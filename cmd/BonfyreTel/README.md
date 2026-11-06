@@ -3,40 +3,10 @@
 Pure C binary that connects to FreeSWITCH via Event Socket (plain TCP),
 giving Bonfyre full telephony capabilities without any Twilio dependency.
 
-**Built-in mock server** — test the entire pipeline without FreeSWITCH,
-without a SIP trunk, and without buying a phone number. Zero cost to try.
-
-## Zero-Cost Test (30 seconds)
-
-```bash
-# 1. Build
-make -C cmd/BonfyreTel
-
-# 2. Terminal 1 — start mock ESL server (replaces FreeSWITCH)
-./cmd/BonfyreTel/bonfyre-tel mock
-
-# 3. Terminal 2 — start listener in dry-run mode
-./cmd/BonfyreTel/bonfyre-tel listen --dry-run
-
-# 4. Terminal 3 — inject events
-./cmd/BonfyreTel/bonfyre-tel sim-call --from +15551234567 --to +15559876543
-./cmd/BonfyreTel/bonfyre-tel sim-sms --from +15551234567 --to +15559876543 --body "hello world"
-
-# 5. Watch Terminal 2 light up:
-#   tel: [DRY-RUN] would trigger: bonfyre-pipeline run /tmp/bonfyre-sim/rec_2026-04-07.wav
-#   tel: [DRY-RUN] would trigger: bonfyre-ingest --text "hello world"
-
-# 6. Test phone verification (Twilio Verify replacement)
-./cmd/BonfyreTel/bonfyre-tel verify-send --to +15559876543 --dry-run
-#   verify: [DRY-RUN] code for +15559876543: 847291 (expires ...)
-./cmd/BonfyreTel/bonfyre-tel verify-check --phone +15559876543 --code 847291
-#   verified
-
-# 7. Check the database
-./cmd/BonfyreTel/bonfyre-tel status
-```
-
-No FreeSWITCH install needed. No SIP trunk. No phone number. No money.
+It needs a running FreeSWITCH to do anything. There is no built-in stand-in for
+one: an earlier version carried a mock server and commands that injected made-up
+calls and messages, and a verification code could be issued and accepted without
+ever being sent.
 
 ## Architecture
 
@@ -51,11 +21,6 @@ Phone Network → SIP Trunk ($1/mo) → FreeSWITCH (MIT, self-hosted)
                    bonfyre-pipeline   bonfyre-ingest   SQLite log
                      (async fork)     (async fork)
 
-Testing (no network needed):
-  bonfyre-tel mock     → fake ESL server on :8021
-  bonfyre-tel sim-call → inject fake call events
-  bonfyre-tel sim-sms  → inject fake SMS events
-  --dry-run            → log pipeline triggers without forking
 ```
 
 ## Production Quick Start
@@ -94,11 +59,6 @@ freeswitch -nonat
 ### Testing (zero cost)
 | Command | Description |
 |---------|-------------|
-| `mock` | Start fake ESL server — replaces FreeSWITCH entirely |
-| `sim-call` | Inject a fake inbound call event into any listener |
-| `sim-sms` | Inject a fake inbound SMS event into any listener |
-| `mock --auto` | Auto-generate events every 5 seconds |
-| `listen --dry-run` | Log pipeline triggers without actually forking |
 
 ### Verify (Twilio Verify replacement)
 | Command | Description |

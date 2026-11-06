@@ -1,0 +1,13 @@
+[Unit]
+Description=Run Bonfyre AddressPlane publication and FactDelta worker
+
+[Timer]
+OnBootSec=45s
+OnUnitActiveSec=20s
+RandomizedDelaySec=3s
+Persistent=true
+Unit=bonfyre-address-worker.service
+
+[Install]
+WantedBy=timers.target
+

@@ -1,0 +1,25 @@
+{
+  "name": "publication_occurrence",
+  "readIndexes": {
+    "public_source": ["source_ref", "status", "visibility", "assertion_state", "published_at", "id"]
+  },
+  "displayName": "Publication Occurrence",
+  "description": "One retained, observed foreign publication item promoted from a lawful ForeignTwin body. It records the foreign assertion and receipt without turning the observing estate into author, publisher, rights holder, or endorser.",
+  "attributes": {
+    "occurrence_id": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "source_twin": {"type": "string", "required": true},
+    "source_ref": {"type": "string", "required": true},
+    "canonical_href": {"type": "string", "required": false},
+    "title": {"type": "string", "required": true},
+    "summary": {"type": "text", "required": false},
+    "published_at": {"type": "string", "required": false},
+    "observed_at": {"type": "string", "required": true},
+    "receipt_ref": {"type": "string", "required": true},
+    "rights_basis": {"type": "string", "required": true},
+    "retention": {"type": "string", "required": true},
+    "visibility": {"type": "string", "required": true},
+    "assertion_state": {"type": "string", "required": true},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

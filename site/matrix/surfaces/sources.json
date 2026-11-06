@@ -1,0 +1,18 @@
+{
+ "version": "bonfyre-flow-surface-v1",
+ "flow": "sources",
+ "shape": "each step renders the next; state is carried in the fragment, not in a session",
+ "machine_views": [
+  "/cap/alerts",
+  "/epcis/events",
+  "/wot/thing",
+  "/openrtb/bidrequest",
+  "/ap/actor",
+  "/ogc"
+ ],
+ "forbidden_inference": [
+  "a listed capability -> a reservation or a completed sale",
+  "an admitted source -> a licence, or a verified fact about the world",
+  "an advertised skill -> an agreement to perform it"
+ ]
+}

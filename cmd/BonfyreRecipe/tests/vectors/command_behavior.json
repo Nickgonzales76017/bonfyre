@@ -1,0 +1,8 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"build/bonfyre-recipe","binary_env":"BONFYRE_RECIPE_BIN","cases":[
+{"name":"a recipe from this repository validates, hashes stably and is registered","steps":[
+ {"argv":["init","--db","r.db"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"argv":["validate","${root}/docs/recipes/A1-audio-quick-brief.json"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["Recipe is valid"]},
+ {"argv":["hash","${root}/docs/recipes/A1-audio-quick-brief.json"],"env":{"HOME":"${tmp}"},"exit":0,"stdout":"sha256:c8054fba30c35fd5b6275646dac7fc4b3f04523439f8dd678002c125588ba09a\n"},
+ {"argv":["add","${root}/docs/recipes/A1-audio-quick-brief.json","--db","r.db"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"argv":["list","--db","r.db"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["A1       Audio Quick Brief"]}]},
+{"name":"a file that is not a recipe does not validate","files":{"x.json":"{}"},"steps":[{"argv":["validate","x.json"],"env":{"HOME":"${tmp}"},"exit_nonzero":true}]}]}

@@ -29,14 +29,14 @@ contract document_intake_v1
   invocation_kind native-process
   argv ${binary} ${input.path} ${output.dir}
   input_binding artifact
-  output_discovery output.dir/intake-manifest.json
-  environment PATH=/usr/bin:/bin
+  output_discovery manifest:fabric-output.manifest
+  environment PATH=/opt/homebrew/bin:/usr/bin:/bin
   working_directory mission.dir
   timeout_seconds 30
   output_limit_bytes 1048576
   retry_policy bounded:0
   workload_probe output-artifact
-  quality_probe json-schema
+  quality_probe artifact-integrity
 
 contract media_normalize_v1
   invocation_kind native-process
@@ -69,7 +69,7 @@ contract qwen_native_inference_v1
   argv ${binary} generate --pack /Users/nickgonzales/BonfyreModels/fpq/qwen2.5-coder-0.5b-instruct-native-fp16.fpq --tokenizer /Users/nickgonzales/BonfyreModels/small/qwen2.5-coder-0.5b-instruct/tokenizer.json --prompt ${input.path} --out ${output.dir}/normalized_generation.py --max-new-tokens 40 --greedy --prefill-chunk 32 --manifest ${output.dir}/model-inference.json --token-trace ${output.dir}/model-token-trace.jsonl
   input_binding artifact
   output_discovery output.dir/normalized_generation.py
-  environment PATH=/usr/bin:/bin,BONFYRE_QWEN_MAX_SEQ_LEN=96,BONFYRE_QWEN_PRELOAD_TIED_EMBEDDINGS=0,BONFYRE_QWEN_REQUIRE_BLENDER_LINE=1
+  environment PATH=/usr/bin:/bin,BONFYRE_QWEN_MAX_SEQ_LEN=96,BONFYRE_QWEN_PRELOAD_TIED_EMBEDDINGS=0,BONFYRE_QWEN_REQUIRE_BLENDER_LINE=1,BONFYRE_QWEN_KV_OUT=kv-recorded.bin,BONFYRE_QWEN_RESID_OUT=resid-recorded.f32
   working_directory mission.dir
   timeout_seconds 180
   output_limit_bytes 10485760
@@ -169,8 +169,11 @@ contract queue_workflow_fixture_v1
   quality_probe queue-workflow-state
 
 contract meter_record_v1
+  # Records the execution that produced the input, from the fabric's own event
+  # for it: its receipt, when it started, how long it ran, and the measured
+  # size of what it produced.
   invocation_kind native-process
-  argv ${binary} record --key fabric-fixture --op model-inference --bytes 64 --duration 1 --db ${output.dir}/meter.sqlite
+  argv ${binary} record --key ${mission.id} --op operator-execution --bytes-of ${input.path} --receipt ${input.receipt} --attempt-ref ${input.receipt} --realization-ref ${input.uri} --at ${input.receipt_at} --duration ${input.receipt_duration_ms} --db ${output.dir}/meter.sqlite
   input_binding artifact
   output_discovery stderr
   environment PATH=/usr/bin:/bin
@@ -546,6 +549,8 @@ contract flashqla_run_v1
   quality_probe artifact-integrity
 
 contract kvcache_roundtrip_v1
+  # The input is the keys and values the model operator's run left in its
+  # cache, written by that run. A generated tone was certified here before.
   invocation_kind native-process
   argv ${binary} roundtrip ${input.path} --bits 4
   input_binding artifact
@@ -597,9 +602,10 @@ contract gate_issue_v1
   workload_probe structured-output
   quality_probe json-schema
 
-contract economy_cost_record_v1
+contract economy_report_v1
+  # Reports the costs held in a snapshot of the estate's own economy store, taken when the workload ran. Nothing is recorded.
   invocation_kind native-process
-  argv ${binary} cost record completion execute local 0.01
+  argv ${binary} --db ${input.path} report --last 1000000
   input_binding artifact
   output_discovery stdout
   environment PATH=/usr/bin:/bin,BONFYRE_ECONOMY_DB=economy.sqlite
@@ -610,9 +616,10 @@ contract economy_cost_record_v1
   workload_probe output-artifact
   quality_probe artifact-integrity
 
-contract finance_service_add_v1
+contract finance_opportunity_rank_v1
+  # Ranks the opportunities held in a snapshot of the estate's own finance store, the one its work actually writes to. An unknown compensation is shown as unknown. Nothing is added.
   invocation_kind native-process
-  argv ${binary} --db ${output.dir}/finance.sqlite service add --name completion-proof --buy 1.00 --sell 3.00 --source local --category validation
+  argv ${binary} --db ${input.path} opportunity rank
   input_binding artifact
   output_discovery stdout
   environment PATH=/usr/bin:/bin
@@ -637,6 +644,9 @@ contract control_entropy_v1
   quality_probe artifact-integrity
 
 contract tone_extract_v1
+  # Measures a recording with whichever engine the machine has and says which:
+  # eGeMAPS through OpenSMILE when one is configured, otherwise the estate's own
+  # voice features under their own name. Neither is reported as the other.
   invocation_kind native-process
   argv ${binary} extract ${input.path} ${output.dir}
   input_binding artifact
@@ -688,9 +698,10 @@ contract time_schedule_v1
   workload_probe output-artifact
   quality_probe artifact-integrity
 
-contract learn_feedback_v1
+contract learn_history_v1
+  # Reads the newest feedback held in a snapshot of the estate's own learn store. Nothing is recorded.
   invocation_kind native-process
-  argv ${binary} feedback completion-run 0.92 good
+  argv ${binary} --db ${input.path} history
   input_binding artifact
   output_discovery stdout
   environment PATH=/usr/bin:/bin,BONFYRE_LEARN_DB=learn.sqlite
@@ -714,9 +725,10 @@ contract compete_pair_v1
   workload_probe output-artifact
   quality_probe artifact-integrity
 
-contract pay_credit_v1
+contract pay_invoice_v1
+  # Invoices the one key and month of metered usage in a store cut from the estate's own meter, priced by the rates the meter applied. No credit is granted.
   invocation_kind native-process
-  argv ${binary} --db ${output.dir}/pay.sqlite credit --user-id 42 --amount 500 --reason acceptance-credit
+  argv ${binary} --db ${output.dir}/pay.sqlite invoice --user-id 1 --api-key auto --period auto --meter-db ${input.path}
   input_binding artifact
   output_discovery stdout
   environment PATH=/usr/bin:/bin
@@ -740,9 +752,10 @@ contract tier_assign_v1
   workload_probe output-artifact
   quality_probe artifact-integrity
 
-contract outreach_send_v1
+contract outreach_report_v1
+  # Reports the outbound entries held in a snapshot of the estate's own outreach store. Nothing is sent or logged.
   invocation_kind native-process
-  argv ${binary} --db ${output.dir}/outreach.sqlite send --channel dm --target acceptance@example.com --offer completion-proof --message durable-evidence-ready
+  argv ${binary} --db ${input.path} report
   input_binding artifact
   output_discovery stdout
   environment PATH=/usr/bin:/bin
@@ -779,9 +792,12 @@ contract stitch_plan_v1
   workload_probe output-artifact
   quality_probe artifact-integrity
 
-contract distribute_message_v1
+contract distribute_messages_v1
+  # Counts by state the messages the estate has composed, from an export of the
+  # estate's content store, taken when the workload ran. Only ids and states
+  # is exported, and never their recipients or their text. Nothing is sent.
   invocation_kind native-process
-  argv ${binary} message ${input.path} ${argument.offer_name} dm
+  argv ${binary} messages ${input.path}
   input_binding artifact
   output_discovery stdout
   environment PATH=/usr/bin:/bin
@@ -831,12 +847,15 @@ contract transcript_family_v1
   workload_probe structured-output
   quality_probe json-schema
 
-contract piper_narrate_v1
+contract narrate_voice_v1
+  # The organ speaks with Piper when it is installed and with the system voice
+  # when it is not, and writes no manifest when neither produced audio. The
+  # manifest names the voice that spoke; the quality probe reads the audio.
   invocation_kind native-process
-  argv ${binary} ${input.path} ${output.dir} --voice-model ${argument.voice_model} --no-pitch-shift --no-envelope
+  argv ${binary} ${input.path} ${output.dir} --no-pitch-shift --no-envelope
   input_binding artifact
   output_discovery output.dir/artifact.manifest.json
-  environment PATH=/Users/nickgonzales/Library/Python/3.9/bin:/opt/homebrew/bin:/usr/bin:/bin
+  environment PATH=/usr/bin:/bin
   working_directory mission.dir
   timeout_seconds 90
   output_limit_bytes 4194304
@@ -845,11 +864,13 @@ contract piper_narrate_v1
   quality_probe json-schema
 
 contract speechloop_transform_v1
+  # Hears a recording, briefs it and speaks the brief: Whisper for the hearing,
+  # and whichever voice the narrate organ has for the speaking.
   invocation_kind native-process
-  argv ${binary} transform ${input.path} ${output.dir} --model ${argument.whisper_model} --voice-model ${argument.voice_model} --compress --brief
+  argv ${binary} transform ${input.path} ${output.dir} --model ${argument.whisper_model}
   input_binding artifact
   output_discovery output.dir/speechloop-manifest.json
-  environment PATH=/Users/nickgonzales/Library/Python/3.9/bin:/opt/homebrew/bin:/usr/bin:/bin
+  environment PATH=/Users/nickgonzales/.local/bin:/opt/homebrew/bin:/usr/bin:/bin,HOME=/Users/nickgonzales
   working_directory mission.dir
   timeout_seconds 180
   output_limit_bytes 4194304
@@ -975,6 +996,8 @@ contract runtime_doctor_v1
   quality_probe json-schema
 
 contract swarm_selftest_v1
+  # The bound program seeds a real file and has two native peers fetch its
+  # first block over the wire; the bytes are compared and the index is read.
   invocation_kind native-process
   argv ${binary}
   input_binding artifact
@@ -988,6 +1011,8 @@ contract swarm_selftest_v1
   quality_probe json-schema
 
 contract moq_selftest_v1
+  # The bound program starts the real server on a loopback port and drives it
+  # with native clients only; it reports what those processes returned.
   invocation_kind native-process
   argv ${binary}
   input_binding artifact
@@ -1001,6 +1026,8 @@ contract moq_selftest_v1
   quality_probe artifact-integrity
 
 contract api_selftest_v1
+  # The bound program starts the real server on a loopback port and drives it
+  # with native clients only; it reports what those processes returned.
   invocation_kind native-process
   argv ${binary}
   input_binding artifact
@@ -1131,6 +1158,7 @@ contract cli_status_v1
   quality_probe artifact-integrity
 
 contract sli_inspect_v1
+  # The input is a .bqfp the quant organ encoded from a model's weights.
   invocation_kind native-process
   argv ${binary} inspect --model ${input.path}
   input_binding artifact
@@ -1143,27 +1171,33 @@ contract sli_inspect_v1
   workload_probe output-artifact
   quality_probe artifact-integrity
 
-contract sae_synth_v1
+contract sae_train_v1
+  # Fits a feature dictionary to the residual activations the model operator's
+  # run recorded, holding one vector in ten out and reporting on those. The
+  # features are unlabelled: nothing has looked at what any of them responds to.
   invocation_kind native-process
-  argv ${binary} synth --out ${output.dir}/dict.bfsae --features 256 --hidden-dim 64
+  argv ${binary} train --activations ${input.path} --dim 896 --features 16 --layer 12 --family qwen2.5-coder-0.5b-instruct --out ${output.dir}/dictionary.bfsae
   input_binding artifact
   output_discovery stdout
   environment PATH=/usr/bin:/bin
   working_directory mission.dir
-  timeout_seconds 30
+  timeout_seconds 300
   output_limit_bytes 1048576
   retry_policy bounded:0
   workload_probe output-artifact
-  quality_probe artifact-integrity
+  quality_probe output-exists
 
-contract reason_start_v1
+contract reason_ask_v1
+  # A reasoning run is a model answering the prompt. This operator used to be
+  # certified by start alone, which records a prompt and runs nothing. The
+  # endpoint is the managed local model; a contract for another names its own.
   invocation_kind native-process
-  argv ${binary} start --prompt ${input.path} --session ${mission.id}
+  argv ${binary} ask --prompt ${input.path} --endpoint http://127.0.0.1:7000 --model Qwen1.5-MoE-A2.7B-Chat-Q2_K.gguf --max-tokens 128 --session ${mission.id}
   input_binding artifact
   output_discovery stdout
-  environment PATH=/usr/bin:/bin
+  environment PATH=/usr/bin:/bin,BONFYRE_REASON_DIR=reason-sessions
   working_directory mission.dir
-  timeout_seconds 30
+  timeout_seconds 180
   output_limit_bytes 1048576
   retry_policy bounded:0
   workload_probe output-artifact
@@ -1187,7 +1221,7 @@ contract orchestrate_status_v1
   argv ${binary} status
   input_binding artifact
   output_discovery stdout-json
-  environment PATH=/usr/bin:/bin
+  environment PATH=/usr/bin:/bin,BONFYRE_ORCHESTRATE_ENDPOINT=http://127.0.0.1:7000,BONFYRE_ORCHESTRATE_MODEL=Qwen1.5-MoE-A2.7B-Chat-Q2_K.gguf
   working_directory mission.dir
   timeout_seconds 30
   output_limit_bytes 1048576
@@ -1197,20 +1231,24 @@ contract orchestrate_status_v1
 
 contract net_run_v1
   invocation_kind native-process
-  argv ${binary} run ${input.path}
+  # A netlist is run by running the organs it names, in net order. The older
+  # run verb integrated components that stood in for organs and is not used.
+  argv ${binary} exec ${input.path} --out ${output.dir}/net
   input_binding artifact
   output_discovery stdout
-  environment PATH=/usr/bin:/bin
+  environment PATH=/Users/nickgonzales/.local/bin:/opt/homebrew/bin:/usr/bin:/bin,HOME=/Users/nickgonzales
   working_directory mission.dir
-  timeout_seconds 30
+  timeout_seconds 180
   output_limit_bytes 1048576
   retry_policy bounded:0
   workload_probe output-artifact
   quality_probe artifact-integrity
 
 contract fpqx_self_align_v1
+  # The input is a .bqfp the quant organ encoded from one tensor of a model;
+  # beside it is the same model's next tensor, and the two are aligned.
   invocation_kind native-process
-  argv ${binary} align ${input.path} ${input.path} --out ${output.dir}
+  argv ${binary} align ${input.path} ${input.dir}/model-b.bqfp --out ${output.dir}
   input_binding artifact
   output_discovery stdout
   environment PATH=/usr/bin:/bin
@@ -1272,3 +1310,20 @@ contract blocked_requires_service_v1
   retry_policy bounded:0
   workload_probe output-artifact
   quality_probe output-exists
+
+contract tel_selftest_v1
+  # The bound program starts a FreeSWITCH that has only its event socket on
+  # loopback and calls that stay inside it, places a call through the organ,
+  # asks the switch whether the call exists, hangs it up and asks again.
+  # Nothing reaches a trunk or the telephone network.
+  invocation_kind native-process
+  argv ${binary}
+  input_binding artifact
+  output_discovery stdout-json
+  environment PATH=/opt/homebrew/bin:/usr/bin:/bin,TMPDIR=/tmp
+  working_directory mission.dir
+  timeout_seconds 120
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe json-schema

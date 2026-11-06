@@ -1,0 +1,24 @@
+{
+  "scope": "fresh anonymous public browser; no account mutations",
+  "observations": [
+    {
+      "width": 1440,
+      "account": {
+        "signedVisible": true,
+        "signedHidden": true,
+        "prompt": "Your session has expired or been revoked.\n\nSign in or create your account to begin your private Bonfÿre context.",
+        "tools": "Your tools and saved work\n\nOpening the tools already installed for you…"
+      }
+    },
+    {
+      "width": 390,
+      "account": {
+        "signedVisible": true,
+        "signedHidden": true,
+        "prompt": "Your session has expired or been revoked.\n\nSign in or create your account to begin your private Bonfÿre context.",
+        "tools": "Your tools and saved work\n\nOpening the tools already installed for you…"
+      }
+    }
+  ],
+  "failures": []
+}

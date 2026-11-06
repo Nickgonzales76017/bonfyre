@@ -1,0 +1,64 @@
+{
+  "name": "service_provider",
+  "displayName": "Service Provider",
+  "description": "A vetted provider for one or more service verticals",
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "slug": {
+      "type": "uid",
+      "required": true,
+      "targetField": "name"
+    },
+    "vertical": {
+      "type": "enumeration",
+      "required": true,
+      "enum": [
+        "dog_walking",
+        "group_fitness",
+        "produce_coop",
+        "car_detailing",
+        "mobile_barber",
+        "childcare_pool",
+        "massage_wellness",
+        "tutoring",
+        "tool_library",
+        "laundry",
+        "cooking_class",
+        "pet_grooming",
+        "dry_cleaning",
+        "coworking",
+        "language_exchange",
+        "security_watch",
+        "ghost_kitchen",
+        "other"
+      ]
+    },
+    "contact_email": {
+      "type": "string"
+    },
+    "contact_phone": {
+      "type": "string"
+    },
+    "bio": {
+      "type": "text"
+    },
+    "rating": {
+      "type": "decimal",
+      "default": "0"
+    },
+    "completed_offers": {
+      "type": "integer",
+      "default": "0"
+    },
+    "availability": {
+      "type": "json"
+    },
+    "verified": {
+      "type": "boolean",
+      "default": "0"
+    }
+  }
+}

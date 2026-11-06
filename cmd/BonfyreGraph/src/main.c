@@ -31,6 +31,8 @@
 #include <sqlite3.h>
 #include <bonfyre.h>
 
+#include "bf_lex.h"
+#include "../../../lib/libbonfyre/include/bf_help.h"
 #define MAX_PATH  2048
 #define MAX_IDS   512
 #define MAX_LINE  65536
@@ -80,24 +82,10 @@ static const char *skip_value(const char *p) {
 }
 
 /* Extract a string value for key from a JSON object. Returns 0 if not found. */
+/* Delegates to the one implementation. This copy dropped the backslash and
+ * kept the letter, so \\n arrived as n, and truncated silently on overflow. */
 static int json_get_str(const char *json, const char *key, char *out, size_t outsz) {
-    char needle[256];
-    snprintf(needle,sizeof(needle),"\"%s\"",key);
-    const char *pos=strstr(json,needle);
-    if (!pos) return 0;
-    pos+=strlen(needle);
-    pos=skip_ws(pos);
-    if (*pos!=':') return 0;
-    pos=skip_ws(pos+1);
-    if (*pos!='"') return 0;
-    pos++;
-    size_t i=0;
-    while (*pos && *pos!='"' && i<outsz-1) {
-        if (*pos=='\\' && *(pos+1)) { pos++; }
-        out[i++]=*pos++;
-    }
-    out[i]='\0';
-    return 1;
+    return bf_lex_json_string(json, key, out, outsz);
 }
 
 /* Find start of array for a key. Returns pointer to '[' or NULL. */
@@ -653,6 +641,39 @@ static int cmd_validate(const char *manifest_path) {
         }
     }
 
+    /* Every operator input must name an atom or another operator's output.
+     * A dangling input used to validate, so an artifact whose lineage could
+     * never be materialized was reported VALID. */
+    if (ops_arr) {
+        static char outputs[MAX_IDS][256];
+        int out_count=0;
+        const char *cursor=ops_arr;
+        char objbuf[MAX_LINE];
+        while (json_next_object(&cursor,objbuf,sizeof(objbuf)))
+            if (out_count<MAX_IDS && json_get_str(objbuf,"output",outputs[out_count],256)) out_count++;
+        cursor=ops_arr;
+        int k=0;
+        while (json_next_object(&cursor,objbuf,sizeof(objbuf))) {
+            const char *in=strstr(objbuf,"\"inputs\"");
+            const char *lb=in?strchr(in,'['):NULL;
+            const char *rb=lb?strchr(lb,']'):NULL;
+            for (const char *p=lb; p && p<rb; ) {
+                const char *q=memchr(p,'"',(size_t)(rb-p));
+                if (!q) break;
+                const char *e=memchr(q+1,'"',(size_t)(rb-q-1));
+                if (!e) break;
+                char ref[256]; size_t n=(size_t)(e-q-1); if (n>=sizeof ref) n=sizeof ref-1;
+                memcpy(ref,q+1,n); ref[n]='\0';
+                int found=0;
+                for (int j=0;j<atom_count&&!found;j++) found=!strcmp(atom_ids[j],ref);
+                for (int j=0;j<out_count&&!found;j++) found=!strcmp(outputs[j],ref);
+                if (!found){ fprintf(stderr,"  operators[%d]: input '%s' names no atom or operator output\n",k,ref); errors++; }
+                p=e+1;
+            }
+            k++;
+        }
+    }
+
     if (errors) printf("INVALID — %d error(s)\n",errors);
     else printf("VALID\n");
 
@@ -859,6 +880,7 @@ static const char *arg_get(int argc, char **argv, const char *flag) {
 }
 
 int main(int argc, char **argv) {
+    if (bf_help_requested(argc, argv)) { usage(); return 0; }
     if (argc<2){ usage(); return 1; }
     const char *cmd=argv[1];
     const char *root = arg_get(argc, argv, "--root");

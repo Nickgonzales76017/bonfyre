@@ -1,0 +1,71 @@
+atlas external
+
+architecture campaign-attribution
+  canonical_name Campaign links and attribution coordinates
+  family external
+  domain External / Go-to-market campaign measurement
+  layer integration
+  semantic_question Which bounded campaign coordinates were authored for a destination or supplied by a URL, without treating those coordinates as identity or an observed business outcome?
+  purpose Native generation and parsing of six manual UTM dimensions provides a reusable account-workspace integration boundary. Existing source citation and source-address canonicalization keep their own meanings.
+  maturity implemented
+  node_types CampaignLinkRequest, CampaignUTM, CampaignLinkResult, CampaignLinkError
+  source_path cmd/BonfyreCampaign/src/campaign.c
+  source_path cmd/BonfyreCampaign/src/campaign.h
+  source_path cmd/BonfyreCampaign/src/main.c
+  source_path cmd/BonfyreCampaign/tests/campaign_test.c
+  source_path schemas/control/campaign-attribution.cue
+  source_path cmd/BonfyreCampaign/README.md
+  source_path cmd/BonfyreWebAddress/src/campaign_workspace.h
+  source_path cmd/BonfyreWebAddress/src/application_workspace.h
+  source_path cmd/BonfyreWebAddress/src/application_continuation.h
+  source_path cmd/BonfyreWebAddress/tests/campaign_workspace_test.c
+  source_path scripts/tests/campaign-workspace.test.mjs
+  internal_calculus a strict two-object JSON request gate precedes the shared native DOM; decoded key identity refuses duplicate or unknown request fields
+  internal_calculus native form decoding precedes UTM duplicate checks; generation emits source, medium, campaign, id, term and content in fixed order using uppercase UTF-8 percent escapes
+  invariant requests are bounded at 16384 bytes, URLs at 8192 UTF-8 bytes, and each nonempty coordinate at 256 UTF-8 bytes; malformed escapes, invalid UTF-8 and ASCII controls are refused
+  invariant source, medium and campaign are required for build; parse and validate retain absent or partial tagging explicitly; complete means those three coordinates are present
+  invariant build refuses destinations already carrying one of the six supported coordinates; unrelated query fields and fragments retain their bytes and order
+  invariant query parameter values preserve case; mixed-case aliases of the six owned parameter names are refused; encoded aliases count as the same key
+  invariant HTTP and HTTPS DNS-name destinations exclude credentials, IP literals, numeric final labels and declared local suffixes; no DNS resolution or remote request occurs
+  invariant output uses bf_jsonw; errors omit input URLs and values; no actor, session, consent, account, arrival or conversion identity is invented
+  invariant the installed source-campaign workspace exposes a native link form and JSON endpoint only after current Auth, exact pack and entry, active binding and retained editor verification; GET requires read access and POST requires write access
+  invariant HTML form submissions retain same-origin Origin and use exact-origin admission; generated URLs are escaped selectable text and are never fetched, shared or stored by this endpoint
+  invariant campaign workspace navigation opens the link builder in a separate tab so the current unsaved artwork remains open; the native form adds no browser script or separately installed runtime
+  witness cmd/BonfyreCampaign/tests/campaign_test.c passes native generation/parsing roundtrips, UTF-8 and percent encoding, unrelated query and fragment preservation, duplicate and hostile URL refusal, JSON grammar and size bounds, and actual stdin CLI execution
+  witness cmd/BonfyreWebAddress/tests/campaign_workspace_test.c exercises real campaign code through bounded form and JSON transport, the HTTP reader header split, correction, escaping, and response policy
+  witness scripts/tests/campaign-workspace.test.mjs exercises actual isolated Auth and CMS grants for private and organization link generation; foreign actors, read-only POST, revoked writers and cross-origin requests refuse
+  witness scripts/tests/campaign-workspace.test.mjs submits the real native form in Chrome, preserves destination query and fragment, returns escaped tags, fits the phone viewport and leaves the saved artwork revision unchanged
+  forbidden_inference a valid campaign link -> an arrival, identified person, consent, qualified lead, conversion, published campaign or tag dispatch
+  forbidden_inference a lexically admitted DNS name -> public DNS resolution, redirect safety, destination ownership or authority to fetch it
+  forbidden_inference complete tagging -> complete Google Analytics dimensions, auto-tagging precedence, attribution credit or supported source_platform handling
+  known_gap the link builder has current account admission but no saved marketing metadata, public arrival capture, consent lifecycle, conversion owner emission, GTM container loading or external reporting
+  known_gap the six-field v1 leaves utm_source_platform and other extended UTM fields untouched in destination queries; it does not create or interpret them
+  known_gap future campaign metadata must use the existing native CMS binding; URL coordinates never confer account authority
+  known_gap customer GTM containers and measurement destinations require explicit per-account configuration; no shared Aurekai property or live delivery is inferred
+  known_gap the future conversion bridge must use native owner receipts and idempotency keys; a browser click cannot stand in for a confirmed save, qualified lead or settled payment
+  known_gap the future GTM adapter must dispatch an event and its variables in one dataLayer push after the relevant consent state has been established through Tag Manager consent APIs; this CLI emits no GTM events
+  known_gap a future campaign report must declare its attribution model, time window and consent scope separately from the untrusted URL coordinates
+  source_lineage Google Analytics manual campaign URL documentation https://support.google.com/analytics/answer/10917952 checked 2026-10-26
+  source_lineage Google Tag Manager data layer documentation https://developers.google.com/tag-platform/tag-manager/datalayer checked 2026-10-26
+
+interaction campaign-uses-native-text-decoder
+  source campaign-attribution
+  destination text-extraction-rules
+  relation decodes_bounded_query_coordinates
+  preserves percent-decoded UTF-8 coordinate bytes, plus-as-space semantics and explicit refusal of malformed fields
+  drops campaign authority implications and ambiguous duplicate keys
+  binding cmd/BonfyreCampaign/src/campaign.c
+  witness cmd/BonfyreCampaign/tests/campaign_test.c
+  forbidden_inference shared text decoding -> permission to retain a visitor identity or dispatch a tracking event
+  invalidates_on bf_lex_form_query decoding contract changes
+
+interaction campaign-workspace-uses-native-link-owner
+  source native-interaction-components
+  destination campaign-attribution
+  relation builds_campaign_links_under_current_workspace_access
+  preserves exact active account binding, source-campaign pack identity, current read or write grants, and original campaign artwork records
+  drops browser-supplied actor authority, destination execution, and inferred conversion credit
+  binding cmd/BonfyreWebAddress/src/application_workspace.h
+  witness scripts/tests/campaign-workspace.test.mjs
+  forbidden_inference a generated link under current account access -> stored marketing metadata, a visitor identity, customer consent or a GTM event
+  invalidates_on current Auth grants, workspace activation, campaign pack identity or retained editor release changes

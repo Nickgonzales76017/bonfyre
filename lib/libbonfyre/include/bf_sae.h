@@ -211,16 +211,6 @@ void bfsae_feature_hash(const BfsaeActivation *act, char *out_hex);
  */
 void bfsae_inspect(const BfsaeDict *dict);
 
-/*
- * bfsae_write_synthetic — write a minimal synthetic .bfsae for testing.
- * feature_count random decoder directions, unit-norm, no labels.
- */
-int bfsae_write_synthetic(const char *path,
-                           const char *model_family,
-                           uint32_t    layer,
-                           uint32_t    hidden_dim,
-                           uint32_t    feature_count);
-
 #ifdef __cplusplus
 }
 #endif

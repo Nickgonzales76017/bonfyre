@@ -1,0 +1,19 @@
+architecture glyph-vocabulary
+  canonical_name GlyphVocabulary
+  family surface
+  domain Surface / Icons
+  layer surface
+  semantic_question Which icons may Aurekai pages draw, where does each come from, and under what licence?
+  purpose One compiled icon vocabulary for every server-rendered page: a declared subset of Tabler geometry held as C string literals in glyph_set.h, each named semantically and declared with its Iconify collection:name identity and licence in glyph_set.tsv. No icon font, CDN, Iconify API or runtime script is loaded.
+  maturity implemented
+  publishes GlyphVocabulary
+  source_path cmd/BonfyreWebAddress/src/glyph_set.h
+  source_path cmd/BonfyreWebAddress/src/glyph_set.tsv
+  source_path cmd/BonfyreWebAddress/tests/glyph_set_test.sh
+  witness cmd/BonfyreWebAddress/tests/glyph_set_test.sh proves every compiled icon (50) is declared and every declared icon is compiled, each identity is collection:name, and each licence is on the allowed list (MIT, ISC, Apache-2.0, CC-BY-4.0); removing a declaration or declaring GPL-3.0 fails it
+  invariant icons are compiled into the binary as literals; pages never fetch an icon font, sprite, CDN asset or Iconify API at view time
+  invariant the Tabler MIT notice travels with the geometry in glyph_set.h
+  forbidden_inference a declared tabler:name identity -> byte-identical upstream path data; identities were assigned from geometry and macro names on 2026-10-29 and the paths have not been re-diffed against the upstream package
+  forbidden_inference an allowed licence -> permission to use a brand mark; brand and domain icons need their own trademark review
+  known_gap the vocabulary is not yet hashed into SurfaceIR/PackGraph release identity, and browser modules still draw their own glyphs rather than reading this set
+  known_gap no compile step generates glyph_set.h from the manifest; the test keeps the two in step instead

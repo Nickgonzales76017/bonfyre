@@ -1,0 +1,259 @@
+#!/usr/bin/env python3
+"""Archived Python series; the supported owner is pure-series.mjs. Differential series for Bonfÿre's pure execution tier.
+
+A single cohort is one data point. This runner derives deterministic order/size
+subcohorts from an already-admitted PURE job so HVM2/HVM4/reference lowerings
+must agree across different binary-tree shapes. It is deliberately a *shape
+series*, not temporal promotion evidence.
+
+Representation credit is equally strict: exact rows are measured today;
+embedding, wavelet, FPQ, Parquet or other OptimizationCascade stages are
+unmeasured until a stage receipt provides a quality envelope.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import importlib.util
+import json
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+PURE = ROOT / "scripts" / "pure_job.py"
+
+
+def _module():
+    spec = importlib.util.spec_from_file_location("bonfyre_pure_job", PURE)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"cannot load {PURE}")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def _sid(candidate: dict, fallback: int) -> str:
+    value = candidate.get("id")
+    return str(value) if value is not None else f"candidate-{fallback:08d}"
+
+
+def _digest(space: list[dict]) -> str:
+    ids = [_sid(c, i) for i, c in enumerate(space)]
+    return hashlib.sha256("\n".join(ids).encode()).hexdigest()[:24]
+
+
+def _sizes(n: int) -> list[int]:
+    if n < 1:
+        return []
+    return sorted({min(n, x) for x in (3, 5, 8, 13, 21, n)})
+
+
+def derive_trials(job: dict) -> list[dict]:
+    space = job.get("candidate_space")
+    if not isinstance(space, list) or not space:
+        raise ValueError("candidate_space must be a non-empty list")
+    hashed = sorted(
+        enumerate(space),
+        key=lambda p: hashlib.sha256(_sid(p[1], p[0]).encode()).digest(),
+    )
+    orders = {
+        "forward": list(space),
+        "reverse": list(reversed(space)),
+        "id-hash": [c for _, c in hashed],
+    }
+    out = []
+    for order, candidates in orders.items():
+        for size in _sizes(len(candidates)):
+            sub = candidates[:size]
+            derived = dict(job)
+            derived["job"] = f"{job.get('job', 'pure')}::{order}::{size}"
+            derived["candidate_space"] = sub
+            out.append({
+                "order": order,
+                "size": size,
+                "cohort_digest": _digest(sub),
+                "job": derived,
+            })
+    return out
+
+
+def run_trial(pure, trial: dict, profiles: list[dict]) -> dict:
+    job = trial["job"]
+    refusal = pure.refuse_if_effectful(job)
+    base = {k: v for k, v in trial.items() if k != "job"}
+    if refusal:
+        return {**base, "refused": True, "reason": refusal, "backends": []}
+
+    rows = []
+    for profile in profiles:
+        backend = profile["backend"]
+        state, why = pure.availability(profile)
+        row = {"backend": backend, "here": state}
+        if state == "available" and backend in pure.RUNNERS:
+            row.update(pure.RUNNERS[backend](job))
+        elif state == "available":
+            row["skipped_because"] = "available but no lowering is written"
+        else:
+            row["unavailable_because"] = why
+        rows.append(row)
+
+    produced = [r for r in rows if r.get("result") is not None]
+    ref = next((r for r in produced if r["backend"] == "reference"), None)
+    refset = set(ref["result"]) if ref else None
+    for row in rows:
+        if row.get("result") is None or refset is None:
+            continue
+        got = set(row["result"])
+        row["quality_against_reference"] = {
+            "exact_set_match": got == refset,
+            "false_prunes": len(refset - got),
+            "false_keeps": len(got - refset),
+        }
+    distinct = {json.dumps(r["result"]) for r in produced}
+    return {
+        **base,
+        "refused": False,
+        "backends_producing_a_result": len(produced),
+        "agreement": len(distinct) <= 1 if len(produced) > 1 else None,
+        "backends": rows,
+    }
+
+
+def summarize(trials: list[dict]) -> dict:
+    stats: dict[str, dict] = {}
+    comparable = 0
+    agreements = []
+    for trial in trials:
+        if trial.get("agreement") is not None:
+            comparable += 1
+            agreements.append(bool(trial["agreement"]))
+        for row in trial.get("backends", []):
+            s = stats.setdefault(row["backend"], {
+                "results": 0, "exact": 0, "false_prunes": 0,
+                "false_keeps": 0, "interactions": 0, "wall_seconds": 0.0,
+            })
+            if row.get("result") is not None:
+                s["results"] += 1
+            q = row.get("quality_against_reference")
+            if q:
+                s["exact"] += int(q["exact_set_match"])
+                s["false_prunes"] += q["false_prunes"]
+                s["false_keeps"] += q["false_keeps"]
+            cost = row.get("cost", {})
+            s["interactions"] += int(cost.get("interactions") or 0)
+            s["wall_seconds"] += float(cost.get("wall_seconds") or 0.0)
+    return {
+        "comparable_trials": comparable,
+        "all_comparable_trials_agree": all(agreements) if agreements else None,
+        "backends": stats,
+    }
+
+
+def self_test() -> None:
+    job = {
+        "job": "fixture", "effect_class": "PURE",
+        "require": {"held": True, "fresh": True},
+        "candidate_space": [
+            {"id": f"c{i:02d}", "held": i % 5 != 0, "fresh": i % 7 != 0}
+            for i in range(30)
+        ],
+    }
+    trials = derive_trials(job)
+    assert len(trials) == 18
+    assert {t["order"] for t in trials} == {"forward", "reverse", "id-hash"}
+    assert {t["size"] for t in trials} == {3, 5, 8, 13, 21, 30}
+    full = [t for t in trials if t["size"] == 30]
+    universes = [{c["id"] for c in t["job"]["candidate_space"]} for t in full]
+    assert universes[0] == universes[1] == universes[2]
+    print("pure series contract: PASS (18 deterministic trials)")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("job", nargs="?")
+    parser.add_argument("--json", action="store_true")
+    parser.add_argument("--receipt")
+    parser.add_argument("--self-test", action="store_true")
+    args = parser.parse_args()
+    if args.self_test:
+        self_test()
+        return 0
+    if not args.job:
+        parser.error("job is required unless --self-test is used")
+
+    base = json.loads(Path(args.job).read_text(encoding="utf-8"))
+    pure = _module()
+    refusal = pure.refuse_if_effectful(base)
+    if refusal:
+        print(f"refused: {refusal}", file=sys.stderr)
+        return 1
+    profiles = pure.profiles()
+    if not profiles:
+        print(f"refused: no execution_profile rows at {pure.CMS_DB}", file=sys.stderr)
+        return 1
+
+    trials = [run_trial(pure, t, profiles) for t in derive_trials(base)]
+    summary = summarize(trials)
+    reducers = {
+        name: s for name, s in summary["backends"].items()
+        if name != "reference" and s["results"] == len(trials)
+        and s["exact"] == len(trials)
+    }
+    receipt = {
+        "schema": "bonfyre-pure-differential-series.v1",
+        "source_job": base.get("job", "?"),
+        "ran_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "series_kind": "deterministic-shape-series-from-one-cohort",
+        "source_candidates": len(base["candidate_space"]),
+        "trial_count": len(trials),
+        "representation": {
+            "governing_law": "CompressionLaw / OptimizationCascade",
+            "exact_dense": {"measured": True, "body": "candidate rows + predicate"},
+            "latent_reduction": {
+                "measured": False, "reason": "no embedding/wavelet-stage receipt"
+            },
+            "physical_compression": {
+                "measured": False, "reason": "no FPQ/Parquet-stage receipt"
+            },
+            "reduction": "backend-specific predicate_and_fan_out",
+            "proof_boundary": "frontier compared with exact reference set",
+        },
+        "summary": summary,
+        "reducers_exact_on_every_trial": sorted(reducers),
+        "promotion_evidence": {
+            "runtime_shape_series": len(reducers) >= 2,
+            "temporal_cohort_series": False,
+            "promotion_ready": False,
+            "reason": "one source cohort cannot establish temporal stability",
+        },
+        "trials": trials,
+        "cannot_infer": [
+            "agreement with reference -> correctness",
+            "shape-series agreement -> temporal stability",
+            "fewer interactions -> lower wall time, energy, or total cost",
+            "unmeasured representation -> representation participated",
+            "candidate frontier -> institutional decision",
+        ],
+    }
+    rendered = json.dumps(receipt, indent=2)
+    if args.receipt:
+        Path(args.receipt).write_text(rendered + "\n", encoding="utf-8")
+    if args.json:
+        print(rendered)
+    else:
+        print(f"pure differential series: {len(trials)} trials")
+        print(f"  comparable: {summary['comparable_trials']}")
+        print(f"  all agree: {summary['all_comparable_trials_agree']}")
+        for name, s in sorted(summary["backends"].items()):
+            print(
+                f"  {name:<12} {s['results']:>2}/{len(trials)} results "
+                f"exact={s['exact']:>2} false_prunes={s['false_prunes']} "
+                f"false_keeps={s['false_keeps']}"
+            )
+        print("  promotion: NO — temporal cohorts remain required")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

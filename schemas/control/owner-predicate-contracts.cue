@@ -1,0 +1,22 @@
+package control
+
+// Owner contracts compile to the numeric predicate ABI persisted with each
+// TargetObligation. Runtime therefore evaluates an opcode, never chooses an
+// owner/state from target text.
+#PredicateOwner: "CommitmentGraph" | "AuthorityGraph" | "InformationPolicy" | "EvidenceGraph" | "ProofFrontier" | "ResourceActivation" | "ResourceReservation" | "ForeignTwin" | "WorkGraph" | "CommerceChain"
+#ExpectedPredicateState: "open" | "discharged" | "delegated" | "violated" | "compensated" | "valid" | "activated" | "reserved" | "observed" | "proven" | "done" | "settled" | "product" | "listing" | "inventory" | "availability" | "offer" | "quote" | "cart" | "checkout" | "commitment" | "payment" | "fulfilment" | "delivery" | "satisfaction" | "ownership"
+#OwnerAdapter: {owner:#PredicateOwner, opcode:"commitment" | "authority" | "policy" | "evidence" | "proof" | "activation" | "reservation" | "foreign" | "work" | "commerce", states:[...{predicate:string & != "",expected_state:#ExpectedPredicateState,native_state:string & != "",owner_query:int & >=0}]}
+nativeOwnerPredicateGrammar: [
+	{owner:"CommitmentGraph",opcode:"commitment",states:[{predicate:"commitment",expected_state:"open",native_state:"commitment_open",owner_query:0},{predicate:"commitment",expected_state:"discharged",native_state:"discharged",owner_query:1},{predicate:"commitment",expected_state:"delegated",native_state:"delegated",owner_query:2},{predicate:"commitment",expected_state:"violated",native_state:"violated",owner_query:3},{predicate:"commitment",expected_state:"compensated",native_state:"compensated",owner_query:4}]},
+	{owner:"AuthorityGraph",opcode:"authority",states:[{predicate:"permit",expected_state:"valid",native_state:"valid",owner_query:1},{predicate:"publish:public",expected_state:"valid",native_state:"public",owner_query:1}]},
+	{owner:"InformationPolicy",opcode:"policy",states:[{predicate:"public_projection",expected_state:"valid",native_state:"policy_public",owner_query:1}]},
+	{owner:"EvidenceGraph",opcode:"evidence",states:[{predicate:"claim",expected_state:"valid",native_state:"stands",owner_query:1}]},
+	{owner:"ProofFrontier",opcode:"proof",states:[{predicate:"invariant",expected_state:"proven",native_state:"proven",owner_query:1}]},
+	{owner:"ResourceActivation",opcode:"activation",states:[{predicate:"capacity",expected_state:"activated",native_state:"activated",owner_query:5}]},
+	{owner:"ResourceReservation",opcode:"reservation",states:[{predicate:"capacity",expected_state:"reserved",native_state:"reserved",owner_query:1}]},
+	{owner:"ForeignTwin",opcode:"foreign",states:[{predicate:"publication_roundtrip",expected_state:"observed",native_state:"observed_publication",owner_query:1},{predicate:"delivery",expected_state:"observed",native_state:"observed_delivery",owner_query:1},{predicate:"result",expected_state:"observed",native_state:"observed_result",owner_query:1}]},
+	{owner:"WorkGraph",opcode:"work",states:[{predicate:"node",expected_state:"done",native_state:"completed",owner_query:1}]},
+	{owner:"CommerceChain",opcode:"commerce",states:[
+		{predicate:"product",expected_state:"product",native_state:"product",owner_query:0},{predicate:"listing",expected_state:"listing",native_state:"listing",owner_query:1},{predicate:"inventory",expected_state:"inventory",native_state:"inventory",owner_query:2},{predicate:"availability",expected_state:"availability",native_state:"availability",owner_query:3},{predicate:"offer",expected_state:"offer",native_state:"offer",owner_query:4},{predicate:"quote",expected_state:"valid",native_state:"quote",owner_query:5},{predicate:"cart",expected_state:"cart",native_state:"cart",owner_query:6},{predicate:"checkout",expected_state:"checkout",native_state:"checkout",owner_query:7},{predicate:"commitment",expected_state:"commitment",native_state:"commerce_commitment",owner_query:8},{predicate:"payment",expected_state:"payment",native_state:"payment",owner_query:9},{predicate:"payment",expected_state:"settled",native_state:"settlement",owner_query:10},{predicate:"fulfilment",expected_state:"fulfilment",native_state:"fulfilment",owner_query:11},{predicate:"delivery",expected_state:"delivery",native_state:"delivery",owner_query:12},{predicate:"satisfaction",expected_state:"satisfaction",native_state:"satisfaction",owner_query:13},{predicate:"ownership",expected_state:"ownership",native_state:"ownership",owner_query:14},
+	]},
+]

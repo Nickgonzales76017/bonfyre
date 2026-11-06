@@ -1,0 +1,4 @@
+{"provider_id":"turso","readiness_status":"ready","status_code":200,"error":null}
+{"provider_id":"upstash_account","readiness_status":"api_error","status_code":401,"error":"token contains an invalid number of segments\n"}
+{"provider_id":"upstash_redis_rest","readiness_status":"missing_optional","status_code":0,"error":"missing_optional"}
+{"provider_id":"qstash","readiness_status":"missing_optional","status_code":0,"error":"missing_optional"}

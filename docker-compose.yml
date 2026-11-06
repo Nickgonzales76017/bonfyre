@@ -54,6 +54,51 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  # Matrix-backed host/path resolver. TLS and public host routing remain at the
+  # deployment Nginx edge; this native service owns no certificates or policy.
+  web-address:
+    build: .
+    container_name: bonfyre-web-address
+    command:
+      - sh
+      - -c
+      - bonfyre-web-address bootstrap-owned --db /data/matrix.db && exec bonfyre-web-address serve --port 8787 --workers ${BONFYRE_WEB_ADDRESS_WORKERS:-4} --db /data/matrix.db --site-root /opt/bonfyre/site
+    ports:
+      - "127.0.0.1:${BONFYRE_ADDRESS_PORT:-8787}:8787"
+    volumes:
+      - bonfyre-data:/data
+    environment:
+      BONFYRE_SITE_ROOT: /opt/bonfyre/site
+      BONFYRE_WEB_ADDRESS_WORKERS: "${BONFYRE_WEB_ADDRESS_WORKERS:-4}"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8787/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  # Public external source-estate explorer. It binds only loopback; Nginx owns
+  # the public path. Search is local and read-only; an explicit probe is HEAD
+  # only and does not create provider/effect state.
+  external-estate:
+    build: .
+    container_name: aurekai-external-estate
+    command: ["node", "/opt/bonfyre/Aurekai/src/external-estate-server.mjs"]
+    ports:
+      - "127.0.0.1:${AUREKAI_EXTERNAL_ESTATE_PORT:-8792}:8792"
+    environment:
+      AUREKAI_REPO_ROOT: /opt/bonfyre
+      AUREKAI_EXTERNAL_ESTATE_PORT: "8792"
+      AUREKAI_EXTERNAL_ESTATE_BASE_PATH: /external-estate
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8792/external-estate/healthz"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
 volumes:
   bonfyre-data:
     driver: local

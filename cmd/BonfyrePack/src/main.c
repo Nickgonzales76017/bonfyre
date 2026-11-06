@@ -7,6 +7,8 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <bonfyre.h>
+#include "../../../lib/libbonfyre/include/bf_help.h"
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 
 extern char **environ;
 
@@ -195,20 +197,33 @@ static int command_assemble_archive(const char *input_tar, const char *output_di
     return result;
 }
 
-int main(int argc, char **argv) {
-    if (argc == 5 && strcmp(argv[1], "assemble") == 0) {
-        return command_assemble(argv[2], argv[3], argv[4]);
-    }
-    if (argc == 5 && strcmp(argv[1], "archive") == 0) {
-        return command_archive(argv[2], argv[3], argv[4]);
-    }
-    if (argc == 4 && strcmp(argv[1], "assemble-archive") == 0) {
-        return command_assemble_archive(argv[2], argv[3]);
-    }
+static void usage(void) {
     fprintf(stderr,
             "Usage:\n"
             "  bonfyre-pack assemble <proof-dir> <offer-dir> <output-dir>\n"
             "  bonfyre-pack assemble-archive <input.tar.gz> <output-dir>\n"
             "  bonfyre-pack archive  <proof-dir> <offer-dir> <output.tar.gz>\n");
+}
+
+int main(int argc, char **argv) {
+    if (bf_help_requested(argc, argv)) { usage(); return 0; }
+    enum { PK_ARCHIVE, PK_ASSEMBLE, PK_ASSEMBLE_ARCHIVE };
+    static const BfCommandEntry pack_commands[] = {
+        {"archive", PK_ARCHIVE, 0, NULL},
+        {"assemble", PK_ASSEMBLE, 0, NULL},
+        {"assemble-archive", PK_ASSEMBLE_ARCHIVE, 0, NULL},
+    };
+    const BfCommandEntry *command = argc < 2 ? NULL : bf_command_lookup(pack_commands,
+        sizeof(pack_commands) / sizeof(pack_commands[0]), argv[1]);
+    if (argc == 5 && command && command->id == PK_ASSEMBLE) {
+        return command_assemble(argv[2], argv[3], argv[4]);
+    }
+    if (argc == 5 && command && command->id == PK_ARCHIVE) {
+        return command_archive(argv[2], argv[3], argv[4]);
+    }
+    if (argc == 4 && command && command->id == PK_ASSEMBLE_ARCHIVE) {
+        return command_assemble_archive(argv[2], argv[3]);
+    }
+    usage();
     return 1;
 }

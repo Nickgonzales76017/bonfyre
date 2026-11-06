@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include "bf_lex.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,35 +55,18 @@ static char *read_file(const char *path, long *size_out) {
 }
 
 static int extract_string_value(const char *json, const char *key, char *buffer, size_t size) {
-    char needle[256];
-    snprintf(needle, sizeof(needle), "\"%s\"", key);
-    const char *pos = strstr(json, needle);
-    if (!pos) return 0;
-    pos = strchr(pos + strlen(needle), ':');
-    if (!pos) return 0;
-    pos++;
-    while (*pos && isspace((unsigned char)*pos)) pos++;
-    if (*pos != '"') return 0;
-    pos++;
-    const char *end = strchr(pos, '"');
-    if (!end) return 0;
-    size_t len = (size_t)(end - pos);
-    if (len >= size) len = size - 1;
-    memcpy(buffer, pos, len);
-    buffer[len] = '\0';
-    return 1;
+    /* Delegates to the one implementation. This copy stopped at the first
+     * quote, and truncated silently on overflow rather than reporting that the
+     * value did not fit -- a prefix returned as if it were whole. */
+    return bf_lex_json_string(json, key, buffer, size);
 }
 
 static int extract_int_value(const char *json, const char *key, int *value) {
-    char needle[256];
-    snprintf(needle, sizeof(needle), "\"%s\"", key);
-    const char *pos = strstr(json, needle);
-    if (!pos) return 0;
-    pos = strchr(pos + strlen(needle), ':');
-    if (!pos) return 0;
-    pos++;
-    while (*pos && isspace((unsigned char)*pos)) pos++;
-    *value = atoi(pos);
+    /* Delegates to the one implementation, which refuses a string where a
+     * number was asked for instead of running atoi over a quote. */
+    char scalar[64];
+    if (!bf_lex_json_scalar(json, key, scalar, sizeof(scalar))) return 0;
+    *value = atoi(scalar);
     return 1;
 }
 

@@ -1,0 +1,37 @@
+{
+  "operator": "COMPARE",
+  "program": {
+    "program_id": "household.compare.12f81de801508e94",
+    "operator": "COMPARE",
+    "digest": "4b8ff4cc26ca1c40576cd7124f6ba906fb568ff10bd399c3794eda07349cd4c4",
+    "reads": [
+      "household:housing:listing:milo-a",
+      "household:housing:listing:milo-a1"
+    ],
+    "admitted": true,
+    "hard_failures": []
+  },
+  "left": "household:housing:listing:milo-a",
+  "right": "household:housing:listing:milo-a1",
+  "same_kind": true,
+  "equal_fields": [
+    "availability_status",
+    "evidence_ref",
+    "property_id",
+    "source_refs"
+  ],
+  "different_fields": [
+    "advertised_base_rent_monthly_usd",
+    "listing_id",
+    "unit_identity"
+  ],
+  "numeric_deltas": [
+    {
+      "field": "advertised_base_rent_monthly_usd",
+      "left": 925,
+      "right": 975.5,
+      "right_minus_left": 50.5
+    }
+  ]
+}
+exit 0

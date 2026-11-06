@@ -11,30 +11,58 @@ architecture money-graph
   semantic_question What money flows here -- funds, pays, owes, grants, subsidizes, costs, earns?
   purpose Causal economic relationships between actors and institutions. Distinct from the ledger, which records; this models the flow.
   maturity implemented
-  source_path components/BonfyreControlPlane/economic_graphs.py
-  witness components/BonfyreControlPlane/tests/test_economic_graphs.py
+  source_path components/BonfyreControlPlane/economic_graphs.py.archive
+  witness components/BonfyreControlPlane/tests/test_economic_graphs.py.archive
   node_types Party
   edge_types funds
   edge_types owes
   forbidden_inference projected value -> realized money
   source_lineage run6/run7 economic estate
   known_gap ERPNext accounting is the intended projection target
-
+  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
 architecture commitment-graph
   canonical_name CommitmentGraph
   family economic
   domain Economic / Commitment
   layer economic
-  semantic_question Who committed what resource to whom, under what conditions, until when?
-  purpose Resource commitments -- purchase orders, SLAs, equipment reservations, grants, human assignments -- each domain-distinct, with authority and expiry.
-  maturity implemented
-  source_path components/BonfyreControlPlane/economic_graphs.py
-  witness components/BonfyreControlPlane/tests/test_economic_graphs.py
+  semantic_question Who committed what resource to whom, under what conditions, until when -- and what is still owed after the exchange ended?
+  purpose Resource commitments -- purchase orders, SLAs, equipment reservations, grants, human assignments -- each domain-distinct, with authority and expiry. It holds obligation as state rather than as an outcome, so a broken promise remains a fact about a counterparty instead of an error that was handled.
+  maturity measured
+  source_path engine/core/src/commitment.c
+  source_path engine/core/include/bf_commitment.h
+  source_path schemas/control/commitment.yaff
+  source_path schemas/control/commitment.cue
+  source_path components/BonfyreControlPlane/commitment_graph.py.archive
+  source_path components/BonfyreControlPlane/native/commitment_cli.c
+  source_path components/BonfyreControlPlane/commitment-graph.mjs
+  source_path components/BonfyreControlPlane/economic_graphs.py.archive
+  witness components/BonfyreControlPlane/tests/commitment-graph.test.mjs drives the native C owner and proves four forbidden inferences by falsifying them: delegation leaves two obligations, violation remains outstanding and can discharge late with its history intact, compensation requires a prior breach, and expiry lists violable work without changing state (17 tests, 37 assertions)
+  witness engine/core/tests/commitment_test.c exercises the same SQLite relations through the native owner: an open promise is not delivered, expiry only nominates it as violable, delegation leaves two live obligations, compensation refuses an unbroken promise, terminality holds, and the four-event history remains append-only
+  witness components/BonfyreControlPlane/tests/test_economic_graphs.py.archive
   node_types ResourceCommitment
+  node_types CommitmentEvent
   edge_types commits
+  edge_types delegates
+  state_types open
+  state_types discharged
+  state_types delegated
+  state_types violated
+  state_types compensated
+  internal_calculus state is a projection of an append-only event log rather than a column; a status that is updated in place cannot answer whether an obligation was ever violated, which is the question compensation exists to keep askable
+  internal_calculus the transition table is closed and terminal states accept nothing further, so a recorded breach cannot be walked back by re-marking the row
+  invariant delegation does not release the original obligor; two obligations exist afterwards and the first stays live, because the beneficiary was promised by the original party and never agreed to be handed to another
+  invariant violation is not an ending: a violated commitment remains outstanding and can still be discharged late, and the violation stays in the history when it is
+  invariant compensation is reachable only from violation; compensating an unbroken obligation would record a remedy for nothing and let a caller manufacture the appearance of a handled failure
+  invariant every commitment carries the enactment that created it, so an obligation is traceable to the exchange that made it rather than standing free
   forbidden_inference a commitment -> the resource delivered
+  forbidden_inference a delegation -> the original obligor being released
+  forbidden_inference a compensation -> the violation not having happened
+  forbidden_inference an expiry passing -> a violation (someone with standing must observe and record it; a clock deciding that a person broke a promise is the inference this refuses)
+  forbidden_inference a settled commitment -> a reliable counterparty (discharged and compensated are both settled and only one of them was kept)
   source_lineage run6/run7 economic estate
-  known_gap AuthorityGraph + ResourceActivation are the nearest real shapes
+  known_gap native C owns the state machine and shared SQLite relations; ProtocolContract and ObligationWork now bind it through the C CLI while in-process native callers use bf_commitment_* directly. The archived Python reference is no longer an active enactment path
+  known_gap authority on a commitment is a recorded string rather than a checked AuthorityGraph edge, so who was entitled to delegate is not yet enforced here
+  known_gap ResourceActivation is still the nearest real shape for turning a discharged commitment into an activated resource
 
 architecture recursive-value-graph
   canonical_name RecursiveValueGraph
@@ -44,14 +72,14 @@ architecture recursive-value-graph
   semantic_question What does this unlock, prefill, strengthen, or make reachable -- without converting to cash?
   purpose Vector-valued causal value: unlocks, prefills, increases-eligibility, strengthens-evidence, decreases-cost/time, creates capacity/distribution/relationship/learning options. No implicit conversion to money.
   maturity implemented
-  source_path components/BonfyreControlPlane/economic_graphs.py
-  witness components/BonfyreControlPlane/tests/test_economic_graphs.py
+  source_path components/BonfyreControlPlane/economic_graphs.py.archive
+  witness components/BonfyreControlPlane/tests/test_economic_graphs.py.archive
   node_types ValueEdge
   edge_types unlocks_value
   forbidden_inference a value edge -> a cash amount
   source_lineage run6/run7 economic estate
   known_gap UnlockGraph is the causal-reachability cousin already real
-
+  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
 architecture institutional-cost-graph
   canonical_name InstitutionalCostGraph
   family economic
@@ -60,13 +88,13 @@ architecture institutional-cost-graph
   semantic_question What does this mission actually cost across compute, model, storage, provider, human, facility?
   purpose Recursive cost allocation of a mission across every resource it consumes, ultimately projecting legitimate costs into ERPNext.
   maturity implemented
-  source_path components/BonfyreControlPlane/economic_graphs.py
-  witness components/BonfyreControlPlane/tests/test_economic_graphs.py
+  source_path components/BonfyreControlPlane/economic_graphs.py.archive
+  witness components/BonfyreControlPlane/tests/test_economic_graphs.py.archive
   node_types CostEnvelope
   edge_types allocates
   forbidden_inference a projected cost -> a booked accounting entry
   source_lineage run6/run7 economic estate
-
+  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
 architecture resource-metabolism
   canonical_name ResourceMetabolism
   family economic
@@ -75,8 +103,8 @@ architecture resource-metabolism
   semantic_question When does physical maintenance still return more capacity than its scan, proof, and deletion cost?
   purpose Marginal-yield accounting for ExtremeGC: content-address reclaim inventory, compare expected and observed capacity yield, and exponentially cool unchanged exhausted inventory while preserving an emergency-floor override.
   maturity implemented
-  source_path components/BonfyreControlPlane/resource_metabolism.py
-  witness components/BonfyreControlPlane/tests/test_resource_metabolism.py
+  source_path components/BonfyreControlPlane/resource_metabolism.py.archive
+  witness components/BonfyreControlPlane/tests/test_resource_metabolism.py.archive
   node_types ReclaimInventory
   node_types YieldEnvelope
   edge_types cools_maintenance
@@ -85,3 +113,483 @@ architecture resource-metabolism
   invariant an inventory fingerprint excludes observation-time and free-space noise
   forbidden_inference cached low yield -> the physical estate cannot have changed
   source_lineage Run8 ExtremeGC operational metabolism
+  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
+architecture financial-metabolism
+  canonical_name FinancialMetabolism
+  family economic
+  domain Economic / Financial Metabolism
+  layer economic/finance
+  semantic_question How does observed usage become accrued economics, funding selection and basis-explicit position without becoming booked truth?
+  purpose Extends MoneyGraph and InstitutionalCostGraph with receipt-bound multi-dimensional UsageOccurrence, versioned EconomicMeasure, traversable CostAllocation, FundingCircuit, FinancialPosition, DerivationEconomics and ChangeEconomics while preserving accrued, estimated, billed, paid, booked and credit bases.
+  maturity implemented
+  owns UsageOccurrence
+  owns FundingCircuit
+  owns FinancialPosition
+  owns DerivationEconomics
+  owns ChangeEconomics
+  owns EconomicMeasure
+  owns CostAllocation
+  owns FinancialEvent
+  consumes PhysicalDerivationReceipt
+  consumes CommercialAgreement
+  publishes FinancialPosition
+  node_types UsageOccurrence
+  node_types FundingRoute
+  node_types FinancialPosition
+  node_types FinancialEvent
+  edge_types valued_by
+  edge_types funded_by
+  edge_types projects_position
+  edge_types allocates
+  invariant usage requires a physical receipt and admitted rate source before cost accrues
+  invariant funding availability never supplies spend authority
+  invariant unknown provider price remains an explicit unknown EconomicMeasure, never zero or billed money
+  invariant provider, technical account, billing account and agreement are separate usage coordinates
+  invariant priced EconomicMeasure binds evidenced effective_at and observed_at price coordinates; a later FinancialEvent never rewrites the estimate
+  invariant carrier usage binds a stable physical attempt and realization; exact replay is idempotent while a changed attempt payload is refused, except source-backed absent-to-present model/route enrichment
+  invariant aggregate Codex usage preserves terminal model/route coordinates only when declared by the terminal event or explicit launcher manifest; an implicit CLI default remains unknown
+  invariant a v2 terminal epoch receipt retains verified carrier command metadata and optional provider/model/route coordinates after compaction; a v5 hash-only manifest leaves missing coordinates unknown
+  invariant CostAllocation names an allocation version; shared or cached realization never becomes a cash-saving claim merely by attribution
+  invariant known provider pricing matches the pricing evidence bound to the usage attempt; absent pricing evidence remains unknown
+  invariant fractional allocations for one measure and allocation version cannot exceed one; unknown fractions remain null
+  forbidden_inference accrued cost -> billed, paid, or booked money
+  internal_calculus a price enters the store only as an admitted rate carrying a provider, a unit, an amount, the date it took effect and the evidence that admitted it; usage the estate has no such rate for is metered and left unpriced
+  internal_calculus an event carries the time the usage happened rather than the time it was written, so a rate admitted today never reaches back to price work done before it took effect
+  internal_calculus accrual is reported per unit and never summed across them: a provider billing in credits and one billing in dollars do not add to an amount owed in either
+  source_path cmd/BonfyreMeter/src/main.c
+  source_path scripts/publish_economics.py.archive
+  source_path scripts/publish_economics.mjs
+  source_path scripts/tests/publish_economics_test.sh
+  source_path cmd/BonfyreMeter/tests/physical_attempt_test.sh
+  witness 2026-09-19 the estate's first metered store: 420 Exa queries and 22 Firecrawl scrapes recorded at the times they happened, accruing 2.9400 USD and 22 FIRECRAWL_CREDIT against two rates admitted from the providers' own statements -- Exa's HTTP 402 naming 0.007 per search, Firecrawl's credit-usage endpoint reporting 979 of 1000 remaining
+  witness 2026-09-19 what the membrane shows is published at /economics on every territory the worker serves and under each subject host running programs, wearing the estate's own stylesheet and carrying the accrual boundary in the page and in a bonfyre:cannot-infer meta
+  witness cmd/BonfyreMeter/tests/physical_attempt_test.sh proves that a receipt, physical-attempt identity, realization and occurrence time are mandatory for new usage, exact replay retains one event, and a changed payload under the same attempt is refused
+  witness 2026-09-24 the retained full-estate meter has 461 receipt-bearing observations (443 priced at evidenced rates, 18 unpriced Cloudflare R2 syncs); its legacy rows retain no fabricated physical-attempt or realization coordinates and the public projection exposes that coverage explicitly
+  witness 2026-09-29 scripts/tests/publish_economics_test.sh with BONFYRE_VERIFY_LEGACY=1 proves the Bun estate and subject-host pages reproduce the historical Python HTML byte-for-byte over priced and unpriced events, daily observations, receipts and program requirements
+  known_gap what stood in BonfyreMeter priced usage by the first letter of the op string -- five cents for anything beginning with O, ten for D -- and returned zero for everything else, so every unpriced op was reported as free; the invented table is gone and the rows it wrote carry no rate reference, which is how they can be told from evidenced ones
+  known_gap only two providers have an admitted rate; Cloudflare, R2, Supabase and this machine's own compute are unmetered, so the accrued figure is a floor under what the estate's reading costs and not its cost
+  known_gap nothing yet allocates accrued use to a funding work package, so a program's cost codes stay empty and no cost can be attributed to any funding stream
+  known_gap historical receipt-bearing events predate the stable physical-attempt and realization columns; they remain visible as legacy recorded usage but cannot prove the newer idempotency identity retroactively
+  forbidden_inference avoided usage -> cash savings
+  forbidden_inference identical resource dimensions -> one physical attempt
+  interacts physical-derivation-feeds-finance
+  interacts terminal-epoch-receipt-feeds-finance
+  source_path components/BonfyreControlPlane/financial_metabolism.py.archive
+  source_path components/BonfyreControlPlane/economic_graphs.py.archive
+  witness components/BonfyreControlPlane/tests/test_financial_metabolism.py.archive
+  witness components/BonfyreControlPlane/tests/test_economic_graphs.py.archive
+  witness components/BonfyreControlPlane/tests/test_financial_metabolism.py.archive
+  source_lineage V8.1 Financial Metabolism candidate selectively reconstructed over current economic owners
+  source_path cmd/BonfyreMeter/src/meter_context.h
+  invariant a context-handoff comparison reaches EconomicMeasure only as two provisional per-run valuations at admitted rates in effect at each attempt, with cache reads, cache writes and uncached input kept as separate price classes; a run with any unrated dimension stays unknown
+  forbidden_inference a negative context-compare valuation delta -> a cash saving, a booked reduction or a CostAllocation; it is avoided provisional usage between two declared runs
+  known_gap no per-token rate is admitted in the live meter store (0 rates, 2026-10-30), so every context comparison over real runs values as unknown; admitting a rate needs the provider's own evidenced statement
+
+architecture food-combination-graph
+  canonical_name FoodCombinationGraph
+  family economic
+  domain Economic / Household Food Combination
+  layer economic/food
+  semantic_question Which source-bound food offers can be lawfully composed into exact cash, delayed-rebate, points, fulfillment, recipe-lead and travel-aware strategy dimensions?
+  purpose Normalizes observed food offers and performs bounded native exact composition. It permits promotion composition only on explicit source-provided stack pairs; it projects recipe lexical leads without promoting them to substitution, availability, nutrition, or complete-basket facts. Its fulfillment route layer exhaustively binds cash-valued components to source-stated modes and order minima, with observed origins furnishing only geodesic travel lower bounds.
+  maturity implemented
+  owns FoodOfferObservation
+  owns PromotionEffect
+  owns QuantityPromotion
+  owns FoodCombinationProjection
+  owns RecipeReviewLead
+  owns RecipeIngredientCoverage
+  owns FulfillmentPlan
+  consumes FinancialPosition
+  consumes HouseholdRecipeObservation
+  publishes FoodCombinationProjection
+  node_types ObservedFoodOffer
+  node_types PromotionEffect
+  node_types QuantityPromotion
+  node_types RecipeReviewLead
+  node_types RecipeIngredientCoverage
+  node_types FulfillmentPlan
+  node_types RouteOrigin
+  edge_types explicitly_stacks_with
+  edge_types lexical_review_lead
+  edge_types source_name_and_quantity_covers
+  edge_types has_cash_basis
+  edge_types fulfilled_by
+  edge_types bound_to_origin
+  invariant promotions combine only through source-declared compatible pairs
+  invariant quantity promotions preserve qualifying/free identities, quantities, expiry, and stackability without allocating an unstated per-item cash value
+  invariant bounded scalar basket replay refreshes every parsed offer and quantity law while limiting only two-/three-offer scalar candidates by an explicit deterministic cap
+  invariant cash paid, delayed rebate and points remain separately basis-labelled
+  invariant restaurant channel marks prepared-food observations without promoting them to complete meals or local availability
+  invariant incomplete recipe coverage remains a review lead, never a meal total
+  invariant recipe ingredient coverage requires a source-contained normalized name and explicit compatible package unit; leftover arithmetic never asserts waste
+  invariant a basket that misses a source-stated fulfillment minimum has no plan in that mode
+  invariant an unresolved fulfillment leg never supplies an exact cash total or zero travel
+  forbidden_inference advertised price -> effective economic cost
+  forbidden_inference recipe lexical match -> substitution or complete meal
+  forbidden_inference points or rebate -> cash paid
+  forbidden_inference quantity-promotion group total -> per-item cash value or checkout quote
+  forbidden_inference bounded scalar replay frontier -> exhaustive strategy ranking, offer ineligibility, or inferior economics
+  forbidden_inference geodesic travel lower bound -> road distance, drive time, or fuel cost
+  source_path tools/food_offer_observations.py.archive
+  source_path components/BonfyreControlPlane/food_combination_engine.py.archive
+  source_path components/BonfyreControlPlane/food_fulfillment_route.py.archive
+  source_path .bonfyre/run8-r2c/20260823T032652Z-27525/household/food/current-offers.jsonl
+  witness components/BonfyreControlPlane/tests/test_food_offer_observations.py.archive
+  witness components/BonfyreControlPlane/tests/test_food_combination_engine.py.archive
+  witness components/BonfyreControlPlane/tests/test_food_fulfillment_route.py.archive
+  witness .bonfyre/run8-r2c/20260823T032652Z-27525/household/food/basket-options.json
+  witness .bonfyre/run8-r2c/20260823T032652Z-27525/household/food/fulfillment-route-options.json
+  source_lineage Run8 food-combination-engine real-work observation and FFTS corpus reuse
+
+architecture close-consequence
+  canonical_name CloseConsequence
+  family economic
+  domain Economic
+  maturity measured
+  semantic_question What would change if this reconciliation were applied, and what does the system of record actually say is outstanding?
+  # A consequential financial write should be evaluable before it is authorised.
+  # "If we allocate this payment, which obligations close and what moves" has an
+  # exact answer needing no effect at all, so it is computed on the pure tier and
+  # nothing here writes anything. The engine produces a consequence; applying it
+  # is a separate act behind an authority the engine does not hold.
+  node_types ReconciliationObligation
+  node_types PaymentAllocation
+  node_types Consequence
+  edge_types reconciles
+  edge_types allocated_from
+  state_types open
+  state_types reconciled
+  state_types unevaluable
+  invariant the engine computes consequences and never applies them; no write occurs on this path and the receipt says so
+  invariant an obligation the estate cannot resolve is reported unevaluable and never counted as closable; treating an unknown amount as closable is how a close report overstates what was reconciled
+  invariant over-allocation and under-allocation are carried per obligation and reported beside the net; a single net figure hides that money is missing in both directions
+  invariant a reconciliation formula is validated against the population before it is believed; summing the gross fee overstated one payment fifty-fold, and only the allocated portion reconciles
+  invariant financial closure is money work, so it runs on the exact representation and where the data already lives, whatever loss budget is offered
+  forbidden_inference a computed consequence -> an approval
+  forbidden_inference a closable obligation -> a closed one
+  forbidden_inference an amount observed in the mirror -> the amount the source holds
+  computational_form derivation
+  native_format json
+  invariant the receipt says whether the system of record was reached, because an empty answer from a database that replied and an empty answer from one that refused the connection were the same dict; every obligation then read "the system of record returned no row for it" while the client had never connected
+  invariant a failed query is not an empty result; the client's exit status is checked and its error carried, and only the error line, which names the host and the failure and no credential
+  invariant no direction is claimed while the source is unreachable, and the suite asserts that absence rather than demanding a distinction the run could not compute
+  forbidden_inference an unreachable system of record -> an obligation that cannot reconcile
+  source_path scripts/product_close_consequence.mjs
+  source_path scripts/product_close_consequence.py.archive
+  source_path packs/upper90/product-contract-ai-loss.yaff
+  witness cmd/BonfyreWebAddress/tests/close_consequence_test.sh
+  witness scripts/tests/product_close_consequence.test.mjs
+  invariant the active consequence reader uses read-only SQLite and a read-only MySQL query; failed source access stays unevaluable and no credential value is emitted in the receipt
+  measured AmountLeft = PayAmt - SUM(PaySpltAIAmt WHERE Active=1) reconciles 5917 of 9982 payments to exactly zero with $0.01 residual across all of them, which is what validates it
+  measured the 101 tracked obligations are all unreconciled: 86 under-allocated and 15 over-allocated, net $325,790.01 outstanding
+  measured across the whole payment population 3804 payments are under-allocated by $148,971,278.17 and 246 over-allocated by $326,832.81, so the tracked obligations cover 2.5% of the unreconciled set
+  known_gap the mirror held financial events for 61 of 101 obligations while the source answers for all 101; the oracle store is a partial copy and its gaps read as unevaluable rather than as absent facts
+  invariant the machinery is given a namespace, discovers the pack that namespace declares, and reads the reconciliation law that pack states; it holds no product's tables, columns, identifier prefix or schema string
+  invariant a product is added by writing a pack and a namespace entry, never by adding another compiled code path; the first version carried one product's grammar in its filename, its SQL, its defaults and its schema version
+  invariant a table or column arriving from a declaration is checked against a plain identifier shape before it reaches a query; a contract is content, and content must not be able to write SQL
+  forbidden_inference a law read from a contract -> a law anyone validated (the pack records its own witness for that)
+  known_gap the $148.9M under-allocated figure is a reconciliation position and not a claim about owed money; a payment received and not yet allocated is unreconciled without anything being wrong
+
+architecture funding-closure
+  canonical_name FundingClosure
+  family economic
+  domain Economic
+  maturity measured
+  semantic_question What prevents every plausible funding path from closing, and which of those obstacles is actually about money?
+  # The wrong question is who will fund this, and the wrong answer is DECLINED. A
+  # decline collapses a dozen separable conditions into one word, and they are not
+  # the same kind of problem: one is cheaply resolvable, one needs a partner, one
+  # needs time, and only some need capital. Keeping them apart is what makes the
+  # remainder actionable rather than a number to raise.
+  node_types FundingRequirement
+  node_types FundingResidual
+  node_types InstitutionalCapacity
+  edge_types satisfies
+  edge_types resolvable_by
+  state_types SATISFIED
+  state_types MISSING
+  state_types UNKNOWN
+  invariant the output is a classified remainder and never a verdict; each unmet condition carries the class of thing that would resolve it and the reason it is unmet
+  invariant only one residual class is answered with money; collapsing the classes makes every shortfall look like a financing problem when most of them are evidence, partner or time
+  invariant capacity is scoped to the institution that holds it; capital observed for one institution is not available to another, and a ceiling summed across institutions reports capacity that cannot be drawn
+  invariant demand is counted at every publication status and the states are reported apart; filtering to published reported zero demand beside a ceiling that had counted it, and an expression of interest is not a commitment
+  invariant an external capital market that has not been asked is unmeasured and contributes no amount, and it names the rung it stopped at; the same ladder as every other market in this estate
+  forbidden_inference a satisfied requirement -> funding
+  forbidden_inference a residual -> a loan that must be raised
+  forbidden_inference an unmeasured market -> an absent one
+  forbidden_inference declared demand -> committed demand
+  computational_form derivation
+  native_format json
+  source_path scripts/funding-closure.mjs
+  source_path scripts/funding-residuals.cue
+  source_path scripts/funding_closure.py.archive
+  source_path components/BonfyreProject/tools/grant-closure.sh
+  source_path components/BonfyreProject/tools/economic-reports.mjs
+  witness components/BonfyreProject/tests/economic_reports.test.mjs runs the grant diagnostic shell without Python, preserves historical counters and explicitly labels their tag-presence, file-presence and declared-depth basis; malformed and oversized evidence cannot replace the prior report
+  known_gap the retained-grant diagnostic is not the verified funding-closure owner: attestation presence verifies no signature, generic evidence verifies no grant-specific sufficiency, and absent listed residuals establish neither eligibility nor freshness
+  witness scripts/tests/funding-closure.test.mjs proves institution-scoped demand includes drafts without cross-institution capital transfer and untried capital routes remain unmeasured; one-time complete receipt comparison against the former Python owner passed except timestamp
+  witness cmd/BonfyreWebAddress/tests/funding_closure_test.sh
+  measured institution:nightgrid declares $6,063.00 of demand across 65 requests, all drafted and none committed; of 8 requirements 3 are satisfied and the remaining 5 classify as 1 capital, 2 evidence, 1 partner and 1 market
+  known_gap TemporalCeiling is unmeasured because no requirement carries an observed_at, so nothing can be said about whether its evidence is still fresh enough to rely on
+  known_gap no provider_route declares a capital capability, so the external capital market has never been named or asked; measuring it is the same trial machinery the retrieval market already uses
+  known_gap a source this entry named could not be opened from this checkout -- /var/lib/bonfyre/cms/content-types/funding_requirement.json. The line is removed rather than repointed to something that merely looks similar, and what remains listed is the evidence this architecture actually stands on.
+architecture funding-frontier
+  canonical_name FundingFrontier
+  family economic
+  domain Economic
+  maturity measured
+  semantic_question Which combinations of capital routes would close, and what single condition is the most capital waiting on?
+  # Routes are not alternatives to pick between. One form of capital routinely
+  # satisfies the condition that unlocks a much larger one, so a grant and a
+  # landlord contribution closing an equity condition can make a bank facility
+  # executable -- three small closures unlocking a rail an order of magnitude
+  # bigger. A list of lenders cannot express that; a combination search over
+  # routes and the conditions they satisfy can.
+  #
+  # The search is pure: no capital moves, nothing is applied for, and no route is
+  # contacted, so it runs on the pure tier under the same admission as any money
+  # work.
+  node_types FundingRoute
+  node_types FundingWorld
+  node_types ClosureHypothesis
+  edge_types requires
+  edge_types satisfies
+  edge_types unlocks
+  state_types EVIDENCED
+  state_types UNKNOWN
+  state_types BLOCKED
+  invariant a route carries both what it requires and what it satisfies, and closure is computed to a fixed point because one route unlocking another can unlock a third
+  invariant EVIDENCED, UNKNOWN and BLOCKED are kept apart and never collapsed; reporting unknown capacity as zero understates the frontier and sends a planner looking for money it may already reach, and reporting it as capacity is worse
+  invariant a closure hypothesis is a recomputation of the whole world set with the condition treated as met, never an estimate of what it might unlock
+  invariant satisfying a condition never removes a reachable world, and a run where it does is a bug in the closure rather than a finding
+  invariant the frontier is computed and never acted on; no route is contacted and no application is made
+  forbidden_inference a closing combination -> funding
+  forbidden_inference an unblocked route -> an offer
+  forbidden_inference UNKNOWN capacity -> zero capacity
+  forbidden_inference an evidenced ceiling -> money that can be drawn today
+  computational_form derivation
+  native_format json
+  source_path scripts/funding-frontier.mjs
+  source_path scripts/funding_frontier.py.archive
+  witness scripts/tests/funding-frontier.test.mjs proves bitset combination closure preserves route-unlocking, unknown capacity and pure effect boundaries; one-time complete receipt comparison against the former Python owner passed except timestamp
+  witness cmd/BonfyreWebAddress/tests/funding_frontier_test.sh
+  measured 6 declared routes over institution:nightgrid produce 63 combinations of which 1 has no blocked route; revenue-history blocks a route in 96 of them, and the three backends of the pure tier agree that exactly 1 world survives
+  measured the capital condition unlocks nothing on its own: cash-position and external-capital-route each gain zero worlds, while two cheaply-resolvable evidence conditions and one partner condition each gain two
+  invariant an evidence artifact is priced against every route that requires it, not against one; a revenue history is one artifact three routes each need, and costing it against a single route understates it by however many others were waiting
+  measured revenue-history is required by 3 of 6 declared routes and approved-demand by 2, so the two cheapest conditions to resolve are also the most reused
+  known_gap five of six routes carry UNKNOWN capacity because no capital provider has been asked; measuring them is the same trial machinery the retrieval market already uses, and until then the evidenced ceiling is the only figure that means anything
+  known_gap a source this entry named could not be opened from this checkout -- /var/lib/bonfyre/cms/content-types/funding_route.json. The line is removed rather than repointed to something that merely looks similar, and what remains listed is the evidence this architecture actually stands on.
+
+architecture funding-prospect-frontier
+  canonical_name FundingProspectFrontier
+  family economic
+  domain Economic / Funding discovery
+  maturity measured
+  semantic_question Which publicly observable funding opportunities are currently adjacent to programmes the estate is actually running, and what does each observation still not establish?
+  purpose A read-only projection over the published ProgrammeFabric funding work packages and public Grants.gov Applicant API results. It makes the estate's real programmes discoverable to a funder or partner without calling a prospect an eligible application, an award, available money, or spend authority.
+  consumes ProgramFabric
+  consumes ForeignObservation
+  publishes FundingProspectFrontier
+  internal_calculus Every published ProgramInstance contributes only its published FundingWorkPackages. Each distinct declared rail is translated to public-catalogue search vocabulary, observed through the no-auth Grants.gov API, bounded to compact opportunity discovery fields, and rendered beside the unmodified programme declaration. The canonical rail remains visible beside its query vocabulary.
+  invariant a declared funding rail is retained separately from the public query vocabulary used to discover it
+  invariant the projection retains provider result count, observation time, endpoint, compact opportunity identity, provider status and response digest; it retains no API response token, applicant payload or submission credential
+  invariant unavailable or empty public search is visible as an observation state and never contributes a zero-dollar or no-funding conclusion
+  invariant public catalogue ordering is not eligibility; bounded lexical ordering only makes exact declared vocabulary results easier to inspect
+  forbidden_inference a funding work package -> eligibility, application, award, available money, authority to submit or authority to spend
+  forbidden_inference a public opportunity -> fit, eligibility, an application, award, available money or authority to submit
+  forbidden_inference a missing or unavailable provider observation -> no funding exists
+  computational_form projection
+  native_format json
+  source_path scripts/bootstrap_funding_frontier.py.archive
+  source_path scripts/bootstrap_funding_frontier.mjs
+  source_path scripts/publish_estate.sh
+  witness scripts/tests/bootstrap-funding-frontier.test.mjs proves the Bun offline compiler retains the ProgrammeFabric declaration and human-line boundary; scripts/tests/bootstrap_funding_observation_test.sh proves bounded live-shaped observations retain a response digest, reorder lexical matches and mark a provider failure unavailable without a funding verdict
+  source_path scripts/tests/bootstrap_funding_observation_test.sh
+  measured 2026-09-25 the full published estate contributed 10 ProgramInstances and 31 separately scoped FundingWorkPackages over 23 declared rails; all 23 were observed through the public Grants.gov Applicant API and yielded a bounded 73-record discovery frontier without any application or payment effect
+  known_gap catalogue vocabulary alone produces generic false-adjacent results for several legacy rail names; opportunity-specific eligibility and programme fit must be observed and compiled before any route is promoted beyond discovery
+architecture capital-transformation-network
+  canonical_name CapitalTransformationNetwork
+  family economic
+  domain Economic
+  maturity measured
+  semantic_question Given what this institution holds, which ordered compositions of capital transformations are structurally permitted, and what does it hold at the end of each?
+  # A financing product list has one row per instrument and a label saying what
+  # the instrument supplies. Three things do not survive that shape: what the
+  # instrument does to the state (a vendor term supplies no cash and moves an
+  # outflow), which instruments cannot be held at once (rights compose; rows do
+  # not), and which orders are permitted (a set has no order to be wrong about).
+  # Writing each route as a transformation over the financial state keeps all
+  # three, and turns the question from which product to which ordered path.
+  node_types CapitalTransformation
+  node_types FinancialState
+  node_types CapitalPath
+  edge_types requires
+  edge_types consumes
+  edge_types provides
+  edge_types conflicts_with
+  state_types admissible
+  state_types refused
+  state_types stranded
+  invariant effects are not monotone, so there is no fixed point to compute; a transformation spends cash, dilutes ownership and consumes collateral-free, and closure algebra over removal would return one arbitrary order and present it as the answer
+  invariant an unknown cash effect poisons the running total rather than contributing zero to it; a path with one unpriced step has an unknown end cash and cannot be said to reach anything
+  invariant opening cash is evidenced internal capacity and nothing else; the requirement-satisfaction ceiling is a different quantity, and read as money it opened a $0 institution $6,063 up against a $6,074 target
+  invariant a pair is mutually exclusive only where each is separately admissible and neither order of the two is; unreachability is not exclusion, and conflating them manufactured twelve collisions out of one missing token
+  invariant reversibility belongs to the path at the position of its first irreversible step, because everything after that point can be unwound and nothing before it can
+  invariant a counterfactual saturated state may be searched, and its findings are reported in their own section and never merged with what the institution can reach
+  forbidden_inference an admissible path -> an available one
+  forbidden_inference an unknown cash effect -> a zero one
+  forbidden_inference a ranked path -> a recommended one; the ranking is a declared preference
+  forbidden_inference structural admissibility -> a counterparty willing to transact
+  forbidden_inference no admissible path containing both -> a conflict between the two
+  computational_form search
+  native_format json
+  source_path scripts/capital_transform.mjs
+  witness scripts/capital_transform.test.mjs
+  witness cmd/BonfyreWebAddress/tests/capital_transform_test.sh
+  measured 11 declared transformations over institution:nightgrid, 1,111 ordered paths at depth 3: 141 admissible, 970 refused, 0 known to reach the declared $6,074 of demand because every capital-bearing step carries an UNKNOWN capacity
+  measured bank-debt is stranded in every path, blocked on external-capital-route -- an unasked market rather than a credit judgement; its two declared rights conflicts are therefore with a route nothing can reach
+  measured the reach report puts a grant three acts and 3.25 months out and equipment-lease two acts and 3 months out, so the binding constraint under this institution is elapsed time to evidence revenue, not selection among instruments
+  measured the survivor predicate over the 141 paths was agreed by four independent reducers -- reference, hvm2, hvm4 and bend -- at 40 paths conceding no right and fully reversible
+  known_gap every capital-bearing transformation carries an UNKNOWN cash delta, so the network answers which compositions are permitted and cannot answer how much any of them would raise
+
+architecture route-arbitrage
+  canonical_name RouteArbitrage
+  family economic
+  domain Economic / Routing
+  layer economic
+  semantic_question For a need this estate can serve from something it reads for nothing, what does the market charge for the same need?
+  purpose The AddressPlane already decides which candidates serve a need. What it never knew is what each one costs. The estate holds 211 metered x402 sources and 2,291 sources it has proven it can read for nothing under a published permission, and both populations answer the same coordinates -- 137 metered sources answer affordance:search and 225 proven-free ones answer it too. A router that does not know this pays for an answer it could have had for free.
+  maturity measured
+  source_path components/BonfyreProject/tools/price-book.sh
+  source_path components/BonfyreProject/tools/route-arbitrage.sh
+  source_path components/BonfyreProject/tools/economic-views.mjs
+  source_path components/BonfyreProject/tests/economic_views_test.mjs
+  invariant the Bun economic projection atomically replaces its report only after successful bounded regular-file reads; route-owner failures remain explicit failed_route_reads rather than disappearing from coverage
+  witness components/BonfyreProject/tests/economic_views_test.mjs invokes both economic shell entrypoints against temporary SQLite and retained bodies without Python or network; quoted prices preserve legacy evidence digests and base-unit scaling, thin markets and rounded-to-zero medians are refused, and mocked native Finance registration is never reported as sale or revenue
+  source_path cmd/BonfyreExternalEstate/src/main.c
+  source_path cmd/BonfyreExternalEstate/tests/route_cost_test.sh
+  consumes CandidateAdvertisement
+  publishes RankedCandidateFrontier
+  internal_calculus the price book is read from bodies the sweep already retained rather than fetched. 211 metered sources were observed, three answered with an HTTP 402 payment envelope and the rest answered 200 because the paid endpoint is a deeper path and what was served was the service describing itself. Those descriptions carry prices; 39 carry a structured price field
+  internal_calculus the spread is registered in BonfyreFinance rather than reported beside it. That owner already models a service as a buy price, a sell price and a source, ranks spreads and reports margin; a second pricing report would be a second vocabulary for one fact
+  internal_calculus what routing avoids is a range and not a number. A router that does not know the prices does not pick the cheapest metered source, it picks one, so the expected avoidance is the mean of the metered options and reporting only the floor understates it by the width of the span
+  invariant a published price wins over a free read of the same origin. Every metered service serves its own description for nothing, so the estate holds a proven free read of the landing page of something it has never paid for; counting that as evidence the service is free removed every priced source from the metered side of the route
+  invariant dollars and base units are never compared. A price field carrying $0.005 is dollars and an amount field carrying 20000 is USDC at six decimals, which is two cents; read as dollars it becomes twenty thousand and a router would refuse a two-cent call as if it cost more than a car
+  invariant a source nobody has read and nobody has priced is unknown, not free, and is never offered as a route
+  cannot_infer a spread -> revenue; nobody was charged, nobody paid, and the sell price is what other services publish rather than a price anyone agreed with this estate
+  cannot_infer cheapest -> best or adequate; whether a free source answers the question as well as a metered one is a judgement no price contains, and the exact verifier still decides
+  cannot_infer a registered service -> a service anyone has asked for
+  cannot_infer a published price -> a contracted rate, or a price that will still hold tomorrow
+  witness cmd/BonfyreExternalEstate/tests/route_cost_test.sh runs on every build and holds the two mistakes that make this dangerous rather than merely wrong: two cents expressed in base units stays two cents, and a priced source whose landing page was read for free stays on the metered side
+  source_path components/BonfyreProject/tools/route-liveness.sh
+  source_path components/BonfyreProject/tools/project-liveness.mjs
+  witness components/BonfyreProject/tests/project_liveness_test.mjs runs the liveness shell with isolated receipts and mocked probes, preserves still-answering versus changed versus unavailable states, reports missing or invalid receipts and failed probes, and atomically emits a bounded deterministic host-balanced sample without live rereads
+  source_path cmd/BonfyreExternalEstate/results/2026-09-13-route-economics.json
+  invariant a spread is registered against a median and never a mean, and never against a market of fewer than four sellers. One source asks 149 dollars where most ask half a cent; the mean reported six dollars of avoidance on a coordinate whose median is five thousandths of one, and on a three-seller coordinate it reported 49 dollars against a 40 cent median
+  internal_calculus per-call arbitrage is not the asset. Routing avoids roughly half a cent in a market deep enough to price, and nothing is built on undercutting half a cent. The asset is the table: 2,344 sources proven readable under a published permission, with digests, across 83 coordinates, and what it is worth is how fresh it is
+  cannot_infer a registered spread -> demand; the estate's demand tables are empty and nobody has asked for anything
+  witness the live estate registers 35 services across 83 coordinates after thin markets are refused, typical spread half a cent per call, with zero jobs logged and zero revenue
+  witness components/BonfyreProject/tools/route-liveness.sh asked 60 routed sources again, one per host: 33 answered with the same digest, 15 answered with new content, 12 did not answer. The table is 80 percent routable and a quarter of its content moved inside a day, which is the number that makes an index worth maintaining rather than worth building once
+  known_gap the liveness measure is a 60-source sample of a 2,344-source table and characterises the sample it drew
+  known_gap 57 metered sources publish a price only as prose, such as a range in marketing copy, and are deliberately not parsed into a quote. 106 publish no price at all. The book covers 39 of 211
+  known_gap nothing has been sold. 74 spreads are registered and BonfyreFinance reports no jobs and no margin, which is the honest state: opportunities ranked, nothing transacted
+
+architecture demand-book
+  canonical_name DemandBook
+  family economic
+  domain Economic / Demand
+  layer economic
+  semantic_question What is the machine-readable internet asking to be given, and which of it does this estate hold?
+  purpose The estate's demand tables were empty and the conclusion drawn was that nobody was asking. What was true is that 3,316 primary URLs had been swept and every one of them returned a landing page -- what a service says about itself to a person. The asking happens somewhere else. A service that wants to be called by an agent publishes openapi.json, /.well-known/x402 or an agent card, and those declare field by field exactly what must be supplied to call it. That is demand: standing, published, machine-readable and free to read.
+  maturity measured
+  source_path components/BonfyreProject/tools/discovery-sweep.sh
+  source_path components/BonfyreProject/tools/demand-match.sh
+  source_path components/BonfyreProject/tools/project-demand.mjs
+  source_path components/BonfyreProject/tests/project_demand_test.mjs
+  witness components/BonfyreProject/tests/project_demand_test.mjs runs the live automation entrypoint against temporary retained declarations and ForeignTwin evidence without Python or network, preserves credential and payment-carrier distinctions, and never equates fillable input with authorization or payment
+  consumes ForeignTwin
+  publishes CapabilityDemand
+  internal_calculus the discovery probe goes through the same observer as any other read, so robots is preflighted per path and a receipt with a digest is written for each. The twin id stays the occurrence's own, because this is another observation of the same thing at a path it publishes for exactly this purpose
+  internal_calculus supply is what this estate can put on the wire and nothing else. A caller-supplied argument is not supply, and a credential is never ours to give -- 16 services ask only for tokens, keys, wallets or signatures and are recorded as unfillable rather than as demand met
+  invariant capability/eligible needs a discriminator or it is a restatement of qualified. Every advertisement carries a lowerer, so having one separated nothing and the rung was refused; a declared input this estate can fill separates 44 services from 45, which is what makes it a rung rather than a relabelling
+  cannot_infer a declared input -> this service asking this estate for it; the declaration is addressed to whoever reads it
+  cannot_infer eligible -> authorized or activated; nobody has called anything and nobody has granted anything
+  cannot_infer fillable -> adequate; the service still decides what it accepts
+  witness the discovery sweep probed 446 paths across 209 hosts and retained 224 declarations, a 50 percent hit rate against a population where the landing-page sweep had found 16
+  witness 89 services declare required inputs across 6,774 declared operations; 44 ask for something this estate demonstrably holds, the largest single ask being a URL, of which it holds 2,344 proven readable under a published permission with a digest each
+  known_gap the estate probes two paths per source and there are more: /.well-known/mcp.json, /.well-known/ai-plugin.json and /llms.txt all appeared in the operation lists and none were swept
+  internal_calculus a credential is four problems wearing one word, and treating them as one turned a decomposition into a shrug. A public identifier is published on purpose -- an x402 payTo is a destination and is meaningless if secret -- so it needs a declaration and not a secret store. A signature is produced by a key this estate holds. An issued token needs a registration, which is a commitment a person makes. And a keyless service needs none of it, which is what x402 was built for
+  invariant the estate does not classify an address or a payTo as a secret. Doing so counted 29 of 38 credential asks as unsolvable when what they need is one institutional identity that a person chooses
+  cannot_infer a blocked credential class -> an unsolvable one; each of the three has a different and named fix
+  known_gap the produced class is blocked by a real defect rather than by policy. bf_crypto advertises Ed25519 signing in its header and implements a symmetric HMAC tag: `pk` is H(seed) and cannot verify anything, and bf_crypto_sign_verify is a stub returning -1 for every input. Nothing calls it today, so nothing is broken in production, but a caller reading sign_keygen(pk, sk) would reasonably publish pk and ship a signature no counterparty can check. The header now says what it implements; the fix is libsodium and not a hand-rolled curve
+  known_gap the issued class needs 19 registrations and every one of them is a commitment a person makes rather than a capability this estate can add
+  known_gap github.com carries 2,670 of the MCP occurrences because their primary_url is a repository rather than an endpoint. The per-host cap removed them and the service behind each repository was never reached
+
+architecture institution-identity
+  canonical_name InstitutionIdentity
+  family identity
+  domain Identity / Attestation
+  layer institutional
+  semantic_question Who says this, and can anyone but us check it?
+  purpose The estate holds tens of thousands of evidence rows and every one carries digests. A digest says the bytes did not move. It does not say who produced them, so until now every claim the estate made was checkable by the estate and by nobody else. An identity key closes that: a detached Ed25519 signature over the evidence digest makes the whole chain verifiable by anyone holding the published public key.
+  maturity measured
+  source_path cmd/BonfyreSign/src/main.c
+  source_path cmd/BonfyreSign/tests/sign_test.sh
+  publishes SignedAttestation
+  internal_calculus real Ed25519 through libsodium, kept in its own binary. libbonfyre is linked by every other organ and does not acquire a signing dependency it does not need
+  internal_calculus the signature is detached and taken over the content digest rather than the body, because the evidence file is twenty-three megabytes and the assertion is the same at a size anyone can carry
+  invariant this is an identity and attestation key. It is not a payment key, holds no funds, authorizes no transfer, and is deliberately not the key an x402 payment would be signed with; one key holding both powers is how an attestation becomes a withdrawal
+  invariant keygen refuses to replace an identity that already exists, because a regenerated key silently invalidates every signature the previous one made
+  invariant the secret is created at 0600 and never exists at any wider mode, not even for the moment between creation and chmod
+  cannot_infer a valid signature -> a true statement; it says this estate made the statement and that the bytes have not moved since
+  cannot_infer an attestation -> a payment authorization
+  witness cmd/BonfyreSign/tests/sign_test.sh proves both directions rather than one. A stub that rejects everything passes a test that only checks bad signatures are refused, which is exactly what the previous implementation would have done, so this asserts that a real signature verifies and that a tampered file, a tampered signature and a different key each do not
+  witness the estate's 23MB evidence file is signed and verifies against the published public key alone
+  known_gap bf_crypto still carries the symmetric tag under names borrowed from a public-key scheme. Its header now says what it implements and nothing calls it, but the functions remain and the honest fix is to delete them rather than document them
+  known_gap the institution publishes an identity key and no payment address. That is a separate declaration with separate consequences and it is not made here
+
+architecture served-answer
+  canonical_name ServedAnswer
+  family economic
+  domain Economic / Service
+  layer economic
+  semantic_question Can this estate answer a request, or can it only describe one?
+  purpose Everything before this measured. The estate observed 3,316 sources, closed 2,344 obligations, priced 39 metered services, matched 44 declared demands and signed its own evidence, and served nobody -- which made all of it an instrument reporting on itself. This takes a need, routes it to the cheapest source the estate has proven it can read, fetches the answer now, and returns the bytes with the chain that justifies them.
+  maturity measured
+  source_path components/BonfyreProject/tools/serve.mjs
+  consumes RankedCandidateFrontier
+  publishes ServedAnswer
+  internal_calculus the route is the cheapest candidate proven readable and never the cheapest candidate. A source nobody has read is not cheap, it is unknown, and it is not offered
+  internal_calculus the answer carries a freshness verdict rather than a promise: unchanged means the bytes still hash to what was observed, changed means the source is live and has moved, unreachable means the table is wrong about it. Three of the first five answers came back changed, which is what a live source does
+  internal_calculus every served answer is signed, so a caller can check who produced the routing decision without holding anything but the published key; the native entrypoint refuses a readable route if the institution key or signer is absent and publishes no answer on signer failure
+  internal_calculus the native entrypoint binds a proven route to a parameterized occurrence lookup, retains the exact fetched bytes under their digest, and publishes a digest-named answer receipt and signature without invoking Python
+  invariant a coordinate with no proven-readable source returns a refusal and not a guess; domain:law was refused on the first run for exactly that reason
+  cannot_infer an answer -> a correct answer; it is what the routed source said when asked
+  cannot_infer a routed source -> the best source; it is the cheapest one proven readable, and the exact verifier still decides
+  cannot_infer a logged job -> revenue; five jobs are logged at zero cost and zero sold, because the estate paid nothing and nobody paid it
+  witness five of six coordinates served end to end, each returning bytes, a route, a frontier count, the metered alternatives it avoided and a freshness verdict, every one signed and independently verifiable
+  witness components/BonfyreProject/tests/serve_native_test.mjs proves the route-cost command arguments, quoted occurrence identity lookup, exact body digest, signature over the receipt, and refusal without proven read or signer
+  known_gap nobody has asked. The jobs are logged against needs this estate chose to demonstrate, not requests anyone made, and margin is zero because nothing was sold rather than because pricing failed
+  known_gap there is no served endpoint. The estate answers when invoked locally and publishes nothing an external caller could reach
+  known_gap the native entrypoint has fixture parity witnesses but the five historical live answers have not been replayed through it; this change does not establish a public buyer or endpoint
+
+architecture rate-discovery
+  canonical_name RateDiscovery
+  family economic
+  domain Economic / Public price statements
+  layer economic
+  semantic_question Did an endpoint state a usable rate, and did the native Meter actually admit it?
+  purpose Probe already-known API-shaped endpoints under their robots policy, distinguish a stated HTTP 402 amount from a Meter rate, and ask the native Meter to admit only an amount with qualified denomination and evidence.
+  maturity implemented
+  source_path scripts/sweep-rates.mjs
+  source_path scripts/rate-discovery.cue
+  source_path scripts/public-source-fetch.mjs
+  consumes PriceSource
+  publishes RateAdmissionAttempt
+  internal_calculus a 402 response is a source observation; maxAmountRequired and crypto-asset amounts may be base-unit quantities and cannot become decimal Meter rates without denomination evidence, so this lowering admits only explicit fiat amounts under the declared currency list
+  invariant a 402 alone does not increment the admitted count; only a successful native Meter command does
+  forbidden_inference a 402 price statement -> a rate, payment commitment, settlement, or buyer quote
+  forbidden_inference a Meter rate admitted here -> usage, accrual, or revenue
+  witness scripts/tests/sweep_rates.test.mjs covers HTTP 402 extraction, source-scoped robots, parameterized endpoint selection, explicit base-unit refusal, and a native Meter admission count that follows the command result
+  known_gap the native discovery has fixture witnesses but no fresh live endpoint replay; a source can change its schema, robots posture or quotation at any time

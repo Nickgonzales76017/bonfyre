@@ -1,0 +1,31 @@
+[Unit]
+Description=Bonfyre stateless MCP 2026 addressed aperture
+After=network-online.target bonfyre-oauth-mcp.service bonfyre-address-plane.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+EnvironmentFile=/etc/bonfyre/web-address.env
+Environment=BONFYRE_MCP_2026_HOST=127.0.0.1
+Environment=BONFYRE_MCP_2026_PORT=8792
+Environment=BONFYRE_MCP_2026_PUBLIC_ORIGIN=https://aurekai.work
+Environment=BONFYRE_MCP_2026_UPSTREAM=http://127.0.0.1:8791/mcp
+Environment=BONFYRE_MCP_2026_APERTURE_TTL_MS=1000
+Environment=BONFYRE_AUTH_BINARY=/usr/local/bin/bonfyre-auth
+Environment=BONFYRE_AUTH_DB=/var/lib/bonfyre/auth.db
+Environment=BONFYRE_ADDRESSPLANE_BINARY=/usr/local/bin/bonfyre-external-estate
+Environment=BONFYRE_ADDRESSPLANE_DB=/var/lib/bonfyre/address-plane.db
+ExecStart=/usr/bin/node /opt/bonfyre/integrations/mcp/bonfyre_mcp_2026_adapter.mjs
+Restart=always
+RestartSec=2
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadOnlyPaths=/etc/bonfyre /usr/local/bin /opt/bonfyre
+ReadWritePaths=/var/lib/bonfyre
+
+[Install]
+WantedBy=multi-user.target

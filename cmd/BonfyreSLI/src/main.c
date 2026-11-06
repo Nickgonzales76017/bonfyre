@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * bonfyre-sli — Structured Layer Inference
  *
@@ -39,11 +46,13 @@
  *   Optionally with FPQx alignment matrix between steps.
  */
 #include <bonfyre.h>
+#include <bf_bqfp.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <limits.h>
 #include <time.h>
 #include <sys/stat.h>
 
@@ -58,74 +67,13 @@
 #define FPQX_MAGIC 0x58515046u
 
 /* ═══════════════════════════════════════════════════════════════════
- * μ-law / FWHT / E8 reconstruction (mirrors bonfyre-quant)
+ * The .bqfp layout, its checks and its block reconstruction are defined
+ * once, in bf_bqfp.h, and shared with bonfyre-quant, which writes the file,
+ * and bonfyre-fpqx, which also reads it.
  * ═══════════════════════════════════════════════════════════════════ */
 
-static float mu_unwarp(float y, float beta) {
-    float sign = (y >= 0) ? 1.0f : -1.0f;
-    return sign * (expf(fabsf(y) * logf(1.0f + beta)) - 1.0f) / beta;
-}
+typedef BfBqfpBlock BqfpBlock;
 
-static uint64_t xorshift64(uint64_t s) {
-    s ^= s << 13; s ^= s >> 7; s ^= s << 17; return s;
-}
-
-static void random_signs_vec(float *d, int n, uint64_t seed) {
-    uint64_t s = seed;
-    for (int i = 0; i < n; i++) { s = xorshift64(s); d[i] *= (s & 1) ? 1.0f : -1.0f; }
-}
-
-static void fwht(float *d, int n) {
-    for (int len = 1; len < n; len <<= 1)
-        for (int i = 0; i < n; i += len<<1)
-            for (int j = 0; j < len; j++) {
-                float a = d[i+j], b = d[i+j+len];
-                d[i+j] = a+b; d[i+j+len] = a-b;
-            }
-    float norm = 1.0f / sqrtf((float)n);
-    for (int i = 0; i < n; i++) d[i] *= norm;
-}
-
-/* ═══════════════════════════════════════════════════════════════════
- * BQFP block structure (must match bonfyre-quant)
- * ═══════════════════════════════════════════════════════════════════ */
-
-typedef struct {
-    float   scale;
-    float   warp_norm;
-    int8_t  e8i[BLOCK_DIM];
-    uint8_t tile_idx[E8_PAIRS];
-} BqfpBlock;
-
-/* Decode a single BQFP block back to float32 */
-static void decode_bqfp_block(const BqfpBlock *blk, const float *tiles, int eff_k,
-                                float *out, size_t dim,
-                                uint64_t haar_seed, float lattice_scale) {
-    float corrected[BLOCK_DIM] = {0};
-    float e8_scale = lattice_scale / 8.0f / 2.0f; /* reverse of e8i encoding */
-
-    for (int p = 0; p < E8_PAIRS; p++) {
-        int ti = blk->tile_idx[p];
-        const float *tile = (ti < eff_k) ? tiles + ti * TILE_DIM : NULL;
-        for (int d = 0; d < TILE_DIM; d++) {
-            float e8_val = (float)blk->e8i[p * TILE_DIM + d] * e8_scale;
-            corrected[p * TILE_DIM + d] = e8_val + (tile ? tile[d] : 0.0f);
-        }
-    }
-
-    /* Inverse scale + unwarp */
-    for (int i = 0; i < BLOCK_DIM; i++) {
-        float lat_val = corrected[i] / lattice_scale * blk->warp_norm;
-        corrected[i] = mu_unwarp(lat_val, MU_BETA) * blk->scale;
-    }
-
-    /* Inverse FWHT + undo signs */
-    fwht(corrected, BLOCK_DIM);
-    random_signs_vec(corrected, BLOCK_DIM, haar_seed);
-
-    size_t n = (dim < BLOCK_DIM) ? dim : BLOCK_DIM;
-    memcpy(out, corrected, n * sizeof(float));
-}
 
 /* ═══════════════════════════════════════════════════════════════════
  * BQFP tensor: loads first tensor from a BQFP file into float32 weights
@@ -140,59 +88,24 @@ typedef struct {
     char     name[256];
 } SliTensor;
 
+/* A file that ends before its blocks do is refused, never returned short. */
 static int load_bqfp_first_tensor(const char *path, SliTensor *t) {
-    FILE *f = fopen(path, "rb");
-    if (!f) { perror(path); return 1; }
-
-    uint32_t hdr[4];
-    if (fread(hdr, 4, 4, f) != 4 || hdr[0] != BQFP_MAGIC) {
-        fprintf(stderr, "sli: not a BQFP file: %s\n", path);
-        fclose(f); return 1;
+    BfBqfpTensor record;
+    uint32_t bits = 0;
+    float *codebook = NULL, *weights = NULL;
+    const char *why = "";
+    memset(t, 0, sizeof(*t));
+    if (bf_bqfp_load_first(path, &record, &bits, &codebook, &weights, &why) != 0) {
+        fprintf(stderr, "sli: %s: %s\n", path, why);
+        return 1;
     }
-    t->bits = (int)hdr[3];
-    float lattice_scale = 8.0f * (float)t->bits;
-
-    /* Read first tensor */
-    char name[256];
-    uint64_t n_elements, n_blocks;
-    uint32_t eff_k, _pad;
-    if (fread(name, 1, 256, f) != 256 ||
-        fread(&n_elements, 8, 1, f) != 1 ||
-        fread(&n_blocks, 8, 1, f) != 1 ||
-        fread(&eff_k, 4, 1, f) != 1 ||
-        fread(&_pad, 4, 1, f) != 1) {
-        fclose(f); return 1;
-    }
-    memcpy(t->name, name, 256);
-    t->n_elements = (size_t)n_elements;
-    t->n_blocks   = (size_t)n_blocks;
-    t->eff_k      = (int)eff_k;
-
-    /* Read codebook */
-    size_t cb_n = (size_t)eff_k * TILE_DIM;
-    float *tiles = (float *)malloc(cb_n * sizeof(float));
-    if (!tiles || fread(tiles, sizeof(float), cb_n, f) != cb_n) {
-        free(tiles); fclose(f); return 1;
-    }
-
-    /* Read blocks and decode to float32 */
-    t->weights = (float *)malloc(n_elements * sizeof(float));
-    if (!t->weights) { free(tiles); fclose(f); return 1; }
-
-    uint64_t haar_seed = 0x12345678ULL;
-    for (const char *p = name; *p; p++)
-        haar_seed = haar_seed * 31 + (uint64_t)(unsigned char)*p;
-
-    for (size_t b = 0; b < n_blocks; b++) {
-        BqfpBlock blk;
-        if (fread(&blk, sizeof(BqfpBlock), 1, f) != 1) break;
-        size_t off = b * BLOCK_DIM;
-        size_t dim = (off + BLOCK_DIM <= n_elements) ? BLOCK_DIM : (n_elements - off);
-        decode_bqfp_block(&blk, tiles, (int)eff_k, t->weights + off, dim,
-                          haar_seed ^ (uint64_t)b, lattice_scale);
-    }
-
-    free(tiles); fclose(f);
+    free(codebook);
+    memcpy(t->name, record.name, 256);
+    t->weights    = weights;
+    t->n_elements = (size_t)record.elements;
+    t->n_blocks   = (size_t)record.blocks;
+    t->eff_k      = (int)record.tiles;
+    t->bits       = (int)bits;
     return 0;
 }
 
@@ -251,22 +164,24 @@ static void apply_transform(const float *W, size_t rows, size_t cols,
  * ═══════════════════════════════════════════════════════════════════ */
 
 static int cmd_inspect_model(const char *bqfp_path) {
+    uint32_t tensor_count = 0, bits = 0;
+    const char *why = "";
     FILE *f = fopen(bqfp_path, "rb");
     if (!f) { perror(bqfp_path); return 1; }
-    uint32_t hdr[4];
-    if (fread(hdr, 4, 4, f) != 4 || hdr[0] != BQFP_MAGIC) {
-        fprintf(stderr, "sli inspect: not a BQFP file\n"); fclose(f); return 1;
+    if (bf_bqfp_read_header(f, &tensor_count, &bits, &why) != 0) {
+        fprintf(stderr, "sli inspect: %s: %s\n", bqfp_path, why);
+        fclose(f); return 1;
     }
     printf("BQFP model: %s\n", bqfp_path);
-    printf("  version:  %u\n  tensors:  %u\n  bits:     %u\n\n", hdr[1], hdr[2], hdr[3]);
-    for (uint32_t t = 0; t < hdr[2]; t++) {
-        char name[256]; uint64_t ne, nb; uint32_t ek, pad;
-        if (fread(name, 1, 256, f) != 256) break;
-        if (fread(&ne, 8, 1, f) != 1 || fread(&nb, 8, 1, f) != 1) break;
-        if (fread(&ek, 4, 1, f) != 1 || fread(&pad, 4, 1, f) != 1) break;
-        printf("  tensor[%u]: %-50s  %lu elem  eff_k=%u\n",
-               t, name[0] ? name : "(anon)", (unsigned long)ne, ek);
-        fseek(f, (long)((size_t)ek * TILE_DIM * 4 + nb * sizeof(BqfpBlock)), SEEK_CUR);
+    printf("  version:  %u\n  tensors:  %u\n  bits:     %u\n\n", BF_BQFP_VERSION, tensor_count, bits);
+    for (uint32_t t = 0; t < tensor_count; t++) {
+        BfBqfpTensor record;
+        if (bf_bqfp_read_tensor(f, &record, &why) != 0 || bf_bqfp_skip_payload(f, &record) != 0) {
+            fprintf(stderr, "sli inspect: tensor %u: %s\n", t, why);
+            fclose(f); return 1;
+        }
+        printf("  tensor[%u]: %-50s  %llu elem  eff_k=%u\n",
+               t, record.name[0] ? record.name : "(anon)", (unsigned long long)record.elements, record.tiles);
     }
     fclose(f);
     return 0;
@@ -488,34 +403,43 @@ static int cmd_route(const char *in_path, const char *stats_path,
     return cmd_run(in_path, model_path, out_path);
 }
 
-static int cmd_bench(const char *model_path, int n) {
+/* Time the transform on recorded vectors. A ramp of made-up values stood in
+ * for the input here; the timing is now of the vectors the caller names, and
+ * the dimension is theirs rather than an assumed 384. */
+static int cmd_bench(const char *model_path, const char *in_path, int n) {
     printf("sli bench: %s  n=%d\n", model_path, n);
 
     SliTensor st;
     if (load_bqfp_first_tensor(model_path, &st)) return 1;
     printf("  tensor:  %zu elements  eff_k=%d\n", st.n_elements, st.eff_k);
 
-    /* Synthetic input vectors */
-    uint32_t dim = 384;
-    float *vec = (float *)malloc(dim * sizeof(float));
+    float *vecs = NULL;
+    uint32_t n_vecs = 0, dim = 0;
+    if (load_vectors(in_path, &vecs, &n_vecs, &dim) || n_vecs == 0 || dim == 0) {
+        fprintf(stderr, "sli bench: %s is not a vector file\n", in_path);
+        sli_tensor_free(&st);
+        return 1;
+    }
+    if ((size_t)dim * (size_t)dim > st.n_elements) {
+        fprintf(stderr, "sli bench: vectors are %u wide and the model tensor holds %zu elements; "
+                        "they do not belong to this model\n", dim, st.n_elements);
+        free(vecs); sli_tensor_free(&st);
+        return 1;
+    }
     float *out = (float *)malloc(dim * sizeof(float));
-    if (!vec || !out) { sli_tensor_free(&st); free(vec); free(out); return 1; }
-    for (uint32_t i = 0; i < dim; i++) vec[i] = 0.1f * (float)(i % 10);
+    if (!out) { free(vecs); sli_tensor_free(&st); return 1; }
+    printf("  vectors: %u of dimension %u from %s\n", n_vecs, dim, in_path);
 
     struct timespec t0, t1;
     clock_gettime(CLOCK_MONOTONIC, &t0);
-
-    size_t rows = (st.n_elements >= dim * dim) ? (size_t)dim : (size_t)sqrtf((float)st.n_elements);
-    for (int iter = 0; iter < n; iter++) {
-        apply_transform(st.weights, rows > 0 ? rows : 1, rows > 0 ? rows : 1, vec, out);
-    }
-
+    for (int iter = 0; iter < n; iter++)
+        apply_transform(st.weights, dim, dim, vecs + (size_t)(iter % (int)n_vecs) * dim, out);
     clock_gettime(CLOCK_MONOTONIC, &t1);
     double elapsed = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) * 1e-9;
     printf("  %d transforms in %.3f s  =  %.1f μs/transform\n",
            n, elapsed, elapsed / n * 1e6);
 
-    free(vec); free(out); sli_tensor_free(&st);
+    free(vecs); free(out); sli_tensor_free(&st);
     return 0;
 }
 
@@ -850,8 +774,9 @@ static void usage(void) {
         "  bonfyre-sli auto-run --in vecs.bin --stats corpus_stats.json --out results/\n"
         "               [--loop 3] [--chain auto|T04:T16|none] [--fpqx auto|none]\n"
         "               [--thresh 0.001] [--models-dir DIR]\n"
-        "  bonfyre-sli bench    --model m.bqfp [--n 1000]\n"
+        "  bonfyre-sli bench    --in vecs.bin --model m.bqfp [--n 1000]\n"
         "  bonfyre-sli inspect  --model m.bqfp\n"
+        "  bonfyre-sli decode   --model m.bqfp --out weights.f32\n"
         "\n"
         "Vector file format: [n_vecs:u32][dim:u32][float32 × n × d]\n"
         "\n"
@@ -887,6 +812,30 @@ int main(int argc, char **argv) {
         return cmd_inspect_model(model_path);
     }
 
+    /* decode writes the weights this reader reconstructs from a .bqfp, as
+     * float32, so they can be compared with the tensor they were encoded from. */
+    if (strcmp(cmd, "decode") == 0) {
+        SliTensor decoded = {0};
+        FILE *out;
+        int ok;
+        if (!model_path || !out_path) { fprintf(stderr,"sli decode: --model and --out required\n"); return 1; }
+        if (load_bqfp_first_tensor(model_path, &decoded) != 0) return 1;
+        if (decoded.n_blocks * BLOCK_DIM < decoded.n_elements) {
+            fprintf(stderr, "sli decode: %s holds %zu blocks, too few for %zu weights\n",
+                    model_path, decoded.n_blocks, decoded.n_elements);
+            sli_tensor_free(&decoded);
+            return 1;
+        }
+        out = fopen(out_path, "wb");
+        ok = out && fwrite(decoded.weights, sizeof(float), decoded.n_elements, out) == decoded.n_elements;
+        if (out && fclose(out) != 0) ok = 0;
+        if (!ok) { fprintf(stderr, "sli decode: cannot write %s\n", out_path); remove(out_path); sli_tensor_free(&decoded); return 1; }
+        printf("decoded %s: %zu weights from %zu blocks, %d tiles, %d bits -> %s\n",
+               decoded.name, decoded.n_elements, decoded.n_blocks, decoded.eff_k, decoded.bits, out_path);
+        sli_tensor_free(&decoded);
+        return 0;
+    }
+
     if (strcmp(cmd, "run") == 0) {
         if (!in_path || !model_path || !out_path) {
             fprintf(stderr,"sli run: --in, --model, --out required\n"); return 1;
@@ -913,8 +862,8 @@ int main(int argc, char **argv) {
     }
 
     if (strcmp(cmd, "bench") == 0) {
-        if (!model_path) { fprintf(stderr,"sli bench: --model required\n"); return 1; }
-        return cmd_bench(model_path, n_bench);
+        if (!model_path || !in_path) { fprintf(stderr,"sli bench: --model and --in are required; there are no built-in vectors\n"); return 1; }
+        return cmd_bench(model_path, in_path, n_bench);
     }
 
     if (strcmp(cmd, "auto-run") == 0) {

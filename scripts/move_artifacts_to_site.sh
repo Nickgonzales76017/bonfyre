@@ -2,8 +2,8 @@
 set -euo pipefail
 
 usage(){
-  cat <<EOF
-Usage: $0 --map MAP.json [--dry-run]
+  cat <<'EOF'
+Usage: move_artifacts_to_site.sh --map MAP.json [--dry-run]
 
 Copies demo artifacts from repo root `site/demos/<demo>` into each Pages repo's `site/` folder
 based on the mappings in MAP.json. Commits and pushes changes unless --dry-run is provided.
@@ -14,7 +14,7 @@ DRY_RUN=0
 MAP=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --map) MAP="$2"; shift 2;;
+    --map) [[ $# -ge 2 ]] || { usage >&2; exit 2; }; MAP="$2"; shift 2;;
     --dry-run) DRY_RUN=1; shift;;
     -h|--help) usage; exit 0;;
     *) echo "Unknown arg: $1" >&2; usage; exit 2;;
@@ -29,17 +29,23 @@ if ! command -v jq >/dev/null 2>&1; then
   echo "jq required" >&2; exit 1
 fi
 
-BASE_PROJECTS_DIR="/Users/$(whoami)/Projects"
-tmp=$(mktemp -d /tmp/move-artifacts.XXXX)
-echo "tmp: $tmp"
+if ! jq -e '(.mappings | type == "array") and
+  all(.mappings[]; (.demo_dir | type == "string" and length > 0) and
+    (.remote | type == "string" and length > 0) and
+    (.paths | type == "array" and all(.[]; type == "string" and length > 0)))' "$MAP" >/dev/null; then
+  echo "Invalid artifact mapping: $MAP" >&2
+  exit 2
+fi
+BASE_PROJECTS_DIR="${BONFYRE_PAGES_PROJECTS_DIR:-/Users/$(whoami)/Projects}"
 
-jq -c '.mappings[]' "$MAP" | while read -r m; do
-  demo_dir=$(echo "$m" | jq -r '.demo_dir')
-  remote=$(echo "$m" | jq -r '.remote')
+while IFS= read -r m; do
+  IFS= read -r -d '' demo_dir < <(printf '%s\n' "$m" | jq -j '.demo_dir, "\u0000"')
+  IFS= read -r -d '' remote < <(printf '%s\n' "$m" | jq -j '.remote, "\u0000"')
   repo_basename=$(basename "$remote" .git)
+  case "$repo_basename" in ''|'.'|'..') echo "Invalid remote repository name" >&2; exit 2;; esac
   repo_path="$BASE_PROJECTS_DIR/$repo_basename"
   site_dir="$repo_path/site"
-  echo "\n== $demo_dir -> $repo_basename/site =="
+  printf '\n== %s -> %s/site ==\n' "$demo_dir" "$repo_basename"
 
   if [ ! -d "$repo_path" ]; then
     echo "Local repo missing: $repo_path" >&2
@@ -51,9 +57,8 @@ jq -c '.mappings[]' "$MAP" | while read -r m; do
   fi
 
   # copy listed paths (preserve directory structure)
-  paths=$(echo "$m" | jq -r '.paths[]')
   changed=0
-  for p in $paths; do
+  while IFS= read -r -d '' p; do
     src="$demo_dir/$p"
     if [ ! -e "$src" ]; then
       echo "Missing source: $src (skipping)"
@@ -68,7 +73,7 @@ jq -c '.mappings[]' "$MAP" | while read -r m; do
         continue
       fi
       mkdir -p "$dest_dir"
-      cp -r "$src"/* "$dest_dir/" || true
+      cp -R "$src"/. "$dest_dir/"
       echo "Copied dir $src -> $dest_dir"
       changed=1
     else
@@ -91,7 +96,7 @@ jq -c '.mappings[]' "$MAP" | while read -r m; do
       fi
       changed=1
     fi
-  done
+  done < <(printf '%s\n' "$m" | jq -j '.paths[] | ., "\u0000"')
 
   if [ "$DRY_RUN" -eq 1 ]; then
     echo "DRY RUN: would commit/push in $repo_path"
@@ -107,6 +112,6 @@ jq -c '.mappings[]' "$MAP" | while read -r m; do
   else
     echo "No artifacts copied for $repo_basename"
   fi
-done
+done < <(jq -c '.mappings[]' "$MAP")
 
-echo "Done. tmp: $tmp"
+echo "Done."

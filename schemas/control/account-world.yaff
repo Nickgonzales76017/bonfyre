@@ -1,0 +1,331 @@
+schema AccountWorldBinding
+generation account-world-1
+authority BonfyreCMS + authenticated account boundary
+
+field world_id
+  type u64
+  required true
+  role existing-cms-world-row
+field subject
+  type text
+  required true
+  role authenticated-account-subject
+field namespace
+  type text
+  required true
+  role authorized-cms-namespace
+
+invariant binding-checks-existing-world
+  statement binding requires the existing draft World to carry the same namespace and subject; an unbound or different World cannot be adopted
+invariant caller-authenticates
+  statement the calling boundary authenticates the subject and authorizes the namespace before invoking the internal owner; the owner does not authenticate caller-supplied strings
+forbidden_inference an account-world binding -> source rights, public audience, authenticated caller, publication or renderer availability
+
+schema AccountWorldSpace
+generation account-world-1
+authority BonfyreCMS + AccountWorldBinding
+
+field world_id
+  type u64
+  required true
+field space_id
+  type text
+  required true
+field title
+  type text
+  required true
+field renderer
+  type enum
+  values 2d 3d
+  required true
+field template_ref
+  type text
+  required true
+field layout_ref
+  type text
+  required true
+field revision
+  type u64
+  required true
+
+invariant bounded-spaces
+  statement each World holds at most 32 named spaces and each write checks the current binding and draft World within one transaction
+invariant bound-identity
+  statement a bound World cannot be deleted or have its identity, subject, or namespace changed until a separate lifecycle owner exists
+invariant revision-check
+  statement create uses revision zero and updates require the exact current revision; conflicts never overwrite
+forbidden_inference a template or layout reference -> a resolved object, permission to show its material, a working immersive room or a published route
+
+schema AccountWorldSpaceStyle
+generation account-world-2
+authority BonfyreCMS + AccountWorldBinding
+
+field medium
+  type text
+  required true
+  role open-vocabulary-lowercase-word
+field character
+  type text
+  required true
+  role cue-compiled-world-character
+field lede
+  type text
+  required false
+
+invariant medium-is-open
+  statement medium is an owner's own lowercase word (radio, podcast, poetry or anything else); it labels the space and never selects a schema, workflow or industry preset
+forbidden_inference a medium word -> station operations, a podcast feed, a newsroom workflow or any vertical-specific object
+
+schema AccountWorldItem
+generation account-world-2
+authority BonfyreCMS + AccountWorldBinding
+
+field position
+  type u64
+  required true
+  role 1..24
+field ref
+  type text
+  required true
+  role pagecomposition-source-key-or-sibling-space
+field role
+  type text
+  required true
+field note
+  type text
+  required false
+
+invariant reference-only
+  statement an item is "<source>/<24 hex key>" or "space:<id>" naming a sibling space in the same World; no URL, copy, rights statement or resolved body is stored
+forbidden_inference an item reference -> the material still exists, is licensed for display, or belongs to the account
+
+schema AccountWorldRelease
+generation account-world-2
+authority BonfyreCMS + AccountWorldBinding
+
+field state
+  type enum
+  values public withdrawn
+  required true
+field revision
+  type u64
+  required true
+
+invariant exact-revision-release
+  statement release copies the draft style and items at the exact current revision; later draft edits stay private until the next release; one public space per site address
+invariant withdrawal
+  statement withdrawal removes the released items and the reader answers 410; ending or unbinding the World removes every space from the public address
+forbidden_inference a released space -> a published World row, source rights or a live playback right
+
+schema AccountWorldScreening
+generation account-world-cine
+authority BonfyreCMS + AccountWorldBinding
+
+field screening_id
+  type text
+  required true
+  role lowercase-slug-per-space
+field starts
+  type text
+  required true
+  role iso-minute-YYYY-MM-DDTHH:MM
+field venue
+  type text
+  required true
+field ref
+  type text
+  required true
+  role pagecomposition-film-reference
+field note
+  type text
+  required false
+field state
+  type enum
+  values draft announced cancelled
+  required true
+
+invariant announce-to-publish
+  statement a new or edited screening is a draft; only announced and cancelled screenings of a released public space are read publicly; at most 48 per space
+invariant public-domain-playback
+  statement the reader plays a screening only when the source, re-read on that request, states public domain or CC0 and gives an https video file
+forbidden_inference a screening -> a right to show the film, a booking, attendance or availability elsewhere
+
+schema AccountWorldClub
+generation account-world-cine
+authority BonfyreCMS + AccountWorldBinding + authenticated member subject
+
+field state
+  type enum
+  values open closed
+  required true
+field member_state
+  type enum
+  values member left removed
+  required true
+field pick_state
+  type enum
+  values open hidden
+  required true
+field post_state
+  type enum
+  values shown hidden retracted
+  required true
+
+invariant members-only
+  statement picks and posts are read only by the World's subject (host) and current members of an open club on a released public space; members never see hidden rows
+invariant moderation
+  statement the host hides posts and picks and removes members; a removed member cannot rejoin; an author retracts their own post and its words are cleared; one vote per member per pick
+forbidden_inference club membership -> enrolment, a course, a credential, an audience count or a moderation decision by anyone but the host
+
+schema AccountWorldNote
+generation account-world-cine
+authority BonfyreCMS + AccountWorldBinding
+
+field ref
+  type text
+  required true
+  role pagecomposition-film-reference
+field watched
+  type text
+  required true
+  role iso-day
+field rating
+  type u64
+  required true
+  role 0..10-half-stars-0-unrated
+field rewatch
+  type bool
+  required true
+field body
+  type text
+  required false
+field visibility
+  type enum
+  values private public
+  required true
+
+invariant private-stays-private
+  statement a private note is read only by the World's subject; a public note shows only beside a film that is an item of a released public space
+forbidden_inference a public rating -> an aggregate score, a moderated review or a claim about the film's rights
+
+schema AccountWorldSound
+generation account-world-audio-1
+authority BonfyreCMS + AccountWorldBinding
+
+field kind
+  type enum
+  values station show
+  required true
+field timezone
+  type text
+  required true
+  role iana-zone-or-utc
+field language
+  type text
+  required true
+field author
+  type text
+  required true
+field category
+  type text
+  required true
+field explicit
+  type bool
+  required true
+field stream_ref
+  type text
+  required false
+  role pagecomposition-source-key
+
+invariant draft-and-released-copy
+  statement each sound row, slot, episode and mark has a draft copy (released 0) and a public copy (released 1) written only by triggers on account_world_release inside the release transaction and removed on withdrawal
+forbidden_inference a station or show row -> a broadcast licence, a live stream that is up or a feed accepted by any directory
+
+schema AccountWorldSlot
+generation account-world-audio-1
+authority BonfyreCMS + AccountWorldBinding
+
+field slot
+  type u64
+  required true
+  role 1..48
+field weekday
+  type u64
+  required true
+  role iso-1-monday..7-sunday
+field start_minute
+  type u64
+  required true
+  role 0..1439-station-clock
+field minutes
+  type u64
+  required true
+  role 1..1440
+field programme
+  type text
+  required true
+field host
+  type text
+  required false
+field ref
+  type text
+  required false
+  role pagecomposition-source-key-or-sibling-space
+forbidden_inference a slot -> that the programme aired, or the time in any zone but the station's
+
+schema AccountWorldEpisode
+generation account-world-audio-1
+authority BonfyreCMS + AccountWorldBinding
+
+field ref
+  type text
+  required true
+  role existing-item-of-the-space
+field season
+  type u64
+  required true
+field number
+  type u64
+  required true
+field published
+  type date
+  required true
+forbidden_inference an episode date -> a right to distribute its recording
+
+schema AccountWorldMark
+generation account-world-audio-1
+authority BonfyreCMS + AccountWorldBinding
+
+field ref
+  type text
+  required true
+  role existing-item-of-the-space
+field kind
+  type enum
+  values track chapter cue clip person source
+  required true
+field start_ms
+  type u64
+  required true
+field end_ms
+  type u64
+  required false
+  role required-for-cue-and-clip
+field title
+  type text
+  required true
+field credit
+  type text
+  required false
+field href
+  type text
+  required false
+  role https-citation-or-pagecomposition-key-never-played
+field checked
+  type bool
+  required true
+  role confirmed-track-or-reviewed-cue-or-clip
+
+invariant review-before-public
+  statement unreviewed cues and clips never reach the public page, transcript file or feed; unconfirmed tracks reach the page only with a flag
+forbidden_inference a confirmed track or reviewed line -> licence to play the track or a claim of transcription accuracy

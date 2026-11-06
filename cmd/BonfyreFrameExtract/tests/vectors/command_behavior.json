@@ -1,0 +1,4 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-frame-extract","binary_env":"BONFYRE_FRAME_EXTRACT_BIN","cases":[
+{"name":"one frame per second is extracted from a 3-second video","steps":[{"program":"ffmpeg","argv":["-loglevel","error","-f","lavfi","-i","testsrc=duration=3:size=160x120:rate=5","-f","lavfi","-i","sine=frequency=440:duration=3","-shortest","-pix_fmt","yuv420p","v.mp4"],"exit":0},
+ {"argv":["--input","v.mp4","--out","fr","--fps","1"],"env":{"HOME":"${tmp}","BONFYRE_FRAGMENT_STORE":"${tmp}/frag.db","BONFYRE_VOCAB_DB":"${tmp}/vocab.bfvocab"},"exit":0,"present":["${tmp}/fr/frame-000001.jpg","${tmp}/fr/frame-000003.jpg"],"absent":["${tmp}/fr/frame-000004.jpg"]}]},
+{"name":"a missing video is refused","steps":[{"argv":["--input","missing.mp4","--out","fr"],"env":{"HOME":"${tmp}","BONFYRE_FRAGMENT_STORE":"${tmp}/frag.db","BONFYRE_VOCAB_DB":"${tmp}/vocab.bfvocab"},"exit_nonzero":true}]}]}

@@ -1,0 +1,27 @@
+exit 0
+bonfyre manifest — an itemised manifest for an equipment lot, from its photos and listing
+
+Usage:
+  bonfyre manifest [--lot NAME] --photo FILE [--photo FILE ...] [--listing FILE ...] [options]
+
+Every photo is read on this machine; photos named alike (lot-1.jpg, lot-2.jpg)
+are one view. Brand, model family, part number, count and the listing's own
+condition and make are copied as written. The local model then says what kind
+of equipment each unit is, whether it holds data to wipe, whether make and
+model are clear enough to price, and what the text says about condition.
+Anything the seller did not state is left blank and listed to confirm.
+
+Options:
+  --photo FILE      A photo of the lot (repeat)
+  --listing FILE    The seller's listing, saved as HTML or text (repeat)
+  --lot NAME        A name for the lot
+  --out FILE        The manifest as TSV, or the full report with receipts (.json)
+  --itad FILE       A TSV the ITAD Exchange desk imports (model, qty, grade);
+                    units it cannot price yet go to FILE.held.tsv with the reason
+  --json            Print the full report
+  --model NAME        Prefer this local model (a file name or part of one);
+                      otherwise the front loads the largest that fits
+  --model-endpoint U  Local model server (default http://127.0.0.1:7000)
+
+Example:
+  bonfyre manifest --lot houston-35 --photo houston-35-1.jpg --photo houston-35-2.jpg --out houston-35.tsv

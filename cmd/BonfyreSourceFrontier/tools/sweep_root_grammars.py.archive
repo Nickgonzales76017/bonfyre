@@ -1,0 +1,236 @@
+#!/usr/bin/env python3
+"""Ask every publisher, once, what it is -- and write down everything that implies.
+
+The estate lists thousands of publishers and has only ever read a few hundred
+of them.  The lattice tool can turn one publisher into a dozen addressable
+channels, but only for a root whose body the estate has actually retained, so
+almost every publisher in the ledger sat there contributing nothing.
+
+This asks each root's own front door once and keeps three separate kinds of
+answer, which are three different claims and are never merged:
+
+  observed_link_candidate      a feed the page declares in its own markup
+  protocol_derived_candidate   a convention of the grammar the body proves it
+                               runs (a WordPress site has /feed/; that is what
+                               WordPress means, not proof the address answers)
+  observed_index_candidate     an address found inside a sitemap it published
+
+Nothing here is admitted, and nothing here is read as content.  Every address
+this writes enters the ledger as a listing that still has to answer for itself.
+Robots and the estate's observer decide every fetch; a refusal is recorded as a
+refusal rather than retried around.
+
+  Historical Python oracle; live command is sweep_root_grammars.mjs.
+      --out channels.jsonl [--limit 3000] [--workers 12] [--per-root 24]
+"""
+import argparse, json, os, re, sqlite3, subprocess, sys, time, urllib.parse
+from concurrent.futures import ThreadPoolExecutor
+
+GENERATOR = re.compile(r'<meta[^>]+name=["\']generator["\'][^>]+content=["\']([^"\']+)', re.I)
+LINK_ALTERNATE = re.compile(r"""<link\b[^>]*?rel=["']?alternate["']?[^>]*?>""", re.I)
+LINK_TYPE = re.compile(r"""type=["']?(application/(?:rss\+xml|atom\+xml|feed\+json|json))""", re.I)
+LINK_HREF = re.compile(r"""href=["']([^"']+)["']""", re.I)
+LINK_TITLE = re.compile(r"""title=["']([^"']*)["']""", re.I)
+
+# What a publishing grammar publishes by convention, once its own body has said
+# which grammar it is.  These are conventions, not observations.
+LATTICE = {
+    "wordpress": [("/feed/", "rss"), ("/comments/feed/", "rss"),
+                  ("/wp-json/wp/v2/posts", "json_api")],
+    "ghost": [("/rss/", "rss")],
+    "drupal": [("/rss.xml", "rss")],
+    "squarespace": [("?format=rss", "rss")],
+    "wix": [("/blog-feed.xml", "rss")],
+    "blogger": [("/feeds/posts/default", "atom"), ("/feeds/posts/default?alt=rss", "rss")],
+    "substack": [("/feed", "rss")],
+    "discourse": [("/latest.rss", "rss"), ("/top.rss", "rss")],
+    "mediawiki": [("/index.php?title=Special:RecentChanges&feed=rss", "rss")],
+    "hugo": [("/index.xml", "rss")],
+    "jekyll": [("/feed.xml", "rss")],
+    "civicplus": [("/RSSFeed.aspx", "rss")],
+    "joomla": [("/index.php?format=feed&type=rss", "rss")],
+    "typo3": [("/rss.xml", "rss")],
+}
+# Marks in a body that prove a grammar without the generator meta saying so.
+MARKERS = [
+    ("wordpress", ("/wp-content/", "/wp-includes/", "wp-json")),
+    ("drupal", ("/sites/default/files/", "drupal-settings-json", "/core/misc/")),
+    ("ghost", ("/assets/built/", "ghost-sdk", "content/images/size/")),
+    ("squarespace", ("squarespace.com", "static1.squarespace")),
+    ("wix", ("wix.com", "wixstatic.com")),
+    ("blogger", ("blogspot.com", "blogger.com/static")),
+    ("substack", ("substackcdn.com", "substack.com/api")),
+    ("discourse", ("discourse_theme", "/stylesheets/desktop_")),
+    ("mediawiki", ("/load.php?", "mw-parser-output")),
+    ("hugo", ("generator\" content=\"Hugo",)),
+    ("civicplus", ("civicplus.com", "/Common/")),
+    ("joomla", ("/media/jui/", "joomla")),
+]
+# Conventions worth trying on any publisher at all, because they cost a listing
+# and nothing else.  They are the ones the open web actually settled on.
+UNIVERSAL = [("/feed", "rss"), ("/rss", "rss"), ("/feed.xml", "rss"),
+             ("/atom.xml", "atom"), ("/index.xml", "rss"), ("/rss.xml", "rss"),
+             ("/feeds/all.atom.xml", "atom"), ("/sitemap.xml", "sitemap")]
+
+
+def observe(project, foreign, twin, url, timeout=45):
+    receipts, bodies = os.path.join(foreign, "receipts"), os.path.join(foreign, "bodies")
+    os.makedirs(receipts, exist_ok=True)
+    os.makedirs(bodies, exist_ok=True)
+    receipt, body = os.path.join(receipts, twin + ".json"), os.path.join(bodies, twin + ".body")
+    try:
+        subprocess.run([project, "foreign", "observe", twin, url, "--receipt", receipt,
+                        "--body", body, "--observe-right", "public"],
+                       capture_output=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        return {"policy_decision": "timeout"}, ""
+    last = {}
+    if os.path.exists(receipt):
+        lines = [l for l in open(receipt, encoding="utf-8", errors="replace").read().splitlines()
+                 if l.startswith("{")]
+        if lines:
+            try:
+                last = json.loads(lines[-1])
+            except ValueError:
+                last = {}
+    text = ""
+    if os.path.exists(body) and 200 <= int(last.get("http_status") or 0) < 300:
+        with open(body, "rb") as handle:
+            text = handle.read(2_000_000).decode("utf-8", "replace")
+    # The receipt is the evidence; the body was only ever needed to read once.
+    for path in (body,):
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
+    return last, text
+
+
+def grammar_of(text):
+    """Which publishing grammar this body proves it runs, if any."""
+    said = GENERATOR.search(text)
+    if said:
+        name = said.group(1).lower()
+        for known in LATTICE:
+            if known in name:
+                return known, "its own generator says so"
+    low = text.lower()
+    for known, marks in MARKERS:
+        if any(mark.lower() in low for mark in marks):
+            return known, "its body carries %s" % marks[0]
+    return None, ""
+
+
+def declared_feeds(text, page_url):
+    found, seen = [], set()
+    for tag in LINK_ALTERNATE.findall(text[:400000]):
+        kind, href = LINK_TYPE.search(tag), LINK_HREF.search(tag)
+        if not kind or not href:
+            continue
+        address = urllib.parse.urljoin(page_url, href.group(1).strip())
+        if not address.lower().startswith(("http://", "https://")) or address in seen:
+            continue
+        seen.add(address)
+        title = LINK_TITLE.search(tag)
+        found.append((address, "json_feed" if "json" in kind.group(1).lower() else "rss",
+                      title.group(1).strip() if title else ""))
+    return found
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--db", required=True)
+    ap.add_argument("--project", required=True)
+    ap.add_argument("--foreign", required=True)
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--limit", type=int, default=3000)
+    ap.add_argument("--workers", type=int, default=12)
+    ap.add_argument("--per-root", type=int, default=24)
+    ap.add_argument("--evidence", default=os.devnull)
+    ap.add_argument("--universal", action="store_true",
+                    help="also list the conventions the open web settled on, for every publisher")
+    args = ap.parse_args()
+
+    con = sqlite3.connect("file:%s?mode=ro" % args.db, uri=True)
+    roots = con.execute(
+        "SELECT r.root_id, r.host, COALESCE(NULLIF(r.name,''), r.host)"
+        " FROM root r"
+        # A publisher this estate has already read a great deal from does not
+        # need asking again; one it has never read is the whole point.
+        " WHERE (SELECT COUNT(*) FROM channel c WHERE c.root_id=r.root_id"
+        "          AND c.state IN ('admitted','active')) = 0"
+        # A publisher the estate has only just heard of holds one address --
+        # its front door -- and has never been asked anything.  Those come
+        # first: asking a publisher already mined for channels returns what is
+        # already in the ledger, which is how a sweep can run at full tilt and
+        # add nothing.
+        " ORDER BY (SELECT COUNT(*) FROM channel c WHERE c.root_id=r.root_id) ASC, r.first_seen DESC"
+        " LIMIT ?", (args.limit,)).fetchall()
+    con.close()
+    if not roots:
+        print(json.dumps({"asked": 0, "note": "every listed publisher is already read here"}))
+        return 0
+
+    def ask(root):
+        root_id, host, name = root
+        url = "https://%s/" % host
+        twin = "sweep-" + re.sub(r"[^a-z0-9]+", "-", host.lower())[:48]
+        receipt, text = observe(args.project, args.foreign, twin, url)
+        time.sleep(0.3)
+        return root_id, host, name, url, receipt, text
+
+    answers = []
+    with ThreadPoolExecutor(max_workers=max(1, args.workers)) as pool:
+        for got in pool.map(ask, roots):
+            answers.append(got)
+
+    written, by_kind, refused = 0, {}, 0
+    seen_addresses = set()
+    with open(args.out, "w") as out, open(args.evidence, "a") as evidence:
+        def emit(host, address, protocol, truth, why, title=""):
+            nonlocal written
+            if address in seen_addresses:
+                return
+            seen_addresses.add(address)
+            out.write(json.dumps({
+                "root": host, "address": address, "protocol": protocol,
+                "title": title, "truth_level": truth, "discovered_from": why,
+            }) + "\n")
+            written += 1
+            by_kind[truth] = by_kind.get(truth, 0) + 1
+
+        for root_id, host, name, url, receipt, text in answers:
+            policy = receipt.get("policy_decision")
+            status = receipt.get("http_status")
+            evidence.write(json.dumps({"root": host, "http_status": status, "policy": policy}) + "\n")
+            if policy not in (None, "allow") or not text:
+                refused += 1
+                continue
+
+            for address, protocol, title in declared_feeds(text, url):
+                emit(host, address, protocol, "observed_link_candidate",
+                     "declared by %s in its own markup" % host, title)
+
+            grammar, why = grammar_of(text)
+            if grammar:
+                for path, protocol in LATTICE[grammar][:args.per_root]:
+                    emit(host, urllib.parse.urljoin(url, path), protocol,
+                         "protocol_derived_candidate",
+                         "%s runs %s: %s" % (host, grammar, why))
+            if args.universal:
+                for path, protocol in UNIVERSAL:
+                    emit(host, urllib.parse.urljoin(url, path), protocol,
+                         "protocol_derived_candidate",
+                         "a convention of the open web, not anything %s said" % host)
+
+    print(json.dumps({
+        "asked": len(roots), "answered": len(roots) - refused, "refused": refused,
+        "channels_listed": written, "by_truth_level": by_kind,
+        "cannot_infer": "a listed channel is an address, not a source this estate reads; "
+                        "a protocol-derived address is a convention of a grammar, never a promise that it answers",
+    }))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

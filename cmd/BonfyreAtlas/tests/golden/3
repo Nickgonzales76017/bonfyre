@@ -1,0 +1,8 @@
+no_cannot_infer (5): alpha, beta, delta, epsilon, gamma
+no_interaction_contract (3): delta, epsilon, gamma
+no_lineage (5): alpha, beta, delta, epsilon, gamma
+no_native_format (5): alpha, beta, delta, epsilon, gamma
+substrate_without_phenotype (1): alpha
+fact_orphan_produced (2): FactC, FactE
+fact_orphan_consumed (1): FactD
+exit 0

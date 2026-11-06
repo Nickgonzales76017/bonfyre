@@ -12,6 +12,7 @@
  * Node pool: pre-allocated, doubles on overflow (amortized O(1)).
  * No recursion in parser — explicit stack.
  */
+#include <stdint.h>
 
 #include "bf_json.h"
 

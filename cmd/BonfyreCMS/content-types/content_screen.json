@@ -1,0 +1,18 @@
+{
+  "name": "content_screen",
+  "displayName": "Content Screen",
+  "description": "One declared way of deciding that retained material should not be projected automatically. A screen is authored so that what it looks at, what it can see, and what it demonstrably cannot are all readable beside its results. reference_* fields record a screen this estate studied or intends to run; declaring one is not installing it, and a screen whose state is declared rather than installed produces no flags at all.",
+  "attributes": {
+    "screen": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "looks_at": {"type": "string", "required": true},
+    "method": {"type": "string", "required": true},
+    "state": {"type": "string", "required": true},
+    "reference_name": {"type": "string", "required": false},
+    "reference_url": {"type": "string", "required": false},
+    "reference_note": {"type": "text", "required": false},
+    "sees": {"type": "text", "required": true},
+    "cannot_see": {"type": "text", "required": true},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

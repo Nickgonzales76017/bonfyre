@@ -1,0 +1,286 @@
+"""Archived Python witness; superseded by aurekai-live-loop.test.mjs.
+
+The Aurekai Live loop, end to end, on one occurrence.
+
+Neon June goes live from Reno's in Deep Ellum. Over one stream this exercises
+every organ built for this architecture and asserts they compose rather than
+merely coexist:
+
+    live speech
+      -> LiveSemanticTrack        (semantic sidecar on the media clock)
+      -> ClaimObservation         (an explicit promotion, never automatic)
+      -> corroboration            (independent foreign observation)
+      -> event-formation          (ProtocolContract enactment)
+      -> AuthorityGraph           (checked against the compiled C organ's store)
+      -> CommitmentGraph          (the obligation the announcement created)
+      -> BonfyreQueue             (that obligation as claimable durable work)
+      -> discharge                (work completes, promise met)
+      -> retention lattice        (chat and atmosphere cool below the SAVED
+                                   floor; the claim and the sponsor
+                                   acknowledgements sit at EVIDENTIARY and stay)
+
+The sponsor contract closes in the same pass, through the three different
+observers its three obligations actually require.
+
+This is the test that would fail if any two of these organs stopped agreeing.
+"""
+
+from __future__ import annotations
+
+import os
+import sqlite3
+import sys
+
+import pytest
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import commitment_graph as cg  # noqa: E402
+import live_semantic_track as lst  # noqa: E402
+import obligation_work as ow  # noqa: E402
+import protocol_authority as pa  # noqa: E402
+import protocol_library as lib  # noqa: E402
+
+MIN = 60_000
+SUBJECT = "live:neon-june-2026-09-04"
+
+
+@pytest.fixture()
+def cdb():
+    conn = sqlite3.connect(":memory:")
+    ow.ensure_schema(conn)
+    yield conn
+    conn.close()
+
+
+@pytest.fixture()
+def adb():
+    conn = sqlite3.connect(":memory:")
+    pa.ensure_schema(conn)
+    yield conn
+    conn.close()
+
+
+@pytest.fixture()
+def stream():
+    """The occurrence, as the semantic compiler saw it."""
+    t = lst.LiveSemanticTrack(SUBJECT)
+    t.say(0, "hey Deep Ellum, we're Neon June", speaker="Neon June")
+    t.append(lst.SemanticEvent(2 * MIN, "chat", "where is everybody"))
+    t.say(18 * MIN, "we're playing Trees again Friday", speaker="Neon June")
+    t.append(lst.SemanticEvent(18 * MIN, "place", "Trees"))
+    t.append(lst.SemanticEvent(25 * MIN, "sponsor_mention", "Red Bull",
+                               speaker="Neon June"))
+    t.append(lst.SemanticEvent(39 * MIN, "cta", "tickets are in our profile",
+                               speaker="Neon June"))
+    t.append(lst.SemanticEvent(41 * MIN, "chat", "Trees line is insane"))
+    t.append(lst.SemanticEvent(52 * MIN, "sponsor_mention", "Red Bull",
+                               speaker="Neon June"))
+    t.append(lst.SemanticEvent(58 * MIN, "clip_candidate", "friday-announcement"))
+    return t
+
+
+def _grant(adb, contract, actors, subject=SUBJECT):
+    for name, role in contract.roles.items():
+        pa.grant(adb, edge_id=f"{contract.name}:{name}", actor=actors[name],
+                 permission=role.authority, subject=subject)
+
+
+# ------------------------------------------------------- the crystallization
+
+def test_a_live_announcement_becomes_a_durable_obligation(cdb, adb, stream, tmp_path):
+    ledger = lst.ClaimLedger()
+
+    # 1. Speech is speech. Nothing is claimed yet.
+    assert stream.by_kind("claim") == []
+
+    # 2. Somebody promotes the utterance into an attributed claim.
+    ledger.from_utterance(stream, 18 * MIN, claim_id="c1", asserter="Neon June",
+                          subject="event:trees-friday",
+                          assertion="Neon June plays Trees on Friday")
+    assert ledger.crystallizable() == [], "one claim, no corroboration yet"
+
+    # 3. Two independent foreign observations corroborate it.
+    ledger.corroborate("c1", source="foreign:trees-calendar",
+                       kind="EventListingObservation")
+    ledger.corroborate("c1", source="foreign:dallas-observer-listings",
+                       kind="ForeignOccurrence")
+    assert ledger.crystallizable() == ["c1"]
+    assert ledger.proven("c1") is False, "well-attested is not proven"
+
+    # 4. The claim is worth enacting event-formation over.
+    formation = lib.get("social", "event-formation")
+    actors = {"asserter": "creator:neon-june",
+              "corroborator": "twin:foreign-observer",
+              "admitter": "institution:aurekai"}
+
+    # Without grants the enactment is refused before anything opens.
+    with pytest.raises(pa.AuthorityRefused):
+        pa.enact_authorized(cdb, adb, formation, enactment_id="ef1",
+                            actors=actors, subject=SUBJECT)
+    assert cg.status(cdb, "ef1:perform_as_announced") is None
+
+    _grant(adb, formation, actors)
+    opened = pa.enact_authorized(cdb, adb, formation, enactment_id="ef1",
+                                 actors=actors, subject=SUBJECT)
+    assert opened == ["ef1:perform_as_announced"]
+
+    # 5. The announcement created a real obligation to whoever heard it.
+    row = cdb.execute("SELECT committer,beneficiary,enactment FROM commitments"
+                      " WHERE commitment_id='ef1:perform_as_announced'").fetchone()
+    assert row == ("creator:neon-june", "institution:aurekai", "ef1")
+
+    # 6. It becomes claimable durable work in the native queue.
+    queue_db = str(tmp_path / "work.db")
+    mission, node = ow.lower(cdb, "ef1:perform_as_announced", queue_db=queue_db)
+    assert ow.work_status(cdb, "ef1:perform_as_announced") == "ready"
+    assert formation.closed(cdb, "ef1") is False, "announcing is not performing"
+
+    # 7. Friday happens. The work completes and the promise is discharged.
+    claim = ow._queue(["claim-next", "crew", "--lease-ms", "60000"], queue_db)
+    ow._queue(["ack", mission, node, "crew", claim["claim_token"]], queue_db)
+    assert ow.settle(cdb, "ef1:perform_as_announced") == cg.DISCHARGED
+    assert formation.closed(cdb, "ef1") is True
+
+
+def test_a_listed_show_nobody_plays_is_still_a_broken_promise(cdb, adb, stream):
+    formation = lib.get("social", "event-formation")
+    actors = {"asserter": "creator:neon-june",
+              "corroborator": "twin:foreign-observer",
+              "admitter": "institution:aurekai"}
+    _grant(adb, formation, actors)
+    pa.enact_authorized(cdb, adb, formation, enactment_id="ef1",
+                        actors=actors, subject=SUBJECT)
+
+    # The Event was admitted and listed everywhere. Nobody turned up to play it.
+    cg.violate(cdb, "ef1:perform_as_announced", actor="institution:aurekai",
+               detail="venue confirms the set did not happen")
+    assert formation.closed(cdb, "ef1") is False
+    cg.compensate(cdb, "ef1:perform_as_announced", detail="refunds issued")
+    assert formation.closed(cdb, "ef1") is True
+    # And the breach outlives the compensation, which is what a booker needs.
+    assert cg.was_ever(cdb, "ef1:perform_as_announced", cg.VIOLATED) is True
+
+
+# ------------------------------------------- sponsorship closed by three observers
+
+def test_sponsorship_closes_through_the_owners_that_can_observe_each_part(
+        cdb, adb, stream, tmp_path):
+    sponsor = lib.get("economic", "sponsor-obligation")
+    actors = {"creator": "creator:neon-june", "publisher": "creator:neon-june",
+              "observer": "twin:foreign-observer", "settler": "sponsor:red-bull"}
+    _grant(adb, sponsor, actors)
+    opened = pa.enact_authorized(cdb, adb, sponsor, enactment_id="sp1",
+                                 actors=actors, subject=SUBJECT)
+    # Declaration order, not sorted: the contract lists the spoken obligation
+    # first because that is the one the live track can close.
+    assert opened == ["sp1:speak_the_acknowledgements", "sp1:publish_the_clip",
+                      "sp1:pay_on_evidence"]
+
+    # The spoken obligation is closed by the semantic track: the contract asked
+    # for two acknowledgements and the track observed two.
+    mentions = stream.sponsor_mentions("Red Bull")
+    assert len(mentions) == 2
+    cg.discharge(cdb, "sp1:speak_the_acknowledgements",
+                 actor="live-semantic-track",
+                 detail=f"acknowledged at {[m.at_ms for m in mentions]}")
+
+    # Payment is still owed, and it is owed the other way.
+    assert sponsor.closed(cdb, "sp1") is False
+    outstanding = dict(sponsor.outstanding_after(cdb, "sp1"))
+    assert set(outstanding) == {"sp1:publish_the_clip", "sp1:pay_on_evidence"}
+
+    # The publication obligation is closed by an external round-trip, not by the
+    # creator's own report.
+    cg.discharge(cdb, "sp1:publish_the_clip", actor="twin:foreign-observer",
+                 detail="clip observed live on the agreed platform")
+
+    # Only then does the sponsor owe money, and it is the last thing to settle.
+    assert sponsor.outstanding_after(cdb, "sp1") == [("sp1:pay_on_evidence", cg.OPEN)]
+    cg.discharge(cdb, "sp1:pay_on_evidence", actor="sponsor:red-bull")
+    assert sponsor.closed(cdb, "sp1") is True
+
+
+def test_one_acknowledgement_does_not_close_a_two_acknowledgement_contract(
+        cdb, adb):
+    # A single-mention stream, against the same contract.
+    thin = lst.LiveSemanticTrack(SUBJECT)
+    thin.append(lst.SemanticEvent(25 * MIN, "sponsor_mention", "Red Bull"))
+
+    sponsor = lib.get("economic", "sponsor-obligation")
+    actors = {"creator": "creator:neon-june", "publisher": "creator:neon-june",
+              "observer": "twin:foreign-observer", "settler": "sponsor:red-bull"}
+    _grant(adb, sponsor, actors)
+    pa.enact_authorized(cdb, adb, sponsor, enactment_id="sp1",
+                        actors=actors, subject=SUBJECT)
+
+    assert len(thin.sponsor_mentions("Red Bull")) == 1
+    # The track cannot discharge it, and nothing in the machine does so on the
+    # strength of the sponsor having been named at all.
+    assert cg.status(cdb, "sp1:speak_the_acknowledgements") == cg.OPEN
+
+
+# --------------------------------------------- exhaust cools, institutions stay
+
+def test_the_stream_cools_without_losing_what_it_produced(cdb, adb, stream, tmp_path):
+    ledger = lst.ClaimLedger()
+    ledger.from_utterance(stream, 18 * MIN, claim_id="c1", asserter="Neon June",
+                          subject="event:trees-friday", assertion="plays Trees Friday")
+
+    sponsor = lib.get("economic", "sponsor-obligation")
+    actors = {"creator": "creator:neon-june", "publisher": "creator:neon-june",
+              "observer": "twin:foreign-observer", "settler": "sponsor:red-bull"}
+    _grant(adb, sponsor, actors)
+    pa.enact_authorized(cdb, adb, sponsor, enactment_id="sp1",
+                        actors=actors, subject=SUBJECT)
+
+    kept, expired = stream.cool()
+
+    # The chat, the atmosphere, the clip candidate and the raw transcript go.
+    expired_kinds = {e.kind for e in expired}
+    assert {"chat", "utterance", "clip_candidate", "place"} <= expired_kinds
+
+    # The claim, both sponsor acknowledgements and the call to action stay.
+    kept_kinds = {e.kind for e in kept}
+    assert kept_kinds == {"claim", "sponsor_mention"}
+    assert len([e for e in kept if e.kind == "sponsor_mention"]) == 2
+    # The call to action cools: it is ordinary publication, not evidence.
+    assert "cta" in {e.kind for e in expired}
+
+    # And nothing that crossed into an institution depends on the track at all:
+    # the obligations live in CommitmentGraph and survive the cooling entirely.
+    assert len(sponsor.outstanding_after(cdb, "sp1")) == 3
+    assert ledger.claims["c1"].asserter == "Neon June"
+
+
+def test_compression_over_the_whole_occurrence(stream):
+    c = stream.compression()
+    assert c["utterances"] == 2
+    assert c["semantic_events"] == 9
+    # Two durable moments, both sponsor acknowledgements. The call to action
+    # sits at SOCIAL and cools. The Friday announcement is not durable either,
+    # because nobody promoted it to a claim in this pass: speech stays speech
+    # until an attribution is made, even when a human reading the transcript
+    # can see exactly what was promised.
+    assert c["durable_events"] == 2
+    assert c["claims"] == 0
+    assert c["durable_events"] < c["semantic_events"]
+
+
+def test_promoting_the_announcement_is_what_adds_the_third_durable_moment(stream):
+    lst.ClaimLedger().from_utterance(
+        stream, 18 * MIN, claim_id="c1", asserter="Neon June",
+        subject="event:trees-friday", assertion="plays Trees Friday")
+    c = stream.compression()
+    assert c["claims"] == 1
+    assert c["durable_events"] == 3
+
+
+# ------------------------------------- ranking cannot read from later in the stream
+
+def test_a_surface_compiled_mid_stream_cannot_know_the_sponsor_yet(stream):
+    at_20 = stream.at_or_before(20 * MIN)
+    assert not [e for e in at_20 if e.kind == "sponsor_mention"]
+    # But it does already know about Trees, which is what makes the stream
+    # newly relevant to somebody two blocks away.
+    assert [e for e in at_20 if e.kind == "place" and e.value == "Trees"]

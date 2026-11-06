@@ -1,0 +1,245 @@
+#!/usr/bin/env python3
+# Archived after Bun catalogue compiler cutover.
+"""Public catalogues enumerated into channels, through the observer that obeys robots.
+
+A catalogue is a source that lists other sources: a Socrata or CKAN portal, an
+ArcGIS services directory, a DCAT `data.json`, an OPML list.  One lawful read
+of a catalogue can name hundreds or thousands of real endpoints, which is the
+only honest way this estate's channel count grows into the tens of thousands:
+each one is a member the catalogue itself declares, recorded as a VIRTUAL
+channel with the catalogue it came from.
+
+Every request goes through `bonfyre-project foreign observe`, so robots rules,
+the estate's contact user agent and receipts govern all of it.  A catalogue
+whose robots refuse is recorded as refused and not read again in this run.
+
+Nothing enumerated here is admitted.  A virtual channel means "this catalogue
+says this endpoint exists", never that it was fetched, parsed, licensed or is
+worth reading.
+
+  expand_catalogues.py --project BIN --foreign ROOT --out channels.jsonl
+      [--evidence evidence.jsonl] [--seeds seeds.json] [--per-catalogue 2000]
+      [--only HOST]
+"""
+import argparse, hashlib, json, os, re, subprocess, sys, time, urllib.parse
+
+# Declared seeds: public catalogues, each with the grammar it answers in.  A
+# seed is a candidate like any other; robots decide whether it is read.
+SEEDS = [
+    {"name": "Dallas Open Data", "kind": "socrata", "url": "https://www.dallasopendata.com", "place": "Dallas"},
+    {"name": "Texas Open Data Portal", "kind": "socrata", "url": "https://data.texas.gov", "place": "Texas"},
+    {"name": "Austin Open Data", "kind": "socrata", "url": "https://data.austintexas.gov", "place": "Austin"},
+    {"name": "Fort Worth Open Data", "kind": "dcat", "url": "https://data.fortworthtexas.gov/api/feed/dcat-us/1.1.json", "place": "Fort Worth"},
+    {"name": "North Central Texas COG open data", "kind": "dcat", "url": "https://data-nctcoggis.opendata.arcgis.com/api/feed/dcat-us/1.1.json", "place": "North Texas"},
+    {"name": "City of Dallas GIS services", "kind": "arcgis", "url": "https://gis.dallascityhall.com/arcgis/rest/services", "place": "Dallas"},
+    {"name": "Tarrant County GIS services", "kind": "arcgis", "url": "https://gis.tarrantcounty.com/arcgis/rest/services", "place": "Tarrant County"},
+    {"name": "Texas Natural Resources GIS", "kind": "arcgis", "url": "https://gis.tnris.org/arcgis/rest/services", "place": "Texas"},
+    {"name": "Houston Open Data", "kind": "socrata", "url": "https://data.houstontx.gov", "place": "Houston"},
+    {"name": "San Antonio Open Data", "kind": "dcat", "url": "https://data.sanantonio.gov/api/feed/dcat-us/1.1.json", "place": "San Antonio"},
+    {"name": "HealthData.gov", "kind": "dcat", "url": "https://healthdata.gov/data.json", "place": "United States"},
+    {"name": "CDC open data", "kind": "socrata", "url": "https://data.cdc.gov", "place": "United States"},
+    {"name": "US Census Bureau data services", "kind": "arcgis", "url": "https://tigerweb.geo.census.gov/arcgis/rest/services", "place": "United States"},
+    # A national CKAN catalogue needs a bounded query route before it is read;
+    # catalog.data.gov answers 404 to package_search from here, and its whole
+    # DCAT document is too large to read in one observation.
+    {"name": "data.gov", "kind": "ckan", "url": "https://catalog.data.gov", "place": "United States", "query": "Texas", "skip": True},
+]
+
+
+def observe(project, foreign, twin, url, timeout=120, keep_body=False):
+    receipts, bodies = os.path.join(foreign, "receipts"), os.path.join(foreign, "bodies")
+    os.makedirs(receipts, exist_ok=True)
+    os.makedirs(bodies, exist_ok=True)
+    receipt, body = os.path.join(receipts, twin + ".json"), os.path.join(bodies, twin + ".body")
+    try:
+        subprocess.run([project, "foreign", "observe", twin, url, "--receipt", receipt, "--body", body, "--observe-right", "public"],
+                       capture_output=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        return {"policy_decision": "timeout"}, ""
+    last = {}
+    if os.path.exists(receipt):
+        lines = [l for l in open(receipt, encoding="utf-8", errors="replace").read().splitlines() if l.startswith("{")]
+        if lines:
+            try:
+                last = json.loads(lines[-1])
+            except ValueError:
+                last = {}
+    text = ""
+    if os.path.exists(body) and 200 <= int(last.get("http_status") or 0) < 300:
+        with open(body, "rb") as f:
+            text = f.read(24_000_000).decode("utf-8", "replace")
+    if not keep_body:
+        # A probe is a question, not material: the receipt is the evidence and
+        # the body is not kept, so asking many hosts costs no disk.
+        try:
+            os.unlink(body)
+        except OSError:
+            pass
+    return last, text
+
+
+def twin_for(url):
+    return "catalogue-" + hashlib.sha256(url.encode()).hexdigest()[:16]
+
+
+def socrata_members(seed, project, foreign, limit, evidence):
+    """Socrata portals publish their whole catalogue as DCAT at /data.json."""
+    base = seed["url"].rstrip("/")
+    receipt, text = observe(project, foreign, twin_for(base + "/data.json"), base + "/data.json")
+    evidence.write(json.dumps({"catalogue": seed["name"], "url": base + "/data.json",
+                               "http_status": receipt.get("http_status"), "policy": receipt.get("policy_decision")}) + "\n")
+    if not text:
+        return [], receipt
+    return dcat_rows(text, seed, base, limit), receipt
+
+
+def dcat_rows(text, seed, base, limit):
+    try:
+        doc = json.loads(text)
+    except ValueError:
+        return []
+    datasets = doc.get("dataset") or doc.get("datasets") or []
+    rows = []
+    for entry in datasets[:limit]:
+        title = entry.get("title") or ""
+        distributions = entry.get("distribution") or []
+        picked = None
+        for dist in distributions:
+            url = dist.get("downloadURL") or dist.get("accessURL") or ""
+            fmt = (dist.get("format") or dist.get("mediaType") or "").lower()
+            if url and ("json" in fmt or "csv" in fmt or "geojson" in fmt):
+                picked = url
+                break
+        address = picked or entry.get("landingPage") or ""
+        if not address.startswith("http"):
+            continue
+        rows.append({"address": address, "title": title[:400], "material": "dataset",
+                     "protocol": "socrata" if "/api/views/" in address or "/resource/" in address else "dataset_file",
+                     "state": "candidate", "virtual": True, "name": seed["name"],
+                     "kind": seed.get("place", ""), "rights": entry.get("license", "") or "",
+                     "cadence": entry.get("accrualPeriodicity", "") or "",
+                     "discovered_from": "%s catalogue at %s" % (seed["name"], base)})
+    return rows
+
+
+def ckan_members(seed, project, foreign, limit, evidence):
+    base = seed["url"].rstrip("/")
+    rows, start, page = [], 0, 1000
+    while len(rows) < limit:
+        query = seed.get("query") or "*:*"
+        url = "%s/api/3/action/package_search?q=%s&rows=%d&start=%d" % (base, urllib.parse.quote(query), min(page, limit - len(rows)), start)
+        receipt, text = observe(project, foreign, twin_for(url), url)
+        evidence.write(json.dumps({"catalogue": seed["name"], "url": url, "http_status": receipt.get("http_status"),
+                                   "policy": receipt.get("policy_decision")}) + "\n")
+        if not text:
+            break
+        try:
+            results = (json.loads(text).get("result") or {}).get("results") or []
+        except ValueError:
+            break
+        if not results:
+            break
+        for entry in results:
+            for resource in entry.get("resources") or []:
+                address = resource.get("url") or ""
+                fmt = (resource.get("format") or "").lower()
+                if address.startswith("http") and fmt in ("csv", "json", "geojson", "api", "rss", "xml"):
+                    rows.append({"address": address, "title": (entry.get("title") or "")[:400], "material": "dataset",
+                                 "protocol": "ckan", "state": "candidate", "virtual": True, "name": seed["name"],
+                                 "kind": seed.get("place", ""), "rights": entry.get("license_title", "") or "",
+                                 "discovered_from": "%s catalogue at %s" % (seed["name"], base)})
+                    break
+        start += page
+        time.sleep(0.5)
+    return rows[:limit], {}
+
+
+def arcgis_members(seed, project, foreign, limit, evidence):
+    """An ArcGIS directory names folders, services and each service's layers."""
+    base = seed["url"].rstrip("/")
+    rows, folders = [], [""]
+    seen_services = 0
+    while folders and len(rows) < limit:
+        folder = folders.pop(0)
+        url = "%s%s?f=json" % (base, ("/" + folder) if folder else "")
+        receipt, text = observe(project, foreign, twin_for(url), url)
+        evidence.write(json.dumps({"catalogue": seed["name"], "url": url, "http_status": receipt.get("http_status"),
+                                   "policy": receipt.get("policy_decision")}) + "\n")
+        if not text:
+            continue
+        try:
+            doc = json.loads(text)
+        except ValueError:
+            continue
+        for sub in (doc.get("folders") or [])[:40]:
+            folders.append(("%s/%s" % (folder, sub)).strip("/"))
+        for service in doc.get("services") or []:
+            if len(rows) >= limit:
+                break
+            name, kind = service.get("name"), service.get("type")
+            if not name or not kind:
+                continue
+            address = "%s/%s/%s" % (base, name, kind)
+            rows.append({"address": address, "title": name.split("/")[-1], "material": "dataset", "protocol": "arcgis",
+                         "state": "candidate", "virtual": True, "name": seed["name"], "kind": seed.get("place", ""),
+                         "discovered_from": "%s services directory" % seed["name"]})
+            seen_services += 1
+        time.sleep(0.3)
+    return rows[:limit], {"services": seen_services}
+
+
+READERS = {"socrata": socrata_members, "dcat": None, "ckan": ckan_members, "arcgis": arcgis_members}
+
+
+def dcat_seed(seed, project, foreign, limit, evidence):
+    receipt, text = observe(project, foreign, twin_for(seed["url"]), seed["url"])
+    evidence.write(json.dumps({"catalogue": seed["name"], "url": seed["url"], "http_status": receipt.get("http_status"),
+                               "policy": receipt.get("policy_decision")}) + "\n")
+    return (dcat_rows(text, seed, seed["url"], limit) if text else []), receipt
+
+
+READERS["dcat"] = dcat_seed
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--project", required=True)
+    ap.add_argument("--foreign", required=True)
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--evidence", default=os.devnull)
+    ap.add_argument("--seeds", help="JSON file of extra catalogue seeds")
+    ap.add_argument("--per-catalogue", type=int, default=2000)
+    ap.add_argument("--only")
+    args = ap.parse_args()
+    seeds = [s for s in SEEDS if not s.get("skip")]
+    if args.seeds and os.path.exists(args.seeds):
+        seeds += [s for s in json.load(open(args.seeds)) if not s.get("skip")]
+    if args.only:
+        seeds = [s for s in seeds if args.only in s["url"]]
+    totals, written = {}, 0
+    with open(args.out, "w") as out, open(args.evidence, "a") as evidence:
+        for seed in seeds:
+            reader = READERS.get(seed["kind"])
+            if not reader:
+                continue
+            try:
+                rows, _ = reader(seed, args.project, args.foreign, args.per_catalogue, evidence)
+            except Exception as error:                      # one catalogue's shape must not stop the rest
+                evidence.write(json.dumps({"catalogue": seed["name"], "error": str(error)[:300]}) + "\n")
+                rows = []
+            # The catalogue itself is a channel too, and the only one that was read.
+            out.write(json.dumps({"address": seed["url"], "name": seed["name"], "protocol": seed["kind"],
+                                  "material": "catalogue", "state": "eligible" if rows else "candidate",
+                                  "kind": seed.get("place", ""),
+                                  "refusal": "" if rows else "the catalogue answered nothing this run"}) + "\n")
+            for row in rows:
+                out.write(json.dumps(row) + "\n")
+                written += 1
+            totals[seed["name"]] = len(rows)
+            evidence.write(json.dumps({"catalogue": seed["name"], "members": len(rows)}) + "\n")
+    print(json.dumps({"catalogues": len(seeds), "virtual_channels": written, "by_catalogue": totals}))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -148,6 +148,9 @@ typedef struct BfField {
     bool columns;
     bool depends_on;
     char *depends_on_expr;
+    char *mandatory_depends_on_expr;
+    char *read_only_depends_on_expr;
+    char *collapsible_depends_on_expr;
     char *default_value;
     char *description;
     char *fetch_from;

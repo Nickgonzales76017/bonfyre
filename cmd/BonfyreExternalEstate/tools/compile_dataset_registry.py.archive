@@ -1,0 +1,132 @@
+#!/usr/bin/env python3
+"""Compile the awesome-public-datasets registry into candidate public estates.
+
+The registry is discovery evidence, not material: it mixes live APIs, bulk
+dumps, historical corpora, mirrors and links its own editors mark broken.  Each
+entry becomes a candidate passport in SHADOW or REFUSED:
+
+  registry entry -> candidate -> robots probe of its host (one request per host)
+  -> SHADOW (robots admits, or the host publishes no rules)
+  -> REFUSED (robots refuses the entry's path, or the registry marks it broken)
+
+A candidate is never ADMITTED here.  Admission is a census row somebody
+authors, with a receipt.  Candidates lower into AddressPlane advertisements
+(kind external_source, admission:shadow|refused) with the registry's category
+as the domain axis, so `forward --need domain:agriculture --need
+admission:shadow` answers with datasets a person might ask the estate to read.
+
+  compile_dataset_registry.py --readme README.rst --out candidates.jsonl [--probe] [--catalogue catalogue.jsonl]
+
+--probe reads robots.txt once per host (BonfyreProject/1.0, a quarter-second
+pace).  Without it every candidate stays SHADOW with robots unobserved.
+--catalogue writes external_resource-shaped rows keyed by a stable ext_id, so a
+re-import updates rather than duplicates the ExternalEstateIndex catalogue.
+"""
+import argparse, hashlib, json, re, sys, time, urllib.parse, urllib.request, urllib.robotparser
+
+sys.path.insert(0, __import__("os").path.dirname(__file__))
+from compile_source_passports import advertisement, token  # noqa: E402
+
+AGENT = "BonfyreProject/1.0"
+ENTRY = re.compile(r"^\*\s+\|(OK|FIXME)_ICON\|\s+`(.+?)\s+<(https?://[^>]+)>`_(?:\s+\[`Meta\s+<([^>]+)>`_\])?")
+
+
+def parse(readme):
+    category, rows = "", []
+    lines = readme.splitlines()
+    for i, line in enumerate(lines):
+        if i + 1 < len(lines) and re.fullmatch(r"-{3,}", lines[i + 1].strip()) and line.strip():
+            category = line.strip()
+            continue
+        m = ENTRY.match(line.strip())
+        if not m or not category:
+            continue
+        status, text, url, meta = m.groups()
+        name, _, says = text.partition(" - ")
+        says = says.replace("[...]", "").strip()
+        rows.append({"category": category, "name": name.strip(), "says": says, "url": url, "meta": meta or "", "listed_ok": status == "OK"})
+    return rows
+
+
+def robots_for(host, cache):
+    if host in cache:
+        return cache[host]
+    parser = urllib.robotparser.RobotFileParser()
+    state = "no-rules"
+    try:
+        req = urllib.request.Request("https://%s/robots.txt" % host, headers={"User-Agent": AGENT})
+        with urllib.request.urlopen(req, timeout=15) as response:
+            parser.parse(response.read().decode("utf-8", "replace").splitlines())
+            state = "rules"
+    except urllib.error.HTTPError as error:
+        parser.parse([])
+        state = "no-rules" if error.code == 404 else "unobserved"
+    except Exception:
+        parser.parse([])
+        state = "unobserved"
+    cache[host] = (parser, state)
+    time.sleep(0.25)
+    return cache[host]
+
+
+def candidate(row, probe_cache=None):
+    parsed = urllib.parse.urlparse(row["url"])
+    ident = "apd-" + hashlib.sha256(row["url"].encode()).hexdigest()[:16]
+    robots, state = "unobserved", "SHADOW"
+    if probe_cache is not None and parsed.hostname:
+        parser, seen = robots_for(parsed.hostname, probe_cache)
+        if seen == "rules":
+            robots = "admitted" if parser.can_fetch(AGENT, row["url"]) else "refused"
+        else:
+            robots = seen
+    if robots == "refused" or not row["listed_ok"]:
+        state = "REFUSED"
+    access = "API" if re.search(r"\bapi\b|/api/", row["url"] + " " + row["says"], re.I) else "FILE"
+    passport = {
+        "passport": ident, "name": row["name"][:120], "roles": ["REFERENCE"], "access": [access], "topology": ["CORPUS"],
+        "identifiers": ["url"], "subject_kinds": [token(row["category"])],
+        "spatial": "global", "temporal": "snapshot", "refresh": "irregular", "revision": "none",
+        "capabilities": ["supply-dataset"],
+        "reuse": {"allows": ["observe"], "requires": [], "unknown": ["retain", "display_metadata", "redistribute", "transform", "commercial_use"]},
+        "scale": "unmeasured", "mirror": "none", "evidence": "claimed",
+        "carrier": {"route": row["url"], "robots": robots},
+        "state": state, "census": [],
+        "cannot_infer": "a listed dataset is a pointer somebody curated, not a reachable, lawful or current source",
+    }
+    ad = advertisement(passport, verifier="SourcePassport:registry-candidate", lowerer="SourcePassport:unlowered")
+    ad["terms"] = sorted(set(ad["terms"] + ["domain:" + token(row["category"]), "source_collection:awesome-public-datasets"]))
+    ad["dependencies"].append("SourcePassport:awesome-public-datasets")
+    return passport, ad
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--readme", required=True)
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--catalogue")
+    ap.add_argument("--probe", action="store_true")
+    ap.add_argument("--limit", type=int, default=0)
+    args = ap.parse_args()
+    rows = parse(open(args.readme, encoding="utf-8", errors="replace").read())
+    if args.limit:
+        rows = rows[: args.limit]
+    cache = {} if args.probe else None
+    states = {}
+    with open(args.out, "w") as out, (open(args.catalogue, "w") if args.catalogue else open("/dev/null", "w")) as cat:
+        for row in rows:
+            passport, ad = candidate(row, cache)
+            states[passport["state"]] = states.get(passport["state"], 0) + 1
+            out.write(json.dumps(ad, separators=(",", ":")) + "\n")
+            cat.write(json.dumps({
+                "ext_id": passport["passport"], "name": row["name"][:200], "url": row["url"], "says": row["says"][:600],
+                "estate": "awesome-public-datasets", "grouping": row["category"], "functions": "dataset",
+                "related": row["meta"], "status": "published",
+                "cannot_infer": "a catalogued dataset is a pointer; nothing here says it was read, is reachable, or may be republished",
+            }) + "\n")
+    print(json.dumps({"entries": len(rows), "categories": len({r["category"] for r in rows}),
+                      "hosts_probed": len(cache) if cache is not None else 0, "states": states}))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

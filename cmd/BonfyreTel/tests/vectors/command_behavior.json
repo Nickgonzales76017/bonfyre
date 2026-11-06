@@ -1,0 +1,3 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-tel-selftest","binary_env":"BONFYRE_TEL_SELFTEST_BIN","cases":[
+{"name":"a call is placed and hung up on a local FreeSWITCH and never reaches the telephone network","steps":[
+ {"argv":[],"env":{"HOME":"${tmp}"},"exit":0,"at":{"ready":true,"switch_has_call_after_call":true,"call_recorded_by_organ":1,"switch_has_call_after_hangup":false,"hangup_of_unknown_call_refused":true,"reaches_telephone_network":false}}]}]}

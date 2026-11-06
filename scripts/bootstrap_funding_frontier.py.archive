@@ -1,0 +1,380 @@
+#!/usr/bin/env python3
+"""Historical parity oracle: compile declared funding work into a public frontier.
+
+The programme fabric already names real programmes and the distinct funding
+streams that could fund each one.  Leaving those declarations in SQLite makes
+them neither a fund-raising product nor a useful operating surface.  This
+compiler reads *every* published programme and work package, observes the
+public Grants.gov search API for each distinct named stream, and emits a small,
+auditable funding frontier for the public estate.
+
+It intentionally performs no application, account creation, payment, pledge,
+or eligibility decision.  A programme naming an agency is a hypothesis to
+investigate; a returned opportunity is an external observation; neither is an
+award nor permission to submit.  The output keeps those states legible instead
+of turning a useful funding list into fabricated pipeline revenue.
+
+The Grants.gov Applicant search endpoint is public.  We retain only the
+bounded search result fields used to make the frontier, never its response
+token or an application payload.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import html
+import json
+import os
+import sqlite3
+import sys
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+from collections import defaultdict
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+GRANTS_SEARCH = "https://api.grants.gov/v1/api/search2"
+BOUNDARY = (
+    "A programme's funding candidate is a declared possible stream. A Grants.gov result "
+    "is an external search observation. Neither establishes eligibility, an application, "
+    "an award, available money, authority to submit, or permission to spend."
+)
+
+# The programme's rail is canonical.  This vocabulary only translates it into
+# the terms a public catalogue indexes; it never creates a new claimed rail.
+SEARCH_VOCABULARY = {
+    "CDC PHIG": "Public Health Infrastructure Grant", "CDC/health partner": "public health infrastructure",
+    "CISA SLCGP": "State Local Cybersecurity Grant Program", "DOE GRIP/SPARK": "Grid Resilience Innovation Partnerships",
+    "DOL SAEF": "apprenticeship expansion", "EDA Build to Scale": "Build to Scale",
+    "FMPP": "Farmers Market Promotion Program", "HRSA Rural Health Network": "Rural Health Network Development",
+    "HUD Automated Permitting": "automated permitting housing", "HUD Lead Hazard Reduction": "Lead Hazard Reduction",
+    "HUD PRO Housing": "PRO Housing", "Healthy Homes": "Healthy Homes",
+    "IMLS NLG-L": "National Leadership Grants Libraries", "NIA/NIH SBIR": "Small Business Innovation Research health",
+    "NSF PESOSE": "Pathways Enable Secure Open Source Ecosystems", "NSF S&CC": "Smart Connected Communities",
+    "NSF-SBIR": "NSF Small Business Innovation Research", "PESOSE": "Pathways Enable Secure Open Source Ecosystems",
+    "S&CC": "Smart Connected Communities", "SS4A": "Safe Streets Roads for All",
+    "USDA DLT": "Distance Learning Telemedicine", "USDA LFPP": "Local Food Promotion Program",
+    "USDA-SBIR Rural Development": "Small Business Innovation Research Rural Development",
+}
+
+
+def now_iso() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def esc(value: object) -> str:
+    return html.escape(str(value if value is not None else ""), quote=True)
+
+
+def json_value(value: object) -> object:
+    """The CMS stores JSON fields as text; a malformed declaration stays visible."""
+    if isinstance(value, (list, dict)):
+        return value
+    try:
+        return json.loads(value or "[]")
+    except (TypeError, json.JSONDecodeError):
+        return []
+
+
+def open_cms(path: str) -> sqlite3.Connection:
+    db = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+    db.row_factory = sqlite3.Row
+    return db
+
+
+def declared_programmes(cms_path: str) -> list[dict]:
+    db = open_cms(cms_path)
+    try:
+        rows = db.execute(
+            "SELECT i.instance_id, i.owner_subject, i.site_id, i.archetype, "
+            "t.name, t.description, t.semantic_slots, t.funding_candidates "
+            "FROM program_instance i JOIN program_template t ON t.template_id=i.template_id "
+            "WHERE i.status='published' AND t.status='published' "
+            "ORDER BY i.instance_id"
+        ).fetchall()
+        package_rows = db.execute(
+            "SELECT instance_id, funding_program FROM funding_work_package "
+            "WHERE status='published' ORDER BY instance_id, funding_program"
+        ).fetchall()
+    finally:
+        db.close()
+
+    packages: dict[str, list[str]] = defaultdict(list)
+    for row in package_rows:
+        name = (row["funding_program"] or "").strip()
+        if name and name not in packages[row["instance_id"]]:
+            packages[row["instance_id"]].append(name)
+
+    result: list[dict] = []
+    for row in rows:
+        # Work packages are the actual declared stream boundary.  Template
+        # candidates are retained only as a consistency witness and never used
+        # to manufacture a package that does not exist.
+        declared = [str(x).strip() for x in json_value(row["funding_candidates"])
+                    if str(x).strip()]
+        work = packages.get(row["instance_id"], [])
+        result.append({
+            "instance_id": row["instance_id"],
+            "owner_subject": row["owner_subject"],
+            "site_id": row["site_id"],
+            "archetype": row["archetype"],
+            "name": row["name"],
+            "description": row["description"],
+            "semantic_slots": [str(value).strip() for value in json_value(row["semantic_slots"])
+                               if str(value).strip()],
+            "funding_candidates": work,
+            "template_candidates": declared,
+            "package_count": len(work),
+            "candidate_contract_matches_packages": sorted(work) == sorted(declared),
+        })
+    return result
+
+
+def edition_contract(programme: dict) -> dict:
+    """The human product implied by a programme's already-declared material.
+
+    This is intentionally a proposal for a pilot, not a claim that these
+    editions have been activated for the subject.  ProgrammeFabric owns the
+    configuration; a partner and the existing owners still decide what material
+    becomes public, relationship-specific, or operator-only.
+    """
+    slots = programme["semantic_slots"]
+    named = ", ".join(slots[:5]) if slots else "the material this institution chooses to connect"
+    return {
+        "public": {
+            "title": "Public edition",
+            "description": "A named, useful publication anyone can browse: " + named + ".",
+        },
+        "connected": {
+            "title": "Connected edition",
+            "description": "People with a real relationship receive their own saved context, relevant updates and lawful actions.",
+        },
+        "operator": {
+            "title": "Operator edition",
+            "description": "An authorized team works from evidence, exceptions, outcomes and the work that remains.",
+        },
+    }
+
+
+def pilot_request_url(programme: dict) -> str:
+    """A prefilled *draft* request against the estate's existing public repo.
+
+    Opening the URL does not create an issue or assert any relationship.  The
+    human still reviews GitHub's form and submits it.  This gives the public
+    product a truthful route to a conversation without pretending an external
+    payment/account/application rail is configured.
+    """
+    title = f"Aurekai pilot — {programme['name']}"
+    body = (
+        "## Pilot conversation\n\n"
+        f"I want to discuss a living publication for **{programme['name']}**.\n\n"
+        "- Institution / community:\n"
+        "- My role and authority to explore a pilot:\n"
+        "- What public material should be useful first:\n"
+        "- Who needs a connected or operator edition:\n"
+        "- Relevant deadline, budget, or funding route (if any):\n\n"
+        "Submitting this request opens a conversation only. It does not form an agreement, "
+        "grant application, payment, or authority delegation."
+    )
+    return "https://github.com/Nickgonzales76017/bonfyre/issues/new?" + urllib.parse.urlencode({
+        "title": title,
+        "body": body,
+        "labels": "pilot",
+    })
+
+
+def observe_grants(candidate: str, rows: int, timeout: int) -> dict:
+    query = SEARCH_VOCABULARY.get(candidate, candidate)
+    payload = json.dumps({
+        # Ask the public catalogue for a small candidate set, then retain only
+        # the bounded frontier below. Catalogue order is not semantic fit.
+        "rows": max(rows, 25),
+        "keyword": query,
+        "oppStatuses": "forecasted|posted",
+    }).encode("utf-8")
+    request = urllib.request.Request(
+        GRANTS_SEARCH,
+        data=payload,
+        headers={"Content-Type": "application/json", "Accept": "application/json", "User-Agent": "BonfyreFundingFrontier/1.0"},
+        method="POST",
+    )
+    observed_at = now_iso()
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+            status = response.status
+        response_digest = "sha256:" + hashlib.sha256(raw).hexdigest()
+        decoded = json.loads(raw)
+        data = decoded.get("data") or {}
+        hits = data.get("oppHits") or []
+        compact = []
+        for hit in hits:
+            # Keep exactly the provider's discovery fields needed for a human
+            # to open and verify the opportunity.  No opaque response token,
+            # applicant data, or invented eligibility score enters the estate.
+            compact.append({
+                "opportunity_id": str(hit.get("id") or ""),
+                "number": str(hit.get("number") or ""),
+                "title": str(hit.get("title") or ""),
+                "agency_code": str(hit.get("agencyCode") or ""),
+                "agency": str(hit.get("agency") or hit.get("agencyName") or ""),
+                "open_date": str(hit.get("openDate") or ""),
+                "close_date": str(hit.get("closeDate") or ""),
+                "provider_status": str(hit.get("oppStatus") or ""),
+                "document_type": str(hit.get("docType") or ""),
+                "assistance_listings": hit.get("cfdaList") or hit.get("alnist") or [],
+            })
+        terms = {word.lower() for word in query.replace("/", " ").replace("-", " ").split()
+                 if len(word) > 2 and word.lower() not in {"and", "for", "the", "program"}}
+        def relevance(hit: dict) -> tuple[int, str]:
+            text = (hit["title"] + " " + hit["agency"] + " " + hit["number"]).lower()
+            return (sum(term in text for term in terms), hit["title"].lower())
+        # Provider ordering is not a fit claim. This bounded lexical ordering
+        # simply keeps exact named programme results ahead of generic matches.
+        compact.sort(key=lambda hit: (-relevance(hit)[0], relevance(hit)[1]))
+        compact = compact[:rows]
+        return {
+            "candidate": candidate,
+            "query": query,
+            "source": GRANTS_SEARCH,
+            "observed_at": observed_at,
+            "http_status": status,
+            "response_digest": response_digest,
+            "provider_hit_count": int(data.get("hitCount") or 0),
+            "returned": compact,
+            "observation_state": "observed",
+        }
+    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, ValueError, json.JSONDecodeError) as exc:
+        return {
+            "candidate": candidate,
+            "query": query,
+            "source": GRANTS_SEARCH,
+            "observed_at": observed_at,
+            "observation_state": "unavailable",
+            "reason": str(exc),
+            "returned": [],
+        }
+
+
+def render_html(report: dict) -> str:
+    programmes = report["programmes"]
+    observations = report["observations"]
+    output = [
+        "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">",
+        "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">",
+        "<title>Funding frontier · Aurekai</title>",
+        "<meta name=\"description\" content=\"Declared programme funding streams matched against current public Grants.gov search observations.\">",
+        "<meta name=\"bonfyre:cannot-infer\" content=\"", esc(BOUNDARY), "\">",
+        "<link rel=\"stylesheet\" href=\"/assets/tailwind.css\"><link rel=\"stylesheet\" href=\"/assets/world.css\">",
+        "<style>.funding-grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(290px,1fr))}.funding-card{border:1px solid currentColor;padding:20px;border-radius:12px}.funding-card h2{margin:.2em 0}.rail{display:inline-block;border:1px solid currentColor;border-radius:999px;padding:3px 8px;margin:3px 4px 3px 0;font:12px ui-monospace,monospace}.boundary{border-left:4px solid #bd7b2a;padding:12px 16px;background:#fff8e8}.opportunity{margin:12px 0;padding-top:12px;border-top:1px solid #ccd}.quiet{color:#667085;font-size:.92em}a{overflow-wrap:anywhere}.edition{margin:14px 0;padding:12px 0;border-top:1px solid #d8ddd8}.edition h3{font-size:1rem;margin:0 0 .25rem}.action{display:inline-block;background:#183b2a;color:#fff!important;padding:10px 14px;border-radius:6px;text-decoration:none;font-weight:700}.action:hover{background:#28543d}</style>",
+        "</head><body><main class=\"wrap\"><header class=\"region\"><p class=\"src\">Aurekai / living publications</p><h1>Build a publication people can actually use.</h1>",
+        "<p class=\"src\">", esc(report["programme_count"]), " real institutional pilot shapes · ",
+        esc(report["work_package_count"]), " separately scoped funding work packages · ",
+        esc(report["candidate_count"]), " declared public funding streams.</p></header>",
+        "<section class=\"region\"><p>Every pilot begins as a living publication: a useful public edition, a relationship-aware edition for the people it serves, and an operator edition for the people responsible for it. The underlying system stays out of the way.</p><p>A city can start with a service guide. A library can start with a local knowledge edition. A creator, school, household, business, place, or community can start with the thing people come to them for.</p></section>",
+        "<section class=\"region boundary\"><strong>Funding boundary.</strong> ", esc(BOUNDARY),
+        " A pilot request is a conversation, not an application, award, payment, agreement, or authority delegation.</section>",
+        "<section class=\"region\"><h2>Choose a pilot shape</h2><p class=\"src\">These are published institutional programme declarations rendered as human products. Their distinct funding work packages remain visible below, but funding is never a substitute for a partner or a useful first edition.</p><div class=\"funding-grid\">",
+    ]
+    for programme in programmes:
+        output.extend(["<article class=\"funding-card\"><p class=\"quiet\">", esc(programme["archetype"]), "</p><h2>", esc(programme["name"]), "</h2>"])
+        if programme.get("description"):
+            output.extend(["<p>", esc(programme["description"]), "</p>"])
+        for edition in programme["edition_contract"].values():
+            output.extend(["<section class=\"edition\"><h3>", esc(edition["title"]), "</h3><p>",
+                           esc(edition["description"]), "</p></section>"])
+        output.append("<p class=\"quiet\">Declared funding work packages</p><p>")
+        for candidate in programme["funding_candidates"]:
+            output.extend(["<span class=\"rail\">", esc(candidate), "</span>"])
+        output.append("</p>")
+        if not programme["candidate_contract_matches_packages"]:
+            output.append("<p class=\"quiet\">Template/package declaration mismatch; this is a compiler consistency signal, not a funding conclusion.</p>")
+        output.extend(["<a class=\"action\" href=\"", esc(programme["pilot_request_url"]),
+                       "\" rel=\"noopener noreferrer\" target=\"_blank\">Start a pilot conversation ↗</a>"])
+        output.append("</article>")
+    output.extend(["</div></section><section class=\"region\"><h2>Observed public opportunity frontier</h2>",
+                   "<p class=\"src\">Search observations are grouped by declared stream. Provider status is the provider's label and may change; no result has been scored as eligible.</p>"])
+    for candidate in sorted(observations):
+        obs = observations[candidate]
+        output.extend(["<article class=\"funding-card\"><h2>", esc(candidate), "</h2><p class=\"quiet\">",
+                       esc(obs.get("observation_state")), " · observed ", esc(obs.get("observed_at")),
+                       " · provider reported ", esc(obs.get("provider_hit_count", 0)), " matching records</p>"])
+        if obs.get("observation_state") != "observed":
+            output.extend(["<p>Provider observation unavailable: ", esc(obs.get("reason")), ". It is not treated as zero opportunities.</p>"])
+        elif not obs["returned"]:
+            output.append("<p>No bounded result was returned for this exact query. That is not a funding verdict.</p>")
+        else:
+            for hit in obs["returned"]:
+                number = hit["number"] or hit["opportunity_id"]
+                url = "https://www.grants.gov/search-results-detail/" + urllib.parse.quote(hit["opportunity_id"], safe="") if hit["opportunity_id"] else "https://www.grants.gov/search-grants"
+                output.extend(["<div class=\"opportunity\"><strong>", esc(hit["title"]), "</strong><br><span class=\"quiet\">",
+                               esc(hit["agency"] or hit["agency_code"]), " · ", esc(number), " · ",
+                               esc(hit["provider_status"]), " · closes ", esc(hit["close_date"] or "not stated"),
+                               "</span><br><a href=\"", esc(url), "\" rel=\"noopener noreferrer\" target=\"_blank\">Open primary opportunity ↗</a></div>"])
+        output.append("</article>")
+    output.extend(["</section><footer class=\"region\"><p class=\"src\">Generated ", esc(report["generated_at"]),
+                   ". Source: <a href=\"https://www.grants.gov/api/api-guide\">Grants.gov Applicant API</a>. ",
+                   "<a href=\"/funding-frontier.json\">Machine-readable receipt</a> · <a href=\"/economics\">Economics</a> · <a href=\"/capability\">Capabilities</a></p></footer></main></body></html>"])
+    return "".join(output)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--cms", default=os.path.expanduser("~/.bonfyre/estate-local/cms.db"))
+    parser.add_argument("--out", required=True, help="public tree receiving funding.html and funding-frontier.json")
+    parser.add_argument("--rows", type=int, default=4, help="bounded provider results retained per declared stream")
+    parser.add_argument("--timeout", type=int, default=30)
+    parser.add_argument("--offline", action="store_true", help="compile declared estate state without public observations")
+    args = parser.parse_args()
+    if args.rows < 1 or args.rows > 25:
+        parser.error("--rows must be between 1 and 25")
+    if not os.path.exists(args.cms):
+        parser.error(f"CMS database does not exist: {args.cms}")
+
+    programmes = declared_programmes(args.cms)
+    candidates = sorted({candidate for programme in programmes for candidate in programme["funding_candidates"]})
+    observations = ({candidate: observe_grants(candidate, args.rows, args.timeout) for candidate in candidates}
+                    if not args.offline else {
+                        candidate: {"candidate": candidate, "query": SEARCH_VOCABULARY.get(candidate, candidate), "source": GRANTS_SEARCH,
+                                    "observed_at": now_iso(), "observation_state": "not_observed",
+                                    "returned": [], "reason": "offline compilation requested"}
+                        for candidate in candidates
+                    })
+    for programme in programmes:
+        programme["edition_contract"] = edition_contract(programme)
+        programme["pilot_request_url"] = pilot_request_url(programme)
+
+    report = {
+        "schema": "bonfyre-funding-frontier.v1",
+        "generated_at": now_iso(),
+        "effect_class": "READ_ONLY_EXTERNAL_OBSERVATION",
+        "source": {"provider": "Grants.gov", "endpoint": GRANTS_SEARCH, "authentication": "none"},
+        "programme_count": len(programmes),
+        "work_package_count": sum(p["package_count"] for p in programmes),
+        "candidate_count": len(candidates),
+        "programmes": programmes,
+        "observations": observations,
+        "cannot_infer": [
+            "a funding candidate -> programme eligibility",
+            "a public opportunity result -> an application, award, available money, or authority to submit",
+            "a missing/unavailable provider observation -> no funding exists",
+            "a funding prospect -> spend authority",
+        ],
+        "boundary": BOUNDARY,
+    }
+    root = Path(args.out)
+    root.mkdir(parents=True, exist_ok=True)
+    (root / "funding-frontier.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    (root / "funding.html").write_text(render_html(report), encoding="utf-8")
+    observed = sum(1 for obs in observations.values() if obs["observation_state"] == "observed")
+    print(json.dumps({"schema": report["schema"], "programmes": len(programmes),
+                      "work_packages": report["work_package_count"], "candidates": len(candidates),
+                      "observed": observed, "out": str(root), "effect_performed": False}, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

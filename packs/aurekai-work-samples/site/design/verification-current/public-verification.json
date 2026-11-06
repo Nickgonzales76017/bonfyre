@@ -1,0 +1,40 @@
+{
+  "at": "2026-10-07T15:20:59.281Z",
+  "checks": [
+    {
+      "name": "Public route opens the product editor",
+      "passed": true
+    },
+    {
+      "name": "Public Redwood records load",
+      "passed": true
+    },
+    {
+      "name": "Public change review opens",
+      "passed": true
+    },
+    {
+      "name": "Public draft survives reload",
+      "passed": true
+    },
+    {
+      "name": "Public mobile fits viewport",
+      "passed": true
+    },
+    {
+      "name": "Mobile product list works",
+      "passed": true
+    },
+    {
+      "name": "No JavaScript errors",
+      "passed": true
+    },
+    {
+      "name": "No merchant or server writes",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "writes": [],
+  "draft_storage": "temporary test browser only"
+}

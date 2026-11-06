@@ -1,0 +1,40 @@
+from __future__ import annotations
+
+import sys
+from types import SimpleNamespace
+from pathlib import Path
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT / "tools"))
+
+import housing_quote_observations as quotes  # noqa: E402
+
+
+def test_policy_receipt_keeps_admission_and_observation_distinct(tmp_path: Path) -> None:
+    response = SimpleNamespace(
+        observed_at="2026-08-24T02:00:00Z", body=b"public quote", transport_error="",
+        status=200, ok=True,
+    )
+    row = quotes.policy_receipt(
+        response=response, twin_id="fixture", source_url="https://example.test/listing",
+        body_path=tmp_path / "quote.html", robots_url="https://example.test/robots.txt",
+        robots_status=200, allowed=True,
+    )
+    assert row["observe_right"] == "public"
+    assert row["policy_decision"] == "allow"
+    assert row["fetch_attempted"] is True
+    assert row["content_sha256"] == "e4f821dda894a5b9a3b81db3ab24f35f93a2e22603f05caf0b7142443e9e17ed"
+    assert row["availability_claim"] is False
+
+
+def test_policy_denial_has_no_fictional_body_or_fetch() -> None:
+    row = quotes.policy_denial_receipt(
+        twin_id="fixture", source_url="https://example.test/private-quote",
+        robots_url="https://example.test/robots.txt", robots_status=200,
+    )
+    assert row["policy_decision"] == "deny"
+    assert row["fetch_attempted"] is False
+    assert row["observation_kind"] == "policy_excluded"
+    assert "body_path" not in row
+    assert "content_sha256" not in row

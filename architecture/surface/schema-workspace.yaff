@@ -1,0 +1,82 @@
+atlas surface
+
+architecture schema-workspace
+  canonical_name Schema workspace
+  family surface
+  domain Surface / Database structure and migration
+  layer application
+  semantic_question For a SQLite database, which structural changes are wanted, which rows would each change reject, alter or orphan, and does the resulting migration keep every row and reference when run on a copy?
+  purpose A Work Samples workspace from the claude-skills engineering schema donors as an instrument: a SQLite file opened in the browser with sql.js, drawn as tables with their references, changes staged from the drawing and the column editor, each change checked against the data, a migration written by SQLite's documented table-rebuild procedure, and a trial on a copy reporting rows before and after, broken references and the integrity check; the original is never written and the result is a download
+  maturity implemented
+  consumes sql.js 1.12.0 (SQLite compiled to WebAssembly), vendored with npm integrity and SHA-256 in vendor/sql.js-1.12.0/provenance.tsv
+  publishes migration SQL, changed SQLite file, diagram SVG
+  node_types Table, Column, ForeignKey, Index, StagedChange, Precheck, Trial
+  internal_calculus changes ALTER TABLE cannot make rebuild the table: create T__new, copy with casts and fills, drop, rename, recreate indexes, then PRAGMA foreign_key_check, all with foreign keys off inside one transaction
+  internal_calculus renaming a table or a referred-to column also rebuilds every table whose definition names it
+  invariant CHECK clauses written in a table survive a rebuild, as do composite keys, table-level UNIQUE, AUTOINCREMENT and WITHOUT ROWID
+  invariant a required column over empty values needs a fill; a reference needs a single-column key or unique target; a value retyped is shown with what it becomes before running
+  invariant a failed trial rolls back and names the statement that failed; the copy is discarded
+  witness components/BonfyreServiceSite/tests/schema-lab.test.mjs with bun:sqlite over the sample built from retained research and NYC 311 records: references hold in the sample, retyping years keeps every row and the precheck names "c. 1999" becoming 0, renaming people/id rebuilds authorship and its reference still holds, an orphan reference is found before and listed after, a required column takes its fill, a unique index over duplicates fails on the copy leaving it unchanged, a CHECK survives a rebuild, and impossible changes are refused with reasons
+  witness components/BonfyreServiceSite/tests/queues-research-browser.mjs in headless Chrome at 1440 and 390 px: works.year retyped from the column editor, tried on the copy, all six tables kept their rows and every reference held
+  forbidden_inference a migration that passes on a copy -> one that is safe on a database other programs are writing to, or under another SQLite version
+  forbidden_inference a structure change -> a correct data model for the business
+  known_gap not yet published; the deploy is the operator's to run
+  known_gap views, triggers and generated columns are listed by SQLite but not edited or rewritten by a rebuild
+  source_path components/BonfyreServiceSite/schema-lab.mjs
+  source_path components/BonfyreServiceSite/schema-lab-client.mjs
+  source_path components/BonfyreServiceSite/schema-lab-material.mjs
+  source_path components/BonfyreServiceSite/schema-lab.css
+  source_path components/BonfyreServiceSite/sections/schema.mjs
+  source_path components/BonfyreServiceSite/vendor/sql.js-1.12.0/provenance.tsv
+  source_path components/BonfyreServiceSite/tests/schema-lab.test.mjs
+  source_lineage 2026-10-19 claude-skills engineering/* at 19392f7a; earlier ChatGPT build was sandbox-only
+
+interaction service-site-packages-schema-workspace
+  source service-site
+  destination schema-workspace
+  relation packages_workspace
+  preserves a sample database built from the retained research and 311 records, and the vendored SQLite with its provenance
+  drops nothing a visitor opens; their file stays in their browser
+  forbidden_inference a packaged workspace -> a published one
+  invalidates_on schema-lab sources, sql.js vendor files, retained records
+  witness components/BonfyreServiceSite/schema-lab-material.mjs
+
+architecture dependency-planner
+  canonical_name Dependency planner
+  family surface
+  domain Surface / Plans, dependencies and finish dates
+  layer application
+  semantic_question For tasks with best, likely and worst lengths, who does them and what each waits on, which path decides the end, how likely is each finish date, and how much later does it end when one person can do one thing at a time?
+  purpose A Work Samples workspace from the claude-skills project-management donors as an instrument: a timeline edited directly (drag a bar's end to change its length, drag its dot onto another task to make that task wait), the critical path from likely lengths, 3,000 seeded PERT-Beta runs giving finish-date percentiles and how often each task is critical, a serial schedule that respects each person's time, and a finish-date chart where dragging picks a date and shows its chance; the sample is this estate's own open handoff work read from the backfill ledger
+  maturity implemented
+  consumes docs/engineering/handoff-backfill-20261019/demo-instruments.tsv
+  publishes schedule CSV, plan JSON
+  node_types Task, Dependency, ThreePointEstimate, Owner, SimulatedFinish, LevelledSchedule
+  internal_calculus forward and backward passes for early and late dates and slack; loops are found by depth-first search and refused
+  internal_calculus PERT-Beta draws with shape 1 + 4(m - o)/(p - o) via Marsaglia–Tsang gamma variates
+  internal_calculus levelling: at each step the ready task whose owner is free soonest starts, least slack first
+  invariant a dependency that would close a loop is refused with the tasks named; estimates must run best ≤ likely ≤ worst
+  invariant dates count working days and skip Saturdays and Sundays; the same seed gives the same spread
+  witness components/BonfyreServiceSite/tests/plan-network.test.mjs checks a textbook network's critical path, slack and late dates by hand, loop and missing-task refusal, PERT draw range and mean, a repeatable spread wider than the likely plan with the long path critical in more than 85% of runs, a two-day delay when one person holds two parallel tasks, working-day arithmetic over a weekend, and CSV round trips
+  witness components/BonfyreServiceSite/tests/queues-research-browser.mjs in headless Chrome at 1440 and 390 px: the sample scheduled at least ten tasks, simulated finish dates, showed the people view and refused a dependency loop
+  forbidden_inference a percentile date -> a commitment or a forecast of what will happen; the spread comes from the stated estimates
+  forbidden_inference the sample's estimates -> measured effort; they are labelled assumptions
+  known_gap not yet published; the deploy is the operator's to run
+  known_gap calendars without weekends only; holidays, part-time owners and partial overlaps are not modelled
+  source_path components/BonfyreServiceSite/plan-network.mjs
+  source_path components/BonfyreServiceSite/plan-network-client.mjs
+  source_path components/BonfyreServiceSite/plan-network-material.mjs
+  source_path components/BonfyreServiceSite/plan-network.css
+  source_path components/BonfyreServiceSite/sections/plan.mjs
+  source_path components/BonfyreServiceSite/tests/plan-network.test.mjs
+  source_lineage 2026-10-19 claude-skills project-management/* at 19392f7a; earlier ChatGPT build was sandbox-only
+
+interaction dependency-planner-reads-handoff-ledger
+  source dependency-planner
+  destination service-site
+  relation packages_workspace
+  preserves the open rows of the instrument ledger as the sample's tasks
+  drops the ledger's stage evidence; the plan carries titles and states only
+  forbidden_inference the sample plan -> an agreed schedule
+  invalidates_on demo-instruments.tsv
+  witness components/BonfyreServiceSite/plan-network-material.mjs

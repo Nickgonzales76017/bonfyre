@@ -76,7 +76,14 @@ async function findExecutable(command, pathValue = process.env.PATH || '') {
   return null;
 }
 
+function boundedTimeoutMs(value, fallback = 5_000) {
+  const number = Number(value ?? fallback);
+  if (!Number.isFinite(number)) return fallback;
+  return Math.max(1, Math.min(Math.trunc(number), 30_000));
+}
+
 function execute(command, args, { spawnImpl = spawn, timeoutMs = 5_000, maxOutputBytes = 48_000 } = {}) {
+  timeoutMs = boundedTimeoutMs(timeoutMs);
   return new Promise((resolve, reject) => {
     const child = spawnImpl(command, args, { stdio: ['ignore', 'pipe', 'pipe'] });
     let stdout = '';
@@ -129,15 +136,25 @@ export async function probeLiveAdapters({ adapters, timeoutMs = 5_000, maxConcur
       results[index] = await probeOne(catalog[index]);
     }
   }
-  const workers = Math.min(Math.max(1, Number(maxConcurrency) || 1), Math.max(1, catalog.length));
+  const workers = Math.min(8, Math.max(1, Number(maxConcurrency) || 1), Math.max(1, catalog.length));
   await Promise.all(Array.from({ length: workers }, worker));
   return results;
 }
 
-export function createLiveAdapterRuntime({ pathValue = process.env.PATH, spawnImpl = spawn, receiptJournal } = {}) {
+export function createLiveAdapterRuntime({ pathValue = process.env.PATH, spawnImpl = spawn, receiptJournal, discoveryCacheMs = 5_000 } = {}) {
   let lastProbes = null;
-  async function discover() {
-    return discoverLiveAdapters({ pathValue });
+  let discovered = null;
+  let discoveredAt = 0;
+  let discoveryPending = null;
+  const cacheMs = Math.max(0, Math.min(Number(discoveryCacheMs) || 0, 60_000));
+  async function discover({ refresh = false } = {}) {
+    const now = Date.now();
+    if (!refresh && discovered && now - discoveredAt < cacheMs) return discovered;
+    if (!refresh && discoveryPending) return discoveryPending;
+    discoveryPending = discoverLiveAdapters({ pathValue })
+      .then((value) => { discovered = value; discoveredAt = Date.now(); return value; })
+      .finally(() => { discoveryPending = null; });
+    return discoveryPending;
   }
   async function probe({ ids, timeoutMs, maxConcurrency } = {}) {
     const requested = ids === undefined ? null : new Set(Array.isArray(ids) ? ids : [ids]);
@@ -156,10 +173,11 @@ export function createLiveAdapterRuntime({ pathValue = process.env.PATH, spawnIm
       .filter((adapter) => !requested || requested.has(adapter.id))
       .map((adapter) => [adapter.id, async (task = {}, provider = {}) => {
         const command = provider.command || adapter.command;
-        const command_path = await findExecutable(command, pathValue);
+        const known = (await discover()).find((candidate) => candidate.id === adapter.id && candidate.command === command);
+        const command_path = known?.command_path || await findExecutable(command, pathValue);
         const [result] = await record(await probeLiveAdapters({
           adapters: [{ ...adapter, command, command_path, state: command_path ? 'installed' : 'unavailable' }],
-          timeoutMs: task.timeoutMs,
+          timeoutMs: boundedTimeoutMs(task.timeoutMs),
           spawnImpl,
         }));
         lastProbes = [result];
@@ -176,6 +194,11 @@ export function createLiveAdapterRuntime({ pathValue = process.env.PATH, spawnIm
 export function createReceiptJournal({ file } = {}) {
   if (!file) throw new Error('receipt journal file is required');
   let tail = Promise.resolve();
+  let previousRecordSha256 = null;
+  let tailReady = false;
+  let tailLoading = null;
+  let directoryReady = null;
+
   async function records() {
     try {
       return (await readFile(file, 'utf8')).trim().split('\n').filter(Boolean).map(JSON.parse);
@@ -184,32 +207,59 @@ export function createReceiptJournal({ file } = {}) {
       throw error;
     }
   }
+
+  function verify(entries) {
+    let previous = null;
+    for (const record of entries) {
+      const { record_sha256, ...body } = record;
+      if (record_sha256 !== sha256(body) || body.previous_record_sha256 !== previous) {
+        throw new Error('receipt journal integrity verification failed');
+      }
+      previous = record_sha256;
+    }
+    return previous;
+  }
+
+  async function currentTail() {
+    if (tailReady) return previousRecordSha256;
+    if (!tailLoading) tailLoading = records()
+      .then((entries) => {
+        previousRecordSha256 = verify(entries);
+        tailReady = true;
+        return previousRecordSha256;
+      })
+      .finally(() => { tailLoading = null; });
+    return tailLoading;
+  }
+
+  function ensureDirectory() {
+    if (!directoryReady) directoryReady = mkdir(dirname(file), { recursive: true });
+    return directoryReady;
+  }
+
   async function append(receipt) {
     const work = tail.then(async () => {
-      const prior = await records();
-      const previous_record_sha256 = prior.at(-1)?.record_sha256 || null;
+      const previous_record_sha256 = await currentTail();
       const body = { schema_version: RECEIPT_JOURNAL_SCHEMA, journal_id: randomUUID(), receipt, written_at: new Date().toISOString(), previous_record_sha256 };
       const record = { ...body, record_sha256: sha256(body) };
-      await mkdir(dirname(file), { recursive: true });
-      await appendFile(file, `${JSON.stringify(record)}\n`, 'utf8');
+      await ensureDirectory();
+      await appendFile(file, `${JSON.stringify(record)}\n`, { encoding: 'utf8', mode: 0o600 });
+      previousRecordSha256 = record.record_sha256;
+      tailReady = true;
       return record;
     });
     tail = work.catch(() => {});
     return work;
   }
-  async function read({ verify = true } = {}) {
+
+  async function read({ verify: shouldVerify = true } = {}) {
     const entries = await records();
-    if (verify) {
-      let previous = null;
-      for (const record of entries) {
-        const { record_sha256, ...body } = record;
-        if (record_sha256 !== sha256(body) || body.previous_record_sha256 !== previous) {
-          throw new Error('receipt journal integrity verification failed');
-        }
-        previous = record_sha256;
-      }
+    if (shouldVerify) {
+      previousRecordSha256 = verify(entries);
+      tailReady = true;
     }
     return entries;
   }
+
   return { append, read };
 }

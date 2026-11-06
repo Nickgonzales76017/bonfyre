@@ -1,0 +1,28 @@
+{
+  "name": "object_contract",
+  "displayName": "Object Contract",
+  "description": "Authored ObjectGrammar contract describing what may be born or attached beneath an addressed closure and which human variables remain unresolved. Rendering an aperture never authorizes its effect; Authority is rechecked by the native owner at submit time.",
+  "attributes": {
+    "object_name": {"type": "string", "required": true},
+    "applies_to_kind": {"type": "string", "required": true},
+    "applies_to_capability": {"type": "string", "required": false},
+    "birth_operation": {"type": "string", "required": true},
+    "birth_mode": {"type": "string", "required": true},
+    "requires_authority": {"type": "string", "required": false},
+    "initial_state": {"type": "string", "required": false},
+    "identity_allocation": {"type": "string", "required": false},
+    "body_content_type": {"type": "string", "required": false},
+    "collection_lens": {"type": "string", "required": true},
+    "slug_field": {"type": "string", "required": false},
+    "closed_fields": {"type": "string", "required": false},
+    "human_fields": {"type": "string", "required": false},
+    "owner_note": {"type": "text", "required": false},
+    "submit_to": {"type": "string", "required": false},
+    "submit_method": {"type": "string", "required": false, "default": "POST"},
+    "owner_subject_param": {"type": "string", "required": false},
+    "owner_subject_value": {"type": "string", "required": false},
+    "return_template": {"type": "string", "required": false},
+    "action_label": {"type": "string", "required": false},
+    "status": {"type": "string", "required": true}
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "schema": "bonfyre-bitnet-addressplane-shadow-receipt.v1",
+  "recorded_at": "2026-09-15T07:17:33Z",
+  "model": {
+    "id": "bitnet-embedding-270m-i2s",
+    "body_sha256": "8ee5ae971b103cd55758934be54e5c9f7cc2b58b15890615acce8e649988c751",
+    "body_bytes": 367487040
+  },
+  "runtime": {
+    "upstream": "microsoft/BitNet",
+    "source_state": "pull_request_606_unmerged",
+    "llama_submodule_commit": "0684c7fd2",
+    "binary_sha256": "a826f7d6c7a6e7131ed6a49b76f1ca1b126ef0b84ca0cfad2b51242ae8e64ed5",
+    "architecture": "x86_64 compatibility execution",
+    "backends": ["cpu", "accelerate"],
+    "excluded_backends": ["metal", "blas", "openssl"],
+    "attention": "causal",
+    "pooling": "last",
+    "normalization": 2,
+    "threads": 4,
+    "candidate_batch": 16
+  },
+  "stability_check": {
+    "input": "one canonical AddressPlane candidate document envelope",
+    "trials": 9,
+    "thread_counts": [1, 2, 4],
+    "finite_trials": 9,
+    "identical_vector_output_sha256": "e778456071157df73d1ca0215ae60cf3561d8e6dc920d49d0014583055106c13"
+  },
+  "addressplane": {
+    "forward_result_sha256": "abf37f7568881c30581acf1897713f584bdd15055828b65ce67adffb8a3655e9",
+    "candidate_kind": "external_occurrence",
+    "population": 4891,
+    "deterministic_survivors": 128,
+    "ranked_candidates": 128,
+    "dimensions": 640,
+    "rank_output_sha256": "8372c16c030c3b2a70593052c30e2d270a5f338a9a983e2e2a222c5f486b869f",
+    "rank_db": "~/.bonfyre/estate/bitnet-embedding-270m-pr606-cpuonly-shadow.db",
+    "rank_db_bytes": 593920,
+    "representation_evidence_sha256": "a7b268f4252259e15de9f2679dbb9dbf8f5041bbbed6d2a42e2271d5fa25bd2e"
+  },
+  "admission": {
+    "state": "SHADOW",
+    "resource_grant_id": 28,
+    "estimated_bytes": 400000000,
+    "released_at": "2026-09-15T07:17:33+00:00"
+  },
+  "exact_boundary": {
+    "exact_owner_queries": 0,
+    "lowerer_handoffs": 0,
+    "preserved_exact_verifier": "ForeignTwin:admission",
+    "preserved_lowerer": "MaterialCompiler:external"
+  },
+  "forbidden_inference": "This is a real bounded learned reordering execution, not retrieval-quality evidence. It does not establish recall, false-prune safety, selection, authorization, proof, exact owner verification, material compilation, or effect."
+}

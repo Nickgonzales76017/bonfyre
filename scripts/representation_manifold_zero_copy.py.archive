@@ -1,0 +1,446 @@
+# Archived PyIceberg migration reference; not an executable production entry point.
+# The Bun coordinator refuses Iceberg add-files until a spec-valid native writer exists.
+from __future__ import annotations
+import argparse, datetime as dt, hashlib, json, os, re, shutil, sqlite3, subprocess, sys, traceback
+from pathlib import Path
+
+ID_EXACT={"id","key","source","source_id","target","target_id","subject","subject_id","object","object_id","actor","actor_id","parent","parent_id","child","child_id","from","from_id","to","to_id","route","route_id","item","item_id","member","member_id","institution","institution_id","world","world_id","program","program_id","channel","channel_id","root","root_id","address","address_id","provider","provider_id"}
+ID_SUFFIX=("_id","_key","_ref","_source","_target","_subject","_object","_address")
+
+MIGRATION="""
+CREATE TABLE IF NOT EXISTS eviction_receipt(
+ id TEXT PRIMARY KEY, representation_id TEXT NOT NULL, kind TEXT NOT NULL,
+ coordinate TEXT NOT NULL, digest TEXT, bytes INTEGER NOT NULL,
+ reason TEXT NOT NULL, reconstruct_from TEXT, evicted_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS byte_economics(
+ representation_kind TEXT PRIMARY KEY, byte_policy TEXT NOT NULL,
+ preferred_temperature TEXT NOT NULL, canonical_body_kind TEXT,
+ rationale TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS virtual_graph_projection(
+ semantic_kind TEXT NOT NULL, source_column TEXT NOT NULL,
+ target_column TEXT NOT NULL, sql_text TEXT NOT NULL,
+ source_representation_id TEXT NOT NULL, state TEXT NOT NULL,
+ proof_digest TEXT NOT NULL, created_at TEXT NOT NULL,
+ PRIMARY KEY(semantic_kind,source_column,target_column));
+CREATE TABLE IF NOT EXISTS metadata_overlay(
+ semantic_kind TEXT NOT NULL, format TEXT NOT NULL,
+ source_representation_id TEXT NOT NULL, source_coordinate TEXT NOT NULL,
+ coordinate TEXT, state TEXT NOT NULL, detail TEXT,
+ created_at TEXT NOT NULL, PRIMARY KEY(semantic_kind,format));
+CREATE TABLE IF NOT EXISTS zero_copy_event(
+ id TEXT PRIMARY KEY, kind TEXT NOT NULL, semantic_kind TEXT,
+ state TEXT NOT NULL, detail TEXT, occurred_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS execution_binding(
+ semantic_kind TEXT NOT NULL, engine TEXT NOT NULL, coordinate TEXT NOT NULL,
+ state TEXT NOT NULL, proof_digest TEXT, checked_at TEXT NOT NULL,
+ PRIMARY KEY(semantic_kind,engine));
+CREATE TABLE IF NOT EXISTS executable_projection(
+ id TEXT PRIMARY KEY,kind TEXT NOT NULL,coordinate TEXT NOT NULL,digest TEXT,
+ state TEXT NOT NULL,created_at TEXT NOT NULL);
+"""
+
+BYTE_POLICY={
+"parquet":("canonical","pinned","parquet","canonical immutable columnar body"),
+"iceberg":("metadata_only","warm","parquet","snapshot/schema/history metadata over canonical Parquet"),
+"delta":("metadata_only_preferred","warm","parquet","prefer metadata overlay over shared Parquet"),
+"hudi":("metadata_only_preferred","warm","parquet","prefer bootstrap/XTable metadata over shared Parquet"),
+"arrow":("execution_on_demand","reconstructable","parquet","stream Arrow IPC on demand from canonical Parquet"),
+"duckdb":("catalog_only","hot","parquet","views/catalog over canonical Parquet"),
+"datafusion":("execution_only","hot","parquet","TableProvider execution; no copied body"),
+"polars":("execution_only","hot","parquet","lazy scan; no copied body"),
+"adbc":("transport_only","hot","parquet","Arrow-native transport"),
+"graph-virtual":("metadata_only","hot","parquet","typed graph projection over source columns"),
+"lance":("distinct_layout","warm","parquet","materialize when random/vector/multimodal layout earns bytes"),
+"zarr":("distinct_layout","warm","parquet","materialize tensor/multiscale families")}
+
+def now(): return dt.datetime.now(dt.timezone.utc).isoformat()
+def sha(v):
+    if not isinstance(v,(bytes,bytearray)): v=str(v).encode()
+    return hashlib.sha256(v).hexdigest()
+def sha_file(p,chunk=8<<20):
+    h=hashlib.sha256()
+    with open(p,"rb") as f:
+        for b in iter(lambda:f.read(chunk),b""): h.update(b)
+    return h.hexdigest()
+def safe(s):
+    s=re.sub(r"[^A-Za-z0-9_]+","_",str(s))
+    if not s or s[0].isdigit(): s="_"+s
+    return s[:180]
+def human(n):
+    units=["B","KiB","MiB","GiB","TiB"]; x=float(n)
+    for u in units:
+        if x<1024 or u==units[-1]: return f"{x:.1f}{u}"
+        x/=1024
+def free_bytes(p):
+    try: return shutil.disk_usage(p).free
+    except Exception: return 0
+def tree_bytes(p):
+    p=Path(p)
+    if not p.exists(): return 0
+    if p.is_file():
+        try: return p.stat().st_size
+        except OSError: return 0
+    total=0
+    for x in p.rglob("*"):
+        if x.is_file():
+            try: total+=x.stat().st_size
+            except OSError: pass
+    return total
+def run(cmd,cwd=None,timeout=None):
+    try:
+        p=subprocess.run(cmd,cwd=cwd,text=True,capture_output=True,timeout=timeout)
+        return p.returncode,p.stdout,p.stderr
+    except Exception as e:
+        return 255,"",f"{type(e).__name__}: {e}"
+
+def open_db(estate):
+    p=estate/"representation-manifold.db"
+    if not p.exists(): raise SystemExit(f"missing manifold: {p}")
+    c=sqlite3.connect(p); c.execute("PRAGMA busy_timeout=30000")
+    c.executescript(MIGRATION)
+    for kind,(bp,temp,canon,why) in BYTE_POLICY.items():
+        c.execute("insert or replace into byte_economics values(?,?,?,?,?,?)",(kind,bp,temp,canon,why,now()))
+    c.commit(); return c
+
+def parquet_roots(c):
+    return c.execute("""SELECT ri.id,ri.schema_ref,pr.coordinate,ri.digest,ri.frontier
+      FROM representation_instance ri JOIN physical_realization pr ON pr.representation_id=ri.id
+      WHERE ri.kind='parquet' AND ri.state='physical' AND pr.available=1 ORDER BY ri.schema_ref""").fetchall()
+
+def parquet_root_count(estate):
+    db=estate/"representation-manifold.db"
+    if not db.is_file(): raise RuntimeError(f"missing manifold: {db}")
+    with sqlite3.connect(f"{db.as_uri()}?mode=ro",uri=True) as c:
+        return c.execute("""select count(*) from representation_instance ri
+          join physical_realization pr on pr.representation_id=ri.id
+          where ri.kind='parquet' and ri.state='physical' and pr.available=1""").fetchone()[0]
+
+def native_reclaim(repo,estate,floor_gb,allow_lance=False,allow_zarr=False):
+    bun=shutil.which("bun")
+    if not bun: raise RuntimeError("bun is required for native representation GC")
+    kinds=["arrow","delta"]
+    if allow_lance: kinds.append("lance")
+    if allow_zarr: kinds.append("zarr")
+    command=[bun,str(repo/"scripts/representation-manifold-gc.mjs"),
+             "--estate",str(estate),"--free-floor-gb",str(floor_gb),"--apply"]
+    for kind in kinds: command.extend(("--kind",kind))
+    rc,out,err=run(command,timeout=7200)
+    if rc: raise RuntimeError(f"native representation GC failed: {(err or out).strip()}")
+    receipt=json.loads(out)
+    evicted=receipt["evicted"]
+    return len(evicted),sum(row["bytes"] for row in evicted)
+
+def record_rep(c,parent,sk,kind,coord,digest,frontier,state="physical",carrier="metadata",temperature="warm",transform=None):
+    rid=sha(f"{kind}|{sk}|{frontier}|{digest}|{coord}"); ts=now()
+    c.execute("""insert or replace into representation_instance
+      (id,subject_id,kind,authority,frontier,digest,schema_ref,created_at,reconstructable,state)
+      values(?,?,?,?,?,?,?,?,?,?)""",(rid,None,kind,"derived",frontier,digest,sk,ts,1,state))
+    p=Path(str(coord).replace("file://","").split("#",1)[0]); n=tree_bytes(p) if p.exists() else None
+    c.execute("""insert or replace into physical_realization
+      (id,representation_id,carrier,coordinate,bytes,digest,temperature,available,checked_at)
+      values(?,?,?,?,?,?,?,?,?)""",
+      (sha(f"{carrier}|{coord}"),rid,carrier,str(coord),n,digest,temperature,1,ts))
+    if parent:
+        c.execute("""insert or ignore into representation_edge
+          (parent_representation_id,child_representation_id,transform,proof_state,created_at)
+          values(?,?,?,?,?)""",(parent,rid,transform or f"parquet->{kind}","materialized",ts))
+    return rid
+
+def zero_copy_iceberg(c,estate,rows):
+    import pyarrow.parquet as pq
+    from pyiceberg.catalog import load_catalog
+    root=estate/"representations/iceberg-zero-copy"; root.mkdir(parents=True,exist_ok=True)
+    warehouse=root/"warehouse"; warehouse.mkdir(parents=True,exist_ok=True)
+    catalog_db=root/"catalog.db"
+    catalog=load_catalog("bonfyre",type="sql",uri=f"sqlite:///{catalog_db}",warehouse=f"file://{warehouse}")
+    try: catalog.create_namespace_if_not_exists("estate")
+    except Exception: pass
+    created=reused=failed=0
+    for parent,sk,pqpath,pdigest,frontier in rows:
+        name="estate."+safe(sk).lower()
+        try:
+            schema=pq.ParquetFile(pqpath).schema_arrow
+            try: table=catalog.load_table(name)
+            except Exception: table=catalog.create_table(name,schema=schema)
+            try:
+                table.add_files(file_paths=[str(Path(pqpath).resolve())],check_duplicate_files=True,
+                    snapshot_properties={"bonfyre.frontier":str(frontier),"bonfyre.parquet.sha256":str(pdigest)})
+                created+=1
+            except ValueError as e:
+                if "already" in str(e).lower() or "duplicate" in str(e).lower(): reused+=1
+                else: raise
+            table.refresh(); meta=str(table.metadata_location); mp=Path(meta.replace("file://",""))
+            dg=sha_file(mp) if mp.exists() else sha(meta)
+            record_rep(c,parent,sk,"iceberg",meta,dg,frontier,carrier="iceberg-metadata",
+                       transform="parquet->iceberg-add-files-zero-copy")
+            c.execute("insert or replace into metadata_overlay values(?,?,?,?,?,?,?,?)",
+                      (sk,"iceberg",parent,pqpath,meta,"physical_zero_copy","PyIceberg add_files; canonical Parquet unchanged",now()))
+            c.execute("""update representation_target set status='physical_zero_copy',
+              reason='Iceberg metadata references canonical Parquet via add_files()'
+              where semantic_kind=? and representation_kind='iceberg'""",(sk,))
+            c.commit()
+        except BaseException:
+            failed+=1; detail=traceback.format_exc()
+            c.execute("insert or replace into zero_copy_event values(?,?,?,?,?,?)",
+                      (sha(f"iceberg-fail|{sk}|{now()}"),"iceberg",sk,"failed",detail[-12000:],now()))
+            c.commit()
+    return created,reused,failed
+
+def id_columns(names):
+    out=[]
+    for col in names:
+        lc=col.lower()
+        if lc in ID_EXACT or lc.endswith(ID_SUFFIX):
+            if col not in out: out.append(col)
+    return out
+
+def virtual_graph(c,rows):
+    import pyarrow.parquet as pq
+    n=0
+    for parent,sk,pqpath,pdigest,frontier in rows:
+        try: ids=id_columns(pq.ParquetFile(pqpath).schema_arrow.names)
+        except Exception: continue
+        if len(ids)<2: continue
+        pairs=[(ids[0],x) for x in ids[1:8]]
+        low={x.lower():x for x in ids}
+        for a,b in (("source","target"),("src","dst"),("from","to"),("parent","child"),("subject","object")):
+            if a in low and b in low and (low[a],low[b]) not in pairs: pairs.append((low[a],low[b]))
+        escaped=str(pqpath).replace("'","''")
+        for src,dst in pairs:
+            sql=(f'SELECT CAST("{src}" AS VARCHAR) src, CAST("{dst}" AS VARCHAR) dst, '
+                 f"'{src}->{dst}' relation FROM read_parquet('{escaped}') "
+                 f'WHERE "{src}" IS NOT NULL AND "{dst}" IS NOT NULL')
+            proof=sha(f"{pdigest}|{src}|{dst}|{sql}")
+            c.execute("insert or replace into virtual_graph_projection values(?,?,?,?,?,?,?,?)",
+                      (sk,src,dst,sql,parent,"executable",proof,now()))
+            record_rep(c,parent,sk,"graph-virtual",f"duckdb-sql://{safe(sk)}/{safe(src)}->{safe(dst)}",
+                       proof,frontier,state="executable",carrier="query-program",temperature="hot",
+                       transform=f"parquet->graph-virtual:{src}->{dst}")
+            n+=1
+    c.commit(); return n
+
+def bind_native_arrow(repo,estate,bundle,expected_tables):
+    if not bundle or not (Path(bundle)/"manifest.json").is_file():
+        raise RuntimeError("--native-arrow-bundle with a verified native runtime is required")
+    bun=shutil.which("bun")
+    if not bun: raise RuntimeError("bun is required for native Arrow binding")
+    command=[bun,str(repo/"scripts/representation-manifold-fabric.mjs"),"bind",
+             "--bundle",str(Path(bundle).resolve()),"--estate",str(estate)]
+    rc,out,err=run(command,timeout=1800)
+    if rc: raise RuntimeError(f"native Arrow bind failed: {(err or out).strip()}")
+    receipt=json.loads(out)
+    if receipt.get("state")!="INSTALLED_UNSERVED" or receipt.get("tables")!=expected_tables:
+        raise RuntimeError(f"native Arrow bind did not cover {expected_tables} roots: {receipt}")
+    return receipt
+
+def execution_fabric(c,estate,rows):
+    results={}
+    try:
+        from datafusion import SessionContext
+        ctx=SessionContext(); good=0
+        for parent,sk,pqpath,pdigest,frontier in rows:
+            try:
+                name=safe(sk); ctx.register_parquet(name,pqpath); ctx.table(name).limit(1).collect()
+                record_rep(c,parent,sk,"datafusion",f"datafusion://{name}",sha(f"datafusion|{pdigest}"),
+                           frontier,state="executable",carrier="execution-program",temperature="hot")
+                good+=1
+            except Exception: pass
+        results["datafusion"]=good
+    except Exception: results["datafusion"]=0
+    try:
+        import polars as pl
+        good=0
+        for parent,sk,pqpath,pdigest,frontier in rows:
+            try:
+                pl.scan_parquet(pqpath).collect_schema()
+                record_rep(c,parent,sk,"polars",f"polars://{pqpath}",sha(f"polars|{pdigest}"),
+                           frontier,state="executable",carrier="execution-program",temperature="hot")
+                good+=1
+            except Exception: pass
+        results["polars"]=good
+    except Exception: results["polars"]=0
+    try:
+        import adbc_driver_sqlite.dbapi as adbcs
+        db=str(estate/"representation-manifold.db")
+        with adbcs.connect(db) as conn:
+            cur=conn.cursor(); cur.execute("select kind,count(*) from representation_instance group by kind")
+            tab=cur.fetch_arrow_table()
+        dg=sha(str(tab.to_pylist()))
+        c.execute("insert or replace into executable_projection values(?,?,?,?,?,?)",
+                  (sha("adbc-manifold"),"adbc",f"sqlite:///{db}",dg,"executable",now()))
+        results["adbc"]=1
+    except Exception: results["adbc"]=0
+    c.commit(); return results
+
+def xtable_configs(c,estate,rows):
+    root=estate/"representations/xtable-configs"; root.mkdir(parents=True,exist_ok=True); n=0
+    for parent,sk,pqpath,pdigest,frontier in rows:
+        ice=c.execute("""select coordinate from metadata_overlay
+          where semantic_kind=? and format='iceberg' and state='physical_zero_copy'""",(sk,)).fetchone()
+        if not ice: continue
+        cfg=root/(safe(sk)+".yaml"); meta=Path(str(ice[0]).replace("file://",""))
+        base=meta.parent.parent if meta.name.endswith(".json") else meta.parent
+        data_path=Path(pqpath).parent
+        body=(f"sourceFormat: ICEBERG\n"
+              f"targetFormats:\n  - DELTA\n  - HUDI\n"
+              f"datasets:\n  - tableBasePath: \"file://{base}\"\n"
+              f"    tableDataPath: \"file://{data_path}\"\n"
+              f"    tableName: \"{safe(sk).lower()}\"\n")
+        cfg.write_text(body,encoding="utf-8")
+        c.execute("insert or replace into metadata_overlay values(?,?,?,?,?,?,?,?)",
+                  (sk,"xtable-delta-hudi",parent,pqpath,str(cfg),"config_ready",
+                   "XTable 0.4 config: Iceberg -> Delta + Hudi metadata only",now()))
+        for fmt in ("delta","hudi"):
+            c.execute("""update representation_target set status='metadata_overlay_ready',
+              reason='XTable config ready; shared Parquet, no rewrite'
+              where semantic_kind=? and representation_kind=?""",(sk,fmt))
+        n+=1
+    c.commit(); return n
+
+def find_xtable(root):
+    for base in (root,Path.home()/".m2/repository",Path.home()/".cache"):
+        if not base.exists(): continue
+        for pat in ("*xtable*bundled*.jar","*xtable*utilities*.jar"):
+            try:
+                hits=list(base.rglob(pat))
+                if hits: return hits[0]
+            except Exception: pass
+    return None
+
+def run_xtable(c,estate,jar):
+    java=shutil.which("java")
+    if not java or not jar: return 0,1
+    ok=fail=0
+    for cfg in (estate/"representations/xtable-configs").glob("*.yaml"):
+        rc,so,se=run([java,"-jar",str(jar),"--datasetConfig",str(cfg)],timeout=1800)
+        if rc==0: ok+=1
+        else: fail+=1
+        c.execute("insert or replace into zero_copy_event values(?,?,?,?,?,?)",
+                  (sha(f"xtable|{cfg}|{now()}"),"xtable",cfg.stem,
+                   "physical_metadata" if rc==0 else "failed",(se or so)[-12000:],now()))
+        c.commit()
+    return ok,fail
+
+def hardlink_exact_duplicates(estate,min_bytes=1<<20):
+    root=estate/"representations"; buckets={}
+    for p in root.rglob("*"):
+        if not p.is_file(): continue
+        try: sz=p.stat().st_size
+        except OSError: continue
+        if sz>=min_bytes: buckets.setdefault(sz,[]).append(p)
+    saved=links=0
+    for sz,files in buckets.items():
+        if len(files)<2: continue
+        byhash={}
+        for p in files:
+            try: byhash.setdefault(sha_file(p),[]).append(p)
+            except Exception: pass
+        for group in byhash.values():
+            if len(group)<2: continue
+            group.sort(key=lambda p:(0 if "/representations/parquet/" in str(p) else 1,str(p)))
+            source=group[0]
+            try: inode=source.stat().st_ino
+            except OSError: continue
+            for dup in group[1:]:
+                try:
+                    if dup.stat().st_ino==inode: continue
+                    tmp=dup.with_name(dup.name+".bonfyre-dedup-tmp")
+                    if tmp.exists(): tmp.unlink()
+                    os.link(source,tmp); os.replace(tmp,dup)
+                    saved+=sz; links+=1
+                except OSError: pass
+    return links,saved
+
+def report(c,estate,before,after):
+    root=estate/"representations"
+    obj={"schema":"bonfyre-zero-copy-pivot.v1","generated_at":now(),"free_before":before,"free_after":after,
+         "physical_kinds":c.execute("""select kind,count(*) from representation_instance where state='physical' group by kind order by count(*) desc""").fetchall(),
+         "executable_kinds":c.execute("""select kind,count(*) from representation_instance where state='executable' group by kind order by count(*) desc""").fetchall(),
+         "evictions":c.execute("""select kind,count(*),sum(bytes) from eviction_receipt group by kind order by sum(bytes) desc""").fetchall(),
+         "overlays":c.execute("""select format,state,count(*) from metadata_overlay group by format,state order by format,state""").fetchall(),
+         "target_states":c.execute("""select status,count(*) from representation_target group by status order by status""").fetchall(),
+         "virtual_graphs":c.execute("select count(*) from virtual_graph_projection").fetchone()[0]}
+    (root/"zero-copy-report.json").write_text(json.dumps(obj,indent=2),encoding="utf-8")
+    lines=["BONFŸRE SHIFT 1.5 — ZERO-COPY PIVOT","="*84,f"free before: {human(before)}",f"free after:  {human(after)}","","EVICTIONS"]
+    for k,n,b in obj["evictions"]: lines.append(f"  {k:22} {n:5} {human(b or 0)}")
+    lines+=["","METADATA OVERLAYS"]
+    for f,s,n in obj["overlays"]: lines.append(f"  {f:24} {s:24} {n}")
+    lines+=["","PHYSICAL"]+[f"  {k:24} {n}" for k,n in obj["physical_kinds"]]
+    lines+=["","EXECUTABLE"]+[f"  {k:24} {n}" for k,n in obj["executable_kinds"]]
+    lines+=["",f"virtual graph projections: {obj['virtual_graphs']:,}","","TARGET STATES"]+[f"  {s:30} {n:,}" for s,n in obj["target_states"]]
+    (root/"zero-copy-report.txt").write_text("\n".join(lines)+"\n",encoding="utf-8")
+
+def worker(a):
+    estate=Path(a.estate).expanduser().resolve(); repo=Path(a.repo).expanduser().resolve()
+    if not a.native_arrow_bundle or not (Path(a.native_arrow_bundle)/"manifest.json").is_file():
+        raise SystemExit("--native-arrow-bundle is required before zero-copy worker mutation")
+    native_binding=bind_native_arrow(repo,estate,a.native_arrow_bundle,parquet_root_count(estate))
+    c=open_db(estate); rows=parquet_roots(c); before=free_bytes(estate)
+    print(f"=== SHIFT 1.5 ZERO-COPY WORKER: {len(rows)} canonical Parquet roots ===",flush=True)
+    print("free:",human(before),flush=True)
+
+    if a.reclaim_derived:
+        print("[1/8] semantic-GC of reconstructable derived bytes",flush=True)
+        native_reclaim(repo,estate,a.free_floor_gb,a.reclaim_lance,a.reclaim_zarr)
+    else: print("[1/8] reclaim disabled",flush=True)
+
+    print("[2/8] exact-file hardlink dedup",flush=True)
+    links,saved=hardlink_exact_duplicates(estate); print(f"  links={links} logical_saved={human(saved)}",flush=True)
+
+    print("[3/8] Iceberg zero-copy add_files",flush=True)
+    print(" ",zero_copy_iceberg(c,estate,rows),flush=True)
+
+    print("[4/8] virtual graph manifold",flush=True)
+    print("  projections",virtual_graph(c,rows),flush=True)
+
+    print("[5/8] native Arrow IPC/C Stream/Flight binding",flush=True)
+    print(" ",native_binding,flush=True)
+
+    print("[6/8] execution fabrics",flush=True)
+    print(" ",execution_fabric(c,estate,rows),flush=True)
+
+    print("[7/8] XTable metadata-overlay configs",flush=True)
+    n=xtable_configs(c,estate,rows); print("  configs",n,flush=True)
+    if a.run_xtable:
+        jar=find_xtable(repo); print("  xtable jar",jar,flush=True); print("  run",run_xtable(c,estate,jar),flush=True)
+
+    print("[8/8] report + frontier",flush=True)
+    after=free_bytes(estate)
+    try: c.execute("PRAGMA wal_checkpoint(TRUNCATE)"); c.commit()
+    except sqlite3.Error: pass
+    report(c,estate,before,after); print("free now:",human(after),flush=True)
+    c.close(); return 0
+
+def main():
+    ap=argparse.ArgumentParser()
+    ap.add_argument("--repo",default="."); ap.add_argument("--estate",default="~/.bonfyre/estate-local")
+    ap.add_argument("--runtime",default="~/.bonfyre/representation-runtime"); ap.add_argument("--apply",action="store_true")
+    ap.add_argument("--worker",action="store_true"); ap.add_argument("--reclaim-derived",action="store_true")
+    ap.add_argument("--free-floor-gb",type=float,default=4.0); ap.add_argument("--reclaim-lance",action="store_true")
+    ap.add_argument("--reclaim-zarr",action="store_true"); ap.add_argument("--run-xtable",action="store_true")
+    ap.add_argument("--native-arrow-bundle")
+    a=ap.parse_args()
+    if a.worker: return worker(a)
+    if not a.apply:
+        print("Use --apply. For the current full-disk state also use --reclaim-derived."); return 0
+    if not a.native_arrow_bundle or not (Path(a.native_arrow_bundle)/"manifest.json").is_file():
+        raise SystemExit("--native-arrow-bundle is required before zero-copy worker mutation")
+    runtime=Path(a.runtime).expanduser().resolve(); py=runtime/"venv/bin/python"
+    if not py.exists(): raise SystemExit(f"representation runtime missing: {py}")
+    repo=Path(a.repo).expanduser().resolve(); canonical=repo/"scripts/representation_manifold_zero_copy.py"
+    canonical.parent.mkdir(parents=True,exist_ok=True)
+    if Path(__file__).resolve()!=canonical:
+        shutil.copy2(Path(__file__).resolve(),canonical); canonical.chmod(0o755)
+    call=[str(py),str(canonical),"--worker","--repo",str(repo),"--estate",str(Path(a.estate).expanduser().resolve()),
+          "--runtime",str(runtime),"--free-floor-gb",str(a.free_floor_gb),
+          "--native-arrow-bundle",str(Path(a.native_arrow_bundle).resolve())]
+    if a.reclaim_derived: call.append("--reclaim-derived")
+    if a.reclaim_lance: call.append("--reclaim-lance")
+    if a.reclaim_zarr: call.append("--reclaim-zarr")
+    if a.run_xtable: call.append("--run-xtable")
+    rc,so,se=run(call,timeout=28800)
+    print(so,end="")
+    if se: print(se,file=sys.stderr,end="")
+    return rc
+
+if __name__=="__main__": raise SystemExit(main())

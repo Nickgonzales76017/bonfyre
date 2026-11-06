@@ -1,0 +1,6 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-layer","binary_env":"BONFYRE_LAYER_BIN","cases":[
+{"name":"the layer ontology relates query projections to keys and values","steps":[
+ {"argv":["ontology","--family","T_Q_PROJ"],"env":{"HOME":"${tmp}"},"exit":0,"at":{"family_filter":"T_Q_PROJ","count":2},"has":{"relations.*.family_b":"T_K_PROJ"}},
+ {"argv":["schema"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["\"head\""]}]},
+{"name":"the C build answers the same ontology","steps":[{"program":"${organ}/bonfyre-layer-c","argv":["ontology","--family","T_Q_PROJ"],"env":{"HOME":"${tmp}"},"exit":0,"at":{"family_filter":"T_Q_PROJ","count":2}}]},
+{"name":"a file that is not ONNX is refused","files":{"x.onnx":"not onnx"},"steps":[{"argv":["inspect","x.onnx"],"env":{"HOME":"${tmp}"},"exit_nonzero":true},{"program":"${organ}/bonfyre-layer-c","argv":["inspect","x.onnx"],"env":{"HOME":"${tmp}"},"exit_nonzero":true}]}]}

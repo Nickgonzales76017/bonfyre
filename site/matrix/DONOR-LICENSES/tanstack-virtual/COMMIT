@@ -1,0 +1,10 @@
+@tanstack/virtual-core 3.13.12
+https://cdn.jsdelivr.net/npm/@tanstack/virtual-core@3.13.12/+esm
+sha256 f02c3cb30ccad24e082d1aa43737dd27e9a2daa9bf759f4a2d932a3b5d6cb8c3
+served as site/matrix/vendor-vlist.min.js
+
+Why this one: it virtualizes a list without owning the markup, the framework or
+the data. The estate's rooms are server-rendered HTML; a virtualizer that
+insisted on rendering rows itself would have to become the renderer, and then
+the room would exist twice. This one measures and positions what is already
+there, which is the only part a browser is better at than the server.

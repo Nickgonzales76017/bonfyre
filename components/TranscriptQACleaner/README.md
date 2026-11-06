@@ -22,5 +22,5 @@ python3 bin/transcript_qa_cleaner.py --transcript raw.txt --out cleaned.txt
 - designed to plug into `LocalAITranscriptionService`
 - current logic is heuristic, fast, and local-first
 - older script path; the preferred native front door is now:
-  - `10-Code/BonfyreTranscriptClean`
-  - or `10-Code/BonfyreTranscriptFamily` when cleanup is part of the full transcript-family flow
+  - `components/BonfyreTranscriptClean`
+  - or `components/BonfyreTranscriptFamily` when cleanup is part of the full transcript-family flow

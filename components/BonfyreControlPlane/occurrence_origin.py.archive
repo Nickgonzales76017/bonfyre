@@ -1,0 +1,193 @@
+"""Occurrence has three origins, and conflating them is the defect.
+
+OccurrenceSpine was read as "effects Bonfyre created". The upward direction of
+the compiler makes that untenable: the same spine now carries things that
+happened without us, things we caused, and things we derived from watching. They
+are ordered by how much the estate is answerable for them, and the distinction is
+load-bearing in three separate places:
+
+  OBSERVED   something happened externally. We are answerable for having
+             observed it correctly and for nothing else. A source said a thing;
+             the thing is not ours.
+
+  DERIVED    a meaningful temporal event we computed from observed material. We
+             are answerable for the derivation. A derived occurrence is only ever
+             as good as its inputs, and it must name them or it is a claim
+             wearing an occurrence's clothes.
+
+  EFFECT     Bonfyre caused it. We are answerable for the act itself. This is the
+             only origin that can carry an authority, because it is the only one
+             where anybody exercised any.
+
+The failure this prevents is specific and easy: reading a derived occurrence as
+an effect. "SponsorOccurrence candidate" derived from a transcript is not the
+sponsor obligation being met, and an estate that files both on one spine without
+origin will eventually settle money on the wrong one.
+
+Raw material is not an occurrence at all. Audio bytes are not an occurrence; an
+utterance is. The boundary is whether anything temporal and meaningful can be
+addressed, and `record` refuses material that has not crossed it.
+
+Forbidden inferences, falsified by the tests beside this file:
+  an observed occurrence -> something the estate did
+  a derived occurrence   -> an effect
+  a derived occurrence   -> its inputs being true
+  an effect occurrence   -> the intended outcome
+  raw material           -> an occurrence
+"""
+
+# COMPATIBILITY BOUNDARY (do not add durable mutation here): the native owner
+# is engine/core/src/occurrence_origin.c via bf_occurrence_origin.h, declared
+# in schemas/control/occurrence-origin.{yaff,cue}.  foreign_live.py is the last
+# live Python caller; move it to the native ABI before archiving this reference.
+
+from __future__ import annotations
+
+import sqlite3
+from typing import Optional
+
+OBSERVED = "observed"
+DERIVED = "derived"
+EFFECT = "effect"
+
+ORIGINS = (OBSERVED, DERIVED, EFFECT)
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS occurrence_origin(
+  occurrence_id TEXT PRIMARY KEY,
+  origin        TEXT NOT NULL,
+  subject       TEXT NOT NULL,
+  at            TEXT NOT NULL DEFAULT '',
+  source        TEXT NOT NULL DEFAULT '',
+  authority     TEXT NOT NULL DEFAULT '',
+  derived_from  TEXT NOT NULL DEFAULT '');
+"""
+
+
+class OriginError(ValueError):
+    pass
+
+
+def ensure_schema(db: sqlite3.Connection) -> None:
+    db.executescript(SCHEMA)
+    db.commit()
+
+
+def record(db: sqlite3.Connection, *, occurrence_id: str, origin: str, subject: str,
+           at: str = "", source: str = "", authority: str = "",
+           derived_from: Optional[list[str]] = None) -> None:
+    """File one occurrence on the spine, with its origin.
+
+    Each origin demands exactly what it is answerable for, and refuses what it
+    cannot honestly carry:
+
+      * an OBSERVED occurrence must name the source it was observed from, and may
+        not carry an authority -- nobody exercised any;
+      * a DERIVED occurrence must name what it was derived from, and may not
+        carry an authority for the same reason;
+      * an EFFECT occurrence must name the authority it happened under, because
+        an act with no answerable authority is the thing this estate refuses
+        everywhere else.
+    """
+    if origin not in ORIGINS:
+        raise OriginError(f"unknown origin {origin!r}; expected one of {list(ORIGINS)}")
+    if not subject:
+        raise OriginError("an occurrence addresses a subject or it is not addressed")
+
+    if origin == OBSERVED:
+        if not source:
+            raise OriginError(
+                "an observed occurrence names the source it was observed from; "
+                "without one it is an assertion with no provenance")
+        if authority:
+            raise OriginError(
+                "an observed occurrence carries no authority: nobody exercised "
+                "any, and recording one would make watching look like acting")
+    elif origin == DERIVED:
+        if not derived_from:
+            raise OriginError(
+                "a derived occurrence names what it was derived from; without "
+                "inputs it is a claim wearing an occurrence's clothes")
+        if authority:
+            raise OriginError(
+                "a derived occurrence carries no authority: deriving is not acting")
+    else:  # EFFECT
+        if not authority:
+            raise OriginError(
+                "an effect occurrence names the authority it happened under; an "
+                "act nobody is answerable for is what this estate refuses")
+
+    ensure_schema(db)
+    if db.execute("SELECT 1 FROM occurrence_origin WHERE occurrence_id=?",
+                  (occurrence_id,)).fetchone():
+        raise OriginError(f"occurrence {occurrence_id!r} already on the spine")
+    db.execute(
+        "INSERT INTO occurrence_origin"
+        "(occurrence_id,origin,subject,at,source,authority,derived_from)"
+        " VALUES(?,?,?,?,?,?,?)",
+        (occurrence_id, origin, subject, at, source, authority,
+         ",".join(derived_from or [])))
+    db.commit()
+
+
+def origin_of(db: sqlite3.Connection, occurrence_id: str) -> Optional[str]:
+    ensure_schema(db)
+    row = db.execute("SELECT origin FROM occurrence_origin WHERE occurrence_id=?",
+                     (occurrence_id,)).fetchone()
+    return row[0] if row else None
+
+
+def inputs_of(db: sqlite3.Connection, occurrence_id: str) -> list[str]:
+    ensure_schema(db)
+    row = db.execute("SELECT derived_from FROM occurrence_origin"
+                     " WHERE occurrence_id=?", (occurrence_id,)).fetchone()
+    if row is None:
+        raise OriginError(f"unknown occurrence {occurrence_id!r}")
+    return [x for x in row[0].split(",") if x]
+
+
+def caused_by_us(db: sqlite3.Connection, occurrence_id: str) -> bool:
+    """Whether the estate is answerable for the act, not merely for the record.
+
+    The single question the flat spine could not answer, and the one that
+    decides whether a settlement, a retraction or an apology is owed.
+    """
+    return origin_of(db, occurrence_id) == EFFECT
+
+
+def by_origin(db: sqlite3.Connection, subject: str) -> dict[str, list[str]]:
+    ensure_schema(db)
+    out: dict[str, list[str]] = {o: [] for o in ORIGINS}
+    for oid, origin in db.execute(
+            "SELECT occurrence_id,origin FROM occurrence_origin WHERE subject=?"
+            " ORDER BY occurrence_id", (subject,)):
+        out[origin].append(oid)
+    return out
+
+
+def provenance(db: sqlite3.Connection, occurrence_id: str) -> list[str]:
+    """Walk a derived occurrence back to the observations under it.
+
+    Returns the observed occurrences at the bottom of the chain. A derived
+    occurrence with no observed ancestor is derived from nothing this estate
+    watched, which is worth being able to see.
+    """
+    ensure_schema(db)
+    roots: list[str] = []
+    frontier = [occurrence_id]
+    seen = set()
+    for _ in range(64):
+        if not frontier:
+            break
+        nxt = []
+        for oid in frontier:
+            if oid in seen:
+                continue
+            seen.add(oid)
+            origin = origin_of(db, oid)
+            if origin == OBSERVED:
+                roots.append(oid)
+            elif origin == DERIVED:
+                nxt.extend(inputs_of(db, oid))
+        frontier = nxt
+    return sorted(set(roots))

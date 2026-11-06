@@ -1,0 +1,243 @@
+#!/usr/bin/env python3
+"""Attest what is sealed, what is deployed, and what is actually running.
+
+The three are routinely conflated and are not the same claim. A sealed release
+is a set of bytes someone committed to. A deployed binary is what sits at the
+path a unit names. A running binary is the inode the kernel is executing, which
+stops being the deployed one the moment a file is replaced without a restart --
+the process keeps executing the old, now-unlinked inode, and every surface
+reports healthy while serving code that no longer exists on disk.
+
+That gap is invisible to `systemctl is-active`, to a version endpoint, and to
+reading the deploy log. It is visible in /proc/<pid>/exe, which still resolves
+to the replaced inode and is marked "(deleted)".
+
+This reads the release's existing sha256-manifest rather than introducing a
+second attestation format; sealing remains the release mechanism's job.
+
+Severity is deliberately split:
+
+  running != deployed   -> exit 1. A restart is owed and the surface is lying.
+  deployed != sealed    -> reported, never fatal. Mid-development this is the
+                           normal state and failing on it would train everyone
+                           to ignore the check.
+
+Cannot infer: agreement here is not a claim the bytes are correct, tested, or
+authorized -- only that the three answers to "which bytes" are the same answer.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+DEFAULT_UNITS = [
+    "bonfyre-web-address",
+    "bonfyre-mcp-gateway",
+    "bonfyre-oauth-mcp",
+]
+
+
+def sh(*argv: str) -> str:
+    try:
+        return subprocess.run(argv, capture_output=True, text=True, timeout=30).stdout.strip()
+    except Exception:  # noqa: BLE001
+        return ""
+
+
+def sha256(path: str) -> str | None:
+    try:
+        h = hashlib.sha256()
+        with open(path, "rb") as handle:
+            for chunk in iter(lambda: handle.read(1 << 20), b""):
+                h.update(chunk)
+        return h.hexdigest()
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def artifact_kind(path: str) -> str:
+    """ELF or script. Decides which question about "what is running" is answerable."""
+    try:
+        with open(path, "rb") as handle:
+            return "elf" if handle.read(4) == b"\x7fELF" else "script"
+    except Exception:  # noqa: BLE001
+        return "unknown"
+
+
+def source_newer(path: str, pid: str) -> bool:
+    """True when the file changed after the process began executing it."""
+    try:
+        file_mtime = Path(path).stat().st_mtime
+        # /proc/<pid> mtime is not the start time; the stat field is. Use the
+        # directory's creation as observed by stat on /proc/<pid>, which tracks
+        # process start closely enough to answer "was this edited since".
+        proc_start = Path(f"/proc/{pid}").stat().st_mtime
+        return file_mtime > proc_start + 1
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def sealed_index(manifest: Path) -> dict[str, str]:
+    """basename -> hash, from the release's own sha256sum manifest."""
+    index: dict[str, str] = {}
+    if not manifest.is_file():
+        return index
+    try:
+        with manifest.open(errors="replace") as handle:
+            for line in handle:
+                parts = line.split(None, 1)
+                if len(parts) != 2:
+                    continue
+                digest, path = parts[0], parts[1].strip()
+                # First occurrence wins: a release may carry the same basename
+                # in several trees, and later copies are not more canonical.
+                index.setdefault(Path(path).name, digest)
+    except Exception:  # noqa: BLE001
+        pass
+    return index
+
+
+def unit_exec_path(unit: str) -> str:
+    """The artifact a unit executes, which is not always the first path on the line.
+
+    Two independent traps here. The last ExecStart wins, because a drop-in that
+    clears and resets it is how the recursive gateway replaced the mesh
+    entrypoint. And for `/usr/bin/node /opt/.../gateway.mjs` the artifact is the
+    script, not the interpreter -- an earlier version denylisted "python" and so
+    resolved that unit to /usr/bin/node, then compared node against node and
+    reported a match that meant nothing.
+
+    The rule names no interpreters: take the last token that is an existing
+    path. A bare binary resolves to itself; an interpreter plus script resolves
+    to the script.
+    """
+    out = sh("systemctl", "cat", unit)
+    path = ""
+    for line in out.splitlines():
+        if not line.startswith("ExecStart="):
+            continue
+        value = line[len("ExecStart="):].strip()
+        if not value:
+            path = ""  # ExecStart= alone clears the previous list
+            continue
+        # The artifact is the first real path on the line, not the last: a unit
+        # that passes another organ as an argument (--auth-binary /usr/local/bin/
+        # bonfyre-auth) would otherwise be attested against that argument. An
+        # interpreter is the exception -- there the script it runs is the artifact.
+        interpreters = ("python", "node", "/bin/sh", "/bin/bash", "perl", "ruby", "java")
+        candidates = [t for t in value.split() if t.startswith("/") and Path(t).is_file()]
+        if candidates:
+            path = candidates[0]
+            if any(name in path for name in interpreters) and len(candidates) > 1:
+                path = candidates[1]
+        else:
+            tokens = value.split()
+            path = tokens[-1] if tokens else ""
+    return path
+
+
+def attest(units: list[str], manifest: Path) -> tuple[list[dict], int]:
+    sealed = sealed_index(manifest)
+    rows: list[dict] = []
+    fatal = 0
+    for unit in units:
+        pid = sh("systemctl", "show", "-p", "MainPID", "--value", unit)
+        active = sh("systemctl", "is-active", unit)
+        deployed_path = unit_exec_path(unit)
+        row = {
+            "unit": unit,
+            "active": active or "unknown",
+            "deployed_path": deployed_path,
+            "pid": pid,
+        }
+        # An interpreted unit executes the interpreter, so /proc/<pid>/exe is
+        # python3 and hashing it answers a different question than the one
+        # being asked. Comparing that to the script's hash reports drift on
+        # every Python service forever, which is worse than not checking:
+        # a check that always fails is a check nobody reads.
+        #
+        # For a script the honest analogue is time, not content -- if the file
+        # changed after the process started, the process is running code that
+        # is no longer what the file says.
+        row["kind"] = artifact_kind(deployed_path)
+        row["deployed_sha256"] = sha256(deployed_path) if deployed_path else None
+        row["sealed_sha256"] = sealed.get(Path(deployed_path).name) if deployed_path else None
+
+        if pid and pid != "0":
+            exe = sh("readlink", f"/proc/{pid}/exe")
+            row["running_inode_deleted"] = exe.endswith("(deleted)")
+            if row["kind"] == "elf":
+                row["running_sha256"] = sha256(f"/proc/{pid}/exe")
+            else:
+                row["running_sha256"] = None
+                row["source_newer_than_process"] = source_newer(deployed_path, pid)
+        else:
+            row["running_sha256"] = None
+            row["running_inode_deleted"] = False
+
+        run, dep, seal = row["running_sha256"], row["deployed_sha256"], row["sealed_sha256"]
+        if not pid or pid == "0":
+            row["verdict"] = "NOT_RUNNING"
+        elif row["kind"] != "elf" and row.get("source_newer_than_process"):
+            row["verdict"] = "SOURCE_CHANGED_SINCE_START"
+            fatal += 1
+        elif run and dep and run != dep:
+            row["verdict"] = "RUNNING_DIFFERS_FROM_DEPLOYED"
+            fatal += 1
+        elif row["kind"] != "elf":
+            row["verdict"] = "interpreted; source unchanged since the process started"
+        elif seal and dep and dep != seal:
+            row["verdict"] = "deployed differs from sealed (expected during development)"
+        elif seal and dep and dep == seal:
+            row["verdict"] = "matches sealed release"
+        else:
+            row["verdict"] = "running matches deployed; not present in sealed manifest"
+        rows.append(row)
+    return rows, fatal
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--manifest", default="/opt/bonfyre/releases/command-plane-sealed-20260727T163326Z/sha256-manifest.txt")
+    ap.add_argument("--units", nargs="*", default=DEFAULT_UNITS)
+    ap.add_argument("--json", action="store_true")
+    args = ap.parse_args()
+
+    rows, fatal = attest(args.units, Path(args.manifest))
+
+    if args.json:
+        print(json.dumps({
+            "schema_version": "bonfyre.release.attest.v1",
+            "sealed_manifest": args.manifest,
+            "units": rows,
+            "running_differs_from_deployed": fatal,
+            "forbidden_inference": (
+                "agreement is not a claim the bytes are correct, tested or authorized; "
+                "only that sealed, deployed and running name the same bytes"
+            ),
+        }, indent=2))
+    else:
+        print(f"sealed manifest: {args.manifest}")
+        for row in rows:
+            short = lambda v: (v[:12] if v else "--------none")  # noqa: E731
+            run_col = short(row['running_sha256']) if row.get('kind') == 'elf' else f"{row.get('kind','?'):<12}"
+            print(f"  {row['unit']:<24} {row['active']:<8} "
+                  f"run={run_col} "
+                  f"dep={short(row['deployed_sha256'])} "
+                  f"seal={short(row['sealed_sha256'])}")
+            print(f"    {row['verdict']}"
+                  + ("  [running inode is deleted]" if row.get("running_inode_deleted") else ""))
+        print()
+        if fatal:
+            print(f"{fatal} unit(s) not executing what is on disk; a restart is owed", file=sys.stderr)
+        else:
+            print("every running unit is executing what is on disk")
+    return 1 if fatal else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

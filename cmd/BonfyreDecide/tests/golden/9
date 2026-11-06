@@ -1,0 +1,2 @@
+--columns role must be one of date, description, debit, credit, amount, category
+exit 2

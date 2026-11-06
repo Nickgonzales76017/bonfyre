@@ -1,0 +1,32 @@
+schema OccurrenceOrigin
+generation execution-1
+authority engine/core/src/occurrence_origin.c
+absorbs components/BonfyreControlPlane/occurrence_origin.py
+
+field occurrence_id
+  type text
+  role identity
+  required true
+
+field origin
+  type enum
+  values observed derived effect
+  required true
+
+field subject
+  type text
+  role addressed-subject
+  required true
+
+invariant observed-names-source
+  statement an observed occurrence has source and no authority
+
+invariant derived-names-inputs
+  statement a derived occurrence has one or more inputs and no authority
+
+invariant effect-names-authority
+  statement an effect occurrence names the authority under which it happened
+
+forbidden_inference observed occurrence -> act by Bonfyre
+forbidden_inference derived occurrence -> effect
+forbidden_inference raw material -> occurrence

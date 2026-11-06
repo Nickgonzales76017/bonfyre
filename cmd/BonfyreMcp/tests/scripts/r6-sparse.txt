@@ -1,0 +1,5 @@
+200	-	{"jsonrpc":"2.0","id":"@ID@","result":{"isError":false,"structuredContent":{"run_id":"run-1"}}}
+200	-	{"jsonrpc":"2.0","id":"@ID@","result":{"isError":false,"structuredContent":{}}}
+200	-	{"jsonrpc":"2.0","id":"@ID@","result":{"isError":false,"structuredContent":{}}}
+200	-	{"jsonrpc":"2.0","id":"@ID@","result":{"isError":false,"structuredContent":{}}}
+200	-	{"jsonrpc":"2.0","id":"@ID@","result":{"isError":false,"structuredContent":{"crux_id":"c"}}}

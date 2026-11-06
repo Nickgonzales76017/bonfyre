@@ -1,0 +1,73 @@
+external-estate Aurekai
+generation density-1
+source_master /Users/nickgonzales/Downloads/AUREKAI_EXTERNAL_ESTATE_MASTER_INDEX_V4.md
+source_protocols /Users/nickgonzales/Downloads/AUREKAI_MACHINE_PROTOCOLS_CONTINUATION_V3.md
+observed_occurrences 4891
+observed_machine_protocols 739
+truth_level observed_candidate
+
+# Seed descriptors demonstrate the compiler rule. They are source-derived,
+# unverified candidates; the master corpus is not a provider directory.
+source ext:aqicn
+  source_ref EXT-02571
+  observed_name AQICN
+  primary_url https://aqicn.org/api/
+  source_kind public_api
+  domain household school farm construction elder-care event transport public-safety
+  semantic_output air-quality-observation exposure-condition
+  affordance OBSERVE MEASURE ALERT COMPARE
+  carrier http
+  economics unknown
+  temporal live
+  spatial local
+  actor person household community government business machine
+  world_phase observe plan execute
+  interaction_fit stage spatial work inspector
+  limit observed public API listing; endpoint, terms, availability, data quality and act rights are unverified
+
+source ext:gs1-epcis
+  source_ref protocol:GS1-EPCIS-2.0
+  observed_name GS1 EPCIS
+  primary_url https://www.gs1.org/standards/epcis
+  source_kind machine_protocol
+  domain farm food warehouse shipment retail restaurant household customs insurance
+  semantic_output supply-chain-occurrence lot-location custody-event
+  affordance IDENTIFY OBSERVE VERIFY COMPARE SHIP STORE REPORT
+  carrier protocol
+  economics unknown
+  temporal mixed
+  spatial asset
+  actor business government machine household
+  world_phase discover execute observe settle remember
+  interaction_fit spatial market work inspector
+  limit protocol support does not prove a trading partner, an observed shipment, title, delivery, customs clearance or insurance coverage
+
+source ext:x402
+  source_ref EXT-00001
+  observed_name x402 Protocol Specification
+  primary_url https://github.com/coinbase/x402
+  source_kind x402_spec
+  domain weather imagery translation laboratory shipping property research household agriculture
+  semantic_output payment-presentation quote-condition service-offer
+  affordance QUOTE PAY SETTLE PURCHASE DISCOVER
+  carrier x402
+  economics settlement
+  temporal live
+  spatial global
+  actor person household business government machine agent
+  world_phase discover plan execute settle
+  interaction_fit market work inspector
+  limit protocol availability is not settlement truth, a wallet binding, an authorized spend, a provider admission or delivered service
+
+composition farm-cold-chain-household
+  context farm crop-lot processor cold-chain-shipment warehouse restaurant household
+  uses ext:aqicn ext:gs1-epcis ext:x402
+  preserves source-specific observation, carrier and payment standing
+  forbidden_inference shipment event -> title, delivery, food safety or payment settlement
+
+composition resilient-building-community
+  context building resident utility weather maintenance emergency community
+  uses ext:aqicn ext:x402
+  preserves separate household, utility, provider and effect authority boundaries
+  forbidden_inference air-quality observation -> building control right or health determination
+

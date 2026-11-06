@@ -1,0 +1,16 @@
+{
+ "version": "bonfyre-subject-surface-v1",
+ "law": "touch the object, understand the object, then offer the operations that pertain to it",
+ "address": "/s/<kind>/<identifier>",
+ "kinds": [
+  "parcel",
+  "capability",
+  "note"
+ ],
+ "aperture": "2-5 actions computed from identity, the capability registry, runtime reachability, the session's closure, its authority, and cost; strength drives visual weight",
+ "forbidden_inference": [
+  "an offered action -> permission already granted; the act still checks scope at the boundary",
+  "an absent action -> a missing feature; it is a closure for this viewer",
+  "visual weight -> importance in general; it is importance to this viewer now"
+ ]
+}

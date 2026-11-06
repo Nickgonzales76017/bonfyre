@@ -9,6 +9,9 @@
  *   hash  — deterministic FNV1a fallback (no model required)
  */
 #define _POSIX_C_SOURCE 200809L
+#ifdef __APPLE__
+#define _DARWIN_C_SOURCE /* libproc for the measured peak footprint in agree */
+#endif
 
 #include <ctype.h>
 #include <errno.h>
@@ -22,8 +25,15 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <onnxruntime_c_api.h>
+
+/* One JSON field reader for the estate, rather than a tenth one written here. */
+#include "bf_lex.h"
+#include "bf_bert_fold.h"
+#include "bf_static_embed.h"
 #include <sqlite3.h>
 #include <bonfyre.h>
+#include "../../../lib/libbonfyre/include/bf_help.h"
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 
 /* portable CPU count (macOS + Linux) */
 #ifdef __APPLE__
@@ -167,38 +177,164 @@ static void vocab_free(Vocab *v) {
 /* BERT pre-tokenizer: split on whitespace + punctuation, lowercase */
 typedef struct { char **words; int count; int cap; } WordList;
 
-static void wordlist_push(WordList *wl, const char *w, size_t len) {
-    if (wl->count == wl->cap) {
-        wl->cap = wl->cap == 0 ? 64 : wl->cap * 2;
-        wl->words = realloc(wl->words, sizeof(char *) * (size_t)wl->cap);
-    }
-    char *s = malloc(len + 1);
-    for (size_t i = 0; i < len; i++) s[i] = (char)tolower((unsigned char)w[i]);
-    s[len] = '\0';
-    wl->words[wl->count++] = s;
-}
-
 static void wordlist_free(WordList *wl) {
     for (int i = 0; i < wl->count; i++) free(wl->words[i]);
     free(wl->words);
 }
 
+/* Unicode-correct BERT pre-tokenization.
+ *
+ * The version this replaces walked bytes with ASCII predicates. isspace and
+ * ispunct see nothing above 0x7F, and tolower changes nothing there, so three
+ * things uncased BERT does never happened:
+ *
+ *   folding       "São" stayed "são" with its combining tilde intact and
+ *                 "Уроженка" kept its capital, while the vocabulary holds
+ *                 only folded forms -- the word missed and became [UNK];
+ *   punctuation   "women’s" was one word, because U+2019 is three bytes none
+ *                 of which is ASCII punctuation, so "women" matched and "’s"
+ *                 did not and the whole word became [UNK];
+ *   CJK           a run of ideographs was one word the vocabulary could not
+ *                 contain, where BERT splits every ideograph into its own.
+ *
+ * At the far end of that is a text none of whose words survive, which reached
+ * the model as [CLS] [UNK]xN [SEP] and embedded as its word count: unrelated
+ * headlines of equal length at cosine 1.000.
+ *
+ * The fold table is generated from unicodedata rather than written here, so
+ * what counts as a mark or an uppercase letter is Unicode's answer and not a
+ * hand-maintained list of the accents someone thought of. */
+static int utf8_decode_cp(const unsigned char *s, size_t len, uint32_t *cp)
+{
+    if (s[0] < 0x80) { *cp = s[0]; return 1; }
+    if ((s[0] & 0xE0) == 0xC0 && len >= 2 && (s[1] & 0xC0) == 0x80) {
+        *cp = ((uint32_t)(s[0] & 0x1F) << 6) | (s[1] & 0x3F); return 2;
+    }
+    if ((s[0] & 0xF0) == 0xE0 && len >= 3 && (s[1] & 0xC0) == 0x80 && (s[2] & 0xC0) == 0x80) {
+        *cp = ((uint32_t)(s[0] & 0x0F) << 12) | ((uint32_t)(s[1] & 0x3F) << 6) | (s[2] & 0x3F);
+        return 3;
+    }
+    if ((s[0] & 0xF8) == 0xF0 && len >= 4 && (s[1] & 0xC0) == 0x80 &&
+        (s[2] & 0xC0) == 0x80 && (s[3] & 0xC0) == 0x80) {
+        *cp = ((uint32_t)(s[0] & 0x07) << 18) | ((uint32_t)(s[1] & 0x3F) << 12) |
+              ((uint32_t)(s[2] & 0x3F) << 6) | (s[3] & 0x3F);
+        return 4;
+    }
+    *cp = 0xFFFD;   /* an invalid byte is one replacement, never a wrong length */
+    return 1;
+}
+
+static int utf8_encode_cp(uint32_t cp, char *out)
+{
+    if (cp < 0x80) { out[0] = (char)cp; return 1; }
+    if (cp < 0x800) { out[0] = (char)(0xC0 | (cp >> 6)); out[1] = (char)(0x80 | (cp & 0x3F)); return 2; }
+    if (cp < 0x10000) {
+        out[0] = (char)(0xE0 | (cp >> 12)); out[1] = (char)(0x80 | ((cp >> 6) & 0x3F));
+        out[2] = (char)(0x80 | (cp & 0x3F)); return 3;
+    }
+    out[0] = (char)(0xF0 | (cp >> 18)); out[1] = (char)(0x80 | ((cp >> 12) & 0x3F));
+    out[2] = (char)(0x80 | ((cp >> 6) & 0x3F)); out[3] = (char)(0x80 | (cp & 0x3F));
+    return 4;
+}
+
+static int bert_is_space(uint32_t cp)
+{
+    return cp == ' ' || cp == '\t' || cp == '\n' || cp == '\r' || cp == 0x0B || cp == 0x0C ||
+           cp == 0xA0 || (cp >= 0x2000 && cp <= 0x200B) || cp == 0x202F || cp == 0x205F ||
+           cp == 0x3000 || cp == 0xFEFF;
+}
+
+static int bert_is_control(uint32_t cp)
+{
+    return cp < 0x20 || (cp >= 0x7F && cp <= 0x9F) || cp == 0xFFFD;
+}
+
+/* BERT treats all ASCII non-alphanumerics and every Unicode P* character as
+ * punctuation. These are the P* ranges that occur in headline text. */
+static int bert_is_punct(uint32_t cp)
+{
+    if (cp < 0x80) return ispunct((int)cp) != 0;
+    if (cp >= 0xA1 && cp <= 0xBF && cp != 0xAA && cp != 0xB5 && cp != 0xBA) return 1;
+    if (cp == 0xD7 || cp == 0xF7) return 1;
+    if (cp >= 0x2010 && cp <= 0x2027) return 1;
+    if (cp >= 0x2030 && cp <= 0x205E) return 1;
+    if (cp >= 0x3001 && cp <= 0x303F) return 1;
+    if (cp >= 0xFF01 && cp <= 0xFF0F) return 1;
+    if (cp >= 0xFF1A && cp <= 0xFF20) return 1;
+    if (cp == 0x060C || cp == 0x061B || cp == 0x061F || cp == 0x06D4) return 1;
+    if (cp == 0x0964 || cp == 0x0965 || cp == 0x0589 || cp == 0x05BE) return 1;
+    return 0;
+}
+
+static int bert_is_cjk(uint32_t cp)
+{
+    return (cp >= 0x4E00 && cp <= 0x9FFF) || (cp >= 0x3400 && cp <= 0x4DBF) ||
+           (cp >= 0xF900 && cp <= 0xFAFF) || (cp >= 0x20000 && cp <= 0x2A6DF) ||
+           (cp >= 0x2F800 && cp <= 0x2FA1F);
+}
+
+/* NULL when the code point folds to itself; otherwise its folded UTF-8, which
+ * is the empty string for a nonspacing mark. */
+static const char *bert_fold_cp(uint32_t cp)
+{
+    size_t lo = 0, hi = BERT_FOLD_COUNT;
+    if (cp < 0x80) return NULL;
+    while (lo < hi) {
+        size_t mid = (lo + hi) / 2;
+        if (BERT_FOLD[mid].cp == cp) return BERT_FOLD[mid].out;
+        if (BERT_FOLD[mid].cp < cp) lo = mid + 1; else hi = mid;
+    }
+    return NULL;
+}
+
+static void wordlist_push_raw(WordList *wl, const char *w, size_t len)
+{
+    if (wl->count == wl->cap) {
+        wl->cap = wl->cap == 0 ? 64 : wl->cap * 2;
+        wl->words = realloc(wl->words, sizeof(char *) * (size_t)wl->cap);
+    }
+    char *s = malloc(len + 1);
+    memcpy(s, w, len);
+    s[len] = '\0';
+    wl->words[wl->count++] = s;
+}
+
 static WordList bert_pre_tokenize(const char *text) {
     WordList wl = {0};
-    size_t i = 0, len = strlen(text);
+    const unsigned char *s = (const unsigned char *)text;
+    size_t len = strlen(text), i = 0, wn = 0;
+    /* A fold never lengthens a code point past eight bytes, and every code
+     * point is at least one input byte. */
+    char *word = malloc(len * 8 + 16);
+    if (!word) return wl;
     while (i < len) {
-        while (i < len && isspace((unsigned char)text[i])) i++;
-        if (i >= len) break;
-        if (ispunct((unsigned char)text[i])) {
-            wordlist_push(&wl, text + i, 1);
-            i++;
+        uint32_t cp;
+        char enc[4];
+        int n = utf8_decode_cp(s + i, len - i, &cp);
+        i += (size_t)n;
+        if (bert_is_space(cp) || bert_is_control(cp)) {
+            if (wn) { wordlist_push_raw(&wl, word, wn); wn = 0; }
             continue;
         }
-        size_t start = i;
-        while (i < len && !isspace((unsigned char)text[i]) && !ispunct((unsigned char)text[i]))
-            i++;
-        if (i > start) wordlist_push(&wl, text + start, i - start);
+        if (bert_is_punct(cp) || bert_is_cjk(cp)) {
+            if (wn) { wordlist_push_raw(&wl, word, wn); wn = 0; }
+            wordlist_push_raw(&wl, enc, (size_t)utf8_encode_cp(cp, enc));
+            continue;
+        }
+        if (cp < 0x80) { word[wn++] = (char)tolower((int)cp); continue; }
+        {
+            const char *folded = bert_fold_cp(cp);
+            if (folded) {
+                size_t fl = strlen(folded);
+                memcpy(word + wn, folded, fl);
+                wn += fl;
+            } else {
+                wn += (size_t)utf8_encode_cp(cp, word + wn);
+            }
+        }
     }
+    if (wn) wordlist_push_raw(&wl, word, wn);
+    free(word);
     return wl;
 }
 
@@ -319,6 +455,80 @@ static void ort_session_close(OrtContext *ctx) {
 }
 
 /* Embed a single text using an open session.  Caller frees *out_vec. */
+/* How much of a text the vocabulary can see.
+ *
+ * wordpiece_encode maps any word it cannot build from vocabulary pieces to a
+ * single [UNK]. For a script the vocabulary does not carry that is every word,
+ * so a Bengali headline of N words reaches the model as [CLS] [UNK]x N [SEP]
+ * and its vector depends on nothing but N. Two unrelated headlines of the same
+ * length then embed identically -- measured on this estate's own corpus as
+ * cosine 1.000 between a dengue campaign and a BRICS communique.
+ *
+ * Counted by running the same pre-tokenizer and matcher the encoder uses, so
+ * the count cannot drift from what the model is actually given. */
+static void wordpiece_visibility(const Vocab *vocab, const char *text,
+                                 int *out_words, int *out_unknown, int *out_meaningful)
+{
+    WordList words = bert_pre_tokenize(text);
+    int unknown = 0, content = 0, meaningful = 0;
+    for (int w = 0; w < words.count; w++) {
+        const char *word = words.words[w];
+        size_t wlen = strlen(word), start = 0;
+        /* Punctuation does not count toward what the model can see. A
+         * headline whose words are all unknown and whose comma is known
+         * still embeds as its length -- the first version of this rule
+         * counted the comma and let fifteen such titles through, each
+         * still sitting at cosine 1.000 with an unrelated neighbour. */
+        {
+            uint32_t cp;
+            int n = utf8_decode_cp((const unsigned char *)word, wlen, &cp);
+            if ((size_t)n == wlen && bert_is_punct(cp)) continue;
+        }
+        content++;
+        {
+            int missed = 0;
+            while (start < wlen) {
+                size_t mlen = 0;
+                int found = start == 0
+                    ? trie_longest_match(&vocab->trie, word, wlen, &mlen)
+                    : trie_longest_match(&vocab->sub_trie, word + start, wlen - start, &mlen);
+                if (found < 0 || mlen == 0) { unknown++; missed = 1; break; }
+                start += mlen;
+            }
+            /* A visible word made only of digits does not identify a text.
+             * A Japanese truck crash and an Urdu shooting that each kept a
+             * "4" and lost every other word embedded at cosine 0.980. */
+            if (!missed) {
+                size_t k;
+                for (k = 0; k < wlen; k++)
+                    if (word[k] < '0' || word[k] > '9') { meaningful++; break; }
+            }
+        }
+    }
+    *out_words = content;
+    *out_unknown = unknown;
+    *out_meaningful = meaningful;
+    wordlist_free(&words);
+}
+
+/* Whether a text is too little seen to embed.
+ *
+ * Refused when no visible word carries meaning, or when unknown words
+ * outnumber the words that do. The second clause is a consequence of mean
+ * pooling rather than a tuned threshold: every unknown word contributes the
+ * same [UNK] token, so once they are the majority the shared [UNK] mass
+ * outweighs whatever the few visible words say, and texts collapse onto
+ * whichever incidental token survived. On the corpus that was "g20" in two
+ * different Russian headlines at cosine 1.000 (seven of eight words unknown),
+ * "sargan" at 1.000 (ten of eleven), and an escaped "quot" joining unrelated
+ * Ukrainian titles at 0.976. Those looked like corroboration because the
+ * surviving token was the topic, which is what made them dangerous. */
+static int visibility_refuses(int content_words, int unknown_words, int meaningful_words)
+{
+    if (content_words <= 0) return 0;
+    return meaningful_words == 0 || unknown_words > meaningful_words;
+}
+
 static int ort_embed_text(OrtContext *ctx, const Vocab *vocab,
                            const char *text, float **out_vec, int *out_dims) {
     const OrtApi *api = ctx->api;
@@ -486,7 +696,16 @@ typedef struct {
     sqlite3 *db;
     sqlite3_stmt *meta_stmt;
     sqlite3_stmt *vec_stmt;
+    sqlite3_stmt *vec_del_stmt;
 } VecDB;
+
+static void vec_db_close(VecDB *vdb) {
+    if (vdb->meta_stmt) sqlite3_finalize(vdb->meta_stmt);
+    if (vdb->vec_stmt) sqlite3_finalize(vdb->vec_stmt);
+    if (vdb->vec_del_stmt) sqlite3_finalize(vdb->vec_del_stmt);
+    if (vdb->db) sqlite3_close(vdb->db);
+    memset(vdb, 0, sizeof(*vdb));
+}
 
 static int vec_db_open(VecDB *vdb, const char *db_path, int dims) {
     memset(vdb, 0, sizeof(*vdb));
@@ -494,6 +713,9 @@ static int vec_db_open(VecDB *vdb, const char *db_path, int dims) {
         fprintf(stderr, "[embed] Cannot open DB: %s\n", sqlite3_errmsg(vdb->db));
         return -1;
     }
+    /* A reader holding the store makes COMMIT wait for its lock. Without a
+     * timeout the wait is zero and the commit fails at once. */
+    sqlite3_busy_timeout(vdb->db, 5000);
     sqlite3_enable_load_extension(vdb->db, 1);
     const char *ext = resolve_vec_ext();
     char *err = NULL;
@@ -515,40 +737,151 @@ static int vec_db_open(VecDB *vdb, const char *db_path, int dims) {
         "  metadata TEXT, created_at TEXT)", NULL, NULL, NULL);
     sqlite3_exec(vdb->db, create_vec, NULL, NULL, NULL);
 
-    sqlite3_prepare_v2(vdb->db,
-        "INSERT OR REPLACE INTO artifacts(id, source, type, text, metadata, created_at) "
-        "VALUES (?, 'BonfyreEmbed', 'embedding', ?, '{}', datetime('now'))",
-        -1, &vdb->meta_stmt, NULL);
-    sqlite3_prepare_v2(vdb->db,
-        "INSERT OR REPLACE INTO vec_artifacts(id, embedding) VALUES (?, ?)",
-        -1, &vdb->vec_stmt, NULL);
+    if (sqlite3_prepare_v2(vdb->db,
+            "INSERT OR REPLACE INTO artifacts(id, source, type, text, metadata, created_at) "
+            "VALUES (?, 'BonfyreEmbed', 'embedding', ?, '{}', datetime('now'))",
+            -1, &vdb->meta_stmt, NULL) != SQLITE_OK ||
+        sqlite3_prepare_v2(vdb->db,
+            "INSERT INTO vec_artifacts(id, embedding) VALUES (?, ?)",
+            -1, &vdb->vec_stmt, NULL) != SQLITE_OK ||
+        sqlite3_prepare_v2(vdb->db,
+            "DELETE FROM vec_artifacts WHERE id = ?",
+            -1, &vdb->vec_del_stmt, NULL) != SQLITE_OK) {
+        fprintf(stderr, "[embed] vector store is not writable: %s\n", sqlite3_errmsg(vdb->db));
+        vec_db_close(vdb);
+        return -1;
+    }
     return 0;
 }
 
 static int vec_db_insert(VecDB *vdb, const char *doc_id, const char *text,
                           const float *embedding, int dims) {
-    sqlite3_exec(vdb->db, "BEGIN", NULL, NULL, NULL);
-    if (vdb->meta_stmt) {
-        sqlite3_reset(vdb->meta_stmt);
-        sqlite3_bind_text(vdb->meta_stmt, 1, doc_id, -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(vdb->meta_stmt, 2, text, -1, SQLITE_TRANSIENT);
-        sqlite3_step(vdb->meta_stmt);
+    /* Every step and the commit are checked, and the writer only ever writes
+     * inside a transaction it opened.
+     *
+     * The version this replaces checked nothing and returned 0 unconditionally,
+     * and it opened a transaction only when sqlite3_get_autocommit said none
+     * was active. One COMMIT failing with SQLITE_BUSY -- a concurrent reader
+     * was enough -- left its transaction open; every later insert then saw
+     * autocommit off, skipped BEGIN and COMMIT, and rode the orphaned
+     * transaction, and sqlite3_close rolled all of it back. On this estate's
+     * corpus the batch reported 6,963 rows stored and 1,216 were. */
+    int ok;
+    if (!vdb->db || !vdb->meta_stmt || !vdb->vec_stmt || !vdb->vec_del_stmt) return -1;
+    if (!sqlite3_get_autocommit(vdb->db)) {
+        fprintf(stderr, "[embed] store has a transaction this writer did not open; "
+                        "refusing to write %s into it\n", doc_id);
+        return -1;
     }
-    if (vdb->vec_stmt) {
+    if (sqlite3_exec(vdb->db, "BEGIN IMMEDIATE", NULL, NULL, NULL) != SQLITE_OK) {
+        fprintf(stderr, "[embed] cannot begin write for %s: %s\n", doc_id, sqlite3_errmsg(vdb->db));
+        return -1;
+    }
+    sqlite3_reset(vdb->meta_stmt);
+    sqlite3_bind_text(vdb->meta_stmt, 1, doc_id, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(vdb->meta_stmt, 2, text, -1, SQLITE_TRANSIENT);
+    ok = sqlite3_step(vdb->meta_stmt) == SQLITE_DONE;
+    sqlite3_reset(vdb->meta_stmt);
+    /* sqlite-vec's vec0 does not honour OR REPLACE on its primary key: a
+     * second insert for an id fails with a UNIQUE constraint and the old
+     * vector stays. The unchecked writer therefore replaced a re-embedded
+     * row's text and silently kept its stale vector, so the store described
+     * one headline and returned another's neighbours. Replacement is done
+     * explicitly, inside the same transaction as the insert. */
+    if (ok) {
+        sqlite3_reset(vdb->vec_del_stmt);
+        sqlite3_bind_text(vdb->vec_del_stmt, 1, doc_id, -1, SQLITE_TRANSIENT);
+        ok = sqlite3_step(vdb->vec_del_stmt) == SQLITE_DONE;
+        sqlite3_reset(vdb->vec_del_stmt);
+    }
+    if (ok) {
         sqlite3_reset(vdb->vec_stmt);
         sqlite3_bind_text(vdb->vec_stmt, 1, doc_id, -1, SQLITE_TRANSIENT);
         sqlite3_bind_blob(vdb->vec_stmt, 2, embedding, dims * (int)sizeof(float), SQLITE_TRANSIENT);
-        sqlite3_step(vdb->vec_stmt);
+        ok = sqlite3_step(vdb->vec_stmt) == SQLITE_DONE;
+        sqlite3_reset(vdb->vec_stmt);
     }
-    sqlite3_exec(vdb->db, "COMMIT", NULL, NULL, NULL);
+    if (!ok) {
+        fprintf(stderr, "[embed] insert of %s failed: %s\n", doc_id, sqlite3_errmsg(vdb->db));
+        sqlite3_exec(vdb->db, "ROLLBACK", NULL, NULL, NULL);
+        return -1;
+    }
+    if (sqlite3_exec(vdb->db, "COMMIT", NULL, NULL, NULL) != SQLITE_OK) {
+        fprintf(stderr, "[embed] commit of %s failed: %s\n", doc_id, sqlite3_errmsg(vdb->db));
+        sqlite3_exec(vdb->db, "ROLLBACK", NULL, NULL, NULL);
+        return -1;
+    }
     return 0;
 }
 
-static void vec_db_close(VecDB *vdb) {
-    if (vdb->meta_stmt) sqlite3_finalize(vdb->meta_stmt);
-    if (vdb->vec_stmt) sqlite3_finalize(vdb->vec_stmt);
-    if (vdb->db) sqlite3_close(vdb->db);
-    memset(vdb, 0, sizeof(*vdb));
+
+typedef struct {
+    sqlite3 *db;
+    sqlite3_stmt *stmt;
+    char text_path[192];
+    char id_path[192];
+} JsonlReader;
+
+static int jsonl_field_path(const char *field, char *out, size_t out_size) {
+    if (!field || !*field || !out || out_size < 4) return -1;
+    for (const unsigned char *p = (const unsigned char *)field; *p; ++p)
+        if (!(isalnum(*p) || *p == '_' || *p == '-')) return -1;
+    return snprintf(out, out_size, "$.%s", field) < (int)out_size ? 0 : -1;
+}
+
+static int jsonl_reader_open(JsonlReader *reader, const char *text_field, const char *id_field) {
+    memset(reader, 0, sizeof(*reader));
+    if (jsonl_field_path(text_field, reader->text_path, sizeof(reader->text_path)) != 0 ||
+        jsonl_field_path(id_field, reader->id_path, sizeof(reader->id_path)) != 0)
+        return -1;
+    if (sqlite3_open(":memory:", &reader->db) != SQLITE_OK) return -1;
+    if (sqlite3_prepare_v2(reader->db,
+            "SELECT json_valid(?1), json_extract(?1, ?2), json_extract(?1, ?3)",
+            -1, &reader->stmt, NULL) != SQLITE_OK) {
+        sqlite3_close(reader->db); reader->db = NULL; return -1;
+    }
+    return 0;
+}
+
+static int jsonl_reader_extract(JsonlReader *reader, const char *line, char **id_out, char **text_out) {
+    const unsigned char *id, *text;
+    *id_out = NULL; *text_out = NULL;
+    sqlite3_reset(reader->stmt); sqlite3_clear_bindings(reader->stmt);
+    sqlite3_bind_text(reader->stmt, 1, line, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(reader->stmt, 2, reader->text_path, -1, SQLITE_STATIC);
+    sqlite3_bind_text(reader->stmt, 3, reader->id_path, -1, SQLITE_STATIC);
+    if (sqlite3_step(reader->stmt) != SQLITE_ROW || sqlite3_column_int(reader->stmt, 0) != 1)
+        return 0;
+    text = sqlite3_column_text(reader->stmt, 1);
+    id = sqlite3_column_text(reader->stmt, 2);
+    if (!text || !id || !*text || !*id) return 0;
+    *text_out = strdup((const char *)text);
+    *id_out = strdup((const char *)id);
+    if (!*text_out || !*id_out) { free(*text_out); free(*id_out); *text_out = NULL; *id_out = NULL; return -1; }
+    return 1;
+}
+
+static void jsonl_reader_close(JsonlReader *reader) {
+    if (reader->stmt) sqlite3_finalize(reader->stmt);
+    if (reader->db) sqlite3_close(reader->db);
+    memset(reader, 0, sizeof(*reader));
+}
+
+static float *embed_text_native(OrtContext *ort_ctx, Vocab *vocab, int use_onnx,
+                                const char *text, int dims, int *out_dims,
+                                const char **backend_label) {
+    float *embedding = NULL;
+    int edims = dims;
+    if (use_onnx && ort_embed_text(ort_ctx, vocab, text, &embedding, &edims) == 0)
+        *backend_label = "onnx-runtime-native";
+    if (!embedding) {
+        TokenList toks = normalize_tokens(text);
+        embedding = build_hash_embedding(&toks, edims);
+        token_list_free(&toks);
+        *backend_label = "hashed-token-native";
+    }
+    *out_dims = edims;
+    return embedding;
 }
 
 /* ── output writers ─────────────────────────────────────────── */
@@ -907,15 +1240,22 @@ static int cmd_embed_branch_(int argc, char **argv) {
 
 /* ─── usage + main ───────────────────────────────────────────── */
 
+#include "static_embed.h"
+
 static void usage(void) {
     fprintf(stderr,
         "Usage: bonfyre-embed --text <path> --out <path> "
-        "[--backend onnx|hash] [--model <name>] [--dims <n>] "
+        "[--backend onnx|hash] [--allow-degraded] [--model <name>] [--dims <n>] "
         "[--output-format json|binary] [--insert-db <db>] [--doc-id <id>] "
-        "[--input-dir <dir>] [--meta-out <path>] [--dry-run]\n"
+        "[--input-dir <dir> | --input-jsonl <file>] [--text-field <field>] "
+        "[--id-field <field>] [--meta-out <path>] [--dry-run]\n"
         "\n"
         "  --input-dir <dir>  Batch mode: embed all .txt files in <dir>\n"
         "                     (loads model once, amortizes startup)\n"
+        "  --input-jsonl <f>  Batch JSONL mode; defaults: --text-field text --id-field id\n"
+        "  --prune-invisible  with --input-jsonl and --insert-db: delete stored rows the\n"
+        "                     vocabulary cannot see, without embedding anything\n"
+        "                     JSON strings are decoded by SQLite JSON1; model loads once\n"
         "\n"
         "Store management subcommands:\n"
         "  bonfyre embed pack           — consolidate loose objects into pack\n"
@@ -931,6 +1271,8 @@ static void usage(void) {
         "  bonfyre embed index-q8                — INT8-quantize pack then index\n"
         "  bonfyre embed nearest <input.vecf> [--k 10] [--n-probe 4] [--brute]\n"
         "  bonfyre embed merge <a.vecf> <b.vecf> [--alpha 0.5] --out <out.vecf>\n"
+        "  bonfyre embed agree --static m.bfse --input-jsonl F --out receipt.json [--k 10] [--limit 2000]\n"
+        "                     — top-k neighbour overlap of a .bfse with its ONNX teacher (memory grant first)\n"
         "\n"
         "Ref / history subcommands:\n"
         "  bonfyre embed tag <hash-hex> <name>   — store named ref\n"
@@ -981,7 +1323,14 @@ static int cmd_embed_index_(int argc, char **argv) {
     snprintf(idx_path,  sizeof(idx_path),
              "%s/.local/share/bonfyre/embeds/pack.bfidx",  home ? home : "/tmp");
 
-    int do_q8 = (argc >= 2 && (strcmp(argv[1],"q8")==0 || strcmp(argv[1],"--q8")==0));
+    enum { EI_Q8, EI_Q8_LONG };
+    static const BfCommandEntry embed_index_commands[] = {
+        {"--q8", EI_Q8_LONG, 0, NULL},
+        {"q8", EI_Q8, 0, NULL},
+    };
+    const BfCommandEntry *index_command = argc < 2 ? NULL : bf_command_lookup(embed_index_commands,
+        sizeof(embed_index_commands) / sizeof(embed_index_commands[0]), argv[1]);
+    int do_q8 = (index_command != NULL);
     if (do_q8) {
         uint32_t nq = 0;
         if (bf_embed_pack_build_q8(pack_path, &nq) != 0) {
@@ -1105,7 +1454,14 @@ static int cmd_embed_tag_(int argc, char **argv) {
     if (argc < 2) {
         fprintf(stderr, "tag: need <hash-hex> <name> | list | delete <name>\n"); return 1;
     }
-    if (strcmp(argv[1], "list") == 0) {
+    enum { ET_DELETE, ET_LIST };
+    static const BfCommandEntry embed_tag_commands[] = {
+        {"delete", ET_DELETE, 0, NULL},
+        {"list", ET_LIST, 0, NULL},
+    };
+    const BfCommandEntry *tag_command = bf_command_lookup(embed_tag_commands,
+        sizeof(embed_tag_commands) / sizeof(embed_tag_commands[0]), argv[1]);
+    if (tag_command && tag_command->id == ET_LIST) {
         char **names = NULL; int count = 0;
         bf_embed_ref_list(&names, &count);
         if (count == 0) { printf("no named refs\n"); free(names); return 0; }
@@ -1119,7 +1475,7 @@ static int cmd_embed_tag_(int argc, char **argv) {
         }
         free(names); return 0;
     }
-    if (strcmp(argv[1], "delete") == 0) {
+    if (tag_command && tag_command->id == ET_DELETE) {
         if (argc < 3) { fprintf(stderr, "tag delete: need <name>\n"); return 1; }
         return bf_embed_ref_delete(argv[2]) == 0 ? 0 : 1;
     }
@@ -1157,6 +1513,7 @@ static int cmd_embed_log_(int argc, char **argv) {
 }
 
 int main(int argc, char **argv) {
+    if (bf_help_requested(argc, argv)) { usage(); return 0; }
     /* Subcommand routing */
     if (argc >= 2 && argv[1][0] != '-') {
         const char *sub = argv[1];
@@ -1177,12 +1534,18 @@ int main(int argc, char **argv) {
             return cmd_embed_tag_(2, av2);
         }
         if (strcmp(sub, "log")     == 0) return cmd_embed_log_    (argc-1, argv+1);
+        if (strcmp(sub, "distill") == 0) return cmd_embed_distill_(argc-1, argv+1);
+        if (strcmp(sub, "static")  == 0) return cmd_embed_static_ (argc-1, argv+1);
+        if (strcmp(sub, "agree")   == 0) return cmd_embed_agree_  (argc-1, argv+1);
     }
 
     const char *text_path = NULL, *out_path = NULL, *meta_out = NULL;
     const char *model = "all-MiniLM-L6-v2", *backend = "onnx";
+    int allow_degraded = 0;
     const char *output_fmt = "json";
     const char *insert_db = NULL, *doc_id = NULL, *input_dir = NULL;
+    const char *input_jsonl = NULL, *text_field = "text", *id_field = "id";
+    int prune_invisible = 0;
     int dims = 384, dry_run = 0;
 
     for (int i = 1; i < argc; i++) {
@@ -1192,15 +1555,236 @@ int main(int argc, char **argv) {
         else if (strcmp(argv[i], "--model") == 0 && i+1 < argc) model = argv[++i];
         else if (strcmp(argv[i], "--dims") == 0 && i+1 < argc) dims = atoi(argv[++i]);
         else if (strcmp(argv[i], "--backend") == 0 && i+1 < argc) backend = argv[++i];
+        else if (strcmp(argv[i], "--allow-degraded") == 0) allow_degraded = 1;
         else if (strcmp(argv[i], "--output-format") == 0 && i+1 < argc) output_fmt = argv[++i];
         else if (strcmp(argv[i], "--insert-db") == 0 && i+1 < argc) insert_db = argv[++i];
         else if (strcmp(argv[i], "--doc-id") == 0 && i+1 < argc) doc_id = argv[++i];
         else if (strcmp(argv[i], "--input-dir") == 0 && i+1 < argc) input_dir = argv[++i];
+        else if (strcmp(argv[i], "--input-jsonl") == 0 && i+1 < argc) input_jsonl = argv[++i];
+        else if (strcmp(argv[i], "--text-field") == 0 && i+1 < argc) text_field = argv[++i];
+        else if (strcmp(argv[i], "--id-field") == 0 && i+1 < argc) id_field = argv[++i];
+        else if (strcmp(argv[i], "--prune-invisible") == 0) prune_invisible = 1;
         else if (strcmp(argv[i], "--dry-run") == 0) dry_run = 1;
         else { usage(); return 1; }
     }
 
     /* ── Batch mode: --input-dir ──────────────────────────── */
+    /* Batch JSONL: one record per line, an id and a text.
+     *
+     * This flag has been in the usage text since the batch path was written
+     * and was never parsed, so `--input-jsonl` fell through to the usage
+     * screen -- advertised, accepted by the shell, and doing nothing. It is
+     * the shape a corpus actually arrives in: 22,962 publication titles come
+     * out of a database as rows, and writing each one to its own .txt file to
+     * satisfy --input-dir is a detour through the filesystem for no reason.
+     *
+     * The model loads once here, which is the entire point of a batch mode:
+     * per-item invocation spends most of its time opening an ONNX session. */
+    if (input_jsonl) {
+        FILE *jf = fopen(input_jsonl, "r");
+        char *line = NULL;
+        size_t cap = 0;
+        ssize_t got;
+        int ok = 0, fail = 0, degraded = 0, invisible = 0, partially_visible = 0;
+        long words_total = 0, unknown_total = 0;
+        if (!jf) { fprintf(stderr, "Cannot open %s\n", input_jsonl); return 2; }
+        if (!insert_db && !out_path) { usage(); fclose(jf); return 1; }
+
+        /* Remove rows a store should not hold under the current visibility
+         * rule, without re-embedding anything. Tokenizing is microseconds and
+         * the model is minutes, so tightening the rule after a corpus is
+         * stored should not cost a full rebuild. */
+        if (prune_invisible) {
+            const char *pdir = resolve_model_dir(model);
+            char ppath[PATH_MAX];
+            Vocab pvocab = {0};
+            VecDB pdb = {0};
+            sqlite3_stmt *del_meta = NULL, *del_vec = NULL;
+            long examined = 0, invisible_n = 0, pruned = 0, prune_failed = 0;
+            snprintf(ppath, sizeof(ppath), "%s/vocab.txt", pdir);
+            if (!insert_db || vocab_load(&pvocab, ppath) != 0) {
+                fprintf(stderr, "[embed] --prune-invisible needs --insert-db and a readable %s\n", ppath);
+                fclose(jf);
+                return 1;
+            }
+            if (vec_db_open(&pdb, insert_db, dims) != 0 ||
+                sqlite3_prepare_v2(pdb.db, "DELETE FROM artifacts WHERE id=?", -1, &del_meta, NULL) != SQLITE_OK ||
+                sqlite3_prepare_v2(pdb.db, "DELETE FROM vec_artifacts WHERE id=?", -1, &del_vec, NULL) != SQLITE_OK) {
+                fprintf(stderr, "[embed] cannot open %s for pruning\n", insert_db);
+                vocab_free(&pvocab);
+                fclose(jf);
+                return 1;
+            }
+            while ((got = getline(&line, &cap, jf)) > 0) {
+                char pid[512] = {0};
+                char *ptext;
+                int w = 0, u = 0, m = 0, ok = 1;
+                if (got < 2) continue;
+                if (!bf_lex_json_string(line, id_field, pid, sizeof(pid)) || !pid[0]) continue;
+                ptext = malloc((size_t)got + 1);
+                if (!ptext) continue;
+                if (!bf_lex_json_string(line, text_field, ptext, (size_t)got + 1)) { free(ptext); continue; }
+                examined++;
+                wordpiece_visibility(&pvocab, ptext, &w, &u, &m);
+                free(ptext);
+                if (!visibility_refuses(w, u, m)) continue;
+                invisible_n++;
+                if (sqlite3_exec(pdb.db, "BEGIN IMMEDIATE", NULL, NULL, NULL) != SQLITE_OK) { prune_failed++; continue; }
+                sqlite3_reset(del_meta); sqlite3_bind_text(del_meta, 1, pid, -1, SQLITE_TRANSIENT);
+                ok = sqlite3_step(del_meta) == SQLITE_DONE;
+                {
+                    int removed = sqlite3_changes(pdb.db);
+                    sqlite3_reset(del_meta);
+                    if (ok) {
+                        sqlite3_reset(del_vec); sqlite3_bind_text(del_vec, 1, pid, -1, SQLITE_TRANSIENT);
+                        ok = sqlite3_step(del_vec) == SQLITE_DONE;
+                        sqlite3_reset(del_vec);
+                    }
+                    if (!ok || sqlite3_exec(pdb.db, "COMMIT", NULL, NULL, NULL) != SQLITE_OK) {
+                        sqlite3_exec(pdb.db, "ROLLBACK", NULL, NULL, NULL);
+                        prune_failed++;
+                        continue;
+                    }
+                    if (removed > 0) pruned++;
+                }
+            }
+            free(line);
+            fclose(jf);
+            sqlite3_finalize(del_meta);
+            sqlite3_finalize(del_vec);
+            vec_db_close(&pdb);
+            vocab_free(&pvocab);
+            printf("{\"schema\":\"bonfyre-embed-prune.v1\",\"examined\":%ld,"
+                   "\"invisible\":%ld,\"pruned\":%ld,\"prune_failed\":%ld,"
+                   "\"cannot_infer\":[\"a kept row -> a well-represented text; this removes only "
+                   "texts whose unknown words outnumber their meaningful visible words\"]}\n",
+                   examined, invisible_n, pruned, prune_failed);
+            return prune_failed ? 1 : 0;
+        }
+
+        const char *mdir = resolve_model_dir(model);
+        fprintf(stderr, "[embed] backend=onnx-native  model=%s\n", mdir);
+        char vpath[PATH_MAX];
+        snprintf(vpath, sizeof(vpath), "%s/vocab.txt", mdir);
+        Vocab vocab = {0};
+        int use_onnx = (strcmp(backend, "onnx") == 0 && vocab_load(&vocab, vpath) == 0);
+        OrtContext ort_ctx = {0};
+        if (use_onnx && ort_session_open(&ort_ctx, mdir) != 0) use_onnx = 0;
+        if (!use_onnx && !allow_degraded && strcmp(backend, "onnx") == 0) {
+            /* The same refusal the single path makes, and for the same reason:
+             * hashed-token geometry is not a learned metric, and a corpus
+             * indexed in it answers queries that look like retrieval. */
+            fprintf(stderr, "[embed] refusing to embed a corpus degraded: onnx was "
+                            "requested and %s has no readable vocab.txt\n", mdir);
+            fclose(jf);
+            return 1;
+        }
+
+        /* The vector table is opened at the width the model actually produces,
+         * not at the flag's default.
+         *
+         * --dims defaults to 384 and this model emits 768, so opening the
+         * table before the first embedding creates a float[384] column and
+         * every insert afterwards is a dimension mismatch. The first version
+         * of this did exactly that, counted 200 rows embedded, and never
+         * looked at what vec_db_insert returned -- a corpus that reports
+         * success and stores nothing usable is worse than one that fails. */
+        VecDB vdb = {0};
+        int vdb_open = 0, vec_dims = 0, stored = 0, insert_failed = 0;
+
+        while ((got = getline(&line, &cap, jf)) > 0) {
+            char id[512] = {0}, *text = NULL;
+            float *embedding = NULL;
+            int edims = dims;
+            size_t tlen = 0;
+            if (got < 2) continue;
+            if (!bf_lex_json_string(line, id_field, id, sizeof(id)) || !id[0]) { fail++; continue; }
+            text = malloc((size_t)got + 1);
+            if (!text) { fail++; continue; }
+            if (!bf_lex_json_string(line, text_field, text, (size_t)got + 1) || !text[0]) {
+                free(text); text = NULL; fail++; continue;
+            }
+            tlen = strlen(text);
+            if (use_onnx) {
+                int words = 0, unknown = 0, meaningful = 0;
+                wordpiece_visibility(&vocab, text, &words, &unknown, &meaningful);
+                words_total += words;
+                unknown_total += unknown;
+                if (visibility_refuses(words, unknown, meaningful)) {
+                    /* Nothing of this text is visible to the model, so the
+                     * vector would encode its word count and nothing else. It
+                     * is not stored: a row that is near every other row of the
+                     * same length is worse than a missing row, because it
+                     * answers queries. */
+                    invisible++;
+                    free(text);
+                    continue;
+                }
+                if (unknown > 0) partially_visible++;
+                if (ort_embed_text(&ort_ctx, &vocab, text, &embedding, &edims) != 0)
+                    embedding = NULL;
+            }
+            if (!embedding) {
+                TokenList toks = normalize_tokens(text);
+                embedding = build_hash_embedding(&toks, edims);
+                token_list_free(&toks);
+                degraded++;
+            }
+            if (!embedding) { free(text); fail++; continue; }
+            if (insert_db) {
+                if (!vdb_open) {
+                    vec_dims = edims;
+                    if (vec_db_open(&vdb, insert_db, vec_dims) != 0) {
+                        fprintf(stderr, "[embed] Cannot open vec DB for batch\n");
+                        free(embedding); free(text); free(line); fclose(jf);
+                        if (use_onnx) { ort_session_close(&ort_ctx); vocab_free(&vocab); }
+                        return 1;
+                    }
+                    vdb_open = 1;
+                    fprintf(stderr, "[embed] vector store opened at %d dims\n", vec_dims);
+                }
+                if (edims != vec_dims) {
+                    /* One corpus, one geometry. A row of a different width is
+                     * not a row that compares badly, it is one that cannot be
+                     * compared at all. */
+                    fprintf(stderr, "[embed] %s embedded at %d dims into a %d-dim store; "
+                                    "refused\n", id, edims, vec_dims);
+                    insert_failed++;
+                } else if (vec_db_insert(&vdb, id, text, embedding, edims) != 0) {
+                    insert_failed++;
+                } else {
+                    stored++;
+                }
+            }
+            free(embedding);
+            free(text);
+            ok++;
+        }
+        free(line);
+        fclose(jf);
+        if (vdb_open) vec_db_close(&vdb);
+        if (use_onnx) { ort_session_close(&ort_ctx); vocab_free(&vocab); }
+        fprintf(stderr, "[embed] jsonl batch: %d embedded, %d stored, %d failed, "
+                        "%d not stored, %d degraded, %d invisible to the vocabulary, "
+                        "%d partially visible\n",
+                ok, stored, fail, insert_failed, degraded, invisible, partially_visible);
+        printf("{\"schema\":\"bonfyre-embed-batch.v1\",\"embedded\":%d,\"stored\":%d,"
+               "\"failed\":%d,\"not_stored\":%d,\"degraded\":%d,"
+               "\"invisible_to_vocabulary\":%d,\"partially_visible\":%d,"
+               "\"content_words\":%ld,\"unknown_words\":%ld,\"dims\":%d,"
+               "\"backend\":\"%s\","
+               "\"cannot_infer\":[\"an embedding -> a meaning; distances are comparable "
+               "only within one model and one geometry\","
+               "\"embedded -> stored; a vector that did not reach the store answers nothing\","
+               "\"partially visible -> faithfully represented; unknown words are dropped "
+               "to a single token each\"]}\n",
+               ok, stored, fail, insert_failed, degraded, invisible, partially_visible,
+               words_total, unknown_total,
+               vec_dims ? vec_dims : dims,
+               use_onnx ? "onnx-runtime-native" : "hashed-token-native");
+        return (fail && !ok) || insert_failed ? 1 : 0;
+    }
+
     if (input_dir) {
         if (!out_path && !insert_db) { usage(); return 1; }
         DIR *d = opendir(input_dir);
@@ -1280,7 +1864,7 @@ int main(int argc, char **argv) {
 
             if (insert_db) {
                 char *ft = read_file_contents(files[fi], NULL);
-                vec_db_insert(&vdb, fid, ft ? ft : "", embedding, edims);
+                if (vec_db_insert(&vdb, fid, ft ? ft : "", embedding, edims) != 0) fail++;
                 free(ft);
             }
             if (out_path) {
@@ -1342,9 +1926,10 @@ int main(int argc, char **argv) {
      * Text alone is not sufficient: a 256-d hash fallback cannot
      * satisfy a 384-d vector-store request for the same document. */
     uint8_t embed_hash[32];
+    int cache_eligible = strcmp(backend, "onnx") == 0;
     {
         BfSha256 _sha;
-        static const char cache_schema[] = "bonfyre-embed-cache-v2";
+        static const char cache_schema[] = "bonfyre-embed-cache-v3";
         char requested_dims[32];
         snprintf(requested_dims, sizeof(requested_dims), "%d", dims);
         bf_sha256_init(&_sha);
@@ -1356,6 +1941,25 @@ int main(int argc, char **argv) {
         bf_sha256_update(&_sha, (const uint8_t *)model, strlen(model));
         bf_sha256_update(&_sha, (const uint8_t *)"\\0", 1);
         bf_sha256_update(&_sha, (const uint8_t *)requested_dims, strlen(requested_dims));
+        /* Runtime upgrades can change the vector produced by the same graph.
+         * Model names also survive replaced weights and vocabularies. Hash
+         * the actual inputs before admitting a cached ONNX representation. */
+        if (cache_eligible) {
+            const char *mdir = resolve_model_dir(model);
+            const char *runtime = OrtGetApiBase()->GetVersionString();
+            char onnx_path[PATH_MAX], vocab_path[PATH_MAX];
+            char model_digest[65], vocab_digest[65];
+            snprintf(vocab_path, sizeof(vocab_path), "%s/vocab.txt", mdir);
+            if (resolve_onnx_path(mdir, onnx_path, sizeof(onnx_path)) != 0 ||
+                bf_sha256_file(onnx_path, model_digest) != 0 ||
+                bf_sha256_file(vocab_path, vocab_digest) != 0) {
+                cache_eligible = 0;
+            } else {
+                bf_sha256_update(&_sha, (const uint8_t *)runtime, strlen(runtime) + 1);
+                bf_sha256_update(&_sha, (const uint8_t *)model_digest, 64);
+                bf_sha256_update(&_sha, (const uint8_t *)vocab_digest, 64);
+            }
+        }
         bf_sha256_final(&_sha, embed_hash);
     }
 
@@ -1363,11 +1967,23 @@ int main(int argc, char **argv) {
     const char *backend_label = NULL;
     uint32_t cached_dim = 0;
 
-    if (bf_embed_lookup(embed_hash, &embedding, &cached_dim) == 0) {
+    if (cache_eligible && bf_embed_lookup(embed_hash, &embedding, &cached_dim) == 0) {
         dims = (int)cached_dim;
         backend_label = "embed-cache";
         fprintf(stderr, "[embed] cache hit  dims=%d\n", dims);
     }
+
+    /* What was asked for, kept separately from what was produced.
+     *
+     * A requested ONNX/Nomic embedding whose vocab is missing degraded to a
+     * hashed-token vector, warned on stderr, and exited 0. An orchestrator sees
+     * the exit status and concludes the model ran. It did not, and the two are
+     * not interchangeable: hashed-token geometry is not a learned metric, so
+     * every downstream distance threshold calibrated on one is meaningless on
+     * the other. Silence is the defect -- the fallback itself is a reasonable
+     * thing to want, once it is something the caller chose. */
+    const char *backend_requested = backend;
+    const char *degraded_because = NULL;
 
     /* ONNX backend (only on cache miss) */
     if (!embedding && strcmp(backend, "onnx") == 0) {
@@ -1377,6 +1993,7 @@ int main(int argc, char **argv) {
         snprintf(vpath, sizeof(vpath), "%s/vocab.txt", mdir);
         Vocab vocab = {0};
         if (vocab_load(&vocab, vpath) != 0) {
+            degraded_because = "the model directory has no readable vocab.txt";
             fprintf(stderr, "[embed] Cannot load vocab: %s — falling back to hash\n", vpath);
             backend = "hash";
         } else {
@@ -1385,8 +2002,9 @@ int main(int argc, char **argv) {
                 dims = odims;
                 backend_label = "onnx-runtime-native";
                 /* Persist for all future callers — atomic, idempotent */
-                bf_embed_store(embed_hash, embedding, (uint32_t)dims);
+                if (cache_eligible) bf_embed_store(embed_hash, embedding, (uint32_t)dims);
             } else {
+                degraded_because = "the ONNX runtime did not produce a vector";
                 fprintf(stderr, "[embed] ONNX failed, falling back to hash\n");
                 backend = "hash";
             }
@@ -1406,6 +2024,26 @@ int main(int argc, char **argv) {
     free(text);
     if (!embedding) { fprintf(stderr, "Embedding failed\n"); return 1; }
 
+    /* Fail closed on an unrequested degradation. The caller who wants the
+     * fallback says so and gets it labelled; the caller who does not is told
+     * rather than handed a differently-shaped space with a zero exit. */
+    if (degraded_because && !allow_degraded) {
+        fprintf(stderr,
+                "[embed] refusing to return a degraded representation: %s was requested, "
+                "%s was produced, because %s.\n"
+                "        Hashed-token geometry is not a learned metric and distances are "
+                "not comparable across the two.\n"
+                "        Install the model's vocab.txt, or pass --allow-degraded to accept "
+                "the fallback with the receipt labelled.\n",
+                backend_requested, backend_label, degraded_because);
+        free(embedding);
+        return 3;
+    }
+    if (degraded_because) {
+        fprintf(stderr, "[embed] degraded: requested=%s obtained=%s because %s\n",
+                backend_requested, backend_label, degraded_because);
+    }
+
     /* Inline insert to sqlite-vec DB (skip file I/O entirely) */
     if (insert_db) {
         /* Auto-generate doc-id from text filename if not provided */
@@ -1418,14 +2056,29 @@ int main(int argc, char **argv) {
             if (dot) *dot = '\0';
             doc_id = auto_id;
         }
+    int insert_failed_single = 0;
         VecDB vdb = {0};
         if (vec_db_open(&vdb, insert_db, dims) != 0) {
             free(embedding); return 1;
         }
         char *t_text = read_file_contents(text_path, NULL);
-        vec_db_insert(&vdb, doc_id, t_text ? t_text : "", embedding, dims);
+        if (vec_db_insert(&vdb, doc_id, t_text ? t_text : "", embedding, dims) != 0) {
+            /* A row that did not commit is not in the store; saying otherwise is
+             * the silent loss this writer used to commit. */
+            fprintf(stderr, "[embed] %s was embedded and not stored\n", doc_id);
+            insert_failed_single = 1;
+        }
         vec_db_close(&vdb);
+        if (insert_failed_single) {
+            free(t_text);
+            free(embedding);
+            return 1;
+        }
         printf("Inserted %s into %s  [%d dims, %s]\n", doc_id, insert_db, dims, backend_label);
+        if (degraded_because) {
+            printf("  requested %s, obtained %s (%s)\n",
+                   backend_requested, backend_label, degraded_because);
+        }
         free(t_text);
     }
 
@@ -1454,6 +2107,10 @@ int main(int argc, char **argv) {
         }
 
         printf("Wrote embedding to %s  [%d dims, %s, %s]\n", out_path, dims, backend_label, fmt_label);
+        if (degraded_because) {
+            printf("  requested %s, obtained %s (%s)\n",
+                   backend_requested, backend_label, degraded_because);
+        }
         printf("Wrote metadata to %s\n", meta_out);
         token_list_free(&mt);
     }

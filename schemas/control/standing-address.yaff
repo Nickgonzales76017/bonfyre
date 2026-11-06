@@ -1,0 +1,18 @@
+schema StandingAddress
+generation surface-1
+authority engine/core/src/standing_address.c
+absorbs components/BonfyreControlPlane/standing_address.py
+
+field opportunity
+  type record
+  role addressed-action
+  required true
+
+invariant attention-reorders-only
+  statement attention may alter rank but cannot create an opportunity or open an obligation
+
+invariant availability-outranks-relevance
+  statement unavailable opportunities rank below every available opportunity regardless of attention
+
+forbidden_inference attention -> intent
+forbidden_inference ranked opportunity -> authorized action

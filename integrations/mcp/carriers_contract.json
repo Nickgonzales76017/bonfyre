@@ -1,0 +1,76 @@
+{
+  "schema_version": "bonfyre.carriers.contract.v1",
+  "source": "architecture/external/carriers.contract.yaff",
+  "count": 17,
+  "carriers": [
+    {
+      "name": "x402",
+      "path": "/capability"
+    },
+    {
+      "name": "MPP",
+      "path": "/mpp/quote"
+    },
+    {
+      "name": "UCP",
+      "path": "/ucp/catalog"
+    },
+    {
+      "name": "ACP",
+      "path": "/acp/products"
+    },
+    {
+      "name": "Beckn",
+      "path": "/beckn/search"
+    },
+    {
+      "name": "OGC",
+      "path": "/ogc"
+    },
+    {
+      "name": "RESO",
+      "path": "/reso/Property"
+    },
+    {
+      "name": "MISMO",
+      "path": "/mismo/subject-property"
+    },
+    {
+      "name": "ActivityPub",
+      "path": "/ap/actor"
+    },
+    {
+      "name": "WebFinger",
+      "path": "/.well-known/webfinger?resource=acct:bonfyre@aurekai.life"
+    },
+    {
+      "name": "CloudEvents",
+      "path": "/events"
+    },
+    {
+      "name": "WoT",
+      "path": "/wot/thing"
+    },
+    {
+      "name": "CAP",
+      "path": "/cap/alerts"
+    },
+    {
+      "name": "EPCIS",
+      "path": "/epcis/events"
+    },
+    {
+      "name": "OpenRTB",
+      "path": "/openrtb/bidrequest"
+    },
+    {
+      "name": "A2A",
+      "path": "/.well-known/agent.json"
+    },
+    {
+      "name": "MCP",
+      "path": "/mcp/resources/"
+    }
+  ],
+  "forbidden_inference": "a served carrier is not an authorized, priced, or willing one"
+}

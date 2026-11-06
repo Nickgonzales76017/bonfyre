@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * BonfyreSegment — Idea Boundary Detection + Segment Graph
  *
@@ -25,6 +32,7 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <bonfyre.h>
+#include "../../../lib/libbonfyre/include/bf_help.h"
 
 /* ── Utilities ────────────────────────────────────────────────────── */
 
@@ -529,6 +537,7 @@ static void print_usage(void) {
 }
 
 int main(int argc, char **argv) {
+    if (bf_help_requested(argc, argv)) { print_usage(); return 0; }
     if (argc < 4) { print_usage(); return 1; }
 
     const char *mode = argv[1];

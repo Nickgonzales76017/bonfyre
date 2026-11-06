@@ -1,0 +1,14 @@
+[
+    {
+        "name": "api",
+        "schema": "bonfyre-api-v1"
+    },
+    {
+        "name": "mcp",
+        "schema": "bonfyre-mcp-resources-v1"
+    },
+    {
+        "name": "a2a",
+        "schema": "bonfyre-a2a-resources-v1"
+    }
+]

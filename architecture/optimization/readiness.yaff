@@ -1,0 +1,180 @@
+atlas optimization-readiness
+
+architecture readiness-state
+  canonical_name ReadinessState
+  owns ReadinessLabel
+  owns AdmissionLadder
+  owns DependencyEdge
+  consumes Capability
+  consumes BodyAvailability
+  consumes CarrierAdmission
+  publishes ReadinessLabel
+  publishes ExecutableFrontier
+  family optimization
+  domain Optimization / Readiness
+  layer governance
+  semantic_question Can this be executed right now, and if not, exactly which rung of the ladder is missing?
+  purpose Make readiness impossible to confuse with architectural completeness. A target shape may be arbitrarily large; the executable frontier is whatever needs nothing else. Every element carries a label and, when blocked, names the single dependency that blocks it.
+  maturity architectural
+  node_types ReadinessLabel
+  node_types AdmissionRung
+  node_types Dependency
+  node_types ExecutableFrontier
+  edge_types blocked_by
+  edge_types unlocks
+  edge_types measured_by
+  invariant every element of the map carries exactly one readiness label
+  invariant a blocked element names the dependency that blocks it, not a general condition
+  invariant a large target shape is never evidence of progress; only MEASURED is
+  invariant an unmeasured claim is labelled CANDIDATE regardless of how well specified it is
+  invariant a derived metric is not a proven fact; a promoted conclusion keeps its provenance, its measurement universe and its verification state
+  invariant an audit's own output is not source truth
+  invariant a prior conclusion, including one produced by this system, is re-verifiable and never a frozen invariant
+  forbidden_inference a well-specified abstraction -> an executable one
+  forbidden_inference breadth of the target map -> readiness
+  forbidden_inference a capability being described -> a body existing
+  forbidden_inference a body existing -> a service running
+  forbidden_inference a service running -> this carrier reaching it
+  forbidden_inference a prior Bonfyre conclusion -> a verified fact
+  interacts optimization-proof
+  interacts preservation-boundary
+  interacts compression-law
+  source_lineage Generation-10 readiness separation, 2026-08-26
+  source_lineage four observed capability-versus-reachability failures, 2026-08-26
+
+label MEASURED
+  detail A number exists, taken over a named universe, at a named revision.
+label EXECUTABLE
+  detail Needs nothing that does not already exist. On the frontier.
+label BLOCKED_BY
+  detail Fully specified and waiting on exactly one named dependency.
+label DECLARED
+  detail The namespace or contract exists; nothing populates or implements it.
+label CANDIDATE
+  detail Proposed. No commitment, no dependency analysis, no measurement.
+
+rung r1-capability
+  question Can this semantically be done?
+rung r2-body-availability
+  question Does an implementation or body exist?
+rung r3-service-availability
+  question Is that body actually running?
+rung r4-carrier-admission
+  question Can this carrier reach it?
+rung r5-authority-admission
+  question May this caller use it?
+rung r6-execution-admission
+  question Is it executable now?
+  detail The conjunction of every rung above.
+
+ladder_invariant a failure is localized to one rung and reported as that rung
+ladder_invariant no rung implies any rung below it
+ladder_example a compiled route set with no serving host is r1 yes, r2 yes, r3 no, and therefore r6 no
+ladder_example a working command-line path whose protocol wrapper fails is r1 yes, r2 yes, r3 yes, r4 no
+ladder_note reporting the whole as unavailable when only one rung is missing hides the cheapest available fix
+
+interaction readiness-labels-every-claim
+  source readiness-state
+  destination optimization-proof
+  relation labelling_constraint
+  preserves the separation between a specified abstraction and an executed one
+  drops any presentation in which described, blocked and measured elements appear at equal maturity
+  forbidden_inference an item appearing in a capability map -> that item being actionable
+
+architecture analysis-universe
+  canonical_name AnalysisUniverse
+  owns ObservedSet
+  owns UniverseDigest
+  consumes SubjectClosure
+  publishes ObservedSet
+  publishes UniverseCompatibility
+  family optimization
+  domain Optimization / Measurement identity
+  layer governance
+  semantic_question Under what conditions was this set observed, and is another set lawfully comparable to it?
+  purpose Stop counts and finding sets from being treated as timeless facts. Every observed set carries the universe that produced it, and a comparison across universes requires explicit reconciliation rather than subtraction.
+  maturity architectural
+  node_types AnalysisUniverse
+  node_types ObservedSet
+  node_types UniverseReconciliation
+  edge_types observed_under
+  edge_types comparable_to
+  invariant an observed set carries a universe digest covering subject closure, revision, inclusion and exclusion rules, tool, tool version, configuration and environment
+  invariant two sets are comparable only under the same universe digest, or through an explicit reconciliation that states what differs
+  invariant a count without a universe is a number, not a measurement
+  invariant divergent inclusion rules between a local run and a scheduled run make the two sets incomparable until reconciled
+  forbidden_inference two counts of the same kind -> those counts being comparable
+  forbidden_inference a finding disappearing between runs -> that finding being resolved
+  forbidden_inference a smaller set -> improvement
+  interacts readiness-state
+  interacts optimization-proof
+  applies_to static analysis findings
+  applies_to test results
+  applies_to benchmark and performance measurements
+  applies_to security scans
+  applies_to route and source censuses
+  applies_to model evaluations
+  applies_to compression measurements
+  applies_to observation scrapes
+  source_lineage Generation-10 readiness separation, 2026-08-26
+
+architecture independent-oracle
+  canonical_name IndependentOracle
+  owns ComparisonContract
+  owns ArbitrationContract
+  owns ResidualClass
+  consumes SubjectClosure
+  consumes ObservedSet
+  publishes Residual
+  publishes DispositionVerdict
+  family optimization
+  domain Optimization / Independent recomputation
+  layer governance
+  semantic_question When two realizations of the same calculation disagree, which one is operative, and what would it take to overturn it?
+  purpose Make independent recomputation usable against a live financial system. Without an arbitration rule the first run produces residuals nobody can triage, and trust in the mechanism dies immediately.
+  maturity architectural
+  node_types OperativeRealization
+  node_types AdvisoryRealization
+  node_types Residual
+  node_types ResidualClass
+  node_types ArbitrationContract
+  edge_types compared_against
+  edge_types classified_as
+  edge_types corroborated_by
+  invariant exactly one realization is operative; every other is advisory
+  invariant a residual is evidence, never a verdict
+  invariant a residual alone never alters financial state, never relabels the operative result as wrong, and never triggers automatic repair
+  invariant the operative result stands until a residual is independently corroborated
+  invariant the comparison contract declares rounding, ordering, grouping, null semantics and effective-date semantics before the first run, not after the first argument
+  invariant a disagreement is classified before it is escalated
+  forbidden_inference a difference -> a defect
+  forbidden_inference an advisory realization being newer or cleaner -> it being correct
+  forbidden_inference agreement between two realizations sharing an assumption -> independent corroboration
+  interacts readiness-state
+  interacts preservation-boundary
+  source_lineage Generation-10 readiness separation, 2026-08-26
+
+residual_class ORACLE_SCHEMA_MISREAD
+residual_class ORACLE_MISSING_BUSINESS_RULE
+residual_class ROUNDING_CONVENTION_DIFFERENCE
+residual_class ORDERING_ONLY
+residual_class REPRESENTATION_ONLY
+residual_class HISTORICAL_LEGACY_QUIRK
+residual_class LEGACY_SUSPECTED_DEFECT
+residual_class LEGACY_CONFIRMED_DEFECT
+residual_class ORACLE_CONFIRMED_DEFECT
+residual_class AMBIGUOUS
+
+corroboration_route independent corroboration by a third realization
+corroboration_route historical output evidence
+corroboration_route domain or human confirmation
+corroboration_route a reproduction from first principles against source records
+
+agreement_topology two_agree_one_differs
+  detail When the operative and one advisory agree and a second advisory differs, the differing advisory's interpretation is suspect before the operative result is.
+agreement_topology operative_alone
+  detail When both advisories agree against the operative, the operative becomes a substantially stronger defect candidate, though still not confirmed.
+agreement_topology all_differ
+  detail When every realization differs, the comparison contract is probably incomplete; fix the contract before raising any defect.
+agreement_topology all_agree
+  detail Strong evidence, and the only cheap outcome.

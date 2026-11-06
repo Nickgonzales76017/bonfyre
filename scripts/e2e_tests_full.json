@@ -3,11 +3,11 @@
     {
       "name": "shift-handoff-board-pipeline",
       "commands": [
-        "mkdir -p site/demos/shift-handoff && ./cmd/BonfyreTranscribe/bonfyre-transcribe site/demos/test_a.wav site/demos/shift-handoff || true",
-        "./cmd/BonfyreBrief/bonfyre-brief site/demos/shift-handoff/transcript.json site/demos/shift-handoff || true",
-        "./cmd/BonfyreProof/bonfyre-proof bundle site/demos/shift-handoff site/demos/shift-handoff/proof_bundle || true",
-        "./cmd/BonfyreOffer/bonfyre-offer generate site/demos/shift-handoff/proof_bundle site/demos/shift-handoff/offer_out || true",
-        "./cmd/BonfyrePack/bonfyre-pack assemble site/demos/shift-handoff site/demos/shift-handoff/offer_out site/demos/shift-handoff/pack_out || true"
+        "mkdir -p site/demos/shift-handoff && ./cmd/BonfyreTranscribe/bonfyre-transcribe site/demos/test_a.wav site/demos/shift-handoff",
+        "./cmd/BonfyreBrief/bonfyre-brief site/demos/shift-handoff/transcript.json site/demos/shift-handoff",
+        "./cmd/BonfyreProof/bonfyre-proof full site/demos/shift-handoff site/demos/shift-handoff/proof_bundle",
+        "./cmd/BonfyreOffer/bonfyre-offer generate site/demos/shift-handoff/proof_bundle/proof-bundle.json site/demos/shift-handoff/offer_out",
+        "./cmd/BonfyrePack/bonfyre-pack assemble site/demos/shift-handoff/proof_bundle site/demos/shift-handoff/offer_out site/demos/shift-handoff/pack_out"
       ],
       "expect": {
         "files": [
@@ -21,10 +21,10 @@
     {
       "name": "memory-atlas-pipeline",
       "commands": [
-        "mkdir -p site/demos/memory-atlas && ./cmd/BonfyreTranscribe/bonfyre-transcribe site/demos/test_b.wav site/demos/memory-atlas || true",
-        "./cmd/BonfyreBrief/bonfyre-brief site/demos/memory-atlas/transcript.json site/demos/memory-atlas || true",
-        "./cmd/BonfyreEmbed/bonfyre-embed --input-dir site/demos/memory-atlas --out site/demos/memory-atlas/embed.json || true",
-        "./cmd/BonfyreRender/bonfyre-render artifact site/demos/memory-atlas/transcript.json site/demos/memory-atlas || true"
+        "mkdir -p site/demos/memory-atlas && ./cmd/BonfyreTranscribe/bonfyre-transcribe site/demos/test_b.wav site/demos/memory-atlas",
+        "./cmd/BonfyreBrief/bonfyre-brief site/demos/memory-atlas/transcript.json site/demos/memory-atlas",
+        "./cmd/BonfyreEmbed/bonfyre-embed --input-dir site/demos/memory-atlas --out site/demos/memory-atlas/embed.json",
+        "./cmd/BonfyreRender/bonfyre-render artifact site/demos/memory-atlas/transcript.json site/demos/memory-atlas"
       ],
       "expect": {
         "files": [
@@ -38,10 +38,10 @@
     {
       "name": "customer-voice-board-pipeline",
       "commands": [
-        "mkdir -p site/demos/customer-voice && ./cmd/BonfyreTranscribe/bonfyre-transcribe site/demos/test_a.wav site/demos/customer-voice || true",
-        "./cmd/BonfyreTone/bonfyre-tone extract site/demos/customer-voice/transcript.txt site/demos/customer-voice || true",
+        "mkdir -p site/demos/customer-voice && ./cmd/BonfyreTranscribe/bonfyre-transcribe site/demos/test_a.wav site/demos/customer-voice",
+        "./cmd/BonfyreTone/bonfyre-tone extract site/demos/customer-voice/normalized.wav site/demos/customer-voice",
         "# bonfyre-tag requires a model; skip if not configured (user can supply model path)",
-        "./cmd/BonfyreEmbed/bonfyre-embed --input-dir site/demos/customer-voice --out site/demos/customer-voice/embed.json || true"
+        "./cmd/BonfyreEmbed/bonfyre-embed --input-dir site/demos/customer-voice --out site/demos/customer-voice/embed.json"
       ],
       "expect": {
         "files": [
@@ -54,9 +54,9 @@
     {
       "name": "family-history-museum-pipeline",
       "commands": [
-        "mkdir -p site/demos/family-history && ./cmd/BonfyreTranscribe/bonfyre-transcribe site/demos/test_b.wav site/demos/family-history || true",
-        "./cmd/BonfyreBrief/bonfyre-brief site/demos/family-history/transcript.json site/demos/family-history || true",
-        "./cmd/BonfyreRender/bonfyre-render artifact site/demos/family-history/transcript.json site/demos/family-history || true"
+        "mkdir -p site/demos/family-history && ./cmd/BonfyreTranscribe/bonfyre-transcribe site/demos/test_b.wav site/demos/family-history",
+        "./cmd/BonfyreBrief/bonfyre-brief site/demos/family-history/transcript.json site/demos/family-history",
+        "./cmd/BonfyreRender/bonfyre-render artifact site/demos/family-history/transcript.json site/demos/family-history"
       ],
       "expect": {
         "files": [
@@ -69,10 +69,11 @@
     {
       "name": "freelancer-evidence-vault-pipeline",
       "commands": [
-        "mkdir -p site/demos/freelancer-evidence && ./cmd/BonfyreTranscribe/bonfyre-transcribe site/demos/test_a.wav site/demos/freelancer-evidence || true",
-        "./cmd/BonfyreBrief/bonfyre-brief site/demos/freelancer-evidence/transcript.json site/demos/freelancer-evidence || true",
-        "./cmd/BonfyreProof/bonfyre-proof bundle site/demos/freelancer-evidence site/demos/freelancer-evidence/proof_bundle || true",
-        "./cmd/BonfyrePack/bonfyre-pack assemble site/demos/freelancer-evidence site/demos/freelancer-evidence/proof_bundle site/demos/freelancer-evidence/pack_out || true"
+        "mkdir -p site/demos/freelancer-evidence && ./cmd/BonfyreTranscribe/bonfyre-transcribe site/demos/test_a.wav site/demos/freelancer-evidence",
+        "./cmd/BonfyreBrief/bonfyre-brief site/demos/freelancer-evidence/transcript.json site/demos/freelancer-evidence",
+        "./cmd/BonfyreProof/bonfyre-proof full site/demos/freelancer-evidence site/demos/freelancer-evidence/proof_bundle",
+        "./cmd/BonfyreOffer/bonfyre-offer generate site/demos/freelancer-evidence/proof_bundle/proof-bundle.json site/demos/freelancer-evidence/offer_out",
+        "./cmd/BonfyrePack/bonfyre-pack assemble site/demos/freelancer-evidence/proof_bundle site/demos/freelancer-evidence/offer_out site/demos/freelancer-evidence/pack_out"
       ],
       "expect": {
         "files": [
@@ -85,10 +86,10 @@
     {
       "name": "podcast-plant-pipeline",
       "commands": [
-        "mkdir -p site/demos/podcast-plant && ./cmd/BonfyreMediaPrep/bonfyre-media-prep normalize site/demos/test_a.wav site/demos/podcast-plant/prepped.wav --loudnorm || true",
-        "./cmd/BonfyreTranscribe/bonfyre-transcribe site/demos/podcast-plant/prepped.wav site/demos/podcast-plant || true",
-        "./cmd/BonfyreBrief/bonfyre-brief site/demos/podcast-plant/transcript.json site/demos/podcast-plant || true",
-        "./cmd/BonfyreEmit/bonfyre-emit site/demos/podcast-plant --format rss --out site/demos/podcast-plant/episode.rss || true"
+        "mkdir -p site/demos/podcast-plant && ./cmd/BonfyreMediaPrep/bonfyre-media-prep normalize site/demos/test_a.wav site/demos/podcast-plant/prepped.wav --loudnorm",
+        "./cmd/BonfyreTranscribe/bonfyre-transcribe site/demos/podcast-plant/prepped.wav site/demos/podcast-plant",
+        "./cmd/BonfyreBrief/bonfyre-brief site/demos/podcast-plant/transcript.json site/demos/podcast-plant",
+        "./cmd/BonfyreEmit/bonfyre-emit site/demos/podcast-plant --format rss --out site/demos/podcast-plant/episode.rss"
       ],
       "expect": {
         "files": [
@@ -102,10 +103,10 @@
     {
       "name": "postmortem-atlas-pipeline",
       "commands": [
-        "mkdir -p site/demos/postmortem-atlas && ./cmd/BonfyreTranscribe/bonfyre-transcribe site/demos/test_b.wav site/demos/postmortem-atlas || true",
-        "./cmd/BonfyreTag/bonfyre-tag detect-lang site/demos/postmortem-atlas/transcript.txt site/demos/postmortem-atlas || true",
-        "./cmd/BonfyreEmbed/bonfyre-embed --input-dir site/demos/postmortem-atlas --out site/demos/postmortem-atlas/embed.json || true",
-        "./cmd/BonfyreRender/bonfyre-render artifact site/demos/postmortem-atlas/transcript.json site/demos/postmortem-atlas || true"
+        "mkdir -p site/demos/postmortem-atlas && ./cmd/BonfyreTranscribe/bonfyre-transcribe site/demos/test_b.wav site/demos/postmortem-atlas",
+        "./cmd/BonfyreTag/bonfyre-tag detect-lang site/demos/postmortem-atlas/transcript.txt site/demos/postmortem-atlas",
+        "./cmd/BonfyreEmbed/bonfyre-embed --input-dir site/demos/postmortem-atlas --out site/demos/postmortem-atlas/embed.json",
+        "./cmd/BonfyreRender/bonfyre-render artifact site/demos/postmortem-atlas/transcript.json site/demos/postmortem-atlas"
       ],
       "expect": {
         "files": [
@@ -119,15 +120,15 @@
     {
       "name": "explain-repo-pipeline",
       "commands": [
-        "mkdir -p site/demos/explain-repo && ./cmd/BonfyreIngest/bonfyre-ingest . site/demos/explain-repo || true",
-        "./cmd/BonfyreCanon/bonfyre-canon parse site/demos/explain-repo/ingest.json site/demos/explain-repo || true",
-        "./cmd/BonfyreBrief/bonfyre-brief site/demos/explain-repo/transcript.json site/demos/explain-repo || true",
-        "./cmd/BonfyreRender/bonfyre-render artifact site/demos/explain-repo/transcript.json site/demos/explain-repo || true"
+        "mkdir -p site/demos/explain-repo && ./cmd/BonfyreIngest/bonfyre-ingest README.md site/demos/explain-repo --type text",
+        "./cmd/BonfyreCanon/bonfyre-canon parse site/demos/explain-repo/intake-manifest.json site/demos/explain-repo",
+        "./cmd/BonfyreBrief/bonfyre-brief site/demos/explain-repo/normalized.txt site/demos/explain-repo",
+        "./cmd/BonfyreRender/bonfyre-render artifact site/demos/explain-repo/normalized.txt site/demos/explain-repo"
       ],
       "expect": {
         "files": [
-          "site/demos/explain-repo/ingest.json",
-          "site/demos/explain-repo/ast.json",
+          "site/demos/explain-repo/intake-manifest.json",
+          "site/demos/explain-repo/brief.md",
           "site/demos/explain-repo/artifact.json"
         ]
       }
@@ -135,10 +136,10 @@
     {
       "name": "town-box-pipeline",
       "commands": [
-        "mkdir -p site/demos/town-box && ./cmd/BonfyreTranscribe/bonfyre-transcribe site/demos/test_a.wav site/demos/town-box || true",
-        "./cmd/BonfyreBrief/bonfyre-brief site/demos/town-box/transcript.json site/demos/town-box || true",
-        "./cmd/BonfyreTag/bonfyre-tag detect-lang site/demos/town-box/transcript.txt site/demos/town-box || true",
-        "./cmd/BonfyreRender/bonfyre-render artifact site/demos/town-box/transcript.json site/demos/town-box || true"
+        "mkdir -p site/demos/town-box && ./cmd/BonfyreTranscribe/bonfyre-transcribe site/demos/test_a.wav site/demos/town-box",
+        "./cmd/BonfyreBrief/bonfyre-brief site/demos/town-box/transcript.json site/demos/town-box",
+        "./cmd/BonfyreTag/bonfyre-tag detect-lang site/demos/town-box/transcript.txt site/demos/town-box",
+        "./cmd/BonfyreRender/bonfyre-render artifact site/demos/town-box/transcript.json site/demos/town-box"
       ],
       "expect": {
         "files": [
@@ -152,10 +153,12 @@
     {
       "name": "grant-evidence-pack-pipeline",
       "commands": [
-        "mkdir -p site/demos/grant-evidence && ./cmd/BonfyreTranscribe/bonfyre-transcribe site/demos/test_b.wav site/demos/grant-evidence || true",
-        "./cmd/BonfyreProof/bonfyre-proof bundle site/demos/grant-evidence site/demos/grant-evidence/proof_bundle || true",
-        "./cmd/BonfyrePack/bonfyre-pack assemble site/demos/grant-evidence site/demos/grant-evidence/proof_bundle site/demos/grant-evidence/pack_out || true",
-        "./cmd/BonfyreEmit/bonfyre-emit site/demos/grant-evidence --format rss --out site/demos/grant-evidence/episode.rss || true"
+        "mkdir -p site/demos/grant-evidence && ./cmd/BonfyreTranscribe/bonfyre-transcribe site/demos/test_b.wav site/demos/grant-evidence",
+        "./cmd/BonfyreBrief/bonfyre-brief site/demos/grant-evidence/transcript.json site/demos/grant-evidence",
+        "./cmd/BonfyreProof/bonfyre-proof full site/demos/grant-evidence site/demos/grant-evidence/proof_bundle",
+        "./cmd/BonfyreOffer/bonfyre-offer generate site/demos/grant-evidence/proof_bundle/proof-bundle.json site/demos/grant-evidence/offer_out",
+        "./cmd/BonfyrePack/bonfyre-pack assemble site/demos/grant-evidence/proof_bundle site/demos/grant-evidence/offer_out site/demos/grant-evidence/pack_out",
+        "./cmd/BonfyreEmit/bonfyre-emit site/demos/grant-evidence --format rss --out site/demos/grant-evidence/episode.rss"
       ],
       "expect": {
         "files": [
@@ -167,12 +170,12 @@
     {
       "name": "micro-consulting-storefront-pipeline",
       "commands": [
-        "mkdir -p site/demos/micro-consulting && ./cmd/BonfyreTranscribe/bonfyre-transcribe site/demos/test_a.wav site/demos/micro-consulting || true",
-        "./cmd/BonfyreBrief/bonfyre-brief site/demos/micro-consulting/transcript.json site/demos/micro-consulting || true",
-        "./cmd/BonfyreProof/bonfyre-proof bundle site/demos/micro-consulting site/demos/micro-consulting/proof_bundle || true",
-        "./cmd/BonfyreOffer/bonfyre-offer generate site/demos/micro-consulting/proof_bundle site/demos/micro-consulting/offer_out || true",
-        "./scripts/gen_meter_from_offer.sh site/demos/micro-consulting/offer_out site/demos/micro-consulting/meter.json || true",
-        "./cmd/BonfyrePack/bonfyre-pack assemble site/demos/micro-consulting site/demos/micro-consulting/offer_out site/demos/micro-consulting/pack_out || true"
+        "mkdir -p site/demos/micro-consulting && ./cmd/BonfyreTranscribe/bonfyre-transcribe site/demos/test_a.wav site/demos/micro-consulting",
+        "./cmd/BonfyreBrief/bonfyre-brief site/demos/micro-consulting/transcript.json site/demos/micro-consulting",
+        "./cmd/BonfyreProof/bonfyre-proof full site/demos/micro-consulting site/demos/micro-consulting/proof_bundle",
+        "./cmd/BonfyreOffer/bonfyre-offer generate site/demos/micro-consulting/proof_bundle/proof-bundle.json site/demos/micro-consulting/offer_out",
+        "./scripts/gen_meter_from_offer.sh site/demos/micro-consulting/offer_out site/demos/micro-consulting/meter.json",
+        "./cmd/BonfyrePack/bonfyre-pack assemble site/demos/micro-consulting/proof_bundle site/demos/micro-consulting/offer_out site/demos/micro-consulting/pack_out"
       ],
       "expect": {
         "files": [
@@ -185,11 +188,12 @@
     {
       "name": "personal-legal-prep-binder-pipeline",
       "commands": [
-          "mkdir -p site/demos/legal-prep && ./cmd/BonfyreTranscribe/bonfyre-transcribe site/demos/test_a.wav site/demos/legal-prep || true",
-          "./scripts/gen_proof_meta.sh site/demos/legal-prep || true",
-          "./cmd/BonfyreProof/bonfyre-proof bundle site/demos/legal-prep site/demos/legal-prep/proof_bundle || true",
-          "./cmd/BonfyreTag/bonfyre-tag detect-lang site/demos/legal-prep/transcript.txt site/demos/legal-prep || true",
-          "./cmd/BonfyrePack/bonfyre-pack assemble site/demos/legal-prep site/demos/legal-prep/proof_bundle site/demos/legal-prep/pack_out || true"
+        "mkdir -p site/demos/legal-prep && ./cmd/BonfyreTranscribe/bonfyre-transcribe site/demos/test_a.wav site/demos/legal-prep",
+        "./cmd/BonfyreBrief/bonfyre-brief site/demos/legal-prep/transcript.json site/demos/legal-prep",
+        "./cmd/BonfyreProof/bonfyre-proof full site/demos/legal-prep site/demos/legal-prep/proof_bundle",
+        "./cmd/BonfyreTag/bonfyre-tag detect-lang site/demos/legal-prep/transcript.txt site/demos/legal-prep",
+        "./cmd/BonfyreOffer/bonfyre-offer generate site/demos/legal-prep/proof_bundle/proof-bundle.json site/demos/legal-prep/offer_out",
+        "./cmd/BonfyrePack/bonfyre-pack assemble site/demos/legal-prep/proof_bundle site/demos/legal-prep/offer_out site/demos/legal-prep/pack_out"
       ],
       "expect": {
         "files": [

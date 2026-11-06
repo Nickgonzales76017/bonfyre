@@ -1,0 +1,466 @@
+{
+  "schema": "bonfyre.native-head-microbenchmark.v1",
+  "scope": "Synthetic native head only, excluding compilation/import, tokenizer, backbone, RPC and application latency. No trained tensors or model download.",
+  "environment": {
+    "os_arch": "Darwin arm64",
+    "compiler": "Apple clang 17.0.0 (clang-1700.0.13.5)",
+    "flags": "-O2 -std=c11 -Wall -Wextra -Werror -DBF_DECISION_ACCELERATE -DACCELERATE_NEW_LAPACK -framework Accelerate -lm",
+    "env": {
+      "VECLIB_MAXIMUM_THREADS": "1"
+    }
+  },
+  "method": {
+    "warmup_per_workload": 3,
+    "samples_per_workload_per_trial": 21,
+    "trials": 3,
+    "order": "baseline/raw/owned, owned/raw/baseline, baseline/raw/owned",
+    "summary": "median of per-trial medians; p95 is sorted sample index 19 of 21",
+    "allocation": "Weights and workspace allocated before warmups. Immutable owner creation/copy/validation excluded from repeated-request measurement."
+  },
+  "fingerprints": {
+    "baseline_kernel_sha256": "49791e1741bf3d40dcdd12d35f956ac21d26314d8f9774cbc0045c8220c48807",
+    "baseline_header_sha256": "66a8d878ea0b038f90b85ea227a911542159d0cadc5a2074a1e811a823723d57",
+    "optimized_kernel_sha256": "3fc480b5096123f3928ecd2d3de298c9408a7e944952fdcea43c607885ce4858",
+    "optimized_header_sha256": "4cd0a31e7624b894ee5d441ff3c657bd3aef315c6e6517cb7438420bc5ab2499",
+    "benchmark_source_sha256": "212b18c0c7f1df84fdecb992794c595d777ec4ce7d11ee55fbc851eff7310033",
+    "baseline_binary_sha256": "0d3e93d7129ea3dd207be0c1ec22746c6a37ea3ba7b605bae74790e1e2265ce7",
+    "optimized_raw_binary_sha256": "dcda656056afcbb629b1f14e4c3184a40b6c55dbd2945aa47c7cfa5f51085d58",
+    "optimized_owned_binary_sha256": "a5abe3cc505227f62a591cbf6b4452b55712e6c8116302f52ea8930e6c72822f"
+  },
+  "summary": [
+    {
+      "workload": "short-schema",
+      "baseline_median_ms": 5.944,
+      "optimized_raw_median_ms": 5.716,
+      "optimized_owned_median_ms": 2.754,
+      "baseline_to_owned_speedup": 2.158315177923021
+    },
+    {
+      "workload": "wide-options",
+      "baseline_median_ms": 2.893,
+      "optimized_raw_median_ms": 2.023,
+      "optimized_owned_median_ms": 1.313,
+      "baseline_to_owned_speedup": 2.2033511043412033
+    },
+    {
+      "workload": "large-head-short-input",
+      "baseline_median_ms": 26.508,
+      "optimized_raw_median_ms": 26.387,
+      "optimized_owned_median_ms": 5.936,
+      "baseline_to_owned_speedup": 4.465633423180593
+    }
+  ],
+  "caveats": [
+    "No hardware isolation or cross-machine confidence interval; simultaneous system load can change timings.",
+    "F32 probability-weight caching and BLAS tiling can change low bits. Independent dense-reference tests use 5-decimal tolerance; this is not upstream PyTorch or BF16 trained parity.",
+    "Wide-option residual packing increases this witness workspace from 672256 to 828928 bytes; scratch remains bounded by a 32-option tile and linear in token count.",
+    "The raw C ABI still scans caller-owned weights every run. Only the opaque copied-and-validated owner omits this repeated scan."
+  ],
+  "trials": [
+    {
+      "trial": 1,
+      "mode": "baseline",
+      "measurements": [
+        {
+          "workload": "short-schema",
+          "synthetic": true,
+          "samples": 21,
+          "tokens": 32,
+          "fields": 8,
+          "options": 32,
+          "weight_bytes": 15798288,
+          "workspace_bytes": 500864,
+          "median_ms": 5.944,
+          "p95_ms": 6.166,
+          "checksum": 5.76519489
+        },
+        {
+          "workload": "wide-options",
+          "synthetic": true,
+          "samples": 21,
+          "tokens": 32,
+          "fields": 8,
+          "options": 128,
+          "weight_bytes": 4209680,
+          "workspace_bytes": 672256,
+          "median_ms": 2.833,
+          "p95_ms": 3.002,
+          "checksum": 12.4676431
+        },
+        {
+          "workload": "large-head-short-input",
+          "synthetic": true,
+          "samples": 21,
+          "tokens": 8,
+          "fields": 1,
+          "options": 2,
+          "weight_bytes": 109299728,
+          "workspace_bytes": 143368,
+          "median_ms": 25.698,
+          "p95_ms": 26.459,
+          "checksum": 0.310367152
+        }
+      ]
+    },
+    {
+      "trial": 1,
+      "mode": "optimized-raw",
+      "measurements": [
+        {
+          "workload": "short-schema",
+          "synthetic": true,
+          "samples": 21,
+          "tokens": 32,
+          "fields": 8,
+          "options": 32,
+          "weight_bytes": 15798288,
+          "workspace_bytes": 500864,
+          "median_ms": 5.804,
+          "p95_ms": 6.077,
+          "checksum": 5.7651948
+        },
+        {
+          "workload": "wide-options",
+          "synthetic": true,
+          "samples": 21,
+          "tokens": 32,
+          "fields": 8,
+          "options": 128,
+          "weight_bytes": 4209680,
+          "workspace_bytes": 828928,
+          "median_ms": 2.09,
+          "p95_ms": 2.192,
+          "checksum": 12.4676433
+        },
+        {
+          "workload": "large-head-short-input",
+          "synthetic": true,
+          "samples": 21,
+          "tokens": 8,
+          "fields": 1,
+          "options": 2,
+          "weight_bytes": 109299728,
+          "workspace_bytes": 143368,
+          "median_ms": 26.706,
+          "p95_ms": 33.386,
+          "checksum": 0.310367659
+        }
+      ]
+    },
+    {
+      "trial": 1,
+      "mode": "optimized-owned",
+      "measurements": [
+        {
+          "workload": "short-schema",
+          "synthetic": true,
+          "samples": 21,
+          "tokens": 32,
+          "fields": 8,
+          "options": 32,
+          "weight_bytes": 15798288,
+          "workspace_bytes": 500864,
+          "median_ms": 2.614,
+          "p95_ms": 2.85,
+          "checksum": 5.76519461
+        },
+        {
+          "workload": "wide-options",
+          "synthetic": true,
+          "samples": 21,
+          "tokens": 32,
+          "fields": 8,
+          "options": 128,
+          "weight_bytes": 4209680,
+          "workspace_bytes": 828928,
+          "median_ms": 1.312,
+          "p95_ms": 1.442,
+          "checksum": 12.4676435
+        },
+        {
+          "workload": "large-head-short-input",
+          "synthetic": true,
+          "samples": 21,
+          "tokens": 8,
+          "fields": 1,
+          "options": 2,
+          "weight_bytes": 109299728,
+          "workspace_bytes": 143368,
+          "median_ms": 6.262,
+          "p95_ms": 8.08,
+          "checksum": 0.310367629
+        }
+      ]
+    },
+    {
+      "trial": 2,
+      "mode": "optimized-owned",
+      "measurements": [
+        {
+          "workload": "short-schema",
+          "synthetic": true,
+          "samples": 21,
+          "tokens": 32,
+          "fields": 8,
+          "options": 32,
+          "weight_bytes": 15798288,
+          "workspace_bytes": 500864,
+          "median_ms": 2.796,
+          "p95_ms": 3.068,
+          "checksum": 5.76519461
+        },
+        {
+          "workload": "wide-options",
+          "synthetic": true,
+          "samples": 21,
+          "tokens": 32,
+          "fields": 8,
+          "options": 128,
+          "weight_bytes": 4209680,
+          "workspace_bytes": 828928,
+          "median_ms": 1.34,
+          "p95_ms": 1.388,
+          "checksum": 12.4676435
+        },
+        {
+          "workload": "large-head-short-input",
+          "synthetic": true,
+          "samples": 21,
+          "tokens": 8,
+          "fields": 1,
+          "options": 2,
+          "weight_bytes": 109299728,
+          "workspace_bytes": 143368,
+          "median_ms": 5.896,
+          "p95_ms": 6.61,
+          "checksum": 0.310367629
+        }
+      ]
+    },
+    {
+      "trial": 2,
+      "mode": "optimized-raw",
+      "measurements": [
+        {
+          "workload": "short-schema",
+          "synthetic": true,
+          "samples": 21,
+          "tokens": 32,
+          "fields": 8,
+          "options": 32,
+          "weight_bytes": 15798288,
+          "workspace_bytes": 500864,
+          "median_ms": 5.716,
+          "p95_ms": 6.219,
+          "checksum": 5.7651948
+        },
+        {
+          "workload": "wide-options",
+          "synthetic": true,
+          "samples": 21,
+          "tokens": 32,
+          "fields": 8,
+          "options": 128,
+          "weight_bytes": 4209680,
+          "workspace_bytes": 828928,
+          "median_ms": 2.023,
+          "p95_ms": 2.069,
+          "checksum": 12.4676433
+        },
+        {
+          "workload": "large-head-short-input",
+          "synthetic": true,
+          "samples": 21,
+          "tokens": 8,
+          "fields": 1,
+          "options": 2,
+          "weight_bytes": 109299728,
+          "workspace_bytes": 143368,
+          "median_ms": 26.387,
+          "p95_ms": 27.995,
+          "checksum": 0.310367659
+        }
+      ]
+    },
+    {
+      "trial": 2,
+      "mode": "baseline",
+      "measurements": [
+        {
+          "workload": "short-schema",
+          "synthetic": true,
+          "samples": 21,
+          "tokens": 32,
+          "fields": 8,
+          "options": 32,
+          "weight_bytes": 15798288,
+          "workspace_bytes": 500864,
+          "median_ms": 5.883,
+          "p95_ms": 6.263,
+          "checksum": 5.76519489
+        },
+        {
+          "workload": "wide-options",
+          "synthetic": true,
+          "samples": 21,
+          "tokens": 32,
+          "fields": 8,
+          "options": 128,
+          "weight_bytes": 4209680,
+          "workspace_bytes": 672256,
+          "median_ms": 2.928,
+          "p95_ms": 3.063,
+          "checksum": 12.4676431
+        },
+        {
+          "workload": "large-head-short-input",
+          "synthetic": true,
+          "samples": 21,
+          "tokens": 8,
+          "fields": 1,
+          "options": 2,
+          "weight_bytes": 109299728,
+          "workspace_bytes": 143368,
+          "median_ms": 26.508,
+          "p95_ms": 27.681,
+          "checksum": 0.310367152
+        }
+      ]
+    },
+    {
+      "trial": 3,
+      "mode": "baseline",
+      "measurements": [
+        {
+          "workload": "short-schema",
+          "synthetic": true,
+          "samples": 21,
+          "tokens": 32,
+          "fields": 8,
+          "options": 32,
+          "weight_bytes": 15798288,
+          "workspace_bytes": 500864,
+          "median_ms": 6.128,
+          "p95_ms": 6.523,
+          "checksum": 5.76519489
+        },
+        {
+          "workload": "wide-options",
+          "synthetic": true,
+          "samples": 21,
+          "tokens": 32,
+          "fields": 8,
+          "options": 128,
+          "weight_bytes": 4209680,
+          "workspace_bytes": 672256,
+          "median_ms": 2.893,
+          "p95_ms": 3.081,
+          "checksum": 12.4676431
+        },
+        {
+          "workload": "large-head-short-input",
+          "synthetic": true,
+          "samples": 21,
+          "tokens": 8,
+          "fields": 1,
+          "options": 2,
+          "weight_bytes": 109299728,
+          "workspace_bytes": 143368,
+          "median_ms": 26.841,
+          "p95_ms": 28.614,
+          "checksum": 0.310367152
+        }
+      ]
+    },
+    {
+      "trial": 3,
+      "mode": "optimized-raw",
+      "measurements": [
+        {
+          "workload": "short-schema",
+          "synthetic": true,
+          "samples": 21,
+          "tokens": 32,
+          "fields": 8,
+          "options": 32,
+          "weight_bytes": 15798288,
+          "workspace_bytes": 500864,
+          "median_ms": 5.6,
+          "p95_ms": 5.793,
+          "checksum": 5.7651948
+        },
+        {
+          "workload": "wide-options",
+          "synthetic": true,
+          "samples": 21,
+          "tokens": 32,
+          "fields": 8,
+          "options": 128,
+          "weight_bytes": 4209680,
+          "workspace_bytes": 828928,
+          "median_ms": 2.017,
+          "p95_ms": 2.049,
+          "checksum": 12.4676433
+        },
+        {
+          "workload": "large-head-short-input",
+          "synthetic": true,
+          "samples": 21,
+          "tokens": 8,
+          "fields": 1,
+          "options": 2,
+          "weight_bytes": 109299728,
+          "workspace_bytes": 143368,
+          "median_ms": 26.221,
+          "p95_ms": 27.315,
+          "checksum": 0.310367659
+        }
+      ]
+    },
+    {
+      "trial": 3,
+      "mode": "optimized-owned",
+      "measurements": [
+        {
+          "workload": "short-schema",
+          "synthetic": true,
+          "samples": 21,
+          "tokens": 32,
+          "fields": 8,
+          "options": 32,
+          "weight_bytes": 15798288,
+          "workspace_bytes": 500864,
+          "median_ms": 2.754,
+          "p95_ms": 2.926,
+          "checksum": 5.76519461
+        },
+        {
+          "workload": "wide-options",
+          "synthetic": true,
+          "samples": 21,
+          "tokens": 32,
+          "fields": 8,
+          "options": 128,
+          "weight_bytes": 4209680,
+          "workspace_bytes": 828928,
+          "median_ms": 1.313,
+          "p95_ms": 1.594,
+          "checksum": 12.4676435
+        },
+        {
+          "workload": "large-head-short-input",
+          "synthetic": true,
+          "samples": 21,
+          "tokens": 8,
+          "fields": 1,
+          "options": 2,
+          "weight_bytes": 109299728,
+          "workspace_bytes": 143368,
+          "median_ms": 5.936,
+          "p95_ms": 7.284,
+          "checksum": 0.310367629
+        }
+      ]
+    }
+  ]
+}

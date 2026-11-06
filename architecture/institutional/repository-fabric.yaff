@@ -1,0 +1,54 @@
+atlas institutional
+
+architecture repository-fabric
+  canonical_name RepositoryFabric
+  family institutional
+  domain Identity / Downstream Provider Tenancy
+  layer institutional
+  semantic_question Can this estate connect to, provision on, resolve, view, check out, change, observe and hook a real git-hosting provider through one verb surface, backed by a sealed credential and nothing typed again?
+  purpose A unified repository.connect|provision|resolve|view|checkout|change|observe|service verb surface over the estate's self-hosted Forgejo instance. connect checks a provider is reachable and its sealed credential is accepted; provision creates the owning organization and repository idempotently; resolve reads one repository's metadata; view reads a path's contents at a ref; checkout clones through an ephemeral, shredded git-credentials file, or, given --filter, clones through the real josh binary instead so the checkout is re-rooted at a JOSH filter spec's subtree; change reads, base64-encodes, and PUTs or POSTs a file through the contents API with correct create-vs-update sha handling; observe lists commits; service lists or adds a webhook. JOSH (josh-proxy/josh, filtered monorepo views) is registered under connect for readiness and is the real backend for checkout --filter.
+  maturity implemented
+  consumes credential-boundary
+  consumes provider-estate
+  publishes RepositoryFabric
+  node_types RepositoryConnection
+  node_types RepositoryProvisioning
+  node_types RepositoryContentRead
+  node_types RepositoryContentChange
+  node_types RepositoryWebhook
+  state_types connected
+  state_types provisioned
+  state_types checked_out
+  source_path cmd/BonfyreRepositoryFabric/src/main.c
+  source_path cmd/BonfyreRepositoryFabric/Makefile
+  source_path cmd/BonfyreRepositoryFabric/tests/smoke.sh
+  source_path cmd/BonfyreCredentials/src/main.c
+  witness cmd/BonfyreRepositoryFabric/tests/smoke.sh proves, live against a real self-hosted Forgejo 17.0.1 instance (launchd service work.aurekai.forgejo, 127.0.0.1:3400) using a sealed bonfyre-credentials forgejo token: connect reports the credential accepted, provision creates a real repository under the aurekai organization (HTTP 201) and is idempotent on a second call, resolve reads its metadata (HTTP 200), view reads its file listing (HTTP 200), observe reads its commit history (HTTP 200), and service lists its webhooks (HTTP 200)
+  witness 2026-11-04 manual session on the same live Forgejo instance beyond the smoke script: checkout cloned aurekai/repository-fabric-proof through an ephemeral 0600 git-credentials file passed to git -c credential.helper=store --file=<path>, landed README.md and a prior change-created file on disk, and left neither the token in .git/config nor the credentials file behind afterward; change created notes/hello.txt (HTTP 201) and then updated the same path by first reading its sha and PUTing with it (HTTP 200); service add created a real webhook (HTTP 201, id 1) pointed at a placeholder https address
+  witness 2026-11-04 josh (josh-cli's built binary, named josh, and josh-proxy) built clean from source and proved live against aurekai/repository-fabric-proof over HTTP with the same ephemeral-credential-file pattern: josh clone ... ":/" ... reproduced the full tree (README.md, notes/hello.txt) while josh clone ... ":/notes" ... re-rooted the same commit at notes/ and yielded exactly hello.txt, nothing else; the real dependency this exposed is that JOSH's git fetch --porcelain requires git 2.41+ and fails under the macOS system git (2.39.5, /usr/bin/git) with "unknown option porcelain", so any caller of josh clone/fetch must put a newer git (Homebrew git 2.54.0 at /opt/homebrew/opt/git/bin) ahead of /usr/bin/git on PATH
+  witness cmd/BonfyreRepositoryFabric/tests/smoke.sh now also proves, live: checkout with no --filter still clones through plain git (mode:"git") and lands a file created moments earlier by change; checkout --filter ":/" when josh is built instead execs the real josh binary (mode:"josh"), with GIT_CONFIG_COUNT/KEY_0/VALUE_0 carrying the same ephemeral credential and Homebrew git added to PATH only when present; an invalid filter spec (anything not starting with ':' or carrying characters outside JOSH's own grammar) is refused before any process is spawned
+  invariant every HTTP call's Authorization header is built from bonfyre-credentials apply's own sealed output (an array of "Name: value" strings), never a value typed or stored in this organ's own files; the header reaches curl over the child process's standard input via a generated config block, never argv
+  invariant an org or repo identifier, a view path, and a ref are validated against a plain-identifier/URL-coordinate whitelist (ident_ok) before they are concatenated into any provider URL; nothing a caller supplies reaches a URL unchecked
+  invariant a checkout's git credentials file is created 0600 under a private temp directory, used for exactly one clone (by plain git, or by josh when --filter is given), then zero-overwritten and unlinked before the process returns, so the token never persists past that single call; the josh path carries the same credential through GIT_CONFIG_COUNT/KEY_0/VALUE_0 rather than git -c, since josh (not this organ) invokes git internally
+  invariant a --filter value must start with ':' and contain only the characters JOSH's own filter grammar uses (alnum, -_./:=,); anything else is refused before josh or git is ever invoked, so a filter argument cannot smuggle an option flag or an unrelated path into the child process's argv
+  invariant a change request's PUT-versus-POST and its carried sha are decided by a live GET of the target path immediately before the write, never by a caller-supplied assumption of whether the path already exists
+  invariant every HTTP response body and every multi-megabyte working buffer (git-credentials config, base64-encoded file content) is heap-allocated, never a multi-kilobyte-or-larger stack array, after a real stack-overflow crash (confirmed under AddressSanitizer at -O2) was traced to exactly that pattern in view and observe
+  forbidden_inference a sealed forgejo credential accepted by connect -> that credential is valid for any other provider or any other Forgejo instance
+  forbidden_inference provision succeeding -> the organization or repository did not already exist; provision is read-then-create and reports org_created/repo_created separately from ok
+  forbidden_inference josh-proxy existing on disk -> JOSH filtered views are wired into every verb; only checkout's --filter option routes through josh today, and only when josh itself is built
+  forbidden_inference a successful checkout or change -> the credential used carries permissions beyond what the Forgejo token itself was scoped to grant
+  known_gap GitLab Gitaly/Praefect is not implemented; Forgejo is the only live provider behind this verb surface
+  known_gap JOSH filtering is wired into checkout --filter only; view, resolve and observe always read the unfiltered Forgejo repository, and nothing here exposes josh push/changes/compose
+  known_gap checkout --filter only accepts the clone form of a JOSH filter spec (one subtree re-root per call); JOSH's richer workspace/compose filters and josh push/changes are not exposed by this organ
+  known_gap checkout, change and service are proven by direct manual live calls recorded above and by the committed smoke.sh (provision, resolve, view, observe, service list, service add, change create, checkout plain, checkout --filter when josh is built)
+  source_lineage 2026-11-04 direction: a unified repository verb surface over a real, live, self-hosted git forge, reusing BonfyreCredentials exclusively for secrets, no stubs or isolated demos
+
+interaction repository-fabric-reads-credential-boundary
+  source repository-fabric
+  destination credential-boundary
+  relation consumes_sealed_credential
+  preserves the provider name and the applied "Name: value" header string needed to authorize one HTTP call
+  drops the underlying sealed value, the private key, and any field other than the header actually applied
+  forbidden_inference a credential reachable through this interaction -> the credential is valid for a provider other than the one named
+  invalidates_on the forgejo sealed credential being cleared or rotated, or bonfyre-credentials apply's header output format changing from an array of "Name: value" strings
+  witness cmd/BonfyreRepositoryFabric/tests/smoke.sh

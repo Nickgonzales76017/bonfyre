@@ -1,0 +1,26 @@
+{
+  "schema": "bonfyre.moqt.native-session-receipt.v1",
+  "observed_at": "2026-09-11",
+  "transport": "native QUIC over loopback",
+  "protocol_passport": "draft-ietf-moq-transport-21",
+  "alpn": "moqt-21",
+  "datagram_transport_parameter": "enabled on both native application profiles",
+  "executed": {
+    "tls_certificate": "ephemeral loopback self-signed test certificate",
+    "server": "bonfyre-moq moqt-native-server",
+    "client": "bonfyre-moq moqt-native-subscribe",
+    "client_control": "SETUP submitted on a raw unidirectional QUIC stream and client waited for paired server SETUP before opening its request stream",
+    "server_control": "server accepted a complete client SETUP on the client unidirectional control stream, then opened and sent its paired server control SETUP",
+    "client_request": "SUBSCRIBE submitted on a raw bidirectional QUIC stream only after paired-control SETUP completed",
+    "server_observation": "received the paired-control and request-stream payloads after TLS/QUIC handshake",
+    "authorization_boundary": "server returned REQUEST_ERROR UNAUTHORIZED on the same request stream because no TransportLease/Authority projection was supplied"
+  },
+  "not_proven": [
+    "complete draft-21 parameter semantics beyond the narrow SETUP wire validator",
+    "SUBSCRIBE_OK or subscription establishment",
+    "TransportLease or AuthorityGraph authorization projection",
+    "object forwarding, relay aggregation, cache semantics, or WebTransport interoperability",
+    "interoperability with an independent draft-21 implementation"
+  ],
+  "truth": "transport submission is not authorization, subscription, evidence, or external effect"
+}

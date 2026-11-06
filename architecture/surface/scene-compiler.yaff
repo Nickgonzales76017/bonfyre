@@ -1,0 +1,50 @@
+atlas surface
+
+architecture scene-compiler
+  canonical_name SceneCompiler
+  family surface
+  domain Surface / Scenes
+  layer surface
+  semantic_question Given whatever material a subject or route actually holds, which reading rhythms does that material itself argue for, in what order, and what should the page look like as a result?
+  purpose The bridge between a large source estate and a page that feels like it. A route used to name its regions and a subject page used a fixed order, so adding thousands of sources and dozens of studied interaction grammars changed nothing a person saw. The compiler asks each declared rhythm whether the material argues for it -- one thing happening now makes a stage, several timed things make an agenda, three placed things make a map, pictures make a wall or a field, recordings that play make a tracklist, video makes a shelf, conversation makes threads -- and orders the ones that qualify by how strongly their own shape argues. The page is then dressed by the estate's own art direction: the material family its scene leads with chooses a family of Ghost presentation profile, and the subject's own address chooses which profile inside it, stably.
+  maturity implemented
+  consumes PageComposition
+  consumes EventMaterial
+  consumes PresentationTemplate
+  publishes SceneSequence
+  node_types SceneGrammar
+  node_types SceneChoice
+  invariant a rhythm appears only where the material argues for it: below its declared threshold the rhythm does not appear at all, so a thin subject stays thin instead of growing empty headings
+  invariant on a route one material is read one way, and one region carries one rhythm: where two grammars argue for the same material or region, the stronger argument wins and the other is not shown
+  invariant a detail page (a publisher's own address, an identity page, the relations of one piece) reads its material in depth: each rhythm consumes the stream in order while enough remains for its threshold -- lead, then index, then list -- every item is still read once, and one region still carries one rhythm
+  invariant relations are material: the parts of a piece, the organizations it names and its publisher's channels are the passage, organization and channel streams, lowered through existing topologies (index, index, table) and chosen by the same thresholds as anything else
+  invariant an event that has already finished argues for nothing: the compiler counts only what has not ended when it decides whether there is an agenda
+  invariant the compiler chooses rhythms and nothing else: it cannot select a source, admit material, change a subject, invent a region or alter a word, and it returns a sequence of the same declared regions the executor already lowers
+  invariant a route's own named regions still render, after the scene and without repeating a region the scene already read
+  invariant a page's look is chosen by what it is made of and keyed by its own address, so the same subject always looks like itself; a profile carries ground, ink, accent, faces, measure and card treatment, and can change no word on the page
+  forbidden_inference a chosen rhythm -> an editorial judgement about the material, or a ranking of the things inside it
+  forbidden_inference a page's look -> a claim about its subject's importance, quality or standing
+  forbidden_inference a scene -> a SurfaceScene closure with authority, actions or dependency tracking; this composes reading rhythms over retained material
+  known_gap the thresholds are declared numbers, not measured ones: nothing yet checks whether a rhythm that appeared was worth appearing
+  known_gap the compiler reads relation material only where a detail page builds it (item pages, publisher addresses, identity pages); subject rooms, people, places, events and topics are not yet relation streams
+  witness cmd/BonfyreWebAddress/tests/addressed_depth_test.sh proves an item page composes its parts, the organizations it links (resolved to their estate addresses, platforms left out) and its publisher's channels through the compiler, with no unrelated fill; page_programs, page_items, page_events and page_composition still pass, so routes keep one rhythm per material (2026-10-18)
+  witness 2026-10-18 on a canary over a rebuilt subject projection: sib-swiss.aurekai.life composes broadsheet, index, cast, masthead and more from SIB's 22 kept pieces, 30 organizations named across its last 17 and its two channels, where the live address showed other publishers' events
+  known_gap the look is chosen from the Ghost catalogue's colour and type tokens only; the estate's donor interaction grammars are not yet selected per scene
+  source_path schemas/control/page-composition.cue
+  source_path cmd/BonfyreWebAddress/tools/compile_page_composition.zig
+  source_path cmd/BonfyreWebAddress/src/main.c
+  source_path cmd/BonfyreWebAddress/tests/page_composition_test.sh
+  source_path cmd/BonfyreWebAddress/tests/page_events_test.sh
+  witness cmd/BonfyreWebAddress/tests/page_composition_test.sh and page_events_test.sh prove a composed route still renders its declared rhythms in reading order with one place to start listening, and that an identity page carries the pictures that depict it
+  witness 2026-09-18 on the estate the same compiler produced materially different pages from the same code: /stage read as stage, map, tracklist, field, shelf and broadsheet under ghost-morning; /whats-on as stage, map and agenda under ghost-voice; /nearby as stage, map and field; /listen as a tracklist under ghost-neat; Dallas as wall, broadsheet, around and places -- none of those sequences is written down anywhere
+  source_lineage 2026-09-18 the Rubicon: the material decides the page, instead of the page deciding the material
+
+interaction scene-compiler-dresses-with-presentation-profiles
+  source scene-compiler
+  destination presentation-template
+  relation chooses_profile_by_material
+  preserves the profile's own tokens as the page's variables, and the subject's stable choice of profile
+  drops every word, source and item of the subject; a profile sees only which material leads
+  forbidden_inference a profile -> art direction anyone authored for that subject
+  invalidates_on the published profile catalogue, the scene's leading material
+  witness cmd/BonfyreWebAddress/tests/page_composition_test.sh

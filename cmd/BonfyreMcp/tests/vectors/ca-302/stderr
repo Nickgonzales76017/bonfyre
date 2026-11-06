@@ -1,0 +1,1 @@
+UnexpectedRedirect fetching "http://127.0.0.1:@PORT@/mcp". For more information, pass `verbose: true` in the second argument to fetch()

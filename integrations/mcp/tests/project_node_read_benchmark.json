@@ -1,0 +1,14 @@
+{
+  "schema": "bonfyre.project-mcp.read-comparison.v1",
+  "measured_at": "2026-10-02T22:33:29.456Z",
+  "command": "bun integrations/mcp/tests/project_live_witness.mjs --baseline",
+  "comparison": "ephemeral concrete Bun owner vs then-live Python project service on the same host and checkout",
+  "method": "25 warmed end-to-end HTTP samples per implementation and operation; alternating call order; sequential requests",
+  "measurements": [
+    { "operation": "project_read", "arguments": { "path": "AGENTS.md", "start_line": 1, "end_line": 30 }, "parity": "equal", "python_median_ms": 1.479125, "bun_median_ms": 0.2935, "python_p95_ms": 2.470375, "bun_p95_ms": 0.521958, "median_speedup": 5.0396081772 },
+    { "operation": "project_tree", "arguments": { "path": "integrations/mcp/tests", "depth": 1, "limit": 500 }, "parity": "equal", "python_median_ms": 2.383292, "bun_median_ms": 0.458958, "python_p95_ms": 3.501542, "bun_p95_ms": 0.606708, "median_speedup": 5.1928324596 },
+    { "operation": "project_status", "arguments": {}, "parity": "identity_and_clean_state_equal", "python_median_ms": 90.901667, "bun_median_ms": 61.455834, "python_p95_ms": 104.836375, "bun_p95_ms": 72.742333, "median_speedup": 1.4791381238 }
+  ],
+  "transport_source_sha256": "7b1589a09b5d979daa029eef79f6479e2db950dca67b51274744c0ebf966e222",
+  "forbidden_inference": "Small warmed local read RPC measurements do not establish concurrent capacity, system-wide scaling, native generation, durability or memory improvements. Baseline mode requires a separately running prior owner; the live endpoint is now Bun."
+}

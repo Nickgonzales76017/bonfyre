@@ -1,0 +1,47 @@
+"""Admission law for housing candidates derived from ForeignTwin receipts.
+
+The body digest proves what a parser read.  It does not prove that the remote
+read was authorized under the *current* ForeignTwin policy contract.  Housing
+normalizers call this module before a receipt can yield an AvailabilityCandidate.
+"""
+
+from __future__ import annotations
+
+from typing import Any
+
+
+POLICY_EVIDENCE_FIELDS = (
+    "observe_right",
+    "policy_decision",
+    "fetch_attempted",
+    "robots_transport_exit",
+    "robots_http_status",
+)
+
+
+def admission_failure(receipt: dict[str, Any]) -> str | None:
+    """Return the first missing current-policy fact, otherwise ``None``.
+
+    A 404 robots response is an allowed successful preflight: the ForeignTwin
+    observer treats it as an available robots policy with no deny rule.
+    """
+    if receipt.get("observe_right") != "public":
+        return "missing_public_observe_right"
+    if receipt.get("policy_decision") != "allow":
+        return "missing_allow_policy_decision"
+    if receipt.get("fetch_attempted") is not True:
+        return "missing_fetch_attempt"
+    if receipt.get("robots_transport_exit") != 0:
+        return "robots_preflight_not_successful"
+    if receipt.get("robots_http_status") not in (200, 404):
+        return "robots_preflight_not_successful"
+    return None
+
+
+def is_admissible(receipt: dict[str, Any]) -> bool:
+    return admission_failure(receipt) is None
+
+
+def evidence(receipt: dict[str, Any]) -> dict[str, Any]:
+    """Copy only the policy facts that justify candidate admission."""
+    return {field: receipt.get(field) for field in POLICY_EVIDENCE_FIELDS}

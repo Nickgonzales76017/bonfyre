@@ -1,5 +1,5 @@
 import { createNativeGenerationMcpSurface } from '../mcp/native_generation_surface.mjs';
-import { createEstateGenerationFabric } from './generation_fabric.mjs';
+import { createEstateGenerationFabric, discoverGenerationProfiles } from './generation_fabric.mjs';
 import { createLiveAdapterRuntime, createReceiptJournal } from './live_adapters.mjs';
 import { createAgentFleet, providerCatalog } from './provider_fleet.mjs';
 
@@ -14,13 +14,14 @@ export function createEstateControlPlane({
   receiptJournalFile,
   cmsClient,
   spawnImpl,
+  env = process.env,
 } = {}) {
   const receiptJournal = receiptJournalFile ? createReceiptJournal({ file: receiptJournalFile }) : undefined;
-  const fabric = createEstateGenerationFabric({ root, modelRoot, modelBinary, llamaBinary, profiles, spawnImpl });
-  const adapterRuntime = createLiveAdapterRuntime({ spawnImpl, receiptJournal });
+  const fabric = createEstateGenerationFabric({ root, modelRoot, modelBinary, llamaBinary, profiles: profiles ?? discoverGenerationProfiles({ env }), spawnImpl });
+  const adapterRuntime = createLiveAdapterRuntime({ pathValue: env.PATH ?? '', spawnImpl, receiptJournal });
   const fleet = createAgentFleet({
     fabric,
-    providers: providers || providerCatalog({ configured: providerConfig }),
+    providers: providers || providerCatalog({ env, configured: providerConfig }),
     adapterRuntime,
     receiptJournal,
   });

@@ -1,0 +1,8 @@
+#!/usr/bin/env python3
+# Historical witness; public_carrier_collector.test.mjs supersedes it.
+import importlib.util
+from pathlib import Path
+ROOT=Path(__file__).resolve().parents[3];s=importlib.util.spec_from_file_location("n",ROOT/"cmd/BonfyreExternalEstate/tools/normalize_incumbent_provider_records.py");m=importlib.util.module_from_spec(s);s.loader.exec_module(m)
+samples={"211":{"id":"r","name":"Food","url":"https://r.test"},"clever":{"data":{"id":"s","name":"School","url":"https://s.test"}},"buildium":{"Id":1,"Name":"Home","PublicUrl":"https://p.test"},"nextdoor":{"id":"n","name":"Place","url":"https://n.test"},"patreon":{"data":{"id":"p","attributes":{"full_name":"Creator","url":"https://p.test"}}}}
+for provider,doc in samples.items():assert m.normalize(provider,doc,"s","r","t")["payload"]["title"]
+print("incumbent provider normalizer: PASS")

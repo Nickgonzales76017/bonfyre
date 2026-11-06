@@ -30,7 +30,15 @@ fabric="$root_dir/programs/bonfyre/bonfyre"
 )
 # 9 declared workspace roots + 2 provider roots (feldera, restate) + 10
 # discovered sibling-repository roots (9 Frappe apps + hvm4) on this checkout.
-"$fabric" root list | awk 'NR > 1 { roots++ } END { exit(roots == 21 ? 0 : 1) }'
+root_list=$("$fabric" root list)
+# 19 declared workspace roots + 10 discovered sibling sources + 2 provider
+# roots are the current compiled frontier.
+printf '%s\n' "$root_list" | awk 'NR > 1 { roots++ } END { exit(roots == 31 ? 0 : 1) }'
+for owner in historical-evidence native-engine command-surfaces shared-libraries \
+  architecture-atlas semantic-contracts operator-contracts evidence integrations \
+  documentation public-site generated; do
+  printf '%s\n' "$root_list" | grep -q "^$owner[[:space:]]"
+done
 "$fabric" catalog list | awk 'NR > 1 { operators++ } END { exit(operators == 98 ? 0 : 1) }'
 sqlite3 "$BONFYRE_STATE_DIR/fabric.db" "SELECT count(*) = 93 FROM catalog_bindings WHERE operator_id LIKE 'command.%' AND binding_state = 'bound';" | grep -qx '1'
 

@@ -1,0 +1,18 @@
+{
+  "name": "service_offer",
+  "displayName": "Observed Marketplace Offer",
+  "description": "A marketplace listing this estate observed in a retained public source. It records the listing as observed without asserting inventory, availability, price, merchant authority, checkout, settlement, or a right for this estate to transact.",
+  "attributes": {
+    "offer_id": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "source_ref": {"type": "string", "required": true},
+    "marketplace": {"type": "string", "required": true},
+    "canonical_href": {"type": "string", "required": true},
+    "title": {"type": "string", "required": true},
+    "observed_at": {"type": "string", "required": true},
+    "receipt_ref": {"type": "string", "required": true},
+    "assertion_state": {"type": "string", "required": true},
+    "offer_status": {"type": "string", "required": true},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

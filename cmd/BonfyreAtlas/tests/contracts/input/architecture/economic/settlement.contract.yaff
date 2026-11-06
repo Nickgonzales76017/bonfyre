@@ -1,0 +1,7 @@
+settlement_contract fixture
+  rail x402
+  quote_path /quote
+  discovery_path /discover
+  carrier x402
+  carrier MPP
+  forbidden_inference declaration does not authorize payment

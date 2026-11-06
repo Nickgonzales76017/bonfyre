@@ -102,7 +102,13 @@ static int cmd_compress(const char *input, const char *output,
     }
 
     /* Save */
-    fpq_save(output, encoded, n_encoded);
+    if (fpq_save(output, encoded, n_encoded) != 0) {
+        fprintf(stderr, "FPQ: save refused; FPQ! supports seed modes without coordinate or auxiliary payloads. The previous destination is preserved.\n");
+        for (size_t i = 0; i < n_encoded; i++) fpq_tensor_free(encoded[i]);
+        free(encoded);
+        fpq_raw_tensor_free(raw, n_raw);
+        return 1;
+    }
 
     /* Summary */
     size_t total_seed_bits = 0;
@@ -110,15 +116,22 @@ static int cmd_compress(const char *input, const char *output,
         total_seed_bits += encoded[i]->total_bits;
     }
     float orig_mb = (float)total_original_bytes / (1024.0f * 1024.0f);
-    float comp_mb = (float)(total_seed_bits / 8) / (1024.0f * 1024.0f);
+    struct stat saved;
+    if (stat(output, &saved) != 0) {
+        for (size_t i = 0; i < n_encoded; i++) fpq_tensor_free(encoded[i]);
+        free(encoded);
+        fpq_raw_tensor_free(raw, n_raw);
+        return 1;
+    }
+    float comp_mb = (float)saved.st_size / (1024.0f * 1024.0f);
 
     fprintf(stderr,
         "\n═══ FPQ Compression Complete ═══\n"
         "  Tensors:    %zu\n"
         "  Original:   %.2f MB (fp32)\n"
-        "  Compressed: %.2f MB (seed programs)\n"
+        "  Stored:     %.2f MB (complete FPQ! file)\n"
         "  Ratio:      %.1fx\n"
-        "  Avg bpw:    %.2f\n",
+        "  Logical bpw: %.2f (encoder estimate, before storage factoring)\n",
         n_encoded, orig_mb, comp_mb,
         comp_mb > 0 ? orig_mb / comp_mb : 0.0f,
         total_original_bytes > 0
@@ -176,6 +189,25 @@ static int cmd_decompress(const char *input, const char *output) {
 
 static int cmd_inspect(const char *input) {
     fprintf(stderr, "FPQ Inspect: %s\n", input);
+
+    /* FPQ0 is the native v9/v10 artifact family.  The legacy FPQ! reader is
+     * intentionally not asked to interpret it; header inspection is a safe
+     * compatibility bridge and makes no reconstruction/generation claim. */
+    fpq_native_inspection_t native;
+    if (fpq_native_inspect(input, &native) == 0) {
+        fprintf(stderr,
+            "\n═══ Native FPQ Header Summary ═══\n"
+            "  Format:     FPQ0\n"
+            "  Version:    %u\n"
+            "  Tensors:    %u\n"
+            "  Weights:    %llu\n"
+            "  Stored:     %llu bytes\n"
+            "  Verdict:    STRUCTURALLY_READABLE_ONLY\n",
+            native.version, native.tensor_count,
+            (unsigned long long)native.weight_count,
+            (unsigned long long)native.stored_bytes);
+        return 0;
+    }
 
     size_t n_tensors;
     fpq_tensor_t **tensors = fpq_load(input, &n_tensors);
@@ -338,6 +370,9 @@ static int cmd_roundtrip_v4(const char *input,
         int tensor_indices[FPQ_SBB_MAX_GROUP]; /* indices into raw[] */
         int roles[FPQ_SBB_MAX_GROUP];
         int count;
+        fpq_sbb_t *sbb_cache[FPQ_SBB_MAX_GROUP];
+        size_t sbb_elements[FPQ_SBB_MAX_GROUP];
+        int sbb_cache_count;
     } layer_group_t;
 
     layer_group_t *groups = (layer_group_t *)calloc(256, sizeof(layer_group_t));
@@ -374,6 +409,7 @@ static int cmd_roundtrip_v4(const char *input,
     float worst_mse_v3 = 0.0f, worst_mse_v4 = 0.0f;
     float best_cosine_v3 = 1.0f, best_cosine_v4 = 1.0f;
     int n_tested = 0;
+    size_t sbb_builds = 0, sbb_reuses = 0;
 
     for (size_t i = 0; i < n_process; i++) {
         if (tensor_filter && strcmp(raw[i].name, tensor_filter) != 0) continue;
@@ -415,6 +451,7 @@ static int cmd_roundtrip_v4(const char *input,
                     const float *group_ptrs[FPQ_SBB_MAX_GROUP];
                     int group_count = 0;
                     int my_idx = -1;
+                    int cache_slot = -1;
                     for (int m = 0; m < groups[g].count; m++) {
                         int ti = groups[g].tensor_indices[m];
                         if (raw[ti].n_elements == raw[i].n_elements) {
@@ -423,9 +460,29 @@ static int cmd_roundtrip_v4(const char *input,
                         }
                     }
                     if (group_count >= 2 && my_idx >= 0) {
-                        sbb = fpq_sbb_compute(group_ptrs, (size_t)group_count,
-                                               raw[i].n_elements,
-                                               0x12345678ULL);
+                        for (int c = 0; c < groups[g].sbb_cache_count; c++) {
+                            if (groups[g].sbb_elements[c] == raw[i].n_elements) {
+                                cache_slot = c;
+                                break;
+                            }
+                        }
+
+                        if (cache_slot >= 0) {
+                            sbb = groups[g].sbb_cache[cache_slot];
+                            sbb_reuses++;
+                        } else {
+                            sbb = fpq_sbb_compute(group_ptrs, (size_t)group_count,
+                                                  raw[i].n_elements,
+                                                  0x12345678ULL);
+                            if (sbb &&
+                                groups[g].sbb_cache_count < FPQ_SBB_MAX_GROUP) {
+                                cache_slot = groups[g].sbb_cache_count++;
+                                groups[g].sbb_cache[cache_slot] = sbb;
+                                groups[g].sbb_elements[cache_slot] =
+                                    raw[i].n_elements;
+                                sbb_builds++;
+                            }
+                        }
                         sbb_idx = my_idx;
                     }
                     goto sbb_done;
@@ -477,7 +534,6 @@ sbb_done:
         free(decoded_v4);
         fpq_tensor_free(t_v3);
         fpq_tensor_free(t_v4);
-        if (sbb) fpq_sbb_free(sbb);
     }
 
     fprintf(stderr,
@@ -488,14 +544,19 @@ sbb_done:
         "  v4 worst cosine: %.6f\n"
         "  v3 worst MSE:    %.8f\n"
         "  v4 worst MSE:    %.8f\n"
+        "  SBB bodies:      %zu built / %zu exact group reuses\n"
         "  Verdict:         %s\n"
         "═══════════════════════════════════════════════════════\n",
         n_tested,
         best_cosine_v3, best_cosine_v4,
         worst_mse_v3, worst_mse_v4,
+        sbb_builds, sbb_reuses,
         best_cosine_v4 > best_cosine_v3
             ? "v4 WINS" : "v3 baseline holds");
 
+    for (int g = 0; g < n_groups; g++)
+        for (int c = 0; c < groups[g].sbb_cache_count; c++)
+            fpq_sbb_free(groups[g].sbb_cache[c]);
     free(groups);
     fpq_raw_tensor_free(raw, n_raw);
     return 0;
@@ -954,8 +1015,8 @@ static int cmd_roundtrip_v8(const char *input,
         sum_cos_v8 += cos_v8;
 
         fprintf(stderr,
-            "  v8 RLF@%d: cos=%.6f  bpw=%.2f\n",
-            cbits, cos_v8, bpw_v8);
+            "  v8 RLF@%d: cos=%.6f  bpw=%.2f  n=%zu  %s\n",
+            cbits, cos_v8, bpw_v8, (size_t)n, raw[i].name);
 
         n_tested++;
 
@@ -1088,21 +1149,25 @@ static int cmd_roundtrip_v9(const char *input,
     fpq_raw_tensor_t *raw = fpq_read_model(input, &n_raw);
     if (!raw || n_raw == 0) return 1;
 
-    size_t n_process = (limit > 0 && limit < n_raw) ? limit : n_raw;
-
     float worst_cos_v9 = 1.0f, worst_cos_v8 = 1.0f;
     double sum_cos_v9 = 0.0, sum_cos_v8 = 0.0;
     int n_tested = 0;
 
-    for (size_t i = 0; i < n_process; i++) {
+    /* ``--limit`` is a measurement budget, not a raw-table offset.  Real
+     * GGUFs begin with metadata, norms and one-dimensional tensors; stopping
+     * at raw[0] used to print a reassuring zero-tensor success for a full
+     * model.  Walk the whole table and stop only after measuring the requested
+     * number of eligible matrices. */
+    for (size_t i = 0; i < n_raw; i++) {
         if (tensor_filter && strcmp(raw[i].name, tensor_filter) != 0) continue;
         if (raw[i].n_elements < FPQ_BLOCK_DIM * 2) continue;
         if (raw[i].rows <= 1) continue;
         size_t n = raw[i].rows * raw[i].cols;
         if (n < FPQ_BLOCK_DIM * 2) continue;  /* skip 3D+ tensors with tiny 2D shape */
+        if (limit > 0 && (size_t)n_tested >= limit) break;
 
-        fprintf(stderr, "\n[%zu/%zu] %s (%zu params, %zu×%zu)\n",
-                i + 1, n_process, raw[i].name, raw[i].n_elements,
+        fprintf(stderr, "\n[%d/%zu] raw[%zu] %s (%zu params, %zu×%zu)\n",
+                n_tested + 1, limit ? limit : n_raw, i, raw[i].name, raw[i].n_elements,
                 raw[i].rows, raw[i].cols);
 
         int cbits = force_bits > 0 ? force_bits : 3;
@@ -1217,6 +1282,10 @@ int main(int argc, char **argv) {
     }
 
     const char *cmd = argv[1];
+    if (!strcmp(cmd, "--help") || !strcmp(cmd, "-h") || !strcmp(cmd, "help")) {
+        usage();
+        return 0;
+    }
 
     /* Parse options */
     size_t max_nodes = 32;

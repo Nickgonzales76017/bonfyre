@@ -46,6 +46,9 @@ typedef struct {
     void *data;                  /* non-NULL only when real payload is materialized */
     size_t payload_bytes;        /* payload bytes currently materialized */
     int ready;                   /* 1 when payload is usable for compute */
+    char factor_sha256[65];      /* exact U/V factor identity; excludes ghost exception */
+    char exception_sha256[65];   /* exact ghost exception identity, including absence */
+    char payload_sha256[65];     /* exact composition of factor + exception */
 
     size_t qweight_size;
     size_t scales_size;
@@ -80,6 +83,20 @@ typedef struct {
     pthread_mutex_t mu;
     int enabled;
 } fpq_active_cache_t;
+
+typedef struct {
+    size_t ready_entries;
+    size_t unique_factors;
+    size_t duplicate_factors;
+    size_t resident_factor_bytes;
+    size_t unique_factor_bytes;
+    size_t duplicate_factor_bytes;
+    size_t unique_payloads;
+    size_t duplicate_payloads;
+    size_t resident_payload_bytes;
+    size_t unique_payload_bytes;
+    size_t duplicate_payload_bytes;
+} fpq_active_density_t;
 
 /* Initialize active cache */
 fpq_active_cache_t *fpq_active_cache_init(const char *cache_dir, size_t max_mb);
@@ -130,6 +147,16 @@ int fpq_active_materialize_v9_file(fpq_active_entry_t *entry,
                                    uint16_t lr_rank,
                                    uint64_t off_ghost,
                                    int has_ghost);
+
+/* Measure exact composed-payload duplication among materialized entries.
+ * This is identity evidence, not proof that duplicate RAM has been folded. */
+void fpq_active_cache_density(fpq_active_cache_t *cache, fpq_active_density_t *out);
+
+/* Project ready low-rank active entries into canonical RepresentationPassport
+ * JSONL.  These passports describe the exact active FPQ realization only;
+ * they do not claim parity with the original dense model or grant admission. */
+int fpq_active_cache_write_passports(fpq_active_cache_t *cache,
+                                     const char *jsonl_path);
 
 void fpq_active_entry_disable(fpq_active_entry_t *entry);
 

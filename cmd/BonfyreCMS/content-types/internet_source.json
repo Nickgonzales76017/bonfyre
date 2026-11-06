@@ -1,0 +1,159 @@
+{
+  "name": "internet_source",
+  "readIndexes": {
+    "source_latest": ["source", "status", "id"],
+    "published_families": ["status", "family", "carries", "source", "twin", "id"]
+  },
+  "displayName": "Internet Source",
+  "description": "One way the outside world can tell this estate what exists, what changed, what is hot, what is nearby, what is available and what may be acted on. A census row is not an integration: it names a source family or a concrete source, what kind of access it offers, and — where the estate has actually observed it — the twin holding the receipt and the contract for reading what came back. Most rows are declared and unobserved on purpose; the census is the map, and a pack decides which tiny portion matters. Each concrete source carries a hydration tier and a cadence: reheating is scheduled against pressure rather than crawled on a clock, so a source nobody's closure needs falls to cold and then stops being read at all. A media-bearing source also carries where the picture is: kind (video, image, post, text), the field holding the thumbnail, the origin to resolve a relative one against, the field holding the link out, and the field naming who made it. A wall that has to know that PeerTube calls it thumbnailPath and Lemmy calls it thumbnail_url is a wall with the outside world compiled into it. front_door records whether this estate puts a source on its own public landing page. A source can be worth reading and still not be worth putting in front of a stranger: an unmoderated general feed is a fact about that feed, and declining to feature it is this estate's decision about its own front door rather than a claim about the source. A source that knows more about each thing says where: what it says at length (summary_field), who made it (maker_field), the terms it may be reused under and where those terms are written (rights_field, rights_link_field), the file that plays (media_field), the identity it shares with the same thing elsewhere (ident_field), where it is (place_field) and how a relative link resolves (link_base). Terms are what the source states; they are read and credited, never granted by this estate. A source that needs a key names the credential provider (credential); the key itself lives only in the credential boundary, and a read waits rather than fails while none is set. A source compiled rather than authored names what compiled it (compiled_by), and a source that is one organization's own voice names that organization's identity and name (publisher_ident, publisher_name) so its posts join that organization's page.",
+  "attributes": {
+    "family": {
+      "type": "string",
+      "required": true
+    },
+    "source": {
+      "type": "string",
+      "required": true
+    },
+    "label": {
+      "type": "string",
+      "required": true
+    },
+    "says": {
+      "type": "string",
+      "required": true
+    },
+    "url": {
+      "type": "string",
+      "required": false
+    },
+    "twin": {
+      "type": "string",
+      "required": false
+    },
+    "state": {
+      "type": "string",
+      "required": true
+    },
+    "note": {
+      "type": "string",
+      "required": false
+    },
+    "extract": {
+      "type": "string",
+      "required": false
+    },
+    "title_field": {
+      "type": "string",
+      "required": false
+    },
+    "meta_field": {
+      "type": "string",
+      "required": false
+    },
+    "body_regime": {
+      "type": "string",
+      "required": false
+    },
+    "status": {
+      "type": "string",
+      "required": true
+    },
+    "tier": {
+      "type": "string",
+      "required": false
+    },
+    "cadence_seconds": {
+      "type": "integer",
+      "required": false
+    },
+    "last_seen": {
+      "type": "string",
+      "required": false
+    },
+    "kind": {
+      "type": "string",
+      "required": false
+    },
+    "image_field": {
+      "type": "string",
+      "required": false
+    },
+    "image_base": {
+      "type": "string",
+      "required": false
+    },
+    "link_field": {
+      "type": "string",
+      "required": false
+    },
+    "sub_field": {
+      "type": "string",
+      "required": false
+    },
+    "front_door": {
+      "type": "string",
+      "required": false
+    },
+    "summary_field": {
+      "type": "string",
+      "required": false
+    },
+    "maker_field": {
+      "type": "string",
+      "required": false
+    },
+    "rights_field": {
+      "type": "string",
+      "required": false
+    },
+    "rights_link_field": {
+      "type": "string",
+      "required": false
+    },
+    "media_field": {
+      "type": "string",
+      "required": false
+    },
+    "ident_field": {
+      "type": "string",
+      "required": false
+    },
+    "place_field": {
+      "type": "string",
+      "required": false
+    },
+    "link_base": {
+      "type": "string",
+      "required": false
+    },
+    "credential": {
+      "type": "string",
+      "required": false
+    },
+    "about_field": {
+      "type": "string",
+      "required": false
+    },
+    "publisher_ident": {
+      "type": "string",
+      "required": false
+    },
+    "publisher_name": {
+      "type": "string",
+      "required": false
+    },
+    "compiled_by": {
+      "type": "string",
+      "required": false
+    },
+    "carries": {
+      "type": "string",
+      "required": false
+    },
+    "key_field": {
+      "type": "string",
+      "required": false
+    }
+  }
+}

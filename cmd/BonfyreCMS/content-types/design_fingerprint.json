@@ -1,0 +1,18 @@
+{
+  "name": "design_fingerprint",
+  "displayName": "Design Fingerprint",
+  "description": "A closed, reproducible measurement of a studied visual language. It records the presentation vector that a renderer may select; it is neither imported theme code nor a claim about the semantic material being rendered.",
+  "attributes": {
+    "fingerprint_id": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "template": {"type": "string", "required": true},
+    "reference_source": {"type": "string", "required": true},
+    "reference_name": {"type": "string", "required": true},
+    "family": {"type": "string", "required": true},
+    "renderer_affinity": {"type": "string", "required": true},
+    "density": {"type": "string", "required": true},
+    "visual_vector": {"type": "json", "required": true},
+    "acceptance_contract": {"type": "text", "required": true},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

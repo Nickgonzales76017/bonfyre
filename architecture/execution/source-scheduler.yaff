@@ -1,0 +1,43 @@
+atlas execution
+
+architecture source-scheduler
+  canonical_name SourceScheduler
+  family execution
+  domain Execution / Reheat
+  layer execution
+  semantic_question Of everything this estate is allowed to read, what should it read on this tick, and what does it owe that it has not read yet?
+  purpose The reheat decides which census rows are asked again. It was written for a census that did not grow: a fixed array of 512 rows, a cold source asked once every twelve of its own cadences, and no budget, so a census of a hundred rows read nothing on a tick and a census of thousands would have been truncated without saying so. It now measures every row first -- how long since it was read, what its standing is, how overdue that makes it -- then spends a bounded budget on the most overdue, with no publisher taking more than its share of one run. What is due but unaffordable says so, instead of being reported as not due.
+  maturity implemented
+  consumes InternetCensus
+  consumes SourceFrontier
+  publishes ResourceWeather
+  node_types ReheatDecision
+  invariant the whole census is considered: rows are allocated for what the census holds, so no row is silently outside the estate's own weather
+  invariant a source nobody has ever read is the most overdue thing there is, so a newly admitted census row is read on the next tick rather than after its first cadence
+  invariant a run spends at most its budget, and a publisher's share of one run is the larger of the standing per-host limit and an equal division of the budget among the publishers with something due
+  invariant a row that is due but unaffordable this run is reported as waiting its turn; the weather states the backlog (due, waiting, never read) rather than implying an empty queue
+  invariant a source a public surface actually showed in the last three days is warm whatever its authored tier says: demand is read from the source ledger's contribution receipts, not declared
+  invariant a frozen source is never asked, and a name does not overrule a refusal
+  invariant the scheduler reads the estate's own foreign root as every other organ does, so pointing an estate at its material cannot leave the scheduler believing nothing was ever read
+  forbidden_inference a read -> a fresh fact; the receipt says when it was read, never that what it says is true
+  forbidden_inference a warm standing -> importance, quality or endorsement of that source
+  forbidden_inference an unspent budget -> the census being fully fresh; the weather's backlog is the measure
+  known_gap the budget is a count of sources, not of bytes or seconds; a run of sixty large calendars costs far more than sixty small feeds
+  known_gap demand is measured from what the surfaces showed, not from what anyone read; there is no reader-side signal anywhere in this estate
+  known_gap tiers still move by one notch at a time, so a source that becomes newsworthy warms over several runs rather than at once
+  source_path components/BonfyreProject/src/main.c
+  source_path components/BonfyreProject/tests/reheat_schedule_test.sh
+  source_path deploy/systemd/bonfyre-reheat.service
+  witness components/BonfyreProject/tests/reheat_schedule_test.sh proves a census of 601 rows is considered whole, that ten never-read rows go first and the longest-unread follow, that a run spends no more than its budget of twenty-five, that four hundred rows due but unaffordable are reported as waiting their turn, that no publisher exceeds its fair share while every publisher with something due gets a turn, that a frozen source is still never asked, and that a cold source a page showed yesterday is treated as warm
+  witness 2026-09-18 on the estate the scheduler went from reading 0 of 106 sources per tick (everything "not due" under a twelve-fold cold cadence) to reading 17 of 18 due per tick with one deferred by a publisher's share; the census then grew to 391 published sources and the timer carries a budget of sixty every five minutes
+  source_lineage 2026-09-18 a census that grows by itself needs a scheduler that grows with it
+
+interaction source-scheduler-reads-demand-from-the-ledger
+  source source-frontier
+  destination source-scheduler
+  relation reports_what_surfaces_showed
+  preserves which census source a page carried, and when
+  drops routes, item counts and everything about the material itself
+  forbidden_inference a contribution -> a reader, a visit or a measure of traffic
+  invalidates_on contribution receipts, the ledger's absence (the authored tier still stands)
+  witness components/BonfyreProject/tests/reheat_schedule_test.sh

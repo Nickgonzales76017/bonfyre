@@ -1,0 +1,33 @@
+{
+  "schema": "bonfyre.bitnet_address_ranker_receipt.v1",
+  "classification": "MEASURED_SHADOW_ADDRESSPLANE_REORDER",
+  "observed_at": "2026-09-12",
+  "model": {
+    "repository": "microsoft/bitnet-embedding-0.6b",
+    "body": "bitnet-embeddings-0.6b-bf16-i2_s.gguf",
+    "sha256": "c89c64f05a2d3f83565250a6762640197fc624df866d4a1bd5853f811219af17",
+    "runtime": "official Microsoft BitNet embedding source at 0b341e5 with isolated ARM I2_S diagnostic fixes"
+  },
+  "address_plane": {
+    "population": 4891,
+    "candidate_kind": "external_occurrence",
+    "required_coordinate": "domain:weather",
+    "survivor_frontier": 16,
+    "deterministic_stage": "shared typed CandidateAdvertisement masks before model execution"
+  },
+  "execution": {
+    "dimensions": 1024,
+    "query": "Find weather observations and forecast sources relevant to current weather monitoring.",
+    "gate_state": "SHADOW",
+    "projection_store": "16 content-digested descriptor EmbeddingProjection vectors in the derived SQLite run store",
+    "top_ranked": ["external:ext-02414", "external:ext-02567", "external:ext-02167", "external:ext-02019"]
+  },
+  "result": "The actual official model reordered an AddressPlane frontier and retained every original ForeignTwin verifier and MaterialCompiler lowerer reference. No source read, exact verification, lowerer invocation, authority decision, evidence admission, proof, commitment, payment or effect occurred.",
+  "does_not_establish": [
+    "an unmodified upstream ARM build",
+    "a general ranking preservation envelope or top-k recall",
+    "ModelRepresentationPassport ADMIT or ResourceAdmission eligibility",
+    "that the top-ranked AviationAPI source is semantically preferable to 7Timer or any other source",
+    "user, traffic, concurrent session, or Internet-scale capacity"
+  ]
+}

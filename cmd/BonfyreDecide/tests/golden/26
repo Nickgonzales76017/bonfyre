@@ -1,0 +1,165 @@
+exit 0
+{
+ "schema": "bonfyre.books.v3",
+ "lines": 5,
+ "by_learned": 0,
+ "suggested_by_model": 0,
+ "to_review": 5,
+ "amounts_unread": 0,
+ "learned": null,
+ "model": null,
+ "model_artifact_sha256": null,
+ "model_error": "the local model at http://127.0.0.1:9 is not answering (Unable to connect. Is the computer able to access the url?). Start it with: bonfyre-moe serve --port 7000   (see: bonfyre model local)",
+ "seconds": T,
+ "booked_by_account": [],
+ "totals": [],
+ "totals_unavailable": "the file has no amounts, so there are line counts by account and no money totals",
+ "transactions": [
+  {
+   "line": 2,
+   "date": "2020-06-18",
+   "description": "X",
+   "amount_cents": 100,
+   "amount": 1,
+   "amount_text": "1",
+   "amount_known": true,
+   "amount_unread": false,
+   "account": "",
+   "suggested": "none",
+   "confidence": null,
+   "decided_by": "none",
+   "review": true,
+   "source": {
+    "sha256": "2f8abbf67ec36601cde37cd230f7d7e81facdce7d7f411c664de39a3ac855850",
+    "sheet": "Bank",
+    "row": 2,
+    "cells": {
+     "date": "A2",
+     "description": "B2",
+     "amount": "C2"
+    },
+    "hidden": false
+   }
+  },
+  {
+   "line": 3,
+   "date": "1900-01-00",
+   "description": "Zero",
+   "amount_cents": 200,
+   "amount": 2,
+   "amount_text": "2",
+   "amount_known": true,
+   "amount_unread": false,
+   "account": "",
+   "suggested": "none",
+   "confidence": null,
+   "decided_by": "none",
+   "review": true,
+   "source": {
+    "sha256": "2f8abbf67ec36601cde37cd230f7d7e81facdce7d7f411c664de39a3ac855850",
+    "sheet": "Bank",
+    "row": 3,
+    "cells": {
+     "date": "A3",
+     "description": "B3",
+     "amount": "C3"
+    },
+    "hidden": false
+   }
+  },
+  {
+   "line": 4,
+   "date": "1900-02-29",
+   "description": "Leap",
+   "amount_cents": 300,
+   "amount": 3,
+   "amount_text": "3",
+   "amount_known": true,
+   "amount_unread": false,
+   "account": "",
+   "suggested": "none",
+   "confidence": null,
+   "decided_by": "none",
+   "review": true,
+   "source": {
+    "sha256": "2f8abbf67ec36601cde37cd230f7d7e81facdce7d7f411c664de39a3ac855850",
+    "sheet": "Bank",
+    "row": 4,
+    "cells": {
+     "date": "A4",
+     "description": "B4",
+     "amount": "C4"
+    },
+    "hidden": false
+   }
+  },
+  {
+   "line": 5,
+   "date": "1900-03-01",
+   "description": "After",
+   "amount_cents": 400,
+   "amount": 4,
+   "amount_text": "4",
+   "amount_known": true,
+   "amount_unread": false,
+   "account": "",
+   "suggested": "none",
+   "confidence": null,
+   "decided_by": "none",
+   "review": true,
+   "source": {
+    "sha256": "2f8abbf67ec36601cde37cd230f7d7e81facdce7d7f411c664de39a3ac855850",
+    "sheet": "Bank",
+    "row": 5,
+    "cells": {
+     "date": "A5",
+     "description": "B5",
+     "amount": "C5"
+    },
+    "hidden": false
+   }
+  },
+  {
+   "line": 6,
+   "date": "1900-01-01",
+   "description": "One",
+   "amount_cents": 500,
+   "amount": 5,
+   "amount_text": "5",
+   "amount_known": true,
+   "amount_unread": false,
+   "account": "",
+   "suggested": "none",
+   "confidence": null,
+   "decided_by": "none",
+   "review": true,
+   "source": {
+    "sha256": "2f8abbf67ec36601cde37cd230f7d7e81facdce7d7f411c664de39a3ac855850",
+    "sheet": "Bank",
+    "row": 6,
+    "cells": {
+     "date": "A6",
+     "description": "B6",
+     "amount": "C6"
+    },
+    "hidden": false
+   }
+  }
+ ],
+ "receipts": [
+  null,
+  null,
+  null,
+  null,
+  null
+ ],
+ "cannot_infer": "a booked line -> a reviewed ledger; the client or their bookkeeper still owns the books, and a line sent to review is not booked",
+ "source_workbook": {
+  "filename": "FIX/xlsx/date1900.xlsx",
+  "sha256": "2f8abbf67ec36601cde37cd230f7d7e81facdce7d7f411c664de39a3ac855850",
+  "sheet": "Bank",
+  "range": "A1:C6",
+  "header_row": 1,
+  "hidden_sheet": false
+ }
+}

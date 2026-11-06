@@ -1,0 +1,25 @@
+{
+  "operator": "WHY",
+  "program": {
+    "program_id": "household.why.999964944bd1adba",
+    "operator": "WHY",
+    "digest": "e455e2eb7ce43eef590417b70dc45d0635ef3bdf643cf48a83fabaf2fe9459ae",
+    "reads": [
+      "household:food:offer:rice_1"
+    ],
+    "admitted": true,
+    "hard_failures": []
+  },
+  "address": "household:food:offer:rice_1",
+  "source_file": "household/food/current-offers.jsonl",
+  "source_refs": [
+    "a",
+    "z"
+  ],
+  "content_sha256": "cdb54c9b853155ad429b303354dade5b5a6f13aa912aaca1d05f942f2521a74d",
+  "evidence_state": "source_bound_observation",
+  "notes": "multi\nline \"q\"",
+  "field": "notes",
+  "value": "multi\nline \"q\""
+}
+exit 0

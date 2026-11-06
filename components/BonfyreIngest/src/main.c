@@ -11,6 +11,7 @@
  *   <output_dir>/intake-manifest.json   — typed intake record
  *   <output_dir>/normalized.*           — normalized input file
  *   <output_dir>/artifact.json          — intake-stage artifact manifest
+ *   <output_dir>/fabric-output.manifest — governed Fabric discovery list
  */
 #include <ctype.h>
 #include <errno.h>
@@ -125,6 +126,36 @@ static const char *media_type(IngestType t, const char *ext) {
     }
 }
 
+/* A filename is a locator, not evidence of an asset's encoding.  Preserve
+ * source and normalized media types separately so a misnamed source cannot be
+ * relabelled on the way into the evidence graph. */
+static const char *source_media_type(IngestType t, const char *path, const char *ext) {
+    unsigned char signature[12] = {0};
+    FILE *input = fopen(path, "rb");
+    size_t size = input ? fread(signature, 1, sizeof(signature), input) : 0;
+    if (input) fclose(input);
+
+    if (t == TYPE_IMAGE) {
+        static const unsigned char png[] = {0x89, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n'};
+        if (size >= sizeof(png) && memcmp(signature, png, sizeof(png)) == 0) return "image/png";
+        if (size >= 3 && signature[0] == 0xff && signature[1] == 0xd8 && signature[2] == 0xff) return "image/jpeg";
+        if (size >= 6 && (!memcmp(signature, "GIF87a", 6) || !memcmp(signature, "GIF89a", 6))) return "image/gif";
+        if (size >= 4 && (!memcmp(signature, "II*\0", 4) || !memcmp(signature, "MM\0*", 4))) return "image/tiff";
+        if (size >= 2 && signature[0] == 'B' && signature[1] == 'M') return "image/bmp";
+    }
+    return media_type(t, ext);
+}
+
+static const char *normalized_media_type(IngestType t, const char *normalized_path, const char *source_ext) {
+    switch (t) {
+        case TYPE_AUDIO: return "audio/wav";
+        case TYPE_TEXT: return "text/plain";
+        case TYPE_IMAGE: return media_type(TYPE_IMAGE, extension(normalized_path));
+        case TYPE_URL: return "audio/wav";
+        default: return media_type(t, source_ext);
+    }
+}
+
 /* ---------- normalizers (fork/exec external tools) ---------- */
 
 static int run_cmd(const char *const argv[]) {
@@ -176,7 +207,9 @@ static int normalize_text(const char *input, const char *outdir, char *out_path,
 }
 
 static int normalize_image(const char *input, const char *outdir, char *out_path, size_t out_sz) {
-    snprintf(out_path, out_sz, "%s/normalized.png", outdir);
+    const char *source_media = source_media_type(TYPE_IMAGE, input, extension(input));
+    const char *output_ext = strcmp(source_media, "image/jpeg") == 0 ? "jpg" : "png";
+    snprintf(out_path, out_sz, "%s/normalized.%s", outdir, output_ext);
     const char *argv[] = { "magick", input, "-strip", "-resize", "2048x2048>", out_path, NULL };
     return run_cmd(argv);
 }
@@ -259,6 +292,16 @@ static int compute_sha256(const char *path, char *hash_out, size_t hash_sz) {
     return 0;
 }
 
+static int write_fabric_output_manifest(const char *outdir, const char *normalized_path) {
+    char path[PATH_MAX];
+    snprintf(path, sizeof(path), "%s/fabric-output.manifest", outdir);
+    FILE *output = fopen(path, "w");
+    if (!output) return 1;
+    fprintf(output, "%s\nartifact.json\nintake-manifest.json\n", basename_of(normalized_path));
+    fclose(output);
+    return 0;
+}
+
 /* ---------- main ---------- */
 
 int main(int argc, char *argv[]) {
@@ -290,7 +333,10 @@ int main(int argc, char *argv[]) {
 
     IngestType itype = detect_type(input, type_hint);
     const char *ext = extension(input);
+    const char *source_media = itype == TYPE_URL ? "text/uri-list" : source_media_type(itype, input, ext);
     unsigned long sz = file_size(input);
+    char source_hash[128] = "unknown";
+    compute_sha256(input, source_hash, sizeof(source_hash));
 
     fprintf(stderr, "[ingest] type=%s input=%s size=%lu\n", type_str(itype), basename_of(input), sz);
 
@@ -332,6 +378,7 @@ int main(int argc, char *argv[]) {
     char hash[128] = "unknown";
     compute_sha256(norm_path[0] ? norm_path : input, hash, sizeof(hash));
     unsigned long norm_sz = file_size(norm_path);
+    const char *normalized_media = normalized_media_type(itype, norm_path, ext);
 
     /* ---- Intake manifest ---- */
     char manifest_path[PATH_MAX];
@@ -347,13 +394,17 @@ int main(int argc, char *argv[]) {
         "  \"detected_type\": \"%s\",\n"
         "  \"normalized_path\": \"%s\",\n"
         "  \"normalized_bytes\": %lu,\n"
+        "  \"source_content_hash\": \"%s\",\n"
+        "  \"normalized_content_hash\": \"%s\",\n"
         "  \"content_hash\": \"%s\",\n"
+        "  \"source_media_type\": \"%s\",\n"
+        "  \"normalized_media_type\": \"%s\",\n"
         "  \"media_type\": \"%s\",\n"
         "  \"status\": \"ready\"\n"
         "}\n",
         VERSION, ts, basename_of(input), sz, type_str(itype),
-        basename_of(norm_path), norm_sz, hash,
-        media_type(itype, ext));
+        basename_of(norm_path), norm_sz, source_hash, hash, hash,
+        source_media, normalized_media, normalized_media);
     fclose(mf);
 
     /* ---- artifact.json ---- */
@@ -402,10 +453,14 @@ int main(int argc, char *argv[]) {
         "    }\n"
         "  ]\n"
         "}\n",
-        hash, ts, hash, media_type(itype, ext),
+        hash, ts, source_hash, source_media,
         basename_of(input), sz, type_str(itype), VERSION,
-        media_type(itype, ext), basename_of(norm_path), hash, norm_sz);
+        normalized_media, basename_of(norm_path), hash, norm_sz);
     fclose(af);
+    if (write_fabric_output_manifest(outdir, norm_path) != 0) {
+        fprintf(stderr, "Cannot write Fabric output manifest\n");
+        return 1;
+    }
 
     fprintf(stderr, "[ingest] -> %s  hash=%s  bytes=%lu\n", basename_of(norm_path), hash, norm_sz);
     return 0;

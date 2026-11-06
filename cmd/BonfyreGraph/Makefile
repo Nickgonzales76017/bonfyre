@@ -1,5 +1,6 @@
 CC ?= cc
-CFLAGS ?= -O2 -Wall -Wextra -std=c11
+CFLAGS ?= -O2 -Wall -Wextra -std=c11 -ffunction-sections -fdata-sections
+CFLAGS += -I../BonfyreLex/src
 LDFLAGS ?= ../../lib/libbonfyre/libbonfyre.a -lsqlite3
 LOCAL_CFLAGS = -I../../lib/libbonfyre/include
 TARGET = bonfyre-graph
@@ -7,10 +8,10 @@ SRC = src/main.c
 
 SYNC_BIN = $(HOME)/.bonfyre/bin/$(TARGET)
 
-all: $(TARGET) install-bin
+all: $(TARGET)
 
 $(TARGET): $(SRC)
-	$(CC) $(CFLAGS) $(LOCAL_CFLAGS) -o $(TARGET) $(SRC) $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LOCAL_CFLAGS) -Wl,-dead_strip -o $(TARGET) $(SRC) $(LDFLAGS)
 
 install-bin: $(TARGET)
 	@mkdir -p $(dir $(SYNC_BIN))

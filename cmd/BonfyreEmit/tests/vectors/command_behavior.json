@@ -1,0 +1,5 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-emit","binary_env":"BONFYRE_EMIT_BIN","cases":[
+{"name":"emit renders a real brief directory to text","files":{"t.txt":"Speaker 1: Um, so we, we need to fix the the website by Friday.\nSpeaker 2: Okay. The checkout page is broken and customers cannot pay.\nSpeaker 1: Right, uh, and we should also update the pricing page.\n"},"steps":[{"program":"${root}/cmd/BonfyreBrief/bonfyre-brief","argv":["t.txt","bout","--title","Demo"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"argv":["bout","--format","txt","--out","e.txt"],"env":{"HOME":"${tmp}"},"exit":0,"present":["${tmp}/e.txt"]},
+ {"program":"cat","argv":["e.txt"],"contains":["Action Items","update the pricing page"]}]},
+{"name":"emit refuses a directory with no markdown","files":{"empty/x.bin":"x"},"steps":[{"argv":["empty","--format","txt","--out","e.txt"],"env":{"HOME":"${tmp}"},"exit_nonzero":true,"absent":["${tmp}/e.txt"]}]}]}

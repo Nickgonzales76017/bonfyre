@@ -1,0 +1,80 @@
+/* The shop front, set as a lookbook: tall pictures with few words, a calendar
+ * of what is coming out, picks under the names of whoever picked them, the
+ * shops made here, and recalls last.  Every colour and face is the house's
+ * own role (--w-*), so the bands follow the territory's dress. */
+
+.shop-kicker{margin:0 0 1.2rem;font:500 .72rem/1 var(--w-face-mono);letter-spacing:.18em;text-transform:uppercase;color:var(--w-accent)}
+
+/* Lookbook: one cover picture, then a run of portraits beside it. */
+.shop-looks{list-style:none;margin:0;padding:0;display:grid;gap:clamp(.8rem,1.6vw,1.4rem);
+  grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-flow:dense}
+.shop-look-item{margin:0}
+.shop-look-item a{display:block;color:var(--w-display)}
+.shop-look-picture{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:var(--w-radius);background:var(--w-panel)}
+.shop-cover{grid-column:span 2;grid-row:span 2}
+.shop-cover .shop-look-picture{aspect-ratio:4/5;height:100%}
+.shop-look-title{display:block;margin-top:.7rem;font:var(--w-display-weight) clamp(1rem,1.4vw,1.25rem)/1.15 var(--w-face-display);
+  text-transform:var(--w-display-transform);letter-spacing:var(--w-display-tracking)}
+.shop-cover .shop-look-title{font-size:clamp(1.6rem,3.2vw,2.8rem);line-height:.95}
+.shop-look-item a:hover .shop-look-title{color:var(--w-accent)}
+.shop-where{margin:.45rem 0 0;display:flex;flex-wrap:wrap;gap:.6rem;font:400 .7rem/1.3 var(--w-face-mono);letter-spacing:.04em;
+  text-transform:uppercase;color:var(--w-muted)}
+.shop-where .via{opacity:.8}
+
+/* Coming out: a strip of days, read left to right. */
+.shop-calendar{list-style:none;margin:0;padding:0;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(13rem,1fr);
+  gap:0;overflow-x:auto;scroll-snap-type:x mandatory;border-top:1px solid var(--w-rule)}
+.shop-calendar li{scroll-snap-align:start;border-right:1px solid var(--w-rule)}
+.shop-calendar li:last-child{border-right:0}
+.shop-calendar a{display:grid;gap:.6rem;padding:1.1rem 1.2rem 1.4rem 0;margin-left:1.2rem;color:var(--w-ink)}
+.shop-calendar li:first-child a{margin-left:0}
+.shop-day{font:500 .72rem/1 var(--w-face-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--w-muted)}
+.shop-day b{display:block;margin-bottom:.25rem;font:var(--w-display-weight) clamp(2.4rem,4vw,3.6rem)/.85 var(--w-face-display);
+  letter-spacing:var(--w-display-tracking);color:var(--w-accent)}
+.shop-drop-title{font:500 1rem/1.25 var(--w-face-body);color:var(--w-display)}
+.shop-drop-when{font:400 .7rem/1.3 var(--w-face-mono);text-transform:uppercase;letter-spacing:.04em;color:var(--w-muted)}
+.shop-calendar a:hover .shop-drop-title{text-decoration:underline;text-underline-offset:.15em}
+
+/* Worth buying: each voice is a column under its own name. */
+.shop-voice-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,17rem),1fr));gap:2rem 2.4rem}
+.shop-voice h3{margin:0 0 .8rem;padding-bottom:.55rem;border-bottom:2px solid var(--w-display);
+  font:var(--w-display-weight) clamp(1.15rem,1.6vw,1.45rem)/1 var(--w-face-display);text-transform:var(--w-display-transform);
+  letter-spacing:var(--w-display-tracking);color:var(--w-display)}
+.shop-voice ul{list-style:none;margin:0;padding:0}
+.shop-voice li{padding:.6rem 0;border-bottom:1px solid var(--w-rule)}
+.shop-voice li a{font:500 .98rem/1.3 var(--w-face-body);color:var(--w-ink)}
+.shop-voice li a:hover{color:var(--w-accent)}
+.shop-voice time{display:block;margin-top:.3rem;font:400 .68rem/1 var(--w-face-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--w-muted)}
+
+/* Shops made here: names set large, what each offers beneath. */
+.shop-door-list{list-style:none;margin:0;padding:0;border-top:1px solid var(--w-rule)}
+.shop-door-list a{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.4fr) auto;align-items:baseline;gap:.4rem 2rem;
+  padding:1.3rem 0;border-bottom:1px solid var(--w-rule);color:var(--w-ink)}
+.shop-door-name{font:var(--w-display-weight) clamp(1.6rem,3.6vw,3rem)/.95 var(--w-face-display);text-transform:var(--w-display-transform);
+  letter-spacing:var(--w-display-tracking);color:var(--w-display)}
+.shop-door-offer{font:400 1rem/1.35 var(--w-face-body);color:var(--w-ink)}
+.shop-door-host{font:400 .7rem/1 var(--w-face-mono);letter-spacing:.06em;color:var(--w-accent)}
+.shop-door-host::after{content:" \2197"}
+.shop-door-list a:hover .shop-door-name{color:var(--w-accent)}
+
+/* Recalls: quiet, last, and plain. */
+.shop-recalls ul{list-style:none;margin:0;padding:0;columns:2 22rem;column-gap:2.4rem}
+.shop-recalls li{break-inside:avoid;padding:.7rem 0;border-bottom:1px solid var(--w-rule)}
+.shop-recalls li>a{font:500 .95rem/1.3 var(--w-face-body);color:var(--w-ink)}
+.shop-recalls li>a:hover{text-decoration:underline;text-underline-offset:.15em}
+
+@media (max-width:760px){
+  .shop-looks{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .shop-door-list a{grid-template-columns:1fr}
+}
+
+/* Deals: the posted headline, its picture small beside it, who and when. */
+.shop-deal-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,20rem),1fr));gap:0 2.4rem}
+.shop-deal-list li{padding:.9rem 0;border-bottom:1px solid var(--w-rule)}
+.shop-deal-list a{display:grid;grid-template-columns:auto minmax(0,1fr);gap:.9rem;align-items:start;color:var(--w-ink)}
+.shop-deal-picture{width:4.2rem;height:4.2rem;object-fit:contain;background:var(--w-panel);border-radius:var(--w-radius)}
+.shop-deal-title{grid-column:2;font:500 .98rem/1.3 var(--w-face-body)}
+.shop-deal-list a:has(> .shop-deal-title:first-child){grid-template-columns:1fr}
+.shop-deal-list a:has(> .shop-deal-title:first-child) .shop-deal-title{grid-column:1}
+.shop-deal-list a:hover .shop-deal-title{color:var(--w-accent)}
+.shop-voice-from{margin:-.45rem 0 .6rem;font:400 .68rem/1 var(--w-face-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--w-muted)}

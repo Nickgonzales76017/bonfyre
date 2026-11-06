@@ -1,0 +1,553 @@
+#!/usr/bin/env python3
+"""Compile a recoverable, purpose-bound model context from the real frontier.
+
+This is deliberately downstream of AddressPlane and the persisted BitNet
+frontier.  It neither discovers candidates nor treats a learned rank as an
+owner decision.  Exact owners supply the admitted material manifest; this
+worker verifies its receipt-bound bodies, tokenizes each distinct CID once
+with the explicitly passed GigaToken runtime, and writes a disposable context
+body plus a ContextCutManifest.
+
+The cut is an execution representation.  It is not evidence, proof,
+authorization, a commitment, or an effect.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import importlib
+import json
+import os
+import sqlite3
+import struct
+import subprocess
+import sys
+import tempfile
+import time
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+
+MANIFEST_KEYS = {
+    "candidate_identity", "body_path", "content_sha256", "receipt_digest",
+    "evidence_ref", "information_policy_class", "temporal_frontier",
+}
+
+
+@dataclass(frozen=True)
+class Material:
+    candidate_identity: str
+    body_path: Path
+    content_sha256: str
+    receipt_digest: str
+    evidence_ref: str
+    information_policy_class: str
+    temporal_frontier: str
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def atomic_write(path: Path, data: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    try:
+        with os.fdopen(descriptor, "wb") as output:
+            output.write(data)
+            output.flush()
+            os.fsync(output.fileno())
+        os.replace(temporary, path)
+    except BaseException:
+        try:
+            os.unlink(temporary)
+        except FileNotFoundError:
+            pass
+        raise
+
+
+def open_token_cache(path: Path) -> sqlite3.Connection:
+    """Open the disposable physical token-body cache.
+
+    The cache is intentionally keyed only by immutable body identity and the
+    complete tokenizer passport.  It stores no owner decision, policy result,
+    rank, evidence standing, or rendered context.  Those are rechecked for
+    every new cut before a cached token body can be referenced.
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    database = sqlite3.connect(path)
+    database.execute("PRAGMA journal_mode=WAL")
+    database.execute(
+        "CREATE TABLE IF NOT EXISTS gigatoken_body ("
+        "content_sha256 TEXT NOT NULL, tokenizer_sha256 TEXT NOT NULL, "
+        "tokenizer_passport TEXT NOT NULL, token_count INTEGER NOT NULL, "
+        "token_blob BLOB NOT NULL, created_at INTEGER NOT NULL, "
+        "PRIMARY KEY(content_sha256,tokenizer_sha256,tokenizer_passport))"
+    )
+    return database
+
+
+def decode_tokens(blob: bytes, count: int) -> tuple[int, ...]:
+    if count < 1 or len(blob) != count * 4:
+        raise ValueError("cached GigaToken body has an invalid token shape")
+    return struct.unpack(f"<{count}I", blob)
+
+
+def encode_token_bodies(
+    tokenizer: Any,
+    cache: sqlite3.Connection,
+    bodies: dict[str, str],
+    tokenizer_digest: str,
+    tokenizer_passport: str,
+) -> tuple[dict[str, bytes], dict[str, int], int, int]:
+    """Return packed u32 token bodies, token counts, cache hits, cache misses."""
+    blobs: dict[str, bytes] = {}
+    lengths: dict[str, int] = {}
+    misses: list[tuple[str, str]] = []
+    hits = 0
+    for digest, body in bodies.items():
+        cached = cache.execute(
+            "SELECT token_count,token_blob FROM gigatoken_body "
+            "WHERE content_sha256=? AND tokenizer_sha256=? AND tokenizer_passport=?",
+            (digest, tokenizer_digest, tokenizer_passport),
+        ).fetchone()
+        if cached is not None:
+            count, blob = int(cached[0]), bytes(cached[1])
+            decode_tokens(blob, count)
+            blobs[digest], lengths[digest] = blob, count
+            hits += 1
+        else:
+            misses.append((digest, body))
+    if misses:
+        encoded = tokenizer.encode_batch_list([body for _, body in misses])
+        if len(encoded) != len(misses):
+            raise ValueError("GigaToken returned an incomplete token batch")
+        with cache:
+            for (digest, _), tokens in zip(misses, encoded):
+                if not tokens or any(not isinstance(token, int) or token < 0 or token > 0xFFFFFFFF for token in tokens):
+                    raise ValueError("GigaToken returned invalid token ids")
+                blob = struct.pack(f"<{len(tokens)}I", *tokens)
+                cache.execute(
+                    "INSERT INTO gigatoken_body VALUES(?,?,?,?,?,?) "
+                    "ON CONFLICT(content_sha256,tokenizer_sha256,tokenizer_passport) "
+                    "DO UPDATE SET token_count=excluded.token_count,token_blob=excluded.token_blob,created_at=excluded.created_at",
+                    (digest, tokenizer_digest, tokenizer_passport, len(tokens), blob, int(time.time())),
+                )
+                blobs[digest], lengths[digest] = blob, len(tokens)
+    return blobs, lengths, hits, len(misses)
+
+
+def request_admission(arguments: argparse.Namespace) -> int:
+    """Acquire a transient native grant for this tokenization operation."""
+    command = [
+        str(Path(arguments.admission_bin).resolve(strict=True)), "request",
+        "--db", str(Path(arguments.admission_db).resolve()),
+        "--plane", arguments.admission_plane,
+        "--kind", "gigatoken_context_materialization",
+        "--bytes", str(arguments.admission_estimated_bytes),
+        "--volume", arguments.admission_volume,
+        "--detail", arguments.tokenizer_passport,
+    ]
+    if arguments.admission_free_bytes is not None:
+        command.extend(("--free-bytes", str(arguments.admission_free_bytes)))
+    result = subprocess.run(command, check=True, text=True, capture_output=True)
+    try:
+        receipt = json.loads(result.stdout)
+    except json.JSONDecodeError as error:
+        raise ValueError("ResourceAdmission returned malformed JSON") from error
+    if receipt.get("verdict") != "admit" or not isinstance(receipt.get("grant_id"), int) or receipt["grant_id"] < 1:
+        raise ValueError(f"ResourceAdmission refused GigaToken context materialization: {receipt.get('reason', 'unknown')}")
+    return receipt["grant_id"]
+
+
+def release_admission(arguments: argparse.Namespace, grant_id: int) -> None:
+    result = subprocess.run(
+        [str(Path(arguments.admission_bin).resolve(strict=True)), "release",
+         "--db", str(Path(arguments.admission_db).resolve()), "--grant", str(grant_id)],
+        check=True, text=True, capture_output=True,
+    )
+    try:
+        receipt = json.loads(result.stdout)
+    except json.JSONDecodeError as error:
+        raise ValueError("ResourceAdmission release returned malformed JSON") from error
+    if receipt.get("released_grant_id") != grant_id:
+        raise ValueError("ResourceAdmission did not release the GigaToken grant")
+
+
+def load_materials(path: Path, policy: str) -> dict[str, Material]:
+    materials: dict[str, Material] = {}
+    with path.open("r", encoding="utf-8") as source:
+        for line_number, line in enumerate(source, 1):
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            if set(row) != MANIFEST_KEYS:
+                raise ValueError(f"material line {line_number} has unknown or missing fields")
+            if any(not isinstance(row[key], str) or not row[key] for key in MANIFEST_KEYS):
+                raise ValueError(f"material line {line_number} requires nonempty strings")
+            if row["information_policy_class"] != policy:
+                raise ValueError(f"material line {line_number} violates requested information policy")
+            body = Path(row["body_path"]).resolve(strict=True)
+            actual = sha256_file(body)
+            declared = row["content_sha256"].removeprefix("sha256:")
+            if actual != declared:
+                raise ValueError(f"material line {line_number} body digest does not match its ForeignTwin receipt")
+            material = Material(
+                candidate_identity=row["candidate_identity"], body_path=body,
+                content_sha256=actual, receipt_digest=row["receipt_digest"],
+                evidence_ref=row["evidence_ref"],
+                information_policy_class=row["information_policy_class"],
+                temporal_frontier=row["temporal_frontier"],
+            )
+            if material.candidate_identity in materials:
+                raise ValueError(f"material manifest repeats candidate {material.candidate_identity}")
+            materials[material.candidate_identity] = material
+    if not materials:
+        raise ValueError("material manifest is empty")
+    return materials
+
+
+def load_bitnet_frontier(rank_db: Path, run_id: str, shadow_diagnostic: bool) -> tuple[str, int, list[dict[str, Any]]]:
+    with sqlite3.connect(f"file:{rank_db}?mode=ro", uri=True) as database:
+        run = database.execute(
+            "SELECT gate_state,candidate_count FROM bitnet_rank_run WHERE run_id=?", (run_id,)
+        ).fetchone()
+        if run is None:
+            raise ValueError("unknown BitNet rank run")
+        if run[0] != "ADMIT" and not (shadow_diagnostic and run[0] == "SHADOW"):
+            raise ValueError("a SHADOW/DEFER BitNet run may not feed executable context")
+        rows = database.execute(
+            "SELECT rank,candidate_identity,candidate_kind,owner_ref,exact_verifier,lowerer_ref "
+            "FROM ranked_candidate_envelope WHERE run_id=? ORDER BY rank", (run_id,)
+        ).fetchall()
+    if len(rows) != run[1]:
+        raise ValueError("ranked candidate envelope is incomplete")
+    return str(run[0]), int(run[1]), [
+        {
+            "rank": int(row[0]), "identity": row[1], "candidate_kind": row[2],
+            "owner_ref": row[3], "exact_verifier": row[4], "lowerer_ref": row[5],
+        }
+        for row in rows
+    ]
+
+
+def load_provider_frontier(provider_db: Path, run_id: str, query_id: str) -> tuple[str, int, list[dict[str, Any]]]:
+    """Load a complete provider rank without relabeling it as BitNet.
+
+    Provider ranks have no authority to feed executable model work merely
+    because an embedding call succeeded.  This route is therefore always
+    diagnostic until an independently admitted representation/execution plan
+    exists.  AddressPlane descriptors are intentionally hydrated only after
+    this query, from their current owner index.
+    """
+    with sqlite3.connect(f"file:{provider_db}?mode=ro", uri=True) as database:
+        run = database.execute(
+            "SELECT representation_id FROM provider_embedding_run WHERE run_id=? "
+            "AND status='complete' AND requested_count>0 AND stored_count=requested_count "
+            "AND failed_count=0 AND dimensions>0", (run_id,)
+        ).fetchone()
+        query = database.execute(
+            "SELECT candidate_count,top_k FROM provider_embedding_query WHERE query_id=? AND run_id=? "
+            "AND candidate_count>0 AND top_k>0", (query_id, run_id)
+        ).fetchone()
+        rows = database.execute(
+            "SELECT rank,subject_id FROM provider_embedding_rank WHERE query_id=? ORDER BY rank", (query_id,)
+        ).fetchall()
+    if run is None or query is None:
+        raise ValueError("provider frontier requires a complete embedding run and matching rank query")
+    if len(rows) != int(query[1]) or any(int(row[0]) != index + 1 or not isinstance(row[1], str) or not row[1]
+                                      for index, row in enumerate(rows)):
+        raise ValueError("provider rank frontier is incomplete or non-deterministically ordered")
+    return "SHADOW", int(query[0]), [{"rank": int(row[0]), "identity": row[1], "representation_id": str(run[0])} for row in rows]
+
+
+def recheck_advertisements(address_db: Path, ranked: list[dict[str, Any]]) -> None:
+    with sqlite3.connect(f"file:{address_db}?mode=ro", uri=True) as database:
+        for candidate in ranked:
+            current = database.execute(
+                "SELECT candidate_kind,owner_ref,exact_verifier,lowerer_ref "
+                "FROM candidate_advertisement WHERE identity=?", (candidate["identity"],)
+            ).fetchone()
+            expected = (candidate["candidate_kind"], candidate["owner_ref"],
+                        candidate["exact_verifier"], candidate["lowerer_ref"])
+            if current != expected:
+                raise ValueError(f"AddressPlane advertisement drifted for {candidate['identity']}")
+
+
+def hydrate_provider_advertisements(address_db: Path, ranked: list[dict[str, Any]]) -> None:
+    """Reopen typed current descriptors for provider handles before use.
+
+    The provider database contains only latent rank handles.  It must not
+    become a parallel candidate ontology, so the current AddressPlane row
+    supplies kind/owner/verifier/lowerer and is constrained to the exact
+    ForeignTwin retained-body lane accepted by ProviderFrontier.
+    """
+    with sqlite3.connect(f"file:{address_db}?mode=ro", uri=True) as database:
+        for candidate in ranked:
+            current = database.execute(
+                "SELECT candidate_kind,owner_ref,exact_verifier,lowerer_ref "
+                "FROM candidate_advertisement WHERE identity=?", (candidate["identity"],)
+            ).fetchone()
+            if current is None or current[0] != "external_occurrence" or current[2] != "ForeignTwin:admission":
+                raise ValueError(f"provider handle no longer names an exact ForeignTwin external occurrence: {candidate['identity']}")
+            candidate.update({
+                "candidate_kind": current[0], "owner_ref": current[1],
+                "exact_verifier": current[2], "lowerer_ref": current[3],
+            })
+
+
+def recheck_provider_material_evidence(path: Path, materials: dict[str, Material], run_id: str, query_id: str) -> None:
+    """Bind each provider-context body to the native exact-owner ledger.
+
+    A material manifest is a disposable derived body, so it cannot be a trust
+    boundary on its own.  The manifest's evidence digest and receipt must
+    replay to an observed ProviderFrontier line for this exact run/query,
+    preserving the native ForeignTwin query rather than replacing it with a
+    Python database read or an assertion by the caller.
+    """
+    evidence: dict[str, dict[str, Any]] = {}
+    with path.open("r", encoding="utf-8") as source:
+        for line_number, raw in enumerate(source, 1):
+            if not raw.strip():
+                continue
+            line = raw[:-1] if raw.endswith("\n") else raw
+            row = json.loads(line)
+            if (row.get("schema") != "bonfyre-provider-exact-owner-evidence.v1" or
+                row.get("run_id") != run_id or row.get("query_id") != query_id):
+                continue
+            if (row.get("query_state") != "queried" or
+                row.get("candidate_kind") != "external_occurrence" or
+                row.get("exact_verifier_ref") != "ForeignTwin:admission" or
+                row.get("outcome") not in ("observed", "unobserved")):
+                raise ValueError(f"provider exact-owner evidence line {line_number} is not a valid ForeignTwin query outcome")
+            # A complete ProviderFrontier ledger intentionally records exact
+            # negatives too.  They prove that the ranker did not get to
+            # manufacture material, but an unobserved row cannot bind a body.
+            if row["outcome"] == "unobserved":
+                if row.get("receipt_id") is not None:
+                    raise ValueError(f"provider exact-owner evidence line {line_number} attaches a receipt to an unobserved outcome")
+                continue
+            required = ("candidate_identity", "receipt_id", "source_digest", "owner_ref", "lowerer_ref", "representation_id")
+            if any(not isinstance(row.get(field), str) or not row[field] for field in required):
+                raise ValueError(f"provider exact-owner evidence line {line_number} is incomplete")
+            digest = hashlib.sha256(line.encode("utf-8")).hexdigest()
+            if digest in evidence or row["candidate_identity"] in {item["candidate_identity"] for item in evidence.values()}:
+                raise ValueError("provider exact-owner evidence repeats a digest or candidate")
+            evidence[digest] = row
+    for identity, material in materials.items():
+        digest = material.evidence_ref.removeprefix("sha256:")
+        row = evidence.get(digest)
+        if row is None or row["candidate_identity"] != identity or row["receipt_id"] != material.receipt_digest:
+            raise ValueError(f"material {identity} is not bound to the current provider exact-owner ledger")
+
+
+def gigatoken(tokenizer_path: Path, pythonpath: Path):
+    # The pinned local extension was built and witnessed under Homebrew Python
+    # 3.12.  macOS's system Python 3.9 can hang during its native module init,
+    # which is worse than a clean refusal because it strands an admission
+    # grant.  Refuse before importing rather than silently selecting a
+    # different tokenizer/runtime.
+    if sys.version_info < (3, 12):
+        raise ValueError("the pinned GigaToken extension requires Python 3.12+; use its recorded compatible runtime")
+    if not pythonpath.is_dir():
+        raise ValueError("GigaToken runtime path is not a directory")
+    sys.path.insert(0, str(pythonpath))
+    module = importlib.import_module("gigatoken")
+    return module.Tokenizer(str(tokenizer_path))
+
+
+def compile_cut(arguments: argparse.Namespace) -> int:
+    address_db = Path(arguments.address_db).resolve(strict=True)
+    tokenizer_path = Path(arguments.tokenizer).resolve(strict=True)
+    tokenizer_digest = sha256_file(tokenizer_path)
+    materials = load_materials(Path(arguments.material_manifest).resolve(strict=True), arguments.information_policy_class)
+    if arguments.provider_db:
+        rank_gate_state, frontier_size, ranked = load_provider_frontier(
+            Path(arguments.provider_db).resolve(strict=True), arguments.provider_run_id, arguments.provider_query_id,
+        )
+        hydrate_provider_advertisements(address_db, ranked)
+        recheck_provider_material_evidence(
+            Path(arguments.provider_exact_owner_evidence).resolve(strict=True), materials,
+            arguments.provider_run_id, arguments.provider_query_id,
+        )
+        frontier_identity = {
+            "kind": "provider_embedding_rank", "run_id": arguments.provider_run_id,
+            "query_id": arguments.provider_query_id,
+        }
+    else:
+        rank_gate_state, frontier_size, ranked = load_bitnet_frontier(
+            Path(arguments.rank_db).resolve(strict=True), arguments.run_id, arguments.shadow_diagnostic,
+        )
+        recheck_advertisements(address_db, ranked)
+        frontier_identity = {"kind": "bitnet_rank", "run_id": arguments.run_id}
+    grant_id = request_admission(arguments)
+    try:
+        tokenizer = gigatoken(tokenizer_path, Path(arguments.gigatoken_pythonpath).resolve(strict=True))
+
+        # Tokenize each distinct retained body once.  Multiple exact candidates may
+        # lawfully refer to one immutable body; their semantic identities remain
+        # distinct in the manifest while the physical body stays deduplicated.
+        bodies: dict[str, str] = {}
+        for material in materials.values():
+            bodies.setdefault(material.content_sha256, material.body_path.read_text(encoding="utf-8", errors="replace"))
+        token_cache = open_token_cache(Path(arguments.token_cache_db).resolve())
+        try:
+            token_blobs, token_lengths, cache_hits, cache_misses = encode_token_bodies(
+                tokenizer, token_cache, bodies, tokenizer_digest, arguments.tokenizer_passport,
+            )
+        finally:
+            token_cache.close()
+
+        selected: list[dict[str, Any]] = []
+        context_parts: list[str] = []
+        token_parts: list[bytes] = []
+        token_spans: list[dict[str, Any]] = []
+        consumed_digests: set[str] = set()
+        selected_tokens = 0
+        omitted_not_materialized = 0
+        omitted_over_budget = 0
+        for candidate in ranked:
+            material = materials.get(candidate["identity"])
+            if material is None:
+                omitted_not_materialized += 1
+                continue
+            body_tokens = token_lengths[material.content_sha256]
+            incremental_tokens = 0 if material.content_sha256 in consumed_digests else body_tokens
+            if selected_tokens + incremental_tokens > arguments.token_budget:
+                omitted_over_budget += 1
+                continue
+            if material.content_sha256 not in consumed_digests:
+                context_parts.append(
+                    f"<bonfyre-material cid=\"sha256:{material.content_sha256}\" "
+                    f"receipt=\"{material.receipt_digest}\" evidence=\"{material.evidence_ref}\">\n"
+                    f"{bodies[material.content_sha256]}\n</bonfyre-material>\n"
+                )
+                consumed_digests.add(material.content_sha256)
+                selected_tokens += body_tokens
+                token_spans.append({
+                    "content_sha256": f"sha256:{material.content_sha256}",
+                    "offset_tokens": selected_tokens - body_tokens,
+                    "token_count": body_tokens,
+                })
+                token_parts.append(token_blobs[material.content_sha256])
+            selected.append({
+                **candidate,
+                "content_sha256": f"sha256:{material.content_sha256}",
+                "receipt_digest": material.receipt_digest,
+                "evidence_ref": material.evidence_ref,
+                "temporal_frontier": material.temporal_frontier,
+            })
+            if len(selected) >= arguments.max_candidates:
+                break
+
+        if not selected:
+            raise ValueError("no exactly admitted material fits the context budget")
+        context_path = Path(arguments.out).resolve().with_suffix(".context")
+        token_path = Path(arguments.out).resolve().with_suffix(".tokens.u32le")
+        context_body = "".join(context_parts).encode("utf-8")
+        context_digest = hashlib.sha256(context_body).hexdigest()
+        token_body = b"".join(token_parts)
+        token_digest = hashlib.sha256(token_body).hexdigest()
+        # The expensive tokenization/packing work is complete before we claim
+        # a reusable artifact.  Release the transient physical grant first;
+        # the manifest may then truthfully state that it retained no capacity.
+        release_admission(arguments, grant_id)
+        grant_id = 0
+        atomic_write(context_path, context_body)
+        atomic_write(token_path, token_body)
+        diagnostic = rank_gate_state == "SHADOW"
+        manifest = {
+        "schema": "bonfyre.context-cut.v1",
+        "run_id": frontier_identity["run_id"],
+        "frontier": frontier_identity,
+        "rank_gate_state": rank_gate_state,
+        "source_rank_frontier": frontier_size,
+        "information_policy_class": arguments.information_policy_class,
+        "tokenizer_passport": {
+            "identity": arguments.tokenizer_passport,
+            "tokenizer_sha256": f"sha256:{tokenizer_digest}",
+            "implementation": "GigaToken",
+        },
+        "context_body": str(context_path),
+        "context_sha256": f"sha256:{context_digest}",
+        "token_body": str(token_path),
+        "token_sha256": f"sha256:{token_digest}",
+        "token_encoding": "u32le",
+        "token_spans": token_spans,
+        "token_budget": arguments.token_budget,
+        "selected_tokens": selected_tokens,
+        "selected_candidates": selected,
+        "unique_bodies": len(consumed_digests),
+        "deduplicated_body_references": len(selected) - len(consumed_digests),
+            "token_cache": {
+            "identity": "CID×tokenizer-passport",
+            "hits": cache_hits,
+            "misses": cache_misses,
+            },
+            "resource_admission": {"plane": arguments.admission_plane, "grant_released": True},
+        "omitted_not_materialized_by_exact_owner": omitted_not_materialized,
+        "omitted_over_budget": omitted_over_budget,
+        "truth": "diagnostic_receipted_context_only" if diagnostic else "purpose_bound_execution_context_only",
+        "forbidden_inference": [
+            "a ranked candidate is selected, lawful, proven, or true",
+            "a retained ForeignTwin body is an admitted institutional fact",
+            "a context cut contains all evidence needed by a mission",
+            "a context cut authorizes an external effect",
+            "a SHADOW diagnostic context may be projected to an executing model, lowerer, or carrier",
+        ],
+        }
+        atomic_write(Path(arguments.out).resolve(), (json.dumps(manifest, sort_keys=True) + "\n").encode("utf-8"))
+        print(json.dumps({
+        "schema": manifest["schema"], "state": "diagnostic" if diagnostic else "compiled", "selected_candidates": len(selected),
+        "selected_tokens": selected_tokens, "unique_bodies": len(consumed_digests),
+        "context_sha256": manifest["context_sha256"], "truth": manifest["truth"],
+        }, sort_keys=True))
+        return 0
+    finally:
+        if grant_id:
+            release_admission(arguments, grant_id)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    commands = parser.add_subparsers(dest="command", required=True)
+    compile_parser = commands.add_parser("compile")
+    for option in ("address_db", "material_manifest", "tokenizer", "tokenizer_passport", "gigatoken_pythonpath", "token_cache_db", "information_policy_class", "out", "admission_bin", "admission_db", "admission_plane", "admission_volume"):
+        compile_parser.add_argument("--" + option.replace("_", "-"), required=True)
+    frontier = compile_parser.add_mutually_exclusive_group(required=True)
+    frontier.add_argument("--rank-db")
+    frontier.add_argument("--provider-db")
+    compile_parser.add_argument("--run-id")
+    compile_parser.add_argument("--provider-run-id")
+    compile_parser.add_argument("--provider-query-id")
+    compile_parser.add_argument("--provider-exact-owner-evidence")
+    compile_parser.add_argument("--token-budget", type=int, required=True)
+    compile_parser.add_argument("--admission-estimated-bytes", type=int, required=True)
+    compile_parser.add_argument("--admission-free-bytes", type=int)
+    compile_parser.add_argument("--max-candidates", type=int, default=32)
+    compile_parser.add_argument("--shadow-diagnostic", action="store_true",
+                                help="permit only a persisted SHADOW frontier and emit a non-executable diagnostic context")
+    arguments = parser.parse_args()
+    if arguments.rank_db and not arguments.run_id:
+        parser.error("--run-id is required with --rank-db")
+    if arguments.provider_db and (not arguments.provider_run_id or not arguments.provider_query_id or not arguments.provider_exact_owner_evidence):
+        parser.error("--provider-run-id, --provider-query-id and --provider-exact-owner-evidence are required with --provider-db")
+    if arguments.provider_db and arguments.shadow_diagnostic is False:
+        parser.error("provider rank context is diagnostic until a separate admitted representation plan exists; pass --shadow-diagnostic")
+    if arguments.token_budget < 1 or arguments.max_candidates < 1 or arguments.admission_estimated_bytes < 1:
+        parser.error("token budget, max candidates, and admission bytes must be positive")
+    try:
+        return compile_cut(arguments)
+    except (OSError, sqlite3.Error, ValueError, json.JSONDecodeError) as error:
+        print(f"context-cut: {error}", file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

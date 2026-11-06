@@ -1,0 +1,157 @@
+#!/usr/bin/env python3
+"""Compile a dense Stage closure without flattening everything into PageItem.
+
+Inputs are already-observed material and owner relations.  This compiler does
+not fetch, admit, authenticate, reserve, buy, or infer attendance.  It joins the
+pieces needed for a live event surface and emits both:
+
+  * typed closure sections for SurfaceScene/WebAddress
+  * a compute plan for high-fanout work (CPU or vGPU candidate)
+
+The plan is descriptive.  A GPU candidate is work that is embarrassingly
+parallel (similarity, clustering, scoring, spatial fanout); the compiler never
+claims that a GPU executed it.
+"""
+import argparse, json, sqlite3
+from collections import Counter, defaultdict
+from pathlib import Path
+
+
+TYPED = {
+    "event": "events",
+    "place": "places",
+    "video": "video",
+    "audio": "recordings",
+    "photo": "pictures",
+    "post": "conversation",
+    "story": "publications",
+    "publication": "publications",
+}
+
+GRAMMAR_BY_FAMILY = {
+    "events": ["stage", "agenda"],
+    "places": ["map"],
+    "pictures": ["gallery"],
+    "recordings": ["listen"],
+    "video": ["watch"],
+    "conversation": ["channels", "community"],
+    "publications": ["context"],
+}
+
+
+def load_jsonl(path):
+    out = []
+    with open(path) as fh:
+        for line in fh:
+            line = line.strip()
+            if line:
+                out.append(json.loads(line))
+    return out
+
+
+def item_family(item):
+    return TYPED.get(str(item.get("kind") or "").lower(), "publications")
+
+
+def relation_rows(path, item_keys):
+    if not path or not Path(path).exists() or not item_keys:
+        return []
+    db = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+    placeholders = ",".join("?" for _ in item_keys)
+    try:
+        rows = db.execute(
+            f"SELECT src,relation,dst,evidence FROM relation WHERE src IN ({placeholders})",
+            tuple(item_keys),
+        ).fetchall()
+    except sqlite3.Error:
+        rows = []
+    db.close()
+    return [{"src":a,"relation":b,"dst":c,"evidence":d} for a,b,c,d in rows]
+
+
+def compute_plan(counts, relation_count, source_roots):
+    total = sum(counts.values())
+    jobs = []
+    def add(name, fanout, operation, backend):
+        jobs.append({"job":name,"fanout":fanout,"operation":operation,"backend_candidate":backend})
+    add("temporal-phase", counts.get("events",0), "classify event phase against now", "cpu")
+    add("spatial-neighborhood", counts.get("places",0) * max(1, counts.get("events",0)), "distance/window fanout", "vgpu" if counts.get("places",0) >= 32 else "cpu")
+    media = counts.get("pictures",0)+counts.get("recordings",0)+counts.get("video",0)
+    add("media-similarity", media * max(0, media-1)//2, "pairwise similarity / clustering", "vgpu" if media >= 24 else "cpu")
+    add("conversation-cluster", counts.get("conversation",0), "group/thread affinity", "vgpu" if counts.get("conversation",0) >= 64 else "cpu")
+    add("source-diversity", source_roots, "publisher/protocol balancing", "cpu")
+    add("relation-expand", relation_count, "typed relation fanout", "cpu")
+    add("scene-score", total, "grammar evidence accumulation", "vgpu" if total >= 128 else "cpu")
+    return jobs
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--items", required=True)
+    ap.add_argument("--frontier-hierarchy")
+    ap.add_argument("--latent-db")
+    ap.add_argument("--subject", default="stage:public")
+    ap.add_argument("--limit", type=int, default=2048)
+    args = ap.parse_args()
+
+    items = load_jsonl(args.items)[:max(1,args.limit)]
+    grouped = defaultdict(list)
+    sources = Counter()
+    identities = Counter()
+    for item in items:
+        family = item_family(item)
+        grouped[family].append(item)
+        if item.get("source"): sources[str(item["source"])] += 1
+        if item.get("ident"): identities[str(item["ident"])] += 1
+
+    frontier = {}
+    root_count = 0
+    if args.frontier_hierarchy and Path(args.frontier_hierarchy).exists():
+        frontier = json.load(open(args.frontier_hierarchy))
+        root_count = int(frontier.get("root_count") or 0)
+
+    item_keys = []
+    for item in items:
+        key = str(item.get("key") or "")
+        source = str(item.get("source") or "")
+        if key:
+            item_keys.extend([key, f"{source}:{key}" if source else key])
+    relations = relation_rows(args.latent_db, list(dict.fromkeys(item_keys)))
+
+    counts = {k:len(v) for k,v in grouped.items()}
+    grammars = []
+    for family in ("events","places","pictures","recordings","video","conversation","publications"):
+        if counts.get(family,0):
+            grammars.extend(GRAMMAR_BY_FAMILY[family])
+
+    # Stage should only exist when there is an actual event.  Other material can
+    # enrich it but cannot manufacture one.
+    stageable = counts.get("events",0) > 0
+    if not stageable:
+        grammars = [g for g in grammars if g not in ("stage","agenda")]
+
+    closure = {
+        "schema": "bonfyre.stage-closure.v1",
+        "subject": args.subject,
+        "stageable": stageable,
+        "typed_counts": counts,
+        "source_count": len(sources),
+        "identity_count": len(identities),
+        "frontier_root_count": root_count,
+        "grammars": grammars,
+        "material": {k:v for k,v in grouped.items()},
+        "relations": relations,
+        "compute_plan": compute_plan(counts, len(relations), root_count or len(sources)),
+        "cannot_infer": [
+            "event material -> attendance, availability, capacity or invitation",
+            "place relation -> presence or access",
+            "offer-like words -> offer or commitment",
+            "gpu candidate -> gpu execution",
+            "source hierarchy -> authority or endorsement",
+        ],
+    }
+    print(json.dumps(closure, separators=(",",":")))
+
+
+if __name__ == "__main__":
+    main()

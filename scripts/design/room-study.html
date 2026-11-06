@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aurekai · Spatial Rooms / Design Study</title>
+<style>
+:root{color-scheme:dark;--base:#081018;--surface:#111c29;--edge:rgba(202,230,255,.18);--ink:#edf6fa;--muted:#9eb1c1;--accent:#c6ff66;font-family:Inter,system-ui,-apple-system,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 74% -20%,#253d4d,transparent 52%),var(--base);color:var(--ink);line-height:1.5}
+a{color:inherit;text-decoration:none}button{font:inherit}button:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+header{display:flex;align-items:center;justify-content:space-between;padding:17px clamp(18px,4vw,60px);gap:12px;border-bottom:1px solid var(--edge)}
+.brand{font-size:20px;letter-spacing:-.06em;font-weight:770}.brand span{color:var(--accent)}
+nav{display:flex;gap:20px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.badge{border:1px solid var(--edge);color:var(--muted);padding:6px 12px;border-radius:100px;font-size:10px}
+main{width:min(1560px,100%);margin:0 auto;padding:clamp(18px,3vw,48px)}
+.eyebrow{color:var(--accent);font-size:11px;letter-spacing:.22em;text-transform:uppercase;font-weight:700}
+.hero{display:flex;justify-content:space-between;align-items:end;gap:28px;margin:10px 0 30px}
+h1{font-size:clamp(44px,7vw,108px);line-height:.93;letter-spacing:-.082em;margin:0;font-weight:660}
+.lede{max-width:380px;color:var(--muted);margin:0;line-height:1.7}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 305px;gap:15px}
+.stage{position:relative;overflow:hidden;min-height:540px;border:1px solid var(--edge);border-radius:18px;background:#14202c}
+#room-canvas{display:block;width:100%;height:100%;position:absolute;inset:0;touch-action:pan-y}
+.overlay{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 95px rgba(0,0,0,.28)}
+.stage-head{position:absolute;top:22px;left:23px;pointer-events:none}.stage-head h2{font-size:clamp(26px,3vw,43px);letter-spacing:-.06em;margin:4px 0}
+.stage-foot{position:absolute;left:18px;right:18px;bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.stage-foot small{background:rgba(8,16,24,.78);border:1px solid var(--edge);border-radius:20px;padding:9px 12px}
+.stage-foot button{color:var(--ink);background:#111c29cc;border:1px solid var(--edge);border-radius:20px;padding:9px 14px;cursor:pointer}
+.choices{display:grid;gap:12px}
+.choice{text-align:left;cursor:pointer;background:var(--surface);border:1px solid var(--edge);border-radius:17px;color:var(--ink);padding:20px;transition:border-color .15s,background .15s}
+.choice:hover{border-color:var(--accent)}
+.choice[aria-pressed=true]{border-color:var(--accent);background:linear-gradient(110deg,#253a29,#111c29)}
+.choice .step{display:block;font-size:11px;letter-spacing:.2em;color:var(--accent);margin:0 0 20px}
+.choice strong{display:block;font-size:19px;letter-spacing:-.04em}
+.choice em{display:block;font-size:13px;font-style:normal;color:var(--muted);margin-top:8px;line-height:1.6}
+.principles{display:grid;grid-template-columns:repeat(3,1fr);gap:25px;margin-top:28px}
+.principles article{border-top:1px solid var(--edge);padding-top:16px}
+.principles h3{font-size:15px;margin:0 0 8px}
+.principles p,.footnote{font-size:13px;color:var(--muted);margin:0;line-height:1.7}
+.footnote{margin-top:20px}
+@media(max-width:1000px){.hero{display:block}.lede{margin-top:20px}.layout{grid-template-columns:1fr}.choices{grid-template-columns:repeat(3,1fr)}.stage{min-height:440px}}
+@media(max-width:650px){header{padding:14px}nav{display:none}main{padding:22px 14px}.stage{min-height:390px}.choices{grid-template-columns:1fr}.choice{padding:15px}.choice .step{margin-bottom:9px}.principles{grid-template-columns:1fr}.stage-foot small{font-size:9px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/"}}</script>
+</head>
+<body>
+<header><a href="#" class="brand">aurekai<span>·</span></a><nav aria-label="Territories"><a href="https://aurekai.work">Work</a><a href="https://aurekai.life">Life</a><a href="https://aurekai.live">Live</a><a href="https://aurekai.shop">Shop</a></nav><span class="badge">CONCEPT · NOT LIVE</span></header>
+<main>
+<span class="eyebrow">Spatial experiences / three scenes</span>
+<section class="hero"><h1>Step inside<br>the collection.</h1><p class="lede">A room is a way to explore a collection, hear a release or follow someone's work—not a dashboard dressed as a gallery.</p></section>
+<div class="layout">
+<section class="stage" aria-label="Optional interactive room preview"><canvas id="room-canvas" aria-label="Interactive 3D interior; use mouse or touch to look around"></canvas><div class="overlay"></div><div class="stage-head"><span class="eyebrow" id="mode-label">01 / Curated collection</span><h2 id="room-title">The Gallery</h2></div><div class="stage-foot"><small>Drag to look · Scroll to zoom</small><button id="reset" type="button">Reset view</button></div></section>
+<aside class="choices" aria-label="Choose room">
+<button class="choice" data-room="gallery" type="button" aria-pressed="true"><span class="step">01 / EXPLORE</span><strong>The Gallery</strong><em>Curator-led editorial walls, exhibits and links back to original publications.</em></button>
+<button class="choice" data-room="listening" type="button" aria-pressed="false"><span class="step">02 / LISTEN</span><strong>Listening Room</strong><em>Album art, sound systems, release notes and owner-approved playback.</em></button>
+<button class="choice" data-room="studio" type="button" aria-pressed="false"><span class="step">03 / CREATE</span><strong>Creator Studio</strong><em>Source library, work surfaces, process artifacts and public profile work.</em></button>
+</aside>
+</div>
+<section class="principles">
+<article><h3>Retained provenance</h3><p>Displayed objects are invented geometry for the study. Production must resolve exact original sources, owner, publication and rights.</p></article>
+<article><h3>Accessible by default</h3><p>Three-dimensional exploration stays optional. Use ordinary cards, descriptions, links and functional actions as the accessible primary route.</p></article>
+<article><h3>Account-owned actions</h3><p>No save, publish, play, purchase or community mutation originates in this concept. Those operations belong to existing Bonfÿre capabilities.</p></article>
+</section>
+<p class="footnote" id="visual-status" role="status">This is a static design prototype with an optional Three.js room. No Aurekai account or source state is accessed.</p>
+</main>
+<script type="module">
+import * as THREE from "three";
+import {OrbitControls} from "three/addons/controls/OrbitControls.js";
+const canvas=document.querySelector("#room-canvas"),stage=canvas.closest(".stage");
+const status=document.querySelector("#visual-status"),choices=[...document.querySelectorAll("[data-room]")];
+const scene=new THREE.Scene();scene.background=new THREE.Color("#17212b");
+const camera=new THREE.PerspectiveCamera(37,1,.1,70),cameraHome=new THREE.Vector3(9,6,11);
+camera.position.copy(cameraHome);
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:"default"});
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.6));
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.3;
+renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.shadowMap.enabled=true;
+const controls=new OrbitControls(camera,canvas);
+controls.enableDamping=true;controls.target.set(0,1.65,0);controls.minDistance=5.5;controls.maxDistance=15;controls.maxPolarAngle=1.52;controls.update();
+const material=(color,roughness=.8,metalness=0)=>new THREE.MeshStandardMaterial({color,roughness,metalness});
+const M={stone:material("#d9cfbd"),dark:material("#2b3541"),oak:material("#a88a67"),walnut:material("#5e4534"),ivory:material("#f0e9df"),felt:material("#78867d"),sand:material("#c8b599"),bronze:material("#b39763",.35,.65),black:material("#18202a"),glass:material("#bfd9de",.15,.2)};
+const root=new THREE.Group();scene.add(root);
+const hemisphere=new THREE.HemisphereLight("#d7ebff","#71563a",2.2);scene.add(hemisphere);
+const sun=new THREE.DirectionalLight("#ffe7c0",3);sun.position.set(-3,8,3);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);
+sun.shadow.camera.left=-9;sun.shadow.camera.right=9;sun.shadow.camera.top=9;sun.shadow.camera.bottom=-9;sun.shadow.normalBias=.04;scene.add(sun);
+function block(w,h,d,mat,x,y,z){const obj=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);obj.position.set(x,y,z);obj.castShadow=true;obj.receiveShadow=true;root.add(obj);return obj}
+function circle(r,h,mat,x,y,z){const obj=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,24),mat);obj.position.set(x,y,z);obj.castShadow=true;root.add(obj);return obj}
+function walls(wall){block(12,.2,9,M.oak,0,-.1,0);block(12,6.3,.15,wall,0,3.15,-4.5);block(.16,6.3,9,wall,-6,3.15,0);
+block(.05,3.5,2.6,M.glass,-5.9,3.35,.7);block(.13,.08,2.8,M.walnut,-5.86,3.35,.7);
+block(.13,3.5,.08,M.walnut,-5.86,3.35,.7)}
+function art(x,y,width,height,tone){block(width+.15,height+.15,.1,M.walnut,x,y,-4.35);block(width,height,.02,M.ivory,x,y,-4.28);
+block(width*.76,height*.77,.03,tone,x,y,-4.25)}
+function plant(x,z){circle(.3,.6,M.sand,x,.3,z);block(.07,1.1,.07,M.walnut,x,1.12,z);
+for(let i=0;i<8;i++){const th=i*2.4,leaf=new THREE.Mesh(new THREE.SphereGeometry(.23,12,8),M.felt);
+leaf.scale.set(.65,1.8,.6);leaf.position.set(x+Math.cos(th)*.38,1.35+i*.12,z+Math.sin(th)*.38);root.add(leaf)}}
+function gallery(){walls(M.stone);art(-2.9,3.25,2.2,2.6,material("#276071"));art(.1,3.25,1.9,2.6,material("#c79970"));
+art(3,3.25,2.2,2.6,material("#9f5759"));block(4.4,.05,3.5,M.sand,0,.03,1);
+block(3,.18,.85,M.walnut,0,.55,1.2);for(const x of [-1.15,1.15])block(.1,.55,.1,M.black,x,.28,1.2);
+block(1.1,1.25,1.1,M.ivory,3.7,.63,1.5);
+const sculpture=new THREE.Mesh(new THREE.TorusKnotGeometry(.4,.15,88,8),M.bronze);sculpture.position.set(3.7,1.68,1.5);sculpture.castShadow=true;root.add(sculpture);
+plant(-4.6,-3.4)}
+function speaker(x){block(.72,1.8,.55,M.walnut,x,.9,-2.5);block(.62,1.65,.03,M.black,x,.9,-2.19);
+for(const y of [.45,.98,1.4]){const shape=new THREE.Mesh(new THREE.TorusGeometry(y===.45?.18:.11,.028,8,24),M.bronze);
+shape.position.set(x,y,-2.15);root.add(shape)}}
+function listening(){walls(M.dark);block(5,.06,3.2,M.sand,0,.04,1.2);block(3.8,.75,1.7,M.felt,0,.66,2);
+block(3.8,.9,.3,M.felt,0,1.22,2.8);
+for(const x of [-1.35,-.45,.45,1.35])block(.84,.16,1.22,M.sand,x,1.13,1.86);
+block(2.5,.16,1,M.walnut,0,.58,.16);for(const x of [-1,1])block(.1,.55,.1,M.bronze,x,.28,.16);
+speaker(-3.1);speaker(3.1);art(0,3.3,2.6,2.7,material("#a66a70"));plant(4.5,2.5)}
+function studio(){walls(M.dark);block(5,.06,3.3,M.sand,0,.04,1.5);block(3.5,.15,1.3,M.walnut,0,1.15,.1);
+for(const x of [-1.35,1.35])for(const z of [-.4,.5])block(.1,1.1,.1,M.bronze,x,.55,z);
+block(1.55,1.02,.08,M.black,-.25,1.94,-.5);block(1.4,.87,.09,material("#467886",.45),-.25,1.94,-.42);
+block(1.5,.05,.5,M.black,-.25,1.2,.4);block(1.2,.12,.9,M.felt,0,.58,2.2);
+block(.96,1,.2,M.felt,0,1.14,2.7);art(-2.8,3.2,2.5,2.4,material("#c5ad8d"));
+for(let y=1.8;y<=3.6;y+=.9)block(2,.1,.7,M.walnut,4.2,y,-3);plant(-4.5,-3.3)}
+const rooms={gallery,listening,studio},label={gallery:["The Gallery","01 / Curated collection"],listening:["Listening Room","02 / Sound and stories"],studio:["Creator Studio","03 / Works in progress"]};
+function choose(key){while(root.children.length){const object=root.children[0];root.remove(object);object.traverse(part=>{part.geometry?.dispose();
+if(part.material&&!Object.values(M).includes(part.material))part.material.dispose()})}
+rooms[key]();choices.forEach(btn=>btn.setAttribute("aria-pressed",String(btn.dataset.room===key)));
+document.querySelector("#room-title").textContent=label[key][0];document.querySelector("#mode-label").textContent=label[key][1];
+status.textContent=label[key][0]+" visualization selected; no account content is loaded."}
+choices.forEach(button=>button.addEventListener("click",()=>choose(button.dataset.room)));
+document.querySelector("#reset").addEventListener("click",()=>{camera.position.copy(cameraHome);controls.target.set(0,1.65,0);controls.update()});
+const resize=()=>{const rect=stage.getBoundingClientRect();if(!rect.width||!rect.height)return;renderer.setSize(rect.width,rect.height,false);camera.aspect=rect.width/rect.height;camera.updateProjectionMatrix()};
+new ResizeObserver(resize).observe(stage);choose("gallery");resize();
+renderer.setAnimationLoop(()=>{if(!document.hidden){controls.update();renderer.render(scene,camera)}});
+</script>
+</body>
+</html>

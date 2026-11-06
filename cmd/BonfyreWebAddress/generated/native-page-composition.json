@@ -1,0 +1,1766 @@
+{
+    "regions": [
+        {
+            "role": "lead",
+            "label": "",
+            "material": "publication",
+            "topology": "lead",
+            "language": "ghost-broadsheet",
+            "min_items": 1,
+            "max_items": 1
+        },
+        {
+            "role": "watch",
+            "label": "Watch",
+            "material": "video",
+            "topology": "shelf",
+            "language": "youtube-shelf",
+            "min_items": 1,
+            "max_items": 12
+        },
+        {
+            "role": "photos",
+            "label": "Photos",
+            "material": "photo",
+            "topology": "field",
+            "language": "pixelfed-grid",
+            "min_items": 2,
+            "max_items": 24
+        },
+        {
+            "role": "places",
+            "label": "Where",
+            "material": "place",
+            "topology": "map",
+            "language": "maplibre-points",
+            "min_items": 3,
+            "max_items": 50
+        },
+        {
+            "role": "latest",
+            "label": "Latest",
+            "material": "publication",
+            "topology": "index",
+            "language": "character",
+            "min_items": 1,
+            "max_items": 12
+        },
+        {
+            "role": "stage",
+            "label": "",
+            "material": "event",
+            "topology": "lead",
+            "language": "stage",
+            "min_items": 1,
+            "max_items": 1
+        },
+        {
+            "role": "happening",
+            "label": "What's on",
+            "material": "event",
+            "topology": "agenda",
+            "language": "calendar-agenda",
+            "min_items": 1,
+            "max_items": 40
+        },
+        {
+            "role": "soon",
+            "label": "Starting soon",
+            "material": "event",
+            "topology": "agenda",
+            "language": "calendar-agenda",
+            "min_items": 1,
+            "max_items": 8
+        },
+        {
+            "role": "topics",
+            "label": "",
+            "material": "publication",
+            "topology": "thread",
+            "language": "zulip-streams",
+            "min_items": 1,
+            "max_items": 48
+        },
+        {
+            "role": "listen",
+            "label": "Listen",
+            "material": "audio",
+            "topology": "tracks",
+            "language": "spotify-tracklist",
+            "min_items": 1,
+            "max_items": 20
+        },
+        {
+            "role": "talk",
+            "label": "What people are saying",
+            "material": "post",
+            "topology": "thread",
+            "language": "zulip-topic",
+            "min_items": 1,
+            "max_items": 20
+        },
+        {
+            "role": "more",
+            "label": "More",
+            "material": "publication",
+            "topology": "list",
+            "language": "ghost-wire",
+            "min_items": 1,
+            "max_items": 30
+        },
+        {
+            "role": "feed",
+            "label": "",
+            "material": "mix",
+            "topology": "feed",
+            "language": "pinterest-home-feed",
+            "min_items": 1,
+            "max_items": 50
+        },
+        {
+            "role": "wall",
+            "label": "",
+            "material": "photo",
+            "topology": "wall",
+            "language": "pinry-masonry",
+            "min_items": 1,
+            "max_items": 50
+        },
+        {
+            "role": "grid",
+            "label": "",
+            "material": "video",
+            "topology": "grid",
+            "language": "youtube-browse-grid",
+            "min_items": 1,
+            "max_items": 50
+        },
+        {
+            "role": "communities",
+            "label": "",
+            "material": "publication",
+            "topology": "communities",
+            "language": "lemmy-community-list",
+            "min_items": 1,
+            "max_items": 50
+        },
+        {
+            "role": "table",
+            "label": "",
+            "material": "publication",
+            "topology": "table",
+            "language": "linear-issue-list",
+            "min_items": 1,
+            "max_items": 50
+        },
+        {
+            "role": "results",
+            "label": "",
+            "material": "mix",
+            "topology": "results",
+            "language": "search-results",
+            "min_items": 1,
+            "max_items": 50
+        },
+        {
+            "role": "playlist",
+            "label": "",
+            "material": "audio",
+            "topology": "tracks",
+            "language": "spotify-tracklist",
+            "min_items": 1,
+            "max_items": 50
+        },
+        {
+            "role": "parts",
+            "label": "In the piece",
+            "material": "passage",
+            "topology": "index",
+            "language": "ghost-table-of-contents",
+            "min_items": 1,
+            "max_items": 12
+        },
+        {
+            "role": "named",
+            "label": "Named in it",
+            "material": "organization",
+            "topology": "index",
+            "language": "wikipedia-infobox-links",
+            "min_items": 1,
+            "max_items": 24
+        },
+        {
+            "role": "channels",
+            "label": "Where they publish",
+            "material": "channel",
+            "topology": "table",
+            "language": "linear-issue-list",
+            "min_items": 1,
+            "max_items": 12
+        }
+    ],
+    "subject_schemes": [
+        {
+            "scheme": "community",
+            "material": "post"
+        },
+        {
+            "scheme": "recording",
+            "material": "audio"
+        },
+        {
+            "scheme": "program",
+            "material": "video"
+        }
+    ],
+    "source_kinds": [
+        {
+            "kind": "video",
+            "material": "video"
+        },
+        {
+            "kind": "image",
+            "material": "photo"
+        },
+        {
+            "kind": "audio",
+            "material": "audio"
+        },
+        {
+            "kind": "event",
+            "material": "event"
+        }
+    ],
+    "route_source_contracts": [
+        {
+            "route": "/releases",
+            "territory": "any",
+            "host_suffix": "gamespress.com",
+            "title_terms": []
+        },
+        {
+            "route": "/releases",
+            "territory": "any",
+            "host_suffix": "stonemaiergames.com",
+            "title_terms": [
+                "release",
+                "available",
+                "launch"
+            ]
+        },
+        {
+            "route": "/advisories",
+            "territory": "any",
+            "host_suffix": "threatfilter.dev",
+            "title_terms": []
+        },
+        {
+            "route": "/advisories",
+            "territory": "any",
+            "host_suffix": "linuxsecurity.com",
+            "title_terms": []
+        },
+        {
+            "route": "/advisories",
+            "territory": "any",
+            "host_suffix": "oss-security.openwall.org",
+            "title_terms": []
+        },
+        {
+            "route": "/advisories",
+            "territory": "any",
+            "host_suffix": "mend.io",
+            "title_terms": []
+        },
+        {
+            "route": "/advisories",
+            "territory": "any",
+            "host_suffix": "tenable.com",
+            "title_terms": []
+        },
+        {
+            "route": "/",
+            "territory": "work",
+            "host_suffix": "threatfilter.dev",
+            "title_terms": []
+        },
+        {
+            "route": "/",
+            "territory": "work",
+            "host_suffix": "linuxsecurity.com",
+            "title_terms": []
+        },
+        {
+            "route": "/",
+            "territory": "work",
+            "host_suffix": "oss-security.openwall.org",
+            "title_terms": []
+        },
+        {
+            "route": "/",
+            "territory": "work",
+            "host_suffix": "mend.io",
+            "title_terms": []
+        },
+        {
+            "route": "/",
+            "territory": "work",
+            "host_suffix": "tenable.com",
+            "title_terms": []
+        }
+    ],
+    "world_regions": [
+        "lead",
+        "watch",
+        "photos",
+        "places",
+        "latest",
+        "listen",
+        "talk",
+        "more"
+    ],
+    "publisher_hosts": [
+        {
+            "host": "hn.algolia.com",
+            "path": "",
+            "publisher": "Hacker News"
+        },
+        {
+            "host": "hacker-news.firebaseio.com",
+            "path": "",
+            "publisher": "Hacker News"
+        },
+        {
+            "host": "feeds.bbci.co.uk",
+            "path": "",
+            "publisher": "BBC"
+        },
+        {
+            "host": "api.wikimedia.org",
+            "path": "",
+            "publisher": "Wikipedia"
+        },
+        {
+            "host": "wikimedia.org",
+            "path": "",
+            "publisher": "Wikipedia"
+        },
+        {
+            "host": "public.api.bsky.app",
+            "path": "",
+            "publisher": "Bluesky"
+        },
+        {
+            "host": "sepiasearch.org",
+            "path": "",
+            "publisher": "PeerTube"
+        },
+        {
+            "host": "store.steampowered.com",
+            "path": "",
+            "publisher": "Steam"
+        },
+        {
+            "host": "en.wikipedia.org",
+            "path": "",
+            "publisher": "Wikipedia"
+        },
+        {
+            "host": "www.wikidata.org",
+            "path": "",
+            "publisher": "Wikidata"
+        },
+        {
+            "host": "commons.wikimedia.org",
+            "path": "",
+            "publisher": "Wikimedia Commons"
+        },
+        {
+            "host": "archive.org",
+            "path": "",
+            "publisher": "Internet Archive"
+        },
+        {
+            "host": "www.inaturalist.org",
+            "path": "",
+            "publisher": "iNaturalist"
+        },
+        {
+            "host": "api.gbif.org",
+            "path": "",
+            "publisher": "iNaturalist via GBIF"
+        },
+        {
+            "host": "feeds.podcastindex.org",
+            "path": "",
+            "publisher": "Podcasting 2.0"
+        },
+        {
+            "host": "qlever.dev",
+            "path": "/api/wikidata",
+            "publisher": "Wikidata"
+        },
+        {
+            "host": "qlever.dev",
+            "path": "/api/wikimedia-commons",
+            "publisher": "Wikimedia Commons"
+        }
+    ],
+    "picture_origins": [
+        {
+            "host": "upload.wikimedia.org",
+            "path": "/wikipedia/commons/",
+            "hashed": true,
+            "name": "Wikimedia Commons",
+            "page": "https://commons.wikimedia.org/wiki/File:",
+            "sized": "https://commons.wikimedia.org/wiki/Special:FilePath/{name}?width={width}",
+            "sizes": "",
+            "everywhere": false
+        },
+        {
+            "host": "thumb.wikimedia.org",
+            "path": "/wikipedia/commons/",
+            "hashed": true,
+            "name": "Wikimedia Commons",
+            "page": "https://commons.wikimedia.org/wiki/File:",
+            "sized": "https://commons.wikimedia.org/wiki/Special:FilePath/{name}?width={width}",
+            "sizes": "",
+            "everywhere": false
+        },
+        {
+            "host": "commons.wikimedia.org",
+            "path": "/wiki/Special:FilePath/",
+            "hashed": false,
+            "name": "Wikimedia Commons",
+            "page": "https://commons.wikimedia.org/wiki/File:",
+            "sized": "https://commons.wikimedia.org/wiki/Special:FilePath/{name}?width={width}",
+            "sizes": "",
+            "everywhere": false
+        },
+        {
+            "host": "inaturalist-open-data.s3.amazonaws.com",
+            "path": "/photos/",
+            "hashed": false,
+            "name": "iNaturalist",
+            "page": "https://www.inaturalist.org/photos/",
+            "sized": "https://inaturalist-open-data.s3.amazonaws.com/photos/{name}/{size}.{ext}",
+            "sizes": "75:square,240:small,500:medium,1024:large",
+            "everywhere": true
+        }
+    ],
+    "licences": [
+        {
+            "match": "publicdomain/zero",
+            "words": "CC0",
+            "commercial": true,
+            "adapt": true,
+            "credit": false,
+            "share_alike": false
+        },
+        {
+            "match": "cc0",
+            "words": "CC0",
+            "commercial": true,
+            "adapt": true,
+            "credit": false,
+            "share_alike": false
+        },
+        {
+            "match": "publicdomain/mark",
+            "words": "Public domain",
+            "commercial": true,
+            "adapt": true,
+            "credit": false,
+            "share_alike": false
+        },
+        {
+            "match": "licenses/publicdomain",
+            "words": "Public domain",
+            "commercial": true,
+            "adapt": true,
+            "credit": false,
+            "share_alike": false
+        },
+        {
+            "match": "public domain",
+            "words": "Public domain",
+            "commercial": true,
+            "adapt": true,
+            "credit": false,
+            "share_alike": false
+        },
+        {
+            "match": "by-nc-nd",
+            "words": "CC BY-NC-ND",
+            "commercial": false,
+            "adapt": false,
+            "credit": true,
+            "share_alike": false
+        },
+        {
+            "match": "by-nc-sa",
+            "words": "CC BY-NC-SA",
+            "commercial": false,
+            "adapt": true,
+            "credit": true,
+            "share_alike": true
+        },
+        {
+            "match": "by-nc",
+            "words": "CC BY-NC",
+            "commercial": false,
+            "adapt": true,
+            "credit": true,
+            "share_alike": false
+        },
+        {
+            "match": "by-nd",
+            "words": "CC BY-ND",
+            "commercial": true,
+            "adapt": false,
+            "credit": true,
+            "share_alike": false
+        },
+        {
+            "match": "by-sa",
+            "words": "CC BY-SA",
+            "commercial": true,
+            "adapt": true,
+            "credit": true,
+            "share_alike": true
+        },
+        {
+            "match": "licenses/by/",
+            "words": "CC BY",
+            "commercial": true,
+            "adapt": true,
+            "credit": true,
+            "share_alike": false
+        },
+        {
+            "match": "cc by ",
+            "words": "CC BY",
+            "commercial": true,
+            "adapt": true,
+            "credit": true,
+            "share_alike": false
+        }
+    ],
+    "embed_hosts": [
+        {
+            "host": "archive.org",
+            "path": "/details/",
+            "embed": "https://archive.org/embed/{id}"
+        }
+    ],
+    "withheld_pictures": [
+        {
+            "host": "upload.wikimedia.org",
+            "path": "/wikipedia/en/",
+            "why": "an English Wikipedia upload is often non-free and usable only on its own article"
+        },
+        {
+            "host": "thumb.wikimedia.org",
+            "path": "/wikipedia/en/",
+            "why": "an English Wikipedia upload is often non-free and usable only on its own article"
+        }
+    ],
+    "programs": [
+        {
+            "route": "/",
+            "territory": "life",
+            "title": "Today",
+            "lede": "Dallas, food, home and the ideas worth your evening.",
+            "character": "scrapbook",
+            "families": [
+                "local-news"
+            ],
+            "source_limit": 1,
+            "regions": [
+                "lead"
+            ],
+            "sections": [
+                "/local",
+                "/food",
+                "/whats-on",
+                "/ideas",
+                "/home",
+                "/health",
+                "/travel",
+                "/books"
+            ],
+            "cannot_infer": "a front page is an arrangement by time, not a ranking of importance or an endorsement"
+        },
+        {
+            "route": "/",
+            "territory": "live",
+            "title": "Live",
+            "lede": "What's on, and what everyone is watching, hearing and playing.",
+            "character": "journal",
+            "families": [
+                "entertainment"
+            ],
+            "source_limit": 1,
+            "regions": [
+                "lead"
+            ],
+            "sections": [
+                "/whats-on",
+                "/film",
+                "/music",
+                "/sports",
+                "/art",
+                "/watch",
+                "/listen",
+                "/stage"
+            ],
+            "cannot_infer": "a report shown here is what its source published, not a warning, advice or a verified event"
+        },
+        {
+            "route": "/",
+            "territory": "shop",
+            "title": "Shop",
+            "lede": "Deals worth your time, things worth buying, and what has been recalled.",
+            "character": "ticker",
+            "families": [
+                "shopping"
+            ],
+            "source_limit": 1,
+            "regions": [
+                "lead"
+            ],
+            "sections": [
+                "/deals",
+                "/picks",
+                "/style",
+                "/recalls",
+                "/retail"
+            ],
+            "cannot_infer": "a release listed here is not an offer, a price, a licence or a recommendation to buy"
+        },
+        {
+            "route": "/",
+            "territory": "work",
+            "title": "Work",
+            "lede": "Jobs, running a business, money, and the day's news that touches them.",
+            "character": "dossier",
+            "families": [
+                "today"
+            ],
+            "source_limit": 1,
+            "regions": [
+                "lead"
+            ],
+            "sections": [
+                "/today",
+                "/jobs",
+                "/business",
+                "/money"
+            ],
+            "cannot_infer": "an advisory or rule listed here does not say whether it applies to you; nothing here is legal, security or financial advice"
+        },
+        {
+            "route": "/deals",
+            "territory": "any",
+            "title": "Deals",
+            "lede": "Prices worth acting on, as the deal hunters post them.",
+            "character": "ticker",
+            "families": [
+                "deals"
+            ],
+            "source_limit": 8,
+            "regions": [
+                "table",
+                "more"
+            ],
+            "sections": [],
+            "cannot_infer": "a deal is the store's price when posted"
+        },
+        {
+            "route": "/picks",
+            "territory": "any",
+            "title": "Worth buying",
+            "lede": "What reviewers and editors think is worth the money.",
+            "character": "scrapbook",
+            "families": [
+                "shopping",
+                "drops"
+            ],
+            "source_limit": 12,
+            "regions": [
+                "lead",
+                "wall",
+                "latest",
+                "more"
+            ],
+            "sections": [],
+            "cannot_infer": "a pick is the publisher's opinion; a drop is the store's listing"
+        },
+        {
+            "route": "/style",
+            "territory": "any",
+            "title": "Style",
+            "lede": "What people are wearing and buying.",
+            "character": "scrapbook",
+            "families": [
+                "style"
+            ],
+            "source_limit": 8,
+            "regions": [
+                "lead",
+                "wall",
+                "latest",
+                "more"
+            ],
+            "sections": [],
+            "cannot_infer": "style coverage is the publisher's"
+        },
+        {
+            "route": "/recalls",
+            "territory": "any",
+            "title": "Recalls",
+            "lede": "Products and food pulled from shelves.",
+            "character": "dossier",
+            "families": [
+                "recalls"
+            ],
+            "source_limit": 8,
+            "regions": [
+                "latest",
+                "more"
+            ],
+            "sections": [],
+            "cannot_infer": "a recall is as the agency announced it"
+        },
+        {
+            "route": "/retail",
+            "territory": "any",
+            "title": "Retail",
+            "lede": "How stores and brands are changing.",
+            "character": "journal",
+            "families": [
+                "retail"
+            ],
+            "source_limit": 8,
+            "regions": [
+                "latest",
+                "more"
+            ],
+            "sections": [],
+            "cannot_infer": "retail news is the publisher's"
+        },
+        {
+            "route": "/film",
+            "territory": "any",
+            "title": "Film & TV",
+            "lede": "What is opening, streaming and worth watching.",
+            "character": "journal",
+            "families": [
+                "film",
+                "entertainment"
+            ],
+            "source_limit": 12,
+            "regions": [
+                "lead",
+                "wall",
+                "latest",
+                "more"
+            ],
+            "sections": [],
+            "cannot_infer": "coverage is the publisher's"
+        },
+        {
+            "route": "/music",
+            "territory": "any",
+            "title": "Music",
+            "lede": "New records, tours and the people making them.",
+            "character": "journal",
+            "families": [
+                "music"
+            ],
+            "source_limit": 12,
+            "regions": [
+                "lead",
+                "wall",
+                "latest",
+                "more"
+            ],
+            "sections": [],
+            "cannot_infer": "coverage is the publisher's"
+        },
+        {
+            "route": "/sports",
+            "territory": "any",
+            "title": "Sports",
+            "lede": "Scores, trades and the stories behind them.",
+            "character": "ticker",
+            "families": [
+                "sports"
+            ],
+            "source_limit": 12,
+            "regions": [
+                "lead",
+                "latest",
+                "more"
+            ],
+            "sections": [],
+            "cannot_infer": "coverage is the publisher's"
+        },
+        {
+            "route": "/art",
+            "territory": "any",
+            "title": "Art",
+            "lede": "Exhibitions, artists and work worth seeing.",
+            "character": "scrapbook",
+            "families": [
+                "art"
+            ],
+            "source_limit": 8,
+            "regions": [
+                "wall",
+                "latest",
+                "more"
+            ],
+            "sections": [],
+            "cannot_infer": "coverage is the publisher's"
+        },
+        {
+            "route": "/local",
+            "territory": "any",
+            "title": "Dallas",
+            "lede": "What is happening in Dallas and across Texas, and where to go.",
+            "character": "journal",
+            "families": [
+                "local-news",
+                "going-out"
+            ],
+            "source_limit": 12,
+            "regions": [
+                "lead",
+                "latest",
+                "wall",
+                "more"
+            ],
+            "sections": [],
+            "cannot_infer": "local coverage is the publisher's"
+        },
+        {
+            "route": "/food",
+            "territory": "any",
+            "title": "Food",
+            "lede": "Something to cook tonight, and where to eat.",
+            "character": "scrapbook",
+            "families": [
+                "food"
+            ],
+            "source_limit": 12,
+            "regions": [
+                "lead",
+                "wall",
+                "latest",
+                "more"
+            ],
+            "sections": [],
+            "cannot_infer": "a recipe is its creator's"
+        },
+        {
+            "route": "/ideas",
+            "territory": "any",
+            "title": "Ideas",
+            "lede": "The essays and arguments people are reading.",
+            "character": "journal",
+            "families": [
+                "culture"
+            ],
+            "source_limit": 8,
+            "regions": [
+                "lead",
+                "latest",
+                "more"
+            ],
+            "sections": [],
+            "cannot_infer": "an essay is its author's"
+        },
+        {
+            "route": "/home",
+            "territory": "any",
+            "title": "Home",
+            "lede": "Rooms, gardens and making a place your own.",
+            "character": "scrapbook",
+            "families": [
+                "home"
+            ],
+            "source_limit": 8,
+            "regions": [
+                "wall",
+                "latest",
+                "more"
+            ],
+            "sections": [],
+            "cannot_infer": "coverage is the publisher's"
+        },
+        {
+            "route": "/health",
+            "territory": "any",
+            "title": "Health",
+            "lede": "Living well, explained.",
+            "character": "journal",
+            "families": [
+                "health"
+            ],
+            "source_limit": 8,
+            "regions": [
+                "latest",
+                "more"
+            ],
+            "sections": [],
+            "cannot_infer": "health coverage is not medical advice"
+        },
+        {
+            "route": "/travel",
+            "territory": "any",
+            "title": "Travel",
+            "lede": "Places worth the trip.",
+            "character": "scrapbook",
+            "families": [
+                "travel"
+            ],
+            "source_limit": 8,
+            "regions": [
+                "lead",
+                "wall",
+                "latest",
+                "more"
+            ],
+            "sections": [],
+            "cannot_infer": "coverage is the publisher's"
+        },
+        {
+            "route": "/books",
+            "territory": "any",
+            "title": "Books",
+            "lede": "What to read next.",
+            "character": "journal",
+            "families": [
+                "books"
+            ],
+            "source_limit": 8,
+            "regions": [
+                "latest",
+                "wall",
+                "more"
+            ],
+            "sections": [],
+            "cannot_infer": "a review is its critic's"
+        },
+        {
+            "route": "/today",
+            "territory": "any",
+            "title": "The day's news",
+            "lede": "What happened today, briefly.",
+            "character": "ticker",
+            "families": [
+                "today"
+            ],
+            "source_limit": 8,
+            "regions": [
+                "lead",
+                "latest",
+                "more"
+            ],
+            "sections": [],
+            "cannot_infer": "news is the publisher's"
+        },
+        {
+            "route": "/jobs",
+            "territory": "any",
+            "title": "Jobs",
+            "lede": "Open roles you can apply for now.",
+            "character": "dossier",
+            "families": [
+                "jobs"
+            ],
+            "source_limit": 8,
+            "regions": [
+                "table",
+                "more"
+            ],
+            "sections": [],
+            "cannot_infer": "a listing is the employer's"
+        },
+        {
+            "route": "/business",
+            "territory": "any",
+            "title": "Small business",
+            "lede": "Starting, running and growing one.",
+            "character": "journal",
+            "families": [
+                "small-business",
+                "retail"
+            ],
+            "source_limit": 12,
+            "regions": [
+                "lead",
+                "latest",
+                "more"
+            ],
+            "sections": [],
+            "cannot_infer": "coverage is the publisher's"
+        },
+        {
+            "route": "/money",
+            "territory": "any",
+            "title": "Money",
+            "lede": "Saving, spending and what it costs.",
+            "character": "journal",
+            "families": [
+                "money"
+            ],
+            "source_limit": 8,
+            "regions": [
+                "latest",
+                "more"
+            ],
+            "sections": [],
+            "cannot_infer": "money coverage is not financial advice"
+        },
+        {
+            "route": "/discover",
+            "territory": "any",
+            "title": "Discover",
+            "lede": "Stories, the day's most-read pages, books and the sky, in one stream as they arrive.",
+            "character": "scrapbook",
+            "families": [
+                "news",
+                "attention",
+                "wikimedia",
+                "books",
+                "space",
+                "history",
+                "institutions",
+                "datasets",
+                "live-music",
+                "commerce",
+                "gaming",
+                "vulnerabilities",
+                "food",
+                "science",
+                "sports"
+            ],
+            "source_limit": 8,
+            "regions": [
+                "lead",
+                "wall",
+                "watch",
+                "listen",
+                "topics",
+                "latest",
+                "table",
+                "more",
+                "feed"
+            ],
+            "sections": [],
+            "cannot_infer": "a story shown here is not endorsed, verified or ranked by importance; order is by time"
+        },
+        {
+            "route": "/watch",
+            "territory": "any",
+            "title": "Watch",
+            "lede": "Video published on people's own servers, and films old enough to belong to everyone, playing right here.",
+            "character": "journal",
+            "families": [
+                "video",
+                "films"
+            ],
+            "source_limit": 64,
+            "regions": [
+                "grid",
+                "watch",
+                "wall",
+                "latest",
+                "more"
+            ],
+            "sections": [],
+            "cannot_infer": "a video listed here is not hosted, licensed or endorsed by this estate; it plays from its own server"
+        },
+        {
+            "route": "/people",
+            "territory": "any",
+            "title": "People",
+            "lede": "Everyone this estate has read: the names publishers printed beside the things they published, and what else each one made.",
+            "character": "dossier",
+            "families": [
+                "news",
+                "attention",
+                "podcasts",
+                "commons"
+            ],
+            "source_limit": 8,
+            "regions": [
+                "latest"
+            ],
+            "sections": [],
+            "cannot_infer": "a name here is what a publisher printed, never an account on this estate, a verified identity, or proof that two identical names are one person"
+        },
+        {
+            "route": "/organisations",
+            "territory": "any",
+            "title": "Institutions",
+            "lede": "The publishers whose channels this estate actually reads, and how much of each one it has taken in.",
+            "character": "dossier",
+            "families": [
+                "news",
+                "institutions",
+                "commons"
+            ],
+            "source_limit": 8,
+            "regions": [
+                "latest"
+            ],
+            "sections": [],
+            "cannot_infer": "being listed is this estate's own decision to read a publisher; it is never a relationship either party agreed to, nor an endorsement"
+        },
+        {
+            "route": "/channels",
+            "territory": "any",
+            "title": "Channels",
+            "lede": "Public threads, grouped by where they are happening. Pick a place to read its topics.",
+            "character": "journal",
+            "families": [
+                "forums",
+                "hacker-attention"
+            ],
+            "source_limit": 64,
+            "regions": [
+                "topics",
+                "latest",
+                "more",
+                "feed"
+            ],
+            "sections": [],
+            "cannot_infer": "a public thread is not local speech, membership or moderation by this estate"
+        },
+        {
+            "route": "/community",
+            "territory": "any",
+            "title": "Community",
+            "lede": "People and communities posting in the open, gathered by who is posting.",
+            "character": "scrapbook",
+            "families": [
+                "fediverse",
+                "atproto"
+            ],
+            "source_limit": 64,
+            "regions": [
+                "communities",
+                "talk",
+                "latest",
+                "more",
+                "feed"
+            ],
+            "sections": [],
+            "cannot_infer": "a post from another community is not a post in this one"
+        },
+        {
+            "route": "/board",
+            "territory": "any",
+            "title": "Boards",
+            "lede": "Pictures from museums, agencies and the photographers of Wikimedia Commons, pinned wall to wall. Open one to see it large and to use it.",
+            "character": "scrapbook",
+            "families": [
+                "commons",
+                "museums",
+                "images"
+            ],
+            "source_limit": 96,
+            "regions": [
+                "wall",
+                "photos",
+                "grid",
+                "latest",
+                "more"
+            ],
+            "sections": [],
+            "cannot_infer": "a picture shown here is not a copy, a licence or a claim about who is depicted"
+        },
+        {
+            "route": "/parcels",
+            "territory": "any",
+            "title": "Map",
+            "lede": "Where things are being reported: earthquakes, species sightings and bike networks, placed where their sources say.",
+            "character": "atlas",
+            "families": [
+                "hazards",
+                "nature",
+                "mobility"
+            ],
+            "source_limit": 16,
+            "regions": [
+                "places",
+                "photos",
+                "latest",
+                "more"
+            ],
+            "sections": [],
+            "cannot_infer": "a point is where a source placed a report, not a verified location, a warning or advice"
+        },
+        {
+            "route": "/releases",
+            "territory": "any",
+            "title": "Releases",
+            "lede": "What registries, studios and model hubs just published, one line each.",
+            "character": "ticker",
+            "families": [
+                "packages",
+                "ai-models",
+                "gaming",
+                "github"
+            ],
+            "source_limit": 20,
+            "regions": [
+                "table",
+                "latest",
+                "more",
+                "feed"
+            ],
+            "sections": [],
+            "cannot_infer": "a release listed here is not reviewed, safe to install or endorsed"
+        },
+        {
+            "route": "/advisories",
+            "territory": "any",
+            "title": "Advisories",
+            "lede": "Vulnerabilities, security writing, standards and rules as they were filed.",
+            "character": "dossier",
+            "families": [
+                "vulnerabilities",
+                "security",
+                "standards",
+                "rulemaking",
+                "recalls"
+            ],
+            "source_limit": 16,
+            "regions": [
+                "lead",
+                "table",
+                "latest",
+                "more"
+            ],
+            "sections": [],
+            "cannot_infer": "an advisory does not say whether you are affected; nothing here is security or legal advice"
+        },
+        {
+            "route": "/research",
+            "territory": "any",
+            "title": "Research",
+            "lede": "Papers, preprints and datasets registered in the last hours, with where each can be cited from.",
+            "character": "journal",
+            "families": [
+                "literature",
+                "government-spending",
+                "local-government"
+            ],
+            "source_limit": 18,
+            "regions": [
+                "latest",
+                "table",
+                "more",
+                "feed"
+            ],
+            "sections": [],
+            "cannot_infer": "a preprint listed here is not peer reviewed unless its index says so"
+        },
+        {
+            "route": "/listen",
+            "territory": "any",
+            "title": "Listen",
+            "lede": "Music anyone may hear and recordings the area's own publishers put out — symphonies, 78 rpm blues, concerts taped in Dallas, talk and reporting — playing here one after another, with where each is kept.",
+            "character": "journal",
+            "families": [
+                "music",
+                "live-music",
+                "podcasts"
+            ],
+            "source_limit": 96,
+            "regions": [
+                "playlist",
+                "listen",
+                "wall",
+                "latest",
+                "more"
+            ],
+            "sections": [],
+            "cannot_infer": "a recording listed here is not hosted, licensed or endorsed by this estate; it plays from Wikimedia Commons under the terms its own page states"
+        },
+        {
+            "route": "/podcasts",
+            "territory": "any",
+            "title": "Podcasts",
+            "lede": "Shows that publish their chapters, transcripts and guests, playing right here.",
+            "character": "journal",
+            "families": [
+                "podcasts"
+            ],
+            "source_limit": 16,
+            "regions": [
+                "playlist",
+                "listen",
+                "latest",
+                "more"
+            ],
+            "sections": [],
+            "cannot_infer": "an episode is its show's own statement; a guest named or a place mentioned is not verified here"
+        },
+        {
+            "route": "/on-this-day",
+            "territory": "any",
+            "title": "On this day",
+            "lede": "The article Wikipedia's editors chose for today, the picture of the day, what happened on this date in other years, and what people are reading.",
+            "character": "almanac",
+            "families": [
+                "history",
+                "commons",
+                "attention"
+            ],
+            "source_limit": 12,
+            "regions": [
+                "lead",
+                "photos",
+                "wall",
+                "latest",
+                "more"
+            ],
+            "sections": [],
+            "cannot_infer": "an event listed for this date is what an encyclopedia records, not a verified account; the picture of the day is Wikimedia's choice, not this estate's"
+        },
+        {
+            "route": "/whats-on",
+            "territory": "any",
+            "title": "What's on",
+            "lede": "Events the organizers themselves publish: what starts soon, what is on today, and what is coming, with where each one is.",
+            "character": "almanac",
+            "families": [
+                "events"
+            ],
+            "source_limit": 96,
+            "regions": [
+                "soon",
+                "happening",
+                "photos",
+                "latest",
+                "more"
+            ],
+            "sections": [
+                "/nearby",
+                "/listen",
+                "/watch",
+                "/discover"
+            ],
+            "cannot_infer": "an event is listed as its organizer published it: a time, a place or a ticket may have changed since, and nothing here is a reservation"
+        },
+        {
+            "route": "/stage",
+            "territory": "any",
+            "title": "Stage",
+            "lede": "What is happening around this event now: where it is and what its organizers have published.",
+            "character": "journal",
+            "families": [
+                "events"
+            ],
+            "source_limit": 96,
+            "regions": [
+                "stage",
+                "happening",
+                "soon"
+            ],
+            "sections": [],
+            "cannot_infer": "a stage is a live composition around organizer-published events, not proof of attendance, capacity, availability, a reservation or an invitation"
+        },
+        {
+            "route": "/nearby",
+            "territory": "any",
+            "title": "Around Fort Worth and Dallas",
+            "lede": "Landmarks, neighbourhoods and the month's wildlife sightings on the map, the best photographs of the two cities, and what their cities, schools and institutions are saying.",
+            "character": "atlas",
+            "families": [
+                "places",
+                "events",
+                "local-voices",
+                "local-photos",
+                "local-nature"
+            ],
+            "source_limit": 96,
+            "regions": [
+                "places",
+                "soon",
+                "photos",
+                "wall",
+                "latest",
+                "more",
+                "feed"
+            ],
+            "sections": [],
+            "cannot_infer": "a place on this map is where Wikidata or a photographer placed it, not a survey, a boundary, a property record or a recommendation to visit"
+        },
+        {
+            "route": "/search",
+            "territory": "any",
+            "title": "Search",
+            "lede": "Everything Aurekai is reading right now, searched by what it says and who made it.",
+            "character": "journal",
+            "families": [
+                "news",
+                "attention",
+                "wikimedia",
+                "books",
+                "space",
+                "video",
+                "forums",
+                "hacker-attention",
+                "fediverse",
+                "atproto",
+                "museums",
+                "images",
+                "hazards",
+                "nature",
+                "packages",
+                "ai-models",
+                "gaming",
+                "vulnerabilities",
+                "security",
+                "literature",
+                "history",
+                "films",
+                "music",
+                "commons",
+                "places",
+                "local-photos",
+                "live-music",
+                "podcasts",
+                "local-nature",
+                "local-voices",
+                "institutions",
+                "events",
+                "food",
+                "science",
+                "sports",
+                "recalls",
+                "rulemaking"
+            ],
+            "source_limit": 64,
+            "regions": [
+                "results"
+            ],
+            "sections": [],
+            "cannot_infer": "a search result is a match on retained public text, not a ranking by truth or importance"
+        }
+    ],
+    "home_phases": [
+        {
+            "territory": "life",
+            "from_hour": 5,
+            "title": "This morning",
+            "lede": "Dallas this morning, something to cook, and what to read.",
+            "sections": [
+                "/local",
+                "/food",
+                "/health",
+                "/whats-on",
+                "/ideas",
+                "/home",
+                "/travel",
+                "/books"
+            ]
+        },
+        {
+            "territory": "life",
+            "from_hour": 11,
+            "title": "Today",
+            "lede": "Pictures, video, stories and the conversations around them, from the people and institutions publishing today.",
+            "sections": [
+                "/local",
+                "/food",
+                "/whats-on",
+                "/ideas",
+                "/home",
+                "/travel",
+                "/books",
+                "/health"
+            ]
+        },
+        {
+            "territory": "life",
+            "from_hour": 17,
+            "title": "Tonight",
+            "lede": "What is on tonight, what to cook, and what Dallas is talking about.",
+            "sections": [
+                "/whats-on",
+                "/food",
+                "/local",
+                "/ideas",
+                "/books",
+                "/home",
+                "/travel",
+                "/health"
+            ]
+        },
+        {
+            "territory": "life",
+            "from_hour": 23,
+            "title": "Still open",
+            "lede": "What is still happening at this hour, what plays without anyone else awake, and what changed while the city went quiet.",
+            "sections": [
+                "/ideas",
+                "/books",
+                "/food",
+                "/local",
+                "/travel",
+                "/home",
+                "/health",
+                "/whats-on"
+            ]
+        }
+    ],
+    "scene_grammars": [
+        {
+            "name": "stage",
+            "region": "stage",
+            "material": "event",
+            "at_least": 1,
+            "take": 1,
+            "weight": 95,
+            "label": "",
+            "says": "one thing is happening now, so it leads"
+        },
+        {
+            "name": "agenda",
+            "region": "happening",
+            "material": "event",
+            "at_least": 2,
+            "take": 24,
+            "weight": 90,
+            "label": "What's on",
+            "says": "several things happen at stated times, which is a day to read forwards"
+        },
+        {
+            "name": "map",
+            "region": "places",
+            "material": "place",
+            "at_least": 3,
+            "take": 40,
+            "weight": 80,
+            "label": "Where",
+            "says": "several things carry a point, which is a place to see at once"
+        },
+        {
+            "name": "field",
+            "region": "photos",
+            "material": "photo",
+            "at_least": 6,
+            "take": 24,
+            "weight": 72,
+            "label": "Pictures",
+            "says": "many pictures of one subject read as a field seen at once"
+        },
+        {
+            "name": "wall",
+            "region": "wall",
+            "material": "photo",
+            "at_least": 1,
+            "take": 12,
+            "weight": 66,
+            "label": "Pictures",
+            "says": "even one picture of a subject belongs beside its words"
+        },
+        {
+            "name": "tracklist",
+            "region": "playlist",
+            "material": "audio",
+            "at_least": 2,
+            "take": 20,
+            "weight": 75,
+            "label": "Listen",
+            "says": "recordings that play belong in a list you can play from"
+        },
+        {
+            "name": "shelf",
+            "region": "watch",
+            "material": "video",
+            "at_least": 2,
+            "take": 12,
+            "weight": 65,
+            "label": "Watch",
+            "says": "video with pictures reads as a shelf"
+        },
+        {
+            "name": "threads",
+            "region": "topics",
+            "material": "post",
+            "at_least": 3,
+            "take": 30,
+            "weight": 55,
+            "label": "Talk",
+            "says": "public conversation is threads, not headlines"
+        },
+        {
+            "name": "broadsheet",
+            "region": "lead",
+            "material": "publication",
+            "at_least": 1,
+            "take": 1,
+            "weight": 50,
+            "label": "",
+            "says": "the newest thing published about it leads when nothing is happening"
+        },
+        {
+            "name": "index",
+            "region": "latest",
+            "material": "publication",
+            "at_least": 2,
+            "take": 12,
+            "weight": 45,
+            "label": "Latest",
+            "says": "what has been published about it, newest first"
+        },
+        {
+            "name": "more",
+            "region": "more",
+            "material": "publication",
+            "at_least": 4,
+            "take": 24,
+            "weight": 20,
+            "label": "More",
+            "says": "everything else it has, compactly"
+        },
+        {
+            "name": "contents",
+            "region": "parts",
+            "material": "passage",
+            "at_least": 2,
+            "take": 12,
+            "weight": 62,
+            "label": "In the piece",
+            "says": "a piece its publisher divided into parts reads as those parts"
+        },
+        {
+            "name": "cast",
+            "region": "named",
+            "material": "organization",
+            "at_least": 2,
+            "take": 24,
+            "weight": 40,
+            "label": "Named in it",
+            "says": "a piece that names several organizations is read beside who they are"
+        },
+        {
+            "name": "masthead",
+            "region": "channels",
+            "material": "channel",
+            "at_least": 1,
+            "take": 12,
+            "weight": 30,
+            "label": "Where they publish",
+            "says": "who published it, and every way they put things out, is part of reading it"
+        }
+    ],
+    "nav": [
+        {
+            "route": "/discover",
+            "label": "Discover"
+        },
+        {
+            "route": "/whats-on",
+            "label": "What's on"
+        },
+        {
+            "route": "/watch",
+            "label": "Watch"
+        },
+        {
+            "route": "/listen",
+            "label": "Listen"
+        },
+        {
+            "route": "/board",
+            "label": "Collections"
+        }
+    ],
+    "grammar_labels": [
+        {
+            "grammar": "discover",
+            "label": "Discover"
+        },
+        {
+            "grammar": "stage",
+            "label": "Schedule"
+        },
+        {
+            "grammar": "spatial",
+            "label": "Map"
+        },
+        {
+            "grammar": "board",
+            "label": "Boards"
+        },
+        {
+            "grammar": "community",
+            "label": "Community"
+        },
+        {
+            "grammar": "channels",
+            "label": "Channels"
+        },
+        {
+            "grammar": "listings",
+            "label": "Listings"
+        },
+        {
+            "grammar": "parcels",
+            "label": "Properties"
+        },
+        {
+            "grammar": "observations",
+            "label": "Updates"
+        },
+        {
+            "grammar": "territory",
+            "label": "Area"
+        },
+        {
+            "grammar": "watch",
+            "label": "Watch"
+        },
+        {
+            "grammar": "listen",
+            "label": "Listen"
+        },
+        {
+            "grammar": "market",
+            "label": "Shop"
+        },
+        {
+            "grammar": "inbox",
+            "label": "Inbox"
+        },
+        {
+            "grammar": "worlds",
+            "label": "Pages"
+        },
+        {
+            "grammar": "packs",
+            "label": "Packs"
+        },
+        {
+            "grammar": "link",
+            "label": "Accounts"
+        },
+        {
+            "grammar": "studio",
+            "label": "Studio"
+        },
+        {
+            "grammar": "console",
+            "label": "Console"
+        }
+    ]
+}

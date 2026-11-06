@@ -1,0 +1,24 @@
+schema CommerceProgress
+generation economic-1
+authority engine/core/src/commerce.c
+absorbs components/BonfyreControlPlane/commerce_chain.py.archive
+
+field exchange
+  type text
+  role exchange-identity
+  required true
+
+field stage
+  type enum
+  values product listing inventory availability_observation offer quote cart checkout commitment payment settlement fulfilment delivery satisfaction ownership
+  required true
+
+invariant no-stage-implies-next
+  statement a stage establishes itself only; no cross-stage implication exists
+
+invariant no-stage-skipped
+  statement recording a stage requires that its immediate predecessor was recorded
+
+forbidden_inference payment -> settlement
+forbidden_inference delivery -> satisfaction
+forbidden_inference delivery -> ownership

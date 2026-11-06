@@ -1,0 +1,22 @@
+namespace bonfyre
+namespace umbrella
+  parent bonfyre
+  delegated_parent true
+  leadership_role lead
+  leadership_permission private:read
+  leadership_object workspace
+namespace umbrella/managed/child
+  inherited_role child-admin
+namespace child
+  parent explicit-parent
+  world DEMO
+namespace umbrella/managed/alpha
+namespace second
+persona_lattice child
+  persona writer write publish,edit
+  persona reader read observe
+institution_roles
+  role admin 2
+  role read 0
+  role reader 0
+  role write 1

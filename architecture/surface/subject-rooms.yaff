@@ -1,0 +1,49 @@
+architecture subject-room-publisher
+  canonical_name SubjectRoomPublisher
+  family surface
+  domain Surface / A thing on the internet, with an address here
+  layer presentation
+  semantic_question What does this estate have of a publisher it reads, at that publisher's own address, before anyone has claimed it?
+  purpose Every source root the estate has admitted answers at /s/publisher/<host>, composed from what is actually there: what the thing is, what it publishes and in what proportions, and how long this estate has been watching.
+  maturity implemented
+  node_types SourceRoot
+  edge_types composed_from
+  internal_calculus a section with nothing behind it is not drawn, so the room is the shape of the thing rather than a template with holes
+  internal_calculus a root is keyed by the host that served it and the archive files a thing under the publisher its feed credited, so the registrable tail is what joins them
+  invariant the room is composed read-only; nothing about a publisher can be changed by opening its address
+  forbidden_inference a presence existing -> the publisher knowing this estate exists, having claimed it, or endorsing it
+  forbidden_inference the count kept -> what the publisher published; it is what reached here
+  forbidden_inference the span watched -> how long the thing has existed
+  source_path cmd/BonfyreWebAddress/src/main.c
+  source_path scripts/compose-publisher-hosts.mjs
+  source_path scripts/publisher-host.cue
+  source_path scripts/publisher-host.sql
+  witness scripts/tests/compose_publisher_hosts.test.mjs
+  witness 2026-09-26 twenty-nine thousand source roots had been an ingestion inventory with no address a person could open. Served natively: smh.com.au answers as "Sydney Morning Herald - Latest News" with 75 kept across 57 photographs and 18 stories, and feeds.npr.org as "Invisibilia" with 1,409 kept, 1,368 of them audio, watched since 2019-01-30
+  known_gap a root whose host this estate never admitted has no room, and the refusal says so rather than composing an empty one
+  known_gap nothing yet offers the publisher a way to claim the presence
+  known_gap the native publisher-host compiler has a fixture parity witness and staging target, but the live estate has not been replayed and its host presentation depends on an available CMS binary
+
+architecture subject-room-program
+  canonical_name SubjectRoomProgram
+  family surface
+  domain Surface / What a subject is trying to run, and what it still needs
+  layer presentation
+  semantic_question What is this program short of, and what could pay for it, without any of that becoming a claim that it was funded?
+  purpose A program instance answers at /s/program/<id> as its own pitch: what it is, who runs it, which requirements are still open, which are met and on what evidence, and which funding scopes are declared against it.
+  maturity implemented
+  node_types ProgramInstance
+  node_types ProgramRequirement
+  node_types FundingWorkPackage
+  edge_types still_needs
+  edge_types could_be_paid_by
+  internal_calculus the open requirements are the pitch and the met ones are the evidence that the pitch is not hypothetical, so both are shown and the open ones come first
+  internal_calculus a funding scope is shown with the rule that keeps it distinct from the others, because one effort supported several ways must be legible from one cost claimed several times
+  invariant nothing on the page can become a pledge, an application or an award by being read
+  forbidden_inference a declared funding scope -> money awarded, applied for, billed, paid, booked or authorized
+  forbidden_inference an open requirement -> authority to meet it
+  forbidden_inference a program instance -> a relationship with any funder its template names
+  source_path cmd/BonfyreWebAddress/src/main.c
+  witness 2026-09-26 served natively for person-nick-grantpack-01-automated-permit-intelligence-network: archetype housing-human-services, run by person:nick, 11 requirements still open against 1 met, 3 funding scopes, each carrying its own distinctness rule verbatim
+  known_gap there is no backing, pledging or voting; this discovers a pitch and stops at the human line
+  known_gap governance is shown only as the owning subject, not as the shape a community chose

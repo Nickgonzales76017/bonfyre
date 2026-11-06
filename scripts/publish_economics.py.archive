@@ -1,0 +1,249 @@
+#!/usr/bin/env python3
+"""Historical parity oracle: what this estate's reading costs.
+
+The membrane had nothing to show because nothing was metered, and the organ
+that meters priced usage by the first letter of its name. Both are fixed, so
+there is now a real answer to what the estate spends and on what -- and an
+answer nobody can see is the same as no answer.
+
+This writes that answer as an ordinary page of the estate: it wears the same
+stylesheet as everything else, sits at /economics, and appears under a
+subject's own host when that subject is running programs, so an account sees
+its own use rather than the estate's.
+
+What it will not say: that any of this was billed, paid, booked or authorized.
+Accrual is what use would cost at rates this estate has admitted with evidence,
+and usage with no admitted rate is counted and left unpriced rather than
+counted as free.
+
+  publish_economics.py --out DIR [--estate DIR]
+"""
+import argparse, html, json, os, sqlite3, sys, time
+
+NOW = time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime())
+
+BOUNDARY = ("Accrued use is what this estate's reading would cost at rates it has admitted with "
+            "evidence. It is not money billed, paid or booked, not an amount owed to anyone, and "
+            "not authority to spend. Use for which no rate has been admitted is counted here and "
+            "left unpriced, never counted as free.")
+
+
+def esc(value):
+    return html.escape(str(value if value is not None else ""))
+
+
+def daily_series(db):
+    """Metered events per day, as the numbers themselves.
+
+    The chart organ draws what the server already computed and interpolates
+    nothing: a line between two observations would be a claim nobody made, so
+    what is handed over is one point per day this estate actually metered.
+    """
+    rows = db.execute(
+        "SELECT substr(timestamp,1,10) AS day, COUNT(*) AS events,"
+        " COALESCE(SUM(cost),0) AS accrued FROM events"
+        " WHERE timestamp <> '' GROUP BY day ORDER BY day").fetchall()
+    import calendar, time as _time
+    series = []
+    for row in rows:
+        try:
+            when = calendar.timegm(_time.strptime(row["day"], "%Y-%m-%d"))
+        except ValueError:
+            continue
+        series.append([when, row["events"]])
+    return series
+
+
+def read_meter(path):
+    if not os.path.exists(path):
+        return None
+    db = sqlite3.connect("file:%s?mode=ro" % path, uri=True)
+    db.row_factory = sqlite3.Row
+    out = {"by_provider": [], "by_key": [], "rates": [], "unpriced": 0,
+           "events": 0, "receipted": 0, "identified_attempts": 0,
+           "identified_realizations": 0}
+    out["by_provider"] = [dict(r) for r in db.execute(
+        "SELECT COALESCE(NULLIF(e.provider,''),'(none named)') AS provider, e.op,"
+        " COALESCE(r.currency,'') AS currency, COUNT(*) AS events, SUM(e.cost IS NULL) AS unpriced,"
+        " SUM(e.cost IS NOT NULL) AS priced,"
+        " printf('%.4f', COALESCE(SUM(e.cost),0)) AS accrued,"
+        " COALESCE(r.unit,'') AS rate_unit"
+        " FROM events e LEFT JOIN rate r ON r.id=e.rate_id"
+        " GROUP BY e.provider, e.op, r.currency, r.unit ORDER BY events DESC, provider, e.op")]
+    out["by_key"] = [dict(r) for r in db.execute(
+        "SELECT e.key_id, COALESCE(r.currency,'') AS currency, COUNT(*) AS events,"
+        " SUM(e.cost IS NULL) AS unpriced, SUM(e.cost IS NOT NULL) AS priced,"
+        " printf('%.4f', COALESCE(SUM(cost),0)) AS accrued"
+        " FROM events e LEFT JOIN rate r ON r.id=e.rate_id"
+        " GROUP BY e.key_id, r.currency ORDER BY events DESC, e.key_id LIMIT 40")]
+    out["rates"] = [dict(r) for r in db.execute(
+        "SELECT provider, op, unit, amount, currency, effective_at, evidence_ref FROM rate"
+        " ORDER BY provider, op")]
+    row = db.execute(
+        "SELECT COUNT(*) AS n, SUM(cost IS NULL) AS unpriced,"
+        " SUM(trim(receipt_ref) <> '') AS receipted,"
+        " SUM(trim(physical_attempt_ref) <> '') AS identified_attempts,"
+        " SUM(trim(realization_ref) <> '') AS identified_realizations FROM events").fetchone()
+    out["events"], out["unpriced"] = row["n"], row["unpriced"] or 0
+    out["receipted"] = row["receipted"] or 0
+    out["identified_attempts"] = row["identified_attempts"] or 0
+    out["identified_realizations"] = row["identified_realizations"] or 0
+    out["series"] = daily_series(db)
+    db.close()
+    return out
+
+
+def read_programs(path, site_id=None):
+    if not os.path.exists(path):
+        return []
+    db = sqlite3.connect("file:%s?mode=ro" % path, uri=True)
+    db.row_factory = sqlite3.Row
+    try:
+        rows = db.execute(
+            "SELECT i.instance_id, i.owner_subject, i.site_id, i.archetype,"
+            " (SELECT COUNT(*) FROM program_requirement q WHERE q.instance_id=i.instance_id"
+            "    AND q.state='open' AND q.status='published') AS open_requirements,"
+            " (SELECT COUNT(*) FROM funding_work_package p WHERE p.instance_id=i.instance_id"
+            "    AND p.status='published') AS work_packages"
+            " FROM program_instance i WHERE i.status='published'"
+            "   AND (?1 IS NULL OR i.site_id=?1) ORDER BY i.instance_id", (site_id,)).fetchall()
+    except sqlite3.OperationalError:
+        rows = []
+    db.close()
+    return [dict(r) for r in rows]
+
+
+def page(meter, programs, subject):
+    who = subject or "this estate"
+    out = ['<!doctype html><html lang="en"><head><meta charset="utf-8">',
+           '<meta name="viewport" content="width=device-width,initial-scale=1">',
+           '<title>What ', esc(who), ' spends · Aurekai</title>',
+           '<link rel="stylesheet" href="/assets/tailwind.css">',
+           '<link rel="stylesheet" href="/assets/world.css">',
+           '<link rel="stylesheet" href="/assets/vendor-uplot.min.css">',
+           '<script src="/assets/client-organs.js" defer></script>',
+           '<meta name="bonfyre:cannot-infer" content="', esc(BOUNDARY), '">',
+           '</head><body><main class="wrap">',
+           '<header class="region"><h1>What ', esc(who), ' spends</h1>',
+           '<p class="src">', esc(BOUNDARY), '</p>',
+           '<p class="src">Stated ', esc(NOW), '.</p></header>']
+
+    if not meter or not meter["events"]:
+        out.append('<section class="region"><p class="src">Nothing has been metered yet. '
+                   'That is a fact about what this estate has recorded, not a claim that it '
+                   'has spent nothing.</p></section>')
+    else:
+        if meter.get("series") and len(meter["series"]) > 1:
+            # The numbers stay in the page whether or not a chart is drawn.
+            out.append('<section class="region"><h2 class="region-label">What was metered, by day</h2>'
+                       '<div data-bf-series=\'%s\' data-bf-label="metered events" '
+                       'data-bf-height="160" role="img" '
+                       'aria-label="metered events per day, %d days"></div>'
+                       '<p class="src">One point per day this estate metered something. Nothing is '
+                       'interpolated between them: a line drawn between two observations would be a '
+                       'claim nobody made.</p></section>'
+                       % (json.dumps(meter["series"]), len(meter["series"])))
+        out.append('<section class="region"><h2 class="region-label">By provider</h2>'
+                   '<ol class="more">')
+        for row in meter["by_provider"]:
+            accrued = ("%s %s" % (row["accrued"], row["currency"])) if row["priced"] else "unpriced"
+            out.append('<li><strong>%s</strong> · %s<span class="by"><span>%d events</span>'
+                       '<span>%s</span>%s</span></li>' % (
+                           esc(row["provider"]), esc(row["op"]), row["events"], esc(accrued),
+                           ('<span>%d unpriced</span>' % row["unpriced"]) if row["unpriced"] else ""))
+        out.append('</ol></section>')
+
+        out.append('<section class="region"><h2 class="region-label">By what was being done</h2>'
+                   '<ol class="more">')
+        for row in meter["by_key"]:
+            accrued = ("%s %s accrued" % (row["accrued"], row["currency"])) if row["priced"] else "unpriced"
+            out.append('<li><strong>%s</strong><span class="by"><span>%d events</span>'
+                       '<span>%s</span>%s</span></li>' % (
+                           esc(row["key_id"]), row["events"], esc(accrued),
+                           ('<span>%d unpriced</span>' % row["unpriced"]) if row["unpriced"] else ""))
+        out.append('</ol></section>')
+
+        out.append('<section class="region"><h2 class="region-label">The rates this estate has admitted</h2>'
+                   '<p class="src">A price may only enter this store with the evidence that admits it. '
+                   'Anything not listed here is unpriced wherever it appears above.</p><ol class="more">')
+        for row in meter["rates"]:
+            out.append('<li><strong>%s · %s</strong> — %s %s per %s from %s'
+                       '<span class="by"><span>%s</span></span></li>' % (
+                           esc(row["provider"]), esc(row["op"]), esc(row["amount"]),
+                           esc(row["currency"]), esc(row["unit"]), esc(row["effective_at"]),
+                           esc(row["evidence_ref"])))
+        out.append('</ol></section>')
+        if meter["unpriced"]:
+            out.append('<section class="region"><p class="src">%d of %d metered events carry no '
+                       'admitted rate and are counted without a price.</p></section>'
+                       % (meter["unpriced"], meter["events"]))
+        out.append('<section class="region"><h2 class="region-label">Evidence coverage</h2>'
+                   '<p class="src">%d of %d events retain a receipt reference; %d bind a stable '
+                   'physical attempt and %d name a realization. Earlier rows without the newer '
+                   'attempt/realization coordinates remain visible as legacy recorded usage rather '
+                   'than being silently upgraded.</p></section>' % (
+                       meter["receipted"], meter["events"], meter["identified_attempts"],
+                       meter["identified_realizations"]))
+
+    if programs:
+        out.append('<section class="region"><h2 class="region-label">Programs running here</h2>'
+                   '<p class="src">Each names funding streams it could be paid by, kept as distinct '
+                   'scopes so one effort supported several ways can be told apart from one cost '
+                   'claimed several times. No scope or cost code has been stated for any of them, '
+                   'so nothing can be allocated to any stream.</p><ol class="more">')
+        for row in programs:
+            out.append('<li><strong>%s</strong><span class="by"><span>%s</span>'
+                       '<span>%d work packages</span><span>%d open requirements</span></span></li>' % (
+                           esc(row["instance_id"]), esc(row["archetype"]),
+                           row["work_packages"], row["open_requirements"]))
+        out.append('</ol></section>')
+
+    out.append('</main></body></html>')
+    return "".join(out)
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--estate", default=os.path.expanduser("~/.bonfyre/estate-local"))
+    ap.add_argument("--out", required=True, help="the publication tree to write into")
+    args = ap.parse_args()
+
+    meter = read_meter(os.path.join(args.estate, "meter.db"))
+    cms = os.path.join(args.estate, "cms.db")
+
+    written = []
+    # The estate's own page.
+    shared = page(meter, read_programs(cms), None)
+    os.makedirs(args.out, exist_ok=True)
+    with open(os.path.join(args.out, "economics.html"), "w") as f:
+        f.write(shared)
+    written.append("economics.html")
+
+    # And one under each subject host that is actually running programs, so an
+    # account is shown its own use rather than the estate's.
+    if os.path.exists(cms):
+        db = sqlite3.connect("file:%s?mode=ro" % cms, uri=True)
+        try:
+            hosts = db.execute(
+                "SELECT DISTINCT p.host, p.site_id, p.subject_address FROM site_presentation p"
+                " JOIN program_instance i ON i.site_id=p.site_id AND i.status='published'"
+                " WHERE p.status='published' AND p.host LIKE '%.aurekai.%'").fetchall()
+        except sqlite3.OperationalError:
+            hosts = []
+        db.close()
+        for host, site_id, subject in hosts:
+            here = page(meter, read_programs(cms, site_id), subject)
+            folder = os.path.join(args.out, "hosts", host)
+            os.makedirs(folder, exist_ok=True)
+            with open(os.path.join(folder, "economics.html"), "w") as f:
+                f.write(here)
+            written.append("hosts/%s/economics.html" % host)
+
+    print(json.dumps({"pages": len(written), "wrote": written[:6],
+                      "metered_events": (meter or {}).get("events", 0),
+                      "cannot_infer": BOUNDARY}, indent=1))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

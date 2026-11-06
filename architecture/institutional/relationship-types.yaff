@@ -1,0 +1,54 @@
+atlas institutional-relationship-types
+
+architecture institutional-relationship-types
+  canonical_name InstitutionalRelationshipTypes
+  owns RelationshipKind
+  consumes InstitutionEnvelope
+  consumes ProviderState
+  consumes Authority
+  publishes RelationshipKind
+  publishes RelationshipClosure
+  family institutional
+  domain Institution / Relationship ownership
+  layer institutional
+  semantic_question Who owns this relationship, which realization sits under it, and what does a downstream estate actually receive from it?
+  purpose Separate the commercial or institutional relationship from the product, account, organization and resource that realize it, so that owning a relationship, holding a capability, owning a resource and being authorized to act are four distinct facts.
+  maturity architectural
+  node_types Relationship
+  node_types RelationshipOwner
+  node_types Realization
+  node_types AccountIdentity
+  edge_types owns_relationship
+  edge_types realized_by
+  edge_types grants_closure_to
+  invariant a relationship names a counterparty institution, not a product; the product is a realization beneath it
+  invariant exactly one estate owns a relationship; other estates receive bounded closures of it
+  invariant relationship ownership, capability availability, resource ownership and downstream authority are four separate facts and are never inferred from one another
+  invariant an account or organization identity is evidence of a realization, not proof of an agreement
+  invariant an agreement is recorded only when its terms are known; an unknown agreement is recorded as unknown rather than assumed
+  forbidden_inference a downstream estate using a provider -> that estate owning the relationship
+  forbidden_inference an organization identity existing -> a commercial agreement being in place
+  forbidden_inference a provider being publicly available -> a specific estate being entitled to it
+  forbidden_inference holding a credential -> holding the authority the credential can reach
+  interacts institutional-root
+  interacts delegation-model
+  interacts authority
+  source_lineage Generation-10 product topology separation, 2026-08-26
+
+relationship_kind commercial-provider
+  detail Counterparty sells a product or service to the owning estate. Realized by accounts, organizations, subscriptions and rails.
+
+relationship_kind accounting-realization
+  detail Counterparty holds the owning estate's books of record. Financial Metabolism derives the position; the counterparty realizes the accounting.
+
+relationship_kind institutional
+  detail University, publisher, non-profit or civic counterparty. Realized by contacts, programs and eligibility rather than by accounts.
+
+relationship_kind direct-collaboration
+  detail A live project relationship with issues, PRs, maintainers and upstream response. Distinct from a Partner Commons method profile covering the same project.
+
+relationship_kind managed-client
+  detail The owning estate operates software or service on the counterparty's behalf. The counterparty has its own downstream organizations and users.
+
+relationship_kind prospect
+  detail Not yet an agreement. Lives in a demo world with its own effect policy until conversion.

@@ -1,0 +1,15 @@
+{
+  "name": "governance_vote",
+  "displayName": "Governance Vote",
+  "description": "One member's position on one proposal. A vote is what was said by the person who said it: it is never the membership's view, never a decision, and never authority to carry anything out. A member may hold only one position on a proposal at a time; changing it replaces the old one rather than adding to a tally.",
+  "attributes": {
+    "vote_id": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "proposal_id": { "type": "string", "required": true },
+    "voter": { "type": "string", "required": true },
+    "choice": { "type": "string", "required": true },
+    "cast_at": { "type": "string", "required": true },
+    "backing": { "type": "string", "required": true },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

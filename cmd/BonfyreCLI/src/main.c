@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * bonfyre — unified CLI dispatcher.
  *
@@ -29,15 +36,19 @@
 #include <bonfyre.h>
 #include <bf_json.h>
 
+#include "bf_lex.h"
 /* ── Section constants ────────────────────────────────────────────── */
-#define SEC_PIPELINE  "Pipeline"
-#define SEC_WORKFLOWS "Workflow Profiles"
-#define SEC_FAMILIES  "Families & Concepts"
-#define SEC_AI        "AI / Models"
-#define SEC_RECIPES   "Recipes & Runtime"
-#define SEC_INFRA     "Infrastructure"
-#define SEC_VALUE     "Value Capture"
-#define SEC_LOCAL     "Local Extras"
+#define SEC_SITES   "Websites and content"
+#define SEC_MEDIA   "Recordings and video"
+#define SEC_WRITE   "Write, package and send"
+#define SEC_SEARCH  "Search and understand text"
+#define SEC_MODELS  "Your own models"
+#define SEC_MONEY   "Money and customers"
+#define SEC_ACCESS  "Accounts and access"
+#define SEC_DATA    "Move and keep data"
+#define SEC_AUTO    "Automate and check"
+#define SEC_LAB     "Lab: research kernels and internals"
+#define SEC_LOCAL   "Local builds not yet in the table"
 
 typedef struct {
     const char *cmd;
@@ -45,7 +56,14 @@ typedef struct {
     const char *sibling_dir;
     const char *section;
     const char *desc;
+    int tier;           /* TIER_START on the first screen; TIER_LAB only with 'list --all' */
 } Route;
+
+enum { TIER_EVERYDAY = 0, TIER_START = 1, TIER_LAB = 2 };
+
+static const char *const goal_sections[] = {
+    SEC_SITES, SEC_MEDIA, SEC_WRITE, SEC_SEARCH, SEC_MODELS, SEC_MONEY, SEC_ACCESS, SEC_DATA, SEC_AUTO, SEC_LAB, NULL
+};
 
 typedef struct {
     const char *cmd;
@@ -61,6 +79,7 @@ typedef struct {
     int json;
     int compact;
     int health;
+    int all;            /* include lab kernels and local builds */
     char query[256];
 } ListOptions;
 
@@ -134,6 +153,8 @@ typedef struct {
 } InstallAliasMap;
 
 static int contains_ci(const char *haystack, const char *needle);
+/* Only list --all exposes lab kernels and local builds; --json changes format, not scope. */
+static int g_list_all = 0;
 
 static const InstallAliasMap install_alias_maps[] = {
     {"clean", {"bonfyre-clean", NULL}},
@@ -145,112 +166,131 @@ static const InstallAliasMap install_alias_maps[] = {
 };
 
 static const BuiltinSurface builtin_surfaces[] = {
-    {"self", "Front-door self-optimization, snapshot, repair, and ontology surface"},
-    {"precision", "Front-door precision routing and compression planning surface"},
-    {"status", "Front-door command drift, registry status, and ops snapshot surface"},
-    {"doctor", "Front-door health, registry, and sync helper surface"},
+    {"status", "What is installed, stale or missing, and what the registries hold"},
+    {"self", "Snapshot, inspect and repair this installation"},
+    {"precision", "Plan smaller representations for stored artifacts"},
     {NULL, NULL}
 };
 
 static const Route routes[] = {
-    /* ── Pipeline ──────────────────────────────────────────────── */
-    {"ingest",            "bonfyre-ingest",           "BonfyreIngest",          SEC_PIPELINE, "Universal asset intake"},
-    {"mediaprep",         "bonfyre-media-prep",       "BonfyreMediaPrep",       SEC_PIPELINE, "Media normalisation"},
-    {"transcribe",        "bonfyre-transcribe",       "BonfyreTranscribe",      SEC_PIPELINE, "Audio to text"},
-    {"clean",             "bonfyre-transcript-clean", "BonfyreTranscriptClean", SEC_PIPELINE, "Transcript cleaning"},
-    {"paragraph",         "bonfyre-paragraph",        "BonfyreParagraph",       SEC_PIPELINE, "Transcript paragraphizer"},
-    {"brief",             "bonfyre-brief",            "BonfyreBrief",           SEC_PIPELINE, "Extract structured brief"},
-    {"proof",             "bonfyre-proof",            "BonfyreProof",           SEC_PIPELINE, "Generate proof bundle"},
-    {"offer",             "bonfyre-offer",            "BonfyreOffer",           SEC_PIPELINE, "Generate offer document"},
-    {"narrate",           "bonfyre-narrate",          "BonfyreNarrate",         SEC_PIPELINE, "Text-to-speech narration"},
-    {"pack",              "bonfyre-pack",             "BonfyrePack",            SEC_PIPELINE, "Package artifact family"},
-    {"distribute",        "bonfyre-distribute",       "BonfyreDistribute",      SEC_PIPELINE, "Multi-channel distribution"},
-    {"transcript-family", "bonfyre-transcript-family","BonfyreTranscriptFamily",SEC_PIPELINE, "Speech to cleaned transcript family"},
-    {"render",            "bonfyre-render",           "BonfyreRender",          SEC_PIPELINE, "Universal artifact renderer"},
-    {"repurpose",         "bonfyre-repurpose",        "BonfyreRepurpose",       SEC_PIPELINE, "Repurpose transcripts to new formats"},
-    {"clips",             "bonfyre-clips",            "BonfyreClips",           SEC_PIPELINE, "Extract short clips from media"},
-    {"frame-extract",     "bonfyre-frame-extract",    "BonfyreFrameExtract",    SEC_PIPELINE, "Extract frames from video"},
-    {"scene-detect",      "bonfyre-scene-detect",     "BonfyreSceneDetect",     SEC_PIPELINE, "Scene boundary detection"},
-    {"video-demux",       "bonfyre-video-demux",      "BonfyreVideoDemux",      SEC_PIPELINE, "Demux video streams to tracks"},
-    {"detect-objects",    "bonfyre-detect-objects",   "BonfyreDetectObjects",   SEC_PIPELINE, "Object detection (vision pipeline stage)"},
-    {"fragment",          "bonfyre-fragment",         "BonfyreFragment",        SEC_PIPELINE, "Fragment store — create / query / merge"},
-    /* ── Workflow Profiles ────────────────────────────────────── */
-    {"workflow",          "bonfyre-workflow",         "BonfyreWorkflow",        SEC_WORKFLOWS, "Workflow profiles (operator suites, not recipes)"},
-    {"watch",             "bonfyre-watch",            "BonfyreWatch",           SEC_WORKFLOWS, "Filesystem reality bridge"},
-    /* ── Families & Concepts ─────────────────────────────────── */
-    {"family",            "bonfyre-family",           "BonfyreFamily",          SEC_FAMILIES, "Conceptual family browser (specialization taxonomy)"},
-    /* ── AI / Models ────────────────────────────────────────────── */
-    {"model",             "bonfyre-model",            "BonfyreModel",           SEC_AI, "Model registry (list / pull / verify)"},
-    {"embed",             "bonfyre-embed",            "BonfyreEmbed",           SEC_AI, "Generate text embeddings (ONNX)"},
-    {"vec",               "bonfyre-vec",              "BonfyreVec",             SEC_AI, "Local vector search (FAISS)"},
-    {"segment",           "bonfyre-segment",          "BonfyreSegment",         SEC_AI, "Speaker / VAD segmentation"},
-    {"speech-loop",       "bonfyre-speechloop",       "BonfyreSpeechLoop",      SEC_AI, "Streaming RNNT + Whisper ASR loop"},
-    {"mfa-dict",          "bonfyre-mfa-dict",         "BonfyreMFADict",         SEC_AI, "MFA forced-alignment dictionary"},
-    {"tone",              "bonfyre-tone",             "BonfyreTone",            SEC_AI, "Tone / sentiment analysis"},
-    {"tag",               "bonfyre-tag",              "BonfyreTag",             SEC_AI, "Auto-tagging pipeline"},
-    {"entity",            "bonfyre-entity",           "BonfyreEntity",          SEC_AI, "Named-entity recognition"},
-    {"canon",             "bonfyre-canon",            "BonfyreCanon",           SEC_AI, "Canonical form resolver"},
-    {"gen",               "bonfyre-gen",              "BonfyreGen",             SEC_AI, "Natural language generation"},
-    {"sli",               "bonfyre-sli",              "BonfyreSLI",             SEC_AI, "Structured layer inference (E8 lattice)"},
-    {"quant",             "bonfyre-quant",            "BonfyreQuant",           SEC_AI, "BQFP model quantisation"},
-    {"fpq",               "bonfyre-fpq",              "BonfyreFPQ",             SEC_AI, "Functional precision quantisation"},
-    {"fpqx",              "bonfyre-fpqx",             "BonfyreFPQx",            SEC_AI, "FPQx extended quantisation"},
-    {"layer",             "bonfyre-layer",            "BonfyreLayer",           SEC_AI, "Neural layer operations"},
-    {"layer-c",           "bonfyre-layer-c",          "BonfyreLayer",           SEC_AI, "Native C layer inspector and ONNX extraction surface"},
-    {"sae",               "bonfyre-sae",             "BonfyreSAE",             SEC_AI, "Sparse autoencoder feature activation + gating"},
-    {"learn",             "bonfyre-learn",            "BonfyreLearn",           SEC_AI, "On-device fine-tuning / adapters"},
-    {"weaviate",          "bonfyre-weaviate-index",   "BonfyreWeaviateIndex",   SEC_AI, "Weaviate vector index bridge"},
-    {"leapfrog",          "bonfyre-leapfrog",         "BonfyreLeapfrog",        SEC_AI, "Hamiltonian leapfrog integrator (conservation + reversibility checks)"},
-    {"violence",          "bonfyre-violence",         "BonfyreViolence",        SEC_AI, "Real-coupling physics validation (E8 embedding + Hamiltonian coupling)"},
-    {"reason",            "bonfyre-reason",           "BonfyreReason",          SEC_AI, "Multi-trajectory reasoning sessions (HVCP + embed + kvcache)"},
-    {"net",               "bonfyre-net",              "BonfyreNet",             SEC_AI, "Mixed-signal netlist runtime (SPICE/HVCP component coupling)"},
-    {"flashqla",          "bonfyre-flashqla",         "BonfyreFlashQLA",        SEC_AI, "Chunked-prefill GDN attention (FlashQLA tiled kernel)"},
-    {"physics",           "bonfyre-physics",          "BonfyrePhysics",         SEC_AI, "Hamiltonian Version Control Protocol (HVCP) — trajectory store"},
-    /* ── Recipes & Runtime ──────────────────────────────────────── */
-    {"recipe",            "bonfyre-recipe",           "BonfyreRecipe",          SEC_RECIPES, "Recipe registry (list / show / run / add)"},
-    {"run",               "bonfyre-run",              "BonfyreRun",             SEC_RECIPES, "Execute a recipe by name or path"},
-    {"flow",              "bonfyre-flow",             "BonfyreFlow",            SEC_RECIPES, "Coroutine-native pipeline flow graphs"},
-    {"pipeline",          "bonfyre-pipeline",         "BonfyrePipeline",        SEC_RECIPES, "Streaming pipeline execution"},
-    {"runtime",           "bonfyre-runtime",          "BonfyreRuntime",         SEC_RECIPES, "Replayable pipeline runtime"},
-    {"discipl",           "bonfyre-discipl",          "BonfyreDiscipl",         SEC_RECIPES, "Recursive DisCIPL runtime substrate"},
-    {"orchestrate",       "bonfyre-orchestrate",      "BonfyreOrchestrate",     SEC_RECIPES, "Machine-only orchestration planner"},
-    {"control",           "bonfyre-control",          "BonfyreControl",         SEC_RECIPES, "Control-plane command gateway"},
-    {"swarm",             "bonfyre-swarm",            "BonfyreSwarm",           SEC_RECIPES, "Distributed worker swarm"},
-    {"project",           "bonfyre-project",          "BonfyreProject",         SEC_RECIPES, "Content graph projection engine"},
-    {"space",             "bonfyre-space",            "BonfyreSpace",           SEC_RECIPES, "Semantic space management"},
-    {"proxy",             "bonfyre-proxy",            "BonfyreProxy",           SEC_RECIPES, "OpenAI-compatible API proxy"},
-    {"doctor",            "bonfyre-runtime",          "BonfyreRuntime",         SEC_RECIPES, "Runtime dependency diagnostics"},
-    {"capabilities",      "bonfyre-capability",       "BonfyreCapability",      SEC_RECIPES, "Capability discovery and matching registry"},
-    /* ── Infrastructure ─────────────────────────────────────────── */
-    {"hash",              "bonfyre-hash",             "BonfyreHash",            SEC_INFRA, "Content-addressing (SHA-256)"},
-    {"index",             "bonfyre-index",            "BonfyreIndex",           SEC_INFRA, "Artifact family indexer"},
-    {"compress",          "bonfyre-compress",         "BonfyreCompress",        SEC_INFRA, "Family-aware compression"},
-    {"emit",              "bonfyre-emit",             "BonfyreEmit",            SEC_INFRA, "Multi-format output engine"},
-    {"stitch",            "bonfyre-stitch",           "BonfyreStitch",          SEC_INFRA, "DAG materialiser"},
-    {"queue",             "bonfyre-queue",            "BonfyreQueue",           SEC_INFRA, "Job queue management"},
-    {"sync",              "bonfyre-sync",             "BonfyreSync",            SEC_INFRA, "Artifact synchronisation"},
-    {"graph",             "bonfyre-graph",            "BonfyreGraph",           SEC_INFRA, "Merkle-DAG artifact graph (SQLite)"},
-    {"query",             "bonfyre-query",            "BonfyreQuery",           SEC_INFRA, "Structured artifact query"},
-    {"wire",              "bonfyre-wire",             "BonfyreWire",            SEC_INFRA, "Consent-based network event layer"},
-    {"surface",           "bonfyre-surface",          "BonfyreSurface",         SEC_INFRA, "Optional client surface registry"},
-    {"kvcache",           "bonfyre-kvcache",          "BonfyreKVCache",         SEC_INFRA, "KV-cache store"},
-    {"auth",              "bonfyre-auth",             "BonfyreAuth",            SEC_INFRA, "Authentication and token management"},
-    {"tel",               "bonfyre-tel",              "BonfyreTel",             SEC_INFRA, "Telemetry / observability"},
-    {"moq",               "bonfyre-moq",              "BonfyreMoQ",             SEC_INFRA, "MoQ media-over-QUIC transport"},
-    {"cms",               "bonfyre-cms",              "BonfyreCMS",             SEC_INFRA, "Content management store"},
-    {"api",               "bonfyre-api",              "BonfyreAPI",             SEC_INFRA, "REST API server"},
-    {"time",              "bonfyre-time",             "BonfyreTime",            SEC_INFRA, "Temporal metadata and scheduling"},
-    /* ── Value Capture ───────────────────────────────────────────── */
-    {"gate",              "bonfyre-gate",             "BonfyreGate",            SEC_VALUE, "License enforcement"},
-    {"meter",             "bonfyre-meter",            "BonfyreMeter",           SEC_VALUE, "Usage metering and billing"},
-    {"ledger",            "bonfyre-ledger",           "BonfyreLedger",          SEC_VALUE, "Value accounting"},
-    {"economy",           "bonfyre-economy",          "BonfyreEconomy",         SEC_VALUE, "Economy / credits engine"},
-    {"compete",           "bonfyre-compete",          "BonfyreCompete",         SEC_VALUE, "Competitive benchmarking"},
-    {"pay",               "bonfyre-pay",              "BonfyrePay",             SEC_VALUE, "Payment processing"},
-    {"finance",           "bonfyre-finance",          "BonfyreFinance",         SEC_VALUE, "Financial reporting"},
-    {"tier",              "bonfyre-tier",             "BonfyreTier",            SEC_VALUE, "Feature / access tier management"},
-    {"outreach",          "bonfyre-outreach",         "BonfyreOutreach",        SEC_VALUE, "Campaign outreach automation"},
-    {NULL, NULL, NULL, NULL, NULL}
+    /* ── sites ── */
+    {"site",              "bonfyre-site",              "BonfyreWebAddress",       SEC_SITES, "Make a website: running and open in your browser in one command", TIER_START},
+    {"cms",               "bonfyre-cms",               "BonfyreCMS",              SEC_SITES, "Store the pages, posts and records your sites and apps read", TIER_EVERYDAY},
+    {"api",               "bonfyre-api",               "BonfyreAPI",              SEC_SITES, "Serve your records over HTTP", TIER_EVERYDAY},
+    {"domain",            "bonfyre-domain",            "BonfyreDomain",           SEC_SITES, "Point a domain you own at a site, checked before anything changes", TIER_EVERYDAY},
+    {"web-address",       "bonfyre-web-address",       "BonfyreWebAddress",       SEC_SITES, "Which site and page a web address serves", TIER_EVERYDAY},
+    /* ── media ── */
+    {"transcript-family", "bonfyre-transcript-family", "BonfyreTranscriptFamily", SEC_MEDIA, "A recording to clean, readable text in one step", TIER_START},
+    {"transcribe",        "bonfyre-transcribe",        "BonfyreTranscribe",       SEC_MEDIA, "Turn a recording into text, on this machine", TIER_EVERYDAY},
+    {"ingest",            "bonfyre-ingest",            "BonfyreIngest",           SEC_MEDIA, "Bring a file in: detect what it is and make a working copy", TIER_EVERYDAY},
+    {"mediaprep",         "bonfyre-media-prep",        "BonfyreMediaPrep",        SEC_MEDIA, "Convert audio or video into the form the other steps read", TIER_EVERYDAY},
+    {"clean",             "bonfyre-transcript-clean",  "BonfyreTranscriptClean",  SEC_MEDIA, "Tidy a transcript: fillers, repeats and timing", TIER_EVERYDAY},
+    {"paragraph",         "bonfyre-paragraph",         "BonfyreParagraph",        SEC_MEDIA, "Break a transcript into readable paragraphs", TIER_EVERYDAY},
+    {"segment",           "bonfyre-segment",           "BonfyreSegment",          SEC_MEDIA, "Find who spoke when, and where speech starts and stops", TIER_EVERYDAY},
+    {"narrate",           "bonfyre-narrate",           "BonfyreNarrate",          SEC_MEDIA, "Read a text aloud into an audio file; fails when nothing was spoken", TIER_EVERYDAY},
+    {"clips",             "bonfyre-clips",             "BonfyreClips",            SEC_MEDIA, "Cut short clips out of a longer recording", TIER_EVERYDAY},
+    {"frame-extract",     "bonfyre-frame-extract",     "BonfyreFrameExtract",     SEC_MEDIA, "Save still frames from a video", TIER_EVERYDAY},
+    {"scene-detect",      "bonfyre-scene-detect",      "BonfyreSceneDetect",      SEC_MEDIA, "Find where the scenes in a video change", TIER_EVERYDAY},
+    {"video-demux",       "bonfyre-video-demux",       "BonfyreVideoDemux",       SEC_MEDIA, "Split a video into its audio and video tracks", TIER_EVERYDAY},
+    {"detect-objects",    "bonfyre-detect-objects",    "BonfyreDetectObjects",    SEC_MEDIA, "Run a detector on each frame and report what it found", TIER_EVERYDAY},
+    {"tel",               "bonfyre-tel",               "BonfyreTel",              SEC_MEDIA, "Phone calls through FreeSWITCH", TIER_EVERYDAY},
+    {"speech-loop",       "bonfyre-speechloop",        "BonfyreSpeechLoop",       SEC_MEDIA, "Streaming RNNT + Whisper ASR loop", TIER_LAB},
+    {"mfa-dict",          "bonfyre-mfa-dict",          "BonfyreMFADict",          SEC_MEDIA, "MFA forced-alignment dictionary", TIER_LAB},
+    /* ── write ── */
+    {"brief",             "bonfyre-brief",             "BonfyreBrief",            SEC_WRITE, "Pull a structured brief out of a transcript", TIER_EVERYDAY},
+    {"proof",             "bonfyre-proof",             "BonfyreProof",            SEC_WRITE, "Check a brief against its source", TIER_EVERYDAY},
+    {"offer",             "bonfyre-offer",             "BonfyreOffer",            SEC_WRITE, "Write an offer document from a brief", TIER_EVERYDAY},
+    {"repurpose",         "bonfyre-repurpose",         "BonfyreRepurpose",        SEC_WRITE, "Turn a transcript into posts, notes and other formats", TIER_EVERYDAY},
+    {"render",            "bonfyre-render",            "BonfyreRender",           SEC_WRITE, "Render a record as a page, document or text", TIER_EVERYDAY},
+    {"emit",              "bonfyre-emit",              "BonfyreEmit",             SEC_WRITE, "Write one result out in several formats", TIER_EVERYDAY},
+    {"pack",              "bonfyre-pack",              "BonfyrePack",             SEC_WRITE, "Bundle related files into one package", TIER_EVERYDAY},
+    {"pack-graph",        "bonfyre-cms",              "BonfyreCMS",             SEC_WRITE, "Compile and verify immutable PackGraph images; govern account installations", TIER_EVERYDAY},
+    {"distribute",        "bonfyre-distribute",        "BonfyreDistribute",       SEC_WRITE, "Send finished work out to its channels", TIER_EVERYDAY},
+    /* ── search ── */
+    {"recall",            "bonfyre-recall",            "BonfyreRecall",           SEC_SEARCH, "Search your material by meaning and by words; owners recheck the results", TIER_EVERYDAY},
+    {"embed",             "bonfyre-embed",             "BonfyreEmbed",            SEC_SEARCH, "Turn text into vectors for search", TIER_EVERYDAY},
+    {"vec",               "bonfyre-vec",               "BonfyreVec",              SEC_SEARCH, "Store and search vectors on this machine", TIER_EVERYDAY},
+    {"query",             "bonfyre-query",             "BonfyreQuery",            SEC_SEARCH, "Query stored artifacts", TIER_EVERYDAY},
+    {"index",             "bonfyre-index",             "BonfyreIndex",            SEC_SEARCH, "Index a folder of related files", TIER_EVERYDAY},
+    {"fragment",          "bonfyre-fragment",          "BonfyreFragment",         SEC_SEARCH, "Store, query and merge passages of text", TIER_EVERYDAY},
+    {"tag",               "bonfyre-tag",               "BonfyreTag",              SEC_SEARCH, "Tag text automatically", TIER_EVERYDAY},
+    {"entity",            "bonfyre-entity",            "BonfyreEntity",           SEC_SEARCH, "Find the people, places and organisations named in a text", TIER_EVERYDAY},
+    {"tone",              "bonfyre-tone",              "BonfyreTone",             SEC_SEARCH, "Read the tone of a voice recording", TIER_EVERYDAY},
+    {"canon",             "bonfyre-canon",             "BonfyreCanon",            SEC_SEARCH, "Resolve different spellings of one thing to a single form", TIER_EVERYDAY},
+    {"space",             "bonfyre-space",             "BonfyreSpace",            SEC_SEARCH, "Group material into named spaces", TIER_EVERYDAY},
+    {"weaviate",          "bonfyre-weaviate-index",    "BonfyreWeaviateIndex",    SEC_SEARCH, "Weaviate vector index bridge", TIER_LAB},
+    {"project",           "bonfyre-project",           "BonfyreProject",          SEC_SEARCH, "Content graph projection engine", TIER_LAB},
+    /* ── models ── */
+    {"monitor",           "bonfyre-monitor",           "BonfyreMonitor",          SEC_MODELS, "What your sources said about a business, namesakes set aside", TIER_EVERYDAY},
+    {"reason",            "bonfyre-reason",            "BonfyreReason",           SEC_MODELS, "Ask your own model; several answers to one prompt, each one kept", TIER_START},
+    {"model",             "bonfyre-model",             "BonfyreModel",            SEC_MODELS, "Your models: what is here, what is loaded, what can load now", TIER_EVERYDAY},
+    {"gen",               "bonfyre-gen",               "BonfyreGen",              SEC_MODELS, "Turn a plain description into a recipe", TIER_EVERYDAY},
+    {"proxy",             "bonfyre-proxy",             "BonfyreProxy",            SEC_MODELS, "An OpenAI-style address for transcription and chat", TIER_EVERYDAY},
+    {"learn",             "bonfyre-learn",             "BonfyreLearn",            SEC_MODELS, "On-device fine-tuning / adapters", TIER_LAB},
+    {"kvcache",           "bonfyre-kvcache",           "BonfyreKVCache",          SEC_MODELS, "KV-cache store, tensor benchmark and context compile", TIER_LAB},
+    /* ── money ── */
+    {"pay",               "bonfyre-pay",               "BonfyrePay",              SEC_MONEY, "Invoices, payments and balances", TIER_EVERYDAY},
+    {"finance",           "bonfyre-finance",           "BonfyreFinance",          SEC_MONEY, "Opportunities, customers and books, worked out from your records", TIER_EVERYDAY},
+    {"books",             "bonfyre-books",             "BonfyreBooks",            SEC_MONEY, "Book bank lines to your accounts with your own model, nothing sent out", TIER_EVERYDAY},
+    {"manifest",          "bonfyre-manifest",          "BonfyreManifest",         SEC_MONEY, "An itemised manifest for an equipment lot, from its photos and listing", TIER_EVERYDAY},
+    {"commerce",          "bonfyre-commerce",          "BonfyreCommerce",         SEC_MONEY, "Follow a sale from first contact to paid, stage by stage", TIER_EVERYDAY},
+    {"meter",             "bonfyre-meter",             "BonfyreMeter",            SEC_MONEY, "Count usage for billing", TIER_EVERYDAY},
+    {"ledger",            "bonfyre-ledger",            "BonfyreLedger",           SEC_MONEY, "What a piece of work actually cost", TIER_EVERYDAY},
+    {"gate",              "bonfyre-gate",              "BonfyreGate",             SEC_MONEY, "Check a licence before something runs", TIER_EVERYDAY},
+    {"tier",              "bonfyre-tier",              "BonfyreTier",             SEC_MONEY, "Plans and what each one unlocks", TIER_EVERYDAY},
+    {"compete",           "bonfyre-compete",           "BonfyreCompete",          SEC_MONEY, "Benchmark against competitors", TIER_EVERYDAY},
+    {"outreach",          "bonfyre-outreach",          "BonfyreOutreach",         SEC_MONEY, "Outreach campaigns", TIER_EVERYDAY},
+    /* ── access ── */
+    {"auth",              "bonfyre-auth",              "BonfyreAuth",             SEC_ACCESS, "Accounts, sign-in and team access", TIER_EVERYDAY},
+    {"provider",          "bonfyre-provider",          "BonfyreProvider",         SEC_ACCESS, "Which outside providers can be used right now", TIER_EVERYDAY},
+    /* ── data ── */
+    {"bridge",            "bonfyre-bridge",            "BonfyreBridge",           SEC_DATA, "Move tables between Postgres, MySQL and SQLite and prove what arrived", TIER_EVERYDAY},
+    {"sync",              "bonfyre-sync",              "BonfyreSync",             SEC_DATA, "Keep files in step across machines", TIER_EVERYDAY},
+    {"hash",              "bonfyre-hash",              "BonfyreHash",             SEC_DATA, "Fingerprint files by their content", TIER_EVERYDAY},
+    {"compress",          "bonfyre-compress",          "BonfyreCompress",         SEC_DATA, "Compress a family of files and measure the saving", TIER_EVERYDAY},
+    {"graph",             "bonfyre-graph",             "BonfyreGraph",            SEC_DATA, "Record which files were made from which", TIER_EVERYDAY},
+    {"queue",             "bonfyre-queue",             "BonfyreQueue",            SEC_DATA, "Queue jobs and see what is waiting", TIER_EVERYDAY},
+    {"repository",        "bonfyre-repository-fabric", "BonfyreRepositoryFabric", SEC_DATA, "Work with Git repositories and exact source-cut receipts", TIER_EVERYDAY},
+    {"parquet",           "bonfyre-arrow-stream",      "BonfyreArrowStream",      SEC_DATA, "Read a digest-pinned Parquet file as streaming Arrow records", TIER_EVERYDAY},
+    /* ── auto ── */
+    {"capabilities",      "bonfyre-capability",        "BonfyreCapability",       SEC_AUTO, "Find the command that does what you describe", TIER_START},
+    {"doctor",            "bonfyre-runtime",           "BonfyreRuntime",          SEC_AUTO, "Check what is installed and working", TIER_START},
+    {"recipe",            "bonfyre-recipe",            "BonfyreRecipe",           SEC_AUTO, "Saved step-by-step recipes: list, show and add", TIER_EVERYDAY},
+    {"run",               "bonfyre-run",               "BonfyreRun",              SEC_AUTO, "Run a recipe and keep its history", TIER_EVERYDAY},
+    {"workflow",          "bonfyre-workflow",          "BonfyreWorkflow",         SEC_AUTO, "Ready-made suites of steps", TIER_EVERYDAY},
+    {"pipeline",          "bonfyre-pipeline",          "BonfyrePipeline",         SEC_AUTO, "Stream files through a chain of steps", TIER_EVERYDAY},
+    {"watch",             "bonfyre-watch",             "BonfyreWatch",            SEC_AUTO, "Act when files in a folder change", TIER_EVERYDAY},
+    {"github-watch",      "bonfyre-github-watch",      "BonfyreGitHubWatch",      SEC_AUTO, "Turn GitHub notifications into work items", TIER_EVERYDAY},
+    {"time",              "bonfyre-time",              "BonfyreTime",             SEC_AUTO, "Schedules and dates attached to work", TIER_EVERYDAY},
+    /* ── lab ── */
+    {"operator",          "bonfyre-operator",          "BonfyreOperator",         SEC_LAB, "Answer household questions from their sources", TIER_LAB},
+    {"family",            "bonfyre-family",            "BonfyreFamily",           SEC_LAB, "Conceptual family browser (specialization taxonomy)", TIER_LAB},
+    {"sli",               "bonfyre-sli",               "BonfyreSLI",              SEC_LAB, "Structured layer inference (E8 lattice)", TIER_LAB},
+    {"quant",             "bonfyre-quant",             "BonfyreQuant",            SEC_LAB, "Measure lattice quantisation of a named model", TIER_LAB},
+    {"fpq",               "bonfyre-fpq",               "BonfyreFPQ",              SEC_LAB, "Functional precision quantisation", TIER_LAB},
+    {"fpqx",              "bonfyre-fpqx",              "BonfyreFPQx",             SEC_LAB, "FPQx extended quantisation", TIER_LAB},
+    {"layer",             "bonfyre-layer",             "BonfyreLayer",            SEC_LAB, "Neural layer operations", TIER_LAB},
+    {"layer-c",           "bonfyre-layer-c",           "BonfyreLayer",            SEC_LAB, "Native C layer inspector and ONNX extraction surface", TIER_LAB},
+    {"sae",               "bonfyre-sae",               "BonfyreSAE",              SEC_LAB, "Feature activation and gating from a trained dictionary", TIER_LAB},
+    {"leapfrog",          "bonfyre-leapfrog",          "BonfyreLeapfrog",         SEC_LAB, "Hamiltonian leapfrog integrator (conservation + reversibility checks)", TIER_LAB},
+    {"violence",          "bonfyre-violence",          "BonfyreViolence",         SEC_LAB, "Real-coupling physics validation (E8 embedding + Hamiltonian coupling)", TIER_LAB},
+    {"net",               "bonfyre-net",               "BonfyreNet",              SEC_LAB, "Run a netlist of organs in net order, with a trace", TIER_LAB},
+    {"flashqla",          "bonfyre-flashqla",          "BonfyreFlashQLA",         SEC_LAB, "Chunked-prefill GDN attention (FlashQLA tiled kernel)", TIER_LAB},
+    {"physics",           "bonfyre-physics",           "BonfyrePhysics",          SEC_LAB, "Hamiltonian Version Control Protocol (HVCP) — trajectory store", TIER_LAB},
+    {"flow",              "bonfyre-flow",              "BonfyreFlow",             SEC_LAB, "Coroutine-native pipeline flow graphs", TIER_LAB},
+    {"runtime",           "bonfyre-runtime",           "BonfyreRuntime",          SEC_LAB, "Replayable pipeline runtime", TIER_LAB},
+    {"discipl",           "bonfyre-discipl",           "BonfyreDiscipl",          SEC_LAB, "Recursive DisCIPL runtime substrate", TIER_LAB},
+    {"orchestrate",       "bonfyre-orchestrate",       "BonfyreOrchestrate",      SEC_LAB, "Machine-only orchestration planner", TIER_LAB},
+    {"control",           "bonfyre-control",           "BonfyreControl",          SEC_LAB, "Control-plane command gateway", TIER_LAB},
+    {"swarm",             "bonfyre-swarm",             "BonfyreSwarm",            SEC_LAB, "Distributed worker swarm", TIER_LAB},
+    {"stitch",            "bonfyre-stitch",            "BonfyreStitch",           SEC_LAB, "DAG materialiser", TIER_LAB},
+    {"admission",         "bonfyre-admission",         "BonfyreAdmission",        SEC_LAB, "Resource grant admission and protected-floor ledger", TIER_LAB},
+    {"attention",         "bonfyre-attention",         "BonfyreAttention",        SEC_LAB, "Watch cooling and named-signal reheat control", TIER_LAB},
+    {"wire",              "bonfyre-wire",              "BonfyreWire",             SEC_LAB, "Consent-based network event layer", TIER_LAB},
+    {"surface",           "bonfyre-surface",           "BonfyreSurface",          SEC_LAB, "Optional client surface registry", TIER_LAB},
+    {"moq",               "bonfyre-moq",               "BonfyreMoQ",              SEC_LAB, "MoQ media-over-QUIC transport", TIER_LAB},
+    {"economy",           "bonfyre-economy",           "BonfyreEconomy",          SEC_LAB, "Economy / credits engine", TIER_LAB},
+    {NULL, NULL, NULL, NULL, NULL, 0}
 };
 
 /* ── Binary resolution ────────────────────────────────────────────── */
@@ -299,8 +339,13 @@ static int find_repo_root_from_cwd(char *buf, size_t sz) {
     char cwd[PATH_MAX];
     char cur[PATH_MAX];
     const char *env = getenv("BONFYRE_REPO_ROOT");
+    const char *root_env = getenv("BONFYRE_ROOT");
     if (env && looks_like_repo_root(env)) {
         snprintf(buf, sz, "%s", env);
+        return 1;
+    }
+    if (root_env && looks_like_repo_root(root_env)) {
+        snprintf(buf, sz, "%s", root_env);
         return 1;
     }
     if (!getcwd(cwd, sizeof(cwd))) return 0;
@@ -368,6 +413,21 @@ static int resolve_binary_path(const char *binary, const char *sibling_dir, char
             }
 
             snprintf(full, sizeof(full), "%s/../%s/build/%s", self_dir, sibling_dir, binary);
+            if (path_exists_exec(full)) {
+                snprintf(resolved, resolved_size, "%s", full);
+                return 1;
+            }
+        }
+    }
+
+    /* The managed runtime: where a release puts an organ and where the MCP
+     * surface runs it from. Without this an organ present only there could
+     * be run through MCP and not from the front door. */
+    {
+        const char *home = getenv("HOME");
+        if (home && home[0]) {
+            char full[PATH_MAX];
+            snprintf(full, sizeof(full), "%s/.bonfyre/bin/%s", home, binary);
             if (path_exists_exec(full)) {
                 snprintf(resolved, resolved_size, "%s", full);
                 return 1;
@@ -492,10 +552,30 @@ static int resolve_repo_binary_path(const char *binary, const char *sibling_dir,
     return path_exists_exec(resolved);
 }
 
+static int resolve_repo_binary_path_from_root(const char *root,
+                                              const char *binary,
+                                              const char *sibling_dir,
+                                              char *resolved,
+                                              size_t resolved_size) {
+    if (!root || !root[0])
+        return resolve_repo_binary_path(binary, sibling_dir, resolved, resolved_size);
+    if (!sibling_dir || !sibling_dir[0] || !looks_like_repo_root(root)) return 0;
+    snprintf(resolved, resolved_size, "%s/cmd/%s/%s", root, sibling_dir, binary);
+    if (path_exists_exec(resolved)) return 1;
+    snprintf(resolved, resolved_size, "%s/cmd/%s/build/%s", root, sibling_dir, binary);
+    return path_exists_exec(resolved);
+}
+
 static int resolve_installed_binary_path(const char *binary, char *resolved, size_t resolved_size) {
     const char *home = getenv("HOME");
     if (home && home[0]) {
         snprintf(resolved, resolved_size, "%s/.local/bin/%s", home, binary);
+        if (path_exists_exec(resolved)) return 1;
+        /* The managed runtime is where a release puts an organ and where the
+         * MCP surface runs it from. An organ that is only there was reported
+         * as not installed, so the front door and the MCP did not offer the
+         * same system. */
+        snprintf(resolved, resolved_size, "%s/.bonfyre/bin/%s", home, binary);
         if (path_exists_exec(resolved)) return 1;
     }
     const char *path_env = getenv("PATH");
@@ -591,13 +671,13 @@ static int probe_command_health(const char *resolved_path) {
     return rc == 0 || rc == 1;
 }
 
-static void collect_command_status(const Route *r, CommandStatusRow *row) {
+static void collect_command_status_at_root(const Route *r, CommandStatusRow *row, const char *root) {
     memset(row, 0, sizeof(*row));
     snprintf(row->command, sizeof(row->command), "%s", r->cmd);
     snprintf(row->cli_name, sizeof(row->cli_name), "%s", r->binary);
     if (resolve_installed_binary_path(r->binary, row->installed_path, sizeof(row->installed_path)))
         compute_sha256_or_empty(row->installed_path, row->installed_sha256);
-    if (resolve_repo_binary_path(r->binary, r->sibling_dir, row->repo_path, sizeof(row->repo_path)))
+    if (resolve_repo_binary_path_from_root(root, r->binary, r->sibling_dir, row->repo_path, sizeof(row->repo_path)))
         compute_sha256_or_empty(row->repo_path, row->repo_sha256);
     row->installed_size = file_size_or_neg1(row->installed_path);
     row->repo_size = file_size_or_neg1(row->repo_path);
@@ -653,6 +733,10 @@ static void collect_command_status(const Route *r, CommandStatusRow *row) {
     else snprintf(row->notes, sizeof(row->notes), "Resolved from PATH");
 }
 
+static void collect_command_status(const Route *r, CommandStatusRow *row) {
+    collect_command_status_at_root(r, row, NULL);
+}
+
 static int sqlite_single_count(const char *db_path, const char *sql, long long *out) {
     sqlite3 *db = NULL;
     sqlite3_stmt *st = NULL;
@@ -705,6 +789,16 @@ static void registry_status_collect(const char *root_arg, RegistryStatus *rs) {
     }
 }
 
+/* A command name is lowercase words joined by '-'. Backups and patched copies
+ * (bonfyre-x.archive, bonfyre-moe.patched2, bonfyre-estate.pre-manifold.2026...)
+ * are files beside the binaries, never commands. */
+static int is_command_name(const char *name) {
+    if (!name || !name[0] || name[0] == '-') return 0;
+    for (const char *p = name; *p; p++)
+        if (!((*p >= 'a' && *p <= 'z') || (*p >= '0' && *p <= '9') || *p == '-')) return 0;
+    return 1;
+}
+
 static int collect_extra_routes(ExtraRoute *items, int max_items, const char *query) {
     char self_dir[PATH_MAX];
     char parent_dir[PATH_MAX];
@@ -712,6 +806,7 @@ static int collect_extra_routes(ExtraRoute *items, int max_items, const char *qu
     struct dirent *ent;
     int count = 0;
 
+    if (!g_list_all) return 0;
     get_self_dir(self_dir, sizeof(self_dir));
     if (!self_dir[0]) return 0;
     snprintf(parent_dir, sizeof(parent_dir), "%s/..", self_dir);
@@ -738,6 +833,7 @@ static int collect_extra_routes(ExtraRoute *items, int max_items, const char *qu
                 if (subent->d_name[0] == '.') continue;
                 if (strncmp(subent->d_name, "bonfyre-", 8) != 0) continue;
                 if (strcmp(subent->d_name, "bonfyre") == 0) continue;
+                if (!is_command_name(subent->d_name + 8)) continue;
                 bin_len = strlen(subent->d_name);
                 if (bin_len >= sizeof(item.binary)) continue;
                 memset(&item, 0, sizeof(item));
@@ -786,24 +882,11 @@ static int contains_ci(const char *haystack, const char *needle) {
     return 0;
 }
 
+/* Delegates to the one implementation. Nineteen copies of this shape existed
+ * with sixteen different opinions about escaping.
+ */
 static void json_escape(FILE *out, const char *s) {
-    fputc('"', out);
-    for (; *s; s++) {
-        unsigned char ch = (unsigned char)*s;
-        switch (ch) {
-            case '"': fputs("\\\"", out); break;
-            case '\\': fputs("\\\\", out); break;
-            case '\b': fputs("\\b", out); break;
-            case '\f': fputs("\\f", out); break;
-            case '\n': fputs("\\n", out); break;
-            case '\r': fputs("\\r", out); break;
-            case '\t': fputs("\\t", out); break;
-            default:
-                if (ch < 0x20) fprintf(out, "\\u%04x", ch);
-                else fputc((int)ch, out);
-        }
-    }
-    fputc('"', out);
+    bf_lex_json_emit(out, s);
 }
 
 static void append_query_token(char *dst, size_t size, const char *token) {
@@ -831,6 +914,10 @@ static ListOptions parse_list_options(int argc, char *argv[]) {
             opts.health = 1;
             continue;
         }
+        if (strcmp(argv[i], "--all") == 0 || strcmp(argv[i], "-a") == 0) {
+            opts.all = 1;
+            continue;
+        }
         if (strcmp(argv[i], "--compact") == 0 || strcmp(argv[i], "-c") == 0) {
             opts.compact = 1;
             continue;
@@ -841,6 +928,7 @@ static ListOptions parse_list_options(int argc, char *argv[]) {
 }
 
 static int route_matches(const Route *r, const char *query) {
+    if (r->tier == TIER_LAB && !g_list_all) return 0;
     return contains_ci(r->cmd, query)
         || contains_ci(r->desc, query)
         || contains_ci(r->section, query)
@@ -966,18 +1054,44 @@ static void cmd_status_registries_human(const char *root) {
 }
 
 static int copy_file_bytes(const char *src, const char *dst) {
+    struct stat src_st, dst_st;
+    char stage[PATH_MAX], src_sha[65] = "", stage_sha[65] = "";
+    int stage_fd = -1, ok = 1;
+    FILE *out = NULL;
+    if (!src || !src[0] || !dst || !dst[0]) return 1;
+    if (lstat(src, &src_st) != 0 || !S_ISREG(src_st.st_mode) || access(src, X_OK) != 0) return 1;
+    if (lstat(dst, &dst_st) == 0 && (!S_ISREG(dst_st.st_mode) || S_ISLNK(dst_st.st_mode))) return 1;
+    if (!compute_sha256_or_empty(src, src_sha) || !src_sha[0]) return 1;
+    if (snprintf(stage, sizeof(stage), "%s.stage.%ld", dst, (long)getpid()) >= (int)sizeof(stage)) return 1;
+
     FILE *in = fopen(src, "rb");
     if (!in) return 1;
-    FILE *out = fopen(dst, "wb");
-    if (!out) { fclose(in); return 1; }
+    stage_fd = open(stage, O_WRONLY | O_CREAT | O_EXCL, 0700);
+    if (stage_fd < 0) { fclose(in); return 1; }
+    out = fdopen(stage_fd, "wb");
+    if (!out) { close(stage_fd); fclose(in); unlink(stage); return 1; }
+    stage_fd = -1;
+
     char buf[8192];
     size_t n;
-    int ok = 0;
     while ((n = fread(buf, 1, sizeof(buf), in)) > 0) {
-        if (fwrite(buf, 1, n, out) != n) { ok = 1; break; }
+        if (fwrite(buf, 1, n, out) != n) goto cleanup;
     }
+    if (ferror(in) || fflush(out) != 0 || fchmod(fileno(out), 0755) != 0 || fsync(fileno(out)) != 0) goto cleanup;
     fclose(in);
+    in = NULL;
     fclose(out);
+    out = NULL;
+
+    if (!compute_sha256_or_empty(stage, stage_sha) || strcmp(src_sha, stage_sha) != 0) goto cleanup;
+    if (rename(stage, dst) != 0) goto cleanup;
+    ok = 0;
+
+cleanup:
+    if (in) fclose(in);
+    if (out) fclose(out);
+    if (stage_fd >= 0) close(stage_fd);
+    if (ok) unlink(stage);
     return ok;
 }
 
@@ -1143,23 +1257,20 @@ static int cmd_doctor_sync_subcommands(int dry_run) {
     for (const Route *r = routes; r->cmd; r++) {
         char repo_path[PATH_MAX], installed_path[PATH_MAX];
         char repo_sha[65] = "", installed_sha[65] = "";
-        long long repo_mtime, installed_mtime;
         if (!resolve_repo_binary_path(r->binary, r->sibling_dir, repo_path, sizeof(repo_path))) continue;
         resolve_install_target_path_for_route(r, installed_path, sizeof(installed_path));
         if (!installed_path[0]) continue;
         compute_sha256_or_empty(repo_path, repo_sha);
         compute_sha256_or_empty(installed_path, installed_sha);
-        repo_mtime = file_mtime_or_neg1(repo_path);
-        installed_mtime = file_mtime_or_neg1(installed_path);
         if (installed_sha[0] && strcmp(repo_sha, installed_sha) == 0) continue;
         printf("%-18s %s\n", r->cmd, installed_sha[0] ? "update" : "install");
         printf("  repo      %s  %s\n", repo_path, repo_sha);
         printf("  install   %s  %s\n", installed_path, installed_sha[0] ? installed_sha : "(missing)");
-        if (!dry_run && repo_mtime >= installed_mtime) {
+        if (!dry_run) {
             if (copy_file_bytes(repo_path, installed_path) == 0) {
-                printf("  applied   copied repo binary into install location\n");
+                printf("  applied   atomically promoted digest-verified repo binary\n");
             } else {
-                printf("  applied   failed to copy\n");
+                printf("  applied   promotion refused or failed\n");
             }
         }
     }
@@ -1173,7 +1284,7 @@ static int cmd_status_snapshot(const char *argv0, const char *root, const char *
     if (bf_ensure_dir(out_dir) != 0) return 1;
 
     snprintf(out, sizeof(out), "%s/commands.json", out_dir);
-    char *cmds1[] = { self_path, "list", "--json", NULL };
+    char *cmds1[] = { self_path, "list", "--json", "--all", NULL };
     run_command_to_file_capture(cmds1, out);
 
     snprintf(out, sizeof(out), "%s/layers.json", out_dir);
@@ -1409,7 +1520,7 @@ static int build_self_plan_items(const char *root, SelfPlanItem *items, int max_
     registry_status_collect(root, &rs);
     for (const Route *r = routes; r->cmd && count < max_items; r++) {
         CommandStatusRow row;
-        collect_command_status(r, &row);
+        collect_command_status_at_root(r, &row, root);
         if (strcmp(row.status, "stale") == 0 || strcmp(row.status, "shadowed") == 0 || strcmp(row.status, "missing") == 0) {
             char seed[512];
             snprintf(seed, sizeof(seed), "command:%s:%s", row.command, row.status);
@@ -1431,24 +1542,10 @@ static int build_self_plan_items(const char *root, SelfPlanItem *items, int max_
         snprintf(items[count].detail, sizeof(items[count].detail), "catalog layer=%lld, layeros artifacts=%lld", rs.catalog_layer, rs.layer_artifacts);
         count++;
     }
-    if (count < max_items) {
-        bf_sha256_hex((const uint8_t *)"precision:scan", strlen("precision:scan"), items[count].id);
-        snprintf(items[count].kind, sizeof(items[count].kind), "precision_route");
-        snprintf(items[count].status, sizeof(items[count].status), "proposed");
-        items[count].score = 0.70;
-        snprintf(items[count].title, sizeof(items[count].title), "Scan precision/compression candidates");
-        snprintf(items[count].detail, sizeof(items[count].detail), "quant/fpq/fpqx/kvcache/compress metadata routes");
-        count++;
-    }
-    if (count < max_items) {
-        bf_sha256_hex((const uint8_t *)"bridge:gaps", strlen("bridge:gaps"), items[count].id);
-        snprintf(items[count].kind, sizeof(items[count].kind), "bridge_gap");
-        snprintf(items[count].status, sizeof(items[count].status), "proposed");
-        items[count].score = 0.68;
-        snprintf(items[count].title, sizeof(items[count].title), "Audit bridge and contract gaps");
-        snprintf(items[count].detail, sizeof(items[count].detail), "use DiscIPL contracts, compat, stitch, and graph neighbors");
-        count++;
-    }
+    /* Two further proposals used to be appended here on every run, whatever
+     * the estate looked like: a precision scan and a bridge audit, each with a
+     * score of its own. Nothing was looked at to make them, so they are gone.
+     * A plan is listed when a comparison above found something. */
     return count;
 }
 
@@ -1499,7 +1596,7 @@ static int cmd_self_ontology(const char *subject) {
         printf("{\"kind\":\"registry_reconcile\",\"trigger\":\"catalog layer count < Layer OS artifact count\",\"apply_safe\":\"record additive registry delta and reconciliation artifact\",\"reversible\":true},");
         printf("{\"kind\":\"precision_route\",\"trigger\":\"precision/compression candidate scan\",\"apply_safe\":\"record precision plan and validation fragment\",\"reversible\":true},");
         printf("{\"kind\":\"bridge_gap\",\"trigger\":\"known complementary families or DiscIPL contracts missing concrete bridge coverage\",\"apply_safe\":\"record bridge-gap repair artifact\",\"reversible\":true}");
-        printf("],\"safety_levels\":[\"observe\",\"plan\",\"dry-run\",\"apply-safe\",\"apply-deep\",\"rollback\"]}\n");
+        printf("],\"safety_levels\":[\"observe\",\"plan\",\"dry-run\",\"apply-safe\"]}\n");
         return 0;
     }
     fprintf(stderr, "bonfyre self ontology: unknown subject '%s'\n", subject);
@@ -1719,12 +1816,12 @@ static int cmd_self_query(const char *question) {
     sqlite3_finalize(st); sqlite3_close(db); return 0;
 }
 
-static int find_command_plan_match(const char *plan_id, const Route **out_route, CommandStatusRow *out_row) {
+static int find_command_plan_match(const char *root, const char *plan_id, const Route **out_route, CommandStatusRow *out_row) {
     for (const Route *r = routes; r->cmd; r++) {
         CommandStatusRow row;
         char seed[512];
         char hash[65];
-        collect_command_status(r, &row);
+        collect_command_status_at_root(r, &row, root);
         if (!(strcmp(row.status, "stale") == 0 || strcmp(row.status, "shadowed") == 0 || strcmp(row.status, "missing") == 0))
             continue;
         snprintf(seed, sizeof(seed), "command:%s:%s", row.command, row.status);
@@ -1922,7 +2019,7 @@ static int cmd_self_optimize(const char *root, int apply_safe) {
         memset(&row, 0, sizeof(row));
         if (i) printf(",");
         if (apply_safe) {
-            if (find_command_plan_match(items[i].id, &route, &row)) {
+            if (find_command_plan_match(root, items[i].id, &route, &row)) {
                 applied_ok = (self_apply_command_repair(route, &row, payload_json, sizeof(payload_json)) == 0);
             } else {
                 applied_ok = (self_apply_metadata_plan(&items[i], payload_json, sizeof(payload_json)) == 0);
@@ -1933,7 +2030,7 @@ static int cmd_self_optimize(const char *root, int apply_safe) {
         printf("{\"plan_id\":"); json_escape(stdout, items[i].id);
         printf(",\"kind\":"); json_escape(stdout, items[i].kind);
         printf(",\"status\":"); json_escape(stdout, apply_safe ? (applied_ok ? "applied" : "failed") : items[i].status);
-        printf(",\"score\":%.2f", items[i].score);
+        printf(",\"score\":%.2f,\"score_basis\":\"fixed by drift status for ordering, not measured\"", items[i].score);
         printf(",\"title\":"); json_escape(stdout, items[i].title);
         printf(",\"detail\":"); json_escape(stdout, items[i].detail);
         if (apply_safe) {
@@ -1974,7 +2071,7 @@ static int cmd_self_repair(const char *root, const char *plan_id, int apply_safe
     printf(",\"operations\":[\"copy_binary\",\"add_index_row\",\"add_graph_edge\",\"write_fragment\",\"write_plan\"]");
     if (apply_safe) {
         memset(&row, 0, sizeof(row));
-        if (find_command_plan_match(match->id, &route, &row)) {
+        if (find_command_plan_match(root, match->id, &route, &row)) {
             applied_ok = (self_apply_command_repair(route, &row, payload_json, sizeof(payload_json)) == 0);
         } else {
             applied_ok = (self_apply_metadata_plan(match, payload_json, sizeof(payload_json)) == 0);
@@ -1995,16 +2092,7 @@ static int cmd_self_publish(const char *snapshot_id) {
 }
 
 static void cmd_list_json(const char *query, const ListOptions *opts) {
-    static const char *sections[] = {
-        SEC_PIPELINE,
-        SEC_WORKFLOWS,
-        SEC_FAMILIES,
-        SEC_AI,
-        SEC_RECIPES,
-        SEC_INFRA,
-        SEC_VALUE,
-        NULL
-    };
+    const char *const *sections = goal_sections;
     int total = 0;
     int available = 0;
     int first_section = 1;
@@ -2060,6 +2148,7 @@ static void cmd_list_json(const char *query, const ListOptions *opts) {
             json_escape(stdout, r->sibling_dir);
             fputs(", \"description\": ", stdout);
             json_escape(stdout, r->desc);
+            fprintf(stdout, ", \"tier\": \"%s\"", r->tier == TIER_START ? "start" : r->tier == TIER_LAB ? "lab" : "everyday");
             fprintf(stdout, ", \"ready\": %s, \"path\": ", ready ? "true" : "false");
             if (ready) json_escape(stdout, resolved);
             else fputs("null", stdout);
@@ -2104,16 +2193,7 @@ static void cmd_list_json(const char *query, const ListOptions *opts) {
 }
 
 static void cmd_list_compact(const char *query, const ListOptions *opts) {
-    static const char *sections[] = {
-        SEC_PIPELINE,
-        SEC_WORKFLOWS,
-        SEC_FAMILIES,
-        SEC_AI,
-        SEC_RECIPES,
-        SEC_INFRA,
-        SEC_VALUE,
-        NULL
-    };
+    const char *const *sections = goal_sections;
     int total = 0;
     int available = 0;
     ExtraRoute extras[128];
@@ -2281,16 +2361,7 @@ static int try_exec(const char *binary, const char *sibling_dir, char **argv) {
 
 /* ── Built-in: list ───────────────────────────────────────────────── */
 static void cmd_list(const char *query, const ListOptions *opts) {
-    static const char *sections[] = {
-        SEC_PIPELINE,
-        SEC_WORKFLOWS,
-        SEC_FAMILIES,
-        SEC_AI,
-        SEC_RECIPES,
-        SEC_INFRA,
-        SEC_VALUE,
-        NULL
-    };
+    const char *const *sections = goal_sections;
     int is_tty = isatty(STDOUT_FILENO);
     const char *bold = is_tty ? "\033[1m" : "";
     const char *dim = is_tty ? "\033[2m" : "";
@@ -2320,8 +2391,7 @@ static void cmd_list(const char *query, const ListOptions *opts) {
            total,
            green, available, reset,
            yellow, total - available, reset);
-    printf("%snext%s      bonfyre doctor   bonfyre workflow list   bonfyre run history\n\n",
-           dim, reset);
+    printf("%snew here%s  bonfyre help   (six ways to start)\n\n", dim, reset);
 
     for (int i = 0; sections[i]; i++) {
         RouteStats stats = route_stats(sections[i], query);
@@ -2367,7 +2437,7 @@ static void cmd_list(const char *query, const ListOptions *opts) {
         printf("\n");
     }
 
-    printf("%sFront-door Built-ins%s  %s4/4 ready%s\n",
+    printf("%sBuilt into bonfyre%s  %s3/3 ready%s\n",
            bold, reset,
            dim, reset);
     for (const BuiltinSurface *b = builtin_surfaces; b->cmd; b++) {
@@ -2379,58 +2449,115 @@ static void cmd_list(const char *query, const ListOptions *opts) {
     printf("\n");
 
     if (total == 0) {
-        printf("No commands matched that filter. Try: bonfyre list model\n\n");
+        printf("Nothing matched '%s'. Try a plain word for what you want to do: bonfyre list invoice\n", query ? query : "");
+        if (!g_list_all) printf("Lab kernels and local builds are not searched; add --all to include them.\n");
+        printf("\n");
     }
 
-    printf("Run 'bonfyre <command> --help' for command help, or 'bonfyre list <term>' to filter.\n");
-    printf("Built-ins like 'bonfyre self ...' and 'bonfyre precision ...' live inside the bonfyre front door.\n");
+    printf("bonfyre <command> --help     how one command works\n");
+    printf("bonfyre list <word>          only the commands about <word>\n");
+    if (!g_list_all) printf("bonfyre list --all           also lab kernels, internals and local builds\n");
 }
 
 /* ── Built-in: help ───────────────────────────────────────────────── */
 static void cmd_help(void) {
-    fprintf(stderr,
-        "bonfyre -- adaptive artifact pipeline toolkit\n\n"
-        "Usage: bonfyre <command> [args...]\n\n"
-        "Built-ins:\n"
-        "  list [term] [--json] [--compact]  Show command surface, filtered search, JSON, or compact mode\n"
-        "  completion [shell]    Emit shell completion for zsh, bash, or fish\n"
-        "  version       Print version\n"
-        "  help          Show this help\n\n"
-        "Start here:\n"
-        "  bonfyre doctor                 verify the installed surface\n"
-        "  bonfyre list model            filter command surface by topic\n"
-        "  bonfyre list --compact        compact one-line surface for fast scanning\n"
-        "  bonfyre list --json           inspect the command surface programmatically\n"
-        "  bonfyre completion zsh        generate shell completion\n"
-        "  bonfyre workflow list         inspect workflow profiles\n"
-        "  bonfyre family list           inspect conceptual family taxonomy\n"
-        "  bonfyre model list            inspect local model registry\n"
-        "  bonfyre recipe list           inspect recipe registry\n"
-        "  bonfyre run history           inspect indexed execution history\n"
-        "  bonfyre layer registry        inspect registered layer artifacts\n\n"
-        "System surfaces:\n"
-        "  Pipeline:  ingest -> mediaprep -> transcribe -> clean -> paragraph\n"
-        "             -> brief -> proof -> offer -> narrate -> pack -> distribute\n"
-        "  Workflows: workflow list / workflow show A3\n"
-        "  Families:  family list / family show T_CASEOPS / family where T_SHARED_QK\n"
-        "  Recipes:   recipe list / recipe show <name> / run <recipe-name> / run history / run show <id>\n"
-        "  Capabilities: capabilities help / capabilities match <description>\n"
-        "                capabilities ontology [--filter <term>]\n"
-        "  Models:    model list / model family <family> / model route <stats.json>\n"
-        "  AI:        embed . vec . segment . sli . quant . fpq . fpqx . layer\n"
-        "  Self:      self snapshot / self optimize --dry-run / self ontology aliases\n"
-        "  Precision: precision scan / precision route <artifact_id> --goal tiny / precision ontology\n"
-        "  Infra:     hash . index . compress . graph . queue . sync . wire . tel\n"
-        "  Value:     gate . meter . ledger . economy . compete\n\n"
-        "Run 'bonfyre list' for the full command surface, including discovered local extras.\n"
-    );
+    int is_tty = isatty(STDOUT_FILENO);
+    const char *bold = is_tty ? "\033[1m" : "";
+    const char *dim = is_tty ? "\033[2m" : "";
+    const char *reset = is_tty ? "\033[0m" : "";
+    printf("%sbonfyre%s  websites, recordings, search, money and your own models, on this machine\n\n", bold, reset);
+    printf("%sStart here%s\n", bold, reset);
+    printf("  bonfyre site new my-shop                    a website, running and open in your browser\n");
+    printf("  bonfyre transcript-family talk.m4a talk/    a recording turned into clean, readable text\n");
+    printf("  bonfyre site search \"opening hours\"         find anything on your sites, by meaning and by words\n");
+    printf("  bonfyre reason ask --prompt \"...\"           ask the model on this machine; every answer kept\n");
+    printf("  bonfyre model local                         which of your models can run right now\n");
+    printf("  bonfyre capabilities search invoice         which command does what you describe\n");
+    printf("  bonfyre doctor                              check what is installed and working\n\n");
+    printf("%sWhat do you want to do?%s\n", bold, reset);
+    for (int i = 0; goal_sections[i]; i++) {
+        int column = 0;
+        if (strcmp(goal_sections[i], SEC_LAB) == 0) continue;
+        printf("  %-28s %s", goal_sections[i], dim);
+        for (const Route *r = routes; r->cmd; r++) {
+            if (r->tier == TIER_LAB || strcmp(r->section, goal_sections[i]) != 0) continue;
+            int width = (int)strlen(r->cmd) + 2;
+            if (column && column + width > 60) { printf("\n  %-28s ", ""); column = 0; }
+            printf("%s  ", r->cmd);
+            column += width;
+        }
+        printf("%s\n", reset);
+    }
+    printf("\n");
+    printf("bonfyre <command> --help     how one command works\n");
+    printf("bonfyre list                 every everyday command, one line each\n");
+    printf("bonfyre list <word>          only the commands about <word>\n");
+    printf("bonfyre list --all           also lab kernels, internals and local builds\n");
+    printf("bonfyre status | version | completion zsh|bash|fish\n");
+}
+
+static int edit_distance(const char *a, const char *b) {
+    size_t n = strlen(a), m = strlen(b);
+    int row[64];
+    if (n > 62 || m > 62) return 99;
+    for (size_t j = 0; j <= m; j++) row[j] = (int)j;
+    for (size_t i = 1; i <= n; i++) {
+        int diag = row[0];
+        row[0] = (int)i;
+        for (size_t j = 1; j <= m; j++) {
+            int up = row[j], best = diag + (a[i - 1] != b[j - 1]);
+            if (up + 1 < best) best = up + 1;
+            if (row[j - 1] + 1 < best) best = row[j - 1] + 1;
+            diag = up;
+            row[j] = best;
+        }
+    }
+    return row[m];
+}
+
+/* Closest commands to a mistyped name: a small edit away, a shared prefix, or one inside the other. */
+static void suggest_commands(const char *cmd) {
+    static const char *const builtins[] = { "help", "list", "status", "version", "completion", "self", "precision", NULL };
+    const Route *printed[4] = {0};
+    int shown = 0;
+    size_t len = strlen(cmd);
+    for (int i = 0; builtins[i]; i++)
+        if (edit_distance(cmd, builtins[i]) <= 2 && shown < 4)
+            fprintf(stderr, "%s %s\n", shown++ ? "               " : "  did you mean:", builtins[i]);
+    /* Closest spelling first, then shared prefixes and names inside names. */
+    for (int pass = 0; pass < 2; pass++) {
+        for (const Route *r = routes; r->cmd && shown < 4; r++) {
+            size_t k = 0;
+            int seen = 0, near = edit_distance(cmd, r->cmd) <= 2;
+            for (int i = 0; i < shown; i++) if (printed[i] == r) seen = 1;
+            while (cmd[k] && r->cmd[k] && cmd[k] == r->cmd[k]) k++;
+            if (seen || r->tier == TIER_LAB) continue;
+            if (pass == 0 ? !near : !((len >= 3 && k >= 3) || (len >= 3 && contains_ci(r->cmd, cmd))
+                                      || (strlen(r->cmd) >= 3 && contains_ci(cmd, r->cmd)))) continue;
+            fprintf(stderr, "%s %-17s %s\n", shown ? "               " : "  did you mean:", r->cmd, r->desc);
+            printed[shown++] = r;
+        }
+    }
+    /* Nothing spelled like it: maybe it names what the person wants to do. */
+    for (const Route *r = routes; r->cmd && shown < 4 && len >= 3; r++) {
+        int seen = 0;
+        for (int i = 0; i < shown; i++) if (printed[i] == r) seen = 1;
+        if (seen || r->tier == TIER_LAB || !contains_ci(r->desc, cmd)) continue;
+        fprintf(stderr, "%s %-17s %s\n", shown ? "               " : "  try:         ", r->cmd, r->desc);
+        printed[shown++] = r;
+    }
 }
 
 /* ── main ─────────────────────────────────────────────────────────── */
 int main(int argc, char *argv[]) {
     ListOptions list_opts;
-    if (argc < 2) { cmd_list(NULL, NULL); return 0; }
+    if (argc < 2) { cmd_help(); return 0; }
     const char *cmd = argv[1];
+
+    if (strcmp(cmd, "shell") == 0 || cmd[0] == '@') {
+        fprintf(stderr, "bonfyre: semantic shell was retired with the Python control plane; use bonfyre operator for source-bound reads\n");
+        return 127;
+    }
 
     if (strcmp(cmd, "help") == 0 || strcmp(cmd, "--help") == 0 || strcmp(cmd, "-h") == 0) {
         cmd_help();
@@ -2442,6 +2569,7 @@ int main(int argc, char *argv[]) {
     }
     if (strcmp(cmd, "list") == 0) {
         list_opts = parse_list_options(argc, argv);
+        g_list_all = list_opts.all;
         if (list_opts.json) cmd_list_json(list_opts.query[0] ? list_opts.query : NULL, &list_opts);
         else if (list_opts.compact) cmd_list_compact(list_opts.query[0] ? list_opts.query : NULL, &list_opts);
         else cmd_list(list_opts.query[0] ? list_opts.query : NULL, &list_opts);
@@ -2453,23 +2581,21 @@ int main(int argc, char *argv[]) {
     if (strcmp(cmd, "self") == 0) {
         const char *sub = argc >= 3 ? argv[2] : NULL;
         const char *root = NULL, *out_dir = NULL, *plan_id = NULL, *question = NULL, *object = NULL, *subject = NULL;
-        int dry_run = 0, apply = 0, apply_safe = 0, apply_deep = 0;
+        int dry_run = 0, apply = 0, apply_safe = 0;
         for (int i = 3; i < argc; i++) {
             if (strcmp(argv[i], "--root") == 0 && i + 1 < argc) root = argv[++i];
             else if (strcmp(argv[i], "--out") == 0 && i + 1 < argc) out_dir = argv[++i];
             else if (strcmp(argv[i], "--plan") == 0 && i + 1 < argc) plan_id = argv[++i];
             else if (strcmp(argv[i], "--dry-run") == 0) dry_run = 1;
             else if (strcmp(argv[i], "--apply-safe") == 0) apply_safe = 1;
-            else if (strcmp(argv[i], "--apply-deep") == 0) apply_deep = 1;
             else if (strcmp(argv[i], "--apply") == 0) apply = 1;
             else if (!question && strcmp(argv[2], "query") == 0) question = argv[i];
             else if (!object && strcmp(argv[2], "inspect") == 0) object = argv[i];
             else if (!subject && strcmp(argv[2], "ontology") == 0) subject = argv[i];
         }
-        if (!sub) return 1;
-        if (apply_deep) {
-            fprintf(stderr, "bonfyre self: --apply-deep is not implemented yet\n");
-            return 1;
+        if (!sub) {
+            fprintf(stderr, "usage: bonfyre self snapshot|inspect [OBJECT]|query [QUESTION]|optimize [--dry-run|--apply-safe]|repair [--plan ID]|ontology [SUBJECT]|publish [ID]\n");
+            return 2;
         }
         if (strcmp(sub, "ontology") == 0) return cmd_self_ontology(subject ? subject : "all");
         if (strcmp(sub, "snapshot") == 0) return cmd_self_snapshot(argv[0], root, out_dir ? out_dir : "/tmp/bonfyre_self");
@@ -2490,7 +2616,10 @@ int main(int argc, char *argv[]) {
             else if (strcmp(argv[i], "--dry-run") == 0) dry_run = 1;
             else if (!artifact_id && argv[i][0] != '-') artifact_id = argv[i];
         }
-        if (!sub) return 1;
+        if (!sub) {
+            fprintf(stderr, "usage: bonfyre precision scan [--json]|route ARTIFACT [--goal tiny|balanced]|validate ARTIFACT|apply ARTIFACT [--dry-run]|ontology\n");
+            return 2;
+        }
         if (strcmp(sub, "ontology") == 0) return cmd_precision_ontology();
         if (strcmp(sub, "scan") == 0 || strcmp(sub, "plan") == 0) return cmd_precision_scan(root, json);
         if (strcmp(sub, "route") == 0) return cmd_precision_route(root, artifact_id ? artifact_id : "", goal ? goal : "balanced");
@@ -2511,7 +2640,12 @@ int main(int argc, char *argv[]) {
         const char *out_dir = NULL;
         int json = 0;
         int dry_run = 0;
-        for (int i = 3; i < argc; i++) {
+        /* "bonfyre status --json" has an option where a subcommand would be;
+         * it fell through to the route table and was told status does not
+         * exist. An option there means no subcommand. */
+        int first_opt = 3;
+        if (sub && sub[0] == '-') { sub = NULL; first_opt = 2; }
+        for (int i = first_opt; i < argc; i++) {
             if (strcmp(argv[i], "--root") == 0 && i + 1 < argc) root = argv[++i];
             else if (strcmp(argv[i], "--out") == 0 && i + 1 < argc) out_dir = argv[++i];
             else if (strcmp(argv[i], "--json") == 0) json = 1;
@@ -2548,6 +2682,36 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    /* PackGraph lives in CMS; the existing delivery-package verb remains "pack". */
+    if (strcmp(cmd, "pack-graph") == 0) {
+        const char *op = argc > 2 ? argv[2] : NULL;
+        if (!op || !strcmp(op, "help") || !strcmp(op, "--help") || !strcmp(op, "-h")) {
+            puts("usage: bonfyre pack-graph compile|verify|plan|current|install|activate|deactivate|remove [options]");
+            puts("  compile --pack ID [--version VERSION] [--out-dir ABSOLUTE_STORE] --db CMS_DB");
+            puts("  verify  --pack ID --verify-image BFP_PATH [--cut-digest SHA256] --db CMS_DB");
+            puts("  plan|current|install|activate|deactivate|remove --pack ID --subject ID --actor ID --db CMS_DB");
+            puts("  This command never grants rights: install and activate require reviewed CMS lifecycle authority.");
+            return 0;
+        }
+        int image = !strcmp(op, "compile") || !strcmp(op, "verify");
+        int lifecycle = !strcmp(op, "plan") || !strcmp(op, "current") || !strcmp(op, "install") ||
+            !strcmp(op, "activate") || !strcmp(op, "deactivate") || !strcmp(op, "remove");
+        if (!image && !lifecycle) {
+            fprintf(stderr, "bonfyre pack-graph: unknown operation %s; use --help\n", op);
+            return 2;
+        }
+        char **args = calloc((size_t)argc + 4, sizeof(char *));
+        if (!args) { perror("calloc"); return 1; }
+        int j = 0;
+        args[j++] = "bonfyre-cms";
+        args[j++] = image ? "pack-image" : "pack-lifecycle";
+        if (lifecycle) { args[j++] = "--operation"; args[j++] = (char *)op; }
+        for (int i = 3; i < argc; i++) args[j++] = argv[i];
+        args[j] = NULL;
+        try_exec("bonfyre-cms", "BonfyreCMS", args);
+        fprintf(stderr, "bonfyre pack-graph: native CMS is not installed\n");
+        free(args); return 127;
+    }
     /* Route lookup */
     for (const Route *r = routes; r->cmd; r++) {
         if (strcmp(cmd, r->cmd) != 0) continue;
@@ -2580,7 +2744,7 @@ int main(int argc, char *argv[]) {
         char binary[160];
         char resolved[PATH_MAX];
         snprintf(binary, sizeof(binary), "bonfyre-%s", cmd);
-        if (resolve_any_binary_path(binary, resolved, sizeof(resolved))) {
+        if (is_command_name(cmd) && resolve_any_binary_path(binary, resolved, sizeof(resolved))) {
             char **argv2 = malloc(sizeof(char *) * (size_t)(argc + 1));
             if (!argv2) { perror("malloc"); return 1; }
             argv2[0] = (char *)binary;
@@ -2591,21 +2755,28 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    /* Last-chance: delegate unknown commands to runtime for dynamic dispatch */
+    /* The runtime's own verbs that are not front-door routes. */
     {
-        char **fb = malloc(sizeof(char *) * (size_t)(argc + 2));
-        if (fb) {
+        static const char *const runtime_verbs[] = {
+            "run-ledger", "loop", "parallel", "branch", "run-recipe", "service", "conference", "autowire", NULL
+        };
+        for (int v = 0; runtime_verbs[v]; v++) {
+            if (strcmp(cmd, runtime_verbs[v]) != 0) continue;
+            char **fb = malloc(sizeof(char *) * (size_t)(argc + 2));
+            if (!fb) { perror("malloc"); return 1; }
             int j = 0;
             fb[j++] = "bonfyre-runtime";
-            fb[j++] = argv[1];
-            for (int i = 2; i < argc; i++) fb[j++] = argv[i];
+            for (int i = 1; i < argc; i++) fb[j++] = argv[i];
             fb[j] = NULL;
             try_exec("bonfyre-runtime", "BonfyreRuntime", fb);
             free(fb);
+            fprintf(stderr, "bonfyre: '%s' needs bonfyre-runtime, which is not installed\n", cmd);
+            return 127;
         }
     }
 
-    fprintf(stderr, "bonfyre: unknown command '%s'\n", cmd);
-    fprintf(stderr, "Run 'bonfyre list' to see all commands.\n");
+    fprintf(stderr, "bonfyre: there is no command '%s'\n", cmd);
+    suggest_commands(cmd);
+    fprintf(stderr, "Run 'bonfyre help' to start, or 'bonfyre list <word>' to search.\n");
     return 1;
 }

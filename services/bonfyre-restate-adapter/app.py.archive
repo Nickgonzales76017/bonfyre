@@ -1,0 +1,251 @@
+"""
+Real Restate <-> Bonfyre WorkGraph bridge.
+
+Restate owns durable progression (retries, the journal, and resumption
+across process restarts) for a handler that drives TWO real, separately
+claimed workgraph nodes with a durable sleep between them -- proving genuine
+mid-mission crash recovery at the Restate layer, not just "retry the whole
+call." Each node's actual work is a real dispatch of the already-tested
+BonfyreHash binary against a real fixture file; nothing here is a stub.
+
+ctx.run() is Restate's durable-step primitive: the first successful result
+is journaled, and on any retry/resume the journaled result is replayed
+instead of re-executing the side effect. That is what makes "kill the
+process between node A and node B, restart, resume at node B" a genuine
+proof rather than an accidental re-run of node A.
+"""
+import json
+import os
+import re
+import subprocess
+from datetime import timedelta
+from pathlib import Path
+
+import restate
+
+ROOT = os.environ.get("BONFYRE_ROOT", str(Path(__file__).resolve().parents[2]))
+FABRIC = os.path.join(ROOT, "programs/bonfyre/bonfyre")
+HASH_BIN = os.path.join(ROOT, "cmd/BonfyreHash/bonfyre-hash")
+
+svc = restate.Service("BonfyreWorkGraph")
+
+
+def _fabric(*args):
+    result = subprocess.run(
+        [FABRIC, *args], capture_output=True, text=True, check=False
+    )
+    if result.returncode != 0:
+        raise restate.TerminalError(
+            f"fabric {' '.join(args)} failed: {result.stderr.strip()}"
+        )
+    return result.stdout
+
+
+def _parse_kv(output):
+    values = {}
+    for line in output.splitlines():
+        if "=" in line:
+            key, _, value = line.partition("=")
+            values[key] = value
+    return values
+
+
+def _identity(value: object, field: str) -> str:
+    if not isinstance(value, str) or not re.fullmatch(r"[A-Za-z0-9._-]{1,120}", value):
+        raise restate.TerminalError(f"{field} must be a stable Bonfyre identity")
+    return value
+
+
+def _lifecycle(*args) -> dict:
+    values = _parse_kv(_fabric(*args))
+    if values.get("result") != "ok":
+        raise restate.TerminalError(
+            f"lifecycle command {' '.join(args[:2])} failed: {values.get('error_message', '')}"
+        )
+    return values
+
+
+def bind_lifecycle(mission_id: str, worker_id: str, worker_run_id: str,
+                   protocol_instance_id: str) -> dict:
+    """Create or read back one stable WorkerRun and ProtocolMachine identity.
+
+    Every operation is replay-safe. Provider invocations and process IDs are
+    intentionally absent from the identity tuple.
+    """
+    registered = _lifecycle("lifecycle", "register-restate")
+    run = _lifecycle(
+        "worker-run", "start", worker_run_id, worker_id, mission_id,
+        protocol_instance_id,
+    )
+    protocol = _lifecycle(
+        "protocol-machine", "start", protocol_instance_id,
+        "restate-workgraph-v1", worker_run_id,
+    )
+    invoked = _lifecycle(
+        "protocol-machine", "step", protocol_instance_id, "invoke",
+        "restate-invoke-v1",
+    )
+    return {
+        "protocol_definition": registered["identity"],
+        "worker_run_id": run["identity"],
+        "protocol_instance_id": protocol["identity"],
+        "protocol_state": invoked["state"],
+    }
+
+
+def dispatch_node(mission_id: str, node_id: str, worker_run_id: str,
+                  fixture_text: str) -> dict:
+    """Real work: claims a real workgraph node, runs the real BonfyreHash
+    binary against a real fixture, completes the node with the real
+    output digest as its output-uri. Not a no-op stub."""
+    worker_id = f"worker-run.{worker_run_id}"
+    claim_out = _fabric(
+        "work", "claim", mission_id, node_id, worker_id, "--lease-ms", "60000"
+    )
+    claim = _parse_kv(claim_out)
+    if claim.get("result") != "ok":
+        raise restate.TerminalError(f"claim failed for {node_id}: {claim_out}")
+    claim_token = claim["claim_token"]
+
+    fixture_path = f"/tmp/bonfyre-restate-{mission_id}-{node_id}.txt"
+    with open(fixture_path, "w", encoding="utf-8") as handle:
+        handle.write(fixture_text)
+    hash_result = subprocess.run(
+        [HASH_BIN, "file", fixture_path], capture_output=True, text=True, check=True
+    )
+    digest = hash_result.stdout.split()[0]
+    output_uri = f"bonfyre://artifact/{digest}"
+
+    complete_out = _fabric(
+        "work", "complete", mission_id, node_id, worker_id, claim_token,
+        "--output-uri", output_uri,
+    )
+    complete = _parse_kv(complete_out)
+    return {
+        "node_id": node_id,
+        "digest": digest,
+        "output_uri": output_uri,
+        "receipt_id": complete.get("receipt_id", ""),
+        "event_id": complete.get("event_id", ""),
+    }
+
+
+def enter_durable_wait(worker_run_id: str, protocol_instance_id: str,
+                       node_receipt: str) -> dict:
+    protocol = _lifecycle(
+        "protocol-machine", "step", protocol_instance_id, "node-a-complete",
+        "node-a-complete-v1", "--receipt", node_receipt,
+    )
+    run = _lifecycle(
+        "worker-run", "step", worker_run_id, "wait", "node-a-wait-v1",
+        "--receipt", node_receipt,
+    )
+    return {"worker_run_state": run["state"], "protocol_state": protocol["state"]}
+
+
+def recover_for_node_b(mission_id: str, worker_run_id: str,
+                       protocol_instance_id: str) -> dict:
+    """Run EffectKernel recovery before allowing Restate to resume WorkGraph."""
+    recovery = _parse_kv(_fabric("work", "reconcile-effects", mission_id))
+    recovered = recovery.get("reconciled", "0")
+    recovery_ref = f"effect-recovery:{recovered}"
+    protocol = _lifecycle(
+        "protocol-machine", "step", protocol_instance_id, "resume",
+        "effect-recovery-v1", "--receipt", recovery_ref,
+    )
+    run = _lifecycle(
+        "worker-run", "step", worker_run_id, "resume", "effect-recovery-v1",
+        "--receipt", recovery_ref,
+    )
+    return {
+        "reconciled_effects": int(recovered),
+        "worker_run_state": run["state"],
+        "protocol_state": protocol["state"],
+    }
+
+
+def complete_lifecycle(worker_run_id: str, protocol_instance_id: str,
+                       node_receipt: str) -> dict:
+    protocol = _lifecycle(
+        "protocol-machine", "step", protocol_instance_id, "node-b-complete",
+        "node-b-complete-v1", "--receipt", node_receipt,
+    )
+    run = _lifecycle(
+        "worker-run", "step", worker_run_id, "complete", "worker-complete-v1",
+        "--receipt", node_receipt,
+    )
+    return {"worker_run_state": run["state"], "protocol_state": protocol["state"]}
+
+
+@svc.handler()
+async def run_two_nodes(ctx: restate.Context, request: dict) -> dict:
+    mission_id = _identity(request.get("mission_id"), "mission_id")
+    node_a = _identity(request.get("node_a"), "node_a")
+    node_b = _identity(request.get("node_b"), "node_b")
+    worker_id = _identity(request.get("worker_id"), "worker_id")
+    worker_run_id = _identity(request.get("worker_run_id"), "worker_run_id")
+    protocol_instance_id = _identity(
+        request.get("protocol_instance_id"), "protocol_instance_id"
+    )
+
+    lifecycle = await ctx.run(
+        "bind-stable-lifecycle",
+        lambda: bind_lifecycle(
+            mission_id, worker_id, worker_run_id, protocol_instance_id
+        ),
+    )
+
+    result_a = await ctx.run(
+        f"dispatch-{node_a}",
+        lambda: dispatch_node(
+            mission_id, node_a, worker_run_id,
+            f"restate node A fixture {mission_id}\n",
+        ),
+    )
+    waiting = await ctx.run(
+        "record-node-a-and-wait",
+        lambda: enter_durable_wait(
+            worker_run_id, protocol_instance_id, result_a["receipt_id"]
+        ),
+    )
+
+    # A real durable wait point: if the process/container dies here, Restate
+    # resumes this invocation after restart and does NOT re-run node A --
+    # ctx.run's journaled result for "dispatch-<node_a>" is replayed, not
+    # re-executed.
+    await ctx.sleep(timedelta(seconds=15))
+
+    recovery = await ctx.run(
+        "effect-kernel-recovery-before-node-b",
+        lambda: recover_for_node_b(
+            mission_id, worker_run_id, protocol_instance_id
+        ),
+    )
+
+    result_b = await ctx.run(
+        f"dispatch-{node_b}",
+        lambda: dispatch_node(
+            mission_id, node_b, worker_run_id,
+            f"restate node B fixture {mission_id}\n",
+        ),
+    )
+    completed = await ctx.run(
+        "complete-stable-lifecycle",
+        lambda: complete_lifecycle(
+            worker_run_id, protocol_instance_id, result_b["receipt_id"]
+        ),
+    )
+
+    return {
+        "worker_run_id": worker_run_id,
+        "protocol_instance_id": protocol_instance_id,
+        "lifecycle": lifecycle,
+        "waiting": waiting,
+        "recovery": recovery,
+        "completed": completed,
+        "node_a": result_a,
+        "node_b": result_b,
+    }
+
+
+app = restate.app([svc])

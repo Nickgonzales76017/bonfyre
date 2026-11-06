@@ -1,0 +1,5 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-moq-selftest","binary_env":"BONFYRE_MOQ_SELFTEST_BIN","cases":[
+{"name":"a native QUIC MOQT session refuses an unauthorized subscribe (loopback only)","steps":[
+ {"argv":[],"env":{"HOME":"${tmp}"},"exit":0,"at":{"ready":true,"alpn":"moqt-21","unauthorized_subscribe_refused":true,"client.truth":"not_authorized_not_subscribed"}}]},
+{"name":"the SUBSCRIBE wire message is byte-exact draft-21 and claims no session","steps":[
+ {"program":"${organ}/bonfyre-moq","argv":["moqt-subscribe-wire","--namespace","a,b","--track","t","--request-id","1"],"env":{"HOME":"${tmp}"},"exit":0,"at":{"wire_hex":"030009010201610162017400","wire_bytes":12,"transport_state":"wire_contract_only_no_quic_session","authorization_token":false}}]}]}

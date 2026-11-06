@@ -1,0 +1,146 @@
+"""Adversarial tests for the one-company cross-organ stress gauntlet."""
+
+import copy
+import json
+import sqlite3
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+import company_stress_gauntlet as gauntlet
+import foreign
+import partner_commons
+import work_graph
+
+
+def _run(tmp_path):
+    return gauntlet.run(state_root=tmp_path / "state", execute_powers=False)
+
+
+def test_three_lanes_cross_five_owners_and_share_one_object(tmp_path):
+    proof = _run(tmp_path)
+    assert proof["acceptance"]["at_least_three_lanes_cross_five_owner_families"]
+    assert proof["acceptance"]["all_lanes_share_one_semantic_identity"]
+    assert sum(count >= 5 for count in proof["lane_owner_family_counts"].values()) >= 3
+    assert len({lane["shared_identity"] for lane in proof["lanes"].values()}) == 1
+
+
+def test_customer_lineage_preserves_canonical_refs_and_money_causality(tmp_path):
+    proof = _run(tmp_path)
+    lane = proof["lanes"]["customer_to_cash"]
+    assert lane["status"] == "pass"
+    assert all(lane["checks"].values())
+    assert lane["counts"]["crm"] >= 1
+    assert lane["counts"]["helpdesk"] >= 1
+    assert lane["counts"]["erpnext_payments"] >= 1
+    assert lane["counts"]["erpnext_commercial_chain"] == 3
+    assert lane["counts"]["insights"] >= 1
+
+
+def test_six_format_families_roundtrip_and_objectfabric_binds_bytes(tmp_path):
+    proof = _run(tmp_path)
+    lane = proof["lanes"]["artifact_supply_chain"]
+    assert lane["status"] == "pass"
+    assert len({item["family"] for item in lane["formats"]}) == 6
+    assert all(lane["semantic_equivalence"].values())
+    assert all(item["uri"].endswith(item["sha256"]) for item in lane["objectfabric"])
+    assert {b["organ"] for b in lane["blockers"]} == {"OpenDAL", "Iroh/QUIC"}
+
+
+def test_partner_twin_never_mints_authority_and_work_closes_on_receipt(tmp_path):
+    proof = _run(tmp_path)
+    lane = proof["lanes"]["engineering_to_partner"]
+    db = sqlite3.connect(tmp_path / "state" / "gauntlet.db")
+    try:
+        twin = partner_commons.as_foreign_twin(db, gauntlet.shared_object()["partner_id"])
+        item = work_graph.get(db, lane["work_item_id"])
+    finally:
+        db.close()
+    assert twin.may(foreign.OBSERVE) and not twin.may(foreign.ACT)
+    assert item.state == work_graph.SATISFIED
+    assert lane["receipt"]["identity"].startswith("receipt:")
+    assert lane["status"] == "pass"
+
+
+def test_unsigned_dsse_and_live_lifecycle_bindings_stay_distinct(tmp_path):
+    proof = _run(tmp_path)
+    dsse = json.loads((tmp_path / "state" / "partner" / "review.dsse.json").read_text())
+    bindings = {b["organ"]: b for b in proof["lanes"]["engineering_to_partner"]["lifecycle_bindings"]}
+    assert dsse["signatures"] == []
+    assert dsse["signature_state"] == "unsigned-local-fixture"
+    assert set(bindings) == {"WorkerRun", "ProtocolMachine", "Restate"}
+    assert all(b["state"] == "registered_live" for b in bindings.values())
+    assert proof["lanes"]["engineering_to_partner"]["blockers"] == []
+
+
+def test_proof_digest_rejects_tamper_and_no_powers_means_no_invocation_claim(tmp_path):
+    proof = _run(tmp_path)
+    assert gauntlet.verify_proof(proof)
+    assert proof["powers"]["actually_invoked"] == []
+    tampered = copy.deepcopy(proof)
+    tampered["lanes"]["customer_to_cash"]["status"] = "fabricated"
+    assert not gauntlet.verify_proof(tampered)
+
+
+def test_knowledge_route_keeps_process_identity_out_of_lifecycle(tmp_path):
+    proof = _run(tmp_path)
+    lane = proof["lanes"]["knowledge_to_action"]
+    assert all(lane["checks"].values())
+    assert lane["decision_contract"]["provider_route"] == "codex-epoch"
+    assert lane["agent_session"]["provider_process_identity_used_as_lifecycle_identity"] is False
+    assert {b["organ"] for b in lane["blockers"]} == {
+        "CaveMem", "GigaToken", "local-model-generation"
+    }
+
+
+def test_compiler_catalog_drives_receipted_cross_lineage_replay(tmp_path):
+    db = gauntlet._init_db(tmp_path / "gauntlet.db")
+    powers = []
+    try:
+        lane = gauntlet._compiled_company_flow(
+            db, gauntlet.shared_object(), tmp_path, powers
+        )
+    finally:
+        db.close()
+    assert lane["status"] == "pass"
+    assert lane["catalog"]["schema"] == "bonfyre.frappe-lineage-catalog.v1"
+    assert len(lane["catalog"]["lineages"]) == 9
+    assert all(lane["checks"].values())
+    assert lane["replay"]["before"] == lane["replay"]["after"]
+    assert lane["replay"]["duplicate_effects"] == 0
+    assert sum(p["power"] == "BonfyreFrappeCompiler" for p in powers) == 9
+    assert any(p["power"] == "BonfyreKVCache" for p in powers)
+
+
+def test_real_observation_projection_binds_provenance_without_frappe_write(tmp_path):
+    source = {
+        "schema": "bonfyre-housing-shadow-observation.v1",
+        "candidate_id": "candidate:real-run8-a1",
+        "property_name": "The Milo Apartments",
+        "plan_name": "A1",
+        "advertised_price": 975.0,
+        "price_currency": "USD",
+        "rent_is_exact_unit_rent": False,
+    }
+    lane = gauntlet.project_real_object_through_frappe(
+        canonical_object=source,
+        source_evidence_refs=["household/housing/current-listings.jsonl#candidate:real-run8-a1"],
+        state_root=tmp_path / "real-projection",
+    )
+    assert lane["status"] == "pass"
+    assert all(lane["checks"].values())
+    assert lane["shared_identity"] == "observation:candidate:real-run8-a1"
+    assert lane["projection_context"]["authority_scope"] == "isolated-local-projection"
+    assert len(lane["catalog"]["lineages"]) == 9
+    receipt = json.loads((tmp_path / "real-projection" / "projection-receipt.json").read_text())
+    assert receipt["forbidden_inferences"] == lane["forbidden_inferences"]
+
+
+def test_compiler_lineage_catalog_has_no_unregistered_dependency(tmp_path):
+    _maturity, executable = gauntlet._power_record("BonfyreFrappeCompiler")
+    catalog = gauntlet._compiler_catalog(executable)
+    registered = {item["lineage"] for item in catalog["lineages"]}
+    assert len(registered) == 9
+    assert all(item["company_flow_after"] in registered
+               for item in catalog["lineages"] if item["company_flow_after"])

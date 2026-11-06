@@ -24,6 +24,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 
+#include "bf_lex.h"
 /* ── bf16 → fp32 conversion ── */
 static float bf16_to_fp32(uint16_t h) {
     union { uint32_t u; float f; } v;
@@ -112,25 +113,15 @@ static const char *skip_ws(const char *p) {
 }
 
 /* Parse a JSON string (between quotes), return pointer past closing quote */
+/* Delegates to the one implementation. This copy sent \\t, \\r and \\uXXXX
+ * through its default branch, so a tab arrived as the letter t and an escaped
+ * codepoint as its four hex digits -- the same defect libbonfyre's reader had,
+ * written independently. */
 static const char *parse_json_string(const char *p, char *out, size_t max) {
-    if (*p != '"') return NULL;
-    p++;
-    size_t i = 0;
-    while (*p && *p != '"') {
-        if (*p == '\\') {
-            p++;
-            if (*p == '"') { if (i < max - 1) out[i++] = '"'; }
-            else if (*p == '\\') { if (i < max - 1) out[i++] = '\\'; }
-            else if (*p == 'n') { if (i < max - 1) out[i++] = '\n'; }
-            else { if (i < max - 1) out[i++] = *p; }
-        } else {
-            if (i < max - 1) out[i++] = *p;
-        }
-        p++;
-    }
-    out[i] = '\0';
-    if (*p == '"') p++;
-    return p;
+    const char *end;
+    if (!p || *p != '"') return NULL;
+    bf_lex_json_string_at(p + 1, out, max, &end);
+    return end;
 }
 
 /* Parse a JSON integer */

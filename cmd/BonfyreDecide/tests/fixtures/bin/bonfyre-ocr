@@ -1,0 +1,2 @@
+#!/bin/sh
+case "$2" in *-1.jpg) printf "1\t0\t0\t1\t1\t0.98\tHP ELITEDES 800 G3\n1\t0\t0\t1\t1\t0.3\tnoise\n1\t0\t0\t1\t1\t0.9\tSN 12345 PART NO: 5CG-9876\n";; *-2.jpg) printf "1\t0\t0\t1\t1\t0.95\tQTY 8 units\n";; *) printf "1\t0\t0\t1\t1\t0.9\t--\n";; esac

@@ -1,0 +1,26 @@
+{
+  "schema": "bonfyre.v6-history-native-witness.v1",
+  "source_database_sha256": "3d29ae57659c925678bed44e744b49d7ee8424748e2eda0034304ba51091e82c",
+  "source_sidecar_sha256": {
+    "wal": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "shm": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+  },
+  "receipt_chain": {
+    "verified": true,
+    "receipts": 31,
+    "head": "ec074ea33391022a35c231d61900de537eee43776e9e3ef5b45d835254c172d1"
+  },
+  "counts": {
+    "receipts": 31,
+    "estates": 0,
+    "bfp_builds": 0,
+    "cutovers": 0,
+    "graph_versions": 2,
+    "sparse_snapshots": 1
+  },
+  "owned_files_copied": 33,
+  "owned_bytes_copied": 22410442,
+  "owned_files_digest": "1d2f35387aaaa2d110dd93d0bcd355f2d24dcfa1b9fe148e1ef828e9bd1c8bda",
+  "source_unchanged": true,
+  "disposable_copy_verified": true
+}

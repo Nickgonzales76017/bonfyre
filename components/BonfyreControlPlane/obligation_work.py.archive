@@ -1,0 +1,189 @@
+"""Archived Python obligation work; active bridge is obligation-work.mjs to BonfyreQueue.
+
+ProtocolContract could say what an enactment still owed and could not hand it to
+anybody. That is half a system: an obligation nobody can claim is a complaint,
+not a queue.
+
+This bridges the two owners that already exist. CommitmentGraph holds what is
+owed; BonfyreQueue -- the native WorkGraph-backed durable queue, with leases,
+attempts, backoff and receipts -- holds what can be worked. Nothing here
+reimplements either. The queue is driven through its actual binary rather than
+through a Python copy of its schema, because a second implementation of a
+durable queue is how the two stop agreeing about which work is claimed.
+
+Two asymmetries are deliberate and enforced below:
+
+  * A completed work item discharges its obligation. Work is the mechanism, the
+    commitment is the fact, and the fact follows the mechanism only in this one
+    direction.
+
+  * A failed work item does NOT violate its obligation. A worker giving up is
+    not the same as a promise being broken -- there may be retries left, another
+    claimant, or a lease still to expire. Somebody with standing observes the
+    violation, exactly as with an expiry. A queue that auto-violated on the
+    first failed attempt would let the machine decide that a person broke a
+    promise because a process crashed.
+
+Forbidden inferences, falsified by the tests beside this file:
+  queued work           -> the obligation being met
+  a failed attempt      -> a violated commitment
+  a discharged obligation -> its work item having run
+  a lowered obligation  -> a claimed one
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import sqlite3
+import subprocess
+from typing import Optional
+
+import commitment_graph as cg
+
+QUEUE_BIN = os.environ.get("BONFYRE_QUEUE_BIN",
+                           os.path.expanduser("~/.bonfyre/bin/bonfyre-queue"))
+
+WORK_TYPE = "obligation"
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS obligation_work(
+  commitment_id TEXT PRIMARY KEY,
+  mission_id    TEXT NOT NULL,
+  node_id       TEXT NOT NULL,
+  queue_db      TEXT NOT NULL,
+  lowered_at    TEXT NOT NULL DEFAULT '');
+"""
+
+
+class LoweringError(RuntimeError):
+    pass
+
+
+def ensure_schema(db: sqlite3.Connection) -> None:
+    cg.ensure_schema(db)
+    db.executescript(SCHEMA)
+    db.commit()
+
+
+def _queue(args: list[str], queue_db: str) -> dict:
+    """Call the native queue and return its receipt.
+
+    A non-zero exit is raised rather than swallowed: an obligation that we
+    believe was queued and was not is worse than one that failed loudly.
+    """
+    proc = subprocess.run([QUEUE_BIN, *args, "--db", queue_db],
+                          capture_output=True, text=True, timeout=60)
+    if proc.returncode != 0:
+        raise LoweringError(
+            f"bonfyre-queue {args[0]} failed ({proc.returncode}): "
+            f"{proc.stderr.strip() or proc.stdout.strip()}")
+    try:
+        return json.loads(proc.stdout)
+    except json.JSONDecodeError as exc:  # pragma: no cover - shape guard
+        raise LoweringError(f"bonfyre-queue {args[0]} returned non-JSON: "
+                            f"{proc.stdout[:200]!r}") from exc
+
+
+# ------------------------------------------------------------------ lowering
+
+def lower(db: sqlite3.Connection, commitment_id: str, *, queue_db: str,
+          at: str = "") -> tuple[str, str]:
+    """Enqueue one open obligation as claimable work.
+
+    Idempotent by commitment: lowering the same obligation twice returns the
+    work item it already has. Enqueuing again would create a second claimable
+    item for one promise, and two workers would both believe they owned it.
+    """
+    ensure_schema(db)
+    state = cg.status(db, commitment_id)
+    if state is None:
+        raise LoweringError(f"unknown commitment {commitment_id!r}")
+    if state in cg.TERMINAL:
+        raise LoweringError(
+            f"commitment {commitment_id!r} is {state}: a settled obligation has "
+            f"no work to claim")
+
+    row = db.execute("SELECT mission_id,node_id FROM obligation_work"
+                     " WHERE commitment_id=?", (commitment_id,)).fetchone()
+    if row:
+        return row[0], row[1]
+
+    resource = db.execute("SELECT resource FROM commitments WHERE commitment_id=?",
+                          (commitment_id,)).fetchone()
+    payload = f"{commitment_id} :: {resource[0] if resource else ''}"
+    receipt = _queue(["enqueue", WORK_TYPE, payload], queue_db)
+    mission, node = receipt["mission_id"], receipt["node_id"]
+    db.execute("INSERT INTO obligation_work"
+               "(commitment_id,mission_id,node_id,queue_db,lowered_at)"
+               " VALUES(?,?,?,?,?)", (commitment_id, mission, node, queue_db, at))
+    db.commit()
+    return mission, node
+
+
+def lower_enactment(db: sqlite3.Connection, contract, enactment_id: str, *,
+                    queue_db: str, at: str = "") -> list[tuple[str, str, str]]:
+    """Lower every obligation this enactment still owes."""
+    out = []
+    for cid, _state in contract.outstanding_after(db, enactment_id):
+        mission, node = lower(db, cid, queue_db=queue_db, at=at)
+        out.append((cid, mission, node))
+    return out
+
+
+# ------------------------------------------------------------------ observing
+
+def work_status(db: sqlite3.Connection, commitment_id: str) -> Optional[str]:
+    """The queue's own status for this obligation's work item, or None if it was
+    never lowered. Read from the queue's database, not from a copy."""
+    row = db.execute("SELECT mission_id,node_id,queue_db FROM obligation_work"
+                     " WHERE commitment_id=?", (commitment_id,)).fetchone()
+    if row is None:
+        return None
+    mission, node, queue_db = row
+    q = sqlite3.connect(queue_db)
+    try:
+        got = q.execute("SELECT status FROM workgraph_nodes"
+                        " WHERE mission_id=? AND node_id=?", (mission, node)).fetchone()
+    finally:
+        q.close()
+    return got[0] if got else None
+
+
+def lowered(db: sqlite3.Connection) -> list[tuple[str, str]]:
+    ensure_schema(db)
+    return sorted((cid, mission) for cid, mission in db.execute(
+        "SELECT commitment_id,mission_id FROM obligation_work"))
+
+
+# ------------------------------------------------------------------ settling
+
+def settle(db: sqlite3.Connection, commitment_id: str, *, actor: str = "",
+           at: str = "") -> Optional[str]:
+    """Discharge the obligation if its work completed. Returns the new state.
+
+    Only `complete` settles anything. A failed, running or ready item leaves the
+    commitment exactly where it was, and the caller is told the work state so it
+    can decide what to do rather than being handed a silent no-op.
+    """
+    state = work_status(db, commitment_id)
+    if state is None:
+        raise LoweringError(f"commitment {commitment_id!r} was never lowered")
+    if state != "complete":
+        return cg.status(db, commitment_id)
+    if cg.status(db, commitment_id) in cg.TERMINAL:
+        return cg.status(db, commitment_id)
+    cg.discharge(db, commitment_id, actor=actor,
+                 detail=f"work item completed ({state})", at=at)
+    return cg.status(db, commitment_id)
+
+
+def settle_all(db: sqlite3.Connection, *, actor: str = "", at: str = "") -> list[str]:
+    """Discharge every lowered obligation whose work completed."""
+    settled = []
+    for cid, _ in lowered(db):
+        before = cg.status(db, cid)
+        after = settle(db, cid, actor=actor, at=at)
+        if before != after and after == cg.DISCHARGED:
+            settled.append(cid)
+    return sorted(settled)

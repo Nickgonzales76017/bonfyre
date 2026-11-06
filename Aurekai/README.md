@@ -125,6 +125,8 @@ akai integrate:templates --target "LayerZero" --environment prod --json
 akai integrate:validate-event --target "LayerZero" --input-file ./event.json --json
 akai integrate:list --surface state-machine --group transport_continuity --json
 akai integrate:scaffold-repos --all --out-dir ./generated/integration-repos --json
+akai integrate:scaffold-repos --all --virtual --json
+akai integrate:scaffold-repos --all --verify --out-dir ./generated/integration-repos --json
 ```
 
 Connector ingestion modes:

@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 #include <dirent.h>
 #include <errno.h>
 #include <limits.h>
@@ -18,6 +25,8 @@
 
 #include <bonfyre.h>
 
+#include "bf_lex.h"
+#include "../../../lib/libbonfyre/include/bf_help.h"
 extern char **environ;
 
 #ifndef PATH_MAX
@@ -52,24 +61,11 @@ static void usage(void) {
             "  bonfyre-watch uploads --pipeline pipeline --out outputs/watch\n");
 }
 
+/* Delegates to the one implementation. Nineteen copies of this shape existed
+ * with sixteen different opinions about escaping.
+ */
 static void json_escape(const char *s) {
-    const unsigned char *p = (const unsigned char *)(s ? s : "");
-    putchar('"');
-    while (*p) {
-        unsigned char c = *p++;
-        switch (c) {
-            case '\\': fputs("\\\\", stdout); break;
-            case '"': fputs("\\\"", stdout); break;
-            case '\n': fputs("\\n", stdout); break;
-            case '\r': fputs("\\r", stdout); break;
-            case '\t': fputs("\\t", stdout); break;
-            default:
-                if (c < 0x20) printf("\\u%04x", (unsigned)c);
-                else putchar((char)c);
-                break;
-        }
-    }
-    putchar('"');
+    bf_lex_json_emit(stdout, s);
 }
 
 static void now_iso8601(char out[32]) {
@@ -357,6 +353,7 @@ static int scan_dir_once(const WatchConfig *cfg, const char *session_id, int *ne
 }
 
 int main(int argc, char **argv) {
+    if (bf_help_requested(argc, argv)) { usage(); return 0; }
     WatchConfig cfg;
     char session_id[65];
     int new_count = 0;

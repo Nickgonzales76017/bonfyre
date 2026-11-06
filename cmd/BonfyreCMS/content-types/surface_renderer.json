@@ -1,0 +1,18 @@
+{
+  "name": "surface_renderer",
+  "displayName": "Surface Renderer",
+  "description": "A human interaction grammar, separated from what it happens to be reading. Route, SurfacePattern, renderer and data source were one thing; a renderer is the third of those on its own, so the same masonry, the same stream-to-topic keyboard, the same faceted compare tray can project a different owner without being rebuilt. A renderer renders; it reads nothing and authorizes nothing.",
+  "attributes": {
+    "renderer": {"type": "string", "required": true},
+    "canonical_name": {"type": "string", "required": true},
+    "donor": {"type": "string", "required": false},
+    "donor_commit": {"type": "string", "required": false},
+    "grammar": {"type": "string", "required": true},
+    "seam": {"type": "string", "required": true},
+    "renders": {"type": "string", "required": true},
+    "extents": {"type": "string", "required": true},
+    "cannot_infer": {"type": "string", "required": true},
+    "extracted_from": {"type": "string", "required": false},
+    "status": {"type": "string", "required": true}
+  }
+}

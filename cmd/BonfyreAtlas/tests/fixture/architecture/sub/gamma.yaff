@@ -1,0 +1,48 @@
+atlas fixture-gamma
+architecture gamma
+  canonical_name Gamma
+  family surface
+  domain Fixture / Surface
+  semantic_question Is gamma an island?
+  maturity proven
+  witness gone/archived-witness.py.archive
+  publishes FactE
+  owns FactA
+  mystery_key twice
+
+architecture delta
+  canonical_name Delta
+  family command
+  domain Fixture / Cmd
+  semantic_question Unknown grade?
+  maturity legendary
+
+architecture epsilon
+  family command
+  maturity measured
+  witness missing/path/witness.json
+
+architecture alpha
+  canonical_name AlphaRedefined
+  family substrate
+  domain Fixture / Core
+  semantic_question Redefined last?
+  maturity implemented
+
+phenotype gamma-phen
+  architecture gamma
+
+phenotype ghost-phen
+  architecture ghost
+  produces something
+
+interaction ghost-link
+  source ghost
+  relation nowhere
+
+edge_class feeds
+  meaning one feeds another
+  specialized_by feeds_fast
+
+stray_block ignored
+  canonical_name ignored too

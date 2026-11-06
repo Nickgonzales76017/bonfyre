@@ -1,0 +1,950 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Boards · Aurekai</title>
+<!-- Bulma (MIT) plus Pinry's own pin-grid and card rules, compiled from
+     pinry-spa/src/components/Pins.vue and utils/grid-layout.scss. Licence text
+     at /matrix/DONOR-LICENSES/pinry/. Every class below is Pinry's or Bulma's:
+     #pins-container, .grid.pin-masonry, .pin-card.grid-item, .pin-footer,
+     .description, .details, .pin-info, .card, .media, .title, .tag. -->
+<link rel="stylesheet" href="/assets/donor-pinry.css?v=7e66b1ea">
+<style>
+/* Only what Pinry ships and this deployment does not: the images a pin carries
+   and the avatar service behind .avatar. Nothing else is restyled. */
+body{background:#f7f7f7}
+.pn-nav{background:#fff;border-bottom:1px solid #e0e0e0;padding:12px 20px;
+  display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.pn-nav .brand{font:800 17px ui-monospace,SFMono-Regular,monospace;letter-spacing:-.04em;
+  color:#333;text-decoration:none}
+.pn-nav a.t{color:#666;text-decoration:none;font-size:14px}
+.pn-nav a.t[aria-current="page"]{color:#333;font-weight:700}
+.pn-nav .sp{flex:1}
+/* A Pinry pin is an image. These pins are subjects that never had one, so the
+   image slot holds a field generated from the record -- same 240px column,
+   same rounded top corners, same zoom-in cursor. */
+.pin-card .pin-preview-image{display:block;width:240px;border-radius:3px 3px 0 0;
+  background:#111;position:relative}
+.pin-card .pin-preview-image canvas{display:block;width:240px;border-radius:3px 3px 0 0}
+.pin-shade{position:absolute;left:0;right:0;bottom:0;padding:34px 10px 10px;
+  background:linear-gradient(transparent,rgba(0,0,0,.8));border-radius:0 0 0 0;
+  pointer-events:none}
+.pin-shade b{display:block;color:#fff;font:600 14px/1.2 Georgia,Times,serif}
+.pin-terr{position:absolute;top:8px;left:8px;font:700 9px ui-monospace,monospace;
+  letter-spacing:.09em;text-transform:uppercase;background:rgba(0,0,0,.6);color:#fff;
+  border-radius:999px;padding:3px 8px}
+.pin-gen{position:absolute;top:8px;right:8px;font:700 8.5px ui-monospace,monospace;
+  letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.6);
+  border:1px dashed rgba(255,255,255,.28);border-radius:999px;padding:2px 7px}
+.avatar{display:inline-grid;place-items:center;color:#fff;font:600 11px system-ui,sans-serif}
+.pn-cant{border-left:3px solid #b34;padding-left:10px;margin:14px auto;max-width:760px;
+  font-size:12.8px;line-height:1.5;color:#6b4a44}
+.pn-refuse{max-width:760px;margin:18px auto;border:1px solid #d5a49c;background:#fff7f5;
+  border-radius:4px;padding:14px 16px}
+.pn-src{max-width:760px;margin:8px auto 40px;font:400 11.5px ui-monospace,monospace;color:#888}
+@media (prefers-reduced-motion:reduce){.pin-masonry{transition:none}}
+</style></head><body>
+<nav class="pn-nav">
+  <span id="bf-mk"><!--BF_SLOT:0--></span>
+  <div id="pn-terr" style="display:flex;gap:14px"><!--BF_SLOT:1--></div>
+  <span class="sp"></span>
+  <div id="pn-links" style="display:flex;gap:14px"><!--BF_SLOT:2--></div>
+</nav>
+<div class="pins">
+  <section class="section">
+    <div id="pins-container" class="container">
+      <div id="pn-grid"><!--BF_SLOT:3-->
+        <div class="grid-sizer"></div>
+        <div class="gutter-sizer"></div>
+      </div>
+    </div>
+  </section>
+  <div id="pn-notes"><!--BF_SLOT:4--></div>
+</div>
+<script src="/assets/donor-masonry.js?v=e9480a28"></script>
+<script>
+/* Shared kit for the clone surfaces.
+ *
+ * Every surface below borrows a market interface's *behaviour* -- the layout,
+ * density and gesture people already know -- and reads Aurekai's own live
+ * endpoints. Nothing here imports anybody's ontology: the records are the same
+ * subjects the rest of the estate addresses, rendered in a shape a person has
+ * already learned somewhere else.
+ *
+ * Three rules hold across all of them, because each has a failure that looks
+ * fine:
+ *
+ *   a 4xx is an answer      htmx and fetch both leave a placeholder up forever
+ *                           if a refusal is treated as an outage. Every pane
+ *                           reports refused / empty / failed as three different
+ *                           things and offers the session when one is needed.
+ *
+ *   verbs are offered       Authority gates at effect time. A chip that posted
+ *                           would be asking for a decision this surface has no
+ *                           standing to carry, so nothing here submits.
+ *
+ *   the source is named     Every pane says which endpoint produced it. A
+ *                           surface that hides its source cannot be checked
+ *                           against the deployment it claims to describe.
+ */
+(() => {
+  const K = {};
+
+  K.host = location.hostname;
+  K.territory = K.host.endsWith('.life') ? 'life'
+              : K.host.endsWith('.shop') ? 'shop'
+              : K.host.endsWith('.work') ? 'work'
+              : 'live';
+
+  K.token = () => null; /* same-origin HttpOnly session cookie */
+  /* One fetch, three outcomes, never a silent blank. */
+  K.get = async (path, accept) => {
+    const headers = { Accept: accept || 'application/json' };
+    const t = K.token();
+    if (t) headers.Authorization = 'Bearer ' + t;
+    let r;
+    try {
+      r = await fetch(path, { headers });
+    } catch (e) {
+      return { ok: false, kind: 'failed', status: 0, detail: String(e), path };
+    }
+    if (r.status === 401 || r.status === 403)
+      return { ok: false, kind: 'refused', status: r.status, path };
+    if (!r.ok)
+      return { ok: false, kind: 'failed', status: r.status, path };
+    const body = accept && accept.includes('html') ? await r.text() : await r.json();
+    return { ok: true, kind: 'ok', status: r.status, body, path };
+  };
+
+  /* The three refusal states, rendered. A withheld pane offers the session
+   * that would fill it; withholding without offering is a dead end wearing the
+   * clothes of a loading state. */
+  K.note = (res, what) => {
+    const el = document.createElement('div');
+    el.className = 'k-note ' + (res.kind === 'refused' ? 'k-refused' : 'k-failed');
+    if (res.kind === 'refused') {
+      el.innerHTML = '<strong>' + what + ' needs an admitted session.</strong>'
+        + '<p>Authority-gated. Other panes on this page answer without one, so this '
+        + 'is a refusal rather than an absent subject.</p>'
+        + (K.token()
+            ? '<p>You are signed in and this scope was still refused: the session you '
+              + 'hold does not carry it.</p>'
+            : '<p><a class="k-btn" href="/login">Sign in</a></p>');
+    } else {
+      el.innerHTML = '<strong>' + what + ' did not answer.</strong>'
+        + '<p><code>' + res.path + '</code> returned ' + (res.status || 'no response')
+        + '. Nothing is rendered rather than a stale or invented list.</p>';
+    }
+    return el;
+  };
+
+  K.empty = (what, path) => {
+    const el = document.createElement('div');
+    el.className = 'k-note k-empty';
+    el.innerHTML = '<strong>' + what + ' is empty.</strong><p><code>' + path
+      + '</code> answered and returned nothing. That is an empty projection, not a '
+      + 'refusal and not an absent subject.</p>';
+    return el;
+  };
+
+  /* Parse the /_surface/<name> record fragments the address organ serves.
+   * They are <dl class="surface-record"> with <dt>/<dd> pairs, and are the same
+   * bytes a machine reading that path receives. */
+  K.records = (html) => {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return [...doc.querySelectorAll('.surface-record')].map(dl => {
+      const rec = {};
+      const dts = [...dl.querySelectorAll('dt')];
+      const dds = [...dl.querySelectorAll('dd')];
+      dts.forEach((dt, i) => { rec[dt.textContent.trim()] = (dds[i] || {}).textContent || ''; });
+      return rec;
+    });
+  };
+
+  K.surface = async (name) => {
+    const res = await K.get('/_surface/' + name, 'text/html');
+    if (!res.ok) return res;
+    return { ...res, records: K.records(res.body) };
+  };
+
+  /* A verb chip. Offered, never submitted. */
+  K.verbs = (list) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'k-verbs';
+    for (const v of list) {
+      const s = document.createElement('span');
+      s.className = 'k-verb';
+      s.textContent = v;
+      s.title = v + ' is offered here. Whether you may is decided at effect time '
+              + 'by the owner of the effect, not by this surface.';
+      wrap.appendChild(s);
+    }
+    return wrap;
+  };
+
+  K.sourceLine = (paths) => {
+    const p = document.createElement('p');
+    p.className = 'k-source';
+    p.innerHTML = 'Reading ' + paths.map(x => '<code>' + x + '</code>').join(' · ')
+      + ' — the same bytes a machine asking for this path receives.';
+    return p;
+  };
+
+  K.mount = (el, node) => { el.innerHTML = ''; el.appendChild(node); };
+
+
+  /* Avatars from DiceBear (https://dicebear.com), rendered from the subject's
+   * own name as the seed, so the same room gets the same face everywhere in the
+   * estate and nothing has to be uploaded or stored.
+   *
+   * The style is chosen by what the subject *is*, because a human face on a
+   * venue or a binary would be the surface asserting a person exists:
+   *
+   *   subject   a room, a venue, an act, a programme   -> shapes
+   *   machine   a binary, a queue, an endpoint         -> identicon
+   *   peer      a federated instance                   -> rings
+   *   person    an actual human actor                  -> initials
+   *
+   * Style licences: shapes is CC BY 4.0 (Alexis Doreau); identicon, rings and
+   * initials are CC0 1.0. Attribution is carried in the page footer.
+   */
+  K.AVATAR_STYLE = { subject: 'shapes', machine: 'identicon', peer: 'rings',
+                     person: 'initials' };
+
+  K.avatar = (seed, kind, size) => {
+    const style = K.AVATAR_STYLE[kind] || K.AVATAR_STYLE.subject;
+    const p = new URLSearchParams({ seed: String(seed == null ? '' : seed) });
+    if (size) p.set('size', String(size));
+    p.set('radius', '12');
+    return 'https://api.dicebear.com/9.x/' + style + '/svg?' + p.toString();
+  };
+
+  /* An <img> that falls back to the initials block if the avatar service is
+   * unreachable. A broken image where a face should be reads as a broken page;
+   * a monogram reads as a subject that has no picture, which is the truth. */
+  K.avatarImg = (seed, kind, size) => {
+    const s = String(seed == null ? '' : seed);
+    const el = document.createElement('img');
+    el.src = K.avatar(s, kind, size);
+    el.alt = '';
+    el.loading = 'lazy';
+    el.width = size || 44; el.height = size || 44;
+    el.dataset.seed = s;
+    el.addEventListener('error', () => {
+      const box = document.createElement('span');
+      box.className = el.className;
+      box.setAttribute('style', el.getAttribute('style') || '');
+      box.textContent = s.replace(/[^a-z0-9 ]/gi, ' ').trim().split(/\s+/)
+        .slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
+      el.replaceWith(box);
+    }, { once: true });
+    return el;
+  };
+
+  K.avatarAttribution = 'Avatars by <a href="https://dicebear.com">DiceBear</a>, generated '
+    + "from each subject's own name. Shapes is CC BY 4.0 (Alexis Doreau); identicon, rings "
+    + 'and initials are CC0 1.0.';
+
+
+  /* ---- the address plane -------------------------------------------------
+   *
+   * A host on this estate is not a deployment, it is an institution in a
+   * territory. leaflounge.aurekai.shop is the Leaf Lounge as the market sees
+   * it; leaflounge.aurekai.life is the same institution as its own people see
+   * it; theleaflounge.store is the same institution again, under a domain it
+   * owns. Same code, same surfaces, different subject.
+   *
+   * So a surface must not guess whose host it is on from the hostname. It asks
+   * the host, once, and the host answers from the Matrix. A page that guessed
+   * would be right for leaflounge.aurekai.shop and wrong for
+   * theleaflounge.store, which is exactly the case that matters.
+   */
+  K.here = null;
+  K.address = async () => {
+    if (K.here) return K.here;
+    try {
+      const r = await fetch('/.well-known/bonfyre', {headers:{Accept:'application/json'}});
+      K.here = r.ok ? await r.json() : {host: location.hostname, territory: K.territory};
+    } catch (_) {
+      K.here = {host: location.hostname, territory: K.territory};
+    }
+    return K.here;
+  };
+
+  /* The whole estate's address plane, for the surfaces that show it. */
+  K.estate = async () => {
+    try {
+      const r = await fetch('/.well-known/bonfyre/estate', {headers:{Accept:'application/json'}});
+      return r.ok ? await r.json() : null;
+    } catch (_) { return null; }
+  };
+
+  /* A subject's canonical address, and its room. The same path on every host,
+   * because the address belongs to the subject and not to the territory. */
+  K.subject = (kind, id) => '/s/' + encodeURIComponent(kind) + '/' + encodeURIComponent(id);
+  K.room    = (kind, id) => '/room/' + encodeURIComponent(kind) + '/' + encodeURIComponent(id);
+
+  /* An <a> to the subject, so a clone is a representation you can leave. */
+  K.subjectLink = (kind, id, label, cls) => {
+    const a = document.createElement('a');
+    a.href = K.subject(kind, id);
+    a.textContent = label === undefined ? id : label;
+    a.title = 'Its address on this estate: ' + K.subject(kind, id)
+            + ' — the same path on every host. This surface is one representation of it.';
+    if (cls) a.className = cls;
+    return a;
+  };
+
+  /* The institution's other territories, from the Matrix rather than from
+   * string surgery on the hostname. Returns [] when this host holds only one. */
+  K.institutionHosts = async () => {
+    const a = await K.address();
+    return (a && a.institution_hosts) || [];
+  };
+
+  /* Renders the switch as links, marking the one you are standing on. Any
+   * surface can drop this in and become navigable across the institution. */
+  K.hostSwitch = async (current) => {
+    const hosts = await K.institutionHosts();
+    const nav = document.createElement('nav');
+    nav.className = 'k-hosts';
+    nav.setAttribute('aria-label', 'This institution across territories');
+    if (hosts.length < 2) return nav;
+    for (const h of hosts) {
+      const a = document.createElement('a');
+      a.href = location.protocol + '//' + h.host + (current || location.pathname);
+      a.textContent = '.' + h.territory;
+      a.title = h.host + ' — audience ' + (h.audience || 'unstated');
+      if (h.host === location.hostname) a.setAttribute('aria-current', 'page');
+      nav.appendChild(a);
+    }
+    return nav;
+  };
+
+
+  /* ---- four territories, four sets of UX physics -------------------------
+   *
+   * Section 69: they are projections over one Matrix, not four products, but
+   * their physics differ -- and building them as one feed with different icons
+   * would lose exactly what makes each market leader good at what it does.
+   *
+   * So the difference here is not the chips. It is the ordering principle, and
+   * each one answers a different question about the same records:
+   *
+   *   .live  what deserves attention now      ordered by what is on, decaying
+   *   .life  what matters in my world         not ordered by attention at all
+   *   .shop  what economic opportunity is useful   ordered by the offer
+   *   .work  what should move forward         ordered by what blocks what
+   *
+   * A verb outside its territory is a category error, so the verb lists are
+   * per territory and nothing merges them.
+   */
+  K.PHYSICS = {
+    live: {
+      question: 'What deserves attention now?',
+      principle: 'fast attention / occurrence',
+      orders_by: 'what is on now, and how hard it is pressing',
+      decays: true,
+      verbs: ['WATCH','JOIN','GO','FOLLOW','SAVE','SHARE'],
+      /* attention is pressure: something happening now outranks something
+         merely published, and a room reporting its fill outranks one that did
+         not. This is the only territory where recency is allowed to rank. */
+      rank: r => {
+        const on = /doors|tonight|now|set |playing|open/i.test(r.tonight_status || '') ? 2 : 0;
+        const pct = Number((String(r.capacity_note||'').match(/(\d+)\s*percent/)||[])[1] || 0);
+        return on * 100 + pct;
+      },
+      cant: 'attention is not obligation. Nothing on this feed is expecting you, and a '
+          + 'capacity note is what the room published rather than what is true at the door.'
+    },
+    life: {
+      question: 'What matters in my world?',
+      principle: 'durable personal world',
+      orders_by: 'nothing — this is what you already keep, in a stable order',
+      decays: false,
+      verbs: ['MEET','JOIN','GO','SAVE','HELP','FOLLOW','PLAN','REMEMBER','SHARE','MOVE','ASSIGN'],
+      /* The load-bearing difference. A personal world ranked by attention
+         would be a recommendation feed wearing the clothes of a kept set, and
+         the thing that makes it yours is that it does not move when the world
+         gets loud. Stable, alphabetical, no recency anywhere. */
+      rank: null,
+      cant: 'a kept subject is not a recommended one. Nothing here was ranked for you, and '
+          + 'nothing moves up because it got busy.'
+    },
+    shop: {
+      question: 'What economic opportunity is useful?',
+      principle: 'economic opportunity / exchange',
+      orders_by: 'the offer — what is on, and at what price',
+      decays: false,
+      verbs: ['BUY','OFFER','JOIN','SAVE','COMPARE','REQUEST','SELL','FUND','CONTRIBUTE'],
+      /* An offer ranks; a description does not. A record with no offer sorts
+         below every record that has one, because in this territory a subject
+         without terms is not an opportunity. */
+      rank: r => (r.offer_usd ? 1000 - Number(r.offer_usd) : -1),
+      cant: 'an offer is terms a seller will accept. It is not a sale, a reservation, or '
+          + 'anything anybody has bought.'
+    },
+    work: {
+      question: 'What should move forward?',
+      principle: 'obligation / execution',
+      orders_by: 'what blocks what, and what undoing it would cost',
+      decays: false,
+      verbs: ['APPLY','APPROVE','CLAIM','FUND','CONTACT','BOOK','DO','REVIEW','ASSIGN',
+              'RESPOND','ESCALATE'],
+      rank: null,
+      cant: 'an obligation is not an assignment, and a requirement is not funding.'
+    }
+  };
+
+  K.physics = (t) => K.PHYSICS[t || K.territory] || K.PHYSICS.live;
+
+  /* Order a record set by its territory's own principle. .life gets a stable
+   * order on purpose: sorting a kept world by anything would be ranking it. */
+  K.order = (records, t) => {
+    const p = K.physics(t);
+    const out = records.slice();
+    if (!p.rank) {
+      out.sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+      return out;
+    }
+    out.sort((a, b) => p.rank(b) - p.rank(a)
+                    || String(a.name || '').localeCompare(String(b.name || '')));
+    return out;
+  };
+
+  /* A verb outside its territory is a category error, so this is the only
+   * place a surface should get its verbs from. */
+  K.verbsFor = (t) => K.physics(t).verbs.slice();
+
+
+  /* ---- the fifteen commerce facts ----------------------------------------
+   *
+   * Section 70: .shop needs its own falsehood list, and it is long.
+   *
+   *   Product != Listing != Inventory != AvailabilityObservation != Offer !=
+   *   Quote != Cart != Checkout != Commitment != Payment != Settlement !=
+   *   Fulfilment != Delivery != Satisfaction != Ownership
+   *
+   * Each stage names the one owner that can establish it, because these
+   * collapse when a subsystem is asked a question it cannot answer. The
+   * dangerous collapses *skip* rather than step -- "paid" read as "delivered",
+   * "delivered" read as "owned" -- so non-implication holds over every pair,
+   * not over adjacent ones.
+   *
+   * And no stage may be skipped in the other direction either: an exchange
+   * reporting delivery with no fulfilment is describing something the estate
+   * never saw happen.
+   */
+  K.COMMERCE = [
+    {stage:'Product', owner:'a catalogue',
+     knows:'what a product is',
+     cannot:'whether anybody has one',
+     here:'/_surface/capabilities'},
+    {stage:'Listing', owner:'a catalogue entry with terms attached',
+     knows:'that this is offered somewhere, described this way',
+     cannot:'that the description is current, or that the seller still means it',
+     here:'/capability, /ucp/catalog, /acp/products'},
+    {stage:'Inventory', owner:'the merchant',
+     knows:'a count the merchant keeps',
+     cannot:'that this buyer can obtain one',
+     here:null},
+    {stage:'AvailabilityObservation', owner:'an observer, at a time and a place',
+     knows:'that it was obtainable then, there',
+     cannot:'that it is obtainable now, here',
+     here:null},
+    {stage:'Offer', owner:'the seller',
+     knows:'terms the seller will accept',
+     cannot:'that anyone accepted them',
+     here:'/capability'},
+    {stage:'Quote', owner:'the pricing owner, for one caller',
+     knows:'what it would cost this caller now',
+     cannot:'anything held, reserved or promised',
+     here:'/mpp/quote'},
+    {stage:'Cart', owner:'the buyer, assembling',
+     knows:'what one person put together, before anybody agreed to any of it',
+     cannot:'that any of it is obtainable together',
+     here:null},
+    {stage:'Checkout', owner:'the exchange',
+     knows:'that an intent to buy was expressed',
+     cannot:'that it was accepted',
+     here:null},
+    {stage:'Commitment', owner:'CommitmentGraph',
+     knows:'who owes what to whom, under which conditions',
+     cannot:'that the resource moved',
+     here:null},
+    {stage:'Payment', owner:'a payment rail',
+     knows:'that a charge was authorized',
+     cannot:'that money settled',
+     here:'the 402 on /capability/<name>'},
+    {stage:'Settlement', owner:'the ledger, once a facilitator verifies',
+     knows:'that money moved',
+     cannot:'that anything was done for it',
+     here:null},
+    {stage:'Fulfilment', owner:'the seller, doing the thing',
+     knows:'that the seller acted',
+     cannot:'that it reached anybody',
+     here:null},
+    {stage:'Delivery', owner:'a courier',
+     knows:'that a parcel moved',
+     cannot:'that anyone wanted its contents',
+     here:'/epcis/events'},
+    {stage:'Satisfaction', owner:'the buyer, afterwards',
+     knows:'that the person who received it says it was what they wanted',
+     cannot:'that they hold it lawfully',
+     here:null},
+    {stage:'Ownership', owner:'.life, after the transaction leaves the store',
+     knows:'that this is now part of somebody\'s world',
+     cannot:'anything about how it got there',
+     here:null}
+  ];
+
+  /* Non-implication over every pair, not adjacent ones: the dangerous
+   * collapses skip. Answers for any two stages in either direction, because
+   * reading "delivered" off "paid" is as wrong as the reverse. */
+  K.commerceGap = (a, b) => {
+    const i = K.COMMERCE.findIndex(x => x.stage === a);
+    const j = K.COMMERCE.findIndex(x => x.stage === b);
+    if (i < 0 || j < 0 || i === j) return null;
+    const lo = K.COMMERCE[Math.min(i, j)], hi = K.COMMERCE[Math.max(i, j)];
+    return lo.stage + ' does not establish ' + hi.stage + ': ' + lo.owner
+         + ' knows ' + lo.knows + ' and not ' + hi.knows + '. Only ' + hi.owner
+         + ' can establish that.';
+  };
+
+  /* What this deployment actually reaches, probed rather than declared. */
+  K.commerceReached = async () => {
+    const out = {};
+    for (const s of K.COMMERCE)
+      out[s.stage] = {reached:false, why:'no owner for this is admitted here'};
+    const book = await K.surface('capabilities');
+    if (book.ok && book.records.length)
+      out.Product = {reached:true, why:book.records.length + ' in the native book'};
+    const cap = await K.get('/capability');
+    if (cap.ok && (cap.body.capabilities||[]).length) {
+      const n = cap.body.capabilities.length;
+      out.Listing = {reached:true, why:n + ' carried by three carriers'};
+      out.Offer   = {reached:true, why:n + ' with terms a seller will accept'};
+      const first = cap.body.capabilities[0];
+      const q = await K.get('/mpp/quote?capability=' + encodeURIComponent(first.name));
+      if (q.ok) out.Quote = {reached:true, why:'priced for this caller, holding nothing'};
+      try {
+        const g = await fetch(first.resource, {headers:{Accept:'application/json'}});
+        if (g.status === 402) {
+          const b = await g.json();
+          const settles = b.settlement && b.settlement.facilitator_configured;
+          out.Payment = {reached:false,
+            why:'the resource answers 402 and wants a charge; nothing has authorized one'};
+          out.Settlement = {reached:false,
+            why: settles ? 'a facilitator is configured and nothing has settled'
+                         : 'facilitator_configured is false, so nothing here can settle at all'};
+        }
+      } catch (_) {}
+    }
+    const ep = await K.get('/epcis/events');
+    if (ep.ok) out.Delivery = {reached:false,
+      why: ep.body.empty_reason || 'the event list is empty'};
+    return out;
+  };
+
+
+  /* ---- the mark ----------------------------------------------------------
+   *
+   * Aurekai x Bonfyre, as a lockup rather than a word. Bonfyre is the engine;
+   * Aurekai is the larger umbrella, and the two plates say which is which
+   * before anybody reads a sentence about it.
+   *
+   *   [ knight ]  x  [ BY ]  BONFYRE
+   *     paper          ink
+   *
+   * The knight is an engraving, so it keeps a paper ground on every theme --
+   * inverting it for dark mode would turn a woodcut into a photographic
+   * negative. The wordmark plate takes the page's ink instead, which is what
+   * makes the pair read as two things beside each other rather than one badge.
+   *
+   * Every surface here runs a different donor's chrome, so this brings its own
+   * styles, scoped and injected once, and depends on no donor class.
+   */
+  K.MARK_CSS = `
+.bf-mk{display:inline-flex;align-items:center;gap:.5rem;margin-right:1.1rem;
+  text-decoration:none;color:inherit;background:none;border:0;padding:0;cursor:pointer;
+  font:inherit;line-height:1;flex:0 0 auto}
+.bf-mk-plate{width:2.5rem;height:2.5rem;border-radius:.75rem;display:grid;place-items:center;
+  flex:0 0 auto;overflow:hidden;border:1px solid rgba(128,128,128,.35);
+  transition:transform .14s ease,box-shadow .14s ease}
+.bf-mk:hover .bf-mk-plate{transform:translateY(-1px);box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.bf-mk-knight{background:#f4f2ec}
+.bf-mk-knight img{width:88%;height:88%;object-fit:contain;display:block;mix-blend-mode:multiply}
+.bf-mk-by{background:#0e1210;color:#f2f4f0;
+  font:800 .82rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.04em}
+.bf-mk-x{font:400 .78rem/1 ui-monospace,monospace;opacity:.45;flex:0 0 auto}
+.bf-mk-word{font:800 .95rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.045em;
+  white-space:nowrap}
+.bf-mk-sm .bf-mk-plate{width:1.75rem;height:1.75rem;border-radius:.5rem}
+.bf-mk-sm .bf-mk-by{font-size:.62rem}
+.bf-mk-sm .bf-mk-word{font-size:.8rem}
+.bf-mk-pop{position:fixed;z-index:2147483000;width:min(23rem,calc(100vw - 2rem));
+  background:#0e1210;color:#e9efe6;border:1px solid #2a332c;border-radius:.75rem;
+  box-shadow:0 10px 40px rgba(0,0,0,.45);padding:1rem 1.05rem;
+  font:400 .82rem/1.5 ui-sans-serif,system-ui,sans-serif}
+.bf-mk-pop[hidden]{display:none}
+.bf-mk-pop h3{margin:0 0 .15rem;font:700 .95rem/1.2 ui-sans-serif,system-ui,sans-serif}
+.bf-mk-pop .bf-mk-sub{margin:0 0 .7rem;opacity:.62;
+  font:400 .72rem/1.4 ui-monospace,monospace}
+.bf-mk-pop p{margin:0 0 .6rem}
+.bf-mk-pop dl{margin:.7rem 0 0;display:grid;grid-template-columns:auto 1fr;gap:.2rem .7rem;
+  font:400 .72rem/1.5 ui-monospace,monospace}
+.bf-mk-pop dt{opacity:.5;text-transform:uppercase;letter-spacing:.08em;font-size:.62rem;
+  align-self:center}
+.bf-mk-pop dd{margin:0;word-break:break-word}
+.bf-mk-pop .bf-mk-hosts{display:flex;gap:.45rem;flex-wrap:wrap;margin-top:.7rem}
+.bf-mk-pop .bf-mk-hosts a{color:#b9d49a;text-decoration:none;
+  font:400 .72rem/1 ui-monospace,monospace;border:1px solid #2a332c;border-radius:999px;
+  padding:.28rem .55rem}
+.bf-mk-pop .bf-mk-hosts a[aria-current]{background:#1b2a1d;color:#e9efe6}
+.bf-mk-scrim{position:fixed;inset:0;z-index:2147482999;background:transparent}
+.bf-mk-scrim[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){.bf-mk:hover .bf-mk-plate{transform:none}}
+`;
+
+  K.markStyles = () => {
+    if (document.getElementById('bf-mk-style')) return;
+    const st = document.createElement('style');
+    st.id = 'bf-mk-style';
+    st.textContent = K.MARK_CSS;
+    document.head.appendChild(st);
+  };
+
+  /* Aurekai x Bonfyre. Pass {word:false} for a chrome that has no room for the
+   * wordmark, {small:true} for a dense header. */
+  K.mark = (opts) => {
+    opts = opts || {};
+    K.markStyles();
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'bf-mk' + (opts.small ? ' bf-mk-sm' : '');
+    b.setAttribute('aria-haspopup', 'dialog');
+    b.setAttribute('aria-expanded', 'false');
+    b.title = 'Aurekai × Bonfyre — what this is';
+    b.innerHTML =
+      '<span class="bf-mk-plate bf-mk-knight">'
+    + '<img src="/assets/aurekai-knight.png" alt="" width="40" height="40" '
+    + 'loading="eager" decoding="async"></span>'
+    + '<span class="bf-mk-x" aria-hidden="true">×</span>'
+    + '<span class="bf-mk-plate bf-mk-by">BŸ</span>'
+    + (opts.word === false ? '' : '<span class="bf-mk-word">BONFŸRE</span>');
+    b.setAttribute('aria-label', 'Aurekai times Bonfyre');
+    b.addEventListener('click', (e) => { e.preventDefault(); K.markPopover(b); });
+    return b;
+  };
+
+  /* Swap a placeholder for the mark, keeping whatever spacing classes the
+   * donor's own header put on that slot. replaceWith drops them otherwise, and
+   * the mark ends up welded to the nav beside it. */
+  K.mountMark = (id, opts) => {
+    const slot = document.getElementById(id || 'bf-mk');
+    if (!slot) return null;
+    const m = K.mark(opts);
+    if (slot.className) m.className += ' ' + slot.className;
+    slot.replaceWith(m);
+    return m;
+  };
+
+  K.markPopover = async (anchor) => {
+    let pop = document.getElementById('bf-mk-pop');
+    let scrim = document.getElementById('bf-mk-scrim');
+    if (pop && !pop.hidden) { close(); return; }
+    if (!pop) {
+      scrim = document.createElement('div');
+      scrim.id = 'bf-mk-scrim'; scrim.className = 'bf-mk-scrim'; scrim.hidden = true;
+      pop = document.createElement('div');
+      pop.id = 'bf-mk-pop'; pop.className = 'bf-mk-pop'; pop.hidden = true;
+      pop.setAttribute('role', 'dialog');
+      pop.setAttribute('aria-label', 'Aurekai and Bonfyre');
+      document.body.append(scrim, pop);
+      scrim.addEventListener('click', close);
+      addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+    }
+    function close() {
+      pop.hidden = true; scrim.hidden = true;
+      if (anchor) anchor.setAttribute('aria-expanded', 'false');
+    }
+
+    const a = await K.address();
+    const inst = (a.institution || '').replace(/^[a-z]+:/, '').replace(/^aurekai:/, 'aurekai / ');
+    const hosts = a.institution_hosts || [];
+    pop.innerHTML =
+      '<h3>Aurekai × BonfŸre</h3>'
+    + '<p class="bf-mk-sub">the umbrella × the engine</p>'
+    + '<p>Bonfŷre is the engine: it addresses subjects, derives work from the difference '
+    + 'between states, routes it, records what happened and projects the result. Aurekai is '
+    + 'the larger umbrella the engine runs under.</p>'
+    + '<p>This page is one projection. The same engine answers the same subjects on every '
+    + 'host below, in that territory’s own physics.</p>'
+    + '<dl>'
+    + (inst ? '<dt>institution</dt><dd>' + inst + '</dd>' : '')
+    + '<dt>host</dt><dd>' + (a.host || location.hostname) + '</dd>'
+    + '<dt>territory</dt><dd>.' + (a.territory || '') + '</dd>'
+    + (a.audience ? '<dt>audience</dt><dd>' + a.audience + '</dd>' : '')
+    + (a.world ? '<dt>world</dt><dd>' + a.world + '</dd>' : '')
+    + '</dl>'
+    + (hosts.length > 1
+        ? '<div class="bf-mk-hosts">' + hosts.map(h =>
+            '<a href="' + location.protocol + '//' + h.host + location.pathname + '"'
+            + (h.host === location.hostname ? ' aria-current="page"' : '')
+            + '>.' + h.territory + '</a>').join('') + '</div>'
+        : '')
+    + '<div class="bf-mk-hosts"><a href="/territory">the address plane</a>'
+    + '<a href="/">the estate</a></div>';
+
+    pop.hidden = false; scrim.hidden = false;
+    if (anchor) {
+      anchor.setAttribute('aria-expanded', 'true');
+      const r = anchor.getBoundingClientRect();
+      pop.style.top = Math.min(r.bottom + 8, innerHeight - pop.offsetHeight - 8) + 'px';
+      pop.style.left = Math.max(8, Math.min(r.left, innerWidth - pop.offsetWidth - 8)) + 'px';
+    }
+  };
+
+  K.nav = (current) => {
+    const items = [
+      ['/discover', 'Discover'], ['/board', 'Boards'], ['/community', 'Community'],
+      ['/listings', 'Listings'], ['/parcels', 'Parcels'],
+      ['/inbox', 'Inbox'], ['/channels', 'Channels'], ['/stage', 'Stage'],
+      ['/territory', 'Territory']
+    ];
+    const nav = document.createElement('nav');
+    nav.className = 'k-nav';
+    nav.setAttribute('aria-label', 'Surfaces');
+    for (const [href, label] of items) {
+      const a = document.createElement('a');
+      a.href = href; a.textContent = label;
+      if (href === current) a.setAttribute('aria-current', 'page');
+      nav.appendChild(a);
+    }
+    return nav;
+  };
+
+  window.K = K;
+})();
+</script>
+<script>
+
+/* Aurekai's subjects inside Pinry's pin grid.
+ *
+ * The structure is Pinry's, from pinry-spa/src/components/Pins.vue:
+ * #pins-container holds a masonry container of .grid.pin-masonry items, each
+ * one a .pin-card.grid-item carrying an image and a .pin-footer with a
+ * .description and a .details row. The layout engine is the one Pinry uses --
+ * Masonry, through vue-masonry upstream and directly here.
+ *
+ * What is Aurekai's: the records, and the three things Pinry never has to say --
+ * a territory can refuse, a projection can be empty rather than absent, and
+ * saving a pin tells the subject nothing.
+ */
+(async () => {
+
+  /* Aurekai x Bonfyre, one lockup, every surface. */
+  K.mountMark('bf-mk', {small: true});
+  const esc = s => String(s==null?'':s).replace(/[&<>"]/g,
+    c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const hue = s => {let h=0;for(const c of String(s))h=(h*31+c.charCodeAt(0))%360;return h;};
+  const seed = s => {let h=2166136261;for(const c of String(s))h=(h^c.charCodeAt(0))*16777619>>>0;
+    return h>>>0;};
+  const initials = s => String(s).replace(/[^a-z0-9 ]/gi,' ').trim().split(/\s+/)
+    .slice(0,2).map(w=>w[0]).join('').toUpperCase()||'?';
+
+  let tt; const toast = t => {
+    let b=document.getElementById('pn-toast');
+    if(!b){b=document.createElement('div');b.id='pn-toast';
+      b.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:900;'
+        +'background:#333;color:#fff;border-radius:4px;padding:11px 15px;font-size:13.5px;'
+        +'max-width:min(540px,90vw);line-height:1.45;box-shadow:0 3px 14px rgba(0,0,0,.28)';
+      document.body.appendChild(b);}
+    b.textContent=t;b.style.display='block';
+    clearTimeout(tt);tt=setTimeout(function(){b.style.display='none';},4400);
+  };
+
+  /* Palettes only; the physics owns the verbs, the ordering and the caveat. */
+  const TERR = {
+    live:{a:[0.98,0.35,0.27],b:[0.55,0.82,0.16],label:'.live'},
+    life:{a:[0.42,0.72,0.30],b:[0.16,0.44,0.52],label:'.life'},
+    shop:{a:[0.98,0.77,0.30],b:[0.62,0.30,0.72],label:'.shop'},
+    work:{a:[0.35,0.55,0.85],b:[0.20,0.28,0.42],label:'.work'}
+  };
+  for (const t of Object.keys(TERR)) TERR[t].cant = K.physics(t).cant;
+
+  /* Pinry pins are photographs. These are subjects that never had one, so the
+     image slot carries a field drawn from the record itself, at the column
+     width Pinry's grid declares. Heights vary the way a pin wall's do, but the
+     variation comes from the record rather than from chance. */
+  const field = (canvas, spec) => {
+    const ctx = canvas.getContext('2d',{alpha:false});
+    let w=0,h=0,raf=0,t=Math.random()*300;
+    const rnd=(()=>{let x=spec.seed||1;return()=>((x=(x*1664525+1013904223)>>>0)/4294967296);})();
+    const A=spec.pal.a,B=spec.pal.b,E=spec.energy;
+    const blobs=Array.from({length:5},()=>({x:rnd(),y:rnd(),r:0.3+rnd()*0.45,
+      sx:(rnd()-0.5)*0.00032*(0.5+E),sy:(rnd()-0.5)*0.00032*(0.5+E),
+      c:rnd()<0.5?A:B,p:rnd()*6.28}));
+    const size=()=>{const d=Math.min(devicePixelRatio||1,1.5);
+      w=Math.max(1,canvas.clientWidth*d);h=Math.max(1,canvas.clientHeight*d);
+      canvas.width=w;canvas.height=h;};
+    const rgba=(c,a)=>'rgba('+(c[0]*255|0)+','+(c[1]*255|0)+','+(c[2]*255|0)+','+a+')';
+    const draw=()=>{
+      t+=1;
+      ctx.fillStyle='#0a0c0b';ctx.fillRect(0,0,w,h);
+      ctx.globalCompositeOperation='lighter';
+      for(const b of blobs){
+        const px=(b.x+Math.sin(t*b.sx*60+b.p)*0.14)*w;
+        const py=(b.y+Math.cos(t*b.sy*60+b.p)*0.14)*h;
+        const r=b.r*Math.max(w,h)*(0.85+0.15*Math.sin(t*0.004+b.p));
+        const g=ctx.createRadialGradient(px,py,0,px,py,r);
+        g.addColorStop(0,rgba(b.c,0.42+0.18*E));
+        g.addColorStop(0.5,rgba(b.c,0.12));
+        g.addColorStop(1,rgba(b.c,0));
+        ctx.fillStyle=g;ctx.beginPath();ctx.arc(px,py,r,0,6.2832);ctx.fill();
+      }
+      ctx.globalCompositeOperation='source-over';
+      raf=requestAnimationFrame(draw);
+    };
+    new ResizeObserver(size).observe(canvas);size();
+    return {start(){if(!raf)raf=requestAnimationFrame(draw);},
+            stop(){cancelAnimationFrame(raf);raf=0;}};
+  };
+
+  const HERE = K.territory;
+  const ORDER = [HERE, ...['live','life','shop','work'].filter(t=>t!==HERE)];
+  const results = await Promise.all(ORDER.map(t=>K.surface('night-'+t)));
+
+  const PINS=[], refused=[];
+  ORDER.forEach((t,i)=>{
+    const r=results[i];
+    if(!r.ok){refused.push({t,r});return;}
+    /* each territory's own order, before the weave interleaves them */
+    for(const rec of K.order(r.records, t)){
+      if(!rec.name) continue;
+      const note = rec.tonight_status || rec.personal_note || rec.offer_note || '';
+      const pct = (rec.capacity_note||'').match(/(\d+)\s*percent/);
+      const usd = rec.offer_usd ? Number(rec.offer_usd) : null;
+      const tags=[];
+      if(pct) tags.push(pct[1]+'% reported');
+      const cap=(rec.capacity_note||'').match(/(\d[\d,]*)\s*capacity/);
+      if(cap) tags.push(cap[1]+' capacity');
+      if(usd!==null) tags.push('$'+usd.toFixed(2));
+      if(rec.safety_note) tags.push('way out');
+      /* Pin height is the record's own weight: how much it published. A wall of
+         identical tiles would be a table wearing a pin board's clothes. */
+      const weight = Object.values(rec).filter(Boolean).join(' ').length;
+      PINS.push({name:rec.name, note, terr:t, rec, tags,
+        h: Math.max(170, Math.min(340, 150 + weight)),
+        energy: pct ? Number(pct[1])/100 : usd!==null ? Math.min(1,usd/40) : 0.35,
+        seed: seed(rec.name+t), pal: TERR[t]});
+    }
+  });
+  const byTerr={}; for(const p of PINS)(byTerr[p.terr]=byTerr[p.terr]||[]).push(p);
+  const wall=[]; let more=true;
+  while(more){more=false;
+    for(const t of ORDER){const q=byTerr[t];if(q&&q.length){wall.push(q.shift());more=true;}}}
+
+  document.getElementById('pn-terr').innerHTML = ['live','life','shop','work'].map(t=>
+    '<a class="t" '+(t===HERE?'aria-current="page"':'')+' href="'
+    + location.protocol+'//'+location.hostname.replace(/\.(life|live|shop|work)$/,'.'+t)
+    + location.pathname+'">'+TERR[t].label+'</a>').join('');
+  document.getElementById('pn-links').innerHTML =
+    [['/discover','Discover'],['/stage','Stage'],['/channels','Channels'],
+     ['/listings','Listings'],['/parcels','Parcels'],['/territory','Territory']]
+    .map(p=>'<a class="t" href="'+p[0]+'">'+p[1]+'</a>').join('');
+
+  const SAVE='bonfyre_board_saved';
+  let saved=new Set(); try{saved=new Set(JSON.parse(localStorage.getItem(SAVE)||'[]'));}catch(_){}
+  const persist=()=>{try{localStorage.setItem(SAVE,JSON.stringify([...saved]));}catch(_){}};
+
+  const grid = document.getElementById('pn-grid');
+  const notes = document.getElementById('pn-notes');
+
+  if (!wall.length) {
+    notes.innerHTML = '<div class="pn-refuse"><b>Nothing is pinned here right now.</b>'
+      + '<p style="margin:6px 0 0;font-size:13px">The patterns answered and returned nothing. '
+      + 'An empty projection, not a refusal.</p></div>';
+  }
+
+  const fields=[];
+  for (const p of wall) {
+    const item=document.createElement('div');
+    item.className='grid pin-masonry';
+    item.innerHTML =
+      '<div class="pin-card grid-item">'
+    + '<div class="pin-preview-image" style="height:'+p.h+'px">'
+    + '<canvas width="240" height="'+p.h+'" style="height:'+p.h+'px" aria-hidden="true"></canvas>'
+    + '<span class="pin-terr">'+esc(TERR[p.terr].label)+'</span>'
+    + '<span class="pin-gen">generated</span>'
+    + '<span class="pin-shade"><b>'+esc(p.name)+'</b></span>'
+    + '</div>'
+    + '<div class="pin-footer">'
+    + (p.note ? '<div class="description">'+esc(p.note)+'</div>' : '')
+    + '<div class="details"><div class="is-pulled-left">'
+    + '<img class="avatar" width="30" height="30" loading="lazy" alt="" '
+    + 'style="background:hsl('+hue(p.name)+' 40% 36%)" src="'
+    + K.avatar(p.name, 'subject', 60) + '"></div>'
+    + '<div class="pin-info"><span class="dim">projected by <span><a href="#">'
+    + esc(TERR[p.terr].label)+'</a></span>'
+    + (p.tags.length ? '&nbsp;in&nbsp;' + p.tags.map(t=>
+        '<span class="pin-tag tag is-light">'+esc(t)+'</span>').join('') : '')
+    + '</span></div></div>'
+    + '<div style="padding:0 10px 10px"><button class="button is-small pn-save" '
+    + 'aria-pressed="'+saved.has(p.name)+'">'+(saved.has(p.name)?'Saved':'Save')+'</button>'
+    + '<button class="button is-small is-text pn-what">What this is</button></div>'
+    + '</div></div>';
+
+    const sv=item.querySelector('.pn-save');
+    sv.addEventListener('click',()=>{
+      if(saved.has(p.name)) saved.delete(p.name); else saved.add(p.name);
+      persist();
+      sv.setAttribute('aria-pressed',String(saved.has(p.name)));
+      sv.textContent = saved.has(p.name)?'Saved':'Save';
+      toast(saved.has(p.name)
+        ? 'Saved in this browser only. '+p.name+' was not told, and nothing is holding anything.'
+        : 'Unsaved here.');
+    });
+    item.querySelector('.pn-what').addEventListener('click',()=>{
+      const rows=Object.entries(p.rec).filter(kv=>kv[1]&&kv[0]!=='name')
+        .map(kv=>kv[0].replace(/_/g,' ')+': '+kv[1]).join(' · ');
+      toast(p.name+' — '+rows+'. Cannot be inferred: '+TERR[p.terr].cant+'.');
+    });
+    grid.appendChild(item);
+    fields.push(field(item.querySelector('canvas'), p));
+    requestAnimationFrame(()=>item.classList.add('image-loaded'));
+  }
+
+  notes.insertAdjacentHTML('beforeend',
+    (refused.length
+      ? refused.map(x=>'<div class="pn-refuse"><b>.'+x.t+' refused ('+x.r.status+')</b>'
+        + '<p style="margin:6px 0 8px;font-size:13px">Its subjects are not missing. They need an '
+        + 'admitted session, and the other territories answered without one.</p>'
+        + '<a class="button is-small is-link" href="/login">Sign in</a></div>').join('')
+      : '')
+    + '<p class="pn-cant">Cannot be inferred: a pinned subject is not a claim on it, and the '
+    + 'field on each pin is drawn from that record rather than being a photograph of anywhere. '
+    + 'Pin height is how much the record published, not how important it is.</p>'
+    + '<p class="pn-cant" style="border-left-color:#6f9821;color:#3f5142">'
+    + esc(K.physics(HERE).question) + ' This board is <strong>'
+    + esc(K.physics(HERE).principle) + '</strong>, ordered by '
+    + esc(K.physics(HERE).orders_by) + '.</p>'
+    + '<p class="pn-src">Read live from '
+    + ORDER.map(t=>'<code>/_surface/night-'+t+'</code>').join(', ') + '. '
+    + K.avatarAttribution + '</p>');
+
+  /* Pinry lays out with Masonry; so does this. */
+  const msnry = new Masonry(grid, {itemSelector:'.grid-item', columnWidth:'.grid-sizer',
+    gutter:'.gutter-sizer', transitionDuration:'0.3s', percentPosition:false});
+  addEventListener('resize', ()=>msnry.layout());
+  setTimeout(()=>msnry.layout(), 60);
+
+  const io=new IntersectionObserver(es=>{
+    for(const e of es){
+      const i=[...grid.querySelectorAll('.pin-masonry')].indexOf(e.target);
+      if(i<0)continue;
+      if(e.isIntersecting) fields[i].start(); else fields[i].stop();
+    }
+  },{rootMargin:'300px'});
+  for(const c of grid.querySelectorAll('.pin-masonry')) io.observe(c);
+})();
+
+</script></body></html>

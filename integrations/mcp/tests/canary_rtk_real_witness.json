@@ -1,0 +1,105 @@
+{
+  "schema": "bonfyre.canary.rtk-real-witness.v1",
+  "run_id": "20261003T005419-6c3760f5",
+  "fixture_revision": "bonfyre-canary-fixtures-bun-v1",
+  "fixture_runtime": "bun",
+  "fixture_source_sha256": "4defc9cfd72f7ade7016da601574874caf0accca1ac8140dd048437c2e2c8b9a",
+  "original_run": {
+    "path": "/private/tmp/bonfyre-canary-real-rtk-7ghbJh/canary/runs/20261003T005419-6c3760f5/run.json",
+    "sha256": "9b4c9dedfd27558c2566db842b48b0e29600d893f0d84d2f34e8f0767c352d13"
+  },
+  "provider_version": "rtk 0.44.0",
+  "provider_version_probe": {
+    "argv": [
+      "/opt/homebrew/Cellar/rtk/0.44.0/bin/rtk",
+      "--version"
+    ],
+    "duration_ms": 4,
+    "exit_code": 0,
+    "stderr": "",
+    "stdout": "rtk 0.44.0\n",
+    "timed_out": false,
+    "runtime_boundary": {
+      "kind": "native",
+      "resolved_launcher": "/opt/homebrew/Cellar/rtk/0.44.0/bin/rtk",
+      "sha256": "6108aed3039d930c7253e4459fc7f80242879724b91a569e7e81cf3f02b0db14"
+    }
+  },
+  "state": "failed",
+  "certificate_digest": "36ad11f9a6ee60c3095b6098a7850db1924c61680b535004c7c9034d3bb0a9ea",
+  "claims": [
+    {
+      "claim": "RTK preserves exit behavior.",
+      "passed": true
+    },
+    {
+      "claim": "RTK preserves changed-file identity.",
+      "passed": true
+    },
+    {
+      "claim": "Both test runners observed the intended assertion failure, not a launch error.",
+      "passed": true
+    },
+    {
+      "claim": "RTK preserves failing-test identity.",
+      "passed": false
+    },
+    {
+      "claim": "RTK reduces aggregate meaningful output by at least 15%.",
+      "passed": true
+    }
+  ],
+  "test_pair": {
+    "pair": "test",
+    "raw": {
+      "argv": [
+        "bun",
+        "test",
+        "./tests/r4.test.mjs"
+      ],
+      "cwd": "/private/tmp/bonfyre-canary-real-rtk-7ghbJh/canary/runs/20261003T005419-6c3760f5/fixtures/rtk",
+      "duration_ms": 15,
+      "exit_code": 1,
+      "overflow": null,
+      "stderr": "\ntests/r4.test.mjs:\n(pass) many passing assertions [0.14ms]\n1 | import { test, expect } from 'bun:test';\n2 | import { importantValue } from '../src/important.mjs';\n3 | test('many passing assertions', () => { for (let index = 0; index < 100; index++) expect(index + 1).toBe(index + 1); });\n4 | test('R4 failure sentinel', () => { expect(importantValue()).toBe('R4_EXPECTED_SENTINEL'); });\n                                                                 ^\nerror: expect(received).toBe(expected)\n\nExpected: \"R4_EXPECTED_SENTINEL\"\nReceived: \"R4_ACTUAL_FAILURE_SENTINEL\"\n\n      at <anonymous> (/private/tmp/bonfyre-canary-real-rtk-7ghbJh/canary/runs/20261003T005419-6c3760f5/fixtures/rtk/tests/r4.test.mjs:4:62)\n(fail) R4 failure sentinel [1.14ms]\n\n 1 pass\n 1 fail\n 101 expect() calls\nRan 2 tests across 1 file. [9.00ms]\n",
+      "stdout": "bun test v1.3.13 (bf2e2cec)\n",
+      "timed_out": false
+    },
+    "rtk": {
+      "argv": [
+        "rtk",
+        "test",
+        "bun",
+        "test",
+        "./tests/r4.test.mjs"
+      ],
+      "cwd": "/private/tmp/bonfyre-canary-real-rtk-7ghbJh/canary/runs/20261003T005419-6c3760f5/fixtures/rtk",
+      "duration_ms": 20,
+      "exit_code": 1,
+      "overflow": null,
+      "stderr": "",
+      "stdout": "OUTPUT (last 5 lines):\n   1 pass\n   1 fail\n   101 expect() calls\n  Ran 2 tests across 1 file. [5.00ms]\n\n",
+      "timed_out": false
+    }
+  },
+  "compression": {
+    "compact_bytes": 22726,
+    "raw_bytes": 95687,
+    "reduction_ratio": 0.7624964728751031
+  },
+  "recursive_ingestion": [
+    {
+      "provider": "rtk",
+      "capability": "context.tool_compression",
+      "certificate_digest": "36ad11f9a6ee60c3095b6098a7850db1924c61680b535004c7c9034d3bb0a9ea",
+      "result": {
+        "state": "skipped",
+        "reason": "recursive_owner_unavailable"
+      }
+    }
+  ],
+  "limitations": [
+    "One or more semantic-parity or reduction assertions failed.",
+    "Bun fixture revision does not certify historical Python test-workload parity."
+  ]
+}

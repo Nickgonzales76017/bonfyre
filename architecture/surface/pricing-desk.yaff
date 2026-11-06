@@ -1,0 +1,42 @@
+atlas surface
+
+architecture pricing-desk
+  canonical_name Pricing desk
+  family surface
+  domain Surface / Prices, plans and margins
+  layer application
+  semantic_question For a capability with a cost to serve and a stated demand, which unit price earns most, where does it break even, how do plans with fees, included use and overage fare against a spread of customers, and what range do buyers call acceptable?
+  purpose A Work Samples workspace from the claude-skills commercial pricing donors as an instrument: a profit and volume curve with a draggable price, cost-to-serve and demand assumptions beside it, plans tried against a seeded lognormal spread of monthly use with each customer picking their cheapest option, an optional Van Westendorp survey shown as the acceptable band, and a downloadable proposal; the sample is the five capabilities this estate's own desk lists with no asking price
+  maturity implemented
+  consumes https://aurekai.life/studio/ (retained desk snapshot with SHA-256) and each capability's live not_for_sale answer
+  publishes price proposal JSON with set_by null
+  node_types CostToServe, DemandModel, PricePoint, Plan, UsageSpread, SurveyAnswer, PriceProposal
+  internal_calculus constant-elasticity demand through one stated point, with the closed-form optimum unit cost × e ÷ (e − 1) shown beside the searched optimum; a linear alternative falls to nobody at a stated multiple
+  internal_calculus Van Westendorp range from the crossings of too cheap with expensive and cheap with too expensive; answers whose four prices are out of order are dropped and counted
+  invariant a proposal never sets a price; setting one stays the desk's act by a person with the right to do it (the human line)
+  invariant costs and demand are labelled assumptions; the sample carries no invented survey answers
+  witness components/BonfyreServiceSite/tests/pricing-desk.test.mjs checks cost to serve, break-even without float drift, demand through its reference point, the searched optimum against the closed form (0.21 at elasticity 2), plan choice by cheapest bill with pay-per-use, lognormal spread percentiles, Van Westendorp range with a dropped inconsistent answer, and a proposal with set_by null
+  witness components/BonfyreServiceSite/tests/queues-research-browser.mjs in headless Chrome at 1440 and 390 px: five unpriced capabilities listed, dragging the price changed the readout, plans worked out
+  witness packs/aurekai-work-samples/site/unpriced-capabilities-20261019.json retains the desk's five rows and each address's 503 not_for_sale answer
+  forbidden_inference a profit-maximising price by the model -> a price the market will pay; demand is an assumption through one point
+  forbidden_inference a downloaded proposal -> a price in the service book
+  known_gap not yet published; the deploy is the operator's to run
+  known_gap measured cost per call is not read from the estate's own run receipts yet; the sample's costs are assumptions
+  source_path components/BonfyreServiceSite/pricing-desk.mjs
+  source_path components/BonfyreServiceSite/pricing-desk-client.mjs
+  source_path components/BonfyreServiceSite/pricing-desk-material.mjs
+  source_path components/BonfyreServiceSite/pricing-desk.css
+  source_path components/BonfyreServiceSite/sections/pricing.mjs
+  source_path components/BonfyreServiceSite/tools/retain-pricing-sample.mjs
+  source_path components/BonfyreServiceSite/tests/pricing-desk.test.mjs
+  source_lineage 2026-10-19 claude-skills commercial/* at 19392f7a; earlier ChatGPT build was sandbox-only
+
+interaction service-site-packages-pricing-desk
+  source service-site
+  destination pricing-desk
+  relation packages_workspace
+  preserves the retained desk rows and capability answers with their digest
+  drops nothing a visitor enters
+  forbidden_inference a packaged workspace -> a published one
+  invalidates_on pricing-desk sources, retained desk snapshot
+  witness components/BonfyreServiceSite/pricing-desk-material.mjs

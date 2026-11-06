@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * BonfyreTone — speech tone/emotion/rhythm extraction via OpenSMILE.
  *
@@ -21,6 +28,9 @@
 #include <time.h>
 #include <unistd.h>
 #include <bonfyre.h>
+#include <bf_voice_fingerprint.h>
+#include "../../../lib/libbonfyre/include/bf_help.h"
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 
 /* ── helpers ─────────────────────────────────────────────────── */
 
@@ -39,37 +49,21 @@ static int run_cmd(const char *const argv[]) {
     return WIFEXITED(st) ? WEXITSTATUS(st) : -1;
 }
 
-/* ── OpenSMILE Python wrapper ────────────────────────────────── */
+/* ── Native OpenSMILE command boundary ───────────────────────── */
 
-/* Generates a tiny Python script that calls opensmile and dumps CSV.
- * This mirrors how BonfyreTranscribe calls whisper — subprocess of python3. */
+/* OpenSMILE is a native external organ. The configured eGeMAPS config is
+ * explicit so no hidden package environment is reconstructed. */
 static int run_opensmile_extract(const char *audio, const char *csv_out) {
-    char script[2048];
-    snprintf(script, sizeof(script),
-        "import opensmile, sys\n"
-        "smile = opensmile.Smile(\n"
-        "    feature_set=opensmile.FeatureSet.eGeMAPSv02,\n"
-        "    feature_level=opensmile.FeatureLevel.Functionals\n"
-        ")\n"
-        "y = smile.process_file('%s')\n"
-        "y.to_csv('%s')\n"
-        "print(len(y.columns))\n",
-        audio, csv_out);
-
-    /* write temp script */
-    char tmp_py[PATH_MAX];
-    snprintf(tmp_py, sizeof(tmp_py), "%s.opensmile_extract.py", csv_out);
-    FILE *f = fopen(tmp_py, "w");
-    if (!f) { perror("fopen script"); return -1; }
-    fputs(script, f);
-    fclose(f);
-
-    const char *python = getenv("BONFYRE_PYTHON3");
-    if (!python) python = "python3";
-    const char *argv[] = { python, tmp_py, NULL };
-    int rc = run_cmd(argv);
-    unlink(tmp_py);
-    return rc;
+    const char *binary = getenv("BONFYRE_OPENSMILE_BINARY");
+    const char *config = getenv("BONFYRE_OPENSMILE_CONFIG");
+    if (!binary || !binary[0] || !config || !config[0]) {
+        fprintf(stderr,
+                "[tone] Native OpenSMILE requires BONFYRE_OPENSMILE_BINARY and "
+                "BONFYRE_OPENSMILE_CONFIG.\n");
+        return -1;
+    }
+    const char *argv[] = { binary, "-C", config, "-I", audio, "-O", csv_out, NULL };
+    return run_cmd(argv);
 }
 
 /* ── CSV → JSON conversion ───────────────────────────────────── */
@@ -182,6 +176,54 @@ static void write_profile(FILE *out, const Feature *feats, int n,
     fprintf(out, "}\n");
 }
 
+/* ── engines ────────────────────────────────────────────────── */
+
+#define SET_EGEMAPS "eGeMAPSv02"
+
+static int opensmile_configured(void) {
+    const char *binary = getenv("BONFYRE_OPENSMILE_BINARY");
+    const char *config = getenv("BONFYRE_OPENSMILE_CONFIG");
+    return binary && binary[0] && access(binary, X_OK) == 0 &&
+           config && config[0] && access(config, R_OK) == 0;
+}
+
+/* Measures one recording with whichever engine this machine has, and says
+ * which. OpenSMILE, when it is configured, gives the eGeMAPS set. Without it
+ * the estate's own extractor reads the samples directly and gives its own,
+ * smaller set under its own name; it takes 16-bit PCM WAV, which is what the
+ * media-prep organ writes. The two sets are different measurements and are
+ * never passed off as each other. Returns the number of features, 0 on
+ * failure. */
+static int tone_features(const char *audio, const char *csv, Feature *out, int max, const char **set) {
+    if (opensmile_configured()) {
+        *set = SET_EGEMAPS;
+        if (run_opensmile_extract(audio, csv) != 0) {
+            fprintf(stderr, "[tone] OpenSMILE extraction failed\n");
+            return 0;
+        }
+        return parse_csv(csv, out, max);
+    }
+    *set = BF_VOICE_FINGERPRINT_SET;
+    WavAudio wav = wav_read(audio);
+    if (!wav.samples || wav.n_samples <= 0) {
+        fprintf(stderr, "[tone] %s is not 16-bit PCM WAV, and no OpenSMILE is configured to read anything else\n", audio);
+        free(wav.samples);
+        return 0;
+    }
+    VoiceFingerprint fp = extract_fingerprint_wav(wav.samples, wav.n_samples, wav.sample_rate);
+    free(wav.samples);
+    if (fp.count == 0) {
+        fprintf(stderr, "[tone] %s is too short to measure\n", audio);
+        return 0;
+    }
+    int n = fp.count < max ? fp.count : max;
+    for (int i = 0; i < n; i++) {
+        snprintf(out[i].name, sizeof(out[i].name), "%s", fp.features[i].name);
+        out[i].value = fp.features[i].value;
+    }
+    return n;
+}
+
 /* ── commands ───────────────────────────────────────────────── */
 
 static int cmd_extract(const char *audio, const char *out_dir) {
@@ -190,19 +232,11 @@ static int cmd_extract(const char *audio, const char *out_dir) {
     snprintf(csv, sizeof(csv), "%s/tone-raw.csv", out_dir);
     snprintf(json, sizeof(json), "%s/tone.json", out_dir);
 
-    fprintf(stderr, "[tone] Extracting eGeMAPSv02 features from %s\n", audio);
-    int rc = run_opensmile_extract(audio, csv);
-    if (rc != 0) {
-        fprintf(stderr, "[tone] OpenSMILE extraction failed (rc=%d)\n", rc);
-        return 1;
-    }
-
     Feature feats[MAX_FEATURES];
-    int n = parse_csv(csv, feats, MAX_FEATURES);
-    if (n == 0) {
-        fprintf(stderr, "[tone] No features parsed from CSV\n");
-        return 1;
-    }
+    const char *feature_set = "";
+    int n = tone_features(audio, csv, feats, MAX_FEATURES, &feature_set);
+    if (n == 0) return 1;
+    fprintf(stderr, "[tone] Measured %d %s features from %s\n", n, feature_set, audio);
 
     /* write JSON */
     char ts[64]; iso_ts(ts, sizeof(ts));
@@ -211,7 +245,8 @@ static int cmd_extract(const char *audio, const char *out_dir) {
     fprintf(f, "{\n  \"type\": \"tone-features\",\n");
     fprintf(f, "  \"source\": \"%s\",\n", audio);
     fprintf(f, "  \"timestamp\": \"%s\",\n", ts);
-    fprintf(f, "  \"feature_set\": \"eGeMAPSv02\",\n");
+    fprintf(f, "  \"feature_set\": \"%s\",\n", feature_set);
+    fprintf(f, "  \"engine\": \"%s\",\n", strcmp(feature_set, SET_EGEMAPS) ? "native" : "opensmile");
     fprintf(f, "  \"feature_count\": %d,\n", n);
     fprintf(f, "  \"features\": {\n");
     for (int i = 0; i < n; i++) {
@@ -231,12 +266,18 @@ static int cmd_profile(const char *audio, const char *out_dir) {
     snprintf(csv, sizeof(csv), "%s/tone-raw.csv", out_dir);
     snprintf(json, sizeof(json), "%s/profile.json", out_dir);
 
+    /* The profile's dimensions are defined on eGeMAPS feature names. Filling
+     * them from another feature set would print numbers for dimensions that
+     * were never measured, so without OpenSMILE there is no profile. */
+    if (!opensmile_configured()) {
+        fprintf(stderr, "[tone] a voice profile is defined on eGeMAPS features and needs OpenSMILE; "
+                        "extract and compare work without it\n");
+        return 2;
+    }
     fprintf(stderr, "[tone] Building voice profile for %s\n", audio);
-    int rc = run_opensmile_extract(audio, csv);
-    if (rc != 0) return 1;
-
     Feature feats[MAX_FEATURES];
-    int n = parse_csv(csv, feats, MAX_FEATURES);
+    const char *feature_set = "";
+    int n = tone_features(audio, csv, feats, MAX_FEATURES, &feature_set);
     if (n == 0) return 1;
 
     FILE *f = fopen(json, "w");
@@ -256,12 +297,11 @@ static int cmd_compare(const char *audio1, const char *audio2, const char *out_d
     snprintf(json, sizeof(json), "%s/diff.json", out_dir);
 
     fprintf(stderr, "[tone] Comparing %s vs %s\n", audio1, audio2);
-    if (run_opensmile_extract(audio1, csv1) != 0) return 1;
-    if (run_opensmile_extract(audio2, csv2) != 0) return 1;
-
     Feature fa[MAX_FEATURES], fb[MAX_FEATURES];
-    int na = parse_csv(csv1, fa, MAX_FEATURES);
-    int nb = parse_csv(csv2, fb, MAX_FEATURES);
+    const char *set_a = "", *set_b = "";
+    int na = tone_features(audio1, csv1, fa, MAX_FEATURES, &set_a);
+    int nb = tone_features(audio2, csv2, fb, MAX_FEATURES, &set_b);
+    if (na == 0 || nb == 0) return 1;
     int n = (na < nb) ? na : nb;
 
     char ts[64]; iso_ts(ts, sizeof(ts));
@@ -310,7 +350,7 @@ static int cmd_compare(const char *audio1, const char *audio2, const char *out_d
 
 static void print_usage(void) {
     fprintf(stderr,
-        "bonfyre-tone — speech tone/emotion/rhythm extraction (OpenSMILE)\n\n"
+        "bonfyre-tone — speech tone/emotion/rhythm extraction\n" "  eGeMAPS through OpenSMILE when BONFYRE_OPENSMILE_BINARY and _CONFIG are set;\n" "  otherwise the estate's own voice features, read from 16-bit PCM WAV.\n\n"
         "Usage:\n"
         "  bonfyre-tone extract <audio> [output-dir]\n"
         "  bonfyre-tone profile <audio> [output-dir]\n"
@@ -319,8 +359,22 @@ static void print_usage(void) {
 }
 
 int main(int argc, char **argv) {
-    if (argc >= 2 && strcmp(argv[1], "status") == 0) {
-        printf("{\"binary\":\"bonfyre-tone\",\"status\":\"ok\",\"version\":\"1.0.0\"}\n");
+    if (bf_help_requested(argc, argv)) { print_usage(); return 0; }
+    enum { TN_STATUS };
+    static const BfCommandEntry tone_commands[] = {
+        {"status", TN_STATUS, 0, NULL},
+    };
+    const BfCommandEntry *command = argc < 2 ? NULL : bf_command_lookup(tone_commands,
+        sizeof(tone_commands) / sizeof(tone_commands[0]), argv[1]);
+    if (command && command->id == TN_STATUS) {
+        /* Status is whether the organ can do its work, which means whether
+         * its engine is there. It used to print ok without looking. */
+        int opensmile = opensmile_configured();
+        printf("{\"binary\":\"bonfyre-tone\",\"status\":\"ok\",\"version\":\"1.1.0\","
+               "\"engine\":\"%s\",\"feature_set\":\"%s\",\"profile_available\":%s}\n",
+               opensmile ? "opensmile" : "native",
+               opensmile ? SET_EGEMAPS : BF_VOICE_FINGERPRINT_SET,
+               opensmile ? "true" : "false");
         return 0;
     }
 

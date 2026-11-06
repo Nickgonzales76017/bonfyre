@@ -1,0 +1,113 @@
+atlas commands-operator-daemon
+
+architecture autonomous-operator-native-owner
+  canonical_name AutonomousOperatorNativeOwner
+  family commands
+  domain Execution / Autonomous operator control plane
+  maturity measured
+  semantic_question Can the existing operator queue run without Python while preserving pause, model policy, accounting and uncertain-effect boundaries?
+  purpose One Bun daemon composes the existing SQLite queue and exact MCP owners instead of reimplementing project, native or remote operations; the native store supplies durable schema inspection, STOP-gated archival for inactive work, and exact reconciliation of a recorded reverted action.
+  node_types Goal
+  node_types Run
+  node_types ActionIntent
+  node_types ResponseUsage
+  state_types paused
+  state_types in_progress
+  state_types outcome_uncertain
+  state_types blocked
+  internal_calculus admitted policy -> atomic budgeted claim -> bounded Responses loop -> durable action intent -> exact gated owner -> action completion -> authoritative run disposition -> receipt projection
+  invariant STOP or disabled policy precedes database construction, event polling, catalog discovery and model requests; startup does not seed goals
+  invariant configured model and credentials remain outside generated tool descriptors; every model response repeats policy instructions and accounts usage once by response identity
+  invariant trusted checked-in schemas intersect the live tool listing; model-visible annotations cannot confer effect authority
+  invariant at most eight admitted reads overlap; mutations are ordered and recheck current policy
+  invariant action intent is durable before owner invocation; uncertain completion blocks automatic retry and claimed resolution
+  invariant only a recorded same-host owner with a provably absent process can be reclaimed; unknown, foreign and living executors are held; an abandoned run with actions requires reconciliation
+  invariant local event cursor and deduplicated goals commit together; duplicate ingestion cannot requeue an in-progress goal
+  invariant failed receipt-file projection cannot roll back an authoritative completed queue transition or replay its effects
+  forbidden_inference a model completion or resolved queue disposition -> independent verification, external effect authority or global exactly-once execution
+  forbidden_inference offline full-loop fixtures or a paused installed process -> live paid model execution, complete Python retirement or system-wide performance improvement
+  source_path integrations/mcp/operator_daemon.mjs
+  source_path integrations/mcp/operator_store.mjs
+  source_path integrations/mcp/operator_tools.mjs
+  source_path deploy/launchd/operator_cutover.mjs
+  source_path schemas/control/operator-store.cue
+  source_path cmd/BonfyreOperatorStore/src/main.c
+  witness integrations/mcp/tests/operator_store.test.mjs exercises real concurrent claims, legacy schema, midnight budgets, overflow rollback and conservative abandoned-action handling
+  witness integrations/mcp/tests/operator_tools.test.mjs exercises rich catalog gates, durable intent, uncertain outcome and real disposable native patch/test/rollback
+  witness integrations/mcp/tests/operator_daemon.test.mjs exercises stop, policy, deadlines, schema refusal, bounded concurrency, response accounting and transport redaction
+  witness integrations/mcp/tests/operator_integration.test.mjs composes the actual store and tool layer with fixture model responses, including failed receipt projection
+  witness integrations/mcp/tests/operator_cutover.json records the paused 2026-10-02 launchd promotion, Python PID exit, preserved policy and STOP hashes, no database or network descriptors and refreshed thirty-tool Project MCP witness
+  known_gap model responses in full-loop tests are fixtures, not a paid production-model execution witness
+  known_gap other legacy processes can still write the shared queue; local transactional claims are not an estate-wide exclusive execution protocol
+  known_gap file receipt replacement does not claim sudden-power-loss durability; SQLite remains the authoritative queue
+  known_gap ambiguous network failure cannot establish whether a remote effect happened; reconciliation is required
+  witness integrations/mcp/tests/operator_provider.test.mjs proves a goal past its attempts is not claimed again (the legacy loop left seed goals at 540) and a 429 insufficient_quota seen by the transport quarantines the provider after one call
+  witness cmd/BonfyreOperatorStore/tests/operator_store_test.sh proves the native substrate applies the declared queue schema at full SQLite durability, reports bounded ledger counts, refuses symlinked database paths, archives only an exact inactive goal under a same-directory STOP while retaining its ledger rows, and reconciles one running run only after its recorded action reverted
+  witness packs/no-simulation/operator-local-20261016/runs.json records why it stopped: 20,777 of 23,126 runs failed on no credits and the gateway was a tunnel to the gone Oracle host; it also retains three cycles tried on a local 3B chat model that produced no usable work, after which that provider was removed
+  invariant a provider failure is recorded only from the transport that made the request; goal or tool text cannot quarantine or clear a provider
+  known_gap the queued goals need a capable provider; the paid one has no credits. The native route command now names the tier each goal may use, but the Bun daemon does not consult it yet and does not execute the local-model or agent-relay tiers; it still knows only the paid Responses loop
+  invariant native routing only reads: it names the cheapest admissible tier for one goal (native owner, local model, admitted agent executor, paid provider, or hold) from the queue row, the policy file and caller-supplied residency, memory, lease, quality and Fabric readings; it takes no lease, loads no model, calls no provider and writes no row
+  invariant a deterministic read routes to a native owner whatever the model state; any other class may use a local checkpoint only with a passing, witnessed quality record for that exact file name and class, and only while it is leased, resident, or fits the memory spendable above the floor
+  invariant an open run, an action whose outcome is uncertain, exhausted attempts, a future retry time or a non-schedulable state holds the goal before any tier is considered; STOP holds every dispatch
+  invariant a route claims an exact provider spend of 0 only for the native, local and hold outcomes; agent-relay and paid outcomes carry a null spend because only BonfyreMeter can know it after the response
+  witness cmd/BonfyreOperatorStore/tests/route_test.sh proves on fixture stores and readings: provider down, low RAM falling to an admitted agent executor and to hold when Fabric is paused, fallback to a smaller checkpoint without quality transfer, unsupported told apart from out of memory, lease admit and lease mismatch, a failed quality record vetoing a pass, provider quarantine, recheck and historical-quota refusal, vendor quarantine, the five goal gates, input digests and a reproducible witness digest
+  forbidden_inference a route naming local_model or agent_relay -> a granted lease, a memory reservation, vendor credit, a quality result, or permission to dispatch while STOP is present
+  forbidden_inference a passing quality record for one checkpoint or class -> quality for a fallback checkpoint or another class
+  invariant quality-record is the only writer of the quality file route reads: it recomputes the verdict from the deterministically scored items and the threshold the evaluation set declared, keys the record by exact checkpoint file name and class, uses the SHA-256 of the evidence bytes as the witness, appends only, treats the same evidence as a replay, and refuses unmeasured evidence, empty or malformed items, thresholds outside (0, 1], path-shaped models, other classes and symlinked files
+  witness cmd/BonfyreOperatorStore/tests/quality_record_test.sh proves on fixture evidence: a computed pass at 3/4 over 0.75, a computed failure at 2/4, replay without a second record, the seven refusals with the file unchanged, and the router reading the written file to local_model for the passing class and hold with quality_failed for the failing one
+  source_path cmd/BonfyreOperatorStore/eval/run_quality_eval.sh
+  source_path cmd/BonfyreOperatorStore/eval/short_analysis.json
+  source_path cmd/BonfyreOperatorStore/eval/code_review.json
+  source_path cmd/BonfyreOperatorStore/eval/workflow.json
+  invariant the quality evaluation asks bonfyre-admission memory before anything can load, refuses when the checkpoint's minimum footprint exceeds what is spendable above the floor, takes the checkpoint only through a bonfyre-moe lease, releases that lease on every exit path, and talks only to a localhost model endpoint
+  forbidden_inference a quality record on these fixed in-repo evaluation sets -> quality on the operator's real goals, on longer contexts, or on any other checkpoint
+  known_gap no measured per-checkpoint, per-class quality records exist yet, so on this machine every model-backed class routes to hold (2026-10-30: four live classes routed on a copy of the queue; deterministic_read to native_owner held by STOP, the other three held with quality_unmeasured, fabric_admission_paused and provider_requests_not_allowed_by_policy)
+  known_gap 2026-10-30 quality run: zero quality records were measured. Over 39 tries (11:10-11:40Z) Qwen2.5-Coder-3B-Instruct-Q4_K_M (needs 2388393216 bytes at 4096 context) never fitted: the precheck refused 38 times with 1.49-2.38 GB spendable, and the one try that passed the old precheck was deferred by bonfyre-moe (503 model_not_admitted, 1602 MiB spendable) because a publish-estate pass held a 734003200-byte memory grant. Refusals are archived under ~/.bonfyre/operator/verification/model-quality-20261030; no lease was taken and the quality file was not created
+  known_gap route computes spendable as available less the floor and does not subtract open ledger grants, so its fits_memory verdict can name a checkpoint the residency owner will defer
+  known_gap the residency owner still lists Qwen2.5-3B-Instruct-Q4_K_M.gguf as a usable candidate after its file left ~/BonfyreModels/gguf/qwen2.5-3b-instruct (discovery runs only at serve start)
+  known_gap vendor admission for agent executors is a human policy list (approved_agent_executors) plus the absence of a vendor quarantine; no owner yet verifies a vendor's live allowance or credit
+  known_gap quality records are keyed by checkpoint file name, not by a content digest of the checkpoint
+  invariant native archival requires a regular same-directory STOP, exact inactive non-recurring identifiers and one durable transaction; it records supersession while retaining ledger and original failure history and never reports completion
+  invariant native reverted-action reconciliation requires one queued goal, one running run, no active action and a retained reverted action; it atomically blocks both rows while retaining all action and failure history, and never reports rollout or completion
+  known_gap the native operator-store substrate only initializes, inspects, STOP-gated archives inactive rows, and reconciles a recorded reversion; the Bun owner remains authoritative for claims, budgets, ordinary runs, actions, recovery and runtime state transitions until vector parity is established
+
+interaction autonomous-operator-invokes-project-owner
+  source autonomous-operator-native-owner
+  destination mcp-project-native-owner
+  relation gated-intent-before-owner-rpc
+  preserves exact project schemas, approval gates, native receipt identity, required tests and verified rollback
+  drops direct arbitrary native invocation, retired Python syntax execution and model-conferred effect authority
+  forbidden_inference trusted catalog membership -> authorization under the current policy or successful execution
+  witness integrations/mcp/tests/operator_tools.test.mjs
+  binding integrations/mcp/operator_tools.mjs
+
+interaction autonomous-operator-uses-recursive-gateway
+  source autonomous-operator-native-owner
+  destination mcp-recursive-native-overlay
+  relation trusted-schema-live-catalog-intersection
+  preserves configured endpoint, authenticated exact owner routing and explicit power/deploy effect grants
+  drops annotations from untrusted discovery as a source of effect authority
+  forbidden_inference a reachable remote tool -> permission to invoke it or complete local owner parity
+  witness integrations/mcp/tests/operator_tools.test.mjs
+  binding integrations/mcp/operator_daemon.mjs
+
+interaction autonomous-operator-routes-on-moe-residency
+  source autonomous-operator-native-owner
+  destination cmd-mo-e
+  relation reads_through
+  preserves the residency owner's candidate order, usable flag, minimum footprint, resident model and lease identity
+  drops any load, lease or memory grant taken on the router's behalf
+  binding cmd/BonfyreOperatorStore/src/main.c
+  witness cmd/BonfyreOperatorStore/tests/route_test.sh
+  forbidden_inference a candidate that fits the memory reading -> a grant the admission owner will give when the lease is asked for
+
+interaction autonomous-operator-routes-on-fabric-admission
+  source autonomous-operator-native-owner
+  destination dual-agent-fabric-native-owner
+  relation reads_through
+  preserves Fabric's STOP-derived accepting_tasks verdict and installed executors
+  drops installation as evidence of vendor credit or allowance
+  binding cmd/BonfyreOperatorStore/src/main.c
+  witness cmd/BonfyreOperatorStore/tests/route_test.sh
+  forbidden_inference an agent_relay route -> a submitted task, vendor credit, or a resumed Fabric
+  invariant route subtracts open_grant_bytes (memory already granted to other work on the ledger) from what is spendable above the floor, so a checkpoint the residency owner would defer is not reported as fitting

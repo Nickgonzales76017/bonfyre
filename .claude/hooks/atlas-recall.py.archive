@@ -1,0 +1,110 @@
+#!/usr/bin/env python3
+"""Archived Python hook; superseded by atlas-recall.mjs.
+
+When a prompt names an organ, hand over what the atlas already knows about it.
+
+The working agreement says to consult the atlas before architecture work rather
+than re-deriving the system. That instruction competes with every other thing in
+context, and the failure is silent: the session answers from memory, the answer
+is close enough to sound right, and the registry that would have corrected it
+was never opened.
+
+A named architecture is a cheap, unambiguous signal. `get <id>` answers in a few
+hundred bytes -- measured at roughly 560x less context than the index -- so the
+lookup is affordable enough to do automatically.
+
+Deliberately narrow. It matches declared identifiers and canonical names only,
+never topic words, and it stops at three. A hook that injects on every prompt
+teaches the session to ignore what it injects.
+"""
+import json
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parents[2]
+ARCH = REPO / "architecture"
+LIMIT = 3
+
+
+def declared():
+    """id -> canonical name, read from the .yaff entries rather than the index.
+
+    The entries are the declaration; the index is an export of them. Reading the
+    declaration keeps this honest when the two have drifted, which they do.
+    """
+    out = {}
+    try:
+        for path in ARCH.rglob("*.yaff"):
+            current = None
+            for line in path.read_text(errors="ignore").splitlines():
+                if line.startswith("architecture "):
+                    current = line.split(" ", 1)[1].strip()
+                    out.setdefault(current, "")
+                elif current and line.strip().startswith("canonical_name "):
+                    out[current] = line.strip().split(" ", 1)[1].strip()
+                    current = None
+    except Exception:
+        return {}
+    return out
+
+
+def main():
+    try:
+        event = json.load(sys.stdin)
+    except Exception:
+        return 0
+    prompt = event.get("prompt") or ""
+    if not prompt.strip():
+        return 0
+
+    names = declared()
+    if not names:
+        return 0
+
+    hits = []
+    lowered = prompt.lower()
+    for aid, canonical in names.items():
+        if len(aid) < 5:
+            continue
+        # A declared id is distinctive enough to match as a word; a canonical
+        # name is matched case-sensitively so `Work` in a sentence does not
+        # summon WorkGraph.
+        if re.search(rf"(?<![\w-]){re.escape(aid)}(?![\w-])", lowered) or \
+           (canonical and len(canonical) > 4 and re.search(rf"\b{re.escape(canonical)}\b", prompt)):
+            hits.append(aid)
+        if len(hits) >= LIMIT:
+            break
+
+    if not hits:
+        return 0
+
+    blocks = []
+    for aid in hits:
+        try:
+            out = subprocess.run([sys.executable, "architecture/atlas.py", "get", aid],
+                                 capture_output=True, text=True, timeout=15,
+                                 cwd=str(REPO)).stdout.strip()
+        except Exception:
+            continue
+        if out:
+            blocks.append(out)
+    if not blocks:
+        return 0
+
+    print(json.dumps({
+        "hookSpecificOutput": {
+            "hookEventName": "UserPromptSubmit",
+            "additionalContext": (
+                "Atlas entries for organs named in this prompt (canonical; do not "
+                "re-derive them from memory, and note each entry's known gaps and "
+                "what it states it cannot infer):\n\n" + "\n\n".join(blocks)
+            ),
+        }
+    }))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

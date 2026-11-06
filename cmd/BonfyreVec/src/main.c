@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * BonfyreVec — local vector search via sqlite-vec.
  *
@@ -5,14 +12,17 @@
  * SQLite C API + vec0 loadable extension = embedded semantic search.
  *
  * Usage:
- *   bonfyre-vec init <db>                          → create vector table
+ *   bonfyre-vec init <db> [--dims N]               → create vector table at that width (default 384)
  *   bonfyre-vec insert <db> <embeddings.json>      → bulk insert vectors
  *   bonfyre-vec search <db> <query-embedding.json> [--top N]  → nearest neighbors
  *   bonfyre-vec search <db> <query.json> --exact [--top N]    → exact SIMD cosine
+ *   bonfyre-vec neighbors <db> [--top N]                      → every item's k-NN, one pass
  *   bonfyre-vec compare <db> <id1> <id2>           → pairwise cosine similarity
  *   bonfyre-vec count <db>                         → row count
  */
 #include <errno.h>
+#include "../../../lib/libbonfyre/include/bf_help.h"
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 #include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -24,9 +34,16 @@
 #include <sqlite3.h>
 #ifdef __ARM_NEON
 #include <arm_neon.h>
+#include "bf_lex.h"
 #endif
 
 #define VEC_DIMS 384
+/* The widest vector a query buffer may hold. VEC_DIMS is the width `init`
+ * creates a store at; it is not the width every store has. Searching used a
+ * VEC_DIMS buffer, so a 768-dim query against a 768-dim store was cut to 384
+ * floats and bound against a float[768] column -- the store and the query
+ * describing different vectors, reported as a search. */
+#define VEC_MAX_DIMS 4096
 #define VEC_FIXTURE_MAX_DIMS 4096
 #define VECF_MAGIC 0x46434556u  /* "VECF" little-endian */
 
@@ -134,6 +151,45 @@ static int read_vec_from_db(sqlite3 *db, const char *id, float *out, int max_dim
     return dims;
 }
 
+/* The width a store actually holds, from its own first vector.
+ *
+ * Asked of the data rather than assumed from a constant, because the store is
+ * written by whichever embedder filled it: bonfyre-embed opens it at the width
+ * its model returns, which for nomic-embed-text-onnx is 768. Returns 0 for an
+ * empty store. */
+static int store_dims(sqlite3 *db)
+{
+    sqlite3_stmt *st = NULL;
+    int dims = 0;
+    if (sqlite3_prepare_v2(db, "SELECT embedding FROM vec_artifacts LIMIT 1",
+                           -1, &st, NULL) != SQLITE_OK) return 0;
+    if (sqlite3_step(st) == SQLITE_ROW)
+        dims = sqlite3_column_bytes(st, 0) / (int)sizeof(float);
+    sqlite3_finalize(st);
+    return dims;
+}
+
+/* A query and a store must be one geometry. Distances between vectors of
+ * different widths are not small or large, they are undefined, and the two
+ * search paths failed that differently: the ANN path bound a truncated query,
+ * the exact path skipped every row whose width differed and returned an empty
+ * result that read as "nothing is similar". */
+static int refuse_width(int query_dims, int stored_dims, const char *query_file)
+{
+    if (query_dims < 0) {
+        fprintf(stderr, "[vec] %s holds a vector wider than %d dims; refused rather "
+                        "than truncated\n", query_file, VEC_MAX_DIMS);
+        return 1;
+    }
+    if (stored_dims && query_dims != stored_dims) {
+        fprintf(stderr, "[vec] query is %d dims and the store holds %d; they are "
+                        "different geometries and cannot be compared\n",
+                query_dims, stored_dims);
+        return 1;
+    }
+    return 0;
+}
+
 /* Result struct for exact search */
 typedef struct {
     char id[256];
@@ -157,25 +213,11 @@ static const char *json_skip_ws(const char *p) {
     return p;
 }
 
+/* Delegates to the one implementation. This copy dropped the backslash and
+ * kept the letter, so \\t arrived as t. */
 static const char *json_str_value(const char *json, const char *key,
                                    char *buf, size_t bufsz) {
-    char needle[256];
-    snprintf(needle, sizeof(needle), "\"%s\"", key);
-    const char *p = strstr(json, needle);
-    if (!p) return NULL;
-    p += strlen(needle);
-    p = json_skip_ws(p);
-    if (*p != ':') return NULL;
-    p = json_skip_ws(p + 1);
-    if (*p != '"') return NULL;
-    p++;
-    size_t i = 0;
-    while (*p && *p != '"' && i + 1 < bufsz) {
-        if (*p == '\\' && p[1]) { p++; }
-        buf[i++] = *p++;
-    }
-    buf[i] = '\0';
-    return buf;
+    return bf_lex_json_string(json, key, buf, bufsz) ? buf : NULL;
 }
 
 static int json_parse_float_array(const char *json, const char *key,
@@ -191,9 +233,27 @@ static int json_parse_float_array(const char *json, const char *key,
     if (*p != '[') return 0;
     p++;
     int count = 0;
-    while (*p && *p != ']' && count < max_count) {
+    while (*p && *p != ']') {
         p = json_skip_ws(p);
         if (*p == ']') break;
+        /* A vector longer than the store's width was silently truncated to
+         * max_count and then inserted as though it were the whole body. That is
+         * worse than refusing it: the store ends up holding a different vector
+         * from the one that was offered, and every later neighbour computed
+         * against it is wrong in a way nothing records. Report the real length
+         * and let the caller refuse. */
+        if (count >= max_count) {
+            int extra = count;
+            while (*p && *p != ']') {
+                char *skip;
+                strtof(p, &skip);
+                if (skip == p) break;
+                extra++;
+                p = json_skip_ws(skip);
+                if (*p == ',') p++;
+            }
+            return -extra;
+        }
         char *end;
         out[count++] = strtof(p, &end);
         p = end;
@@ -360,7 +420,29 @@ done:
 
 /* ── commands ───────────────────────────────────────────────── */
 
-static int cmd_init(const char *db_path) {
+/* The width a store was made at, read from the store itself.  The vector
+ * table's own declaration says it (float[N]); an older store with rows but an
+ * unreadable declaration is measured from a row.  Nothing here assumes 384. */
+static int declared_width(sqlite3 *db)
+{
+    sqlite3_stmt *st = NULL;
+    int width = 0;
+    if (sqlite3_prepare_v2(db, "SELECT sql FROM sqlite_master WHERE name='vec_artifacts'", -1, &st, NULL) == SQLITE_OK &&
+        sqlite3_step(st) == SQLITE_ROW) {
+        const char *sql = (const char *)sqlite3_column_text(st, 0);
+        const char *at = sql ? strstr(sql, "float[") : NULL;
+        if (at) width = atoi(at + 6);
+    }
+    sqlite3_finalize(st);
+    if (width < 1 || width > VEC_MAX_DIMS) width = store_dims(db);
+    return width >= 1 && width <= VEC_MAX_DIMS ? width : VEC_DIMS;
+}
+
+static int cmd_init(const char *db_path, int width) {
+    if (width < 1 || width > VEC_MAX_DIMS) {
+        fprintf(stderr, "[vec] a store is between 1 and %d dimensions wide; %d refused\n", VEC_MAX_DIMS, width);
+        return 1;
+    }
     fprintf(stderr, "[vec] Initializing vector DB: %s\n", db_path);
 
     sqlite3 *db = NULL;
@@ -394,11 +476,17 @@ static int cmd_init(const char *db_path) {
         "CREATE VIRTUAL TABLE IF NOT EXISTS vec_artifacts USING vec0("
         "  id TEXT PRIMARY KEY,"
         "  embedding float[%d]"
-        ")", VEC_DIMS);
+        ")", width);
     rc = sqlite3_exec(db, sql, NULL, NULL, &err);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "[vec] Failed to create vec_artifacts table: %s\n", err);
         sqlite3_free(err);
+        sqlite3_close(db);
+        return 1;
+    }
+    if (declared_width(db) != width) {
+        fprintf(stderr, "[vec] this store already exists at %d dimensions; it was not changed to %d\n",
+                declared_width(db), width);
         sqlite3_close(db);
         return 1;
     }
@@ -431,6 +519,10 @@ static int cmd_insert(const char *db_path, const char *json_path) {
     sqlite3_enable_load_extension(db, 1);
     if (load_vec_ext(db) != 0) { sqlite3_close(db); free(json); return 1; }
 
+    /* What this store holds is asked of the store. */
+    const int want = declared_width(db);
+    static float embedding[VEC_MAX_DIMS];
+
     sqlite3_stmt *meta_stmt = NULL;
     sqlite3_stmt *vec_stmt = NULL;
     sqlite3_prepare_v2(db,
@@ -453,7 +545,7 @@ static int cmd_insert(const char *db_path, const char *json_path) {
     sqlite3_exec(db, "BEGIN", NULL, NULL, NULL);
 
     const char *arr = json_find_embeddings_array(json);
-    int count = 0;
+    int count = 0, skipped = 0;
     if (arr) {
         const char *p = arr + 1;
         while (*p) {
@@ -471,30 +563,48 @@ static int cmd_insert(const char *db_path, const char *json_path) {
             obj[obj_len] = '\0';
 
             char id[256] = "", source[512] = "", type[128] = "", text[4096] = "";
-            float embedding[VEC_DIMS];
             json_str_value(obj, "id", id, sizeof(id));
             json_str_value(obj, "source", source, sizeof(source));
             json_str_value(obj, "type", type, sizeof(type));
             json_str_value(obj, "text", text, sizeof(text));
-            int dims = json_parse_float_array(obj, "embedding", embedding, VEC_DIMS);
+            int dims = json_parse_float_array(obj, "embedding", embedding, VEC_MAX_DIMS);
 
             if (id[0] == '\0') snprintf(id, sizeof(id), "%d", count);
 
-            if (dims > 0) {
+            /* The width is checked before anything is written.
+             *
+             * This wrote the metadata row first and then stepped the vector
+             * insert without looking at the result. A body of the wrong width is
+             * rejected by the vector table, so the store was left holding an
+             * artifact with no vector -- and the command still counted it and
+             * reported success. `artifacts: 1, vectors: 0` was reachable from a
+             * run that said `inserted: 1`.
+             *
+             * Refusing first means a rejected body leaves nothing behind. */
+            if (dims != 0 && dims != want) {
+                fprintf(stderr, "[vec] refusing %s: %d dimensions, store holds %d\n",
+                        id, dims < 0 ? -dims : dims, want);
+                skipped++;
+            } else if (dims == want) {
                 sqlite3_reset(meta_stmt);
                 sqlite3_bind_text(meta_stmt, 1, id, -1, SQLITE_TRANSIENT);
                 sqlite3_bind_text(meta_stmt, 2, source, -1, SQLITE_TRANSIENT);
                 sqlite3_bind_text(meta_stmt, 3, type, -1, SQLITE_TRANSIENT);
                 sqlite3_bind_text(meta_stmt, 4, text, -1, SQLITE_TRANSIENT);
                 sqlite3_bind_text(meta_stmt, 5, "{}", -1, SQLITE_STATIC);
-                sqlite3_step(meta_stmt);
+                int meta_ok = sqlite3_step(meta_stmt) == SQLITE_DONE;
 
                 sqlite3_reset(vec_stmt);
                 sqlite3_bind_text(vec_stmt, 1, id, -1, SQLITE_TRANSIENT);
                 sqlite3_bind_blob(vec_stmt, 2, embedding,
                                   dims * (int)sizeof(float), SQLITE_TRANSIENT);
-                sqlite3_step(vec_stmt);
-                count++;
+                int vec_ok = sqlite3_step(vec_stmt) == SQLITE_DONE;
+                if (meta_ok && vec_ok) {
+                    count++;
+                } else {
+                    fprintf(stderr, "[vec] %s not stored: %s\n", id, sqlite3_errmsg(db));
+                    skipped++;
+                }
             }
 
             free(obj);
@@ -505,28 +615,36 @@ static int cmd_insert(const char *db_path, const char *json_path) {
          * Accept it as a single artifact so Embed → Vec does not require a
          * lossy or hand-built wrapper. */
         char id[256] = "", source[512] = "", type[128] = "embedding", text[4096] = "";
-        float embedding[VEC_DIMS];
         json_str_value(json, "id", id, sizeof(id));
         json_str_value(json, "source", source, sizeof(source));
         json_str_value(json, "type", type, sizeof(type));
         json_str_value(json, "text", text, sizeof(text));
-        int dims = json_parse_float_array(json, "embedding", embedding, VEC_DIMS);
-        if (dims == 0) dims = json_parse_float_array(json, "vector", embedding, VEC_DIMS);
+        int dims = json_parse_float_array(json, "embedding", embedding, VEC_MAX_DIMS);
+        if (dims == 0) dims = json_parse_float_array(json, "vector", embedding, VEC_MAX_DIMS);
         if (id[0] == '\0') {
             const char *base = strrchr(json_path, '/');
             snprintf(id, sizeof(id), "%s", base ? base + 1 : json_path);
         }
-        if (dims > 0) {
+        if (dims != 0 && dims != want) {
+            fprintf(stderr, "[vec] refusing %s: %d dimensions, store holds %d\n",
+                    id, dims < 0 ? -dims : dims, want);
+            skipped++;
+        } else if (dims == want) {
             sqlite3_bind_text(meta_stmt, 1, id, -1, SQLITE_TRANSIENT);
             sqlite3_bind_text(meta_stmt, 2, source, -1, SQLITE_TRANSIENT);
             sqlite3_bind_text(meta_stmt, 3, type, -1, SQLITE_TRANSIENT);
             sqlite3_bind_text(meta_stmt, 4, text, -1, SQLITE_TRANSIENT);
             sqlite3_bind_text(meta_stmt, 5, "{}", -1, SQLITE_STATIC);
-            sqlite3_step(meta_stmt);
+            int meta_ok = sqlite3_step(meta_stmt) == SQLITE_DONE;
             sqlite3_bind_text(vec_stmt, 1, id, -1, SQLITE_TRANSIENT);
             sqlite3_bind_blob(vec_stmt, 2, embedding, dims * (int)sizeof(float), SQLITE_TRANSIENT);
-            sqlite3_step(vec_stmt);
-            count = 1;
+            int vec_ok = sqlite3_step(vec_stmt) == SQLITE_DONE;
+            if (meta_ok && vec_ok) {
+                count = 1;
+            } else {
+                fprintf(stderr, "[vec] %s not stored: %s\n", id, sqlite3_errmsg(db));
+                skipped++;
+            }
         }
     }
 
@@ -536,19 +654,75 @@ static int cmd_insert(const char *db_path, const char *json_path) {
     sqlite3_close(db);
     free(json);
 
-    printf("%d vectors inserted\n", count);
-    return 0;
+    /* A refusal is reported, and an import that stored nothing while being
+     * offered something is a failure. Exiting 0 after storing nothing is how a
+     * caller ends up believing an empty store is populated. */
+    if (skipped) printf("%d vectors inserted, %d refused\n", count, skipped);
+    else printf("%d vectors inserted\n", count);
+    return (count == 0 && skipped > 0) ? 1 : 0;
+}
+
+/* Remove exact passage IDs from both halves of the index in one transaction.
+ * No source file, embedding cache, backup or other database is erased. */
+static int cmd_delete(const char *db_path, int id_count, char **ids) {
+    for (int i = 0; i < id_count; i++) {
+        if (!ids[i][0]) {
+            fprintf(stderr, "[vec] delete requires nonempty exact IDs\n");
+            return 1;
+        }
+    }
+    sqlite3 *db = NULL;
+    sqlite3_stmt *vectors = NULL, *artifacts = NULL;
+    int transaction = 0, result = 1;
+    sqlite3_int64 removed_vectors = 0, removed_artifacts = 0;
+    /* A typo must not create an empty database and appear to remove data. */
+    if (sqlite3_open_v2(db_path, &db, SQLITE_OPEN_READWRITE, NULL) != SQLITE_OK)
+        goto failed;
+    sqlite3_busy_timeout(db, 5000);
+    sqlite3_enable_load_extension(db, 1);
+    if (load_vec_ext(db) != 0) goto done;
+    if (sqlite3_prepare_v2(db, "DELETE FROM vec_artifacts WHERE id = ?",
+                           -1, &vectors, NULL) != SQLITE_OK ||
+        sqlite3_prepare_v2(db, "DELETE FROM artifacts WHERE id = ?",
+                           -1, &artifacts, NULL) != SQLITE_OK) goto failed;
+    if (sqlite3_exec(db, "BEGIN IMMEDIATE", NULL, NULL, NULL) != SQLITE_OK)
+        goto failed;
+    transaction = 1;
+    for (int i = 0; i < id_count; i++) {
+        if (sqlite3_reset(vectors) != SQLITE_OK ||
+            sqlite3_bind_text(vectors, 1, ids[i], -1, SQLITE_TRANSIENT) != SQLITE_OK ||
+            sqlite3_step(vectors) != SQLITE_DONE) goto failed;
+        removed_vectors += sqlite3_changes(db);
+        if (sqlite3_reset(artifacts) != SQLITE_OK ||
+            sqlite3_bind_text(artifacts, 1, ids[i], -1, SQLITE_TRANSIENT) != SQLITE_OK ||
+            sqlite3_step(artifacts) != SQLITE_DONE) goto failed;
+        removed_artifacts += sqlite3_changes(db);
+    }
+    if (sqlite3_exec(db, "COMMIT", NULL, NULL, NULL) != SQLITE_OK) goto failed;
+    transaction = 0;
+    printf("{\"requested_ids\":%d,\"deleted_vectors\":%lld,\"deleted_artifacts\":%lld}\n",
+           id_count, (long long)removed_vectors, (long long)removed_artifacts);
+    result = 0;
+    goto done;
+failed:
+    fprintf(stderr, "[vec] delete failed: %s\n", db ? sqlite3_errmsg(db) : "cannot open database");
+done:
+    sqlite3_finalize(vectors);
+    sqlite3_finalize(artifacts);
+    if (transaction) sqlite3_exec(db, "ROLLBACK", NULL, NULL, NULL);
+    sqlite3_close(db);
+    return result;
 }
 
 static int cmd_search(const char *db_path, const char *query_file, int top_k) {
     fprintf(stderr, "[vec] Searching %s (top %d)\n", db_path, top_k);
 
-    float query_vec[VEC_DIMS];
+    static float query_vec[VEC_MAX_DIMS];
     int dims = 0;
 
     /* Try VECF binary first, then JSON */
     if (is_vecf_file(query_file)) {
-        dims = read_vector_binary(query_file, query_vec, VEC_DIMS);
+        dims = read_vector_binary(query_file, query_vec, VEC_MAX_DIMS);
         if (dims > 0) fprintf(stderr, "[vec] Read %d dims from VECF binary\n", dims);
     }
     if (dims == 0) {
@@ -562,8 +736,8 @@ static int cmd_search(const char *db_path, const char *query_file, int top_k) {
         fread(json, 1, (size_t)sz, f);
         json[sz] = '\0';
         fclose(f);
-        dims = json_parse_float_array(json, "embedding", query_vec, VEC_DIMS);
-        if (dims == 0) dims = json_parse_float_array(json, "vector", query_vec, VEC_DIMS);
+        dims = json_parse_float_array(json, "embedding", query_vec, VEC_MAX_DIMS);
+        if (dims == 0) dims = json_parse_float_array(json, "vector", query_vec, VEC_MAX_DIMS);
         free(json);
     }
 
@@ -579,6 +753,7 @@ static int cmd_search(const char *db_path, const char *query_file, int top_k) {
     }
     sqlite3_enable_load_extension(db, 1);
     if (load_vec_ext(db) != 0) { sqlite3_close(db); return 1; }
+    if (refuse_width(dims, store_dims(db), query_file)) { sqlite3_close(db); return 1; }
 
     sqlite3_stmt *stmt = NULL;
     int rc = sqlite3_prepare_v2(db,
@@ -607,15 +782,122 @@ static int cmd_search(const char *db_path, const char *query_file, int top_k) {
         const char *src = (const char *)sqlite3_column_text(stmt, 2);
         const char *typ = (const char *)sqlite3_column_text(stmt, 3);
         const char *txt = (const char *)sqlite3_column_text(stmt, 4);
+        /* Escaped. Result text is whatever was embedded -- here, headlines
+         * with quotes in them -- and printing it raw produced output that was
+         * not JSON the moment a title contained one. */
+        char eid[512], esrc[1024], etyp[256], etxt[4096];
+        bf_lex_json_escape(rid ? rid : "", eid, sizeof(eid));
+        bf_lex_json_escape(src ? src : "", esrc, sizeof(esrc));
+        bf_lex_json_escape(typ ? typ : "", etyp, sizeof(etyp));
+        bf_lex_json_escape(txt ? txt : "", etxt, sizeof(etxt));
         printf("    {\"id\":\"%s\",\"distance\":%.6f,\"source\":\"%s\","
                "\"type\":\"%s\",\"text\":\"%s\"}",
-               rid ? rid : "", dist,
-               src ? src : "", typ ? typ : "", txt ? txt : "");
+               eid, dist, esrc, etyp, etxt);
     }
     printf("\n  ],\n  \"query_file\": \"%s\",\n  \"top_k\": %d\n}\n", query_file, top_k);
 
     sqlite3_finalize(stmt);
     sqlite3_close(db);
+    return 0;
+}
+
+/* Every stored vector's nearest neighbours, in one process.
+ *
+ * Corroboration across a corpus is "which items are near which other items",
+ * and `search` answers that one query file at a time. Asking it for 22,962
+ * items meant 22,962 invocations, each reopening the store and reloading the
+ * extension to run a single k-NN. This walks the store once and runs every
+ * k-NN on one connection.
+ *
+ * Similarity is reported as cosine, computed here from both vectors, rather
+ * than the store's native distance: vec0 ranks by L2, and an L2 figure is only
+ * a cosine in disguise when every vector is unit length, which is a property
+ * of the embedder and not something this command can see. The L2 ranking
+ * chooses the candidates; cosine is what is reported about them.
+ *
+ * Output is one JSON line per (item, neighbour) pair. No threshold is applied:
+ * what counts as "the same event" is a calibration nobody has done, and baking
+ * one in would present a guess as a property of the data. */
+static int cmd_neighbors(const char *db_path, int top_k)
+{
+    sqlite3 *db = NULL;
+    sqlite3_stmt *ids = NULL, *knn = NULL;
+    char **idv = NULL;
+    int n = 0, cap = 0, dims, i, pairs = 0, skipped = 0;
+    static float q[VEC_MAX_DIMS], v[VEC_MAX_DIMS];
+
+    if (top_k < 1) top_k = 1;
+    if (sqlite3_open(db_path, &db) != SQLITE_OK) {
+        fprintf(stderr, "[vec] Cannot open DB: %s\n", sqlite3_errmsg(db));
+        return 1;
+    }
+    sqlite3_enable_load_extension(db, 1);
+    if (load_vec_ext(db) != 0) { sqlite3_close(db); return 1; }
+    dims = store_dims(db);
+    if (dims <= 0) {
+        fprintf(stderr, "{\"schema\":\"bonfyre-vec-neighbors.v1\",\"items\":0,\"pairs\":0}\n");
+        sqlite3_close(db);
+        return 0;
+    }
+
+    /* Ids first, then queries: stepping a k-NN cursor on vec_artifacts while
+     * another cursor is still walking the same virtual table is the kind of
+     * interleaving that works until it does not. */
+    if (sqlite3_prepare_v2(db, "SELECT id FROM vec_artifacts", -1, &ids, NULL) != SQLITE_OK) {
+        sqlite3_close(db);
+        return 1;
+    }
+    while (sqlite3_step(ids) == SQLITE_ROW) {
+        const char *id = (const char *)sqlite3_column_text(ids, 0);
+        if (!id) continue;
+        if (n == cap) {
+            char **grown;
+            cap = cap ? cap * 2 : 1024;
+            grown = realloc(idv, sizeof(char *) * (size_t)cap);
+            if (!grown) break;
+            idv = grown;
+        }
+        idv[n++] = strdup(id);
+    }
+    sqlite3_finalize(ids);
+
+    if (sqlite3_prepare_v2(db,
+            "SELECT id FROM vec_artifacts WHERE embedding MATCH ? AND k = ? ORDER BY distance",
+            -1, &knn, NULL) != SQLITE_OK) {
+        fprintf(stderr, "[vec] k-NN prepare failed: %s\n", sqlite3_errmsg(db));
+        for (i = 0; i < n; i++) free(idv[i]);
+        free(idv);
+        sqlite3_close(db);
+        return 1;
+    }
+
+    for (i = 0; i < n; i++) {
+        char eid[512];
+        if (read_vec_from_db(db, idv[i], q, VEC_MAX_DIMS) != dims) { skipped++; continue; }
+        bf_lex_json_escape(idv[i], eid, sizeof(eid));
+        sqlite3_reset(knn);
+        sqlite3_bind_blob(knn, 1, q, dims * (int)sizeof(float), SQLITE_TRANSIENT);
+        sqlite3_bind_int(knn, 2, top_k + 1);      /* +1: the item finds itself */
+        while (sqlite3_step(knn) == SQLITE_ROW) {
+            const char *nid = (const char *)sqlite3_column_text(knn, 0);
+            char enid[512];
+            if (!nid || strcmp(nid, idv[i]) == 0) continue;
+            if (read_vec_from_db(db, nid, v, VEC_MAX_DIMS) != dims) continue;
+            bf_lex_json_escape(nid, enid, sizeof(enid));
+            printf("{\"id\":\"%s\",\"neighbor\":\"%s\",\"cosine\":%.6f}\n",
+                   eid, enid, cosine_similarity(q, v, dims));
+            pairs++;
+        }
+    }
+    sqlite3_finalize(knn);
+    for (i = 0; i < n; i++) free(idv[i]);
+    free(idv);
+    sqlite3_close(db);
+    fprintf(stderr, "{\"schema\":\"bonfyre-vec-neighbors.v1\",\"items\":%d,\"dims\":%d,"
+                    "\"top_k\":%d,\"pairs\":%d,\"skipped_width_mismatch\":%d,"
+                    "\"cannot_infer\":[\"a near neighbour -> the same event; no similarity "
+                    "threshold has been calibrated against labelled pairs\"]}\n",
+            n, dims, top_k, pairs, skipped);
     return 0;
 }
 
@@ -657,9 +939,9 @@ static int cmd_compare(const char *db_path, const char *id1, const char *id2) {
     sqlite3_enable_load_extension(db, 1);
     if (load_vec_ext(db) != 0) { sqlite3_close(db); return 1; }
 
-    float v1[VEC_DIMS], v2[VEC_DIMS];
-    int d1 = read_vec_from_db(db, id1, v1, VEC_DIMS);
-    int d2 = read_vec_from_db(db, id2, v2, VEC_DIMS);
+    static float v1[VEC_MAX_DIMS], v2[VEC_MAX_DIMS];
+    int d1 = read_vec_from_db(db, id1, v1, VEC_MAX_DIMS);
+    int d2 = read_vec_from_db(db, id2, v2, VEC_MAX_DIMS);
     sqlite3_close(db);
 
     if (d1 == 0) { fprintf(stderr, "[vec] No vector for '%s'\n", id1); return 1; }
@@ -678,11 +960,11 @@ static int cmd_compare(const char *db_path, const char *id1, const char *id2) {
 static int cmd_search_exact(const char *db_path, const char *query_file, int top_k) {
     fprintf(stderr, "[vec] Exact SIMD cosine search %s (top %d)\n", db_path, top_k);
 
-    float query_vec[VEC_DIMS];
+    static float query_vec[VEC_MAX_DIMS];
     int dims = 0;
 
     if (is_vecf_file(query_file)) {
-        dims = read_vector_binary(query_file, query_vec, VEC_DIMS);
+        dims = read_vector_binary(query_file, query_vec, VEC_MAX_DIMS);
         if (dims > 0) fprintf(stderr, "[vec] Read %d dims from VECF binary\n", dims);
     }
     if (dims == 0) {
@@ -692,8 +974,8 @@ static int cmd_search_exact(const char *db_path, const char *query_file, int top
         char *json = malloc((size_t)sz + 1);
         if (!json) { fclose(f); return 1; }
         fread(json, 1, (size_t)sz, f); json[sz] = '\0'; fclose(f);
-        dims = json_parse_float_array(json, "embedding", query_vec, VEC_DIMS);
-        if (dims == 0) dims = json_parse_float_array(json, "vector", query_vec, VEC_DIMS);
+        dims = json_parse_float_array(json, "embedding", query_vec, VEC_MAX_DIMS);
+        if (dims == 0) dims = json_parse_float_array(json, "vector", query_vec, VEC_MAX_DIMS);
         free(json);
     }
     if (dims == 0) { fprintf(stderr, "[vec] No embedding in %s\n", query_file); return 1; }
@@ -705,6 +987,7 @@ static int cmd_search_exact(const char *db_path, const char *query_file, int top
     }
     sqlite3_enable_load_extension(db, 1);
     if (load_vec_ext(db) != 0) { sqlite3_close(db); return 1; }
+    if (refuse_width(dims, store_dims(db), query_file)) { sqlite3_close(db); return 1; }
 
     /* Count vectors for allocation */
     int total = 0;
@@ -754,10 +1037,13 @@ static int cmd_search_exact(const char *db_path, const char *query_file, int top
     printf("{\n  \"results\": [\n");
     for (int i = 0; i < show; i++) {
         if (i > 0) printf(",\n");
+        char eid[512], esrc[1024], etyp[256];
+        bf_lex_json_escape(results[i].id, eid, sizeof(eid));
+        bf_lex_json_escape(results[i].source, esrc, sizeof(esrc));
+        bf_lex_json_escape(results[i].type, etyp, sizeof(etyp));
         printf("    {\"id\":\"%s\",\"cosine_similarity\":%.8f,"
                "\"distance\":%.8f,\"source\":\"%s\",\"type\":\"%s\"}",
-               results[i].id, results[i].score, 1.0f - results[i].score,
-               results[i].source, results[i].type);
+               eid, results[i].score, 1.0f - results[i].score, esrc, etyp);
     }
     printf("\n  ],\n  \"query_file\": \"%s\",\n  \"top_k\": %d,"
            "\n  \"mode\": \"exact-simd\",\n  \"scanned\": %d\n}\n",
@@ -952,8 +1238,9 @@ static void print_usage(void) {
     fprintf(stderr,
         "bonfyre-vec — local vector search (sqlite-vec, pure C, SIMD cosine)\n\n"
         "Usage:\n"
-        "  bonfyre-vec init <db>\n"
+        "  bonfyre-vec init <db> [--dims N]     (default 384; match your embedding model)\n"
         "  bonfyre-vec insert <db> <embeddings.json>\n"
+        "  bonfyre-vec delete <db> <exact-id> [exact-id ...]\n"
         "  bonfyre-vec search <db> <query.json> [--top N]\n"
         "  bonfyre-vec search <db> <query.json> --exact [--top N]\n"
         "  bonfyre-vec compare <db> <id1> <id2>\n"
@@ -964,7 +1251,14 @@ static void print_usage(void) {
 }
 
 int main(int argc, char **argv) {
-    if (argc >= 2 && strcmp(argv[1], "status") == 0) {
+    if (bf_help_requested(argc, argv)) { print_usage(); return 0; }
+    enum { VC_STATUS };
+    static const BfCommandEntry vec_commands[] = {
+        {"status", VC_STATUS, 0, NULL},
+    };
+    const BfCommandEntry *command = argc < 2 ? NULL : bf_command_lookup(vec_commands,
+        sizeof(vec_commands) / sizeof(vec_commands[0]), argv[1]);
+    if (command && command->id == VC_STATUS) {
         printf("{\"binary\":\"bonfyre-vec\",\"status\":\"ok\",\"version\":\"3.0.0\","
                "\"backend\":\"sqlite-vec-native\",\"simd\":\""
 #ifdef __ARM_NEON
@@ -981,10 +1275,15 @@ int main(int argc, char **argv) {
     const char *cmd = argv[1];
 
     if (strcmp(cmd, "init") == 0) {
-        return cmd_init(argv[2]);
+        int width = VEC_DIMS;
+        for (int i = 3; i + 1 < argc; i++) if (strcmp(argv[i], "--dims") == 0) width = atoi(argv[i + 1]);
+        return cmd_init(argv[2], width);
     } else if (strcmp(cmd, "insert") == 0) {
         if (argc < 4) { print_usage(); return 1; }
         return cmd_insert(argv[2], argv[3]);
+    } else if (strcmp(cmd, "delete") == 0) {
+        if (argc < 4) { print_usage(); return 1; }
+        return cmd_delete(argv[2], argc - 3, argv + 3);
     } else if (strcmp(cmd, "search") == 0) {
         if (argc < 4) { print_usage(); return 1; }
         int top_k = 10, exact = 0;
@@ -999,6 +1298,12 @@ int main(int argc, char **argv) {
     } else if (strcmp(cmd, "compare") == 0) {
         if (argc < 5) { print_usage(); return 1; }
         return cmd_compare(argv[2], argv[3], argv[4]);
+    } else if (strcmp(cmd, "neighbors") == 0) {
+        int k = 5;
+        if (argc < 3) { fprintf(stderr, "usage: bonfyre-vec neighbors <db> [--top N]\n"); return 1; }
+        for (int i = 3; i < argc; i++)
+            if (strcmp(argv[i], "--top") == 0 && i + 1 < argc) k = atoi(argv[++i]);
+        return cmd_neighbors(argv[2], k);
     } else if (strcmp(cmd, "count") == 0) {
         return cmd_count(argv[2]);
     } else if (strcmp(cmd, "fixture") == 0) {

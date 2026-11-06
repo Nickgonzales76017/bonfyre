@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.bonfyre.live-sweep</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/sh</string>
+        <string>/Users/nickgonzales/Developer/Bonfyre/scripts/release/live_sweep.sh</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/nickgonzales/Developer/Bonfyre</string>
+
+    <!-- Twice a morning, before the edge Worker's daily cap is usually spent. -->
+    <key>StartCalendarInterval</key>
+    <array>
+        <dict><key>Hour</key><integer>5</integer><key>Minute</key><integer>10</integer></dict>
+        <dict><key>Hour</key><integer>9</integer><key>Minute</key><integer>10</integer></dict>
+    </array>
+
+    <key>StandardOutPath</key>
+    <string>/Users/nickgonzales/.bonfyre/logs/live-sweep/stdout.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/nickgonzales/.bonfyre/logs/live-sweep/stderr.log</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/Users/nickgonzales/.bun/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    </dict>
+
+    <key>Nice</key>
+    <integer>10</integer>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+</dict>
+</plist>

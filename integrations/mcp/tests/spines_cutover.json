@@ -1,0 +1,75 @@
+{
+  "schema": "bonfyre.owner-cutover.v1",
+  "measured_at": "2026-10-03T03:55:40.901Z",
+  "service": "gui/503/com.bonfyre.native-spines-r7",
+  "previous": {
+    "pid": 999,
+    "program": [
+      "/opt/homebrew/bin/python3.12",
+      "/Users/nickgonzales/.bonfyre/agent-hypervisor/native-spines-r7/package/spines_server.py"
+    ],
+    "exited": true,
+    "rollback_plist": "/private/tmp/bonfyre-owner-cutover.zKDSLj/original.plist",
+    "rollback_launcher": "/private/tmp/bonfyre-owner-cutover.zKDSLj/launcher.original",
+    "database_backups": [
+      {
+        "source": "/Users/nickgonzales/.bonfyre/agent-hypervisor/native-spines-r7/spines.sqlite3",
+        "path": "/private/tmp/bonfyre-owner-cutover.zKDSLj/database-0.sqlite3",
+        "sha256": "33db15cffa0a0f97a755bb4aa9d11cec137623055de508279f02ccf65239f941"
+      }
+    ]
+  },
+  "installed": {
+    "pid": 30279,
+    "program": [
+      "/Users/nickgonzales/.bun/bin/bun",
+      "/Users/nickgonzales/Developer/Bonfyre/integrations/mcp/spines_server.mjs"
+    ],
+    "non_program_configuration_unchanged": true,
+    "source_sha256": {
+      "integrations/mcp/spines_server.mjs": "1b9de0a2ada1fef477c47e1ddcd031291fbccac229050dcd0f5427e4b1ba67db",
+      "deploy/launchd/bonfyre-spines": "fecb2c4c5b47fc52643b5022d9997c853a88ea5553c27f85bfa040788aac10d6",
+      "integrations/mcp/spines_store.mjs": "9da981a3a73251ef9e55d27dba7ad6200ed472c0ce10aaa06d1593595f2d0bba",
+      "integrations/mcp/spines_schema.sql": "175f8b96c1ad3d860fdb422f9eb4950e33e85f0729571c0423e8dfadd0692402",
+      "integrations/mcp/spines_catalog.json": "88b37333c2c79220ef3fd8d848ce72c644dc2c2a949db230d6d19a854d7c2fb7",
+      "integrations/mcp/spines_temporal.mjs": "b0f571069c484938f7f96061a7ef459c88c1fedcdcfad020e423b95b980142ee",
+      "integrations/mcp/spines_reasoning.mjs": "0d16651b7f573c5049b0015f2b52da173ce28c1f71ab8c0263b2d81e9f77b605",
+      "integrations/mcp/spines_model.mjs": "44118ed12f8d09b3bd97dfbf55003bbf3f288d077d373f09443672a9171ff280",
+      "integrations/mcp/spines_cli.mjs": "cec747b012bafe93f83b6e675c139d0f816a78af8e37a816685688c218a8baca",
+      "integrations/mcp/canonical_json.mjs": "8bdfbc672b4b0a1b017e3f437f46af5c84d1e40a6ddba6185fb6b8c5b92bc386",
+      "integrations/mcp/project_runtime.mjs": "5f192716ea7f18e5f7d30763900d443fa8dee8b06eb8ec6a43591f1f0aeb1ede",
+      "integrations/mcp/owned_mcp_client.mjs": "8be1c9a1e12f0cbc09567a100a7b7ebb2891c76953352e88a04088d3ddcf8ec7",
+      "integrations/mcp/http_boundary.mjs": "7379b4f14d865afd0884d7d4720b7b7f76bd4a52c6a40812129bd736b1f78073",
+      "integrations/mcp/spines_wasm.mjs": "e360a0d8806be3ea226a75afedb457669984f724ee68cc10a852c013d6f8654e",
+      "integrations/mcp/spines_wasm_core.mjs": "c7bafe6164e5a2e1ed5a17a7f2a9fea3db681bd18138117ca49afdb71d4a531c",
+      "integrations/mcp/native/spines_helix.wasm": "5dd6f057e49c7c6637b9cf3b5b86190eb2ae9fc93bfaf6a146a03cf53cf48e52",
+      "integrations/mcp/native/spines_helix.lock.json": "e46653667221b75196db400e1ec7c799cc790f56a7c72d82e650ee8268bdbf5a",
+      "integrations/mcp/native/spines_helix_export.c": "6ca40d553867d62731b9d6ccb3740d2e88388799d8255038a5a4b47d7d7b8be6",
+      "integrations/mcp/native/spines_helix_vm.c": "d2e761917691b2ccf2b247aed635575e6f6d8c3fcc68b2737fe0100938a5c978",
+      "integrations/mcp/native/spines_sha256_compat.h": "618fe4dbca940007cc57d28a02f28509d9f449300b9555a7c9b3f42a72b25bc5",
+      "integrations/mcp/native/build_spines_wasm.mjs": "055ce1819e2a7482f20e6e667fd2e80b3e3223e0bda49344ca04d9c7a436e6a7",
+      "integrations/mcp/tests/spines_live_witness.mjs": "4d9a0ef5aeceeef3e12f27c5d49aa87545fdf717c82bfecf33eae3d1b5a3e176",
+      "deploy/launchd/service_cutover.mjs": "4c8d092d2ba467ab40c6161df2f96f607a21b9b0e7b4649b9d2775bf9ecbb8d2",
+      "deploy/launchd/spines_cutover.mjs": "5326b6ffd4a4d81891553578c1a7613969c6fe7782dfe7b75f8ddb589c894dd1"
+    }
+  },
+  "cli": {
+    "path": "/Users/nickgonzales/.local/bin/bonfyre-spines",
+    "sha256": "fecb2c4c5b47fc52643b5022d9997c853a88ea5553c27f85bfa040788aac10d6",
+    "installed": true,
+    "version_verified": true,
+    "status_verified": true,
+    "native_binary_sha256": {
+      "/Users/nickgonzales/.local/bin/bonfyre-delta-kernel": "52300fe1a6f26a015f0a997533431692f48e3db6848624c763854df39e6e5610",
+      "/Users/nickgonzales/.local/bin/bonfyre-helix-vm": "9b53e0f1e855a6f7fcc3a315509d4dd21cc0ba2530718b065bf7e8d0edc33375",
+      "/Users/nickgonzales/.local/bin/bonfyre-kernel-probe": "68be54c67e0611049cfd79691a155845c81abfb7d0681a76c45edf986d2249e3"
+    }
+  },
+  "refreshed": [],
+  "rollback_policy": "Primary configuration/runtime rollback only; accepted database and artifact writes remain. Already-refreshed Bun dependents retain the compatible shared code and are reverified against restored primary service. Backups require explicit reconciliation, never automatic overwrite.",
+  "evidence_capture": {
+    "console_truncated": true,
+    "continuity_assertions_completed": true,
+    "note": "Promotion returned its success record after continuity and CLI assertions. Large before/after maps exceeded console capture; independent post-cutover readback is recorded separately."
+  }
+}

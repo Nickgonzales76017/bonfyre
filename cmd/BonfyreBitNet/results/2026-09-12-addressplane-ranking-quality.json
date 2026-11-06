@@ -1,0 +1,39 @@
+{
+  "schema": "bonfyre.bitnet_ranking_quality_measurement.v1",
+  "classification": "MEASURED_SHADOW_RANKING_QUALITY",
+  "observed_at": "2026-09-12",
+  "why": "The passport's known_gap recorded latency, throughput and quality as unmeasured. Latency and throughput were measured first and were fine. Quality is the one ADMIT is actually about, and it had never been taken.",
+  "run": {
+    "run_id": "bitnet:1789271781",
+    "gate_state": "SHADOW",
+    "representation_id": "microsoft-bitnet-embedding-0.6b-i2s",
+    "dimensions": 1024,
+    "query": "weather observation and forecast sources",
+    "address_plane": {
+      "population": 4891,
+      "required_coordinate": "domain:weather",
+      "survivors": 92,
+      "deterministic_stage": "shared typed CandidateAdvertisement masks before model execution"
+    }
+  },
+  "measure": {
+    "proxy": "source_kind == machine_protocol marks a specification rather than a weather source. This is a coarse relevance proxy over a real frontier, not a labelled relevance set, and it is only used because the gap it measures is one-sided: a specification cannot be a weather observation source.",
+    "base_rate": {"specifications": 15, "survivors": 92, "share": 0.163},
+    "top_k": [
+      {"k": 5,  "specifications": 4, "share": 0.80},
+      {"k": 10, "specifications": 4, "share": 0.40},
+      {"k": 20, "specifications": 5, "share": 0.25}
+    ],
+    "first_non_specification_ranks": [3, 5, 6, 7, 8],
+    "top_3": ["Multicast DNS (mDNS)", "Reliable and Available Wireless Architecture", "RAW Technologies"]
+  },
+  "finding": "The ranker concentrates specifications at the head of the frontier at roughly five times their base rate, and the first actual weather source appears at rank 3. On this query the learned reordering is worse than the identity ordering would need to be to do harm, because the slice a caller would try first is mostly documents that cannot answer the query at all.",
+  "consequence": "The ModelRepresentationPassport stays DEFER, and now for a measured reason rather than an unmeasured one. This is one query, one proxy and one frontier; it is enough to refuse admission and not enough to characterise the model.",
+  "does_not_establish": [
+    "that the model is bad in general; one query with a coarse proxy is not an evaluation",
+    "that descriptor text is the cause, though a name-and-kind descriptor is the obvious suspect",
+    "top-k recall, preservation envelope, or behaviour on any other coordinate",
+    "anything about the deterministic stage, which did its job: all 92 survivors carried domain:weather"
+  ],
+  "next_measurement": "Rank the same frontier with a richer descriptor and with a labelled relevance set, and compare against the identity ordering rather than against nothing."
+}

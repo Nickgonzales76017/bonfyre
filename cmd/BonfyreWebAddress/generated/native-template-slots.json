@@ -1,0 +1,17 @@
+[
+    {
+        "template": "home",
+        "slot": 0,
+        "op": "resolved_identity"
+    },
+    {
+        "template": "home",
+        "slot": 1,
+        "op": "authored_navigation"
+    },
+    {
+        "template": "matrix_index",
+        "slot": 0,
+        "op": "matrix_context"
+    }
+]

@@ -28,15 +28,62 @@ architecture authority-graph
   state_types revoked
   internal_calculus in-window non-revoked edge lookup
   internal_calculus scope-constrained delegation
+  internal_calculus BonfyreAuth institution_grant is an exact user×institution role closure reread at admission time; read, write, and admin are ordered but never wildcard host grants
+  internal_calculus declared institutional ancestry descends Bonfyre -> Upper90 -> JRSS|AI Loss|Leads; a parent grant is reread for each child admission while a child grant never climbs or crosses siblings
   invariant delegation may compose only under constrained scope
   invariant an edge outside its window or revoked grants nothing
+  invariant a valid Matrix session, subscription tier, or grant for one delegated client does not authorize another client estate
+  invariant inherited authority is closed over the declared parent graph only; revoking a parent immediately closes every descendant aperture it supplied
   forbidden_inference affiliation -> authority
   forbidden_inference available -> authorized
   forbidden_inference presence -> authority
+  forbidden_inference paid account -> authority over Upper90, JRSS, AI Loss, or Leads
   native_format graf
-  source_path components/BonfyreControlPlane/authority.py
-  witness components/BonfyreControlPlane/tests/test_authority.py
+  source_path components/BonfyreControlPlane/authority.py.archive
+  witness components/BonfyreControlPlane/tests/test_authority.py.archive
+  witness cmd/BonfyreAuth/tests/institution_grant_test.sh verifies an ungranted session is denied, a JRSS grant cannot read AI Loss, read cannot write, and revocation denies the same active session immediately
   source_lineage SEED-A recursive organ document
+
+architecture external-account-link
+  canonical_name ExternalAccountLink
+  family identity
+  domain Identity / External Relationship
+  layer institutional
+  semantic_question Which public remote accounts has an authenticated Bonfyre person declared as related to them, and what has actually been proven about that relationship?
+  purpose A private, account-owned register of public remote profile locators. A person may add, read, and revoke only their own relationship rows through BonfyreAuth. The initial proof state is deliberately declared: it makes a useful social/profile connection without pretending a locator has established remote identity, OAuth consent, provider data access, or external effect authority.
+  maturity implemented
+  consumes BonfyreAuth
+  publishes ExternalAccountLink
+  node_types ExternalAccountLink
+  state_types declared
+  state_types verified
+  state_types revoked
+  source_path cmd/BonfyreAuth/src/main.c
+  source_path cmd/BonfyreWebAddress/src/main.c
+  source_path site/matrix/surfaces/account-native.html
+  source_path cmd/BonfyreWebAddress/src/account_connections_presentation.h
+  witness cmd/BonfyreWebAddress/tests/account_navigation_test.mjs checks that unsafe legacy link addresses remain plain text, search and filtering remain usable, and unverified labels are not classified as verified
+  invariant account-link presentation labels a relationship verified only when the owner reports the exact verified state; unsafe link addresses remain non-clickable
+  source_path cmd/BonfyreAuth/tests/external_account_link_test.sh
+  source_path cmd/BonfyreWebAddress/tests/external_account_surface_test.sh
+  witness cmd/BonfyreAuth/tests/external_account_link_test.sh proves a current account can declare and revoke only its own HTTPS public profile locator, while another account cannot read or revoke it and URL credentials/non-HTTPS input are refused
+  witness cmd/BonfyreWebAddress/tests/external_account_surface_test.sh proves the same relationship is available through the HttpOnly browser session, renders as declared rather than verified, and is revocable at the native address boundary
+  invariant a link is exact to the authenticated account row and every list, claim, and revoke rereads the current session; a syntactically shaped, expired, disabled, or another account's session changes nothing
+  invariant initial state is declared. Only a separate witnessed proof/authorization ceremony may advance it; storing a profile URL never stores a token or makes a remote request
+  invariant the owner retains public relationship metadata only: provider label, remote account locator, public HTTPS profile, display label, proof state and timestamps. It retains no password, bearer, OAuth code, refresh token, provider response, imported private material, authority grant, or effect receipt
+  forbidden_inference a declared or verified external account link -> Bonfyre Actor identity, external OAuth grant, provider admission, imported provider data, remote authority, community membership, financial relationship, or effect right
+  forbidden_inference a profile URL -> control of that profile, proof that the profile exists, or permission to fetch it
+  source_lineage 2026-09-25 account-world social boundary
+
+interaction web-address-projects-external-account-link
+  source web-address-edge
+  destination external-account-link
+  relation projects_authenticated_account_request
+  preserves current bearer admission, exact account ownership, provider/account/profile metadata and the declared/revoked state returned by BonfyreAuth
+  drops password, session/bearer material, OAuth code/token, provider credentials, remote response body, external authority, imported data, effect permission and any verification claim beyond the owner's proof_state
+  forbidden_inference a web account form -> a connected OAuth provider or an external identity proof
+  invalidates_on session revocation/expiry, external account row state, or profile-link validation law changing
+  witness cmd/BonfyreWebAddress/tests/external_account_surface_test.sh
 
 architecture relationship-graph
   canonical_name RelationshipGraph
@@ -61,10 +108,10 @@ architecture relationship-graph
   forbidden_inference relationship -> contract
   forbidden_inference collaboration on one profile -> standing on another
   native_format graf
-  source_path components/BonfyreControlPlane/relationship.py
-  witness components/BonfyreControlPlane/tests/test_relationship.py
+  source_path components/BonfyreControlPlane/relationship.py.archive
+  witness components/BonfyreControlPlane/tests/test_relationship.py.archive
   source_lineage capitalgym crm relationships
-
+  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
 architecture shadow-institution
   canonical_name ShadowInstitutionGraph
   family institutional
@@ -87,10 +134,10 @@ architecture shadow-institution
   forbidden_inference observed hierarchy -> established authority
   forbidden_inference public structure mapped -> relationship established
   native_format graf
-  source_path components/BonfyreControlPlane/shadow_institution.py
-  witness components/BonfyreControlPlane/tests/test_shadow_institution.py
+  source_path components/BonfyreControlPlane/shadow_institution.py.archive
+  witness components/BonfyreControlPlane/tests/test_shadow_institution.py.archive
   source_lineage SEED-A recursive organ document
-
+  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
 architecture institution-graph
   canonical_name InstitutionGraph
   family institutional
@@ -112,10 +159,92 @@ architecture social-presence-graph
   domain Institutional / Presence
   layer institutional
   semantic_question Who is present, on what surface, with what disclosure state, availability, and attention?
-  purpose Presence sessions over surfaces/rooms with disclosure state, interaction rights, availability, attention. Habitat, chat, live work and events depend on it.
-  maturity architectural
+  purpose An expiring, voluntarily disclosed presence relation from an active Community membership into one named surface. It exposes only the public aggregate to anonymous readers; Habitat, chat, live work and events can consume the same owner without treating physical connection state as a social fact.
+  maturity implemented
   node_types PresenceSession
   edge_types present_on
+  source_path cmd/BonfyreCMS/content-types/community_presence.json
+  source_path cmd/BonfyreWebAddress/src/community_projection.c
+  source_path cmd/BonfyreWebAddress/src/main.c
+  witness cmd/BonfyreWebAddress/tests/surface_pattern_contract_test.sh proves a public presence counts only while its membership and presence windows are both current, and an expired membership cannot keep a retained presence current
+  invariant a public presence is counted only with explicit public disclosure, a current presence window, and an independently current membership; it is not inferred from a session, click, connection, post, reaction or physical location
+  invariant anonymous output contains a public aggregate only; actor identity and attention remain undisclosed unless a separate presentation owner authorizes them
   forbidden_inference presence -> authority
+  forbidden_inference absence of presence -> absence from a community, place, event or conversation
   source_lineage run6/run7 institutional estate
-  known_gap not built
+
+interaction human-community-projects-social-presence
+  source human-community-body
+  destination social-presence-graph
+  relation projects
+  preserves only the public aggregate, explicit community coordinate, current membership gate and presence expiry frontier
+  drops actor identity, attention state, connection/session telemetry, authority and any claim that a person is physically at a place
+  forbidden_inference an aggregate public presence -> an individual identity, community authority, event attendance or location disclosure
+
+interaction social-presence-advertises-bounded-community-coordinate
+  source social-presence-graph
+  destination external-estate-density
+  relation forwards
+  preserves only the community, surface, disclosure posture and the exact membership/body dependency references required to retire the forwarding cut
+  drops actor identity, availability, attention, session telemetry, physical location, event attendance, authority and effect permission
+  forbidden_inference a forwarded social-presence candidate -> a public actor roster, a current attendance fact, relationship authority or a right to message an actor
+  invalidates_on the exact presence, its membership dependency, its community body or disclosure declaration changing
+  witness cmd/BonfyreExternalEstate/tests/external_estate_test.sh proves the presence candidate preserves the community/surface and membership dependency while refusing actor, attention and availability terms
+
+architecture generic-machinery-law
+  canonical_name GenericMachineryLaw
+  family institutional
+  domain Institutional
+  maturity measured
+  semantic_question Does a product's name live in the declaration that owns it, or inside the machinery that consumes it?
+  # Named things should be named. A product contract, a report definition, a
+  # reconciliation law and a legacy table mapping are domain grammar and belong
+  # in the pack; generalising them away would be the opposite mistake from
+  # hardcoding.
+  #
+  # What must stay clean is the machinery. When a product's identifier, its
+  # tables or its schema string end up inside a generic compiler, a second
+  # product costs another compiled code path -- which is exactly the cost the
+  # namespace work exists to remove.
+  node_types ProductPack
+  node_types GenericCompiler
+  edge_types declares
+  edge_types consumes
+  state_types declaration
+  state_types machinery
+  invariant machinery consumes a namespace and discovers its pack; it never names a declared product, and never names a table that a pack declares
+  invariant a product implementation may name its product freely, and lives in the pack rather than beside generic machinery
+  invariant the checker reads the product list from the namespace contract rather than holding its own copy; a checker with a private list of product names is the very thing it checks for
+  invariant prose is not grammar: a module docstring explaining which estates a generator renders is exempt, and only code is judged
+  forbidden_inference a file that passes -> a generic file (it names no declared product, which is not the same as being well abstracted)
+  forbidden_inference a named contract -> hardcoding
+  computational_form validation
+  native_format yaff
+  source_path architecture/check_generic_machinery.mjs
+  source_path architecture/check_generic_machinery.py.archive
+  source_path architecture/institutional/namespaces.yaff
+  witness cmd/BonfyreWebAddress/tests/close_consequence_test.sh
+  witness scripts/tests/check_generic_machinery.test.mjs
+  invariant tests and declarations carry authored product examples without becoming generic machinery violations; implementation files and filenames remain checked against declared product and table grammar
+  measured 3 declared products and 35 declared tables checked across scripts and architecture with no violation, after two product-named compilers were moved into their pack and one was retired
+
+architecture gate-entitlement
+  canonical_name GateEntitlement
+  family institutional
+  domain Institutional / Licensing
+  layer institutional
+  semantic_question Does this key actually entitle this operation, or does it merely contain its letters?
+  purpose BonfyreGate issues tiered keys whose entitlements name the operations a holder may perform. The guard that enforces them compared with strstr against the whole comma-joined list, which is a substring test and not a membership test, and it failed in both directions at once.
+  maturity measured
+  source_path cmd/BonfyreGate/src/main.c
+  source_path cmd/BonfyreGate/tests/guard_test.sh
+  consumes CapabilityDemand
+  publishes AdmissibleRole
+  internal_calculus an entitlement is an element of a comma-separated list, matched whole and without regard to case, with surrounding space ignored because the list is written by a person
+  invariant a fragment of an entitlement is not an entitlement. A free key entitled to Ingest,Brief,Proof allowed the operation "e", and also In, rie, f,Proof and the entire list passed as one operation name
+  invariant the entitlement vocabulary and the capability registry are the same vocabulary. Entitlements were capitalised and the 103 indexed capabilities are lowercase, so every one of them was denied on free and pro keys while the gate looked like it was enforcing policy
+  invariant a field is addressed where it lives. allowed_ops is a field of the entitlements object and was read as a top-level key; that found it only while the shared JSON reader searched flat, and when the reader learned about depth it went silently empty. An empty entitlement list denies everything, which is the safe direction and still wrong
+  cannot_infer a passing enterprise key -> a working guard; enterprise carries allowed_ops "*" and short-circuits before the comparison, so the tier most likely to be tested is the one tier that can expose neither failure
+  witness cmd/BonfyreGate/tests/guard_test.sh runs on every build and asserts both directions against free and pro rather than enterprise: six fragments are refused, seven real operations are allowed in either case, a tier grants what it grants and no more, and a revoked key grants nothing
+  witness measured coverage over the 103 capabilities BonfyreCapability indexes: free 3, pro 10, enterprise 103
+  known_gap coverage is measured against the capability registry and not against what each capability actually costs to run; the registry carries per-capability cost and latency tiers that the entitlement model does not consult

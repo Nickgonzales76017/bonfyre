@@ -1,0 +1,234 @@
+#!/usr/bin/env python3
+"""Measure SourceRoot reuse from ForeignTwin FactDelta reverse dependencies.
+
+A ForeignTwin observation emits a FactDelta write such as ForeignTwin:<topic>.
+ScopedFrontier owns the reverse dependency frontier from that write to the
+subject/scope closures that must be recomputed.  This compiler joins those two
+artifacts back to SourceRoots and, optionally, persisted SurfaceScenes.
+
+The resulting subject_reuse/scene_reuse values are measured dependency impact.
+They do not establish that the source changed visible material, caused an
+action, was authoritative, or deserves acquisition/payment.
+"""
+
+import argparse
+import hashlib
+import json
+import os
+import sqlite3
+import sys
+from collections import defaultdict
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+import compile_source_frontier as frontier  # noqa: E402
+
+
+def source_roots(specs):
+    roots_by_address = {}
+    for spec in specs:
+        if "=" not in spec:
+            raise ValueError("--source-input must be LABEL=PATH")
+        label, path = spec.split("=", 1)
+        for row in frontier.load_rows(path):
+            if not isinstance(row, dict):
+                continue
+            url = frontier.channel_url(row)
+            if not url:
+                continue
+            url = frontier.canonical_url(url)
+            address = frontier.root_address(row, url)
+            root_id = "root-" + hashlib.sha256(address.encode()).hexdigest()[:20]
+            root = roots_by_address.setdefault(address, {
+                "root_id": root_id,
+                "root_address": address,
+                "provenance": set(),
+            })
+            root["provenance"].add(label)
+    return roots_by_address
+
+
+def fact_delta_paths(args):
+    paths = list(args.fact_delta or [])
+    if args.fact_delta_dir:
+        for name in sorted(os.listdir(args.fact_delta_dir)):
+            if name.endswith(".json"):
+                paths.append(os.path.join(args.fact_delta_dir, name))
+    return paths
+
+
+def writes_from(path):
+    try:
+        body = json.load(open(path))
+    except (OSError, json.JSONDecodeError):
+        return []
+    if body.get("schema") != "bonfyre-fact-delta.v1":
+        return []
+    return [str(x) for x in body.get("writes") or [] if isinstance(x, str)]
+
+
+def root_for_topic(roots, topic):
+    try:
+        canonical = frontier.canonical_url(topic)
+    except Exception:
+        return None
+    p = __import__("urllib.parse", fromlist=["urlsplit"]).urlsplit(canonical)
+    address = "%s://%s/" % ((p.scheme or "https").lower(), (p.hostname or "").lower().removeprefix("www."))
+    return roots.get(address)
+
+
+def affected(frontier_db, write):
+    rows = []
+    if not frontier_db:
+        return rows
+    st = frontier_db.execute(
+        "SELECT DISTINCT subject,scope,basis FROM closure_dependency "
+        "WHERE dependency_ref=? ORDER BY subject,scope,basis", (write,))
+    for subject, scope, basis in st:
+        rows.append((str(subject), str(scope), str(basis)))
+    return rows
+
+
+def scene_keys(scene_db, closures):
+    if not scene_db or not closures:
+        return set()
+    try:
+        present = scene_db.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='surface_scene'"
+        ).fetchone()
+    except sqlite3.Error:
+        return set()
+    if not present:
+        return set()
+    out = set()
+    for subject, scope in closures:
+        try:
+            rows = scene_db.execute(
+                "SELECT DISTINCT scene_key FROM surface_scene "
+                "WHERE status='published' AND subject_address=? AND actor_scope=?",
+                (subject, scope),
+            )
+            out.update(str(row[0]) for row in rows if row[0])
+        except sqlite3.Error:
+            continue
+    return out
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--source-input", action="append", required=True, metavar="LABEL=PATH")
+    ap.add_argument("--frontier-db", required=True)
+    ap.add_argument("--scene-db")
+    ap.add_argument("--fact-delta", action="append")
+    ap.add_argument("--fact-delta-dir")
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--receipts")
+    args = ap.parse_args()
+    if not args.fact_delta and not args.fact_delta_dir:
+        ap.error("provide --fact-delta or --fact-delta-dir")
+
+    roots = source_roots(args.source_input)
+    frontier_db = sqlite3.connect("file:%s?mode=ro" % args.frontier_db, uri=True)
+    scene_db = sqlite3.connect("file:%s?mode=ro" % args.scene_db, uri=True) if args.scene_db else None
+
+    impact = defaultdict(lambda: {
+        "writes": set(), "topics": set(), "closures": set(),
+        "subjects": set(), "scopes": set(), "bases": set(), "scenes": set(),
+        "delta_files": set(),
+    })
+    unmapped_topics = defaultdict(int)
+    deltas_read = 0
+
+    for path in fact_delta_paths(args):
+        writes = writes_from(path)
+        if not writes:
+            continue
+        deltas_read += 1
+        for write in writes:
+            if not write.startswith("ForeignTwin:"):
+                continue
+            topic = write[len("ForeignTwin:"):]
+            root = root_for_topic(roots, topic)
+            if not root:
+                unmapped_topics[topic] += 1
+                continue
+            dependencies = affected(frontier_db, write)
+            row = impact[root["root_id"]]
+            row["writes"].add(write)
+            row["topics"].add(topic)
+            row["delta_files"].add(os.path.basename(path))
+            closure_pairs = set()
+            for subject, scope, basis in dependencies:
+                row["closures"].add((subject, scope, basis))
+                row["subjects"].add(subject)
+                row["scopes"].add(scope)
+                row["bases"].add(basis)
+                closure_pairs.add((subject, scope))
+            row["scenes"].update(scene_keys(scene_db, closure_pairs))
+
+    frontier_db.close()
+    if scene_db:
+        scene_db.close()
+
+    root_by_id = {root["root_id"]: root for root in roots.values()}
+    measurements, receipts = [], []
+    for root_id, row in impact.items():
+        root = root_by_id[root_id]
+        measurements.append({
+            "root_id": root_id,
+            "root_address": root["root_address"],
+            "subject_reuse": len(row["subjects"]),
+            "scene_reuse": len(row["scenes"]),
+        })
+        receipts.append({
+            "schema": "bonfyre.source-change-impact.v1",
+            "root_id": root_id,
+            "root_address": root["root_address"],
+            "fact_delta_writes": sorted(row["writes"]),
+            "topics": sorted(row["topics"]),
+            "delta_files": sorted(row["delta_files"]),
+            "affected_subjects": len(row["subjects"]),
+            "affected_scopes": len(row["scopes"]),
+            "affected_closures": len(row["closures"]),
+            "affected_scenes": len(row["scenes"]),
+            "dependency_bases": sorted(row["bases"]),
+            "provenance": sorted(root["provenance"]),
+            "truth": "reverse_dependency_impact_not_visible_material_contribution",
+            "cannot_infer": [
+                "affected closure -> visible material changed",
+                "affected scene -> source appeared in the rendered extent",
+                "dependency impact -> authority, rights, availability or economic value",
+                "ForeignTwin observation -> external effect",
+            ],
+        })
+
+    receipts.sort(key=lambda row: (
+        -row["affected_closures"], -row["affected_scenes"], row["root_id"]
+    ))
+    measurements.sort(key=lambda row: (
+        -row["subject_reuse"], -row["scene_reuse"], row["root_id"]
+    ))
+    with open(args.out, "w") as out:
+        for row in measurements:
+            out.write(json.dumps(row, sort_keys=True, separators=(",", ":")) + "\n")
+    if args.receipts:
+        with open(args.receipts, "w") as out:
+            for row in receipts:
+                out.write(json.dumps(row, sort_keys=True, separators=(",", ":")) + "\n")
+
+    summary = {
+        "schema": "bonfyre.source-change-impact-summary.v1",
+        "fact_deltas_read": deltas_read,
+        "roots_with_measured_impact": len(receipts),
+        "affected_closures": sum(x["affected_closures"] for x in receipts),
+        "affected_scenes": sum(x["affected_scenes"] for x in receipts),
+        "unmapped_topics": len(unmapped_topics),
+        "unmapped_topic_occurrences": sum(unmapped_topics.values()),
+        "truth": "reverse_dependency_impact_not_visible_material_contribution",
+    }
+    print(json.dumps(summary, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

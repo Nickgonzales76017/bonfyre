@@ -1,0 +1,99 @@
+[
+    {
+        "name": "reference-standard",
+        "evidence_requirements": [
+            "foreign_observation_receipt",
+            "ingest_artifact"
+        ],
+        "fields": [
+            {
+                "name": "authority",
+                "audiences": [
+                    "self",
+                    "household",
+                    "group",
+                    "community",
+                    "public",
+                    "market",
+                    "institution"
+                ]
+            },
+            {
+                "name": "description",
+                "audiences": [
+                    "self",
+                    "household",
+                    "group",
+                    "community",
+                    "public",
+                    "market",
+                    "institution"
+                ]
+            },
+            {
+                "name": "name",
+                "audiences": [
+                    "self",
+                    "household",
+                    "group",
+                    "community",
+                    "public",
+                    "market",
+                    "institution"
+                ]
+            },
+            {
+                "name": "source_url",
+                "audiences": [
+                    "self",
+                    "household",
+                    "group",
+                    "community",
+                    "public",
+                    "market",
+                    "institution"
+                ]
+            },
+            {
+                "name": "updated_at",
+                "audiences": [
+                    "self",
+                    "household",
+                    "group",
+                    "community",
+                    "public",
+                    "market",
+                    "institution"
+                ]
+            }
+        ],
+        "projections": [
+            {
+                "carrier": "semantic-json",
+                "standard": "Bonfyre semantic record",
+                "fields": [
+                    {
+                        "semantic": "authority",
+                        "carrier": "authority"
+                    },
+                    {
+                        "semantic": "description",
+                        "carrier": "description"
+                    },
+                    {
+                        "semantic": "name",
+                        "carrier": "name"
+                    },
+                    {
+                        "semantic": "source_url",
+                        "carrier": "source_url"
+                    },
+                    {
+                        "semantic": "updated_at",
+                        "carrier": "updated_at"
+                    }
+                ]
+            }
+        ]
+    }
+]

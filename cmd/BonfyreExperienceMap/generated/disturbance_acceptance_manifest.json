@@ -1,0 +1,92 @@
+{
+  "accepted": false,
+  "cannot_infer": [
+    "event count -> propagation depth",
+    "sequence/step number -> causality",
+    "owner label -> owner receipt",
+    "completed protocol -> discharged commitment"
+  ],
+  "failures": [
+    "no disturbance trace supplied",
+    "expected one disturbance_id, got 0",
+    "expected one root disturbance, got 0",
+    "missing required owner BlockerGraph",
+    "missing required owner CommitmentGraph",
+    "missing required owner DomainProfile",
+    "missing required owner EvidenceGraph",
+    "missing required owner ForeignTwinGraph",
+    "missing required owner PublicationProgram",
+    "missing required owner RoundTripTwin",
+    "missing required owner SemanticDerivationGraph",
+    "missing required owner UnlockGraph",
+    "missing required owner WorkGraph",
+    "missing economic owner",
+    "distinct_owners=0 below 10",
+    "max_owner_braid_depth=0 below 8",
+    "blockers_opened=0 below 1",
+    "blockers_resolved=0 below 1",
+    "joins_admitted=0 below 1",
+    "human_decisions=0 below 1",
+    "commitments_opened=0 below 1",
+    "quotes=0 below 1",
+    "settlements=0 below 1",
+    "projections=0 below 1",
+    "round_trip_total=0 below 1",
+    "no retraction or compensation"
+  ],
+  "metrics": {
+    "blockers_opened": 0,
+    "blockers_resolved": 0,
+    "commitments_opened": 0,
+    "compensations": 0,
+    "corrections": 0,
+    "distinct_owners": 0,
+    "human_decisions": 0,
+    "improper_erases": 0,
+    "joins_admitted": 0,
+    "max_event_depth": 0,
+    "max_owner_braid_depth": 0,
+    "owner_transition_kinds": 0,
+    "owner_transition_pairs": [],
+    "owners": [],
+    "projections": 0,
+    "quotes": 0,
+    "retractions": 0,
+    "round_trip": {},
+    "round_trip_total": 0,
+    "settlements": 0,
+    "trace_events": 0
+  },
+  "owner_bridge_evidence": {
+    "ForeignTwinGraph->DomainProfile": {
+      "blocked_candidates": 6,
+      "cannot_infer": [
+        "validated occurrence bindings -> all future DomainProfile handoffs are ready"
+      ],
+      "receipt_ingress_observed": true,
+      "validated_bindings": 1
+    },
+    "ProtocolContract->SemanticDerivationGraph": {
+      "cannot_infer": [
+        "native registration witness -> every contract has a valid lowering"
+      ],
+      "native_graph_registration": true
+    }
+  },
+  "schema": "bonfyre.disturbance-acceptance.v1",
+  "sensor_boundary": {
+    "attempts": 2,
+    "body_observed": false,
+    "cannot_infer": [
+      "documented public feed -> lawful observation by this agent"
+    ],
+    "policy_decisions": {
+      "robots_disallow": 1,
+      "robots_preflight_unavailable": 1
+    },
+    "states": {
+      "policy_excluded": 1,
+      "policy_indeterminate": 1
+    }
+  }
+}

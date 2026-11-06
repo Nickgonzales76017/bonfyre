@@ -1,0 +1,9 @@
+#!/usr/bin/env python3
+# Historical witness; coordination_family.test.mjs supersedes it.
+import importlib.util
+from pathlib import Path
+ROOT=Path(__file__).resolve().parents[3];s=importlib.util.spec_from_file_location("c",ROOT/"cmd/BonfyreExternalEstate/tools/compile_participation_carriers.py");m=importlib.util.module_from_spec(s);s.loader.exec_module(m)
+for kind in m.ROOTS:
+ r=m.compile({"provider":"test","carrier_kind":kind,"source_ref":"source:test","receipt_ref":"receipt:test","observed_at":"2026-09-28T00:00:00Z","payload":{"id":kind,"title":"Test","url":"https://example.test/x"}})
+ assert r["body"]["candidate_roots"]==m.ROOTS[kind] and "not a Bonfyre subject" in r["body"]["cannot_infer"]
+print("participation carriers: PASS")

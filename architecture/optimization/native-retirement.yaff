@@ -1,0 +1,159 @@
+atlas optimization-native-retirement
+
+architecture native-ratchet
+  canonical_name NativeRatchet
+  family optimization
+  domain Optimization / Estate governance
+  layer governance
+  semantic_question Is the JS and script estate shrinking toward C over YAFF/CUE, and is anything installed as a program still a packed JS runtime?
+  purpose Turn the retirement of the .mjs estate into a one-way door: every win lowers a budget, and nothing (person, Claude or Codex) can grow the estate back without a reviewed edit to the budgets
+  maturity measured
+  owns NativeRatchetBudget
+  publishes NativeRatchetMeasure
+  source_path scripts/native-ratchet.sh
+  witness scripts/tests/native-ratchet-installed-files.sh checks executable files, hard links, symlinks and non-executable data are counted according to the installed-program budget
+  source_path architecture/native-ratchet.cue
+  source_path .githooks/pre-commit
+  source_path .claude/hooks/native-ratchet.sh
+  source_path .claude/hooks/institution-state.mjs
+  source_path .github/workflows/native-ratchet.yml
+  source_path docs/engineering/mjs-retirement-20261022/PLAN.md
+  internal_calculus measure: authored .mjs files and lines (tracked or untracked, not ignored, vendored excluded), other scripts (.js .cjs .ts .tsx .py), bun build --compile sites outside comments, and, when ~/.bonfyre/bin exists, JS-runtime executables and the largest installed program
+  internal_calculus check: cue vet of the measurement against #Measure; tighten: lower any budget to the current figure
+  witness scripts/native-ratchet.sh check refused a one-line probe .mjs (files 1781 > 1780, lines over budget) and passes on the tree; 2026-10-22 figures went 1780 to 1778 files, 182482 to 176351 lines, 1 to 0 compile sites, 3 to 0 JS-runtime programs and 63.6 MB to 13.8 MB largest installed program
+  invariant budgets only fall through tighten; raising one is a reviewed edit to architecture/native-ratchet.cue
+  invariant the pre-commit hook, CI and Claude's PostToolUse hook on any script write all run the same check
+  invariant an installed program in ~/.bonfyre/bin is never a packed JS runtime
+  invariant installed program byte totals count regular executables once per inode and exclude symlinks and non-executable data files
+  forbidden_inference a passing ratchet -> native, efficient or correct code; it counts files, lines and installed runtimes, not behaviour
+  forbidden_inference fewer .mjs lines -> less functionality; ports are held to golden vectors so behaviour is kept while the JS goes
+  known_gap other agents working in the tree add .mjs between measurements; the file budget is enforced at commit, so concurrent work must port or retire to land
+  interacts ratchet-measures-retirement-archive
+  source_lineage 2026-10-22 mjs retirement plan, docs/engineering/mjs-retirement-20261022
+
+architecture js-compat-primitives
+  canonical_name JsCompatPrimitives
+  family optimization
+  domain Optimization / Native port substrate
+  layer substrate
+  semantic_question What must C provide so a JS organ can be ported without changing a byte of its output, digests or receipts?
+  purpose One shared substrate in libbonfyre for every JS-to-C port: a JSON writer byte-identical to JSON.stringify, a mutable JSON value with JS property order and canonical digests, and JS-compatible regular expressions
+  maturity measured
+  owns JsCompatibleEncoding
+  source_path lib/libbonfyre/include/bf_jsonw.h
+  source_path lib/libbonfyre/bf_jsonw.c
+  source_path lib/libbonfyre/include/bf_jv.h
+  source_path lib/libbonfyre/bf_jv.c
+  source_path lib/libbonfyre/include/bf_re.h
+  source_path lib/libbonfyre/bf_re.c
+  source_path lib/libbonfyre/src/bf_sha256.c
+  internal_calculus numbers: integers and short decimals by an exact Clinger fast path (N / 10^k equal to d with N under 10^15), else the shortest of 15, 16 or 17 significant digits that round-trips, subnormals searched in full; JS layout rules for exponents
+  internal_calculus objects keep JS property order on insert (array-index keys first); digests are SHA-256 of a byte-sorted or a JS-sorted canonical form; objects past 16 keys get an open-addressed index
+  internal_calculus regex: pattern to AST to a backtracking VM with a stack-allocated first frame, counted repetition expanded, progress checks on empty-capable loops, lookahead, ASCII case folding, whole code points for . and negated classes
+  internal_calculus allocation: size-class free lists over 64 KiB slabs for values, keys and strings; SHA-256 on ARMv8 SHA instructions when present
+  witness lib/libbonfyre/tests/bf_jsonw_parity.sh proves JSON.stringify layout, escapes, key order, canonical forms and digests equal Bun's, through both the writer and bf_jv
+  witness lib/libbonfyre/tests/bf_re_parity.sh proves 51 patterns taken from the ports (lookahead, lazy, backreferences under i, multibyte quantifiers, replace templates) match Bun's RegExp offsets and replacements
+  witness 2026-10-22: 300,000 random doubles of every magnitude format exactly as V8 prints them, and libm exp, log, log1p and expm1 agree with V8 bit for bit on 200,000 samples
+  invariant ports compile with -ffp-contract=off: fused multiply-add changes the last bit of sums V8 computes unfused
+  invariant a bf_jv tree belongs to one thread; the allocator is not thread-safe
+  forbidden_inference a byte-identical port -> a correct organ; parity carries the old behaviour, mistakes included
+  forbidden_inference bf_re -> full ECMAScript RegExp; lookbehind, named groups, unicode properties and the y and u flags are refused at compile
+  known_gap key order for astral characters against U+E000..U+FFFF differs from UTF-16 sorting; no Bonfyre key uses them
+  interacts decide-ports-on-js-compat-primitives
+  source_lineage 2026-10-22 mjs retirement plan, WZ
+
+architecture retirement-archive
+  canonical_name RetirementArchive
+  family optimization
+  domain Optimization / Estate density
+  layer storage
+  semantic_question When code or a tree is retired, where does it go so nothing is lost and nothing stays behind?
+  purpose Retire replaced source and cold trees into verified, path-ordered zstd archives with a sha256 manifest and a README entry, then remove them from the tree
+  maturity measured
+  owns RetiredArtifact
+  source_path scripts/retire.sh
+  internal_calculus every entry (symlinks and empty directories too) ordered by its path inside its top-level tree, tar --no-recursion, zstd -19 --long=27; restore proven by extraction, diff -r --no-dereference and the sha256 manifest before removal
+  witness 2026-10-22 ~/.bonfyre/archive/retired: Downloads hand-off bundles 6,077 files 262 MB to 62 MB; Aurekai generated integration repos 649 files to 52 KB; operator TypeScript and the twelve DecisionPlane product files, each restore-verified before removal
+  witness 2026-10-27 reference census (scripts, Makefiles, workflows, launchd, package files, C headers, pages, tests): 22 authored .mjs with no reference of any kind retired into js-unreferenced-20261027 (3,141 lines); four evidence copies of upstream Creator bytes into creator-upstream-copies-20261027
+  witness 2026-10-27 maturity triage of test-only clusters: media-clip-review-20261027 (738 lines, orchestrator already gone), foreign-twin-fabric-20261027 (981 lines), research-consequence-prototype-20261027 (589 lines) and experience-handoff-protocol-20261027 (635 lines) retired with their own tests; none had an atlas entry, launchd, script or page caller. The Cloudflare admission path keeps experience-handoffs contract, artifacts, source-review-owner and handoff-fabric native-owner
+  forbidden_inference an unreferenced file retired by census -> its capability was ported; it had no caller, and restoring it restores the same unwired code
+  invariant nothing is removed unless the archive restores entry for entry
+  invariant RETIRE_FROM retires outside the repo; the archive README names the restore command for each archive
+  forbidden_inference a retired file -> a deleted capability; the capability moved to its native owner, and the source is restorable
+  known_gap retiring live release trees under ~/.bonfyre/releases needs the owner's approval; 61 cold releases (1.04 GB) are listed in PLAN.md and not yet archived
+  interacts ratchet-measures-retirement-archive
+  source_lineage .claude/skills/density (ordering is the lever)
+
+interaction ratchet-measures-retirement-archive
+  source retirement-archive
+  destination native-ratchet
+  relation retired_sources_lower_the_measured_estate
+  preserves restorable source bytes and the manifest of what left the tree
+  drops the retired files from the measured estate
+  forbidden_inference a lowered budget -> the retired code's behaviour is gone; it lives in its native owner and its archive
+  invalidates_on retire.sh ordering or verification changing, or the ratchet's measured set changing
+  witness scripts/retire.sh
+
+interaction decide-ports-on-js-compat-primitives
+  source cmd-books
+  destination js-compat-primitives
+  relation port_held_to_golden_vectors_through_shared_primitives
+  preserves receipts, digests and printed output of the retired Bun products byte for byte, except tests/CORRECTIONS
+  drops a JS runtime per product (three 63 MB executables became one 246 KB program)
+  forbidden_inference golden parity -> new behaviour verified; only recorded behaviour is held
+  invalidates_on bf_jsonw number or string formatting, bf_jv key order, bf_re semantics or the DecisionPlane CUE changing
+  witness cmd/BonfyreDecide/tests/parity.sh
+  binding lib/libbonfyre/bf_jv.c
+
+architecture command-vectors
+  canonical_name CommandVectors
+  family optimization
+  domain Optimization / Test estate
+  layer verification
+  semantic_question Which JS tests only spawn a native program and check what came back, and can their cases live as data replayed by one native runner?
+  purpose Carry spawn-only JS test suites as bonfyre.command-vectors.v1 JSON beside the owning organ (ORGAN/tests/vectors/), replayed by one C runner, so the .mjs test can be retired without dropping an assertion
+  maturity measured
+  owns CommandVector
+  source_path tests/vectors/bf_vectors.c
+  source_path tests/vectors/Makefile
+  source_path cmd/BonfyreExperienceMap/tests/vectors/native_definition.json
+  source_path cmd/BonfyreExperienceMap/tests/vectors/native_resolution.json
+  source_path cmd/BonfyreExperienceMap/tests/vectors/policy_compilation.json
+  source_path cmd/BonfyreFinance/tests/vectors/zero_close.json
+  source_path cmd/BonfyreFinance/tests/vectors/payment_options.json
+  source_path cmd/BonfyreFinance/tests/vectors/supplier_quote_memo.json
+  source_path cmd/BonfyreFinance/tests/vectors/relationship_states.json
+  internal_calculus each case gets a fresh temporary directory and files; steps run a program with argv, env and stdin, then check exit, exact stdout or stderr, substrings, JSON deep equality, values at dotted paths (with * map and ?k=v selection), array membership, lengths, membership in a JSON file and file presence; SQLite setup and readback go through the sqlite3 program, so the runner owns no database code
+  witness 2026-10-29 tests/vectors/bonfyre-vectors replays 7 vector files (24 cases, 1,769 checks) that carry 24 passing bun tests from BonfyreExperienceMap (native_definition, native_resolution, policy_compilation) and BonfyreFinance (zero_close, payment_options, supplier_quote_memo, relationship_states); mutated expectations fail; the 450 retired test lines are in experience-map-spawn-tests-20261029 and finance-spawn-tests-20261029
+  forbidden_inference a passing vector set -> the program is correct; it answered the recorded inputs the way the retired assertions required, nothing more
+  forbidden_inference a converted suite -> every JS test can become a vector; suites that build fault-injection binaries, race processes, compare against an independent encoder or read live stores stay as code
+  invariant a .mjs test is retired only after its vectors pass against the same binary and every assertion it made is a check in a vector
+  known_gap BonfyreCMS, BonfyreHash and components/BonfyreProject spawn suites need JSONL row selection, concurrency or fault-injection builds and are not converted; the runner is not yet run by CI
+  interacts ratchet-measures-command-vectors
+  interacts command-vectors-replay-admits-verified-repair
+  internal_calculus repair replay (--replay-repair ID --case TEXT --before BIN --after BIN --runs N) replays one vector file N times through its binary_env against each binary and emits bonfyre.repair-replay.v1 with bf_jsonw; verdict replayed only when every before run fails a check of the named case, every after run passes the whole file, both sides' FAIL-location signatures are identical across runs and the two binaries differ in bytes
+  witness 2026-10-30 packs/no-simulation/repair-replays-20261030/: 16 of the 19 repairs from the 2026-10-29 certification replayed 3x before (unmodified git 173d984a tree) and 3x after (working-tree build) with identical signatures; physics and discipl separated the binaries for a reason other than the claimed repair and wire's pre-fix tree passed, so all three are excluded (manifest.tsv)
+  witness cmd/BonfyreCapability/tests/vectors/repair_admit.json runs the replay mode on toy programs: separated binaries replay; swapped, identical and wrong-case replays are not-replayed with their reasons
+  forbidden_inference a replayed repair -> the two binaries differ only by that repair; the before tree is a commit, and its working-tree diff (hash recorded in before.source) can carry other changes
+  forbidden_inference a replayed repair -> the repair is deployed, priced or a product; it says the vector separates two named binaries, nothing more
+  source_lineage 2026-10-22 mjs retirement plan, W4
+
+interaction ratchet-measures-command-vectors
+  source command-vectors
+  destination native-ratchet
+  relation vectorized_tests_lower_the_measured_estate
+  preserves every assertion of a retired spawn-only test as a vector check
+  drops the .mjs test file and its Bun process
+  forbidden_inference a lowered budget -> less test coverage; the checks moved into data replayed natively
+  invalidates_on the runner's check semantics or the bonfyre.command-vectors.v1 shape changing
+  witness tests/vectors/bf_vectors.c
+
+interaction command-vectors-replay-admits-verified-repair
+  source command-vectors
+  destination cmd-capability
+  relation deterministic_replay_gates_repair_record
+  preserves the vector file sha256, the named case, run count, before and after binary sha256, the before source commit and diff hash, and each side's outcome signature
+  drops per-run output text and the temporary case directories
+  forbidden_inference an admitted repair record -> the installed organ carries the repair, an invocation is authorized, or a customer effect was verified
+  invalidates_on the vector file or the after binary changing after the replay (admission re-hashes both and refuses), or the bonfyre.repair-replay.v1 shape changing
+  witness cmd/BonfyreCapability/tests/vectors/repair_admit.json

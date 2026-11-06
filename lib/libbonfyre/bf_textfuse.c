@@ -1,3 +1,7 @@
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 /*
  * bf_textfuse.c — Single-pass multi-pattern text scanner
  *
@@ -9,6 +13,10 @@
  * and BonfyreProof pattern sets.
  */
 
+/* CLOCK_MONOTONIC, and the Linux inotify/epoll paths this file documents,
+ * are behind a glibc feature macro. Declared here so the Linux build this
+ * targets actually compiles. */
+#include <stdint.h>
 #include "bf_textfuse.h"
 
 #include <ctype.h>

@@ -1,0 +1,6 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-weaviate-index","binary_env":"BONFYRE_WEAVIATE_INDEX_BIN","cases":[
+{"name":"a local ingest payload is written and nothing is sent","files":{"e.json":"{\"vector\":[0.1,0.2,0.3]}","m.json":"{\"jobSlug\":\"Demo Job\",\"jobName\":\"Demo\"}"},"steps":[
+ {"argv":["--emb","e.json","--meta","m.json","--out","o/w.json"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["wrote local ingest payload only"],"present":["${tmp}/o/w.json","${tmp}/o/status.json"]},
+ {"program":"cat","argv":["o/w.json"],"at":{"documentId":"demo-job","vectorLength":3,"properties.jobName":"Demo"}}]},
+{"name":"an embedding with no vector is refused rather than indexed empty","files":{"e.json":"[[0.1,0.2]]","m.json":"{}"},"steps":[{"argv":["--emb","e.json","--meta","m.json","--out","w.json"],"env":{"HOME":"${tmp}"},"exit":2,"absent":["${tmp}/w.json"]}]},
+{"name":"dry-run writes nothing","files":{"e.json":"{\"vector\":[1]}","m.json":"{}"},"steps":[{"argv":["--emb","e.json","--meta","m.json","--out","w.json","--dry-run"],"env":{"HOME":"${tmp}"},"exit":0,"absent":["${tmp}/w.json"]}]}]}

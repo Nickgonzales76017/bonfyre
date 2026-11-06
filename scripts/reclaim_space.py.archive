@@ -1,0 +1,209 @@
+#!/usr/bin/env python3
+"""Reclaim disk without losing evidence.
+
+Three kinds of space, treated differently because they are different:
+
+  COMPRESS   retained bodies and evidence journals the estate must keep.  A
+             body older than --keep-raw-days is gzipped where it lies; every
+             reader takes `<name>.body` or `<name>.body.gz`, so the evidence
+             survives at roughly a seventh of the size.  Nothing is deleted.
+
+  PRUNE      what the machine can make again with no loss of record: package
+             and build caches, browser and editor caches, virtual environments,
+             other sessions' scratch directories, an organ's own build tree.
+
+  REPORT     everything else, with its size, so a person decides.  This never
+             deletes a database, a receipt, a run record or a source body.
+
+Without --apply it only measures.  Every run prints what it would reclaim,
+by class, and the paths it refuses to touch.
+
+  Historical Python oracle; live command is reclaim_space.mjs.
+"""
+import argparse, gzip, json, os, shutil, sys, time
+
+# Directories whose contents the machine can rebuild.  A path is pruned only if
+# it matches one of these exactly, never by pattern over a whole home.
+PRUNABLE = [
+    ("~/Library/Caches/com.microsoft.VSCode.ShipIt", "VS Code update staging"),
+    ("~/Library/Caches/Google", "browser cache"),
+    ("~/Library/Caches/node-gyp", "node build headers"),
+    ("~/Library/Caches/pnpm", "package cache"),
+    ("~/.cache/puppeteer", "downloaded browsers"),
+    ("~/.cache/zig", "compiler cache"),
+    ("~/.npm/_cacache", "npm cache"),
+    ("~/Library/Caches/pip", "pip cache"),
+    ("~/.cache/pip", "pip cache"),
+]
+
+# Body and evidence directories worth compressing in place.
+COMPRESSIBLE = [
+    ("~/.bonfyre/foreign-sweep/bodies", "*.body"),
+    ("~/.bonfyre/estate/served", "*"),
+    ("/var/lib/bonfyre/foreign/bodies", "*.body"),
+]
+
+# Never touched, whatever their size.
+REFUSED = (".db", ".sqlite3", ".sqlite", ".key", "-wal", "-shm", ".jsonl", ".json")
+
+
+def size_of(path):
+    total = 0
+    for root, _dirs, files in os.walk(path, onerror=lambda e: None):
+        for name in files:
+            try:
+                total += os.lstat(os.path.join(root, name)).st_size
+            except OSError:
+                pass
+    return total
+
+
+def newest_file(path):
+    """The most recent write anywhere inside a tree."""
+    newest = 0.0
+    for root, _dirs, files in os.walk(path, onerror=lambda e: None):
+        try:
+            newest = max(newest, os.lstat(root).st_mtime)
+        except OSError:
+            pass
+        for name in files:
+            try:
+                newest = max(newest, os.lstat(os.path.join(root, name)).st_mtime)
+            except OSError:
+                pass
+    return newest
+
+
+def human(n):
+    for unit in ("B", "K", "M", "G", "T"):
+        if n < 1024 or unit == "T":
+            return "%.0f%s" % (n, unit)
+        n /= 1024.0
+
+
+def compress_dir(path, pattern, keep_raw_days, apply_now):
+    """Gzip bodies older than the raw window, in place, keeping the digest of
+    what was there: a reader that wants the bytes still gets the bytes."""
+    cutoff = time.time() - keep_raw_days * 86400
+    before = after = 0
+    files = 0
+    suffix = pattern.replace("*", "")
+    for root, _dirs, names in os.walk(path, onerror=lambda e: None):
+        for name in names:
+            if name.endswith(".gz") or (suffix and not name.endswith(suffix)):
+                continue
+            full = os.path.join(root, name)
+            try:
+                stat = os.lstat(full)
+            except OSError:
+                continue
+            if not stat.st_size or stat.st_mtime > cutoff:
+                continue
+            before += stat.st_size
+            files += 1
+            if not apply_now:
+                after += stat.st_size // 7            # measured ratio for retained HTML and JSON
+                continue
+            packed = full + ".gz"
+            try:
+                with open(full, "rb") as src, gzip.open(packed, "wb", compresslevel=9) as dst:
+                    shutil.copyfileobj(src, dst, 1024 * 1024)
+                os.utime(packed, (stat.st_atime, stat.st_mtime))
+                after += os.lstat(packed).st_size
+                os.unlink(full)
+            except OSError as error:
+                if os.path.exists(packed):
+                    try:
+                        os.unlink(packed)
+                    except OSError:
+                        pass
+                after += stat.st_size
+                sys.stderr.write("keeping %s: %s\n" % (full, error))
+    return {"path": path, "files": files, "before": before, "after": after}
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--apply", action="store_true")
+    # Half a day, not three.  A body is rewritten only when its source is read
+    # again -- six-hourly for the hottest, three-weekly for the coldest -- so a
+    # three-day window left almost every retained body raw forever, which is
+    # why the estate kept filling its disk and nobody could see why.
+    ap.add_argument("--keep-raw-days", type=float, default=0.5)
+    ap.add_argument("--scratch", default="/private/tmp/claude-503")
+    ap.add_argument("--keep-scratch", default=os.environ.get("CLAUDE_SESSION_ID", ""))
+    ap.add_argument("--keep-scratch-hours", type=float, default=24)
+    ap.add_argument("--keep-paths", default=os.environ.get("CLAUDE_SCRATCHPAD", ""),
+                    help="directories never pruned, whatever their age")
+    ap.add_argument("--compress-dir", action="append", default=[],
+                    help="another directory of retained bodies to compress in place")
+    ap.add_argument("--json", action="store_true")
+    args = ap.parse_args()
+    report = {"schema": "bonfyre-reclaim.v1", "applied": args.apply, "compressed": [], "pruned": [], "kept": []}
+
+    for path, pattern in COMPRESSIBLE + [(d, "*") for d in args.compress_dir]:
+        full = os.path.expanduser(path)
+        if os.path.isdir(full):
+            report["compressed"].append(compress_dir(full, pattern, args.keep_raw_days, args.apply))
+
+    for path, why in PRUNABLE:
+        full = os.path.expanduser(path)
+        if not os.path.isdir(full):
+            continue
+        freed = size_of(full)
+        if not freed:
+            continue
+        if args.apply:
+            shutil.rmtree(full, ignore_errors=True)
+        report["pruned"].append({"path": full, "why": why, "bytes": freed})
+
+    # Other sessions' scratch directories: this session's own is kept.
+    if os.path.isdir(args.scratch):
+        for parent, dirs, _files in os.walk(args.scratch):
+            if parent != args.scratch:
+                continue
+            for name in dirs:
+                for session in os.listdir(os.path.join(parent, name)) if os.path.isdir(os.path.join(parent, name)) else []:
+                    full = os.path.join(parent, name, session)
+                    if not os.path.isdir(full) or (args.keep_scratch and session == args.keep_scratch):
+                        continue
+                    # A scratch directory holding a recently written file belongs
+                    # to a session that is still working.  A directory's own
+                    # mtime is not that signal: it does not move when a file
+                    # deep inside it is written, which is how a live session's
+                    # work was once deleted by this very check.
+                    if newest_file(full) > time.time() - args.keep_scratch_hours * 3600:
+                        report["kept"].append({"path": full, "why": "holds work written inside the keep window"})
+                        continue
+                    if args.keep_paths and any(os.path.realpath(full) == os.path.realpath(k) or
+                                               os.path.realpath(full) in os.path.realpath(k)
+                                               for k in args.keep_paths.split(",") if k.strip()):
+                        report["kept"].append({"path": full, "why": "named as kept"})
+                        continue
+                    if name == "bundled-skills":
+                        continue
+                    freed = size_of(full)
+                    if freed < 1_000_000:
+                        continue
+                    if args.apply:
+                        shutil.rmtree(full, ignore_errors=True)
+                    report["pruned"].append({"path": full, "why": "another session's scratch", "bytes": freed})
+
+    report["compressed_bytes"] = sum(c["before"] - c["after"] for c in report["compressed"])
+    report["pruned_bytes"] = sum(p["bytes"] for p in report["pruned"])
+    report["reclaimed_bytes"] = report["compressed_bytes"] + report["pruned_bytes"]
+    if args.json:
+        print(json.dumps(report))
+    else:
+        for c in report["compressed"]:
+            if c["files"]:
+                print("compress %s: %d files %s -> %s" % (c["path"], c["files"], human(c["before"]), human(c["after"])))
+        for p in report["pruned"]:
+            print("prune    %s (%s) %s" % (p["path"], p["why"], human(p["bytes"])))
+        print("%s %s (compressed %s, pruned %s)" % ("reclaimed" if args.apply else "would reclaim",
+              human(report["reclaimed_bytes"]), human(report["compressed_bytes"]), human(report["pruned_bytes"])))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,11 @@
+{
+  "id": "nomic-static-128",
+  "name": "Nomic static embedding, 128 dimensions",
+  "description": "Static token embedding distilled by bonfyre-embed distill from the local nomic-embed-text-onnx graph (PCA to 128 dimensions, Zipf weighting, int8 rows). Static semantic search reads it in CMS publishing, the web address server and the browser. This identity is not the teacher's sentence model and implies no retrieval quality; what has been measured is carried by its representation passport.",
+  "format": "bfse",
+  "sha256": "5b722d081d18113a77970f63d2bd4bef346ca3e56d6c12c0fadf2c3f1032b51e",
+  "size_mb": 4.078,
+  "geometry": "128-dimensional normalized static embedding",
+  "geometry_condition": "scores compare only within this one .bfse; comparison with any other geometry requires an explicit ComparabilityContract",
+  "sources": ["file:///Users/nickgonzales/BonfyreModels/static/nomic-static-128.bfse"]
+}

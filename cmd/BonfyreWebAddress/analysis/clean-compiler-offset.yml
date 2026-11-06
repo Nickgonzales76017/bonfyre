@@ -1,0 +1,17 @@
+id: web-address-clean-compiler-offset
+language: C
+severity: error
+message: this compiler path must use bounded output rather than an unchecked snprintf offset
+rule:
+  any:
+    - pattern: $W += (size_t)snprintf($BUF + $W, $$$ARGS)
+    - pattern: $W += snprintf($BUF + $W, $$$ARGS)
+    - pattern: $W = (size_t)snprintf($BUF, $$$ARGS)
+    - pattern: $W = snprintf($BUF, $$$ARGS)
+  inside:
+    kind: function_definition
+    has:
+      kind: function_declarator
+      regex: 'serve_surface_pattern|subject_conditions|subject_generic|trail_render|machine_head|subject_miss'
+      stopBy: end
+    stopBy: end

@@ -1,0 +1,52 @@
+schema PublicationOccurrence
+generation publication-occurrence-1
+authority ForeignLiveIngest + OccurrenceOrigin + InformationPolicy + RetentionGC
+
+field occurrence_id
+  type text
+  required true
+field source_twin
+  type text
+  required true
+field source_ref
+  type text
+  required true
+field canonical_href
+  type text
+field title
+  type text
+  required true
+field summary
+  type text
+field published_at
+  type timestamp
+field observed_at
+  type timestamp
+  required true
+field receipt_ref
+  type text
+  required true
+field rights_basis
+  type text
+  required true
+field retention
+  type enum
+  values ephemeral retained archival
+  required true
+field visibility
+  type enum
+  values public scoped withheld
+  required true
+field assertion_state
+  type enum
+  values OBSERVED
+  required true
+field cannot_infer
+  type text
+  required true
+
+invariant foreign-assertion-stays-foreign
+  statement every row is OBSERVED and names its ForeignTwin receipt; the observing estate did not author the publication
+invariant material-is-admitted-before-use
+  statement a SiteProgram may query this typed occurrence only after rights, retention and disclosure are explicit
+forbidden_inference PublicationOccurrence -> Aurekai assertion, endorsement, author identity, republication right or effect authority

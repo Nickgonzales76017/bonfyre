@@ -114,7 +114,7 @@ int bf_workgraph_write_evidence_ex(BfWorkgraph *graph, BfWorkgraphResult *result
     char transition_id[64];
     char previous_id[64];
     char previous_hash[65];
-    char payload[1024];
+    char payload[2048];
     char payload_hash[65];
     char chain_material[256];
     char chain_hash[65];
@@ -124,6 +124,7 @@ int bf_workgraph_write_evidence_ex(BfWorkgraph *graph, BfWorkgraphResult *result
     const char *node_value = result->node_id[0] != '\0' ? result->node_id : NULL;
     const char *transition = evidence->to_state;
     const char *domain_name = transition_domain_name(evidence->transition_domain);
+    const BfWorkgraphRunEvidence *run = evidence->run;
     int is_compensation = evidence->transition_domain == BF_WORKGRAPH_TRANSITION_COMPENSATION;
     int node_attempt = -1;
     int execution_attempt;
@@ -187,6 +188,20 @@ int bf_workgraph_write_evidence_ex(BfWorkgraph *graph, BfWorkgraphResult *result
              (long long)result->lease_expires_at_ms,
              (long long)result->next_attempt_at_ms,
              error_code != NULL ? error_code : "");
+    if (run != NULL) {
+        /* bf_workgraph_attest_run admits only [0-9A-Za-z._:-] in these fields,
+         * so they enter the chained payload without escaping. */
+        size_t used = strlen(payload);
+        int added;
+        if (used == 0 || payload[used - 1] != '}') return -1;
+        added = snprintf(payload + used - 1, sizeof(payload) - used + 1,
+                         ",\"agent\":\"%s\",\"provider_session_ref\":\"%s\","
+                         "\"model_id\":\"%s\",\"handoff_receipt\":\"%s\"}",
+                         run->agent, run->provider_session_ref,
+                         run->model_id != NULL ? run->model_id : "",
+                         run->handoff_receipt != NULL ? run->handoff_receipt : "");
+        if (added < 0 || (size_t)added >= sizeof(payload) - used + 1) return -1;
+    }
     bf_sha256_hex((const uint8_t *)payload, strlen(payload), payload_hash);
     snprintf(chain_material, sizeof(chain_material), "%s|%s", previous_hash, payload_hash);
     bf_sha256_hex((const uint8_t *)chain_material, strlen(chain_material), chain_hash);
@@ -221,7 +236,7 @@ int bf_workgraph_write_evidence_ex(BfWorkgraph *graph, BfWorkgraphResult *result
             "INSERT INTO events(id,mission_id,task_id,attempt,actor,operator_id,provider_id,"
             "model_id,start_at,end_at,duration_ms,input_uri,output_uri,effect_class,status,"
             "error_code,receipt_id,transition_domain,execution_attempt,compensation_attempt) "
-            "VALUES(?,?,?,?,?,?,?,NULL,?,?,0,NULL,NULL,?,?,?,?,?,?,?)",
+            "VALUES(?,?,?,?,?,?,?,?,?,?,0,?,NULL,?,?,?,?,?,?,?)",
             -1, &statement, NULL) != SQLITE_OK) {
         return -1;
     }
@@ -235,23 +250,35 @@ int bf_workgraph_write_evidence_ex(BfWorkgraph *graph, BfWorkgraphResult *result
     sqlite3_bind_int(statement, 4, result->attempt);
     sqlite3_bind_text(statement, 5, actor != NULL ? actor : "scheduler", -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(statement, 6, operator_id, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(statement, 7, "native", -1, SQLITE_STATIC);
-    sqlite3_bind_text(statement, 8, timestamp, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(statement, 9, timestamp, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(statement, 10, "governed-workgraph", -1, SQLITE_STATIC);
-    sqlite3_bind_text(statement, 11, transition, -1, SQLITE_TRANSIENT);
-    if (error_code != NULL && error_code[0] != '\0') {
-        sqlite3_bind_text(statement, 12, error_code, -1, SQLITE_TRANSIENT);
+    /* An attested run names the harness and model that executed the attempt and
+     * the handoff it declared as input; every other transition is the native scheduler. */
+    sqlite3_bind_text(statement, 7, run != NULL ? run->agent : "native", -1, SQLITE_TRANSIENT);
+    if (run != NULL && run->model_id != NULL && run->model_id[0] != '\0') {
+        sqlite3_bind_text(statement, 8, run->model_id, -1, SQLITE_TRANSIENT);
     } else {
-        sqlite3_bind_null(statement, 12);
+        sqlite3_bind_null(statement, 8);
     }
-    sqlite3_bind_text(statement, 13, result->receipt_id, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(statement, 14, domain_name, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(statement, 15, execution_attempt);
-    if (is_compensation) {
-        sqlite3_bind_int(statement, 16, evidence->compensation_attempt);
+    sqlite3_bind_text(statement, 9, timestamp, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement, 10, timestamp, -1, SQLITE_TRANSIENT);
+    if (run != NULL && run->handoff_receipt != NULL && run->handoff_receipt[0] != '\0') {
+        sqlite3_bind_text(statement, 11, run->handoff_receipt, -1, SQLITE_TRANSIENT);
     } else {
-        sqlite3_bind_null(statement, 16);
+        sqlite3_bind_null(statement, 11);
+    }
+    sqlite3_bind_text(statement, 12, "governed-workgraph", -1, SQLITE_STATIC);
+    sqlite3_bind_text(statement, 13, transition, -1, SQLITE_TRANSIENT);
+    if (error_code != NULL && error_code[0] != '\0') {
+        sqlite3_bind_text(statement, 14, error_code, -1, SQLITE_TRANSIENT);
+    } else {
+        sqlite3_bind_null(statement, 14);
+    }
+    sqlite3_bind_text(statement, 15, result->receipt_id, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement, 16, domain_name, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(statement, 17, execution_attempt);
+    if (is_compensation) {
+        sqlite3_bind_int(statement, 18, evidence->compensation_attempt);
+    } else {
+        sqlite3_bind_null(statement, 18);
     }
     if (sqlite3_step(statement) != SQLITE_DONE) {
         sqlite3_finalize(statement);

@@ -165,8 +165,8 @@ int main(int argc, char **argv)
                 char expect_verdict[32];
                 if (sscanf(body, "expect %31s", expect_verdict) == 1) {
                     checks++;
-                    BfAdmissionDecision decision = bf_admission_decide(&request, &policy);
-                    const char *verdict = bf_admission_verdict_name(decision.verdict);
+                    BfAdmissionDecision decision = bf_control_admission_decide(&request, &policy);
+                    const char *verdict = bf_control_admission_verdict_name(decision.verdict);
                     if (strcmp(verdict, expect_verdict) != 0) {
                         char detail[512];
                         snprintf(detail, sizeof(detail), "expected %s, got %s (%s)",

@@ -1,0 +1,44 @@
+NATIVE_CONTINUATION_PASS	40
+web	15444cd62f4c55ab7ddf2a81551627d8feb3d953831e8b7edf2db5000df78875
+spaces	43a884cda81fa5f285e70196862d12952e148b2b2fd9a9e26f306464682afeba
+programs	f39b9c8ceac99d8eec28a4ce40611d41ea07b2b5777f6b95e99e8316da8e0286
+PASS	ordinary Your work entrance carries the selected destination through sign-in
+PASS	anonymous index contains no private workspace titles
+PASS	signed-in discovery provides an ordinary entrance to the actor’s work
+PASS	anonymous discovery does not imply a selected actor destination
+PASS	ungranted organization is refused before listing
+PASS	destination entrance lists the active installed catalogue and room editors
+PASS	organization entrance does not union personal or household bindings
+PASS	current read-only members can reopen their organization
+PASS	saved-work title is escaped and not executable markup
+PASS	saved-work listing keeps the exact native record key
+PASS	the second editor sees the same record without a transfer
+PASS	continuation redirects into the existing spatial editor with exact object identity
+PASS	the original editor receives server-owned common navigation
+PASS	scope is retained through editor navigation
+PASS	reading, listing and continuing creates no records, blobs or mutation receipts
+PASS	another account cannot follow the saved-work address
+PASS	read-only continuation does not grant saving
+PASS	a stale continuation refuses rather than silently opening different reviewed work
+PASS	fresh continuation follows the new exact revision
+PASS	owner sees the other member’s saved revision
+PASS	duplicate revision is refused
+PASS	destination substitution is refused
+PASS	duplicate view is refused
+PASS	external redirect is refused
+PASS	unknown view cannot invent an editor destination
+PASS	encoded record and object identities survive without becoming URL instructions
+PASS	nested lookalike fields cannot replace top-level owner selectors
+PASS	missing owner selector does not create a usable continuation
+PASS	support records do not masquerade as separate projects
+PASS	setup catalogue preserves the destination in each configuration link
+PASS	configuration sign-in preserves household context
+PASS	the same native continuation mechanism opens a recurring program
+PASS	a program-family key cannot cross into spatial workspace records
+PASS	saved work publishes bounded continuation instead of truncating the collection
+PASS	continuation reaches records beyond the first native page
+PASS	page generation changes refuse a stale cursor
+PASS	stale editor cannot delete a newer saved version
+PASS	removed records cannot reopen through an old address
+PASS	deactivation closes the old entry but preserves work in the other active editor
+PASS	grant revocation immediately closes continuation

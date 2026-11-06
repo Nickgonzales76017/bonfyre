@@ -1,0 +1,13 @@
+{
+  "name": "service_site",
+  "displayName": "Service Site",
+  "description": "What one service business's public page says: the business, who to reach, the ordered sections and their words, the look it wears, and whether it is still a preview. The page is built from this record and from nothing else. A record here is what the site states; it is not evidence that any statement in it is true, that the business confirmed it, or that anybody is engaged to act for the business.",
+  "attributes": {
+    "site_id": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "business_name": {"type": "string", "required": true},
+    "pages_project": {"type": "string", "required": false},
+    "status": {"type": "string", "required": true},
+    "content_json": {"type": "text", "required": true},
+    "note": {"type": "string", "required": false}
+  }
+}

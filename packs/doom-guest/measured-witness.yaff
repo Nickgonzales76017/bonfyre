@@ -1,0 +1,35 @@
+pack doom-guest-measured-witness
+generation control-1
+source_plane run5_recursive_external
+item_kind proof_witness
+source_ref campaign:doom-guest
+note Answers the standing work items guest_branch_and_commit_primitive and rerun_and_keep_fixtures_before_any_promotion for one layer only. The level-completion claim was archive evidence after a restart erased its witness; it has now been reproduced through the runtime organ's branch verb with this pack's program as the only campaign logic, and the committed log is kept here as a fixture. The foreign guest is still built outside this repository and is named by hash.
+
+witness e1m1_native_branch
+  subject guest:doom-shareware-1.9
+  profile doomgeneric@dcb7a8dbc7a16ce3dda29382ac9aae9d77d21284
+  fixture packs/doom-guest/fixtures/e1m1.cmds
+  fixture_sha256 c96a632e59a0b046cf3cbd70bb9cc9e334084dfc674393fc1b2c0e978335eb39
+  body wad doom1.wad sha256 1d7d43be501e67d927e415e0b8f3e29c3bf33075e859721816f652a526cac771
+  body platform platform.c sha256 1c2274008dab6a0aaefaa6cabc729837b02a57229965f70798755db1019f19f2
+  command bonfyre-runtime branch --actions program/actions.tsv --rank <query organ over program/rank.sql> --commit <query organ over program/commit.sql> --boot "t 40" --depth 3 --width 8 --stop-score 500000000 -- <guest> <wad> --frame-every 0 --forks 8 -- -warp 1 1 -skill 2
+  observed 2026-10-03 577 decisions, 88281 forks in 455.0 seconds, stopped on score; all four monsters killed, health 100
+  replay <guest> <wad> --frame-every 0 --script <fixture> --state <file> -- -warp 1 1 -skill 2
+  deterministic a fresh process replaying the fixture reaches the intermission at tic 5370, last level state sector 82, kills 4, alive 0
+  invariant doom.e1m1.exit_by_ranked_branches layer level_completion plane measured status cooled
+  reheat fixture-replay-does-not-reach-intermission
+  reheat engine-commit-or-platform-hash-changes
+  reheat wad-hash-changes
+  note One level, skill 2, pistol start. The route is a recursive query in rank.sql; egglog, which planned the route in the lost run, is not in this loop.
+
+work guest_branch_and_commit_primitive
+  target_plane run4_institutional_fabric
+  priority 3.0
+  status delivered
+  reason The runtime organ now has a branch verb: one live guest on a pipe, candidate sequences run in forks of the guest, an external ranker, one committed step. It names no campaign. Its fixture test uses a counter guest and a ranker that fails. What it does not do: check that a guest is deterministic or that its forks are exact, which it assumes.
+
+work rerun_and_keep_fixtures_before_any_promotion
+  target_plane run5_recursive_external
+  priority 6.5
+  status partially_satisfied
+  reason level_completion has a kept, replayable fixture. determinism over the id demos, branch exactness, both packagings and the model player are still archive evidence with no fixture.

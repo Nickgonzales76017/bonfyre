@@ -1,0 +1,3 @@
+#!/bin/sh
+set -eu
+exec "${BONFYRE_BUN:-${HOME}/.bun/bin/bun}" "${BONFYRE_ROOT:-${HOME}/Developer/Bonfyre}/integrations/mcp/hypervisor_cli.mjs" "$@"

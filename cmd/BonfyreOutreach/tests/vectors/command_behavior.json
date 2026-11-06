@@ -1,0 +1,6 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-outreach","binary_env":"BONFYRE_OUTREACH_BIN","cases":[
+{"name":"send only records a local entry and claims no delivery","steps":[
+ {"argv":["--db","o.db","channels"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["email","listing"]},
+ {"argv":["--db","o.db","send","--channel","email","--target","bob@example.test"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["Recorded outbound entry #1 locally","delivery NOT verified"]},
+ {"argv":["--db","o.db","status"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["Logged entries (external delivery unverified): 1","Classified responses: 0"]}]},
+{"name":"reply to an unknown entry is refused","steps":[{"argv":["--db","o.db","reply","--id","99","--type","positive"],"env":{"HOME":"${tmp}"},"exit_nonzero":true}]}]}

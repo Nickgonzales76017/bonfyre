@@ -1,0 +1,43 @@
+{
+  "name": "building",
+  "displayName": "Building",
+  "description": "An apartment complex or residential community",
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "slug": {
+      "type": "uid",
+      "required": true,
+      "targetField": "name"
+    },
+    "address": {
+      "type": "string"
+    },
+    "city": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string"
+    },
+    "zip": {
+      "type": "string"
+    },
+    "unit_count": {
+      "type": "integer",
+      "default": "0"
+    },
+    "building_namespace": {
+      "type": "string",
+      "required": true
+    },
+    "management_contact": {
+      "type": "string"
+    },
+    "active": {
+      "type": "boolean",
+      "default": "1"
+    }
+  }
+}

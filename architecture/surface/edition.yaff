@@ -1,0 +1,60 @@
+architecture estate-edition
+  canonical_name EstateEdition
+  family surface
+  domain Surface / What this estate has to show today
+  layer presentation
+  semantic_question If this estate has read sixty-nine thousand things, what does it have to show for it today -- as a publication, not as a feed?
+  purpose One dated edition composed from material the estate already kept, dressed in a presentation template the estate actually published. A cover, a strip of photographs, something to watch, something to listen to, and a reading list, each piece carrying who published it and when it was read.
+  maturity implemented
+  node_types Edition
+  node_types EditionPiece
+  node_types PresentationTemplate
+  edge_types composed_from
+  edge_types dressed_by
+  internal_calculus the design is not invented for the occasion: it is chosen from the presentation templates this estate has actually published, restricted to the magazine family that carries a full set of layout tokens, and rotated by the day so the edition changes its clothes without anyone dressing it. The page names the template it is wearing
+  internal_calculus every selection is bounded to a sane window of the last forty-five days, because timestamps in the archive span 1970 to 2105 and an unbounded order by date hands the cover to whichever feed has the worst clock
+  internal_calculus one headline appears once. A feed that republishes the same item hourly would otherwise take three slots in an edition, so the reading list groups by the title itself
+  internal_calculus a title is printed as its publisher meant it rather than as its encoder left it: feeds arrive having escaped their own quotation marks, sometimes several times over, and the escaping is collapsed until it stops changing
+  invariant every piece is material this estate already read and kept; the composer fetches nothing at compose time and generates no text of its own
+  invariant a standing publish pass reads the retained archive and published design once, then emits the edition for each declared public territory and the live root route
+  forbidden_inference a piece appearing in the edition -> this estate endorsing it, vouching for it, or judging it worth reading
+  forbidden_inference a piece appearing in the edition -> its source still publishing it, or what it says being true
+  forbidden_inference the template's name on the page -> the theme's authors knowing this estate exists or approving of this use
+  forbidden_inference an edition existing -> an editor; nothing here was chosen by a person
+  source_path scripts/publish-edition.mjs
+  source_path scripts/edition-policy.cue
+  source_path scripts/edition.css
+  source_path scripts/publish_estate.sh
+  source_path scripts/publish_edition.py.archive
+  witness scripts/tests/publish_edition.test.mjs proves the native compiler selects retained material inside the declared time windows, wears a published magazine profile, preserves attribution and the cannot-infer boundary, refuses unsafe CSS tokens, stages independently of the repo, and matched the retired Python semantic receipt on a fixture before cutover
+  witness scripts/tests/publish_estate_native_entrypoints_test.sh guards the standing publisher against a direct Python entrypoint and includes the native edition compiler; the edition fixture proves one read emits the root route and all four declared territory routes
+  witness 2026-09-25 published to all four territories: template "fern magazine, loud dusk", a real photographic cover, a three-photograph strip, one video, four audio pieces and fourteen deduplicated headlines, over 69,132 things kept from 1,667 publishers, with 32 days of keeping charted
+  witness 2026-09-25 verified in a browser on aurekai.live/edition: real photography at full bleed, mono bylines naming publisher and time under every piece, the chart drawn by the time organ, and no escaped quotation mark left anywhere in the rendered text
+  known_gap the edition is the estate's own; no subject gets an edition of what was kept under their address yet
+  known_gap the cover is the most recent thing with an image inside the sane window, which is recency rather than judgment, and the page does not claim otherwise
+  known_gap the daily rotation of the template is arithmetic on the day number, so two consecutive days can land on templates that look alike
+  known_gap the native edition has a fixture and staging witness, not a replay of all four live territories or a browser check after cutover
+  interacts edition-wears-the-organs
+
+interaction edition-wears-the-organs
+  source estate-edition
+  destination client-organs
+  relation enhances_without_composing
+  preserves the composer as the only thing that decides what the edition says; the organs animate, anchor and chart what is already in the page
+  drops any path by which the browser could choose a piece, reorder the edition, or fetch material
+  forbidden_inference a chart on the edition -> a reading of anything beyond the numbers the composer already wrote into the page
+  witness 2026-09-25 the kept-per-day chart drew from a data-bf-series block the composer emitted, with the numbers remaining in the document whether or not the organ ever bound
+  binding scripts/publish-edition.mjs
+  binding site/matrix/client-organs.js
+
+interaction estate-edition-publishes-territory-hosts
+  source estate-edition
+  destination web-address-edge
+  relation publishes_one_retained_edition_per_declared_territory
+  preserves the exact retained items selected, published magazine profile, territory name and public provenance boundary
+  drops publisher adoption, endorsement, source freshness, editorial approval and any authority to republish externally
+  forbidden_inference a compiled static edition at a public host -> any publisher approved the arrangement or any story remains current
+  invalidates_on retained item material, published presentation templates, edition policy or the publication day changing
+  witness scripts/tests/publish_edition.test.mjs
+  binding scripts/publish_estate.sh
+  binding scripts/publish-edition.mjs

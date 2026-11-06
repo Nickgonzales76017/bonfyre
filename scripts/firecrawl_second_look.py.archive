@@ -1,0 +1,152 @@
+#!/usr/bin/env python3
+"""Look again at the hosts that answered nothing, with something that renders.
+
+The convention probe asks at the addresses feeds and catalogues are kept at and
+reads exactly what comes back. Most hosts that answer nothing genuinely publish
+nothing this estate can read -- but some publish plenty behind a page that
+builds itself in a browser, where a plain read sees an empty shell and the
+links it would have followed never exist in the markup.
+
+That is the one thing a renderer is actually for here. So the hosts already
+recorded as having answered nothing get one more question each, rendered, and
+whatever feed, catalogue or interface address the rendered page links to
+becomes an ordinary candidate -- observed in a link this time, not derived from
+a convention, and admitted only if it answers like the rest.
+
+Credits are finite and counted: this asks a bounded number of hosts per pass
+and stops, rather than spending the balance in one run.
+
+  Historical Python oracle; live command is firecrawl_second_look.mjs.
+"""
+import argparse, json, os, re, sqlite3, sys, time, urllib.error, urllib.parse, urllib.request
+
+ENDPOINT = "https://api.firecrawl.dev/v1/scrape"
+
+# What a link has to look like to be worth asking. The same shapes the probe
+# knows, plus the catalogue and interface addresses a portal links rather than
+# keeps at a convention.
+WORTH_ASKING = re.compile(
+    r"(/feed\b|/rss\b|\.rss\b|atom\.xml|feed\.xml|index\.xml|feed\.json|"
+    r"data\.json|/api/3/action/|/api/views|/arcgis/rest|/api/v3/datasets|"
+    r"openapi\.json|swagger\.json|/v3/api-docs|\.ics\b|oai\?verb=)", re.I)
+NOT_WORTH = re.compile(r"(\.jpg|\.png|\.gif|\.pdf|\.zip|/login|/signin|/cart|"
+                       r"facebook\.com|twitter\.com|x\.com/|linkedin\.com)", re.I)
+
+
+def host_of(address):
+    try:
+        host = (urllib.parse.urlparse(address).hostname or "").lower().strip(".")
+    except ValueError:
+        return ""
+    return host[4:] if host.startswith("www.") else host
+
+
+def rendered_links(key, address, timeout=70):
+    body = json.dumps({"url": address, "formats": ["links"], "onlyMainContent": False}).encode()
+    request = urllib.request.Request(ENDPOINT, data=body, method="POST")
+    request.add_header("Authorization", "Bearer " + key)
+    request.add_header("Content-Type", "application/json")
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as answer:
+            doc = json.loads(answer.read().decode("utf-8", "replace"))
+    except urllib.error.HTTPError as problem:
+        return None, "refused %s" % problem.code
+    except Exception as problem:
+        return None, str(problem)[:80]
+    if not doc.get("success"):
+        return None, str(doc.get("error"))[:80]
+    return (doc.get("data") or {}).get("links") or [], ""
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--estate", default=os.path.expanduser("~/.bonfyre/estate-local"))
+    ap.add_argument("--limit", type=int, default=20, help="hosts asked this pass; one credit each")
+    ap.add_argument("--out", default="")
+    ap.add_argument("--apply", action="store_true")
+    args = ap.parse_args()
+
+    # The working key, chosen by trying: one of these is usually spent.
+    key = ""
+    for name in ("FIRECRAWL_API_KEY2", "FIRECRAWL_API_KEY"):
+        candidate = os.environ.get(name, "").strip()
+        if candidate:
+            key = candidate
+            break
+    if not key:
+        print(json.dumps({"asked": 0, "why": "no Firecrawl credential in this environment"}))
+        return 0
+
+    asked_db = os.path.join(args.estate, "probe", "asked.db")
+    if not os.path.exists(asked_db):
+        print(json.dumps({"asked": 0, "why": "nothing has been probed yet, so nothing has answered nothing"}))
+        return 0
+    state = sqlite3.connect(asked_db)
+    state.execute("CREATE TABLE IF NOT EXISTS looked_again(host TEXT PRIMARY KEY, at TEXT NOT NULL,"
+                  " links INTEGER NOT NULL DEFAULT 0, why TEXT NOT NULL DEFAULT '')")
+    hosts = [r[0] for r in state.execute(
+        "SELECT host FROM asked WHERE answered=0"
+        " AND host NOT IN (SELECT host FROM looked_again) ORDER BY at LIMIT ?", (args.limit,))]
+    if not hosts:
+        state.close()
+        print(json.dumps({"asked": 0, "why": "every host that answered nothing has already been looked at again"}))
+        return 0
+
+    if not args.apply:
+        state.close()
+        print(json.dumps({"would_ask": hosts, "credits": len(hosts)}, indent=1))
+        return 0
+
+    out_path = args.out or os.path.join(
+        args.estate, "discovery",
+        "rendered-%s.jsonl" % time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()))
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    found, refused, seen = [], 0, set()
+    for host in hosts:
+        links, why = rendered_links(key, "https://%s/" % host)
+        if links is None:
+            refused += 1
+            state.execute("INSERT OR REPLACE INTO looked_again(host,at,links,why) VALUES(?,?,0,?)",
+                          (host, now, why))
+            continue
+        kept = 0
+        for link in links:
+            link = (link or "").strip()
+            if not link.lower().startswith(("http://", "https://")):
+                continue
+            if NOT_WORTH.search(link) or not WORTH_ASKING.search(link):
+                continue
+            if link in seen:
+                continue
+            seen.add(link)
+            target = host_of(link)
+            if not target:
+                continue
+            found.append({
+                "root": target, "address": link, "protocol": "unknown", "title": "",
+                "truth_level": "observed_link_candidate",
+                "discovered_from": "linked by %s on a page this estate could only read rendered" % host,
+            })
+            kept += 1
+        state.execute("INSERT OR REPLACE INTO looked_again(host,at,links,why) VALUES(?,?,?,'')",
+                      (host, now, kept))
+    state.commit()
+    state.close()
+
+    with open(out_path, "w") as out:
+        for row in found:
+            out.write(json.dumps(row) + "\n")
+
+    print(json.dumps({
+        "hosts_asked": len(hosts), "credits_spent": len(hosts), "refused": refused,
+        "addresses_found": len(found), "out": out_path,
+        "cannot_infer": "an address linked by a rendered page is one that page names; it is not a "
+                        "channel this estate reads, and rendering someone's page is not permission "
+                        "beyond what their robots policy already gave",
+    }, indent=1))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

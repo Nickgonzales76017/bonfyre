@@ -42,6 +42,7 @@
 
 #if defined(__ARM_NEON) || defined(__ARM_NEON__)
 #include <arm_neon.h>
+#endif
 
 
 #ifndef MAP_ANONYMOUS
@@ -210,7 +211,8 @@ static void bonfyre_v9_tensor_free(fpq_tensor_t *enc) {
 }
 
 
-#endif
+/* (NEON guard now closes immediately after <arm_neon.h>; the code that followed
+ * is architecture-neutral and must compile everywhere.) */
 
 #ifndef PATH_MAX
 #define PATH_MAX 4096
@@ -1708,6 +1710,9 @@ static int fpq_shared_active_direct_matvec(fpq_active_entry_t *entry,
 }
 
 
+/* "shared" here means grouped execution over one input activation. Each tensor
+ * still owns a separate active factor payload; exact body reuse is measured by
+ * the active-cache payload digest rather than inferred from this call shape. */
 static int fpq_matmul_shared_active_lr(fpq_model_t *m,
                                        size_t n_tensors,
                                        const char *const *tensor_names,
@@ -1719,8 +1724,10 @@ static int fpq_matmul_shared_active_lr(fpq_model_t *m,
     uint32_t cols0 = 0;
     struct timespec t0 = {0};
     struct timespec t1 = {0};
+    fpq_active_density_t density = {0};
+    size_t group_factor_duplicates = 0;
     double sec = 0.0;
-    char extra[256];
+    char extra[512];
 
     if (!m || !tensor_names || !x || !outputs) {
         fpq_shared_active_diag("bad_args", NULL, 0, n_tensors, 0, 0, 0);
@@ -1928,6 +1935,18 @@ static int fpq_matmul_shared_active_lr(fpq_model_t *m,
         entries[i] = entry;
     }
 
+    for (size_t i = 0; i < n_tensors; i++) {
+        if (!entries[i] || !entries[i]->factor_sha256[0]) continue;
+        for (size_t j = 0; j < i; j++) {
+            if (!entries[j] || !entries[j]->factor_sha256[0]) continue;
+            if (strcmp(entries[i]->factor_sha256, entries[j]->factor_sha256) == 0) {
+                group_factor_duplicates++;
+                break;
+            }
+        }
+    }
+    fpq_active_cache_density(cache, &density);
+
     clock_gettime(CLOCK_MONOTONIC, &t0);
     for (size_t i = 0; i < n_tensors; i++) {
         if ((fpq_truthy_env_local("BONFYRE_QWEN_RANKZERO_DIRECT_SLI") ||
@@ -1971,8 +1990,14 @@ static int fpq_matmul_shared_active_lr(fpq_model_t *m,
 
     if (fpq_prepare_breakdown_enabled()) {
         snprintf(extra, sizeof(extra),
-                 "\"returned_before_sli\":true,\"shared\":true,\"n_tensors\":%zu,"
+                 "\"returned_before_sli\":true,\"grouped_execution\":true,"
+                 "\"shared_input\":true,\"shared_representation\":false,"
+                 "\"group_factor_duplicates\":%zu,\"physical_factor_aliases\":0,"
+                 "\"cache_unique_payloads\":%zu,\"cache_duplicate_payloads\":%zu,"
+                 "\"cache_duplicate_bytes\":%zu,\"n_tensors\":%zu,"
                  "\"tensor_b\":\"%s\",\"tensor_c\":\"%s\"",
+                 group_factor_duplicates, density.unique_payloads,
+                 density.duplicate_payloads, density.duplicate_payload_bytes,
                  n_tensors,
                  ts[1] && ts[1]->name ? ts[1]->name : "",
                  (n_tensors > 2 && ts[2] && ts[2]->name) ? ts[2]->name : "");

@@ -1,0 +1,530 @@
+architecture member-training
+  experience_chain learning
+  canonical_name MemberTraining
+  family apps
+  domain Personal applications / Training
+  layer application
+  semantic_question How does a member own one training history while choosing programs and presentation from several creators?
+  purpose A portable training state machine and local ServiceSite workspace for routines, active workouts, history and explicit program exports.
+  maturity implemented
+  source_path components/BonfyreServiceSite/training-model.mjs
+  source_path components/BonfyreServiceSite/training-editor.mjs
+  source_path components/BonfyreServiceSite/training-import.mjs
+  source_path components/BonfyreServiceSite/training-settings.mjs
+  source_path components/BonfyreServiceSite/training-workspace.mjs
+  source_path components/BonfyreServiceSite/training-client.mjs
+  source_path components/BonfyreServiceSite/training-offline.mjs
+  source_path components/BonfyreServiceSite/training-progression.mjs
+  source_path components/BonfyreServiceSite/training-weight.mjs
+  source_path components/BonfyreServiceSite/training-brand-assets.mjs
+  source_path components/BonfyreServiceSite/training-assist.mjs
+  source_path components/BonfyreServiceSite/training-assist-view.mjs
+  witness components/BonfyreServiceSite/tests/training-brand-assets.test.mjs verifies image byte and pixel limits, embedded-only assets and independent studio settings
+  witness packs/no-simulation/fitness-studio-20261011/brand-browser-verification.json records eleven single-browser checks for saved logos and icons, reload, studio isolation, mobile layout and a disconnected model route
+  invariant studio logos and browser icons are bounded embedded PNG assets; fallback browser icons derive from the selected studio colors
+  witness components/BonfyreServiceSite/tests/training-progression.test.mjs verifies rep/load/time progression, configured deload cycles, effort evidence, changed prescriptions and dated weight records
+  witness packs/no-simulation/fitness-studio-20261011/progress-verification.json records eleven browser checks for configured progression, completed-work targets, weight charts, creator switching and exact unit preservation
+  invariant prescribed effort is distinct from recorded effort; automatic increases require matching completed working sets and any prescribed effort target
+  source_path components/BonfyreServiceSite/tests/training-offline.test.mjs
+  witness packs/no-simulation/fitness-studio-20261011/offline-verification.json records a stopped server and full browser restart, preserved paused/rest state, offline completion, private-history exclusion from app caches, waiting updates and rejected mixed-version installation
+  source_path components/BonfyreServiceSite/training-workspace.css
+  source_path packs/aurekai-fitness-studio/training.json
+  witness components/BonfyreServiceSite/tests/training-model.test.mjs checks current clocks, pause/resume, rest deadlines, portable history, unit conversion, atomic refusals and recalculated records
+  witness components/BonfyreServiceSite/tests/training-settings.test.mjs checks bounded configuration, program-only exports and local route restrictions
+  source_path components/BonfyreServiceSite/tests/training-browser.test.mjs
+  witness packs/no-simulation/fitness-studio-20261011/browser-verification.json records 18 desktop/mobile checks covering completed sets, rest timing, paused reload, history, scoped programs and branding, parsed WordPress export, routine editing and OpenGym import persistence, and stale-tab conflict refusal
+  witness components/BonfyreServiceSite/tests/training-editor.test.mjs checks stable identities, immutable workout snapshots, alternating superset rounds and independent warm-up/working-set load prefills
+  witness components/BonfyreServiceSite/tests/training-import.test.mjs checks pounds-to-kilograms conversion, canonical km/h cardio, unilateral/drop volume, original record retention, invalid input and credential exclusion
+  owns MemberTrainingState
+  owns TrainingRoutine
+  owns TrainingSession
+  owns TrainingDisplayPreferences
+  consumes CreatorProgramVersion
+  publishes TrainingArchive
+  publishes ProgramExport
+  internal_calculus a validated command transforms a copy; the browser commits through the existing atomic revision-checked workbench store before replacing its current state
+  internal_calculus canonical kilograms and explicit seconds/meters are independent of display units; paused duration and rest deadlines persist as timestamps
+  internal_calculus history is the sole source of personal records and last-load prefills; a template retains its creator/program/version coordinates after member adoption
+  internal_calculus the routine editor changes a copy with stable exercise and set identities; saving does not mutate active or completed snapshots and marks creator-program adaptations
+  internal_calculus supersets alternate exercises within a round and delay rest until the round ends; ungrouped exercises retain their own sequence
+  invariant creator selection changes presentation and available programs without changing the member coordinate or duplicating history
+  invariant program exports read only selected creator routines and omit set completion; private history is exported only through the member's training-file action
+  invariant connection configuration does not authorize network writes or model invocation
+  invariant the local server snapshots approved assets and public program material under one content-derived version; service-worker installation admits only complete matching-version responses
+  invariant an app update waits for old tabs to close; activation prunes only obsolete training app caches and never mutates member IndexedDB records
+  forbidden_inference a local member identifier -> authenticated Actor identity, paid entitlement, coach consent or creator team authority
+  forbidden_inference passing core tests or a Chrome offline restart -> complete openGym feature parity, verified operating-system installation, durable backup or device synchronization
+  known_gap member Actor/consent, recurring terms, booking and settlement integrations remain unconnected; creator request delivery now uses native Auth and WorkGraph through a scoped creator screen
+  known_gap local model requests and proposal review are implemented but disconnected in the preview; tested live Qwen1.5 output failed an equipment constraint, and live end-to-end application remains unverified
+  known_gap installed application icons still use server material; member-selected studio icons apply to the browser tab
+  known_gap WordPress and Frappe outputs are import files; remote acceptance and ongoing synchronization remain unverified
+  known_gap exercise media and device synchronization remain to be implemented; dated multi-week plans now retain routine-version snapshots, while rescheduling and calendar reminders remain open; operating-system installation and non-Chrome offline behavior still need verification
+  known_gap the OpenGym reader requires declared units, valid timestamps and supported set shapes; original schedules, additional targets and media references are retained in the export archive but not fully projected into the app
+  known_gap Google Stitch generation is pending because this session exposes no browser or Stitch binding; the local surface is authored code
+
+interaction service-site-serves-member-training
+  source service-site
+  destination member-training
+  via components/BonfyreServiceSite/site.mjs training
+  preserves member-owned storage, creator program identity, exact local asset routes and revision conflict refusal
+  drops institution effects, remote writes and provider secrets
+  forbids creator presentation implying access to training history or business authority
+
+interaction member-training-reuses-browser-store
+  source member-training
+  destination browser-host
+  via integrations/browser/extension/store.mjs
+  preserves browser-local state and atomic expected-revision checks
+  drops remote identity and device synchronization
+  forbids a local saved record implying a native authenticated actor or paid term
+
+architecture opengym-training-interchange
+  canonical_name OpenGymTrainingInterchange
+  family external
+  domain External applications / Personal training data
+  layer import
+  semantic_question Which training facts can cross from an OpenGym state file into the member-owned training implementation without losing their original representation?
+  purpose A bounded reader of the pinned public OpenGym state contract, with reviewed replacement and original training records retained for export.
+  maturity implemented
+  source_path components/BonfyreServiceSite/training-import.mjs
+  source_path packs/aurekai-fitness-studio/upstream-reference.json
+  witness components/BonfyreServiceSite/tests/training-import.test.mjs verifies unit, cardio, unilateral/drop, source archive and invalid-input behavior
+  internal_calculus profile unit converts stored loads; cardio speed remains canonical km/h; scalar rest-pause totals are counted once and unilateral drops become explicit side-tagged rows
+  invariant provider credentials and authentication state are excluded from the retained training archive
+  forbidden_inference successfully importing a supported state file -> complete upstream feature parity, copied media rights, working remote synchronization or authenticated identity
+  known_gap legacy records without valid start/end clocks and mixed tracking modes in one exercise are refused; media files require a separate import path
+
+interaction opengym-state-becomes-member-training
+  source opengym-training-interchange
+  destination member-training
+  via components/BonfyreServiceSite/training-import.mjs
+  preserves stable source IDs, load units, actual completed work and original training records in a portable archive
+  drops credentials and active-session execution; unprojected settings are reported in import review
+  forbids replacing the member's stored history before explicit import review and a successful expected-revision write
+
+architecture training-model-proposal
+  canonical_name TrainingModelProposal
+  family apps
+  domain Personal applications / Training adaptation
+  layer integration
+  semantic_question What can a selected model propose from an explicitly reviewed exercise request, before the member chooses to apply it?
+  purpose A bounded local model transport and validated exercise proposal that cannot directly mutate member training.
+  maturity implemented
+  source_path components/BonfyreServiceSite/training-assist-server.mjs
+  source_path components/BonfyreServiceSite/training-assist.mjs
+  witness components/BonfyreServiceSite/tests/training-assist.test.mjs verifies explicit projection, selected-session scope, destination binding, origin checks, bounded replies, cancellation and unchanged workout snapshots
+  witness packs/no-simulation/fitness-studio-20261011/model-browser-failure.json records a real Qwen1.5 request and unchanged stored training before the equipment-quality assertion failed
+  invariant only a server-configured loopback endpoint can execute; browser-selected destinations cannot expand it and redirects are refused
+  invariant request data contains one exercise prescription and optionally that exercise from one explicitly selected completed session; member identity, weigh-ins and unrelated history are excluded
+  invariant model output is a closed validated proposal; a separate expected-revision write applies it and refuses a changed routine
+  forbidden_inference a valid proposal or successful HTTP response -> correct exercise advice, satisfied equipment constraints, authorized application or hosted-provider integration
+  known_gap live proposal quality and complete browser application remain unverified; model execution is disconnected after a resource incident, and no additional local models should be started on this machine
+  known_gap hosted credentials, provider routing and native decision/admission integration remain unconnected
+
+interaction member-training-requests-model-proposal
+  source member-training
+  destination training-model-proposal
+  via components/BonfyreServiceSite/training-workspace.mjs /api/training/propose
+  preserves the reviewed exercise request, explicit selected-session scope and hashes of the actual model request and response
+  drops unrelated history, body-weight records, member identity and authority to mutate training
+  forbids saved model preferences or a received proposal automatically sending additional records or changing a routine
+
+architecture training-creator-request
+  experience_chain learning
+  experience_chain service-case
+  experience_chain project
+  canonical_name TrainingCreatorRequest
+  family apps
+  domain Creator operations / Program delivery
+  layer integration
+  semantic_question How can a member request a creator program change, track native work, and explicitly adopt its delivered routine?
+  purpose A local bridge from a reviewed member brief into native WorkGraph, with private receipt reads and immutable delivered-program artifacts.
+  maturity implemented
+  source_path components/BonfyreServiceSite/training-requests.mjs
+  source_path components/BonfyreServiceSite/training-request-view.mjs
+  source_path components/BonfyreServiceSite/training-request-cli.mjs
+  source_path components/BonfyreServiceSite/training-draft.mjs
+  witness components/BonfyreServiceSite/tests/training-requests.test.mjs checks real native queue retries, scoped claims, receipt isolation, restart readback, stale-claim refusal and delivery digest checks
+  witness packs/no-simulation/fitness-studio-20261011/request-browser-verification.json records member submission, native creator claim and completion, delivered-program adoption, reload, studio isolation and execution of the returned routine
+  owns TrainingRequestBrief
+  owns TrainingRequestReceipt
+  owns TrainingDeliveryArtifact
+  invariant native WorkGraph is the lifecycle owner; browser receipts retain access coordinates and pending briefs, not an independent completion ledger
+  invariant a stable submission ID binds one immutable brief; retry cannot change its program, creator or requested work
+  invariant delivered routines become visible only after native completion names their content-addressed artifact; a stale worker cannot replace the acknowledged output
+  invariant newly submitted requests retain the selected public program snapshot; later catalogue changes cannot rewrite the coach's starting program
+  invariant the member sends only the authored brief and selected public program reference; workout and body-weight records are not part of request intake
+  forbidden_inference possession of a local request receipt or operator filesystem access -> authenticated Actor identity, coaching consent, paid entitlement or team authority
+  known_gap creator request operations have native sign-in, scoped grants and reviewed public CMS publication; SLA, quoting and refusal/revision workflow remain unconnected
+  known_gap claims expire after at most 24 hours and require explicit renewal; expired work is shown as needing creator attention, with recovery still performed through the native queue
+  known_gap receipts and unsent briefs are local to the member browser; device synchronization and portable receipt export remain open
+
+interaction member-training-submits-creator-request
+  source member-training
+  destination training-creator-request
+  via components/BonfyreServiceSite/training-workspace.mjs /api/training/requests
+  preserves creator/program version, authored brief, stable retry identity and explicit adoption of the completed delivery
+  drops private training history, body-weight records and automatic retries or adoption
+  forbids a locally saved unsent brief appearing as received creator work
+
+interaction training-request-uses-native-workgraph
+  source training-creator-request
+  destination work-graph
+  via cmd/BonfyreQueue/bonfyre-queue enqueue, claim, renew, ack and mission
+  preserves native lifecycle, claim ownership, lease expiry, creator routing family and completion receipt
+  drops a separate application-owned work status database
+  forbids writing delivered program state before native completion or treating a claim as a paid coaching agreement
+
+architecture training-creator-access
+  experience_chain identity-access
+  experience_chain learning
+  canonical_name TrainingCreatorAccess
+  family apps
+  domain Creator operations / Scoped access
+  layer integration
+  semantic_question Which authenticated creator may read, claim or deliver a program request in this studio now?
+  purpose A multi-studio workspace with separate request, program, appearance, account and team views over native Auth sessions, explicit ActorClosure bindings, institution grants and WorkGraph claims.
+  maturity implemented
+  source_path components/BonfyreServiceSite/training-creator.mjs
+  source_path components/BonfyreServiceSite/training-creator-client.mjs
+  source_path components/BonfyreServiceSite/training-creator-view.mjs
+  source_path components/BonfyreServiceSite/workspace-navigation.mjs
+  source_path components/BonfyreServiceSite/training-workspace-views.mjs
+  source_path components/BonfyreServiceSite/workspace-queue.mjs
+  source_path components/BonfyreServiceSite/training-creator.css
+  source_path cmd/BonfyreAuth/src/institution_members.h
+  witness components/BonfyreServiceSite/tests/training-queue-browser.mjs exercises native request claims, list and board layouts, direct request links, URL filter restoration, output search, keyboard selection, studio isolation, mobile inspectors, team directory search and concurrent grant review refusal
+  witness packs/no-simulation/product-maturity-20261015/workspace/queue/verification.json retains authenticated queue and directory browser checks
+  invariant request list and board are views of native WorkGraph state; layout changes cannot assign work, recover expired leases or deliver routines
+  invariant team review compares the expected direct grant role and expiry inside the native write transaction; stale changes fail and role edits never extend an existing grant expiry
+  invariant team directory counts and search cover loaded direct grants only; inherited authority and unseen pages are not represented as absent membership
+  witness components/BonfyreServiceSite/tests/training-workspace-browser.mjs verifies deep links, studio switching, browser Back, read-only navigation, reviewed native team changes, current-session revocation and desktop/mobile layouts
+  witness packs/no-simulation/product-maturity-20261015/workspace/verification.json retains the multi-studio browser checks
+  invariant URLs and navigation reflect currently authorized studios; selecting an organization or a view never creates a native grant
+  invariant team changes require scoped native admin authority, an existing account and explicit review; request, program and appearance grants remain separate
+  witness components/BonfyreServiceSite/tests/training-creator.test.mjs exercises real native sign-in, missing bindings, cross-studio and read/write denials, claim ownership, logout, grant revocation and revocation during a streamed request body
+  witness packs/no-simulation/fitness-studio-20261011/creator-browser-verification.json records member submission, native creator sign-in, assignment, routine editing, review, delivery, member adoption, revocation and logout through the browser
+  witness packs/no-simulation/fitness-studio-20261011/draft-browser-verification.json records requested-program reuse, unfinished draft reload, full browser restart, two-tab save conflicts, stale review refusal and delivery of the latest reviewed draft
+  invariant every private read checks the current native session, actor binding and studio request grant; mutations repeat those checks after reading the request body
+  invariant passwords and session tokens reach native Auth through stdin; the browser receives an HttpOnly SameSite Strict cookie scoped to creator APIs, never a JavaScript session token
+  invariant the worker derives from the authenticated actor; only that worker can renew or deliver its assignment, and studio permission alone does not transfer another coach's claim
+  invariant creator APIs are never stored in the offline asset cache; request briefs and drafts stay out of the member training ledger
+  forbidden_inference a request-scoped grant or declared ActorClosure -> verified ActorGraph identity, private workout consent, paid terms, publishing rights, billing authority or all creator team permissions
+  forbidden_inference a polished local account workspace or successful grant -> public sign-in deployment, invitations, actor provisioning, complete organization membership or audit revision history
+  known_gap the server is loopback-only; account provisioning and actor binding still require native local commands; team grant administration is available to scoped admins, while invitations and remote deployment remain open
+  invariant creator drafts autosave to content-addressed artifacts admitted by native WorkGraph checkpoints; unfinished names can be saved but cannot be delivered
+  invariant a conflict preserves the page's current edits and offers download before loading the saved version; review never bypasses the native expected-revision check
+  known_gap autosave requires the server; unsaved offline edits warn before navigation, while reassignment and expired-claim recovery in the creator screen remain open
+
+interaction training-creator-checks-native-auth
+  source training-creator-access
+  destination cmd-auth
+  via components/BonfyreServiceSite/training-creator.mjs invokes http-login, actor-closure-stdin, institution-authorize-stdin and logout-stdin
+  preserves current session validity, explicit actor coordinate, per-studio request read/write grant and immediate revocation at the next operation
+  drops local role toggles, subscription badges and browser-supplied worker identities
+  forbids a successful login becoming a studio permission or a request permission becoming coaching consent
+
+interaction training-creator-delivers-native-request
+  source training-creator-access
+  destination training-creator-request
+  via components/BonfyreServiceSite/training-creator.mjs creator request routes
+  preserves exact studio/request binding, actor-derived claim owner, explicit delivery review and native completion receipt
+  drops authority over another coach's active claim and automatic adoption into member training
+  forbids a review screen or edited draft being reported as completed work before native acknowledgement
+
+interaction training-draft-checkpoints-native-work
+  source training-creator-access
+  destination work-graph
+  via components/BonfyreServiceSite/training-requests.mjs uses checkpoint-read, checkpoint-save and ack --checkpoint-revision
+  preserves live claim ownership, immutable artifact digest, expected revision and atomic stale-review refusal
+  drops browser-owned revision authority and drafts from member receipt reads
+  forbids a saved draft being treated as delivered or an older reviewed draft overwriting a newer saved revision
+
+architecture training-program-publication
+  experience_chain learning
+  experience_chain creator-publish
+  canonical_name TrainingProgramPublication
+  family apps
+  domain Creator operations / Program library
+  layer integration
+  semantic_question Which reviewed public version of a delivered routine can this studio offer without changing a member's adopted training?
+  purpose Native CMS program releases with separate publishing grants, public catalogue reads, explicit adoption and version-specific withdrawal.
+  maturity implemented
+  source_path cmd/BonfyreCMS/content-types/training_program_release.json
+  source_path components/BonfyreServiceSite/training-publishing.mjs
+  source_path components/BonfyreServiceSite/training-publication-view.mjs
+  source_path components/BonfyreServiceSite/training-catalogue.mjs
+  witness components/BonfyreServiceSite/tests/training-publishing.test.mjs exercises native CMS persistence, namespace uniqueness, retry identity, versions, content digest checks, follow-up request snapshots and current publishing grants
+  witness packs/no-simulation/fitness-studio-20261011/publishing-browser-verification.json records reviewed publication, member adoption, version preservation, offline catalogue reads, confirmed withdrawal and damaged-cache isolation
+  invariant a request-scoped grant never supplies publishing permission; a delivered-request publication requires both request read access and the studio's current program write grant
+  invariant CMS namespace-unique release keys admit one program version; retry identity binds the exact publication input and actor
+  invariant the public projection contains the reviewed routine, title and description; private request references, member briefs, publisher credentials and actor coordinates are excluded
+  invariant public routine and exercise identifiers are newly assigned; source request identifiers are not reused as public program coordinates
+  invariant newly published exercise identities derive from studio, program identity and the source exercise identity; unrelated programs cannot share personal records merely by placing an exercise first
+  invariant the highest program version governs catalogue visibility; withdrawing it does not resurrect an older published release
+  invariant adoption copies a specific version into member-owned training; publication updates and withdrawal never mutate that copy or its workout history
+  invariant public catalogue caching uses the existing browser store and never turns API responses into app assets; a damaged catalogue cannot prevent opening private training
+  forbidden_inference a published public program -> paid entitlement, coaching consent, medical efficacy, remote WordPress/Frappe delivery or a right to delete member copies
+  known_gap this local catalogue is bounded to 100 releases per studio and 64 KB per routine; paging, media, paid-tier publication and dedicated MCP operations remain open
+  known_gap withdrawal reaches a disconnected catalogue on its next successful refresh; downloaded and adopted public material remains on the member device
+
+interaction training-creator-publishes-cms-program
+  source training-creator-access
+  destination training-program-publication
+  via components/BonfyreServiceSite/training-creator.mjs /studios/STUDIO/programs
+  preserves native actor binding, separate current publishing grant, reviewed public fields, stable retry identity and expected program version
+  drops permission inferred from coaching assignment and automatic publication after delivery
+  forbids a publication review screen or completed coaching request counting as a published release
+
+interaction training-program-release-uses-native-cms
+  source training-program-publication
+  destination cmd-c-m-s
+  via components/BonfyreServiceSite/training-publishing.mjs schema apply and namespace-scoped entry create/list/update
+  preserves native content records, unique release and publication keys, publication state and private provenance
+  drops a second application-owned publication database or direct SQL mutations from the training server
+  forbids a request receipt or local JSON file acting as public catalogue truth
+
+interaction member-training-adopts-published-program
+  source member-training
+  destination training-program-publication
+  via components/BonfyreServiceSite/training-catalogue.mjs and /api/training/programs/STUDIO
+  preserves exact public program version, studio scope, offline public cache and explicit local adoption
+  drops private request metadata and authority to rewrite already adopted routines
+  forbids catalogue refresh or withdrawal deleting or changing the member's routines and workouts
+
+architecture training-program-authoring
+  experience_chain learning
+  experience_chain creator-publish
+  canonical_name TrainingProgramAuthoring
+  domain MemberTraining
+  family apps
+  semantic_question How can a studio editor build and retain its own routine without a member request or permission to read client work?
+  purpose Studio program library authoring with native CMS edit history and reviewed public releases
+  maturity implemented
+  internal_calculus normalized routine drafts, revision digest comparison in native SQL, scoped program grants and publication revision checks
+  source_path cmd/BonfyreCMS/content-types/training_program_draft.json
+  source_path components/BonfyreServiceSite/training-publishing.mjs
+  source_path components/BonfyreServiceSite/training-creator-client.mjs
+  source_path components/BonfyreServiceSite/training-publication-view.mjs
+  witness components/BonfyreServiceSite/tests/training-library.test.mjs covers unfinished draft recovery, idempotent save retry, stale writes, scoped library-only access, grant revocation and release preservation
+  witness packs/no-simulation/fitness-studio-20261011/library-browser-verification.json records library-only sign-in, authoring, reopening, two-tab conflict recovery, stale review refusal, publication and member adoption
+  invariant library writes require the studio's current program write grant and never infer access to member requests
+  invariant a content digest includes the draft revision; native compare-and-update admits one writer against that saved revision
+  invariant retries of the same saved revision, routine and actor are idempotent; conflicting edits remain available in the browser
+  invariant publication checks the reviewed saved revision and copies its routine into a separate release; later source edits cannot change the release
+  invariant native CMS edit history retains successful draft updates without an application-owned history table
+  forbidden_inference a saved program draft -> published content, paid entitlement, consent to personal training records or offline creator editing
+  known_gap the local library is bounded to 100 draft entries and 64 KB per routine; paging, draft archival, revision browsing and offline creator editing remain open
+
+interaction training-program-authoring-uses-native-cms
+  source training-program-authoring
+  destination cmd-c-m-s
+  via native entry create and entry update --if-field content_sha --if-value EXPECTED
+  preserves studio namespace, normalized routine, revision digest, edit identity and native operation history
+  drops direct SQL writes and browser-owned publication authority
+  forbids stale client state replacing the latest draft or successful saving implying publication
+
+interaction training-program-authoring-publishes-review
+  source training-program-authoring
+  destination training-program-publication
+  via /studios/STUDIO/programs with draftId and draftRevision
+  preserves reviewed source revision, explicit publication action and independently versioned release
+  drops a requirement to create a member request before library authoring
+  forbids editing a draft from changing a previously published or adopted version
+
+architecture training-studio-appearance
+  canonical_name TrainingStudioAppearance
+  family apps
+  domain Creator operations / Studio identity and presentation
+  layer integration
+  semantic_question Which reviewed studio identity and native template should a creator and following members see without changing personal training or local overrides?
+  purpose Shared creator branding through native presentation records, bounded images and explicit member style choice
+  maturity implemented
+  internal_calculus closed brand validation, immutable template selection, guarded profile revision, content-addressed PNGs and public offline projection
+  source_path cmd/BonfyreCMS/content-types/training_studio_presentation.json
+  source_path components/BonfyreServiceSite/training-presentation.mjs
+  source_path components/BonfyreServiceSite/training-appearance.mjs
+  source_path components/BonfyreServiceSite/training-creator-client.mjs
+  witness components/BonfyreServiceSite/tests/training-presentation.test.mjs covers native template readback, bounded asset storage, separate current grants, stale writes, corrupted content and refused styles
+  witness packs/no-simulation/fitness-studio-20261011/presentation-browser-verification.json records preview and apply, fresh-member branding, member override preservation, offline reopening and unchanged private training
+  invariant request and program grants do not grant studio appearance writes; mutation rechecks the appearance grant after reading the body
+  invariant native PresentationTemplate owns color, typography and density; the studio presentation record owns name, image references and template selection
+  invariant the current studio profile changes only after referenced template and image artifacts exist; native compare-and-update refuses a stale revision
+  invariant preview and uploads do not change the studio until Apply to studio succeeds
+  invariant new member preferences follow the studio by default; existing local appearance stays local until the member chooses Use studio appearance
+  invariant public branding cache is separate from member-owned workouts and cannot rewrite a training record
+  invariant an unreadable studio presentation falls back to launch branding for creator session discovery instead of blocking unrelated creator work
+  forbidden_inference shared appearance -> a legal identity change, domain ownership, member consent, installed PWA icon update or remote WordPress/Frappe deployment
+  known_gap shared name and images apply in the running member app and creator desk; installed PWA metadata still follows the launch material
+  known_gap disconnected members retain their cached public appearance until the next successful connected load; broader layout and navigation composition remain open
+
+interaction studio-appearance-selects-presentation-template
+  source training-studio-appearance
+  destination presentation-template
+  via components/BonfyreServiceSite/training-presentation.mjs native CMS template creation and digest-checked role lowering
+  preserves declared roles, system font stacks, studio-owned selection and immutable template content
+  drops arbitrary CSS, foreign font URLs and semantic data ownership in the template
+  forbids visual selection granting access to programs, requests or workouts
+
+interaction studio-appearance-uses-native-content
+  source training-studio-appearance
+  destination cmd-c-m-s
+  via training_studio_presentation guarded entry updates and native operation history
+  preserves studio namespace, current revision, content digest and actor attribution
+  drops direct application SQL writes and partial profile application
+  forbids a preview or uploaded file implying a saved studio appearance
+
+interaction member-training-follows-studio-appearance
+  source member-training
+  destination training-studio-appearance
+  via /api/training/appearance/STUDIO and training-appearance.mjs
+  preserves the member's local style choice, saved public appearance and independent workout state
+  drops private editor attribution from public projection and server authority over personal training
+  forbids studio branding updates replacing a member's explicit local override
+
+architecture training-weekly-plans
+  experience_chain learning
+  experience_chain creator-publish
+  canonical_name TrainingWeeklyPlans
+  family apps
+  domain Creator operations / Multi-week training
+  layer integration
+  semantic_question Which versioned routine targets belong to each planned day, and which sessions has the member actually completed?
+  purpose Creator-authored weekly schedules, native CMS plan releases and member-owned dated plan progress
+  maturity implemented
+  internal_calculus immutable routine snapshots, relative week/day slots, calendar-date offsets, guarded draft revisions and progress derived from workout occurrences
+  source_path cmd/BonfyreCMS/content-types/training_plan_draft.json
+  source_path cmd/BonfyreCMS/content-types/training_plan_release.json
+  source_path components/BonfyreServiceSite/training-plan.mjs
+  source_path components/BonfyreServiceSite/training-plan-store.mjs
+  source_path components/BonfyreServiceSite/training-plan-editor.mjs
+  source_path components/BonfyreServiceSite/training-plan-view.mjs
+  witness components/BonfyreServiceSite/tests/training-plan.test.mjs checks calendar boundaries, workout-derived progress, skips, atomic refusals, portable export, fixed planned loads, exercise identity, native draft snapshots, stale publication and current grants
+  witness packs/no-simulation/fitness-studio-20261011/plan-browser-verification.json records three-week authoring, recovery weeks, conflicting tabs, reviewed publication, member date choice, offline workout completion, version preservation and withdrawal
+  invariant a studio plan resolves routine versions from its own library or already saved snapshots; client-supplied routine bodies cannot change its targets
+  invariant plan drafts and releases use native CMS identity and revision admission under the studio's current program grant
+  invariant an adopted plan contains its selected routine snapshots and a member-chosen calendar start date; catalogue changes cannot rewrite either
+  invariant plan completion derives from a finished workout's enrollment and slot coordinates; skip and restore never manufacture workouts
+  invariant a planned session honors its prescribed load instead of generic last-workout prefilling; explicitly configured progression rules remain applicable
+  invariant date offsets count calendar days across month, leap-year and daylight-saving boundaries; one slot cannot own two workouts
+  invariant planned sessions, skips and workout coordinates survive the member's existing training export and offline store
+  forbidden_inference published schedule or completed session count -> paid entitlement, coach consent, full target adherence or improved health
+  known_gap plans support up to 52 weeks, 14 sessions per week and 50 distinct routine snapshots within a 64 KB release; the local store holds 100 drafts and 100 releases per studio
+  known_gap individual date moves, calendar reminders, pause/rebase scheduling, archived-plan browsing and per-slot overrides remain open; variant targets use separately saved routine versions
+
+interaction creator-plans-use-native-cms
+  source training-weekly-plans
+  destination cmd-c-m-s
+  via training-plan-store.mjs guarded draft updates and unique versioned release entries
+  preserves studio scope, source snapshots, revision checks, actor attribution, publication retry identity and withdrawal state
+  drops client authority to supply private routine data or overwrite an admitted version
+  forbids saving or reviewing a plan being read as publication
+
+interaction weekly-plans-reference-program-versions
+  source training-weekly-plans
+  destination training-program-publication
+  via studio routine choices and saved plan snapshots
+  preserves routine identity, version, exercise identity and prescribed targets
+  drops automatic replacement by a newer routine version
+  forbids withdrawing or editing a source routine from changing an already saved or adopted plan
+
+interaction member-training-follows-weekly-plan
+  source member-training
+  destination training-weekly-plans
+  via plan adoption and start commands in the existing training state
+  preserves one member-owned workout history, explicit start date, skipped sessions and exact adopted plan version
+  drops a creator-owned progress ledger or completion flags disconnected from workout evidence
+  forbids plan progress, publication or withdrawal from granting the creator access to personal training
+
+architecture training-device-connections
+  canonical_name TrainingDeviceConnections
+  family apps
+  domain Personal applications / Fitness devices
+  layer integration
+  semantic_question How do sensor readings, recorded watch workouts and phone calendars enter the member experience without becoming invented training completions?
+  purpose A device screen for Bluetooth heart-rate pairing, reviewed TCX workout imports and phone calendar handoff
+  maturity implemented
+  source_path components/BonfyreServiceSite/training-devices.mjs
+  source_path components/BonfyreServiceSite/training-device-files.mjs
+  source_path components/BonfyreServiceSite/training-device-view.mjs
+  source_path components/BonfyreServiceSite/training-client.mjs
+  witness components/BonfyreServiceSite/tests/training-devices.test.mjs checks Bluetooth flags, contact loss, truncated packets, disconnect races, workout identity, pause refusal, duplicate import and calendar escaping
+  witness components/BonfyreServiceSite/tests/training-devices-browser.test.mjs exercises offline calendar downloads, successful sharing, cancellation, permission refusal, failed capability probes and direct downloads without changing member records
+  witness packs/no-simulation/fitness-studio-20261011/devices-browser-verification.json records reviewed file import, live readings through test notifications, explicit recording, editing preservation, offline recovery and mobile layout
+  internal_calculus the Bluetooth collector reads standard service 0x180D and characteristic 0x2A37 after the browser chooser; contact loss and stale readings clear the displayed value
+  internal_calculus opted-in recording samples at most once per five seconds into the revision-checked active workout; it never marks a set complete and refuses a paused or different workout
+  internal_calculus TCX activity totals become separately identified member records after review; normalized content identity prevents repeated-file duplication without merging them into strength sets
+  internal_calculus bounded TCX parsing refuses document types, external entities, malformed dates and invalid totals; GPS positions and free-text device notes are not imported
+  internal_calculus upcoming plan dates become RFC 5545 all-day events with stable identities and escaped folded text; the phone share sheet or calendar file carries the handoff
+  invariant device readings and imported workouts remain in the existing member-owned store and portable training export
+  invariant choosing a studio never changes the sensor or grants that studio access to its readings
+  invariant a pairing or import action cannot expose the complete device health store or change a prescribed plan
+  invariant unavailable or rejected calendar sharing falls back to a calendar file; user cancellation produces no download, and direct download remains available independently of sharing support
+  forbidden_inference browser protocol tests or imported TCX totals -> physical sensor validation, native Apple Health or Health Connect sync, wrist control, medical accuracy or commercial device certification
+  known_gap physical sensor pairing, native companion installation, background watch recording, health-store permissions and remote phone synchronization remain unverified
+  known_gap calendar handoff is a snapshot; calendar applications control import, duplicate handling and alerts
+
+interaction training-sensor-readings-enter-member-workout
+  source training-device-connections
+  destination member-training
+  via Bluetooth notifications and heart-rate commands in training-model.mjs
+  preserves member choice, active workout identity, reading timestamps, sensor name and local revision checks
+  drops raw beat intervals, device energy totals, manufacturer secrets and automatic set completion
+  forbids a heart-rate reading becoming a completed set or permission to share member data
+
+interaction watch-workout-files-enter-member-history
+  source training-device-connections
+  destination member-training
+  via reviewed bounded TCX activity imports
+  preserves source format, activity date, duration, distance, available whole-workout average heart rate and idempotent content identity
+  drops GPS tracks, free-text device notes, automatic strength-session matching and creator access
+  forbids an imported watch workout advancing a planned strength session
+
+interaction training-plan-opens-phone-calendar
+  source training-weekly-plans
+  destination training-device-connections
+  via upcoming RFC 5545 events and native share-sheet handoff where supported
+  preserves planned calendar date, plan label, exercise names, set counts and stable event identity
+  drops private history, sensor readings, automatic calendar subscriptions and reminder authority
+  forbids downloading or sharing a calendar file establishing remote calendar acceptance
+
+architecture training-native-watch-companions
+  canonical_name TrainingNativeWatchCompanions
+  family apps
+  domain Mobile and wearable applications / Training
+  layer architecture
+  semantic_question Which native phone and watch capabilities must be connected for equivalent Apple Watch and Wear OS workout control?
+  purpose Equal product behavior through platform-owned workout, connectivity and health permission APIs
+  maturity declared
+  source_path docs/commercial/fitness-creator-studio-20261011.md
+  internal_calculus Apple HealthKit workout sessions and mirrored phone sessions; WatchConnectivity for durable plan transfer; Wear OS Health Services ExerciseClient and Data Layer for the Android companion; Health Connect for separately consented phone health records
+  invariant each companion owns a human-facing session screen, permission flow, connection status, current exercise, rest clock and acknowledged controls
+  invariant retries reuse workout and command identities; timestamps, source device and explicit conflict handling survive disconnection
+  forbidden_inference a shared device screen or documented platform contract -> built, signed, installed or hardware-tested native companion apps
+  known_gap native targets, platform permission UX, background lifecycle, signed deployment and physical-device acceptance remain to be implemented
+
+interaction native-watch-companions-use-device-boundary
+  source training-native-watch-companions
+  destination training-device-connections
+  via planned native workout and connectivity adapters
+  preserves member ownership, explicit sharing scope, workout identity and platform permission decisions
+  drops assumption that either watch family exposes a generic browser Bluetooth heart-rate service
+  forbids prototype protocol support implying native watch application availability
+
+interaction atlas-workflow-declarations-enter-experience-map
+  source atlas-provenance
+  destination cmd-experience-map
+  via architecture/atlas-index.mjs loadVerifiedAtlas and cmd/BonfyreExperienceMap/tools/atlas_bindings.mjs
+  preserves exact workflow IDs, architecture IDs, source paths, interaction references and forbidden inferences; owner_graph retains all exported architectures and interactions for read-only native resolution
+  drops inferred inheritance from a schema to its parent command or neighboring files
+  forbids candidate workflow association granting execution authority, paid entitlement or evidence of completed work
+  invalidates_on changed atlas declaration digest or unavailable declared source
+  witness cmd/BonfyreExperienceMap/tests/atlas_bindings.test.mjs
+
+interaction training-team-administers-native-grants
+  source training-creator-access
+  destination cmd-auth
+  via components/BonfyreServiceSite/training-creator.mjs team routes invoke institution-members-stdin and institution-member-set-stdin
+  preserves current session and scoped administrator checks, existing account identity, exact institution, native transaction ordering and delegation expiry
+  drops arbitrary institution names from browser input, global user enumeration and implicit account creation
+  forbids a request administrator granting program access, an expiring administrator creating perpetual grants or direct grant removal implying removal of inherited authority

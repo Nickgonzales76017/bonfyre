@@ -1,7 +1,7 @@
 CC      = cc
 CFLAGS  = -std=c11 -O2 -Wall -Wextra -Wpedantic
 LOCAL_CFLAGS = -I../../lib/libbonfyre/include
-LDFLAGS = -L../../lib/libbonfyre -lbonfyre -lsqlite3
+LDFLAGS = -L../../lib/libbonfyre -lbonfyre -lsqlite3 -lm  # libm is implicit in macOS libSystem; Linux needs it explicit
 TARGET  = bonfyre-control
 SRC     = src/main.c
 

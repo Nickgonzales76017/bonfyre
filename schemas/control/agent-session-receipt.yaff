@@ -1,0 +1,71 @@
+schema AgentSessionReceiptFidelity
+generation control-1
+authority native-kernel
+absorbs run8-side-lane:2026-08-20#CrowBe/agentbranch#290
+
+record AgentSession
+  field session_id identity required
+  field agent_profile_ref reference required
+  field root_work_node reference required
+  field events sequence AgentEvent required
+
+record AgentEvent
+  field session_id reference required
+  field sequence u64 required monotonic contiguous
+  field kind enum model_turn context_compaction strategy_change required
+  field evidence_origin enum subject host external required
+  field work_node reference required
+  field observed_at timestamp required
+  field provider_identity reference required_when kind=model_turn
+  field model_identity reference required_when kind=model_turn
+  field provider_session_ref representation optional
+  field context_before_ref reference required_when kind=context_compaction
+  field context_after_ref reference required_when kind=context_compaction
+  field strategy_before_ref reference required_when kind=strategy_change
+  field strategy_after_ref reference required_when kind=strategy_change
+  field reason_ref reference required_when kind=context_compaction|strategy_change
+
+record ReceiptEnvelope
+  field identity identity required
+  field subject reference required
+  field occurrence_ref reference required
+  field status text required
+  field session_id reference required
+  field first_event_sequence u64 required
+  field last_event_sequence u64 required
+  field evidence sequence ReceiptEvidence required
+
+record ReceiptEvidence
+  field event_sequence u64 required
+  field evidence_ref reference required
+  field origin enum subject host external required
+  field artifact_identity identity required
+  field producer_identity identity required
+  field model_identity identity required_when event.kind=model_turn
+  field producer_verifier_ref reference required_when event.kind=model_turn
+  field transport_identity identity required_when origin=external
+
+invariant stable-session-identity
+  statement AgentSession identity does not change when provider, model, carrier, or provider-native session reference changes
+
+invariant provider-fidelity-per-model-turn
+  statement every model_turn records provider and model identity and ReceiptEvidence repeats both at the same event sequence and origin with an explicit producer verifier observation
+
+invariant context-management-is-observable
+  statement context compaction and strategy changes are distinct events with changed before/after references and an observable reason reference
+
+invariant evidence-origin-fidelity
+  statement subject, host, and external evidence origins are typed and cannot satisfy one another during receipt coverage validation
+
+invariant orthogonal-evidence-identities
+  statement artifact/content identity, producer/model identity, and transport/session identity remain separately typed receipt dimensions
+
+forbidden_inference provider_session_ref -> AgentSession identity
+forbidden_inference host or external evidence -> subject provider fidelity
+forbidden_inference artifact identity -> producer, model, transport, authority, or claim support
+forbidden_inference repeated provider/model attribution -> verified producer fidelity without producer_verifier_ref
+forbidden_inference provider attribution -> authority, effect safety, quality, ownership, or evidence sufficiency
+
+native_header engine/core/include/bf_agent_contract.h
+native_source engine/core/src/agent_contract.c
+witness engine/core/tests/agent_contract_test.c

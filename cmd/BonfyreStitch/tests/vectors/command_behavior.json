@@ -1,0 +1,4 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-stitch","binary_env":"BONFYRE_STITCH_BIN","cases":[
+{"name":"a materialization plan walks a real artifact back to its root atom","files":{"t.csv":"name,qty\nwidget,3\n"},"steps":[{"program":"${root}/cmd/BonfyreIngest/bonfyre-ingest","argv":["t.csv","fam/x"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"argv":["plan","fam/x/artifact.json","--target","normalized"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["STEP 1: [op-normalize] Normalize -> normalized  (binary: bonfyre-ingest)","ROOT: source-raw (atom)","TOTAL STEPS: 1"]}]},
+{"name":"an unknown target is refused","files":{"t.csv":"name,qty\nwidget,3\n"},"steps":[{"program":"${root}/cmd/BonfyreIngest/bonfyre-ingest","argv":["t.csv","fam/x"],"env":{"HOME":"${tmp}"},"exit":0},{"argv":["plan","fam/x/artifact.json","--target","nope"],"env":{"HOME":"${tmp}"},"exit_nonzero":true}]}]}

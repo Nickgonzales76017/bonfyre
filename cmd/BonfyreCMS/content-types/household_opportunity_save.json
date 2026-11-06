@@ -1,0 +1,13 @@
+{
+  "name": "household_opportunity_save",
+  "displayName": "Household Opportunity Save",
+  "description": "One signed-in person's private local save of a published household opportunity. It is not an application, referral, eligibility finding, enrollment, provider notification, or service delivery.",
+  "attributes": {
+    "save_id": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "opportunity_id": {"type": "string", "required": true},
+    "saver": {"type": "string", "required": true},
+    "saved_at": {"type": "string", "required": true},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

@@ -1,0 +1,457 @@
+architecture web-address-edge
+  canonical_name WebAddressEdge
+  family forwarding
+  domain Web / Address carrier
+  layer edge
+  semantic_question How does an ordinary HTTPS host and path enter Bonfyre's address fabric without turning Nginx into semantic or authority machinery?
+  purpose A native WebAddress compiler plus Nginx and Cloudflare Tunnel carriers. It normalizes a controlled host, carries path and request context, exposes an explicit discovery document, and asks AddressPlane/Matrix for an active, disclosure-constrained presence.
+  maturity implemented
+  source_path cmd/BonfyreWebAddress/src/connections_workspace.h
+  source_path scripts/release/public_surface_rollout.mjs
+  invariant Public release acceptance requests every frozen browser module through the actual native HTTP owner before service activation; only declared asset paths are served
+  witness cmd/BonfyreWebAddress/tests/public_surface_assets.test.mjs checks native byte and media-type parity for the complete frozen browser list, GET-only capability modules and an undeclared route refusal
+  source_path cmd/BonfyreWebAddress/src/site_presentation.c
+  source_path cmd/BonfyreWebAddress/src/site_product.c
+  witness cmd/BonfyreWebAddress/tests/site_page_replace.test.mjs verifies rejected replacement inputs preserve page and fragment records, valid replacements keep page identity and navigation group, and explicit removal still withdraws the page
+  invariant site page --replace reads and checks its replacement body before deleting any fragments; a valid replacement updates the existing CMS page ID and retains its group unless explicitly changed
+  invariant site page prepares its complete page and fragments before one namespace-scoped CMS page-write; creation, replacement and removal commit together or retain the previous page and fragments
+  witness cmd/BonfyreWebAddress/tests/site_page_replace.test.mjs injects fragment insertion and page deletion failures and checks unchanged records and served HTML
+  forbidden_inference an atomic local page save -> durable hook delivery, publication notification delivery or a deployed public page
+  witness 2026-10-11 site_product_test.sh and site_program_native_test.sh pass native presentation lowering and customer template update checks
+  invariant customer presentation updates validate closed roles and modes before one native CMS update; customer identity and shared template ownership are excluded from the patch
+  invariant a site MCP request with an Origin requires an HTTP(S) authority matching the request host and port, or that site's named host on the loopback endpoint's port; substrings, sibling site origins and opaque null origins are refused on GET and POST
+  source_path cmd/BonfyreWebAddress/src/site_mcp.c
+  source_path cmd/BonfyreWebAddress/src/markdown_fence.h
+  invariant Markdown import and rendering use the same backtick fence width; shorter fences and fences followed by text remain code, and embedded headings cannot split a page into fragments
+  witness cmd/BonfyreWebAddress/tests/site_page_replace.test.mjs verifies retained fragment headings and literal code text through native CMS import, HTTP rendering and Chrome at desktop and phone widths
+  source_path site/matrix/own-site.css
+  witness packs/no-simulation/guide-pages-20261011/browser-verification.json checks all seven guide pages at 1440 and 390 pixels with no document overflow or browser errors
+  invariant the manual article stretches to its mobile container while wide tables and command lines scroll within their own panels
+  witness cmd/BonfyreWebAddress/tests/site_product_test.sh accepts the local site and loopback origins, rejects hostname suffixes, paths, userinfo, sibling sites, wrong ports and null origins, and separately checks site-scoped keys and write permissions
+  source_path cmd/BonfyreWebAddress/Makefile
+  invariant the checkout bonfyre-site product command is a relative symbolic link to bonfyre-web-address; rebuilding the resolver cannot leave a separately copied product executable behind
+  witness make -C cmd/BonfyreWebAddress site-product-witness checks the product alias and runs cmd/BonfyreWebAddress/tests/site_product_test.sh against its resolver
+  forbidden_inference a current checkout product alias -> every installed copy or running server using that build
+  invariant CUE-declared publisher login reads can terminate in Cloudflare Single Redirects before the estate Worker; exact session and control hosts, apex hosts and write methods are excluded, while path and query are preserved
+  source_path scripts/cloudflare-reconcile.cue
+  witness scripts/tests/cloudflare-reconcile.test.mjs verifies the member redirect plan, append-only reconciliation, idempotent readback and refusal of owned-rule drift without replacing unrelated redirects
+  witness 2026-10-08 Cloudflare ruleset 675f7a42e6854513b9149ec2fbde327a on aurekai.life carries rule 3aea31e241ef4ab3b5995c2134121870; Cloudflare Trace ends at its redirect for publisher login GET and excludes POST, auth, apex, login-extra and ordinary content; public HEAD preserves encoded return query and browser-Accept GET completes one redirect to an HTTP 200 native login form
+  forbidden_inference Historical redirect counts or a Worker-bypass trace -> measured daily savings, unique human visitors, successful authentication, customer conversion or funding
+  invariant An optional configured HTTPS inquiry form is projected identically into capability discovery and unpriced refusals; requests remain subject to human scope and price review and never enable execution or settlement
+  source_path cmd/BonfyreWebAddress/tests/capability-inquiry.test.mjs
+  witness cmd/BonfyreWebAddress/tests/capability-inquiry.test.mjs checks human and JSON inquiry parity, escaped URLs, unchanged unpriced refusal with presented payment, and omitted destinations for missing or unsafe configuration
+  witness 2026-10-08 the public WebAddress service was reloaded with the configured work-samples inquiry form; aurekai.work/capability returned its destination in JSON and HTML and the unpriced estate-coverage route remained HTTP 503 with the same inquiry destination; two inquiry tests passed 48 assertions and a2a_surface_test.sh passed settlement declaration, machine direction, carrier parity and territory identity; work-samples lead sync reported errors=[] and no new inquiry; no form submission, payment, visual browser check or Fleming deployment is claimed
+  forbidden_inference A capability inquiry link -> a quoted price, accepted order, available delivery, approved work, payment or settlement
+  owns WebAddressRequest
+  owns CanonicalHost
+  consumes AddressConstellation
+  consumes PublicationPresence
+  publishes WebAddressContext
+  node_types CanonicalHost
+  node_types WebAddressRequest
+  node_types WebAddressContext
+  node_types CarrierDiscovery
+  edge_types forwards_to
+  internal_calculus controlled host suffix -> Life|Live|Shop|Work territory; unowned host -> independent territory
+  internal_calculus path + host -> exact https address; world, audience, and representation select the active Matrix presence
+  internal_calculus one parent-bound loopback listener -> N exec-started native workers; each worker opens fresh Matrix/SQLite owner handles and accepts the same transport queue
+  source_path cmd/BonfyreWebAddress/src/http_readiness.c
+  source_path cmd/BonfyreWebAddress/src/http_readiness.h
+  invariant each worker polls up to 64 incomplete HTTP requests and dispatches only complete bounded Content-Length messages; idle sockets and partial headers or bodies cannot occupy the request handler
+  invariant request buffers allocate as bytes arrive within the existing 256 KiB whole-request bound; idle connections expire after 10 seconds and incomplete requests after 30 seconds; a full queue refuses its oldest incomplete connection before admitting another
+  invariant transport readiness does not run owner handlers concurrently within a worker; the accepted request socket returns to blocking mode and all existing session, namespace and effect checks remain owned by their handlers
+  witness cmd/BonfyreWebAddress/tests/http_readiness.test.mjs reproduces idle-connection starvation before the change and checks split framing, incomplete bodies, queue pressure, expiry, malformed-framing refusal and header/body separation
+  invariant only /apps/ targets frame against the 640 KiB request capacity; every other target is held to 256 KiB from the moment its request line arrives, so oversized headers or a declared Content-Length it could never accept get 413 at header time instead of holding a connection while the body is awaited
+  witness 2026-10-18: http_readiness.test.mjs (7) and week_web.test.mjs framing refusal pass again; both had regressed when the capacity was raised to 640 KiB for /apps/ uploads
+  witness packs/no-simulation/http-readiness-20261013/browser.json completes the previously stalled four-territory intake-to-Studio browser flow at desktop and phone widths with one native worker
+  forbidden_inference a bounded request-readiness queue -> parallel owner execution, completed authorization, production capacity or bounded response-write latency
+  invariant CMS form text uses the shared Lex JSON emitter to preserve admitted tabs, carriage returns, newlines, quotes, backslashes and UTF-8; escaping that exceeds the bounded JSON carrier refuses before invoking the native store
+  invariant CMS form admission and complete edit rendering share a 64 KiB decoded-field bound including the terminator; HTML escaping has capacity for every admitted field and the complete 128 KiB JSON carrier
+  witness cmd/BonfyreWebAddress/tests/cms_editor_journey.test.mjs round-trips a 65535-byte escape-heavy field through native save, Chrome editing and reload; decoded UTF-8 and 256 KiB request overflows retain the previous record
+  forbidden_inference A decoded field below 64 KiB -> an unlimited form or transport request; total native JSON and HTTP envelopes remain independently bounded
+  witness cmd/BonfyreWebAddress/tests/week_web.test.mjs saves a complete tabbed preparation plan from Chrome through native CMS, checks private Desk access, round-trips control characters and refuses escaping expansion beyond the carrier bound without creating a record
+  forbidden_inference a saved preparation draft -> publication, a food safety determination, a purchase or a booked helper
+  invariant the note room sizes its content and HTML response from the selected CMS body rather than truncating it at a fixed display buffer; authored line breaks remain visible and long text wraps within the viewport
+  witness cmd/BonfyreWebAddress/tests/week_web.test.mjs opens the saved preparation plan in Chrome at phone width, compares the reader text with the stored snapshot, reads a 64 KB field with extensive HTML escaping in full and checks direct-read denial for another account and a guest
+  internal_calculus a root HTML response injects only the same native resolved subject, presence, territory, world, audience, and canonical address into the reusable Matrix visual grammar; it never guesses a subject from hostname styling
+  internal_calculus an addressed root or bounded local subject path compiles the same native Matrix cut into RO-Crate JSON-LD and a virtual Zarr v3 group; an independent owner may attach an immutable digest-and-receipt reference for that exact active Presence, but its body/state/authority stays with the owner and both machine carriers still begin with one resolve
+  internal_calculus Accept negotiation selects API, MCP, A2A, or BonfyreFS only when a matching Matrix presence exists; HTML remains an ordinary browser surface
+  internal_calculus a host standing in front of a territory apex is a subject address: its own published SiteProgram composes it, and a published subject program is tried before the territory's composed front page so a member's address carries their surfaces rather than the territory's reading
+  internal_calculus a subject host with no fabric bundle composes nothing rather than falling back to the territory's sources; the hour's phase still orders a subject page but the subject, not the phase, names it
+  internal_calculus a static publication writes each subject host under hosts/<host>/ and the edge worker resolves that prefix before the shared estate, so one published tree answers every address without copying itself under each of them
+  internal_calculus the machine aperture answers JSON-RPC at /mcp from the edge, over objects this estate has already published, because the adapter it used to tunnel to needed a host that no longer exists
+  internal_calculus an aperture with no session and no owner behind it is read-only by construction; an effect tool is refused by name with the reason rather than being absent, so a caller learns the boundary instead of a silence
+  source_path integrations/mcp/bonfyre_mcp_2026_adapter.mjs
+  witness 2026-09-25 /mcp on aurekai.work answered initialize as bonfyre-edge-aperture at protocol 2025-06-18, listed estate_search, estate_page and estate_boundary, returned real retained material for a search, and refused media_transport_lease as an effect the edge holds no authority to grant
+  witness 2026-09-25 the break was six worker routes carrying a null script -- aurekai.work/mcp*, /oauth*, /.well-known/oauth-*, and three subdomains -- left from the dead Oracle tunnel. A scriptless route bypasses the worker to an origin that no longer answers, so every one of those paths returned 522 while the rest of the estate served normally; deleting them restored them to the estate worker
+  known_gap no authorization server stands behind the aperture and /.well-known/oauth-protected-resource says so with an empty list, because advertising one that cannot complete a flow sends a connector into a dead end. A connector needing OAuth still cannot attach
+  internal_calculus the public directories and the addresses are the same fact read twice: an institution row carries its own address when this estate has published a presentation for it, and the people surface lists the members standing in the territory; an address is never guessed from a hostname that has no published presentation
+  internal_calculus the native project MCP uses the exact Streamable HTTP POST /mcp contract through the edge; OAuth PKCE exchanges a BonfyreAuth-backed session at the authority bridge, which requires read scope for bounded discovery/read methods and write scope for unknown or mutating tool calls before forwarding to the MCP owner
+  internal_calculus an OAuth MCP session with a current institution closure but no Bonfyre admin closure receives a freshly compiled institutional tool slice: closure coordinates, namespace-scoped CMS read/create, private ForeignTwin observation, and bounded Upper90 review work; a self-scoped actor with no institutional closure receives a different actor-local slice for its own carrier recipes and private ForeignTwin observation; only current bonfyre/admin reaches the full project MCP owner and its additive canonical BonfyreAuth user/tier/active/grant controls plus schema-bound BonfyreCMS copy controls
+  internal_calculus the MCP transport also exposes canonical owner-backed resources, bounded architecture resource templates, and tool-grounded prompts; these are read/preparation carriers and do not create a second institutional store or effect authority
+  internal_calculus MCP can resolve a host/path/world/audience/representation through the configured local Matrix store or the declared Oracle native BonfyreWebAddress read route and read a subject constellation; the remote route permits only native resolve/constellation with fixed binary/database coordinates, while an absent shared Matrix store is reported as unconfigured rather than bootstrapped as a demo estate
+  internal_calculus authenticated CMS HTMX fragments derive navigation and field grammar from the native CMS registry after compiling the session closure: an ordinary self account sees only physical_carrier, a generic write session sees registered grammar, and a previously admitted private Upper90 namespace sees only grammar under that private closure; create and update invoke BonfyreCMS by fork/exec with the resulting isolated namespace
+  internal_calculus the controlled Work root also compiles one Bonfyre/admin-only private repair room: it rechecks the live named admin admission before rendering canonical user/tier/activity, session-revoke, and institution grant/revoke forms, links to schema-bound native CMS copy, and calls BonfyreAuth by fixed argv only; any tier/activity change burns stale sessions before the next login compiles a new scope, and no delegated estate or self closure can route to this room
+  internal_calculus an ordinary authenticated account may compile only an actor-owned PersonalProfile in the Life/self territory, retain its isolated PhysicalCarrier recipe, and observe a public source only into its actor-derived private ForeignTwin root; generic Matrix publication, market work, institutional/Frappe records, public ForeignTwin projection, finance, and external effects still require their separate write/authority owners
+  internal_calculus static territory paths for login, signup, logout, account, saved material, Studio and CMS are not interpreted by the Worker. A broad static route preserves their path/query while redirecting to auth.aurekai.life, auth.aurekai.live, auth.aurekai.shop or signin.aurekai.work; the exact territory apex can instead lower directly to the same native/Tunnel origin when the Worker cannot serve its request budget. Native WebAddress serves progressive forms and same-origin account/session requests in either transport realization. The native account composes saved material, self-presence/self-ForeignTwin controls and declared outside-account relationships from their existing owners rather than creating a parallel member dashboard store
+  internal_calculus an actor-owned self Presence remains addressable but its HTML, RO-Crate, and Zarr carrier resolution rechecks the live session actor prefix; public/market actor publication and institutional Life roots retain their separately declared visibility
+  internal_calculus before a PhysicalCarrier recipe is retained, its governed HTTPS address is resolved through the current Matrix AddressPlane cut; a self-scoped actor must resolve to its own actor-owned subject while generic/private closures retain their independently admitted namespace policy
+  internal_calculus a CMS request on an admitted Upper90, JRSS, AI Loss, or Leads host first obtains the current native Upper90 closure; its first exact scope compiles a private estate namespace, and only then may the ordinary CMS HTMX owner render or save declared grammar
+  internal_calculus a private /studio address is compiled from that same fresh estate/scope closure into a bounded human workroom: native Upper90 review work plus links to the independently closure-derived CMS and ForeignTwin carriers, never the global Aurekai Studio
+  internal_calculus exact delegated hosts Upper90, JRSS, AI Loss, and Leads carry a fixed host-to-institution selector to BonfyreAuth; native admission evaluates the current institution role on every request and selects read versus write from the original request method
+  internal_calculus after exact institutional admission, the native Upper90 product dispatcher resolves auth-user identity to an AuthorityGraph-backed named role and scope, renders only that HTML closure, and converts a bounded opaque-reference request into an upper90-private WorkGraph review mission
+  internal_calculus delegated client hosts decline public HTTP redirects and all generic discovery, feed, RO-Crate, Zarr, federation, protocol, commerce, and sitemap carriers until a client-specific AuthorityGraph envelope names a lawful private carrier
+  internal_calculus internet.aurekai.work resolves one public Work-territory Matrix institution; its root and typed maintained path cuts compile through the same WebAddress resolution and RO-Crate/Zarr closure as every other bound subject, while its authenticated Operator Lab retains source/index results only as receipt-bound CandidateAddress state for later ForeignTwin admission
+  internal_calculus an exact protected host -> fixed institution selector -> native BonfyreAuth institution-grant check; GET/HEAD require read and any other original verb requires write, while revocation is checked against the current grant rather than captured in the session
+  internal_calculus /.well-known/bonfyre publishes carrier coordinates for Web, API, MCP, A2A, BonfyreFS, CMS, and Habitat without manufacturing semantic objects
+  invariant Nginx provides TLS, host forwarding, WebSocket/stream forwarding, and lawful transport concerns only
+  invariant edge worker multiplicity changes only transport capacity: each worker recompiles the same request against its own fresh native owner connections, so a process pool cannot become a cache of actor, authority, disclosure, Matrix, or effect state
+  invariant the compiler cannot infer a readable private closure, effect authority, claim, or publication from a URL
+  invariant a root HTML carrier preserves the exact Matrix resolve result that selected its presence; a reusable static grammar cannot replace that resolved subject with a generic brand or host-derived identity
+  invariant RO-Crate and Zarr root routes are generated from current Matrix resolution rather than stored host catalogs; every non-Matrix plane is either explicitly unresolved or names a digest-and-receipt owner reference for the exact resolved Presence instead of fabricating a body
+  invariant each owned territory host carries its own document identity: title, description, Open Graph pair and self-referential canonical are emitted from the resolved audience and canonical address, so no owned host declares another host as its canonical and a fetcher that executes no script can still tell the four territories apart
+  invariant the A2A agent card and the /a2a endpoint are rendered from one skill table, so a skill cannot be advertised by the card and absent from the endpoint the card names
+  invariant representation follows an explicit ask in both directions: a surface holding both forms serves the JSON one to a client that names application/json and the page to a browser, while a client that names neither keeps the representation it already had, so adding negotiation never rewrites what an existing plain fetch reads
+  invariant a human-facing machine surface answers a browser with a page and a machine with JSON from one page grammar and one price lookup; the capability catalogue and the A2A carrier render the same number in both representations, so a reader and a crawler are never shown different prices
+  invariant every commerce grammar renders one settlement declaration rather than asserting its own: the rail, its quote path and its discovery path are single constants that the x402, MPP, UCP, ACP and Beckn projections each render into their own vocabulary, so five carriers cannot drift into disagreeing about where payment settles, and a carrier that quotes an amount always also declares how it would be paid
+  invariant the A2A and x402 carriers quote one capability from one finance service book; the agent-to-agent carrier cannot name a price the payment carrier would not, and an unpriced capability is refused rather than treated as free
+  invariant a path-qualified machine closure is accepted only as a bounded path on the request's already-controlled Host; the edge never dereferences or imports a foreign URL supplied as a crate selector
+  invariant the discovery descriptor advertises a surface if and only if the organ serves content for it; one predicate over SITE_ROOT/surfaces/<name>.json decides both advertising and serving, so the descriptor cannot name a surface that would 404
+  invariant a surface is served only for a host that resolves in the matrix; an unknown host receives 404 even when the surface file exists
+  invariant a delegated client host never becomes publicly crawlable or machine-discoverable because a generic public carrier was added elsewhere in Nginx
+  invariant an Internet Observatory CandidateAddress is source/query receipt state at discovery_only; the public maintained cut reports only derived membership/counts, and a candidate never fetches, becomes a ForeignTwin, asserts origin liveness, publishes a tool, or grants authority through the WebAddress carrier
+  invariant delegated host admission is exact and revocable: an authenticated account must hold a current grant for the same named estate, and a mutation additionally needs the estate write role
+  invariant protected delegated hosts use the native private product dispatcher exclusively; an unknown private path cannot fall through to a legacy client application with weaker role semantics
+  witness cmd/BonfyreWebAddress/tests/a2a_surface_test.sh proves /a2a, /capability and /protocols each answer a browser with a page carrying the shared stylesheet and topbar and a machine with JSON, and that every capability's priced/unpriced state on the page matches the JSON carrier exactly
+  witness cmd/BonfyreWebAddress/tests/a2a_surface_test.sh proves /agents, /market, /property and /sources hand a JSON-asking client JSON and a browser a page, that the root answers an explicit JSON ask with its address descriptor, and that a wildcard or absent Accept still receives exactly the representation it received before negotiation existed
+  forbidden_inference an advertised A2A skill, or a quote returned inside a JSON-RPC error -> an agreement to perform that skill for any particular requester, a settled payment, or an invoice
+  witness cmd/BonfyreWebAddress/tests/a2a_surface_test.sh proves the endpoint the agent card names answers as application/a2a+json, that every advertised skill is described by both the card and the endpoint, that an unknown skill, an unsupported method, a request with no method and a skill that is not a priced query are each refused with a typed JSON-RPC code rather than a generic 404, and that the sibling /a2a/agent.json and /a2a/resources routes are not swallowed by the new handler
+  witness cmd/BonfyreWebAddress/tests/a2a_surface_test.sh proves each of the four owned hosts serves a distinct title, is canonical to itself, and carries exactly one of each identity tag, while still carrying its own resolved Matrix subject and audience
+  forbidden_inference a served surface -> authority to invoke, read, or act on anything it lists
+  forbidden_inference a public MCP URL -> anonymous project access or authority to invoke a project tool
+  forbidden_inference a valid session, paid tier, or JRSS grant -> read or write authority for a different delegated client host
+  forbidden_inference an OAuth access token -> authority beyond its verified write scope or bypass of an MCP tool's own effect boundary
+  invariant the auth surface holds no credentials: signup, login, logout and account forward to BonfyreAuth, which owns users, sessions and PBKDF2-HMAC-SHA256 at 120000 iterations
+  invariant signup and login are progressive forms, not JavaScript-only decoration: a no-script registration creates no session and redirects to the sign-in boundary, while a no-script login forwards the same form values to BonfyreAuth and only then receives the scoped HttpOnly cookie
+  invariant a successful browser login may set a Secure HttpOnly SameSite=Lax session cookie only for the controlled parent zone of the request's own Life, Live, Shop, or Work territory; it is revalidated by BonfyreAuth on every request and is never an institution, role, evidence, or effect grant. A browser cookie never crosses sibling territories; cross-territory continuation requires an explicit future authorization exchange
+  invariant the auth child is spawned with fork and execv and never through a shell, and a bearer token is validated against its exact shape before it is passed as an argument
+  invariant a request body may carry a credential, so no body is logged and no failure response returns a token, a hash, or a salt
+  invariant the four exact native member-session hosts may serve checked-in client assets needed by their native account forms; a wildcard host that has no AddressPlane domain and is not one of those four remains refused rather than gaining estate assets by suffix
+  invariant Upper90, JRSS, AI Loss, and Leads hosts are dedicated private apertures: they cannot fall through the public Matrix/legacy route, emit noindex/no-store/no-referrer policy on success and refusal, suppress edge access logging, and deny public protocol/machine-discovery path families
+  invariant auth is advertised only when the auth binary is executable, on the same terms as a file-backed surface
+  invariant the CMS edge accepts only registered native types and declared editable columns; it neither invents a browser schema nor accepts arbitrary SQL columns
+  invariant a free self session cannot enumerate or render institutional/Frappe CMS grammar merely because the native registry contains it; private-estate CMS remains available only after its independently checked Upper90 namespace closure is present
+  invariant a delegated CMS namespace is derived afresh from the host-selected estate and Upper90 closure for every request; it is never supplied by a URL, form field, session cache, generic actor namespace, or a prior request's process state
+  invariant multiple delegated scopes are not silently unioned into one CMS write bucket; the carrier keeps one owner-returned scope closure until an explicit future Room selection is itself admitted
+  invariant a delegated private Studio may compose only named owner planes whose inputs are freshly derived from the same admitted estate/scope closure; it cannot borrow global finance, model, Fleming, Frappe, or generic Studio state merely because the browser requested /studio
+  invariant a successful CMS save is not publication, anonymous readability, a Frappe write-back, a resolved relation, financial settlement, or external effect
+  invariant free self-authoring is exact and non-escalating: it is limited to actor-owned PersonalProfile/self publication at aurekai.life, physical_carrier rows in that actor's isolated CMS namespace, and public-source ForeignTwin observation into that same actor's private root; it cannot select another territory, subject, namespace, actor, institution, public ForeignTwin projection, provider, payment, device, or effect closure
+  invariant an actor-owned self Presence is not anonymously scrapeable through its web, RO-Crate, or Zarr address; a missing or different actor receives an indistinguishable no-store/noindex miss, while a self scope on an institutional root does not incorrectly make that institution private
+  invariant a PhysicalCarrier recipe cannot retain a foreign, query-selected, fragment-selected, port-selected, stale, or unresolvable URL-shaped value as its subject address; carrier save begins from one current controlled Matrix address resolution, not browser text alone
+  invariant an MCP resource or prompt is resolved from the current native owner at read time; it cannot be mistaken for a durable copy, evidence promotion, authorization grant, or effect receipt
+  invariant an MCP Matrix address result is only a native AddressPlane cut; actor/session, delegation, information policy, evidence, provider, resource, financial, and effect closures remain independently unresolved unless their owners are separately consulted
+  invariant the MCP remote Matrix route carries no shell string or caller-selected database/path; it may invoke only the declared native read contract over the configured owner route
+  invariant OAuth scope narrows transport admission by declared MCP method/tool class, while every forwarded tool still enforces its own native authority and effect boundary; unknown or malformed requests take the write path
+  invariant a write-scoped Bonfyre session can satisfy a read-only MCP call, and a self-scoped session can be transport-admitted only to its fixed self MCP slice; generic OAuth read/write scope alone cannot select the full project MCP, a delegated institution, or an actor-local slice other than the verified actor
+  invariant an institutional MCP tool re-evaluates its caller's live estate/scope closure before each owner invocation; caller-provided estate values can narrow only to an estate already in that closure
+  invariant only a freshly verified bonfyre/admin closure may receive the additive administrative MCP tools; they invoke BonfyreAuth or BonfyreCMS directly, never expose password hashes, salts, or session credentials, and do not turn account tier, institution admission, or CMS copy into object/provider/payment/effect authority
+  invariant the Bonfyre/admin browser repair room is private/no-store/noindex and available only at the controlled Work root after live named-admin revalidation; its forms may mutate only canonical BonfyreAuth tier/activity/institution admission state, while copy remains in the native schema-bound CMS surface
+  forbidden_inference a valid session -> authority for any scope beyond the one the session carries
+  forbidden_inference a CandidateAddress retained through the Internet Operator Lab -> a ForeignTwin observation, live service, protocol validation, relationship, callable tool, payment route, or effect authority
+  forbidden_inference generic account tier or write scope -> an institution-specific read/write closure
+  witness cmd/BonfyreWebAddress/tests/auth_surface_test.sh covers signup, duplicate refusal, a Life-territory scoped browser login cookie, bearer/cookie account read, three refusal paths, revocation taking effect immediately, and that the passphrase never reaches the server log
+  witness cmd/BonfyreWebAddress/tests/external_account_surface_test.sh proves HTML form signup reaches login without minting a session, HTML form login receives an HttpOnly territory cookie and account redirect, and the signed-in account page exposes the native external-link relationship controls
+  witness cmd/BonfyreWebAddress/tests/external_account_surface_test.sh proves the signed-in account carries a same-origin HTMX self-profile load, the returned fragment exposes actor-scoped Life-presence creation, and the exact auth.aurekai.life sibling serves the required shared runtime rather than leaving form controls inert
+  witness 2026-09-27 a live account completed declared external-link create, read and revoke through auth.aurekai.life with a scoped HttpOnly session; it did not obtain a provider credential, import provider material or grant any external effect authority
+  witness 2026-09-27 the public aurekai.life apex completed native signup, login, authenticated account and HTMX runtime delivery after its exact Worker route was replaced by the bounded native/Tunnel fallback; aurekai.live, aurekai.shop and aurekai.work simultaneously returned their own 200 native roots
+  witness cmd/BonfyreWebAddress/tests/auth_surface_test.sh proves an ungranted Pro session cannot enter JRSS, a JRSS read grant cannot mutate, and revoke closes an existing session immediately
+  witness cmd/BonfyreWebAddress/tests/private_estate_surface_test.sh proves a native role/scope closure is HTML-only, compiles private Studio from native review work plus closure-derived CMS/ForeignTwin carriers rather than generic Studio, creates bounded WorkGraph review work, creates a real CMS row in a closure-derived JRSS namespace, observes a public fixture into a receipt/body root private:jrss:stable:cedar, refuses a forged cross-client form, suppresses private RO-Crate/discovery paths, refuses the JRSS row from the separately admitted AI Loss CMS namespace, revokes independently from client admission, and compiles one Upper90 leadership closure through the JRSS, AI Loss, and Leads host selectors without child/sibling leakage
+  witness cmd/BonfyreWebAddress/tests/auth_surface_test.sh compiles CRM Deal metadata into a safe native schema and exercises its authenticated HTMX create/update/list path, including cross-account namespace refusal
+  witness cmd/BonfyreWebAddress/tests/auth_surface_test.sh proves a free signup receives only self scope, creates and resolves its actor-owned Life PersonalProfile plus a private PhysicalCarrier recipe and actor-private ForeignTwin receipt/body, proves its actor-owned HTML/RO-Crate paths are anonymously refused but self-readable, sees only that recipe in its CMS HTMX closure, and remains refused from market territory and Frappe-derived CMS grammar
+  witness cmd/BonfyreWebAddress/tests/auth_surface_test.sh proves a paid but ungranted account is refused from /studio/admin, then a current bonfyre/admin grant admits the private noindex repair room, changes a fixture user's tier and immediately refuses the stale token, grants/revokes Leads admission, explicitly burns active sessions through BonfyreAuth, and cannot leak that room to the JRSS host
+  source_path cmd/BonfyreAuth/src/main.c
+  source_path cmd/BonfyreUpper90/src/main.c
+  witness cmd/BonfyreWebAddress/tests/web_address_test.sh walks every surface and asserts descriptor membership matches HTTP status exactly -- advertised implies 200, unadvertised implies 404 -- plus an unknown-host refusal
+  witness cmd/BonfyreWebAddress/tests/web_address_test.sh asserts root HTML carries the native resolved Matrix subject, presence, and canonical address for Aurekai and Leaf Lounge rather than a host-guessed placeholder
+  witness cmd/BonfyreWebAddress/tests/web_address_test.sh verifies the same root returns matching native RO-Crate and Zarr v3 closures, including a tested exact-Presence ObjectFabric reference without moving ObjectFabric state into the edge
+  witness cmd/BonfyreWebAddress/tests/web_address_test.sh verifies an addressed plant's HTML links to its own path-qualified RO-Crate/Zarr closure and that both preserve the exact plant Presence
+  witness cmd/BonfyreWebAddress/tests/web_address_test.sh resolves internet.aurekai.work to institution:aurekai:internet, serves a public maintained A2A cut and its matching RO-Crate, and refuses its Operator Lab without authentication
+  witness cmd/BonfyreWebAddress/tests/auth_surface_test.sh retains a typed CandidateAddress and QueryReceipt through the authenticated Internet Operator Lab, verifies discovery_only state, and proves the public view reports the derived count without leaking the candidate address
+  known_gap Until 2026-08-29 discovery() emitted api, mcp, a2a, cms and habitat unconditionally for every host while all five answered 404 in production. That is this organ's own forbidden inference -- discovery metadata claiming a named resource is publicly readable -- shipped and served. The prior witness asserted the mcp URL was always present, so the test encoded the defect rather than catching it. Fixed by deriving liveness from the filesystem and serving the surfaces from this organ. API, MCP and A2A are backed by real content; authenticated CMS HTMX fragments are now backed by BonfyreCMS but still are not a public CMS carrier declaration because a valid session and an executable native CMS owner are required. Habitat remains deliberately unbacked. Writing placeholder content would recreate the defect.
+  invariant Cloudflare Tunnel and Nginx forward controlled host traffic but terminate unmatched hostnames instead of becoming fallback semantic routers
+  invariant a scoped native-organ release stages every compiled source input, including generated native headers, and attests the staged tree before the origin builds; a new executor may never link against an unstaged previous-generation lowering
+  invariant native-organ release stages and digests the bounded libbonfyre header set before remote build, so a shared header added by a cross-owner refactor cannot be silently supplied by an older origin checkout
+  invariant a configured SQLite location is a literal filesystem path; read-only opens never interpret '?' or '#' as URI query or fragment, and the remaining compatibility URI callers percent-encode those bytes at one bounded boundary
+  forbidden_inference a host/path request -> authority over the addressed subject
+  forbidden_inference an independent branded domain -> a duplicate semantic subject
+  forbidden_inference an Nginx route -> a semantic route, policy, or database query
+  forbidden_inference discovery metadata -> a claim that any named resource is publicly readable or executable
+  native_format graf
+  source_path cmd/BonfyreWebAddress/src/cms_editor.h
+  invariant The sticky CMS save toolbar follows the measured account-bar height and remains reachable after scrolling or navigation resizing
+  source_path cmd/BonfyreWebAddress/src/main.c
+  source_path lib/libbonfyre/include/bf_sqlite_path.h
+  source_path cmd/BonfyreWebAddress/tests/sqlite_path_test.c
+  witness cmd/BonfyreWebAddress/tests/sqlite_path_test.c proves both direct read-only and compatibility URI opens preserve a database filename containing '?' and '#', refuse writes, and reject a truncated URI
+  source_path cmd/BonfyreWebAddress/results/scale-frontier/2026-09-11-aurekai-live-public-read.json
+  source_path engine/core/include/bf_matrix_closure.h
+  source_path deploy/nginx/bonfyre-addressplane.conf
+  source_path deploy/nginx/aurekai-surfaces.conf
+  source_path integrations/mcp/bonfyre_oauth_gateway.mjs
+  source_path integrations/mcp/project_native.mjs
+  source_path deploy/systemd/bonfyre-oauth-mcp.service
+  source_path docker-compose.yml
+  source_path Dockerfile
+  source_path deploy/cloudflared/bonfyre-addressplane-ingress.yml
+  source_path deploy/systemd/bonfyre-web-address.service
+  source_path docker-compose.yml
+  witness cmd/BonfyreWebAddress/tests/web_address_test.sh
+  witness cmd/BonfyreWebAddress/tests/web_address_concurrency_test.sh proves four exec-started native edge workers accept 128 concurrent public Matrix root requests through one listener and each emitted carrier preserves the resolved Live subject and territory
+  witness cmd/BonfyreWebAddress/results/scale-frontier/2026-09-11-aurekai-live-public-read.json records eighty bounded public GETs against the deployed aurekai.live root at concurrency four with zero HTTP request failures and p50/p95/p99 client-to-edge latency; it explicitly does not establish origin, cache, MAU, write, or global capacity
+  known_gap the prefork witness proves bounded local concurrency, not a production MAU or write-capacity claim. Multi-node public reads need measured cache/replica deployment; authenticated mutations remain bounded by their separately measured owner stores and effect lanes.
+  known_gap the shared-header release path passes shell syntax locally but has not been exercised against an origin in this change; a remote release remains separately gated by its staged-tree digest and live-route probe
+  witness cmd/BonfyreWebAddress/tests/nginx_edge_test.sh
+  witness cmd/BonfyreAuth/tests/institution_grant_test.sh
+  witness cmd/BonfyreWebAddress/tests/auth_surface_test.sh verifies a paid session cannot enter JRSS without a grant, a JRSS read grant cannot write, and revocation closes the same live session
+  witness cmd/BonfyreWebAddress/tests/compose_service_test.sh
+  witness cmd/BonfyreWebAddress/tests/cloudflared_ingress_test.sh
+  witness cmd/BonfyreWebAddress/tests/mcp_tunnel_test.sh
+  source_path scripts/compose_member_worlds.py.archive
+  source_path scripts/compose_member_worlds.mjs
+  source_path scripts/tests/compose_member_worlds_test.sh
+  witness 2026-09-29 scripts/tests/compose_member_worlds_test.sh with BONFYRE_VERIFY_LEGACY=1 proves the Bun person-host compiler publishes receipted occurrences, estate-owned source collections, class-specific native World fragments, typed-empty application slots and SiteProgram rows; a second pass keeps row counts stable and matches the historical Python report and owner-row counts
+  source_path scripts/export_subject_hosts.sh
+  source_path deploy/worker/estate-worker.mjs
+  source_path scripts/tests/estate_worker_source_ledger_test.mjs
+  source_path cmd/BonfyreWebAddress/src/people_projection.c
+  source_path cmd/BonfyreWebAddress/tools/people_static_manifest.c
+  source_path lib/libbonfyre/include/bf_static_query.h
+  source_path cmd/BonfyreWebAddress/tools/people_static_manifest.c
+  source_path cmd/BonfyreWebAddress/tools/people_static_manifest.py.archive
+  source_path cmd/BonfyreWebAddress/tests/people_static_manifest_test.sh
+  source_path scripts/tests/people_ledger_static_export_test.sh
+  source_path scripts/export_static_estate.sh
+  source_path cmd/BonfyreWebAddress/tests/rooms_reach_the_edge_test.sh
+  source_path deploy/launchd/com.bonfyre.public-web-address.plist
+  source_path site/matrix/surfaces/home.html
+  source_path site/matrix/surfaces/build/mk_home.py.archive
+  internal_calculus a public subject room is exportable only from the owner that supplies its identifiers: CMS supplies public notes and published programs, the compiled capability catalogue supplies capabilities, Frontier supplies every admitted publisher, and the parcel owner supplies its public subject manifest; internal /room renderers do not create a second /s address family
+  invariant a static release walks every public subject kind the WebAddress subject dispatcher serves, and the public home links only to subject rooms that the current native read-model closure can answer
+  invariant the static credited-name manifest is emitted by a native read-only SQLite/SHA-256 tool, preserving source-bound semantic query addresses and carrier-safe digest leaves; export and its default witness invoke no Python manifest compiler
+  invariant static estate export invokes native manifest compilers for both credited-name and admitted-source query coordinates; the exporter itself has no Python execution step
+  witness cmd/BonfyreWebAddress/tests/rooms_reach_the_edge_test.sh proves all 22 public subject kinds are walked through owner-derived address lists, the front door exposes three subject-room links, and a root without pagination does not fabricate a next page
+  witness 2026-09-27 the live native public origin was restarted with the existing CMS, source-frontier, price, finance, commitment, and compiled-Frappe read projections; aurekai.life returned 200 for public working sets, observed prices, what-is-on, an admitted publisher room, a published program room, and the route-frontier capability room while the shared member account still completed browser login, account, and self-profile reads
+  witness cmd/BonfyreWebAddress/tests/people_static_manifest_test.sh proves native text/NUL manifests for source-bound credited names, long coordinates, Unicode, embedded NUL, and an independently hashed golden key; a direct native/legacy comparison matched before the default witness retired its Python dependency, and scripts/tests/people_ledger_static_export_test.sh proves the exporter materializes the directory and all three exact query leaves without Python
+  witness 2026-09-19 nick.aurekai.life composed 20 typed application slots over 15 published surface fragments and 15 named source collections (66 KB, 221 links) while aurekai.life kept its own composed front page; theguardian-com.aurekai.life kept its publisher composition (19.7 KB, 61 links) and is named by its address rather than by the hour's phase
+  witness 2026-09-19 export_subject_hosts.sh wrote 210 subject hosts under hosts/, 210 of them distinct pages, 3.27 MB total
+  witness 2026-09-19 /organisations carried 60 published institution addresses and /people listed the one member standing in the territory, each linking to the host that composes that subject
+  witness 2026-09-19 every subject host in aurekai.life answered on the public internet through one worker route *.aurekai.life/* -> aurekai-estate reading R2: nick.aurekai.life 58 KB of its own surfaces, theguardian-com.aurekai.life 19.8 KB of that publisher's own material, while aurekai.life kept its Pages-served front page unchanged; before this every subdomain returned 522
+  witness 2026-09-19 a hostname this estate has published no presentation for returns 404 at the edge rather than the territory's front page, while the estate's shared surfaces and assets still answer at every address
+  known_gap Workers custom domains cap at 100 per account, so per-host binding cannot carry an estate that addresses 28,000 publishers; the wildcard route is the only mechanism that scales and the 100 custom domains bound during the cutover were withdrawn once it was in place
+  invariant full-estate publisher-address and member-world projections wait through a bounded sixty-second SQLite writer window before refusing, and commit only complete idempotent prefixes (fifty addressed publishers, the publication corpus/collections, or one member surface) instead of holding the estate writer through unrelated work; waiting and committing are scheduling recovery only and never treat a blocked write as an admitted address, owner row, or completed publication
+  witness 2026-09-19 1,103 subject hosts answered in aurekai.life -- 893 publishers addressed from retained material rather than ledger bookkeeping -- and aurekai.live, .work and .shop each served their own composition instead of .life's front page, which all three had been serving verbatim as Pages custom domains
+  source_path scripts/address_every_publisher.py.archive
+  source_path scripts/address_every_publisher.mjs
+  source_path scripts/tests/address_every_publisher_test.sh
+  witness 2026-09-29 scripts/tests/address_every_publisher_test.sh with BONFYRE_VERIFY_LEGACY=1 proves the Bun publisher coordinator runs real Matrix owner commands and writes the same CMS and SubjectFabric bundle digests as the historical Python path for retained source material
+  source_path scripts/deploy_organ.sh
+  witness 2026-09-26 every composed subject room was unreadable in a browser and nobody had noticed, because the tests fetch with curl. When a client offered gzip the wire layer packed the body and appended its own Content-Length while the room's original stayed in the buffer; two of them is a malformed response, curl tolerates it and Chrome refuses the page outright with ERR_RESPONSE_HEADERS_MULTIPLE_CONTENT_LENGTH. The stale line is now dropped rather than the new one appended beside it, and the same request returns one Content-Length
+  known_gap the assets a room dresses in are served only for a host the matrix admits as a domain, so a room fetched at 127.0.0.1 renders unstyled with no organ layer. That is the gate working, but it means no test that uses a bare address exercises the page a reader actually gets
+  internal_calculus how long the edge may keep a thing depends on what kind of thing it is. A URL carrying a content stamp cannot change without the URL changing, so it is immutable; the catalogue is a publication pass and may be an hour stale while it revalidates; a composed page is what actually moves and keeps a short window
+  known_gap this estate took itself off the air. Every publish in a working session called purge_everything on all four zones, each purge threw away the whole edge cache, and the next read re-fetched the pages, the catalogue parquets and a 33 MB WebAssembly engine from the object store. Forty publishes in a day put the account past its request budget and all four territories answered HTTP 429. scripts/estate_purge.sh now purges the files that changed, and the cache policy is tiered so the large immutable things are not re-fetched every five minutes
+  forbidden_inference a purge being cheap -> a purge being free; the cost is paid by every reader who arrives next and by the account's request budget
+  source_path scripts/estate_purge.sh
+  source_path scripts/cloudflare-reconcile.mjs
+  witness scripts/tests/cloudflare-entrypoints.test.mjs proves the default purge shell reaches the shared Bun owner without Python; empty or mixed full-purge arguments are refused and all exact zones resolve before writes. Mock acceptance is not a live cache freshness witness.
+  internal_calculus a caller that asked in JSON is refused in JSON. Every refusal this edge makes -- no page, wrong method -- carried a sentence written for a person, so anything automated reading this estate got prose where it needed a reason it could branch on. A path under a machine surface counts as a machine's question even when the caller forgot to say so
+  witness 2026-09-25 measured on all four territories: a machine asking /studio/v1/profile with Accept: application/json received text/html and a sentence; it now receives application/json with an error code, the reason, the address, and what the refusal does not imply
+  witness 2026-09-25 aurekai.life answered HTTP 200 to every address on the territory, including addresses that do not exist, because a Cloudflare Pages project held the apex as a custom domain and a Pages custom domain outranks a Workers route. /press, /edition, /archive, /field and /mcp were all unreachable on that territory and every wrong URL was a soft 200. Removing the two custom domains restored the whole territory to the estate; verified afterwards that the apex serves its composed page, the four surfaces answer, an unknown address is a real 404, and the aperture lists its three read tools
+  known_gap a Pages custom domain silently outranking a Workers route is not visible from the route table, which listed the worker as the handler for a hostname it never saw. Nothing in this estate checks that the thing answering a territory is the thing declared to answer it
+  known_gap the prototype that had been serving that apex carried six sections the composer does not build -- Listen, Watch, Around Fort Worth and Dallas, Discover, Boards, On this day -- and is kept at evidence/origins/tonight-pages-prototype/ as evidence of what was served, not as a page to serve again
+  known_gap a Pages custom domain outranks a worker route on the same hostname, so a territory cannot be moved to the worker without first withdrawing it from the Pages project; aurekai.life remains on Pages by the operator's choice
+  known_gap a writer that remains blocked beyond the bounded wait is still recorded as refused; the standing publisher does not yet enqueue a durable retry generation for those sidecars
+  known_gap 2026-10-12 a member front page's own /w/<world>/<page> links are now followed by scripts/export_subject_hosts.sh (at most 24 per host); before that every such link answered 404 at the edge. The donor stylesheets those pages load were uploaded to the object store by hand that day; scripts/export_static_estate.sh now lists them with the bar, site-program and own-site sheets, and no publish pass has run with that list yet
+  witness 2026-10-12 cmd/BonfyreWebAddress/tests/site_product_test.sh sets a site's footer line with site set --footnote, reads it on the front and contact pages, refuses a link that is not https, and clears it with --no-footnote
+  known_gap a cleared footer line is a newer record of kind 'cleared', not a deletion; older lines stay in the store and nothing prunes them
+  known_gap 2026-10-12 the stylesheet link for independent sites carries a version (?v=5) so the edge cannot hold an old sheet for hours; the number is bumped by hand and nothing derives it from the file
+  known_gap 2026-10-12 the edge Worker aurekai-estate receives about 125,000 requests a day at a steady 8,000 an hour (Cloudflare workersInvocationsAdaptive, 2026-10-09 to 2026-10-12) against a free-plan cap of 100,000, so every subdomain answers 429 from about 16:00 UTC until midnight UTC, every day. The apexes and the hosts with their own no-Worker route are unaffected. Who sends the traffic is not known: the stored token cannot read zone analytics
+  witness 2026-10-12 docs.aurekai.work answered 429 from the Worker at 16:20 UTC and 200 after it was attached to the Pages project aurekai, whose pages.dev name the zone's wildcard record already targets; a Pages custom domain outranks the Worker route, so the guides no longer pass through the Worker or its daily cap. The project's previous deployment (the September prototype, 4ea24053) is the rollback point
+  known_gap 2026-10-12 three Pages projects staged for the shop sites (aurekai-tallgrass, -fernhollow, -juniper) were removed the same day once the bucket route worked; only the guides use Pages
+  known_gap the guides now live in two places, the object store and the Pages project aurekai; scripts/publish_estate.sh updates only the first, so a guide changed without running scripts/publish_site_to_pages.mjs is stale at its public address
+  witness 2026-10-12 nick.aurekai.life answered 429 from the Worker and 200 at 17:55 UTC after scripts/route_host_through_tunnel.sh gave it its own tunnel record and a no-Worker route, the arrangement the territory apexes already use; it is now composed live by this machine and is down when this machine is
+  known_gap 2026-10-12 a tunnel login certificate is bound to one zone; the one held is for aurekai.life, so the three sample shop sites in aurekai.shop could not be routed the same way, and a first attempt left a stray record tallgrass.aurekai.shop.aurekai.life that the held credentials cannot delete
+  source_path deploy/origin/estate-origin.mjs
+  source_path scripts/run_estate_origin.sh
+  source_path scripts/route_host_through_tunnel.sh
+  witness 2026-10-12 18:35 UTC every published address in aurekai.life (1,703 hosts) was moved off the edge Worker onto deploy/origin/estate-origin.mjs, which runs deploy/worker/estate-worker.mjs unchanged over the same object store as a local origin behind the tunnel: the zone's wildcard record and tunnel rule point at it, and the Worker keeps only /search, /mcp and its oauth descriptor. Forty-one of forty-one sampled publisher hosts answered 200 at their public addresses while the Worker was still refusing with 429; pages, stylesheets, misses (404), ranges (206), revalidation (304), writes (405) and foreign host names (421) were each exercised against the origin
+  cannot_infer a publisher or member address answering -> the edge Worker serving it; since 2026-10-12 those addresses are read from the object store by a process on this machine and are down when this machine or its tunnel is
+  cannot_infer a page served by the estate origin -> a page composed now; it is the object last published, exactly as at the edge, kept in memory for at most five minutes
+  known_gap the estate origin has no automated test; its behaviour was checked by hand against a running instance, and it shims only the parts of the Worker runtime the Worker uses today (one bucket binding, the default cache, waitUntil). A Worker change that reaches for another binding fails here first
+  known_gap search on publisher addresses still runs on the Worker and so still shares its daily cap; with the pages gone from the Worker that cap is no longer expected to be reached, which has not yet been observed over a full day
+  witness 2026-10-12 19:00 UTC tallgrass, fernhollow and juniper .aurekai.shop answered 429 from the Worker and 200 on every page after scripts/publish_site_to_bucket.sh stored each in its own bucket (aurekai-site-NAME) with the address attached as the bucket's custom domain, one zone rewrite sending / to index.html, and a no-Worker route per host; the contact form posted through auth.aurekai.shop from the new address
+  known_gap a shop site served from its bucket has no not-found page of its own (storage answers a bare 404), and the standing publish job does not write these buckets: scripts/publish_site_to_bucket.sh has to be run after the site changes
+  source_path scripts/publish_site_to_bucket.sh
+  forbidden_inference an address this estate gives a subject -> that subject's own site, their agreement, their contribution, or any relationship either party entered
+  forbidden_inference a caller-supplied source-ledger query -> an object key or a source profile this estate has published
+  forbidden_inference a printed credited name -> a filesystem identity or an asserted match to another source's equal spelling
+  invariant a proved source-ledger coordinate maps to a deterministic carrier key; a long coordinate uses a SHA-256 canonical-query leaf, and neither digest materialization nor edge lookup grants any unlisted coordinate
+  invariant a credited-name public coordinate preserves the asserting source in semantic query space, while every physical R2/filesystem leaf is a SHA-256 canonical-query key; carrier normalization or filename constraints can therefore never merge two printed names into one asserted actor
+  forbidden_inference a typed-empty application slot on a subject's page -> that nothing of that kind exists anywhere; it means nothing has been added to that surface
+  witness 2026-08-30 public OAuth PKCE authorization, code exchange, and authenticated MCP initialization against aurekai.work completed without emitting a credential or bearer token
+  witness 2026-08-30 gateway scope classifier treats initialization/resources/prompts and explicit read-only Matrix/native tools as read, and treats unknown or mutating calls as write
+  witness integrations/mcp/tests/oauth_institution_slice_test.sh proves a self account receives only actor-local closure/carrier/private-ForeignTwin tools, while a JRSS write session receives closure/CMS/ForeignTwin/review tools rather than global project tools, creates and lists a real private:jrss:stable:cedar CMS row through the MCP carrier, and returns only its native stable:cedar closure; it also proves live Upper90 leadership inherits separate institution:{jrss,ai-loss,leads} MCP closures and writes JRSS only to private:jrss:institution:jrss, while a bonfyre/admin session reaches the full upstream owner plus canonical BonfyreAuth user/tier/grant/revocation, schema-bound BonfyreCMS copy, and scoped provider-materialization residency/release controls without credential or canonical-body leakage
+  witness 2026-08-30 local MCP matrix_address_resolve reached the configured Oracle native Matrix owner and resolved aurekai.live/ to institution:aurekai:live; matrix_subject_constellation returned the same subject and one lawful bound address
+  source_lineage Address constellation / domain-publication maturity, 2026-08-28
+  interacts web-address-edge-forwards-context
+  interacts mcp-resolves-native-matrix-address
+  interacts web-address-edge-admits-delegated-estate
+  interacts protected-estate-host-gates-authority
+  interacts web-address-compiles-internet-observatory
+  interacts machine-membrane-passports-observatory-candidate
+  interacts self-authoring-compiles-life-presence
+  interacts self-foreign-observation-enters-private-closure
+  interacts mcp-compiles-self-slice
+  interacts mcp-superuser-controls-native-auth-and-copy
+  interacts browser-session-binds-controlled-territory
+  interacts physical-carrier-consumes-address-closure
+invariant the SourceCollection/World publication HTTP aperture accepts only the current CMS write closure, derives its actor namespace and enforces same-origin MessagePack writes; its native readback remains private and no-store
+  invariant opt-in publication-input details add only the explicit retained source subject; existing nine-field V1 packets remain unchanged and private, draft or unobserved material remains excluded
+  invariant the exact ForeignTwin workbench and installed Source Review use one reviewed source-publication client; ordinary /link stays CUE-native and links to /foreign/workbench rather than reopening a retired donor renderer
+  source_path cmd/BonfyreWebAddress/src/source_publication_web.h
+  source_path cmd/BonfyreWebAddress/src/publication_workspace.h
+  source_path integrations/browser/source-publication.mjs
+  source_path integrations/browser/source-publication.css
+  source_path scripts/live_account_readback.mjs
+  witness cmd/BonfyreWebAddress/tests/source_publication_web.test.mjs verifies binary readback, native same-request idempotence, current grant enforcement, wrong-Origin refusal and bounded protocol validation
+  witness scripts/tests/source-publication-browser.test.mjs uses real isolated Auth/CMS/WebAddress and Chrome to publish one source pair, drop a post-commit response, reopen from its opaque recovery address through both the installed source editor and ForeignTwin workbench, and preserve private research without gaining publication rights
+  witness scripts/live_account_readback.mjs completed real public HTTPS in the existing signed-in Chrome account on 2026-10-20, receipt 9c796bb1-8a48-4117-a67e-3e152a0f9caf: all twelve directed WORK/LIFE/LIVE/SHOP handoffs retained principal 19, its profile link, no visible signup/login links and no horizontal overflow; Account, Apps, setup and CMS also passed; no account or credential was created or read
+  known_gap the live browser witness covers the existing signed-in account and named routes, not new account registration, logout/revocation or all embedded application prompts
+  interacts web-source-publication-uses-native-cms-transaction
+  source_path cmd/BonfyreWebAddress/src/publication_retained.h
+  source_path integrations/browser/publication-research-client.mjs
+  source_path integrations/browser/publication-research.mjs
+  witness scripts/tests/retained-source-workspace.test.mjs reads 29 real fixture RSS excerpts through the native public source owner in 24-plus-5 pages, refuses changed-snapshot continuation and hidden sources, and drives installed Source Review into one saved and reopened research record without making occurrence copies
+  invariant a retained research input uses the existing public source reader and exact host admission; root published front-door RSS sources remain checked, withheld source twins stay excluded and reading a selected feed makes no provider request
+  invariant the retained-input MessagePack page carries its normalized excerpt hash and complete source-cut digest; changed page membership returns conflict rather than mixing generations into a reviewed selection
+  invariant publication-occurrence and retained-reader inputs remain distinct carriers; an empty occurrence summary is never silently filled with unrelated provider text or a new semantic content store
+  known_gap retained-source handoff currently admits the declared public RSS cut and its existing normalized excerpt bounds; full-text provider acquisition, all skill productions and live signed-in receiving acceptance remain separate
+  source_path scripts/publish_estate.sh
+  invariant the hourly publish pass composes every subdomain with native publish-static, copies each /assets/ file those pages reference, and deploys the Worker static assets only when at least BONFYRE_EDGE_MIN_PAGES pages composed; a short composition leaves the last deployed pages in place
+  invariant a publish pass releases the memory grant a killed earlier pass left in publish/memory.grant before asking for its own, so a leaked grant cannot refuse every later pass
+  invariant each apex rollout stages its site from the repository's site/matrix, never from the running release's site root, so a sheet edit in the repository is what the next release serves
+  source_path scripts/release/front_integrity.mjs
+  source_path scripts/release/edge_sweep.sh
+  source_path scripts/release/live_sweep.sh
+  source_path services/live-sweep/com.bonfyre.live-sweep.plist
+  invariant after a rollout activates, the four apex fronts are read in a real Chrome at 1440 and 390 pixels under their public names against the new service; a section using house classes that no loaded sheet styles, inline byline parts drawn with no gap, a collapsed section, the top bar off screen or over the first heading, a page wider than the screen, or a front that does not answer fails readback and restores the previous service
+  invariant slow first byte, slow load, slow same-origin resources and outreach-sample links on a public front are recorded with each rollout and by the live sweep, but do not by themselves stop activation
+  invariant the edge sweep covers every published subdomain page: locally, that each one links only sheets and scripts the upload carries; live, one slow request per host and one per linked house sheet, with the Worker's 429 cap counted rather than read as a broken page
+  invariant the live sweep keeps one operator goal per open defect class and host (source live-sweep), blocked for rendering failures and slow loads so they reach the owner's activity panel and inbox through the account work index, and resolves a goal when the next sweep no longer finds it; it never repairs, publishes or rolls out
+  witness scripts/release/tests/front_integrity_test.sh renders a fixture front with an unstyled feed section, a run-together byline, a clipped section, a too-wide row and an outreach link and requires each to be named, then requires a clean front to pass with no failure
+  witness 2026-10-24 the first live sweep found bylines run together on aurekai.life, aurekai.live and aurekai.shop at both widths, outreach-sample links on all four fronts, first bytes of 1.1-5.7 s and loads of 4.3-12.9 s, and 1,789 of 1,794 subdomain pages linking /apps/aurekai-activity.css and .mjs that the edge upload does not carry; each became a live-sweep operator goal and appeared in the account work index
+  forbidden_inference a passing front probe -> a good-looking or usable page; it names known failure classes and reads only the anonymous front, so signed-in renders and pages behind the fronts are not covered
+  forbidden_inference a resolved live-sweep goal -> the defect was fixed by someone; it means the last sweep did not see it, which a 429 or an unreachable host can also cause
+  known_gap the probe reads anonymous fronts only; a signed-in front that drops a sheet (the work feed drawn bare for a signed-in reader) needs an acceptance session and is not yet probed
+  known_gap the scheduled sweep is a launchd template in services/live-sweep; it runs only once it is loaded
+  forbidden_inference a deployed edge page -> fresh material; the pages are as fresh as the archive and subject fabric they were composed from
+  source_path cmd/BonfyreWebAddress/src/site_mcp.c
+  invariant site offer --ask FACT=Question stores up to eight intake questions in the offer's projection_contract (fact names a-z0-9_, refused on a malformed, repeated or ninth question with nothing kept); the contact page asks them only when ?about= names that published offer, and the message records only answers to that offer's own questions, keyed by fact, beside the about subject
+  witness 2026-10-30 cmd/BonfyreWebAddress/tests/site_offer_intake_test.sh (built in a scratch copy, run by site-product-witness) passes: malformed, non-slug, repeated and ninth questions refused with no record left; a range in words is not read as an amount; the form for an offer asks its questions with markup escaped, the plain, made-up-subject and question-free forms ask none; an answer for an unasked fact, a blank answer and an answer under another offer's subject are dropped; site inbox shows answers in JSON and text
+  forbidden_inference an intake answer -> a verified fact about the person's system; it is what the person typed, and the brief's inventory rule (subject, scope and grant) still governs anything treated as inventory
+  known_gap intake answers reach the owner's inbox only; they are not yet turned into a draft inventory for bonfyre-brief cited, and assistants' send_inquiry and request_booking carry no answers
+  known_gap site_product_test.sh stops at "search by words" on 2026-10-30 with both the pre-change binary and the scratch build, so that failure predates the intake change and is not yet diagnosed
+
+
+interaction migration-brief-types-price-practice-site
+  source cmd-brief
+  destination web-address-edge
+  relation estimate_ranges_and_needed_facts_become_site_offers
+  preserves each brief type's estimate low, high and unit as a range worded "Estimated $L to $H per UNIT", and the brief type's needs facts as the names of the offer's intake questions
+  drops the estimate as an amount (no range becomes a price number), the brief's citations and receipts, and any inventory status
+  forbidden_inference a range on the practice site -> a quote, a calibrated price or the owner's approval of that price
+  forbidden_inference a built practice site -> a published one; it lives in a site home on loopback until its owner runs site share or a publish
+  witness cmd/BonfyreBrief/tests/practice_site_test.sh
+  binding cmd/BonfyreBrief/practice-site/build.sh
+  binding cmd/BonfyreBrief/data/migration-brief-types.json
+
+interaction web-address-edge-forwards-context
+  source web-address-edge
+  destination address-plane
+  relation normalized_web_address_context
+  preserves canonical host, path, requested world, audience, and representation as a bounded address-resolution request
+  drops TLS termination, HTTP transport, WebSocket transport, and any edge-cache implementation from semantic resolution
+  forbidden_inference an edge-forwarded URL -> read, effect, claim, or publication authority
+  witness cmd/BonfyreWebAddress/tests/web_address_test.sh
+  witness cmd/BonfyreWebAddress/tests/nginx_edge_test.sh
+  witness cmd/BonfyreWebAddress/tests/compose_service_test.sh
+  witness cmd/BonfyreWebAddress/tests/cloudflared_ingress_test.sh
+  binding cmd/BonfyreWebAddress/src/main.c
+  binding deploy/nginx/bonfyre-addressplane.conf
+
+interaction mcp-resolves-native-matrix-address
+  source web-address-edge
+  destination bonfyre-matrix
+  relation config-gated-native-address-cut
+  preserves normalized host, path, requested world, audience, representation, configured native-owner identity, native resolution receipt, and the subject's already-bound constellation only
+  drops actor/session selection, delegation envelopes, information-policy closure, credential/private-key material, arbitrary remote command/database selection, evidence promotion, provider/resource state, financial commitment, and all effect authority
+  forbidden_inference an MCP address result -> a complete viewer closure, private-read right, publication decision, economic state, provider availability, or authority to act
+  invalidates_on configured Matrix store identity, native WebAddress resolution contract, constellation binding, or MCP argument-validation contract changes
+  witness 2026-08-30 local MCP Matrix-resolution and constellation requests returned an explicit unconfigured state when BONFYRE_MATRIX_DB was absent; no temporary Matrix was bootstrapped
+  witness 2026-08-30 local MCP Matrix-resolution used the bounded configured Oracle native owner read route and resolved aurekai.live/ to institution:aurekai:live
+  witness integrations/mcp/tests/project_native.test.mjs verifies configured store selection and POSIX quoting across the SSH remote-shell boundary without invoking remote effects
+  binding integrations/mcp/project_native.mjs
+  binding cmd/BonfyreWebAddress/src/main.c
+
+interaction web-address-edge-admits-delegated-estate
+  source web-address-edge
+  destination authority-graph
+  relation exact_revocable_institution_admission
+  preserves exact controlled host-to-institution binding, current session validity, required read-or-write role, grant revocation/expiry, and original request method only
+  drops public machine-carrier publication, any cross-client data closure, global subscription tier as a substitute for client authority, credentials, generic host wildcards, provider/model/effect authority, and all semantic state from the Nginx edge
+  forbidden_inference a generic authenticated session -> delegated client access
+  invalidates_on institution grant state, session state, exact host binding, or request method changes
+  witness cmd/BonfyreAuth/tests/institution_grant_test.sh
+  witness cmd/BonfyreWebAddress/tests/auth_surface_test.sh
+  witness cmd/BonfyreWebAddress/tests/nginx_edge_test.sh
+  binding cmd/BonfyreAuth/src/main.c
+  binding cmd/BonfyreWebAddress/src/main.c
+  binding deploy/nginx/aurekai-surfaces.conf
+
+interaction protected-estate-host-gates-authority
+  source web-address-edge
+  destination authority-graph
+  relation host_selected_reversible_institution_admission
+  preserves exact protected host, fixed institution selector, bearer validity, current grant role, original request verb class, revocation/expiry result, and the decision receipt only
+  drops client application state, generic subscription tier as a substitute for a grant, any cross-client closure, Matrix public discovery, machine carrier projection, effect authority beyond the admitted verb, and all credential material
+  forbidden_inference a valid Bonfyre session or generic write scope -> authority over a managed client estate
+  invalidates_on matching institution grant, grant role, expiry, active/revoked state, session state, or host-to-institution map changes
+  witness cmd/BonfyreWebAddress/tests/auth_surface_test.sh
+  witness cmd/BonfyreWebAddress/tests/nginx_edge_test.sh
+  binding cmd/BonfyreAuth/src/main.c
+  binding cmd/BonfyreWebAddress/src/main.c
+  binding deploy/nginx/aurekai-surfaces.conf
+
+interaction mcp-compiles-institutional-slice
+  source web-address-edge
+  destination institutional-product-contracts
+  relation oauth-session-to-live-delegated-tool-slice
+  preserves current OAuth session, verified BonfyreAuth identity, exact/ancestral institution admission, native Upper90 role scope, declared CMS owner grammar, ForeignTwin observation boundary, and bounded review-work contract only
+  drops global project source tree/tools, sibling/child data not in the closure, caller-selected namespace, public machine publication, raw credentials, private body enumeration, and all authority not owned by each invoked native tool
+  forbidden_inference OAuth read/write scope -> global project MCP, cross-estate MCP read, public ForeignTwin publication, or a private CMS row becoming published
+  invalidates_on session/grant/role scope revocation, estate ancestry, Upper90 closure output, superuser grant, or declared MCP slice tool contract changes
+  witness integrations/mcp/tests/oauth_institution_slice_test.sh
+  binding integrations/mcp/bonfyre_oauth_gateway.mjs
+  binding cmd/BonfyreAuth/src/main.c
+  binding cmd/BonfyreUpper90/src/main.c
+
+interaction mcp-compiles-self-slice
+  source web-address-edge
+  destination bonfyre-matrix
+  relation oauth-session-to-actor-local-tool-slice
+  preserves the verified actor identity, exact native self scope, actor-local CMS namespace, fixed Life/self coordinates, and private ForeignTwin root derived from the same actor
+  drops the global project owner, generic write inference, institutional/parent/child closures, another actor namespace/root, public profile publication, public ForeignTwin projection, payment/device/provider authority, and every external effect
+  forbidden_inference OAuth read/write transport admission for a self account -> generic write, Bonfyre superuser access, an institutional slice, another actor's CMS/ForeignTwin state, publication, or effect authority
+  invalidates_on native session/self-scope verification, actor identity, actor namespace/root mapping, MCP self-tool contract, or superuser routing changes
+  witness integrations/mcp/tests/oauth_institution_slice_test.sh proves a free self account initializes only bonfyre-self-slice, sees self closure/carrier/private-ForeignTwin tools, and receives neither institutional nor global project tools
+  binding integrations/mcp/bonfyre_oauth_gateway.mjs
+  binding cmd/BonfyreAuth/src/main.c

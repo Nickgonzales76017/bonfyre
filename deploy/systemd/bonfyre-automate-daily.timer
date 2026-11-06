@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily standing automation for the Bonfyre estate
+
+[Timer]
+OnCalendar=*-*-* 09:20:00 UTC
+RandomizedDelaySec=600
+Persistent=true
+Unit=bonfyre-automate.service
+
+[Install]
+WantedBy=timers.target

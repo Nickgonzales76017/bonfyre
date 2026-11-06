@@ -1,0 +1,104 @@
+{
+  "created": [
+    {
+      "observation_id": "twc:published:sitecare-gold-monthly:20261009",
+      "result": {
+        "id": 3,
+        "created": true,
+        "fact_delta": "NOT_PUBLISHED"
+      }
+    },
+    {
+      "observation_id": "twc:published:sitecare-gold-annual:20261009",
+      "result": {
+        "id": 4,
+        "created": true,
+        "fact_delta": "NOT_PUBLISHED"
+      }
+    },
+    {
+      "observation_id": "twc:published:sitecare-diamond-monthly:20261009",
+      "result": {
+        "id": 5,
+        "created": true,
+        "fact_delta": "NOT_PUBLISHED"
+      }
+    },
+    {
+      "observation_id": "twc:published:sitecare-diamond-annual:20261009",
+      "result": {
+        "id": 6,
+        "created": true,
+        "fact_delta": "NOT_PUBLISHED"
+      }
+    },
+    {
+      "observation_id": "twc:published:inspirable-institutional-monthly:20261009",
+      "result": {
+        "id": 7,
+        "created": true,
+        "fact_delta": "NOT_PUBLISHED"
+      }
+    }
+  ],
+  "prices": [
+    {
+      "id": 3,
+      "observation_id": "twc:published:sitecare-gold-monthly:20261009",
+      "amount": "435.00",
+      "currency": "USD",
+      "kind": "published_subscription_price_per_month",
+      "source_ref": "https://sitecare.com/pricing/"
+    },
+    {
+      "id": 4,
+      "observation_id": "twc:published:sitecare-gold-annual:20261009",
+      "amount": "4680.00",
+      "currency": "USD",
+      "kind": "published_subscription_price_per_year",
+      "source_ref": "https://sitecare.com/pricing/"
+    },
+    {
+      "id": 5,
+      "observation_id": "twc:published:sitecare-diamond-monthly:20261009",
+      "amount": "2190.00",
+      "currency": "USD",
+      "kind": "published_subscription_price_per_month",
+      "source_ref": "https://sitecare.com/pricing/"
+    },
+    {
+      "id": 6,
+      "observation_id": "twc:published:sitecare-diamond-annual:20261009",
+      "amount": "23880.00",
+      "currency": "USD",
+      "kind": "published_subscription_price_per_year",
+      "source_ref": "https://sitecare.com/pricing/"
+    },
+    {
+      "id": 7,
+      "observation_id": "twc:published:inspirable-institutional-monthly:20261009",
+      "amount": "349.99",
+      "currency": "USD",
+      "kind": "published_subscription_price_per_month",
+      "source_ref": "https://inspirable.com/careplans/"
+    }
+  ],
+  "rfqs": [
+    {
+      "id": 2,
+      "vendor": "SiteCare",
+      "opportunity": "opportunity:twc-website-rfp",
+      "subject": "WordPress support quote for an Illinois nonprofit proposal",
+      "terms": "Correspondence source: gmail:message:1a11f0d1dc6b1c9f; independently read back with SENT. Recipient hello@sitecare.com. RFP TWC-2026-120. This stores an inquiry already sent, not a returned quotation, agreed subcontract, staffed SLA or service activation. The original Gmail message is authoritative for its exact wording. No price, coverage acceptance or supplier record resolution is inferred."
+    },
+    {
+      "id": 3,
+      "vendor": "Inspirable",
+      "opportunity": "opportunity:twc-website-rfp",
+      "subject": "Co-delivery inquiry: nonprofit WordPress support contract",
+      "terms": "Correspondence source: gmail:message:1a11f0ee8ab6197f; independently read back with SENT. Recipient support@inspirable.com. RFP TWC-2026-120. Existing message expressly says feasibility and pricing only; no award or activation. This record is not a returned quote, supplier acceptance, staffed SLA or subcontract. Exact original wording remains in Gmail. Published care-plan pricing is a separate observation, not this RFQ's answer."
+    }
+  ],
+  "external_dispatches": 0,
+  "accepted_quotes": 0
+}

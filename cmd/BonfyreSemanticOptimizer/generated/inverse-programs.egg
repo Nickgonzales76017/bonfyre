@@ -1,0 +1,4 @@
+; Generated closure algebra; saturation is compiled to native eclasses.
+(datatype Closure (T_reserve_capacity) (T_enact_protocol_commitment) (T_settle_commerce) (T_independent_roundtrip_observe) (T_prove_invariant) (And Closure Closure))
+(rewrite (And (T_enact_protocol_commitment) (T_reserve_capacity)) (T_reserve_capacity))
+(run 10)

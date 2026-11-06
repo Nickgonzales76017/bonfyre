@@ -1,0 +1,244 @@
+{
+    "affordances": [
+        {
+            "key": "LOCATE",
+            "terms": "place map route origin destination directions territory nearby location venue"
+        },
+        {
+            "key": "IDENTIFY",
+            "terms": "identity person owner account subject party asset profile actor"
+        },
+        {
+            "key": "OBSERVE",
+            "terms": "observe read status track monitor activity signal detail context history now"
+        },
+        {
+            "key": "MEASURE",
+            "terms": "measure meter stats analytics value equity comps risk progress score"
+        },
+        {
+            "key": "VERIFY",
+            "terms": "verify evidence assessment review proof quality inspection"
+        },
+        {
+            "key": "PREDICT",
+            "terms": "forecast predict estimate arv value risk compare"
+        },
+        {
+            "key": "COMPARE",
+            "terms": "compare contrast alternative option variant value comps risk"
+        },
+        {
+            "key": "SEARCH",
+            "terms": "discover search filter catalog find query related universe browse"
+        },
+        {
+            "key": "MATCH",
+            "terms": "match compare select provider candidate related fit"
+        },
+        {
+            "key": "ROUTE",
+            "terms": "route delivery trip transit in-transit directions dispatch"
+        },
+        {
+            "key": "SCHEDULE",
+            "terms": "schedule calendar book reserve appointment upcoming hold"
+        },
+        {
+            "key": "QUOTE",
+            "terms": "quote price offer bid term"
+        },
+        {
+            "key": "PURCHASE",
+            "terms": "cart checkout buy order product purchase"
+        },
+        {
+            "key": "PAY",
+            "terms": "pay payment settlement invoice receipt"
+        },
+        {
+            "key": "INSURE",
+            "terms": "insurance coverage claim policy"
+        },
+        {
+            "key": "COMMUNICATE",
+            "terms": "message conversation discussion reply contact communication thread"
+        },
+        {
+            "key": "TRANSLATE",
+            "terms": "translate language transcript captions"
+        },
+        {
+            "key": "PUBLISH",
+            "terms": "publish post syndicate distribution share article release"
+        },
+        {
+            "key": "STREAM",
+            "terms": "stream live play watch listen media"
+        },
+        {
+            "key": "AUTHENTICATE",
+            "terms": "identity authenticate session login credential"
+        },
+        {
+            "key": "AUTHORIZE",
+            "terms": "authorize consent approval permission authority"
+        },
+        {
+            "key": "SIGN",
+            "terms": "sign signature mandate agreement"
+        },
+        {
+            "key": "CERTIFY",
+            "terms": "certificate credential verify compliance"
+        },
+        {
+            "key": "FILE",
+            "terms": "file filing form submission permit tax"
+        },
+        {
+            "key": "REPORT",
+            "terms": "report alert notification analytics status"
+        },
+        {
+            "key": "ALERT",
+            "terms": "alert emergency warning incident"
+        },
+        {
+            "key": "SIMULATE",
+            "terms": "simulate model plan forecast"
+        },
+        {
+            "key": "OPTIMIZE",
+            "terms": "optimize plan route schedule rank"
+        },
+        {
+            "key": "REPAIR",
+            "terms": "repair maintenance service work"
+        },
+        {
+            "key": "INSPECT",
+            "terms": "inspect inspection review audit evidence"
+        },
+        {
+            "key": "CLASSIFY",
+            "terms": "classify category topic tag ontology"
+        },
+        {
+            "key": "NEGOTIATE",
+            "terms": "negotiate proposal quote terms conversation"
+        },
+        {
+            "key": "CONTRACT",
+            "terms": "contract agreement commitment checkout approval"
+        },
+        {
+            "key": "HIRE",
+            "terms": "hire candidate job interview offer onboarding"
+        },
+        {
+            "key": "TEACH",
+            "terms": "learn lesson course module feedback assessment"
+        },
+        {
+            "key": "CARE",
+            "terms": "care provider appointment plan follow-up service"
+        }
+    ],
+    "roles": [
+        {
+            "key": "material_source",
+            "terms": "entry hero media detail read source content release track episode thread event place product discovery"
+        },
+        {
+            "key": "media_service",
+            "terms": "play media watch listen stream chapter transcript captions queue"
+        },
+        {
+            "key": "action_adapter",
+            "terms": "select reserve book checkout payment quote contact apply submit order confirm"
+        },
+        {
+            "key": "interaction_reference",
+            "terms": "entry body thread board timeline map workspace detail"
+        },
+        {
+            "key": "design_reference",
+            "terms": "hero layout preview editorial gallery document"
+        },
+        {
+            "key": "authoring_adapter",
+            "terms": "draft edit compose preview publish update"
+        },
+        {
+            "key": "compiler_toolchain",
+            "terms": "plan build test run analysis edit deploy"
+        },
+        {
+            "key": "transport_carrier",
+            "terms": "request send receive deliver execute stream status"
+        },
+        {
+            "key": "publication_carrier",
+            "terms": "publish syndicate distribution share post update"
+        },
+        {
+            "key": "verification_tool",
+            "terms": "verify evidence review audit proof quality"
+        },
+        {
+            "key": "external_service_candidate",
+            "terms": "search select request execute result status"
+        },
+        {
+            "key": "reference_standard",
+            "terms": "discover resolve validate execute response"
+        }
+    ],
+    "presentation_terms": "entry hero media detail read sequence discussion community related collection identity profile article source release track episode place product preview creator people",
+    "app_name_rules": [
+        {
+            "contains": "transcrib caption subtitle",
+            "hints": [
+                "TRANSLATE"
+            ]
+        },
+        {
+            "contains": "clip video audio media stream",
+            "hints": [
+                "STREAM"
+            ]
+        },
+        {
+            "contains": "offer commerce shop",
+            "hints": [
+                "QUOTE",
+                "PURCHASE"
+            ]
+        },
+        {
+            "contains": "finance pay ledger settle",
+            "hints": [
+                "PAY"
+            ]
+        },
+        {
+            "contains": "publish cms distribute repurpose",
+            "hints": [
+                "PUBLISH"
+            ]
+        },
+        {
+            "contains": "auth identity",
+            "hints": [
+                "AUTHENTICATE"
+            ]
+        },
+        {
+            "contains": "project queue workflow pipeline",
+            "hints": [
+                "OPTIMIZE"
+            ]
+        }
+    ]
+}

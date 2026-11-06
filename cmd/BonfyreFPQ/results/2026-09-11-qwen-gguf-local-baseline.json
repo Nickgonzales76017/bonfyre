@@ -1,0 +1,37 @@
+{
+  "schema": "bonfyre-model-local-baseline.v1",
+  "observed_at": "2026-09-11T15:42:00Z",
+  "classification": "MEASURED_LOCAL_GGUF_BASELINE",
+  "runner": {
+    "runtime": "llama.cpp",
+    "version": "8640 (7992aa7c8)",
+    "backend": "Apple Metal/BLAS",
+    "threads": 4
+  },
+  "model": {
+    "path": "/Users/nickgonzales/BonfyreModels/gguf/qwen2.5-coder-3b-instruct/Qwen2.5-Coder-3B-Instruct-Q4_K_M.gguf",
+    "format": "GGUF Q4_K_M",
+    "declared_model": "Qwen2.5-Coder-3B-Instruct",
+    "file_bytes": 1840531456
+  },
+  "workload": {
+    "prompt": "Reply with exactly: local baseline measured.",
+    "context_tokens": 512,
+    "max_predicted_tokens": 16,
+    "warmup": false
+  },
+  "result": {
+    "prompt_tokens_per_second": 143.5,
+    "generation_tokens_per_second": 15.0,
+    "response_matched_instruction": true
+  },
+  "establishes": [
+    "This exact local GGUF model/runtime/hardware configuration completed the stated bounded generation workload.",
+    "The displayed llama.cpp prompt and generation throughput for that one run."
+  ],
+  "does_not_establish": [
+    "FPQ execution, FPQ reconstruction quality, FPQ generation parity, fused FPQ block execution, or FPQ model residency.",
+    "BitNet embeddings, BitNet reranking, BitNet throughput, a comparative model benchmark, production inference capacity, or concurrent-session capacity.",
+    "Any user-scale, traffic-scale, cost, energy, or provider-performance claim."
+  ]
+}

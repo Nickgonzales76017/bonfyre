@@ -1,0 +1,12 @@
+[Unit]
+Description=Drain Bonfyre inverse-compiler dependency cuts
+
+[Timer]
+OnBootSec=55s
+OnUnitActiveSec=5s
+RandomizedDelaySec=1s
+Persistent=true
+Unit=bonfyre-inverse-compiler-worker.service
+
+[Install]
+WantedBy=timers.target

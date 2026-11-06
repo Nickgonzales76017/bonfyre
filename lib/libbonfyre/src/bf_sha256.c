@@ -1,12 +1,19 @@
 /*
- * bf_sha256.c — FIPS 180-4 SHA-256, no external dependencies.
+ * bf_sha256.c — FIPS 180-4 SHA-256. The incremental API is portable C;
+ * macOS file hashing uses the crypto implementation already in libSystem.
  *
  * Previously duplicated in BonfyreHash, BonfyreIngest, BonfyrePipeline.
  * Now shared via libbonfyre.
  */
+#include <stdint.h>
 #include "bonfyre.h"
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
+#if defined(__APPLE__) && !defined(BONFYRE_SHA256_PORTABLE)
+#include <CommonCrypto/CommonDigest.h>
+#define BF_FILE_SHA256_COMMONCRYPTO 1
+#endif
 
 static const uint32_t K256[64] = {
     0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
@@ -33,6 +40,24 @@ void bf_sha256_init(BfSha256 *c) {
     c->total = 0;
 }
 
+#if defined(__ARM_FEATURE_SHA2) || defined(__ARM_FEATURE_CRYPTO)
+#include <arm_neon.h>
+/* ARMv8 SHA-256 instructions: the same compression, in hardware. */
+static void sha256_block(BfSha256 *c, const uint8_t *d) {
+    uint32x4_t s0 = vld1q_u32(&c->h[0]), s1 = vld1q_u32(&c->h[4]), save0 = s0, save1 = s1;
+    uint32x4_t w[4];
+    for (int i = 0; i < 4; i++) w[i] = vreinterpretq_u32_u8(vrev32q_u8(vld1q_u8(d + 16 * i)));
+    for (int i = 0; i < 16; i++) {
+        uint32x4_t wk = vaddq_u32(w[i & 3], vld1q_u32(&K256[4 * i]));
+        if (i < 12) w[i & 3] = vsha256su1q_u32(vsha256su0q_u32(w[i & 3], w[(i + 1) & 3]), w[(i + 2) & 3], w[(i + 3) & 3]);
+        uint32x4_t t = s0;
+        s0 = vsha256hq_u32(s0, s1, wk);
+        s1 = vsha256h2q_u32(s1, t, wk);
+    }
+    vst1q_u32(&c->h[0], vaddq_u32(s0, save0));
+    vst1q_u32(&c->h[4], vaddq_u32(s1, save1));
+}
+#else
 static void sha256_block(BfSha256 *c, const uint8_t *d) {
     uint32_t W[64], a, b, cc2, dd, e, f, g, h;
     for (int i = 0; i < 16; i++)
@@ -52,6 +77,7 @@ static void sha256_block(BfSha256 *c, const uint8_t *d) {
     c->h[0]+=a; c->h[1]+=b; c->h[2]+=cc2; c->h[3]+=dd;
     c->h[4]+=e; c->h[5]+=f; c->h[6]+=g; c->h[7]+=h;
 }
+#endif
 
 void bf_sha256_update(BfSha256 *c, const uint8_t *data, size_t len) {
     size_t off = c->total % 64;
@@ -112,20 +138,41 @@ void bf_sha256_hex(const uint8_t *data, size_t len, char hex[65]) {
 }
 
 int bf_sha256_file(const char *path, char hex[65]) {
+    hex[0] = '\0';
     FILE *f = fopen(path, "rb");
     if (!f) return -1;
 
+#ifdef BF_FILE_SHA256_COMMONCRYPTO
+    CC_SHA256_CTX ctx;
+    CC_SHA256_Init(&ctx);
+#else
     BfSha256 ctx;
     bf_sha256_init(&ctx);
+#endif
 
     uint8_t buf[8192];
     size_t n;
-    while ((n = fread(buf, 1, sizeof(buf), f)) > 0)
+    while ((n = fread(buf, 1, sizeof(buf), f)) > 0) {
+#ifdef BF_FILE_SHA256_COMMONCRYPTO
+        /* The fixed buffer bounds n well below CC_LONG's limit. */
+        CC_SHA256_Update(&ctx, buf, (CC_LONG)n);
+#else
         bf_sha256_update(&ctx, buf, n);
-    fclose(f);
+#endif
+    }
+    int read_error = ferror(f) ? (errno ? errno : EIO) : 0;
+    int close_error = fclose(f);
+    if (read_error || close_error) {
+        if (read_error) errno = read_error;
+        return -1;
+    }
 
     uint8_t hash[32];
+#ifdef BF_FILE_SHA256_COMMONCRYPTO
+    CC_SHA256_Final(hash, &ctx);
+#else
     bf_sha256_final(&ctx, hash);
+#endif
     hash_to_hex(hash, hex);
     return 0;
 }

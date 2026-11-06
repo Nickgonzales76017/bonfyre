@@ -1,0 +1,60 @@
+{
+  "schema_version": "bonfyre.publication-proof-bundle.v1",
+  "epoch": "codex-20260821T031111-4ee97bff",
+  "surface": "blogger",
+  "authority": {
+    "decision": "allowed",
+    "rule": "Publish only source-backed Bonfyre/Aurekai posts with no secrets, private paths, or private partner material; retain API response receipt."
+  },
+  "posts": [
+    {
+      "title": "Bonfÿre: A Typed Operating Machine for Authorized Work and Evidence",
+      "html_path": "content/publications/blogger/run8-20260821/01-typed-operating-machine.html",
+      "sha256": "5b2013b5351588aaca2c023589eb8db2dc3a96784101b0c699ad35bfb8d913e5",
+      "labels": [
+        "Bonfyre",
+        "Aurekai",
+        "Architecture",
+        "Evidence"
+      ],
+      "source_refs": [
+        "sha256:936422c0856281683e96a9fb6bcc63217c830291b288cb86dfe1ea8c85befc5d",
+        "sha256:b2fca5c3bfcf4226fdaf7e8af8e2c22ed932c2943bb23d9a48bc0ab50b645db9"
+      ]
+    },
+    {
+      "title": "Run History Should Become Evidence, Not Parallel Architecture",
+      "html_path": "content/publications/blogger/run8-20260821/02-history-as-evidence.html",
+      "sha256": "9bd25ffbb9d9e52794aa58bb21a5a2b7a1ff08afb6b72b9d3c15704b2f192ac5",
+      "labels": [
+        "Bonfyre",
+        "Aurekai",
+        "Evidence",
+        "Run History"
+      ],
+      "source_refs": [
+        "sha256:e1993cf2d1be054d115f2e6747612b69910851680160702a19ff5d6235ced810",
+        "sha256:3d8d41ed7e78f3a296d4fb3ab9c35c27e191e0dbcb7a17669b26f54ecbe5fdcb"
+      ]
+    }
+  ],
+  "prepublication_validation": [
+    {
+      "command": "python3 -m pytest components/BonfyreControlPlane/tests/test_run_history_absorption.py -q",
+      "expected": "5 passed"
+    },
+    {
+      "command": "cd components/BonfyreControlPlane && python3 -m pytest tests/ -q",
+      "expected": "current full control-plane suite passes"
+    },
+    {
+      "command": "python3 architecture/atlas.py validate",
+      "expected": "valid live architecture registry"
+    },
+    {
+      "command": "publication secret/private-path scan",
+      "expected": "no secret values, local absolute paths, or private partner material"
+    }
+  ],
+  "external_receipts": []
+}

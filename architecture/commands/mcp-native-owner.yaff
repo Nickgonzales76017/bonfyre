@@ -1,0 +1,49 @@
+atlas commands-mcp-native-owner
+
+architecture mcp-native-command-clients
+  canonical_name McpNativeCommandClients
+  family commands
+  domain Execution / Native MCP owner command clients (W2 first slice)
+  maturity measured
+  semantic_question Can the spines, canary, recursive and V6 terminal clients run as one C program over libbonfyre with the retired JS grammar, catalog validation, wire refusals and JSON.stringify output unchanged?
+  purpose First W2 slice of the .mjs retirement: one multi-call C client (bonfyre-mcp) replaces four bun CLIs; the owners, stores and transport stay where they are.
+  node_types OwnerCommand
+  node_types McpToolCall
+  internal_calculus argv -> owner grammar (parseArgs or the hand grammar) -> catalog-validated arguments -> one authenticated JSON-RPC tools/call -> identity-checked result -> JSON.stringify(result, null, 2)
+  internal_calculus JSON.parse semantics (strict grammar, fatal UTF-8, last duplicate wins, doubles) -> bf_jv -> bf_jsonw emission
+  invariant help, version and every argument refusal happen before any token read or network request, as in the retired JS
+  invariant one request per owner call, never retried; a lost or refused response is reported, not replayed
+  invariant the bearer token never appears in argv (HTTPS owners go through curl with a private header file) and is redacted from every reported error
+  invariant http owners must be loopback; https owners must carry no URL credentials, query or fragment
+  source_path cmd/BonfyreMcp/Makefile
+  source_path cmd/BonfyreMcp/src/main.c
+  source_path cmd/BonfyreMcp/src/clis.c
+  source_path cmd/BonfyreMcp/src/wire.c
+  source_path cmd/BonfyreMcp/src/schema.c
+  source_path cmd/BonfyreMcp/src/jsx.c
+  source_path cmd/BonfyreMcp/src/fixture.c
+  source_path deploy/launchd/bonfyre-spines
+  source_path deploy/launchd/bonfyre-canary
+  source_path deploy/launchd/bonfyre-recursive
+  witness cmd/BonfyreMcp/tests/vectors.sh check: 159 golden vectors (51 spines, 11 v6, 53 canary, 44 recursive) recorded from the retired JS CLIs against bonfyre-mcp fixture-serve compare stdout, stderr, exit code and the exact request sent; 159 of 159 pass, and the same 159 matched in a direct JS-against-C run before retirement
+  witness 2026-10-29 read-only status against the live spines, canary, recursive and V6 owners: canary and V6 output identical byte for byte; spines and recursive identical except owner-measured duration_ms fields
+  witness integrations/mcp/tests/spines_integration.test.mjs drives r5-smoke and r6-smoke through bonfyre-mcp against the real Spines owner served over loopback HTTP
+  witness integrations/mcp/tests/spines_transport.test.mjs builds bonfyre-mcp and runs the vector check inside the MCP test suite
+  forbidden_inference passing vectors -> either the JS or the C client being correct; they show the C matches the JS on the recorded inputs only
+  forbidden_inference a native client -> native owners, stores or transport; spines, canary, recursive and V6 servers and stores are still Bun
+  forbidden_inference matching error text on recorded cases -> matching text on every malformed response; JSON.parse diagnostics are approximated
+  known_gap the integrations/mcp/{spines,canary,recursive}_cli.mjs paths remain as three-line shims because the installed ~/.local/bin wrappers name them; they go once those wrappers are repointed at deploy/launchd/bonfyre-*
+  known_gap bonfyre-mcp is built in place (cmd/BonfyreMcp/bonfyre-mcp, gitignored); a fresh checkout must run make before the shims or wrappers work
+  known_gap a JSON string holding a lone surrogate escape is re-emitted as its three UTF-8 bytes, where JSON.stringify prints \udXXX
+  known_gap URL handling is a WHATWG subset: hostnames are lowercased, IPv4 shorthand and IPv6 are normalised, default ports dropped; percent-encoding and dot-segments in paths are not normalised
+  known_gap hypervisor_cli.mjs and fabric_activity_cli.mjs are not ported (mission wait loop, task-execute spawned by hypervisor_server, msgpack framing)
+
+interaction mcp-native-clients-call-spines-owner
+  source mcp-native-command-clients
+  destination native-spines-bun-owner
+  relation authenticated-json-rpc-tool-call
+  preserves tool names, argument shapes and order, defaults, smoke composition and exit codes
+  drops the bun runtime from the terminal path
+  forbidden_inference a passed smoke through the client -> authority to promote or execute external effects
+  binding cmd/BonfyreMcp/src/clis.c
+  witness integrations/mcp/tests/spines_integration.test.mjs

@@ -1,0 +1,18 @@
+{
+  "representation_id": "nomic-static-128/bfse-int8/2026-10-17",
+  "model_id": "nomic-static-128",
+  "representation_family": "static-embedding",
+  "representation_version": "bfse-v1/128/int8-per-row/zipf/teacher-nomic-embed-text-onnx-b4342336",
+  "exactness_class": "latent",
+  "measurement_state": "measured",
+  "admission_state": "DEFER",
+  "admission_scope": "embedding",
+  "quality_envelope": "Teacher agreement measured, not retrieval quality. On all 1703 site search passages (corpus sha256 e3b2a8be) the .bfse shares 18.5 percent of each text's top-10 neighbours with the nomic-embed-text-onnx teacher (top-1 agreement 17.1 percent, worst query 0 of 10). On the first 2000 visible publication titles (sha256 9a8dc282, 55 refused as invisible) it shares 20.7 percent (top-1 22.0 percent; receipt sha256 47b89764). The distill receipt records 68.6 percent explained variance of token rows. Static embedding cost 0.0026 ms per text against 62 to 203 ms for the teacher on this Mac. No relevance judgement, false-prune trial or cross-model comparability has been measured; ResourceAdmission must not treat this representation as a substitute for its teacher or as a ranker of record.",
+  "receipt_ref": "estate/generated/nomic-static-128-teacher-agreement-site-passages-2026-10-30.json",
+  "receipt_digest": "3810e4edffb745a7fc3a2f1842a2651daf4ead1ffd34de177db048edce4a641c",
+  "physical_body_ref": "~/BonfyreModels/static/nomic-static-128.bfse",
+  "physical_digest": "5b722d081d18113a77970f63d2bd4bef346ca3e56d6c12c0fadf2c3f1032b51e",
+  "physical_bytes": 4276420,
+  "supports": ["top-k"],
+  "recorded_at": "2026-10-30T14:20:00Z"
+}

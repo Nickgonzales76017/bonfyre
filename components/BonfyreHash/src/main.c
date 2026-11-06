@@ -267,7 +267,7 @@ static int cmd_dedup(const char *dir) {
     return 0;
 }
 
-/* ---------- #10: Inline Merkle (replaces system() + Python) ---------- */
+/* ---------- #10: Inline Merkle (replaces process-spawn hashing) ---------- */
 
 /* Extract quoted string values matching "content_hash" from artifact.json */
 static int extract_content_hashes(const char *json, char hashes[][65], int max_hashes) {

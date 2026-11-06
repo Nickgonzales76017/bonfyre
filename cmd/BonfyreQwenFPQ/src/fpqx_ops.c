@@ -1,6 +1,14 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 #include <pthread.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <inttypes.h>  /* PRIu64. Reached transitively via a macOS-only header before. */
 #ifndef PTHREAD_STACK_MIN
 #define PTHREAD_STACK_MIN 16384
 #endif
@@ -1538,6 +1546,140 @@ static void sli_generate_projection(float *proj, size_t n,
  *  • 4-accumulator dot product
  *  • Single inline function (zero call overhead)
  */
+/* The Haar sign is fixed for a prepared weight block.  Folding it into the
+ * transformed weight lets the runtime use a single BLAS GEMV with a zero-padded
+ * activation.  This is algebraically identical to z^T(sign \u2299 x). */
+static void fpqx_sli_fold_block_signs(float *dst, const float *src,
+                                      uint64_t block_seed) {
+    uint64_t state = block_seed ? block_seed : 0x5DEECE66DUL;
+    for (size_t i = 0; i < 256; i += 64) {
+        state ^= state << 13;
+        state ^= state >> 7;
+        state ^= state << 17;
+        for (size_t k = 0; k < 64; k++) {
+            float value = src[i + k];
+            dst[i + k] = ((state >> k) & 1u) ? -value : value;
+        }
+    }
+}
+
+static int fpqx_sli_linear_residual(const fpqx_sli_ctx_t *ctx,
+                                    const float *x,
+                                    float *output) {
+    const size_t linear_cols = ctx->blocks_per_row * SLI_BLOCK_DIM;
+    float *x_linear;
+    if (!ctx || !ctx->z_linear_data || !x || !output || linear_cols < ctx->cols) return -1;
+    x_linear = (float *)calloc(linear_cols, sizeof(float));
+    if (!x_linear) return -1;
+    memcpy(x_linear, x, ctx->cols * sizeof(float));
+#if USE_ACCELERATE
+    cblas_sgemv(CblasRowMajor, CblasNoTrans,
+                (int)ctx->rows, (int)linear_cols, 1.0f,
+                ctx->z_linear_data, (int)linear_cols,
+                x_linear, 1, 1.0f, output, 1);
+#else
+    for (size_t row = 0; row < ctx->rows; row++) {
+        const float *w = ctx->z_linear_data + row * linear_cols;
+        float sum = 0.0f;
+        for (size_t col = 0; col < linear_cols; col++) sum += w[col] * x_linear[col];
+        output[row] += sum;
+    }
+#endif
+    free(x_linear);
+    return 0;
+}
+
+#if !defined(__ARM_NEON) && !defined(__ARM_NEON__)
+/* Portable block-score kernels.
+ *
+ * sli_fast_block_score_f16/_i8 existed only inside the `#if defined(__ARM_NEON)`
+ * branch, but their call sites are unguarded, so every non-ARM link failed with
+ * "undefined reference". These scalar versions mirror the NEON ones step for
+ * step -- same xorshift sign schedule, same four-accumulator reduction order,
+ * fmaf() for NEON's fused vmlaq_f32, and nearbyintf() for vcvtnq_s32_f32's
+ * round-to-nearest-even -- so the two paths agree rather than merely resembling
+ * each other. */
+static inline void sli_apply_block_signs(float *x, uint64_t block_seed) {
+    uint64_t state = block_seed ? block_seed : 0x5DEECE66DUL;
+    for (size_t i = 0; i < 256; i += 64) {
+        state ^= state << 13;
+        state ^= state >> 7;
+        state ^= state << 17;
+        for (size_t k = 0; k < 64; k++)
+            if ((state >> k) & 1u) x[i + k] = -x[i + k];
+    }
+}
+
+static inline void sli_load_block(float *dst, const float *src, size_t dim) {
+    if (dim >= 256) {
+        memcpy(dst, src, 256 * sizeof(float));
+    } else {
+        memcpy(dst, src, dim * sizeof(float));
+        memset(dst + dim, 0, (256 - dim) * sizeof(float));
+    }
+}
+
+static inline float sli_fast_block_score_f16(
+    const bf_fp16_t *z_b, const float *x_src, size_t dim, uint64_t block_seed)
+{
+    float x[256];
+    sli_load_block(x, x_src, dim);
+    sli_apply_block_signs(x, block_seed);
+
+    float acc0 = 0.0f, acc1 = 0.0f, acc2 = 0.0f, acc3 = 0.0f;
+    for (size_t i = 0; i < 256; i += 16) {
+        for (size_t j = 0; j < 4; j++) {
+            acc0 = fmaf((float)z_b[i      + j], x[i      + j], acc0);
+            acc1 = fmaf((float)z_b[i +  4 + j], x[i +  4 + j], acc1);
+            acc2 = fmaf((float)z_b[i +  8 + j], x[i +  8 + j], acc2);
+            acc3 = fmaf((float)z_b[i + 12 + j], x[i + 12 + j], acc3);
+        }
+    }
+    return (acc0 + acc1) + (acc2 + acc3);
+}
+
+#ifdef FPQ_INT8_SDOT
+static inline float sli_fast_block_score_i8(
+    const int8_t *z_i8, float z_scale, const float *x_src, size_t dim,
+    uint64_t block_seed)
+{
+    float xf[256];
+    sli_load_block(xf, x_src, dim);
+    sli_apply_block_signs(xf, block_seed);
+
+    float xmax = 0.0f;
+    for (size_t i = 0; i < 256; i++) {
+        float a = fabsf(xf[i]);
+        if (a > xmax) xmax = a;
+    }
+    if (xmax < 1e-20f) return 0.0f;
+
+    const float x_scale = xmax / 127.0f;
+    const float inv_x   = 1.0f / x_scale;
+
+    int8_t xi[256];
+    for (size_t i = 0; i < 256; i++) {
+        /* |xf[i]| <= xmax, so the scaled value lands in [-127, 127] and the
+         * narrowing cannot overflow -- matching the NEON path, where vmovn
+         * truncates rather than saturates. */
+        xi[i] = (int8_t)(int32_t)nearbyintf(xf[i] * inv_x);
+    }
+
+    int32_t acc0 = 0, acc1 = 0, acc2 = 0, acc3 = 0;
+    for (size_t i = 0; i < 256; i += 64) {
+        for (size_t j = 0; j < 16; j++) {
+            acc0 += (int32_t)z_i8[i      + j] * (int32_t)xi[i      + j];
+            acc1 += (int32_t)z_i8[i + 16 + j] * (int32_t)xi[i + 16 + j];
+            acc2 += (int32_t)z_i8[i + 32 + j] * (int32_t)xi[i + 32 + j];
+            acc3 += (int32_t)z_i8[i + 48 + j] * (int32_t)xi[i + 48 + j];
+        }
+    }
+    const int32_t dot_i32 = (acc0 + acc1) + (acc2 + acc3);
+    return (float)dot_i32 * z_scale * x_scale;
+}
+#endif /* FPQ_INT8_SDOT */
+#endif /* !__ARM_NEON */
+
 #if defined(__ARM_NEON) || defined(__ARM_NEON__)
 #include <arm_neon.h>
 
@@ -1626,51 +1768,8 @@ static inline float sli_fast_block_score(
     return vaddvq_f32(acc0);
 }
 
-/* The Haar sign is fixed for a prepared weight block.  Folding it into the
- * transformed weight lets the runtime use a single BLAS GEMV with a zero-padded
- * activation.  This is algebraically identical to z^T(sign \u2299 x). */
-static void fpqx_sli_fold_block_signs(float *dst, const float *src,
-                                      uint64_t block_seed) {
-    uint64_t state = block_seed ? block_seed : 0x5DEECE66DUL;
-    for (size_t i = 0; i < 256; i += 64) {
-        state ^= state << 13;
-        state ^= state >> 7;
-        state ^= state << 17;
-        for (size_t k = 0; k < 64; k++) {
-            float value = src[i + k];
-            dst[i + k] = ((state >> k) & 1u) ? -value : value;
-        }
-    }
-}
-
-static int fpqx_sli_linear_residual(const fpqx_sli_ctx_t *ctx,
-                                    const float *x,
-                                    float *output) {
-    const size_t linear_cols = ctx->blocks_per_row * SLI_BLOCK_DIM;
-    float *x_linear;
-    if (!ctx || !ctx->z_linear_data || !x || !output || linear_cols < ctx->cols) return -1;
-    x_linear = (float *)calloc(linear_cols, sizeof(float));
-    if (!x_linear) return -1;
-    memcpy(x_linear, x, ctx->cols * sizeof(float));
-#if USE_ACCELERATE
-    cblas_sgemv(CblasRowMajor, CblasNoTrans,
-                (int)ctx->rows, (int)linear_cols, 1.0f,
-                ctx->z_linear_data, (int)linear_cols,
-                x_linear, 1, 1.0f, output, 1);
-#else
-    for (size_t row = 0; row < ctx->rows; row++) {
-        const float *w = ctx->z_linear_data + row * linear_cols;
-        float sum = 0.0f;
-        for (size_t col = 0; col < linear_cols; col++) sum += w[col] * x_linear[col];
-        output[row] += sum;
-    }
-#endif
-    free(x_linear);
-    return 0;
-}
-
 static inline float sli_fast_block_score_f16(
-    const __fp16 *z_b,
+    const bf_fp16_t *z_b,
     const float *x_src,
     size_t dim,
     uint64_t block_seed)
@@ -2422,12 +2521,12 @@ fpqx_sli_ctx_t *fpqx_sli_prepare(const fpqx_tensor_t *t) {
     }
 
     if (fpqx_sli_prepare_f16_only_enabled()) {
-        ctx->z_data_f16 = (__fp16 *)malloc(n_blocks * SLI_BLOCK_DIM * sizeof(__fp16));
+        ctx->z_data_f16 = (bf_fp16_t *)malloc(n_blocks * SLI_BLOCK_DIM * sizeof(bf_fp16_t));
         if (ctx->z_data_f16) {
             for (size_t b = 0; b < n_blocks; b++) {
                 const float *zb = z_region + b * SLI_BLOCK_DIM;
-                __fp16 *hb = ctx->z_data_f16 + b * SLI_BLOCK_DIM;
-                for (size_t i = 0; i < SLI_BLOCK_DIM; i++) hb[i] = (__fp16)zb[i];
+                bf_fp16_t *hb = ctx->z_data_f16 + b * SLI_BLOCK_DIM;
+                for (size_t i = 0; i < SLI_BLOCK_DIM; i++) hb[i] = (bf_fp16_t)zb[i];
             }
             if (!probe_only_rows &&
                 ctx->z_data &&
@@ -3240,6 +3339,9 @@ void fpqx_sli_shared_free(fpqx_sli_shared_spectral_t *grp) {
  * Gated on  -DFPQ_JIT_SLI  at compile time.
  * ═══════════════════════════════════════════════════════════════════ */
 
+#ifdef FPQ_JIT_ORC
+#include "fpq_orc_jit.h"
+#endif
 #ifdef FPQ_JIT_SLI
 /* fpqx_sli_jit_compile — implementation (forward-declared above) */
 static void fpqx_sli_jit_compile(fpqx_sli_ctx_t *ctx, uint64_t haar_seed)
@@ -3248,6 +3350,15 @@ static void fpqx_sli_jit_compile(fpqx_sli_ctx_t *ctx, uint64_t haar_seed)
 
     size_t rows = ctx->rows;
     size_t bpr  = ctx->blocks_per_row;
+
+#ifdef FPQ_JIT_ORC
+    /* Specialised in this process through LLVM ORC: no source written to
+     * /tmp, no compiler process, and no shared object loaded from a path
+     * another user could have written first. The code belongs to the JIT, so
+     * there is no handle to close. */
+    ctx->jit_fn = fpq_orc_sli_kernel(rows, bpr, NULL);
+    return;
+#endif
 
     /* Stable hash from shape — avoids recompilation for same-shaped tensors */
     unsigned long hash = (unsigned long)(rows * 1000003UL + bpr * 131UL);

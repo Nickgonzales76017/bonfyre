@@ -23,6 +23,7 @@
  */
 
 #include <stdio.h>
+#include "../../../lib/libbonfyre/include/bf_help.h"
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -77,6 +78,7 @@ static const char *SCHEMA=
 static sqlite3 *open_db(void){
     char path[4096];db_path(path,sizeof(path));ensure_dir(path);
     sqlite3 *db=NULL;
+    /* Fast tier, by decision: experiment results; losing the last commits to a power cut costs a re-run. */
     if(bf_sqlite3_open(path,&db)!=SQLITE_OK){fprintf(stderr,"db error\n");exit(1);}
     char *err=NULL;sqlite3_exec(db,SCHEMA,NULL,NULL,&err);
     if(err){fprintf(stderr,"%s\n",err);sqlite3_free(err);exit(1);}
@@ -115,7 +117,18 @@ static void cmd_pair(sqlite3 *db,const char *recipe,const char *stage){
     printf("competition created: %s\n",cid);
 }
 
-static void cmd_add_variant(sqlite3 *db,const char *comp,const char *label,const char *cfg){
+static int comp_exists(sqlite3 *db,const char *comp){
+    sqlite3_stmt *st=NULL;int found=0;
+    if(sqlite3_prepare_v2(db,"SELECT 1 FROM competitions WHERE id=?",-1,&st,NULL)!=SQLITE_OK)return 0;
+    sqlite3_bind_text(st,1,comp,-1,SQLITE_STATIC);
+    found=sqlite3_step(st)==SQLITE_ROW;
+    sqlite3_finalize(st);return found;
+}
+
+/* A variant or result filed under an id no competition holds is an orphan
+ * nothing will ever score; refuse it rather than report success. */
+static int cmd_add_variant(sqlite3 *db,const char *comp,const char *label,const char *cfg){
+    if(!comp_exists(db,comp)){fprintf(stderr,"bonfyre-compete: no competition %s\n",comp);return 1;}
     time_t now=time(NULL);
     char vid[128];snprintf(vid,sizeof(vid),"var-%s-%s-%ld",comp,label,(long)now);
     sqlite3_stmt *st=NULL;
@@ -129,9 +142,11 @@ static void cmd_add_variant(sqlite3 *db,const char *comp,const char *label,const
     sqlite3_bind_int64(st,5,(sqlite3_int64)now);
     sqlite3_step(st);sqlite3_finalize(st);
     printf("variant added: %s → %s\n",vid,comp);
+    return 0;
 }
 
-static void cmd_run(sqlite3 *db,const char *comp,const char *input){
+static int cmd_run(sqlite3 *db,const char *comp,const char *input){
+    if(!comp_exists(db,comp)){fprintf(stderr,"bonfyre-compete: no competition %s\n",comp);return 1;}
     /* Score each variant with real lexical content analysis.
      * If a variant's config contains a "command" field, that command is
      * invoked on the input and its output is scored; otherwise the raw
@@ -195,6 +210,7 @@ static void cmd_run(sqlite3 *db,const char *comp,const char *input){
         printf("  variant %-40s score=%.3f\n",vid,score);
     }
     sqlite3_finalize(st);
+    return 0;
 }
 
 static void cmd_score(sqlite3 *db,const char *comp){
@@ -217,20 +233,24 @@ static void cmd_score(sqlite3 *db,const char *comp){
     sqlite3_finalize(st);
 }
 
-static void cmd_promote(sqlite3 *db,const char *vid){
+static int cmd_promote(sqlite3 *db,const char *vid){
     sqlite3_stmt *st=NULL;
     sqlite3_prepare_v2(db,"UPDATE variants SET promoted=1 WHERE id=?",-1,&st,NULL);
     sqlite3_bind_text(st,1,vid,-1,SQLITE_STATIC);
     sqlite3_step(st);sqlite3_finalize(st);
+    if(sqlite3_changes(db)!=1){fprintf(stderr,"bonfyre-compete: no variant %s\n",vid);return 1;}
     printf("promoted: %s\n",vid);
+    return 0;
 }
 
-static void cmd_demote(sqlite3 *db,const char *vid){
+static int cmd_demote(sqlite3 *db,const char *vid){
     sqlite3_stmt *st=NULL;
     sqlite3_prepare_v2(db,"UPDATE variants SET promoted=0 WHERE id=?",-1,&st,NULL);
     sqlite3_bind_text(st,1,vid,-1,SQLITE_STATIC);
     sqlite3_step(st);sqlite3_finalize(st);
+    if(sqlite3_changes(db)!=1){fprintf(stderr,"bonfyre-compete: no variant %s\n",vid);return 1;}
     printf("demoted: %s\n",vid);
+    return 0;
 }
 
 static void cmd_list(sqlite3 *db){
@@ -292,7 +312,8 @@ static void cmd_help(void){
 }
 
 int main(int argc,char **argv){
-    if(argc<2||strcmp(argv[1],"help")==0||strcmp(argv[1],"--help")==0){cmd_help();return 0;}
+    if (bf_help_requested(argc, argv)) { cmd_help(); return 0; }
+    if(argc<2){cmd_help();return 0;}
     sqlite3 *db=open_db();
     srand((unsigned)time(NULL));
     int rc=0;const char *cmd=argv[1];
@@ -302,19 +323,19 @@ int main(int argc,char **argv){
         else cmd_pair(db,argv[2],argv[3]);
     } else if(strcmp(cmd,"add-variant")==0){
         if(argc<5){fprintf(stderr,"usage: bonfyre-compete add-variant <comp> <label> <cfg>\n");rc=1;}
-        else cmd_add_variant(db,argv[2],argv[3],argv[4]);
+        else rc=cmd_add_variant(db,argv[2],argv[3],argv[4]);
     } else if(strcmp(cmd,"run")==0){
         if(argc<4){fprintf(stderr,"usage: bonfyre-compete run <comp-id> <input>\n");rc=1;}
-        else cmd_run(db,argv[2],argv[3]);
+        else rc=cmd_run(db,argv[2],argv[3]);
     } else if(strcmp(cmd,"score")==0){
         if(argc<3){fprintf(stderr,"usage: bonfyre-compete score <comp-id>\n");rc=1;}
         else cmd_score(db,argv[2]);
     } else if(strcmp(cmd,"promote")==0){
         if(argc<3){fprintf(stderr,"usage: bonfyre-compete promote <variant-id>\n");rc=1;}
-        else cmd_promote(db,argv[2]);
+        else rc=cmd_promote(db,argv[2]);
     } else if(strcmp(cmd,"demote")==0){
         if(argc<3){fprintf(stderr,"usage: bonfyre-compete demote <variant-id>\n");rc=1;}
-        else cmd_demote(db,argv[2]);
+        else rc=cmd_demote(db,argv[2]);
     } else if(strcmp(cmd,"list")==0) cmd_list(db);
     else if(strcmp(cmd,"history")==0) cmd_history(db,argc>2?argv[2]:NULL);
     else {fprintf(stderr,"bonfyre-compete: unknown command: %s\n",cmd);rc=1;}

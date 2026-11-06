@@ -1,0 +1,24 @@
+{
+  "schema": "bonfyre.bridge.transform-plan.v1",
+  "id": "odoo-partner-to-erpnext-customer",
+  "source_engine": "sqlite",
+  "target_engine": "sqlite",
+  "tables": [
+    {
+      "source": "res_partner",
+      "target": "tabCustomer",
+      "frappe_doctype": "Customer",
+      "columns": [
+        {"source": "id", "target": "name", "prefix": "PARTNER-"},
+        {"source": "name", "target": "customer_name"},
+        {"source": "is_company", "target": "customer_type", "value_map": {"1": "Company", "0": "Individual"}},
+        {"source": "vat", "target": "tax_id"},
+        {"source": "active", "target": "disabled", "value_map": {"1": "0", "0": "1"}}
+      ]
+    }
+  ],
+  "probes": [
+    {"id": "companies", "purpose": "company partners become Company customers", "source_sql": "SELECT count(*) FROM res_partner WHERE is_company = 1", "target_sql": "SELECT count(*) FROM \"tabCustomer\" WHERE customer_type = 'Company'"},
+    {"id": "archived", "purpose": "archived partners become disabled customers", "source_sql": "SELECT count(*) FROM res_partner WHERE active = 0", "target_sql": "SELECT count(*) FROM \"tabCustomer\" WHERE disabled = 1"}
+  ]
+}

@@ -1,0 +1,20 @@
+[Unit]
+Description=Bonfyre public SurfaceIR projection-cut worker
+After=bonfyre-address-worker.service bonfyre-web-address.service
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=ubuntu
+EnvironmentFile=/etc/bonfyre/web-address.env
+EnvironmentFile=/etc/bonfyre/address-plane.env
+# Consumes only SurfaceIR-partitioned handoffs. It retires disposable public
+# projection bodies; it does not invoke CMS, protocol, provider, target,
+# authority, evidence, payment or EffectKernel operations.
+ExecStart=/usr/local/bin/bonfyre-web-address public-projection-drain --cache-db ${BONFYRE_PUBLIC_PROJECTION_DB} --lowerer-dir ${BONFYRE_LOWERER_INBOX} --limit 256
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/bonfyre
+

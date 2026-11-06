@@ -1,0 +1,237 @@
+{
+    "modes": [
+        {
+            "name": "cross_world_service",
+            "roles_any": [
+                "service"
+            ],
+            "min_join_power": 3
+        },
+        {
+            "name": "effect_adapter",
+            "roles_any": [
+                "action"
+            ]
+        },
+        {
+            "name": "publication_roundtrip",
+            "roles_any": [
+                "carrier"
+            ],
+            "candidate_plane": "round_trip"
+        },
+        {
+            "name": "paid_machine_market",
+            "candidate_plane": "economic",
+            "source_kind_any": [
+                "x402"
+            ],
+            "protocol_any": [
+                "x402"
+            ],
+            "source_or_protocol": true
+        },
+        {
+            "name": "semantic_interchange",
+            "roles_any": [
+                "standard"
+            ],
+            "source_kind_any": [
+                "machine_protocol"
+            ],
+            "source_or_role": true
+        },
+        {
+            "name": "toolchain",
+            "roles_any": [
+                "compiler"
+            ]
+        },
+        {
+            "name": "verification_bridge",
+            "roles_any": [
+                "verification"
+            ]
+        },
+        {
+            "name": "sensor_material",
+            "roles_any": [
+                "material"
+            ],
+            "roles_none": [
+                "service"
+            ]
+        }
+    ],
+    "fallback_mode": "general_candidate",
+    "next": [
+        {
+            "axis": "observation",
+            "candidate_plane": "observation",
+            "status": "unknown",
+            "owner": "ForeignTwin",
+            "action": "observe_exact_candidate",
+            "why": "establish policy/transport/body evidence before deeper admission"
+        },
+        {
+            "axis": "observation",
+            "candidate_plane": "observation",
+            "depth_lt": 3,
+            "owner": "ForeignTwin",
+            "action": "resolve_observation_boundary",
+            "why": "policy or transport was measured but no source body was observed"
+        },
+        {
+            "axis": "observation",
+            "candidate_plane": "semantic",
+            "depth_lt": 4,
+            "owner": "ForeignTwin",
+            "action": "retain_exact_observation",
+            "why": "semantic binding must read retained bytes that still hash to their receipt"
+        },
+        {
+            "axis": "semantic",
+            "candidate_plane": "semantic",
+            "status": "unknown",
+            "owner": "DomainProfile",
+            "action": "bind_semantic_profile",
+            "why": "turn candidate domain material into shared domain meaning"
+        },
+        {
+            "axis": "protocol",
+            "candidate_plane": "protocol",
+            "status": "unknown",
+            "owner": "ProtocolContract",
+            "action": "bind_or_enact_protocol",
+            "why": "carrier fit is not yet a lawful interaction"
+        },
+        {
+            "axis": "capability",
+            "candidate_plane": "capability",
+            "status": "unknown",
+            "owner": "ResourceActivationGraph",
+            "action": "qualify_candidate_resource",
+            "why": "candidate capability must become qualified, eligible, authorized and activated"
+        },
+        {
+            "axis": "economic",
+            "candidate_plane": "economic",
+            "status": "unknown",
+            "owner": "Finance",
+            "action": "establish_quote_or_service_book_entry",
+            "why": "economic vocabulary is not a quote, commitment, payment or settlement"
+        },
+        {
+            "axis": "round_trip",
+            "candidate_plane": "round_trip",
+            "status": "unknown",
+            "owner": "RoundTripTwin",
+            "action": "close_projection_round_trip",
+            "why": "a projection is not verified until independently observed"
+        }
+    ],
+    "fallback_next": {
+        "owner": "Opportunity",
+        "action": "inspect_blockers_and_joins",
+        "why": "all candidate participation axes with known potential already have owner evidence"
+    },
+    "score": {
+        "join_power_weight": 4,
+        "chain_span_cap": 10,
+        "braid_depth_weight": 8,
+        "bonuses": {
+            "cross_world_service": 12,
+            "semantic_interchange": 8,
+            "effect_adapter": 6,
+            "paid_machine_market": 5
+        }
+    },
+    "disturbance": {
+        "schema": "bonfyre.disturbance-event.v1",
+        "required_owners": [
+            "ForeignTwinGraph",
+            "DomainProfile",
+            "SemanticDerivationGraph",
+            "EvidenceGraph",
+            "BlockerGraph",
+            "UnlockGraph",
+            "WorkGraph",
+            "CommitmentGraph",
+            "PublicationProgram",
+            "RoundTripTwin"
+        ],
+        "economic_owners": [
+            "MoneyGraph",
+            "FinancialMetabolism",
+            "CommerceChain"
+        ],
+        "kind_groups": {
+            "blockers_opened": [
+                "blocker_opened"
+            ],
+            "blockers_resolved": [
+                "blocker_resolved"
+            ],
+            "retractions": [
+                "retracted",
+                "assumption_retracted",
+                "fact_retracted"
+            ],
+            "compensations": [
+                "compensated",
+                "commitment_compensated",
+                "reservation_compensated"
+            ],
+            "joins_admitted": [
+                "join_admitted",
+                "opportunity_admitted"
+            ],
+            "human_decisions": [
+                "human_decision"
+            ],
+            "commitments_opened": [
+                "commitment_opened"
+            ],
+            "quotes": [
+                "quoted",
+                "quote_changed"
+            ],
+            "settlements": [
+                "settled",
+                "reconciled"
+            ],
+            "projections": [
+                "projected",
+                "publication_projected",
+                "external_projection_changed"
+            ],
+            "corrections": [
+                "correction_opened",
+                "correction_applied"
+            ],
+            "improper_erases": [
+                "erased",
+                "commitment_erased",
+                "reservation_erased"
+            ]
+        },
+        "thresholds": {
+            "distinct_owners": 10,
+            "max_owner_braid_depth": 8,
+            "blockers_opened": 1,
+            "blockers_resolved": 1,
+            "joins_admitted": 1,
+            "human_decisions": 1,
+            "commitments_opened": 1,
+            "quotes": 1,
+            "settlements": 1,
+            "projections": 1,
+            "round_trip_total": 1
+        }
+    },
+    "cannot_infer": [
+        "activation rank -> authority to observe or activate",
+        "leverage mode -> provider admission",
+        "next owner -> guaranteed successful transition"
+    ]
+}

@@ -1,0 +1,24 @@
+{
+  "schema": "bonfyre.hypervisor-route-benchmark.v1",
+  "source_database_sha256": "ffd4e1ce14d647480d335c2334fbfe54733a054596e9f187addc18e9ae970fdc",
+  "implementation_sha256": {
+    "hypervisor_store": "aedafc9c022e741e692251151f9c9cc2a5819c48018f3275aa8b92d13bf10c6f",
+    "canonical_json": "72ab7d3f9301d1016c7354abcb1c976365728f71dca4bdc8a730eb7cbb9168ea",
+    "benchmark": "8573ad3cb7d485d2434868051918b5decadc3fbaf742f910368ebd58ff3286b7"
+  },
+  "measured_at_utc": "2026-10-03T04:50:25.471Z",
+  "capabilities": 12,
+  "iterations_per_pair": 100,
+  "pairs": 7,
+  "repeated_queries_per_call": 12,
+  "batch_queries_per_call": 1,
+  "raw_pair_ms_per_call": {
+    "repeated_ms": [0.4565083300000001, 0.45547500000000013, 0.42781041999999986, 0.44847958000000004, 0.41398624999999983, 0.4137895800000001, 0.41184583999999974],
+    "batch_ms": [0.11513708000000009, 0.09805458000000015, 0.09739584000000008, 0.09776582999999989, 0.09736874999999998, 0.09829875000000016, 0.09670834000000013]
+  },
+  "repeated_p50_ms": 0.42781041999999986,
+  "batch_p50_ms": 0.09776582999999989,
+  "result_equal": true,
+  "source_unchanged": true,
+  "interpretation": "Local copied-state timing only; no production latency or distributed scaling claim."
+}

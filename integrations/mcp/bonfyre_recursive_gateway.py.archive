@@ -1,0 +1,1158 @@
+#!/usr/bin/env python3
+"""Runtime overlay that restores RecursiveMatrixClosure to the rich MCP mesh.
+
+The staged mcp/bonfyre_mcp_gateway.py remains the transport/state owner.  This
+entrypoint imports it, adds owner-backed Matrix/closure tools and resources, and
+then starts the same Handler/mesh database.  It deliberately creates no second
+institutional store and performs no write/effect transition.
+"""
+from __future__ import annotations
+
+import importlib.util
+import json
+import time
+import hashlib
+import os
+import re
+import urllib.error
+import urllib.request
+from pathlib import Path
+from typing import Any
+from urllib.parse import urlparse
+
+
+ROOT = Path(os.environ.get("BONFYRE_ROOT", "/opt/bonfyre")).resolve()
+GATEWAY_PATH = Path(
+    os.environ.get(
+        "BONFYRE_RICH_MCP_GATEWAY",
+        str(ROOT / "mcp" / "bonfyre_mcp_gateway.py"),
+    )
+).resolve()
+MATRIX_DB = os.environ.get("BONFYRE_MATRIX_DB", "/var/lib/bonfyre/matrix.db")
+WEB_ADDRESS_BINARY = os.environ.get("BONFYRE_WEB_ADDRESS_BINARY", "")
+
+
+def load_gateway():
+    if not GATEWAY_PATH.is_file():
+        raise FileNotFoundError(f"rich MCP gateway missing: {GATEWAY_PATH}")
+    spec = importlib.util.spec_from_file_location("bonfyre_rich_mcp_gateway", GATEWAY_PATH)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("unable to load rich MCP gateway")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+gateway = load_gateway()
+_original_call_tool = gateway.call_tool
+_original_read_resource = gateway.read_resource
+
+
+def _binary() -> Path:
+    if WEB_ADDRESS_BINARY:
+        path = Path(WEB_ADDRESS_BINARY)
+        if path.is_file() and os.access(path, os.X_OK):
+            return path
+        raise FileNotFoundError(f"configured BonfyreWebAddress unavailable: {path}")
+    return gateway.find_family_binary("BonfyreWebAddress")
+
+
+def _native_json(argv: list[str], timeout: int = 30) -> tuple[Any, dict[str, Any]]:
+    result = gateway.run([str(_binary()), *argv], timeout=timeout)
+    receipt = {
+        "exit_code": result["exit_code"],
+        "duration_ms": result["duration_ms"],
+        "stderr": result.get("stderr", ""),
+    }
+    if result["exit_code"] != 0:
+        raise RuntimeError(result.get("stderr") or result.get("stdout") or "BonfyreWebAddress failed")
+    try:
+        return json.loads(result["stdout"]), receipt
+    except json.JSONDecodeError as exc:
+        raise RuntimeError("BonfyreWebAddress returned non-JSON output") from exc
+
+
+def _host(value: Any) -> str:
+    host = str(value or "").strip().lower().rstrip(".")
+    if len(host) > 253 or not re.fullmatch(
+        r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+",
+        host,
+    ):
+        raise ValueError("host must be a normalized DNS hostname")
+    return host
+
+
+def _subject(value: Any) -> str:
+    subject = str(value or "").strip()
+    if not subject or len(subject) > 256 or not re.fullmatch(r"[A-Za-z0-9:_.-]+", subject):
+        raise ValueError("invalid Matrix subject identifier")
+    return subject
+
+
+def _path(value: Any) -> str:
+    path = str(value or "/")
+    if not path.startswith("/") or len(path) > 2048 or "://" in path or "\x00" in path:
+        raise ValueError("path must be a bounded local Matrix path")
+    return path
+
+
+def matrix_address_resolve(args: dict[str, Any]) -> dict[str, Any]:
+    host = _host(args.get("host"))
+    path = _path(args.get("path", "/"))
+    argv = ["resolve", "--db", MATRIX_DB, "--host", host, "--path", path]
+    for key, flag, default in (
+        ("world", "--world", None),
+        ("audience", "--audience", None),
+        ("representation", "--repr", None),
+    ):
+        value = args.get(key, default)
+        if value is not None:
+            value = str(value).strip()
+            if not value or len(value) > 48 or not re.fullmatch(r"[A-Za-z0-9:_.-]+", value):
+                raise ValueError(f"invalid Matrix {key}")
+            argv.extend([flag, value])
+    resolution, receipt = _native_json(argv)
+    return {
+        "schema_version": "bonfyre.matrix.address.mcp.v1",
+        "native_owner": "BonfyreMatrix/AddressPlane",
+        "resolution": resolution,
+        "native_receipt": receipt,
+        "forbidden_inference": (
+            "an address resolution is not a viewer closure, evidence frontier, "
+            "provider route, payment state, publication decision, or effect authority"
+        ),
+    }
+
+
+def matrix_subject_constellation(args: dict[str, Any]) -> dict[str, Any]:
+    subject = _subject(args.get("subject"))
+    constellation, receipt = _native_json(
+        ["constellation", "--db", MATRIX_DB, "--subject", subject]
+    )
+    return {
+        "schema_version": "bonfyre.matrix.constellation.mcp.v1",
+        "native_owner": "BonfyreMatrix/AddressConstellation",
+        "subject": subject,
+        "constellation": constellation,
+        "native_receipt": receipt,
+        "forbidden_inference": (
+            "an address constellation locates one semantic subject; it neither "
+            "copies the subject nor grants disclosure, provider, financial, or effect authority"
+        ),
+    }
+
+
+def matrix_closure_compile(args: dict[str, Any]) -> dict[str, Any]:
+    host = _host(args.get("host"))
+    fmt = str(args.get("format", "ro-crate")).strip().lower()
+    if fmt not in {"ro-crate", "zarr"}:
+        raise ValueError("format must be ro-crate or zarr")
+    closure, receipt = _native_json(
+        ["closure", "--db", MATRIX_DB, "--host", host, "--format", fmt],
+        timeout=max(5, min(int(args.get("timeout_seconds", 30)), 120)),
+    )
+    return {
+        "schema_version": "bonfyre.matrix.closure.receipt.v1",
+        "status": "available",
+        "host": host,
+        "format": fmt,
+        "native_owner": "BonfyreMatrix/RecursiveMatrixClosure",
+        "closure": closure,
+        "native_receipt": receipt,
+        "unresolved_closures": [
+            "actor/session",
+            "delegation envelope",
+            "information policy",
+            "evidence frontier",
+            "material body",
+            "latent passport",
+            "provider/resource state",
+            "work/effect authority",
+            "economic commitment",
+        ],
+        "forbidden_inference": (
+            "a sparse Matrix closure is not a complete viewer closure, material "
+            "body, model route, financial state, or effect authority"
+        ),
+    }
+
+
+def _safe_owner(tool: str, args: dict[str, Any], trace_id: str) -> Any:
+    try:
+        return _original_call_tool(tool, args, trace_id)
+    except Exception as exc:
+        return {
+            "status": "unavailable",
+            "owner_tool": tool,
+            "reason": f"{type(exc).__name__}: {exc}",
+        }
+
+
+def recursive_closure_frontier(args: dict[str, Any], trace_id: str) -> dict[str, Any]:
+    host = _host(args.get("host") or urlparse(getattr(gateway, "PUBLIC_ORIGIN", "https://aurekai.work")).hostname)
+    matrix = matrix_closure_compile({"host": host, "format": args.get("format", "ro-crate")})
+    return {
+        "schema_version": "bonfyre.recursive-closure.frontier.v1",
+        "host": host,
+        "planes": {
+            "exact_semantic": matrix,
+            "material_external": _safe_owner("membrane_state", {}, trace_id),
+            "latent_model": _safe_owner("model_local_inventory", {}, trace_id),
+            "execution": _safe_owner("desk_open_decisions", {}, trace_id),
+            "economic": _safe_owner("finance_book", {}, trace_id),
+        },
+        "architecture": _safe_owner("architecture_atlas", {"op": "summary"}, trace_id),
+        "protocol_lattice": {
+            "carrier_state": _safe_owner("protocol_fetch", {"carrier": "a2a"}, trace_id),
+            "rule": "protocols project the same owned state; they do not become independent truth stores",
+        },
+        "operating_contract": {
+            "joined_read_is_not_joined_authority": True,
+            "human_submit_remains_effect_boundary": True,
+            "observation_is_not_truth": True,
+            "cms_save_is_not_publication": True,
+            "quote_is_not_payment_or_settlement": True,
+            "approximation_cannot_satisfy_exact_constraint": True,
+            "recurse_only_from_admitted_delta": True,
+        },
+        "forbidden_inference": (
+            "this frontier is preparation context. Each plane remains independently "
+            "owned and every write/effect still requires its native admission boundary"
+        ),
+    }
+
+
+EXTRA_TOOLS = [
+    *json.loads((Path(__file__).parent / "matrix_tools.json").read_text())["tools"],
+    {
+        "name": "recursive_closure_frontier",
+        "description": (
+            "Compile an owner-backed five-plane MCP preparation frontier: Matrix exact state, "
+            "MachineMembrane/material state, local model/latent state, open Work execution state, "
+            "finance state, Atlas and one protocol-carrier witness. The join creates no new authority."
+        ),
+        "inputSchema": gateway.schema(
+            {
+                "host": {"type": "string"},
+                "format": {"type": "string", "enum": ["ro-crate", "zarr"], "default": "ro-crate"},
+            }
+        ),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False},
+    },
+]
+
+
+# ---------------------------------------------------------------------------
+# Tools the project node owns that this mesh had lost.
+#
+# The mesh gained 36 tools the project node does not have -- Oracle flows, the
+# estate query surface, the finance book, artifacts, release attestation -- and
+# lost 14 the project node still serves. Three of those are the Matrix surface
+# restored above; these eleven are the rest, and they are forwarded rather than
+# reimplemented because the project node already owns their semantics, their
+# argument validation and their effect boundaries. A second implementation of
+# native_tool_invoke is a second place for them to disagree.
+#
+# The list is explicit rather than "everything upstream has". The project node
+# is the full development and operations estate; which parts of it this mesh
+# republishes is a decision, and a decision belongs in a literal.
+#
+# Cannot infer: a forwarded tool -> authority granted by this gateway. The
+# project node authorizes every call on its own terms; forwarding moves the
+# request, never the right to make it.
+PROJECT_MCP_URL = os.environ.get("BONFYRE_PROJECT_MCP_URL", "http://127.0.0.1:13051/mcp")
+PROJECT_MCP_TOKEN_FILE = Path(
+    os.environ.get("BONFYRE_PROJECT_MCP_TOKEN_FILE", "/etc/bonfyre/mcp.token")
+)
+FORWARDED_TOOL_NAMES = (
+    # Still forwarded: this prepares institutional state through a model
+    # route rather than writing a store, so the project node remains the
+    # right owner. Removed once by mistake, which dropped it from the
+    # surface entirely rather than relocating it.
+    "institutional_prepare",
+    "financial_membrane",
+    "frappe_compile",
+    "capability_fulfillment",
+    "native_tool_inventory",
+    "native_tool_invoke",
+    "bonfyre_moe_generate",
+    "bonfyre_moe_status",
+    "bonfyre_quic_fpq_generate",
+)
+
+
+def _project_token() -> str:
+    try:
+        return PROJECT_MCP_TOKEN_FILE.read_text().strip()
+    except OSError:
+        return os.environ.get("BONFYRE_PROJECT_MCP_TOKEN", "")
+
+
+def _project_rpc(method: str, params: dict[str, Any] | None, timeout: float = 60.0) -> dict[str, Any]:
+    payload = json.dumps(
+        {"jsonrpc": "2.0", "id": "overlay", "method": method, "params": params or {}}
+    ).encode()
+    request = urllib.request.Request(
+        PROJECT_MCP_URL,
+        data=payload,
+        headers={
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Authorization": f"Bearer {_project_token()}",
+        },
+    )
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        return json.loads(response.read().decode())
+
+
+def _forwarded_schemas() -> list[dict[str, Any]]:
+    """Take the project node's own schemas verbatim.
+
+    A hand-copied schema drifts from the tool it describes; asking the owner at
+    startup means the description an agent reads is the one the implementation
+    enforces. When the node is unreachable the mesh still starts -- it simply
+    republishes nothing, which is honest, rather than advertising tools that
+    would fail on the first call."""
+    try:
+        answer = _project_rpc("tools/list", {}, timeout=10.0)
+    except Exception as error:  # noqa: BLE001 - degrade, never fail to start
+        print(f"overlay: project node unreachable, forwarding nothing: {error}", flush=True)
+        return []
+    tools = answer.get("result", {}).get("tools", [])
+    wanted = set(FORWARDED_TOOL_NAMES)
+    return [t for t in tools if t.get("name") in wanted]
+
+
+FORWARDED_TOOLS = _forwarded_schemas()
+FORWARDED_TOOLS.append({
+    "name": "capability_circuit_compile",
+    "description": (
+        "Compile a capability demand into the lawful native circuit that would "
+        "satisfy it on this host: which priced capability, which organs, what it "
+        "costs, and what admission each stage requires. Plans a route; does not "
+        "authorize or execute one. Refuses rather than guessing a match."
+    ),
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "demand": {"type": "string"},
+            "budget_usd": {"type": "number"},
+        },
+        "required": ["demand"],
+        "additionalProperties": False,
+    },
+    "annotations": {"readOnlyHint": True, "destructiveHint": False},
+})
+FORWARDED_TOOLS.append({
+    "name": "cms_record",
+    "description": (
+        "Read or write CMS records in this deployment's store. Actions: schemas, "
+        "list, get, create, update, delete. Writing a record does not publish it."
+    ),
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "action": {"type": "string"},
+            "content_type": {"type": "string"},
+            "namespace": {"type": "string"},
+            "entry_id": {"type": "string"},
+            "attributes": {"type": "object"},
+            "limit": {"type": "integer"},
+        },
+        "required": ["action"],
+        "additionalProperties": False,
+    },
+    "annotations": {"readOnlyHint": False, "destructiveHint": True},
+})
+FORWARDED_TOOLS.append({
+    "name": "foreign_resolution",
+    "description": (
+        "What this institution currently believes about an externally observed resource, "
+        "and whether that belief is still current. Actions: resolve (current content and "
+        "current availability, which are two different questions), history (every "
+        "observation with its relation to the one before -- confirms, supersedes, "
+        "qualifies, restores), conflicts (resources whose observations disagree). "
+        "Observations are never overwritten: a 404 today does not erase bytes fetched "
+        "last week, it says the resource stopped answering."
+    ),
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "action": {"type": "string", "enum": ["resolve", "history", "conflicts"]},
+            "source_url": {"type": "string"},
+        },
+        "required": ["action"],
+        "additionalProperties": False,
+    },
+    "annotations": {"readOnlyHint": True, "destructiveHint": False},
+})
+FORWARDED_TOOLS.append({
+    "name": "surface_project",
+    "description": (
+        "Project this institution's authored surfaces. Actions: catalogue lists every "
+        "declared read pattern with the type it reads, its effect class and the authority "
+        "it requires; read returns one pattern's records. These are the same records the "
+        "public HTMX fragment renders, from one descriptor and one query -- an agent and a "
+        "browser are served the same state, not two implementations of it. Publication "
+        "state and row-level visibility are enforced by the surface, so this never returns "
+        "a draft or a page the type marks invisible."
+    ),
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "action": {"type": "string", "enum": ["catalogue", "read"]},
+            "pattern": {"type": "string"},
+            "selector": {"type": "string"},
+        },
+        "required": ["action"],
+        "additionalProperties": False,
+    },
+    "annotations": {"readOnlyHint": True, "destructiveHint": False},
+})
+FORWARDED_TOOLS.append({
+    "name": "foreign_twin_observe",
+    "description": (
+        "Observe a public https document as a ForeignTwin, into this deployment's "
+        "foreign root, with a receipt. Honours the origin's robots.txt and records "
+        "a refusal as an observation rather than fetching anyway."
+    ),
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "twin_id": {"type": "string"},
+            "url": {"type": "string"},
+            "timeout_seconds": {"type": "integer"},
+        },
+        "required": ["twin_id", "url"],
+        "additionalProperties": False,
+    },
+    "annotations": {"readOnlyHint": False, "destructiveHint": False},
+})
+_FORWARDED = {t["name"] for t in FORWARDED_TOOLS}
+
+
+
+# ---------------------------------------------------------------------------
+# ForeignTwin observation, executed where the institution keeps its twins.
+#
+# This was forwarded to the project node, which runs on the operator's laptop
+# over the reverse tunnel. Every observation an agent made therefore wrote its
+# receipt and retained body into ~/.bonfyre/foreign on that machine, while the
+# deployment's own foreign root -- the one the surfaces read, the one with the
+# other twenty-five receipts -- never saw them. The agent was observing the
+# world into a directory the institution does not read.
+#
+# The box has the same organ and the declared root, so the observation runs
+# here. Forwarding is right for project source, which genuinely lives on the
+# laptop; it is wrong for institutional evidence, which does not.
+#
+# Cannot infer: a retained body -> remote truth, availability, or a right to
+# republish. The organ records what it was permitted to fetch and says so when
+# robots refused; that refusal is itself the observation.
+FOREIGN_ROOT = Path(os.environ.get("BONFYRE_FOREIGN_ROOT", "/var/lib/bonfyre/foreign"))
+PROJECT_BINARY = os.environ.get("BONFYRE_PROJECT_BINARY", "/usr/local/bin/bonfyre-project")
+
+
+def _twin_id(value: Any) -> str:
+    twin = str(value or "").strip()
+    if not twin or len(twin) > 128 or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", twin):
+        raise ValueError("twin_id must be a short slug")
+    return twin
+
+
+def foreign_twin_observe(args: dict[str, Any]) -> dict[str, Any]:
+    twin = _twin_id(args.get("twin_id"))
+    url = str(args.get("url") or "").strip()
+    parsed = urlparse(url)
+    if parsed.scheme != "https" or not parsed.netloc:
+        raise ValueError("url must be https")
+    timeout = int(args.get("timeout_seconds") or 30)
+    timeout = max(5, min(timeout, 120))
+
+    stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+    tag = hashlib.sha256(f"{twin}{url}{stamp}".encode()).hexdigest()[:10]
+    receipts = FOREIGN_ROOT / "receipts"
+    bodies = FOREIGN_ROOT / "bodies"
+    for directory in (receipts, bodies):
+        directory.mkdir(parents=True, exist_ok=True)
+    receipt_path = receipts / f"{twin}-{stamp}-{tag}.json"
+    body_path = bodies / f"{twin}-{stamp}-{tag}.body"
+
+    result = gateway.run(
+        [
+            PROJECT_BINARY, "foreign", "observe", twin, url,
+            "--receipt", str(receipt_path),
+            "--body", str(body_path),
+            "--observe-right", "public",
+        ],
+        timeout=timeout,
+    )
+    receipt: Any = None
+    if receipt_path.is_file():
+        raw = receipt_path.read_text().strip()
+        # The organ may append more than one document to the file; the last one
+        # is this observation.
+        for chunk in reversed(raw.split("\n{")):
+            candidate = chunk if chunk.startswith("{") else "{" + chunk
+            try:
+                receipt = json.loads(candidate)
+                break
+            except json.JSONDecodeError:
+                continue
+    # Retention decided from what the origin actually sent, not from asking
+    # first. Okta answers an unknown well-known path with a 1MB marketing 404
+    # and refuses HEAD outright, so a pre-flight probe both failed and fell
+    # open -- an error page kept as evidence, indistinguishable by size from a
+    # real corpus. The receipt already knows the status; drop the body of an
+    # error and let the receipt say why it is not there.
+    status = 0
+    try:
+        status = int((receipt or {}).get("http_status") or 0)
+    except (TypeError, ValueError):
+        status = 0
+    retention: dict[str, Any] = {"http_status": status, "retained": True}
+    if status >= 400 and body_path.is_file():
+        retention["bytes_dropped"] = body_path.stat().st_size
+        body_path.unlink()
+        retention["retained"] = False
+        retention["reason"] = "origin answered an error status; its body is not evidence of the resource"
+    elif body_path.is_file() and body_path.stat().st_size > 2_000_000:
+        retention["bytes_dropped"] = body_path.stat().st_size
+        body_path.unlink()
+        retention["retained"] = False
+        retention["reason"] = "body over 2MB"
+
+    return {
+        "schema_version": "bonfyre.foreign.observe.mcp.v1",
+        "native_owner": "BonfyreProject/ForeignTwin",
+        "retention": retention,
+        "foreign_root": str(FOREIGN_ROOT),
+        "receipt_path": str(receipt_path),
+        "body_path": str(body_path) if body_path.is_file() else None,
+        "observation": receipt,
+        "native_exit": result["exit_code"],
+        "forbidden_inference": (
+            "a retained body is not remote truth, availability, a licence to "
+            "republish, or a relationship with the observed origin; a robots "
+            "refusal is a recorded observation, not a failed one"
+        ),
+    }
+
+
+# ---------------------------------------------------------------------------
+# CMS records, executed against the store this deployment declares.
+#
+# Forwarded, this ran bonfyre-cms on the operator's laptop, which has no
+# declared CMS coordinate and now refuses rather than inventing one -- so the
+# tool answered "BonfyreCMS returned malformed JSON" to every call. The refusal
+# was correct; the routing was not. The store lives here, so the organ runs
+# here, against BONFYRE_CMS_DB.
+#
+# Cannot infer: a written record -> a published one. Creation and publication
+# are separate acts and this tool performs only the first.
+CMS_BINARY = os.environ.get("BONFYRE_CMS_BINARY", "/usr/local/bin/bonfyre-cms")
+CMS_DB = os.environ.get("BONFYRE_CMS_DB", "/var/lib/bonfyre/cms/bonfyre_cms.db")
+CMS_SCHEMAS = os.environ.get("BONFYRE_CMS_SCHEMAS", "/var/lib/bonfyre/cms/content-types")
+
+
+def _cms_ident(value: Any, what: str, limit: int = 128) -> str:
+    text = str(value or "").strip()
+    if not text or len(text) > limit or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:-]*", text):
+        raise ValueError(f"{what} must be a short identifier")
+    return text
+
+
+SURFACE_ORIGIN = os.environ.get("BONFYRE_SURFACE_ORIGIN", "http://127.0.0.1:8787")
+SURFACE_HOST = os.environ.get("BONFYRE_SURFACE_HOST", "aurekai.life")
+
+
+def foreign_resolution(args: dict[str, Any]) -> dict[str, Any]:
+    """Ask the observation owner, not the receipt files.
+
+    The receipts are BonfyreProject's evidence, and the relation between them is
+    its answer to give. Reading the directory here would make this a second
+    implementation of supersession that could disagree with the first.
+    """
+    action = _cms_ident(args.get("action"), "action", 24).lower()
+    if action not in ("resolve", "history", "conflicts"):
+        raise ValueError("action must be resolve, history or conflicts")
+    argv = [str(_binary().parent / "bonfyre-project"), "foreign", action]
+    if action in ("resolve", "history"):
+        url = args.get("source_url")
+        if not isinstance(url, str) or not url.startswith(("http://", "https://")):
+            raise ValueError("source_url must be an http(s) URL for resolve and history")
+        argv.append(url)
+    result = gateway.run(argv, timeout=45)
+    payload: Any = result.get("stdout", "")
+    try:
+        payload = json.loads(payload)
+    except (ValueError, TypeError):
+        pass
+    return {
+        "schema_version": "bonfyre.foreign.resolution.mcp.v1",
+        "native_owner": "BonfyreProject",
+        "action": action,
+        "result": payload,
+        "native_exit": result["exit_code"],
+        "forbidden_inference": (
+            "a current observation is not a true statement about the world, and a "
+            "superseded one is not a deleted one: both remain recorded"
+        ),
+    }
+
+
+def surface_project(args: dict[str, Any]) -> dict[str, Any]:
+    """Read the estate's own surfaces through the organ that serves them.
+
+    Deliberately an HTTP read against the running surface rather than a second
+    SQL path into the CMS. A second path is a second implementation, and the
+    whole point of the pattern compiler is that a person and a machine are
+    answered from one. If this returned different records than the fragment,
+    the fragment would be right and this would be a bug -- so it asks the same
+    question over the same carrier.
+    """
+    action = _cms_ident(args.get("action"), "action", 24).lower()
+    if action == "catalogue":
+        path = "/_surface/"
+    elif action == "read":
+        pattern = _cms_ident(args.get("pattern"), "pattern", 64)
+        path = "/_surface/" + pattern
+        selector = args.get("selector")
+        if selector:
+            path += "?page=" + _cms_ident(selector, "selector", 64)
+    else:
+        raise ValueError("action must be catalogue or read")
+
+    request = urllib.request.Request(
+        SURFACE_ORIGIN.rstrip("/") + path,
+        headers={"Accept": "application/json", "Host": SURFACE_HOST},
+    )
+    status = 0
+    payload: Any = None
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            status = response.status
+            body = response.read().decode("utf-8", "replace")
+        payload = json.loads(body) if body.strip() else None
+    except urllib.error.HTTPError as http_error:
+        # A 403 here is the surface enforcing a declared authority, which is an
+        # answer rather than a failure: report it as one.
+        status = http_error.code
+        try:
+            payload = json.loads(http_error.read().decode("utf-8", "replace"))
+        except Exception:  # noqa: BLE001
+            payload = None
+    except Exception as error:  # noqa: BLE001
+        return {
+            "schema_version": "bonfyre.surface.project.mcp.v1",
+            "native_owner": "BonfyreWebAddress",
+            "action": action,
+            "error": f"surface unreachable: {str(error)[:120]}",
+        }
+
+    return {
+        "schema_version": "bonfyre.surface.project.mcp.v1",
+        "native_owner": "BonfyreWebAddress",
+        "surface": SURFACE_ORIGIN + path,
+        "action": action,
+        "http_status": status,
+        "result": payload,
+        "forbidden_inference": (
+            "a projected surface is not an authorized effect: these are the records a "
+            "reader may see, and Authority still gates at effect time. A pattern absent "
+            "from the catalogue is undeclared, not hidden."
+        ),
+    }
+
+
+def cms_record(args: dict[str, Any]) -> dict[str, Any]:
+    action = _cms_ident(args.get("action"), "action", 24).lower()
+    argv = [CMS_BINARY]
+    if action == "schemas":
+        argv += ["schema", "list"]
+    elif action in ("list", "get", "create", "update", "delete"):
+        content_type = _cms_ident(args.get("content_type"), "content_type")
+        argv += ["entry", action, content_type]
+        if action in ("get", "update", "delete"):
+            argv.append(_cms_ident(args.get("entry_id"), "entry_id", 64))
+        if action in ("create", "update"):
+            attributes = args.get("attributes")
+            if not isinstance(attributes, dict) or not attributes:
+                raise ValueError("attributes object required to create or update")
+            argv.append(json.dumps(attributes))
+        namespace = args.get("namespace")
+        if namespace:
+            argv += ["--ns", _cms_ident(namespace, "namespace", 64)]
+        if action == "list":
+            limit = int(args.get("limit") or 20)
+            argv += ["--limit", str(max(1, min(limit, 200)))]
+    else:
+        raise ValueError("action must be one of schemas, list, get, create, update, delete")
+
+    argv += ["--db", CMS_DB, "--schemas", CMS_SCHEMAS]
+    result = gateway.run(argv, timeout=60)
+    payload: Any = result.get("stdout", "")
+    try:
+        payload = json.loads(payload)
+    except (ValueError, TypeError):
+        pass
+    return {
+        "schema_version": "bonfyre.cms.record.mcp.v1",
+        "native_owner": "BonfyreCMS",
+        "store": CMS_DB,
+        "action": action,
+        "result": payload,
+        "native_exit": result["exit_code"],
+        "stderr": (result.get("stderr") or "")[:400],
+        "forbidden_inference": (
+            "a created or updated record is not published, publicly readable, "
+            "or an institutional commitment"
+        ),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Compile a capability demand into the lawful native circuit that satisfies it.
+#
+# The surface carries eighty tools and this host carries a hundred and twenty
+# nine organs. Asking a model to pick the right one from that list is asking it
+# to hold the institution's authority, price and provider state in its head and
+# guess. This compiles instead: it reads what the book charges, what organs are
+# actually executable here, and what admission each stage would require, and
+# returns the circuit -- or refuses and says which constraint stopped it.
+#
+# Three things it deliberately does not do.
+#
+# It does not authorize. This gateway is reached through the OAuth bridge, which
+# proxies with its own upstream credential, so the caller's identity does not
+# survive the hop. Authority is therefore compiled as a *requirement* -- what a
+# stage would need -- never as a grant. The bridge admits; this only plans.
+#
+# It does not execute. A compiled circuit is a route, and running it is a
+# separate act through the organ that owns the effect.
+#
+# It does not invent a match. An unmatched demand comes back unmatched, with the
+# terms that found nothing, because a plausible wrong organ is worse than an
+# honest empty circuit.
+CIRCUIT_STOPWORDS = frozenset(
+    "the a an of for to and or with by from in on i we need want get find "
+    "please can you how what show me my our is are be per much have has "
+    "many most some any all this that these those".split()
+)
+
+
+def _circuit_terms(demand: str) -> list[str]:
+    words = re.findall(r"[a-z0-9]+", demand.lower())
+    return [w for w in words if len(w) > 2 and w not in CIRCUIT_STOPWORDS]
+
+
+def _capability_descriptions() -> dict[str, str]:
+    """The catalogue's own words for what each capability does.
+
+    The finance book stores a name, a category and a price -- enough to charge
+    for something, not enough to recognise a demand for it. "who owns the most
+    parcels" matched nothing while owner-concentration sat in the book at $2,
+    because the description that would have matched lives on the capability
+    surface rather than in the book. Ask the surface."""
+    # Read it from the organ on this host, not from the public hostname. Fetching
+    # https://aurekai.life/capability from the box hairpins out through the edge
+    # and back, which timed out and silently emptied the descriptions -- the
+    # compiler then stopped matching demands it had matched a minute earlier.
+    # Local data never leaves the machine to be read.
+    url = os.environ.get("BONFYRE_CAPABILITY_URL", "http://127.0.0.1:8787/capability")
+    try:
+        request = urllib.request.Request(
+            url, headers={"Accept": "application/json", "Host": "aurekai.life"}
+        )
+        with urllib.request.urlopen(request, timeout=8) as response:
+            payload = json.loads(response.read().decode())
+        return {
+            c["name"]: str(c.get("description") or "")
+            for c in payload.get("capabilities", [])
+            if c.get("name")
+        }
+    except Exception:  # noqa: BLE001 - descriptions sharpen matching, never gate it
+        return {}
+
+
+def _stem(word: str) -> str:
+    """Enough stemming to survive a plural. Not linguistics -- "owns" has to
+    reach "owner" and "parcels" has to reach "parcel", and that is the whole
+    requirement."""
+    for suffix in ("ies", "es", "s"):
+        if len(word) > 4 and word.endswith(suffix):
+            return word[: -len(suffix)]
+    return word
+
+
+def _priced_capabilities() -> list[dict[str, Any]]:
+    import sqlite3
+
+    finance = os.environ.get("BONFYRE_FINANCE_DB", "/var/lib/bonfyre/state/finance.db")
+    rows: list[dict[str, Any]] = []
+    try:
+        db = sqlite3.connect(f"file:{finance}?mode=ro", uri=True)
+        for name, category, sell, source in db.execute(
+            "SELECT name, category, sell_price, source FROM services"
+        ):
+            rows.append(
+                {
+                    "name": name,
+                    "category": category,
+                    "price_usd": float(sell or 0.0),
+                    "source": source,
+                    "priced": float(sell or 0.0) > 0,
+                }
+            )
+        db.close()
+    except Exception as error:  # noqa: BLE001 - an unreadable book is a stated gap
+        return [{"__error__": str(error)[:120]}]
+    return rows
+
+
+def _box_organs() -> dict[str, str]:
+    organs: dict[str, str] = {}
+    for path in sorted(Path("/usr/local/bin").glob("bonfyre-*")):
+        if not os.access(path, os.X_OK) or "." in path.name[len("bonfyre-") :]:
+            continue
+        organs[path.name] = str(path)
+    return organs
+
+
+
+def _fulfillment_closure(name: str) -> dict[str, Any]:
+    """Ask the native fulfillment machine, do not re-derive it.
+
+    This used to survey five commerce URLs from Python and parse settlement out
+    of each response. That was a worse copy of something the institution already
+    owns: capability_fulfillment is one ProtocolMachine shared by x402, MPP, MCP,
+    A2A, CloudEvents, Beckn, UCP and ACP, and it already returns the carrier
+    coordinates, the lifecycle state, the financial route and -- the part the
+    Python version could not have known -- the authority split between what a
+    caller may do and what it may not.
+
+    A second implementation of a closure is a second place for it to disagree.
+
+    Cannot infer: an opened quote -> a reservation, a charge, or delivery. The
+    machine says so itself and this passes that through rather than softening
+    it."""
+    try:
+        answer = forward_to_project(
+            "capability_fulfillment",
+            {
+                "capability": name,
+                "exchange": f"circuit-{hashlib.sha256(name.encode()).hexdigest()[:12]}",
+                "action": "open_quote",
+            },
+        )
+    except Exception as error:  # noqa: BLE001 - an unreachable machine is a stated gap
+        return {"reachable": False, "state": "fulfillment_unreachable", "detail": str(error)[:120]}
+
+    if not isinstance(answer, dict):
+        return {"reachable": False, "state": "fulfillment_unparsed"}
+
+    authority = answer.get("authority") or {}
+    granted = set(authority.get("allowed") or [])
+    withheld = set(authority.get("not_granted") or [])
+    machine_state = "unknown"
+    state_block = answer.get("state") or {}
+    for line in str(state_block.get("stdout") or "").splitlines():
+        if line.startswith("state="):
+            machine_state = line.split("=", 1)[1].strip()
+
+    route = ""
+    membrane = answer.get("financial_membrane") or {}
+    for line in str((membrane.get("route") or {}).get("stdout") or "").splitlines():
+        if "recommended model" in line or "route basis" in line:
+            route += line.strip() + "; "
+
+    executable = "execute" in granted and "deliver" in granted
+    blocked = None
+    if not executable:
+        blocked = (
+            "the fulfillment machine grants "
+            + ", ".join(sorted(granted) or ["nothing"])
+            + " and withholds "
+            + ", ".join(sorted(withheld) or ["nothing"])
+        )
+
+    return {
+        "reachable": True,
+        "state": machine_state,
+        "protocol_definition": answer.get("protocol_definition"),
+        "carrier_coordinates": answer.get("carrier_coordinates"),
+        "authority": authority,
+        "economy_route": route.strip("; ") or None,
+        "quote_sha256": (answer.get("public_mpp_quote") or {}).get("quote_sha256"),
+        "executable": executable,
+        "blocked_by": blocked,
+    }
+
+
+def capability_circuit_compile(args: dict[str, Any]) -> dict[str, Any]:
+    demand = str(args.get("demand") or "").strip()
+    if not demand or len(demand) > 500:
+        raise ValueError("demand must be a short statement of what is wanted")
+    budget = args.get("budget_usd")
+    budget = float(budget) if budget is not None else None
+
+    terms = _circuit_terms(demand)
+    catalogue = _priced_capabilities()
+    organs = _box_organs()
+
+    descriptions = _capability_descriptions()
+    matched: list[dict[str, Any]] = []
+    refused: list[dict[str, Any]] = []
+    for entry in catalogue:
+        if "__error__" in entry:
+            refused.append({"candidate": "service book", "reason": entry["__error__"]})
+            continue
+        haystack = " ".join(
+            (
+                entry["name"],
+                entry.get("category") or "",
+                descriptions.get(entry["name"], ""),
+            )
+        ).lower()
+        stems = {_stem(w) for w in re.findall(r"[a-z0-9]+", haystack)}
+        hits = []
+        for t in terms:
+            ts = _stem(t)
+            if t in haystack or ts in stems or any(
+                h.startswith(ts) and len(ts) >= 4 for h in stems
+            ):
+                hits.append(t)
+        if not hits:
+            continue
+        if not entry["priced"]:
+            refused.append(
+                {
+                    "candidate": entry["name"],
+                    "reason": "carries no asking price, so it is not for sale; "
+                    "unpriced is not free",
+                }
+            )
+            continue
+        if budget is not None and entry["price_usd"] > budget:
+            refused.append(
+                {
+                    "candidate": entry["name"],
+                    "reason": f"costs ${entry['price_usd']:.2f}, over the stated "
+                    f"budget of ${budget:.2f}",
+                }
+            )
+            continue
+        strong = sorted({h for h in hits if len(h) >= 4})
+        if not strong:
+            # One short incidental word is not a demand for a priced capability.
+            continue
+        matched.append(
+            {
+                "stage": "priced_capability",
+                "capability": entry["name"],
+                "price_usd": entry["price_usd"],
+                "payment": "x402",
+                "resource": f"/capability/{entry['name']}",
+                "also_reachable_over": "A2A message/send",
+                "matched_terms": strong,
+                "score": sum(len(h) for h in strong),
+                "authority_required": "a settled x402 payment; discovery is free",
+            }
+        )
+
+    organ_hits: list[dict[str, Any]] = []
+    for name, binary in organs.items():
+        stem = name[len("bonfyre-") :]
+        # Whole-word or prefix, never an arbitrary substring. Free substring
+        # matching made "launch a satellite" select bonfyre-tel, because "tel"
+        # sits inside "satellite" -- exactly the plausible wrong organ this is
+        # supposed to refuse to offer. A stem shorter than four characters is
+        # matched only exactly, since short stems collide with ordinary words.
+        hits = []
+        for t in terms:
+            if t == stem:
+                hits.append(t)
+            elif len(stem) >= 4 and (t.startswith(stem) or stem.startswith(t)) and len(t) >= 4:
+                hits.append(t)
+        if hits:
+            organ_hits.append(
+                {
+                    "stage": "native_organ",
+                    "organ": name,
+                    "binary": binary,
+                    "matched_terms": sorted(set(hits)),
+                    "authority_required": "the organ's own effect boundary",
+                }
+            )
+    organ_hits.sort(key=lambda o: (-len(o["matched_terms"]), o["organ"]))
+
+    # One demand buys one capability. Every capability that shares a word is a
+    # candidate, not a stage: bundling them charged $12.50 for a question a
+    # single $9 capability answers, and a compiler that pads the bill with
+    # everything vaguely related is worse than one that returns nothing. The
+    # strongest match is the circuit; the rest are named with their prices so
+    # the caller can choose differently, and are not summed.
+    # Closure ranking. Lexical score orders what a capability is about; the
+    # closure decides whether it can be reached at all, and an executable route
+    # outranks a better-worded one that cannot settle.
+    for candidate in matched:
+        candidate["closure"] = _fulfillment_closure(candidate["capability"])
+        candidate["executable"] = bool(candidate["closure"].get("executable"))
+    matched.sort(key=lambda m: (not m["executable"], -m["score"], m["price_usd"]))
+    chosen = matched[:1]
+    alternatives = [
+        {
+            "capability": m["capability"],
+            "price_usd": m["price_usd"],
+            "matched_terms": m["matched_terms"],
+            "resource": m["resource"],
+        }
+        for m in matched[1:4]
+    ]
+    circuit = chosen + organ_hits[:4]
+    total = round(sum(float(m.get("price_usd") or 0) for m in chosen), 2)
+    blockers = [
+        {
+            "stage": m["capability"],
+            "state": m["closure"].get("state"),
+            "blocked_by": m["closure"].get("blocked_by"),
+        }
+        for m in chosen
+        if not m["executable"]
+    ]
+    unmatched = [t for t in terms if not any(
+        t in json.dumps(stage).lower() for stage in circuit
+    )]
+
+    return {
+        "schema_version": "bonfyre.capability.circuit.v1",
+        "demand": demand,
+        "terms": terms,
+        "circuit": circuit,
+        "cost": {
+            "total_usd": total,
+            "settleable": not blockers,
+            "budget_usd": budget,
+            "within_budget": None if budget is None else total <= budget,
+        },
+        "executable": not blockers,
+        "blocked_by": blockers,
+        "alternatives": alternatives,
+        "refused": refused,
+        "unmatched_terms": unmatched,
+        "surveyed": {
+            "priced_capabilities": sum(1 for e in catalogue if e.get("priced")),
+            "book_entries": len(catalogue),
+            "executable_organs": len(organs),
+        },
+        "forbidden_inference": (
+            "a compiled circuit is a route, not an authorization, a quote that has "
+            "been paid, a reservation of the organ, or a claim that running it will "
+            "succeed; admission is decided by the authority bridge and each effect "
+            "by the organ that owns it"
+        ),
+    }
+
+def forward_to_project(name: str, args: dict[str, Any]) -> Any:
+    answer = _project_rpc("tools/call", {"name": name, "arguments": args})
+    if "error" in answer:
+        raise RuntimeError(str(answer["error"]))
+    result = answer.get("result")
+    # The node answers in a full MCP result envelope and this mesh wraps whatever
+    # a tool returns in another one, so passing it straight through hands the
+    # agent content nested inside content. Unwrap to the payload the tool
+    # actually produced and let the mesh do its own single wrapping.
+    if isinstance(result, dict):
+        content = result.get("content")
+        if isinstance(content, list) and len(content) == 1:
+            text = content[0].get("text") if isinstance(content[0], dict) else None
+            if isinstance(text, str):
+                try:
+                    return json.loads(text)
+                except (ValueError, TypeError):
+                    return text
+    return result
+
+
+for tool in EXTRA_TOOLS:
+    if tool["name"] not in gateway.TOOL_MAP:
+        gateway.TOOLS.append(tool)
+for tool in FORWARDED_TOOLS:
+    if tool["name"] not in gateway.TOOL_MAP:
+        gateway.TOOLS.append(tool)
+gateway.TOOL_MAP = {tool["name"]: tool for tool in gateway.TOOLS}
+
+
+def overlay_call_tool(name: str, args: dict[str, Any], trace_id: str) -> Any:
+    if name == "matrix_address_resolve":
+        return matrix_address_resolve(args)
+    if name == "matrix_subject_constellation":
+        return matrix_subject_constellation(args)
+    if name == "matrix_closure_compile":
+        return matrix_closure_compile(args)
+    if name == "recursive_closure_frontier":
+        return recursive_closure_frontier(args, trace_id)
+    if name == "foreign_twin_observe":
+        return foreign_twin_observe(args)
+    if name == "cms_record":
+        return cms_record(args)
+    if name == "surface_project":
+        return surface_project(args)
+    if name == "foreign_resolution":
+        return foreign_resolution(args)
+    if name == "capability_circuit_compile":
+        return capability_circuit_compile(args)
+    if name in _FORWARDED:
+        return forward_to_project(name, args)
+    return _original_call_tool(name, args, trace_id)
+
+
+gateway.call_tool = overlay_call_tool
+
+
+EXTRA_RESOURCES = [
+    {
+        "uri": "bonfyre://closure/frontier",
+        "name": "Recursive institutional closure frontier",
+        "description": "Live owner-backed five-plane preparation cut. Reading it never grants effect authority.",
+        "mimeType": "application/json",
+    },
+    {
+        "uri": "bonfyre://closure/operating-contract",
+        "name": "Recursive closure operating contract",
+        "description": "Non-escalation laws for Matrix, observation, CMS, cognition, Work and money.",
+        "mimeType": "application/json",
+    },
+]
+existing_resource_uris = {item.get("uri") for item in gateway.RESOURCES}
+gateway.RESOURCES.extend(item for item in EXTRA_RESOURCES if item["uri"] not in existing_resource_uris)
+
+
+def overlay_read_resource(uri: str) -> Any:
+    if uri == "bonfyre://closure/frontier":
+        return recursive_closure_frontier({}, "resource-" + os.urandom(8).hex())
+    if uri == "bonfyre://closure/operating-contract":
+        return {
+            "schema_version": "bonfyre.recursive-closure.contract.v1",
+            "laws": [
+                "Matrix closure is not viewer/effect/economic authority.",
+                "Foreign observation is not canonical truth or a right to act.",
+                "CMS save is not publication or guest readability.",
+                "Budget/price/quote is not cash, verified payment or settlement.",
+                "Approximate cognition cannot satisfy an exact constraint.",
+                "Human submit remains an effect boundary.",
+                "Derived closures retain semantic identity and add only owner-receipted deltas.",
+            ],
+        }
+    return _original_read_resource(uri)
+
+
+gateway.read_resource = overlay_read_resource
+
+
+def main() -> None:
+    gateway.main()
+
+
+if __name__ == "__main__":
+    main()

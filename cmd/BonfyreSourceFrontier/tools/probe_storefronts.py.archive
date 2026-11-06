@@ -1,0 +1,61 @@
+#!/usr/bin/env python3
+"""Ask existing roots for two cheap public storefront endpoint shapes.
+
+Every request is made through bonfyre-project foreign observe, so the ordinary
+observer/robots boundary decides. An answer produces an eligible *channel*,
+never a product or an admitted census source. Shopify product material still
+requires a returned product handle and a retained product receipt.
+"""
+import argparse, concurrent.futures, hashlib, json, os, subprocess, tempfile, urllib.parse
+from pathlib import Path
+import sys
+
+ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(ROOT / "cmd/BonfyreExternalEstate/tools"))
+from compile_commerce_observations import classify_probe
+
+ENDPOINTS = (("woocommerce-store-api", "/wp-json/wc/store/v1/products"), ("shopify-ajax", "/search/suggest.json?q=a&resources[type]=product&resources[limit]=1"))
+
+
+def host_of(value):
+    parsed = urllib.parse.urlparse(value if "://" in value else "https://" + value)
+    return (parsed.hostname or "").lower().removeprefix("www.")
+
+
+def ask(project, host, endpoint):
+    address = "https://%s%s" % (host, endpoint); stem = hashlib.sha256(address.encode()).hexdigest()[:16]
+    with tempfile.TemporaryDirectory(prefix="bonfyre-storefront-probe.") as work:
+        body, receipt = os.path.join(work, stem + ".body"), os.path.join(work, stem + ".receipt")
+        try:
+            result = subprocess.run([project, "foreign", "observe", "storefront-" + stem, address, "--observe-right", "public", "--body", body, "--receipt", receipt], capture_output=True, text=True, timeout=60)
+            text = Path(body).read_text(errors="replace") if os.path.exists(body) else ""
+        except (OSError, subprocess.TimeoutExpired):
+            return endpoint, None
+    if result.returncode or not text.strip(): return endpoint, None
+    try: return endpoint.split("?", 1)[0], json.loads(text)
+    except ValueError: return endpoint, None
+
+
+def frontier_rows(host, responses):
+    rows = []
+    for found in classify_probe({}, {"root": host, "responses": responses}):
+        path = "/wp-json/wc/store/v1/products" if found["phenotype"] == "woocommerce-store-api" else "/search/suggest.json"
+        rows.append({"address": "https://%s%s" % (host, path), "protocol": found["phenotype"], "material": "commerce", "state": "eligible", "truth_level": found["truth_level"], "title": "%s at %s" % (found["phenotype"], host), "discovered_from": "SourceFrontier observer received declared storefront endpoint shape", "cannot_infer": "a storefront endpoint answer -> a product observation, whole catalogue, account relationship, merchant inventory, or a right to buy"})
+    return rows
+
+
+def main():
+    ap = argparse.ArgumentParser(); ap.add_argument("--hosts", type=Path, required=True); ap.add_argument("--out", type=Path, required=True); ap.add_argument("--limit", type=int, default=400); ap.add_argument("--workers", type=int, default=8); ap.add_argument("--project", default=str(ROOT / "components/BonfyreProject/bonfyre-project")); args = ap.parse_args()
+    hosts = []
+    for value in args.hosts.read_text().splitlines():
+        host = host_of(value.strip())
+        if host and host not in hosts: hosts.append(host)
+        if len(hosts) == args.limit: break
+    def one(host):
+        responses = dict(ask(args.project, host, endpoint) for _, endpoint in ENDPOINTS)
+        return frontier_rows(host, responses)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as pool: rows = [row for group in pool.map(one, hosts) for row in group]
+    args.out.write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in rows)); print(json.dumps({"hosts_asked": len(hosts), "eligible_storefront_channels": len(rows), "cannot_infer": "an endpoint answer is not materialized commerce or permission to buy"})); return 0
+
+
+if __name__ == "__main__": raise SystemExit(main())

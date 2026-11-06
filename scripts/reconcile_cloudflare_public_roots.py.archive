@@ -1,0 +1,101 @@
+#!/usr/bin/env python3
+"""Give each exhausted public Worker apex a bounded native/Tunnel fallback.
+
+This changes only the four territory apexes.  Wildcard subject delivery stays
+on the estate Worker, and no semantic mapping moves into Cloudflare: native
+WebAddress resolves the same owned root from Matrix after the request arrives.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import sys
+import urllib.error
+import urllib.request
+
+API = "https://api.cloudflare.com/client/v4"
+TUNNEL_ID = "495b264d-9a9d-4676-a5a7-e2ae6b45c1a3"  # archived; native CUE owns this now
+ROOTS = ("aurekai.life", "aurekai.live", "aurekai.shop", "aurekai.work")
+
+
+def zone_token() -> str:
+    matched = re.search(r"Bearer\s+([A-Za-z0-9_-]+)", os.environ.get("CLOUDFLARE_info_zones", ""))
+    return matched.group(1) if matched else os.environ.get("CLOUDFLARE_API_TOKEN", "")
+
+
+def api(method: str, path: str, token: str, body: dict | None = None) -> dict:
+    request = urllib.request.Request(
+        API + path, data=None if body is None else json.dumps(body).encode(), method=method,
+        headers={"Authorization": "Bearer " + token, "Content-Type": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            answer = json.load(response)
+    except urllib.error.HTTPError as exc:
+        answer = json.loads(exc.read().decode("utf-8", "replace"))
+    if not answer.get("success"):
+        raise RuntimeError(json.dumps(answer.get("errors", answer), separators=(",", ":")))
+    return answer
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--apply", action="store_true")
+    parser.add_argument("--replace-estate-worker", action="store_true",
+                        help="replace only an exact apex route currently bound to aurekai-estate")
+    args = parser.parse_args()
+    token = zone_token()
+    if not token:
+        parser.error("a Cloudflare zone-management credential is required")
+    zones = api("GET", "/zones?per_page=50", token).get("result", [])
+    zone_ids = {row.get("name"): row.get("id") for row in zones}
+    target = TUNNEL_ID + ".cfargotunnel.com"
+    changed_dns = created_routes = present = 0
+    for root in ROOTS:
+        zone_id = zone_ids.get(root)
+        if not zone_id:
+            raise RuntimeError("missing zone " + root)
+        records = api("GET", f"/zones/{zone_id}/dns_records?name={root}", token).get("result", [])
+        if len(records) != 1 or records[0].get("type") != "CNAME":
+            kinds = ",".join(str(row.get("type", "?")) for row in records)
+            raise RuntimeError(root + " requires exactly one CNAME apex record; found " + (kinds or "none"))
+        record = records[0]
+        desired = {"type": "CNAME", "name": root, "content": target, "proxied": True, "ttl": 1}
+        already_bound = record.get("content") == target and bool(record.get("proxied"))
+        if not already_bound:
+            if args.apply:
+                api("PUT", f"/zones/{zone_id}/dns_records/{record['id']}", token, desired)
+            changed_dns += 1
+            print(("updated" if args.apply else "would update") + " DNS " + root)
+        routes = api("GET", f"/zones/{zone_id}/workers/routes", token).get("result", [])
+        pattern = root + "/*"
+        exact = next((row for row in routes if row.get("pattern") == pattern), None)
+        if exact is not None:
+            if exact.get("script") is not None:
+                if exact.get("script") != "aurekai-estate" or not args.replace_estate_worker:
+                    raise RuntimeError(pattern + " is bound to " + repr(exact.get("script")) + "; refusing to replace it")
+                if args.apply:
+                    api("DELETE", f"/zones/{zone_id}/workers/routes/{exact['id']}", token)
+                    api("POST", f"/zones/{zone_id}/workers/routes", token, {"pattern": pattern, "script": None})
+                created_routes += 1
+                print(("replaced" if args.apply else "would replace") + " estate Worker route " + pattern)
+                continue
+            present += 1
+        else:
+            if args.apply:
+                api("POST", f"/zones/{zone_id}/workers/routes", token, {"pattern": pattern, "script": None})
+            created_routes += 1
+            print(("created" if args.apply else "would create") + " no-Worker route " + pattern)
+    print(json.dumps({"apply": args.apply, "dns_changed": changed_dns, "routes_created": created_routes,
+                      "routes_present": present, "roots": len(ROOTS)}, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        raise SystemExit(main())
+    except RuntimeError as exc:
+        print("reconcile_public_roots: " + str(exc), file=sys.stderr)
+        raise SystemExit(2)

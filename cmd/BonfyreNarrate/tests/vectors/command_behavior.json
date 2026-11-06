@@ -1,0 +1,5 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-narrate","binary_env":"BONFYRE_NARRATE_BIN","cases":[
+{"name":"text is synthesized with the system voice and quality-measured","files":{"n.txt":"The checkout page is fixed.\n"},"steps":[
+ {"argv":["n.txt","nar"],"env":{"HOME":"${tmp}","BONFYRE_FRAGMENT_STORE":"${tmp}/frag.db","BONFYRE_VOCAB_DB":"${tmp}/vocab.bfvocab"},"exit":0,"contains":["Audio:      nar/artifact.wav"],"present":["${tmp}/nar/artifact.wav","${tmp}/nar/artifact.manifest.json","${tmp}/nar/narration.txt"]},
+ {"program":"ffprobe","argv":["-v","error","-show_entries","stream=codec_type","-of","csv=p=0","nar/artifact.wav"],"stdout":"audio\n"}]},
+{"name":"dry-run plans without producing audio","files":{"n.txt":"Hello.\n"},"steps":[{"argv":["n.txt","nar","--dry-run"],"env":{"HOME":"${tmp}","BONFYRE_FRAGMENT_STORE":"${tmp}/frag.db","BONFYRE_VOCAB_DB":"${tmp}/vocab.bfvocab"},"exit":0,"absent":["${tmp}/nar/artifact.wav"]}]}]}

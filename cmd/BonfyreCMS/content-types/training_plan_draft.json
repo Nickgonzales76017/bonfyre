@@ -1,0 +1,1 @@
+{"name":"training_plan_draft","displayName":"Training Plan Draft","attributes":{"draft_key":{"type":"string","required":true,"uniqueWithinNamespace":true},"revision":{"type":"integer","required":true},"plan":{"type":"json","required":true},"content_sha":{"type":"string","required":true},"editor_actor":{"type":"string","required":true}}}

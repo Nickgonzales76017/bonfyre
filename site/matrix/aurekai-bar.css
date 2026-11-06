@@ -1,0 +1,93 @@
+/* aurekai-bar.css -- the one bar every Aurekai page wears.
+ *
+ * Front pages, native surfaces, donor surfaces, subject rooms and the sign-in
+ * pages each drew their own header, so the way around the estate moved every
+ * time a person followed a link.  This sheet styles one element, .ak-bar, the
+ * same on all of them: the name, the four territories, search and the account
+ * on the first line; the sections on the second, in one row that scrolls
+ * sideways instead of wrapping or stacking.
+ *
+ * It takes its colours from the page it sits on (currentColor and the page's
+ * own ground), so it never fights a territory's dress.
+ */
+.ak-bar{
+  --ak-on:var(--w-ground,var(--n-ground,var(--bf-ground,var(--paper,#faf7f2))));
+  --ak-line:color-mix(in srgb,currentColor 16%,transparent);
+  --ak-soft:color-mix(in srgb,currentColor 9%,transparent);
+  --ak-pad:clamp(1rem,4vw,3.5rem);
+  position:sticky;top:0;z-index:60;box-sizing:border-box;width:calc(100vw - var(--ak-dock,0px));max-width:calc(100vw - var(--ak-dock,0px));margin-inline:calc(50% - 50vw + var(--ak-dock,0px)/2);padding:0 var(--ak-pad);
+  background:color-mix(in srgb,var(--ak-on) 82%,transparent);backdrop-filter:blur(18px) saturate(1.5);-webkit-backdrop-filter:blur(18px) saturate(1.5);
+  border-bottom:1px solid var(--ak-line);
+  font:500 .84rem/1 'DM Sans',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;letter-spacing:-.01em;text-transform:none;
+}
+/* --ak-dock is the width the activity panel takes when docked beside the
+ * page; the full-bleed bar spans what is left. */
+/* Directly under the body the bar is already the width of the page; the
+ * viewport width would add the scrollbar to it. */
+body>.ak-bar{width:auto;max-width:none;margin-inline:0}
+.ak-bar *{box-sizing:border-box}
+.ak-bar a{color:inherit;text-decoration:none;font-weight:500}
+.ak-bar form,.ak-bar label{margin:0;padding:0;border:0;background:none;box-shadow:none;font:inherit;letter-spacing:inherit;text-transform:none;color:inherit}
+.ak-bar .ak-brand{font-weight:650}
+.ak-bar .ak-account{font-weight:600}
+.ak-bar-top{display:flex;align-items:center;gap:.9rem;min-height:3.5rem}
+.ak-brand{display:inline-flex;align-items:center;gap:.5rem;font-size:1.18rem;font-weight:650;letter-spacing:-.045em}
+.ak-brand img{width:1.5rem;height:1.5rem;border-radius:50%}
+.ak-places{display:flex;gap:.1rem;padding:.2rem;border:1px solid var(--ak-line);border-radius:999px}
+.ak-places a{padding:.42rem .8rem;border-radius:999px;opacity:.72;transition:background .25s,opacity .25s}
+.ak-places a:hover{opacity:1;background:var(--ak-soft)}
+.ak-places a[aria-current="page"]{opacity:1;background:currentColor}
+.ak-places a[aria-current="page"]>span{color:var(--ak-on)}
+.ak-find{margin:0 0 0 auto;flex:0 1 17rem;min-width:0}
+.ak-find label{display:flex;align-items:center;gap:.5rem;margin:0;padding:.5rem .9rem;border:1px solid transparent;border-radius:999px;background:var(--ak-soft);transition:border-color .25s,background .25s}
+.ak-find label:focus-within{border-color:currentColor;background:transparent}
+.ak-find svg{flex:none;width:.9rem;height:.9rem;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;opacity:.6}
+.ak-find input{flex:1;min-width:0;width:auto;padding:0;border:0;outline:0;background:none;box-shadow:none;color:inherit;font:inherit}
+.ak-find input::placeholder{color:inherit;opacity:.5}
+.ak-account{flex:none;padding:.62rem 1rem;border:1px solid currentColor;border-radius:999px;font-weight:600;white-space:nowrap;transition:background .25s}
+.ak-account:hover{background:currentColor}
+.ak-account:hover>span{color:var(--ak-on)}
+.ak-account+.ak-account{margin-left:-.5rem}
+.ak-sections{display:flex;gap:.1rem;margin:0 calc(-1*var(--ak-pad));padding:0 calc(var(--ak-pad) - .7rem) .55rem;overflow-x:auto;scrollbar-width:none;
+  -webkit-mask-image:linear-gradient(to right,transparent,#000 1.2rem,#000 calc(100% - 2.5rem),transparent);mask-image:linear-gradient(to right,transparent,#000 1.2rem,#000 calc(100% - 2.5rem),transparent)}
+.ak-sections::-webkit-scrollbar{display:none}
+.ak-sections a{flex:none;padding:.5rem .7rem;border-radius:999px;white-space:nowrap;opacity:.66;transition:background .25s,opacity .25s}
+.ak-sections a:hover{opacity:1;background:var(--ak-soft)}
+.ak-sections a[aria-current="page"]{opacity:1;background:currentColor}
+.ak-sections a[aria-current="page"]>span{color:var(--ak-on)}
+.ak-sections .ak-out{display:flex;gap:.1rem;margin-left:auto;padding-left:1.5rem}
+.ak-sections .ak-out a::after{content:"\2197";margin-left:.3rem;font-size:.8em;opacity:.7}
+.ak-local[hidden]{display:none}
+.ak-bar :focus-visible{outline:2px solid currentColor;outline-offset:2px}
+
+/* The headers this bar replaces, wherever a page still carries one. */
+body:has(.ak-bar) :is(nav.navbar,header.topbar,nav.bar:not(.ak-sections)){display:none}
+body:has(.ak-bar) .bf-native-kicker{display:none}
+/* The bar carries the territories; a surface need not repeat them as chips. */
+body:has(.ak-bar) .bf-native-slot>a:is([href$="/stage"],[href="/discover"]){display:none}
+
+/* A page that centres its one form keeps doing so beneath the bar. */
+body:has(>.ak-bar+main>.kicker){display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:0}
+body:has(>.ak-bar+main>.kicker)>.ak-bar{flex:none;align-self:stretch;width:auto;margin-inline:0}
+body:has(>.ak-bar+main>.kicker)>main{margin-block:auto;padding:1.5rem}
+
+/* Pages whose own sheet is not the estate's say what their ground is. */
+[data-bs-theme="dark"] .ak-bar{--ak-on:#000}
+.ak-bar.ak-on-dark{--ak-on:#101113}
+
+@media (max-width:760px){
+  .ak-bar-top{gap:.35rem;min-height:3.25rem}
+  .ak-brand{font-size:1.02rem}
+  .ak-places{padding:.15rem}
+  .ak-places a{padding:.38rem .44rem;font-size:.8rem}
+  .ak-find{flex:0 0 2.3rem;margin-left:auto}
+  .ak-find label{padding:.5rem;justify-content:center}
+  .ak-find input{width:0;flex:0 0 0}
+  .ak-find label:focus-within{position:absolute;left:var(--ak-pad);right:var(--ak-pad);z-index:2;background:var(--ak-on);padding:.5rem .9rem}
+  .ak-find label:focus-within input{flex:1;width:auto}
+  .ak-account{padding:.5rem .62rem;font-size:.8rem}
+}
+@media print{.ak-bar{display:none}}
+
+/* Specialized page anatomy stays in its own stylesheet. */
+@media(prefers-reduced-motion:reduce){.ak-bar *{transition:none!important;animation:none!important}}

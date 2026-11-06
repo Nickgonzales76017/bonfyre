@@ -1,5 +1,6 @@
 CC := cc
 CFLAGS := -O2 -Wall -Wextra -std=c11 -I../../lib/libbonfyre/include
+CFLAGS += -I../BonfyreLex/src
 LDFLAGS := -L../../lib/libbonfyre -lbonfyre -lsqlite3
 
 SRC := src/main.c

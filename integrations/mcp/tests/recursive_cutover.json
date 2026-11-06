@@ -1,0 +1,68 @@
+{
+  "schema": "bonfyre.owner-cutover-summary.v1",
+  "measured_at": "2026-10-03T02:32:29.111Z",
+  "service": "gui/503/com.bonfyre.recursive-substrate-v5",
+  "previous": {
+    "pid": 1013,
+    "runtime": "python",
+    "exited": true,
+    "rollback_plist": "/private/tmp/bonfyre-owner-cutover.RV1KCd/original.plist",
+    "rollback_launcher": "/private/tmp/bonfyre-owner-cutover.RV1KCd/launcher.original",
+    "database_backup": "/private/tmp/bonfyre-owner-cutover.RV1KCd/database-0.sqlite3",
+    "database_sha256": "0c518ac4668cef4de9d7c4a96033834c339e9d0a64ad36c6813673bb24e99dd2"
+  },
+  "installed": {
+    "pid": 75918,
+    "runtime": "bun",
+    "entry": "integrations/mcp/recursive_server.mjs",
+    "non_program_configuration_unchanged": true,
+    "cli": "/Users/nickgonzales/.local/bin/bonfyre-recursive",
+    "cli_replay_verified": true,
+    "source_sha256": {
+      "integrations/mcp/recursive_server.mjs": "182cfb76b8ad92892e941ffb54d5c1148951999c65d8d6165122ddb3ae0c90a4",
+      "deploy/launchd/bonfyre-recursive": "348e52d61f2ecf4774039453e4e2e8f1c2fff7e8be14c61c1c04bdb8cc2a6142",
+      "integrations/mcp/http_boundary.mjs": "a4291f2c6cb8dd1f5bfeaf1d0db453ffa9e398dc90f0bdf1987409b05c4179a5",
+      "integrations/mcp/canonical_json.mjs": "8bdfbc672b4b0a1b017e3f437f46af5c84d1e40a6ddba6185fb6b8c5b92bc386",
+      "integrations/mcp/recursive_store.mjs": "93803dee205b9efb81dce8e5c877a7915a0f058b02131dd0aeaa1f570a900a69",
+      "integrations/mcp/recursive_schema.sql": "1a990edc0eda3aa2d36a3ac9526947c9de3d601edce49a2e897ab420320a44c1",
+      "integrations/mcp/recursive_catalog.json": "86378fd001f27132f6c167e96cec8672664c44acaecf06399778f159afeb9c9a",
+      "integrations/mcp/recursive_cli.mjs": "406bf9a48d49c12ca395ffe22e4469f3f78b2673812956e74a60d2c61a8edf15",
+      "integrations/mcp/canary_server.mjs": "f78c81bce71c2db9da8d73954b62e8e310d15a4c9aacce1ade1ac89a73aa6f1f",
+      "integrations/mcp/canary_store.mjs": "0ca8a6e1993b8ff96ff7409aba21963ad9ad3379eb1168bcc0e8ae145d61b2cd",
+      "integrations/mcp/project_node.mjs": "8bc6f2c0ac4e239d4fbb32b8e24f04a011932d6cd6af035c5a9b615c3d4fb7cb",
+      "deploy/launchd/service_cutover.mjs": "0ef6c6ae7b86fd941f4044525dcf62aede7214f4bbd92a19337a96fc8d22d124",
+      "deploy/launchd/recursive_cutover.mjs": "23ecf9a2d385a548b60d2bcf2ece1f29bdfd605aee935addb302cd7b857df07d"
+    }
+  },
+  "continuity": {
+    "tools": 22,
+    "prompts": 2,
+    "catalog_sha256": "639d5c1088e88cc082835a70f962b40a06cad5715b44f3e7fefd0591005ee438",
+    "all_counts_unchanged": true,
+    "artifacts": 60,
+    "token_artifacts": 59,
+    "token_chunks": 339,
+    "flux_events": 121,
+    "receipts": 134,
+    "receipt_head": "0efd64dedbd9b1afe287d77e7506b191d6254506fa7229d4ae1322e85af5e4dd",
+    "receipt_and_four_flux_chains_verified_unchanged": true,
+    "tokenizer_metadata_unchanged": true,
+    "native_token_status_exit_code": 0,
+    "unauthenticated_status_refused": true
+  },
+  "benchmark": {
+    "scope": "Warm serial loopback receipt/flux verification only; not tokenization throughput or estate scaling",
+    "samples_per_owner": 25,
+    "python_p50_ms": 57.51383299999998,
+    "python_p95_ms": 74.06237499999997,
+    "bun_p50_ms": 68.62308399999984,
+    "bun_p95_ms": 84.9940830000005,
+    "conclusion": "Regression in this sample; no performance improvement claimed"
+  },
+  "refreshed": [
+    {"service": "com.bonfyre.fixture-canary-r4", "previous_pid": 99110, "pid": 76100, "tools": 12, "verified_unchanged_receipts": 19},
+    {"service": "com.bonfyre.project-mcp", "previous_pid": 99205, "pid": 76143, "tools": 30, "resources": 5, "templates": 2, "prompts": 4, "read_only_witness_passed": true}
+  ],
+  "remaining_live_python_daemons": 5,
+  "rollback_policy": "Primary configuration/runtime rollback only; accepted writes are never automatically overwritten. Refreshed Bun dependents retain compatible shared code and must be reverified."
+}

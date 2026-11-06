@@ -1,0 +1,132 @@
+atlas optimization-preservation-boundary
+
+architecture preservation-boundary
+  canonical_name PreservationBoundary
+  owns PreservationLayer
+  owns DualStatus
+  owns SemanticLineage
+  consumes ProductContract
+  consumes CapabilityBinding
+  consumes CascadePlan
+  publishes DualStatus
+  publishes PromotionVerdict
+  family optimization
+  domain Optimization / Protected boundary
+  layer governance
+  semantic_question Which layer is this change allowed to alter, and does the layer above it still mean exactly what it meant before?
+  purpose Draw the line the optimization doctrine may not cross. Bonfyre may compress representation, execution, cognition, context and repeated structure. It may not compress away business semantics, user-visible capability, authority, or the legacy behavior being preserved.
+  maturity architectural
+  node_types PreservationLayer
+  node_types ProtectedSemantics
+  node_types OptimizableRealization
+  node_types DualStatus
+  node_types SemanticLineage
+  edge_types preserved_by
+  edge_types realized_by
+  edge_types factored_beneath
+  invariant three layers exist and only the lowest may change aggressively
+  invariant the product-semantics layer is what the client bought and uses; it is never a compression target
+  invariant the exact-compiled layer must remain exactly equivalent to the product layer, not approximately equivalent
+  invariant a binding retains enough semantic lineage to reconstruct the original behavior; its physical representation may be tiny, its meaning may not be tiny by omission
+  invariant repetition in legacy code is evidence of shared mechanics, never evidence that behavior is disposable
+  invariant scheduled and background behavior is product capability; invisibility on a screen is not absence
+  invariant a downstream user sees named domain sections, never capability identifiers; the packed representation stays under the floorboards
+  invariant factoring makes behavior more discoverable; a factoring that reduces the census of what exists has erased rather than compressed
+  forbidden_inference a route looking repetitive -> its business behavior being disposable
+  forbidden_inference two routes sharing mechanics -> those routes being one capability
+  forbidden_inference a capability having no screen -> that capability not existing
+  forbidden_inference a faster implementation -> an equivalent implementation
+  forbidden_inference a shared kernel -> merged business domains
+  forbidden_inference legacy behavior being strange -> that behavior being unintentional
+  interacts compression-law
+  interacts optimization-cascade
+  interacts optimization-proof
+  interacts product-contracts
+  source_lineage Generation-10 optimization doctrine promotion, 2026-08-26
+  source_lineage downstream product chain preservation ruling, 2026-08-26
+
+layer l1-product-semantics
+  rank 1
+  mutability protected
+  detail What users actually bought and use. Transfer a horse, submit a daysheet, generate a statement, apply a payment, run vet production, schedule a transfer, change a billing cycle, download a report, request a correction.
+  invariant never a compression target
+
+layer l2-exact-compiled
+  rank 2
+  mutability equivalence-bound
+  detail Address, capability binding, product contract, business rules, effects, authority, schedules, evidence and proof. Provides exact equivalence between the layer above and the layer below.
+  invariant equivalence here is exact, never statistical
+
+layer l3-optimized-realization
+  rank 3
+  mutability aggressive
+  detail Content identity and dedup, packed identifiers and bitsets, columnar and adjacency forms, deltas, byte compression, borrowed views, latent reduction, cheap cognition routing, prepared context and model state, residency, fused and lowered kernels.
+  invariant free to change entirely, provided layer 2 equivalence holds
+
+dual_status semantic_preservation
+  values PASS, FAIL
+  question Does it still mean, read, calculate, change, emit and prove exactly what it did?
+dual_status physical_optimization
+  values PASS, FAIL
+  question Is it admissibly represented under the optimization gates?
+
+verdict semantic_PASS_physical_PASS
+  outcome promotable
+verdict semantic_PASS_physical_FAIL
+  outcome correct but still fat; keep optimizing; not a defect in behavior
+verdict semantic_FAIL_physical_PASS
+  outcome reject; a fast wrong answer is the worst outcome the doctrine can produce
+verdict semantic_FAIL_physical_FAIL
+  outcome reject
+
+lineage_field legacy_route
+lineage_field domain_subject
+lineage_field domain_action
+lineage_field input_contract
+lineage_field filter_contract
+lineage_field business_rules
+lineage_field calculation_family
+lineage_field read_closure
+lineage_field write_closure
+lineage_field effect_class
+lineage_field authority_contract
+lineage_field external_systems
+lineage_field scheduled_trigger
+lineage_field output_contract
+lineage_field report_or_document_contract
+lineage_field evidence_contract
+lineage_field regression_contract
+lineage_field current_implementation
+lineage_field alternate_realizations
+lineage_field exact_legacy_provenance
+
+acceptance_rule preserve
+  detail what it means, who uses it, what it reads, what it calculates, what it changes, what it emits, when it runs, and what proves it worked
+acceptance_rule factor
+  detail repeated route wrappers, repeated validation shapes, repeated report mechanics, repeated permissions, repeated relationships, repeated allocation mechanics, repeated workflow structure
+acceptance_rule optimize
+  detail identity, storage, memory, copying, queries, search, cognition, context, models, scheduling, physical execution
+acceptance_rule lower
+  detail only after repeated proof, and only with a demonstrated lift or thaw path
+
+archaeology_role
+  detail Cheap cognition may propose where business logic hides in a legacy tree: whether a unit belongs to a domain family, is validation, is authorization, is formatting only, is a dead wrapper, is a shared helper, is a domain calculation or is a scheduled workflow.
+  bounded_by cheap-cognition
+  invariant it tells the exact machinery where to dig; it never declares what was found
+
+interaction preservation-bounds-cascade
+  source preservation-boundary
+  destination optimization-cascade
+  relation hard_constraint
+  preserves the product-semantics layer and the exact-equivalence obligation of the compiled layer
+  drops any optimization that reduces the census of what behavior exists
+  forbidden_inference a cascade stage being admissible in general -> that stage being admissible across a preservation layer
+  witness none
+
+interaction preservation-reports-dual-status
+  source preservation-boundary
+  destination optimization-proof
+  relation verdict_input
+  preserves the separation of semantic preservation from physical optimization as two independent statuses
+  drops any single combined score that would let a semantic failure be offset by a physical success
+  forbidden_inference a fast implementation -> a preserved implementation

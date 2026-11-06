@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <sqlite3.h>
 
+#include "bf_lex.h"
 #define MAX_LINE 65536
 
 static void iso_timestamp(char *buf, size_t sz) {
@@ -138,11 +139,13 @@ static void compute_canonical_key(ManifestSummary *summary) {
     snprintf(summary->canonical_key, sizeof(summary->canonical_key), "%016llx", h);
 }
 
+/* Delegates to the one implementation. Three byte-identical copies existed.
+ * Note what this is not: it copies the token's bytes as written, so a JSON
+ * escape inside one survives as a backslash. The callers here read slugs that
+ * carry none; a caller that needs the value unescaped wants
+ * bf_lex_json_string_at instead. */
 static void copy_json_token(char *dst, size_t dst_sz, const char *start, size_t len) {
-    if (dst_sz == 0) return;
-    size_t n = len < dst_sz - 1 ? len : dst_sz - 1;
-    memcpy(dst, start, n);
-    dst[n] = '\0';
+    bf_lex_copy_bounded(dst, dst_sz, start, len);
 }
 
 static void manifest_summary_init(ManifestSummary *summary) {

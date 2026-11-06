@@ -1,0 +1,68 @@
+{
+  "name": "program_template",
+  "displayName": "Program Template",
+  "description": "A generalized capability an institution or person may run, declared once. It names the subject kinds, slots, capability families and existing owners a program of this kind needs. A template is a declaration of what such a program would require; it is never a claim that anyone is running it, that funding exists, or that this estate has any relationship with the funder it names.",
+  "attributes": {
+    "template_id": {
+      "type": "string",
+      "required": true,
+      "uniqueWithinNamespace": true
+    },
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "archetype": {
+      "type": "string",
+      "required": true
+    },
+    "ordinal": {
+      "type": "integer",
+      "required": false
+    },
+    "subject_kinds": {
+      "type": "json",
+      "required": true
+    },
+    "semantic_slots": {
+      "type": "json",
+      "required": true
+    },
+    "capability_families": {
+      "type": "json",
+      "required": true
+    },
+    "address_demands": {
+      "type": "json",
+      "required": false
+    },
+    "owner_bindings": {
+      "type": "json",
+      "required": true
+    },
+    "funding_candidates": {
+      "type": "json",
+      "required": false
+    },
+    "surface_policy": {
+      "type": "string",
+      "required": true
+    },
+    "page_policy": {
+      "type": "string",
+      "required": true
+    },
+    "description": {
+      "type": "text",
+      "required": false
+    },
+    "cannot_infer": {
+      "type": "text",
+      "required": true
+    },
+    "status": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

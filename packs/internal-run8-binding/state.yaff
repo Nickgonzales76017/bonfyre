@@ -1,0 +1,67 @@
+pack internal-run8-binding
+generation control-1
+provenance direct census of .bonfyre/run8/state.sqlite3 on 2026-08-26
+authority measured
+note This pack binds existing Run8 state into the Internal root product. It does not copy, regenerate or re-schema that state. Counts below are a census timestamp, not a ledger. Provenance stays with the original tables so occurrences keep their identity.
+
+binding internal:run8
+  namespace bonfyre/internal/run8
+  state_source .bonfyre/run8/state.sqlite3
+  binding_kind reference
+  regeneration forbidden
+  detail Run8 is the native operating system for building Bonfyre with Bonfyre. It does not end after setup and it is not migrated into a new schema for the sake of the root topology.
+
+table_binding internal:run8/work
+  namespace bonfyre/internal/run8/work
+  table work_items
+  census_count 136
+table_binding internal:run8/proof
+  namespace bonfyre/internal/run8/proof
+  table anti_amnesia
+  census_count 507
+  detail Proof frontier, solved invariants, known non-causes, regression fences and failure fingerprints.
+table_binding internal:run8/epochs
+  namespace bonfyre/internal/run8/epochs
+  table epochs
+  census_count 192
+table_binding internal:run8/receipts
+  namespace bonfyre/internal/run8/receipts
+  table receipts
+  census_count 192
+  carrier_split claude 125
+  carrier_split codex 67
+table_binding internal:run8/providers
+  namespace bonfyre/internal/run8/providers
+  table provider_state
+  census_count 2
+table_binding internal:run8/mesh
+  namespace bonfyre/internal/run8/mesh
+  table mesh_events
+  census_count 118
+  table mesh_delivery
+  delivery_count 112
+  table mesh_export_state
+  table mesh_quarantine
+table_binding internal:run8/scheduler
+  namespace bonfyre/internal/run8/scheduler
+  table scheduler_history
+  census_count 192
+
+filesystem_binding internal:run8/artifacts
+  path .bonfyre/run8/canonical
+  path .bonfyre/run8/checkpoints
+  path .bonfyre/run8/convergence
+  path .bonfyre/run8/epochs
+  path .bonfyre/run8/evidence
+  path .bonfyre/run8/mesh
+  path .bonfyre/run8/partner
+  path .bonfyre/run8/receipts
+  binding_kind reference
+
+related_pack packs/run-history
+related_pack packs/system-upgrades
+related_pack packs/fpq-proof-frontier
+
+invariant Run8 state is bound by reference; a rebuild of the root topology never rewrites it
+invariant the operator lock and heartbeat are live operational state and are not treated as durable evidence
+forbidden_inference a census count in this pack -> the current row count

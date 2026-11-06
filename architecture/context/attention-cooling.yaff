@@ -19,7 +19,147 @@ architecture attention-cooling
   invariant a cooled subject must name what reheats it, or it consumes attention forever
   invariant only a signal matching a named reheat condition may reheat a cooled subject
   forbidden_inference a symptom -> attention (only a named reheat signal warms a cooled subject)
-  source_path components/BonfyreControlPlane/scheduling.py
+  source_path components/BonfyreControlPlane/scheduling.py.archive
+  source_path engine/core/src/control_attention.c
+  source_path cmd/BonfyreAttention/src/main.c
+  witness cmd/BonfyreAttention/tests/smoke.sh
   interacts proof-frontier
   interacts work-graph
-  source_lineage run6 control-plane retrospective -- the Proton attention-drain fix
+  source_lineage run6 control-plane retrospective -- the Proton attention-drain fix; native persistence absorption retains the shared watches schema
+  known_gap Python scheduling callers remain on the compatibility carrier until their call boundaries move to BonfyreAttention
+
+architecture atlas-context-provider
+  owns AtlasAnswer
+  publishes AtlasAnswer
+  derived AtlasAnswer
+  canonical_name AtlasContextProvider
+  family context
+  domain Context / Model Context
+  layer context
+  semantic_question What does one atlas question cost to answer, and can it cost only that?
+  purpose A lossless registry is not a context surface. atlas.index.json is 257,986 bytes; delivering it to answer "what does ProviderGraph forbid?" spends ~64k tokens to carry ~200 tokens of answer. This is the bounded read path: summary/get/search/cannot_infer/expand/loss computed from the exported index, every op under a byte budget, search reading field VALUES rather than the JSON serialization (which made every schema key searchable content -- search("witness") returned all 185 architectures). Query semantics live here once, so the CLI, MCP transport, CI and native callers cannot drift.
+  maturity measured
+  node_types Query
+  node_types BoundedAnswer
+  edge_types answers
+  edge_types truncates
+  internal_calculus value-walk (keys are schema, never content)
+  internal_calculus per-response byte budget with explicit truncation
+  invariant every op declares a byte budget and reports truncation rather than silently exceeding it
+  invariant search matches field values and the architecture id, never field names
+  invariant explain fields (matched_fields, snippet) are request-local and never enter the exported index
+  invariant the Bun MCP project owner invokes the same root-relative Bun query command as the Atlas CLI and deploy witness; transport does not reimplement search, provenance or byte budgeting
+  forbidden_inference a bounded answer -> the registry is lossy (the registry stays lossless; only the read path is bounded)
+  forbidden_inference cheapest read path -> authoritative answer (the index is derived; the YaFF registry is canonical)
+  source_path cmd/BonfyreAtlas/src/main.c
+  source_path architecture/atlas.mjs
+  source_path integrations/mcp/project_reads.mjs
+  source_path integrations/mcp/project_node.mjs
+  witness integrations/mcp/tests/project_node_cutover.json records the installed Bun project owner serving the root-local Atlas query over HTTP
+  witness bun test architecture/tests/atlas_query.test.mjs exercises bounded value-only search, explicit misses, request-local explanation and provenance
+  interacts realization-measurement
+  source_lineage run8 provider-context-pressure -- measured 559.6x context reduction per lookup
+  known_gap only the atlas is served this way; the same bounded-read discipline is unapplied to the fabric and evidence surfaces
+  known_gap the installed Bun project owner composes other native owners but its read-only HTTP cutover witness does not establish live generation, financial effects or remote Matrix execution
+
+architecture atlas-provenance
+  canonical_name AtlasProvenance
+  family context
+  domain Context
+  maturity measured
+  semantic_question When this atlas answers, what was it built from, and can that be checked from where it is being read?
+  # The index is a build artifact that travels. A copy was installed on the
+  # deployment once and then answered questions for four days about declarations
+  # that had moved underneath it. Both copies look equally authoritative because
+  # neither said when it was made -- and a planner told a capability is absent
+  # rebuilds what already exists.
+  node_types DeclarationDigest
+  node_types IndexStamp
+  edge_types built_from
+  state_types verified
+  state_types dated
+  invariant the export stamps the index with a digest over every declaration byte it was built from, and atlas.mjs owns which bytes count so a second opinion cannot drift from it
+  invariant where the declarations are present the index is checked and a disagreeing one is rebuilt rather than served; where they are absent it is dated instead, and every answer says which of the two happened
+  invariant verifiability is decided by whether atlas.mjs is present, because that is the only place the index can be rebuilt; counting .yaff files instead made a deployment carrying two unrelated contract declarations claim it had verified an index against declarations that were never its inputs
+  forbidden_inference a matching digest -> a correct atlas
+  forbidden_inference a dated index -> a stale one, or a fresh one; dated means unverifiable from here
+  computational_form derivation
+  native_format json
+  source_path architecture/atlas.mjs
+  source_path cmd/BonfyreAtlas/src/main.c
+  source_path cmd/BonfyreAtlas/tests/parity.sh
+  witness cmd/BonfyreAtlas/tests/parity.sh attests that the deployment answers at the digest just shipped and reports itself unverified rather than current
+  measured the deployment answered from a 232-architecture index dated four days earlier while the checkout carried 258; get surface-ir returned architectural with one witness against implemented with five, and the deploy path now closes both
+  measured a deliberately corrupted stamp caused the index to be regenerated and the true maturity served, rather than the corrupted one
+  known_gap nothing runs the deploy on a schedule, so an index can still go stale between deploys; it can no longer do so silently
+
+architecture claim-falsifiability
+  canonical_name ClaimFalsifiability
+  family context
+  domain Context
+  maturity measured
+  semantic_question Where does this estate report a success it never checked?
+  # Every defect repaired here over two days had one shape: a value naming a
+  # condition, written so it can only say yes. cli_present asserted true on a
+  # host with no aws binary; status "ok" printed beside endpoint_configured
+  # false; a recipe counted four failures and returned zero; a database that
+  # refused the connection was reported as having returned no rows. None is
+  # subtle. They survive because nothing fails when they are wrong, which is the
+  # definition of the class and the reason tripping over their consequences one
+  # at a time is the slow way to find them.
+  node_types Claim
+  node_types Observation
+  edge_types asserts
+  edge_types observes
+  state_types gated
+  state_types advisory
+  invariant a suite that counts its own failures exits on that count; this is the one pattern decidable without reading intent, because a test that cannot fail is never correct, and it is the only one the checker fails the build on
+  invariant every other pattern is advisory and says so, because a literal true is right for a fact about the source and an unchecked exit is redundant beside a parse strict enough to fail closed; failing a build on those would be the unfalsifiable claim the checker exists to find
+  invariant the checker scans code and never records; flagging generated projections and archived receipts buried thirty real findings under eleven hundred, which is this same failure committed by the tool
+  forbidden_inference a flagged line -> a defect
+  forbidden_inference a clean run -> an estate without unfalsifiable claims; it means these patterns do not appear
+  computational_form derivation
+  native_format text
+  source_path architecture/check-falsifiable-claims.mjs
+  witness a suite that counts failures and ends on its summary echo makes the checker exit 1; removing it returns the tree to exit 0
+  measured of 21 candidates in the gated class, 20 were suites that correctly exit on their counter and one was not: live_e2e ran 33 checks against the live estate and returned 0 whatever it printed
+  measured the advisory classes triaged to legitimate code -- resolve_binary_path really does test executability, the fulfillment closure really does have reachable false paths, and the pure tier's parse fails closed without consulting an exit status
+  known_gap the checker reads patterns, not meaning; a claim expressed any other way passes it silently
+
+architecture witness-grade
+  canonical_name WitnessGrade
+  family context
+  domain Context
+  maturity measured
+  semantic_question For each architecture claiming to be measured, how strong is the backing, really?
+  # The atlas enforces its first law existentially: a measured architecture must
+  # name a witness and that witness must be openable. Existence is the weakest
+  # standard there is. A witness that always passes satisfies it, a witness
+  # nobody runs satisfies it, and a witness reading none of the state its
+  # architecture is about satisfies it.
+  node_types MaturityClaim
+  node_types Witness
+  edge_types backs
+  state_types named
+  state_types runnable
+  state_types exercised
+  state_types graded
+  invariant the tiers are reported as a distribution and never as one number; a single figure would let 23 claims backed by a file nobody runs hide behind 6 that have been shown to fail
+  invariant suite candidates are discovered from cmd/*/tests/*.sh and recursive tests/**/*.sh; directory membership does not establish execution or a passing result
+  forbidden_inference a graded witness -> a correct architecture; mutation shows the witness reacts to the state it reads
+  forbidden_inference an exercised witness -> an executed or load-bearing witness; the historical tier name means shell-suite discovery only
+  computational_form derivation
+  native_format text
+  source_path architecture/check_witness_grade.py.archive
+  source_path cmd/BonfyreAtlas/src/main.c
+  source_path cmd/BonfyreAtlas/src/witness_grade.h
+  source_path cmd/BonfyreAtlas/Makefile
+  witness cmd/BonfyreAtlas/tests/witness-grade.sh compares recorded JS reports for mutation labels, missing and malformed receipts, symlinks, discovery depth and every tier; stale indexes cannot replace parsed YAFF
+  known_gap mutation receipts are supplied evidence and are not authenticated; matching noticed_by labels does not establish when or where the suite ran
+  known_gap the native port preserves recorded JSON receipt shapes; malformed non-array noticed_by fields are ignored as invalid receipts instead of treating strings as character sequences
+  measured 2026-09-30 with no mutation receipt: 109 measured or proven claims, 0 graded, 48 exercised, 37 runnable but unrun, 24 named only
+  measured of 61 architectures claiming measured or proven: 6 graded, 18 exercised, 23 runnable but unrun, 14 named in prose only
+  measured 23 architectures claim measured on the strength of a witness file that nothing in this estate executes, and 14 on prose alone; the first law was being satisfied administratively for 37 of 61 claims
+  known_gap only witnesses reachable from a local store can be graded; the suites that read the live estate over ssh are exercised and ungraded
+  known_gap the distribution is graded 0, exercised 44, runnable 36, named 16. Nothing in ninety-six measured claims has been shown able to go red. `exercised` counts a witness that runs in the regression and has never failed, which is a statement about the regression and not about the witness; until a fact it reads is changed and it notices, a green suite and an empty suite are indistinguishable from outside.
+  known_gap this grader existed and was not run. Two sessions of work added witnesses to a pile where nothing was graded, and the exposure was rediscovered by hand-written scans that got the numbers wrong twice before the real instrument was consulted. A tool nobody runs measures nothing.

@@ -1,0 +1,17 @@
+{
+  "schema": "bonfyre.bridge.transform-plan.v1",
+  "id": "legacy-shop-sqlite-to-postgres",
+  "source_engine": "sqlite",
+  "target_engine": "postgres",
+  "tables": [
+    {"source": "customer"},
+    {"source": "product"},
+    {"source": "sales_order"},
+    {"source": "sales_order_line"}
+  ],
+  "probes": [
+    {"id": "line-total", "purpose": "order totals agree", "source_sql": "SELECT order_id, sum(qty * unit_price) FROM sales_order_line GROUP BY order_id ORDER BY order_id", "target_sql": "SELECT order_id, sum(qty * unit_price) FROM sales_order_line GROUP BY order_id ORDER BY order_id"},
+    {"id": "name-like-a", "purpose": "LIKE 'a%' finds the same customers", "source_sql": "SELECT id FROM customer WHERE name LIKE 'a%' ORDER BY id", "target_sql": "SELECT id FROM customer WHERE name LIKE 'a%' ORDER BY id"},
+    {"id": "empty-email", "purpose": "empty and absent email are kept apart", "source_sql": "SELECT count(*) FILTER (WHERE email IS NULL), count(*) FILTER (WHERE email = '') FROM customer", "target_sql": "SELECT count(*) FILTER (WHERE email IS NULL), count(*) FILTER (WHERE email = '') FROM customer"}
+  ]
+}

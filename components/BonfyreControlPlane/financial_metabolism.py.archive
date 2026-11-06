@@ -1,0 +1,908 @@
+"""Financial Metabolism upgrade over the existing economic graphs."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import re
+import sqlite3
+from dataclasses import dataclass
+from decimal import Decimal
+from pathlib import Path
+from typing import Any, Iterable, Mapping, Optional
+
+from physical_derivation import ProviderModelUsageObservation, provider_model_usage_from_receipt
+
+
+TERMINAL_EPOCH_RECEIPT_SCHEMA = "bonfyre.terminal-epoch-receipt.v2"
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS usage_occurrences(
+  usage_id TEXT PRIMARY KEY, target_ref TEXT NOT NULL, resource_ref TEXT NOT NULL,
+  quantity TEXT NOT NULL, unit TEXT NOT NULL, occurred_at TEXT NOT NULL,
+  receipt_ref TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS funding_routes(
+  route_id TEXT PRIMARY KEY, funding_ref TEXT NOT NULL, currency TEXT NOT NULL,
+  remaining TEXT NOT NULL, authority_ref TEXT NOT NULL, active INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS financial_positions(
+  subject_ref TEXT NOT NULL, basis TEXT NOT NULL, currency TEXT NOT NULL,
+  amount TEXT NOT NULL, source_ref TEXT NOT NULL,
+  PRIMARY KEY(subject_ref,basis,currency,source_ref));
+CREATE TABLE IF NOT EXISTS usage_occurrence_details(
+  usage_id TEXT PRIMARY KEY, provider_ref TEXT NOT NULL, model_ref TEXT,
+  route_ref TEXT, physical_receipt_ref TEXT NOT NULL, dimensions_json TEXT NOT NULL,
+  accounts_json TEXT NOT NULL, realization_ref TEXT, evidence_ref TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS usage_attempts(
+  attempt_ref TEXT PRIMARY KEY, usage_id TEXT NOT NULL UNIQUE,
+  realization_ref TEXT NOT NULL, provider_ref TEXT NOT NULL,
+  receipt_ref TEXT NOT NULL, payload_json TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS economic_measures(
+  measure_id TEXT PRIMARY KEY, usage_id TEXT NOT NULL, kind TEXT NOT NULL,
+  basis TEXT NOT NULL, currency TEXT, amount TEXT, price_version_ref TEXT,
+  evidence_ref TEXT NOT NULL, unknown_reason TEXT, price_effective_at TEXT,
+  price_observed_at TEXT);
+CREATE TABLE IF NOT EXISTS cost_allocations(
+  allocation_id TEXT PRIMARY KEY, measure_id TEXT NOT NULL, target_ref TEXT NOT NULL,
+  target_kind TEXT NOT NULL, fraction TEXT, evidence_ref TEXT NOT NULL,
+  allocation_version_ref TEXT);
+CREATE TABLE IF NOT EXISTS financial_events(
+  financial_event_id TEXT PRIMARY KEY, measure_id TEXT NOT NULL, basis TEXT NOT NULL,
+  currency TEXT NOT NULL, amount TEXT NOT NULL, occurred_at TEXT NOT NULL,
+  observed_at TEXT NOT NULL, evidence_ref TEXT NOT NULL);
+"""
+
+
+@dataclass(frozen=True)
+class UsageOccurrence:
+    usage_id: str
+    target_ref: str
+    resource_ref: str
+    quantity: Decimal
+    unit: str
+    occurred_at: str
+    receipt_ref: str
+
+
+@dataclass(frozen=True)
+class DerivationEconomics:
+    usage_id: str
+    currency: str
+    accrued_cost: Decimal
+    rate_source_ref: str
+
+
+@dataclass(frozen=True)
+class ChangeEconomics:
+    currency: str
+    baseline_accrued: Decimal
+    candidate_accrued: Decimal
+
+    @property
+    def delta(self) -> Decimal:
+        return self.candidate_accrued - self.baseline_accrued
+
+
+@dataclass(frozen=True)
+class EconomicMeasure:
+    """A value/cost measure whose basis stays separate from money posting."""
+
+    measure_id: str
+    usage_id: str
+    kind: str
+    basis: str
+    currency: Optional[str]
+    amount: Optional[Decimal]
+    price_version_ref: Optional[str]
+    evidence_ref: str
+    unknown_reason: Optional[str] = None
+    price_effective_at: Optional[str] = None
+    price_observed_at: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class CostAllocation:
+    allocation_id: str
+    measure_id: str
+    target_ref: str
+    target_kind: str
+    fraction: Optional[Decimal]
+    evidence_ref: str
+    allocation_version_ref: str
+
+
+@dataclass(frozen=True)
+class PriceEvidence:
+    """Versioned price evidence; it is not an invoice unless basis is billed."""
+
+    price_version_ref: str
+    basis: str
+    currency: str
+    rate: Decimal
+    evidence_ref: str
+    effective_at: Optional[str] = None
+    observed_at: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class FinancialEvent:
+    """An evidenced bill/payment event, distinct from a usage valuation."""
+
+    financial_event_id: str
+    measure_id: str
+    basis: str
+    currency: str
+    amount: Decimal
+    occurred_at: str
+    observed_at: str
+    evidence_ref: str
+
+
+def ensure_schema(db: sqlite3.Connection) -> None:
+    db.executescript(SCHEMA)
+    # Run8's first reconciliation database predates these explicit revision
+    # coordinates.  Preserve its rows while making every new write carry them.
+    for table, column, definition in (
+        ("economic_measures", "price_effective_at", "TEXT"),
+        ("economic_measures", "price_observed_at", "TEXT"),
+        ("cost_allocations", "allocation_version_ref", "TEXT"),
+        ("usage_occurrence_details", "attempt_ref", "TEXT"),
+        ("usage_occurrence_details", "pricing_evidence_ref", "TEXT"),
+    ):
+        present = {row[1] for row in db.execute(f"PRAGMA table_info({table})")}
+        if column not in present:
+            db.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
+    db.commit()
+
+
+def record_usage(db: sqlite3.Connection, usage: UsageOccurrence) -> None:
+    if usage.quantity < 0 or not usage.receipt_ref:
+        raise ValueError("usage requires nonnegative quantity and a receipt")
+    ensure_schema(db)
+    db.execute(
+        "INSERT INTO usage_occurrences VALUES(?,?,?,?,?,?,?)",
+        (usage.usage_id, usage.target_ref, usage.resource_ref,
+         str(usage.quantity), usage.unit, usage.occurred_at, usage.receipt_ref),
+    )
+    db.commit()
+
+
+def _primary_dimension(observation: ProviderModelUsageObservation) -> tuple[str, Decimal]:
+    """Keep the legacy scalar UsageOccurrence usable without losing dimensions."""
+    for name in ("request_count", "retry_count", "input_tokens", "output_tokens", "cached_input_tokens",
+                 "cache_creation_input_tokens", "reasoning_tokens", "completion_tokens", "context_bytes",
+                 "wall_time_ms", "cpu_seconds", "gpu_seconds", "vram_byte_seconds"):
+        value = observation.dimensions()[name]
+        if value is not None:
+            return name, Decimal(str(value))
+    raise ValueError("a usage receipt with no observable resource dimension cannot become usage")
+
+
+def record_provider_model_usage(db: sqlite3.Connection,
+                                observation: ProviderModelUsageObservation, *,
+                                target_ref: str,
+                                evidence_ref: Optional[str] = None) -> UsageOccurrence:
+    """Close a physical provider receipt into the canonical UsageOccurrence.
+
+    The scalar row preserves compatibility with the original owner; the detail
+    row records the complete multi-dimensional ABI, including explicit nulls.
+    Replaying an identical stable attempt is idempotent; changing its evidence
+    is refused rather than replaced or double-counted.  No price is supplied
+    here, so this operation cannot create money.
+    """
+    dimension, quantity = _primary_dimension(observation)
+    usage = UsageOccurrence(observation.occurrence_id, target_ref,
+                            f"provider-model/{dimension}", quantity, dimension,
+                            observation.observed_at, observation.receipt_ref)
+    ensure_schema(db)
+    accounts = {
+        "provider_account_ref": observation.provider_account_ref,
+        "technical_account_ref": observation.technical_account_ref,
+        "billing_account_ref": observation.billing_account_ref,
+        "agreement_ref": observation.agreement_ref,
+    }
+    attempt_payload = {
+        "usage_id": usage.usage_id, "target_ref": target_ref,
+        "resource_ref": usage.resource_ref, "quantity": str(usage.quantity),
+        "unit": usage.unit, "occurred_at": usage.occurred_at,
+        "provider_ref": observation.provider_ref, "model_ref": observation.model_ref,
+        "route_ref": observation.route_ref, "receipt_ref": observation.receipt_ref,
+        "dimensions": observation.dimensions(), "accounts": accounts,
+        "realization_ref": observation.realization_ref,
+        "evidence_ref": evidence_ref or observation.receipt_ref,
+        "pricing_evidence_ref": observation.pricing_evidence_ref,
+    }
+    payload_json = json.dumps(attempt_payload, sort_keys=True)
+    existing = db.execute(
+        "SELECT usage_id,payload_json FROM usage_attempts WHERE attempt_ref=?",
+        (observation.attempt_ref,),
+    ).fetchone()
+    if existing:
+        if existing != (usage.usage_id, payload_json):
+            prior_id, prior_json = existing
+            try:
+                prior_payload = json.loads(prior_json)
+            except json.JSONDecodeError:
+                prior_payload = None
+            coordinate_keys = ("model_ref", "route_ref")
+            is_coordinate_enrichment = (
+                prior_id == usage.usage_id and isinstance(prior_payload, dict)
+                and all(prior_payload.get(key) in {None, attempt_payload.get(key)} for key in coordinate_keys)
+                and all(prior_payload.get(key) == attempt_payload.get(key)
+                        for key in set(prior_payload) | set(attempt_payload) if key not in coordinate_keys)
+                and any(prior_payload.get(key) is None and attempt_payload.get(key) is not None
+                        for key in coordinate_keys)
+            )
+            if not is_coordinate_enrichment:
+                raise ValueError("attempt identity cannot be replayed with changed usage evidence")
+            # Older reconciliation passes only saw Codex's aggregate terminal
+            # usage.  A later parser can add a model/route coordinate from the
+            # immutable terminal envelope or its command manifest without
+            # changing the physical attempt, usage dimensions, or evidence.
+            db.execute("UPDATE usage_attempts SET payload_json=? WHERE attempt_ref=?",
+                       (payload_json, observation.attempt_ref))
+            db.execute(
+                "UPDATE usage_occurrence_details SET model_ref=?,route_ref=? WHERE usage_id=?",
+                (observation.model_ref, observation.route_ref, usage.usage_id),
+            )
+            db.commit()
+        row = db.execute(
+            "SELECT usage_id,target_ref,resource_ref,quantity,unit,occurred_at,receipt_ref "
+            "FROM usage_occurrences WHERE usage_id=?", (usage.usage_id,),
+        ).fetchone()
+        if not row:
+            raise ValueError("stable attempt is missing its usage occurrence")
+        return UsageOccurrence(row[0], row[1], row[2], Decimal(row[3]), row[4], row[5], row[6])
+    bound_attempt = db.execute(
+        "SELECT attempt_ref FROM usage_attempts WHERE usage_id=?", (usage.usage_id,),
+    ).fetchone()
+    if bound_attempt:
+        raise ValueError("usage identity is already bound to a different stable attempt; retry charging requires a distinct usage identity")
+    legacy_usage = db.execute(
+        "SELECT usage_id,target_ref,resource_ref,quantity,unit,occurred_at,receipt_ref "
+        "FROM usage_occurrences WHERE usage_id=?", (usage.usage_id,),
+    ).fetchone()
+    if legacy_usage:
+        # Some early Run8 ledger rows predate the attempt table.  They can be
+        # made replay-safe only when the immutable carrier receipt reconstructs
+        # *every* stored detail exactly.  A usage-only legacy row has no such
+        # proof and remains refused: assigning an attempt there could collapse
+        # an unrecorded retry into its aggregate.
+        legacy_detail = db.execute(
+            "SELECT provider_ref,model_ref,route_ref,physical_receipt_ref,dimensions_json,accounts_json,"
+            "realization_ref,evidence_ref,attempt_ref,pricing_evidence_ref "
+            "FROM usage_occurrence_details WHERE usage_id=?", (usage.usage_id,),
+        ).fetchone()
+        expected_usage = (usage.usage_id, usage.target_ref, usage.resource_ref, str(usage.quantity),
+                          usage.unit, usage.occurred_at, usage.receipt_ref)
+        expected_detail = (
+            observation.provider_ref, observation.model_ref, observation.route_ref, observation.receipt_ref,
+            json.dumps(observation.dimensions(), sort_keys=True), json.dumps(accounts, sort_keys=True),
+            observation.realization_ref, evidence_ref or observation.receipt_ref, None,
+            observation.pricing_evidence_ref,
+        )
+        if legacy_usage != expected_usage or legacy_detail != expected_detail:
+            raise ValueError("usage identity already exists without this stable attempt identity and receipt-equivalent details")
+        db.execute("UPDATE usage_occurrence_details SET attempt_ref=? WHERE usage_id=?",
+                   (observation.attempt_ref, usage.usage_id))
+        db.execute(
+            "INSERT INTO usage_attempts VALUES(?,?,?,?,?,?)",
+            (observation.attempt_ref, usage.usage_id, observation.realization_ref,
+             observation.provider_ref, observation.receipt_ref, payload_json),
+        )
+        db.commit()
+        return usage
+    db.execute(
+        "INSERT INTO usage_occurrences VALUES(?,?,?,?,?,?,?)",
+        (usage.usage_id, usage.target_ref, usage.resource_ref, str(usage.quantity),
+         usage.unit, usage.occurred_at, usage.receipt_ref),
+    )
+    db.execute(
+        "INSERT INTO usage_occurrence_details(usage_id,provider_ref,model_ref,route_ref,physical_receipt_ref,"
+        "dimensions_json,accounts_json,realization_ref,evidence_ref,attempt_ref,pricing_evidence_ref) "
+        "VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+        (usage.usage_id, observation.provider_ref, observation.model_ref,
+         observation.route_ref, observation.receipt_ref,
+         json.dumps(observation.dimensions(), sort_keys=True),
+         json.dumps(accounts, sort_keys=True), observation.realization_ref,
+         evidence_ref or observation.receipt_ref, observation.attempt_ref,
+         observation.pricing_evidence_ref),
+    )
+    db.execute(
+        "INSERT INTO usage_attempts VALUES(?,?,?,?,?,?)",
+        (observation.attempt_ref, usage.usage_id, observation.realization_ref,
+         observation.provider_ref, observation.receipt_ref, payload_json),
+    )
+    db.commit()
+    return usage
+
+
+def record_economic_measure(db: sqlite3.Connection, measure: EconomicMeasure) -> None:
+    if measure.basis not in {"unknown", "estimated", "billed", "paid", "booked", "credit"}:
+        raise ValueError("economic measure basis must remain explicit")
+    if measure.amount is not None:
+        if (measure.amount < 0 or not measure.currency or not measure.price_version_ref
+                or not measure.price_effective_at or not measure.price_observed_at):
+            raise ValueError("known measure amount requires bitemporal, versioned price evidence")
+    elif not measure.unknown_reason:
+        raise ValueError("unknown measure must say why it is unknown")
+    ensure_schema(db)
+    db.execute(
+        "INSERT OR REPLACE INTO economic_measures("
+        "measure_id,usage_id,kind,basis,currency,amount,price_version_ref,evidence_ref,"
+        "unknown_reason,price_effective_at,price_observed_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+        (measure.measure_id, measure.usage_id, measure.kind, measure.basis,
+         measure.currency, str(measure.amount) if measure.amount is not None else None,
+         measure.price_version_ref, measure.evidence_ref, measure.unknown_reason,
+         measure.price_effective_at, measure.price_observed_at),
+    )
+    db.commit()
+
+
+def record_cost_allocation(db: sqlite3.Connection, allocation: CostAllocation) -> None:
+    if allocation.fraction is not None and not (Decimal("0") <= allocation.fraction <= Decimal("1")):
+        raise ValueError("allocation fraction must be between zero and one")
+    if not allocation.allocation_version_ref:
+        raise ValueError("cost allocation requires an explicit allocation version")
+    ensure_schema(db)
+    if allocation.fraction is not None:
+        allocated = sum(
+            (Decimal(row[0]) for row in db.execute(
+                "SELECT fraction FROM cost_allocations WHERE measure_id=? AND allocation_version_ref=? "
+                "AND allocation_id<>? AND fraction IS NOT NULL",
+                (allocation.measure_id, allocation.allocation_version_ref, allocation.allocation_id),
+            )), Decimal("0"),
+        )
+        if allocated + allocation.fraction > Decimal("1"):
+            raise ValueError("allocation fractions exceed one for this measure and allocation version")
+    existing = db.execute(
+        "SELECT measure_id,target_ref,target_kind,fraction,evidence_ref,allocation_version_ref "
+        "FROM cost_allocations WHERE allocation_id=?", (allocation.allocation_id,),
+    ).fetchone()
+    expected = (allocation.measure_id, allocation.target_ref, allocation.target_kind,
+                str(allocation.fraction) if allocation.fraction is not None else None,
+                allocation.evidence_ref, allocation.allocation_version_ref)
+    if existing:
+        if existing != expected:
+            # The first retained Run8 allocations had the complete target and
+            # evidence binding but predated the required version column.  A
+            # deterministic replay may restore that coordinate only when every
+            # original coordinate is identical; it may not rewrite a version,
+            # fraction, target, or evidence source.
+            if existing[:-1] == expected[:-1] and existing[-1] is None:
+                db.execute("UPDATE cost_allocations SET allocation_version_ref=? WHERE allocation_id=?",
+                           (allocation.allocation_version_ref, allocation.allocation_id))
+                db.commit()
+                return
+            raise ValueError("allocation identity cannot be replayed with changed evidence")
+        return
+    db.execute(
+        "INSERT INTO cost_allocations("
+        "allocation_id,measure_id,target_ref,target_kind,fraction,evidence_ref,allocation_version_ref) "
+        "VALUES(?,?,?,?,?,?,?)",
+        (allocation.allocation_id, allocation.measure_id, allocation.target_ref,
+         allocation.target_kind, str(allocation.fraction) if allocation.fraction is not None else None,
+         allocation.evidence_ref, allocation.allocation_version_ref),
+    )
+    db.commit()
+
+
+def unknown_cost_measure(usage: UsageOccurrence, *, evidence_ref: Optional[str] = None,
+                         reason: str = "provider receipt has no billing truth") -> EconomicMeasure:
+    return EconomicMeasure(f"measure:{usage.usage_id}:cost", usage.usage_id, "cost", "unknown",
+                           None, None, None, evidence_ref or usage.receipt_ref, reason)
+
+
+def value_provider_usage(db: sqlite3.Connection, usage: UsageOccurrence, *, dimension: str,
+                         price: PriceEvidence) -> EconomicMeasure:
+    """Value an observed dimension only with versioned price evidence."""
+    if (price.basis not in {"estimated", "billed"} or price.rate < 0 or not price.evidence_ref
+            or not price.effective_at or not price.observed_at):
+        raise ValueError("price evidence must be nonnegative, evidenced, bitemporal, and estimated or billed")
+    row = db.execute(
+        "SELECT dimensions_json,pricing_evidence_ref FROM usage_occurrence_details WHERE usage_id=?",
+        (usage.usage_id,),
+    ).fetchone()
+    if not row:
+        raise ValueError("usage details required before provider usage can be valued")
+    if row[1] != price.evidence_ref:
+        raise ValueError("known price must match the pricing evidence bound to the usage attempt")
+    quantity = json.loads(row[0]).get(dimension)
+    if quantity is None:
+        raise ValueError("cannot value an unobserved usage dimension")
+    measure = EconomicMeasure(f"measure:{usage.usage_id}:cost:{dimension}", usage.usage_id,
+                              "cost", price.basis, price.currency,
+                              Decimal(str(quantity)) * price.rate, price.price_version_ref,
+                              price.evidence_ref, price_effective_at=price.effective_at,
+                              price_observed_at=price.observed_at)
+    record_economic_measure(db, measure)
+    return measure
+
+
+def allocate_measure_to_trace(db: sqlite3.Connection, measure: EconomicMeasure, *,
+                              work_occurrence_ref: Optional[str] = None,
+                              work_item_ref: Optional[str] = None,
+                              result_ref: Optional[str] = None,
+                              proof_ref: Optional[str] = None,
+                              workstream_ref: Optional[str] = None,
+                              allocation_version_ref: str) -> list[CostAllocation]:
+    """Make allocation causally traversable without pretending it is money."""
+    targets = (("work_occurrence", work_occurrence_ref), ("work_item", work_item_ref),
+               ("result", result_ref), ("proof", proof_ref), ("workstream", workstream_ref))
+    out = []
+    for kind, target in targets:
+        if target:
+            allocation = CostAllocation(f"allocation:{measure.measure_id}:{kind}", measure.measure_id,
+                                        target, kind, None, measure.evidence_ref, allocation_version_ref)
+            record_cost_allocation(db, allocation)
+            out.append(allocation)
+    return out
+
+
+def record_financial_event(db: sqlite3.Connection, event: FinancialEvent) -> None:
+    """Record independently evidenced billing truth without rewriting economics."""
+    if (event.basis not in {"billed", "paid", "booked", "credit"} or event.amount < 0
+            or not event.currency or not event.occurred_at or not event.observed_at or not event.evidence_ref):
+        raise ValueError("financial event requires an evidenced nonnegative non-estimated basis")
+    ensure_schema(db)
+    db.execute("INSERT OR REPLACE INTO financial_events VALUES(?,?,?,?,?,?,?,?)",
+               (event.financial_event_id, event.measure_id, event.basis, event.currency,
+                str(event.amount), event.occurred_at, event.observed_at, event.evidence_ref))
+    db.commit()
+
+
+def finance_why(db: sqlite3.Connection, target_ref: str) -> dict[str, Any]:
+    """Canonical WHY surface for usage/cost by work, result, proof, or stream."""
+    rows = db.execute(
+        "SELECT a.target_kind,u.usage_id,d.attempt_ref,d.realization_ref,d.physical_receipt_ref,d.evidence_ref,"
+        "d.provider_ref,d.model_ref,d.route_ref,d.dimensions_json,m.measure_id,m.basis,m.currency,"
+        "m.amount,m.unknown_reason,m.evidence_ref,a.evidence_ref,a.allocation_version_ref,d.pricing_evidence_ref "
+        "FROM cost_allocations a JOIN economic_measures m ON m.measure_id=a.measure_id "
+        "JOIN usage_occurrence_details d ON d.usage_id=m.usage_id "
+        "JOIN usage_occurrences u ON u.usage_id=d.usage_id WHERE a.target_ref=? ORDER BY u.usage_id",
+        (target_ref,),
+    ).fetchall()
+    return {"target_ref": target_ref, "occurrences": [
+        {"target_kind": kind, "usage_id": usage_id, "attempt_ref": attempt_ref,
+         "realization_ref": realization,
+         "physical_receipt_ref": physical_receipt, "usage_evidence_ref": usage_evidence,
+         "provider": provider, "model": model, "route": route, "dimensions": json.loads(dimensions),
+         "economic_measure_id": measure_id,
+         "basis": basis, "currency": currency, "amount": amount, "unknown_reason": unknown_reason}
+        | {"economic_evidence_ref": economic_evidence, "allocation_evidence_ref": allocation_evidence,
+           "allocation_version_ref": allocation_version, "pricing_evidence_ref": pricing_evidence_ref}
+        for kind, usage_id, attempt_ref, realization, physical_receipt, usage_evidence, provider, model, route, dimensions,
+        measure_id, basis, currency, amount, unknown_reason, economic_evidence, allocation_evidence,
+        allocation_version, pricing_evidence_ref in rows
+    ]}
+
+
+def usage_by_work(db: sqlite3.Connection) -> list[dict[str, Any]]:
+    """Provider/model usage grouped by the explicitly allocated work target."""
+    rows = db.execute(
+        "SELECT a.target_ref,a.target_kind,d.provider_ref,d.model_ref,d.dimensions_json "
+        "FROM cost_allocations a JOIN economic_measures m ON m.measure_id=a.measure_id "
+        "JOIN usage_occurrence_details d ON d.usage_id=m.usage_id "
+        "WHERE a.target_kind IN ('work_occurrence','work_item','workstream') ORDER BY a.target_ref,d.provider_ref"
+    ).fetchall()
+    return [{"target_ref": target, "target_kind": kind, "provider": provider,
+             "model": model, "dimensions": json.loads(dimensions)}
+            for target, kind, provider, model, dimensions in rows]
+
+
+def cost_per_target(db: sqlite3.Connection, target_ref: str) -> dict[str, Any]:
+    """Return a unit cost only when price and allocation both make it derivable."""
+    rows = db.execute(
+        "SELECT m.currency,m.amount,a.fraction,m.basis,m.unknown_reason FROM cost_allocations a "
+        "JOIN economic_measures m ON m.measure_id=a.measure_id WHERE a.target_ref=?",
+        (target_ref,),
+    ).fetchall()
+    if not rows:
+        return {"target_ref": target_ref, "cost_per_target": None, "reason": "no allocated measures"}
+    if any(amount is None for _currency, amount, _fraction, _basis, _reason in rows):
+        return {"target_ref": target_ref, "cost_per_target": None,
+                "reason": "one or more measures have unknown price or billing truth"}
+    if any(fraction is None for _currency, _amount, fraction, _basis, _reason in rows):
+        return {"target_ref": target_ref, "cost_per_target": None,
+                "reason": "one or more measures are attributed but not fractionally allocated"}
+    currencies = {currency for currency, _amount, _fraction, _basis, _reason in rows}
+    if len(currencies) != 1:
+        return {"target_ref": target_ref, "cost_per_target": None,
+                "reason": "multiple currencies cannot be silently combined"}
+    total = sum(Decimal(amount) * Decimal(fraction) for _currency, amount, fraction, _basis, _reason in rows)
+    return {"target_ref": target_ref, "cost_per_target": str(total), "currency": currencies.pop(),
+            "basis": sorted({basis for _currency, _amount, _fraction, basis, _reason in rows})}
+
+
+def value_usage(usage: UsageOccurrence, *, rate: Decimal,
+                currency: str, rate_source_ref: str) -> DerivationEconomics:
+    if rate < 0 or not rate_source_ref:
+        raise ValueError("an admitted nonnegative rate and source are required")
+    return DerivationEconomics(usage.usage_id, currency,
+                               usage.quantity * rate, rate_source_ref)
+
+
+def record_funding_route(db: sqlite3.Connection, *, route_id: str,
+                         funding_ref: str, currency: str, remaining: Decimal,
+                         authority_ref: str, active: bool = True) -> None:
+    if not authority_ref:
+        raise ValueError("funding availability is not spend authority")
+    ensure_schema(db)
+    db.execute("INSERT OR REPLACE INTO funding_routes VALUES(?,?,?,?,?,?)",
+               (route_id, funding_ref, currency, str(remaining),
+                authority_ref, int(active)))
+    db.commit()
+
+
+def choose_funding(db: sqlite3.Connection, *, currency: str,
+                   amount: Decimal) -> Optional[str]:
+    rows = db.execute(
+        "SELECT route_id,remaining FROM funding_routes"
+        " WHERE currency=? AND active=1 ORDER BY route_id", (currency,),
+    )
+    for route_id, remaining in rows:
+        if Decimal(remaining) >= amount:
+            return route_id
+    return None
+
+
+def record_position(db: sqlite3.Connection, *, subject_ref: str, basis: str,
+                    currency: str, amount: Decimal, source_ref: str) -> None:
+    if basis not in {"accrued", "billed", "paid", "booked", "credit"}:
+        raise ValueError("financial basis must remain explicit")
+    ensure_schema(db)
+    db.execute("INSERT OR REPLACE INTO financial_positions VALUES(?,?,?,?,?)",
+               (subject_ref, basis, currency, str(amount), source_ref))
+    db.commit()
+
+
+def _events_from_text(text: str) -> list[dict[str, Any]]:
+    """Recover structured carrier events from live stdout or compaction tails."""
+    decoder = json.JSONDecoder()
+    events: list[dict[str, Any]] = []
+    cursor = 0
+    while True:
+        start = text.find('{"type"', cursor)
+        if start < 0:
+            return events
+        try:
+            event, cursor = decoder.raw_decode(text, start)
+        except json.JSONDecodeError:
+            cursor = start + 7
+            continue
+        if isinstance(event, dict):
+            events.append(event)
+
+
+def _objects_after_key(text: str, key: str) -> list[Mapping[str, Any]]:
+    """Read JSON objects embedded in a carrier result envelope or tail."""
+    decoder = json.JSONDecoder()
+    found: list[Mapping[str, Any]] = []
+    cursor = 0
+    marker = f'"{key}":'
+    while True:
+        at = text.find(marker, cursor)
+        if at < 0:
+            return found
+        start = at + len(marker)
+        while start < len(text) and text[start].isspace():
+            start += 1
+        try:
+            value, cursor = decoder.raw_decode(text, start)
+        except json.JSONDecodeError:
+            cursor = start + 1
+            continue
+        if isinstance(value, Mapping):
+            found.append(value)
+
+
+def _canonical_json_digest(value: Any) -> str:
+    return hashlib.sha256(
+        json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    ).hexdigest()
+
+
+def _command_argv(command: Any) -> Optional[list[str]]:
+    """Accept only a nonempty, string-only carrier command representation."""
+    if not isinstance(command, list) or not command or not all(isinstance(arg, str) for arg in command):
+        return None
+    return list(command)
+
+
+def _codex_launcher_coordinates_from_argv(command: list[str]) -> dict[str, str]:
+    """Extract only coordinates explicitly declared by a Codex invocation."""
+    executable = Path(command[0]).name
+    if executable != "codex":
+        return {}
+
+    coordinates: dict[str, str] = {}
+    if len(command) > 1 and command[1] == "exec":
+        coordinates["route"] = "codex-cli:exec"
+    for index, argument in enumerate(command[1:], 1):
+        if argument in {"--model", "-m"} and index + 1 < len(command):
+            selected = command[index + 1]
+            if selected:
+                coordinates["model"] = selected
+            break
+        if argument.startswith("--model="):
+            selected = argument.removeprefix("--model=")
+            if selected:
+                coordinates["model"] = selected
+            break
+    return coordinates
+
+
+def terminal_epoch_receipt_envelope(epoch: Path) -> dict[str, Any]:
+    """Build the compactable, versioned terminal carrier receipt.
+
+    The command's semantic argv and its canonical digest are both retained.
+    This makes a later compacted epoch independently checkable while avoiding
+    a claim that a missing CLI default was an explicitly selected model.
+    """
+    provider = epoch.name.split("-", 1)[0] or None
+    command_path = epoch / "command.json"
+    command: Optional[list[str]] = None
+    if command_path.is_file():
+        try:
+            command = _command_argv(json.loads(command_path.read_text(encoding="utf-8")))
+        except json.JSONDecodeError:
+            command = None
+    coordinates = _codex_launcher_coordinates_from_argv(command) if command else {}
+    stdout = epoch / "stdout.log"
+    if stdout.is_file():
+        # A terminal carrier event is more specific than its launcher.  It is
+        # copied into the envelope before stdout compaction, so the event's
+        # explicitly emitted coordinate need not be guessed later.
+        for event in reversed(_events_from_text(stdout.read_text(encoding="utf-8", errors="replace"))):
+            if event.get("type") == "turn.completed":
+                for key in ("provider", "model", "route"):
+                    value = event.get(key)
+                    if isinstance(value, str) and value:
+                        coordinates[key] = value
+                break
+    return {
+        "schema": TERMINAL_EPOCH_RECEIPT_SCHEMA,
+        "provider": provider,
+        "model": coordinates.get("model"),
+        "route": coordinates.get("route"),
+        "carrier_command": ({
+            "source": "command.json",
+            "argv": command,
+            "argv_sha256": _canonical_json_digest(command),
+        } if command else None),
+    }
+
+
+def _valid_terminal_epoch_receipt(value: Any, *, expected_provider: str) -> Optional[dict[str, Any]]:
+    """Validate a v2 envelope before it can enrich a retained usage attempt."""
+    if not isinstance(value, Mapping) or value.get("schema") != TERMINAL_EPOCH_RECEIPT_SCHEMA:
+        return None
+    provider = value.get("provider")
+    if provider is not None and (not isinstance(provider, str) or provider != expected_provider):
+        return None
+    command = value.get("carrier_command")
+    if command is not None:
+        if not isinstance(command, Mapping):
+            return None
+        argv = _command_argv(command.get("argv"))
+        if (argv is None or command.get("source") != "command.json"
+                or command.get("argv_sha256") != _canonical_json_digest(argv)):
+            return None
+    coordinates: dict[str, Any] = {}
+    for key in ("provider", "model", "route"):
+        coordinate = value.get(key)
+        if coordinate is not None:
+            if not isinstance(coordinate, str) or not coordinate:
+                return None
+            coordinates[key] = coordinate
+    return coordinates
+
+
+def _epoch_text(epoch: Path) -> tuple[str, Path, Optional[dict[str, Any]]]:
+    stdout = epoch / "stdout.log"
+    if stdout.is_file():
+        return stdout.read_text(encoding="utf-8", errors="replace"), stdout, None
+    compacted = epoch / "compaction.json"
+    if compacted.is_file():
+        try:
+            payload = json.loads(compacted.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            return "", compacted, None
+        provider = epoch.name.split("-", 1)[0]
+        envelope = _valid_terminal_epoch_receipt(
+            payload.get("terminal_epoch_receipt"), expected_provider=provider
+        )
+        for entry in payload.get("files", []):
+            if entry.get("name") == "stdout.log":
+                return str(entry.get("tail_utf8", "")), compacted, envelope
+    return "", stdout, None
+
+
+def _codex_launcher_coordinates(epoch: Path) -> dict[str, str]:
+    """Read identity coordinates explicitly declared by a Codex invocation.
+
+    The terminal ``turn.completed`` usage event is an aggregate and normally
+    does not repeat the invocation's route or selected model.  The immutable
+    per-epoch command manifest is the adjacent carrier receipt for those
+    coordinates.  A CLI default is deliberately *not* treated as a declared
+    model: only an explicit ``--model``/``-m`` value may fill that coordinate.
+    """
+    command_path = epoch / "command.json"
+    if not command_path.is_file():
+        return {}
+    try:
+        command = json.loads(command_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+    command = _command_argv(command)
+    if command is None:
+        return {}
+    return _codex_launcher_coordinates_from_argv(command)
+
+
+def _work_trace(events: Iterable[Mapping[str, Any]], fallback: str) -> tuple[str, str]:
+    rendered = json.dumps(list(events), sort_keys=True)
+    # Agent-message receipts carry the final JSON as a JSON string, so unwrap
+    # its quote escaping before locating the declared work item.
+    unescaped = rendered.replace('\\"', '"')
+    match = re.findall(r'"work_item"\s*:\s*"([^"\\]+)', unescaped)
+    work_item = match[-1] if match else fallback
+    # An explicitly named work item wins over incidental food/housing words in
+    # its carrier prompt (the finance bridge itself is a machine work item).
+    lowered = work_item.lower()
+    if "housing" in lowered:
+        stream = "workstream:run8:housing"
+    elif "food" in lowered:
+        stream = "workstream:run8:food"
+    elif work_item == "r2c-model-usage-finance-closure" or "machine" in lowered:
+        stream = "workstream:run8:machine"
+    else:
+        rendered_lower = rendered.lower()
+        stream = "workstream:run8:housing" if "housing" in rendered_lower else (
+            "workstream:run8:food" if "food" in rendered_lower else "workstream:run8:machine")
+    return work_item, stream
+
+
+def reconcile_run8_epochs(db: sqlite3.Connection, state: Path) -> dict[str, Any]:
+    """Backfill retained Run8 carrier receipts without copying prompts or logs.
+
+    Carrier totals are aggregated occurrences; when a Claude receipt exposes a
+    per-model total, it is preferred over a second aggregate row.  The output
+    persists only usage/economic coordinates and source-digest evidence refs.
+    """
+    ensure_schema(db)
+    inserted: list[str] = []
+    restored_attempts: list[str] = []
+    replayed_attempts: list[str] = []
+    streams: set[str] = set()
+    providers: set[str] = set()
+    for epoch in sorted((state / "epochs").glob("*")):
+        if not epoch.is_dir():
+            continue
+        text, source, compacted_envelope = _epoch_text(epoch)
+        events = _events_from_text(text)
+        embedded_model_usage = _objects_after_key(text, "modelUsage")
+        if not events and not embedded_model_usage:
+            continue
+        provider = epoch.name.split("-", 1)[0]
+        # v6 compaction preserves the terminal envelope after command.json is
+        # removed. Retained v5 epochs remain readable through the adjacent raw
+        # manifest when it still exists; no coordinate is reconstructed when it
+        # does not.
+        launcher_coordinates = (compacted_envelope or (
+            _codex_launcher_coordinates(epoch) if provider == "codex" else {}
+        ))
+        digest = hashlib.sha256(source.read_bytes()).hexdigest() if source.is_file() else "unavailable"
+        receipt_ref = f"receipt:{epoch.name}:{source.name}:sha256:{digest}"
+        work_item, stream = _work_trace(events, f"work:{epoch.name}")
+        model_usage: list[tuple[str, Mapping[str, Any], str]] = []
+        event_model_signatures: set[tuple[str, str]] = set()
+        aggregate_usage: list[tuple[Mapping[str, Any], str]] = []
+        for index, event in enumerate(events):
+            if event.get("type") == "turn.completed" and isinstance(event.get("usage"), Mapping):
+                # Keep terminal-envelope coordinates beside the nested usage
+                # payload.  ProviderModelUsageObservation already gives the
+                # nested usage fields precedence, then reads these coordinates.
+                aggregate_usage.append((event, f"turn-{index}"))
+            message = event.get("modelUsage")
+            if isinstance(message, Mapping):
+                for model, usage in message.items():
+                    if isinstance(usage, Mapping):
+                        model_usage.append((str(model), usage, f"model-{index}-{model}"))
+                        event_model_signatures.add((str(model), json.dumps(usage, sort_keys=True)))
+        # Claude terminal results place modelUsage beside (rather than inside) a
+        # type-tagged event, so it survives compaction as an embedded object.
+        for index, message in enumerate(embedded_model_usage):
+            for model, usage in message.items():
+                if isinstance(usage, Mapping):
+                    signature = (str(model), json.dumps(usage, sort_keys=True))
+                    # The generic tail scanner also sees a typed event's
+                    # modelUsage member.  It is a second parser view of the
+                    # same physical receipt, not a retry.  Typed events retain
+                    # their occurrence identity; only that parser overlap is
+                    # suppressed.
+                    if signature not in event_model_signatures:
+                        model_usage.append((str(model), usage, f"model-tail-{index}-{model}"))
+        chosen = [(model, usage, identity) for model, usage, identity in model_usage]
+        if not chosen:
+            chosen = [(None, usage, identity) for usage, identity in aggregate_usage]
+        for model, usage, identity in chosen:
+            occurrence_id = f"usage:{epoch.name}:{identity}"
+            payload = dict(usage)
+            payload["provider"] = launcher_coordinates.get("provider", provider)
+            # A terminal event wins over its launcher metadata.  The launcher
+            # can safely supply only an explicitly selected model; an omitted
+            # model remains unknown rather than becoming a guessed CLI default.
+            for key, value in launcher_coordinates.items():
+                if payload.get(key) is None:
+                    payload[key] = value
+            if model:
+                payload["model"] = model
+            observation = provider_model_usage_from_receipt(
+                payload, occurrence_id=occurrence_id,
+                attempt_ref=f"attempt:{epoch.name}:{identity}",
+                realization_ref=f"realization:{epoch.name}", receipt_ref=receipt_ref,
+                observed_at=epoch.name.split("-", 1)[-1].split("-", 1)[0],
+            )
+            had_usage = db.execute("SELECT 1 FROM usage_occurrences WHERE usage_id=?",
+                                  (occurrence_id,)).fetchone() is not None
+            had_attempt = db.execute("SELECT 1 FROM usage_attempts WHERE attempt_ref=?",
+                                    (observation.attempt_ref,)).fetchone() is not None
+            usage_row = record_provider_model_usage(
+                db, observation, target_ref=f"work-occurrence:{epoch.name}", evidence_ref=receipt_ref,
+            )
+            measure = unknown_cost_measure(usage_row, evidence_ref=receipt_ref)
+            record_economic_measure(db, measure)
+            allocate_measure_to_trace(
+                db, measure, work_occurrence_ref=f"work-occurrence:{epoch.name}",
+                work_item_ref=f"work-item:{work_item}",
+                result_ref=f"result:{epoch.name}", proof_ref=f"proof:{epoch.name}",
+                workstream_ref=stream, allocation_version_ref="allocation:run8-attribution:v1",
+            )
+            if not had_usage:
+                inserted.append(occurrence_id)
+            elif not had_attempt:
+                restored_attempts.append(observation.attempt_ref)
+            else:
+                replayed_attempts.append(observation.attempt_ref)
+            providers.add(provider)
+            streams.add(stream)
+    return {"usage_occurrences": len(inserted), "restored_attempts": len(restored_attempts),
+            "replayed_attempts": len(replayed_attempts), "providers": sorted(providers),
+            "workstreams": sorted(streams), "cost_basis": "unknown_without_billing_truth"}
+
+
+def main(argv: Optional[list[str]] = None) -> int:
+    parser = argparse.ArgumentParser(description="FinancialMetabolism usage receipt closure")
+    sub = parser.add_subparsers(dest="command", required=True)
+    reconcile = sub.add_parser("reconcile-run8", help="ingest retained epoch carrier receipts")
+    reconcile.add_argument("--state", type=Path, required=True)
+    reconcile.add_argument("--db", type=Path, required=True)
+    reconcile.add_argument("--summary-out", type=Path)
+    why = sub.add_parser("why", help="show usage/cost provenance for a work target")
+    why.add_argument("--db", type=Path, required=True)
+    why.add_argument("target_ref")
+    unit_cost = sub.add_parser("unit-cost", help="derive cost per proof/result/work only when valid")
+    unit_cost.add_argument("--db", type=Path, required=True)
+    unit_cost.add_argument("target_ref")
+    args = parser.parse_args(argv)
+    args.db.parent.mkdir(parents=True, exist_ok=True)
+    db = sqlite3.connect(args.db)
+    try:
+        if args.command == "reconcile-run8":
+            result = reconcile_run8_epochs(db, args.state)
+            if args.summary_out:
+                args.summary_out.parent.mkdir(parents=True, exist_ok=True)
+                args.summary_out.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
+        elif args.command == "why":
+            result = finance_why(db, args.target_ref)
+        else:
+            result = cost_per_target(db, args.target_ref)
+    finally:
+        db.close()
+    print(json.dumps(result, indent=2, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

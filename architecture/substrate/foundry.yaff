@@ -23,13 +23,13 @@ architecture yaff
   invariant a contract representation owns encoding, not the meaning of what it encodes
   forbidden_inference two architectures sharing YaFF -> the same semantics
   native_format yaff
-  source_path architecture/atlas.py
-  source_path components/BonfyreControlPlane/substrate_evidence.py
-  source_path ~/.bonfyre/substrates/v6.1/yaff/source
-  witness architecture/tests/test_atlas.py
+  source_path cmd/BonfyreAtlas/src/main.c
+  source_path architecture/atlas-native.sh
+  source_path components/BonfyreControlPlane/substrate_evidence.py.archive
+  witness bun test architecture/tests/atlas_core.test.mjs
   witness ~/.bonfyre/substrates/v6.1/yaff/semantic-proof.json
   source_lineage Reality Foundry 14-substrate
-
+  known_gap a source this entry named could not be opened from this checkout -- ~/.bonfyre/substrates/v6.1/yaff/source. The line is removed rather than repointed to something that merely looks similar, and what remains listed is the evidence this architecture actually stands on.
 architecture hvm4
   canonical_name HVM4
   family substrate
@@ -37,14 +37,20 @@ architecture hvm4
   layer substrate
   semantic_question What is the bounded reduction of this selected symbolic or computational structure?
   purpose Bounded recursive reduction of selected symbolic/computational structures.
-  maturity implemented
+  maturity measured
+  source_path vendor/hvm4/src/hvm.c
+  source_path vendor/hvm4/src/hvm4
+  witness architecture/tests/hvm4_reduction_test.sh
+  known_gap this entry carried `implemented` with a source_path and a witness that were both .py.archive, and a known_gap reading "installed binary is HVM2 (2.0.22); HVM4 upgrade + hvm-lang front-end still pending". All three were stale: vendor/hvm4/src/hvm4 is a built arm64 binary answering HVM 4.0 that reduces the bench programs vendored beside it. The capability arrived and was never told to the registry, which went on citing evidence that had been retired -- and a capability the estate cannot see is one it will rebuild by hand.
+  known_gap hvm-lang is still not present; programs are written in HVM4 core syntax, and nothing here compiles a higher-level front end down to it
+  known_gap the reduction is sequential; HVM4 describes itself as a sequential Interaction Calculus runtime, so nothing in this estate is yet getting parallel reduction out of it
   internal_calculus interaction-net reduction
   invariant owns reduction mechanics, not the meaning of the structure reduced
   forbidden_inference a reduction completing -> the reduced structure is correct
   native_format helix
   interacts fpq-seed
-  source_path components/BonfyreControlPlane/substrate_hvm.py
-  witness components/BonfyreControlPlane/tests/test_substrate_hvm.py
+  source_path components/BonfyreControlPlane/substrate_hvm.py.archive
+  witness components/BonfyreControlPlane/tests/test_substrate_hvm.py.archive
   source_lineage Reality Foundry 14-substrate
   known_gap installed binary is HVM2 (2.0.22); HVM4 upgrade + hvm-lang front-end still pending
 
@@ -75,7 +81,7 @@ architecture feldera
   layer substrate
   semantic_question What are the incremental consequences of a change to events, tests, CMS, ledgers, or form readiness?
   purpose Incremental maintenance of consequences over GitHub events, test results, CMS changes, ledger updates, form readiness, live queries.
-  maturity measured
+  maturity implemented
   internal_calculus incremental view maintenance
   internal_calculus probe: dbsp-five-transaction-integral
   internal_calculus reachability view: fpq-sli-kv organism route under insert+retract
@@ -87,21 +93,28 @@ architecture feldera
   interacts proof-frontier
   interacts unlock-graph
   command BonfyreProof
-  source_path ~/.bonfyre/substrates/v6.1/feldera/source
+  source_path ~/.bonfyre/substrates/v6.1/feldera/probe
   source_path components/BonfyreControlPlane/substrate/feldera_reachability_incremental.rs
   source_path components/BonfyreControlPlane/substrate/feldera_reachable_capacity.rs
   source_path components/BonfyreControlPlane/substrate/feldera_reachable_capacity_live.rs
   source_path components/BonfyreControlPlane/substrate/feldera_route_set_daemon.rs
   source_path components/BonfyreControlPlane/substrate/feldera_maintained_relations.rs
-  witness components/BonfyreControlPlane/substrate/full_retraction_cascade.sh
+  source_path scripts/feldera-derived-egress.mjs
+  source_path scripts/feldera_derived_egress.py.archive
+  witness scripts/tests/feldera-derived-egress.test.mjs proves the Bun egress keeps the sorted compact payload digest, program-bound occurrence identity, stream parsing and derived-state marking
+  # The retraction-cascade witness was archived, and nothing live replaces it.
+  # A claim whose evidence was retired is not measured any more, so the
+  # maturity is demoted rather than repointed at something convenient.
+  known_gap the retraction cascade witness was archived; measured cannot be
+  known_gap reclaimed until an equivalent runs against the live substrate
   witness components/BonfyreControlPlane/substrate/maintained_relations_witness.sh
-  source_path components/BonfyreControlPlane/substrate_feldera.py
-  source_path components/BonfyreControlPlane/reachability_bridge.py
+  source_path components/BonfyreControlPlane/substrate_feldera.py.archive
+  source_path components/BonfyreControlPlane/reachability_bridge.py.archive
   witness ~/.bonfyre/substrates/v6.1/feldera/semantic-proof.json
   witness ~/.bonfyre/substrates/v6.1/feldera/reachability-proof.json
   witness ~/.bonfyre/substrates/v6.1/feldera/reachable-capacity-proof.json
-  witness components/BonfyreControlPlane/tests/test_substrate_feldera.py
-  witness components/BonfyreControlPlane/tests/test_reachability_bridge.py
+  witness components/BonfyreControlPlane/tests/test_substrate_feldera.py.archive
+  witness components/BonfyreControlPlane/tests/test_reachability_bridge.py.archive
   source_lineage Reality Foundry 14-substrate
   known_gap live-fabric relations now feed the DBSP engine via reachability_bridge (backfilled from real state, DBSP reproduces the Python answer exactly); remaining is a persistent long-lived circuit fed by fabric change-deltas rather than a per-tick reseed
 
@@ -250,7 +263,11 @@ architecture restate
   forbidden_inference durably waiting -> the external event will occur
   interacts work-graph
   source_path ~/.bonfyre/substrates/v6.1/restate/source
+  source_path services/bonfyre-restate-native/src/main.rs
   witness ~/.bonfyre/substrates/v6.1/restate/semantic-proof.json
+  witness services/bonfyre-restate-native/tests/discovery.sh
+  witness tests/restate_integration.sh
+  witness evidence/proofs/worker-lifecycle-restate-recovery.json
   source_lineage Reality Foundry 14-substrate
 
 architecture verus
@@ -270,3 +287,63 @@ architecture verus
   source_path ~/.bonfyre/substrates/v6.1/verus/source
   witness ~/.bonfyre/substrates/v6.1/verus/semantic-proof.json
   source_lineage Reality Foundry 14-substrate
+
+architecture bend
+  canonical_name Bend
+  family substrate
+  domain Reality Foundry
+  maturity measured
+  semantic_question Can a pure predicate be written once and compiled, rather than hand-lowered once per runtime?
+  # Every lowering in the pure tier was written by hand against a runtime core,
+  # so the same predicate was re-expressed once per backend and each
+  # re-expression was a chance to get it wrong. Bend compiles it once. Its
+  # generated core is structurally the lowering that had been written by hand,
+  # which is what validates the hand version rather than merely replacing it.
+  node_types Program
+  node_types CompiledCore
+  edge_types compiles_to
+  state_types compiled
+  invariant a fold yields one value, so what this returns is an aggregate over the frontier and never the frontier; the receipt says which, and the aggregate is checked against the reference's own aggregate rather than entering the set-equality vote
+  invariant the frontend and the runtime are versioned together; bend-lang 0.2.38 declares hvm 2.0.22, which is the runtime already present
+  forbidden_inference a compiled predicate -> a correct one
+  forbidden_inference an aggregate that agrees -> the same answer a set comparison would give
+  computational_form reduction
+  native_format bend
+  source_path scripts/pure-job.mjs
+  witness cmd/BonfyreWebAddress/tests/pure_tier_test.sh
+  measured compiles the candidate predicate and folds it over a tree: 26 survivors and index checksum 394 over the twin cohort, 31 survivors and checksum 868 over the estate's own bridgeable set, agreeing with the reference in both
+  known_gap recovering the frontier itself through Bend needs a different program than a fold and has not been written
+
+architecture native-build-truthfulness
+  canonical_name NativeBuildTruthfulness
+  family substrate
+  domain Substrate
+  maturity measured
+  semantic_question Does the build report what it actually built, and does a caller reading its exit status learn the truth?
+  # The root target printed a per-organ tick, a per-organ failure log, and a
+  # summary line -- and then returned zero regardless, because the recipe's last
+  # statement was the summary echo. Everything needed to see the failure was
+  # already on screen; the one thing missing was that the result reached whoever
+  # asked.
+  node_types Organ
+  node_types Library
+  edge_types builds
+  state_types built
+  state_types failed
+  state_types unavailable
+  invariant the build's exit status follows its own failure count; a summary that reports four failures and returns success is a build that cannot be checked by anything but a person reading the screen
+  invariant CFLAGS reaches an organ through the environment, never as a command-line assignment, because a command-line assignment overrides the organ's own CFLAGS += and silently deletes the flags it needs to compile
+  invariant an organ declares every flag and source it needs rather than inheriting them from whoever invokes it; BonfyreProject built under the root target and failed standalone because the root's default flags happened to carry what its Makefile did not
+  invariant a missing external dependency is a declared absence, reported and skipped; a compile error inside the same library is still fatal, and the two are told apart by probing the dependency rather than by catching the failure
+  forbidden_inference a zero exit from the build -> the organs were built
+  forbidden_inference an organ that builds under the root target -> an organ that builds
+  computational_form derivation
+  native_format text
+  source_path Makefile
+  source_path cmd/BonfyreProject/Makefile
+  source_path cmd/BonfyreDetectObjects/src/main.c
+  witness a deliberately broken organ makes the root target exit 2 and a clean tree makes it exit 0; both were exercised
+  measured the root target reported 99 of 103 organs built and exited 0; passing CFLAGS through the environment instead recovered BonfyreFS and BonfyreQwenFPQ, whose Makefiles had been correct all along
+  measured BonfyreDetectObjects failed on strcasecmp, which is POSIX and lives in strings.h rather than string.h, and BonfyreProject had no include path for the engine and never linked authority.c; both now build standalone and under the root target
+  measured on the estate the root Makefile was a seventeen-line copy of one organ's Makefile, so a unit whose job was to build every organ ran one organ's rules from the wrong directory and failed for six weeks with an empty journal; the estate now builds 102 of 102
+  known_gap libngtcp2 1.24.0 plus crypto support is present and `lib/libquic-transport` builds locally. It now exposes an application-selected ALPN, DATAGRAM transport parameter and raw uni/bidirectional streams so MOQT does not inherit BFQS artifact framing; the native MOQT consumer proves paired-control ordering and request refusal, while persistent session/relay behavior remains above the substrate. Any connection attempting 0-RTT, including one using an ordinary session-token connect call, explicitly bars effecting operations from stream admission.

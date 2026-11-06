@@ -1,0 +1,15 @@
+12 architectures claim measured or proven
+
+  graded       5   a fact it reads was changed and it went red
+  exercised    0   it is in the regression, but has never been shown to fail
+  runnable     4   a file exists; nothing runs it here
+  named        3   a witness is described in prose only
+
+  graded:
+    e-command                          cmd/Fixture/tests/run.sh
+    f-root-nested                      tests/deep/nested.sh
+    i-test                             cmd/Fixture/tests/grade_test.sh
+    j-e2e                              cmd/Fixture/tests/grade_e2e.sh
+    k-first-live                       docs/readme.txt
+
+  cannot infer: a graded witness -> a correct architecture; mutation shows the witness reacts to the state it reads

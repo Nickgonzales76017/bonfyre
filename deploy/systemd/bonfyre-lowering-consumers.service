@@ -1,0 +1,18 @@
+[Unit]
+Description=Bonfyre typed MCP, ProtocolCompiler, and MaterialCompiler lowerer consumers
+After=bonfyre-address-worker.service bonfyre-websub-drain.service
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=ubuntu
+EnvironmentFile=/etc/bonfyre/address-plane.env
+# This process accepts only typed lowering envelopes. It recreates disposable
+# MCP/protocol artifacts or issues a ForeignTwin observation demand; it does
+# not grant authority, enact a protocol, call a carrier, or record evidence.
+ExecStart=/usr/local/bin/bonfyre-lowering-workers drain --db ${BONFYRE_LOWERING_WORKER_DB} --lowerer-dir ${BONFYRE_LOWERER_INBOX} --owner-contract-image ${BONFYRE_OWNER_CONTRACT_IMAGE} --mcp-closure ${BONFYRE_MCP_CLOSURE_SNAPSHOT} --protocols ${BONFYRE_PROTOCOLS_JSONL} --cms ${BONFYRE_CMS_DB} --external-estate ${BONFYRE_EXTERNAL_ESTATE_DB} --foreign-receipts ${BONFYRE_FOREIGN_RECEIPTS} --demand-dir ${BONFYRE_FOREIGN_OBSERVATION_DEMANDS} --limit 256
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/bonfyre

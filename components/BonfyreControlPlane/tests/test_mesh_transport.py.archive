@@ -1,0 +1,741 @@
+"""Remote mesh transport: what the public branch may carry, and what happens to
+an envelope whose declared address does not bind its own content.
+
+The live 2026-08-21 mesh refused two external envelopes with
+``content_sha256 mismatch`` and kept no durable record of either refusal. These
+tests fence that: a refusal is a preserved disagreement, a re-fetch is counted
+rather than repeated blindly, and an already-published identical address is a
+success rather than a retry livelock.
+"""
+
+import hashlib
+import json
+import sqlite3
+import sys
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+from threading import Barrier
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+import mesh_transport as mt
+import evidence_graphs as eg
+
+
+def _db():
+    db = sqlite3.connect(":memory:")
+    db.row_factory = sqlite3.Row
+    mt.ensure_schema(db)
+    return db
+
+
+def _work_db():
+    db = _db()
+    db.execute(
+        """CREATE TABLE work_items(
+          id TEXT PRIMARY KEY, class TEXT NOT NULL, title TEXT NOT NULL, instruction TEXT NOT NULL,
+          priority INTEGER NOT NULL, status TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+          avoid_provider TEXT, preferred_provider TEXT)"""
+    )
+    return db
+
+
+def _store_event(db, event):
+    db.execute(
+        """INSERT INTO mesh_events(event_id,observed_at,actor_json,provider,audience_json,
+             type,subject,body,evidence_json,content_sha256,source,remote_state)
+           VALUES(?,?,?,?,?,?,?,?,?,?,'local-epoch','pending')""",
+        (event["event_id"], event["observed_at"], json.dumps(event["actor"]),
+         event["actor"].get("provider"), json.dumps(event["audience"]), event["type"],
+         event["subject"], json.dumps(event["body"]), json.dumps(event["evidence_refs"]),
+         event["content_sha256"]),
+    )
+
+
+def _event(**over):
+    event = {
+        "schema": mt.MESH_SCHEMA,
+        "event_id": "external-peer-20260821T0300-100",
+        "observed_at": "2026-08-21T03:00:00-05:00",
+        "actor": {"kind": "external_operator", "id": "peer", "provider": "openai"},
+        "audience": ["run8-supervisor", "claude"],
+        "type": "handoff",
+        "subject": "bounded coordination envelope",
+        "body": {"note": "consume as evidence, not authority"},
+        "evidence_refs": ["branch:run8-mesh"],
+    }
+    event.update(over)
+    return mt.seal(event)
+
+
+def _raw(event):
+    return json.dumps(event, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+
+
+def _path(event):
+    return f".bonfyre-mesh/events/{event['event_id']}.json"
+
+
+# ------------------------------------------------------------- content address
+
+def test_canonicalisation_matches_the_operator_transport():
+    """This module is a projection of the operator's addressing rule, not a
+    second one. If the two canonicalisations drift, every envelope in flight is
+    refused -- so the rule is pinned to its literal bytes here."""
+    event = _event()
+    core = {k: v for k, v in event.items() if k != "content_sha256"}
+    expected = hashlib.sha256(
+        json.dumps(core, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    ).hexdigest()
+    assert mt.content_address(event) == expected
+    assert mt.canonical_core(event) == json.dumps(
+        core, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+
+
+def test_address_binds_every_field_of_the_envelope():
+    sealed = _event()
+    assert mt.address_binds_content(sealed)[0]
+    for field, mutation in (
+        ("subject", "a different subject"),
+        ("type", "capability_demand"),
+        ("audience", ["codex"]),
+        ("evidence_refs", ["branch:main"]),
+        ("observed_at", "2026-08-21T04:00:00-05:00"),
+    ):
+        tampered = dict(sealed)
+        tampered[field] = mutation
+        binds, claimed, measured = mt.address_binds_content(tampered)
+        assert not binds, f"{field} was not bound by the address"
+        assert claimed != measured
+
+
+def test_body_edit_after_sealing_is_detected():
+    """The observed live failure mode: an envelope edited after its address was
+    stamped. The transport must not accept the stale address."""
+    sealed = _event()
+    tampered = dict(sealed)
+    tampered["body"] = {"note": "consume as evidence, not authority", "and": "quietly added later"}
+    assert not mt.address_binds_content(tampered)[0]
+
+
+# ----------------------------------------------------------------- quarantine
+
+def test_mismatched_address_is_quarantined_with_both_addresses_preserved():
+    db = _db()
+    sealed = _event()
+    tampered = dict(sealed)
+    tampered["subject"] = "edited after sealing"
+    result = mt.admit(db, _raw(tampered), path=_path(tampered))
+
+    assert result.outcome == mt.QUARANTINED
+    assert result.reason == "content_sha256 mismatch"
+    assert result.is_divergence
+    # Both observations survive: neither carrier's view is discarded.
+    row = mt.quarantined(db)[0]
+    assert row["claimed_address"] == sealed["content_sha256"]
+    assert row["measured_address"] == mt.content_address(tampered)
+    assert row["claimed_address"] != row["measured_address"]
+
+
+def test_requarantine_counts_attempts_instead_of_duplicating():
+    """The import loop re-fetches every unimported path every cycle. Without an
+    attempt counter a permanently unbindable envelope is silently re-refused
+    forever and nobody can see that it is happening."""
+    db = _db()
+    tampered = dict(_event())
+    tampered["subject"] = "edited after sealing"
+    for _ in range(3):
+        mt.admit(db, _raw(tampered), path=_path(tampered))
+    rows = mt.quarantined(db)
+    assert len(rows) == 1
+    assert rows[0]["attempts"] == 3
+
+
+def test_divergence_report_exports_addresses_and_never_the_refused_content():
+    """What goes back to the producer is what it needs to re-seal -- the two
+    addresses -- not an echo of the payload we just refused to trust."""
+    db = _db()
+    tampered = dict(_event())
+    tampered["body"] = {"note": "consume as evidence, not authority", "secret_ish": "edited later"}
+    mt.admit(db, _raw(tampered), path=_path(tampered))
+
+    report = mt.divergence_report(db)
+    assert len(report) == 1
+    assert report[0]["declared_address"] and report[0]["measured_address"]
+    assert report[0]["declared_address"] != report[0]["measured_address"]
+    encoded = json.dumps(report)
+    assert "edited later" not in encoded
+    assert "consume as evidence" not in encoded
+
+    assert mt.mark_divergence_reported(db, [report[0]["event_id"]]) == 1
+    assert mt.quarantined(db)[0]["divergence_reported"] == 1
+
+
+def test_quarantine_projects_typed_falsifying_evidence_without_raw_payload():
+    db = _db()
+    tampered = dict(_event())
+    tampered["body"] = {"note": "refused payload must never enter EvidenceGraph"}
+    mt.admit(db, _raw(tampered), path=_path(tampered))
+
+    assert mt.project_quarantines_into_evidence(db) == 1
+    row = mt.quarantined(db)[0]
+    assert row["evidence_projected"] == 1
+    evidence, claim = mt._quarantine_evidence_ids(db.execute(
+        "SELECT event_id,reason,claimed_address,measured_address FROM mesh_quarantine"
+    ).fetchone())
+    assert db.execute(
+        "SELECT 1 FROM evidence_relations WHERE evidence=? AND kind=? AND claim=?",
+        (evidence, eg.FALSIFIES, claim),
+    ).fetchone()
+    assert mt.project_quarantines_into_evidence(db) == 0
+    projected_text = "\n".join("|".join(map(str, row)) for row in db.execute(
+        "SELECT evidence,kind,claim FROM evidence_relations"
+    ))
+    assert "refused payload" not in projected_text
+
+
+def test_structural_defects_are_quarantined_not_dropped():
+    db = _db()
+    mt.admit(db, "{not json", path=".bonfyre-mesh/events/broken-envelope-001.json")
+    mt.admit(db, _raw(_event(type="gossip", event_id="external-peer-20260821T0301-101")),
+             path=".bonfyre-mesh/events/external-peer-20260821T0301-101.json")
+    reasons = {r["reason"] for r in mt.quarantined(db)}
+    assert any("unparseable" in r for r in reasons)
+    assert "unsupported mesh event type" in reasons
+    # Structural defects are not address disagreements, so they are not reported
+    # back as divergence.
+    assert mt.divergence_report(db) == []
+
+
+def test_wellformed_envelope_is_admitted_then_deduplicated():
+    db = _db()
+    sealed = _event()
+    assert mt.admit(db, _raw(sealed), path=_path(sealed)).outcome == mt.ADMITTED
+    db.execute(
+        """INSERT INTO mesh_events(event_id,observed_at,actor_json,audience_json,type,subject,
+             body,evidence_json,content_sha256,source)
+           VALUES(?,?,?,?,?,?,?,?,?,'remote-github')""",
+        (sealed["event_id"], sealed["observed_at"], json.dumps(sealed["actor"]),
+         json.dumps(sealed["audience"]), sealed["type"], sealed["subject"],
+         json.dumps(sealed["body"]), json.dumps(sealed["evidence_refs"]), sealed["content_sha256"]),
+    )
+    assert mt.admit(db, _raw(sealed), path=_path(sealed)).outcome == mt.DUPLICATE
+    assert mt.quarantined(db) == []
+
+
+def test_existing_event_id_with_different_bound_content_is_quarantined():
+    """Seeing an id once must not make later remote bytes invisible."""
+    db = _db()
+    original = _event()
+    assert mt.admit(db, _raw(original), path=_path(original)).outcome == mt.ADMITTED
+    db.execute(
+        """INSERT INTO mesh_events(event_id,observed_at,actor_json,audience_json,type,subject,
+             body,evidence_json,content_sha256,source)
+           VALUES(?,?,?,?,?,?,?,?,?,'remote-github')""",
+        (original["event_id"], original["observed_at"], json.dumps(original["actor"]),
+         json.dumps(original["audience"]), original["type"], original["subject"],
+         json.dumps(original["body"]), json.dumps(original["evidence_refs"]), original["content_sha256"]),
+    )
+    replacement = _event(subject="same id, independently sealed replacement")
+    result = mt.admit(db, _raw(replacement), path=_path(replacement))
+
+    assert result.outcome == mt.QUARANTINED
+    assert result.reason == "event_id collision"
+    assert result.claimed_address == original["content_sha256"]
+    assert result.measured_address == replacement["content_sha256"]
+    assert mt.divergence_report(db)[0]["reason"] == "event_id collision"
+
+
+# ---------------------------------------------------------------- privacy gate
+
+def test_privacy_gate_refuses_private_paths_and_token_shapes():
+    for body in (
+        {"log": "failed reading /Users/someone/Documents/private/notes.md"},
+        {"log": "failed reading /home/someone/secrets/notes.md"},
+        {"cmd": "export GITHUB_TOKEN=ghp_AAAAAAAAAAAAAAAAAAAA"},
+        {"cmd": "api_key: aaaaaaaaaaaaaaaaaaaa"},
+    ):
+        safe, reason = mt.public_safe(_event(body=body), home="/nonexistent-home-sentinel")
+        assert not safe, body
+        assert reason
+
+
+def test_privacy_gate_traverses_lists_not_only_objects():
+    """The fields that actually carry paths and commands are all lists.
+
+    A gate that walks objects but not lists never inspects ``evidence_refs``,
+    ``audience``, ``body.changed_paths`` or ``body.tests[].command``. That
+    exact hole published a home path in receipt
+    ``local-2b5745a7e20f61978cfcdbb81409`` while the gate reported the envelope
+    safe, so every case below is a list position.
+    """
+    home = "/Users/someone"
+    for label, event in (
+        ("evidence_refs", _event(evidence_refs=["src:/Users/someone/Documents/private.md"])),
+        ("audience", _event(audience=["run8-supervisor", "/home/someone/keys"])),
+        ("body list of strings", _event(body={"changed_paths": ["/Users/someone/x.py"]})),
+        ("body list of objects", _event(
+            body={"tests": [{"command": "cd /Users/someone/repo", "result": "ok"}]})),
+        ("secret in a list", _event(
+            body={"tests": [{"command": "run", "result": "api_key: aaaaaaaaaaaaaaaaaaaa"}]})),
+        ("nested lists", _event(body={"outer": [[{"note": "ghp_AAAAAAAAAAAAAAAAAAAA"}]]})),
+    ):
+        safe, reason = mt.public_safe(event, home=home)
+        assert not safe, label
+        assert reason
+
+
+def test_privacy_gate_refuses_structured_raw_provider_payloads_and_authority_grants():
+    for body in (
+        {"raw_prompt": "bounded-looking but private"},
+        {"stdout": "provider transcript"},
+        {"nested": {"raw_log": "line one"}},
+        {"authority_grant": "may mutate upstream"},
+    ):
+        safe, reason = mt.public_safe(_event(body=body), home="/nonexistent-home-sentinel")
+        assert not safe, body
+        assert "forbidden private payload field" in reason
+
+
+def test_unexpected_top_level_authority_field_is_structurally_refused():
+    event = _event(authority={"granted": True})
+    assert mt.structural_reason(event) == "unexpected event fields: authority"
+
+
+def test_privacy_gate_refuses_an_inbound_envelope_before_we_could_requote_it():
+    """An upstream leak must not become our publication: the gate runs on import
+    too, so a leaking envelope is quarantined rather than admitted into state we
+    later quote back onto the public branch."""
+    db = _db()
+    leaky = _event(body={"path": "/Users/someone/Documents/Bonfyre/state.sqlite3"})
+    result = mt.admit(db, _raw(leaky), path=_path(leaky), home="/nonexistent-home-sentinel")
+    assert result.outcome == mt.QUARANTINED
+    assert result.reason == "event contains private absolute path"
+    assert not result.is_divergence
+
+
+def test_oversized_envelope_is_bounded():
+    huge = _event(body={"blob": "x" * (mt.MAX_BODY + 10)})
+    assert mt.structural_reason(huge) == "body exceeds bound"
+
+
+# -------------------------------------------------------- WorkGraph projection
+def test_local_challenge_materializes_for_other_provider_not_its_author():
+    db = _work_db()
+    event = _event(
+        event_id="local-codex-proof-001",
+        actor={"kind": "provider_epoch", "id": "codex-epoch", "provider": "codex"},
+        audience=["claude", "run8-supervisor"],
+        type="proof_challenge",
+        subject="Adversarially replay the mesh routing fence",
+    )
+
+    assert mt.materialize_coordination_work(db, event)
+    row = db.execute("SELECT * FROM work_items").fetchone()
+    assert row["id"] == "mesh-local-codex-proof-001"
+    assert row["class"] == "proof_replay_backtest"
+    assert row["avoid_provider"] == "codex"
+    assert row["preferred_provider"] == "claude"
+    assert event["event_id"] in row["instruction"]
+    assert not mt.materialize_coordination_work(db, event), "projection must be idempotent"
+
+
+def test_remote_challenge_can_prefer_sole_local_recipient_without_false_exclusion():
+    db = _work_db()
+    event = _event(type="review_request", audience=["codex", "run8-supervisor"])
+    assert mt.materialize_coordination_work(db, event)
+    row = db.execute("SELECT avoid_provider,preferred_provider FROM work_items").fetchone()
+    assert row["avoid_provider"] is None
+    assert row["preferred_provider"] == "codex"
+
+
+def test_separator_aliasing_cannot_merge_two_distinct_obligations():
+    """``:`` is legal in an event id and folds to ``-`` in a work id stem.
+
+    Two envelopes with different content addresses must not collapse onto one
+    obligation -- the second would be dropped while ``materialize`` reported
+    the same ``False`` an honest idempotent replay reports.
+    """
+    db = _work_db()
+    first = _event(event_id="local-aaaaaaaaaaaaaaaaaaaa", type="proof_challenge", subject="first")
+    second = _event(event_id="local:aaaaaaaaaaaaaaaaaaaa", type="proof_challenge", subject="second")
+    assert mt.structural_reason(second) is None, "the colon form is a legal event id"
+    assert first["content_sha256"] != second["content_sha256"]
+
+    assert mt.materialize_coordination_work(db, first)
+    assert mt.materialize_coordination_work(db, second), "distinct events keep distinct obligations"
+    ids = [r["id"] for r in db.execute("SELECT id FROM work_items ORDER BY id")]
+    assert len(set(ids)) == 2, ids
+
+
+def test_truncation_cannot_merge_two_distinct_obligations():
+    db = _work_db()
+    shared = "external-chatgpt-" + "x" * (mt.MAX_WORK_ID_STEM - len("external-chatgpt-"))
+    assert len(shared) == mt.MAX_WORK_ID_STEM
+    first = _event(event_id=shared + "-alpha", type="proof_challenge", subject="first")
+    second = _event(event_id=shared + "-beta", type="proof_challenge", subject="second")
+
+    assert mt.materialize_coordination_work(db, first)
+    assert mt.materialize_coordination_work(db, second)
+    assert db.execute("SELECT count(DISTINCT id) FROM work_items").fetchone()[0] == 2
+
+
+def test_work_ids_stay_bounded_and_prefixed():
+    long_id = "external-chatgpt-" + "y" * 160
+    derived = mt.work_item_id(long_id)
+    assert derived.startswith("mesh-")
+    assert len(derived) <= len("mesh-") + mt.MAX_WORK_ID_STEM
+
+
+def test_lossless_event_ids_keep_their_existing_work_id():
+    """Injectivity must not rename obligations the live WorkGraph already owns."""
+    for event_id in (
+        "local-746b1d0bc6cbc4467780842d8046",
+        "external-chatgpt-20260821T0058-001",
+        "local-codex-proof-001",
+    ):
+        assert mt.work_item_id(event_id) == "mesh-" + event_id
+
+
+def test_non_actionable_handoff_stays_event_input_not_automatic_work():
+    db = _work_db()
+    assert not mt.materialize_coordination_work(db, _event(type="handoff"))
+    assert db.execute("SELECT count(*) FROM work_items").fetchone()[0] == 0
+
+
+# --------------------------------------------------- delivery acknowledgement
+def test_ack_requires_a_real_delivery_for_the_same_consumer():
+    db = _db()
+    event = _event(type="proof_challenge")
+    _store_event(db, event)
+
+    accepted, reason = mt.acknowledge_delivery(
+        db, event["event_id"], "claude", result="consumed by claude-epoch")
+
+    assert not accepted
+    assert reason == "event was not delivered to this consumer"
+    assert db.execute("SELECT count(*) FROM mesh_delivery").fetchone()[0] == 0
+
+
+def test_author_cannot_ack_its_own_cross_provider_challenge():
+    db = _db()
+    event = _event(
+        event_id="local-codex-cross-provider-ack",
+        actor={"kind": "provider_epoch", "id": "codex-epoch", "provider": "codex"},
+        audience=["claude", "run8-supervisor"],
+        type="proof_challenge",
+    )
+    _store_event(db, event)
+    db.execute(
+        "INSERT INTO mesh_delivery(event_id,consumer,delivered_at) VALUES(?,?,?)",
+        (event["event_id"], "codex", "2026-08-21T03:00:01-05:00"),
+    )
+
+    accepted, reason = mt.acknowledge_delivery(
+        db, event["event_id"], "codex", result="self-attested")
+
+    assert not accepted
+    assert "originating provider" in reason
+    row = db.execute("SELECT acked_at,result FROM mesh_delivery").fetchone()
+    assert row["acked_at"] is None
+    assert row["result"] is None
+
+
+def test_other_provider_can_idempotently_ack_a_delivered_challenge():
+    db = _db()
+    event = _event(
+        event_id="local-codex-cross-provider-received",
+        actor={"kind": "provider_epoch", "id": "codex-epoch", "provider": "codex"},
+        audience=["claude", "run8-supervisor"],
+        type="proof_challenge",
+    )
+    _store_event(db, event)
+    db.execute(
+        "INSERT INTO mesh_delivery(event_id,consumer,delivered_at) VALUES(?,?,?)",
+        (event["event_id"], "claude", "2026-08-21T03:00:01-05:00"),
+    )
+
+    assert mt.acknowledge_delivery(
+        db, event["event_id"], "claude", result="consumed by claude-epoch") == (
+            True, "acknowledged")
+    first = db.execute(
+        "SELECT acked_at,result FROM mesh_delivery WHERE event_id=? AND consumer='claude'",
+        (event["event_id"],),
+    ).fetchone()
+    assert first["acked_at"]
+    assert first["result"] == "consumed by claude-epoch"
+    assert mt.acknowledge_delivery(
+        db, event["event_id"], "claude", result="replacement") == (
+            True, "already acknowledged")
+    second = db.execute(
+        "SELECT acked_at,result FROM mesh_delivery WHERE event_id=? AND consumer='claude'",
+        (event["event_id"],),
+    ).fetchone()
+    assert dict(second) == dict(first)
+
+
+def test_sqlite_guard_rejects_stale_carrier_ack_upserts():
+    """A long-running carrier can retain old Python after a hot upgrade. The
+    durable store still refuses its former INSERT..ON CONFLICT ack pattern."""
+    db = _db()
+    event = _event(
+        event_id="local-codex-stale-carrier",
+        actor={"kind": "provider_epoch", "id": "codex-epoch", "provider": "codex"},
+        audience=["claude", "run8-supervisor"],
+        type="review_request",
+    )
+    _store_event(db, event)
+
+    # No delivery exists: an acknowledgement cannot create one.
+    db.execute(
+        """INSERT INTO mesh_delivery(event_id,consumer,delivered_at,acked_at,result)
+           VALUES(?,?,?,?,?) ON CONFLICT(event_id,consumer) DO UPDATE SET
+             acked_at=excluded.acked_at,result=excluded.result""",
+        (event["event_id"], "claude", "now", "now", "fabricated"),
+    )
+    assert db.execute("SELECT count(*) FROM mesh_delivery").fetchone()[0] == 0
+
+    for consumer in ("codex", "claude"):
+        db.execute(
+            "INSERT INTO mesh_delivery(event_id,consumer,delivered_at) VALUES(?,?,?)",
+            (event["event_id"], consumer, "delivered"),
+        )
+        db.execute(
+            """INSERT INTO mesh_delivery(event_id,consumer,delivered_at,acked_at,result)
+               VALUES(?,?,?,?,?) ON CONFLICT(event_id,consumer) DO UPDATE SET
+                 acked_at=excluded.acked_at,result=excluded.result""",
+            (event["event_id"], consumer, "now", "now", "stale carrier"),
+        )
+
+    codex = db.execute(
+        "SELECT acked_at FROM mesh_delivery WHERE event_id=? AND consumer='codex'",
+        (event["event_id"],),
+    ).fetchone()
+    claude = db.execute(
+        "SELECT acked_at,result FROM mesh_delivery WHERE event_id=? AND consumer='claude'",
+        (event["event_id"],),
+    ).fetchone()
+    assert codex["acked_at"] is None
+    assert claude["acked_at"] == "now"
+    assert claude["result"] == "stale carrier"
+
+    # A repeated stale upsert cannot replace the first durable consumer receipt.
+    db.execute(
+        """INSERT INTO mesh_delivery(event_id,consumer,delivered_at,acked_at,result)
+           VALUES(?,?,?,?,?) ON CONFLICT(event_id,consumer) DO UPDATE SET
+             acked_at=excluded.acked_at,result=excluded.result""",
+        (event["event_id"], "claude", "later", "later", "replacement"),
+    )
+    claude = db.execute(
+        "SELECT delivered_at,acked_at,result FROM mesh_delivery WHERE event_id=? AND consumer='claude'",
+        (event["event_id"],),
+    ).fetchone()
+    assert dict(claude) == {
+        "delivered_at": "delivered", "acked_at": "now", "result": "stale carrier"}
+
+
+def test_pre_fence_self_acknowledgement_is_reopened_without_erasing_it():
+    """The fence must be retroactive, not merely prospective.
+
+    ``acknowledgement_eligibility`` was added after codex had already closed
+    its own challenge ``local-746b1d0bc6cbc4467780842d8046``. A row written
+    before a fence exists is still a false completion; reconciliation reopens
+    it, and keeps the prior closure so the divergence stays auditable.
+    """
+    db = _db()
+    event = _event(
+        event_id="local-codex-pre-fence-ack",
+        actor={"kind": "provider_epoch", "id": "codex-epoch", "provider": "codex"},
+        audience=["claude", "run8-supervisor"],
+        type="proof_challenge",
+    )
+    _store_event(db, event)
+    # Recreate bytes written by the pre-fence carrier, then reinstall today's
+    # durable guards before running the retroactive reconciliation.
+    db.execute("DROP TRIGGER mesh_ack_insert_guard")
+    db.execute("DROP TRIGGER mesh_ack_update_guard")
+    db.executemany(
+        "INSERT INTO mesh_delivery(event_id,consumer,delivered_at,acked_at,result) VALUES(?,?,?,?,?)",
+        [
+            (event["event_id"], "codex", "2026-08-21T03:00:01-05:00",
+             "2026-08-21T03:10:00-05:00", "consumed by codex-epoch"),
+            (event["event_id"], "claude", "2026-08-21T03:00:02-05:00",
+             "2026-08-21T03:20:00-05:00", "consumed by claude-epoch"),
+        ],
+    )
+    mt.ensure_schema(db)
+
+    findings = mt.reconcile_ineligible_acknowledgements(db)
+
+    assert [f["consumer"] for f in findings] == ["codex"], "only the author's ack is ineligible"
+    author = db.execute(
+        "SELECT acked_at,result FROM mesh_delivery WHERE event_id=? AND consumer='codex'",
+        (event["event_id"],),
+    ).fetchone()
+    assert author["acked_at"] is None, "the obligation is open again"
+    assert "consumed by codex-epoch" in author["result"], "the prior closure survives"
+    assert "retracted" in author["result"]
+    other = db.execute(
+        "SELECT acked_at,result FROM mesh_delivery WHERE event_id=? AND consumer='claude'",
+        (event["event_id"],),
+    ).fetchone()
+    assert other["acked_at"] == "2026-08-21T03:20:00-05:00", "a legitimate ack is untouched"
+    assert mt.reconcile_ineligible_acknowledgements(db) == [], "reconciliation is idempotent"
+
+
+def test_reconciliation_does_not_reopen_a_self_ack_on_a_non_actionable_event():
+    """The sweep may not be broader than the trigger it enforces.
+
+    ``mesh_ack_update_guard`` refuses a self-ack only on an actionable type.
+    A provider confirming it saw its own ``provider_delta`` satisfies no
+    obligation, so retracting that row would reopen a delivery the database
+    itself would happily close -- two layers of one fence disagreeing.
+    """
+    db = _db()
+    event = _event(
+        event_id="local-codex-informational",
+        actor={"kind": "provider_epoch", "id": "codex-epoch", "provider": "codex"},
+        audience=["claude", "run8-supervisor"],
+        type="provider_delta",
+    )
+    _store_event(db, event)
+    db.execute(
+        "INSERT INTO mesh_delivery(event_id,consumer,delivered_at) VALUES(?,?,?)",
+        (event["event_id"], "codex", "2026-08-21T03:00:01-05:00"),
+    )
+    db.execute(
+        "UPDATE mesh_delivery SET acked_at=?,result=? WHERE event_id=? AND consumer='codex'",
+        ("2026-08-21T03:10:00-05:00", "consumed by codex-epoch", event["event_id"]),
+    )
+
+    assert mt.reconcile_ineligible_acknowledgements(db) == []
+    row = db.execute("SELECT acked_at,result FROM mesh_delivery").fetchone()
+    assert row["acked_at"] == "2026-08-21T03:10:00-05:00"
+    assert row["result"] == "consumed by codex-epoch"
+
+
+# ---------------------------------------------------------- export convergence
+
+def test_identical_content_already_published_is_synced_not_a_retry():
+    """The retry livelock: event ids are deterministic, so two carriers can push
+    the same address. A 422 whose remote bytes equal ours means the content
+    arrived -- re-pushing it every cycle never converges."""
+    payload = _raw(_event())
+    state, detail = mt.classify_export(
+        returncode=1, stderr='422 "sha" wasn\'t supplied', remote_content=payload, payload=payload)
+    assert state == mt.EXPORT_SYNCED
+    assert "identical" in detail
+
+
+def test_successful_write_requires_identical_remote_readback():
+    payload = _raw(_event())
+    state, detail = mt.classify_export(
+        returncode=0, stderr="", remote_content=payload, payload=payload)
+    assert state == mt.EXPORT_SYNCED
+    assert "verified" in detail
+
+
+def test_successful_write_without_readback_remains_retryable():
+    payload = _raw(_event())
+    state, detail = mt.classify_export(
+        returncode=0, stderr="", remote_content=None, payload=payload)
+    assert state == mt.EXPORT_RETRY
+    assert "could not be verified" in detail
+
+
+def test_different_content_at_our_address_is_a_collision_never_an_overwrite():
+    ours = _raw(_event())
+    theirs = _raw(_event(subject="a different envelope at the same id"))
+    state, _ = mt.classify_export(returncode=1, stderr="422", remote_content=theirs, payload=ours)
+    assert state == mt.EXPORT_COLLISION
+
+
+def test_absent_remote_content_with_an_error_is_a_transient_retry():
+    payload = _raw(_event())
+    state, detail = mt.classify_export(
+        returncode=1, stderr="dial tcp: i/o timeout", remote_content=None, payload=payload)
+    assert state == mt.EXPORT_RETRY
+    assert "timeout" in detail
+
+
+def test_terminal_export_states_do_not_come_back_for_another_push():
+    db = _db()
+    mt.record_export(db, event_id="a", address="addr-a", state=mt.EXPORT_SYNCED)
+    mt.record_export(db, event_id="b", address="addr-b", state=mt.EXPORT_COLLISION)
+    mt.record_export(db, event_id="c", address="addr-c", state=mt.EXPORT_REFUSED)
+    mt.record_export(db, event_id="d", address="addr-d", state=mt.EXPORT_RETRY)
+    assert mt.exportable(db, ["a", "b", "c", "d", "e"]) == ["d", "e"]
+
+
+def test_export_attempts_accumulate_on_one_row():
+    db = _db()
+    for _ in range(3):
+        mt.record_export(db, event_id="a", address="addr-a", state=mt.EXPORT_RETRY, detail="timeout")
+    row = db.execute("SELECT attempts,state FROM mesh_export_state WHERE event_id='a'").fetchone()
+    assert row["attempts"] == 3
+    assert row["state"] == mt.EXPORT_RETRY
+
+
+def test_first_export_attempt_is_atomic_across_sync_processes(tmp_path):
+    """Two sync carriers may discover the same pending row at once."""
+    path = tmp_path / "mesh-race.sqlite3"
+    initial = sqlite3.connect(path)
+    initial.row_factory = sqlite3.Row
+    mt.ensure_schema(initial)
+    initial.close()
+    barrier = Barrier(2)
+
+    def record(detail):
+        db = sqlite3.connect(path, timeout=5)
+        db.row_factory = sqlite3.Row
+        db.execute("PRAGMA busy_timeout=5000")
+        barrier.wait()
+        mt.record_export(
+            db, event_id="race", address="addr-race", state=mt.EXPORT_RETRY, detail=detail)
+        db.close()
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        list(pool.map(record, ("carrier-a", "carrier-b")))
+
+    db = sqlite3.connect(path)
+    row = db.execute(
+        "SELECT count(*),attempts,state FROM mesh_export_state WHERE event_id='race'"
+    ).fetchone()
+    db.close()
+    assert row == (1, 2, mt.EXPORT_RETRY)
+
+
+def test_terminal_export_receipt_recovers_crash_before_event_update():
+    db = _db()
+    event = _event(event_id="local-crash-boundary-001")
+    db.execute(
+        """INSERT INTO mesh_events(event_id,observed_at,actor_json,audience_json,type,subject,
+             body,evidence_json,content_sha256,source,remote_state)
+           VALUES(?,?,?,?,?,?,?,?,?,'local-epoch','pending')""",
+        (event["event_id"], event["observed_at"], json.dumps(event["actor"]),
+         json.dumps(event["audience"]), event["type"], event["subject"],
+         json.dumps(event["body"]), json.dumps(event["evidence_refs"]), event["content_sha256"]),
+    )
+    # Exact readback was durably recorded, then the carrier stopped before the
+    # EventGraph projection was updated.
+    mt.record_export(
+        db, event_id=event["event_id"], address=event["content_sha256"], state=mt.EXPORT_SYNCED)
+
+    assert mt.reconcile_terminal_exports(db) == 1
+    row = db.execute(
+        "SELECT remote_state,exported_at FROM mesh_events WHERE event_id=?", (event["event_id"],)
+    ).fetchone()
+    assert row["remote_state"] == mt.EXPORT_SYNCED
+    assert row["exported_at"]
+    assert mt.exportable(db, [event["event_id"]]) == []
+
+
+# ----------------------------------------------------------------- authority
+
+def test_an_admitted_envelope_carries_no_authority_field():
+    """A mesh message is evidence/work input. Admission says the bytes are what
+    they claim to be -- nothing about what the sender may cause."""
+    result = mt.admit(_db(), _raw(_event()), path=_path(_event()))
+    assert result.admitted
+    assert not hasattr(result, "authority")
+    assert set(vars(result)) == {"outcome", "event_id", "reason", "claimed_address", "measured_address"}

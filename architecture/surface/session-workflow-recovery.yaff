@@ -1,0 +1,100 @@
+architecture session-workflow-recovery
+  canonical_name SessionWorkflowRecovery
+  family surface
+  layer native-workspace
+  domain Surface / Source-backed workflow recovery
+  maturity implemented
+  semantic_question Can a reviewed historical workflow become editable work in the current account while retaining exact source anchors, complete native records and an honest execution boundary?
+  purpose Compile a bounded MessagePack recovery into one existing Production Studio composition and its native instruments, using the existing authenticated destination and atomic CMS record owner.
+  source_path cmd/BonfyreSurfaceScene/runtime/authored-workspace-recovery.mjs
+  source_path cmd/BonfyreSurfaceScene/runtime/authored-instrument-validation.mjs
+  source_path cmd/BonfyreSurfaceScene/runtime/authored-workspace.mjs
+  source_path cmd/BonfyreSurfaceScene/runtime/authored-workspace-transfer.mjs
+  source_path cmd/BonfyreSurfaceScene/runtime/authored-workspace-view.mjs
+  source_path cmd/BonfyreSurfaceScene/runtime/authored-workspace-recovery-view.mjs
+  source_path cmd/BonfyreSurfaceScene/runtime/authored-workspace-destination.mjs
+  source_path scripts/materialize_authored_workspace.mjs
+  source_path integrations/mcp/workspace_recovery_mcp.mjs
+  source_path integrations/mcp/workspace_mcp.mjs
+  native_format MessagePack
+  node_types RecoveryMaterial, RecoverySource, NativeInstrument, ReviewedRecovery, RecoveryOrigin
+  state_types ready, retained, conflict, created, recovered, paused, stopped
+  internal_calculus deterministic identity from the explicit recovery key, conversation identity and sorted source message anchors; source material changes conflict rather than silently replacing an existing identity
+  internal_calculus one through four validated child records plus their composition enter the existing expected-revision-zero native transaction, bounded by its record and complete-batch limits
+  invariant imported historical text and code are inert source material; recovery does not evaluate code, install providers, create schedules or execute archived commands
+  invariant original text remains in ordinary private Research records with exact body hashes and explicit session-line anchors; an index locator is never called a provider message identifier
+  invariant only the selected authenticated destination supplies account ownership; caller-provided actors, namespaces, databases, credentials and endpoints are absent from the account carrier
+  invariant the installed destination, ready release, Production continuation and recovery grammar profile are rechecked before writing; missing or incompatible admission is an error rather than an empty account
+  invariant the compiler, instrument validator, checks evaluator, composition grammar, renderer and value and MessagePack codecs have exact compatibility hashes shared by the materialized editor and account carrier
+  invariant a complete current readback is required after save; a lost acknowledgement can recover only all exact revision-one records, never a stale request-ledger receipt
+  invariant partial, deleted, edited, unreadable or source-changed recovered work is preserved and stops the import; retained work cannot be recreated from a stale review after its closure disappears
+  invariant batch recovery commits bounded whole workflows, stops on the first uncertain or conflicting workflow and retains explicit progress; it does not split one composition across independent writes
+  invariant private transfer retains validated recovery provenance and existing transfer lineage; public design reuse strips source provenance and all private instrument material
+  witness scripts/tests/authored-workspace-recovery.test.mjs tests deterministic source identities, admission drift, full closure readback, interrupted responses, partial and edited records, changed source and bounded batch progress
+  witness integrations/mcp/tests/workspace_recovery_mcp.test.mjs tests the real compiler and account carrier against a modeled HTTP transport, including exact private source preservation, current session, profile drift and uncertain writes; this is not a live CMS witness
+  witness scripts/tests/authored-workspace-transfer.test.mjs tests private material transfer and recovery provenance preservation alongside existing source lineage
+  witness scripts/tests/authored-recovery-browser.test.mjs exercises the retained Production editor, reviewed recovery, Data Checks input mapping and exports in Chrome against a modeled HTTP record transport; it does not establish native gateway acceptance
+  witness scripts/tests/authored-workspace-recovery-native.test.mjs is the isolated native acceptance gate for frozen editor material, served CMS and WebAddress and Auth owners, authenticated scope refusal, lost acknowledgement and edited-record conflicts; local pure and browser tests do not establish this gate has passed
+  known_gap historical procedures without a native execution owner remain source-editable drafts; recovering a detailed plan does not make its actions executable
+  known_gap account attachment requires a compatible installed editor and authenticated native import; local files or passing tests do not establish that a customer profile was updated
+  known_gap the archive index and reviewed private recovery packets are preparation artifacts, not a new product registry or an automatic transcript execution service
+  forbidden_inference an imported or retained workflow -> completed work, current provider permission, production customer inputs, a proven external integration or live customer verification
+  forbidden_inference a large historical template or persona catalogue -> that many distinct implemented workflows
+  interacts session-recovery-uses-account-workspace
+  interacts session-recovery-composes-data-checks
+
+architecture authored-data-checks
+  canonical_name AuthoredDataChecks
+  family surface
+  layer native-instrument
+  domain Surface / Deterministic source-table checks
+  maturity implemented
+  semantic_question Which exact supplied rows satisfy an authored finite contract, which fail, and which remain unresolved because inputs or an execution owner are missing?
+  purpose Add a reusable Data Checks instrument to the existing Production Studio so recovered machine contracts can accept current inputs, evaluate supported checks, export evidence and reopen the same retained native work.
+  source_path cmd/BonfyreSurfaceScene/runtime/authored-data-checks.mjs
+  source_path cmd/BonfyreSurfaceScene/runtime/authored-data-checks-view.mjs
+  source_path cmd/BonfyreSurfaceScene/runtime/authored-workspace.mjs
+  source_path cmd/BonfyreSurfaceScene/runtime/authored-instrument-validation.mjs
+  source_path scripts/materialize_authored_workspace.mjs
+  native_format MessagePack
+  node_types DataChecksContract, Entity, Field, Relation, Predicate, Closure, RetainedTable, ResultRow
+  state_types needs_input, pass, fail, unresolved
+  internal_calculus bounded scalar and exact-integer predicates, explicit UTC date tolerance, membership, requirements and interval non-overlap over exact mapped source rows
+  internal_calculus exact-key and declared cross relations retain candidate row identities; latent-only matches and unsupported branches remain unresolved rather than receiving invented similarity scores
+  invariant contracts are closed literal data with bounded fields, tables, source bytes, candidate pairs and result rows; arbitrary scripts and unknown operations are rejected
+  invariant tables retain the actual CSV or row material, source SHA-256, mapping and example flag; changing source or configuration invalidates prior results
+  invariant empty or missing tables produce needs_input with no completed output; empty input cannot satisfy a workflow by vacuous success
+  invariant large integer text retains exact arithmetic and mapped-row hashes preserve signed zero; unsupported numeric conversions fail explicitly
+  invariant output rows retain source hashes, exact row references and predicate outcomes; exported reports verify their result digest before materialization
+  invariant declarations about provider calls, budgets, compression, publication, WAV generation or ERP commands remain declarations unless their native execution owner is separately bound
+  invariant recovered contracts begin with empty production inputs; historical synthetic examples are not customer data and are never silently loaded
+  invariant a new reusable design is valid empty work; public design material excludes contracts, input tables, reports and source provenance
+  witness scripts/tests/authored-data-checks.test.mjs exercises the five recovered contracts, exact success and failure rows, missing inputs, latent and hybrid unresolved branches, malformed table identities, large integer timing and explicit date tolerance
+  witness scripts/tests/authored-recovery-browser.test.mjs exercises real input mapping, retained input editing, evaluation, report and draft export and native-format reopen against a modeled record transport
+  known_gap latent semantic matching, provider execution and historical materialization steps are not implemented by this local table-checking instrument
+  known_gap the archived audio contract uses cross pairing without an exact media-hash join and applies an unconditional gain-range predicate; recovery retains these source defects visibly rather than silently correcting history
+  forbidden_inference a passing table predicate or export -> an authorized payment, published content, sent follow-up, applied audio edit, ERP write, verified financial statement or live deployment
+
+interaction session-recovery-uses-account-workspace
+  source session-workflow-recovery
+  destination account-workspace-mcp
+  relation reviewed-native-record-creation
+  preserves current authenticated session and destination admission, exact installed release, source lineage, complete native record material, revision checks and current save readback
+  drops caller-inferred identities, independent storage, archived execution authority, implicit effects and stale receipts presented as current success
+  invalidates_on account access, installed release, recovery grammar profile, exact reviewed source or any child record revision changing
+  forbidden_inference a successful recovery transport -> a completed historical workflow or permission beyond the admitted native destination
+  binding integrations/mcp/workspace_recovery_mcp.mjs
+  binding cmd/BonfyreSurfaceScene/runtime/authored-workspace-recovery.mjs
+  witness integrations/mcp/tests/workspace_recovery_mcp.test.mjs
+
+interaction session-recovery-composes-data-checks
+  source session-workflow-recovery
+  destination authored-data-checks
+  relation source-contract-to-editable-native-instrument
+  preserves exact authored entity and predicate declarations, source corrections, empty initial production inputs, actual input hashes and unsupported-operation status
+  drops executing archived source code, loading synthetic fixtures as customer data and replacing missing model or provider owners with heuristic success
+  invalidates_on contract, source table, field mapping, evaluator or native instrument revision changes
+  forbidden_inference an available Data Checks pane -> end-to-end execution of every materialization or external operation described by its source
+  binding cmd/BonfyreSurfaceScene/runtime/authored-workspace-recovery.mjs
+  binding cmd/BonfyreSurfaceScene/runtime/authored-data-checks.mjs
+  witness scripts/tests/authored-data-checks.test.mjs

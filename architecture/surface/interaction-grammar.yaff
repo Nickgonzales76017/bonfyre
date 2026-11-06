@@ -1,0 +1,41 @@
+architecture interaction-grammar
+  canonical_name InteractionGrammar
+  family surface
+  domain Surface / Native interaction grammar
+  layer compiler
+  semantic_question How can a studied market interaction grammar become reusable native surface composition without importing a donor product's ontology, backend, or data?
+  purpose Native closed grammar catalog and subject-binding compiler. It contains twenty researched donor-informed interaction shapes, emits AddressPlane descriptors for active bindings, and hands each to the deployed InteractionGrammarCompiler consumer. CreatorChannel and MediaLibrary bindings are derived from current native owner rows; public CreatorChannel candidates can invoke the existing ChannelSurfaceCompiler through the worker after that recheck.
+  maturity measured
+  owns InteractionGrammarCatalog
+  owns InteractionGrammarBinding
+  consumes AddressClosure
+  publishes CandidateAdvertisement
+  publishes SurfacePlan
+  publishes PendingExactOwnerSurfaceComposition
+  publishes ChannelSurfaceProjection
+  node_types InteractionGrammar
+  node_types InteractionGrammarBinding
+  node_types SurfaceCompositionIR
+  edge_types binds_interaction_grammar
+  edge_types advertises_interaction_grammar
+  edge_types compiles_pending_surface_composition
+  edge_types projects_public_channel_surface
+  internal_calculus grammar basis x subject/institution/owner binding x forwarding coordinates -> candidate -> native consumer recheck -> pending exact-owner composition; CreatorChannel(public) -> existing Channel surface compiler -> content-addressed derived projection | retired binding omitted
+  invariant a grammar catalog entry is a reusable interaction shape, not a subject, user, message, media identity, relationship, right, authority, provider, payment, external protocol enactment or effect
+  invariant only an active binding carrying a concrete subject and owner reference emits an AddressPlane candidate; retirement atomically removes the old grammar population from the derived index
+  invariant a binding owner must carry the catalogued native owner-family prefix, so a Community grammar cannot be advertised as an Offer, Finance or invented owner population
+  invariant a candidate carries a verifier and lowerer reference but never an owner result; deterministic mask selection remains eligible_for_further_consideration only
+  invariant AddressPlane always dispatches InteractionGrammarCompiler:surface, which reopens the canonical binding. A CreatorChannel-derived public binding additionally reopens current channel/publication rows and invokes the existing Channel surface compiler; all other target lowerers remain recorded only as pending_exact_owner.
+  invariant source-derived bindings retain source kind/ref and the worker refuses them when the current CreatorChannel published-kind or MediaLibrary active-membership predicate is absent; this is an owner-state recheck, not actor-specific visibility, playback, delivery, or proof.
+  invariant all runtime grammar coordinates use compact address terms; pretty donor and owner identifiers remain boundary references and never hot forwarding terms
+  forbidden_inference a donor grammar -> copied donor code, donor backend, protocol compatibility, a donor user or an entitlement
+  forbidden_inference a grammar binding -> an executed exact verifier, a lawful disclosure, admission, delivery, payment, commitment or effect
+  source_path cmd/BonfyreInteractionGrammar/src/main.c
+  source_path cmd/BonfyreInteractionGrammar/tests/interaction_grammar_test.sh
+  source_path cmd/BonfyreExternalEstate/src/main.c
+  source_path cmd/BonfyreLoweringWorkers/src/main.c
+  source_path schemas/control/address-advertisement.cue
+  source_path research/interaction-grammar-market-2026.md
+  witness cmd/BonfyreInteractionGrammar/tests/interaction_grammar_test.sh proves an exact 20-grammar native catalog, refuses a cross-family owner binding, compiles and forwards all 20 grammar IDs, routes a 20-binding FactDelta batch through durable handoffs, ignores previously handled files, rechecks canonical bindings, derives YouTube/TikTok/Spotify bindings from live CreatorChannel/MediaLibrary rows, rechecks their current source predicates, invokes the existing public Channel surface compiler for both CreatorChannel grammars, emits content-addressed pending exact-owner compositions, and atomically removes a retired binding from the derived population
+  source_lineage current official product documentation recorded in research/interaction-grammar-market-2026.md
+  known_gap Community, Workspace, Social, Correspondence, Knowledge, Artifact, Board, Commerce and Protocol target lowerers still require their own exact-owner recheck and consumption path. MediaLibrary source state is rechecked, but actor-specific catalog/playback remains on its authenticated owner path; it is not a rendered Listen surface here.

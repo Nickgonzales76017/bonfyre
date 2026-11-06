@@ -1,0 +1,5 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-video-demux","binary_env":"BONFYRE_VIDEO_DEMUX_BIN","cases":[
+{"name":"a real video is split into its video and audio streams","steps":[{"program":"ffmpeg","argv":["-loglevel","error","-f","lavfi","-i","testsrc=duration=3:size=160x120:rate=5","-f","lavfi","-i","sine=frequency=440:duration=3","-shortest","-pix_fmt","yuv420p","v.mp4"],"exit":0},
+ {"argv":["--input","v.mp4","--out","dm"],"env":{"HOME":"${tmp}","BONFYRE_FRAGMENT_STORE":"${tmp}/frag.db","BONFYRE_VOCAB_DB":"${tmp}/vocab.bfvocab"},"exit":0,"present":["${tmp}/dm/video.mp4","${tmp}/dm/audio.wav"]},
+ {"program":"ffprobe","argv":["-v","error","-show_entries","stream=codec_type","-of","csv=p=0","dm/audio.wav"],"stdout":"audio\n"}]},
+{"name":"a missing video is refused","steps":[{"argv":["--input","missing.mp4","--out","dm"],"env":{"HOME":"${tmp}","BONFYRE_FRAGMENT_STORE":"${tmp}/frag.db","BONFYRE_VOCAB_DB":"${tmp}/vocab.bfvocab"},"exit_nonzero":true}]}]}

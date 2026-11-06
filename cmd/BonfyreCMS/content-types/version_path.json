@@ -1,0 +1,36 @@
+{
+  "name": "version_path",
+  "displayName": "version_path",
+  "description": "One path in one snapshot, with the digest its bytes hashed to. A recorded digest is what this estate read at that moment; the bytes it names may since be gone, and nothing here can put them back.",
+  "attributes": {
+    "path_id": {
+      "type": "string",
+      "required": true,
+      "uniqueWithinNamespace": true
+    },
+    "version_id": {
+      "type": "string",
+      "required": true
+    },
+    "path": {
+      "type": "string",
+      "required": true
+    },
+    "digest": {
+      "type": "string",
+      "required": true
+    },
+    "bytes": {
+      "type": "string",
+      "required": true
+    },
+    "cannot_infer": {
+      "type": "text",
+      "required": true
+    },
+    "status": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

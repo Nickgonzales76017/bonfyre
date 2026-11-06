@@ -1,0 +1,2 @@
+bonfyre-operator: PROJECT requires at least one --field
+exit 2

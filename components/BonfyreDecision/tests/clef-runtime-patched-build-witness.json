@@ -1,0 +1,36 @@
+{
+  "schema": "bonfyre.clef-native-build-witness.v1",
+  "observed_at": "2026-10-02T20:12:57Z",
+  "source": {
+    "repository": "https://github.com/ggml-org/llama.cpp",
+    "revision": "1e265f2111a894c85560d667216d4dd7930474dc",
+    "archive_sha256": "ba1894e46655347fcd9f5b7257af794b5276b6dc6d30bf347a8e97e10c95fb12",
+    "patch": "components/BonfyreDecision/native/patches/clef-output-embedding.patch",
+    "patch_sha256": "f71dc2c0cd04b5d23664057e34854ead36e9e942e48ceeeaaf1cc02b78ced337",
+    "patched_loader_sha256": "b799ccd5d7593f0273f11d75bca82bd0986e44685a300e24f45d7318ef75b237",
+    "patch_scope": "For the Clef architecture only, select output.weight storage for its actual GET_ROWS use, leaving other architectures and all other matrix weights unchanged."
+  },
+  "build": {
+    "compiler": "AppleClang 17.0.0.17000013",
+    "platform": "Darwin arm64",
+    "method": "Applied the canonical zero-fuzz patch to the previously verified source; rebuilt llama-server incrementally with CMake --parallel 2; copied to a new artifact without replacing the original binary.",
+    "build_command": "cmake --build /private/tmp/bonfyre-clef-native.MRkhu3/runtime/build --target llama-server --parallel 2",
+    "native_target_exit": 0,
+    "version_exit": 0,
+    "version": "0.5.0-dev (build 0, commit 1e265f2111a894c85560d667216d4dd7930474dc)",
+    "cmake_cache_sha256": "95c724101c51f3380c70a051624f73e5c74497c73abe9082ef0416400ea9100e",
+    "binary_path": "components/BonfyreDecision/native/build/clef/llama-server-fixed",
+    "binary_bytes": 18004160,
+    "binary_sha256": "ad8cc437321e78a1f3fd7de83d68ba31e0320d71ec0c2285cdcb5beca90c21ae",
+    "linked_libraries": "macOS system frameworks and /usr/lib only; no Homebrew or Python library",
+    "original_binary_preserved": "components/BonfyreDecision/native/build/clef/llama-server"
+  },
+  "build_guards": {
+    "command": "bun test components/BonfyreDecision/tests/clef-runtime-build.test.mjs",
+    "tests": 7,
+    "assertions": 40,
+    "regression_scope": "Patched compilable loader slice chooses GET_ROWS only for Clef output; positive offline builder packaging; patch digest and context-drift refusal before compiler execution. This is not a full model calculation."
+  },
+  "inference_verified": false,
+  "forbidden_inference": "Patched native compilation and operator classification do not establish trained inference, numerical BF16 parity, model accuracy, application utility or measured speedup. Trained execution requires its separate runtime witness."
+}

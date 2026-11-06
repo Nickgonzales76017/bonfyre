@@ -1,0 +1,202 @@
+#!/usr/bin/env python3
+"""Find fields and steps that report success they never checked.
+
+Every defect repaired in this estate over the last two days was the same shape:
+a value that names a condition, written so that it can only ever say yes.
+
+    cli_present: true            asserted on a host with no aws binary
+    status: "ok"                 printed beside endpoint_configured false
+    echo "$fail failed"          then returning 0 from the same recipe
+    proc.stdout parsed           with proc.returncode never read
+    "returned no row for it"     said of a database that refused the connection
+
+None of these is a subtle bug. Each is a sentence that cannot be false, sitting
+where a reader would look to find out whether something worked. They survive
+because nothing fails when they are wrong -- that is the definition of the
+class, and it is why finding them one at a time by tripping over their
+consequences is the slow way.
+
+This is the fast way. It reads source and reports the places where a success is
+asserted rather than observed.
+
+What it cannot do
+-----------------
+It cannot know intent. A literal `true` is often correct: a field that means
+"this build supports X" is a fact about the source, not an observation, and
+belongs as a literal. So this reports candidates with the reason each was
+flagged, and every finding needs a human to say whether the claim is checkable
+at that point. A clean run is not a proof that no such claim exists; it is a
+proof that these patterns do not appear.
+
+Cannot infer: a flagged line -> a defect. Nor an unflagged file -> an honest one.
+"""
+from __future__ import annotations
+
+import re
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+
+# Only code is scanned. A .json under generated/ or an archived run's checkpoint
+# is a *record* of an observation someone made, not a claim being asserted now --
+# flagging those buried thirty real findings under eleven hundred receipts, which
+# is the same failure this checker exists to catch, committed by the checker.
+SKIP_DIRS = {".git", "node_modules", "build", "obj", "dist", "vendor",
+             "legacy_from_10code", ".bonfyre-runtime", "releases",
+             ".bonfyre", ".run6", ".run8", "generated", "demos", "output",
+             "e2e-results", "results", "checkpoints", "epochs", "source_runs",
+             "archive", "site"}
+SCAN_SUFFIXES = (".py", ".c", ".h", ".ts", ".sh")
+
+# Field names that name an observable condition. A literal beside one of these
+# is a claim about the world made without looking at it.
+OBSERVED = (
+    "present", "available", "reachable", "installed", "connected", "configured",
+    "verified", "measured", "healthy", "running", "exists", "enabled_by_probe",
+    "responded", "answered", "reached", "detected", "supported_at_runtime",
+)
+
+CHECKS: list[tuple[str, re.Pattern, str]] = [
+    (
+        "literal-observation",
+        # JSON/C/TS: "<something>_present": true  /  .cli_present = true
+        # Struct members, object properties and dict keys only. A bare local
+        # like `static volatile int g_running = 1` is a signal flag, not a claim
+        # about the world, and fifty of those buried the ones that were.
+        re.compile(
+            r"""(?:->|\.|["'])(\w*(?:%s))["']?\s*[:=]\s*(?:true|True|1)\s*[,;}\n]"""
+            % "|".join(OBSERVED)
+        ),
+        "a field naming an observable condition is set to a literal truth; "
+        "if the condition is observable here, observe it",
+    ),
+    (
+        "literal-status-ok",
+        re.compile(r"""["']status["']\s*:\s*["'](?:ok|healthy|ready|active)["']"""),
+        "a status is written as a literal; a status that cannot say no is not a status",
+    ),
+    (
+        "unchecked-exit",
+        # A real subprocess invocation whose output is consumed. Matching any
+        # token named stdout caught `process.stdout.write` and file paths ending
+        # .stdout, which is 150 lines of nothing.
+        re.compile(
+            r"""(?:subprocess\.run|subprocess\.Popen|Bun\.spawn|execCommand|"""
+            r"""check_output|os\.popen)\s*\("""
+        ),
+        "a subprocess is run; consult its exit status, or an error and an empty "
+        "result become the same value",
+    ),
+    (
+        "counted-not-returned",
+        # shell: a failure counter incremented, then the recipe ends on echo
+        re.compile(r"""fail=\$\(\(fail\s*\+\s*1\)\)"""),
+        "a failure counter is incremented; the enclosing recipe must exit on it",
+    ),
+]
+
+
+def iter_sources():
+    for path in sorted(ROOT.rglob("*")):
+        if not path.is_file():
+            continue
+        if any(part in SKIP_DIRS for part in path.parts):
+            continue
+        if path.suffix not in SCAN_SUFFIXES:
+            continue
+        if path.name.endswith((".archive", ".bak")):
+            continue
+        if path.name == Path(__file__).name:
+            continue
+        yield path
+
+
+def returncode_checked(text: str, index: int) -> bool:
+    """Is an exit status consulted anywhere near this stdout read?
+
+    Deliberately generous: a window either side, and any of the several spellings
+    the estate uses. The aim is to surface the cases where nothing checks at all,
+    not to police where the check sits."""
+    window = text[max(0, index - 1500): index + 1500]
+    return any(tok in window for tok in
+               ("returncode", "exitCode", "exit_code", ".ok", "check=True",
+                "check_call", "check_output", "raise_for_status", "$?",
+                "CalledProcessError", "shell=True, check", "capture_output=True) or"))
+
+
+def main() -> int:
+    findings: list[tuple[str, str, int, str, str]] = []
+    for path in iter_sources():
+        try:
+            text = path.read_text(errors="replace")
+        except OSError:
+            continue
+        rel = str(path.relative_to(ROOT))
+        for name, pattern, why in CHECKS:
+            for m in pattern.finditer(text):
+                line_no = text.count("\n", 0, m.start()) + 1
+                line = text.splitlines()[line_no - 1].strip()
+                if line.lstrip().startswith(("#", "//", "*", "/*")):
+                    continue
+                if name == "unchecked-exit" and returncode_checked(text, m.start()):
+                    continue
+                # A status computed from a condition is falsifiable and is the
+                # correct shape: `"ok" if healthy else "attention"` is exactly
+                # what the flagged literals should have been.
+                if name in ("literal-status-ok", "literal-observation"):
+                    tail = text[m.end(): m.end() + 60]
+                    if " if " in line or "?" in tail[:20] or line.rstrip().endswith("?"):
+                        continue
+                if name == "counted-not-returned":
+                    # Only interesting where nothing consumes the counter. Both
+                    # spellings count: `[ "$fail" -eq 0 ]` is what every suite
+                    # here uses, and matching only `test ...` reported twenty
+                    # honest suites and hid the one that was not.
+                    if re.search(
+                        r'(?:\[\s*"?\$\$?fail"?\s*-eq\s*0\s*\]'
+                        r'|test\s+"?\$\$?fail"?\s+-eq\s+0'
+                        r'|exit\s+\$\{?\$?fail)', text):
+                        continue
+                findings.append((name, rel, line_no, line[:110], why))
+
+    if not findings:
+        print("no unfalsifiable-claim patterns found "
+              "(which is not proof that none exist)")
+        return 0
+
+    by_kind: dict[str, list] = {}
+    for f in findings:
+        by_kind.setdefault(f[0], []).append(f)
+
+    for kind in sorted(by_kind):
+        rows = by_kind[kind]
+        print(f"\n{kind}  ({len(rows)})")
+        print(f"  {rows[0][4]}")
+        for _, rel, line_no, line, _why in rows[:25]:
+            print(f"    {rel}:{line_no}: {line}")
+        if len(rows) > 25:
+            print(f"    ... and {len(rows) - 25} more")
+
+    print(f"\n{len(findings)} candidate(s) across {len(by_kind)} pattern(s)")
+    print("cannot infer: a flagged line -> a defect, or an unflagged file -> an honest one")
+
+    # One class is a rule rather than a candidate, and it is the only one that
+    # can be decided without reading intent: a suite that counts its own failures
+    # and then exits on something else cannot fail, and a test that cannot fail
+    # is never correct. live_e2e ran thirty-three checks against the live estate
+    # and ended on its summary echo, so it returned 0 whatever it printed.
+    #
+    # The other patterns stay advisory. Each of them has legitimate instances --
+    # a literal `true` for a fact about the source, a parse strict enough that
+    # the exit status is redundant -- and a checker that failed the build on
+    # those would be making exactly the unfalsifiable claim it exists to find.
+    gated = by_kind.get("counted-not-returned", [])
+    if gated:
+        print(f"\nFAIL: {len(gated)} suite(s) count failures and do not exit on the count")
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

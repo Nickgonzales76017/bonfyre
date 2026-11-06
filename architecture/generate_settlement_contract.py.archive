@@ -1,0 +1,95 @@
+#!/usr/bin/env python3
+"""Render the settlement contract into the C header the carriers compile against.
+
+The rail was four string literals in one organ, and Beckn quoted without naming
+one at all. Constants fixed the drift inside that file; they did nothing to stop
+a second organ from asserting its own rail, because nothing outside the file
+knew what the rail was. The contract is the source now, and this renders it.
+
+Run with --check to verify the generated header still matches the contract, which
+is what the surface test calls so a hand-edited header fails the build rather
+than quietly disagreeing with the institution.
+"""
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+CONTRACT = ROOT / "architecture" / "economic" / "settlement.contract.yaff"
+HEADER = ROOT / "cmd" / "BonfyreWebAddress" / "src" / "bf_settlement.h"
+
+
+def parse(path: Path) -> dict[str, object]:
+    """Read the one settlement_contract block. Repeated keys accumulate."""
+    fields: dict[str, object] = {}
+    inside = False
+    for raw in path.read_text().splitlines():
+        line = raw.rstrip()
+        if not line or line.lstrip().startswith("#"):
+            continue
+        if not line.startswith(" "):
+            inside = line.startswith("settlement_contract ")
+            continue
+        if not inside:
+            continue
+        key, _, value = line.strip().partition(" ")
+        value = value.strip()
+        if key == "carrier":
+            fields.setdefault("carriers", []).append(value)  # type: ignore[union-attr]
+        else:
+            fields[key] = value
+    for required in ("rail", "quote_path", "discovery_path"):
+        if required not in fields:
+            raise SystemExit(f"settlement contract is missing {required}")
+    return fields
+
+
+def render(fields: dict[str, object]) -> str:
+    carriers = fields.get("carriers") or []
+    listed = ", ".join(f'"{c}"' for c in carriers)  # type: ignore[union-attr]
+    return f"""/* Generated from architecture/economic/settlement.contract.yaff.
+ *
+ * Do not edit. Change the contract and re-run
+ * architecture/generate_settlement_contract.py; the surface test fails if this
+ * header and the contract disagree.
+ *
+ * Cannot infer: a declared rail -> a configured one. {fields.get('forbidden_inference', '')}
+ */
+#ifndef BF_SETTLEMENT_H
+#define BF_SETTLEMENT_H
+
+#define BF_SETTLEMENT_RAIL      "{fields['rail']}"
+#define BF_SETTLEMENT_QUOTE     "{fields['quote_path']}"
+#define BF_SETTLEMENT_DISCOVERY "{fields['discovery_path']}"
+
+/* Every grammar that quotes a price renders the declaration above. */
+#define BF_SETTLEMENT_CARRIERS  {{ {listed} }}
+#define BF_SETTLEMENT_CARRIER_N {len(carriers)}
+
+#endif /* BF_SETTLEMENT_H */
+"""
+
+
+def main() -> int:
+    text = render(parse(CONTRACT))
+    if "--check" in sys.argv:
+        if not HEADER.is_file():
+            print(f"settlement header missing: {HEADER}", file=sys.stderr)
+            return 1
+        if HEADER.read_text() != text:
+            print(
+                "settlement header disagrees with the contract; "
+                "re-run architecture/generate_settlement_contract.py",
+                file=sys.stderr,
+            )
+            return 1
+        print("settlement contract and header agree")
+        return 0
+    HEADER.write_text(text)
+    print(f"wrote {HEADER.relative_to(ROOT)}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

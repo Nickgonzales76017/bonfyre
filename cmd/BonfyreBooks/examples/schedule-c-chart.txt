@@ -1,0 +1,19 @@
+# The expense lines of IRS Schedule C (Form 1040), plus income and transfers.
+Sales income: Payments received from customers for goods or services
+Advertising: Ads, listings, marketing services, promotion
+Car and truck expenses: Fuel, parking, tolls, vehicle repairs and rideshare for business driving
+Commissions and fees: Bank fees, card processing fees, platform and marketplace fees
+Contract labor: Freelancers and contractors who are not employees
+Insurance: Business insurance premiums
+Interest: Interest on business loans and credit cards
+Legal and professional services: Lawyers, accountants, registered agents, filing services
+Office expense: Software subscriptions, postage, small office purchases
+Rent or lease: Rent for office, storage or equipment
+Repairs and maintenance: Repairs to equipment and premises
+Supplies: Materials and supplies used in the work
+Taxes and licenses: State and local taxes, permits, licences
+Travel: Airfare, hotels and transport while travelling away from home
+Meals: Business meals
+Utilities: Electricity, gas, water, internet, phone
+Wages: Payroll to employees
+Owner draw or transfer: Transfers between the owner's accounts, owner withdrawals

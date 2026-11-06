@@ -1,0 +1,62 @@
+pack habitat-boundary
+generation control-1
+provenance product topology separation, 2026-08-26; existing packs/habitat-human-factors
+authority asserted
+note This pack establishes Habitat's product boundary and namespace only. It is deliberately not an implementation. Its purpose is to remove Habitat's dependency on being a Bonfyre administrative surface and give it an independent product identity.
+
+product hab:habitat
+  namespace bonfyre/habitat
+  display_name Habitat
+  kind standalone-product
+  state SEEDED
+  populated_by packs/habitat-human-factors
+  world LIVE
+  detail A standalone social and spatial experiment. Not another Bonfyre admin surface and not a visualization of the estate.
+
+subject_family hab:people
+  display_name People
+  state DECLARED
+subject_family hab:groups
+  display_name Groups
+  state DECLARED
+subject_family hab:spaces
+  display_name Spaces
+  state DECLARED
+subject_family hab:occurrences
+  display_name Occurrences
+  state DECLARED
+subject_family hab:experiments
+  display_name Experiments
+  state DECLARED
+
+reuses AddressPlane
+reuses relationship graph
+reuses Occurrence
+reuses Automerge
+reuses Iroh
+reuses MoQ
+reuses ObjectFabric
+reuses media Powers
+reuses Vec and Embed
+reuses Model Commons
+reuses ActivityPub and Matrix
+
+vocabulary person
+vocabulary friend
+vocabulary member
+vocabulary host
+vocabulary guest
+vocabulary group
+vocabulary space
+vocabulary presence
+vocabulary invite
+vocabulary shared
+vocabulary private
+vocabulary public
+vocabulary temporary
+
+invariant Habitat's product language is social; client, tenant, invoice and managed institution do not appear in it
+invariant Habitat shares Bonfyre's underlying fabrics and shares no data closure with any delegated estate
+invariant no delegated estate implementation depends on Habitat
+forbidden_inference Habitat reusing the relationship graph -> Habitat participating in institutional delegation
+forbidden_inference this boundary existing -> an implementation being scheduled

@@ -29,6 +29,7 @@
 #include <sys/stat.h>
 #include <sqlite3.h>
 #include <bonfyre.h>
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 
 #define VERSION    "1.0.0"
 #define DB_ENV     "BONFYRE_FLOW_DB"
@@ -84,6 +85,7 @@ static const char *SCHEMA=
 static sqlite3 *open_db(void){
     char path[4096];db_path(path,sizeof(path));ensure_dir(path);
     sqlite3 *db=NULL;
+    /* Fast tier, by decision: run records; losing the last commits to a power cut costs a re-run. */
     if(bf_sqlite3_open(path,&db)!=SQLITE_OK){fprintf(stderr,"db error\n");exit(1);}
     char *err=NULL;sqlite3_exec(db,SCHEMA,NULL,NULL,&err);
     if(err){fprintf(stderr,"%s\n",err);sqlite3_free(err);exit(1);}
@@ -115,9 +117,9 @@ static void cmd_status(sqlite3 *db){
     sqlite3_finalize(st);
 }
 
-static void cmd_define(sqlite3 *db,const char *path){
+static int cmd_define(sqlite3 *db,const char *path){
     char *src=read_file(path);
-    if(!src){return;}
+    if(!src){fprintf(stderr,"cannot read %s\n",path);return 1;}
     /* minimal parse: look for "id" and "entry" keys */
     time_t now=time(NULL);
     char flow_id[256]="";char flow_name[256]="";char entry[256]="";
@@ -135,8 +137,18 @@ static void cmd_define(sqlite3 *db,const char *path){
         const char *q=strchr(p+7,'"');if(q){q++;const char *e=strchr(q,'"');
         if(e){size_t n=(size_t)(e-q);if(n<sizeof(entry)-1){strncpy(entry,q,n);entry[n]='\0';}}}
     }
-    if(!flow_id[0]){fprintf(stderr,"flow JSON must have \"id\" field\n");free(src);return;}
-    if(!entry[0]) snprintf(entry,sizeof(entry),"start");
+    if(!flow_id[0]){fprintf(stderr,"flow JSON must have \"id\" field\n");free(src);return 1;}
+    /* The entry has to be one of the flow's own stages. A flow with no
+     * stages used to be stored with an invented entry "start" that no run
+     * could reach. */
+    {
+        const char *stages=strstr(src,"\"stages\"");
+        char want[300]; snprintf(want,sizeof(want),"\"%s\"",entry);
+        if(!entry[0]||!stages||!strstr(stages,want)){
+            fprintf(stderr,"flow JSON must name an \"entry\" that is one of its \"stages\"\n");
+            free(src);return 1;
+        }
+    }
     if(!flow_name[0]) snprintf(flow_name,sizeof(flow_name),"%s",flow_id);
 
     sqlite3_stmt *st=NULL;
@@ -153,6 +165,7 @@ static void cmd_define(sqlite3 *db,const char *path){
     sqlite3_step(st);sqlite3_finalize(st);
     printf("flow '%s' defined (id=%s entry=%s)\n",flow_name,flow_id,entry);
     free(src);
+    return 0;
 }
 
 static void cmd_list(sqlite3 *db){
@@ -170,25 +183,26 @@ static void cmd_list(sqlite3 *db){
     sqlite3_finalize(st);
 }
 
-static void cmd_show(sqlite3 *db,const char *fid){
+static int cmd_show(sqlite3 *db,const char *fid){
     sqlite3_stmt *st=NULL;
     sqlite3_prepare_v2(db,"SELECT name,entry_stage,definition FROM flows WHERE id=?",-1,&st,NULL);
     sqlite3_bind_text(st,1,fid,-1,SQLITE_STATIC);
-    if(sqlite3_step(st)!=SQLITE_ROW){fprintf(stderr,"flow not found: %s\n",fid);sqlite3_finalize(st);return;}
+    if(sqlite3_step(st)!=SQLITE_ROW){fprintf(stderr,"flow not found: %s\n",fid);sqlite3_finalize(st);return 1;}
     printf("name  : %s\nentry : %s\n\n%s\n",
         (const char*)sqlite3_column_text(st,0),(const char*)sqlite3_column_text(st,1),
         (const char*)sqlite3_column_text(st,2));
     sqlite3_finalize(st);
+    return 0;
 }
 
-static void cmd_run_flow(sqlite3 *db,const char *fid,const char *input){
+static int cmd_run_flow(sqlite3 *db,const char *fid,const char *input){
     time_t now=time(NULL);
     /* get entry stage */
     sqlite3_stmt *st=NULL;
     sqlite3_prepare_v2(db,"SELECT entry_stage FROM flows WHERE id=?",-1,&st,NULL);
     sqlite3_bind_text(st,1,fid,-1,SQLITE_STATIC);
     if(sqlite3_step(st)!=SQLITE_ROW){
-        fprintf(stderr,"flow not found: %s\n",fid);sqlite3_finalize(st);return;
+        fprintf(stderr,"flow not found: %s\n",fid);sqlite3_finalize(st);return 1;
     }
     char entry[64];snprintf(entry,sizeof(entry),"%s",(const char*)sqlite3_column_text(st,0));
     char eid[64];snprintf(eid,sizeof(eid),"run-%ld",(long)now);
@@ -282,6 +296,8 @@ static void cmd_run_flow(sqlite3 *db,const char *fid,const char *input){
     sqlite3_bind_text(fin,3,run_id,-1,SQLITE_STATIC);
     sqlite3_step(fin);sqlite3_finalize(fin);
     if(!failed) printf("run complete: %s\n",run_id);
+    /* A failed stage fails the run for the caller too, not only in the store. */
+    return failed ? 1 : 0;
 }
 
 static void cmd_inspect(sqlite3 *db,const char *run_id){
@@ -368,20 +384,27 @@ static void cmd_help(void){
 }
 
 int main(int argc,char **argv){
-    if(argc<2||strcmp(argv[1],"help")==0||strcmp(argv[1],"--help")==0){cmd_help();return 0;}
+    enum { FL_HELP };
+    static const BfCommandEntry flow_help_command[] = {
+        {"--help", FL_HELP, 0, NULL},
+        {"help", FL_HELP, 0, NULL},
+    };
+    const BfCommandEntry *help_command = argc < 2 ? NULL : bf_command_lookup(flow_help_command,
+        sizeof(flow_help_command) / sizeof(flow_help_command[0]), argv[1]);
+    if(argc<2||(help_command && help_command->id == FL_HELP)){cmd_help();return 0;}
     sqlite3 *db=open_db();
     int rc=0;const char *cmd=argv[1];
     if(strcmp(cmd,"status")==0) cmd_status(db);
     else if(strcmp(cmd,"define")==0){
         if(argc<3){fprintf(stderr,"usage: bonfyre-flow define <file.json>\n");rc=1;}
-        else cmd_define(db,argv[2]);
+        else rc=cmd_define(db,argv[2]);
     } else if(strcmp(cmd,"list")==0) cmd_list(db);
     else if(strcmp(cmd,"show")==0){
         if(argc<3){fprintf(stderr,"usage: bonfyre-flow show <flow-id>\n");rc=1;}
-        else cmd_show(db,argv[2]);
+        else rc=cmd_show(db,argv[2]);
     } else if(strcmp(cmd,"run")==0){
         if(argc<4){fprintf(stderr,"usage: bonfyre-flow run <flow-id> <input>\n");rc=1;}
-        else cmd_run_flow(db,argv[2],argv[3]);
+        else rc=cmd_run_flow(db,argv[2],argv[3]);
     } else if(strcmp(cmd,"inspect")==0){
         if(argc<3){fprintf(stderr,"usage: bonfyre-flow inspect <run-id>\n");rc=1;}
         else cmd_inspect(db,argv[2]);

@@ -1,0 +1,98 @@
+architecture context-cut-compiler
+  canonical_name ContextCutCompiler
+  owns ContextCutManifest
+  owns PurposeBoundContext
+  consumes RankedCandidateEnvelope
+  consumes ReceiptBoundMaterialManifest
+  consumes ExactOwnerQueryEvidence
+  consumes InformationPolicyClass
+  publishes ContextCutManifest
+  publishes PurposeBoundContext
+  publishes DecisionCaseFrontier
+  family context
+  domain Context / physical compilation
+  layer execution
+  semantic_question Which exactly receipted material bodies from the currently bounded candidate frontier fit this purpose and token budget?
+  purpose Compile a recoverable model context from an AddressPlane-bounded learned frontier after exact owners have supplied receipt-bound material, tokenizing each content-addressed body once under an explicit GigaToken tokenizer passport.
+  maturity implemented
+  node_types ContextCutManifest
+  node_types ReceiptBoundMaterial
+  node_types TokenizerPassport
+  edge_types contains_material
+  edge_types omits_by_budget
+  invariant only a current ADMIT ranked frontier may enter an executable context cut
+  invariant a current SHADOW ranked frontier may produce a separately labelled diagnostic token/cache receipt only; it cannot project to an executing model, lowerer or carrier
+  invariant a complete external ProviderEmbeddingRank may enter only through ProviderFrontier's current AddressPlane recheck plus matching ForeignTwin exact-owner ledger, remains labelled provider_embedding_rank rather than BitNet, and is diagnostic until a separately admitted representation/execution plan exists
+  invariant every selected body rehashes to its declared ForeignTwin receipt digest before tokenization
+  invariant when an ExactOwnerQueryEvidence ledger is supplied, a body may enter the context only after that ledger records an observed result from the declared ForeignTwin verifier; the receipt/body rehash remains a separate required check
+  invariant a cached token body is keyed by immutable body CID and complete tokenizer passport, while every new cut rechecks current AddressPlane descriptor, receipt digest, and InformationPolicy before referencing it
+  invariant GigaToken materialization obtains and releases a transient ResourceAdmission grant; that physical grant is neither a selected candidate nor evidence, authority, proof, or effect permission
+  invariant the native GigaToken batch bridge is built from the pinned 0.10 source core without Python bindings; an unavailable or failed encoder refuses the cut and releases its transient ResourceAdmission grant
+  invariant a body shared by several selected semantic references is tokenized once but retains every reference in the manifest
+  invariant ordinary compilation tokenizes the exact ranked prefix first and leaves unreachable suffix bodies unencoded when the prefix fills the candidate cap; missing or over-budget prefix material triggers one suffix batch without changing ranked selection or receipt validation
+  witness cmd/BonfyreContextCut/tests/context_cut_test.sh measures one of two unique bodies avoided on the full-prefix fixture and zero native calls on cache reuse; a budget-constrained fallback retains identical selected identities, context and token digests while explicitly reporting its extra native batch
+  invariant an over-budget or not-yet-materialized candidate remains a recoverable frontier member rather than becoming impossible
+  invariant InformationPolicyClass is checked before any body crosses into the context representation
+  invariant a nonempty explicit purpose is bound into every compiled ContextCut, which publishes a reconstructable receipt-bound DecisionCase frontier without another resident copy of source text or a hosted model call
+  invariant a selected body too large for one authored decision state is split into deterministic bounded digest-bound chunks; no model sees a silently truncated body, and the original ContextCut remains intact
+  forbidden_inference a context cut -> sufficient evidence for a mission
+  forbidden_inference an exact retained-observation query -> semantic relevance, source truth, admitted institutional fact, proof, authority, or effect permission
+  forbidden_inference a learned rank -> selected, authorized, or semantically true candidate
+  forbidden_inference a SHADOW diagnostic context -> executable model context, lowerer handoff or carrier payload
+  source_path cmd/BonfyreContextCut/context_cut.mjs
+  source_path components/BonfyreDecision/frontier-adapters.mjs
+  source_path cmd/BonfyreContextCut/gigatoken-native/src/main.rs
+  source_path cmd/BonfyreProviderFrontier/src/main.c
+  source_path cmd/BonfyreLoweringWorkers/src/main.c
+  witness cmd/BonfyreContextCut/tests/context_cut_test.sh executes the native GigaToken core with the real Qwen2.5-Coder tokenizer under a declared passport
+  witness cmd/BonfyreContextCut/tests/context_cut_test.sh proves the normal compiler publishes a purpose-bound reconstructable DecisionCase frontier which can be planned without a hosted call while the original ContextCut stays intact
+  witness cmd/BonfyreContextCut/tests/live_shadow_parity.test.mjs replays the persisted bitnet:1789271781 SHADOW frontier through the native compiler and matches the prior 29,848 token IDs, exact token and context digests, selected identities and spans
+  witness cmd/BonfyreLoweringWorkers/tests/lowering_workers_test.sh proves MaterialCompiler refuses a SHADOW rank without an explicit diagnostic request, atomically emits only a digest-verified ForeignTwin receipt whose identity intersects the persisted frontier, and accepts that body under the stronger path only after native ForeignTwin query evidence records the exact candidate as observed
+  witness /Users/nickgonzales/.bonfyre/estate/bitnet-shadow-context.json records the live bitnet:1789271781 SHADOW path over 92 persisted candidates: MaterialCompiler retained exactly two receipt-rehashed bodies, GigaToken produced 29,848 Qwen-token IDs under the named passport, and ResourceAdmission released its transient grant before artifact publication; replay at bitnet-shadow-context-reused.json preserves the context/token digests with two cache hits and zero misses
+  witness /Users/nickgonzales/.bonfyre/estate/bitnet-exact-shadow-context.json repeats that live ContextCut through /Users/nickgonzales/.bonfyre/estate/bitnet-exact-owner-evidence.jsonl: native ForeignTwin queried all 92 persisted BitNet candidates and only the two observed retained bodies reached the same digest-stable 29,848-token SHADOW context
+  witness /Users/nickgonzales/.bonfyre/estate/representation-runs/mistral-bitnet-frontier-20260915/context/weather-provider-full-ledger-rechecked-diagnostic.json records a live ResourceAdmission-gated GigaToken cut over a real Mistral 1,024-dimensional rank of the prior 128-member AddressPlane frontier: the complete 16-row ProviderFrontier ledger retained four exact ForeignTwin negatives and twelve observed receipt-bound bodies; the SHADOW provider_embedding_rank cut produced 790,936 Qwen2.5 token IDs with twelve CID×tokenizer cache hits and zero lowerer or model execution
+  known_gap the native GigaToken bridge builds against an external pinned local source tree; relocatable packaging and a deploy-host build receipt remain open
+
+interaction bitnet-frontier-compiles-gigatoken-context-cut
+  source bitnet-address-ranker
+  destination context-cut-compiler
+  relation ranked-receipted-material-context-compilation
+  preserves the bounded AddressPlane frontier order, current candidate identity/type/owner/verifier/lowerer envelope, receipt digest, evidence reference, information policy class, temporal frontier and tokenizer passport
+  drops model vector values, learned score as a truth claim, unmaterialized candidates, owner state beyond the supplied receipt-bound material, authority, proof, commitment and effect state
+  forbidden_inference a GigaToken context body -> source evidence is proven, an omitted body is impossible, a selected candidate is authorized, or a model may execute an effect
+  invalidates_on address advertisement drift, rank representation withdrawal, ForeignTwin receipt digest change, information policy change, temporal frontier change or tokenizer passport change
+  witness cmd/BonfyreContextCut/tests/context_cut_test.sh
+  binding cmd/BonfyreContextCut/context_cut.mjs
+
+interaction gigatoken-native-encodes-context-cut
+  source gigatoken
+  destination context-cut-compiler
+  relation native-receipted-body-tokenization
+  preserves exact body bytes after declared UTF-8 replacement, pinned tokenizer bytes, ordered GigaToken token IDs and u32le token-body encoding
+  drops Python interpreter and binding objects, source authority, semantic relevance, admission judgment, and effect permission
+  forbidden_inference token ID parity -> source truth, authorized use, sufficient evidence, or production packaging
+  invalidates_on GigaToken source revision, tokenizer byte digest, body CID, batch protocol, or tokenization implementation change
+  witness cmd/BonfyreContextCut/tests/live_shadow_parity.test.mjs
+  binding cmd/BonfyreContextCut/gigatoken-native/src/main.rs
+
+interaction material-compiler-bounds-bitnet-context-material
+  source address-plane
+  destination context-cut-compiler
+  relation retained-foreign-body-intersection
+  preserves only persisted ranked identity, rank gate state, receipt-bound body path and digest, receipt digest, declared policy class, and temporal frontier
+  drops learned score, vector body, unretained candidates, external URL execution, authority, proof, carrier action, lowerer enactment, and effect capability
+  forbidden_inference a retained material intersection -> source truth, semantic relevance, ranked candidate selection, executable context from a SHADOW rank, authority, proof, or effect
+  invalidates_on rank run/gate change, retained ForeignTwin receipt/body digest change, information policy change, or ContextCut manifest schema change
+  witness cmd/BonfyreLoweringWorkers/tests/lowering_workers_test.sh
+  binding cmd/BonfyreLoweringWorkers/src/main.c
+
+interaction provider-frontier-compiles-diagnostic-gigatoken-context
+  source provider-state
+  destination context-cut-compiler
+  relation provider-rank-exact-owner-context-compilation
+  preserves ProviderEmbeddingRun/query/representation identifiers, rank order, current AddressPlane candidate identity/type/owner/verifier/lowerer envelope, exact ForeignTwin receipt/body digest, information policy class, temporal frontier and tokenizer passport
+  drops provider vector values, provider score as semantic truth, unobserved candidates, authority, proof, commitment, carrier action, lowerer enactment and model execution
+  forbidden_inference a complete provider embedding rank -> an admitted model representation, a selected candidate, a lawful operation, source truth, proof, authority or effect
+  invalidates_on provider run/query withdrawal, AddressPlane advertisement drift, ForeignTwin receipt/body digest change, information policy change, temporal frontier change or tokenizer passport change
+  witness cmd/BonfyreProviderFrontier/tests/provider_frontier_test.sh
+  binding cmd/BonfyreProviderFrontier/src/main.c

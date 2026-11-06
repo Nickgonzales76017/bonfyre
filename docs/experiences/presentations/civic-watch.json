@@ -1,0 +1,24 @@
+{
+  "hero_mode": "oversized-title",
+  "navigation_mode": "header",
+  "density": "tight",
+  "card_mode": "ruled-row",
+  "typography_mode": "display-grotesque",
+  "layout_tokens": {
+    "ground": "#151716",
+    "ink": "#eceee9",
+    "display": "#f7f5ee",
+    "accent": "#f2c230",
+    "muted": "#9a9c96",
+    "rule": "rgba(242,194,48,.28)",
+    "panel": "#202321",
+    "measure": "46rem",
+    "radius": "18px",
+    "face_display": "\"Archivo Black\",Impact,sans-serif",
+    "face_body": "\"Public Sans\",system-ui,sans-serif",
+    "face_mono": "\"DM Mono\",ui-monospace,monospace",
+    "display_tracking": "-.01em",
+    "display_leading": ".95",
+    "font_href": "https://fonts.googleapis.com/css2?family=Archivo+Black&family=Public+Sans:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap"
+  }
+}

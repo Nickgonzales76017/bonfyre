@@ -1,0 +1,10 @@
+exit 0
+TMP/itad.tsv sha256 1337cadd5977d1f3c4b4e7008004f0b150e2d292343809e4c5790003f0cda499
+TMP/itad.held.tsv sha256 ef1e1d2f8350518305b606331fc7d9e22f9bec79e69e8f64122b482c84bb41d4
+line	make	model_family	part_number	quantity	category	data_bearing	condition	confirm_with_seller	source
+Dell OptiPlex 7050	Dell	OptiPlex 7050	AB-1234	12	laptop	no	parts	make and model unclear	listing houston-35.html
+HP	HP			40	consumable	no	unknown	model not stated; make and model unclear	listing toner.txt
+Cisco	Cisco						unknown	model not stated; count not stated; make and model unclear; only a brand name is readable: say what the items are	listing brandonly.txt
+
+3 units; 0 hold data to wipe; 3 have something to confirm with the seller. Read on this machine by fixture-model-Q4 in Ts.
+1 units are not in TMP/itad.tsv because they cannot be priced yet (count not stated, or not read); they are listed in TMP/itad.held.tsv.

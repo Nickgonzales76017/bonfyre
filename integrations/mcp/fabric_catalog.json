@@ -1,0 +1,400 @@
+{
+  "tools": [
+    {
+      "name": "fabric_status",
+      "description": "Inspect current STOP/admission, live service-owned tasks, separate Project and mesh reachability, agent versions and historical task records. Stored running state alone is not liveness.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "dispatch_claude",
+      "description": "Start a noninteractive Claude Code analysis task and return a durable task handle.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "prompt"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "dispatch_codex",
+      "description": "Start a noninteractive Codex analysis task and return a durable task handle.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "prompt"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "duel",
+      "description": "Run Claude and Codex independently, cross-critique each other, then synthesize a converged institutional plan.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "prompt"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "implementation_relay",
+      "description": "Run isolated plan, implementation, review, conditional repair, tests and concurrent independent final verification. Apply candidates are checked before reviews. Failed tests get one bounded repair in the same worktree, then persistent failure stops verification. Optional apply uses current Project policy and preimage checks. Optional source_files capture selected current files by SHA-256 into the isolated baseline. Invalid or stale inputs stop before model calls; the final patch excludes baseline inputs. This does not relax Project write policy.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "apply_to_project": {
+            "type": "boolean",
+            "default": false
+          },
+          "source_files": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 64,
+            "description": "Optional explicit current-source coverage over the configured Git base. Supply whole-file SHA-256 from project_read; null requires absence. Up to 8 MiB total. Unselected paths stay at the Git base. Ignored files and symlinks are refused.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "maxLength": 2048
+                },
+                "sha256": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "pattern": "^[a-f0-9]{64}$"
+                }
+              },
+              "required": [
+                "path",
+                "sha256"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "prompt"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true
+      }
+    },
+    {
+      "name": "cross_review",
+      "description": "Run independent Claude and Codex reviews of current repository changes.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "instructions": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "dual_verify",
+      "description": "Run two independent verifiers against a claim using repository, estate, MCP and release evidence.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "claim": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "claim"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "pr_converge",
+      "description": "Inspect the current GitHub PR, CI checks and review comments, then run the isolated Claude/Codex relay without pushing.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "instructions": {
+            "type": "string"
+          },
+          "apply_to_project": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true
+      }
+    },
+    {
+      "name": "resume_session",
+      "description": "Resume a recorded Claude Code session or Codex thread through the fabric.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "agent": {
+            "type": "string",
+            "enum": [
+              "claude",
+              "codex"
+            ]
+          },
+          "session_id": {
+            "type": "string"
+          },
+          "prompt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "agent",
+          "session_id",
+          "prompt"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "batch_plan",
+      "description": "Create a cross-agent 5-30 unit batch plan with dependencies, plane locks, worktrees, tests and convergence.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "mission": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "mission"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "task_status",
+      "description": "Read durable task state and current service ownership. Prefer detail=summary for bounded polling; full includes agent outputs and receipts. A historical running record without current ownership requires reconciliation, not automatic replay.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string",
+            "enum": [
+              "summary",
+              "full"
+            ]
+          }
+        },
+        "required": [
+          "task_id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "task_cancel",
+      "description": "Cancel active subprocesses belonging to a task.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "task_id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true
+      }
+    },
+    {
+      "name": "recent_receipts",
+      "description": "List recent dual-agent plans, patches, reviews and verification receipts.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 500,
+            "default": 50
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "estate_mission",
+      "description": "Add a full-system mission to the Bonfyre Estate Compiler.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "details": {
+            "type": "string"
+          },
+          "family": {
+            "type": "string",
+            "default": "manual"
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 90
+          },
+          "locks": {
+            "type": "string",
+            "default": "general"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    }
+  ],
+  "prompts": [
+    {
+      "name": "duel",
+      "description": "Launch a Claude/Codex architecture duel.",
+      "arguments": [
+        {
+          "name": "mission",
+          "description": "Mission or problem",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "relay",
+      "description": "Launch the full plan/implement/review/repair/verify relay.",
+      "arguments": [
+        {
+          "name": "mission",
+          "description": "Implementation mission",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "cross_review",
+      "description": "Review current changes with both coding agents.",
+      "arguments": []
+    },
+    {
+      "name": "estate",
+      "description": "Compile a goal into an estate mission before coding.",
+      "arguments": [
+        {
+          "name": "mission",
+          "description": "Institutional mission",
+          "required": true
+        }
+      ]
+    }
+  ]
+}

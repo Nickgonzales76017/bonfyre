@@ -1,0 +1,1191 @@
+:root{
+  --mono:'DM Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --serif:'Instrument Serif',Georgia,serif;
+  --slab:'Archivo Black','Arial Black',sans-serif;
+  --type:'Spline Sans Mono',ui-monospace,Menlo,monospace;
+  --news:'Newsreader',Georgia,'Times New Roman',serif;
+}
+
+/* ---------------------------------------------------- the presentation roles
+ *
+ * Every character declares these for itself, and a presentation template
+ * overrides the same names -- set inline on <body>, so no selector has to win
+ * an argument with another one. A character that writes a colour or a face as
+ * a literal is a character no template can dress, which is the whole reason
+ * this list exists rather than each block keeping its own palette private.
+ *
+ * A template owns these. It does not own the scale bar, the tape or the
+ * stamp: those are what makes an atlas an atlas.
+ */
+:root{
+  --w-ground:#faf7f2;   /* the page */
+  --w-ink:#20201c;      /* body text */
+  --w-display:#111;     /* headings */
+  --w-accent:#8c1c13;   /* the one loud thing */
+  --w-muted:#8d8880;    /* captions, credits, datelines */
+  --w-rule:rgba(0,0,0,.14);
+  --w-panel:#fff;       /* a card's own ground */
+  --w-face-display:var(--serif);
+  --w-face-body:var(--sans);
+  --w-face-mono:var(--mono);
+  --w-display-size:clamp(2.4rem,6.4vw,4.6rem);
+  --w-display-weight:400;
+  --w-display-transform:none;
+  --w-display-tracking:-.02em;
+  --w-display-leading:1;
+  --w-radius:3px;
+  --w-card-border:none;
+  --w-card-shadow:none;
+  --w-gap:16px;
+  --w-measure:56ch;
+}
+
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--w-ground);color:var(--w-ink);
+     font-family:var(--w-face-body);-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+.wrap{width:min(1240px,calc(100% - 44px));margin-inline:auto}
+.wait{padding:2rem 0;font-family:var(--w-face-mono);font-size:.76rem;opacity:.6}
+
+/* the one shared strip: where you are, and how to leave */
+.bar{display:flex;align-items:center;gap:.7rem;padding:.5rem 0;
+     font-family:var(--w-face-mono);border-bottom:1px solid var(--w-rule);
+     font-size:.66rem;flex-wrap:wrap}
+.bar .home{border:1px solid currentColor;border-radius:100px;padding:.1rem .6rem;opacity:.7}
+.bar .home:hover{opacity:1}
+.bar .ch{letter-spacing:.14em;text-transform:uppercase;opacity:.55}
+.bar .gr{margin-left:auto;display:flex;gap:.25rem;flex-wrap:wrap}
+.bar .gr a{border:1px solid currentColor;border-radius:4px;padding:.06rem .42rem;opacity:.62}
+.bar .gr a:hover{opacity:1}
+.src{padding:1.4rem 0 2.4rem;font-family:var(--w-face-mono);font-size:.6rem;opacity:.5;
+     line-height:1.7}
+
+/* ======================= COMPOSED REGIONS =======================
+ *
+ * A page is several reading rhythms, not one list. Each region below is a
+ * rhythm people already know -- a lead story, a video shelf, a tracklist, a
+ * conversation, a dense index -- and exists only when the subject has that
+ * kind of material. They read only the presentation roles, so any character
+ * and any template dresses them; nothing here draws a box around an item that
+ * has no picture. Rules do the separating.
+ */
+.region{margin:2.2rem 0 0}
+/* Selectors below carry .region so a character's own bare h2/h3 rule, which
+   styles its older single-rhythm page, cannot shrink a lead or a label. */
+.region .region-label{font-family:var(--w-face-mono);font-size:.66rem;font-weight:500;
+              letter-spacing:.16em;text-transform:uppercase;color:var(--w-muted);
+              margin:0 0 .5rem;padding:0;border:0;text-shadow:none}
+.by{font-family:var(--w-face-mono);font-size:.62rem;letter-spacing:.04em;color:var(--w-muted)}
+.by time::before{content:"\00b7";margin:0 .4em}
+.by span:empty + time::before{content:none}
+
+.lead{margin:1.6rem 0 0;padding:0 0 1.4rem;border-bottom:1px solid var(--w-rule)}
+.region .lead h2{margin:0;max-width:24ch;font-family:var(--w-face-display);font-weight:var(--w-display-weight);
+         font-size:clamp(1.6rem,4.2vw,2.8rem);line-height:1.04;letter-spacing:var(--w-display-tracking);
+         color:var(--w-display)}
+.region .lead a:hover h2{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.12em}
+.lead .by{margin:.7rem 0 0}
+
+.index{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));
+       column-gap:2rem;margin:0}
+.index a{display:block;padding:.7rem 0 .75rem;border-top:1px solid var(--w-rule)}
+.index b{display:block;font-family:var(--w-face-display);font-weight:var(--w-display-weight);
+         font-size:1.06rem;line-height:1.22;color:var(--w-display)}
+.index a:hover b{text-decoration:underline;text-underline-offset:.14em}
+.index .by{display:block;margin-top:.35rem}
+
+.more{list-style:none;margin:0;padding:0;columns:2 340px;column-gap:2rem}
+.more li{break-inside:avoid;padding:.36rem 0;border-top:1px solid var(--w-rule);
+         font-size:.86rem;line-height:1.35}
+.more li a:hover{text-decoration:underline}
+.more .by{margin-left:.35rem;white-space:nowrap}
+.keep-going .more li>a .glyph{margin-right:.45em;color:var(--w-accent)}.keep-going .desk-l .glyph,.keep-going+.subj-note .glyph{margin-right:.4em}
+/* An agenda reads forwards: the day stands over the things happening in it,
+   and each line says when it starts and where, in that order. */
+.agenda{list-style:none;margin:0;padding:0}
+.agenda .agenda-day h3{margin:1.1rem 0 .3rem;font-size:.82rem;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--w-dim);border-bottom:1px solid var(--w-rule);padding-bottom:.25rem}
+.agenda .agenda-item{display:flex;flex-wrap:wrap;gap:.45rem;align-items:baseline;padding:.4rem 0;border-top:1px solid var(--w-rule)}
+.agenda .agenda-item:first-of-type{border-top:0}
+.agenda .starts{font-variant-numeric:tabular-nums;color:var(--w-accent);white-space:nowrap}
+.agenda .at{color:var(--w-dim)}
+.agenda .at::before{content:"at "}
+/* What an event is right now, said once at the top of its own page. */
+.phase{margin:0 0 .3rem;font-size:.78rem;letter-spacing:.09em;text-transform:uppercase;color:var(--w-dim)}
+.phase-now{color:var(--w-accent);font-weight:600}
+.kept{margin:.4rem 0 .8rem;color:var(--w-dim);font-size:.9rem;border-left:2px solid var(--w-rule);padding-left:.6rem}
+/* Things near a placed thing, nearest first, pictures included. */
+.more.around li.with-picture{display:grid;grid-template-columns:auto 1fr;gap:.6rem;align-items:start}
+.more.around .thumb{width:84px;height:60px;object-fit:cover;border-radius:2px}
+.more.around .how-far{color:var(--w-accent);white-space:nowrap}
+.more.around .how-far::after{content:" \00b7 ";color:var(--w-dim)}
+/* A listening surface: one recording ready to play, then the rest as rows. */
+.now-playing{display:grid;grid-template-columns:minmax(120px,220px) 1fr;gap:1rem;align-items:center;
+  padding:1rem;margin:0 0 .8rem;background:var(--w-panel,rgba(127,127,127,.06));border-radius:4px}
+.now-playing .sleeve{width:100%;aspect-ratio:1;object-fit:cover;border-radius:3px}
+.now-playing .np-kicker{margin:0;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--w-dim)}
+.now-playing h3{margin:.2rem 0 .1rem;font-size:1.35rem;line-height:1.15}
+.now-playing .np-by{margin:0 0 .5rem;color:var(--w-dim)}
+.now-playing .np-by .dur{margin-left:.5rem}
+.now-playing audio{width:100%;max-width:520px}
+.now-playing .terms{margin:.4rem 0 0;font-size:.78rem;color:var(--w-dim)}
+.tracks li{display:grid;grid-template-columns:1.6rem auto 1fr auto;gap:.6rem;align-items:center;padding:.35rem 0;
+  border-top:1px solid var(--w-rule)}
+.tracks li .art{width:40px;height:40px;object-fit:cover;border-radius:2px}
+.tracks li .no{color:var(--w-dim);font-variant-numeric:tabular-nums;text-align:right}
+.tracks li.is-first .no{color:var(--w-accent)}
+.tracks li audio{grid-column:1/-1;width:100%;height:32px}
+.tracks li .play-on-page{grid-column:4}
+
+.shelf{display:grid;grid-auto-flow:column;grid-auto-columns:min(78%,320px);gap:1rem;
+       overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:.5rem;overscroll-behavior-x:contain}
+.clip{margin:0;scroll-snap-align:start}
+.clip video{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;background:#000;
+            border-radius:var(--w-radius)}
+.clip figcaption{padding:.5rem 0 0;font-size:.9rem;line-height:1.3;color:var(--w-display)}
+.clip figcaption .by{display:block;margin-top:.2rem}
+
+.tracks{list-style:none;margin:0;padding:0}
+.tracks li{display:grid;grid-template-columns:2rem minmax(0,1fr) auto;align-items:center;
+           column-gap:.8rem;padding:.45rem 0;border-top:1px solid var(--w-rule)}
+.tracks .no{font-family:var(--w-face-mono);font-size:.7rem;color:var(--w-muted);text-align:right;
+            font-variant-numeric:tabular-nums}
+.tracks .tt b{display:block;font-weight:500;font-size:.92rem;line-height:1.25}
+.tracks .tt span{font-size:.76rem;color:var(--w-muted)}
+.tracks .dur{font-family:var(--w-face-mono);font-size:.7rem;color:var(--w-muted);
+             font-variant-numeric:tabular-nums}
+.tracks audio{grid-column:2 / -1;width:100%;height:32px;margin-top:.35rem}
+
+.topic + .topic{margin-top:1.4rem}
+.region .topic h3{margin:0 0 .3rem;font-size:.95rem;font-weight:600;display:flex;gap:.6rem;align-items:baseline}
+.region .topic h3 small{font-family:var(--w-face-mono);font-size:.62rem;font-weight:400;color:var(--w-muted)}
+.msg{padding:.55rem 0 .6rem;border-top:1px solid var(--w-rule);max-width:70ch}
+.msg header{display:flex;gap:.5rem;align-items:baseline}
+.msg header b{font-size:.84rem}
+.msg header time{font-family:var(--w-face-mono);font-size:.62rem;color:var(--w-muted)}
+.region .msg h4{margin:.2rem 0 0;font-size:.9rem}
+.msg p{margin:.2rem 0 0;font-size:.9rem;line-height:1.45}
+
+/* Pictures. A picture is the item when there is one; an item without one
+   stays a line of text rather than a grey rectangle pretending to be one. */
+/* The picture takes the first column; headline, summary and byline share the
+   second, so the byline reads with its story rather than under the picture. */
+.lead.with-picture{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);
+                   column-gap:1.4rem;align-content:start}
+.lead.with-picture > a{display:contents}
+.lead.with-picture > *:not(a){grid-column:2}
+.lead.with-picture h2{grid-column:2;align-self:start}
+.lead-picture{grid-column:1;grid-row:1 / span 4;width:100%;aspect-ratio:4/3;object-fit:cover;display:block;
+              border-radius:var(--w-radius);background:var(--w-rule)}
+.dek{display:block;margin:.4rem 0 0;max-width:62ch;font-size:.88rem;line-height:1.45;color:var(--w-ink);
+     display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.index a:has(.thumb){display:grid;grid-template-columns:minmax(0,1fr) 84px;column-gap:.8rem}
+.index a:has(.thumb) > :not(.thumb){grid-column:1}
+.index .thumb{grid-column:2;grid-row:1 / span 3;width:84px;height:84px;object-fit:cover;
+              border-radius:var(--w-radius);background:var(--w-rule)}
+.by .via::before{content:"\00b7";margin:0 .4em}
+.clip a{display:block}
+.clip .poster{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;background:#000;
+              border-radius:var(--w-radius)}
+.field{columns:4 200px;column-gap:.9rem}
+.photo{margin:0 0 .9rem;break-inside:avoid}
+.photo a{display:block}
+.photo .picture{display:block;width:100%;height:auto;border-radius:var(--w-radius);background:var(--w-rule)}
+.photo figcaption{padding:.35rem 0 0;font-size:.82rem;line-height:1.3;color:var(--w-display)}
+.photo figcaption .by{display:block;margin-top:.15rem}
+@media (max-width:600px){.lead.with-picture{grid-template-columns:1fr}.lead.with-picture > *,.lead.with-picture h2,.lead-picture{grid-column:1;grid-row:auto}.field{columns:2 140px}}
+
+.explore{display:flex;flex-wrap:wrap;gap:.4rem 1.4rem}
+.explore a{font-size:.95rem;padding:.2rem 0;border-bottom:1px solid var(--w-rule)}
+.explore a:hover{border-bottom-color:currentColor}
+
+/* Map: a plate of points on a graticule, in the page's own roles. */
+.map{margin:0}
+.map .plate{position:relative;border-radius:var(--w-radius);overflow:hidden;background:var(--w-panel)}
+/* Land is a mask, so it takes the page's own colour roles in every character. */
+.map .plate::before{content:"";position:absolute;inset:0;background:var(--w-muted);opacity:.28;
+  -webkit-mask:url(/assets/world-land.svg) center/100% 100% no-repeat;mask:url(/assets/world-land.svg) center/100% 100% no-repeat}
+.map svg{position:relative;display:block;width:100%;height:auto}
+.map .grid{stroke:var(--w-rule);stroke-width:.3}
+.map .grid.equator{stroke-width:.6}
+.map .point{fill:var(--w-accent);fill-opacity:.8;stroke:var(--w-ground);stroke-width:.3}
+.map .point.newest{fill-opacity:1;stroke-width:.8}
+.map a:hover .point{fill-opacity:1;r:3.2}
+.map figcaption{margin-top:.45rem;font-family:var(--w-face-mono);font-size:.64rem;color:var(--w-muted)}
+/* Close together, places are drawn on their streets; the tiles carry their credit. */
+.map .plate.streets{background:#e8e4dc}
+.map .plate.streets::before{display:none}
+.map .plate.streets .point circle{fill:var(--w-accent);stroke:#fff;stroke-width:2.5}
+.map .plate.streets .point text{fill:#fff;font:600 11px/1 var(--w-face-mono);text-anchor:middle;pointer-events:none}
+.map .plate.streets a:hover circle{r:14}
+.map .plate.streets .point.newest circle{stroke-width:3}
+.map-credit{position:absolute;right:0;bottom:0;padding:.15rem .45rem;border-top-left-radius:6px;background:rgba(255,255,255,.82);
+  font-family:var(--w-face-mono);font-size:.56rem;color:#333}
+.map-credit a{color:#333;text-decoration:underline}
+.map.where{margin-top:1.2rem}
+
+/* Streams: where a conversation is happening, then its topics, newest first. */
+.streams{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:1.6rem 2rem}
+.stream h3{margin:0 0 .3rem;font-family:var(--w-face-mono);font-size:.7rem;font-weight:500;
+           letter-spacing:.12em;text-transform:uppercase;color:var(--w-muted)}
+.stream ol{list-style:none;margin:0;padding:0}
+.stream li{padding:.45rem 0;border-top:1px solid var(--w-rule);font-size:.9rem;line-height:1.3}
+.stream li a{color:var(--w-display)}
+.stream li a:hover{text-decoration:underline;text-underline-offset:.14em}
+.stream li .by{display:block;margin-top:.15rem}
+.stream li .by span + time::before{content:"\00b7";margin:0 .4em}
+/* A front page names the place and offers the other territories. */
+.bar.front .brand{font-family:var(--w-face-display);font-size:1.05rem;letter-spacing:-.01em;color:var(--w-display)}
+.bar.front .places{display:flex;gap:.1rem;margin-left:.6rem}
+.bar.front .places a{padding:.08rem .45rem;border-radius:100px;opacity:.6}
+.bar.front .places a:hover{opacity:1}
+.bar.front .places a[aria-current="page"]{opacity:1;background:var(--w-accent);color:var(--w-ground)}
+.bar .gr a[aria-current="page"]{opacity:1;background:var(--w-display);color:var(--w-ground);border-color:var(--w-display)}
+
+/* ===================== ROUTES, ITEMS AND VERBS =====================
+ *
+ * Each main route speaks its own interaction language; these rules give each
+ * one its own shape rather than one feed with different words over it.
+ */
+.glyph{width:1em;height:1em;flex:none;fill:none;stroke:currentColor;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.12em}
+.glyph path[d^="M5 3.5v9"]{fill:currentColor;stroke:none}
+
+/* header: the place, the sections, and search -- always in the same spots */
+.bar{gap:.9rem}
+.bar .brand{font-family:var(--w-face-display);font-size:1.02rem;letter-spacing:-.01em;color:var(--w-display);opacity:1}
+.bar .gr{margin-left:0}
+.bar .gr a{border:0;padding:.2rem .5rem;border-radius:100px;opacity:.72}
+.find{margin-left:auto}
+.find label{display:flex;align-items:center;gap:.35rem;border:1px solid var(--w-rule);border-radius:100px;padding:.18rem .65rem;color:var(--w-muted)}
+.find input{border:0;background:transparent;color:var(--w-ink);font:inherit;font-size:.72rem;width:11rem;outline:none}
+.find label:focus-within{border-color:var(--w-display);color:var(--w-display)}
+.tabs{display:flex;flex-wrap:wrap;gap:.3rem;padding:.5rem 0;border-bottom:1px solid var(--w-rule);font-family:var(--w-face-mono);font-size:.68rem}
+.tabs a{padding:.1rem .5rem;border:1px solid var(--w-rule);border-radius:100px}
+.narrowed{margin:.8rem 0 0;font-family:var(--w-face-mono);font-size:.7rem;color:var(--w-muted)}
+.narrowed a{text-decoration:underline;text-underline-offset:.15em;color:var(--w-display)}
+.jump{display:flex;flex-wrap:wrap;gap:.4rem}
+.jump a{padding:.3rem .8rem;border:1px solid var(--w-rule);border-radius:100px}
+
+/* Discover: a mixed stream, pictures at their own height, stories set as type */
+.feed{columns:4 240px;column-gap:1.4rem}
+.tile{break-inside:avoid;margin:0 0 1.4rem;display:block}
+.tile a{display:block;color:var(--w-display)}
+.tile .frame{position:relative;display:block;margin-bottom:.45rem}
+.tile .picture{display:block;width:100%;height:auto;border-radius:var(--w-radius);background:var(--w-rule)}
+.tile b{display:block;font-weight:500;line-height:1.25}
+.tile.is-story b{font-family:var(--w-face-display);font-size:1.28rem;line-height:1.12;padding-top:.7rem;border-top:2px solid var(--w-display)}
+.tile.is-story:nth-child(3n) b{font-size:1.6rem}
+.tile.is-picture b,.tile.is-video b{font-size:.9rem}
+.tile .dek{display:block;margin-top:.35rem;font-size:.84rem;color:var(--w-ink);line-height:1.4}
+.tile .by{display:block;margin-top:.3rem}
+.play{position:absolute;left:.6rem;bottom:.6rem;display:grid;place-items:center;width:2.2rem;height:2.2rem;border-radius:50%;
+      background:rgba(0,0,0,.62);color:#fff;font-size:.95rem;backdrop-filter:blur(4px)}
+.tile a:hover b,.video:hover b,.pane-topics a:hover b,.result:hover b{text-decoration:underline;text-underline-offset:.14em}
+
+/* Watch: a browsing grid of frames, the way video sites lay out a shelf of them */
+.video-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:1.6rem 1.2rem}
+.video{display:block;color:var(--w-display)}
+.video .frame{position:relative;display:block;aspect-ratio:16/9;overflow:hidden;border-radius:calc(var(--w-radius) + 4px);background:#000}
+.video .poster{width:100%;height:100%;object-fit:cover;display:block;transition:transform .25s ease}
+.video:hover .poster{transform:scale(1.03)}
+.video b{display:block;margin-top:.55rem;font-size:.95rem;font-weight:500;line-height:1.3;
+         display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.video .by{display:block;margin-top:.2rem}
+.clip .frame{position:relative;display:block}
+
+/* Boards: a wall of pictures; words appear on the picture you point at */
+.wall-pins{columns:5 200px;column-gap:.8rem}
+.pin{position:relative;display:block;break-inside:avoid;margin:0 0 .8rem;border-radius:calc(var(--w-radius) + 6px);overflow:hidden;background:var(--w-rule)}
+.pin .picture{display:block;width:100%;height:auto;min-height:3rem}
+.pin .cap{position:absolute;inset:auto 0 0 0;padding:1.6rem .7rem .6rem;color:#fff;
+          background:linear-gradient(transparent,rgba(0,0,0,.72));opacity:0;transition:opacity .18s ease}
+.pin:hover .cap,.pin:focus-visible .cap{opacity:1}
+.pin .cap b{display:block;font-size:.85rem;font-weight:600;line-height:1.2}
+.pin .cap span{display:block;margin-top:.15rem;font-size:.7rem;opacity:.85}
+.pin .cap .terms,.photo .terms{font-family:var(--w-face-mono);font-size:.6rem;letter-spacing:.02em}
+.photo .by .terms::before{content:"\00b7";margin:0 .35rem;opacity:.6}
+@media (hover:none){.pin .cap{opacity:1}}
+
+/* Channels: places on the left, the chosen place's topics on the right */
+.panes{display:grid;grid-template-columns:minmax(0,15rem) minmax(0,1fr);gap:0;border-top:1px solid var(--w-rule)}
+.pane-list{border-right:1px solid var(--w-rule);padding:.6rem .8rem .6rem 0}
+.pane-list ol{list-style:none;margin:0;padding:0}
+.pane-list a{display:flex;justify-content:space-between;gap:.6rem;padding:.42rem .6rem;border-radius:6px;font-size:.9rem;color:var(--w-ink)}
+.pane-list a small{font-family:var(--w-face-mono);font-size:.66rem;color:var(--w-muted)}
+.pane-list a:hover{background:color-mix(in srgb,var(--w-rule) 60%,transparent)}
+.pane-list a[aria-current="true"]{background:var(--w-display);color:var(--w-ground)}
+.pane-list a[aria-current="true"] small{color:inherit;opacity:.7}
+.pane-topics{padding:.6rem 0 .6rem 1.4rem}
+.pane-topics h3{margin:.2rem 0 .6rem;font-family:var(--w-face-display);font-size:1.5rem;font-weight:var(--w-display-weight);color:var(--w-display)}
+.pane-topics ol{list-style:none;margin:0;padding:0}
+.pane-topics .topic{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.2rem 1rem;align-items:center;padding:.7rem 0;border-top:1px solid var(--w-rule);color:var(--w-display)}
+.pane-topics .topic b{font-weight:500;line-height:1.3}
+.pane-topics .topic .by{grid-column:1}
+.pane-topics .topic .thumb{grid-column:2;grid-row:1 / span 2;width:64px;height:64px;object-fit:cover;border-radius:6px}
+.stream h3 a{color:inherit}
+
+/* Community: who is posting, how much, and what */
+.communities{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:1.8rem 2rem}
+.community header{display:flex;align-items:baseline;justify-content:space-between;gap:.6rem;padding-bottom:.4rem;border-bottom:2px solid var(--w-display)}
+.community h3{margin:0;font-family:var(--w-face-display);font-size:1.25rem;font-weight:var(--w-display-weight);color:var(--w-display)}
+.community header a:hover h3{text-decoration:underline;text-underline-offset:.14em}
+.community small{font-family:var(--w-face-mono);font-size:.66rem;color:var(--w-muted)}
+.community ol{list-style:none;margin:0;padding:0}
+.community li a,.community li span{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.1rem .8rem;padding:.55rem 0;border-bottom:1px solid var(--w-rule);color:var(--w-ink)}
+.community li b{font-weight:400;font-size:.9rem;line-height:1.35;grid-column:1;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.community li time{grid-column:1;font-family:var(--w-face-mono);font-size:.62rem;color:var(--w-muted)}
+.community li .thumb{grid-column:2;grid-row:1 / span 2;width:52px;height:52px;object-fit:cover;border-radius:6px}
+
+/* Releases and advisories: a ledger, one line per thing, columns that line up */
+.ledger-wrap{overflow-x:auto}
+.ledger{width:100%;border-collapse:collapse;font-size:.86rem}
+.ledger th{text-align:left;font-family:var(--w-face-mono);font-size:.62rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--w-muted);padding:.4rem .6rem .4rem 0;border-bottom:2px solid var(--w-display)}
+.ledger td{padding:.5rem .8rem .5rem 0;border-bottom:1px solid var(--w-rule);vertical-align:top}
+.ledger td.name a,.ledger td.name span:first-child{color:var(--w-display);font-weight:500}
+.ledger td.name .dek{display:block;font-weight:400;margin-top:.15rem;font-size:.8rem;color:var(--w-ink)}
+.ledger td a:hover{text-decoration:underline}
+.ledger td:not(.name) a{font-family:var(--w-face-mono);font-size:.7rem;color:var(--w-muted)}
+.ledger td.when{font-family:var(--w-face-mono);font-size:.7rem;color:var(--w-muted);white-space:nowrap}
+.ledger tbody tr:hover{background:color-mix(in srgb,var(--w-rule) 45%,transparent)}
+
+/* Search results: what kind of thing, what it is, who made it */
+.results{list-style:none;margin:0;padding:0;max-width:56rem}
+.result{display:grid;grid-template-columns:2rem minmax(0,1fr) auto;gap:.8rem;align-items:start;padding:.8rem 0;border-bottom:1px solid var(--w-rule);color:var(--w-display)}
+.result .kind{display:grid;place-items:center;width:2rem;height:2rem;border-radius:50%;border:1px solid var(--w-rule);color:var(--w-muted)}
+.result b{display:block;font-size:1.02rem;font-weight:500}
+.result .dek{display:block;margin-top:.2rem;font-size:.85rem;color:var(--w-ink)}
+.result .by{display:block;margin-top:.25rem}
+.result .thumb{width:72px;height:72px;object-fit:cover;border-radius:6px}
+
+/* Map: the plate and its numbered list side by side */
+.map.with-list{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:1.4rem;align-items:start}
+.map.with-list figcaption{grid-column:1}
+.places-list{margin:0;padding:0 0 0 1.4rem;max-height:34rem;overflow:auto;font-size:.88rem}
+.places-list li{padding:.45rem 0;border-bottom:1px solid var(--w-rule)}
+.places-list li::marker{font-family:var(--w-face-mono);font-size:.66rem;color:var(--w-muted)}
+.places-list a{color:var(--w-display)}
+.places-list a:hover{text-decoration:underline}
+.places-list .by{display:block;margin-top:.1rem}
+
+/* Front pages: each section is a way in, in its own route's rhythm */
+.section{margin:3rem 0 0}
+.section-head{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:.2rem 1rem;margin-bottom:1rem;padding-bottom:.6rem;border-bottom:1px solid var(--w-rule)}
+.section-head h2{margin:0;font-family:var(--w-face-display);font-size:clamp(1.5rem,3vw,2.2rem);font-weight:var(--w-display-weight);letter-spacing:var(--w-display-tracking);color:var(--w-display)}
+.section-head h2 a:hover{text-decoration:underline;text-underline-offset:.12em}
+.section-head p{grid-column:1;margin:0;font-size:.84rem;color:var(--w-muted);max-width:60ch}
+.section-head .see-all{grid-column:2;grid-row:1 / span 2;align-self:center;font-family:var(--w-face-mono);font-size:.7rem;padding:.35rem .8rem;border:1px solid var(--w-display);border-radius:100px;color:var(--w-display)}
+.section-head .see-all:hover{background:var(--w-display);color:var(--w-ground)}
+.section-wall .wall-pins{columns:6 150px}
+.section-feed .feed{columns:4 220px}
+
+/* An item, opened: the thing large, its verbs beside it */
+.crumbs{margin:1rem 0 0;font-family:var(--w-face-mono);font-size:.7rem;color:var(--w-muted)}
+.crumbs a{color:var(--w-display)}
+.crumbs a:hover{text-decoration:underline}
+.thing{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:2rem;align-items:start;margin:1rem 0 0;padding-bottom:2rem;border-bottom:1px solid var(--w-rule)}
+.thing > :only-child{grid-column:1 / -1;max-width:46rem}
+.player{position:relative;aspect-ratio:16/9;border-radius:calc(var(--w-radius) + 6px);overflow:hidden;background:#000}
+.player iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.hero-picture{margin:0}
+.hero-picture .picture{display:block;width:100%;height:auto;max-height:78vh;object-fit:contain;border-radius:calc(var(--w-radius) + 4px);background:var(--w-rule)}
+.thing .map{margin:0}
+.thing-text h1{margin:0;font-family:var(--w-face-display);font-size:clamp(1.7rem,3.6vw,2.8rem);font-weight:var(--w-display-weight);line-height:1.08;letter-spacing:var(--w-display-tracking);color:var(--w-display)}
+.thing-text .by{margin:.7rem 0 0}
+.thing-body{margin:1rem 0 0;font-size:1rem;line-height:1.6;max-width:62ch}
+.verbs{display:flex;flex-wrap:wrap;gap:.5rem;margin:1.4rem 0 0}
+.verb{display:inline-flex;align-items:center;gap:.45rem;padding:.55rem .95rem;border:1px solid var(--w-rule);border-radius:100px;font-size:.86rem;color:var(--w-display);transition:background .15s ease,border-color .15s ease}
+.verb:hover{border-color:var(--w-display)}
+.verb.primary{background:var(--w-display);border-color:var(--w-display);color:var(--w-ground)}
+.verb.primary:hover{opacity:.88}
+.thing:not(.property){gap:clamp(1.5rem,4vw,4rem);padding:clamp(1rem,2vw,2rem) 0 clamp(2rem,5vw,4rem)}
+.thing:not(.property) .hero-picture .picture{max-height:70vh;border-radius:14px}
+.thing:not(.property) .thing-text h1{font-family:'DM Sans',system-ui,sans-serif;font-size:clamp(2.1rem,4.6vw,4.2rem);font-weight:700;letter-spacing:-.045em;line-height:1.02;overflow-wrap:anywhere}
+.thing:not(.property) .thing-body{font-size:clamp(1rem,1.25vw,1.15rem);line-height:1.7}
+.thing:not(.property) .verb{min-height:44px;box-sizing:border-box;font-family:'DM Sans',system-ui,sans-serif;font-weight:600;text-decoration:none}
+.thing:not(.property) .verb.primary{background:#b5df32;border-color:#b5df32;color:#17220b}
+.thing:not(.property) .verb:focus-visible,.thing:not(.property) .more-verbs summary:focus-visible{outline:3px solid #8bb71b;outline-offset:3px}
+.thing:not(.property) .verbs.leads{padding-top:1rem;border-top:1px solid var(--w-rule)}
+.thing:not(.property) .more-verbs{margin-top:1.4rem;border-top:1px solid var(--w-rule);padding-top:1rem}
+.thing:not(.property) .more-verbs summary{cursor:pointer;font-weight:600;color:var(--w-display)}
+.thing:not(.property) .more-verbs .verbs{margin-top:.9rem}
+.link-line{margin:1rem 0 0}
+/* where a picture or a file is kept, and the terms its page states */
+.credit{margin:.5rem 0 0;font-family:var(--w-face-mono);font-size:.66rem;color:var(--w-muted)}
+.credit a{color:var(--w-display);text-decoration:underline;text-underline-offset:.15em}
+.playing{margin:0}
+.player video{position:absolute;inset:0;width:100%;height:100%;background:#000}
+.listening audio{display:block;width:100%;margin-top:.8rem}
+/* using something someone shared, without leaving to find out how */
+.reuse{margin:1.2rem 0 0;border-top:1px solid var(--w-rule);padding-top:.8rem}
+.reuse summary{cursor:pointer;display:inline-flex;align-items:center;gap:.4rem;font-size:.86rem;color:var(--w-display)}
+.reuse summary:hover{text-decoration:underline;text-underline-offset:.15em}
+.reuse p{margin:.6rem 0 0;font-size:.82rem;color:var(--w-ink)}
+.reuse p a{color:var(--w-display);text-decoration:underline;text-underline-offset:.15em}
+.reuse input{display:block;width:100%;box-sizing:border-box;margin-top:.4rem;font:inherit;font-size:.8rem;padding:.5rem .6rem;border:1px solid var(--w-rule);border-radius:6px;background:transparent;color:var(--w-ink)}
+.tracks .tt b a{color:inherit}
+.play-on-page{grid-column:2 / -1;display:inline-flex;align-items:center;gap:.35rem;margin-top:.35rem;font-size:.8rem;color:var(--w-display)}
+.play-on-page:hover span{text-decoration:underline;text-underline-offset:.14em}
+.terms-list{margin:.6rem 0 0;padding-left:1.1rem;font-size:.82rem;color:var(--w-ink)}
+.terms-list li{margin:.15rem 0}
+.facts.episode{margin-top:1rem}
+.tracks .tt b a:hover{text-decoration:underline;text-underline-offset:.14em}
+.link-line label{display:flex;align-items:center;gap:.5rem;font-family:var(--w-face-mono);font-size:.64rem;color:var(--w-muted)}
+.link-line input{flex:1;min-width:0;font:inherit;font-size:.7rem;padding:.35rem .5rem;border:1px solid var(--w-rule);border-radius:6px;background:transparent;color:var(--w-ink)}
+/* a person's own place on every page: sign in, or what they kept */
+.bar .account{margin-left:.4rem;padding:.2rem .7rem;border-radius:100px;border:1px solid var(--w-display);color:var(--w-display);font-size:.72rem;white-space:nowrap}
+.bar .account:hover{background:var(--w-display);color:var(--w-ground)}
+.verb-form{display:inline-flex;margin:0}
+button.verb{font:inherit;font-size:.86rem;background:transparent;cursor:pointer}
+.verb.is-on{background:color-mix(in srgb,var(--w-accent) 16%,transparent);border-color:var(--w-accent);color:var(--w-display)}
+.verb.is-on .glyph path{fill:currentColor}
+/* a property: what the roll says, laid out the way listings lay out facts */
+.thing.property{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr)}
+.facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,200px),1fr));gap:0 1.4rem;margin:0;align-self:start}
+.facts div{padding:.6rem 0;border-top:1px solid var(--w-rule)}
+.facts dt{font-family:var(--w-face-mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--w-muted)}
+.facts dd{margin:.2rem 0 0;font-size:1rem;color:var(--w-display)}
+.region-properties .result .kind{color:var(--w-accent);border-color:var(--w-accent)}
+@media (max-width:760px){
+  .panes{grid-template-columns:1fr}.pane-list{border-right:0;border-bottom:1px solid var(--w-rule);padding-right:0}
+  .pane-list ol{display:flex;overflow-x:auto;gap:.3rem}.pane-list a{white-space:nowrap}
+  .pane-topics{padding-left:0}.map.with-list,.thing{grid-template-columns:1fr}
+  .find input{width:7rem}.bar .gr{order:3;width:100%;overflow-x:auto;flex-wrap:nowrap}
+}
+
+.zine .region .lead h2,.zine .index b{text-transform:uppercase;letter-spacing:-.01em}
+.zine .region .region-label{font-family:var(--slab);font-size:1rem;letter-spacing:0;color:var(--w-display)}
+.zine .index a,.zine .more li,.zine .tracks li,.zine .msg{border-top:2px solid var(--w-rule)}
+.atlas .index b,.ticker .index b{font-family:var(--w-face-mono);font-size:.92rem;letter-spacing:-.01em}
+.journal .index{grid-template-columns:repeat(auto-fill,minmax(min(100%,420px),1fr))}
+@media (max-width:600px){.more{columns:1}.region .lead h2{max-width:none}}
+
+/* ============================ ATLAS ============================ */
+body.atlas{
+  --w-ground:#07100e; --w-ink:#d8e6df; --w-display:#eaf4ee; --w-accent:#5ee39b;
+  --w-muted:#6f8a80; --w-rule:rgba(216,230,223,.16); --w-panel:#0b1714;
+  --w-face-display:var(--mono); --w-face-body:var(--sans);
+  --w-display-weight:400; --w-display-tracking:-.03em;
+  --w-display-size:clamp(2rem,5.2vw,3.6rem); --w-radius:0;
+}
+.atlas .bar{border-bottom:1px solid var(--w-rule)}
+.atlas .hero{padding:2.2rem 0 1.2rem;border-bottom:1px solid var(--w-rule);
+             /* The plate grid is the atlas's signature, but its colour is not:
+                painted in its own green it turned into visible banding across
+                a light template's letterforms. It takes the rule role, which
+                every language has already had to choose. */
+             background:
+               repeating-linear-gradient(0deg,transparent 0 39px,
+                 color-mix(in srgb,var(--w-rule) 45%,transparent) 39px 40px),
+               repeating-linear-gradient(90deg,transparent 0 39px,
+                 color-mix(in srgb,var(--w-rule) 45%,transparent) 39px 40px);
+             background-blend-mode:normal;opacity:1}
+.atlas .hero > *{position:relative}
+.atlas h1{margin:0;font-family:var(--w-face-display);font-size:var(--w-display-size);font-weight:var(--w-display-weight);letter-spacing:var(--w-display-tracking);line-height:var(--w-display-leading);text-transform:var(--w-display-transform);color:var(--w-display)}
+.atlas .lede{margin:.9rem 0 0;max-width:var(--w-measure);font-size:.94rem;
+             color:var(--w-muted);line-height:1.55}
+.atlas .readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));
+                gap:1px;background:var(--w-rule);border:1px solid var(--w-rule);
+                margin:1.4rem 0 0}
+.atlas .readout div{background:var(--w-ground);padding:.6rem .7rem}
+.atlas .readout b{display:block;font-family:var(--w-face-mono);font-size:1.6rem;
+                  font-weight:500;letter-spacing:-.05em;color:var(--w-accent);
+                  font-variant-numeric:tabular-nums}
+.atlas .readout span{font-family:var(--w-face-mono);font-size:.55rem;letter-spacing:.14em;
+                     text-transform:uppercase;color:var(--w-muted)}
+.atlas .rows{margin:1.6rem 0 0}
+.atlas .q{display:grid;grid-template-columns:5.4rem minmax(0,1fr) 6rem;gap:.9rem;
+          align-items:baseline;padding:.5rem 0;border-bottom:1px solid var(--w-rule);
+          font-family:var(--w-face-mono)}
+.atlas .q .mag{font-size:1.5rem;letter-spacing:-.05em;text-align:right;
+               font-variant-numeric:tabular-nums}
+.atlas .q .mag i{font-style:normal;font-size:.6rem;opacity:.5;margin-left:.15rem}
+.atlas .q .place{font-family:var(--w-face-body);font-size:.92rem;line-height:1.3}
+.atlas .q .when{font-size:.62rem;color:var(--w-muted);text-align:right}
+.atlas .q.big .mag{color:#ff8a5e}
+.atlas .q.small .mag{color:#3a6b5c}
+.atlas .scale{height:3px;background:var(--w-rule);margin-top:.3rem;position:relative}
+.atlas .scale i{position:absolute;inset:0 auto 0 0;background:var(--w-accent);display:block}
+.atlas h2{font-family:var(--w-face-mono);font-size:.62rem;letter-spacing:.18em;
+          text-transform:uppercase;color:var(--w-muted);font-weight:500;margin:2.2rem 0 .5rem}
+
+/* ============================ ZINE ============================ */
+body.zine{
+  --w-ground:#e8e4d9; --w-ink:#111; --w-display:#111; --w-accent:#111;
+  --w-muted:#4a4a44; --w-rule:#111; --w-panel:#fff;
+  --w-face-display:var(--slab); --w-face-body:var(--sans);
+  --w-display-weight:400; --w-display-transform:uppercase;
+  --w-display-tracking:-.01em; --w-display-leading:.92;
+  --w-display-size:clamp(2.2rem,6.8vw,4.8rem); --w-radius:0;
+}
+body.zine{
+  background-image:radial-gradient(circle at 20% 10%,rgba(0,0,0,.05),transparent 60%),
+                   radial-gradient(circle at 85% 70%,rgba(0,0,0,.05),transparent 55%)}
+.zine .bar{border-bottom:2px solid var(--w-rule)}
+.zine .hero{padding:1.6rem 0 1.2rem}
+.zine h1{margin:0;font-family:var(--w-face-display);font-size:var(--w-display-size);font-weight:var(--w-display-weight);letter-spacing:var(--w-display-tracking);line-height:var(--w-display-leading);text-transform:var(--w-display-transform);color:var(--w-display);
+         font-size:clamp(2.4rem,9vw,6rem);line-height:.86;
+         text-shadow:3px 3px 0 var(--w-ground),5px 5px 0 var(--w-display)}
+.zine .lede{margin:1.1rem 0 0;max-width:var(--w-measure);font-size:.9rem;line-height:1.5;
+            border-left:3px solid var(--w-accent);padding-left:.8rem}
+.zine .wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,214px),1fr));
+            gap:1.1rem;margin:1.8rem 0 0}
+.zine .fl{position:relative;background:#f4f1e8;border:2px solid #111;
+          box-shadow:5px 5px 0 #111;display:block;overflow:hidden}
+.zine .fl:nth-child(3n){transform:rotate(-1.1deg)}
+.zine .fl:nth-child(4n){transform:rotate(.9deg)}
+.zine .fl:nth-child(7n){transform:rotate(-.5deg)}
+.zine .fl:hover{transform:rotate(0) translate(-2px,-2px);box-shadow:8px 8px 0 #111}
+.zine .fl img{width:100%;aspect-ratio:4/5;object-fit:cover;display:block;
+              filter:grayscale(1) contrast(1.5) brightness(1.08);mix-blend-mode:multiply}
+.zine .fl .t{padding:.55rem .6rem .7rem;border-top:2px solid #111}
+.zine .fl .t b{display:block;font-family:var(--slab);font-size:.88rem;line-height:1.12;
+               text-transform:uppercase;letter-spacing:-.02em;
+               display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;
+               overflow:hidden}
+.zine .fl .t span{display:block;margin-top:.3rem;font-family:var(--mono);font-size:.58rem;
+                  letter-spacing:.08em;text-transform:uppercase}
+.zine .fl .stamp{position:absolute;top:.5rem;right:.5rem;background:#111;color:#e8e4d9;
+                 font-family:var(--mono);font-size:.52rem;letter-spacing:.12em;
+                 padding:.1rem .4rem;text-transform:uppercase;transform:rotate(3deg)}
+.zine .fl.noimg{background:#111;color:#e8e4d9}
+.zine .fl.noimg .t{border-top:0}
+.zine h2{font-family:var(--slab);font-size:1.1rem;text-transform:uppercase;margin:2.4rem 0 .2rem;
+         letter-spacing:-.01em}
+.zine .rule{height:2px;background:#111;margin-bottom:1rem}
+
+/* ========================== SCRAPBOOK ========================== */
+body.scrapbook{
+  --w-ground:#faf7f2; --w-ink:#20201c; --w-display:#111; --w-accent:#8a7a63;
+  --w-muted:#8d8a80; --w-rule:rgba(0,0,0,.14); --w-panel:#fff;
+  --w-face-display:var(--serif); --w-face-body:var(--sans);
+  --w-card-shadow:0 1px 2px rgba(0,0,0,.12),0 8px 22px rgba(0,0,0,.06);
+  --w-gap:14px;
+}
+.scrapbook .bar{border-bottom:1px solid var(--w-rule)}
+.scrapbook .hero{padding:2.4rem 0 1rem}
+.scrapbook h1{margin:0;font-family:var(--w-face-display);font-size:var(--w-display-size);font-weight:var(--w-display-weight);letter-spacing:var(--w-display-tracking);line-height:var(--w-display-leading);text-transform:var(--w-display-transform);color:var(--w-display);max-width:16ch}
+.scrapbook h1 em{font-style:italic}
+.scrapbook .lede{margin:1rem 0 0;max-width:var(--w-measure);font-size:.96rem;
+                 color:var(--w-muted);line-height:1.6}
+.scrapbook .pins{columns:4 210px;column-gap:14px;margin:1.9rem 0 0}
+.scrapbook .pin{break-inside:avoid;margin:0 0 var(--w-gap);background:var(--w-panel);
+                padding:8px 8px 0;border-radius:var(--w-radius);
+                box-shadow:var(--w-card-shadow);
+                display:block;position:relative;transform:rotate(var(--r,0deg));
+                transition:transform .28s ease}
+.scrapbook .pin:nth-child(5n){--r:-.8deg} .scrapbook .pin:nth-child(3n){--r:.7deg}
+.scrapbook .pin:hover{transform:rotate(0) translateY(-3px)}
+.scrapbook .pin img{width:100%;display:block;background:#eee9e1}
+.scrapbook .pin .cap{padding:.5rem .1rem .7rem}
+.scrapbook .pin .cap b{display:block;font-size:.82rem;line-height:1.3;font-weight:500}
+.scrapbook .pin .cap span{display:block;margin-top:.2rem;font-family:var(--w-face-mono);
+                          font-size:.58rem;color:var(--w-muted)}
+.scrapbook .pin .tape{position:absolute;top:-9px;left:50%;width:56px;height:18px;
+                      transform:translateX(-50%) rotate(-2deg);background:rgba(226,214,180,.72);
+                      box-shadow:0 1px 2px rgba(0,0,0,.10)}
+.scrapbook .pin.noimg{padding:1rem .9rem}
+.scrapbook .pin.noimg .cap{padding:0}
+.scrapbook h2{font-family:var(--w-face-display);font-size:1.5rem;
+              font-weight:var(--w-display-weight);color:var(--w-display);margin:2.4rem 0 .1rem}
+.scrapbook .sub{font-family:var(--w-face-mono);font-size:.6rem;letter-spacing:.14em;
+                text-transform:uppercase;color:var(--w-muted);margin-bottom:.9rem}
+
+
+/* ========================== DOSSIER ==========================
+   What broke this week. Manila stock, a typewriter, and a stamp. Nothing
+   here is styled to look serious; it is styled the way the material is
+   actually filed, which is what makes a CVE number read as an identifier
+   rather than as decoration. */
+body.dossier{
+  --w-ground:#d6c9ac; --w-ink:#20180f; --w-display:#20180f; --w-accent:#8c1c13;
+  --w-muted:#6b5740; --w-rule:rgba(32,24,15,.3); --w-panel:rgba(255,255,255,.28);
+  --w-face-display:var(--type); --w-face-body:var(--type); --w-face-mono:var(--type);
+  --w-display-weight:600; --w-display-transform:uppercase;
+  --w-display-tracking:-.02em; --w-display-leading:1.04;
+  --w-display-size:clamp(1.9rem,4.6vw,3.2rem); --w-radius:2px;
+}
+.dossier .bar{border-bottom:1px solid var(--w-rule)}
+.dossier .bar .ch{background:var(--w-accent);color:var(--w-ground);padding:.1rem .45rem;
+                  border-radius:var(--w-radius);opacity:1}
+.dossier .hero{padding:2.6rem 0 1.2rem;position:relative}
+.dossier h1{margin:0;font-family:var(--w-face-display);font-size:var(--w-display-size);font-weight:var(--w-display-weight);letter-spacing:var(--w-display-tracking);line-height:var(--w-display-leading);text-transform:var(--w-display-transform);color:var(--w-display);max-width:19ch}
+.dossier .lede{margin:1rem 0 0;max-width:var(--w-measure);font-family:var(--w-face-body);
+               font-size:.84rem;line-height:1.65;color:var(--w-muted)}
+.dossier .stamp{position:absolute;top:1.6rem;right:0;border:3px solid var(--w-accent);
+                color:var(--w-accent);font-family:var(--w-face-mono);font-weight:600;
+                font-size:.7rem;letter-spacing:.22em;
+                padding:.3rem .7rem;transform:rotate(-7deg);opacity:.82}
+.dossier h2{font-family:var(--w-face-mono);font-weight:600;font-size:.76rem;
+            letter-spacing:.2em;text-transform:uppercase;margin:2.6rem 0 0;color:var(--w-muted)}
+.dossier .file{border-top:1px solid var(--w-rule);margin-top:.5rem}
+.dossier .case{display:grid;grid-template-columns:2.4rem 1fr auto;gap:.9rem;
+               align-items:baseline;padding:.62rem 0 .62rem .7rem;
+               border-bottom:1px solid var(--w-rule);border-left:4px solid transparent}
+.dossier .case:hover{background:var(--w-panel)}
+.dossier .case.sev{border-left-color:var(--w-accent)}
+.dossier .case .n{font-family:var(--w-face-mono);font-size:.62rem;color:var(--w-muted)}
+.dossier .case .t{font-family:var(--w-face-body);font-size:.84rem;line-height:1.4}
+.dossier .case .t b{font-weight:600}
+.dossier .case .t i{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+                    overflow:hidden;font-style:normal;font-size:.62rem;color:var(--w-muted);
+                    line-height:1.45;margin-top:.2rem;max-width:88ch}
+.dossier .case .w{font-family:var(--w-face-mono);font-size:.6rem;color:var(--w-muted);
+                  white-space:nowrap}
+
+/* ========================== TICKER ==========================
+   What shipped. A registry publishes a continuous line of releases; the
+   honest shape for that is a tape, not a grid of cards, and the version
+   and the download count line up because they are meant to be compared. */
+body.ticker{
+  --w-ground:#08090b; --w-ink:#e8e2d4; --w-display:#f5a623; --w-accent:#f5a623;
+  --w-muted:#6f7783; --w-rule:#1d2026; --w-panel:#0b0d10;
+  --w-face-display:var(--type); --w-face-body:var(--sans); --w-face-mono:var(--type);
+  --w-display-weight:600; --w-display-tracking:-.01em; --w-display-leading:1.05;
+  --w-display-size:clamp(1.8rem,4.4vw,3rem); --w-radius:3px; --w-gap:0px;
+}
+.ticker .bar{border-bottom:1px solid var(--w-rule)}
+.ticker .bar .ch{color:var(--w-accent);opacity:1}
+.ticker .hero{padding:2.4rem 0 1rem}
+.ticker h1{margin:0;font-family:var(--w-face-display);font-size:var(--w-display-size);font-weight:var(--w-display-weight);letter-spacing:var(--w-display-tracking);line-height:var(--w-display-leading);text-transform:var(--w-display-transform);color:var(--w-display)}
+.ticker .lede{margin:.9rem 0 0;max-width:var(--w-measure);font-size:.88rem;
+              line-height:1.6;color:var(--w-muted)}
+.ticker h2{font-family:var(--w-face-mono);font-size:.68rem;letter-spacing:.2em;
+           text-transform:uppercase;color:var(--w-muted);margin:2.2rem 0 .35rem;
+           display:flex;gap:.6rem;align-items:center}
+.ticker h2::after{content:'';flex:1;height:1px;background:var(--w-rule)}
+.ticker .tape{border:1px solid var(--w-rule);border-radius:var(--w-radius);overflow:hidden}
+.ticker .t{display:grid;grid-template-columns:1fr auto auto;gap:1rem;align-items:baseline;
+           padding:.42rem .8rem;font-family:var(--w-face-mono);font-size:.78rem;
+           border-bottom:1px dotted var(--w-rule)}
+.ticker .t:last-child{border-bottom:0}
+.ticker .t:nth-child(odd){background:var(--w-panel)}
+.ticker .t:hover{background:var(--w-rule)}
+.ticker .t .nm{color:var(--w-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ticker .t .nm em{font-style:normal;color:var(--w-muted);margin-left:.5rem;font-size:.68rem}
+.ticker .t .v{color:var(--w-accent);font-size:.72rem}
+.ticker .t .c{color:var(--w-muted);font-size:.72rem;font-variant-numeric:tabular-nums;
+              text-align:right;min-width:5.5rem}
+
+/* ========================== ALMANAC ==========================
+   The sky. An almanac is plates and captions: the picture is the page, the
+   words sit under it in a measured column, and the numbers are set as
+   readings rather than as statistics. */
+body.almanac{
+  --w-ground:#0b1a2b; --w-ink:#e6dfd0; --w-display:#f2ece0; --w-accent:#a8b6c6;
+  --w-muted:#7f93a8; --w-rule:rgba(230,223,208,.16); --w-panel:#12263c;
+  --w-face-display:var(--news); --w-face-body:var(--news);
+  --w-display-weight:400; --w-display-tracking:-.015em; --w-display-leading:1.02;
+  --w-display-size:clamp(2.4rem,6vw,4.4rem); --w-radius:0;
+  --w-gap:26px; --w-measure:62ch;
+}
+.almanac .bar{border-bottom:1px solid var(--w-rule)}
+.almanac .hero{padding:3rem 0 1.4rem;max-width:var(--w-measure)}
+.almanac h1{margin:0;font-family:var(--w-face-display);font-size:var(--w-display-size);font-weight:var(--w-display-weight);letter-spacing:var(--w-display-tracking);line-height:var(--w-display-leading);text-transform:var(--w-display-transform);color:var(--w-display)}
+.almanac .lede{margin:1.1rem 0 0;font-family:var(--w-face-body);font-size:1.06rem;
+               line-height:1.62;color:var(--w-muted)}
+.almanac h2{font-family:var(--w-face-mono);font-size:.62rem;letter-spacing:.22em;
+            text-transform:uppercase;color:var(--w-muted);margin:2.8rem 0 1rem;
+            padding-bottom:.4rem;border-bottom:1px solid var(--w-rule)}
+.almanac .plates{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+                 gap:var(--w-gap)}
+.almanac .plate{display:block}
+.almanac .plate img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;
+                    background:var(--w-panel);border:1px solid var(--w-rule);
+                    border-radius:var(--w-radius)}
+/* An almanac entry that is a film rather than a plate keeps its caption and
+   gives back the space the picture would have taken. */
+.almanac .plate.noplate{border-top:1px solid var(--w-rule);padding-top:.6rem;
+                        align-self:start}
+.almanac .plate.noplate b{margin-top:0}
+.almanac .plate b{display:block;margin-top:.6rem;font-family:var(--w-face-display);
+                  font-weight:var(--w-display-weight);color:var(--w-display);
+                  font-size:1.02rem;line-height:1.32}
+.almanac .plate span{display:block;margin-top:.22rem;font-family:var(--w-face-mono);
+                     font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;
+                     color:var(--w-muted)}
+.almanac .read{border-top:1px solid var(--w-rule);
+               border-bottom:1px solid var(--w-rule);margin-top:1rem}
+.almanac .r{display:grid;grid-template-columns:1fr auto;gap:1rem;padding:.5rem 0;
+            border-bottom:1px dotted var(--w-rule);align-items:baseline}
+.almanac .r:last-child{border-bottom:0}
+.almanac .r b{font-family:var(--w-face-display);font-weight:var(--w-display-weight);
+              color:var(--w-display);font-size:.98rem}
+.almanac .r span{font-family:var(--w-face-mono);font-size:.66rem;color:var(--w-muted);
+                 font-variant-numeric:tabular-nums}
+
+/* ========================== JOURNAL ==========================
+   What was written. A journal's front matter is a measured column, a
+   hairline, and the identifier set small -- the DOI is how the thing is
+   cited, so it belongs on the page rather than behind the link. */
+body.journal{
+  --w-ground:#fff; --w-ink:#111; --w-display:#111; --w-accent:#111;
+  --w-muted:#5a5a54; --w-rule:#d8d8d2; --w-panel:#f6f5f1;
+  --w-face-display:var(--news); --w-face-body:var(--news);
+  --w-display-weight:600; --w-display-tracking:-.02em; --w-display-leading:1.06;
+  --w-display-size:clamp(2rem,5vw,3.4rem); --w-radius:0; --w-measure:66ch;
+}
+.journal .bar{border-bottom:1px solid var(--w-rule)}
+.journal .hero{padding:2.8rem 0 1.4rem;border-bottom:3px double var(--w-display);
+               max-width:var(--w-measure)}
+.journal h1{margin:0;font-family:var(--w-face-display);font-size:var(--w-display-size);font-weight:var(--w-display-weight);letter-spacing:var(--w-display-tracking);line-height:var(--w-display-leading);text-transform:var(--w-display-transform);color:var(--w-display)}
+.journal .lede{margin:1rem 0 0;font-family:var(--w-face-body);font-size:1.04rem;
+               line-height:1.6;color:var(--w-muted)}
+.journal h2{font-family:var(--w-face-mono);font-size:.6rem;letter-spacing:.22em;
+            text-transform:uppercase;color:var(--w-muted);margin:2.4rem 0 .8rem}
+.journal .cols{columns:2 320px;column-gap:2.4rem}
+.journal .a{break-inside:avoid;display:block;padding:.7rem 0 .8rem;
+            border-top:1px solid var(--w-rule)}
+.journal .a:hover{background:var(--w-panel)}
+.journal .a b{display:block;font-family:var(--w-face-display);
+              font-weight:var(--w-display-weight);color:var(--w-display);font-size:1rem;
+              line-height:1.3}
+.journal .a .au{display:block;margin-top:.28rem;font-family:var(--w-face-body);
+                font-size:.84rem;color:var(--w-muted);line-height:1.4}
+.journal .a .id{display:block;margin-top:.34rem;font-family:var(--w-face-mono);
+                font-size:.56rem;letter-spacing:.06em;color:var(--w-muted);
+                word-break:break-all}
+
+
+/* ========================== THE SHELF ==========================
+   Seven worlds listed as seven identical cards is the catalogue shape the
+   layer exists to replace: it says a world is a row in a table, when the
+   whole claim is that it is not. Each cover is set in the character it
+   opens into, so the rack shows what is inside before anything is clicked. */
+body.shelf{
+  --w-ground:#f3f1ec; --w-ink:#1b1b18; --w-display:#111; --w-accent:#8a7a63;
+  --w-muted:#5c5a52; --w-rule:rgba(0,0,0,.14); --w-panel:#fff;
+  --w-face-display:var(--serif); --w-face-body:var(--sans);
+  --w-display-size:clamp(2.4rem,6vw,4.2rem);
+}
+.shelf .bar{border-bottom:1px solid var(--w-rule)}
+.shelf .hero{padding:2.6rem 0 .6rem;max-width:58ch}
+.shelf h1{margin:0;font-family:var(--w-face-display);font-size:var(--w-display-size);font-weight:var(--w-display-weight);letter-spacing:var(--w-display-tracking);line-height:var(--w-display-leading);text-transform:var(--w-display-transform);color:var(--w-display)}
+.shelf .lede{margin:1rem 0 0;font-size:.98rem;line-height:1.6;color:var(--w-muted);
+             max-width:var(--w-measure)}
+.shelf .rack{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));
+             gap:16px;margin:2rem 0 0}
+.shelf .cover{display:flex;flex-direction:column;justify-content:space-between;
+              min-height:186px;padding:1.1rem 1.15rem;border-radius:3px;overflow:hidden;
+              position:relative;transition:transform .22s ease,box-shadow .22s ease}
+.shelf .cover:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(0,0,0,.18)}
+.shelf .cover .t{font-size:1.34rem;line-height:1.1;margin:0;max-width:15ch}
+.shelf .cover .m{font-family:var(--mono);font-size:.58rem;letter-spacing:.16em;
+                 text-transform:uppercase;opacity:.72;margin-top:1.1rem}
+.shelf .cover .g{display:flex;gap:.3rem;flex-wrap:wrap;margin-top:.5rem}
+.shelf .cover .g i{font-style:normal;font-family:var(--mono);font-size:.54rem;
+                   border:1px solid currentColor;border-radius:2px;padding:.05rem .3rem;
+                   opacity:.68}
+
+/* each cover in its world's own colours and type */
+.shelf .c-atlas{background:#07100e;color:#d8e6df}
+.shelf .c-atlas .t{font-family:var(--mono);letter-spacing:-.02em}
+.shelf .c-zine{background:#e8e4d9;color:#111;border:2px solid #111;
+               box-shadow:5px 5px 0 #111;border-radius:0}
+.shelf .c-zine .t{font-family:var(--slab);text-transform:uppercase;font-size:1.18rem;
+                  line-height:.98}
+.shelf .c-scrapbook{background:#fff;color:#20201c;
+                    box-shadow:0 1px 2px rgba(0,0,0,.14),0 8px 22px rgba(0,0,0,.07)}
+.shelf .c-scrapbook .t{font-family:var(--serif);font-size:1.6rem}
+.shelf .c-dossier{background:#d6c9ac;color:#20180f}
+.shelf .c-dossier .t{font-family:var(--type);font-weight:600;text-transform:uppercase;
+                     font-size:1.06rem;line-height:1.16}
+.shelf .c-ticker{background:#08090b;color:#f5a623}
+.shelf .c-ticker .t{font-family:var(--type);font-weight:600}
+.shelf .c-almanac{background:#0b1a2b;color:#e6dfd0}
+.shelf .c-almanac .t{font-family:var(--news);font-weight:400;font-size:1.66rem}
+.shelf .c-journal{background:#fff;color:#111;border:1px solid #111}
+.shelf .c-journal .t{font-family:var(--news);font-weight:600}
+
+/* the refusal note, in each world's own voice */
+.note{border:1px solid var(--w-rule);border-radius:var(--w-radius);padding:.6rem .8rem;
+      font-size:.78rem;color:var(--w-muted);
+      opacity:.75;margin:1rem 0}
+.note strong{display:block;margin-bottom:.15rem}
+
+/* ------------------------------------------------------------------ a long scroll
+ * Every region down a page is dressed in a different published profile, so a
+ * page is a walk through the estate's presentations rather than one look
+ * repeated.  Each therefore has to carry its own ground to the edges, and the
+ * seam between two of them has to read as deliberate.
+ *
+ * Nothing here needs a script.  Parallax is the browser's own compositing:
+ * a fixed background under normal flow, and where a browser has scroll-driven
+ * animation it gets a little more.  A browser without either shows the same
+ * page, still.  Anyone who has asked for less motion gets none of it. */
+.region[class*="region-dress-"]{
+  background:var(--w-ground,transparent);color:var(--w-ink,inherit);
+  padding:clamp(1.4rem,4vw,3.2rem) clamp(1rem,4vw,3rem);
+  margin:0 calc(-1 * clamp(1rem,4vw,3rem));
+  position:relative;
+}
+/* The seam: a hairline the region's own accent lights, so one presentation
+   visibly ends and the next begins. */
+.region[class*="region-dress-"] + .region[class*="region-dress-"]{
+  border-top:1px solid var(--w-rule,rgba(127,127,127,.25));
+}
+.region[class*="region-dress-"] > .region-label{
+  font-family:var(--w-face-display,inherit);
+  font-size:var(--w-display-size,1.5rem);
+  font-weight:var(--w-display-weight,600);
+  text-transform:var(--w-display-transform,none);
+  letter-spacing:var(--w-display-tracking,normal);
+  color:var(--w-display,var(--w-ink,inherit));
+  position:sticky; top:0; z-index:5;
+  padding:.4rem 0; margin:0 0 .8rem;
+  background:linear-gradient(var(--w-ground,transparent) 70%,transparent);
+}
+/* A picture-led region parallaxes its own first picture behind the words. */
+@media (prefers-reduced-motion: no-preference){
+  .region-photos, .region-gallery, .region-wall{
+    background-attachment:fixed;
+    background-size:cover;
+    background-position:center;
+  }
+  /* Where the browser can drive animation from scroll position, the region
+     rises into place as it is reached.  Where it cannot, it is simply there. */
+  @supports (animation-timeline: view()){
+    .region[class*="region-dress-"] > *{
+      animation:bf-rise linear both;
+      animation-timeline:view();
+      animation-range:entry 0% entry 40%;
+    }
+    @keyframes bf-rise{
+      from{opacity:0;transform:translateY(1.2rem)}
+      to{opacity:1;transform:none}
+    }
+  }
+}
+@media (prefers-reduced-motion: reduce){
+  .region[class*="region-dress-"] > *{animation:none}
+}
+
+/* A front page is a long walk: each stop carries its own ground to the edges,
+   and the seam between two of them reads as deliberate. */
+.section[class*="section-dress-"]{
+  background:var(--w-ground,transparent);color:var(--w-ink,inherit);
+  padding:clamp(1.6rem,5vw,3.6rem) clamp(1rem,4vw,3rem);
+  margin:0 calc(-1 * clamp(1rem,4vw,3rem));
+  position:relative;
+}
+.section[class*="section-dress-"] + .section[class*="section-dress-"]{
+  border-top:1px solid var(--w-rule,rgba(127,127,127,.25));
+}
+.section[class*="section-dress-"] .section-head h2{
+  font-family:var(--w-face-display,inherit);
+  font-size:var(--w-display-size,1.6rem);
+  font-weight:var(--w-display-weight,600);
+  text-transform:var(--w-display-transform,none);
+  letter-spacing:var(--w-display-tracking,normal);
+  color:var(--w-display,var(--w-ink,inherit));
+}
+@media (prefers-reduced-motion: no-preference){
+  @supports (animation-timeline: view()){
+    .section[class*="section-dress-"] > *{
+      animation:bf-rise linear both;
+      animation-timeline:view();
+      animation-range:entry 0% entry 35%;
+    }
+  }
+}
+
+/* ---------------------------------------------------------------- apertures
+ *
+ * This estate writes what it cannot infer beside what it shows. Those notes
+ * were easy to scroll past; anchored beside the thing they qualify they become
+ * something a reader opens on purpose. The note itself stays in the page and
+ * stays readable with no script at all -- these rules only mark it as openable
+ * and dress the panel when one is opened. */
+.bf-aperture-source {
+  cursor: help;
+  border-bottom: 1px dotted var(--w-rule, currentColor);
+}
+.bf-aperture-source:focus-visible {
+  outline: 2px solid var(--w-accent, currentColor);
+  outline-offset: 2px;
+}
+.bf-aperture {
+  position: absolute;
+  z-index: 60;
+  max-width: min(38rem, 82vw);
+  margin: 0;
+  padding: .75rem .9rem;
+  background: var(--w-panel, #14161a);
+  color: var(--w-ink, #f2efe9);
+  border: 1px solid var(--w-rule, rgba(242,239,233,.18));
+  border-radius: var(--w-radius, 2px);
+  font-size: .9rem;
+  line-height: 1.5;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, .35);
+}
+@media (prefers-reduced-motion: reduce) {
+  .bf-aperture { box-shadow: none; }
+}
+
+/* A chart drawn from numbers the server already sent. */
+.uplot, [data-bf-series] { width: 100%; }
+[data-bf-series] { min-height: 3rem; }
+
+/* ------------------------------------------------------------- the opening
+ * A page opens on its name at display size, whatever character it wears.
+ * The characters above set the face, weight and tracking; this sets only how
+ * much room the opening takes, so a territory's front page and a section's
+ * page begin the same way under the shared bar. */
+.wrap>.hero{padding-block:clamp(3.25rem,8vw,7.5rem) clamp(1.75rem,3.5vw,3rem);max-width:none;border-bottom:0}
+.wrap>.hero h1{max-width:16ch;font-size:clamp(3rem,8.6vw,7.75rem);line-height:.9;text-wrap:balance;overflow-wrap:anywhere;animation:w-rise .9s cubic-bezier(.2,.8,.2,1) both}
+.wrap>.hero .lede{max-width:40rem;margin-top:clamp(1rem,2vw,1.75rem);font-size:clamp(1.1rem,1.5vw,1.4rem);line-height:1.4}
+@keyframes w-rise{from{opacity:0;translate:0 .25em;filter:blur(8px)}}
+@media (prefers-reduced-motion:reduce){.wrap>.hero h1{animation:none}}
+
+/* ------------------------------------------------------- the estate's own pages
+ * Live, Life, Shop and Work are one publication with four doors.  Each section
+ * used to arrive in a different template's colours and faces, set into the
+ * page as a panel; here they share one ground, one pair of faces and one
+ * accent per door, and every section runs the full width of the window.
+ * The selectors outrank the per-section template styles on purpose. */
+html body[data-character],html body[data-character] .wrap,
+html body[data-character] .wrap>:is(.section,.region){
+  --w-ground:#0d130f;--w-ink:#dde6da;--w-display:#f5f7ee;--w-accent:#b5df32;--w-muted:#8c9a8d;--w-dim:#6d7a6f;
+  --w-rule:rgba(221,230,218,.17);--w-panel:#17211a;--w-radius:14px;
+  --w-face-display:'DM Sans',ui-sans-serif,system-ui,sans-serif;--w-face-body:'DM Sans',ui-sans-serif,system-ui,sans-serif;--w-face-mono:'DM Mono',ui-monospace,monospace;
+  --w-display-weight:600;--w-display-tracking:-.05em;--w-display-transform:none;
+  --f-pad:max(22px,calc(50vw - var(--ak-dock,0px)/2 - 620px));
+  font-family:var(--w-face-body)}
+html body[data-character]:not(:has(style[data-bf-band])):has(.ak-places a[aria-current="page"][href*="aurekai.live"]),html body[data-character]:not(:has(style[data-bf-band])):has(.ak-places a[aria-current="page"][href*="aurekai.live"]) .wrap,html body[data-character]:not(:has(style[data-bf-band])):has(.ak-places a[aria-current="page"][href*="aurekai.live"]) .wrap>:is(.section,.region){--w-accent:#ff6a3d}
+html body[data-character]:not(:has(style[data-bf-band])):has(.ak-places a[aria-current="page"][href*="aurekai.shop"]),html body[data-character]:not(:has(style[data-bf-band])):has(.ak-places a[aria-current="page"][href*="aurekai.shop"]) .wrap,html body[data-character]:not(:has(style[data-bf-band])):has(.ak-places a[aria-current="page"][href*="aurekai.shop"]) .wrap>:is(.section,.region){--w-accent:#ffc53d}
+html body[data-character]:not(:has(style[data-bf-band])):has(.ak-places a[aria-current="page"][href*="aurekai.work"]),html body[data-character]:not(:has(style[data-bf-band])):has(.ak-places a[aria-current="page"][href*="aurekai.work"]) .wrap,html body[data-character]:not(:has(style[data-bf-band])):has(.ak-places a[aria-current="page"][href*="aurekai.work"]) .wrap>:is(.section,.region){--w-accent:#7cc7ff}
+html body[data-character]{background:var(--w-ground);color:var(--w-ink);overflow-x:clip}
+body[data-character] .wrap>.hero{padding-block:clamp(3.5rem,9vw,8.5rem) clamp(2.5rem,5vw,4.5rem)}
+body[data-character] .wrap>.hero h1{max-width:none;font:600 clamp(3.4rem,11.5vw,11rem)/.86 var(--w-face-display);letter-spacing:-.065em;text-transform:none;text-shadow:none;color:var(--w-display)}
+body[data-character] .wrap>.hero .lede{max-width:34rem;font:400 clamp(1.3rem,2vw,1.85rem)/1.22 'Instrument Serif',Georgia,serif;letter-spacing:-.01em;color:var(--w-ink)}
+body[data-character] .wrap>:is(.section,.region){margin:0 calc(50% - 50vw + var(--ak-dock,0px)/2);padding:clamp(3.5rem,8vw,7rem) var(--f-pad);border:0;border-top:1px solid var(--w-rule);border-radius:0;background:var(--w-ground);color:var(--w-ink);box-shadow:none}
+body[data-character] .wrap>.section:nth-of-type(even){background:#111a14}
+/* A territory with a house wears it on every band: the house's faces, weight
+ * and case on the opening and section heads, and each band's own ground
+ * (field, paper or night) instead of one dark ground with a lit lead. */
+body[data-character]:has(style[data-bf-band]) .wrap>.hero h1,
+body[data-character]:has(style[data-bf-band]) .section-head h2{font-family:var(--w-face-display);font-weight:var(--w-display-weight);
+  letter-spacing:var(--w-display-tracking);text-transform:var(--w-display-transform);line-height:var(--w-display-leading,.9)}
+body[data-character]:has(style[data-bf-band]) .wrap>.hero .lede,
+body[data-character]:has(style[data-bf-band]) .section-head p{font-family:var(--w-face-body);font-size:clamp(1.05rem,1.4vw,1.3rem)}
+body[data-character]:has(style[data-bf-band]) .wrap>.section:nth-of-type(even),
+body[data-character]:has(style[data-bf-band]) .wrap>.region-lead{background:var(--w-ground);color:var(--w-ink)}
+body[data-character]:has(style[data-bf-band]) .region-lead .lead h2{color:var(--w-display);font-family:var(--w-face-display);
+  font-weight:var(--w-display-weight);text-transform:var(--w-display-transform)}
+body[data-character]:has(style[data-bf-band]) .region-lead .by{color:var(--w-muted)}
+body[data-character]:has(style[data-bf-band]) .section-head .see-all:hover{color:var(--w-ground)}
+/* The lead story stands on the door's own colour. */
+body[data-character] .wrap>.region-lead{background:var(--w-accent);color:#0d130f;border-top:0;--w-rule:rgba(13,19,15,.25);--w-muted:rgba(13,19,15,.7);--w-display:#0d130f}
+body[data-character] .region-lead .lead{margin:0;padding:0;border:0}
+body[data-character] .region-lead .lead h2{max-width:20ch;font:600 clamp(2.2rem,6.2vw,6rem)/.95 var(--w-face-display);letter-spacing:-.055em;text-transform:none;color:#0d130f;text-wrap:balance}
+body[data-character] .region-lead .lead a:hover h2{text-decoration:none;font-style:italic;font-family:'Instrument Serif',Georgia,serif;font-weight:400;letter-spacing:-.03em}
+body[data-character] .region-lead .by{margin-top:clamp(1.5rem,3vw,2.5rem);font:500 .78rem/1 var(--w-face-mono);letter-spacing:.08em;text-transform:uppercase;color:rgba(13,19,15,.72);display:flex;gap:1.2rem}
+body[data-character] .region-lead .lead-picture{border-radius:1.25rem}
+body[data-character] .section-head{grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:1rem 2rem;margin-bottom:clamp(1.5rem,3vw,2.75rem);padding-bottom:clamp(1.25rem,2.5vw,2rem);border-bottom:1px solid var(--w-rule)}
+body[data-character] .section-head h2{font:600 clamp(2.6rem,7vw,6.25rem)/.9 var(--w-face-display);letter-spacing:-.06em;color:var(--w-display)}
+body[data-character] .section-head h2 a:hover{text-decoration:none;color:var(--w-accent)}
+body[data-character] .section-head h2::after,body[data-character] .section-head h2::before{content:none}
+body[data-character] .section-head p{max-width:34rem;font:400 clamp(1.05rem,1.5vw,1.35rem)/1.3 'Instrument Serif',Georgia,serif;color:var(--w-muted)}
+body[data-character] .section-head .see-all{grid-row:1;align-self:end;padding:.8rem 1.3rem;border:1px solid var(--w-rule);border-radius:999px;font:500 .9rem/1 var(--w-face-body);color:var(--w-ink);transition:background .3s,color .3s,border-color .3s}
+body[data-character] .section-head .see-all::after{content:" \2192"}
+body[data-character] .section-head .see-all:hover{background:var(--w-accent);border-color:var(--w-accent);color:#0d130f}
+/* Lines of things: big enough to read across a room, one rule between. */
+body[data-character] .ledger{font-size:1rem}
+body[data-character] .ledger th{padding:.2rem 1rem .9rem 0;border-bottom:1px solid var(--w-rule);font:500 .7rem/1 var(--w-face-mono);letter-spacing:.1em;color:var(--w-muted)}
+body[data-character] .ledger td{padding:1.05rem 1.2rem 1.05rem 0;border-bottom:1px solid var(--w-rule)}
+body[data-character] .ledger td.name a,body[data-character] .ledger td.name span:first-child{font:500 clamp(1.05rem,1.7vw,1.5rem)/1.2 var(--w-face-display);letter-spacing:-.025em;color:var(--w-display)}
+body[data-character] .ledger tbody tr{transition:background .25s}
+body[data-character] .ledger tbody tr:hover{background:transparent}
+body[data-character] .ledger tbody tr:hover td.name a{color:var(--w-accent)}
+body[data-character] .ledger td a:hover{text-decoration:none}
+body[data-character] .ledger td:not(.name) a,body[data-character] .ledger td.when{font:400 .78rem/1.4 var(--w-face-mono);color:var(--w-muted)}
+body[data-character] .agenda{display:grid;grid-template-columns:minmax(6rem,12rem) minmax(0,1fr);column-gap:clamp(1rem,4vw,4rem)}
+body[data-character] .agenda .agenda-day{grid-column:1;padding-top:1.1rem;border-top:1px solid var(--w-rule)}
+body[data-character] .agenda .agenda-day h3{margin:0;font:600 clamp(1.5rem,2.6vw,2.4rem)/1 var(--w-face-display);letter-spacing:-.05em;text-transform:none;color:var(--w-accent)}
+body[data-character] .agenda .agenda-item{grid-column:2;padding:1.1rem 0;border-top:1px solid var(--w-rule);gap:.4rem 1.2rem}
+body[data-character] .agenda .agenda-item:first-of-type{border-top:1px solid var(--w-rule)}
+body[data-character] .agenda .agenda-item b{font:500 clamp(1.05rem,1.7vw,1.5rem)/1.2 var(--w-face-display);letter-spacing:-.025em;color:var(--w-display)}
+body[data-character] .agenda .agenda-item a:hover b{color:var(--w-accent)}
+body[data-character] .agenda .starts,body[data-character] .agenda .by{font:400 .78rem/1.4 var(--w-face-mono);color:var(--w-muted)}
+body[data-character] .agenda .starts{color:var(--w-ink)}
+body[data-character] .video-grid{gap:2.5rem 1.5rem}
+body[data-character] .video .frame{border-radius:1.1rem;background:var(--w-panel)}
+body[data-character] .video .poster[src*="emoji"]{object-fit:contain;padding:22%;opacity:.5}
+body[data-character] .video b{margin-top:.9rem;font:500 1.12rem/1.25 var(--w-face-display);letter-spacing:-.02em;color:var(--w-display)}
+body[data-character] .video:hover b{text-decoration:none;color:var(--w-accent)}
+body[data-character] .by{font-family:var(--w-face-mono);color:var(--w-muted)}
+body[data-character] .section-photos .field{columns:3 260px;column-gap:1.5rem}
+body[data-character] .photo .picture{border-radius:1.1rem}
+body[data-character] .photo figcaption{padding-top:.8rem;font-size:1rem;color:var(--w-display)}
+body[data-character] .wrap>.more-estate,body[data-character] .wrap>p:has(>.more-publishers){margin:clamp(2.5rem,5vw,4rem) 0 0}
+body[data-character] .src{padding:clamp(3rem,6vw,5rem) 0 2.5rem;font:400 .78rem/1.5 var(--w-face-mono);color:var(--w-muted);opacity:1}
+@media (max-width:700px){
+  body[data-character] .section-head{grid-template-columns:1fr}
+  body[data-character] .section-head .see-all{grid-column:1;grid-row:auto;justify-self:start}
+  body[data-character] .agenda{grid-template-columns:1fr}
+  body[data-character] .agenda .agenda-day,body[data-character] .agenda .agenda-item{grid-column:1}
+  body[data-character] .ledger th:nth-child(2),body[data-character] .ledger td:nth-child(2){display:none}
+}
+/* Who published what is on the page: names in a row, their feeds folded away. */
+body[data-character] .source-depth>header{margin-bottom:clamp(1.5rem,3vw,2.5rem)}
+body[data-character] .source-depth h2{margin:0;font:600 clamp(2.2rem,5.5vw,4.75rem)/.92 var(--w-face-display);letter-spacing:-.055em;color:var(--w-display)}
+body[data-character] .source-depth>header p{max-width:34rem;margin:1rem 0 0;font:400 clamp(1.05rem,1.5vw,1.35rem)/1.3 'Instrument Serif',Georgia,serif;color:var(--w-muted)}
+body[data-character] .source-depth-roots{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,19rem),1fr));gap:0 clamp(1.5rem,4vw,4rem)}
+body[data-character] .source-root{padding:1.4rem 0;border-top:1px solid var(--w-rule)}
+body[data-character] .source-root h3{margin:0;font:600 clamp(1.3rem,2.2vw,1.9rem)/1.05 var(--w-face-display);letter-spacing:-.04em}
+body[data-character] .source-root h3 a{color:var(--w-display)}
+body[data-character] .source-root h3 a:hover{color:var(--w-accent);text-decoration:none}
+body[data-character] .source-root-meta{margin:.5rem 0 .9rem;font:400 .76rem/1.5 var(--w-face-mono);color:var(--w-muted)}
+body[data-character] .source-root-meta a{color:var(--w-ink);text-decoration:underline;text-underline-offset:.2em}
+body[data-character] .source-families{display:flex;flex-wrap:wrap;gap:.4rem}
+body[data-character] .source-family{font-size:.9rem}
+body[data-character] .source-family summary{display:inline-flex;gap:.5rem;align-items:baseline;padding:.45rem .85rem;border:1px solid var(--w-rule);border-radius:999px;cursor:pointer;list-style:none;color:var(--w-ink);transition:border-color .25s,background .25s}
+body[data-character] .source-family summary::-webkit-details-marker{display:none}
+body[data-character] .source-family summary b{font-weight:500}
+body[data-character] .source-family summary span{font:400 .72rem/1 var(--w-face-mono);color:var(--w-muted)}
+body[data-character] .source-family summary:hover,body[data-character] .source-family[open] summary{border-color:var(--w-accent);color:var(--w-display)}
+body[data-character] .source-family[open]{flex-basis:100%}
+body[data-character] .source-family ol{list-style:none;margin:.7rem 0 .4rem;padding:0}
+body[data-character] .source-family li{padding:.55rem 0;border-top:1px solid var(--w-rule);overflow-wrap:anywhere}
+body[data-character] .source-family li a{color:var(--w-display)}
+body[data-character] .source-family li a:hover{color:var(--w-accent)}
+body[data-character] .source-family li :is(.channel-state,small){margin-left:.7rem;font:400 .7rem/1 var(--w-face-mono);color:var(--w-muted)}
+body[data-character] .source-family .source-tail{color:var(--w-muted);font-size:.85rem}
+/* A region's own heading, and its lists, at the same scale as a section's. */
+body[data-character] .wrap>.region>h2,body[data-character] .wrap>.region>header>h2,body[data-character] .region .region-label{margin:0 0 clamp(1.25rem,2.5vw,2.25rem);font:600 clamp(2.2rem,5.5vw,4.75rem)/.92 var(--w-face-display);letter-spacing:-.055em;text-transform:none;color:var(--w-display)}
+body[data-character] .more li{padding:1rem 0;border-top:1px solid var(--w-rule)}
+body[data-character] .more li a{font:500 1.08rem/1.25 var(--w-face-display);letter-spacing:-.02em;color:var(--w-display)}
+body[data-character] .more li a:hover{text-decoration:none;color:var(--w-accent)}
+body[data-character] .tile.is-story b{padding-top:1rem;border-top:1px solid var(--w-rule);font:600 1.3rem/1.12 var(--w-face-display);letter-spacing:-.035em}
+body[data-character] .tile a:hover b{text-decoration:none;color:var(--w-accent)}
+html:has(>body[data-character]){overflow-x:clip}
+/* A film whose publisher gave no picture still gets a frame worth looking at:
+ * the door's colour, flat, with the play mark at its centre. */
+body[data-character] .video .poster[src*="emoji"]{display:none}
+body[data-character] .video .frame:not(:has(.poster:not([src*="emoji"]))){background:var(--w-accent)}
+body[data-character] .video:nth-child(3n+2) .frame:not(:has(.poster:not([src*="emoji"]))){background:#dde6da}
+body[data-character] .video:nth-child(3n) .frame:not(:has(.poster:not([src*="emoji"]))){background:var(--w-panel);outline:1px solid var(--w-rule);outline-offset:-1px}
+body[data-character] .video .frame:not(:has(.poster:not([src*="emoji"]))) .play{inset:0;left:0;top:0;right:0;bottom:0;width:auto;height:auto;margin:0;display:grid;place-items:center;background:none;border:0;border-radius:0;color:#0d130f;transition:scale .4s cubic-bezier(.2,.8,.2,1)}
+body[data-character] .video:nth-child(3n) .frame:not(:has(.poster:not([src*="emoji"]))) .play{color:var(--w-accent)}
+body[data-character] .video .frame:not(:has(.poster:not([src*="emoji"]))) .play .glyph{width:22%;height:auto;fill:currentColor;stroke:none}
+body[data-character] .video:hover .frame:not(:has(.poster:not([src*="emoji"]))) .play{scale:1.18}
+
+/* ======================= ACCOUNT SPACES (/worlds) =======================
+ * A member's space is set in one of the characters above. These rules only
+ * arrange the pieces it points to; colour and type come from the character,
+ * so a station in ticker and a screening room in almanac read as two places.
+ * Rules separate the pieces. Nothing here draws a box around them. */
+body.aw-space .aw-pieces{display:grid;gap:0;margin:clamp(1.6rem,4vw,3rem) 0 0}
+body.aw-space .aw-piece{display:grid;gap:clamp(1rem,2.4vw,2.4rem);padding:clamp(1.4rem,3vw,2.6rem) 0;border-top:1px solid var(--w-rule)}
+body.aw-space .aw-piece:has(figure){grid-template-columns:minmax(0,1fr)}
+@media(min-width:900px){body.aw-space .aw-piece:has(figure){grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);align-items:start}}
+body.aw-space .aw-piece figure{margin:0}
+body.aw-space .aw-piece img,body.aw-space .aw-piece video{display:block;width:100%;max-height:76vh;object-fit:contain;background:var(--w-panel);border-radius:var(--w-radius)}
+body.aw-space .aw-words{display:grid;gap:.55rem;align-content:start;max-width:var(--w-measure)}
+body.aw-space .aw-role{margin:0;font-family:var(--w-face-mono);font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--w-accent)}
+body.aw-space .aw-piece h2{margin:0;font-family:var(--w-face-display);font-weight:var(--w-display-weight);font-size:clamp(1.45rem,3.2vw,2.5rem);
+  line-height:1.06;letter-spacing:var(--w-display-tracking);text-transform:var(--w-display-transform);color:var(--w-display);text-wrap:balance}
+body.aw-space .aw-piece h2::after,body.aw-space .aw-piece h2::before{content:none}
+body.aw-space .aw-piece h2{display:block}
+body.aw-space .aw-piece h2 a:hover{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.14em}
+body.aw-space .aw-piece .by{margin:0;font-family:var(--w-face-mono);font-size:.74rem;color:var(--w-muted)}
+body.aw-space .aw-piece audio{width:100%;margin:.4rem 0;color-scheme:light dark}
+body.aw-space .aw-note{margin:.2rem 0 0;font-family:var(--w-face-body);font-size:clamp(1rem,1.4vw,1.16rem);line-height:1.55;color:var(--w-ink)}
+body.aw-space .aw-body{margin:0;font-size:.95rem;line-height:1.6;color:var(--w-muted)}
+body.aw-space .aw-terms{margin:.3rem 0 0;font-family:var(--w-face-mono);font-size:.68rem;line-height:1.6;color:var(--w-muted)}
+body.aw-space .aw-terms a{text-decoration:underline;text-underline-offset:.16em}
+body.aw-space .aw-portal h2 a::after{content:" \2192";color:var(--w-accent)}
+body.aw-space .aw-gone .aw-body{font-style:italic}
+body.aw-space .aw-elsewhere{padding:2rem 0;border-top:1px solid var(--w-rule)}
+body.aw-space .aw-elsewhere ul{list-style:none;margin:.6rem 0 0;padding:0;display:flex;flex-wrap:wrap;gap:.4rem 1.6rem}
+body.aw-space .aw-elsewhere a{font-family:var(--w-face-display);font-size:1.15rem;color:var(--w-display)}
+body.aw-space .aw-elsewhere span{font-family:var(--w-face-mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--w-muted)}
+body.aw-space a:focus-visible,body.aw-shelf a:focus-visible{outline:3px solid var(--w-accent);outline-offset:3px}
+body.aw-shelf .rack{grid-template-columns:repeat(auto-fill,minmax(min(100%,268px),1fr))}
+
+/* ---- account spaces: programme, diary and club (account-world-cine) ------
+ * Same rule as the pieces: the character gives colour and type, rules
+ * separate rows, nothing is boxed. Dates sit in their own column on wide
+ * screens and above the title on a phone. */
+body.aw-space :is(.aw-programme,.aw-diary,.aw-club,.aw-picks,.aw-talk,.aw-join,.aw-leave){padding:clamp(1.6rem,3.4vw,2.8rem) 0;border-top:1px solid var(--w-rule)}
+body.aw-space :is(.aw-show,.aw-entry):last-child{border-bottom:0}
+body.aw-space .aw-month{margin:1.6rem 0 0;font-family:var(--w-face-mono);font-size:.7rem;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--w-accent)}
+body.aw-space :is(.aw-show,.aw-entry){display:grid;gap:.35rem;padding:1.1rem 0;border-bottom:1px solid var(--w-rule)}
+@media(min-width:900px){body.aw-space :is(.aw-show,.aw-entry){grid-template-columns:15rem minmax(0,1fr);column-gap:2.4rem}
+  body.aw-space :is(.aw-show,.aw-entry)>.aw-when{grid-row:1/span 6}
+  body.aw-space :is(.aw-show,.aw-entry)>:not(.aw-when){grid-column:2}}
+body.aw-space .aw-when{margin:0;font-family:var(--w-face-mono);font-size:.74rem;line-height:1.55;color:var(--w-muted)}
+body.aw-space .aw-when strong{color:var(--w-accent);font-weight:600}
+body.aw-space :is(.aw-show,.aw-entry,.aw-picks li) h3{margin:0;font-family:var(--w-face-display);font-weight:var(--w-display-weight);font-size:clamp(1.3rem,2.6vw,1.9rem);line-height:1.1;letter-spacing:-.01em;color:var(--w-display)}
+body.aw-space :is(.aw-show,.aw-entry,.aw-picks li) h3 a:hover{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.14em}
+body.aw-space .aw-show[data-state=cancelled] h3{text-decoration:line-through;text-decoration-thickness:1px;opacity:.6}
+body.aw-space .aw-show .by,body.aw-clubroom .by{margin:0;font-family:var(--w-face-mono);font-size:.72rem;color:var(--w-muted)}
+body.aw-space .aw-watch summary{cursor:pointer;width:max-content;font-family:var(--w-face-mono);font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--w-accent);text-decoration:underline;text-underline-offset:.2em;padding:.35rem 0}
+body.aw-space .aw-watch video{display:block;width:100%;max-height:70vh;margin-top:.6rem;background:var(--w-panel);border-radius:var(--w-radius)}
+body.aw-space .aw-stars{color:var(--w-accent);letter-spacing:.06em}
+body.aw-space .aw-door{font-family:var(--w-face-display);font-size:clamp(1.15rem,2vw,1.45rem);color:var(--w-display);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.18em}
+body.aw-space .aw-door::after{content:" \2192";color:var(--w-accent)}
+body.aw-clubroom :is(.aw-picks,.aw-talk) ol{list-style:none;margin:0 0 1.4rem;padding:0}
+body.aw-clubroom :is(.aw-picks,.aw-talk) li{display:grid;gap:.4rem;padding:1rem 0;border-bottom:1px solid var(--w-rule)}
+@media(min-width:760px){body.aw-clubroom .aw-picks li{grid-template-columns:minmax(0,1fr) auto;align-items:start;column-gap:2rem}}
+body.aw-clubroom li[data-state=hidden]{opacity:.55}
+body.aw-clubroom .aw-acts{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
+body.aw-clubroom .aw-mark{font-family:var(--w-face-mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--w-accent)}
+body.aw-clubroom form{display:grid;gap:.8rem;max-width:var(--w-measure)}
+body.aw-clubroom .aw-acts form{display:inline-flex}
+body.aw-clubroom .aw-fields{display:grid;gap:.8rem;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))}
+body.aw-clubroom label{display:grid;gap:.35rem;font-family:var(--w-face-mono);font-size:.7rem;letter-spacing:.06em;color:var(--w-muted)}
+body.aw-clubroom :is(input,select,textarea){font:1rem/1.45 var(--w-face-body);color:var(--w-ink);background:transparent;border:0;border-bottom:1px solid var(--w-ink);border-radius:0;padding:.5rem 0;min-height:44px}
+body.aw-clubroom textarea{border:1px solid var(--w-rule);padding:.6rem .7rem;border-radius:var(--w-radius)}
+body.aw-clubroom select option{color:#111;background:#fff}
+body.aw-clubroom button{justify-self:start;min-height:44px;padding:.55rem 1.1rem;font:500 .78rem/1 var(--w-face-mono);letter-spacing:.08em;text-transform:uppercase;cursor:pointer;
+  color:var(--w-ground);background:var(--w-accent);border:1px solid var(--w-accent);border-radius:var(--w-radius)}
+body.aw-clubroom button.aw-quiet{color:var(--w-ink);background:transparent;border-color:var(--w-rule)}
+body.aw-clubroom :is(button,input,select,textarea):focus-visible{outline:3px solid var(--w-accent);outline-offset:2px}
+/* account-world-audio: stations and shows inside a member space. Rules and
+   type only; the World character supplies colour and faces. */
+body.aw-space .aw-sound{display:grid;gap:1rem;margin:clamp(1.2rem,3vw,2.2rem) 0 0;padding:clamp(1rem,2.4vw,1.8rem) 0;border-top:2px solid var(--w-ink);border-bottom:1px solid var(--w-rule)}
+body.aw-space .aw-sound .aw-credit{margin:0;font-family:var(--w-face-mono);font-size:.74rem;letter-spacing:.08em;color:var(--w-muted)}
+body.aw-space .aw-live{display:grid;gap:.35rem;max-width:var(--w-measure)}
+body.aw-space .aw-live audio{width:100%;color-scheme:light dark}
+body.aw-space .aw-live .aw-role,body.aw-space .aw-onair .aw-role{margin:0 .6rem 0 0;display:inline}
+body.aw-space .aw-onair{display:grid;gap:.4rem}
+body.aw-space .aw-onair p{margin:0;font-family:var(--w-face-display);font-size:clamp(1.1rem,2.2vw,1.5rem);line-height:1.3;color:var(--w-display)}
+body.aw-space .aw-onair p.aw-terms{font-family:var(--w-face-mono);font-size:.68rem;color:var(--w-muted)}
+body.aw-space .aw-schedule{width:100%;max-width:46rem;border-collapse:collapse;font-size:.92rem}
+body.aw-space .aw-schedule caption{text-align:left;padding:0 0 .4rem;font-family:var(--w-face-mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--w-accent)}
+body.aw-space .aw-schedule th,body.aw-space .aw-schedule td{text-align:left;vertical-align:baseline;padding:.5rem .8rem .5rem 0;border-top:1px solid var(--w-rule)}
+body.aw-space .aw-schedule th{font-weight:600;white-space:nowrap}
+body.aw-space .aw-schedule td:nth-child(2){font-family:var(--w-face-mono);font-size:.8rem;white-space:nowrap}
+body.aw-space .aw-schedule span{color:var(--w-muted)}
+body.aw-space .aw-listen{display:flex;flex-wrap:wrap;gap:.5rem 1.4rem;margin:0}
+body.aw-space .aw-listen a{display:inline-flex;align-items:center;min-height:44px;font-family:var(--w-face-mono);font-size:.76rem;letter-spacing:.06em;text-decoration:underline;text-underline-offset:.2em;color:var(--w-accent)}
+body.aw-space .aw-episode{display:grid;gap:1.1rem;padding:0 0 clamp(1.4rem,3vw,2.4rem);max-width:52rem}
+body.aw-space .aw-epmeta,body.aw-space .aw-people{margin:0;font-family:var(--w-face-mono);font-size:.74rem;line-height:1.7;color:var(--w-muted)}
+body.aw-space .aw-people a{color:var(--w-ink);text-decoration:underline;text-underline-offset:.16em}
+body.aw-space .aw-marklist h3,body.aw-space .aw-transcript summary{margin:0 0 .35rem;font-family:var(--w-face-mono);font-size:.68rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--w-accent)}
+body.aw-space .aw-marks{list-style:none;margin:0;padding:0}
+body.aw-space .aw-marks li{display:flex;flex-wrap:wrap;gap:.2rem .7rem;align-items:baseline;padding:.4rem 0;border-top:1px solid var(--w-rule);line-height:1.5}
+body.aw-space .aw-marks li[hidden]{display:none}
+body.aw-space .aw-marks li[aria-current]{background:color-mix(in srgb,var(--w-accent) 12%,transparent)}
+body.aw-space .aw-marks a{text-decoration:underline;text-underline-offset:.16em}
+body.aw-space .aw-at{flex:none;min-width:3.6rem;font-family:var(--w-face-mono);font-size:.78rem;color:var(--w-muted)}
+body.aw-space button.aw-at{min-height:36px;padding:.1rem .5rem;border:1px solid var(--w-rule);border-radius:var(--w-radius);background:transparent;color:var(--w-ink);cursor:pointer}
+body.aw-space button.aw-at:hover{border-color:var(--w-accent);color:var(--w-accent)}
+body.aw-space .aw-flag{font-family:var(--w-face-mono);font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;color:var(--w-accent)}
+body.aw-space .aw-transcript summary{cursor:pointer;min-height:44px;display:flex;align-items:center}
+body.aw-space .aw-search{display:grid;gap:.3rem;margin:.2rem 0 .6rem;font-family:var(--w-face-mono);font-size:.7rem;color:var(--w-muted)}
+body.aw-space .aw-search input{font:inherit;font-size:1rem;min-height:44px;padding:.4rem .6rem;border:1px solid var(--w-rule);border-radius:var(--w-radius);background:transparent;color:var(--w-ink);max-width:28rem}
+body.aw-space :is(button,input,summary):focus-visible{outline:3px solid var(--w-accent);outline-offset:2px}
+body.aw-space .aw-words,body.aw-space .aw-episode,body.aw-space .aw-live{min-width:0}
+body.aw-space .aw-piece audio,body.aw-space .aw-live audio{max-width:100%;min-width:0}
+body.aw-space .aw-transcript summary::before{content:"\25B8\00a0"}
+body.aw-space .aw-transcript[open] summary::before{content:"\25BE\00a0"}
+
+/* The reading page uses the nocturnal editorial palette across its sections. */
+body.item-page{
+  --w-ground:#0d130f;--w-ink:#eef1e8;--w-display:#eef1e8;
+  --w-muted:#aeb9aa;--w-rule:rgba(238,241,232,.18);--w-panel:#16201a;
+  --w-accent:#b5df32;--w-face-body:var(--sans);--w-face-display:var(--sans);
+  background:var(--w-ground);color:var(--w-ink)
+}

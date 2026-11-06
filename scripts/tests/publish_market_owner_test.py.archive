@@ -1,0 +1,82 @@
+#!/usr/bin/env python3
+"""The public market must render CMS-owned observed offers, not commerce_lot."""
+from __future__ import annotations
+
+import pathlib
+import sqlite3
+import subprocess
+import sys
+import tempfile
+
+
+ROOT = pathlib.Path(__file__).resolve().parents[2]
+
+
+def main() -> int:
+    commerce = ROOT / "cmd/BonfyreCommerce/bonfyre-commerce"
+    cms_bin = ROOT / "cmd/BonfyreCMS/bonfyre-cms"
+    projector = ROOT / "scripts/project_listings.mjs"
+    publisher = ROOT / "scripts/publish_market.mjs"
+    if not commerce.exists() or not cms_bin.exists():
+        print("publish market owner: required binaries missing", file=sys.stderr)
+        return 2
+    with tempfile.TemporaryDirectory(prefix="bonfyre-market-owner.") as temp:
+        estate = pathlib.Path(temp) / "estate"
+        output = pathlib.Path(temp) / "out"
+        estate.mkdir()
+        archive = sqlite3.connect(estate / "items.db")
+        archive.execute("CREATE TABLE item(source TEXT,key TEXT,title TEXT,href TEXT,publisher TEXT,at INTEGER)")
+        archive.execute("INSERT INTO item VALUES(?,?,?,?,?,?)", (
+            "bat", "owner-lot", "Owner-backed observed lot",
+            "https://bringatrailer.com/listing/owner-backed/", "Bring a Trailer", 1789999200))
+        archive.commit()
+        archive.close()
+        projected = subprocess.run(["bun", str(projector), "--estate", str(estate),
+                                    "--repo", str(ROOT), "--cms", str(cms_bin), "--apply"],
+                                   capture_output=True, text=True, check=False)
+        if projected.returncode:
+            print(projected.stdout, projected.stderr, file=sys.stderr)
+            return 1
+        # A disagreeing compatibility row proves the renderer chose the owner.
+        db = sqlite3.connect(estate / "cms.db")
+        db.execute("CREATE TABLE commerce_lot(exchange TEXT PRIMARY KEY, marketplace TEXT, source TEXT,"
+                   " title TEXT, href TEXT, observed_at TEXT, price_observed TEXT, currency TEXT,"
+                   " cannot_infer TEXT)")
+        db.execute("INSERT INTO commerce_lot VALUES(?,?,?,?,?,?,?,?,?)", (
+            "stale", "example", "legacy", "Stale compatibility lot", "https://invalid.example/stale",
+            "2020-01-01T00:00:00Z", "", "", "legacy boundary"))
+        db.commit()
+        db.close()
+        rendered = subprocess.run(["bun", str(publisher), "--estate", str(estate),
+                                  "--repo", str(ROOT), "--out", str(output)],
+                                 capture_output=True, text=True, check=False)
+        if rendered.returncode:
+            print(rendered.stdout, rendered.stderr, file=sys.stderr)
+            return 1
+        page = (output / "market.html").read_text()
+        checks = ["Owner-backed observed lot" in page,
+                  "https://bringatrailer.com/listing/owner-backed/" in page,
+                  "Stale compatibility lot" not in page,
+                  "price not observed" in page,
+                  "not a claim that the thing exists" in page]
+        if not all(checks):
+            print("publish market owner: page did not use the owner offer boundary", file=sys.stderr)
+            return 1
+        if __import__("os").environ.get("BONFYRE_VERIFY_LEGACY") == "1":
+            legacy = subprocess.run([sys.executable, str(ROOT / "scripts/publish_market.py.archive"),
+                                     "--estate", str(estate), "--repo", str(ROOT),
+                                     "--out", str(pathlib.Path(temp) / "legacy")],
+                                    capture_output=True, text=True, check=False)
+            if legacy.returncode:
+                print(legacy.stdout, legacy.stderr, file=sys.stderr)
+                return 1
+            old_page = (pathlib.Path(temp) / "legacy/market.html").read_text()
+            if page != old_page:
+                print("publish market owner: native page differs from legacy", file=sys.stderr)
+                return 1
+    print("publish market owner: PASS")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

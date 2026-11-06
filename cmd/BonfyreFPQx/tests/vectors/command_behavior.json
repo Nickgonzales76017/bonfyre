@@ -1,0 +1,106 @@
+{
+  "schema": "bonfyre.command-vectors.v1",
+  "binary": "bonfyre-fpqx",
+  "binary_env": "BONFYRE_FPQX_BIN",
+  "cases": [
+    {
+      "name": "two BQFP codebooks are aligned and the alignment is evaluated",
+      "steps": [
+        {
+          "program": "sh",
+          "argv": [
+            "-c",
+            "perl mkst.pl 7 > m.safetensors && perl mkst.pl 9 > m2.safetensors"
+          ],
+          "exit": 0
+        },
+        {
+          "program": "${root}/cmd/BonfyreQuant/bonfyre-quant",
+          "argv": [
+            "encode",
+            "m.safetensors",
+            "--out",
+            "a.bqfp",
+            "--tensor",
+            "down_proj"
+          ],
+          "env": {
+            "HOME": "${tmp}"
+          },
+          "exit": 0
+        },
+        {
+          "program": "${root}/cmd/BonfyreQuant/bonfyre-quant",
+          "argv": [
+            "encode",
+            "m2.safetensors",
+            "--out",
+            "b.bqfp",
+            "--tensor",
+            "down_proj"
+          ],
+          "env": {
+            "HOME": "${tmp}"
+          },
+          "exit": 0
+        },
+        {
+          "argv": [
+            "align",
+            "a.bqfp",
+            "b.bqfp",
+            "--out",
+            "al"
+          ],
+          "env": {
+            "HOME": "${tmp}"
+          },
+          "exit": 0,
+          "present": [
+            "${tmp}/al/fpqx_alignment.json",
+            "${tmp}/al/fpqx_alignment.bin"
+          ]
+        },
+        {
+          "argv": [
+            "eval",
+            "a.bqfp",
+            "al/fpqx_alignment.json"
+          ],
+          "env": {
+            "HOME": "${tmp}"
+          },
+          "exit": 0,
+          "contains": [
+            "k=256 tiles",
+            "mean cosine(tile, A×tile): 0.9"
+          ]
+        }
+      ],
+      "files": {
+        "mkst.pl": "my ($seed,$n)=@ARGV; $n||=256; srand($seed||7); my @t=(\"model.layers.0.mlp.down_proj.weight\",\"model.layers.0.self_attn.q_proj.weight\"); my %h; my $data=\"\"; my $off=0;\nfor my $name (@t){ my $d=pack(\"f<*\", map { (rand()-0.5)*0.08 } 1..$n*$n); $h{$name}=[$off,$off+length($d)]; $data.=$d; $off+=length($d); }\nmy $j=\"{\".join(\",\", map { \"\\\"$_\\\":{\\\"dtype\\\":\\\"F32\\\",\\\"shape\\\":[$n,$n],\\\"data_offsets\\\":[$h{$_}[0],$h{$_}[1]]}\" } @t).\"}\";\n$j.=\" \" x ((8 - length($j) % 8) % 8); print pack(\"Q<\", length($j)).$j.$data;\n"
+      }
+    },
+    {
+      "name": "a missing codebook is refused",
+      "steps": [
+        {
+          "argv": [
+            "align",
+            "a.bqfp",
+            "b.bqfp",
+            "--out",
+            "al"
+          ],
+          "env": {
+            "HOME": "${tmp}"
+          },
+          "exit_nonzero": true,
+          "absent": [
+            "${tmp}/al/fpqx_alignment.json"
+          ]
+        }
+      ]
+    }
+  ]
+}

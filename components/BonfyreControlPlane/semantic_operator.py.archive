@@ -1,0 +1,420 @@
+"""Deterministic shell operators over current, source-bound household state.
+
+This is deliberately a small adapter, not a second household application.  It
+addresses the durable Run8 JSONL projections already owned by the food and
+housing flows, lowers every read into ``SemanticProgramIR``, and uses the
+AddressPlane only for what it owns: selecting an eligible command surface.
+
+The operator is read-only unless an explicit ``--output`` receipt is requested.
+In particular, ``PROVE`` can demonstrate source binding but cannot promote a
+listing, price, pet status, or offer condition into a proof merely because it
+appears in a current projection.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import sqlite3
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Iterable, Mapping, Sequence
+
+import address_plane as address_plane
+import command_advertisements
+import estate_catalog
+import semantic_derivation as derivation
+
+
+DEFAULT_STATE = Path(".bonfyre/run8-r2c/20260823T032652Z-27525")
+
+
+def _canonical(value: object) -> str:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+
+def _digest(value: object) -> str:
+    return hashlib.sha256(_canonical(value).encode("utf-8")).hexdigest()
+
+
+@dataclass(frozen=True)
+class AddressedRecord:
+    """A real projected record plus its deterministic semantic address."""
+
+    address: str
+    kind: str
+    document: Mapping[str, Any]
+    source_file: str
+
+    @property
+    def digest(self) -> str:
+        return _digest(self.document)
+
+    @property
+    def source_refs(self) -> tuple[str, ...]:
+        refs = self.document.get("source_refs") or []
+        if isinstance(refs, str):
+            refs = [refs]
+        evidence = self.document.get("evidence_ref")
+        source_url = self.document.get("source_url")
+        return tuple(sorted({str(value) for value in [*refs, evidence, source_url] if value}))
+
+    def summary(self) -> dict[str, Any]:
+        return {
+            "address": self.address,
+            "kind": self.kind,
+            "content_sha256": self.digest,
+            "source_file": self.source_file,
+            "source_refs": list(self.source_refs),
+            "record": dict(self.document),
+        }
+
+
+class HouseholdAddressBook:
+    """The current food/housing projections without copying them into a new DB."""
+
+    INPUTS = (
+        ("food", Path("household/food/current-offers.jsonl")),
+        ("housing", Path("household/housing/current-listings.jsonl")),
+    )
+
+    def __init__(self, records: Iterable[AddressedRecord]) -> None:
+        self._records = {record.address: record for record in records}
+        if len(self._records) == 0:
+            raise ValueError("no addressable household records")
+
+    @classmethod
+    def load(cls, state_root: Path) -> "HouseholdAddressBook":
+        records: list[AddressedRecord] = []
+        for domain, relative in cls.INPUTS:
+            path = state_root / relative
+            if not path.is_file():
+                raise FileNotFoundError(f"missing current household projection: {relative}")
+            for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+                if not line.strip():
+                    continue
+                try:
+                    document = json.loads(line)
+                except json.JSONDecodeError as error:
+                    raise ValueError(f"invalid JSON in {relative}:{line_number}") from error
+                kind, identity_field = _record_identity(domain, document)
+                identity = document[identity_field]
+                address = f"household:{domain}:{kind}:{identity}"
+                records.append(AddressedRecord(address, f"{domain}.{kind}", document, str(relative)))
+        duplicate_addresses = len(records) != len({record.address for record in records})
+        if duplicate_addresses:
+            raise ValueError("duplicate household address")
+        return cls(records)
+
+    def resolve(self, address: str) -> AddressedRecord:
+        try:
+            return self._records[address]
+        except KeyError as error:
+            raise KeyError(f"unknown household address: {address}") from error
+
+    def select(self, *, prefix: str = "", kind: str = "", predicates: Sequence[str] = ()) -> list[AddressedRecord]:
+        parsed = [_parse_predicate(predicate) for predicate in predicates]
+        selected: list[AddressedRecord] = []
+        for address, record in sorted(self._records.items()):
+            if prefix and not address.startswith(prefix):
+                continue
+            if kind and record.kind != kind:
+                continue
+            if all(_matches(record.document, field, expected) for field, expected in parsed):
+                selected.append(record)
+        return selected
+
+
+def _record_identity(domain: str, document: Mapping[str, Any]) -> tuple[str, str]:
+    """Choose the identity declared by the source schema, never a title or price."""
+    if domain == "food" and isinstance(document.get("offer_id"), str) and document["offer_id"]:
+        return "offer", "offer_id"
+    if domain == "housing" and isinstance(document.get("listing_id"), str) and document["listing_id"]:
+        return "listing", "listing_id"
+    if domain == "housing" and isinstance(document.get("candidate_id"), str) and document["candidate_id"]:
+        return "observation", "candidate_id"
+    raise ValueError(
+        f"source record has no supported stable identity for {domain}: "
+        "expected offer_id, listing_id, or candidate_id"
+    )
+
+def _parse_predicate(predicate: str) -> tuple[str, str]:
+    if "=" not in predicate:
+        raise ValueError(f"predicate must be field=value: {predicate!r}")
+    field, expected = predicate.split("=", 1)
+    if not field or "." in field or not expected:
+        raise ValueError(f"only nonempty top-level field=value predicates are supported: {predicate!r}")
+    return field, expected
+
+
+def _matches(document: Mapping[str, Any], field: str, expected: str) -> bool:
+    if field not in document:
+        return False
+    value = document[field]
+    if value is None:
+        return expected == "null"
+    if isinstance(value, bool):
+        return expected.lower() == str(value).lower()
+    return str(value) == expected
+
+
+def _program(operator: str, reads: Iterable[str]) -> dict[str, Any]:
+    read_set = frozenset(reads)
+    program = derivation.SemanticProgramIR(
+        program_id=f"household.{operator.lower()}.{_digest(sorted(read_set))[:16]}",
+        operator=operator,
+        reads=read_set,
+        writes=frozenset(),
+    )
+    decision = derivation.decide(program)
+    return {
+        "program_id": program.program_id,
+        "operator": program.operator,
+        "digest": program.digest,
+        "reads": sorted(program.reads),
+        "admitted": decision.admitted,
+        "hard_failures": list(decision.hard_failures),
+    }
+
+
+def select(book: HouseholdAddressBook, *, prefix: str = "", kind: str = "", predicates: Sequence[str] = ()) -> dict[str, Any]:
+    records = book.select(prefix=prefix, kind=kind, predicates=predicates)
+    return {
+        "operator": "SELECT",
+        "program": _program("SELECT", (record.address for record in records)),
+        "count": len(records),
+        "records": [record.summary() for record in records],
+    }
+
+
+def _field_diff(left: Any, right: Any, path: str = "$") -> list[dict[str, Any]]:
+    if isinstance(left, Mapping) and isinstance(right, Mapping):
+        changes: list[dict[str, Any]] = []
+        for key in sorted(set(left) | set(right)):
+            next_path = f"{path}.{key}"
+            if key not in left:
+                changes.append({"path": next_path, "left": None, "right": right[key]})
+            elif key not in right:
+                changes.append({"path": next_path, "left": left[key], "right": None})
+            else:
+                changes.extend(_field_diff(left[key], right[key], next_path))
+        return changes
+    if left != right:
+        return [{"path": path, "left": left, "right": right}]
+    return []
+
+
+def diff(book: HouseholdAddressBook, left_address: str, right_address: str) -> dict[str, Any]:
+    left, right = book.resolve(left_address), book.resolve(right_address)
+    return {
+        "operator": "DIFF",
+        "program": _program("DIFF", (left.address, right.address)),
+        "left": left.address,
+        "right": right.address,
+        "changes": _field_diff(left.document, right.document),
+    }
+
+
+def compare(book: HouseholdAddressBook, left_address: str, right_address: str) -> dict[str, Any]:
+    left, right = book.resolve(left_address), book.resolve(right_address)
+    shared = sorted(set(left.document) & set(right.document))
+    equal = [field for field in shared if left.document[field] == right.document[field]]
+    different = [field for field in shared if left.document[field] != right.document[field]]
+    numeric: list[dict[str, Any]] = []
+    for field in different:
+        left_value, right_value = left.document[field], right.document[field]
+        if isinstance(left_value, (int, float)) and not isinstance(left_value, bool) and isinstance(right_value, (int, float)) and not isinstance(right_value, bool):
+            numeric.append({"field": field, "left": left_value, "right": right_value, "right_minus_left": right_value - left_value})
+    return {
+        "operator": "COMPARE",
+        "program": _program("COMPARE", (left.address, right.address)),
+        "left": left.address,
+        "right": right.address,
+        "same_kind": left.kind == right.kind,
+        "equal_fields": equal,
+        "different_fields": different,
+        "numeric_deltas": numeric,
+    }
+
+
+def why(book: HouseholdAddressBook, address: str, field: str = "") -> dict[str, Any]:
+    record = book.resolve(address)
+    if field and field not in record.document:
+        raise ValueError(f"field is not present on {address}: {field}")
+    reason: dict[str, Any] = {
+        "operator": "WHY",
+        "program": _program("WHY", (record.address,)),
+        "address": record.address,
+        "source_file": record.source_file,
+        "source_refs": list(record.source_refs),
+        "content_sha256": record.digest,
+        "evidence_state": "source_bound_observation",
+        "notes": record.document.get("notes", ""),
+    }
+    if field:
+        reason["field"] = field
+        reason["value"] = record.document[field]
+    return reason
+
+
+def prove(book: HouseholdAddressBook, address: str, claim: str) -> dict[str, Any]:
+    """Return a deliberately non-promoting proof verdict for a household claim."""
+    record = book.resolve(address)
+    claim_fields = {
+        "availability": ("availability_status", "availability_claim", "available_text"),
+        "dog_access": ("pet_status", "dogs_stated_ok"),
+        "effective_cost": ("advertised_base_rent_monthly_usd", "advertised_monthly_rent_usd", "price_usd_month"),
+        "price": ("cash_price_usd", "advertised_base_rent_monthly_usd", "advertised_monthly_rent_usd", "price_usd_month"),
+    }
+    if claim not in claim_fields:
+        raise ValueError(f"unknown proof claim: {claim}")
+    present = [field for field in claim_fields[claim] if field in record.document and record.document[field] is not None]
+    return {
+        "operator": "PROVE",
+        "program": _program("PROVE", (record.address,)),
+        "address": record.address,
+        "claim": claim,
+        "proof_state": "not_proven",
+        "observed_fields": present,
+        "source_refs": list(record.source_refs),
+        "reason": (
+            "A source-bound projection can establish record identity and preserve an observation, "
+            "but it does not independently prove current availability, eligibility, pet acceptance, or cost."
+        ),
+    }
+
+
+def route() -> dict[str, Any]:
+    """Route the query owner over the current command advertisement, never a demo estate."""
+    advertisements = command_advertisements.inventory()["advertisements"]
+    query_ad = next((item for item in advertisements if item["identity"] == "BonfyreQuery"), None)
+    if query_ad is None or query_ad["classification"] != "built":
+        raise RuntimeError("current BonfyreQuery surface is not a built command owner")
+    db = sqlite3.connect(":memory:")
+    try:
+        db.execute("CREATE TABLE estate_catalog(family TEXT, estate TEXT)")
+        db.executemany(
+            "INSERT INTO estate_catalog VALUES(?, ?)",
+            (
+                (item["identity"], estate_catalog._estate_for(item["identity"])[0])
+                for item in advertisements
+                if item["classification"] == "built"
+            ),
+        )
+        result = address_plane.route(db, address_plane.RouteDemand(capabilities=("BonfyreQuery",)))
+    finally:
+        db.close()
+    return {
+        "operator": "ROUTE",
+        "program": _program("ROUTE", ("command:BonfyreQuery",)),
+        "owner": query_ad,
+        "address_plane": result.to_dict(),
+        "route_state": "eligible_owner_only",
+        "forbidden_inference": "eligible query owner -> proof, authority, or external effect",
+    }
+
+
+def project(book: HouseholdAddressBook, address: str, fields: Sequence[str]) -> dict[str, Any]:
+    record = book.resolve(address)
+    if not fields:
+        raise ValueError("PROJECT requires at least one --field")
+    missing = [field for field in fields if field not in record.document]
+    if missing:
+        raise ValueError(f"fields absent from {address}: {', '.join(missing)}")
+    return {
+        "operator": "PROJECT",
+        "program": _program("PROJECT", (record.address,)),
+        "address": record.address,
+        "projection": {field: record.document[field] for field in fields},
+        "source_refs": list(record.source_refs),
+    }
+
+
+def reconcile(book: HouseholdAddressBook, left_address: str, right_address: str) -> dict[str, Any]:
+    left, right = book.resolve(left_address), book.resolve(right_address)
+    comparison = compare(book, left_address, right_address)
+    left_property, right_property = left.document.get("property_id"), right.document.get("property_id")
+    left_unit, right_unit = left.document.get("unit_identity"), right.document.get("unit_identity")
+    if left_property and left_property == right_property and left_unit != right_unit:
+        disposition = "coexisting_distinct_units"
+        merge_prohibited = True
+        reason = "Shared property identity with distinct unit identities is not a duplicate or a price conflict."
+    elif left.address == right.address:
+        disposition = "identical_address"
+        merge_prohibited = False
+        reason = "Both operands resolve to the same address."
+    else:
+        disposition = "no_canonical_join"
+        merge_prohibited = True
+        reason = "No supported identity relation permits merging these source-bound records."
+    return {
+        "operator": "RECONCILE",
+        "program": _program("RECONCILE", (left.address, right.address)),
+        "left": left.address,
+        "right": right.address,
+        "disposition": disposition,
+        "merge_prohibited": merge_prohibited,
+        "reason": reason,
+        "comparison": comparison,
+    }
+
+
+def _parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Address and query current Bonfyre household projections")
+    parser.add_argument("--state", type=Path, default=DEFAULT_STATE, help="Run state root containing household/")
+    parser.add_argument("--output", type=Path, help="Optional JSON receipt path; the only write this command performs")
+    sub = parser.add_subparsers(dest="operator", required=True)
+    select_parser = sub.add_parser("select")
+    select_parser.add_argument("--prefix", default="")
+    select_parser.add_argument("--kind", default="")
+    select_parser.add_argument("--where", action="append", default=[], metavar="FIELD=VALUE")
+    for name in ("diff", "compare", "reconcile"):
+        binary = sub.add_parser(name)
+        binary.add_argument("left")
+        binary.add_argument("right")
+    why_parser = sub.add_parser("why")
+    why_parser.add_argument("address")
+    why_parser.add_argument("--field", default="")
+    prove_parser = sub.add_parser("prove")
+    prove_parser.add_argument("address")
+    prove_parser.add_argument("--claim", required=True, choices=("availability", "dog_access", "effective_cost", "price"))
+    sub.add_parser("route")
+    project_parser = sub.add_parser("project")
+    project_parser.add_argument("address")
+    project_parser.add_argument("--field", action="append", default=[])
+    return parser
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    args = _parser().parse_args(argv)
+    if args.operator == "route":
+        result = route()
+    else:
+        book = HouseholdAddressBook.load(args.state)
+        if args.operator == "select":
+            result = select(book, prefix=args.prefix, kind=args.kind, predicates=args.where)
+        elif args.operator == "diff":
+            result = diff(book, args.left, args.right)
+        elif args.operator == "compare":
+            result = compare(book, args.left, args.right)
+        elif args.operator == "why":
+            result = why(book, args.address, args.field)
+        elif args.operator == "prove":
+            result = prove(book, args.address, args.claim)
+        elif args.operator == "project":
+            result = project(book, args.address, args.field)
+        elif args.operator == "reconcile":
+            result = reconcile(book, args.left, args.right)
+        else:  # argparse keeps this unreachable; retain a fail-closed boundary.
+            raise ValueError(f"unsupported operator: {args.operator}")
+    output = json.dumps(result, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+    if args.output:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(output, encoding="utf-8")
+    print(output, end="")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

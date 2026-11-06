@@ -1,0 +1,217 @@
+"""Witness for the commerce chain.
+
+The exhaustive test is the important one: over all 210 ordered pairs of the
+fifteen stages, no stage implies any other. The named tests below single out the
+collapses that actually happen in production systems.
+"""
+
+# ARCHIVED WITH THE PYTHON REFERENCE: the executable witness is now
+# engine/core/tests/commerce_test.c against bf_commerce_*. Keep this file only
+# to explain the original exhaustive non-implication intent.
+
+from __future__ import annotations
+
+import itertools
+import os
+import sqlite3
+import sys
+
+import pytest
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import commerce_chain as cc  # noqa: E402
+
+EXCHANGE = "ex:one-pair-of-boots"
+
+
+@pytest.fixture()
+def db():
+    conn = sqlite3.connect(":memory:")
+    cc.ensure_schema(conn)
+    yield conn
+    conn.close()
+
+
+def _advance_to(db, stage, exchange=EXCHANGE):
+    for s in cc.STAGES[:cc.STAGE_RANK[stage] + 1]:
+        cc.record(db, exchange=exchange, stage=s, owner=cc.owner_of(s))
+
+
+# --------------------------------------------- the exhaustive claim
+
+def test_no_stage_implies_any_other_stage():
+    collapses = [(a, b) for a, b in itertools.permutations(cc.STAGES, 2)
+                 if cc.implies(a, b)]
+    assert collapses == []
+    # 15 stages, 210 ordered pairs, zero inferences. The dangerous ones skip --
+    # "paid" read as "delivered" is not an adjacent mistake.
+    assert len(list(itertools.permutations(cc.STAGES, 2))) == 210
+
+
+def test_a_stage_implies_only_itself():
+    for s in cc.STAGES:
+        assert cc.implies(s, s) is True
+
+
+def test_every_stage_says_what_it_does_not_establish():
+    for s in cc.STAGES:
+        assert cc.what_it_does_not_mean(s)
+        assert cc.owner_of(s)
+
+
+# --------------------------- the collapses that happen in real systems
+
+def test_a_listing_is_not_a_product_in_inventory(db):
+    _advance_to(db, cc.LISTING)
+    assert cc.reached(db, EXCHANGE, cc.LISTING) is True
+    assert cc.reached(db, EXCHANGE, cc.INVENTORY) is False
+    assert "is in stock" in cc.what_it_does_not_mean(cc.LISTING)
+
+
+def test_inventory_is_not_availability_here_and_now(db):
+    _advance_to(db, cc.INVENTORY)
+    assert cc.reached(db, EXCHANGE, cc.AVAILABILITY) is False
+    # A seller's own count is not an observation that this buyer can obtain one.
+    assert cc.owner_of(cc.INVENTORY) == "merchant system of record"
+    assert cc.owner_of(cc.AVAILABILITY) == "AvailabilityObservation, receipted"
+
+
+def test_an_offer_is_not_a_quote_for_this_buyer(db):
+    _advance_to(db, cc.OFFER)
+    assert cc.reached(db, EXCHANGE, cc.QUOTE) is False
+    assert "this particular buyer" in cc.what_it_does_not_mean(cc.OFFER)
+
+
+def test_a_quote_is_not_a_reservation():
+    assert "not held" in cc.what_it_does_not_mean(cc.QUOTE)
+
+
+def test_a_cart_is_not_intent_to_buy(db):
+    _advance_to(db, cc.CART)
+    assert cc.reached(db, EXCHANGE, cc.CHECKOUT) is False
+    assert "intent to buy" in cc.what_it_does_not_mean(cc.CART)
+
+
+def test_a_checkout_is_not_a_commitment(db):
+    _advance_to(db, cc.CHECKOUT)
+    assert cc.reached(db, EXCHANGE, cc.COMMITMENT) is False
+    # Resolving the last variables is not agreeing to anything.
+
+
+def test_a_payment_is_not_settled_money(db):
+    _advance_to(db, cc.PAYMENT)
+    assert cc.reached(db, EXCHANGE, cc.SETTLEMENT) is False
+    assert cc.owner_of(cc.PAYMENT) == "payment rail"
+    assert cc.owner_of(cc.SETTLEMENT) == "MoneyGraph / settlement rail"
+    # An authorization is the rail's claim about itself; settlement is money
+    # having actually moved, and the two are days apart on real rails.
+
+
+def test_settlement_is_not_fulfilment(db):
+    _advance_to(db, cc.SETTLEMENT)
+    assert cc.reached(db, EXCHANGE, cc.FULFILMENT) is False
+    assert "shipped" in cc.what_it_does_not_mean(cc.SETTLEMENT)
+
+
+def test_delivery_is_not_satisfaction(db):
+    _advance_to(db, cc.DELIVERY)
+    assert cc.reached(db, EXCHANGE, cc.SATISFACTION) is False
+    assert cc.owner_of(cc.SATISFACTION) == "the buyer, and only the buyer"
+    # The carrier can prove the parcel arrived and cannot prove anybody wanted
+    # what was in it.
+
+
+def test_delivery_is_not_ownership(db):
+    _advance_to(db, cc.DELIVERY)
+    assert cc.reached(db, EXCHANGE, cc.OWNERSHIP) is False
+    assert "now theirs" in cc.what_it_does_not_mean(cc.DELIVERY)
+
+
+def test_satisfaction_is_not_ledger_discharge():
+    assert "ledger" in cc.what_it_does_not_mean(cc.SATISFACTION)
+    # A happy buyer is not a closed obligation, and CommitmentGraph owns that.
+
+
+# ------------------------------------------- no stage may be skipped
+
+def test_recording_delivery_with_no_fulfilment_is_refused(db):
+    _advance_to(db, cc.SETTLEMENT)
+    with pytest.raises(cc.CommerceError) as e:
+        cc.record(db, exchange=EXCHANGE, stage=cc.DELIVERY,
+                  owner=cc.owner_of(cc.DELIVERY))
+    assert "never saw happen" in str(e.value)
+    assert "fulfilment" in str(e.value)
+
+
+def test_an_exchange_that_starts_at_payment_is_refused(db):
+    with pytest.raises(cc.CommerceError) as e:
+        cc.record(db, exchange="ex:mystery", stage=cc.PAYMENT, owner="rail")
+    assert "was never recorded" in str(e.value)
+
+
+def test_a_stage_recorded_with_no_owner_is_refused(db):
+    with pytest.raises(cc.CommerceError) as e:
+        cc.record(db, exchange=EXCHANGE, stage=cc.PRODUCT, owner="")
+    assert "cannot know it" in str(e.value)
+
+
+def test_an_unknown_stage_is_refused(db):
+    with pytest.raises(cc.CommerceError):
+        cc.record(db, exchange=EXCHANGE, stage="vibes", owner="x")
+    with pytest.raises(cc.CommerceError):
+        cc.implies(cc.PRODUCT, "vibes")
+
+
+# ------------------------------------------------ reading an exchange back
+
+def test_furthest_reports_progress_without_implying_completion(db):
+    _advance_to(db, cc.COMMITMENT)
+    assert cc.furthest(db, EXCHANGE) == cc.COMMITMENT
+    # Six stages still outstanding. A dashboard showing "committed" as a
+    # terminal state would be reporting a third of the way through as done.
+    assert cc.outstanding(db, EXCHANGE) == [
+        cc.PAYMENT, cc.SETTLEMENT, cc.FULFILMENT, cc.DELIVERY,
+        cc.SATISFACTION, cc.OWNERSHIP]
+
+
+def test_an_unknown_exchange_has_reached_nothing(db):
+    assert cc.furthest(db, "ex:never-happened") is None
+    assert cc.outstanding(db, "ex:never-happened") == list(cc.STAGES)
+
+
+def test_a_complete_exchange_has_nothing_outstanding(db):
+    _advance_to(db, cc.OWNERSHIP)
+    assert cc.outstanding(db, EXCHANGE) == []
+    assert cc.furthest(db, EXCHANGE) == cc.OWNERSHIP
+
+
+def test_two_exchanges_do_not_share_progress(db):
+    _advance_to(db, cc.PAYMENT, exchange="ex:a")
+    assert cc.furthest(db, "ex:a") == cc.PAYMENT
+    assert cc.furthest(db, "ex:b") is None
+
+
+# ----------------------------- one row per marketplace would have lost this
+
+def test_three_marketplaces_describe_different_stages_of_one_product(db):
+    # A Shopify product, an eBay listing and "a store two miles away has one"
+    # are three different facts. A universal product row collapses them.
+    cc.record(db, exchange="ex:shopify", stage=cc.PRODUCT,
+              owner="ObjectContract / catalogue", detail="merchant catalogue entry")
+    cc.record(db, exchange="ex:ebay", stage=cc.PRODUCT, owner="catalogue")
+    cc.record(db, exchange="ex:ebay", stage=cc.LISTING,
+              owner="merchant or marketplace ForeignTwin", detail="one seller, used")
+    for s in (cc.PRODUCT, cc.LISTING, cc.INVENTORY):
+        cc.record(db, exchange="ex:walmart", stage=s, owner=cc.owner_of(s))
+    cc.record(db, exchange="ex:walmart", stage=cc.AVAILABILITY,
+              owner="AvailabilityObservation, receipted", detail="2 miles away")
+
+    assert cc.furthest(db, "ex:shopify") == cc.PRODUCT
+    assert cc.furthest(db, "ex:ebay") == cc.LISTING
+    assert cc.furthest(db, "ex:walmart") == cc.AVAILABILITY
+    # Only one of the three can answer "can I get one today", and the estate can
+    # now say which.
+    assert cc.reached(db, "ex:shopify", cc.AVAILABILITY) is False
+    assert cc.reached(db, "ex:ebay", cc.AVAILABILITY) is False
+    assert cc.reached(db, "ex:walmart", cc.AVAILABILITY) is True

@@ -1,0 +1,179 @@
+pack lineage-session-2026-08-27
+generation control-1
+provenance upgrades landed and claims measured during the AI Loss / AI Leads modelling pass, 2026-08-27
+authority measured
+note Continues lineage-session-2026-08-26. This session moved from cartography to measured change. The signal worth keeping is that two conclusions reversed under better instruments, and both reversals were caught because the refusals were written down with reheat conditions instead of being deleted.
+
+# ---------------------------------------------------------------------------
+# INFRASTRUCTURE REPAIRS -- all verified present on disk 2026-08-27
+# ---------------------------------------------------------------------------
+
+upgrade upg:local-model-tunnel-port
+  status LANDED
+  verification VERIFIED_ON_DISK
+  target ~/Library/LaunchAgents/com.bonfyre.local-model-tunnel.plist
+  change forward spec 127.0.0.1:411435:127.0.0.1:11435 corrected to 127.0.0.1:11435:127.0.0.1:11435
+  cause 411435 is not a valid TCP port; the tunnel could never bind
+  evidence grep of the plist returns 127.0.0.1:11435:127.0.0.1:11435
+
+upgrade upg:agents-runtime-mcp-base
+  status LANDED
+  verification VERIFIED_ON_DISK
+  target ~/Library/LaunchAgents/com.bonfyre.agents-runtime.plist
+  change BONFYRE_MCP_BASE 13052 -> 3053
+  cause the runtime was pointed at a forward port that no longer carried the MCP surface
+  evidence plist now reads http://127.0.0.1:3053
+
+upgrade upg:openai-response-usage-shim
+  status LANDED
+  verification VERIFIED_ON_DISK
+  target ~/.bonfyre/agents-runtime/venv/.../openai/types/responses/response_usage.py
+  change cache_write_tokens defaulted to 0 with an adapter-normalization comment
+  cause the local adapter omits the field; strict model validation rejected every response
+  note vendored-dependency edit; it does not survive a venv rebuild
+
+upgrade upg:agents-runtime-transport
+  status LANDED
+  verification VERIFIED_ON_DISK
+  target ~/.bonfyre/agents-runtime/operator_agents_runtime.py:144
+  change transport selection read from BONFYRE_OPENAI_RESPONSES_TRANSPORT, default http
+
+upgrade upg:mcp-lint-profiles
+  status LANDED
+  verification VERIFIED_ON_DISK
+  target ~/.bonfyre/mcp/project_node.py
+  change added node-syntax (node --check) and php-lint (php -l) test profiles
+  change ROOT now reads BONFYRE_ROOT with the Documents/Bonfyre default
+  pending MCP restart to activate the profiles
+  evidence 5 matching lines present
+
+upgrade upg:sqlite-vec-dylib
+  status LANDED
+  verification VERIFIED_ON_DISK
+  target /opt/homebrew/lib/sqlite_vec/vec0.dylib
+  change installed from the validator venv's sqlite_vec package
+  cause bonfyre-vec could not load its vector extension and every store built empty
+  evidence 161896 bytes present; bonfyre-vec init/insert/search all functional
+
+upgrade upg:u90-env-permissions
+  status LANDED
+  verification VERIFIED_ON_DISK
+  target ~/Work/u90.env
+  change mode 644 -> 600
+  note ~/Work/u90.env.template written in reference form, values omitted, NOT cut over
+
+upgrade upg:oracle-vm-disk-recovery
+  status LANDED
+  verification MEASURED_REMOTELY
+  target 207.211.172.160 (OCI)
+  change mesh.sqlite3 rebuilt 23.6GB -> 500K retaining 222 deltas; journald capped
+  change /usr/local/bin/bonfyre-mesh-retention.sh installed with cron
+  cause no retention policy on 350k mesh calls/events; disk hit 100%
+  result disk 100% -> 45%, load 4.15 -> 0.24
+
+# ---------------------------------------------------------------------------
+# NEW CAPABILITY: real embeddings
+# ---------------------------------------------------------------------------
+
+upgrade upg:onnx-embedder-registered
+  status LANDED
+  verification VERIFIED_ON_DISK
+  target ~/.cache/bonfyre/models/nomic-embed-text-onnx/
+  change laid out onnx/model.onnx (nomic-embed-text-v1.5 int8, 137296292 bytes) and vocab.txt (30522 WordPiece tokens)
+  change registered as nomic-embed-text-onnx in the bonfyre-model registry
+  cause bonfyre-embed --backend onnx resolves <model>/onnx/model.onnx and <model>/vocab.txt; the previously pulled artifact was a gguf, which that path cannot load
+  defect_before --backend onnx silently reported backend=onnx-native while the per-file tag read hashed-token-native; the fallback is silent and exits 0
+  evidence per-file tag now reads onnx-runtime-native at 768 dims
+
+claim clm:embedding-geometry-carries-economics
+  status STANDING
+  verification MEASURED_TWICE_INDEPENDENTLY
+  claim Segment embedding geometry carries loss economics that is not present in the descriptor text.
+  method 745 business x peril segments; for each, do its 8 nearest neighbours sit closer in log value-per-loss than a random draw
+  control value-per-loss never appears in the descriptor text as a readable number; descriptors carry counts and totals only
+  measurement_a direct cosine: hash +19.2%, onnx +25.9%, delta +6.7 pts
+  measurement_b bonfyre-vec ANN (sqlite-vec SIMD): hash +19.4%, onnx +24.9%, delta +5.5 pts
+  consequence the hashed-token store was recovering roughly three quarters of the available structure; real semantics adds the rest
+  note the two paths agree within about one point, which is why both are recorded rather than the better one
+
+# ---------------------------------------------------------------------------
+# NEW CAPABILITY: selective SSM (Mamba-shaped)
+# ---------------------------------------------------------------------------
+
+upgrade upg:selective-ssm
+  status PROMOTED
+  verification MEASURED
+  target capability_identities ai-leads.selective-ssm, rung 10
+  change input-gated state-space recurrence over per-ZIP yearly loss sequences
+  form h_t = sigmoid(wa*x+ba) * h_{t-1} + sigmoid(wb*x+bb) * x
+  discipline gate grid-fit per fold on strictly prior years; 12-fold walk-forward 2015-2026; no lookahead
+  cause nothing in the estate had an SSM; bonfyre-moe carries Mixtral, Qwen and DeepSeek MoE only
+  result 49.1% aggregate / 53.7% recent against a 45.1% / 49.1% ternary-static incumbent
+  constraint consumed by a real-valued ranker, NOT by TernaryRanker
+
+# ---------------------------------------------------------------------------
+# THE TWO REVERSALS -- the part worth carrying forward
+# ---------------------------------------------------------------------------
+
+claim clm:ssm-refusal-was-instrument-error
+  status REVERSED
+  verification MEASURED
+  origin refused 2026-08-27 morning, reversed 2026-08-27 same session
+  original_claim Per-cell temporal state carries no material signal; the 45.1% ceiling is not a memory problem.
+  original_evidence adding SSM state moved nothing; replacing cell value lost 1.1 pts; dormancy recovered +0.1 pts against a 1.0 pt bar
+  what_was_wrong the measurement was taken through route_ranker.TernaryRanker, whose {-1,0,+1} weights cannot express "this feature is worth a third of cell value". The ranker rounded the signal to nothing and the measurement honestly reported nothing.
+  how_it_was_caught the refusal was cooled with an explicit reheat condition, "the ranker itself changes from ternary to real-valued weights". The capacity test fired that condition the same session.
+  corrected_result under real-valued weights the SSM adds +1.7 pts aggregate and +1.3 pts recent on top of dequantization
+  lesson a negative result from an instrument that cannot represent the effect is not evidence of absence; write the reheat condition or the direction closes permanently on an artifact
+
+claim clm:ternary-quantization-costs-capture
+  status STANDING
+  verification MEASURED
+  claim route_ranker.TernaryRanker's {-1,0,+1} weights cost real capture on this workload.
+  evidence 12-fold walk-forward, identical features: ternary 45.1%, real-valued 47.4%
+  evidence the cost concentrates in recent folds -- 2023 +5.1, 2025 +5.0, 2026 +9.8 -- so it is widening, not a fixed tax
+  scope ternary routing stays correct and cheap; it is lossy as a VALUE RANKER, which is a different job
+  caveat the real-valued comparator is a correlation-scaled mean difference, not a fitted model, so +2.3 pts is a FLOOR on the quantization cost
+  headroom oracle ranking of the same candidates reaches 83.0%; about 34 pts is unreachable by any reweighting of these five features and points at the candidate set, not the model
+
+claim clm:recency-anti-predicts-in-a-catastrophe-book
+  status STANDING
+  verification MEASURED
+  claim Raw recency-weighted cell state anti-predicts next-year fee capture.
+  evidence substituting SSM state for lifetime value cost 1.1 pts, worst folds 2020 -8.1 and 2026 -5.0
+  evidence the state is NOT redundant with lifetime value -- rank agreement 0.759 -- and separates live from dead cells 14.5x
+  interpretation fee value lands where the book has been quiet; the gate has to be fit rather than assumed, and the sign is not the intuitive one
+  consequence the useful temporal signal exists but must be learned, which is precisely what a fixed-decay EMA cannot do and what the ternary ranker could not hold
+
+# ---------------------------------------------------------------------------
+# DEFECTS FOUND IN BONFYRE'S OWN TOOLING
+# ---------------------------------------------------------------------------
+
+defect def:bonfyre-vec-silent-dim-mismatch
+  status OPEN
+  verification REPRODUCED
+  target bonfyre-vec insert
+  symptom prints "N vectors inserted" and exits 0 when the embedding dimension does not match the store's vec0 column, which is float[384]
+  effect rows land in artifacts but never in the vector index; count then reads "artifacts: N, vectors: 0" and every search returns empty
+  reproduced 256-dim hash embeddings against a default store
+  blast_radius a comparison whose CONTROL arm fails this way scores 0 and makes the treatment arm look artificially good; it produced a false admitted=True in this session before it was caught
+  fix_shape nonzero exit or a stderr warning on dimension mismatch
+
+defect def:bonfyre-embed-silent-onnx-fallback
+  status OPEN
+  verification REPRODUCED
+  target bonfyre-embed --backend onnx
+  symptom reports "backend=onnx-native" on the banner line while the per-file tag reads hashed-token-native, and exits 0, when the model directory does not resolve
+  aggravating the banner goes to STDERR, not stdout, so a guard that reads stdout alone sees nothing and can pass on no evidence
+  fix_shape nonzero exit when an explicitly requested backend is unavailable
+
+# ---------------------------------------------------------------------------
+# STANDING SECURITY ITEM -- carried from 2026-08-26, still unresolved
+# ---------------------------------------------------------------------------
+
+claim clm:exposed-loss-credential
+  status UNRESOLVED
+  verification VERIFIED_ON_DISK
+  finding a plaintext production DB password for the loss@localhost account appears in all_copilot_chats_export.tar.gz under Downloads
+  action_required rotate the credential; the export is an artifact the user controls, so this is a rotation task rather than a code change
+  note recorded here because it has now survived two sessions without action

@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Cross-density · Aurekai</title>
+<script src="/assets/client-organs.js" defer></script>
+<meta name="description" content="What each source this estate reads actually illuminates, measured per item rather than counted, so a small source that carries money, people and organisations outranks a large one that carries headlines.">
+<meta name="bonfyre:cannot-infer" content="A dimension is counted present when a share of a source's kept material carries a mark this estate can detect in text: a currency amount, a four-digit year, a byline shaped like a person's name, an institutional word. Detection is not extraction and extraction is not understanding. A high score means a source writes in a way this estate can read, not that it is accurate, important or worth trusting.">
+<script type="importmap">{ "imports": { "apache-arrow": "/assets/apache-arrow.mjs?b=87b6553fdf" } }</script>
+<style>
+  :root {
+    --ground: #0e0f12; --ink: #f2efe9; --display: #f2efe9; --accent: #d8a13c;
+    --muted: #8b8780; --rule: rgba(242,239,233,.15); --panel: #16181c;
+    --face-display: Georgia, serif; --face-body: system-ui, sans-serif;
+    --face-mono: ui-monospace, SFMono-Regular, monospace;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: var(--face-body); line-height: 1.55; -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; }
+  h1, h2, h3 { font-family: var(--face-display); margin: 0; letter-spacing: -.015em; }
+  .wrap { max-width: 86rem; margin: 0 auto; padding: 0 clamp(1rem, 3vw, 2.6rem); }
+  .mono, .col, .by, .ways, .stamp {
+    font-family: var(--face-mono); font-size: .68rem; letter-spacing: .09em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .masthead {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 1rem;
+    flex-wrap: wrap; padding: 1.2rem 0 .8rem; border-bottom: 1px solid var(--rule);
+  }
+  .mark { font-family: var(--face-display); font-weight: 700; letter-spacing: .15em;
+          text-transform: uppercase; font-size: .8rem; }
+  .ways { display: flex; gap: .9rem; }
+  .ways a { text-decoration: none; }
+  .ways a:hover { color: var(--accent); }
+
+  .lede { padding: 1.7rem 0 1.2rem; border-bottom: 1px solid var(--rule); }
+  .lede h1 { font-size: clamp(1.8rem, 4.2vw, 3.2rem); line-height: 1.04; max-width: 21ch; }
+  .lede p { margin: .9rem 0 0; max-width: 62ch; color: var(--muted); font-size: .94rem; }
+  .say { font-family: var(--face-mono); font-size: .74rem; color: var(--muted); margin-top: .7rem; }
+
+  /* volume against density */
+  .plot-wrap { padding: 1.3rem 0; border-bottom: 1px solid var(--rule); }
+  .col { font-weight: 500; margin: 0 0 .7rem; }
+  #scatter { width: 100%; height: 260px; display: block; cursor: crosshair; }
+  .axis-note { display: flex; justify-content: space-between; }
+
+  /* the ranked sources */
+  .board { padding: 1.3rem 0 2rem; }
+  .head, .row {
+    display: grid; grid-template-columns: minmax(9rem, 1.4fr) 4.6rem 1fr;
+    gap: .9rem; align-items: center;
+  }
+  .head { padding-bottom: .5rem; border-bottom: 1px solid var(--rule); }
+  #list { height: 30rem; overflow: auto; contain: strict; }
+  #inner { position: relative; width: 100%; }
+  .row {
+    position: absolute; top: 0; left: 0; width: 100%;
+    padding: .45rem 0; border-bottom: 1px solid var(--rule);
+  }
+  .row:hover { background: var(--panel); }
+  .who { font-size: .9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .kept { font-family: var(--face-mono); font-size: .72rem; color: var(--muted); text-align: right; }
+  .dims { display: flex; gap: 2px; align-items: center; }
+  .dim {
+    flex: 1 1 0; height: 15px; background: rgba(242,239,233,.07); position: relative;
+    border-radius: 1px; overflow: hidden;
+  }
+  .dim i { position: absolute; inset: auto 0 0 0; background: var(--accent); display: block; }
+  .dim.on { background: rgba(216,161,60,.14); }
+  .score { font-family: var(--face-mono); font-size: .74rem; color: var(--accent);
+           width: 2.2rem; text-align: right; flex: 0 0 auto; }
+  .legend { display: flex; gap: .9rem; flex-wrap: wrap; padding: .7rem 0 0; }
+  .legend span { font-family: var(--face-mono); font-size: .64rem; letter-spacing: .07em;
+                 text-transform: uppercase; color: var(--muted); }
+  .boundary { padding: 1.4rem 0 3rem; color: var(--muted); font-size: .8rem;
+              max-width: 72ch; border-top: 1px solid var(--rule); }
+  .note { text-transform: none; letter-spacing: 0; margin: .8rem 0 0; max-width: 66ch;
+          line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <span class="mark">Aurekai · cross-density</span>
+  <nav class="ways">
+    <a href="/press">the press</a><a href="/edition">the edition</a>
+    <a href="/archive">the reading room</a><a href="/field">the field</a>
+  </nav>
+  <span class="stamp" id="stamp"></span>
+</header>
+
+<section class="lede">
+  <h1>The best source is not the one with the most entries.</h1>
+  <p>A source that files ten thousand headlines illuminates one dimension of the
+     world ten thousand times. A council page that files two hundred items
+     naming money, people, organisations and dates illuminates six. This ranks
+     every source this estate reads by how many dimensions its material
+     actually carries, measured as a share of what it files rather than
+     whether it ever happened once.</p>
+  <p class="say" id="say">Starting a query engine in this tab…</p>
+</section>
+
+<section class="plot-wrap">
+  <h3 class="col">Volume against density</h3>
+  <canvas id="scatter" aria-label="each source plotted by how much it files against how many dimensions it carries"></canvas>
+  <div class="axis-note mono"><span>← files less</span><span>files more →</span></div>
+  <p class="mono note">Each mark is a source. Across: how much it has filed, on a
+     log scale. Up: how many dimensions its material carries. If the two were the
+     same thing this would be a diagonal line.</p>
+</section>
+
+<section class="board">
+  <h3 class="col">Every source, by what it illuminates</h3>
+  <div class="head">
+    <span class="mono">Source</span><span class="mono kept">Kept</span>
+    <span class="mono">Dimensions carried</span>
+  </div>
+  <div id="list"><div id="inner"></div></div>
+  <div class="legend" id="legend"></div>
+  <p class="mono note">A bar is filled by the share of that source's material
+     carrying the mark, and lit when the share passes the floor for that
+     dimension. A source can be dense and small; most of the largest are not.</p>
+</section>
+
+<p class="boundary" id="boundary"></p>
+
+</div>
+<script type="module">
+/* Cross-density.
+ *
+ * The estate has measured sources by how much they file since it started
+ * reading them, which rewards a wire that repeats itself and tells you nothing
+ * about whether a source makes the rest of the estate more connected. This
+ * measures the other thing: of what a source files, what share of it carries a
+ * mark this estate can actually read -- an amount, a year, a byline shaped like
+ * a person, an institutional word, prose rather than a headline, a picture.
+ *
+ * Per item, not per source. A dimension that occurs once in two thousand
+ * filings is not a dimension that source carries, and counting presence rather
+ * than rate is how a volume metric disguises itself as a density one.
+ *
+ * What this is not: extraction, understanding, or a judgement about quality. A
+ * source scores well here when it writes in a way this estate can read.
+ */
+const STAMP = "?b=87b6553fdf";
+const CATALOG = location.origin + "/catalog";
+const say = (w) => { document.getElementById("say").textContent = w; };
+
+const BOUNDARY =
+  "Every number here is computed in this tab from tables this estate published, over "
+  + "material it already read and kept. A dimension is counted present when a share of a "
+  + "source's material carries a mark detectable in text. Detection is not extraction, and "
+  + "extraction is not understanding: a currency symbol beside a number is not a verified "
+  + "amount, a capitalised institutional word is not a resolved organisation, and a byline "
+  + "shaped like a name is not a confirmed person. A high score means a source writes in a "
+  + "way this estate can read. It is not a claim that the source is accurate, important, "
+  + "independent, or worth trusting, and a low score is a fact about this estate's reading "
+  + "rather than about the source.";
+
+/* The dimensions, their floors, and what each one is actually looking at. The
+ * floor is a share of a source's own material, so a large source has no
+ * advantage over a small one. */
+const DIMS = [
+  { key: "kinds",  label: "material", floor: 0.40, of: "more than one kind of thing filed" },
+  { key: "people", label: "people",   floor: 0.10, of: "a byline shaped like a person's name" },
+  { key: "money",  label: "money",    floor: 0.06, of: "a currency amount" },
+  { key: "years",  label: "time",     floor: 0.12, of: "a four-digit year" },
+  { key: "orgs",   label: "bodies",   floor: 0.08, of: "an institutional word" },
+  { key: "quant",  label: "measure",  floor: 0.03, of: "a proportion stated in words" },
+  { key: "prose",  label: "prose",    floor: 0.10, of: "more than a headline" },
+  { key: "pics",   label: "pictures", floor: 0.10, of: "a picture" },
+];
+
+let conn = null, sources = [];
+
+async function engine() {
+  const duckdb = await import("/assets/duckdb-browser.mjs" + STAMP);
+  if (!duckdb || !duckdb.AsyncDuckDB) throw new Error("the query engine did not load");
+  const worker = new Worker("/assets/duckdb-browser-eh.worker.js" + STAMP);
+  const db = new duckdb.AsyncDuckDB(new duckdb.ConsoleLogger(duckdb.LogLevel.WARNING), worker);
+  await db.instantiate("/assets/duckdb-eh.wasm" + STAMP);
+  return db.connect();
+}
+
+function rows(answer) {
+  const names = answer.schema.fields.map((f) => f.name);
+  const cols = names.map((n) => answer.getChild(n));
+  const out = [];
+  for (let i = 0; i < answer.numRows; i++) {
+    const row = {};
+    names.forEach((n, c) => {
+      let v = cols[c].get(i);
+      if (v && typeof v.toArray === "function") v = Array.from(v.toArray());
+      row[n] = typeof v === "bigint" ? Number(v) : v;
+    });
+    out.push(row);
+  }
+  return out;
+}
+
+function esc(v) {
+  return String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+const MEASURE = `
+  WITH m AS (
+    SELECT publisher, kind, title || ' ' || body AS t, by_name, by_kind, image, body
+    FROM read_parquet('${CATALOG}/material.parquet') WHERE publisher <> ''
+  )
+  SELECT publisher,
+    CAST(COUNT(*) AS INTEGER) AS kept,
+    COUNT(DISTINCT kind) / 5.0 AS kinds,
+    AVG(CAST((by_kind = 'person' AND by_name LIKE '% %') AS INT)) AS people,
+    AVG(CAST(regexp_matches(t, '(?i)[$£€]\\s?[0-9][0-9,.]*') AS INT)) AS money,
+    AVG(CAST(regexp_matches(t, '\\b(19|20)[0-9]{2}\\b') AS INT)) AS years,
+    AVG(CAST(regexp_matches(t, '(?i)\\b(Inc|Ltd|Corp|University|Ministry|Agency|Commission|Council|Department|Bank|Authority|Institute)\\b') AS INT)) AS orgs,
+    AVG(CAST(regexp_matches(t, '(?i)\\b(percent|per cent)\\b') AS INT)) AS quant,
+    AVG(CAST((length(body) > 200) AS INT)) AS prose,
+    AVG(CAST((image <> '') AS INT)) AS pics
+  FROM m GROUP BY publisher HAVING COUNT(*) >= 8`;
+
+function score(s) {
+  let n = 0;
+  DIMS.forEach((d) => { if (Number(s[d.key]) >= d.floor) n++; });
+  return n;
+}
+
+/* ------------------------------------------------------------------- drawing */
+
+function scatter() {
+  const canvas = document.getElementById("scatter");
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = Math.floor(canvas.clientWidth * dpr);
+  canvas.height = Math.floor(canvas.clientHeight * dpr);
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  const pad = { l: 26, r: 10, t: 10, b: 20 };
+  ctx.clearRect(0, 0, w, h);
+
+  const maxKept = Math.max.apply(null, sources.map((s) => s.kept));
+  const lx = (k) => pad.l + (Math.log10(k) / Math.log10(maxKept)) * (w - pad.l - pad.r);
+  const ly = (d) => h - pad.b - (d / DIMS.length) * (h - pad.t - pad.b);
+
+  ctx.strokeStyle = "rgba(242,239,233,.10)";
+  ctx.fillStyle = "rgba(139,135,128,.9)";
+  ctx.font = "10px ui-monospace, monospace";
+  for (let d = 0; d <= DIMS.length; d += 2) {
+    const y = ly(d);
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(w - pad.r, y); ctx.stroke();
+    ctx.fillText(String(d), 6, y + 3);
+  }
+  sources.forEach((s) => {
+    const x = lx(s.kept), y = ly(s.dims);
+    /* Jitter only across the dimension axis, which is integral, so points at
+     * the same score do not stack into a single mark and hide how many there
+     * are. Nothing is jittered on the volume axis, which is measured. */
+    const jy = y + ((s.publisher.charCodeAt(0) % 7) - 3) * 1.1;
+    ctx.beginPath();
+    ctx.arc(x, jy, s.dims >= 5 ? 2.6 : 1.7, 0, Math.PI * 2);
+    ctx.fillStyle = s.dims >= 5 ? "rgba(216,161,60,.85)" : "rgba(242,239,233,.24)";
+    ctx.fill();
+  });
+}
+
+/* A list of thirteen hundred rows is not a list to put in a document. Only the
+ * rows in view are built, and the scroller keeps the height of all of them. */
+async function board() {
+  const listEl = document.getElementById("list");
+  const innerEl = document.getElementById("inner");
+  const mod = await import("/assets/vendor-virtual-core.min.js").catch(() => null);
+  const Virtualizer = mod && mod.Virtualizer;
+
+  const rowHeight = 30;
+  const paint = (range) => {
+    const html = [];
+    for (let i = range.from; i <= range.to && i < sources.length; i++) {
+      const s = sources[i];
+      html.push("<div class='row' style='transform:translateY(" + (i * rowHeight) + "px)'>"
+        + "<span class='who' title='" + esc(s.publisher) + "'>" + esc(s.publisher) + "</span>"
+        + "<span class='kept'>" + s.kept.toLocaleString() + "</span>"
+        + "<span class='dims'>"
+        + DIMS.map((d) => {
+            const v = Math.max(0, Math.min(1, Number(s[d.key]) || 0));
+            const on = v >= d.floor;
+            return "<span class='dim" + (on ? " on" : "") + "' title='" + esc(d.label) + ": "
+              + Math.round(v * 100) + "% of what it files carries " + esc(d.of) + "'>"
+              + "<i style='height:" + Math.round(v * 15) + "px'></i></span>";
+          }).join("")
+        + "<span class='score'>" + s.dims + "</span></span></div>");
+    }
+    innerEl.innerHTML = html.join("");
+  };
+
+  innerEl.style.height = (sources.length * rowHeight) + "px";
+  if (typeof Virtualizer === "function") {
+    const v = new Virtualizer({
+      count: sources.length,
+      getScrollElement: () => listEl,
+      estimateSize: () => rowHeight,
+      overscan: 8,
+      observeElementRect: (inst, cb) => {
+        const measure = () => cb({ width: listEl.clientWidth, height: listEl.clientHeight });
+        measure();
+        window.addEventListener("resize", measure);
+        return () => window.removeEventListener("resize", measure);
+      },
+      observeElementOffset: (inst, cb) => {
+        const onScroll = () => cb(listEl.scrollTop, false);
+        onScroll();
+        listEl.addEventListener("scroll", onScroll, { passive: true });
+        return () => listEl.removeEventListener("scroll", onScroll);
+      },
+      scrollToFn: () => {},
+    });
+    v._didMount && v._didMount();
+    v._willUpdate && v._willUpdate();
+    const render = () => {
+      const items = v.getVirtualItems();
+      if (items.length) paint({ from: items[0].index, to: items[items.length - 1].index });
+    };
+    v.options.onChange = () => { v._willUpdate(); render(); };
+    listEl.addEventListener("scroll", render, { passive: true });
+    render();
+    if (!innerEl.children.length) paint({ from: 0, to: 40 });
+  } else {
+    /* No virtualiser here. The board is still the board: it shows the first
+     * page of it and says that is what it is doing. */
+    paint({ from: 0, to: 60 });
+    innerEl.style.height = "auto";
+    document.getElementById("legend").insertAdjacentHTML("beforeend",
+      "<span>showing the first 60 of " + sources.length.toLocaleString() + "</span>");
+  }
+}
+
+(async function () {
+  document.getElementById("boundary").textContent = BOUNDARY;
+  document.getElementById("stamp").textContent =
+    new Date().toISOString().replace("T", " ").slice(0, 16) + " UTC";
+  document.getElementById("legend").innerHTML =
+    DIMS.map((d) => "<span>" + esc(d.label) + " ≥" + Math.round(d.floor * 100) + "%</span>").join("");
+  try {
+    say("Starting a query engine in this tab…");
+    conn = await engine();
+    say("Measuring every source against what it files…");
+    const measured = await conn.query(MEASURE);
+    sources = rows(measured).map((s) => Object.assign(s, { dims: score(s) }))
+      .sort((a, b) => b.dims - a.dims || b.kept - a.kept);
+    const dense = sources.filter((s) => s.dims >= 5).length;
+    const biggest = sources.slice().sort((a, b) => b.kept - a.kept)[0];
+    say(sources.length.toLocaleString() + " sources measured in this tab. "
+        + dense.toLocaleString() + " carry five dimensions or more. The largest, "
+        + biggest.publisher + ", files " + biggest.kept.toLocaleString()
+        + " and carries " + biggest.dims + ".");
+    scatter();
+    await board();
+    window.addEventListener("resize", scatter);
+  } catch (why) {
+    say("The measure could not be taken: " + String(why.message || why)
+        + ". Nothing has been guessed in its place.");
+  }
+})();
+</script>
+</body>
+</html>

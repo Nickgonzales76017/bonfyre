@@ -1,0 +1,29 @@
+{
+  "name": "bonfyre-service-site",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:compiler": "bun test tests/compiler-owners.test.mjs tests/site-cms.test.mjs tests/site-leads.test.mjs tests/site-draft.test.mjs tests/site-publication.test.mjs",
+    "test:repo-owners": "bun test ../../scripts/analysis/repository_maturity.test.mjs",
+    "test:catalogue": "bun test tests/catalogue-baseline.test.mjs tests/catalogue-model.test.mjs tests/catalogue-review.test.mjs",
+    "verify:catalogue-live": "CATALOGUE_VERIFY_LIVE=1 bun test tests/catalogue-live-intake.test.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/client": "2.0.0",
+    "@modelcontextprotocol/ext-apps": "2.0.3",
+    "@univerjs/core": "1.1.0",
+    "@univerjs/docs": "1.1.0",
+    "@univerjs/engine-formula": "1.1.0",
+    "@univerjs/engine-render": "1.1.0",
+    "@univerjs/preset-sheets-core": "1.1.0",
+    "@univerjs/presets": "1.1.0",
+    "@univerjs/sheets": "1.1.0",
+    "@univerjs/sheets-formula": "1.1.0",
+    "@univerjs/sheets-numfmt": "1.1.0",
+    "parse5": "8.0.0",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "rxjs": "7.8.2",
+    "zod": "4.2.0"
+  }
+}

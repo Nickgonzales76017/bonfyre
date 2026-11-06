@@ -1,0 +1,259 @@
+"""StandingAddress -- ranking lawful opportunities, not content.
+
+A feed is usually a table of objects ordered by predicted engagement. This is a
+continuously recompiled query whose unit is an **addressed opportunity**: not
+"this video" but "WATCH this, GO to that, APPLY for the other" -- a thing a
+particular actor could lawfully do, right now, about a particular subject.
+
+The difference is not cosmetic. It changes what ranking optimizes:
+
+    not   which content maximizes watch time
+    but   which lawful opportunity is most relevant to this actor
+          in this world right now
+
+Two loops feed it, and keeping them apart is the design:
+
+  ATTENTION LOOP       watch, swipe, react -> FactDelta -> StandingAddress
+                       Optimizes relevance. Cheap, fast, reversible, and it
+                       changes nothing about the world.
+
+  INSTITUTIONAL LOOP   Action -> ProtocolProgram -> Effect -> Occurrence ->
+                       Evidence/Money/Relationship -> FactDelta
+                       Changes reality. Expensive, slow, and answerable.
+
+A system that fed the second loop from the first -- treating attention as intent
+-- would convert curiosity into commitments. So attention signals may reorder
+what is offered and may never open an obligation, and that boundary is enforced
+here rather than described.
+
+Entertainment is allowed to win. An actor who wants to watch things is served by
+ranking WATCH highly; nothing here needs every swipe to become a transaction.
+
+Forbidden inferences, falsified by the tests beside this file:
+  a ranked opportunity  -> an authorized one
+  attention             -> intent
+  an offered action     -> an available one
+  a high rank           -> a transaction being wanted
+  an undisclosed subject -> an absent one
+"""
+
+# COMPATIBILITY BOUNDARY (do not add ranking or attention law here): native
+# opportunity validation, disclosure gating, attention, and ranking live in
+# engine/core/src/standing_address.c via bf_standing_address.h. SurfacePattern
+# still imports this action catalogue; migrate it to generated native bindings
+# before archiving this reference.
+
+from __future__ import annotations
+
+import sqlite3
+from dataclasses import dataclass, field
+from typing import Optional
+
+import information_policy as ip
+
+# The verbs. An opportunity is one of these against one addressed subject.
+WATCH = "WATCH"
+JOIN = "JOIN"
+GO = "GO"
+FOLLOW = "FOLLOW"
+SAVE = "SAVE"
+BOOK = "BOOK"
+BUY = "BUY"
+CONTRIBUTE = "CONTRIBUTE"
+MEET = "MEET"
+APPLY = "APPLY"
+HELP = "HELP"
+OFFER = "OFFER"
+APPROVE = "APPROVE"
+CLAIM = "CLAIM"
+FUND = "FUND"
+CONTACT = "CONTACT"
+PLAN = "PLAN"
+REMEMBER = "REMEMBER"
+SHARE = "SHARE"
+MOVE = "MOVE"
+COMPARE = "COMPARE"
+REQUEST = "REQUEST"
+SELL = "SELL"
+DO = "DO"
+REVIEW = "REVIEW"
+ASSIGN = "ASSIGN"
+RESPOND = "RESPOND"
+ESCALATE = "ESCALATE"
+
+ACTIONS = (WATCH, JOIN, GO, FOLLOW, SAVE, BOOK, BUY, CONTRIBUTE, MEET, APPLY,
+           HELP, OFFER, APPROVE, CLAIM, FUND, CONTACT, PLAN, REMEMBER, SHARE,
+           MOVE, COMPARE, REQUEST, SELL, DO, REVIEW, ASSIGN, RESPOND, ESCALATE)
+
+# Which verbs each territory offers. A territory is a disclosure context, so the
+# same subject legitimately offers different opportunities in each -- and an
+# opportunity offered in the wrong one is not a ranking mistake but a category
+# error.
+TERRITORY_ACTIONS = {
+    # "What matters in my world?" -- durable personal relevance.
+    # ASSIGN belongs here because a household assigns chores; the verb arrived
+    # with the household mode rather than being planned for.
+    "life": frozenset({MEET, JOIN, GO, SAVE, HELP, FOLLOW, PLAN, REMEMBER,
+                       SHARE, MOVE, ASSIGN}),
+    # "What deserves attention now?" -- fast occurrence.
+    "live": frozenset({WATCH, JOIN, GO, FOLLOW, SAVE, SHARE}),
+    # "What economic opportunity is useful?" -- exchange.
+    "shop": frozenset({BUY, OFFER, JOIN, SAVE, COMPARE, REQUEST, SELL, FUND,
+                       CONTRIBUTE}),
+    # "What should move forward?" -- obligation and execution.
+    "work": frozenset({APPLY, APPROVE, CLAIM, FUND, CONTACT, BOOK, DO, REVIEW,
+                       ASSIGN, RESPOND, ESCALATE}),
+}
+
+# Attention signals may reorder. They may never open an obligation.
+ATTENTION_SIGNALS = frozenset({"watched", "swiped_past", "reacted", "dwelled",
+                               "followed_back", "muted"})
+
+
+class StandingError(ValueError):
+    pass
+
+
+@dataclass(frozen=True)
+class Opportunity:
+    """One lawful thing an actor could do about one addressed subject."""
+    subject: str
+    action: str
+    territory: str
+    relevance: float = 0.0
+    reason: str = ""
+    # Availability is a fact about the world, not about the actor. A sold-out
+    # show is unavailable to everybody; an unauthorized one is refused only to
+    # this actor. They are different and both must be sayable.
+    available: bool = True
+
+    def __post_init__(self) -> None:
+        if self.action not in ACTIONS:
+            raise StandingError(f"unknown action {self.action!r}")
+        if self.territory not in TERRITORY_ACTIONS:
+            raise StandingError(f"unknown territory {self.territory!r}")
+        if self.action not in TERRITORY_ACTIONS[self.territory]:
+            raise StandingError(
+                f"{self.action} is not offered in .{self.territory}; a territory "
+                f"is a disclosure context and an action outside it is a category "
+                f"error rather than a low-ranking candidate")
+
+
+@dataclass
+class StandingAddress:
+    """A continuously recompiled set of opportunities for one actor.
+
+    Not a stored feed. `compile` is called with the current world and returns
+    what is offerable now; nothing is cached, because an opportunity that
+    outlived its world is the failure this shape exists to avoid.
+    """
+    actor: str
+    territory: str
+    policy: Optional[ip.InformationPolicy] = None
+    attention: dict[str, float] = field(default_factory=dict)
+
+    # ------------------------------------------------------------- attention
+
+    def observe_attention(self, subject: str, signal: str,
+                          weight: float = 1.0) -> "StandingAddress":
+        """Record an attention signal. Reorders; never obligates.
+
+        The refusal here is the whole point: passing an institutional verb as a
+        signal is rejected, so the attention loop cannot be used as a side door
+        into the institutional one.
+        """
+        if signal not in ATTENTION_SIGNALS:
+            raise StandingError(
+                f"{signal!r} is not an attention signal; attention may reorder "
+                f"what is offered and may never open an obligation, so an Action "
+                f"cannot be recorded here")
+        self.attention[subject] = self.attention.get(subject, 0.0) + weight
+        return self
+
+    # -------------------------------------------------------------- ranking
+
+    def offerable(self, candidates: list[Opportunity]) -> list[Opportunity]:
+        """Candidates this actor may be shown, in this territory.
+
+        Two filters, in order. Wrong-territory candidates are already refused at
+        construction. Here: a subject the policy will not disclose is not
+        offered, because offering an action on something the actor may not know
+        exists discloses it.
+        """
+        out = []
+        for c in candidates:
+            if c.territory != self.territory:
+                continue
+            if self.policy is not None:
+                allowed, _ = self.policy.field_decision("subject", self._audience())
+                if not allowed:
+                    continue
+            out.append(c)
+        return out
+
+    def _audience(self) -> str:
+        return {"life": "self", "live": "public",
+                "shop": "market", "work": "institution"}[self.territory]
+
+    def compile(self, candidates: list[Opportunity]) -> list[Opportunity]:
+        """Rank offerable opportunities. Highest relevance first.
+
+        Attention nudges order and cannot promote an unavailable opportunity
+        above an available one: no amount of looking at a sold-out show makes it
+        bookable, and a ranker that let it would be optimizing for the feed
+        rather than for the actor.
+        """
+        ranked = []
+        for c in self.offerable(candidates):
+            score = c.relevance + self.attention.get(c.subject, 0.0) * 0.1
+            ranked.append((c.available, score, c))
+        ranked.sort(key=lambda t: (t[0], t[1]), reverse=True)
+        return [c for _a, _s, c in ranked]
+
+    def top(self, candidates: list[Opportunity], n: int = 5) -> list[Opportunity]:
+        return self.compile(candidates)[:n]
+
+
+# ------------------------------------------------------------- the two loops
+
+def attention_delta(address: StandingAddress, subject: str, signal: str,
+                    weight: float = 1.0) -> dict:
+    """The attention loop, as a FactDelta-shaped record.
+
+    Its invalidation envelope names only the standing address it reorders. An
+    attention signal that invalidated institutional state would be the loops
+    crossing.
+    """
+    address.observe_attention(subject, signal, weight)
+    return {
+        "loop": "attention",
+        "subject": subject,
+        "signal": signal,
+        "invalidates": [f"standing:{address.actor}:{address.territory}"],
+        "opens_obligation": False,
+    }
+
+
+def institutional_delta(subject: str, action: str, *, enactment: str,
+                        occurrence: str) -> dict:
+    """The institutional loop, as a FactDelta-shaped record.
+
+    Requires an enactment and an occurrence: this loop is only ever entered by
+    something having actually happened, never by somebody having looked.
+    """
+    if action not in ACTIONS:
+        raise StandingError(f"unknown action {action!r}")
+    if not enactment or not occurrence:
+        raise StandingError(
+            "the institutional loop is entered by an enactment that produced an "
+            "occurrence; without both this is an attention signal wearing an "
+            "Action's name")
+    return {
+        "loop": "institutional",
+        "subject": subject,
+        "action": action,
+        "enactment": enactment,
+        "occurrence": occurrence,
+        "invalidates": [f"subject:{subject}", f"enactment:{enactment}"],
+        "opens_obligation": True,
+    }

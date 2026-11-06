@@ -1,0 +1,41 @@
+{
+  "braid_depth_distribution": {
+    "0": 4881,
+    "1": 9,
+    "3": 1
+  },
+  "candidate_axis_counts": {
+    "capability": 3624,
+    "discovery": 4891,
+    "economic": 1051,
+    "observation": 4891,
+    "protocol": 4891,
+    "round_trip": 2256,
+    "semantic": 4689
+  },
+  "cannot_infer": [
+    "unknown realized depth -> zero realized depth",
+    "high investigation priority -> source admission, authority or value",
+    "latent join power -> semantic compatibility or permission to join data"
+  ],
+  "frontier_limit": 100,
+  "join_power_distribution": {
+    "1": 794,
+    "2": 1785,
+    "3": 1003,
+    "4": 837,
+    "5": 351,
+    "6": 107,
+    "7": 14
+  },
+  "measured_axis_counts": {
+    "discovery": 4891,
+    "observation": 10,
+    "protocol": 1,
+    "semantic": 1
+  },
+  "owner_evidence_rows": 16,
+  "schema": "bonfyre.external-participation-manifest.v2",
+  "total_occurrences": 4891,
+  "truth_level": "compiled_diagnostic_projection"
+}

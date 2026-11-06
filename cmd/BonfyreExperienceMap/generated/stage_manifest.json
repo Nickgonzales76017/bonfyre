@@ -1,0 +1,25 @@
+{
+  "binding_records": 5704,
+  "chain_stage_edges": 69927,
+  "coverage": true,
+  "digest": "4bff2965b6382d953c95ef75d71dccb33a240424eece429dba43556b9797e3d2",
+  "expected_binding_records": 5704,
+  "human_chain_count": 52,
+  "record_kind_counts": {
+    "architecture": 6,
+    "cms_type": 104,
+    "command": 178,
+    "component": 92,
+    "donor_reference": 19,
+    "external": 4891,
+    "frappe_app": 9,
+    "ghost": 238,
+    "market_reference": 20,
+    "partner_observed": 19,
+    "protocol_reference": 108,
+    "surface": 20
+  },
+  "records_with_stage_bindings": 5117,
+  "schema": "bonfyre.experience-stage-map.v1",
+  "unbound_experience_references": 5063
+}

@@ -1,0 +1,38 @@
+{
+  "status": "measured",
+  "scope": "one real tensor transform and reconstruction only; this is not layer execution, logits, generation, task behavior, or a full-model claim",
+  "model": {
+    "repo": "Qwen/Qwen2.5-Coder-0.5B",
+    "revision": "8123ea2e9354afb7ffcc6c8641d1b2f5ecf18301",
+    "artifact": "model.safetensors",
+    "artifact_bytes": 988097824,
+    "tensor_count": 290
+  },
+  "tensor": {
+    "name": "model.layers.0.self_attn.k_proj.weight",
+    "shape": [128, 896],
+    "weights": 114688
+  },
+  "representation": {
+    "codec": "BonfyreFPQ v9",
+    "bits_requested": 3,
+    "v8_bits_per_weight": 5.34,
+    "v9_bits_per_weight": 5.75,
+    "v8_cosine": 0.999624,
+    "v9_cosine": 0.999935
+  },
+  "execution": {
+    "elapsed_seconds": 1.23,
+    "maximum_resident_bytes": 491520000,
+    "host": "Darwin arm64, Apple clang 17, 16 GiB RAM",
+    "command": "cmd/BonfyreFPQ/bonfyre-fpq roundtrip-v9 /tmp/bonfyre-qwen2.5-coder-0.5b/model.safetensors --bits 3 --tensor model.layers.0.self_attn.k_proj.weight"
+  },
+  "open": [
+    "full tensor population transform/reconstruction",
+    "native FPQ block-consumption without full weight rehydration",
+    "layer divergence",
+    "logit divergence",
+    "generation parity",
+    "task behavior"
+  ]
+}

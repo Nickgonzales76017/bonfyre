@@ -1,0 +1,139 @@
+import inspect
+import subprocess
+from pathlib import Path
+from unittest.mock import patch
+
+import execution_environment
+from execution_environment import (
+    AI_STUDIO_BODY,
+    GITHUB_READ_BODY,
+    INSTALLED_ALTERNATES,
+    MODEL_COMMONS_BODY,
+    _runtime_command,
+    dotenv_disposition,
+    parse_route_lines,
+    probe_dotenv,
+    probe_github_capability,
+    resolve_runtime,
+    sanitize_text,
+)
+
+
+def _with_probe(replacement, action, *, native_returncode=1):
+    """Run *action* with both credential seams stubbed, so no secret is read."""
+
+    def fake_run(*args, **kwargs):
+        return subprocess.CompletedProcess(args[0], native_returncode, "", "")
+
+    with patch.object(execution_environment, "_sourced_probe", replacement):
+        with patch.object(execution_environment, "_run", fake_run):
+            return action()
+
+
+def test_sanitize_text_removes_private_machine_roots():
+    repo = Path("/Users/example/Documents/Bonfyre")
+    home = Path("/Users/example")
+    value = "/Users/example/Documents/Bonfyre/tool /Users/example/.config"
+    assert sanitize_text(value, repo=repo, home=home) == "$REPO/tool $USER_HOME/.config"
+
+
+def test_only_authoritative_task_references_are_selected():
+    assert dotenv_disposition("/secret/provider.refs.env").startswith("selected_read_only")
+    assert dotenv_disposition("/secret/cloud.refs.env").startswith("selected_read_only")
+    assert dotenv_disposition("/secret/oracle.refs.env").startswith("selected_read_only")
+    assert dotenv_disposition("/secret/cloud.refs.sanitized.env") == "not_selected_shadow_reference"
+    assert dotenv_disposition("/pipeline/.env") == "not_selected_task_irrelevant_secret_bearing"
+
+
+def test_sqlite_smoke_is_valid_sql(tmp_path):
+    command = _runtime_command("sqlite3", "/usr/bin/sqlite3", tmp_path, tmp_path)
+    assert command[-1] == "select 2 + 3;"
+
+
+def test_installed_alternate_rescues_a_dead_os_shim(tmp_path):
+    shim = tmp_path / "java"
+    shim.write_text("#!/bin/sh\nexit 1\n")
+    shim.chmod(0o755)
+    path, resolution = resolve_runtime("java", str(shim), cwd=tmp_path)
+    assert resolution == "installed_alternate_reused"
+    assert path in INSTALLED_ALTERNATES["java"]
+
+
+def test_a_live_catalog_path_is_never_replaced(tmp_path):
+    live = tmp_path / "java"
+    live.write_text("#!/bin/sh\nexit 0\n")
+    live.chmod(0o755)
+    assert resolve_runtime("java", str(live), cwd=tmp_path) == (str(live), "catalog_path")
+
+
+def test_a_runtime_without_any_live_installation_stays_unavailable(tmp_path):
+    missing = tmp_path / "nonesuch-runtime"
+    assert resolve_runtime("nonesuch-runtime", str(missing), cwd=tmp_path) == (
+        str(missing),
+        "no_live_installation",
+    )
+
+
+def test_route_health_separates_auth_quota_and_transport_failure():
+    routes = parse_route_lines(
+        "groq http=200 seconds=0.39 answered=yes\n"
+        "cohere http=429 seconds=0.33 answered=no\n"
+        "firecrawl http=402 seconds=0.40 answered=no\n"
+        "dead http=401 seconds=0.10 answered=no\n"
+        "offline http=000 seconds=0 answered=no\n"
+        "chatty http=200 seconds=1.0 answered=no\n"
+        "noise without fields\n"
+    )
+    assert routes["groq"] == {"health": "healthy", "http_status": "200", "latency_seconds": 0.39}
+    assert routes["cohere"]["health"] == "degraded_rate_limited"
+    assert routes["firecrawl"]["health"] == "degraded_quota_exhausted"
+    assert routes["dead"]["health"] == "degraded_auth_rejected"
+    assert routes["offline"]["health"] == "degraded_transport_refused"
+    assert routes["chatty"]["health"] == "degraded_unexpected_response"
+    assert "noise" not in routes
+
+
+def test_every_declared_github_source_is_probed_not_just_the_first():
+    catalog = {
+        "dotenv_files": [
+            {"path": "/secret/provider.refs.env", "keys": ["GITHUB_PAT"]},
+            {"path": "/secret/cloud.refs.env", "keys": ["GITHUB_PAT"]},
+            {"path": "/secret/cloud.refs.sanitized.env", "keys": ["GITHUB_PAT"]},
+            {"path": "/secret/oracle.refs.env", "keys": ["BONFYRE_ORACLE_PROFILE"]},
+        ]
+    }
+    seen: list[str] = []
+
+    def record(path, body, *, cwd):
+        seen.append(path)
+        return path.endswith("cloud.refs.env")
+
+    surface = _with_probe(record, lambda: probe_github_capability(catalog, repo=Path(".")))
+    assert seen == ["/secret/provider.refs.env", "/secret/cloud.refs.env"]
+    assert surface["sources"]["dotenv:provider.refs.env#GITHUB_PAT"] == "degraded_auth_rejected"
+    assert surface["sources"]["dotenv:cloud.refs.env#GITHUB_PAT"] == "healthy"
+    assert surface["health"] == "healthy"
+    assert surface["resolved_source"] is not None
+
+
+def test_no_live_github_source_degrades_the_capability():
+    catalog = {"dotenv_files": [{"path": "/secret/provider.refs.env", "keys": ["GITHUB_PAT"]}]}
+    surface = _with_probe(
+        lambda path, body, *, cwd: False,
+        lambda: probe_github_capability(catalog, repo=Path(".")),
+    )
+    assert surface["health"] == "degraded"
+    assert surface["resolved_source"] is None
+
+
+def test_probe_bodies_never_echo_a_variable_value():
+    bodies = [GITHUB_READ_BODY, MODEL_COMMONS_BODY, AI_STUDIO_BODY]
+    for body in bodies:
+        assert "echo $" not in body
+        assert "printf %s\\n \"$key\"" not in body
+    oracle_probe = inspect.getsource(probe_dotenv)
+    # The Oracle probe must reuse the installed ~/.oci/config rather than
+    # synthesize one whose key_file names a secret reference instead of a key.
+    assert "key_file=" not in oracle_probe
+    assert "$BONFYRE_ORACLE_PRIVATE_KEY_SECRET_REF" not in oracle_probe
+    assert '[ -r "$HOME/.oci/config" ] || exit 2; ' in oracle_probe

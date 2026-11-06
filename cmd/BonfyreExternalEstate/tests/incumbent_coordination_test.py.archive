@@ -1,0 +1,11 @@
+#!/usr/bin/env python3
+# Historical witness; coordination_family.test.mjs supersedes it.
+import importlib.util,json
+from pathlib import Path
+ROOT=Path(__file__).resolve().parents[3]
+spec=importlib.util.spec_from_file_location("incumbent",ROOT/"cmd/BonfyreExternalEstate/tools/compile_incumbent_coordination.py");m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+rows=m.compile(json.loads((ROOT/"schemas/control/incumbent-coordination-phenotypes.json").read_text()))
+wp=next(x for x in rows if x["phenotype"]=="wordpress-estate")
+assert wp["bridge_state"]=="verified_installation" and "woocommerce" in wp["public_carriers"]
+assert all(x["bridge_state"]=="deferred" for x in rows if x["phenotype"]!="wordpress-estate")
+print("incumbent coordination compiler: PASS")

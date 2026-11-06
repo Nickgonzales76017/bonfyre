@@ -1,3 +1,7 @@
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 /*
  * bf_crypto.c — Portable cryptographic primitives for Bonfyre
  *
@@ -8,6 +12,7 @@
  * Ed25519 implementation. When libsodium/libhydrogen is linked, define
  * BF_CRYPTO_USE_SODIUM or BF_CRYPTO_USE_HYDROGEN to delegate.
  */
+#include <stdint.h>
 
 #include "bf_crypto.h"
 
@@ -476,48 +481,10 @@ int bf_crypto_secretbox_open(uint8_t *plain_out,
 
 /* ── Signing (Ed25519) — stub, delegates to BLAKE2b HMAC ───── */
 
-int bf_crypto_sign_keygen(uint8_t pk[BF_CRYPTO_SIGN_PK_BYTES],
-                          uint8_t sk[BF_CRYPTO_SIGN_SK_BYTES]) {
-    /* Generate random seed, derive pk as H(seed) */
-    bf_crypto_random_buf(sk, BF_CRYPTO_SIGN_SK_BYTES);
-    bf_crypto_hash(pk, sk, 32, NULL, 0);
-    /* Copy pk into upper half of sk for easy access */
-    memcpy(sk + 32, pk, 32);
-    return 0;
-}
-
-int bf_crypto_sign(uint8_t sig_out[BF_CRYPTO_SIGN_BYTES],
-                   const void *msg, size_t msg_len,
-                   const uint8_t sk[BF_CRYPTO_SIGN_SK_BYTES]) {
-    /*
-     * HMAC-based deterministic signature (not EC-based Ed25519).
-     * Produces a 64-byte tag: HMAC(sk[0:32], nonce || msg) where
-     * nonce = HMAC(sk[0:32], msg). This is secure for authentication
-     * but not a public-key signature. For real Ed25519, link libsodium.
-     */
-    uint8_t nonce[32];
-    bf_crypto_hmac(nonce, msg, msg_len, sk);
-
-    blake2b_state s;
-    blake2b_init(&s, 64, sk, 32);
-    blake2b_update(&s, nonce, 32);
-    blake2b_update(&s, msg, msg_len);
-    blake2b_final(&s, sig_out);
-
-    bf_crypto_wipe(nonce, 32);
-    bf_crypto_wipe(&s, sizeof(s));
-    return 0;
-}
-
-int bf_crypto_sign_verify(const uint8_t sig[BF_CRYPTO_SIGN_BYTES],
-                          const void *msg, size_t msg_len,
-                          const uint8_t pk[BF_CRYPTO_SIGN_PK_BYTES]) {
-    /* Cannot verify HMAC-based sigs without secret key.
-     * This is a placeholder — returns -1 always.
-     * Link libsodium for real Ed25519 verification. */
-    (void)sig; (void)msg; (void)msg_len; (void)pk;
-    return -1;
-}
+/* Signing was removed from this module. It exported an Ed25519-shaped API over
+ * a symmetric tag whose verify could never succeed. cmd/BonfyreSign implements
+ * the real thing with libsodium; bf_crypto_hmac remains for authenticating a
+ * message to a holder of the same secret, which is what this actually did. */
 
 /* ── KDF ─────────────────────────────────────────────────────── */
 

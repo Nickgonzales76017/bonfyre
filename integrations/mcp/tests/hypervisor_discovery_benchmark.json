@@ -1,0 +1,268 @@
+{
+  "schema": "bonfyre.hypervisor-discovery-benchmark.v1",
+  "state": "passed",
+  "generated_at": "2026-10-03T05:05:38.986Z",
+  "command": "bun integrations/mcp/tests/hypervisor_discovery_benchmark.mjs --output integrations/mcp/tests/hypervisor_discovery_benchmark.json",
+  "scope": "8 disposable native-Node children per scan; each waits 60ms then prints a fixed line. Measures bounded process overlap, not production provider latency or capability.",
+  "limitations": [
+    "Ordinary development host; no CPU affinity or exclusive host control.",
+    "Repeated fixture commands do not establish latency, reachability, or correctness of actual providers."
+  ],
+  "production_speed_claim": false,
+  "pairs": 7,
+  "providers": 8,
+  "child_delay_ms": 60,
+  "samples_per_configuration": 7,
+  "excluded_semantic_fields": [
+    "providers[].evidence[].duration_ms"
+  ],
+  "semantic_outputs_equal": true,
+  "sources_unchanged": true,
+  "sources": {
+    "integrations/mcp/native_probe.mjs": {
+      "bytes": 5603,
+      "sha256": "442718a62876d116d6f228da2e5032c5e0d6c291c10a5e8dfd6992f67b0d9e36"
+    },
+    "integrations/mcp/hypervisor_discovery.mjs": {
+      "bytes": 4536,
+      "sha256": "6effd8ec7ae0a79a6e6203c3fd8170d8fab39a75589bec9a1a740af1dfb896d6"
+    },
+    "integrations/mcp/project_runtime.mjs": {
+      "bytes": 4307,
+      "sha256": "5f192716ea7f18e5f7d30763900d443fa8dee8b06eb8ec6a43591f1f0aeb1ede"
+    },
+    "integrations/mcp/spines_store.mjs": {
+      "bytes": 12809,
+      "sha256": "9da981a3a73251ef9e55d27dba7ad6200ed472c0ce10aaa06d1593595f2d0bba"
+    },
+    "integrations/mcp/canary_fixtures.mjs": {
+      "bytes": 35910,
+      "sha256": "4705009b2302efb2786217df4dea4d2341303e42ce11c4ed6eab8bcf2ea4ab3b"
+    },
+    "integrations/mcp/canary_reviewed_scripts.json": {
+      "bytes": 1454,
+      "sha256": "2a33a8ad0ac112063d6c877e8827ffc9f7dc5fb8416f037b8916da656e51d417"
+    },
+    "integrations/mcp/tests/hypervisor_discovery_benchmark.mjs": {
+      "bytes": 9572,
+      "sha256": "bf06fffc736bf8d4cb7dc19a0ed54ef137ef381c76f53a2940a41a3f17aeccc5"
+    }
+  },
+  "runtime": {
+    "bun": "1.3.13",
+    "node": {
+      "invocation_path": "/Users/nickgonzales/.vite-plus/js_runtime/node/24.21.0/bin/node",
+      "executable_path": "/Users/nickgonzales/.vite-plus/js_runtime/node/24.21.0/bin/node",
+      "version": "v24.21.0",
+      "bytes": 122129232,
+      "sha256": "e4b5a3af0e05c75de2eae013904145f40fe7fc2a6e6f17510128bf45cca4e79b"
+    },
+    "node_resolver": {
+      "invocation_path": "/Users/nickgonzales/.vite-plus/bin/node",
+      "executable_path": "/Users/nickgonzales/.vite-plus/0.2.9/bin/vp",
+      "bytes": 8371920,
+      "sha256": "319ccf2a985832d7a4adffe4fec64409c8876d8aef8ab2767a5084cadab8d743"
+    },
+    "os": "darwin",
+    "release": "24.5.0",
+    "arch": "arm64",
+    "cpu": "Apple M3"
+  },
+  "fixture": {
+    "path": "/private/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/bonfyre-discovery-benchmark-sz2QEK",
+    "retained": false,
+    "script_sha256": "78594d0e48822ff6a325e51a217b49a61eff96b4af090d0802c031c42b7e1a74",
+    "provider_registry_sha256": "42f42a6dafabec16549bacc75c1aa2adbafe170da9661a34d47316cf339be3d5"
+  },
+  "summary": {
+    "serial_p50_ms": 964.7614589999994,
+    "serial_p95_ms": 1130.5605420000002,
+    "parallel_p50_ms": 272.0097499999997,
+    "parallel_p95_ms": 319.153542,
+    "p50_ratio": 3.546789991902865
+  },
+  "samples": [
+    {
+      "pair": 0,
+      "order": [
+        1,
+        4
+      ],
+      "concurrency": 1,
+      "elapsed_ms": 939.237666,
+      "peak_in_flight": 1,
+      "subprocesses": 8,
+      "atomic_publications": 1,
+      "semantic_digest": "cc0fb890d27eca41038bd94a046572687ea93b854541282eb0fcb1bfe97d3044"
+    },
+    {
+      "pair": 0,
+      "order": [
+        1,
+        4
+      ],
+      "concurrency": 4,
+      "elapsed_ms": 305.6039579999999,
+      "peak_in_flight": 4,
+      "subprocesses": 8,
+      "atomic_publications": 1,
+      "semantic_digest": "cc0fb890d27eca41038bd94a046572687ea93b854541282eb0fcb1bfe97d3044"
+    },
+    {
+      "pair": 1,
+      "order": [
+        4,
+        1
+      ],
+      "concurrency": 4,
+      "elapsed_ms": 290.08449999999993,
+      "peak_in_flight": 4,
+      "subprocesses": 8,
+      "atomic_publications": 1,
+      "semantic_digest": "cc0fb890d27eca41038bd94a046572687ea93b854541282eb0fcb1bfe97d3044"
+    },
+    {
+      "pair": 1,
+      "order": [
+        4,
+        1
+      ],
+      "concurrency": 1,
+      "elapsed_ms": 1127.704125,
+      "peak_in_flight": 1,
+      "subprocesses": 8,
+      "atomic_publications": 1,
+      "semantic_digest": "cc0fb890d27eca41038bd94a046572687ea93b854541282eb0fcb1bfe97d3044"
+    },
+    {
+      "pair": 2,
+      "order": [
+        1,
+        4
+      ],
+      "concurrency": 1,
+      "elapsed_ms": 916.2815419999997,
+      "peak_in_flight": 1,
+      "subprocesses": 8,
+      "atomic_publications": 1,
+      "semantic_digest": "cc0fb890d27eca41038bd94a046572687ea93b854541282eb0fcb1bfe97d3044"
+    },
+    {
+      "pair": 2,
+      "order": [
+        1,
+        4
+      ],
+      "concurrency": 4,
+      "elapsed_ms": 272.0097499999997,
+      "peak_in_flight": 4,
+      "subprocesses": 8,
+      "atomic_publications": 1,
+      "semantic_digest": "cc0fb890d27eca41038bd94a046572687ea93b854541282eb0fcb1bfe97d3044"
+    },
+    {
+      "pair": 3,
+      "order": [
+        4,
+        1
+      ],
+      "concurrency": 4,
+      "elapsed_ms": 319.153542,
+      "peak_in_flight": 4,
+      "subprocesses": 8,
+      "atomic_publications": 1,
+      "semantic_digest": "cc0fb890d27eca41038bd94a046572687ea93b854541282eb0fcb1bfe97d3044"
+    },
+    {
+      "pair": 3,
+      "order": [
+        4,
+        1
+      ],
+      "concurrency": 1,
+      "elapsed_ms": 894.1867919999995,
+      "peak_in_flight": 1,
+      "subprocesses": 8,
+      "atomic_publications": 1,
+      "semantic_digest": "cc0fb890d27eca41038bd94a046572687ea93b854541282eb0fcb1bfe97d3044"
+    },
+    {
+      "pair": 4,
+      "order": [
+        1,
+        4
+      ],
+      "concurrency": 1,
+      "elapsed_ms": 964.7614589999994,
+      "peak_in_flight": 1,
+      "subprocesses": 8,
+      "atomic_publications": 1,
+      "semantic_digest": "cc0fb890d27eca41038bd94a046572687ea93b854541282eb0fcb1bfe97d3044"
+    },
+    {
+      "pair": 4,
+      "order": [
+        1,
+        4
+      ],
+      "concurrency": 4,
+      "elapsed_ms": 211.07166700000016,
+      "peak_in_flight": 4,
+      "subprocesses": 8,
+      "atomic_publications": 1,
+      "semantic_digest": "cc0fb890d27eca41038bd94a046572687ea93b854541282eb0fcb1bfe97d3044"
+    },
+    {
+      "pair": 5,
+      "order": [
+        4,
+        1
+      ],
+      "concurrency": 4,
+      "elapsed_ms": 210.30583300000035,
+      "peak_in_flight": 4,
+      "subprocesses": 8,
+      "atomic_publications": 1,
+      "semantic_digest": "cc0fb890d27eca41038bd94a046572687ea93b854541282eb0fcb1bfe97d3044"
+    },
+    {
+      "pair": 5,
+      "order": [
+        4,
+        1
+      ],
+      "concurrency": 1,
+      "elapsed_ms": 1130.5605420000002,
+      "peak_in_flight": 1,
+      "subprocesses": 8,
+      "atomic_publications": 1,
+      "semantic_digest": "cc0fb890d27eca41038bd94a046572687ea93b854541282eb0fcb1bfe97d3044"
+    },
+    {
+      "pair": 6,
+      "order": [
+        1,
+        4
+      ],
+      "concurrency": 1,
+      "elapsed_ms": 975.4265830000004,
+      "peak_in_flight": 1,
+      "subprocesses": 8,
+      "atomic_publications": 1,
+      "semantic_digest": "cc0fb890d27eca41038bd94a046572687ea93b854541282eb0fcb1bfe97d3044"
+    },
+    {
+      "pair": 6,
+      "order": [
+        1,
+        4
+      ],
+      "concurrency": 4,
+      "elapsed_ms": 223.3513750000002,
+      "peak_in_flight": 4,
+      "subprocesses": 8,
+      "atomic_publications": 1,
+      "semantic_digest": "cc0fb890d27eca41038bd94a046572687ea93b854541282eb0fcb1bfe97d3044"
+    }
+  ]
+}

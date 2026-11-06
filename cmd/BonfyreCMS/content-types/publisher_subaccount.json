@@ -1,0 +1,52 @@
+{
+  "name": "publisher_subaccount",
+  "displayName": "Publisher Subaccount",
+  "description": "A publisher-account-owned public contributor subaccount for one exact observed byline/source pair. Parent binding is required; it may not grant login, institutional membership, verified personal identity, post authorship, or editorial control.",
+  "attributes": {
+    "subaccount_id": {
+      "type": "string",
+      "required": true,
+      "uniqueWithinNamespace": true
+    },
+    "account_subject": {
+      "type": "string",
+      "required": true
+    },
+    "publisher_account_id": {
+      "type": "string",
+      "required": true
+    },
+    "source": {
+      "type": "string",
+      "required": true
+    },
+    "display_name": {
+      "type": "string",
+      "required": true
+    },
+    "host": {
+      "type": "string",
+      "required": true
+    },
+    "evidence_path": {
+      "type": "string",
+      "required": true
+    },
+    "identity_state": {
+      "type": "string",
+      "required": true
+    },
+    "claimed_actor_subject": {
+      "type": "string",
+      "required": false
+    },
+    "cannot_infer": {
+      "type": "text",
+      "required": true
+    },
+    "status": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

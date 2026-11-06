@@ -1,0 +1,509 @@
+{
+  "acceptance": {
+    "all_lanes_share_one_semantic_identity": true,
+    "all_runnable_checks_pass": true,
+    "at_least_three_lanes_cross_five_owner_families": true,
+    "unavailable_edges_are_bounded": true
+  },
+  "bounded_blockers": [
+    {
+      "organ": "OpenDAL",
+      "reason": "no local opendal executable or Python binding is installed; ObjectFabric used its registered local zero-copy representation",
+      "state": "blocked_exactly"
+    },
+    {
+      "organ": "Iroh/QUIC",
+      "reason": "no existing local iroh executable/service path is available; peer transport was not simulated",
+      "state": "blocked_exactly"
+    },
+    {
+      "organ": "WorkerRun",
+      "reason": "no live WorkerRun implementation is registered in repository source",
+      "state": "blocked_exactly"
+    },
+    {
+      "organ": "ProtocolMachine",
+      "reason": "no live ProtocolMachine implementation is registered in repository source",
+      "state": "blocked_exactly"
+    },
+    {
+      "organ": "Restate",
+      "reason": "a measured Restate substrate checkout exists, but no live WorkGraph/EffectKernel binding is registered",
+      "state": "blocked_exactly"
+    },
+    {
+      "organ": "BonfyreReason durable session",
+      "reason": "BonfyreReason start returned zero but did not create its promised session state; branch/run were refused after exact readback",
+      "state": "blocked_exactly"
+    },
+    {
+      "organ": "CaveMem",
+      "reason": "no live CaveMem source or executable is registered in the repository",
+      "state": "blocked_exactly"
+    },
+    {
+      "organ": "GigaToken",
+      "reason": "the installed substrate has a passed semantic proof, but no installed importable runtime was used in this epoch",
+      "state": "exercised_replay"
+    },
+    {
+      "organ": "local-model-generation",
+      "reason": "BonfyreModel reports 0 of 18 model artifacts cached; no giant model download was allowed",
+      "state": "blocked_exactly"
+    }
+  ],
+  "forbidden_inferences": [
+    "simulation cash -> production revenue",
+    "local partner review -> remote partner completion or authority",
+    "unsigned DSSE envelope -> verified signature",
+    "content hash -> producer, model, transport, authority or claim support",
+    "provider process identity -> AgentSession, WorkerRun or WorkGraph identity",
+    "available source checkout -> live registered runtime binding"
+  ],
+  "lane_owner_family_counts": {
+    "artifact_supply_chain": 6,
+    "customer_to_cash": 8,
+    "engineering_to_partner": 8,
+    "knowledge_to_action": 9
+  },
+  "lanes": {
+    "artifact_supply_chain": {
+      "blockers": [
+        {
+          "organ": "OpenDAL",
+          "reason": "no local opendal executable or Python binding is installed; ObjectFabric used its registered local zero-copy representation",
+          "state": "blocked_exactly"
+        },
+        {
+          "organ": "Iroh/QUIC",
+          "reason": "no existing local iroh executable/service path is available; peer transport was not simulated",
+          "state": "blocked_exactly"
+        }
+      ],
+      "checks": {
+        "objectfabric_addresses_every_projection": true,
+        "six_registered_format_families_roundtrip": true,
+        "unavailable_peer_storage_paths_are_not_claimed": true,
+        "zstd_recovery_hash_matches_when_invoked": true
+      },
+      "compression": {
+        "compressed_bytes": 357,
+        "input_sha256": "674b89f78374e5f279903eb998a76cef7902711785454b6640a275f69abe58ca",
+        "recovered_sha256": "674b89f78374e5f279903eb998a76cef7902711785454b6640a275f69abe58ca",
+        "status": "pass"
+      },
+      "evidence": [
+        "formats/canonical.json",
+        "formats/object.csv",
+        "formats/object.sqlite",
+        "formats/object.geojson",
+        "formats/object.html",
+        "formats/object.tar"
+      ],
+      "formats": [
+        {
+          "bytes": 549,
+          "family": "schema-record-data",
+          "format": "JSON",
+          "path": "formats/canonical.json",
+          "sha256": "674b89f78374e5f279903eb998a76cef7902711785454b6640a275f69abe58ca"
+        },
+        {
+          "bytes": 87,
+          "family": "spreadsheets",
+          "format": "CSV",
+          "path": "formats/object.csv",
+          "sha256": "181a3757fa28d4a480d46690566d7bde3f9d2cafb25265b07fc2e6e7222145e2"
+        },
+        {
+          "bytes": 12288,
+          "family": "relational-containers",
+          "format": "SQLite",
+          "path": "formats/object.sqlite",
+          "sha256": "640cb75b9a95d7c5322bbb761719b00e0146cadb26a843695515486ab7f9501c"
+        },
+        {
+          "bytes": 862,
+          "family": "geospatial-vector",
+          "format": "GeoJSON",
+          "path": "formats/object.geojson",
+          "sha256": "a05bf66a402a3c3d3c18f68b092e69188e50bd8e91bf9b5a0c3f0abde053f40f"
+        },
+        {
+          "bytes": 938,
+          "family": "ebooks-web-archives",
+          "format": "HTML",
+          "path": "formats/object.html",
+          "sha256": "60d926fefc42be6e5c4dc12d333dd0db45fb179f37cb26a21507b344eff8f7d4"
+        },
+        {
+          "bytes": 10240,
+          "family": "archive-distribution",
+          "format": "TAR",
+          "path": "formats/object.tar",
+          "sha256": "a65137f78e07b46cd0fbc6c724fad471539e069d98e40ce1ca93c5b608e034a0"
+        }
+      ],
+      "objectfabric": [
+        {
+          "bytes": 549,
+          "format": "JSON",
+          "sha256": "674b89f78374e5f279903eb998a76cef7902711785454b6640a275f69abe58ca",
+          "uri": "bonfyre://artifact/674b89f78374e5f279903eb998a76cef7902711785454b6640a275f69abe58ca"
+        },
+        {
+          "bytes": 87,
+          "format": "CSV",
+          "sha256": "181a3757fa28d4a480d46690566d7bde3f9d2cafb25265b07fc2e6e7222145e2",
+          "uri": "bonfyre://artifact/181a3757fa28d4a480d46690566d7bde3f9d2cafb25265b07fc2e6e7222145e2"
+        },
+        {
+          "bytes": 12288,
+          "format": "SQLite",
+          "sha256": "640cb75b9a95d7c5322bbb761719b00e0146cadb26a843695515486ab7f9501c",
+          "uri": "bonfyre://artifact/640cb75b9a95d7c5322bbb761719b00e0146cadb26a843695515486ab7f9501c"
+        },
+        {
+          "bytes": 862,
+          "format": "GeoJSON",
+          "sha256": "a05bf66a402a3c3d3c18f68b092e69188e50bd8e91bf9b5a0c3f0abde053f40f",
+          "uri": "bonfyre://artifact/a05bf66a402a3c3d3c18f68b092e69188e50bd8e91bf9b5a0c3f0abde053f40f"
+        },
+        {
+          "bytes": 938,
+          "format": "HTML",
+          "sha256": "60d926fefc42be6e5c4dc12d333dd0db45fb179f37cb26a21507b344eff8f7d4",
+          "uri": "bonfyre://artifact/60d926fefc42be6e5c4dc12d333dd0db45fb179f37cb26a21507b344eff8f7d4"
+        },
+        {
+          "bytes": 10240,
+          "format": "TAR",
+          "sha256": "a65137f78e07b46cd0fbc6c724fad471539e069d98e40ce1ca93c5b608e034a0",
+          "uri": "bonfyre://artifact/a65137f78e07b46cd0fbc6c724fad471539e069d98e40ce1ca93c5b608e034a0"
+        }
+      ],
+      "owner_trace": [
+        "ArtifactGraph",
+        "FormatCommons",
+        "BonfyreHash",
+        "ObjectFabric",
+        "BonfyreCompress",
+        "EvidenceGraph"
+      ],
+      "semantic_equivalence": {
+        "canonical": true,
+        "csv_typed_subset": true,
+        "geojson": true,
+        "html": true,
+        "sqlite": true,
+        "tar": true
+      },
+      "shared_identity": "company-object:run8-tiny-order",
+      "status": "pass"
+    },
+    "customer_to_cash": {
+      "checks": {
+        "crm_projects_actor_identity": true,
+        "erpnext_projects_commitment_identity": true,
+        "erpnext_quote_order_invoice_share_semantic_identity": true,
+        "helpdesk_projects_occurrence_identity": true,
+        "insights_exposes_maintained_queries": true,
+        "moneygraph_retains_causal_payment": true,
+        "simulation_never_claims_production_revenue": true
+      },
+      "counts": {
+        "crm": 1,
+        "erpnext_commercial_chain": 3,
+        "erpnext_payments": 1,
+        "helpdesk": 1,
+        "insights": 7
+      },
+      "evidence": [
+        "customer/crm-leads.json",
+        "customer/helpdesk-tickets.json",
+        "customer/erpnext-payments.json",
+        "customer/erpnext-commercial-chain.json",
+        "customer/insights-queries.json"
+      ],
+      "owner_trace": [
+        "ExternalEventLog",
+        "ActorGraph",
+        "CRM",
+        "Helpdesk",
+        "ERPNext",
+        "MoneyGraph",
+        "Insights",
+        "EvidenceGraph"
+      ],
+      "shared_identity": "company-object:run8-tiny-order",
+      "status": "pass"
+    },
+    "engineering_to_partner": {
+      "blockers": [
+        {
+          "organ": "WorkerRun",
+          "reason": "no live WorkerRun implementation is registered in repository source",
+          "state": "blocked_exactly"
+        },
+        {
+          "organ": "ProtocolMachine",
+          "reason": "no live ProtocolMachine implementation is registered in repository source",
+          "state": "blocked_exactly"
+        },
+        {
+          "organ": "Restate",
+          "reason": "a measured Restate substrate checkout exists, but no live WorkGraph/EffectKernel binding is registered",
+          "state": "blocked_exactly"
+        }
+      ],
+      "checks": {
+        "dsse_does_not_fake_signature": true,
+        "foreign_twin_is_observe_reference_only": true,
+        "partner_update_is_local_observation": true,
+        "sarif_vex_otel_are_content_addressed": true,
+        "workgraph_closed_against_receipt": true
+      },
+      "evidence": [
+        "partner/issue.json",
+        "partner/review.sarif",
+        "partner/review.cdx.json",
+        "partner/review.otel.json",
+        "partner/review.dsse.json",
+        "partner/receipt-envelope.json"
+      ],
+      "owner_trace": [
+        "PartnerCommons",
+        "ForeignTwin",
+        "WorkGraph",
+        "BonfyreIngest",
+        "FormatCommons",
+        "DSSE",
+        "ReceiptEnvelope",
+        "EvidenceGraph"
+      ],
+      "receipt": {
+        "artifact_identity": "b6ca891346dcfd61e98c398929a6cd8500f202fe07a955f776fe45ca6cc1e8f3",
+        "evidence": {
+          "otel": "eb71aa26fed69601206fdd87defaad3b9edf4e824de1e019869dfae3a6b69774",
+          "sarif": "de43b08f81ce0e544cb4639b384cd9ed82dfb0a626ea4985fccc29dc57356064",
+          "vex": "02d19fd76c73e48ef245fa0c10c7c49af0a7a6df68cd7d283e26f07db49bc092"
+        },
+        "identity": "receipt:35cab61caaecff22316ef98c2e5a8ac5789b4fd06025b10a81371529f6094640",
+        "provider_identity": "native-bonfyre-review",
+        "review": "pass",
+        "schema": "bonfyre.receipt-envelope.v1",
+        "subject": "issue:run8-evidence-packet",
+        "transport_identity": "local-filesystem",
+        "work_item_id": 1
+      },
+      "shared_identity": "company-object:run8-tiny-order",
+      "status": "bounded-pass-with-lifecycle-blockers",
+      "work_item_id": 1
+    },
+    "knowledge_to_action": {
+      "agent_session": {
+        "events": [
+          {
+            "evidence_origin": "subject",
+            "kind": "model_turn",
+            "model_identity": "codex",
+            "provider_identity": "openai",
+            "sequence": 1,
+            "work_node": "mesh-external-chatgpt-20260821T0250-020"
+          }
+        ],
+        "provider_process_identity_used_as_lifecycle_identity": false,
+        "root_work_node": "mesh-external-chatgpt-20260821T0250-020",
+        "session_id": "agent-session:1debfd961dafd3f5621a012a"
+      },
+      "blockers": [
+        {
+          "organ": "BonfyreReason durable session",
+          "reason": "BonfyreReason start returned zero but did not create its promised session state; branch/run were refused after exact readback",
+          "state": "blocked_exactly"
+        },
+        {
+          "organ": "CaveMem",
+          "reason": "no live CaveMem source or executable is registered in the repository",
+          "state": "blocked_exactly"
+        },
+        {
+          "organ": "GigaToken",
+          "reason": "the installed substrate has a passed semantic proof, but no installed importable runtime was used in this epoch",
+          "state": "exercised_replay"
+        },
+        {
+          "organ": "local-model-generation",
+          "reason": "BonfyreModel reports 0 of 18 model artifacts cached; no giant model download was allowed",
+          "state": "blocked_exactly"
+        }
+      ],
+      "checks": {
+        "bounded_context_is_digest_bound": true,
+        "decision_contract_binds_evidence_and_authority_scope": true,
+        "effect_is_content_addressed": true,
+        "provider_process_id_is_not_lifecycle_identity": true,
+        "providergraph_selects_current_codex_epoch": true
+      },
+      "context": {
+        "answer_sha256": "59d63ec95603030861824d9b4d81e4a46ed5722bf45e0fe9e125715af1a625a7",
+        "bytes": 1638,
+        "query": "get work-graph"
+      },
+      "decision_contract": {
+        "authority_scope": "isolated local simulation state",
+        "contract_id": "decision:2429a647cf8048c54e30d779c814291f0872d8e0817b4af2b8d2fb8eabd8f377",
+        "decision": "commit only bounded local evidence projections",
+        "evidence_refs": [
+          "external-chatgpt-20260821T0250-020",
+          "atlas-answer:59d63ec95603030861824d9b4d81e4a46ed5722bf45e0fe9e125715af1a625a7"
+        ],
+        "provider_route": "codex-epoch",
+        "subject": "company-object:run8-tiny-order",
+        "valid_from": "2026-08-21T00:00:00Z",
+        "valid_until": "2026-08-22T00:00:00Z"
+      },
+      "evidence": [
+        "knowledge/corpus-stats.json",
+        "knowledge/decision-contract.json",
+        "knowledge/agent-session.json"
+      ],
+      "owner_trace": [
+        "Wiki/Drive",
+        "AtlasContextProvider",
+        "ProviderGraph",
+        "BonfyreModel",
+        "BonfyreReason",
+        "DecisionContract",
+        "AgentSession",
+        "ObjectFabric",
+        "ProofBundle"
+      ],
+      "shared_identity": "company-object:run8-tiny-order",
+      "status": "bounded-pass-with-native-model-blockers"
+    }
+  },
+  "powers": {
+    "actually_invoked": [
+      {
+        "operation": "--phase",
+        "output_sha256": "96cdc3598b51aa4b56873de4c3fe89ecd93e184b3ef7f8a2da3115503ca6ab49",
+        "power": "BonfyreFrappeCompiler",
+        "registry_maturity": "health_probed",
+        "returncode": 0,
+        "wall_ms": 10.021
+      },
+      {
+        "operation": "file",
+        "output_sha256": "083f104e853ec7e639a479730386dfa1ac85e8461f144eb47411d5675ac272be",
+        "power": "BonfyreHash",
+        "registry_maturity": "health_probed",
+        "returncode": 0,
+        "wall_ms": 8.261
+      },
+      {
+        "operation": "pack",
+        "output_sha256": "d1285c45131b5d99af4c05cd03148536d02e8622478e0df603fcb710db8d08a3",
+        "power": "BonfyreCompress",
+        "registry_maturity": "workload_proven",
+        "returncode": 0,
+        "wall_ms": 25.194
+      },
+      {
+        "operation": "unpack",
+        "output_sha256": "10fe10b916e308aa3bf198371216ec3b0a243bab00994cd833c3cdb6596c5f5a",
+        "power": "BonfyreCompress",
+        "registry_maturity": "workload_proven",
+        "returncode": 0,
+        "wall_ms": 11.788
+      },
+      {
+        "operation": "invoke",
+        "output_sha256": "f33a6a3cc6926841385c47b889650548d4c21a09c1f2a659b7aeae73ffe0fa61",
+        "power": "BonfyreIngest",
+        "registry_maturity": "workload_proven",
+        "returncode": 0,
+        "wall_ms": 9.565
+      },
+      {
+        "operation": "route",
+        "output_sha256": "07d32e1b7444ac71ea956a7213373225f440afa3fe7a06a147e057b7edf7de90",
+        "power": "BonfyreModel",
+        "registry_maturity": "health_probed",
+        "returncode": 0,
+        "wall_ms": 72.894
+      },
+      {
+        "operation": "start",
+        "output_sha256": "2bb9eac79f39adc02913ddc63f483ca5d8dd4b2697b091af556c6f8203b58c63",
+        "power": "BonfyreReason",
+        "registry_maturity": "health_probed",
+        "returncode": 0,
+        "wall_ms": 7.444
+      },
+      {
+        "operation": "assess-json",
+        "output_sha256": "526990f1f626c9f7eaad90161f6264b99b93e67161d4d01662b098c965d0eb6d",
+        "power": "BonfyreLedger",
+        "registry_maturity": "workload_proven",
+        "returncode": 0,
+        "wall_ms": 15.635
+      },
+      {
+        "operation": "bundle",
+        "output_sha256": "fce640955a9b1b1ad73992fff9a3fcfca5bb041c5ca1ee1f7bbb0e3bd24a7229",
+        "power": "BonfyreProof",
+        "registry_maturity": "health_probed",
+        "returncode": 0,
+        "wall_ms": 12.614
+      }
+    ],
+    "direct_names": [
+      "BonfyreCompress",
+      "BonfyreFrappeCompiler",
+      "BonfyreHash",
+      "BonfyreIngest",
+      "BonfyreLedger",
+      "BonfyreModel",
+      "BonfyreProof",
+      "BonfyreReason"
+    ],
+    "novel_cross_organ_composition": [
+      "BonfyreFrappeCompiler + CRM/Helpdesk/ERPNext + MoneyGraph + Insights",
+      "BonfyreHash + FormatCommons + BonfyreCompress + ObjectFabric",
+      "BonfyreIngest + PartnerCommons + ForeignTwin + WorkGraph + ReceiptEnvelope",
+      "BonfyreModel + BonfyreReason + ProviderGraph + DecisionContract + AgentSession"
+    ]
+  },
+  "proof_sha256": "546d5fcdbca88a9c8cb04a112370666892b95dbee420bbd59f3d3c4951d50a88",
+  "reusable_evidence": [
+    "customer/crm-leads.json",
+    "customer/erpnext-commercial-chain.json",
+    "customer/erpnext-payments.json",
+    "customer/helpdesk-tickets.json",
+    "customer/insights-queries.json",
+    "formats/canonical.json",
+    "formats/object.csv",
+    "formats/object.geojson",
+    "formats/object.html",
+    "formats/object.sqlite",
+    "formats/object.tar",
+    "knowledge/agent-session.json",
+    "knowledge/corpus-stats.json",
+    "knowledge/decision-contract.json",
+    "partner/issue.json",
+    "partner/receipt-envelope.json",
+    "partner/review.cdx.json",
+    "partner/review.dsse.json",
+    "partner/review.otel.json",
+    "partner/review.sarif"
+  ],
+  "schema": "bonfyre.one-company-stress-gauntlet.v1",
+  "shared_object": {
+    "identity": "company-object:run8-tiny-order",
+    "sha256": "1debfd961dafd3f5621a012a017b2c3bea4304c17b53d78c5f795071d491a31b"
+  },
+  "simulation": true,
+  "source_event": "external-chatgpt-20260821T0250-020",
+  "work_item": "mesh-external-chatgpt-20260821T0250-020"
+}

@@ -1,0 +1,43 @@
+atlas optimization-static-semantic-search
+
+architecture static-semantic-search
+  canonical_name StaticSemanticSearch
+  owns StaticEmbeddingModel
+  owns SiteSearchIndex
+  consumes OnnxTeacherModel
+  consumes PublishedSiteSections
+  publishes SearchPassage
+  publishes SearchIndex
+  family optimization
+  domain Optimization / Retrieval
+  layer substrate
+  semantic_question Which published section answers a reader's question, computed with no model runtime and no server at question time?
+  purpose Distill the local ONNX sentence model once into a small token table (Model2Vec recipe, native), embed every published CMS section into a per-site index when the site is served or exported, and let any page, app or command embed a question with the same numbers so search ships as static files.
+  maturity measured
+  source_path cmd/BonfyreEmbed/src/static_embed.h
+  source_path cmd/BonfyreEmbed/src/main.c
+  source_path lib/libbonfyre/include/bf_static_embed.h
+  source_path lib/libbonfyre/src/bf_static_embed.c
+  source_path lib/libbonfyre/include/bf_bert_fold.h
+  source_path cmd/BonfyreWebAddress/src/site_search.h
+  source_path cmd/BonfyreWebAddress/src/site_mcp.c
+  source_path site/matrix/static-embed.mjs
+  source_path site/matrix/own-site-reading.js
+  source_path scripts/export_subject_hosts.sh
+  witness cmd/BonfyreEmbed/tests/static_embed.test.mjs proves the browser reader equals bonfyre-embed static to float32 precision on accented, curly-quoted, Cyrillic, CJK, unknown and empty texts, that a .bfsi index refuses a different model, and that four paraphrased household questions find their passage
+  witness cmd/BonfyreWebAddress/tests/site_search_test.sh builds a two-page manual site from nothing, serves /_search/passages.json, index.bfsi and model.bfse bound to the installed model, finds both sections from paraphrased questions through the page reader, shows a CMS edit in the next index with no rebuild step, and refuses search with a reason when the model is missing while pages keep serving
+  witness 2026-10-17 distillation of nomic-embed-text-onnx: 29,523 of 30,522 tokens embedded natively in 2 min 19 s, PCA 768 -> 128 keeping 68.6 percent of variance, int8 rows, 4.1 MB file (~/BonfyreModels/static/nomic-static-128.bfse)
+  witness 2026-10-17 docs.aurekai.work published with its index (141 passages, 18.6 KB index): in Chrome, "what are people saying about my company in the news" listed the business-mentions sections first; the model loaded once in 234 ms and the page logged no errors
+  witness 2026-10-17 hybrid ranking on the docs index put the right page first for 6 of 7 paraphrased questions; vector-only ranking managed 4 of 7
+  invariant the .bfse carries the vocabulary and the Unicode fold table, so a reader reproduces the native tokenizer without knowing the model
+  invariant a .bfsi index records the SHA-256 of the .bfse that produced it, and readers refuse it under any other model
+  invariant a site's index is cached by a digest of its model and every published passage, so a CMS edit reaches the next request's index and nothing is backfilled by hand
+  invariant a passage the model cannot see is refused from the index rather than stored as a zero vector
+  invariant the question is embedded in the reader's browser; no question is sent to a server
+  invariant search blends vector and keyword (BM25) scores, each scaled to its best passage, because static vectors blur rare exact words
+  forbidden_inference a static vector -> the teacher's sentence vector; word order and context are gone
+  forbidden_inference a high score -> the same meaning; scores compare only within one .bfse and one index
+  forbidden_inference a section listed under "Sections that answer this" -> a verified answer to the question
+  known_gap Zipf weighting uses vocabulary rank as a frequency proxy; weighting from this estate's own corpus has not been measured
+  witness 2026-10-17 live web-address moved to ~/.bonfyre/static-search-release-20261017 after a canary matched live on 42 route pairs apart from the stylesheet version; the CMS sites answer /_search from the live server
+  known_gap the ServiceSite builds (work samples, client sites) and the Documents application do not use the index yet

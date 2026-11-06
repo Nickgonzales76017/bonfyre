@@ -1,0 +1,36 @@
+#!/usr/bin/env python3
+"""Historical Python promoter; promote_external_resource.mjs owns this path.
+
+The promotion is deliberately narrow: a retained 211 record with explicit
+public service classifications can become a HouseholdOpportunity.  It never
+asserts that a household qualifies, has applied, is enrolled, or has a provider
+relationship.
+"""
+import argparse, json
+from pathlib import Path
+
+class Refusal(ValueError): pass
+
+def promote(record):
+    if not isinstance(record, dict) or record.get("kind") != "211_resource" or record.get("provider") != "211":
+        raise Refusal("only normalized 211 resources may promote")
+    payload = record.get("payload")
+    if not isinstance(payload, dict) or not isinstance(payload.get("functions"), str) or not payload["functions"].strip():
+        raise Refusal("public 211 service classification required")
+    promoted = dict(record)
+    promoted["kind"] = "211_household_opportunity"
+    return promoted
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--input", type=Path, required=True)
+    parser.add_argument("--out", type=Path, required=True)
+    args = parser.parse_args()
+    try: output = promote(json.loads(args.input.read_text()))
+    except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
+        print(f"external resource promotion: {exc}"); return 2
+    args.out.write_text(json.dumps(output, sort_keys=True) + "\n")
+    print(json.dumps({"kind": output["kind"], "truth": "public service classification only"}))
+    return 0
+
+if __name__ == "__main__": raise SystemExit(main())

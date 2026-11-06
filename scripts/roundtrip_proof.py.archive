@@ -1,0 +1,129 @@
+#!/usr/bin/env python3
+"""Archived Python baseline: compare intended publication with observation.
+
+A projection is a claim. `/ap/actor` says this institution has an ActivityPub
+presence; `/.well-known/agent.json` says it offers skills. Nothing checked that
+the claim survived the carrier -- and a projection that silently stopped being
+served looks, from the inside, exactly like one that works.
+
+This is the round trip: canonical state is projected onto a carrier, the carrier
+is then observed independently, and the two are compared. What it proves is
+publication fidelity -- that the representation an outside reader can fetch is
+the one this institution meant to publish.
+
+What it cannot prove: that anyone fetched it, that a federation accepted it, or
+that the projection means what a reader will take it to mean. Fidelity is not
+reach and it is not agreement.
+"""
+from __future__ import annotations
+
+import json
+import sys
+import urllib.error
+import urllib.request
+
+ORIGIN = "https://aurekai.life"
+
+# Each row: the carrier, the projection's address, and the fields whose presence
+# is the claim. The fields are named here rather than inferred because a
+# projection that drops a field still parses -- absence is the failure that has
+# to be looked for on purpose.
+PROJECTIONS = [
+    ("activitypub", "/ap/actor", ["id", "type", "inbox", "preferredUsername"]),
+    ("activitypub", "/.well-known/webfinger?resource=acct:bonfyre@aurekai.life",
+     ["subject", "links"]),
+    ("a2a", "/.well-known/agent.json", ["name", "url", "skills"]),
+    ("mcp", "/mcp/resources/", ["resources"]),
+    ("beckn", "/beckn/search", ["context"]),
+    ("machine-discovery", "/.well-known/bonfyre", ["version", "host"]),
+]
+
+
+def observe(path: str) -> tuple[int, dict | None, str]:
+    request = urllib.request.Request(
+        ORIGIN + path, headers={"Accept": "application/json", "User-Agent": "bonfyre-roundtrip/1"}
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            raw = response.read().decode("utf-8", "replace")
+            status = response.status
+    except urllib.error.HTTPError as http_error:
+        return http_error.code, None, "http error"
+    except Exception as error:  # noqa: BLE001
+        return 0, None, str(error)[:60]
+    try:
+        return status, json.loads(raw), ""
+    except json.JSONDecodeError:
+        return status, None, "not json"
+
+
+def main() -> int:
+    rows, drift = [], 0
+    for carrier, path, required in PROJECTIONS:
+        status, document, note = observe(path)
+        if status != 200 or document is None:
+            rows.append((carrier, path, "unreachable", f"{status} {note}".strip()))
+            drift += 1
+            continue
+        missing = [f for f in required if f not in document]
+        if missing:
+            rows.append((carrier, path, "drifted", "missing " + ",".join(missing)))
+            drift += 1
+        else:
+            rows.append((carrier, path, "faithful", f"{len(document)} fields"))
+
+    # Presence is the weak half. The strong half is agreement: one institution
+    # projected onto several carriers is still one identity, and two carriers
+    # that disagree about it is drift no single-carrier check can see.
+    actor_status, actor, _ = observe("/ap/actor")
+    finger_status, finger, _ = observe(
+        "/.well-known/webfinger?resource=acct:bonfyre@aurekai.life")
+    card_status, card, _ = observe("/.well-known/agent.json")
+    if actor and finger:
+        hrefs = [l.get("href") for l in finger.get("links", []) if isinstance(l, dict)]
+        if actor.get("id") in hrefs:
+            rows.append(("cross-carrier", "actor id vs webfinger", "agree",
+                         actor.get("id", "")))
+        else:
+            rows.append(("cross-carrier", "actor id vs webfinger", "drifted",
+                         f"{actor.get('id')} not among {hrefs}"))
+            drift += 1
+    if actor and card:
+        a_host = str(actor.get("id", "")).split("/")[2] if actor.get("id") else ""
+        c_host = str(card.get("url", "")).split("/")[2] if card.get("url") else ""
+        if a_host and a_host == c_host:
+            rows.append(("cross-carrier", "actor host vs agent card", "agree", a_host))
+        else:
+            rows.append(("cross-carrier", "actor host vs agent card", "drifted",
+                         f"{a_host} vs {c_host}"))
+            drift += 1
+    (void_status := (actor_status, finger_status, card_status))  # noqa: F841
+
+    width = max(len(p) for _, p, _, _ in rows)
+    for carrier, path, verdict, detail in rows:
+        mark = {"faithful": " ", "agree": " ", "drifted": "!", "unreachable": "x"}[verdict]
+        print(f" {mark} {carrier:<18} {path:<{width}}  {verdict:<11} {detail}")
+
+    print()
+    print(f"round trip: {len(rows) - drift}/{len(rows)} projections observed as published")
+    if "--json" in sys.argv:
+        print(json.dumps({
+            "schema": "bonfyre-roundtrip.v1",
+            "origin": ORIGIN,
+            "projections": [
+                {"carrier": c, "address": p, "verdict": v, "detail": d}
+                for c, p, v, d in rows
+            ],
+            "faithful": len(rows) - drift,
+            "total": len(rows),
+            "forbidden_inference": [
+                "fidelity -> reach: nothing here says anyone fetched it",
+                "fidelity -> acceptance: a federation may serve the document and refuse the actor",
+                "a present field -> a correct value",
+            ],
+        }, indent=2))
+    return 1 if drift else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

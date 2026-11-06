@@ -1,0 +1,5 @@
+{"offer_id":"beans","cash_price_usd":"1.79","merchant":"Target","source_url":"https://example.test/beans","price":1.5,"tags":["a",null,2],"in_stock":true}
+
+{"offer_id":"Rice-2","cash_price_usd":2.10,"merchant":"Kroger","source_refs":"https://example.test/rice","evidence_ref":"","notes":null,"10":1,"2":2,"nested":{"b":{"y":1,"x":[1,2]},"a":"éé"}}
+{"offer_id":"rice_1","cash_price_usd":2.1,"merchant":"Kroger","source_refs":["z","a","a",""],"notes":"multi\nline \"q\"","nested":{"b":{"y":2,"x":[1,2]},"c":0.1}}
+{"offer_id":"apple","merchant":"Aldi","source_refs":{"x":1},"cash_price_usd":null,"pet_status":false}

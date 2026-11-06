@@ -1,0 +1,1094 @@
+#!/usr/bin/env python3
+"""Shadow rental-supply discovery for the Run8 housing flood.
+
+Weakly marketed supply does not appear in aggregator search results. It appears
+in the surfaces a community publishes for its own leasing funnel: sitemaps,
+Schema.org offer catalogs, embedded pricing JSON, ``/specials`` concession
+pages, ``coming-soon``/``pre-leasing`` interest pages, and the manager
+portfolio pages that link siblings together.
+
+This module is the canonical owner of that discovery. It is deliberately not a
+scraper-for-everything: it reads only public, robots-permitted surfaces, it
+never submits a form, and it never turns a readable page into an availability
+fact. Discovery emits *candidates*. Promotion to a listing requires a separate
+verification pass that re-observes the same structured record and records both
+content hashes.
+
+Non-collapse rules enforced in code:
+
+* observation != fact.  Every fetch is a ``bonfyre-foreign-observation.v1``
+  receipt with ``availability_claim: false``.
+* candidate availability != exact availability.  ``verify`` promotes only what
+  survives re-observation, and stamps ``rent_exactness`` so a floorplan
+  "starting at" price can never be read as an exact unit rent.
+* advertised price != effective cost.  Concession text is captured verbatim as
+  an unverified concession candidate; it is never subtracted from rent here.
+"""
+
+from __future__ import annotations
+
+import argparse
+import fcntl
+import gzip
+import hashlib
+import html as html_lib
+import json
+import os
+import re
+import sys
+import tempfile
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from pathlib import Path
+
+OBSERVATION_SCHEMA = "bonfyre-foreign-observation.v1"
+CANDIDATE_SCHEMA = "bonfyre-housing-shadow-candidate.v1"
+# A lane-owned schema lets this producer merge only its rows in the shared
+# household output.  Generic listing schemas are foreign rows here.
+LISTING_SCHEMA = "bonfyre-housing-shadow-observation.v1"
+
+USER_AGENT = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+)
+DEFAULT_DELAY_S = 1.0
+MAX_DELAY_S = 10.0
+MAX_BODY_BYTES = 4 * 1024 * 1024
+
+# Shadow surfaces, ordered most specific first: the first pattern that matches a
+# path wins, so /floorplans/tour/ classifies as a tour surface, not a quote one.
+SHADOW_SURFACES = (
+    ("tour_inventory", r"/(tour|tours|schedule[-_]?a?[-_]?tour|self[-_]?guided|book[-_]?a?[-_]?tour)"),
+    ("application_inventory", r"/(apply|application|applynow|start[-_]?application|leasing[-_]?application)"),
+    ("prelease_surface", r"/(coming[-_]?soon|pre[-_]?leas|preleas|now[-_]?leasing|waitlist|wait[-_]?list|interest[-_]?list|register)"),
+    ("concession_surface", r"/(special|specials|offer|offers|promo|promotion|current[-_]?special)"),
+    ("quote_engine", r"/(floorplan|floor[-_]?plans|availability|available|pricing|rates|units|unit[-_]?availability|apartments)"),
+    ("pet_surface", r"/(pet|pets|pet[-_]?policy|dog)"),
+    ("portfolio_surface", r"/(communities|our[-_]?communities|properties|our[-_]?properties|portfolio|locations|find[-_]?a?[-_]?home)"),
+)
+
+# Leasing/marketing platforms. A shared platform is a portfolio-recursion edge:
+# it tells us which other communities are reachable through the same operator.
+PLATFORM_FINGERPRINTS = (
+    ("realpage_apts247", r"(apts247\.info|realpage\.com|onesite)"),
+    ("yardi_rentcafe", r"(rentcafe\.com|yardi(?:one)?\.com|securecafe\.com)"),
+    ("entrata", r"(entrata\.com|prospectportal\.com)"),
+    ("appfolio", r"appfolio\.com"),
+    ("funnel_leasing", r"funnelleasing\.com"),
+    ("g5_marketing", r"g5(?:search|marketing|platform)?\.com"),
+    ("knock", r"knockcrm\.com"),
+    ("resman", r"myresman\.com"),
+)
+
+# Hosts that are never a sibling community. The first discovery run proved this
+# filter has to cover more than social/aggregator hosts: site builders, CDNs and
+# the leasing-SaaS vendors themselves were consuming property slots and crowding
+# out the real siblings a portfolio page links to.
+NON_COMMUNITY_HOSTS = re.compile(
+    r"(facebook|instagram|twitter|x\.com|linkedin|youtube|pinterest|tiktok|yelp|"
+    r"google|gstatic|googleapis|doubleclick|bing|apartments\.com|zillow|trulia|"
+    r"hotpads|rent\.com|apartmentguide|apartmentlist|padmapper|forrent\.com|"
+    r"cloudflare|jquery|bootstrapcdn|fontawesome|gravatar|wp\.com|w3\.org|"
+    r"schema\.org|adobe|hud\.gov|tdhca|equalhousing|realtor\.com|"
+    # site builders, hosting and asset CDNs
+    r"squarespace|sqspcdn|wixstatic|wix\.com|godaddy|wsimg|typekit|cloudfront|"
+    r"akamai|fastly|jsdelivr|unpkg|amazonaws|azureedge|sharepoint|office\.com|"
+    r"microsoft|apple\.com|vimeo|mailchimp|hubspot|calendly|recaptcha|"
+    # leasing / marketing SaaS vendors and their agencies
+    r"appfolio|rentcafe|securecafe|yardi|entrata|prospectportal|realpage|apts247|"
+    r"onesite|myresman|resman|knockcrm|funnelleasing|rentvine|buildium|"
+    r"propertyware|tenantturner|showmojo|rently\.com|razz|g5)",
+    re.I,
+)
+
+# Public listing portals that small managers host on leasing SaaS. These are the
+# shadow channel for scattered single-family/duplex/fourplex supply: the units
+# never reach a community website because there is no community website.
+PORTAL_PATTERNS = (
+    ("appfolio_listing_portal", r"https?://[a-z0-9.-]+\.appfolio\.com/listings(?:/listings)?\b"),
+    ("rentvine_listing_portal", r"https?://[a-z0-9.-]+\.rentvine\.com/portals/listings?\b"),
+    ("buildium_listing_portal", r"https?://[a-z0-9.-]+\.managebuilding\.com/Resident/public/rentals\b"),
+    ("propertyware_listing_portal", r"https?://[a-z0-9.-]+\.propertyware\.com/[a-z0-9/_-]*listing[a-z0-9/_-]*"),
+)
+
+CONCESSION_PATTERN = re.compile(
+    r"(?:[^.!?\n]{0,120}?)"
+    r"(?:\$\s?\d[\d,]*\s*(?:off|free|credit|gift)"
+    r"|\b(?:one|two|three|four|six|eight|1|2|3|4|6|8)\s+(?:weeks?|months?)\s+free"
+    r"|\blook\s+and\s+lease\b"
+    r"|\bmove[- ]in\s+special\b"
+    r"|\breduced\s+(?:rent|deposit)\b"
+    r"|\bzero\s+deposit\b"
+    r"|\b\$0\s+(?:deposit|app|application|admin)\b)"
+    r"(?:[^.!?\n]{0,120})",
+    re.I,
+)
+
+AVAILABILITY_ENUM = {
+    "instock": "in_stock",
+    "in_stock": "in_stock",
+    "limitedavailability": "limited",
+    "outofstock": "out_of_stock",
+    "out_of_stock": "out_of_stock",
+    "soldout": "out_of_stock",
+    "preorder": "preorder",
+    "presale": "preorder",
+    "backorder": "backorder",
+    "discontinued": "discontinued",
+}
+
+
+def utc_now() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def sha256_hex(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def host_of(url: str) -> str:
+    return (urllib.parse.urlsplit(url).hostname or "").lower()
+
+
+# On a shared leasing platform the subdomain *is* the operator identity, so
+# collapsing to the registrable domain would merge every manager into one node.
+MULTI_TENANT_PLATFORM_DOMAINS = frozenset(
+    {
+        "appfolio.com",
+        "rentcafe.com",
+        "securecafe.com",
+        "rentvine.com",
+        "managebuilding.com",
+        "propertyware.com",
+        "prospectportal.com",
+        "entrata.com",
+        "myresman.com",
+        "tenantturner.com",
+        "showmojo.com",
+    }
+)
+
+
+def registrable(hostname: str) -> str:
+    """Collapse www/leasing subdomains so a community keeps one identity."""
+    parts = [p for p in hostname.lower().split(".") if p]
+    if len(parts) <= 2:
+        return ".".join(parts)
+    base = ".".join(parts[-2:])
+    if base in MULTI_TENANT_PLATFORM_DOMAINS:
+        return ".".join(parts)
+    return base
+
+
+# --------------------------------------------------------------------------
+# fetching
+# --------------------------------------------------------------------------
+
+
+@dataclass
+class Response:
+    url: str
+    status: int
+    body: bytes
+    sha256: str
+    observed_at: str
+    transport_error: str = ""
+
+    @property
+    def text(self) -> str:
+        return self.body.decode("utf-8", errors="replace")
+
+    @property
+    def ok(self) -> bool:
+        return 200 <= self.status < 300 and bool(self.body)
+
+
+class Fetcher:
+    """Robots-respecting reader that writes a receipt for every boundary touch.
+
+    A non-2xx is retained as a ``boundary_response`` observation, matching what
+    ``bonfyre-project foreign observe`` records: a denial is evidence about the
+    boundary, never evidence that inventory is absent.
+    """
+
+    def __init__(self, receipt_path: str | None, timeout: int = 25, verbose: bool = False):
+        self.receipt_path = receipt_path
+        self.timeout = timeout
+        self.verbose = verbose
+        self._robots: dict[str, tuple[list[str], list[str], float, list[str]]] = {}
+        self._last_hit: dict[str, float] = {}
+        self.receipts: list[dict] = []
+        self.blocked: list[dict] = []
+
+    # -- robots ---------------------------------------------------------
+    def _robots_for(self, url: str):
+        host = host_of(url)
+        if host in self._robots:
+            return self._robots[host]
+        scheme = urllib.parse.urlsplit(url).scheme or "https"
+        parsed = self._parse_robots(self._raw_get(f"{scheme}://{host}/robots.txt"))
+        self._robots[host] = parsed
+        return parsed
+
+    @staticmethod
+    def _parse_robots(resp: Response) -> tuple[list[str], list[str], float, list[str]]:
+        """Return (disallow, allow, crawl_delay, sitemaps) for User-agent: *."""
+        disallow: list[str] = []
+        allow: list[str] = []
+        sitemaps: list[str] = []
+        delay = DEFAULT_DELAY_S
+        if not resp.ok:
+            return disallow, allow, delay, sitemaps
+        applies = False
+        for raw in resp.text.splitlines():
+            line = raw.split("#", 1)[0].strip()
+            if not line or ":" not in line:
+                continue
+            key, value = (part.strip() for part in line.split(":", 1))
+            key = key.lower()
+            if key == "sitemap":
+                sitemaps.append(value)
+            elif key == "user-agent":
+                applies = value == "*"
+            elif applies and key == "disallow" and value:
+                disallow.append(value)
+            elif applies and key == "allow" and value:
+                allow.append(value)
+            elif applies and key == "crawl-delay":
+                try:
+                    delay = min(MAX_DELAY_S, max(DEFAULT_DELAY_S, float(value)))
+                except ValueError:
+                    pass
+        return disallow, allow, delay, sitemaps
+
+    def robots_allows(self, url: str) -> bool:
+        disallow, allow, _, _ = self._robots_for(url)
+        path = urllib.parse.urlsplit(url).path or "/"
+        # Longest matching rule wins; Allow beats Disallow at equal length.
+        best_len, verdict = -1, True
+        for rule in disallow:
+            if path.startswith(rule) and len(rule) > best_len:
+                best_len, verdict = len(rule), False
+        for rule in allow:
+            if path.startswith(rule) and len(rule) >= best_len:
+                best_len, verdict = len(rule), True
+        return verdict
+
+    def sitemaps_for(self, url: str) -> list[str]:
+        return list(self._robots_for(url)[3])
+
+    # -- transport ------------------------------------------------------
+    def _raw_get(self, url: str) -> Response:
+        host = host_of(url)
+        delay = self._robots.get(host, ((), (), DEFAULT_DELAY_S, ()))[2]
+        elapsed = time.monotonic() - self._last_hit.get(host, 0.0)
+        if elapsed < delay:
+            time.sleep(delay - elapsed)
+        self._last_hit[host] = time.monotonic()
+
+        request = urllib.request.Request(
+            url,
+            headers={
+                "User-Agent": USER_AGENT,
+                "Accept": "text/html,application/xhtml+xml,application/xml,application/json;q=0.9,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.9",
+            },
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=self.timeout) as handle:
+                body = handle.read(MAX_BODY_BYTES)
+                if handle.headers.get("Content-Encoding") == "gzip" or url.endswith(".gz"):
+                    try:
+                        body = gzip.decompress(body)
+                    except OSError:
+                        pass
+                return Response(url, handle.status, body, sha256_hex(body), utc_now())
+        except urllib.error.HTTPError as exc:
+            body = b""
+            try:
+                body = exc.read(MAX_BODY_BYTES)
+            except Exception:  # noqa: BLE001 - body is best-effort evidence
+                pass
+            return Response(url, exc.code, body, sha256_hex(body), utc_now())
+        except Exception as exc:  # noqa: BLE001 - transport failure is evidence too
+            return Response(url, 0, b"", sha256_hex(b""), utc_now(), transport_error=type(exc).__name__)
+
+    def get(self, url: str, twin_id: str, *, obey_robots: bool = True) -> Response | None:
+        if obey_robots and not self.robots_allows(url):
+            self.blocked.append({"url": url, "twin_id": twin_id, "reason": "robots_disallow"})
+            if self.verbose:
+                print(f"  robots-disallow {url}", file=sys.stderr)
+            return None
+        resp = self._raw_get(url)
+        self._record(resp, twin_id)
+        if self.verbose:
+            print(f"  {resp.status:>3} {len(resp.body):>8}b {url}", file=sys.stderr)
+        return resp
+
+    def _record(self, resp: Response, twin_id: str) -> None:
+        if resp.transport_error:
+            kind = "transport_failure"
+        elif resp.ok:
+            kind = "source_observed"
+        else:
+            kind = "boundary_response"
+        receipt = {
+            "schema": OBSERVATION_SCHEMA,
+            "twin_id": twin_id,
+            "source_url": resp.url,
+            "observed_at": resp.observed_at,
+            "transport_exit": 1 if resp.transport_error else 0,
+            "http_status": resp.status,
+            "body_bytes": len(resp.body),
+            "content_sha256": resp.sha256,
+            "availability_claim": False,
+            "observation_kind": kind,
+            "observer": "housing_shadow_inventory",
+        }
+        self.receipts.append(receipt)
+        if self.receipt_path:
+            with open(self.receipt_path, "a", encoding="utf-8") as handle:
+                handle.write(json.dumps(receipt, sort_keys=True) + "\n")
+
+
+# --------------------------------------------------------------------------
+# extraction
+# --------------------------------------------------------------------------
+
+
+def classify_surface(url: str) -> str | None:
+    path = (urllib.parse.urlsplit(url).path or "/").lower()
+    for name, pattern in SHADOW_SURFACES:
+        if re.search(pattern, path):
+            return name
+    return None
+
+
+def parse_sitemap(xml_text: str) -> tuple[list[str], list[str]]:
+    """Return (child sitemap urls, page urls)."""
+    locs = [urllib.parse.unquote(m).strip() for m in re.findall(r"<loc>\s*([^<]+?)\s*</loc>", xml_text, re.I)]
+    is_index = "<sitemapindex" in xml_text.lower()
+    if is_index:
+        return locs, []
+    children = [u for u in locs if u.lower().endswith((".xml", ".xml.gz"))]
+    pages = [u for u in locs if u not in children]
+    return children, pages
+
+
+def _walk_jsonld(node, out: list[dict]) -> None:
+    if isinstance(node, list):
+        for item in node:
+            _walk_jsonld(item, out)
+    elif isinstance(node, dict):
+        out.append(node)
+        for value in node.values():
+            _walk_jsonld(value, out)
+
+
+def extract_jsonld_nodes(html: str) -> list[dict]:
+    nodes: list[dict] = []
+    for block in re.findall(
+        r"<script[^>]+type\s*=\s*[\"']application/ld\+json[\"'][^>]*>(.*?)</script>", html, re.S | re.I
+    ):
+        text = block.strip()
+        if not text:
+            continue
+        try:
+            nodes_root = json.loads(text)
+        except json.JSONDecodeError:
+            continue
+        _walk_jsonld(nodes_root, nodes)
+    return nodes
+
+
+def _type_of(node: dict) -> set[str]:
+    raw = node.get("@type") or node.get("type") or ""
+    if isinstance(raw, str):
+        raw = [raw]
+    return {str(t).split("/")[-1].lower() for t in raw if t}
+
+
+def _as_number(value):
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        cleaned = re.sub(r"[^\d.]", "", value)
+        if cleaned.count(".") > 1:
+            cleaned = cleaned.split(".")[0]
+        if cleaned:
+            try:
+                return float(cleaned)
+            except ValueError:
+                return None
+    return None
+
+
+def extract_structured_offers(html: str, page_url: str) -> list[dict]:
+    """Schema.org offer catalogs published by the community itself.
+
+    ``price`` on a FloorPlan-backed Offer is an advertised *starting* rent, so
+    it is emitted with ``rent_exactness = floorplan_starting_advertised`` and a
+    null exact unit rent. Only a unit-scoped record earns ``unit_exact``.
+    """
+    offers: list[dict] = []
+    for node in extract_jsonld_nodes(html):
+        types = _type_of(node)
+        if "offer" not in types and "aggregateoffer" not in types:
+            continue
+        price = _as_number(node.get("price") or node.get("lowPrice"))
+        if price is None:
+            continue
+        item = node.get("itemOffered")
+        item = item if isinstance(item, dict) else {}
+        floor_plan = item.get("accommodationFloorPlan")
+        floor_plan = floor_plan if isinstance(floor_plan, dict) else {}
+        size = floor_plan.get("floorSize")
+        size = size if isinstance(size, dict) else {}
+        raw_avail = str(node.get("availability") or "").split("/")[-1].strip().lower()
+        item_types = _type_of(item)
+        unit_scoped = bool(item.get("identifier") or item.get("unitCode")) and "apartment" in item_types
+        offers.append(
+            {
+                "plan_name": item.get("name") or floor_plan.get("name"),
+                "plan_id": item.get("@id") or node.get("@id"),
+                "bedrooms": _as_number(item.get("numberOfBedrooms")),
+                "bathrooms": _as_number(item.get("numberOfBathroomsTotal") or item.get("numberOfBathrooms")),
+                "sqft": _as_number(size.get("value")),
+                "advertised_price": price,
+                "price_currency": node.get("priceCurrency") or "USD",
+                "advertised_price_text": node.get("description"),
+                "availability_signal": AVAILABILITY_ENUM.get(raw_avail, raw_avail or "unstated"),
+                "rent_exactness": "unit_exact" if unit_scoped else "floorplan_starting_advertised",
+                "exact_unit_rent": price if unit_scoped else None,
+                "source_url": page_url,
+                "extractor": "schema_org_offer",
+            }
+        )
+    return offers
+
+
+def extract_embedded_units(html: str, page_url: str) -> list[dict]:
+    """Unit-level records embedded by leasing platforms as inline JSON.
+
+    Platforms differ in key spelling, so match on shape: an object carrying a
+    unit identifier alongside a rent field.
+    """
+    units: list[dict] = []
+    seen: set[str] = set()
+    unit_key = re.compile(r'"(unit(?:_?number|_?id|name|code)?)"\s*:\s*("(?:[^"\\]|\\.)*"|\d+)', re.I)
+    rent_key = re.compile(r'"((?:min(?:imum)?_?)?(?:rent|price|marketrent|baserent|askingrent)[a-z_]*)"\s*:\s*"?([\d,.]+)"?', re.I)
+    date_key = re.compile(r'"((?:date)?available[a-z_]*|availabledate|readydate|movein[a-z_]*)"\s*:\s*"([^"]{4,40})"', re.I)
+    for match in re.finditer(r"\{[^{}]{0,2000}\}", html):
+        blob = match.group(0)
+        unit_match = unit_key.search(blob)
+        rent_match = rent_key.search(blob)
+        if not (unit_match and rent_match):
+            continue
+        rent = _as_number(rent_match.group(2))
+        if rent is None or rent < 200 or rent > 25000:
+            continue
+        unit_id = unit_match.group(2).strip('"')
+        key = f"{unit_id}|{rent}"
+        if key in seen:
+            continue
+        seen.add(key)
+        date_match = date_key.search(blob)
+
+        def _field(pattern):
+            found = re.search(pattern, blob, re.I)
+            return _as_number(found.group(1)) if found else None
+
+        # A net-effective figure is the source's own concession arithmetic. It is
+        # kept beside the advertised rent, never substituted for it.
+        net_effective = _field(r'"(?:min)?neteffective[a-z]*"\s*:\s*"?([\d,.]+)"?')
+        unit_number = re.search(r'"(?:apartment|unit)number"\s*:\s*"([^"]{1,20})"', blob, re.I)
+        units.append(
+            {
+                "unit_id": unit_id,
+                "unit_number": unit_number.group(1) if unit_number else None,
+                "exact_unit_rent": rent,
+                "rent_exactness": "unit_exact",
+                "advertised_price": rent,
+                "advertised_price_max": _field(r'"max(?:price|rent)"\s*:\s*"?([\d,.]+)"?'),
+                "net_effective_rent_advertised": net_effective,
+                "price_currency": "USD",
+                "bedrooms": _field(r'"(?:min)?(?:beds|bedrooms|numberofbedrooms)"\s*:\s*"?([\d.]+)"?'),
+                "bathrooms": _field(r'"(?:min)?(?:baths|bathrooms|numberofbathrooms)"\s*:\s*"?([\d.]+)"?'),
+                "sqft": _field(r'"(?:min)?(?:sqft|squarefeet|sq_?feet|size)"\s*:\s*"?([\d,.]+)"?'),
+                "available_date_text": date_match.group(2) if date_match else None,
+                "availability_signal": "unit_listed",
+                "source_url": page_url,
+                "extractor": "embedded_unit_json",
+            }
+        )
+    return units
+
+
+def extract_portal_listings(html: str, page_url: str) -> list[dict]:
+    """Unit-exact rows from an AppFolio-style public listing portal.
+
+    Each listing card carries rent, bed/bath, square feet and an available date
+    in labelled markup rather than JSON, so parse the card, not the page.
+    """
+    listings: list[dict] = []
+    # The class token must end here: \b also matches inside js-listing-item-blurb,
+    # which split every card in two and stranded the address away from the rent.
+    cards = re.split(r'<div[^>]+class="[^"]*\bjs-listing-item(?=[\s"])[^"]*"', html)[1:]
+    for card in cards:
+        card = card[:8000]
+        listing_id = re.search(r'/listings/detail/([0-9a-f-]{8,})', card)
+        rent = re.search(r'detail-box__label"[^>]*>\s*RENT\s*</dt>\s*<dd[^>]*>\s*\$?([\d,]+)', card, re.I)
+        if rent is None:
+            rent = re.search(r'js-listing-blurb-rent"[^>]*>\s*\$?([\d,]+)', card, re.I)
+        if rent is None:
+            continue
+        amount = _as_number(rent.group(1))
+        if amount is None or amount < 200 or amount > 25000:
+            continue
+        sqft = re.search(r'>\s*Square Feet\s*</dt>\s*<dd[^>]*>\s*([\d,]+)', card, re.I)
+        bedbath = re.search(r'js-listing-blurb-bed-bath"[^>]*>\s*([\d.]+)\s*bd\s*/\s*([\d.]+)\s*ba', card, re.I)
+        available = re.search(r'js-listing-available"[^>]*>\s*([^<]{3,30}?)\s*<', card, re.I)
+        address = re.search(r'alt="([^"]{10,160}?,\s*[A-Z]{2}\s*\d{5})"', card)
+        title = re.search(r'js-listing-title"[^>]*>\s*<a[^>]*>\s*([^<]{3,200}?)\s*<', card, re.S)
+        listings.append(
+            {
+                "unit_id": listing_id.group(1) if listing_id else None,
+                "plan_name": html_lib.unescape(re.sub(r"\s+", " ", title.group(1)).strip()) if title else None,
+                "unit_address": address.group(1) if address else None,
+                "exact_unit_rent": amount,
+                "rent_exactness": "unit_exact",
+                "advertised_price": amount,
+                "price_currency": "USD",
+                "bedrooms": _as_number(bedbath.group(1)) if bedbath else None,
+                "bathrooms": _as_number(bedbath.group(2)) if bedbath else None,
+                "sqft": _as_number(sqft.group(1)) if sqft else None,
+                "available_date_text": available.group(1) if available else None,
+                "availability_signal": "unit_listed",
+                "source_url": page_url,
+                "extractor": "portal_listing_card",
+            }
+        )
+    return listings
+
+
+def extract_portal_urls(html: str) -> list[tuple[str, str]]:
+    """Public listing portals linked from a manager site."""
+    found: dict[str, str] = {}
+    for name, pattern in PORTAL_PATTERNS:
+        for match in re.findall(pattern, html, re.I):
+            url = match if isinstance(match, str) else match[0]
+            found.setdefault(url.rstrip("/"), name)
+    return [(url, name) for url, name in found.items()]
+
+
+def extract_concession_candidates(html: str) -> list[str]:
+    text = re.sub(r"<(script|style)[^>]*>.*?</\1>", " ", html, flags=re.S | re.I)
+    text = re.sub(r"<[^>]+>", " ", text)
+    text = re.sub(r"&nbsp;?", " ", text)
+    text = re.sub(r"\s+", " ", text)
+    found: list[str] = []
+    for match in CONCESSION_PATTERN.finditer(text):
+        phrase = match.group(0).strip(" -|·,")
+        if 8 <= len(phrase) <= 240 and phrase.lower() not in {f.lower() for f in found}:
+            found.append(phrase)
+        if len(found) >= 8:
+            break
+    return found
+
+
+def extract_platforms(html: str) -> list[str]:
+    return sorted({name for name, pattern in PLATFORM_FINGERPRINTS if re.search(pattern, html, re.I)})
+
+
+def extract_links(html: str, base_url: str) -> list[str]:
+    links = []
+    for href in re.findall(r'href\s*=\s*["\']([^"\'>\s]+)', html, re.I):
+        if href.startswith(("mailto:", "tel:", "javascript:", "#")):
+            continue
+        links.append(urllib.parse.urljoin(base_url, href))
+    return links
+
+
+def sibling_community_hosts(html: str, base_url: str) -> list[str]:
+    """External hosts on a portfolio page that look like sibling communities."""
+    base = registrable(host_of(base_url))
+    out: dict[str, None] = {}
+    for link in extract_links(html, base_url):
+        host = host_of(link)
+        if not host or registrable(host) == base:
+            continue
+        if NON_COMMUNITY_HOSTS.search(host):
+            continue
+        if urllib.parse.urlsplit(link).scheme not in ("http", "https"):
+            continue
+        out.setdefault(f"https://{host}/", None)
+    return list(out)
+
+
+def extract_pet_claims(html: str) -> list[str]:
+    text = re.sub(r"<(script|style)[^>]*>.*?</\1>", " ", html, flags=re.S | re.I)
+    text = re.sub(r"<[^>]+>", " ", text)
+    text = re.sub(r"\s+", " ", text)
+    claims: list[str] = []
+    pattern = re.compile(
+        r"[^.!?]{0,140}(?:pet(?:s)?\s+(?:friendly|welcome|allowed|policy|fee|rent|deposit)"
+        r"|breed\s+restrict|weight\s+limit|dog\s+park|bark\s+park|pet\s+spa|two\s+pets?\s+max)[^.!?]{0,140}",
+        re.I,
+    )
+    for match in pattern.finditer(text):
+        phrase = match.group(0).strip()
+        if 12 <= len(phrase) <= 300 and phrase not in claims:
+            claims.append(phrase)
+        if len(claims) >= 6:
+            break
+    return claims
+
+
+# --------------------------------------------------------------------------
+# discovery
+# --------------------------------------------------------------------------
+
+
+@dataclass
+class Property:
+    key: str
+    root_url: str
+    seed_class: str
+    discovered_via: str
+    name: str | None = None
+    address: dict = field(default_factory=dict)
+    platforms: list[str] = field(default_factory=list)
+    surfaces: dict[str, list[str]] = field(default_factory=dict)
+    sibling_hosts: list[str] = field(default_factory=list)
+    portals: list[dict] = field(default_factory=list)
+    offers: list[dict] = field(default_factory=list)
+    concession_candidates: list[dict] = field(default_factory=list)
+    pet_claims: list[dict] = field(default_factory=list)
+    observations: list[dict] = field(default_factory=list)
+    boundary_responses: list[dict] = field(default_factory=list)
+
+    def to_json(self) -> dict:
+        return {
+            "property_key": self.key,
+            "root_url": self.root_url,
+            "seed_class": self.seed_class,
+            "discovered_via": self.discovered_via,
+            "name": self.name,
+            "address": self.address,
+            "platforms": self.platforms,
+            "shadow_surfaces": self.surfaces,
+            "sibling_hosts": self.sibling_hosts,
+            "listing_portals": self.portals,
+            "offer_count": len(self.offers),
+            "concession_candidate_count": len(self.concession_candidates),
+            "boundary_responses": self.boundary_responses,
+        }
+
+
+def extract_identity(html: str) -> tuple[str | None, dict]:
+    for node in extract_jsonld_nodes(html):
+        types = _type_of(node)
+        if not types & {"apartmentcomplex", "localbusiness", "realestateagent", "organization", "residence"}:
+            continue
+        address = node.get("address")
+        address = address if isinstance(address, dict) else {}
+        clean = {
+            "street": address.get("streetAddress"),
+            "locality": address.get("addressLocality"),
+            "region": address.get("addressRegion"),
+            "postal_code": address.get("postalCode"),
+        }
+        if node.get("name") or any(clean.values()):
+            return node.get("name"), {k: v for k, v in clean.items() if v}
+    title = re.search(r"<title[^>]*>(.*?)</title>", html, re.S | re.I)
+    return (re.sub(r"\s+", " ", title.group(1)).strip() if title else None), {}
+
+
+def discover_property(fetcher: Fetcher, root_url: str, seed_class: str, via: str, max_surface_pages: int) -> Property:
+    key = registrable(host_of(root_url))
+    prop = Property(key=key, root_url=root_url, seed_class=seed_class, discovered_via=via)
+
+    home = fetcher.get(root_url, f"shadow:{key}:root")
+    pages: list[tuple[str, str]] = []
+    if home is not None and home.ok:
+        pages.append((root_url, home.text))
+    elif home is not None:
+        prop.boundary_responses.append({"url": root_url, "http_status": home.status, "content_sha256": home.sha256})
+
+    # Sitemaps declared in robots.txt, plus the two conventional locations.
+    candidates = list(fetcher.sitemaps_for(root_url))
+    for guess in ("sitemap.xml", "sitemap_index.xml"):
+        candidates.append(urllib.parse.urljoin(root_url, "/" + guess))
+    sitemap_pages: list[str] = []
+    seen_sitemaps: set[str] = set()
+    queue = list(dict.fromkeys(candidates))
+    while queue and len(seen_sitemaps) < 6:
+        sitemap_url = queue.pop(0)
+        if sitemap_url in seen_sitemaps:
+            continue
+        seen_sitemaps.add(sitemap_url)
+        resp = fetcher.get(sitemap_url, f"shadow:{key}:sitemap")
+        if resp is None or not resp.ok or "<" not in resp.text[:512]:
+            continue
+        children, urls = parse_sitemap(resp.text)
+        queue.extend(children)
+        sitemap_pages.extend(urls)
+
+    # Sitemap URLs are the primary shadow channel; on-page links backfill sites
+    # that publish no sitemap at all.
+    link_pool = sitemap_pages or (extract_links(home.text, root_url) if home is not None and home.ok else [])
+    same_site = [
+        u
+        for u in dict.fromkeys(link_pool)
+        if registrable(host_of(u)) == key and urllib.parse.urlsplit(u).scheme in ("http", "https")
+    ]
+    for url in same_site:
+        surface = classify_surface(url)
+        if surface:
+            prop.surfaces.setdefault(surface, [])
+            if url not in prop.surfaces[surface]:
+                prop.surfaces[surface].append(url)
+
+    # Read the surfaces that actually carry supply signal, cheapest first.
+    priority = ("quote_engine", "concession_surface", "prelease_surface", "pet_surface", "portfolio_surface", "application_inventory")
+    to_read: list[str] = []
+    for surface in priority:
+        for url in prop.surfaces.get(surface, [])[:3]:
+            if url not in to_read:
+                to_read.append(url)
+    for url in to_read[:max_surface_pages]:
+        resp = fetcher.get(url, f"shadow:{key}:{classify_surface(url)}")
+        if resp is None:
+            continue
+        if resp.ok:
+            pages.append((url, resp.text))
+        else:
+            prop.boundary_responses.append({"url": url, "http_status": resp.status, "content_sha256": resp.sha256})
+
+    # A manager site usually has no inventory of its own; its inventory lives on
+    # a linked public listing portal. Follow those before extracting.
+    portal_pages: list[tuple[str, str]] = []
+    seen_portals: set[str] = set()
+    for _, html in list(pages):
+        for portal_url, portal_kind in extract_portal_urls(html):
+            if portal_url in seen_portals or len(seen_portals) >= 3:
+                continue
+            seen_portals.add(portal_url)
+            prop.portals.append({"url": portal_url, "kind": portal_kind})
+            resp = fetcher.get(portal_url, f"shadow:{key}:{portal_kind}")
+            if resp is None:
+                continue
+            if resp.ok:
+                portal_pages.append((portal_url, resp.text))
+                prop.surfaces.setdefault("platform_listing_portal", []).append(portal_url)
+            else:
+                prop.boundary_responses.append(
+                    {"url": portal_url, "http_status": resp.status, "content_sha256": resp.sha256}
+                )
+
+    seen_offer_keys: set[str] = set()
+    for url, html in pages + portal_pages:
+        if prop.name is None:
+            name, address = extract_identity(html)
+            prop.name, prop.address = name, address or prop.address
+        for platform in extract_platforms(html):
+            if platform not in prop.platforms:
+                prop.platforms.append(platform)
+        extracted = extract_structured_offers(html, url) + extract_portal_listings(html, url)
+        if not extracted:
+            extracted = extract_embedded_units(html, url)
+        for offer in extracted:
+            fingerprint = json.dumps(
+                [offer.get("plan_name"), offer.get("unit_id"), offer.get("advertised_price"), offer.get("bedrooms")],
+                sort_keys=True,
+            )
+            if fingerprint in seen_offer_keys:
+                continue
+            seen_offer_keys.add(fingerprint)
+            prop.offers.append(offer)
+        surface = classify_surface(url) or "root"
+        if surface in ("concession_surface", "prelease_surface", "root", "quote_engine"):
+            for phrase in extract_concession_candidates(html):
+                prop.concession_candidates.append({"text": phrase, "source_url": url, "verified": False})
+        if surface == "pet_surface":
+            for claim in extract_pet_claims(html):
+                prop.pet_claims.append({"text": claim, "source_url": url, "verified": False})
+        if surface == "portfolio_surface" or prop.seed_class == "manager_portfolio":
+            for sibling in sibling_community_hosts(html, url):
+                if sibling not in prop.sibling_hosts:
+                    prop.sibling_hosts.append(sibling)
+        prop.observations.append({"url": url, "surface": surface, "bytes": len(html)})
+    return prop
+
+
+def run_discovery(seeds: list[dict], fetcher: Fetcher, max_properties: int, max_surface_pages: int) -> list[Property]:
+    queue = [(s["url"], s.get("class", "direct_community"), s.get("via", "seed")) for s in seeds]
+    seen: set[str] = set()
+    found: list[Property] = []
+    while queue and len(found) < max_properties:
+        url, seed_class, via = queue.pop(0)
+        key = registrable(host_of(url))
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        if fetcher.verbose:
+            print(f"[{len(found)+1}/{max_properties}] {key} ({seed_class} via {via})", file=sys.stderr)
+        prop = discover_property(fetcher, url, seed_class, via, max_surface_pages)
+        found.append(prop)
+        # property -> manager -> portfolio -> sibling inventory
+        for sibling in prop.sibling_hosts:
+            if registrable(host_of(sibling)) not in seen:
+                queue.append((sibling, "portfolio_sibling", f"portfolio:{key}"))
+    return found
+
+
+def candidates_from(properties: list[Property], run_id: str) -> list[dict]:
+    rows: list[dict] = []
+    for prop in properties:
+        for offer in prop.offers:
+            rows.append(
+                {
+                    "schema": CANDIDATE_SCHEMA,
+                    "run_id": run_id,
+                    "candidate_id": sha256_hex(
+                        f"{prop.key}|{offer.get('plan_name')}|{offer.get('unit_id')}|{offer.get('advertised_price')}".encode()
+                    )[:16],
+                    "property_key": prop.key,
+                    "property_name": prop.name,
+                    "address": prop.address,
+                    "root_url": prop.root_url,
+                    "discovery_channel": offer["extractor"],
+                    "seed_class": prop.seed_class,
+                    "discovered_via": prop.discovered_via,
+                    "platforms": prop.platforms,
+                    "observed_at": utc_now(),
+                    "verified": False,
+                    "availability_status": "candidate_only",
+                    **offer,
+                }
+            )
+    return rows
+
+
+def merge_jsonl(path: str, rows: list[dict], owned_schema: str, key: str) -> int:
+    """Replace this producer's rows without truncating shared durable output.
+
+    Shadow candidates have a stable `candidate_id`; `source_url` alone is not a
+    key because one page can describe several units.  The lane-owned schema
+    makes rows from explicit and social housing frontiers foreign by default.
+    """
+    output = Path(path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    lock_path = output.with_name(f".{output.name}.lock")
+    temporary_path: str | None = None
+    # The social lane uses the same lock name.  It covers the complete merge,
+    # not merely the final replacement, so either lane observes the other's
+    # newest durable rows before it writes.
+    with lock_path.open("a+", encoding="utf-8") as lock:
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+        try:
+            existing_rows: list[dict] = []
+            if output.exists():
+                with output.open(encoding="utf-8") as handle:
+                    for line in handle:
+                        if line.strip():
+                            existing_rows.append(json.loads(line))
+            mine = {row[key]: row for row in rows}
+            preserved = [
+                row for row in existing_rows
+                if row.get("schema") != owned_schema and row.get(key) not in mine
+            ]
+            with tempfile.NamedTemporaryFile(
+                mode="w", encoding="utf-8", dir=output.parent,
+                prefix=f".{output.name}.", suffix=".tmp", delete=False,
+            ) as handle:
+                temporary_path = handle.name
+                for row in preserved + rows:
+                    handle.write(json.dumps(row, sort_keys=True) + "\n")
+            os.replace(temporary_path, output)
+            temporary_path = None
+            return len(preserved)
+        finally:
+            if temporary_path:
+                Path(temporary_path).unlink(missing_ok=True)
+            fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+
+
+# --------------------------------------------------------------------------
+# verification
+# --------------------------------------------------------------------------
+
+
+def verify_candidates(candidates: list[dict], fetcher: Fetcher) -> tuple[list[dict], list[dict]]:
+    """Re-observe each candidate's source and promote only exact agreement.
+
+    A candidate becomes a listing when the same structured record is present on
+    re-fetch with an identical price and an availability signal that is not
+    out-of-stock. Everything else stays a candidate with a recorded reason.
+    """
+    by_url: dict[str, list[dict]] = {}
+    for row in candidates:
+        by_url.setdefault(row["source_url"], []).append(row)
+
+    listings: list[dict] = []
+    unpromoted: list[dict] = []
+    for url, rows in by_url.items():
+        resp = fetcher.get(url, f"verify:{rows[0]['property_key']}")
+        if resp is None or not resp.ok:
+            reason = "verification_boundary_response" if resp is not None else "verification_robots_disallow"
+            status = resp.status if resp is not None else None
+            for row in rows:
+                unpromoted.append({**row, "unpromoted_reason": reason, "verify_http_status": status})
+            continue
+        fresh = extract_structured_offers(resp.text, url) + extract_portal_listings(resp.text, url)
+        if not fresh:
+            fresh = extract_embedded_units(resp.text, url)
+        index = {
+            (o.get("plan_name"), o.get("unit_id"), o.get("advertised_price")): o for o in fresh
+        }
+        for row in rows:
+            key = (row.get("plan_name"), row.get("unit_id"), row.get("advertised_price"))
+            match = index.get(key)
+            if match is None:
+                unpromoted.append({**row, "unpromoted_reason": "not_reproduced_on_reobservation"})
+                continue
+            if match.get("availability_signal") in ("out_of_stock", "discontinued"):
+                unpromoted.append(
+                    {
+                        **row,
+                        "unpromoted_reason": "source_states_unavailable",
+                        "availability_signal": match.get("availability_signal"),
+                    }
+                )
+                continue
+            listings.append(
+                {
+                    **row,
+                    "schema": LISTING_SCHEMA,
+                    "verified": True,
+                    "availability_status": match.get("availability_signal"),
+                    "verified_at": resp.observed_at,
+                    "verify_content_sha256": resp.sha256,
+                    "verify_http_status": resp.status,
+                    "verification_method": "exact_structured_reobservation",
+                    "rent_is_exact_unit_rent": row.get("rent_exactness") == "unit_exact",
+                }
+            )
+    return listings, unpromoted
+
+
+# --------------------------------------------------------------------------
+# CLI
+# --------------------------------------------------------------------------
+
+
+def load_seeds(path: str) -> list[dict]:
+    with open(path, encoding="utf-8") as handle:
+        data = json.load(handle)
+    return data["seeds"] if isinstance(data, dict) else data
+
+
+def cmd_discover(args) -> int:
+    seeds = load_seeds(args.seeds)
+    fetcher = Fetcher(args.receipts, verbose=args.verbose)
+    run_id = args.run_id or utc_now()
+    properties = run_discovery(seeds, fetcher, args.max_properties, args.max_surface_pages)
+    candidates = candidates_from(properties, run_id)
+
+    with open(args.candidates_out, "w", encoding="utf-8") as handle:
+        for row in candidates:
+            handle.write(json.dumps(row, sort_keys=True) + "\n")
+
+    graph = {
+        "schema": "bonfyre-property-identity-graph.v1",
+        "run_id": run_id,
+        "generated_at": utc_now(),
+        "properties": [p.to_json() for p in properties],
+        "platform_index": {},
+        "portfolio_edges": [],
+        "robots_blocked": fetcher.blocked,
+        "forbidden_inference": [
+            "A discovered surface is not an available unit.",
+            "A shared leasing platform is not shared ownership.",
+            "A concession candidate is not an effective-cost reduction until verified.",
+        ],
+    }
+    for prop in properties:
+        for platform in prop.platforms:
+            graph["platform_index"].setdefault(platform, []).append(prop.key)
+        for sibling in prop.sibling_hosts:
+            graph["portfolio_edges"].append(
+                {"from": prop.key, "to": registrable(host_of(sibling)), "edge": "portfolio_sibling_link", "verified": False}
+            )
+    with open(args.graph_out, "w", encoding="utf-8") as handle:
+        json.dump(graph, handle, indent=2, sort_keys=True)
+        handle.write("\n")
+
+    print(
+        json.dumps(
+            {
+                "properties": len(properties),
+                "candidates": len(candidates),
+                "receipts": len(fetcher.receipts),
+                "robots_blocked": len(fetcher.blocked),
+                "platforms": sorted(graph["platform_index"]),
+            },
+            indent=2,
+        )
+    )
+    return 0
+
+
+def cmd_verify(args) -> int:
+    candidates = [json.loads(line) for line in open(args.candidates_out, encoding="utf-8") if line.strip()]
+    fetcher = Fetcher(args.receipts, verbose=args.verbose)
+    listings, unpromoted = verify_candidates(candidates, fetcher)
+    foreign_listing_rows_preserved = merge_jsonl(
+        args.listings_out, listings, LISTING_SCHEMA, "candidate_id"
+    )
+    if args.unpromoted_out:
+        with open(args.unpromoted_out, "w", encoding="utf-8") as handle:
+            for row in unpromoted:
+                handle.write(json.dumps(row, sort_keys=True) + "\n")
+    print(json.dumps({
+        "verified_listings": len(listings),
+        "unpromoted": len(unpromoted),
+        "foreign_listing_rows_preserved": foreign_listing_rows_preserved,
+    }, indent=2))
+    return 0
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--receipts", help="append bonfyre-foreign-observation.v1 receipts here")
+    parser.add_argument("--verbose", action="store_true")
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    discover = sub.add_parser("discover", help="find weakly marketed supply from seed boundaries")
+    discover.add_argument("--seeds", required=True)
+    discover.add_argument("--candidates-out", required=True)
+    discover.add_argument("--graph-out", required=True)
+    discover.add_argument("--max-properties", type=int, default=40)
+    discover.add_argument("--max-surface-pages", type=int, default=6)
+    discover.add_argument("--run-id")
+    discover.set_defaults(func=cmd_discover)
+
+    verify = sub.add_parser("verify", help="exact-verify candidates before promotion")
+    verify.add_argument("--candidates-out", required=True)
+    verify.add_argument("--listings-out", required=True)
+    verify.add_argument("--unpromoted-out")
+    verify.set_defaults(func=cmd_verify)
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = build_parser().parse_args(argv)
+    return args.func(args)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

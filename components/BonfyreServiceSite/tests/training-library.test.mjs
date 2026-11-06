@@ -1,0 +1,53 @@
+import {test,expect} from 'bun:test';
+import {mkdtempSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {execFileSync} from 'node:child_process';
+import {Database} from 'bun:sqlite';
+import {trainingMaterial,trainingHandler} from '../training-workspace.mjs';
+import {publishingStore,programInstitution} from '../training-publishing.mjs';
+import {creatorAuth} from '../training-creator.mjs';
+import {routineDraft} from '../training-editor.mjs';
+const material=trainingMaterial('packs/aurekai-fitness-studio'),routine=()=>structuredClone(material.creators[0].routines[0]);
+async function isolated(fn){const home=mkdtempSync(join(tmpdir(),'training-library-'));try{await fn({home,store:publishingStore(home,material,null)});}finally{rmSync(home,{recursive:true,force:true});}}
+test('library drafts retain unfinished work, retry identity and native edit history across reopen',()=>isolated(({home,store})=>{
+  const id=crypto.randomUUID(),first=store.saveDraft('forge','actor:editor',id,{routine:routineDraft(),expectedRevision:0});
+  expect(first.revision).toBe(1);expect(first.routine.name).toBe('');expect(store.list('forge',{publicOnly:true})).toEqual([]);expect(store.drafts('still')).toEqual([]);
+  expect(store.saveDraft('forge','actor:editor',id,{routine:first.routine,expectedRevision:0})).toEqual(first);
+  const second=store.saveDraft('forge','actor:editor',id,{routine:routine(),expectedRevision:1});expect(second.revision).toBe(2);
+  expect(publishingStore(home,material,null).readDraft('forge',id)).toEqual(second);
+  expect(()=>store.saveDraft('forge','actor:other',id,{routine:routine(),expectedRevision:1})).toThrow('Another tab');
+  expect(()=>store.saveDraft('forge','actor:editor',id,{routine:{...routine(),name:'Old tab'},expectedRevision:1})).toThrow('Another tab');
+  expect(()=>store.readDraft('still',id)).toThrow('not found');
+  const db=new Database(join(home,'catalogue.db'),{readonly:true});expect(db.query('select count(*) as n from training_program_draft').get().n).toBe(1);db.close();
+  const ops=JSON.parse(execFileSync('cmd/BonfyreCMS/bonfyre-cms',['ops','count','training_program_draft','1','--db',join(home,'catalogue.db')],{encoding:'utf8',stdio:'pipe'}));expect(ops.ops).toBe(2);
+}));
+test('publication uses the reviewed saved draft and subsequent edits cannot rewrite that release',()=>isolated(({store})=>{
+  const id=crypto.randomUUID(),first=store.saveDraft('forge','actor:editor',id,{routine:routine(),expectedRevision:0});
+  const input={publicationId:crypto.randomUUID(),programId:crypto.randomUUID(),expectedVersion:0,draftId:id,draftRevision:1,title:'Library strength',description:'A short strength session.'};
+  const release=store.publish('forge','actor:editor',input);expect(release.version).toBe(1);expect(JSON.stringify(store.list('forge',{publicOnly:true}))).not.toContain(id);
+  const changed=structuredClone(first.routine);changed.exercises[0].sets[0].reps=17;store.saveDraft('forge','actor:editor',id,{routine:changed,expectedRevision:1});
+  expect(store.publish('forge','actor:editor',input).releaseId).toBe(release.releaseId);
+  expect(()=>store.publish('forge','actor:editor',{...input,publicationId:crypto.randomUUID(),expectedVersion:1})).toThrow('changed after review');
+  expect(store.list('forge',{publicOnly:true})[0].routine.exercises[0].sets[0].reps).toBe(first.routine.exercises[0].sets[0].reps);
+  expect(()=>store.publish('forge','actor:editor',{...input,requestId:crypto.randomUUID()})).toThrow('Choose one');
+  const unfinished=crypto.randomUUID();store.saveDraft('forge','actor:editor',unfinished,{routine:routineDraft(),expectedRevision:0});
+  expect(()=>store.publish('forge','actor:editor',{...input,publicationId:crypto.randomUUID(),programId:crypto.randomUUID(),draftId:unfinished})).toThrow();
+  expect(store.list('forge')).toHaveLength(1);
+}));
+test('library-only editors can author without request access; current grants gate every save',()=>isolated(async({home,store})=>{
+  const db=join(home,'auth.db'),native=(command,args=[],input='')=>JSON.parse(execFileSync('cmd/BonfyreAuth/bonfyre-auth',['--db',db,command,...args],{input,encoding:'utf8',stdio:'pipe'}));
+  native('http-signup',[],JSON.stringify({email:'editor@example.test',password:'library-test-password',name:'Editor'}));native('actor-bind',['--user-id','1','--actor','actor:editor']);native('institution-grant',['--user-id','1','--institution',programInstitution('forge'),'--role','read']);
+  const handler=trainingHandler(material,4190,{publishing:store,requests:{},auth:creatorAuth(db)}),origin='http://127.0.0.1:4190';let cookie='';
+  const call=(path,body,headers={})=>handler(new Request(origin+'/api/training/creator'+path,{method:body===undefined?'GET':'POST',headers:{host:'127.0.0.1:4190',origin,cookie,'content-type':'application/json',...headers},body:body===undefined?undefined:JSON.stringify(body)}));
+  const login=await call('/login',{email:'editor@example.test',password:'library-test-password'});cookie=login.headers.get('set-cookie').split(';')[0];
+  const id=crypto.randomUUID(),path='/studios/forge/program-drafts/'+id,body={routine:routine(),expectedRevision:0};
+  expect((await call('/session')).status).toBe(200);expect((await call('/studios/forge/program-drafts')).status).toBe(200);expect((await call(path,body)).status).toBe(403);
+  native('institution-grant',['--user-id','1','--institution',programInstitution('forge'),'--role','write']);
+  expect((await call(path,body,{origin:'https://elsewhere.test'})).status).toBe(403);expect((await call(path,body)).status).toBe(200);
+  expect((await call('/studios/still/program-drafts/'+id,body)).status).toBe(403);
+  expect((await call('/studios/forge/programs',{publicationId:crypto.randomUUID(),programId:crypto.randomUUID(),expectedVersion:0,draftId:id,draftRevision:1,title:'Editor program',description:'Prepared in the library.'})).status).toBe(200);
+  expect((await call('/studios/forge/requests')).status).toBe(403);
+  let send;const stream=new ReadableStream({start(controller){send=()=>{native('institution-revoke',['--user-id','1','--institution',programInstitution('forge')]);controller.enqueue(new TextEncoder().encode(JSON.stringify({...body,expectedRevision:1})));controller.close();};}});
+  const pending=handler(new Request(origin+'/api/training/creator'+path,{method:'POST',headers:{host:'127.0.0.1:4190',origin,cookie,'content-type':'application/json'},body:stream,duplex:'half'}));send();expect((await pending).status).toBe(403);expect(store.readDraft('forge',id).revision).toBe(1);
+}));

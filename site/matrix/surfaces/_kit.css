@@ -1,0 +1,54 @@
+/* Shared kit styling for the clone surfaces.
+   Each page adds its own layout; this carries only what every one of them needs. */
+:root{--ink:#10201a;--paper:#f2f3ec;--card:#fff;--line:#cdd4c7;--hair:#e2e7db;
+      --muted:#5a6a60;--leaf:#6f9821;--brick:#8d3427;--amber:#8a6a12}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+     font:400 15.5px/1.55 "IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;
+     -webkit-font-smoothing:antialiased}
+.k-wrap{width:min(1280px,calc(100% - 36px));margin-inline:auto}
+
+.k-top{display:flex;align-items:center;justify-content:space-between;gap:20px;
+       padding:16px 0;border-bottom:1px solid var(--ink);flex-wrap:wrap}
+.k-mark{font:800 19px ui-monospace,SFMono-Regular,monospace;letter-spacing:-.04em;
+        text-decoration:none;color:var(--ink)}
+.k-mark span{color:var(--leaf)}
+.k-nav{display:flex;gap:4px;flex-wrap:wrap}
+.k-nav a{font:700 10.5px ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;
+         text-decoration:none;color:var(--muted);padding:7px 10px;border-radius:999px}
+.k-nav a:hover{background:var(--hair);color:var(--ink)}
+.k-nav a[aria-current="page"]{background:var(--ink);color:#fff}
+.k-nav a:focus-visible{outline:2px solid var(--leaf);outline-offset:2px}
+
+.k-head{padding:26px 0 8px}
+.k-eyebrow{font:700 10px ui-monospace,monospace;letter-spacing:.15em;text-transform:uppercase;
+           color:var(--leaf);margin:0}
+.k-head h1{font:600 clamp(30px,4.6vw,50px)/1.02 "IBM Plex Sans",system-ui,sans-serif;
+           letter-spacing:-.035em;margin:8px 0 6px;text-wrap:balance}
+.k-head p.k-lede{color:var(--muted);max-width:64ch;margin:0;font-size:16.5px}
+.k-target{font:700 10px ui-monospace,monospace;letter-spacing:.1em;text-transform:uppercase;
+          color:var(--muted);border:1px dashed var(--line);border-radius:999px;
+          padding:5px 10px;display:inline-block;margin-top:12px}
+
+.k-note{border:1px solid var(--line);background:var(--card);padding:18px 20px;margin:10px 0;
+        border-radius:3px}
+.k-note strong{display:block;font-size:16px;margin-bottom:5px}
+.k-note p{margin:0 0 6px;color:var(--muted);font-size:14px;max-width:62ch}
+.k-note code{font:12.5px ui-monospace,monospace;background:var(--hair);padding:1px 5px;border-radius:2px}
+.k-refused{border-color:#d5a49c;background:#fff7f5}
+.k-failed{border-color:#d9c48a;background:#fffcf2}
+.k-empty{border-color:var(--line)}
+.k-btn{display:inline-block;background:var(--ink);color:#fff;text-decoration:none;
+       border-radius:999px;padding:8px 14px;font:700 11px ui-monospace,monospace;
+       letter-spacing:.07em;margin-top:4px}
+
+.k-verbs{display:flex;gap:5px;flex-wrap:wrap;margin-top:14px}
+.k-verb{border:1px solid #b9c9ab;background:#f4f7ee;color:#3f5142;border-radius:999px;
+        padding:6px 11px;font:700 10.5px ui-monospace,monospace;letter-spacing:.06em;cursor:help}
+.k-source{font-size:12px;color:#788a7d;margin:18px 0 0;line-height:1.5}
+.k-source code{font-size:11.5px;background:var(--hair);padding:1px 5px;border-radius:2px}
+
+.k-loading{color:var(--muted);font-size:14px;padding:18px 0}
+.k-foot{padding:40px 0 60px;margin-top:34px;border-top:1px solid var(--hair);
+        color:var(--muted);font-size:12.5px;line-height:1.6}
+.k-foot p{max-width:74ch;margin:0 0 8px}

@@ -1,0 +1,16 @@
+{
+  "schema_version": "bonfyre.carriers.contract.v1",
+  "source": "architecture/external/carriers.contract.yaff",
+  "count": 2,
+  "carriers": [
+    {
+      "name": "okay",
+      "path": "/okay"
+    },
+    {
+      "name": "priced",
+      "path": "/priced"
+    }
+  ],
+  "forbidden_inference": "a served carrier is not an authorized, priced, or willing one"
+}

@@ -1,0 +1,101 @@
+atlas commands-v6-owner
+
+architecture v6-capability-bun-owner
+  canonical_name V6CapabilityBunOwner
+  family commands
+  domain Execution / Resource evidence, mission candidates and representation distribution
+  maturity implemented
+  semantic_question Can one bounded owner compose resource observations, real substrate evidence, history verification and sparse representations without treating configuration or synthetic canaries as execution?
+  purpose Replace V6 Python coordination with shared authenticated Bun transport and durable owners while preserving historical identities and refusing unsupported mission promotion.
+  node_types ResourceObservation
+  node_types BackendActivationEvidence
+  node_types MissionCandidate
+  node_types FederationRoot
+  node_types SparseSnapshot
+  internal_calculus one eighteen-operation catalog -> authenticated bounded transport -> confirmed STOP-gated owner -> durable attempt and completion or uncertainty
+  internal_calculus raw numeric-source UTF-8 canonicalization -> row-bound receipt chain -> verified source-owner federation -> derived history root
+  internal_calculus bounded source traversal -> pinned file or consistent SQLite snapshot -> sparse bundle -> content identity and explicit residency
+  invariant all thirty-nine provider and fourteen backend contracts survive; configured credentials, binary help and source builds do not become semantic activation
+  invariant probe bodies and credentials are not persisted; executable format checks reject Python trampolines
+  invariant missing compiler or disabled compilation yields not-executed evidence and candidate missions, never synthetic passed canaries
+  invariant STOP is checked at raw database and bundle publication boundaries as well as async owner boundaries
+  invariant original receipt files and live source histories are never rewritten by federation verification
+  forbidden_inference authenticated administrative routing or static analysis -> multi-tenant correctness, proven global scale or complete Python retirement
+  forbidden_inference historical activation integrity -> fresh remote health or authority to execute effects
+  source_path integrations/mcp/v6_catalog.mjs
+  source_path integrations/mcp/v6_store.mjs
+  source_path integrations/mcp/v6_schema.sql
+  source_path integrations/mcp/v6_server.mjs
+  source_path cmd/BonfyreMcp/src/clis.c
+  source_path integrations/mcp/v6_resources.mjs
+  source_path integrations/mcp/v6_history.mjs
+  source_path integrations/mcp/v6_missions.mjs
+  source_path integrations/mcp/project_owner.mjs
+  source_path integrations/mcp/project_v6.mjs
+  witness integrations/mcp/tests/v6_store.test.mjs
+  witness integrations/mcp/tests/v6_transport.test.mjs
+  witness integrations/mcp/tests/v6_resources.test.mjs
+  witness integrations/mcp/tests/v6_history.test.mjs
+  witness integrations/mcp/tests/v6_missions.test.mjs
+  witness integrations/mcp/tests/project_v6.test.mjs
+  witness tests/v6_history_witness.json thirty-one historical receipts verified on a disposable database/file copy; source bytes unchanged
+  known_gap installed V6 service remains Python; source uses the real Bun compiler by default, but local canary ownership and full live cutover continuity remain incomplete
+  known_gap source integrity manifests require trusted filesystem ownership; self-consistent hashes are not signed provenance or fresh execution attestation
+  invariant ordinary BFP verification runs in a bounded two-worker executor by default; excess work refuses without queueing and cancellation never automatically replays a job
+  source_path integrations/mcp/owned_worker_pool.mjs
+  source_path integrations/mcp/v6_bfp_worker.mjs
+  witness integrations/mcp/tests/owned_worker_pool.test.mjs
+  witness integrations/mcp/tests/v6_bfp_worker_benchmark.mjs same archive and verifier compare main-event-loop interference with and without worker isolation
+  witness integrations/mcp/tests/v6_bfp_worker_benchmark.json source-bound three-pair warmed 343295361-byte archive comparison; 64 section identities equal; maximum main-loop timer gap 549.01 ms direct versus 5.42 ms worker, similar verification time
+  witness integrations/mcp/tests/v6_analysis.json Oxlint 1.86.0 analyzed 28 source-bound files with 96 rules and zero diagnostics
+  invariant cooperative worker cancellation is observed between bounded verification reads through an atomic signal; noncooperative termination remains runtime-dependent
+  known_gap receipt scans, SQLite checks and sparse packaging still occupy the owner event loop; isolating BFP alone does not prove acceptable whole-service tail latency
+  forbidden_inference worker-thread isolation -> security sandbox, hardware resource quota or instantaneous hard preemption
+  known_gap filesystem artifact publication and SQLite updates are not one transaction; interrupted operations require receipt-guided reconciliation
+
+architecture v6-bfp-bounded-interchange
+  canonical_name V6BfpBoundedInterchange
+  family representation
+  domain Representation / Streamed package and delta interchange
+  maturity implemented
+  semantic_question Can the same historical package and dictionary-delta contracts survive Python retirement without whole-package memory residency or unchecked extraction?
+  internal_calculus manifest and section bounds -> streamed section digests -> pinned file identity -> optional confined extraction
+  internal_calculus RAW or COPY_ADD or DEFLATE_DICT32 -> source digest and dictionary -> bounded reconstruction -> target digest
+  invariant archive sources stream through bounded buffers; extraction requires verified section identity and confined destinations
+  invariant native verifier output is corroborating evidence, not a substitute for structural validation
+  forbidden_inference matching archive digests or small buffers -> optimal compression, hostile-filesystem race freedom or distributed deployment
+  source_path integrations/mcp/v6_bfp.mjs
+  witness integrations/mcp/tests/v6_bfp.test.mjs native corroboration, three codecs, deterministic packing, malformed bounds, tampering and symlink refusal
+  known_gap selected delta codec is explicit rather than workload-measured automatic portfolio selection
+
+interaction project-v6-reuses-semantic-owner
+  source mcp-project-native-owner
+  destination v6-capability-bun-owner
+  relation catalog-bound-authenticated-owner-federation
+  preserves exact schemas, dedicated HTTPS credentials, administrative closure, write admission and STOP
+  drops endpoint selection by untrusted arguments and duplicated transport implementations
+  forbidden_inference configured HTTPS and fixture forwarding -> deployed two-host execution
+  binding integrations/mcp/project_owner.mjs
+  binding integrations/mcp/project_v6.mjs
+  witness integrations/mcp/tests/project_v6.test.mjs
+  witness integrations/mcp/tests/oauth_institution_slice_test.sh
+
+interaction v6-uses-shared-wire
+  source v6-capability-bun-owner
+  destination mcp-bounded-wire-boundary
+  relation shared-authenticated-transport
+  preserves bounded requests, serialized effects, constant confirmation, private escaped dashboard and output limits
+  drops unauthenticated Python HTTP server and per-owner parsing
+  forbidden_inference transport admission -> effect authority
+  binding integrations/mcp/v6_server.mjs
+  witness integrations/mcp/tests/v6_transport.test.mjs
+
+interaction v6-uses-streamed-bfp
+  source v6-capability-bun-owner
+  destination v6-bfp-bounded-interchange
+  relation representation-integrity
+  preserves package identity, declared section bounds and reconstruction digests
+  drops whole-archive Python byte allocation
+  forbidden_inference resident archive integrity -> remote activation
+  binding integrations/mcp/v6_server.mjs
+  witness integrations/mcp/tests/v6_bfp.test.mjs

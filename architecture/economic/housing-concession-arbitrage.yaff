@@ -1,0 +1,35 @@
+architecture housing-concession-arbitrage
+  canonical_name HousingConcessionArbitrage
+  family economic
+  domain Economic / External Housing
+  layer economic/housing
+  semantic_question Which public unit-by-move-date-by-lease-term price curves admit a bounded effective-cost projection without turning conditional concessions, variable charges, or policy text into a lease quote?
+  purpose Parses retained first-party public quote surfaces into unit/term/move-date curves, separates base rent from quoted required monthly deltas, normalizes known move-in and one-dog scenarios, and records source disagreements as reconciliation work instead of averaging them.
+  maturity implemented
+  owns HousingPriceCurve
+  owns HousingTermEconomics
+  owns HousingConcessionScenario
+  owns HousingFeeCadenceReconciliation
+  consumes ForeignTwin
+  consumes Evidence
+  publishes HousingConcessionArbitrageProjection
+  node_types HousingPriceCurve
+  node_types HousingTermEconomics
+  node_types HousingConcessionScenario
+  node_types HousingFeeCadenceReconciliation
+  edge_types quote_surface_yields
+  edge_types conditionally_reduces
+  edge_types requires_reconciliation
+  invariant public quote rows remain source observations, never applications, leases, or confirmed availability
+  invariant a concession only reduces an effective-cost scenario when its unit, move-date, and term eligibility are source-bound; otherwise it is explicitly conditional
+  invariant variable deposits, utilities, usage fees, and unallocated annual fees remain unknown or separately labelled, never zero
+  invariant a conflicting fee cadence creates reconciliation work rather than an averaged or silently selected charge
+  forbidden_inference select-home promotion -> eligible particular unit
+  forbidden_inference pet policy -> approval of a particular animal
+  forbidden_inference projected full-term cost -> money due, billed, paid, or booked
+  interacts foreign-twin-bounds-housing-concession-arbitrage
+  source_path tools/housing_concession_arbitrage.py.archive
+  witness tests/test_housing_concession_arbitrage.py.archive
+  witness .bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/concession-arbitrage.json
+  source_lineage Run8 housing-concession-arbitrage first-party Zenith public quote probe
+  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.

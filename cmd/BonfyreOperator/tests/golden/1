@@ -1,0 +1,21 @@
+{
+  "operator": "ROUTE",
+  "program": {
+    "program_id": "household.route.d7eb258bff2c9660",
+    "operator": "ROUTE",
+    "digest": "267acef6181bff7545bb2f7c9281aef084bdd4c73d844b7781d592cca89356e5",
+    "reads": [
+      "command:BonfyreQuery"
+    ],
+    "admitted": true,
+    "hard_failures": []
+  },
+  "owner": {
+    "identity": "BonfyreQuery",
+    "classification": "source-only",
+    "provides": "BonfyreQuery"
+  },
+  "route_state": "eligible_owner_only",
+  "forbidden_inference": "eligible query owner -> proof, authority, or external effect"
+}
+exit 0

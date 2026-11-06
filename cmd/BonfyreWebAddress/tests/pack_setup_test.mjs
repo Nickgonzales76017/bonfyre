@@ -1,0 +1,76 @@
+import assert from 'node:assert/strict';
+import {packSetupFixture,decode} from './pack_setup_fixture.mjs';
+const f=await packSetupFixture(),checks=[];
+const check=(name,ok)=>{assert.ok(ok,name);checks.push(name);console.log('PASS '+name);};
+const route='/packs/setup?pack=creator-work';
+const get=async(cookie,path=route)=>f.request(path,{cookie});
+const perform=async(cookie,operation,page)=>f.request('/packs/setup',{cookie,form:f.form(page.body,operation)});
+try{
+ f.pack('z-editor','Z shared editor');f.pack('a-plan','A application-looking workflow');
+ f.sql.run("UPDATE pack_artifact SET kind='application' WHERE pack='z-editor'");
+ f.sql.run("UPDATE pack_artifact SET kind='workflow-plan' WHERE pack='a-plan'");
+ for(const host of ['aurekai.life','aurekai.live','aurekai.shop','aurekai.work']){
+  const directory=await f.request('/packs/setup',{host});
+  const applications=directory.body.match(/<section data-setup-kind="application">([\s\S]*?)<\/section>/)?.[1]??'',configurations=directory.body.match(/<section data-setup-kind="configuration">([\s\S]*?)<\/section>/)?.[1]??'';
+  check(host+' distinguishes editor releases from workflow configurations',directory.status===200&&applications.includes('Z shared editor')&&!applications.includes('A application-looking workflow')&&configurations.includes('A application-looking workflow')&&directory.body.indexOf('data-setup-kind="application"')<directory.body.indexOf('data-setup-kind="configuration"'));
+  check(host+' opens existing tools through the current workspace owner',directory.body.includes('data-setup-existing href="/apps?context=self"')&&applications.includes('Review application setup')&&configurations.includes('Review workflow configuration')&&!directory.body.includes('data-pack-action='));
+ }
+ check('reading the setup directory never installs or activates a configuration',f.sql.query('SELECT count(*) AS n FROM pack_installation').get().n===0&&f.sql.query('SELECT count(*) AS n FROM pack_activation').get().n===0);
+ let r=await get('');check('published configurations are reviewable without an account',r.status===200&&r.body.includes('Shared source selection')&&r.body.includes('data-pack-signin')&&!r.body.includes('data-pack-action='));
+ const link=decode(r.body.match(/data-pack-signin href="([^"]*)"/)[1]);check('account entry retains the selected configuration',new URL(link,'https://aurekai.life').searchParams.get('next').startsWith(route));
+ const first=await f.login('pack-first@example.test'),second=await f.login('pack-second@example.test');
+ r=await get(first.cookie);check('a fresh account can review personal installation without manually granted roles',r.body.includes('data-pack-action="install"')&&f.authsql.query('SELECT count(*) AS n FROM institution_grants').get().n===0);
+ const reviewed=f.form(r.body,'install');
+ let saved=await perform(first.cookie,'install',r);check('reviewed browser installation reaches the native content owner',saved.status===303&&f.sql.query('SELECT count(*) AS n FROM pack_installation').get().n===1);
+ saved=await f.request('/packs/setup',{cookie:first.cookie,form:reviewed});check('a retried form preserves one installed revision',saved.status===303&&f.sql.query('SELECT revision FROM _pack_installation_state').get().revision===1);
+ r=await get(first.cookie);check('installed versions are shown beside the reviewed versions',r.body.includes('data-pack-state="installed"')&&r.body.includes('data-pack-action="activate"')&&!r.body.includes('Not installed</td>'));
+ check('installation does not activate behavior implicitly',f.sql.query('SELECT count(*) AS n FROM pack_activation').get().n===0);
+ saved=await perform(first.cookie,'activate',r);check('activation is explicit and persisted',saved.status===303&&f.sql.query("SELECT count(*) AS n FROM pack_activation WHERE status='published'").get().n===1);
+ const protectedPath='/packs/closure?pack=creator-work&context=self';
+ const machine=await f.request(protectedPath,{cookie:first.cookie,headers:{Accept:'application/json'}});
+ const current=JSON.parse(machine.body);check('the existing closure renderer receives the installed versions',machine.status===200&&current.packs.some(p=>p.pack==='shared-material'&&p.version==='1'));
+ check('private closure has private caching and no wildcard cross-origin access',machine.headers.get('cache-control').includes('private')&&!machine.headers.has('access-control-allow-origin'));
+ r=await get(first.cookie,protectedPath);check('a person opening the active configuration receives HTML',r.status===200&&r.headers.get('content-type').startsWith('text/html')&&r.body.includes('Manage this installation'));
+ check('an anonymous reader cannot open a private active closure',(await get('',protectedPath)).status===403);
+ check('another account cannot substitute itself into the installation',(await get(second.cookie,protectedPath)).status===409);
+ check('forged actor coordinates are refused',(await get(first.cookie,protectedPath+'&actor=user:999')).status===400);
+ const legacy=await f.request('/packs/closure?actor=user:'+first.id,{headers:{Accept:'application/json'}});check('legacy public actor projection cannot reveal private installations',!JSON.parse(legacy.body).packs.length);
+ const directory=await f.request('/packs',{headers:{Accept:'application/json'}});check('public catalogue counts exclude private installations',JSON.parse(directory.body).packs.every(p=>p.installations===0&&p.activations===0));
+ r=await get(first.cookie);const shared=decode(r.body.match(/data-pack-share href="([^"]*)"/)[1]);check('reuse link carries only public coordinates',shared.includes('shared=')&&!shared.includes('context=')&&!shared.includes('user')&&!shared.includes('installation'));
+ r=await get(second.cookie,shared);saved=await perform(second.cookie,'install',r);check('recipient installs independent state from the reusable public reference',saved.status===303&&f.sql.query('SELECT count(*) AS n FROM pack_installation').get().n===2);
+ r=await get(first.cookie);const staleReview=f.form(r.body,'remove');
+ f.add('pack_version',{pack:'shared-material',version:'2',root:f.hash('shared-material:2'),changed:'Dependency version two',status:'published'});f.sql.run("UPDATE pack_head SET version='2' WHERE pack='shared-material'");
+ const pinned=JSON.parse((await f.request(protectedPath,{cookie:first.cookie,headers:{Accept:'application/json'}})).body);
+ check('active closure keeps pinned dependency after upstream head advances',pinned.packs.some(p=>p.pack==='shared-material'&&p.version==='1'));
+ r=await get(first.cookie);const upgrade=f.form(r.body,'install');check('upgrade is offered as a new explicit review',upgrade.digest!==staleReview.digest&&r.body.includes('Install reviewed configuration'));
+ f.sql.run("UPDATE pack_artifact SET purpose='Changed after review' WHERE pack='creator-work'");
+ const refused=await f.request('/packs/setup',{cookie:first.cookie,form:upgrade});check('source changes between review and submit refuse the mutation',refused.status===409&&refused.body.includes('source_changed'));
+ check('changed selected definitions cannot be consumed as the former active closure',(await get(first.cookie,protectedPath)).status===409);
+ r=await get(first.cookie);check('stale source state is visible and can be removed',r.body.includes('data-pack-state="stale"')&&r.body.includes('data-pack-action="remove"'));
+ saved=await perform(first.cookie,'remove',r);check('removal preserves recipient pins and records',saved.status===303&&f.sql.query("SELECT count(*) AS n FROM pack_installation WHERE status='published'").get().n===1);
+ r=await get(second.cookie,shared);check('a changed shared configuration requires fresh review',r.body.includes('The shared configuration has changed'));
+ const org='workspace-test';f.grant(first.id,org,'admin');f.grant(second.id,org,'read');
+ const orgRoute=route+'&context=institution:'+org;
+ const scopedDirectory=await get(first.cookie,'/packs/setup?context=institution:'+org);
+ check('directory review links retain the chosen organization without making a copy',scopedDirectory.body.includes('pack=z-editor&amp;context=institution%3A'+org)&&scopedDirectory.body.includes('/apps?context=institution%3A'+org));
+ r=await get(first.cookie,orgRoute);saved=await perform(first.cookie,'install',r);check('current institution admin can install in that specific workspace',saved.status===303&&f.sql.query("SELECT count(*) AS n FROM pack_installation WHERE installed_for=?").get('institution:'+org).n===1);
+ r=await get(second.cookie,orgRoute);check('institution reader can inspect but has no mutation controls',r.status===200&&!r.body.includes('data-pack-action=')&&r.body.includes('An administrator'));
+ const adminPage=await get(first.cookie,orgRoute),adminForm=f.form(adminPage.body,'activate');
+ check('read-only account cannot submit another user’s admin form',(await f.request('/packs/setup',{cookie:second.cookie,form:adminForm})).status===403);
+ check('sibling workspace admission is not inherited',(await get(first.cookie,route+'&context=institution:other-workspace')).status===403);
+ check('cross-origin mutations cannot activate a configuration',(await f.request('/packs/setup',{cookie:first.cookie,form:adminForm,headers:{Origin:'https://evil.test'}})).status===403);
+ check('opaque-origin mutations cannot activate a configuration',(await f.request('/packs/setup',{cookie:first.cookie,form:adminForm,headers:{Origin:'null'}})).status===403);
+ f.run(f.auth,['--db',f.authdb,'institution-revoke','--user-id',String(first.id),'--institution',org]);
+ check('revocation invalidates a previously reviewed form',(await f.request('/packs/setup',{cookie:first.cookie,form:adminForm})).status===403);
+ check('revoked institution disappears from the selectable contexts',!(await get(first.cookie)).body.includes('value="institution:'+org+'"'));
+ for(const query of ['pack=creator-work&pack=community-reuse','pack=creator-work&%70ack=community-reuse','pack=creator-work&context=user:999','pack=creator-work&role=admin','pack=creator-work&version=%00','pack='+'a'.repeat(97)])check('invalid configuration coordinates are refused: '+query.slice(0,60),[400,403].includes((await get(first.cookie,'/packs/setup?'+query)).status));
+ f.pack('broken');f.add('pack_dependency',{pack:'broken',depends_on:'missing',why:'Unimplemented dependency',status:'published'});
+ r=await get(first.cookie,'/packs/setup?pack=broken');check('missing prerequisites remain an actionable refusal without an install button',r.body.includes('missing_head')&&!r.body.includes('data-pack-action="install"'));
+ check('no account grants were created by configuration operations',f.authsql.query('SELECT count(*) AS n FROM institution_grants').get().n===2);
+ f.sql.run('ALTER TABLE pack_artifact RENAME TO unavailable_pack_artifact');
+ try{
+  const unavailable=await f.request('/packs/setup');
+  check('an unavailable directory is a refusal rather than an empty catalogue',unavailable.status===503&&unavailable.body.includes('configuration owner could not be read')&&!unavailable.body.includes('No configurations are published'));
+ }finally{f.sql.run('ALTER TABLE unavailable_pack_artifact RENAME TO pack_artifact');}
+ console.log('PACK_SETUP_HTTP_PASS\t'+checks.length);
+}finally{await f.close();}

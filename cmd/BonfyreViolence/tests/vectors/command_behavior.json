@@ -1,0 +1,5 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-violence","binary_env":"BONFYRE_VIOLENCE_BIN","cases":[
+{"name":"the corpus is embedded, packed and indexed, and the circuit refuses components no organ backs","steps":[
+ {"program":"sh","argv":["-c","mkdir -p rd && for i in $(seq 1 40); do echo \"Document $i about checkout pages number $i.\" > rd/d$i.txt; done"],"exit":0},
+ {"argv":["--data","rd","--pack","p.bfpk","--bvh","p.bfvh"],"env":{"HOME":"${tmp}"},"exit":1,"contains":["generated 40 embeddings (dim=32)","pack built: 40 vectors","BVH  built"],"present":["${tmp}/p.bfpk","${tmp}/p.bfvh"]}]},
+{"name":"a missing corpus is refused","steps":[{"argv":["--data","missing","--pack","p.bfpk","--bvh","p.bfvh"],"env":{"HOME":"${tmp}"},"exit_nonzero":true,"absent":["${tmp}/p.bfpk"]}]}]}

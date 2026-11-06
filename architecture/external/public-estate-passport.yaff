@@ -1,0 +1,98 @@
+atlas external
+
+architecture public-estate-passport
+  canonical_name PublicEstatePassport
+  family external
+  domain External / Public Commons Compiler
+  layer external
+  semantic_question What can a public estate do for this machine -- identify, observe, supply material, give reference facts, relate, fingerprint or list -- through what access, under what reuse posture and lawful route, with what credential, and what may it not be read to imply?
+  purpose Makes a public estate's phenotype machine-legible so a task asks the forwarding plane for a capability instead of a source's name. A passport carries roles, access, topology, identifiers, subject kinds, reach, refresh and revision models, capabilities as verb-object terms, a reuse posture (what is allowed, required or unknown, and whether terms vary per item), mirror posture, evidence strength, the carrier route with its robots standing and the refused path it replaces, the credential provider it needs, its admission state and the census rows that realize it. It embeds the descriptor-level SourcePassport (root, robots admission, best carrier), constrained to agree with the route taken. The Bun/CUE passport compiler lowers passports into AddressPlane candidate advertisements of kind external_source under the reuse axis.
+  maturity implemented
+  consumes SourcePassport
+  consumes InternetSource
+  publishes PublicEstatePassport
+  publishes ExternalSourceAdvertisement
+  node_types PublicEstatePassport
+  node_types ReusePosture
+  edge_types advertises_capability
+  edge_types realized_by_census_row
+  invariant a passport is declared in schemas/control/source-passport.cue and cannot claim robots admission its route does not have: descriptor.robots_allows_us is derived from carrier.robots
+  invariant a refused route is recorded with the lawful route that replaces it (Commons /w/ by QLever; Wikidata /sparql by QLever; iNaturalist's API by GBIF; MusicBrainz web service by its CC0 dumps and Wikidata identifier joins) and is never re-reached through another verb on the same host
+  invariant reuse posture separates allowed, required and unknown acts; unknown is a value, and a source that states no terms is not thereby free
+  invariant a capability advertisement is eligible_for_further_consideration only; admission to read is a census row with a robots preflight and a receipt
+  invariant the reuse axis says what a source's terms state and never grants a use
+  forbidden_inference an admitted passport -> the truth, currency or completeness of what the source publishes
+  forbidden_inference a reuse posture -> a licence granted by this estate or legal advice
+  forbidden_inference a capability term -> a working endpoint, a paid plan or spend approval
+  forbidden_inference a DECLARED passport with a credential -> that the credential exists or works
+  known_gap Common Crawl's index and data hosts both refuse crawlers under robots, so historical replay rests on the Wayback CDX alone; a Common Crawl route exists only as a declared, refused passport
+  known_gap MusicBrainz, AcoustID and FMA passports are declared but not realized: no dump is mirrored, no AcoustID key is set and no fingerprint lookup is wired
+  known_gap DBnomics and OONI APIs refuse crawlers; their bulk routes are declared, not read
+  known_gap passports are compiled into a local AddressPlane index; no task in the inverse compiler yet asks the forwarding plane for a capability term
+  source_path schemas/control/source-passport.cue
+  source_path schemas/control/external-descriptor.cue
+  source_path schemas/control/address-advertisement.cue
+  source_path schemas/control/public-commons-sources.cue
+  source_path schemas/control/open-content-sources.cue
+  source_path cmd/BonfyreExternalEstate/tools/compile_source_passports.mjs
+  source_path cmd/BonfyreExternalEstate/tools/compile_source_passports.py.archive
+  source_path cmd/BonfyreExternalEstate/passport-advertisement.cue
+  witness cmd/BonfyreExternalEstate/tests/source_passports.test.mjs proves admitted and declared passport advertisements keep capability, reuse and credential terms distinct; Bun output was compared field-for-field to the Python compiler before archival
+  source_path cmd/BonfyreExternalEstate/src/main.c
+  witness 2026-09-17 21 passports (10 admitted, 4 refused, 7 declared) lowered into external_source advertisements and imported through bonfyre-external-estate import-advertisements; forward --kind external_source answered --need affordance:identify-recording with acoustid and musicbrainz, --need affordance:supply-free-pictures --forbid admission:refused with wikimedia-commons-structured-data, --need reuse:allows-commercial-use --need affordance:resolve-entity with wikidata, --need requirement:credential-podcast-index with podcast-index, and --need affordance:replay-url --forbid admission:refused with wayback-cdx while common-crawl was excluded
+  witness 2026-09-17 production census gained archive-feature-films, archive-dallas-live-music, archive-great-78, gbif-inaturalist-dfw, podcasting-2-0, buzzcast and podcast-index-recent through the CMS binary; named reheats read the six admitted sources and answered podcast-index-recent "waiting for a credential"; /watch then took turns across nine video sources including Archive films, /listen across Dallas concerts, 78s and recorded works, and /podcasts across two feeds
+  witness 2026-09-17 the operator AddressPlane index ~/.bonfyre/estate/estate.db (backed up first) imported the 21 passports and 976 registry candidates beside 4,891 external occurrences; forward --kind external_source --need affordance:supply-licensed-nature-photos --forbid admission:refused answered gbif-inaturalist over 1,491 external_source advertisements
+  witness cmd/BonfyreExternalEstate/tests/external_estate_test.sh still proves the native axis vocabulary equals the CUE declaration after the reuse axis was added to both
+  invariant a structured source names its provider's record id as key_field; that id is the item key, so records sharing a landing page or a title stay distinct, and existing sources keep their link-derived keys
+  invariant a structured body is read whole (up to 6 MB) by the page reader, because a JSON document cut off parses as nothing; feeds keep reading their top half-megabyte
+  invariant an item from a structured source opens with its own record's fields as facts: escapes decoded, type prefixes and ordinals dropped, numbered fields grouped, identifiers and what the page already shows left out
+  witness 2026-10-18 nativeOpenContentSources declares 28 keyless sources across 14 families (TVmaze, TheMealDB, TheCocktailDB, Open Library, Radio Browser, Scryfall, CheapShark, OpenF1, iNaturalist, GBIF, NWS, USGS, Hacker News, Lobsters, Art Institute of Chicago, Cleveland Museum of Art, OpenAlex, Europe PMC, Federal Register, CPSC, openFDA); one bounded fetch retained all 28 in 18.7 s (28 accepted, 0 failed, 0 held) and on a scratch estate every source's first record opened at its record-id key with picture or media where the provider gives one
+  witness cmd/BonfyreWebAddress/tests/addressed_depth_test.sh proves two structured records sharing one landing page open at their own keys with their own facts and nested fields named in words
+  known_gap the open-content pack is applied to a scratch estate only; GDELT, Google Books, MusicBrainz and Open Food Facts answered rate-limited or unavailable and Openverse, SeatGeek, TheSportsDB, Eventbrite and the other keyed news, recipe and event APIs need accounts the user creates
+  source_lineage 2026-09-17 Public Commons Compiler: public estates as typed capabilities, not more source rows
+
+architecture dataset-registry-candidates
+  canonical_name DatasetRegistryCandidates
+  family external
+  domain External / Public Commons Compiler
+  layer external
+  semantic_question Which datasets does a curated public registry point at, which of their hosts admit a crawler, and how are they addressed as candidates without being read?
+  purpose Compiles the awesome-public-datasets registry into candidate passports: each entry keeps its category, words, address and meta link; its host's robots rules are read once; an entry the registry marks broken or whose path robots refuses is REFUSED, every other entry is SHADOW. Candidates lower into external_source advertisements with the registry category as the domain axis, and into external_resource catalogue rows keyed by a stable identifier so a re-import updates rather than duplicates.
+  maturity implemented
+  consumes PublicEstatePassport
+  consumes ExternalEstateIndex
+  publishes CandidateExternalSource
+  node_types CandidateExternalSource
+  invariant a registry candidate is never ADMITTED by the compiler; admission is an authored census row with a receipt
+  invariant robots rules are read once per host with the estate's own agent and a quarter-second pace; an unanswerable robots file leaves the candidate unobserved, not admitted
+  invariant catalogue identifiers are a digest of the entry's address, so the same entry imported twice is one row
+  forbidden_inference a listed dataset -> a reachable, lawful, current or free source
+  forbidden_inference SHADOW -> this estate having read, retained or evaluated the dataset
+  known_gap reachability, access type, schema, rights and cadence are not probed beyond robots; a SHADOW candidate's capabilities are only "supply-dataset" until someone authors its passport
+  known_gap catalogue rows are written as JSONL for the CMS; they were not imported into the production ExternalEstateIndex in this change
+  source_path cmd/BonfyreExternalEstate/tools/compile_dataset_registry.mjs
+  source_path cmd/BonfyreExternalEstate/tools/compile_dataset_registry.py.archive
+  source_path cmd/BonfyreExternalEstate/dataset-registry.cue
+  witness cmd/BonfyreExternalEstate/tests/dataset_registry.test.mjs proves candidate advertisements and catalogue pointers retain SHADOW versus REFUSED, with host-cached robots probes and no source admission
+  witness 2026-09-17 the registry's master README.rst compiled to 976 entries in 35 categories; robots rules were read on 666 hosts; 850 candidates are SHADOW and 126 REFUSED; forward --need domain:agriculture --need admission:shadow answered five agriculture datasets
+  source_lineage 2026-09-17 Public Commons Compiler: compile the registry, not 400 hand-written rows
+
+interaction public-estate-passport-advertises-to-address-plane
+  source public-estate-passport
+  destination address-plane
+  relation advertises_capability
+  preserves passport identity, roles, access, topology, capability terms, reuse posture, credential requirement, robots standing and admission state
+  drops the passport's prose, scale words and census row contracts
+  forbidden_inference an advertisement surviving a capability cut -> eligibility to read, spend or act
+  invalidates_on source-passport.cue, public-commons-sources.cue or wikimedia-sources.cue changes
+  witness cmd/BonfyreExternalEstate/tests/source_passports.test.mjs
+
+interaction dataset-registry-proposes-external-estate-candidates
+  source dataset-registry-candidates
+  destination external-estate-index
+  relation proposes_candidates
+  preserves entry words, address, category, meta link and robots standing
+  drops any claim of reachability, rights or currency
+  forbidden_inference a proposed candidate -> a catalogued resource having been read
+  invalidates_on a new edition of the registry or a host's robots rules changing
+  witness cmd/BonfyreExternalEstate/tests/dataset_registry.test.mjs

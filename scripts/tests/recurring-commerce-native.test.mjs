@@ -1,0 +1,31 @@
+import assert from 'node:assert/strict';
+import {mkdtempSync, mkdirSync, copyFileSync, rmSync} from 'node:fs';
+import {dirname, resolve, join} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {tmpdir, homedir} from 'node:os';
+import {spawnSync} from 'node:child_process';
+import {Database} from 'bun:sqlite';
+const repo=resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+const root=mkdtempSync(join(tmpdir(),'aurekai-recurring-witness-'));
+const schemas=join(root,'schemas'),dbPath=join(root,'cms.db');
+const cms=join(homedir(),'.bonfyre/bin/bonfyre-cms');
+const run=(bin,args)=>{const r=spawnSync(bin,args,{cwd:repo,encoding:'utf8',timeout:60000,maxBuffer:20000000});assert.equal(r.status,0,r.stderr);return JSON.parse(r.stdout);};
+mkdirSync(schemas);
+try {
+ for(const type of ['external_resource','program_template','program_instance','program_requirement','program_binding','funding_work_package','semantic_slot','application_binding','source_collection'])copyFileSync(join(repo,'cmd/BonfyreCMS/content-types',type+'.json'),join(schemas,type+'.json'));
+ const init=spawnSync(cms,['schema','migrate','--db',dbPath,'--schemas',schemas],{encoding:'utf8',timeout:30000});assert.equal(init.status,0,init.stderr);
+ const loader=join(repo,'scripts/recurring-commerce-load.mjs');
+ const first=run(process.execPath,[loader,'--apply',dbPath]);assert.equal(first.created,46);
+ const second=run(process.execPath,[loader,'--apply',dbPath]);assert.equal(second.created,0);assert.equal(second.unchanged,46);assert.deepEqual(second.conflicts,[]);
+ let db=new Database(dbPath,{readonly:true});
+ const ids=db.query('SELECT template_id FROM program_template ORDER BY template_id').all().map(x=>x.template_id);db.close();assert.equal(ids.length,36);
+ const args=[join(repo,'scripts/compile-program-fabric.mjs'),'compile','--estate',root,'--subject','institution:recurring-fixture','--site-id','recurring-fixture'];
+ for(const id of ids)args.push('--program',id);
+ const result=run(process.execPath,args);assert.equal(result.compiled.length,36);assert.deepEqual(result.no_such_template,[]);
+ assert(result.compiled.every(x=>x.slots===4&&x.lowered===4&&x.declared_unlowered===0&&x.requirements===5));
+ db=new Database(dbPath,{readonly:true});
+ const counts={};for(const type of ['external_resource','program_template','program_instance','semantic_slot','application_binding','program_requirement'])counts[type]=db.query(`SELECT COUNT(*) AS n FROM ${type}`).get().n;
+ assert.equal(counts.program_instance,36);assert.equal(counts.semantic_slot,144);assert.equal(counts.application_binding,144);assert.equal(counts.program_requirement,180);
+ assert.equal(db.query('PRAGMA integrity_check').get().integrity_check,'ok');db.close();
+ console.log(JSON.stringify({status:'passed',scope:'Temporary fixture. Existing native CMS and ProgramFabric compiler; no live enrollment or publication.',counts,source_pack_sha256:first.pack_sha256,billing_connected:false},null,2));
+} finally {rmSync(root,{recursive:true,force:true});}

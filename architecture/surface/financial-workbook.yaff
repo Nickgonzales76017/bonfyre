@@ -1,0 +1,144 @@
+architecture financial-workbook
+  canonical_name FinancialWorkbook
+  source_path components/BonfyreServiceSite/workbook-lifetime.mjs
+  invariant account-change and pagehide events permanently close the current workbook lifetime, abort native transport and workers, clear the private view and require a fresh page read before reopening
+  invariant queued native file and record operations check the lifetime before dispatch; a dispatched save may have completed, so its delayed reply cannot rehydrate the closed editor or trigger a retry
+  invariant imported files, delayed configuration and initial record reads cannot open a workbook after lifetime invalidation; the shared native store remains the authority and revision owner
+  witness components/BonfyreServiceSite/tests/workbook-lifetime.test.mjs verifies one-time cleanup, aborted transport, delayed module refusal and no retry of uncertain saves
+  witness scripts/tests/workbook-account-browser.test.mjs exercises native browser account events, held reads, held import worker loading, page lifecycle return, changed-account reload and a delayed real save acknowledgement
+  known_gap workbook account cleanup relies on the existing account-change and page lifecycle events; it is not an independent session monitor or server revocation feed
+  forbidden_inference aborting a workbook session -> cancellation or rollback of a save already received by the native owner
+  source_path components/BonfyreServiceSite/workbook-analysis.mjs
+  source_path components/BonfyreServiceSite/workbook-analysis-view.mjs
+  invariant sensitivity evaluates two to 15 distinct finite inputs against the same named driver and formula output, including an independently recalculated current baseline
+  invariant goal seeking uses a finite bracket, explicit result tolerance and at most 24 bisection steps; calculation errors or unmet residual tolerance produce no solution
+  invariant analyses run in the existing isolated scenario worker with a 30 second deadline; a goal result can only create a draft assumption set, followed by the existing preview, adoption and native save flow
+  witness components/BonfyreServiceSite/tests/workbook-analysis.test.mjs covers real formula sweeps, baseline and endpoint matches, maximum sweep bounds, invalid results and discontinuous nonconvergence
+  witness scripts/tests/workbook-analysis-browser.test.mjs checks native browser analysis, source preservation, explicit goal-set creation and stale result invalidation
+  forbidden_inference a sensitivity sweep or bracketed goal match -> model validity, a unique or global optimum, continuity, forecast accuracy or authority to change financial records
+  source_path components/BonfyreServiceSite/workbook-scenarios.mjs
+  source_path components/BonfyreServiceSite/workbook-scenarios-view.mjs
+  source_path components/BonfyreServiceSite/workbook-evaluate.mjs
+  source_path components/BonfyreServiceSite/workbook-scenario-worker.mjs
+  source_path components/BonfyreServiceSite/workbook-scenario-calculation.mjs
+  invariant assumption sets belong to the existing revisioned workbook record; at most 24 named numeric drivers and 24 sets fit a 64 KiB metadata bound
+  invariant scenario comparison recalculates the current baseline and candidate through the same Univer evaluator in disposable workers; error, timeout, cancellation and changed workbook or set prevent adoption
+  invariant preview does not mutate cells or save records; explicit adoption changes the current draft and Save review retains it through existing native revision and account checks
+  invariant machine transaction previews preserve valid assumption sets in the exact native record body
+  witness components/BonfyreServiceSite/tests/workbook-scenarios.test.mjs verifies real formula evaluation, source retention, stale preview refusal, driver bounds, set persistence and worker cancellation
+  witness scripts/tests/workbook-scenarios-browser.test.mjs operates the actual native package with worker previews, explicit adoption, error refusal, phone reopening, MCP preservation and stale-save refusal
+  known_gap assumption sets bind worksheet addresses rather than tracking row movement; changed sheet names or dimensions refuse application, but moved rows require the user to check driver meaning
+  forbidden_inference a saved or applied scenario -> forecast validity, financial advice, automatic model optimization or preservation of scenario metadata in XLSX
+  source_path components/BonfyreServiceSite/workbook-lineage.mjs
+  source_path components/BonfyreServiceSite/workbook-lineage-view.mjs
+  invariant formula lineage projects the existing Univer dependency trees for the exact current workbook; ranges remain bounded references, every current formula must be represented, and obsolete inspection results cannot replace a newer edit
+  invariant the lineage inspector distinguishes direct and transitive dependents, reads no external sources, changes no cells and preserves original workbook bytes; headless calculation exposes the same optional graph within its worker deadline
+  witness components/BonfyreServiceSite/tests/workbook-lineage.test.mjs exercises real formula-engine cross-sheet references, ranges, quoted names, direct and indirect dependents, changed formulas and stale graph refusal
+  witness scripts/tests/workbook-lineage-browser.test.mjs inspects the actual native finance editor and follows a formula reference without altering its saved workbook
+  forbidden_inference a formula dependency graph -> financial correctness, actual execution of every conditional branch, historical imported-cell lineage or supported external workbook links
+  family surface
+  domain Finance / Workbook review
+  maturity implemented
+  semantic_question Can a person import a financial workbook, edit and recalculate its assumptions, and continue the same source-bearing review with another authorized member of the organization?
+  purpose Use the existing ServiceSite renderer and native workspace owners to expose a Univer review instrument, bounded XLSX exchange and revisioned account records without adding a financial ledger or another storage owner.
+  internal_calculus Actual ZIP expansion bound before XML parsing
+  internal_calculus Supported scalar and formula workbook projection
+  internal_calculus Independent formula evaluation with circular-reference and deadline refusal
+  internal_calculus Immutable workbook bodies under native workspace revisions
+  internal_calculus Pack-declared financial-workbooks family and exact continuation projection
+  internal_calculus Configurable transaction column mapping, exact-cent totals and duplicate groups
+  internal_calculus Row decisions bound to current content and duplicate-group fingerprints
+  source_path components/BonfyreServiceSite/workbook-model.mjs
+  source_path components/BonfyreServiceSite/workbook-import.mjs
+  source_path components/BonfyreServiceSite/workbook-import-worker.mjs
+  source_path components/BonfyreServiceSite/workbook-record.mjs
+  source_path components/BonfyreServiceSite/workbook-calculation.mjs
+  source_path components/BonfyreServiceSite/workbook-calculation-worker.mjs
+  source_path components/BonfyreServiceSite/workbook-editor.mjs
+  source_path components/BonfyreServiceSite/workbook-review.mjs
+  source_path components/BonfyreServiceSite/workbook-review-view.mjs
+  source_path components/BonfyreServiceSite/workbook-client.mjs
+  source_path components/BonfyreServiceSite/workbook-material.mjs
+  source_path components/BonfyreServiceSite/workbook-workspace-client.mjs
+  source_path components/BonfyreServiceSite/workbook-package.mjs
+  source_path integrations/mcp/workbook_mcp.mjs
+  source_path components/BonfyreServiceSite/workbook-mcp-app.mjs
+  source_path components/BonfyreServiceSite/workbook-mcp-controller.mjs
+  source_path components/BonfyreServiceSite/workbook-mcp-build.mjs
+  source_path components/BonfyreServiceSite/sections/workbook.mjs
+  source_path scripts/publish_experience_setups.mjs
+  source_path integrations/browser/workspace-value.mjs
+  witness components/BonfyreServiceSite/tests/workbook-import.test.mjs verifies original-file retention, cached result replacement, last-row bounds, unsupported content refusal and dishonest ZIP expansion
+  witness components/BonfyreServiceSite/tests/workbook-calculation.test.mjs evaluates Books formulas with Univer, edits assumptions, exports and reopens XLSX, refuses circular references and terminates expired calculation workers
+  witness components/BonfyreServiceSite/tests/workbook-native.test.mjs exercises real isolated Auth, CMS and WebAddress owners for installation, authorized shared review, large workbook bodies, current role checks, stale saves, account isolation, deactivation and exact continuation
+  witness components/BonfyreServiceSite/tests/workbook-material.test.mjs builds the browser bundle through the existing ServiceSite workspace renderer
+  witness components/BonfyreServiceSite/tests/workbook-review.test.mjs verifies column mapping, missing amounts, duplicate explanations, stale decision refusal, original source retention and exported decision and account sheets
+  witness components/BonfyreServiceSite/tests/workbook-facade.test.mjs verifies real Univer edits clear replaced formulas, preserve formatting, retain literal account text and recalculate dependent cells
+  witness components/BonfyreServiceSite/tests/workbook-mcp.test.mjs verifies account MCP operations and manual review continue the same native workbook record with shared validation and formula calculation
+  invariant original imported XLSX bytes remain a separately retained source; an exported review is a new file
+  invariant imports bound actual decompression to 32 MiB from an 8 MiB archive and refuse encrypted, macro, merged and unsupported formula inputs
+  invariant review calculation uses Univer 1.1.0 and explicitly refuses circular references and error cells; a cached value cannot establish recalculation
+  invariant workbook JSON bodies use the existing immutable file transport while record metadata remains within the native 256 KiB contract
+  invariant account records use the Pack-declared financial-workbooks family and finance-workbook prefix with existing installation, destination, Auth role and CMS revision checks
+  invariant old browser v1 records remain readable and subsequent saves use v2 immutable workbook bodies
+  invariant package material contains the editor and continuation descriptor, never private workbook fixtures or source documents
+  invariant review decisions apply only to the same mapped row content and duplicate group; missing amounts, accounts, descriptions and formula errors prevent marking a row reviewed
+  invariant possible duplicate decisions require a note; batches validate all selected fingerprints before replacing decisions
+  invariant review decision bodies have the same 8 MiB UTF-8 bound when written and read, including multi-byte notes
+  invariant imported-cell comparison shows the original workbook address, not inferred lineage after row insertion or movement
+  known_gap browser witnesses cover isolated native Chrome at 1440 and 390 pixels, not every supported browser, complete accessibility, embedded host behavior, or live signed-in acceptance
+  known_gap rich text, merged cells, shared formulas, table references, external workbook references and unsupported functions require a broader exchange contract; this is not lossless Excel editing
+  witness components/BonfyreServiceSite/tests/workbook-mcp.test.mjs exercises the official MCP Apps bridge with real isolated account services; UI rendering remains unverified
+  known_gap the native review record is not yet a ledger reconciliation, posting approval or valuation workflow; the embedded MCP App still needs host and browser verification
+  known_gap browser calculation runs within the editor runtime; only the headless calculation path and import worker have process termination deadlines
+  forbidden_inference saved or recalculated workbook -> financial correctness, reconciliation completion, authorized posting, payment, audit approval or lossless Excel compatibility
+  forbidden_inference passing native HTTP and calculation tests -> a verified browser interface or deployed public demo
+  forbidden_inference marking a workbook row reviewed -> authenticated approval, reconciliation, independent source verification or authority to post a transaction
+  interacts books-review-enters-financial-workbook
+  interacts financial-workbook-uses-native-workspace
+  interacts service-site-renders-financial-workbook
+  interacts account-mcp-operates-financial-workbook
+
+  source_path components/BonfyreServiceSite/workbook-presentation.css
+  witness scripts/tests/workspace_entry_presentation.test.mjs imports an actual illustrative XLSX through its worker, saves with native workspace revisions, reopens supported formulas and preserves exact original bytes at desktop and phone widths
+  witness scripts/tests/workspace_entry_presentation.test.mjs exercises transaction mapping, current account totals, duplicate and missing-amount metrics, original-cell inspection, explained duplicate review, native save and reduced motion; the transaction case passed 17 assertions on 2026-10-20
+  invariant the import entrance, working toolbar, review filters, inspector and account summary share one scoped stylesheet compiled with the existing Univer editor; presentation does not replace workbook calculation or native storage
+  invariant displayed account totals are the existing exact-cent review projection over all mapped rows; awaiting-review rows remain included, missing amounts remain explicit and no currency or ledger posting is inferred
+  forbidden_inference an updated preview or styled account total -> completion of a donor finance skill, financial approval or live browser acceptance
+
+interaction books-review-enters-financial-workbook
+  source cmd-books
+  destination financial-workbook
+  relation review-workbook-recalculation
+  preserves original review bytes, account labels, transaction values, supported formulas and source worksheet content
+  drops cached formula authority and unimplemented Excel features
+  forbidden_inference recalculated export -> a validated categorization or posted ledger entry
+  invalidates_on Books export columns, formula semantics, SheetJS exchange or Univer runtime changes
+  witness components/BonfyreServiceSite/tests/workbook-calculation.test.mjs
+  binding cmd/BonfyreDecide/src/books_xlsx.c
+  binding components/BonfyreServiceSite/workbook-model.mjs
+
+interaction financial-workbook-uses-native-workspace
+  source financial-workbook
+  destination web-address-edge
+  relation account-bound-workbook-review
+  preserves current session, organization, installed family, native record revision, immutable source and workbook bodies, and exact saved-review continuation
+  drops inferred account access, arbitrary storage endpoints and application-owned draft databases
+  forbidden_inference installation or a saved review -> permission to post transactions or mutate external financial systems
+  invalidates_on native binding, current role, installation state, workbook record schema or editor package changes
+  witness components/BonfyreServiceSite/tests/workbook-native.test.mjs
+  binding components/BonfyreServiceSite/workbook-package.mjs
+  binding components/BonfyreServiceSite/workbook-record.mjs
+  binding scripts/publish_experience_setups.mjs
+
+interaction service-site-renders-financial-workbook
+  source service-site
+  destination financial-workbook
+  relation existing-workspace-section-material
+  preserves supplied workbook identity, material route, site theme, workspace layout and shared browser store
+  drops any claim that static material has a private account binding
+  forbidden_inference a built static workbook page -> account-scoped storage or safe publication of private financial data
+  invalidates_on ServiceSite workspace section contract, asset paths, workbook model or runtime changes
+  witness components/BonfyreServiceSite/tests/workbook-material.test.mjs
+  binding components/BonfyreServiceSite/workbook-material.mjs
+  binding components/BonfyreServiceSite/sections/workbook.mjs

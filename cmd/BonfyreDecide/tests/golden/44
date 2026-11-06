@@ -1,0 +1,2 @@
+bonfyre manifest needs --photo FILE or --listing FILE (see bonfyre manifest --help)
+exit 2

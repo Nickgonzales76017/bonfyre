@@ -20,7 +20,7 @@ Thin local REST wrapper over the existing speaker diarization pipeline.
 
 ## Notes
 
-- wraps `10-Code/SpeakerDiarization/bin/diarize_pyannote_resemblyzer.sh`
+- wraps `components/SpeakerDiarization/bin/diarize_pyannote_resemblyzer.sh`
 - stores lightweight job state in `state/jobs.json`
 - no external web framework required
 

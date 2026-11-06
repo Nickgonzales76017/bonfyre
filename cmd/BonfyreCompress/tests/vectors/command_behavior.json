@@ -1,0 +1,8 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-compress","binary_env":"BONFYRE_COMPRESS_BIN","cases":[
+{"name":"pack then unpack restores the exact bytes","files":{"n.txt":{"prefix":"","repeat":"line of repeated text 12345\n","count":400,"suffix":""}},"steps":[
+ {"argv":["pack","n.txt","n.zst"],"env":{"HOME":"${tmp}"},"exit":0,"present":["${tmp}/n.zst"]},
+ {"argv":["unpack","n.zst","n2.txt"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"program":"cmp","argv":["n.txt","n2.txt"],"exit":0}]},
+{"name":"savings reports what compression did to one directory and says what it cannot infer","files":{"d/a.txt":{"prefix":"","repeat":"abcabcabc\n","count":500,"suffix":""}},"steps":[
+ {"argv":["savings","d"],"env":{"HOME":"${tmp}"},"exit":0,"at":{"directory":"d","raw_bytes":5000},"has":{"cannot_infer":"Neither is a saving"}}]},
+{"name":"unpack refuses bytes that are not a compressed frame","files":{"bad.zst":"not zstd"},"steps":[{"argv":["unpack","bad.zst","out.txt"],"env":{"HOME":"${tmp}"},"exit_nonzero":true}]}]}

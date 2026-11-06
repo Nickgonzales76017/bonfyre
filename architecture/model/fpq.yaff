@@ -35,18 +35,31 @@ architecture fpq-transform
   native_format axon
   native_format crux
   command BonfyreFPQ
+  invariant a distortion diagnostic is accumulated once; two passes summing into one accumulator that is divided once inflated the reported pre-RVQ RMSE by the square root of two and nothing downstream could have noticed
+  invariant a diagnostic reconstructs in the encoder's own lattice scale; a local named lattice_scale shadowing it with wnorm/padded put scaled_orig three orders of magnitude below the lattice points it was differenced against, and the post RMSE became minus the lattice point
+  invariant disabling the correction must make the post error identically the residual, because every tile is then the zeroed tile; that identity is the test, and it cannot be satisfied by a metric measured in the wrong space
+  invariant a percentage is called a reduction only when the error fell; a -6241% reduction is a sentence with no meaning and it sat beside a genuine 0.9998 cosine without stopping anything
+  forbidden_inference a high cosine -> coherent diagnostics
+  forbidden_inference a printed reduction -> an improvement
+  witness cmd/BonfyreFPQ/tests/rvq_metric_test.sh
   source_path cmd/BonfyreFPQ/src/fpq_native.c
+  source_path cmd/BonfyreFPQ/src/main.c
   source_path cmd/BonfyreFPQ/src/ggml_reader.c
-  source_path components/BonfyreControlPlane/fpq_evidence.py
-  source_path components/BonfyreControlPlane/fpq_pack_evidence.py
+  source_path components/BonfyreControlPlane/fpq_evidence.py.archive
+  source_path components/BonfyreControlPlane/fpq_pack_evidence.py.archive
   witness packs/fpq-proof-frontier/fixtures/tiny-f16.gguf
   witness packs/fpq-proof-frontier/measured-witness.yaff
-  witness components/BonfyreControlPlane/tests/test_fpq_evidence.py
-  witness components/BonfyreControlPlane/fpq_pack_evidence.py
+  witness cmd/BonfyreFPQ/results/2026-09-11-qwen-fpq0-header.json
+  witness cmd/BonfyreFPQ/results/2026-09-11-qwen2.5-coder-0.5b-real-tensor-v9.json measures a real 114,688-weight Qwen2.5-Coder-0.5B attention tensor through FPQ v9 transform/reconstruction (v9 cosine 0.999935 at 5.75 bits/weight, 1.23 seconds on the recorded host); the receipt explicitly excludes layer, logit, generation and task claims
+  witness cmd/BonfyreFPQ/results/2026-09-24-qwen2.5-coder-3b-attnq-v9.json measures a 4,194,304-weight Qwen2.5-Coder-3B Q4_K_M attention matrix through v8 and v9: v9 cosine 0.999939 at 4.32 bits/weight versus v8 0.999860 at 4.16 bits/weight; the receipt explicitly records the quality/size trade-off and excludes whole-model or runtime claims
+  witness cmd/BonfyreFPQ/results/2026-09-11-bitnetcpp-arm-build-refusal.json records the unmodified upstream Microsoft BitNet.cpp ARM build refusal before model execution, so the official model artifact is not mistaken for a local BitNet runtime witness
+  witness cmd/BonfyreQwenFPQ/results/2026-09-11-qwen-native-fp16-execution.json records the existing 290-tensor Qwen FPQ0 artifact through the native 24-layer runtime and four generated tokens; it is an all-passthrough native-fp16 baseline, not FPQ block execution or FPQ parity
+  witness components/BonfyreControlPlane/tests/test_fpq_evidence.py.archive
+  witness components/BonfyreControlPlane/fpq_pack_evidence.py.archive
   witness ~/BonfyreModels/fpq/*.fpq-pack.json (recorded substrate quality gates)
   source_lineage run4_institutional_fabric FPQ archive
   source_lineage mature fpqqwen substrate (HuggingFace, cmd/BonfyreQwenFPQ, ~/BonfyreModels/fpq)
-  known_gap real qwen2.5-0.5b tensor fixture (current fixture is synthetic-but-structured)
+  known_gap a real Qwen2.5-Coder-0.5B FPQ0 artifact is structurally header-verified (290 tensors / 494032768 weights) and now traverses native layer execution/generation as all passthrough tensors. The full non-passthrough FPQ population, block-local consumption, layer/logit/generation parity and useful runtime envelope remain uncompleted; the current quantitative whole-model fixture remains synthetic-but-structured
   known_gap recorded fpqqwen packs show semantic_behavior OPEN (generation parity failed) -- honest, not laundered
   reheat_condition reconstruction fixture mse exceeds ceiling
   reheat_condition fixture gguf hash changes
@@ -70,6 +83,20 @@ architecture fpq-seed
   command BonfyreFPQ
   source_path cmd/BonfyreFPQ/src/seed.c
   source_path cmd/BonfyreFPQ/src/seed_v1.c
+  source_path cmd/BonfyreFPQ/src/serialize.c
+  source_path cmd/BonfyreFPQ/tests/serialization.c
+  source_path cmd/BonfyreFPQ/tests/serialization_faults.c
+  source_path cmd/BonfyreFPQ/serialization.cue
+  source_path cmd/BonfyreFPQ/tests/serialization_contract.cue
+  witness cmd/BonfyreFPQ/tests/serialization.c verifies exact dictionary byte factoring, decoded parity with base seeds and both seed modes, independent block distortion and QJL words, legacy v1-v3 and interim v4 compatibility, truncation refusal, bounded malformed parsing and preservation of an existing destination after a failed save
+  witness cmd/BonfyreFPQ/tests/serialization_faults.c injects failure at every observed serializer allocation in legacy loading, dictionary saving and nested dictionary cloning; failed loads return no tensors and failed saves preserve the existing file
+  witness cmd/BonfyreFPQ/Makefile test-serialization validates C-emitted metadata from the actual dictionary file, empty tensor and four legacy headers against serialization.cue, and checks twelve malformed metadata refusals covering version, flags, layout, counts, mode, dictionary references and QJL word lengths
+  invariant the owner-local CUE contract constrains projected header and block-dictionary relations; the native parser and tests own binary framing, exact tree bytes, resource bounds and decoded parity
+  invariant FPQ! version 4 flag 1 selects the exact seed dictionary; version 4 flag 0 retains the interim per-block layout and no parser guesses between them
+  invariant dictionary identity includes target dimension and exact combinator bytes, including signed zero, while each block retains its own distortion, radius and QJL payload
+  invariant failed saves leave the previous destination intact; malformed or partial loads return no tensors, and unsupported coordinate or auxiliary payloads refuse instead of being discarded
+  forbidden_inference fewer stored seed bytes or unchanged decoded fixture values -> whole-model quality, useful inference or a model compression ratio
+  known_gap dictionary sharing factors the FPQ! file only; loading clones each block program for existing ownership and cleanup, and FPQ0 coordinate serialization remains a separate owner
   known_gap structural correctness only partially witnessed
   source_lineage run4_institutional_fabric FPQ archive
 
@@ -80,7 +107,11 @@ architecture fpq-mode-select
   layer model/representation
   semantic_question Which decomposition mode (FWHT / DIRECT / COORD) minimizes error-plus-cost for this block?
   purpose Lazy/thunk-based per-block mode selection; distinct from the seed combinator graph.
-  maturity measured
+  maturity implemented
+  # Demoted: every witness this carried was archived. The evidence was
+  # retired and the claim was never revisited, which is the laundering the
+  # atlas forbids -- reclaiming measured needs a witness that runs today.
+  known_gap fpq-mode-select lost its live witness to archival and holds implemented until one runs again
   node_types FPQBlock
   node_types ModeCandidate
   edge_types scored_by
@@ -90,7 +121,7 @@ architecture fpq-mode-select
   computational_form fused
   command BonfyreFPQ
   source_path cmd/BonfyreFPQ/src/fpq_codec_v2.c
-  witness components/BonfyreControlPlane/tests/test_fpq_evidence.py
+  witness components/BonfyreControlPlane/tests/test_fpq_evidence.py.archive
   source_lineage run4_institutional_fabric FPQ archive
 
 architecture sli-execution
@@ -132,3 +163,39 @@ architecture kv-temporal
   command BonfyreKVCache
   source_path cmd/BonfyreKVCache
   known_gap semantic retention (Quest integration) not yet witnessed
+
+architecture vector-body-admission
+  canonical_name VectorBodyAdmission
+  family learning
+  domain Learning
+  maturity measured
+  semantic_question Does the store hold the body it was offered, and does it say so when it does not?
+  # The vector insert discarded the result of its own step. A body of the wrong
+  # width is rejected by the vector table, but the metadata row had already been
+  # written and the counter had already been incremented, so a run reporting
+  # `inserted: 1` left `artifacts: 1, vectors: 0` and exited zero. The store
+  # held an artifact with no body and nothing said so.
+  #
+  # Underneath it the parser stopped at the store's width, so a longer vector was
+  # truncated and stored as though whole -- worse than a refusal, because the
+  # store then holds a different vector from the one offered and every neighbour
+  # computed against it is wrong in a way nothing records.
+  node_types VectorBody
+  node_types ArtifactRow
+  edge_types stored_as
+  state_types stored
+  state_types refused
+  invariant a body whose width differs from the store's is refused before anything is written, so a refusal leaves nothing behind
+  invariant the result of every write is checked, and only a write that completed increments the count
+  invariant an import offered input and storing nothing exits non-zero; exiting zero after storing nothing is how an empty store comes to be believed populated
+  invariant a parser reports the real length it was offered rather than the length it could accept; truncating to the accepted width stores a different vector under the offered one's name
+  invariant the artifact count and the vector count are two halves of one record and never disagree
+  forbidden_inference a reported insert -> a stored body
+  forbidden_inference a stored vector -> a correct or current one
+  computational_form storage
+  native_format json
+  source_path cmd/BonfyreVec/src/main.c
+  witness cmd/BonfyreVec/tests/width_admission_test.sh
+  measured a 32-wide and a 512-wide body are both refused with the real width named, leaving zero artifacts and zero vectors; a 384-wide body stores one of each
+  witness 2026-10-12 cmd/BonfyreVec/tests/width_admission_test.sh (24 checks) creates a store with init --dims 768, stores and finds a 768-wide body, refuses a 384-wide one without leaving a row, and refuses to re-make an existing store at another width; insert now reads the width from the store's own declaration instead of a compiled constant
+  known_gap a store is still one width for its whole life; changing embedding model means making a new store and re-embedding, and nothing migrates one

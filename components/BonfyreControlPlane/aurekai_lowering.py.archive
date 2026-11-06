@@ -1,0 +1,47 @@
+"""Proof-gated Aurekai LOWER/LIFT control state.
+
+M2 builds this machinery; a real repeated circuit and mutation proof remain the
+separate M9 mission.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, replace
+
+LOWERED = "LOWERED"
+LIFTED = "LIFTED"
+
+
+@dataclass(frozen=True)
+class ValidityEnvelope:
+    dependency_refs: frozenset[str]
+    proof_ref: str
+    causal_frontier: str
+
+
+@dataclass(frozen=True)
+class LoweringRecord:
+    circuit_id: str
+    rich_digest: str
+    lowered_digest: str
+    envelope: ValidityEnvelope
+    state: str = LOWERED
+    lift_reason: str = ""
+
+
+def lower(*, circuit_id: str, rich_digest: str, lowered_digest: str,
+          equivalent: bool, envelope: ValidityEnvelope) -> LoweringRecord:
+    if not equivalent or not envelope.proof_ref:
+        raise ValueError("LOWER requires equivalence evidence")
+    if not envelope.dependency_refs:
+        raise ValueError("LOWER requires an invalidation envelope")
+    return LoweringRecord(circuit_id, rich_digest, lowered_digest, envelope)
+
+
+def lift_on_change(record: LoweringRecord,
+                   changed_refs: frozenset[str]) -> LoweringRecord:
+    hit = record.envelope.dependency_refs & changed_refs
+    if not hit:
+        return record
+    return replace(record, state=LIFTED,
+                   lift_reason="dependency_change:" + ",".join(sorted(hit)))

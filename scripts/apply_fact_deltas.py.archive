@@ -1,0 +1,126 @@
+#!/usr/bin/env python3
+"""Consume FactDeltas: recompute only what a birth actually touched.
+
+Births emit a delta naming every store they wrote. Nothing read them, which
+made the delta a record with no consequence -- and a write set that changes
+nothing is indistinguishable from one nobody bothered to emit.
+
+This is the consumer. It reads unapplied deltas, maps each write to the
+derivation it invalidates, and recomputes only those. Today the mapping that
+matters is `cms:<type>` -> that type's ANN index: a birth writes one authored
+body, and the index over that type is stale until it is rebuilt. Rebuilding
+every index on every birth would work and would be exactly the "recompute the
+whole answer on a change" that a delta exists to avoid.
+
+Applied deltas are marked rather than deleted. A delta is a record of what
+happened; deleting it to signify completion would destroy the history to store
+one bit, and the same reasoning applies here as to superseded observations.
+
+Cannot infer: an applied delta -> a correct index. It records that the
+recomputation ran over what the write set named.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+DEFAULT_DELTAS = Path("/var/lib/bonfyre/births/deltas")
+APPLIED = "applied"
+
+
+def load(path: Path) -> dict | None:
+    try:
+        return json.loads(path.read_text())
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def affected_types(delta: dict) -> set[str]:
+    """Which authored types this delta invalidated.
+
+    Only cms: writes invalidate an index. A matrix_subjects write changes
+    identity, not the vectors an index is built from, and rebuilding on it
+    would be recomputation the delta did not ask for.
+    """
+    out: set[str] = set()
+    for write in delta.get("writes", []):
+        if isinstance(write, str) and write.startswith("cms:"):
+            name = write.split(":", 1)[1].strip()
+            if name and name.replace("_", "").isalnum():
+                out.add(name)
+    return out
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--deltas", default=str(DEFAULT_DELTAS))
+    ap.add_argument("--cms", default="/usr/local/bin/bonfyre-cms")
+    ap.add_argument("--db", default="/var/lib/bonfyre/cms/bonfyre_cms.db")
+    ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--json", action="store_true")
+    args = ap.parse_args()
+
+    root = Path(args.deltas)
+    if not root.is_dir():
+        print(f"no delta directory at {root}", file=sys.stderr)
+        return 1
+
+    pending, types, applied_files = [], set(), []
+    for path in sorted(root.glob("*.json")):
+        delta = load(path)
+        if not delta or delta.get(APPLIED):
+            continue
+        pending.append(path)
+        types |= affected_types(delta)
+
+    rebuilt: dict[str, int] = {}
+    if not args.dry_run:
+        for content_type in sorted(types):
+            try:
+                result = subprocess.run(
+                    [args.cms, "ann", "build", content_type, "--db", args.db],
+                    capture_output=True, text=True, timeout=120)
+                indexed = json.loads(result.stdout.strip().splitlines()[-1]).get("indexed", -1)
+            except Exception:  # noqa: BLE001
+                indexed = -1
+            rebuilt[content_type] = indexed
+        for path in pending:
+            delta = load(path)
+            if not delta:
+                continue
+            delta[APPLIED] = True
+            try:
+                path.write_text(json.dumps(delta, indent=2) + "\n")
+                applied_files.append(path.name)
+            except Exception:  # noqa: BLE001
+                pass
+
+    report = {
+        "schema": "bonfyre.fact-delta.apply.v1",
+        "pending_deltas": len(pending),
+        "invalidated_types": sorted(types),
+        "rebuilt": rebuilt,
+        "applied": len(applied_files),
+        "dry_run": bool(args.dry_run),
+        "forbidden_inference": (
+            "an applied delta is not a correct index; it records that the recomputation "
+            "ran over what the write set named"
+        ),
+    }
+    if args.json:
+        print(json.dumps(report, indent=2))
+    else:
+        print(f"pending deltas: {len(pending)}")
+        print(f"invalidated:    {', '.join(sorted(types)) or '(nothing)'}")
+        for name, n in rebuilt.items():
+            print(f"  rebuilt {name}: {n} indexed")
+        if not args.dry_run:
+            print(f"marked applied:  {len(applied_files)}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

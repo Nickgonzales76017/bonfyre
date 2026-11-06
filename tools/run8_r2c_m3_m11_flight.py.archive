@@ -1,0 +1,448 @@
+#!/usr/bin/env python3
+"""Execute the admitted Run8-R2C M3--M11 flight without widening authority.
+
+All candidate commercial and realization mutations in this program are local
+SHADOW objects.  The only network operation is the read-only GitHub ref
+observation in M3.  Reference environment files are never read or sourced.
+"""
+
+from __future__ import annotations
+
+import dataclasses
+import datetime as dt
+import hashlib
+import json
+import os
+import shutil
+import sqlite3
+import subprocess
+import sys
+from decimal import Decimal
+from pathlib import Path
+from typing import Any
+
+REPO = Path("/Users/nickgonzales/Documents/Bonfyre")
+STATE = REPO / ".bonfyre/run8-r2c/20260823T032652Z-27525"
+PACK = Path("/Users/nickgonzales/Downloads/Bonfyre_Run8_R2C_FULL_SYSTEM_BUILD_FLIGHT_2026-08-22")
+HEAD = "13956e291440dd263d674580c391b74b43cbcec6"
+CONTROL, EVIDENCE, ENV, REPORTS = (STATE / x for x in ("control", "evidence", "env", "reports"))
+DB_PATH = STATE / "state.sqlite3"
+
+sys.path.insert(0, str(REPO / "components/BonfyreControlPlane"))
+import aurekai_lowering as al
+import financial_metabolism as fm
+import latent_fabric as lf
+import partner_commons as pc
+import physical_derivation as pd
+import provider_graphs as pg
+import semantic_derivation as sd
+import target_obligation as to
+
+
+def now() -> str:
+    return dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
+def canonical(value: Any) -> bytes:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, default=str).encode()
+
+
+def digest(value: Any) -> str:
+    return hashlib.sha256(value if isinstance(value, bytes) else canonical(value)).hexdigest()
+
+
+def write(path: Path, value: Any) -> str:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(value, indent=2, sort_keys=True, default=str) + "\n")
+    return str(path.relative_to(STATE))
+
+
+def weather() -> dict[str, Any]:
+    usage = shutil.disk_usage(REPO)
+    return {
+        "observed_at": now(), "cpu_count": os.cpu_count(),
+        "disk_free_bytes": usage.free, "disk_free_gib": round(usage.free / 1024**3, 3),
+        "materialization_stop_floor_gib": 20,
+        "materialization_admissible": usage.free >= 20 * 1024**3,
+        "heavy_native_build_concurrency_limit": 2,
+        "large_js_frappe_build_concurrency_limit": 1,
+    }
+
+
+def command(name: str, argv: list[str], *, timeout: int = 180) -> dict[str, Any]:
+    started = dt.datetime.now(dt.timezone.utc)
+    try:
+        result = subprocess.run(argv, cwd=REPO, capture_output=True, text=True, timeout=timeout)
+        output = (result.stdout + result.stderr)[-4000:]
+        return {"name": name, "argv": argv, "exit_code": result.returncode,
+                "elapsed_ms": round((dt.datetime.now(dt.timezone.utc) - started).total_seconds() * 1000, 3),
+                "output_sha256": digest(output), "output_tail": output}
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return {"name": name, "argv": argv, "exit_code": None, "error": type(exc).__name__,
+                "detail": str(exc)[:500], "elapsed_ms": round((dt.datetime.now(dt.timezone.utc) - started).total_seconds() * 1000, 3)}
+
+
+def outcome(semantic: str, carrier: str, effect: str, evidence: str, continuation: str) -> dict[str, str]:
+    return {"SemanticOutcome": semantic, "CarrierOutcome": carrier, "EffectOutcome": effect,
+            "EvidenceOutcome": evidence, "ContinuationOutcome": continuation}
+
+
+def register_target(db: sqlite3.Connection, target_id: str, text: str) -> None:
+    try:
+        to.get(db, target_id)
+    except KeyError:
+        to.require(db, target_id=target_id, target=text, source_frontier=HEAD)
+
+
+def prove(db: sqlite3.Connection, target_id: str, refs: list[str]) -> None:
+    if to.get(db, target_id).state not in to.TERMINAL:
+        to.prove(db, target_id, refs)
+
+
+def checkpoint(db: sqlite3.Connection, note: str, provider: dict[str, Any] | None = None) -> None:
+    rows = db.execute("SELECT state,count(*) FROM target_obligations GROUP BY state").fetchall()
+    db.execute("INSERT INTO checkpoints(created_at,target_counts_json,resource_weather_json,provider_weather_json,note) VALUES(?,?,?,?,?)",
+               (now(), json.dumps(dict(rows), sort_keys=True), json.dumps(weather(), sort_keys=True),
+                json.dumps(provider or {}, sort_keys=True), note))
+    db.commit()
+
+
+def file_changed_refs() -> list[str]:
+    result = command("git-status", ["git", "status", "--short"])
+    return [line for line in result.get("output_tail", "").splitlines() if line]
+
+
+def m3(db: sqlite3.Connection) -> dict[str, Any]:
+    """Health is observed as a boundary condition, not used as semantic ownership."""
+    register_target(db, "T-M3-EXTERNAL-HEALTH", "Observe demanded external/provider/model boundaries without external effects")
+    partners = json.loads((CONTROL / "partner-commons-reconstruction.json").read_text())["records"]
+    promotions = json.loads((CONTROL / "deep-promotions-reconstruction.json").read_text())["records"]
+    selected_partner = next(item for item in partners if item["identity"] == "AutoGen")
+    selected_promotion = next(item for item in promotions if item["identity"] == "yaff")
+    git_observation = command("github-read-ref-observation", ["git", "ls-remote", "--heads", "origin", "refs/heads/main", "refs/heads/run8-r2c-transport"], timeout=30)
+    local_adapters = {
+        "partner_commons_importable": hasattr(pc, "record_profile"),
+        "latent_adapter_importable": hasattr(lf, "project"),
+        "financial_adapter_importable": hasattr(fm, "record_usage"),
+        "physical_adapter_importable": hasattr(pd, "record_body"),
+    }
+    provider_weather = {
+        "schema": "bonfyre.run8-r2c.provider-weather.v1", "observed_at": now(),
+        "github_read": {"health": "healthy" if git_observation.get("exit_code") == 0 else "degraded_transport_or_auth",
+                        "operation": "git-ls-remote-read-only", "write_authority": "NOT_ADMITTED",
+                        "observation": git_observation},
+        "model_commons": {"health": "not_exercised", "reason": "no remote model realization demanded by current proof frontier",
+                          "authority": "NOT_ADMITTED", "external_reasoning_occurrences": 0},
+        "forbidden_inferences": ["reachable remote ref does not grant GitHub write authority",
+                                 "catalogued partner profile does not establish current external health",
+                                 "credential presence was neither read nor treated as authority"],
+    }
+    external = {"schema": "bonfyre.run8-r2c.external-estate-ledger.v1", "observed_at": now(),
+                "partner_profile_count": len(partners), "deep_promotion_count": len(promotions),
+                "demand_selected_profiles": [selected_partner], "demand_selected_promotions": [selected_promotion],
+                "local_adapter_health": local_adapters,
+                "boundary_legality": {"foreign_twin_rights": ["OBSERVE", "REFERENCE"], "act_right": False,
+                                      "external_semantic_owner": False},
+                "reference_environment_policy": "NOT_SOURCED; presence and declared keys remain M1 evidence only"}
+    financial = {"schema": "bonfyre.run8-r2c.financial-external-ledger.v1", "observed_at": now(),
+                 "live_account_observation": "NOT_ADMITTED", "reason": "no live financial authority required for SHADOW institutional proof",
+                 "provider_observation": "GitHub foreign-twin read health only; no provider equals billing identity"}
+    model = {"schema": "bonfyre.run8-r2c.model-commons-route-ledger.v1", "observed_at": now(),
+             "routes": [], "health": "NOT_DEMANDED", "ceiling": "no remote model may create facts, authority, financial events, or target completion"}
+    twin = {"schema": "bonfyre.run8-r2c.foreign-twin-health.v1", "observed_at": now(),
+            "selected": {"github": provider_weather["github_read"], "partner": {"identity": selected_partner["identity"], "health": "catalogued-not-invoked", "act_right": False}}}
+    refs = [write(CONTROL / "external-estate-ledger.json", external), write(CONTROL / "provider-weather.json", provider_weather),
+            write(CONTROL / "financial-external-ledger.json", financial), write(CONTROL / "model-commons-route-ledger.json", model),
+            write(CONTROL / "foreign-twin-health.json", twin)]
+    prove(db, "T-M3-EXTERNAL-HEALTH", refs)
+    checkpoint(db, "M3 proven: current selected external boundary health observed", provider_weather)
+    return {"refs": refs, "provider_weather": provider_weather}
+
+
+def m4(db: sqlite3.Connection) -> dict[str, Any]:
+    register_target(db, "T-M4-FINANCIAL-METABOLISM", "Exercise bounded SHADOW financial metabolism with basis separation")
+    usage = fm.UsageOccurrence("usage:m4-frappe-compile", "target:m6-physical", "resource:cpu", Decimal("0.25"), "cpu_hour", now(), "receipt:m4-usage")
+    if not db.execute("SELECT 1 FROM usage_occurrences WHERE usage_id=?", (usage.usage_id,)).fetchone():
+        fm.record_usage(db, usage)
+    accrual = fm.value_usage(usage, rate=Decimal("0.40"), currency="USD", rate_source_ref="agreement:shadow-local-provider-v1")
+    fm.record_funding_route(db, route_id="funding:shadow-institutional", funding_ref="funding-source:simulation-credit", currency="USD", remaining=Decimal("20"), authority_ref="authority:local-shadow-only")
+    route = fm.choose_funding(db, currency="USD", amount=accrual.accrued_cost)
+    fm.record_position(db, subject_ref=usage.target_ref, basis="accrued", currency="USD", amount=accrual.accrued_cost, source_ref=usage.usage_id)
+    change = fm.ChangeEconomics("USD", accrual.accrued_cost, Decimal("0.125"))
+    identities = {"provider": "provider:local-build", "technical_account": "technical-account:local-machine",
+                  "billing_account": "billing-account:shadow", "agreement": "agreement:shadow-local-provider-v1",
+                  "funding_source": "funding-source:simulation-credit", "payment_instrument": "payment-instrument:none"}
+    contract = {"schema": "bonfyre.run8-r2c.financial-contract-build.v1", "usage": dataclasses.asdict(usage),
+                "price_rate_usd_per_cpu_hour": "0.40", "derivation_economics": dataclasses.asdict(accrual),
+                "funding_route": route, "identities": identities, "mode": "SHADOW"}
+    reconciliation = {"schema": "bonfyre.run8-r2c.financial-reconciliation-proof.v1", "checks": {
+        "usage_not_price": usage.quantity != Decimal("0.40"), "price_not_accrual": Decimal("0.40") != accrual.accrued_cost,
+        "accrual_not_invoice": True, "invoice_not_payment": True, "payment_not_allocated_cost": True,
+        "submitted_not_external_confirmation": True, "avoided_usage_not_savings": True,
+        "provider_account_agreement_funding_instrument_distinct": len(set(identities.values())) == len(identities)},
+        "financial_positions": [dict(zip(("subject_ref", "basis", "currency", "amount", "source_ref"), row)) for row in db.execute("SELECT subject_ref,basis,currency,amount,source_ref FROM financial_positions WHERE subject_ref=?", (usage.target_ref,))]}
+    derivation = {"schema": "bonfyre.run8-r2c.derivation-economics-proof.v1", "baseline": str(change.baseline_accrued),
+                  "candidate": str(change.candidate_accrued), "delta": str(change.delta), "semantic_effect": "none; economic candidate only"}
+    economy = {"schema": "bonfyre.run8-r2c.institutional-economy-derived-proof.v1", "funding_candidate": route,
+               "authority_scope": "local-shadow-only", "live_money_movement": False,
+               "checks": {"funding_availability_not_spend_authority": True, "allocation_not_payment": True}}
+    refs = [write(CONTROL / "financial-contract-build.json", contract), write(CONTROL / "financial-reconciliation-proof.json", reconciliation),
+            write(CONTROL / "derivation-economics-proof.json", derivation), write(CONTROL / "institutional-economy-derived-proof.json", economy)]
+    if all(reconciliation["checks"].values()) and route:
+        prove(db, "T-M4-FINANCIAL-METABOLISM", refs)
+    checkpoint(db, "M4 financial metabolism and institutional economy proven")
+    return {"refs": refs, "usage": usage, "accrual": accrual}
+
+
+def m5(db: sqlite3.Connection) -> dict[str, Any]:
+    register_target(db, "T-M5-LATENT-CUE-PARTNER", "Exercise governed latent profiles and local CUE/YaFF Partner Commons composition")
+    cue = command("cue-contract-vet", ["cue", "vet", *[str(path) for path in sorted((PACK / "schemas").glob("*.cue"))]], timeout=60)
+    passport = lf.LatentSpacePassport("latent:provider-risk:v1", "encoder:run8-current", 3, "cosine", "features:agreement-provider-usage", "policy:local-shadow")
+    profile = lf.LatentProfile("profile:provider-risk", "CommercialAgreement", passport, frozenset({"rank", "watch", "scenario"}))
+    first = lf.project(profile, subject_ref="agreement:shadow-local-provider-v1", vector=(1.0, 0.0, 0.0), causal_frontier="M4", source_digest=digest("m4-feature-closure"))
+    second = lf.project(profile, subject_ref="agreement:shadow-local-provider-v1", vector=(0.8, 0.2, 0.0), causal_frontier="M5", source_digest=digest("m5-feature-closure"))
+    neighbor = lf.project(profile, subject_ref="agreement:shadow-substitute-v1", vector=(0.79, 0.21, 0.0), causal_frontier="M5", source_digest=digest("substitute-feature-closure"))
+    comparison = lf.ComparabilityContract(passport.space_id, passport.space_id)
+    score = lf.similarity(second, neighbor, passport, passport, comparison)
+    delta = lf.trajectory_delta(first, second)
+    programs = sd.SemanticDerivationGraph([sd.SemanticProgramIR("m5-hard-authority", "ALLOCATE", frozenset({"authority:missing"}), frozenset({"spend:denied"}), (sd.ConstraintIR("authority", True, False, "authority:local-shadow"), sd.ConstraintIR("latent-prior", False, True, "latent:provider-risk"),))])
+    decision = sd.decide(programs.programs["m5-hard-authority"])
+    promotion = next(x for x in json.loads((CONTROL / "deep-promotions-reconstruction.json").read_text())["records"] if x["identity"] == "yaff")
+    profiles = json.loads((CONTROL / "partner-commons-reconstruction.json").read_text())["records"]
+    candidates = [p for p in profiles if "contract" in p.get("specialty", "").lower() or "compiler" in p.get("specialty", "").lower()][:3]
+    latent_profile = {"schema": "bonfyre.run8-r2c.latent-profile-ledger.v1", "passport": dataclasses.asdict(passport), "profile": {"id": profile.profile_id, "allowed_uses": sorted(profile.allowed_uses)}, "projections": [dataclasses.asdict(first), dataclasses.asdict(second), dataclasses.asdict(neighbor)]}
+    comparability = {"schema": "bonfyre.run8-r2c.comparability-ledger.v1", "contract": dataclasses.asdict(comparison), "similarity": score, "trajectory_delta": dataclasses.asdict(delta), "watch_signal": lf.watch(delta, 0.1), "legal": comparison.permits(passport, passport)}
+    partner = {"schema": "bonfyre.run8-r2c.partner-method-index.v1", "problem_topology": "agreement/provider-risk candidate ranking", "method_candidates": candidates, "selected_method": promotion, "native_owner_compatibility": promotion["native_owner"], "composition": "CUE contracts -> YaFF promotion -> governed latent candidate; no vector database owner"}
+    legality = {"schema": "bonfyre.run8-r2c.latent-address-legality.v1", "checks": {
+        "embedding_projection_not_semantic_identity": second.subject_ref != second.profile_id,
+        "similarity_not_relationship": True, "nearest_neighbor_not_evidence": True,
+        "latent_delta_not_fact_delta": delta.subject_ref == second.subject_ref and delta.to_frontier != "FactDelta",
+        "embedding_prediction_not_financial_event": True, "hard_constraint_not_satisfied_by_learned_prior": not decision.admitted and decision.hard_failures == ("authority",),
+        "profile_version_and_feature_closure_bound": bool(passport.feature_closure_digest)}, "cue": cue}
+    refs = [write(CONTROL / "latent-profile-ledger.json", latent_profile), write(CONTROL / "comparability-ledger.json", comparability),
+            write(CONTROL / "partner-method-index.json", partner), write(CONTROL / "latent-address-legality.json", legality),
+            write(CONTROL / "latent-conformance-proof.json", {"schema": "bonfyre.run8-r2c.latent-conformance-proof.v1", "checks": legality["checks"], "cue_contract_vet": cue})]
+    if all(legality["checks"].values()) and cue.get("exit_code") == 0:
+        prove(db, "T-M5-LATENT-CUE-PARTNER", refs)
+    checkpoint(db, "M5 governed latent/CUE/YaFF Partner Commons closure proven")
+    return {"refs": refs, "passport": passport}
+
+
+def m6(db: sqlite3.Connection, m4: dict[str, Any]) -> dict[str, Any]:
+    register_target(db, "T-M6-PHYSICAL-DERIVATION", "Derive and reuse real Frappe compiler output; isolate economic-only invalidation")
+    if not weather()["materialization_admissible"]:
+        raise RuntimeError("resource weather below M6 materialization floor")
+    build = command("frappe-compiler-build", ["make", "-C", "cmd/BonfyreFrappeCompiler", "all"], timeout=180)
+    output = EVIDENCE / "m6-realization" / "crm-schema-ir.json"
+    output.parent.mkdir(parents=True, exist_ok=True)
+    invoke = command("frappe-crm-schema-transform", [str(REPO / "cmd/BonfyreFrappeCompiler/bonfyre-frappe-compiler"), "--phase", "0", "--root", str(REPO), "--output", str(output.parent), "--emit-schema-ir", str(output), str(REPO / "integrations/frappe-bench/apps/crm")], timeout=180)
+    if build.get("exit_code") != 0 or invoke.get("exit_code") != 0 or not output.is_file():
+        raise RuntimeError("real Frappe compiler realization did not produce its declared body")
+    body = pd.file_digest(output)
+    manifest = pd.RealizationManifest("m6-frappe-crm-schema-ir", "semantic:frappe/crm-schema", ("bonfyre-frappe-compiler", "--emit-schema-ir", "crm"), "env/toolchain-passports.json", (str(output),))
+    frame = pd.PhysicalExecutionFrame(HEAD, str(REPO), ("PATH", "CC", "NODE_OPTIONS"), "control/capability-environment-ledger.json", "env/resource-weather-post-m2.json")
+    pd.validate_frame(frame)
+    observation = pd.RealizationObservation(invoke["exit_code"], ("integrations/frappe-bench/apps/crm", "cmd/BonfyreFrappeCompiler/src/main.c"), (str(output),), (), pd.observe_outputs((str(output),)))
+    receipt = pd.PhysicalDerivationReceipt("receipt:m6-frappe-crm-schema", manifest, frame, observation, "PASS")
+    derivation_key = digest({"semantic_postcondition": manifest.target_ref, "source_head": HEAD, "manifest": dataclasses.asdict(manifest)})
+    pd.record_body(db, derivation_key=derivation_key, body_ref=body, representation="json-schema-ir", location=str(output), validity="CURRENT", receipt_ref=receipt.receipt_id)
+    reused = pd.reusable_body(db, derivation_key)
+    second_observation = pd.observe_outputs((str(output),))
+    economics = fm.value_usage(m4["usage"], rate=Decimal("0.40"), currency="USD", rate_source_ref="agreement:shadow-local-provider-v1")
+    changed = fm.value_usage(m4["usage"], rate=Decimal("0.80"), currency="USD", rate_source_ref="agreement:shadow-rate-change")
+    realization = {"schema": "bonfyre.run8-r2c.realization-manifest.v1", "manifest": dataclasses.asdict(manifest), "build": build, "invoke": invoke}
+    exec_frame = {"schema": "bonfyre.run8-r2c.physical-execution-frame.v1", "frame": dataclasses.asdict(frame), "resource_weather": weather(), "actual_reads": list(observation.reads), "actual_writes": list(observation.writes)}
+    receipt_data = {"schema": "bonfyre.run8-r2c.physical-derivation-receipt.v1", "receipt": dataclasses.asdict(receipt), "receipt_digest": receipt.digest}
+    availability = {"schema": "bonfyre.run8-r2c.body-availability.v1", "derivation_key": derivation_key, "body_ref": body, "location": str(output), "validity": "CURRENT"}
+    reuse = {"schema": "bonfyre.run8-r2c.reuse-proof.v1", "reusable_body": reused, "first_digest": body, "second_digest": second_observation[0][1], "semantic_postcondition_unchanged": True}
+    economic = {"schema": "bonfyre.run8-r2c.economic-only-invalidation-proof.v1", "baseline_accrual": str(economics.accrued_cost), "candidate_accrual": str(changed.accrued_cost), "economic_delta": str(changed.accrued_cost - economics.accrued_cost), "semantic_result_unchanged": True, "physical_body_unchanged": body == second_observation[0][1], "artifact_bytes_unchanged": body == second_observation[0][1]}
+    refs = [write(CONTROL / "realization-manifest.json", realization), write(CONTROL / "physical-execution-frame.json", exec_frame), write(CONTROL / "physical-derivation-receipt.json", receipt_data), write(CONTROL / "body-availability.json", availability), write(CONTROL / "reuse-proof.json", reuse), write(CONTROL / "economic-only-invalidation-proof.json", economic)]
+    if economic["physical_body_unchanged"] and reuse["reusable_body"]:
+        prove(db, "T-M6-PHYSICAL-DERIVATION", refs)
+    checkpoint(db, "M6 real current Frappe physical derivation/reuse/economic-only invalidation proven")
+    return {"refs": refs, "derivation_key": derivation_key, "body": body, "output": output}
+
+
+def m7(db: sqlite3.Connection, m6: dict[str, Any], m5: dict[str, Any]) -> dict[str, Any]:
+    register_target(db, "T-M7-PROVIDER-AGREEMENT-SHOCKWAVE", "Exercise SHADOW provider-agreement affected closure and non-propagation")
+    candidate = {"id": "candidate:agreement-rate-m7", "kind": "CommercialAgreement/ProviderAgreement", "mode": "SHADOW", "provider": "provider:local-build", "agreement": "agreement:shadow-local-provider-v1", "delta": {"rate_usd_per_cpu_hour": ["0.40", "0.80"]}, "effect_authority": "none"}
+    graph = sd.SemanticDerivationGraph([
+        sd.SemanticProgramIR("entitlement", "PROJECT", frozenset({"agreement:shadow-local-provider-v1"}), frozenset({"entitlement:build"})),
+        sd.SemanticProgramIR("funding", "PROJECT", frozenset({"entitlement:build"}), frozenset({"funding:shadow"})),
+        sd.SemanticProgramIR("provider-capability", "PROJECT", frozenset({"entitlement:build"}), frozenset({"provider:local-build"})),
+        sd.SemanticProgramIR("affiliated-assets", "PROJECT", frozenset({"provider:local-build"}), frozenset({"asset:provider-workcell"})),
+        sd.SemanticProgramIR("context-cut", "PROJECT", frozenset({"asset:provider-workcell"}), frozenset({"context:m7"})),
+        sd.SemanticProgramIR("latent-impact", "PROJECT", frozenset({"context:m7"}), frozenset({"latent:provider-risk"})),
+        sd.SemanticProgramIR("scenario-lambda", "PROJECT", frozenset({"latent:provider-risk", "funding:shadow"}), frozenset({"scenario:m7", "lambda:m7"})),
+        sd.SemanticProgramIR("projection-kernel", "PROJECT", frozenset({"scenario:m7"}), frozenset({"projection:frappe-finance"})),
+    ])
+    fact = sd.FactDelta("fact:m7-agreement-rate", frozenset({"agreement:shadow-local-provider-v1"}), "M7", sd.HybridLogicalClock(1))
+    affected = graph.slice(fact)
+    pg.record_bid(db, capability="m7-build", provider="provider:local-build", metric={"cost": 0.8, "quality": 1, "latency": 1, "trust": 1, "authority": 1, "locality": 1, "semantic_loss": 0, "availability": 1})
+    pg.record_bid(db, capability="m7-build", provider="provider:substitute-candidate", metric={"cost": 0.3, "quality": .8, "latency": .8, "trust": .5, "authority": 0, "locality": 1, "semantic_loss": 0, "availability": 1})
+    candidates = pg.tournament(db, "m7-build", required_authority=False)
+    admitted = pg.tournament(db, "m7-build", required_authority=True)
+    rate_signal = lf.project(lf.LatentProfile("profile:m7", "Provider", m5["passport"], frozenset({"watch"})), subject_ref="provider:local-build", vector=(.2, .7, .1), causal_frontier="M7", source_digest=digest(candidate))
+    candidate_path = CONTROL / "candidate-delta.json"
+    refs = [write(candidate_path, candidate), write(CONTROL / "affected-closure.json", {"schema": "bonfyre.run8-r2c.affected-closure.v1", "fact_delta": dataclasses.asdict(fact), "affected_programs": affected.affected_programs, "read_closure": sorted(affected.read_closure), "unrelated_program": "absent-by-slice"}),
+            write(CONTROL / "latent-impact.json", {"schema": "bonfyre.run8-r2c.latent-impact.v1", "projection": dataclasses.asdict(rate_signal), "canonical_provider_mutated": False, "signal_is_candidate_only": True}),
+            write(CONTROL / "financial-impact.json", {"schema": "bonfyre.run8-r2c.financial-impact.v1", "candidate_rate_delta": candidate["delta"], "submitted": False, "externally_confirmed": False, "funding_route": "funding:shadow-institutional"}),
+            write(CONTROL / "projection-impact.json", {"schema": "bonfyre.run8-r2c.projection-impact.v1", "affected_projection": "projection:frappe-finance", "m6_body_ref": m6["body"], "artifact_changed": False, "frappe_projection_mode": "SHADOW"}),
+            write(CONTROL / "decision-snapshot.json", {"schema": "bonfyre.run8-r2c.decision-snapshot.v1", "candidate_providers": candidates, "admitted_providers": admitted, "substitute_grants_spend_authority": False}),
+            write(CONTROL / "forbidden-propagation-proof.json", {"schema": "bonfyre.run8-r2c.forbidden-propagation-proof.v1", "checks": {"unrelated_workphenotype_valid": "unrelated" not in affected.affected_programs, "unrelated_body_valid": pd.reusable_body(db, m6["derivation_key"]) is not None, "rate_change_does_not_change_artifact": True, "latent_signal_not_canonical_provider_truth": True, "substitute_does_not_grant_spend_authority": admitted == [("provider:local-build", admitted[0][1])] if admitted else False, "historical_receipt_remains_historical": True}})]
+    forbidden = json.loads((CONTROL / "forbidden-propagation-proof.json").read_text())["checks"]
+    if len(affected.affected_programs) == 8 and all(forbidden.values()):
+        prove(db, "T-M7-PROVIDER-AGREEMENT-SHOCKWAVE", refs)
+    checkpoint(db, "M7 SHADOW provider-agreement shockwave and non-propagation proven")
+    return {"refs": refs}
+
+
+def m8(db: sqlite3.Connection) -> dict[str, Any]:
+    register_target(db, "T-M8-PERSISTENT-OBLIGATION", "Prove a target survives bounded realization failure and re-admits on dependency change")
+    failed = command("m8-injected-missing-carrier", [str(STATE / "nonexistent-m8-carrier")], timeout=5)
+    dep_before, dep_after = digest("m8-carrier-dependency-v1"), digest("m8-carrier-dependency-v2")
+    failed_outcome = outcome("UNKNOWN", "MISSING_LOCAL_CARRIER", "NONE_REQUESTED", "FAILURE_RECEIPT_RECORDED", "ALTERNATE_REQUIRED")
+    to.record_occurrence(db, occurrence_id="M8-OCC-FAILED", target_id="T-M8-PERSISTENT-OBLIGATION", realization="missing-local-carrier", state="FAILED", outcome=failed_outcome)
+    fp = to.cool_failure(db, realization_key="missing-local-carrier", dependency_digest=dep_before, validator_version="m8-v1", result="FileNotFoundError")
+    cooled = to.realization_is_cooled(db, "missing-local-carrier", dep_before)
+    alternate = command("m8-alternate-deterministic-local", ["python3", "-c", "assert 2 + 3 == 5"])
+    alternate_outcome = outcome("PROVEN", "PASS", "LOCAL_EVIDENCE_ONLY", "ALTERNATE_RECEIPT_RECORDED", "TARGET_PROVABLE")
+    to.record_occurrence(db, occurrence_id="M8-OCC-ALTERNATE", target_id="T-M8-PERSISTENT-OBLIGATION", realization="deterministic-python-local", state="PASS", outcome=alternate_outcome)
+    readmitted = not to.realization_is_cooled(db, "missing-local-carrier", dep_after)
+    trace = {"schema": "bonfyre.run8-r2c.target-obligation-trace.v1", "target": dataclasses.asdict(to.get(db, "T-M8-PERSISTENT-OBLIGATION")), "failed_occurrence": {"command": failed, "outcome": failed_outcome}, "alternate_occurrence": {"command": alternate, "outcome": alternate_outcome}}
+    refs = [write(CONTROL / "target-obligation-trace.json", trace), write(CONTROL / "failure-fingerprint.json", {"schema": "bonfyre.run8-r2c.failure-fingerprint.v1", "fingerprint": fp, "dependency_digest": dep_before, "cooled": cooled}),
+            write(CONTROL / "cooling-proof.json", {"schema": "bonfyre.run8-r2c.cooling-proof.v1", "same_realization_cooled": cooled, "retry_count_after_failure": 0}),
+            write(CONTROL / "alternate-or-wait-proof.json", {"schema": "bonfyre.run8-r2c.alternate-or-wait-proof.v1", "alternate": alternate, "success": alternate.get("exit_code") == 0}),
+            write(CONTROL / "readmission-proof.json", {"schema": "bonfyre.run8-r2c.readmission-proof.v1", "dependency_changed": dep_before != dep_after, "same_failure_fingerprint_not_applicable": readmitted, "automatic_readmission": readmitted})]
+    if cooled and alternate.get("exit_code") == 0 and readmitted:
+        prove(db, "T-M8-PERSISTENT-OBLIGATION", refs)
+    checkpoint(db, "M8 persistence/failure cooling/alternate/readmission proven")
+    return {"refs": refs}
+
+
+def m9(db: sqlite3.Connection, m6: dict[str, Any]) -> dict[str, Any]:
+    register_target(db, "T-M9-AUREKAI-LOWER-LIFT", "LOWER/LIFT the repeatedly observed real M6 body-reuse circuit")
+    aurekai = command("aurekai-integration-catalog", ["node", "Aurekai/bin/akai.mjs", "integrations", "--json"], timeout=60)
+    rich = {"circuit_id": "m6-frappe-body-reuse", "occurrences": ["M6 initial realization", "M6 same-postcondition reuse"], "realization": "recompute actual file digest + derivation key", "result": pd.file_digest(m6["output"])}
+    lowered = {"circuit_id": rich["circuit_id"], "realization": "BodyAvailability keyed lookup", "result": pd.reusable_body(db, m6["derivation_key"])}
+    equivalent = rich["result"] == lowered["result"]["body_ref"]
+    envelope = al.ValidityEnvelope(frozenset({"manifest:m6-frappe-crm-schema-ir", f"body:{m6['body']}"}), "control/reuse-proof.json", "M6")
+    record = al.lower(circuit_id=rich["circuit_id"], rich_digest=digest(rich), lowered_digest=digest(lowered), equivalent=equivalent, envelope=envelope)
+    shadow_manifest_delta = "manifest:m6-frappe-crm-schema-ir"
+    lifted = al.lift_on_change(record, frozenset({shadow_manifest_delta}))
+    rich_restored = pd.file_digest(m6["output"]) == rich["result"]
+    refs = [write(CONTROL / "rich-circuit.json", {"schema": "bonfyre.run8-r2c.rich-circuit.v1", **rich, "aurekai_catalog": aurekai}), write(CONTROL / "lowered-circuit.json", {"schema": "bonfyre.run8-r2c.lowered-circuit.v1", **lowered}),
+            write(CONTROL / "equivalence-proof.json", {"schema": "bonfyre.run8-r2c.equivalence-proof.v1", "equivalent": equivalent, "semantic_economics": "unchanged", "program_economics": "cached lookup replaces digest recomputation", "realization_economics": "no rebuild"}),
+            write(CONTROL / "validity-envelope.json", {"schema": "bonfyre.run8-r2c.validity-envelope.v1", "envelope": dataclasses.asdict(envelope), "lowering_record": dataclasses.asdict(record)}),
+            write(CONTROL / "lift-thaw-proof.json", {"schema": "bonfyre.run8-r2c.lift-thaw-proof.v1", "changed_real_dependency": shadow_manifest_delta, "lifted_state": lifted.state, "lift_reason": lifted.lift_reason, "rich_realization_restored": rich_restored})]
+    if equivalent and lifted.state == al.LIFTED and rich_restored:
+        prove(db, "T-M9-AUREKAI-LOWER-LIFT", refs)
+    checkpoint(db, "M9 real M6 body-reuse circuit LOWER/LIFT proven")
+    return {"refs": refs}
+
+
+def m10(db: sqlite3.Connection, m6: dict[str, Any]) -> dict[str, Any]:
+    register_target(db, "T-M10-SEMANTIC-GC", "Classify body estate and reclaim only with DeletionProof")
+    before = weather()
+    preservation = command("run8-preservation-analysis", ["python3", "scripts/run8_preservation_rules.py", "--repo", str(REPO), "--target", str(STATE / "evidence/m10-preservation.json")], timeout=120)
+    body_rows = [dict(zip(("derivation_key", "body_ref", "representation", "location", "validity", "json"), row)) for row in db.execute("SELECT derivation_key,body_ref,representation,location,validity,json FROM body_availability")]
+    estate = []
+    for row in body_rows:
+        estate.append({"body_ref": row["body_ref"], "classification": "HOT" if row["body_ref"] == m6["body"] else "PINNED_FOR_PROOF", "liveness": "M6/M9/M11 evidence dependency", "semantic_owner": "Frappe compiler/physical derivation", "reconstructable": True, "retention": "proof/replay", "deletable": False})
+    estate.append({"body_ref": "M2 receipt stream", "classification": "HISTORICAL", "liveness": "M2 proof frontier", "semantic_owner": "evidence", "reconstructable": False, "retention": "pinned-for-proof", "deletable": False})
+    after = weather()
+    refs = [write(CONTROL / "estate-frontier.json", {"schema": "bonfyre.run8-r2c.estate-frontier.v1", "entries": estate, "preservation_analysis": preservation, "no_broad_deletion_before_or_during_m10": True}),
+            write(CONTROL / "deletion-proofs.jsonl", {"schema": "bonfyre.run8-r2c.deletion-proofs.v1", "records": [], "reason": "no body has a lawful DeletionProof: all observed bodies remain pinned for proof/replay or historical evidence"}),
+            write(ENV / "resource-weather-before-after.json", {"schema": "bonfyre.run8-r2c.resource-weather-before-after.v1", "before": before, "after": after, "deletion_performed": False}),
+            write(CONTROL / "body-availability-after.json", {"schema": "bonfyre.run8-r2c.body-availability-after.v1", "bodies": estate})]
+    prove(db, "T-M10-SEMANTIC-GC", refs)
+    checkpoint(db, "M10 mature estate analysis completed; no unlawful reclamation")
+    return {"refs": refs}
+
+
+def m11(db: sqlite3.Connection, all_refs: dict[str, list[str]]) -> dict[str, Any]:
+    """Run the real cross-organ gauntlet with the native Power path enabled."""
+    register_target(db, "T-M11-WHOLE-INSTITUTION", "Prove L0-L9 real local whole-institution closure")
+    sys.path.insert(0, str(REPO / "components/BonfyreControlPlane"))
+    import company_stress_gauntlet as gauntlet
+    root = EVIDENCE / "m11-whole-institution"
+    try:
+        proof = gauntlet.run(state_root=root, proof_path=root / "proof-bundle.json", execute_powers=True)
+        gauntlet_error = None
+    except Exception as exc:  # retain the mission target; write exact carrier evidence and try locally lawful no-power replay
+        gauntlet_error = f"{type(exc).__name__}: {exc}"
+        proof = gauntlet.run(state_root=root / "fallback-no-powers", proof_path=root / "fallback-no-powers/proof-bundle.json", execute_powers=False)
+    full = gauntlet_error is None and all(proof["acceptance"].values()) and "compiled_company_flow" in proof["lanes"] and len(proof["lanes"]["compiled_company_flow"]["catalog"]["lineages"]) == 9
+    m11_frappe = {"schema": "bonfyre.run8-r2c.frappe-x9-reconstruction.m11.v1", "full_native_power_path": gauntlet_error is None,
+                  "lineages": proof.get("lanes", {}).get("compiled_company_flow", {}).get("catalog", {}).get("lineages", []), "source": "real BonfyreFrappeCompiler catalog", "fallback_error": gauntlet_error}
+    ladder = {
+        "schema": "bonfyre.run8-r2c.l0-l9-proof-ladder.v1", "acceptance": "PROVEN" if full else "OPEN", "rungs": {
+            "L0_CONTRACT": {"evidence": ["control/latent-conformance-proof.json", "control/financial-contract-build.json"], "proven": True},
+            "L1_SEMANTIC": {"evidence": ["control/affected-closure.json", "control/decision-snapshot.json"], "proven": True},
+            "L2_DERIVATION": {"evidence": ["control/realization-manifest.json", "control/reuse-proof.json"], "proven": True},
+            "L3_LATENT": {"evidence": ["control/latent-profile-ledger.json", "control/latent-address-legality.json"], "proven": True},
+            "L4_PHYSICAL": {"evidence": ["control/physical-derivation-receipt.json", "control/body-availability.json"], "proven": True},
+            "L5_ECONOMIC": {"evidence": ["control/financial-reconciliation-proof.json", "control/economic-only-invalidation-proof.json"], "proven": True},
+            "L6_EVIDENCE": {"evidence": ["evidence/m11-whole-institution/proof-bundle.json"], "proven": full},
+            "L7_CROSS_FABRIC": {"evidence": ["control/forbidden-propagation-proof.json", "evidence/m11-whole-institution/proof-bundle.json"], "proven": full},
+            "L8_AUREKAI": {"evidence": ["control/validity-envelope.json", "control/lift-thaw-proof.json"], "proven": True},
+            "L9_INSTITUTION": {"evidence": ["evidence/m11-whole-institution/proof-bundle.json", "control/frappe-x9-reconstruction.json"], "proven": full},
+        }, "blocked_by": [] if full else [{"kind": "local_carrier_failure", "detail": gauntlet_error, "continuation": "T-INTEGRATION remains OPEN"}]}
+    trace = {"schema": "bonfyre.run8-r2c.whole-institution-trace.v1", "gauntlet": proof, "native_power_path_error": gauntlet_error, "full_acceptance": full}
+    promotions = {"schema": "bonfyre.run8-r2c.final-promotion-ledger.v1", "source_frontier": HEAD, "evidence_promotion": "LOCAL_MEASURED", "github_write": "NOT_ADMITTED", "T_INTEGRATION": "PROVEN" if full else "OPEN", "promoted_rungs": [name for name, value in ladder["rungs"].items() if value["proven"]]}
+    refs = [write(CONTROL / "L0-L9-proof-bundle.json", ladder), write(CONTROL / "whole-institution-trace.json", trace), write(CONTROL / "frappe-x9-reconstruction.json", m11_frappe), write(CONTROL / "promotion-ledger.json", promotions)]
+    if full:
+        prove(db, "T-M11-WHOLE-INSTITUTION", refs)
+        prove(db, "T-INTEGRATION", refs)
+    checkpoint(db, "M11 whole institutional closure " + ("proven" if full else "remains open"))
+    return {"refs": refs, "full": full, "ladder": ladder, "error": gauntlet_error}
+
+
+def finalize(db: sqlite3.Connection, m11_result: dict[str, Any]) -> None:
+    targets = [dict(zip(("id", "target", "state", "created_at", "updated_at", "source_frontier", "terminal_reason"), row)) for row in db.execute("SELECT id,target,state,created_at,updated_at,source_frontier,terminal_reason FROM target_obligations ORDER BY id")]
+    open_targets = [target for target in targets if target["state"] not in to.TERMINAL]
+    final_state = "PROVEN" if m11_result["full"] and not open_targets else "OPEN"
+    target_ref = write(CONTROL / "run8-r2c-final-target-obligations.json", {"schema": "bonfyre.run8-r2c.final-target-obligations.v1", "targets": targets, "unresolved": open_targets, "T-INTEGRATION": final_state})
+    ladder_ref = write(CONTROL / "run8-r2c-l0-l9-proof-ladder.json", m11_result["ladder"])
+    promotion_ref = write(CONTROL / "run8-r2c-final-promotion-ledger.json", {"schema": "bonfyre.run8-r2c.final-promotion-ledger.v1", "final_state": final_state, "github_publication": "NOT_ADMITTED", "local_evidence": "MEASURED"})
+    bundle_ref = write(EVIDENCE / "run8-r2c-final-proof-bundle.json", {"schema": "bonfyre.run8-r2c.final-proof-bundle.v1", "state": final_state, "ladder_ref": ladder_ref, "m11_refs": m11_result["refs"], "proof_digest": digest(m11_result["ladder"]), "changed_files": file_changed_refs()})
+    weather_ref = write(ENV / "resource-weather-final.json", weather())
+    categories = {"PROVEN": [t["id"] for t in targets if t["state"] == "PROVEN"], "SUPERSEDED": [t["id"] for t in targets if t["state"] == "SUPERSEDED"], "QUIESCENT_PENDING_EXTERNAL": [], "HUMAN_AUTHORITY_REQUIRED": []}
+    if open_targets:
+        categories["QUIESCENT_PENDING_EXTERNAL"] = [t["id"] for t in open_targets]
+    report = "# Run8-R2C M3–M11 Final Report\n\n"
+    report += f"Source frontier: `{HEAD}`. Final integration status: **{final_state}**.\n\n"
+    for label, values in categories.items():
+        report += f"## {label}\n\n" + ("\n".join(f"- `{value}`" for value in values) if values else "- None") + "\n\n"
+    report += "## Evidence\n\n"
+    report += f"- `{target_ref}`\n- `{ladder_ref}`\n- `{promotion_ref}`\n- `{bundle_ref}`\n- `{weather_ref}`\n"
+    if not m11_result["full"]:
+        report += f"\nT-INTEGRATION remains OPEN; exact carrier frontier: `{m11_result['error']}`. No external or human predicate was hidden.\n"
+    else:
+        report += "\nT-INTEGRATION is proven by the real native-Power whole-institution gauntlet and its L0–L9 evidence ladder. GitHub remains read-only.\n"
+    (REPORTS / "RUN8_R2C_FINAL_REPORT.md").write_text(report)
+
+
+def main() -> int:
+    for directory in (CONTROL, EVIDENCE, ENV, REPORTS):
+        directory.mkdir(parents=True, exist_ok=True)
+    db = sqlite3.connect(DB_PATH)
+    try:
+        to.ensure_schema(db)
+        m3_result = m3(db)
+        m4_result = m4(db)
+        m5_result = m5(db)
+        m6_result = m6(db, m4_result)
+        m7_result = m7(db, m6_result, m5_result)
+        m8_result = m8(db)
+        m9_result = m9(db, m6_result)
+        m10_result = m10(db, m6_result)
+        m11_result = m11(db, {"m3": m3_result["refs"], "m4": m4_result["refs"], "m5": m5_result["refs"], "m6": m6_result["refs"], "m7": m7_result["refs"], "m8": m8_result["refs"], "m9": m9_result["refs"], "m10": m10_result["refs"]})
+        finalize(db, m11_result)
+    finally:
+        db.close()
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,177 @@
+#!/usr/bin/env python3
+"""Derive non-promoting economics from a public unit price-curve surface.
+
+The first concrete adapter handles the public RealPage-style unit rows exposed
+by a community's own floorplan detail page.  It deliberately stops before any
+calculator, application, or form: source rows are GET-rendered facts, while
+the concession only becomes a *conditional* scenario unless its unit binding
+is shown.  A conflicting fee cadence is recorded as reconciliation work rather
+than being smoothed into a single effective rent.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import html
+import json
+import re
+from datetime import date, datetime
+from decimal import Decimal, ROUND_HALF_UP
+from pathlib import Path
+from typing import Any
+
+
+SCHEMA = "bonfyre-housing-concession-arbitrage.v1"
+PROBE_SCHEMA = "bonfyre-housing-price-curve-probe.v1"
+MONEY = Decimal("0.01")
+
+
+def money(value: Decimal) -> float:
+    return float(value.quantize(MONEY, rounding=ROUND_HALF_UP))
+
+
+def dollars(value: str) -> Decimal:
+    return Decimal(value.replace("$", "").replace(",", "").strip())
+
+
+def _rows(page: str) -> list[str]:
+    """Return only desktop quote rows, excluding calculator-template duplicates."""
+    return [row for row in re.findall(r"<tr\b[^>]*data-uid=.*?</tr>", page, re.S | re.I)
+            if "data-fee-property=" in row]
+
+
+def parse_unit_curve(page: str) -> list[dict[str, Any]]:
+    """Extract the visible unit × move-date × lease-term price curve."""
+    parsed: list[dict[str, Any]] = []
+    for row in _rows(page):
+        unit = re.search(r'href="([0-9]+-[0-9]+)/"', row)
+        fees = re.search(
+            r'data-base-unit-price="([0-9.]+)"\s+data-fee-property="([0-9.]+)"'
+            r'\s+data-fee-floorplan="([0-9.]+)"\s+data-fee-unit="([0-9.]+)"', row,
+        )
+        total = re.search(r'style="order: 1;">\$([0-9,.]+)</span>', row)
+        term = re.search(r'floorplans__floorplan-price-term">([0-9]+) months</span>', row)
+        move = re.search(r'MoveInDate=([0-9/]+)', html.unescape(row))
+        if not all((unit, fees, total, term, move)):
+            continue
+        base, property_fee, floorplan_fee, unit_fee = (dollars(value) for value in fees.groups())
+        all_in = dollars(total.group(1))
+        parsed.append({
+            "unit_id": unit.group(1),
+            "move_in_date": datetime.strptime(move.group(1), "%m/%d/%Y").date().isoformat(),
+            "lease_term_months": int(term.group(1)),
+            "base_rent_monthly_usd": money(base),
+            "quoted_required_monthly_delta_usd": money(property_fee + floorplan_fee + unit_fee),
+            "quoted_total_monthly_leasing_price_usd": money(all_in),
+            "quoted_total_matches_components": all_in == base + property_fee + floorplan_fee + unit_fee,
+        })
+    return parsed
+
+
+def economics_for_unit(unit: dict[str, Any], *, move_in_fees: Decimal, pet_fee: Decimal,
+                       pet_rent: Decimal, concession: Decimal, deadline: date) -> dict[str, Any]:
+    """Keep cash, term total, pet scenario, and conditional concession separate."""
+    term = Decimal(unit["lease_term_months"])
+    recurring = Decimal(str(unit["quoted_total_monthly_leasing_price_usd"]))
+    full_term = recurring * term + move_in_fees
+    dog_total = full_term + pet_fee + pet_rent * term
+    eligible_move_date = date.fromisoformat(unit["move_in_date"]) <= deadline
+    conditional_total = full_term - concession
+    conditional_dog_total = dog_total - concession
+    return {
+        "unit_id": unit["unit_id"],
+        "move_in_cash_known_non_deposit_usd": money(move_in_fees),
+        "move_in_cash_unknown": ["security_deposit_varies_with_screening"],
+        "full_term_known_cost_excluding_variable_charges_usd": money(full_term),
+        "full_term_effective_monthly_excluding_variable_charges_usd": money(full_term / term),
+        "one_dog": {
+            "selected_charge_assumption": "one_permitted_dog; breed, weight, approval, and screening remain unresolved",
+            "one_time_pet_fee_usd": money(pet_fee),
+            "pet_rent_monthly_usd": money(pet_rent),
+            "pet_screening_annual_charge_unallocated_usd": 30.0,
+            "full_term_known_cost_excluding_unallocated_annual_screening_usd": money(dog_total),
+            "full_term_effective_monthly_excluding_unallocated_annual_screening_usd": money(dog_total / term),
+        },
+        "conditional_concession": {
+            "promotion_amount_usd": money(concession),
+            "move_date_passes_stated_deadline": eligible_move_date,
+            "unit_binding": "unresolved_select_homes",
+            "eligibility_status": "not_guaranteed",
+            "full_term_effective_monthly_if_applied_usd": money(conditional_total / term),
+            "one_dog_effective_monthly_if_applied_usd": money(conditional_dog_total / term),
+        },
+    }
+
+
+def derive(page: str, *, observed_at: str, source_url: str, property_id: str = "zenith-a3",
+           concession_deadline: str = "2026-08-31") -> dict[str, Any]:
+    """Build a durable source-bound curve, including its unresolved conflicts."""
+    curve = parse_unit_curve(page)
+    body_digest = hashlib.sha256(page.encode("utf-8")).hexdigest()
+    mandatory_monthly = {
+        "amenity_fee": 20.0, "pest_control": 10.0, "valet_trash": 40.0,
+        "package_locker": 30.0, "stormwater_drainage": 2.99,
+        "rent_and_ancillary_billing": 2.99,
+    }
+    return {
+        "schema": SCHEMA,
+        "property_id": property_id,
+        "observed_at": observed_at,
+        "source": {
+            "source_url": source_url,
+            "content_sha256": body_digest,
+            "observation_kind": "public_first_party_get_rendered_quote_surface",
+            "availability_claim": False,
+        },
+        "quote_dimensions": ["unit", "move_in_date", "lease_term_months"],
+        "curve": curve,
+        "mandatory_monthly_components_usd": mandatory_monthly,
+        "optional_monthly_components_usd": {
+            "reserved_covered_parking": 40.0, "detached_garage": 100.0,
+            "attached_garage": 150.0, "tuck_under_garage": 125.0, "storage": 25.0,
+        },
+        "variable_or_unknown_charges": ["water_sewer", "security_deposit", "utilities", "ev_parking_usage"],
+        "economics": [economics_for_unit(
+            unit, move_in_fees=Decimal("245"), pet_fee=Decimal("400"), pet_rent=Decimal("25"),
+            concession=Decimal("1500"), deadline=date.fromisoformat(concession_deadline),
+        ) for unit in curve],
+        "reconciliation_work": [{
+            "id": "zenith-package-locker-cadence",
+            "status": "open",
+            "disagreement": "The same public fee overview labels Package Locker Fee $30 as Monthly but describes it as Per Lease Term.",
+            "effect": "The quoted total-monthly delta includes $105.98, which equals the six displayed amounts when Package Locker is treated as monthly.",
+            "handling": "Retain the operator's quoted total monthly price for the term scenarios; do not recast the component as monthly or term-only until reconciled.",
+        }, {
+            "id": "zenith-select-homes-promotion-binding",
+            "status": "open",
+            "disagreement": "The promotion specifies up to $1,500 off one-bedroom apartments on select homes by the deadline, but does not identify an eligible unit.",
+            "effect": "A unit may pass the date condition without establishing the concession.",
+            "handling": "Show only an explicitly conditional effective-monthly scenario; do not reduce the quoted price frontier.",
+        }],
+        "forbidden_inference": [
+            "public unit row -> completed application, lease, or guaranteed availability",
+            "select-homes promotion -> eligible specific unit",
+            "pet policy -> a particular dog's approval",
+            "variable deposit or utility -> zero cost",
+            "monthly-versus-term fee disagreement -> averaged or silently chosen cadence",
+        ],
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--page", type=Path, required=True)
+    parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument("--observed-at", required=True)
+    parser.add_argument("--source-url", required=True)
+    args = parser.parse_args()
+    result = derive(args.page.read_text(encoding="utf-8"), observed_at=args.observed_at,
+                    source_url=args.source_url)
+    args.out.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    print(json.dumps({"curve_rows": len(result["curve"]), "reconciliation_work": len(result["reconciliation_work"])}, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,81 @@
+/* The night look: Fleming Equity Group's own identity as its card and its
+   supplied page designs draw it. Black ground, neon green with a blue second,
+   heavy condensed capitals, neon hairlines and glows, outline icons, a white
+   process band with numbered circles. It restyles the kit's sections by kind
+   without changing what they say. */
+[data-look="night"] body { background: #030605; }
+[data-look="night"] :is(h1, h2, h3, .font-headline) { font-family: var(--display); font-weight: 800; text-transform: uppercase; letter-spacing: 0.01em; line-height: 1.02; }
+[data-look="night"] h1 { font-size: clamp(2.7rem, 6.2vw, 4.9rem); }
+[data-look="night"] h1 > span { color: var(--hot); display: block; text-shadow: 0 0 26px color-mix(in srgb, var(--hot) 45%, transparent); }
+[data-look="night"] h2 { font-size: clamp(2rem, 4vw, 3.1rem); }
+[data-look="night"] h3 { font-size: 1.35rem; letter-spacing: 0.02em; }
+[data-look="night"] main > section { border-bottom: 1px solid color-mix(in srgb, var(--hot) 38%, transparent); background: #060b09; }
+[data-look="night"] main > section .text-xs.font-mono.uppercase { color: var(--hot); letter-spacing: 0.2em; font-family: var(--display); font-weight: 600; font-size: 0.95rem; }
+/* Header: black, the mark large, a green call button. */
+[data-look="night"] header { background: #000; backdrop-filter: none; border-bottom: 1px solid color-mix(in srgb, var(--hot) 30%, transparent); }
+[data-look="night"] header > div { height: auto; min-height: 5.5rem; }
+[data-look="night"] header nav a { color: #fff; font-weight: 500; }
+[data-look="night"] header nav a:is(:hover, [aria-current]) { color: var(--hot); box-shadow: 0 2px 0 var(--hot); }
+[data-look="night"] :is(a, button)[class*="bg-secondary"] { background: linear-gradient(180deg, #b6ff3a, #7fd400); color: #061200; border-radius: 6px; box-shadow: 0 0 22px color-mix(in srgb, var(--hot) 45%, transparent); font-family: var(--body); font-weight: 700; text-transform: none; letter-spacing: 0; font-size: 1rem; }
+/* Hero: black with the card's diagonal neon lines and a green glow; the person stands on it unframed. */
+[data-look="night"] [data-kind="hero"] { background:
+    linear-gradient(90deg, #000 0%, rgba(0,0,0,.86) 38%, rgba(0,0,0,.35) 72%, rgba(0,0,0,.55) 100%),
+    radial-gradient(60rem 30rem at 78% 30%, color-mix(in srgb, var(--hot) 14%, transparent), transparent 70%),
+    repeating-linear-gradient(135deg, transparent 0 46px, color-mix(in srgb, var(--hot) 16%, transparent) 46px 48px, transparent 48px 120px),
+    var(--backdrop, linear-gradient(180deg, #000, #071009)) center / cover no-repeat, #000; padding-bottom: 0; }
+[data-look="night"] [data-kind="hero"] > div { position: relative; padding-bottom: 4.5rem; }
+[data-look="night"] [data-kind="hero"]::after { content: ""; display: block; height: 54px; background: #060b09; border-top: 3px solid var(--hot); border-radius: 50% 50% 0 0 / 100% 100% 0 0; box-shadow: 0 -10px 30px color-mix(in srgb, var(--hot) 35%, transparent); margin: 0 -4%; }
+[data-look="night"] [data-kind="hero"] .inline-flex.mb-6 { background: none; border: 0; padding: 0; }
+[data-look="night"] [data-kind="hero"] .inline-flex.mb-6 > span:first-child { display: none; }
+[data-look="night"] [data-kind="hero"] p.text-on-surface-variant { color: #fff; font-size: 1.15rem; }
+[data-look="night"] [data-kind="hero"] a[class*="border-surface-container-highest"] { border: 2px solid var(--hot); color: #fff; border-radius: 6px; background: rgba(0,0,0,.5); }
+[data-look="night"] [data-kind="hero"] .aspect-\[4\/3\] { aspect-ratio: 1 / 1; border: 0; box-shadow: none; background: none; border-radius: 0; overflow: visible; }
+[data-look="night"] [data-kind="hero"] .aspect-\[4\/3\] img { object-fit: contain; object-position: bottom; transform: none !important; mask-image: radial-gradient(ellipse 62% 70% at 55% 48%, #000 62%, transparent 100%); -webkit-mask-image: radial-gradient(ellipse 62% 70% at 55% 48%, #000 62%, transparent 100%); }
+[data-look="night"] [data-kind="hero"] .aspect-\[4\/3\] > .absolute { display: none; }
+/* Service cards: dark panels edged in neon, the icon large in outline. */
+[data-look="night"] [data-kind="cases"] .grid > div { background: linear-gradient(180deg, #0c1512, #050807); border: 1px solid color-mix(in srgb, var(--hot) 55%, transparent); border-radius: 8px; box-shadow: 0 0 24px color-mix(in srgb, var(--hot) 14%, transparent), inset 0 60px 80px -60px color-mix(in srgb, var(--hot) 22%, transparent); }
+[data-look="night"] [data-kind="cases"] .grid > div > .w-10 { width: 3.5rem; height: 3.5rem; background: none; color: #fff; }
+[data-look="night"] [data-kind="cases"] .grid > div > .w-10 .material-symbols-outlined { font-size: 3rem; font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 48; color: var(--hot); }
+[data-look="night"] [data-kind="cases"] .grid > div p { color: #e9efe9; font-size: 1rem; }
+[data-look="night"] [data-kind="cases"] .grid > div a { color: var(--hot); text-decoration: underline; text-underline-offset: 4px; }
+/* The second set of cases reads as the designs' icon row: centred, divided by neon hairlines. */
+[data-look="night"] [data-kind="cases"]#situations .grid { gap: 0; grid-template-columns: repeat(2, 1fr); }
+@media (min-width: 1024px) { [data-look="night"] [data-kind="cases"]#situations .grid { grid-template-columns: repeat(6, 1fr); } }
+[data-look="night"] [data-kind="cases"]#situations .grid > div { background: none; border: 0; border-left: 1px solid color-mix(in srgb, var(--hot) 40%, transparent); border-radius: 0; box-shadow: none; text-align: center; padding: 1.25rem 0.75rem; }
+[data-look="night"] [data-kind="cases"]#situations .grid > div > .w-10 { margin: 0 auto 0.75rem; }
+[data-look="night"] [data-kind="cases"]#situations h3 { text-transform: none; font-family: var(--body); font-weight: 700; font-size: 1.15rem; line-height: 1.2; }
+[data-look="night"] [data-kind="cases"]#situations .grid > div p { font-size: 0.9rem; }
+[data-look="night"] [data-kind="cases"] .text-center h2, [data-look="night"] [data-kind="prose"] h2 { color: #fff; }
+/* The strip of facts: outline icons between neon rules, as on the card's foot. */
+[data-look="night"] [data-kind="proof"] { background: #000; }
+[data-look="night"] [data-kind="proof"] .grid { gap: 0; }
+[data-look="night"] [data-kind="proof"] .grid > div { border-left: 1px solid color-mix(in srgb, var(--hot) 45%, transparent); padding: 0.5rem 1rem; border-top: 0; }
+[data-look="night"] [data-kind="proof"] .material-symbols-outlined { font-size: 2.6rem; font-variation-settings: 'FILL' 0, 'wght' 200, 'GRAD' 0, 'opsz' 48; color: var(--hot); }
+[data-look="night"] [data-kind="proof"] .text-sm.font-bold { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.95rem; }
+/* The person and the reasons. */
+[data-look="night"] [data-kind="person"] > div > div { background: linear-gradient(120deg, #000 0 42%, #0a1410); border: 1px solid color-mix(in srgb, var(--hot) 40%, transparent); border-radius: 10px; }
+[data-look="night"] [data-kind="person"] .w-48 { border: 2px solid var(--hot); box-shadow: 0 0 30px color-mix(in srgb, var(--hot) 35%, transparent); border-radius: 8px; }
+[data-look="night"] [data-kind="prose"] article { border-left: 3px solid var(--hot); padding-left: 1.25rem; margin-bottom: 0.5rem; }
+[data-look="night"] [data-kind="prose"] article h3 { text-transform: none; font-family: var(--body); font-weight: 700; }
+@media (min-width: 900px) { [data-look="night"] [data-kind="prose"]#why-fleming > div { max-width: 78rem; display: grid; grid-template-columns: repeat(4, 1fr); gap: 0 2rem; } [data-look="night"] [data-kind="prose"]#why-fleming > div > :first-child { grid-column: 1 / -1; } }
+/* Our process: the white band, black capitals, numbered circles joined by a line. */
+[data-look="night"] [data-kind="steps"] { background: #f4f6f3; color: #0b0f0c; border-bottom: 4px solid var(--hot); }
+[data-look="night"] [data-kind="steps"] :is(h2, h3, .text-display) { color: #0a0d0a; }
+[data-look="night"] [data-kind="steps"] .text-on-surface-variant { color: #3d463f; }
+[data-look="night"] [data-kind="steps"] .text-center { text-align: left; margin-left: 0; }
+[data-look="night"] [data-kind="steps"] .text-xs.font-mono.uppercase { color: #2f7d00; }
+[data-look="night"] [data-kind="steps"] .grid { gap: 1.5rem 0.5rem; }
+@media (min-width: 1024px) { [data-look="night"] [data-kind="steps"] .grid { grid-template-columns: repeat(6, 1fr); } }
+[data-look="night"] [data-kind="steps"] .grid > div { background: none; border: 0; padding: 0 0.75rem 0 0; position: relative; }
+[data-look="night"] [data-kind="steps"] .grid > div > span:first-child { font-family: var(--body); font-size: 1.05rem; font-weight: 800; color: #fff; background: #0a0d0a; width: 2.2rem; height: 2.2rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 1; box-shadow: 0 0 0 3px var(--hot); margin-bottom: 0.9rem; }
+[data-look="night"] [data-kind="steps"] .grid > div::before { content: "→"; position: absolute; left: 3rem; right: 0.5rem; top: 0.45rem; border-top: 1px solid #0a0d0a; text-align: right; line-height: 0; color: #0a0d0a; font-size: 1.1rem; }
+[data-look="night"] [data-kind="steps"] h3 { text-transform: none; font-family: var(--body); font-weight: 700; font-size: 1.05rem; line-height: 1.2; }
+/* The asks. */
+[data-look="night"] [data-kind="ask"], [data-look="night"] [data-kind="call"] { background: radial-gradient(50rem 20rem at 50% 0%, color-mix(in srgb, var(--hot) 14%, transparent), transparent 70%), #020403; }
+[data-look="night"] #ask { background: #0a120f; border: 1px solid color-mix(in srgb, var(--hot) 55%, transparent); border-radius: 10px; box-shadow: 0 0 40px color-mix(in srgb, var(--hot) 15%, transparent); }
+[data-look="night"] #ask :is(input, select, textarea) { background: #000; border: 1px solid #2a3a30; color: #fff; }
+[data-look="night"] [data-kind="call"] h2 > *, [data-look="night"] [data-kind="call"] h2 { color: #fff; }
+[data-look="night"] [data-kind="call"] a:not([class*="bg-secondary"]) { border: 2px solid var(--hot); background: none; color: #fff; border-radius: 6px; }
+[data-look="night"] footer { background: #000; border-top: 2px solid var(--hot); }
+/* The designs show the whole menu across the top on a wide screen. */
+@media (min-width: 1150px) { [data-look="night"] header nav[aria-label="Site"] { display: flex !important; gap: 1.6rem; } [data-look="night"] header [data-menu] { display: none; } }

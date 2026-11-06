@@ -1,0 +1,38 @@
+atlas carriers
+
+# The protocol grammars this institution actually answers in.
+#
+# This fact was asserted three times and no two agreed. The /protocols page named
+# ten and counted CMS and Web among them, which are surfaces rather than wire
+# protocols. The carriers skill said "eighteen" and then listed seventeen.
+# capability_fulfillment mapped six coordinates. Nothing was wrong exactly --
+# each was describing a different slice -- but there was no answer to "which
+# protocols does this institution speak", only three approximations.
+#
+# The list below was built by probing every candidate. All seventeen answered
+# 200. `cmd/BonfyreAtlas/bonfyre-atlas compile-contracts carriers --check` re-probes them, so a
+# carrier that stops answering fails rather than staying declared.
+#
+# Cannot infer: a carrier that answers is not a carrier that is authorized,
+# priced, or willing to perform for the caller asking. It answers; that is all
+# this contract claims.
+
+carrier_contract served
+  carrier x402 /capability
+  carrier MPP /mpp/quote
+  carrier UCP /ucp/catalog
+  carrier ACP /acp/products
+  carrier Beckn /beckn/search
+  carrier OGC /ogc
+  carrier RESO /reso/Property
+  carrier MISMO /mismo/subject-property
+  carrier ActivityPub /ap/actor
+  carrier WebFinger /.well-known/webfinger?resource=acct:bonfyre@aurekai.life
+  carrier CloudEvents /events
+  carrier WoT /wot/thing
+  carrier CAP /cap/alerts
+  carrier EPCIS /epcis/events
+  carrier OpenRTB /openrtb/bidrequest
+  carrier A2A /.well-known/agent.json
+  carrier MCP /mcp/resources/
+  forbidden_inference a served carrier -> an authorized, priced, or willing one

@@ -1,0 +1,109 @@
+#!/usr/bin/env python3
+"""Emit a bounded deep source hierarchy from BonfyreSourceFrontier.
+
+This is a projection over the canonical ledger, not a second source store:
+
+    SourceRoot -> ChannelFamily -> Channel -> reader/provenance/contribution
+
+It is intentionally bounded at presentation time. The database may hold tens of
+thousands of channels; a caller asks for a root window and a per-family channel
+window while retaining aggregate counts for the hidden tail.
+"""
+import argparse, json, sqlite3
+
+
+def rows(db, sql, args=()):
+    return db.execute(sql, args).fetchall()
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--db", required=True)
+    ap.add_argument("--state", default="")
+    ap.add_argument("--roots", type=int, default=100)
+    ap.add_argument("--channels", type=int, default=64)
+    ap.add_argument("--identity", default="")
+    ap.add_argument("--host", default="")
+    args = ap.parse_args()
+    root_limit = max(1, min(args.roots, 1000))
+    channel_limit = max(1, min(args.channels, 500))
+    db = sqlite3.connect(f"file:{args.db}?mode=ro", uri=True)
+
+    where = ["(?='' OR c.state=?)", "(?='' OR COALESCE(NULLIF(c.identity,''),r.identity,'')=?)", "(?='' OR r.host=?)"]
+    qargs = (args.state, args.state, args.identity, args.identity, args.host, args.host, root_limit)
+    roots = rows(db, f"""
+      SELECT r.root_id,r.host,COALESCE(r.name,''),COALESCE(r.identity,''),
+             COUNT(DISTINCT c.family_id),COUNT(DISTINCT c.channel_id),
+             SUM(c.state IN ('admitted','active')),SUM(c.virtual),
+             COALESCE(SUM(c.contributions),0)
+      FROM root r JOIN channel c ON c.root_id=r.root_id
+      WHERE {' AND '.join(where)}
+      GROUP BY r.root_id
+      ORDER BY SUM(c.state IN ('admitted','active')) DESC,
+               COALESCE(SUM(c.contributions),0) DESC,
+               COUNT(DISTINCT c.channel_id) DESC,r.host
+      LIMIT ?
+    """, qargs)
+
+    out = []
+    for rid, host, name, identity, family_count, channel_count, admitted_count, virtual_count, contributions in roots:
+        origins = [{"label": label, "listings": listings} for label, listings in rows(
+            db, "SELECT label,listings FROM root_origin WHERE root_id=? ORDER BY label", (rid,)
+        )]
+        families = []
+        for fid, protocol, exact_count, fam_virtual, fam_contrib in rows(db, """
+            SELECT f.family_id,f.protocol,COUNT(c.channel_id),SUM(c.virtual),COALESCE(SUM(c.contributions),0)
+            FROM family f JOIN channel c ON c.family_id=f.family_id
+            WHERE f.root_id=? AND (?='' OR c.state=?)
+            GROUP BY f.family_id
+            ORDER BY COUNT(c.channel_id) DESC,f.protocol
+        """, (rid, args.state, args.state)):
+            channels = []
+            for row in rows(db, """
+                SELECT c.channel_id,c.address,c.exact_address,c.state,c.material,c.protocol,c.virtual,
+                       c.census_source,c.identity,c.discovered_from,c.contributions,c.last_contributed,
+                       c.truth_level,c.rights,c.credential
+                FROM channel c
+                WHERE c.family_id=? AND (?='' OR c.state=?)
+                ORDER BY c.contributions DESC,c.virtual ASC,c.first_seen ASC
+                LIMIT ?
+            """, (fid, args.state, args.state, channel_limit)):
+                (cid,address,exact,state,material,proto,virtual,reader,cidentity,
+                 discovered,shown,last,truth,rights,credential) = row
+                channel_origins = [r[0] for r in rows(
+                    db, "SELECT label FROM channel_origin WHERE channel_id=? ORDER BY label", (cid,)
+                )]
+                readers = [{"source": s, "material": m} for s,m in rows(
+                    db, "SELECT census_source,material FROM channel_census WHERE channel_id=? ORDER BY census_source", (cid,)
+                )]
+                channels.append({
+                    "channel_id": cid, "address": address, "exact_address": exact,
+                    "state": state, "material": material, "protocol": proto,
+                    "virtual": bool(virtual), "reader": reader or "", "readers": readers,
+                    "identity": cidentity or "", "discovered_from": discovered or "",
+                    "contributions": shown, "last_contributed": last or "",
+                    "truth_level": truth or "", "rights": rights or "",
+                    "credential": credential or "", "origins": channel_origins,
+                })
+            families.append({
+                "family_id": fid, "protocol": protocol, "channel_count": exact_count,
+                "virtual_count": fam_virtual, "contributions": fam_contrib,
+                "visible_channels": len(channels), "channels": channels,
+            })
+        out.append({
+            "root_id": rid, "host": host, "name": name, "identity": identity,
+            "family_count": family_count, "channel_count": channel_count,
+            "admitted_count": admitted_count, "virtual_count": virtual_count,
+            "contributions": contributions, "origins": origins, "families": families,
+        })
+
+    print(json.dumps({
+        "schema": "bonfyre-source-hierarchy.v1",
+        "filters": {"state": args.state, "identity": args.identity, "host": args.host},
+        "root_count": len(out), "roots": out,
+        "cannot_infer": "source hierarchy is topology and provenance, not endorsement, authority, identity equivalence, availability, or permission to fetch",
+    }, separators=(",", ":")))
+
+
+if __name__ == "__main__":
+    main()

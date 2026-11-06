@@ -45,6 +45,21 @@ for item in "${required[@]}"; do
   fi
 done
 
+# The split is a frozen projection, not a second source of truth.
+for module in state-runtime transition-runtime trajectory-runtime claim-runtime trajectory-calculus policy-registry chart-registry schema-registry; do
+  if ! cmp -s "$ROOT_DIR/kernel/src/$module.mjs" "$OUT_DIR/src/$module.mjs"; then
+    echo "Split kernel source drift: $module.mjs" >&2
+    exit 1
+  fi
+done
+for family in registry schemas; do
+  if ! diff -qr "$ROOT_DIR/$family" "$OUT_DIR/$family" >/dev/null; then
+    echo "Split contract drift: $family" >&2
+    exit 1
+  fi
+done
+node -e 'const fs=require("node:fs"); const root=JSON.parse(fs.readFileSync(process.argv[1])); const split=JSON.parse(fs.readFileSync(process.argv[2])); if (JSON.stringify(root.exports)!==JSON.stringify(split.exports)) throw Error("Split package exports differ from the canonical kernel package");' "$ROOT_DIR/kernel/package.json" "$OUT_DIR/package.json"
+
 (
   cd "$OUT_DIR"
   node ./scripts/verify-split.mjs

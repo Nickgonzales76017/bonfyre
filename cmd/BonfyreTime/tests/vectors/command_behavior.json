@@ -1,0 +1,8 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-time","binary_env":"BONFYRE_TIME_BIN","cases":[
+{"name":"default triggers are seeded once, however often the store is opened","steps":[
+ {"argv":["status"],"env":{"HOME":"${tmp}","BONFYRE_TIME_DB":"${tmp}/time.db"},"exit":0,"contains":["triggers : 2 active"]},
+ {"argv":["status"],"env":{"HOME":"${tmp}","BONFYRE_TIME_DB":"${tmp}/time.db"},"exit":0,"contains":["triggers : 2 active"]},
+ {"argv":["trigger","add","model_updated","rec1"],"env":{"HOME":"${tmp}","BONFYRE_TIME_DB":"${tmp}/time.db"},"exit":0,"contains":["re-run recipe 'rec1'"]},
+ {"argv":["status"],"env":{"HOME":"${tmp}","BONFYRE_TIME_DB":"${tmp}/time.db"},"exit":0,"contains":["triggers : 3 active"]},
+ {"program":"sqlite3","argv":["${tmp}/time.db","select count(*) from triggers"],"stdout":"3\n"}]},
+{"name":"an empty store has nothing pending and no runs","steps":[{"argv":["status"],"env":{"HOME":"${tmp}","BONFYRE_TIME_DB":"${tmp}/time.db"},"exit":0,"contains":["pending  : 0","total runs: 0"]}]}]}

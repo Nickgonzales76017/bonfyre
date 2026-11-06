@@ -1,0 +1,20 @@
+{
+  "name": "community_post",
+  "displayName": "Community Post",
+  "description": "A human-authored social occurrence inside a community body. A post may reference media or another post, but neither federation carriage nor observation of bytes creates a post.",
+  "attributes": {
+    "post": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "community": {"type": "string", "required": true},
+    "author_subject": {"type": "string", "required": true},
+    "subject_address": {"type": "string", "required": false},
+    "title": {"type": "string", "required": false},
+    "body": {"type": "text", "required": true},
+    "media_program": {"type": "string", "required": false},
+    "reply_to": {"type": "string", "required": false},
+    "published_at": {"type": "string", "required": true},
+    "visibility": {"type": "string", "required": true},
+    "moderation_state": {"type": "string", "required": true},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

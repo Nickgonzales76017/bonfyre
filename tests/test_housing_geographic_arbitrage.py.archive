@@ -1,0 +1,32 @@
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT / "tools"))
+
+import housing_geographic_arbitrage as geo  # noqa: E402
+
+
+def test_derivation_preserves_geo_and_park_first_boundaries() -> None:
+    subjects = [{"subject_id": "candidate:a", "subject_kind": "receipted_direct_housing_candidate_group", "address": "1 Main, Dallas, TX", "candidate_ids": ["a"], "minimum_advertised_monthly_rent_usd": 900, "source_urls": ["https://rent.example/a"], "source_observed_at": ["2026-08-24T00:00:00Z"], "latitude": 32.8, "longitude": -96.8}]
+    overpass = {"elements": [
+        {"type": "way", "id": 1, "tags": {"leisure": "park", "name": "Park"}, "geometry": [{"lat": 32.8004, "lon": -96.8}]},
+        {"type": "node", "id": 2, "lat": 32.801, "lon": -96.8, "tags": {"amenity": "dog_park", "name": "Dogs"}},
+        {"type": "way", "id": 3, "tags": {"highway": "footway"}, "geometry": [{"lat": 32.8002, "lon": -96.8}]},
+    ]}
+    result = geo.derive(subjects, overpass, [{"source_kind": "fixture"}])
+    row = result["subjects"][0]
+    assert row["nearest_park_or_open_space"]["geodesic_distance_m"] < 100
+    assert row["nearest_public_dog_park"]["feature_class"] == "dog_park"
+    assert row["observable_walking_way_count_within_600m"] == 1
+    assert result["park_first_discovery"][0]["nearby_housing_subjects"][0]["subject_id"] == "candidate:a"
+    assert "not a walkable route" in result["forbidden_inference"][0]
+
+
+def test_normalize_address_keeps_street_numbers_and_drops_unit() -> None:
+    assert geo.normalize_address("5315 Columbia Avenue, 209, Dallas, TX 75214") == "5315 Columbia Avenue, Dallas, TX 75214"
+    assert geo.normalize_address("13266 Emily Road, Dallas, TX 75240") == "13266 Emily Road, Dallas, TX 75240"
+    assert geo.normalize_address("4800 West Illinois Ave, Unit- 1207 A2, Dallas, TX 75211") == "4800 West Illinois Ave, Dallas, TX 75211"

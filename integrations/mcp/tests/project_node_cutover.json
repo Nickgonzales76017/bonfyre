@@ -1,0 +1,150 @@
+{
+  "schema": "bonfyre.project-mcp.cutover.v1",
+  "measured_at": "2026-10-02T22:36:59.805Z",
+  "service": "gui/503/com.bonfyre.project-mcp",
+  "previous": {
+    "pid": 1004,
+    "program": [
+      "/usr/bin/python3",
+      "/Users/nickgonzales/.bonfyre/mcp/project_node.py"
+    ],
+    "exited": true,
+    "plist_sha256": "18614c93df3aae6425f40fbeae1de03e8d1039fe5b8c325bd598b18209f26917",
+    "rollback_plist": "/private/tmp/bonfyre-project-mcp-cutover.7mRGIA/original.plist"
+  },
+  "installed": {
+    "pid": 64114,
+    "program": [
+      "/Users/nickgonzales/.bun/bin/bun",
+      "/Users/nickgonzales/Developer/Bonfyre/integrations/mcp/project_node.mjs"
+    ],
+    "plist_sha256": "ae0b14a6696a604f3b12367d3dc7b185e420f4ddb9e926b7fed4e8ead381c1f9",
+    "non_program_configuration_unchanged": true,
+    "source_sha256": {
+      "project_node.mjs": "7b1589a09b5d979daa029eef79f6479e2db950dca67b51274744c0ebf966e222",
+      "project_catalog.json": "56fb3c6464f4c895485223882a6882bb8c895aebb27299f2c9296e5aa9cb65ce",
+      "project_reads.mjs": "7819755f6e430eed2003482b568e5a796b23371c7c9594b3f9a8d40d8a8cbaa7",
+      "project_operator.mjs": "46678684c1870381e4e4138647eb0547db073b3a893c1b3ba16b576efcd32f45",
+      "project_native.mjs": "a954798d589e1660ec5bee78cb2920f791e117fbda424c808e5be3799b2642bd",
+      "project_runtime.mjs": "a0cb42bf367009a0470a02276c9ac97e48c181f4971136163b63fc30b03f7811"
+    }
+  },
+  "http_witness": {
+    "schema": "bonfyre.project-mcp.http-witness.v1",
+    "measured_at": "2026-10-02T22:36:59.788Z",
+    "mode": "configured_live_owner",
+    "runtime": "bun",
+    "root": "/Users/nickgonzales/Developer/Bonfyre",
+    "tool_count": 30,
+    "resources": 5,
+    "templates": 2,
+    "prompts": 4,
+    "native_inventory_sha256": "7f799054e3597a6a8c7d1e2f9ee6cfb2be7bac8af86bcd285cc719fdc6a75230",
+    "atlas_summary_sha256": "4fa3f9532cebc7c318dd94400ac765cfd9499699cb03916563ceff4c2be382cd",
+    "measurements": [
+      {
+        "name": "project_read",
+        "arguments": {
+          "path": "AGENTS.md",
+          "start_line": 1,
+          "end_line": 30
+        },
+        "parity": "not_compared",
+        "candidate": {
+          "samples": 25,
+          "median_ms": 0.3730000000000473,
+          "p95_ms": 0.5103749999998399,
+          "min_ms": 0.2646669999999176,
+          "max_ms": 0.6464579999999387
+        }
+      },
+      {
+        "name": "project_tree",
+        "arguments": {
+          "path": "integrations/mcp/tests",
+          "depth": 1,
+          "limit": 500
+        },
+        "parity": "not_compared",
+        "candidate": {
+          "samples": 25,
+          "median_ms": 0.4063330000001315,
+          "p95_ms": 0.5880000000001928,
+          "min_ms": 0.34295799999995324,
+          "max_ms": 0.9884999999999309
+        }
+      },
+      {
+        "name": "project_status",
+        "arguments": {},
+        "parity": "not_compared",
+        "candidate": {
+          "samples": 25,
+          "median_ms": 62.45574999999985,
+          "p95_ms": 157.13783299999977,
+          "min_ms": 59.82295900000008,
+          "max_ms": 160.8609580000002
+        }
+      }
+    ],
+    "source_sha256": "7b1589a09b5d979daa029eef79f6479e2db950dca67b51274744c0ebf966e222",
+    "limitation": "Local warmed read RPCs only; not a load, durability, native generation, remote Matrix or system-wide scaling benchmark. No operator mutation or generation invoked."
+  },
+  "limitation": "Historical local service cutover; no real generation/projection, remote Matrix or full Python retirement claim.",
+  "verification": {
+    "fail_closed_javascript_gate": {
+      "implementation": "scripts/analysis/oxlint_audit.mjs",
+      "tests_passed": 8,
+      "assertions": 59,
+      "actual_status": "pass",
+      "files_analyzed": 7,
+      "rules_analyzed": 96,
+      "scope_sha256": "6674bcc3cc618ae41665828a682918e9315dcbef21c2aedde4ead4662615ad6c",
+      "diagnostics": []
+    },
+    "project_mcp_and_atlas_tests": {
+      "passed": 91,
+      "failed": 0,
+      "assertions": 1597,
+      "files": 10
+    },
+    "control_plane_tests": {
+      "passed": 866,
+      "skipped": 259,
+      "failed": 0,
+      "assertions": 2991,
+      "files": 34
+    },
+    "static_analysis": {
+      "tool": "Oxlint",
+      "version": "1.86.0",
+      "diagnostics": [],
+      "number_of_files": 13,
+      "number_of_rules": 96,
+      "threads_count": 1,
+      "start_time": 0.045878375,
+      "scope": [
+        "integrations/mcp/project_node.mjs",
+        "integrations/mcp/project_runtime.mjs",
+        "integrations/mcp/project_reads.mjs",
+        "integrations/mcp/project_operator.mjs",
+        "integrations/mcp/project_native.mjs",
+        "integrations/mcp/tests/project_live_witness.mjs",
+        "deploy/launchd/project_mcp_cutover.mjs",
+        "integrations/mcp/tests/project_node.test.mjs",
+        "integrations/mcp/tests/project_runtime.test.mjs",
+        "integrations/mcp/tests/project_reads.test.mjs",
+        "integrations/mcp/tests/project_operator.test.mjs",
+        "integrations/mcp/tests/project_native.test.mjs",
+        "integrations/mcp/tests/project_transport_adversarial.test.mjs"
+      ]
+    },
+    "atlas": {
+      "architectures": 458,
+      "interactions": 361,
+      "valid": true,
+      "existing_duplicate_ids": 5
+    },
+    "note": "Regression suites and explicit JSON analyzer evidence collected after cutover; skipped live tests were not counted as passed."
+  }
+}

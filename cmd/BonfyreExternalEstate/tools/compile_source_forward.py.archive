@@ -1,0 +1,229 @@
+#!/usr/bin/env python3
+"""Turn SourceFrontier gaps into measured, non-effecting closure plans.
+
+This compiler answers a different question than source discovery: if a gap were
+closed, what already-measured downstream work would become simpler or newly
+reachable, and which lawful resolution classes deserve attention first?
+
+It never crawls, contacts, enrolls, buys, chooses a provider or sends outreach.
+Affiliate and partner routes are commercial possibilities only. Outreach plans
+explicitly require Aurekai/Bonfyre/cataloguing identity disclosure.
+
+Demand evidence is optional JSON/JSONL keyed by root_id or root_address. Numeric
+fields are used only when supplied; an absent measurement remains unmeasured.
+Supported measurements:
+
+  subject_reuse, scene_reuse, predicate_reuse, action_unlock,
+  calculation_simplification, freshness_need, economic_potential,
+  acquisition_cost, maintenance_cost, rights_risk, fragility,
+  candidate_branches_before, candidate_branches_after, queries_avoided
+"""
+
+import argparse
+import json
+import math
+import sys
+from collections import Counter, defaultdict
+
+
+FREE_FIRST = {
+    "PUBLIC_BACKFILL": 0, "DISCOVER": 1, "CREDENTIAL": 2, "AFFILIATE": 3,
+    "OUTREACH": 4, "PARTNER": 5, "HUMAN_VERIFY": 6, "PURCHASE": 7,
+}
+BENEFIT_WEIGHTS = {
+    "subject_reuse": 1.0, "scene_reuse": 1.5, "predicate_reuse": 1.25,
+    "action_unlock": 2.0, "calculation_simplification": 2.0,
+    "freshness_need": 0.75, "economic_potential": 1.0,
+}
+COST_WEIGHTS = {
+    "acquisition_cost": 1.0, "maintenance_cost": 1.0,
+    "rights_risk": 1.5, "fragility": 1.0,
+}
+
+
+def load_rows(path):
+    text = open(path, encoding="utf-8", errors="replace").read().strip()
+    if not text:
+        return []
+    try:
+        value = json.loads(text)
+    except json.JSONDecodeError:
+        return [json.loads(line) for line in text.splitlines() if line.strip()]
+    if isinstance(value, list):
+        return value
+    if isinstance(value, dict):
+        for key in ("rows", "items", "data", "gaps", "roots", "measurements"):
+            if isinstance(value.get(key), list):
+                return value[key]
+        return [value]
+    return []
+
+
+def number(value):
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)) and math.isfinite(float(value)):
+        return float(value)
+    try:
+        value = float(value)
+        return value if math.isfinite(value) else None
+    except (TypeError, ValueError):
+        return None
+
+
+def index_measurements(rows):
+    by_id, by_address = defaultdict(dict), defaultdict(dict)
+    fields = set(BENEFIT_WEIGHTS) | set(COST_WEIGHTS) | {
+        "candidate_branches_before", "candidate_branches_after", "queries_avoided"
+    }
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        dests = []
+        if row.get("root_id"):
+            dests.append(by_id[str(row["root_id"])])
+        if row.get("root_address"):
+            dests.append(by_address[str(row["root_address"])])
+        for dest in dests:
+            for field in fields:
+                value = number(row.get(field))
+                if value is not None:
+                    dest[field] = value
+    return by_id, by_address
+
+
+def measured_score(values):
+    benefits, costs = {}, {}
+    for field, weight in BENEFIT_WEIGHTS.items():
+        if field in values:
+            benefits[field] = values[field] * weight
+    for field, weight in COST_WEIGHTS.items():
+        if field in values:
+            costs[field] = values[field] * weight
+    if not benefits and not costs:
+        return None, {}, {}
+    return sum(benefits.values()) - sum(costs.values()), benefits, costs
+
+
+def calculation_reduction(values):
+    before = values.get("candidate_branches_before")
+    after = values.get("candidate_branches_after")
+    out = {}
+    if before is not None:
+        out["candidate_branches_before"] = before
+    if after is not None:
+        out["candidate_branches_after"] = after
+    if before is not None and after is not None and before >= after:
+        out["branches_eliminated"] = before - after
+        out["reduction_ratio"] = 0 if before == 0 else round((before - after) / before, 6)
+    if "queries_avoided" in values:
+        out["queries_avoided"] = values["queries_avoided"]
+    return out
+
+
+def route_plan(gap):
+    routes = sorted(set(gap.get("resolution_classes") or []),
+                    key=lambda item: (FREE_FIRST.get(item, 99), item))
+    out = []
+    for route in routes:
+        row = {"class": route, "effect": "candidate_only"}
+        if route == "PUBLIC_BACKFILL":
+            row["next"] = "search existing public/authoritative estates before reading a new provider"
+        elif route == "DISCOVER":
+            row["next"] = "compile feeds, calendars, API descriptors, well-known endpoints and linked source identities"
+        elif route == "CREDENTIAL":
+            row["next"] = "derive required secret/account/scope fields and wait for authorized credential provisioning"
+        elif route == "AFFILIATE":
+            row["next"] = "discover affiliate/referral/reseller posture without changing semantic/provider standing"
+        elif route == "OUTREACH":
+            row["next"] = "prepare a transparent Aurekai/Bonfyre catalogue-gap request for human approval"
+            row["identity_disclosure_required"] = True
+        elif route == "PARTNER":
+            row["next"] = "prepare a bounded data/capability value exchange for human approval"
+        elif route == "HUMAN_VERIFY":
+            row["next"] = "request a person verify the unresolved claim or terms posture"
+        elif route == "PURCHASE":
+            row["next"] = "price paid-data closure only after cheaper routes remain unresolved"
+        out.append(row)
+    return out
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--roots", required=True)
+    ap.add_argument("--gaps", required=True)
+    ap.add_argument("--demand")
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--opportunities")
+    args = ap.parse_args()
+
+    roots = load_rows(args.roots)
+    gaps = load_rows(args.gaps)
+    root_by_id = {r.get("root_id"): r for r in roots if isinstance(r, dict) and r.get("root_id")}
+    by_id, by_address = index_measurements(load_rows(args.demand)) if args.demand else ({}, {})
+    plans, opportunities = [], []
+
+    for gap in gaps:
+        root = root_by_id.get(gap.get("root_id"), {})
+        values = dict(by_address.get(root.get("address"), {}))
+        values.update(by_id.get(gap.get("root_id"), {}))
+        score, benefits, costs = measured_score(values)
+        resolution = route_plan(gap)
+        plan = {
+            "schema": "bonfyre.source-gap-plan.v1",
+            "gap_id": gap.get("gap_id"), "root_id": gap.get("root_id"),
+            "root_address": root.get("address"), "gap_kind": gap.get("kind"),
+            "reason": gap.get("reason"), "provenance": gap.get("provenance") or [],
+            "resolution_plan": resolution,
+            "closure_dividend": {
+                "state": "MEASURED" if score is not None else "UNMEASURED",
+                "score": round(score, 6) if score is not None else None,
+                "benefit_components": benefits, "cost_components": costs,
+                "calculation_reduction": calculation_reduction(values),
+            },
+            "cannot_infer": "a high closure dividend or available resolution class does not authorize acquisition, contact, provider selection, payment or effect",
+        }
+        plans.append(plan)
+        routes = {x["class"] for x in resolution}
+        commercial = routes & {"AFFILIATE", "PARTNER", "OUTREACH"}
+        if commercial:
+            opportunities.append({
+                "schema": "bonfyre.source-relationship-opportunity.v1",
+                "gap_id": gap.get("gap_id"), "root_id": gap.get("root_id"),
+                "root_address": root.get("address"), "gap_kind": gap.get("kind"),
+                "possible_relationships": sorted(commercial),
+                "closure_dividend_state": plan["closure_dividend"]["state"],
+                "closure_dividend_score": plan["closure_dividend"]["score"],
+                "identity_disclosure_required": "OUTREACH" in commercial,
+                "effect": "candidate_only",
+            })
+
+    plans.sort(key=lambda p: (
+        p["closure_dividend"]["state"] != "MEASURED",
+        -(p["closure_dividend"]["score"] or 0), p["gap_kind"] or "", p["gap_id"] or "",
+    ))
+    opportunities.sort(key=lambda p: (
+        p["closure_dividend_state"] != "MEASURED",
+        -(p["closure_dividend_score"] or 0), p["gap_id"] or "",
+    ))
+    summary = {
+        "schema": "bonfyre.source-forward.v1", "gap_plans": len(plans),
+        "measured_plans": sum(p["closure_dividend"]["state"] == "MEASURED" for p in plans),
+        "relationship_opportunities": len(opportunities),
+        "gap_kinds": dict(sorted(Counter(p["gap_kind"] for p in plans).items())),
+        "resolution_classes": dict(sorted(Counter(x["class"] for p in plans for x in p["resolution_plan"]).items())),
+        "plans": plans,
+    }
+    json.dump(summary, open(args.out, "w"), indent=2, sort_keys=True)
+    if args.opportunities:
+        with open(args.opportunities, "w") as out:
+            for row in opportunities:
+                out.write(json.dumps(row, sort_keys=True, separators=(",", ":")) + "\n")
+    print(json.dumps({key: summary[key] for key in (
+        "gap_plans", "measured_plans", "relationship_opportunities",
+        "gap_kinds", "resolution_classes")}, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

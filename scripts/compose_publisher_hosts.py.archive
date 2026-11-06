@@ -1,0 +1,149 @@
+#!/usr/bin/env python3
+"""Make a publisher's own address show that publisher's own material.
+
+Giving every institution a host was half the work: the addresses resolved and
+the estate answered on them, but each one composed the same material the front
+page does, because nothing said which sources belong to that subject. A host
+that is an institution in a territory has to carry that institution's work, or
+it is a deployment wearing a name.
+
+Two things are written, and only for publishers the estate genuinely reads:
+
+  site_presentation   the host, and the subject standing on it, published so a
+                      surface can name whose host it is rather than deriving it
+                      from string surgery on the hostname
+
+  subject fabric      that subject's readers -- which, for a publisher, are its
+                      own admitted channels and nothing else
+
+The fabric is a precomputed read model, not a decision: a publisher's readers
+are definitionally the channels this estate admitted from that publisher. What
+is composed from them is still the page organ's work, and being addressed
+remains this estate's own decision to read a publisher, never a relationship
+either party agreed to.
+
+  compose_publisher_hosts.py --estate DIR [--territory life] [--limit 400]
+"""
+import argparse, hashlib, json, os, re, sqlite3, subprocess, sys, time
+
+
+def label_for(host):
+    flat = re.sub(r"[^a-z0-9]", "-", host.lower().removeprefix("www."))
+    return re.sub(r"-+", "-", flat).strip("-")[:48]
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--estate", default=os.path.expanduser("~/.bonfyre/estate-local"))
+    ap.add_argument("--repo", default=os.path.expanduser("~/Developer/Bonfyre"))
+    ap.add_argument("--territory", default="life")
+    ap.add_argument("--limit", type=int, default=400)
+    args = ap.parse_args()
+
+    ledger = sqlite3.connect("file:%s/frontier.db?mode=ro" % args.estate, uri=True)
+    ledger.row_factory = sqlite3.Row
+    publishers = ledger.execute(
+        "SELECT r.root_id, r.host, COALESCE(NULLIF(r.name,''), r.host) AS name"
+        " FROM root r WHERE EXISTS (SELECT 1 FROM channel c WHERE c.root_id=r.root_id"
+        "   AND c.state IN ('admitted','active'))"
+        " ORDER BY (SELECT COUNT(*) FROM channel c WHERE c.root_id=r.root_id"
+        "           AND c.state IN ('admitted','active')) DESC LIMIT ?",
+        (args.limit,)).fetchall()
+
+    # The read model the page organ already knows how to read.
+    fabric_path = os.path.join(args.estate, "subject_fabric.db")
+    fabric = sqlite3.connect(fabric_path)
+    fabric.executescript("""
+      CREATE TABLE IF NOT EXISTS subject_bundle(
+        subject TEXT NOT NULL, scope TEXT NOT NULL, bundle_digest TEXT NOT NULL,
+        closure_digest TEXT NOT NULL, scene_digest TEXT NOT NULL DEFAULT '',
+        compiled_at TEXT NOT NULL, counts_json TEXT NOT NULL, payload_json TEXT NOT NULL,
+        PRIMARY KEY(subject,scope));
+      CREATE TABLE IF NOT EXISTS subject_reader(
+        subject TEXT NOT NULL, scope TEXT NOT NULL, census_source TEXT NOT NULL,
+        root_id TEXT NOT NULL, channel_id TEXT NOT NULL, material TEXT NOT NULL DEFAULT '',
+        protocol TEXT NOT NULL DEFAULT '', state TEXT NOT NULL DEFAULT '',
+        last_contributed TEXT NOT NULL DEFAULT '', contributions INTEGER NOT NULL DEFAULT 0,
+        first_seen TEXT NOT NULL DEFAULT '',
+        PRIMARY KEY(subject,scope,census_source,channel_id,material));
+      CREATE INDEX IF NOT EXISTS subject_reader_by_subject ON subject_reader(subject,scope);
+    """)
+
+    stamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    cms_bin = os.path.join(args.repo, "cmd/BonfyreCMS/bonfyre-cms")
+    schemas = os.path.join(args.estate, "schemas")
+    composed, without_readers, presented = 0, 0, 0
+
+    for row in publishers:
+        label = label_for(row["host"])
+        if not label:
+            continue
+        subject = "institution:publisher:%s" % label
+        host = "%s.aurekai.%s" % (label, args.territory)
+
+        readers = ledger.execute(
+            "SELECT c.channel_id, c.root_id, COALESCE(c.census_source,'') AS census_source,"
+            " COALESCE(c.material,'') AS material, COALESCE(c.protocol,'') AS protocol,"
+            " c.state, COALESCE(c.last_contributed,'') AS last_contributed,"
+            " COALESCE(c.contributions,0) AS contributions, COALESCE(c.first_seen,'') AS first_seen"
+            " FROM channel c WHERE c.root_id=? AND c.state IN ('admitted','active')"
+            "   AND COALESCE(c.census_source,'')<>''", (row["root_id"],)).fetchall()
+        if not readers:
+            # A publisher with nothing admitted gets no bundle: an empty page is
+            # worse than no page, and the address stays honest either way.
+            without_readers += 1
+            continue
+
+        fabric.execute("DELETE FROM subject_reader WHERE subject=? AND scope='public'", (subject,))
+        for reader in readers:
+            fabric.execute(
+                "INSERT OR REPLACE INTO subject_reader(subject,scope,census_source,root_id,"
+                " channel_id,material,protocol,state,last_contributed,contributions,first_seen)"
+                " VALUES(?,'public',?,?,?,?,?,?,?,?,?)",
+                (subject, reader["census_source"], reader["root_id"], reader["channel_id"],
+                 reader["material"], reader["protocol"], reader["state"],
+                 reader["last_contributed"], reader["contributions"], reader["first_seen"]))
+
+        counts = {"readers": len(readers), "roots": 1}
+        payload = {"subject": subject, "host": host, "publisher": row["name"],
+                   "cannot_infer": "these are the channels this estate admitted from this "
+                                   "publisher; the page is this estate reading them, not the "
+                                   "publisher's own site and not anything it agreed to"}
+        seed = json.dumps(payload, sort_keys=True).encode()
+        fabric.execute(
+            "INSERT OR REPLACE INTO subject_bundle(subject,scope,bundle_digest,closure_digest,"
+            " scene_digest,compiled_at,counts_json,payload_json) VALUES(?,'public',?,?,'',?,?,?)",
+            (subject, hashlib.sha256(seed).hexdigest(),
+             hashlib.sha256(("|".join(r["census_source"] for r in readers)).encode()).hexdigest(),
+             stamp, json.dumps(counts), json.dumps(payload)))
+        composed += 1
+
+        # And the host says whose it is, published rather than derived.
+        if os.path.exists(cms_bin):
+            entry = {"site_id": "publisher-%s" % label, "host": host,
+                     "subject_address": subject, "profile": "newsroom",
+                     "territory": args.territory, "navigation": "estate",
+                     "status": "published"}
+            done = subprocess.run(
+                [cms_bin, "entry", "create", "site_presentation", json.dumps(entry),
+                 "--ns", "root", "--db", os.path.join(args.estate, "cms.db"),
+                 "--schemas", schemas],
+                capture_output=True, text=True)
+            if done.returncode == 0:
+                presented += 1
+
+    fabric.commit()
+    fabric.close()
+    print(json.dumps({
+        "publishers": len(publishers), "composed": composed,
+        "hosts_presented": presented, "without_readers": without_readers,
+        "fabric": fabric_path,
+        "cannot_infer": "a subject's readers are the channels this estate admitted from that "
+                        "publisher; nothing here says the publisher approved, contributed to, "
+                        "or knows about the page standing on that host",
+    }))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

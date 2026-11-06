@@ -1,0 +1,11 @@
+[Unit]
+Description=Drain Bonfyre SurfaceIR handoffs into SurfaceScene
+
+[Timer]
+OnBootSec=75s
+OnUnitActiveSec=15s
+Persistent=true
+Unit=bonfyre-surface-scene-worker.service
+
+[Install]
+WantedBy=timers.target

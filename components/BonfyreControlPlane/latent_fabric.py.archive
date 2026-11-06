@@ -1,0 +1,101 @@
+"""Governed learned coordinates attached to exact AddressPlane subjects."""
+
+from __future__ import annotations
+
+import hashlib
+import math
+from dataclasses import dataclass
+from typing import Iterable, Optional, Sequence
+
+
+@dataclass(frozen=True)
+class LatentSpacePassport:
+    space_id: str
+    encoder_digest: str
+    dimension: int
+    metric: str
+    feature_closure_digest: str
+    information_policy_ref: str
+
+
+@dataclass(frozen=True)
+class LatentProfile:
+    profile_id: str
+    subject_kind: str
+    passport: LatentSpacePassport
+    allowed_uses: frozenset[str]
+
+
+@dataclass(frozen=True)
+class EmbeddingProjection:
+    subject_ref: str
+    profile_id: str
+    vector: tuple[float, ...]
+    causal_frontier: str
+    source_digest: str
+
+
+@dataclass(frozen=True)
+class ComparabilityContract:
+    left_space: str
+    right_space: str
+    transform_digest: Optional[str] = None
+
+    def permits(self, left: LatentSpacePassport,
+                right: LatentSpacePassport) -> bool:
+        same = (left.space_id == right.space_id and
+                left.encoder_digest == right.encoder_digest and
+                left.dimension == right.dimension and
+                left.metric == right.metric)
+        return same or (self.left_space == left.space_id and
+                        self.right_space == right.space_id and
+                        bool(self.transform_digest))
+
+
+@dataclass(frozen=True)
+class LatentDelta:
+    subject_ref: str
+    from_frontier: str
+    to_frontier: str
+    distance: float
+
+
+def project(profile: LatentProfile, *, subject_ref: str,
+            vector: Sequence[float], causal_frontier: str,
+            source_digest: str) -> EmbeddingProjection:
+    if len(vector) != profile.passport.dimension:
+        raise ValueError("vector dimension violates the latent passport")
+    if not subject_ref or not source_digest:
+        raise ValueError("projection requires exact subject and source identity")
+    return EmbeddingProjection(subject_ref, profile.profile_id,
+                               tuple(float(v) for v in vector),
+                               causal_frontier, source_digest)
+
+
+def similarity(left: EmbeddingProjection, right: EmbeddingProjection,
+               left_passport: LatentSpacePassport,
+               right_passport: LatentSpacePassport,
+               contract: ComparabilityContract) -> float:
+    if not contract.permits(left_passport, right_passport):
+        raise ValueError("latent spaces are not comparable")
+    if left_passport.metric != "cosine" or right_passport.metric != "cosine":
+        raise ValueError("only declared cosine spaces are supported")
+    dot = sum(a * b for a, b in zip(left.vector, right.vector))
+    ln = math.sqrt(sum(a * a for a in left.vector))
+    rn = math.sqrt(sum(b * b for b in right.vector))
+    return dot / (ln * rn) if ln and rn else 0.0
+
+
+def trajectory_delta(previous: EmbeddingProjection,
+                     current: EmbeddingProjection) -> LatentDelta:
+    if previous.subject_ref != current.subject_ref:
+        raise ValueError("trajectory cannot cross semantic subjects")
+    distance = math.sqrt(sum((a - b) ** 2
+                             for a, b in zip(previous.vector, current.vector)))
+    return LatentDelta(current.subject_ref, previous.causal_frontier,
+                       current.causal_frontier, distance)
+
+
+def watch(delta: LatentDelta, threshold: float) -> bool:
+    """Returns an observation signal only; it never mutates semantic truth."""
+    return delta.distance >= threshold

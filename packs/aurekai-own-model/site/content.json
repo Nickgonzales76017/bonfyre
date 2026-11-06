@@ -1,0 +1,638 @@
+{
+  "schema": "service-site.v1",
+  "preview": false,
+  "leads": "server",
+  "contact": {
+    "name": "Nick Gonzales",
+    "email": "nickgonzales76017@gmail.com"
+  },
+  "action": "Send a project brief",
+  "theme": {
+    "look": "aurekai",
+    "ground": "#0d130f",
+    "ink": "#dde6da",
+    "display": "#f5f7ee",
+    "accent": "#b5df32",
+    "muted": "#9aa89b",
+    "panel": "#17211a",
+    "face_display": "'DM Sans',system-ui,sans-serif",
+    "face_body": "'DM Sans',system-ui,sans-serif",
+    "face_mono": "'DM Mono',ui-monospace,monospace",
+    "font_href": "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap"
+  },
+  "footer": {
+    "about": "Aurekai · Custom web tools, sites and integrations by Nick Gonzales. Remote delivery for businesses and agencies.",
+    "notice": {
+      "title": "About these samples",
+      "text": "These examples use public or made-up data. Named businesses have not commissioned or endorsed them."
+    }
+  },
+  "to_confirm": [],
+  "site_id": "aurekai-own-model",
+  "pages_project": "aurekai-own-model",
+  "business": {
+    "name": "Aurekai",
+    "page_title": "Work your own model does | Aurekai",
+    "description": "Three jobs a small model on your own computer does: news mentions of a business, private bookkeeping categorisation and equipment lot manifests."
+  },
+  "navigation": [
+    {
+      "label": "Mentions",
+      "href": "/mentions/"
+    },
+    {
+      "label": "Private books",
+      "href": "/books/"
+    },
+    {
+      "label": "Lot manifests",
+      "href": "/manifests/"
+    },
+    {
+      "label": "Work samples",
+      "href": "https://aurekai-work-samples.pages.dev/"
+    },
+    {
+      "label": "Guides",
+      "href": "https://docs.aurekai.work/"
+    },
+    {
+      "label": "Contact",
+      "href": "/#ask"
+    }
+  ],
+  "sections": [
+    {
+      "kind": "hero",
+      "headline": "A model on your own computer, *doing paid work.*",
+      "lede": "Three jobs a small model can do well when it is asked a narrow question and checked against what the text already says. Each runs on one computer, keeps a receipt for every answer, and sends nothing to an outside service.",
+      "button": "Discuss one of these",
+      "href": "/#ask"
+    },
+    {
+      "kind": "cases",
+      "id": "own-model-jobs",
+      "title": "The three jobs",
+      "items": [
+        {
+          "title": "Mentions of a business",
+          "text": "What the news sources this installation reads said about a business, with namesakes set aside and the items that need doing something about listed first.",
+          "icon": "newspaper",
+          "href": "/mentions/",
+          "button": "See a real run"
+        },
+        {
+          "title": "Books on your own machine",
+          "text": "Bank and card lines booked to a client's accounts, learning from earlier months, with the unsure lines held for review.",
+          "icon": "account_balance",
+          "href": "/books/",
+          "button": "See a real run"
+        },
+        {
+          "title": "Lot manifests",
+          "text": "A seller's photos and listing turned into a manifest a buyer can price, with every gap listed for the seller to fill.",
+          "icon": "inventory_2",
+          "href": "/manifests/",
+          "button": "See a real run"
+        }
+      ]
+    },
+    {
+      "kind": "steps",
+      "id": "own-model-how",
+      "title": "How each job is built",
+      "items": [
+        {
+          "title": "The text settles what it can",
+          "text": "Names, model numbers, counts and stated conditions are copied as written. Rules decide what the words make certain, such as toner holding no data."
+        },
+        {
+          "title": "The model answers a narrow question",
+          "text": "Is this the business or a namesake. Which of these accounts. What kind of equipment. Every answer keeps its probabilities and the exact model file that gave it."
+        },
+        {
+          "title": "Unsure answers go to a person",
+          "text": "A low-confidence answer is held for review, and anything the seller or source did not state is listed to confirm."
+        }
+      ]
+    },
+    {
+      "kind": "ask",
+      "form": {
+        "id": "work-request",
+        "title": "Send a project brief",
+        "fields": [
+          {
+            "label": "Your name",
+            "wide": true
+          },
+          {
+            "label": "Email",
+            "type": "email",
+            "wide": true
+          },
+          {
+            "label": "What needs to work?",
+            "type": "textarea",
+            "placeholder": "A short description of the task, feature or problem."
+          },
+          {
+            "label": "Current tools or public URL",
+            "optional": true,
+            "wide": true
+          },
+          {
+            "label": "Deadline or timing",
+            "optional": true,
+            "wide": true
+          }
+        ],
+        "button": "Send your brief",
+        "subject": "Aurekai project brief",
+        "sent": "Your brief has been received. Nick will reply to the email you supplied.",
+        "notice": "Your details go to Nick Gonzales at Aurekai for a reply. Introductory calls are free. Please leave out passwords and private customer data."
+      }
+    }
+  ],
+  "pages": [
+    {
+      "path": "mentions",
+      "title": "Mentions of a business",
+      "menu": "Mentions",
+      "sections": [
+        {
+          "kind": "hero",
+          "headline": "What the news said about a business, *namesakes set aside.*",
+          "lede": "bonfyre monitor reads the items an installation already collects, keeps the ones about the business, and lists first the few that call for a reply, carry a risk or offer an opening. This page shows a real run over 30 days of archived headlines naming Apple.",
+          "button": "Discuss this for your business",
+          "href": "/#ask"
+        },
+        {
+          "kind": "figures",
+          "id": "mentions-act",
+          "title": "Listed first: what needs doing",
+          "columns": [
+            "Headline",
+            "Why",
+            "Source",
+            "Date"
+          ],
+          "rows": [
+            [
+              "Apple's ridiculous printer security policy",
+              "Answer",
+              "spiceworks.com",
+              "2026-09-19"
+            ],
+            [
+              "Apple Teams Up With ROSÉ for iPhone 18 Pro Camera Ad",
+              "Opening",
+              "macrumors.com",
+              "2026-09-18"
+            ],
+            [
+              "Apple Exec Says 'Hold Us Accountable' on iPhone Duo Crease",
+              "Answer",
+              "macrumors.com",
+              "2026-09-19"
+            ],
+            [
+              "Apple, Samsung and Google face potential device ban in the US",
+              "Answer",
+              "gsmarena.com",
+              "2026-09-18"
+            ],
+            [
+              "Apple Watch Series 12 has slightly larger bezels, stuck out Digital Crown",
+              "Answer",
+              "appleinsider.com",
+              "2026-09-18"
+            ],
+            [
+              "I’ve now completely changed my mind about Apple Glasses",
+              "Answer",
+              "9to5mac.com",
+              "2026-09-18"
+            ],
+            [
+              "Apple Watch Ultra 4 Review: The Series 12 Is Closing the Gap",
+              "Answer",
+              "wired.com",
+              "2026-09-18"
+            ],
+            [
+              "Apple price hikes in 2027 could make your next iPhone cost even more",
+              "Answer",
+              "cultofmac.com",
+              "2026-09-18"
+            ],
+            [
+              "Apple is hiding tiny 'hello' signs for iPhone 18 Pro users to find",
+              "Answer",
+              "appleinsider.com",
+              "2026-09-18"
+            ],
+            [
+              "Sell your Apple stock now!",
+              "Opening",
+              "spiceworks.com",
+              "2026-09-19"
+            ],
+            [
+              "Apple releases Xcode 27.1 beta, enabling iPhone Duo app development",
+              "Opening",
+              "9to5mac.com",
+              "2026-09-18"
+            ]
+          ],
+          "source": {
+            "name": "bonfyre monitor over this installation's item archive, Qwen2.5 3B Instruct",
+            "observed": "16 October 2026"
+          },
+          "caveat": "40 headlines named Apple; 35 were about the company and 11 of those were listed here. A person had picked out four beforehand as needing action and all four are among them, with a possible import ban found afterwards."
+        },
+        {
+          "kind": "figures",
+          "id": "mentions-aside",
+          "title": "Set aside: the name meant something else",
+          "columns": [
+            "Headline",
+            "Decision",
+            "Source",
+            "Date"
+          ],
+          "rows": [
+            [
+              "Ex-nursery head, childcare worker referred to prosecutors over baby choking on piece of ap",
+              "Set aside",
+              "japantoday.com",
+              "2026-09-18"
+            ],
+            [
+              "Comment on James Blood Ulmer meets Pierre Dørge & NJO by Casino Ohne Verifizierung Apple P",
+              "Set aside",
+              "newjungleorchestra.com",
+              "2026-09-18"
+            ],
+            [
+              "Category:He:Apple iOS",
+              "Set aside",
+              "openstreetmap.org",
+              "2026-09-18"
+            ],
+            [
+              "Category:He:Apple",
+              "Set aside",
+              "openstreetmap.org",
+              "2026-09-18"
+            ],
+            [
+              "Skomentuj Nowość – Bungou Stray Dogs – BEAST, DEAD APPLE, Dazai, Chuuya, lat piętnaście, S",
+              "Set aside",
+              "waneko.pl",
+              "2026-09-19"
+            ]
+          ],
+          "source": {
+            "name": "bonfyre monitor, same run",
+            "observed": "16 October 2026"
+          },
+          "caveat": "On a separate run over 23 headlines containing the word Target, 22 were judged correctly as the retailer or not."
+        },
+        {
+          "kind": "steps",
+          "id": "mentions-scope",
+          "title": "What is in it, and what is not",
+          "items": [
+            {
+              "title": "Working now",
+              "text": "Whole-name matching over the archive, one item per headline even when several feeds carry it, a judgement of business or namesake, the kind of mention, its tone and what to do, with a receipt for each."
+            },
+            {
+              "title": "Not yet",
+              "text": "Local sources for a particular town. Coverage is the sources the installation reads, which are mostly national news."
+            },
+            {
+              "title": "Nothing is sent",
+              "text": "The digest is a file. Replying, posting or contacting anyone stays with the business."
+            }
+          ]
+        },
+        {
+          "kind": "cases",
+          "id": "mentions-guide",
+          "title": "Run it yourself",
+          "items": [
+            {
+              "title": "Mentions of a business",
+              "text": "The commands, the example files and the measured results, in the Bonfÿre guides.",
+              "icon": "menu_book",
+              "href": "https://docs.aurekai.work/business-mentions",
+              "button": "Open the guide"
+            }
+          ]
+        },
+        {
+          "kind": "call",
+          "title": "Want this for your business?",
+          "text": "Tell me what you need it to do. An introductory call is free.",
+          "button": "Send a project brief",
+          "href": "/#ask"
+        }
+      ]
+    },
+    {
+      "path": "books",
+      "title": "Books on your own machine",
+      "menu": "Private books",
+      "sections": [
+        {
+          "kind": "hero",
+          "headline": "Bank lines booked to your accounts, *on your own computer.*",
+          "lede": "bonfyre books learns from the lines a client has already categorised and books a new month from that. The lines it is unsure of go to a local model, which sees how similar lines were booked before. Transactions never leave the computer.",
+          "button": "Discuss this for your business",
+          "href": "/#ask"
+        },
+        {
+          "kind": "figures",
+          "id": "books-result",
+          "title": "One month of 1,500 lines",
+          "columns": [
+            "Outcome",
+            "Lines"
+          ],
+          "rows": [
+            [
+              "Booked from what earlier months taught",
+              "1,447"
+            ],
+            [
+              "Booked by the local model",
+              "29"
+            ],
+            [
+              "Held for review",
+              "24"
+            ],
+            [
+              "Booked lines matching the given category",
+              "1,460 of 1,476"
+            ]
+          ],
+          "source": {
+            "name": "DoDataThings/us-bank-transaction-categories-v2, a public synthetic set of US bank lines (MIT licence); learned from 6,000 lines, tested on the next 1,500",
+            "url": "https://huggingface.co/DoDataThings/distilbert-us-transaction-classifier-v2",
+            "observed": "16 October 2026"
+          },
+          "caveat": "These are not anyone's real accounts. With no earlier months to learn from, every line goes to the local model and is held for review."
+        },
+        {
+          "kind": "figures",
+          "id": "books-unsure",
+          "title": "Lines the learned weights were unsure of",
+          "columns": [
+            "Bank line",
+            "Suggested",
+            "Confidence",
+            "Decided by",
+            "Held for review"
+          ],
+          "rows": [
+            [
+              "[debit] AES 643 MAIN WAY BROOKLYN11201 NY USA",
+              "Shopping",
+              "0.35",
+              "local model",
+              "yes"
+            ],
+            [
+              "[debit] Paypal *p.f. Chang's Tf7jujw2rt",
+              "Restaurants",
+              "0.61",
+              "local model",
+              "no"
+            ],
+            [
+              "[debit] PYPL *CVS",
+              "Groceries",
+              "0.34",
+              "local model",
+              "yes"
+            ],
+            [
+              "[debit] GOOGLE *BITBUCKET",
+              "Subscription",
+              "0.88",
+              "local model",
+              "no"
+            ],
+            [
+              "[debit] WITHDRAWAL FROM ROBLOX",
+              "Entertainment",
+              "0.46",
+              "local model",
+              "yes"
+            ],
+            [
+              "[debit] WORLD MARKET - SEATTLE",
+              "Shopping",
+              "0.83",
+              "local model",
+              "no"
+            ],
+            [
+              "[debit] jc penney 6931 oak st dallas 75201-8854tx usa",
+              "Shopping",
+              "0.68",
+              "local model",
+              "no"
+            ],
+            [
+              "[debit] binny's 4276 broadway ln oakland 94601 ca usa",
+              "Restaurants",
+              "0.30",
+              "local model",
+              "yes"
+            ],
+            [
+              "[debit] Hartford 3008 Oak Rd Oakland94601 Ca Usa",
+              "Insurance",
+              "0.45",
+              "local model",
+              "yes"
+            ],
+            [
+              "[debit] POSHMARK #643",
+              "Shopping",
+              "0.60",
+              "local model",
+              "no"
+            ]
+          ],
+          "source": {
+            "name": "bonfyre books, same run",
+            "observed": "16 October 2026"
+          }
+        },
+        {
+          "kind": "steps",
+          "id": "books-scope",
+          "title": "What is in it, and what is not",
+          "items": [
+            {
+              "title": "Working now",
+              "text": "Learning from a categorised history, booking a bank or card export, a local model for the unsure lines, review for anything still unclear, and a receipt per line."
+            },
+            {
+              "title": "Not yet",
+              "text": "Connecting to a bank or to the client's accounting software. Lines arrive as an export and leave as a CSV."
+            },
+            {
+              "title": "The books stay theirs",
+              "text": "A booked line is a suggestion the client or their bookkeeper can change; a held line is not booked."
+            }
+          ]
+        },
+        {
+          "kind": "cases",
+          "id": "books-guide",
+          "title": "Run it yourself",
+          "items": [
+            {
+              "title": "Books on your own machine",
+              "text": "The commands, the example files and the measured results, in the Bonfÿre guides.",
+              "icon": "menu_book",
+              "href": "https://docs.aurekai.work/books-on-your-machine",
+              "button": "Open the guide"
+            }
+          ]
+        },
+        {
+          "kind": "call",
+          "title": "Want this for your business?",
+          "text": "Tell me what you need it to do. An introductory call is free.",
+          "button": "Send a project brief",
+          "href": "/#ask"
+        }
+      ]
+    },
+    {
+      "path": "manifests",
+      "title": "Lot manifests",
+      "menu": "Lot manifests",
+      "sections": [
+        {
+          "kind": "hero",
+          "headline": "A seller's photos and listing, *turned into a manifest.*",
+          "lede": "bonfyre manifest reads lot photos and listings on one computer, copies the make, model, part number and count exactly as written, and asks a local model what each unit is and whether it holds data to wipe. Anything the seller did not state is listed to confirm. The output loads into the ITAD acquisition desk.",
+          "button": "Discuss this for your business",
+          "href": "/#ask"
+        },
+        {
+          "kind": "figures",
+          "id": "manifest-rows",
+          "title": "Seven lots from a real wholesale week",
+          "columns": [
+            "Read as",
+            "Kind",
+            "Data to wipe",
+            "Count",
+            "Ask the seller"
+          ],
+          "rows": [
+            [
+              "HP EliteDesk",
+              "desktop",
+              "yes",
+              "—",
+              "count not stated"
+            ],
+            [
+              "Vertiv VRA1016",
+              "consumable",
+              "no",
+              "—",
+              "count not stated"
+            ],
+            [
+              "Canon",
+              "—",
+              "—",
+              "—",
+              "model not stated; count not stated; only a brand name is readable: say what the items are"
+            ],
+            [
+              "Dell",
+              "desktop",
+              "yes",
+              "—",
+              "model not stated; count not stated"
+            ],
+            [
+              "Lexmark/Epson/Fujifilm",
+              "consumable",
+              "no",
+              "121",
+              "model not stated"
+            ],
+            [
+              "Dell/HP/Apple/Samsung/Cisco iMac",
+              "desktop",
+              "yes",
+              "—",
+              "count not stated"
+            ],
+            [
+              "photos heim-gmc",
+              "—",
+              "—",
+              "—",
+              "no readable text: attach the listing or a photo of the label"
+            ]
+          ],
+          "source": {
+            "name": "Marketplace photos and two saved listings from the October 2026 wholesale pipeline, read by bonfyre manifest",
+            "observed": "16 October 2026"
+          },
+          "caveat": "The Dell row is a photo of toner boxes that was read as a desktop; the rest match what the photos and listings show."
+        },
+        {
+          "kind": "steps",
+          "id": "manifest-scope",
+          "title": "What is in it, and what is not",
+          "items": [
+            {
+              "title": "Working now",
+              "text": "Reading photos and listings, exact brand, model, part number and count, kind of equipment, data to wipe, stated condition, and a file the ITAD acquisition desk imports."
+            },
+            {
+              "title": "Not yet",
+              "text": "Counting units in a photo or reading a label too small to see. Marketplace photos rarely show labels, so most lots need the listing or close photos."
+            }
+          ]
+        },
+        {
+          "kind": "cases",
+          "id": "manifests-guide",
+          "title": "Run it yourself",
+          "items": [
+            {
+              "title": "Lot manifests",
+              "text": "The commands, the example files and the measured results, in the Bonfÿre guides.",
+              "icon": "menu_book",
+              "href": "https://docs.aurekai.work/lot-manifests",
+              "button": "Open the guide"
+            }
+          ]
+        },
+        {
+          "kind": "call",
+          "title": "Want this for your business?",
+          "text": "Tell me what you need it to do. An introductory call is free.",
+          "button": "Send a project brief",
+          "href": "/#ask"
+        }
+      ]
+    }
+  ]
+}

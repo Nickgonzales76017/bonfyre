@@ -9,34 +9,18 @@
 #include <sys/stat.h>
 #include <bonfyre.h>
 
+#include "bf_lex.h"
 static int ensure_dir(const char *path) { return bf_ensure_dir(path); }
 static char *read_file(const char *path) {
     return bf_read_file(path, NULL);
 }
 
+/* Delegates to the one implementation. This copy stopped at the first quote,
+ * so any value containing an escaped one came back cut. */
 static char *json_string_value(const char *json, const char *key) {
-    char pattern[256];
-    char *hit;
-    char *start;
-    char *end;
-    snprintf(pattern, sizeof(pattern), "\"%s\"", key);
-    hit = strstr(json, pattern);
-    if (!hit) return NULL;
-    start = strchr(hit + strlen(pattern), ':');
-    if (!start) return NULL;
-    start++;
-    while (*start && isspace((unsigned char)*start)) start++;
-    if (*start != '"') return NULL;
-    start++;
-    end = start;
-    while (*end && *end != '"') end++;
-    if (*end != '"') return NULL;
-    size_t len = (size_t)(end - start);
-    char *value = malloc(len + 1);
-    if (!value) return NULL;
-    memcpy(value, start, len);
-    value[len] = '\0';
-    return value;
+    char buf[8192];
+    if (!bf_lex_json_string(json, key, buf, sizeof(buf))) return NULL;
+    return strdup(buf);
 }
 
 static int count_vector_length(const char *json) {
@@ -197,6 +181,14 @@ int main(int argc, char **argv) {
     }
 
     vector_length = count_vector_length(emb_json);
+    if (vector_length <= 0) {
+        /* A payload with no vector indexes nothing; writing one and
+         * reporting success hid a wrong input shape. */
+        fprintf(stderr, "No \"vector\" array in %s\n", emb_path);
+        free(emb_json);
+        free(meta_json);
+        return 2;
+    }
     document_id = build_document_id(meta_json);
     job_slug = json_string_value(meta_json, "job_slug");
     if (!job_slug) job_slug = json_string_value(meta_json, "jobSlug");

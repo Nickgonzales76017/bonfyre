@@ -1,0 +1,11 @@
+[Unit]
+Description=Dispatch completed ProviderState embedding deltas
+
+[Timer]
+OnBootSec=90s
+OnUnitActiveSec=30s
+Persistent=true
+Unit=bonfyre-provider-delta.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,247 @@
+{
+  "schema": "bonfyre-foundry-behavior-spec.v1",
+  "description": "Compile semantic behavior families into exact ObjectContracts. Runtime lookup remains exact by applies_to_kind; a spec never creates runtime inheritance.",
+  "foundries": [
+    {"foundry": "person", "roots": ["Actor"], "facets": ["personal continuity", "notes"], "closure_posture": "owner_ready", "reason": "Person owns the only pre-existing published exact ObjectContract; Principal continuity remains separate work."},
+    {"foundry": "household", "roots": ["Household", "Institution"], "facets": ["institution connection"], "closure_posture": "materialization_needed", "reason": "The connect owner exists, while household and connection material are adoption-created."},
+    {"foundry": "school", "roots": ["Institution", "Program", "Community", "World"], "facets": ["education", "household connection"], "closure_posture": "composition", "reason": "School composes the Institution root; it is not a new runtime semantic kind."},
+    {"foundry": "program", "roots": ["Program"], "facets": ["ProgramTemplate", "ProgramInstance", "ProgramBinding"], "closure_posture": "owner_ready", "reason": "Executable CapabilityProgram lowering remains a separate materialization closure."},
+    {"foundry": "community", "roots": ["Community"], "facets": ["membership", "governance", "presence"], "closure_posture": "owner_ready", "reason": "CommunityBody is receipt-materialized and the native community request owner records only a local participation request."},
+    {"foundry": "project", "roots": ["Project", "GovernanceProposal"], "facets": ["support", "team needs", "funding", "governance"], "closure_posture": "owner_ready", "reason": "Project has typed material and native support/join; voting is correctly addressed to GovernanceProposal rather than Project."},
+    {"foundry": "property", "roots": ["PlaceAsset"], "facets": ["spatial observation", "service offer"], "closure_posture": "composition", "reason": "Property surface/owner integration remains separate from ObjectGrammar."},
+    {"foundry": "creator", "roots": ["Actor", "Publisher"], "facets": ["publication", "media", "support"], "closure_posture": "composition", "reason": "Rich publication material has no verified creator action owner yet."},
+    {"foundry": "business", "roots": ["Institution", "Provider"], "facets": ["service offers", "projects"], "closure_posture": "composition", "reason": "Provider and organization behavior binding remains unproved."},
+    {"foundry": "event", "roots": ["Occurrence"], "facets": ["stage", "live session"], "closure_posture": "owner_ready", "reason": "A receipt-materialized PublicationOccurrence has an exact native local-follow owner; external RSVP and attendance remain unclaimed."},
+    {"foundry": "learning_opportunity", "roots": ["OpportunityProjection"], "facets": ["Program", "Event", "Lesson", "ServiceOffer"], "closure_posture": "projection", "reason": "Learning Opportunity is compiled downstream from typed owners and owns no canonical duplicate."},
+    {"foundry": "tutor", "roots": ["Actor", "Provider", "Program"], "facets": ["service offer", "availability"], "closure_posture": "composition", "reason": "Tutor resolves Actor/provider to service/program; no Tutor silo is emitted."},
+    {"foundry": "library", "roots": ["Institution", "Program", "Occurrence"], "facets": ["knowledge", "world", "material"], "closure_posture": "composition", "reason": "Library is an Institution specialization, pending its contracts."},
+    {"foundry": "club", "roots": ["Community", "Program", "Occurrence"], "facets": ["team needs", "funding"], "closure_posture": "composition", "reason": "Club composes CommunityBody, ProgramInstance and occurrences rather than owning another social system."}
+  ],
+  "families": [
+    {
+      "family": "ProjectBehavior",
+      "semantic_base": "project",
+      "targets": ["project"],
+      "behaviors": [
+        {
+          "operation": "Project.support",
+          "object_name": "Project Support",
+          "birth_mode": "INVOKE",
+          "owner_path": "/govern/support",
+          "owner_subject_param": "id",
+          "owner_subject_value": "subject_identifier",
+          "return_template": "/s/project/{subject_identifier}",
+          "human_fields": ["amount"],
+          "closed_fields": ["project", "supporter"],
+          "authority_requirement": "",
+          "collection_lens": "project-support",
+          "action_label": "State my support",
+          "owner_note": "Records support through the native governance owner. No money moves and the owner rechecks the signed-in actor.",
+          "cannot_infer": "stated support -> payment, pledge collection, settlement, or value moved",
+          "status": "verified"
+        },
+        {
+          "operation": "Project.join",
+          "object_name": "Project Contribution",
+          "birth_mode": "INVOKE",
+          "owner_path": "/govern/join",
+          "owner_subject_param": "id",
+          "owner_subject_value": "subject_identifier",
+          "return_template": "/s/project/{subject_identifier}",
+          "human_fields": [],
+          "closed_fields": ["project", "contributor"],
+          "authority_requirement": "",
+          "collection_lens": "project-needs",
+          "action_label": "Offer to contribute",
+          "owner_note": "Records willingness through the native governance owner. It is not engagement, acceptance, or an employment contract.",
+          "cannot_infer": "an offered contribution -> engagement, acceptance, employment, or delivery",
+          "status": "verified"
+        },
+        {
+          "operation": "Project.propose",
+          "status": "unresolved",
+          "reason": "No verified Project proposal owner path is published; do not emit an ObjectContract."
+        },
+        {
+          "operation": "Project.vote",
+          "status": "unresolved",
+          "reason": "The verified vote owner takes a governance proposal id, not a Project subject; proposal addressing must be proved before emission."
+        },
+        {
+          "operation": "Project.settle",
+          "status": "unresolved",
+          "reason": "Settlement requires provider and metered-rate evidence, not a project id alone; do not advertise it as a Project contract."
+        },
+        {
+          "operation": "Project.viewNeeds",
+          "status": "projection",
+          "reason": "TeamNeed is already rendered by the Project owner; this is a read projection, not an ObjectContract birth/effect."
+        },
+        {
+          "operation": "Project.viewFunding",
+          "status": "projection",
+          "reason": "FundingWorkPackage is already rendered by the Project/Program owners; this is a read projection, not an ObjectContract birth/effect."
+        }
+      ]
+    },
+    {
+      "family": "InstitutionBehavior",
+      "semantic_base": "institution",
+      "targets": ["institution"],
+      "behaviors": [
+        {
+          "operation": "Institution.connect",
+          "object_name": "Household Institution Connection",
+          "birth_mode": "INVOKE",
+          "owner_path": "/govern/connect",
+          "owner_subject_param": "institution",
+          "owner_subject_value": "subject_identifier",
+          "return_template": "/s/institution/{subject_identifier}",
+          "human_fields": ["plane"],
+          "closed_fields": ["institution", "household steward"],
+          "authority_requirement": "",
+          "collection_lens": "household-connections",
+          "action_label": "Connect my household",
+          "owner_note": "Creates or releases a household connection only through the native institution-plane owner. The institution has not confirmed the relationship.",
+          "cannot_infer": "a household connection -> institution confirmation, access to a private plane, or disclosure to another household",
+          "status": "verified"
+        },
+        {"operation": "Institution.claim", "status": "unresolved", "reason": "No verified institution-claim owner is published; incidental WorkGraph claim code is not an institution behavior."},
+        {"operation": "Institution.adopt", "status": "unresolved", "reason": "Adoption needs a verified authority owner and a human confirmation boundary."}
+      ]
+    },
+    {
+      "family": "GovernanceProposalBehavior",
+      "semantic_base": "governance proposal",
+      "targets": ["governance_proposal"],
+      "behaviors": [
+        {
+          "operation": "GovernanceProposal.vote",
+          "object_name": "Governance Vote",
+          "birth_mode": "INVOKE",
+          "owner_path": "/govern/vote",
+          "owner_subject_param": "id",
+          "owner_subject_value": "subject_identifier",
+          "human_fields": ["choice"],
+          "closed_fields": ["proposal", "voter"],
+          "authority_requirement": "",
+          "collection_lens": "governance-votes",
+          "action_label": "Cast my vote",
+          "owner_note": "Records one authenticated person's position through the native governance owner. The owner replaces that person's prior position for the proposal.",
+          "cannot_infer": "a vote -> a decision, membership consensus, authority to carry out an effect, or settlement",
+          "status": "verified"
+        },
+        {"operation": "GovernanceProposal.decide", "status": "unresolved", "reason": "A decision owner and its authority/evidence closure remain separate from a vote tally."}
+      ]
+    },
+    {
+      "family": "CommunityBehavior",
+      "semantic_base": "community body",
+      "targets": ["community_body"],
+      "behaviors": [
+        {
+          "operation": "Community.join",
+          "object_name": "Community Participation Request",
+          "birth_mode": "INVOKE",
+          "owner_path": "/govern/community-join",
+          "owner_subject_param": "id",
+          "owner_subject_value": "subject_identifier",
+          "return_template": "/s/community/{subject_identifier}",
+          "human_fields": [],
+          "closed_fields": ["community", "member subject"],
+          "authority_requirement": "",
+          "collection_lens": "community-membership-requests",
+          "action_label": "Request to participate",
+          "owner_note": "Records one signed-in person's local participation request through the native CommunityMembership owner. It does not join an external carrier.",
+          "cannot_infer": "a local participation request -> acceptance, provider membership, external role, authority, or permission to act for a community",
+          "status": "verified"
+        },
+        {"operation": "Community.publish", "status": "unresolved", "reason": "CommunityBody, membership, post and presence material remain unmaterialized and no post owner has been proved."}
+      ]
+    },
+    {
+      "family": "ProgramBehavior",
+      "semantic_base": "program instance",
+      "targets": ["program_instance"],
+      "behaviors": [
+        {"operation": "Program.run", "status": "unresolved", "reason": "ProgramBinding lowers semantic slots, but CapabilityProgram has no populated executable carrier or native effect owner."},
+        {"operation": "Program.viewRequirements", "status": "projection", "reason": "ProgramRequirement is existing typed read material, not a birth or effect contract."}
+      ]
+    },
+    {
+      "family": "OccurrenceBehavior",
+      "semantic_base": "occurrence",
+      "targets": ["publication_occurrence"],
+      "behaviors": [
+        {
+          "operation": "Occurrence.follow",
+          "object_name": "Occurrence Follow",
+          "birth_mode": "INVOKE",
+          "owner_path": "/govern/occurrence-follow",
+          "owner_subject_param": "id",
+          "owner_subject_value": "subject_identifier",
+          "return_template": "/s/publication_occurrence/{subject_identifier}",
+          "human_fields": [],
+          "closed_fields": ["occurrence", "follower"],
+          "authority_requirement": "",
+          "collection_lens": "occurrence-follows",
+          "action_label": "Follow this occurrence",
+          "owner_note": "Records one signed-in person's local follow of retained public event material. It does not RSVP or contact the external organizer.",
+          "cannot_infer": "a local occurrence follow -> RSVP, registration, attendance, provider membership, notice delivery, organizer authority, or an external effect",
+          "status": "verified"
+        },
+        {"operation": "Occurrence.host", "status": "unresolved", "reason": "Stage/Mobilizon grammar is presentation evidence; no owner path has been verified for hosting."},
+        {"operation": "Occurrence.publish", "status": "unresolved", "reason": "Publication occurrences are not proof of an event/occurrence effect owner."}
+      ]
+    },
+    {
+      "family": "HouseholdOpportunityBehavior",
+      "semantic_base": "household-relevant public opportunity",
+      "targets": ["household_opportunity"],
+      "behaviors": [
+        {
+          "operation": "HouseholdOpportunity.save",
+          "object_name": "Household Opportunity Save",
+          "birth_mode": "INVOKE",
+          "owner_path": "/govern/opportunity-save",
+          "owner_subject_param": "id",
+          "owner_subject_value": "subject_identifier",
+          "return_template": "/s/household_opportunity/{subject_identifier}",
+          "human_fields": [],
+          "closed_fields": ["opportunity", "saver"],
+          "authority_requirement": "",
+          "collection_lens": "household-opportunity-saves",
+          "action_label": "Save this opportunity",
+          "owner_note": "Records one signed-in person's private local save of an observed public service opportunity. It does not contact or apply to the provider.",
+          "cannot_infer": "a local opportunity save -> eligibility, application, referral, enrollment, provider notice, service delivery, authority, or a private provider relationship",
+          "status": "verified"
+        },
+        {"operation": "HouseholdOpportunity.request", "status": "unresolved", "reason": "A public 211 resource does not provide a verified referral or application owner; do not emit a request action."}
+      ]
+    },
+    {
+      "family": "ProviderBehavior",
+      "semantic_base": "provider",
+      "targets": ["provider"],
+      "behaviors": [
+        {"operation": "Provider.offer", "status": "unresolved", "reason": "Observed ServiceOffer material does not establish organization/provider action ownership."}
+      ]
+    },
+    {
+      "family": "PlaceAssetBehavior",
+      "semantic_base": "place asset",
+      "targets": ["property"],
+      "behaviors": [
+        {"operation": "PlaceAsset.observe", "status": "unresolved", "reason": "SpatialObservation material is empty and the Property surface has not yet been joined to ObjectGrammar."}
+      ]
+    },
+    {
+      "family": "ActorBehavior",
+      "semantic_base": "actor",
+      "targets": ["person"],
+      "behaviors": [
+        {"operation": "Actor.publish", "status": "unresolved", "reason": "Creator publication material does not prove a creator publication effect owner; Person Note.declare remains the independently authored contract."}
+      ]
+    }
+  ]
+}

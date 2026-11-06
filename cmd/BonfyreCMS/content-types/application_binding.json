@@ -1,0 +1,16 @@
+{
+  "name": "application_binding",
+  "displayName": "Application Binding",
+  "description": "An ordered typed application lowered into one semantic slot. It binds material and, where applicable, a native action aperture; it never turns a source or protocol name into user-facing application identity.",
+  "attributes": {
+    "binding_id": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "site_id": {"type": "string", "required": true},
+    "slot_id": {"type": "string", "required": true},
+    "application_kind": {"type": "string", "required": true},
+    "material_query": {"type": "json", "required": true},
+    "source_collection": {"type": "string", "required": false},
+    "action_aperture": {"type": "string", "required": false},
+    "continuity_key": {"type": "string", "required": false},
+    "status": {"type": "string", "required": true}
+  }
+}

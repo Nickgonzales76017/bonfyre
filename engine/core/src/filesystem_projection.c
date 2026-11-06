@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "bf_lex.h"
 #ifndef PATH_MAX
 #define PATH_MAX 4096
 #endif
@@ -33,24 +34,11 @@ static void safe_component(const char *value, char *output, size_t output_size) 
     output[index] = '\0';
 }
 
+/* Delegates to the one implementation. Nineteen copies of this shape existed
+ * with sixteen different opinions about escaping.
+ */
 static void json_string(FILE *file, const char *value) {
-    const unsigned char *cursor = (const unsigned char *)(value == NULL ? "" : value);
-
-    fputc('"', file);
-    while (*cursor != '\0') {
-        unsigned char character = *cursor++;
-        if (character == '"' || character == '\\') {
-            fputc('\\', file);
-            fputc(character, file);
-        } else if (character == '\n') {
-            fputs("\\n", file);
-        } else if (character < 0x20) {
-            fprintf(file, "\\u%04x", character);
-        } else {
-            fputc(character, file);
-        }
-    }
-    fputc('"', file);
+    bf_lex_json_emit(file, value);
 }
 
 static int write_artifacts(sqlite3 *database, const char *directory, int *count) {

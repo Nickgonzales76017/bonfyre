@@ -1,0 +1,459 @@
+#!/usr/bin/env python3
+"""Historical parity oracle: bind native surfaces to a person's address.
+
+Institutions got their addresses first, and a publisher's host composes that
+publisher's own channels.  A member's host resolved and then showed territory
+material, because nothing said what a person's page is made of.  The tempting
+answer was a per-user CMS.  It is the wrong one: this estate already carries
+the surfaces a person acts through -- fifteen published surface grammars and
+seven lowered application kinds -- and a person's world is those surfaces plus
+whatever they have put in them.  Nothing new needs to be authored for a person
+to have a place; what was missing was the binding.
+
+So three published facts are written per member, in types that already exist:
+
+  world / world_fragment   the surfaces bound to this person, one fragment per
+                           published grammar, carrying that grammar's own
+                           renderer family, extent and refusal character.  This
+                           is the Board application's canonical material, so a
+                           member's board is literally their own tool surfaces.
+
+  semantic_slot /          the ordered composition of that person's apex: each
+  application_binding      slot lowers one typed application over one named
+                           material selector.  A slot with nothing in it stays
+                           typed-empty rather than borrowing the territory's
+                           material -- an empty surface means nothing has been
+                           added, never that nothing exists.
+
+  site_program             the published program those slots belong to, which
+                           is what makes the apex serve the person's own
+                           composition instead of the territory home.
+
+The Newsroom and Feed slots read named collections of sources this estate
+observed.  Those collections belong to the estate, not to the member: being
+read on a person's page is this estate's arrangement of its own reading, never
+a claim that the person chose, follows, endorses or has any relationship with
+the source.
+
+  compose_member_worlds.py --estate DIR [--occurrences 12000] [--apply]
+"""
+import argparse, hashlib, json, os, re, sqlite3, sys, time
+
+NOW = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+OCCURRENCE_CANNOT_INFER = (
+    "this is what this estate observed a source publish at the time it read it; "
+    "it is not a claim that the source still publishes it, that what it says is "
+    "true, or that the source knows this estate read it")
+WORLD_CANNOT_INFER = (
+    "these are the surfaces bound to this person's address, not things the "
+    "person has made; an empty surface means nothing has been added to it, "
+    "never that nothing exists")
+COLLECTION_SUBJECT = "estate:aurekai"
+
+
+def slug(text, cap=48):
+    flat = re.sub(r"[^a-z0-9]", "-", (text or "").lower())
+    return re.sub(r"-+", "-", flat).strip("-")[:cap]
+
+
+def digest(*parts, cap=24):
+    return hashlib.sha1("|".join(parts).encode()).hexdigest()[:cap]
+
+
+def cells_by_class(repo):
+    """Every published surface grammar, for every class of reader.
+
+    The same grammar is a different surface depending on who is standing at
+    the address: the estate's own cells say so, asking an anonymous visitor
+    what can be understood without an account and asking the person whose
+    address it is what they can now do.  A member's world is therefore not one
+    world but one per class, and the public one is what a stranger sees.
+
+    Everything a fragment needs -- renderer family, variant, extent, what the
+    surface is for and what it must not be read to imply -- is stated in the
+    cell, so none of it is invented here.
+    """
+    path = os.path.join(repo, "cmd/BonfyreWebAddress/generated/native-presentation-cells.json")
+    raw = json.load(open(path))
+    rows = raw if isinstance(raw, list) else next(v for v in raw.values() if isinstance(v, list))
+    out = {}
+    for cell in rows:
+        out.setdefault(cell.get("presentation_class") or "anonymous", {}).setdefault(cell["grammar"], cell)
+    return out
+
+
+def surface_programs(repo):
+    path = os.path.join(repo, "cmd/BonfyreWebAddress/generated/native-surface-programs.json")
+    return {p["program"]: p for p in json.load(open(path))["programs"]}
+
+
+# ---------------------------------------------------------------- CMS writing
+
+class Store:
+    """Direct writes into the CMS tables, in the shape the CMS binary writes.
+
+    A member's world is thousands of rows once the observed material is
+    projected; one process per row would take hours for work that is a single
+    transaction.  The columns and their conventions are read from the live
+    table rather than assumed.
+    """
+
+    def __init__(self, path, namespace="root"):
+        # This projector runs in the standing full-estate publish beside other
+        # owner projections.  A transient writer window is not a refusal of
+        # the whole member-world generation.
+        self.db = sqlite3.connect(path, timeout=60)
+        self.db.execute("PRAGMA busy_timeout=60000")
+        self.db.execute("PRAGMA journal_mode=WAL")
+        self.ns = namespace
+        self.columns = {}
+
+    def cols(self, table):
+        if table not in self.columns:
+            self.columns[table] = [r[1] for r in self.db.execute("PRAGMA table_info(%s)" % table)]
+        return self.columns[table]
+
+    def has(self, table):
+        return bool(self.cols(table))
+
+    def keyed(self, table, key_field):
+        """Whether this type's own key is unique in the store.
+
+        Not every content type declares one.  Where the store enforces it, a
+        second run updates the same row; where it does not, the prior row is
+        withdrawn first, so re-running restates the facts instead of stacking
+        duplicates of them.
+        """
+        mark = (table, key_field)
+        if mark not in self.columns.setdefault("__keyed__", {}):
+            found = self.db.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='index' AND tbl_name=?"
+                " AND sql LIKE '%UNIQUE%' AND sql LIKE ?", (table, '%"' + key_field + '"%')).fetchone()
+            self.columns["__keyed__"][mark] = bool(found)
+        return self.columns["__keyed__"][mark]
+
+    def put(self, table, key_field, row):
+        cols = self.cols(table)
+        record = {"namespace": self.ns, "created_at": NOW, "updated_at": NOW,
+                  "published_at": "", "status": "published"}
+        for name, value in row.items():
+            record[name] = json.dumps(value) if isinstance(value, (dict, list)) else value
+        fields = [c for c in cols if c in record and c != "id"]
+        values = [record[f] for f in fields]
+        if self.keyed(table, key_field):
+            self.db.execute(
+                "INSERT INTO \"%s\"(%s) VALUES(%s) ON CONFLICT(namespace,\"%s\") DO UPDATE SET %s" % (
+                    table, ",".join('"%s"' % f for f in fields),
+                    ",".join("?" for _ in fields), key_field,
+                    ",".join('"%s"=excluded."%s"' % (f, f) for f in fields if f != "created_at")),
+                values)
+            return
+        self.db.execute("DELETE FROM \"%s\" WHERE namespace=? AND \"%s\"=?" % (table, key_field),
+                        (self.ns, record[key_field]))
+        self.db.execute("INSERT INTO \"%s\"(%s) VALUES(%s)" % (
+            table, ",".join('"%s"' % f for f in fields), ",".join("?" for _ in fields)), values)
+
+    def drop_where(self, table, clause, args):
+        self.db.execute("DELETE FROM \"%s\" WHERE namespace=? AND %s" % (table, clause),
+                        [self.ns] + list(args))
+
+    def done(self):
+        self.db.commit()
+        self.db.close()
+
+    def commit(self):
+        self.db.commit()
+
+
+# ------------------------------------------------- what this estate has read
+
+def project_occurrences(store, estate, limit):
+    """The archive, said in the type a Newsroom knows how to read.
+
+    Only material with a readable receipt is projected: an occurrence without
+    the receipt that produced it is an assertion, and this estate does not make
+    those.  The projection is bounded because a Newsroom slot reads the newest
+    rows and the cost of the rest is paid on every query.
+    """
+    items = sqlite3.connect("file:%s/items.db?mode=ro" % estate, uri=True)
+    items.row_factory = sqlite3.Row
+    twins = {r[0]: (r[1] or "") for r in
+             store.db.execute("SELECT source, COALESCE(twin,'') FROM internet_source WHERE status='published'")}
+    receipts = os.path.join(estate, "foreign", "receipts")
+    written, skipped_receipt, skipped_source = 0, 0, 0
+    families, kinds = {}, {}
+
+    for row in items.execute(
+            "SELECT source,key,kind,family,title,COALESCE(href,'') AS href,"
+            " COALESCE(publisher,'') AS publisher,at FROM item"
+            " WHERE title <> '' ORDER BY at DESC LIMIT ?", (limit,)):
+        source = row["source"]
+        if source not in twins:
+            skipped_source += 1
+            continue
+        receipt = os.path.join(receipts, "%s.json" % source)
+        if not os.path.exists(receipt):
+            skipped_receipt += 1
+            continue
+        when = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(row["at"])) if row["at"] else NOW
+        store.put("publication_occurrence", "occurrence_id", {
+            "occurrence_id": digest(source, row["key"]),
+            "source_twin": twins[source] or source,
+            "source_ref": source,
+            "canonical_href": row["href"][:1000],
+            "title": row["title"][:480],
+            "summary": "",
+            "published_at": when,
+            "observed_at": when,
+            "receipt_ref": "foreign/receipts/%s.json" % source,
+            "rights_basis": "public_feed_observation",
+            "retention": "archive_local",
+            "visibility": "public",
+            "assertion_state": "OBSERVED",
+            "cannot_infer": OCCURRENCE_CANNOT_INFER,
+        })
+        written += 1
+        if row["family"]:
+            families.setdefault(row["family"], set()).add(source)
+        if row["kind"]:
+            kinds.setdefault(row["kind"], set()).add(source)
+
+    items.close()
+    return {"occurrences": written, "without_receipt": skipped_receipt,
+            "unknown_source": skipped_source}, families, kinds
+
+
+def publish_collections(store, families, kinds, per_collection=300):
+    """Named sets of sources, each one a fact about what this estate reads.
+
+    A collection carries the estate's subject, never a member's: a surface on a
+    person's address reading one of these is this estate's arrangement of its
+    own reading.
+    """
+    published = []
+    for label, sources in sorted(families.items(), key=lambda kv: -len(kv[1])):
+        name = slug(label)
+        if not name or len(sources) < 1:
+            continue
+        refs = sorted(sources)[:per_collection]
+        store.put("source_collection", "collection_id", {
+            "collection_id": "estate-family-%s" % name,
+            "subject_address": COLLECTION_SUBJECT,
+            "source_selector": {"source_refs": refs, "grouping": "family", "value": label},
+            "material_kind": ["publication_occurrence"],
+            "refresh_policy": "on_observation",
+        })
+        published.append(("estate-family-%s" % name, label, len(refs)))
+    for label, sources in sorted(kinds.items(), key=lambda kv: -len(kv[1])):
+        name = slug(label)
+        if not name:
+            continue
+        refs = sorted(sources)[:per_collection]
+        store.put("source_collection", "collection_id", {
+            "collection_id": "estate-carries-%s" % name,
+            "subject_address": COLLECTION_SUBJECT,
+            "source_selector": {"source_refs": refs, "grouping": "carries", "value": label},
+            "material_kind": ["publication_occurrence"],
+            "refresh_policy": "on_observation",
+        })
+        published.append(("estate-carries-%s" % name, label, len(refs)))
+    return published
+
+
+# ------------------------------------------------------------ a member's world
+
+def publish_world(store, world, subject, title, cells):
+    store.put("world", "world", {
+        "world": world, "title": title, "character": "workspace",
+        "lede": "The surfaces bound to this address.",
+        "subject": subject, "sources": "native_presentation_cells",
+        "grammars": ",".join(sorted(cells)),
+        "cannot_infer": WORLD_CANNOT_INFER,
+    })
+    store.drop_where("world_fragment", "world=?", (world,))
+    ordinal = 0
+    for grammar, cell in sorted(cells.items()):
+        ordinal += 1
+        store.put("world_fragment", "fragment_id", {
+            "fragment_id": "%s-%s" % (world, grammar),
+            "world": world, "ordinal": ordinal,
+            "subject_address": cell["route"],
+            "surface_grammar": grammar,
+            "renderer_family": cell["renderer_family"],
+            "renderer_variant": cell.get("renderer_variant", ""),
+            "extent": cell.get("extent_defaults", "section"),
+            "visible_sections": ", ".join(cell.get("visible_sections", [])),
+            "provenance": cell.get("question", ""),
+            "cannot_infer": cell.get("refusal_character", WORLD_CANNOT_INFER),
+        })
+    return ordinal
+
+
+def publish_slots(store, site, world, collections, cells):
+    """The ordered composition of a member's apex.
+
+    Their own surfaces lead, because that is what the address is for.  The
+    reading follows, typed by what it carries.  The applications a member has
+    not put anything in are still published: a surface that exists and is empty
+    is the truth, and hiding it would make the page claim the estate has less
+    to offer than it does.
+    """
+    # Only the slots this composer owns. A program attached to the same world
+    # publishes slots of its own, and withdrawing every slot on the site would
+    # have deleted them on the next pass -- the member composer would quietly
+    # uninstall whatever else the subject is running.
+    store.drop_where("semantic_slot",
+                     "site_id=? AND slot_id NOT IN (SELECT slot_id FROM program_binding"
+                     " WHERE namespace=? AND status='published')", (site, store.ns))
+    store.drop_where("application_binding",
+                     "site_id=? AND slot_id NOT IN (SELECT slot_id FROM program_binding"
+                     " WHERE namespace=? AND status='published')", (site, store.ns))
+    ordinal, slots = 0, []
+
+    def slot(name, kind, extent, max_items, *, collection="", query=None, boundary=""):
+        nonlocal ordinal
+        ordinal += 1
+        slot_id = "%s-%s" % (site, name)
+        store.put("semantic_slot", "slot_id", {
+            "slot_id": slot_id, "site_id": site, "slot_name": name, "ordinal": ordinal,
+            "extent": extent, "accepts": [kind], "min_material_quality": "observed",
+            "max_items": max_items,
+            "htmx_boundary": boundary or "slot-%s" % name,
+        })
+        store.put("application_binding", "binding_id", {
+            "binding_id": "%s-%s" % (slot_id, slug(kind)),
+            "site_id": site, "slot_id": slot_id, "application_kind": kind,
+            "material_query": query or {},
+            "source_collection": collection,
+            "continuity_key": "%s:%s" % (site, name),
+        })
+        slots.append({"slot": name, "application": kind, "collection": collection})
+
+    # What this person acts through.
+    slot("surfaces", "Board", "workspace", 24, query={"world": world})
+    # What this estate has read, typed by what it carries.
+    lead = [c for c in collections if c[0].startswith("estate-family-")]
+    carried = [c for c in collections if c[0].startswith("estate-carries-")]
+    for index, (collection_id, label, _count) in enumerate(lead[:10]):
+        slot("reading-%s" % slug(label, 24), "Newsroom" if index % 2 == 0 else "PublicationFeed",
+             "section", 14, collection=collection_id)
+    for collection_id, label, _count in carried[:5]:
+        slot("carrying-%s" % slug(label, 24), "PublicationFeed", "section", 12,
+             collection=collection_id)
+    # Surfaces this person can put their own material in.
+    slot("commons", "Community", "section", 12, query={"community": site})
+    slot("listening", "Listen", "card", 1, query={"recording": "%s-latest" % site})
+    slot("watching", "Watch", "card", 1, query={"program": "%s-latest" % site})
+    slot("conditions", "Weather", "chip", 1)
+    return slots
+
+
+def publish_program(store, site, subject, world, slots, collections, grammars):
+    store.put("site_program", "program_id", {
+        "program_id": "%s-world" % site, "site_id": site,
+        "experience_programs": [{"grammar": g, "route": "/%s" % g} for g in sorted(grammars)],
+        "application_bindings": slots,
+        "renderer_preferences": {"board": "masonry_board", "river": "vertical"},
+        "source_collections": [c[0] for c in collections],
+        "capability_programs": [],
+        "actor_presentations": {"anonymous": "public surfaces and this estate's own reading",
+                                "personal": "the same surfaces, with what this person has added"},
+    })
+    store.db.execute(
+        "UPDATE site_presentation SET navigation=?, updated_at=? WHERE namespace=? AND site_id=?",
+        (json.dumps(sorted(grammars)), NOW, store.ns, site))
+
+
+def members(estate):
+    matrix = sqlite3.connect("file:%s/matrix.db?mode=ro" % estate, uri=True)
+    matrix.row_factory = sqlite3.Row
+    rows = matrix.execute(
+        "SELECT s.subject_id, p.territory, p.scope FROM matrix_subjects s"
+        " LEFT JOIN matrix_presences p ON p.subject_id=s.subject_id AND p.active=1"
+        " WHERE s.subject_kind='person'").fetchall()
+    matrix.close()
+    return rows
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--estate", default=os.path.expanduser("~/.bonfyre/estate-local"))
+    ap.add_argument("--repo", default=os.path.expanduser("~/Developer/Bonfyre"))
+    ap.add_argument("--occurrences", type=int, default=12000)
+    ap.add_argument("--apply", action="store_true")
+    args = ap.parse_args()
+
+    by_class = cells_by_class(args.repo)
+    programs = surface_programs(args.repo)
+    by_class = {k: {g: c for g, c in v.items() if g in programs} for k, v in by_class.items()}
+    cells = by_class.get("anonymous", {})
+    people = members(args.estate)
+
+    if not args.apply:
+        print(json.dumps({"members": [dict(r) for r in people], "surfaces": sorted(cells),
+                          "would_write": ["publication_occurrence", "source_collection",
+                                          "world", "world_fragment", "semantic_slot",
+                                          "application_binding", "site_program"]}, indent=1))
+        return 0
+
+    store = Store(os.path.join(args.estate, "cms.db"))
+    for table in ("publication_occurrence", "source_collection", "world", "world_fragment",
+                  "semantic_slot", "application_binding", "site_program", "site_presentation"):
+        if not store.has(table):
+            print(json.dumps({"error": "the CMS has no %s type registered" % table}))
+            return 2
+
+    read, families, kinds = project_occurrences(store, args.estate, args.occurrences)
+    # The publication corpus is a complete idempotent owner projection.  Do
+    # not hold its write transaction while later member-surface work runs.
+    store.commit()
+    collections = publish_collections(store, families, kinds)
+    store.commit()
+
+    composed = []
+    for person in people:
+        subject = person["subject_id"]
+        label = slug(subject.split(":", 1)[-1])
+        site = "person-%s" % label
+        present = store.db.execute(
+            "SELECT host FROM site_presentation WHERE namespace=? AND site_id=? AND status='published'",
+            (store.ns, site)).fetchone()
+        if not present:
+            composed.append({"subject": subject, "skipped": "no published site_presentation"})
+            continue
+        world = "%s-surfaces" % label
+        fragments = publish_world(store, world, subject,
+                                  "%s's surfaces" % label.replace("-", " ").title(), cells)
+        # And the same surfaces as each other class of reader meets them. The
+        # page organ prefers the World published for the reader's class, so
+        # signing in changes what the surface asks of you without changing
+        # which surfaces are yours.
+        for klass, klass_cells in sorted(by_class.items()):
+            if klass == "anonymous" or not klass_cells:
+                continue
+            fragments += publish_world(store, "%s-%s" % (world, klass), subject,
+                                       "%s's surfaces" % label.replace("-", " ").title(),
+                                       klass_cells)
+        slots = publish_slots(store, site, world, collections, cells)
+        publish_program(store, site, subject, world, slots, collections, cells)
+        composed.append({"subject": subject, "host": present[0], "site": site,
+                         "world": world, "fragments": fragments, "slots": len(slots)})
+        # A completed member is a stable generation boundary.  Releasing the
+        # lock here lets the standing publisher's sibling owner projections
+        # progress without making a later member part of this one's state.
+        store.commit()
+
+    store.done()
+    print(json.dumps({
+        "read": read, "collections": len(collections), "members": composed,
+        "cannot_infer": "a member's page is the surfaces this estate binds to their address "
+                        "plus this estate's own reading; it is not material the person "
+                        "published, chose, or endorsed, and an empty surface means nothing "
+                        "has been added to it",
+    }, indent=1))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

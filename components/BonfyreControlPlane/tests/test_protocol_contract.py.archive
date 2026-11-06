@@ -1,0 +1,251 @@
+"""Archived Python witness; active native witness is protocol-contract.test.mjs.
+
+The load-bearing claims are that ordering is derived rather than declared, that
+the three conformance conditions each catch a distinct failure a schema
+validator passes, and that a completed exchange is not the same as a discharged
+obligation. Each test is written to falsify one of those.
+"""
+
+from __future__ import annotations
+
+import os
+import sqlite3
+import sys
+
+import pytest
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import commitment_graph as cg  # noqa: E402
+import information_policy as ip  # noqa: E402
+import protocol_contract as pc  # noqa: E402
+
+
+ACTORS = {"buyer": "agent:acme", "seller": "aurekai.life",
+          "settlement": "aurekai.life", "deliverer": "aurekai.life"}
+
+
+@pytest.fixture()
+def db():
+    conn = sqlite3.connect(":memory:")
+    cg.ensure_schema(conn)
+    yield conn
+    conn.close()
+
+
+@pytest.fixture()
+def quote():
+    return pc.quote_accept()
+
+
+# ------------------------------------------- ordering is derived, not declared
+
+def test_ordering_falls_out_of_information_dependencies(quote):
+    waves = quote.causal_order()
+    assert waves == [["buyer"], ["seller"], ["settlement"], ["deliverer"]]
+    # This one happens to be a chain because each role genuinely needs the
+    # previous role's output. The next test shows the compiler does not impose
+    # that shape when the dependencies do not.
+
+
+def test_independent_roles_share_a_wave_rather_than_being_serialized(quote):
+    # Two checks that both need only the request, and neither needs the other.
+    p = (pc.ProtocolContract("dual-check", given=frozenset({"request"}))
+         .role("credit", requires={"request"}, produces={"credit_ok"})
+         .role("identity", requires={"request"}, produces={"identity_ok"})
+         .role("decision", requires={"credit_ok", "identity_ok"},
+               produces={"decision"}))
+    waves = p.causal_order()
+    assert waves == [["credit", "identity"], ["decision"]]
+    # A declared message sequence would have picked an order for the two checks
+    # and made a concurrency decision the exchange never actually required.
+
+
+def test_a_role_needing_nothing_starts_immediately(quote):
+    p = (pc.ProtocolContract("kickoff")
+         .role("opener", produces={"request"})
+         .role("responder", requires={"request"}, produces={"reply"}))
+    assert p.causal_order() == [["opener"], ["responder"]]
+
+
+# --------------------------------------------------- liveness: waiting forever
+
+def test_liveness_catches_a_role_nobody_can_satisfy():
+    p = (pc.ProtocolContract("broken", given=frozenset({"request"}))
+         .role("seller", requires={"request"}, produces={"quote"})
+         .role("shipper", requires={"payment_confirmation"}, produces={"shipment"}))
+    errors = p.liveness_errors()
+    assert errors == {"shipper": frozenset({"payment_confirmation"})}
+    # Nobody produces payment_confirmation, so shipper waits forever. A message
+    # sequence diagram would have looked perfectly reasonable.
+
+
+def test_ordering_refuses_a_contract_that_cannot_progress():
+    p = (pc.ProtocolContract("broken", given=frozenset({"request"}))
+         .role("shipper", requires={"payment_confirmation"}, produces={"shipment"}))
+    with pytest.raises(pc.ProtocolError) as e:
+        p.causal_order()
+    assert "waits forever" in str(e.value)
+    assert "payment_confirmation" in str(e.value)
+
+
+def test_a_cycle_is_reported_as_liveness_not_as_a_hang():
+    p = (pc.ProtocolContract("cyclic")
+         .role("a", requires={"from_b"}, produces={"from_a"})
+         .role("b", requires={"from_a"}, produces={"from_b"}))
+    errors = p.liveness_errors()
+    assert set(errors) == {"a", "b"}
+
+
+def test_the_healthy_contract_has_no_liveness_errors(quote):
+    assert quote.liveness_errors() == {}
+
+
+# ------------------------------------------------- safety: racing to be correct
+
+def test_safety_catches_two_roles_producing_one_authoritative_output():
+    p = (pc.ProtocolContract("racy", given=frozenset({"request"}))
+         .role("seller", requires={"request"}, produces={"price"})
+         .role("repricer", requires={"request"}, produces={"price"}))
+    assert p.safety_errors() == {"price": ["repricer", "seller"]}
+    # Whichever lands first wins, so the price is decided by timing and the
+    # exchange has no answer to which producer was authoritative.
+
+
+def test_the_healthy_contract_has_no_safety_errors(quote):
+    assert quote.safety_errors() == {}
+
+
+# ------------------------------- integrity: laundering a field into an output
+
+def test_integrity_catches_an_output_derived_from_an_unentitled_input():
+    # The scorer needs the mailing address to compute its score but is only
+    # entitled to read the account. The message it emits would be well-formed.
+    p = (pc.ProtocolContract("leaky", given=frozenset({"account", "owner_mailing_address"}))
+         .role("scorer", requires={"account", "owner_mailing_address"},
+               produces={"contactability_score"}, reads={"account"}))
+    assert p.integrity_errors() == {"scorer": frozenset({"owner_mailing_address"})}
+
+
+def test_integrity_consults_the_disclosure_policy_too():
+    policy = (ip.InformationPolicy("Parcel")
+              .disclose("account", to=("public", "institution"))
+              .disclose("owner_mailing_address", to=("institution",),
+                        reason="contactable"))
+    p = (pc.ProtocolContract("scored",
+                             given=frozenset({"account", "owner_mailing_address"}))
+         .role("scorer", requires={"account", "owner_mailing_address"},
+               produces={"score"},
+               reads={"account", "owner_mailing_address"}))
+
+    # Entitled within the contract, and still not disclosable to the public.
+    assert p.integrity_errors() == {}
+    assert p.integrity_errors(policy, audience="public") == {
+        "scorer": frozenset({"owner_mailing_address"})}
+    # The institution audience may compute the same score lawfully.
+    assert p.integrity_errors(policy, audience="institution") == {}
+
+
+def test_a_role_that_produces_nothing_cannot_fail_integrity():
+    p = (pc.ProtocolContract("reader", given=frozenset({"secret"}))
+         .role("auditor", requires={"secret"}, reads=set()))
+    assert p.integrity_errors() == {}
+
+
+# ------------------------------------------------ conformance is not lawfulness
+
+def test_conformant_contract_reports_all_three_clean(quote):
+    assert quote.conformant() is True
+    assert quote.conformance() == {"liveness": {}, "safety": {}, "integrity": {}}
+
+
+def test_conformance_says_nothing_about_this_actor_being_permitted(quote):
+    # A structurally sound contract is not a grant. Authority is named per role
+    # and checked by AuthorityGraph at effect time, not here.
+    assert quote.conformant() is True
+    assert quote.roles["deliverer"].authority == "deliver:capability"
+    # Nothing in the contract asserts any particular actor holds it.
+    assert "agent:acme" not in str(quote.conformance())
+
+
+# ---------------------------- a completed exchange is not a discharged obligation
+
+def test_enactment_opens_commitments_in_the_graph(db, quote):
+    opened = quote.enact(db, enactment_id="ex1", actors=ACTORS)
+    assert opened == ["ex1:delivery", "ex1:payment"]
+    assert cg.status(db, "ex1:delivery") == cg.OPEN
+    assert cg.status(db, "ex1:payment") == cg.OPEN
+
+
+def test_every_message_can_complete_while_the_obligation_stays_open(db, quote):
+    quote.enact(db, enactment_id="ex1", actors=ACTORS)
+    # The exchange ran to its last wave; every carrier reported success.
+    assert quote.causal_order()[-1] == ["deliverer"]
+    # And the buyer is still owed the capability. This is the question no
+    # carrier answers, and the reason commitments are modelled at all.
+    assert quote.closed(db, "ex1") is False
+    assert quote.outstanding_after(db, "ex1") == [
+        ("ex1:delivery", cg.OPEN), ("ex1:payment", cg.OPEN)]
+
+
+def test_an_enactment_closes_only_when_every_obligation_is_terminal(db, quote):
+    quote.enact(db, enactment_id="ex1", actors=ACTORS)
+    cg.discharge(db, "ex1:delivery", detail="capability returned")
+    assert quote.closed(db, "ex1") is False, "payment is still owed"
+
+    cg.violate(db, "ex1:payment", detail="x402 settlement never verified")
+    assert quote.closed(db, "ex1") is False, "a violation is not a closure"
+
+    cg.compensate(db, "ex1:payment", detail="written off")
+    assert quote.closed(db, "ex1") is True
+    # And the breach survives the closure.
+    assert cg.was_ever(db, "ex1:payment", cg.VIOLATED) is True
+
+
+def test_commitments_carry_the_enactment_that_created_them(db, quote):
+    quote.enact(db, enactment_id="ex1", actors=ACTORS)
+    row = db.execute("SELECT enactment FROM commitments WHERE commitment_id='ex1:delivery'"
+                     ).fetchone()
+    assert row[0] == "ex1"
+
+
+def test_two_enactments_of_one_contract_do_not_collide(db, quote):
+    quote.enact(db, enactment_id="ex1", actors=ACTORS)
+    quote.enact(db, enactment_id="ex2", actors=ACTORS)
+    cg.discharge(db, "ex1:delivery")
+    assert cg.status(db, "ex2:delivery") == cg.OPEN
+    assert quote.closed(db, "ex2") is False
+
+
+# --------------------------------------------------------- refusals at the edge
+
+def test_a_non_conformant_contract_is_refused_before_it_opens_obligations(db):
+    p = (pc.ProtocolContract("broken", given=frozenset({"request"}))
+         .role("buyer", requires={"request"}, produces={"order"})
+         .role("shipper", requires={"payment_confirmation"}, produces={"shipment"})
+         .commits("ship", committer="shipper", beneficiary="buyer",
+                  resource="the goods"))
+    with pytest.raises(pc.ProtocolError) as e:
+        p.enact(db, enactment_id="ex1", actors={"buyer": "a", "shipper": "b"})
+    assert "non-conformant" in str(e.value)
+    # No obligation was opened on the way to failing.
+    assert cg.status(db, "ex1:ship") is None
+
+
+def test_a_commitment_naming_an_undeclared_role_is_refused_at_declaration():
+    with pytest.raises(pc.ProtocolError) as e:
+        (pc.ProtocolContract("typo")
+         .role("buyer", produces={"order"})
+         .commits("ship", committer="shipper", beneficiary="buyer", resource="goods"))
+    assert "does not declare" in str(e.value)
+
+
+def test_enacting_without_an_actor_for_every_role_is_refused(db, quote):
+    with pytest.raises(pc.ProtocolError) as e:
+        quote.enact(db, enactment_id="ex1", actors={"buyer": "agent:acme"})
+    assert "no actor for role" in str(e.value)
+
+
+def test_a_role_declared_twice_is_refused():
+    with pytest.raises(pc.ProtocolError):
+        pc.ProtocolContract("dup").role("buyer").role("buyer")

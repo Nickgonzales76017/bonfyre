@@ -1,0 +1,31 @@
+{
+  "name": "pack_head",
+  "displayName": "Pack Head",
+  "description": "A mutable pointer from a channel to one immutable version. Publishing is not making official and advancing a head is not installing: a head advances only under the rule its artifact declared.",
+  "attributes": {
+    "pack": {
+      "type": "string",
+      "required": true
+    },
+    "channel": {
+      "type": "string",
+      "required": true
+    },
+    "version": {
+      "type": "string",
+      "required": true
+    },
+    "advanced_by": {
+      "type": "string",
+      "required": true
+    },
+    "advanced_at": {
+      "type": "string",
+      "required": false
+    },
+    "status": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

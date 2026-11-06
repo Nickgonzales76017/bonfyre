@@ -42,7 +42,7 @@ bonfyre wire report <capture_id>
 ## Offline-first workflow
 
 ```bash
-bonfyre wire ingest-pcap cmd/BonfyreWire/fixtures/media_fixture.jsonl --authorized --root layeros/state
+bonfyre wire ingest-pcap /path/to/capture.pcap --authorized --root layeros/state
 bonfyre wire flows <capture_id> --root layeros/state
 bonfyre wire media-detect <capture_id> --root layeros/state
 bonfyre wire meter <capture_id> --root layeros/state

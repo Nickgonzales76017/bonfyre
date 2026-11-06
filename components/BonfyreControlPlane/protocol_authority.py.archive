@@ -1,0 +1,305 @@
+"""Archived Python protocol authority; active owner is engine/core/src/authority.c.
+
+ProtocolContract named the authority each role relies on and nothing verified it.
+A contract that says `deliver:capability` and never asks whether this actor holds
+it proves structure and not permission -- which is the more dangerous half to get
+wrong, because the structure is visible in the declaration and the permission is
+not.
+
+This reads `authority_edges`, the store the native C organ owns
+(engine/core/src/authority.c) and whose schema that file pins as "must match
+authority.py exactly". The rule reproduced here is the C's rule, and the test
+beside this file links the compiled organ and asserts the two agree on the same
+database rather than trusting that they do:
+
+    an actor holds a permission over a subject only if a non-revoked edge
+    matches actor+permission+subject, its window contains the moment, and --
+    when a purpose is asked -- the edge's purpose is general (empty) or matches.
+
+Nothing is inferred. Affiliation, provenance, a valid session, holding the
+permission over a parent subject: none of them grant it here.
+
+Forbidden inferences, falsified by the tests beside this file:
+  a conformant contract     -> a permitted enactment
+  authority over a subject  -> authority over another subject
+  a general-purpose grant   -> authority for a purpose the edge excludes
+  an expired or revoked edge -> a grant that still holds
+"""
+
+from __future__ import annotations
+
+import sqlite3
+from dataclasses import dataclass
+from typing import Optional
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS authority_edges(
+  edge_id TEXT PRIMARY KEY,
+  actor TEXT NOT NULL,
+  permission TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  purpose TEXT NOT NULL DEFAULT '',
+  scope TEXT NOT NULL DEFAULT '',
+  effective_from TEXT,
+  expires_at TEXT,
+  delegable INTEGER NOT NULL DEFAULT 0,
+  revoked INTEGER NOT NULL DEFAULT 0,
+  evidence TEXT NOT NULL DEFAULT '',
+  originating_authority TEXT NOT NULL DEFAULT ''
+);
+"""
+
+
+class AuthorityRefused(PermissionError):
+    """An enactment refused for want of authority, naming the role and the grant
+    it lacked. A refusal that only says 'denied' cannot be acted on."""
+
+
+@dataclass(frozen=True)
+class Lack:
+    role: str
+    actor: str
+    permission: str
+    subject: str
+    purpose: str
+
+    def __str__(self) -> str:
+        p = f" for purpose {self.purpose!r}" if self.purpose else ""
+        return (f"{self.role} ({self.actor}) lacks {self.permission!r} "
+                f"over {self.subject!r}{p}")
+
+
+def ensure_schema(db: sqlite3.Connection) -> None:
+    db.executescript(SCHEMA)
+    db.commit()
+
+
+def grant(db: sqlite3.Connection, *, edge_id: str, actor: str, permission: str,
+          subject: str, purpose: str = "", scope: str = "",
+          effective_from: Optional[str] = None, expires_at: Optional[str] = None,
+          delegable: int = 0, evidence: str = "",
+          originating_authority: str = "") -> None:
+    ensure_schema(db)
+    db.execute(
+        "INSERT INTO authority_edges(edge_id,actor,permission,subject,purpose,scope,"
+        "effective_from,expires_at,delegable,revoked,evidence,originating_authority)"
+        " VALUES(?,?,?,?,?,?,?,?,?,0,?,?)"
+        " ON CONFLICT(edge_id) DO UPDATE SET actor=excluded.actor,"
+        " permission=excluded.permission, subject=excluded.subject,"
+        " purpose=excluded.purpose, scope=excluded.scope,"
+        " effective_from=excluded.effective_from, expires_at=excluded.expires_at,"
+        " delegable=excluded.delegable, evidence=excluded.evidence,"
+        " originating_authority=excluded.originating_authority",
+        (edge_id, actor, permission, subject, purpose, scope, effective_from,
+         expires_at, delegable, evidence, originating_authority))
+    db.commit()
+
+
+def revoke(db: sqlite3.Connection, edge_id: str) -> bool:
+    ensure_schema(db)
+    cur = db.execute("UPDATE authority_edges SET revoked=1"
+                     " WHERE edge_id=? AND revoked=0", (edge_id,))
+    db.commit()
+    return cur.rowcount > 0
+
+
+def has_authority(db: sqlite3.Connection, actor: str, permission: str, subject: str,
+                  at_iso: Optional[str] = None, purpose: Optional[str] = None) -> bool:
+    """The C organ's rule, reproduced. Comparison on ISO-8601 is lexical, which
+    is why a malformed bound fails to match rather than being read as now."""
+    ensure_schema(db)
+    rows = db.execute(
+        "SELECT purpose,effective_from,expires_at FROM authority_edges"
+        " WHERE actor=? AND permission=? AND subject=? AND revoked=0",
+        (actor, permission, subject))
+    for edge_purpose, eff, exp in rows:
+        if purpose and edge_purpose and edge_purpose != purpose:
+            continue
+        if at_iso is not None:
+            if eff and at_iso < eff:
+                continue
+            if exp and at_iso > exp:
+                continue
+        return True
+    return False
+
+
+# --------------------------------------------------------------- delegation
+
+# The store carries `delegable` and `originating_authority` and the C organ's
+# has_authority reads neither -- it answers the flat question, and this module
+# reproduces exactly that so the two stay in parity. Delegation is built on top
+# rather than folded in: changing has_authority would break the agreement the
+# parity test exists to hold.
+#
+# AuthorityGraph's own declared invariant is that revoking a parent immediately
+# closes every descendant aperture it supplied. Nothing enforced that. It does
+# now.
+
+
+class DelegationRefused(PermissionError):
+    pass
+
+
+def delegate_authority(db: sqlite3.Connection, *, parent_edge_id: str,
+                       to_actor: str, new_edge_id: str,
+                       purpose: Optional[str] = None,
+                       expires_at: Optional[str] = None) -> None:
+    """Derive a child grant from a parent, bounded downward.
+
+    Three refusals, each a real way delegation is used to escalate:
+
+      * a non-delegable parent cannot be delegated from at all;
+      * a revoked parent grants nothing to derive from;
+      * a child may narrow purpose and window and may never widen them, so a
+        general parent can yield a purpose-bound child while a purpose-bound
+        parent cannot yield a general one.
+    """
+    ensure_schema(db)
+    row = db.execute(
+        "SELECT actor,permission,subject,purpose,scope,effective_from,expires_at,"
+        " delegable,revoked,originating_authority FROM authority_edges"
+        " WHERE edge_id=?", (parent_edge_id,)).fetchone()
+    if row is None:
+        raise DelegationRefused(f"unknown parent edge {parent_edge_id!r}")
+    (actor, permission, subject, p_purpose, scope, eff, exp,
+     delegable, revoked, _parent_origin) = row
+
+    if revoked:
+        raise DelegationRefused(
+            f"edge {parent_edge_id!r} is revoked: a closed grant supplies nothing")
+    if not delegable:
+        raise DelegationRefused(
+            f"edge {parent_edge_id!r} is not delegable; delegation is a declared "
+            f"property of a grant, not a default")
+
+    child_purpose = p_purpose
+    if purpose is not None:
+        if p_purpose and purpose != p_purpose:
+            raise DelegationRefused(
+                f"cannot delegate purpose {purpose!r} from an edge bound to "
+                f"{p_purpose!r}; a child narrows and never widens")
+        child_purpose = purpose
+
+    child_expiry = exp
+    if expires_at is not None:
+        if exp and expires_at > exp:
+            raise DelegationRefused(
+                f"cannot delegate an expiry of {expires_at} beyond the parent's "
+                f"{exp}; a child never outlives what it came from")
+        child_expiry = expires_at
+
+    # originating_authority names the IMMEDIATE parent, not the root. Storing
+    # the root would keep the original principal and lose every hop between,
+    # which is the half a re-delegation rule needs: who may narrow further, and
+    # which link to close. The root stays available as chain[0].
+    grant(db, edge_id=new_edge_id, actor=to_actor, permission=permission,
+          subject=subject, purpose=child_purpose, scope=scope,
+          effective_from=eff, expires_at=child_expiry,
+          delegable=0,  # one hop unless explicitly re-granted as delegable
+          originating_authority=parent_edge_id)
+
+
+def delegation_chain(db: sqlite3.Connection, edge_id: str) -> list[str]:
+    """Every edge this grant descends from, root first.
+
+    Cycles are impossible by construction (a child names an existing parent),
+    but the walk is bounded anyway: a corrupted store should return a wrong
+    answer rather than hang.
+    """
+    ensure_schema(db)
+    chain = [edge_id]
+    seen = {edge_id}
+    for _ in range(64):
+        row = db.execute("SELECT originating_authority FROM authority_edges"
+                         " WHERE edge_id=?", (chain[0],)).fetchone()
+        if row is None or not row[0] or row[0] in seen:
+            break
+        chain.insert(0, row[0])
+        seen.add(row[0])
+    return chain
+
+
+def descendants(db: sqlite3.Connection, edge_id: str) -> list[str]:
+    """Every edge derived from this one, transitively."""
+    ensure_schema(db)
+    out: list[str] = []
+    frontier = [edge_id]
+    for _ in range(64):
+        if not frontier:
+            break
+        placeholders = ",".join("?" * len(frontier))
+        rows = db.execute(
+            f"SELECT edge_id FROM authority_edges"
+            f" WHERE originating_authority IN ({placeholders})", frontier).fetchall()
+        found = [r[0] for r in rows if r[0] not in out and r[0] != edge_id]
+        out.extend(found)
+        frontier = found
+    return sorted(out)
+
+
+def revoke_cascade(db: sqlite3.Connection, edge_id: str) -> list[str]:
+    """Revoke a grant and everything derived from it.
+
+    This is AuthorityGraph's stated invariant made real: revoking a parent
+    closes every descendant aperture it supplied, without requiring the child to
+    cooperate. Revoking only the parent would leave a child holding authority
+    its source no longer has.
+    """
+    closed = []
+    for target in [edge_id, *descendants(db, edge_id)]:
+        if revoke(db, target):
+            closed.append(target)
+    return sorted(closed)
+
+
+# ------------------------------------------------------- protocol integration
+
+def role_lacks(db: sqlite3.Connection, contract, actors: dict[str, str], *,
+               subject: str, at_iso: Optional[str] = None,
+               purpose: Optional[str] = None) -> list[Lack]:
+    """Every role whose actor does not hold the authority the contract names.
+
+    A role declaring no authority is skipped rather than passed: it asserted no
+    requirement, and inventing one here would refuse enactments the contract
+    never gated.
+    """
+    out: list[Lack] = []
+    for name, role in sorted(contract.roles.items()):
+        if not role.authority:
+            continue
+        actor = actors.get(name)
+        if actor is None:
+            out.append(Lack(name, "<unassigned>", role.authority, subject, purpose or ""))
+            continue
+        if not has_authority(db, actor, role.authority, subject, at_iso, purpose):
+            out.append(Lack(name, actor, role.authority, subject, purpose or ""))
+    return out
+
+
+def authorized(db: sqlite3.Connection, contract, actors: dict[str, str], *,
+               subject: str, at_iso: Optional[str] = None,
+               purpose: Optional[str] = None) -> bool:
+    return not role_lacks(db, contract, actors, subject=subject,
+                          at_iso=at_iso, purpose=purpose)
+
+
+def enact_authorized(commitment_db: sqlite3.Connection,
+                     authority_db: sqlite3.Connection, contract, *,
+                     enactment_id: str, actors: dict[str, str], subject: str,
+                     at_iso: Optional[str] = None, purpose: Optional[str] = None,
+                     at: str = "") -> list[str]:
+    """Enact only if every role's actor holds the authority its role names.
+
+    Conformance and authority are checked separately and in that order, because
+    they fail for different reasons and a caller told only 'refused' cannot tell
+    a malformed protocol from an unpermitted actor.
+    """
+    lacks = role_lacks(authority_db, contract, actors, subject=subject,
+                       at_iso=at_iso, purpose=purpose)
+    if lacks:
+        raise AuthorityRefused(
+            f"enactment {enactment_id!r} of {contract.name!r} refused: "
+            + "; ".join(str(l) for l in lacks))
+    return contract.enact(commitment_db, enactment_id=enactment_id,
+                          actors=actors, at=at)

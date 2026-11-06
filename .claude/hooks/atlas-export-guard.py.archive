@@ -1,0 +1,67 @@
+#!/usr/bin/env python3
+"""Archived Python hook; superseded by atlas-export-guard.mjs.
+
+Close the gap between a valid atlas and a published one.
+
+`atlas-guard` already blocks a `.yaff` edit that fails validation, so the
+registry cannot go invalid inside a turn. It does not export. The index is what
+every other reader consumes, so a session can leave the registry correct and the
+published view stale -- which is how a session opened against an index four days
+behind the entries it claimed to describe, with the atlas reporting itself as
+not source-verified.
+
+Stop. Runs when the turn is already over, so an export costs the user nothing.
+It re-validates first and refuses to export a registry that does not validate:
+publishing a broken index is worse than publishing a stale one.
+
+This never blocks. A turn that ended is not the place to argue.
+"""
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parents[2]
+ARCH = REPO / "architecture"
+INDEX = ARCH / "atlas.index.json"
+
+
+def run(args, timeout=120):
+    try:
+        p = subprocess.run([sys.executable, *args], capture_output=True, text=True,
+                           timeout=timeout, cwd=str(REPO))
+        return p.returncode, (p.stdout + p.stderr).strip()
+    except Exception as exc:
+        return 1, str(exc)
+
+
+def main():
+    try:
+        json.load(sys.stdin)
+    except Exception:
+        pass
+
+    try:
+        newest = max(p.stat().st_mtime for p in ARCH.rglob("*.yaff"))
+        if newest <= INDEX.stat().st_mtime:
+            return 0
+    except Exception:
+        return 0
+
+    code, out = run(["architecture/atlas.py", "validate"])
+    if code != 0:
+        print(f"atlas: entries changed and validation fails; index left alone.\n{out[:800]}",
+              file=sys.stderr)
+        return 0
+
+    code, out = run(["architecture/atlas.py", "export"])
+    if code == 0:
+        print(f"atlas: entries changed, index re-exported. {out.splitlines()[-1] if out else ''}",
+              file=sys.stderr)
+    else:
+        print(f"atlas: export failed, index left alone.\n{out[:800]}", file=sys.stderr)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

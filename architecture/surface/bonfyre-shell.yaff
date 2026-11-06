@@ -1,0 +1,52 @@
+architecture bonfyre-semantic-shell
+  canonical_name BonfyreSemanticShell
+  family surface
+  domain Surface / Operator ABI
+  layer surface
+  semantic_question How can a public Bonfyre CLI expression address current state and compose native Powers without creating another command estate or granting authority?
+  purpose A thin typed shell over the public Bonfyre front door. It resolves @ addresses against existing Run8 projections or CommandAdvertisements, applies deterministic ? queries to their canonical owners, and delegates governed ! Power invocations to Fabric's generation-current operator-contract executor after its AuthorityGraph ACT gate. It retains Power identity, source digests, and non-promoting semantic bounds.
+  maturity implemented
+  owns SemanticShellProgram
+  owns ProcessOccurrenceView
+  consumes CommandAdvertisement
+  consumes HouseholdEconomicCircuitProjection
+  consumes FinancialMetabolism
+  consumes ProviderState
+  consumes HouseholdProjection
+  publishes ShellQueryResult
+  node_types SemanticShellProgram
+  node_types ProcessOccurrenceView
+  node_types ShellQueryResult
+  edge_types addresses
+  edge_types composes
+  edge_types invokes_native_owner
+  internal_calculus @ address |> ? deterministic query |> ! read-only probe or Fabric ACT-gated contract invocation
+  invariant the shell owns no household, provider, finance, or Power implementation state
+  invariant an exact work address reaches finance only through an existing canonical CostAllocation work-item target
+  invariant a native Power executes under its advertised Bonfyre identity, never a generic replacement verb
+  invariant a non-probe ! requires an exact actor, purpose, content-addressed input artifact, explicit ACT grant, and generation-current Fabric operator contract
+  forbidden_inference semantic address -> authority
+  forbidden_inference shell presentation or cache -> canonical truth
+  forbidden_inference CLI route -> implementation ownership
+  forbidden_inference native Power identity -> generic operator identity
+  forbidden_inference provider weather observation -> metered usage, billed cost, or capacity authority
+  source_path cmd/BonfyreCLI/src/main.c
+  source_path components/BonfyreControlPlane/bonfyre_shell.py.archive
+  source_path engine/core/src/fabric_exec.c
+  source_path engine/core/tests/operator_reference.test.mjs
+  source_path schemas/control/reference-disclosure.cue
+  source_path lib/libbonfyre/bf_utf8.c
+  consumes InformationPolicy
+  invariant reference artifact excerpts default to withheld; an explicit publisher disclosure declaration must name the operator, current contract generation and exact digest-addressed excerpt field for the public audience
+  invariant disclosed excerpt bytes must still match their retained artifact digest and fit the bounded text reader; Markdown fences inside the bytes cannot terminate the emitted example
+  witness engine/core/tests/operator_reference.test.mjs checks default withholding, exact public audiences, scoped declarations, changed-byte refusal, malformed-policy refusal, Unicode scalar validity and local publication without implied public disclosure; UTF-8 validation uses the same bounded bytes whose digest was verified
+  interacts bonfyre-reference-reads-information-policy
+  invariant operator reference requires the catalog binding, contract binding and contract to agree with the selected state's generation before rendering command documentation
+  invariant a reference run requires an event, matching generation metrics and a digest-verified operator-execution receipt whose operator, contract, generation, mission, node, output and passed checks agree; older events remain retained without becoming evidence for a newer contract
+  witness engine/core/tests/operator_reference.test.mjs executes a native hash workload, recompiles a changed declaration, excludes the earlier generation, rejects inconsistent receipts and metrics, refuses stale bindings and selects an earlier valid run when the newest receipt is damaged
+  forbidden_inference a generation-matched execution receipt -> an attestation of the currently installed executable or permission to publish artifact excerpts
+  witness components/BonfyreControlPlane/tests/test_bonfyre_shell.py.archive
+  witness tests/requirements/semantic_shell.sh
+  interacts bonfyre-shell-composes-existing-owners
+  interacts bonfyre-shell-reads-financial-metabolism
+  source_lineage Run8 native command estate closure

@@ -16,22 +16,22 @@ extern "C" {
 float fpq_i8_f32_dot_neon(const int8_t *w, const float *x, size_t n);
 
 /* Fused dequant + GEMV: y = W*x (int8 weights, float32 input/output) */
-void fpq_i8_f32_gemv_neon(const int8_t *W, const float *scales,
-                          const float *x, float *y,
+void fpq_i8_f32_gemv_neon(const int8_t *restrict W, const float *restrict scales,
+                          const float *restrict x, float *restrict y,
                           size_t rows, size_t cols);
 
 /* AXPY-style scatter: y += coeff * int8_vector */
-void fpq_i8_f32_axpy_neon(const int8_t *w, float coeff, float *y, size_t n);
+void fpq_i8_f32_axpy_neon(const int8_t *restrict w, float coeff, float *restrict y, size_t n);
 
 /* Merge residual corrections into output */
-void fpq_residual_merge_neon(float *out, const float *residuals, size_t n);
+void fpq_residual_merge_neon(float *restrict out, const float *restrict residuals, size_t n);
 
 /* RMS normalization */
-void fpq_rmsnorm_neon(float *out, const float *x, const float *w,
+void fpq_rmsnorm_neon(float *restrict out, const float *restrict x, const float *restrict w,
                       size_t n, float eps);
 
 /* SiLU activation with Hadamard product: gate = silu(gate) * up */
-void fpq_silu_mul_neon(float *gate, const float *up, size_t n);
+void fpq_silu_mul_neon(float *restrict gate, const float *restrict up, size_t n);
 
 /* RoPE rotation */
 void fpq_rope_neon(float *head, size_t head_dim, int pos, float theta);

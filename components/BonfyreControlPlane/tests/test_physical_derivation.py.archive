@@ -1,0 +1,72 @@
+import sqlite3, sys
+from pathlib import Path
+
+import pytest
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import physical_derivation as pd
+
+
+def test_frame_records_environment_names_not_values():
+    good = pd.PhysicalExecutionFrame("HEAD", "/repo", ("PATH", "CC"), "cap", "weather")
+    pd.validate_frame(good)
+    bad = pd.PhysicalExecutionFrame("HEAD", "/repo", ("TOKEN=secret",), "cap", "weather")
+    try:
+        pd.validate_frame(bad)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("secret-shaped environment value was accepted")
+
+
+def test_body_availability_is_keyed_by_derivation(tmp_path):
+    body = tmp_path / "body"
+    body.write_bytes(b"same")
+    db = sqlite3.connect(":memory:")
+    pd.record_body(db, derivation_key="K", body_ref=pd.file_digest(body),
+                   representation="binary", location=str(body),
+                   validity="CURRENT", receipt_ref="R")
+    reusable = pd.reusable_body(db, "K")
+    assert reusable["receipt_ref"] == "R"
+    assert pd.reusable_body(db, "other") is None
+
+
+def test_body_availability_requires_digest_readback_and_retracts_tampering(tmp_path):
+    body = tmp_path / "body"
+    body.write_bytes(b"first")
+    db = sqlite3.connect(":memory:")
+
+    with pytest.raises(ValueError, match="does not match"):
+        pd.record_body(db, derivation_key="K", body_ref="not-a-digest",
+                       representation="binary", location=str(body),
+                       validity="CURRENT", receipt_ref="R")
+
+    pd.record_body(db, derivation_key="K", body_ref=pd.file_digest(body),
+                   representation="binary", location=str(body),
+                   validity="CURRENT", receipt_ref="R")
+    body.write_bytes(b"changed")
+    assert pd.reusable_body(db, "K") is None
+
+
+def test_provider_usage_adapter_preserves_unknowns_and_distinct_accounts():
+    observed = pd.provider_model_usage_from_receipt(
+        {"provider": "codex", "model": "gpt-5.6", "input_tokens": 12,
+         "output_tokens": 4, "technical_account_ref": "technical:codex-cli",
+         "billing_account_ref": "billing:unknown"},
+        occurrence_id="usage:codex:one", attempt_ref="attempt:codex:one",
+        realization_ref="realization:codex", receipt_ref="receipt:one",
+        observed_at="2026-08-24T00:00:00Z",
+    )
+    assert observed.input_tokens == 12
+    assert observed.cached_input_tokens is None
+    assert observed.reasoning_tokens is None
+    assert observed.technical_account_ref != observed.billing_account_ref
+
+
+def test_provider_usage_adapter_refuses_carrier_identity_rebinding():
+    with pytest.raises(ValueError, match="attempt identity"):
+        pd.provider_model_usage_from_receipt(
+            {"provider": "codex", "attempt_id": "attempt:carrier", "input_tokens": 1},
+            occurrence_id="usage:codex:one", attempt_ref="attempt:adapter",
+            realization_ref="realization:codex", receipt_ref="receipt:one",
+            observed_at="2026-08-24T00:00:00Z")

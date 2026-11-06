@@ -1,0 +1,31 @@
+{
+  "name": "pack_activation",
+  "displayName": "Pack Activation",
+  "description": "This installed pack is running for this actor in this scope. Activation contributes behaviour to a closure and grants nothing: every effect it offers still meets Authority at effect time.",
+  "attributes": {
+    "pack": {
+      "type": "string",
+      "required": true
+    },
+    "activated_for": {
+      "type": "string",
+      "required": true
+    },
+    "scope": {
+      "type": "string",
+      "required": true
+    },
+    "activated_by": {
+      "type": "string",
+      "required": true
+    },
+    "conditions": {
+      "type": "string",
+      "required": false
+    },
+    "status": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

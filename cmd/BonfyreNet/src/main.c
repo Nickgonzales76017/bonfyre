@@ -65,6 +65,8 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
+#include <time.h>
 #include <limits.h>
 #include <bonfyre.h>
 
@@ -110,6 +112,10 @@ static void usage(void) {
 "\n"
 "  compile <file.bfnet> [--out <file.bfcircuit>]\n"
 "            Compile to binary .bfcircuit.\n"
+"\n"
+"  exec    <file.bfnet> --out DIR\n"
+"            Run each component as its organ, in net order, and record\n"
+"            what happened.\n"
 "\n"
 "  run     <file.bfnet|bfcircuit>\n"
 "            [--tran N]          steps to run (default: from .TRAN or 64)\n"
@@ -178,7 +184,7 @@ static int cmd_check_(int argc, char **argv) {
         const BfComponentDef *def=bf_component_lookup(c->type);
         const char *ok=def?(use_colour_()?"\033[32m✓\033[0m":"ok"):(use_colour_()?"\033[33m?\033[0m":"?");
         printf("    %s %-12s [%s]",ok,c->instance,c->type);
-        if(!def) printf("  (unknown — will be stubbed)");
+        if(!def) printf("  (unknown — this netlist will not compile)");
         if(c->params[0]) printf("  %s",c->params);
         printf("\n");
     }
@@ -694,6 +700,168 @@ static int cmd_eval_sealed_(int argc, char **argv) {
 /* ═══════════════════════════════════════════════════════════════════════
  * main
  * ═════════════════════════════════════════════════════════════════════ */
+/* ── exec: run a netlist of organs ───────────────────────────────────────
+ *
+ * A component names an organ; its parameters are that organ's arguments. A net
+ * from one instance to another means the second runs after the first and may
+ * refer to the first's output directory as ${instance}. ${out} is a
+ * component's own output directory. Each component is one real process. What
+ * is recorded for it is what happened: the command, the exit status, the time
+ * it took, and where its output went.
+ */
+static int organ_binary_(const char *type, char *out, size_t n) {
+    char kebab[128], flat[128];
+    size_t k = 0, f = 0;
+    const char *t = type;
+    if (strncmp(t, "Bonfyre", 7) != 0 || !t[7]) return 0;
+    t += 7;
+    for (const char *c = t; *c && k + 2 < sizeof(kebab); c++) {
+        int upper = (*c >= 'A' && *c <= 'Z');
+        int prev_lower = (c > t) && (c[-1] >= 'a' && c[-1] <= 'z');
+        if (upper && prev_lower) kebab[k++] = '-';
+        kebab[k++] = (char)(upper ? *c + 32 : *c);
+        if (f + 1 < sizeof(flat)) flat[f++] = (char)(upper ? *c + 32 : *c);
+    }
+    kebab[k] = '\0'; flat[f] = '\0';
+    const char *names[2] = { kebab, flat };
+    const char *path = getenv("PATH"), *home = getenv("HOME");
+    for (int v = 0; v < 2; v++) {
+        if (home) {
+            snprintf(out, n, "%s/.bonfyre/bin/bonfyre-%s", home, names[v]);
+            if (access(out, X_OK) == 0) return 1;
+        }
+        char *copy = path ? strdup(path) : NULL;
+        for (char *tok = copy ? strtok(copy, ":") : NULL; tok; tok = strtok(NULL, ":")) {
+            snprintf(out, n, "%s/bonfyre-%s", tok, names[v]);
+            if (access(out, X_OK) == 0) { free(copy); return 1; }
+        }
+        free(copy);
+    }
+    return 0;
+}
+
+static int instance_of_(const BfNetlist *nl, const char *pin_or_name, size_t len) {
+    for (uint32_t i = 0; i < nl->n_components; i++)
+        if (strlen(nl->components[i].instance) == len && !strncmp(nl->components[i].instance, pin_or_name, len)) return (int)i;
+    return -1;
+}
+
+static int cmd_exec_(int argc, char **argv) {
+    const char *path = NULL, *root = NULL;
+    for (int i = 1; i < argc; i++) {
+        if (!strcmp(argv[i], "--out") && i + 1 < argc) root = argv[++i];
+        else if (argv[i][0] != '-' && !path) path = argv[i];
+    }
+    if (!path || !root) { fprintf(stderr, "usage: bonfyre-net exec <file.bfnet> --out DIR\n"); return 1; }
+    static BfNetlist nl;
+    if (bf_netlist_parse(path, &nl) != 0) { fprintf(stderr, "exec: cannot parse %s\n", path); return 1; }
+    uint32_t n = nl.n_components;
+    if (n == 0) { fprintf(stderr, "exec: the netlist names no component\n"); return 1; }
+
+    static char binary[BF_NETLIST_MAX_COMPONENTS][PATH_MAX];
+    static unsigned char dep[BF_NETLIST_MAX_COMPONENTS][BF_NETLIST_MAX_COMPONENTS];
+    int order[BF_NETLIST_MAX_COMPONENTS], done[BF_NETLIST_MAX_COMPONENTS], placed = 0;
+    memset(dep, 0, sizeof(dep));
+    for (uint32_t i = 0; i < n; i++) {
+        done[i] = 0;
+        if (!organ_binary_(nl.components[i].type, binary[i], sizeof(binary[i]))) {
+            fprintf(stderr, "exec: %s names %s, and no such organ is installed; nothing was run\n",
+                    nl.components[i].instance, nl.components[i].type);
+            return 1;
+        }
+    }
+    for (uint32_t w = 0; w < nl.n_wires; w++) {
+        const char *sd = strchr(nl.wires[w].src, '.'), *dd = strchr(nl.wires[w].dst, '.');
+        int a = instance_of_(&nl, nl.wires[w].src, sd ? (size_t)(sd - nl.wires[w].src) : strlen(nl.wires[w].src));
+        int b = instance_of_(&nl, nl.wires[w].dst, dd ? (size_t)(dd - nl.wires[w].dst) : strlen(nl.wires[w].dst));
+        if (a < 0 || b < 0) { fprintf(stderr, "exec: net %s -> %s names an instance that is not declared\n", nl.wires[w].src, nl.wires[w].dst); return 1; }
+        dep[b][a] = 1;
+    }
+    while (placed < (int)n) {
+        int progressed = 0;
+        for (uint32_t i = 0; i < n; i++) {
+            if (done[i]) continue;
+            int ready = 1;
+            for (uint32_t j = 0; j < n; j++) if (dep[i][j] && !done[j]) ready = 0;
+            if (ready) { order[placed++] = (int)i; done[i] = 1; progressed = 1; }
+        }
+        if (!progressed) { fprintf(stderr, "exec: the nets form a cycle; nothing was run\n"); return 1; }
+    }
+
+    char trace_path[PATH_MAX];
+    if (bf_ensure_dir(root) != 0) { perror(root); return 1; }
+    snprintf(trace_path, sizeof(trace_path), "%s/trace.jsonl", root);
+    FILE *trace = fopen(trace_path, "w");
+    if (!trace) { perror(trace_path); return 1; }
+
+    int failed = 0, ran = 0;
+    for (int o = 0; o < (int)n; o++) {
+        int i = order[o];
+        const BfNetComponent *c = &nl.components[i];
+        char outdir[PATH_MAX], logp[PATH_MAX], expanded[2048];
+        snprintf(outdir, sizeof(outdir), "%s/%s", root, c->instance);
+        snprintf(logp, sizeof(logp), "%s/%s.log", root, c->instance);
+        if (failed) { printf("  %-12s not run: an earlier component failed\n", c->instance); continue; }
+        if (bf_ensure_dir(outdir) != 0) { perror(outdir); failed = 1; continue; }
+
+        /* expand ${out} and ${instance}; a reference needs a net behind it */
+        size_t e = 0; int bad = 0;
+        for (const char *p = c->params; *p && e + 1 < sizeof(expanded); ) {
+            if (p[0] == '$' && p[1] == '{') {
+                const char *close = strchr(p, '}');
+                if (!close) { bad = 1; break; }
+                size_t len = (size_t)(close - p - 2);
+                const char *value = NULL; char other[PATH_MAX];
+                if (len == 3 && !strncmp(p + 2, "out", 3)) value = outdir;
+                else {
+                    int j = instance_of_(&nl, p + 2, len);
+                    if (j < 0 || !dep[i][j]) {
+                        fprintf(stderr, "exec: %s refers to ${%.*s} with no net from it; nothing further was run\n", c->instance, (int)len, p + 2);
+                        bad = 1; break;
+                    }
+                    snprintf(other, sizeof(other), "%s/%s", root, nl.components[j].instance);
+                    value = other;
+                }
+                size_t vl = strlen(value);
+                if (e + vl + 1 >= sizeof(expanded)) { bad = 1; break; }
+                memcpy(expanded + e, value, vl); e += vl;
+                p = close + 1;
+            } else expanded[e++] = *p++;
+        }
+        expanded[e] = '\0';
+        if (bad) { failed = 1; continue; }
+
+        char *args[64]; int na = 0;
+        args[na++] = binary[i];
+        for (char *tok = strtok(expanded, " \t"); tok && na < 63; tok = strtok(NULL, " \t")) args[na++] = tok;
+        args[na] = NULL;
+
+        struct timespec t0, t1;
+        clock_gettime(CLOCK_MONOTONIC, &t0);
+        pid_t pid = fork();
+        if (pid < 0) { failed = 1; continue; }
+        if (pid == 0) {
+            FILE *lf = fopen(logp, "w");
+            if (lf) { dup2(fileno(lf), STDOUT_FILENO); dup2(fileno(lf), STDERR_FILENO); }
+            execv(binary[i], args);
+            _exit(127);
+        }
+        int status = 0;
+        waitpid(pid, &status, 0);
+        clock_gettime(CLOCK_MONOTONIC, &t1);
+        long ms = (long)((t1.tv_sec - t0.tv_sec) * 1000 + (t1.tv_nsec - t0.tv_nsec) / 1000000);
+        int code = WIFEXITED(status) ? WEXITSTATUS(status) : -1;
+        ran++;
+        printf("  %-12s %-28s exit %d  %ld ms\n", c->instance, strrchr(binary[i], '/') + 1, code, ms);
+        fprintf(trace, "{\"instance\":\"%s\",\"organ\":\"%s\",\"exit\":%d,\"ms\":%ld,\"output\":\"%s\",\"log\":\"%s\"}\n",
+                c->instance, strrchr(binary[i], '/') + 1, code, ms, outdir, logp);
+        if (code != 0) failed = 1;
+    }
+    fclose(trace);
+    printf("world=%s  components=%u  ran=%d  status=%s  trace=%s\n", nl.world, n, ran, failed ? "FAILED" : "OK", trace_path);
+    return failed ? 1 : 0;
+}
+
 int main(int argc, char **argv) {
     if(argc<2){usage();return 1;}
     bf_component_registry_init();
@@ -702,6 +870,7 @@ int main(int argc, char **argv) {
     if(!strcmp(cmd,"--help")||!strcmp(cmd,"-h")){ usage();return 0; }
     if(!strcmp(cmd,"check"))        return cmd_check_      (argc-1,argv+1);
     if(!strcmp(cmd,"compile"))      return cmd_compile_    (argc-1,argv+1);
+    if(!strcmp(cmd,"exec"))         return cmd_exec_       (argc-1,argv+1);
     if(!strcmp(cmd,"run"))          return cmd_run_        (argc-1,argv+1);
     if(!strcmp(cmd,"probe"))        return cmd_probe_      (argc-1,argv+1);
     if(!strcmp(cmd,"graph"))        return cmd_graph_      (argc-1,argv+1);

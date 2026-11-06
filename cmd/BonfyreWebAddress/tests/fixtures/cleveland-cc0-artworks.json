@@ -1,0 +1,147 @@
+{
+"info": {
+"note": "Trimmed from the Cleveland Museum of Art Open Access API response retained 2026-10-19 (openaccess-api.clevelandart.org, cc0=1). Every row is CC0 as the museum states it."
+},
+"data": [
+{
+"id": 92937,
+"title": "Stag at Sharkey's",
+"url": "https://clevelandart.org/art/1922.1133",
+"share_license_status": "CC0",
+"tombstone": "Stag at Sharkey's, 1909. George Bellows (American, 1882–1925). Oil on canvas; framed: 110 x 140.5 x 8.5 cm (43 5/16 x 55 5/16 x 3 3/8 in.); unframed: 92 x 122.6 cm (36 1/4 x 48 1/4 in.). The Cleveland Museum of Art, Hinman B. Hurlbut Collection, 1922.1133",
+"creditline": "Hinman B. Hurlbut Collection",
+"images": {
+"web": {
+"url": "https://openaccess-cdn.clevelandart.org/1922.1133/1922.1133_web.jpg"
+}
+},
+"creators": [
+{
+"description": "George Bellows (American, 1882–1925)"
+}
+]
+},
+{
+"id": 141639,
+"title": "Twilight in the Wilderness",
+"url": "https://clevelandart.org/art/1965.233",
+"share_license_status": "CC0",
+"tombstone": "Twilight in the Wilderness, 1860. Frederic Edwin Church (American, 1826–1900). Oil on canvas; unframed: 101.6 x 162.6 cm (40 x 64 in.); framed: 124 x 185 x 13 cm (48 13/16 x 72 13/16 x 5 1/8 in.). The Cleveland Museum of Art, Mr. and Mrs. William H. Marlatt Fund, 1965.233",
+"creditline": "Mr. and Mrs. William H. Marlatt Fund",
+"images": {
+"web": {
+"url": "https://openaccess-cdn.clevelandart.org/1965.233/1965.233_web.jpg"
+}
+},
+"creators": [
+{
+"description": "Frederic Edwin Church (American, 1826–1900)"
+}
+]
+},
+{
+"id": 135382,
+"title": "The Red Kerchief",
+"url": "https://clevelandart.org/art/1958.39",
+"share_license_status": "CC0",
+"tombstone": "The Red Kerchief (Femme à la capeline rouge), c. 1868–73. Claude Monet (French, 1840–1926). Oil on fabric; framed: 128.3 x 105.7 x 14.6 cm (50 1/2 x 41 5/8 x 5 3/4 in.); unframed: 99 x 79.8 cm (39 x 31 7/16 in.). The Cleveland Museum of Art, Bequest of Leonard C. Hanna Jr., 1958.39",
+"creditline": "Bequest of Leonard C. Hanna Jr.",
+"images": {
+"web": {
+"url": "https://openaccess-cdn.clevelandart.org/1958.39/1958.39_web.jpg"
+}
+},
+"creators": [
+{
+"description": "Claude Monet (French, 1840–1926)"
+}
+]
+},
+{
+"id": 140408,
+"title": "Peregrine Falcons (Duck Hawks)",
+"url": "https://clevelandart.org/art/1964.351",
+"share_license_status": "CC0",
+"tombstone": "Peregrine Falcons (Duck Hawks), c. 1827. John James Audubon (American, born Haiti, 1785–1851). Oil on canvas; framed: 74.9 x 101 x 10.2 cm (29 1/2 x 39 3/4 x 4 in.); unframed: 64.5 x 91.5 cm (25 3/8 x 36 in.). The Cleveland Museum of Art, Gift of the American Foundation for the Maud E. and Warren H. Corning Botanical Collection, 1964.351",
+"creditline": "Gift of the American Foundation for the Maud E. and Warren H. Corning Botanical Collection",
+"images": {
+"web": {
+"url": "https://openaccess-cdn.clevelandart.org/1964.351/1964.351_web.jpg"
+}
+},
+"creators": [
+{
+"description": "John James Audubon (American, born Haiti, 1785–1851)"
+}
+]
+},
+{
+"id": 124089,
+"title": "Portrait of a Woman",
+"url": "https://clevelandart.org/art/1944.90",
+"share_license_status": "CC0",
+"tombstone": "Portrait of a Woman, 1635 or earlier. Rembrandt van Rijn (Dutch, 1606–1669), and Studio. Oil on wood; framed: 97.8 x 83.8 x 6.4 cm (38 1/2 x 33 x 2 1/2 in.); unframed: 77.5 x 64.8 cm (30 1/2 x 25 1/2 in.). The Cleveland Museum of Art, The Elisabeth Severance Prentiss Collection, 1944.90",
+"creditline": "The Elisabeth Severance Prentiss Collection",
+"images": {
+"web": {
+"url": "https://openaccess-cdn.clevelandart.org/1944.90/1944.90_web.jpg"
+}
+},
+"creators": [
+{
+"description": "Rembrandt van Rijn (Dutch, 1606–1669)"
+}
+]
+},
+{
+"id": 136510,
+"title": "Water Lilies (Agapanthus)",
+"url": "https://clevelandart.org/art/1960.81",
+"share_license_status": "CC0",
+"tombstone": "Water Lilies (Agapanthus), c. 1915–26. Claude Monet (French, 1840–1926). Oil on canvas; framed: 204.9 x 430.3 x 6 cm (80 11/16 x 169 7/16 x 2 3/8 in.); unframed: 201.3 x 425.6 cm (79 1/4 x 167 9/16 in.). The Cleveland Museum of Art, John L. Severance Fund and an anonymous gift, 1960.81",
+"creditline": "John L. Severance Fund and an anonymous gift",
+"images": {
+"web": {
+"url": "https://openaccess-cdn.clevelandart.org/1960.81/1960.81_web.jpg"
+}
+},
+"creators": [
+{
+"description": "Claude Monet (French, 1840–1926)"
+}
+]
+},
+{
+"id": 111811,
+"title": "Nataraja, Shiva as the Lord of Dance",
+"url": "https://clevelandart.org/art/1930.331",
+"share_license_status": "CC0",
+"tombstone": "Nataraja, Shiva as the Lord of Dance, 1000s. South India, Tamil Nadu, Chola period (900–1200s). Bronze; overall: 113 x 102 x 30 cm (44 1/2 x 40 3/16 x 11 13/16 in.); base: 35 x 24 cm (13 3/4 x 9 7/16 in.). The Cleveland Museum of Art, Purchase from the J. H. Wade Fund, 1930.331",
+"creditline": "Purchase from the J. H. Wade Fund",
+"images": {
+"web": {
+"url": "https://openaccess-cdn.clevelandart.org/1930.331/1930.331_web.jpg"
+}
+},
+"creators": []
+},
+{
+"id": 147938,
+"title": "Interior of the Pantheon, Rome",
+"url": "https://clevelandart.org/art/1974.39",
+"share_license_status": "CC0",
+"tombstone": "Interior of the Pantheon, Rome, 1747. Giovanni Paolo Panini (Italian, 1691–1765). Oil on canvas; framed: 147.5 x 120 x 5 cm (58 1/16 x 47 1/4 x 1 15/16 in.); unframed: 127 x 97.8 cm (50 x 38 1/2 in.). The Cleveland Museum of Art, Purchase from the J. H. Wade Fund, 1974.39",
+"creditline": "Purchase from the J. H. Wade Fund",
+"images": {
+"web": {
+"url": "https://openaccess-cdn.clevelandart.org/1974.39/1974.39_web.jpg"
+}
+},
+"creators": [
+{
+"description": "Giovanni Paolo Panini (Italian, 1691–1765)"
+}
+]
+}
+]
+}

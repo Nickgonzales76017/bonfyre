@@ -1,0 +1,4 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-swarm-selftest","binary_env":"BONFYRE_SWARM_SELFTEST_BIN","cases":[
+{"name":"two loopback workers each fetch a matching piece","steps":[
+ {"argv":[],"env":{"HOME":"${tmp}"},"exit":0,"at":{"ready":true,"worker1_piece_matched":true,"worker2_piece_matched":true,"status.kind":"swarm-status","status.peers":2}}]},
+{"name":"status refuses an index that does not exist","steps":[{"program":"${organ}/bonfyre-swarm","argv":["status","--index","missing.db"],"env":{"HOME":"${tmp}"},"exit":1,"absent":["${tmp}/missing.db"]}]}]}

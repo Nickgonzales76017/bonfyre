@@ -1,0 +1,1 @@
+{"authorization":"Bearer fixture-token","body":{"id":"@ID@","jsonrpc":"2.0","method":"tools/call","params":{"arguments":{"kind":"smoke","path":"@T@/tmp/bonfyre-recursive-smoke-XXXXXX/smoke.txt"},"name":"artifact_ingest"}},"content-type":"application/json","file":"alpha\r\nbeta\nalpha\n","mcp-protocol-version":"2025-06-18","request":"POST /mcp"}

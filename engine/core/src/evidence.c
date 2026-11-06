@@ -28,6 +28,8 @@ static const char *EVIDENCE_KINDS[] = {
     "supports", "contradicts", "reproduces", "falsifies", NULL,
 };
 
+static int present(const char *value) { return value && value[0] != '\0'; }
+
 static int kind_declared(const char *kind) {
     for (size_t i = 0; EVIDENCE_KINDS[i] != NULL; i++) {
         if (strcmp(EVIDENCE_KINDS[i], kind) == 0) {
@@ -189,4 +191,51 @@ int64_t bf_evidence_supporters_count(BfEvidence *graph, const char *claim) {
     }
     sqlite3_finalize(stmt);
     return n;
+}
+
+const char *bf_evidence_verdict_name(BfEvidenceVerdict verdict) {
+    switch (verdict) {
+        case BF_EVIDENCE_UNEVIDENCED: return "unevidenced";
+        case BF_EVIDENCE_SUPPORTED: return "supported";
+        case BF_EVIDENCE_REPRODUCED: return "reproduced";
+        case BF_EVIDENCE_CONTESTED: return "contested";
+        case BF_EVIDENCE_FALSIFIED: return "falsified";
+    }
+    return "unknown";
+}
+
+BfEvidenceStatus bf_evidence_verdict(BfEvidence *graph, const char *claim,
+                                      BfEvidenceVerdict *out) {
+    sqlite3_stmt *stmt = NULL;
+    int supports = 0, contradicts = 0, reproduces = 0, falsifies = 0;
+    if (!graph || !present(claim) || !out) return BF_EVIDENCE_INVALID;
+    if (sqlite3_prepare_v2(graph->db,
+            "SELECT kind FROM evidence_relations WHERE claim=?", -1,
+            &stmt, NULL) != SQLITE_OK) return BF_EVIDENCE_STORAGE_ERROR;
+    sqlite3_bind_text(stmt, 1, claim, -1, SQLITE_TRANSIENT);
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        const char *kind = (const char *)sqlite3_column_text(stmt, 0);
+        if (!kind) continue;
+        if (strcmp(kind, "supports") == 0) supports = 1;
+        else if (strcmp(kind, "contradicts") == 0) contradicts = 1;
+        else if (strcmp(kind, "reproduces") == 0) reproduces = 1;
+        else if (strcmp(kind, "falsifies") == 0) falsifies = 1;
+    }
+    if (sqlite3_errcode(graph->db) != SQLITE_OK && sqlite3_errcode(graph->db) != SQLITE_DONE) {
+        sqlite3_finalize(stmt);
+        return BF_EVIDENCE_STORAGE_ERROR;
+    }
+    sqlite3_finalize(stmt);
+    if (falsifies) *out = BF_EVIDENCE_FALSIFIED;
+    else if (contradicts) *out = BF_EVIDENCE_CONTESTED;
+    else if (reproduces) *out = BF_EVIDENCE_REPRODUCED;
+    else if (supports) *out = BF_EVIDENCE_SUPPORTED;
+    else *out = BF_EVIDENCE_UNEVIDENCED;
+    return BF_EVIDENCE_OK;
+}
+
+int bf_evidence_stands(BfEvidence *graph, const char *claim) {
+    BfEvidenceVerdict verdict;
+    if (bf_evidence_verdict(graph, claim, &verdict) != BF_EVIDENCE_OK) return -1;
+    return verdict == BF_EVIDENCE_SUPPORTED || verdict == BF_EVIDENCE_REPRODUCED;
 }

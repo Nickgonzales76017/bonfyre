@@ -1,0 +1,128 @@
+#!/usr/bin/env python3
+"""Historical parity oracle: write declared public census rows through CMS.
+
+The rows are declared in schemas/control/wikimedia-sources.cue and
+schemas/control/public-commons-sources.cue.  A feed row
+names its address; a query row names a QLever dataset and its SPARQL, and its
+address is rendered here with the query's whitespace collapsed.  Nothing is
+written except through `bonfyre-cms entry create|update`, so the CMS keeps its
+own validation, timestamps and fact deltas.
+
+  apply_census_sources.py --dry-run
+  apply_census_sources.py --cms BIN --db CMS.db --schemas DIR
+  apply_census_sources.py --fetch-into DIR   # retain bodies for a local page (tests, previews)
+
+A row that already exists is updated in place (its reading, address, tier and
+words); a row that does not is created.  A row is never deleted here.
+"""
+import argparse, json, os, re, sqlite3, subprocess, sys, time, urllib.parse, urllib.request
+
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+MAX_URL = 7000
+AGENT = "BonfyreProject/1.0"
+
+
+EXPRESSIONS = ("nativeWikimediaSources", "nativePublicCommonsSources")
+
+
+def declared(path=None):
+    if path:
+        return json.load(open(path))
+    rows = []
+    for expression in EXPRESSIONS:
+        out = subprocess.run(["cue", "export", ".", "-e", expression, "--out", "json"],
+                             cwd=os.path.join(ROOT, "schemas", "control"), capture_output=True, text=True, check=True)
+        rows.extend(json.loads(out.stdout))
+    return rows
+
+
+def address(row):
+    if row.get("url"):
+        return row["url"]
+    query = re.sub(r"\s+", " ", row["query"]).strip()
+    return "https://qlever.dev/api/%s?query=%s" % (row["dataset"], urllib.parse.quote(query, safe=""))
+
+
+def census_fields(row):
+    fields = {
+        "family": row["family"], "source": row["source"], "label": row["label"], "says": row["says"],
+        "url": address(row), "twin": row["twin"], "state": "observed", "body_regime": "REMOTE",
+        "status": "published", "tier": row["tier"], "cadence_seconds": row["cadence_seconds"],
+        "kind": row["kind"], "front_door": row.get("front_door", "yes"), "note": row["note"],
+    }
+    for extra in ("credential", "publisher_ident", "publisher_name", "compiled_by"):
+        if row.get(extra):
+            fields[extra] = row[extra]
+    if row.get("status"):
+        fields["status"] = row["status"]
+    for key, value in row["reading"].items():
+        fields[key] = value
+    return fields
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--json")
+    ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--cms")
+    ap.add_argument("--db")
+    ap.add_argument("--schemas")
+    ap.add_argument("--fetch-into")
+    ap.add_argument("--only")
+    args = ap.parse_args()
+    rows = [r for r in declared(args.json) if not args.only or r["source"] == args.only]
+    problems = 0
+    for row in rows:
+        url = address(row)
+        if len(url) > MAX_URL:
+            print("%s: address is %d characters; the reheat reads at most %d" % (row["source"], len(url), MAX_URL), file=sys.stderr)
+            problems += 1
+    if problems:
+        return 1
+    if args.dry_run:
+        for row in rows:
+            print("%-32s %-14s %5d %s" % (row["source"], row["family"], len(address(row)), row["twin"]))
+        return 0
+    if args.fetch_into:
+        seen = set()
+        os.makedirs(os.path.join(args.fetch_into, "receipts"), exist_ok=True)
+        os.makedirs(os.path.join(args.fetch_into, "bodies"), exist_ok=True)
+        for row in rows:
+            if row["twin"] in seen or row.get("credential"):
+                continue
+            seen.add(row["twin"])
+            url = address(row)
+            for token, back, fmt in (("{today-iso}", 0, "%Y-%m-%d"), ("{yesterday-iso}", 86400, "%Y-%m-%d"), ("{week-ago-iso}", 604800, "%Y-%m-%d"), ("{month-ago-iso}", 2592000, "%Y-%m-%d"),
+                                     ("{today}", 0, "%Y/%m/%d"), ("{yesterday}", 86400, "%Y/%m/%d"), ("{week-ago}", 604800, "%Y/%m/%d")):
+                url = url.replace(token, time.strftime(fmt, time.gmtime(time.time() - back)))
+            body = os.path.join(args.fetch_into, "bodies", row["twin"] + ".body")
+            req = urllib.request.Request(url, headers={"User-Agent": AGENT})
+            with urllib.request.urlopen(req, timeout=90) as response, open(body, "wb") as out:
+                out.write(response.read())
+            with open(os.path.join(args.fetch_into, "receipts", row["twin"] + ".json"), "w") as out:
+                out.write(json.dumps({"body_path": body}) + "\n")
+            print("retained %s (%d bytes)" % (row["twin"], os.path.getsize(body)))
+        return 0
+    if not (args.cms and args.db and args.schemas):
+        ap.error("--cms, --db and --schemas are required to write")
+    db = sqlite3.connect("file:%s?mode=ro" % args.db, uri=True)
+    for row in rows:
+        fields = census_fields(row)
+        existing = db.execute("SELECT id FROM internet_source WHERE source=? AND status='published' ORDER BY id DESC LIMIT 1",
+                              (row["source"],)).fetchone()
+        if existing:
+            cmd = [args.cms, "entry", "update", "internet_source", str(existing[0]), json.dumps(fields), "--ns", "root"]
+        else:
+            cmd = [args.cms, "entry", "create", "internet_source", json.dumps(fields), "--ns", "root"]
+        done = subprocess.run(cmd + ["--db", args.db, "--schemas", args.schemas], capture_output=True, text=True)
+        verb = "updated" if existing else "created"
+        if done.returncode not in (0, 2):
+            print("%s: not %s: %s" % (row["source"], verb, (done.stderr or done.stdout).strip()), file=sys.stderr)
+            problems += 1
+        else:
+            print("%s %s" % (verb, row["source"]))
+    return 1 if problems else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

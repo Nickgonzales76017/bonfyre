@@ -1,0 +1,75 @@
+{
+  "name": "work_example",
+  "displayName": "Work Example",
+  "description": "A released work composition for one account profile. It appears only with the posts of the profile site that explicitly releases it. The headline describes the work; made_with identifies material used and does not establish a client endorsement, delivery, availability, or account ownership. program_template names the published reusable ProgramFabric template a visitor may start in their own account; it is not a program anyone runs, and starting it copies nothing from this profile. facts carries the short labelled details; there is no separate terms field.",
+  "attributes": {
+    "example_id": {
+      "type": "string",
+      "required": true
+    },
+    "pack": {
+      "type": "string",
+      "required": true
+    },
+    "program_template": {
+      "type": "string",
+      "required": false
+    },
+    "site": {
+      "type": "string",
+      "required": false
+    },
+    "territories": {
+      "type": "string",
+      "required": true
+    },
+    "position": {
+      "type": "integer",
+      "required": true
+    },
+    "kicker": {
+      "type": "string",
+      "required": true
+    },
+    "headline": {
+      "type": "string",
+      "required": true
+    },
+    "dek": {
+      "type": "text",
+      "required": true
+    },
+    "made_with": {
+      "type": "string",
+      "required": true
+    },
+    "made_with_href": {
+      "type": "string",
+      "required": false
+    },
+    "observed_at": {
+      "type": "string",
+      "required": true
+    },
+    "picture": {
+      "type": "string",
+      "required": true
+    },
+    "picture_alt": {
+      "type": "string",
+      "required": true
+    },
+    "routes": {
+      "type": "string",
+      "required": false
+    },
+    "facts": {
+      "type": "json",
+      "required": false
+    },
+    "status": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

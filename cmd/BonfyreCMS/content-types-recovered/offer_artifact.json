@@ -1,0 +1,104 @@
+{
+  "name": "offer_artifact",
+  "displayName": "Offer Artifact",
+  "description": "Projected commercial offer artifact with hot sales fields and compact JSON sidecars.",
+  "attributes": {
+    "source_system": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "datetime"
+    },
+    "offer_name": {
+      "type": "string",
+      "required": true
+    },
+    "proof_slug": {
+      "type": "string"
+    },
+    "proof_label": {
+      "type": "string"
+    },
+    "headline": {
+      "type": "text"
+    },
+    "promise": {
+      "type": "text"
+    },
+    "price": {
+      "type": "string"
+    },
+    "turnaround": {
+      "type": "string"
+    },
+    "buyer_segment": {
+      "type": "string"
+    },
+    "proof_asset": {
+      "type": "string"
+    },
+    "source_kind": {
+      "type": "string"
+    },
+    "service_lane": {
+      "type": "string"
+    },
+    "output_shape": {
+      "type": "text"
+    },
+    "next_step": {
+      "type": "text"
+    },
+    "review_score": {
+      "type": "integer"
+    },
+    "quality_score": {
+      "type": "integer"
+    },
+    "quality_status": {
+      "type": "string"
+    },
+    "recommendation": {
+      "type": "string"
+    },
+    "offer_angle": {
+      "type": "text"
+    },
+    "outreach_hook": {
+      "type": "text"
+    },
+    "deliverable_excerpt": {
+      "type": "text"
+    },
+    "deliverable_count": {
+      "type": "integer"
+    },
+    "segment_variant_count": {
+      "type": "integer"
+    },
+    "intake_job_title": {
+      "type": "string"
+    },
+    "intake_output_goal": {
+      "type": "string"
+    },
+    "intake_buyer_type": {
+      "type": "string"
+    },
+    "intake_client_name": {
+      "type": "string"
+    },
+    "intake_context_json": {
+      "type": "json"
+    },
+    "proof_quality_json": {
+      "type": "json"
+    },
+    "deliverables_json": {
+      "type": "json"
+    },
+    "segment_variants_json": {
+      "type": "json"
+    }
+  }
+}

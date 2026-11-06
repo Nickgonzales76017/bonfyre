@@ -30,11 +30,13 @@
  *   }
  */
 #include <bonfyre.h>
+#include <bf_bqfp.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <limits.h>
 #include <time.h>
 #include <sys/stat.h>
 
@@ -71,58 +73,50 @@ static void infer_family_from_path(const char *path, char *fam, size_t n) {
     if (!fam[0]) snprintf(fam, n, "unknown");
 }
 
+/* The .bqfp layout and its checks are defined once, in bf_bqfp.h, and shared
+ * with bonfyre-quant, which writes the file, and bonfyre-sli, which also
+ * reads it. Every tensor in the file is checked, not only the first, whose
+ * codebook is the one kept. */
 static int bqfp_load(const char *path, BqfpSummary *s) {
-    strncpy(s->path, path, MAX_PATH-1);
+    uint32_t tensor_count = 0, bits = 0;
+    const char *why = "";
+    memset(s, 0, sizeof(*s));
+    snprintf(s->path, sizeof(s->path), "%s", path);
     infer_family_from_path(path, s->family, sizeof(s->family));
 
     FILE *f = fopen(path, "rb");
     if (!f) { perror(path); return 1; }
-
-    uint32_t hdr[4];
-    if (fread(hdr, 4, 4, f) != 4 || hdr[0] != BQFP_MAGIC) {
-        fprintf(stderr, "bonfyre-fpqx: not a BQFP file: %s\n", path);
+    if (bf_bqfp_read_header(f, &tensor_count, &bits, &why) != 0) {
+        fprintf(stderr, "bonfyre-fpqx: %s: %s\n", path, why);
         fclose(f); return 1;
     }
-    uint32_t n_tensors = hdr[2];
-    s->bits = hdr[3];
-    s->codebook = NULL; s->eff_k = 0;
-
-    /* Read first tensor's codebook (representative of this family's embedding) */
-    for (uint32_t t = 0; t < n_tensors; t++) {
-        char name[256];
-        uint64_t n_elements, n_blocks;
-        uint32_t eff_k, _pad;
-        if (fread(name, 1, 256, f) != 256) break;
-        if (fread(&n_elements, 8, 1, f) != 1) break;
-        if (fread(&n_blocks, 8, 1, f) != 1) break;
-        if (fread(&eff_k, 4, 1, f) != 1) break;
-        if (fread(&_pad, 4, 1, f) != 1) break;
-
-        size_t cb_bytes = (size_t)eff_k * TILE_DIM * sizeof(float);
-        /* Fixed block size: scale(4) + warp_norm(4) + e8i[256](256) + tile_idx[16](16) = 280 */
-        size_t blk_bytes = (size_t)n_blocks * (4 + 4 + 256 + 16);
-
-        if (t == 0 && eff_k > 0 && eff_k <= MAX_TILES) {
-            s->codebook = (float *)malloc(cb_bytes);
-            if (s->codebook && fread(s->codebook, 1, cb_bytes, f) == cb_bytes) {
-                s->eff_k = (int)eff_k;
-                fseek(f, (long)blk_bytes, SEEK_CUR);
-            } else {
-                free(s->codebook); s->codebook = NULL;
-                fseek(f, (long)(cb_bytes + blk_bytes), SEEK_CUR);
-            }
-        } else {
-            fseek(f, (long)(cb_bytes + blk_bytes), SEEK_CUR);
+    s->bits = bits;
+    for (uint32_t t = 0; t < tensor_count; t++) {
+        BfBqfpTensor record;
+        if (bf_bqfp_read_tensor(f, &record, &why) != 0) {
+            fprintf(stderr, "bonfyre-fpqx: %s: tensor %u: %s\n", path, t, why);
+            goto fail;
         }
+        if (t == 0) {
+            size_t book = (size_t)record.tiles * TILE_DIM;
+            s->codebook = (float *)malloc(book * sizeof(float));
+            if (!s->codebook || fread(s->codebook, sizeof(float), book, f) != book) {
+                fprintf(stderr, "bonfyre-fpqx: %s: codebook cut short\n", path);
+                goto fail;
+            }
+            s->eff_k = (int)record.tiles;
+            if (fseek(f, (long)(record.blocks * sizeof(BfBqfpBlock)), SEEK_CUR) != 0) goto fail;
+        } else if (bf_bqfp_skip_payload(f, &record) != 0) goto fail;
     }
     fclose(f);
-    if (!s->codebook) {
-        fprintf(stderr, "bonfyre-fpqx: no codebook in %s\n", path);
-        return 1;
-    }
     return 0;
+fail:
+    free(s->codebook);
+    s->codebook = NULL;
+    s->eff_k = 0;
+    fclose(f);
+    return 1;
 }
-
 static void bqfp_free(BqfpSummary *s) { free(s->codebook); s->codebook = NULL; }
 
 /* ═══════════════════════════════════════════════════════════════════

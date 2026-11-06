@@ -1,0 +1,36 @@
+{
+  "basis": "Published provider prices and issuer-stated procurement requirements; no fictional transactions or executed contract",
+  "rows": [
+    {
+      "provider": "inspirable",
+      "plan": "Institutional",
+      "monthly_price": "349.99",
+      "annual_price": null,
+      "twelve_month_payments": "4199.88",
+      "nominal_annual_saving": null,
+      "twc_subcontract_quote": null,
+      "aurekai_contribution": null
+    },
+    {
+      "provider": "sitecare",
+      "plan": "Diamond",
+      "monthly_price": "2190.00",
+      "annual_price": "23880.00",
+      "twelve_month_payments": "26280.00",
+      "nominal_annual_saving": "2400.00",
+      "twc_subcontract_quote": null,
+      "aurekai_contribution": null
+    },
+    {
+      "provider": "sitecare",
+      "plan": "Gold",
+      "monthly_price": "435.00",
+      "annual_price": "4680.00",
+      "twelve_month_payments": "5220.00",
+      "nominal_annual_saving": "540.00",
+      "twc_subcontract_quote": null,
+      "aurekai_contribution": null
+    }
+  ],
+  "sql": "WITH offers AS (SELECT o.provider,o.plan,o.billing,CAST(o.amount_usd AS DECIMAL(18,2)) amount FROM read_json_auto('/Users/nickgonzales/Developer/Bonfyre/packs/aurekai-work-samples/twc-commercial-facts-20261009.json'),unnest(offers) t(o)) SELECT provider,plan,MAX(CASE WHEN billing='monthly' THEN amount END) monthly_price,MAX(CASE WHEN billing='annual' THEN amount END) annual_price,MAX(CASE WHEN billing='monthly' THEN amount*12 END) twelve_month_payments,CASE WHEN count(*)=2 THEN MAX(CASE WHEN billing='monthly' THEN amount*12 END)-MAX(CASE WHEN billing='annual' THEN amount END) END nominal_annual_saving,CAST(NULL AS DECIMAL(18,2)) twc_subcontract_quote,CAST(NULL AS DECIMAL(18,2)) aurekai_contribution FROM offers GROUP BY provider,plan ORDER BY provider,plan"
+}

@@ -1,0 +1,592 @@
+#!/usr/bin/env python3
+"""Capital routes as transformations over financial state, and the paths they compose into.
+
+The funding route table declares six ways capital could arrive and says of five
+of them that they satisfy `cash-position`. That is the product-list framing: a
+row per financing product, each labelled with the thing it supplies, and the
+implicit claim that picking one is the decision. It is wrong in three separate
+ways, and the wrongness is only visible once a route is written as a
+transformation over state rather than as a product with a label.
+
+  1. `vendor-terms` does not supply cash. It moves an outflow later. Declared as
+     satisfying `cash-position` it is indistinguishable from a grant; declared as
+     a transformation it has a cash delta of zero and a schedule delta that is
+     not zero, which is a different instrument entirely.
+
+  2. Two routes can each be admissible and not be admissible together.
+     `equipment-lease` takes a lien on the equipment and `bank-debt` wants a lien
+     on everything; a product list holds both rows happily because no row
+     mentions the other. Rights are a set that composes, so the conflict appears
+     the moment two transformations are placed in one path.
+
+  3. Order decides admissibility. A grant carries a use restriction; bank debt
+     wants unrestricted use of proceeds. Grant-then-debt is refused and
+     debt-then-grant is not. A set of products has no order to be wrong about.
+
+So each route is written here as:
+
+    requires / consumes / provides / grants_rights / obligations
+    cash_delta / ownership_delta / revenue_share_delta / monthly_obligation_delta
+    duration_months / reversibility / cost_usd / success_probability
+
+and the question stops being "which product" and becomes "which ordered path
+through the state, and what does the institution hold at the end of it".
+
+Why this is not the closure algebra with different nouns
+--------------------------------------------------------
+`closure_algebra.py` computes a least fixed point, and it is allowed to because
+its effects are monotone: a resolver only ever adds satisfied conditions, so
+iterating to exhaustion is order-independent and the answer is unique. Capital is
+not monotone. A transformation spends cash, gives away ownership, and consumes
+`collateral-free` -- state leaves. With removal in the effects there is no
+fixed point to reach and no order-independence to rely on, so the same machinery
+would silently return one arbitrary path and call it the answer. Path search is
+not a heavier implementation of closure; it is what is left when monotonicity is
+withdrawn.
+
+Cannot infer: an admissible path is not an available one. Every route in this
+institution's declared world carries capacity UNKNOWN, so the search says which
+compositions are structurally permitted and says nothing about whether any of
+them would produce a dollar.
+"""
+from __future__ import annotations
+
+import itertools
+import json
+import os
+import sqlite3
+import sys
+from datetime import datetime, timezone
+
+CMS_DB = os.environ.get("BONFYRE_CMS_DB", "/var/lib/bonfyre/cms/bonfyre_cms.db")
+
+# The ranking below is a declared preference, not a measurement. It is written
+# here so a reader can disagree with it in one place rather than reverse-engineer
+# it from an ordering. Fewer rights conceded beats shorter; both are subordinate
+# to reaching the target, and reaching the target is subordinate to being known.
+PREFERENCE = (
+    "a path that is known to reach the target beats one that might; "
+    "fewer rights conceded beats more; a reversible path beats a costly one and "
+    "a costly one beats an irreversible one; shorter breaks the remaining ties"
+)
+
+REVERSIBILITY_RANK = {"reversible": 0, "costly": 1, "irreversible": 2}
+
+
+def iso_now() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def split(value) -> set[str]:
+    if not value:
+        return set()
+    return {p.strip() for p in str(value).replace(";", ",").split(",") if p.strip()}
+
+
+def num(value):
+    """A declared number, or None for a genuinely unknown one.
+
+    The distinction is the same one the funding work already turned on: an empty
+    capacity is UNKNOWN and not zero. Coercing it to 0.0 here would let a path
+    report that it reaches a target of zero dollars."""
+    if value in (None, "", "UNKNOWN"):
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def rows(table: str, institution: str | None = None) -> list[dict]:
+    try:
+        db = sqlite3.connect(f"file:{CMS_DB}?mode=ro", uri=True)
+        db.row_factory = sqlite3.Row
+        sql = f"SELECT * FROM {table}"
+        args: tuple = ()
+        if institution:
+            sql += " WHERE institution = ?"
+            args = (institution,)
+        out = [dict(r) for r in db.execute(sql, args)]
+        db.close()
+        return out
+    except sqlite3.Error:
+        return []
+
+
+def opening_state(institution: str) -> dict:
+    """What the institution holds before any transformation is applied.
+
+    Taken from the evidence that already exists rather than declared a second
+    time. A satisfied funding requirement is a token the opening state holds; the
+    evidenced internal capacity is the opening cash. Both are already computed by
+    funding_closure.py against the same store, and re-declaring them here is how
+    two organs come to disagree about the same institution.
+    """
+    reqs = rows("funding_requirement", institution)
+    held = {r["requirement"] for r in reqs if r.get("state") == "SATISFIED"}
+    # Opening cash is evidenced internal capacity, and nothing else. The first
+    # version summed the amounts on satisfied requirements, which is what
+    # funding_closure calls the InternalizedCeiling -- a measure of how much of
+    # the requirement set the institution's own state closes. That is not money.
+    # Read as cash it opened the search $6,063 up against a $6,074 target and made
+    # every path look one short step from done.
+    cash = round(sum(float(r.get("capacity") or 0) for r in rows("funding_route", institution)
+                     if r.get("kind") == "internal" and r.get("capacity_state") == "EVIDENCED"), 2)
+    # Nothing in the declared world grants a lien, an equity stake or a revenue
+    # pledge, so the institution opens unencumbered. These are absences read off
+    # the store, not assumptions: a lien would be a granted right on some row.
+    held |= {"collateral-free", "unrestricted-use", "revenue-unpledged"}
+    return {
+        "tokens": held,
+        "cash": cash,
+        "ownership_retained": 1.0,
+        "revenue_share_committed": 0.0,
+        "monthly_obligation": 0.0,
+        "rights_granted": set(),
+        "obligations": set(),
+        "cash_known": True,
+    }
+
+
+def target_amount(institution: str) -> tuple[float, str]:
+    """The demand the paths are searched against.
+
+    Declared demand at every status, for the reason funding_closure gives: a
+    drafted budget request is a stated need, and filtering to published reported
+    no demand beside a ceiling that had counted it."""
+    demand = rows("budget_request", institution)
+    total = round(sum(float(r.get("amount") or 0) for r in demand), 2)
+    return total, f"{len(demand)} declared budget request(s), at any status"
+
+
+def apply_step(state: dict, t: dict) -> tuple[dict | None, str]:
+    """Apply one transformation, or refuse it with the reason it was refused.
+
+    The refusal reason is the product of this function that matters. `DECLINED`
+    was the word the funding work was built to stop producing; a path that fails
+    at step 3 because a lien is already held is a different problem from one that
+    fails at step 1 for want of revenue history, and only one of them is worth
+    anyone's afternoon."""
+    needs = split(t.get("requires"))
+    missing = needs - state["tokens"]
+    if missing:
+        return None, f"requires {', '.join(sorted(missing))}, which the state does not hold here"
+
+    conflicts = split(t.get("conflicts_with_rights")) & state["rights_granted"]
+    if conflicts:
+        return None, (f"conflicts with {', '.join(sorted(conflicts))}, already conceded "
+                      "earlier in this path")
+
+    min_ownership = num(t.get("min_ownership_retained"))
+    if min_ownership is not None and state["ownership_retained"] < min_ownership:
+        return None, (f"needs {min_ownership:.0%} ownership retained and the path has "
+                      f"already diluted to {state['ownership_retained']:.0%}")
+
+    max_share = num(t.get("max_revenue_share_committed"))
+    if max_share is not None and state["revenue_share_committed"] > max_share:
+        return None, (f"needs revenue commitments at or under {max_share:.0%} and the path "
+                      f"has already pledged {state['revenue_share_committed']:.0%}")
+
+    nxt = {
+        "tokens": (state["tokens"] - split(t.get("consumes"))) | split(t.get("provides")),
+        "ownership_retained": state["ownership_retained"] + (num(t.get("ownership_delta")) or 0.0),
+        "revenue_share_committed": state["revenue_share_committed"]
+                                   + (num(t.get("revenue_share_delta")) or 0.0),
+        "monthly_obligation": state["monthly_obligation"]
+                              + (num(t.get("monthly_obligation_delta")) or 0.0),
+        "rights_granted": state["rights_granted"] | split(t.get("grants_rights")),
+        "obligations": state["obligations"] | split(t.get("obligations")),
+    }
+    delta = num(t.get("cash_delta"))
+    # An unknown cash effect poisons the running total rather than contributing
+    # zero to it. A path containing one unpriced step has an unknown end cash,
+    # and saying so is the whole difference between a plan and a wish.
+    if delta is None:
+        nxt["cash"] = state["cash"]
+        nxt["cash_known"] = False
+    else:
+        nxt["cash"] = round(state["cash"] + delta, 2)
+        nxt["cash_known"] = state["cash_known"]
+    return nxt, ""
+
+
+def evaluate(path: tuple[dict, ...], opening: dict) -> dict:
+    state = dict(opening)
+    for index, t in enumerate(path):
+        nxt, why = apply_step(state, t)
+        if nxt is None:
+            return {"admissible": False, "failed_at": index,
+                    "failed_on": t["transform"], "because": why}
+        state = nxt
+
+    # Reversibility belongs to the path, at the position of its first
+    # irreversible step: everything after that point can be unwound and nothing
+    # before it can. A per-step label cannot express that, which is why the
+    # product list has no answer to "how far back can we still walk".
+    first_irreversible = next(
+        (i for i, t in enumerate(path) if t.get("reversibility") == "irreversible"), None)
+    worst = max((REVERSIBILITY_RANK.get(str(t.get("reversibility")), 1) for t in path),
+                default=0)
+    cost = sum(num(t.get("cost_usd")) or 0.0 for t in path)
+    unpriced = [t["transform"] for t in path if num(t.get("cost_usd")) is None]
+    probs = [num(t.get("success_probability")) for t in path]
+    joint = None
+    if all(p is not None for p in probs) and probs:
+        joint = 1.0
+        for p in probs:
+            joint *= p
+    return {
+        "admissible": True,
+        "path": [t["transform"] for t in path],
+        "end_cash": state["cash"] if state["cash_known"] else None,
+        "cash_known": state["cash_known"],
+        "ownership_retained": round(state["ownership_retained"], 4),
+        "revenue_share_committed": round(state["revenue_share_committed"], 4),
+        "monthly_obligation": round(state["monthly_obligation"], 2),
+        "rights_conceded": sorted(state["rights_granted"]),
+        "obligations": sorted(state["obligations"]),
+        "reversibility": [k for k, v in REVERSIBILITY_RANK.items() if v == worst][0],
+        "reversible_back_to_step": first_irreversible,
+        "longest_duration_months": max((num(t.get("duration_months")) or 0 for t in path),
+                                       default=0),
+        "pursuit_cost_usd": round(cost, 2) if not unpriced else None,
+        "unpriced_steps": unpriced,
+        "joint_success_probability": round(joint, 4) if joint is not None else None,
+    }
+
+
+def search(transforms: list[dict], opening: dict, depth: int) -> tuple[list[dict], list[dict]]:
+    admissible: list[dict] = []
+    refused: list[dict] = []
+    for length in range(1, depth + 1):
+        for path in itertools.permutations(transforms, length):
+            result = evaluate(path, opening)
+            if result["admissible"]:
+                admissible.append(result)
+            else:
+                refused.append({"path": [t["transform"] for t in path], **result})
+    return admissible, refused
+
+
+def saturated_state(transforms: list[dict], opening: dict) -> dict:
+    """The opening state plus every token any transformation asks for.
+
+    A counterfactual, and labelled as one wherever its results are reported. Its
+    only job is to let a conflict between two routes be seen as a property of the
+    two routes rather than as an accident of what this institution happens to be
+    missing this week."""
+    state = {k: (set(v) if isinstance(v, set) else v) for k, v in opening.items()}
+    for t in transforms:
+        state["tokens"] = state["tokens"] | split(t.get("requires"))
+    return state
+
+
+def order_sensitivity(transforms: list[dict], state: dict,
+                      admissible: list[dict], refused: list[dict]) -> list[dict]:
+    out = []
+    names = sorted(t["transform"] for t in transforms)
+    for a, b in itertools.permutations(names, 2):
+        fwd = any(r["path"] == [a, b] for r in admissible)
+        rev = any(r["path"] == [b, a] for r in admissible)
+        if fwd and not rev:
+            why = next((r["because"] for r in refused if r["path"] == [b, a]), "")
+            out.append({"admissible": [a, b], "refused": [b, a], "because": why})
+    return out
+
+
+def rank(result: dict, target: float) -> tuple:
+    reaches = 0 if (result["cash_known"] and result["end_cash"] is not None
+                    and result["end_cash"] >= target) else 1
+    return (
+        reaches,
+        len(result["rights_conceded"]),
+        REVERSIBILITY_RANK.get(result["reversibility"], 1),
+        len(result["path"]),
+    )
+
+
+def pure_job(admissible: list[dict], target: float) -> dict:
+    """The composition search, restated as something the pure tier can vote on.
+
+    The enumeration is not what gets checked here -- a backend cannot be asked to
+    agree about a permutation it was not given. What is checked is the predicate:
+    given each path's computed properties, four independent reducers must agree
+    on which survive. That is the part where an off-by-one in a filter would
+    otherwise pass unnoticed."""
+    space = []
+    for r in admissible:
+        space.append({
+            "id": " > ".join(r["path"]),
+            "rights_free": len(r["rights_conceded"]) == 0,
+            "reversible": r["reversibility"] == "reversible",
+            "cash_known": bool(r["cash_known"]),
+        })
+    return {
+        "job": "capital-paths-that-concede-nothing-and-can-be-unwound",
+        "effect_class": "PURE",
+        "candidate_space": space,
+        "require": {"rights_free": True, "reversible": True},
+        "cannot_infer": "agreement among reducers -> a correct enumeration; the backends "
+                        "check the predicate over the paths they were handed",
+    }
+
+
+def main() -> int:
+    institution = None
+    depth = 3
+    argv = sys.argv
+    for i, a in enumerate(argv):
+        if a == "--institution" and i + 1 < len(argv):
+            institution = argv[i + 1]
+        if a == "--depth" and i + 1 < len(argv):
+            depth = int(argv[i + 1])
+    if not institution:
+        print("usage: capital_transform.py --institution <id> [--depth N] [--json|--pure-job]",
+              file=sys.stderr)
+        return 2
+
+    transforms = [t for t in rows("capital_transformation", institution)
+                  if t.get("status") == "published"]
+    if not transforms:
+        print(f"no capital transformation is declared for {institution}", file=sys.stderr)
+        return 2
+
+    opening = opening_state(institution)
+    target, target_basis = target_amount(institution)
+    admissible, refused = search(transforms, opening, depth)
+    admissible.sort(key=lambda r: rank(r, target))
+
+    # Which single transformations never appear in any admissible path.
+    used = {name for r in admissible for name in r["path"]}
+    stranded = sorted({t["transform"] for t in transforms} - used)
+
+    # Where the same two transformations are admissible one way round and not the
+    # other. This is the claim that ordering carries information, stated as
+    # evidence rather than as an argument.
+    order_sensitive = order_sensitivity(transforms, opening, admissible, refused)
+
+    # The same question asked of a counterfactual state that holds every token any
+    # transformation asks for. This says what the declarations imply about order,
+    # separately from what this institution can currently reach -- a conflict
+    # between two routes is a property of the two routes, and it does not stop
+    # being one because a third fact makes both unreachable today. Kept apart from
+    # the reachable answer because it is counterfactual, and a counterfactual
+    # reported as a finding is how a plan becomes fiction.
+    saturated = saturated_state(transforms, opening)
+    sat_admissible, sat_refused = search(transforms, saturated, min(depth, 2))
+    structural_order = order_sensitivity(transforms, saturated, sat_admissible, sat_refused)
+
+    # Mutual exclusion, asked correctly. The first version called a pair mutually
+    # exclusive whenever no admissible path contained both, which reported twelve
+    # conflicts that were nothing of the kind: grant and community-equity do not
+    # collide, grant was simply unreachable, and every pair containing it inherited
+    # that. Unreachability is not exclusion. The question is only meaningful from a
+    # state where each of the two is individually admissible, so it is asked there:
+    # both alone succeed, and neither order of the two does.
+    exclusive = []
+    for a, b in itertools.combinations(sorted(x["transform"] for x in transforms), 2):
+        alone = {r["path"][0] for r in sat_admissible if len(r["path"]) == 1}
+        if a not in alone or b not in alone:
+            continue
+        if any(set(r["path"]) == {a, b} for r in sat_admissible):
+            continue
+        reasons = sorted({r["because"] for r in sat_refused if set(r["path"]) == {a, b}})
+        exclusive.append({"pair": [a, b], "because": reasons,
+                          "reachable_today": a in used and b in used})
+    declared_conflicts = []
+    for t_row in transforms:
+        for right in sorted(split(t_row.get("conflicts_with_rights"))):
+            holders = sorted(o["transform"] for o in transforms
+                             if right in split(o.get("grants_rights")))
+            for holder in holders:
+                declared_conflicts.append({
+                    "pair": sorted([t_row["transform"], holder]),
+                    "right": right,
+                    "reachable_together": any(
+                        t_row["transform"] in r["path"] and holder in r["path"]
+                        for r in admissible),
+                })
+    seen = set()
+    declared_conflicts = [c for c in declared_conflicts
+                          if not (tuple(c["pair"]) + (c["right"],) in seen
+                                  or seen.add(tuple(c["pair"]) + (c["right"],)))]
+
+    # What it takes to reach each transformation at all. This is the output a
+    # product list cannot produce and the one an operator actually wants: not
+    # "which instrument", but "how many acts and how many months stand between
+    # here and each instrument, and which of them nothing can reach".
+    reach = []
+    for x in sorted(transforms, key=lambda r: r["transform"]):
+        ending = [r for r in admissible if r["path"][-1] == x["transform"]]
+        if not ending:
+            blocked = next((r["because"] for r in refused
+                            if r["path"] == [x["transform"]]), "")
+            reach.append({"transform": x["transform"], "reachable": False,
+                          "steps": None, "months_floor": None, "blocked_by": blocked})
+            continue
+        best = min(ending, key=lambda r: (len(r["path"]),
+                                          sum(num(s.get("duration_months")) or 0
+                                              for s in transforms
+                                              if s["transform"] in r["path"])))
+        months = sum(num(s.get("duration_months")) or 0 for s in transforms
+                     if s["transform"] in best["path"][:-1])
+        reach.append({"transform": x["transform"], "reachable": True,
+                      "steps": len(best["path"]), "via": best["path"],
+                      "months_floor": months,
+                      "rights_conceded": best["rights_conceded"]})
+
+    reaching = [r for r in admissible if r["cash_known"] and r["end_cash"] is not None
+                and r["end_cash"] >= target]
+    unknown_cash = [r for r in admissible if not r["cash_known"]]
+
+    # A fingerprint of the declarations this answer rests on.
+    #
+    # Mutation testing showed the suite could not tell if a transformation's
+    # reversibility, granted rights, conflicting rights or cash delta were
+    # changed to anything at all -- the four fields every invariant in this
+    # architecture is written about. Twenty-six checks, and none of them touched
+    # the declarations they depended on.
+    #
+    # Summarising them into the receipt makes them assertable: a suite pins the
+    # counts, and any change to a load-bearing field moves one and turns red.
+    # That is cheaper and more honest than asserting each row, which would pin
+    # the data rather than the shape.
+    declared = {
+        "transformations": len(transforms),
+        "by_reversibility": {k: sum(1 for x in transforms
+                                    if str(x.get("reversibility")) == k)
+                             for k in sorted(REVERSIBILITY_RANK)},
+        "rights_granted": sorted({r for x in transforms
+                                  for r in split(x.get("grants_rights"))}),
+        "rights_conflicted": sorted({r for x in transforms
+                                     for r in split(x.get("conflicts_with_rights"))}),
+        # The values, not just how many there are. Counting known deltas left
+        # 0.00 -> 1.0 invisible: the count stays six either way, and the whole
+        # vendor-terms finding is that its cash effect is exactly zero.
+        "with_known_cash_delta": sum(1 for x in transforms
+                                     if num(x.get("cash_delta")) is not None),
+        "known_cash_deltas": sorted(num(x.get("cash_delta")) for x in transforms
+                                    if num(x.get("cash_delta")) is not None),
+        "ownership_effects": sorted(num(x.get("ownership_delta")) for x in transforms
+                                    if num(x.get("ownership_delta")) is not None),
+        "revenue_pledges": sorted(num(x.get("revenue_share_delta")) for x in transforms
+                                  if num(x.get("revenue_share_delta")) is not None),
+        "ownership_floors": sorted(num(x.get("min_ownership_retained")) for x in transforms
+                                   if num(x.get("min_ownership_retained")) is not None),
+        "with_ownership_effect": sum(1 for x in transforms
+                                     if num(x.get("ownership_delta")) is not None),
+        "with_revenue_pledge": sum(1 for x in transforms
+                                   if num(x.get("revenue_share_delta")) is not None),
+        "with_ownership_floor": sum(1 for x in transforms
+                                    if num(x.get("min_ownership_retained")) is not None),
+        "cannot_infer": "a stable fingerprint -> correct declarations; it says the "
+                        "shape of what was read has not moved",
+    }
+
+    receipt = {
+        "schema": "bonfyre-capital-transform.v1",
+        "declared": declared,
+        "institution": institution,
+        "ran_at": iso_now(),
+        "effect_class": "PURE",
+        "depth": depth,
+        "transformations": len(transforms),
+        "opening_state": {
+            "cash": opening["cash"],
+            "tokens_held": sorted(opening["tokens"]),
+            "ownership_retained": opening["ownership_retained"],
+        },
+        "target": {"amount": target, "basis": target_basis},
+        "paths_enumerated": len(admissible) + len(refused),
+        "admissible": len(admissible),
+        "refused": len(refused),
+        "known_to_reach_target": len(reaching),
+        "unknown_cash_effect": len(unknown_cash),
+        "preference": PREFERENCE,
+        "best": admissible[:5],
+        "mutually_exclusive_pairs": exclusive,
+        "reach": reach,
+        "order_sensitive": order_sensitive,
+        "structurally_order_sensitive": structural_order,
+        "declared_rights_conflicts": declared_conflicts,
+        "stranded_transformations": stranded,
+        "rung": "admissible" if not reaching else "sufficient",
+        "cannot_infer": [
+            "an admissible path -> an available one",
+            "an unknown cash effect -> a zero one",
+            "a ranked path -> a recommended one; the ranking is a declared preference",
+            "structural admissibility -> a counterparty's willingness",
+            "a structurally order-sensitive pair -> a pair this institution can reach",
+            "no admissible path containing both -> a conflict between the two",
+        ],
+    }
+
+    if "--pure-job" in argv:
+        print(json.dumps(pure_job(admissible, target), indent=2))
+        return 0
+    if "--json" in argv:
+        print(json.dumps(receipt, indent=2))
+        return 0
+
+    print(f"  institution {institution}, {len(transforms)} transformations, depth {depth}")
+    print(f"  opening: ${opening['cash']:,.2f} cash, {len(opening['tokens'])} tokens held")
+    print(f"  target:  ${target:,.2f} ({target_basis})")
+    print()
+    print(f"  {len(admissible) + len(refused)} ordered paths, {len(admissible)} admissible, "
+          f"{len(refused)} refused")
+    print(f"  {len(reaching)} known to reach the target, "
+          f"{len(unknown_cash)} with an unknown cash effect")
+    print()
+    print("  best by declared preference:")
+    for r in admissible[:5]:
+        cash = f"${r['end_cash']:,.0f}" if r["cash_known"] else "cash UNKNOWN"
+        rights = ", ".join(r["rights_conceded"]) or "nothing conceded"
+        print(f"    {' > '.join(r['path']):<48} {cash:<14} {r['reversibility']:<13} {rights}")
+    print()
+    print("  what it takes to reach each transformation:")
+    for r in reach:
+        if not r["reachable"]:
+            print(f"    {r['transform']:<30} unreachable: {r['blocked_by']}")
+        else:
+            rights = ", ".join(r["rights_conceded"]) or "nothing conceded"
+            print(f"    {r['transform']:<30} {r['steps']} step(s), "
+                  f"{r['months_floor']:g} month floor, via {' > '.join(r['via'])}; {rights}")
+    if exclusive:
+        print()
+        print("  mutually exclusive once each is separately admissible:")
+        for e in exclusive:
+            reach_note = "" if e["reachable_today"] else " (neither reachable today)"
+            print(f"    {e['pair'][0]} + {e['pair'][1]}{reach_note}")
+            for why in e["because"]:
+                print(f"      {why}")
+    if order_sensitive:
+        print()
+        print("  order decides admissibility, from the state this institution is in:")
+        for o in order_sensitive[:6]:
+            print(f"    {' > '.join(o['admissible'])} is admissible; the reverse is not")
+            print(f"      {o['because']}")
+    if structural_order:
+        print()
+        print("  order decides admissibility once every prerequisite is held "
+              "(counterfactual, not reachable today):")
+        for o in structural_order[:6]:
+            print(f"    {' > '.join(o['admissible'])} is admissible; the reverse is not")
+            print(f"      {o['because']}")
+    if declared_conflicts:
+        print()
+        print("  declared rights conflicts:")
+        for c in declared_conflicts:
+            reach = "reachable together" if c["reachable_together"] else "not reachable together"
+            print(f"    {c['pair'][0]} + {c['pair'][1]} over {c['right']} ({reach})")
+    if stranded:
+        print()
+        print(f"  never admissible in any path: {', '.join(stranded)}")
+    print()
+    print(f"  rung: {receipt['rung']}")
+    for c in receipt["cannot_infer"]:
+        print(f"    cannot infer {c}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

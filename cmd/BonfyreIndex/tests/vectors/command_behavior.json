@@ -1,0 +1,6 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-index","binary_env":"BONFYRE_INDEX_BIN","cases":[
+{"name":"index crawls a real artifact family and finds it by type","files":{"t.csv":"name,qty\nwidget,3\ngadget,5\n"},"steps":[{"program":"${root}/cmd/BonfyreIngest/bonfyre-ingest","argv":["t.csv","fam/x"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"argv":["build","fam","--db","i.db"],"env":{"HOME":"${tmp}"},"exit":0,"present":["${tmp}/i.db"]},
+ {"argv":["stats","--db","i.db"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["ingest "]},
+ {"program":"sqlite3","argv":["i.db","select artifact_id from families"],"exit":0,"contains":["ingest-7824def8331cbe1edb56ea44c0724203ff4247d1af1880e2268055a3ad7792b4"]}]},
+{"name":"build of an empty directory indexes nothing","files":{"empty/.keep":""},"steps":[{"argv":["build","empty","--db","i.db"],"env":{"HOME":"${tmp}"},"contains":[]}]}]}

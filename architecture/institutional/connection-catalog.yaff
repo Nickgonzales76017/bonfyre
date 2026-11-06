@@ -1,0 +1,31 @@
+architecture connection-source-catalog
+  canonical_name ConnectionSourceCatalog
+  family identity
+  domain Identity / Connection Discovery
+  layer institutional
+  semantic_question Which retained connection source candidates can be inspected with their original coordinates?
+  purpose Read paginated connection candidates from retained local Parquet projections and check each candidate against its original source row before returning it.
+  maturity implemented
+  publishes ConnectionSourceCandidate
+  source_path cmd/BonfyreConnectionCatalog/src/main.c
+  source_path cmd/BonfyreConnectionCatalog/tests/catalog_test.sh
+  source_path cmd/BonfyreWebAddress/src/connections_workspace.h
+  source_path integrations/browser/connection-studio.mjs
+  source_path cmd/BonfyreWebAddress/tests/connections_workspace.test.mjs
+  witness cmd/BonfyreConnectionCatalog/tests/catalog_test.sh checks bounded pagination, parameterized name search, ecosystem filtering, non-clickable HTTP addresses, private-field omission in the app view, duplicate coordinates across ecosystems, altered source entries and refusal without partial output
+  witness cmd/BonfyreWebAddress/tests/connections_workspace.test.mjs checks current-account admission, refusal of other accounts and caller-supplied paths, reduced output, search and an installed Chrome workspace using the same endpoint
+  invariant every returned candidate has a unique source coordinate and matching source row digest, and its source entry appears in that row
+  invariant the CLI reads explicit local files; its default view contains private source coordinates, while its app view emits only ecosystem, name, safe HTTPS link and candidate status. Neither view is an account-facing endpoint or an authorization boundary
+  forbidden_inference a source candidate or HTTPS locator -> provider ownership, current availability, permission to connect, installed capability, license or authorization
+  invariant the account endpoint reads only configured absolute source paths, requires the configured current personal actor and subject, and refuses private source coordinates in its reduced output
+  known_gap the account endpoint and Connection Studio panel require a release with the native reader, DuckDB library and retained source snapshots configured; source entries remain unverified candidates
+
+interaction connection-studio-reads-source-catalog
+  source cmd-web-address
+  destination connection-source-catalog
+  relation requests
+  preserves exact authenticated personal account, bounded pagination, ecosystem and literal name search, candidate status and safe HTTPS locator
+  drops private goal coordinates, original lines, arbitrary source paths and any implied provider authorization
+  forbidden_inference a catalog entry or source locator -> installed connector, ownership, provider consent or permission to act
+  invalidates_on account session, configured subject, retained source snapshots or native reader changing
+  witness cmd/BonfyreWebAddress/tests/connections_workspace.test.mjs

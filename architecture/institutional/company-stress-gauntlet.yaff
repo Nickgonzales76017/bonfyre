@@ -1,0 +1,113 @@
+atlas institutional-company-stress-gauntlet
+
+architecture one-company-stress-gauntlet
+  canonical_name OneCompanyStressGauntlet
+  owns CompanyGauntletReplay
+  consumes ExternalEvent
+  consumes WorkState
+  consumes CapabilityBid
+  consumes FormatProfile
+  consumes PartnerObservation
+  consumes ModelRoute
+  consumes Artifact
+  consumes FrappeLineageCatalog
+  consumes CanonicalContractIR
+  publishes ReceiptEnvelope
+  publishes ProofBundle
+  family institutional
+  domain Institutional / Cross-organ operating proof
+  layer replay
+  semantic_question Can one tiny company object cross Powers, Frappe, Model Commons, Format Commons and Partner Commons without collapsing their meanings?
+  purpose Runs bounded customer-to-cash, artifact-supply, engineering-to-partner, knowledge-to-action and compiler-spine lanes over one semantic identity; the compiler-spine discovers all Frappe lineages from BonfyreFrappeCompiler, compiles their real schemas, and closes every local mutation through WorkGraph, authority/effect receipts and EvidenceGraph before replay.
+  maturity measured
+  node_types CompanySemanticObject
+  node_types LaneReceipt
+  node_types BoundedBlocker
+  node_types ProofBundle
+  node_types FrappeLineageCatalog
+  node_types CanonicalContractIR
+  edge_types projects_through
+  edge_types converges_on
+  internal_calculus shared-identity owner-trace replay across at least five owner families per lane
+  internal_calculus format-native round-trip plus content-addressed semantic equivalence
+  internal_calculus exact blocker preservation for unavailable lifecycle, storage, peer-transport, context and model routes
+  internal_calculus catalog-derived lineage dependency graph plus idempotent WorkGraph effect replay
+  invariant at least three lanes cross five or more distinct owner families over the same semantic object
+  invariant every claimed Power invocation resolves through the live public-Power registry and carries an output digest
+  invariant blocked organs remain named blockers and cannot contribute a success check
+  invariant all reusable lane evidence converges on one tamper-evident ProofBundle digest
+  invariant every registered Frappe lineage mutation has one WorkGraph obligation and one authority-bounded ReceiptEnvelope
+  invariant ContextCompiler, UI and API projections bind the same canonical Frappe contract digest
+  invariant replay and transactional rollback create no duplicate lineage effects, work or evidence relations
+  forbidden_inference isolated simulation cash -> production revenue
+  forbidden_inference local partner review -> remote partner completion, authority or mutation
+  forbidden_inference unsigned DSSE envelope -> verified signature
+  forbidden_inference byte equivalence -> producer, model, transport, authority or claim support
+  forbidden_inference provider process identity -> AgentSession, WorkerRun or WorkGraph identity
+  forbidden_inference source checkout or semantic proof -> live registered runtime binding
+  interacts crm
+  interacts frappe-core
+  interacts helpdesk
+  interacts erpnext
+  interacts hrms
+  interacts lms
+  interacts wiki
+  interacts drive
+  interacts insights
+  interacts money-graph
+  interacts partner-commons
+  interacts foreign-twin
+  interacts work-graph
+  interacts provider-graph
+  interacts agent-session
+  interacts artifact-graph
+  interacts evidence-graph
+  source_path components/BonfyreControlPlane/company_stress_gauntlet.py.archive
+  witness components/BonfyreControlPlane/tests/test_company_stress_gauntlet.py.archive
+  witness evidence/proofs/one-company-stress-gauntlet.json
+  witness evidence/proofs/frappe-compiler-company-flow.json
+  source_lineage Generation-10/V8.1 one-company operating-day stress requirement
+  source_lineage mesh external-chatgpt-20260821T0250-020
+  source_lineage mesh external-chatgpt-20260821T0300-032
+
+  known_gap every source this entry names is archived, so this is a historical measurement rather than a live implementation; no native replacement for the whole gauntlet is witnessed here
+
+interaction one-company-gauntlet-projects-frappe
+  source crm
+  destination one-company-stress-gauntlet
+  relation shared_object_doctype_projection
+  preserves ActorGraph identity, occurrence identity, commitment identity, compiler-registered lineage identity and real DocType field/type grammar
+  drops any implication that a projection owns actor, evidence, money or authority semantics
+  forbidden_inference app record -> canonical identity, booked value, problem resolution or committed derived fact
+  witness compiler_catalog_drives_receipted_cross_lineage_replay
+  binding components/BonfyreControlPlane/company_stress_gauntlet.py
+
+interaction one-company-gauntlet-binds-partner
+  source partner-commons
+  destination one-company-stress-gauntlet
+  relation rights_limited_partner_review
+  preserves partner identity, source reference, local observation and observe/reference rights
+  drops remote mutation authority and any claim that local review changed the partner institution
+  forbidden_inference local partner observation -> remote completion or authority
+  witness foreign_twin_is_observe_reference_only
+  binding components/BonfyreControlPlane/company_stress_gauntlet.py
+
+interaction one-company-gauntlet-binds-model-session
+  source agent-session
+  destination one-company-stress-gauntlet
+  relation provider_faithful_decision_receipt
+  preserves stable AgentSession identity, provider/model identity, work node and evidence origin
+  drops provider-native process identity as lifecycle identity
+  forbidden_inference selected model route -> authority, quality, completion or lifecycle identity
+  witness provider_process_id_is_not_lifecycle_identity
+  binding components/BonfyreControlPlane/company_stress_gauntlet.py
+
+interaction one-company-gauntlet-roundtrips-artifacts
+  source artifact-graph
+  destination one-company-stress-gauntlet
+  relation format_profile_objectfabric_replay
+  preserves concrete format identity, family, native validation, semantic equivalence, digest and ObjectFabric URI
+  drops unavailable OpenDAL and Iroh carriers from the success frontier
+  forbidden_inference common family substrate -> format equivalence or peer storage success
+  witness six_registered_format_families_roundtrip
+  binding components/BonfyreControlPlane/company_stress_gauntlet.py

@@ -1,0 +1,1302 @@
+{
+  "schema": "bonfyre.reclamation.reconstructability.v1",
+  "observed_on": "2026-10-02",
+  "status": "scoped_cleanup_completed_after_inventory_and_override_preservation",
+  "cleanup_record": {
+    "reported_on": "2026-10-02",
+    "authority": "Parent agent reported approved cleanup completed; this record does not itself authorize further deletion.",
+    "partner_venv": {
+      "path": "/Users/nickgonzales/.bonfyre/partner-venv",
+      "operation": "exact directory removal after RECORD verification and preservation of the sole changed source file",
+      "verification": "ls -ld reports No such file or directory after cleanup",
+      "pre_cleanup_allocated_kib_du_sk": 2316260
+    },
+    "bitnet_optional_worktrees": [
+      {
+        "path": "/Users/nickgonzales/.cache/bonfyre/bitnet.cpp-pr606",
+        "operation": "Git-aware worktree remove --force from primary BitNet repository",
+        "verification": "path absent; git worktree list --porcelain contains only primary worktree"
+      },
+      {
+        "path": "/Users/nickgonzales/.cache/bonfyre/bitnet.cpp-pr626",
+        "operation": "Git-aware worktree remove --force from primary BitNet repository",
+        "verification": "path absent; git worktree list --porcelain contains only primary worktree"
+      }
+    ],
+    "reported_free_space_after_cleanup": "8.9 GiB before the subsequent Hugging Face download; parent-reported, not independently measured here",
+    "other_cleanup_scope": "Earlier target/release deps/build/incremental/cache removals are not itemized here because their exact full target paths and per-target results are unavailable in this audit context; no additional removal is inferred."
+  },
+  "partner_venv": {
+    "path": "/Users/nickgonzales/.bonfyre/partner-venv",
+    "allocated_kib_du_sk": 2316260,
+    "python_version": "3.12.13",
+    "python_base": "/opt/homebrew/opt/python@3.12/bin",
+    "isolated_from_system_site_packages": true,
+    "installed_distributions_count": 285,
+    "installed_distributions": [
+      {
+        "name": "aiohappyeyeballs",
+        "version": "2.7.1"
+      },
+      {
+        "name": "aiohttp",
+        "version": "3.14.3"
+      },
+      {
+        "name": "aiosignal",
+        "version": "1.4.0"
+      },
+      {
+        "name": "alembic",
+        "version": "1.19.1"
+      },
+      {
+        "name": "annotated-doc",
+        "version": "0.0.5"
+      },
+      {
+        "name": "annotated-types",
+        "version": "0.8.0"
+      },
+      {
+        "name": "anthropic",
+        "version": "1.2.0"
+      },
+      {
+        "name": "anyio",
+        "version": "4.14.2"
+      },
+      {
+        "name": "anywidget",
+        "version": "0.11.0"
+      },
+      {
+        "name": "appnope",
+        "version": "1.0.0"
+      },
+      {
+        "name": "arch",
+        "version": "8.0.0"
+      },
+      {
+        "name": "arcticdb",
+        "version": "6.23.0"
+      },
+      {
+        "name": "argon2-cffi",
+        "version": "25.1.0"
+      },
+      {
+        "name": "argon2-cffi-bindings",
+        "version": "26.1.0"
+      },
+      {
+        "name": "arrow",
+        "version": "1.4.0"
+      },
+      {
+        "name": "astropy",
+        "version": "8.0.1"
+      },
+      {
+        "name": "astropy-iers-data",
+        "version": "0.2026.8.24.0.24.29"
+      },
+      {
+        "name": "asttokens",
+        "version": "3.0.2"
+      },
+      {
+        "name": "async-lru",
+        "version": "2.3.0"
+      },
+      {
+        "name": "attrs",
+        "version": "26.1.0"
+      },
+      {
+        "name": "babel",
+        "version": "2.18.0"
+      },
+      {
+        "name": "backoff",
+        "version": "2.2.1"
+      },
+      {
+        "name": "beautifulsoup4",
+        "version": "4.15.0"
+      },
+      {
+        "name": "blake3",
+        "version": "1.0.9"
+      },
+      {
+        "name": "bleach",
+        "version": "6.4.0"
+      },
+      {
+        "name": "blinker",
+        "version": "1.9.0"
+      },
+      {
+        "name": "boto3",
+        "version": "1.43.82"
+      },
+      {
+        "name": "botocore",
+        "version": "1.43.82"
+      },
+      {
+        "name": "cachetools",
+        "version": "7.1.7"
+      },
+      {
+        "name": "certifi",
+        "version": "2026.7.22"
+      },
+      {
+        "name": "cffi",
+        "version": "2.1.1"
+      },
+      {
+        "name": "charset-normalizer",
+        "version": "3.5.1"
+      },
+      {
+        "name": "clarabel",
+        "version": "0.11.1"
+      },
+      {
+        "name": "click",
+        "version": "8.5.0"
+      },
+      {
+        "name": "cloudpickle",
+        "version": "3.1.2"
+      },
+      {
+        "name": "cohere",
+        "version": "7.1.0"
+      },
+      {
+        "name": "comm",
+        "version": "0.2.3"
+      },
+      {
+        "name": "contourpy",
+        "version": "1.3.3"
+      },
+      {
+        "name": "cryptography",
+        "version": "49.0.0"
+      },
+      {
+        "name": "cvxpy",
+        "version": "1.9.2"
+      },
+      {
+        "name": "cycler",
+        "version": "0.12.1"
+      },
+      {
+        "name": "databricks-sdk",
+        "version": "0.133.0"
+      },
+      {
+        "name": "datafusion",
+        "version": "54.0.0"
+      },
+      {
+        "name": "dateparser",
+        "version": "1.4.2"
+      },
+      {
+        "name": "debugpy",
+        "version": "1.8.21"
+      },
+      {
+        "name": "deepeval",
+        "version": "4.2.0"
+      },
+      {
+        "name": "defusedxml",
+        "version": "0.7.1"
+      },
+      {
+        "name": "deprecation",
+        "version": "2.1.0"
+      },
+      {
+        "name": "dill",
+        "version": "0.4.1"
+      },
+      {
+        "name": "distro",
+        "version": "1.9.0"
+      },
+      {
+        "name": "dnspython",
+        "version": "2.8.0"
+      },
+      {
+        "name": "docker",
+        "version": "7.2.0"
+      },
+      {
+        "name": "docstring_parser",
+        "version": "0.18.0"
+      },
+      {
+        "name": "duckdb",
+        "version": "1.5.5"
+      },
+      {
+        "name": "eval_type_backport",
+        "version": "0.4.0"
+      },
+      {
+        "name": "execnet",
+        "version": "2.1.2"
+      },
+      {
+        "name": "executing",
+        "version": "2.2.1"
+      },
+      {
+        "name": "fastapi",
+        "version": "0.141.1"
+      },
+      {
+        "name": "fastavro",
+        "version": "1.12.2"
+      },
+      {
+        "name": "fastjsonschema",
+        "version": "2.22.2"
+      },
+      {
+        "name": "fastuuid",
+        "version": "0.14.0"
+      },
+      {
+        "name": "filelock",
+        "version": "3.32.4"
+      },
+      {
+        "name": "fire",
+        "version": "0.7.1"
+      },
+      {
+        "name": "Flask",
+        "version": "3.1.3"
+      },
+      {
+        "name": "flask-cors",
+        "version": "6.0.5"
+      },
+      {
+        "name": "fonttools",
+        "version": "4.63.0"
+      },
+      {
+        "name": "formulaic",
+        "version": "1.2.2"
+      },
+      {
+        "name": "fqdn",
+        "version": "1.5.1"
+      },
+      {
+        "name": "frozenlist",
+        "version": "1.8.0"
+      },
+      {
+        "name": "fsspec",
+        "version": "2026.7.0"
+      },
+      {
+        "name": "gitdb",
+        "version": "4.0.12"
+      },
+      {
+        "name": "GitPython",
+        "version": "3.1.60"
+      },
+      {
+        "name": "google-auth",
+        "version": "2.57.0"
+      },
+      {
+        "name": "google-genai",
+        "version": "2.20.0"
+      },
+      {
+        "name": "graphene",
+        "version": "3.4.3"
+      },
+      {
+        "name": "graphql-core",
+        "version": "3.2.12"
+      },
+      {
+        "name": "graphql-relay",
+        "version": "3.2.0"
+      },
+      {
+        "name": "groq",
+        "version": "1.7.0"
+      },
+      {
+        "name": "grpcio",
+        "version": "1.83.0"
+      },
+      {
+        "name": "gunicorn",
+        "version": "26.2.0"
+      },
+      {
+        "name": "gym",
+        "version": "0.26.2"
+      },
+      {
+        "name": "gym-notices",
+        "version": "0.1.0"
+      },
+      {
+        "name": "h11",
+        "version": "0.16.0"
+      },
+      {
+        "name": "hf-xet",
+        "version": "1.6.0"
+      },
+      {
+        "name": "highspy",
+        "version": "1.15.1"
+      },
+      {
+        "name": "httpcore",
+        "version": "1.0.9"
+      },
+      {
+        "name": "httpcore2",
+        "version": "2.12.0"
+      },
+      {
+        "name": "httpx",
+        "version": "0.28.1"
+      },
+      {
+        "name": "httpx2",
+        "version": "2.12.0"
+      },
+      {
+        "name": "huey",
+        "version": "3.3.4"
+      },
+      {
+        "name": "huggingface_hub",
+        "version": "1.29.0"
+      },
+      {
+        "name": "idna",
+        "version": "3.19"
+      },
+      {
+        "name": "ImageIO",
+        "version": "2.37.4"
+      },
+      {
+        "name": "importlib_metadata",
+        "version": "8.9.0"
+      },
+      {
+        "name": "iniconfig",
+        "version": "2.3.0"
+      },
+      {
+        "name": "interface_meta",
+        "version": "2.0.1"
+      },
+      {
+        "name": "ipykernel",
+        "version": "7.3.0"
+      },
+      {
+        "name": "ipython",
+        "version": "9.16.1"
+      },
+      {
+        "name": "ipython_pygments_lexers",
+        "version": "1.1.1"
+      },
+      {
+        "name": "ipywidgets",
+        "version": "8.1.9"
+      },
+      {
+        "name": "isoduration",
+        "version": "20.11.0"
+      },
+      {
+        "name": "itsdangerous",
+        "version": "2.2.0"
+      },
+      {
+        "name": "jedi",
+        "version": "0.20.0"
+      },
+      {
+        "name": "Jinja2",
+        "version": "3.1.6"
+      },
+      {
+        "name": "jiter",
+        "version": "0.16.0"
+      },
+      {
+        "name": "jmespath",
+        "version": "1.1.0"
+      },
+      {
+        "name": "joblib",
+        "version": "1.5.3"
+      },
+      {
+        "name": "json5",
+        "version": "0.15.0"
+      },
+      {
+        "name": "jsonpath-python",
+        "version": "1.1.6"
+      },
+      {
+        "name": "jsonpointer",
+        "version": "3.1.1"
+      },
+      {
+        "name": "jsonschema",
+        "version": "4.26.0"
+      },
+      {
+        "name": "jsonschema-specifications",
+        "version": "2025.9.1"
+      },
+      {
+        "name": "jupyter",
+        "version": "1.1.1"
+      },
+      {
+        "name": "jupyter_builder",
+        "version": "1.2.2"
+      },
+      {
+        "name": "jupyter_client",
+        "version": "8.9.1"
+      },
+      {
+        "name": "jupyter_core",
+        "version": "5.9.1"
+      },
+      {
+        "name": "jupyter_server",
+        "version": "2.21.0"
+      },
+      {
+        "name": "jupyter_server_terminals",
+        "version": "0.5.4"
+      },
+      {
+        "name": "jupyter-console",
+        "version": "6.6.3"
+      },
+      {
+        "name": "jupyter-events",
+        "version": "0.12.1"
+      },
+      {
+        "name": "jupyter-lsp",
+        "version": "2.3.1"
+      },
+      {
+        "name": "jupyterlab",
+        "version": "4.6.3"
+      },
+      {
+        "name": "jupyterlab_pygments",
+        "version": "0.3.0"
+      },
+      {
+        "name": "jupyterlab_server",
+        "version": "2.28.0"
+      },
+      {
+        "name": "jupyterlab_widgets",
+        "version": "3.0.17"
+      },
+      {
+        "name": "kiwisolver",
+        "version": "1.5.0"
+      },
+      {
+        "name": "lance-namespace",
+        "version": "0.11.1"
+      },
+      {
+        "name": "lance-namespace-urllib3-client",
+        "version": "0.11.1"
+      },
+      {
+        "name": "lancedb",
+        "version": "0.37.1"
+      },
+      {
+        "name": "lark",
+        "version": "1.3.1"
+      },
+      {
+        "name": "lightgbm",
+        "version": "4.7.0"
+      },
+      {
+        "name": "litellm",
+        "version": "1.98.0"
+      },
+      {
+        "name": "llvmlite",
+        "version": "0.49.0"
+      },
+      {
+        "name": "loguru",
+        "version": "0.7.3"
+      },
+      {
+        "name": "Mako",
+        "version": "1.4.1"
+      },
+      {
+        "name": "markdown-it-py",
+        "version": "4.2.0"
+      },
+      {
+        "name": "MarkupSafe",
+        "version": "3.0.3"
+      },
+      {
+        "name": "matplotlib",
+        "version": "3.11.1"
+      },
+      {
+        "name": "matplotlib-inline",
+        "version": "0.2.2"
+      },
+      {
+        "name": "mdurl",
+        "version": "0.1.2"
+      },
+      {
+        "name": "mistralai",
+        "version": "2.9.4"
+      },
+      {
+        "name": "mistune",
+        "version": "3.3.4"
+      },
+      {
+        "name": "mlflow",
+        "version": "3.15.2"
+      },
+      {
+        "name": "mlflow-skinny",
+        "version": "3.15.2"
+      },
+      {
+        "name": "mlflow-tracing",
+        "version": "3.15.2"
+      },
+      {
+        "name": "msgpack",
+        "version": "1.2.2"
+      },
+      {
+        "name": "multidict",
+        "version": "6.7.1"
+      },
+      {
+        "name": "mypy_extensions",
+        "version": "1.1.0"
+      },
+      {
+        "name": "narwhals",
+        "version": "2.25.0"
+      },
+      {
+        "name": "nbclient",
+        "version": "0.11.0"
+      },
+      {
+        "name": "nbconvert",
+        "version": "7.17.1"
+      },
+      {
+        "name": "nbformat",
+        "version": "5.11.1"
+      },
+      {
+        "name": "nest-asyncio",
+        "version": "1.6.0"
+      },
+      {
+        "name": "nest-asyncio2",
+        "version": "1.7.2"
+      },
+      {
+        "name": "networkx",
+        "version": "3.6.1"
+      },
+      {
+        "name": "notebook",
+        "version": "7.6.2"
+      },
+      {
+        "name": "notebook_shim",
+        "version": "0.2.4"
+      },
+      {
+        "name": "numba",
+        "version": "0.67.0"
+      },
+      {
+        "name": "numpy",
+        "version": "2.5.2"
+      },
+      {
+        "name": "openai",
+        "version": "2.54.0"
+      },
+      {
+        "name": "opentelemetry-api",
+        "version": "1.44.0"
+      },
+      {
+        "name": "opentelemetry-proto",
+        "version": "1.44.0"
+      },
+      {
+        "name": "opentelemetry-sdk",
+        "version": "1.44.0"
+      },
+      {
+        "name": "opentelemetry-semantic-conventions",
+        "version": "0.65b0"
+      },
+      {
+        "name": "osqp",
+        "version": "1.1.3"
+      },
+      {
+        "name": "packaging",
+        "version": "26.3"
+      },
+      {
+        "name": "pandas",
+        "version": "2.3.3"
+      },
+      {
+        "name": "pandocfilters",
+        "version": "1.5.1"
+      },
+      {
+        "name": "parso",
+        "version": "0.8.7"
+      },
+      {
+        "name": "patsy",
+        "version": "1.0.2"
+      },
+      {
+        "name": "pexpect",
+        "version": "4.9.0"
+      },
+      {
+        "name": "pillow",
+        "version": "12.3.0"
+      },
+      {
+        "name": "pip",
+        "version": "26.2.1"
+      },
+      {
+        "name": "platformdirs",
+        "version": "4.11.5"
+      },
+      {
+        "name": "plotly",
+        "version": "7.0.0"
+      },
+      {
+        "name": "pluggy",
+        "version": "1.6.0"
+      },
+      {
+        "name": "polars",
+        "version": "1.44.1"
+      },
+      {
+        "name": "polars-runtime-32",
+        "version": "1.44.1"
+      },
+      {
+        "name": "portalocker",
+        "version": "4.3.0"
+      },
+      {
+        "name": "posthog",
+        "version": "7.44.2"
+      },
+      {
+        "name": "prettytable",
+        "version": "3.18.0"
+      },
+      {
+        "name": "prometheus_client",
+        "version": "0.26.0"
+      },
+      {
+        "name": "prompt_toolkit",
+        "version": "3.0.53"
+      },
+      {
+        "name": "propcache",
+        "version": "0.5.2"
+      },
+      {
+        "name": "protobuf",
+        "version": "6.33.6"
+      },
+      {
+        "name": "psutil",
+        "version": "7.2.2"
+      },
+      {
+        "name": "psygnal",
+        "version": "0.15.1"
+      },
+      {
+        "name": "ptyprocess",
+        "version": "0.7.0"
+      },
+      {
+        "name": "pure_eval",
+        "version": "0.2.3"
+      },
+      {
+        "name": "pyarrow",
+        "version": "25.0.1"
+      },
+      {
+        "name": "pyasn1",
+        "version": "0.6.4"
+      },
+      {
+        "name": "pyasn1_modules",
+        "version": "0.4.2"
+      },
+      {
+        "name": "pybind11",
+        "version": "3.1.0"
+      },
+      {
+        "name": "pycparser",
+        "version": "3.0"
+      },
+      {
+        "name": "pydantic",
+        "version": "2.13.4"
+      },
+      {
+        "name": "pydantic_core",
+        "version": "2.46.4"
+      },
+      {
+        "name": "pydantic-settings",
+        "version": "2.15.0"
+      },
+      {
+        "name": "pyerfa",
+        "version": "2.0.1.5"
+      },
+      {
+        "name": "pyfiglet",
+        "version": "1.0.4"
+      },
+      {
+        "name": "Pygments",
+        "version": "2.21.0"
+      },
+      {
+        "name": "pymongo",
+        "version": "4.17.0"
+      },
+      {
+        "name": "pyparsing",
+        "version": "3.3.2"
+      },
+      {
+        "name": "pyqlib",
+        "version": "0.9.7"
+      },
+      {
+        "name": "pytest",
+        "version": "9.1.1"
+      },
+      {
+        "name": "pytest-asyncio",
+        "version": "1.4.0"
+      },
+      {
+        "name": "pytest-repeat",
+        "version": "0.9.4"
+      },
+      {
+        "name": "pytest-rerunfailures",
+        "version": "16.6"
+      },
+      {
+        "name": "pytest-xdist",
+        "version": "3.8.0"
+      },
+      {
+        "name": "python-dateutil",
+        "version": "2.9.0.post0"
+      },
+      {
+        "name": "python-dotenv",
+        "version": "1.2.3"
+      },
+      {
+        "name": "python-json-logger",
+        "version": "4.2.0"
+      },
+      {
+        "name": "python-redis-lock",
+        "version": "4.0.1"
+      },
+      {
+        "name": "pytz",
+        "version": "2026.3.post1"
+      },
+      {
+        "name": "PyYAML",
+        "version": "6.0.3"
+      },
+      {
+        "name": "pyzmq",
+        "version": "27.2.0"
+      },
+      {
+        "name": "qdldl",
+        "version": "0.1.9.post1"
+      },
+      {
+        "name": "QuantLib",
+        "version": "1.43"
+      },
+      {
+        "name": "questionary",
+        "version": "2.1.1"
+      },
+      {
+        "name": "redis",
+        "version": "8.1.0"
+      },
+      {
+        "name": "referencing",
+        "version": "0.37.0"
+      },
+      {
+        "name": "regex",
+        "version": "2026.7.19"
+      },
+      {
+        "name": "requests",
+        "version": "2.34.2"
+      },
+      {
+        "name": "rfc3339-validator",
+        "version": "0.1.4"
+      },
+      {
+        "name": "rfc3986-validator",
+        "version": "0.1.1"
+      },
+      {
+        "name": "rfc3987-syntax",
+        "version": "1.1.0"
+      },
+      {
+        "name": "rich",
+        "version": "14.3.4"
+      },
+      {
+        "name": "riskfolio-lib",
+        "version": "7.3.0"
+      },
+      {
+        "name": "rpds-py",
+        "version": "2026.6.3"
+      },
+      {
+        "name": "ruamel.yaml",
+        "version": "0.19.1"
+      },
+      {
+        "name": "s3transfer",
+        "version": "0.19.2"
+      },
+      {
+        "name": "schedule",
+        "version": "1.2.2"
+      },
+      {
+        "name": "scikit-learn",
+        "version": "1.9.0"
+      },
+      {
+        "name": "scipy",
+        "version": "1.18.1"
+      },
+      {
+        "name": "scs",
+        "version": "3.2.11"
+      },
+      {
+        "name": "Send2Trash",
+        "version": "2.1.0"
+      },
+      {
+        "name": "setuptools",
+        "version": "84.0.0"
+      },
+      {
+        "name": "shellingham",
+        "version": "1.5.4"
+      },
+      {
+        "name": "six",
+        "version": "1.17.0"
+      },
+      {
+        "name": "skops",
+        "version": "0.14.0"
+      },
+      {
+        "name": "smmap",
+        "version": "5.0.3"
+      },
+      {
+        "name": "sniffio",
+        "version": "1.3.1"
+      },
+      {
+        "name": "soupsieve",
+        "version": "2.9.2"
+      },
+      {
+        "name": "sparsediffpy",
+        "version": "0.3.0"
+      },
+      {
+        "name": "SQLAlchemy",
+        "version": "2.0.52"
+      },
+      {
+        "name": "sqlparse",
+        "version": "0.6.0"
+      },
+      {
+        "name": "stack-data",
+        "version": "0.6.3"
+      },
+      {
+        "name": "starlette",
+        "version": "1.6.0"
+      },
+      {
+        "name": "statsmodels",
+        "version": "0.15.0"
+      },
+      {
+        "name": "tabulate",
+        "version": "0.9.0"
+      },
+      {
+        "name": "tenacity",
+        "version": "9.1.4"
+      },
+      {
+        "name": "termcolor",
+        "version": "3.3.0"
+      },
+      {
+        "name": "terminado",
+        "version": "0.18.1"
+      },
+      {
+        "name": "threadpoolctl",
+        "version": "3.6.0"
+      },
+      {
+        "name": "tiktoken",
+        "version": "0.14.0"
+      },
+      {
+        "name": "tinycss2",
+        "version": "1.5.1"
+      },
+      {
+        "name": "tokenizers",
+        "version": "0.23.1"
+      },
+      {
+        "name": "tornado",
+        "version": "6.5.8"
+      },
+      {
+        "name": "tqdm",
+        "version": "4.70.0"
+      },
+      {
+        "name": "traitlets",
+        "version": "5.16.1"
+      },
+      {
+        "name": "tree-sitter",
+        "version": "0.26.0"
+      },
+      {
+        "name": "tree-sitter-python",
+        "version": "0.25.0"
+      },
+      {
+        "name": "truststore",
+        "version": "0.10.4"
+      },
+      {
+        "name": "typer",
+        "version": "0.27.1"
+      },
+      {
+        "name": "types-requests",
+        "version": "2.33.0.20260712"
+      },
+      {
+        "name": "typing_extensions",
+        "version": "4.16.0"
+      },
+      {
+        "name": "typing-inspection",
+        "version": "0.4.4"
+      },
+      {
+        "name": "tzdata",
+        "version": "2026.3"
+      },
+      {
+        "name": "tzlocal",
+        "version": "5.4.4"
+      },
+      {
+        "name": "uri-template",
+        "version": "1.3.0"
+      },
+      {
+        "name": "urllib3",
+        "version": "2.7.0"
+      },
+      {
+        "name": "uvicorn",
+        "version": "0.52.4"
+      },
+      {
+        "name": "vectorbt",
+        "version": "1.1.0"
+      },
+      {
+        "name": "wcwidth",
+        "version": "0.8.2"
+      },
+      {
+        "name": "webcolors",
+        "version": "25.10.0"
+      },
+      {
+        "name": "webencodings",
+        "version": "0.6.1"
+      },
+      {
+        "name": "websocket-client",
+        "version": "1.9.0"
+      },
+      {
+        "name": "websockets",
+        "version": "16.1.1"
+      },
+      {
+        "name": "Werkzeug",
+        "version": "3.1.8"
+      },
+      {
+        "name": "wheel",
+        "version": "0.48.0"
+      },
+      {
+        "name": "widgetsnbextension",
+        "version": "4.0.16"
+      },
+      {
+        "name": "wrapt",
+        "version": "2.3.0"
+      },
+      {
+        "name": "xlsxwriter",
+        "version": "3.2.9"
+      },
+      {
+        "name": "yarl",
+        "version": "1.24.5"
+      },
+      {
+        "name": "zipp",
+        "version": "4.1.0"
+      },
+      {
+        "name": "zstandard",
+        "version": "0.25.0"
+      }
+    ],
+    "distribution_metadata_audit": {
+      "method": "Read only METADATA, direct_url.json, RECORD path lists, and .pth metadata; no package imports or execution.",
+      "direct_url_count": 0,
+      "editable_or_local_path_origins": [],
+      "missing_name_or_version": [],
+      "egg_info_count": 0,
+      "unowned_top_level_site_packages_modules": [],
+      "bin_entries_count": 104,
+      "bin_record_owned_count": 99,
+      "bin_unowned_entries": [
+        "Activate.ps1",
+        "python3",
+        "python",
+        "activate.fish",
+        "activate",
+        "python3.12",
+        "activate.csh"
+      ],
+      "pth": [
+        {
+          "name": "distutils-precedence.pth",
+          "absolute_path_entries": 0,
+          "import_lines": 1
+        }
+      ]
+    },
+    "known_local_dependency_sources": [
+      {
+        "path": "/Users/nickgonzales/.bonfyre/partner/fraise/pyproject.toml",
+        "scope": "Fraise project only, not this entire environment"
+      },
+      {
+        "path": "/Users/nickgonzales/.bonfyre/partner/fraise/uv.lock",
+        "scope": "Fraise project only, not this entire environment"
+      },
+      {
+        "path": "/Users/nickgonzales/.bonfyre/partner/fraise/sdk/python/pyproject.toml",
+        "scope": "Fraise SDK project only"
+      },
+      {
+        "path": "/Users/nickgonzales/.bonfyre/partner/fraise/tests/pyproject.toml",
+        "scope": "Fraise tests only"
+      }
+    ],
+    "runtime_use_audit": "Earlier scoped repo and ~/.bonfyre launch-source searches found no partner-venv reference; lsof +D found no open handles at audit time. This is a point-in-time observation, not a proof of future non-use.",
+    "record_hash_verification": {
+      "tool": "tools/estate/reclamation/verify-partner-venv.mjs",
+      "command": "bun tools/estate/reclamation/verify-partner-venv.mjs /Users/nickgonzales/.bonfyre/partner-venv",
+      "observed_on": "2026-10-02",
+      "distributions": 285,
+      "record_entries": 79707,
+      "hashed_entries_checked": 49840,
+      "hashed_bytes_checked": 1801469381,
+      "unhashed_entries": 29867,
+      "unhashed_entries_breakdown": {
+        "generated_pycache": 29582,
+        "record_self_entries": 285,
+        "other": 0
+      },
+      "missing": [],
+      "invalid_records": [],
+      "unrecorded_py_so_excluding_pycache": [],
+      "mismatches": [
+        {
+          "path": "lib/python3.12/site-packages/openai/types/responses/response_usage.py",
+          "distribution": "openai==2.54.0",
+          "installed_bytes": 1946,
+          "installed_sha256_base64url": "T5PghzllhyI2Cv3BtixEeaHhAj8rYiB_M2ixI5mggFU",
+          "record_sha256_base64url": "ECVLwuoZ9vqfxwHcwYepmR6IiLJhPzdXdXD1gcHQ6Zg",
+          "preserved_exact_copy": "tools/estate/reclamation/partner-venv-overrides/openai/types/responses/response_usage.py",
+          "observed_change": "Bonfyre adapter default for cache_write_tokens with explanatory comment; package import was not attempted."
+        }
+      ]
+    },
+    "reconstruction_limits": [
+      "The 285 exact Name/Version pins are an inventory, not a resolved lock with wheel hashes or indexes.",
+      "Fraise uv.lock is not known to cover all 285 distributions.",
+      "All 49,840 hashed RECORD-listed files were checked; one modified package file was found and preserved exactly in this repository. The 29,867 unhashed entries are generated __pycache__ files and RECORD self-entries.",
+      "Downloaded wheels and dependency indexes may be unavailable later; reinstall may require network and compatible Python 3.12 ABI.",
+      "The preserved override must be deliberately reapplied after any reinstall, with compatibility checked against the installed openai version.",
+      "The venv has since been removed after owner approval; recreation remains subject to these limits and requires deliberate restoration of the preserved override."
+    ],
+    "recommendation": "Historical reconstruction record for the removed venv: its sole RECORD-mismatching source file is preserved byte-for-byte in this repository, and no unrecorded .py/.so existed at audit time. Reinstallation depends on package availability and restoring the override."
+  },
+  "bitnet_worktrees": {
+    "common_git_dir": "/Users/nickgonzales/.cache/bonfyre/bitnet.cpp/.git",
+    "primary": {
+      "path": "/Users/nickgonzales/.cache/bonfyre/bitnet.cpp",
+      "head": "0b341e582afbf9e1011f24744b554c96a3477eb5",
+      "porcelain_status": "clean"
+    },
+    "optional": [
+      {
+        "path": "/Users/nickgonzales/.cache/bonfyre/bitnet.cpp-pr606",
+        "head": "07d3cf46c1c5589a706b59dceb2b4726d3bbc42d",
+        "detached_head": true,
+        "allocated_kib_du_sk": 167444,
+        "git_admin_allocated_kib_du_sk": 385476,
+        "submodules": [
+          {
+            "path": "3rdparty/llama.cpp",
+            "commit": "0684c7fd229be68beb3e2fed316f9de26cb810a5"
+          }
+        ],
+        "porcelain_status": "clean"
+      },
+      {
+        "path": "/Users/nickgonzales/.cache/bonfyre/bitnet.cpp-pr626",
+        "head": "312a04bb257ca1a95499f879706e81f074867277",
+        "detached_head": true,
+        "allocated_kib_du_sk": 167824,
+        "git_admin_allocated_kib_du_sk": 385328,
+        "submodules": [
+          {
+            "path": "3rdparty/llama.cpp",
+            "commit": "390c307752ab78fd8189f359d6954c9ba1be74af"
+          }
+        ],
+        "porcelain_status": "clean"
+      }
+    ],
+    "use_audit": "Earlier scoped launcher/path searches and lsof +D found no use or open handles for the two optional worktrees at audit time.",
+    "cleanup_limit": "The two optional worktrees were removed with Git-aware operations; preserve the primary worktree and its Git metadata. The pre-removal commits and submodule pins above remain a reconstruction record."
+  }
+}

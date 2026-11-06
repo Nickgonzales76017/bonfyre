@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>The reading room · Aurekai</title>
+<link rel="stylesheet" href="/assets/vendor-uplot.min.css">
+<script src="/assets/client-organs.js" defer></script>
+<meta name="description" content="Everything this estate has kept, queried in your own tab out of its columnar catalogue, dressed in any of the design systems it has published.">
+<meta name="bonfyre:cannot-infer" content="Everything here is material this estate read and kept. A piece appearing is not a claim that its source still publishes it, that what it says is true, or that this estate endorses it. The design you are reading it in is a published theme's language reduced to tokens; wearing it is not an endorsement by its authors, and it says nothing about the material inside it.">
+<script type="importmap">{ "imports": { "apache-arrow": "/assets/apache-arrow.mjs?b=87b6553fdf" } }</script>
+<style>
+  /* The page has no colours of its own. Every one of them arrives from a
+   * template this estate published, and changes when the reader picks another. */
+  :root {
+    --ground: #0c0d0f; --ink: #f2efe9; --display: #f2efe9; --accent: #c8a24a;
+    --muted: #8a867e; --rule: rgba(242,239,233,.16); --panel: #15171a;
+    --face-display: Georgia, serif; --face-body: system-ui, sans-serif;
+    --face-mono: ui-monospace, monospace;
+    --display-size: clamp(2.2rem, 5vw, 4rem); --display-weight: 600;
+    --display-tracking: -.02em; --display-leading: 1.05;
+  }
+  /* The template decides whether this page is light or dark, and the page says
+   * which so the browser stops repainting it. A reader's own dark mode is a
+   * fine default for a page with no opinion; this one is wearing someone's
+   * design and the ground is part of it. */
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: var(--face-body); font-size: clamp(1rem, 1.04vw, 1.1rem);
+    line-height: 1.6; -webkit-font-smoothing: antialiased;
+    transition: background .35s ease, color .35s ease;
+  }
+  @media (prefers-reduced-motion: reduce) { body { transition: none; } }
+  a { color: inherit; }
+  h1, h2, h3 {
+    font-family: var(--face-display); color: var(--display); margin: 0;
+    letter-spacing: var(--display-tracking); line-height: var(--display-leading);
+  }
+  .wrap { max-width: 80rem; margin: 0 auto; padding: 0 clamp(1rem, 3.4vw, 3rem); }
+
+  .masthead {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 1rem; flex-wrap: wrap; padding: 1.3rem 0 .9rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .mark {
+    font-family: var(--face-display); font-weight: 700; letter-spacing: .15em;
+    text-transform: uppercase; font-size: .8rem;
+  }
+  .stamp { font-family: var(--face-mono); font-size: .72rem; color: var(--muted); }
+  .ways{display:flex;gap:.9rem;font-family:var(--face-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}.ways a{color:var(--muted);text-decoration:none}.ways a:hover{color:var(--accent)}
+
+  .lede { padding: 1.6rem 0 1.1rem; border-bottom: 1px solid var(--rule); }
+  .lede h1 { font-size: var(--display-size); font-weight: var(--display-weight); max-width: 20ch; }
+  .lede p { margin: .8rem 0 0; max-width: 56ch; color: var(--muted); font-size: .92rem; }
+
+  /* the asking */
+  .ask {
+    display: flex; gap: .7rem; flex-wrap: wrap; align-items: flex-end;
+    padding: 1.1rem 0; border-bottom: 1px solid var(--rule);
+  }
+  .ask label {
+    display: flex; flex-direction: column; gap: .3rem;
+    font-family: var(--face-mono); font-size: .68rem; letter-spacing: .09em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .ask input, .ask select {
+    background: var(--panel); color: var(--ink); border: 1px solid var(--rule);
+    border-radius: 2px; padding: .48rem .6rem; font: inherit; font-size: .88rem;
+    min-width: 11rem; max-width: 92vw;
+  }
+  .ask input:focus, .ask select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .ask .wide input { min-width: 19rem; }
+  .count { font-family: var(--face-mono); font-size: .74rem; color: var(--muted); padding-bottom: .5rem; }
+
+  /* the shape of the answer over time */
+  .over-time { padding: 1rem 0 .4rem; border-bottom: 1px solid var(--rule); }
+  .over-time h2, .results h2, .dressing h2 {
+    font-family: var(--face-mono); font-size: .68rem; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--muted); font-weight: 500; margin: 0 0 .6rem;
+  }
+  .plot { min-height: 150px; width: 100%; }
+
+  /* what was kept */
+  .results { padding: 1.4rem 0 2rem; }
+  .hero { display: grid; gap: 1rem; margin-bottom: 1.6rem; }
+  @media (min-width: 46rem) { .hero { grid-template-columns: 1.15fr 1fr; align-items: center; } }
+  .hero img {
+    width: 100%; aspect-ratio: 16/10; object-fit: cover; display: block;
+    background: var(--panel); border-radius: var(--radius, 2px);
+  }
+  .hero h3 { font-size: clamp(1.5rem, 3vw, 2.4rem); font-weight: var(--display-weight); }
+  .kept { list-style: none; margin: 0; padding: 0; columns: 2; column-gap: clamp(1.4rem, 4vw, 3.2rem); }
+  @media (max-width: 52rem) { .kept { columns: 1; } }
+  .kept li { break-inside: avoid; margin: 0 0 1.15rem; padding-bottom: 1.05rem; border-bottom: 1px solid var(--rule); }
+  .kept h3 { font-size: 1.04rem; font-weight: 600; line-height: 1.32; }
+  .kept a { text-decoration: none; }
+  .kept a:hover h3 { color: var(--accent); }
+  .by {
+    display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .4rem;
+    font-family: var(--face-mono); font-size: .68rem; letter-spacing: .05em;
+    color: var(--muted); text-transform: uppercase;
+  }
+  .empty { color: var(--muted); max-width: 54ch; }
+
+  /* the clothes */
+  .dressing { padding: 1.2rem 0; border-top: 1px solid var(--rule); }
+  .rack { display: flex; gap: .5rem; flex-wrap: wrap; }
+  .rack button {
+    font: inherit; font-family: var(--face-mono); font-size: .72rem;
+    background: var(--panel); color: var(--ink); border: 1px solid var(--rule);
+    border-radius: 2px; padding: .4rem .65rem; cursor: pointer;
+  }
+  .rack button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+  .worn { font-family: var(--face-mono); font-size: .72rem; color: var(--muted); margin: .7rem 0 0; }
+
+  .boundary {
+    padding: 1.4rem 0 3rem; color: var(--muted); font-size: .8rem;
+    max-width: 68ch; border-top: 1px solid var(--rule);
+  }
+  .say { font-family: var(--face-mono); font-size: .74rem; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <span class="mark">Aurekai · the reading room</span>
+  <nav class="ways"><a href="/press">the press</a><a href="/edition">the edition</a><a href="/archive">the reading room</a><a href="/field">the field</a></nav>
+  <span class="stamp" id="stamp"></span>
+</header>
+
+<section class="lede">
+  <h1>Everything this estate has kept, asked in your own tab.</h1>
+  <p>The archive is published as columnar tables. Your browser range-reads the
+     columns it needs out of the object store and answers from them. No server
+     composes this page, and no question you ask here reaches one.</p>
+  <p class="say" id="reading">Starting a query engine…</p>
+</section>
+
+<section class="ask">
+  <label class="wide">a word in the title
+    <input id="q" type="search" placeholder="anything" autocomplete="off" spellcheck="false">
+  </label>
+  <label>publisher
+    <select id="pub"><option value="">any of them</option></select>
+  </label>
+  <label>what it is
+    <select id="kind"><option value="">anything</option></select>
+  </label>
+  <label>how they come
+    <select id="spread">
+      <option value="">however they fall</option>
+      <option value="1">one each, per publisher</option>
+    </select>
+  </label>
+  <label>kept since
+    <select id="since">
+      <option value="0">whenever</option>
+      <option value="7">the last week</option>
+      <option value="30" selected>the last month</option>
+      <option value="365">the last year</option>
+    </select>
+  </label>
+  <span class="count" id="count"></span>
+</section>
+
+<section class="over-time">
+  <h2>When these were published</h2>
+  <div class="plot" id="plot"></div>
+  <p class="say">One point per day.</p>
+</section>
+
+<section class="results">
+  <h2>What was kept</h2>
+  <div id="answer"></div>
+</section>
+
+<section class="dressing">
+  <h2>What you are reading it in</h2>
+  <div class="rack" id="rack"></div>
+  <p class="worn" id="worn"></p>
+</section>
+
+<p class="boundary" id="boundary"></p>
+
+</div>
+<script type="module">
+/* The reading room.
+ *
+ * The estate has kept sixty-nine thousand things and published one thousand
+ * three hundred and ninety design systems, and until now a reader could see one
+ * arrangement of the first wearing one of the second, chosen for them. This
+ * page hands both over: the archive answers questions here, on this device, out
+ * of Parquet in the object store, and the clothes are a rack rather than a
+ * decision someone else made.
+ *
+ * What it will not do: reach a source, write a row, or claim that anything here
+ * is still published, true, or endorsed. It shows what this estate retained.
+ */
+const STAMP = "?b=87b6553fdf";
+const CATALOG = location.origin + "/catalog";
+const say = (words) => { document.getElementById("reading").textContent = words; };
+
+const BOUNDARY =
+  "Everything above is material this estate read and kept, and every answer was "
+  + "computed in this tab from tables the estate published. A piece appearing here "
+  + "is not a claim that its source still publishes it, that what it says is true, "
+  + "or that this estate endorses it. The design you are reading it in is a "
+  + "published theme's language reduced to tokens: wearing it is not an "
+  + "endorsement by its authors, and it says nothing about the material inside it.";
+
+/* ------------------------------------------------------------------- engine */
+
+let conn = null;
+
+async function engine() {
+  const duckdb = await import("/assets/duckdb-browser.mjs" + STAMP);
+  if (!duckdb || !duckdb.AsyncDuckDB) throw new Error("the query engine did not load");
+  const worker = new Worker("/assets/duckdb-browser-eh.worker.js" + STAMP);
+  const db = new duckdb.AsyncDuckDB(new duckdb.ConsoleLogger(duckdb.LogLevel.WARNING), worker);
+  await db.instantiate("/assets/duckdb-eh.wasm" + STAMP);
+  return db.connect();
+}
+
+const MATERIAL = () => `read_parquet('${CATALOG}/material.parquet')`;
+const TEMPLATES = () => `read_parquet('${CATALOG}/template.parquet')`;
+
+function quoted(value) { return "'" + String(value).replace(/'/g, "''") + "'"; }
+
+function where(asked) {
+  /* Every clause is built from a fixed shape with the reader's words quoted
+   * into it. Nothing the reader types becomes SQL structure. */
+  const clauses = ["title <> ''"];
+  if (asked.q) clauses.push("lower(title) LIKE lower(" + quoted("%" + asked.q + "%") + ")");
+  if (asked.pub) clauses.push("publisher = " + quoted(asked.pub));
+  if (asked.kind) clauses.push("kind = " + quoted(asked.kind));
+  if (asked.since) {
+    clauses.push("published_at BETWEEN epoch(now()) - 86400 * " + Number(asked.since)
+                 + " AND epoch(now()) + 86400");
+  } else {
+    /* Even "whenever" is bounded. Feed timestamps in this archive run from 1970
+     * to 2105, and an unbounded ordering by date hands the top of the page to
+     * whichever feed has the worst clock. */
+    clauses.push("published_at BETWEEN 946684800 AND epoch(now()) + 86400");
+  }
+  return clauses.join(" AND ");
+}
+
+/* --------------------------------------------------------------------- said */
+
+function esc(value) {
+  return String(value == null ? "" : value)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function clean(text) {
+  /* Feeds arrive having escaped their own quotation marks, sometimes several
+   * times over. That depth is transport, not what was published. */
+  let out = String(text == null ? "" : text);
+  for (let i = 0; i < 8; i++) {
+    const undone = out.replace(/\\+(["'/])/g, "$1")
+                      .replace(/\\n/g, " ").replace(/\\{2,}/g, "");
+    if (undone === out) break;
+    out = undone;
+  }
+  return out.split(/\s+/).join(" ").trim();
+}
+
+function when(seconds) {
+  if (!seconds) return "";
+  const d = new Date(Number(seconds) * 1000);
+  return d.toISOString().slice(0, 10);
+}
+
+function rows(answer) {
+  const out = [];
+  const names = answer.schema.fields.map((f) => f.name);
+  const cols = names.map((n) => answer.getChild(n));
+  for (let i = 0; i < answer.numRows; i++) {
+    const row = {};
+    names.forEach((n, c) => { row[n] = cols[c].get(i); });
+    out.push(row);
+  }
+  return out;
+}
+
+function piece(row) {
+  const title = clean(row.title);
+  const href = String(row.href || "");
+  const body = '<h3>' + esc(title) + '</h3><div class="by">'
+    + (row.publisher ? '<span>' + esc(row.publisher) + '</span>' : '')
+    + (row.kind ? '<span>' + esc(row.kind) + '</span>' : '')
+    + (row.published_at ? '<span>' + esc(when(row.published_at)) + '</span>' : '')
+    + '</div>';
+  return href
+    ? '<a href="' + esc(href) + '" rel="noopener noreferrer" target="_blank">' + body + '</a>'
+    : body;
+}
+
+function render(found) {
+  const box = document.getElementById("answer");
+  if (!found.length) {
+    box.innerHTML = '<p class="empty">This estate has kept nothing matching that. '
+      + 'That is a fact about what it has read, not about the world.</p>';
+    return;
+  }
+  const lead = found.find((r) => String(r.image || "")) || null;
+  const rest = found.filter((r) => r !== lead);
+  let html = "";
+  if (lead) {
+    html += '<div class="hero"><img src="' + esc(lead.image) + '" alt="" loading="lazy">'
+      + '<div>' + piece(lead) + '</div></div>';
+  }
+  html += '<ol class="kept">' + rest.map((r) => '<li>' + piece(r) + '</li>').join("") + '</ol>';
+  box.innerHTML = html;
+}
+
+/* -------------------------------------------------------------------- clothes */
+
+let wardrobe = [];
+let wearing = null;
+
+function lightness(colour) {
+  /* Templates state their grounds in whatever syntax their design system used
+   * -- hex, rgb, hsl, oklch. Rather than learn every one, hand the value to the
+   * browser and read back what it resolved to, which is rgb() or oklab(). Two
+   * cases instead of a parser that will be wrong about the next syntax. */
+  const c = String(colour || "").trim();
+  if (!c) return 0;
+  const probe = document.createElement("span");
+  probe.style.cssText = "position:absolute;visibility:hidden;pointer-events:none;color:" + c;
+  document.body.append(probe);
+  const said = getComputedStyle(probe).color;
+  probe.remove();
+  const ok = /^okl(?:ab|ch)\(\s*([\d.]+)(%?)/i.exec(said);
+  if (ok) return ok[2] ? Number(ok[1]) / 100 : Number(ok[1]);
+  const rgb = /([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)/.exec(said);
+  if (rgb) return (0.2126 * +rgb[1] + 0.7152 * +rgb[2] + 0.0722 * +rgb[3]) / 255;
+  return 0;   /* unreadable is treated as dark, which is this page's own default */
+}
+
+function wear(t) {
+  wearing = t;
+  let tokens = {};
+  try { tokens = JSON.parse(t.tokens); } catch (bad) { return; }
+  const root = document.documentElement.style;
+  const pairs = {
+    "--ground": tokens.ground, "--ink": tokens.ink,
+    "--display": tokens.display || tokens.ink, "--accent": tokens.accent,
+    "--muted": tokens.muted, "--rule": tokens.rule, "--panel": tokens.panel,
+    "--face-display": tokens.face_display, "--face-body": tokens.face_body,
+    "--face-mono": tokens.face_mono, "--display-size": tokens.display_size,
+    "--display-weight": tokens.display_weight,
+    "--display-tracking": tokens.display_tracking,
+    "--display-leading": tokens.display_leading, "--radius": tokens.radius,
+  };
+  Object.keys(pairs).forEach((k) => { if (pairs[k]) root.setProperty(k, pairs[k]); });
+  /* Say which scheme this template is, or the browser will decide for it and
+   * repaint a cream ground black. */
+  root.setProperty("color-scheme", lightness(tokens.ground) > 0.5 ? "light" : "dark");
+
+  /* The faces the template names, fetched from where it says they live. A
+   * template whose faces do not arrive still reads: the stack falls back. */
+  if (tokens.font_href) {
+    let link = document.getElementById("worn-faces");
+    if (!link) {
+      link = document.createElement("link");
+      link.id = "worn-faces"; link.rel = "stylesheet";
+      document.head.append(link);
+    }
+    if (link.href !== tokens.font_href) link.href = tokens.font_href;
+  }
+  document.getElementById("worn").textContent =
+    "Wearing “" + t.name + "” — " + [t.family, t.hero_mode, t.typography_mode, t.density]
+      .filter(Boolean).join(", ") + ". This estate has published "
+    + wardrobe.length.toLocaleString() + " of these and composes its own pages in them. "
+    + "Wearing one is not an endorsement by whoever made it.";
+  document.querySelectorAll("#rack button").forEach((b) => {
+    b.setAttribute("aria-pressed", String(b.dataset.family === t.family));
+  });
+}
+
+function rack() {
+  const families = [];
+  wardrobe.forEach((t) => { if (t.family && families.indexOf(t.family) < 0) families.push(t.family); });
+  families.sort();
+  const box = document.getElementById("rack");
+  box.innerHTML = families.map((f) =>
+    '<button type="button" data-family="' + esc(f) + '" aria-pressed="false">' + esc(f)
+    + '</button>').join("") + '<button type="button" data-family="" id="another">another one</button>';
+  box.addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    const pool = b.id === "another"
+      ? (wearing ? wardrobe.filter((t) => t.family === wearing.family) : wardrobe)
+      : wardrobe.filter((t) => t.family === b.dataset.family);
+    if (pool.length) wear(pool[Math.floor(Math.random() * pool.length)]);
+  });
+}
+
+/* ---------------------------------------------------------------------- asking */
+
+let asking = 0;
+
+async function ask() {
+  const mine = ++asking;
+  const asked = {
+    q: document.getElementById("q").value.trim(),
+    pub: document.getElementById("pub").value,
+    kind: document.getElementById("kind").value,
+    since: Number(document.getElementById("since").value),
+    spread: document.getElementById("spread").value === "1",
+  };
+  const clause = where(asked);
+  say("Asking the catalogue…");
+  try {
+    const [found, tally, byDay] = await Promise.all([
+      conn.query("SELECT title, href, image, publisher, kind, published_at FROM "
+                 + MATERIAL() + " WHERE " + clause
+                 /* The reason this catalogue exists. A list ordered only by
+                  * recency is whichever publisher posted most in the last hour;
+                  * one row per publisher is a different question, and answering
+                  * it from a table is one query rather than one request per
+                  * guess. */
+                 + (asked.spread
+                    ? " QUALIFY row_number() OVER (PARTITION BY publisher"
+                      + " ORDER BY published_at DESC) = 1"
+                    : "")
+                 + " ORDER BY published_at DESC LIMIT 41"),
+      conn.query("SELECT COUNT(*) AS n, COUNT(DISTINCT publisher) AS who FROM "
+                 + MATERIAL() + " WHERE " + clause),
+      conn.query("SELECT CAST(epoch(date_trunc('day', to_timestamp(published_at))) AS BIGINT) AS day,"
+                 + " COUNT(*) AS n FROM " + MATERIAL() + " WHERE " + clause
+                 + " GROUP BY day ORDER BY day"),
+    ]);
+    if (mine !== asking) return;   /* a later question already went out */
+    const summary = rows(tally)[0] || { n: 0, who: 0 };
+    document.getElementById("count").textContent =
+      Number(summary.n).toLocaleString() + " kept, from "
+      + Number(summary.who).toLocaleString() + " publishers";
+    render(rows(found));
+    chart(rows(byDay).map((r) => [Number(r.day), Number(r.n)]));
+    say("Answered here, in this tab, from the estate's published tables.");
+    /* New markup has never met the organs. Re-binding is idempotent. */
+    document.dispatchEvent(new Event("bonfyre:composed"));
+  } catch (why) {
+    if (mine !== asking) return;
+    say("The catalogue did not answer: " + String(why.message || why)
+        + ". Nothing has been guessed in its place.");
+  }
+}
+
+function chart(series) {
+  /* The numbers go into the page whether or not a chart is ever drawn over
+   * them, and the time organ draws them where it is present. */
+  const box = document.getElementById("plot");
+  const fresh = document.createElement("div");
+  fresh.className = "plot";
+  fresh.id = "plot";
+  if (series.length > 1) {
+    fresh.setAttribute("data-bf-series", JSON.stringify(series));
+    fresh.setAttribute("data-bf-label", "kept");
+    fresh.setAttribute("data-bf-height", "150");
+    fresh.setAttribute("role", "img");
+    fresh.setAttribute("aria-label", "things kept per day, " + series.length + " days");
+  } else {
+    fresh.innerHTML = '<p class="empty">Not enough days matched to draw a shape.</p>';
+  }
+  box.replaceWith(fresh);
+}
+
+/* ------------------------------------------------------------------------ wake */
+
+function debounce(fn, ms) {
+  let t = 0;
+  return function () { clearTimeout(t); t = setTimeout(fn, ms); };
+}
+
+(async function () {
+  document.getElementById("boundary").textContent = BOUNDARY;
+  document.getElementById("stamp").textContent =
+    new Date().toISOString().replace("T", " ").slice(0, 16) + " UTC";
+  try {
+    say("Starting a query engine in this tab…");
+    conn = await engine();
+
+    say("Reading the estate's published tables by byte range…");
+    const [pubs, kinds, clothes] = await Promise.all([
+      conn.query("SELECT publisher, COUNT(*) AS n FROM " + MATERIAL()
+                 + " WHERE publisher <> '' GROUP BY publisher ORDER BY n DESC LIMIT 120"),
+      conn.query("SELECT kind, COUNT(*) AS n FROM " + MATERIAL()
+                 + " WHERE kind <> '' GROUP BY kind ORDER BY n DESC"),
+      conn.query("SELECT name, family, hero_mode, typography_mode, density, tokens FROM "
+                 + TEMPLATES()),
+    ]);
+    const pub = document.getElementById("pub");
+    rows(pubs).forEach((r) => {
+      const o = document.createElement("option");
+      o.value = String(r.publisher);
+      o.textContent = String(r.publisher) + " (" + Number(r.n).toLocaleString() + ")";
+      pub.append(o);
+    });
+    const kind = document.getElementById("kind");
+    rows(kinds).forEach((r) => {
+      const o = document.createElement("option");
+      o.value = String(r.kind);
+      o.textContent = String(r.kind) + " (" + Number(r.n).toLocaleString() + ")";
+      kind.append(o);
+    });
+
+    wardrobe = rows(clothes).map((r) => ({
+      name: String(r.name), family: String(r.family || ""),
+      hero_mode: String(r.hero_mode || ""), typography_mode: String(r.typography_mode || ""),
+      density: String(r.density || ""), tokens: String(r.tokens || ""),
+    })).filter((t) => t.tokens);
+    if (wardrobe.length) {
+      rack();
+      /* The day picks the first one, so the room looks different tomorrow
+       * without anyone deciding it should. */
+      wear(wardrobe[Math.floor(Date.now() / 86400000) % wardrobe.length]);
+    }
+
+    /* Arrived from somewhere else with a question already formed. The press
+     * links a publisher here; the room opens on that publisher rather than on
+     * its own front page, and the address stays shareable. */
+    const asked = new URLSearchParams(location.search);
+    const fromPub = asked.get("pub");
+    if (fromPub) {
+      const option = [...pub.options].find((o) => o.value === fromPub);
+      if (!option) {
+        const made = document.createElement("option");
+        made.value = fromPub; made.textContent = fromPub;
+        pub.append(made);
+      }
+      pub.value = fromPub;
+    }
+    const fromQ = asked.get("q");
+    if (fromQ) document.getElementById("q").value = fromQ;
+
+    ["q"].forEach((id) =>
+      document.getElementById(id).addEventListener("input", debounce(ask, 220)));
+    ["pub", "kind", "since", "spread"].forEach((id) =>
+      document.getElementById(id).addEventListener("change", ask));
+
+    await ask();
+  } catch (why) {
+    say("The reading room could not open: " + String(why.message || why)
+        + ". Nothing has been guessed in its place.");
+  }
+})();
+</script>
+</body>
+</html>

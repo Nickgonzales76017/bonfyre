@@ -1,0 +1,85 @@
+#!/usr/bin/env python3
+"""Archived after cutover to cloudflare-reconcile.mjs and cloudflare-reconcile.cue."""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import urllib.error
+import urllib.request
+
+API = "https://api.cloudflare.com/client/v4"
+TUNNEL_ID = "495b264d-9a9d-4676-a5a7-e2ae6b45c1a3"
+ZONES = ("aurekai.life", "aurekai.live", "aurekai.shop", "aurekai.work")
+MEMBER_HOSTS = {
+    "aurekai.life": "auth.aurekai.life",
+    "aurekai.live": "auth.aurekai.live",
+    "aurekai.shop": "auth.aurekai.shop",
+    "aurekai.work": "signin.aurekai.work",
+}
+
+
+def token() -> str:
+    matched = re.search(r"Bearer\s+([A-Za-z0-9_-]+)", os.environ.get("CLOUDFLARE_info_zones", ""))
+    return matched.group(1) if matched else os.environ.get("CLOUDFLARE_API_TOKEN", "")
+
+
+def api(method: str, path: str, credential: str, body: dict | None = None) -> dict:
+    request = urllib.request.Request(
+        API + path, data=None if body is None else json.dumps(body).encode(), method=method,
+        headers={"Authorization": "Bearer " + credential, "Content-Type": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            result = json.load(response)
+    except urllib.error.HTTPError as exc:
+        result = json.loads(exc.read().decode("utf-8", "replace"))
+    if not result.get("success"):
+        raise RuntimeError(json.dumps(result.get("errors", result), separators=(",", ":")))
+    return result
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--apply", action="store_true")
+    args = parser.parse_args()
+    credential = token()
+    if not credential:
+        parser.error("a Cloudflare zone credential is required")
+    zone_rows = api("GET", "/zones?per_page=50", credential).get("result", [])
+    zone_ids = {row.get("name"): row.get("id") for row in zone_rows}
+    target = TUNNEL_ID + ".cfargotunnel.com"
+    created = updated = present = 0
+    for zone in ZONES:
+        zone_id = zone_ids.get(zone)
+        if not zone_id:
+            raise RuntimeError("missing zone " + zone)
+        name = MEMBER_HOSTS[zone]
+        rows = api("GET", f"/zones/{zone_id}/dns_records?name={name}", credential).get("result", [])
+        if len(rows) > 1:
+            raise RuntimeError("more than one record exists for " + name)
+        desired = {"type": "CNAME", "name": name, "content": target, "proxied": True, "ttl": 1}
+        if not rows:
+            if args.apply:
+                api("POST", f"/zones/{zone_id}/dns_records", credential, desired)
+            created += 1
+            print(("created" if args.apply else "would create") + " " + name)
+            continue
+        row = rows[0]
+        if row.get("type") == "CNAME" and row.get("content") == target and row.get("proxied"):
+            present += 1
+            continue
+        if row.get("type") != "CNAME":
+            raise RuntimeError(name + " has non-CNAME record")
+        if args.apply:
+            api("PUT", f"/zones/{zone_id}/dns_records/{row['id']}", credential, desired)
+        updated += 1
+        print(("updated" if args.apply else "would update") + " " + name)
+    print(json.dumps({"apply": args.apply, "created": created, "updated": updated,
+                      "present": present, "target": target}, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

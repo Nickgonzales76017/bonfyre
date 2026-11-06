@@ -1,0 +1,160 @@
+#!/usr/bin/env python3
+"""Historical parity oracle: what each admitted channel carries from retained bodies.
+
+A channel is filed under one family because that is what its publisher mostly
+does.  A great many of them also hand out audio files, video files, pictures at
+their own addresses or a calendar's events, and the estate was throwing all of
+that away: a page for listening drew on the four channels whose *family* said
+music, while sixteen more were publishing recordings inside a family called
+news.  Every page was therefore thinner than the estate's own retained bodies.
+
+This reads each retained body once and counts the evidence a source itself
+gives about each item -- an enclosure the source typed audio/*, a video
+enclosure or a media:group, a picture at a real address, a VEVENT -- and writes
+the materials it demonstrably carries beside the channel.  A page then draws a
+channel for what it publishes rather than for what it was filed under.
+
+Evidence only, never inference:
+  - a body that was not retained yields nothing at all; silence is not absence
+  - a material is carried only above a floor of items, so one stray enclosure
+    in a year of stories does not make a news feed a podcast
+  - the count is kept beside the claim, so the claim can be checked
+  - the source's declared family is never overwritten; carriage is additional
+
+  measure_carried_material.py --cms cms.db --foreign /var/lib/bonfyre/foreign
+      [--frontier frontier.db] [--floor 3] [--apply]
+"""
+import argparse, gzip, json, os, re, sqlite3, sys, time
+
+# What a material is called on this estate's pages, and what proves it.
+AUDIO = re.compile(r'type=["\']audio/', re.I)
+VIDEO = re.compile(r'type=["\']video/', re.I)
+YT = re.compile(r'<yt:videoId>|<media:group', re.I)
+# A thumbnail beside a story is not a published photograph; a file the source
+# itself typed image/* is.  Only the second counts as carriage.
+PICTURE = re.compile(r'<media:content[^>]+type=["\']image/|<enclosure[^>]+type=["\']image/', re.I)
+ITEM = re.compile(r'<item[\s>]|<entry[\s>]', re.I)
+
+
+def body_text(path, cap=4_000_000):
+    """Read a retained body, compressed or not, without holding a huge one."""
+    try:
+        opener = gzip.open if path.endswith(".gz") else open
+        with opener(path, "rb") as fh:
+            return fh.read(cap).decode("utf-8", "replace")
+    except OSError:
+        return ""
+
+
+def find_body(foreign, twin):
+    for name in ("%s.body" % twin, "%s.body.gz" % twin):
+        path = os.path.join(foreign, "bodies", name)
+        if os.path.exists(path):
+            return path
+    receipt = os.path.join(foreign, "receipts", "%s.json" % twin)
+    if os.path.exists(receipt):
+        try:
+            said = json.load(open(receipt, encoding="utf-8"))
+        except ValueError:
+            return ""
+        path = said.get("body_path") or ""
+        if path and os.path.exists(path):
+            return path
+        if path and os.path.exists(path + ".gz"):
+            return path + ".gz"
+    return ""
+
+
+def measure(text, floor):
+    """The materials this body demonstrates, with the count that demonstrates it."""
+    if not text:
+        return {}
+    carried = {}
+    if text.lstrip()[:15].upper().startswith("BEGIN:VCALENDAR"):
+        events = text.count("BEGIN:VEVENT")
+        if events >= floor:
+            carried["events"] = events
+        return carried
+    counts = {
+        "podcasts": len(AUDIO.findall(text)),
+        "video": len(VIDEO.findall(text)) + len(YT.findall(text)),
+        "images": len(PICTURE.findall(text)),
+    }
+    items = len(ITEM.findall(text)) or 1
+    for material, n in counts.items():
+        # Carriage is a habit, not an accident: a third of a feed's items, and
+        # never fewer than the floor.
+        if n >= floor and n * 3 >= items:
+            carried[material] = n
+    return carried
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--cms", required=True)
+    ap.add_argument("--foreign", required=True)
+    ap.add_argument("--frontier", default="")
+    ap.add_argument("--floor", type=int, default=3)
+    ap.add_argument("--apply", action="store_true")
+    ap.add_argument("--evidence", default="")
+    args = ap.parse_args()
+
+    con = sqlite3.connect(args.cms)
+    con.row_factory = sqlite3.Row
+    rows = con.execute("SELECT source, family, COALESCE(twin,'') twin FROM internet_source"
+                       " WHERE status='published' AND COALESCE(twin,'')<>'' GROUP BY source").fetchall()
+    has_carries = any(c[1] == "carries" for c in con.execute("PRAGMA table_info(internet_source)"))
+    if args.apply and not has_carries:
+        con.execute("ALTER TABLE internet_source ADD COLUMN carries TEXT DEFAULT ''")
+        has_carries = True
+
+    evidence = open(args.evidence, "w", encoding="utf-8") if args.evidence else None
+    seen = unread = written = 0
+    totals, by_material = {}, {}
+    for row in rows:
+        seen += 1
+        path = find_body(args.foreign, row["twin"])
+        if not path:
+            unread += 1
+            continue
+        carried = measure(body_text(path), args.floor)
+        # What it is already filed under is not carriage to be re-stated.
+        carried.pop(row["family"], None)
+        if not carried:
+            continue
+        materials = ",".join(sorted(carried))
+        for material in carried:
+            by_material[material] = by_material.get(material, 0) + 1
+        totals[row["source"]] = carried
+        if evidence:
+            evidence.write(json.dumps({"source": row["source"], "family": row["family"],
+                                       "carries": carried, "body": os.path.basename(path)}) + "\n")
+        if args.apply:
+            con.execute("UPDATE internet_source SET carries=? WHERE source=?", (materials, row["source"]))
+            written += 1
+    if args.apply:
+        con.commit()
+    con.close()
+    if evidence:
+        evidence.close()
+
+    if args.frontier and args.apply and os.path.exists(args.frontier):
+        led = sqlite3.connect(args.frontier)
+        if not any(c[1] == "carries" for c in led.execute("PRAGMA table_info(channel)")):
+            led.execute("ALTER TABLE channel ADD COLUMN carries TEXT DEFAULT ''")
+        for source, carried in totals.items():
+            led.execute("UPDATE channel SET carries=? WHERE census_source=?",
+                        (",".join(sorted(carried)), source))
+        led.commit()
+        led.close()
+
+    print(json.dumps({"measured": seen, "no_retained_body": unread, "carrying": len(totals),
+                      "written": written, "by_material": by_material,
+                      "floor": args.floor, "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                      "cannot_infer": "carriage is what a retained body showed at one reading, "
+                                      "not a promise that the source keeps publishing that material"}))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

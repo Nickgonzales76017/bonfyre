@@ -1,0 +1,6 @@
+// Authored explanatory text and questions share the same page/section owner.
+export const needs=['title','items'];
+export function render(s,site,h){
+ const content=s.items.map(item=>s.questions?'<details class="border-b border-surface-container-high py-4"><summary class="min-h-[48px] cursor-pointer font-headline font-bold text-lg text-display flex items-center justify-between gap-4">'+h.esc(item.title)+h.icon('add','text-secondary')+'</summary><p class="mt-3 text-on-surface-variant leading-relaxed">'+h.esc(item.text)+'</p></details>':'<article class="py-4"><h3 class="font-headline font-bold text-xl text-display">'+h.esc(item.title)+'</h3><p class="mt-3 text-on-surface-variant text-base leading-relaxed">'+h.esc(item.text)+'</p></article>').join('');
+ return '<section id="'+h.esc(s.id)+'" class="scroll-mt-24 py-12 sm:py-20 border-b border-surface-container-high bg-surface"><div class="max-w-4xl mx-auto px-4 sm:px-6">'+h.heading(s,'mb-8')+content+(s.links?.length?'<nav aria-label="'+h.esc(s.title)+'" class="mt-8 flex flex-wrap gap-3">'+s.links.map(l=>'<a class="min-h-[48px] px-5 py-3 rounded-lg border border-surface-container-highest text-secondary font-semibold" href="'+h.esc(h.localHref(l.href))+'">'+h.esc(l.label)+' &rarr;</a>').join('')+'</nav>':'')+'</div></section>';
+}

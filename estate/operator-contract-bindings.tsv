@@ -7,9 +7,9 @@ command.paragraph	paragraph_structure_v1	document_pdf_table	{}		paragraph-struct
 command.brief	brief_document_v1	document_pdf_table	{}		brief-semantics
 command.proof	proof_score_v1	artifact_intake_archive	{}		proof-semantics
 command.offer	offer_generate_v1	artifact_intake_archive	{}		offer-semantics
-command.narrate	piper_narrate_v1	audio_video_transcript	{"voice_model":"/Users/nickgonzales/.local/share/piper/en_US-lessac-medium.onnx"}		narrate-semantic
+command.narrate	narrate_voice_v1	audio_video_transcript	{}		narrate-semantic
 command.pack	pack_assemble_v1	render_pack_publish	{}		package-manifest
-command.distribute	distribute_message_v1	render_pack_publish	{"offer_name":"Quality proof for outputs Native Offer"}		distribute-semantic
+command.distribute	distribute_messages_v1	render_pack_publish	{}		distribute-semantic
 command.transcript-family	transcript_family_v1	audio_video_transcript	{"model_path":"/Users/nickgonzales/.local/share/whisper/ggml-tiny.en.bin"}		transcript-family-semantic
 command.render	render_artifact_v1	render_pack_publish	{}		
 command.repurpose	repurpose_all_v1	render_pack_publish	{}		repurpose-manifest
@@ -26,7 +26,7 @@ command.model	qwen_native_inference_v1	model_inference	{"model_uri":"bonfyre://r
 command.embed	embedding_generate_v1	embedding_vector	{"backend":"native-moe-token-embedding","model_uri":"bonfyre://root/model-vault/native/qwen1.5-moe-a2.7b-chat","dimensions":2048,"vector_store":"bonfyre://state/vector"}	embedding-vector-fixture	model-embedding
 command.vec	vector_store_fixture_v1	embedding_vector	{"backend":"native-moe-token-embedding","index_uri":"bonfyre://state/vector","distance_metric":"cosine","operation":"insert-query-filter-update-delete-restart"}	vector-store-native-moe-fixture	vector-store-state
 command.segment	segment_graph_v1	audio_video_transcript	{}		segment-graph
-command.speech-loop	speechloop_transform_v1	audio_video_transcript	{"whisper_model":"/Users/nickgonzales/.local/share/whisper/ggml-tiny.en.bin","voice_model":"/Users/nickgonzales/.local/share/piper/en_US-lessac-medium.onnx"}		speechloop-semantic
+command.speech-loop	speechloop_transform_v1	audio_video_transcript	{"whisper_model":"/Users/nickgonzales/.local/share/whisper/ggml-tiny.en.bin"}		speechloop-semantic
 command.mfa-dict	mfa_dictionary_v1	audio_video_transcript	{}		artifact-integrity
 command.tone	tone_extract_v1	audio_video_transcript	{}		tone-semantic
 command.tag	tag_language_v1	document_pdf_table	{}		tag-semantic
@@ -39,12 +39,12 @@ command.fpq	fpq_roundtrip_v1	model_inference	{"model_path":"/Users/nickgonzales/
 command.fpqx	fpqx_self_align_v1	model_or_vector	{}		fpqx-semantic
 command.layer	layer_extract_v1	model_inference	{"model_path":"/Users/nickgonzales/.local/share/piper/en_US-lessac-medium.onnx"}		layer-extract-semantic
 command.layer-c	layer_inspect_v1	model_inference	{"model_path":"/Users/nickgonzales/.local/share/piper/en_US-lessac-medium.onnx"}		layer-inspect-semantic
-command.sae	sae_synth_v1	model_inference	{}		sae-semantic
-command.learn	learn_feedback_v1	agent_project_space	{}		learn-semantic
+command.sae	sae_train_v1	service_dependent	{}		sae-semantic
+command.learn	learn_history_v1	agent_project_space	{}		learn-semantic
 command.weaviate	weaviate_ingest_v1	embedding_vector	{}		weaviate-semantic
 command.leapfrog	leapfrog_validation_v1	model_inference	{}		leapfrog-semantic
 command.violence	violence_coupling_v1	model_inference	{}		violence-semantic
-command.reason	reason_start_v1	model_inference	{}		reason-semantic
+command.reason	reason_ask_v1	model_inference	{}		reason-semantic
 command.net	net_run_v1	model_inference	{}		net-semantic
 command.flashqla	flashqla_run_v1	model_inference	{}		flashqla-semantic
 command.physics	physics_init_v1	model_inference	{}		physics-semantic
@@ -75,7 +75,7 @@ command.wire	wire_ingest_v1	transport_quic_moq	{"transport":"wire","operation":"
 command.surface	surface_validate_v1	cms_api	{}		surface-semantic
 command.kvcache	kvcache_roundtrip_v1	model_inference	{}		kvcache-semantic
 command.auth	auth_authority_fixture_v1	auth_gate	{"auth_store_uri":"bonfyre://state/auth","operation":"credential-token-scope-effect-gate-restart"}	auth-authority-fixture	auth-authority-state
-command.tel	blocked_requires_service_v1	service_dependent	{}		
+command.tel	tel_selftest_v1	service_dependent	{}		tel-selftest-semantic
 command.moq	moq_selftest_v1	transport_quic_moq	{}		moq-selftest-semantic
 command.cms	cms_schema_state_v1	cms_api	{"database_uri":"bonfyre://state/cms","operation":"schema-crud-relation-pagination-auth-delete"}	cms-crud-fixture	cms-crud-state
 command.api	api_selftest_v1	daemon_runtime_release	{}		api-selftest-semantic
@@ -83,12 +83,12 @@ command.time	time_schedule_v1	meter_economy_ledger_time_finance_control	{}		time
 command.gate	gate_issue_v1	auth_gate	{}		gate-semantic
 command.meter	meter_record_v1	meter_economy_ledger_time_finance_control	{"ledger_uri":"bonfyre://state/meter","operation":"record"}	meter-record-fixture	meter-record
 command.ledger	ledger_assess_v1	meter_economy_ledger_time_finance_control	{}		ledger-semantic
-command.economy	economy_cost_record_v1	meter_economy_ledger_time_finance_control	{}		economy-semantic
+command.economy	economy_report_v1	meter_economy_ledger_time_finance_control	{}		economy-semantic
 command.compete	compete_pair_v1	meter_economy_ledger_time_finance_control	{}		compete-semantic
-command.pay	pay_credit_v1	meter_economy_ledger_time_finance_control	{}		pay-semantic
-command.finance	finance_service_add_v1	meter_economy_ledger_time_finance_control	{}		finance-semantic
+command.pay	pay_invoice_v1	meter_economy_ledger_time_finance_control	{}		pay-semantic
+command.finance	finance_opportunity_rank_v1	meter_economy_ledger_time_finance_control	{}		finance-semantic
 command.tier	tier_assign_v1	meter_economy_ledger_time_finance_control	{}		tier-semantic
-command.outreach	outreach_send_v1	meter_economy_ledger_time_finance_control	{}		outreach-semantic
+command.outreach	outreach_report_v1	meter_economy_ledger_time_finance_control	{}		outreach-semantic
 command.self	cli_self_ontology_v1	daemon_runtime_release	{}		self-ontology-semantic
 command.precision	cli_precision_ontology_v1	daemon_runtime_release	{}		precision-ontology-semantic
 command.status	cli_status_v1	daemon_runtime_release	{}		cli-status-semantic

@@ -1,0 +1,188 @@
+{
+  "schema": "service-site.fixture-catalogue.v1",
+  "id": "red3-display",
+  "merchant": "RED3 Display",
+  "currency": "USD",
+  "products": [
+    {
+      "id": "rack",
+      "product_id": "8628",
+      "variant_id": "10749",
+      "title": "Raw Steel Rolling Racks - 36\" Length",
+      "label": "36-inch rolling rack",
+      "option": "Normal finials",
+      "use": "Hanging apparel",
+      "image": "https://red3display.com/wp-content/uploads/2024/12/RM_RR30.jpg",
+      "source_url": "https://red3display.com/retail_fixtures/fixtures-floor-displays/raw-steel-racks/raw-steel-rolling-racks/raw-steel-rolling-racks-36-length/",
+      "source_sha256": "30c0bd2329b0d0a373a2a45bd21a909416b474ee43df80fa371e52b984b10f84",
+      "observed_at": "2026-10-08T17:41:43Z",
+      "price_cents": 8300,
+      "dimensions": {
+        "width": 36,
+        "depth": null
+      },
+      "allowance": {
+        "width": 36,
+        "depth": 24
+      },
+      "questions": [
+        "Confirm rack depth, height and loaded capacity.",
+        "Can this rack be disassembled for transport?"
+      ]
+    },
+    {
+      "id": "counter",
+      "product_id": "1961",
+      "variant_id": "11740",
+      "title": "Standard Cash Wrap Counters - Size and Finish Options",
+      "label": "4-foot cash wrap counter",
+      "option": "4-foot / Black",
+      "use": "Checkout & storage",
+      "image": "https://red3display.com/wp-content/uploads/2024/12/standard-quality-built-cash-wrap-counters-in-multiple-finish-options-LG.jpg",
+      "source_url": "https://red3display.com/retail_fixtures/counter-pos-showcases-retail/standard-counters/wrap-counters/standard-cash-wrap-counters-size-and-finish-options/",
+      "source_sha256": "4dfe3a53c2c1afcd91550adcd88a9411b34346cf1c21714a2670c4c24f761cfc",
+      "observed_at": "2026-10-08T17:41:45Z",
+      "price_cents": 52600,
+      "dimensions": {
+        "width": 48,
+        "depth": 18
+      },
+      "allowance": {
+        "width": 48,
+        "depth": 18
+      },
+      "questions": [
+        "Confirm current price, finish and delivery date."
+      ]
+    },
+    {
+      "id": "table",
+      "product_id": "8570",
+      "variant_id": "20684",
+      "title": "Modern Nesting Tables",
+      "label": "Large maple display table",
+      "option": "Large / Maple top, silver legs",
+      "use": "Folded apparel",
+      "image": "https://red3display.com/wp-content/uploads/2024/12/Fwd-Display-Tables-moitreyee-bwd-gmail-com-Gmail-05-06-2025_04_11_PM.png",
+      "source_url": "https://red3display.com/retail_fixtures/fixtures-floor-displays/display-tables/nesting-tables/economy-nesting-tables/modern-nesting-tables/",
+      "source_sha256": "c6004696c87f6c9adc8503019e6fbf5fa3186f997c4ffdc74ee45c9eaad0347c",
+      "observed_at": "2026-10-08T17:42:25Z",
+      "price_cents": 54000,
+      "dimensions": {
+        "width": 60,
+        "depth": 30
+      },
+      "allowance": {
+        "width": 60,
+        "depth": 30
+      },
+      "questions": [
+        "Confirm assembly and transport requirements."
+      ]
+    },
+    {
+      "id": "easel",
+      "product_id": "7631",
+      "variant_id": "7631",
+      "title": "Acrylic Shirt Display Easel",
+      "label": "Acrylic shirt easel",
+      "option": "Standard listing",
+      "use": "Countertop feature",
+      "image": "https://red3display.com/wp-content/uploads/2024/12/acrylic-t-shirt-easel-tmb-1.jpg",
+      "source_url": "https://red3display.com/retail_fixtures/fixtures-floor-displays/t-shirt-displays/countertop-t-shirt-displays/acrylic-shirt-display-easel-3/",
+      "source_sha256": "f073d7106e90584a2585f092785957e9b82d040f248fe13b1840f5209554e66b",
+      "observed_at": "2026-10-08T17:42:27Z",
+      "price_cents": 1950,
+      "dimensions": null,
+      "allowance": null,
+      "questions": [
+        "Confirm easel dimensions and whether the shirt is included."
+      ]
+    }
+  ],
+  "origin": "https://red3display.com",
+  "defaults": {
+    "title": "Weekend apparel pop-up",
+    "width": 16,
+    "depth": 12,
+    "budget": 150000,
+    "deadline": "",
+    "notes": "I need hanging space, folded-shirt displays and a checkout. Please confirm transport and delivery options."
+  },
+  "presets": {
+    "compact": [
+      {
+        "key": "rack-1",
+        "product": "rack",
+        "x": 1,
+        "y": 1,
+        "rotation": 0
+      },
+      {
+        "key": "table-1",
+        "product": "table",
+        "x": 9,
+        "y": 1,
+        "rotation": 0
+      },
+      {
+        "key": "counter-1",
+        "product": "counter",
+        "x": 10,
+        "y": 8,
+        "rotation": 0
+      },
+      {
+        "key": "easel-1",
+        "product": "easel",
+        "x": 11,
+        "y": 8,
+        "rotation": 0
+      }
+    ],
+    "display": [
+      {
+        "key": "rack-1",
+        "product": "rack",
+        "x": 1,
+        "y": 1,
+        "rotation": 0
+      },
+      {
+        "key": "table-1",
+        "product": "table",
+        "x": 9,
+        "y": 1,
+        "rotation": 0
+      },
+      {
+        "key": "counter-1",
+        "product": "counter",
+        "x": 10,
+        "y": 8,
+        "rotation": 0
+      },
+      {
+        "key": "easel-1",
+        "product": "easel",
+        "x": 11,
+        "y": 8,
+        "rotation": 0
+      },
+      {
+        "key": "rack-2",
+        "product": "rack",
+        "x": 1,
+        "y": 5,
+        "rotation": 0
+      },
+      {
+        "key": "table-2",
+        "product": "table",
+        "x": 9,
+        "y": 4.5,
+        "rotation": 0
+      }
+    ]
+  }
+}

@@ -10,6 +10,8 @@
 #include <unistd.h>
 #include <sqlite3.h>
 
+#include "bf_lex.h"
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 #define MAX_PLAN_STEPS 32
 #define MAX_TEXT 128
 #define MODEL_TEXT 96
@@ -290,30 +292,15 @@ static void build_state_key(const OrchestrateRequest *req, char *dst, size_t dst
              v.pattern_hearing, v.pattern_council, v.pattern_bedside, v.pattern_nursing);
 }
 
+/* Delegates to the one implementation. Nineteen copies of this shape existed
+ * with sixteen different opinions about escaping.
+ * This copy was one of the four defects: it was a reader wearing a writer's name, and its unescaping was `(*p == 'n')
+ * ? '\n' : *p` -- so \t arrived as the letter t, \r as r and \u00e9 as u00e9.
+ * It also returned 0 for a value that was present and empty, which is a
+ * different fact from a value that is absent.
+ */
 static int json_string(const char *json, const char *key, char *dst, size_t dst_sz) {
-    char needle[64];
-    snprintf(needle, sizeof(needle), "\"%s\"", key);
-    const char *p = strstr(json, needle);
-    if (!p) return 0;
-    p += strlen(needle);
-    while (*p && isspace((unsigned char)*p)) p++;
-    if (*p != ':') return 0;
-    p++;
-    while (*p && isspace((unsigned char)*p)) p++;
-    if (*p != '"') return 0;
-    p++;
-    size_t j = 0;
-    while (*p && *p != '"' && j + 1 < dst_sz) {
-        if (*p == '\\' && p[1]) {
-            p++;
-            dst[j++] = (*p == 'n') ? '\n' : *p;
-        } else {
-            dst[j++] = *p;
-        }
-        p++;
-    }
-    dst[j] = '\0';
-    return j > 0;
+    return bf_lex_json_string(json, key, dst, dst_sz);
 }
 
 static int json_double(const char *json, const char *key, double *value) {
@@ -1617,12 +1604,29 @@ static void print_plan(const OrchestrateRequest *req, const OrchestratePlan *pla
 static int command_status(void) {
     const char *endpoint = getenv("BONFYRE_ORCHESTRATE_ENDPOINT");
     const char *model = getenv("BONFYRE_ORCHESTRATE_MODEL");
-    printf("{\"status\":\"ok\",\"binary\":\"bonfyre-orchestrate\",\"operators\":%d,"
-           "\"endpoint_configured\":%s,\"model\":\"%s\",\"machine_only\":true,\"human_prompting\":false}\n",
+    int have_endpoint = endpoint && endpoint[0];
+    /* "ok" was unconditional. It printed beside endpoint_configured:false and a
+     * catalogue of 53 operators, so the one field that says whether this binary
+     * can execute anything was the one field that could never say no. A reader
+     * taking status at its word would route work here and find nothing runs.
+     *
+     * The operators are real and the catalogue is worth publishing; what it
+     * cannot do is stand in for a route. So the count stays, and the status says
+     * which of the two it is. */
+    printf("{\"status\":\"%s\",\"binary\":\"bonfyre-orchestrate\",\"operators\":%d,"
+           "\"endpoint_configured\":%s,\"model\":\"%s\",\"model_source\":\"%s\","
+           "\"machine_only\":true,\"human_prompting\":false,"
+           "\"cannot_infer\":\"a declared operator -> a reachable one; this names what "
+           "would run if a route existed\"%s}\n",
+           have_endpoint ? "ok" : "no_endpoint",
            BF_OPERATOR_COUNT,
-           (endpoint && endpoint[0]) ? "true" : "false",
-           (model && model[0]) ? model : DEFAULT_MODEL);
-    return 0;
+           have_endpoint ? "true" : "false",
+           (model && model[0]) ? model : DEFAULT_MODEL,
+           (model && model[0]) ? "environment" : "default",
+           have_endpoint ? "" :
+             ",\"not_executable_because\":\"BONFYRE_ORCHESTRATE_ENDPOINT is unset, so no "
+             "operator in the catalogue can be invoked from here\"");
+    return have_endpoint ? 0 : 4;
 }
 
 static int command_plan(const char *path) {
@@ -1647,10 +1651,23 @@ int main(int argc, char **argv) {
         usage();
         return 1;
     }
-    if (strcmp(argv[1], "status") == 0) return command_status();
-    if (strcmp(argv[1], "plan") == 0 && argc >= 3) return command_plan(argv[2]);
-    if (strcmp(argv[1], "feedback") == 0 && argc >= 4) return command_feedback(argv[2], argv[3], argc >= 5 ? argv[4] : NULL);
-    if (strcmp(argv[1], "help") == 0 || strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0) {
+    enum {
+        OR_FEEDBACK, OR_HELP, OR_PLAN, OR_STATUS,
+    };
+    static const BfCommandEntry orchestrate_commands[] = {
+        {"--help", OR_HELP, 0, NULL},
+        {"-h", OR_HELP, 0, NULL},
+        {"feedback", OR_FEEDBACK, 0, NULL},
+        {"help", OR_HELP, 0, NULL},
+        {"plan", OR_PLAN, 0, NULL},
+        {"status", OR_STATUS, 0, NULL},
+    };
+    const BfCommandEntry *command = bf_command_lookup(orchestrate_commands,
+        sizeof(orchestrate_commands) / sizeof(orchestrate_commands[0]), argv[1]);
+    if (command && command->id == OR_STATUS) return command_status();
+    if (command && command->id == OR_PLAN && argc >= 3) return command_plan(argv[2]);
+    if (command && command->id == OR_FEEDBACK && argc >= 4) return command_feedback(argv[2], argv[3], argc >= 5 ? argv[4] : NULL);
+    if (command && command->id == OR_HELP) {
         usage();
         return 0;
     }

@@ -1,0 +1,1604 @@
+{
+  "BonfyreADBCProbe": {
+    "architecture": "representation-manifold",
+    "description": "Which physical forms of one semantic subject are useful, and how can each derived form be rebuilt from its exact input frontier?",
+    "domain": "Bonfyre",
+    "family": "storage",
+    "layer": "substrate",
+    "maturity": "architectural",
+    "publishes": ""
+  },
+  "BonfyreAPI": {
+    "architecture": "cmd-a-p-i",
+    "description": "What does the BonfyreAPI capability organ realize, and by what contract?",
+    "domain": "Command / API",
+    "family": "command",
+    "layer": "",
+    "maturity": "measured",
+    "publishes": ""
+  },
+  "BonfyreActors": {
+    "architecture": "standing-address-compiler",
+    "description": "Which lawful opportunity is most relevant to this actor, in this territory, right now?",
+    "domain": "Commons / Opportunity ranking",
+    "family": "commons",
+    "layer": "commons",
+    "maturity": "measured",
+    "publishes": "Opportunity"
+  },
+  "BonfyreAdmission": {
+    "architecture": "cmd-admission",
+    "description": "What does the BonfyreAdmission capability organ realize, and by what contract?",
+    "domain": "Command / Admission",
+    "family": "command",
+    "layer": "",
+    "maturity": "measured",
+    "publishes": ""
+  },
+  "BonfyreAgentContract": {
+    "architecture": "receipt-envelope",
+    "description": "What exact session event frontier occurred, and from which evidence origin and identity dimensions?",
+    "domain": "Evidence / Receipts",
+    "family": "evidence",
+    "layer": "evidence/receipt",
+    "maturity": "implemented",
+    "publishes": "Evidence"
+  },
+  "BonfyreArrowFlight": {
+    "architecture": "representation-manifold",
+    "description": "Which physical forms of one semantic subject are useful, and how can each derived form be rebuilt from its exact input frontier?",
+    "domain": "Bonfyre",
+    "family": "storage",
+    "layer": "substrate",
+    "maturity": "architectural",
+    "publishes": ""
+  },
+  "BonfyreArrowStream": {
+    "architecture": "cmd-arrow-stream",
+    "description": "What does the BonfyreArrowStream capability organ realize, and by what contract?",
+    "domain": "Command / ArrowStream",
+    "family": "command",
+    "layer": "",
+    "maturity": "measured",
+    "publishes": ""
+  },
+  "BonfyreAtlas": {
+    "architecture": "architecture-frontier",
+    "description": "Which bridge, if built, would connect the most of this estate to itself -- and which apparent isolation is not isolation at all?",
+    "domain": "Learning",
+    "family": "learning",
+    "layer": "",
+    "maturity": "measured",
+    "publishes": ""
+  },
+  "BonfyreAttention": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreAuth": {
+    "architecture": "cmd-auth",
+    "description": "What does the BonfyreAuth capability organ realize, and by what contract?",
+    "domain": "Authority / Access",
+    "family": "command",
+    "layer": "",
+    "maturity": "measured",
+    "publishes": "Authority"
+  },
+  "BonfyreBitNet": {
+    "architecture": "bitnet-address-ranker",
+    "description": "Given an AddressPlane survivor frontier and an admitted learned representation, which existing typed handles should be tried first without changing eligibility?",
+    "domain": "Model / Addressable Candidate Narrowing",
+    "family": "model",
+    "layer": "model/execution",
+    "maturity": "implemented",
+    "publishes": "RankedCandidateFrontier"
+  },
+  "BonfyreBraidAudit": {
+    "architecture": "cmd-braid-audit",
+    "description": "What does the BonfyreBraidAudit capability organ realize, and by what contract?",
+    "domain": "Command / BraidAudit",
+    "family": "command",
+    "layer": "",
+    "maturity": "declared",
+    "publishes": ""
+  },
+  "BonfyreBridge": {
+    "architecture": "database-bridge",
+    "description": "Did the selected table rows arrive at the destination with matching values, and what types changed?",
+    "domain": "Database interoperability",
+    "family": "external",
+    "layer": "native",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreBridgeReadiness": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreBrief": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreCLI": {
+    "architecture": "cmd-c-l-i",
+    "description": "What does the BonfyreCLI capability organ realize, and by what contract?",
+    "domain": "Command / CLI",
+    "family": "command",
+    "layer": "",
+    "maturity": "measured",
+    "publishes": ""
+  },
+  "BonfyreCMS": {
+    "architecture": "frappe-condition-plan",
+    "description": "A DocType says a field depends on something. Under the donor's own semantics, what exactly does it depend on, which fields can change the answer, and which declarations are outside what this estate can evaluate?",
+    "domain": "Apps / When a compiled record kind shows, requires, locks or folds a field",
+    "family": "apps",
+    "layer": "surface",
+    "maturity": "measured",
+    "publishes": ""
+  },
+  "BonfyreCampaign": {
+    "architecture": "campaign-attribution",
+    "description": "Which bounded campaign coordinates were authored for a destination or supplied by a URL, without treating those coordinates as identity or an observed business outcome?",
+    "domain": "External / Go-to-market campaign measurement",
+    "family": "external",
+    "layer": "integration",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreCanon": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreCapability": {
+    "architecture": "capability-discovery-gap",
+    "description": "Can this estate discover a capability it has just gained?",
+    "domain": "Capability / Registry",
+    "family": "capability",
+    "layer": "capability",
+    "maturity": "measured",
+    "publishes": "CandidateClassification"
+  },
+  "BonfyreChannel": {
+    "architecture": "creator-channel",
+    "description": "How can a creator program compose published media into a channel without making the channel a media, rights, delivery, community, analytics or proof owner?",
+    "domain": "Media / Creator channel",
+    "family": "surface",
+    "layer": "surface",
+    "maturity": "measured",
+    "publishes": "ChannelSurfaceProjection"
+  },
+  "BonfyreClips": {
+    "architecture": "cmd-clips",
+    "description": "What does the BonfyreClips capability organ realize, and by what contract?",
+    "domain": "Command / Clips",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreCommerce": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreCompete": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreCompress": {
+    "architecture": "address-plane",
+    "description": "Of all the state available, what is even eligible to participate in this operation?",
+    "domain": "Forwarding / Eligibility",
+    "family": "forwarding",
+    "layer": "forwarding",
+    "maturity": "implemented",
+    "publishes": "RouteAdvertisement"
+  },
+  "BonfyreConnectionCatalog": {
+    "architecture": "connection-source-catalog",
+    "description": "Which retained connection source candidates can be inspected with their original coordinates?",
+    "domain": "Identity / Connection Discovery",
+    "family": "identity",
+    "layer": "institutional",
+    "maturity": "implemented",
+    "publishes": "ConnectionSourceCandidate"
+  },
+  "BonfyreContextCut": {
+    "architecture": "decision-plane",
+    "description": "Which semantic ambiguity remains after exact masking, and can several atomic judgments about one subject avoid a more expensive operator?",
+    "domain": "Optimization / Typed semantic decisions",
+    "family": "optimization",
+    "layer": "execution",
+    "maturity": "implemented",
+    "publishes": "DecisionProposal"
+  },
+  "BonfyreControl": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreCreatorMix": {
+    "architecture": "cmd-creator-mix",
+    "description": "Can an explicitly invoked native operation mix a bounded audio window with exact ordered float32 arithmetic and sparse silent output?",
+    "domain": "Creator / Native offline audio",
+    "family": "command",
+    "layer": "command",
+    "maturity": "measured",
+    "publishes": ""
+  },
+  "BonfyreCredentials": {
+    "architecture": "credential-boundary",
+    "description": "What does each provider require before this estate can read from it, which of those values are set, generated or missing, how is a credential applied to a request and verified, and how is that kept private?",
+    "domain": "Institutional / Credentials",
+    "family": "institutional",
+    "layer": "institutional",
+    "maturity": "implemented",
+    "publishes": "CredentialProviderStatus"
+  },
+  "BonfyreDecide": {
+    "architecture": "cmd-monitor",
+    "description": "What did the sources this estate already reads say about one business, once its namesakes are set aside, and which mentions need doing something about?",
+    "domain": "Command / CheapCognition",
+    "family": "command",
+    "layer": "",
+    "maturity": "measured",
+    "publishes": ""
+  },
+  "BonfyreDetectObjects": {
+    "architecture": "native-build-truthfulness",
+    "description": "Does the build report what it actually built, and does a caller reading its exit status learn the truth?",
+    "domain": "Substrate",
+    "family": "substrate",
+    "layer": "",
+    "maturity": "measured",
+    "publishes": ""
+  },
+  "BonfyreDiscipl": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreDistribute": {
+    "architecture": "cmd-distribute",
+    "description": "What does the BonfyreDistribute capability organ realize, and by what contract?",
+    "domain": "Command / Distribute",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreDisturbanceAudit": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreDomain": {
+    "architecture": "domain-control",
+    "description": "How can Bonfyre observe and deliberately publish the owned domain records without treating registrar state, a local plan, or a secret as canonical institutional truth?",
+    "domain": "External reality / DNS authority",
+    "family": "external",
+    "layer": "boundary",
+    "maturity": "implemented",
+    "publishes": "DNSObservation"
+  },
+  "BonfyreEconomy": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreEmbed": {
+    "architecture": "static-semantic-search",
+    "description": "Which published section answers a reader's question, computed with no model runtime and no server at question time?",
+    "domain": "Optimization / Retrieval",
+    "family": "optimization",
+    "layer": "substrate",
+    "maturity": "measured",
+    "publishes": "SearchPassage"
+  },
+  "BonfyreEmit": {
+    "architecture": "cmd-emit",
+    "description": "What does the BonfyreEmit capability organ realize, and by what contract?",
+    "domain": "Execution / Emit",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": "Occurrence"
+  },
+  "BonfyreEntity": {
+    "architecture": "cmd-entity",
+    "description": "What does the BonfyreEntity capability organ realize, and by what contract?",
+    "domain": "Identity / Entity",
+    "family": "command",
+    "layer": "",
+    "maturity": "measured",
+    "publishes": "Actor"
+  },
+  "BonfyreEnvelope": {
+    "architecture": "cmd-envelope",
+    "description": "What does the BonfyreEnvelope capability organ realize, and by what contract?",
+    "domain": "Command / Envelope",
+    "family": "command",
+    "layer": "",
+    "maturity": "measured",
+    "publishes": ""
+  },
+  "BonfyreExperienceBinding": {
+    "architecture": "cmd-experience-binding",
+    "description": "What does the BonfyreExperienceBinding capability organ realize, and by what contract?",
+    "domain": "Command / ExperienceBinding",
+    "family": "command",
+    "layer": "",
+    "maturity": "declared",
+    "publishes": ""
+  },
+  "BonfyreExperienceMap": {
+    "architecture": "command-vectors",
+    "description": "Which JS tests only spawn a native program and check what came back, and can their cases live as data replayed by one native runner?",
+    "domain": "Optimization / Test estate",
+    "family": "optimization",
+    "layer": "verification",
+    "maturity": "measured",
+    "publishes": ""
+  },
+  "BonfyreExperienceStage": {
+    "architecture": "cmd-experience-stage",
+    "description": "What does the BonfyreExperienceStage capability organ realize, and by what contract?",
+    "domain": "Command / ExperienceStage",
+    "family": "command",
+    "layer": "",
+    "maturity": "declared",
+    "publishes": ""
+  },
+  "BonfyreExternalEstate": {
+    "architecture": "interaction-grammar",
+    "description": "How can a studied market interaction grammar become reusable native surface composition without importing a donor product's ontology, backend, or data?",
+    "domain": "Surface / Native interaction grammar",
+    "family": "surface",
+    "layer": "compiler",
+    "maturity": "measured",
+    "publishes": "CandidateAdvertisement"
+  },
+  "BonfyreFPQ": {
+    "architecture": "fpq-transform",
+    "description": "Can these weights be reconstructed within tolerance from a compact functional representation?",
+    "domain": "Model Representation",
+    "family": "model",
+    "layer": "model/representation",
+    "maturity": "measured",
+    "publishes": "FPQRepresentation"
+  },
+  "BonfyreFPQx": {
+    "architecture": "cmd-f-p-qx",
+    "description": "What does the BonfyreFPQx capability organ realize, and by what contract?",
+    "domain": "Model / FPQ",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": "FPQRepresentation"
+  },
+  "BonfyreFacet": {
+    "architecture": "protocol-facet-compiler",
+    "description": "Given what this occurrence is, which protocols could lawfully add a relation to it that the machine does not already have?",
+    "domain": "Commons / Protocol",
+    "family": "commons",
+    "layer": "compiler",
+    "maturity": "measured",
+    "publishes": "ProtocolFacetContract"
+  },
+  "BonfyreFamily": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreFinance": {
+    "architecture": "command-vectors",
+    "description": "Which JS tests only spawn a native program and check what came back, and can their cases live as data replayed by one native runner?",
+    "domain": "Optimization / Test estate",
+    "family": "optimization",
+    "layer": "verification",
+    "maturity": "measured",
+    "publishes": ""
+  },
+  "BonfyreFlashQLA": {
+    "architecture": "cmd-flash-q-l-a",
+    "description": "What does the BonfyreFlashQLA capability organ realize, and by what contract?",
+    "domain": "Command / FlashQLA",
+    "family": "command",
+    "layer": "",
+    "maturity": "measured",
+    "publishes": ""
+  },
+  "BonfyreFlow": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreFragment": {
+    "architecture": "cmd-fragment",
+    "description": "What does the BonfyreFragment capability organ realize, and by what contract?",
+    "domain": "Command / Fragment",
+    "family": "command",
+    "layer": "",
+    "maturity": "declared",
+    "publishes": ""
+  },
+  "BonfyreFragmentMigration": {
+    "architecture": "cmd-fragment-migration",
+    "description": "What does the BonfyreFragmentMigration capability organ realize, and by what contract?",
+    "domain": "Command / FragmentMigration",
+    "family": "command",
+    "layer": "",
+    "maturity": "declared",
+    "publishes": ""
+  },
+  "BonfyreFrameExtract": {
+    "architecture": "cmd-frame-extract",
+    "description": "What does the BonfyreFrameExtract capability organ realize, and by what contract?",
+    "domain": "Command / FrameExtract",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreFrappeCompiler": {
+    "architecture": "frappe-condition-plan",
+    "description": "A DocType says a field depends on something. Under the donor's own semantics, what exactly does it depend on, which fields can change the answer, and which declarations are outside what this estate can evaluate?",
+    "domain": "Apps / When a compiled record kind shows, requires, locks or folds a field",
+    "family": "apps",
+    "layer": "surface",
+    "maturity": "measured",
+    "publishes": ""
+  },
+  "BonfyreGate": {
+    "architecture": "gate-entitlement",
+    "description": "Does this key actually entitle this operation, or does it merely contain its letters?",
+    "domain": "Institutional / Licensing",
+    "family": "institutional",
+    "layer": "institutional",
+    "maturity": "measured",
+    "publishes": "AdmissibleRole"
+  },
+  "BonfyreGen": {
+    "architecture": "cmd-gen",
+    "description": "What does the BonfyreGen capability organ realize, and by what contract?",
+    "domain": "Model / Generation",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": "ExecutionReceipt"
+  },
+  "BonfyreGitHubWatch": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreGraph": {
+    "architecture": "cmd-graph",
+    "description": "What does the BonfyreGraph capability organ realize, and by what contract?",
+    "domain": "Identity / Graph",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": "Relation"
+  },
+  "BonfyreHash": {
+    "architecture": "native-file-digest",
+    "description": "Can native file receipts use the operating system's digest implementation while preserving exact content identity and read-failure semantics?",
+    "domain": "External / Platform cryptography",
+    "family": "external",
+    "layer": "external",
+    "maturity": "measured",
+    "publishes": ""
+  },
+  "BonfyreHousehold": {
+    "architecture": "semantic-operator",
+    "description": "How can a current household projection be addressed and queried without promoting its source observations or creating a second household store?",
+    "domain": "Forwarding / Semantic Lowering",
+    "family": "forwarding",
+    "layer": "forwarding",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreIndex": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreIngest": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreInteractionGrammar": {
+    "architecture": "cmd-interaction-grammar",
+    "description": "How can a native command bind a reusable donor-informed interaction grammar without turning the donor into a runtime backend or the binding into authority?",
+    "domain": "Command / Interaction grammar",
+    "family": "command",
+    "layer": "",
+    "maturity": "measured",
+    "publishes": ""
+  },
+  "BonfyreKVCache": {
+    "architecture": "cmd-k-v-cache",
+    "description": "What does the BonfyreKVCache capability organ realize, and by what contract?",
+    "domain": "Model / KV",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": "KVPassport"
+  },
+  "BonfyreLatentAtlas": {
+    "architecture": "latent-coordinate-atlas",
+    "description": "Which typed coordinate charts carry an exact address, which comparisons between them are lawful, what does a group of addresses become when lifted, and which branch of the hierarchy must change when one occurrence changes?",
+    "domain": "Model / Latent Coordinates",
+    "family": "model",
+    "layer": "model/latent",
+    "maturity": "implemented",
+    "publishes": "LatentChart"
+  },
+  "BonfyreLayer": {
+    "architecture": "cmd-layer",
+    "description": "What does the BonfyreLayer capability organ realize, and by what contract?",
+    "domain": "Command / Layer",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreLeapfrog": {
+    "architecture": "cmd-leapfrog",
+    "description": "What does the BonfyreLeapfrog capability organ realize, and by what contract?",
+    "domain": "Command / Leapfrog",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreLearn": {
+    "architecture": "cmd-learn",
+    "description": "What does the BonfyreLearn capability organ realize, and by what contract?",
+    "domain": "Capability / Acquisition",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": "Capability"
+  },
+  "BonfyreLedger": {
+    "architecture": "cmd-ledger",
+    "description": "What does the BonfyreLedger capability organ realize, and by what contract?",
+    "domain": "Economic / Ledger",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": "Value"
+  },
+  "BonfyreLex": {
+    "architecture": "text-extraction-rules",
+    "description": "Where in this document is that value, and who decided the answer?",
+    "domain": "Commons / Text",
+    "family": "commons",
+    "layer": "law",
+    "maturity": "measured",
+    "publishes": "ExtractionRule"
+  },
+  "BonfyreLifecycle": {
+    "architecture": "protocol-machine",
+    "description": "Which operations are legal now in a durable foreign conversation, and which acknowledgement permits the next one?",
+    "domain": "Execution / Boundary programs",
+    "family": "execution",
+    "layer": "execution/protocol",
+    "maturity": "measured",
+    "publishes": "ProtocolTransition"
+  },
+  "BonfyreLoweringWorkers": {
+    "architecture": "interaction-grammar",
+    "description": "How can a studied market interaction grammar become reusable native surface composition without importing a donor product's ontology, backend, or data?",
+    "domain": "Surface / Native interaction grammar",
+    "family": "surface",
+    "layer": "compiler",
+    "maturity": "measured",
+    "publishes": "CandidateAdvertisement"
+  },
+  "BonfyreMCPProof": {
+    "architecture": "mcp-generation-proof",
+    "description": "Did a returned MCP generation receipt durably name and agree with each claimed institutional projection?",
+    "domain": "Evidence / Cross-owner generation receipt",
+    "family": "evidence",
+    "layer": "evidence/proof",
+    "maturity": "measured",
+    "publishes": "Evidence"
+  },
+  "BonfyreMFADict": {
+    "architecture": "cmd-m-f-a-dict",
+    "description": "What does the BonfyreMFADict capability organ realize, and by what contract?",
+    "domain": "Command / MFADict",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreMaterialLease": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreMaterialWeatherGate": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreMaterialWeatherReheat": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreMcp": {
+    "architecture": "mcp-native-command-clients",
+    "description": "Can the spines, canary, recursive and V6 terminal clients run as one C program over libbonfyre with the retired JS grammar, catalog validation, wire refusals and JSON.stringify output unchanged?",
+    "domain": "Execution / Native MCP owner command clients (W2 first slice)",
+    "family": "commands",
+    "layer": "",
+    "maturity": "measured",
+    "publishes": ""
+  },
+  "BonfyreMediaDelivery": {
+    "architecture": "media-delivery",
+    "description": "How can an authenticated actor obtain a bounded transport lease for an already-selected media representation without collapsing library access, rights, transport, delivery, or watch proof?",
+    "domain": "Media / Delivery lease",
+    "family": "surface",
+    "layer": "surface",
+    "maturity": "measured",
+    "publishes": "TransportLease"
+  },
+  "BonfyreMediaLibrary": {
+    "architecture": "media-library",
+    "description": "How do personal Kodi-like media habitats and Jellyfin-like community channels share one MediaProgram representation estate without copying media identity, representation, rights or playback truth?",
+    "domain": "Media / Personal and community library ownership",
+    "family": "surface",
+    "layer": "surface",
+    "maturity": "implemented",
+    "publishes": "PlaybackPlan"
+  },
+  "BonfyreMediaPrep": {
+    "architecture": "cmd-media-prep",
+    "description": "What does the BonfyreMediaPrep capability organ realize, and by what contract?",
+    "domain": "Command / MediaPrep",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreMeter": {
+    "architecture": "financial-metabolism",
+    "description": "How does observed usage become accrued economics, funding selection and basis-explicit position without becoming booked truth?",
+    "domain": "Economic / Financial Metabolism",
+    "family": "economic",
+    "layer": "economic/finance",
+    "maturity": "implemented",
+    "publishes": "FinancialPosition"
+  },
+  "BonfyreMoE": {
+    "architecture": "cmd-mo-e",
+    "description": "What does the BonfyreMoE capability organ realize, and by what contract?",
+    "domain": "Command / MoE",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreMoQ": {
+    "architecture": "cmd-mo-q",
+    "description": "What does the BonfyreMoQ capability organ realize, and by what contract?",
+    "domain": "Command / MoQ",
+    "family": "command",
+    "layer": "",
+    "maturity": "measured",
+    "publishes": ""
+  },
+  "BonfyreModel": {
+    "architecture": "model-representation-passport-registry",
+    "description": "Which measured model representation may be forwarded for which operation, and what exact preservation gate remains before resource admission?",
+    "domain": "Model / Representation Admission",
+    "family": "model",
+    "layer": "model/representation",
+    "maturity": "implemented",
+    "publishes": "CandidateAdvertisement"
+  },
+  "BonfyreNarrate": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreNet": {
+    "architecture": "cmd-net",
+    "description": "What does the BonfyreNet capability organ realize, and by what contract?",
+    "domain": "Command / Net",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreOCR": {
+    "architecture": "cmd-manifest",
+    "description": "What does a seller's equipment lot contain, as far as its photos and listing state it, and what must be confirmed before a buyer prices it?",
+    "domain": "Command / CheapCognition",
+    "family": "command",
+    "layer": "",
+    "maturity": "measured",
+    "publishes": ""
+  },
+  "BonfyreObservationBoundary": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreObsidian": {
+    "architecture": "obsidian-vault-binding",
+    "description": "Which Obsidian vault folders on this device belong to which account, how are they read, written and synced (desktop CLI, Obsidian Headless or the files themselves), and when is headless sync refused?",
+    "domain": "External / Personal knowledge vaults",
+    "family": "external",
+    "layer": "external",
+    "maturity": "implemented",
+    "publishes": "ObsidianNoteRef"
+  },
+  "BonfyreOffer": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreOperator": {
+    "architecture": "semantic-operator",
+    "description": "How can a current household projection be addressed and queried without promoting its source observations or creating a second household store?",
+    "domain": "Forwarding / Semantic Lowering",
+    "family": "forwarding",
+    "layer": "forwarding",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreOperatorStore": {
+    "architecture": "autonomous-operator-native-owner",
+    "description": "Can the existing operator queue run without Python while preserving pause, model policy, accounting and uncertain-effect boundaries?",
+    "domain": "Execution / Autonomous operator control plane",
+    "family": "commands",
+    "layer": "",
+    "maturity": "measured",
+    "publishes": ""
+  },
+  "BonfyreOrchestrate": {
+    "architecture": "cmd-orchestrate",
+    "description": "What does the BonfyreOrchestrate capability organ realize, and by what contract?",
+    "domain": "Command / Orchestrate",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreOrigin": {
+    "architecture": "occurrence-origin",
+    "description": "Did this happen to us, did we derive it, or did we do it?",
+    "domain": "Commons / Occurrence provenance",
+    "family": "commons",
+    "layer": "commons",
+    "maturity": "measured",
+    "publishes": "OccurrenceOrigin"
+  },
+  "BonfyreOutreach": {
+    "architecture": "cmd-outreach",
+    "description": "What does the BonfyreOutreach capability organ realize, and by what contract?",
+    "domain": "Command / Outreach",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreOwnerContract": {
+    "architecture": "capability-lattice",
+    "description": "What does the system actually have, by estate and law, as real callable binaries?",
+    "domain": "Capability",
+    "family": "capability",
+    "layer": "capability",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyrePack": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyrePackCondition": {
+    "architecture": "cmd-pack-condition",
+    "description": "What does the BonfyrePackCondition capability organ realize, and by what contract?",
+    "domain": "Command / PackCondition",
+    "family": "command",
+    "layer": "",
+    "maturity": "declared",
+    "publishes": ""
+  },
+  "BonfyrePackConditionDelta": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreParagraph": {
+    "architecture": "cmd-paragraph",
+    "description": "What does the BonfyreParagraph capability organ realize, and by what contract?",
+    "domain": "Command / Paragraph",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreParticipation": {
+    "architecture": "cmd-participation",
+    "description": "What does the BonfyreParticipation capability organ realize, and by what contract?",
+    "domain": "Command / Participation",
+    "family": "command",
+    "layer": "",
+    "maturity": "declared",
+    "publishes": ""
+  },
+  "BonfyrePay": {
+    "architecture": "cmd-pay",
+    "description": "What does the BonfyrePay capability organ realize, and by what contract?",
+    "domain": "Command / Pay",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyrePhysics": {
+    "architecture": "cmd-physics",
+    "description": "What does the BonfyrePhysics capability organ realize, and by what contract?",
+    "domain": "Command / Physics",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyrePipeline": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreProject": {
+    "architecture": "native-build-truthfulness",
+    "description": "Does the build report what it actually built, and does a caller reading its exit status learn the truth?",
+    "domain": "Substrate",
+    "family": "substrate",
+    "layer": "",
+    "maturity": "measured",
+    "publishes": ""
+  },
+  "BonfyreProof": {
+    "architecture": "cmd-proof",
+    "description": "What does the BonfyreProof capability organ realize, and by what contract?",
+    "domain": "Evidence / Proof",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": "ProofFrontier"
+  },
+  "BonfyreProvider": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreProviderEstate": {
+    "architecture": "provider-estate",
+    "description": "Which downstream provider accounts is Aurekai acquiring, how far has each got, what container does each provider offer for a customer, and what may Aurekai actually do inside it?",
+    "domain": "Identity / Downstream Provider Tenancy",
+    "family": "identity",
+    "layer": "institutional",
+    "maturity": "implemented",
+    "publishes": "ProviderEstate"
+  },
+  "BonfyreProviderFrontier": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreProxy": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyrePublicWorld": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreQuant": {
+    "architecture": "cmd-quant",
+    "description": "What does the BonfyreQuant capability organ realize, and by what contract?",
+    "domain": "Command / Quant",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreQuery": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreQueue": {
+    "architecture": "aurekai-activity",
+    "description": "How can a person keep current work, its outputs, provider steps and personal notifications visible while moving through Aurekai?",
+    "domain": "Surface / Account-scoped work and recipient attention",
+    "family": "surface",
+    "layer": "surface/private",
+    "maturity": "implemented",
+    "publishes": "AccountActivityPresentation"
+  },
+  "BonfyreQwenFPQ": {
+    "architecture": "cmd-qwen-f-p-q",
+    "description": "What does the BonfyreQwenFPQ capability organ realize, and by what contract?",
+    "domain": "Command / QwenFPQ",
+    "family": "command",
+    "layer": "",
+    "maturity": "measured",
+    "publishes": ""
+  },
+  "BonfyreReason": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreRecall": {
+    "architecture": "cmd-recall",
+    "description": "What does the BonfyreRecall capability organ realize, and by what contract?",
+    "domain": "Command / Recall",
+    "family": "command",
+    "layer": "",
+    "maturity": "declared",
+    "publishes": ""
+  },
+  "BonfyreRecipe": {
+    "architecture": "cmd-recipe",
+    "description": "What does the BonfyreRecipe capability organ realize, and by what contract?",
+    "domain": "Command / Recipe",
+    "family": "command",
+    "layer": "",
+    "maturity": "measured",
+    "publishes": ""
+  },
+  "BonfyreReleaseApproval": {
+    "architecture": "release-approval-mcp",
+    "description": "Can the owner approve an offered release from an MCP client instead of the work board button?",
+    "domain": "Release / Human Approval",
+    "family": "command",
+    "layer": "institutional",
+    "maturity": "implemented",
+    "publishes": "ReleaseApproval"
+  },
+  "BonfyreRender": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreRepositoryFabric": {
+    "architecture": "repository-fabric",
+    "description": "Can this estate connect to, provision on, resolve, view, check out, change, observe and hook a real git-hosting provider through one verb surface, backed by a sealed credential and nothing typed again?",
+    "domain": "Identity / Downstream Provider Tenancy",
+    "family": "institutional",
+    "layer": "institutional",
+    "maturity": "implemented",
+    "publishes": "RepositoryFabric"
+  },
+  "BonfyreRepurpose": {
+    "architecture": "cmd-repurpose",
+    "description": "What does the BonfyreRepurpose capability organ realize, and by what contract?",
+    "domain": "Command / Repurpose",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreResourceWeatherDelta": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreResourceWeatherRefresh": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreResourceWeatherTransition": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreRetention": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreRun": {
+    "architecture": "cmd-run",
+    "description": "What does the BonfyreRun capability organ realize, and by what contract?",
+    "domain": "Command / Run",
+    "family": "command",
+    "layer": "",
+    "maturity": "declared",
+    "publishes": ""
+  },
+  "BonfyreRuntime": {
+    "architecture": "guest-branch-commit",
+    "description": "When a workload is a deterministic body plus a command log, how are its possible next steps explored without any of them becoming Actual?",
+    "domain": "Execution / Candidate branches over one deterministic guest",
+    "family": "execution",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreSAE": {
+    "architecture": "cmd-s-a-e",
+    "description": "What does the BonfyreSAE capability organ realize, and by what contract?",
+    "domain": "Command / SAE",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreSLI": {
+    "architecture": "cmd-s-l-i",
+    "description": "What does the BonfyreSLI capability organ realize, and by what contract?",
+    "domain": "Command / SLI",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreSceneDetect": {
+    "architecture": "cmd-scene-detect",
+    "description": "What does the BonfyreSceneDetect capability organ realize, and by what contract?",
+    "domain": "Command / SceneDetect",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreScopedDemand": {
+    "architecture": "external-estate-density",
+    "description": "Which unrelated worlds can lawfully reuse this source's observed semantic outputs and affordances?",
+    "domain": "External / Cross-domain Composition",
+    "family": "external",
+    "layer": "external/descriptor",
+    "maturity": "measured",
+    "publishes": ""
+  },
+  "BonfyreScopedFrontier": {
+    "architecture": "external-estate-density",
+    "description": "Which unrelated worlds can lawfully reuse this source's observed semantic outputs and affordances?",
+    "domain": "External / Cross-domain Composition",
+    "family": "external",
+    "layer": "external/descriptor",
+    "maturity": "measured",
+    "publishes": ""
+  },
+  "BonfyreScopedLeaseReheat": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreScopedReheat": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreScopedRespecialize": {
+    "architecture": "external-estate-density",
+    "description": "Which unrelated worlds can lawfully reuse this source's observed semantic outputs and affordances?",
+    "domain": "External / Cross-domain Composition",
+    "family": "external",
+    "layer": "external/descriptor",
+    "maturity": "measured",
+    "publishes": ""
+  },
+  "BonfyreSegment": {
+    "architecture": "cmd-segment",
+    "description": "What does the BonfyreSegment capability organ realize, and by what contract?",
+    "domain": "Command / Segment",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreSemanticOperation": {
+    "architecture": "cmd-semantic-operation",
+    "description": "What does the BonfyreSemanticOperation capability organ realize, and by what contract?",
+    "domain": "Command / SemanticOperation",
+    "family": "command",
+    "layer": "",
+    "maturity": "declared",
+    "publishes": ""
+  },
+  "BonfyreSemanticOptimizer": {
+    "architecture": "inverse-compiler",
+    "description": "Given a TargetObligation, which owner-backed predicates and declared transformation alternatives could lawfully close its residual?",
+    "domain": "Execution / Institutional Synthesis",
+    "family": "execution",
+    "layer": "execution/compiler",
+    "maturity": "implemented",
+    "publishes": "PredicateRef"
+  },
+  "BonfyreShowcaseCrosswalk": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreShowcaseEstate": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreSign": {
+    "architecture": "institution-identity",
+    "description": "Who says this, and can anyone but us check it?",
+    "domain": "Identity / Attestation",
+    "family": "identity",
+    "layer": "institutional",
+    "maturity": "measured",
+    "publishes": "SignedAttestation"
+  },
+  "BonfyreSourceFrontier": {
+    "architecture": "browser-host",
+    "description": "A person is on a page in their own browser. What has this estate already kept from it, and can they have a copy kept without leaving the page?",
+    "domain": "External / Beside the page",
+    "family": "external",
+    "layer": "external",
+    "maturity": "measured",
+    "publishes": ""
+  },
+  "BonfyreSpace": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreSpatial": {
+    "architecture": "spatial-observation",
+    "description": "Where was this existing subject observed, and by what means was that position arrived at?",
+    "domain": "Spatial / Observation",
+    "family": "spatial",
+    "layer": "owner",
+    "maturity": "measured",
+    "publishes": "SpatialObservation"
+  },
+  "BonfyreSpeechLoop": {
+    "architecture": "cmd-speech-loop",
+    "description": "What does the BonfyreSpeechLoop capability organ realize, and by what contract?",
+    "domain": "Command / SpeechLoop",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreStanding": {
+    "architecture": "standing-address-compiler",
+    "description": "Which lawful opportunity is most relevant to this actor, in this territory, right now?",
+    "domain": "Commons / Opportunity ranking",
+    "family": "commons",
+    "layer": "commons",
+    "maturity": "measured",
+    "publishes": "Opportunity"
+  },
+  "BonfyreStitch": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreSurface": {
+    "architecture": "site-fragment-migration",
+    "description": "How can compiled source literals become reviewable draft fragments without claiming publication or replacing an exact SurfaceIR slot?",
+    "domain": "Surface / Authored fragment migration",
+    "family": "surface",
+    "layer": "surface",
+    "maturity": "implemented",
+    "publishes": "DerivedView"
+  },
+  "BonfyreSurfaceMaturity": {
+    "architecture": "cmd-surface-maturity",
+    "description": "What does the BonfyreSurfaceMaturity capability organ realize, and by what contract?",
+    "domain": "Command / SurfaceMaturity",
+    "family": "command",
+    "layer": "",
+    "maturity": "declared",
+    "publishes": ""
+  },
+  "BonfyreSurfaceScene": {
+    "architecture": "session-workflow-recovery",
+    "description": "Can a reviewed historical workflow become editable work in the current account while retaining exact source anchors, complete native records and an honest execution boundary?",
+    "domain": "Surface / Source-backed workflow recovery",
+    "family": "surface",
+    "layer": "native-workspace",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreSwarm": {
+    "architecture": "cmd-swarm",
+    "description": "Which exact owner-admitted artifact may this recipient receive, and what did the peer actually confirm?",
+    "domain": "Command / Swarm",
+    "family": "command",
+    "layer": "",
+    "maturity": "measured",
+    "publishes": ""
+  },
+  "BonfyreSync": {
+    "architecture": "cmd-sync",
+    "description": "What does the BonfyreSync capability organ realize, and by what contract?",
+    "domain": "Command / Sync",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreTag": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreTargetAttention": {
+    "architecture": "cmd-target-attention",
+    "description": "What does the BonfyreTargetAttention capability organ realize, and by what contract?",
+    "domain": "Command / TargetAttention",
+    "family": "command",
+    "layer": "",
+    "maturity": "declared",
+    "publishes": ""
+  },
+  "BonfyreTel": {
+    "architecture": "cmd-tel",
+    "description": "What does the BonfyreTel capability organ realize, and by what contract?",
+    "domain": "Command / Tel",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreTier": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreTime": {
+    "architecture": "cmd-time",
+    "description": "What does the BonfyreTime capability organ realize, and by what contract?",
+    "domain": "Command / Time",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreTone": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreTranscribe": {
+    "architecture": "cmd-transcribe",
+    "description": "What does the BonfyreTranscribe capability organ realize, and by what contract?",
+    "domain": "Command / Transcribe",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreTranscriptClean": {
+    "architecture": "cmd-transcript-clean",
+    "description": "What does the BonfyreTranscriptClean capability organ realize, and by what contract?",
+    "domain": "Command / TranscriptClean",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreTranscriptFamily": {
+    "architecture": "cmd-transcript-family",
+    "description": "What does the BonfyreTranscriptFamily capability organ realize, and by what contract?",
+    "domain": "Command / TranscriptFamily",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreUpper90": {
+    "architecture": "institutional-product-contracts",
+    "description": "What can a person in this downstream organization actually see, filter, run and approve, and which existing route or function realizes it?",
+    "domain": "Institution / Downstream product",
+    "family": "institutional",
+    "layer": "surface",
+    "maturity": "implemented",
+    "publishes": "ProductContract"
+  },
+  "BonfyreVec": {
+    "architecture": "vector-body-admission",
+    "description": "Does the store hold the body it was offered, and does it say so when it does not?",
+    "domain": "Learning",
+    "family": "learning",
+    "layer": "",
+    "maturity": "measured",
+    "publishes": ""
+  },
+  "BonfyreVideoDemux": {
+    "architecture": "cmd-video-demux",
+    "description": "What does the BonfyreVideoDemux capability organ realize, and by what contract?",
+    "domain": "Command / VideoDemux",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreViolence": {
+    "architecture": "cmd-violence",
+    "description": "What does the BonfyreViolence capability organ realize, and by what contract?",
+    "domain": "Command / Violence",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreWatch": {
+    "architecture": "cmd-watch",
+    "description": "What does the BonfyreWatch capability organ realize, and by what contract?",
+    "domain": "Command / Watch",
+    "family": "command",
+    "layer": "",
+    "maturity": "measured",
+    "publishes": ""
+  },
+  "BonfyreWeaviateIndex": {
+    "architecture": "cmd-weaviate-index",
+    "description": "What does the BonfyreWeaviateIndex capability organ realize, and by what contract?",
+    "domain": "Command / WeaviateIndex",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreWebAddress": {
+    "architecture": "frappe-condition-plan",
+    "description": "A DocType says a field depends on something. Under the donor's own semantics, what exactly does it depend on, which fields can change the answer, and which declarations are outside what this estate can evaluate?",
+    "domain": "Apps / When a compiled record kind shows, requires, locks or folds a field",
+    "family": "apps",
+    "layer": "surface",
+    "maturity": "measured",
+    "publishes": ""
+  },
+  "BonfyreWebSub": {
+    "architecture": "machine-membrane",
+    "description": "How can one canonical state be delivered to thousands of machine consumers, and the machine-readable world be read back, without any carrier becoming a second owner of a fact or any cost scaling with the number of readers?",
+    "domain": "Institution / Machine-readable exchange",
+    "family": "institutional",
+    "layer": "institutional",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreWebSubLeaseGate": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreWire": {
+    "architecture": "cmd-wire",
+    "description": "What does the BonfyreWire capability organ realize, and by what contract?",
+    "domain": "Command / Wire",
+    "family": "command",
+    "layer": "",
+    "maturity": "measured",
+    "publishes": ""
+  },
+  "BonfyreWorkflow": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
+  "BonfyreWorldCompiler": {
+    "architecture": "cmd-world-compiler",
+    "description": "What does the BonfyreWorldCompiler capability organ realize, and by what contract?",
+    "domain": "Command / WorldCompiler",
+    "family": "command",
+    "layer": "",
+    "maturity": "declared",
+    "publishes": ""
+  },
+  "BonfyreZarrForge": {
+    "architecture": "representation-manifold",
+    "description": "Which physical forms of one semantic subject are useful, and how can each derived form be rebuilt from its exact input frontier?",
+    "domain": "Bonfyre",
+    "family": "storage",
+    "layer": "substrate",
+    "maturity": "architectural",
+    "publishes": ""
+  }
+}

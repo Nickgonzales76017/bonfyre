@@ -1,0 +1,94 @@
+{
+  "delegated_leadership": {
+    "estate": "upper90",
+    "leadership_object": "upper90-private-workspace",
+    "leadership_permission": "upper90:private-access",
+    "leadership_role": "upper90-leadership"
+  },
+  "forbidden_inference": "a declared estate is not a granted one, and this list is not an authority model: it says which estates exist, never who may enter one",
+  "inherited_roles": {
+    "ai-loss": "ai-loss-admin",
+    "jrss": "jrss-internal-admin",
+    "leads": "leads-demo-admin"
+  },
+  "managed_estates": [
+    "ai-loss",
+    "jrss",
+    "leads"
+  ],
+  "note": "the estates an authenticated account may hold a slice in; membership is declared here, admission is decided by the grant",
+  "parents": {
+    "ai-loss": "upper90",
+    "jrss": "upper90",
+    "leads": "upper90",
+    "upper90": "bonfyre"
+  },
+  "persona_lattice": {
+    "nightgrid": [
+      {
+        "capabilities": "events,members,publication",
+        "persona": "organizer",
+        "rank": "admin"
+      },
+      {
+        "capabilities": "merchant,offers,capacity",
+        "persona": "venue",
+        "rank": "write"
+      },
+      {
+        "capabilities": "creator,deliverables",
+        "persona": "creator",
+        "rank": "write"
+      },
+      {
+        "capabilities": "finance,campaign-budget",
+        "persona": "sponsor",
+        "rank": "write"
+      },
+      {
+        "capabilities": "publication",
+        "persona": "editor",
+        "rank": "write"
+      },
+      {
+        "capabilities": "safety,operations",
+        "persona": "safety",
+        "rank": "write"
+      },
+      {
+        "capabilities": "participation",
+        "persona": "member",
+        "rank": "read"
+      },
+      {
+        "capabilities": "machine-closure",
+        "persona": "machine",
+        "rank": "read"
+      }
+    ]
+  },
+  "role_ranks": {
+    "admin": 2,
+    "read": 0,
+    "write": 1
+  },
+  "roots": [
+    "bonfyre",
+    "nightgrid",
+    "upper90"
+  ],
+  "schema_version": "bonfyre.institution.contract.v1",
+  "slice_estates": [
+    "ai-loss",
+    "jrss",
+    "leads",
+    "nightgrid",
+    "upper90"
+  ],
+  "source": "architecture/institutional/namespaces.yaff",
+  "worlds": {
+    "bonfyre": "LIVE",
+    "nightgrid": "DEMO",
+    "upper90": "LIVE"
+  }
+}

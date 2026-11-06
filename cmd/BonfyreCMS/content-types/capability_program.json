@@ -1,0 +1,18 @@
+{
+  "name": "capability_program",
+  "displayName": "Capability Program",
+  "description": "The executable carrier program beneath a typed human action. x402, MCP, Beckn, OpenAPI and similar carriers may compete here, but they never become the user-facing application or grant authority.",
+  "attributes": {
+    "program_id": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "application_kind": {"type": "string", "required": true},
+    "action": {"type": "string", "required": true},
+    "consumes": {"type": "json", "required": true},
+    "produces": {"type": "json", "required": true},
+    "carrier_candidates": {"type": "json", "required": true},
+    "capability_requirements": {"type": "json", "required": true},
+    "authority_requirement": {"type": "string", "required": true},
+    "transition_conditions": {"type": "json", "required": true},
+    "failure_projection": {"type": "string", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

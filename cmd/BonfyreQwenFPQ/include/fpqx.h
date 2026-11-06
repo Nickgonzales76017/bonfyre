@@ -38,6 +38,24 @@
 #include <stddef.h>
 #include <stdint.h>
 
+/* Half-precision storage type.
+ *
+ * __fp16 is an ARM extension: it exists on aarch64 clang/gcc and nowhere else,
+ * so every x86-64 build failed with "unknown type name '__fp16'". The portable
+ * spelling is _Float16 (GCC 12+, clang 15+, C23). Both are storage-only types
+ * that convert implicitly to and from float, which is all this code asks of
+ * them -- no arithmetic is performed at half precision. Neither present is a
+ * hard error rather than a silent uint16_t fallback, which would compile and
+ * then store bit patterns instead of numbers. */
+#if defined(__aarch64__) || defined(__ARM_FP16_FORMAT_IEEE)
+typedef __fp16 bf_fp16_t;
+#elif defined(__FLT16_MANT_DIG__)
+typedef _Float16 bf_fp16_t;
+#else
+#error "fpqx: no half-precision storage type (need __fp16 or _Float16)"
+#endif
+
+
 /* ═══════════════════════════════════════════════════════════════════
  * Version and format constants
  * ═══════════════════════════════════════════════════════════════════ */
@@ -467,7 +485,7 @@ typedef struct {
 
     /* FP16 prepared z path. Cuts prepared residency roughly in half while
      * preserving the same block-domain scoring structure as the FP32 path. */
-    __fp16 *z_data_f16;          /* owned; NULL when inactive */
+    bf_fp16_t *z_data_f16;          /* owned; NULL when inactive */
 
 #ifdef FPQ_INT8_SDOT
     /* INT8 SDOT optional path (compile with -DFPQ_INT8_SDOT).

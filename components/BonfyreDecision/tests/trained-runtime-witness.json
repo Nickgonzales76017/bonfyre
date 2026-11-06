@@ -1,0 +1,625 @@
+{
+  "schema": "bonfyre.trained-clef-witness.v1",
+  "observed_at": "2026-10-02T20:33:49.056Z",
+  "state": "complete",
+  "hardware": {
+    "cpu": "Apple M3",
+    "memory_bytes": 17179869184,
+    "platform": "darwin",
+    "arch": "arm64"
+  },
+  "runtime": {
+    "model": "bonfyre-clef-flash-q4",
+    "artifact_digest": "e5dd0f1f7bc3d6c591b6a105134ba73de54bea33b317f22c38ede92ecbe526db",
+    "question_semantics": "joint_schema",
+    "confidence_semantics": "typesafe-uniform-adjusted",
+    "deterministic": false,
+    "model_sha256": "3243a51d7a7bb205fb4fcf402a7df763f7d31e6645a9c10e5754c4395ab85b66",
+    "native_binary_sha256": "ad8cc437321e78a1f3fd7de83d68ba31e0320d71ec0c2285cdcb5beca90c21ae",
+    "implementation_digest": "c9600c77e17b1e585bfbb3e370604f4e444478e64d914e56a32520efaeb1bf0a",
+    "adapter_source_sha256": "c4c1bebb015b9c4e2626739ae88dfc7a1a7da239d06b4b123d0754325fba977e"
+  },
+  "total_ms": 291867.08704099996,
+  "receipts": [
+    {
+      "name": "context-cold",
+      "end_to_end_ms": 131798.5415,
+      "receipt": {
+        "schema": "bonfyre.decision-plane.v2",
+        "contract": {
+          "schema": "bonfyre.decision-plane.v2",
+          "program": "context_passage",
+          "owner": "ContextCut",
+          "program_digest": "97d3a1f881abf5336f1808532ca2fe9b3f356178f5ec42f467ee9a67ab599cb3",
+          "subject_id": "witness:passage",
+          "mask_digest": "c3e509b86cc1c0ef3900b3d013d60a2f9291e3f54757ba9edda04877f972589e",
+          "gate_state": "ADMIT",
+          "information_policy_class": "private",
+          "frontier": [
+            {
+              "id": "passage",
+              "description": "Authored witness text",
+              "owner_ref": "ContextCut:witness"
+            }
+          ]
+        },
+        "case_digest": "c8d360806cf2e8c73c0cd777ef0e4131f2076ab7b5a4783f7748c8cbd79bb414",
+        "provider": "local",
+        "request_provider": "clef-flash",
+        "requested_model": "bonfyre-clef-flash-q4",
+        "request_digest": "cba5eaba87d7bd5f88067267bf85d791ef83f13181ed62ff20d33a1bbcf7f6df",
+        "cannot_infer": "a typed model assessment -> candidate admission, source truth, evidence, authorization, effect, or calibrated correctness on an unevaluated domain",
+        "action": "none",
+        "model": "bonfyre-clef-flash-q4",
+        "model_identity_state": "artifact_bound",
+        "model_artifact_digest": "e5dd0f1f7bc3d6c591b6a105134ba73de54bea33b317f22c38ede92ecbe526db",
+        "question_semantics": "joint_schema",
+        "confidence_semantics": "typesafe-uniform-adjusted",
+        "state": "diagnostic",
+        "response_digest": "33a35952ad864c81c048f583710dac805b9b5e70980257207ceac2ba5e9d5dd5",
+        "latency_ms": 131789,
+        "usage": null,
+        "answers": {
+          "contradicts": {
+            "type": "noul",
+            "noul": 0.07858637571452333
+          },
+          "instructs": {
+            "type": "noul",
+            "noul": 0.030759708488035293
+          },
+          "relevant": {
+            "type": "noul",
+            "noul": 0.9381180353139361
+          },
+          "usable": {
+            "type": "noul",
+            "noul": 0.9449025348101066
+          }
+        },
+        "answers_digest": "6875d4659a662a5e16af5c32eeab4e72d2c5e442a7a472a8419e9aa37a93415e",
+        "inference": {
+          "state": "uncached",
+          "producer_ms": 131777.743666,
+          "executed": true
+        },
+        "proposal": {
+          "subject_id": "witness:passage",
+          "candidate_id": "passage",
+          "relevance": 0.9381180353139361,
+          "usability": 0.9449025348101066,
+          "contradiction": 0.07858637571452333,
+          "instruction_attempt": 0.030759708488035293,
+          "rank_hint": 0.8830205701240428,
+          "rank_upper": 0.9381180353139361,
+          "uncertainty": {
+            "relevant": {
+              "mass": 1,
+              "maximum": 0.9381180353139361,
+              "winner": "true",
+              "margin": 0.8762360706278722,
+              "expectation": 0.061881964686063884,
+              "entropy": 0.23211471851534735,
+              "concentration": 0.8762360706278722,
+              "ordinal_concentration": null,
+              "provider_confidence": null
+            },
+            "usable": {
+              "mass": 1,
+              "maximum": 0.9449025348101066,
+              "winner": "true",
+              "margin": 0.8898050696202131,
+              "expectation": 0.055097465189893446,
+              "entropy": 0.21325928252871879,
+              "concentration": 0.8898050696202131,
+              "ordinal_concentration": null,
+              "provider_confidence": null
+            },
+            "contradicts": {
+              "mass": 1,
+              "maximum": 0.9214136242854767,
+              "winner": "false",
+              "margin": 0.8428272485709534,
+              "expectation": 0.9214136242854767,
+              "entropy": 0.2753031613837976,
+              "concentration": 0.8428272485709534,
+              "ordinal_concentration": null,
+              "provider_confidence": null
+            },
+            "instructs": {
+              "mass": 1,
+              "maximum": 0.9692402915119647,
+              "winner": "false",
+              "margin": 0.9384805830239293,
+              "expectation": 0.9692402915119647,
+              "entropy": 0.13737315318085844,
+              "concentration": 0.9384805830239293,
+              "ordinal_concentration": null,
+              "provider_confidence": null
+            }
+          },
+          "action": "none"
+        }
+      }
+    },
+    {
+      "name": "mcp-warm",
+      "end_to_end_ms": 31967.97904200002,
+      "receipt": {
+        "schema": "bonfyre.decision-plane.v2",
+        "contract": {
+          "schema": "bonfyre.decision-plane.v2",
+          "program": "tool_shortlist",
+          "owner": "MCP",
+          "program_digest": "95378b9004f6f1a7cfa17d3c972a9de37706c701abaa36c75f95c0092cf82488",
+          "subject_id": "mcp-intent:sha256:532b126665a014f4ba429190a30b3e0ef95c41638c26f9f5275d57a3ecc3141b",
+          "mask_digest": "f17c8aa22dd8c1b13cde2ba1d8398af2fa29968bb34c8bcf5a503dd11c39b08d",
+          "gate_state": "ADMIT",
+          "information_policy_class": "private",
+          "frontier": [
+            {
+              "id": "read_library_hours",
+              "description": "Read the library opening hours",
+              "owner_ref": "MCP:read_library_hours"
+            },
+            {
+              "id": "read_weather",
+              "description": "Read the weather forecast",
+              "owner_ref": "MCP:read_weather"
+            }
+          ]
+        },
+        "case_digest": "3dc65dcb0241ea1300a7b2298631df910fa7e01d52938ef7e212ef68432cca1d",
+        "provider": "local",
+        "request_provider": "clef-flash",
+        "requested_model": "bonfyre-clef-flash-q4",
+        "request_digest": "c56c6d9ff2d61429357d81d1c044cda5a517cbe90b59cec655624f459ec4eca3",
+        "cannot_infer": "a typed model assessment -> candidate admission, source truth, evidence, authorization, effect, or calibrated correctness on an unevaluated domain",
+        "action": "none",
+        "model": "bonfyre-clef-flash-q4",
+        "model_identity_state": "artifact_bound",
+        "model_artifact_digest": "e5dd0f1f7bc3d6c591b6a105134ba73de54bea33b317f22c38ede92ecbe526db",
+        "question_semantics": "joint_schema",
+        "confidence_semantics": "typesafe-uniform-adjusted",
+        "state": "diagnostic",
+        "response_digest": "4fecb46b3b9c6f0b44bd7f9ecdce1476fd350032248a5f0e3e8a465d2e01bd85",
+        "latency_ms": 31949,
+        "usage": null,
+        "answers": {
+          "needs_review": {
+            "type": "noul",
+            "noul": 0.14079904073470897
+          },
+          "route": {
+            "type": "choice",
+            "choice": "read_library_hours",
+            "confidence": 0.9570769746167037,
+            "probabilities": {
+              "none": 0.020925934164642,
+              "read_library_hours": 0.9713846497444691,
+              "read_weather": 0.007689416090888775
+            }
+          }
+        },
+        "answers_digest": "e47c748fb893249560304fc6d4a7f512a069cdc3ee3363d591eee8d99ef5289c",
+        "inference": {
+          "state": "uncached",
+          "producer_ms": 31946.090666999982,
+          "executed": true
+        },
+        "proposal": {
+          "subject_id": "mcp-intent:sha256:532b126665a014f4ba429190a30b3e0ef95c41638c26f9f5275d57a3ecc3141b",
+          "suggested_candidate": "read_library_hours",
+          "distribution": {
+            "read_library_hours": 0.9713846497444691,
+            "read_weather": 0.007689416090888775,
+            "none": 0.020925934164642
+          },
+          "review_probability": 0.14079904073470897,
+          "selection": {
+            "candidate": "read_library_hours",
+            "disposition": "candidate",
+            "reason": "minimum_expected_loss",
+            "risks": {
+              "read_library_hours": 0.028615350255530775,
+              "read_weather": 0.9923105839091111,
+              "none": 0.25
+            },
+            "minimizing_actions": [
+              "read_library_hours"
+            ],
+            "minimum_expected_loss": 0.028615350255530775,
+            "action": "none"
+          },
+          "uncertainty": {
+            "route": {
+              "mass": 1,
+              "maximum": 0.9713846497444691,
+              "winner": "read_library_hours",
+              "margin": 0.9504587155798272,
+              "expectation": 0.049541284420172776,
+              "entropy": 0.14654904899523852,
+              "concentration": 0.9570769746167037,
+              "ordinal_concentration": null,
+              "provider_confidence": 0.9570769746167037
+            },
+            "needs_review": {
+              "mass": 1,
+              "maximum": 0.859200959265291,
+              "winner": "false",
+              "margin": 0.7184019185305821,
+              "expectation": 0.859200959265291,
+              "entropy": 0.4064113284660611,
+              "concentration": 0.7184019185305821,
+              "ordinal_concentration": null,
+              "provider_confidence": null
+            }
+          },
+          "action": "none"
+        }
+      }
+    },
+    {
+      "name": "flow-warm",
+      "end_to_end_ms": 33229.13725,
+      "receipt": {
+        "schema": "bonfyre.decision-plane.v2",
+        "contract": {
+          "schema": "bonfyre.decision-plane.v2",
+          "program": "work_triage",
+          "owner": "Flow",
+          "program_digest": "d068a20d5c4e2d3eec4728153eca4190357c679d8d8428079de81b1c776f2f5f",
+          "subject_id": "witness:work",
+          "mask_digest": "6d5ba9a0e9e52299a7515b0e152ca843cecbcdd5ac66c8dea7cfc630ccb4e12d",
+          "gate_state": "ADMIT",
+          "information_policy_class": "private",
+          "frontier": [
+            {
+              "id": "fact_review",
+              "description": "Check source documents and verify factual claims",
+              "owner_ref": "Flow:review"
+            },
+            {
+              "id": "layout",
+              "description": "Design visual page layouts",
+              "owner_ref": "Flow:design"
+            }
+          ]
+        },
+        "case_digest": "acc721ceaf16455ad7ad67d56e5c5f6277e5798414a53d60753d9a5af8e8be34",
+        "provider": "local",
+        "request_provider": "clef-flash",
+        "requested_model": "bonfyre-clef-flash-q4",
+        "request_digest": "a9ad57ffc4e71866846f6f42726c34edc33a71abbdb42254897ce8d418612fda",
+        "cannot_infer": "a typed model assessment -> candidate admission, source truth, evidence, authorization, effect, or calibrated correctness on an unevaluated domain",
+        "action": "none",
+        "model": "bonfyre-clef-flash-q4",
+        "model_identity_state": "artifact_bound",
+        "model_artifact_digest": "e5dd0f1f7bc3d6c591b6a105134ba73de54bea33b317f22c38ede92ecbe526db",
+        "question_semantics": "joint_schema",
+        "confidence_semantics": "typesafe-uniform-adjusted",
+        "state": "diagnostic",
+        "response_digest": "173e35f3dfab3bda850772d74283edc0f7812544d545939453d22a7d84c6afd0",
+        "latency_ms": 33224,
+        "usage": null,
+        "answers": {
+          "needs_review": {
+            "type": "noul",
+            "noul": 0.03623581413785499
+          },
+          "phenotype": {
+            "type": "choice",
+            "choice": "fact_review",
+            "confidence": 0.9716437446474222,
+            "probabilities": {
+              "fact_review": 0.9810958297649482,
+              "layout": 0.006749618534591672,
+              "none": 0.0121545517004601
+            }
+          },
+          "urgency": {
+            "type": "score",
+            "score": 0.6420044521456341,
+            "confidence": 0.036993321781548905,
+            "probabilities": {
+              "0": 0.52555227961898,
+              "1": 0.3068909886164061,
+              "2": 0.16755673176461394
+            }
+          }
+        },
+        "answers_digest": "67b74b4365ac65f1b01b90366816e29c70edcd78bc3f50ef8f0316311556400a",
+        "inference": {
+          "state": "uncached",
+          "producer_ms": 33223.617042,
+          "executed": true
+        },
+        "proposal": {
+          "subject_id": "witness:work",
+          "suggested_candidate": "fact_review",
+          "distribution": {
+            "fact_review": 0.9810958297649482,
+            "layout": 0.006749618534591672,
+            "none": 0.0121545517004601
+          },
+          "review_probability": 0.03623581413785499,
+          "urgency": 0.6420044521456341,
+          "selection": {
+            "candidate": "fact_review",
+            "disposition": "candidate",
+            "reason": "minimum_expected_loss",
+            "risks": {
+              "fact_review": 0.01890417023505177,
+              "layout": 0.9932503814654083,
+              "none": 0.25
+            },
+            "minimizing_actions": [
+              "fact_review"
+            ],
+            "minimum_expected_loss": 0.01890417023505177,
+            "action": "none"
+          },
+          "uncertainty": {
+            "phenotype": {
+              "mass": 1,
+              "maximum": 0.9810958297649482,
+              "winner": "fact_review",
+              "margin": 0.9689412780644882,
+              "expectation": 0.03105872193551187,
+              "entropy": 0.10606296033437508,
+              "concentration": 0.9716437446474222,
+              "ordinal_concentration": null,
+              "provider_confidence": 0.9716437446474222
+            },
+            "urgency": {
+              "mass": 1,
+              "maximum": 0.52555227961898,
+              "winner": "0",
+              "margin": 0.21866129100257387,
+              "expectation": 0.6420044521456341,
+              "entropy": 0.9999385238944876,
+              "concentration": 0.28832841942847,
+              "ordinal_concentration": 0.036993321781548905,
+              "provider_confidence": 0.036993321781548905
+            },
+            "needs_review": {
+              "mass": 1,
+              "maximum": 0.963764185862145,
+              "winner": "false",
+              "margin": 0.9275283717242899,
+              "expectation": 0.963764185862145,
+              "entropy": 0.15579104573238256,
+              "concentration": 0.9275283717242899,
+              "ordinal_concentration": null,
+              "provider_confidence": null
+            }
+          },
+          "action": "none"
+        }
+      }
+    },
+    {
+      "name": "context-warm-repeat",
+      "end_to_end_ms": 41556.88862500002,
+      "receipt": {
+        "schema": "bonfyre.decision-plane.v2",
+        "contract": {
+          "schema": "bonfyre.decision-plane.v2",
+          "program": "context_passage",
+          "owner": "ContextCut",
+          "program_digest": "97d3a1f881abf5336f1808532ca2fe9b3f356178f5ec42f467ee9a67ab599cb3",
+          "subject_id": "witness:passage",
+          "mask_digest": "c3e509b86cc1c0ef3900b3d013d60a2f9291e3f54757ba9edda04877f972589e",
+          "gate_state": "ADMIT",
+          "information_policy_class": "private",
+          "frontier": [
+            {
+              "id": "passage",
+              "description": "Authored witness text",
+              "owner_ref": "ContextCut:witness"
+            }
+          ]
+        },
+        "case_digest": "c8d360806cf2e8c73c0cd777ef0e4131f2076ab7b5a4783f7748c8cbd79bb414",
+        "provider": "local",
+        "request_provider": "clef-flash",
+        "requested_model": "bonfyre-clef-flash-q4",
+        "request_digest": "cba5eaba87d7bd5f88067267bf85d791ef83f13181ed62ff20d33a1bbcf7f6df",
+        "cannot_infer": "a typed model assessment -> candidate admission, source truth, evidence, authorization, effect, or calibrated correctness on an unevaluated domain",
+        "action": "none",
+        "model": "bonfyre-clef-flash-q4",
+        "model_identity_state": "artifact_bound",
+        "model_artifact_digest": "e5dd0f1f7bc3d6c591b6a105134ba73de54bea33b317f22c38ede92ecbe526db",
+        "question_semantics": "joint_schema",
+        "confidence_semantics": "typesafe-uniform-adjusted",
+        "state": "diagnostic",
+        "response_digest": "33a35952ad864c81c048f583710dac805b9b5e70980257207ceac2ba5e9d5dd5",
+        "latency_ms": 41544,
+        "usage": null,
+        "answers": {
+          "contradicts": {
+            "type": "noul",
+            "noul": 0.07858637571452333
+          },
+          "instructs": {
+            "type": "noul",
+            "noul": 0.030759708488035293
+          },
+          "relevant": {
+            "type": "noul",
+            "noul": 0.9381180353139361
+          },
+          "usable": {
+            "type": "noul",
+            "noul": 0.9449025348101066
+          }
+        },
+        "answers_digest": "6875d4659a662a5e16af5c32eeab4e72d2c5e442a7a472a8419e9aa37a93415e",
+        "inference": {
+          "state": "uncached",
+          "producer_ms": 41519.346374999994,
+          "executed": true
+        },
+        "proposal": {
+          "subject_id": "witness:passage",
+          "candidate_id": "passage",
+          "relevance": 0.9381180353139361,
+          "usability": 0.9449025348101066,
+          "contradiction": 0.07858637571452333,
+          "instruction_attempt": 0.030759708488035293,
+          "rank_hint": 0.8830205701240428,
+          "rank_upper": 0.9381180353139361,
+          "uncertainty": {
+            "relevant": {
+              "mass": 1,
+              "maximum": 0.9381180353139361,
+              "winner": "true",
+              "margin": 0.8762360706278722,
+              "expectation": 0.061881964686063884,
+              "entropy": 0.23211471851534735,
+              "concentration": 0.8762360706278722,
+              "ordinal_concentration": null,
+              "provider_confidence": null
+            },
+            "usable": {
+              "mass": 1,
+              "maximum": 0.9449025348101066,
+              "winner": "true",
+              "margin": 0.8898050696202131,
+              "expectation": 0.055097465189893446,
+              "entropy": 0.21325928252871879,
+              "concentration": 0.8898050696202131,
+              "ordinal_concentration": null,
+              "provider_confidence": null
+            },
+            "contradicts": {
+              "mass": 1,
+              "maximum": 0.9214136242854767,
+              "winner": "false",
+              "margin": 0.8428272485709534,
+              "expectation": 0.9214136242854767,
+              "entropy": 0.2753031613837976,
+              "concentration": 0.8428272485709534,
+              "ordinal_concentration": null,
+              "provider_confidence": null
+            },
+            "instructs": {
+              "mass": 1,
+              "maximum": 0.9692402915119647,
+              "winner": "false",
+              "margin": 0.9384805830239293,
+              "expectation": 0.9692402915119647,
+              "entropy": 0.13737315318085844,
+              "concentration": 0.9384805830239293,
+              "ordinal_concentration": null,
+              "provider_confidence": null
+            }
+          },
+          "action": "none"
+        }
+      }
+    },
+    {
+      "name": "external-estate-warm",
+      "end_to_end_ms": 52630.33083400002,
+      "receipt": {
+        "schema": "bonfyre-decision-program-plane.v3",
+        "provider": "local",
+        "state": "diagnostic",
+        "model": "bonfyre-clef-flash-q4",
+        "question_semantics": "joint_schema",
+        "confidence_semantics": "typesafe-uniform-adjusted",
+        "model_artifact_digest": "e5dd0f1f7bc3d6c591b6a105134ba73de54bea33b317f22c38ede92ecbe526db",
+        "model_identity_state": "artifact_bound",
+        "program_digest": "2eeff3f9fef29d4bb22555eb33cdb2fd72a2c52876c573349fa8f742f9052c54",
+        "source_digest": "a1804a0424f2c9f8efdde212e5c641b3a75080f6bed2def52461d7ed43ff81fa",
+        "information_policy_class": "private",
+        "request_provider": "clef-flash",
+        "inference": {
+          "state": "uncached",
+          "producer_ms": 50945.13608299999,
+          "executed": true
+        },
+        "request_digest": "1a278d38bb6eaadf8248c86f7bde265cd2095be6e54cfcaf409556c272dfe009",
+        "response_digest": "a9cdbe05b1cfe5a759e0ac7c3a1add7e60736ad06695f81693aca0d617e90cc0",
+        "latency_ms": 50953,
+        "source": {
+          "address": "https://example.invalid/library",
+          "cadence": "weekly",
+          "census_source": "witness:library",
+          "channel_id": "witness:source",
+          "contributions": 2,
+          "declared_material": "articles",
+          "information_policy_class": "private",
+          "measured_carries": "written articles",
+          "protocol": "rss",
+          "retained_items": 2,
+          "retained_items_state": "observed",
+          "title": "Library written announcements"
+        },
+        "program_choice": "read",
+        "program_confidence": 0.8293947849840937,
+        "program_probabilities": {
+          "read": 0.8578289874867447,
+          "listen": 0.007213482836974829,
+          "watch": 0.0009404311080161676,
+          "events": 0.007169808122254935,
+          "images": 0.0010682152198981192,
+          "review": 0.12577907522611134
+        },
+        "attention_score": 0.8692280286471743,
+        "attention_confidence": 0.31289291542352415,
+        "needs_exact_review_probability": 0.24206409379931537,
+        "attention_probabilities": {
+          "0": 0.29442168053523815,
+          "1": 0.5419286102823495,
+          "2": 0.1636497091824124
+        },
+        "uncertainty": {
+          "s0_program": {
+            "mass": 1.0000000000000002,
+            "maximum": 0.8578289874867447,
+            "winner": "read",
+            "margin": 0.7320499122606334,
+            "expectation": 0.6637720064299212,
+            "entropy": 0.4771588630036516,
+            "concentration": 0.8293947849840937,
+            "ordinal_concentration": null,
+            "provider_confidence": 0.8293947849840937
+          },
+          "s0_attention": {
+            "mass": 1,
+            "maximum": 0.5419286102823495,
+            "winner": "1",
+            "margin": 0.24750692974711136,
+            "expectation": 0.8692280286471743,
+            "entropy": 0.9882090777997099,
+            "concentration": 0.31289291542352426,
+            "ordinal_concentration": 0.31289291542352415,
+            "provider_confidence": 0.31289291542352415
+          },
+          "s0_needs_exact_review": {
+            "mass": 1,
+            "maximum": 0.7579359062006846,
+            "winner": "false",
+            "margin": 0.5158718124013693,
+            "expectation": 0.7579359062006846,
+            "entropy": 0.5534475105557353,
+            "concentration": 0.5158718124013693,
+            "ordinal_concentration": null,
+            "provider_confidence": null
+          }
+        },
+        "diagnostic_lane": "read",
+        "action": "none",
+        "cannot_infer": "typed diagnostic output is not source truth, admission, publication, authority, payment, or an effect"
+      }
+    }
+  ],
+  "limitations": [
+    "Five authored integration examples, not held-out production accuracy or calibrated correctness.",
+    "Cold measurement includes full artifact hashing and startup; warm measurements include shared projection.",
+    "Q4_K_M native runtime is not a BF16 parity witness or an end-to-end speedup comparison.",
+    "No authorization, tool invocation, work claim or source admission follows from these answers."
+  ]
+}

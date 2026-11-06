@@ -1,0 +1,19 @@
+name = "aurekai-estate"
+main = "estate-worker.mjs"
+compatibility_date = "2026-09-01"
+
+# Pages published as files (scripts/build_edge_assets.mjs): served before this
+# script, free and unlimited; a path with no file reaches the script.
+[assets]
+directory = "./edge-assets"
+binding = "ASSETS"
+html_handling = "auto-trailing-slash"
+not_found_handling = "none"
+
+# Every page the estate composed, as objects: no limit on how many.
+[[r2_buckets]]
+binding = "ESTATE"
+bucket_name = "aurekai-estate"
+
+[vars]
+SUPABASE_URL = "https://exwxrwjayumtoljjxufh.supabase.co"

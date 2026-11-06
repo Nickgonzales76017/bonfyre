@@ -1,0 +1,17 @@
+{
+  "name": "project_support",
+  "displayName": "Project Support",
+  "description": "A person's stated intention to support a project, recorded before any money moves and independent of whether it ever does. Support recorded here is an intention and a relationship: it is never a payment, never a pledge this estate can collect, and never evidence that value moved. Money movement belongs to a payment rail and leaves a receipt reference, which is a digest of something presented rather than proof of settlement.",
+  "attributes": {
+    "support_id": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "project_id": { "type": "string", "required": true },
+    "supporter": { "type": "string", "required": true },
+    "mode": { "type": "string", "required": true },
+    "amount_stated": { "type": "string" },
+    "currency": { "type": "string" },
+    "stated_at": { "type": "string", "required": true },
+    "receipt_ref": { "type": "string" },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

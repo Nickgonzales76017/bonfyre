@@ -1,0 +1,3 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-api-selftest","binary_env":"BONFYRE_API_SELFTEST_BIN","cases":[
+{"name":"the gateway serves an authenticated request, refuses an unauthenticated one and logs it (loopback only)","steps":[
+ {"argv":[],"env":{"HOME":"${tmp}"},"exit":0,"at":{"ready":true,"authenticated_status":200,"rejected_status":401,"static_surface_served":1,"authenticated_requests_logged":1}}]}]}

@@ -1,0 +1,180 @@
+# ARCHIVED 2026-09-06: absorbed by engine/core/src/retention.c (bf_retention.h).
+# This remains a reference witness. The native reconcile bridge owns only the
+# CommitmentGraph/EvidenceGraph holds and intentionally never releases legal
+# or user holds; extend that owner rather than restoring a Python state path.
+"""Derive retention holds from the owners that actually have a reason to hold.
+
+RetentionGC refuses to remove a held record and names who is holding it. Until
+now the holds were placed by callers, which means the two owners with the
+strongest claim -- an open obligation and a live evidence relation -- had to
+remember to speak up. An owner that has to remember is an owner that will
+eventually forget, and the record it forgot about is exactly the one somebody
+later needed.
+
+This derives those holds from the stores themselves:
+
+    an open commitment resting on a record   -> HOLD_OBLIGATION
+    a live evidence relation citing a record -> HOLD_EVIDENCE
+
+The direction that matters is the second one. A derived hold is **released when
+its reason ends**, not merely added when its reason begins. A sweep that only
+ever accumulated holds would keep everything forever while appearing to have a
+retention policy, which is the failure mode this whole lattice exists to avoid.
+So `reconcile` is the operation: it places what is now justified and releases
+what is no longer, in one pass, and reports both.
+
+Two facts stay separate throughout. A commitment reaching a terminal state and a
+record becoming removable are different events -- a discharged obligation
+releases its own hold and says nothing about anybody else's. A record cited as
+evidence and also resting under an open promise needs both reasons to end.
+
+Forbidden inferences, falsified by the tests beside this file:
+  a derived hold          -> a permanent one
+  a discharged commitment -> a removable record
+  a retracted relation    -> no other hold
+  a placed hold           -> a record that was ever removable
+"""
+
+from __future__ import annotations
+
+import sqlite3
+from typing import Optional
+
+import commitment_graph as cg
+import protocol_evidence as pe
+import retention_gc as gc
+
+# This module owns the link between an obligation and the records it rests on.
+# CommitmentGraph deliberately does not know about records, and RetentionGC
+# deliberately does not know about obligations; putting the edge in either would
+# make one of them depend on the other's vocabulary.
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS commitment_rests_on(
+  commitment_id TEXT NOT NULL,
+  record_id     TEXT NOT NULL,
+  PRIMARY KEY(commitment_id, record_id));
+"""
+
+HOLDER_OBLIGATION = "CommitmentGraph"
+HOLDER_EVIDENCE = "EvidenceGraph"
+
+
+class HoldError(ValueError):
+    pass
+
+
+def ensure_schema(db: sqlite3.Connection) -> None:
+    gc.ensure_schema(db)
+    cg.ensure_schema(db)
+    db.executescript(SCHEMA)
+    db.commit()
+
+
+def rests_on(db: sqlite3.Connection, *, commitment_id: str, record_id: str) -> None:
+    """Declare that an obligation rests on a record.
+
+    Refused if the commitment does not exist: an obligation nobody opened cannot
+    justify keeping anything, and allowing the edge would let a caller hold a
+    record forever by naming a commitment that never was.
+    """
+    ensure_schema(db)
+    if cg.status(db, commitment_id) is None:
+        raise HoldError(
+            f"unknown commitment {commitment_id!r}; an obligation that was never "
+            f"opened cannot justify retaining anything")
+    db.execute("INSERT OR REPLACE INTO commitment_rests_on"
+               "(commitment_id,record_id) VALUES(?,?)", (commitment_id, record_id))
+    db.commit()
+
+
+# ------------------------------------------------------------ what justifies
+
+def obligation_reasons(db: sqlite3.Connection) -> dict[str, list[str]]:
+    """record_id -> the open commitments resting on it.
+
+    Terminal commitments are excluded: a discharged or compensated obligation
+    has stopped being a reason to keep anything, and that is precisely the fact
+    a caller-placed hold would have missed.
+    """
+    ensure_schema(db)
+    out: dict[str, list[str]] = {}
+    for cid, rid in db.execute(
+            "SELECT commitment_id,record_id FROM commitment_rests_on"):
+        state = cg.status(db, cid)
+        if state is None or state in cg.TERMINAL:
+            continue
+        out.setdefault(rid, []).append(cid)
+    return {k: sorted(v) for k, v in out.items()}
+
+
+def evidence_reasons(db: sqlite3.Connection) -> dict[str, list[str]]:
+    """record_id -> the claims it is currently cited as evidence for.
+
+    Reads the same evidence_relations store the C organ owns. A retracted
+    relation simply is not there, so retraction releases the hold without this
+    module needing to be told.
+    """
+    pe.ensure_schema(db)
+    out: dict[str, list[str]] = {}
+    for evidence, claim in db.execute(
+            "SELECT evidence,claim FROM evidence_relations"):
+        out.setdefault(evidence, []).append(claim)
+    return {k: sorted(v) for k, v in out.items()}
+
+
+# --------------------------------------------------------------- reconcile
+
+def reconcile(db: sqlite3.Connection) -> dict[str, list[str]]:
+    """Place every justified hold and release every unjustified one.
+
+    Returns what changed, in both directions. Reporting only placements would
+    hide the half that actually matters: a retention system whose holds never
+    lift keeps everything while looking like it has a policy.
+    """
+    ensure_schema(db)
+    placed: list[str] = []
+    released: list[str] = []
+
+    wanted = {
+        (gc.HOLD_OBLIGATION, HOLDER_OBLIGATION): obligation_reasons(db),
+        (gc.HOLD_EVIDENCE, HOLDER_EVIDENCE): evidence_reasons(db),
+    }
+
+    for (kind, holder), reasons in wanted.items():
+        current = {rid for (rid,) in db.execute(
+            "SELECT record_id FROM retention_hold WHERE hold=? AND holder=?",
+            (kind, holder))}
+        justified = set(reasons)
+
+        for rid in sorted(justified - current):
+            gc.hold(db, rid, kind=kind, holder=holder)
+            placed.append(f"{kind}:{rid}")
+        for rid in sorted(current - justified):
+            gc.release(db, rid, kind=kind, holder=holder)
+            released.append(f"{kind}:{rid}")
+
+    return {"placed": sorted(placed), "released": sorted(released)}
+
+
+def why_held(db: sqlite3.Connection, record_id: str) -> dict[str, list[str]]:
+    """The actual reasons, not merely the hold rows.
+
+    A hold row says a record is kept. This says what would have to end before it
+    could be removed, which is the question anybody trying to release it has.
+    """
+    return {
+        gc.HOLD_OBLIGATION: obligation_reasons(db).get(record_id, []),
+        gc.HOLD_EVIDENCE: evidence_reasons(db).get(record_id, []),
+    }
+
+
+def collect(db: sqlite3.Connection, now: int, *,
+            occurrence: Optional[str] = None) -> tuple[list[str], list[gc.Refusal]]:
+    """Reconcile derived holds, then sweep.
+
+    Doing them in one call is deliberate: a sweep run against stale holds either
+    keeps something whose reason ended or removes something whose reason began
+    since the last reconcile, and both are silent.
+    """
+    reconcile(db)
+    return gc.collect(db, now, occurrence=occurrence)

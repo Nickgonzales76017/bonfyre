@@ -21,6 +21,8 @@
  */
 
 #include <stdio.h>
+#include "../../../lib/libbonfyre/include/bf_help.h"
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -129,7 +131,10 @@ static void seed(sqlite3 *db) {
         { "model_updated",   "*" },
     };
     const char *sql =
-        "INSERT OR IGNORE INTO triggers(event,recipe,active,created) VALUES(?,?,1,?)";
+        /* The table has no unique key, so OR IGNORE ignored nothing and every
+         * open added the defaults again. Seed only what is absent. */
+        "INSERT INTO triggers(event,recipe,active,created) SELECT ?1,?2,1,?3 "
+        "WHERE NOT EXISTS (SELECT 1 FROM triggers WHERE event=?1 AND recipe=?2)";
     sqlite3_stmt *st = NULL;
     sqlite3_prepare_v2(db, sql, -1, &st, NULL);
     time_t now = time(NULL);
@@ -145,6 +150,7 @@ static void seed(sqlite3 *db) {
 static sqlite3 *open_db(void) {
     char path[4096]; db_path(path, sizeof(path)); ensure_dir(path);
     sqlite3 *db = NULL;
+    /* Fast tier, by decision: run history; losing the last commits to a power cut costs a re-run. */
     if (bf_sqlite3_open(path, &db) != SQLITE_OK) {
         fprintf(stderr,"bonfyre-time: cannot open db\n"); exit(1);
     }
@@ -334,38 +340,56 @@ static void cmd_help(void) {
 }
 
 int main(int argc, char **argv) {
+    if (bf_help_requested(argc, argv)) { cmd_help(); return 0; }
+    enum {
+        TM_DIFF, TM_HISTORY, TM_LAYER, TM_RERUN, TM_SCHEDULE,
+        TM_SCHEDULE_LAYER_VERIFY, TM_STALE_LAYERS, TM_STATUS, TM_TRIGGER,
+    };
+    static const BfCommandEntry time_commands[] = {
+        {"diff", TM_DIFF, 0, NULL},
+        {"history", TM_HISTORY, 0, NULL},
+        {"layer", TM_LAYER, 0, NULL},
+        {"rerun", TM_RERUN, 0, NULL},
+        {"schedule", TM_SCHEDULE, 0, NULL},
+        {"schedule-layer-verify", TM_SCHEDULE_LAYER_VERIFY, 0, NULL},
+        {"stale-layers", TM_STALE_LAYERS, 0, NULL},
+        {"status", TM_STATUS, 0, NULL},
+        {"trigger", TM_TRIGGER, 0, NULL},
+    };
+    const BfCommandEntry *command = argc < 2 ? NULL :
+        bf_command_lookup(time_commands, sizeof(time_commands) / sizeof(time_commands[0]), argv[1]);
     if (argc >= 2) {
-        if (strcmp(argv[1], "layer") == 0) {
+        if (command && command->id == TM_LAYER) {
             return delegate_layeros_time(argc, argv, "layer");
         }
-        if (strcmp(argv[1], "stale-layers") == 0) {
+        if (command && command->id == TM_STALE_LAYERS) {
             return delegate_layeros_time(argc, argv, "stale-layers");
         }
-        if (strcmp(argv[1], "schedule-layer-verify") == 0) {
+        if (command && command->id == TM_SCHEDULE_LAYER_VERIFY) {
             return delegate_layeros_time(argc, argv, "schedule-layer-verify");
         }
     }
 
-    if (argc < 2 || strcmp(argv[1],"help")==0 || strcmp(argv[1],"--help")==0) {
+    if (argc < 2) {
         cmd_help(); return 0;
     }
     sqlite3 *db = open_db();
     int rc = 0;
     const char *cmd = argv[1];
-    if (strcmp(cmd,"status")==0)   cmd_status(db);
-    else if (strcmp(cmd,"schedule")==0) {
+    if (command && command->id == TM_STATUS)   cmd_status(db);
+    else if (command && command->id == TM_SCHEDULE) {
         if (argc<4) { fprintf(stderr,"usage: bonfyre-time schedule <artifact> <recipe>\n"); rc=1; }
         else cmd_schedule(db,argv[2],argv[3]);
-    } else if (strcmp(cmd,"rerun")==0) {
+    } else if (command && command->id == TM_RERUN) {
         if (argc<3) { fprintf(stderr,"usage: bonfyre-time rerun <artifact>\n"); rc=1; }
         else cmd_rerun(db,argv[2]);
-    } else if (strcmp(cmd,"diff")==0) {
+    } else if (command && command->id == TM_DIFF) {
         if (argc<3) { fprintf(stderr,"usage: bonfyre-time diff <artifact>\n"); rc=1; }
         else cmd_diff(db,argv[2]);
-    } else if (strcmp(cmd,"history")==0) {
+    } else if (command && command->id == TM_HISTORY) {
         if (argc<3) { fprintf(stderr,"usage: bonfyre-time history <artifact>\n"); rc=1; }
         else cmd_history(db,argv[2]);
-    } else if (strcmp(cmd,"trigger")==0) {
+    } else if (command && command->id == TM_TRIGGER) {
         if (argc<3) { fprintf(stderr,"usage: bonfyre-time trigger <list|add|rm>\n"); rc=1; }
         else if (strcmp(argv[2],"list")==0) cmd_trigger_list(db);
         else if (strcmp(argv[2],"add")==0) {

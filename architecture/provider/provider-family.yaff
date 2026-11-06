@@ -3,6 +3,8 @@ atlas provider
 # events; these are the resolution/placement/parity graphs above it, still to build.
 
 architecture provider-graph
+  consumes CapabilityBid
+  consumes ArtifactParity
   canonical_name ProviderGraph
   family provider
   domain Provider / Resolution
@@ -10,8 +12,12 @@ architecture provider-graph
   semantic_question Which providers can realize this capability, at what multidimensional metric?
   purpose Capability bids, tournament, fallback tree -- native/frappe/replicated/signal/sidecar/external/commercial/capacity/model/device/human bids scored on a vector (cost/quality/latency/trust/authority/locality/semantic-loss/availability), no scalar collapse. Anycast over equivalent realizations.
   maturity implemented
-  source_path components/BonfyreControlPlane/provider_graphs.py
-  witness components/BonfyreControlPlane/tests/test_provider_graphs.py
+  source_path cmd/BonfyreProviderFrontier/tools/refresh_providers.mjs
+  source_path cmd/BonfyreProviderFrontier/provider-refresh.cue
+  source_path components/BonfyreControlPlane/provider_graphs.py.archive
+  witness 2026-09-18 a provider refresh asked all 67 entries directly rather than reading any logged status: 12 answered as themselves with credentials this estate holds (cloudflare queues, workflows, pages, workers and kv; turso, render, vercel, github, firecrawl, posthog, sentry), 4 answered and refused the credential (cloudflare r2, d1, vectorize, workers-ai -- scope or not enabled, never absent), 24 hold no credential here and were not asked, 1 answered 400, and 26 are libraries or local runtimes that no endpoint can be asked about
+  witness components/BonfyreControlPlane/tests/test_provider_graphs.py.archive
+  witness cmd/BonfyreProviderFrontier/tests/refresh_providers.test.mjs
   node_types CapabilityBid
   node_types ProviderTournament
   edge_types realizes
@@ -20,8 +26,11 @@ architecture provider-graph
   forbidden_inference cheapest -> valid
   interacts provider-state
   interacts address-plane
+  interacts realization-measurement
   source_lineage run6/run7 provider topology
   known_gap ProviderStateFold folds events, the route-set daemon advertises/withdraws routes
+  known_gap only ArchitectureLookup has real bids; every other capability still has an empty tournament, which is silence rather than a choice
+  known_gap the Bun refresh replaces only reachability probes; it does not implement provider bidding or placement, and unconfigured endpoints remain not_probeable even with a credential
 
 architecture placement-graph
   canonical_name PlacementGraph
@@ -31,15 +40,15 @@ architecture placement-graph
   semantic_question Where does this run or reside, given locality and resource constraints?
   purpose The material placement of a selected realization across Mac fabric, LAN, GPU, device, remote. Distinct from ProviderGraph (who can) and RuntimeMesh (what instances exist).
   maturity implemented
-  source_path components/BonfyreControlPlane/provider_graphs.py
-  witness components/BonfyreControlPlane/tests/test_provider_graphs.py
+  source_path components/BonfyreControlPlane/provider_graphs.py.archive
+  witness components/BonfyreControlPlane/tests/test_provider_graphs.py.archive
   node_types PlacementNode
   edge_types placed_on
   forbidden_inference placeable -> authorized to execute there
   interacts address-plane
   source_lineage run6/run7 provider topology
   known_gap CID prefix routing gives placement partitions over content digests
-
+  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
 architecture runtime-parity-graph
   canonical_name RuntimeParityGraph
   family provider
@@ -48,11 +57,99 @@ architecture runtime-parity-graph
   semantic_question Do direct, MCP, and HTTP carriers produce the same semantic result?
   purpose Proven semantic equivalence across execution carriers, so route selection can treat them as an equal-cost multipath group.
   maturity implemented
-  source_path components/BonfyreControlPlane/provider_graphs.py
-  witness components/BonfyreControlPlane/tests/test_provider_graphs.py
+  source_path components/BonfyreControlPlane/provider_graphs.py.archive
+  witness components/BonfyreControlPlane/tests/test_provider_graphs.py.archive
   node_types Carrier
   edge_types parity_with
   forbidden_inference a carrier ran -> semantic parity with the others
   interacts transport-phenotype
   source_lineage run6/run7 provider topology
   known_gap TransportPhenotype proved identical digest across direct/MCP already
+  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
+architecture realization-measurement
+  owns RealizationCost
+  consumes AtlasAnswer
+  publishes CapabilityBid
+  publishes ArtifactParity
+  derived RealizationCost
+  canonical_name RealizationMeasurement
+  family provider
+  domain Provider / Realization
+  layer provider
+  semantic_question What does each realization of this capability actually spend, measured rather than assumed?
+  purpose ProviderGraph was implemented and witnessed but never fed -- provider_bids did not exist in the live control plane, so no capability had a competing realization and every request fell through to the most expensive carrier by default. This runs each rung of the cheapest-sufficient ladder (native / local / agent / external / human) against one real capability and records what it spent, in the unit that is actually scarce: context bytes delivered per answered question.
+  maturity implemented
+  # Demoted: every witness this carried was archived. The evidence was
+  # retired and the claim was never revisited, which is the laundering the
+  # atlas forbids -- reclaiming measured needs a witness that runs today.
+  known_gap realization-measurement lost its live witness to archival and holds implemented until one runs again
+  node_types Realization
+  node_types LadderRung
+  edge_types measures
+  edge_types bids_for
+  internal_calculus executed measurement (paths are run, not estimated)
+  internal_calculus answer-digest comparison for artifact parity
+  invariant a bid records real units; polarity belongs to the metric dimension, never to the caller's weights
+  invariant a realization that was not executed does not bid
+  forbidden_inference measured cheapest -> selected (authority and proof still admit)
+  forbidden_inference byte-identical answers -> one provider (artifact identity and producer identity are orthogonal proof dimensions)
+  source_path components/BonfyreControlPlane/realization_measure.py.archive
+  witness components/BonfyreControlPlane/tests/test_realization_measure.py.archive
+  interacts provider-graph
+  interacts atlas-context-provider
+  source_lineage run8 provider-context-pressure
+  source_lineage external chatgpt trajectory -- artifact vs producer identity orthogonality (Bernstein trusted-producer work)
+  known_gap only ArchitectureLookup is measured; the native rung has no bidder yet for this capability
+
+architecture physical-derivation
+  canonical_name PhysicalDerivation
+  family provider
+  domain Provider / Physical Derivation
+  layer provider/realization
+  semantic_question What source, toolchain, environment names, bodies and observations physically realized this semantic demand?
+  purpose Wraps ExecutionEnvironmentGraph and RealizationMeasurement with RealizationManifest, PhysicalExecutionFrame, RealizationObservation, ProviderModelUsageObservation, PhysicalDerivationReceipt, ProviderMaterializationReceipt and BodyAvailability identities. Provider receipts may expose token, cache, retry, wall-time or local CPU/GPU/VRAM dimensions without forcing absent dimensions to zero. A provider file, vector store, collection, container or batch object is replaceable physical residency of a Bonfyre representation rather than another artifact owner.
+  maturity implemented
+  owns RealizationManifest
+  owns PhysicalExecutionFrame
+  owns RealizationObservation
+  owns ProviderModelUsageObservation
+  owns PhysicalDerivationReceipt
+  owns ProviderMaterializationReceipt
+  owns BodyAvailability
+  consumes CapabilityEnvironment
+  consumes ResourceWeather
+  consumes CapabilityBid
+  publishes UsageOccurrence
+  publishes PhysicalDerivationReceipt
+  node_types RealizationManifest
+  node_types PhysicalExecutionFrame
+  node_types PhysicalDerivationReceipt
+  node_types ProviderModelUsageObservation
+  edge_types realizes
+  edge_types materializes
+  edge_types reuses_body
+  invariant environment evidence records dependency names and references, never secret values
+  invariant body reuse is keyed by derivation identity and current validity
+  invariant a CURRENT BodyAvailability entry is admitted only after the named local body reads back to its declared SHA-256 digest; a different body cannot rebind the same derivation and representation identity, and invalidation withdraws reuse eligibility without erasing the historical body or receipt
+  invariant an external provider reference may be reused only for the same provider, scoped representation digest and active materialization; it cannot be rebound to another body
+  invariant releasing or expiry of a provider materialization records loss of reusable external residency and never deletes a canonical artifact, receipt, provider account or authority record
+  invariant sparse provider usage remains explicit rather than becoming zero usage or billing truth
+  invariant Codex aggregate usage may inherit route identity and an explicitly selected model from its immutable epoch launcher, but never infers a model from a CLI default
+  invariant terminal epoch compaction preserves command argv only with its canonical digest; invalid compacted metadata cannot enrich usage coordinates
+  invariant a carrier adapter binds every UsageOccurrence to stable attempt, realization, and physical-receipt identities
+  invariant a pre-attempt-table usage row gains an attempt identity only when a retained carrier receipt exactly matches every stored usage and detail coordinate; a usage-only legacy row remains refused
+  invariant carrier-declared attempt or realization identities cannot be rebound by an adapter
+  forbidden_inference a command exited zero -> its semantic target is proven
+  forbidden_inference a body digest -> producer identity or authority
+  forbidden_inference provider file/vector-store/collection/container/batch identifier -> artifact identity, canonical knowledge, credential, authority, provider admission, output admission or effect right
+  interacts physical-derivation-feeds-finance
+  interacts terminal-epoch-receipt-feeds-finance
+  source_path components/BonfyreControlPlane/financial_metabolism.py.archive
+  source_path components/BonfyreControlPlane/physical_derivation.py.archive
+  source_path cmd/BonfyreProvider/src/main.c
+  witness components/BonfyreControlPlane/tests/test_physical_derivation.py.archive
+  witness components/BonfyreControlPlane/tests/test_financial_metabolism.py.archive
+  witness cmd/BonfyreProvider/tests/smoke.sh proves provider residency is deduplicated only by scoped representation identity, rejects opaque-reference rebinding, excludes release from reusable listings, and retains no credential/body
+  witness cmd/BonfyreProvider/tests/smoke.sh proves BodyAvailability rejects a derivation/representation rebinding to different bytes, detects a later local-body mismatch, and makes a body unavailable after explicit invalidation
+  witness 2026-09-24 the frozen 2,424-coordinate SourceFrontier static RuntimeImage closure was digested as f687126fd4fc2db941d99038e36466103a6d3ee0b131406d2013981e99fb3c74 and recorded CURRENT only after local readback; this proves physical closure availability, not source liveness, semantic success, authority, or effect completion
+  source_lineage Run8 realization measurement and Generation-10 physical derivation ABI

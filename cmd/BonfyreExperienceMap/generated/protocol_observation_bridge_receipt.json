@@ -1,0 +1,1 @@
+{"schema":"bonfyre-protocol-observation-bridge.v1","registered":true,"occurrence_id":"external:protocol-0304","contract":"ogc-api-common-observation","programs":3,"scoped":true,"state":"compiled","cannot_infer":["compiled contract -> OGC conformance","compiled contract -> enacted request","compiled contract -> effect"]}

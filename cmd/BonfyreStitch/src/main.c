@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * BonfyreStitch — DAG materializer.
  *
@@ -15,11 +22,14 @@
  *   bonfyre-stitch cache-stats [--cache DIR]                     — show cache hit/miss
  */
 #include <errno.h>
+#include "bf_lex.h"
+#include "bf_command_lookup.h"
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
 #include <dirent.h>
@@ -45,15 +55,12 @@ typedef struct {
 
 /* Naive JSON extraction */
 static int json_str(const char *json, const char *key, char *out, size_t sz) {
-    char needle[256]; snprintf(needle, sizeof(needle), "\"%s\"", key);
-    const char *p = strstr(json, needle);
-    if (!p) return 0;
-    p += strlen(needle);
-    while (*p && (*p == ' ' || *p == ':' || *p == '\t')) p++;
-    if (*p != '"') return 0; p++;
-    size_t i = 0;
-    while (*p && *p != '"' && i < sz - 1) out[i++] = *p++;
-    out[i] = '\0'; return 1;
+    /* Delegates to the one implementation. This copy searched for "key" rather
+     * than "key": so it matched inside values, and stopped at the first quote
+     * so an escaped one truncated the result -- the bug that silently broke
+     * conditional re-observation elsewhere. Six binaries carried it; a seventh
+     * had been fixed locally and the fix never reached the others. */
+    return bf_lex_json_string(json, key, out, sz);
 }
 
 /* Map op type to Bonfyre binary */
@@ -347,6 +354,11 @@ static int cmd_compile(const char *recipe_path, const char *output_name,
     char recipe_id[64] = "unknown", recipe_name[256] = "Compiled Pipeline";
     json_str(json, "recipe_id", recipe_id, sizeof(recipe_id));
     json_str(json, "name",      recipe_name, sizeof(recipe_name));
+    if (!recipe_id[0] || strspn(recipe_id, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-") != strlen(recipe_id)) {
+        fprintf(stderr, "compile: recipe_id must contain only letters, digits, '_' or '-'\n");
+        free(json);
+        return 1;
+    }
 
     /* ── 2. Parse stages[] ── */
     RecipeStage *stages = (RecipeStage *)calloc(COMP_MAX_STAGES, sizeof(RecipeStage));
@@ -356,10 +368,10 @@ static int cmd_compile(const char *recipe_path, const char *output_name,
     const char *cursor = strstr(json, "\"stages\"");
     if (!cursor) {
         fprintf(stderr, "compile: no 'stages' array in %s\n", recipe_path);
-        free(json); return 1;
+        free(stages); free(json); return 1;
     }
     cursor = strchr(cursor, '[');
-    if (!cursor) { fprintf(stderr, "compile: malformed stages array\n"); free(json); return 1; }
+    if (!cursor) { fprintf(stderr, "compile: malformed stages array\n"); free(stages); free(json); return 1; }
     cursor++;
 
     /* Walk stage objects */
@@ -381,7 +393,7 @@ static int cmd_compile(const char *recipe_path, const char *output_name,
         /* Stage block is [so .. cursor) */
         size_t block_len = (size_t)(cursor - so);
         char *block = (char *)malloc(block_len + 1);
-        if (!block) { free(json); return 1; }
+        if (!block) { free(stages); free(json); return 1; }
         memcpy(block, so, block_len); block[block_len] = '\0';
 
         json_str(block, "id",       st->id,            sizeof(st->id));
@@ -431,10 +443,13 @@ static int cmd_compile(const char *recipe_path, const char *output_name,
     /* ── 3. Emit C source ── */
     /* Determine output .c path */
     char c_path[PATH_MAX];
-    if (recipe_dir)
-        snprintf(c_path, sizeof(c_path), "%s/%s_compiled.c", recipe_dir, recipe_id);
-    else
-        snprintf(c_path, sizeof(c_path), "/tmp/%s_compiled.c", recipe_id);
+    int path_length = recipe_dir
+        ? snprintf(c_path, sizeof(c_path), "%s/%s_compiled.c", recipe_dir, recipe_id)
+        : snprintf(c_path, sizeof(c_path), "/tmp/%s_compiled.c", recipe_id);
+    if (path_length < 0 || (size_t)path_length >= sizeof(c_path)) {
+        fprintf(stderr, "compile: generated source path is too long\n");
+        free(stages); free(json); return 1;
+    }
 
     FILE *fp = fopen(c_path, "w");
     if (!fp) {
@@ -552,14 +567,26 @@ static int cmd_compile(const char *recipe_path, const char *output_name,
     const char *cc = getenv("CC");
     if (!cc || !cc[0]) cc = "cc";
 
-    char cmd_buf[PATH_MAX * 2 + 256];
-    snprintf(cmd_buf, sizeof(cmd_buf), "%s -O2 -o %s %s", cc, output_name, c_path);
-
-    fprintf(stderr, "[stitch compile] %s\n", cmd_buf);
-
-    int rc = system(cmd_buf);
-    if (rc != 0) {
-        fprintf(stderr, "compile: compiler failed (exit %d)\n", rc);
+    fprintf(stderr, "[stitch compile] %s -O2 -o %s %s\n", cc, output_name, c_path);
+    pid_t compiler = fork();
+    if (compiler == 0) {
+        execlp(cc, cc, "-O2", "-o", output_name, c_path, (char *)NULL);
+        perror("compile: exec compiler");
+        _exit(127);
+    }
+    if (compiler < 0) {
+        perror("compile: fork compiler");
+        free(stages); free(json); return 1;
+    }
+    int status;
+    while (waitpid(compiler, &status, 0) < 0) {
+        if (errno == EINTR) continue;
+        perror("compile: wait for compiler");
+        free(stages); free(json); return 1;
+    }
+    if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+        fprintf(stderr, "compile: compiler failed (exit %d)\n",
+                WIFEXITED(status) ? WEXITSTATUS(status) : -1);
         free(stages); free(json); return 1;
     }
 
@@ -573,12 +600,38 @@ static int cmd_compile(const char *recipe_path, const char *output_name,
 
 /* ---------- main ---------- */
 
+#define STITCH_COMMANDS(X) \
+    X("cache-stats", SC_CACHE_STATS) \
+    X("compile", SC_COMPILE) \
+    X("layer-composite", SC_LAYER_COMPOSITE) \
+    X("layer-plan", SC_LAYER_PLAN) \
+    X("materialize", SC_MATERIALIZE) \
+    X("plan", SC_PLAN) \
+    X("prune", SC_PRUNE) \
+    X("resolve-bridges", SC_RESOLVE_BRIDGES) \
+    X("validate-layer-dag", SC_VALIDATE_LAYER_DAG)
+
+enum StitchCommand {
+#define STITCH_ENUM(name, command_id) command_id,
+    STITCH_COMMANDS(STITCH_ENUM)
+#undef STITCH_ENUM
+};
+
+static const BfCommandEntry stitch_commands[] = {
+#define STITCH_ENTRY(name, command_id) {name, command_id, 0, NULL},
+    STITCH_COMMANDS(STITCH_ENTRY)
+#undef STITCH_ENTRY
+};
+
 int main(int argc, char *argv[]) {
+    const BfCommandEntry *command = argc >= 2 ? bf_command_lookup(stitch_commands,
+        sizeof(stitch_commands) / sizeof(stitch_commands[0]), argv[1]) : NULL;
     if (argc >= 2) {
-        if (strcmp(argv[1], "layer-plan") == 0) {
+        if (command && command->id == SC_LAYER_PLAN) {
             const char *root = NULL;
             char *json = NULL;
-            int discipl_trace = getenv("DISCIPL_TRACE") && strcmp(getenv("DISCIPL_TRACE"), "1") == 0;
+            const char *trace = getenv("DISCIPL_TRACE");
+            int discipl_trace = trace && strcmp(trace, "1") == 0;
             for (int i = 2; i < argc; i++) {
                 if (strcmp(argv[i], "--root") == 0 && i + 1 < argc) root = argv[i + 1];
                 if (strcmp(argv[i], "--discipl") == 0) discipl_trace = 1;
@@ -601,7 +654,7 @@ int main(int argc, char *argv[]) {
             free(json);
             return 0;
         }
-        if (strcmp(argv[1], "validate-layer-dag") == 0) {
+        if (command && command->id == SC_VALIDATE_LAYER_DAG) {
             char *json = NULL;
             int rc;
             if (argc < 3) { fprintf(stderr, "validate-layer-dag requires <plan.json>\n"); return 1; }
@@ -614,7 +667,7 @@ int main(int argc, char *argv[]) {
             free(json);
             return rc;
         }
-        if (strcmp(argv[1], "resolve-bridges") == 0) {
+        if (command && command->id == SC_RESOLVE_BRIDGES) {
             const char *root = NULL;
             char *json = NULL;
             for (int i = 2; i < argc - 1; i++)
@@ -628,7 +681,7 @@ int main(int argc, char *argv[]) {
             free(json);
             return 0;
         }
-        if (strcmp(argv[1], "layer-composite") == 0) {
+        if (command && command->id == SC_LAYER_COMPOSITE) {
             const char *out = NULL;
             char *json = NULL;
             if (argc < 3) { fprintf(stderr, "layer-composite requires <virtual_composite_id>\n"); return 1; }
@@ -645,14 +698,14 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if (argc >= 3 && strcmp(argv[1], "plan") == 0) {
+    if (argc >= 3 && command && command->id == SC_PLAN) {
         const char *target = NULL;
         for (int i = 3; i < argc - 1; i++)
             if (strcmp(argv[i], "--target") == 0) target = argv[i+1];
         if (!target) { fprintf(stderr, "plan requires --target\n"); return 1; }
         return cmd_plan(argv[2], target);
     }
-    if (argc >= 3 && strcmp(argv[1], "materialize") == 0) {
+    if (argc >= 3 && command && command->id == SC_MATERIALIZE) {
         const char *target = NULL;
         for (int i = 3; i < argc - 1; i++)
             if (strcmp(argv[i], "--target") == 0) target = argv[i+1];
@@ -663,19 +716,19 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "[stitch] (full execution requires all operator binaries to be installed)\n");
         return 0;
     }
-    if (argc >= 3 && strcmp(argv[1], "prune") == 0) {
+    if (argc >= 3 && command && command->id == SC_PRUNE) {
         int keep_pinned = 0;
         for (int i = 3; i < argc; i++)
             if (strcmp(argv[i], "--keep-pinned") == 0) keep_pinned = 1;
         return cmd_prune(argv[2], keep_pinned);
     }
-    if (argc >= 2 && strcmp(argv[1], "cache-stats") == 0) {
+    if (argc >= 2 && command && command->id == SC_CACHE_STATS) {
         const char *cache = NULL;
         for (int i = 2; i < argc - 1; i++)
             if (strcmp(argv[i], "--cache") == 0) cache = argv[i+1];
         return cmd_cache_stats(cache);
     }
-    if (argc >= 3 && strcmp(argv[1], "compile") == 0) {
+    if (argc >= 3 && command && command->id == SC_COMPILE) {
         const char *output_name = NULL, *recipe_dir = NULL;
         for (int i = 3; i < argc - 1; i++) {
             if (strcmp(argv[i], "--output") == 0) output_name = argv[i+1];

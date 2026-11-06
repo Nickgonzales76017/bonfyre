@@ -1,0 +1,45 @@
+{
+  "schema": "bonfyre.embed.agreement.v1",
+  "teacher": {
+    "model": "nomic-embed-text-onnx",
+    "onnx_path": "/Users/nickgonzales/.cache/bonfyre/models/nomic-embed-text-onnx/onnx/model.onnx",
+    "onnx_sha256": "b4342336debaea79de872370664b0aaeb67dea4605513d00ee236ea871a81f27",
+    "onnx_bytes": 137296292,
+    "vocab_sha256": "07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3",
+    "dims": 768,
+    "max_tokens": 128
+  },
+  "static": {
+    "path": "/Users/nickgonzales/BonfyreModels/static/nomic-static-128.bfse",
+    "sha256": "5b722d081d18113a77970f63d2bd4bef346ca3e56d6c12c0fadf2c3f1032b51e",
+    "dims": 128
+  },
+  "corpus": {
+    "path": "/Users/nickgonzales/.bonfyre/estate-local/recall/sites-work/passages.jsonl",
+    "sha256": "e3b2a8beeeb28727d338e9a2112975dd66762bd76901f7437788501349c259e4",
+    "rows_read": 1703,
+    "compared": 1703,
+    "refused_invisible_to_teacher": 0,
+    "refused_empty_static": 0,
+    "limit": 2000
+  },
+  "k": 10,
+  "neighbour_overlap_at_k": 0.18549618320610686,
+  "worst_query_overlap_at_k": 0,
+  "top1_agreement": 0.17087492660011744,
+  "teacher_ms_per_text": 62.16123605432471,
+  "static_ms_per_text": 0.002571344760608057,
+  "peak_footprint_bytes": 279939456,
+  "admission": {
+    "volume": "memory",
+    "estimate_bytes": 274592584,
+    "estimate_rule": "2 x ONNX graph bytes",
+    "verdict": "admit",
+    "released": true
+  },
+  "cannot_infer": [
+    "neighbour overlap with the teacher -> retrieval quality; the teacher itself is unjudged here",
+    "agreement on this corpus -> agreement on another corpus or language",
+    "the .bfse was distilled from this teacher; only the bytes compared are named"
+  ]
+}

@@ -1,0 +1,3268 @@
+[
+    {
+        "grammar": "discover",
+        "presentation_class": "anonymous",
+        "question": "What lawful possibilities intersect this addressed situation? What can a public visitor understand without an account assumption?",
+        "experience_character": "public orientation over source-derived material",
+        "visible_sections": [
+            "candidate horizon",
+            "why this may be shown",
+            "next context",
+            "public boundary"
+        ],
+        "preferred_renderers": [
+            "faceted-discovery",
+            "comparison-tray"
+        ],
+        "renderer_family": "vertical",
+        "renderer_variant": "faceted_stream",
+        "route": "/discover",
+        "interaction_density": "low",
+        "allowed_affordance_families": [
+            "inspect",
+            "compare",
+            "open_context",
+            "open",
+            "inspect"
+        ],
+        "external_demand_roles": [
+            "affordance:DISCOVER",
+            "affordance:SEARCH",
+            "affordance:MATCH",
+            "domain:community",
+            "domain:travel",
+            "domain:education",
+            "source_kind:public_api",
+            "source_kind:rss",
+            "source_kind:mcp"
+        ],
+        "empty_character": "Nothing public answers this address yet.",
+        "refusal_character": "This public view does not imply a private relationship or permission.",
+        "extent_defaults": "section",
+        "navigation_neighbors": [
+            "worlds",
+            "board",
+            "territory"
+        ],
+        "requires": [
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "discover",
+        "presentation_class": "personal",
+        "question": "What lawful possibilities intersect this addressed situation? What intersects the actor's real relations, Habitat and permitted Packs?",
+        "experience_character": "relation, Habitat and permitted-Pack aware projection",
+        "visible_sections": [
+            "candidate horizon",
+            "why this may be shown",
+            "next context",
+            "personal context",
+            "kept relations"
+        ],
+        "preferred_renderers": [
+            "faceted-discovery",
+            "comparison-tray"
+        ],
+        "renderer_family": "vertical",
+        "renderer_variant": "faceted_stream",
+        "route": "/discover",
+        "interaction_density": "medium",
+        "allowed_affordance_families": [
+            "inspect",
+            "compare",
+            "open_context",
+            "save",
+            "join_request",
+            "go"
+        ],
+        "external_demand_roles": [
+            "affordance:DISCOVER",
+            "affordance:SEARCH",
+            "affordance:MATCH",
+            "domain:community",
+            "domain:travel",
+            "domain:education",
+            "source_kind:public_api",
+            "source_kind:rss",
+            "source_kind:mcp"
+        ],
+        "empty_character": "Nothing admitted to this personal context answers yet.",
+        "refusal_character": "A personal presentation cannot invent a relation, Habitat or Pack closure.",
+        "extent_defaults": "section",
+        "navigation_neighbors": [
+            "worlds",
+            "board",
+            "territory"
+        ],
+        "requires": [
+            "relation",
+            "pack",
+            "habitat",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "discover",
+        "presentation_class": "member_worker",
+        "question": "What lawful possibilities intersect this addressed situation? What intersects the real community, mission or work closure?",
+        "experience_character": "scoped member, project and work projection",
+        "visible_sections": [
+            "candidate horizon",
+            "why this may be shown",
+            "next context",
+            "shared context",
+            "work boundary"
+        ],
+        "preferred_renderers": [
+            "faceted-discovery",
+            "comparison-tray"
+        ],
+        "renderer_family": "vertical",
+        "renderer_variant": "faceted_stream",
+        "route": "/discover",
+        "interaction_density": "high",
+        "allowed_affordance_families": [
+            "inspect",
+            "compare",
+            "open_context",
+            "participate",
+            "handoff",
+            "open_context"
+        ],
+        "external_demand_roles": [
+            "affordance:DISCOVER",
+            "affordance:SEARCH",
+            "affordance:MATCH",
+            "domain:community",
+            "domain:travel",
+            "domain:education",
+            "source_kind:public_api",
+            "source_kind:rss",
+            "source_kind:mcp"
+        ],
+        "empty_character": "Nothing admitted to this member or work scope is waiting.",
+        "refusal_character": "This presentation cannot infer membership, assignment or authority.",
+        "extent_defaults": "section",
+        "navigation_neighbors": [
+            "worlds",
+            "board",
+            "territory"
+        ],
+        "requires": [
+            "relation",
+            "pack",
+            "work_scope",
+            "institution",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "discover",
+        "presentation_class": "operator",
+        "question": "What lawful possibilities intersect this addressed situation? Which controls and exceptions are visible around the already-resolved closure?",
+        "experience_character": "operational observability over real owner boundaries",
+        "visible_sections": [
+            "candidate horizon",
+            "why this may be shown",
+            "next context",
+            "operational context",
+            "owner boundaries"
+        ],
+        "preferred_renderers": [
+            "faceted-discovery",
+            "comparison-tray"
+        ],
+        "renderer_family": "vertical",
+        "renderer_variant": "faceted_stream",
+        "route": "/discover",
+        "interaction_density": "very_high",
+        "allowed_affordance_families": [
+            "inspect",
+            "compare",
+            "open_context",
+            "inspect",
+            "trace",
+            "request_operation"
+        ],
+        "external_demand_roles": [
+            "affordance:DISCOVER",
+            "affordance:SEARCH",
+            "affordance:MATCH",
+            "domain:community",
+            "domain:travel",
+            "domain:education",
+            "source_kind:public_api",
+            "source_kind:rss",
+            "source_kind:mcp"
+        ],
+        "empty_character": "No operational residue is visible at this resolved closure.",
+        "refusal_character": "A visible operator control is not authority to admit, spend, publish or effect.",
+        "extent_defaults": "section",
+        "navigation_neighbors": [
+            "worlds",
+            "board",
+            "territory"
+        ],
+        "requires": [
+            "institution",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "stage",
+        "presentation_class": "anonymous",
+        "question": "What is progressing in this occurrence, and what is lawful to do now? What can a public visitor understand without an account assumption?",
+        "experience_character": "public orientation over source-derived material",
+        "visible_sections": [
+            "temporal focus",
+            "current observations",
+            "participation context",
+            "public boundary"
+        ],
+        "preferred_renderers": [
+            "temporal-stage",
+            "event-rail"
+        ],
+        "renderer_family": "stage",
+        "renderer_variant": "timeline",
+        "route": "/stage",
+        "interaction_density": "low",
+        "allowed_affordance_families": [
+            "inspect",
+            "follow",
+            "open_context",
+            "open",
+            "inspect"
+        ],
+        "external_demand_roles": [
+            "affordance:OBSERVE",
+            "affordance:STREAM",
+            "affordance:SCHEDULE",
+            "affordance:ALERT",
+            "domain:sports",
+            "domain:weather",
+            "domain:transport",
+            "domain:media",
+            "source_kind:public_api",
+            "source_kind:rss"
+        ],
+        "empty_character": "Nothing public answers this address yet.",
+        "refusal_character": "This public view does not imply a private relationship or permission.",
+        "extent_defaults": "page",
+        "navigation_neighbors": [
+            "observations",
+            "spatial",
+            "channels"
+        ],
+        "requires": [
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "stage",
+        "presentation_class": "personal",
+        "question": "What is progressing in this occurrence, and what is lawful to do now? What intersects the actor's real relations, Habitat and permitted Packs?",
+        "experience_character": "relation, Habitat and permitted-Pack aware projection",
+        "visible_sections": [
+            "temporal focus",
+            "current observations",
+            "participation context",
+            "personal context",
+            "kept relations"
+        ],
+        "preferred_renderers": [
+            "temporal-stage",
+            "event-rail"
+        ],
+        "renderer_family": "stage",
+        "renderer_variant": "timeline",
+        "route": "/stage",
+        "interaction_density": "medium",
+        "allowed_affordance_families": [
+            "inspect",
+            "follow",
+            "open_context",
+            "save",
+            "join_request",
+            "go"
+        ],
+        "external_demand_roles": [
+            "affordance:OBSERVE",
+            "affordance:STREAM",
+            "affordance:SCHEDULE",
+            "affordance:ALERT",
+            "domain:sports",
+            "domain:weather",
+            "domain:transport",
+            "domain:media",
+            "source_kind:public_api",
+            "source_kind:rss"
+        ],
+        "empty_character": "Nothing admitted to this personal context answers yet.",
+        "refusal_character": "A personal presentation cannot invent a relation, Habitat or Pack closure.",
+        "extent_defaults": "page",
+        "navigation_neighbors": [
+            "observations",
+            "spatial",
+            "channels"
+        ],
+        "requires": [
+            "relation",
+            "pack",
+            "habitat",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "stage",
+        "presentation_class": "member_worker",
+        "question": "What is progressing in this occurrence, and what is lawful to do now? What intersects the real community, mission or work closure?",
+        "experience_character": "scoped member, project and work projection",
+        "visible_sections": [
+            "temporal focus",
+            "current observations",
+            "participation context",
+            "shared context",
+            "work boundary"
+        ],
+        "preferred_renderers": [
+            "temporal-stage",
+            "event-rail"
+        ],
+        "renderer_family": "stage",
+        "renderer_variant": "timeline",
+        "route": "/stage",
+        "interaction_density": "high",
+        "allowed_affordance_families": [
+            "inspect",
+            "follow",
+            "open_context",
+            "participate",
+            "handoff",
+            "open_context"
+        ],
+        "external_demand_roles": [
+            "affordance:OBSERVE",
+            "affordance:STREAM",
+            "affordance:SCHEDULE",
+            "affordance:ALERT",
+            "domain:sports",
+            "domain:weather",
+            "domain:transport",
+            "domain:media",
+            "source_kind:public_api",
+            "source_kind:rss"
+        ],
+        "empty_character": "Nothing admitted to this member or work scope is waiting.",
+        "refusal_character": "This presentation cannot infer membership, assignment or authority.",
+        "extent_defaults": "page",
+        "navigation_neighbors": [
+            "observations",
+            "spatial",
+            "channels"
+        ],
+        "requires": [
+            "relation",
+            "pack",
+            "work_scope",
+            "institution",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "stage",
+        "presentation_class": "operator",
+        "question": "What is progressing in this occurrence, and what is lawful to do now? Which controls and exceptions are visible around the already-resolved closure?",
+        "experience_character": "operational observability over real owner boundaries",
+        "visible_sections": [
+            "temporal focus",
+            "current observations",
+            "participation context",
+            "operational context",
+            "owner boundaries"
+        ],
+        "preferred_renderers": [
+            "temporal-stage",
+            "event-rail"
+        ],
+        "renderer_family": "stage",
+        "renderer_variant": "timeline",
+        "route": "/stage",
+        "interaction_density": "very_high",
+        "allowed_affordance_families": [
+            "inspect",
+            "follow",
+            "open_context",
+            "inspect",
+            "trace",
+            "request_operation"
+        ],
+        "external_demand_roles": [
+            "affordance:OBSERVE",
+            "affordance:STREAM",
+            "affordance:SCHEDULE",
+            "affordance:ALERT",
+            "domain:sports",
+            "domain:weather",
+            "domain:transport",
+            "domain:media",
+            "source_kind:public_api",
+            "source_kind:rss"
+        ],
+        "empty_character": "No operational residue is visible at this resolved closure.",
+        "refusal_character": "A visible operator control is not authority to admit, spend, publish or effect.",
+        "extent_defaults": "page",
+        "navigation_neighbors": [
+            "observations",
+            "spatial",
+            "channels"
+        ],
+        "requires": [
+            "institution",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "channels",
+        "presentation_class": "anonymous",
+        "question": "Which conversations and notices belong in this context? What can a public visitor understand without an account assumption?",
+        "experience_character": "public orientation over source-derived material",
+        "visible_sections": [
+            "threads",
+            "notices",
+            "conversation boundaries",
+            "public boundary"
+        ],
+        "preferred_renderers": [
+            "thread-stream",
+            "notice-rail"
+        ],
+        "renderer_family": "thread",
+        "renderer_variant": "threaded_stream",
+        "route": "/community",
+        "interaction_density": "low",
+        "allowed_affordance_families": [
+            "read",
+            "reply",
+            "follow",
+            "open",
+            "inspect"
+        ],
+        "external_demand_roles": [
+            "affordance:COMMUNICATE",
+            "affordance:TRANSLATE",
+            "affordance:ALERT",
+            "affordance:PUBLISH",
+            "domain:community",
+            "domain:media",
+            "domain:education",
+            "source_kind:mcp",
+            "source_kind:rss"
+        ],
+        "empty_character": "Nothing public answers this address yet.",
+        "refusal_character": "This public view does not imply a private relationship or permission.",
+        "extent_defaults": "page",
+        "navigation_neighbors": [
+            "community",
+            "inbox",
+            "stage"
+        ],
+        "requires": [
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "channels",
+        "presentation_class": "personal",
+        "question": "Which conversations and notices belong in this context? What intersects the actor's real relations, Habitat and permitted Packs?",
+        "experience_character": "relation, Habitat and permitted-Pack aware projection",
+        "visible_sections": [
+            "threads",
+            "notices",
+            "conversation boundaries",
+            "personal context",
+            "kept relations"
+        ],
+        "preferred_renderers": [
+            "thread-stream",
+            "notice-rail"
+        ],
+        "renderer_family": "thread",
+        "renderer_variant": "threaded_stream",
+        "route": "/community",
+        "interaction_density": "medium",
+        "allowed_affordance_families": [
+            "read",
+            "reply",
+            "follow",
+            "save",
+            "join_request",
+            "go"
+        ],
+        "external_demand_roles": [
+            "affordance:COMMUNICATE",
+            "affordance:TRANSLATE",
+            "affordance:ALERT",
+            "affordance:PUBLISH",
+            "domain:community",
+            "domain:media",
+            "domain:education",
+            "source_kind:mcp",
+            "source_kind:rss"
+        ],
+        "empty_character": "Nothing admitted to this personal context answers yet.",
+        "refusal_character": "A personal presentation cannot invent a relation, Habitat or Pack closure.",
+        "extent_defaults": "page",
+        "navigation_neighbors": [
+            "community",
+            "inbox",
+            "stage"
+        ],
+        "requires": [
+            "relation",
+            "pack",
+            "habitat",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "channels",
+        "presentation_class": "member_worker",
+        "question": "Which conversations and notices belong in this context? What intersects the real community, mission or work closure?",
+        "experience_character": "scoped member, project and work projection",
+        "visible_sections": [
+            "threads",
+            "notices",
+            "conversation boundaries",
+            "shared context",
+            "work boundary"
+        ],
+        "preferred_renderers": [
+            "thread-stream",
+            "notice-rail"
+        ],
+        "renderer_family": "thread",
+        "renderer_variant": "threaded_stream",
+        "route": "/community",
+        "interaction_density": "high",
+        "allowed_affordance_families": [
+            "read",
+            "reply",
+            "follow",
+            "participate",
+            "handoff",
+            "open_context"
+        ],
+        "external_demand_roles": [
+            "affordance:COMMUNICATE",
+            "affordance:TRANSLATE",
+            "affordance:ALERT",
+            "affordance:PUBLISH",
+            "domain:community",
+            "domain:media",
+            "domain:education",
+            "source_kind:mcp",
+            "source_kind:rss"
+        ],
+        "empty_character": "Nothing admitted to this member or work scope is waiting.",
+        "refusal_character": "This presentation cannot infer membership, assignment or authority.",
+        "extent_defaults": "page",
+        "navigation_neighbors": [
+            "community",
+            "inbox",
+            "stage"
+        ],
+        "requires": [
+            "relation",
+            "pack",
+            "work_scope",
+            "institution",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "channels",
+        "presentation_class": "operator",
+        "question": "Which conversations and notices belong in this context? Which controls and exceptions are visible around the already-resolved closure?",
+        "experience_character": "operational observability over real owner boundaries",
+        "visible_sections": [
+            "threads",
+            "notices",
+            "conversation boundaries",
+            "operational context",
+            "owner boundaries"
+        ],
+        "preferred_renderers": [
+            "thread-stream",
+            "notice-rail"
+        ],
+        "renderer_family": "thread",
+        "renderer_variant": "threaded_stream",
+        "route": "/community",
+        "interaction_density": "very_high",
+        "allowed_affordance_families": [
+            "read",
+            "reply",
+            "follow",
+            "inspect",
+            "trace",
+            "request_operation"
+        ],
+        "external_demand_roles": [
+            "affordance:COMMUNICATE",
+            "affordance:TRANSLATE",
+            "affordance:ALERT",
+            "affordance:PUBLISH",
+            "domain:community",
+            "domain:media",
+            "domain:education",
+            "source_kind:mcp",
+            "source_kind:rss"
+        ],
+        "empty_character": "No operational residue is visible at this resolved closure.",
+        "refusal_character": "A visible operator control is not authority to admit, spend, publish or effect.",
+        "extent_defaults": "page",
+        "navigation_neighbors": [
+            "community",
+            "inbox",
+            "stage"
+        ],
+        "requires": [
+            "institution",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "community",
+        "presentation_class": "anonymous",
+        "question": "Who and what are gathered here under this community's terms? What can a public visitor understand without an account assumption?",
+        "experience_character": "public orientation over source-derived material",
+        "visible_sections": [
+            "body",
+            "shared work",
+            "public norms",
+            "public boundary"
+        ],
+        "preferred_renderers": [
+            "community-atlas",
+            "member-constellation"
+        ],
+        "renderer_family": "community",
+        "renderer_variant": "community_profile",
+        "route": "/community",
+        "interaction_density": "low",
+        "allowed_affordance_families": [
+            "inspect",
+            "join_request",
+            "open_context",
+            "open",
+            "inspect"
+        ],
+        "external_demand_roles": [
+            "affordance:IDENTIFY",
+            "affordance:COMMUNICATE",
+            "affordance:PUBLISH",
+            "domain:community",
+            "domain:people",
+            "domain:government",
+            "source_kind:public_api",
+            "source_kind:mcp"
+        ],
+        "empty_character": "Nothing public answers this address yet.",
+        "refusal_character": "This public view does not imply a private relationship or permission.",
+        "extent_defaults": "page",
+        "navigation_neighbors": [
+            "channels",
+            "worlds",
+            "board"
+        ],
+        "requires": [
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "community",
+        "presentation_class": "personal",
+        "question": "Who and what are gathered here under this community's terms? What intersects the actor's real relations, Habitat and permitted Packs?",
+        "experience_character": "relation, Habitat and permitted-Pack aware projection",
+        "visible_sections": [
+            "body",
+            "shared work",
+            "public norms",
+            "personal context",
+            "kept relations"
+        ],
+        "preferred_renderers": [
+            "community-atlas",
+            "member-constellation"
+        ],
+        "renderer_family": "community",
+        "renderer_variant": "community_profile",
+        "route": "/community",
+        "interaction_density": "medium",
+        "allowed_affordance_families": [
+            "inspect",
+            "join_request",
+            "open_context",
+            "save",
+            "join_request",
+            "go"
+        ],
+        "external_demand_roles": [
+            "affordance:IDENTIFY",
+            "affordance:COMMUNICATE",
+            "affordance:PUBLISH",
+            "domain:community",
+            "domain:people",
+            "domain:government",
+            "source_kind:public_api",
+            "source_kind:mcp"
+        ],
+        "empty_character": "Nothing admitted to this personal context answers yet.",
+        "refusal_character": "A personal presentation cannot invent a relation, Habitat or Pack closure.",
+        "extent_defaults": "page",
+        "navigation_neighbors": [
+            "channels",
+            "worlds",
+            "board"
+        ],
+        "requires": [
+            "relation",
+            "pack",
+            "habitat",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "community",
+        "presentation_class": "member_worker",
+        "question": "Who and what are gathered here under this community's terms? What intersects the real community, mission or work closure?",
+        "experience_character": "scoped member, project and work projection",
+        "visible_sections": [
+            "body",
+            "shared work",
+            "public norms",
+            "shared context",
+            "work boundary"
+        ],
+        "preferred_renderers": [
+            "community-atlas",
+            "member-constellation"
+        ],
+        "renderer_family": "community",
+        "renderer_variant": "community_profile",
+        "route": "/community",
+        "interaction_density": "high",
+        "allowed_affordance_families": [
+            "inspect",
+            "join_request",
+            "open_context",
+            "participate",
+            "handoff",
+            "open_context"
+        ],
+        "external_demand_roles": [
+            "affordance:IDENTIFY",
+            "affordance:COMMUNICATE",
+            "affordance:PUBLISH",
+            "domain:community",
+            "domain:people",
+            "domain:government",
+            "source_kind:public_api",
+            "source_kind:mcp"
+        ],
+        "empty_character": "Nothing admitted to this member or work scope is waiting.",
+        "refusal_character": "This presentation cannot infer membership, assignment or authority.",
+        "extent_defaults": "page",
+        "navigation_neighbors": [
+            "channels",
+            "worlds",
+            "board"
+        ],
+        "requires": [
+            "relation",
+            "pack",
+            "work_scope",
+            "institution",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "community",
+        "presentation_class": "operator",
+        "question": "Who and what are gathered here under this community's terms? Which controls and exceptions are visible around the already-resolved closure?",
+        "experience_character": "operational observability over real owner boundaries",
+        "visible_sections": [
+            "body",
+            "shared work",
+            "public norms",
+            "operational context",
+            "owner boundaries"
+        ],
+        "preferred_renderers": [
+            "community-atlas",
+            "member-constellation"
+        ],
+        "renderer_family": "community",
+        "renderer_variant": "community_profile",
+        "route": "/community",
+        "interaction_density": "very_high",
+        "allowed_affordance_families": [
+            "inspect",
+            "join_request",
+            "open_context",
+            "inspect",
+            "trace",
+            "request_operation"
+        ],
+        "external_demand_roles": [
+            "affordance:IDENTIFY",
+            "affordance:COMMUNICATE",
+            "affordance:PUBLISH",
+            "domain:community",
+            "domain:people",
+            "domain:government",
+            "source_kind:public_api",
+            "source_kind:mcp"
+        ],
+        "empty_character": "No operational residue is visible at this resolved closure.",
+        "refusal_character": "A visible operator control is not authority to admit, spend, publish or effect.",
+        "extent_defaults": "page",
+        "navigation_neighbors": [
+            "channels",
+            "worlds",
+            "board"
+        ],
+        "requires": [
+            "institution",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "board",
+        "presentation_class": "anonymous",
+        "question": "What heterogeneous material helps this situation move forward? What can a public visitor understand without an account assumption?",
+        "experience_character": "public orientation over source-derived material",
+        "visible_sections": [
+            "arrangement",
+            "references",
+            "working alternatives",
+            "public boundary"
+        ],
+        "preferred_renderers": [
+            "heterogeneous-board",
+            "comparison-tray"
+        ],
+        "renderer_family": "board",
+        "renderer_variant": "masonry_board",
+        "route": "/board",
+        "interaction_density": "low",
+        "allowed_affordance_families": [
+            "inspect",
+            "arrange",
+            "compare",
+            "open",
+            "inspect"
+        ],
+        "external_demand_roles": [
+            "affordance:COMPARE",
+            "affordance:SEARCH",
+            "affordance:DISCOVER",
+            "affordance:OPTIMIZE",
+            "domain:research",
+            "domain:art",
+            "domain:construction",
+            "domain:food",
+            "source_kind:public_api",
+            "source_kind:mcp"
+        ],
+        "empty_character": "Nothing public answers this address yet.",
+        "refusal_character": "This public view does not imply a private relationship or permission.",
+        "extent_defaults": "workspace",
+        "navigation_neighbors": [
+            "discover",
+            "worlds",
+            "studio"
+        ],
+        "requires": [
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "board",
+        "presentation_class": "personal",
+        "question": "What heterogeneous material helps this situation move forward? What intersects the actor's real relations, Habitat and permitted Packs?",
+        "experience_character": "relation, Habitat and permitted-Pack aware projection",
+        "visible_sections": [
+            "arrangement",
+            "references",
+            "working alternatives",
+            "personal context",
+            "kept relations"
+        ],
+        "preferred_renderers": [
+            "heterogeneous-board",
+            "comparison-tray"
+        ],
+        "renderer_family": "board",
+        "renderer_variant": "masonry_board",
+        "route": "/board",
+        "interaction_density": "medium",
+        "allowed_affordance_families": [
+            "inspect",
+            "arrange",
+            "compare",
+            "save",
+            "join_request",
+            "go"
+        ],
+        "external_demand_roles": [
+            "affordance:COMPARE",
+            "affordance:SEARCH",
+            "affordance:DISCOVER",
+            "affordance:OPTIMIZE",
+            "domain:research",
+            "domain:art",
+            "domain:construction",
+            "domain:food",
+            "source_kind:public_api",
+            "source_kind:mcp"
+        ],
+        "empty_character": "Nothing admitted to this personal context answers yet.",
+        "refusal_character": "A personal presentation cannot invent a relation, Habitat or Pack closure.",
+        "extent_defaults": "workspace",
+        "navigation_neighbors": [
+            "discover",
+            "worlds",
+            "studio"
+        ],
+        "requires": [
+            "relation",
+            "pack",
+            "habitat",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "board",
+        "presentation_class": "member_worker",
+        "question": "What heterogeneous material helps this situation move forward? What intersects the real community, mission or work closure?",
+        "experience_character": "scoped member, project and work projection",
+        "visible_sections": [
+            "arrangement",
+            "references",
+            "working alternatives",
+            "shared context",
+            "work boundary"
+        ],
+        "preferred_renderers": [
+            "heterogeneous-board",
+            "comparison-tray"
+        ],
+        "renderer_family": "board",
+        "renderer_variant": "masonry_board",
+        "route": "/board",
+        "interaction_density": "high",
+        "allowed_affordance_families": [
+            "inspect",
+            "arrange",
+            "compare",
+            "participate",
+            "handoff",
+            "open_context"
+        ],
+        "external_demand_roles": [
+            "affordance:COMPARE",
+            "affordance:SEARCH",
+            "affordance:DISCOVER",
+            "affordance:OPTIMIZE",
+            "domain:research",
+            "domain:art",
+            "domain:construction",
+            "domain:food",
+            "source_kind:public_api",
+            "source_kind:mcp"
+        ],
+        "empty_character": "Nothing admitted to this member or work scope is waiting.",
+        "refusal_character": "This presentation cannot infer membership, assignment or authority.",
+        "extent_defaults": "workspace",
+        "navigation_neighbors": [
+            "discover",
+            "worlds",
+            "studio"
+        ],
+        "requires": [
+            "relation",
+            "pack",
+            "work_scope",
+            "institution",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "board",
+        "presentation_class": "operator",
+        "question": "What heterogeneous material helps this situation move forward? Which controls and exceptions are visible around the already-resolved closure?",
+        "experience_character": "operational observability over real owner boundaries",
+        "visible_sections": [
+            "arrangement",
+            "references",
+            "working alternatives",
+            "operational context",
+            "owner boundaries"
+        ],
+        "preferred_renderers": [
+            "heterogeneous-board",
+            "comparison-tray"
+        ],
+        "renderer_family": "board",
+        "renderer_variant": "masonry_board",
+        "route": "/board",
+        "interaction_density": "very_high",
+        "allowed_affordance_families": [
+            "inspect",
+            "arrange",
+            "compare",
+            "inspect",
+            "trace",
+            "request_operation"
+        ],
+        "external_demand_roles": [
+            "affordance:COMPARE",
+            "affordance:SEARCH",
+            "affordance:DISCOVER",
+            "affordance:OPTIMIZE",
+            "domain:research",
+            "domain:art",
+            "domain:construction",
+            "domain:food",
+            "source_kind:public_api",
+            "source_kind:mcp"
+        ],
+        "empty_character": "No operational residue is visible at this resolved closure.",
+        "refusal_character": "A visible operator control is not authority to admit, spend, publish or effect.",
+        "extent_defaults": "workspace",
+        "navigation_neighbors": [
+            "discover",
+            "worlds",
+            "studio"
+        ],
+        "requires": [
+            "institution",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "spatial",
+        "presentation_class": "anonymous",
+        "question": "How is this world arranged across place, route and capacity? What can a public visitor understand without an account assumption?",
+        "experience_character": "public orientation over source-derived material",
+        "visible_sections": [
+            "map",
+            "layers",
+            "coverage and route",
+            "public boundary"
+        ],
+        "preferred_renderers": [
+            "spatial-field",
+            "route-inspector"
+        ],
+        "renderer_family": "spatial",
+        "renderer_variant": "map",
+        "route": "/spatial",
+        "interaction_density": "low",
+        "allowed_affordance_families": [
+            "inspect",
+            "locate",
+            "route",
+            "open",
+            "inspect"
+        ],
+        "external_demand_roles": [
+            "affordance:LOCATE",
+            "affordance:ROUTE",
+            "affordance:MEASURE",
+            "affordance:OBSERVE",
+            "domain:weather",
+            "domain:transport",
+            "domain:water",
+            "domain:energy",
+            "domain:telecommunications",
+            "source_kind:public_api",
+            "source_kind:machine_protocol"
+        ],
+        "empty_character": "Nothing public answers this address yet.",
+        "refusal_character": "This public view does not imply a private relationship or permission.",
+        "extent_defaults": "page",
+        "navigation_neighbors": [
+            "stage",
+            "observations",
+            "territory"
+        ],
+        "requires": [
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "spatial",
+        "presentation_class": "personal",
+        "question": "How is this world arranged across place, route and capacity? What intersects the actor's real relations, Habitat and permitted Packs?",
+        "experience_character": "relation, Habitat and permitted-Pack aware projection",
+        "visible_sections": [
+            "map",
+            "layers",
+            "coverage and route",
+            "personal context",
+            "kept relations"
+        ],
+        "preferred_renderers": [
+            "spatial-field",
+            "route-inspector"
+        ],
+        "renderer_family": "spatial",
+        "renderer_variant": "map",
+        "route": "/spatial",
+        "interaction_density": "medium",
+        "allowed_affordance_families": [
+            "inspect",
+            "locate",
+            "route",
+            "save",
+            "join_request",
+            "go"
+        ],
+        "external_demand_roles": [
+            "affordance:LOCATE",
+            "affordance:ROUTE",
+            "affordance:MEASURE",
+            "affordance:OBSERVE",
+            "domain:weather",
+            "domain:transport",
+            "domain:water",
+            "domain:energy",
+            "domain:telecommunications",
+            "source_kind:public_api",
+            "source_kind:machine_protocol"
+        ],
+        "empty_character": "Nothing admitted to this personal context answers yet.",
+        "refusal_character": "A personal presentation cannot invent a relation, Habitat or Pack closure.",
+        "extent_defaults": "page",
+        "navigation_neighbors": [
+            "stage",
+            "observations",
+            "territory"
+        ],
+        "requires": [
+            "relation",
+            "pack",
+            "habitat",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "spatial",
+        "presentation_class": "member_worker",
+        "question": "How is this world arranged across place, route and capacity? What intersects the real community, mission or work closure?",
+        "experience_character": "scoped member, project and work projection",
+        "visible_sections": [
+            "map",
+            "layers",
+            "coverage and route",
+            "shared context",
+            "work boundary"
+        ],
+        "preferred_renderers": [
+            "spatial-field",
+            "route-inspector"
+        ],
+        "renderer_family": "spatial",
+        "renderer_variant": "map",
+        "route": "/spatial",
+        "interaction_density": "high",
+        "allowed_affordance_families": [
+            "inspect",
+            "locate",
+            "route",
+            "participate",
+            "handoff",
+            "open_context"
+        ],
+        "external_demand_roles": [
+            "affordance:LOCATE",
+            "affordance:ROUTE",
+            "affordance:MEASURE",
+            "affordance:OBSERVE",
+            "domain:weather",
+            "domain:transport",
+            "domain:water",
+            "domain:energy",
+            "domain:telecommunications",
+            "source_kind:public_api",
+            "source_kind:machine_protocol"
+        ],
+        "empty_character": "Nothing admitted to this member or work scope is waiting.",
+        "refusal_character": "This presentation cannot infer membership, assignment or authority.",
+        "extent_defaults": "page",
+        "navigation_neighbors": [
+            "stage",
+            "observations",
+            "territory"
+        ],
+        "requires": [
+            "relation",
+            "pack",
+            "work_scope",
+            "institution",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "spatial",
+        "presentation_class": "operator",
+        "question": "How is this world arranged across place, route and capacity? Which controls and exceptions are visible around the already-resolved closure?",
+        "experience_character": "operational observability over real owner boundaries",
+        "visible_sections": [
+            "map",
+            "layers",
+            "coverage and route",
+            "operational context",
+            "owner boundaries"
+        ],
+        "preferred_renderers": [
+            "spatial-field",
+            "route-inspector"
+        ],
+        "renderer_family": "spatial",
+        "renderer_variant": "map",
+        "route": "/spatial",
+        "interaction_density": "very_high",
+        "allowed_affordance_families": [
+            "inspect",
+            "locate",
+            "route",
+            "inspect",
+            "trace",
+            "request_operation"
+        ],
+        "external_demand_roles": [
+            "affordance:LOCATE",
+            "affordance:ROUTE",
+            "affordance:MEASURE",
+            "affordance:OBSERVE",
+            "domain:weather",
+            "domain:transport",
+            "domain:water",
+            "domain:energy",
+            "domain:telecommunications",
+            "source_kind:public_api",
+            "source_kind:machine_protocol"
+        ],
+        "empty_character": "No operational residue is visible at this resolved closure.",
+        "refusal_character": "A visible operator control is not authority to admit, spend, publish or effect.",
+        "extent_defaults": "page",
+        "navigation_neighbors": [
+            "stage",
+            "observations",
+            "territory"
+        ],
+        "requires": [
+            "institution",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "listings",
+        "presentation_class": "anonymous",
+        "question": "Which declared capacity can be compared here without claiming a completed exchange? What can a public visitor understand without an account assumption?",
+        "experience_character": "public orientation over source-derived material",
+        "visible_sections": [
+            "availability",
+            "terms",
+            "comparison",
+            "public boundary"
+        ],
+        "preferred_renderers": [
+            "market-grid",
+            "quote-comparison"
+        ],
+        "renderer_family": "market",
+        "renderer_variant": "listing_grid",
+        "route": "/listings",
+        "interaction_density": "low",
+        "allowed_affordance_families": [
+            "inspect",
+            "compare",
+            "quote_request",
+            "open",
+            "inspect"
+        ],
+        "external_demand_roles": [
+            "affordance:QUOTE",
+            "affordance:RESERVE",
+            "affordance:PURCHASE",
+            "affordance:COMPARE",
+            "domain:trade",
+            "domain:hospitality",
+            "domain:labor",
+            "domain:construction",
+            "source_kind:public_api",
+            "source_kind:x402",
+            "source_kind:mcp"
+        ],
+        "empty_character": "Nothing public answers this address yet.",
+        "refusal_character": "This public view does not imply a private relationship or permission.",
+        "extent_defaults": "page",
+        "navigation_neighbors": [
+            "discover",
+            "inbox",
+            "territory"
+        ],
+        "requires": [
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "listings",
+        "presentation_class": "personal",
+        "question": "Which declared capacity can be compared here without claiming a completed exchange? What intersects the actor's real relations, Habitat and permitted Packs?",
+        "experience_character": "relation, Habitat and permitted-Pack aware projection",
+        "visible_sections": [
+            "availability",
+            "terms",
+            "comparison",
+            "personal context",
+            "kept relations"
+        ],
+        "preferred_renderers": [
+            "market-grid",
+            "quote-comparison"
+        ],
+        "renderer_family": "market",
+        "renderer_variant": "listing_grid",
+        "route": "/listings",
+        "interaction_density": "medium",
+        "allowed_affordance_families": [
+            "inspect",
+            "compare",
+            "quote_request",
+            "save",
+            "join_request",
+            "go"
+        ],
+        "external_demand_roles": [
+            "affordance:QUOTE",
+            "affordance:RESERVE",
+            "affordance:PURCHASE",
+            "affordance:COMPARE",
+            "domain:trade",
+            "domain:hospitality",
+            "domain:labor",
+            "domain:construction",
+            "source_kind:public_api",
+            "source_kind:x402",
+            "source_kind:mcp"
+        ],
+        "empty_character": "Nothing admitted to this personal context answers yet.",
+        "refusal_character": "A personal presentation cannot invent a relation, Habitat or Pack closure.",
+        "extent_defaults": "page",
+        "navigation_neighbors": [
+            "discover",
+            "inbox",
+            "territory"
+        ],
+        "requires": [
+            "relation",
+            "pack",
+            "habitat",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "listings",
+        "presentation_class": "member_worker",
+        "question": "Which declared capacity can be compared here without claiming a completed exchange? What intersects the real community, mission or work closure?",
+        "experience_character": "scoped member, project and work projection",
+        "visible_sections": [
+            "availability",
+            "terms",
+            "comparison",
+            "shared context",
+            "work boundary"
+        ],
+        "preferred_renderers": [
+            "market-grid",
+            "quote-comparison"
+        ],
+        "renderer_family": "market",
+        "renderer_variant": "listing_grid",
+        "route": "/listings",
+        "interaction_density": "high",
+        "allowed_affordance_families": [
+            "inspect",
+            "compare",
+            "quote_request",
+            "participate",
+            "handoff",
+            "open_context"
+        ],
+        "external_demand_roles": [
+            "affordance:QUOTE",
+            "affordance:RESERVE",
+            "affordance:PURCHASE",
+            "affordance:COMPARE",
+            "domain:trade",
+            "domain:hospitality",
+            "domain:labor",
+            "domain:construction",
+            "source_kind:public_api",
+            "source_kind:x402",
+            "source_kind:mcp"
+        ],
+        "empty_character": "Nothing admitted to this member or work scope is waiting.",
+        "refusal_character": "This presentation cannot infer membership, assignment or authority.",
+        "extent_defaults": "page",
+        "navigation_neighbors": [
+            "discover",
+            "inbox",
+            "territory"
+        ],
+        "requires": [
+            "relation",
+            "pack",
+            "work_scope",
+            "institution",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "listings",
+        "presentation_class": "operator",
+        "question": "Which declared capacity can be compared here without claiming a completed exchange? Which controls and exceptions are visible around the already-resolved closure?",
+        "experience_character": "operational observability over real owner boundaries",
+        "visible_sections": [
+            "availability",
+            "terms",
+            "comparison",
+            "operational context",
+            "owner boundaries"
+        ],
+        "preferred_renderers": [
+            "market-grid",
+            "quote-comparison"
+        ],
+        "renderer_family": "market",
+        "renderer_variant": "listing_grid",
+        "route": "/listings",
+        "interaction_density": "very_high",
+        "allowed_affordance_families": [
+            "inspect",
+            "compare",
+            "quote_request",
+            "inspect",
+            "trace",
+            "request_operation"
+        ],
+        "external_demand_roles": [
+            "affordance:QUOTE",
+            "affordance:RESERVE",
+            "affordance:PURCHASE",
+            "affordance:COMPARE",
+            "domain:trade",
+            "domain:hospitality",
+            "domain:labor",
+            "domain:construction",
+            "source_kind:public_api",
+            "source_kind:x402",
+            "source_kind:mcp"
+        ],
+        "empty_character": "No operational residue is visible at this resolved closure.",
+        "refusal_character": "A visible operator control is not authority to admit, spend, publish or effect.",
+        "extent_defaults": "page",
+        "navigation_neighbors": [
+            "discover",
+            "inbox",
+            "territory"
+        ],
+        "requires": [
+            "institution",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "inbox",
+        "presentation_class": "anonymous",
+        "question": "What is waiting for a lawful response in this context? What can a public visitor understand without an account assumption?",
+        "experience_character": "public orientation over source-derived material",
+        "visible_sections": [
+            "waiting items",
+            "timing",
+            "response boundary",
+            "public boundary"
+        ],
+        "preferred_renderers": [
+            "inbox-queue",
+            "exception-rail"
+        ],
+        "renderer_family": "work",
+        "renderer_variant": "priority_queue",
+        "route": "/inbox",
+        "interaction_density": "low",
+        "allowed_affordance_families": [
+            "inspect",
+            "acknowledge",
+            "open_context",
+            "open",
+            "inspect"
+        ],
+        "external_demand_roles": [
+            "affordance:ALERT",
+            "affordance:NOTIFY",
+            "affordance:SCHEDULE",
+            "domain:community",
+            "domain:transport",
+            "domain:weather",
+            "domain:medicine",
+            "source_kind:rss",
+            "source_kind:public_api",
+            "source_kind:mcp"
+        ],
+        "empty_character": "Nothing public answers this address yet.",
+        "refusal_character": "This public view does not imply a private relationship or permission.",
+        "extent_defaults": "workspace",
+        "navigation_neighbors": [
+            "console",
+            "channels",
+            "observations"
+        ],
+        "requires": [
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "inbox",
+        "presentation_class": "personal",
+        "question": "What is waiting for a lawful response in this context? What intersects the actor's real relations, Habitat and permitted Packs?",
+        "experience_character": "relation, Habitat and permitted-Pack aware projection",
+        "visible_sections": [
+            "waiting items",
+            "timing",
+            "response boundary",
+            "personal context",
+            "kept relations"
+        ],
+        "preferred_renderers": [
+            "inbox-queue",
+            "exception-rail"
+        ],
+        "renderer_family": "work",
+        "renderer_variant": "priority_queue",
+        "route": "/inbox",
+        "interaction_density": "medium",
+        "allowed_affordance_families": [
+            "inspect",
+            "acknowledge",
+            "open_context",
+            "save",
+            "join_request",
+            "go"
+        ],
+        "external_demand_roles": [
+            "affordance:ALERT",
+            "affordance:NOTIFY",
+            "affordance:SCHEDULE",
+            "domain:community",
+            "domain:transport",
+            "domain:weather",
+            "domain:medicine",
+            "source_kind:rss",
+            "source_kind:public_api",
+            "source_kind:mcp"
+        ],
+        "empty_character": "Nothing admitted to this personal context answers yet.",
+        "refusal_character": "A personal presentation cannot invent a relation, Habitat or Pack closure.",
+        "extent_defaults": "workspace",
+        "navigation_neighbors": [
+            "console",
+            "channels",
+            "observations"
+        ],
+        "requires": [
+            "relation",
+            "pack",
+            "habitat",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "inbox",
+        "presentation_class": "member_worker",
+        "question": "What is waiting for a lawful response in this context? What intersects the real community, mission or work closure?",
+        "experience_character": "scoped member, project and work projection",
+        "visible_sections": [
+            "waiting items",
+            "timing",
+            "response boundary",
+            "shared context",
+            "work boundary"
+        ],
+        "preferred_renderers": [
+            "inbox-queue",
+            "exception-rail"
+        ],
+        "renderer_family": "work",
+        "renderer_variant": "priority_queue",
+        "route": "/inbox",
+        "interaction_density": "high",
+        "allowed_affordance_families": [
+            "inspect",
+            "acknowledge",
+            "open_context",
+            "participate",
+            "handoff",
+            "open_context"
+        ],
+        "external_demand_roles": [
+            "affordance:ALERT",
+            "affordance:NOTIFY",
+            "affordance:SCHEDULE",
+            "domain:community",
+            "domain:transport",
+            "domain:weather",
+            "domain:medicine",
+            "source_kind:rss",
+            "source_kind:public_api",
+            "source_kind:mcp"
+        ],
+        "empty_character": "Nothing admitted to this member or work scope is waiting.",
+        "refusal_character": "This presentation cannot infer membership, assignment or authority.",
+        "extent_defaults": "workspace",
+        "navigation_neighbors": [
+            "console",
+            "channels",
+            "observations"
+        ],
+        "requires": [
+            "relation",
+            "pack",
+            "work_scope",
+            "institution",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "inbox",
+        "presentation_class": "operator",
+        "question": "What is waiting for a lawful response in this context? Which controls and exceptions are visible around the already-resolved closure?",
+        "experience_character": "operational observability over real owner boundaries",
+        "visible_sections": [
+            "waiting items",
+            "timing",
+            "response boundary",
+            "operational context",
+            "owner boundaries"
+        ],
+        "preferred_renderers": [
+            "inbox-queue",
+            "exception-rail"
+        ],
+        "renderer_family": "work",
+        "renderer_variant": "priority_queue",
+        "route": "/inbox",
+        "interaction_density": "very_high",
+        "allowed_affordance_families": [
+            "inspect",
+            "acknowledge",
+            "open_context",
+            "inspect",
+            "trace",
+            "request_operation"
+        ],
+        "external_demand_roles": [
+            "affordance:ALERT",
+            "affordance:NOTIFY",
+            "affordance:SCHEDULE",
+            "domain:community",
+            "domain:transport",
+            "domain:weather",
+            "domain:medicine",
+            "source_kind:rss",
+            "source_kind:public_api",
+            "source_kind:mcp"
+        ],
+        "empty_character": "No operational residue is visible at this resolved closure.",
+        "refusal_character": "A visible operator control is not authority to admit, spend, publish or effect.",
+        "extent_defaults": "workspace",
+        "navigation_neighbors": [
+            "console",
+            "channels",
+            "observations"
+        ],
+        "requires": [
+            "institution",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "territory",
+        "presentation_class": "anonymous",
+        "question": "Why is this material here, and which boundary governs it? What can a public visitor understand without an account assumption?",
+        "experience_character": "public orientation over source-derived material",
+        "visible_sections": [
+            "address",
+            "provenance",
+            "withholding",
+            "public boundary"
+        ],
+        "preferred_renderers": [
+            "territory-inspector",
+            "lineage-panel"
+        ],
+        "renderer_family": "inspector",
+        "renderer_variant": "provenance_panel",
+        "route": "/territory",
+        "interaction_density": "low",
+        "allowed_affordance_families": [
+            "inspect",
+            "trace",
+            "open_context",
+            "open",
+            "inspect"
+        ],
+        "external_demand_roles": [
+            "affordance:VERIFY",
+            "affordance:INSPECT",
+            "affordance:REPORT",
+            "affordance:IDENTIFY",
+            "domain:government",
+            "domain:law",
+            "domain:land",
+            "domain:research",
+            "source_kind:machine_protocol",
+            "source_kind:public_api"
+        ],
+        "empty_character": "Nothing public answers this address yet.",
+        "refusal_character": "This public view does not imply a private relationship or permission.",
+        "extent_defaults": "section",
+        "navigation_neighbors": [
+            "observations",
+            "link",
+            "worlds"
+        ],
+        "requires": [
+            "information_policy",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "territory",
+        "presentation_class": "personal",
+        "question": "Why is this material here, and which boundary governs it? What intersects the actor's real relations, Habitat and permitted Packs?",
+        "experience_character": "relation, Habitat and permitted-Pack aware projection",
+        "visible_sections": [
+            "address",
+            "provenance",
+            "withholding",
+            "personal context",
+            "kept relations"
+        ],
+        "preferred_renderers": [
+            "territory-inspector",
+            "lineage-panel"
+        ],
+        "renderer_family": "inspector",
+        "renderer_variant": "provenance_panel",
+        "route": "/territory",
+        "interaction_density": "medium",
+        "allowed_affordance_families": [
+            "inspect",
+            "trace",
+            "open_context",
+            "save",
+            "join_request",
+            "go"
+        ],
+        "external_demand_roles": [
+            "affordance:VERIFY",
+            "affordance:INSPECT",
+            "affordance:REPORT",
+            "affordance:IDENTIFY",
+            "domain:government",
+            "domain:law",
+            "domain:land",
+            "domain:research",
+            "source_kind:machine_protocol",
+            "source_kind:public_api"
+        ],
+        "empty_character": "Nothing admitted to this personal context answers yet.",
+        "refusal_character": "A personal presentation cannot invent a relation, Habitat or Pack closure.",
+        "extent_defaults": "section",
+        "navigation_neighbors": [
+            "observations",
+            "link",
+            "worlds"
+        ],
+        "requires": [
+            "information_policy",
+            "relation",
+            "pack",
+            "habitat",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "territory",
+        "presentation_class": "member_worker",
+        "question": "Why is this material here, and which boundary governs it? What intersects the real community, mission or work closure?",
+        "experience_character": "scoped member, project and work projection",
+        "visible_sections": [
+            "address",
+            "provenance",
+            "withholding",
+            "shared context",
+            "work boundary"
+        ],
+        "preferred_renderers": [
+            "territory-inspector",
+            "lineage-panel"
+        ],
+        "renderer_family": "inspector",
+        "renderer_variant": "provenance_panel",
+        "route": "/territory",
+        "interaction_density": "high",
+        "allowed_affordance_families": [
+            "inspect",
+            "trace",
+            "open_context",
+            "participate",
+            "handoff",
+            "open_context"
+        ],
+        "external_demand_roles": [
+            "affordance:VERIFY",
+            "affordance:INSPECT",
+            "affordance:REPORT",
+            "affordance:IDENTIFY",
+            "domain:government",
+            "domain:law",
+            "domain:land",
+            "domain:research",
+            "source_kind:machine_protocol",
+            "source_kind:public_api"
+        ],
+        "empty_character": "Nothing admitted to this member or work scope is waiting.",
+        "refusal_character": "This presentation cannot infer membership, assignment or authority.",
+        "extent_defaults": "section",
+        "navigation_neighbors": [
+            "observations",
+            "link",
+            "worlds"
+        ],
+        "requires": [
+            "information_policy",
+            "relation",
+            "pack",
+            "work_scope",
+            "institution",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "territory",
+        "presentation_class": "operator",
+        "question": "Why is this material here, and which boundary governs it? Which controls and exceptions are visible around the already-resolved closure?",
+        "experience_character": "operational observability over real owner boundaries",
+        "visible_sections": [
+            "address",
+            "provenance",
+            "withholding",
+            "operational context",
+            "owner boundaries"
+        ],
+        "preferred_renderers": [
+            "territory-inspector",
+            "lineage-panel"
+        ],
+        "renderer_family": "inspector",
+        "renderer_variant": "provenance_panel",
+        "route": "/territory",
+        "interaction_density": "very_high",
+        "allowed_affordance_families": [
+            "inspect",
+            "trace",
+            "open_context",
+            "inspect",
+            "trace",
+            "request_operation"
+        ],
+        "external_demand_roles": [
+            "affordance:VERIFY",
+            "affordance:INSPECT",
+            "affordance:REPORT",
+            "affordance:IDENTIFY",
+            "domain:government",
+            "domain:law",
+            "domain:land",
+            "domain:research",
+            "source_kind:machine_protocol",
+            "source_kind:public_api"
+        ],
+        "empty_character": "No operational residue is visible at this resolved closure.",
+        "refusal_character": "A visible operator control is not authority to admit, spend, publish or effect.",
+        "extent_defaults": "section",
+        "navigation_neighbors": [
+            "observations",
+            "link",
+            "worlds"
+        ],
+        "requires": [
+            "information_policy",
+            "institution",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "observations",
+        "presentation_class": "anonymous",
+        "question": "What did the outside world report, when, and under which evidence boundary? What can a public visitor understand without an account assumption?",
+        "experience_character": "public orientation over source-derived material",
+        "visible_sections": [
+            "observation stream",
+            "freshness",
+            "provenance",
+            "public boundary"
+        ],
+        "preferred_renderers": [
+            "evidence-stream",
+            "freshness-panel"
+        ],
+        "renderer_family": "inspector",
+        "renderer_variant": "evidence_ledger",
+        "route": "/observations",
+        "interaction_density": "low",
+        "allowed_affordance_families": [
+            "inspect",
+            "compare",
+            "trace",
+            "open",
+            "inspect"
+        ],
+        "external_demand_roles": [
+            "affordance:OBSERVE",
+            "affordance:MEASURE",
+            "affordance:VERIFY",
+            "affordance:ALERT",
+            "domain:weather",
+            "domain:science",
+            "domain:medicine",
+            "domain:energy",
+            "domain:water",
+            "source_kind:public_api",
+            "source_kind:rss",
+            "source_kind:machine_protocol"
+        ],
+        "empty_character": "Nothing public answers this address yet.",
+        "refusal_character": "This public view does not imply a private relationship or permission.",
+        "extent_defaults": "page",
+        "navigation_neighbors": [
+            "stage",
+            "spatial",
+            "territory"
+        ],
+        "requires": [
+            "information_policy",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "observations",
+        "presentation_class": "personal",
+        "question": "What did the outside world report, when, and under which evidence boundary? What intersects the actor's real relations, Habitat and permitted Packs?",
+        "experience_character": "relation, Habitat and permitted-Pack aware projection",
+        "visible_sections": [
+            "observation stream",
+            "freshness",
+            "provenance",
+            "personal context",
+            "kept relations"
+        ],
+        "preferred_renderers": [
+            "evidence-stream",
+            "freshness-panel"
+        ],
+        "renderer_family": "inspector",
+        "renderer_variant": "evidence_ledger",
+        "route": "/observations",
+        "interaction_density": "medium",
+        "allowed_affordance_families": [
+            "inspect",
+            "compare",
+            "trace",
+            "save",
+            "join_request",
+            "go"
+        ],
+        "external_demand_roles": [
+            "affordance:OBSERVE",
+            "affordance:MEASURE",
+            "affordance:VERIFY",
+            "affordance:ALERT",
+            "domain:weather",
+            "domain:science",
+            "domain:medicine",
+            "domain:energy",
+            "domain:water",
+            "source_kind:public_api",
+            "source_kind:rss",
+            "source_kind:machine_protocol"
+        ],
+        "empty_character": "Nothing admitted to this personal context answers yet.",
+        "refusal_character": "A personal presentation cannot invent a relation, Habitat or Pack closure.",
+        "extent_defaults": "page",
+        "navigation_neighbors": [
+            "stage",
+            "spatial",
+            "territory"
+        ],
+        "requires": [
+            "information_policy",
+            "relation",
+            "pack",
+            "habitat",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "observations",
+        "presentation_class": "member_worker",
+        "question": "What did the outside world report, when, and under which evidence boundary? What intersects the real community, mission or work closure?",
+        "experience_character": "scoped member, project and work projection",
+        "visible_sections": [
+            "observation stream",
+            "freshness",
+            "provenance",
+            "shared context",
+            "work boundary"
+        ],
+        "preferred_renderers": [
+            "evidence-stream",
+            "freshness-panel"
+        ],
+        "renderer_family": "inspector",
+        "renderer_variant": "evidence_ledger",
+        "route": "/observations",
+        "interaction_density": "high",
+        "allowed_affordance_families": [
+            "inspect",
+            "compare",
+            "trace",
+            "participate",
+            "handoff",
+            "open_context"
+        ],
+        "external_demand_roles": [
+            "affordance:OBSERVE",
+            "affordance:MEASURE",
+            "affordance:VERIFY",
+            "affordance:ALERT",
+            "domain:weather",
+            "domain:science",
+            "domain:medicine",
+            "domain:energy",
+            "domain:water",
+            "source_kind:public_api",
+            "source_kind:rss",
+            "source_kind:machine_protocol"
+        ],
+        "empty_character": "Nothing admitted to this member or work scope is waiting.",
+        "refusal_character": "This presentation cannot infer membership, assignment or authority.",
+        "extent_defaults": "page",
+        "navigation_neighbors": [
+            "stage",
+            "spatial",
+            "territory"
+        ],
+        "requires": [
+            "information_policy",
+            "relation",
+            "pack",
+            "work_scope",
+            "institution",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "observations",
+        "presentation_class": "operator",
+        "question": "What did the outside world report, when, and under which evidence boundary? Which controls and exceptions are visible around the already-resolved closure?",
+        "experience_character": "operational observability over real owner boundaries",
+        "visible_sections": [
+            "observation stream",
+            "freshness",
+            "provenance",
+            "operational context",
+            "owner boundaries"
+        ],
+        "preferred_renderers": [
+            "evidence-stream",
+            "freshness-panel"
+        ],
+        "renderer_family": "inspector",
+        "renderer_variant": "evidence_ledger",
+        "route": "/observations",
+        "interaction_density": "very_high",
+        "allowed_affordance_families": [
+            "inspect",
+            "compare",
+            "trace",
+            "inspect",
+            "trace",
+            "request_operation"
+        ],
+        "external_demand_roles": [
+            "affordance:OBSERVE",
+            "affordance:MEASURE",
+            "affordance:VERIFY",
+            "affordance:ALERT",
+            "domain:weather",
+            "domain:science",
+            "domain:medicine",
+            "domain:energy",
+            "domain:water",
+            "source_kind:public_api",
+            "source_kind:rss",
+            "source_kind:machine_protocol"
+        ],
+        "empty_character": "No operational residue is visible at this resolved closure.",
+        "refusal_character": "A visible operator control is not authority to admit, spend, publish or effect.",
+        "extent_defaults": "page",
+        "navigation_neighbors": [
+            "stage",
+            "spatial",
+            "territory"
+        ],
+        "requires": [
+            "information_policy",
+            "institution",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "worlds",
+        "presentation_class": "anonymous",
+        "question": "Which composed situations can make this material useful together? What can a public visitor understand without an account assumption?",
+        "experience_character": "public orientation over source-derived material",
+        "visible_sections": [
+            "world composition",
+            "demands",
+            "related contexts",
+            "public boundary"
+        ],
+        "preferred_renderers": [
+            "world-atlas",
+            "composition-graph"
+        ],
+        "renderer_family": "board",
+        "renderer_variant": "world_gallery",
+        "route": "/w",
+        "interaction_density": "low",
+        "allowed_affordance_families": [
+            "inspect",
+            "open_context",
+            "compare",
+            "open",
+            "inspect"
+        ],
+        "external_demand_roles": [
+            "affordance:MATCH",
+            "affordance:DISCOVER",
+            "affordance:SIMULATE",
+            "affordance:PREDICT",
+            "domain:community",
+            "domain:family",
+            "domain:household",
+            "domain:farms",
+            "domain:buildings",
+            "source_kind:public_api",
+            "source_kind:mcp"
+        ],
+        "empty_character": "Nothing public answers this address yet.",
+        "refusal_character": "This public view does not imply a private relationship or permission.",
+        "extent_defaults": "page",
+        "navigation_neighbors": [
+            "packs",
+            "discover",
+            "board"
+        ],
+        "requires": [
+            "pack",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "worlds",
+        "presentation_class": "personal",
+        "question": "Which composed situations can make this material useful together? What intersects the actor's real relations, Habitat and permitted Packs?",
+        "experience_character": "relation, Habitat and permitted-Pack aware projection",
+        "visible_sections": [
+            "world composition",
+            "demands",
+            "related contexts",
+            "personal context",
+            "kept relations"
+        ],
+        "preferred_renderers": [
+            "world-atlas",
+            "composition-graph"
+        ],
+        "renderer_family": "board",
+        "renderer_variant": "world_gallery",
+        "route": "/w",
+        "interaction_density": "medium",
+        "allowed_affordance_families": [
+            "inspect",
+            "open_context",
+            "compare",
+            "save",
+            "join_request",
+            "go"
+        ],
+        "external_demand_roles": [
+            "affordance:MATCH",
+            "affordance:DISCOVER",
+            "affordance:SIMULATE",
+            "affordance:PREDICT",
+            "domain:community",
+            "domain:family",
+            "domain:household",
+            "domain:farms",
+            "domain:buildings",
+            "source_kind:public_api",
+            "source_kind:mcp"
+        ],
+        "empty_character": "Nothing admitted to this personal context answers yet.",
+        "refusal_character": "A personal presentation cannot invent a relation, Habitat or Pack closure.",
+        "extent_defaults": "page",
+        "navigation_neighbors": [
+            "packs",
+            "discover",
+            "board"
+        ],
+        "requires": [
+            "pack",
+            "relation",
+            "pack",
+            "habitat",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "worlds",
+        "presentation_class": "member_worker",
+        "question": "Which composed situations can make this material useful together? What intersects the real community, mission or work closure?",
+        "experience_character": "scoped member, project and work projection",
+        "visible_sections": [
+            "world composition",
+            "demands",
+            "related contexts",
+            "shared context",
+            "work boundary"
+        ],
+        "preferred_renderers": [
+            "world-atlas",
+            "composition-graph"
+        ],
+        "renderer_family": "board",
+        "renderer_variant": "world_gallery",
+        "route": "/w",
+        "interaction_density": "high",
+        "allowed_affordance_families": [
+            "inspect",
+            "open_context",
+            "compare",
+            "participate",
+            "handoff",
+            "open_context"
+        ],
+        "external_demand_roles": [
+            "affordance:MATCH",
+            "affordance:DISCOVER",
+            "affordance:SIMULATE",
+            "affordance:PREDICT",
+            "domain:community",
+            "domain:family",
+            "domain:household",
+            "domain:farms",
+            "domain:buildings",
+            "source_kind:public_api",
+            "source_kind:mcp"
+        ],
+        "empty_character": "Nothing admitted to this member or work scope is waiting.",
+        "refusal_character": "This presentation cannot infer membership, assignment or authority.",
+        "extent_defaults": "page",
+        "navigation_neighbors": [
+            "packs",
+            "discover",
+            "board"
+        ],
+        "requires": [
+            "pack",
+            "relation",
+            "pack",
+            "work_scope",
+            "institution",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "worlds",
+        "presentation_class": "operator",
+        "question": "Which composed situations can make this material useful together? Which controls and exceptions are visible around the already-resolved closure?",
+        "experience_character": "operational observability over real owner boundaries",
+        "visible_sections": [
+            "world composition",
+            "demands",
+            "related contexts",
+            "operational context",
+            "owner boundaries"
+        ],
+        "preferred_renderers": [
+            "world-atlas",
+            "composition-graph"
+        ],
+        "renderer_family": "board",
+        "renderer_variant": "world_gallery",
+        "route": "/w",
+        "interaction_density": "very_high",
+        "allowed_affordance_families": [
+            "inspect",
+            "open_context",
+            "compare",
+            "inspect",
+            "trace",
+            "request_operation"
+        ],
+        "external_demand_roles": [
+            "affordance:MATCH",
+            "affordance:DISCOVER",
+            "affordance:SIMULATE",
+            "affordance:PREDICT",
+            "domain:community",
+            "domain:family",
+            "domain:household",
+            "domain:farms",
+            "domain:buildings",
+            "source_kind:public_api",
+            "source_kind:mcp"
+        ],
+        "empty_character": "No operational residue is visible at this resolved closure.",
+        "refusal_character": "A visible operator control is not authority to admit, spend, publish or effect.",
+        "extent_defaults": "page",
+        "navigation_neighbors": [
+            "packs",
+            "discover",
+            "board"
+        ],
+        "requires": [
+            "pack",
+            "institution",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "packs",
+        "presentation_class": "anonymous",
+        "question": "Which reusable appetites can compose lawful outside-world support? What can a public visitor understand without an account assumption?",
+        "experience_character": "public orientation over source-derived material",
+        "visible_sections": [
+            "demand closure",
+            "candidate families",
+            "lineage",
+            "public boundary"
+        ],
+        "preferred_renderers": [
+            "pack-closure",
+            "capability-lattice"
+        ],
+        "renderer_family": "work",
+        "renderer_variant": "dependency_graph",
+        "route": "/packs",
+        "interaction_density": "low",
+        "allowed_affordance_families": [
+            "inspect",
+            "compare",
+            "open_context",
+            "open",
+            "inspect"
+        ],
+        "external_demand_roles": [
+            "affordance:DISCOVER",
+            "affordance:COMPARE",
+            "affordance:OPTIMIZE",
+            "affordance:SEARCH",
+            "domain:computers",
+            "domain:agents",
+            "domain:telecommunications",
+            "domain:trade",
+            "domain:research",
+            "source_kind:mcp",
+            "source_kind:machine_protocol",
+            "source_kind:public_api"
+        ],
+        "empty_character": "Nothing public answers this address yet.",
+        "refusal_character": "This public view does not imply a private relationship or permission.",
+        "extent_defaults": "page",
+        "navigation_neighbors": [
+            "worlds",
+            "link",
+            "studio"
+        ],
+        "requires": [
+            "pack",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "packs",
+        "presentation_class": "personal",
+        "question": "Which reusable appetites can compose lawful outside-world support? What intersects the actor's real relations, Habitat and permitted Packs?",
+        "experience_character": "relation, Habitat and permitted-Pack aware projection",
+        "visible_sections": [
+            "demand closure",
+            "candidate families",
+            "lineage",
+            "personal context",
+            "kept relations"
+        ],
+        "preferred_renderers": [
+            "pack-closure",
+            "capability-lattice"
+        ],
+        "renderer_family": "work",
+        "renderer_variant": "dependency_graph",
+        "route": "/packs",
+        "interaction_density": "medium",
+        "allowed_affordance_families": [
+            "inspect",
+            "compare",
+            "open_context",
+            "save",
+            "join_request",
+            "go"
+        ],
+        "external_demand_roles": [
+            "affordance:DISCOVER",
+            "affordance:COMPARE",
+            "affordance:OPTIMIZE",
+            "affordance:SEARCH",
+            "domain:computers",
+            "domain:agents",
+            "domain:telecommunications",
+            "domain:trade",
+            "domain:research",
+            "source_kind:mcp",
+            "source_kind:machine_protocol",
+            "source_kind:public_api"
+        ],
+        "empty_character": "Nothing admitted to this personal context answers yet.",
+        "refusal_character": "A personal presentation cannot invent a relation, Habitat or Pack closure.",
+        "extent_defaults": "page",
+        "navigation_neighbors": [
+            "worlds",
+            "link",
+            "studio"
+        ],
+        "requires": [
+            "pack",
+            "relation",
+            "pack",
+            "habitat",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "packs",
+        "presentation_class": "member_worker",
+        "question": "Which reusable appetites can compose lawful outside-world support? What intersects the real community, mission or work closure?",
+        "experience_character": "scoped member, project and work projection",
+        "visible_sections": [
+            "demand closure",
+            "candidate families",
+            "lineage",
+            "shared context",
+            "work boundary"
+        ],
+        "preferred_renderers": [
+            "pack-closure",
+            "capability-lattice"
+        ],
+        "renderer_family": "work",
+        "renderer_variant": "dependency_graph",
+        "route": "/packs",
+        "interaction_density": "high",
+        "allowed_affordance_families": [
+            "inspect",
+            "compare",
+            "open_context",
+            "participate",
+            "handoff",
+            "open_context"
+        ],
+        "external_demand_roles": [
+            "affordance:DISCOVER",
+            "affordance:COMPARE",
+            "affordance:OPTIMIZE",
+            "affordance:SEARCH",
+            "domain:computers",
+            "domain:agents",
+            "domain:telecommunications",
+            "domain:trade",
+            "domain:research",
+            "source_kind:mcp",
+            "source_kind:machine_protocol",
+            "source_kind:public_api"
+        ],
+        "empty_character": "Nothing admitted to this member or work scope is waiting.",
+        "refusal_character": "This presentation cannot infer membership, assignment or authority.",
+        "extent_defaults": "page",
+        "navigation_neighbors": [
+            "worlds",
+            "link",
+            "studio"
+        ],
+        "requires": [
+            "pack",
+            "relation",
+            "pack",
+            "work_scope",
+            "institution",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "packs",
+        "presentation_class": "operator",
+        "question": "Which reusable appetites can compose lawful outside-world support? Which controls and exceptions are visible around the already-resolved closure?",
+        "experience_character": "operational observability over real owner boundaries",
+        "visible_sections": [
+            "demand closure",
+            "candidate families",
+            "lineage",
+            "operational context",
+            "owner boundaries"
+        ],
+        "preferred_renderers": [
+            "pack-closure",
+            "capability-lattice"
+        ],
+        "renderer_family": "work",
+        "renderer_variant": "dependency_graph",
+        "route": "/packs",
+        "interaction_density": "very_high",
+        "allowed_affordance_families": [
+            "inspect",
+            "compare",
+            "open_context",
+            "inspect",
+            "trace",
+            "request_operation"
+        ],
+        "external_demand_roles": [
+            "affordance:DISCOVER",
+            "affordance:COMPARE",
+            "affordance:OPTIMIZE",
+            "affordance:SEARCH",
+            "domain:computers",
+            "domain:agents",
+            "domain:telecommunications",
+            "domain:trade",
+            "domain:research",
+            "source_kind:mcp",
+            "source_kind:machine_protocol",
+            "source_kind:public_api"
+        ],
+        "empty_character": "No operational residue is visible at this resolved closure.",
+        "refusal_character": "A visible operator control is not authority to admit, spend, publish or effect.",
+        "extent_defaults": "page",
+        "navigation_neighbors": [
+            "worlds",
+            "link",
+            "studio"
+        ],
+        "requires": [
+            "pack",
+            "institution",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "link",
+        "presentation_class": "anonymous",
+        "question": "What external relationship can be inspected without treating it as an admitted connection? What can a public visitor understand without an account assumption?",
+        "experience_character": "public orientation over source-derived material",
+        "visible_sections": [
+            "external identity",
+            "carrier",
+            "binding boundary",
+            "public boundary"
+        ],
+        "preferred_renderers": [
+            "connection-inspector",
+            "carrier-map"
+        ],
+        "renderer_family": "inspector",
+        "renderer_variant": "relationship_inspector",
+        "route": "/link",
+        "interaction_density": "low",
+        "allowed_affordance_families": [
+            "inspect",
+            "verify",
+            "open_context",
+            "open",
+            "inspect"
+        ],
+        "external_demand_roles": [
+            "affordance:IDENTIFY",
+            "affordance:VERIFY",
+            "affordance:AUTHENTICATE",
+            "affordance:INSPECT",
+            "domain:computers",
+            "domain:agents",
+            "domain:telecommunications",
+            "domain:government",
+            "source_kind:machine_protocol",
+            "source_kind:mcp",
+            "source_kind:public_api"
+        ],
+        "empty_character": "Nothing public answers this address yet.",
+        "refusal_character": "This public view does not imply a private relationship or permission.",
+        "extent_defaults": "section",
+        "navigation_neighbors": [
+            "territory",
+            "packs",
+            "console"
+        ],
+        "requires": [
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "link",
+        "presentation_class": "personal",
+        "question": "What external relationship can be inspected without treating it as an admitted connection? What intersects the actor's real relations, Habitat and permitted Packs?",
+        "experience_character": "relation, Habitat and permitted-Pack aware projection",
+        "visible_sections": [
+            "external identity",
+            "carrier",
+            "binding boundary",
+            "personal context",
+            "kept relations"
+        ],
+        "preferred_renderers": [
+            "connection-inspector",
+            "carrier-map"
+        ],
+        "renderer_family": "inspector",
+        "renderer_variant": "relationship_inspector",
+        "route": "/link",
+        "interaction_density": "medium",
+        "allowed_affordance_families": [
+            "inspect",
+            "verify",
+            "open_context",
+            "save",
+            "join_request",
+            "go"
+        ],
+        "external_demand_roles": [
+            "affordance:IDENTIFY",
+            "affordance:VERIFY",
+            "affordance:AUTHENTICATE",
+            "affordance:INSPECT",
+            "domain:computers",
+            "domain:agents",
+            "domain:telecommunications",
+            "domain:government",
+            "source_kind:machine_protocol",
+            "source_kind:mcp",
+            "source_kind:public_api"
+        ],
+        "empty_character": "Nothing admitted to this personal context answers yet.",
+        "refusal_character": "A personal presentation cannot invent a relation, Habitat or Pack closure.",
+        "extent_defaults": "section",
+        "navigation_neighbors": [
+            "territory",
+            "packs",
+            "console"
+        ],
+        "requires": [
+            "relation",
+            "pack",
+            "habitat",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "link",
+        "presentation_class": "member_worker",
+        "question": "What external relationship can be inspected without treating it as an admitted connection? What intersects the real community, mission or work closure?",
+        "experience_character": "scoped member, project and work projection",
+        "visible_sections": [
+            "external identity",
+            "carrier",
+            "binding boundary",
+            "shared context",
+            "work boundary"
+        ],
+        "preferred_renderers": [
+            "connection-inspector",
+            "carrier-map"
+        ],
+        "renderer_family": "inspector",
+        "renderer_variant": "relationship_inspector",
+        "route": "/link",
+        "interaction_density": "high",
+        "allowed_affordance_families": [
+            "inspect",
+            "verify",
+            "open_context",
+            "participate",
+            "handoff",
+            "open_context"
+        ],
+        "external_demand_roles": [
+            "affordance:IDENTIFY",
+            "affordance:VERIFY",
+            "affordance:AUTHENTICATE",
+            "affordance:INSPECT",
+            "domain:computers",
+            "domain:agents",
+            "domain:telecommunications",
+            "domain:government",
+            "source_kind:machine_protocol",
+            "source_kind:mcp",
+            "source_kind:public_api"
+        ],
+        "empty_character": "Nothing admitted to this member or work scope is waiting.",
+        "refusal_character": "This presentation cannot infer membership, assignment or authority.",
+        "extent_defaults": "section",
+        "navigation_neighbors": [
+            "territory",
+            "packs",
+            "console"
+        ],
+        "requires": [
+            "relation",
+            "pack",
+            "work_scope",
+            "institution",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "link",
+        "presentation_class": "operator",
+        "question": "What external relationship can be inspected without treating it as an admitted connection? Which controls and exceptions are visible around the already-resolved closure?",
+        "experience_character": "operational observability over real owner boundaries",
+        "visible_sections": [
+            "external identity",
+            "carrier",
+            "binding boundary",
+            "operational context",
+            "owner boundaries"
+        ],
+        "preferred_renderers": [
+            "connection-inspector",
+            "carrier-map"
+        ],
+        "renderer_family": "inspector",
+        "renderer_variant": "relationship_inspector",
+        "route": "/link",
+        "interaction_density": "very_high",
+        "allowed_affordance_families": [
+            "inspect",
+            "verify",
+            "open_context",
+            "inspect",
+            "trace",
+            "request_operation"
+        ],
+        "external_demand_roles": [
+            "affordance:IDENTIFY",
+            "affordance:VERIFY",
+            "affordance:AUTHENTICATE",
+            "affordance:INSPECT",
+            "domain:computers",
+            "domain:agents",
+            "domain:telecommunications",
+            "domain:government",
+            "source_kind:machine_protocol",
+            "source_kind:mcp",
+            "source_kind:public_api"
+        ],
+        "empty_character": "No operational residue is visible at this resolved closure.",
+        "refusal_character": "A visible operator control is not authority to admit, spend, publish or effect.",
+        "extent_defaults": "section",
+        "navigation_neighbors": [
+            "territory",
+            "packs",
+            "console"
+        ],
+        "requires": [
+            "institution",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "studio",
+        "presentation_class": "anonymous",
+        "question": "Which declared composition can be shaped here before publication? What can a public visitor understand without an account assumption?",
+        "experience_character": "public orientation over source-derived material",
+        "visible_sections": [
+            "draft composition",
+            "references",
+            "publication boundary",
+            "public boundary"
+        ],
+        "preferred_renderers": [
+            "composition-studio",
+            "reference-board"
+        ],
+        "renderer_family": "work",
+        "renderer_variant": "studio_canvas",
+        "route": "/studio",
+        "interaction_density": "low",
+        "allowed_affordance_families": [
+            "inspect",
+            "draft",
+            "compare",
+            "open",
+            "inspect"
+        ],
+        "external_demand_roles": [
+            "affordance:PUBLISH",
+            "affordance:COMPARE",
+            "affordance:SEARCH",
+            "affordance:OPTIMIZE",
+            "domain:art",
+            "domain:media",
+            "domain:film",
+            "domain:music",
+            "domain:research",
+            "source_kind:mcp",
+            "source_kind:public_api",
+            "source_kind:rss"
+        ],
+        "empty_character": "Nothing public answers this address yet.",
+        "refusal_character": "This public view does not imply a private relationship or permission.",
+        "extent_defaults": "workspace",
+        "navigation_neighbors": [
+            "board",
+            "packs",
+            "console"
+        ],
+        "requires": [
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "studio",
+        "presentation_class": "personal",
+        "question": "Which declared composition can be shaped here before publication? What intersects the actor's real relations, Habitat and permitted Packs?",
+        "experience_character": "relation, Habitat and permitted-Pack aware projection",
+        "visible_sections": [
+            "draft composition",
+            "references",
+            "publication boundary",
+            "personal context",
+            "kept relations"
+        ],
+        "preferred_renderers": [
+            "composition-studio",
+            "reference-board"
+        ],
+        "renderer_family": "work",
+        "renderer_variant": "studio_canvas",
+        "route": "/studio",
+        "interaction_density": "medium",
+        "allowed_affordance_families": [
+            "inspect",
+            "draft",
+            "compare",
+            "save",
+            "join_request",
+            "go"
+        ],
+        "external_demand_roles": [
+            "affordance:PUBLISH",
+            "affordance:COMPARE",
+            "affordance:SEARCH",
+            "affordance:OPTIMIZE",
+            "domain:art",
+            "domain:media",
+            "domain:film",
+            "domain:music",
+            "domain:research",
+            "source_kind:mcp",
+            "source_kind:public_api",
+            "source_kind:rss"
+        ],
+        "empty_character": "Nothing admitted to this personal context answers yet.",
+        "refusal_character": "A personal presentation cannot invent a relation, Habitat or Pack closure.",
+        "extent_defaults": "workspace",
+        "navigation_neighbors": [
+            "board",
+            "packs",
+            "console"
+        ],
+        "requires": [
+            "relation",
+            "pack",
+            "habitat",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "studio",
+        "presentation_class": "member_worker",
+        "question": "Which declared composition can be shaped here before publication? What intersects the real community, mission or work closure?",
+        "experience_character": "scoped member, project and work projection",
+        "visible_sections": [
+            "draft composition",
+            "references",
+            "publication boundary",
+            "shared context",
+            "work boundary"
+        ],
+        "preferred_renderers": [
+            "composition-studio",
+            "reference-board"
+        ],
+        "renderer_family": "work",
+        "renderer_variant": "studio_canvas",
+        "route": "/studio",
+        "interaction_density": "high",
+        "allowed_affordance_families": [
+            "inspect",
+            "draft",
+            "compare",
+            "participate",
+            "handoff",
+            "open_context"
+        ],
+        "external_demand_roles": [
+            "affordance:PUBLISH",
+            "affordance:COMPARE",
+            "affordance:SEARCH",
+            "affordance:OPTIMIZE",
+            "domain:art",
+            "domain:media",
+            "domain:film",
+            "domain:music",
+            "domain:research",
+            "source_kind:mcp",
+            "source_kind:public_api",
+            "source_kind:rss"
+        ],
+        "empty_character": "Nothing admitted to this member or work scope is waiting.",
+        "refusal_character": "This presentation cannot infer membership, assignment or authority.",
+        "extent_defaults": "workspace",
+        "navigation_neighbors": [
+            "board",
+            "packs",
+            "console"
+        ],
+        "requires": [
+            "relation",
+            "pack",
+            "work_scope",
+            "institution",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "studio",
+        "presentation_class": "operator",
+        "question": "Which declared composition can be shaped here before publication? Which controls and exceptions are visible around the already-resolved closure?",
+        "experience_character": "operational observability over real owner boundaries",
+        "visible_sections": [
+            "draft composition",
+            "references",
+            "publication boundary",
+            "operational context",
+            "owner boundaries"
+        ],
+        "preferred_renderers": [
+            "composition-studio",
+            "reference-board"
+        ],
+        "renderer_family": "work",
+        "renderer_variant": "studio_canvas",
+        "route": "/studio",
+        "interaction_density": "very_high",
+        "allowed_affordance_families": [
+            "inspect",
+            "draft",
+            "compare",
+            "inspect",
+            "trace",
+            "request_operation"
+        ],
+        "external_demand_roles": [
+            "affordance:PUBLISH",
+            "affordance:COMPARE",
+            "affordance:SEARCH",
+            "affordance:OPTIMIZE",
+            "domain:art",
+            "domain:media",
+            "domain:film",
+            "domain:music",
+            "domain:research",
+            "source_kind:mcp",
+            "source_kind:public_api",
+            "source_kind:rss"
+        ],
+        "empty_character": "No operational residue is visible at this resolved closure.",
+        "refusal_character": "A visible operator control is not authority to admit, spend, publish or effect.",
+        "extent_defaults": "workspace",
+        "navigation_neighbors": [
+            "board",
+            "packs",
+            "console"
+        ],
+        "requires": [
+            "institution",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "console",
+        "presentation_class": "anonymous",
+        "question": "What is the estate doing, withholding, waiting on, or failing to compose? What can a public visitor understand without an account assumption?",
+        "experience_character": "public orientation over source-derived material",
+        "visible_sections": [
+            "source weather",
+            "demand pressure",
+            "exceptions",
+            "public boundary"
+        ],
+        "preferred_renderers": [
+            "operational-observatory",
+            "exception-matrix"
+        ],
+        "renderer_family": "inspector",
+        "renderer_variant": "observatory",
+        "route": "/console",
+        "interaction_density": "low",
+        "allowed_affordance_families": [
+            "inspect",
+            "trace",
+            "open_context",
+            "open",
+            "inspect"
+        ],
+        "external_demand_roles": [
+            "affordance:INSPECT",
+            "affordance:OPTIMIZE",
+            "affordance:REPORT",
+            "affordance:VERIFY",
+            "domain:computers",
+            "domain:agents",
+            "domain:finance",
+            "domain:government",
+            "domain:telecommunications",
+            "source_kind:machine_protocol",
+            "source_kind:mcp",
+            "source_kind:public_api"
+        ],
+        "empty_character": "Nothing public answers this address yet.",
+        "refusal_character": "This public view does not imply a private relationship or permission.",
+        "extent_defaults": "workspace",
+        "navigation_neighbors": [
+            "packs",
+            "worlds",
+            "territory"
+        ],
+        "requires": [
+            "institution",
+            "information_policy",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "console",
+        "presentation_class": "personal",
+        "question": "What is the estate doing, withholding, waiting on, or failing to compose? What intersects the actor's real relations, Habitat and permitted Packs?",
+        "experience_character": "relation, Habitat and permitted-Pack aware projection",
+        "visible_sections": [
+            "source weather",
+            "demand pressure",
+            "exceptions",
+            "personal context",
+            "kept relations"
+        ],
+        "preferred_renderers": [
+            "operational-observatory",
+            "exception-matrix"
+        ],
+        "renderer_family": "inspector",
+        "renderer_variant": "observatory",
+        "route": "/console",
+        "interaction_density": "medium",
+        "allowed_affordance_families": [
+            "inspect",
+            "trace",
+            "open_context",
+            "save",
+            "join_request",
+            "go"
+        ],
+        "external_demand_roles": [
+            "affordance:INSPECT",
+            "affordance:OPTIMIZE",
+            "affordance:REPORT",
+            "affordance:VERIFY",
+            "domain:computers",
+            "domain:agents",
+            "domain:finance",
+            "domain:government",
+            "domain:telecommunications",
+            "source_kind:machine_protocol",
+            "source_kind:mcp",
+            "source_kind:public_api"
+        ],
+        "empty_character": "Nothing admitted to this personal context answers yet.",
+        "refusal_character": "A personal presentation cannot invent a relation, Habitat or Pack closure.",
+        "extent_defaults": "workspace",
+        "navigation_neighbors": [
+            "packs",
+            "worlds",
+            "territory"
+        ],
+        "requires": [
+            "institution",
+            "information_policy",
+            "relation",
+            "pack",
+            "habitat",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "console",
+        "presentation_class": "member_worker",
+        "question": "What is the estate doing, withholding, waiting on, or failing to compose? What intersects the real community, mission or work closure?",
+        "experience_character": "scoped member, project and work projection",
+        "visible_sections": [
+            "source weather",
+            "demand pressure",
+            "exceptions",
+            "shared context",
+            "work boundary"
+        ],
+        "preferred_renderers": [
+            "operational-observatory",
+            "exception-matrix"
+        ],
+        "renderer_family": "inspector",
+        "renderer_variant": "observatory",
+        "route": "/console",
+        "interaction_density": "high",
+        "allowed_affordance_families": [
+            "inspect",
+            "trace",
+            "open_context",
+            "participate",
+            "handoff",
+            "open_context"
+        ],
+        "external_demand_roles": [
+            "affordance:INSPECT",
+            "affordance:OPTIMIZE",
+            "affordance:REPORT",
+            "affordance:VERIFY",
+            "domain:computers",
+            "domain:agents",
+            "domain:finance",
+            "domain:government",
+            "domain:telecommunications",
+            "source_kind:machine_protocol",
+            "source_kind:mcp",
+            "source_kind:public_api"
+        ],
+        "empty_character": "Nothing admitted to this member or work scope is waiting.",
+        "refusal_character": "This presentation cannot infer membership, assignment or authority.",
+        "extent_defaults": "workspace",
+        "navigation_neighbors": [
+            "packs",
+            "worlds",
+            "territory"
+        ],
+        "requires": [
+            "institution",
+            "information_policy",
+            "relation",
+            "pack",
+            "work_scope",
+            "institution",
+            "information_policy"
+        ]
+    },
+    {
+        "grammar": "console",
+        "presentation_class": "operator",
+        "question": "What is the estate doing, withholding, waiting on, or failing to compose? Which controls and exceptions are visible around the already-resolved closure?",
+        "experience_character": "operational observability over real owner boundaries",
+        "visible_sections": [
+            "source weather",
+            "demand pressure",
+            "exceptions",
+            "operational context",
+            "owner boundaries"
+        ],
+        "preferred_renderers": [
+            "operational-observatory",
+            "exception-matrix"
+        ],
+        "renderer_family": "inspector",
+        "renderer_variant": "observatory",
+        "route": "/console",
+        "interaction_density": "very_high",
+        "allowed_affordance_families": [
+            "inspect",
+            "trace",
+            "open_context",
+            "inspect",
+            "trace",
+            "request_operation"
+        ],
+        "external_demand_roles": [
+            "affordance:INSPECT",
+            "affordance:OPTIMIZE",
+            "affordance:REPORT",
+            "affordance:VERIFY",
+            "domain:computers",
+            "domain:agents",
+            "domain:finance",
+            "domain:government",
+            "domain:telecommunications",
+            "source_kind:machine_protocol",
+            "source_kind:mcp",
+            "source_kind:public_api"
+        ],
+        "empty_character": "No operational residue is visible at this resolved closure.",
+        "refusal_character": "A visible operator control is not authority to admit, spend, publish or effect.",
+        "extent_defaults": "workspace",
+        "navigation_neighbors": [
+            "packs",
+            "worlds",
+            "territory"
+        ],
+        "requires": [
+            "institution",
+            "information_policy",
+            "institution",
+            "information_policy"
+        ]
+    }
+]

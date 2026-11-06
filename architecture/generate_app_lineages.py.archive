@@ -1,0 +1,135 @@
+#!/usr/bin/env python3
+"""Render the application lineage contract into what the organs compile against.
+
+Nine lineages lived as a C table inside the Frappe compiler. One copy, which is
+better than nine -- but a copy inside an organ, so "which applications does this
+institution understand" could only be answered by building a binary.
+
+The generated header keeps the same field order the C table had, so the organ
+reads a table it did not write instead of carrying one. `dialect` is new and is
+the point of the exercise: it records that a grammar was first extracted from
+Frappe's DocType JSON, which is provenance. Frappe is not the type of an
+application lineage, and nothing in the generated names says it is.
+
+Run with --check to verify the artifacts still match the contract.
+"""
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+CONTRACT = ROOT / "architecture" / "apps" / "app-lineages.contract.yaff"
+JSON_OUT = ROOT / "integrations" / "mcp" / "app_lineages_contract.json"
+HEADER = ROOT / "engine" / "core" / "include" / "bf_app_lineages.h"
+
+
+def parse() -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    for raw in CONTRACT.read_text().splitlines():
+        if not raw.startswith("  lineage "):
+            continue
+        parts = raw.strip().split()
+        if len(parts) < 5:
+            continue
+        row = {
+            "lineage": parts[1],
+            "flow_stage": parts[3],
+            # A representative DocType may contain a space; the contract writes
+            # it with a hyphen so the line stays one field per column.
+            "representative_doctype": parts[4].replace("-", " "),
+            "company_flow_after": "" if parts[5] == "-" else parts[5],
+        }
+        for token in parts[2:3] + parts[6:]:
+            key, _, value = token.partition(":")
+            if key == "dir":
+                key = "app_dir"
+            row[key] = "" if value == "-" else value
+        rows.append(row)
+    if not rows:
+        raise SystemExit("app lineage contract declares no lineages")
+    return rows
+
+
+def render_json(rows: list[dict[str, str]]) -> str:
+    return json.dumps({
+        "schema_version": "bonfyre.app-lineages.contract.v1",
+        "source": "architecture/apps/app-lineages.contract.yaff",
+        "count": len(rows),
+        "lineages": rows,
+        "forbidden_inference": (
+            "a declared lineage is not a running application, and a dialect records "
+            "where a grammar was first extracted from rather than what serves it"
+        ),
+    }, indent=2) + "\n"
+
+
+def render_header(rows: list[dict[str, str]]) -> str:
+    # Every line of a multi-line macro needs its own continuation; only the
+    # first and last carrying one silently ends the macro after one entry.
+    entries = ", \\\n".join(
+        '    {{"{lineage}", "{app_dir}", "{flow_stage}", "{rep}", "{after}", '
+        '"{owns}", "{consumes}", "{publishes}", "{dialect}"}}'.format(
+            lineage=r["lineage"], app_dir=r.get("app_dir", ""), flow_stage=r["flow_stage"],
+            rep=r["representative_doctype"], after=r.get("company_flow_after", ""),
+            owns=r.get("owns", ""), consumes=r.get("consumes", ""),
+            publishes=r.get("publishes", ""), dialect=r.get("dialect", ""))
+        for r in rows)
+    return f"""/* Generated from architecture/apps/app-lineages.contract.yaff.
+ *
+ * Do not edit. Change the contract and re-run
+ * architecture/generate_app_lineages.py.
+ *
+ * These were a C table inside the Frappe compiler, which made the set of
+ * application grammars a fact only a binary could answer. `dialect` records
+ * where each grammar was first extracted from; it is provenance, not a
+ * dependency, and not the type of an application lineage.
+ *
+ * Cannot infer: a declared lineage -> a running application. None of these is
+ * installed on the serving estate.
+ */
+#ifndef BF_APP_LINEAGES_H
+#define BF_APP_LINEAGES_H
+
+typedef struct BfAppLineage {{
+    const char *lineage;
+    const char *app_dir;
+    const char *flow_stage;
+    const char *representative_doctype;
+    const char *company_flow_after;
+    const char *owns;
+    const char *consumes;
+    const char *publishes;
+    const char *dialect;
+}} BfAppLineage;
+
+#define BF_APP_LINEAGES {{ \\
+{entries} \\
+}}
+#define BF_APP_LINEAGE_N {len(rows)}
+
+#endif /* BF_APP_LINEAGES_H */
+"""
+
+
+def main() -> int:
+    rows = parse()
+    want = {JSON_OUT: render_json(rows), HEADER: render_header(rows)}
+    if "--check" in sys.argv:
+        for path, text in want.items():
+            if not path.is_file() or path.read_text() != text:
+                print(f"{path.relative_to(ROOT)} disagrees with the app lineage contract; "
+                      "re-run architecture/generate_app_lineages.py", file=sys.stderr)
+                return 1
+        print(f"app lineage contract agrees ({len(rows)} lineages)")
+        return 0
+    for path, text in want.items():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text)
+        print(f"wrote {path.relative_to(ROOT)}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

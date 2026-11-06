@@ -1,0 +1,37 @@
+{
+  "schema": "bonfyre.spines-native-analysis.v1",
+  "measured_at": "2026-10-03T03:24:30.301Z",
+  "scope": "Three installed native C entrypoints and the new shell launcher; not whole-estate verification.",
+  "sources": {
+    "helix_vm.c": "1daf4127c7f23ea7bbe61a3f6ffb733734b7290d33b81adba0d21945d44782b9",
+    "delta_kernel.c": "6db6d8f89356ea86b9779fd1f9cd6acbaf83e59ac63d3d1111f9e61f08de089e",
+    "kernel_probe.c": "3834cadf1bbd6341c484b81cad4861c4958a3c93d9698b963d567daf751f7704",
+    "sha256_compat.h": "f4391837aaa8557a03fcfd595096b1ad9f1c5da540503d8cb5783284878cf97b"
+  },
+  "runs": [
+    {
+      "tool": "Cppcheck 2.22.0",
+      "exit_code": 0,
+      "output": "Checking /Users/nickgonzales/.bonfyre/agent-hypervisor/native-spines-r7/package/native/helix_vm.c ...\nChecking /Users/nickgonzales/.bonfyre/agent-hypervisor/native-spines-r7/package/native/helix_vm.c: __APPLE__=__APPLE__...\nChecking /Users/nickgonzales/.bonfyre/agent-hypervisor/native-spines-r7/package/native/helix_vm.c: __GNUC__=__GNUC__;__clang__=__clang__...\n1/3 files checked 38% done\nChecking /Users/nickgonzales/.bonfyre/agent-hypervisor/native-spines-r7/package/native/delta_kernel.c ...\nChecking /Users/nickgonzales/.bonfyre/agent-hypervisor/native-spines-r7/package/native/delta_kernel.c: __APPLE__=__APPLE__...\nChecking /Users/nickgonzales/.bonfyre/agent-hypervisor/native-spines-r7/package/native/delta_kernel.c: __GNUC__=__GNUC__;__clang__=__clang__...\n2/3 files checked 88% done\nChecking /Users/nickgonzales/.bonfyre/agent-hypervisor/native-spines-r7/package/native/kernel_probe.c ...\nChecking /Users/nickgonzales/.bonfyre/agent-hypervisor/native-spines-r7/package/native/kernel_probe.c: __APPLE__=__APPLE__...\nChecking /Users/nickgonzales/.bonfyre/agent-hypervisor/native-spines-r7/package/native/kernel_probe.c: __GNUC__=__GNUC__;__clang__=__clang__...\n3/3 files checked 100% done\n"
+    },
+    {
+      "tool": "Apple Clang 17.0.0 static analyzer",
+      "exit_code": 0,
+      "output": "In file included from /Users/nickgonzales/.bonfyre/agent-hypervisor/native-spines-r7/package/native/delta_kernel.c:2:\n/Users/nickgonzales/.bonfyre/agent-hypervisor/native-spines-r7/package/native/sha256_compat.h:40:42: warning: Value of 'errno' was not checked and may be overwritten by function 'malloc' [unix.Errno]\n   40 |     unsigned char *buf = (unsigned char*)malloc((size_t)size + 1);\n      |                                          ^\n/Users/nickgonzales/.bonfyre/agent-hypervisor/native-spines-r7/package/native/delta_kernel.c:72:8: note: Assuming 'argc' is >= 2\n   72 |     if(argc<2){fprintf(stderr,\"usage: bonfyre-delta-kernel [status|hash|delta|parity]\\n\");return 2;}\n      |        ^~~~~~\n/Users/nickgonzales/.bonfyre/agent-hypervisor/native-spines-r7/package/native/delta_kernel.c:72:5: note: Taking false branch\n   72 |     if(argc<2){fprintf(stderr,\"usage: bonfyre-delta-kernel [status|hash|delta|parity]\\n\");return 2;}\n      |     ^\n/Users/nickgonzales/.bonfyre/agent-hypervisor/native-spines-r7/package/native/delta_kernel.c:73:8: note: Assuming the condition is false\n   73 |     if(strcmp(argv[1],\"status\")==0||strcmp(argv[1],\"--version\")==0){\n      |        ^~~~~~~~~~~~~~~~~~~~~~~~~~~\n/Users/nickgonzales/.bonfyre/agent-hypervisor/native-spines-r7/package/native/delta_kernel.c:73:8: note: Left side of '||' is false\n/Users/nickgonzales/.bonfyre/agent-hypervisor/native-spines-r7/package/native/delta_kernel.c:73:37: note: Assuming the condition is false\n   73 |     if(strcmp(argv[1],\"status\")==0||strcmp(argv[1],\"--version\")==0){\n      |                                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/Users/nickgonzales/.bonfyre/agent-hypervisor/native-spines-r7/package/native/delta_kernel.c:73:5: note: Taking false branch\n   73 |     if(strcmp(argv[1],\"status\")==0||strcmp(argv[1],\"--version\")==0){\n      |     ^\n/Users/nickgonzales/.bonfyre/agent-hypervisor/native-spines-r7/package/native/delta_kernel.c:76:5: note: Taking true branch\n   76 |     if(strcmp(argv[1],\"hash\")==0){\n      |     ^\n/Users/nickgonzales/.bonfyre/agent-hypervisor/native-spines-r7/package/native/delta_kernel.c:77:58: note: Assuming 'p' is non-null\n   77 |         const char *p=arg_value(argc,argv,\"--input\"); if(!p)return 2; return hash_file(p);\n      |                                                          ^~\n/Users/nickgonzales/.bonfyre/agent-hypervisor/native-spines-r7/package/native/delta_kernel.c:77:55: note: Taking false branch\n   77 |         const char *p=arg_value(argc,argv,\"--input\"); if(!p)return 2; return hash_file(p);\n      |                                                       ^\n/Users/nickgonzales/.bonfyre/agent-hypervisor/native-spines-r7/package/native/delta_kernel.c:77:78: note: Calling 'hash_file'\n   77 |         const char *p=arg_value(argc,argv,\"--input\"); if(!p)return 2; return hash_file(p);\n      |                                                                              ^~~~~~~~~~~~\n/Users/nickgonzales/.bonfyre/agent-hypervisor/native-spines-r7/package/native/delta_kernel.c:15:26: note: Calling 'bf_read_all'\n   15 |     unsigned char *buf = bf_read_all(path, &len);\n      |                          ^~~~~~~~~~~~~~~~~~~~~~~\n/Users/nickgonzales/.bonfyre/agent-hypervisor/native-spines-r7/package/native/sha256_compat.h:35:10: note: 'f' is non-null\n   35 |     if (!f) return NULL;\n      |          ^\n/Users/nickgonzales/.bonfyre/agent-hypervisor/native-spines-r7/package/native/sha256_compat.h:35:5: note: Taking false branch\n   35 |     if (!f) return NULL;\n      |     ^\n/Users/nickgonzales/.bonfyre/agent-hypervisor/native-spines-r7/package/native/sha256_compat.h:36:5: note: Taking false branch\n   36 |     if (fseek(f, 0, SEEK_END) != 0) { fclose(f); return NULL; }\n      |     ^\n/Users/nickgonzales/.bonfyre/agent-hypervisor/native-spines-r7/package/native/sha256_compat.h:38:9: note: 'size' is >= 0\n   38 |     if (size < 0) { fclose(f); return NULL; }\n      |         ^~~~\n/Users/nickgonzales/.bonfyre/agent-hypervisor/native-spines-r7/package/native/sha256_compat.h:38:5: note: Taking false branch\n   38 |     if (size < 0) { fclose(f); return NULL; }\n      |     ^\n/Users/nickgonzales/.bonfyre/agent-hypervisor/native-spines-r7/package/native/sha256_compat.h:39:5: note: After calling 'rewind' reading 'errno' is required to find out if the call has failed\n   39 |     rewind(f);\n      |     ^~~~~~~~~\n/Users/nickgonzales/.bonfyre/agent-hypervisor/native-spines-r7/package/native/sha256_compat.h:40:42: note: Value of 'errno' was not checked and may be overwritten by function 'malloc'\n   40 |     unsigned char *buf = (unsigned char*)malloc((size_t)size + 1);\n      |                                          ^~~~~~~~~~~~~~~~~~~~~~~~\n1 warning generated.\n"
+    },
+    {
+      "tool": "ShellCheck 0.11.0",
+      "exit_code": 0,
+      "output": ""
+    }
+  ],
+  "all_diagnostics_clear": false,
+  "outstanding": [
+    {
+      "tool": "Clang",
+      "source": "sha256_compat.h:39",
+      "diagnostic": "unix.Errno: rewind failure not checked before malloc",
+      "boundary": "Existing installed native delta reader; new temporal owner supplies bounded regular files and checks native manifest content hashes. This does not prove the reader warning resolved."
+    }
+  ]
+}

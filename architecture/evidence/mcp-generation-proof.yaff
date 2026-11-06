@@ -1,0 +1,33 @@
+atlas evidence
+
+architecture mcp-generation-proof
+  canonical_name BonfyreMCPProof
+  family evidence
+  domain Evidence / Cross-owner generation receipt
+  layer evidence/proof
+  semantic_question Did a returned MCP generation receipt durably name and agree with each claimed institutional projection?
+  purpose Independently audits a persisted local generation receipt through the owners that hold its CMS/LambdaTensor row, ArtifactGraph atom/operator, BonfyreFlow definition, and DisCIPL contract. The proof rehashes owner-returned CMS generation text and never reads owner SQLite files directly.
+  maturity measured
+  consumes Artifact
+  consumes ReceiptEnvelope
+  publishes Evidence
+  node_types GenerationReceipt
+  node_types ControlPlaneManifest
+  node_types OwnerProofReceipt
+  edge_types verifies_projection
+  internal_calculus receipt digest and locator verification across native owner projections
+  invariant a generation receipt is not a complete durable control-plane receipt until its returned control_plane manifest is persisted atomically with the generation facts
+  invariant CMS output integrity requires the receipt digest, owner-declared digest, and hash of owner-returned output text to agree
+  invariant an older receipt without a control_plane manifest may use deterministic local-name recovery only when the proof marks every recovered locator as reconstructed
+  invariant owner verification invokes BonfyreCMS, BonfyreGraph, BonfyreFlow, and BonfyreDisCIPL; it never opens their WAL-backed stores as a shadow reader
+  forbidden_inference an MCP generation success response -> durable institutional side effects
+  forbidden_inference a defined WorkGraph flow -> enactment, authority, external effect, or completion
+  forbidden_inference a registered DisCIPL contract -> its enactment for this generation
+  forbidden_inference a CMS generation row -> publication or evidence-backed truth of its generated content
+  source_path cmd/BonfyreMCPProof/src/main.c
+  source_path integrations/mcp/project_native.mjs
+  witness integrations/mcp/tests/project_native.test.mjs verifies retained completion and write-ahead projection attempts through failures, uncertain outcomes and automatic replay refusal
+  witness cmd/BonfyreMCPProof/tests/live_generation_proof.sh
+  witness ~/.bonfyre/moe/receipts/24337a43-fc9f-4112-a50a-a7485370f8af.json
+  source_lineage MCP generation control-plane durability repair
+  known_gap the local project-node producer now runs checkout-owned Bun code under launchd; its fixture-verified projection path has not produced a new live generation proof in the 2026-10-02 transport cutover, and the older measured receipt is not proof of the new producer

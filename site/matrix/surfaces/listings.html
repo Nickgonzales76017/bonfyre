@@ -1,0 +1,1171 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Listings · Aurekai</title>
+<!-- Next.js Commerce (vercel/commerce, MIT): its own app/globals.css built with
+     Tailwind v4 and the two plugins the project declares, scanned over its own
+     components. Licence at /matrix/DONOR-LICENSES/nextcommerce/. -->
+<link rel="stylesheet" href="/assets/donor-nextcommerce.css?v=ce8147ca">
+<style>
+/* The donor animates on hover; this deployment asks first. */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;
+    animation-iteration-count:1!important;transition-duration:.001ms!important;
+    scroll-behavior:auto!important}
+}
+</style>
+</head>
+<body class="bg-neutral-50 text-black selection:bg-teal-300 dark:bg-neutral-900 dark:text-white dark:selection:bg-pink-500 dark:selection:text-white">
+<nav class="relative flex items-center justify-between p-4 lg:px-6">
+  <div class="flex w-full items-center">
+    <div class="flex w-full md:w-1/3">
+      <span id="bf-mk" class="mr-4 flex flex-none items-center lg:mr-6"><!--BF_SLOT:0--></span>
+      <ul class="hidden gap-6 text-sm md:flex md:items-center" id="nx-nav"><!--BF_SLOT:1--></ul>
+    </div>
+    <div class="hidden justify-center md:flex md:w-1/3">
+      <form role="search" class="w-max-[550px] relative w-full lg:w-80 xl:w-full"
+            id="nx-searchform">
+        <input type="text" name="q" placeholder="Search listings" autocomplete="off"
+          id="nx-search"
+          class="text-md w-full rounded-lg border bg-white px-4 py-2 text-black
+                 placeholder:text-neutral-500 dark:border-neutral-800 dark:bg-transparent
+                 dark:text-white dark:placeholder:text-neutral-400">
+        <div class="absolute top-0 right-0 mr-3 flex h-full items-center">
+          <span class="h-4 w-4 text-neutral-500">&#9906;</span>
+        </div>
+      </form>
+    </div>
+    <div class="flex justify-end md:w-1/3">
+      <button aria-label="Open compare" id="nx-cart"
+        class="relative flex h-11 w-11 items-center justify-center rounded-md border
+               border-neutral-200 text-black transition-colors dark:border-neutral-700
+               dark:text-white">
+        <span class="text-lg">&#9776;</span>
+        <div class="absolute right-0 top-0 -mt-2 -mr-2 h-4 w-4 rounded-sm bg-blue-600
+                    text-[11px] font-medium text-white" id="nx-cartn">0</div>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="mx-auto max-w-(--breakpoint-2xl) px-4 pb-8" id="nx-productwrap"><!--BF_SLOT:2--></div>
+
+<div class="mx-auto max-w-(--breakpoint-2xl) px-4 pb-8" id="nx-fifteen"></div>
+
+<div class="mx-auto flex max-w-(--breakpoint-2xl) flex-col gap-8 px-4 pb-4 text-black
+            md:flex-row dark:text-white">
+  <div class="order-first w-full flex-none md:max-w-[125px]">
+    <nav>
+      <h3 class="hidden text-xs text-neutral-500 md:block dark:text-neutral-400">Pages</h3>
+      <ul class="hidden md:block" id="nx-collections"><!--BF_SLOT:3--></ul>
+      <h3 class="mt-6 hidden text-xs text-neutral-500 md:block dark:text-neutral-400">Status</h3>
+      <ul class="hidden md:block" id="nx-latency"><!--BF_SLOT:4--></ul>
+    </nav>
+  </div>
+  <div class="order-last min-h-screen w-full md:order-none">
+    <p class="mb-1 text-sm font-medium" id="nx-question"><!--BF_SLOT:5--></p>
+    <p class="mb-4 text-sm text-neutral-500 dark:text-neutral-400" id="nx-count"><!--BF_SLOT:6--></p>
+    <div class="grid grid-flow-row gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+         id="nx-grid"><!--BF_SLOT:7--></div>
+  </div>
+  <div class="order-none flex-none md:order-last md:w-[180px]">
+    <nav>
+      <h3 class="hidden text-xs text-neutral-500 md:block dark:text-neutral-400">Sort by</h3>
+      <ul class="hidden md:block" id="nx-sort"><!--BF_SLOT:8--></ul>
+    </nav>
+  </div>
+</div>
+
+
+<script>
+/* Shared kit for the clone surfaces.
+ *
+ * Every surface below borrows a market interface's *behaviour* -- the layout,
+ * density and gesture people already know -- and reads Aurekai's own live
+ * endpoints. Nothing here imports anybody's ontology: the records are the same
+ * subjects the rest of the estate addresses, rendered in a shape a person has
+ * already learned somewhere else.
+ *
+ * Three rules hold across all of them, because each has a failure that looks
+ * fine:
+ *
+ *   a 4xx is an answer      htmx and fetch both leave a placeholder up forever
+ *                           if a refusal is treated as an outage. Every pane
+ *                           reports refused / empty / failed as three different
+ *                           things and offers the session when one is needed.
+ *
+ *   verbs are offered       Authority gates at effect time. A chip that posted
+ *                           would be asking for a decision this surface has no
+ *                           standing to carry, so nothing here submits.
+ *
+ *   the source is named     Every pane says which endpoint produced it. A
+ *                           surface that hides its source cannot be checked
+ *                           against the deployment it claims to describe.
+ */
+(() => {
+  const K = {};
+
+  K.host = location.hostname;
+  K.territory = K.host.endsWith('.life') ? 'life'
+              : K.host.endsWith('.shop') ? 'shop'
+              : K.host.endsWith('.work') ? 'work'
+              : 'live';
+
+  K.token = () => null; /* same-origin HttpOnly session cookie */
+
+  /* One fetch, three outcomes, never a silent blank. */
+  K.get = async (path, accept) => {
+    const headers = { Accept: accept || 'application/json' };
+    const t = K.token();
+    if (t) headers.Authorization = 'Bearer ' + t;
+    let r;
+    try {
+      r = await fetch(path, { headers });
+    } catch (e) {
+      return { ok: false, kind: 'failed', status: 0, detail: String(e), path };
+    }
+    if (r.status === 401 || r.status === 403)
+      return { ok: false, kind: 'refused', status: r.status, path };
+    if (!r.ok)
+      return { ok: false, kind: 'failed', status: r.status, path };
+    const body = accept && accept.includes('html') ? await r.text() : await r.json();
+    return { ok: true, kind: 'ok', status: r.status, body, path };
+  };
+
+  /* The three refusal states, rendered. A withheld pane offers the session
+   * that would fill it; withholding without offering is a dead end wearing the
+   * clothes of a loading state. */
+  K.note = (res, what) => {
+    const el = document.createElement('div');
+    el.className = 'k-note ' + (res.kind === 'refused' ? 'k-refused' : 'k-failed');
+    if (res.kind === 'refused') {
+      el.innerHTML = '<strong>' + what + ' needs an admitted session.</strong>'
+        + '<p>Authority-gated. Other panes on this page answer without one, so this '
+        + 'is a refusal rather than an absent subject.</p>'
+        + (K.token()
+            ? '<p>You are signed in and this scope was still refused: the session you '
+              + 'hold does not carry it.</p>'
+            : '<p><a class="k-btn" href="/login">Sign in</a></p>');
+    } else {
+      el.innerHTML = '<strong>' + what + ' did not answer.</strong>'
+        + '<p><code>' + res.path + '</code> returned ' + (res.status || 'no response')
+        + '. Nothing is rendered rather than a stale or invented list.</p>';
+    }
+    return el;
+  };
+
+  K.empty = (what, path) => {
+    const el = document.createElement('div');
+    el.className = 'k-note k-empty';
+    el.innerHTML = '<strong>' + what + ' is empty.</strong><p><code>' + path
+      + '</code> answered and returned nothing. That is an empty projection, not a '
+      + 'refusal and not an absent subject.</p>';
+    return el;
+  };
+
+  /* Parse the /_surface/<name> record fragments the address organ serves.
+   * They are <dl class="surface-record"> with <dt>/<dd> pairs, and are the same
+   * bytes a machine reading that path receives. */
+  K.records = (html) => {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return [...doc.querySelectorAll('.surface-record')].map(dl => {
+      const rec = {};
+      const dts = [...dl.querySelectorAll('dt')];
+      const dds = [...dl.querySelectorAll('dd')];
+      dts.forEach((dt, i) => { rec[dt.textContent.trim()] = (dds[i] || {}).textContent || ''; });
+      return rec;
+    });
+  };
+
+  K.surface = async (name) => {
+    const res = await K.get('/_surface/' + name, 'text/html');
+    if (!res.ok) return res;
+    return { ...res, records: K.records(res.body) };
+  };
+
+  /* A verb chip. Offered, never submitted. */
+  K.verbs = (list) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'k-verbs';
+    for (const v of list) {
+      const s = document.createElement('span');
+      s.className = 'k-verb';
+      s.textContent = v;
+      s.title = v + ' is offered here. Whether you may is decided at effect time '
+              + 'by the owner of the effect, not by this surface.';
+      wrap.appendChild(s);
+    }
+    return wrap;
+  };
+
+  K.sourceLine = (paths) => {
+    const p = document.createElement('p');
+    p.className = 'k-source';
+    p.innerHTML = 'Reading ' + paths.map(x => '<code>' + x + '</code>').join(' · ')
+      + ' — the same bytes a machine asking for this path receives.';
+    return p;
+  };
+
+  K.mount = (el, node) => { el.innerHTML = ''; el.appendChild(node); };
+
+
+  /* Avatars from DiceBear (https://dicebear.com), rendered from the subject's
+   * own name as the seed, so the same room gets the same face everywhere in the
+   * estate and nothing has to be uploaded or stored.
+   *
+   * The style is chosen by what the subject *is*, because a human face on a
+   * venue or a binary would be the surface asserting a person exists:
+   *
+   *   subject   a room, a venue, an act, a programme   -> shapes
+   *   machine   a binary, a queue, an endpoint         -> identicon
+   *   peer      a federated instance                   -> rings
+   *   person    an actual human actor                  -> initials
+   *
+   * Style licences: shapes is CC BY 4.0 (Alexis Doreau); identicon, rings and
+   * initials are CC0 1.0. Attribution is carried in the page footer.
+   */
+  K.AVATAR_STYLE = { subject: 'shapes', machine: 'identicon', peer: 'rings',
+                     person: 'initials' };
+
+  K.avatar = (seed, kind, size) => {
+    const style = K.AVATAR_STYLE[kind] || K.AVATAR_STYLE.subject;
+    const p = new URLSearchParams({ seed: String(seed == null ? '' : seed) });
+    if (size) p.set('size', String(size));
+    p.set('radius', '12');
+    return 'https://api.dicebear.com/9.x/' + style + '/svg?' + p.toString();
+  };
+
+  /* An <img> that falls back to the initials block if the avatar service is
+   * unreachable. A broken image where a face should be reads as a broken page;
+   * a monogram reads as a subject that has no picture, which is the truth. */
+  K.avatarImg = (seed, kind, size) => {
+    const s = String(seed == null ? '' : seed);
+    const el = document.createElement('img');
+    el.src = K.avatar(s, kind, size);
+    el.alt = '';
+    el.loading = 'lazy';
+    el.width = size || 44; el.height = size || 44;
+    el.dataset.seed = s;
+    el.addEventListener('error', () => {
+      const box = document.createElement('span');
+      box.className = el.className;
+      box.setAttribute('style', el.getAttribute('style') || '');
+      box.textContent = s.replace(/[^a-z0-9 ]/gi, ' ').trim().split(/\s+/)
+        .slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
+      el.replaceWith(box);
+    }, { once: true });
+    return el;
+  };
+
+  K.avatarAttribution = 'Avatars by <a href="https://dicebear.com">DiceBear</a>, generated '
+    + "from each subject's own name. Shapes is CC BY 4.0 (Alexis Doreau); identicon, rings "
+    + 'and initials are CC0 1.0.';
+
+
+  /* ---- the address plane -------------------------------------------------
+   *
+   * A host on this estate is not a deployment, it is an institution in a
+   * territory. leaflounge.aurekai.shop is the Leaf Lounge as the market sees
+   * it; leaflounge.aurekai.life is the same institution as its own people see
+   * it; theleaflounge.store is the same institution again, under a domain it
+   * owns. Same code, same surfaces, different subject.
+   *
+   * So a surface must not guess whose host it is on from the hostname. It asks
+   * the host, once, and the host answers from the Matrix. A page that guessed
+   * would be right for leaflounge.aurekai.shop and wrong for
+   * theleaflounge.store, which is exactly the case that matters.
+   */
+  K.here = null;
+  K.address = async () => {
+    if (K.here) return K.here;
+    try {
+      const r = await fetch('/.well-known/bonfyre', {headers:{Accept:'application/json'}});
+      K.here = r.ok ? await r.json() : {host: location.hostname, territory: K.territory};
+    } catch (_) {
+      K.here = {host: location.hostname, territory: K.territory};
+    }
+    return K.here;
+  };
+
+  /* The whole estate's address plane, for the surfaces that show it. */
+  K.estate = async () => {
+    try {
+      const r = await fetch('/.well-known/bonfyre/estate', {headers:{Accept:'application/json'}});
+      return r.ok ? await r.json() : null;
+    } catch (_) { return null; }
+  };
+
+  /* A subject's canonical address, and its room. The same path on every host,
+   * because the address belongs to the subject and not to the territory. */
+  K.subject = (kind, id) => '/s/' + encodeURIComponent(kind) + '/' + encodeURIComponent(id);
+  K.room    = (kind, id) => '/room/' + encodeURIComponent(kind) + '/' + encodeURIComponent(id);
+
+  /* An <a> to the subject, so a clone is a representation you can leave. */
+  K.subjectLink = (kind, id, label, cls) => {
+    const a = document.createElement('a');
+    a.href = K.subject(kind, id);
+    a.textContent = label === undefined ? id : label;
+    a.title = 'Its address on this estate: ' + K.subject(kind, id)
+            + ' — the same path on every host. This surface is one representation of it.';
+    if (cls) a.className = cls;
+    return a;
+  };
+
+  /* The institution's other territories, from the Matrix rather than from
+   * string surgery on the hostname. Returns [] when this host holds only one. */
+  K.institutionHosts = async () => {
+    const a = await K.address();
+    return (a && a.institution_hosts) || [];
+  };
+
+  /* Renders the switch as links, marking the one you are standing on. Any
+   * surface can drop this in and become navigable across the institution. */
+  K.hostSwitch = async (current) => {
+    const hosts = await K.institutionHosts();
+    const nav = document.createElement('nav');
+    nav.className = 'k-hosts';
+    nav.setAttribute('aria-label', 'This institution across territories');
+    if (hosts.length < 2) return nav;
+    for (const h of hosts) {
+      const a = document.createElement('a');
+      a.href = location.protocol + '//' + h.host + (current || location.pathname);
+      a.textContent = '.' + h.territory;
+      a.title = h.host + ' — audience ' + (h.audience || 'unstated');
+      if (h.host === location.hostname) a.setAttribute('aria-current', 'page');
+      nav.appendChild(a);
+    }
+    return nav;
+  };
+
+
+  /* ---- four territories, four sets of UX physics -------------------------
+   *
+   * Section 69: they are projections over one Matrix, not four products, but
+   * their physics differ -- and building them as one feed with different icons
+   * would lose exactly what makes each market leader good at what it does.
+   *
+   * So the difference here is not the chips. It is the ordering principle, and
+   * each one answers a different question about the same records:
+   *
+   *   .live  what deserves attention now      ordered by what is on, decaying
+   *   .life  what matters in my world         not ordered by attention at all
+   *   .shop  what economic opportunity is useful   ordered by the offer
+   *   .work  what should move forward         ordered by what blocks what
+   *
+   * A verb outside its territory is a category error, so the verb lists are
+   * per territory and nothing merges them.
+   */
+  K.PHYSICS = {
+    live: {
+      question: 'What deserves attention now?',
+      principle: 'fast attention / occurrence',
+      orders_by: 'what is on now, and how hard it is pressing',
+      decays: true,
+      verbs: ['WATCH','JOIN','GO','FOLLOW','SAVE','SHARE'],
+      /* attention is pressure: something happening now outranks something
+         merely published, and a room reporting its fill outranks one that did
+         not. This is the only territory where recency is allowed to rank. */
+      rank: r => {
+        const on = /doors|tonight|now|set |playing|open/i.test(r.tonight_status || '') ? 2 : 0;
+        const pct = Number((String(r.capacity_note||'').match(/(\d+)\s*percent/)||[])[1] || 0);
+        return on * 100 + pct;
+      },
+      cant: 'attention is not obligation. Nothing on this feed is expecting you, and a '
+          + 'capacity note is what the room published rather than what is true at the door.'
+    },
+    life: {
+      question: 'What matters in my world?',
+      principle: 'durable personal world',
+      orders_by: 'nothing — this is what you already keep, in a stable order',
+      decays: false,
+      verbs: ['MEET','JOIN','GO','SAVE','HELP','FOLLOW','PLAN','REMEMBER','SHARE','MOVE','ASSIGN'],
+      /* The load-bearing difference. A personal world ranked by attention
+         would be a recommendation feed wearing the clothes of a kept set, and
+         the thing that makes it yours is that it does not move when the world
+         gets loud. Stable, alphabetical, no recency anywhere. */
+      rank: null,
+      cant: 'a kept subject is not a recommended one. Nothing here was ranked for you, and '
+          + 'nothing moves up because it got busy.'
+    },
+    shop: {
+      question: 'What economic opportunity is useful?',
+      principle: 'economic opportunity / exchange',
+      orders_by: 'the offer — what is on, and at what price',
+      decays: false,
+      verbs: ['BUY','OFFER','JOIN','SAVE','COMPARE','REQUEST','SELL','FUND','CONTRIBUTE'],
+      /* An offer ranks; a description does not. A record with no offer sorts
+         below every record that has one, because in this territory a subject
+         without terms is not an opportunity. */
+      rank: r => (r.offer_usd ? 1000 - Number(r.offer_usd) : -1),
+      cant: 'an offer is terms a seller will accept. It is not a sale, a reservation, or '
+          + 'anything anybody has bought.'
+    },
+    work: {
+      question: 'What should move forward?',
+      principle: 'obligation / execution',
+      orders_by: 'what blocks what, and what undoing it would cost',
+      decays: false,
+      verbs: ['APPLY','APPROVE','CLAIM','FUND','CONTACT','BOOK','DO','REVIEW','ASSIGN',
+              'RESPOND','ESCALATE'],
+      rank: null,
+      cant: 'an obligation is not an assignment, and a requirement is not funding.'
+    }
+  };
+
+  K.physics = (t) => K.PHYSICS[t || K.territory] || K.PHYSICS.live;
+
+  /* Order a record set by its territory's own principle. .life gets a stable
+   * order on purpose: sorting a kept world by anything would be ranking it. */
+  K.order = (records, t) => {
+    const p = K.physics(t);
+    const out = records.slice();
+    if (!p.rank) {
+      out.sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+      return out;
+    }
+    out.sort((a, b) => p.rank(b) - p.rank(a)
+                    || String(a.name || '').localeCompare(String(b.name || '')));
+    return out;
+  };
+
+  /* A verb outside its territory is a category error, so this is the only
+   * place a surface should get its verbs from. */
+  K.verbsFor = (t) => K.physics(t).verbs.slice();
+
+
+  /* ---- the fifteen commerce facts ----------------------------------------
+   *
+   * Section 70: .shop needs its own falsehood list, and it is long.
+   *
+   *   Product != Listing != Inventory != AvailabilityObservation != Offer !=
+   *   Quote != Cart != Checkout != Commitment != Payment != Settlement !=
+   *   Fulfilment != Delivery != Satisfaction != Ownership
+   *
+   * Each stage names the one owner that can establish it, because these
+   * collapse when a subsystem is asked a question it cannot answer. The
+   * dangerous collapses *skip* rather than step -- "paid" read as "delivered",
+   * "delivered" read as "owned" -- so non-implication holds over every pair,
+   * not over adjacent ones.
+   *
+   * And no stage may be skipped in the other direction either: an exchange
+   * reporting delivery with no fulfilment is describing something the estate
+   * never saw happen.
+   */
+  K.COMMERCE = [
+    {stage:'Product', owner:'a catalogue',
+     knows:'what a product is',
+     cannot:'whether anybody has one',
+     here:'/_surface/capabilities'},
+    {stage:'Listing', owner:'a catalogue entry with terms attached',
+     knows:'that this is offered somewhere, described this way',
+     cannot:'that the description is current, or that the seller still means it',
+     here:'/capability, /ucp/catalog, /acp/products'},
+    {stage:'Inventory', owner:'the merchant',
+     knows:'a count the merchant keeps',
+     cannot:'that this buyer can obtain one',
+     here:null},
+    {stage:'AvailabilityObservation', owner:'an observer, at a time and a place',
+     knows:'that it was obtainable then, there',
+     cannot:'that it is obtainable now, here',
+     here:null},
+    {stage:'Offer', owner:'the seller',
+     knows:'terms the seller will accept',
+     cannot:'that anyone accepted them',
+     here:'/capability'},
+    {stage:'Quote', owner:'the pricing owner, for one caller',
+     knows:'what it would cost this caller now',
+     cannot:'anything held, reserved or promised',
+     here:'/mpp/quote'},
+    {stage:'Cart', owner:'the buyer, assembling',
+     knows:'what one person put together, before anybody agreed to any of it',
+     cannot:'that any of it is obtainable together',
+     here:null},
+    {stage:'Checkout', owner:'the exchange',
+     knows:'that an intent to buy was expressed',
+     cannot:'that it was accepted',
+     here:null},
+    {stage:'Commitment', owner:'CommitmentGraph',
+     knows:'who owes what to whom, under which conditions',
+     cannot:'that the resource moved',
+     here:null},
+    {stage:'Payment', owner:'a payment rail',
+     knows:'that a charge was authorized',
+     cannot:'that money settled',
+     here:'the 402 on /capability/<name>'},
+    {stage:'Settlement', owner:'the ledger, once a facilitator verifies',
+     knows:'that money moved',
+     cannot:'that anything was done for it',
+     here:null},
+    {stage:'Fulfilment', owner:'the seller, doing the thing',
+     knows:'that the seller acted',
+     cannot:'that it reached anybody',
+     here:null},
+    {stage:'Delivery', owner:'a courier',
+     knows:'that a parcel moved',
+     cannot:'that anyone wanted its contents',
+     here:'/epcis/events'},
+    {stage:'Satisfaction', owner:'the buyer, afterwards',
+     knows:'that the person who received it says it was what they wanted',
+     cannot:'that they hold it lawfully',
+     here:null},
+    {stage:'Ownership', owner:'.life, after the transaction leaves the store',
+     knows:'that this is now part of somebody\'s world',
+     cannot:'anything about how it got there',
+     here:null}
+  ];
+
+  /* Non-implication over every pair, not adjacent ones: the dangerous
+   * collapses skip. Answers for any two stages in either direction, because
+   * reading "delivered" off "paid" is as wrong as the reverse. */
+  K.commerceGap = (a, b) => {
+    const i = K.COMMERCE.findIndex(x => x.stage === a);
+    const j = K.COMMERCE.findIndex(x => x.stage === b);
+    if (i < 0 || j < 0 || i === j) return null;
+    const lo = K.COMMERCE[Math.min(i, j)], hi = K.COMMERCE[Math.max(i, j)];
+    return lo.stage + ' does not establish ' + hi.stage + ': ' + lo.owner
+         + ' knows ' + lo.knows + ' and not ' + hi.knows + '. Only ' + hi.owner
+         + ' can establish that.';
+  };
+
+  /* What this deployment actually reaches, probed rather than declared. */
+  K.commerceReached = async () => {
+    const out = {};
+    for (const s of K.COMMERCE)
+      out[s.stage] = {reached:false, why:'no owner for this is admitted here'};
+    const book = await K.surface('capabilities');
+    if (book.ok && book.records.length)
+      out.Product = {reached:true, why:book.records.length + ' in the native book'};
+    const cap = await K.get('/capability');
+    if (cap.ok && (cap.body.capabilities||[]).length) {
+      const n = cap.body.capabilities.length;
+      out.Listing = {reached:true, why:n + ' carried by three carriers'};
+      out.Offer   = {reached:true, why:n + ' with terms a seller will accept'};
+      const first = cap.body.capabilities[0];
+      const q = await K.get('/mpp/quote?capability=' + encodeURIComponent(first.name));
+      if (q.ok) out.Quote = {reached:true, why:'priced for this caller, holding nothing'};
+      try {
+        const g = await fetch(first.resource, {headers:{Accept:'application/json'}});
+        if (g.status === 402) {
+          const b = await g.json();
+          const settles = b.settlement && b.settlement.facilitator_configured;
+          out.Payment = {reached:false,
+            why:'the resource answers 402 and wants a charge; nothing has authorized one'};
+          out.Settlement = {reached:false,
+            why: settles ? 'a facilitator is configured and nothing has settled'
+                         : 'facilitator_configured is false, so nothing here can settle at all'};
+        }
+      } catch (_) {}
+    }
+    const ep = await K.get('/epcis/events');
+    if (ep.ok) out.Delivery = {reached:false,
+      why: ep.body.empty_reason || 'the event list is empty'};
+    return out;
+  };
+
+
+  /* ---- the mark ----------------------------------------------------------
+   *
+   * Aurekai x Bonfyre, as a lockup rather than a word. Bonfyre is the engine;
+   * Aurekai is the larger umbrella, and the two plates say which is which
+   * before anybody reads a sentence about it.
+   *
+   *   [ knight ]  x  [ BY ]  BONFYRE
+   *     paper          ink
+   *
+   * The knight is an engraving, so it keeps a paper ground on every theme --
+   * inverting it for dark mode would turn a woodcut into a photographic
+   * negative. The wordmark plate takes the page's ink instead, which is what
+   * makes the pair read as two things beside each other rather than one badge.
+   *
+   * Every surface here runs a different donor's chrome, so this brings its own
+   * styles, scoped and injected once, and depends on no donor class.
+   */
+  K.MARK_CSS = `
+.bf-mk{display:inline-flex;align-items:center;gap:.5rem;margin-right:1.1rem;
+  text-decoration:none;color:inherit;background:none;border:0;padding:0;cursor:pointer;
+  font:inherit;line-height:1;flex:0 0 auto}
+.bf-mk-plate{width:2.5rem;height:2.5rem;border-radius:.75rem;display:grid;place-items:center;
+  flex:0 0 auto;overflow:hidden;border:1px solid rgba(128,128,128,.35);
+  transition:transform .14s ease,box-shadow .14s ease}
+.bf-mk:hover .bf-mk-plate{transform:translateY(-1px);box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.bf-mk-knight{background:#f4f2ec}
+.bf-mk-knight img{width:88%;height:88%;object-fit:contain;display:block;mix-blend-mode:multiply}
+.bf-mk-by{background:#0e1210;color:#f2f4f0;
+  font:800 .82rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.04em}
+.bf-mk-x{font:400 .78rem/1 ui-monospace,monospace;opacity:.45;flex:0 0 auto}
+.bf-mk-word{font:800 .95rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.045em;
+  white-space:nowrap}
+.bf-mk-sm .bf-mk-plate{width:1.75rem;height:1.75rem;border-radius:.5rem}
+.bf-mk-sm .bf-mk-by{font-size:.62rem}
+.bf-mk-sm .bf-mk-word{font-size:.8rem}
+.bf-mk-pop{position:fixed;z-index:2147483000;width:min(23rem,calc(100vw - 2rem));
+  background:#0e1210;color:#e9efe6;border:1px solid #2a332c;border-radius:.75rem;
+  box-shadow:0 10px 40px rgba(0,0,0,.45);padding:1rem 1.05rem;
+  font:400 .82rem/1.5 ui-sans-serif,system-ui,sans-serif}
+.bf-mk-pop[hidden]{display:none}
+.bf-mk-pop h3{margin:0 0 .15rem;font:700 .95rem/1.2 ui-sans-serif,system-ui,sans-serif}
+.bf-mk-pop .bf-mk-sub{margin:0 0 .7rem;opacity:.62;
+  font:400 .72rem/1.4 ui-monospace,monospace}
+.bf-mk-pop p{margin:0 0 .6rem}
+.bf-mk-pop dl{margin:.7rem 0 0;display:grid;grid-template-columns:auto 1fr;gap:.2rem .7rem;
+  font:400 .72rem/1.5 ui-monospace,monospace}
+.bf-mk-pop dt{opacity:.5;text-transform:uppercase;letter-spacing:.08em;font-size:.62rem;
+  align-self:center}
+.bf-mk-pop dd{margin:0;word-break:break-word}
+.bf-mk-pop .bf-mk-hosts{display:flex;gap:.45rem;flex-wrap:wrap;margin-top:.7rem}
+.bf-mk-pop .bf-mk-hosts a{color:#b9d49a;text-decoration:none;
+  font:400 .72rem/1 ui-monospace,monospace;border:1px solid #2a332c;border-radius:999px;
+  padding:.28rem .55rem}
+.bf-mk-pop .bf-mk-hosts a[aria-current]{background:#1b2a1d;color:#e9efe6}
+.bf-mk-scrim{position:fixed;inset:0;z-index:2147482999;background:transparent}
+.bf-mk-scrim[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){.bf-mk:hover .bf-mk-plate{transform:none}}
+`;
+
+  K.markStyles = () => {
+    if (document.getElementById('bf-mk-style')) return;
+    const st = document.createElement('style');
+    st.id = 'bf-mk-style';
+    st.textContent = K.MARK_CSS;
+    document.head.appendChild(st);
+  };
+
+  /* Aurekai x Bonfyre. Pass {word:false} for a chrome that has no room for the
+   * wordmark, {small:true} for a dense header. */
+  K.mark = (opts) => {
+    opts = opts || {};
+    K.markStyles();
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'bf-mk' + (opts.small ? ' bf-mk-sm' : '');
+    b.setAttribute('aria-haspopup', 'dialog');
+    b.setAttribute('aria-expanded', 'false');
+    b.title = 'Aurekai × Bonfyre — what this is';
+    b.innerHTML =
+      '<span class="bf-mk-plate bf-mk-knight">'
+    + '<img src="/assets/aurekai-knight.png" alt="" width="40" height="40" '
+    + 'loading="eager" decoding="async"></span>'
+    + '<span class="bf-mk-x" aria-hidden="true">×</span>'
+    + '<span class="bf-mk-plate bf-mk-by">BŸ</span>'
+    + (opts.word === false ? '' : '<span class="bf-mk-word">BONFŸRE</span>');
+    b.setAttribute('aria-label', 'Aurekai times Bonfyre');
+    b.addEventListener('click', (e) => { e.preventDefault(); K.markPopover(b); });
+    return b;
+  };
+
+  /* Swap a placeholder for the mark, keeping whatever spacing classes the
+   * donor's own header put on that slot. replaceWith drops them otherwise, and
+   * the mark ends up welded to the nav beside it. */
+  K.mountMark = (id, opts) => {
+    const slot = document.getElementById(id || 'bf-mk');
+    if (!slot) return null;
+    const m = K.mark(opts);
+    if (slot.className) m.className += ' ' + slot.className;
+    slot.replaceWith(m);
+    return m;
+  };
+
+  K.markPopover = async (anchor) => {
+    let pop = document.getElementById('bf-mk-pop');
+    let scrim = document.getElementById('bf-mk-scrim');
+    if (pop && !pop.hidden) { close(); return; }
+    if (!pop) {
+      scrim = document.createElement('div');
+      scrim.id = 'bf-mk-scrim'; scrim.className = 'bf-mk-scrim'; scrim.hidden = true;
+      pop = document.createElement('div');
+      pop.id = 'bf-mk-pop'; pop.className = 'bf-mk-pop'; pop.hidden = true;
+      pop.setAttribute('role', 'dialog');
+      pop.setAttribute('aria-label', 'Aurekai and Bonfyre');
+      document.body.append(scrim, pop);
+      scrim.addEventListener('click', close);
+      addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+    }
+    function close() {
+      pop.hidden = true; scrim.hidden = true;
+      if (anchor) anchor.setAttribute('aria-expanded', 'false');
+    }
+
+    const a = await K.address();
+    const inst = (a.institution || '').replace(/^[a-z]+:/, '').replace(/^aurekai:/, 'aurekai / ');
+    const hosts = a.institution_hosts || [];
+    pop.innerHTML =
+      '<h3>Aurekai × BonfŸre</h3>'
+    + '<p class="bf-mk-sub">the umbrella × the engine</p>'
+    + '<p>Bonfŷre is the engine: it addresses subjects, derives work from the difference '
+    + 'between states, routes it, records what happened and projects the result. Aurekai is '
+    + 'the larger umbrella the engine runs under.</p>'
+    + '<p>This page is one projection. The same engine answers the same subjects on every '
+    + 'host below, in that territory’s own physics.</p>'
+    + '<dl>'
+    + (inst ? '<dt>institution</dt><dd>' + inst + '</dd>' : '')
+    + '<dt>host</dt><dd>' + (a.host || location.hostname) + '</dd>'
+    + '<dt>territory</dt><dd>.' + (a.territory || '') + '</dd>'
+    + (a.audience ? '<dt>audience</dt><dd>' + a.audience + '</dd>' : '')
+    + (a.world ? '<dt>world</dt><dd>' + a.world + '</dd>' : '')
+    + '</dl>'
+    + (hosts.length > 1
+        ? '<div class="bf-mk-hosts">' + hosts.map(h =>
+            '<a href="' + location.protocol + '//' + h.host + location.pathname + '"'
+            + (h.host === location.hostname ? ' aria-current="page"' : '')
+            + '>.' + h.territory + '</a>').join('') + '</div>'
+        : '')
+    + '<div class="bf-mk-hosts"><a href="/territory">the address plane</a>'
+    + '<a href="/">the estate</a></div>';
+
+    pop.hidden = false; scrim.hidden = false;
+    if (anchor) {
+      anchor.setAttribute('aria-expanded', 'true');
+      const r = anchor.getBoundingClientRect();
+      pop.style.top = Math.min(r.bottom + 8, innerHeight - pop.offsetHeight - 8) + 'px';
+      pop.style.left = Math.max(8, Math.min(r.left, innerWidth - pop.offsetWidth - 8)) + 'px';
+    }
+  };
+
+  K.nav = (current) => {
+    const items = [
+      ['/discover', 'Discover'], ['/board', 'Boards'], ['/community', 'Community'],
+      ['/listings', 'Listings'], ['/parcels', 'Parcels'],
+      ['/inbox', 'Inbox'], ['/channels', 'Channels'], ['/stage', 'Stage'],
+      ['/territory', 'Territory']
+    ];
+    const nav = document.createElement('nav');
+    nav.className = 'k-nav';
+    nav.setAttribute('aria-label', 'Surfaces');
+    for (const [href, label] of items) {
+      const a = document.createElement('a');
+      a.href = href; a.textContent = label;
+      if (href === current) a.setAttribute('aria-current', 'page');
+      nav.appendChild(a);
+    }
+    return nav;
+  };
+
+  window.K = K;
+})();
+</script>
+<script>
+
+/* Aurekai's capability book inside Next.js Commerce's storefront.
+ *
+ * The structure is the project's own: components/layout/navbar/index.tsx gives
+ * the three-part navbar with the centred search and the cart badge;
+ * components/layout/search/filter/ gives the collections rail on the left and
+ * the sort rail on the right; components/grid/index.tsx and grid/tile.tsx plus
+ * components/label.tsx give the square tile with the rounded-full pill and the
+ * blue price chip; components/product/ gives the split product page below.
+ *
+ * What is Aurekai's: the book, and the things a storefront never has to say --
+ * ninety-nine of these have no offer at all, a quote holds nothing, and the
+ * resource keeps answering 402.
+ */
+(async () => {
+
+  /* Aurekai x Bonfyre, one lockup, every surface. */
+  K.mountMark('bf-mk', {small: false});
+  const esc = s => String(s==null?'':s).replace(/[&<>"]/g,
+    c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const usd = n => '$' + Number(n).toFixed(2);
+
+  const [capR, ucpR, acpR, bookR] = await Promise.all([
+    K.get('/capability'), K.get('/ucp/catalog'), K.get('/acp/products'),
+    K.surface('capabilities')]);
+
+  const grid = document.getElementById('nx-grid');
+  if (!bookR.ok) {
+    grid.innerHTML = '<div class="border-l-4 border-red-500 pl-3"><p class="font-medium">'
+      + 'The capability book did not answer.</p><p class="text-sm text-neutral-500 mt-2">'
+      + '<span class="font-mono">/_surface/capabilities</span> returned ' + bookR.status
+      + '. Nothing is rendered rather than a stale or invented catalogue.</p></div>';
+    return;
+  }
+
+  const priced = {};
+  if (capR.ok) for (const c of (capR.body.capabilities||[]))
+    priced[c.name] = {price:Number(c.priceUsd), resource:c.resource, desc:c.description};
+  const ucp = {}, acp = {};
+  if (ucpR.ok) for (const p of (ucpR.body.products||[])) ucp[p.id]=Number(p.price.value);
+  if (acpR.ok) for (const p of (acpR.body.products||[])) acp[p.id]=Number(p.price.value);
+
+  /* Two registers, and on this deployment they do not overlap: the native book
+     says what the estate can run, the x402 catalogue says what anybody priced.
+     A storefront that showed only the priced four would be hiding the market. */
+  const ITEMS = bookR.records.map(r => ({
+    id:r.id, name:r.name, binary:r.binary, register:'native book',
+    stage:(r.stage && r.stage!=='-') ? r.stage : 'unstaged',
+    artifact:(r.artifact && r.artifact!=='-') ? r.artifact : null,
+    latency:r.latency||'unknown', cost:Number(r.cost||0),
+    offer: priced[r.id] || priced[r.name] || null,
+    desc: (priced[r.id]||priced[r.name]||{}).desc || null
+  }));
+  const known = new Set(ITEMS.flatMap(i=>[i.id,i.name]));
+  for (const [name, off] of Object.entries(priced)) {
+    if (known.has(name)) continue;
+    ITEMS.push({id:name, name, binary:'—', register:'x402 catalogue', stage:'priced data',
+                artifact:null, latency:'unknown', cost:null, offer:off, desc:off.desc});
+  }
+  const overlap = Object.keys(priced).filter(n=>known.has(n));
+
+  let q='', reg=null, lat=null, sort='offer', sel=null;
+  const compare = new Map();
+
+  const LAT = {instant:0, fast:1, batch:2, unknown:3};
+  const shownItems = () => {
+    let out = ITEMS.filter(i =>
+      (!q || (i.name+' '+i.id+' '+i.binary+' '+(i.desc||'')).toLowerCase().includes(q))
+      && (!reg || i.register===reg) && (!lat || i.latency===lat));
+    out.sort((a,b)=>{
+      if (sort==='name') return a.name.localeCompare(b.name);
+      if (sort==='price') return (a.offer?a.offer.price:Infinity)-(b.offer?b.offer.price:Infinity)
+        || a.name.localeCompare(b.name);
+      if (sort==='cost') return (a.cost===null?Infinity:a.cost)-(b.cost===null?Infinity:b.cost)
+        || a.name.localeCompare(b.name);
+      if (sort==='latency') return (LAT[a.latency]??9)-(LAT[b.latency]??9)
+        || a.name.localeCompare(b.name);
+      return (b.offer?1:0)-(a.offer?1:0) || a.name.localeCompare(b.name);
+    });
+    return out;
+  };
+
+  const railItem = (label, count, active, on) => {
+    const li=document.createElement('li');
+    li.className='mt-2 flex text-black dark:text-white';
+    li.innerHTML='<button class="w-full text-left text-sm underline-offset-4 '
+      + (active ? 'underline underline-offset-4' : 'hover:underline') + '">'
+      + esc(label) + (count!==undefined
+        ? ' <span class="text-neutral-500 dark:text-neutral-400">' + count + '</span>' : '')
+      + '</button>';
+    li.querySelector('button').addEventListener('click', on);
+    return li;
+  };
+
+  const drawRails = () => {
+    const col=document.getElementById('nx-collections');
+    col.innerHTML='';
+    col.appendChild(railItem('All', ITEMS.length, reg===null, ()=>{reg=null;draw();}));
+    for (const r of ['native book','x402 catalogue'])
+      col.appendChild(railItem(r, ITEMS.filter(i=>i.register===r).length, reg===r,
+        ()=>{reg=(reg===r?null:r);draw();}));
+
+    const lt=document.getElementById('nx-latency');
+    lt.innerHTML='';
+    lt.appendChild(railItem('Any', undefined, lat===null, ()=>{lat=null;draw();}));
+    for (const l of ['instant','fast','batch','unknown'])
+      lt.appendChild(railItem(l, ITEMS.filter(i=>i.latency===l).length, lat===l,
+        ()=>{lat=(lat===l?null:l);draw();}));
+
+    const so=document.getElementById('nx-sort');
+    so.innerHTML='';
+    for (const s of [['offer','Offer first'],['name','Name'],['price','Price: low to high'],
+                     ['cost','Unit cost'],['latency','Latency']])
+      so.appendChild(railItem(s[1], undefined, sort===s[0], ()=>{sort=s[0];draw();}));
+  };
+
+  /* components/grid/tile.tsx + components/label.tsx, with a generated square in
+     place of the product photograph. */
+  const tile = (it) => {
+    const el = document.createElement('div');
+    el.className = 'aspect-square';
+    el.innerHTML =
+      '<div class="group flex h-full w-full items-center justify-center overflow-hidden '
+      + 'rounded-lg border bg-white hover:border-blue-600 dark:bg-black relative '
+      + (sel && sel.id===it.id ? 'border-2 border-blue-600'
+                               : 'border-neutral-200 dark:border-neutral-800') + '">'
+      + '<canvas class="relative h-full w-full" aria-hidden="true"></canvas>'
+      + '<div class="absolute bottom-0 left-0 flex w-full px-4 pb-4">'
+      + '<div class="flex items-center rounded-full border bg-white/70 p-1 text-xs '
+      + 'font-semibold text-black backdrop-blur-md dark:border-neutral-800 dark:bg-black/70 '
+      + 'dark:text-white">'
+      + '<h3 class="mr-4 line-clamp-2 grow pl-2 leading-none tracking-tight">'
+      + esc(it.name) + '</h3>'
+      + (it.offer
+        ? '<p class="flex-none rounded-full bg-blue-600 p-2 text-white">' + usd(it.offer.price)
+          + '</p>'
+        : '<p class="flex-none rounded-full bg-neutral-200 p-2 text-neutral-600 '
+          + 'dark:bg-neutral-800 dark:text-neutral-400">no offer</p>')
+      + '</div></div>'
+      + '<div class="absolute top-2 left-2 flex gap-2 text-[11px] uppercase tracking-widest '
+      + 'text-white/80">'
+      + '<span class="rounded-full bg-black/50 px-2 py-1 backdrop-blur-md">'
+      + esc(it.latency) + '</span>'
+      + '<span class="rounded-full bg-black/50 px-2 py-1 backdrop-blur-md">'
+      + esc(it.stage) + '</span></div>'
+      + (it.offer
+        ? '<a class="absolute bottom-2 right-2 z-10 rounded-full bg-black/50 px-2 py-1 '
+          + 'text-[11px] font-mono text-white/80 backdrop-blur-md" href="'
+          + esc(K.subject('capability', it.id)) + '" title="Leave this representation for the '
+          + 'subject itself">/s/</a>'
+        : '')
+      + '</div>';
+    el.addEventListener('click', (ev) => {
+      /* the /s/ chip leaves for the address; the tile opens the representation */
+      if (ev.target.closest('a')) return;
+      select(it);
+    });
+    /* the square a photograph would occupy, drawn from the record */
+    const cv = el.querySelector('canvas');
+    const ctx = cv.getContext('2d');
+    const paint = () => {
+      const d=Math.min(devicePixelRatio||1,1.5);
+      const w=cv.width=Math.max(1,cv.clientWidth*d), h=cv.height=Math.max(1,cv.clientHeight*d);
+      let x=0; for(const c of it.id) x=(x*31+c.charCodeAt(0))>>>0;
+      const hu=x%360;
+      const g=ctx.createLinearGradient(0,0,w,h);
+      g.addColorStop(0,'hsl('+hu+' 42% '+(it.offer?26:14)+'%)');
+      g.addColorStop(1,'hsl('+((hu+48)%360)+' 38% '+(it.offer?12:8)+'%)');
+      ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+      /* one mark per unit of cost, so the tile carries a fact rather than noise */
+      const marks = it.cost===null ? 0 : Math.min(24, Math.round(it.cost*2000));
+      ctx.fillStyle='rgba(255,255,255,.13)';
+      for(let i=0;i<marks;i++) ctx.fillRect(w*0.08, h*(0.14+i*0.032), w*0.84, Math.max(1,h*0.006));
+    };
+    new ResizeObserver(paint).observe(cv);
+    return el;
+  };
+
+  const draw = () => {
+    const items = shownItems();
+    document.getElementById('nx-count').textContent =
+      items.length + ' of ' + ITEMS.length + ' · ' + items.filter(i=>i.offer).length
+      + ' with an offer · ordered by ' + K.physics(K.territory).orders_by;
+    grid.innerHTML='';
+    if (!items.length) {
+      grid.innerHTML = '<p class="text-sm text-neutral-500">Nothing matches. That is an empty '
+        + 'result, not a refusal.</p>';
+    } else for (const it of items) grid.appendChild(tile(it));
+    drawRails();
+  };
+
+  /* components/product/ — the split page, walking the chain a listing really has */
+  const wrap = document.getElementById('nx-productwrap');
+  const select = async (it) => {
+    sel = it; draw();
+    wrap.scrollIntoView({behavior:'smooth', block:'start'});
+    wrap.innerHTML = '<div class="flex flex-col rounded-lg border border-neutral-200 bg-white '
+      + 'p-8 md:p-12 lg:flex-row lg:gap-8 dark:border-neutral-800 dark:bg-black">'
+      + '<div class="h-full w-full basis-full lg:basis-4/6"><div class="aspect-square '
+      + 'rounded-lg bg-neutral-100 dark:bg-neutral-800" id="nx-hero"></div></div>'
+      + '<div class="basis-full lg:basis-2/6" id="nx-side">'
+      + '<p class="text-sm text-neutral-500">Walking the chain…</p></div></div>';
+    const hero = document.getElementById('nx-hero');
+    hero.appendChild(tile(it).firstElementChild);
+
+    const side = document.getElementById('nx-side');
+    const head = '<div class="mb-6 flex flex-col border-b pb-6 dark:border-neutral-700">'
+      + '<h1 class="mb-2 text-5xl font-medium">' + esc(it.name) + '</h1>'
+      + '<div class="mr-auto w-auto rounded-full p-2 text-sm text-white '
+      + (it.offer ? 'bg-blue-600">' + usd(it.offer.price)
+                  : 'bg-neutral-500">no offer') + '</div>'
+      + '<p class="mt-3 text-sm text-neutral-500 dark:text-neutral-400 font-mono">'
+      + (it.offer
+        ? '<a href="' + esc(K.subject('capability', it.id)) + '" class="underline" '
+          + 'title="Its address on this estate. The same path on every host; this page is one '
+          + 'representation of it.">' + esc(K.subject('capability', it.id)) + '</a>'
+          + ' · <a class="underline" href="' + esc(K.room('capability', it.id))
+          + '">its room</a>'
+        : '<span title="The native book lists what this estate can run. Addressing is a '
+          + 'separate act, and it has not happened for this one.">no address on this estate</span>')
+      + '</p>'
+      + '<p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400 font-mono">'
+      + esc(it.binary) + ' · ' + esc(it.register) + '</p>'
+      + (it.desc ? '<p class="mt-3 text-sm">' + esc(it.desc) + '</p>' : '')
+      + '</div>';
+
+    if (!it.offer) {
+      side.innerHTML = head
+        + '<div class="text-sm"><p class="mb-3"><span class="font-medium">Catalogue.</span> '
+        + 'Listed as something this estate can run: ' + esc(it.latency) + ' latency, unit cost '
+        + (it.cost===null?'not recorded':it.cost.toFixed(4)) + ', stage ' + esc(it.stage)
+        + '.</p>'
+        + '<p class="mb-3"><span class="font-medium">Offer.</span> None. It is absent from all '
+        + 'three carriers, so there is nothing to quote and nothing to gate. The chain stops '
+        + 'here, and that is its real end.</p></div>'
+        + '<button disabled class="mt-4 w-full rounded-full bg-blue-600 p-4 text-sm '
+        + 'font-medium text-white opacity-60 disabled:cursor-not-allowed">Not for sale</button>'
+        + '<p class="mt-4 border-l-4 border-red-500 pl-3 text-sm text-neutral-500">An unpriced '
+        + 'capability is not for sale, which is not the same as free. No price means nobody has '
+        + 'said what it would take.</p>';
+      return;
+    }
+
+    const [qr, gr] = await Promise.all([
+      K.get('/mpp/quote?capability=' + encodeURIComponent(it.id)),
+      K.get(it.offer.resource)]);
+    const quote = qr.ok ? qr.body : null;
+    let gateBody = null;
+    if (gr.status === 402) {
+      /* K.get calls a 402 failed; re-read it, because a 402 body is the answer. */
+      try { const raw = await fetch(it.offer.resource, {headers:{Accept:'application/json'}});
+            gateBody = await raw.json(); } catch (_) {}
+    }
+    const accept = gateBody && gateBody.accepts && gateBody.accepts[0];
+    const settled = gateBody && gateBody.settlement;
+    const money = [quote && Number(quote.amount), ucp[it.id], acp[it.id], it.offer.price]
+      .filter(v => v!==undefined && v!==null && !Number.isNaN(v));
+    const same = money.every(v => Math.abs(v-money[0]) < 1e-9);
+
+    side.innerHTML = head
+      + '<div class="mb-6 rounded-md border border-neutral-200 dark:border-neutral-800 '
+      + 'overflow-hidden text-sm">'
+      + [['x402','/capability', usd(it.offer.price)],
+         ['UCP','/ucp/catalog', ucp[it.id]!==undefined?usd(ucp[it.id]):'absent'],
+         ['ACP','/acp/products', acp[it.id]!==undefined?usd(acp[it.id]):'absent']]
+        .map(r=>'<div class="flex items-center gap-3 px-3 py-2 border-b '
+          + 'border-neutral-100 dark:border-neutral-800"><span class="font-medium w-12">'
+          + r[0] + '</span><span class="font-mono text-neutral-500">' + r[1]
+          + '</span><span class="ml-auto font-medium">' + r[2] + '</span></div>').join('')
+      + '<div class="px-3 py-2 text-[11px] uppercase tracking-widest '
+      + (same ? 'text-green-600 dark:text-green-400">three carriers, one price'
+              : 'text-red-600 dark:text-red-400">carriers disagree about the money')
+      + '</div></div>'
+
+      + '<ol class="text-sm flex flex-col gap-4">'
+      + '<li><span class="font-medium">1. Catalogue.</span> Carried by all three. A listing is '
+      + 'a description with a price attached, and it commits nobody.</li>'
+      + '<li><span class="font-medium">2. Quote.</span> '
+      + (quote ? usd(quote.amount) + ' ' + esc(quote.currency) + ' over '
+          + esc((quote.settlement_rails||[]).join(', ')) + '. ' + esc(quote.note)
+        : (qr.kind==='refused' ? 'Refused — the quote endpoint needs a session.'
+                               : 'No quote answered.')) + '</li>'
+      + '<li><span class="font-medium">3. The gate (x402).</span> '
+      + (gr.status === 402
+        ? 'The resource answers <span class="font-mono">402</span>. It wants '
+          + (accept ? usd(Number(accept.extra.priceUsd)) : usd(it.offer.price)) + ' in '
+          + '<span class="font-mono">' + esc(accept?accept.scheme:'exact') + '</span> on '
+          + '<span class="font-mono">' + esc(accept?accept.network:'?') + '</span>, and it '
+          + 'keeps answering 402 until a payment verifies. The quote did not change that.'
+        : 'Answered ' + gr.status + ' rather than 402.') + '</li>'
+      + '<li><span class="font-medium">4. Settlement.</span> '
+      + (settled
+        ? 'facilitator_configured is <span class="font-mono">' + settled.facilitator_configured
+          + '</span>. ' + (settled.facilitator_configured
+            ? 'A payment could be verified.'
+            : 'Nothing can settle here yet, and the gate says so itself rather than letting '
+              + 'the chain look complete.')
+        : 'Not stated by the gate.') + '</li></ol>'
+
+      + '<button id="nx-add" class="mt-6 w-full rounded-full bg-blue-600 p-4 text-sm '
+      + 'font-medium text-white hover:opacity-90">Add to compare</button>'
+      + '<p class="mt-4 border-l-4 border-red-500 pl-3 text-sm text-neutral-500">A quote is not '
+      + 'a reservation, a 402 is not a charge, and none of these four steps moved money. '
+      + 'They are four of the fifteen stages below, and this one stops at the fourth.</p>';
+
+    document.getElementById('nx-add').addEventListener('click', () => {
+      compare.set(it.id, it);
+      document.getElementById('nx-cartn').textContent = compare.size;
+      toast('Added to compare. Nothing was reserved and no cart exists: this estate quotes per '
+        + 'capability at /mpp/quote, and the resource still answers 402.');
+    });
+  };
+
+  let tt; const toast = t => {
+    let b=document.getElementById('nx-toast');
+    if(!b){b=document.createElement('div');b.id='nx-toast';
+      b.className='fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-black px-4 py-3 '
+        + 'text-sm text-white shadow-lg dark:bg-white dark:text-black max-w-lg';
+      document.body.appendChild(b);}
+    b.textContent=t;b.style.display='block';
+    clearTimeout(tt);tt=setTimeout(function(){b.style.display='none';},4600);
+  };
+
+  document.getElementById('nx-nav').innerHTML =
+    [['/discover','Discover'],['/stage','Stage'],['/board','Boards'],['/parcels','Parcels'],
+     ['/territory','Territory']]
+    .map(p=>'<li><a class="text-neutral-500 underline-offset-4 hover:text-black '
+      + 'hover:underline dark:text-neutral-400 dark:hover:text-neutral-300" href="'+p[0]+'">'
+      + p[1]+'</a></li>').join('');
+  /* whose host this is, and its other territories */
+  const here = await K.address();
+  const hostSwitch = await K.hostSwitch('/listings');
+  if (hostSwitch.children.length) {
+    hostSwitch.className = 'flex gap-3 text-sm';
+    for (const a of hostSwitch.children) {
+      a.className = 'text-neutral-500 underline-offset-4 hover:underline '
+        + 'dark:text-neutral-400';
+      if (a.getAttribute('aria-current')) a.className += ' font-medium text-black dark:text-white';
+    }
+    document.getElementById('nx-nav').insertAdjacentHTML('beforeend',
+      '<li class="text-neutral-400">|</li>');
+    const li = document.createElement('li'); li.appendChild(hostSwitch);
+    document.getElementById('nx-nav').appendChild(li);
+  }
+  document.getElementById('nx-searchform').addEventListener('submit', e=>e.preventDefault());
+  document.getElementById('nx-search').addEventListener('input', e => {
+    q = e.target.value.trim().toLowerCase(); draw(); });
+  document.getElementById('nx-cart').addEventListener('click', () => toast(
+    compare.size
+      ? [...compare.values()].map(i=>i.name + ' ' + (i.offer?usd(i.offer.price):'no offer'))
+        .join(' · ') + ' — nothing is reserved and no cart exists here.'
+      : 'Nothing in compare yet. There is no cart on this estate: a capability is quoted and '
+        + 'gated, one at a time.'));
+
+  const P = K.physics(K.territory);
+  document.getElementById('nx-question').textContent = P.question;
+
+  /* ---- the fifteen commerce facts, against what this estate reaches ------
+     Section 70. Each stage names the one owner that can establish it, and the
+     page marks where this deployment actually stops -- which is at a quote and
+     a gate, six stages in, with nine stages that have no owner admitted at
+     all. A storefront that drew a tidy progress bar to Ownership would be
+     making the collapse this list exists to prevent. */
+  const reached = await K.commerceReached();
+  const lastReached = K.COMMERCE.filter(s => reached[s.stage].reached).length;
+  document.getElementById('nx-fifteen').innerHTML =
+    '<div class="rounded-lg border border-neutral-200 p-6 dark:border-neutral-800">'
+  + '<p class="font-medium mb-1">Product &ne; Listing &ne; Inventory &ne; '
+  + 'AvailabilityObservation &ne; Offer &ne; Quote &ne; Cart &ne; Checkout &ne; Commitment '
+  + '&ne; Payment &ne; Settlement &ne; Fulfilment &ne; Delivery &ne; Satisfaction &ne; '
+  + 'Ownership</p>'
+  + '<p class="text-sm text-neutral-500 dark:text-neutral-400 mb-4">Fifteen stages, and each '
+  + 'names the one owner that can establish it. This estate reaches <strong>'
+  + lastReached + ' of them</strong>. The dangerous collapses skip rather than step &mdash; '
+  + '&ldquo;paid&rdquo; read as &ldquo;delivered&rdquo;, &ldquo;delivered&rdquo; read as '
+  + '&ldquo;owned&rdquo; &mdash; so nothing below is drawn as a progress bar to the end.</p>'
+  + '<ol class="text-sm flex flex-col gap-3">'
+  + K.COMMERCE.map((s, i) => {
+      const r = reached[s.stage];
+      return '<li class="flex gap-3">'
+      + '<span class="flex-none w-6 text-neutral-400 font-mono">' + (i + 1) + '</span>'
+      + '<span class="flex-none w-2 h-2 rounded-full mt-2 '
+      + (r.reached ? 'bg-green-500' : (s.here ? 'bg-amber-500' : 'bg-neutral-300 '
+         + 'dark:bg-neutral-700')) + '"></span>'
+      + '<span class="min-w-0"><span class="font-medium">' + esc(s.stage) + '</span>'
+      + ' <span class="text-neutral-500 dark:text-neutral-400">&mdash; only '
+      + esc(s.owner) + ' can establish it; it knows ' + esc(s.knows) + ' and not '
+      + esc(s.cannot) + '.</span>'
+      + '<br><span class="text-neutral-500 dark:text-neutral-400">'
+      + (r.reached ? '<strong>reached.</strong> ' : '<strong>not reached.</strong> ')
+      + esc(r.why) + (s.here ? ' &middot; <span class="font-mono">' + esc(s.here)
+                              + '</span>' : '') + '</span></span></li>';
+    }).join('')
+  + '</ol>'
+  + '<p class="mt-4 border-l-4 border-red-500 pl-3 text-sm text-neutral-500">Non-implication '
+  + 'holds over every pair, not adjacent ones. ' + esc(K.commerceGap('Payment', 'Delivery'))
+  + ' ' + esc(K.commerceGap('Delivery', 'Ownership')) + '</p>'
+  + '<p class="mt-3 text-sm text-neutral-500 dark:text-neutral-400">And no stage may be '
+  + 'skipped in the other direction either: an exchange reporting delivery with no fulfilment '
+  + 'is describing something the estate never saw happen. After a purchase completes the '
+  + 'transaction does not stay in the store &mdash; Ownership is a <span class="font-mono">'
+  + '.life</span> fact, and this host is <span class="font-mono">.'
+  + esc(K.territory) + '</span>.</p></div>';
+
+  draw();
+
+  wrap.innerHTML = '<div class="rounded-lg border border-neutral-200 p-6 text-sm '
+    + 'dark:border-neutral-800"><p class="font-medium mb-2">Two registers, no overlap</p>'
+    + '<p class="text-neutral-500 dark:text-neutral-400">The native book at '
+    + '<span class="font-mono">/_surface/capabilities</span> lists '
+    + ITEMS.filter(i=>i.register==='native book').length + ' things this estate can run. The '
+    + 'x402 catalogue at <span class="font-mono">/capability</span> lists '
+    + Object.keys(priced).length + ' priced. '
+    + (overlap.length ? overlap.length + ' appears in both.'
+       : 'Not one appears in both — so nothing you can run here has a price, and nothing '
+       + 'with a price is in the book. Choose a tile to walk its chain.')
+    + ' An unpriced capability is not for sale, which is not the same as free.</p>'
+    + '<p class="text-neutral-500 dark:text-neutral-400 mt-3">The split reaches the address '
+    + 'plane too: <span class="font-mono">/s/capability/&lt;id&gt;</span> resolves for the '
+    + Object.keys(priced).length + ' in the catalogue and for none of the '
+    + ITEMS.filter(i=>i.register==='native book').length + ' in the book. This estate can run '
+    + 'more than it can link to, and the tiles say which is which rather than linking to '
+    + 'addresses that do not answer.</p></div>';
+})();
+
+</script></body></html>

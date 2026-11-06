@@ -1,0 +1,24 @@
+exit 0
+bonfyre monitor — what your sources said about a business
+
+Usage:
+  bonfyre monitor --watch NAME [--watch OTHER-NAME] [--about TEXT] [options]
+
+Finds every item in the item archive from the last --days that names the
+business, then the local model reads each one: is it this business or a
+namesake, what kind of mention, how it reflects, and whether to read it today.
+
+Options:
+  --watch NAME        A name to look for; repeat for other names it goes by
+  --about TEXT        One line that tells this business apart from namesakes
+  --days N            How far back to look (default 30)
+  --limit N           Most items to read (default 40)
+  --out FILE          Write the digest (.md) or the full report with receipts (.json)
+  --json              Print the full report instead of the digest
+  --archive FILE      Item archive (default $BONFYRE_ITEM_ARCHIVE_DB or ~/.bonfyre/estate-local/items.db)
+  --model NAME        Prefer this local model (a file name or part of one);
+                      otherwise the front loads the largest that fits
+  --model-endpoint U  Local model server (default http://127.0.0.1:7000)
+
+Example:
+  bonfyre monitor --watch Target --about "Target Corporation, the US retail chain" --days 30 --out target.md

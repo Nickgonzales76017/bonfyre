@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Run7 acceptance (mandate SS32): exercise the principal loop end to end, and prove
-# RETRACTION AND RECOVERY -- not just happy-path insertion. Chains the real
-# witnesses built across the run; each is running code with an asserted result.
+# Generation-10 principal-loop acceptance: exercise the absorbed Run 7 witnesses
+# end to end and prove RETRACTION AND RECOVERY, not just happy-path insertion.
 set -uo pipefail
-cd "$(dirname "$0")"
-CP=10-Code/BonfyreControlPlane
+repo_root=$(cd "$(dirname "$0")/../.." && pwd)
+cd "$repo_root"
+CP=components/BonfyreControlPlane
 CORE=engine/core
 PROBE="$HOME/.bonfyre/substrates/v6.1/feldera/probe/target/release"
 pass=0; fail=0
@@ -12,15 +12,15 @@ ok(){ echo "  PASS  $1"; pass=$((pass+1)); }
 bad(){ echo "  FAIL  $1"; fail=$((fail+1)); }
 
 echo "== 1. native principal loop + native -1 on every store (P0)"
-if (cd "$CORE" && make test >/tmp/run7_native.log 2>&1); then
-  grep -q "p0_loop_test: PASS" /tmp/run7_native.log && ok "native loop: observation->occurrence->work->receipt->occurrence" || bad "p0 loop"
-  grep -q "occurrence_correction_test: PASS" /tmp/run7_native.log && ok "occurrence correction/retraction" || bad "correction"
-  grep -q "retraction_cascade_test: PASS" /tmp/run7_native.log && ok "Evidence -1 -> proof retracts" || bad "evidence cascade"
-  grep -q "activation_retraction_test: PASS" /tmp/run7_native.log && ok "Authority -1 -> activation retracts" || bad "activation cascade"
+if (cd "$CORE" && make test >/tmp/bonfyre_generation10_native.log 2>&1); then
+  grep -q "p0_loop_test: PASS" /tmp/bonfyre_generation10_native.log && ok "native loop: observation->occurrence->work->receipt->occurrence" || bad "p0 loop"
+  grep -q "occurrence_correction_test: PASS" /tmp/bonfyre_generation10_native.log && ok "occurrence correction/retraction" || bad "correction"
+  grep -q "retraction_cascade_test: PASS" /tmp/bonfyre_generation10_native.log && ok "Evidence -1 -> proof retracts" || bad "evidence cascade"
+  grep -q "activation_retraction_test: PASS" /tmp/bonfyre_generation10_native.log && ok "Authority -1 -> activation retracts" || bad "activation cascade"
 else bad "native suite build/run"; fi
 
 echo "== 2. consequence-plane cascade through real DBSP (P2+P3)"
-if bash "$CP/substrate/full_retraction_cascade.sh" 2>/tmp/run7_casc.log | grep -q "3/3 links proven"; then
+if bash "$CP/substrate/full_retraction_cascade.sh" 2>/tmp/bonfyre_generation10_cascade.log | grep -q "3/3 links proven"; then
   ok "Evidence -1 -> proof -1 -> reachable -1 -> route -1"
 else bad "full retraction cascade"; fi
 
@@ -50,5 +50,5 @@ served=$(sqlite3 ~/.bonfyre/estate-fabric/fabric.db "SELECT COUNT(*) FROM namesp
 [ "${served:-0}" -ge 12 ] && ok "BonfyreFS serves $served control-plane projections" || bad "fabric projections ($served)"
 
 echo
-echo "RUN7 ACCEPTANCE: $pass passed, $fail failed"
+echo "GENERATION-10 PRINCIPAL LOOP: $pass passed, $fail failed"
 [ "$fail" -eq 0 ] && echo "principal loop + retraction + recovery + connection: PROVEN" || exit 1

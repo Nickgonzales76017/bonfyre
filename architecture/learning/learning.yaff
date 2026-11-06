@@ -1,6 +1,6 @@
 atlas learning
 # Harvested run6/run7 learning/promotion path (Aurekai): the recursive loop that
-# learns how the graph itself should evolve. Registered architectural until built.
+# learns how the graph itself should evolve.
 
 architecture pattern-graph
   canonical_name PatternGraph
@@ -9,13 +9,17 @@ architecture pattern-graph
   layer learning
   semantic_question What recurring pattern do these action traces and residuals cluster into?
   purpose Action traces -> residuals -> pattern clusters, the raw material of promotion. Above Bonfyre's operation, Aurekai's learning.
-  maturity architectural
+  maturity implemented
   node_types ActionTrace
   node_types PatternCluster
   edge_types clusters_into
   forbidden_inference a pattern observed -> a validated primitive
+  native_format crux
+  source_path components/BonfyreControlPlane/pattern_graph.py.archive
+  source_path packs/run-history/run8-absorption.json
+  witness components/BonfyreControlPlane/tests/test_run_history_absorption.py.archive
   source_lineage run6/run7 Aurekai learning path
-  known_gap not built; the route-ranker learns route ordering, a first learned organ
+  known_gap clusters and candidate proposals are durable; proof-gated promotion into the capability registry remains open
 
 architecture capability-genome
   canonical_name CapabilityGenome
@@ -33,3 +37,195 @@ architecture capability-genome
   interacts route-ranker
   source_lineage run6/run7 Aurekai learning path
   known_gap not built
+
+architecture live-gym
+  canonical_name LiveGym
+  family learning
+  domain Learning
+  maturity measured
+  semantic_question What can be known right now, what could have been known, and where did the difference come from?
+  # A static test pairs a case with an expected answer. That is sufficient only
+  # for systems that do not touch the outside world; everywhere else the answer
+  # decays and the test quietly begins measuring the past. A live gym declares a
+  # generator, a source frontier, a validity window, how gold is constructed and
+  # which ceilings a run must measure -- one contract, many realizations.
+  #
+  # The output is deliberately not a score. A score says a number moved; a
+  # residual says where the loss happened, and only the second one decides where
+  # effort should go.
+  node_types GymContract
+  node_types Cohort
+  node_types Ceiling
+  node_types Residual
+  node_types ProviderRoute
+  edge_types generates
+  edge_types exercised_by
+  edge_types attributed_to
+  state_types measured
+  state_types unmeasured
+  invariant a cohort is generated from live state on every run, never loaded from a fixture; a fixture is a snapshot of when someone last looked
+  invariant an unmeasured ceiling is reported as unmeasured together with the reason it could not be measured; filling the gap with an estimate is worse than leaving it, because the hole is visible and the estimate is not
+  invariant the reason an unmeasured ceiling gives must be a fact about the estate and not a fact about where the runner happened to look; an earlier version claimed no supplier was credentialed anywhere, which was true only of the two directories it had searched
+  invariant a residual is attributed to the plane that owns the loss -- staleness to the refresh schedule, duplicate identity to AddressPlane and Matrix, non-retention to the hydration regime -- because an unattributed residual cannot direct any decision
+  invariant a subject kind with no declared validity window is treated as expired, never as permanent; forgetting must fail toward stale
+  invariant this institution's own organs are declared as supplier routes and measured under the same contract as any vendor; exempting a native organ is how internal architecture becomes religion
+  invariant a route names the environment variable its credential arrives in and never the credential; the registry is content, and whether a route is usable is answered by the presence of that name, never by reading its value
+  invariant a failure cause that this institution cannot close ranks below one it can, however frequent; no credit remaining accounted for 18033 of 18130 attempts and no engineering decision follows from it
+  forbidden_inference a measured ceiling -> a promise
+  forbidden_inference a residual -> a defect
+  forbidden_inference a gym that passes -> a true answer (it says the routes agreed at this moment)
+  forbidden_inference a ranked failure -> a prioritized task
+  forbidden_inference an attempt count -> a cost in money
+  forbidden_inference clustering by error text -> distinct faults (two faults that print alike are counted as one)
+  forbidden_inference an unmeasured market -> an absent one
+  computational_form measurement
+  native_format json
+  source_path scripts/gym_run.mjs
+  source_path scripts/provider_trial.mjs
+  source_path scripts/gym_contract.mjs
+  source_path scripts/failure-cohort.mjs
+  source_path scripts/failure-causes.cue
+  source_path scripts/failure_cohort.py.archive
+  witness cmd/BonfyreWebAddress/tests/gym_test.sh
+  witness scripts/gym_native.test.mjs
+  known_gap the current source of cmd/BonfyreProject/src/main.c does not dispatch `foreign` commands despite the existing gym, provider-trial and WebAddress callers expecting them; native fixture witnesses prove cohort and receipt contracts, not live foreign-owner availability
+  measured first run over 16 foreign twins: InternalizedCeiling 13/16, TemporalCeiling 16/16, IdentityResidual 9, RetentionResidual 3/16
+  known_gap MarketCeiling is unmeasured because no external supplier is declared as a provider_route yet; the estate holds provider credentials in a secrets store this process is not permitted to read, so the routes must be declared by name before the same contract can measure the market
+  known_gap DirectSourceCeiling is declared and not exercised per run, because re-fetching every source is an outbound cost against third parties; a refresh is a separate rate-aware act
+  invariant a ceiling is constructed from executed trial receipts and from nothing else; the first implementation returned measured when a route's named credential was merely present in the environment, which asserted that a market had been measured on the strength of possessing a key
+  invariant the rungs are distinct and each must be climbed: a route declared is not admissible, admissible is not executed, executed is not retrieved, retrieved is not canonical evidence, and evidence is not a measured ceiling; an unmeasured ceiling reports which rung it stopped at
+  invariant a supplier is admitted to a capability tournament by the capability it declares, never by possessing a credential; a completion endpoint closes completion and does not close retrieval.search, however many keys are present
+  invariant a trial receipt is scoped to the cohort digest it ran against, so a supplier cannot keep credit for a question it was never asked; the digest is built from the subjects and the gym and deliberately not from the capability, because who is asked is a property of the trial and never of the cohort
+  invariant the runner and the trial select the cohort through one function; two selection rules over one estate produced two cohorts that looked like one, and the receipts were then correctly refused in a way that read as the supplier never having run
+  invariant a ceiling counts distinct evidence digests, never addresses; thirteen retrievals over this cohort yielded ten distinct pieces of evidence, and counting the addresses would have overstated the achievable by three
+  invariant a trial receipt is institutional evidence and is not deletable as cache; a stale receipt is harmless because the cohort digest already refuses it
+  forbidden_inference a present credential -> a measured market
+  forbidden_inference an executed trial -> a good result
+  forbidden_inference a returned resource -> relevant evidence
+  forbidden_inference a trial receipt -> permission to route real work to that supplier
+  invariant a deformation family is compiled mechanically from one canonical address, never authored per subject, so adding a subject costs nothing and the family cannot drift between them
+  invariant a closure score reports closed, missed and false_merge separately and never nets them off; a miss is visible and a false merge is a wrong answer wearing a right answer's clothes, so a canonicalizer that folds hard enough to close everything has broken something worse than it fixed
+  invariant every probe that must be refused differs from the address it probes, literally and after canonicalization; a decoy equal to its own subject measures nothing and reports the estate as merging a URL with itself
+  invariant canonicalization folds only the scheme, the host, a default port, an empty root path, a fragment and declared tracking parameters; the path is never folded, because paths are case-sensitive and a server may lawfully serve different bytes at /a and /a/
+  invariant tracking-parameter removal is declared as policy rather than taken as a standard, because a server is entitled to treat those parameters as significant
+  invariant a scheme change is a declared non-fold and is reported apart from misses; http and https are different origins, and folding them needs the digests to agree, which needs an outbound fetch
+  forbidden_inference two addresses that canonicalize alike -> the same resource (folding is a heuristic over addressing; identity is settled by retained bytes)
+  forbidden_inference a closed deformation -> a correct retrieval
+  measured identity closure over 8 subjects and their lawful deformations: 8 of 41 before the canonicalizer was internalized into the twin owner, 41 of 41 after, with 0 false merges and 15 decoys refused in both measurements
+  measured direct-source trials over 16 subjects: 13 retrieved, 10 distinct evidence digests, 3 addresses returning bytes identical to another
+  known_gap deformation families are declared in the contract grammar and no gym uses them yet; the first gym measures decay rather than retrieval under degraded description
+  known_gap a source this entry named could not be opened from this checkout -- /var/lib/bonfyre/cms/content-types/live_gym.json; /var/lib/bonfyre/cms/content-types/provider_route.json. The line is removed rather than repointed to something that merely looks similar, and what remains listed is the evidence this architecture actually stands on.
+architecture representation-market
+  canonical_name RepresentationMarket
+  family learning
+  domain Learning
+  maturity measured
+  semantic_question Which compressed form of this body preserves enough of the candidate set to be worth its bytes?
+  # A representation is chosen the way a supplier is chosen: on measured cost
+  # against a stated requirement, never on reputation. So it climbs the same
+  # rungs the provider market already uses -- declared, admissible, executed,
+  # measured -- and a declared representation that has never been trialled has no
+  # envelope at all.
+  #
+  # The measurement is not average error. It is what the compressed form does to
+  # the candidate set, and it is reported as two numbers that are never netted: a
+  # false prune removes a candidate every later stage will never see, and a false
+  # keep costs one exact check. A representation trading ten false keeps for one
+  # fewer false prune is a good trade, and a single number hides the trade.
+  node_types RepresentationProfile
+  node_types PreservationEnvelope
+  node_types RepresentationTrial
+  edge_types measured_against
+  edge_types compresses
+  state_types available
+  state_types declared_untrialled
+  invariant an envelope is a fact about one cohort at one k, established by an executed trial; a declared representation without a trial shows no envelope
+  invariant false prunes and false keeps are reported separately and never netted, because they cost different things and only one of them is recoverable
+  invariant the exact reference must reproduce its own ranking before any representation is judged; a harness that cannot reproduce the reference is wrong before it measures anything
+  invariant a quantization carrying a per-body scale must multiply that scale back when two bodies are compared; comparing raw codes ranks by whichever body had the larger peak, and measured int8 at 0.357 recall -- a harness bug reported as a property of the representation
+  invariant a deliberately poor representation stays in the tournament; a market containing only candidates already believed good confirms rather than measures
+  invariant representations on different axes are not compared; a cosine reported over model tensors is not a retrieval preservation envelope, and reusing one as the other compares two unrelated measurements
+  forbidden_inference preservation on this corpus -> preservation on another
+  forbidden_inference an envelope measured on hashed-token embeddings -> the same envelope on a learned model, whose geometry differs
+  forbidden_inference a preserved candidate -> a correct answer
+  forbidden_inference recall at one k -> recall at another
+  forbidden_inference a path that works on three fixtures -> an envelope
+  computational_form measurement
+  native_format json
+  source_path scripts/representation_trial.py.archive
+  source_path scripts/representation-trial.cue
+  source_path scripts/representation-trial.mjs
+  witness scripts/tests/representation_trial.test.mjs proves all declared codecs are measured against the exact reference and bounded stable top-k agrees with full ranking including ties; one CLI receipt matched the retired Python peer except elapsed seconds and timestamp before cutover
+  source_path scripts/resource-admission.cue
+  source_path scripts/resource-admission.mjs
+  source_path scripts/admitted-frontier.mjs
+  source_path scripts/pure-job.mjs
+  source_path scripts/pure-series.mjs
+  witness scripts/tests/pure-native.test.mjs proves HVM2 and HVM4 compute the same exact frontier as the reference, Bend's aggregate remains distinct, numeric and subset HVM4 lowerings run, an admission miss fails closed, and one cohort cannot establish temporal promotion
+  witness scripts/tests/resource_admission.test.mjs proves measured same-axis same-k selection, exact-only classes, budget fallback and disclosure-first site placement; four CLI cases matched the retired Python peer field-for-field except timestamp before cutover
+  witness scripts/tests/admitted_frontier.test.mjs proves realised loss is distinct from a predicted envelope; an int8 CLI receipt matched the retired Python peer field-for-field except timestamp before cutover
+  known_gap the pure-job runner and deterministic shape series are now Bun, but the opt-in live CMS admission slice has not been replayed through this cutover
+  source_path cmd/BonfyreCMS/content-types/representation_profile.json
+  witness cmd/BonfyreWebAddress/tests/representation_test.sh
+  measured over 47 real institutional bodies at 384 dimensions, k=5: int8 preserves 0.987 of the exact top-k at 4x with 3 false prunes, halved-f32 preserves 0.528 at 2x with 111, sign-1bit preserves 0.170 at 32x with 195
+  known_gap the embeddings come from a hashed-token backend, which spreads signal uniformly across dimensions and is the worst case for sign quantization; the same trial against a learned model would produce different envelopes and has not been run
+  known_gap the CMS quantized ANN sidecar and FPQ are declared and untrialled here, so the market currently compares four representations on one axis rather than the estate's full set
+  invariant an envelope is chosen against, not merely reported; ResourceAdmission admits the cheapest representation whose measured envelope satisfies the work's loss budget, and the closure then executes on that representation
+  invariant work whose result carries an institutional effect has no loss budget to spend and runs exact; authority, money, identity, publication and effect are classes where a dropped candidate is a wrong answer rather than a slower one
+  invariant when no representation with a measured envelope satisfies the budget, the work runs exact and never the closest miss; a budget that bends is a suggestion
+  invariant an envelope measured at one k does not satisfy a budget stated at another, and an envelope from one axis is never a bound on a different axis
+  invariant every run reports its realised loss beside the promised one, because an envelope is a fact about the cohort it was measured over and reporting only the envelope lets a number from one cohort stand in for a result on another
+  invariant a budget missed on the running cohort exits non-zero even when the envelope predicted it would be met
+  measured the same admitted int8 realised 0.987 over the 47 bodies its envelope was measured on and 0.967 over 60 architecture contracts it was not, taking 10 false prunes where the envelope promised 3
+  forbidden_inference an admitted representation -> a correct one
+  forbidden_inference a budget met on one cohort -> a budget met on another
+  forbidden_inference a realised loss on one run -> a new envelope (an envelope comes from a trial across a cohort, not from one run)
+  invariant placement asks whether the input may be seen at a site before asking what is cheap there; the first is a disclosure question and is not tradeable against speed
+  invariant a site's clearance is compared on an ordered scope ladder and never as a string; restricted sorts before public alphabetically, and a placement rule comparing text would send the most sensitive input to the least trusted machine
+  invariant capability is not permission; the machine holding every reducer holds no institutional data, and work placed there discloses its input however briefly
+  invariant among sites cleared to see the input, the one already holding it is preferred; moving the live state to save seconds of compute is not a saving
+  measured the estate holds 693MB of live state on two cores with no reducer; the workstation has eight cores and every reducer and no institutional data, one round trip away
+  measured the gap is closed by putting a reducer where the data is rather than by clearing another site: hvm4 builds from vendored C with the estate's own compiler, so private work now reaches a reducer without the input moving, while hvm2 and bend remain refused because they exist only where that data may not go
+  invariant closing a placement gap by moving the compute is preferred to closing it by widening a clearance; one adds a capability and the other removes a boundary
+
+architecture architecture-frontier
+  canonical_name ArchitectureFrontier
+  family learning
+  domain Learning
+  maturity measured
+  semantic_question Which bridge, if built, would connect the most of this estate to itself -- and which apparent isolation is not isolation at all?
+  # The estate found that most of its architectures participated in no
+  # interaction, and answered by building the eight bridges whose ends happened
+  # to already be measured: a hand-picked list chosen by whoever was looking.
+  # This asks it as the closure problem the funding frontier already solves, over
+  # the estate's own graph.
+  #
+  # It also corrected the alarm that prompted it. The raw isolation count is 60%
+  # generated command-catalogue rows, which were declared alone rather than left
+  # unbridged, so "87% isolated" was true as counted and misleading as read.
+  node_types ArchitectureNode
+  node_types CandidateBridge
+  edge_types affinity
+  state_types connected
+  state_types isolated
+  state_types catalogue_row
+  invariant an affinity signal is weighted by how few architectures carry it; counting shared attributes equally put family command at the top reaching 99 architectures, because a hundred of them are in that family, and a signal a hundred things share says almost nothing about any two of them
+  invariant a candidate is ranked and never declared; writing an interaction is a judgement about what actually passes between two organs, and a graph algorithm is not entitled to make it
+  invariant an edge invented to improve a connectivity number is the laundering the witness rule exists to stop; it makes the estate look joined without anything flowing
+  invariant a generated catalogue row is distinguished from an organ that failed to connect, because the two have different remedies and only one of them is a gap
+  forbidden_inference a high-scoring candidate -> a bridge worth building
+  forbidden_inference a shared family -> something exchanged
+  forbidden_inference an isolated architecture -> an unused one
+  forbidden_inference connectivity -> leverage
+  computational_form measurement
+  native_format json
+  source_path scripts/architecture-frontier.mjs
+  source_path cmd/BonfyreAtlas/src/main.c
+  source_path scripts/architecture_frontier.py.archive
+  witness cmd/BonfyreWebAddress/tests/connectivity_test.sh
+  witness cmd/BonfyreAtlas/tests/parity.sh replaces the retired atlas-index test with golden vectors recorded from it; proves the native reader refuses stale exported declarations and the frontier counts canonical interaction identities rather than duplicate raw edge spellings
+  invariant a frontier projection consumes only an index whose declaration digest matches the current YAFF bytes; duplicate raw interaction spellings cannot inflate its edge count
+  measured 254 architectures and 133 edges: 164 isolated of which 99 are generated command rows, leaving 65 real unbridged organs; the estate computed its own bridgeable set of 31 on all four of its reducers, which agreed
+  invariant a measurement that could not read its registry refuses and names the path it looked at; deployed beside the estate's scripts it found one architecture and reported it as a finding, which is the silent-nothing this estate keeps having to remove
+  known_gap the registry lives in the repository and the runner is deployed on the estate, so this measurement is declared everywhere and answerable only where the tree is; that is a placement fact it now states rather than papers over
+  known_gap the strongest candidates it finds are family-mates rather than exchanges, so the algorithm narrows where to look and cannot say what would flow; every bridge declared from it was justified by an exchange verified by hand

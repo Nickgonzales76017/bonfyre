@@ -1,9 +1,16 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * BonfyreTag — instant intent/topic tagging via fastText (pure C).
  *
- * Zero Python dependencies for inference. Loads .bin models natively.
+ * Zero interpreter dependencies. Loads .bin models natively.
  * 2ms, no GPU. Classify any text into topics, intents, or custom labels.
- * Train custom models on your own transcript corpus (still uses Python).
+ * Training requires a separately bound native training organ.
  *
  * Usage:
  *   bonfyre-tag predict <model.bin> <text-file>     → tags.json
@@ -19,11 +26,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <sys/wait.h>
 #include <time.h>
-#include <unistd.h>
 #include <dirent.h>
 #include <bonfyre.h>
+#include "../../../lib/libbonfyre/include/bf_help.h"
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 
 /* ── helpers ─────────────────────────────────────────────────── */
 
@@ -474,32 +481,6 @@ static const char *ft_label_name(const FtModel *m, int label_idx) {
     return w;
 }
 
-/* ── Python wrapper for fastText training ─────────────────────── */
-
-static int run_cmd(const char *const argv[]) {
-    pid_t pid = fork();
-    if (pid < 0) { perror("fork"); return -1; }
-    if (pid == 0) { execvp(argv[0], (char *const *)argv); _exit(127); }
-    int st; waitpid(pid, &st, 0);
-    return WIFEXITED(st) ? WEXITSTATUS(st) : -1;
-}
-
-static int run_python_script(const char *script) {
-    char tmp_path[PATH_MAX];
-    snprintf(tmp_path, sizeof(tmp_path), "/tmp/bonfyre_tag_%d.py", getpid());
-    FILE *f = fopen(tmp_path, "w");
-    if (!f) { perror("fopen"); return -1; }
-    fputs(script, f);
-    fclose(f);
-
-    const char *python = getenv("BONFYRE_PYTHON3");
-    if (!python) python = "python3";
-    const char *argv[] = { python, tmp_path, NULL };
-    int rc = run_cmd(argv);
-    unlink(tmp_path);
-    return rc;
-}
-
 /* ── commands (pure C inference) ─────────────────────────────── */
 
 static int cmd_predict(const char *model_path, const char *text_file,
@@ -614,27 +595,236 @@ static int cmd_batch(const char *model_path, const char *dir,
     return 0;
 }
 
+/* Training, bound natively.
+ *
+ * This organ could read a fastText model and never make one: train() refused
+ * and told the caller to bind a native training organ. So the estate could
+ * classify its material only with a model somebody else had trained on
+ * somebody else's corpus, which is the opposite of what a tagger is for.
+ *
+ * What is implemented is the model this file already knows how to read: a
+ * linear bag-of-words classifier, hidden state the mean of its features'
+ * vectors, softmax over labels, plain SGD with a linearly decayed rate. No
+ * hierarchical softmax and no character n-grams, because the reader treats
+ * both as optional and a model that uses neither is a model it loads.
+ *
+ * Training data is one example per line, fastText's own shape:
+ *   __label__sport  arsenal beat spurs in the north london derby
+ */
+#define TRAIN_DIM        64
+#define TRAIN_EPOCHS     12
+#define TRAIN_LR         0.35f
+#define TRAIN_MIN_COUNT  2
+#define TRAIN_BUCKET     1        /* no char n-grams, so no bucket is used */
+#define TRAIN_MAX_FEAT   256
+
+typedef struct { char *word; int64_t count; int8_t type; } TrainEntry;
+
+typedef struct {
+    TrainEntry *e; int32_t n, cap;
+    int32_t *table; int32_t table_sz;
+} TrainDict;
+
+static void train_dict_init(TrainDict *d, int32_t table_sz) {
+    d->cap = 4096; d->n = 0;
+    d->e = calloc((size_t)d->cap, sizeof(TrainEntry));
+    d->table_sz = table_sz;
+    d->table = malloc(sizeof(int32_t) * (size_t)table_sz);
+    for (int32_t i = 0; i < table_sz; i++) d->table[i] = -1;
+}
+
+static int32_t train_dict_get(TrainDict *d, const char *w, int8_t type, int add) {
+    size_t wlen = strlen(w);
+    uint32_t h = ft_hash(w, wlen) % (uint32_t)d->table_sz;
+    while (d->table[h] >= 0) {
+        if (strcmp(d->e[d->table[h]].word, w) == 0) return d->table[h];
+        h = (h + 1) % (uint32_t)d->table_sz;
+    }
+    if (!add) return -1;
+    if (d->n == d->cap) {
+        d->cap *= 2;
+        d->e = realloc(d->e, (size_t)d->cap * sizeof(TrainEntry));
+        memset(d->e + d->n, 0, (size_t)(d->cap - d->n) * sizeof(TrainEntry));
+    }
+    d->e[d->n].word = strdup(w);
+    d->e[d->n].count = 0;
+    d->e[d->n].type = type;
+    d->table[h] = d->n;
+    return d->n++;
+}
+
+static void train_dict_free(TrainDict *d) {
+    for (int32_t i = 0; i < d->n; i++) free(d->e[i].word);
+    free(d->e); free(d->table);
+}
+
 static int cmd_train(const char *training_data, const char *model_out) {
-    fprintf(stderr, "[tag] Training model from %s -> %s\n", training_data, model_out);
+    FILE *f = fopen(training_data, "r");
+    if (!f) { fprintf(stderr, "[tag] Cannot read training data: %s\n", training_data); return 1; }
 
-    char script[2048];
-    snprintf(script, sizeof(script),
-        "import fasttext, warnings\n"
-        "warnings.filterwarnings('ignore')\n"
-        "model = fasttext.train_supervised(\n"
-        "    input='%s',\n"
-        "    epoch=25,\n"
-        "    lr=1.0,\n"
-        "    wordNgrams=2,\n"
-        "    dim=100,\n"
-        "    loss='softmax'\n"
-        ")\n"
-        "model.save_model('%s')\n"
-        "result = model.test('%s')\n"
-        "print(f'Trained: {result[0]} samples, precision={result[1]:.4f}, recall={result[2]:.4f}')\n",
-        training_data, model_out, training_data);
+    /* First pass: what words and labels exist, and how often. */
+    TrainDict raw; train_dict_init(&raw, 1 << 21);
+    char line[8192];
+    int64_t ntokens = 0, nlines = 0;
+    while (fgets(line, sizeof(line), f)) {
+        char *save = NULL, *tok = strtok_r(line, " \t\n\r", &save);
+        int had_label = 0;
+        while (tok) {
+            int is_label = strncmp(tok, "__label__", 9) == 0;
+            int32_t id = train_dict_get(&raw, tok, is_label ? 1 : 0, 1);
+            raw.e[id].count++;
+            if (is_label) had_label = 1; else ntokens++;
+            tok = strtok_r(NULL, " \t\n\r", &save);
+        }
+        if (had_label) nlines++;
+    }
+    if (nlines == 0) {
+        fprintf(stderr, "[tag] No labelled examples in %s\n", training_data);
+        fclose(f); train_dict_free(&raw); return 1;
+    }
 
-    return run_python_script(script);
+    /* The reader indexes the input matrix by dictionary position for words, so
+     * every word must come before every label. Rare words are dropped: a word
+     * seen once teaches the classifier a coincidence. */
+    TrainDict d; train_dict_init(&d, 1 << 21);
+    for (int32_t i = 0; i < raw.n; i++)
+        if (raw.e[i].type == 0 && raw.e[i].count >= TRAIN_MIN_COUNT) {
+            int32_t id = train_dict_get(&d, raw.e[i].word, 0, 1);
+            d.e[id].count = raw.e[i].count;
+        }
+    int32_t nwords = d.n;
+    for (int32_t i = 0; i < raw.n; i++)
+        if (raw.e[i].type == 1) {
+            int32_t id = train_dict_get(&d, raw.e[i].word, 1, 1);
+            d.e[id].count = raw.e[i].count;
+        }
+    int32_t nlabels = d.n - nwords;
+    train_dict_free(&raw);
+    if (nlabels < 2) {
+        fprintf(stderr, "[tag] %d label(s): a classifier needs at least two\n", nlabels);
+        fclose(f); train_dict_free(&d); return 1;
+    }
+
+    int dim = TRAIN_DIM;
+    int64_t input_rows = (int64_t)nwords + TRAIN_BUCKET;
+    float *input = malloc(sizeof(float) * (size_t)(input_rows * dim));
+    float *output = calloc((size_t)((int64_t)nlabels * dim), sizeof(float));
+    if (!input || !output) { fclose(f); train_dict_free(&d); free(input); free(output); return 1; }
+    /* Small random input, zero output: the same start fastText uses. */
+    srand(1);
+    for (int64_t i = 0; i < input_rows * dim; i++)
+        input[i] = ((float)rand() / (float)RAND_MAX - 0.5f) / (float)dim;
+
+    float *hidden = calloc((size_t)dim, sizeof(float));
+    float *grad   = calloc((size_t)dim, sizeof(float));
+    float *scores = calloc((size_t)nlabels, sizeof(float));
+    int32_t feat[TRAIN_MAX_FEAT];
+
+    int64_t seen = 0, total = (int64_t)nlines * TRAIN_EPOCHS;
+    for (int epoch = 0; epoch < TRAIN_EPOCHS; epoch++) {
+        rewind(f);
+        while (fgets(line, sizeof(line), f)) {
+            int nfeat = 0, label = -1;
+            char *save = NULL, *tok = strtok_r(line, " \t\n\r", &save);
+            while (tok) {
+                if (strncmp(tok, "__label__", 9) == 0) {
+                    int32_t id = train_dict_get(&d, tok, 1, 0);
+                    if (id >= nwords) label = id - nwords;
+                } else {
+                    int32_t id = train_dict_get(&d, tok, 0, 0);
+                    if (id >= 0 && id < nwords && nfeat < TRAIN_MAX_FEAT) feat[nfeat++] = id;
+                }
+                tok = strtok_r(NULL, " \t\n\r", &save);
+            }
+            if (label < 0 || nfeat == 0) continue;
+
+            /* The rate decays with progress, so late examples nudge rather
+             * than overwrite what the early ones taught. */
+            float lr = TRAIN_LR * (1.0f - (float)seen / (float)total);
+            if (lr < TRAIN_LR * 0.01f) lr = TRAIN_LR * 0.01f;
+            seen++;
+
+            for (int k = 0; k < dim; k++) hidden[k] = 0.0f;
+            for (int i = 0; i < nfeat; i++) {
+                const float *row = input + (int64_t)feat[i] * dim;
+                for (int k = 0; k < dim; k++) hidden[k] += row[k];
+            }
+            for (int k = 0; k < dim; k++) hidden[k] /= (float)nfeat;
+
+            float max = -1e30f;
+            for (int32_t l = 0; l < nlabels; l++) {
+                const float *row = output + (int64_t)l * dim;
+                float s = 0.0f;
+                for (int k = 0; k < dim; k++) s += row[k] * hidden[k];
+                scores[l] = s;
+                if (s > max) max = s;
+            }
+            float sum = 0.0f;
+            for (int32_t l = 0; l < nlabels; l++) { scores[l] = expf(scores[l] - max); sum += scores[l]; }
+            for (int32_t l = 0; l < nlabels; l++) scores[l] /= sum;
+
+            for (int k = 0; k < dim; k++) grad[k] = 0.0f;
+            for (int32_t l = 0; l < nlabels; l++) {
+                float err = scores[l] - (l == label ? 1.0f : 0.0f);
+                float *row = output + (int64_t)l * dim;
+                for (int k = 0; k < dim; k++) {
+                    grad[k] += err * row[k];
+                    row[k]  -= lr * err * hidden[k];
+                }
+            }
+            /* The hidden state was a mean, so its gradient is shared out again. */
+            for (int i = 0; i < nfeat; i++) {
+                float *row = input + (int64_t)feat[i] * dim;
+                for (int k = 0; k < dim; k++) row[k] -= lr * grad[k] / (float)nfeat;
+            }
+        }
+        fprintf(stderr, "[tag] epoch %d/%d\n", epoch + 1, TRAIN_EPOCHS);
+    }
+    fclose(f);
+
+    /* Written in the format this organ already reads, so predict needs no
+     * knowledge that the model was made here. */
+    FILE *o = fopen(model_out, "wb");
+    if (!o) { fprintf(stderr, "[tag] Cannot write model: %s\n", model_out); return 1; }
+    int32_t magic = FT_MAGIC, version = FT_VERSION;
+    int32_t z = 0, one = 1, dim32 = dim, epochs = TRAIN_EPOCHS, minc = TRAIN_MIN_COUNT;
+    int32_t loss = 3, model_type = 1, bucket = TRAIN_BUCKET, lr_upd = 100;
+    double t = 1e-4;
+    fwrite(&magic, 4, 1, o); fwrite(&version, 4, 1, o);
+    fwrite(&dim32, 4, 1, o); fwrite(&one, 4, 1, o);       /* dim, ws */
+    fwrite(&epochs, 4, 1, o); fwrite(&minc, 4, 1, o);
+    fwrite(&z, 4, 1, o);                                   /* neg */
+    fwrite(&one, 4, 1, o);                                 /* word_ngrams */
+    fwrite(&loss, 4, 1, o); fwrite(&model_type, 4, 1, o);
+    fwrite(&bucket, 4, 1, o);
+    fwrite(&z, 4, 1, o); fwrite(&z, 4, 1, o);              /* minn, maxn */
+    fwrite(&lr_upd, 4, 1, o); fwrite(&t, 8, 1, o);
+
+    int32_t dict_size = d.n;
+    fwrite(&dict_size, 4, 1, o); fwrite(&nwords, 4, 1, o); fwrite(&nlabels, 4, 1, o);
+    fwrite(&ntokens, 8, 1, o);
+    int64_t pruneidx = 0;
+    if (version >= 12) fwrite(&pruneidx, 8, 1, o);
+    for (int32_t i = 0; i < d.n; i++) {
+        fwrite(d.e[i].word, 1, strlen(d.e[i].word) + 1, o);
+        fwrite(&d.e[i].count, 8, 1, o);
+        fwrite(&d.e[i].type, 1, 1, o);
+    }
+    int8_t quant = 0;
+    int64_t in_cols = dim, out_rows = nlabels;
+    fwrite(&quant, 1, 1, o);
+    fwrite(&input_rows, 8, 1, o); fwrite(&in_cols, 8, 1, o);
+    fwrite(input, sizeof(float), (size_t)(input_rows * dim), o);
+    fwrite(&quant, 1, 1, o);
+    fwrite(&out_rows, 8, 1, o); fwrite(&in_cols, 8, 1, o);
+    fwrite(output, sizeof(float), (size_t)((int64_t)nlabels * dim), o);
+    fclose(o);
+
+    fprintf(stderr, "[tag] Trained: %lld examples, %d words, %d labels, dim=%d → %s\n",
+            (long long)nlines, nwords, nlabels, dim, model_out);
+    free(input); free(output); free(hidden); free(grad); free(scores);
+    train_dict_free(&d);
+    return 0;
 }
 
 static int cmd_detect_lang(const char *text_file, const char *out_dir) {
@@ -792,7 +982,14 @@ static void print_usage(void) {
 }
 
 int main(int argc, char **argv) {
-    if (argc >= 2 && strcmp(argv[1], "status") == 0) {
+    if (bf_help_requested(argc, argv)) { print_usage(); return 0; }
+    enum { TG_STATUS };
+    static const BfCommandEntry tag_commands[] = {
+        {"status", TG_STATUS, 0, NULL},
+    };
+    const BfCommandEntry *command = argc < 2 ? NULL : bf_command_lookup(tag_commands,
+        sizeof(tag_commands) / sizeof(tag_commands[0]), argv[1]);
+    if (command && command->id == TG_STATUS) {
         printf("{\"binary\":\"bonfyre-tag\",\"status\":\"ok\",\"version\":\"2.0.0\"}\n");
         return 0;
     }

@@ -1,0 +1,8 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-physics","binary_env":"BONFYRE_PHYSICS_BIN","cases":[
+{"name":"a state of the pack width runs symplectic steps; a state of another width is refused","steps":[{"program":"sh","argv":["-c","mkdir -p rd && for i in $(seq 1 40); do echo \"Document $i about checkout pages, pricing and Friday deadlines number $i.\" > rd/d$i.txt; done"],"exit":0},{"program":"${root}/cmd/BonfyreViolence/bonfyre-violence","argv":["--data","rd","--pack","p.bfpk","--bvh","p.bfvh"],"env":{"HOME":"${tmp}"}},
+ {"argv":["bvh","--pack","p.bfpk","--out","i.bfvh"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["40 vecs  dim=32"],"present":["${tmp}/i.bfvh"]},
+ {"program":"sh","argv":["-c","printf 'VECF\\020\\000\\000\\000' > wrong.vecf; dd if=/dev/zero bs=64 count=1 2>/dev/null >> wrong.vecf; perl -e 'print \"VECF\".pack(\"V\",32).pack(\"f<*\", map { sin($_) } 1..32)' > valid.vecf"],"exit":0},
+ {"argv":["init","wrong.vecf","--pack","p.bfpk","--state","rej.bfps"],"env":{"HOME":"${tmp}"},"exit":1,"absent":["${tmp}/rej.bfps"]},
+ {"argv":["init","valid.vecf","--pack","p.bfpk","--state","v.bfps"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["dim    = 32","pack   = 40 objects"]},
+ {"argv":["run","--steps","5","--state","v.bfps","--pack","p.bfpk","--bvh","i.bfvh"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["steps=5"]},
+ {"argv":["energy","--state","v.bfps","--pack","p.bfpk","--bvh","i.bfvh"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["step=5","KDE over 40 vecs"]}]}]}

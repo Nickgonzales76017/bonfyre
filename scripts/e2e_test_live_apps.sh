@@ -13,9 +13,9 @@ BIN_DIRS=(./cmd)
 declare -a BINS
 
 # discover executables named bonfyre-*
-while IFS= read -r bin; do
+while IFS= read -r -d '' bin; do
   BINS+=("$bin")
-done < <(find ${BIN_DIRS[@]} -maxdepth 2 -type f -name 'bonfyre-*' -perm -111 2>/dev/null | sort)
+done < <(find "${BIN_DIRS[@]}" -maxdepth 2 -type f -name 'bonfyre-*' -perm -111 -print0 2>/dev/null)
 
 if [ ${#BINS[@]} -eq 0 ]; then
   echo "No bonfyre-* binaries found in ${BIN_DIRS[*]}. Try running 'make'." >&2

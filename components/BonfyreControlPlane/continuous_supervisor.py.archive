@@ -1,0 +1,428 @@
+"""Durable Run8 continuation supervisor composed from canonical control owners.
+
+This module deliberately owns no alternative WorkGraph, ProviderGraph, or
+ProofFrontier.  It records the campaign-specific join: a TargetObligation,
+the bounded provider assignment that may realize it, observable provider
+weather, receipt metadata, and a compact continuation cursor.  A carrier may
+die at any point without losing the semantic target or silently changing a
+provider's reported condition.
+"""
+
+from __future__ import annotations
+
+import argparse
+import datetime as dt
+import hashlib
+import json
+import sqlite3
+from pathlib import Path
+from typing import Any, Iterable
+
+import provider_state
+import proof_frontier
+import target_obligation
+
+UTC = dt.timezone.utc
+
+ACTIVE = "ACTIVE"
+RATE_LIMITED = "RATE_LIMITED"
+QUOTA_EXHAUSTED = "QUOTA_EXHAUSTED"
+AUTH_REJECTED = "AUTH_REJECTED"
+TRANSPORT_FAILURE = "TRANSPORT_FAILURE"
+UNAVAILABLE = "UNAVAILABLE"
+WEATHER = frozenset({
+    ACTIVE, RATE_LIMITED, QUOTA_EXHAUSTED, AUTH_REJECTED, TRANSPORT_FAILURE,
+    UNAVAILABLE,
+})
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS continuous_assignments(
+  assignment_id TEXT PRIMARY KEY,
+  target_id TEXT NOT NULL,
+  session_id TEXT NOT NULL,
+  provider TEXT NOT NULL,
+  expected_proof_delta TEXT NOT NULL,
+  source_cut TEXT NOT NULL,
+  allowed_mutation_scope TEXT NOT NULL,
+  required_evidence TEXT NOT NULL,
+  state TEXT NOT NULL DEFAULT 'ASSIGNED',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  UNIQUE(target_id, session_id, provider)
+);
+CREATE TABLE IF NOT EXISTS continuous_provider_weather(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  provider TEXT NOT NULL,
+  state TEXT NOT NULL,
+  detail TEXT NOT NULL DEFAULT '',
+  reset_at TEXT,
+  observed_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS continuous_weather_by_provider
+  ON continuous_provider_weather(provider, id);
+CREATE TABLE IF NOT EXISTS continuous_receipts(
+  receipt_id TEXT PRIMARY KEY,
+  assignment_id TEXT NOT NULL REFERENCES continuous_assignments(assignment_id),
+  semantic_outcome TEXT NOT NULL,
+  carrier_outcome TEXT NOT NULL,
+  evidence_outcome TEXT NOT NULL,
+  continuation_outcome TEXT NOT NULL,
+  detail TEXT NOT NULL,
+  receipt_sha256 TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS continuous_checkpoints(
+  checkpoint_id TEXT PRIMARY KEY,
+  cursor_json TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS continuous_github_observations(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  kind TEXT NOT NULL,
+  repository TEXT NOT NULL,
+  outcome TEXT NOT NULL,
+  detail TEXT NOT NULL DEFAULT '',
+  url TEXT NOT NULL DEFAULT '',
+  observed_at TEXT NOT NULL
+);
+"""
+
+
+def _now() -> dt.datetime:
+    return dt.datetime.now(UTC).replace(microsecond=0)
+
+
+def _iso(moment: dt.datetime | None = None) -> str:
+    return (moment or _now()).astimezone(UTC).replace(microsecond=0).isoformat()
+
+
+def _canonical(value: Any) -> str:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+
+def _digest(value: Any) -> str:
+    return hashlib.sha256(_canonical(value).encode("utf-8")).hexdigest()
+
+
+def _atomic_json(path: Path, value: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n")
+    temporary.replace(path)
+
+
+def ensure_schema(db: sqlite3.Connection) -> None:
+    target_obligation.ensure_schema(db)
+    provider_state.ensure_schema(db)
+    proof_frontier.ensure_schema(db)
+    db.executescript(SCHEMA)
+    db.execute("PRAGMA foreign_keys=ON")
+    db.commit()
+
+
+def open_target(db: sqlite3.Connection, *, target_id: str, target: str,
+                source_frontier: str) -> target_obligation.TargetObligation:
+    ensure_schema(db)
+    return target_obligation.require(
+        db, target_id=target_id, target=target, source_frontier=source_frontier
+    )
+
+
+def set_target_frontier(db: sqlite3.Connection, *, target_id: str, ordinal: int,
+                        layer: str, status: str, witness_ref: str = "",
+                        detail: str = "") -> None:
+    """Project one target's proof layers through the canonical ProofFrontier."""
+    target_obligation.get(db, target_id)
+    proof_frontier.set_layer(
+        db, target_id, ordinal, layer, status, witness_ref=witness_ref,
+        detail=detail,
+    )
+
+
+def prove_target(db: sqlite3.Connection, *, target_id: str,
+                 evidence_refs: Iterable[str]) -> None:
+    """Close only an evidence-backed target whose explicit frontier has no gap."""
+    target_obligation.get(db, target_id)
+    report = proof_frontier.frontier_report(db, target_id)
+    unfinished = [item["layer"] for item in report["layers"]
+                  if item["status"] != proof_frontier.PROVEN]
+    if unfinished:
+        raise ValueError(f"{target_id}: proof frontier remains {unfinished}")
+    target_obligation.prove(db, target_id, evidence_refs)
+
+
+def assign(db: sqlite3.Connection, *, target_id: str, session_id: str,
+           provider: str, expected_proof_delta: str, source_cut: Iterable[str],
+           allowed_mutation_scope: Iterable[str],
+           required_evidence: Iterable[str]) -> str:
+    """Persist a review/build assignment before a remote carrier is launched."""
+    ensure_schema(db)
+    target = target_obligation.get(db, target_id)
+    if target.state in target_obligation.TERMINAL:
+        raise ValueError(f"{target_id} is terminal: {target.state}")
+    fields = {
+        "target_id": target_id,
+        "session_id": session_id,
+        "provider": provider,
+        "expected_proof_delta": expected_proof_delta,
+        "source_cut": sorted(set(source_cut)),
+        "allowed_mutation_scope": sorted(set(allowed_mutation_scope)),
+        "required_evidence": sorted(set(required_evidence)),
+    }
+    if not all((target_id, session_id, provider, expected_proof_delta)):
+        raise ValueError("target, session, provider, and ExpectedProofDelta are required")
+    if not fields["source_cut"] or not fields["required_evidence"]:
+        raise ValueError("source_cut and required_evidence are required")
+    assignment_id = _digest(fields)[:32]
+    now = _iso()
+    existing = db.execute(
+        "SELECT target_id,session_id,provider,expected_proof_delta,source_cut,"
+        "allowed_mutation_scope,required_evidence FROM continuous_assignments "
+        "WHERE assignment_id=?", (assignment_id,)
+    ).fetchone()
+    encoded = (
+        target_id, session_id, provider, expected_proof_delta,
+        _canonical(fields["source_cut"]), _canonical(fields["allowed_mutation_scope"]),
+        _canonical(fields["required_evidence"]),
+    )
+    if existing is not None:
+        if tuple(existing) != encoded:
+            raise ValueError("assignment identity collision")
+        return assignment_id
+    db.execute(
+        "INSERT INTO continuous_assignments(assignment_id,target_id,session_id,provider,"
+        "expected_proof_delta,source_cut,allowed_mutation_scope,required_evidence,"
+        "created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)",
+        (assignment_id, *encoded, now, now),
+    )
+    db.commit()
+    return assignment_id
+
+
+def _fold_event(state: str) -> str:
+    return {
+        ACTIVE: provider_state.SUCCESS,
+        RATE_LIMITED: provider_state.TRANSIENT_FAILURE,
+        QUOTA_EXHAUSTED: provider_state.HARD_CAPACITY,
+        AUTH_REJECTED: provider_state.MANUAL_PAUSE,
+        TRANSPORT_FAILURE: provider_state.TRANSIENT_FAILURE,
+        UNAVAILABLE: provider_state.MANUAL_PAUSE,
+    }[state]
+
+
+def observe_provider(db: sqlite3.Connection, *, provider: str, state: str,
+                     detail: str = "", reset_at: dt.datetime | None = None,
+                     now: dt.datetime | None = None) -> None:
+    """Append weather and fold it into the canonical ProviderState owner."""
+    if state not in WEATHER:
+        raise ValueError(f"unknown provider weather {state!r}")
+    ensure_schema(db)
+    moment = now or _now()
+    # AUTH_REJECTED and UNAVAILABLE intentionally become an explicit manual
+    # pause in the ProviderState fold. A subsequent successful bounded call is
+    # itself the explicit resume observation; recording only SUCCESS would
+    # leave the historical pause dominant forever.
+    if state == ACTIVE:
+        folded = provider_state.derive_state(
+            provider, provider_state.load_observations(db, provider), moment
+        )
+        if folded.status == "manual_pause":
+            provider_state.record(
+                db, provider, provider_state.MANUAL_RESUME, observed_at=moment,
+                detail="explicit successful occurrence resumed a paused route",
+            )
+    provider_state.record(
+        db, provider, _fold_event(state), observed_at=moment, reset_at=reset_at,
+        detail=detail,
+    )
+    db.execute(
+        "INSERT INTO continuous_provider_weather(provider,state,detail,reset_at,observed_at)"
+        " VALUES(?,?,?,?,?)",
+        (provider, state, detail[-1000:], _iso(reset_at) if reset_at else None,
+         _iso(moment)),
+    )
+    db.commit()
+
+
+def record_receipt(db: sqlite3.Connection, *, assignment_id: str,
+                   semantic_outcome: str, carrier_outcome: str,
+                   evidence_outcome: str, continuation_outcome: str,
+                   detail: str = "") -> str:
+    """Append a bounded receipt; it never proves or closes its target itself."""
+    ensure_schema(db)
+    if db.execute("SELECT 1 FROM continuous_assignments WHERE assignment_id=?",
+                  (assignment_id,)).fetchone() is None:
+        raise KeyError(assignment_id)
+    payload = {
+        "assignment_id": assignment_id,
+        "semantic_outcome": semantic_outcome,
+        "carrier_outcome": carrier_outcome,
+        "evidence_outcome": evidence_outcome,
+        "continuation_outcome": continuation_outcome,
+        "detail": detail[-1000:],
+    }
+    receipt_sha256 = _digest(payload)
+    receipt_id = receipt_sha256[:32]
+    db.execute(
+        "INSERT OR IGNORE INTO continuous_receipts(receipt_id,assignment_id,"
+        "semantic_outcome,carrier_outcome,evidence_outcome,continuation_outcome,"
+        "detail,receipt_sha256,created_at) VALUES(?,?,?,?,?,?,?,?,?)",
+        (receipt_id, assignment_id, semantic_outcome, carrier_outcome,
+         evidence_outcome, continuation_outcome, detail[-1000:], receipt_sha256,
+         _iso()),
+    )
+    db.commit()
+    return receipt_id
+
+
+def record_github_observation(db: sqlite3.Connection, *, kind: str, repository: str,
+                              outcome: str, detail: str = "", url: str = "") -> None:
+    """Append a secret-free GitHub observation; it grants no publication authority."""
+    ensure_schema(db)
+    if not all((kind, repository, outcome)):
+        raise ValueError("kind, repository, and outcome are required")
+    db.execute(
+        "INSERT INTO continuous_github_observations(kind,repository,outcome,detail,url,observed_at)"
+        " VALUES(?,?,?,?,?,?)", (kind, repository, outcome, detail[-1000:], url, _iso())
+    )
+    db.commit()
+
+
+def snapshot(db: sqlite3.Connection) -> dict[str, Any]:
+    ensure_schema(db)
+    targets = [
+        {"id": row[0], "target": row[1], "state": row[2],
+         "source_frontier": row[3], "terminal_reason": row[4]}
+        for row in db.execute(
+            "SELECT id,target,state,source_frontier,terminal_reason "
+            "FROM target_obligations ORDER BY id"
+        )
+    ]
+    assignments = [
+        {"assignment_id": row[0], "target_id": row[1], "session_id": row[2],
+         "provider": row[3], "expected_proof_delta": row[4],
+         "source_cut": json.loads(row[5]), "allowed_mutation_scope": json.loads(row[6]),
+         "required_evidence": json.loads(row[7]), "state": row[8]}
+        for row in db.execute("SELECT assignment_id,target_id,session_id,provider,"
+                              "expected_proof_delta,source_cut,allowed_mutation_scope,"
+                              "required_evidence,state FROM continuous_assignments "
+                              "ORDER BY assignment_id")
+    ]
+    weather = [
+        {"provider": row[0], "state": row[1], "detail": row[2],
+         "reset_at": row[3], "observed_at": row[4]}
+        for row in db.execute("SELECT provider,state,detail,reset_at,observed_at "
+                              "FROM continuous_provider_weather ORDER BY id")
+    ]
+    receipts = [
+        {"receipt_id": row[0], "assignment_id": row[1], "semantic_outcome": row[2],
+         "carrier_outcome": row[3], "evidence_outcome": row[4],
+         "continuation_outcome": row[5], "detail": row[6], "receipt_sha256": row[7],
+         "created_at": row[8]}
+        for row in db.execute("SELECT receipt_id,assignment_id,semantic_outcome,carrier_outcome,"
+                              "evidence_outcome,continuation_outcome,detail,receipt_sha256,created_at "
+                              "FROM continuous_receipts ORDER BY created_at,receipt_id")
+    ]
+    github = [
+        {"kind": row[0], "repository": row[1], "outcome": row[2],
+         "detail": row[3], "url": row[4], "observed_at": row[5]}
+        for row in db.execute("SELECT kind,repository,outcome,detail,url,observed_at "
+                              "FROM continuous_github_observations ORDER BY id")
+    ]
+    frontier = {item["id"]: proof_frontier.frontier_report(db, item["id"])
+                for item in targets}
+    return {"schema": "bonfyre.run8-continuous-supervisor.v1", "targets": targets,
+            "proof_frontier": frontier, "assignments": assignments,
+            "provider_weather": weather, "receipts": receipts, "github": github}
+
+
+def checkpoint(db: sqlite3.Connection, state_dir: Path) -> str:
+    """Write the required secret-free continuation projections atomically."""
+    value = snapshot(db)
+    cursor = {
+        "open_target_ids": [item["id"] for item in value["targets"]
+                            if item["state"] not in target_obligation.TERMINAL],
+        "assignment_ids": [item["assignment_id"] for item in value["assignments"]],
+        "receipt_ids": [item["receipt_id"] for item in value["receipts"]],
+        "checkpointed_at": _iso(),
+    }
+    checkpoint_id = _digest(cursor)[:32]
+    db.execute("INSERT OR IGNORE INTO continuous_checkpoints(checkpoint_id,cursor_json,created_at)"
+               " VALUES(?,?,?)", (checkpoint_id, _canonical(cursor), _iso()))
+    db.commit()
+    control = state_dir / "control"
+    evidence = state_dir / "evidence"
+    _atomic_json(control / "continuous-target-obligations.json",
+                 {"schema": value["schema"], "targets": value["targets"]})
+    _atomic_json(control / "continuous-proof-frontier.json",
+                 {"schema": value["schema"], "open_target_ids": cursor["open_target_ids"],
+                  "frontiers": value["proof_frontier"],
+                  "proof_rule": "only evidence-backed PROVEN or SUPERSEDED closes a target"})
+    _atomic_json(control / "continuous-provider-weather.json",
+                 {"schema": value["schema"], "observations": value["provider_weather"]})
+    _atomic_json(control / "continuous-map-coverage.json",
+                 {"schema": value["schema"], "assigned_expected_proof_deltas": [
+                     {"target_id": item["target_id"], "expected_proof_delta": item["expected_proof_delta"]}
+                     for item in value["assignments"]]})
+    _atomic_json(control / "continuous-repo-promotion.json",
+                 {"schema": value["schema"], "state": "LOCAL_UNPUBLISHED", "receipts": []})
+    _atomic_json(control / "continuous-github-ledger.json",
+                 {"schema": value["schema"], "occurrences": value["github"]})
+    _atomic_json(control / "continuous-optimization-ledger.json",
+                 {"schema": value["schema"], "measurements": []})
+    _atomic_json(control / "continuous-continuation-cursor.json",
+                 {"schema": value["schema"], "checkpoint_id": checkpoint_id, "cursor": cursor})
+    lines = "".join(_canonical(item) + "\n" for item in value["receipts"])
+    evidence.mkdir(parents=True, exist_ok=True)
+    (evidence / "continuous-receipts.jsonl").write_text(lines)
+    (evidence / "continuous-work-occurrences.jsonl").write_text(lines)
+    report = [
+        "# Run8 continuous campaign",
+        "",
+        "This state is a continuation supervisor projection, not proof that any "
+        "TargetObligation is complete.",
+        "",
+        "## Targets",
+        "",
+    ]
+    report.extend(f"- `{item['id']}` — {item['state']}: {item['target']}"
+                  for item in value["targets"])
+    report.extend(["", "## Assignments", ""])
+    report.extend(f"- `{item['assignment_id']}` → `{item['provider']}` for "
+                  f"`{item['target_id']}`; ExpectedProofDelta: "
+                  f"{item['expected_proof_delta']}"
+                  for item in value["assignments"])
+    report.extend(["", "## Provider weather", ""])
+    report.extend(f"- `{item['provider']}`: {item['state']} ({item['detail']})"
+                  for item in value["provider_weather"])
+    report.extend(["", "## Continuation", "", f"- Checkpoint: `{checkpoint_id}`"])
+    (state_dir / "reports" / "RUN8_CONTINUOUS_REPORT.md").parent.mkdir(
+        parents=True, exist_ok=True
+    )
+    (state_dir / "reports" / "RUN8_CONTINUOUS_REPORT.md").write_text(
+        "\n".join(report) + "\n"
+    )
+    return checkpoint_id
+
+
+def _cli() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--db", required=True, type=Path)
+    parser.add_argument("--state-dir", type=Path)
+    parser.add_argument("--checkpoint", action="store_true")
+    args = parser.parse_args()
+    db = sqlite3.connect(args.db)
+    try:
+        ensure_schema(db)
+        if args.checkpoint:
+            if not args.state_dir:
+                parser.error("--checkpoint requires --state-dir")
+            print(checkpoint(db, args.state_dir))
+        else:
+            print(json.dumps(snapshot(db), indent=2, sort_keys=True))
+    finally:
+        db.close()
+
+
+if __name__ == "__main__":
+    _cli()

@@ -50,6 +50,11 @@
 
 /* ─── Structures ────────────────────────────────────────────────── */
 
+#define REPAIR_NONE      0   /* not a repair candidate */
+#define REPAIR_FAILED    1   /* flagged, but the second recognition did not run */
+#define REPAIR_REJECTED  2   /* re-decoded; candidate scored no better, original kept */
+#define REPAIR_ACCEPTED  3   /* re-decoded; candidate replaced the original text */
+
 typedef struct {
     int64_t  t0_ms;
     int64_t  t1_ms;
@@ -63,7 +68,10 @@ typedef struct {
     int      speaker_turn;
     int      token_count;
     int      hcp_flagged_count;
+    uint8_t  repair;              /* REPAIR_* outcome of the re-decode pass */
+    float    repair_quality;      /* quality of the re-decoded candidate */
     char     text[MAX_TEXT_LEN];
+    char    *text_before_repair;  /* original text, kept only when a repair is accepted */
 } TranscriptSegment;
 
 typedef struct {
@@ -72,7 +80,9 @@ typedef struct {
     int cap;
     int segments_filtered;
     int segments_hallucinated;
-    int segments_hcp_redecoded;
+    int segments_hcp_redecoded;   /* flagged segments whose audio was recognised a second time */
+    int segments_hcp_repaired;    /* of those, candidates accepted over the original */
+    int segments_hcp_redecode_failed;
     double decode_ms;
     double hcp_ms;
     char detected_language[8];
@@ -823,24 +833,130 @@ static int extract_segments(
     return 0;
 }
 
-/* ─── Re-decode flagged segments with context chaining ──────────── */
+/* ─── Re-decode flagged segments ─────────────────────────────────── */
 
+/* Score the candidate left in ctx by a windowed whisper_full() with the same
+ * composite used for first-pass segments: conf * (1 - nsp) * min(1, 2.4/rho). */
+static float score_redecode_candidate(struct whisper_context *ctx, char *text, size_t cap) {
+    int ns = whisper_full_n_segments(ctx);
+    size_t used = 0;
+    double log_conf_sum = 0.0;
+    int valid_tokens = 0;
+    float nsp_max = 0.0f;
+    text[0] = '\0';
+    for (int s = 0; s < ns; s++) {
+        const char *txt = whisper_full_get_segment_text(ctx, s);
+        if (txt) {
+            size_t len = strlen(txt);
+            if (used + len >= cap) len = cap - 1 - used;
+            memcpy(text + used, txt, len);
+            used += len;
+            text[used] = '\0';
+        }
+        float nsp = whisper_full_get_segment_no_speech_prob(ctx, s);
+        if (nsp > nsp_max) nsp_max = nsp;
+        int nt = whisper_full_n_tokens(ctx, s);
+        for (int t = 0; t < nt; t++) {
+            whisper_token_data td = whisper_full_get_token_data(ctx, s, t);
+            if (td.id < 50257 && td.p > 0.0f) {
+                log_conf_sum += log(td.p);
+                valid_tokens++;
+            }
+        }
+    }
+    if (!valid_tokens || !used) return 0.0f;
+    float conf = expf((float)(log_conf_sum / valid_tokens));
+    float nsp_factor = 1.0f - nsp_max;
+    if (nsp_factor < 0.0f) nsp_factor = 0.0f;
+    float rho = compute_compression_ratio(text);
+    float cr_factor = rho > 0.0f ? fminf(1.0f, 2.4f / rho) : 1.0f;
+    if (detect_ngram_repetition(text)) return 0.0f;
+    return conf * nsp_factor * cr_factor;
+}
+
+/* Recognise each flagged segment's own audio window a second time, without
+ * the preceding text as context (the usual carrier of a hallucination), and
+ * accept the candidate only when it scores above the original. The original
+ * timing is kept; an accepted correction changes the text every writer reads.
+ * This overwrites ctx's first-pass results, so it must run after hcp_process. */
 static int redecode_flagged_segments(
     struct whisper_context *ctx,
-    const char *audio_path,
+    struct whisper_full_params base,
+    const float *audio,
+    int n_samples,
     TranscriptResult *res,
-    HcpResult *hcp,
-    int beam_size
+    const int *candidates,
+    int n_candidates
 ) {
-    if (hcp->n_flagged_seg == 0) return 0;
-    /* For segments flagged by HCP, we enhance quality scores using the
-     * HCP magnitude/phase analysis. The HCP magnitude ratio provides a
-     * far richer quality signal than naive confidence. Future: use
-     * whisper_full() with offset_ms/duration_ms to re-decode specific
-     * time windows. */
-    (void)ctx; (void)audio_path; (void)beam_size;
-    res->segments_hcp_redecoded = hcp->n_flagged_seg;
+    const int pad = 16000 / 5;          /* 200 ms either side */
+    const int min_len = 16000;          /* whisper refuses very short windows */
+    for (int k = 0; k < n_candidates; k++) {
+        int idx = candidates[k];
+        if (idx < 0 || idx >= res->count) continue;
+        TranscriptSegment *seg = &res->segments[idx];
+
+        long a = (long)(seg->t0_ms * 16) - pad;
+        long b = (long)(seg->t1_ms * 16) + pad;
+        if (a < 0) a = 0;
+        if (b > n_samples) b = n_samples;
+        if (b - a < min_len) {
+            long grow = (min_len - (b - a) + 1) / 2;
+            a = a - grow < 0 ? 0 : a - grow;
+            b = a + min_len > n_samples ? n_samples : a + min_len;
+        }
+        if (b - a < min_len / 10) {
+            seg->repair = REPAIR_FAILED;
+            res->segments_hcp_redecode_failed++;
+            continue;
+        }
+
+        RepPenaltyState rp = {0};
+        struct whisper_full_params wp = base;
+        wp.no_context = true;
+        wp.single_segment = false;
+        wp.print_progress = false;
+        wp.beam_search.beam_size = base.beam_search.beam_size + 3;
+        wp.logits_filter_callback_user_data = &rp;
+
+        if (whisper_full(ctx, wp, audio + a, (int)(b - a)) != 0) {
+            seg->repair = REPAIR_FAILED;
+            res->segments_hcp_redecode_failed++;
+            continue;
+        }
+        res->segments_hcp_redecoded++;
+
+        char candidate[MAX_TEXT_LEN];
+        float q = score_redecode_candidate(ctx, candidate, sizeof(candidate));
+        seg->repair_quality = q;
+        if (q > seg->quality && strcmp(candidate, seg->text) != 0) {
+            seg->text_before_repair = strdup(seg->text);
+            memcpy(seg->text, candidate, sizeof(seg->text));
+            seg->repair = REPAIR_ACCEPTED;
+            res->segments_hcp_repaired++;
+        } else {
+            seg->repair = REPAIR_REJECTED;
+        }
+    }
     return 0;
+}
+
+static void write_json_string(FILE *fp, const char *text) {
+    fputc('"', fp);
+    for (const char *c = text; *c; c++) {
+        switch (*c) {
+            case '"':  fprintf(fp, "\\\""); break;
+            case '\\': fprintf(fp, "\\\\"); break;
+            case '\n': fprintf(fp, "\\n");  break;
+            case '\r': fprintf(fp, "\\r");  break;
+            case '\t': fprintf(fp, "\\t");  break;
+            default:
+                if ((unsigned char)*c < 0x20)
+                    fprintf(fp, "\\u%04x", (unsigned char)*c);
+                else
+                    fputc(*c, fp);
+        }
+    }
+    fputc('"', fp);
 }
 
 /* ─── Output writers ────────────────────────────────────────────── */
@@ -859,6 +975,9 @@ static int write_transcript_json(const char *path, TranscriptResult *res, HcpRes
     fprintf(fp, "  \"hcp_padded\": %d,\n", hcp->n_padded);
     fprintf(fp, "  \"hcp_flagged_tokens\": %d,\n", hcp->n_flagged);
     fprintf(fp, "  \"hcp_flagged_segments\": %d,\n", hcp->n_flagged_seg);
+    fprintf(fp, "  \"hcp_redecoded_segments\": %d,\n", res->segments_hcp_redecoded);
+    fprintf(fp, "  \"hcp_repaired_segments\": %d,\n", res->segments_hcp_repaired);
+    fprintf(fp, "  \"hcp_redecode_failed_segments\": %d,\n", res->segments_hcp_redecode_failed);
     fprintf(fp, "  \"total_segments\": %d,\n", res->count);
     fprintf(fp, "  \"hallucinated_segments\": %d,\n", res->segments_hallucinated);
     fprintf(fp, "  \"segments\": [\n");
@@ -879,23 +998,18 @@ static int write_transcript_json(const char *path, TranscriptResult *res, HcpRes
         fprintf(fp, "      \"token_count\": %d,\n", s->token_count);
         fprintf(fp, "      \"speaker_turn\": %s,\n", s->speaker_turn ? "true" : "false");
 
-        /* Escape text for JSON */
-        fprintf(fp, "      \"text\": \"");
-        for (const char *c = s->text; *c; c++) {
-            switch (*c) {
-                case '"':  fprintf(fp, "\\\""); break;
-                case '\\': fprintf(fp, "\\\\"); break;
-                case '\n': fprintf(fp, "\\n");  break;
-                case '\r': fprintf(fp, "\\r");  break;
-                case '\t': fprintf(fp, "\\t");  break;
-                default:
-                    if ((unsigned char)*c < 0x20)
-                        fprintf(fp, "\\u%04x", (unsigned char)*c);
-                    else
-                        fputc(*c, fp);
-            }
+        static const char *const repair_names[] = { "none", "failed", "rejected", "accepted" };
+        fprintf(fp, "      \"repair\": \"%s\",\n", repair_names[s->repair & 3]);
+        if (s->repair >= REPAIR_REJECTED)
+            fprintf(fp, "      \"repair_candidate_quality\": %.4f,\n", s->repair_quality);
+        if (s->text_before_repair) {
+            fprintf(fp, "      \"text_before_repair\": ");
+            write_json_string(fp, s->text_before_repair);
+            fprintf(fp, ",\n");
         }
-        fprintf(fp, "\"\n");
+        fprintf(fp, "      \"text\": ");
+        write_json_string(fp, s->text);
+        fprintf(fp, "\n");
         fprintf(fp, "    }%s\n", (i + 1 < res->count) ? "," : "");
     }
 
@@ -1082,6 +1196,8 @@ static void print_usage(void) {
         "  --beam-size N         Beam search size (default: 5)\n"
         "  --no-hcp              Disable HCP refinement\n"
         "  --media-prep PATH     Path to bonfyre-media-prep binary\n"
+        "  --no-redecode         Diagnose with HCP but do not re-decode flagged segments\n"
+        "  --redecode-all        Re-decode every segment, not only the flagged ones\n"
         "  --no-normalize        Skip audio normalization\n"
         "  --output-format FMT   json,txt,srt,vtt (default: all)\n"
         "  --threads N           CPU threads (default: 4)\n"
@@ -1109,6 +1225,8 @@ int main(int argc, char **argv) {
     const char *language = "en";
     int beam_size = 5;
     int use_hcp = 1;
+    int use_redecode = 1;
+    int redecode_all = 0;
     int use_gpu = 1;
     int n_threads = 4;
     int normalize = 1;
@@ -1125,6 +1243,10 @@ int main(int argc, char **argv) {
             beam_size = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--no-hcp") == 0) {
             use_hcp = 0;
+        } else if (strcmp(argv[i], "--no-redecode") == 0) {
+            use_redecode = 0;
+        } else if (strcmp(argv[i], "--redecode-all") == 0) {
+            redecode_all = 1;
         } else if (strcmp(argv[i], "--media-prep") == 0 && i + 1 < argc) {
             media_prep = argv[++i];
         } else if (strcmp(argv[i], "--no-normalize") == 0) {
@@ -1259,8 +1381,20 @@ int main(int argc, char **argv) {
                 hcp.n_tokens > 0 ? 100.0f * (float)hcp.n_flagged / (float)hcp.n_tokens : 0.0f,
                 hcp.n_flagged_seg, hcp.elapsed_ms);
 
-        /* Re-decode flagged segments (quality enhancement) */
-        redecode_flagged_segments(ctx, normalized_path, &result, &hcp, beam_size);
+        /* Second recognition of the flagged windows; ctx's first-pass
+         * results are consumed above and are not read again after this. */
+        if (redecode_all) {
+            int *all = calloc(result.count, sizeof(int));
+            if (all) {
+                for (int i = 0; i < result.count; i++) all[i] = i;
+                redecode_flagged_segments(ctx, wparams, audio, n_samples, &result, all, result.count);
+                free(all);
+            }
+        } else if (use_redecode) {
+            redecode_flagged_segments(ctx, wparams, audio, n_samples, &result, hcp.flagged_seg, hcp.n_flagged_seg);
+        }
+        fprintf(stderr, "[transcribe] repair: %d re-decoded, %d accepted, %d failed\n",
+                result.segments_hcp_redecoded, result.segments_hcp_repaired, result.segments_hcp_redecode_failed);
     }
 
     /* ── Write output files ─────────────────────────────────── */
@@ -1314,6 +1448,8 @@ int main(int argc, char **argv) {
             "  \"total_segments\": %d,\n"
             "  \"hallucinated_segments\": %d,\n"
             "  \"hcp_flagged_segments\": %d,\n"
+            "  \"hcp_redecoded_segments\": %d,\n"
+            "  \"hcp_repaired_segments\": %d,\n"
             "  \"hcp_flagged_tokens\": %d,\n"
             "  \"hcp_total_tokens\": %d,\n"
             "  \"audio_seconds\": %.1f\n"
@@ -1325,7 +1461,8 @@ int main(int argc, char **argv) {
             use_hcp ? "true" : "false",
             decode_ms, hcp.elapsed_ms,
             result.count, result.segments_hallucinated,
-            hcp.n_flagged_seg, hcp.n_flagged, hcp.n_tokens,
+            hcp.n_flagged_seg, result.segments_hcp_redecoded, result.segments_hcp_repaired,
+            hcp.n_flagged, hcp.n_tokens,
             (float)n_samples / 16000.0f);
         fclose(meta);
     }
@@ -1363,6 +1500,8 @@ int main(int argc, char **argv) {
             hcp.n_tokens, hcp.n_flagged,
             hcp.n_tokens > 0 ? 100.0f * (float)hcp.n_flagged / (float)hcp.n_tokens : 0.0f,
             hcp.n_flagged_seg, hcp.elapsed_ms);
+        printf("Repair:   %d re-decoded, %d accepted, %d failed\n",
+            result.segments_hcp_redecoded, result.segments_hcp_repaired, result.segments_hcp_redecode_failed);
     }
     if (write_json) printf("JSON:     %s\n", json_path);
     if (write_txt)  printf("TXT:      %s\n", txt_path);
@@ -1372,6 +1511,7 @@ int main(int argc, char **argv) {
 
     /* Cleanup */
     hcp_free(&hcp);
+    for (int i = 0; i < result.count; i++) free(result.segments[i].text_before_repair);
     free(result.segments);
     whisper_free(ctx);
     free(audio);

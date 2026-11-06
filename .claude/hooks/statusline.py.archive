@@ -1,0 +1,151 @@
+#!/usr/bin/env python3
+"""Archived Python hook; active entrypoint is statusline.mjs.
+
+The things that go wrong here go wrong quietly: the surface stops answering,
+disk creeps toward the level that paused the operator, the atlas drifts from its
+exported index, the desk quietly accumulates decisions nobody is looking at.
+None of those announce themselves. A status line is the cheapest place to notice.
+
+Drift is the one worth explaining. `atlas.py validate` runs on every `.yaff`
+edit, but `export` does not, so the registry can be valid and the index it
+publishes can still be hours behind the entries it claims to describe -- which
+is exactly how a session opened against an index dated four days earlier.
+Comparing mtimes costs nothing and turns that into a visible mark.
+
+Cached to a short TTL because it runs constantly and one probe crosses a
+network. Every probe degrades to a stated unknown; a status line that hangs is
+worse than one that admits it could not reach something.
+"""
+import json
+import os
+import re
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parents[2]
+CACHE = Path(os.environ.get("TMPDIR", "/tmp")) / "aurekai-statusline.json"
+TTL = 45
+SURFACE = "https://aurekai.life"
+CAVEMAN = Path(os.environ.get("CLAUDE_CONFIG_DIR", str(Path.home() / ".claude"))) / ".caveman-active"
+
+DIM = "\033[2m"
+OFF = "\033[0m"
+AMBER = "\033[38;5;172m"
+TEAL = "\033[38;5;37m"
+
+
+def sh(argv, timeout=4):
+    try:
+        return subprocess.run(argv, capture_output=True, text=True,
+                              timeout=timeout, cwd=str(REPO)).stdout.strip()
+    except Exception:
+        return ""
+
+
+def probe_surface():
+    """One fetch answers both questions: is it up, and what is the desk holding."""
+    body = sh(["curl", "-sS", "-m", "3", "-H", "Accept: text/html", f"{SURFACE}/studio/"])
+    if not body:
+        return False, ""
+    queues = re.findall(r"<h3>([^<]*)</h3><span class=\"desk-n\">(\d+)</span>", body)
+    open_now = [n for _, n in queues if n != "0"]
+    return True, "/".join(open_now)
+
+
+def probe_atlas():
+    """Counts from the human summary, drift from mtimes.
+
+    The index is never read into a session's context, but a status line may
+    stat it: asking whether it is older than the entries it exports is a
+    filesystem question, not a semantic one.
+    """
+    out = sh([sys.executable, "architecture/atlas.py", "summary"], 20)
+    head = re.search(r"atlas: (\d+) architectures, \d+ views, (\d+) interactions", out)
+    counts = f"{head.group(1)}a/{head.group(2)}i" if head else "?"
+    drift = False
+    try:
+        index = (REPO / "architecture" / "atlas.index.json").stat().st_mtime
+        newest = max(p.stat().st_mtime for p in (REPO / "architecture").rglob("*.yaff"))
+        drift = newest > index
+    except Exception:
+        pass
+    return counts, drift
+
+
+def collect():
+    up, desk = probe_surface()
+    counts, drift = probe_atlas()
+    disk = sh(["df", "-h", "/System/Volumes/Data"]).splitlines()
+    free = disk[-1].split()[3] if len(disk) > 1 else "?"
+    return {
+        "up": up, "desk": desk, "atlas": counts, "drift": drift, "free": free,
+        "branch": sh(["git", "rev-parse", "--abbrev-ref", "HEAD"]) or "?",
+        "dirty": len(sh(["git", "status", "--porcelain"]).splitlines()),
+    }
+
+
+def cached():
+    try:
+        doc = json.loads(CACHE.read_text())
+        if time.time() - doc["at"] < TTL:
+            return doc["v"]
+    except Exception:
+        pass
+    v = collect()
+    try:
+        CACHE.write_text(json.dumps({"at": time.time(), "v": v}))
+    except Exception:
+        pass
+    return v
+
+
+def caveman_badge():
+    """Render the other badge rather than replacing it.
+
+    A project status line overrides the user's, so wiring one here would
+    silently delete a badge the user had switched on globally. Same hardening
+    the caveman script applies to its own flag: refuse a symlink, cap the read,
+    and whitelist the value rather than echoing bytes from a file into a
+    terminal on every keystroke.
+    """
+    try:
+        if CAVEMAN.is_symlink() or not CAVEMAN.is_file():
+            return ""
+        mode = re.sub(r"[^a-z0-9-]", "", CAVEMAN.read_bytes()[:64].decode("utf-8", "ignore").lower())
+    except Exception:
+        return ""
+    allowed = {"lite", "full", "ultra", "wenyan-lite", "wenyan", "wenyan-full",
+               "wenyan-ultra", "commit", "review", "compress"}
+    if mode == "off" or mode not in allowed:
+        return ""
+    label = "CAVEMAN" if mode == "full" else f"CAVEMAN:{mode.upper()}"
+    return f"  {AMBER}[{label}]{OFF}"
+
+
+def main():
+    try:
+        event = json.load(sys.stdin)
+    except Exception:
+        event = {}
+    model = ((event.get("model") or {}).get("display_name")) or "claude"
+    v = cached()
+
+    dot = "\033[32m●\033[0m" if v["up"] else "\033[31m○\033[0m"
+    parts = [f"{TEAL}[AUREKAI]{OFF} {dot}", f"\033[36m{v['branch']}\033[0m"]
+    if v["dirty"]:
+        parts.append(f"\033[33m±{v['dirty']}\033[0m")
+    atlas = f"atlas {v['atlas']}"
+    if v["drift"]:
+        atlas += " \033[33m⚠drift\033[0m"
+    parts.append(f"{DIM}{atlas}{OFF}")
+    if v["desk"]:
+        parts.append(f"{DIM}desk {v['desk']}{OFF}")
+    parts.append(f"{DIM}disk {v['free']}{OFF}")
+    parts.append(f"{DIM}{model}{OFF}")
+    print("  ".join(parts) + caveman_badge())
+
+
+if __name__ == "__main__":
+    main()

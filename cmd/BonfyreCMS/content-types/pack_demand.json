@@ -1,0 +1,43 @@
+{
+  "name": "pack_demand",
+  "displayName": "Pack Demand",
+  "description": "What a pack needs to be useful, declared rather than fetched: the external reality (InternetDemand), the capabilities, the surface patterns and the renderers. Demand is the thing ResourceWeather schedules against, which is how holding almost nothing becomes operational instead of aspirational.",
+  "attributes": {
+    "pack": {
+      "type": "string",
+      "required": true
+    },
+    "demand_kind": {
+      "type": "string",
+      "required": true
+    },
+    "needs": {
+      "type": "string",
+      "required": true
+    },
+    "preferred_sources": {
+      "type": "string",
+      "required": false
+    },
+    "fields": {
+      "type": "string",
+      "required": false
+    },
+    "body_regime": {
+      "type": "string",
+      "required": false
+    },
+    "reheat_when": {
+      "type": "string",
+      "required": false
+    },
+    "optional": {
+      "type": "string",
+      "required": false
+    },
+    "status": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

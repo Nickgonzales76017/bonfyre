@@ -6,6 +6,7 @@
  *
  * Reference: https://github.com/lz4/lz4/blob/dev/doc/lz4_Block_format.md
  */
+#include <stdint.h>
 
 #include "bf_lz4.h"
 
@@ -37,14 +38,15 @@ static inline uint32_t read32(const void *p)
 
 static inline uint16_t read16(const void *p)
 {
-    uint16_t v;
-    memcpy(&v, p, 2);
-    return v;
+    const uint8_t *b = (const uint8_t *)p;
+    return (uint16_t)(b[0] | ((uint16_t)b[1] << 8));
 }
 
 static inline void write16(void *p, uint16_t v)
 {
-    memcpy(p, &v, 2);
+    uint8_t *b = (uint8_t *)p;
+    b[0] = (uint8_t)v;
+    b[1] = (uint8_t)(v >> 8);
 }
 
 /* Count bytes that match between `p` and `q`, up to `max` bytes. */
@@ -60,7 +62,11 @@ static size_t match_length(const uint8_t *p, const uint8_t *q, const uint8_t *li
         if (diff) {
             /* find first differing byte — little-endian CTZ */
 #if defined(__GNUC__) || defined(__clang__)
+            #if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+            p += __builtin_clzll(diff) >> 3;
+            #else
             p += __builtin_ctzll(diff) >> 3;
+            #endif
 #else
             /* portable fallback */
             for (int i = 0; i < 8; i++) {
@@ -116,8 +122,6 @@ size_t bf_lz4_compress(const void *src, size_t src_len,
     const uint8_t *ip   = (const uint8_t *)src;
     const uint8_t *base = ip;
     const uint8_t *iend = ip + src_len;
-    const uint8_t *mf_limit = iend - LZ4_MF_LIMIT;
-    const uint8_t *match_limit = iend - LZ4_LAST_LITERALS;
     const uint8_t *anchor = ip;
 
     uint8_t *op    = (uint8_t *)dst;
@@ -127,6 +131,9 @@ size_t bf_lz4_compress(const void *src, size_t src_len,
     memset(htable, 0, sizeof(htable));
 
     if (src_len < LZ4_MF_LIMIT) goto _last_literals;
+
+    const uint8_t *mf_limit = iend - LZ4_MF_LIMIT;
+    const uint8_t *match_limit = iend - LZ4_LAST_LITERALS;
 
     ip++; /* first byte can't be a back-ref anchor */
 
@@ -152,13 +159,13 @@ size_t bf_lz4_compress(const void *src, size_t src_len,
                 match = base + htable[h];
                 htable[h] = (uint32_t)(ip - base);
             } while (read32(match) != read32(ip) ||
-                     match + 0xFFFF < ip);  /* offset must fit in 16 bits */
+                     (size_t)(ip - match) > 0xFFFF);  /* offset must fit in 16 bits */
         }
 
         /* emit literals since anchor */
         {
             size_t lit_len = (size_t)(ip - anchor);
-            if (op + 1 + lit_len + (lit_len >= 15 ? lit_len/255 + 1 : 0) + 2 > olimit)
+            if (1 + lit_len + (lit_len >= 15 ? lit_len/255 + 1 : 0) + 2 > (size_t)(olimit - op))
                 return 0;
 
             token = op++;
@@ -176,7 +183,7 @@ _next_match:
         /* emit offset */
         {
             uint16_t offset = (uint16_t)(ip - match);
-            if (op + 2 > olimit) return 0;
+            if ((size_t)(olimit - op) < 2) return 0;
             write16(op, offset);
             op += 2;
         }
@@ -186,7 +193,7 @@ _next_match:
             size_t ml = match_length(ip + LZ4_MIN_MATCH,
                                      match + LZ4_MIN_MATCH,
                                      match_limit) + LZ4_MIN_MATCH;
-            if (op + (ml >= 19 ? (ml - 19)/255 + 1 : 0) + 1 > olimit)
+            if ((ml >= 19 ? (ml - 19)/255 + 1 : 0) + 1 > (size_t)(olimit - op))
                 return 0;
 
             if (ml >= 19) {
@@ -210,7 +217,7 @@ _next_match:
             match = base + htable[h];
             htable[h] = (uint32_t)(ip - base);
 
-            if (read32(match) == read32(ip) && match + 0xFFFF >= ip) {
+            if (read32(match) == read32(ip) && (size_t)(ip - match) <= 0xFFFF) {
                 token = op++;
                 *token = 0;
                 goto _next_match;
@@ -223,7 +230,7 @@ _next_match:
 _last_literals:
     {
         size_t last = (size_t)(iend - anchor);
-        if (op + 1 + last + (last >= 15 ? last/255 + 1 : 0) > olimit)
+        if (1 + last + (last >= 15 ? last/255 + 1 : 0) > (size_t)(olimit - op))
             return 0;
 
         uint8_t *token = op++;
@@ -266,13 +273,14 @@ size_t bf_lz4_decompress(const void *src, size_t src_len,
             do {
                 if (ip >= iend) return 0;
                 s = *ip++;
+                if (lit_len > SIZE_MAX - s) return 0;
                 lit_len += s;
             } while (s == 255);
         }
 
         /* copy literals */
-        if (op + lit_len > oend) return 0;
-        if (ip + lit_len > iend) return 0;
+        if (lit_len > (size_t)(oend - op)) return 0;
+        if (lit_len > (size_t)(iend - ip)) return 0;
         memcpy(op, ip, lit_len);
         op += lit_len;
         ip += lit_len;
@@ -280,12 +288,11 @@ size_t bf_lz4_decompress(const void *src, size_t src_len,
         if (op >= oend) break;  /* done — all output consumed */
 
         /* match offset */
-        if (ip + 2 > iend) return 0;
+        if ((size_t)(iend - ip) < 2) return 0;
         size_t offset = read16(ip);
         ip += 2;
-        if (offset == 0) return 0;  /* invalid offset */
+        if (offset == 0 || offset > (size_t)(op - (uint8_t *)dst)) return 0;
         uint8_t *match = op - offset;
-        if (match < (uint8_t *)dst) return 0;  /* underflow */
 
         /* match length */
         size_t ml = (tok & ML_MASK) + LZ4_MIN_MATCH;
@@ -294,11 +301,12 @@ size_t bf_lz4_decompress(const void *src, size_t src_len,
             do {
                 if (ip >= iend) return 0;
                 s = *ip++;
+                if (ml > SIZE_MAX - s) return 0;
                 ml += s;
             } while (s == 255);
         }
 
-        if (op + ml > oend) return 0;
+        if (ml > (size_t)(oend - op)) return 0;
 
         /* copy match — may overlap (offset < ml) */
         if (offset >= 8) {
@@ -361,6 +369,8 @@ size_t bf_lz4_stream_compress(bf_lz4_stream_t *s,
      * For simplicity, fall back to independent block compression
      * while maintaining the dictionary. */
     size_t result = bf_lz4_compress(src, src_len, dst, dst_cap);
+
+    if (!result) return 0;
 
     /* Update dict: keep last 64KB for future blocks */
     if (src_len <= sizeof(s->dict)) {

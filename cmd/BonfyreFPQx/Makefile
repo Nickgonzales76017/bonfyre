@@ -5,12 +5,15 @@ LDFLAGS = -L../../lib/libbonfyre -lbonfyre -lm
 TARGET = bonfyre-fpqx
 SRC = src/main.c
 
-all: $(TARGET)
+all: $(TARGET) test
 
 $(TARGET): $(SRC)
 	$(CC) $(CFLAGS) $(LOCAL_CFLAGS) -o $(TARGET) $(SRC) $(LDFLAGS)
 
+test: $(TARGET)
+	sh tests/bqfp_contract_test.sh ./$(TARGET)
+
 clean:
 	rm -f $(TARGET)
 
-.PHONY: all clean
+.PHONY: all clean test

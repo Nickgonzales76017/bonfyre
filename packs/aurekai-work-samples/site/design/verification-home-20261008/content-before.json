@@ -1,0 +1,341 @@
+{
+  "schema": "service-site.v1",
+  "site_id": "aurekai-work-samples",
+  "pages_project": "aurekai-work-samples",
+  "preview": true,
+  "leads": "server",
+  "business": {
+    "name": "Nick Gonzales",
+    "page_title": "Product workspace | Nick Gonzales"
+  },
+  "contact": {
+    "name": "Nick Gonzales",
+    "email": "nickgonzales76017@gmail.com"
+  },
+  "action": "Discuss your workflow",
+  "theme": {
+    "ground": "#fbf9f5",
+    "ink": "#1b1c1a",
+    "display": "#1b1c1a",
+    "accent": "#1b3b2b",
+    "muted": "#424843",
+    "panel": "#f5f3ef",
+    "face_display": "'Bodoni Moda',Georgia,serif",
+    "face_body": "Manrope,Arial,sans-serif",
+    "face_mono": "monospace",
+    "font_href": "https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap"
+  },
+  "navigation": [
+    {
+      "label": "Plan a retail space",
+      "href": "/red3-planner/"
+    },
+    {
+      "label": "Catalogue work",
+      "href": "/catalogue/"
+    },
+    {
+      "label": "Archive work",
+      "href": "/archive/"
+    },
+    {
+      "label": "Wix findings",
+      "href": "/wix-review/"
+    },
+    {
+      "label": "Contact",
+      "href": "/#ask"
+    }
+  ],
+  "sections": [
+    {
+      "kind": "hero",
+      "headline": "Try the product workspace",
+      "lede": "Open a product, make an edit and compare it with the original. Save a draft, then send it to Nick for review.",
+      "button": "Open product workspace",
+      "href": "/catalogue/"
+    },
+    {
+      "kind": "cases",
+      "id": "samples",
+      "title": "Work to explore",
+      "items": [
+        {
+          "title": "Plan a retail space",
+          "text": "Arrange real RED3 fixtures, compare the listed costs and prepare a project brief with the details still to confirm.",
+          "href": "/red3-planner/",
+          "button": "Open the fixture planner",
+          "icon": "grid_view"
+        },
+        {
+          "title": "Product editing",
+          "text": "Search either example store, review descriptions and options, and save your changes as drafts.",
+          "href": "/catalogue/",
+          "button": "Try the editor",
+          "icon": "inventory_2"
+        },
+        {
+          "title": "Shipment archive workflow",
+          "text": "A deliberately messy eight-file demonstration becomes five ready records, three review items and two missing-delivery-document alerts. No source files are renamed.",
+          "href": "/archive/",
+          "button": "Open the before and after",
+          "icon": "folder_open"
+        },
+        {
+          "title": "Wix search and conversion",
+          "text": "Specific public-page findings for Elite Accreditation: headline intent, duplicate homepage text and an unusually large HTML response. A first repair scope stays on Wix.",
+          "href": "/wix-review/",
+          "button": "Read the concrete findings",
+          "icon": "search"
+        }
+      ]
+    },
+    {
+      "kind": "ask",
+      "form": {
+        "id": "work-request",
+        "title": "Talk through your workflow",
+        "fields": [
+          {
+            "label": "Your name",
+            "wide": true
+          },
+          {
+            "label": "Email",
+            "type": "email",
+            "wide": true
+          },
+          {
+            "label": "Workflow or public website",
+            "type": "textarea",
+            "placeholder": "What would you like help with?"
+          }
+        ],
+        "button": "Send your request",
+        "subject": "Workflow conversation",
+        "sent": "Your request has been received. Nick can reply using the email you supplied.",
+        "notice": "Your details go to Nick for a reply. Introductory calls are free."
+      }
+    }
+  ],
+  "pages": [
+    {
+      "path": "catalogue",
+      "title": "Product workspace",
+      "menu": "Products",
+      "sections": [
+        {
+          "kind": "catalogue",
+          "id": "product-workspace",
+          "title": "Products",
+          "review": true,
+          "material": "products"
+        }
+      ],
+      "layout": "workspace"
+    },
+    {
+      "path": "archive",
+      "title": "Shipment document preparation sample",
+      "menu": "Archive",
+      "sections": [
+        {
+          "kind": "hero",
+          "headline": "Eight messy files. One checked handoff.",
+          "lede": "This is an authored demonstration of the archive task, not a trucking company\u2019s private records. It exercises shipment joins, duplicate-content identifiers, invalid dates, missing proof-of-delivery checks and a non-destructive rename plan.",
+          "button": "Discuss this workflow",
+          "href": "/#ask"
+        },
+        {
+          "kind": "figures",
+          "id": "archive-results",
+          "title": "Native query result",
+          "columns": [
+            "Disposition",
+            "Records"
+          ],
+          "rows": [
+            [
+              "Ready for review and import",
+              "5"
+            ],
+            [
+              "Duplicate content identifier",
+              "1"
+            ],
+            [
+              "Unknown shipment",
+              "1"
+            ],
+            [
+              "Unreadable date",
+              "1"
+            ],
+            [
+              "Shipments missing a delivery proof",
+              "2"
+            ]
+          ],
+          "source": {
+            "name": "Download the checked record and rename-preview CSV",
+            "url": "/assets/archive-rename-preview.csv",
+            "observed": "October 6, 2026"
+          },
+          "caveat": "Document text and content identifiers are provided test inputs. This run did not scan physical papers, perform OCR, alter real filenames or import into QuickBooks."
+        },
+        {
+          "kind": "figures",
+          "id": "missing-proof",
+          "title": "Two missing documents stay visible",
+          "columns": [
+            "Shipment",
+            "Missing document"
+          ],
+          "rows": [
+            [
+              "DEMO-1002",
+              "Delivery proof"
+            ],
+            [
+              "DEMO-1003",
+              "Delivery proof"
+            ]
+          ],
+          "source": {
+            "name": "Download the missing-document CSV",
+            "url": "/assets/archive-missing-documents.csv",
+            "observed": "October 6, 2026"
+          },
+          "caveat": "Synthetic shipment references. These are review items, not completed deliveries."
+        },
+        {
+          "kind": "steps",
+          "id": "archive-pilot",
+          "title": "A batch before a staffing commitment",
+          "items": [
+            {
+              "title": "Choose representative material",
+              "text": "Agree the document kinds, naming convention, destination fields and a small representative batch."
+            },
+            {
+              "title": "Run and inspect",
+              "text": "Deliver checked rows, duplicates, unknown references and unreadable fields with a review list. Physical scanning can be supplied separately."
+            },
+            {
+              "title": "Discuss your workload",
+              "text": "A phone or video introduction is free. We can then agree the work you need covered and a price for delivery."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "wix-review",
+      "title": "Elite Accreditation public website review",
+      "menu": "Wix review",
+      "sections": [
+        {
+          "kind": "hero",
+          "headline": "Three concrete checks for an existing Wix site.",
+          "lede": "Prepared in response to a public request for technical SEO work. This is an independent Aurekai review of publicly delivered HTML, not a client engagement, a Google Search Console inspection or a claim about search rankings.",
+          "button": "Discuss this workflow",
+          "href": "/#ask"
+        },
+        {
+          "kind": "cases",
+          "id": "wix-findings",
+          "title": "Observed on the live homepage",
+          "items": [
+            {
+              "title": "Search intent is diluted",
+              "text": "The delivered title leads with \u201celite accreditation services review\u201d, and the page has a second primary heading phrased as a review. A service buyer is more directly served by a title such as \u201cHealthcare Accreditation Consultants | Elite Accreditation\u201d and a service-led introduction."
+            },
+            {
+              "title": "The same long introduction repeats",
+              "text": "Several testimonial blocks carry the same broad service-description paragraphs. Make each testimonial concise, keep one authoritative service introduction, and link to the specific service pages instead of repeating the same text."
+            },
+            {
+              "title": "The HTML response is 2,320,224 bytes",
+              "text": "That is the uncompressed response-body size observed in this run, not a Core Web Vitals score. Inspect Wix apps, video embeds and repeated sections, then measure mobile loading before and after each change."
+            }
+          ]
+        },
+        {
+          "kind": "figures",
+          "id": "wix-source",
+          "title": "What was inspected",
+          "columns": [
+            "Public endpoint",
+            "Observed result"
+          ],
+          "rows": [
+            [
+              "Homepage",
+              "HTTP 200; two h1 elements"
+            ],
+            [
+              "robots.txt",
+              "HTTP 200"
+            ],
+            [
+              "sitemap.xml",
+              "HTTP 200"
+            ]
+          ],
+          "source": {
+            "name": "Elite Accreditation public website",
+            "url": "https://www.eliteaccreditation.org/",
+            "observed": "October 6, 2026"
+          },
+          "caveat": "A reachable sitemap is not proof of Google indexing. \u201cDiscovered, not indexed\u201d and \u201cCrawled, not indexed\u201d need their actual URL examples and Search Console evidence before assigning a cause."
+        },
+        {
+          "kind": "steps",
+          "id": "wix-first-pass",
+          "title": "A first implementation pass \u2014 without a platform migration",
+          "items": [
+            {
+              "title": "Baseline",
+              "text": "Record current Wix settings and selected service pages, then inspect Search Console examples with owner-approved read access."
+            },
+            {
+              "title": "Correct high-intent pages",
+              "text": "Refine homepage and key ASC/DME service titles, headings and internal links, preserving the site and its existing content ownership."
+            },
+            {
+              "title": "Measure the change",
+              "text": "Recheck rendered pages and crawlability; track indexing and qualified enquiries separately. No paid backlinks or ranking guarantees."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "red3-planner",
+      "title": "Plan your next shop",
+      "menu": "Fixture planner",
+      "layout": "workspace",
+      "sections": [
+        {
+          "kind": "planner",
+          "id": "red3-fixtures",
+          "title": "Plan your next shop.",
+          "presentation": {
+            "brand": "red",
+            "accent": "3",
+            "descriptor": "DISPLAY",
+            "intro": "Start with an apparel pop-up. Move the fixtures, make it yours, and keep the questions together.",
+            "presets": {
+              "compact": "Open floor",
+              "display": "More display"
+            },
+            "planning_url": "https://red3display.com/retail-planning-and-design1/retail-design/"
+          },
+          "material": "fixtures"
+        }
+      ]
+    }
+  ],
+  "footer": {},
+  "to_confirm": []
+}

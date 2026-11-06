@@ -1,13 +1,20 @@
+#include <stdint.h>
 #include "bonfyre.h"
 #include "bf_json.h"
 #include "bonfyre/bf_discipl.h"
 
 #include <sqlite3.h>
+#include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
+
+#ifndef PATH_MAX
+#define PATH_MAX 4096
+#endif
 
 static int json_appendf(char **buf, size_t *len, size_t *cap, const char *fmt, ...);
 static char *json_quote(const char *s);
@@ -217,6 +224,692 @@ static int discipl_open_db(const char *root, sqlite3 **out_db) {
     *out_db = NULL;
     if (bf_layer_state_db_path(root, "discipl.db", path, sizeof(path)) != 0) return 1;
     return bf_sqlite3_open(path, out_db) == SQLITE_OK ? 0 : 1;
+}
+
+/* Command grammar used to be hand-written into DisCIPL by Python.  It belongs
+ * beside the native contract calculator: the arrays are facts about command
+ * input/output kinds and edges are derived by set intersection below. */
+typedef struct {
+    const char *name;
+    const char *binary;
+    const char *const *consumes;
+    const char *const *produces;
+    int can_verify;
+} DisciplCommandSpec;
+
+#define KINDS(name, ...) static const char *const name[] = { __VA_ARGS__, NULL }
+KINDS(k_file_url_audio_text_image, "file", "url", "audio", "text", "image");
+KINDS(k_artifact, "artifact"); KINDS(k_artifact_code, "artifact", "code");
+KINDS(k_artifact_observation, "artifact", "observation"); KINDS(k_audio, "audio");
+KINDS(k_transcript, "transcript"); KINDS(k_transcript_clean, "transcript", "clean_transcript");
+KINDS(k_brief_text, "brief", "text"); KINDS(k_brief, "brief");
+KINDS(k_brief_artifact, "brief", "artifact"); KINDS(k_artifact_brief_rendered, "artifact", "brief", "rendered");
+KINDS(k_text_clean, "text", "clean_transcript"); KINDS(k_embedding, "embedding");
+KINDS(k_index, "search_index", "vector_index"); KINDS(k_model_tensor, "model", "tensor");
+KINDS(k_compressed, "compressed"); KINDS(k_execution, "execution");
+KINDS(k_artifact_execution_deliverable, "artifact", "execution", "deliverable");
+KINDS(k_meter, "meter_event"); KINDS(k_artifact_brief_deliverable, "artifact", "brief", "deliverable");
+KINDS(p_artifact, "artifact"); KINDS(p_canonical_structural, "canonical", "structural_id");
+KINDS(p_content_id, "content_id"); KINDS(p_lineage, "lineage"); KINDS(p_identity, "identity");
+KINDS(p_transcript, "transcript"); KINDS(p_clean_transcript, "clean_transcript"); KINDS(p_segments, "segments");
+KINDS(p_tone, "tone_profile"); KINDS(p_brief, "brief"); KINDS(p_audio, "audio"); KINDS(p_social, "social");
+KINDS(p_rendered, "rendered"); KINDS(p_deliverable, "deliverable"); KINDS(p_embedding, "embedding");
+KINDS(p_vector_index, "vector_index"); KINDS(p_search_index, "search_index"); KINDS(p_results, "results");
+KINDS(p_tags, "tags"); KINDS(p_composite, "composite"); KINDS(p_pack, "pack"); KINDS(p_compressed, "compressed");
+KINDS(p_execution, "execution"); KINDS(p_kv_state, "kv_state"); KINDS(p_meter_event, "meter_event");
+KINDS(p_accounting, "accounting"); KINDS(p_proof, "proof");
+#undef KINDS
+
+static const DisciplCommandSpec BF_DISCIPL_COMMAND_SPECS[] = {
+    {"Ingest", "bonfyre-ingest", k_file_url_audio_text_image, p_artifact, 0},
+    {"Canon", "bonfyre-canon", k_artifact_code, p_canonical_structural, 1},
+    {"Hash", "bonfyre-hash", k_artifact, p_content_id, 1},
+    {"Graph", "bonfyre-graph", k_artifact, p_lineage, 0},
+    {"Entity", "bonfyre-entity", k_artifact_observation, p_identity, 0},
+    {"Transcribe", "bonfyre-transcribe", k_audio, p_transcript, 0},
+    {"TranscriptClean", "bonfyre-transcript-clean", k_transcript, p_clean_transcript, 0},
+    {"Segment", "bonfyre-segment", k_transcript_clean, p_segments, 0},
+    {"Tone", "bonfyre-tone", k_audio, p_tone, 0},
+    {"Brief", "bonfyre-brief", k_transcript_clean, p_brief, 0},
+    {"Narrate", "bonfyre-narrate", k_brief_text, p_audio, 0},
+    {"Repurpose", "bonfyre-repurpose", k_brief, p_social, 0},
+    {"Render", "bonfyre-render", k_brief_artifact, p_rendered, 0},
+    {"Emit", "bonfyre-emit", k_artifact_brief_rendered, p_deliverable, 0},
+    {"Embed", "bonfyre-embed", k_text_clean, p_embedding, 0},
+    {"Vec", "bonfyre-vec", k_embedding, p_vector_index, 0},
+    {"Index", "bonfyre-index", k_artifact, p_search_index, 0},
+    {"Query", "bonfyre-query", k_index, p_results, 0},
+    {"Tag", "bonfyre-tag", k_text_clean, p_tags, 0},
+    {"Stitch", "bonfyre-stitch", k_artifact, p_composite, 0},
+    {"Pack", "bonfyre-pack", k_artifact, p_pack, 0},
+    {"FPQ", "bonfyre-fpq", k_model_tensor, p_compressed, 0},
+    {"SLI", "bonfyre-sli", k_compressed, p_execution, 0},
+    {"KVCache", "bonfyre-kvcache", k_execution, p_kv_state, 0},
+    {"Meter", "bonfyre-meter", k_artifact_execution_deliverable, p_meter_event, 0},
+    {"Ledger", "bonfyre-ledger", k_meter, p_accounting, 0},
+    {"Proof", "bonfyre-proof", k_artifact_brief_deliverable, p_proof, 1},
+    {NULL, NULL, NULL, NULL, 0}
+};
+
+static int command_kinds_intersect(const char *const *produces, const char *const *consumes) {
+    size_t i, j;
+    for (i = 0; produces[i]; ++i)
+        for (j = 0; consumes[j]; ++j)
+            if (strcmp(produces[i], consumes[j]) == 0) return 1;
+    return 0;
+}
+
+/* What modality a kind is carried in.
+ *
+ * Every edge in the command estate used to carry the same semantic_loss of
+ * 0.03, which sounds like a small honest number and is in fact the absence of
+ * one: when every edge loses the same amount, the chain score is a hop counter
+ * wearing a probability's clothes, and the ranking cannot tell a good
+ * composition from a long one.
+ *
+ * The measurement that exposed this is worth keeping. Asked for a chain from a
+ * retained document to a tone profile, the search returned
+ * text -> Narrate -> audio -> Transcribe -> transcript -> Tone: speak the feed
+ * aloud, then listen to what you just said. Every edge is contracted, the
+ * search is right, and the composition is worthless. Nothing in the weights
+ * could say so.
+ *
+ * So one fact goes in, and only one: a transform that changes the modality its
+ * material is carried in loses more than a transform that does not. Crossing
+ * from text to audio is a synthesis and crossing back is a recognition, and
+ * both throw away things the other cannot restore. Two tiers, not a
+ * calibrated model -- nobody has measured these losses, and a finer-grained
+ * table would be inventing precision rather than reporting it. */
+typedef enum {
+    BF_MODALITY_RECORD = 0,   /* digests, identities, ledgers: projections */
+    BF_MODALITY_TEXT,
+    BF_MODALITY_AUDIO,
+    BF_MODALITY_IMAGE,
+    BF_MODALITY_NUMERIC       /* embeddings, tensors: not invertible to text */
+} bf_modality_t;
+
+static bf_modality_t discipl_kind_modality(const char *kind)
+{
+    static const struct { const char *kind; bf_modality_t m; } K[] = {
+        {"text", BF_MODALITY_TEXT}, {"transcript", BF_MODALITY_TEXT},
+        {"clean_transcript", BF_MODALITY_TEXT}, {"brief", BF_MODALITY_TEXT},
+        {"segments", BF_MODALITY_TEXT}, {"social", BF_MODALITY_TEXT},
+        {"tags", BF_MODALITY_TEXT}, {"rendered", BF_MODALITY_TEXT},
+        {"code", BF_MODALITY_TEXT}, {"deliverable", BF_MODALITY_TEXT},
+        {"audio", BF_MODALITY_AUDIO}, {"tone_profile", BF_MODALITY_AUDIO},
+        {"image", BF_MODALITY_IMAGE},
+        {"embedding", BF_MODALITY_NUMERIC}, {"vector_index", BF_MODALITY_NUMERIC},
+        {"model", BF_MODALITY_NUMERIC}, {"tensor", BF_MODALITY_NUMERIC},
+        {"compressed", BF_MODALITY_NUMERIC}, {"kv_state", BF_MODALITY_NUMERIC},
+        {NULL, BF_MODALITY_RECORD}
+    };
+    size_t i;
+    for (i = 0; K[i].kind; ++i) if (strcmp(K[i].kind, kind) == 0) return K[i].m;
+    /* artifact, content_id, lineage, identity, canonical, proof, search_index,
+     * results, composite, pack, execution, meter_event, accounting: each is a
+     * record about material rather than the material itself. */
+    return BF_MODALITY_RECORD;
+}
+
+/* The modality a command moves its material into, across everything it
+ * declares. A command whose outputs live in a different modality from its
+ * inputs is a synthesis or a recognition, and the edge leaving it carries what
+ * that costs. */
+static double discipl_command_transition_loss(const char *const *consumes,
+                                              const char *const *produces)
+{
+    int crossed = 0;
+    size_t i, j;
+    for (i = 0; produces[i]; ++i) {
+        bf_modality_t out = discipl_kind_modality(produces[i]);
+        if (out == BF_MODALITY_RECORD) continue;   /* a record about material */
+        for (j = 0; consumes[j]; ++j) {
+            bf_modality_t in = discipl_kind_modality(consumes[j]);
+            if (in == BF_MODALITY_RECORD) continue;
+            if (in != out) crossed = 1;
+        }
+    }
+    return crossed ? 0.15 : 0.03;
+}
+
+/* Whether the command behind a family moves material from one modality into
+ * another, and which two. A command that only makes a record about material,
+ * or stays within one modality, crosses nothing. */
+int bf_discipl_family_crossing(const char *family, int *from_modality, int *to_modality)
+{
+    size_t i, j, k;
+    for (i = 0; BF_DISCIPL_COMMAND_SPECS[i].name; ++i) {
+        const DisciplCommandSpec *spec = &BF_DISCIPL_COMMAND_SPECS[i];
+        char name[128];
+        snprintf(name, sizeof(name), "T_%s", spec->name);
+        for (char *p = name; *p; ++p) if (*p >= 'a' && *p <= 'z') *p = (char)(*p - ('a' - 'A'));
+        if (strcmp(name, family) != 0) continue;
+        for (j = 0; spec->produces[j]; ++j) {
+            bf_modality_t out = discipl_kind_modality(spec->produces[j]);
+            if (out == BF_MODALITY_RECORD) continue;
+            for (k = 0; spec->consumes[k]; ++k) {
+                bf_modality_t in = discipl_kind_modality(spec->consumes[k]);
+                if (in == BF_MODALITY_RECORD || in == out) continue;
+                if (from_modality) *from_modality = (int)in;
+                if (to_modality) *to_modality = (int)out;
+                return 1;
+            }
+        }
+        return 0;
+    }
+    return 0;
+}
+
+int bf_discipl_seed_command_estate(const char *root, unsigned *actor_count,
+                                   unsigned *contract_count) {
+    char repo_root[PATH_MAX];
+    unsigned actors = 0, contracts = 0;
+    size_t i, j;
+    if (actor_count) *actor_count = 0;
+    if (contract_count) *contract_count = 0;
+    if (bf_discipl_init_db(root) != 0 || !bf_catalog_find_repo_root(repo_root, sizeof(repo_root))) return 1;
+    for (i = 0; BF_DISCIPL_COMMAND_SPECS[i].name; ++i) {
+        const DisciplCommandSpec *spec = &BF_DISCIPL_COMMAND_SPECS[i];
+        bf_discipl_actor_t actor;
+        memset(&actor, 0, sizeof(actor));
+        snprintf(actor.id, sizeof(actor.id), "command:%s", spec->name);
+        snprintf(actor.family, sizeof(actor.family), "T_%s", spec->name);
+        for (char *p = actor.family; *p; ++p) if (*p >= 'a' && *p <= 'z') *p = (char)(*p - ('a' - 'A'));
+        actor.actor_type = BF_DISCIPL_ACTOR_COMMAND;
+        snprintf(actor.domain, sizeof(actor.domain), "command");
+        snprintf(actor.modality, sizeof(actor.modality), "artifact");
+        actor.capabilities_bitset = 1ull << 8;
+        actor.affordances.can_execute = 1;
+        actor.affordances.can_verify = spec->can_verify;
+        actor.confidence = 0.8; actor.uncertainty = 0.1; actor.cost = 0.1; actor.latency = 0.1;
+        if (snprintf(actor.source_command, sizeof(actor.source_command), "%s/cmd/Bonfyre%s/%s", repo_root, spec->name, spec->binary) >= (int)sizeof(actor.source_command)) return 1;
+        if (bf_discipl_upsert_actor(root, &actor) != 0) return 1;
+        actors++;
+    }
+    for (i = 0; BF_DISCIPL_COMMAND_SPECS[i].name; ++i) {
+        const DisciplCommandSpec *src = &BF_DISCIPL_COMMAND_SPECS[i];
+        for (j = 0; BF_DISCIPL_COMMAND_SPECS[j].name; ++j) {
+            const DisciplCommandSpec *dst = &BF_DISCIPL_COMMAND_SPECS[j];
+            bf_discipl_contract_t contract;
+            if (i == j || !command_kinds_intersect(src->produces, dst->consumes)) continue;
+            memset(&contract, 0, sizeof(contract));
+            snprintf(contract.src_family, sizeof(contract.src_family), "T_%s", src->name);
+            snprintf(contract.dst_family, sizeof(contract.dst_family), "T_%s", dst->name);
+            for (char *p = contract.src_family; *p; ++p) if (*p >= 'a' && *p <= 'z') *p = (char)(*p - ('a' - 'A'));
+            for (char *p = contract.dst_family; *p; ++p) if (*p >= 'a' && *p <= 'z') *p = (char)(*p - ('a' - 'A'));
+            snprintf(contract.relationship, sizeof(contract.relationship), "feeds");
+            snprintf(contract.directionality, sizeof(contract.directionality), "directed");
+            snprintf(contract.preconditions_json, sizeof(contract.preconditions_json), "[]");
+            snprintf(contract.postconditions_json, sizeof(contract.postconditions_json), "[]");
+            snprintf(contract.failure_modes_json, sizeof(contract.failure_modes_json), "[]");
+            contract.success_prior = 0.7; contract.transform_cost = 0.08;
+            contract.semantic_loss = discipl_command_transition_loss(src->consumes, src->produces);
+            contract.retryable = 1; contract.decomposable = 1;
+            if (bf_discipl_upsert_contract(root, &contract) != 0) return 1;
+            contracts++;
+        }
+    }
+    if (actor_count) *actor_count = actors;
+    if (contract_count) *contract_count = contracts;
+    return 0;
+}
+
+/* ------------------------------------------- external estate -> lattice --
+ *
+ * The estate reads and then stops.
+ *
+ * Four thousand one hundred and seventy-one observations were attempted and
+ * the bodies of the successful ones are on this disk -- a gigabyte of
+ * lawfully retained representations, each one a file. Twenty-seven native
+ * commands declare what kinds they consume, and the first of them, Ingest,
+ * consumes `file`. Every one of those retained bodies has been a legal start
+ * node for the whole command lattice since the moment it landed, and not one
+ * of them has ever entered it. discipl_chains was empty for a reason that had
+ * nothing to do with the chains.
+ *
+ * Two things were missing and both are structural rather than clever.
+ *
+ * The first is that a phenotype was never a family. `bonfyre-facet` says what
+ * shape an occurrence is; DisCIPL says what transforms a family admits; they
+ * share no vocabulary, so the compiler that knows the estate holds a
+ * MEASUREMENT_STREAM cannot ask the compiler that knows how to transform
+ * things what may be done with one.
+ *
+ * The second is subtler and is the reason this bridge has the shape it has.
+ * A phenotype describes what the *source* offers. It does not describe what
+ * this estate *holds*. What this estate holds, uniformly, is a retained body:
+ * a file. Binding MEDIA_ASSET straight to `audio` would claim we hold audio
+ * when what we hold is whatever the server actually returned, which for a
+ * great many of these is an HTML landing page. So every phenotype crosses
+ * into the lattice through one honest intermediate -- T_RETAINED_BODY, kind
+ * `file` -- and specialisation past that is conformance's job, not this
+ * bridge's. The bridge is narrow on purpose; a wider one would be a lie about
+ * carriers.
+ *
+ * The prior on that crossing is measured, not declared. It is the fraction of
+ * attempted observations whose body is present on disk *now*, checked by
+ * stat() rather than believed from the evidence row that claims retention.
+ * Those two numbers disagree -- 3,573 rows claim a retained body and 2,875 of
+ * those files exist -- and the honest prior is the smaller one. An estate that
+ * priced this edge off its own evidence would be quoting itself. */
+
+typedef struct {
+    const char *phenotype;
+    const char *family;
+} DisciplPhenotypeSpec;
+
+static const DisciplPhenotypeSpec BF_DISCIPL_PHENOTYPE_SPECS[] = {
+    {"VERSIONED_RECORD",     "T_PHENOTYPE_VERSIONED_RECORD"},
+    {"EVENT",                "T_PHENOTYPE_EVENT"},
+    {"LIVE_ENTITY",          "T_PHENOTYPE_LIVE_ENTITY"},
+    {"MEASUREMENT_STREAM",   "T_PHENOTYPE_MEASUREMENT_STREAM"},
+    {"FIELD_COVERAGE",       "T_PHENOTYPE_FIELD_COVERAGE"},
+    {"DATASET",              "T_PHENOTYPE_DATASET"},
+    {"MEDIA_ASSET",          "T_PHENOTYPE_MEDIA_ASSET"},
+    {"COMMANDABLE_RESOURCE", "T_PHENOTYPE_COMMANDABLE_RESOURCE"},
+    {"ECONOMIC_OFFER",       "T_PHENOTYPE_ECONOMIC_OFFER"},
+    {"SUPPLY_CHAIN_OBJECT",  "T_PHENOTYPE_SUPPLY_CHAIN_OBJECT"},
+    {"IDENTITY_CREDENTIAL",  "T_PHENOTYPE_IDENTITY_CREDENTIAL"},
+    {"SERVICE_CAPABILITY",   "T_PHENOTYPE_SERVICE_CAPABILITY"},
+    {"DOCUMENT",             "T_PHENOTYPE_DOCUMENT"},
+    {"SPATIAL_RESOURCE",     "T_PHENOTYPE_SPATIAL_RESOURCE"},
+    {"OBLIGATION",           "T_PHENOTYPE_OBLIGATION"},
+    {NULL, NULL}
+};
+
+/* Where the command lattice rejoins the value lattice.
+ *
+ * These two graphs were built separately and never introduced. The command
+ * side ends at T_LEDGER, whose binary produces `accounting`. The value side
+ * begins at T_METER_EVENT and runs T_METER_EVENT -> T_LEDGER_EVENT ->
+ * T_VALUE_CAPTURE. `bonfyre-meter` produces the kind `meter_event`, which is
+ * the family T_METER_EVENT spelled in lower case, and nothing joined them, so
+ * a chain could reach accounting and could reach value and could never reach
+ * one from the other.
+ *
+ * Nothing here is invented: each row joins a declared output kind to the
+ * already-declared family of the same name. */
+static const struct { const char *kind; const char *family; } BF_DISCIPL_KIND_FAMILIES[] = {
+    {"meter_event", "T_METER_EVENT"},
+    {"execution",   "T_EXECUTION"},
+    {"artifact",    "T_ARTIFACT_OUTPUT"},
+    {NULL, NULL}
+};
+
+static int discipl_kinds_contain(const char *const *kinds, const char *want)
+{
+    size_t i;
+    for (i = 0; kinds[i]; ++i)
+        if (strcmp(kinds[i], want) == 0) return 1;
+    return 0;
+}
+
+static int discipl_seed_edge(const char *root, const char *src, const char *dst,
+                             const char *relationship, const char *bridge,
+                             double prior, double cost, double loss,
+                             unsigned *contracts)
+{
+    bf_discipl_contract_t contract;
+    memset(&contract, 0, sizeof(contract));
+    snprintf(contract.src_family, sizeof(contract.src_family), "%s", src);
+    snprintf(contract.dst_family, sizeof(contract.dst_family), "%s", dst);
+    snprintf(contract.relationship, sizeof(contract.relationship), "%s", relationship);
+    snprintf(contract.directionality, sizeof(contract.directionality), "directed");
+    snprintf(contract.required_bridge, sizeof(contract.required_bridge), "%s", bridge ? bridge : "");
+    snprintf(contract.preconditions_json, sizeof(contract.preconditions_json), "[]");
+    snprintf(contract.postconditions_json, sizeof(contract.postconditions_json), "[]");
+    snprintf(contract.failure_modes_json, sizeof(contract.failure_modes_json), "[]");
+    contract.success_prior = prior;
+    contract.transform_cost = cost;
+    contract.semantic_loss = loss;
+    contract.retryable = 1;
+    contract.decomposable = 1;
+    if (bf_discipl_upsert_contract(root, &contract) != 0) return 1;
+    if (contracts) (*contracts)++;
+    return 0;
+}
+
+int bf_discipl_seed_estate_bridge(const char *root, double retention_rate,
+                                  unsigned *actor_count, unsigned *contract_count)
+{
+    unsigned actors = 0, contracts = 0;
+    size_t i;
+    if (actor_count) *actor_count = 0;
+    if (contract_count) *contract_count = 0;
+    /* A measured rate or nothing. Refusing here rather than substituting a
+     * default is the point: an unmeasured prior on this edge would make every
+     * chain crossing it carry a number nobody took. */
+    if (!(retention_rate > 0.0) || retention_rate > 1.0) return 2;
+    if (bf_discipl_init_db(root) != 0) return 1;
+
+    for (i = 0; BF_DISCIPL_PHENOTYPE_SPECS[i].phenotype; ++i) {
+        bf_discipl_actor_t actor;
+        memset(&actor, 0, sizeof(actor));
+        snprintf(actor.id, sizeof(actor.id), "phenotype:%s", BF_DISCIPL_PHENOTYPE_SPECS[i].phenotype);
+        snprintf(actor.family, sizeof(actor.family), "%s", BF_DISCIPL_PHENOTYPE_SPECS[i].family);
+        actor.actor_type = BF_DISCIPL_ACTOR_BRIDGE;
+        snprintf(actor.domain, sizeof(actor.domain), "external_estate");
+        snprintf(actor.modality, sizeof(actor.modality), "observation");
+        actor.affordances.can_follow = 1;
+        actor.confidence = retention_rate;
+        actor.uncertainty = 1.0 - retention_rate;
+        actor.cost = 0.0;
+        actor.latency = 0.0;
+        snprintf(actor.source_command, sizeof(actor.source_command), "bonfyre-facet compile");
+        if (bf_discipl_upsert_actor(root, &actor) != 0) return 1;
+        actors++;
+        if (discipl_seed_edge(root, BF_DISCIPL_PHENOTYPE_SPECS[i].family, "T_RETAINED_BODY",
+                              "retained_as", "foreign_twin_observation",
+                              retention_rate, 0.02, 0.00, &contracts) != 0) return 1;
+    }
+
+    {
+        bf_discipl_actor_t actor;
+        memset(&actor, 0, sizeof(actor));
+        snprintf(actor.id, sizeof(actor.id), "estate:retained_body");
+        snprintf(actor.family, sizeof(actor.family), "T_RETAINED_BODY");
+        actor.actor_type = BF_DISCIPL_ACTOR_BRIDGE;
+        snprintf(actor.domain, sizeof(actor.domain), "external_estate");
+        snprintf(actor.modality, sizeof(actor.modality), "file");
+        actor.affordances.can_follow = 1;
+        actor.affordances.can_execute = 1;
+        actor.confidence = retention_rate;
+        actor.uncertainty = 1.0 - retention_rate;
+        snprintf(actor.source_command, sizeof(actor.source_command), "bonfyre-foreign-twin observe");
+        if (bf_discipl_upsert_actor(root, &actor) != 0) return 1;
+        actors++;
+    }
+
+    /* A retained body is a file, so it enters wherever `file` is consumed.
+     * Derived by the same intersection the command estate uses -- this does
+     * not name Ingest, it asks which commands declared that they take one. */
+    for (i = 0; BF_DISCIPL_COMMAND_SPECS[i].name; ++i) {
+        char dst[128];
+        size_t k;
+        if (!discipl_kinds_contain(BF_DISCIPL_COMMAND_SPECS[i].consumes, "file")) continue;
+        snprintf(dst, sizeof(dst), "T_%s", BF_DISCIPL_COMMAND_SPECS[i].name);
+        for (k = 0; dst[k]; ++k) if (dst[k] >= 'a' && dst[k] <= 'z') dst[k] = (char)(dst[k] - ('a' - 'A'));
+        /* 0.95, and declared rather than measured: handing a local file to a
+         * local binary fails for reasons of encoding and size, not of network
+         * or authority, and nobody has counted those yet. */
+        if (discipl_seed_edge(root, "T_RETAINED_BODY", dst, "ingested_as", "",
+                              0.95, 0.05, 0.02, &contracts) != 0) return 1;
+    }
+
+    /* Rejoin the command lattice to the value lattice through the kinds they
+     * already share the names of. */
+    for (i = 0; BF_DISCIPL_COMMAND_SPECS[i].name; ++i) {
+        size_t j;
+        for (j = 0; BF_DISCIPL_KIND_FAMILIES[j].kind; ++j) {
+            char src[128];
+            size_t k;
+            if (!discipl_kinds_contain(BF_DISCIPL_COMMAND_SPECS[i].produces,
+                                       BF_DISCIPL_KIND_FAMILIES[j].kind)) continue;
+            snprintf(src, sizeof(src), "T_%s", BF_DISCIPL_COMMAND_SPECS[i].name);
+            for (k = 0; src[k]; ++k) if (src[k] >= 'a' && src[k] <= 'z') src[k] = (char)(src[k] - ('a' - 'A'));
+            if (strcmp(src, BF_DISCIPL_KIND_FAMILIES[j].family) == 0) continue;
+            if (discipl_seed_edge(root, src, BF_DISCIPL_KIND_FAMILIES[j].family,
+                                  "emits_kind", "", 0.90, 0.02, 0.01, &contracts) != 0) return 1;
+        }
+    }
+
+    if (actor_count) *actor_count = actors;
+    if (contract_count) *contract_count = contracts;
+    return 0;
+}
+
+/* ------------------------------------------------ carrier specialisation --
+ *
+ * The retained-body bridge above is deliberately narrow, and the measurement
+ * shows exactly what that narrowness costs: all fifteen phenotypes reach the
+ * same eleven terminals, because every one of them funnels through a single
+ * `file` and the phenotype contributes nothing to what follows. A bridge that
+ * makes its own input irrelevant is honest about what it knows and useless as
+ * a discriminator.
+ *
+ * What licenses a wider edge is not a better guess about the phenotype. It is
+ * the bytes. `bonfyre-facet conformance` reads a retained body and reports the
+ * carrier it actually carries -- the third derivation tier, the only one that
+ * rests on what was served rather than on what was catalogued. Five hundred
+ * and nineteen occurrences in this estate have been through it. Those are not
+ * sources that might be feeds; they are bodies that parsed as feeds.
+ *
+ * So carriers enter the lattice as their own families, and only carriers with
+ * a measured population enter at all. The nine probes below cover what the
+ * conformance compiler can detect; a carrier nobody has observed gets no
+ * family, no edge and no mention, because seeding one would be a prepared
+ * answer wearing a measurement's clothes. */
+
+typedef struct {
+    const char *carrier;
+    const char *const *kinds;
+} DisciplCarrierSpec;
+
+/* Every carrier the conformance probes can detect is a structured text
+ * document. That is a fact about this particular set -- a feed, a spec, a
+ * catalogue record and a sitemap are all text -- and not a claim that carriers
+ * in general are. When a probe for a binary carrier is added, this table is
+ * where it declares itself, and the intersection below does the rest. */
+static const char *const bf_carrier_kinds_text[] = { "text", NULL };
+
+static const DisciplCarrierSpec BF_DISCIPL_CARRIER_SPECS[] = {
+    {"RSS",      bf_carrier_kinds_text},
+    {"Atom",     bf_carrier_kinds_text},
+    {"OpenAPI",  bf_carrier_kinds_text},
+    {"STAC",     bf_carrier_kinds_text},
+    {"DCAT",     bf_carrier_kinds_text},
+    {"RO-Crate", bf_carrier_kinds_text},
+    {"IIIF",     bf_carrier_kinds_text},
+    {"Sitemap",  bf_carrier_kinds_text},
+    {NULL, NULL}
+};
+
+/* How to actually invoke a command, for the commands whose invocation has been
+ * checked by running them.
+ *
+ * Every edge in this lattice was a contract and none of them had ever run a
+ * binary, which makes the whole graph a claim about what could happen. What
+ * stops it being one is executing it, and executing it needs an argv.
+ *
+ * An argv cannot be derived from the family name. `bonfyre-hash` wants
+ * `file <path>`, `bonfyre-ingest` wants `<input> <outdir>`, `bonfyre-tag` wants
+ * a trained model it has no way to ask for. So this table holds only the forms
+ * that were checked by invoking them and looking at what came back; everything
+ * else is BF_INVOKE_UNBOUND and the runner stops there and says so. A guessed
+ * argv that happens to exit zero is worse than a refusal, because it would let
+ * the receipt claim a hop ran when nothing meaningful happened. */
+/* Every command family and its binary, so a prober can walk them.
+ *
+ * bf_discipl_command_invocation answers for the four whose argv was checked by
+ * hand. That is the wrong scale: 23 of 27 commands were unbound and the plan
+ * was to check them one at a time, which is the sort of task that stays on a
+ * list for a year. The commands already describe themselves -- every one of
+ * them prints a usage block -- so the estate can derive its own invocations
+ * and then prove them by running them. */
+int bf_discipl_command_at(int index, char *family, size_t family_sz,
+                          char *binary, size_t binary_sz)
+{
+    char repo_root[PATH_MAX];
+    int n = 0;
+    size_t k;
+    while (BF_DISCIPL_COMMAND_SPECS[n].name) n++;
+    if (index < 0 || index >= n) return 1;
+    if (!bf_catalog_find_repo_root(repo_root, sizeof(repo_root))) return 1;
+    if (snprintf(family, family_sz, "T_%s", BF_DISCIPL_COMMAND_SPECS[index].name) >= (int)family_sz)
+        return 1;
+    for (k = 0; family[k]; ++k)
+        if (family[k] >= 'a' && family[k] <= 'z') family[k] = (char)(family[k] - ('a' - 'A'));
+    if (snprintf(binary, binary_sz, "%s/cmd/Bonfyre%s/%s", repo_root,
+                 BF_DISCIPL_COMMAND_SPECS[index].name,
+                 BF_DISCIPL_COMMAND_SPECS[index].binary) >= (int)binary_sz)
+        return 1;
+    return 0;
+}
+
+/* What the command declares it produces, so a prober can prefer the call that
+ * makes that rather than any call that exits zero. */
+const char *bf_discipl_command_produces(int index, int kind_index)
+{
+    int n = 0, k;
+    while (BF_DISCIPL_COMMAND_SPECS[n].name) n++;
+    if (index < 0 || index >= n || kind_index < 0) return NULL;
+    for (k = 0; BF_DISCIPL_COMMAND_SPECS[index].produces[k]; k++)
+        if (k == kind_index) return BF_DISCIPL_COMMAND_SPECS[index].produces[k];
+    return NULL;
+}
+
+int bf_discipl_command_total(void)
+{
+    int n = 0;
+    while (BF_DISCIPL_COMMAND_SPECS[n].name) n++;
+    return n;
+}
+
+int bf_discipl_command_invocation(const char *family, char *binary, size_t binary_sz)
+{
+    static const struct { const char *family; const char *bin; int form; } INVOCATIONS[] = {
+        {"T_INGEST", "bonfyre-ingest", BF_INVOKE_INPUT_OUTDIR},
+        {"T_HASH",   "bonfyre-hash",   BF_INVOKE_FILE_SUBCMD},
+        {"T_CANON",  "bonfyre-canon",  BF_INVOKE_PARSE_OUTDIR},
+        {"T_EMBED",  "bonfyre-embed",  BF_INVOKE_TEXT_OUT},
+        {NULL, NULL, BF_INVOKE_UNBOUND}
+    };
+    char repo_root[PATH_MAX];
+    size_t i;
+    if (!family) return BF_INVOKE_UNBOUND;
+    for (i = 0; INVOCATIONS[i].family; ++i) {
+        if (strcmp(INVOCATIONS[i].family, family) != 0) continue;
+        if (!binary || binary_sz == 0) return INVOCATIONS[i].form;
+        if (!bf_catalog_find_repo_root(repo_root, sizeof(repo_root))) return BF_INVOKE_UNBOUND;
+        {
+            const char *name = INVOCATIONS[i].bin;
+            const char *camel = family + 2;   /* T_INGEST -> INGEST */
+            char dir[128];
+            size_t k;
+            snprintf(dir, sizeof(dir), "%s", camel);
+            for (k = 1; dir[k]; ++k)
+                if (dir[k] >= 'A' && dir[k] <= 'Z') dir[k] = (char)(dir[k] + ('a' - 'A'));
+            if (snprintf(binary, binary_sz, "%s/cmd/Bonfyre%c%s/%s",
+                         repo_root, dir[0], dir + 1, name) >= (int)binary_sz)
+                return BF_INVOKE_UNBOUND;
+        }
+        return INVOCATIONS[i].form;
+    }
+    return BF_INVOKE_UNBOUND;
+}
+
+int bf_discipl_phenotype_count(void)
+{
+    int n = 0;
+    while (BF_DISCIPL_PHENOTYPE_SPECS[n].phenotype) n++;
+    return n;
+}
+
+const char *bf_discipl_phenotype_name(int index)
+{
+    if (index < 0 || index >= bf_discipl_phenotype_count()) return NULL;
+    return BF_DISCIPL_PHENOTYPE_SPECS[index].phenotype;
+}
+
+int bf_discipl_phenotype_index(const char *phenotype)
+{
+    int i;
+    if (!phenotype) return -1;
+    for (i = 0; BF_DISCIPL_PHENOTYPE_SPECS[i].phenotype; i++)
+        if (strcmp(BF_DISCIPL_PHENOTYPE_SPECS[i].phenotype, phenotype) == 0) return i;
+    return -1;
+}
+
+int bf_discipl_seed_carrier_bridge(const char *root, const char *carrier,
+                                   const char *phenotype,
+                                   double detection_rate, unsigned long population,
+                                   unsigned *actor_count, unsigned *contract_count)
+{
+    int pheno_idx = bf_discipl_phenotype_index(phenotype);
+    const DisciplCarrierSpec *spec = NULL;
+    bf_discipl_actor_t actor;
+    char family[128];
+    size_t i, k;
+    unsigned actors = 0, contracts = 0;
+    if (actor_count) *actor_count = 0;
+    if (contract_count) *contract_count = 0;
+    if (!carrier || !carrier[0]) return 2;
+    /* A carrier nobody has observed does not get a family. */
+    if (population == 0) return 2;
+    if (!(detection_rate > 0.0) || detection_rate > 1.0) return 2;
+    /* A carrier no phenotype declares has nothing to be conditional on. */
+    if (pheno_idx < 0) return 2;
+    for (i = 0; BF_DISCIPL_CARRIER_SPECS[i].carrier; ++i)
+        if (strcmp(BF_DISCIPL_CARRIER_SPECS[i].carrier, carrier) == 0) spec = &BF_DISCIPL_CARRIER_SPECS[i];
+    /* A carrier the lattice has no kinds for is reported, not invented. */
+    if (!spec) return 3;
+    if (bf_discipl_init_db(root) != 0) return 1;
+
+    snprintf(family, sizeof(family), "T_CARRIER_%s", carrier);
+    for (k = 0; family[k]; ++k) {
+        if (family[k] >= 'a' && family[k] <= 'z') family[k] = (char)(family[k] - ('a' - 'A'));
+        else if (family[k] == '-') family[k] = '_';
+    }
+
+    memset(&actor, 0, sizeof(actor));
+    snprintf(actor.id, sizeof(actor.id), "carrier:%s", carrier);
+    snprintf(actor.family, sizeof(actor.family), "%s", family);
+    actor.actor_type = BF_DISCIPL_ACTOR_BRIDGE;
+    snprintf(actor.domain, sizeof(actor.domain), "external_estate");
+    snprintf(actor.modality, sizeof(actor.modality), "text");
+    actor.affordances.can_follow = 1;
+    actor.affordances.can_verify = 1;
+    /* Conformance was checked against the bytes, so the carrier itself is not
+     * in doubt. What is uncertain is how often a retained body turns out to be
+     * this carrier, and that lives on the edge below, not here. */
+    actor.confidence = 1.0;
+    actor.uncertainty = 0.0;
+    snprintf(actor.source_command, sizeof(actor.source_command),
+             "bonfyre-facet conformance | population=%lu", population);
+    if (bf_discipl_upsert_actor(root, &actor) != 0) return 1;
+    actors++;
+
+    /* The edge is from the phenotype, not from the retained body.
+     *
+     * Seeding it from T_RETAINED_BODY was the honest-looking version and it
+     * made the phenotype irrelevant: all fifteen crossed into the lattice
+     * through one file and every one of them reached the same fifteen
+     * terminals. A bridge whose input cannot change its output is not a
+     * bridge, it is a funnel.
+     *
+     * What makes the phenotype matter again is that conformance is recorded
+     * per occurrence and attributed to the phenotype that declares the
+     * carrier. EVENT occurrences with a body conform to RSS at 0.990; the
+     * same measurement gives SERVICE_CAPABILITY -> OpenAPI 0.012, and gives
+     * the other thirteen phenotypes no carrier at all. That spread is the
+     * discriminator, and it is counted rather than assigned.
+     *
+     * These rates do not partition. An occurrence can conform to more than
+     * one carrier -- 500 conformances across 479 EVENT bodies -- so the rates
+     * on one phenotype's edges may sum past 1. They are per-edge likelihoods,
+     * not a distribution over carriers. */
+    if (discipl_seed_edge(root, BF_DISCIPL_PHENOTYPE_SPECS[pheno_idx].family, family,
+                          "conforms_to", "carrier_conformance", detection_rate,
+                          0.03, 0.00, &contracts) != 0) return 1;
+
+    for (i = 0; BF_DISCIPL_COMMAND_SPECS[i].name; ++i) {
+        char dst[128];
+        size_t j;
+        int matched = 0;
+        for (j = 0; spec->kinds[j] && !matched; ++j)
+            if (discipl_kinds_contain(BF_DISCIPL_COMMAND_SPECS[i].consumes, spec->kinds[j])) matched = 1;
+        if (!matched) continue;
+        snprintf(dst, sizeof(dst), "T_%s", BF_DISCIPL_COMMAND_SPECS[i].name);
+        for (k = 0; dst[k]; ++k) if (dst[k] >= 'a' && dst[k] <= 'z') dst[k] = (char)(dst[k] - ('a' - 'A'));
+        /* 0.95 and declared. A body that parsed as this carrier is text; what
+         * remains uncertain is encoding and size, which nobody has counted. */
+        if (discipl_seed_edge(root, family, dst, "parsed_as", "", 0.95, 0.04, 0.02,
+                              &contracts) != 0) return 1;
+    }
+
+    if (actor_count) *actor_count = actors;
+    if (contract_count) *contract_count = contracts;
+    return 0;
 }
 
 static int discipl_init_schema(sqlite3 *db) {

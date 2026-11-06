@@ -1,0 +1,45 @@
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import latent_fabric as lf
+
+
+def _passport(space="S"):
+    return lf.LatentSpacePassport(space, "encoder", 2, "cosine", "features", "policy")
+
+
+def test_projection_requires_passport_dimension_and_exact_subject():
+    profile = lf.LatentProfile("P", "Work", _passport(), frozenset({"rank"}))
+    projection = lf.project(profile, subject_ref="work:1", vector=(1, 0),
+                            causal_frontier="F", source_digest="D")
+    assert projection.subject_ref == "work:1"
+    try:
+        lf.project(profile, subject_ref="work:1", vector=(1,),
+                   causal_frontier="F", source_digest="D")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("wrong dimension accepted")
+
+
+def test_similarity_requires_comparability_and_never_creates_relation():
+    passport = _passport()
+    profile = lf.LatentProfile("P", "Work", passport, frozenset({"rank"}))
+    left = lf.project(profile, subject_ref="work:1", vector=(1, 0),
+                      causal_frontier="F1", source_digest="D1")
+    right = lf.project(profile, subject_ref="work:2", vector=(1, 0),
+                       causal_frontier="F1", source_digest="D2")
+    contract = lf.ComparabilityContract("S", "S")
+    assert lf.similarity(left, right, passport, passport, contract) == 1.0
+    assert left.subject_ref != right.subject_ref
+
+
+def test_trajectory_stays_on_one_subject():
+    passport = _passport()
+    profile = lf.LatentProfile("P", "Work", passport, frozenset({"watch"}))
+    old = lf.project(profile, subject_ref="work:1", vector=(0, 0),
+                     causal_frontier="F1", source_digest="D1")
+    new = lf.project(profile, subject_ref="work:1", vector=(1, 0),
+                     causal_frontier="F2", source_digest="D2")
+    assert lf.watch(lf.trajectory_delta(old, new), 0.5)

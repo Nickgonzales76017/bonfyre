@@ -10,6 +10,7 @@
  *   - fixarray, array16/32
  *   - fixmap, map16/32
  */
+#include <stdint.h>
 
 #include "bf_msgpack.h"
 

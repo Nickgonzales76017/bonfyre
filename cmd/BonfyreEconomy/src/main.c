@@ -28,6 +28,8 @@
 #include <unistd.h>
 #include <sqlite3.h>
 #include <bonfyre.h>
+#include "verification_planner.h"
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 
 #define VERSION    "1.0.0"
 #define DB_ENV     "BONFYRE_ECONOMY_DB"
@@ -41,16 +43,15 @@ static void db_path(char *buf,size_t len){
 }
 static void ensure_dir(const char *p) { bf_ensure_parent_dir(p); }
 
-/* cost model table: known model → cost per 1M tokens (USD) */
-static const struct {const char *model;double usd_per_1m;} COSTS[]={
-    {"gpt-4o",         5.00},
-    {"gpt-4o-mini",    0.15},
-    {"claude-3-5",    15.00},
-    {"llama-3-8b",     0.20},
-    {"whisper-large",  0.006},/* per minute */
-    {"local",          0.000},
-};
-static const int NCOSTS=(int)(sizeof(COSTS)/sizeof(COSTS[0]));
+/* Economy must never choose a provider merely because a static price table
+ * says it is cheap.  Provider/model reachability belongs to Model Commons;
+ * the caller supplies this narrow readiness fact only after probing a local
+ * runtime.  Without a measured route, the honest recommendation is unresolved
+ * rather than silently re-entering an exhausted remote provider. */
+static int local_model_ready(void) {
+    const char *value = getenv("BONFYRE_ECONOMY_LOCAL_MODEL_READY");
+    return value && (!strcmp(value, "1") || !strcmp(value, "true"));
+}
 
 static const char *SCHEMA=
     "PRAGMA journal_mode=WAL;"
@@ -83,7 +84,8 @@ static const char *SCHEMA=
 static sqlite3 *open_db(void){
     char path[4096];db_path(path,sizeof(path));ensure_dir(path);
     sqlite3 *db=NULL;
-    if(bf_sqlite3_open(path,&db)!=SQLITE_OK){fprintf(stderr,"db error\n");exit(1);}
+    /* What this store holds is costs and money: a commit that returned stays. */
+    if(bf_sqlite3_open_tier(path,&db,BF_SQLITE_DURABLE)!=SQLITE_OK){fprintf(stderr,"db error: the ledger could not be opened at full durability\n");exit(1);}
     char *err=NULL;sqlite3_exec(db,SCHEMA,NULL,NULL,&err);
     if(err){fprintf(stderr,"%s\n",err);sqlite3_free(err);exit(1);}
     return db;
@@ -132,7 +134,9 @@ static void cmd_budget_show(sqlite3 *db,const char *recipe){
 }
 
 static void cmd_route(sqlite3 *db,const char *recipe){
-    /* simple routing: recommend cheapest model not over budget */
+    /* Prefer an observed, within-budget realization.  A historical cost is a
+     * price observation, not availability; an explicit local readiness probe
+     * is the only zero-price path this organ may recommend. */
     sqlite3_stmt *st=NULL;
     double remaining=9999.0;
     sqlite3_prepare_v2(db,"SELECT max_usd-spent FROM budgets WHERE recipe=?",-1,&st,NULL);
@@ -145,7 +149,8 @@ static void cmd_route(sqlite3 *db,const char *recipe){
     /* First: check DB cost history for this recipe — prefer the cheapest model
      * that has been actually observed, rather than the static cost table. */
     char chosen_buf[256]; chosen_buf[0]='\0';
-    const char *chosen="gpt-4o"; double chosen_cost=9999.0;
+    const char *chosen="unresolved"; double chosen_cost=-1.0;
+    const char *reason="no observed affordable realization and no probed local runtime";
     {
         sqlite3_stmt *hs=NULL;
         sqlite3_prepare_v2(db,
@@ -159,35 +164,28 @@ static void cmd_route(sqlite3 *db,const char *recipe){
             if(m&&c<=remaining){
                 snprintf(chosen_buf,sizeof(chosen_buf),"%s",m);
                 chosen=chosen_buf; chosen_cost=c;
+                reason="cheapest observed cost within this recipe budget";
             }
         }
         sqlite3_finalize(hs);
     }
-    /* Fall back to static table if DB had nothing useful */
-    if(chosen_cost>=9999.0){
-        long avg_tokens=1000;
-        { sqlite3_stmt *ts=NULL;
-          sqlite3_prepare_v2(db,
-              "SELECT CAST(AVG(tokens) AS INTEGER) FROM costs WHERE recipe=? AND tokens>0",
-              -1,&ts,NULL);
-          sqlite3_bind_text(ts,1,recipe,-1,SQLITE_STATIC);
-          if(sqlite3_step(ts)==SQLITE_ROW&&sqlite3_column_type(ts,0)!=SQLITE_NULL)
-              avg_tokens=(long)sqlite3_column_int64(ts,0);
-          sqlite3_finalize(ts); }
-        chosen="local"; chosen_cost=0.0;
-        for(int i=0;i<NCOSTS;i++){
-            double est=COSTS[i].usd_per_1m*(double)avg_tokens/1000000.0;
-            if(est<=remaining){chosen=COSTS[i].model;chosen_cost=est;break;}
-        }
+    if(chosen_cost < 0.0 && local_model_ready()){
+        chosen="bonfyre-local";
+        chosen_cost=0.0;
+        reason="local runtime was explicitly probed ready; provider-price basis is zero, physical carrying cost remains outside this estimate";
     }
-    printf("recommended model : %s (est. cost/call: $%.6f)\n",chosen,chosen_cost);
+    if(chosen_cost < 0.0)
+        printf("recommended model : unresolved (no lawful route recommendation)\n");
+    else
+        printf("recommended model : %s (est. provider cost/call: $%.6f)\n",chosen,chosen_cost);
+    printf("route basis       : %s\n",reason);
 
     time_t now=time(NULL);
     sqlite3_stmt *ins=NULL;
     sqlite3_prepare_v2(db,"INSERT INTO routes(recipe,chosen_model,reason,ts) VALUES(?,?,?,?)",-1,&ins,NULL);
     sqlite3_bind_text(ins,1,recipe,-1,SQLITE_STATIC);
     sqlite3_bind_text(ins,2,chosen,-1,SQLITE_STATIC);
-    sqlite3_bind_text(ins,3,"cheapest-within-budget",-1,SQLITE_STATIC);
+    sqlite3_bind_text(ins,3,reason,-1,SQLITE_STATIC);
     sqlite3_bind_int64(ins,4,(sqlite3_int64)now);
     sqlite3_step(ins);sqlite3_finalize(ins);
 }
@@ -272,11 +270,13 @@ static void cmd_help(void){
 "  cost record <recipe> <stage> <model> <usd>   record actual cost\n"
 "  report [--last N]             cost history (default: 50 rows)\n"
 "  reset <recipe>                zero the spent counter\n"
+"  verify case|need|offer|covers|plan  bounded verification cost planning\n"
 "  layer <artifact_id> [--op verify|materialize|compose|run]\n"
 "  help                          this message\n\n"
-"COST MODEL\n"
-"  gpt-4o $5.00/1M · gpt-4o-mini $0.15/1M · claude-3-5 $15.00/1M\n"
-"  llama-3-8b $0.20/1M · whisper-large $0.006/min · local $0.000\n\n"
+"ROUTING BASIS\n"
+"  Reuses observed within-budget recipe costs. A local route is emitted only\n"
+"  when BONFYRE_ECONOMY_LOCAL_MODEL_READY=1 was supplied after a runtime probe.\n"
+"  Otherwise the route remains unresolved; this command never invents a remote fallback.\n\n"
 "INTEGRATION\n"
 "  bonfyre-control calls: bonfyre-economy route <recipe>\n"
 "  bonfyre-run calls:     bonfyre-economy cost record ...\n\n"
@@ -286,8 +286,29 @@ static void cmd_help(void){
 }
 
 int main(int argc,char **argv){
-    if(argc<2||strcmp(argv[1],"help")==0||strcmp(argv[1],"--help")==0){cmd_help();return 0;}
-    if(strcmp(argv[1],"layer")==0 && argc>=3){
+    /* --db FILE before the command names the store, like the other organs
+     * that keep one; it takes the place of the environment variable. */
+    if (argc >= 3 && !strcmp(argv[1], "--db")) { setenv(DB_ENV, argv[2], 1); argv += 2; argc -= 2; }
+    if(argc<2){cmd_help();return 0;}
+    enum {
+        EC_HELP, EC_BUDGET, EC_COST, EC_LAYER, EC_REPORT, EC_RESET, EC_ROUTE, EC_STATUS, EC_VERIFY,
+    };
+    static const BfCommandEntry economy_commands[] = {
+        {"--help", EC_HELP, 0, NULL},
+        {"budget", EC_BUDGET, 0, NULL},
+        {"cost", EC_COST, 0, NULL},
+        {"help", EC_HELP, 0, NULL},
+        {"layer", EC_LAYER, 0, NULL},
+        {"report", EC_REPORT, 0, NULL},
+        {"reset", EC_RESET, 0, NULL},
+        {"route", EC_ROUTE, 0, NULL},
+        {"status", EC_STATUS, 0, NULL},
+        {"verify", EC_VERIFY, 0, NULL},
+    };
+    const BfCommandEntry *command = bf_command_lookup(economy_commands,
+        sizeof(economy_commands) / sizeof(economy_commands[0]), argv[1]);
+    if(command && command->id == EC_HELP){cmd_help();return 0;}
+    if(command && command->id == EC_LAYER && argc>=3){
         const char *root = NULL, *op = "verify";
         char *json = NULL, *out = NULL;
         for(int i=1;i<argc-1;i++){
@@ -303,8 +324,9 @@ int main(int argc,char **argv){
     }
     sqlite3 *db=open_db();
     int rc=0;const char *cmd=argv[1];
-    if(strcmp(cmd,"status")==0) cmd_status(db);
-    else if(strcmp(cmd,"budget")==0){
+    if(command && command->id == EC_VERIFY) rc=bf_verification_command(db,argc,argv);
+    else if(command && command->id == EC_STATUS) cmd_status(db);
+    else if(command && command->id == EC_BUDGET){
         if(argc<3){fprintf(stderr,"budget: set|show\n");rc=1;}
         else if(strcmp(argv[2],"set")==0){
             if(argc<5){fprintf(stderr,"usage: budget set <recipe> <usd>\n");rc=1;}
@@ -312,10 +334,10 @@ int main(int argc,char **argv){
         } else if(strcmp(argv[2],"show")==0)
             cmd_budget_show(db,argc>3?argv[3]:NULL);
         else {fprintf(stderr,"budget: unknown sub-command %s\n",argv[2]);rc=1;}
-    } else if(strcmp(cmd,"route")==0){
+    } else if(command && command->id == EC_ROUTE){
         if(argc<3){fprintf(stderr,"usage: bonfyre-economy route <recipe>\n");rc=1;}
         else cmd_route(db,argv[2]);
-    } else if(strcmp(cmd,"cost")==0){
+    } else if(command && command->id == EC_COST){
         if(argc<3){fprintf(stderr,"cost: estimate|record\n");rc=1;}
         else if(strcmp(argv[2],"estimate")==0){
             if(argc<4){fprintf(stderr,"usage: cost estimate <recipe>\n");rc=1;}
@@ -324,11 +346,11 @@ int main(int argc,char **argv){
             if(argc<7){fprintf(stderr,"usage: cost record <recipe> <stage> <model> <usd>\n");rc=1;}
             else cmd_cost_record(db,argv[3],argv[4],argv[5],atof(argv[6]));
         } else {fprintf(stderr,"cost: unknown sub-command %s\n",argv[2]);rc=1;}
-    } else if(strcmp(cmd,"report")==0){
+    } else if(command && command->id == EC_REPORT){
         int n=50;
         if(argc>3&&strcmp(argv[2],"--last")==0) n=atoi(argv[3]);
         cmd_report(db,n);
-    } else if(strcmp(cmd,"reset")==0){
+    } else if(command && command->id == EC_RESET){
         if(argc<3){fprintf(stderr,"usage: bonfyre-economy reset <recipe>\n");rc=1;}
         else cmd_reset(db,argv[2]);
     } else {fprintf(stderr,"bonfyre-economy: unknown command: %s\n",cmd);rc=1;}

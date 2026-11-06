@@ -1,0 +1,53 @@
+id	territories	entry_intents	stages
+discover	live life	find explore search browse ask	intent|semantic-query|lead-material|mixed-results|subject-entry|related-context|save-or-follow|continue-chain
+listen	live life shop	music song artist album podcast audiobook listen	entry|playable-hero|play|persistent-player|queue|release-or-show|track-or-episode-sequence|credits|save|share|artist-or-creator|related-listen|live-event|community|offer
+watch	live life shop	video stream movie show clip live watch	entry|media-hero|play|persistent-player|chapters|transcript-or-captions|creator|discussion|save|share|related-watch|playlist-or-series|premiere-or-live|community|offer
+community	live life work	community topic discussion forum group circle	entry-topic|human-body|active-thread|read|reply|reaction|related-thread|people|shared-media|event-or-poll|collection|join-or-follow|moderation-state
+relationship	life work	person friend contact network relationship	person-entry|relationship-context|shared-context|activity|message-or-introduction|shared-place-or-event|collection|follow|plan|history
+professional	work life	company professional job career service business	organization-or-person|current-activity|people|products-or-services|jobs|content|message-or-intro|event|newsletter|relationship-state|analytics-or-admin
+dating	life live	date dating match people romance	mode-or-intent|focused-person|shared-context|interest-signal|match|conversation|music-or-media-context|activity-suggestion|place|plan|safety-context|meet-or-close
+mobility	life live shop	move ride drive transit travel route transport	need|origin-destination|search-options|compare|select|reserve-or-request|price-and-terms|pay|track|communicate|arrive|receipt|rate|next-local-action
+trip	life live shop	trip vacation travel hotel itinerary destination	inspiration|place-date-party|search|stay-or-hotel|detail|save-share|book|itinerary|experience|service|local-discovery|messages|directions|trip-state|review
+property	life work shop	property real-estate parcel home investor landlord	territory|search-filter|property|owner-or-party|tax-lien-distress|equity|comps|arv-or-value|related-property|save-list|monitor|contact-resolution|outreach|funding|offer|transaction|post-close
+housing	life shop work	rent lease apartment home housing	need|place-budget|search|listing-detail|availability|save|compare|contact|tour|application|screening|lease|move-in|home-state
+learning	life work	learn course skill degree certificate training	goal|skill-or-topic|program-or-course|syllabus|module|watch-or-read|discussion|practice|assignment|submit|feedback|assessment|progress|credential|next-skill
+enterprise-gtm	work shop	lead customer sales marketing crm revenue growth	market-or-account|audience|content-or-campaign|visitor-or-signal|lead|enrich|score-or-prioritize|outreach|conversation|opportunity|quote|approval|payment|onboarding|support|health|renewal-or-expansion
+service-case	work life	service support issue request incident customer	request|identity-and-context|triage|knowledge|assignment|conversation|work|approval-if-needed|resolution|receipt|satisfaction|follow-up
+commerce	shop life	buy product purchase checkout shop retail	need-or-discovery|product-or-offer|detail|compare-or-configure|save-or-cart|availability|quote-or-price|checkout|payment|fulfillment|tracking|delivery|ownership|support|repeat-or-resale
+creator-publish	live work shop	publish creator post media release distribute	idea-or-material|ingest|edit-or-compose|rights-and-policy|metadata|preview|approval|publish|distribution|audience-response|analytics|repurpose|archive-or-update
+live-event	live life shop work	event show concert meetup venue live	announcement|event-detail|artist-or-host|venue-or-place|schedule|media-preview|discussion|rsvp-or-ticket|calendar|directions|live-room|post-event-media|receipt-or-memory
+ticketing	shop live life	ticket event admission reservation	show-or-event|inventory|section-or-option|price|hold|identity|checkout|payment|ticket|wallet-or-delivery|entry|receipt|transfer-or-support
+food	life shop live	food restaurant meal grocery delivery	need-or-craving|local-discovery|menu-or-items|detail|availability|cart|customize|checkout|payment|prep-status|courier-or-pickup|delivery|rating|reorder-or-community
+place	life live	place venue neighborhood city local map near	place-entry|map-context|now|people|events|media|discussion|services|offers|route|save|related-place
+finance	work life shop	money budget payment banking cashflow accounting	financial-context|account-or-ledger|obligation|forecast-or-need|funding-source|authorization|transaction|settlement|reconciliation|receipt|report|next-obligation
+investing	work life	invest portfolio market stock fund quant	goal-or-mandate|universe|data|signal|risk|portfolio|decision|authority|order|execution|position|monitor|attribution|rebalance
+insurance	work life shop	insurance risk policy claim coverage	need-or-risk|party-or-asset|coverage-search|quote|compare|underwriting-input|bind|policy|incident|claim|evidence|adjustment|settlement|renewal
+grant-funding	work life	grant funding investor lender capital loan	need|eligibility|program-or-funder|requirements|evidence|package|application-or-pitch|submission|review|follow-up|award-or-term-sheet|close|compliance|reporting
+hiring	work life	job hire candidate talent recruiting	role-or-need|audience|candidate-or-job-discovery|profile|fit-or-screen|conversation|interview|assessment|decision|offer|acceptance|onboarding|performance-context
+project	work	project task issue roadmap delivery operations	goal|scope|plan|dependencies|assignment|work|discussion|artifact|review|approval|release-or-delivery|retrospective|next-work
+knowledge	work life	document wiki knowledge answer research docs	question-or-subject|search|authoritative-page|related-context|source|discussion|edit-or-propose|review|publish|history|reuse
+collaboration	work life	chat channel team collaborate message meeting	space-or-channel|context|message|thread|reaction|file-or-canvas|huddle-or-meeting|task-or-list|decision|follow-up|durable-summary
+research	work life	research investigate evidence dataset paper	question|prior-art|sources|dataset|method|analysis|result|corroboration|evidence-frontier|write-up|publication|reuse
+science	work life	science lab experiment protocol dataset	hypothesis|protocol|materials|experiment|instrument-data|observation|analysis|result|replication|evidence|dataset-publication|paper-or-report
+healthcare	life work	care health clinic patient appointment medical	need|provider-or-service|eligibility|appointment|intake|visit|observation|plan|order-or-prescription|follow-up|record|billing
+civic	life work	government permit public service civic city	need-or-obligation|jurisdiction|service-or-rule|eligibility|form-or-request|evidence|submission|status|review|decision|receipt|appeal-or-next-step
+emergency	life work	emergency disaster incident response alert	incident|alert|scope|people-assets|resource-needs|assignment|route-or-deploy|status|evidence|resolution|recovery|after-action
+logistics	work shop life	ship delivery freight warehouse supply-chain	need-or-order|origin-destination|inventory|carrier|quote|booking|pickup|in-transit|exception|delivery|proof|settlement|reconciliation
+manufacturing	work shop	factory manufacture production maintenance	order-or-demand|bom-or-recipe|materials|capacity|schedule|work-order|production|quality|inventory|shipment|maintenance|costing|continuous-improvement
+agriculture	work life shop	farm agriculture crop livestock food	season-or-demand|field-or-herd|inputs|plan|work|observation|weather|harvest-or-output|storage|market|sale|traceability
+energy	work life	energy power battery grid fuel	need-or-load|asset-or-source|forecast|market-or-tariff|schedule|dispatch|meter|exception|settlement|report|maintenance
+utility	work life	water utility waste sewer service	service-area|account-or-asset|need-or-reading|work-order|route-or-dispatch|meter-or-observation|exception|resolution|bill-or-settlement|report
+vehicle	life work shop	vehicle car motorcycle fleet repair	vehicle-entry|condition-or-history|need|parts-or-service|quote|schedule|work|inspection|payment|receipt|maintenance|resale-or-next-service
+sports	live life shop	sport team game score athlete league	league-or-topic|team-or-athlete|schedule|live-or-score|watch|discussion|stats|highlights|standings|ticket|merch|next-game
+media-production	live work	film audio video production shoot edit	concept|project|script-or-plan|cast-or-crew|schedule|capture|ingest|edit|review|rights|master|publish|distribution|analytics
+audience-growth	live work shop	marketing ads audience creator growth campaign	audience|goal|content-or-offer|channel|campaign|publish-or-run|signal|conversation|conversion|attribution|learn|iterate
+support	work life	manual help support troubleshoot docs	issue|search|diagnose|known-answer|guided-step|tool-or-action|verify|resolve-or-escalate|receipt|knowledge-update
+household	life shop work	home family chore personal daily	day-or-need|people|home-state|calendar|task|service-or-purchase|route|communication|completion|receipt-or-memory
+care	life work	care pet elder child family support	person-or-dependent|need|provider-or-helper|availability|plan|consent|service|status|communication|completion|record
+resource-market	shop work	market exchange material resource trade	need-or-supply|catalog-or-market|quality|quantity|price|counterparty|quote|commitment|settlement|movement|receipt|reputation
+mission	work life	mission spacecraft expedition field-team	objective|team|assets|plan|route-or-window|telemetry-or-observation|decision|work|exception|result|evidence|debrief
+software-work	work	software code issue build deploy repository devops	goal-or-issue|repository|context|plan|edit|build|test|review|merge|deploy|observe|incident-or-follow-up
+ai-work	work	ai model agent inference benchmark automation	intent|capability-match|model-or-agent|context|plan|run|artifact|evaluation|proof-or-policy|publish-or-effect|telemetry|learn
+publication	live work life	article blog newsletter news publish	story-or-topic|sources|draft|edit|fact-or-rights-check|layout|preview|publish|syndicate|discussion|update|archive
+identity-access	life work	login identity account permission membership	identity|discovery|authenticate|session|scope|membership-or-role|authorize|act|receipt|revoke-or-expire
+telecom	work life	connectivity network internet carrier broadband wireless service	need-or-signal|service-or-network|coverage-or-route|identity-or-device|authenticate|negotiate-link|connect|measure-quality|recover-or-handoff|usage|bill-or-policy|support-or-change

@@ -1,0 +1,208 @@
+"""Archived Python witness for CommitmentGraph's five states; active witness is commitment-graph.test.mjs.
+
+These tests are written to falsify the forbidden inferences rather than to
+exercise the happy path. A suite that only proved "record then discharge works"
+would have passed against the two-state version this replaces, which is exactly
+why it would not be a witness for the three states that were added.
+"""
+
+from __future__ import annotations
+
+import os
+import sqlite3
+import sys
+
+import pytest
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import commitment_graph as cg  # noqa: E402
+
+
+@pytest.fixture()
+def db():
+    conn = sqlite3.connect(":memory:")
+    cg.ensure_schema(conn)
+    yield conn
+    conn.close()
+
+
+def _open(db, cid="c1", committer="venue", beneficiary="organizer",
+          resource="room-on-friday", **kw):
+    cg.record_commitment(db, commitment_id=cid, committer=committer,
+                         beneficiary=beneficiary, resource=resource, **kw)
+    return cid
+
+
+# ------------------------------------------------- a commitment is not delivery
+
+def test_open_commitment_is_not_delivered(db):
+    cid = _open(db)
+    assert cg.status(db, cid) == cg.OPEN
+    assert cg.commitment_delivered(db, cid) is False
+
+
+def test_unknown_commitment_is_none_not_open(db):
+    # None and "open" must not be conflated: one means nobody promised anything,
+    # the other means somebody did and has not yet performed.
+    assert cg.status(db, "never-recorded") is None
+    assert cg.commitment_delivered(db, "never-recorded") is False
+
+
+# --------------------------------------------------- delegation keeps the origin
+
+def test_delegation_does_not_release_the_original_obligor(db):
+    cid = _open(db, cid="c1", committer="venue")
+    new = cg.delegate(db, cid, to_committer="sub-venue", delegated_id="c1-d")
+
+    # The original is delegated, not discharged. It is still live and still
+    # capable of being violated -- the beneficiary never agreed to the swap.
+    assert cg.status(db, cid) == cg.DELEGATED
+    assert cg.commitment_delivered(db, cid) is False
+    assert cg.status(db, new) == cg.OPEN
+
+    # Both obligations are owed to the same beneficiary.
+    owed = dict(cg.outstanding(db, "organizer"))
+    assert owed == {"c1": cg.DELEGATED, "c1-d": cg.OPEN}
+
+
+def test_delegated_commitment_can_still_be_violated(db):
+    cid = _open(db)
+    cg.delegate(db, cid, to_committer="sub-venue", delegated_id="c1-d")
+    cg.violate(db, cid, detail="sub-venue never showed")
+    assert cg.status(db, cid) == cg.VIOLATED
+
+
+def test_delegation_chain_walks_back_to_the_original_promiser(db):
+    cid = _open(db, cid="c1", committer="venue")
+    cg.delegate(db, cid, to_committer="sub-venue", delegated_id="c1-d")
+    assert cg.delegation_chain(db, "c1") == ["venue"]
+    assert cg.delegation_chain(db, "c1-d") == ["venue", "sub-venue"]
+
+
+# --------------------------------------------- violation is not an ending
+
+def test_violated_commitment_is_still_outstanding(db):
+    cid = _open(db)
+    cg.violate(db, cid, detail="room double-booked")
+    # Unmet is unmet. A violated obligation that vanished from what is owed
+    # would let a counterparty clear their book by breaking promises.
+    assert dict(cg.outstanding(db, "organizer")) == {cid: cg.VIOLATED}
+
+
+def test_late_delivery_still_discharges_and_keeps_the_violation(db):
+    cid = _open(db)
+    cg.violate(db, cid, detail="missed the date")
+    cg.discharge(db, cid, detail="delivered a week late")
+
+    assert cg.status(db, cid) == cg.DISCHARGED
+    assert cg.was_ever(db, cid, cg.VIOLATED) is True
+    assert cg.outstanding(db, "organizer") == []
+
+
+# --------------------------------------- compensation does not erase the breach
+
+def test_compensation_requires_a_violation_to_answer(db):
+    cid = _open(db)
+    with pytest.raises(cg.CommitmentError) as e:
+        cg.compensate(db, cid, detail="refund")
+    # Compensating something unbroken would manufacture the appearance of a
+    # handled failure. The refusal names the state it was actually in.
+    assert "open" in str(e.value)
+
+
+def test_compensation_keeps_the_violation_visible(db):
+    cid = _open(db)
+    cg.violate(db, cid, detail="room double-booked")
+    cg.compensate(db, cid, detail="full refund plus a free date")
+
+    assert cg.status(db, cid) == cg.COMPENSATED
+    assert cg.was_ever(db, cid, cg.VIOLATED) is True
+    states = [s for s, _, _, _ in cg.history(db, cid)]
+    assert states == [cg.OPEN, cg.VIOLATED, cg.COMPENSATED]
+
+
+def test_compensated_and_discharged_are_distinguishable(db):
+    clean = _open(db, cid="clean", beneficiary="alice")
+    cg.discharge(db, clean)
+
+    messy = _open(db, cid="messy", beneficiary="alice")
+    cg.violate(db, messy)
+    cg.compensate(db, messy)
+
+    # Both are settled and neither is outstanding -- but "was fine" and "broke
+    # then made good" must remain different facts about the counterparty.
+    assert cg.outstanding(db, "alice") == []
+    assert cg.was_ever(db, clean, cg.VIOLATED) is False
+    assert cg.was_ever(db, messy, cg.VIOLATED) is True
+
+
+# ------------------------------------------------------ terminal states are final
+
+def test_discharged_is_terminal(db):
+    cid = _open(db)
+    cg.discharge(db, cid)
+    for move in (cg.violate, cg.compensate):
+        with pytest.raises(cg.CommitmentError) as e:
+            move(db, cid)
+        assert "terminal" in str(e.value)
+
+
+def test_compensated_is_terminal(db):
+    cid = _open(db)
+    cg.violate(db, cid)
+    cg.compensate(db, cid)
+    with pytest.raises(cg.CommitmentError) as e:
+        cg.discharge(db, cid)
+    assert "terminal" in str(e.value)
+
+
+def test_re_recording_cannot_reopen_a_settled_obligation(db):
+    cid = _open(db)
+    cg.violate(db, cid)
+    with pytest.raises(cg.CommitmentError):
+        _open(db, cid=cid)
+    # The breach survives the attempt to overwrite it.
+    assert cg.status(db, cid) == cg.VIOLATED
+    assert cg.was_ever(db, cid, cg.VIOLATED) is True
+
+
+# ------------------------------------------- expiry is not itself a violation
+
+def test_expiry_passing_does_not_violate_on_its_own(db):
+    cid = _open(db, expires_at="2026-01-01T00:00:00Z")
+    assert cg.violable(db, now="2026-06-01T00:00:00Z") == [cid]
+    # The clock proposes; it does not decide that somebody broke a promise.
+    assert cg.status(db, cid) == cg.OPEN
+    assert cg.was_ever(db, cid, cg.VIOLATED) is False
+
+
+def test_violable_excludes_settled_and_unexpiring_commitments(db):
+    settled = _open(db, cid="settled", expires_at="2026-01-01T00:00:00Z")
+    cg.discharge(db, settled)
+    _open(db, cid="no-expiry")
+    live = _open(db, cid="future", expires_at="2099-01-01T00:00:00Z")
+
+    assert cg.violable(db, now="2026-06-01T00:00:00Z") == []
+    assert cg.status(db, live) == cg.OPEN
+
+
+# ----------------------------------------------- the log is the state, not a column
+
+def test_state_is_append_only_and_history_is_complete(db):
+    cid = _open(db)
+    cg.delegate(db, cid, to_committer="sub", delegated_id="d")
+    cg.violate(db, cid)
+    cg.compensate(db, cid)
+
+    states = [s for s, _, _, _ in cg.history(db, cid)]
+    assert states == [cg.OPEN, cg.DELEGATED, cg.VIOLATED, cg.COMPENSATED]
+    # Nothing was overwritten: every transition is still readable.
+    assert len(cg.history(db, cid)) == 4
+
+
+def test_enactment_ties_an_obligation_to_the_exchange_that_made_it(db):
+    _open(db, cid="c1", enactment="quote-accept:2026-09-04:venue-organizer")
+    row = db.execute(
+        "SELECT enactment FROM commitments WHERE commitment_id='c1'").fetchone()
+    assert row[0] == "quote-accept:2026-09-04:venue-organizer"

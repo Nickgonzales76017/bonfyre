@@ -1,0 +1,3 @@
+app_lineage_contract fixture
+  lineage alpha dir:app platform Sales-Order - owns:- consumes:Input|State publishes:Output dialect:frappe
+  lineage second dir:two customer Quoted-Doc alpha publishes:Name"Quoted

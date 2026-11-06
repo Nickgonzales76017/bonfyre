@@ -1,0 +1,16 @@
+{
+  "name": "discovery_set",
+  "displayName": "Discovery Set",
+  "description": "A working set over observed sources, defined by criteria that run rather than by a list somebody typed. The criteria propose candidates; a person accepts or rejects them. A set is never a claim that its members are related in the world, never permission to fetch or contact anything, and never semantic relevance: every criterion is a filter over facts this estate already recorded.",
+  "attributes": {
+    "set_id": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "label": { "type": "string", "required": true },
+    "criteria": { "type": "text", "required": true },
+    "monitoring": { "type": "string", "required": true },
+    "opened_by": { "type": "string", "required": true },
+    "opened_at": { "type": "string", "required": true },
+    "last_run_at": { "type": "string" },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

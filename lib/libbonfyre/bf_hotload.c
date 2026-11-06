@@ -1,3 +1,7 @@
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 /*
  * bf_hotload.c — Hot-reload pipeline stages via dlopen
  *
@@ -6,6 +10,10 @@
  * Linux: inotify on plugin_dir
  */
 
+/* CLOCK_MONOTONIC, and the Linux inotify/epoll paths this file documents,
+ * are behind a glibc feature macro. Declared here so the Linux build this
+ * targets actually compiles. */
+#include <stdint.h>
 #include "bf_hotload.h"
 
 #include <dlfcn.h>

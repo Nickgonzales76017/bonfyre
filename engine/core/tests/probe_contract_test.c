@@ -110,12 +110,42 @@ int main(void) {
           "Indexed 12 artifact families\n",
           0, "index missing db marker");
 
-    check("wire-ingest-semantic", "wire-pass",
-          "{\"packet_count\":2,\"byte_count\":1536,\"mode\":\"metadata-only\"}",
-          1, "wire ingest json markers present");
-    check("wire-ingest-semantic", "wire-fail",
-          "{\"packet_count\":3,\"byte_count\":1536,\"mode\":\"metadata-only\"}",
-          0, "wire ingest wrong packet_count");
+    /* wire-ingest-semantic recounts the capture it was handed. What this
+     * does not prove: the report strings below are written here, so this
+     * shows the probe's dispatch and arithmetic and not the wire organ.
+     * BONFYRE_TEST_PCAP names a capture somebody recorded; without one the
+     * case is reported as not run. */
+    {
+        const char *capture = getenv("BONFYRE_TEST_PCAP");
+        unsigned long long packets = 0, bytes = 0;
+        if (!capture || !*capture) {
+            printf("NOT RUN: probe=wire-ingest-semantic (set BONFYRE_TEST_PCAP to a real capture)\n");
+        } else if (pcap_record_totals(capture, &packets, &bytes) != 0 || packets == 0) {
+            fprintf(stderr, "FAIL: BONFYRE_TEST_PCAP is not a readable capture: %s\n", capture);
+            g_failures++;
+        } else {
+            char report[256];
+            snprintf(report, sizeof(report),
+                     "{\"packet_count\":%llu,\"byte_count\":%llu,\"mode\":\"metadata-only\"}", packets, bytes);
+            check_with_input("wire-ingest-semantic", "wire-pass", report, capture,
+                             1, "wire report matches the capture's own records");
+            snprintf(report, sizeof(report),
+                     "{\"packet_count\":%llu,\"byte_count\":%llu,\"mode\":\"metadata-only\"}", packets + 1, bytes);
+            check_with_input("wire-ingest-semantic", "wire-fail", report, capture,
+                             0, "wire report with one packet too many");
+            check_with_input("wire-ingest-semantic", "wire-not-a-capture", report, __FILE__,
+                             0, "input that is not a capture");
+        }
+    }
+
+    check("detect-objects-semantic", "detect-pass",
+          "{\"model\": \"apple-vision/people-r2\", \"frame_count\": 1, \"frames_not_detected\": 0, "
+          "\"frames\": [{\"file\": \"a.jpg\", \"detections\": [{\"label\": \"face\", \"confidence\": 0.8}]}]}",
+          1, "a detection was reported for the frame");
+    check("detect-objects-semantic", "detect-empty",
+          "{\"model\": \"apple-vision/people-r2\", \"frame_count\": 1, \"frames_not_detected\": 0, "
+          "\"frames\": [{\"file\": \"a.jpg\", \"detections\": []}]}",
+          0, "an empty detection list does not certify");
 
     /* ledger-semantic now cross-checks the reported "Raw bytes" figure
      * against the real input artifact's actual size on disk. */

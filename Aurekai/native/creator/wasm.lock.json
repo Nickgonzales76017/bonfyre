@@ -1,0 +1,26 @@
+{
+  "schema": "aurekai.creator.wasm-lock.v1",
+  "zig_version": "0.13.0",
+  "sources": {
+    "mix_kernel.c": "cba37b9a35273e28fab3998cab7be69047a38d9a92f2aca8404c3bebba488d47",
+    "mix_kernel.h": "1cc08af18fb26e034f3b132838cec6aeaf2edcb6b0c09482177af8fa86149e08"
+  },
+  "artifact_sha256": "efba33826fa3da7f3ea28a9e44e7cad189b65a78aa9f58e7ab40ff8f1e574126",
+  "flags": [
+    "-target",
+    "wasm32-freestanding",
+    "-O3",
+    "-g0",
+    "-nostdlib",
+    "-fno-fast-math",
+    "-ffp-contract=off",
+    "-Wl,--no-entry",
+    "-Wl,--export=aurekai_mix_f32",
+    "-Wl,--export=__heap_base",
+    "-Wl,--export-memory",
+    "-Wl,--initial-memory=0x20000",
+    "-Wl,--max-memory=0x20000",
+    "-Wl,-z,stack-size=0x4000",
+    "-Wl,--strip-all"
+  ]
+}

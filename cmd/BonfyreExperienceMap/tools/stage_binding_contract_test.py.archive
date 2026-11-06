@@ -1,0 +1,24 @@
+#!/usr/bin/env python3
+"""Witness that a candidate miss is not converted into a prose-stage edge."""
+
+from __future__ import annotations
+
+import compile_experience_map as compiler
+
+
+def main() -> None:
+    chains = {
+        "proof": {"stages": ["field-or-herd", "weather", "harvest-or-output"]},
+    }
+    # Discovery labels may still say a candidate relates to agriculture, but
+    # neither an unrelated affordance nor a donor visual reference is a typed
+    # reason to place it at the first stage.
+    assert compiler.stage_bindings(["proof"], chains, ["unrelated-capability"]) == {}
+    assert compiler.presentation_stage_bindings(["proof"], chains) == {}
+
+    exact = compiler.stage_bindings(["proof"], chains, ["weather"])
+    assert exact == {"proof": ["weather"]}
+
+
+if __name__ == "__main__":
+    main()

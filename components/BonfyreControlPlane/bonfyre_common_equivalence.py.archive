@@ -1,0 +1,128 @@
+"""Behavioural comparison for the duplicate helper families.
+
+This intentionally includes inputs on which the currently duplicated helpers
+do not all agree.  It records every difference before failing the assertion.
+"""
+
+import datetime as dt
+import sqlite3
+from zoneinfo import ZoneInfo
+
+from actors import _iso as actors_iso
+from authority import _iso as authority_iso, _parse as authority_parse, _table_exists as authority_table_exists
+from bonfyre_common import iso, parse_iso, table_exists
+from capability_catalog import _iso as capability_catalog_iso
+from continuous_supervisor import _iso as continuous_supervisor_iso
+from external_events import _iso as external_events_iso
+from fabric_facts import _has as fabric_facts_table_exists
+from fabric_queries import _table_exists as fabric_queries_table_exists
+from opportunity import _table_exists as opportunity_table_exists
+from pack_loader import _parse_ts as pack_loader_parse
+from proof_frontier import _iso as proof_frontier_iso
+from provider_state import _iso as provider_state_iso, _parse as provider_state_parse
+from reachability_watch import _table_exists as reachability_watch_table_exists
+from relationship import _iso as relationship_iso, _table_exists as relationship_table_exists
+from resource_activation import _iso as resource_activation_iso, _table_exists as resource_activation_table_exists
+from route_ranker import _table_exists as route_ranker_table_exists
+from scheduling import _iso as scheduling_iso, _parse as scheduling_parse
+from shadow_institution import _iso as shadow_institution_iso, _table_exists as shadow_institution_table_exists
+from verification import _iso as verification_iso
+from work_graph import _iso as work_graph_iso, _parse as work_graph_parse
+
+
+ISO_HELPERS = {
+    "actors._iso": actors_iso,
+    "authority._iso": authority_iso,
+    "capability_catalog._iso": capability_catalog_iso,
+    "continuous_supervisor._iso": continuous_supervisor_iso,
+    "external_events._iso": external_events_iso,
+    "proof_frontier._iso": proof_frontier_iso,
+    "provider_state._iso": provider_state_iso,
+    "relationship._iso": relationship_iso,
+    "resource_activation._iso": resource_activation_iso,
+    "scheduling._iso": scheduling_iso,
+    "shadow_institution._iso": shadow_institution_iso,
+    "verification._iso": verification_iso,
+    "work_graph._iso": work_graph_iso,
+}
+
+PARSE_HELPERS = {
+    "authority._parse": authority_parse,
+    "pack_loader._parse_ts": pack_loader_parse,
+    "provider_state._parse": provider_state_parse,
+    "scheduling._parse": scheduling_parse,
+    "work_graph._parse": work_graph_parse,
+}
+
+TABLE_HELPERS = {
+    "authority._table_exists": authority_table_exists,
+    "fabric_facts._has": fabric_facts_table_exists,
+    "fabric_queries._table_exists": fabric_queries_table_exists,
+    "opportunity._table_exists": opportunity_table_exists,
+    "reachability_watch._table_exists": reachability_watch_table_exists,
+    "relationship._table_exists": relationship_table_exists,
+    "resource_activation._table_exists": resource_activation_table_exists,
+    "route_ranker._table_exists": route_ranker_table_exists,
+    "shadow_institution._table_exists": shadow_institution_table_exists,
+}
+
+
+def outcome(function, *args):
+    try:
+        return ("value", function(*args))
+    except Exception as exc:  # The comparison must include invalid inputs.
+        return ("exception", type(exc).__name__)
+
+
+def compare(family, helpers, values, shared, disagreements):
+    for name, helper in helpers.items():
+        for value in values:
+            old = outcome(helper, value)
+            new = outcome(shared, value)
+            if old != new:
+                disagreements.append(f"{family}:{name}({value!r})")
+
+
+def main():
+    disagreements = []
+    iso_values = (
+        dt.datetime(2026, 1, 2, 3, 4, 5),
+        dt.datetime(2026, 1, 2, 3, 4, 5, 987654, tzinfo=ZoneInfo("America/Chicago")),
+        dt.datetime(2026, 1, 2, 3, 4, 5, 1, tzinfo=dt.timezone.utc),
+        None,
+    )
+    parse_values = (
+        None,
+        "",
+        "not an ISO timestamp",
+        "2026-01-02T03:04:05",
+        "2026-01-02T03:04:05.987654-05:00",
+        " 2026-01-02T03:04:05+00:00",
+        "2026-01-02T03:04:05+00:00 ",
+    )
+    compare("iso", ISO_HELPERS, iso_values, iso, disagreements)
+    compare("parse_iso", PARSE_HELPERS, parse_values, parse_iso, disagreements)
+
+    db = sqlite3.connect(":memory:")
+    try:
+        for name, helper in TABLE_HELPERS.items():
+            for table_name in ("present", "absent"):
+                old = outcome(helper, db, table_name)
+                new = outcome(table_exists, db, table_name)
+                if old != new:
+                    disagreements.append(f"table_exists:{name}({table_name!r})")
+        db.execute("CREATE TABLE present (id INTEGER PRIMARY KEY)")
+        for name, helper in TABLE_HELPERS.items():
+            for table_name in ("present", "absent"):
+                old = outcome(helper, db, table_name)
+                new = outcome(table_exists, db, table_name)
+                if old != new:
+                    disagreements.append(f"table_exists:{name}({table_name!r})")
+    finally:
+        db.close()
+
+    assert not disagreements, "\n".join(disagreements)
+
+
+if __name__ == "__main__":
+    main()

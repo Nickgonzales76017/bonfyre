@@ -1,0 +1,44 @@
+schema CommitmentRecord
+generation economic-1
+authority engine/core/src/commitment.c
+absorbs components/BonfyreControlPlane/commitment_graph.py
+
+field commitment_id
+  type text
+  role identity
+  required true
+
+field committer
+  type text
+  role obligor
+  required true
+
+field beneficiary
+  type text
+  role beneficiary
+  required true
+
+field resource
+  type text
+  role promised-resource
+  required true
+
+field enactment
+  type text
+  role protocol-contract-ref
+  default ""
+
+state open discharged delegated violated compensated
+transition open discharged delegated violated
+transition delegated discharged violated
+transition violated discharged compensated
+
+invariant state-is-append-only
+  statement current state is the last CommitmentEvent; no transition overwrites history
+
+invariant delegation-keeps-obligor
+  statement delegation creates a separate open commitment and leaves the original live
+
+forbidden_inference commitment -> resource delivered
+forbidden_inference expiry-passing -> violation
+forbidden_inference compensation -> violation did not happen

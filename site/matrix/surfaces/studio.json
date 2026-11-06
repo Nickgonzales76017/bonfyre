@@ -1,0 +1,6 @@
+{
+  "version": "bonfyre-studio-surface-v1",
+  "kind": "authenticated-native-projection",
+  "surfaces": ["FrappeLineage", "ModelCommons", "EconomicRouting", "ArtifactLedgerExport", "NativeCMS"],
+  "forbidden_inference": "a visible Studio control -> effect authority or booked financial truth"
+}

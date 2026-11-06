@@ -1,0 +1,6 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-repurpose","binary_env":"BONFYRE_REPURPOSE_BIN","cases":[
+{"name":"a real brief is repurposed into a LinkedIn post and a thread","files":{"t.txt":"Speaker 1: Um, so we, we need to fix the the website by Friday.\nSpeaker 2: Okay. The checkout page is broken and customers cannot pay.\nSpeaker 1: Right, uh, and we should also update the pricing page.\n"},"steps":[
+ {"program":"${root}/cmd/BonfyreBrief/bonfyre-brief","argv":["t.txt","bout","--title","Demo"],"env":{"HOME":"${tmp}","BONFYRE_FRAGMENT_STORE":"${tmp}/frag.db","BONFYRE_VOCAB_DB":"${tmp}/vocab.bfvocab"},"exit":0},
+ {"argv":["all","bout","rp"],"env":{"HOME":"${tmp}","BONFYRE_FRAGMENT_STORE":"${tmp}/frag.db","BONFYRE_VOCAB_DB":"${tmp}/vocab.bfvocab"},"exit":0,"present":["${tmp}/rp/linkedin.md","${tmp}/rp/repurpose-manifest.json"]},
+ {"program":"cat","argv":["rp/linkedin.md"],"contains":["checkout page"]}]},
+{"name":"a directory without a brief is refused","files":{"empty/.keep":""},"steps":[{"argv":["linkedin","empty","rp"],"env":{"HOME":"${tmp}","BONFYRE_FRAGMENT_STORE":"${tmp}/frag.db","BONFYRE_VOCAB_DB":"${tmp}/vocab.bfvocab"},"exit_nonzero":true}]}]}

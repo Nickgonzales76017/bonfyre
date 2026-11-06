@@ -1,0 +1,18 @@
+{
+  "representation_id": "bitnet-embedding-270m-i2s-pr606-2026-09",
+  "model_id": "bitnet-embedding-270m-i2s",
+  "representation_family": "bitnet-embedding",
+  "representation_version": "embedding-270m-i2_s/pr606/0684c7fd2/cpuonly-x86/2026-09",
+  "exactness_class": "latent",
+  "measurement_state": "measured",
+  "admission_state": "DEFER",
+  "admission_scope": "diagnostic",
+  "quality_envelope": "Nine repeated executions across one, two, and four threads produced the same finite 640-dimensional candidate vector on the CPU-only x86 compatibility runtime. One real AddressPlane run deterministically reduced 4891 external occurrences to 128 mask survivors and reordered all 128 in SHADOW state. A separate complete native ForeignTwin retained-body evaluation recorded 104 retained observations across that 128-member frontier, including 15 retained at rank 16 against an 81.25 percent frontier baseline; this is one owner predicate on one query, not retrieval preservation, semantic relevance, top-k recall, false-prune safety, temporal stability, cross-model comparability, or a semantic quality envelope. The representation remains diagnostic-only and may reorder a bounded AddressPlane survivor set in SHADOW mode; it may not truncate, select, authorize, verify, lower, or enact.",
+  "receipt_ref": "estate/generated/bitnet-embedding-270m-i2s-pr606-cpuonly-addressplane-receipt-2026-09.json",
+  "receipt_digest": "e33c4afde347c522b90cbaf2560255130a3bc9ba2129cd93eec63ce7b105c255",
+  "physical_body_ref": "~/.cache/bonfyre/models/bitnet-embedding-270m/bitnet-embeddings-270m-bf16-i2_s.gguf",
+  "physical_digest": "8ee5ae971b103cd55758934be54e5c9f7cc2b58b15890615acce8e649988c751",
+  "physical_bytes": 367487040,
+  "supports": ["top-k", "partial-decode", "random-access"],
+  "recorded_at": "2026-09-15T07:31:00Z"
+}

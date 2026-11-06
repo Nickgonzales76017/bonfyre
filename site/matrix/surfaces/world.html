@@ -1,0 +1,387 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>A world · Aurekai</title>
+<meta name="description" content="A thing with enough public relationships becomes, for as long as it matters, a publication with its own visual character.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Instrument+Serif:ital@0;1&family=Archivo+Black&family=Spline+Sans+Mono:wght@400;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&display=swap">
+<link rel="stylesheet" href="/assets/tailwind.css"><link rel="stylesheet" href="/assets/world.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="bar">
+    <a class="home" href="/">&larr; Aurekai</a>
+    <span class="ch" id="ch">&hellip;</span>
+    <span class="gr" id="gr"></span>
+  </div>
+  <div id="page"><p class="wait">assembling this world&hellip;</p></div>
+  <p class="src" id="src"></p>
+</div>
+
+<!-- The kit is served from the site root, because emit_file_response_cached
+     refuses an asset name containing a slash and that guard is not worth
+     weakening for a convenience. -->
+<script src="/assets/bonfyre-kit.js?v=BFKITVERSIONXXXX"></script>
+<script>
+(async () => {
+  const $ = (id) => document.getElementById(id);
+  const el = (t, c, x) => { const n = document.createElement(t);
+    if (c) n.className = c; if (x !== undefined) n.textContent = x; return n; };
+  const page = $('page');
+
+
+  /* ------------------------------------------------- the presentation layer
+   *
+   * A character says what elements exist. A template says what they look
+   * like. The two are separate on purpose: seven characters and six templates
+   * is forty-two looks over one reader, and neither axis had to be told about
+   * the other.
+   *
+   * The template is asked for in the address (?template=) or carried on the
+   * authored world, in that order, so a reader can try a language on a world
+   * without anybody re-authoring it. If the template cannot be resolved --
+   * unpublished, unreachable, misspelt -- the character stands on its own and
+   * the page is still whole. That is what makes character the fallback rather
+   * than a second opinion.
+   *
+   * Cannot infer: a design language is not the thing it was studied from. The
+   * reference on a template row says where a look was looked at; no third-party
+   * theme code runs here, and wearing a newsroom's typography does not make
+   * anything on the page reported.
+   */
+  /* The dresser lives in the kit: home wears a language too, and two
+   * copies of it would drift the way the census reader did. */
+  const dress = K.dress;
+  const asked = K.askedTemplate();
+
+  const slug = decodeURIComponent(location.pathname.replace(/^\/w\/?/, '').replace(/\/$/, ''));
+
+  const worlds = await K.surface('worlds');
+  if (!worlds.ok) { page.innerHTML = ''; page.appendChild(K.note(worlds, 'The worlds')); return; }
+
+  /* No world named: this is the shelf. */
+  if (!slug) {
+    document.body.className = 'shelf';
+    const st = await dress(asked);
+    $('ch').textContent = st ? 'worlds · ' + st.template : 'worlds';
+    page.innerHTML = '';
+    const h = el('div', 'hero');
+    h.appendChild(el('h1', null, 'Things that became worlds.'));
+    h.appendChild(el('p', 'lede',
+      'A subject with enough public relationships is worth more than a card. For as long '
+      + 'as it matters it gets its own publication — and then goes back to being a subject.'));
+    page.appendChild(h);
+    const rack = el('div', 'rack');
+    for (const w of worlds.records) {
+      /* The cover is set in the world's own character. A rack of identical
+       * cards would be the catalogue shape this layer replaces, and would be
+       * arguing the opposite of what is behind each one. */
+      const a = el('a', 'cover c-' + w.character);
+      a.href = '/w/' + w.world;
+      a.appendChild(el('div', 't', w.title));
+      const foot = el('div');
+      foot.appendChild(el('div', 'm', w.character + ' · '
+        + w.sources.split(',').filter(Boolean).length + ' sources'));
+      const g = el('div', 'g');
+      for (const v of (w.grammars || '').split(',').map(x => x.trim()).filter(Boolean))
+        g.appendChild(el('i', null, v));
+      foot.appendChild(g);
+      a.appendChild(foot);
+      rack.appendChild(a);
+    }
+    page.appendChild(rack);
+    K.mount($('src'), K.sourceLine(['/_surface/worlds']));
+    return;
+  }
+
+  const w = worlds.records.find(r => r.world === slug);
+  if (!w) {
+    document.body.className = 'atlas';
+    page.innerHTML = '';
+    page.appendChild(K.empty('A world by that name', '/_surface/worlds'));
+    return;
+  }
+
+  document.body.className = w.character;
+  document.title = w.title + ' · Bonfÿre';
+  const tpl = await dress(asked || w.template);
+  /* Say both. The character is what this is; the template is what it is
+   * wearing, and a reader who cannot tell the two apart cannot tell which
+   * one to blame for a page that reads badly. */
+  $('ch').textContent = tpl ? w.character + ' · ' + tpl.template : w.character;
+  if (tpl) $('ch').title = tpl.reference_name
+    ? 'presentation studied from ' + tpl.reference_source + ' ' + tpl.reference_name
+      + '; no theme code from it runs here'
+    : '';
+  for (const g of (w.grammars || '').split(',').filter(Boolean)) {
+    const a = el('a', null, g);
+    a.href = K.VIEW_ROUTE[g.trim()] || '/';
+    a.title = 'read this world as ' + g.trim();
+    $('gr').appendChild(a);
+  }
+
+  /* ------------------------------------------------------- the material
+   *
+   * A world names its sources; the census says how to read each one. That is
+   * the whole reason fifteen worlds are not fifteen templates. */
+  const census = await K.surface('internet-census');
+  const byId = {};
+  if (census.ok) for (const r of census.records) byId[r.source] = r;
+
+  /* The material, read through the one interpreter of the census's
+   * extraction contract. A second reader of that contract is a second
+   * place it can be wrong. */
+
+  const rows = (w.sources || '').split(',').map(s => s.trim()).filter(Boolean)
+    .map(s => byId[s]).filter(Boolean);
+  const sets = await Promise.all(rows.map(r => K.readSource(r, { limit: 24 })));
+
+  page.innerHTML = '';
+  const hero = el('div', 'hero');
+  const h1 = el('h1');
+  h1.textContent = w.title;
+  hero.appendChild(h1);
+  hero.appendChild(el('p', 'lede', w.lede));
+  page.appendChild(hero);
+
+  /* ------------------------------------------------------- the characters */
+  if (w.character === 'atlas') {
+    const all = sets.flatMap(s => s.items);
+    const mags = all.map(i => parseFloat(i.meta)).filter(n => isFinite(n));
+    const readout = el('div', 'readout');
+    const cell = (v, l) => { const d = el('div');
+      d.appendChild(el('b', null, v)); d.appendChild(el('span', null, l)); readout.appendChild(d); };
+    cell(String(all.length), 'recorded');
+    if (mags.length) {
+      cell(Math.max(...mags).toFixed(1), 'largest');
+      cell((mags.reduce((a, b) => a + b, 0) / mags.length).toFixed(2), 'mean');
+      cell(String(mags.filter(m => m >= 5).length), 'at 5 or above');
+    }
+    cell(String(sets.length), 'networks read');
+    hero.appendChild(readout);
+
+    for (const { row, items } of sets) {
+      if (!items.length) continue;
+      page.appendChild(el('h2', null, row.says));
+      const box = el('div', 'rows');
+      const top = Math.max(...items.map(i => parseFloat(i.meta) || 0), 1);
+      for (const it of items.slice(0, 16)) {
+        const m = parseFloat(it.meta);
+        const a = el('a', 'q' + (m >= 5 ? ' big' : m < 3 ? ' small' : ''));
+        if (it.href) { a.href = it.href; a.target = '_blank'; a.rel = 'noopener'; }
+        const mag = el('div', 'mag');
+        mag.textContent = isFinite(m) ? m.toFixed(1) : '—';
+        mag.appendChild(el('i', null, 'M'));
+        a.appendChild(mag);
+        const place = el('div');
+        place.appendChild(el('div', 'place', it.title));
+        const sc = el('div', 'scale');
+        const bar = el('i');
+        bar.style.width = Math.max(2, Math.min(100, (m / top) * 100)) + '%';
+        sc.appendChild(bar);
+        place.appendChild(sc);
+        a.appendChild(place);
+        a.appendChild(el('div', 'when', it.who === row.source ? '' : it.who));
+        box.appendChild(a);
+      }
+      page.appendChild(box);
+    }
+  }
+
+  else if (w.character === 'zine') {
+    for (const { row, items } of sets) {
+      if (!items.length) continue;
+      page.appendChild(el('h2', null, row.says));
+      page.appendChild(el('div', 'rule'));
+      const wall = el('div', 'wall');
+      for (const it of items.slice(0, 16)) {
+        const a = el('a', 'fl' + (it.img ? '' : ' noimg'));
+        if (it.href) { a.href = it.href; a.target = '_blank'; a.rel = 'noopener'; }
+        if (it.img) {
+          const im = document.createElement('img');
+          im.src = it.img; im.alt = ''; im.loading = 'lazy';
+          im.referrerPolicy = 'no-referrer';
+          im.addEventListener('error', () => { a.classList.add('noimg'); im.remove(); },
+                              { once: true });
+          a.appendChild(im);
+        }
+        a.appendChild(el('span', 'stamp', (it.meta || 'listed').slice(0, 12)));
+        const t = el('div', 't');
+        t.appendChild(el('b', null, it.title));
+        t.appendChild(el('span', null, it.who));
+        a.appendChild(t);
+        wall.appendChild(a);
+      }
+      page.appendChild(wall);
+    }
+  }
+
+  /* Named, not defaulted. A character the reader does not know renders
+   * nothing and says so, rather than quietly coming out as this one. */
+  else if (w.character === 'scrapbook') {
+    for (const { row, items } of sets) {
+      if (!items.length) continue;
+      page.appendChild(el('h2', null, row.says));
+      page.appendChild(el('p', 'sub', row.source));
+      const pins = el('div', 'pins');
+      for (const it of items.slice(0, 18)) {
+        const a = el('a', 'pin' + (it.img ? '' : ' noimg'));
+        if (it.href) { a.href = it.href; a.target = '_blank'; a.rel = 'noopener'; }
+        if (it.img) {
+          a.appendChild(el('span', 'tape'));
+          const im = document.createElement('img');
+          im.src = it.img; im.alt = ''; im.loading = 'lazy';
+          im.referrerPolicy = 'no-referrer';
+          im.addEventListener('error', () => { a.classList.add('noimg'); im.remove(); },
+                              { once: true });
+          a.appendChild(im);
+        }
+        const cap = el('div', 'cap');
+        cap.appendChild(el('b', null, it.title));
+        cap.appendChild(el('span', null, it.who + (it.meta ? '  ·  ' + it.meta : '')));
+        a.appendChild(cap);
+        pins.appendChild(a);
+      }
+      page.appendChild(pins);
+    }
+  }
+
+
+  /* Four more characters. Each is a branch and a stylesheet; none of them
+   * touches how a source is read, which is the whole claim of the layer. */
+  else if (w.character === 'dossier') {
+    const stamp = el('div', 'stamp', String(sets.reduce((n, s) => n + s.items.length, 0))
+      + ' filed');
+    hero.appendChild(stamp);
+    let n = 0;
+    for (const { row, items } of sets) {
+      if (!items.length) continue;
+      page.appendChild(el('h2', null, row.says));
+      const file = el('div', 'file');
+      for (const it of items.slice(0, 14)) {
+        n++;
+        /* A case with an identifier for a title is an advisory; one with a
+         * sentence is somebody writing about it. They file differently. */
+        const ident = /^(CVE|RFC|GHSA)[- ]/i.test(it.title);
+        const a = el('a', 'case' + (ident ? ' sev' : ''));
+        if (it.href) { a.href = it.href; a.target = '_blank'; a.rel = 'noopener'; }
+        a.appendChild(el('div', 'n', String(n).padStart(3, '0')));
+        const t = el('div', 't');
+        t.appendChild(el('b', null, it.title));
+        if (it.who && it.who !== row.source) t.appendChild(el('i', null, it.who));
+        a.appendChild(t);
+        a.appendChild(el('div', 'w', (it.meta || '').slice(0, 10)));
+        file.appendChild(a);
+      }
+      page.appendChild(file);
+    }
+  }
+
+  else if (w.character === 'ticker') {
+    /* A registry's meta is a count for some rows and a date for others, and
+     * stripping the punctuation out of "Sat, 06 Sep 2026" leaves a number.
+     * Only a value that is entirely a number is a count. */
+    const num = (v) => {
+      const t = String(v == null ? '' : v).trim();
+      if (!/^[0-9]+(\.[0-9]+)?$/.test(t)) return '';
+      const x = parseFloat(t);
+      return x >= 1e6 ? (x / 1e6).toFixed(1) + 'M'
+           : x >= 1e3 ? Math.round(x / 1e3) + 'k' : String(Math.round(x));
+    };
+    for (const { row, items } of sets) {
+      if (!items.length) continue;
+      page.appendChild(el('h2', null, row.says));
+      const tape = el('div', 'tape');
+      for (const it of items.slice(0, 18)) {
+        const a = el('a', 't');
+        if (it.href) { a.href = it.href; a.target = '_blank'; a.rel = 'noopener'; }
+        const nm = el('div', 'nm');
+        nm.appendChild(document.createTextNode(it.title));
+        if (it.who && it.who !== row.source) nm.appendChild(el('em', null, it.who));
+        a.appendChild(nm);
+        /* A registry's meta is a version, a date or a count. Whichever it is,
+         * it belongs in the column that is read as that kind of thing. */
+        const c = num(it.meta);
+        a.appendChild(el('div', 'v', c ? '' : (it.meta || '').slice(0, 22)));
+        a.appendChild(el('div', 'c', c));
+        tape.appendChild(a);
+      }
+      page.appendChild(tape);
+    }
+  }
+
+  else if (w.character === 'almanac') {
+    for (const { row, items } of sets) {
+      if (!items.length) continue;
+      page.appendChild(el('h2', null, row.says));
+      const withPic = items.filter(i => i.img);
+      if (withPic.length >= 3) {
+        const plates = el('div', 'plates');
+        for (const it of items.slice(0, 12)) {
+          /* An entry with no plate -- an almanac day that was a film, not a
+           * photograph -- is still an entry, and says so rather than sitting
+           * as a hole in the grid. */
+          const a = el('a', 'plate' + (it.img ? '' : ' noplate'));
+          if (it.href) { a.href = it.href; a.target = '_blank'; a.rel = 'noopener'; }
+          if (it.img) {
+            const im = document.createElement('img');
+            im.src = it.img; im.alt = ''; im.loading = 'lazy';
+            im.referrerPolicy = 'no-referrer';
+            im.addEventListener('error', () => a.classList.add('noplate') || im.remove(),
+                                { once: true });
+            a.appendChild(im);
+          }
+          a.appendChild(el('b', null, it.title));
+          a.appendChild(el('span', null, it.meta || it.who));
+          plates.appendChild(a);
+        }
+        page.appendChild(plates);
+      } else {
+        /* A reading with no plate is still a reading, and reads as a line in
+         * the table rather than as a card with an empty picture in it. */
+        const box = el('div', 'read');
+        for (const it of items.slice(0, 14)) {
+          const a = el('a', 'r');
+          if (it.href) { a.href = it.href; a.target = '_blank'; a.rel = 'noopener'; }
+          a.appendChild(el('b', null, it.title));
+          a.appendChild(el('span', null, [it.meta, it.who !== row.source ? it.who : '']
+            .filter(Boolean).join('  ·  ')));
+          box.appendChild(a);
+        }
+        page.appendChild(box);
+      }
+    }
+  }
+
+  else if (w.character === 'journal') {
+    for (const { row, items } of sets) {
+      if (!items.length) continue;
+      page.appendChild(el('h2', null, row.says));
+      const cols = el('div', 'cols');
+      for (const it of items.slice(0, 16)) {
+        const a = el('a', 'a');
+        if (it.href) { a.href = it.href; a.target = '_blank'; a.rel = 'noopener'; }
+        a.appendChild(el('b', null, it.title));
+        /* Who wrote it, and where it was registered. A paper without either
+         * is a title, and a title is not a citation. */
+        if (it.who && it.who !== row.source) a.appendChild(el('span', 'au', it.who));
+        const id = [it.meta, it.href && it.href.indexOf('doi') >= 0 ? it.href : '']
+          .filter(Boolean).join('  ·  ');
+        if (id) a.appendChild(el('span', 'id', id));
+        cols.appendChild(a);
+      }
+      page.appendChild(cols);
+    }
+  }
+
+  if (!page.querySelector('.q, .fl, .pin, .case, .t, .plate, .r, .a'))
+    page.appendChild(K.empty('This world', '/_surface/internet-census'));
+
+  const n = el('div', 'note');
+  n.innerHTML = '<strong>What this world is not.</strong>' + w.cannot_infer;
+  page.appendChild(n);
+
+  K.mount($('src'), K.sourceLine(['/_surface/worlds', '/_surface/internet-census']
+    .concat(tpl ? ['/_surface/presentation-templates'] : [])
+    .concat(rows.map(r => '/foreign/body?twin=' + r.twin))));
+})();
+</script>
+</body></html>

@@ -1,0 +1,424 @@
+import json
+import hashlib
+import sqlite3, sys
+from decimal import Decimal
+from pathlib import Path
+
+import pytest
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import financial_metabolism as fm
+
+
+def test_usage_values_without_becoming_booked_money():
+    db = sqlite3.connect(":memory:")
+    usage = fm.UsageOccurrence("U", "T", "cpu", Decimal("2.5"),
+                               "cpu_hour", "2026-08-23T00:00:00Z", "receipt:R")
+    fm.record_usage(db, usage)
+    economics = fm.value_usage(usage, rate=Decimal("0.40"), currency="USD",
+                               rate_source_ref="agreement:A")
+    assert economics.accrued_cost == Decimal("1.000")
+    assert db.execute("SELECT count(*) FROM financial_positions").fetchone()[0] == 0
+
+
+def test_funding_requires_authority_and_basis_stays_explicit():
+    db = sqlite3.connect(":memory:")
+    fm.record_funding_route(db, route_id="R", funding_ref="credit:C",
+                            currency="USD", remaining=Decimal("5"),
+                            authority_ref="authority:A")
+    assert fm.choose_funding(db, currency="USD", amount=Decimal("4")) == "R"
+    fm.record_position(db, subject_ref="T", basis="accrued", currency="USD",
+                       amount=Decimal("4"), source_ref="usage:U")
+    assert db.execute("SELECT basis FROM financial_positions").fetchone()[0] == "accrued"
+
+
+def test_receipted_model_usage_flows_to_unknown_cost_and_allocation():
+    db = sqlite3.connect(":memory:")
+    observation = fm.provider_model_usage_from_receipt(
+        {"provider": "codex", "model": "gpt-5.6", "input_tokens": 12,
+         "output_tokens": 3, "cached_input_tokens": 8, "retry_count": 1},
+        occurrence_id="usage:codex:receipt", attempt_ref="attempt:codex:receipt",
+        realization_ref="realization:codex", receipt_ref="receipt:codex",
+        observed_at="2026-08-24T00:00:00Z",
+    )
+    usage = fm.record_provider_model_usage(db, observation, target_ref="work-occurrence:food")
+    measure = fm.unknown_cost_measure(usage)
+    fm.record_economic_measure(db, measure)
+    fm.allocate_measure_to_trace(db, measure, work_occurrence_ref="work-occurrence:food",
+                                 work_item_ref="work-item:food-flood",
+                                 proof_ref="proof:food", workstream_ref="workstream:run8:food",
+                                 allocation_version_ref="allocation:food-attribution:v1")
+    explanation = fm.finance_why(db, "work-item:food-flood")
+    assert explanation["occurrences"][0]["dimensions"]["input_tokens"] == 12
+    assert explanation["occurrences"][0]["dimensions"]["wall_time_ms"] is None
+    assert explanation["occurrences"][0]["basis"] == "unknown"
+    assert explanation["occurrences"][0]["amount"] is None
+    assert explanation["occurrences"][0]["allocation_version_ref"] == "allocation:food-attribution:v1"
+    assert explanation["occurrences"][0]["physical_receipt_ref"] == "receipt:codex"
+    assert fm.cost_per_target(db, "proof:food")["cost_per_target"] is None
+
+
+def test_retry_or_cache_only_receipt_is_retained_as_usage_not_dropped():
+    db = sqlite3.connect(":memory:")
+    observation = fm.provider_model_usage_from_receipt(
+        {"provider": "codex", "retry_count": 1, "cached_input_tokens": 12},
+        occurrence_id="usage:codex:retry", attempt_ref="attempt:codex:retry",
+        realization_ref="realization:codex", receipt_ref="receipt:retry",
+        observed_at="2026-08-24T00:00:00Z")
+    usage = fm.record_provider_model_usage(db, observation, target_ref="work-occurrence:retry")
+    assert usage.unit == "retry_count"
+    assert json.loads(db.execute("SELECT dimensions_json FROM usage_occurrence_details").fetchone()[0])["input_tokens"] is None
+
+
+def test_versioned_price_can_value_observed_usage_without_becoming_billed():
+    db = sqlite3.connect(":memory:")
+    observation = fm.provider_model_usage_from_receipt(
+        {"provider": "local", "model": "bitnet", "input_tokens": 10,
+         "pricing_evidence_ref": "evidence:rate"},
+        occurrence_id="usage:local:one", attempt_ref="attempt:local:one",
+        realization_ref="realization:local", receipt_ref="receipt:local",
+        observed_at="2026-08-24T00:00:00Z",
+    )
+    usage = fm.record_provider_model_usage(db, observation, target_ref="work-occurrence:machine")
+    measure = fm.value_provider_usage(
+        db, usage, dimension="input_tokens",
+        price=fm.PriceEvidence("rate:local-v1", "estimated", "USD", Decimal("0.01"), "evidence:rate",
+                               effective_at="2026-08-01T00:00:00Z",
+                               observed_at="2026-08-24T00:00:00Z"),
+    )
+    assert measure.amount == Decimal("0.10")
+    assert measure.basis == "estimated"
+    row = db.execute("SELECT price_effective_at,price_observed_at FROM economic_measures").fetchone()
+    assert row == ("2026-08-01T00:00:00Z", "2026-08-24T00:00:00Z")
+
+
+def test_price_requires_bitemporal_evidence_and_financial_event_stays_separate():
+    db = sqlite3.connect(":memory:")
+    observation = fm.provider_model_usage_from_receipt(
+        {"provider": "local", "input_tokens": 10, "pricing_evidence_ref": "evidence:rate"},
+        occurrence_id="usage:local:two", attempt_ref="attempt:local:two",
+        realization_ref="realization:local", receipt_ref="receipt:local",
+        observed_at="2026-08-24T00:00:00Z")
+    usage = fm.record_provider_model_usage(db, observation, target_ref="work-occurrence:machine")
+    with pytest.raises(ValueError, match="bitemporal"):
+        fm.value_provider_usage(
+            db, usage, dimension="input_tokens",
+            price=fm.PriceEvidence("rate:incomplete", "estimated", "USD", Decimal("0.01"), "evidence:rate"))
+    measure = fm.value_provider_usage(
+        db, usage, dimension="input_tokens",
+        price=fm.PriceEvidence("rate:local-v2", "estimated", "USD", Decimal("0.01"), "evidence:rate",
+                               effective_at="2026-08-01T00:00:00Z", observed_at="2026-08-24T00:00:00Z"))
+    fm.record_financial_event(
+        db, fm.FinancialEvent("event:invoice", measure.measure_id, "billed", "USD", Decimal("0.10"),
+                              "2026-08-25T00:00:00Z", "2026-08-26T00:00:00Z", "evidence:invoice"))
+    assert db.execute("SELECT basis,amount FROM economic_measures").fetchone() == ("estimated", "0.10")
+    assert db.execute("SELECT basis,amount FROM financial_events").fetchone() == ("billed", "0.10")
+
+
+def test_attempt_contract_is_idempotent_for_replay_and_distinct_for_retries():
+    db = sqlite3.connect(":memory:")
+    receipt = {"provider": "codex", "input_tokens": 10, "cached_input_tokens": 7}
+    first = fm.provider_model_usage_from_receipt(
+        receipt, occurrence_id="usage:codex:attempt-1", attempt_ref="attempt:codex:1",
+        realization_ref="realization:codex", receipt_ref="receipt:codex:aggregate",
+        observed_at="2026-08-24T00:00:00Z")
+    usage = fm.record_provider_model_usage(db, first, target_ref="work-occurrence:one")
+    replay = fm.record_provider_model_usage(db, first, target_ref="work-occurrence:one")
+    assert replay == usage
+    assert db.execute("SELECT count(*) FROM usage_occurrences").fetchone()[0] == 1
+    assert db.execute("SELECT pricing_evidence_ref FROM usage_occurrence_details").fetchone()[0] is None
+
+    retry = fm.provider_model_usage_from_receipt(
+        receipt, occurrence_id="usage:codex:attempt-2", attempt_ref="attempt:codex:2",
+        realization_ref="realization:codex", receipt_ref="receipt:codex:aggregate",
+        observed_at="2026-08-24T00:00:01Z")
+    fm.record_provider_model_usage(db, retry, target_ref="work-occurrence:one")
+    assert db.execute("SELECT count(*) FROM usage_occurrences").fetchone()[0] == 2
+
+    changed = fm.provider_model_usage_from_receipt(
+        {"provider": "codex", "input_tokens": 11}, occurrence_id="usage:codex:attempt-1",
+        attempt_ref="attempt:codex:1", realization_ref="realization:codex",
+        receipt_ref="receipt:codex:aggregate", observed_at="2026-08-24T00:00:00Z")
+    with pytest.raises(ValueError, match="changed usage evidence"):
+        fm.record_provider_model_usage(db, changed, target_ref="work-occurrence:one")
+
+
+def test_legacy_usage_without_attempt_identity_refuses_retry_backfill():
+    db = sqlite3.connect(":memory:")
+    fm.record_usage(db, fm.UsageOccurrence(
+        "usage:legacy", "work-occurrence:legacy", "provider-model/input_tokens", Decimal("10"),
+        "input_tokens", "2026-08-24T00:00:00Z", "receipt:legacy"))
+    observation = fm.provider_model_usage_from_receipt(
+        {"provider": "codex", "input_tokens": 10}, occurrence_id="usage:legacy",
+        attempt_ref="attempt:codex:legacy", realization_ref="realization:codex",
+        receipt_ref="receipt:legacy", observed_at="2026-08-24T00:00:00Z")
+    with pytest.raises(ValueError, match="without this stable attempt identity"):
+        fm.record_provider_model_usage(db, observation, target_ref="work-occurrence:legacy")
+
+
+def test_receipt_equivalent_detailed_legacy_usage_restores_attempt_for_idempotent_replay():
+    db = sqlite3.connect(":memory:")
+    observation = fm.provider_model_usage_from_receipt(
+        {"provider": "codex", "input_tokens": 10, "cached_input_tokens": 7},
+        occurrence_id="usage:codex:legacy-detailed", attempt_ref="attempt:codex:legacy-detailed",
+        realization_ref="realization:codex", receipt_ref="receipt:codex:legacy-detailed",
+        observed_at="2026-08-24T00:00:00Z")
+    usage = fm.record_provider_model_usage(db, observation, target_ref="work-occurrence:legacy-detailed")
+    # Simulate the exact Run8 migration boundary: all receipt coordinates
+    # survived, but the old schema had nowhere to retain an attempt identity.
+    db.execute("DELETE FROM usage_attempts")
+    db.execute("UPDATE usage_occurrence_details SET attempt_ref=NULL WHERE usage_id=?", (usage.usage_id,))
+    db.commit()
+
+    restored = fm.record_provider_model_usage(db, observation, target_ref="work-occurrence:legacy-detailed")
+    replay = fm.record_provider_model_usage(db, observation, target_ref="work-occurrence:legacy-detailed")
+    assert restored == replay == usage
+    assert db.execute("SELECT count(*) FROM usage_occurrences").fetchone()[0] == 1
+    assert db.execute("SELECT attempt_ref FROM usage_occurrence_details").fetchone()[0] == "attempt:codex:legacy-detailed"
+
+    changed = fm.provider_model_usage_from_receipt(
+        {"provider": "codex", "input_tokens": 11},
+        occurrence_id="usage:codex:legacy-detailed", attempt_ref="attempt:codex:legacy-detailed:other",
+        realization_ref="realization:codex", receipt_ref="receipt:codex:legacy-detailed",
+        observed_at="2026-08-24T00:00:00Z")
+    with pytest.raises(ValueError, match="retry charging requires a distinct usage identity"):
+        fm.record_provider_model_usage(db, changed, target_ref="work-occurrence:legacy-detailed")
+
+
+def test_bound_price_and_explicit_version_protect_shared_allocation():
+    db = sqlite3.connect(":memory:")
+    observation = fm.provider_model_usage_from_receipt(
+        {"provider": "local", "input_tokens": 10, "pricing_evidence_ref": "evidence:rate:v1"},
+        occurrence_id="usage:local:shared", attempt_ref="attempt:local:shared",
+        realization_ref="realization:local", receipt_ref="receipt:local",
+        observed_at="2026-08-24T00:00:00Z")
+    usage = fm.record_provider_model_usage(db, observation, target_ref="work-occurrence:shared")
+    with pytest.raises(ValueError, match="pricing evidence"):
+        fm.value_provider_usage(
+            db, usage, dimension="input_tokens",
+            price=fm.PriceEvidence("rate:other", "estimated", "USD", Decimal("0.01"), "evidence:other",
+                                   effective_at="2026-08-01T00:00:00Z", observed_at="2026-08-24T00:00:00Z"))
+    measure = fm.value_provider_usage(
+        db, usage, dimension="input_tokens",
+        price=fm.PriceEvidence("rate:shared-v1", "estimated", "USD", Decimal("0.01"), "evidence:rate:v1",
+                               effective_at="2026-08-01T00:00:00Z", observed_at="2026-08-24T00:00:00Z"))
+    fm.record_cost_allocation(db, fm.CostAllocation(
+        "allocation:shared:a", measure.measure_id, "work:a", "work_item", Decimal("0.6"),
+        "evidence:allocation", "allocation:shared:v1"))
+    with pytest.raises(ValueError, match="exceed one"):
+        fm.record_cost_allocation(db, fm.CostAllocation(
+            "allocation:shared:b", measure.measure_id, "work:b", "work_item", Decimal("0.5"),
+            "evidence:allocation", "allocation:shared:v1"))
+    with pytest.raises(ValueError, match="explicit allocation version"):
+        fm.record_cost_allocation(db, fm.CostAllocation(
+            "allocation:shared:unknown", measure.measure_id, "work:unknown", "work_item", None,
+            "evidence:allocation", ""))
+
+
+def test_receipt_equivalent_legacy_allocation_restores_only_missing_version():
+    db = sqlite3.connect(":memory:")
+    fm.ensure_schema(db)
+    allocation = fm.CostAllocation(
+        "allocation:legacy", "measure:legacy", "work:legacy", "work_item", None,
+        "evidence:legacy", "allocation:run8-attribution:v1")
+    fm.record_cost_allocation(db, allocation)
+    db.execute("UPDATE cost_allocations SET allocation_version_ref=NULL WHERE allocation_id=?",
+               (allocation.allocation_id,))
+    db.commit()
+    fm.record_cost_allocation(db, allocation)
+    assert db.execute("SELECT allocation_version_ref FROM cost_allocations").fetchone()[0] == (
+        "allocation:run8-attribution:v1")
+    with pytest.raises(ValueError, match="changed evidence"):
+        fm.record_cost_allocation(db, fm.CostAllocation(
+            "allocation:legacy", "measure:legacy", "work:other", "work_item", None,
+            "evidence:legacy", "allocation:run8-attribution:v1"))
+
+
+def test_embedded_model_usage_does_not_double_count_a_typed_receipt():
+    from tempfile import TemporaryDirectory
+
+    with TemporaryDirectory() as temp:
+        root = Path(temp)
+        epoch = root / "epochs" / "claude-20260824T010001-def"
+        epoch.mkdir(parents=True)
+        payload = {"type": "turn.completed", "modelUsage": {"claude-opus": {"inputTokens": 7}}}
+        epoch.joinpath("stdout.log").write_text(json.dumps(payload))
+        db = sqlite3.connect(":memory:")
+        summary = fm.reconcile_run8_epochs(db, root)
+        assert summary["usage_occurrences"] == 1
+
+
+def test_run8_reconciliation_uses_codex_and_claude_receipts_without_inventing_counts(tmp_path):
+    epochs = tmp_path / "epochs"
+    codex = epochs / "codex-20260824T010000-abc"
+    codex.mkdir(parents=True)
+    codex_event = {"type": "turn.completed", "usage": {
+        "input_tokens": 50, "cached_input_tokens": 40, "output_tokens": 5,
+    }}
+    work_event = {"type": "item.completed", "item": {"type": "agent_message",
+        "text": '{"work_item":"food-flood"}'}}
+    codex.joinpath("stdout.log").write_text(json.dumps(codex_event) + "\n" + json.dumps(work_event))
+    claude = epochs / "claude-20260824T010001-def"
+    claude.mkdir()
+    tail = '{"is_error":false,"modelUsage":{"claude-opus-5":{"inputTokens":7,"outputTokens":2,"cacheReadInputTokens":3}}}'
+    claude.joinpath("compaction.json").write_text(json.dumps({"files": [{"name": "stdout.log", "tail_utf8": tail}]}))
+    db = sqlite3.connect(":memory:")
+    summary = fm.reconcile_run8_epochs(db, tmp_path)
+    assert summary["providers"] == ["claude", "codex"]
+    rows = db.execute("SELECT provider_ref,model_ref,route_ref,dimensions_json FROM usage_occurrence_details ORDER BY provider_ref").fetchall()
+    assert rows[0][0:2] == ("claude", "claude-opus-5")
+    assert json.loads(rows[0][3])["request_count"] is None
+    assert rows[1][0:3] == ("codex", None, None)
+    assert json.loads(rows[1][3])["cached_input_tokens"] == 40
+
+
+def test_codex_terminal_usage_preserves_observed_model_and_route_coordinates(tmp_path):
+    epoch = tmp_path / "epochs" / "codex-20260824T010000-abc"
+    epoch.mkdir(parents=True)
+    epoch.joinpath("stdout.log").write_text(json.dumps({
+        "type": "turn.completed", "model": "gpt-5.6",
+        "route": "responses-api", "usage": {"input_tokens": 50},
+    }))
+    db = sqlite3.connect(":memory:")
+    fm.reconcile_run8_epochs(db, tmp_path)
+    row = db.execute("SELECT provider_ref,model_ref,route_ref FROM usage_occurrence_details").fetchone()
+    assert row == ("codex", "gpt-5.6", "responses-api")
+
+
+def test_codex_explicit_launcher_model_enriches_sparse_terminal_usage(tmp_path):
+    epoch = tmp_path / "epochs" / "codex-20260824T010000-abc"
+    epoch.mkdir(parents=True)
+    epoch.joinpath("command.json").write_text(json.dumps([
+        "codex", "exec", "--model", "gpt-5.6", "--json", "-",
+    ]))
+    epoch.joinpath("stdout.log").write_text(json.dumps({
+        "type": "turn.completed", "model": None, "route": None,
+        "usage": {"input_tokens": 50},
+    }))
+    db = sqlite3.connect(":memory:")
+    fm.reconcile_run8_epochs(db, tmp_path)
+    row = db.execute("SELECT provider_ref,model_ref,route_ref FROM usage_occurrence_details").fetchone()
+    assert row == ("codex", "gpt-5.6", "codex-cli:exec")
+
+
+def test_v6_compaction_preserves_terminal_coordinates_and_immutable_command(tmp_path):
+    epoch = tmp_path / "epochs" / "codex-20260824T010000-abc"
+    epoch.mkdir(parents=True)
+    command = ["codex", "exec", "--model", "gpt-5.6", "--json", "-"]
+    terminal = {"type": "turn.completed", "route": "responses-api",
+                "usage": {"input_tokens": 50}}
+    epoch.joinpath("command.json").write_text(json.dumps(command))
+    epoch.joinpath("stdout.log").write_text(json.dumps(terminal))
+    envelope = fm.terminal_epoch_receipt_envelope(epoch)
+    assert envelope["schema"] == fm.TERMINAL_EPOCH_RECEIPT_SCHEMA
+    assert envelope["provider"] == "codex"
+    assert envelope["model"] == "gpt-5.6"
+    assert envelope["route"] == "responses-api"
+    assert envelope["carrier_command"]["argv"] == command
+    assert envelope["carrier_command"]["argv_sha256"]
+
+    # This models the post-compaction state: only a bounded stdout tail and
+    # the versioned envelope survive; command.json itself is no longer there.
+    epoch.joinpath("stdout.log").unlink()
+    epoch.joinpath("command.json").unlink()
+    epoch.joinpath("compaction.json").write_text(json.dumps({
+        "version": "Run8EpochCompaction-v6",
+        "files": [{"name": "stdout.log", "tail_utf8": json.dumps(terminal)}],
+        "terminal_epoch_receipt": envelope,
+    }))
+    db = sqlite3.connect(":memory:")
+    fm.reconcile_run8_epochs(db, tmp_path)
+    row = db.execute("SELECT provider_ref,model_ref,route_ref FROM usage_occurrence_details").fetchone()
+    assert row == ("codex", "gpt-5.6", "responses-api")
+
+
+def test_tampered_compacted_command_metadata_cannot_enrich_usage(tmp_path):
+    epoch = tmp_path / "epochs" / "codex-20260824T010000-abc"
+    epoch.mkdir(parents=True)
+    terminal = {"type": "turn.completed", "usage": {"input_tokens": 50}}
+    envelope = {
+        "schema": fm.TERMINAL_EPOCH_RECEIPT_SCHEMA,
+        "provider": "codex", "model": "gpt-5.6", "route": "codex-cli:exec",
+        "carrier_command": {"source": "command.json",
+                            "argv": ["codex", "exec", "--model", "gpt-5.6"],
+                            "argv_sha256": "tampered"},
+    }
+    epoch.joinpath("compaction.json").write_text(json.dumps({
+        "version": "Run8EpochCompaction-v6",
+        "files": [{"name": "stdout.log", "tail_utf8": json.dumps(terminal)}],
+        "terminal_epoch_receipt": envelope,
+    }))
+    db = sqlite3.connect(":memory:")
+    fm.reconcile_run8_epochs(db, tmp_path)
+    row = db.execute("SELECT provider_ref,model_ref,route_ref FROM usage_occurrence_details").fetchone()
+    assert row == ("codex", None, None)
+
+
+def test_v5_hash_only_compaction_leaves_codex_coordinates_unknown(tmp_path):
+    epoch = tmp_path / "epochs" / "codex-20260824T010000-abc"
+    epoch.mkdir(parents=True)
+    terminal = {"type": "turn.completed", "usage": {"input_tokens": 50}}
+    epoch.joinpath("compaction.json").write_text(json.dumps({
+        "version": "Run8EpochCompaction-v5",
+        "files": [
+            {"name": "stdout.log", "tail_utf8": json.dumps(terminal)},
+            {"name": "command.json", "sha256": "hash-only"},
+        ],
+    }))
+    db = sqlite3.connect(":memory:")
+    fm.reconcile_run8_epochs(db, tmp_path)
+    row = db.execute("SELECT provider_ref,model_ref,route_ref FROM usage_occurrence_details").fetchone()
+    assert row == ("codex", None, None)
+
+
+def test_codex_implicit_launcher_model_remains_unknown(tmp_path):
+    epoch = tmp_path / "epochs" / "codex-20260824T010000-abc"
+    epoch.mkdir(parents=True)
+    epoch.joinpath("command.json").write_text(json.dumps(["codex", "exec", "--json", "-"]))
+    epoch.joinpath("stdout.log").write_text(json.dumps({
+        "type": "turn.completed", "usage": {"input_tokens": 50},
+    }))
+    db = sqlite3.connect(":memory:")
+    fm.reconcile_run8_epochs(db, tmp_path)
+    row = db.execute("SELECT model_ref,route_ref FROM usage_occurrence_details").fetchone()
+    assert row == (None, "codex-cli:exec")
+
+
+def test_codex_coordinate_enrichment_preserves_existing_attempt_identity(tmp_path):
+    epoch = tmp_path / "epochs" / "codex-20260824T010000-abc"
+    epoch.mkdir(parents=True)
+    epoch.joinpath("command.json").write_text(json.dumps([
+        "codex", "exec", "--model=gpt-5.6", "--json", "-",
+    ]))
+    epoch.joinpath("stdout.log").write_text(json.dumps({
+        "type": "turn.completed", "usage": {"input_tokens": 50},
+    }))
+    db = sqlite3.connect(":memory:")
+    prior = fm.provider_model_usage_from_receipt(
+        {"provider": "codex", "input_tokens": 50},
+        occurrence_id="usage:codex-20260824T010000-abc:turn-0",
+        attempt_ref="attempt:codex-20260824T010000-abc:turn-0",
+        realization_ref="realization:codex-20260824T010000-abc",
+        receipt_ref="receipt:codex-20260824T010000-abc:stdout.log:sha256:"
+                    + hashlib.sha256(epoch.joinpath("stdout.log").read_bytes()).hexdigest(),
+        observed_at="20260824T010000",
+    )
+    fm.record_provider_model_usage(db, prior, target_ref="work-occurrence:codex-20260824T010000-abc")
+    fm.reconcile_run8_epochs(db, tmp_path)
+    row = db.execute("SELECT model_ref,route_ref FROM usage_occurrence_details").fetchone()
+    assert row == ("gpt-5.6", "codex-cli:exec")
+
+
+def test_run8_receipt_replay_reports_replay_without_duplicate_charge(tmp_path):
+    epoch = tmp_path / "epochs" / "codex-20260824T010000-abc"
+    epoch.mkdir(parents=True)
+    epoch.joinpath("stdout.log").write_text(json.dumps({
+        "type": "turn.completed", "usage": {"input_tokens": 50},
+    }))
+    db = sqlite3.connect(":memory:")
+    first = fm.reconcile_run8_epochs(db, tmp_path)
+    second = fm.reconcile_run8_epochs(db, tmp_path)
+    assert first["usage_occurrences"] == 1
+    assert second["usage_occurrences"] == 0
+    assert second["replayed_attempts"] == 1
+    assert db.execute("SELECT count(*) FROM usage_occurrences").fetchone()[0] == 1

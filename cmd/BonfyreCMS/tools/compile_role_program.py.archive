@@ -1,0 +1,89 @@
+#!/usr/bin/env python3
+"""Compile reusable RoleProgram postures from exact Foundry behavior contracts.
+
+Roles arrange shared subjects, lenses and work; this compiler never creates an
+Actor subtype or turns requested authority into a grant.  Only operations that
+already exist in the exact Foundry catalog enter ``exact_operations``.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import re
+from pathlib import Path
+
+SCHEMA = "bonfyre-role-program-spec.v1"
+IDENT = re.compile(r"^[a-z][a-z0-9-]*$")
+FIELDS = (
+    "subject_kinds", "relationship_kinds", "search_scopes", "lenses", "work_queues",
+    "capability_programs", "authority_requirements", "requested_operations", "metric_views",
+    "handoff_contracts",
+)
+
+
+class SpecError(ValueError):
+    pass
+
+
+def strings(value: object, name: str) -> list[str]:
+    if not isinstance(value, list) or not all(isinstance(item, str) and item for item in value):
+        raise SpecError(f"{name} must be a list of nonempty strings")
+    return list(value)
+
+
+def compile_roles(spec: dict[str, object], catalog: dict[str, object]) -> dict[str, object]:
+    if spec.get("schema") != SCHEMA:
+        raise SpecError("unsupported role program schema")
+    roles = spec.get("roles")
+    contracts = catalog.get("contracts")
+    if not isinstance(roles, list) or not isinstance(contracts, list):
+        raise SpecError("roles and exact Foundry catalog are required")
+    exact = {str(row.get("birth_operation")) for row in contracts if isinstance(row, dict)}
+    compiled: list[dict[str, object]] = []
+    seen: set[str] = set()
+    for role in roles:
+        if not isinstance(role, dict):
+            raise SpecError("role must be an object")
+        role_id, label = role.get("role_id"), role.get("label")
+        if not isinstance(role_id, str) or not IDENT.fullmatch(role_id) or role_id in seen:
+            raise SpecError("role_id must be a unique lowercase identifier")
+        if not isinstance(label, str) or not label:
+            raise SpecError(f"{role_id}: label required")
+        seen.add(role_id)
+        values = {field: strings(role.get(field), f"{role_id}.{field}") for field in FIELDS}
+        scene = role.get("surface_scene")
+        if not isinstance(scene, dict) or not all(isinstance(scene.get(k), str) and scene[k] for k in ("focus", "presentation", "workspace")):
+            raise SpecError(f"{role_id}: surface_scene requires focus, presentation, workspace")
+        requested = values.pop("requested_operations")
+        emitted = [operation for operation in requested if operation in exact]
+        unresolved = [operation for operation in requested if operation not in exact]
+        compiled.append({
+            "role_id": role_id, "label": label, **values,
+            "exact_operations": emitted, "unresolved_operations": unresolved,
+            "surface_scene": scene,
+            "cannot_infer": "a role program selects lawful lenses and exact existing operations; it does not create an Actor kind, grant authority or provider access, or complete an effect",
+            "status": "published",
+        })
+    compiled.sort(key=lambda row: str(row["role_id"]))
+    return {"schema": "bonfyre-role-program-catalog.v1", "programs": compiled,
+            "cannot_infer": "compiled role reach is globally portable public cognition; effect authority remains local and is checked by the owner at action time"}
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--spec", type=Path, required=True)
+    parser.add_argument("--foundry-catalog", type=Path, required=True)
+    parser.add_argument("--out", type=Path, required=True)
+    args = parser.parse_args()
+    try:
+        output = compile_roles(json.loads(args.spec.read_text()), json.loads(args.foundry_catalog.read_text()))
+    except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
+        print(f"role program compiler: {exc}")
+        return 2
+    args.out.write_text(json.dumps(output, indent=2, sort_keys=True) + "\n")
+    print(json.dumps({"programs": len(output["programs"]), "schema": output["schema"]}))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

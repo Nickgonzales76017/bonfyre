@@ -1,0 +1,90 @@
+"""The atlas as a bounded context provider: a query must cost a query's worth of
+bytes, and a filter that matches everything is not a filter."""
+
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+ARCH = HERE.parent
+sys.path.insert(0, str(ARCH))
+
+import atlas_query as aq  # noqa: E402
+
+
+def _index():
+    return aq.load_index()
+
+
+def test_search_matches_values_not_field_names():
+    """The regression this module exists for: the previous surface searched
+    ``json.dumps(record)``, so every schema key was searchable content and
+    ``search("witness")`` returned all 185 architectures."""
+    index = _index()
+    total = len(index["architectures"])
+    for key_name in ("witness", "forbidden", "maturity", "source_path", "canonical_name"):
+        hits = aq.search(index, key_name)["total"]
+        assert hits < total, f"{key_name!r} matched all {total} records -- keys are being searched"
+
+
+def test_search_still_finds_real_content():
+    index = _index()
+    r = aq.search(index, "provider-graph")
+    assert "provider-graph" in [m["id"] for m in r["matches"]]
+    # a phrase that only lives in a value, never in a key
+    assert aq.search(index, "available -> authorized")["total"] >= 1
+
+
+def test_search_is_bounded_and_says_so():
+    index = _index()
+    r = aq.search(index, "graph", limit=3)
+    assert len(r["matches"]) <= 3
+    assert r["total"] >= len(r["matches"])
+    assert r["truncated"] is (r["total"] > len(r["matches"]))
+    tight = aq.search(index, "graph", limit=100, budget_bytes=400)
+    assert len(json.dumps(tight["matches"])) <= 400 + 512  # one item may overshoot
+    assert tight["truncated"]
+
+
+def test_explain_fields_stay_request_local():
+    """Field attribution and snippets are computed per request; they must never
+    have been written into the cached index."""
+    index = _index()
+    r = aq.search(index, "authority")
+    assert r["matches"] and r["matches"][0]["matched_fields"]
+    for rec in index["architectures"].values():
+        assert "matched_fields" not in rec
+        assert "snippet" not in rec
+
+
+def test_bounded_ops_cost_far_less_than_the_index():
+    index = _index()
+    full = os.path.getsize(aq.INDEX)
+    for payload in (aq.summary(index),
+                    aq.get(index, "provider-graph"),
+                    aq.cannot_infer(index, "provider-graph"),
+                    aq.expand(index, "ProviderResourceView")):
+        assert len(json.dumps(payload)) * 20 < full
+
+
+def test_get_misses_are_helpful_not_silent():
+    index = _index()
+    r = aq.get(index, "provider-grap")
+    assert r["architecture"] is None
+    assert "provider-graph" in r["did_you_mean"]
+
+
+def test_empty_query_matches_nothing():
+    assert aq.search(_index(), "   ")["total"] == 0
+
+
+def test_cli_exposes_the_cheap_path_without_mcp():
+    """Every carrier with a shell gets the same realization, not just an MCP
+    attachment."""
+    out = subprocess.run([sys.executable, "atlas.py", "cannot-infer", "provider-graph"],
+                         cwd=ARCH, capture_output=True, text=True, timeout=60)
+    assert out.returncode == 0
+    assert "available -> authorized" in out.stdout
+    assert len(out.stdout) < 1024

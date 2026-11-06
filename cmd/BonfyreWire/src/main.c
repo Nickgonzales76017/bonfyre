@@ -1,8 +1,18 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 #include "wire.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 static void usage(void) {
@@ -10,8 +20,9 @@ static void usage(void) {
             "BonfyreWire — consent-based network event layer\n\n"
             "Usage:\n"
             "  bonfyre-wire doctor [--root DIR]\n"
-            "  bonfyre-wire listen --interface <iface> --authorized --metadata-only [--root DIR]\n"
-            "  bonfyre-wire listen --interface <iface> --dumb-device --metadata-only [--root DIR]\n"
+            "  bonfyre-wire listen --interface <iface> --authorized --metadata-only [--packets N] [--seconds N] [--root DIR]\n"
+            "  bonfyre-wire listen --interface <iface> --dumb-device --metadata-only [--packets N] [--seconds N] [--root DIR]\n"
+            "  tcpdump -w - ... | bonfyre-wire listen --interface <iface> --authorized [--root DIR]\n"
             "  bonfyre-wire ingest-pcap <file> --authorized [--root DIR] [--metadata-only]\n"
             "  bonfyre-wire ingest-pcap <file> --authorized --payload --unencrypted-only [--root DIR]\n"
             "  bonfyre-wire ingest-pcap <file> --dumb-device [--root DIR]\n"
@@ -49,7 +60,9 @@ static int parse_common(int argc, char **argv,
                         const char **root, int *authorized, int *dumb_device,
                         int *metadata_only, int *payload, int *unencrypted_only,
                         int *save_raw, const char **iface, const char **path_or_id,
-                        const char **space_name) {
+                        const char **space_name, int *packets, int *seconds) {
+    *packets = 200;
+    *seconds = 10;
     *root = "layeros/state";
     *authorized = 0;
     *dumb_device = 0;
@@ -70,7 +83,51 @@ static int parse_common(int argc, char **argv,
         else if (strcmp(argv[i], "--save-raw") == 0) *save_raw = 1;
         else if (strcmp(argv[i], "--interface") == 0 && i + 1 < argc) *iface = argv[++i];
         else if (strcmp(argv[i], "--space") == 0 && i + 1 < argc) *space_name = argv[++i];
+        else if (strcmp(argv[i], "--packets") == 0 && i + 1 < argc) { *packets = atoi(argv[++i]); if (*packets < 1) *packets = 1; }
+        else if (strcmp(argv[i], "--seconds") == 0 && i + 1 < argc) { *seconds = atoi(argv[++i]); if (*seconds < 1) *seconds = 1; }
         else if (argv[i][0] != '-' && !*path_or_id) *path_or_id = argv[i];
+    }
+    return 0;
+}
+
+/* Record up to `packets` packets, or whatever arrives in `seconds`, from one
+ * interface into a pcap file. Fails when tcpdump is absent, may not open the
+ * interface, or recorded nothing. */
+static int capture_live(const char *iface, int packets, int seconds, int metadata_only,
+                        char *out_path, size_t out_sz) {
+    const char *tool = access("/usr/sbin/tcpdump", X_OK) == 0 ? "/usr/sbin/tcpdump"
+                     : access("/usr/bin/tcpdump", X_OK) == 0 ? "/usr/bin/tcpdump" : NULL;
+    const char *tmp = getenv("TMPDIR");
+    char count[32], snap[32];
+    struct stat st;
+    int status = 0, waited = 0;
+    pid_t pid;
+    if (!tool) {
+        fprintf(stderr, "bonfyre-wire listen: tcpdump is not installed; pipe a pcap stream on stdin instead\n");
+        return 1;
+    }
+    snprintf(out_path, out_sz, "%s/bonfyre-wire-live.XXXXXX", tmp && tmp[0] ? tmp : "/tmp");
+    { int fd = mkstemp(out_path); if (fd < 0) { perror("bonfyre-wire listen"); return 1; } close(fd); }
+    snprintf(count, sizeof(count), "%d", packets);
+    /* Headers only unless payload was separately authorized. */
+    snprintf(snap, sizeof(snap), "%d", metadata_only ? 128 : 262144);
+    pid = fork();
+    if (pid < 0) { unlink(out_path); return 1; }
+    if (pid == 0) {
+        execl(tool, tool, "-i", iface, "-n", "-U", "-s", snap, "-c", count, "-w", out_path, (char *)NULL);
+        _exit(127);
+    }
+    while (waitpid(pid, &status, WNOHANG) == 0) {
+        if (waited >= seconds * 10) { kill(pid, SIGINT); waitpid(pid, &status, 0); break; }
+        usleep(100000);
+        waited++;
+    }
+    if (stat(out_path, &st) != 0 || st.st_size <= 24) {
+        fprintf(stderr, "bonfyre-wire listen: nothing was captured on %s (tcpdump %s); "
+                        "packet capture needs BPF permission on this interface\n",
+                iface, WIFEXITED(status) && WEXITSTATUS(status) == 0 ? "saw no packets" : "did not run");
+        unlink(out_path);
+        return 1;
     }
     return 0;
 }
@@ -115,10 +172,10 @@ static int enforce_payload_flags(int payload, int authorized, int unencrypted_on
 
 int main(int argc, char **argv) {
     const char *cmd, *root, *iface, *path_or_id, *space_name;
-    int authorized, dumb_device, metadata_only, payload, unencrypted_only, save_raw;
+    int authorized, dumb_device, metadata_only, payload, unencrypted_only, save_raw, packets, seconds;
     if (argc < 2) { usage(); return 1; }
     cmd = argv[1];
-    parse_common(argc, argv, &root, &authorized, &dumb_device, &metadata_only, &payload, &unencrypted_only, &save_raw, &iface, &path_or_id, &space_name);
+    parse_common(argc, argv, &root, &authorized, &dumb_device, &metadata_only, &payload, &unencrypted_only, &save_raw, &iface, &path_or_id, &space_name, &packets, &seconds);
     apply_env_policy(cmd, authorized, &metadata_only, &payload, unencrypted_only);
 
     if (strcmp(cmd, "doctor") == 0) {
@@ -142,15 +199,43 @@ int main(int argc, char **argv) {
         capture.payload_enabled = payload;
         capture.unencrypted_only = unencrypted_only;
         capture.save_raw = save_raw;
-        snprintf(capture.status, sizeof(capture.status), "%s", isatty(STDIN_FILENO) ? "listening_stub_ready" : "ingesting_stream");
-        bf_wire_capture_create(root, &capture);
+        /* Packets come from one of two places: a pcap stream on stdin, or
+         * tcpdump run here on the named interface for a bounded count. With
+         * neither, nothing was captured and no capture is recorded. */
         if (!isatty(STDIN_FILENO)) {
-            if (bf_wire_ingest_stream(stdin, root, &capture, payload) != 0) return 1;
+            snprintf(capture.status, sizeof(capture.status), "ingesting_stream");
+            bf_wire_capture_create(root, &capture);
+            if (bf_wire_ingest_stream(stdin, root, &capture, payload) != 0) {
+                fprintf(stderr, "bonfyre-wire listen: stdin is not a pcap stream\n");
+                snprintf(capture.status, sizeof(capture.status), "refused_not_pcap");
+                bf_wire_capture_update_summary(root, &capture);
+                return 1;
+            }
             snprintf(capture.status, sizeof(capture.status), "ingested_stream");
             bf_wire_capture_update_summary(root, &capture);
+        } else {
+            char pcap_path[4096];
+            if (capture_live(iface, packets, seconds, metadata_only, pcap_path, sizeof(pcap_path)) != 0) return 1;
+            snprintf(capture.status, sizeof(capture.status), "ingesting");
+            snprintf(capture.source_path, sizeof(capture.source_path), "%s", pcap_path);
+            bf_wire_capture_create(root, &capture);
+            if (save_raw) {
+                char raw_copy[4096];
+                if (bf_wire_save_raw_copy(root, pcap_path, raw_copy, sizeof(raw_copy)) == 0)
+                    snprintf(capture.source_path, sizeof(capture.source_path), "%s", raw_copy);
+            }
+            if (bf_wire_ingest_file(root, &capture, pcap_path, payload) != 0) {
+                fprintf(stderr, "bonfyre-wire listen: the capture on %s could not be read back\n", iface);
+                unlink(pcap_path);
+                return 1;
+            }
+            unlink(pcap_path);
+            snprintf(capture.status, sizeof(capture.status), "captured");
+            bf_wire_capture_update_summary(root, &capture);
         }
-        printf("{\"capture_id\":\"%s\",\"status\":\"%s\",\"mode\":\"%s\",\"interface\":\"%s\",\"note\":\"live capture requires an authorized packet source or external adapter; synthetic stdin events are supported in this build\"}\n",
-               capture.capture_id, capture.status, metadata_only ? "metadata-only" : "payload", capture.interface_name);
+        printf("{\"capture_id\":\"%s\",\"status\":\"%s\",\"mode\":\"%s\",\"interface\":\"%s\",\"packet_count\":%lld,\"byte_count\":%lld}\n",
+               capture.capture_id, capture.status, metadata_only ? "metadata-only" : "payload", capture.interface_name,
+               (long long)capture.packet_count, (long long)capture.byte_count);
         return 0;
     }
 
@@ -181,7 +266,7 @@ int main(int argc, char **argv) {
         }
         if (bf_wire_ingest_file(root, &capture, path_or_id, payload) != 0) {
             fprintf(stderr, "bonfyre-wire ingest-pcap: could not ingest %s "
-                            "(not a readable pcap file or recognized synthetic JSON capture)\n",
+                            "(not a readable pcap file)\n",
                     path_or_id);
             return 1;
         }

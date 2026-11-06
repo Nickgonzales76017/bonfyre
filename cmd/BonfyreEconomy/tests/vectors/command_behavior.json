@@ -1,0 +1,9 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-economy","binary_env":"BONFYRE_ECONOMY_BIN","cases":[
+{"name":"route reuses an observed in-budget cost and goes unresolved once the budget is spent","steps":[
+ {"argv":["budget","set","rec1","5.00"],"env":{"HOME":"${tmp}","BONFYRE_ECONOMY_DB":"${tmp}/e.db","BONFYRE_ECONOMY_LOCAL_MODEL_READY":""},"exit":0,"contains":["budget set: rec1"]},
+ {"argv":["cost","record","rec1","s1","m1","1.25"],"env":{"HOME":"${tmp}","BONFYRE_ECONOMY_DB":"${tmp}/e.db","BONFYRE_ECONOMY_LOCAL_MODEL_READY":""},"exit":0},
+ {"argv":["status"],"env":{"HOME":"${tmp}","BONFYRE_ECONOMY_DB":"${tmp}/e.db","BONFYRE_ECONOMY_LOCAL_MODEL_READY":""},"exit":0,"contains":["25.0%"]},
+ {"argv":["route","rec1"],"env":{"HOME":"${tmp}","BONFYRE_ECONOMY_DB":"${tmp}/e.db","BONFYRE_ECONOMY_LOCAL_MODEL_READY":""},"exit":0,"contains":["budget remaining for 'rec1': $3.7500","recommended model : m1"]},
+ {"argv":["cost","record","rec1","s1","m1","9.00"],"env":{"HOME":"${tmp}","BONFYRE_ECONOMY_DB":"${tmp}/e.db","BONFYRE_ECONOMY_LOCAL_MODEL_READY":""},"exit":0},
+ {"argv":["route","rec1"],"env":{"HOME":"${tmp}","BONFYRE_ECONOMY_DB":"${tmp}/e.db","BONFYRE_ECONOMY_LOCAL_MODEL_READY":""},"exit":0,"contains":["recommended model : unresolved"],"excludes":["recommended model : m1"]}]},
+{"name":"route with no history invents no fallback","steps":[{"argv":["route","fresh"],"env":{"HOME":"${tmp}","BONFYRE_ECONOMY_DB":"${tmp}/e.db","BONFYRE_ECONOMY_LOCAL_MODEL_READY":""},"exit":0,"contains":["unresolved"]}]}]}

@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * bonfyre-sae — SAE feature dictionary runtime.
  *
@@ -17,10 +24,6 @@
  *   bonfyre-sae inspect <dict.bfsae>
  *       Print header metadata: model family, layer, hidden dim,
  *       feature count, dtype, file size.
- *
- *   bonfyre-sae synth [--model-family F] [--layer L]
- *                     [--hidden-dim D] [--features N] --out <file.bfsae>
- *       Write a synthetic .bfsae for testing (random unit-norm encoder).
  *
  *   bonfyre-sae gate <dict.bfsae> <features.json> [--alpha A]
  *       Re-check an existing feature manifest against threshold alpha.
@@ -288,40 +291,6 @@ static int cmd_inspect(int argc, char **argv) {
     return 0;
 }
 
-/* ── cmd_synth ────────────────────────────────────────────────────────────── */
-
-static int cmd_synth(int argc, char **argv) {
-    const char *out_path     = NULL;
-    const char *model_family = "synthetic";
-    uint32_t    layer        = 24;
-    uint32_t    hidden_dim   = 4096;
-    uint32_t    features     = 16384;
-
-    for (int i = 0; i < argc; i++) {
-        if      (strcmp(argv[i], "--out")          == 0 && i+1 < argc) out_path     = argv[++i];
-        else if (strcmp(argv[i], "--model-family")  == 0 && i+1 < argc) model_family = argv[++i];
-        else if (strcmp(argv[i], "--layer")         == 0 && i+1 < argc) layer        = (uint32_t)atoi(argv[++i]);
-        else if (strcmp(argv[i], "--hidden-dim")    == 0 && i+1 < argc) hidden_dim   = (uint32_t)atoi(argv[++i]);
-        else if (strcmp(argv[i], "--features")      == 0 && i+1 < argc) features     = (uint32_t)atoi(argv[++i]);
-    }
-    if (!out_path) {
-        fprintf(stderr, "usage: bonfyre-sae synth --out <file.bfsae>"
-                        " [--model-family F] [--layer L]"
-                        " [--hidden-dim D] [--features N]\n");
-        return 1;
-    }
-
-    printf("Writing synthetic .bfsae: %s × %u features @ layer %u → %s\n",
-           model_family, features, layer, out_path);
-
-    int r = bfsae_write_synthetic(out_path, model_family, layer, hidden_dim, features);
-    if (r != 0) return 1;
-
-    struct stat st; stat(out_path, &st);
-    printf("  done: %.2f MB\n", (double)st.st_size / 1048576.0);
-    return 0;
-}
-
 /* ── cmd_gate ─────────────────────────────────────────────────────────────── */
 
 static int cmd_gate(int argc, char **argv) {
@@ -454,13 +423,7 @@ static void print_help(void) {
 "    --artifact-id ID                 tag manifest with parent artifact id\n"
 "    exits 2 if a DANGER-tagged feature exceeds alpha\n"
 "\n"
-"  inspect <dict.bfsae>               print header metadata\n"
-"\n"
-"  synth --out <file.bfsae>           write synthetic dict for testing\n"
-"    --model-family F   (default synthetic)\n"
-"    --layer L          (default 24)\n"
-"    --hidden-dim D     (default 4096)\n"
-"    --features N       (default 16384)\n"
+"  train --activations acts.f32 --dim D --features N --layer L --family MODEL --out dict.bfsae\n" "                                     fit a dictionary to recorded activations; one vector\n" "                                     in ten is held out and the report is measured on those\n" "\n" "  inspect <dict.bfsae>               print header metadata\n"
 "\n"
 "  gate <dict.bfsae> <features.json>  re-check manifest, exit 2 on danger\n"
 "    --alpha A          (default 0.7)\n"
@@ -479,15 +442,16 @@ static void print_help(void) {
 
 /* ── main ─────────────────────────────────────────────────────────────────── */
 
+#include "sae_train.inc"
+
 int main(int argc, char **argv) {
     if (argc < 2) { print_help(); return 0; }
     const char *cmd = argv[1];
     int   sub_argc = argc - 2;
     char **sub_argv = argv + 2;
 
-    if (strcmp(cmd, "activate") == 0) return cmd_activate(sub_argc, sub_argv);
+    if (strcmp(cmd, "activate") == 0) return cmd_activate(sub_argc, sub_argv); if (strcmp(cmd, "train")    == 0) return cmd_train   (sub_argc, sub_argv);
     if (strcmp(cmd, "inspect")  == 0) return cmd_inspect (sub_argc, sub_argv);
-    if (strcmp(cmd, "synth")    == 0) return cmd_synth   (sub_argc, sub_argv);
     if (strcmp(cmd, "gate")     == 0) return cmd_gate    (sub_argc, sub_argv);
     if (strcmp(cmd, "hash")     == 0) return cmd_hash    (sub_argc, sub_argv);
     if (strcmp(cmd, "history")  == 0) return cmd_history (sub_argc, sub_argv);

@@ -1,0 +1,241 @@
+"""ARCHIVED: interaction_stack_circuit.mjs carries the explicit-origin person-level checks.
+
+Endpoint checks pass while an interface is unusable, so these assert the laws E
+states: a subject answers with itself plus the operations that pertain to it; an
+aperture differs by viewer; relations are directions with somewhere to go; a lens
+varies selection and representation independently; a room is shaped by what its
+subject is; and creation is read into a typed proposal before anything exists.
+"""
+import json, subprocess, re
+
+BASE="https://aurekai.life"; fails, notes = [], []
+def get(path, tok=None, t=300):
+    cmd=["curl","-sS","-m",str(t),f"{BASE}{path}","-H","Accept: text/html","-w","\n__S__%{http_code}"]
+    if tok: cmd += ["-H", f"Authorization: Bearer {tok}"]
+    r=subprocess.run(cmd,capture_output=True,text=True).stdout
+    txt,_,st=r.rpartition("\n__S__")
+    return (int(st) if st.isdigit() else 0), txt
+def check(n,c,d=""):
+    (notes if c else fails).append(f"{'PASS' if c else 'FAIL'}  {n}"+(f"  — {d}" if d else "")); return c
+def acts(html): return re.findall(r'<span class="ap-do">([^<]*)</span>', html)
+def dirs(html): return re.findall(r'<span class="tr-label">([^<]*)</span>', html)
+
+tok=json.loads(subprocess.run(["curl","-sS","-m","30","-X","POST",f"{BASE}/login",
+  "-H","Content-Type: application/json",
+  "-d",json.dumps({"email":"dev.tomas.1788083710906@example.com","password":"Integrations-2026!"})],
+  capture_output=True,text=True).stdout)["session"]["token"]
+
+PARCEL="00226440"
+print("SUBJECT — the object answers with its own operations")
+st,anon = get(f"/s/parcel/{PARCEL}")
+st2,auth = get(f"/s/parcel/{PARCEL}", tok)
+check("a subject renders for a stranger", st==200 and "ap-do" in anon, f"{len(acts(anon))} actions")
+check("the same subject renders for an operator", st2==200, f"{len(acts(auth))} actions")
+
+print("APERTURE — the same subject, different closure")
+a1, a2 = set(acts(anon)), set(acts(auth))
+check("the two apertures differ", a1 != a2, f"stranger={sorted(a1)} operator={sorted(a2)}")
+check("only the operator is offered the write act", "Watch this parcel" in a2 and "Watch this parcel" not in a1)
+check("the stranger is told how to act instead", any("Sign in" in x for x in a1))
+check("an aperture stays within 2-5 actions", 2 <= len(a2) <= 5, f"{len(a2)}")
+
+print("TRAIL — relations are directions with somewhere to go")
+d = dirs(anon)
+check("directions are offered", len(d) >= 3, ", ".join(d[:4]))
+check("a direction the source cannot support is named, not hidden",
+      "Near" in d and "Changed since" in d)
+check("a live direction carries a real count",
+      bool(re.search(r'\d+ (other parcels|parcels)', anon)))
+
+print("AMBIENT — one subject, many carriers")
+check("the subject lists where else it appears",
+      all(c in anon for c in ("RESO Web API","OGC API Features","MISMO 3.4")))
+
+print("LENS — selection and representation vary independently")
+st,lens = get("/lens")
+check("lenses are offered as cuts, not tabs", st==200 and lens.count("tr-dir") >= 3)
+seen=[]
+for slug in ("vacant-land","concentrated-owners","newest-building"):
+    st,h = get(f"/lens/{slug}")
+    sel=re.search(r'<dt>Selection</dt><dd class="lens-field">([^<]*)',h)
+    rep=re.search(r'<dt>Representation</dt><dd class="lens-field">([^<]*)',h)
+    items=re.findall(r'<span class="li-weight">([^<]*)</span>',h)
+    seen.append((slug, sel.group(1) if sel else "", rep.group(1) if rep else "", len(items)))
+    check(f"lens {slug} returns a populated cut", st==200 and len(items)>0, f"{len(items)} items")
+check("every lens declares both selection and representation",
+      all(s and r for _,s,r,_ in seen))
+check("the lenses differ in both dimensions",
+      len({s for _,s,_,_ in seen})==3 and len({r for _,_,r,_ in seen})==3)
+
+print("ROOM — navigation continuity, representational discontinuity")
+st,room = get(f"/room/parcel/{PARCEL}")
+bands=re.findall(r'<h3 class="room-h">([^<]*)</h3>', room)
+check("a room renders bands shaped by its subject", st==200 and len(bands)>=3, " | ".join(bands))
+check("the room names what its source cannot supply",
+      "is-absent" in room and "no prior state" in room)
+st,none = get("/room/occurrence/nothing-here")
+check("an unbuilt room says so rather than templating one",
+      "built rather than templated" in none)
+
+print("COMPOSE — creation is read into a typed proposal")
+cases={"I need somebody to help translate this README":"Work",
+       "selling this cutting for $20":"Offer",
+       "we are starting a neighborhood clean-up":"Group",
+       "https://example.org/feed.xml":"ForeignTwin"}
+for text,want in cases.items():
+    st,h = get("/make/read?text="+text.replace(" ","+").replace("$","%24"))
+    got=acts(h)
+    check(f"“{text[:34]}…” reads as {want}", st==200 and got and got[0]==want, f"read as {got}")
+st,h = get("/make/read?text=hello")
+check("creation is proposed, never performed", "nothing exists until you choose" in h)
+
+print("COMPOSE — choosing a type creates the object for real")
+st,denied = get("/make/create?type=Work&text=help+translate")
+check("a stranger cannot create", "write-scoped account" in denied)
+import time
+stamp=str(int(time.time()))
+made={}
+for typ,text in (("Work",   f"help+translate+readme+{stamp}"),
+                 ("Group",  f"we+are+starting+crew+{stamp}"),
+                 ("Note",   f"estate+note+{stamp}")):
+    st,h = get(f"/make/create?type={typ}&text={text}", tok)
+    ok = st==200 and f"{typ} created" in h
+    where = re.search(r'href="([^"]*)">Go to it', h)
+    made[typ] = where.group(1) if where else None
+    check(f"{typ} is created through its owning organ", ok, made[typ] or h[:60])
+check("a created object hands back somewhere to go", all(made.values()), str(made))
+if made.get("Note"):
+    st,_ = get(made["Note"])
+    check("the created note is immediately addressable", st==200, made["Note"])
+st,h = get(f"/make/create?type=Nonsense&text=whatever+{stamp}", tok)
+check("an unmakeable type creates nothing and says so",
+      "could not be made" in h and "Nothing was created" in h)
+
+print("SURFACEIR — a shape earns its way from trace to proof")
+st,fr = get("/surfaces")
+check("the frontier renders", st==200 and "SurfaceIR" in fr)
+facts=dict(re.findall(r'<dt>([^<]*)</dt><dd>([^<]*)</dd>', fr))
+check("it reports its own thresholds",
+      "Candidate at" in facts and "Proof needs" in facts,
+      f"candidate at {facts.get('Candidate at')}, proof needs {facts.get('Proof needs')}")
+shapes=re.findall(r'li-weight">(\d+)&times;</span><span class="li-name">([^<]*)<br>.*?pill [a-z]*">([a-z]+)</span><br>(\d+) viewer',fr)
+check("traces have been recorded", len(shapes)>0, f"{len(shapes)} shapes")
+check("closure is part of the shape",
+      len({sh.split("&middot;")[-1].strip() for _,sh,_,_ in shapes})>1,
+      str(sorted({sh.split("&middot;")[-1].strip() for _,sh,_,_ in shapes})))
+# The rule the whole mechanism rests on: proof needs repeats AND distinct viewers.
+cand_at=int(facts.get("Candidate at","5").split()[0]); need=int(facts.get("Proof needs","3").split()[0])
+bad=[(n,sh,stage,v) for n,sh,stage,v in shapes
+     if (stage=="proven") != (int(n)>=cand_at and int(v)>=need)]
+check("proven means repeated AND seen by enough distinct viewers", not bad, str(bad))
+check("a single-viewer shape is never proven",
+      all(stage!="proven" for n,sh,stage,v in shapes if int(v)<need))
+check("cooling is described as deliberate, not performed",
+      "cooling one into a fixed page is a deliberate act" in fr)
+
+
+print("FLOW — one gesture over changing object grammars")
+kinds, cards = [], []
+for i in range(8):
+    st,c = get(f"/flow/at?i={i}")
+    if st!=200: break
+    k = re.search(r'class="fl-kind">([^<]*)<', c)
+    n = re.search(r'class="fl-title[^"]*">([^<]*)<', c)
+    kinds.append(k.group(1) if k else "?"); cards.append((c, n.group(1) if n else ""))
+check("traversal answers at every position", len(kinds)==8, str(len(kinds)))
+check("consecutive positions are different kinds of object",
+      all(a!=b for a,b in zip(kinds, kinds[1:])), " ".join(kinds))
+check("the object grammar actually changes", len(set(kinds))>=3, str(sorted(set(kinds))))
+check("every card names a real object", all(n for _,n in cards),
+      str([n for _,n in cards][:4]))
+check("every card opens the thing it shows",
+      all(re.search(r'class="button primary" href="/\S', c) for c,_ in cards))
+st,a1 = get("/flow/at?i=3"); st,a2 = get("/flow/at?i=3")
+check("a position is the same object every time it is asked for",
+      re.search(r'fl-title[^"]*">([^<]*)<',a1).group(1)==re.search(r'fl-title[^"]*">([^<]*)<',a2).group(1))
+st,fp = get("/flow")
+check("the shell holds the position and lets the card carry the move",
+      st==200 and 'hx-get="/flow/at?i=0"' in fp and '<button class="fl-next"' not in fp)
+check("every card offers exactly one way onward, whatever kind it is",
+      all(c.count("data-flow-next")==1 for c,_ in cards))
+
+print("ROOM — built per kind, and honest about the kinds not built")
+st,cr = get("/room/capability/parcel-underwrite")
+check("a capability room is shaped by what a capability is",
+      st==200 and "What it costs, in every grammar" in cr and "Whether it can settle" in cr)
+check("it states settlement as a fact about the world, not a promise",
+      "facilitator" in cr)
+note_route = re.search(r'href="/notes/([a-z0-9-]+)"', get("/notes/")[1])
+if note_route:
+    st,nr = get(f"/room/note/{note_route.group(1)}")
+    check("a note room separates publication from readability",
+          st==200 and "Who can read it" in nr and "Publishing and readability are separate" in nr)
+st,mr = get("/room/wombat/nothing")
+check("an unbuilt kind says it is unbuilt rather than serving a generic frame",
+      "built rather than templated" in mr)
+
+print("COMPOSE — a sentence that proposes several things becomes all of them")
+st,rd = get("/make/read?text=We%27re+starting+a+neighborhood+clean-up+and+need+help+this+Saturday")
+order = re.findall(r'<span class="ap-do">([^<]*)</span>', rd)
+check("a combination is offered above its parts",
+      order and "+" in order[0], " > ".join(order))
+check("the parts stay available underneath",
+      {"Group","Work"} <= set(order), str(order))
+st,cm = get(f"/make/create?type=Group%2BWork&text=circuit+cleanup+{stamp}", tok)
+made_parts = re.findall(r'<span class="ap-do">(\w+) (created|not created)</span>', cm)
+check("each part is created through its own organ",
+      [p for p,s in made_parts if s=="created"]==["Group","Work"], str(made_parts))
+check("each part links to where its organ keeps it",
+      len(re.findall(r'class="ap-act is-strongest" href="/', cm))==2)
+st,pf = get(f"/make/create?type=ForeignTwin%2BOffer&text=selling+a+circuit+bike+{stamp}", tok)
+pf_parts = dict((p,s) for p,s in re.findall(r'<span class="ap-do">(\w+) (created|not created)</span>', pf))
+check("a part that fails is named as failed, not omitted",
+      pf_parts.get("ForeignTwin")=="not created" and pf_parts.get("Offer")=="created",
+      str(pf_parts))
+check("the parts that succeeded are not rolled back",
+      "left nothing behind, and can be made on their own" in pf)
+
+
+print("DESK — the operator surface states what is open, not what exists")
+st,desk = get("/studio/")
+check("the desk renders", st==200 and "waiting on a decision" in desk)
+queues = re.findall(r'<h3>([^<]*)</h3><span class="desk-n">(\d+)</span>', desk)
+check("it holds several queues of open decisions", len(queues)>=4, str(queues))
+check("it is not a wall of controls", desk.count("<h2>") <= 1)
+# An anonymous viewer gets the counts and none of the rows. The rows of an
+# unpublished queue are the unpublished content itself, and a crawler that
+# followed this page would otherwise harvest every draft title and route.
+anon_rows = desk.count('class="desk-row"')
+check("a viewer who cannot act is told how many, never which",
+      anon_rows == 0 and any(int(c) > 0 for _, c in queues),
+      f"{anon_rows} rows exposed anonymously")
+check("and is told why the rows are withheld",
+      "nobody has published yet" in desk)
+clear = re.findall(r'<section class="desk-q is-clear">(.*?)</section>', desk, re.S)
+check("an empty queue says what would fill it rather than showing nothing",
+      all("Nothing open." in seg for seg in clear),
+      f"{len(clear)} clear queues" if clear else "no queue is clear right now")
+check("a queue with rows is never marked clear",
+      all('class="desk-row"' not in seg for seg in clear))
+st,desk_w = get("/studio/", tok)
+# The writer sees the rows, and they reconcile against the counted total.
+w_rows = len(re.findall(r'class="desk-row"', desk_w))
+w_more = sum(int(m) for m in re.findall(r'desk-more">(\d+) more not shown', desk_w))
+w_named = re.findall(r'<h3>([^<]*)</h3><span class="desk-n">(\d+)</span>', desk_w)
+w_total = sum(int(c) for h, c in w_named if "no asking price" not in h) + \
+          sum(int(c) for h, c in w_named if "no asking price" in h)
+check("a writer sees the rows a stranger does not", w_rows > 0, f"{w_rows} rows")
+check("what a writer is shown plus what is withheld equals what is counted",
+      w_rows + w_more == w_total, f"{w_rows} shown + {w_more} withheld vs {w_total} counted")
+anon_acts = set(re.findall(r'class="desk-a">([^<]*) &rarr;', desk))
+writer_acts = set(re.findall(r'class="desk-a">([^<]*) &rarr;', desk_w))
+check("the act offered depends on what the viewer may actually do",
+      anon_acts != writer_acts, f"{sorted(anon_acts)} vs {sorted(writer_acts)}")
+check("a viewer without write scope is told why, not shown a button that fails",
+      "cannot close any of it" in desk or "not close it" in desk)
+check("the unsorted panel keeps its own address rather than being the front door",
+      '/studio/controls' in desk and get("/studio/controls")[0]==200)
+check("every open line opens the thing it names",
+      all(h.startswith("/") for h in re.findall(r'class="desk-row" href="([^"]*)"', desk)))
+
+print("\n".join(notes+fails)); print(f"\n{len(notes)} passed, {len(fails)} FAILED")

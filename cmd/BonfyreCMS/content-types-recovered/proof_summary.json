@@ -1,0 +1,84 @@
+{
+  "name": "proof_summary",
+  "displayName": "Proof Summary",
+  "description": "Projected proof summary artifact with promoted quality and intake fields.",
+  "attributes": {
+    "proof_slug": {
+      "type": "string",
+      "required": true
+    },
+    "proof_label": {
+      "type": "string",
+      "required": true
+    },
+    "promoted_at": {
+      "type": "datetime"
+    },
+    "source_job_output": {
+      "type": "string"
+    },
+    "job_name": {
+      "type": "string"
+    },
+    "job_slug": {
+      "type": "string"
+    },
+    "source_kind": {
+      "type": "string"
+    },
+    "summary_bullets": {
+      "type": "integer"
+    },
+    "quality_score": {
+      "type": "integer"
+    },
+    "quality_status": {
+      "type": "string"
+    },
+    "intake_job_id": {
+      "type": "string"
+    },
+    "intake_job_slug": {
+      "type": "string"
+    },
+    "intake_client_name": {
+      "type": "string"
+    },
+    "intake_client_contact": {
+      "type": "string"
+    },
+    "intake_job_title": {
+      "type": "string"
+    },
+    "intake_output_goal": {
+      "type": "string"
+    },
+    "intake_status": {
+      "type": "string"
+    },
+    "intake_created_at": {
+      "type": "datetime"
+    },
+    "intake_file_name": {
+      "type": "string"
+    },
+    "intake_file_type": {
+      "type": "string"
+    },
+    "intake_file_size": {
+      "type": "integer"
+    },
+    "copied_file_count": {
+      "type": "integer"
+    },
+    "quality_json": {
+      "type": "json"
+    },
+    "intake_manifest_json": {
+      "type": "json"
+    },
+    "copied_files_json": {
+      "type": "json"
+    }
+  }
+}

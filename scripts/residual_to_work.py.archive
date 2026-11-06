@@ -1,0 +1,292 @@
+#!/usr/bin/env python3
+"""Archived Python residual worker; the supported owner is residual-to-work.mjs.
+
+The estate had grown many organs that measure a gap and none that act on one.
+The gym reports what the sources have stopped answering, the funding frontier
+reports the condition the most capital waits on, the close consequence reports
+what will not reconcile, the representation market reports what a cheaper body
+would lose. Each was correct and each ended at a number nobody was obliged to
+read.
+
+This reads their receipts -- whatever produced them -- and emits work items with
+a reason, a plane that owns the fix, and a rank. It writes nothing by default:
+proposing work is cheap and creating it is not, so the queue is only touched when
+asked explicitly.
+
+Ranking is deliberately not by size. A residual nobody can close ranks below a
+smaller one somebody can, for the same reason the failure estate partitions
+across the human line: an unclosable item is not a low-priority task, it is not
+a task.
+
+Cannot infer: a ranked item is not an approved one, a residual is not a defect,
+and the plane named as owner is where the fix belongs rather than who will do it.
+"""
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+import sys
+from datetime import datetime, timezone
+
+# Which plane owns a fix. A residual attributed to nobody cannot direct anything,
+# so an unrecognised kind is reported as unattributed rather than dropped.
+OWNER = {
+    "TemporalResidual": ("refresh schedule", True),
+    "IdentityResidual": ("AddressPlane and Matrix", True),
+    "RetentionResidual": ("hydration regime", True),
+    "EvidenceQualityResidual": ("admission law", True),
+    "MarketResidual": ("provider market", False),
+    "CapitalResidual": ("finance", False),
+    "EvidenceResidual": ("evidence production", True),
+    "PartnerResidual": ("partnerships", False),
+}
+
+
+def iso_now() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def run_json(argv: list[str]) -> dict | None:
+    """Run a source command and read its receipt.
+
+    Leading VAR=value words are applied to the environment rather than treated
+    as the program. A caller naturally writes the same string they would type --
+    `BONFYRE_CMS_DB=... python3 scripts/funding_closure.py --json` -- and this
+    execs argv directly, so that arrived as a request to run a program whose
+    name was the assignment. FileNotFoundError with the whole assignment as the
+    filename, and a raw traceback out of a tool whose entire subject is turning
+    unmet needs into legible work.
+    """
+    env = {**os.environ}
+    while argv and "=" in argv[0] and not argv[0].startswith("/") \
+            and argv[0].split("=", 1)[0].replace("_", "").isalnum():
+        key, value = argv[0].split("=", 1)
+        env[key] = value
+        argv = argv[1:]
+    if not argv:
+        print("a --from source names no program, only assignments", file=sys.stderr)
+        return None
+    try:
+        p = subprocess.run(argv, capture_output=True, text=True, timeout=300, env=env)
+    except FileNotFoundError:
+        print(f"a --from source could not be run: {argv[0]!r} is not a program",
+              file=sys.stderr)
+        return None
+    except subprocess.SubprocessError as error:
+        print(f"a --from source failed: {str(error)[:120]}", file=sys.stderr)
+        return None
+    if p.returncode != 0 and not p.stdout.strip():
+        tail = (p.stderr or "").strip().splitlines()
+        print(f"a --from source exited {p.returncode}: "
+              f"{tail[-1][:140] if tail else 'no output'}", file=sys.stderr)
+        return None
+    try:
+        return json.loads(p.stdout) if p.stdout.strip() else None
+    except json.JSONDecodeError:
+        print(f"a --from source produced no JSON: {p.stdout.strip()[:100]!r}",
+              file=sys.stderr)
+        return None
+
+
+def items_from(receipt: dict, source: str) -> list[dict]:
+    """Every organ states residuals differently; the shapes are read, not assumed.
+
+    A source whose shape is not recognised contributes nothing and says so,
+    rather than being silently skipped -- a skipped source looks exactly like a
+    source with no residual."""
+    out: list[dict] = []
+    if not isinstance(receipt, dict):
+        return out
+
+    # gym_run: residual is a mapping of class -> {value, attribution}
+    for name, body in (receipt.get("residual") or {}).items():
+        if not isinstance(body, dict):
+            continue
+        value = body.get("value")
+        if not value:
+            continue
+        owner, closable = OWNER.get(name, ("unattributed", True))
+        out.append({"source": source, "kind": name, "size": value,
+                    "owner": owner, "closable": closable,
+                    "because": body.get("attribution", "")[:160]})
+
+    # funding_closure: residual is class -> {count, requirements[]}
+    for name, body in (receipt.get("residual") or {}).items():
+        if not isinstance(body, dict) or "requirements" not in body:
+            continue
+        owner, closable = OWNER.get(name, ("unattributed", True))
+        for r in body["requirements"]:
+            out.append({"source": source, "kind": name, "size": 1,
+                        "owner": owner, "closable": closable,
+                        "subject": r.get("requirement"),
+                        "because": r.get("because", "")[:160]})
+
+    # funding_frontier: the condition the most routes wait on
+    for cond, blocked in (receipt.get("binding_conditions") or []):
+        out.append({"source": source, "kind": "BindingCondition", "size": blocked,
+                    "owner": "funding frontier", "closable": True,
+                    "subject": cond,
+                    "because": f"blocks a route in {blocked} combinations"})
+
+    # close_consequence: unreconciled obligations
+    if receipt.get("schema", "").startswith("bonfyre-product-close"):
+        n = receipt.get("unreconciled_under", 0) + receipt.get("unreconciled_over", 0)
+        if n:
+            out.append({"source": source, "kind": "ReconciliationResidual", "size": n,
+                        "owner": "finance", "closable": True,
+                        "subject": receipt.get("namespace"),
+                        "because": f"{n} obligations do not reconcile; net "
+                                   f"{receipt.get('net_amount_left')}"})
+
+    # representation_trial: a representation losing candidates
+    for t in (receipt.get("trials") or []):
+        if t.get("false_prunes"):
+            out.append({"source": source, "kind": "PreservationResidual",
+                        "size": t["false_prunes"], "owner": "representation market",
+                        "closable": True, "subject": t["representation"],
+                        "because": f"{t['false_prunes']} candidates lost at "
+                                   f"{t['bytes_per_body']} bytes per body"})
+    return out
+
+
+
+def submit(items: list[dict], endpoint: str, auth: str) -> list[dict]:
+    """Create work through the organ that owns goals, never by writing its store.
+
+    Two properties make this safe to repeat. The dedupe key is derived from the
+    residual itself, so the same measured gap produces the same goal however many
+    times this runs -- a queue that grows by one entry per invocation is worse
+    than one that never fills. And only closable items are submitted: an item
+    past the human line is not a low-priority goal, it is not a goal, and putting
+    it in a build queue invites the two to be traded off.
+
+    Cannot infer: a created goal is an approved one. It is a proposal the
+    operator will schedule; nothing here decides it should be done."""
+    import hashlib
+    import urllib.request
+    created = []
+    for item in items:
+        if not item.get("closable"):
+            continue
+        subject = item.get("subject") or item["source"]
+        key = "residual:" + hashlib.sha256(
+            f"{item['kind']}|{subject}|{item['owner']}".encode()).hexdigest()[:16]
+        title = f"Close {item['kind']} on {subject}"
+        details = (f"{item['because']}\n\n"
+                   f"Owner plane: {item['owner']}\n"
+                   f"Measured size: {item['size']}\n"
+                   f"Source receipt: {item['source']}\n\n"
+                   "Raised from a measured residual. The measurement states the gap; "
+                   "it does not state that closing it is the right next move.")
+        body = json.dumps({
+            "jsonrpc": "2.0", "id": 1, "method": "tools/call",
+            "params": {"name": "operator_goal_add", "arguments": {
+                "title": title[:120], "details": details,
+                "priority": min(90, 40 + int(min(float(item["size"]), 50))),
+                "source": "residual-to-work", "dedupe_key": key}}}).encode()
+        request = urllib.request.Request(
+            endpoint, data=body,
+            headers={"Content-Type": "application/json", "Authorization": auth})
+        try:
+            with urllib.request.urlopen(request, timeout=60) as response:
+                answer = json.loads(response.read().decode())
+            created.append({"kind": item["kind"], "subject": subject,
+                            "dedupe_key": key,
+                            "accepted": "error" not in json.dumps(answer).lower()[:400]})
+        except Exception as error:  # noqa: BLE001
+            created.append({"kind": item["kind"], "subject": subject,
+                            "dedupe_key": key, "accepted": False,
+                            "error": str(error)[:100]})
+    return created
+
+
+def main() -> int:
+    sources = []
+    for i, a in enumerate(sys.argv):
+        if a == "--from" and i + 1 < len(sys.argv):
+            sources.append(sys.argv[i + 1])
+    if not sources:
+        print("usage: residual_to_work.py --from '<command producing a json receipt>' "
+              "[--from ...] [--json]", file=sys.stderr)
+        return 2
+
+    items: list[dict] = []
+    unread: list[str] = []
+    for cmd in sources:
+        receipt = run_json(cmd.split())
+        if receipt is None:
+            unread.append(cmd.split()[-1] if cmd.split() else cmd)
+            continue
+        found = items_from(receipt, receipt.get("schema", "unknown"))
+        if not found:
+            unread.append(receipt.get("schema", cmd))
+        items.extend(found)
+
+    # Closable first, then by size. An item nobody can close is not a small task,
+    # it is not a task, and ranking it against build work invites the two to be
+    # traded off.
+    buildable = sorted((i for i in items if i["closable"]),
+                       key=lambda i: -float(i["size"]))
+    waiting = sorted((i for i in items if not i["closable"]),
+                     key=lambda i: -float(i["size"]))
+
+    write = "--write" in sys.argv
+    endpoint = os.environ.get("BONFYRE_OPERATOR_MCP", "http://127.0.0.1:3051/mcp")
+    auth = os.environ.get("BONFYRE_OPERATOR_AUTH", "")
+    submitted = []
+    if write:
+        if not auth:
+            print("refusing to write: no BONFYRE_OPERATOR_AUTH is set, and a goal "
+                  "created without an authenticated path is a goal nobody authorised",
+                  file=sys.stderr)
+            return 2
+        submitted = submit(buildable, endpoint, auth)
+
+    receipt = {
+        "schema": "bonfyre-residual-work.v1",
+        "ran_at": iso_now(),
+        "sources_read": len(sources) - len(unread),
+        "sources_without_a_recognised_residual": unread,
+        "buildable": buildable,
+        "waiting_on_a_decision": waiting,
+        "written": bool(write),
+        "submitted": submitted,
+        "cannot_infer": [
+            "a ranked item -> an approved one",
+            "a residual -> a defect",
+            "the plane named as owner -> who will do the work",
+            "a source with no recognised residual -> a source with no residual",
+        ],
+    }
+    if "--json" in sys.argv:
+        print(json.dumps(receipt, indent=2))
+        return 0
+
+    print(f"  read {receipt['sources_read']} of {len(sources)} sources")
+    if unread:
+        print(f"  no recognised residual from: {', '.join(unread)}")
+    print()
+    print(f"  buildable ({len(buildable)}), by size:")
+    for i in buildable:
+        subj = f" {i.get('subject','')}" if i.get("subject") else ""
+        print(f"    {str(i['size']):>5}  {i['kind']:<26}{i['owner']:<24}{subj[:26]}")
+    if waiting:
+        print()
+        print(f"  waiting on a decision, not a build ({len(waiting)}):")
+        for i in waiting:
+            print(f"    {str(i['size']):>5}  {i['kind']:<26}{i['owner']}")
+    print()
+    if write:
+        okc = sum(1 for x in submitted if x.get("accepted"))
+        print(f"  created {okc} of {len(submitted)} goal(s) through the operator, "
+              f"keyed so a repeat run adds nothing")
+        for x in submitted[:6]:
+            print(f"    {'ok ' if x.get('accepted') else 'FAIL'} {x['kind']:<24}{x['dedupe_key']}")
+    else:
+        print("  nothing was written; --write would create work from these")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

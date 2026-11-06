@@ -1,0 +1,7 @@
+.WORLD frontier-gym
+.COMPONENT met0 BonfyreMeter key=frontier-gym
+.COMPONENT led0 BonfyreLedger account=frontier-gym
+.NET met0.invoice led0.value value
+.TRAN 0 8 0.01
+.PROBE met0.invoice led0.value
+.ON_FAIL branch diagnostic

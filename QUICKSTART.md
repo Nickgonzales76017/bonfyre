@@ -3,6 +3,10 @@
 Choose the shortest path that answers your question. You do not need to build
 the whole estate to understand the machine.
 
+To see finished work before building anything, open the
+[work samples](https://aurekai-work-samples.pages.dev/) or the
+[guides](https://docs.aurekai.work/).
+
 ## Path A — inspect architecture and maturity
 
 This is the safest first path. The Architecture Atlas is the canonical live
@@ -13,12 +17,12 @@ to source or a witness.
 git clone https://github.com/Nickgonzales76017/bonfyre-oss.git
 cd bonfyre-oss
 
-python3 architecture/atlas.py validate
-python3 architecture/atlas.py expand ExecutionView
-python3 architecture/atlas.py expand CapabilityView
-python3 architecture/atlas.py expand EvidenceView
-python3 architecture/atlas.py get work-graph
-python3 architecture/atlas.py loss
+bun architecture/atlas.mjs validate
+bun architecture/atlas.mjs expand ExecutionView
+bun architecture/atlas.mjs expand CapabilityView
+bun architecture/atlas.mjs expand EvidenceView
+bun architecture/atlas.mjs get work-graph
+bun architecture/atlas.mjs loss
 ```
 
 Read maturity literally:
@@ -113,8 +117,8 @@ Model Commons is larger than one model or quantizer. Begin by inspecting the
 live Model view and a native command's contract:
 
 ```bash
-python3 architecture/atlas.py expand ModelView
-python3 architecture/atlas.py get fpq-transform
+bun architecture/atlas.mjs expand ModelView
+bun architecture/atlas.mjs get fpq-transform
 make -C cmd/BonfyreFPQ
 ./cmd/BonfyreFPQ/bonfyre-fpq --help
 ```

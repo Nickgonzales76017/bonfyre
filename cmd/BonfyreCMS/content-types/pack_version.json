@@ -1,0 +1,39 @@
+{
+  "name": "pack_version",
+  "displayName": "Pack Version",
+  "description": "An immutable version of a pack, addressed by the digest of its compiled runtime image. Versions never move. What moves is a head, and that is a separate governed act.",
+  "attributes": {
+    "pack": {
+      "type": "string",
+      "required": true
+    },
+    "version": {
+      "type": "string",
+      "required": true
+    },
+    "root": {
+      "type": "string",
+      "required": true
+    },
+    "parent_root": {
+      "type": "string",
+      "required": false
+    },
+    "changed": {
+      "type": "string",
+      "required": true
+    },
+    "image_bytes": {
+      "type": "integer",
+      "required": false
+    },
+    "proof": {
+      "type": "string",
+      "required": false
+    },
+    "status": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

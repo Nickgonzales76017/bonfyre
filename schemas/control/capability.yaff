@@ -1,7 +1,7 @@
 schema Capability
 generation control-1
 authority native-kernel
-absorbs 10-Code/BonfyreControlPlane/capability_catalog.py
+absorbs components/BonfyreControlPlane/capability_catalog.py
 note generated, never hand-maintained; the 91 public identities are the namespace
 
 field public_identity

@@ -1,0 +1,40 @@
+pack doom-guest-definition
+generation control-1
+source_plane run5_recursive_external
+item_kind proof_frontier
+source_ref campaign:doom-guest
+note What Doom is, here. Not a program to port and not a picture to produce: a body and a log. Everything this campaign measured follows from taking that seriously, and everything it got wrong came from treating Doom as a source tree instead.
+
+claim clm:doom-is-a-body-and-a-log
+  status STANDING
+  verification MEASURED
+  claim A game of Doom is the pair of a body identity and a command log. The body is the engine at one commit, one platform file and one WAD, each named by hash. The log is the keys and tic counts committed so far. State, frames and outcome are all functions of that pair.
+  evidence fixtures/e1m1.cmds is 15868 bytes; replayed by a fresh process against the named body it reaches the intermission at tic 5370
+  evidence the guest reads no wall clock: its time is the tic count, so the same log lands in the same place however long each decision took
+  consequence a save is a log prefix, a spectator is a second replay, a dispute is settled by replaying, and a recording of any length costs what its log costs
+
+claim clm:a-branch-is-a-candidate
+  status STANDING
+  verification MEASURED
+  claim A fork of the live guest is candidate state in the institution's own sense. It may be computed freely and compared; it is not Actual until its first step is appended to the log.
+  evidence the runtime organ's branch verb ran 88281 forks to commit 577 steps; no fork moved the guest
+  consequence the same footing the opportunity engine has: reachability is computed, and nothing is committed past the line except by a commit
+
+claim clm:what-the-simulation-depends-on-is-an-experiment
+  status STANDING
+  verification MEASURED
+  claim Which bytes of the body the simulation depends on is found by removing them and replaying an oracle, not by reading the format.
+  evidence pictures, flats, palette, sound and music were removed and 12000 tics of the three id demos replayed with an identical world-hash chain; the witness was lost in a restart and the layer is untested until re-run
+  evidence the REJECT tables look like an optimisation and are not: zeroed, the random index diverged at tic 1011
+  consequence a body has two sizes, the one that restores every byte and the one that restores every tic, and only replay tells them apart
+
+claim clm:the-player-is-outside-the-definition
+  status STANDING
+  verification MEASURED
+  claim Who chooses the next step is not part of what Doom is. Search over branches, a language model, a person at a keyboard or a spoken word all end as lines in the same log.
+  evidence the level that finished was finished by ranked branches with no model; a model given route words followed them through four sectors and finished nothing
+  consequence a player is judged by the log it produces against the same body, which makes players comparable and their claims replayable
+
+forbidden_inference a body and a log -> the game as people mean it; the gameplay-exact body renders blank and silent
+forbidden_inference one finished level -> the episode; three further maps ran out of budget
+forbidden_inference a definition that held for Doom -> one that holds for a guest that reads the clock, the network or a random device

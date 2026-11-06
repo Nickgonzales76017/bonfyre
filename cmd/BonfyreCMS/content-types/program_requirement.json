@@ -1,0 +1,52 @@
+{
+  "name": "program_requirement",
+  "displayName": "Program Requirement",
+  "description": "One open obligation a running program carries: evidence that must exist, an action that must happen, a source that must be read, a report that must be made. A requirement is an obligation this estate records, never a statement that the obligation has been met, and never authority to meet it.",
+  "attributes": {
+    "requirement_id": {
+      "type": "string",
+      "required": true,
+      "uniqueWithinNamespace": true
+    },
+    "instance_id": {
+      "type": "string",
+      "required": true
+    },
+    "kind": {
+      "type": "string",
+      "required": true
+    },
+    "statement": {
+      "type": "text",
+      "required": true
+    },
+    "owner": {
+      "type": "string",
+      "required": true
+    },
+    "satisfied_by": {
+      "type": "string",
+      "required": false
+    },
+    "evidence_ref": {
+      "type": "string",
+      "required": false
+    },
+    "deadline": {
+      "type": "string",
+      "required": false
+    },
+    "state": {
+      "type": "string",
+      "required": true
+    },
+    "cannot_infer": {
+      "type": "text",
+      "required": true
+    },
+    "status": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

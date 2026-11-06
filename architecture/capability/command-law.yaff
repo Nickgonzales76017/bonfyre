@@ -16,11 +16,69 @@ architecture command-law
   forbidden_inference same domain -> same law
   forbidden_inference a law label -> a proof the algebra holds
   command BonfyreDiscipl
-  source_path components/BonfyreControlPlane/command_laws.py
-  source_path components/BonfyreControlPlane/command_advertisements.py
-  witness components/BonfyreControlPlane/tests/test_command_advertisements.py
+  source_path components/BonfyreControlPlane/command_laws.py.archive
+  source_path components/BonfyreControlPlane/command_advertisements.py.archive
+  witness components/BonfyreControlPlane/tests/test_command_advertisements.py.archive
   publishes CommandAdvertisement
-  known_gap the whole 91-cmd surface (94 dirs, 87 built) is advertised as CommandAdvertisements mapped to the capability each provides (BonfyreAuth->Authority, BonfyreLedger->Value, BonfyreFPQ->FPQRepresentation, ...) and served in the fabric; binding each advertisement's consumes/produces into DisCIPL composition is the next step
+  known_gap 27 artifact/media commands now seed native DisCIPL families and data-flow contracts; the remaining advertised estate still needs verified consumes/produces grammar before it may join composition
   interacts capability-lattice
   interacts discipl-composition
+  interacts command-law-seeds-discipl
   source_lineage run6/run7 second deep read -- 91 commands as deep calculi
+  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
+architecture witness-enforcement
+  canonical_name WitnessEnforcement
+  family institutional
+  domain Institutional
+  maturity measured
+  semantic_question Is a claimed measurement backed by evidence anyone can open today?
+  # The atlas states no maturity laundering as its first non-negotiable rule and
+  # checked only that a witness list was non-empty. Any sentence satisfied it, so
+  # `witness a bounded proof artifact` passed the guard against claiming a
+  # measurement without one. The rule forbade an absent witness, not a fictional
+  # one, and eight claims rested on evidence that had been archived or deleted.
+  node_types Witness
+  node_types MaturityClaim
+  edge_types supports
+  state_types live
+  state_types archived
+  state_types missing
+  invariant a measured or proven claim carries at least one witness that can be opened or run today
+  invariant a witness naming a file must have that file, with home-relative paths expanded; ten substrate proofs live outside the tree and a checker that failed to expand them would report every one as missing, which is how a false alarm becomes a reason to distrust the check
+  invariant an archived witness beside a live one is historical context; an archive standing alone is a claim whose evidence was retired and never revisited
+  invariant a prose witness is left alone rather than failed, because some evidence genuinely is a description of an external result -- and it is reported as unverifiable rather than counted as verification
+  invariant the failure message names which kind of nothing it found; a missing file and a retired one have different fixes and naming the wrong one sends the reader to the wrong place
+  forbidden_inference a listed witness -> a real one
+  forbidden_inference a proof file that exists -> a proof that reproduces
+  forbidden_inference state passed inside a proof -> a currently passing check
+  computational_form validation
+  native_format yaff
+  source_path cmd/BonfyreAtlas/src/main.c
+  witness bun test architecture/tests/atlas_core.test.mjs
+  measured enforcement withdrew 8 of 57 measured claims: one repointed at a live suite, seven demoted to implemented because every witness they carried had been archived
+  known_gap the ten substrate semantic-proofs carry an output_digest that reproduces from nothing available; re-running egglog's own program gives the asserted term and a different digest, so the proofs are readable and not re-verifiable
+  known_gap 63 interactions carry prose witnesses that no check can verify; they are reported rather than failed, and nothing yet distinguishes an honest description from a placeholder
+  internal_calculus a source_path is held to the same standard as a witness: a claim resting on a file that does not open rests on nothing, and the reader cannot even go and look
+  internal_calculus an architecture whose every source is archived is not an implementation; it may still describe something native, and it has to say which in a known_gap rather than let the maturity imply it
+  internal_calculus a witness is often a real file followed by what it proves, so the path is read from the first token and prose alone still counts -- reading it more narrowly reported two live measurements as unwitnessed
+  source_path architecture/check_maturity_backing.py.archive
+  source_path cmd/BonfyreAtlas/src/main.c
+  witness cmd/BonfyreAtlas/tests/backing.sh verifies native validation rejects missing source paths, unexplained archive-only backing and missing or archived measurement witnesses, then accepts restored backing and explicit retirement gaps
+  witness 2026-09-19 the rule found what it was written for: eight source paths naming files that do not exist in this checkout, one measurement resting entirely on another company's repository, and thirty architectures standing on archived code without saying so -- all thirty of which had passed validation for as long as the rule went unenforced
+  witness 2026-09-19 removing the honest known_gap from command-law made validation fail with that architecture named, and restoring it passed; the rule is enforced rather than described
+  forbidden_inference an architecture that validates -> an architecture that runs
+  known_gap the thirty retired entries now say they stand on archived code; none of them yet names the native owner that took the work over, so the gap is visible rather than closed
+  internal_calculus a test is not a caller: an organ can pass every assertion it makes about itself and still be reached by no path in the estate, and `implemented` says nothing about which
+  source_path architecture/check-organ-callers.mjs
+  source_path cmd/BonfyreAtlas/src/build_edges.h
+  source_path cmd/BonfyreAtlas/build-edges.cue
+  witness cmd/BonfyreAtlas/tests/build-edges.sh retains the former JS audit's text and JSON on six directory twins, covering command and component binary matches, older and alternate builds, missing installs and Atlas entries, delegation, strict mismatch refusal and recovery
+  invariant build-edges reads current YAFF and reports simple Makefile source assignments, installed hashes and source modification times without changing either build or installation
+  forbidden_inference matching installed bytes or a directory twin -> an obsolete capability or permission to retire either tree
+  known_gap build-edges reads simple assignments rather than evaluating Makefile variables or continuations; its report preserves the previous audit's scope
+  source_path architecture/check_organ_callers.py.archive
+  witness architecture/tests/check-organ-callers.test.mjs proves an organ's source and tests do not count as callers and a separate command caller does
+  witness 2026-09-19 check_organ_callers.py found eight of twenty-nine native organs called by nothing outside their own source, header and tests: commerce, actor, agent_contract, corroboration, occurrence_origin, retention, semantic_operator and standing_address. Callers were written for commerce and retention the same day, leaving six
+  witness 2026-09-21 check_organ_callers.py indexes supported source files once, completes in under two seconds and finds every one of 29 native organs has an external caller; --strict passes
+  witness cmd/BonfyreActors/tests/organ_callers_test.sh exercises the six previously-unreached native caller CLIs and their refusal boundaries
+  known_gap the caller audit proves a reachable caller, not scheduled or deployed use; these six are explicit operator CLIs until their owning ingest, worker or surface path binds them.

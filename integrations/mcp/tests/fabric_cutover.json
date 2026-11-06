@@ -1,0 +1,616 @@
+{
+  "schema": "bonfyre.owner-cutover.v1",
+  "measured_at": "2026-10-03T03:07:05.830Z",
+  "service": "gui/503/com.bonfyre.dual-agent-fabric",
+  "previous": {
+    "pid": 995,
+    "program": [
+      "/opt/homebrew/bin/python3.12",
+      "/Users/nickgonzales/.bonfyre/dev-fabric/broker_server.py"
+    ],
+    "exited": true,
+    "rollback_plist": "/private/tmp/bonfyre-owner-cutover.TRXdd8/original.plist",
+    "database_backups": [
+      {
+        "source": "/Users/nickgonzales/.bonfyre/dev-fabric/fabric.sqlite3",
+        "path": "/private/tmp/bonfyre-owner-cutover.TRXdd8/database-0.sqlite3",
+        "sha256": "c46115eff7435a5dc0e0ddb4a3117bb54fe8b5b88fe41e4109c31eecf597c20a"
+      }
+    ]
+  },
+  "installed": {
+    "pid": 42525,
+    "program": [
+      "/Users/nickgonzales/.bun/bin/bun",
+      "/Users/nickgonzales/Developer/Bonfyre/integrations/mcp/fabric_server.mjs"
+    ],
+    "non_program_configuration_unchanged": true,
+    "source_sha256": {
+      "integrations/mcp/fabric_server.mjs": "f77385fa3dfd4fe1cde46cc04e85fe3d66f3a1e7bdcfdf7cf7375c5409e84cfa",
+      "integrations/mcp/fabric_store.mjs": "5ccbe961be93b6756de4dc199af8eb162e561b75fd1c08a9ac8a6e43f498579c",
+      "integrations/mcp/fabric_schema.sql": "c5178cdb21288f518bfa9eec0bbb74291af0c173b4bfb1e9d23dc655590160b5",
+      "integrations/mcp/fabric_work.mjs": "7cd9796b83f422d07667879d2150a636518e7e83b399a2347d5809f6062c1116",
+      "integrations/mcp/fabric_estate.mjs": "5d972c7096168206280c0186885df8019c983a732fbbc12ad0a49f8d81b93819",
+      "integrations/mcp/fabric_catalog.json": "5e0d8700519d904b15bac192087b2afa999246ffc8e7b473764ccb2c0ea56b3c",
+      "integrations/mcp/owned_mcp_client.mjs": "4a6270bb14f6eed34913ebeb158c5be947617ce1d80fc21f1704edb7352deff0",
+      "integrations/mcp/http_boundary.mjs": "7379b4f14d865afd0884d7d4720b7b7f76bd4a52c6a40812129bd736b1f78073",
+      "integrations/mcp/canonical_json.mjs": "8bdfbc672b4b0a1b017e3f437f46af5c84d1e40a6ddba6185fb6b8c5b92bc386",
+      "integrations/mcp/project_runtime.mjs": "5f192716ea7f18e5f7d30763900d443fa8dee8b06eb8ec6a43591f1f0aeb1ede",
+      "integrations/mcp/recursive_server.mjs": "182cfb76b8ad92892e941ffb54d5c1148951999c65d8d6165122ddb3ae0c90a4",
+      "integrations/mcp/recursive_store.mjs": "93803dee205b9efb81dce8e5c877a7915a0f058b02131dd0aeaa1f570a900a69",
+      "integrations/mcp/recursive_schema.sql": "1a990edc0eda3aa2d36a3ac9526947c9de3d601edce49a2e897ab420320a44c1",
+      "integrations/mcp/recursive_catalog.json": "86378fd001f27132f6c167e96cec8672664c44acaecf06399778f159afeb9c9a",
+      "integrations/mcp/canary_server.mjs": "f78c81bce71c2db9da8d73954b62e8e310d15a4c9aacce1ade1ac89a73aa6f1f",
+      "integrations/mcp/canary_store.mjs": "0ca8a6e1993b8ff96ff7409aba21963ad9ad3379eb1168bcc0e8ae145d61b2cd",
+      "integrations/mcp/canary_catalog.json": "589f6e6852c472112a52f8938e7e437eaf8df4ae0c005610f279497db06ada7f",
+      "integrations/mcp/canary_fixtures.mjs": "4705009b2302efb2786217df4dea4d2341303e42ce11c4ed6eab8bcf2ea4ab3b",
+      "integrations/mcp/canary_reviewed_scripts.json": "2a33a8ad0ac112063d6c877e8827ffc9f7dc5fb8416f037b8916da656e51d417",
+      "integrations/mcp/project_node.mjs": "8bc6f2c0ac4e239d4fbb32b8e24f04a011932d6cd6af035c5a9b615c3d4fb7cb",
+      "integrations/mcp/tests/fabric_live_witness.mjs": "47f7d51d085ec31aa6db0650d481fa60a55c823fc0148f4f7ad6743f12d0e848",
+      "integrations/mcp/tests/recursive_live_witness.mjs": "cb870c69442d23cb8b3a74a8e6c61dd4521ec35ba98a2eb618a86d3ae01f7174",
+      "integrations/mcp/tests/canary_live_witness.mjs": "3a1d0bcdfd5b750c14029cd64c8c6d28c47f930512167b51280d5384245eb48d",
+      "integrations/mcp/tests/project_live_witness.mjs": "81a802da7ea87717dd1bed03b76f29c2646e1774e1b549b3a47e06cf81a0f7b4",
+      "deploy/launchd/service_cutover.mjs": "4c8d092d2ba467ab40c6161df2f96f607a21b9b0e7b4649b9d2775bf9ecbb8d2",
+      "deploy/launchd/fabric_cutover.mjs": "2f31cf205911f300fd50f0e7020416d2b66bfba525fb5c10505a20b0c4bf54b2"
+    }
+  },
+  "before": {
+    "schema": "bonfyre.fabric.live-witness.v1",
+    "measured_at": "2026-10-03T03:06:59.184Z",
+    "runtime": "python",
+    "endpoint": "http://127.0.0.1:3053",
+    "tool_count": 14,
+    "prompt_count": 4,
+    "catalog_sha256": "05982a30650236ba15f9a418ccc43762a7ba4b92332a5a2330f970f719d38c84",
+    "unauthorized_events_refused": true,
+    "receipt_metadata_sha256": "92c5a5f7e52867e07ac2591b7679c1cb2124492c8738c63cda7514af4a701007",
+    "task_detail_sha256": {
+      "961ce2f8bd4f41bda09e341d": "4fe6be33d1aef7c5eb477a621848d2bc20c9da5639ebca6025ce62f7646ed6dc",
+      "2a8af8216e2e4267abf860d5": "45d557c56a21d071a3dd8e8d0d59ffdf00de69c19bdbef54b676b3a65375cde0",
+      "33f97bdfb1654c85aac08421": "d7489f87399666c34988b3b0be435f917cbe349bc5e19b7c045931b4a2599cfe",
+      "7ffea9eac3284223bc144548": "6e4f9bce588b2782043460bf927f599c66dae094fcabbb8cf12a4f6d9d059d04",
+      "28e290e45aef415a8d606d95": "5c8b5e6459b4676d48a6971bc496724c48675b4021fefeb20d4ff1c1d91e4814",
+      "b17ab71a8ff34a96aedf48e7": "4fdc270adb31446de7367bd52e53cf37abe1c69126cd2359aa928fdf31b49a9e",
+      "b27f2fe06041419f812395ba": "e761736ae78f02f1866020f26764544ebc24d6dd2458d4c495f246f5d7d5d90a",
+      "7bce0f35ebbd4df7bdc2bbcf": "d398b29d871d155a4127f0d1782ad298ef686d47d1791b60f28ba107ccd736b3",
+      "c8baf5134a0c4e4083236756": "b05607090a70c84a0c53c92f3997afd79f15b3f756367a7425806ab2ce23916c",
+      "ef3eb91c3ec5424d893bc570": "2ea3c3282bd683fb3f44730ec482e3e01a0ead29104ec01baabec7d6f147bcff",
+      "c07b18d0bf624762b3b0285c": "0a276c24acd636440647063089dbd921667c6ff4df4da127ae7de9b1bb1cf2fa",
+      "0470a8a779c24114be8e7c35": "313f3153a0731efb50d79954269655e72acc3ad95d82f47bef92ee39a8a125d0",
+      "48729a56495e4981bec70395": "6b7fe3b4a595b8eecae6e0ca73a7778d3fe9f75b4c03e5cce4164b6d67a3979b",
+      "76978d9a7144453e870b209e": "8441757e7498a152cb295f68162ae3203488dbee15e94e544f94271bdb33937b",
+      "c59bcb31bd274e21881d221b": "eaae853d86429d13506c46f55e4d3bd0356b672952ee732d4b792269301a8824",
+      "05be8072908b4014a221d120": "bd281b4d83ed96f7f8cc58b501785ba463d206d72be2d45a4a94e8447c21d8bd",
+      "c3fbf6fd7bf44fc4a30b6ef4": "f9583cbc156c0109a0367abae58c48cc0cc2085ddc353664dc05837e110cdb8c",
+      "7c221481168d47c5b935d802": "0c1bca304e85c6b0ac8e87e6e94d912f92696e7aaab885b030a33d500e56c703",
+      "1a7f57d3e4d0459e9316732d": "b9d636a8ce46cde3b173fe6282d41126be381875c27ed44482f78f7fc1cb7f9c",
+      "66b36ea185d04280b6191fd2": "a67f7bd6c950fa1b21f9a2e655eea0a45a0c127faf396f695762a38db40eb712",
+      "e8222369275d4b0fa99537c7": "03e456fdb9a37615b90a9d1c5550761ccf1c8e21146d3ca48508cdee1a96c20e",
+      "381a93ee35134485976befad": "98e3de7483b69116e9e416f0fef92a3d503eb9fd536b43b97d07bcef7e8170e9",
+      "0517e123c84a429aa6a15530": "e808dd2c50d2e9e87913b2ddf3827fce74909b3f71f63f20f1ab3790b0f08090",
+      "1d8e04cb2e80423790fe91e8": "c5007c6239982603c7d23b9ad456f5d81bd06859572f2564918569b61e184698",
+      "f38aac6e29fc479591ad83d2": "d37b3346f4eca73ec9bc283a6e32541f7bbdd69cfb0c012899e37f73348a8915",
+      "ef365ce9dfb1432489ecccdf": "16eae25dc81d851b83428c2ffd4998fd62ac9893512e61f0de8f56ad37ad70f5",
+      "b1e332bebe934f1ab9dac72b": "c8e9058f3517af2af545c9d2523a61e221bc21529d4be4e5aa74ec243399f274",
+      "525b9be6e64c4710b2f82a71": "160e4a40343273d03d19016a79855c263e00fd37e17815d9dc244f2ffbd820b5",
+      "3a44bfed6d5446ea822982cb": "e4cc2bc514083ee57afc774354cb4f4386914191ca34f05510f3c552df15a9c5",
+      "86a4d20bdccf49d99f4f3125": "dd1f55a8340810bfa14458e579efe28da7fa703aadf850621ac50f920417f2e4",
+      "1632d77197e1469e9547eb26": "5094f2b6bb52f7b68b94a88202ee8c422127cb08ca3d4e2a931847c0e06a7b39",
+      "4f275728103c4c37a4f5aa25": "4856ecaaf58cd460540777e910862fb03bd88e0cd70f49fe7e5ef61555ebaa75",
+      "da02177c192946e59f78c5b2": "dc34debaac4f4baad0cfbe0f38677729e3d2c0a8fb8d7f54bd9d29c7968fc9ad",
+      "8bce75dfc9b24d4db3431c2c": "1162325c61370c48d49660203fcb17ca08617607d64c9ee4e10adc12e0a0ab83",
+      "79de9cd3b69640568048989a": "488ce39eba55dfa7db25a29f17b0a8db429a5afb7e90745282a304458c073cb0",
+      "efe632e283ff435294d959cd": "6de2ed83b00d635d65e1f857a3d15d0bdd2cbea63cff32d9c745176b13e9286f",
+      "3c9b6a6c69054de5b759393a": "fb0c3791b67e30ef06467ef8c20732728a2885a71d306de684dc4bfa0a7c9a5c",
+      "e9dfbb93fe6e428d8b41ece3": "aaf5dcd7c2e1052bddbf6243da00073f5ecad6275097b93d364ef54bc105468b",
+      "6a3d3f0fc2ed4c4e84cb11bd": "20cbd4090f5d9a4c24265c8c4c8d161df0551aa92773042762b493eada22552f",
+      "d533c9a602f743e285a4c5f6": "c72c83a9fba8e25ccd9cb8c27af5eca57843ae1a790b6dca5573fc0863fc09fc",
+      "635f8b859c4b40daae799856": "ca9ba9e6d3f3481d2e763922a17c0902de287dc99fd759a7122a7cf30d846873",
+      "952d0ecf3d8f4e8699587c47": "ecc47850d20daf960a7db01d8eb00248d05adeef6ecc3cf3c0c24d0e18bc038f",
+      "9c6482d5d1334f85b5644551": "f5acea07f7db794e2b009fc4da3ea9ca4724f585f960de34dd4e87c7516b0f40",
+      "833c9f31c74b4246810633d2": "e44cd2058d4a078d99b391a76eedb4b652179dae26108a25762c3ae4b40d82c9",
+      "78b69d6b06834b7dbc95a248": "aef7d2574ef6d844f093d900a44d6ff9ad1d075df5ded9655256ba21344c3e62",
+      "a743157e680a451cacc6919d": "517af5dca1c248a2ca09ce4b33dbf7412a0c40a2a388815a26c3d3a63e14bf3b",
+      "164db8b3af6a4008ba96d803": "52d766a4d76d0c1f548d3f8c9ca273f185b17cf72ad7a010ff000be4510224f8",
+      "0f77dc9c5bc74b0f823e9015": "d8b7c332bdc3313019cec2d967d8c0e968861899b2c49f6db6c949afdc4647e6",
+      "095ca42f6cb541c785be472e": "f155f5cc7cd595a3b0f40ee8c279cd15a2e2ca7bf3789cbfd594323e882190a2",
+      "eafbd6ccb67840c29c98a134": "04819397bafb9f179178b75b70340cf21ad3eb5aff69722f734515d9fc639549",
+      "6e0af174ec9e4f6b96b14018": "6e361a1c8fce747ac72fa8d72667cbf45f1575a9391d4bc4f89ded5eb06a8ee6"
+    },
+    "events_sha256": "d2181f7a956194bbdd97e1bb983fc84902e24169335b93f9a27adc0f32b90d84",
+    "snapshot": {
+      "source_db_sha256": "c46115eff7435a5dc0e0ddb4a3117bb54fe8b5b88fe41e4109c31eecf597c20a",
+      "tables": {
+        "tasks": {
+          "rows": 57,
+          "sha256": "0f7c10e44533ebc0daba99ae151088f6d1797586c58a35535355260bd5aced2b"
+        },
+        "runs": {
+          "rows": 137,
+          "sha256": "c7d5087dc61035cc2cb87ac984a2588f05958b92a4f93bbb5d4995711a51720b"
+        },
+        "events": {
+          "rows": 3174,
+          "sha256": "2d43c1096e44a7ab016801716e7f98d89bffa46db439d228bc564461ff4a0e34"
+        },
+        "locks": {
+          "rows": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "sessions": {
+          "rows": 131,
+          "sha256": "c21875bebd8904793cfb8e099ecbb2b33f668e60912c01979d40a0e85ff1db37"
+        },
+        "receipts": {
+          "rows": 52,
+          "sha256": "8bb1a23f0ef06b09c417210709095e0e7dd59c96ee040d62ac044809d86f5cab"
+        }
+      },
+      "receipts": {
+        "verified": true,
+        "failures": []
+      },
+      "task_states": [
+        {
+          "state": "cancelled",
+          "count": 2
+        },
+        {
+          "state": "completed",
+          "count": 49
+        },
+        {
+          "state": "failed",
+          "count": 5
+        },
+        {
+          "state": "running",
+          "count": 1
+        }
+      ],
+      "run_states": [
+        {
+          "state": "failed",
+          "count": 72
+        },
+        {
+          "state": "passed",
+          "count": 63
+        },
+        {
+          "state": "running",
+          "count": 2
+        }
+      ],
+      "recorded_nonterminal_tasks": [
+        {
+          "id": "a0cf14c75bc048f8b4d81f8a",
+          "kind": "review",
+          "state": "running",
+          "started_at": 1785454106.682112
+        }
+      ],
+      "recorded_nonterminal_runs": [
+        {
+          "id": "2c7a8d347eda4843839fc3a4",
+          "task_id": "2f06532631b94156a8f50e21",
+          "agent": "claude",
+          "role": "cross-review",
+          "state": "running",
+          "started_at": 1785408742.60782
+        },
+        {
+          "id": "d3bc123770f84dfca4226528",
+          "task_id": "a0cf14c75bc048f8b4d81f8a",
+          "agent": "codex",
+          "role": "cross-review",
+          "state": "running",
+          "started_at": 1785454106.687111
+        }
+      ]
+    },
+    "recent_receipts_http": {
+      "samples": 25,
+      "milliseconds": [
+        14.364750000000072,
+        15.226249999999936,
+        15.357040999999981,
+        14.663874999999962,
+        14.72016700000006,
+        16.12633299999993,
+        16.237209000000007,
+        17.941542000000027,
+        15.994290999999976,
+        15.415875000000028,
+        13.86466699999994,
+        14.878332999999998,
+        17.58062499999994,
+        15.31162500000005,
+        16.70895799999994,
+        17.145209000000136,
+        19.70466600000009,
+        18.123166999999967,
+        14.849375000000009,
+        17.768041999999923,
+        18.11366699999985,
+        15.695958000000019,
+        14.399042000000009,
+        18.0021670000001,
+        17.352790999999797
+      ],
+      "p50_ms": 15.994290999999976,
+      "p95_ms": 18.123166999999967,
+      "scope": "Warm serial loopback receipt reads only; not agent throughput."
+    }
+  },
+  "after": {
+    "schema": "bonfyre.fabric.live-witness.v1",
+    "measured_at": "2026-10-03T03:07:00.540Z",
+    "runtime": "bun",
+    "endpoint": "http://127.0.0.1:3053",
+    "tool_count": 14,
+    "prompt_count": 4,
+    "catalog_sha256": "05982a30650236ba15f9a418ccc43762a7ba4b92332a5a2330f970f719d38c84",
+    "unauthorized_events_refused": true,
+    "receipt_metadata_sha256": "92c5a5f7e52867e07ac2591b7679c1cb2124492c8738c63cda7514af4a701007",
+    "task_detail_sha256": {
+      "961ce2f8bd4f41bda09e341d": "4fe6be33d1aef7c5eb477a621848d2bc20c9da5639ebca6025ce62f7646ed6dc",
+      "2a8af8216e2e4267abf860d5": "45d557c56a21d071a3dd8e8d0d59ffdf00de69c19bdbef54b676b3a65375cde0",
+      "33f97bdfb1654c85aac08421": "d7489f87399666c34988b3b0be435f917cbe349bc5e19b7c045931b4a2599cfe",
+      "7ffea9eac3284223bc144548": "6e4f9bce588b2782043460bf927f599c66dae094fcabbb8cf12a4f6d9d059d04",
+      "28e290e45aef415a8d606d95": "5c8b5e6459b4676d48a6971bc496724c48675b4021fefeb20d4ff1c1d91e4814",
+      "b17ab71a8ff34a96aedf48e7": "4fdc270adb31446de7367bd52e53cf37abe1c69126cd2359aa928fdf31b49a9e",
+      "b27f2fe06041419f812395ba": "e761736ae78f02f1866020f26764544ebc24d6dd2458d4c495f246f5d7d5d90a",
+      "7bce0f35ebbd4df7bdc2bbcf": "d398b29d871d155a4127f0d1782ad298ef686d47d1791b60f28ba107ccd736b3",
+      "c8baf5134a0c4e4083236756": "b05607090a70c84a0c53c92f3997afd79f15b3f756367a7425806ab2ce23916c",
+      "ef3eb91c3ec5424d893bc570": "2ea3c3282bd683fb3f44730ec482e3e01a0ead29104ec01baabec7d6f147bcff",
+      "c07b18d0bf624762b3b0285c": "0a276c24acd636440647063089dbd921667c6ff4df4da127ae7de9b1bb1cf2fa",
+      "0470a8a779c24114be8e7c35": "313f3153a0731efb50d79954269655e72acc3ad95d82f47bef92ee39a8a125d0",
+      "48729a56495e4981bec70395": "6b7fe3b4a595b8eecae6e0ca73a7778d3fe9f75b4c03e5cce4164b6d67a3979b",
+      "76978d9a7144453e870b209e": "8441757e7498a152cb295f68162ae3203488dbee15e94e544f94271bdb33937b",
+      "c59bcb31bd274e21881d221b": "eaae853d86429d13506c46f55e4d3bd0356b672952ee732d4b792269301a8824",
+      "05be8072908b4014a221d120": "bd281b4d83ed96f7f8cc58b501785ba463d206d72be2d45a4a94e8447c21d8bd",
+      "c3fbf6fd7bf44fc4a30b6ef4": "f9583cbc156c0109a0367abae58c48cc0cc2085ddc353664dc05837e110cdb8c",
+      "7c221481168d47c5b935d802": "0c1bca304e85c6b0ac8e87e6e94d912f92696e7aaab885b030a33d500e56c703",
+      "1a7f57d3e4d0459e9316732d": "b9d636a8ce46cde3b173fe6282d41126be381875c27ed44482f78f7fc1cb7f9c",
+      "66b36ea185d04280b6191fd2": "a67f7bd6c950fa1b21f9a2e655eea0a45a0c127faf396f695762a38db40eb712",
+      "e8222369275d4b0fa99537c7": "03e456fdb9a37615b90a9d1c5550761ccf1c8e21146d3ca48508cdee1a96c20e",
+      "381a93ee35134485976befad": "98e3de7483b69116e9e416f0fef92a3d503eb9fd536b43b97d07bcef7e8170e9",
+      "0517e123c84a429aa6a15530": "e808dd2c50d2e9e87913b2ddf3827fce74909b3f71f63f20f1ab3790b0f08090",
+      "1d8e04cb2e80423790fe91e8": "c5007c6239982603c7d23b9ad456f5d81bd06859572f2564918569b61e184698",
+      "f38aac6e29fc479591ad83d2": "d37b3346f4eca73ec9bc283a6e32541f7bbdd69cfb0c012899e37f73348a8915",
+      "ef365ce9dfb1432489ecccdf": "16eae25dc81d851b83428c2ffd4998fd62ac9893512e61f0de8f56ad37ad70f5",
+      "b1e332bebe934f1ab9dac72b": "c8e9058f3517af2af545c9d2523a61e221bc21529d4be4e5aa74ec243399f274",
+      "525b9be6e64c4710b2f82a71": "160e4a40343273d03d19016a79855c263e00fd37e17815d9dc244f2ffbd820b5",
+      "3a44bfed6d5446ea822982cb": "e4cc2bc514083ee57afc774354cb4f4386914191ca34f05510f3c552df15a9c5",
+      "86a4d20bdccf49d99f4f3125": "dd1f55a8340810bfa14458e579efe28da7fa703aadf850621ac50f920417f2e4",
+      "1632d77197e1469e9547eb26": "5094f2b6bb52f7b68b94a88202ee8c422127cb08ca3d4e2a931847c0e06a7b39",
+      "4f275728103c4c37a4f5aa25": "4856ecaaf58cd460540777e910862fb03bd88e0cd70f49fe7e5ef61555ebaa75",
+      "da02177c192946e59f78c5b2": "dc34debaac4f4baad0cfbe0f38677729e3d2c0a8fb8d7f54bd9d29c7968fc9ad",
+      "8bce75dfc9b24d4db3431c2c": "1162325c61370c48d49660203fcb17ca08617607d64c9ee4e10adc12e0a0ab83",
+      "79de9cd3b69640568048989a": "488ce39eba55dfa7db25a29f17b0a8db429a5afb7e90745282a304458c073cb0",
+      "efe632e283ff435294d959cd": "6de2ed83b00d635d65e1f857a3d15d0bdd2cbea63cff32d9c745176b13e9286f",
+      "3c9b6a6c69054de5b759393a": "fb0c3791b67e30ef06467ef8c20732728a2885a71d306de684dc4bfa0a7c9a5c",
+      "e9dfbb93fe6e428d8b41ece3": "aaf5dcd7c2e1052bddbf6243da00073f5ecad6275097b93d364ef54bc105468b",
+      "6a3d3f0fc2ed4c4e84cb11bd": "20cbd4090f5d9a4c24265c8c4c8d161df0551aa92773042762b493eada22552f",
+      "d533c9a602f743e285a4c5f6": "c72c83a9fba8e25ccd9cb8c27af5eca57843ae1a790b6dca5573fc0863fc09fc",
+      "635f8b859c4b40daae799856": "ca9ba9e6d3f3481d2e763922a17c0902de287dc99fd759a7122a7cf30d846873",
+      "952d0ecf3d8f4e8699587c47": "ecc47850d20daf960a7db01d8eb00248d05adeef6ecc3cf3c0c24d0e18bc038f",
+      "9c6482d5d1334f85b5644551": "f5acea07f7db794e2b009fc4da3ea9ca4724f585f960de34dd4e87c7516b0f40",
+      "833c9f31c74b4246810633d2": "e44cd2058d4a078d99b391a76eedb4b652179dae26108a25762c3ae4b40d82c9",
+      "78b69d6b06834b7dbc95a248": "aef7d2574ef6d844f093d900a44d6ff9ad1d075df5ded9655256ba21344c3e62",
+      "a743157e680a451cacc6919d": "517af5dca1c248a2ca09ce4b33dbf7412a0c40a2a388815a26c3d3a63e14bf3b",
+      "164db8b3af6a4008ba96d803": "52d766a4d76d0c1f548d3f8c9ca273f185b17cf72ad7a010ff000be4510224f8",
+      "0f77dc9c5bc74b0f823e9015": "d8b7c332bdc3313019cec2d967d8c0e968861899b2c49f6db6c949afdc4647e6",
+      "095ca42f6cb541c785be472e": "f155f5cc7cd595a3b0f40ee8c279cd15a2e2ca7bf3789cbfd594323e882190a2",
+      "eafbd6ccb67840c29c98a134": "04819397bafb9f179178b75b70340cf21ad3eb5aff69722f734515d9fc639549",
+      "6e0af174ec9e4f6b96b14018": "6e361a1c8fce747ac72fa8d72667cbf45f1575a9391d4bc4f89ded5eb06a8ee6"
+    },
+    "events_sha256": "d2181f7a956194bbdd97e1bb983fc84902e24169335b93f9a27adc0f32b90d84",
+    "snapshot": {
+      "source_db_sha256": "c46115eff7435a5dc0e0ddb4a3117bb54fe8b5b88fe41e4109c31eecf597c20a",
+      "tables": {
+        "tasks": {
+          "rows": 57,
+          "sha256": "0f7c10e44533ebc0daba99ae151088f6d1797586c58a35535355260bd5aced2b"
+        },
+        "runs": {
+          "rows": 137,
+          "sha256": "c7d5087dc61035cc2cb87ac984a2588f05958b92a4f93bbb5d4995711a51720b"
+        },
+        "events": {
+          "rows": 3174,
+          "sha256": "2d43c1096e44a7ab016801716e7f98d89bffa46db439d228bc564461ff4a0e34"
+        },
+        "locks": {
+          "rows": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "sessions": {
+          "rows": 131,
+          "sha256": "c21875bebd8904793cfb8e099ecbb2b33f668e60912c01979d40a0e85ff1db37"
+        },
+        "receipts": {
+          "rows": 52,
+          "sha256": "8bb1a23f0ef06b09c417210709095e0e7dd59c96ee040d62ac044809d86f5cab"
+        }
+      },
+      "receipts": {
+        "verified": true,
+        "failures": []
+      },
+      "task_states": [
+        {
+          "state": "cancelled",
+          "count": 2
+        },
+        {
+          "state": "completed",
+          "count": 49
+        },
+        {
+          "state": "failed",
+          "count": 5
+        },
+        {
+          "state": "running",
+          "count": 1
+        }
+      ],
+      "run_states": [
+        {
+          "state": "failed",
+          "count": 72
+        },
+        {
+          "state": "passed",
+          "count": 63
+        },
+        {
+          "state": "running",
+          "count": 2
+        }
+      ],
+      "recorded_nonterminal_tasks": [
+        {
+          "id": "a0cf14c75bc048f8b4d81f8a",
+          "kind": "review",
+          "state": "running",
+          "started_at": 1785454106.682112
+        }
+      ],
+      "recorded_nonterminal_runs": [
+        {
+          "id": "2c7a8d347eda4843839fc3a4",
+          "task_id": "2f06532631b94156a8f50e21",
+          "agent": "claude",
+          "role": "cross-review",
+          "state": "running",
+          "started_at": 1785408742.60782
+        },
+        {
+          "id": "d3bc123770f84dfca4226528",
+          "task_id": "a0cf14c75bc048f8b4d81f8a",
+          "agent": "codex",
+          "role": "cross-review",
+          "state": "running",
+          "started_at": 1785454106.687111
+        }
+      ]
+    },
+    "recent_receipts_http": {
+      "samples": 25,
+      "milliseconds": [
+        9.85162500000024,
+        53.56891600000017,
+        6.018750000000182,
+        6.440333999999893,
+        10.668084000000363,
+        9.270540999999866,
+        8.407292000000325,
+        6.244041000000379,
+        6.998999999999796,
+        6.909125000000131,
+        6.626999999999953,
+        12.57445800000005,
+        7.755999999999858,
+        6.425499999999829,
+        6.202499999999873,
+        6.050750000000335,
+        6.097500000000309,
+        7.45712500000036,
+        5.643750000000182,
+        6.199207999999999,
+        16.38608400000021,
+        7.089832999999999,
+        6.686666000000059,
+        11.619375000000218,
+        7.373708000000079
+      ],
+      "p50_ms": 6.998999999999796,
+      "p95_ms": 16.38608400000021,
+      "scope": "Warm serial loopback receipt reads only; not agent throughput."
+    }
+  },
+  "cli": {
+    "installed": false
+  },
+  "refreshed": [
+    {
+      "service": "com.bonfyre.recursive-substrate-v5",
+      "previous_pid": 75918,
+      "pid": 42545,
+      "witness": {
+        "schema": "bonfyre.recursive.live-witness.v1",
+        "measured_at": "2026-10-03T03:07:01.615Z",
+        "endpoint": "http://127.0.0.1:3055",
+        "version": "5.1.0-recursive-r1",
+        "runtime": "bun",
+        "tool_count": 22,
+        "prompt_count": 2,
+        "catalog_sha256": "639d5c1088e88cc082835a70f962b40a06cad5715b44f3e7fefd0591005ee438",
+        "unauthorized_status_refused": true,
+        "token_binary": "/Users/nickgonzales/.local/bin/bonfyre-token-fabric",
+        "token_binary_status": {
+          "argv": [
+            "/Users/nickgonzales/.local/bin/bonfyre-token-fabric",
+            "status"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"status\":\"ok\",\"service\":\"bonfyre-token-fabric\",\"version\":\"5.1.0-recursive-r1\",\"tokenizers\":[\"byte-utf8-v1\",\"unicode-scalar-v1\",\"lexeme-v1\"]}\n",
+          "stderr": "",
+          "duration_ms": 8
+        },
+        "counts": {
+          "artifacts": 60,
+          "token_artifacts": 59,
+          "token_chunks": 339,
+          "flux_events": 121,
+          "deltas": 0,
+          "dependency_edges": 72,
+          "affected_closures": 2,
+          "ir_objects": 14,
+          "lambda_motifs": 0,
+          "provider_token_bids": 0,
+          "graph_projections": 0,
+          "runtime_images": 1,
+          "bfp_successor_plans": 0,
+          "receipts": 134
+        },
+        "tokenizers": [
+          {
+            "id": "byte-utf8-v1",
+            "version": "1",
+            "implementation": "bonfyre-token-fabric-rust",
+            "exact": 1,
+            "model_compatible": 0,
+            "metadata_json": "{\"authority\":\"native-rust\",\"scope\":\"canonical-fallback\",\"warning\":\"Not interchangeable with a model vendor tokenizer.\"}"
+          },
+          {
+            "id": "lexeme-v1",
+            "version": "1",
+            "implementation": "bonfyre-token-fabric-rust",
+            "exact": 1,
+            "model_compatible": 0,
+            "metadata_json": "{\"authority\":\"native-rust\",\"scope\":\"canonical-fallback\",\"warning\":\"Not interchangeable with a model vendor tokenizer.\"}"
+          },
+          {
+            "id": "unicode-scalar-v1",
+            "version": "1",
+            "implementation": "bonfyre-token-fabric-rust",
+            "exact": 1,
+            "model_compatible": 0,
+            "metadata_json": "{\"authority\":\"native-rust\",\"scope\":\"canonical-fallback\",\"warning\":\"Not interchangeable with a model vendor tokenizer.\"}"
+          }
+        ],
+        "chains": {
+          "verified": true,
+          "receipt_chain": {
+            "verified": true,
+            "receipts": 134,
+            "head": "0efd64dedbd9b1afe287d77e7506b191d6254506fa7229d4ae1322e85af5e4dd",
+            "failures": []
+          },
+          "flux_chains": {
+            "verified": true,
+            "streams": {
+              "artifact": "5acb36d0506f1b7da7d7f497cab4a5f1766224d3abc81c2a4e4e17094e41dc59",
+              "mission": "16e980e2ab96a7cc4126e03c33ddadfb429384838f603e1f01c91d16d7f7c6b9",
+              "run6.run3.external_campaign": "29df89f04c491758b3b418d5af72e48b5c772c828da851296b7a1a18cddf7ba4",
+              "token": "0705ece07ee6ef17e3ba33526a7bdd811cc9054a8c96bcfd3ffe7156d2ad3f9b"
+            },
+            "failures": []
+          }
+        }
+      }
+    },
+    {
+      "service": "com.bonfyre.fixture-canary-r4",
+      "previous_pid": 76100,
+      "pid": 42597,
+      "witness": {
+        "schema": "bonfyre.canary.live-witness.v1",
+        "measured_at": "2026-10-03T03:07:01.942Z",
+        "endpoint": "http://127.0.0.1:3056",
+        "version": "5.4.0-fixture-canary-r4",
+        "runtime": "bun",
+        "tool_count": 12,
+        "catalog_sha256": "99b473fb44390cf7a3cf393bab5c8395fbcac42c1a36358c1c530b9cd9a21c0c",
+        "unauthorized_status_refused": true,
+        "receipt_chain": {
+          "verified": true,
+          "receipts": 19,
+          "head": "7654bc8856b072c1b1ce47ec5c7fa34ccce52c0597abd6ddb29e87507112b0c6",
+          "failures": []
+        }
+      }
+    },
+    {
+      "service": "com.bonfyre.project-mcp",
+      "previous_pid": 76143,
+      "pid": 42608,
+      "witness": {
+        "schema": "bonfyre.project-mcp.http-witness.v1",
+        "measured_at": "2026-10-03T03:07:05.821Z",
+        "mode": "configured_live_owner",
+        "runtime": "bun",
+        "root": "/Users/nickgonzales/Developer/Bonfyre",
+        "tool_count": 30,
+        "resources": 5,
+        "templates": 2,
+        "prompts": 4,
+        "native_inventory_sha256": "7f799054e3597a6a8c7d1e2f9ee6cfb2be7bac8af86bcd285cc719fdc6a75230",
+        "atlas_summary_sha256": "669194f80fe8f7a875bc465a9f82e31a0abd2f578bca5b84b7e8e986ad114f41",
+        "measurements": [
+          {
+            "name": "project_read",
+            "arguments": {
+              "path": "AGENTS.md",
+              "start_line": 1,
+              "end_line": 30
+            },
+            "parity": "not_compared",
+            "candidate": {
+              "samples": 25,
+              "median_ms": 0.4392920000000231,
+              "p95_ms": 0.869083000000046,
+              "min_ms": 0.2820419999999899,
+              "max_ms": 1.12091700000002
+            }
+          },
+          {
+            "name": "project_tree",
+            "arguments": {
+              "path": "integrations/mcp/tests",
+              "depth": 1,
+              "limit": 500
+            },
+            "parity": "not_compared",
+            "candidate": {
+              "samples": 25,
+              "median_ms": 0.9555829999999332,
+              "p95_ms": 1.646541999999954,
+              "min_ms": 0.8952080000000251,
+              "max_ms": 1.70070800000002
+            }
+          },
+          {
+            "name": "project_status",
+            "arguments": {},
+            "parity": "not_compared",
+            "candidate": {
+              "samples": 25,
+              "median_ms": 109.60787499999992,
+              "p95_ms": 196.08883400000013,
+              "min_ms": 105.22254199999998,
+              "max_ms": 215.22116600000027
+            }
+          }
+        ],
+        "source_sha256": "8bc6f2c0ac4e239d4fbb32b8e24f04a011932d6cd6af035c5a9b615c3d4fb7cb",
+        "limitation": "Local warmed read RPCs only; not a load, durability, native generation, remote Matrix or system-wide scaling benchmark. No operator mutation or generation invoked."
+      }
+    }
+  ],
+  "rollback_policy": "Primary configuration/runtime rollback only; accepted database and artifact writes remain. Already-refreshed Bun dependents retain the compatible shared code and are reverified against restored primary service. Backups require explicit reconciliation, never automatic overwrite."
+}

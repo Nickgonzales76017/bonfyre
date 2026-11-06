@@ -1,0 +1,126 @@
+atlas optimization-registry-federation
+
+architecture registry-federation
+  canonical_name RegistryFederation
+  owns RegistryBinding
+  owns FederatedProjection
+  owns MachineCoverage
+  consumes ArchitectureClaim
+  consumes AnalysisUniverse
+  publishes RegistryBinding
+  publishes MachineCoverage
+  family optimization
+  domain Optimization / Registry federation
+  layer governance
+  semantic_question Where does authoritative reality for this identity live, and can the atlas reference it without importing ownership of it?
+  purpose Answer two different questions separately. The architecture registry answers what has been modeled. The executable registries answer what machinery exists. Federation references one from the other without copying canonical truth, so curing a visibility gap cannot create a second truth.
+  maturity architectural
+  node_types RegistryBinding
+  node_types RegistryKind
+  node_types FederatedProjection
+  node_types CoverageDimension
+  edge_types references
+  edge_types implements
+  edge_types validates
+  edge_types observes
+  invariant a binding is REFERENCE_ONLY; it records where authority lives and never relocates it
+  invariant design law is owned by the architecture registry; executable presence is owned by the executable registries; whether either is true is owned by evidence
+  invariant an architecture claim marked DORMANT never implies its implementation is absent
+  invariant an architecture claim marked active never implies an implementation exists
+  invariant a definition is referenced, never copied between registries; a copy creates a second truth and is a defect
+  invariant atlas validity is one coverage dimension and is never reported as machine completeness
+  invariant a federated projection is rebuilt from source digests incrementally, never by rescanning every registry on every invocation
+  forbidden_inference an identity being absent from the architecture registry -> that identity being absent from the machine
+  forbidden_inference an identity being present in the architecture registry -> an implementation existing
+  forbidden_inference a validator existing -> that validator currently passing
+  forbidden_inference a validator passing -> the substrate being used by anything
+  forbidden_inference architecture record count -> machine completeness
+  interacts architecture-claim
+  interacts readiness-state
+  interacts analysis-universe
+  source_path cmd/BonfyreAtlas/src/main.c
+  witness bun test architecture/tests/atlas_machine.test.mjs proves bound/unbound accounting, reference-only authority and cache invalidation on lineage changes
+  source_lineage Generation-10 registry split discovery, 2026-08-26
+
+  registry_kind design
+  path architecture/
+  owns design law, semantic intent, topology, lineage, proposals, explanatory structure
+  registry_kind canonical-executable
+  path .bonfyre/run8/canonical/estate/
+  owns executable presence, implementations, validators, runtime contracts, physical bodies
+  registry_kind evidence
+  path evidence/ and receipts and measurements
+  owns whether either of the above is actually true
+
+  binding_field claim_id
+  binding_field semantic_identity
+  binding_field registry_kind
+  binding_field authoritative_source
+  binding_field source_path
+  binding_field source_digest
+  binding_field validator_path
+  binding_field evidence_refs
+  binding_field relation
+  binding_field verification_state
+  binding_field observed_at
+  binding_field authority
+
+  relation IMPLEMENTS
+  relation VALIDATES
+  relation MATERIALIZES
+  relation PROJECTS
+  relation DEPENDS_ON
+  relation SUPERSEDES
+  relation OBSERVES
+  relation BENCHMARKS
+  relation DOCUMENTS
+
+  authority REFERENCE_ONLY
+  detail The only legal authority value for a binding. Anything else is a copy.
+
+  coverage_dimension design
+  question how much intended architecture is represented
+  coverage_dimension execution
+  question how much known executable machinery is represented
+  coverage_dimension binding
+  question how much design has a link to implementation
+  coverage_dimension verification
+  question how much implementation has evidence
+  coverage_dimension lineage
+  question how much current design preserves origin and corrections
+  coverage_dimension runtime
+  question how much executable machinery has actually been exercised
+  coverage_dimension projection
+  question how much executable machinery is reachable from products and surfaces
+  coverage_dimension lowering
+  question how much repeated semantic work has been lowered
+
+  existence_ladder exists
+  existence_ladder validated_historically
+  existence_ladder available_on_this_host
+  existence_ladder activated
+  existence_ladder currently_used
+  existence_ladder used_by_a_named_estate
+  existence_ladder measured_under_that_estate
+  existence_ladder eligible_for_lowering
+  existence_ladder_invariant each rung is a separate fact; none implies the next
+  existence_ladder_note collapsing these is the largest remaining false-promotion risk
+
+  admission_rule inference-ceiling
+  detail A claim whose primary basis is a filename, directory name, job name, route name, derived count, interface label, framing analogy or absence from one registry defaults to ASSERTED_BY_INFERENCE with a promotion ceiling of CANDIDATE.
+  raised_by reading the primary source body
+  raised_by a runtime observation
+  raised_by an authoritative query
+  raised_by a validator
+  raised_by a receipt
+  raised_by an independent reconciliation
+  prohibition ASSERTED_BY_INFERENCE alone never justifies creating a semantic owner, removing anything, asserting capability equivalence, eliminating behavior, classifying an effect, assigning authority, lowering, platformizing or retiring
+  rationale three retractions in one session, every one an inference from a name or a derived count; an evolutionary optimizer left unbounded would harden its own guesses
+
+interaction federation-bounds-coverage-claims
+  source registry-federation
+  destination readiness-state
+  relation coverage_constraint
+  preserves the separation between modeled, implemented, exercised and used
+  drops any single completeness number presented as machine state
+  forbidden_inference a validating atlas -> a complete machine

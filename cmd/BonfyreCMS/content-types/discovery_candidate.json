@@ -1,0 +1,20 @@
+{
+  "name": "discovery_candidate",
+  "displayName": "Discovery Candidate",
+  "description": "One publisher a set's criteria were run against, with the verdict and which criterion decided it. A machine may record that criteria matched or missed; only a named person moves a candidate to accepted or rejected, because the criteria compute what is reachable and stop at the human line. A matched candidate has not been read, asked for, or endorsed.",
+  "attributes": {
+    "candidate_id": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "set_id": { "type": "string", "required": true },
+    "root_host": { "type": "string", "required": true },
+    "display_name": { "type": "string" },
+    "verdict": { "type": "string", "required": true },
+    "matched": { "type": "string" },
+    "failed_criterion": { "type": "string" },
+    "decided_by": { "type": "string" },
+    "decided_at": { "type": "string" },
+    "reason": { "type": "text" },
+    "evaluated_at": { "type": "string", "required": true },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

@@ -1,0 +1,48 @@
+architecture media-library
+  canonical_name MediaLibrary
+  family surface
+  domain Media / Personal and community library ownership
+  layer surface
+  semantic_question How do personal Kodi-like media habitats and Jellyfin-like community channels share one MediaProgram representation estate without copying media identity, representation, rights or playback truth?
+  purpose Native owner for library membership, actor-scoped library access, local playback continuity, exact representation planning, and typed human-surface grammar. Personal libraries lower to a personal_media_habitat; community libraries lower to a community_media_channel. Both reference a CMS MediaProgram rather than copying a media body or creating donor applications.
+  maturity implemented
+  owns MediaLibrary
+  owns MediaLibraryAccess
+  owns MediaLibraryMembership
+  owns PlaybackSession
+  consumes MediaProgram
+  publishes PlaybackPlan
+  publishes MediaLibrarySurfaceProjection
+  publishes CandidateAdvertisement
+  node_types MediaLibrary
+  node_types MediaLibraryMembership
+  node_types PlaybackSession
+  node_types PlaybackPlan
+  node_types MediaLibrarySurfaceProjection
+  edge_types contains_representation_reference
+  edge_types grants_library_visibility
+  edge_types resumes_actor_reported_continuity
+  internal_calculus library access -> referenced MediaProgram representations x device capabilities -> direct playable representation | explicit transcode/no-representation refusal; library access -> personal/community grammar -> bounded media surface projection
+  invariant a personal or community library contains references to canonical MediaPrograms; it never creates a second MediaWork, media body, transcript, right, or representation identity
+  invariant an authenticated catalog, surface, playback-plan, session or continuity request obtains its actor coordinate only from the current BonfyreAuth ActorClosure; a caller-provided coordinate may only equal that closure and never selects another actor
+  invariant a playback plan selects an already-declared direct representation only; it never invokes a transcoder, opens a carrier, delivers bytes, creates a watch occurrence or proves viewing
+  invariant actor-reported playback progress is local continuity state only and is never watch proof, evidence, a social relation or a disclosure grant
+  invariant personal_media_habitat and community_media_channel are Aurekai grammars; Kodi and Jellyfin inform vocabulary but no donor backend, skin, database or copied application is introduced
+  invariant MediaLibrary advertisements carry compact forwarding atoms plus owner/verifier/lowerer references only; raw subject identities, access results, rights, representation state and playback state remain out of AddressPlane
+  forbidden_inference MediaLibrary membership -> a media identity, media ownership, licence, right to distribute, stream delivery or watched occurrence
+  forbidden_inference a direct playable representation -> authority to deliver it, a running playback session, a carrier lease or a completed watch
+  forbidden_inference a public library -> public media rights or unauthenticated access to another library
+  forbidden_inference an actor continuity report -> proof of media consumption, a social relationship or evidence standing
+  source_path cmd/BonfyreMediaLibrary/src/main.c
+  source_path cmd/BonfyreMediaLibrary/tests/media_library_test.sh
+  source_path cmd/BonfyreCMS/content-types/media_program.json
+  source_path schemas/control/address-advertisement.cue
+  witness cmd/BonfyreMediaLibrary/tests/media_library_test.sh proves personal access refusal, community access grant, explicit Auth ActorClosure binding/revocation/mismatch refusal at catalog and playback ingress, shared video/audio MediaProgram bindings, direct representation selection, explicit incompatible-codec refusal, local continuity, Kodi-like/Jellyfin-like typed surface grammars, CUE-valid MediaLibrary CandidateAdvertisements, AddressPlane type partitioning and an exact MediaLibrary FactDelta cut
+  interacts media-library-reads-media-program
+  interacts media-library-advertises-address-plane
+  interacts auth-binds-actor-closure-to-media-library
+  interacts mcp-aperture-reads-authenticated-media-library
+  source_lineage Kodi personal-library grammar + Jellyfin shared-library grammar absorbed into one Aurekai media ownership boundary
+  known_gap the current typed projection is a native MediaLibraryCompiler artifact, not yet a WebAddress/SiteProgram reader; it must lower through the existing SurfaceIR and actor closure rather than become an isolated media app
+  known_gap raw --actor commands remain internal owner/compiler paths for durable library administration and deterministic workers. WebAddress and the staged MCP gateway still need to call the authenticated-* ingress forms, which ask BonfyreAuth for a current ActorClosure before catalog or playback-plan exposure
+  known_gap MediaDelivery now owns explicit HLS/DASH/MOQT lease eligibility after rechecking Auth and this owner, and MOQT can validate a lease for a control-only SUBSCRIBE_OK. Actual HLS/DASH manifests and bytes, MOQT object forwarding/relay aggregation, transcode enactment, synchronized Stage, subtitles selection, device-session ownership and watch proof remain separate exact boundaries

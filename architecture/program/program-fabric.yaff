@@ -1,0 +1,267 @@
+architecture program-fabric
+  canonical_name ProgramFabric
+  family capability
+  domain Programs / Institutional capability configuration
+  layer configuration
+  semantic_question How does a subject start running a generalized capability without the estate growing another product, another page tree, or another store?
+  purpose The binding layer that records a subject preparing or using a program and names the existing owners that should participate: its world and slots, SourceFrontier, work and evidence graphs, and Finance. It owns configuration, not those owners' material, work or money. Shared authenticated WebAddress chrome presents private preparation, maintained configuration and exact continuations to the existing work owners.
+  maturity implemented
+  node_types ProgramTemplate
+  node_types ProgramInstance
+  node_types ProgramRequirement
+  node_types FundingWorkPackage
+  node_types ProgramBinding
+  edge_types instantiates
+  edge_types binds_into
+  edge_types obliges
+  edge_types funds_scope
+  internal_calculus a template declares the subject kinds, slots, capability families and owners a program of that kind needs; it is not an instance and names a funding stream only as the kind of stream such work is usually paid by
+  internal_calculus an instance exists only when a real subject uses the program, and adds its slots after whatever that subject's world already publishes, so attaching one never reorders the subject's own composition
+  internal_calculus a program role is lowered by an application only where an application genuinely lowers that material; the rest are published as declared slots that no surface can fill yet, which the machine projection states and the page omits
+  internal_calculus a capability family becomes an open ProgramRequirement rather than a capability_program, because this estate's capability_program is an action contract carrying an authority requirement and a failure projection, and writing one without those would be maturity laundering
+  internal_calculus several funding streams may support one real effort; each is a distinct work package whose scope and cost codes must not overlap another on the same instance, which is what lets one effort funded three ways be told apart from one cost claimed three times
+  invariant an instance owns no material, no work, no evidence and no money; every one of those stays with the owner that already holds it
+  invariant a program never requires a page; a dedicated surface exists only when an institution chooses to expose one
+  invariant a work package's scope stays distinct from every other package on the same instance
+  forbidden_inference a template -> a program anyone is running, an award, an application for one, or any relationship with the funder it names
+  forbidden_inference an instance -> authority to act on anyone's behalf, a funded award, or an entitlement held by the owning subject
+  forbidden_inference a funding work package -> money awarded, applied for, billed, paid, booked, or authorized to spend
+  forbidden_inference an open requirement -> an obligation met, or authority to meet it
+  forbidden_inference a declared slot with no lowering application -> a feature that exists, or one that failed
+  source_path scripts/compile-program-fabric.mjs
+  source_path scripts/program-fabric.cue
+  source_path scripts/compile_program_fabric.py.archive
+  witness scripts/tests/compile_program_fabric.test.mjs
+  source_path cmd/BonfyreCMS/content-types/program_template.json
+  source_path cmd/BonfyreCMS/content-types/program_instance.json
+  source_path cmd/BonfyreCMS/content-types/program_requirement.json
+  source_path cmd/BonfyreCMS/content-types/funding_work_package.json
+  source_path cmd/BonfyreCMS/content-types/program_binding.json
+  witness 2026-09-19 fifty generalized program templates loaded across nine archetypes, and four of them compiled onto one real subject produced 4 instances, 27 slots, 27 program bindings, 45 open requirements and 12 funding work packages without creating a single application, page or route
+  witness 2026-09-19 of the 27 compiled slots, 8 were lowered by an application this estate actually has and 19 were published as declared slots no surface can fill; the lowered ones rendered the estate's own empty characters rather than blank sections, and nick.aurekai.life composed unchanged at 60 KB
+  internal_calculus a program's stated needs are the discovery query: the demand recorded in its collection is asked of SourceFrontier through the ordinary admission chain -- listed, imported under this instance's own label, qualified, and for the pages that answered, qualified again on the feeds those pages declare -- and only what answered is named in the collection
+  source_path scripts/resolve_program_sources.mjs
+  source_path scripts/resolve_program_sources.py.archive
+  source_path scripts/tests/resolve_program_sources_test.mjs
+  invariant only a source admitted by SourceFrontier under this instance's label can enter its collection; a missing published collection is refused rather than marking the source-intake requirement met without an owner
+  witness scripts/tests/resolve_program_sources_test.mjs proves a dry run makes no provider call, a missing instance is refused, and a listed candidate reaches the program collection and closes source-intake only after qualification and admitted SourceFrontier state
+  source_path scripts/bootstrap_funding_frontier.py.archive
+  source_path scripts/bootstrap_funding_frontier.mjs
+  source_path scripts/tests/bootstrap-funding-frontier.test.mjs
+  witness 2026-09-19 the permit program's eight stated needs resolved through the whole chain: 60 addresses listed, 59 asked, 9 publisher-declared feeds found, 3 admitted, and those 3 named in that program's own collection; nothing shortened the chain and the 56 that did not answer are absent rather than assumed
+  source_lineage the earlier Exa-first resolver returned three loosely related sources from sixty listed addresses; that discovery-first path and its hardcoded archetype search dictionary have been replaced by shared owner resolution
+  known_gap a resolved source is named in the collection before anything has read it; items appear only after the standing pass reheats it, so a program collection can name sources whose material is not yet in the archive
+  known_gap resolution binds candidate references and rechecks published source membership, not arbitrary capability fulfillment or finance acceptance; exact execution and acceptance remain with those owners
+  known_gap the fifty templates arrived as an external pack; their archetypes and slot vocabularies are that pack's, not this estate's measured vocabulary, and only the eight roles this estate can lower have been reconciled with its applications
+  known_gap the native program compiler passed fixture parity against the retired Python writer and rolls back a failed compile, but the fifty-template live estate has not been replayed through this cutover
+  source_path scripts/recurring-commerce-load.mjs
+  source_path scripts/tests/recurring-commerce-native.test.mjs
+  witness 2026-10-03 scripts/tests/recurring-commerce-native.test.mjs, run as a script against a temporary native CMS: ten reference provider profiles as external_resource and thirty-six recurring-commerce templates across eight contract shapes compiled into 36 instances, 144 slots, 144 application bindings and 180 open requirements, with billing_connected false
+  witness 2026-10-03 the local estate's program_template holds 86 rows: the fifty earlier templates and these thirty-six (recurring_service 8, discovery_box 7, replenishment 6, hybrid 6, access_pass 4, finite_gift 3, wardrobe_keep_all 1, try_before_buy 1); a dry run of the loader reports nothing to create
+  forbidden_inference a reference provider profile -> a merchant account, a partnership, current price or stock, or a checkout connection with that provider
+  forbidden_inference a recurring-commerce template -> a subscription anyone holds, a charge, a reservation or a delivery
+  source_path scripts/recurring-commerce/draft.mjs
+  source_path scripts/recurring-commerce/catalog.json
+  witness scripts/tests/recurring-commerce-draft.test.mjs holds the draft compiler lifted from the delivered studio to what it was said to do: a monthly anchor on the 31st lands on each month's last day and returns to the 31st; a styling fee already paid is credited against what is kept and returning everything leaves the fee; replenishment is proposed only from a stated observation no more than seven days old and never grants a charge; selection rejects repeats, excluded ingredients, heat over the ceiling and unverified stock, and treats missing ingredients as unverified; a finite gift cannot auto-renew and is counted once; a budget preview leaves try-on, replenishment and mixed programs unpriced; the catalogue maps to ten profiles and thirty-six templates in eight shapes with every bundle naming real templates
+  forbidden_inference a compiled draft or a budget preview -> a merchant connection, consent, an invoice, a payment, a stock reservation, a shipment or an active renewal
+  known_gap the thirty-six recurring-commerce templates and ten provider profiles arrived as an external pack, like the fifty before them. The draft compiler and catalogue are now in this checkout and tested; the studio page itself is not, because a standalone page is not how this estate exposes authoring, and the installed browser workbench now calls the canonical recurring compiler. The live store's rows carry the loader's shorter descriptions rather than the catalogue's, the native witness is a script bun test does not collect, and no instance of any of them runs on a real subject
+
+  source_path cmd/BonfyreExternalEstate/tools/resolve_program_demand.mjs
+  source_path scripts/tests/program_resolution_native.test.mjs
+  source_path cmd/BonfyreLoweringWorkers/src/main.c
+  internal_calculus normal programme compilation and later source refresh consume the same demand resolver; explicit template address_demands are inherited by reference, with existing capability families resolved when no explicit demand contract overrides them
+  internal_calculus existing source, pack, projection, provider and creator descriptors are cut through AddressPlane before any optional residual search; matching a source then rechecks its current published CMS row in the requested namespace
+  invariant source discovery cannot mark a requirement met or overwrite accepted evidence; recompilation preserves authored source membership, presentation order, funding scope and completed state
+  invariant template_ref names one maintained template rather than copying its demand definition into each instance; candidate_refs and resolved_dependency_refs are non-owning projections
+  invariant a changed template or source dependency reaches the existing native FactDelta and MaterialCompiler source-collection handoff; the configured lowerer reruns the existing programme resolver without external discovery and retires the handoff only after successful refresh
+  witness scripts/tests/program_resolution_native.test.mjs and scripts/tests/compile_program_fabric.test.mjs pass native-owner, automatic compilation, withdrawal, namespace, accepted-state, capacity, rollback and actual lowerer refresh tests
+  known_gap ordinary resolution is bounded to 256 candidates per typed cut and explicit collection limits; it refuses incomplete projections rather than silently narrowing them; nutrition formulation belongs to Recipe and bounded bulk video collection belongs to SourceFrontier; this resolver supplies their owner references rather than accepting or running effects itself
+  known_gap active lowerer services must configure the installed programme resolver and Bun runtime; the source and three managed commands were updated, but no public service or standing-worker configuration was restarted in this pass
+
+  source_path scripts/program-workspace-owner.mjs
+  source_path scripts/Makefile
+  source_path cmd/BonfyreWebAddress/src/program_workspace.h
+  source_path cmd/BonfyreWebAddress/src/application_workspace.h
+  source_path integrations/browser/program-workspace.mjs
+  source_path integrations/browser/program-workspace.css
+  native_format MessagePack
+  internal_calculus the shared /programs frontdoor reads published templates and private prepared instances through the native ProgramFabric owner; /apps/_programs carries bounded versioned MessagePack for catalogue, preparation, configuration changes, receipts and declared source work instead of a parallel browser registry
+  internal_calculus WebAddress resolves the live actor, selected subject and scope from native account and membership admission on every request; preparation, configuration changes and source mutations additionally require current write access and an expected binding that still equals that admitted destination
+  internal_calculus a new account preparation derives its site identity from the fixed namespace, subject and scope; it compiles through the same ProgramFabric transaction and retains draft instances, slots, bindings, source collections, open requirements and distinct funding work packages
+  internal_calculus review binds the whole template row, compiler policy and admitted actor/subject/scope; prepare rechecks that digest inside the same immediate transaction that compiles the instance, records its owner receipt and checks the bounded response
+  invariant the browser cannot choose an actor, owner subject, site identity, namespace, database or native program-owner executable; the deployment configures native paths and the edge supplies current admitted identity
+  invariant private readback filters every instance by namespace and owner_subject before reading its requirements, bindings or funding work packages; a template catalogue cannot widen that ownership
+  invariant a retained preparation reopens its deterministic instance without recompiling accepted requirements, authored funding scopes or logical timestamps; changed templates and preexisting unreceipted instances or child identities are refused rather than adopted
+  invariant an observed account change or current access refusal clears prior private browser projections; late replies cannot repopulate the previous destination, and an unconfirmed write keeps the exact instance address for readback before any new preparation
+  invariant private preparation does not publish or demote existing public records and cannot mark a requirement met, select provider credentials or execute an external action
+  invariant installed editor links name current admitted workspace bindings; attached work names a native-verified exact key, revision, release and body digest with a compatible saved-record view, and the record body remains with its existing editor
+  witness scripts/tests/program-workspace-owner.test.mjs checks exact review, private compilation, account and namespace isolation, stale bindings, replay preservation, unreceipted and orphan identity refusal, transaction rollback and bounded MessagePack transport
+  witness cmd/BonfyreWebAddress/tests/program_workspace.test.mjs exercises the real C gateway with controlled authority and subprocess replies, including current read/write admission, method and origin checks, owner argument binding and malformed native packet refusal
+  witness integrations/browser/tests/program-workspace.browser.test.mjs uses the real owner, compiler and SQLite with fixture account admission and controlled AddressPlane results to check browser preparation, retained requirements, installed editor links, access revocation, stale account replies and repeated readback after a lost acknowledgement
+  known_gap existing operator and person:nick instances have no implied authenticated account owner; this frontdoor prepares new admitted instances and cannot transfer or reinterpret those earlier records
+  known_gap a declared facility, farm, municipality or other domain subject is not an account, institution or household; templates that do not admit one of the currently selected subject kinds require an explicit future target binding
+  known_gap requirement deadlines and funding scope are editable configuration, and actual source research can run through SourceFrontier; evidence acceptance, partner or institution commitments, financial approval and Program-to-Model-Commons task attachment remain with their native owners or require a further explicit bridge
+  known_gap fixtures verify configuration, saved-work continuation and source execution with controlled provider results; they do not attest current provider availability, a production research result or a delivered notification; managed deployment must freeze both Program owners, native CMS and AddressPlane readers, SourceFrontier protocol dependencies, browser components and configured canonical databases
+  forbidden_inference a prepared account program or an installed editor link -> an activated institution, copied work record, trusted ownership of a legacy operator task, accepted requirement, partner agreement or external effect
+  forbidden_inference a successful local program preparation -> public publication, submitted funding application, provider connection, paid model run or execution authority
+
+  source_path scripts/program-source-work.mjs
+  source_path scripts/program-work-reference.mjs
+  source_path scripts/workspace_material.mjs
+  source_path cmd/BonfyreCMS/src/main.c
+  source_path cmd/BonfyreCMS/tests/program_continuation_test.c
+  source_path cmd/BonfyreCMS/tests/program_continuation_test.mk
+  source_path cmd/BonfyreCMS/tests/program_continuation_test.md
+  source_path integrations/browser/program-source-work.mjs
+  source_path integrations/browser/interaction-collection.mjs
+  source_path integrations/browser/record-comparison.mjs
+  source_path integrations/browser/workspace-store.mjs
+  source_path integrations/browser/workspace-continuation.mjs
+  source_path scripts/release/public_surface_rollout.mjs
+  internal_calculus the workspace composes maintained work, source research, funding and overview panels with shared searchable collections and inspectors; unsaved edits survive panel changes only in account-bound memory and are removed on account invalidation
+  internal_calculus configuration saves compare the full admitted Program revision inside one immediate transaction, retain an exact request digest and outcome receipt, and expose a read-only receipt lookup after an interrupted acknowledgement
+  internal_calculus editable requirement deadlines leave owner state and accepted evidence unchanged; funding scope and cost-code declarations reject normalized overlap with other packages in that same Program
+  internal_calculus work attachments verify the current CMS install, subject, scope, record key, revision, release and body digest through the existing continuation owner, then verify retained saved-view material; the CMS continuation reader opens the database read-only so a Program transaction can hold its configuration lock
+  internal_calculus local source refresh consumes the existing AddressPlane resolver and preserves draft lifecycle and accepted evidence; it does not run external discovery
+  internal_calculus a source plan binds one actual Program collection and declared demand to a reviewed SourceFrontier request; ProgramFabric retains only the association and digests while WebWork retains the plan, provider reply, results, review decisions and exact text
+  invariant source planning and start are separate actions; start reuses the native source-read admission, quotas, credentials, reviewed digest, revision and no-repeat-dispatch transition without changing any of those gates
+  invariant no CMS configuration transaction spans a provider request; an interrupted association resolves through the same retained WebWork request and can never turn uncertainty into a new automatic dispatch
+  invariant source status, retained results and configuration receipts require current read access; source planning, execution, result review and configuration edits require current write access and an exact expected actor, subject and scope
+  invariant attached source jobs use the existing account-scoped Activity and Outputs projection and exact source-workbench continuation; research results, source-library material, source-collection admission and accepted requirement evidence remain distinct owner states
+  witness scripts/tests/program-workspace-owner.test.mjs checks planning edits, full revision conflict, idempotent receipt recovery, cross-account refusal, funding overlap, native record verification and preservation of accepted state
+  witness cmd/BonfyreCMS/tests/program_continuation_test.c drives actual CMS plan, install, activate and workspace write commands before six continuation checks: a 2.5-second read under BEGIN IMMEDIATE, exact retained MessagePack record, same-account workspace contexts, unchanged schema and database/WAL bytes, cross-account refusal, and missing-database refusal without creation; tests/program_continuation_test.mk supports native and ASan/UBSan execution and honors BONFYRE_TEST_PROGRAM_CMS_BINARY for the frozen reader
+  witness scripts/tests/program-source-work.test.mjs checks current Program ownership, exact collection/demand review, durable native plan association, uncertain acknowledgement recovery, source admission, no duplicate dispatch and retained result identity with controlled providers
+  witness integrations/browser/tests/program-workspace.browser.test.mjs exercises actual saves and source continuation through native owners with account invalidation, scoped drafts, conflicts, exact saved-record reopening and interrupted acknowledgements
+  witness scripts/release/tests/public_surface_rollout.test.mjs checks frozen native and browser dependency closure, canonical database configuration and exact asset readback
+  forbidden_inference a planned deadline, saved funding scope, attached editor record or shortlisted source result -> accepted evidence, fulfilled capability, eligibility, partner consent, an award or spend authority
+  forbidden_inference a source plan or retained association -> provider execution; only the native reviewed Start transition may initiate that request
+
+  source_path cmd/BonfyreCMS/data/work-example-programs.jsonl
+  source_path cmd/BonfyreCMS/tools/install_work_examples.sh
+  source_path cmd/BonfyreCMS/tests/work_example_programs_test.sh
+  internal_calculus a released WorkExample names one reusable program_template; /programs?context=C&template=T reads the admitted catalogue and private instances for C, opens the existing instance of T owned by C when one exists and otherwise shows the published template unreviewed; it never sends review, prepare or any write on arrival
+  internal_calculus the template deep link is accepted only on the human /programs page, is exclusive with instance, matches the catalogue's template identity grammar (alphanumeric lead, at most 160 of [A-Za-z0-9._-]), survives sign-in and a workspace switch, and is refused on the /apps/_programs machine carrier
+  internal_calculus the seven finished-work templates (shop layout and fixture buying, one catalogue from several shops, staffing a service queue, workbook assumption review, research to a migration plan, planning recurring selections, continuing a recording session) are installed create-only beside the examples; an existing template is never rewritten because prepared programs retain its reviewed digest
+  invariant a template deep link selects nothing outside the current admitted destination: the instance it opens comes from that destination's owner-filtered readback, and another account reaching the same link sees only the published template
+  invariant the material and organizations an example was built with stay in WorkExample.made_with as provenance; the reusable template a visitor starts names none of them
+  witness integrations/browser/tests/program-workspace.browser.test.mjs "a template link opens the reviewed template unprepared, then only this account's prepared program" drives real Chrome against the real owner and compiler: the template opens with no review, prepare, change or source write; after preparation the same link reopens that instance; a second account sees only the template; an unknown template says it is not offered
+  witness cmd/BonfyreWebAddress/tests/profile_site_scope.test.mjs "released work stays with its bound account profile" runs the native binary: the profile CTA is /programs?context=self&template=..., /programs carries data-template and keeps it across the workspace switch and sign-in redirect, and malformed, duplicate, over-long, instance-combined and machine-carrier template links answer 400
+  witness cmd/BonfyreCMS/tests/work_example_programs_test.sh installs the shipped data into a fresh native CMS: every example binds a published person-startable template, reinstall leaves an owner-edited template unchanged, an example naming a missing or draft template is refused before it is written, the schema declares every data field and no unused terms field, and no made_with name appears in template text
+  forbidden_inference a work example's template link or an opened template -> a prepared program, a reviewed preparation, the profile owner's records, or an endorsement by the material named in made_with
+  known_gap the seven finished-work templates exist in source and in fixture databases only; the live CMS needs install_work_examples.sh run against it, and no live work_example row is bound to a profile site yet, so no public profile shows released work today
+  known_gap the deep link's existing-instance choice is the first owner-filtered instance of that template; a destination holding several instances of one template (possible only through earlier operator compilation) opens the first, not a chooser
+
+interaction program-fabric-projects-authenticated-preparation
+  source program-fabric
+  destination web-address-edge
+  relation projects_private_preparation_into_shared_account_chrome
+  preserves freshly admitted actor/subject/scope binding, selected destination, exact template and review digest, deterministic instance identity, private owner readback, retained requirement state and installed workspace identity
+  drops caller-selected owner or namespace, legacy ownership inference, browser persistence of private account records, material duplication and any claim that a declared role has executed
+  invalidates_on current session or membership admission, selected actor/subject/scope, whole template or compiler policy digest, current instance ownership or installed workspace binding changing
+  forbidden_inference template review, saved preparation or continuation link -> owner acceptance, background execution, funding, model metering, provider consent or an external effect
+  binding scripts/program-workspace-owner.mjs
+  binding cmd/BonfyreWebAddress/src/program_workspace.h
+  binding integrations/browser/program-workspace.mjs
+  witness scripts/tests/program-workspace-owner.test.mjs
+  witness cmd/BonfyreWebAddress/tests/program_workspace.test.mjs
+  witness integrations/browser/tests/program-workspace.browser.test.mjs
+
+interaction program-fabric-projects-funding-prospect-frontier
+  source program-fabric
+  destination funding-prospect-frontier
+  relation projects_published_institutional_pilot_editions_and_funding_work_packages_for_public_observation
+  preserves published ProgramInstance identity, declared semantic slots, work-package boundary and declared funding rail
+  drops activated public/member/operator material, partner relationship, programme eligibility, applicant identity evidence, application content, provider response tokens, award state, money and spend authority
+  forbidden_inference a proposed public/member/operator pilot edition or a declared funding rail projected into public discovery -> activated material, partner relationship, submitted application, eligible applicant, award or spend authority
+  invalidates_on published ProgramInstance, FundingWorkPackage, public observation receipt or query-vocabulary mapping changing
+  witness scripts/tests/bootstrap-funding-frontier.test.mjs
+  binding scripts/bootstrap_funding_frontier.py
+
+interaction program-fabric-binds-into-site-program
+  source program-fabric
+  destination web-address-edge
+  relation program_lowered_into_existing_world
+  preserves the subject's own composition ahead of any program, the slot order it already published, and the estate's own empty characters where a program has nothing yet
+  drops any requirement for a page, a route, or an application that does not already exist
+  forbidden_inference a program slot standing in a subject's world -> that subject holding the capability, the funding, or the authority the program would need
+  witness 2026-09-19 four programs compiled onto person-nick added 27 slots after the 20 that world already published; the page rendered the 8 that an application lowers and omitted the 19 that none can, and page_items, page_composition, page_stage, page_channels and page_kin all passed
+  binding scripts/compile-program-fabric.mjs
+  binding cmd/BonfyreWebAddress/src/main.c
+
+interaction program-fabric-resolves-address-owner
+  source program-fabric
+  destination address-plane
+  relation reads_through
+  preserves candidate kind, exact owner references, required and prohibited coordinates, source scope and dependency references
+  drops archetype-specific search dictionaries and feature-owned estate schemas
+  binding cmd/BonfyreExternalEstate/tools/resolve_program_demand.mjs
+  witness scripts/tests/program_resolution_native.test.mjs
+  forbidden_inference eligible source or capability -> fulfilled requirement
+
+interaction program-source-change-runs-existing-lowerer
+  source program-fabric
+  destination cmd-lowering-workers
+  relation projects_into
+  preserves dependency identity and accepted or authored state while refreshing only derived source membership
+  drops manual rediscovery and a separate programme scheduler
+  binding cmd/BonfyreLoweringWorkers/src/main.c
+  witness scripts/tests/program_resolution_native.test.mjs
+  forbidden_inference refreshed programme sources -> executed external service or calculated nutrient totals
+
+
+interaction program-fabric-maintains-native-work-references
+  source program-fabric
+  destination cmd-c-m-s
+  relation attaches_verified_saved_record_references
+  preserves current account destination, native installation and release, exact saved key and revision, retained body digest, compatible saved view and Program target identity
+  drops copied record bodies, browser-selected authority, unprofiled editor guesses and any inference of accepted evidence
+  invalidates_on account access, installation, release, record revision, retained material or Program ownership changing
+  forbidden_inference a saved-work attachment -> owner acceptance, a completed requirement or execution of the attached work
+  binding scripts/program-workspace-owner.mjs
+  binding scripts/program-work-reference.mjs
+  binding cmd/BonfyreCMS/src/main.c
+  binding integrations/browser/workspace-continuation.mjs
+  witness scripts/tests/program-workspace-owner.test.mjs
+  witness integrations/browser/tests/program-workspace.browser.test.mjs
+
+interaction program-fabric-continues-account-source-work
+  source program-fabric
+  destination source-frontier
+  relation associates_reviewed_demand_with_native_web_work
+  preserves private Program and collection, declared demand, fresh actor/subject/scope, scoped request identity, reviewed plan digest, native job and result identity, retained text digest and exact continuation
+  drops separate run or result stores, automatic external dispatch, legacy operator ownership inference, implicit source admission and automatic requirement fulfillment
+  invalidates_on current membership, Program owner or lifecycle, reviewed collection/demand, native run digest or revision, result digest or provider admission changing
+  forbidden_inference a Program source association or research result -> admitted collection membership, verified evidence, provider consent or authorization for another request
+  binding scripts/program-source-work.mjs
+  binding cmd/BonfyreSourceFrontier/tools/web_work.mjs
+  binding integrations/browser/program-source-work.mjs
+  witness scripts/tests/program-source-work.test.mjs
+  witness integrations/browser/tests/program-workspace.browser.test.mjs
+
+interaction program-fabric-composes-shared-work-inspection
+  source program-fabric
+  destination native-interaction-components
+  relation composes_existing_collection_inspection_and_review
+  preserves account-bound identity, native revisions, selection, independent retained panel state, exact change comparison and explicit save actions
+  drops a second work store, hover-only interaction and generic tool links standing in for retained work
+  invalidates_on account binding or native record revision changing
+  forbidden_inference an available inspector or proposed change -> a native save, accepted requirement or executed source run
+  binding integrations/browser/program-workspace.mjs
+  binding integrations/browser/interaction-collection.mjs
+  binding integrations/browser/record-comparison.mjs
+  witness integrations/browser/tests/program-workspace.browser.test.mjs
+
+interaction site-presentation-composition-starts-program-fabric-template
+  source site-presentation-composition
+  destination program-fabric
+  relation released_work_example_deep_links_to_reusable_program_template
+  preserves exact template identity, the visitor's own admitted destination, owner-filtered instance readback and the review-before-prepare gate
+  drops the profile owner's identity, records and site, the example's provenance material, and any automatic review, preparation or write
+  invalidates_on WorkExample.program_template, template publication status, or the visitor's admitted destination changing
+  forbidden_inference following a released work's program link -> a prepared program, a copied record, a relationship with the profile owner or with the material the example was built with
+  binding cmd/BonfyreWebAddress/src/profile_home.h
+  binding cmd/BonfyreWebAddress/src/program_workspace.h
+  binding integrations/browser/program-workspace.mjs
+  witness cmd/BonfyreWebAddress/tests/profile_site_scope.test.mjs
+  witness integrations/browser/tests/program-workspace.browser.test.mjs
+  witness cmd/BonfyreCMS/tests/work_example_programs_test.sh

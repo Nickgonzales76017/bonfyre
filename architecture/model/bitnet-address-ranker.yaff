@@ -1,0 +1,69 @@
+atlas model
+
+architecture bitnet-address-ranker
+  canonical_name BitNetAddressRanker
+  family model
+  domain Model / Addressable Candidate Narrowing
+  layer model/execution
+  semantic_question Given an AddressPlane survivor frontier and an admitted learned representation, which existing typed handles should be tried first without changing eligibility?
+  purpose Consumes only an already mask-filtered AddressPlane forwarding result, requests a transient ResourceAdmission grant for a declared BitNet rerank workload, projects declared CandidateAdvertisement coordinates into content-digested EmbeddingProjections through the official BitNet execution surface, and preserves the whole ordered frontier plus each exact verifier and declared lowerer for bounded widening without repeating model work.
+  maturity implemented
+  owns BitNetRankRun
+  owns AddressEmbeddingProjection
+  consumes CandidateAdvertisement
+  consumes ModelRepresentationPassport
+  publishes RankedCandidateFrontier
+  node_types BitNetRankRun
+  node_types AddressEmbeddingProjection
+  node_types RankedCandidateFrontier
+  edge_types reorders
+  edge_types projected_from
+  invariant BitNet consumes only AddressPlane survivors and cannot add a candidate that deterministic forwarding rejected
+  invariant every ranked record retains its original typed candidate kind, exact verifier and lowerer reference
+  invariant an initial top-k is a bounded attempt slice; the complete stored frontier supports later widening after an exact rejection
+  invariant only a measured ADMIT ModelRepresentationPassport may hand a ranked slice to declared lowerer lanes; DEFER is shadow-only
+  invariant ResourceAdmission grants are transient physical execution leases released after ranked-frontier persistence; neither a grant nor a released grant changes candidate eligibility or model preservation standing
+  invariant a persisted BitNetRankRun can emit representation-use evidence only from its stored source and vector digests; its gate state is preserved verbatim and a verifier reference is never counted as an exact-owner query
+  forbidden_inference rank -> selection, semantic truth, availability, authority, evidence, proof, commitment, payment, or effect
+  forbidden_inference top-k omission -> candidate impossibility or target failure
+  forbidden_inference stored EmbeddingProjection -> owner fact or comparable vector without its representation passport
+  source_path cmd/BonfyreBitNet/src/main.c
+  source_path cmd/BonfyreBitNet/Makefile
+  source_path cmd/BonfyreExternalEstate/tools/estate-refresh.sh
+  source_path cmd/BonfyreBitNet/results/2026-09-12-bitnet-thread-scaling.json
+  internal_calculus the embedding source is named by the caller and not implied by the transport: an HTTP endpoint, or the bitnet.cpp binary invoked directly. Both were in the usage string and only the endpoint was reachable -- the direct path was written, compiled, and never called from main, which -Wunused-function turns into a build failure the moment anything else in the file moves, and did
+  internal_calculus the embedding thread count is measured rather than assumed. One thread was compiled in, which is the honest number to write before measuring; four is 2.49x faster on this host and eight is slower than four, because there are four performance cores and oversubscribing them costs more than it buys
+  invariant a measurement establishes only what it measured. Latency, throughput, and one owner-predicate coverage curve do not move the passport, because ADMIT requires a preservation envelope across the declared retrieval families
+  cannot_infer a faster embedding -> a better ranking; a thread count changes how long the model takes to say the same thing
+  cannot_infer this host's optimum -> another host's; the default is overridable because the next execution phenotype will answer differently
+  cannot_infer a SHADOW reorder over a real frontier -> a frontier anyone may act on; SHADOW is what DEFER plus --diagnostic produces and it hands nothing to a lowerer
+  witness cmd/BonfyreBitNet/results/2026-09-12-bitnet-thread-scaling.json records the run the known_gap said was missing: 92 real AddressPlane survivors from a 4,891 population embedded at 1.79s per candidate single-threaded, returning 94,208 floats, plus a thread sweep at 1, 4 and 8 over a 24-candidate subset
+  source_path cmd/BonfyreBitNet/results/2026-09-12-addressplane-ranking-quality.json
+  invariant the passport is refused on measurement, not on absence of it. DEFER was correct before because nothing had been measured; it is correct now because something was, and the something was negative
+  cannot_infer a deterministic frontier that did its job -> a learned ordering that did; all 92 survivors carried the required coordinate and the model still put three specifications above the first weather source
+  witness cmd/BonfyreBitNet/results/2026-09-12-addressplane-ranking-quality.json measures the ranking the previous gap left unmeasured: over a real 92-survivor frontier, machine_protocol specifications are 16 percent of the population and 80 percent of the top five, roughly five times their base rate, and the first actual weather source lands at rank 3
+  witness cmd/BonfyreBitNet/tests/cpp_path_test.sh proves the direct embedding source is reachable rather than merely present: naming --bitnet-cpp without --endpoint must fail as an embedding failure and never as a usage error
+  witness cmd/BonfyreBitNet/tests/contract_test.sh
+  witness cmd/BonfyreBitNet/results/2026-09-12-addressplane-weather-shadow.json
+  witness cmd/BonfyreBitNet/results/2026-09-12-addressplane-protocol-handoff.json
+  witness /Users/nickgonzales/.bonfyre/estate/representation-evidence.jsonl is atomically emitted from the persisted bitnet:1789271781 92-candidate rank run; /Users/nickgonzales/.bonfyre/estate/bitnet-exact-owner-evidence.jsonl then records 92 separate native ForeignTwin queries over that same persisted frontier, retaining SHADOW on every representation record and reporting only two retained observations
+  interacts addressplane-survivors-reorder-through-bitnet
+  known_gap the unmodified official Microsoft BitNet embedding checkout at release-bitnet-embedding-0.6b-270m was rebuilt on this ARM host on 2026-09-12 and failed to link llama-embedding because dequantize_row_i2_s and quantize_i2_s have no ARM implementation; Microsoft documents the I2_S embedding releases as ARM-unsupported. The native ranker can now invoke the separately declared bitnet.cpp CLI path directly, reject non-finite output, and retain a bounded SHADOW frontier from the patched ARM diagnostic build, but that build remains SHADOW only. A deliberately isolated ADMIT mirror has exercised the generic ProtocolCommons handoff through the declared native ProtocolCompiler consumer, but it is not a production admission. Full-frontier latency and throughput are now measured on this host and recorded beside this entry; preservation recall, warm-worker pooling and concurrent capacity remain unmeasured, and those are the ones ADMIT actually turns on. The release build does embed here -- NEON, ARM_FMA, MATMUL_INT8 and DOTPROD all report active -- so what is unestablished is an unmodified upstream ARM build, not whether this host can produce embeddings at all.
+  witness cmd/BonfyreBitNet/tests/drive_fitness_test.sh
+  forbidden_inference a ranker whose bottom-k looks better than its top-k -> a useful ranker inverted; that is one query fitted, not a signal earned
+  invariant the learned ordering does not decide what enters a bounded search. A subset lattice costs one branch per subset, so something must choose the k that enter, and on the persisted 92-survivor run BitNet is worse than drawing at random: the frontier is 84 percent reachable services, its top-16 is 69 percent, and 91 percent of random draws of 16 beat it
+  known_gap the ranking is anti-correlated with usability on this frontier, not merely uninformative. Its bottom-16 is 88 percent services against an 84 percent base rate while its top-16 is 69 percent, so the model is finding something and ordering it backwards for this query. The entry already said three specifications outranked the first weather source; the consequence is now attached, which is that a SHADOW representation has not earned the right to spend a deterministic frontier's budget.
+  source_path estate/generated/bitnet-embedding-270m-i2s-pr606-cpuonly-addressplane-receipt-2026-09.json
+  source_path estate/generated/bitnet-embedding-270m-i2s-pr606-cpuonly-addressplane-shadow-evidence-2026-09.jsonl
+  source_path estate/generated/bitnet-embedding-270m-i2s-pr606-cpuonly-addressplane-exact-owner-evidence-2026-09.jsonl
+  source_path estate/generated/bitnet-embedding-270m-i2s-pr606-cpuonly-addressplane-shadow-context-2026-09.json
+  source_path estate/generated/bitnet-embedding-270m-i2s-pr606-cpuonly-addressplane-shadow-context-reused-2026-09.json
+  source_path estate/generated/bitnet-embedding-270m-i2s-pr606-cpuonly-addressplane-retention-evaluation-2026-09.json
+  invariant the official 270M I2_S execution phenotype is bound to a CPU-only x86 compatibility binary; Metal/BLAS-linked x86 compatibility output was empirically non-finite or non-deterministic and is not an eligible runtime substitute
+  invariant candidate descriptors enter the BitNet document side only after AddressPlane forwarding and retain every compiled coordinate; task instruction remains query-side and does not create semantic facts
+  witness estate/generated/bitnet-embedding-270m-i2s-pr606-cpuonly-addressplane-receipt-2026-09.json records nine finite identical repeated candidate vectors across one, two and four threads, then a ResourceAdmission-granted 4891-to-128 AddressPlane cut whose 128 vectors and complete SHADOW ordering were atomically persisted
+  witness estate/generated/bitnet-embedding-270m-i2s-pr606-cpuonly-addressplane-exact-owner-evidence-2026-09.jsonl records native ForeignTwin retained-body queries for every member of that 128-candidate SHADOW frontier: 104 were observed, with 5/5 retained through rank five and 76/92 through rank ninety-two, without treating retained coverage as relevance or selection
+  witness estate/generated/bitnet-embedding-270m-i2s-pr606-cpuonly-addressplane-shadow-context-2026-09.json records the exact-owner-intersected top-16 diagnostic aperture: 12 distinct retained bodies fit 197348 Qwen tokens under the pinned GigaToken tokenizer passport; the repeat receipt preserves the same context digest with 15 CID-tokenizer cache hits and zero new tokenizations
+  witness estate/generated/bitnet-embedding-270m-i2s-pr606-cpuonly-addressplane-retention-evaluation-2026-09.json measures the complete 128-member live frontier against the independently queried ForeignTwin retained-body predicate: 104 of 128 are retained, while the first 1, 5, and 10 ranks are all retained and rank 16 retains 15; the receipt leaves admission unchanged
+  cannot_infer retained-body concentration on one query -> semantic relevance, retrieval preservation across purposes, or ADMIT
+  cannot_infer one stable physical execution envelope -> retrieval preservation, false-prune safety, or ADMIT; the 128 ranked candidates still require their preserved ForeignTwin exact verifier and no lowerer handoff was emitted

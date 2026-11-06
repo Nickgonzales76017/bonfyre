@@ -1,0 +1,19 @@
+{
+  "pattern": "territory-presentation",
+  "reads_type": "territory_presentation",
+  "selector_field": "territory",
+  "order_by": "territory",
+  "item_fields": "territory,question,eyebrow,head,lede,character,template,sections,lead_source_kinds,cannot_infer",
+  "shape": "record",
+  "effect_class": "QUERY",
+  "requires_authority": "",
+  "visible_when": "",
+  "status_filter": "published",
+  "time_field": "",
+  "time_mode": "any",
+  "title": "Territory door",
+  "caption": "One authored front-door projection per Aurekai territory; ordering and omission are presentation, never authority.",
+  "extent": "page",
+  "lineage": "Aurekai TerritoryDoor · CMS-owned · no host credential or SSH path",
+  "status": "published"
+}

@@ -1,0 +1,177 @@
+atlas creator-render
+
+architecture creator-render-program
+  canonical_name CreatorRenderProgram
+  family surface
+  domain Creator / Revision-scoped timeline compilation
+  layer surface
+  semantic_question Can a timeline become exact bounded render windows without materializing media or inferring execution authority?
+  purpose Validates timeline metadata, applies revision-bound candidate edits and compiles selected frame windows with exact rational sample coordinates. A used-source projection carries only the source bases needed by the selected windows.
+  maturity measured
+  source_lineage Nickgonzales76017/bonfyre commit 1187f3736ebbdeba3b70edb39f04de15c752cd5c; imported files and exact upstream digests retained in packs/no-simulation/creator-upstream-20261013/sources.json
+  source_path Aurekai/src/creator-render-program.mjs
+  source_path Aurekai/src/creator-native-pcm.mjs
+  source_path Aurekai/src/creator-cli.mjs
+  source_path Aurekai/bin/akai.mjs
+  internal_calculus an immutable prepared clip index selects window overlaps; BigInt frame-to-sample arithmetic rounds each rational boundary once
+  invariant timeline edits name the exact previous digest and return an uncommitted candidate; compile and PCM-plan commands read bounded metadata only and never read source PCM or execute a renderer
+  invariant PCM lowering requires exact declared source digests and absolute paths but marks those claims unverified until an execution owner checks bytes
+  witness Aurekai/tests/creator-render-program.test.mjs exercises exact cuts, revision checks, source projection and prepared-index behavior across synthetic 10k-clip and 6000-source fixtures
+  witness Aurekai/tests/creator-native-pcm.test.mjs checks candidate lowering and exact native arithmetic under explicit synthetic test execution
+  witness Aurekai/tests/creator-cli.test.mjs verifies reachable repository CLI commands, immutable input, stale edit refusal, missing media allowed for planning and refusal of oversized or nonregular metadata
+  forbidden_inference a valid scope digest or candidate argv -> authenticated authority, media rights, source-byte verification or a completed render
+  known_gap the global akai executable points to a separate checkout; these commands are wired into this repository's CLI only. No interactive editor or media decoder is supplied by this compiler
+
+architecture cmd-creator-mix
+  canonical_name BonfyreCreatorMix
+  family command
+  domain Creator / Native offline audio
+  layer command
+  semantic_question Can an explicitly invoked native operation mix a bounded audio window with exact ordered float32 arithmetic and sparse silent output?
+  purpose Mixes up to 64 interleaved f32le stems in 1024-frame blocks, scheduling active stems by ordered start/end events. Sparse silence is opt-in and retains byte-equivalent logical output.
+  maturity measured
+  command BonfyreCreatorMix
+  source_lineage native mixer and allocation-free kernel imported unchanged from Nickgonzales76017/bonfyre commit 1187f3736ebbdeba3b70edb39f04de15c752cd5c
+  source_path Aurekai/native/creator/mix.c
+  source_path Aurekai/native/creator/mix_kernel.c
+  source_path Aurekai/native/creator/mix_kernel.h
+  source_path cmd/BonfyreCreatorMix/Makefile
+  source_path cmd/BonfyreCreatorMix/tools/demo.mjs
+  source_path cmd/BonfyreCreatorMix/tools/demo.html
+  source_path cmd/BonfyreCreatorMix/tests/browser.mjs
+  internal_calculus time events maintain a 64-bit active set, iterated in original stem order; consecutive source blocks reuse their stream position; unoccupied output blocks may become sparse file holes
+  invariant the local build disables fast-math and floating-point contraction to preserve ordered float32 accumulation and nonfinite refusal
+  invariant output is published without overwriting an existing path; receipts describe materialized_unverified output and never infer execution authority
+  witness Aurekai/tests/creator-native-mix.test.mjs checks exact samples, short and nonfinite input refusal, offset boundaries, 64-stem event scheduling, sparse parity and sequential seek elision
+  witness packs/no-simulation/creator-upstream-20261013/demo/verification.json verifies every output float32 sample against an independent reference, source digests before and after rendering and byte-identical dense/sparse output for a six-second stereo fixture
+  witness cmd/BonfyreCreatorMix/tests/browser.mjs verifies actual WAV decode and playback, no script exceptions and desktop/phone layouts for the retained synthetic preview
+  forbidden_inference a materialized mix or a source size check -> verified source digest, rights, authorization, a live audio engine or a finished DAW
+  known_gap raw PCM input only, with no codec decoding, source-digest enforcement, effects, recording or real-time playback in this executable; the same kernel has a separately verified browser WASM adapter
+
+interaction creator-plan-lowers-native-pcm
+  source creator-render-program
+  destination cmd-creator-mix
+  relation exact_window_to_unexecuted_native_candidate
+  preserves timeline and scope digests, selected window body key, stem order, integer sample coordinates and explicit source binding claims
+  drops unrelated source bases and automatic execution
+  forbidden_inference successful lowering -> permission to invoke the renderer or verification of the bound files
+  invalidates_on timeline, scope, source bindings, frame clock or native PCM contract changing
+  witness Aurekai/tests/creator-native-pcm.test.mjs
+  binding Aurekai/src/creator-native-pcm.mjs
+
+
+architecture creator-browser-mix
+  canonical_name CreatorBrowserMix
+  family surface
+  domain Creator / Browser offline audio
+  layer surface
+  semantic_question Can the unchanged native audio kernel render bounded browser blocks with byte-exact native parity?
+  purpose Runs the shared C kernel as a pinned WASM artifact behind a browser-safe block adapter. A local synthetic sample exposes gain controls and Web Audio playback.
+  maturity measured
+  source_path Aurekai/src/creator-wasm.mjs
+  source_path Aurekai/native/creator/mix_kernel.wasm
+  source_path Aurekai/native/creator/wasm.lock.json
+  source_path cmd/BonfyreCreatorMix/tools/wasm.mjs
+  source_path cmd/BonfyreCreatorMix/tools/wasm-demo.html
+  source_path cmd/BonfyreCreatorMix/tools/wasm-demo.mjs
+  internal_calculus two bounded scratch buffers above the exported heap base preserve ordered float32 multiply/add; no fast-math or contraction; at most 1024 frames, eight channels and 64 stems per call
+  invariant artifact and source digests are verified without a runtime compiler; Zig 0.13.0 reproduces the reviewed artifact byte for byte
+  invariant WASM has no host imports and fixed 128 KiB linear memory; returned Float32Array blocks and caller-owned media require additional JavaScript memory
+  witness Aurekai/tests/creator-wasm.test.mjs verifies native byte parity across one, two and eight channels with 64 overlapping stems, bounds refusal, nonfinite and overflow refusal, recovery, independent outputs and impossible memory growth
+  witness cmd/BonfyreCreatorMix/tests/wasm-browser.mjs checks all 576000 output values against native bytes in Chrome, gain mute/reset, playback and stop, no script exceptions and desktop/phone layouts
+  witness packs/no-simulation/creator-wasm-20261013/browser-verification.json retains actual browser evidence for the six-second synthetic fixture
+  forbidden_inference byte parity or a short offline render -> real-time audio guarantees, media rights, verified source identity, AudioWorklet integration or public deployment
+  known_gap caller owns loading and scheduling; source PCM and full output are resident in the sample; no worker, effects, recording or streaming decoder
+
+interaction creator-native-kernel-to-browser
+  source cmd-creator-mix
+  destination creator-browser-mix
+  relation shared_c_kernel_compiled_to_wasm
+  preserves ordered float32 arithmetic, interleaved channel layout, bounded block coordinates and nonfinite output refusal
+  drops native filesystem IO, event scheduling, source cursors, sparse output and native materialization receipts
+  forbidden_inference shared kernel -> equivalent filesystem semantics, execution authority or complete native renderer behavior
+  invalidates_on C kernel, compiler flags, artifact digest or adapter ABI changing
+  witness Aurekai/tests/creator-wasm.test.mjs
+  binding Aurekai/src/creator-wasm.mjs
+
+
+architecture service-creator-audio
+  canonical_name ServiceSiteCreatorAudio
+  family surface
+  domain Creator / Public sample workspace
+  layer surface
+  semantic_question Can a visitor import or select recordings, edit their timeline, retain the source session and export a mix through the existing native kernel?
+  purpose Packages a verified synthetic sample and runs imported WAV clips through the same native kernel in a module worker. Separate source, timeline and export views retain original recordings, edits and source identities in the existing browser store.
+  maturity measured
+  source_path components/BonfyreServiceSite/sections/creator.mjs
+  source_path components/BonfyreServiceSite/creator-material.mjs
+  source_path components/BonfyreServiceSite/creator-sample.mjs
+  source_path components/BonfyreServiceSite/creator-worker.mjs
+  source_path components/BonfyreServiceSite/creator-client.mjs
+  source_path components/BonfyreServiceSite/creator-import.mjs
+  source_path components/BonfyreServiceSite/creator-import-client.mjs
+  source_path components/BonfyreServiceSite/creator-import-view.mjs
+  source_path components/BonfyreServiceSite/creator-timeline.mjs
+  source_path components/BonfyreServiceSite/creator-timeline-model.mjs
+  source_path components/BonfyreServiceSite/vendor/wavesurfer-8.0.2/provenance.tsv
+  source_path components/BonfyreServiceSite/tests/creator-timeline.test.mjs
+  source_path components/BonfyreServiceSite/tests/creator-timeline-browser.mjs
+  invariant arrangement gestures and source waveform regions project into the existing integer-frame clip contract; only the native WASM renderer produces mixed audio, and persisted sessions retain the existing expected-revision record
+  invariant WaveSurfer 8.0.2 and Regions are self-hosted with their BSD-3-Clause license inside the content-addressed audio package; they receive validated source peaks without audio uploads or a second playback engine
+  witness packs/no-simulation/product-maturity-20261015/audio/local-arrangement/verification.json records pointer and keyboard arrangement edits, waveform region trim, undo and redo, synchronized zoom and scroll, cursor playback, reload, mobile fit and independently calculated exported PCM
+  forbidden_inference waveform editing and a populated arrangement -> account synchronization, collaborative editing, long-form production audio or completion of the other demo programs
+  source_path components/BonfyreServiceSite/tests/creator-import.test.mjs
+  source_path components/BonfyreServiceSite/tests/creator-import-browser.mjs
+  invariant imported WAV input is bounded to eight tracks and 24 MB encoded, with at most 32 MB decoded PCM; only PCM16 or float32 mono/stereo with one sample rate and clips within a 30-second timeline are admitted
+  invariant browser session saves retain source bytes and fingerprints through the existing expected-revision store; restores verify each source before rendering, and a replacement recording set does not inherit the prior permission statement
+  invariant imported render requests name their worker session; late replacement cannot silently render an earlier editor's clips against another recording set
+  witness 2026-10-15 creator-import.test.mjs independently checks every rendered sample for trim, placement, gain and mute; it also verifies WAV bounds, source fingerprints, same-rate admission, nonfinite rejection and clipping reports
+  source_path components/BonfyreServiceSite/creator.css
+  source_path packs/aurekai-work-samples/audio/sample.json
+  source_path packs/aurekai-work-samples/site/material.mjs
+  internal_calculus ordered native-kernel blocks render in a module worker; the client coalesces newer gain requests, transfers completed output and caches the waveform between playback frames
+  invariant packaged sample initialization verifies source hashes and the initial native reference before enabling playback; imports retain separately hashed source WAVs and do not borrow that synthetic native-reference claim
+  invariant saved levels use the existing browser workbench store with expected revisions and the sample ID plus native output digest; stale tabs cannot overwrite newer levels
+  invariant audio modules and source files share a content-addressed asset directory so a new deployment cannot reuse stale module URLs
+  invariant WAV export is signed 16-bit PCM with explicit clipping; parity with native float32 applies before that export conversion
+  witness components/BonfyreServiceSite/tests/creator.test.mjs checks exact native output, every WAV sample, source-drift refusal and package bounds
+  witness components/BonfyreServiceSite/tests/creator-browser.mjs checks initial native parity, edits, reload, stale-tab refusal, playback, stop, a decoded and physically downloaded WAV, invalid worker input, missing and corrupted assets and responsive layouts
+  witness packs/no-simulation/creator-site-20261013/local/verification.json retains eighteen browser checks with no server writes or script exceptions
+  witness packs/no-simulation/creator-site-20261013/live/verification.json retains sixteen successful checks on the published audio route, including browser Back, saved levels, stale-tab refusal and actual WAV download
+  witness packs/no-simulation/creator-site-20261013/public-readback.json independently matches all thirteen published HTML, CSS and versioned audio-package files to the reviewed build
+  witness packs/no-simulation/product-maturity-20261015/audio/local-desk/verification.json retains 28 successful imported-session browser checks, including independent downloaded PCM values, two sample rates, source tampering, invalid import recovery, stale tabs and 320 to 1440 pixel layouts; the original sample passes all eighteen browser checks in packs/no-simulation/product-maturity-20261015/audio/regression/verification.json
+  forbidden_inference generated-tone parity or browser-local saves -> rights over third-party media, live collaborative editing, real-time audio guarantees or a complete DAW
+  known_gap decoded PCM and mixed output remain resident in bounded memory; longer recordings, other codecs, effects, live recording, multiple imported-session libraries, account sync and an AudioWorklet engine remain unimplemented
+
+interaction creator-kernel-to-service-sample
+  source creator-browser-mix
+  destination service-creator-audio
+  relation verified_wasm_material_to_browser_worker
+  preserves shared kernel bytes, ordered float32 output, source identities and exact initial native reference
+  drops native filesystem writes, unused source frames and automatic server persistence
+  forbidden_inference successful client render -> permission to upload media or modify a server-side project
+  invalidates_on source PCM, sample clock, gain order, kernel artifact or browser adapter changing
+  witness components/BonfyreServiceSite/tests/creator-browser.mjs
+  binding components/BonfyreServiceSite/creator-material.mjs
+
+interaction service-site-carries-creator-workspace
+  source service-site
+  destination service-creator-audio
+  relation named_material_and_workspace_section
+  preserves existing site navigation, CMS publication ownership and static asset routing
+  drops new lead forms, uploads and a separate application server
+  forbidden_inference opening a public sample -> a commissioned engagement or approved media processing
+  invalidates_on site record, workspace validation or packaged material changing
+  witness components/BonfyreServiceSite/tests/creator.test.mjs
+  binding components/BonfyreServiceSite/sections/creator.mjs
+
+interaction creator-arrangement-to-native-mix
+  source service-creator-audio
+  destination creator-browser-mix
+  relation pointer_keyboard_and_waveform_selection_to_validated_integer_frame_clips
+  preserves original source identities, sample clocks, placement, source bounds, gain, mute and ordered native PCM output
+  drops waveform-library playback, server uploads and visual-only edits
+  forbidden_inference a waveform gesture -> rendered success before the native worker validates and returns the new mix
+  invalidates_on gesture rounding, source selection, native clip validation or packaged waveform modules changing
+  witness components/BonfyreServiceSite/tests/creator-timeline-browser.mjs
+  binding components/BonfyreServiceSite/creator-timeline.mjs

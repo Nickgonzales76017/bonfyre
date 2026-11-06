@@ -1,0 +1,22 @@
+{
+  "at": "2026-10-08T21:49:19.784171+00:00",
+  "address": "https://aurekai-work-samples.pages.dev/",
+  "cms_id": 3,
+  "cms_namespace": "service-site",
+  "cms_prior_content_matched_local": true,
+  "preview": false,
+  "local_browser_checks": 17,
+  "live_browser_checks": 14,
+  "live_submissions": 0,
+  "local_intake": "Generated worker retained all five brief fields; invalid form and server failure fallback checked.",
+  "source_content_sha256": "2947ae071906544a988f552e99f08fb093e626e14723f6bbdf022dd2398a8cd3",
+  "home_html_sha256": "f6e07ea2a6c94f3691f62206d44315674729a9e27df1d101361fa736ab2d5f20",
+  "worker_sha256": "3611626bfd0a60ac7df7c1e1e9b3d0b271d52253fdc289d9ad1789a63623c4ae",
+  "changes": [
+    "Aurekai service offer and primary project brief CTA",
+    "All four existing samples retained with public/sample-data attribution",
+    "Task, tools and timing brief fields",
+    "Public status removes inaccurate not-yet-public notice"
+  ],
+  "cannot_infer": "Local worker intake plus public page verification does not establish a new live brief or buyer enquiry."
+}

@@ -1,0 +1,89 @@
+{
+  "boundaries": {
+    "artifact_identity_is_not_producer_identity": true,
+    "foreign_observation_is_not_authority": true,
+    "provenance_is_not_claim_support": true,
+    "snapshot_validation_is_not_upstream_completion": true,
+    "successful_replay_is_not_a_new_external_effect": true,
+    "transport_identity_is_not_producer_identity": true
+  },
+  "owner_trace": [
+    "ForeignTwin",
+    "WorkGraph",
+    "AtlasContextProvider",
+    "ProviderGraph",
+    "AuthorityGraph",
+    "NativeWorkGraph/EffectKernel",
+    "ObjectFabric",
+    "ReceiptEnvelope",
+    "EvidenceGraph",
+    "InstitutionalReplay"
+  ],
+  "proof_sha256": "283e7848f02d260aff667de5f193536bbcda406f631619b6de6f2365a07918b2",
+  "receipt_envelope": {
+    "artifact": {
+      "bytes": 308,
+      "identity": "4a18a803cf9b768b5b68459f7e6e105e0416326d7d992bc9a9a631a5741ed3f2",
+      "uri": "bonfyre://artifact/4a18a803cf9b768b5b68459f7e6e105e0416326d7d992bc9a9a631a5741ed3f2"
+    },
+    "authority": {
+      "actor": "codex-provider-epoch",
+      "permission": "act",
+      "purpose": "generation10-system-map-stress",
+      "subject": "artifact:bernstein-3880-validation-snapshot"
+    },
+    "content_sha256": "3386f37a684f1374695dcec152ec84aeb8cd9adae0a0f35a24e5b23ca9246d05",
+    "context": {
+      "answer_sha256": "08a0f56d1e094021af63b97909b1085edc6fdda80a7ce6edb308dc439a5d9264",
+      "bytes": 1632,
+      "query": "get work-graph"
+    },
+    "effect": {
+      "adapter": "publish-local",
+      "event_id": "evt-00f2a21d062223c5a67ef0f2aaf6fa6f",
+      "receipt_id": "rcpt-7b0f277be2553e13a2f41fead928270d"
+    },
+    "envelope_id": "receipt:3386f37a684f1374695dcec152ec84aeb8cd9adae0a0f35a24e5b23ca9246d05",
+    "evidence_claims": [
+      "claim:authorized-local-snapshot-artifact-committed",
+      "claim:owned-validation-snapshot-observed-green"
+    ],
+    "forbidden_claims": [
+      "claim:upstream-3880-complete-and-current-base-ready"
+    ],
+    "foreign_observation_id": "local-c18033de2d49fbf1ac88eabd5f02",
+    "foreign_rights": [
+      "observe",
+      "reference"
+    ],
+    "foreign_twin_id": "bernstein/issue/3880",
+    "provider_identity": "native-bonfyre-effect",
+    "schema": "bonfyre.receipt-envelope.v1",
+    "transport_identity": "native-cli",
+    "work_item_id": 1
+  },
+  "replay": {
+    "checks": {
+      "authority_owner_admitted_exact_effect": true,
+      "evidence_supports_local_effect_claim": true,
+      "foreign_twin_did_not_carry_act_right": true,
+      "native_effect_receipt_exists": true,
+      "objectfabric_digest_matches_effect_output": true,
+      "provider_owner_agrees_with_receipt": true,
+      "receipt_content_address_binds_envelope": true,
+      "receipt_envelope_is_durable": true,
+      "snapshot_evidence_does_not_support_upstream_completion": true,
+      "workgraph_closed_only_against_receipt": true
+    },
+    "counterfactuals": {
+      "foreign_act_label_without_authority_grant_is_denied": true,
+      "green_snapshot_remains_distinct_from_upstream_completion": true,
+      "same_artifact_relabelled_producer_is_not_same_execution": true,
+      "tampered_artifact_is_refused_at_receipt_boundary": true
+    },
+    "verdict": "pass"
+  },
+  "schema": "bonfyre.generation10-system-map-stress.v1",
+  "source_event": "local-c18033de2d49fbf1ac88eabd5f02",
+  "work_item": "phase0-system-map-stress"
+}

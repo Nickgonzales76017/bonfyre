@@ -12,7 +12,7 @@
  *
  * Commands:
  *   bonfyre-learn status               — stage thresholds + recent tuning
- *   bonfyre-learn feedback <run-id> <score> [label]   — record outcome
+ *   bonfyre-learn feedback <run-id> <score> --stage <stage> [label] — record outcome
  *   bonfyre-learn tune <stage>         — run threshold update for a stage
  *   bonfyre-learn list                 — all tracked stages
  *   bonfyre-learn export               — dump thresholds as JSON
@@ -24,10 +24,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+#include <math.h>
 #include <time.h>
 #include <sys/stat.h>
 #include <sqlite3.h>
 #include <bonfyre.h>
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 
 #define VERSION    "1.0.0"
 #define DB_ENV     "BONFYRE_LEARN_DB"
@@ -82,7 +85,8 @@ static const int NSEED=7;
 static sqlite3 *open_db(void){
     char path[4096];db_path(path,sizeof(path));ensure_dir(path);
     sqlite3 *db=NULL;
-    if(bf_sqlite3_open(path,&db)!=SQLITE_OK){fprintf(stderr,"db error\n");exit(1);}
+    /* Durable tier -- feedback people gave: it cannot be re-derived. */
+    if (bf_sqlite3_open_tier(path, &db, BF_SQLITE_DURABLE) != SQLITE_OK){fprintf(stderr,"db error\n");exit(1);}
     char *err=NULL;sqlite3_exec(db,SCHEMA,NULL,NULL,&err);
     if(err){fprintf(stderr,"%s\n",err);sqlite3_free(err);exit(1);}
     /* seed known stages */
@@ -121,19 +125,59 @@ static void cmd_status(sqlite3 *db){
     sqlite3_finalize(st);
 }
 
-static void cmd_feedback(sqlite3 *db,const char *run_id,double score,const char *label){
-    time_t now=time(NULL);
+/* Stage is supplied explicitly, never inferred from the spelling of a run id.
+ * Old rows with NULL stages remain unassigned and do not enter stage tuning. */
+static int feedback_args(int argc, char **argv, double *score,
+                         const char **stage, const char **label) {
+    char *end = NULL;
+    *stage = *label = NULL;
+    if (argc < 6 || !argv[2][0] || strlen(argv[2]) > 1024 || !argv[3][0]) return 0;
+    errno = 0; *score = strtod(argv[3], &end);
+    if (errno || end == argv[3] || *end || !isfinite(*score) || *score < 0 || *score > 1) return 0;
+    for (int i = 4; i < argc; i++) {
+        if (!strcmp(argv[i], "--stage")) {
+            if (*stage || i + 1 >= argc) return 0;
+            *stage = argv[++i];
+        } else {
+            if (*label || !strncmp(argv[i], "--", 2)) return 0;
+            *label = argv[i];
+        }
+    }
+    if (!*stage || !**stage || strlen(*stage) > 128 || (*label && strlen(*label) > 1024)) return 0;
+    for (const unsigned char *p = (const unsigned char *)*stage; *p; p++)
+        if (*p < 33 || *p == 127) return 0;
+    return 1;
+}
+
+static int cmd_feedback(sqlite3 *db,const char *run_id,double score,
+                        const char *label,const char *stage){
     sqlite3_stmt *st=NULL;
-    sqlite3_prepare_v2(db,
-        "INSERT INTO feedback(run_id,score,label,ts) VALUES(?,?,?,?)",
-        -1,&st,NULL);
-    sqlite3_bind_text(st,1,run_id,-1,SQLITE_STATIC);
-    sqlite3_bind_double(st,2,score);
-    if(label) sqlite3_bind_text(st,3,label,-1,SQLITE_STATIC);
-    else sqlite3_bind_null(st,3);
-    sqlite3_bind_int64(st,4,(sqlite3_int64)now);
-    sqlite3_step(st);sqlite3_finalize(st);
-    printf("feedback: run=%s score=%.3f%s%s\n",run_id,score,label?" label=":"",label?label:"");
+    if (sqlite3_prepare_v2(db, "SELECT 1 FROM thresholds WHERE stage=?", -1, &st, NULL) != SQLITE_OK)
+        goto failed;
+    sqlite3_bind_text(st,1,stage,-1,SQLITE_TRANSIENT);
+    int found = sqlite3_step(st);
+    sqlite3_finalize(st); st=NULL;
+    if (found != SQLITE_ROW) {
+        fprintf(stderr,"feedback: stage '%s' is not registered; no feedback recorded\n",stage);
+        return 1;
+    }
+    if (sqlite3_prepare_v2(db,
+        "INSERT INTO feedback(run_id,stage,score,label,ts) VALUES(?,?,?,?,?)",
+        -1,&st,NULL) != SQLITE_OK) goto failed;
+    sqlite3_bind_text(st,1,run_id,-1,SQLITE_TRANSIENT);
+    sqlite3_bind_text(st,2,stage,-1,SQLITE_TRANSIENT);
+    sqlite3_bind_double(st,3,score);
+    if(label) sqlite3_bind_text(st,4,label,-1,SQLITE_TRANSIENT);
+    else sqlite3_bind_null(st,4);
+    sqlite3_bind_int64(st,5,(sqlite3_int64)time(NULL));
+    if (sqlite3_step(st) != SQLITE_DONE) goto failed;
+    sqlite3_finalize(st);
+    printf("feedback: run=%s stage=%s score=%.3f%s%s\n",run_id,stage,score,label?" label=":"",label?label:"");
+    return 0;
+failed:
+    fprintf(stderr,"feedback: database write refused: %s\n",sqlite3_errmsg(db));
+    sqlite3_finalize(st);
+    return 1;
 }
 
 static void cmd_tune(sqlite3 *db,const char *stage){
@@ -267,7 +311,7 @@ static void cmd_help(void){
 "  bonfyre-learn <command> [args]\n\n"
 "COMMANDS\n"
 "  status                    current stage thresholds + 7-day averages\n"
-"  feedback <run> <score> [label]   record outcome (score 0.0–1.0)\n"
+"  feedback <run> <score> --stage <stage> [label]   record a stage outcome (0.0–1.0)\n"
 "  tune <stage>              compute rolling avg and adjust threshold\n"
 "  list                      all tracked stages and thresholds\n"
 "  export                    dump thresholds as JSON\n"
@@ -289,22 +333,45 @@ static void cmd_help(void){
 }
 
 int main(int argc,char **argv){
-    if(argc<2||strcmp(argv[1],"help")==0||strcmp(argv[1],"--help")==0){cmd_help();return 0;}
+    /* --db FILE before the command names the store, like the other organs
+     * that keep one; it takes the place of the environment variable. */
+    if (argc >= 3 && !strcmp(argv[1], "--db")) { setenv(DB_ENV, argv[2], 1); argv += 2; argc -= 2; }
+    enum {
+        LN_HELP, LN_EXPORT, LN_FEEDBACK, LN_HISTORY, LN_LIST, LN_RESET, LN_STATUS, LN_TUNE,
+    };
+    static const BfCommandEntry learn_commands[] = {
+        {"--help", LN_HELP, 0, NULL},
+        {"export", LN_EXPORT, 0, NULL},
+        {"feedback", LN_FEEDBACK, 0, NULL},
+        {"help", LN_HELP, 0, NULL},
+        {"history", LN_HISTORY, 0, NULL},
+        {"list", LN_LIST, 0, NULL},
+        {"reset", LN_RESET, 0, NULL},
+        {"status", LN_STATUS, 0, NULL},
+        {"tune", LN_TUNE, 0, NULL},
+    };
+    const BfCommandEntry *command = argc < 2 ? NULL : bf_command_lookup(learn_commands,
+        sizeof(learn_commands) / sizeof(learn_commands[0]), argv[1]);
+    if(argc<2||(command&&command->id==LN_HELP)){cmd_help();return 0;}
+    double score=0; const char *stage=NULL,*label=NULL;
+    if (command&&command->id==LN_FEEDBACK && !feedback_args(argc,argv,&score,&stage,&label)) {
+        fputs("usage: bonfyre-learn feedback <run-id> <score 0..1> --stage <stage> [label]\n",stderr);
+        return 2;
+    }
     sqlite3 *db=open_db();
     int rc=0;const char *cmd=argv[1];
-    if(strcmp(cmd,"status")==0) cmd_status(db);
-    else if(strcmp(cmd,"feedback")==0){
-        if(argc<4){fprintf(stderr,"usage: bonfyre-learn feedback <run-id> <score> [label]\n");rc=1;}
-        else cmd_feedback(db,argv[2],atof(argv[3]),argc>4?argv[4]:NULL);
-    } else if(strcmp(cmd,"tune")==0){
+    if(command&&command->id==LN_STATUS) cmd_status(db);
+    else if(command&&command->id==LN_FEEDBACK){
+        rc=cmd_feedback(db,argv[2],score,label,stage);
+    } else if(command&&command->id==LN_TUNE){
         if(argc<3){fprintf(stderr,"usage: bonfyre-learn tune <stage>\n");rc=1;}
         else cmd_tune(db,argv[2]);
-    } else if(strcmp(cmd,"list")==0) cmd_list(db);
-    else if(strcmp(cmd,"export")==0) cmd_export(db);
-    else if(strcmp(cmd,"reset")==0){
+    } else if(command&&command->id==LN_LIST) cmd_list(db);
+    else if(command&&command->id==LN_EXPORT) cmd_export(db);
+    else if(command&&command->id==LN_RESET){
         if(argc<3){fprintf(stderr,"usage: bonfyre-learn reset <stage>\n");rc=1;}
         else cmd_reset(db,argv[2]);
-    } else if(strcmp(cmd,"history")==0) cmd_history(db,argc>2?argv[2]:NULL);
+    } else if(command&&command->id==LN_HISTORY) cmd_history(db,argc>2?argv[2]:NULL);
     else {fprintf(stderr,"bonfyre-learn: unknown command: %s\n",cmd);rc=1;}
     sqlite3_close(db);return rc;
 }

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101916"><title>Agents · Aurekai</title>
+<link rel="stylesheet" href="/assets/matrix.css"><link rel="stylesheet" href="/assets/matrix-aperture.css">
+<style>
+.mk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:0;
+  border-top:1px solid var(--ink);border-left:1px solid var(--ink);margin:30px 0}
+.mk-cap{border-right:1px solid var(--ink);border-bottom:1px solid var(--ink);padding:22px;background:#fff;
+  display:flex;flex-direction:column}
+.mk-cap.is-unlisted{background:#f2f1e9}
+.mk-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.mk-head h3{margin:0;font-size:24px;font-weight:500;letter-spacing:-.05em}
+.mk-desc{margin:12px 0;color:#526159;font-size:14px;line-height:1.55}
+.mk-grammars{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:0;margin:6px 0 12px;
+  border-top:1px solid var(--line)}
+.mk-grammars div{padding:8px 0;border-bottom:1px solid var(--line)}
+.mk-grammars dt{font:500 9px 'DM Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:#657068}
+.mk-grammars dd{margin:2px 0 0;font:500 12px 'DM Mono',monospace}
+.mk-note{margin:0;color:#657068;font-size:12px;line-height:1.55}
+.mk-detail{border:1px solid var(--ink);background:#fff;padding:24px;margin:26px 0}
+.mk-detail h3{margin:8px 0 14px;font-size:28px;font-weight:500;letter-spacing:-.05em}
+.flow-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0;margin:0 0 14px;
+  border-top:1px solid var(--line)}
+.flow-facts div{padding:10px 0;border-bottom:1px solid var(--line)}
+.flow-facts dt{font:500 10px 'DM Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:#657068}
+.flow-facts dd{margin:3px 0 0;font-size:18px;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.flow-next{margin-top:auto;padding-top:14px}
+.flow-search{display:flex;gap:10px;margin:16px 0 6px;flex-wrap:wrap}
+.flow-search input{flex:1 1 300px;padding:12px 14px;border:1px solid var(--ink);background:var(--paper);
+  color:var(--ink);font:500 15px 'DM Sans',Arial,sans-serif}
+.flow-hint{margin:0 0 4px;color:#657068;font:500 12px 'DM Mono',monospace}
+.flow-empty{padding:20px 0;color:#657068;font:500 13px 'DM Mono',monospace}
+.pill{display:inline-block;padding:3px 9px;border:1px solid currentColor;font:500 9px 'DM Mono',monospace;
+  letter-spacing:.07em;text-transform:uppercase}
+.pill.published{color:#5f8a17}.pill.draft{color:#96751d}
+.mono{font-family:'DM Mono',monospace}.htmx-request{opacity:.5}
+</style></head><body>
+<canvas class="matrix-gpu" id="matrix-gpu" aria-hidden="true"></canvas><div class="grain" aria-hidden="true"></div>
+<header class="topbar"><a class="wordmark" href="/">BONF<span>Ÿ</span>RE</a>
+<nav><a href="/property">Property</a><a href="/market">Market</a><a href="/sources">Sources</a>
+<a href="/agents">Agents</a><a href="/notes/">Notes</a><a href="/cms/">Content</a></nav>
+<a class="small-link" href="/account" id="session-link">Account <span>→</span></a></header>
+<main class="wrap">
+<section class="hero" style="padding:52px 0 0">
+  <div class="eyebrow"><i></i><span>Step 1 · discover, act, emit</span></div>
+  <h1>Agents that <em>do things.</em></h1>
+  <p class="lede">An agent discovers a skill, opens durable work under lease, and what happens becomes an event any system can follow. MCP goes well past listing tools.</p>
+</section>
+<div id="flow-root" hx-get="/agents/list" hx-trigger="load" hx-swap="innerHTML">
+  <p class="flow-empty">Loading…</p>
+</div>
+</main>
+<footer class="footer wrap"><a class="wordmark" href="/">BONF<span>Ÿ</span>RE</a>
+<p>An advertised skill is not an agreement. No agent verb crosses a human submit line.</p><a href="/protocols">All carriers ↗</a></footer>
+<script defer src="/assets/matrix-htmx.js"></script><script src="/assets/matrix.js"></script>
+<script>
+document.addEventListener('click', async ev => {
+  const b=ev.target.closest('[data-admit]'); if(!b) return;
+  const url=document.querySelector('#admit input[name=url]').value.trim();
+  const out=document.querySelector('[data-admit-status]');
+  if(!url){ out.textContent='Enter a public http(s) URL.'; return; }
+  b.disabled=true; out.textContent='Checking robots.txt, then fetching…';
+  try{
+    const r=await fetch('/studio/v1/foreign/observe',{method:'POST',
+      headers:{'Content-Type':'application/json'}, credentials:'same-origin',
+      body:JSON.stringify({twin_id:'source-'+Date.now(),url})});
+    const d=await r.json().catch(()=>({}));
+    if(r.status===403){ out.textContent='This account is not authorized to admit sources.'; }
+    else if(d.policy_decision==='robots_disallow'){
+      out.textContent='Refused by robots.txt. The source URL was never fetched, and the refusal is receipted.'; }
+    else if(d.content_sha256){
+      out.innerHTML='Admitted. '+d.body_bytes+' bytes retained, digest <span class="mono">'+
+        d.content_sha256.slice(0,16)+'…</span>. This is a cached projection, not a licence.'; }
+    else { out.textContent='Not admitted: '+(d.error||d.policy_decision||('HTTP '+r.status)); }
+  }catch(e){ out.textContent='Could not reach the observer.'; }
+  b.disabled=false;
+});
+</script></body></html>

@@ -1,0 +1,5 @@
+# fact	producer	consumer	witness	state
+SemanticOperation	object-grammar	semantic-operation-lowering	cmd/BonfyreSemanticOperation/Makefile	runtime_closed
+TargetState	target-obligation	target-attention-projection	cmd/BonfyreTargetAttention/Makefile	runtime_closed
+TransportLease	media-delivery	cmd-mo-q	cmd/BonfyreMoQ/tests/moqt_leased_session_test.sh	declaration_drift
+FactDelta	*	*	cmd/BonfyreCMS/tests/fact_delta_test.sh;cmd/BonfyreExternalEstate/tests/external_estate_test.sh	distributed_runtime_projection

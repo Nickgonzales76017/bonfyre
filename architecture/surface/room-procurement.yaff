@@ -1,0 +1,53 @@
+architecture room-procurement-draft
+  canonical_name RoomProcurementDraft
+  family surface
+  domain Content / Saved room purchase lists
+  maturity implemented
+  semantic_question Which exact products and quantities belong to a saved room version, and can members retain a purchase list without losing source lineage or accepting a stale layout?
+  purpose Derive draft purchase lists from saved room records and retained product observations using the existing destination-owned Workspace contract.
+  source_path components/BonfyreServiceSite/room-procurement.mjs
+  source_path components/BonfyreServiceSite/room-procurement-view.mjs
+  source_path components/BonfyreServiceSite/room-procurement.css
+  source_path scripts/materialize_room_procurement.mjs
+  source_path scripts/publish_experience_setups.mjs
+  invariant Product identity is the exact source URL, product identifier and variant identifier; conflicting observations refuse grouping
+  invariant Every draft retains the source room key, native revision, complete value snapshot and canonical digest
+  invariant Native check-only source revision and draft compare-and-swap execute in the same Workspace transaction
+  invariant The existing spaces family admits the explicit procurement-draft prefix; no new record database is introduced
+  invariant Refresh retains the draft identity while native version history preserves the prior room snapshot
+  invariant Account change and pagehide permanently close the document and clear its private list and room choices
+  invariant All amounts are exact integer USD cents; delivery, tax, current availability and purchase authority remain unverified
+  witness scripts/tests/room-procurement.test.mjs verifies exact option grouping, forty and sixty-four placements, source conflicts, immutable snapshots, stale lineage and tampered-body refusal
+  witness scripts/tests/room-procurement-browser.test.mjs exercises retained native records, cross-editor reopen, atomic stale refusal, current roles, lost acknowledgements, source refresh and mobile account closure
+  forbidden_inference A saved or downloaded purchase list -> a supplier quotation, accepted order, authenticated purchase approval, payment or shipment
+  forbidden_inference A source observation timestamp -> a current supplier price or inventory check
+  forbidden_inference A same-destination room derivation -> a universal cross-product transaction or completed procurement chain
+  known_gap Supplier requests, quote comparison, purchase approval, split orders, shipment and finance continuation remain separate work
+  known_gap Product observations remain frozen in the retained package; later catalogue draft prices are not adopted automatically
+  known_gap Source room changes after export remain outside the exported snapshot; downstream users must recheck its retained source identity
+  interacts room-purchase-list-native-records
+  interacts room-purchase-list-source
+
+interaction room-purchase-list-native-records
+  source room-procurement-draft
+  destination web-address-edge
+  relation revision-checked-purchase-list-draft
+  preserves Current actor, destination, installed prefix, native revision, source check and idempotent request replay
+  drops Implicit supplier authority and application-owned record databases
+  forbidden_inference Native draft persistence -> procurement execution or supplier consent
+  invalidates_on Native record contract, actor authority, source room revision or installed prefix changes
+  binding components/BonfyreServiceSite/room-procurement.mjs
+  binding scripts/publish_experience_setups.mjs
+  witness scripts/tests/room-procurement-browser.test.mjs
+
+interaction room-purchase-list-source
+  source service-site
+  destination room-procurement-draft
+  relation saved-room-and-retained-product-observations
+  preserves Exact room version, source snapshot, product option identity, original observation hash and listed unit prices
+  drops Matching by title, inferred current prices and automatic adoption of unsaved edits
+  forbidden_inference Listed room products -> supplier availability or verified site geometry
+  invalidates_on Room schema, catalogue observation, price precision or planner assessment changes
+  binding components/BonfyreServiceSite/planner-model.mjs
+  binding scripts/materialize_room_procurement.mjs
+  witness scripts/tests/room-procurement.test.mjs

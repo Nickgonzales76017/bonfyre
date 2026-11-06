@@ -1,0 +1,15 @@
+{
+  "schema":"bonfyre-incumbent-coordination-phenotypes.v1",
+  "cannot_infer":"a platform carrier, public profile, or installed bridge does not collapse principal, actor, institution, relationship, authority, money, content, or history into one provider account",
+  "phenotypes":[
+    {"id":"wordpress-estate","roots":["institution","publication","merchant"],"public":["wp-rest","rss","sitemap","activitypub","woocommerce"],"authority":"wordpress-bridge","bridge":"verified_installation"},
+    {"id":"moderated-community","examples":["reddit","discord"],"roots":["community","operator"],"public":["public-thread","public-server-profile"],"authority":"provider-role-bridge","bridge":"deferred"},
+    {"id":"support-membership","examples":["patreon","github-sponsors"],"roots":["actor","project","support"],"public":["creator-profile","project-profile"],"authority":"payment-provider-bridge","bridge":"deferred"},
+    {"id":"event-organizing","examples":["meetup","eventbrite"],"roots":["occurrence","community","operator"],"public":["event-page","calendar"],"authority":"organizer-bridge","bridge":"deferred"},
+    {"id":"education-authority","examples":["clever","powerschool","oneroster","ed-fi"],"roots":["institution","program","household"],"public":["school-world"],"authority":"district-authority-bridge","bridge":"deferred"},
+    {"id":"household-resource-network","examples":["211","united-way"],"roots":["household","institution","opportunity"],"public":["resource-search","service-directory"],"authority":"provider-directory-bridge","bridge":"deferred"},
+    {"id":"resident-property","examples":["buildium","appfolio","zillow"],"roots":["property","household","institution"],"public":["property-profile","service-directory"],"authority":"resident-property-bridge","bridge":"deferred"},
+    {"id":"agentic-commerce","examples":["shopify","amazon","woocommerce"],"roots":["product","merchant","household"],"public":["catalog","offer","price"],"authority":"checkout-capability-bridge","bridge":"deferred"},
+    {"id":"local-neighborhood-network","examples":["nextdoor"],"roots":["world","community","household","business"],"public":["neighborhood-profile","local-business-profile"],"authority":"neighborhood-role-bridge","bridge":"deferred"}
+  ]
+}

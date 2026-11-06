@@ -31,6 +31,7 @@
 #else
 #  define _POSIX_C_SOURCE 200809L
 #endif
+#include <stdint.h>
 #include "bf_pool.h"
 
 #include <pthread.h>

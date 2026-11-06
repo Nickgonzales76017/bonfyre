@@ -1,0 +1,135 @@
+{
+  "schema": "bonfyre.command-vectors.v1",
+  "binary": "bonfyre-quant",
+  "binary_env": "BONFYRE_QUANT_BIN",
+  "cases": [
+    {
+      "name": "a safetensors tensor is encoded to BQFP, decoded by SLI, and compared back at cosine >= 0.99 (synthetic weights in a real safetensors container)",
+      "steps": [
+        {
+          "program": "sh",
+          "argv": [
+            "-c",
+            "perl mkst.pl 7 > m.safetensors && perl mkst.pl 9 > m2.safetensors"
+          ],
+          "exit": 0
+        },
+        {
+          "argv": [
+            "encode",
+            "m.safetensors",
+            "--out",
+            "a.bqfp",
+            "--tensor",
+            "down_proj"
+          ],
+          "env": {
+            "HOME": "${tmp}"
+          },
+          "exit": 0,
+          "contains": [
+            "encoded model.layers.0.mlp.down_proj.weight: 65536 weights"
+          ],
+          "present": [
+            "${tmp}/a.bqfp"
+          ]
+        },
+        {
+          "program": "${root}/cmd/BonfyreSLI/bonfyre-sli",
+          "argv": [
+            "decode",
+            "--model",
+            "a.bqfp",
+            "--out",
+            "w.f32"
+          ],
+          "env": {
+            "HOME": "${tmp}"
+          },
+          "exit": 0
+        },
+        {
+          "argv": [
+            "compare",
+            "m.safetensors",
+            "--weights",
+            "w.f32",
+            "--tensor",
+            "down_proj"
+          ],
+          "env": {
+            "HOME": "${tmp}"
+          },
+          "exit": 0,
+          "contains": [
+            "compared model.layers.0.mlp.down_proj.weight: 65536 weights  cos=0.99"
+          ]
+        },
+        {
+          "argv": [
+            "roundtrip",
+            "m.safetensors",
+            "--limit",
+            "1"
+          ],
+          "env": {
+            "HOME": "${tmp}"
+          },
+          "exit": 2,
+          "contains": [
+            "tensors measured: 1",
+            "tensors below 0.999 cosine: 1"
+          ]
+        }
+      ],
+      "files": {
+        "mkst.pl": "my ($seed,$n)=@ARGV; $n||=256; srand($seed||7); my @t=(\"model.layers.0.mlp.down_proj.weight\",\"model.layers.0.self_attn.q_proj.weight\"); my %h; my $data=\"\"; my $off=0;\nfor my $name (@t){ my $d=pack(\"f<*\", map { (rand()-0.5)*0.08 } 1..$n*$n); $h{$name}=[$off,$off+length($d)]; $data.=$d; $off+=length($d); }\nmy $j=\"{\".join(\",\", map { \"\\\"$_\\\":{\\\"dtype\\\":\\\"F32\\\",\\\"shape\\\":[$n,$n],\\\"data_offsets\\\":[$h{$_}[0],$h{$_}[1]]}\" } @t).\"}\";\n$j.=\" \" x ((8 - length($j) % 8) % 8); print pack(\"Q<\", length($j)).$j.$data;\n"
+      }
+    },
+    {
+      "name": "weights of the wrong length are refused",
+      "files": {
+        "w.f32": "short",
+        "mkst.pl": "my ($seed,$n)=@ARGV; $n||=256; srand($seed||7); my @t=(\"model.layers.0.mlp.down_proj.weight\",\"model.layers.0.self_attn.q_proj.weight\"); my %h; my $data=\"\"; my $off=0;\nfor my $name (@t){ my $d=pack(\"f<*\", map { (rand()-0.5)*0.08 } 1..$n*$n); $h{$name}=[$off,$off+length($d)]; $data.=$d; $off+=length($d); }\nmy $j=\"{\".join(\",\", map { \"\\\"$_\\\":{\\\"dtype\\\":\\\"F32\\\",\\\"shape\\\":[$n,$n],\\\"data_offsets\\\":[$h{$_}[0],$h{$_}[1]]}\" } @t).\"}\";\n$j.=\" \" x ((8 - length($j) % 8) % 8); print pack(\"Q<\", length($j)).$j.$data;\n"
+      },
+      "steps": [
+        {
+          "program": "sh",
+          "argv": [
+            "-c",
+            "perl mkst.pl 7 > m.safetensors && perl mkst.pl 9 > m2.safetensors"
+          ],
+          "exit": 0
+        },
+        {
+          "argv": [
+            "compare",
+            "m.safetensors",
+            "--weights",
+            "w.f32",
+            "--tensor",
+            "down_proj"
+          ],
+          "env": {
+            "HOME": "${tmp}"
+          },
+          "exit": 1
+        }
+      ]
+    },
+    {
+      "name": "there is no built-in tensor to measure",
+      "steps": [
+        {
+          "argv": [
+            "roundtrip"
+          ],
+          "env": {
+            "HOME": "${tmp}"
+          },
+          "exit": 1
+        }
+      ]
+    }
+  ]
+}

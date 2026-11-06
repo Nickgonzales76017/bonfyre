@@ -1,0 +1,56 @@
+site_fragment_contract v1
+
+owner BonfyreCMS
+projection_owner BonfyreWebAddress SurfaceIR BonfyreSurface
+address_owner BonfyreMatrix BonfyreWebAddress
+semantic_owners LambdaTensor BonfyreIndex BonfyreEmbed BonfyreVec
+
+identity exact {
+  namespace
+  coordinate
+  page
+  slot
+  audience
+  variant_key
+}
+
+publication {
+  states draft published archived
+  public_requires status=published
+  save_does_not_imply publish
+  index_membership_does_not_imply publish
+}
+
+provenance {
+  source_ref
+  source_digest
+  evidence_ref
+}
+
+projection {
+  exact_lookup coordinate
+  contract_field projection_contract
+  dynamic HTMX
+  fallback compiled_surface
+}
+
+semantic_derivation {
+  family bindings
+  tensor _tensor_cells
+  ann _ann_buckets
+  quantized _ann_quantized
+  equivalence _equivalences
+  egraph _egraph_meta
+  memo _reduce_memo
+}
+
+cannot_infer {
+  nearest_neighbor => exact_coordinate
+  authored => published
+  published => authorized_effect
+  projection => canonical_owner
+  shared_semantics => identical_copy
+  observation => truth
+}
+
+witness cmd/BonfyreCMS/tests/site_fragment_pipeline_test.sh

@@ -1,0 +1,99 @@
+atlas commands-canary-owner
+
+architecture mcp-bounded-wire-boundary
+  canonical_name McpBoundedWireBoundary
+  family commands
+  domain MCP / Bounded transport primitives
+  maturity implemented
+  semantic_question Can independently owned MCP services share authentication, structural validation and bounded decoding without sharing effect authority?
+  purpose Share the Project MCP boundary primitives and the canary/recursive transport factory while retaining separate catalogs, stores, tool dispatch and permissions.
+  node_types RequestEnvelope
+  node_types ArgumentSchema
+  internal_calculus constant-time bearer comparison -> byte/time-bounded strict UTF-8 decoding -> structural argument validation -> owner-specific dispatch
+  invariant authenticated effect routes validate input before owner invocation; no type coercion grants booleans or numeric limits
+  invariant declared JSON type unions validate each complete structural branch; an explicit null alternative never admits booleans, arrays or incomplete objects as file hash preconditions
+  forbidden_inference shared HTTP mechanics -> shared semantic authority, automatic authorization or distributed transaction safety
+  source_path integrations/mcp/http_boundary.mjs
+  source_path integrations/mcp/project_node.mjs
+  source_path integrations/mcp/canary_server.mjs
+  source_path integrations/mcp/recursive_server.mjs
+  source_path integrations/mcp/fabric_server.mjs
+  source_path integrations/mcp/canonical_json.mjs
+  source_path integrations/mcp/owned_mcp_client.mjs
+  invariant outbound owner calls require exact tool and response identity, configured loopback or HTTPS, one headers-and-body deadline and fail-fast per-client concurrency and aggregate wire-byte reservations
+  invariant remote errors and lost responses are not proof that an effect did not occur; no automatic replay is permitted by the shared transport
+  witness integrations/mcp/tests/owned_mcp_client.test.mjs overload refusal before fetch, stalled headers and body, invalid body cancellation, pre-dispatch cancellation, exact HTTPS response identity and uncertain partial effects
+  known_gap outbound reservations bound per-client wire bytes, not total JavaScript heap, cross-process quotas, tenant admission or durable distributed idempotency
+  witness integrations/mcp/tests/project_transport_adversarial.test.mjs
+  witness integrations/mcp/tests/canary_transport.test.mjs
+  witness integrations/mcp/tests/recursive_transport.test.mjs
+  witness integrations/mcp/tests/fabric_transport.test.mjs
+
+architecture fixture-canary-native-owner
+  canonical_name FixtureCanaryNativeOwner
+  family commands
+  domain Execution / Version-bound evidence and bounded canary routing
+  maturity measured
+  semantic_question Does actual provider evidence permit a deterministic low-percentage safe-effect canary while preserving fallback and regression suspension?
+  purpose Replace the local Python canary daemon and handwritten fixture orchestration with Bun owners over the existing receipt chain, certificates, policies, decisions and outcomes.
+  node_types CapabilityCertificate
+  node_types CanaryPolicy
+  node_types RouteDecision
+  node_types Outcome
+  node_types HashLinkedReceipt
+  state_types proposed
+  state_types enabled
+  state_types suspended
+  state_types blocked
+  internal_calculus version-bound certificate validation -> eligible safe-effect policy -> deterministic mission/task/capability bucket -> selected provider or distinct fallback -> measured outcome -> bounded regression suspension
+  invariant canaries require a passed, unexpired, digest-valid, cleanup-verified provider-version-bound certificate; percentages remain between one and twenty-five and fallback must differ
+  invariant policy evidence cannot authorize external effects; only PURE, READ_ONLY and CANDIDATE_WRITE are canary-eligible
+  invariant certificate discovery cannot automatically promote a provider; failure thresholds may suspend an existing policy
+  invariant fixture certification invokes the actual provider and records measured outcomes; missing tools and partial evidence cannot become passed certificates
+  invariant receipt and certificate verification preserves historical number and Unicode digest semantics rather than recomputing identity from a lossy JavaScript object
+  forbidden_inference a passed fixture -> arbitrary production correctness, full capability equivalence, or permission to promote a provider automatically
+  forbidden_inference Bun daemon and Bun-authored fixtures -> every invoked third-party provider or downstream Bonfyre service being Python-free
+  forbidden_inference rewritten Bun fixture workload -> proof of the historical Python workload; fixture revision and evidence identify what actually ran
+  source_path integrations/mcp/canary_catalog.json
+  source_path integrations/mcp/canary_reviewed_scripts.json
+  source_path integrations/mcp/canary_server.mjs
+  source_path integrations/mcp/canary_store.mjs
+  source_path integrations/mcp/canary_fixtures.mjs
+  source_path cmd/BonfyreMcp/src/clis.c
+  source_path deploy/launchd/bonfyre-canary
+  source_path deploy/launchd/canary_cutover.mjs
+  witness integrations/mcp/tests/canary_transport.test.mjs tests twelve routes, authentication, bounded JSON, effect serialization and recursive projection responses without live effects
+  witness integrations/mcp/tests/canary_store.test.mjs tests historical digest fidelity, policy certificate binding, concurrent receipt writes, confinement and stale-authority refusal
+  witness integrations/mcp/tests/canary_fixtures.test.mjs tests provider evidence, durable projection intent and refusal to replay uncertain agent effects
+  witness integrations/mcp/tests/canary_rtk_real_witness.json records an actual RTK 0.44.0 fixture with 76 percent output reduction but lost failing-test identity; its certificate remains failed
+  witness integrations/mcp/tests/canary_integration.test.mjs instantiates the real owners, checks lazy startup, persists fallback and outcome receipts, rejects unsupported promotion and verifies restart continuity
+  witness cmd/BonfyreMcp/tests/vectors.sh check replays 53 canary command vectors recorded from the retired canary_cli.mjs (all twelve command forms, defaults, catalog validation, help/version, response identity, redirect and size refusal, token redaction) against bonfyre-mcp byte for byte
+  witness integrations/mcp/tests/canary_live_witness.mjs checks the real twelve-tool contract and existing receipt chain without running fixtures or creating route decisions
+  witness integrations/mcp/tests/canary_python_baseline.json records the prior Python service and its verified nineteen-receipt chain; this is baseline evidence, not a native deployment claim
+  witness integrations/mcp/tests/canary_cutover.json records live Bun daemon and CLI promotion, unchanged twelve-tool catalog and nineteen-receipt chain, source hashes, rollback paths and scoped before-after HTTP measurements
+  witness integrations/mcp/tests/recursive_cutover.json records refresh onto shared canonical and transport helpers with all nineteen canary receipts unchanged
+  known_gap upstream Bernstein is an explicit third-party Python boundary: certification must exercise the actual installed upstream CLI, not a mislabeled Bonfyre simulation; local native Bernstein parity is not established
+  known_gap reviewed shell and Node wrapper entrypoints are pinned by digest; this does not prove every transitive provider dependency or generated agent action is Python-free
+  known_gap recursive certificate projection still targets its configured independent MCP owner; replacing the canary daemon does not retire that downstream service
+  known_gap provider and agent fixture behavior requires its own witness; read-only HTTP measurements do not establish provider speed or estate-wide scaling
+  known_gap RTK 0.44.0 generic test compression drops Bun failing-test identity in the witnessed workload; reduction ratio alone cannot certify its use
+
+interaction project-mcp-shares-wire-boundary
+  source mcp-project-native-owner
+  destination mcp-bounded-wire-boundary
+  relation shared-transport-primitives
+  preserves existing Project catalog, authentication, schema refusal and strict byte-bounded decoding
+  drops duplicate wire validation implementation, not Project-specific effect gates
+  forbidden_inference shared parser -> interchangeable stores or delegated effect authority
+  witness integrations/mcp/tests/project_transport_adversarial.test.mjs
+  binding integrations/mcp/project_node.mjs
+
+interaction canary-mcp-shares-wire-boundary
+  source fixture-canary-native-owner
+  destination mcp-bounded-wire-boundary
+  relation shared-transport-primitives
+  preserves twelve-tool certificate and routing contract with owner-specific request limits
+  drops duplicated authentication and structural validation logic
+  forbidden_inference authenticated canary request -> certificate validity or automatic provider promotion
+  witness integrations/mcp/tests/canary_transport.test.mjs
+  binding integrations/mcp/canary_server.mjs

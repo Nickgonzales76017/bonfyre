@@ -1,3 +1,7 @@
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 /*
  * bf_dns.c — Async DNS resolver with reactor integration
  *
@@ -10,6 +14,10 @@
  * Includes a small DNS cache (LRU, 64 entries, 60s TTL).
  */
 
+/* CLOCK_MONOTONIC, and the Linux inotify/epoll paths this file documents,
+ * are behind a glibc feature macro. Declared here so the Linux build this
+ * targets actually compiles. */
+#include <stdint.h>
 #include "bf_dns.h"
 
 #include <stdlib.h>

@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * main.c — BonfyreMoE: Distributed expert-streaming inference
  *
@@ -21,6 +28,8 @@
  */
 
 #include "colibri_bonfyre.h"
+#include "residency.h"
+#include <dirent.h>
 #include <errno.h>
 #include <limits.h>
 #include <math.h>
@@ -80,6 +89,26 @@ static void usage(const char *argv0) {
         "  --peers <list>         Comma-separated host:port peers\n"
         "  --port <port>          API listen port for GGUF serve (default: 7000)\n"
         "\n"
+        "Residency (GGUF serve):\n"
+        "  The model loads on the first request, only if ResourceAdmission grants the\n"
+        "  memory, and unloads when idle. A load that does not fit answers 503.\n"
+        "  With no --model, every chat model under --model-root (default\n"
+        "  $BONFYRE_MODEL_ROOT or ~/BonfyreModels) is a candidate. The strongest that\n"
+        "  fits the memory free at that moment loads, with as much context as fits,\n"
+        "  and is replaced by a stronger one between requests once there is room.\n"
+        "  --model <path> ...     Name the candidates yourself, in preference order\n"
+        "  --model-root <dir>     Where to look for models when --model is not given\n"
+        "  --ctx-size <N>         Least context a load gets (serve default: 4096)\n"
+        "  --max-ctx-size <N>     Most context a load gets when memory allows (default: 16384)\n"
+        "  --idle-unload <sec>    Unload after this long with no request (default: 600)\n"
+        "  --resident             Load now and never unload (the old behaviour)\n"
+        "  --host <ipv4>          Listen address (default: 127.0.0.1)\n"
+        "  --backend-port <port>  Private llama-server port (default: port + 1)\n"
+        "  --admission-db <file>  Grant ledger (default: $BONFYRE_ADMISSION_DB or ~/.bonfyre/admission.db)\n"
+        "  --load-timeout <sec>   Give up on a load after this long (default: 180)\n"
+        "  --memory-available <bytes|@file>  Use this reading instead of measuring (tests)\n"
+        "  GET /bonfyre/residency reports what is loaded and why a load was refused.\n"
+        "\n"
         "Examples:\n"
         "  %s list-archs\n"
         "  %s plan --model /nvme/glm52 --vram 80 --ram 128\n"
@@ -123,6 +152,27 @@ static bool has_suffix(const char *value, const char *suffix) {
     suffix_len = strlen(suffix);
     return value_len >= suffix_len &&
            strcmp(value + value_len - suffix_len, suffix) == 0;
+}
+
+/* Finds .gguf files up to three directories deep. Paths are kept for the
+ * process lifetime. */
+static int discover_gguf(const char *dir, const char **out, int capacity, int depth) {
+    DIR *handle;
+    struct dirent *entry;
+    int count = 0;
+    if (depth > 3 || !(handle = opendir(dir))) return 0;
+    while ((entry = readdir(handle)) && count < capacity) {
+        char path[PATH_MAX];
+        struct stat st;
+        size_t length = strlen(entry->d_name);
+        if (entry->d_name[0] == '.') continue;
+        snprintf(path, sizeof path, "%s/%s", dir, entry->d_name);
+        if (stat(path, &st) != 0) continue;
+        if (S_ISDIR(st.st_mode)) count += discover_gguf(path, out + count, capacity - count, depth + 1);
+        else if (S_ISREG(st.st_mode) && length > 5 && strcmp(entry->d_name + length - 5, ".gguf") == 0) out[count++] = strdup(path);
+    }
+    closedir(handle);
+    return count;
 }
 
 static bool is_gguf_model(const char *model_path) {
@@ -461,136 +511,6 @@ static int mode_chat(const char *model_path, const cbf_model_shape_t *shape,
     return 0;
 }
 
-#if 0 /* Disabled: these former placeholder loops must never advertise service. */
-static int mode_serve(const char *model_path, const cbf_model_shape_t *shape,
-                      const cbf_memory_config_t *memory, uint16_t port) {
-    printf("BonfyreMoE API Server\n");
-    printf("=====================\n");
-    printf("Model: %s\n", model_path);
-    printf("Port: %u\n", port);
-    printf("\nStarting server...\n");
-
-    /* Initialize engine */
-    cbf_engine_t *engine = cbf_engine_new(model_path, shape, memory);
-    if (!engine) {
-        fprintf(stderr, "✗ Engine initialization failed\n");
-        return 1;
-    }
-
-    int rc = cbf_engine_load(engine);
-    if (rc != CBF_OK) {
-        fprintf(stderr, "✗ Model loading failed: %s\n", cbf_strerror(rc));
-        cbf_engine_free(engine);
-        return 1;
-    }
-
-    /* Load tokenizer */
-    char tokenizer_path[512];
-    snprintf(tokenizer_path, sizeof(tokenizer_path), "%s/tokenizer.model", model_path);
-    cbf_tokenizer_t *tokenizer = cbf_tokenizer_load(tokenizer_path);
-    if (!tokenizer) {
-        tokenizer = cbf_tokenizer_create_fallback(shape->n_vocab);
-    }
-
-    /* Simple HTTP server implementation (minimal OpenAI-compatible API)
-     * In production, would use libevent, libmicrohttpd, or similar.
-     * For now, implement a basic socket-based server.
-     */
-
-    printf("✓ Server ready at http://0.0.0.0:%u\n", port);
-    printf("Endpoints:\n");
-    printf("  POST /v1/chat/completions\n");
-    printf("  POST /v1/completions\n");
-    printf("  GET  /health\n\n");
-
-    /* Server loop (placeholder - would use proper HTTP library) */
-    printf("Note: Full HTTP server implementation requires libmicrohttpd or similar.\n");
-    printf("For now, use the 'chat' mode for interactive testing.\n\n");
-
-    /* Keep alive for Ctrl+C */
-    printf("Press Ctrl+C to stop...\n");
-    while (1) {
-        sleep(1);
-        /* TODO: Process HTTP requests */
-    }
-
-    cbf_tokenizer_free(tokenizer);
-    cbf_engine_free(engine);
-    return 0;
-}
-
-static int mode_peer(const char *model_path, const cbf_model_shape_t *shape,
-                     const cbf_memory_config_t *memory, uint16_t port) {
-    printf("BonfyreMoE Expert Server\n");
-    printf("========================\n");
-    printf("Model: %s\n", model_path);
-    printf("Listen port: %u\n", port);
-    printf("\nStarting expert server...\n");
-
-    /* Initialize engine */
-    cbf_engine_t *engine = cbf_engine_new(model_path, shape, memory);
-    if (!engine) {
-        fprintf(stderr, "✗ Engine initialization failed\n");
-        return 1;
-    }
-
-    int rc = cbf_engine_load(engine);
-    if (rc != CBF_OK) {
-        fprintf(stderr, "✗ Model loading failed: %s\n", cbf_strerror(rc));
-        cbf_engine_free(engine);
-        return 1;
-    }
-
-    printf("✓ Expert server ready on QUIC port %u\n", port);
-    printf("Total experts available: %u layers × %u experts = %u\n",
-           shape->n_layers, shape->n_experts_per_layer,
-           shape->n_layers * shape->n_experts_per_layer);
-    printf("\nWaiting for expert requests...\n\n");
-
-    /* QUIC server loop
-     * The actual implementation would:
-     * 1. Accept incoming QUIC connections
-     * 2. Register expert request callback
-     * 3. When requested, load expert from disk/cache
-     * 4. Stream expert blob back to requester
-     * 5. Track bandwidth and latency metrics
-     */
-
-    printf("Note: QUIC server uses bf_quic API from libquic-transport\n");
-    printf("Expert requests will be served from:\n");
-    printf("  - VRAM cache (if present)\n");
-    printf("  - RAM cache (per-layer LRU)\n");
-    printf("  - Disk (mmap'd weight files)\n\n");
-
-    /* Keep alive */
-    printf("Press Ctrl+C to stop...\n");
-    uint64_t experts_served = 0;
-    uint64_t bytes_sent = 0;
-    time_t start_time = time(NULL);
-
-    while (1) {
-        sleep(5);
-
-        /* Get metrics */
-        cbf_metrics_t metrics;
-        cbf_engine_get_metrics(engine, &metrics);
-
-        printf("\r[Metrics] Uptime: %lus | Tokens: %llu | Experts cached: %u | Requests: %llu | Sent: %llu MB",
-               (unsigned long)(time(NULL) - start_time),
-               (unsigned long long)metrics.tokens_generated,
-               metrics.experts_resident[CBF_TIER_VRAM] + metrics.experts_resident[CBF_TIER_RAM],
-               (unsigned long long)experts_served,
-               (unsigned long long)(bytes_sent / (1024 * 1024)));
-        fflush(stdout);
-
-        /* TODO: In real implementation, process QUIC events here */
-    }
-
-    cbf_engine_free(engine);
-    return 0;
-}
-#endif
-
 static int mode_rebalance(const char *model_path, const cbf_model_shape_t *shape,
                           const cbf_memory_config_t *memory,
                           cbf_peer_t *peers, uint32_t n_peers) {
@@ -732,6 +652,8 @@ int main(int argc, char **argv) {
 
     /* Parse arguments */
     const char *model_path = NULL;
+    const char *models[32] = {0};
+    int model_count = 0;
     const char *arch = "auto";  /* Changed from glm52 to auto */
     const char *workload = "default";
     const char *peer_str = NULL;
@@ -747,11 +669,27 @@ int main(int argc, char **argv) {
     uint32_t prefetch = 1;
     uint32_t gpu_layers = 99;
     uint32_t context_size = 2048;
+    uint32_t max_context = 16384;
+    bool context_given = false;
+    const char *model_root = NULL;
     bool numa = false;
     uint16_t port = DEFAULT_PORT;
+    uint16_t backend_port = 0;
+    uint32_t idle_unload = 600;
+    uint32_t load_timeout = 180;
+    bool resident = false;
+    int64_t memory_available = 0;
+    const char *memory_file = NULL;
+    const char *host = "127.0.0.1";
+    const char *admission_db = getenv("BONFYRE_ADMISSION_DB");
 
     for (int i = 2; i < argc; i++) {
-        if (strcmp(argv[i], "--model") == 0 && i + 1 < argc) model_path = argv[++i];
+        if (strcmp(argv[i], "--model") == 0 && i + 1 < argc) {
+            /* serve takes several, in preference order; every other mode uses the first. */
+            if (model_count < 32) models[model_count++] = argv[i + 1];
+            if (!model_path) model_path = argv[i + 1];
+            i++;
+        }
         else if (strcmp(argv[i], "--arch") == 0 && i + 1 < argc) arch = argv[++i];
         else if (strcmp(argv[i], "--workload") == 0 && i + 1 < argc) workload = argv[++i];
         else if (strcmp(argv[i], "--vram") == 0 && i + 1 < argc) vram_gb = argi(argv[++i], vram_gb);
@@ -763,7 +701,9 @@ int main(int argc, char **argv) {
         else if (strcmp(argv[i], "--io-threads") == 0 && i + 1 < argc) io_threads = argi(argv[++i], io_threads);
         else if (strcmp(argv[i], "--prefetch") == 0 && i + 1 < argc) prefetch = argi(argv[++i], prefetch);
         else if (strcmp(argv[i], "--gpu-layers") == 0 && i + 1 < argc) gpu_layers = argi(argv[++i], gpu_layers);
-        else if (strcmp(argv[i], "--ctx-size") == 0 && i + 1 < argc) context_size = argi(argv[++i], context_size);
+        else if (strcmp(argv[i], "--ctx-size") == 0 && i + 1 < argc) { context_size = argi(argv[++i], context_size); context_given = true; }
+        else if (strcmp(argv[i], "--max-ctx-size") == 0 && i + 1 < argc) max_context = argi(argv[++i], max_context);
+        else if (strcmp(argv[i], "--model-root") == 0 && i + 1 < argc) model_root = argv[++i];
         else if (strcmp(argv[i], "--numa") == 0) numa = true;
         else if (strcmp(argv[i], "--no-spec") == 0) {
             fprintf(stderr,
@@ -773,10 +713,39 @@ int main(int argc, char **argv) {
         }
         else if (strcmp(argv[i], "--peers") == 0 && i + 1 < argc) peer_str = argv[++i];
         else if (strcmp(argv[i], "--port") == 0 && i + 1 < argc) port = argi(argv[++i], port);
+        else if (strcmp(argv[i], "--backend-port") == 0 && i + 1 < argc) backend_port = argi(argv[++i], 0);
+        else if (strcmp(argv[i], "--idle-unload") == 0 && i + 1 < argc) idle_unload = argi(argv[++i], idle_unload);
+        else if (strcmp(argv[i], "--load-timeout") == 0 && i + 1 < argc) load_timeout = argi(argv[++i], load_timeout);
+        else if (strcmp(argv[i], "--resident") == 0) resident = true;
+        else if (strcmp(argv[i], "--memory-available") == 0 && i + 1 < argc) {
+            i++;
+            if (argv[i][0] == '@') memory_file = argv[i] + 1;
+            else memory_available = strtoll(argv[i], NULL, 10);
+        }
+        else if (strcmp(argv[i], "--host") == 0 && i + 1 < argc) host = argv[++i];
+        else if (strcmp(argv[i], "--admission-db") == 0 && i + 1 < argc) admission_db = argv[++i];
         else if (strcmp(argv[i], "--text") == 0 && i + 1 < argc) text_path = argv[++i];
         else if (strcmp(argv[i], "--out") == 0 && i + 1 < argc) out_path = argv[++i];
         else {
             usage(argv[0]);
+            return 2;
+        }
+    }
+
+    /* serve with no --model runs every chat model on this machine: the same
+     * set `bonfyre model local` lists, from BONFYRE_MODEL_ROOT or ~/BonfyreModels. */
+    bool discovered = false;
+    if (!model_path && strcmp(mode, "serve") == 0) {
+        static char root_buffer[PATH_MAX];
+        if (!model_root) model_root = getenv("BONFYRE_MODEL_ROOT");
+        if (!model_root) {
+            snprintf(root_buffer, sizeof root_buffer, "%s/BonfyreModels", getenv("HOME") ? getenv("HOME") : ".");
+            model_root = root_buffer;
+        }
+        model_count = discover_gguf(model_root, models, 32, 0);
+        if (model_count > 0) { model_path = models[0]; discovered = true; }
+        else {
+            fprintf(stderr, "BonfyreMoE: no .gguf model under %s; pass --model <file> or --model-root <dir>\n", model_root);
             return 2;
         }
     }
@@ -794,6 +763,34 @@ int main(int argc, char **argv) {
         if (strcmp(mode, "chat") == 0) {
             return exec_llama_cpp(getenv("BONFYRE_LLAMA_CLI_BIN") ? getenv("BONFYRE_LLAMA_CLI_BIN") : "llama-cli",
                                   model_path, port, gpu_layers, context_size, false);
+        }
+        if (strcmp(mode, "serve") == 0 && !resident) {
+            static char ledger[PATH_MAX], plane[64];
+            const char *home = getenv("HOME");
+            MoeResidency residency = {0};
+            if (!admission_db) {
+                snprintf(ledger, sizeof ledger, "%s/.bonfyre/admission.db", home ? home : ".");
+                admission_db = ledger;
+            }
+            snprintf(plane, sizeof plane, "moe-serve:%u", (unsigned)port);
+            residency.server_program = getenv("BONFYRE_LLAMA_SERVER_BIN") ? getenv("BONFYRE_LLAMA_SERVER_BIN") : "llama-server";
+            for (int m = 0; m < model_count; m++) residency.models[m] = models[m];
+            residency.model_count = model_count;
+            residency.host = host;
+            residency.port = port;
+            residency.backend_port = backend_port ? backend_port : (uint16_t)(port + 1);
+            residency.gpu_layers = gpu_layers;
+            /* --ctx-size is the least a load gets; memory decides how much more. */
+            residency.context_size = context_given ? context_size : 4096;
+            residency.max_context = max_context > residency.context_size ? max_context : residency.context_size;
+            residency.discovered = discovered;
+            residency.idle_seconds = idle_unload;
+            residency.load_timeout_seconds = load_timeout;
+            residency.admission_db = admission_db;
+            residency.plane = plane;
+            residency.memory_available = memory_available;
+            residency.memory_available_file = memory_file;
+            return moe_residency_serve(&residency);
         }
         if (strcmp(mode, "serve") == 0) {
             return exec_llama_cpp(getenv("BONFYRE_LLAMA_SERVER_BIN") ? getenv("BONFYRE_LLAMA_SERVER_BIN") : "llama-server",

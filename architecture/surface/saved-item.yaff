@@ -1,0 +1,49 @@
+atlas surface
+
+architecture saved-item
+  canonical_name SavedItem
+  family surface
+  domain Surface / Personal Relation
+  layer surface/public
+  semantic_question What has this person chosen to keep, and what did its source say about it when they kept it?
+  purpose Owns a signed-in person's private, reversible reference to a thing they kept -- a retained feed item or a property -- with the public description its source gave at that moment, so a kept thing outlives its source's latest feed slot for that person. Written only through the CMS binary from a one-type schema directory; read by the item page, the property page and /saved.
+  maturity implemented
+  consumes PageComposition
+  consumes BonfyreAuth
+  publishes SavedItem
+  node_types SavedItem
+  edge_types keeps
+  invariant a saved item belongs to exactly one actor resolved from a valid BonfyreAuth session at request time; the page never trusts an actor named in a form or URL
+  invariant saving is refused when the request's Origin is another site, and a session cookie is SameSite=Lax, so a cross-site form cannot keep something on a person's behalf
+  invariant one actor keeps one thing once: the saved key is a digest of actor and item reference and the CMS enforces it unique
+  invariant a snapshot holds only the public description the source gave (title, link, picture, publisher, maker, summary, observed time); it never holds a retained body
+  invariant a kept item whose source has moved on is shown only to the person who kept it, marked as what the source published when they kept it; everyone else sees that it is not there any more
+  invariant a page that knows its reader is never publicly cached (private, no-store; Vary Cookie)
+  invariant unsave deletes the person's reference through the CMS binary; nothing else about the thing changes
+  invariant a browser sign-in form returns the person to a validated same-site path (a next field, or the sign-in page's own next); any other destination falls back to the account page
+  forbidden_inference a saved item -> a copy of the source's material, an endorsement, or a claim that the thing is true
+  forbidden_inference a saved property -> a title search, an appraisal, an ownership interest or an opportunity opened in the work graph
+  forbidden_inference a saved item -> membership, authority or any grant beyond the person's own reference
+  forbidden_inference an item shown from a snapshot -> the source still publishing it
+  known_gap Save is a native owner handler, not yet an ObjectGrammar contract offered through /_aperture; it should become one so the same aperture law governs it
+  known_gap there is one collection (Saved); named boards and sharing a collection are not built
+  known_gap a snapshot is private; a lawful path to promote a kept retained item into a canonical subject through an ObjectGrammar ATTACH birth is not built
+  source_path cmd/BonfyreCMS/content-types/saved_item.json
+  source_path cmd/BonfyreWebAddress/src/main.c
+  source_path site/matrix/surfaces/login.html
+  source_path cmd/BonfyreWebAddress/tests/page_saved_test.sh
+  source_path cmd/BonfyreWebAddress/tests/page_parcel_test.sh
+  witness cmd/BonfyreWebAddress/tests/page_saved_test.sh signs two people up through /signup and /login, proves an anonymous save redirects to sign in and back, a signed-in item page offers a real Save form and is privately cached, a cross-site save is refused and keeps nothing, saving twice keeps one row, the saved page lists and opens the item, another person cannot see it, the kept item survives its removal from the source feed for its keeper only, a browser sign-in form returns to next (and never to another site), and unsave removes it
+  witness cmd/BonfyreWebAddress/tests/page_parcel_test.sh saves a Tarrant property, lists it on /saved with its title-cased address and opens /s/parcel/<account>
+  witness 2026-09-17 estate canary against copied CMS and auth stores signed a canary person up, saved a retained item and a property, listed both, refused a cross-site save, unsaved, returned a form sign-in to /saved with a session cookie, and walked 300 internal links with 0 dead anchors; production then registered saved_item through the CMS binary after a store backup (0 rows) and answered a failed form sign-in back to /login?next=/saved&failed=1
+  source_lineage 2026-09-17 Pass 1 public-product convergence: real Save and continuity
+
+interaction saved-item-keeps-public-subjects
+  source page-composition
+  destination saved-item
+  relation keeps_reference
+  preserves item page key or property account, the source's public description at the moment of keeping, the actor from a verified session
+  drops retained source bodies, other people's keeps, source availability after the moment of keeping
+  forbidden_inference a kept reference -> source truth, rights to the material or a canonical subject
+  invalidates_on saved_item rows for that actor, the item's source material, BonfyreAuth session validity
+  witness cmd/BonfyreWebAddress/tests/page_saved_test.sh

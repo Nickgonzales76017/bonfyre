@@ -1,0 +1,59 @@
+package experiencemap
+
+// Candidate planes and measured rungs are different facts. An absent owner
+// receipt is unknown; a label or URL cannot promote any measured axis.
+participationLaw: {
+  axes: ["discovery", "observation", "semantic", "protocol", "capability", "economic", "round_trip"]
+  generic_human: ["discover"]
+  generic_protocol: ["machine-generic"]
+  capability_roles: ["action_adapter", "authoring_adapter", "compiler_toolchain", "external_service_candidate", "verification_tool", "media_service"]
+  round_trip_roles: ["action_adapter", "authoring_adapter", "publication_carrier", "verification_tool"]
+  round_trip_human: ["creator-publish", "publication"]
+  round_trip_protocol: ["activitypub", "atproto", "nostr", "webmention", "websub"]
+  economic_terms: ["commerce", "finance", "investing", "trade", "x402", "web-payment", "interledger", "iso20022", "payment-insurance-interchange", "agent-commerce"]
+  role_classes: {
+    material: ["material_source", "media_service"]
+    action: ["action_adapter", "authoring_adapter"]
+    interaction_reference: ["interaction_reference"]
+    design_reference: ["design_reference"]
+    compiler: ["compiler_toolchain"]
+    carrier: ["transport_carrier", "publication_carrier"]
+    verification: ["verification_tool"]
+    service: ["external_service_candidate"]
+    standard: ["reference_standard"]
+  }
+  join_families: {
+    economic: ["commerce", "finance", "investing", "enterprise-gtm", "resource-market", "insurance"]
+    physical: ["agriculture", "energy", "food", "housing", "logistics", "manufacturing", "mobility", "place", "property", "trip", "utility", "vehicle"]
+    social: ["care", "community", "dating", "hiring", "household", "professional", "relationship"]
+    knowledge_compute: ["ai-work", "knowledge", "learning", "research", "science", "software-work"]
+    media_attention: ["audience-growth", "creator-publish", "listen", "live-event", "media-production", "publication", "sports", "watch"]
+    civic_regulated: ["civic", "emergency", "grant-funding", "healthcare", "identity-access", "service-case"]
+    coordination: ["collaboration", "mission", "project", "support"]
+  }
+  axis_ladders: {
+    discovery: {
+      indexed: {depth: 1, name: "indexed"}, routable: {depth: 2, name: "owner-routable"}, maintained: {depth: 3, name: "maintained"}
+    }
+    observation: {
+      policy_excluded: {depth: 1, name: "policy-preflighted"}, policy_indeterminate: {depth: 1, name: "policy-preflighted"}
+      boundary_response: {depth: 2, name: "transport-observed"}, source_observed: {depth: 3, name: "body-observed"}
+      source_retained: {depth: 4, name: "body-retained"}, repeat_observed: {depth: 5, name: "repeat-observed"}
+    }
+    semantic: {interpreted: {depth: 1, name: "interpreted"}, profile_bound: {depth: 2, name: "profile-bound"}, carrier_conformant: {depth: 3, name: "carrier-conformant"}}
+    protocol: {contract_bound: {depth: 1, name: "contract-bound"}, compiled: {depth: 2, name: "compiled"}, enacted: {depth: 3, name: "enacted"}, obligations_closed: {depth: 4, name: "obligations-closed"}}
+    capability: {qualified: {depth: 1, name: "qualified"}, eligible: {depth: 2, name: "eligible"}, authorized: {depth: 3, name: "authorized"}, activated: {depth: 4, name: "activated"}}
+    economic: {quoted: {depth: 1, name: "quoted"}, committed: {depth: 2, name: "committed"}, paid: {depth: 3, name: "paid"}, settled: {depth: 4, name: "settled"}, reconciled: {depth: 5, name: "reconciled"}}
+    round_trip: {projected: {depth: 1, name: "projected"}, observed: {depth: 2, name: "independently-observed"}, faithful: {depth: 3, name: "closed-faithful"}, drifted: {depth: 3, name: "closed-drifted"}, unreachable: {depth: 3, name: "closed-unreachable"}}
+  }
+  investigation_score: {
+    join_power_weight: 12
+    chain_span_cap: 12
+    candidate_plane_weight: 2
+    braid_depth_weight: 5
+    branch_weight: 4
+    rejoin_weight: 4
+    braid_excess_weight: 2
+  }
+  cannot_infer: ["candidate plane -> realized participation", "protocol carrier fit -> ProtocolContract enactment", "capability-shaped reagent -> admitted provider or callable capability", "economic vocabulary -> quote, payment or settlement", "latent join power -> permission or semantic compatibility", "missing owner evidence -> non-participation"]
+}

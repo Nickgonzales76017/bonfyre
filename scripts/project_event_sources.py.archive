@@ -1,0 +1,65 @@
+#!/usr/bin/env python3
+"""Archived parity oracle: file admitted calendar sources through BonfyreCMS.
+
+The source itself declares `kind=event`; this projection corrects only its
+page-program family. It neither reads a new calendar nor asserts that a listed
+event will happen.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sqlite3
+import subprocess
+import sys
+
+
+SYSTEM_COLUMNS = {"id", "namespace", "created_at", "updated_at", "published_at"}
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--estate", default=os.path.expanduser("~/.bonfyre/estate-local"))
+    ap.add_argument("--repo", default=os.path.expanduser("~/Developer/Bonfyre"))
+    ap.add_argument("--apply", action="store_true")
+    args = ap.parse_args()
+
+    cms_bin = os.path.join(args.repo, "cmd/BonfyreCMS/bonfyre-cms")
+    schemas = os.path.join(args.repo, "cmd/BonfyreCMS/content-types")
+    db_path = os.path.join(args.estate, "cms.db")
+    if not os.path.exists(cms_bin) or not os.path.exists(db_path):
+        print(json.dumps({"error": "CMS owner or estate is unavailable"}))
+        return 2
+    # The owner subprocess below performs every write.  This discovery handle
+    # only reads its current source rows; a normal SQLite handle also works on
+    # the estate's existing WAL database and on portable test paths.
+    db = sqlite3.connect(db_path)
+    db.row_factory = sqlite3.Row
+    rows = db.execute(
+        "SELECT * FROM internet_source WHERE status='published' AND kind='event'"
+        " AND COALESCE(family,'')<>'events' ORDER BY id").fetchall()
+    db.close()
+    source_ids = [row["source"] for row in rows]
+    if not args.apply:
+        print(json.dumps({"event_sources_to_refile": len(rows), "sources": source_ids}, indent=1))
+        return 0
+    written = refused = 0
+    for row in rows:
+        payload = {key: row[key] for key in row.keys() if key not in SYSTEM_COLUMNS}
+        payload["family"] = "events"
+        done = subprocess.run(
+            [cms_bin, "entry", "update", "internet_source", str(row["id"]),
+             json.dumps(payload, separators=(",", ":")), "--ns", row["namespace"],
+             "--db", db_path, "--schemas", schemas], capture_output=True, text=True)
+        if done.returncode:
+            refused += 1
+        else:
+            written += 1
+    print(json.dumps({"event_sources_refiled": written, "refused": refused,
+                      "sources": source_ids}, indent=1))
+    return 0 if not refused else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

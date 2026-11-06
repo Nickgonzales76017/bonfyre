@@ -6,7 +6,7 @@
 
 /*
  * Native corroboration ledger -- the native peer of the Python reference
- * (10-Code/BonfyreControlPlane/verification.py). Writes the SAME
+ * (components/BonfyreControlPlane/verification.py). Writes the SAME
  * actor_corroborations table, so a native writer and the Python writer share one
  * ledger and count independence identically.
  *

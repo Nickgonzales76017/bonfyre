@@ -1,0 +1,18 @@
+{
+  "name": "music_right",
+  "displayName": "Music Right",
+  "description": "Evidence-backed rights/interest relation over a music subject. It records the asserted holder, right class, territory, share and term without turning a credit or platform listing into ownership.",
+  "attributes": {
+    "right_id": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "subject_ref": {"type": "string", "required": true},
+    "right_type": {"type": "string", "required": true},
+    "holder_ref": {"type": "string", "required": true},
+    "territory": {"type": "string", "required": false},
+    "share_basis_points": {"type": "integer", "required": false},
+    "starts_at": {"type": "datetime", "required": false},
+    "ends_at": {"type": "datetime", "required": false},
+    "evidence_ref": {"type": "string", "required": true},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

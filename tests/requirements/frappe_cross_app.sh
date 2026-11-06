@@ -7,7 +7,18 @@ output=$(mktemp -d "${TMPDIR:-/tmp}/bonfyre-frappe-cross-app.XXXXXX")
 trap 'rm -rf "$output"' EXIT
 
 test -x "$compiler"
-for family in frappe erpnext crm hrms helpdesk lms wiki drive insights; do
+"$compiler" --emit-lineage-catalog "$output/lineage-catalog.json" >/dev/null
+lineage_apps=$(python3 - "$output/lineage-catalog.json" <<'PY'
+import json, sys
+print(" ".join(x["app_dir"] for x in json.load(open(sys.argv[1]))["lineages"]))
+PY
+)
+lineage_count=$(python3 - "$output/lineage-catalog.json" <<'PY'
+import json, sys
+print(len(json.load(open(sys.argv[1]))["lineages"]))
+PY
+)
+for family in $lineage_apps; do
   "$compiler" --phase 1 -r "$root" --emit-pack "$output/$family.apppack.json" \
     "$root/integrations/frappe-bench/apps/$family" >"$output/$family.log"
   python3 - "$output/$family.apppack.json" <<'PY'
@@ -30,7 +41,7 @@ make -C "$root/programs/bonfyre" >/dev/null
 
 # The first worker completes four domain nodes, claims the fifth, and waits.
 # Killing that process leaves a real persisted lease for restart reclamation.
-"$runtime" app cross-transition "$output" --lease-ms 80 --hold-after 4 \
+"$runtime" app cross-transition "$output" --lineage-catalog "$output/lineage-catalog.json" --lease-ms 80 --hold-after 4 \
   >"$output/interrupted.out" 2>"$output/interrupted.err" &
 worker_pid=$!
 while kill -0 "$worker_pid" 2>/dev/null && ! grep -q '^node_claimed=step-05$' "$output/interrupted.out" 2>/dev/null; do :; done
@@ -45,21 +56,21 @@ kill -9 "$worker_pid"
 wait "$worker_pid" 2>/dev/null || true
 while [ "$(($(date +%s) * 1000))" -le "$deadline" ]; do :; done
 
-if "$runtime" app cross-transition "$output" --mission "$mission" --lease-ms 30000 \
+if "$runtime" app cross-transition "$output" --lineage-catalog "$output/lineage-catalog.json" --mission "$mission" --lease-ms 30000 \
   >"$output/transition.out" 2>"$output/transition.err"; then
   grep -q '^receipt=bonfyre://receipt/' "$output/transition.out" || {
     echo 'cross-app executor returned without a receipt' >&2; exit 1;
   }
   test -n "$mission"
   db="$BONFYRE_STATE_DIR/fabric.db"
-  sqlite3 "$db" "SELECT count(*) = 11 FROM application_records WHERE record_id LIKE '$mission-%';" | grep -qx 1
-  sqlite3 "$db" "SELECT count(DISTINCT family) = 9 FROM application_records WHERE record_id LIKE '$mission-%';" | grep -qx 1
+  sqlite3 "$db" "SELECT count(*) = $lineage_count FROM application_records WHERE record_id LIKE '$mission-%';" | grep -qx 1
+  sqlite3 "$db" "SELECT count(DISTINCT family) = $lineage_count FROM application_records WHERE record_id LIKE '$mission-%';" | grep -qx 1
   # The Frappe platform context is the sole root; every transition node links
   # to its predecessor and carries the common receipt and event.
-  sqlite3 "$db" "SELECT count(*) = 10 FROM application_records WHERE record_id LIKE '$mission-%' AND receipt_id IS NOT NULL AND event_id IS NOT NULL AND parent_uri IS NOT NULL;" | grep -qx 1
-  sqlite3 "$db" "SELECT count(*) = 11 FROM workgraph_nodes WHERE mission_id='$mission' AND status='complete';" | grep -qx 1
+  sqlite3 "$db" "SELECT count(*) = $((lineage_count - 1)) FROM application_records WHERE record_id LIKE '$mission-%' AND receipt_id IS NOT NULL AND event_id IS NOT NULL AND parent_uri IS NOT NULL;" | grep -qx 1
+  sqlite3 "$db" "SELECT count(*) = $lineage_count FROM workgraph_nodes WHERE mission_id='$mission' AND status='complete';" | grep -qx 1
   sqlite3 "$db" "SELECT count(*) = 1 FROM workgraph_transitions WHERE mission_id='$mission' AND node_id='step-05' AND from_status='running' AND to_status='retry_wait';" | grep -qx 1
-  sqlite3 "$db" "SELECT count(*) = 1 FROM application_records WHERE record_id='$mission-11' AND family='insights' AND record_type='AnalyticalProjection';" | grep -qx 1
+  sqlite3 "$db" "SELECT count(*) = 1 FROM application_records WHERE family='insights' AND record_type='Insights Query' AND record_id LIKE '$mission-%';" | grep -qx 1
   sqlite3 "$db" "SELECT status = 'complete' AND workgraph_cursor = 'terminal' FROM missions WHERE id='$mission';" | grep -qx 1
 else
   cat "$output/transition.err" >&2

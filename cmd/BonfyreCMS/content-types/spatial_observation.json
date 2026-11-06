@@ -1,0 +1,30 @@
+{
+  "name": "spatial_observation",
+  "displayName": "Spatial Observation",
+  "description": "Where an existing addressed subject was observed or projected. It is a statement about position, never an identity for the subject, and never authority, disclosure or proof. observation_mode separates what a source stated from what this estate computed: an interpolated display position is not a third fix.",
+  "attributes": {
+    "observation_id": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "subject_address": { "type": "string", "required": true },
+    "geometry_kind": { "type": "string", "required": true },
+    "geometry": { "type": "text", "required": true },
+    "crs": { "type": "string", "required": true },
+    "horizontal_datum": { "type": "string", "required": true },
+    "vertical_datum": { "type": "string" },
+    "observed_at": { "type": "string", "required": true },
+    "effective_at": { "type": "string" },
+    "valid_until": { "type": "string" },
+    "source_occurrence": { "type": "string", "required": true },
+    "source_digest": { "type": "string" },
+    "observation_mode": { "type": "string", "required": true },
+    "derived_from": { "type": "json" },
+    "mobility": { "type": "string", "required": true },
+    "scale": { "type": "string", "required": true },
+    "region": { "type": "string", "required": true },
+    "cell": { "type": "string", "required": true },
+    "accuracy": { "type": "json" },
+    "motion": { "type": "json" },
+    "provenance": { "type": "string", "required": true },
+    "license_profile": { "type": "string" },
+    "status": { "type": "string", "required": true }
+  }
+}

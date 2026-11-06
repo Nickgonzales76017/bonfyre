@@ -15,6 +15,7 @@ LDFLAGS := -L$(FRAGMENT_LIB) -lfragment \
 SRC    := src/main.c
 BUILD  := build
 BIN    := bonfyre-detect-objects
+VISION := bonfyre-detect-vision
 
 .PHONY: all clean install test
 
@@ -37,18 +38,16 @@ install: $(BUILD)/$(BIN)
 	cp $(BUILD)/$(BIN) ~/bin/
 	@echo "Installed to ~/bin/$(BIN)"
 
-test: $(BUILD)/$(BIN)
-	@echo "=== BonfyreDetectObjects smoke tests ==="
-	@# Single image (stub path)
-	@mkdir -p /tmp/bf-detect-test/single
-	@echo "testing single JPEG stub..."
-	@echo "" > /tmp/test-frame.jpg
-	@./$(BUILD)/$(BIN) --input /tmp/test-frame.jpg --out /tmp/bf-detect-test/single
-	@test -f /tmp/bf-detect-test/single/objects.json && echo "✓ objects.json created" || echo "✗ objects.json missing"
-	@# Directory path
-	@mkdir -p /tmp/bf-detect-test/frames
-	@echo "" > /tmp/bf-detect-test/frames/frame_001.jpg
-	@echo "" > /tmp/bf-detect-test/frames/frame_002.jpg
-	@./$(BUILD)/$(BIN) --input /tmp/bf-detect-test/frames --out /tmp/bf-detect-test/out
-	@test -f /tmp/bf-detect-test/out/objects.json && echo "✓ merged objects.json created" || echo "✗ merged missing"
-	@echo "=== Tests done ==="
+install-vision: $(BUILD)/$(VISION)
+	mkdir -p ~/bin
+	cp $(BUILD)/$(VISION) ~/bin/
+
+# The detector this machine carries. It is built where the system's detection
+# framework exists; elsewhere BONFYRE_YOLO_BINARY names the detector.
+$(BUILD)/$(VISION): src/vision_detect.swift | $(BUILD)
+	swiftc -O -o $@ $<
+
+# TEST_IMAGE is a real photograph with a person or a face in it.
+test: $(BUILD)/$(BIN) $(BUILD)/$(VISION)
+	@test -n "$(TEST_IMAGE)" || { echo "set TEST_IMAGE to a real photograph of a person"; exit 1; }
+	sh tests/detect_test.sh $(BUILD)/$(BIN) $(BUILD)/$(VISION) "$(TEST_IMAGE)"

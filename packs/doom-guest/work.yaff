@@ -1,0 +1,52 @@
+pack doom-guest-work
+generation control-1
+source_plane run5_recursive_external
+item_kind proof_frontier
+source_ref campaign:doom-guest
+note The campaign was attempted as a source tree five times before it was read as data: a web-assembly build, a new organ, a SQL demake, loose C and JavaScript in a scratch directory, then the same files under the estate home. Each was corrected by the operator. The rule it broke is the constitutional one: a campaign that needs new runtime code has found a missing kernel primitive, and that primitive is the work. The items below are those primitives, in the order the campaign met them. None is delivered.
+
+work guest_branch_and_commit_primitive
+  target_plane run4_institutional_fabric
+  priority 8.0
+  reason The runtime organ can loop, pipe and fork independent commands, but it cannot hold one live deterministic guest, branch it, compare where the branches land and commit one. The campaign carried that in a foreign platform file and a foreign controller. Stated generally it is candidate state against Actual at process scale, for any guest that speaks lines on a pipe, and it knows nothing about Doom.
+
+work rerun_and_keep_fixtures_before_any_promotion
+  target_plane run5_recursive_external
+  priority 7.5
+  reason Every layer above guest_identity is untested because its witness was erased. Re-run determinism, branch exactness, both packagings and the E1M1 log from the pinned engine and WAD, and keep the fixtures by hash in a durable place before any status moves.
+
+work hypervisor_fabric_provider_contract
+  target_plane run4_institutional_fabric
+  priority 7.0
+  reason Execution dispatches fabric work only when the selected provider is bonfyre-native; routing selects claude-code for agent.architect. Until one side changes no live mission passes its first agent task. Recorded as a known gap on hypervisor-durable-task-execution.
+
+work queue_claim_returns_its_input
+  target_plane run4_institutional_fabric
+  priority 5.5
+  reason A claim returns the mission, token and receipt but not the input the mission was enqueued with, so a consumer needs a second read. The campaign worked around it by carrying the key in the mission identifier.
+
+work substrate_reachable_as_an_organ
+  target_plane run4_institutional_fabric
+  priority 5.5
+  reason egglog did real work as the route planner, but it was reached as a bare binary under the substrate directory with a program written to a file. No organ contract says what goes in and what comes out.
+
+work structure_aware_transform_before_compression
+  target_plane run4_institutional_fabric
+  priority 4.5
+  reason The compression organ packs bytes as given. The gain on record-structured data came from transposing byte planes per record family first, which the campaign did in SQL through the query organ. Whether that belongs in the compression organ's plan step is undecided.
+
+work netlist_components_that_execute
+  target_plane run4_institutional_fabric
+  priority 4.0
+  reason A netlist of organs compiled and ran, and every probed signal stayed at zero; the circuit simulated its topology and drove no organ.
+
+work fpq_generation_latency_and_client_error
+  target_plane run5_recursive_external
+  priority 4.0
+  reason Over QUIC the FPQ runtime answered status at once and one generated token in 87 seconds, with another request returning nothing inside 90; the MCP generate tool failed with an empty error. Both were observed while other work held the CPU.
+
+work episode_run_with_keys_and_locked_doors
+  target_plane run5_recursive_external
+  priority 5.0
+  status OPEN
+  reason Three maps tried, none finished. Key pickup works: two maps took a key card and the route then opened the matching edges. What fails is after that, and the cause is not established. Candidates, none tested: the world treats any tagged sector as passable, so the route can lead through a lift or a door that only a switch elsewhere opens; a goal reached by standing on a line is scored by distance to its midpoint; the visit penalty is too small to leave a dead end; and a death restarts the level while the held-key table keeps its rows. Each is a separate experiment and should be recorded as a known non-cause when it is ruled out.

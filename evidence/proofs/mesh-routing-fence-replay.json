@@ -1,0 +1,129 @@
+{
+  "authored_by_provider": "codex",
+  "avoid_provider": "codex",
+  "checks": [
+    {
+      "check": "eventgraph_singleton",
+      "detail": "1 EventGraph rows for this event id",
+      "passed": true
+    },
+    {
+      "check": "address_binds_reconstructed_content",
+      "detail": "declared address recomputed from EventGraph state",
+      "passed": true
+    },
+    {
+      "check": "workgraph_singleton",
+      "detail": "1 WorkGraph rows for mesh-local-746b1d0bc6cbc4467780842d8046",
+      "passed": true
+    },
+    {
+      "check": "route_rederives_from_envelope",
+      "detail": "derived avoid=codex preferred=claude; stored avoid=codex preferred=claude",
+      "passed": true
+    },
+    {
+      "check": "author_provider_excluded",
+      "detail": "authored by codex; avoid_provider=codex",
+      "passed": true
+    },
+    {
+      "check": "public_readback_is_byte_identical",
+      "detail": "remote bytes equal the payload local state reproduces",
+      "passed": true
+    },
+    {
+      "check": "published_address_binds_published_bytes",
+      "detail": "published address recomputed",
+      "passed": true
+    },
+    {
+      "check": "published_envelope_is_public_safe",
+      "detail": "no private path, secret shape, raw payload field or oversize",
+      "passed": true
+    },
+    {
+      "check": "published_envelope_is_structurally_valid",
+      "detail": "well-formed envelope",
+      "passed": true
+    },
+    {
+      "check": "replayed_projection_creates_no_duplicate",
+      "detail": "materialize returned False; work_items 136 -> 136",
+      "passed": true
+    },
+    {
+      "check": "readmitting_published_bytes_is_a_duplicate",
+      "detail": "admission=duplicate; mesh_events 118 -> 118; quarantine 16 -> 16",
+      "passed": true
+    },
+    {
+      "check": "fence_excludes_author_when_an_alternative_exists",
+      "detail": "exclusion follows the authoring provider in both directions",
+      "passed": true
+    },
+    {
+      "check": "fence_never_deadlocks_a_sole_recipient",
+      "detail": "an author addressing only itself is soft-routed, not excluded into starvation",
+      "passed": true
+    },
+    {
+      "check": "fence_leaves_external_authors_unexcluded",
+      "detail": "an external author excludes no local carrier",
+      "passed": true
+    },
+    {
+      "check": "distinct_event_ids_keep_distinct_obligations",
+      "detail": "no legal event-id pair collapses onto one WorkGraph id",
+      "passed": true
+    },
+    {
+      "check": "work_ids_stay_within_their_bound",
+      "detail": "derived ids stay within mesh- plus 120 characters",
+      "passed": true
+    },
+    {
+      "check": "live_obligations_keep_their_identity",
+      "detail": "30 mesh work ids re-derive from 118 live event ids",
+      "passed": true
+    }
+  ],
+  "content_sha256": "32d50bdc4b3e492be8823f82a886f9a0e19a6bb412b71fbe92c31c492ba006ab",
+  "event_id": "local-746b1d0bc6cbc4467780842d8046",
+  "failed": 0,
+  "mesh_branch_commit": "eeb84c243ec0caa9a417a2817fc996595445ebad",
+  "passed": 17,
+  "preferred_provider": "claude",
+  "published_address": ".bonfyre-mesh/events/local-746b1d0bc6cbc4467780842d8046.json",
+  "routing_matrix": [
+    {
+      "avoid_provider": "codex",
+      "case": "codex_author_to_claude",
+      "preferred_provider": "claude"
+    },
+    {
+      "avoid_provider": "claude",
+      "case": "claude_author_to_codex",
+      "preferred_provider": "codex"
+    },
+    {
+      "avoid_provider": null,
+      "case": "author_is_sole_recipient",
+      "preferred_provider": "codex"
+    },
+    {
+      "avoid_provider": "codex",
+      "case": "both_carriers_addressed",
+      "preferred_provider": "claude"
+    },
+    {
+      "avoid_provider": null,
+      "case": "external_author",
+      "preferred_provider": "claude"
+    }
+  ],
+  "source": "components/BonfyreControlPlane/mesh_routing_replay.py",
+  "verdict": "review_result",
+  "work_item": "mesh-local-746b1d0bc6cbc4467780842d8046",
+  "work_status": "running"
+}

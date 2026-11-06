@@ -1,0 +1,57 @@
+{
+  "schema": "bonfyre.operator.cutover.v1",
+  "measured_at": "2026-10-02T23:09:23.457Z",
+  "service": "gui/503/com.bonfyre.autonomous-power-operator",
+  "previous": {
+    "pid": 984,
+    "program": [
+      "/usr/bin/python3",
+      "/Users/nickgonzales/.bonfyre/operator/operator_daemon.py"
+    ],
+    "exited": true,
+    "plist_sha256": "87e34ec74c6e9644734bde70776de3792307ec30ea03c2dfb79a3be27f1df297",
+    "rollback_plist": "/private/tmp/bonfyre-operator-cutover.nrfMvq/original.plist"
+  },
+  "installed": {
+    "pid": 41245,
+    "program": [
+      "/Users/nickgonzales/.bun/bin/bun",
+      "/Users/nickgonzales/Developer/Bonfyre/integrations/mcp/operator_daemon.mjs"
+    ],
+    "plist_sha256": "b47326ff90f09d5273af0cd62a6e400e2c3cca6421e3af6a0576920c4cd0872d",
+    "non_program_configuration_unchanged": true,
+    "source_sha256": {
+      "operator_daemon.mjs": "76afa5f95f0998ef1bb7197807442dbea6d863f3f956c00b37c83bffc09ac07b",
+      "operator_store.mjs": "2f9a0fcc9e983854d8a69e217624424d4b32a786dfb71a350f2894b2365364fa",
+      "operator_tools.mjs": "88f71f980208dc64a87cb255789a688f92f4e9a3dc049b37ba8862c1245c6510",
+      "project_operator.mjs": "a6e19b589d8e6e0e19a1c8e10eaf37d003bb76b4176666c6d58cc45050b0afec"
+    }
+  },
+  "preserved": {
+    "stop_sha256": "80050317c65c5404a429b097b5682275fdd4ffd25575a2fb386a31ace3fcc2c0",
+    "policy_sha256": "7024276082b64db85a10bd3fed2d2f2d8803904a6917931388f7c0a7a980f61c",
+    "model": "gpt-5",
+    "gateway": "http://127.0.0.1:13052"
+  },
+  "paused_witness": {
+    "schema": "bonfyre.operator-runtime.inspect.v1",
+    "runtime": "bun",
+    "paused": true,
+    "autonomous": true,
+    "model": "gpt-5",
+    "gateway": "http://127.0.0.1:13052",
+    "database": "/Users/nickgonzales/.bonfyre/operator/operator.sqlite3",
+    "policy_sha256": "7024276082b64db85a10bd3fed2d2f2d8803904a6917931388f7c0a7a980f61c",
+    "startup_seeds": false,
+    "startup_model_call": false,
+    "live_database_open": false,
+    "established_network_connection": false
+  },
+  "project_mcp_refresh": {
+    "previous_pid": 64114,
+    "pid": 41296,
+    "tool_count": 30,
+    "runtime": "bun"
+  },
+  "limitation": "Paused production process and offline full-loop fixtures do not prove live paid model execution, global exactly-once effects, or retirement of the other Python services."
+}

@@ -1,0 +1,7 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-kvcache","binary_env":"BONFYRE_KVCACHE_BIN","cases":[
+{"name":"a smooth float32 KV block round-trips with high cosine at 3, 4 and 5 bits","steps":[
+ {"program":"sh","argv":["-c","perl -e 'print pack(\"f<*\", map { sin($_*0.37)*0.8 + cos($_*0.11)*0.3 } 0..16383)' > kv.bin"],"exit":0},
+ {"argv":["roundtrip","kv.bin","--bits","3"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["16384 floats (64 blocks) @ 3-bit","cos=0.9999"]},
+ {"argv":["roundtrip","kv.bin","--bits","4"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["@ 4-bit","cos=0.9999"]},
+ {"argv":["roundtrip","kv.bin","--bits","5"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["@ 5-bit","cos=0.9999"]}]},
+{"name":"a missing input is refused","steps":[{"argv":["roundtrip","missing.bin"],"env":{"HOME":"${tmp}"},"exit_nonzero":true}]}]}

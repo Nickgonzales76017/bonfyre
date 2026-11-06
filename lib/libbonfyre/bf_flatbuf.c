@@ -7,6 +7,7 @@
  *   - Builder for creating BfManifest flatbuffers from C structs
  *   - JSON → FlatBuffer converter with minimal tokenizer
  */
+#include <stdint.h>
 
 #include "bf_flatbuf.h"
 

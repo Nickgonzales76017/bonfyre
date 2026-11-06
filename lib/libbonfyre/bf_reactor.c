@@ -1,3 +1,7 @@
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 /*
  * bf_reactor.c — Shared-nothing async I/O reactor
  *
@@ -8,6 +12,10 @@
  * Listener socket shared via SO_REUSEPORT → kernel load-balances.
  */
 
+/* SO_REUSEPORT and CLOCK_MONOTONIC are both behind a glibc feature macro. The
+ * file's own header comment says the listener is shared via SO_REUSEPORT on
+ * Linux, so the Linux path could never have compiled without this. */
+#include <stdint.h>
 #include "bf_reactor.h"
 
 #include <arpa/inet.h>

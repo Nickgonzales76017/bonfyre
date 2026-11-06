@@ -1,0 +1,25 @@
+{
+  "schema": "bonfyre-fpq-transform-witness.v1",
+  "recorded_at": "2026-09-24",
+  "input": {
+    "kind": "gguf",
+    "model": "Qwen2.5-Coder-3B-Instruct-Q4_K_M",
+    "sha256": "3da3afe6cf5c674ac195803ea0dd6fee7e1c228c2105c1ce8c66890d1d4ab460",
+    "bytes": 1929903360,
+    "tensor": "blk.0.attn_q.weight",
+    "shape": [2048, 2048],
+    "weights": 4194304
+  },
+  "transform": {
+    "command": "bonfyre-fpq roundtrip-v9 <model> --tensor blk.0.attn_q.weight --limit 1 --bits 3",
+    "v8": { "cosine": 0.99986, "bits_per_weight": 4.16 },
+    "v9": { "cosine": 0.999939, "bits_per_weight": 4.32 }
+  },
+  "verdict": "real_tensor_transform_witness",
+  "cannot_infer": [
+    "a single attention-tensor reconstruction establishes whole-model compression",
+    "transform cosine establishes layer, logit, generation, task, latency, or energy parity",
+    "v9's higher cosine at a higher bits-per-weight is an unconditional compression win",
+    "the Q4_K_M input is an FPQ-native runtime artifact"
+  ]
+}

@@ -1,9 +1,10 @@
-# BonfyreControlPlane — Python Reference v1 (FROZEN)
+# BonfyreControlPlane — archived Python reference
 
-> **Status: frozen.** This is a semantic reference implementation and
-> conformance oracle. It is **not** the runtime and must not become one.
-> No substantial new behaviour goes here; new semantics extend the native
-> kernel per the constitutional rule in `CONTRIBUTING.md`.
+> **Status: archived.** Every former Python module and test has the
+> `.py.archive` suffix, so it is neither importable nor executable by normal
+> Python discovery. The native C, Zig, and Bun owners are the only runtime
+> path. An archive may be consulted as historical evidence, but restoring one
+> requires an explicit native absorption change.
 >
 > It is deliberately **not** wired into `bonfyre_run6_supervisor.py`. Bolting it
 > in would fix the Run 6 bugs while making the architecture worse — six Python
@@ -31,8 +32,6 @@ incident it makes impossible. Nothing here sends anything or contacts anyone.
 
 ```bash
 python3 -m unittest discover -s tests     # 63 tests
-python3 migrate_run6.py --dry-run         # read capital.db, write nothing
-python3 migrate_run6.py                   # build control_plane.db
 ```
 
 `capital.db` is opened read-only and never mutated. The freeze is evidence.

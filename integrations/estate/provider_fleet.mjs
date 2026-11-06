@@ -127,13 +127,19 @@ export function createAgentFleet({ fabric, providers, maxConcurrency = 2, provid
   const catalog = providers || providerCatalog();
   const liveHandlers = adapterRuntime?.providerHandlers?.() || {};
   const handlers = { ...liveHandlers, ...providerHandlers };
+  const concurrency = Math.max(1, Math.min(Number(maxConcurrency) || 1, 16));
 
   async function inspect() {
+    const observed = adapterRuntime?.observations?.();
+    const [nativeTools, adapters] = await Promise.all([
+      fabric.inventory(),
+      adapterRuntime ? (observed ?? adapterRuntime.discover()) : Promise.resolve(null),
+    ]);
     return {
       schema_version: FLEET_SCHEMA,
       fleet_id: digest(catalog.map(({ id, state, command }) => ({ id, state, command }))),
-      providers: adapterRuntime ? reconcileProviderCatalog({ providers: catalog, adapters: adapterRuntime.observations?.() ?? await adapterRuntime.discover() }) : catalog,
-      native_tools: await fabric.inventory(),
+      providers: adapterRuntime ? reconcileProviderCatalog({ providers: catalog, adapters }) : catalog,
+      native_tools: nativeTools,
       profiles: fabric.profileInventory?.() || [],
     };
   }
@@ -175,7 +181,7 @@ export function createAgentFleet({ fabric, providers, maxConcurrency = 2, provid
         results[index] = await executeTask(tasks[index]);
       }
     }
-    await Promise.all(Array.from({ length: Math.min(maxConcurrency, Math.max(1, tasks.length)) }, worker));
+    await Promise.all(Array.from({ length: Math.min(concurrency, Math.max(1, tasks.length)) }, worker));
     const body = {
       schema_version: FLEET_SCHEMA,
       wave_id: randomUUID(),

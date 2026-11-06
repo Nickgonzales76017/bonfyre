@@ -1,0 +1,18 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-graph","binary_env":"BONFYRE_GRAPH_BIN","cases":[
+{"name":"atoms and operators build a lineage that exports to a valid artifact","steps":[
+ {"argv":["init","g.db"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"argv":["add-atom","g.db","--id","a1","--hash","5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03","--type","text"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"argv":["add-op","g.db","--id","o1","--op","Brief","--inputs","a1","--output","r1"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["Added operator: o1 (hash: 84700548cc55e871"]},
+ {"argv":["lineage","g.db","--id","r1"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["op: Brief  inputs: [\"a1\"]  output: r1","atom: a1  type: text"]},
+ {"argv":["export","g.db","--out","ga.json"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"program":"cat","argv":["ga.json"],"at":{"atoms.0.content_hash":"5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03","operators.0.node_hash":"84700548cc55e871113f4e0bb50a0467f0100d0954349723f4d9a81913e489ca"}},
+ {"argv":["validate","ga.json"],"env":{"HOME":"${tmp}"},"exit":0,"stdout":"VALID\n"}]},
+{"name":"an operator input that names nothing makes the artifact invalid","steps":[
+ {"argv":["init","g.db"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"argv":["add-atom","g.db","--id","a1","--hash","5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03","--type","text"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"argv":["add-op","g.db","--id","o2","--op","X","--inputs","zz","--output","r2"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"argv":["export","g.db","--out","gb.json"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"argv":["validate","gb.json"],"env":{"HOME":"${tmp}"},"exit":1,"contains":["INVALID — 1 error(s)"]}]},
+{"name":"a real ingest artifact validates","files":{"t.csv":"name,qty\nwidget,3\n"},"steps":[
+ {"program":"${root}/cmd/BonfyreIngest/bonfyre-ingest","argv":["t.csv","iout"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"argv":["validate","iout/artifact.json"],"env":{"HOME":"${tmp}"},"exit":0,"stdout":"VALID\n"}]}]}

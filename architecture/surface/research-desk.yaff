@@ -1,0 +1,82 @@
+atlas surface
+
+architecture research-desk
+  canonical_name Research desk
+  source_path scripts/materialize_research_repair.mjs
+  source_path scripts/release/research_workspace_upgrade.mjs
+  source_path scripts/release/workspace_upgrade.mjs
+  invariant the selected account upgrades an exact retained planning package through the shared durable CMS lifecycle journal; only research editor files change, while saved records, other editor bytes, bindings and version pins are checked unchanged
+  witness scripts/tests/research-repair-package.test.mjs checks exact retained package projection and unchanged sample, shared store and other editor bytes
+  witness scripts/release/tests/workspace_upgrade.test.mjs checks a second workspace family, declared version roots, interrupted stages, wrong-account review refusal and repeat-safe readback
+  forbidden_inference a reviewed or locally tested research package -> installation in an account; the native lifecycle receipt and current binding must identify that exact release
+  family surface
+  domain Surface / Literature screening and synthesis
+  layer application
+  semantic_question Which published works bear on a question, why was each excluded, which exact passages support or go against each claim, and what may be written from them?
+  purpose A Work Samples workspace built from the claude-skills research donors as an instrument: live searches of OpenAlex and Europe PMC from the browser, merging of the same work across indexes, keyboard screening with a stated reason for every exclusion, selection of a passage in an abstract to file it under a claim, a standing for each claim from included studies only, the flow of records through the review, and a write-up, evidence table, BibTeX and RIS carrying only filed quotations
+  maturity implemented
+  invariant quote fitting detects both height and unbreakable-word width overflow; PNG and motion exports refuse an overflowing quotation without altering its words
+  witness components/BonfyreServiceSite/tests/campaign-composer.test.mjs checks horizontal and vertical overflow at minimum type size; campaign-persistence-browser.mjs refuses both export APIs and restores image generation after shortening the message
+  invariant imported and reopened reviews validate record identities, source addresses, editor structures, quotation coordinates and decisions before replacing current work; source mismatches remain reviewable, and delayed file reads cannot replace a different project
+  witness components/BonfyreServiceSite/tests/synthesis.test.mjs checks valid legacy review normalization, retained stale evidence, invalid structures, unsafe source addresses and duplicate identities without changing caller data
+  witness components/BonfyreServiceSite/tests/campaign-persistence-browser.mjs rejects malformed imports without losing the active artboard and refuses delayed file adoption after project replacement
+  invariant each source search belongs to one project and one search attempt; replacement, account change or a newer query aborts pending reads and obsolete responses cannot mutate the receiving project, even when transport ignores cancellation
+  witness components/BonfyreServiceSite/tests/campaign-persistence-browser.mjs returns searches out of order, replaces a project during a source read and refuses obsolete adoption, then verifies one provider failure still retains the other provider results
+  invariant claim standing and write-ups use only included quotations with exact valid coordinates in the current abstract; stale or removed evidence remains filed and exportable with an explicit mismatch, but cannot support a finding or appear as a verified quotation
+  witness components/BonfyreServiceSite/tests/synthesis.test.mjs checks changed and removed sources, malformed coordinates, current-only claim counts and report citations, and retained mismatch evidence
+  witness components/BonfyreServiceSite/tests/campaign-persistence-browser.mjs imports corrected source text and verifies the visible write-up omits stale quotations while the claim list retains them with a warning
+  consumes OpenAlex works API (keyless, shared per-network daily allowance)
+  consumes Europe PMC REST search (keyless)
+  publishes ReviewProject JSON, Markdown write-up, evidence CSV, BibTeX, RIS, post artboards as PNG and WebM
+  node_types Question, Record, ScreeningDecision, Claim, Excerpt, ReviewFlow
+  internal_calculus OpenAlex abstracts are rebuilt from their inverted index; records merge by DOI, else by title-word overlap of at least 0.85 within a year
+  internal_calculus an excerpt is a start and end offset into one record's abstract, widened to whole words; its text is recomputed from the abstract to verify it
+  internal_calculus a claim reads "all support" or "mostly supported" only when supporting studies outnumber the rest three to one; otherwise it reads divided
+  invariant a quotation that does not match its abstract is marked and a write-up never carries text that is not in a record
+  invariant design and sample size found in an abstract are suggestions shown as such; an empty field stays empty
+  invariant a filed quotation becomes a post on linked artboards (square 1080×1080, story 1080×1920, link card 1200×630): words and citation are shared, type scale, alignment and colours belong to each format, the largest type that fits is found by binary search over measured lines, and words edited away from the source are labelled as no longer a quotation
+  invariant evidence counts only while its record is included; excluded records keep their quotations visibly uncounted
+  invariant campaign artboards retain their originating quotation and claim, edited words, per-format overrides and selected format inside the existing ReviewProject; save, copy and import/export carry that same state
+  invariant source correction or withdrawal warns without overwriting artboard edits; project replacement cancels pending composer opens and detaches the previous editor
+  invariant saved artboards remain discoverable after their quotation is unfiled; a reviewed source replacement retains original provenance and independent layout edits, revalidates the exact reviewed passage and editor state before applying, and replaces editorial wording only by explicit selection
+  witness components/BonfyreServiceSite/tests/synthesis.test.mjs checks inverted-index reconstruction, cross-index merging that keeps the longer abstract and both sources, whole-word excerpts and detection of a changed source, standing from included studies only, sample-size, design and term finding, ORCID removal from names, search addresses, and that the retained sample's quotations all verify and the write-up carries exactly them
+  witness components/BonfyreServiceSite/tests/queues-research-browser.mjs run against a local build on 2026-10-19 at 1440 and 390 px: a selected passage was filed and matched its abstract, no sideways scroll
+  witness components/BonfyreServiceSite/tests/campaign-composer.test.mjs checks line breaking, the largest fitting size with one pixel more not fitting, shared content with per-format overrides, quotation above citation in every format, the word-by-word reveal, and the exact-quotation check
+  witness components/BonfyreServiceSite/tests/campaign-composer.test.mjs checks project roundtrip, independent claim/project drafts, correction and withdrawal warnings, invalid settings, legacy projects and snapshot isolation
+  witness components/BonfyreServiceSite/tests/campaign-composer.test.mjs checks reviewed source replacement, immutable creation provenance, retained editorial and layout choices, explicit wording replacement, and refusal after source, citation, inclusion or editor state changes
+  witness components/BonfyreServiceSite/tests/campaign-persistence-browser.mjs checks the actual research package and shared browser store: named save/reload, keyboard format selection, button-only dirty guard, two-tab stale save, project file roundtrip, invalid import, pending-open cancellation and 390px layout; it does not attest native account or public deployment behavior
+  witness components/BonfyreServiceSite/tests/campaign-persistence-browser.mjs removes a quotation, saves and reloads its retained artboard, reviews a replacement without losing edits, reloads again and reads the receiving source; source wording replaces editorial text only after an explicit selection
+  witness components/BonfyreServiceSite/tests/campaign-persistence-native.mjs installs the research package in a throwaway Auth/CMS/WebAddress estate and checks shared-member save/reopen, stale revisions, lost-acknowledgement reconciliation, effect-time revocation, reader and outsider refusal, record-prefix isolation and legacy-browser-draft isolation; it does not attest the live estate or public deployment
+  witness components/BonfyreServiceSite/tests/queues-research-browser.mjs exported the composer's square post as a 1080×1080 PNG, the story as 1080×1920, and a recorded link card WebM that a video element decoded at 1200×630
+  witness a live in-browser search on 2026-10-19 returned 59 records with abstracts from both indexes and merged 5 duplicates
+  witness packs/aurekai-work-samples/site/synthesis-four-day-week-20261019.json retains 87 records with each response's address, time and SHA-256
+  forbidden_inference a claim's standing -> a meta-analytic effect size, risk of bias assessment or a finding about the world
+  forbidden_inference an abstract quotation -> what the full paper concludes; only abstracts are read
+  forbidden_inference an index record -> permission to republish the paper beyond quotation
+  forbidden_inference a post made from a quotation -> a published post; nothing is sent to any platform
+  known_gap not yet published to aurekai-work-samples.pages.dev; the deploy is the operator's to run
+  known_gap full text, risk-of-bias tools and two-reviewer agreement are not supported; standalone work uses browser storage and installed work uses the destination workspace store
+  source_path components/BonfyreServiceSite/synthesis.mjs
+  source_path components/BonfyreServiceSite/synthesis-client.mjs
+  source_path components/BonfyreServiceSite/synthesis-material.mjs
+  source_path components/BonfyreServiceSite/synthesis.css
+  source_path components/BonfyreServiceSite/campaign-composer.mjs
+  source_path components/BonfyreServiceSite/campaign-composer-client.mjs
+  source_path components/BonfyreServiceSite/tests/campaign-composer.test.mjs
+  source_path components/BonfyreServiceSite/tests/campaign-persistence-browser.mjs
+  source_path components/BonfyreServiceSite/tests/campaign-persistence-native.mjs
+  source_path components/BonfyreServiceSite/sections/synthesis.mjs
+  source_path components/BonfyreServiceSite/tools/retain-synthesis-sample.mjs
+  source_path components/BonfyreServiceSite/tests/synthesis.test.mjs
+  source_path packs/aurekai-work-samples/site/synthesis-four-day-week-20261019.json
+  source_lineage 2026-10-19 claude-skills research/* at 19392f7a; ChatGPT sandbox build rejected by Nick as faking
+
+interaction service-site-packages-research-desk
+  source service-site
+  destination research-desk
+  relation packages_workspace
+  preserves the retained search records and receipts, and a worked example whose quotations are located in their abstracts at build time
+  drops nothing a visitor edits; the package carries no visitor state
+  forbidden_inference a packaged workspace -> a published one; publication is a separate deploy
+  invalidates_on synthesis sources, retained search, worked-example quotations
+  witness components/BonfyreServiceSite/synthesis-material.mjs

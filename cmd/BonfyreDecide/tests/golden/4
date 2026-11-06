@@ -1,0 +1,6 @@
+exit 0
+TMP/booked.csv sha256 92bf7377f89a5b608f076322628875a8985b7272c893d0b2c93445b7e05bf4ac
+1500 lines: 1445 booked from what your books taught it, 55 held for review.
+The local model was not used: the local model at http://127.0.0.1:9 is not answering (Unable to connect. Is the computer able to access the url?). Start it with: bonfyre-moe serve --port 7000   (see: bonfyre model local)
+Against the given accounts: 1436 of 1445 booked lines are right; 1458 of 1500 suggestions are right, review included.
+Ts on this machine. Written to TMP/booked.csv.

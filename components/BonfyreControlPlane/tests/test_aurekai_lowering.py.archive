@@ -1,0 +1,27 @@
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import aurekai_lowering as al
+
+
+def test_lower_requires_proof_and_lifts_only_on_dependency_change():
+    envelope = al.ValidityEnvelope(frozenset({"agreement:P", "compiler:v1"}),
+                                   "proof:R", "F1")
+    record = al.lower(circuit_id="C", rich_digest="rich", lowered_digest="low",
+                      equivalent=True, envelope=envelope)
+    assert al.lift_on_change(record, frozenset({"customer:Q"})).state == al.LOWERED
+    lifted = al.lift_on_change(record, frozenset({"agreement:P"}))
+    assert lifted.state == al.LIFTED
+    assert "agreement:P" in lifted.lift_reason
+
+
+def test_frequency_cannot_lower_without_equivalence():
+    envelope = al.ValidityEnvelope(frozenset({"dep"}), "proof:R", "F1")
+    try:
+        al.lower(circuit_id="C", rich_digest="rich", lowered_digest="low",
+                 equivalent=False, envelope=envelope)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("unproven lowering accepted")

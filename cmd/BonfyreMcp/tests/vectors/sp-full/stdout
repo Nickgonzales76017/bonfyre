@@ -1,0 +1,55 @@
+{
+  "state": "passed",
+  "r5": {
+    "parity": {
+      "equal": true,
+      "id": "p"
+    }
+  },
+  "r6": {
+    "saturation": {
+      "run_id": "run-1",
+      "selected_term": "5",
+      "input_term": "add(0,mul(add(2,3),1))"
+    },
+    "reduction": {
+      "reduction_id": "red-1",
+      "state": "passed"
+    },
+    "authority": {
+      "decision_id": "dec-1",
+      "decision": "candidate_only"
+    },
+    "crux": {
+      "crux_id": "crux-1"
+    }
+  },
+  "r7": {
+    "census": {
+      "state": "passed",
+      "cpu": 8
+    },
+    "inventory": {
+      "receipt": {
+        "state": "passed"
+      },
+      "models": []
+    },
+    "phenotype": {
+      "phenotype_id": "ph-1"
+    },
+    "parity": {
+      "state": "passed"
+    },
+    "placement": {
+      "placement_id": "pl-1"
+    },
+    "fuse": {
+      "fuse_id": "f-1"
+    }
+  },
+  "verification": {
+    "verified": true,
+    "receipts": 3
+  }
+}

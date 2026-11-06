@@ -1,0 +1,114 @@
+import datetime as dt
+import json
+import sqlite3
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import continuous_supervisor as supervisor
+import provider_state
+import target_obligation
+
+
+def test_assignment_receipt_and_checkpoint_preserve_continuation(tmp_path):
+    db = sqlite3.connect(":memory:")
+    supervisor.open_target(db, target_id="T-CONTINUOUS", target="exercise route",
+                           source_frontier="frontier")
+    supervisor.set_target_frontier(
+        db, target_id="T-CONTINUOUS", ordinal=1, layer="persistence",
+        status="proven", witness_ref="test receipt",
+    )
+    assignment = supervisor.assign(
+        db, target_id="T-CONTINUOUS", session_id="session:codex",
+        provider="claude", expected_proof_delta="adversarial finding or corroboration",
+        source_cut=["components/BonfyreControlPlane/continuous_supervisor.py"],
+        allowed_mutation_scope=["review only"],
+        required_evidence=["bounded review receipt"],
+    )
+    assert assignment == supervisor.assign(
+        db, target_id="T-CONTINUOUS", session_id="session:codex", provider="claude",
+        expected_proof_delta="adversarial finding or corroboration",
+        source_cut=["components/BonfyreControlPlane/continuous_supervisor.py"],
+        allowed_mutation_scope=["review only"], required_evidence=["bounded review receipt"],
+    )
+    supervisor.observe_provider(db, provider="claude", state=supervisor.ACTIVE,
+                                detail="bounded review admitted")
+    supervisor.record_github_observation(
+        db, kind="repository_metadata", repository="owner/repo", outcome="AVAILABLE",
+        url="https://example.invalid/owner/repo",
+    )
+    receipt = supervisor.record_receipt(
+        db, assignment_id=assignment, semantic_outcome="UNKNOWN",
+        carrier_outcome="STARTED", evidence_outcome="PENDING",
+        continuation_outcome="RETRYABLE_WITH_OTHER_REALIZATION", detail="worker launched",
+    )
+    assert receipt
+    checkpoint = supervisor.checkpoint(db, tmp_path)
+    assert checkpoint
+    assert (tmp_path / "control" / "continuous-target-obligations.json").is_file()
+    assert (tmp_path / "control" / "continuous-continuation-cursor.json").is_file()
+    frontier = json.loads((tmp_path / "control" / "continuous-proof-frontier.json").read_text())
+    assert frontier["frontiers"]["T-CONTINUOUS"]["first_open_layer"] is None
+    receipt_rows = [json.loads(line) for line in
+                    (tmp_path / "evidence" / "continuous-receipts.jsonl").read_text().splitlines()]
+    assert [item["receipt_id"] for item in receipt_rows] == [receipt]
+    assert (tmp_path / "reports" / "RUN8_CONTINUOUS_REPORT.md").is_file()
+    github = json.loads((tmp_path / "control" / "continuous-github-ledger.json").read_text())
+    assert github["occurrences"][0]["repository"] == "owner/repo"
+    assert target_obligation.get(db, "T-CONTINUOUS").state == target_obligation.OPEN
+
+
+def test_weather_outcomes_do_not_collapse_quota_and_transient():
+    db = sqlite3.connect(":memory:")
+    now = dt.datetime(2026, 8, 23, tzinfo=dt.timezone.utc)
+    reset = now + dt.timedelta(hours=4)
+    supervisor.observe_provider(db, provider="claude", state=supervisor.QUOTA_EXHAUSTED,
+                                reset_at=reset, now=now, detail="quota")
+    supervisor.observe_provider(db, provider="claude", state=supervisor.TRANSPORT_FAILURE,
+                                now=now + dt.timedelta(minutes=1), detail="timeout")
+    folded = provider_state.derive_state("claude", provider_state.load_observations(db, "claude"), now)
+    assert folded.status == "capacity_exhausted"
+    assert folded.circuit_until == reset
+
+
+def test_successful_occurrence_explicitly_resumes_auth_paused_route():
+    db = sqlite3.connect(":memory:")
+    now = dt.datetime(2026, 8, 23, tzinfo=dt.timezone.utc)
+    supervisor.observe_provider(db, provider="claude", state=supervisor.AUTH_REJECTED,
+                                now=now, detail="expired OAuth")
+    supervisor.observe_provider(db, provider="claude", state=supervisor.ACTIVE,
+                                now=now + dt.timedelta(minutes=1), detail="fresh bounded call")
+    folded = provider_state.derive_state(
+        "claude", provider_state.load_observations(db, "claude"),
+        now + dt.timedelta(minutes=1),
+    )
+    assert folded.status == "ready"
+
+
+def test_terminal_target_cannot_receive_assignment():
+    db = sqlite3.connect(":memory:")
+    supervisor.open_target(db, target_id="T", target="done", source_frontier="frontier")
+    target_obligation.prove(db, "T", ["evidence://proof"])
+    try:
+        supervisor.assign(db, target_id="T", session_id="s", provider="claude",
+                          expected_proof_delta="none", source_cut=["x"],
+                          allowed_mutation_scope=["review"], required_evidence=["receipt"])
+    except ValueError as exc:
+        assert "terminal" in str(exc)
+    else:
+        raise AssertionError("terminal target was assigned")
+
+
+def test_proof_requires_an_explicitly_closed_frontier():
+    db = sqlite3.connect(":memory:")
+    supervisor.open_target(db, target_id="T", target="frontier", source_frontier="frontier")
+    supervisor.set_target_frontier(db, target_id="T", ordinal=1, layer="build", status="open")
+    try:
+        supervisor.prove_target(db, target_id="T", evidence_refs=["evidence://proof"])
+    except ValueError as exc:
+        assert "remains" in str(exc)
+    else:
+        raise AssertionError("open frontier was proven")
+    supervisor.set_target_frontier(db, target_id="T", ordinal=1, layer="build", status="proven")
+    supervisor.prove_target(db, target_id="T", evidence_refs=["evidence://proof"])
+    assert target_obligation.get(db, "T").state == target_obligation.PROVEN

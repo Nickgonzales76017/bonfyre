@@ -1,0 +1,17 @@
+{
+  "name": "semantic_slot",
+  "displayName": "Semantic Slot",
+  "description": "One typed visual position in a site profile. It accepts a material or typed application at a declared extent, but never raw sources, protocols, chains, authority or effects.",
+  "attributes": {
+    "slot_id": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "site_id": {"type": "string", "required": true},
+    "slot_name": {"type": "string", "required": true},
+    "ordinal": {"type": "integer", "required": true},
+    "extent": {"type": "string", "required": true},
+    "accepts": {"type": "json", "required": true},
+    "min_material_quality": {"type": "string", "required": true},
+    "max_items": {"type": "integer", "required": true},
+    "htmx_boundary": {"type": "string", "required": false},
+    "status": {"type": "string", "required": true}
+  }
+}

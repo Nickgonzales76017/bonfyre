@@ -1,0 +1,66 @@
+#!/usr/bin/env python3
+"""Validate M2 ledgers against the pinned CUE contracts and scale laws."""
+
+from __future__ import annotations
+
+import json
+import subprocess
+import tempfile
+from pathlib import Path
+
+
+REPO = Path(__file__).resolve().parents[1]
+PACK = Path("/Users/nickgonzales/Downloads/Bonfyre_Run8_R2C_FULL_SYSTEM_BUILD_FLIGHT_2026-08-22")
+STATE = REPO / ".bonfyre/run8-r2c/20260823T032652Z-27525"
+
+
+def cue_vet(schema: str, definition: str, value: dict) -> None:
+    with tempfile.NamedTemporaryFile("w", suffix=".json") as f:
+        json.dump(value, f)
+        f.flush()
+        proc = subprocess.run(
+            ["cue", "vet", str(PACK / "schemas" / schema), f.name, "-d", definition],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode:
+            raise RuntimeError(f"CUE validation failed for {definition}: {proc.stdout}{proc.stderr}")
+
+
+def load(path: str) -> dict:
+    return json.loads((STATE / path).read_text())
+
+
+def main() -> None:
+    receipts = [json.loads(line) for line in (STATE / "evidence/full-build-receipts.jsonl").read_text().splitlines() if line]
+    for receipt in receipts:
+        cue_vet("run8-r2c-receipt.cue", "#Receipt", receipt)
+    targets = load("control/target-obligations-m2-final.json")["targets"]
+    for target in targets:
+        cue_vet("run8-r2c-target-obligation.cue", "#TargetObligation", target)
+
+    counts = {
+        "powers": load("control/public-powers-disposition.json")["count"],
+        "partners": load("control/partner-commons-reconstruction.json")["count"],
+        "deep_promotions": load("control/deep-promotions-reconstruction.json")["count"],
+        "formats": load("control/format-commons-reconstruction.json")["count"],
+        "frappe": load("control/frappe-x9-reconstruction.json")["count"],
+    }
+    assert counts == {"powers": 91, "partners": 112, "deep_promotions": 82, "formats": 83, "frappe": 9}
+    powers = load("control/public-powers-disposition.json")["records"]
+    assert len({p["power"] for p in powers}) == 91
+    assert all(p["body_refs"] and p["build_state"] == "BUILT_CURRENT" for p in powers)
+    assert not any(p["executed_as_demo"] for p in powers)
+    partners = load("control/partner-commons-reconstruction.json")["records"]
+    assert all(p["ownership_boundary_enforced"] and p["does_not_own"] for p in partners)
+    formats = load("control/format-commons-reconstruction.json")["records"]
+    assert all(f["profile_body"] and not f["executed"] for f in formats)
+    frappe = load("control/frappe-x9-reconstruction.json")["records"]
+    assert all(f["doctype_count"] > 0 and not f["frontend_rebuilt"] for f in frappe)
+    gaps = load("control/full-build-gap-ledger.json")
+    assert gaps["internally_runnable_required_build_deficits"] == []
+    print(json.dumps({"status": "PASS", "cue_receipts": len(receipts), "cue_targets": len(targets), **counts}, indent=2))
+
+
+if __name__ == "__main__":
+    main()

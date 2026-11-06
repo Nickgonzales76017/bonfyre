@@ -1,0 +1,28 @@
+{
+  "verified_at": "2026-10-07T22:11:37.576Z",
+  "site": "https://aurekai-work-samples.pages.dev/catalogue/?store=red3-display",
+  "receipt": "lead:catalogue:0193b6b913446f7fe1c91a81ce66089414886b75c49535d2692705a0ec9ea425",
+  "cms_namespace": "service-site",
+  "service_lead_id": 10,
+  "outbound_message_id": 25,
+  "source_sha256": "ba21476562bde3adfeeb816f633ea090334887b80755949c200f1b244925f458",
+  "product_id": "7631",
+  "changes": [
+    {
+      "field": "description",
+      "label": "Description",
+      "before": "",
+      "after": "Bonfyre verification only. 2026-10-07T22:10:48.716Z"
+    }
+  ],
+  "author_verified": false,
+  "changes_approved": false,
+  "merchant_published": false,
+  "first_sync": {
+    "brought": 1,
+    "prepared": 1,
+    "errors": []
+  },
+  "second_sync": {"brought": 0, "prepared": 0, "recovered": 0, "already_here": 1, "errors": []},
+  "test_record_disposition": "service_lead handled=yes; outbound_message abandoned; verification only, do not contact"
+}

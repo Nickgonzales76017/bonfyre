@@ -5,24 +5,31 @@
 set -euo pipefail
 
 repo_root="$(git rev-parse --show-toplevel)"
-atlas="$repo_root/architecture/atlas.py"
+atlas="$repo_root/architecture/atlas.mjs"
 [ -f "$atlas" ] || exit 0                      # no atlas in this tree: nothing to do
-command -v python3 >/dev/null 2>&1 || exit 0   # no python3: skip rather than block
+command -v bun >/dev/null 2>&1 || { echo "pre-commit: bun is required for Atlas validation" >&2; exit 1; }
 
 # 1. The constitution must hold. A laundering claim, a view that swallows its
 #    children, or a dangling interaction fails the commit here, before CI.
-if ! python3 "$atlas" validate; then
+if ! bun "$atlas" validate; then
   echo "pre-commit: architecture atlas is invalid (see above). Commit aborted." >&2
   exit 1
 fi
 
 # 2. Keep the consumable index (MCP / BonfyreFS read it) in sync with the .yaff
 #    sources. If it changed, stage it so the commit carries a fresh index.
-python3 "$atlas" export >/dev/null
+bun "$atlas" export >/dev/null
 index="$repo_root/architecture/atlas.index.json"
 if [ -f "$index" ] && ! git diff --quiet -- "$index" 2>/dev/null; then
   git add "$index"
   echo "pre-commit: refreshed architecture/atlas.index.json"
+fi
+
+# 3. The native ratchet: the JS/script estate and installed JS runtimes may only
+#    shrink (architecture/native-ratchet.cue). Port to C or retire to pay.
+if ! sh "$repo_root/scripts/native-ratchet.sh" check; then
+  echo "pre-commit: native ratchet refused the commit (see above)." >&2
+  exit 1
 fi
 
 exit 0

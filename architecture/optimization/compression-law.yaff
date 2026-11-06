@@ -1,0 +1,111 @@
+atlas optimization-compression-law
+
+architecture compression-law
+  canonical_name CompressionLaw
+  owns SmallestSufficientState
+  consumes ForeignWorld
+  consumes Identity
+  consumes Authority
+  consumes FactDelta
+  publishes SmallestSufficientState
+  publishes RepresentationSelection
+  family optimization
+  domain Optimization / Governing law
+  layer substrate
+  semantic_question What is the smallest state that still supports every lawful operation over this subject, and does the current representation exceed it?
+  purpose State the governing law of the machine: Bonfyre compiles high-entropy reality into the smallest sufficient executable state and then uses the cheapest adequate operator over that state. Every estate admitted to Bonfyre is a source world to be factored, addressed and packed, not a thing to ingest and reproduce.
+  maturity architectural
+  source_path cmd/BonfyreCompress/src/physical.c
+  source_path schemas/control/representation-passport.cue
+  witness cmd/BonfyreCompress/tests/physical_compiler_test.sh compiles arbitrary passport declarations into dense integer handles, rejects unknown semantic fields and conflicting byte declarations for one physical digest, materializes one deduplicated physical-body record for multiple separate passports, and refuses an unmeasured latent body from the candidate cut
+  witness cmd/BonfyreCompress/results/physical-compiler/structural-100k.json records a 100,000-record synthetic structural registry compilation; this is a physical handle/index witness only, not a user, traffic, or Internet-scale claim
+  witness cmd/BonfyreCompress/results/physical-compiler/structural-1m.json records a 1,000,000-record synthetic structural registry compilation; this is a physical handle/index witness only, not a user, traffic, or Internet-scale claim
+  witness cmd/BonfyreCompress/results/physical-compiler/structural-10m-local.json records a 10,000,000-record synthetic structural registry compilation on the stated 16 GiB host (61.19 seconds, 403.99913 SQLite bytes/passport); it is a physical handle/index witness only, not a user, traffic, retrieval, BitNet, FPQ, or Internet-scale claim
+  node_types SourceWorld
+  node_types SharedBasis
+  node_types TypedBinding
+  node_types SparseException
+  node_types RepresentationInstance
+  edge_types factored_into
+  edge_types bound_to
+  edge_types excepted_by
+  edge_types addressed_by
+  invariant the target form is shared exact bases plus typed bindings plus sparse meaningful exceptions plus compact addresses
+  invariant compression is not deletion; every factored form retains a path back to the original meaning
+  invariant compression is not approximation of authority; permission, ownership and effect admission stay exact and lossless
+  invariant compression is not genericization; a domain object keeps its identity when its mechanics are shared
+  invariant an exception is preserved when it carries meaning and collapsed only when it is incidental repetition
+  invariant every LOWER retains a LIFT or THAW path; an irreversible reduction is a deletion and requires a deletion proof
+  invariant a body that must be fully expanded before any useful operation is only partly compressed
+  invariant authoring and boundary forms are not runtime forms; parse once, then operate on dense state
+  invariant an unchanged content-digested passport snapshot does not replace the dense registry again
+  invariant physical-digest deduplication retains one derived body record while preserving every separate passport identity, semantic digest, basis/binding/exception and lift/thaw route
+  invariant two declarations for one physical digest must agree on declared bytes; a conflict refuses the compiled generation rather than silently selecting an accounting value
+  forbidden_inference two objects sharing a basis -> those objects being the same object
+  forbidden_inference a domain's mechanics being shared -> the domains being merged
+  forbidden_inference smaller representation -> better representation, absent a measured quality envelope
+  forbidden_inference a correct result -> an admissible representation
+  forbidden_inference lossless byte compression -> compressed semantics
+  interacts optimization-cascade
+  interacts optimization-proof
+  interacts cheap-cognition
+  source_lineage Generation-10 optimization doctrine promotion, 2026-08-26
+
+calculation PhysicalCompiler
+  input RepresentationPassport declarations
+  input access phenotype subject family, operation, exactness demand, loss budget
+  process preflight source declarations, atomically replace compiled handle rows, normalize shared bases, typed subject-family bindings and sparse exceptions into separate relations, partition support operations, and return only exact or measured-latent candidate bodies
+  output RepresentationCandidateCut
+  invariant the compiler returns eligible representations rather than a selected representation; ResourceAdmission and the exact owner remain downstream
+  invariant exact operations exclude latent bodies even when they advertise the requested operation
+  invariant a declared latent representation has no admissible preservation envelope and is excluded from the candidate cut
+  invariant a shared basis, typed binding, and sparse exception stay physically distinct from the passport identity; factoring does not merge subjects
+  invariant a physical digest is retained once in the derived body relation and may be referenced by many distinct passports; retained body equality is not subject equality
+  forbidden_inference a compiled passport -> a physical measurement having been executed
+
+calculation CompressionLedgerRuntime
+  input executed CopyReceipt counters
+  process preserve runtime bytes read, borrowed, copied, hydrated, decompressed, and useful bytes separately from declaration-time costs
+  output CompressionLedgerReceipt
+  invariant declared passport costs and executed runtime measurements are never aggregated into an unnamed percentage
+  forbidden_inference a representation declaration containing bytes -> those bytes having been measured on this machine
+
+calculation StructuralRegistryBenchmark
+  input labelled synthetic record count
+  process compile dense passport handles plus one operation index in an in-memory SQLite registry and measure elapsed time and allocated SQLite pages
+  output StructuralRegistryMeasurement
+  invariant a synthetic structural cohort is reported independently from actual estate populations and does not establish adoption, traffic, retrieval quality, or external-source capacity
+  forbidden_inference a 100000-record structural compile -> a 100000-user or 100000-source production capacity claim
+
+representation_tier authoring
+  detail YaFF, CUE, JSON, foreign payloads, human-authored contracts. Verbose on purpose. Parsed once at admission.
+  runtime_use forbidden
+
+representation_tier exact-dense
+  detail Interned strings, dictionary enums, packed structs, bitfields, bitmaps, sorted sparse sets, CSR adjacency, columnar relations, closure indexes, FactDelta streams.
+  runtime_use hot
+  losslessness required
+
+representation_tier latent
+  detail Embeddings, shared latent bases plus quantized residuals, sparse features, phenotype coordinates.
+  runtime_use candidate reduction only
+  losslessness not required
+  invariant a latent representation narrows a candidate set; it never decides authority
+
+representation_tier physical
+  detail Arrow, mmap, SQLite and Turso, Feldera, Lance, DuckDB and Daft, Zstd frames, FPQ families, external handles.
+  runtime_use selected per access pattern
+  invariant one semantic subject may hold several bodies; no single physical format is mandated for all uses
+
+representation_tier boundary
+  detail Browser and API JSON, human YaFF, PDF, XLSX and other delivery formats.
+  runtime_use egress only
+  invariant a boundary form is produced at the boundary and never consumed back into the hot path
+
+interaction law-governs-cascade
+  source compression-law
+  destination optimization-cascade
+  relation governing_constraint
+  preserves the distinction between exact lossless state and approximate latent state
+  drops any claim that a cheaper representation is admissible without a measured quality envelope
+  forbidden_inference a cascade stage being available -> that stage being appropriate for this subject

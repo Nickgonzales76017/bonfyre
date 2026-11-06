@@ -1,0 +1,29 @@
+{
+  "date": "2026-10-09",
+  "source": "cmd/BonfyreOffer/src/main.c",
+  "source_binary_sha256": "29c35f42ad97239ad77fcfb65b678f77d66b97536ece5ecefdfdce707134c6e8",
+  "test": {
+    "proof": "founder-sample-pickfu",
+    "terms": null,
+    "sendable": false
+  },
+  "targets": [
+    {
+      "id": "managed",
+      "path": "/Users/nickgonzales/.bonfyre/bin/bonfyre-offer",
+      "prior_sha256": "f194e50b7c88e44bd630e909a1f4d58c3ab61daa08726fb1e7e7e8209bdeec86",
+      "installed_sha256": "d0ac9a6b2a8843c4bc3810e005421c75db9532c3bcc5aaea9e1f3cb2b8fa091b",
+      "backup_path": "/Users/nickgonzales/.bonfyre/backups/offer-safety-20261009/managed.preimage"
+    },
+    {
+      "id": "creator-ingest-default",
+      "path": "/Users/nickgonzales/.local/bin/bonfyre-offer",
+      "prior_sha256": "1e10386e9eea9d67947a5136fedbd0e2ac23968777caaf71b35f65820cc7aa0b",
+      "installed_sha256": "d0ac9a6b2a8843c4bc3810e005421c75db9532c3bcc5aaea9e1f3cb2b8fa091b",
+      "backup_path": "/Users/nickgonzales/.bonfyre/backups/offer-safety-20261009/creator-ingest-default.preimage"
+    }
+  ],
+  "external_dispatched": 0,
+  "realized_revenue": 0,
+  "component_source_not_modified": true
+}

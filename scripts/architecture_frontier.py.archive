@@ -1,0 +1,234 @@
+#!/usr/bin/env python3
+# Retired: scripts/architecture-frontier.mjs reads the verified Atlas index.
+"""Which bridge, if built, would connect the most of this estate to itself?
+
+The estate declares 253 architectures and most of them participate in no
+interaction at all. That was found by counting, and the response was to build the
+eight bridges whose ends happened to be measured already -- a hand-picked list
+chosen by whoever was looking.
+
+This asks it as a closure problem instead, with the machinery the funding
+frontier already uses. An architecture is a node; a declared interaction is an
+edge; and the question "which single new edge would join the most isolated nodes
+to the connected mass" has an exact answer that needs no judgement.
+
+Two things it deliberately will not do.
+
+It will not propose an edge between two architectures that share no family,
+domain or vocabulary. A bridge exists because two things genuinely exchange
+something, and an edge invented to improve a connectivity number is the same
+laundering the witness rule was written to stop -- it would make the estate
+*look* joined without anything flowing.
+
+And it ranks candidates without declaring any. Writing the interaction is a
+judgement about what actually passes between two organs, and nothing here is
+entitled to make it.
+
+Cannot infer: a high-scoring candidate is a bridge worth building, or one that
+could be built at all. It is the shape of the graph, not a design.
+"""
+from __future__ import annotations
+
+import json
+import os
+import pathlib
+import sys
+from collections import defaultdict
+from datetime import datetime, timezone
+
+ROOT = pathlib.Path(os.environ.get(
+    "BONFYRE_ATLAS_ROOT", pathlib.Path(__file__).resolve().parent.parent))
+
+# Below this, the tree being read is not the atlas. The runner is deployed beside
+# the estate's scripts where no architecture tree lives, and it reported one
+# architecture as a finding rather than saying it had read almost nothing --
+# which is the same silent-nothing this estate keeps having to remove.
+ATLAS_FLOOR = 20
+
+
+def iso_now() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def read_atlas() -> tuple[dict, list]:
+    arch: dict[str, dict] = {}
+    edges: list[tuple[str, str]] = []
+    for path in sorted((ROOT / "architecture").rglob("*.yaff")):
+        current = None
+        pending: dict[str, str] = {}
+        for raw in path.read_text(errors="replace").splitlines():
+            line = raw.strip()
+            if raw.startswith("architecture "):
+                current = line.split(" ", 1)[1]
+                arch[current] = {"family": "", "domain": "", "maturity": "",
+                                 "terms": set(), "file": path.name}
+                pending = {}
+            elif raw.startswith("interaction "):
+                current = None
+                pending = {}
+            elif line.startswith(("source ", "destination ")) :
+                key, value = line.split(" ", 1)
+                pending[key] = value.strip()
+                if "source" in pending and "destination" in pending:
+                    edges.append((pending["source"], pending["destination"]))
+                    pending = {}
+            elif current:
+                if line.startswith("family "):
+                    arch[current]["family"] = line.split(" ", 1)[1]
+                elif line.startswith("domain "):
+                    arch[current]["domain"] = line.split(" ", 1)[1]
+                elif line.startswith("maturity "):
+                    arch[current]["maturity"] = line.split(" ", 1)[1]
+                elif line.startswith(("node_types ", "edge_types ", "state_types ")):
+                    arch[current]["terms"].add(line.split(" ", 1)[1].lower())
+    return arch, edges
+
+
+def main() -> int:
+    arch, edges = read_atlas()
+    if len(arch) < ATLAS_FLOOR:
+        detail = {
+            "error": "atlas_not_readable_here",
+            "read_from": str(ROOT / "architecture"),
+            "architectures_found": len(arch),
+            "floor": ATLAS_FLOOR,
+            "note": ("this host has no architecture tree at that path; the measurement "
+                     "reads the registry and cannot substitute a smaller one. Set "
+                     "BONFYRE_ATLAS_ROOT to where the tree lives."),
+        }
+        if "--json" in sys.argv:
+            print(json.dumps(detail, indent=2))
+        else:
+            print(f"  {detail['note']}", file=sys.stderr)
+        return 2
+    real = [(a, b) for a, b in edges if a in arch and b in arch]
+    degree: dict[str, int] = defaultdict(int)
+    for a, b in real:
+        degree[a] += 1
+        degree[b] += 1
+    connected = {n for n in arch if degree[n]}
+    isolated = sorted(n for n in arch if not degree[n])
+
+    # A candidate bridge must have something to carry. Shared family, shared
+    # domain or a shared vocabulary term is weak evidence that two organs
+    # exchange something; no overlap at all is evidence that they do not.
+    # How rare each signal is. A first version counted any shared attribute
+    # equally and put `family command` at the top, reaching 99 isolated
+    # architectures -- because a hundred of them are in that family. A signal a
+    # hundred things share says almost nothing about any two of them.
+    #
+    # So each signal is weighted by how few architectures carry it. Sharing a
+    # family of two is evidence; sharing a family of a hundred is a filing
+    # convention.
+    import math
+    population: dict[str, int] = defaultdict(int)
+    for meta in arch.values():
+        if meta["family"]:
+            population["family:" + meta["family"]] += 1
+        if meta["domain"]:
+            population["domain:" + meta["domain"]] += 1
+        for term in meta["terms"]:
+            population["term:" + term] += 1
+    total = max(len(arch), 1)
+
+    def weight(signal: str) -> float:
+        held_by = population.get(signal, total)
+        return math.log(total / max(held_by, 1))
+
+    MEANINGFUL = 1.5  # a signal held by more than ~22% of the estate is filing
+
+    def affinity(x: str, y: str) -> list[dict]:
+        a, b = arch[x], arch[y]
+        found = []
+        if a["family"] and a["family"] == b["family"]:
+            key = "family:" + a["family"]
+            found.append({"signal": f"family {a['family']}", "weight": round(weight(key), 2),
+                          "held_by": population[key]})
+        if a["domain"] and a["domain"] == b["domain"]:
+            key = "domain:" + a["domain"]
+            found.append({"signal": f"domain {a['domain']}", "weight": round(weight(key), 2),
+                          "held_by": population[key]})
+        for term in sorted(a["terms"] & b["terms"]):
+            key = "term:" + term
+            found.append({"signal": f"shares {term}", "weight": round(weight(key), 2),
+                          "held_by": population[key]})
+        return [f for f in found if f["weight"] >= MEANINGFUL]
+
+    # Score a connected node by how many isolated nodes it could plausibly reach.
+    # One edge joins two nodes; a hub that plausibly serves many isolated organs
+    # is where a few edges do the most work.
+    hubs = []
+    for hub in sorted(connected):
+        reachable = []
+        for lonely in isolated:
+            why = affinity(hub, lonely)
+            if why:
+                reachable.append({"architecture": lonely, "affinity": why,
+                                  "strength": round(sum(w["weight"] for w in why), 2),
+                                  "maturity": arch[lonely]["maturity"]})
+        if reachable:
+            reachable.sort(key=lambda r: -r["strength"])
+            hubs.append({"hub": hub, "degree": degree[hub],
+                         "isolated_within_reach": len(reachable),
+                         "total_strength": round(sum(r["strength"] for r in reachable), 2),
+                         "candidates": reachable[:8]})
+    # Rank by the strength of what could be carried, not the count of what is
+    # nearby. Counting rewards a large family; strength rewards a real overlap.
+    hubs.sort(key=lambda h: -h["total_strength"])
+
+    # And the reverse view: an isolated organ nothing shares anything with is
+    # not waiting for a bridge, it is telling you it was declared alone.
+    orphans = []
+    for lonely in isolated:
+        if not any(affinity(lonely, other) for other in connected):
+            orphans.append({"architecture": lonely, "maturity": arch[lonely]["maturity"],
+                            "file": arch[lonely]["file"]})
+
+    receipt = {
+        "schema": "bonfyre-architecture-frontier.v1",
+        "ran_at": iso_now(),
+        "effect_class": "PURE",
+        "architectures": len(arch),
+        "declared_edges": len(real),
+        "connected": len(connected),
+        "isolated": len(isolated),
+        "hubs_by_reach": hubs[:10],
+        "isolated_with_no_affinity_anywhere": orphans[:12],
+        "orphan_count": len(orphans),
+        "signal_floor": MEANINGFUL,
+        "cannot_infer": [
+            "a high-scoring candidate -> a bridge worth building",
+            "a rare shared term -> a real exchange; rarity is evidence, not proof",
+            "a shared vocabulary -> something actually exchanged",
+            "an isolated architecture -> an unused one",
+            "connectivity -> leverage",
+        ],
+    }
+    if "--json" in sys.argv:
+        print(json.dumps(receipt, indent=2))
+        return 0
+
+    print(f"  {len(arch)} architectures, {len(real)} declared edges, "
+          f"{len(connected)} connected, {len(isolated)} isolated")
+    print()
+    print("  where one edge would do the most work:")
+    for h in hubs[:8]:
+        print(f"    {h['hub']:<30} degree {h['degree']:<3} reaches "
+              f"{h['isolated_within_reach']:>3} isolated   strength {h['total_strength']:>6.1f}")
+    print()
+    print("  the strongest single candidates:")
+    for h in hubs[:3]:
+        for c in h["candidates"][:2]:
+            print(f"    {h['hub']} <-> {c['architecture']}")
+            sig = "; ".join(f"{w['signal']} (held by {w['held_by']})" for w in c["affinity"][:3])
+            print(f"        {sig[:76]}")
+    print()
+    print(f"  {len(orphans)} isolated architectures share nothing with anything connected;")
+    print("  those were declared alone rather than left unbridged:")
+    for o in orphans[:6]:
+        print(f"    {o['architecture']:<34}{o['maturity']:<14}{o['file']}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

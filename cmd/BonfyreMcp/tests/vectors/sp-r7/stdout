@@ -1,0 +1,25 @@
+{
+  "state": "passed",
+  "census": {
+    "state": "passed",
+    "cpu": 8
+  },
+  "inventory": {
+    "receipt": {
+      "state": "passed"
+    },
+    "models": []
+  },
+  "phenotype": {
+    "phenotype_id": "ph-1"
+  },
+  "parity": {
+    "state": "passed"
+  },
+  "placement": {
+    "placement_id": "pl-1"
+  },
+  "fuse": {
+    "fuse_id": "f-1"
+  }
+}

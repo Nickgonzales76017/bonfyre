@@ -1,0 +1,140 @@
+{
+    "schema": "bonfyre.experience-stage-law.v1",
+    "affordance_stage_hints": {
+        "LOCATE": "place map route origin destination directions territory nearby location venue",
+        "IDENTIFY": "identity person owner account subject party asset profile actor",
+        "OBSERVE": "observe read status track monitor activity signal detail context history now",
+        "MEASURE": "measure meter stats analytics value equity comps risk progress score",
+        "VERIFY": "verify evidence assessment review proof quality inspection",
+        "PREDICT": "forecast predict estimate arv value risk compare",
+        "COMPARE": "compare contrast alternative option variant value comps risk",
+        "SEARCH": "discover search filter catalog find query related universe browse",
+        "MATCH": "match compare select provider candidate related fit",
+        "ROUTE": "route delivery trip transit in-transit directions dispatch",
+        "SCHEDULE": "schedule calendar book reserve appointment upcoming hold",
+        "QUOTE": "quote price offer bid term",
+        "PURCHASE": "cart checkout buy order product purchase",
+        "PAY": "pay payment settlement invoice receipt",
+        "INSURE": "insurance coverage claim policy",
+        "COMMUNICATE": "message conversation discussion reply contact communication thread",
+        "TRANSLATE": "translate language transcript captions",
+        "PUBLISH": "publish post syndicate distribution share article release",
+        "STREAM": "stream live play watch listen media",
+        "AUTHENTICATE": "identity authenticate session login credential",
+        "AUTHORIZE": "authorize consent approval permission authority",
+        "SIGN": "sign signature mandate agreement",
+        "CERTIFY": "certificate credential verify compliance",
+        "FILE": "file filing form submission permit tax",
+        "REPORT": "report alert notification analytics status",
+        "ALERT": "alert emergency warning incident",
+        "SIMULATE": "simulate model plan forecast",
+        "OPTIMIZE": "optimize plan route schedule rank",
+        "REPAIR": "repair maintenance service work",
+        "INSPECT": "inspect inspection review audit evidence",
+        "CLASSIFY": "classify category topic tag ontology",
+        "NEGOTIATE": "negotiate proposal quote terms conversation",
+        "CONTRACT": "contract agreement commitment checkout approval",
+        "HIRE": "hire candidate job interview offer onboarding",
+        "TEACH": "learn lesson course module feedback assessment",
+        "CARE": "care provider appointment plan follow-up service"
+    },
+    "role_stage_hints": {
+        "material_source": "entry hero media detail read source content release track episode thread event place product discovery",
+        "media_service": "play media watch listen stream chapter transcript captions queue",
+        "action_adapter": "select reserve book checkout payment quote contact apply submit order confirm",
+        "interaction_reference": "entry body thread board timeline map workspace detail",
+        "design_reference": "hero layout preview editorial gallery document",
+        "authoring_adapter": "draft edit compose preview publish update",
+        "compiler_toolchain": "plan build test run analysis edit deploy",
+        "transport_carrier": "request send receive deliver execute stream status",
+        "publication_carrier": "publish syndicate distribution share post update",
+        "verification_tool": "verify evidence review audit proof quality",
+        "external_service_candidate": "search select request execute result status",
+        "reference_standard": "discover resolve validate execute response"
+    },
+    "presentation_terms": "entry hero media detail read sequence discussion community related collection identity profile article source release track episode place product preview creator people",
+    "app_name_overrides": [
+        {
+            "terms": [
+                "transcrib",
+                "caption",
+                "subtitle"
+            ],
+            "affordances": [
+                "TRANSLATE"
+            ]
+        },
+        {
+            "terms": [
+                "clip",
+                "video",
+                "audio",
+                "media",
+                "stream"
+            ],
+            "affordances": [
+                "STREAM"
+            ]
+        },
+        {
+            "terms": [
+                "offer",
+                "commerce",
+                "shop"
+            ],
+            "affordances": [
+                "QUOTE",
+                "PURCHASE"
+            ]
+        },
+        {
+            "terms": [
+                "finance",
+                "pay",
+                "ledger",
+                "settle"
+            ],
+            "affordances": [
+                "PAY"
+            ]
+        },
+        {
+            "terms": [
+                "publish",
+                "cms",
+                "distribute",
+                "repurpose"
+            ],
+            "affordances": [
+                "PUBLISH"
+            ]
+        },
+        {
+            "terms": [
+                "auth",
+                "identity"
+            ],
+            "affordances": [
+                "AUTHENTICATE"
+            ]
+        },
+        {
+            "terms": [
+                "project",
+                "queue",
+                "workflow",
+                "pipeline"
+            ],
+            "affordances": [
+                "OPTIMIZE"
+            ]
+        }
+    ],
+    "app_fallback_affordance": "OBSERVE",
+    "max_stage_bindings_per_chain": 8,
+    "cannot_infer": [
+        "chain reference -> stage edge",
+        "stage fit -> admitted source or semantic identity",
+        "stage edge -> executable transition, authority or effect"
+    ]
+}

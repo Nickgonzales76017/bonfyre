@@ -1,0 +1,11 @@
+[Unit]
+Description=Bonfyre material-demand to SourceDirty ingress
+After=bonfyre-lowering-consumers.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/bonfyre/address-plane.env
+Environment=BONFYRE_WEBSUB_DB=/var/lib/bonfyre/state/websub.db
+# This ingress validates and coalesces only. It performs no network read;
+# bonfyre-websub-drain separately owns bounded ForeignTwin observation.
+ExecStart=/usr/local/bin/bonfyre-websub accept-demands --dir ${BONFYRE_FOREIGN_OBSERVATION_DEMANDS} --limit 256

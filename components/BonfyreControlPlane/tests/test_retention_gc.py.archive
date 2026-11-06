@@ -1,0 +1,222 @@
+"""Witness for RetentionGC, on the night the lattice was written for.
+
+The stream ends. Most of it should go. The tests check that what goes, goes;
+that what is held stays and says who is holding it; and that after the sweep the
+estate still knows the night happened.
+"""
+
+from __future__ import annotations
+
+import os
+import sqlite3
+import sys
+
+import pytest
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import live_semantic_track as lst  # noqa: E402
+import retention_gc as gc  # noqa: E402
+
+HOUR = 60 * 60 * 1000
+DAY = 24 * HOUR
+LIVE = "live:neon-june-2026-09-04"
+
+
+@pytest.fixture()
+def db():
+    conn = sqlite3.connect(":memory:")
+    gc.ensure_schema(conn)
+    yield conn
+    conn.close()
+
+
+@pytest.fixture()
+def night(db):
+    """One occurrence's records, all written at t=0."""
+    for rid, kind, body in (
+            ("r:reaction", "reaction", "heart"),
+            ("r:chat", "chat", "Trees line is insane"),
+            ("r:utterance", "utterance", "we're playing Trees again Friday"),
+            ("r:place", "place", "Trees"),
+            ("r:clip", "clip_candidate", "friday-announcement"),
+            ("r:cta", "cta", "tickets are in our profile"),
+            ("r:claim", "claim", "Neon June plays Trees Friday"),
+            ("r:sponsor", "sponsor_mention", "Red Bull"),
+            ("r:purchase", "commerce", "ticket purchased")):
+        gc.retain(db, record_id=rid, occurrence=LIVE, kind=kind,
+                  written_at=0, body=body)
+    return db
+
+
+# ------------------------------------ the clock removes the exhaust and no more
+
+def test_nothing_is_removable_before_its_lifetime_elapses(night):
+    removed, refused = gc.collect(night, now=60 * 1000)  # one minute in
+    assert removed == []
+    assert {r.record_id for r in refused} == set(gc.surviving(night, LIVE))
+    assert any("lifetime has not elapsed" in r.reason for r in refused)
+
+
+def test_flash_goes_first(night):
+    removed, _ = gc.collect(night, now=10 * 60 * 1000)  # ten minutes
+    assert removed == ["r:reaction"]
+    assert gc.body_of(night, "r:chat") is not None
+
+
+def test_chat_goes_after_hours_and_moments_survive_it(night):
+    gc.collect(night, now=10 * 60 * 1000)
+    removed, _ = gc.collect(night, now=7 * HOUR)
+    assert removed == ["r:chat", "r:utterance"]
+    # A moment-tier record is days, not hours.
+    assert gc.body_of(night, "r:place") is not None
+    assert gc.body_of(night, "r:clip") is not None
+
+
+def test_moments_go_after_days(night):
+    removed, _ = gc.collect(night, now=4 * DAY)
+    assert removed == ["r:chat", "r:clip", "r:place", "r:reaction", "r:utterance"]
+    # The call to action is social tier: weeks, not days.
+    assert gc.body_of(night, "r:cta") is not None
+
+
+def test_everything_below_the_floor_is_eventually_gone(night):
+    removed, refused = gc.collect(night, now=60 * DAY)
+    assert removed == ["r:chat", "r:clip", "r:cta", "r:place", "r:reaction",
+                       "r:utterance"]
+    # And what remains is exactly what the lattice said would remain.
+    assert gc.surviving(night, LIVE) == ["r:claim", "r:purchase", "r:sponsor"]
+    assert all("cooling floor" in r.reason for r in refused)
+
+
+def test_a_tier_at_or_above_the_floor_is_never_removed_by_time(night):
+    gc.collect(night, now=10_000 * DAY)
+    assert gc.surviving(night, LIVE) == ["r:claim", "r:purchase", "r:sponsor"]
+    ok, reason = gc.removable(night, "r:purchase", now=10_000 * DAY)
+    assert ok is False
+    assert "time passing does not remove it" in reason
+
+
+# ------------------------------------------- a hold outranks the clock
+
+def test_an_elapsed_lifetime_is_not_permission_to_remove(night):
+    gc.hold(night, "r:chat", kind=gc.HOLD_EVIDENCE, holder="EvidenceGraph")
+    removed, refused = gc.collect(night, now=7 * HOUR)
+    assert "r:chat" not in removed
+    held = [r for r in refused if r.record_id == "r:chat"][0]
+    assert "evidence_reference by EvidenceGraph" in held.reason
+    assert gc.body_of(night, "r:chat") == "Trees line is insane"
+
+
+def test_a_refusal_names_who_is_holding_it(night):
+    gc.hold(night, "r:clip", kind=gc.HOLD_LEGAL, holder="counsel")
+    _removed, refused = gc.collect(night, now=60 * DAY)
+    clip = [r for r in refused if r.record_id == "r:clip"][0]
+    assert clip.holder == "counsel"
+    # "Who is holding this" is the question a refusal has to answer for anybody
+    # to be able to release it.
+
+
+def test_several_holds_are_all_named(night):
+    gc.hold(night, "r:chat", kind=gc.HOLD_OBLIGATION, holder="CommitmentGraph")
+    gc.hold(night, "r:chat", kind=gc.HOLD_USER, holder="person:nick")
+    _r, refused = gc.collect(night, now=60 * DAY)
+    chat = [r for r in refused if r.record_id == "r:chat"][0]
+    assert "open_obligation by CommitmentGraph" in chat.reason
+    assert "user_saved by person:nick" in chat.reason
+
+
+def test_releasing_the_last_hold_makes_it_removable(night):
+    gc.hold(night, "r:chat", kind=gc.HOLD_USER, holder="person:nick")
+    assert gc.collect(night, now=60 * DAY)[0] == [
+        "r:clip", "r:cta", "r:place", "r:reaction", "r:utterance"]
+    assert gc.release(night, "r:chat", kind=gc.HOLD_USER, holder="person:nick") is True
+    assert gc.collect(night, now=60 * DAY)[0] == ["r:chat"]
+
+
+def test_releasing_one_of_two_holds_does_not_release_the_record(night):
+    gc.hold(night, "r:chat", kind=gc.HOLD_USER, holder="person:nick")
+    gc.hold(night, "r:chat", kind=gc.HOLD_LEGAL, holder="counsel")
+    gc.release(night, "r:chat", kind=gc.HOLD_USER, holder="person:nick")
+    removed, _ = gc.collect(night, now=60 * DAY)
+    assert "r:chat" not in removed
+    assert gc.holds_on(night, "r:chat") == [(gc.HOLD_LEGAL, "counsel")]
+
+
+def test_a_hold_must_name_a_holder(night):
+    with pytest.raises(gc.RetentionError) as e:
+        gc.hold(night, "r:chat", kind=gc.HOLD_LEGAL, holder="")
+    assert "nobody can release it" in str(e.value)
+
+
+def test_an_unknown_hold_kind_is_refused(night):
+    with pytest.raises(gc.RetentionError) as e:
+        gc.hold(night, "r:chat", kind="because", holder="someone")
+    assert "cannot be released by anybody" in str(e.value)
+
+
+# -------------------------------- the body goes; the moment does not
+
+def test_a_removed_record_still_happened(night):
+    gc.collect(night, now=10 * 60 * 1000)
+    assert gc.body_of(night, "r:reaction") is None
+    # The bytes are gone. That something of this kind occurred at this moment
+    # is not, and answering False here would be enforcing amnesia.
+    assert gc.happened(night, "r:reaction") is True
+
+
+def test_the_tombstone_keeps_the_fact_and_not_the_content(night):
+    gc.collect(night, now=10 * 60 * 1000)
+    stone = gc.tombstone_of(night, "r:reaction")
+    assert stone["kind"] == "reaction"
+    assert stone["tier"] == lst.FLASH
+    assert stone["occurrence"] == LIVE
+    assert stone["removed_at"] == 10 * 60 * 1000
+    # No body anywhere in the tombstone: it records that a moment existed, not
+    # what was in it.
+    assert "heart" not in str(stone)
+
+
+def test_a_record_never_written_did_not_happen(night):
+    assert gc.happened(night, "r:never") is False
+    ok, reason = gc.removable(night, "r:never", now=0)
+    assert ok is False and reason == "no such record"
+
+
+def test_what_the_night_produced_outlives_what_it_consisted_of(night):
+    gc.collect(night, now=60 * DAY)
+    # Almost all of the stream is gone.
+    assert gc.body_of(night, "r:utterance") is None
+    assert gc.body_of(night, "r:chat") is None
+    # The claim, the sponsor acknowledgement and the purchase remain readable.
+    assert gc.body_of(night, "r:claim") == "Neon June plays Trees Friday"
+    assert gc.body_of(night, "r:sponsor") == "Red Bull"
+    assert gc.body_of(night, "r:purchase") == "ticket purchased"
+    # And every moment that ever existed is still known to have existed.
+    for rid in ("r:reaction", "r:chat", "r:utterance", "r:claim", "r:purchase"):
+        assert gc.happened(night, rid) is True
+
+
+# ----------------------------------------------- sweeps are scoped and repeatable
+
+def test_a_sweep_can_be_scoped_to_one_occurrence(db):
+    gc.retain(db, record_id="a:chat", occurrence="live:a", kind="chat",
+              written_at=0)
+    gc.retain(db, record_id="b:chat", occurrence="live:b", kind="chat",
+              written_at=0)
+    removed, _ = gc.collect(db, now=60 * DAY, occurrence="live:a")
+    assert removed == ["a:chat"]
+    assert gc.body_of(db, "b:chat") is not None
+
+
+def test_running_the_sweep_twice_removes_nothing_the_second_time(night):
+    first, _ = gc.collect(night, now=60 * DAY)
+    second, _ = gc.collect(night, now=60 * DAY)
+    assert first
+    assert second == []
+
+
+def test_a_record_of_an_unknown_kind_is_refused_at_write(db):
+    with pytest.raises(gc.RetentionError) as e:
+        gc.retain(db, record_id="x", occurrence=LIVE, kind="vibe", written_at=0)
+    assert "declared kind" in str(e.value)

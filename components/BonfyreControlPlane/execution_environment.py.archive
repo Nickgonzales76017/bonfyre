@@ -1,0 +1,559 @@
+"""Bounded, secret-safe health evidence for installed execution surfaces.
+
+The Run8 environment catalog is discovery evidence, not execution evidence.
+This module turns catalog entries into ResourceGraph/ResourceWeather records by
+running a tiny workload in each installed runtime, reusing existing virtual
+environments and Docker contexts, and probing selected reference environments
+without ever recording their values or subprocess output.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import shutil
+import subprocess
+import tempfile
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Mapping, Sequence
+
+
+OWNER_AND_WORK: dict[str, tuple[str, str, list[str]]] = {
+    "python3": ("control-plane", "os_managed_low", ["machine_execution", "proof_replay_backtest"]),
+    "pip3": ("python-package-fabric", "os_managed_low", ["environment_repair"]),
+    "node": ("integration-estate", "homebrew_low", ["product_surface", "contract_projection"]),
+    "npm": ("integration-estate", "homebrew_low", ["product_surface", "dependency_validation"]),
+    "pnpm": ("integration-estate", "homebrew_low", ["product_surface", "dependency_validation"]),
+    "bun": ("integration-estate", "user_install_low", ["product_surface", "machine_execution"]),
+    "deno": ("integration-estate", "homebrew_low", ["product_surface", "machine_execution"]),
+    "go": ("native-runtime", "homebrew_medium", ["native_runtime_defect", "partner_contribution"]),
+    "cargo": ("native-runtime", "homebrew_medium", ["native_runtime_defect", "machine_execution"]),
+    "rustc": ("native-runtime", "homebrew_medium", ["native_runtime_defect", "machine_execution"]),
+    "cc": ("native-kernel", "os_managed_low", ["native_runtime_defect", "contract_projection"]),
+    "clang": ("native-kernel", "os_managed_low", ["native_runtime_defect", "contract_projection"]),
+    "gcc": ("native-kernel", "os_managed_low", ["native_runtime_defect", "contract_projection"]),
+    "clang++": ("native-kernel", "os_managed_low", ["native_runtime_defect", "contract_projection"]),
+    "g++": ("native-kernel", "os_managed_low", ["native_runtime_defect", "contract_projection"]),
+    "cmake": ("native-build-fabric", "homebrew_low", ["native_runtime_defect", "dependency_validation"]),
+    "ninja": ("native-build-fabric", "homebrew_low", ["native_runtime_defect", "dependency_validation"]),
+    "make": ("native-build-fabric", "os_managed_low", ["native_runtime_defect", "dependency_validation"]),
+    "perl": ("queue-and-legacy-services", "os_managed_low", ["machine_execution", "estate_convergence"]),
+    "ruby": ("system-automation", "os_managed_low", ["machine_execution"]),
+    "java": ("foreign-runtime", "os_managed_medium", ["machine_execution", "partner_contribution"]),
+    "docker": ("container-fabric", "desktop_state_high", ["machine_execution", "proof_replay_backtest"]),
+    "git": ("evidence-and-partner-fabric", "os_managed_low", ["partner_contribution", "proof_replay_backtest"]),
+    "sqlite3": ("event-work-resource-graphs", "os_managed_low", ["machine_execution", "proof_replay_backtest"]),
+    "hvm": ("native-runtime", "cargo_install_medium", ["native_runtime_defect", "model_context_provider"]),
+    "codex": ("provider-graph", "homebrew_low", ["provider_execution"]),
+    "claude": ("provider-graph", "user_install_low", ["provider_execution"]),
+    "brew": ("machine-package-fabric", "network_medium", ["environment_repair"]),
+    "pipx": ("python-tool-fabric", "homebrew_low", ["environment_repair", "machine_execution"]),
+    "gh": ("github-foreign-twin", "homebrew_low", ["partner_contribution", "proof_replay_backtest"]),
+    "aws": ("cloud-fabric", "homebrew_medium", ["cloud_read_only", "machine_execution"]),
+    "oci": ("cloud-fabric", "pipx_or_homebrew_medium", ["cloud_read_only", "machine_execution"]),
+    "cloudflared": ("cloud-fabric", "homebrew_low", ["cloud_read_only", "machine_execution"]),
+    "curl": ("external-tool-fabric", "os_managed_low", ["cloud_read_only", "proof_replay_backtest"]),
+}
+
+
+# macOS ships /usr/bin/java as a stub that exits non-zero when no JDK is
+# registered under /Library/Java/JavaVirtualMachines, even when Homebrew has a
+# working JDK installed. Reuse the installed runtime instead of reporting the
+# surface unavailable and provoking another download.
+INSTALLED_ALTERNATES: dict[str, tuple[str, ...]] = {
+    "java": (
+        "/opt/homebrew/opt/openjdk/bin/java",
+        "/usr/local/opt/openjdk/bin/java",
+        "/opt/homebrew/opt/openjdk@26/bin/java",
+        "/opt/homebrew/opt/openjdk@25/bin/java",
+    ),
+}
+
+VERSION_FLAG = {"java": "-version"}
+
+
+def _profile(name: str) -> dict[str, Any]:
+    owner, cost, work = OWNER_AND_WORK.get(
+        name, ("unassigned-runtime", "unknown", ["machine_execution"])
+    )
+    return {"owning_subsystem": owner, "regeneration_cost": cost, "suitable_work_classes": work}
+
+
+def sanitize_text(value: str, *, repo: Path, home: Path) -> str:
+    """Remove machine-private path prefixes from bounded diagnostic metadata."""
+
+    return value.replace(str(repo), "$REPO").replace(str(home), "$USER_HOME")[:500]
+
+
+def dotenv_disposition(path: str) -> str:
+    name = Path(path).name
+    if name == "provider.refs.env":
+        return "selected_read_only_provider_probe"
+    if name == "cloud.refs.env":
+        return "selected_read_only_cloud_probe"
+    if name == "oracle.refs.env":
+        return "selected_read_only_oracle_probe"
+    if name == "cloud.refs.sanitized.env":
+        return "not_selected_shadow_reference"
+    return "not_selected_task_irrelevant_secret_bearing"
+
+
+def _responds(name: str, path: str, *, cwd: Path) -> bool:
+    """Cheapest possible liveness question: does this executable answer at all?"""
+
+    try:
+        return _run([path, VERSION_FLAG.get(name, "--version")], cwd=cwd).returncode == 0
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+
+
+def resolve_runtime(name: str, path: str, *, cwd: Path) -> tuple[str, str]:
+    """Return the executable that actually runs, and how it was resolved.
+
+    A catalog path is discovery evidence, not an installation. When the
+    cataloged path is a dead OS shim, prefer an already-installed alternate
+    before declaring the whole surface unavailable.
+    """
+
+    if _responds(name, path, cwd=cwd):
+        return path, "catalog_path"
+    for candidate in INSTALLED_ALTERNATES.get(name, ()):
+        if Path(candidate).exists() and _responds(name, candidate, cwd=cwd):
+            return candidate, "installed_alternate_reused"
+    discovered = shutil.which(name)
+    if discovered and discovered != path and _responds(name, discovered, cwd=cwd):
+        return discovered, "path_lookup"
+    return path, "no_live_installation"
+
+
+def _run(command: Sequence[str], *, cwd: Path, timeout: int = 20) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        list(command), cwd=cwd, capture_output=True, text=True, timeout=timeout, check=False
+    )
+
+
+def _runtime_command(name: str, path: str, temp: Path, repo: Path) -> list[str]:
+    commands = {
+        "python3": [path, "-c", "assert sum([2,3]) == 5"],
+        "pip3": [path, "--version"],
+        "node": [path, "-e", "if (2 + 3 !== 5) process.exit(1)"],
+        "npm": [path, "--version"],
+        "pnpm": [path, "--version"],
+        "bun": [path, "-e", "if (2 + 3 !== 5) process.exit(1)"],
+        "deno": [path, "eval", "if (2 + 3 !== 5) Deno.exit(1)"],
+        "go": [path, "env", "GOOS", "GOARCH"],
+        "cargo": [path, "--version"],
+        "cmake": [path, "-E", "echo", "cmake-smoke-ok"],
+        "perl": [path, "-e", "exit((2 + 3 == 5) ? 0 : 1)"],
+        "ruby": [path, "-e", "exit((2 + 3 == 5) ? 0 : 1)"],
+        "docker": [path, "version", "--format", "{{.Client.Version}} {{.Server.Version}}"],
+        "git": [path, "rev-parse", "--is-inside-work-tree"],
+        "sqlite3": [path, ":memory:", "select 2 + 3;"],
+        "hvm": [path, "--version"],
+        "codex": [path, "--version"],
+        "claude": [path, "--version"],
+        "brew": [path, "config"],
+        "pipx": [path, "list", "--short"],
+        "gh": [path, "--version"],
+        "aws": [path, "--version"],
+        "oci": [path, "--version"],
+        "cloudflared": [path, "--version"],
+        "curl": [path, "--version"],
+    }
+    if name in {"cc", "clang", "gcc"}:
+        source = temp / f"{name}-smoke.c"
+        binary = temp / f"{name}-smoke"
+        source.write_text("int main(void) { return (2 + 3 == 5) ? 0 : 1; }\n")
+        return [path, str(source), "-o", str(binary)]
+    if name in {"clang++", "g++"}:
+        stem = name.replace("+", "p")
+        source = temp / f"{stem}-smoke.cpp"
+        binary = temp / f"{stem}-smoke"
+        source.write_text("int main() { return (2 + 3 == 5) ? 0 : 1; }\n")
+        return [path, str(source), "-o", str(binary)]
+    if name == "rustc":
+        source = temp / "rust-smoke.rs"
+        source.write_text("fn main() { assert_eq!(2 + 3, 5); }\n")
+        return [path, str(source), "-o", str(temp / "rust-smoke")]
+    if name == "java":
+        source = temp / "Smoke.java"
+        source.write_text("class Smoke { public static void main(String[] a) { if (2 + 3 != 5) System.exit(1); } }\n")
+        return [path, str(source)]
+    if name == "ninja":
+        build = temp / "build.ninja"
+        build.write_text("rule smoke\n  command = printf ninja-smoke-ok > out\nbuild out: smoke\ndefault out\n")
+        return [path, "-f", str(build)]
+    if name == "make":
+        makefile = temp / "Makefile"
+        makefile.write_text("all:\n\t@printf make-smoke-ok > out\n")
+        return [path, "-f", str(makefile)]
+    return commands.get(name, [path, "--version"])
+
+
+def probe_runtime(entry: Mapping[str, Any], *, repo: Path, temp: Path) -> dict[str, Any]:
+    name, catalog_path = str(entry["name"]), str(entry["path"])
+    path, resolution = resolve_runtime(name, catalog_path, cwd=repo)
+    result: dict[str, Any] = {
+        "surface_id": f"runtime:{name}",
+        "kind": "runtime",
+        "name": name,
+        "path": sanitize_text(path, repo=repo, home=Path.home()),
+        "resolution": resolution,
+        "catalog_version": sanitize_text(str(entry.get("version") or ""), repo=repo, home=Path.home()),
+        **_profile(name),
+    }
+    try:
+        completed = _run(_runtime_command(name, path, temp, repo), cwd=repo)
+        healthy = completed.returncode == 0
+        if healthy and name in {"cc", "clang", "gcc", "clang++", "g++", "rustc"}:
+            binary_name = "rust-smoke" if name == "rustc" else f"{name.replace('+', 'p')}-smoke"
+            healthy = _run([str(temp / binary_name)], cwd=repo).returncode == 0
+        absent = resolution == "no_live_installation"
+        result.update(
+            health="healthy" if healthy else ("unavailable" if absent else "degraded"),
+            probe="bounded_execution",
+            exit_code=completed.returncode,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        result.update(health="unhealthy", probe="bounded_execution", exit_code=None)
+    return result
+
+
+def probe_venv(entry: Mapping[str, Any], *, repo: Path) -> dict[str, Any]:
+    python = str(entry["python"])
+    environment_dir = Path(str(entry["path"]))
+    subsystem_dir = environment_dir.parent
+    checks = [
+        [python, "-c", "import sys, app, restate; assert sys.prefix != sys.base_prefix"],
+        [python, "-m", "pip", "check"],
+    ]
+    outcomes = []
+    for command in checks:
+        try:
+            outcomes.append(_run(command, cwd=subsystem_dir).returncode == 0)
+        except (OSError, subprocess.TimeoutExpired):
+            outcomes.append(False)
+    return {
+        "surface_id": "venv:restate-adapter",
+        "kind": "python_venv",
+        "name": "restate-adapter",
+        "path": sanitize_text(str(entry["path"]), repo=repo, home=Path.home()),
+        "health": "healthy" if all(outcomes) else "degraded",
+        "probe": "isolated_import_and_dependency_check",
+        "check_count": len(checks),
+        "checks_passed": sum(outcomes),
+        "owning_subsystem": "restate-workgraph-bridge",
+        "regeneration_cost": "medium_existing_lockless_venv",
+        "suitable_work_classes": ["machine_execution", "proof_replay_backtest", "native_runtime_defect"],
+    }
+
+
+def _sourced_probe(path: str, body: str, *, cwd: Path) -> bool:
+    script = 'set -a; . "$1" >/dev/null 2>&1; set +a; ' + body
+    try:
+        return _run(["/bin/zsh", "-c", script, "bonfyre-env-probe", path], cwd=cwd, timeout=30).returncode == 0
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+
+
+def _sourced_capture(path: str, body: str, *, cwd: Path, timeout: int = 240) -> str:
+    """Run a task-local probe and return only the structured lines it prints.
+
+    The probe body is responsible for printing status metadata and never a
+    variable value; nothing else from the sourced environment is captured.
+    """
+
+    script = 'set -a; . "$1" >/dev/null 2>&1; set +a; ' + body
+    try:
+        completed = _run(["/bin/zsh", "-c", script, "bonfyre-env-probe", path], cwd=cwd, timeout=timeout)
+    except (OSError, subprocess.TimeoutExpired):
+        return ""
+    return completed.stdout
+
+
+GITHUB_READ_BODY = (
+    '[ -n "${GITHUB_PAT:-}" ] || exit 2; '
+    'code=$(/usr/bin/curl -sS -o /dev/null -w "%{http_code}" -m 20 '
+    '-H "Authorization: Bearer ${GITHUB_PAT}" https://api.github.com/rate_limit); '
+    '[ "$code" = 200 ]'
+)
+
+
+def probe_github_capability(catalog: Mapping[str, Any], *, repo: Path) -> dict[str, Any]:
+    """Resolve the GitHub read capability across every declared credential source.
+
+    ``GITHUB_PAT`` is a conflicting variable name across reference files. Binding
+    the capability to one arbitrary copy lets a single expired token mask a live
+    installed credential, so every declared source is probed and named.
+    """
+
+    sources: dict[str, str] = {}
+    native = "env -u GH_TOKEN -u GITHUB_TOKEN gh api rate_limit >/dev/null 2>&1"
+    try:
+        native_ok = _run(["/bin/zsh", "-c", native], cwd=repo, timeout=30).returncode == 0
+    except (OSError, subprocess.TimeoutExpired):
+        native_ok = False
+    sources["gh_cli_keyring"] = "healthy" if native_ok else "degraded_auth_rejected"
+    for entry in catalog.get("dotenv_files", []):
+        path = str(entry["path"])
+        if "GITHUB_PAT" not in entry.get("keys", []):
+            continue
+        if dotenv_disposition(path) == "not_selected_shadow_reference":
+            continue
+        sources[f"dotenv:{Path(path).name}#GITHUB_PAT"] = (
+            "healthy" if _sourced_probe(path, GITHUB_READ_BODY, cwd=repo) else "degraded_auth_rejected"
+        )
+    resolved = next((key for key, value in sources.items() if value == "healthy"), None)
+    return {
+        "surface_id": "capability:github-read",
+        "kind": "capability",
+        "name": "github-read",
+        "health": "healthy" if resolved else "degraded",
+        "probe": "multi_source_credential_resolution",
+        "sources": sources,
+        "resolved_source": resolved,
+        "owning_subsystem": "github-foreign-twin",
+        "regeneration_cost": "high_secret_or_authority_reconciliation",
+        "suitable_work_classes": ["partner_contribution", "proof_replay_backtest", "cloud_read_only"],
+    }
+
+
+# Endpoint, credential variable name and model for each Model Commons routing
+# surface. Each entry is one real bounded completion, not a version assertion.
+MODEL_COMMONS_ROUTES: tuple[tuple[str, str, str, str], ...] = (
+    ("groq", "GROQ_API_KEY", "https://api.groq.com/openai/v1/chat/completions", "openai/gpt-oss-20b"),
+    ("mistral", "MISTRAL_API_KEY", "https://api.mistral.ai/v1/chat/completions", "mistral-small-latest"),
+    ("openrouter", "OPENROUTER_API_KEY", "https://openrouter.ai/api/v1/chat/completions", "openai/gpt-4o-mini"),
+    ("openai", "OPENAI_API_KEY", "https://api.openai.com/v1/chat/completions", "gpt-4o-mini"),
+)
+
+MODEL_COMMONS_BODY = r"""
+emit() { printf '%s http=%s seconds=%s answered=%s\n' "$1" "$2" "$3" "$4"; }
+chat() {
+  key=$(eval printf %s "\"\${$2:-}\"")
+  if [ -z "$key" ]; then emit "$1" 000 0 no; return; fi
+  payload=$(/usr/bin/printf '{"model":"%s","messages":[{"role":"user","content":"Reply with exactly: BONFYRE_OK"}],"max_tokens":64,"temperature":0}' "$4")
+  out=$(/usr/bin/curl -sS -m 45 -w '\n__C=%{http_code} __T=%{time_total}' -X POST "$3" \
+    -H "Content-Type: application/json" -H "Authorization: Bearer $key" -d "$payload" 2>/dev/null)
+  code=$(printf '%s' "$out" | sed -n 's/.*__C=\([0-9]*\).*/\1/p')
+  secs=$(printf '%s' "$out" | sed -n 's/.*__T=\([0-9.]*\).*/\1/p')
+  printf '%s' "$out" | grep -q BONFYRE_OK && ans=yes || ans=no
+  emit "$1" "${code:-000}" "${secs:-0}" "$ans"
+}
+"""
+
+AI_STUDIO_BODY = r"""
+if [ -z "${AI_STUDIO_API_KEY:-}" ]; then printf 'aistudio http=000 seconds=0 answered=no\n'; else
+  out=$(/usr/bin/curl -sS -m 45 -w '\n__C=%{http_code} __T=%{time_total}' -X POST \
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${AI_STUDIO_API_KEY}" \
+    -H "Content-Type: application/json" \
+    -d '{"contents":[{"parts":[{"text":"Reply with exactly: BONFYRE_OK"}]}]}' 2>/dev/null)
+  code=$(printf '%s' "$out" | sed -n 's/.*__C=\([0-9]*\).*/\1/p')
+  secs=$(printf '%s' "$out" | sed -n 's/.*__T=\([0-9.]*\).*/\1/p')
+  printf '%s' "$out" | grep -q BONFYRE_OK && ans=yes || ans=no
+  printf 'aistudio http=%s seconds=%s answered=%s\n' "${code:-000}" "${secs:-0}" "$ans"
+fi
+"""
+
+
+def parse_route_lines(output: str) -> dict[str, dict[str, Any]]:
+    """Parse the fixed ``name http= seconds= answered=`` probe protocol."""
+
+    routes: dict[str, dict[str, Any]] = {}
+    for line in output.splitlines():
+        fields = line.split()
+        if len(fields) != 4 or not all("=" in field for field in fields[1:]):
+            continue
+        values = dict(field.split("=", 1) for field in fields[1:])
+        code = values.get("http", "000")
+        try:
+            seconds = round(float(values.get("seconds", "0")), 3)
+        except ValueError:
+            seconds = 0.0
+        if values.get("answered") == "yes":
+            health = "healthy"
+        elif code == "200":
+            health = "degraded_unexpected_response"
+        elif code in {"401", "403"}:
+            health = "degraded_auth_rejected"
+        elif code == "402":
+            health = "degraded_quota_exhausted"
+        elif code == "429":
+            health = "degraded_rate_limited"
+        elif code == "000":
+            health = "degraded_transport_refused"
+        else:
+            health = "degraded_route_rejected"
+        routes[fields[0]] = {"health": health, "http_status": code, "latency_seconds": seconds}
+    return routes
+
+
+def probe_model_commons(path: str, *, repo: Path) -> dict[str, Any]:
+    """Measure real paid-routing behaviour instead of asserting provider economics."""
+
+    calls = "".join(
+        "chat %s %s %s %s\n" % route for route in MODEL_COMMONS_ROUTES
+    )
+    output = _sourced_capture(path, MODEL_COMMONS_BODY + calls + AI_STUDIO_BODY, cwd=repo)
+    routes = parse_route_lines(output)
+    live = [name for name, route in routes.items() if route["health"] == "healthy"]
+    ranked = sorted(((name, routes[name]["latency_seconds"]) for name in live), key=lambda pair: pair[1])
+    return {
+        "surface_id": "capability:model-commons-routing",
+        "kind": "capability",
+        "name": "model-commons-routing",
+        "health": "healthy" if live else "degraded",
+        "probe": "bounded_real_completion_per_route",
+        "routes": routes,
+        "live_route_count": len(live),
+        "measured_route_count": len(routes),
+        "fastest_live_route": ranked[0][0] if ranked else None,
+        "model_calls_spent": len(routes),
+        "owning_subsystem": "provider-graph",
+        "regeneration_cost": "high_secret_or_authority_reconciliation",
+        "suitable_work_classes": ["model_context_provider", "open_world_learning", "cloud_read_only"],
+    }
+
+
+def probe_dotenv(entry: Mapping[str, Any], *, repo: Path) -> dict[str, Any]:
+    path = str(entry["path"])
+    disposition = dotenv_disposition(path)
+    probes: dict[str, str] = {}
+    if disposition == "selected_read_only_provider_probe":
+        gate = '[ "${BONFYRE_EXTERNAL_READS_ENABLED:-0}" = 1 ] && [ "${BONFYRE_EXTERNAL_WRITES_ENABLED:-1}" = 0 ]'
+        auth = 'code=$(/usr/bin/curl -sS -o /dev/null -w "%{http_code}" -m 20 -H "Authorization: Bearer ${OPENAI_API_KEY:-}" https://api.openai.com/v1/models); [ "$code" = 200 ]'
+        probes = {
+            "authority_gate": "healthy" if _sourced_probe(path, gate, cwd=repo) else "degraded",
+            "openai_read": "healthy" if _sourced_probe(path, auth, cwd=repo) else "degraded",
+            # This file's GITHUB_PAT copy is probed here for file-level honesty.
+            # Capability resolution lives in probe_github_capability, so a dead
+            # copy degrades the file without condemning the whole capability.
+            "github_read": "healthy" if _sourced_probe(path, GITHUB_READ_BODY, cwd=repo) else "degraded_auth_rejected",
+        }
+    elif disposition == "selected_read_only_cloud_probe":
+        cloudflare = 'code=$(/usr/bin/curl -sS -o /dev/null -w "%{http_code}" -m 20 -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN:-}" https://api.cloudflare.com/client/v4/user/tokens/verify); [ "$code" = 200 ]'
+        # The R2 object path uses S3 access keys, not the account API token. It is
+        # probed separately so one dead credential cannot hide a live sibling.
+        r2_reachable = '[ -n "${CLOUDFLARE_R2_ENDPOINT:-}" ] && /usr/bin/curl -sS -o /dev/null -m 20 "${CLOUDFLARE_R2_ENDPOINT}" >/dev/null 2>&1'
+        aws = '/opt/homebrew/bin/aws sts get-caller-identity >/dev/null 2>&1'
+        probes = {
+            "cloudflare_api_token_read": "healthy" if _sourced_probe(path, cloudflare, cwd=repo) else "degraded_auth_rejected",
+            "cloudflare_r2_transport": "healthy" if _sourced_probe(path, r2_reachable, cwd=repo) else "degraded_transport_refused",
+            "aws_read": "healthy" if _sourced_probe(path, aws, cwd=repo) else "degraded",
+        }
+    elif disposition == "selected_read_only_oracle_probe":
+        gate = '[ "${BONFYRE_EXTERNAL_READS_ENABLED:-0}" = 1 ] && [ "${BONFYRE_EXTERNAL_WRITES_ENABLED:-1}" = 0 ] && [ "${BONFYRE_LIVE_APPLY_ENABLED:-0}" = 1 ]'
+        # Reuse the installed ~/.oci/config and its on-disk key. Synthesizing a
+        # config from BONFYRE_ORACLE_PRIVATE_KEY_SECRET_REF cannot authenticate:
+        # that variable names a secret, it is not a readable key file.
+        oracle = (
+            '[ -r "$HOME/.oci/config" ] || exit 2; '
+            'profile="${BONFYRE_ORACLE_PROFILE:-DEFAULT}"; '
+            'compartment="${BONFYRE_ORACLE_COMPARTMENT_OCID:-}"; '
+            '[ -n "$compartment" ] || compartment="${BONFYRE_ORACLE_TENANCY_OCID:-}"; '
+            '[ -n "$compartment" ] || exit 2; '
+            '/opt/homebrew/bin/oci --profile "$profile" iam availability-domain list '
+            '--compartment-id "$compartment" >/dev/null 2>&1'
+        )
+        probes = {
+            "authority_gate": "healthy" if _sourced_probe(path, gate, cwd=repo) else "degraded",
+            "oracle_read": "healthy" if _sourced_probe(path, oracle, cwd=repo) else "degraded",
+        }
+    health = "not_selected" if not probes else ("healthy" if all(v == "healthy" for v in probes.values()) else "degraded")
+    failing = sorted(name for name, state in probes.items() if state != "healthy")
+    return {
+        "surface_id": f"dotenv:{Path(path).name}",
+        "kind": "reference_environment",
+        "name": Path(path).name,
+        "health": health,
+        "disposition": disposition,
+        "declared_key_count": len(entry.get("keys", [])),
+        "probes": probes,
+        "failing_probes": failing,
+        "owning_subsystem": "provider-graph" if "provider" in path else "cloud-fabric" if "cloud" in path or "oracle" in path else "model-pipeline",
+        "regeneration_cost": "high_secret_or_authority_reconciliation",
+        "suitable_work_classes": ["cloud_read_only", "model_context_provider", "machine_execution"],
+    }
+
+
+def build_evidence(catalog: Mapping[str, Any], *, repo: Path) -> dict[str, Any]:
+    with tempfile.TemporaryDirectory(prefix="bonfyre-env-smoke-") as raw_temp:
+        temp = Path(raw_temp)
+        runtimes = [probe_runtime(entry, repo=repo, temp=temp) for entry in catalog.get("runtimes", [])]
+        catalog_names = {entry["name"] for entry in catalog.get("runtimes", [])}
+        for name in ("clang++", "g++", "gh", "aws", "oci", "cloudflared", "curl"):
+            path = shutil.which(name)
+            if path and name not in catalog_names:
+                runtimes.append(probe_runtime({"name": name, "path": path, "version": "discovered_during_smoke"}, repo=repo, temp=temp))
+        venvs = [probe_venv(entry, repo=repo) for entry in catalog.get("python_venvs", [])]
+        contexts = []
+        docker = shutil.which("docker")
+        for context in catalog.get("docker_contexts", []):
+            completed = _run([docker or "docker", "--context", str(context), "version", "--format", "{{.Client.Version}} {{.Server.Version}}"], cwd=repo)
+            contexts.append({
+                "surface_id": f"docker-context:{context}", "kind": "docker_context", "name": context,
+                "health": "healthy" if completed.returncode == 0 else "degraded", "probe": "client_server_api_roundtrip",
+                "owning_subsystem": "container-fabric", "regeneration_cost": "high_stateful_daemon",
+                "suitable_work_classes": ["machine_execution", "proof_replay_backtest", "partner_contribution"],
+            })
+        dotenvs = [probe_dotenv(entry, repo=repo) for entry in catalog.get("dotenv_files", [])]
+        capabilities = [probe_github_capability(catalog, repo=repo)]
+        provider_refs = next(
+            (str(entry["path"]) for entry in catalog.get("dotenv_files", [])
+             if dotenv_disposition(str(entry["path"])) == "selected_read_only_provider_probe"),
+            None,
+        )
+        if provider_refs:
+            capabilities.append(probe_model_commons(provider_refs, repo=repo))
+    surfaces = runtimes + venvs + contexts + dotenvs + capabilities
+    return {
+        "schema": "BonfyreResourceEnvironmentEvidence-v1",
+        "observed_at": datetime.now(timezone.utc).isoformat(),
+        "source_catalog_version": catalog.get("version"),
+        "summary": {
+            "surface_count": len(surfaces),
+            "healthy": sum(item["health"] == "healthy" for item in surfaces),
+            "degraded": sum(item["health"] == "degraded" for item in surfaces),
+            "unavailable": sum(item["health"] == "unavailable" for item in surfaces),
+            "not_selected": sum(item["health"] == "not_selected" for item in surfaces),
+            "conda_env_count": len(catalog.get("conda_envs", [])),
+            "pyenv_env_count": len(catalog.get("pyenv_envs", [])),
+        },
+        "resource_weather": {
+            "free_disk_gib": round(shutil.disk_usage(repo).free / 1024**3, 3),
+            "heavy_downloads_performed": 0,
+            "environments_created": 0,
+            "environments_reused": sum(
+                item.get("resolution") == "installed_alternate_reused" for item in surfaces
+            ),
+            "model_calls_spent": sum(item.get("model_calls_spent", 0) for item in surfaces),
+        },
+        "surfaces": surfaces,
+        "forbidden_inferences": [
+            "catalog presence does not imply runtime health",
+            "credential reachability does not grant effect authority",
+            "a version command does not prove task-level semantic completion",
+            "one expired copy of a conflicting variable name does not prove the capability is unavailable",
+            "a cataloged executable path does not prove an installed runtime; an OS shim can answer for an absent one",
+            "measured routing latency is provider weather, not a durable cost or availability guarantee",
+        ],
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--catalog", required=True, type=Path)
+    parser.add_argument("--output", required=True, type=Path)
+    args = parser.parse_args()
+    catalog = json.loads(args.catalog.read_text())
+    repo = args.catalog.resolve().parents[3]
+    evidence = build_evidence(catalog, repo=repo)
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(json.dumps(evidence, indent=2, sort_keys=True) + "\n")
+    print(json.dumps(evidence["summary"], sort_keys=True))
+    return 1 if evidence["summary"]["degraded"] else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

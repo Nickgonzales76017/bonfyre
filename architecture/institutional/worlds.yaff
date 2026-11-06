@@ -1,0 +1,57 @@
+atlas institutional-worlds
+
+architecture institutional-worlds
+  canonical_name InstitutionalWorlds
+  owns WorldPolicy
+  consumes EffectIntent
+  consumes InformationPolicy
+  consumes DelegationEnvelope
+  publishes WorldPolicy
+  publishes EffectAdmission
+  family institutional
+  domain Institution / Execution world
+  layer execution
+  semantic_question In which world does this estate execute, and what happens to an effect intent raised inside it?
+  purpose Give a prospect, a demo, a replay and a live client genuinely different execution semantics, so demonstration state and client state can never be confused for one another.
+  maturity implemented
+  node_types World
+  node_types EffectPolicy
+  node_types DemoInstitution
+  node_types ClientInstitution
+  edge_types executes_in
+  edge_types converts_to
+  invariant every institution declares exactly one world
+  invariant the worlds this contract declares and the worlds the Matrix can bind are the same set; a world that cannot be bound to a host is a world no institution can actually execute in
+  invariant a DEMO world admits real public observation but never a live external effect against a third party
+  invariant demo state is synthetic or replayed and is never merged into client state
+  invariant conversion from DemoInstitution to ClientInstitution is an explicit transition that re-derives policies, effects and data closure rather than relabelling the institution
+  invariant usage and financial projection are recorded in DEMO as proposal economics, never as revenue
+  forbidden_inference a demo exercising a capability -> that capability being authorized live
+  forbidden_inference demo data resembling client data -> demo data being usable as client data
+  forbidden_inference conversion -> demo history becoming client history
+  invariant an institution's world is registered once in the Matrix and applies to every host it serves; a per-host world would let one institution be DEMO on one address and LIVE on another
+  invariant an institution that declares no world is LIVE; the failure directions are not symmetric, and an estate that forgets must be treated as real rather than silently sandboxed
+  invariant a DEMO institution has no settlement facilitator regardless of what the environment configures; the world overrides configuration, or it is a label rather than a property of execution
+  forbidden_inference a world named in this contract -> a world the Matrix can bind (they were four and four with three in common: DEMO was declared and unbindable, CANDIDATE bindable and undeclared)
+  source_path engine/core/include/bf_matrix.h
+  source_path engine/core/src/matrix.c
+  source_path cmd/BonfyreWebAddress/src/main.c
+  witness a capability quote served with a facilitator configured returns facilitator_configured true for a LIVE institution and false for a DEMO institution on the same running binary
+  known_gap only settlement is gated by world today; other external effects -- outbound publication, foreign observation writes -- do not yet consult institution_world
+  interacts institutional-root
+  interacts delegation-model
+  interacts institutional-relationship-types
+  source_lineage Generation-10 product topology separation, 2026-08-26
+
+world LIVE
+  detail Real institution, real data, real effects subject to authority and admission.
+world DEMO
+  detail Prospect-facing. Real public observation allowed, synthetic or replayed institution state, sandboxed effects, proposal economics.
+world SHADOW
+  detail Candidate execution against real state with effects withheld, used to prove a realization before promotion.
+world REPLAY
+  detail Deterministic re-execution of recorded occurrences for proof and divergence detection.
+world CANDIDATE
+  detail A proposed execution not yet admitted to any of the above. Implemented in the
+  detail Matrix world enum before this contract named it, which is how DEMO came to be
+  detail declared here and absent there: two lists of four worlds, three of them shared.

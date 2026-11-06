@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+# Native Bun-compiled surface for source-bound household semantic operators.
+set -eu
+root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+binary="$root/cmd/BonfyreOperator/bonfyre-operator"
+if [ ! -x "$binary" ]; then
+  make -C "$root/cmd/BonfyreOperator" >/dev/null
+fi
+exec "$binary" "$@"

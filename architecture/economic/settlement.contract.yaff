@@ -1,0 +1,30 @@
+atlas settlement
+
+# Where this institution settles payment, declared once.
+#
+# Five commerce grammars quote the same capabilities -- x402, MPP, UCP, ACP and
+# Beckn -- and each used to state its own settlement rail in its own emitter.
+# Beckn stated none at all, so it quoted an amount an agent had no way to pay.
+# Four separate string literals in one file was already drift waiting to happen;
+# a second organ asserting its own rail would be drift nobody could see.
+#
+# This file is the source. `cmd/BonfyreAtlas/bonfyre-atlas compile-contracts settlement` renders
+# it into cmd/BonfyreWebAddress/src/bf_settlement.h, and the surface test fails
+# if the header and this contract disagree. Changing where payment settles is an
+# edit here, not an edit in every carrier that mentions it.
+#
+# Cannot infer: a declared rail is not a configured one. This says where payment
+# would settle. Whether it can settle is the x402 requirements block's answer,
+# and while payTo, asset and facilitator are unset that answer is no -- for all
+# five carriers at once, because all five render this one declaration.
+
+settlement_contract commerce
+  rail x402
+  quote_path /mpp/quote
+  discovery_path /capability
+  carrier x402
+  carrier MPP
+  carrier UCP
+  carrier ACP
+  carrier Beckn
+  forbidden_inference a declared settlement rail -> a configured one, a settled payment, or a reserved organ

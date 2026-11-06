@@ -781,7 +781,7 @@ const int BF_OPERATOR_COUNT = sizeof(BF_OPERATORS) / sizeof(BF_OPERATORS[0]);
 
 /* ── P4: FNV-1a hash table for O(1) operator lookups ─────────────── */
 
-#define OP_HT_SIZE 128  /* power-of-2, fits 39 operators at ~30% load */
+#define OP_HT_SIZE 128  /* power-of-2, fits the current 53 operators at ~41% load */
 
 typedef struct {
     int idx[OP_HT_SIZE]; /* index into BF_OPERATORS, -1 = empty */

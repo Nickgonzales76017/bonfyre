@@ -1,0 +1,20 @@
+{
+  "name": "experience_stage",
+  "displayName": "Experience Stage",
+  "description": "One executable transition in a human experience graph. A stage is a typed application with material/capability inputs and honest empty/refused states, never an ordered prose chain.",
+  "attributes": {
+    "stage_id": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "experience": {"type": "string", "required": true},
+    "application_kind": {"type": "string", "required": true},
+    "consumes": {"type": "json", "required": true},
+    "produces": {"type": "json", "required": true},
+    "material_queries": {"type": "json", "required": true},
+    "renderer": {"type": "string", "required": true},
+    "extent": {"type": "string", "required": true},
+    "actions": {"type": "json", "required": true},
+    "next_stage_rules": {"type": "json", "required": true},
+    "empty_projection": {"type": "string", "required": true},
+    "refused_projection": {"type": "string", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

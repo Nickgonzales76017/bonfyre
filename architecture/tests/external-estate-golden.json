@@ -1,0 +1,1040 @@
+[
+  {
+    "forbidden_inferences": [
+      "listing -> verified capability",
+      "candidate affordance -> authority or permission",
+      "carrier/protocol -> canonical semantic owner",
+      "payment presentation -> settlement or fulfillment",
+      "observation candidate -> admitted evidence or institutional truth"
+    ],
+    "id": "external:ext-00001",
+    "observed_name": "x402 Protocol Specification",
+    "primary_url": "https://github.com/coinbase/x402",
+    "projection": {
+      "candidate_affordances": [
+        "DISCOVER",
+        "QUOTE",
+        "PAY"
+      ],
+      "candidate_domains": [
+        "finance",
+        "trade",
+        "computers"
+      ],
+      "candidate_worlds": [],
+      "carrier_candidate": "http",
+      "carrier_default_domains": [
+        "finance",
+        "trade",
+        "computers"
+      ],
+      "classification_level": "candidate_heuristic_not_provider_admission",
+      "conditional_reuse_domains": [],
+      "direct_domains": [],
+      "estate_roles": [
+        "transport_carrier",
+        "reference_standard"
+      ],
+      "interaction_fits": [
+        "discover",
+        "inspector",
+        "work"
+      ],
+      "spatial_candidate": "not_evident",
+      "temporal_candidate": "unknown",
+      "topic_domains": [],
+      "world_phases": [
+        "discover",
+        "plan",
+        "observe"
+      ]
+    },
+    "raw_source_text": "- [x402 Protocol Specification](https://github.com/coinbase/x402) — Official open-source protocol implementation by Coinbase.  `EXT-00001`",
+    "section": "x402 foundation, protocol and specification resources",
+    "source_document": "AUREKAI_EXTERNAL_ESTATE_MASTER_INDEX_V4.md",
+    "source_kind": "x402_spec",
+    "source_line": 34,
+    "source_ref": "EXT-00001",
+    "truth_level": "observed_candidate"
+  },
+  {
+    "forbidden_inferences": [
+      "listing -> verified capability",
+      "candidate affordance -> authority or permission",
+      "carrier/protocol -> canonical semantic owner",
+      "payment presentation -> settlement or fulfillment",
+      "observation candidate -> admitted evidence or institutional truth"
+    ],
+    "id": "external:ext-00008",
+    "observed_name": "🇦🇺 Australia",
+    "primary_url": "https://github.com/plenaryapp/awesome-rss-feeds#-Australia",
+    "projection": {
+      "candidate_affordances": [
+        "OBSERVE",
+        "PUBLISH"
+      ],
+      "candidate_domains": [
+        "media",
+        "publishing",
+        "community",
+        "music",
+        "film",
+        "sports",
+        "art",
+        "advertising",
+        "travel"
+      ],
+      "candidate_worlds": [],
+      "carrier_candidate": "http",
+      "carrier_default_domains": [
+        "media",
+        "publishing",
+        "community"
+      ],
+      "classification_level": "candidate_heuristic_not_provider_admission",
+      "conditional_reuse_domains": [
+        "community",
+        "music",
+        "film",
+        "sports",
+        "art",
+        "advertising",
+        "travel",
+        "publishing"
+      ],
+      "direct_domains": [
+        "media",
+        "publishing"
+      ],
+      "estate_roles": [
+        "material_source",
+        "publication_carrier"
+      ],
+      "interaction_fits": [
+        "discover",
+        "inspector",
+        "work"
+      ],
+      "spatial_candidate": "not_evident",
+      "temporal_candidate": "unknown",
+      "topic_domains": [
+        "media",
+        "publishing"
+      ],
+      "world_phases": [
+        "discover",
+        "plan",
+        "observe"
+      ]
+    },
+    "raw_source_text": "- **🇦🇺 Australia** — [https://github.com/plenaryapp/awesome-rss-feeds#-Australia](https://github.com/plenaryapp/awesome-rss-feeds#-Australia) — RSS/OPML source or manifest · Additional feeds/resources present · Related: [Australia.opml](https://raw.githubusercontent.com/spians/awesome-RSS-feeds/master/countries/with_category/Australia.opml); [Australia.opml](https://raw.githubusercontent.com/spians/awesome-RSS-feeds/master/countries/without_category/Australia.opml)  `EXT-00008`",
+    "section": "Unsectioned / index",
+    "source_document": "AUREKAI_EXTERNAL_ESTATE_MASTER_INDEX_V4.md",
+    "source_kind": "rss",
+    "source_line": 8229,
+    "source_ref": "EXT-00008",
+    "truth_level": "observed_candidate"
+  },
+  {
+    "forbidden_inferences": [
+      "listing -> verified capability",
+      "candidate affordance -> authority or permission",
+      "carrier/protocol -> canonical semantic owner",
+      "payment presentation -> settlement or fulfillment",
+      "observation candidate -> admitted evidence or institutional truth"
+    ],
+    "id": "external:ext-00849",
+    "observed_name": "AdoptAPet",
+    "primary_url": "https://www.adoptapet.com/public/apis/pet_list.html",
+    "projection": {
+      "candidate_affordances": [
+        "AUTHENTICATE"
+      ],
+      "candidate_domains": [
+        "animals",
+        "people",
+        "community",
+        "research"
+      ],
+      "candidate_worlds": [],
+      "carrier_candidate": "http",
+      "carrier_default_domains": [
+        "people",
+        "community",
+        "research"
+      ],
+      "classification_level": "candidate_heuristic_not_provider_admission",
+      "conditional_reuse_domains": [],
+      "direct_domains": [
+        "animals"
+      ],
+      "estate_roles": [
+        "external_service_candidate"
+      ],
+      "interaction_fits": [
+        "discover",
+        "inspector",
+        "work"
+      ],
+      "spatial_candidate": "not_evident",
+      "temporal_candidate": "unknown",
+      "topic_domains": [
+        "animals"
+      ],
+      "world_phases": [
+        "discover",
+        "plan",
+        "observe"
+      ]
+    },
+    "raw_source_text": "- **AdoptAPet** — [https://www.adoptapet.com/public/apis/pet_list.html](https://www.adoptapet.com/public/apis/pet_list.html) — Resource to help get pets adopted · Auth=apiKey · HTTPS=Yes · CORS=Yes  `EXT-00849`",
+    "section": "Animals",
+    "source_document": "AUREKAI_EXTERNAL_ESTATE_MASTER_INDEX_V4.md",
+    "source_kind": "public_api",
+    "source_line": 9257,
+    "source_ref": "EXT-00849",
+    "truth_level": "observed_candidate"
+  },
+  {
+    "forbidden_inferences": [
+      "listing -> verified capability",
+      "candidate affordance -> authority or permission",
+      "carrier/protocol -> canonical semantic owner",
+      "payment presentation -> settlement or fulfillment",
+      "observation candidate -> admitted evidence or institutional truth"
+    ],
+    "id": "external:ext-01645",
+    "observed_name": "IPstack",
+    "primary_url": "https://ipstack.com/?utm_source=Github&utm_medium=Referral&utm_campaign=Public-apis-repo-Best-sellers",
+    "projection": {
+      "candidate_affordances": [
+        "LOCATE",
+        "AUTHENTICATE"
+      ],
+      "candidate_domains": [
+        "advertising",
+        "people",
+        "community",
+        "research"
+      ],
+      "candidate_worlds": [],
+      "carrier_candidate": "http",
+      "carrier_default_domains": [
+        "people",
+        "community",
+        "research"
+      ],
+      "classification_level": "candidate_heuristic_not_provider_admission",
+      "conditional_reuse_domains": [],
+      "direct_domains": [
+        "advertising"
+      ],
+      "estate_roles": [
+        "external_service_candidate"
+      ],
+      "interaction_fits": [
+        "discover",
+        "inspector",
+        "work"
+      ],
+      "spatial_candidate": "bearing",
+      "temporal_candidate": "unknown",
+      "topic_domains": [
+        "advertising"
+      ],
+      "world_phases": [
+        "discover",
+        "plan",
+        "observe"
+      ]
+    },
+    "raw_source_text": "- **IPstack** — [https://ipstack.com/?utm_source=Github&utm_medium=Referral&utm_campaign=Public-apis-repo-Best-sellers](https://ipstack.com/?utm_source=Github&utm_medium=Referral&utm_campaign=Public-apis-repo-Best-sellers) — Locate and identify website visitors by IP address · Auth=apiKey · HTTPS=Yes · CORS=Unknown  `EXT-01645`",
+    "section": "Geocoding",
+    "source_document": "AUREKAI_EXTERNAL_ESTATE_MASTER_INDEX_V4.md",
+    "source_kind": "public_api",
+    "source_line": 10125,
+    "source_ref": "EXT-01645",
+    "truth_level": "observed_candidate"
+  },
+  {
+    "forbidden_inferences": [
+      "listing -> verified capability",
+      "candidate affordance -> authority or permission",
+      "carrier/protocol -> canonical semantic owner",
+      "payment presentation -> settlement or fulfillment",
+      "observation candidate -> admitted evidence or institutional truth"
+    ],
+    "id": "external:ext-02605",
+    "observed_name": "AfaAgent x402 API Suite",
+    "primary_url": "https://afaagent-x402-api.storm-fly.workers.dev/",
+    "projection": {
+      "candidate_affordances": [
+        "SEARCH",
+        "PAY",
+        "STREAM",
+        "REPAIR"
+      ],
+      "candidate_domains": [
+        "plants",
+        "farms",
+        "finance",
+        "labor",
+        "repair",
+        "retail",
+        "manufacturing",
+        "agriculture",
+        "computers",
+        "models",
+        "agents",
+        "trade",
+        "insurance",
+        "housing",
+        "travel",
+        "food",
+        "construction",
+        "film",
+        "music",
+        "water",
+        "land",
+        "logistics",
+        "natural-resources",
+        "animals",
+        "research",
+        "government",
+        "community"
+      ],
+      "candidate_worlds": [
+        "farm-cold-chain-household",
+        "independent-film-production",
+        "water-district",
+        "hospital-construction",
+        "small-town-fair",
+        "restaurant-and-meal",
+        "circular-fashion",
+        "recoverable-material-market",
+        "family-farm-succession",
+        "community-association",
+        "independent-retailer",
+        "factory-and-repair-network",
+        "vehicle-ownership",
+        "connected-field-team",
+        "research-laboratory"
+      ],
+      "carrier_candidate": "http",
+      "carrier_default_domains": [
+        "finance",
+        "trade",
+        "agents"
+      ],
+      "classification_level": "candidate_heuristic_not_provider_admission",
+      "conditional_reuse_domains": [
+        "trade",
+        "insurance",
+        "housing",
+        "farms",
+        "travel",
+        "food",
+        "construction",
+        "labor",
+        "film",
+        "music",
+        "water",
+        "land",
+        "logistics",
+        "finance",
+        "natural-resources",
+        "animals",
+        "computers",
+        "models",
+        "research",
+        "government",
+        "community"
+      ],
+      "direct_domains": [
+        "plants",
+        "farms",
+        "finance",
+        "labor",
+        "repair",
+        "retail",
+        "manufacturing",
+        "agriculture",
+        "computers",
+        "models",
+        "agents"
+      ],
+      "estate_roles": [
+        "media_service",
+        "action_adapter",
+        "external_service_candidate"
+      ],
+      "interaction_fits": [
+        "discover",
+        "inspector",
+        "work"
+      ],
+      "spatial_candidate": "not_evident",
+      "temporal_candidate": "unknown",
+      "topic_domains": [
+        "plants",
+        "farms",
+        "finance",
+        "labor",
+        "repair",
+        "retail",
+        "manufacturing",
+        "agriculture",
+        "computers",
+        "models",
+        "agents"
+      ],
+      "world_phases": [
+        "discover",
+        "plan",
+        "observe"
+      ]
+    },
+    "raw_source_text": "- **AfaAgent x402 API Suite** — [https://afaagent-x402-api.storm-fly.workers.dev/](https://afaagent-x402-api.storm-fly.workers.dev/) — 43 production-grade x402 APIs (DeFi, wallet security, AI/ML, developer tools, SEO) with pay-per-call USDC micropayments on Base. Includes MCP server with 43 tools (Streamable HTTP), OpenAPI 3.0 spec, llms.txt, and agents.json for AI-agent discovery. Premium services up to .99/call. ([Discovery](https://afaagent-x402-api.storm-fly.workers.dev/.well-known/x402) | [MCP](https://afaagent-x402-api.storm-fly.workers.dev/mcp) | [GitHub](https://github.com/AfaAgent/x402-api-suite)) · Related: [Discovery](https://afaagent-x402-api.storm-fly.workers.dev/.well-known/x402); [MCP](https://afaagent-x402-api.storm-fly.workers.dev/mcp); [GitHub](https://github.com/AfaAgent/x402-api-suite)  `EXT-02605`",
+    "section": "Unsectioned / index",
+    "source_document": "AUREKAI_EXTERNAL_ESTATE_MASTER_INDEX_V4.md",
+    "source_kind": "x402",
+    "source_line": 11170,
+    "source_ref": "EXT-02605",
+    "truth_level": "observed_candidate"
+  },
+  {
+    "forbidden_inferences": [
+      "listing -> verified capability",
+      "candidate affordance -> authority or permission",
+      "carrier/protocol -> canonical semantic owner",
+      "payment presentation -> settlement or fulfillment",
+      "observation candidate -> admitted evidence or institutional truth"
+    ],
+    "id": "external:ext-02641",
+    "observed_name": "Venture NL Open-Data",
+    "primary_url": "https://api.pogo-tb.nl/",
+    "projection": {
+      "candidate_affordances": [
+        "LOCATE",
+        "OBSERVE",
+        "SEARCH",
+        "ROUTE",
+        "REPORT",
+        "ALERT"
+      ],
+      "candidate_domains": [
+        "government",
+        "retail",
+        "logistics",
+        "emergencies",
+        "manufacturing",
+        "vehicles",
+        "computers",
+        "models",
+        "agents",
+        "ships",
+        "roads",
+        "rail",
+        "aircraft",
+        "trade",
+        "food",
+        "waste",
+        "weather",
+        "medicine",
+        "telecommunications",
+        "utilities",
+        "transport",
+        "community",
+        "research",
+        "labor",
+        "finance"
+      ],
+      "candidate_worlds": [
+        "farm-cold-chain-household",
+        "water-district",
+        "natural-disaster-response",
+        "restaurant-and-meal",
+        "circular-fashion",
+        "recoverable-material-market",
+        "independent-retailer",
+        "factory-and-repair-network",
+        "research-laboratory",
+        "civic-services"
+      ],
+      "carrier_candidate": "http",
+      "carrier_default_domains": [
+        "finance",
+        "trade",
+        "agents"
+      ],
+      "classification_level": "candidate_heuristic_not_provider_admission",
+      "conditional_reuse_domains": [
+        "ships",
+        "roads",
+        "rail",
+        "aircraft",
+        "trade",
+        "food",
+        "manufacturing",
+        "retail",
+        "waste",
+        "weather",
+        "medicine",
+        "telecommunications",
+        "utilities",
+        "transport",
+        "community",
+        "government",
+        "computers",
+        "models",
+        "research",
+        "labor"
+      ],
+      "direct_domains": [
+        "government",
+        "retail",
+        "logistics",
+        "emergencies",
+        "manufacturing",
+        "vehicles",
+        "computers",
+        "models",
+        "agents"
+      ],
+      "estate_roles": [
+        "external_service_candidate"
+      ],
+      "interaction_fits": [
+        "discover",
+        "inspector",
+        "work"
+      ],
+      "spatial_candidate": "bearing",
+      "temporal_candidate": "unknown",
+      "topic_domains": [
+        "government",
+        "retail",
+        "logistics",
+        "emergencies",
+        "manufacturing",
+        "vehicles",
+        "computers",
+        "models",
+        "agents"
+      ],
+      "world_phases": [
+        "discover",
+        "plan",
+        "observe"
+      ]
+    },
+    "raw_source_text": "- **Venture NL Open-Data** — [https://api.pogo-tb.nl/](https://api.pogo-tb.nl/) — Dutch government open-data API for AI agents: RDW vehicle records (kenteken lookup), BAG addresses and postcode bulk lookup, reverse geocoding, vehicle brand search, and APK expiry alerts. Free previews on every route; $0.001-$0.005 USDC per call on Base. CC0/CC BY licensed sources with attribution in every response. ([OpenAPI](https://api.pogo-tb.nl/openapi.json) | [.well-known/x402](https://api.pogo-tb.nl/.well-known/x402) | [pricing](https://api.pogo-tb.nl/pricing)) · Related: [OpenAPI](https://api.pogo-tb.nl/openapi.json); [.well-known/x402](https://api.pogo-tb.nl/.well-known/x402); [pricing](https://api.pogo-tb.nl/pricing)  `EXT-02641`",
+    "section": "High-Volume Production Deployments",
+    "source_document": "AUREKAI_EXTERNAL_ESTATE_MASTER_INDEX_V4.md",
+    "source_kind": "x402",
+    "source_line": 11209,
+    "source_ref": "EXT-02641",
+    "truth_level": "observed_candidate"
+  },
+  {
+    "forbidden_inferences": [
+      "listing -> verified capability",
+      "candidate affordance -> authority or permission",
+      "carrier/protocol -> canonical semantic owner",
+      "payment presentation -> settlement or fulfillment",
+      "observation candidate -> admitted evidence or institutional truth"
+    ],
+    "id": "external:ext-02816",
+    "observed_name": "team886/findagent-mcp",
+    "primary_url": "https://github.com/team886/findagent-mcp",
+    "projection": {
+      "candidate_affordances": [
+        "IDENTIFY",
+        "MATCH",
+        "QUOTE",
+        "PUBLISH",
+        "AUTHENTICATE"
+      ],
+      "candidate_domains": [
+        "people",
+        "trade",
+        "media",
+        "computers",
+        "models",
+        "agents",
+        "community",
+        "music",
+        "film",
+        "sports",
+        "art",
+        "advertising",
+        "travel",
+        "publishing",
+        "research",
+        "labor",
+        "government"
+      ],
+      "candidate_worlds": [
+        "high-school-sports",
+        "touring-musician",
+        "research-laboratory"
+      ],
+      "carrier_candidate": "http",
+      "carrier_default_domains": [
+        "agents",
+        "computers",
+        "research"
+      ],
+      "classification_level": "candidate_heuristic_not_provider_admission",
+      "conditional_reuse_domains": [
+        "community",
+        "music",
+        "film",
+        "sports",
+        "art",
+        "advertising",
+        "travel",
+        "publishing",
+        "computers",
+        "models",
+        "research",
+        "trade",
+        "labor",
+        "government"
+      ],
+      "direct_domains": [
+        "people",
+        "trade",
+        "media",
+        "computers",
+        "models",
+        "agents"
+      ],
+      "estate_roles": [
+        "material_source",
+        "compiler_toolchain"
+      ],
+      "interaction_fits": [
+        "discover",
+        "inspector",
+        "work"
+      ],
+      "spatial_candidate": "not_evident",
+      "temporal_candidate": "unknown",
+      "topic_domains": [
+        "people",
+        "trade",
+        "media",
+        "computers",
+        "models",
+        "agents"
+      ],
+      "world_phases": [
+        "discover",
+        "plan",
+        "observe"
+      ]
+    },
+    "raw_source_text": "- **team886/findagent-mcp** — [https://github.com/team886/findagent-mcp](https://github.com/team886/findagent-mcp) — [team886/findagent-mcp MCP server](https://glama.ai/mcp/servers/team886/findagent-mcp) ([image](https://camo.githubusercontent.com/4628d9261c9135fa9bc2ac84f3a67c9ca9078887d99eaf4c8f86a2dc5f0a225f/68747470733a2f2f676c616d612e61692f6d63702f736572766572732f7465616d3838362f66696e646167656e742d6d63702f6261646765732f73636f72652e737667)) 📇 ☁️ - Cross-LLM marketplace of vetted \"doer\" agents — itself an MCP server. Automated security scan + human review, credential-to-host binding, and sandboxed hosted code with default-deny egress. Remote endpoint `https://mcp.findagent.cloud/mcp`. · Related: [team886/findagent-mcp MCP server](https://glama.ai/mcp/servers/team886/findagent-mcp); [image](https://camo.githubusercontent.com/4628d9261c9135fa9bc2ac84f3a67c9ca9078887d99eaf4c8f86a2dc5f0a225f/68747470733a2f2f676c616d612e61692f6d63702f736572766572732f7465616d3838362f66696e646167656e742d6d63702f6261646765732f73636f72652e737667)  `EXT-02816`",
+    "section": "Unsectioned / index",
+    "source_document": "AUREKAI_EXTERNAL_ESTATE_MASTER_INDEX_V4.md",
+    "source_kind": "mcp",
+    "source_line": 11404,
+    "source_ref": "EXT-02816",
+    "truth_level": "observed_candidate"
+  },
+  {
+    "forbidden_inferences": [
+      "listing -> verified capability",
+      "candidate affordance -> authority or permission",
+      "carrier/protocol -> canonical semantic owner",
+      "payment presentation -> settlement or fulfillment",
+      "observation candidate -> admitted evidence or institutional truth"
+    ],
+    "id": "external:ext-02822",
+    "observed_name": "2s-io/sdk",
+    "primary_url": "https://github.com/2s-io/sdk",
+    "projection": {
+      "candidate_affordances": [
+        "LOCATE",
+        "OBSERVE",
+        "TRANSLATE",
+        "PUBLISH"
+      ],
+      "candidate_domains": [
+        "weather",
+        "oceans",
+        "roads",
+        "science",
+        "law",
+        "finance",
+        "utilities",
+        "media",
+        "research",
+        "computers",
+        "models",
+        "agents",
+        "farms",
+        "construction",
+        "energy",
+        "aircraft",
+        "ships",
+        "sports",
+        "travel",
+        "emergencies",
+        "housing",
+        "medicine",
+        "trade",
+        "food",
+        "insurance",
+        "telecommunications",
+        "natural-resources",
+        "education",
+        "instruments",
+        "spacecraft",
+        "agriculture",
+        "labor",
+        "film",
+        "music",
+        "community",
+        "art",
+        "advertising",
+        "publishing",
+        "government"
+      ],
+      "candidate_worlds": [
+        "household-daily-life",
+        "high-school-sports",
+        "touring-musician",
+        "water-district",
+        "energy-community",
+        "natural-disaster-response",
+        "small-town-fair",
+        "international-scientific-expedition",
+        "space-mission",
+        "family-farm-succession",
+        "land-and-forest-stewardship",
+        "vehicle-ownership",
+        "research-laboratory",
+        "cross-border-shipment",
+        "civic-services"
+      ],
+      "carrier_candidate": "http",
+      "carrier_default_domains": [
+        "agents",
+        "computers",
+        "research"
+      ],
+      "classification_level": "candidate_heuristic_not_provider_admission",
+      "conditional_reuse_domains": [
+        "farms",
+        "construction",
+        "energy",
+        "aircraft",
+        "ships",
+        "sports",
+        "travel",
+        "emergencies",
+        "housing",
+        "medicine",
+        "trade",
+        "weather",
+        "food",
+        "insurance",
+        "telecommunications",
+        "natural-resources",
+        "research",
+        "education",
+        "instruments",
+        "spacecraft",
+        "agriculture",
+        "labor",
+        "film",
+        "music",
+        "community",
+        "art",
+        "advertising",
+        "publishing",
+        "computers",
+        "models",
+        "government"
+      ],
+      "direct_domains": [
+        "weather",
+        "oceans",
+        "roads",
+        "science",
+        "law",
+        "finance",
+        "utilities",
+        "media",
+        "research",
+        "computers",
+        "models",
+        "agents"
+      ],
+      "estate_roles": [
+        "material_source",
+        "compiler_toolchain"
+      ],
+      "interaction_fits": [
+        "discover",
+        "inspector",
+        "work"
+      ],
+      "spatial_candidate": "bearing",
+      "temporal_candidate": "unknown",
+      "topic_domains": [
+        "weather",
+        "oceans",
+        "roads",
+        "science",
+        "law",
+        "finance",
+        "utilities",
+        "media",
+        "research",
+        "computers",
+        "models",
+        "agents"
+      ],
+      "world_phases": [
+        "discover",
+        "plan",
+        "observe"
+      ]
+    },
+    "raw_source_text": "- **2s-io/sdk** — [https://github.com/2s-io/sdk](https://github.com/2s-io/sdk) — [2s-io/sdk MCP server](https://glama.ai/mcp/servers/2s-io/sdk) ([image](https://camo.githubusercontent.com/5ff147ab66dc8909915b1871288dcc9dbff763c2d948835bd9c71e31d0b96ef2/68747470733a2f2f676c616d612e61692f6d63702f736572766572732f32732d696f2f73646b2f6261646765732f73636f72652e737667)) 📇 ☁️ 🍎 🪟 🐧 - Unified API for AI agents — 180+ tools across geocoding, weather (NWS), climate stations (NOAA), earthquakes (USGS), tides (NOAA), points of interest (OpenStreetMap), patents (USPTO ODP), US case law (CourtListener / Free Law Project), Federal Register, Wikipedia, scientific papers (arXiv / PubMed / Semantic Scholar), AI summarize / translate / extract / screenshot / image-describe, image compression, DNS / WHOIS, crypto address-validate + EVM gas oracle, OFAC sanctions screening, US Census ACS demographics, airport / ZIP lookup. Sub-cent to a few cents per call in USDC on Base via x402 — no API keys, no signup. `npx -y @2sio/mcp` · Related: [2s-io/sdk MCP server](https://glama.ai/mcp/servers/2s-io/sdk); [image](https://camo.githubusercontent.com/5ff147ab66dc8909915b1871288dcc9dbff763c2d948835bd9c71e31d0b96ef2/68747470733a2f2f676c616d612e61692f6d63702f736572766572732f32732d696f2f73646b2f6261646765732f73636f72652e737667)  `EXT-02822`",
+    "section": "Unsectioned / index",
+    "source_document": "AUREKAI_EXTERNAL_ESTATE_MASTER_INDEX_V4.md",
+    "source_kind": "mcp",
+    "source_line": 11410,
+    "source_ref": "EXT-02822",
+    "truth_level": "observed_candidate"
+  },
+  {
+    "forbidden_inferences": [
+      "listing -> verified capability",
+      "candidate affordance -> authority or permission",
+      "carrier/protocol -> canonical semantic owner",
+      "payment presentation -> settlement or fulfillment",
+      "observation candidate -> admitted evidence or institutional truth"
+    ],
+    "id": "external:protocol-0001",
+    "observed_name": "Universal Commerce Protocol (UCP)",
+    "primary_url": "https://ucp.dev/2026-04-08/specification/overview/",
+    "projection": {
+      "candidate_affordances": [
+        "IDENTIFY",
+        "PURCHASE",
+        "PAY",
+        "PUBLISH",
+        "AUTHENTICATE",
+        "NEGOTIATE"
+      ],
+      "candidate_domains": [
+        "finance",
+        "trade",
+        "publishing",
+        "machines",
+        "agents",
+        "insurance",
+        "housing",
+        "farms",
+        "travel",
+        "food",
+        "construction",
+        "labor",
+        "film",
+        "music",
+        "computers",
+        "models",
+        "research",
+        "government",
+        "community"
+      ],
+      "candidate_worlds": [
+        "recoverable-material-market",
+        "independent-retailer",
+        "cross-border-shipment"
+      ],
+      "carrier_candidate": "protocol",
+      "carrier_default_domains": [
+        "computers",
+        "machines",
+        "community"
+      ],
+      "classification_level": "candidate_heuristic_not_provider_admission",
+      "conditional_reuse_domains": [
+        "trade",
+        "insurance",
+        "housing",
+        "farms",
+        "travel",
+        "food",
+        "construction",
+        "labor",
+        "film",
+        "music",
+        "computers",
+        "models",
+        "research",
+        "government",
+        "community"
+      ],
+      "direct_domains": [
+        "finance",
+        "trade",
+        "publishing",
+        "machines",
+        "agents"
+      ],
+      "estate_roles": [
+        "action_adapter",
+        "transport_carrier",
+        "publication_carrier"
+      ],
+      "interaction_fits": [
+        "discover",
+        "inspector",
+        "work"
+      ],
+      "spatial_candidate": "not_evident",
+      "temporal_candidate": "unknown",
+      "topic_domains": [
+        "finance",
+        "trade",
+        "publishing",
+        "machines",
+        "agents"
+      ],
+      "world_phases": [
+        "discover",
+        "plan",
+        "observe"
+      ]
+    },
+    "protocol_occurrence": 1,
+    "raw_source_text": "| **Universal Commerce Protocol (UCP)** | 2026-04-08 | Current published specification | Commerce capability negotiation, checkout/order/identity linking | Commerce carrier + DomainProfile projection | [source](https://ucp.dev/2026-04-08/specification/overview/) |",
+    "section": "1. Agentic commerce & machine payment (15)",
+    "source_document": "AUREKAI_MACHINE_PROTOCOLS_CONTINUATION_V3.md",
+    "source_kind": "machine_protocol",
+    "source_line": 33,
+    "source_ref": "EXT-04153",
+    "source_ref_assignment": "documented_continuation_range",
+    "truth_level": "observed_candidate"
+  },
+  {
+    "forbidden_inferences": [
+      "listing -> verified capability",
+      "candidate affordance -> authority or permission",
+      "carrier/protocol -> canonical semantic owner",
+      "payment presentation -> settlement or fulfillment",
+      "observation candidate -> admitted evidence or institutional truth"
+    ],
+    "id": "external:protocol-0272",
+    "observed_name": "GTFS Schedule",
+    "primary_url": "https://gtfs.org/documentation/schedule/reference/",
+    "projection": {
+      "candidate_affordances": [
+        "ROUTE",
+        "SCHEDULE"
+      ],
+      "candidate_domains": [
+        "oceans",
+        "sports",
+        "travel",
+        "logistics",
+        "robots",
+        "vehicles",
+        "ships",
+        "trade",
+        "weather",
+        "food",
+        "insurance",
+        "energy",
+        "telecommunications",
+        "natural-resources",
+        "roads",
+        "rail",
+        "aircraft",
+        "manufacturing",
+        "retail",
+        "waste",
+        "computers",
+        "machines",
+        "community"
+      ],
+      "candidate_worlds": [
+        "high-school-sports",
+        "touring-musician",
+        "port-township",
+        "international-scientific-expedition",
+        "vehicle-ownership"
+      ],
+      "carrier_candidate": "protocol",
+      "carrier_default_domains": [
+        "computers",
+        "machines",
+        "community"
+      ],
+      "classification_level": "candidate_heuristic_not_provider_admission",
+      "conditional_reuse_domains": [
+        "ships",
+        "trade",
+        "weather",
+        "food",
+        "insurance",
+        "energy",
+        "telecommunications",
+        "natural-resources",
+        "roads",
+        "rail",
+        "aircraft",
+        "manufacturing",
+        "retail",
+        "waste"
+      ],
+      "direct_domains": [
+        "oceans",
+        "sports",
+        "travel",
+        "logistics",
+        "robots",
+        "vehicles"
+      ],
+      "estate_roles": [
+        "transport_carrier"
+      ],
+      "interaction_fits": [
+        "discover",
+        "inspector",
+        "work"
+      ],
+      "spatial_candidate": "bearing",
+      "temporal_candidate": "unknown",
+      "topic_domains": [
+        "oceans",
+        "sports",
+        "travel",
+        "logistics",
+        "robots",
+        "vehicles"
+      ],
+      "world_phases": [
+        "discover",
+        "plan",
+        "observe"
+      ]
+    },
+    "protocol_occurrence": 272,
+    "raw_source_text": "| **GTFS Schedule** |  | Current open standard | Static public transport schedules/fares/pathways | Mobility DomainProfile/source carrier | [source](https://gtfs.org/documentation/schedule/reference/) |",
+    "section": "10. Mobility, logistics & travel (31)",
+    "source_document": "AUREKAI_MACHINE_PROTOCOLS_CONTINUATION_V3.md",
+    "source_kind": "machine_protocol",
+    "source_line": 349,
+    "source_ref": "EXT-04424",
+    "source_ref_assignment": "documented_continuation_range",
+    "truth_level": "observed_candidate"
+  }
+]

@@ -1,0 +1,119 @@
+{
+  "name": "service_offer",
+  "displayName": "Service Offer",
+  "description": "A service offer with staking-based demand bundling",
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "slug": {
+      "type": "uid",
+      "required": true,
+      "targetField": "title"
+    },
+    "description": {
+      "type": "text"
+    },
+    "vertical": {
+      "type": "enumeration",
+      "required": true,
+      "enum": [
+        "dog_walking",
+        "group_fitness",
+        "produce_coop",
+        "car_detailing",
+        "mobile_barber",
+        "childcare_pool",
+        "massage_wellness",
+        "tutoring",
+        "tool_library",
+        "laundry",
+        "cooking_class",
+        "pet_grooming",
+        "dry_cleaning",
+        "coworking",
+        "language_exchange",
+        "security_watch",
+        "ghost_kitchen",
+        "other"
+      ]
+    },
+    "base_price": {
+      "type": "decimal",
+      "required": true
+    },
+    "min_threshold": {
+      "type": "integer",
+      "required": true,
+      "default": "5"
+    },
+    "max_slots": {
+      "type": "integer",
+      "default": "50"
+    },
+    "current_stake_count": {
+      "type": "integer",
+      "default": "0"
+    },
+    "current_price": {
+      "type": "decimal"
+    },
+    "commitment_start": {
+      "type": "datetime"
+    },
+    "commitment_end": {
+      "type": "datetime"
+    },
+    "fulfillment_date": {
+      "type": "datetime"
+    },
+    "offer_status": {
+      "type": "enumeration",
+      "required": true,
+      "enum": [
+        "draft",
+        "open",
+        "closed_pending",
+        "fulfilled",
+        "failed",
+        "completed"
+      ],
+      "default": "draft"
+    },
+    "pricing_curve": {
+      "type": "enumeration",
+      "enum": [
+        "piecewise_tiered",
+        "linear_decay",
+        "exponential",
+        "logistic",
+        "hybrid"
+      ],
+      "default": "piecewise_tiered"
+    },
+    "terms": {
+      "type": "text"
+    },
+    "tiers": {
+      "type": "component",
+      "component": "pricing_tier",
+      "repeatable": true
+    },
+    "provider": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "service_provider"
+    },
+    "building": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "building"
+    },
+    "stakes": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "stake"
+    }
+  }
+}

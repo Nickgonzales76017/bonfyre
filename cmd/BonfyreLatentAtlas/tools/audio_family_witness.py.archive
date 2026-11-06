@@ -1,0 +1,242 @@
+#!/usr/bin/env python3
+"""ARCHIVED: audio_family_witness.mjs carries the heterogeneous family through native observation.
+
+The proof the polytypic atlas owes: one heterogeneous subject family carried
+in several coordinate types at once, grouped, lifted, grouped again, mutated,
+refreshed and reopened -- over real recordings the census already retains.
+
+For each recording in the retained Wikidata recorded-music, Great 78 and
+Dallas live-music twins:
+  - its playable file is resolved (the Commons file address, or the Archive
+    item's own metadata), robots rules are checked for BonfyreProject/1.0, and
+    only the first bytes are range-read; the sample is decoded to 30 seconds of
+    11025 Hz mono by ffmpeg and deleted, and its digest is kept as the receipt;
+  - it is projected into six charts: acoustic fingerprint (bits), spectrum
+    (distribution), loudness (trajectory), words (dense hashed trigrams), roles
+    (HDC: creator, collection, era) and, where dated, season (circular);
+  - it is a member_of its collection.
+Each collection is grouped in three charts (points -> modes+subspace, spectra
+-> a mixture, fingerprints -> a medoid) and the three word groups are lifted
+into one hierarchy node.  Then one recording is re-sampled from a later part
+of its file, the atlas is refreshed, and the witness records which branch
+changed, whether the parent was held or recomputed, and whether every group
+still reopens exactly.  Cross-chart comparison is attempted and must be
+refused.
+
+Addresses are item page keys ("o/<source>/<key>"), so the public item page can
+reopen them against current retained material.
+
+  audio_family_witness.py --atlas BIN --db ATLAS.db --foreign ROOT --out WITNESS.json [--per-source 8]
+"""
+import argparse, gzip, hashlib, json, os, subprocess, sys, tempfile, time, urllib.parse, urllib.request, urllib.robotparser
+
+AGENT = "BonfyreProject/1.0 (+https://aurekai.work/)"
+SAMPLE_BYTES = 1_200_000
+
+
+def item_key(source, href, title):
+    seed = "%s\n%s" % (source, href or title)
+    return hashlib.sha256(seed.encode()).hexdigest()[:24]
+
+
+def body(root, twin):
+    receipt = os.path.join(root, "receipts", twin + ".json")
+    lines = [l for l in open(receipt).read().splitlines() if l.strip()]
+    path = json.loads(lines[-1])["body_path"]
+    # A receipt may outlive an ephemeral compiler checkout.  Recover only the
+    # same basename from this explicit foreign-root closure; never search for
+    # similarly named material elsewhere.
+    if not os.path.exists(path):
+        path = os.path.join(root, "bodies", os.path.basename(path))
+    if not os.path.exists(path) and os.path.exists(path + ".gz"):
+        path += ".gz"
+    opener = gzip.open if path.endswith(".gz") else open
+    with opener(path, "rt", encoding="utf-8") as f:
+        return json.load(f)
+
+
+_robots = {}
+def allowed(url):
+    host = urllib.parse.urlparse(url).hostname
+    if host not in _robots:
+        parser = urllib.robotparser.RobotFileParser()
+        try:
+            with urllib.request.urlopen(urllib.request.Request("https://%s/robots.txt" % host, headers={"User-Agent": AGENT}), timeout=20) as r:
+                parser.parse(r.read().decode("utf-8", "replace").splitlines())
+        except urllib.error.HTTPError as e:
+            parser.parse([] if e.code == 404 else ["User-agent: *", "Disallow: /"])
+        _robots[host] = parser
+    return _robots[host].can_fetch(AGENT, url)
+
+
+def resolve(url):
+    req = urllib.request.Request(url, method="HEAD", headers={"User-Agent": AGENT})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return r.geturl()
+
+
+def archive_file(identifier):
+    meta_url = "https://archive.org/metadata/%s" % urllib.parse.quote(identifier)
+    if not allowed(meta_url):
+        return None
+    with urllib.request.urlopen(urllib.request.Request(meta_url, headers={"User-Agent": AGENT}), timeout=30) as r:
+        meta = json.load(r)
+    for want in ("VBR MP3", "128Kbps MP3", "MP3", "Ogg Vorbis"):
+        for f in meta.get("files", []):
+            if want.lower() in str(f.get("format", "")).lower():
+                return "https://archive.org/download/%s/%s" % (identifier, urllib.parse.quote(f["name"]))
+    return None
+
+
+def sample(url, start=0):
+    if not allowed(url):
+        return None, "robots refuses"
+    req = urllib.request.Request(url, headers={"User-Agent": AGENT, "Range": "bytes=%d-%d" % (start, start + SAMPLE_BYTES - 1)})
+    try:
+        with urllib.request.urlopen(req, timeout=60) as r:
+            data = r.read(SAMPLE_BYTES)
+    except Exception as e:
+        return None, str(e)[:80]
+    return data, None
+
+
+def decode(data, atlas, tmp):
+    raw = os.path.join(tmp, "sample.bin"); pcm = os.path.join(tmp, "sample.pcm")
+    open(raw, "wb").write(data)
+    p = subprocess.run(["ffmpeg", "-v", "quiet", "-y", "-i", raw, "-t", "30", "-ac", "1", "-ar", "11025", "-f", "s16le", pcm])
+    os.unlink(raw)
+    if p.returncode or not os.path.exists(pcm) or os.path.getsize(pcm) < 11025 * 2 * 5:
+        if os.path.exists(pcm): os.unlink(pcm)
+        return None
+    out = subprocess.run([atlas, "acoustic", "--pcm", pcm], capture_output=True, text=True)
+    os.unlink(pcm)
+    return json.loads(out.stdout) if out.returncode == 0 else None
+
+
+def run(atlas, *args, codes=(0,)):
+    p = subprocess.run([atlas] + list(args), capture_output=True, text=True)
+    if p.returncode not in codes:
+        raise SystemExit("%s failed: %s" % (" ".join(args[:3]), p.stderr[:300]))
+    lines = [l for l in p.stdout.splitlines() if l.strip()]
+    return json.loads(lines[-1]) if lines else {}
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--atlas", required=True); ap.add_argument("--db", required=True)
+    ap.add_argument("--foreign", required=True); ap.add_argument("--out", required=True)
+    ap.add_argument("--per-source", type=int, default=8)
+    args = ap.parse_args()
+    tmp = tempfile.mkdtemp(prefix="bonfyre-audio-family-")
+    recordings = []
+    wd = body(args.foreign, "wikidata-recorded-music")["results"]["bindings"]
+    for b in wd[: args.per_source * 2]:
+        recordings.append({"source": "wikidata-recorded-music", "title": b["title"]["value"], "maker": b.get("composer", {}).get("value", ""),
+                           "href": b.get("page", {}).get("value", ""), "file": b["audio"]["value"], "group": "group:recorded-works", "date": ""})
+    for twin, group in (("archive-great-78", "group:78-rpm-records"), ("archive-dallas-live-music", "group:dallas-live")):
+        for d in body(args.foreign, twin)["response"]["docs"][: args.per_source * 2]:
+            creator = d.get("creator", "")
+            if isinstance(creator, list): creator = ", ".join(creator[:3])
+            recordings.append({"source": twin, "title": d["title"], "maker": creator, "href": "https://archive.org/details/" + d["identifier"],
+                               "identifier": d["identifier"], "group": group, "date": d.get("date", "")})
+    lines = [
+        {"chart": {"id": "acoustic-fp", "family": "fingerprint", "dims": 32, "version": "haitsma-kalker-33band-v1", "encoder": "bonfyre-latent-atlas acoustic", "universe": "census-recordings"}},
+        {"chart": {"id": "spectrum-24", "family": "distribution", "dims": 24, "version": "log24-v1", "encoder": "bonfyre-latent-atlas acoustic", "universe": "census-recordings"}},
+        {"chart": {"id": "loudness-32", "family": "trajectory", "dims": 32, "version": "rms32-v1", "encoder": "bonfyre-latent-atlas acoustic", "universe": "census-recordings"}},
+        {"chart": {"id": "words-256", "family": "dense", "dims": 256, "version": "trigram-hash-v1", "encoder": "bonfyre-latent-atlas encode-text", "universe": "census-recordings"}},
+        {"chart": {"id": "roles-4096", "family": "hdc", "dims": 4096, "version": "roles-v1", "encoder": "bonfyre-latent-atlas encode-roles", "universe": "census-recordings"}},
+        {"chart": {"id": "season-2", "family": "circular", "dims": 2, "version": "dayofyear-weekday-v1", "encoder": "witness", "universe": "census-recordings"}},
+    ]
+    receipts, counts = [], {}
+    for rec in recordings:
+        if counts.get(rec["group"], 0) >= args.per_source:
+            continue
+        try:
+            url = resolve(rec["file"]) if rec["source"] == "wikidata-recorded-music" else archive_file(rec["identifier"])
+        except Exception as e:
+            receipts.append({"title": rec["title"], "refused": "unresolved: %s" % str(e)[:60]}); continue
+        if not url:
+            receipts.append({"title": rec["title"], "refused": "no playable file"}); continue
+        data, why = sample(url)
+        if data is None:
+            receipts.append({"title": rec["title"], "url": url, "refused": why}); continue
+        digest = hashlib.sha256(data).hexdigest()
+        acoustic = decode(data, args.atlas, tmp)
+        if not acoustic:
+            receipts.append({"title": rec["title"], "url": url, "refused": "undecodable sample"}); continue
+        address = "o/%s/%s" % (rec["source"], item_key(rec["source"], rec["href"], rec["title"]))
+        rec.update({"address": address, "url": url, "digest": digest})
+        counts[rec["group"]] = counts.get(rec["group"], 0) + 1
+        receipts.append({"address": address, "title": rec["title"], "url": url, "range": [0, len(data) - 1], "sha256": digest, "frames": acoustic["frames"], "robots": "admitted"})
+        words = json.loads(subprocess.run([args.atlas, "encode-text", "--text", "%s | %s" % (rec["title"], rec["maker"])], capture_output=True, text=True).stdout)
+        era = rec["date"][:3] + "0s" if rec["date"][:4].isdigit() else "unknown"
+        roles = subprocess.run([args.atlas, "encode-roles", "--roles", "creator=%s;collection=%s;era=%s" % (rec["maker"], rec["group"], era), "--dims", "4096"], capture_output=True, text=True).stdout.strip().strip('"')
+        text_digest = hashlib.sha256(("%s|%s" % (rec["title"], rec["maker"])).encode()).hexdigest()
+        lines += [
+            {"project": {"address": address, "chart": "acoustic-fp", "bits": acoustic["fingerprint"], "source_digest": digest}},
+            {"project": {"address": address, "chart": "spectrum-24", "values": acoustic["distribution"], "source_digest": digest}},
+            {"project": {"address": address, "chart": "loudness-32", "values": acoustic["trajectory"], "source_digest": digest}},
+            {"project": {"address": address, "chart": "words-256", "values": words, "source_digest": text_digest}},
+            {"project": {"address": address, "chart": "roles-4096", "bits": roles, "source_digest": text_digest}},
+            {"relate": {"src": address, "relation": "member_of", "dst": rec["group"], "evidence": "retained collection " + rec["source"]}},
+            {"label": {"address": address, "label": rec["title"]}},
+        ]
+        if rec["date"][:10].count("-") == 2 and not rec["date"][4:10] == "-01-01":
+            t = time.strptime(rec["date"][:10], "%Y-%m-%d")
+            lines.append({"project": {"address": address, "chart": "season-2", "values": [(t.tm_yday - 1) / 365.0, t.tm_wday / 7.0], "source_digest": text_digest}})
+        time.sleep(0.5)
+    imp = os.path.join(tmp, "import.jsonl")
+    open(imp, "w").write("\n".join(json.dumps(l) for l in lines) + "\n")
+    if os.path.exists(args.db): os.unlink(args.db)
+    witness = {"schema": "bonfyre-latent-atlas-audio-family-witness.v1", "sampled": receipts, "import": run(args.atlas, "import", "--db", args.db, "--jsonl", imp)}
+    groups = sorted(counts)
+    witness["groups"] = {}
+    # member_of is per logical group; each chart's group is a distinct logical address over the same exact members
+    rel = []
+    for rec in recordings:
+        if "address" not in rec: continue
+        for c in ("words-256", "spectrum-24", "acoustic-fp"):
+            rel.append({"relate": {"src": rec["address"], "relation": "member_of", "dst": "%s@%s" % (rec["group"], c), "evidence": "retained collection " + rec["source"]}})
+    rel_path = os.path.join(tmp, "groups.jsonl"); open(rel_path, "w").write("\n".join(json.dumps(l) for l in rel) + "\n")
+    run(args.atlas, "import", "--db", args.db, "--jsonl", rel_path)
+    for g in groups:
+        witness["groups"][g] = {}
+        for c in ("words-256", "spectrum-24", "acoustic-fp"):
+            r = run(args.atlas, "group", "--db", args.db, "--logical", "%s@%s" % (g, c), "--lens", "collection", "--chart", c, "--universe", "census-recordings")
+            witness["groups"][g][c] = {"snapshot": r["snapshot"], "members": r["members"], "member_type": r["member_type"], "representation_type": r["representation"].get("type")}
+    parent = run(args.atlas, "lift", "--db", args.db, "--logical", "group:recorded-music@words-256", "--lens", "collection",
+                 "--children", ",".join("%s@words-256" % g for g in groups), "--universe", "census-recordings")
+    witness["hierarchy"] = {"snapshot": parent["snapshot"], "type": parent["representation"]["type"], "topology": parent["representation"]["topology"]}
+    sound = run(args.atlas, "lift", "--db", args.db, "--logical", "group:recorded-music@spectrum-24", "--lens", "sound",
+                "--children", ",".join("%s@spectrum-24" % g for g in groups), "--universe", "census-recordings")
+    witness["sound_hierarchy"] = {"snapshot": sound["snapshot"], "type": sound["representation"]["type"], "distances": sound["representation"]["distances"], "topology": sound["representation"]["topology"]}
+    first = next((r for r in recordings if "address" in r and r["source"] == "archive-great-78"), next(r for r in recordings if "address" in r))
+    witness["cross_chart"] = run(args.atlas, "compare", "--db", args.db, "--a", first["address"], "--b", first["address"], "--chart", "acoustic-fp", "--to-chart", "words-256", codes=(3,))
+    # mutate: a later part of one recording's file
+    data, why = sample(first["url"], start=SAMPLE_BYTES // 2)
+    later = decode(data, args.atlas, tmp) if data else None
+    if later:
+        digest = hashlib.sha256(data).hexdigest()
+        witness["mutation"] = {"address": first["address"], "from": first["digest"], "to": digest,
+                               "acoustic-fp": run(args.atlas, "mutate", "--db", args.db, "--address", first["address"], "--chart", "acoustic-fp", "--bits", later["fingerprint"], "--source-digest", digest),
+                               "spectrum-24": run(args.atlas, "mutate", "--db", args.db, "--address", first["address"], "--chart", "spectrum-24", "--values", ",".join("%.6f" % v for v in later["distribution"]), "--source-digest", digest)}
+        witness["reopen_before_refresh"] = {g: run(args.atlas, "reopen", "--db", args.db, "--logical", "%s@spectrum-24" % g) for g in groups}
+        witness["refresh"] = run(args.atlas, "refresh", "--db", args.db, "--universe", "census-recordings", "--envelope", "0.02")
+        witness["reopen_after_refresh"] = {"%s@%s" % (g, c): run(args.atlas, "reopen", "--db", args.db, "--logical", "%s@%s" % (g, c)) for g in groups for c in ("words-256", "spectrum-24", "acoustic-fp")}
+    lens_path = os.path.join(tmp, "lens.json")
+    json.dump({"query": first["address"], "within": "%s@acoustic-fp" % first["group"], "charts": ["acoustic-fp", "spectrum-24", "loudness-32", "season-2"], "fusion": "rrf", "slice": 5}, open(lens_path, "w"))
+    witness["lens_sounds_like"] = run(args.atlas, "lens", "--db", args.db, "--program", lens_path)
+    witness["neighbours_acoustic"] = run(args.atlas, "neighbours", "--db", args.db, "--address", first["address"], "--chart", "spectrum-24", "--k", "3")
+    json.dump(witness, open(args.out, "w"), indent=1)
+    changed = [g["logical"] for g in witness.get("refresh", {}).get("groups", [])]
+    print(json.dumps({"sampled": sum(1 for r in receipts if "sha256" in r), "refused": sum(1 for r in receipts if "refused" in r),
+                      "groups": {g: len(witness["groups"][g]) for g in groups}, "hierarchy": witness["hierarchy"]["type"],
+                      "cross_chart": witness["cross_chart"].get("refused"), "changed_after_mutation": changed,
+                      "parents_recomputed": witness.get("refresh", {}).get("parents_recomputed"), "parents_held": witness.get("refresh", {}).get("parents_held"),
+                      "reopen_drifted_before": sum(v.get("drifted", 0) for v in witness.get("reopen_before_refresh", {}).values()),
+                      "reopen_drifted_after": sum(v.get("drifted", 0) for v in witness.get("reopen_after_refresh", {}).values())}))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,145 @@
+atlas spatial
+
+# Space was the coordinate the estate did not have. The Spatial surface has had
+# a real MapLibre basemap and an OGC API Features carrier for some time, while
+# all 4,891 ExternalEstate occurrences still carry `spatial_candidate: unknown`
+# and no owner held position at all. This family is deliberately thin: it makes
+# space another exact coordinate attached to an existing subject, and adds no
+# identity, authority, proof or capability of its own.
+
+architecture spatial-observation
+  canonical_name SpatialObservation
+  family spatial
+  domain Spatial / Observation
+  layer owner
+  semantic_question Where was this existing subject observed, and by what means was that position arrived at?
+  purpose The thin owner that lets an addressed subject have a position without space becoming a product branch. A parcel, a venue, an aircraft, a fire perimeter, a food truck, a field crew and a road closure are the same shape of claim: an existing subject, a geometry, a time it was observed, a time it holds, and an honest statement of whether a source measured it or this estate computed it.
+  maturity measured
+  source_path schemas/control/spatial-observation.cue
+  source_path cmd/BonfyreCMS/content-types/spatial_observation.json
+  source_path cmd/BonfyreSpatial/src/main.c
+  source_path lib/libbonfyre/include/bf_command_lookup.h
+  source_path scripts/tests/native_command_tables.test.mjs
+  invariant the native Spatial verb is resolved before the store is opened; pure address rendering remains store-free and the six spatial query verbs retain their exact query mode through the shared command descriptor
+  forbidden_inference a resolved spatial verb -> permission to append, retract, or infer identity or authority from a location
+  witness 2026-09-30 cmd/BonfyreSpatial/tests/spatial_test.sh passes after the 17-verb descriptor cut; native_command_tables.test.mjs checks table order and coverage, not query speed
+  source_path lib/libbonfyre/include/bf_sqlite_path.h
+  invariant a world reconstruction binds its exact read-only spatial index path as an ATTACH parameter; punctuation in a filename is not SQL text, a different source, or a writable plane
+  witness cmd/BonfyreSpatial/tests/spatial_test.sh proves the same spatial world cut with a plane filename containing '?', '#', and an apostrophe
+  invariant a feature without a geometry type is refused as invalid geometry before the owner compares or interprets that type
+  witness cmd/BonfyreSpatial/tests/spatial_test.sh proves a GeoJSON feature with coordinates but no geometry type increments refused_geometry instead of entering the spatial fact log
+  source_path cmd/BonfyreSpatial/Makefile
+  source_path cmd/BonfyreSpatial/tests/spatial_scale_bench.sh
+  source_path cmd/BonfyreWebAddress/src/spatial_frontier.c
+  source_path cmd/BonfyreWebAddress/tests/spatial_frontier_route_test.sh
+  source_path architecture/compile-external-estate.mjs
+  source_path cmd/BonfyreSpatial/tests/spatial_test.sh
+  source_path cmd/BonfyreExternalEstate/src/main.c
+  consumes AddressPlane
+  consumes ForeignTwin
+  consumes InformationPolicy
+  publishes SpatialObservation
+  internal_calculus three times, not one: observed_at is when a source saw it, effective_at is when the position is claimed to hold, valid_until is when the claim expires rather than silently persisting as current
+  internal_calculus two independent time axes: valid time is effective_at..valid_until, when a position holds in the world; knowledge time is recorded_at, when this estate learned it. A reconstruction takes both, and defaults knowledge time to the valid instant so the default question is what was believed then rather than what is believed now about then
+  internal_calculus the bitemporal cut is: known by the knowledge frontier, not retracted by it, effective by the valid instant, and not expired at it. The expiry clause is kept separate from the others so that never having known and having known something that has since expired remain different answers
+  internal_calculus retraction appends rather than removes, so a reconstruction as of a knowledge time before the retraction still returns what was retracted; that is what makes an earlier answer reproducible rather than merely remembered
+  internal_calculus intake is a declared mapping, not a guess: which property carries the subject, which carries the source's own instant, and how that instant is shaped. A feature with no usable source instant is refused and counted rather than stamped with the moment of ingest, because a stamped feature is indistinguishable from a real observation forever afterwards
+  internal_calculus an ingest is idempotent by the whole source digest. Observing one document twice is one observation of one thing, and a shortened digest would make two documents share a coordinate and silently drop the second one's features
+  internal_calculus a frontier is addressable: /w/<world>/spatial?at=<instant>&as-of=<instant> carries the pair, plus extent, region, cell and an optional subject of interest. It carries projection coordinates only and never a population, so a recipient recompiles the closure under their own actor and policy and a link cannot hand anyone a subject, a position or a layer they could not have asked for themselves
+  internal_calculus the world closure runs both stages over one frontier: the plane names which subjects could participate from coarse coordinates alone, and the owner then reconstructs each survivor from its own complete log including facts that were never advertised
+  internal_calculus coarse addressing narrows and exact geometry answers: spatial/mobility/scale/region/cell/geometry_kind/mode reach the forwarding plane; intersects, within-radius, along-route, nearest-N and visible-from run on the survivors
+  invariant a coordinate is a statement about where an existing subject was observed or projected; it is never a new identity for that subject and a position arriving for an unknown subject creates nothing
+  invariant observation_mode separates what a source stated from what this estate computed; observed and reported are claims by a source, and propagated, interpolated, inferred and simulated are derivations this estate owns
+  invariant a display position computed between two fixes is not a third fix; derived positions name the observations they were computed from, so the two stay distinguishable after the fact and not only at the moment of writing
+  invariant derived spatial state may move as fast as a surface needs; the observations underneath it are append-only and a 12 Hz projection writes no history
+  invariant geometry, CRS and datum never become forwarding coordinates; a plane carrying geometry starts answering exact spatial questions cheaply and badly
+  invariant the observation log is append-only and the store enforces it rather than trusting the writer; correcting a fact means appending a retraction, and both the fact and its retraction stay readable afterwards
+  invariant a position expires rather than silently persisting as current; after valid_until there is no current position, and that is reported as expired and never as the last known place
+  invariant an extent is never measured as a point; a polygon, line or multi-part shape stores no representative position, and distance is computed against the shape itself, because measuring to a centroid answers how far the middle is while reporting how far the thing is -- wrong by the size of it, and most wrong where it is largest
+  invariant the maintained live view is derived state and never a second source of truth; a maintained read and a recomputed read must agree, and a disagreement is a defect here rather than a new fact about the world
+  invariant a retraction is recomputed rather than patched forward; only an append moves the latest fact in one direction, and patching a retraction would leave the view asserting what the log no longer supports
+  invariant the maintained view stores the latest known fact and never the assertion that it holds now; effectiveness and expiry are decided at read time against the instant actually asked about
+  invariant a cold representation that cannot be thawed is a deletion with extra steps; the durable tier is verified by content and proved by restoring it
+  invariant a bounding box exists only to narrow; it is a cheap rejection and never an answer, and no result reports a distance to one
+  invariant a hole subtracts: a point in the courtyard of a building is not in the building
+  invariant the occurrence coordinate is the receipt's own and never synthesized; a coordinate nobody else uses is not an identity, and facts carrying one report as depth zero while the chain is in fact running
+  invariant a subject follows its identifier lineage rather than the latest label a source prefers; a source that changes its preferred identifier while still publishing the previous ones must not split one thing into two subjects
+  invariant every owner handoff leaves occurrence-keyed evidence; a handoff that leaves none cannot be measured and is indistinguishable from one that never happened
+  invariant intake produces source claims only; a derivation has to name the facts it came from and a source did not compute one
+  invariant an estate cannot have learned a position before it was observed; a feature whose source instant is later than the moment of ingest is refused, because storing it produces a log that reconstructs to impossible pasts
+  invariant a document that failed to parse is a failed observation and never an empty one, because an empty ingest looks exactly like a source that reported nothing
+  invariant a surviving advertisement names a candidate subject and is never the set of facts about it; reconstructing only from advertised observations would let the forwarding plane decide what is true
+  invariant parsing an address refuses rather than repairs: a missing frontier, a malformed instant and an undeclared coordinate are all errors, because a half-parsed address shows a reader an instant they did not ask for and does not say so
+  invariant an exact spatial predicate runs at a reconstruction frontier, so each subject contributes at most the one position it held there; a subject with ten fixes is one thing in a place, not ten
+  cannot_infer a subject having a coordinate -> that coordinate being disclosable; InformationPolicy still decides per field and per audience
+  cannot_infer an interpolated or simulated position -> an observation; the mode is carried precisely so the two cannot be read as one
+  cannot_infer two subjects sharing a coarse cell -> those subjects being near each other; a cell is a narrowing bucket and not a distance
+  cannot_infer a position being valid -> the subject still being there; valid_until bounds the claim and nothing renews it silently
+  cannot_infer a spatial relationship -> authority, permission, provider admission or an effect right on either subject
+  cannot_infer a derived position whose basis was retracted -> a position that still stands; it is reported as an orphaned derivation rather than quietly outliving the fixes that justified it
+  cannot_infer declared identifier equivalence -> two events being the same physical event; the record is that a source declared these identifiers together at an observed time, and a source can be wrong about that
+  cannot_infer an owner-transition receipt -> a correct interpretation, an admitted source, or an authorized downstream act; it says an owner accepted a handoff
+  cannot_infer being within a declared reach -> being visible; no elevation model is held here, so nothing occludes and a frustum answers what lies inside the declared cone rather than what could be seen
+  cannot_infer a spatial_candidate of bearing -> an observation, a reachable source, or an admitted one; it is what a description said about itself
+  cannot_infer a spatial_candidate of not_evident -> a source with no coordinates; a listing that said nothing about maps is a listing that said nothing
+  cannot_infer a durable copy -> a retention decision or an authority to delete the hot store
+  cannot_infer a receipted body -> a true one; a verified digest says these are the bytes that were observed, not that the source was right or that this estate may repeat what it said
+  cannot_infer an address -> access; the frontier travels and the population does not, so a shared link grants nothing that the recipient could not have asked for under their own closure
+  cannot_infer a reconstruction -> a recording; it is recomputed from append-only facts at a stated pair of frontiers and nothing replays a stored frame
+  witness cmd/BonfyreSpatial/tests/spatial_test.sh measures the bitemporal reconstruction against a fix that was observed at 22:00:30 and did not reach this estate until 22:00:45: the same valid instant answers fix-a as understood at 22:00:40 and fix-b as understood at 22:01:00, so knowledge time and valid time demonstrably do not collapse. It further proves the store aborts UPDATE and DELETE rather than trusting the writer, that a claim past valid_until reports expired while an unseen subject reports unknown, that a retraction leaves the pre-retraction answer reproducible and changes only later ones, that a derivation whose basis was retracted is marked orphaned instead of standing, that source claims and derivations are separable in both directions, that a malformed instant and a position claiming to hold before it was observed are refused rather than coerced, and that the same bounding box at the same valid instant returns two subjects at one knowledge time and one at another
+  witness cmd/BonfyreSpatial/tests/spatial_test.sh measures the exact closure at a frontier: near, nearest and bbox each contribute at most one position per subject, the haversine distance between two fixes 0.009 degrees of latitude apart falls between 995 and 1010 metres, a tight radius excludes the aircraft and keeps the vendor, and the same radius after the vendor claim expires selects nothing without being told to
+  witness cmd/BonfyreExternalEstate/tests/external_estate_test.sh compiles two observed aircraft fixes and the display position interpolated between them, and proves the distinction survives the forwarding plane: asking for what a source observed returns the fixes and never the interpolation, asking for the interpolation returns it and never the fixes, the derived position carries a dependency on both fixes it was computed from, no geometry or CRS reaches the plane as a term, and a coarse cell narrows a population without becoming a location
+  witness cmd/BonfyreSpatial/tests/spatial_test.sh measures the two stages composed over one frontier against a store that advertises fix-a and withholds fix-b: the coarse cut narrows three spatial advertisements to two candidate subjects and drops the vessel that is present in the log, and the world closure still answers fix-b for the aircraft -- the plane named the subject and the owner answered from its own log. The same world at an earlier knowledge frontier answers fix-a, an expired vendor claim simply is not present, and a radius composes with the cut rather than replacing it
+  witness cmd/BonfyreSpatial/tests/spatial_test.sh proves the address carries a frontier and no population: the rendered address round-trips to exactly itself, contains no subject, geometry or coordinate of anything present, and is refused outright when it carries no frontier, a malformed instant, an empty world or a coordinate nobody declared
+  witness cmd/BonfyreSpatial/tests/spatial_test.sh measures intake against a document shaped like the ones real feeds publish: two features are ingested, and three are refused for three separately counted reasons -- no source instant, a geometry this owner cannot place exactly, and no subject key. It proves no fact carries the ingest instant as its observed instant, that the source's own instants survive while a single ingest instant is shared, that re-observing the same document ingests nothing while a different document ingests again, that a back-dated ingest is refused per feature, that a derivation cannot be ingested, and that an unparseable document fails rather than recording an empty observation
+  witness cmd/BonfyreSpatial/src/main.c ingests the live USGS all-hour GeoJSON feed end to end -- 21 features on one run, none refused -- and the exact closure answers over it with real separations of 0.8 km, 5.5 km and 115.7 km from a point in the Geysers field
+  witness cmd/BonfyreSpatial/tests/spatial_test.sh measures the maintained live state against recomputation and requires them to agree: a maintained read and a recomputed read return the same subjects and the same facts, a later fact advances the view by one rather than rebuilding it, a retraction recomputes the subject it touches and the view still agrees with the log, the retracted fact is gone rather than hidden, and a claim past its valid_until falls out of the maintained view at read time exactly as it falls out of a recomputation
+  witness cmd/BonfyreSpatial/tests/spatial_test.sh proves --live is refused while the view is behind rather than answering from a frontier it has not caught up to
+  witness cmd/BonfyreSpatial/tests/spatial_test.sh proves the durable tier round-trips: the cold Parquet is identical to the hot store by row count, fact_id sum and an md5 over every field that carries meaning; a hot store that has moved on is reported as different rather than as still matching; and a store thawed from Parquet answers the same closure with the same subjects and facts
+  witness cmd/BonfyreSpatial/tests/spatial_test.sh proves a route corridor follows the line rather than circling its midpoint, that a kilometres-distant polygon stays out, that a declared reach sees two subjects to the north and nothing when turned around, and that a range shorter than the distance sees nothing however wide the sweep
+  witness cmd/BonfyreSpatial/tests/spatial_scale_bench.sh measures maintenance and the durable tier over a million-fact store across twenty thousand subjects: a full maintenance pass takes about 3.1 s and an incremental pass over two hundred newly appended facts about 10 ms, so the cost follows the delta rather than the history; and the same store is 254 MB of SQLite against 3.3 MB of zstd Parquet, written in about 1.5 s and identical by content
+  witness cmd/BonfyreSpatial/tests/spatial_test.sh proves identifier lineage against the USGS behaviour it exists for: two feeds of one earthquake, the second after the source moved its preferred identifier, yield one subject and two observations with both identifiers resolving to it and the instant each was first seen recorded -- and the same two feeds without the lineage split into two subjects, which is the failure being prevented
+  witness cmd/BonfyreSpatial/tests/spatial_test.sh proves the owner handoff leaves occurrence-keyed evidence carrying the receipt's own twin_id, from ForeignTwin to SpatialObservation on the semantic axis at the interpreted rung, and that an empty ingest records no handoff at all
+  witness cmd/BonfyreExperienceMap/tools/participation_report.mjs measures external:ext-02176 at braid_depth 2 over the path ExternalEstate to ForeignTwin to SpatialObservation once that evidence exists, against a baseline in which all 4,891 occurrences measured 0
+  known_gap distance is computed in a local tangent plane -- good to well under a metre at this estate's extents and not a geodesic, and it is not the answer to give for a continental span.
+  known_gap area-to-area overlap is answered as closest approach reaching zero rather than as a computed intersection geometry; nothing returns the shape of an overlap.
+  known_gap intake reads a receipt and does not ask for one. ForeignTwin still owns fetching, and nothing schedules re-observation, so a source is placed when someone runs it rather than when the source changes.
+  known_gap the 146 bearing occurrences are classified and not yet observed. Placing any of them still needs a ForeignTwin receipt per source, which is now the only step between the classification and a position.
+  known_gap identifier lineage resolves and never splits. If a source declares two identifiers together and later retracts that association, nothing un-merges the subject; the aliases are time-scoped and the merge is not.
+  known_gap the semantic rung stops at interpreted. No DomainProfile is bound for a seismic event, so nothing reaches profile_bound or carrier_conformant, and the braid cannot grow past this owner on the semantic axis.
+  known_gap temporal_candidate is still the literal "unknown" that spatial_candidate used to be. The same evidence would classify it and nothing has.
+  known_gap intake places GeoJSON points, lines, polygons and their multi-part forms. A GeometryCollection is refused and counted, and no non-GeoJSON encoding is read.
+  witness cmd/BonfyreSpatial/tests/spatial_scale_bench.sh reproduces the read measurement over a generated million-fact store across twenty thousand subjects: a single subject reconstructs at any frontier in about 5 ms, and a population-wide exact closure over every subject takes about 0.32 s at a live frontier and the same at a historical one. Before the indexes and the sort below, neither completed at all
+  witness cmd/BonfyreSpatial/tests/spatial_test.sh proves an extent is not treated as a point: a polygon and a line ingest with no stored position and a stored box, a point inside the polygon is contained and a point in its hole is not, a point beside the middle of a north-south line measures about 94 m to the line where the nearest endpoint is over two kilometres away, and a point inside an area is at distance zero from it
+  witness cmd/BonfyreSpatial/tests/spatial_test.sh proves intake driven by a ForeignTwin receipt takes its digest and occurrence from the receipt rather than the caller, records the observation instant as the estate's knowledge instant, refuses outright when one appended byte makes the body stop hashing to its receipt, and refuses a receipt that names no body and no digest
+  witness cmd/BonfyreWebAddress/tests/spatial_frontier_route_test.sh proves the frontier is reachable rather than merely addressable: the same URL at one valid instant answers one fix as understood at 22:00:40 and a later fix as understood at 22:01:00, the later fix having never been advertised, a browser is told which two instants it is looking at, a malformed instant is refused with 400, a request without a frontier falls through untouched to the surface that already answered it, and unrelated routes are unaffected
+  witness 2026-09-25 /private/tmp/bonfyre-spatial-usgs-20260925T1810Z/receipt.json observed the live USGS all-hour GeoJSON under ForeignTwin robots evidence (HTTP 200, 8,203 verified bytes); from-receipt then wrote 11 observed earthquake facts and one occurrence-keyed SpatialObservation handoff, maintain advanced exactly 11 facts, and a Dallas nearest query considered all 11 at the stated valid/knowledge frontier without treating distance as authority or disclosure
+  internal_calculus the closure's cost was never where it looked. A quadratic insertion sort over the survivors made a whole-population query scale with the square of the population -- four times the subjects cost sixteen times the time while four times the bytes cost four -- and replacing it with qsort took twenty thousand subjects from 3.4 s to 0.145 s. Two planner hints were tried first and one of them made things worse; the lesson recorded here is that a set the query depends on is built into a temp table rather than declared as a CTE and hoped for
+  internal_calculus three indexes carry that: a partial index on retracts, because the retraction check is asked once per candidate row and otherwise falls onto the knowledge index, which at a late frontier matches nearly every fact ever written; an index on observation_id, which both the derivation check and the ingest idempotency guard look up by name; and a partial index over derivations, since only a derivation can be orphaned. The orphan set is built once into a temp table rather than expressed as a correlated check or a CTE, both of which measured slower than the rest of the query combined
+  known_gap Zarr is deliberately not written. Zarr chunks N-dimensional arrays -- a gridded field sampled over space and time -- and an observation log is not that shape. This owner holds no raster and no continuous surface, so a Zarr tier here would be a container with nothing to put in it; a weather surface or an elevation model would want one, and that is a different record than this.
+  known_gap the durable tier is written and verified and nothing schedules it. Export, verify and thaw are invoked by hand, and no retention policy decides when a hot range becomes cold.
+  known_gap maintenance advances when it is run. Nothing triggers it on append, so a live read is refused until someone runs `maintain`; a Feldera/DBSP dataflow would remove the manual step rather than change the semantics, which are already measured against recomputation.
+  known_gap the served route shows the advertised population and nothing narrower. Publication is the disclosure decision it leans on; InformationPolicy is not consulted per field or per audience, so a World whose published subjects need audience-dependent disclosure is not yet served correctly.
+
+architecture coverage-volume
+  canonical_name CoverageVolume
+  family spatial
+  domain Spatial / Reach
+  layer owner
+  semantic_question What can this owner see, reach, serve or carry from where it is?
+  purpose Generalised from a camera frustum to reach of any kind, because a delivery radius, a transit service region, a stage's audible area, a weather radar cell, a drone inspection envelope and an emergency response radius are the same claim with different vocabulary. It describes reach and settles nothing about entitlement.
+  maturity declared
+  source_path schemas/control/spatial-observation.cue
+  source_path cmd/BonfyreCMS/content-types/coverage_volume.json
+  source_path cmd/BonfyreExternalEstate/src/main.c
+  consumes AddressPlane
+  consumes InformationPolicy
+  publishes CoverageVolume
+  internal_calculus origin plus orientation plus horizontal and vertical extent plus range gives a volume; presentation is derived from that geometry and owns none of it
+  invariant coverage describes reach and never entitlement; a subject falling inside a coverage volume is not thereby observable, disclosable or servable
+  invariant derivation is carried because a published specification, a measured footprint, an estimate and a model are four different claims and collapsing them makes the weakest one look like the strongest
+  cannot_infer a coverage volume reaching a subject -> permission to observe, record, disclose or serve that subject
+  cannot_infer a specified coverage -> a measured one; a camera's published field of view is what someone wrote down
+  cannot_infer coverage existing -> the covering owner being available, admitted, funded or willing
+  witness cmd/BonfyreExternalEstate/tests/external_estate_test.sh proves a specified camera coverage is selectable by its declared derivation and scale, is not returned when asking for a measured footprint, and carries no authority, audience or field coordinate that would let reach be read as permission
+  known_gap intersection is unbuilt: nothing yet computes which coverage volumes contain a given subject, which is the operation the record exists to support

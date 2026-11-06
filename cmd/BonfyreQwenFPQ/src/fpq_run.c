@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 #include <pthread.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -74,6 +81,7 @@ extern unsigned long malloc_zone_pressure_relief(void *zone, unsigned long goal)
 #include <float.h>
 #include <time.h>
 #include <stdint.h>
+#include <sys/resource.h>
 #include <pthread.h>
 #ifdef _OPENMP
 #include <omp.h>
@@ -2733,6 +2741,28 @@ static int fpq_run_flash_prefill_prefix(
         }
         clock_gettime(CLOCK_MONOTONIC, &lay_t1);
         qwen_runtime_heartbeat_tick("prefill_layer_end", lay, cfg->n_layers);
+        {
+            /* BONFYRE_QWEN_RESID_OUT names a file that receives the residual
+             * stream after one layer, one float32 vector of d_model per prompt
+             * token, appended as each run passes that layer. The layer is
+             * BONFYRE_QWEN_RESID_LAYER, or the middle one. */
+            const char *resid_out = getenv("BONFYRE_QWEN_RESID_OUT");
+            if (resid_out && *resid_out) {
+                const char *resid_layer = getenv("BONFYRE_QWEN_RESID_LAYER");
+                int want = resid_layer && *resid_layer ? atoi(resid_layer) : n_lay / 2;
+                if (lay == want) {
+                    FILE *resid_file = fopen(resid_out, "ab");
+                    int wrote = resid_file != NULL;
+                    for (int t = 0; wrote && t < prefix_len; t++)
+                        wrote = fwrite(hs + (size_t)t * token_stride_d, sizeof(float), (size_t)d, resid_file) == (size_t)d;
+                    if (resid_file && fclose(resid_file) != 0) wrote = 0;
+                    if (wrote)
+                        fprintf(stderr, "residual record: layer %d, %d tokens, d_model %d -> %s\n", lay, prefix_len, d, resid_out);
+                    else
+                        fprintf(stderr, "residual record: could not write %s\n", resid_out);
+                }
+            }
+        }
         if (lay >= 0 && lay < FPQ_RUN_MAX_LAYERS) {
             state->metrics.prefill_layer_total_seconds[lay] += fpq_elapsed_seconds(&lay_t0, &lay_t1);
             state->metrics.prefill_layer_prepare_seconds[lay] += prepare_seconds;
@@ -2989,6 +3019,24 @@ int fpq_run_generate(
 
         /* Run through all transformer layers */
         for (int lay = 0; lay < n_lay; lay++) {
+            {
+                /* BONFYRE_QWEN_RESID_OUT: the residual stream as it leaves one
+                 * layer, one float32 vector of d_model per token this run
+                 * passes through it, appended. h entering layer L+1 is what
+                 * layer L left. The layer is BONFYRE_QWEN_RESID_LAYER, or the
+                 * middle one. */
+                const char *resid_out = getenv("BONFYRE_QWEN_RESID_OUT");
+                if (resid_out && *resid_out) {
+                    const char *resid_layer = getenv("BONFYRE_QWEN_RESID_LAYER");
+                    int want = resid_layer && *resid_layer ? atoi(resid_layer) : n_lay / 2;
+                    if (lay == want + 1) {
+                        FILE *resid_file = fopen(resid_out, "ab");
+                        if (!resid_file || fwrite(h, sizeof(float), (size_t)d, resid_file) != (size_t)d)
+                            fprintf(stderr, "residual record: could not write %s\n", resid_out);
+                        if (resid_file) fclose(resid_file);
+                    }
+                }
+            }
             struct timespec layer_t0 = {0};
             struct timespec layer_t1 = {0};
             struct timespec seg_t0 = {0};

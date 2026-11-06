@@ -1,0 +1,2518 @@
+{
+  "bonfyre_path": "/Users/nickgonzales/.local/bin/bonfyre",
+  "cli": {
+    "bonfyre_estate_help": {
+      "argv": [
+        "bonfyre",
+        "estate",
+        "--help"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "usage: bonfyre-estate [-h] {status,pause,resume,cycle,census,compile,add} ...\n\nControl the Bonfyre estate compiler.\n\npositional arguments:\n  {status,pause,resume,cycle,census,compile,add}\n\noptional arguments:\n  -h, --help            show this help message and exit\n"
+    },
+    "bonfyre_list": {
+      "argv": [
+        "bonfyre",
+        "list"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "bonfyre  command surface\nsummary   134 commands  134 ready  0 missing\nnext      bonfyre doctor   bonfyre workflow list   bonfyre run history\n\nPipeline  20/20 ready\n  ready             ingest               Universal asset intake\n  ready             mediaprep            Media normalisation\n  ready             transcribe           Audio to text\n  ready             clean                Transcript cleaning\n  ready             paragraph            Transcript paragraphizer\n  ready             brief                Extract structured brief\n  ready             proof                Generate proof bundle\n  ready             offer                Generate offer document\n  ready             narrate              Text-to-speech narration\n  ready             pack                 Package artifact family\n  ready             distribute           Multi-channel distribution\n  ready             transcript-family    Speech to cleaned transcript family\n  ready             render               Universal artifact renderer\n  ready             repurpose            Repurpose transcripts to new formats\n  ready             clips                Extract short clips from media\n  ready             frame-extract        Extract frames from video\n  ready             scene-detect         Scene boundary detection\n  ready             video-demux          Demux video streams to tracks\n  ready             detect-objects       Object detection (vision pipeline stage)\n  ready             fragment             Fragment store \u2014 create / query / merge\n\nWorkflow Profiles  4/4 ready\n  ready             workflow             Workflow profiles (operator suites, not recipes)\n  ready             watch                Filesystem reality bridge\n  ready             github-watch         GitHub notification to occurrence intake\n  ready             operator             Source-bound household semantic operators\n\nFamilies & Concepts  1/1 ready\n  ready             family               Conceptual family browser (specialization taxonomy)\n\nAI / Models  26/26 ready\n  ready             model                Model registry (list / pull / verify)\n  ready             embed                Generate text embeddings (ONNX)\n  ready             vec                  Local vector search (FAISS)\n  ready             segment              Speaker / VAD segmentation\n  ready             speech-loop          Streaming RNNT + Whisper ASR loop\n  ready             mfa-dict             MFA forced-alignment dictionary\n  ready             tone                 Tone / sentiment analysis\n  ready             tag                  Auto-tagging pipeline\n  ready             entity               Named-entity recognition\n  ready             canon                Canonical form resolver\n  ready             gen                  Natural language generation\n  ready             sli                  Structured layer inference (E8 lattice)\n  ready             quant                BQFP model quantisation\n  ready             fpq                  Functional precision quantisation\n  ready             fpqx                 FPQx extended quantisation\n  ready             layer                Neural layer operations\n  ready             layer-c              Native C layer inspector and ONNX extraction surface\n  ready             sae                  Sparse autoencoder feature activation + gating\n  ready             learn                On-device fine-tuning / adapters\n  ready             weaviate             Weaviate vector index bridge\n  ready             leapfrog             Hamiltonian leapfrog integrator (conservation + reversibility checks)\n  ready             violence             Real-coupling physics validation (E8 embedding + Hamiltonian coupling)\n  ready             reason               Multi-trajectory reasoning sessions (HVCP + embed + kvcache)\n  ready             net                  Mixed-signal netlist runtime (SPICE/HVCP component coupling)\n  ready             flashqla             Chunked-prefill GDN attention (FlashQLA tiled kernel)\n  ready             physics              Hamiltonian Version Control Protocol (HVCP) \u2014 trajectory store\n\nRecipes & Runtime  14/14 ready\n  ready             recipe               Recipe registry (list / show / run / add)\n  ready             run                  Execute a recipe by name or path\n  ready             flow                 Coroutine-native pipeline flow graphs\n  ready             pipeline             Streaming pipeline execution\n  ready             runtime              Replayable pipeline runtime\n  ready             discipl              Recursive DisCIPL runtime substrate\n  ready             orchestrate          Machine-only orchestration planner\n  ready             control              Control-plane command gateway\n  ready             swarm                Distributed worker swarm\n  ready             project              Content graph projection engine\n  ready             space                Semantic space management\n  ready             proxy                OpenAI-compatible API proxy\n  ready             doctor               Runtime dependency diagnostics\n  ready             capabilities         Capability discovery and matching registry\n\nInfrastructure  23/23 ready\n  ready             hash                 Content-addressing (SHA-256)\n  ready             index                Artifact family indexer\n  ready             web-address          Matrix-backed web host/path resolver\n  ready             domain               Native Namecheap DNS observation and guarded publication\n  ready             compress             Family-aware compression\n  ready             emit                 Multi-format output engine\n  ready             stitch               DAG materialiser\n  ready             queue                Job queue management\n  ready             provider             Provider observation and admissibility state\n  ready             admission            Resource grant admission and protected-floor ledger\n  ready             attention            Watch cooling and named-signal reheat control\n  ready             sync                 Artifact synchronisation\n  ready             graph                Merkle-DAG artifact graph (SQLite)\n  ready             query                Structured artifact query\n  ready             wire                 Consent-based network event layer\n  ready             surface              Optional client surface registry\n  ready             kvcache              KV-cache store\n  ready             auth                 Authentication and token management\n  ready             tel                  Telemetry / observability\n  ready             moq                  MoQ media-over-QUIC transport\n  ready             cms                  Content management store\n  ready             api                  REST API server\n  ready             time                 Temporal metadata and scheduling\n\nValue Capture  9/9 ready\n  ready             gate                 License enforcement\n  ready             meter                Usage metering and billing\n  ready             ledger               Value accounting\n  ready             economy              Economy / credits engine\n  ready             compete              Competitive benchmarking\n  ready             pay                  Payment processing\n  ready             finance              Financial reporting\n  ready             tier                 Feature / access tier management\n  ready             outreach             Campaign outreach automation\n\nLocal Extras  37/37 ready\n  ready             chat                 Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             swarm-selftest.archive Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             mcp-status           Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             mcp-tools            Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             infer                Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             agents               Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             caveman-provider     Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             shadow               Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             delta-kernel         Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             agent-deck-provider  Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             canary               Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             oracle-surfaces      Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             with-env             Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             estate               Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             bfp-verify           Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             moe.patched          Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             token-fabric         Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             frappe-compiler      Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             v6                   Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             ssh                  Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             moe.patched2         Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             authority-v6         Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             power                Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             claude-squad-provider Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             dev                  Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             helix-vm             Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             hypervisor           Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             recursive            Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             bernstein-provider   Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             moq-selftest.archive Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             spines               Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             oracle-runtime       Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             kernel-probe         Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             cavekit-provider     Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             moe                  Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             provider-status      Discovered local bonfyre-* binary not yet registered in the core route table\n  ready             api-selftest.archive Discovered local bonfyre-* binary not yet registered in the core route table\n\nFront-door Built-ins  4/4 ready\n  ready             self                 Front-door self-optimization, snapshot, repair, and ontology surface\n  ready             precision            Front-door precision routing and compression planning surface\n  ready             status               Front-door command drift, registry status, and ops snapshot surface\n  ready             doctor               Front-door health, registry, and sync helper surface\n\nRun 'bonfyre <command> --help' for command help, or 'bonfyre list <term>' to filter.\nBuilt-ins like 'bonfyre self ...' and 'bonfyre precision ...' live inside the bonfyre front door.\n"
+    },
+    "bonfyre_list_estate": {
+      "argv": [
+        "bonfyre",
+        "list",
+        "estate"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "bonfyre  command surface\nfilter    estate\nsummary   1 commands  1 ready  0 missing\nnext      bonfyre doctor   bonfyre workflow list   bonfyre run history\n\nLocal Extras  1/1 ready\n  ready             estate               Discovered local bonfyre-* binary not yet registered in the core route table\n\nFront-door Built-ins  4/4 ready\n  ready             self                 Front-door self-optimization, snapshot, repair, and ontology surface\n  ready             precision            Front-door precision routing and compression planning surface\n  ready             status               Front-door command drift, registry status, and ops snapshot surface\n  ready             doctor               Front-door health, registry, and sync helper surface\n\nRun 'bonfyre <command> --help' for command help, or 'bonfyre list <term>' to filter.\nBuilt-ins like 'bonfyre self ...' and 'bonfyre precision ...' live inside the bonfyre front door.\n"
+    },
+    "direct_estate_candidates": [
+      "/Users/nickgonzales/.local/bin/bonfyre-estate"
+    ],
+    "direct_estate_help": {
+      "argv": [
+        "/Users/nickgonzales/.local/bin/bonfyre-estate",
+        "--help"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "usage: bonfyre-estate [-h] {status,pause,resume,cycle,census,compile,add} ...\n\nControl the Bonfyre estate compiler.\n\npositional arguments:\n  {status,pause,resume,cycle,census,compile,add}\n\noptional arguments:\n  -h, --help            show this help message and exit\n"
+    }
+  },
+  "cli_classification": {
+    "bonfyre_estate_help_exit": 0,
+    "direct_estate_help_exit": 0,
+    "estate_classified_local_extra": true,
+    "estate_reported_unregistered": true,
+    "estate_visible": true
+  },
+  "estate": {
+    "closure": {
+      "frontier_to_cms": [
+        {
+          "closure_state": "published_cms_reader",
+          "sources": 2364
+        }
+      ],
+      "retained_frontier_to_cms": [
+        {
+          "closure_state": "published_cms_reader",
+          "sources": 2117
+        }
+      ],
+      "retained_to_cms": [
+        {
+          "closure_state": "published_cms_reader",
+          "sources": 2208
+        }
+      ]
+    },
+    "cms_internet_source": {
+      "carries": {
+        "ok": true,
+        "rows": [
+          {
+            "carries": "",
+            "sources": 2172
+          },
+          {
+            "carries": "images",
+            "sources": 219
+          },
+          {
+            "carries": "podcasts",
+            "sources": 55
+          },
+          {
+            "carries": "video",
+            "sources": 17
+          },
+          {
+            "carries": "images,video",
+            "sources": 2
+          },
+          {
+            "carries": "podcasts,video",
+            "sources": 2
+          }
+        ]
+      },
+      "columns": [
+        {
+          "cid": 0,
+          "dflt_value": null,
+          "name": "id",
+          "notnull": 0,
+          "pk": 1,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 1,
+          "dflt_value": "'root'",
+          "name": "namespace",
+          "notnull": 1,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 2,
+          "dflt_value": null,
+          "name": "created_at",
+          "notnull": 1,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 3,
+          "dflt_value": null,
+          "name": "updated_at",
+          "notnull": 1,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 4,
+          "dflt_value": null,
+          "name": "published_at",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 5,
+          "dflt_value": "'draft'",
+          "name": "status",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 6,
+          "dflt_value": null,
+          "name": "family",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 7,
+          "dflt_value": null,
+          "name": "source",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 8,
+          "dflt_value": null,
+          "name": "label",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 9,
+          "dflt_value": null,
+          "name": "says",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 10,
+          "dflt_value": null,
+          "name": "url",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 11,
+          "dflt_value": null,
+          "name": "twin",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 12,
+          "dflt_value": null,
+          "name": "state",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 13,
+          "dflt_value": null,
+          "name": "note",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 14,
+          "dflt_value": null,
+          "name": "extract",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 15,
+          "dflt_value": null,
+          "name": "title_field",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 16,
+          "dflt_value": null,
+          "name": "meta_field",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 17,
+          "dflt_value": null,
+          "name": "body_regime",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 18,
+          "dflt_value": null,
+          "name": "tier",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 19,
+          "dflt_value": null,
+          "name": "cadence_seconds",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 20,
+          "dflt_value": null,
+          "name": "last_seen",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 21,
+          "dflt_value": null,
+          "name": "kind",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 22,
+          "dflt_value": null,
+          "name": "image_field",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 23,
+          "dflt_value": null,
+          "name": "image_base",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 24,
+          "dflt_value": null,
+          "name": "link_field",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 25,
+          "dflt_value": null,
+          "name": "sub_field",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 26,
+          "dflt_value": null,
+          "name": "front_door",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 27,
+          "dflt_value": null,
+          "name": "summary_field",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 28,
+          "dflt_value": null,
+          "name": "maker_field",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 29,
+          "dflt_value": null,
+          "name": "rights_field",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 30,
+          "dflt_value": null,
+          "name": "rights_link_field",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 31,
+          "dflt_value": null,
+          "name": "media_field",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 32,
+          "dflt_value": null,
+          "name": "ident_field",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 33,
+          "dflt_value": null,
+          "name": "place_field",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 34,
+          "dflt_value": null,
+          "name": "link_base",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 35,
+          "dflt_value": null,
+          "name": "credential",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 36,
+          "dflt_value": null,
+          "name": "about_field",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 37,
+          "dflt_value": null,
+          "name": "publisher_ident",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 38,
+          "dflt_value": null,
+          "name": "publisher_name",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 39,
+          "dflt_value": null,
+          "name": "compiled_by",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 40,
+          "dflt_value": "''",
+          "name": "carries",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        }
+      ],
+      "family_kind": {
+        "ok": true,
+        "rows": [
+          {
+            "family": "news",
+            "kind": "text",
+            "sources": 2380
+          },
+          {
+            "family": "datasets",
+            "kind": "text",
+            "sources": 39
+          },
+          {
+            "family": "gaming",
+            "kind": "text",
+            "sources": 15
+          },
+          {
+            "family": "vulnerabilities",
+            "kind": "text",
+            "sources": 13
+          },
+          {
+            "family": "events",
+            "kind": "event",
+            "sources": 3
+          },
+          {
+            "family": "podcasts",
+            "kind": "audio",
+            "sources": 3
+          },
+          {
+            "family": "commons",
+            "kind": "image",
+            "sources": 2
+          },
+          {
+            "family": "films",
+            "kind": "video",
+            "sources": 2
+          },
+          {
+            "family": "history",
+            "kind": "text",
+            "sources": 2
+          },
+          {
+            "family": "music",
+            "kind": "audio",
+            "sources": 2
+          },
+          {
+            "family": "attention",
+            "kind": "text",
+            "sources": 1
+          },
+          {
+            "family": "commerce",
+            "kind": "text",
+            "sources": 1
+          },
+          {
+            "family": "live-music",
+            "kind": "audio",
+            "sources": 1
+          },
+          {
+            "family": "local-nature",
+            "kind": "image",
+            "sources": 1
+          },
+          {
+            "family": "local-photos",
+            "kind": "image",
+            "sources": 1
+          },
+          {
+            "family": "places",
+            "kind": "image",
+            "sources": 1
+          }
+        ]
+      },
+      "published_total": {
+        "ok": true,
+        "rows": [
+          {
+            "distinct_sources": 2467,
+            "rows": 2467
+          }
+        ]
+      },
+      "table_exists": true,
+      "with_twin": {
+        "ok": true,
+        "rows": [
+          {
+            "distinct_sources": 2467,
+            "rows": 2467
+          }
+        ]
+      }
+    },
+    "files": {
+      "cms": {
+        "bytes": 105283584,
+        "exists": true,
+        "mtime": "2026-09-28T17:41:12.633718",
+        "path": "/Users/nickgonzales/.bonfyre/estate-local/cms.db"
+      },
+      "frontier": {
+        "bytes": 110841856,
+        "exists": true,
+        "mtime": "2026-09-28T18:48:30.064254",
+        "path": "/Users/nickgonzales/.bonfyre/estate-local/frontier.db"
+      },
+      "items": {
+        "bytes": 45326336,
+        "exists": true,
+        "mtime": "2026-09-28T17:39:32.036510",
+        "path": "/Users/nickgonzales/.bonfyre/estate-local/items.db"
+      },
+      "subject_fabric": {
+        "bytes": 441077760,
+        "exists": true,
+        "mtime": "2026-09-27T08:29:33.995911",
+        "path": "/Users/nickgonzales/.bonfyre/estate-local/subject_fabric.db"
+      }
+    },
+    "frontier_channel": {
+      "admitted_active": {
+        "ok": true,
+        "rows": [
+          {
+            "channels": 2364,
+            "distinct_census_sources": 2364
+          }
+        ]
+      },
+      "columns": [
+        {
+          "cid": 0,
+          "dflt_value": null,
+          "name": "channel_id",
+          "notnull": 0,
+          "pk": 1,
+          "type": "TEXT"
+        },
+        {
+          "cid": 1,
+          "dflt_value": null,
+          "name": "family_id",
+          "notnull": 1,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 2,
+          "dflt_value": null,
+          "name": "root_id",
+          "notnull": 1,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 3,
+          "dflt_value": null,
+          "name": "address",
+          "notnull": 1,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 4,
+          "dflt_value": null,
+          "name": "exact_address",
+          "notnull": 1,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 5,
+          "dflt_value": "''",
+          "name": "title",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 6,
+          "dflt_value": "''",
+          "name": "material",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 7,
+          "dflt_value": "'unknown'",
+          "name": "protocol",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 8,
+          "dflt_value": "'candidate'",
+          "name": "state",
+          "notnull": 1,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 9,
+          "dflt_value": "'listed'",
+          "name": "truth_level",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 10,
+          "dflt_value": "''",
+          "name": "refusal",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 11,
+          "dflt_value": "0",
+          "name": "virtual",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 12,
+          "dflt_value": "''",
+          "name": "census_source",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 13,
+          "dflt_value": "''",
+          "name": "credential",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 14,
+          "dflt_value": "''",
+          "name": "rights",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 15,
+          "dflt_value": "''",
+          "name": "cadence",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 16,
+          "dflt_value": "''",
+          "name": "discovered_from",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 17,
+          "dflt_value": "''",
+          "name": "body_sha256",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 18,
+          "dflt_value": "''",
+          "name": "identity",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 19,
+          "dflt_value": null,
+          "name": "first_seen",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 20,
+          "dflt_value": null,
+          "name": "last_seen",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 21,
+          "dflt_value": "''",
+          "name": "last_contributed",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 22,
+          "dflt_value": "0",
+          "name": "contributions",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 23,
+          "dflt_value": "''",
+          "name": "carries",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        }
+      ],
+      "states": {
+        "ok": true,
+        "rows": [
+          {
+            "census_sources": 2364,
+            "channels": 2364,
+            "state": "admitted"
+          },
+          {
+            "census_sources": 0,
+            "channels": 107344,
+            "state": "candidate"
+          },
+          {
+            "census_sources": 61,
+            "channels": 61,
+            "state": "eligible"
+          },
+          {
+            "census_sources": 1,
+            "channels": 1,
+            "state": "waiting_credential"
+          }
+        ]
+      },
+      "table_exists": true
+    },
+    "items_item": {
+      "columns": [
+        {
+          "cid": 0,
+          "dflt_value": null,
+          "name": "source",
+          "notnull": 1,
+          "pk": 1,
+          "type": "TEXT"
+        },
+        {
+          "cid": 1,
+          "dflt_value": null,
+          "name": "key",
+          "notnull": 1,
+          "pk": 2,
+          "type": "TEXT"
+        },
+        {
+          "cid": 2,
+          "dflt_value": null,
+          "name": "kind",
+          "notnull": 1,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 3,
+          "dflt_value": "''",
+          "name": "family",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 4,
+          "dflt_value": null,
+          "name": "title",
+          "notnull": 1,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 5,
+          "dflt_value": "''",
+          "name": "body",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 6,
+          "dflt_value": "''",
+          "name": "href",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 7,
+          "dflt_value": "''",
+          "name": "image",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 8,
+          "dflt_value": "''",
+          "name": "by",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 9,
+          "dflt_value": "''",
+          "name": "publisher",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 10,
+          "dflt_value": "''",
+          "name": "ident",
+          "notnull": 0,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 11,
+          "dflt_value": "0",
+          "name": "at",
+          "notnull": 0,
+          "pk": 0,
+          "type": "INTEGER"
+        },
+        {
+          "cid": 12,
+          "dflt_value": null,
+          "name": "first_read",
+          "notnull": 1,
+          "pk": 0,
+          "type": "TEXT"
+        },
+        {
+          "cid": 13,
+          "dflt_value": null,
+          "name": "last_read",
+          "notnull": 1,
+          "pk": 0,
+          "type": "TEXT"
+        }
+      ],
+      "family_kind": {
+        "ok": true,
+        "rows": [
+          {
+            "family": "news",
+            "kind": "story",
+            "retained_items": 51099,
+            "sources": 2149
+          },
+          {
+            "family": "news",
+            "kind": "audio",
+            "retained_items": 9357,
+            "sources": 47
+          },
+          {
+            "family": "news",
+            "kind": "photo",
+            "retained_items": 6455,
+            "sources": 129
+          },
+          {
+            "family": "news",
+            "kind": "video",
+            "retained_items": 668,
+            "sources": 17
+          },
+          {
+            "family": "podcasts",
+            "kind": "audio",
+            "retained_items": 424,
+            "sources": 2
+          },
+          {
+            "family": "datasets",
+            "kind": "story",
+            "retained_items": 319,
+            "sources": 8
+          },
+          {
+            "family": "gaming",
+            "kind": "story",
+            "retained_items": 292,
+            "sources": 14
+          },
+          {
+            "family": "vulnerabilities",
+            "kind": "story",
+            "retained_items": 263,
+            "sources": 13
+          },
+          {
+            "family": "news",
+            "kind": "event",
+            "retained_items": 63,
+            "sources": 1
+          },
+          {
+            "family": "music",
+            "kind": "story",
+            "retained_items": 60,
+            "sources": 2
+          },
+          {
+            "family": "films",
+            "kind": "story",
+            "retained_items": 52,
+            "sources": 2
+          },
+          {
+            "family": "attention",
+            "kind": "story",
+            "retained_items": 45,
+            "sources": 1
+          },
+          {
+            "family": "history",
+            "kind": "story",
+            "retained_items": 39,
+            "sources": 2
+          },
+          {
+            "family": "films",
+            "kind": "video",
+            "retained_items": 36,
+            "sources": 2
+          },
+          {
+            "family": "music",
+            "kind": "audio",
+            "retained_items": 36,
+            "sources": 2
+          },
+          {
+            "family": "places",
+            "kind": "story",
+            "retained_items": 36,
+            "sources": 1
+          },
+          {
+            "family": "podcasts",
+            "kind": "story",
+            "retained_items": 36,
+            "sources": 2
+          },
+          {
+            "family": "local-nature",
+            "kind": "photo",
+            "retained_items": 33,
+            "sources": 1
+          },
+          {
+            "family": "commons",
+            "kind": "story",
+            "retained_items": 30,
+            "sources": 1
+          },
+          {
+            "family": "local-photos",
+            "kind": "photo",
+            "retained_items": 29,
+            "sources": 1
+          },
+          {
+            "family": "events",
+            "kind": "event",
+            "retained_items": 24,
+            "sources": 3
+          },
+          {
+            "family": "places",
+            "kind": "photo",
+            "retained_items": 24,
+            "sources": 1
+          },
+          {
+            "family": "live-music",
+            "kind": "audio",
+            "retained_items": 22,
+            "sources": 1
+          },
+          {
+            "family": "commons",
+            "kind": "photo",
+            "retained_items": 20,
+            "sources": 2
+          },
+          {
+            "family": "commerce",
+            "kind": "story",
+            "retained_items": 18,
+            "sources": 1
+          },
+          {
+            "family": "live-music",
+            "kind": "story",
+            "retained_items": 18,
+            "sources": 1
+          },
+          {
+            "family": "local-nature",
+            "kind": "story",
+            "retained_items": 18,
+            "sources": 1
+          },
+          {
+            "family": "local-photos",
+            "kind": "story",
+            "retained_items": 18,
+            "sources": 1
+          },
+          {
+            "family": "gaming",
+            "kind": "video",
+            "retained_items": 1,
+            "sources": 1
+          }
+        ]
+      },
+      "table_exists": true,
+      "totals": {
+        "ok": true,
+        "rows": [
+          {
+            "distinct_sources": 2208,
+            "items": 69535
+          }
+        ]
+      }
+    },
+    "subject_fabric": {
+      "subject_material": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": 202275
+          }
+        ]
+      },
+      "subject_route": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": 32414
+          }
+        ]
+      },
+      "subject_route_item": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": 662126
+          }
+        ]
+      },
+      "subject_route_phase": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": 0
+          }
+        ]
+      },
+      "subject_route_reader": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": 29085
+          }
+        ]
+      },
+      "subject_route_region": {
+        "ok": true,
+        "rows": [
+          {
+            "rows": 131362
+          }
+        ]
+      },
+      "tables": {
+        "ok": true,
+        "rows": [
+          {
+            "name": "subject_bundle"
+          },
+          {
+            "name": "subject_material"
+          },
+          {
+            "name": "subject_reader"
+          },
+          {
+            "name": "subject_route"
+          },
+          {
+            "name": "subject_route_item"
+          },
+          {
+            "name": "subject_route_phase"
+          },
+          {
+            "name": "subject_route_reader"
+          },
+          {
+            "name": "subject_route_region"
+          }
+        ]
+      }
+    }
+  },
+  "estate_root": "/Users/nickgonzales/.bonfyre/estate-local",
+  "generated_at": "2026-09-29T00:03:05.124088+00:00",
+  "repo": "/Users/nickgonzales/Developer/Bonfyre",
+  "repo_trace": {
+    "BONFYRE_CMS_DB": [
+      {
+        "file": "cmd/BonfyreCMS/tools/install_ghost_marketplace_templates.sh",
+        "line": 11,
+        "text": "db=${BONFYRE_CMS_DB:-/var/lib/bonfyre/cms/bonfyre_cms.db}"
+      },
+      {
+        "file": "cmd/BonfyreCMS/src/main.c",
+        "line": 90,
+        "text": "* Worse, the deployment declares BONFYRE_CMS_DB and this binary read no"
+      },
+      {
+        "file": "cmd/BonfyreCMS/src/main.c",
+        "line": 99,
+        "text": "*   2. BONFYRE_CMS_DB, the deployment's own declaration"
+      },
+      {
+        "file": "cmd/BonfyreCMS/src/main.c",
+        "line": 121,
+        "text": "* declares alongside BONFYRE_CMS_DB -- was equally unread. A store found next to"
+      },
+      {
+        "file": "cmd/BonfyreCMS/src/main.c",
+        "line": 159,
+        "text": "env = getenv(\"BONFYRE_CMS_DB\");"
+      },
+      {
+        "file": "cmd/BonfyreCMS/src/main.c",
+        "line": 3612,
+        "text": "\"[fatal] no CMS store coordinate: pass --db, or set BONFYRE_CMS_DB \""
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/surface_pattern_contract_test.sh",
+        "line": 92,
+        "text": "BONFYRE_CMS_BINARY=\"$cms\" BONFYRE_CMS_DB=\"$cmsdb\" BONFYRE_CMS_SCHEMAS=\"$schemas\" \\"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/page_items_test.sh",
+        "line": 101,
+        "text": "BONFYRE_CMS_BINARY=\"$cms\" BONFYRE_CMS_DB=\"$cmsdb\" BONFYRE_CMS_SCHEMAS=\"$schemas\" \\"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/page_saved_test.sh",
+        "line": 41,
+        "text": "BONFYRE_AUTH_BINARY=\"$auth\" BONFYRE_CMS_BINARY=\"$cms\" BONFYRE_CMS_DB=\"$cmsdb\" BONFYRE_CMS_SCHEMAS=\"$schemas\" \\"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/foundry_behavior_owner_test.sh",
+        "line": 54,
+        "text": "BONFYRE_AUTH_BINARY=\"$auth\" BONFYRE_CMS_DB=\"$cmsdb\" BONFYRE_CMS_SCHEMAS=\"$schemas\" \\"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/page_events_test.sh",
+        "line": 72,
+        "text": "BONFYRE_CMS_DB=\"$cmsdb\" BONFYRE_FOREIGN_ROOT=\"$tmp/foreign\" \"$web\" census-items >\"$tmp/items.jsonl\" 2>/dev/null"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/page_events_test.sh",
+        "line": 85,
+        "text": "BONFYRE_CMS_DB=\"$cmsdb\" BONFYRE_FOREIGN_ROOT=\"$tmp/foreign\" BONFYRE_LOCAL_ZONE=\"America/Chicago\" \\"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/site_program_native_test.sh",
+        "line": 64,
+        "text": "BONFYRE_CMS_BINARY=\"$cms\" BONFYRE_CMS_DB=\"$cmsdb\" BONFYRE_CMS_SCHEMAS=\"$schemas\" BONFYRE_FOREIGN_ROOT=\"$tmp/foreign\" BONFYRE_PUBLIC_PROJECTION_DB=\"$projection_cache\" \"$web\" serve --db \"$matrix\" --auth-db \"$authdb\" --port \"$port\" --site-root \"$root/site/matrix\" >\"$tmp/server.log\" 2>&1 &"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/role_program_owner_test.sh",
+        "line": 41,
+        "text": "BONFYRE_AUTH_BINARY=\"$auth\" BONFYRE_CMS_DB=\"$cmsdb\" BONFYRE_CMS_SCHEMAS=\"$schemas\" \\"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/page_public_commons_test.sh",
+        "line": 127,
+        "text": "BONFYRE_CMS_DB=\"$cmsdb\" BONFYRE_FOREIGN_ROOT=\"$tmp/foreign\" \"$web\" census-items >\"$tmp/items.jsonl\" 2>/dev/null"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/page_public_commons_test.sh",
+        "line": 137,
+        "text": "BONFYRE_CMS_DB=\"$cmsdb\" BONFYRE_CMS_SCHEMAS=\"$schemas\" BONFYRE_FOREIGN_ROOT=\"$tmp/foreign\" BONFYRE_LATENT_ATLAS_DB=\"$tmp/atlas.db\" \\"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/page_programs_test.sh",
+        "line": 161,
+        "text": "BONFYRE_CMS_BINARY=\"$cms\" BONFYRE_CMS_DB=\"$cmsdb\" BONFYRE_CMS_SCHEMAS=\"$schemas\" \\"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/page_kin_test.sh",
+        "line": 54,
+        "text": "BONFYRE_CMS_DB=\"$tmp/cms.db\" BONFYRE_FOREIGN_ROOT=\"$tmp/foreign\" \\"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/page_kin_test.sh",
+        "line": 130,
+        "text": "BONFYRE_ITEM_ARCHIVE_DB=\"$tmp/items.db\" BONFYRE_CMS_DB=\"$tmp/cms.db\" BONFYRE_FOREIGN_ROOT=\"$tmp/foreign\" \\"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/page_channels_test.sh",
+        "line": 70,
+        "text": "BONFYRE_SOURCE_FRONTIER_DB=\"$tmp/frontier.db\" BONFYRE_CMS_DB=\"$tmp/cms.db\" BONFYRE_FOREIGN_ROOT=\"$tmp/foreign\" \\"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/private_estate_surface_test.sh",
+        "line": 54,
+        "text": "BONFYRE_CMS_BINARY=\"$cms\" BONFYRE_CMS_DB=\"$cmsdb\" BONFYRE_CMS_SCHEMAS=\"$cms_schemas\" BONFYRE_FOREIGN_ROOT=\"$foreign_root\" \\"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/page_composition_test.sh",
+        "line": 94,
+        "text": "BONFYRE_CMS_BINARY=\"$cms\" BONFYRE_CMS_DB=\"$cmsdb\" BONFYRE_CMS_SCHEMAS=\"$schemas\" \\"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/auth_surface_test.sh",
+        "line": 73,
+        "text": "BONFYRE_AUTH_BINARY=\"$auth\" BONFYRE_BIN_DIR=\"$tmp/bin\" BONFYRE_MATRIX_DB=\"$db\" BONFYRE_ECONOMY_DB=\"$tmp/economy.db\" BONFYRE_ENTITY_DB=\"$tmp/entity.db\" BONFYRE_MATRIX_RECEIPT_DIR=\"$tmp/receipts\" BONFYRE_INTERNET_DB=\"$tmp/internet.db\" BONFYRE_MEMBRANE_DB=\"$mdb\" BONFYRE_FOREIGN_ROOT=\"$tmp/foreign\" BONFYRE_FOREIGN_DISCOVER_BIN=\"$root/cmd/BonfyreWebAddress/tests/foreign-discover-fixture.sh\" BONFYRE_CMS_BINARY=\"$cms\" BONFYRE_CMS_DB=\"$cdb\" BONFYRE_CMS_SCHEMAS=\"$cms_schemas\" \"$bin\" serve --db \"$db\" --au"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/page_transport_test.sh",
+        "line": 70,
+        "text": "BONFYRE_CMS_DB=\"$tmp/cms.db\" BONFYRE_FOREIGN_ROOT=\"$tmp/foreign\" BONFYRE_LOCAL_ZONE=\"America/Chicago\" \\"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/pure_tier_test.sh",
+        "line": 41,
+        "text": "if BONFYRE_CMS_DB=\"$PURE_CMS\" $RUN \"$tmp/$n.json\" 2>&1 | grep -q refused; then"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/pure_tier_test.sh",
+        "line": 50,
+        "text": "R=$(BONFYRE_CMS_DB=\"$PURE_CMS\" $RUN --json \"$PURE_JOB\" 2>/dev/null)"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/pure_tier_test.sh",
+        "line": 143,
+        "text": "B=$(BONFYRE_CMS_DB=\"$PURE_CMS\" python3 \"$brk\" --json \"$PURE_JOB\" 2>/dev/null)"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/pure_tier_test.sh",
+        "line": 191,
+        "text": "O=$(BONFYRE_CMS_DB=\"$PURE_CMS\" python3 \"$iso/orphan.py\" --json \"$PURE_JOB\" 2>/dev/null)"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/github_foundry_closure_test.sh",
+        "line": 132,
+        "text": "BONFYRE_AUTH_BINARY=\"$auth\" BONFYRE_CMS_DB=\"$cmsdb\" BONFYRE_CMS_SCHEMAS=\"$schemas\" \\"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/page_commons_test.sh",
+        "line": 89,
+        "text": "BONFYRE_CMS_DB=\"$cmsdb\" BONFYRE_CMS_SCHEMAS=\"$schemas\" BONFYRE_FOREIGN_ROOT=\"$tmp/foreign\" \\"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/native_surface_routes_test.sh",
+        "line": 31,
+        "text": "BONFYRE_CMS_BINARY=\"$cms\" BONFYRE_CMS_DB=\"$cmsdb\" BONFYRE_CMS_SCHEMAS=\"$schemas\" \"$web\" serve --db \"$matrix\" --auth-db \"$authdb\" --port \"$port\" --site-root \"$root/site/matrix\" >\"$tmp/server.log\" 2>&1 &"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/page_occurrence_event_test.sh",
+        "line": 27,
+        "text": "BONFYRE_CMS_DB=\"$db\" \"$web\" serve --db \"$tmp/matrix.db\" --port \"$port\" --site-root \"$root/site/matrix\" >\"$tmp/server.log\" 2>&1 &"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/world_native_material_test.sh",
+        "line": 83,
+        "text": "BONFYRE_CMS_BINARY=\"$cms\" BONFYRE_CMS_DB=\"$cmsdb\" BONFYRE_CMS_SCHEMAS=\"$schemas\" \\"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/page_parcel_test.sh",
+        "line": 33,
+        "text": "BONFYRE_AUTH_BINARY=\"$auth\" BONFYRE_CMS_BINARY=\"$cms\" BONFYRE_CMS_DB=\"$tmp/cms.db\" BONFYRE_SAVED_ITEM_SCHEMAS=\"$tmp/saved-type\" \\"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/page_stage_test.sh",
+        "line": 53,
+        "text": "BONFYRE_CMS_DB=\"$cmsdb\" BONFYRE_FOREIGN_ROOT=\"$tmp/foreign\" \"$web\" census-items >\"$tmp/items.jsonl\" 2>/dev/null"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/page_stage_test.sh",
+        "line": 56,
+        "text": "BONFYRE_CMS_DB=\"$cmsdb\" BONFYRE_FOREIGN_ROOT=\"$tmp/foreign\" BONFYRE_LOCAL_ZONE=\"America/Chicago\" \\"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/page_census_reader_test.sh",
+        "line": 91,
+        "text": "BONFYRE_CMS_BINARY=\"$cms\" BONFYRE_CMS_DB=\"$cmsdb\" BONFYRE_CMS_SCHEMAS=\"$schemas\" \\"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/household_plane_test.sh",
+        "line": 63,
+        "text": "BONFYRE_AUTH_BINARY=\"$auth\" BONFYRE_CMS_DB=\"$cdb\" BONFYRE_SOURCE_FRONTIER_DB=\"$fdb\" \\"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/a2a_surface_test.sh",
+        "line": 20,
+        "text": "# floor beneath the authored surfaces. A BONFYRE_CMS_DB inherited from the"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/a2a_surface_test.sh",
+        "line": 25,
+        "text": "unset BONFYRE_CMS_DB BONFYRE_CMS_SCHEMAS 2>/dev/null || true"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/src/community_projection.c",
+        "line": 87,
+        "text": "const char *path = getenv(\"BONFYRE_CMS_DB\");"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/src/people_projection.c",
+        "line": 136,
+        "text": "const char *cms_path = getenv(\"BONFYRE_CMS_DB\");"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/src/main.c",
+        "line": 164,
+        "text": "const char *cms = getenv(\"BONFYRE_CMS_DB\");"
+      },
+      {
+        "file": "cmd/BonfyreResourceWeatherTransition/tests/project_weather_transition_test.sh",
+        "line": 46,
+        "text": "BONFYRE_CMS_DB=\"$root/cms.db\" \\"
+      },
+      {
+        "file": "cmd/BonfyreResourceWeatherRefresh/tests/resource_weather_refresh_test.sh",
+        "line": 25,
+        "text": "BONFYRE_CMS_DB=\"$root/cms.db\" BONFYRE_FOREIGN_RECEIPTS=\"$root/receipts\" BONFYRE_FOREIGN_BODIES=\"$root/bodies\" \"$refresh\" refresh $common > \"$root/baseline.out\""
+      },
+      {
+        "file": "deploy/fly/Dockerfile",
+        "line": 59,
+        "text": "BONFYRE_CMS_DB=/var/lib/bonfyre/cms/bonfyre_cms.db \\"
+      },
+      {
+        "file": "deploy/fly/start-estate.sh",
+        "line": 32,
+        "text": "bonfyre-cms schema migrate --db \"$BONFYRE_CMS_DB\" --schemas \"$state/schemas\" >/dev/null 2>&1 || true"
+      },
+      {
+        "file": "deploy/systemd/bonfyre-address-worker.service",
+        "line": 14,
+        "text": "ExecStart=/usr/local/bin/bonfyre-external-estate address-worker --db ${BONFYRE_ADDRESS_INDEX} --cms-db ${BONFYRE_CMS_DB} --target-db ${BONFYRE_TARGET_DB} --provider-db ${BONFYRE_PROVIDER_DB} --model-db ${BONFYRE_MODEL_DB} --protocols ${BONFYRE_PROTOCOLS_JSONL} --mcp-url ${BONFYRE_MCP_URL} --mcp-token-file ${BONFYRE_MCP_TOKEN_FILE} --delta-dir ${BONFYRE_FACT_DELTAS} --lowerer-dir ${BONFYRE_LOWERER_INBOX} --physical-db ${BONFYRE_PHYSICAL_REGISTRY_DB} --physical-compiler ${BONFYRE_PHYSICAL_COMPILER"
+      },
+      {
+        "file": "deploy/systemd/bonfyre-surface-scene-worker.service",
+        "line": 12,
+        "text": "ExecStart=/usr/local/bin/bonfyre-surface-scene drain --db ${BONFYRE_CMS_DB} --lowerer-dir ${BONFYRE_LOWERER_INBOX} --actor-scope public --limit 256"
+      },
+      {
+        "file": "deploy/systemd/bonfyre-lowering-consumers.service",
+        "line": 13,
+        "text": "ExecStart=/usr/local/bin/bonfyre-lowering-workers drain --db ${BONFYRE_LOWERING_WORKER_DB} --lowerer-dir ${BONFYRE_LOWERER_INBOX} --owner-contract-image ${BONFYRE_OWNER_CONTRACT_IMAGE} --mcp-closure ${BONFYRE_MCP_CLOSURE_SNAPSHOT} --protocols ${BONFYRE_PROTOCOLS_JSONL} --cms ${BONFYRE_CMS_DB} --external-estate ${BONFYRE_EXTERNAL_ESTATE_DB} --foreign-receipts ${BONFYRE_FOREIGN_RECEIPTS} --demand-dir ${BONFYRE_FOREIGN_OBSERVATION_DEMANDS} --limit 256"
+      },
+      {
+        "file": "deploy/systemd/bonfyre-oauth-mcp.service",
+        "line": 27,
+        "text": "Environment=BONFYRE_CMS_DB=/var/lib/bonfyre/cms/bonfyre_cms.db"
+      },
+      {
+        "file": "deploy/launchd/com.bonfyre.public-web-address.plist",
+        "line": 18,
+        "text": "<key>BONFYRE_CMS_DB</key><string>/Users/nickgonzales/.bonfyre/estate-local/cms.db</string>"
+      },
+      {
+        "file": "mcp/bonfyre_mcp_gateway.py",
+        "line": 1191,
+        "text": "cms = os.environ.get(\"BONFYRE_CMS_DB\", \"/var/lib/bonfyre/cms/bonfyre_cms.db\")"
+      },
+      {
+        "file": "docs/state-coordinates.md",
+        "line": 53,
+        "text": "deployment declares `BONFYRE_CMS_DB` and `BONFYRE_CMS_SCHEMAS`; the binary"
+      },
+      {
+        "file": "integrations/mcp/bonfyre_recursive_gateway.py",
+        "line": 591,
+        "text": "# here, against BONFYRE_CMS_DB."
+      },
+      {
+        "file": "integrations/mcp/bonfyre_oauth_gateway.mjs",
+        "line": 56,
+        "text": "const cmsDb = process.env.BONFYRE_CMS_DB || '/var/lib/bonfyre/cms/bonfyre_cms.db';"
+      },
+      {
+        "file": "integrations/mcp/tests/oauth_institution_slice_test.sh",
+        "line": 50,
+        "text": "BONFYRE_CMS_BINARY=\"$cms\" BONFYRE_CMS_DB=\"$cmsdb\" BONFYRE_CMS_SCHEMAS=\"$cms_schemas\" BONFYRE_FOREIGN_ROOT=\"$foreign_root\" \\"
+      },
+      {
+        "file": "components/BonfyreProject/tests/credentialed_reheat_test.sh",
+        "line": 53,
+        "text": "env = dict(os.environ, BONFYRE_CMS_DB=cmsdb, BONFYRE_FOREIGN_RECEIPTS=foreign + \"/receipts\", BONFYRE_FOREIGN_BODIES=foreign + \"/bodies\","
+      },
+      {
+        "file": "components/BonfyreProject/tests/discovery_set_test.sh",
+        "line": 63,
+        "text": "run() { BONFYRE_CMS_DB=\"$cms\" BONFYRE_SOURCE_FRONTIER_DB=\"$frontier\" \"$bin\" \"$@\"; }"
+      },
+      {
+        "file": "components/BonfyreProject/tests/missing_cells_test.sh",
+        "line": 55,
+        "text": "run() { BONFYRE_CMS_DB=\"$cms\" BONFYRE_ACTOR=\"${ACTOR-nick}\" \"$bin\" \"$@\"; }"
+      },
+      {
+        "file": "components/BonfyreProject/tests/foreign_release_projection_test.sh",
+        "line": 61,
+        "text": "BONFYRE_CMS_DB=\"$cms\" \\"
+      },
+      {
+        "file": "components/BonfyreProject/tests/reheat_schedule_test.sh",
+        "line": 60,
+        "text": "BONFYRE_CMS_DB=\"$tmp/cms.db\" BONFYRE_FOREIGN_ROOT=\"$tmp/foreign\" BONFYRE_SOURCE_FRONTIER_DB=\"$tmp/ledger.db\" \\"
+      },
+      {
+        "file": "components/BonfyreProject/tests/destination_release_test.sh",
+        "line": 82,
+        "text": "BONFYRE_CMS_DB=\"$cms\" BONFYRE_SOURCE_FRONTIER_DB=\"$frontier\" \\"
+      },
+      {
+        "file": "components/BonfyreProject/src/main.c",
+        "line": 1086,
+        "text": "const char *cms = getenv(\"BONFYRE_CMS_DB\");"
+      },
+      {
+        "file": "architecture/check_cms_contract.py",
+        "line": 26,
+        "text": "DB = os.environ.get(\"BONFYRE_CMS_DB\", \"/var/lib/bonfyre/cms/bonfyre_cms.db\")"
+      },
+      {
+        "file": "architecture/tests/chain_portfolio_test.sh",
+        "line": 71,
+        "text": "BONFYRE_CMS_DB=\"$cms\" BONFYRE_HVM4=\"$hvm\" \\"
+      },
+      {
+        "file": "architecture/tests/plane_rank_reduce_test.sh",
+        "line": 87,
+        "text": "BONFYRE_CMS_DB=\"$cms\" BONFYRE_HVM4=\"$repo/vendor/hvm4/src/hvm4\" \\"
+      },
+      {
+        "file": "scripts/export_static_estate.sh",
+        "line": 29,
+        "text": "CMS=\"${BONFYRE_CMS_DB:-}\""
+      },
+      {
+        "file": "scripts/resource_admission.py",
+        "line": 38,
+        "text": "CMS_DB = os.environ.get(\"BONFYRE_CMS_DB\", \"/var/lib/bonfyre/cms/bonfyre_cms.db\")"
+      },
+      {
+        "file": "scripts/content_screen.py",
+        "line": 42,
+        "text": "DB = os.environ.get(\"BONFYRE_CMS_DB\", \"/var/lib/bonfyre/cms/bonfyre_cms.db\")"
+      },
+      {
+        "file": "scripts/capital_transform.py",
+        "line": 61,
+        "text": "CMS_DB = os.environ.get(\"BONFYRE_CMS_DB\", \"/var/lib/bonfyre/cms/bonfyre_cms.db\")"
+      },
+      {
+        "file": "scripts/provider_trial.py",
+        "line": 51,
+        "text": "CMS_DB = os.environ.get(\"BONFYRE_CMS_DB\", \"/var/lib/bonfyre/cms/bonfyre_cms.db\")"
+      },
+      {
+        "file": "scripts/publish_estate.sh",
+        "line": 71,
+        "text": "export BONFYRE_CMS_DB=\"$ESTATE/cms.db\""
+      },
+      {
+        "file": "scripts/probe_continuously.sh",
+        "line": 61,
+        "text": "export BONFYRE_CMS_DB=\"$ESTATE/cms.db\""
+      },
+      {
+        "file": "scripts/representation_trial.py",
+        "line": 41,
+        "text": "CMS_DB = os.environ.get(\"BONFYRE_CMS_DB\", \"/var/lib/bonfyre/cms/bonfyre_cms.db\")"
+      },
+      {
+        "file": "scripts/residual_to_work.py",
+        "line": 55,
+        "text": "`BONFYRE_CMS_DB=... python3 scripts/funding_closure.py --json` -- and this"
+      },
+      {
+        "file": "scripts/bonfyre_automate.py",
+        "line": 93,
+        "text": "env = dict(os.environ, BONFYRE_CMS_DB=args.cms, BONFYRE_FOREIGN_ROOT=args.foreign)"
+      },
+      {
+        "file": "scripts/funding_frontier.py",
+        "line": 38,
+        "text": "CMS_DB = os.environ.get(\"BONFYRE_CMS_DB\", \"/var/lib/bonfyre/cms/bonfyre_cms.db\")"
+      },
+      {
+        "file": "scripts/publish_catalog.sh",
+        "line": 184,
+        "text": "BONFYRE_CMS_DB=\"$ESTATE/cms.db\" BONFYRE_FOREIGN_ROOT=\"$ESTATE/foreign\" \\"
+      },
+      {
+        "file": "scripts/witness_mutation.py",
+        "line": 182,
+        "text": "env = {**os.environ, \"BONFYRE_CMS_DB\": str(work)}"
+      },
+      {
+        "file": "scripts/restore_estate.sh",
+        "line": 111,
+        "text": "BONFYRE_CMS_DB=/var/lib/bonfyre/cms/bonfyre_cms.db"
+      },
+      {
+        "file": "scripts/closure_algebra.py",
+        "line": 44,
+        "text": "CMS_DB = os.environ.get(\"BONFYRE_CMS_DB\", \"/var/lib/bonfyre/cms/bonfyre_cms.db\")"
+      },
+      {
+        "file": "scripts/pure_job.py",
+        "line": 42,
+        "text": "CMS_DB = os.environ.get(\"BONFYRE_CMS_DB\", \"/var/lib/bonfyre/cms/bonfyre_cms.db\")"
+      },
+      {
+        "file": "scripts/admitted_frontier.py",
+        "line": 33,
+        "text": "CMS_DB = os.environ.get(\"BONFYRE_CMS_DB\", \"/var/lib/bonfyre/cms/bonfyre_cms.db\")"
+      },
+      {
+        "file": "scripts/gym_run.py",
+        "line": 40,
+        "text": "CMS_DB = os.environ.get(\"BONFYRE_CMS_DB\", \"/var/lib/bonfyre/cms/bonfyre_cms.db\")"
+      },
+      {
+        "file": "scripts/reference_check.py",
+        "line": 24,
+        "text": "DEFAULT_DB = os.environ.get(\"BONFYRE_CMS_DB\", \"/var/lib/bonfyre/cms/bonfyre_cms.db\")"
+      },
+      {
+        "file": "scripts/funding_closure.py",
+        "line": 35,
+        "text": "CMS_DB = os.environ.get(\"BONFYRE_CMS_DB\", \"/var/lib/bonfyre/cms/bonfyre_cms.db\")"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/pagecomposition-surface-runtime-20260922T070804Z/source/cmd/BonfyreWebAddress/src/main.c",
+        "line": 136,
+        "text": "const char *cms = getenv(\"BONFYRE_CMS_DB\");"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/connection-workgraph-20260921T045343Z/scripts/bonfyre_automate.py",
+        "line": 82,
+        "text": "env = dict(os.environ, BONFYRE_CMS_DB=args.cms, BONFYRE_FOREIGN_ROOT=args.foreign)"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/demandbook-foreigntwin-backfill-20260921T070040Z/scripts/bonfyre_automate.py",
+        "line": 89,
+        "text": "env = dict(os.environ, BONFYRE_CMS_DB=args.cms, BONFYRE_FOREIGN_ROOT=args.foreign)"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/pagecomposition-surface-runtime-20260922T071231Z/source/cmd/BonfyreWebAddress/src/main.c",
+        "line": 136,
+        "text": "const char *cms = getenv(\"BONFYRE_CMS_DB\");"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/connection-workgraph-20260921T050214Z/scripts/bonfyre_automate.py",
+        "line": 82,
+        "text": "env = dict(os.environ, BONFYRE_CMS_DB=args.cms, BONFYRE_FOREIGN_ROOT=args.foreign)"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/pagecomposition-surface-runtime-20260922T070332Z/source/cmd/BonfyreWebAddress/src/main.c",
+        "line": 136,
+        "text": "const char *cms = getenv(\"BONFYRE_CMS_DB\");"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/activation-authority-finalize-20260922T032646Z/source/components/BonfyreProject/src/main.c",
+        "line": 1074,
+        "text": "const char *cms = getenv(\"BONFYRE_CMS_DB\");"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/connection-workgraph-20260921T050901Z/scripts/bonfyre_automate.py",
+        "line": 82,
+        "text": "env = dict(os.environ, BONFYRE_CMS_DB=args.cms, BONFYRE_FOREIGN_ROOT=args.foreign)"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/supplymatch-resource-activation-20260921T072820Z/source/components/BonfyreProject/src/main.c",
+        "line": 792,
+        "text": "const char *cms = getenv(\"BONFYRE_CMS_DB\");"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/supplymatch-resource-activation-20260921T072820Z/source/scripts/bonfyre_automate.py",
+        "line": 89,
+        "text": "env = dict(os.environ, BONFYRE_CMS_DB=args.cms, BONFYRE_FOREIGN_ROOT=args.foreign)"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/demandbook-connection-seam-20260921T065524Z/scripts/bonfyre_automate.py",
+        "line": 89,
+        "text": "env = dict(os.environ, BONFYRE_CMS_DB=args.cms, BONFYRE_FOREIGN_ROOT=args.foreign)"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/connection-workgraph-20260921T050540Z/scripts/bonfyre_automate.py",
+        "line": 82,
+        "text": "env = dict(os.environ, BONFYRE_CMS_DB=args.cms, BONFYRE_FOREIGN_ROOT=args.foreign)"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/connection-workgraph-20260921T051152Z/scripts/bonfyre_automate.py",
+        "line": 82,
+        "text": "env = dict(os.environ, BONFYRE_CMS_DB=args.cms, BONFYRE_FOREIGN_ROOT=args.foreign)"
+      }
+    ],
+    "BONFYRE_ITEM_ARCHIVE_DB": [
+      {
+        "file": "cmd/BonfyreWebAddress/tests/page_events_test.sh",
+        "line": 82,
+        "text": "BONFYRE_ITEM_ARCHIVE_DB=\"$tmp/items.db\" \"$web\" archive-items --items \"$tmp/items.jsonl\" >\"$tmp/archive.json\""
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/page_events_test.sh",
+        "line": 86,
+        "text": "BONFYRE_LATENT_ATLAS_DB=\"$tmp/atlas.db\" BONFYRE_ITEM_ARCHIVE_DB=\"$tmp/items.db\" \\"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/page_kin_test.sh",
+        "line": 56,
+        "text": "BONFYRE_ITEM_ARCHIVE_DB=\"$tmp/items.db\" \"$web\" archive-items --items \"$tmp/items.jsonl\" >/dev/null"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/page_kin_test.sh",
+        "line": 130,
+        "text": "BONFYRE_ITEM_ARCHIVE_DB=\"$tmp/items.db\" BONFYRE_CMS_DB=\"$tmp/cms.db\" BONFYRE_FOREIGN_ROOT=\"$tmp/foreign\" \\"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/src/main.c",
+        "line": 8590,
+        "text": "const char *archive = getenv(\"BONFYRE_ITEM_ARCHIVE_DB\");"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/src/main.c",
+        "line": 9797,
+        "text": "const char *archive = getenv(\"BONFYRE_ITEM_ARCHIVE_DB\");"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/src/main.c",
+        "line": 9843,
+        "text": "if (channel[0]) shown += bf_source_depth_channel(stdout, frontier, channel, route, getenv(\"BONFYRE_ITEM_ARCHIVE_DB\"));"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/src/main.c",
+        "line": 10078,
+        "text": "getenv(\"BONFYRE_ITEM_ARCHIVE_DB\"), clock);"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/src/main.c",
+        "line": 10621,
+        "text": "const char *path = getenv(\"BONFYRE_ITEM_ARCHIVE_DB\");"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/src/main.c",
+        "line": 30405,
+        "text": "if (!archive) { fprintf(stderr, \"archive-items: BONFYRE_ITEM_ARCHIVE_DB is not set\\n\"); if (f && f != stdin) fclose(f); return 2; }"
+      },
+      {
+        "file": "deploy/fly/Dockerfile",
+        "line": 62,
+        "text": "BONFYRE_ITEM_ARCHIVE_DB=/var/lib/bonfyre/archive/items.db \\"
+      },
+      {
+        "file": "deploy/fly/start-estate.sh",
+        "line": 36,
+        "text": "for db in \"$BONFYRE_CMS_DB\" \"$BONFYRE_SOURCE_FRONTIER_DB\" \"$BONFYRE_ITEM_ARCHIVE_DB\" \"$BONFYRE_PRICES_DB\"; do"
+      },
+      {
+        "file": "components/BonfyreProject/tests/foreign_release_projection_test.sh",
+        "line": 63,
+        "text": "BONFYRE_ITEM_ARCHIVE_DB=\"$items\" \\"
+      },
+      {
+        "file": "components/BonfyreProject/tests/foreign_release_projection_test.sh",
+        "line": 71,
+        "text": "BONFYRE_ITEM_ARCHIVE_DB=\"$items\" \\"
+      },
+      {
+        "file": "components/BonfyreProject/tests/foreign_release_projection_test.sh",
+        "line": 80,
+        "text": "BONFYRE_ITEM_ARCHIVE_DB=\"$items\" \\"
+      },
+      {
+        "file": "components/BonfyreProject/tests/foreign_release_projection_test.sh",
+        "line": 92,
+        "text": "BONFYRE_ITEM_ARCHIVE_DB=\"$items\" \\"
+      },
+      {
+        "file": "components/BonfyreProject/tests/foreign_release_projection_test.sh",
+        "line": 98,
+        "text": "BONFYRE_ITEM_ARCHIVE_DB=\"$items\" \\"
+      },
+      {
+        "file": "components/BonfyreProject/tests/destination_release_test.sh",
+        "line": 83,
+        "text": "BONFYRE_ITEM_ARCHIVE_DB=\"$items\" BONFYRE_PRICES_DB=\"$prices\" \\"
+      },
+      {
+        "file": "components/BonfyreProject/tests/destination_release_test.sh",
+        "line": 188,
+        "text": "BONFYRE_ITEM_ARCHIVE_DB=\"$items\" BONFYRE_PRICES_DB=\"$prices\" \\"
+      },
+      {
+        "file": "components/BonfyreProject/src/main.c",
+        "line": 1576,
+        "text": "const char *items_path = getenv(\"BONFYRE_ITEM_ARCHIVE_DB\");"
+      },
+      {
+        "file": "components/BonfyreProject/src/main.c",
+        "line": 3536,
+        "text": "const char *items_path = getenv(\"BONFYRE_ITEM_ARCHIVE_DB\");"
+      },
+      {
+        "file": "components/BonfyreProject/src/main.c",
+        "line": 5191,
+        "text": "getenv(\"BONFYRE_ITEM_ARCHIVE_DB\"), getenv(\"BONFYRE_PRICES_DB\"), write);"
+      },
+      {
+        "file": "components/BonfyreProject/src/main.c",
+        "line": 5200,
+        "text": "return release_deliver(getenv(\"BONFYRE_CMS_DB\"), getenv(\"BONFYRE_ITEM_ARCHIVE_DB\"),"
+      },
+      {
+        "file": "components/BonfyreProject/src/main.c",
+        "line": 5208,
+        "text": "getenv(\"BONFYRE_ITEM_ARCHIVE_DB\"), write);"
+      },
+      {
+        "file": "scripts/export_static_estate.sh",
+        "line": 27,
+        "text": "ARCHIVE=\"${BONFYRE_ITEM_ARCHIVE_DB:-}\""
+      },
+      {
+        "file": "scripts/publish_estate.sh",
+        "line": 74,
+        "text": "export BONFYRE_ITEM_ARCHIVE_DB=\"$ESTATE/items.db\""
+      },
+      {
+        "file": "scripts/bonfyre_automate.py",
+        "line": 302,
+        "text": "env_extra={\"BONFYRE_ITEM_ARCHIVE_DB\": args.archive_db})"
+      },
+      {
+        "file": "scripts/bonfyre_automate.py",
+        "line": 512,
+        "text": "\"BONFYRE_ITEM_ARCHIVE_DB\": args.archive_db},"
+      },
+      {
+        "file": "scripts/publish_catalog.sh",
+        "line": 185,
+        "text": "BONFYRE_SOURCE_FRONTIER_DB=\"$ESTATE/frontier.db\" BONFYRE_ITEM_ARCHIVE_DB=\"$ITEMS\" \\"
+      },
+      {
+        "file": "scripts/restore_estate.sh",
+        "line": 114,
+        "text": "BONFYRE_ITEM_ARCHIVE_DB=/var/lib/bonfyre/archive/items.db"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/pagecomposition-surface-runtime-20260922T070804Z/source/cmd/BonfyreWebAddress/src/main.c",
+        "line": 8851,
+        "text": "const char *archive = getenv(\"BONFYRE_ITEM_ARCHIVE_DB\");"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/pagecomposition-surface-runtime-20260922T070804Z/source/cmd/BonfyreWebAddress/src/main.c",
+        "line": 8887,
+        "text": "if (channel[0]) shown += bf_source_depth_channel(stdout, frontier, channel, route, getenv(\"BONFYRE_ITEM_ARCHIVE_DB\"));"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/pagecomposition-surface-runtime-20260922T070804Z/source/cmd/BonfyreWebAddress/src/main.c",
+        "line": 9119,
+        "text": "getenv(\"BONFYRE_ITEM_ARCHIVE_DB\"), clock);"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/pagecomposition-surface-runtime-20260922T070804Z/source/cmd/BonfyreWebAddress/src/main.c",
+        "line": 9637,
+        "text": "const char *path = getenv(\"BONFYRE_ITEM_ARCHIVE_DB\");"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/pagecomposition-surface-runtime-20260922T070804Z/source/cmd/BonfyreWebAddress/src/main.c",
+        "line": 25001,
+        "text": "if (!archive) { fprintf(stderr, \"archive-items: BONFYRE_ITEM_ARCHIVE_DB is not set\\n\"); if (f && f != stdin) fclose(f); return 2; }"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/connection-workgraph-20260921T045343Z/scripts/bonfyre_automate.py",
+        "line": 179,
+        "text": "env_extra={\"BONFYRE_ITEM_ARCHIVE_DB\": args.archive_db})"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/connection-workgraph-20260921T045343Z/scripts/bonfyre_automate.py",
+        "line": 347,
+        "text": "\"BONFYRE_ITEM_ARCHIVE_DB\": args.archive_db},"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/demandbook-foreigntwin-backfill-20260921T070040Z/scripts/bonfyre_automate.py",
+        "line": 274,
+        "text": "env_extra={\"BONFYRE_ITEM_ARCHIVE_DB\": args.archive_db})"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/demandbook-foreigntwin-backfill-20260921T070040Z/scripts/bonfyre_automate.py",
+        "line": 442,
+        "text": "\"BONFYRE_ITEM_ARCHIVE_DB\": args.archive_db},"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/pagecomposition-surface-runtime-20260922T071231Z/source/cmd/BonfyreWebAddress/src/main.c",
+        "line": 8851,
+        "text": "const char *archive = getenv(\"BONFYRE_ITEM_ARCHIVE_DB\");"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/connection-workgraph-20260921T050214Z/scripts/bonfyre_automate.py",
+        "line": 179,
+        "text": "env_extra={\"BONFYRE_ITEM_ARCHIVE_DB\": args.archive_db})"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/pagecomposition-surface-runtime-20260922T070332Z/source/cmd/BonfyreWebAddress/src/main.c",
+        "line": 8851,
+        "text": "const char *archive = getenv(\"BONFYRE_ITEM_ARCHIVE_DB\");"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/connection-workgraph-20260921T050901Z/scripts/bonfyre_automate.py",
+        "line": 179,
+        "text": "env_extra={\"BONFYRE_ITEM_ARCHIVE_DB\": args.archive_db})"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/supplymatch-resource-activation-20260921T072820Z/source/scripts/bonfyre_automate.py",
+        "line": 274,
+        "text": "env_extra={\"BONFYRE_ITEM_ARCHIVE_DB\": args.archive_db})"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/demandbook-connection-seam-20260921T065524Z/scripts/bonfyre_automate.py",
+        "line": 274,
+        "text": "env_extra={\"BONFYRE_ITEM_ARCHIVE_DB\": args.archive_db})"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/connection-workgraph-20260921T050540Z/scripts/bonfyre_automate.py",
+        "line": 179,
+        "text": "env_extra={\"BONFYRE_ITEM_ARCHIVE_DB\": args.archive_db})"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/connection-workgraph-20260921T051152Z/scripts/bonfyre_automate.py",
+        "line": 179,
+        "text": "env_extra={\"BONFYRE_ITEM_ARCHIVE_DB\": args.archive_db})"
+      }
+    ],
+    "BONFYRE_SOURCE_FRONTIER_DB": [
+      {
+        "file": "cmd/BonfyreWebAddress/tests/page_channels_test.sh",
+        "line": 70,
+        "text": "BONFYRE_SOURCE_FRONTIER_DB=\"$tmp/frontier.db\" BONFYRE_CMS_DB=\"$tmp/cms.db\" BONFYRE_FOREIGN_ROOT=\"$tmp/foreign\" \\"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/tests/household_plane_test.sh",
+        "line": 63,
+        "text": "BONFYRE_AUTH_BINARY=\"$auth\" BONFYRE_CMS_DB=\"$cdb\" BONFYRE_SOURCE_FRONTIER_DB=\"$fdb\" \\"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/src/main.c",
+        "line": 8110,
+        "text": "const char *frontier = getenv(\"BONFYRE_SOURCE_FRONTIER_DB\");"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/src/main.c",
+        "line": 8591,
+        "text": "const char *frontier = getenv(\"BONFYRE_SOURCE_FRONTIER_DB\");"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/src/main.c",
+        "line": 8721,
+        "text": "const char *path = getenv(\"BONFYRE_SOURCE_FRONTIER_DB\");"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/src/main.c",
+        "line": 9791,
+        "text": "const char *frontier = getenv(\"BONFYRE_SOURCE_FRONTIER_DB\");"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/src/main.c",
+        "line": 10077,
+        "text": "public_projection_fingerprint(fingerprint, getenv(\"BONFYRE_SOURCE_FRONTIER_DB\"),"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/src/main.c",
+        "line": 18046,
+        "text": "const char *path = getenv(\"BONFYRE_SOURCE_FRONTIER_DB\");"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/src/main.c",
+        "line": 22413,
+        "text": "const char *fpath = getenv(\"BONFYRE_SOURCE_FRONTIER_DB\");"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/src/main.c",
+        "line": 22798,
+        "text": "const char *fpath = getenv(\"BONFYRE_SOURCE_FRONTIER_DB\");"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/src/main.c",
+        "line": 23480,
+        "text": "const char *fpath = getenv(\"BONFYRE_SOURCE_FRONTIER_DB\");"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/src/main.c",
+        "line": 23747,
+        "text": "const char *fpath = getenv(\"BONFYRE_SOURCE_FRONTIER_DB\");"
+      },
+      {
+        "file": "deploy/fly/Dockerfile",
+        "line": 61,
+        "text": "BONFYRE_SOURCE_FRONTIER_DB=/var/lib/bonfyre/frontier/source_frontier.db \\"
+      },
+      {
+        "file": "deploy/fly/start-estate.sh",
+        "line": 36,
+        "text": "for db in \"$BONFYRE_CMS_DB\" \"$BONFYRE_SOURCE_FRONTIER_DB\" \"$BONFYRE_ITEM_ARCHIVE_DB\" \"$BONFYRE_PRICES_DB\"; do"
+      },
+      {
+        "file": "deploy/launchd/com.bonfyre.public-web-address.plist",
+        "line": 19,
+        "text": "<key>BONFYRE_SOURCE_FRONTIER_DB</key><string>/Users/nickgonzales/.bonfyre/estate-local/frontier.db</string>"
+      },
+      {
+        "file": "components/BonfyreProject/tests/discovery_set_test.sh",
+        "line": 63,
+        "text": "run() { BONFYRE_CMS_DB=\"$cms\" BONFYRE_SOURCE_FRONTIER_DB=\"$frontier\" \"$bin\" \"$@\"; }"
+      },
+      {
+        "file": "components/BonfyreProject/tests/foreign_release_projection_test.sh",
+        "line": 62,
+        "text": "BONFYRE_SOURCE_FRONTIER_DB=\"$frontier\" \\"
+      },
+      {
+        "file": "components/BonfyreProject/tests/foreign_release_projection_test.sh",
+        "line": 70,
+        "text": "BONFYRE_SOURCE_FRONTIER_DB=\"$frontier\" \\"
+      },
+      {
+        "file": "components/BonfyreProject/tests/foreign_release_projection_test.sh",
+        "line": 79,
+        "text": "BONFYRE_SOURCE_FRONTIER_DB=\"$frontier\" \\"
+      },
+      {
+        "file": "components/BonfyreProject/tests/foreign_release_projection_test.sh",
+        "line": 91,
+        "text": "BONFYRE_SOURCE_FRONTIER_DB=\"$frontier\" \\"
+      },
+      {
+        "file": "components/BonfyreProject/tests/foreign_release_projection_test.sh",
+        "line": 97,
+        "text": "BONFYRE_SOURCE_FRONTIER_DB=\"$frontier\" \\"
+      },
+      {
+        "file": "components/BonfyreProject/tests/reheat_schedule_test.sh",
+        "line": 60,
+        "text": "BONFYRE_CMS_DB=\"$tmp/cms.db\" BONFYRE_FOREIGN_ROOT=\"$tmp/foreign\" BONFYRE_SOURCE_FRONTIER_DB=\"$tmp/ledger.db\" \\"
+      },
+      {
+        "file": "components/BonfyreProject/tests/destination_release_test.sh",
+        "line": 82,
+        "text": "BONFYRE_CMS_DB=\"$cms\" BONFYRE_SOURCE_FRONTIER_DB=\"$frontier\" \\"
+      },
+      {
+        "file": "components/BonfyreProject/tests/destination_release_test.sh",
+        "line": 187,
+        "text": "BONFYRE_CMS_DB=\"$cms\" BONFYRE_SOURCE_FRONTIER_DB=\"$frontier\" \\"
+      },
+      {
+        "file": "components/BonfyreProject/src/main.c",
+        "line": 1575,
+        "text": "const char *frontier_path = getenv(\"BONFYRE_SOURCE_FRONTIER_DB\");"
+      },
+      {
+        "file": "components/BonfyreProject/src/main.c",
+        "line": 3535,
+        "text": "const char *frontier_path = getenv(\"BONFYRE_SOURCE_FRONTIER_DB\");"
+      },
+      {
+        "file": "components/BonfyreProject/src/main.c",
+        "line": 4601,
+        "text": "const char *path = getenv(\"BONFYRE_SOURCE_FRONTIER_DB\");"
+      },
+      {
+        "file": "components/BonfyreProject/src/main.c",
+        "line": 5181,
+        "text": "return discovery_run(getenv(\"BONFYRE_CMS_DB\"), getenv(\"BONFYRE_SOURCE_FRONTIER_DB\"),"
+      },
+      {
+        "file": "components/BonfyreProject/src/main.c",
+        "line": 5190,
+        "text": "return release_impact(getenv(\"BONFYRE_CMS_DB\"), getenv(\"BONFYRE_SOURCE_FRONTIER_DB\"),"
+      },
+      {
+        "file": "components/BonfyreProject/src/main.c",
+        "line": 5201,
+        "text": "getenv(\"BONFYRE_SOURCE_FRONTIER_DB\"), getenv(\"BONFYRE_PRICES_DB\"),"
+      },
+      {
+        "file": "components/BonfyreProject/src/main.c",
+        "line": 5207,
+        "text": "getenv(\"BONFYRE_SOURCE_FRONTIER_DB\"),"
+      },
+      {
+        "file": "scripts/export_static_estate.sh",
+        "line": 28,
+        "text": "FRONTIER=\"${BONFYRE_SOURCE_FRONTIER_DB:-}\""
+      },
+      {
+        "file": "scripts/publish_estate.sh",
+        "line": 73,
+        "text": "export BONFYRE_SOURCE_FRONTIER_DB=\"$ESTATE/frontier.db\""
+      },
+      {
+        "file": "scripts/bonfyre_automate.py",
+        "line": 435,
+        "text": "text=True, env=dict(env, BONFYRE_SOURCE_FRONTIER_DB=args.frontier_db), timeout=1800)"
+      },
+      {
+        "file": "scripts/bonfyre_automate.py",
+        "line": 511,
+        "text": "env_extra={\"BONFYRE_SOURCE_FRONTIER_DB\": args.frontier_db,"
+      },
+      {
+        "file": "scripts/publish_catalog.sh",
+        "line": 185,
+        "text": "BONFYRE_SOURCE_FRONTIER_DB=\"$ESTATE/frontier.db\" BONFYRE_ITEM_ARCHIVE_DB=\"$ITEMS\" \\"
+      },
+      {
+        "file": "scripts/restore_estate.sh",
+        "line": 113,
+        "text": "BONFYRE_SOURCE_FRONTIER_DB=/var/lib/bonfyre/frontier/source_frontier.db"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/pagecomposition-surface-runtime-20260922T070804Z/source/cmd/BonfyreWebAddress/src/main.c",
+        "line": 7552,
+        "text": "const char *frontier = getenv(\"BONFYRE_SOURCE_FRONTIER_DB\");"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/pagecomposition-surface-runtime-20260922T070804Z/source/cmd/BonfyreWebAddress/src/main.c",
+        "line": 8101,
+        "text": "const char *path = getenv(\"BONFYRE_SOURCE_FRONTIER_DB\");"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/pagecomposition-surface-runtime-20260922T070804Z/source/cmd/BonfyreWebAddress/src/main.c",
+        "line": 8845,
+        "text": "const char *frontier = getenv(\"BONFYRE_SOURCE_FRONTIER_DB\");"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/connection-workgraph-20260921T045343Z/scripts/bonfyre_automate.py",
+        "line": 270,
+        "text": "text=True, env=dict(env, BONFYRE_SOURCE_FRONTIER_DB=args.frontier_db), timeout=1800)"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/demandbook-foreigntwin-backfill-20260921T070040Z/scripts/bonfyre_automate.py",
+        "line": 365,
+        "text": "text=True, env=dict(env, BONFYRE_SOURCE_FRONTIER_DB=args.frontier_db), timeout=1800)"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/pagecomposition-surface-runtime-20260922T071231Z/source/cmd/BonfyreWebAddress/src/main.c",
+        "line": 7552,
+        "text": "const char *frontier = getenv(\"BONFYRE_SOURCE_FRONTIER_DB\");"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/connection-workgraph-20260921T050214Z/scripts/bonfyre_automate.py",
+        "line": 270,
+        "text": "text=True, env=dict(env, BONFYRE_SOURCE_FRONTIER_DB=args.frontier_db), timeout=1800)"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/pagecomposition-surface-runtime-20260922T070332Z/source/cmd/BonfyreWebAddress/src/main.c",
+        "line": 7552,
+        "text": "const char *frontier = getenv(\"BONFYRE_SOURCE_FRONTIER_DB\");"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/activation-authority-finalize-20260922T032646Z/source/components/BonfyreProject/src/main.c",
+        "line": 2129,
+        "text": "const char *path = getenv(\"BONFYRE_SOURCE_FRONTIER_DB\");"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/connection-workgraph-20260921T050901Z/scripts/bonfyre_automate.py",
+        "line": 270,
+        "text": "text=True, env=dict(env, BONFYRE_SOURCE_FRONTIER_DB=args.frontier_db), timeout=1800)"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/supplymatch-resource-activation-20260921T072820Z/source/components/BonfyreProject/src/main.c",
+        "line": 1847,
+        "text": "const char *path = getenv(\"BONFYRE_SOURCE_FRONTIER_DB\");"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/supplymatch-resource-activation-20260921T072820Z/source/scripts/bonfyre_automate.py",
+        "line": 365,
+        "text": "text=True, env=dict(env, BONFYRE_SOURCE_FRONTIER_DB=args.frontier_db), timeout=1800)"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/demandbook-connection-seam-20260921T065524Z/scripts/bonfyre_automate.py",
+        "line": 365,
+        "text": "text=True, env=dict(env, BONFYRE_SOURCE_FRONTIER_DB=args.frontier_db), timeout=1800)"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/connection-workgraph-20260921T050540Z/scripts/bonfyre_automate.py",
+        "line": 270,
+        "text": "text=True, env=dict(env, BONFYRE_SOURCE_FRONTIER_DB=args.frontier_db), timeout=1800)"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/connection-workgraph-20260921T051152Z/scripts/bonfyre_automate.py",
+        "line": 270,
+        "text": "text=True, env=dict(env, BONFYRE_SOURCE_FRONTIER_DB=args.frontier_db), timeout=1800)"
+      }
+    ],
+    "BONFYRE_SUBJECT_FABRIC_DB": [
+      {
+        "file": "cmd/BonfyreWebAddress/tests/page_programs_test.sh",
+        "line": 163,
+        "text": "BONFYRE_SUBJECT_FABRIC_DB=\"$fabric\" \\"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/src/main.c",
+        "line": 8592,
+        "text": "const char *fabric = getenv(\"BONFYRE_SUBJECT_FABRIC_DB\");"
+      },
+      {
+        "file": "cmd/BonfyreWebAddress/src/main.c",
+        "line": 8755,
+        "text": "const char *path = getenv(\"BONFYRE_SUBJECT_FABRIC_DB\");"
+      },
+      {
+        "file": "scripts/publish_estate.sh",
+        "line": 82,
+        "text": "export BONFYRE_SUBJECT_FABRIC_DB=\"$ESTATE/subject_fabric.db\""
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/pagecomposition-surface-runtime-20260922T070804Z/source/cmd/BonfyreWebAddress/src/main.c",
+        "line": 8135,
+        "text": "const char *path = getenv(\"BONFYRE_SUBJECT_FABRIC_DB\");"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/pagecomposition-surface-runtime-20260922T071231Z/source/cmd/BonfyreWebAddress/src/main.c",
+        "line": 8135,
+        "text": "const char *path = getenv(\"BONFYRE_SUBJECT_FABRIC_DB\");"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/pagecomposition-surface-runtime-20260922T070332Z/source/cmd/BonfyreWebAddress/src/main.c",
+        "line": 8135,
+        "text": "const char *path = getenv(\"BONFYRE_SUBJECT_FABRIC_DB\");"
+      }
+    ],
+    "Local Extras": [
+      {
+        "file": "cmd/BonfyreCLI/src/main.c",
+        "line": 48,
+        "text": "#define SEC_LOCAL     \"Local Extras\""
+      }
+    ],
+    "bonfyre-estate": [
+      {
+        "file": "cmd/BonfyreWebAddress/src/main.c",
+        "line": 29501,
+        "text": "printf(\"{\\\"version\\\":\\\"bonfyre-estate-v1\\\",\\\"hosts\\\":[\");"
+      },
+      {
+        "file": ".bonfyre/run8/convergence/deletion-proofs/dcc4c2dc90ab6872836a.json",
+        "line": 8,
+        "text": "\"path\": \"/Users/nickgonzales/Downloads/bonfyre-estate-payload-audit.sqlite3-wal\","
+      },
+      {
+        "file": ".bonfyre/run8/convergence/deletion-proofs/13184fb9c80936ac40d6.json",
+        "line": 8,
+        "text": "\"path\": \"/Users/nickgonzales/Downloads/bonfyre-estate-payload-audit-v2.sqlite3-shm\","
+      },
+      {
+        "file": ".bonfyre/run8/convergence/deletion-proofs/f840e960514f64446732.json",
+        "line": 8,
+        "text": "\"path\": \"/Users/nickgonzales/Downloads/bonfyre-estate-payload-audit.sqlite3\","
+      },
+      {
+        "file": ".bonfyre/run8/convergence/deletion-proofs/4c72c9f651492e0fbd59.json",
+        "line": 8,
+        "text": "\"path\": \"/Users/nickgonzales/Downloads/bonfyre-estate-payload-audit.log\","
+      },
+      {
+        "file": ".bonfyre/run8/convergence/deletion-proofs/b266018b2f5600354328.json",
+        "line": 8,
+        "text": "\"path\": \"/Users/nickgonzales/Downloads/bonfyre-estate-payload-audit-v2.sqlite3\","
+      },
+      {
+        "file": ".bonfyre/run8/convergence/deletion-proofs/3d8fb1a4a06feafab8b3.json",
+        "line": 8,
+        "text": "\"path\": \"/Users/nickgonzales/Downloads/bonfyre-estate-payload-audit-v2.report.json\","
+      },
+      {
+        "file": ".bonfyre/run8/convergence/deletion-proofs/2c380b085daa3f4ecba7.json",
+        "line": 8,
+        "text": "\"path\": \"/Users/nickgonzales/Downloads/bonfyre-estate-payload-audit-v2.log\","
+      },
+      {
+        "file": ".bonfyre/run8/convergence/deletion-proofs/3f470f2ff3a2aa8a9863.json",
+        "line": 8,
+        "text": "\"path\": \"/Users/nickgonzales/Downloads/bonfyre-estate-payload-audit.sqlite3-shm\","
+      },
+      {
+        "file": ".bonfyre/run8/convergence/deletion-proofs/8a153489417dfb589750.json",
+        "line": 8,
+        "text": "\"path\": \"/Users/nickgonzales/Downloads/bonfyre-estate-payload-audit-v2.sqlite3-wal\","
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/pagecomposition-surface-runtime-20260922T070804Z/source/cmd/BonfyreWebAddress/src/main.c",
+        "line": 24144,
+        "text": "printf(\"{\\\"version\\\":\\\"bonfyre-estate-v1\\\",\\\"hosts\\\":[\");"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/pagecomposition-surface-runtime-20260922T071231Z/source/cmd/BonfyreWebAddress/src/main.c",
+        "line": 24144,
+        "text": "printf(\"{\\\"version\\\":\\\"bonfyre-estate-v1\\\",\\\"hosts\\\":[\");"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/pagecomposition-surface-runtime-20260922T070332Z/source/cmd/BonfyreWebAddress/src/main.c",
+        "line": 24144,
+        "text": "printf(\"{\\\"version\\\":\\\"bonfyre-estate-v1\\\",\\\"hosts\\\":[\");"
+      }
+    ],
+    "estate-local": [
+      {
+        "file": ".bonfyre-spatial-oauth-closeout.json",
+        "line": 7,
+        "text": "\"estate\": \"/Users/nickgonzales/.bonfyre/estate-local\","
+      },
+      {
+        "file": "deploy/launchd/com.bonfyre.public-web-address.plist",
+        "line": 8,
+        "text": "<string>--db</string><string>/Users/nickgonzales/.bonfyre/estate-local/matrix.db</string>"
+      },
+      {
+        "file": "deploy/launchd/com.bonfyre.public-web-address.plist",
+        "line": 9,
+        "text": "<string>--auth-db</string><string>/Users/nickgonzales/.bonfyre/estate-local/auth.db</string>"
+      },
+      {
+        "file": "deploy/launchd/com.bonfyre.public-web-address.plist",
+        "line": 18,
+        "text": "<key>BONFYRE_CMS_DB</key><string>/Users/nickgonzales/.bonfyre/estate-local/cms.db</string>"
+      },
+      {
+        "file": "deploy/launchd/com.bonfyre.public-web-address.plist",
+        "line": 19,
+        "text": "<key>BONFYRE_SOURCE_FRONTIER_DB</key><string>/Users/nickgonzales/.bonfyre/estate-local/frontier.db</string>"
+      },
+      {
+        "file": "deploy/launchd/com.bonfyre.public-web-address.plist",
+        "line": 20,
+        "text": "<key>BONFYRE_PRICES_DB</key><string>/Users/nickgonzales/.bonfyre/estate-local/prices.db</string>"
+      },
+      {
+        "file": "deploy/launchd/com.bonfyre.public-web-address.plist",
+        "line": 21,
+        "text": "<key>BONFYRE_FINANCE_DB</key><string>/Users/nickgonzales/.bonfyre/estate-local/finance.db</string>"
+      },
+      {
+        "file": "deploy/launchd/com.bonfyre.public-web-address.plist",
+        "line": 22,
+        "text": "<key>BONFYRE_COMMITMENT_DB</key><string>/Users/nickgonzales/.bonfyre/estate-local/commitments.db</string>"
+      },
+      {
+        "file": "deploy/launchd/com.bonfyre.public-web-address.plist",
+        "line": 23,
+        "text": "<key>BONFYRE_FRAPPE_SURFACE_DB</key><string>/Users/nickgonzales/.bonfyre/estate-local/frappe-surfaces.db</string>"
+      },
+      {
+        "file": "deploy/launchd/com.bonfyre.public-web-address.plist",
+        "line": 24,
+        "text": "<key>BONFYRE_FOREIGN_ROOT</key><string>/Users/nickgonzales/.bonfyre/estate-local/foreign</string>"
+      },
+      {
+        "file": "scripts/publish_market.py",
+        "line": 56,
+        "text": "ap.add_argument(\"--estate\", default=os.path.expanduser(\"~/.bonfyre/estate-local\"))"
+      },
+      {
+        "file": "scripts/build_semantic_index.sh",
+        "line": 22,
+        "text": "ESTATE=\"${BONFYRE_ESTATE:-$HOME/.bonfyre/estate-local}\""
+      },
+      {
+        "file": "scripts/publish_estate.sh",
+        "line": 21,
+        "text": "ESTATE=\"${BONFYRE_ESTATE:-$HOME/.bonfyre/estate-local}\""
+      },
+      {
+        "file": "scripts/address_every_publisher.py",
+        "line": 49,
+        "text": "ap.add_argument(\"--estate\", default=os.path.expanduser(\"~/.bonfyre/estate-local\"))"
+      },
+      {
+        "file": "scripts/project_listings.py",
+        "line": 60,
+        "text": "ap.add_argument(\"--estate\", default=os.path.expanduser(\"~/.bonfyre/estate-local\"))"
+      },
+      {
+        "file": "scripts/probe_continuously.sh",
+        "line": 19,
+        "text": "ESTATE=\"${BONFYRE_ESTATE:-$HOME/.bonfyre/estate-local}\""
+      },
+      {
+        "file": "scripts/publish_economics.py",
+        "line": 207,
+        "text": "ap.add_argument(\"--estate\", default=os.path.expanduser(\"~/.bonfyre/estate-local\"))"
+      },
+      {
+        "file": "scripts/discover_continuously.sh",
+        "line": 10,
+        "text": "ESTATE=\"${BONFYRE_ESTATE:-$HOME/.bonfyre/estate-local}\""
+      },
+      {
+        "file": "scripts/bootstrap_funding_frontier.py",
+        "line": 326,
+        "text": "parser.add_argument(\"--cms\", default=os.path.expanduser(\"~/.bonfyre/estate-local/cms.db\"))"
+      },
+      {
+        "file": "scripts/compose_member_worlds.py",
+        "line": 381,
+        "text": "ap.add_argument(\"--estate\", default=os.path.expanduser(\"~/.bonfyre/estate-local\"))"
+      },
+      {
+        "file": "scripts/compile_program_fabric.py",
+        "line": 228,
+        "text": "ap.add_argument(\"--estate\", default=os.path.expanduser(\"~/.bonfyre/estate-local\"))"
+      },
+      {
+        "file": "scripts/publish_catalog.sh",
+        "line": 18,
+        "text": "ESTATE=\"${BONFYRE_ESTATE:-$HOME/.bonfyre/estate-local}\""
+      },
+      {
+        "file": "scripts/audit_public_circulation.py",
+        "line": 57,
+        "text": "parser.add_argument(\"--estate\", default=os.path.expanduser(\"~/.bonfyre/estate-local\"))"
+      },
+      {
+        "file": "scripts/firecrawl_second_look.py",
+        "line": 63,
+        "text": "ap.add_argument(\"--estate\", default=os.path.expanduser(\"~/.bonfyre/estate-local\"))"
+      },
+      {
+        "file": "scripts/publish_edition.py",
+        "line": 320,
+        "text": "ap.add_argument(\"--estate\", default=os.path.expanduser(\"~/.bonfyre/estate-local\"))"
+      },
+      {
+        "file": "scripts/load_search_index.py",
+        "line": 15,
+        "text": "_ap.add_argument(\"--archive\", default=os.path.expanduser(\"~/.bonfyre/estate-local/items.db\"))"
+      },
+      {
+        "file": "scripts/resolve_program_sources.py",
+        "line": 75,
+        "text": "ap.add_argument(\"--estate\", default=os.path.expanduser(\"~/.bonfyre/estate-local\"))"
+      },
+      {
+        "file": "scripts/build_actor_graph.py",
+        "line": 26,
+        "text": "ap.add_argument(\"--estate\", default=os.path.expanduser(\"~/.bonfyre/estate-local\"))"
+      },
+      {
+        "file": "scripts/sweep_rates.py",
+        "line": 115,
+        "text": "ap.add_argument(\"--frontier\", default=os.path.expanduser(\"~/.bonfyre/estate-local/frontier.db\"))"
+      },
+      {
+        "file": "scripts/sweep_rates.py",
+        "line": 116,
+        "text": "ap.add_argument(\"--meter\", default=os.path.expanduser(\"~/.bonfyre/estate-local/meter.db\"))"
+      },
+      {
+        "file": "scripts/resolve_entities.py",
+        "line": 199,
+        "text": "ap.add_argument(\"--catalog\", default=os.path.expanduser(\"~/.bonfyre/estate-local/catalog\"))"
+      },
+      {
+        "file": "scripts/address_the_publishers.sh",
+        "line": 20,
+        "text": "ESTATE=\"${BONFYRE_ESTATE:-$HOME/.bonfyre/estate-local}\""
+      },
+      {
+        "file": "scripts/export_subject_hosts.sh",
+        "line": 25,
+        "text": "ESTATE=\"${BONFYRE_ESTATE:-$HOME/.bonfyre/estate-local}\""
+      },
+      {
+        "file": "scripts/qualify_continuously.sh",
+        "line": 14,
+        "text": "ESTATE=\"${BONFYRE_ESTATE:-$HOME/.bonfyre/estate-local}\""
+      },
+      {
+        "file": "scripts/file_sought_family.py",
+        "line": 29,
+        "text": "ap.add_argument(\"--estate\", default=os.path.expanduser(\"~/.bonfyre/estate-local\"))"
+      },
+      {
+        "file": "scripts/observe_prices.py",
+        "line": 26,
+        "text": "STORE = os.path.expanduser(\"~/.bonfyre/estate-local/prices.db\")"
+      },
+      {
+        "file": "scripts/project_event_sources.py",
+        "line": 23,
+        "text": "ap.add_argument(\"--estate\", default=os.path.expanduser(\"~/.bonfyre/estate-local\"))"
+      },
+      {
+        "file": "scripts/compose_publisher_hosts.py",
+        "line": 37,
+        "text": "ap.add_argument(\"--estate\", default=os.path.expanduser(\"~/.bonfyre/estate-local\"))"
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/workgraph-wiring-20260921T035651Z/scripts/qualify_continuously.sh",
+        "line": 19,
+        "text": "ESTATE=\"${BONFYRE_ESTATE:-$HOME/.bonfyre/estate-local}\""
+      },
+      {
+        "file": ".bonfyre-runtime/patch-backups/workgraph-wiring-20260921T040545Z/scripts/qualify_continuously.sh",
+        "line": 19,
+        "text": "ESTATE=\"${BONFYRE_ESTATE:-$HOME/.bonfyre/estate-local}\""
+      },
+      {
+        "file": "foundry-behavior-audit/catalog.json",
+        "line": 6,
+        "text": "\"path\": \"/Users/nickgonzales/.bonfyre/estate-local/auth.db\","
+      }
+    ],
+    "not yet registered in the core route table": [
+      {
+        "file": "cmd/BonfyreCLI/src/main.c",
+        "line": 2097,
+        "text": "json_escape(stdout, \"Discovered local bonfyre-* binary not yet registered in the core route table\");"
+      },
+      {
+        "file": "cmd/BonfyreCLI/src/main.c",
+        "line": 2367,
+        "text": "\"Discovered local bonfyre-* binary not yet registered in the core route table\");"
+      }
+    ]
+  },
+  "schema": "bonfyre-estate-cli-drift-probe.v1"
+}

@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * BonfyreRun — Recipe Executor
  *
@@ -24,6 +31,8 @@
  */
 
 #include <ctype.h>
+#include "../../../lib/libbonfyre/include/bf_help.h"
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
@@ -37,6 +46,7 @@
 #include <sqlite3.h>
 #include <bonfyre.h>
 
+#include "bf_lex.h"
 #define MAX_STAGES 64
 #define MAX_ARGS 128
 #define MAX_DEPS 16
@@ -519,7 +529,7 @@ static int load_recipe(const char *db_path, const char *recipe_id, char **json_o
     if (catalog) sqlite3_close(catalog);
 
     sqlite3 *db;
-    int rc = sqlite3_open(db_path, &db);
+    int rc = bf_sqlite3_open_ro(db_path, &db);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Cannot open database: %s\n", sqlite3_errmsg(db));
         sqlite3_close(db);
@@ -820,19 +830,9 @@ static int execute_level(ExecutionContext *ctx, int level) {
     return launched >= 0 ? 0 : -1;
 }
 
+/* Delegates to the one implementation. */
 static void write_json_string(FILE *fp, const char *s) {
-    fputc('"', fp);
-    for (; s && *s; s++) {
-        unsigned char ch = (unsigned char)*s;
-        if (ch == '"') fputs("\\\"", fp);
-        else if (ch == '\\') fputs("\\\\", fp);
-        else if (ch == '\n') fputs("\\n", fp);
-        else if (ch == '\r') fputs("\\r", fp);
-        else if (ch == '\t') fputs("\\t", fp);
-        else if (ch < 0x20) fprintf(fp, "\\u%04x", ch);
-        else fputc(ch, fp);
-    }
-    fputc('"', fp);
+    bf_lex_json_emit(fp, s);
 }
 
 static int make_manifest_path(const ExecutionContext *ctx,
@@ -1144,19 +1144,24 @@ static void print_usage(void) {
 }
 
 int main(int argc, char **argv) {
+    if (bf_help_requested(argc, argv)) { print_usage(); return 0; }
     if (argc < 2) {
         print_usage();
         return 1;
     }
-    if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "help") == 0 ||
-        strcmp(argv[1], "-h") == 0) {
-        print_usage();
-        return 0;
-    }
-    if (strcmp(argv[1], "history") == 0) {
+    enum {
+        RN_HISTORY, RN_SHOW,
+    };
+    static const BfCommandEntry run_commands[] = {
+        {"history", RN_HISTORY, 0, NULL},
+        {"show", RN_SHOW, 0, NULL},
+    };
+    const BfCommandEntry *command = bf_command_lookup(run_commands,
+        sizeof(run_commands) / sizeof(run_commands[0]), argv[1]);
+    if (command && command->id == RN_HISTORY) {
         return cmd_history(argc >= 3 ? argv[2] : NULL);
     }
-    if (strcmp(argv[1], "show") == 0) {
+    if (command && command->id == RN_SHOW) {
         if (argc < 3) {
             fprintf(stderr, "usage: bonfyre-run show <RUN_ID>\n");
             return 1;

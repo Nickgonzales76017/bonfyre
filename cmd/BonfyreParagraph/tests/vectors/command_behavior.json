@@ -1,0 +1,5 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-paragraph","binary_env":"BONFYRE_PARAGRAPH_BIN","cases":[
+{"name":"paragraph writes readable text and id-addressed passages","files":{"t.txt":"Speaker 1: Um, so we, we need to fix the the website by Friday.\nSpeaker 2: Okay. The checkout page is broken and customers cannot pay.\nSpeaker 1: Right, uh, and we should also update the pricing page.\n"},"steps":[
+ {"argv":["--input","t.txt","--out","p.txt","--passages","p.jsonl","--source-id","demo"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["Passages: p.jsonl (1 written"],"present":["${tmp}/p.txt","${tmp}/p.jsonl"]},
+ {"program":"cat","argv":["p.jsonl"],"at":{"id":"demo:0","ordinal":0,"source_sha256":"8b5637622f188051680216c5e2519e6f8e5c200d052ce2704868612ff0c0b70a"}}]},
+{"name":"paragraph refuses a missing input","steps":[{"argv":["--input","nope.txt","--out","p.txt"],"env":{"HOME":"${tmp}"},"exit_nonzero":true}]}]}

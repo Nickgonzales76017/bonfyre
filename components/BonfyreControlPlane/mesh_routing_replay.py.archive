@@ -1,0 +1,318 @@
+"""Adversarially replay one mesh envelope through the local routing fence.
+
+A cross-provider proof challenge is only worth its name if replaying it is
+cheap and mechanical. This runs the claim end to end against *live* state:
+
+* the envelope exists exactly once as content-addressed EventGraph state, and
+  the address it declares still binds its own bytes;
+* it exists exactly once as WorkGraph state, whose ``avoid_provider`` /
+  ``preferred_provider`` are re-derived from the envelope rather than trusted
+  from the row -- a routing fence that only agrees with itself proves nothing;
+* replaying the projection creates no second row, and re-admitting the
+  published bytes is a duplicate rather than a new event or a quarantine;
+* the bytes actually on the public branch equal the bytes the local row
+  reproduces, and pass the privacy gate.
+
+Live state is never mutated. Replay runs against a `sqlite3` backup copy, so a
+proof run cannot damage the coordination frontier it is measuring, and cannot
+race the other carrier's writes.
+
+Usage:
+    python3 components/BonfyreControlPlane/mesh_routing_replay.py <event_id> \
+        [--out evidence/proofs/<name>.json]
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import pathlib
+import sqlite3
+import subprocess
+import sys
+import tempfile
+from typing import Any, Optional
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+
+import mesh_transport as mt  # noqa: E402
+
+REPO = pathlib.Path(__file__).resolve().parents[2]
+STATE_DB = REPO / ".bonfyre" / "run8" / "state.sqlite3"
+MESH_BRANCH = "run8-mesh"
+REMOTE_DIR = ".bonfyre-mesh/events"
+
+
+def _rel(path: pathlib.Path) -> str:
+    """Repo-relative, because this artifact is quotable into the public mesh."""
+    try:
+        return str(path.relative_to(REPO))
+    except ValueError:
+        return path.name
+
+
+def open_readonly(db_path: pathlib.Path) -> sqlite3.Connection:
+    db = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+    db.row_factory = sqlite3.Row
+    return db
+
+
+def snapshot(db_path: pathlib.Path, target: pathlib.Path) -> sqlite3.Connection:
+    """A consistent copy of live state, taken through SQLite's own backup API.
+
+    Copying the file by hand would tear against the other carrier's WAL writes;
+    that exact torn read already cost one epoch an hour of false diagnosis.
+    """
+    source = open_readonly(db_path)
+    dest = sqlite3.connect(str(target))
+    with dest:
+        source.backup(dest)
+    source.close()
+    dest.row_factory = sqlite3.Row
+    return dest
+
+
+def row_to_event(row: sqlite3.Row) -> dict[str, Any]:
+    """Reconstruct the published envelope from EventGraph state.
+
+    The body column cannot say whether it stored an object or a JSON-encoded
+    string; the recorded address is the tiebreaker. Same rule as the carrier's
+    exporter, deliberately: if these two disagree the exported bytes stop
+    binding their address.
+    """
+    def build(body: Any) -> dict[str, Any]:
+        return {
+            "schema": mt.MESH_SCHEMA,
+            "event_id": row["event_id"],
+            "observed_at": row["observed_at"],
+            "actor": json.loads(row["actor_json"]),
+            "audience": json.loads(row["audience_json"]),
+            "type": row["type"],
+            "subject": row["subject"],
+            "body": body,
+            "evidence_refs": json.loads(row["evidence_json"]),
+            "content_sha256": row["content_sha256"],
+        }
+
+    candidates: list[Any] = []
+    try:
+        candidates.append(json.loads(row["body"]))
+    except Exception:
+        pass
+    candidates.append(row["body"])
+    for body in candidates:
+        event = build(body)
+        if mt.content_address(event) == row["content_sha256"]:
+            return event
+    return build(candidates[0])
+
+
+def published_bytes(event_id: str) -> Optional[str]:
+    """Whatever the public branch currently holds at this event's address."""
+    cp = subprocess.run(
+        ["git", "-C", str(REPO), "show", f"origin/{MESH_BRANCH}:{REMOTE_DIR}/{event_id}.json"],
+        text=True, capture_output=True, timeout=30,
+    )
+    return cp.stdout if cp.returncode == 0 else None
+
+
+def _check(results: list[dict[str, Any]], name: str, passed: bool, detail: str) -> bool:
+    results.append({"check": name, "passed": bool(passed), "detail": detail[:400]})
+    return bool(passed)
+
+
+def replay(event_id: str, *, home: Optional[str] = None) -> dict[str, Any]:
+    home = home or str(pathlib.Path.home())
+    checks: list[dict[str, Any]] = []
+    live = open_readonly(STATE_DB)
+
+    rows = live.execute(
+        "SELECT * FROM mesh_events WHERE event_id=?", (event_id,)
+    ).fetchall()
+    _check(checks, "eventgraph_singleton", len(rows) == 1,
+           f"{len(rows)} EventGraph rows for this event id")
+    if len(rows) != 1:
+        live.close()
+        return {"event_id": event_id, "verdict": "trace_divergence", "checks": checks}
+
+    row = rows[0]
+    event = row_to_event(row)
+    binds, claimed, measured = mt.address_binds_content(event)
+    _check(checks, "address_binds_reconstructed_content", binds,
+           "declared address recomputed from EventGraph state"
+           if binds else f"claimed {claimed} vs measured {measured}")
+
+    work_id = "mesh-" + event_id
+    work = live.execute(
+        "SELECT id,class,status,priority,avoid_provider,preferred_provider,attempts,last_provider"
+        "  FROM work_items WHERE id=?", (work_id,)
+    ).fetchall()
+    _check(checks, "workgraph_singleton", len(work) == 1,
+           f"{len(work)} WorkGraph rows for {work_id}")
+
+    derived_avoid, derived_preferred = mt.coordination_route(event)
+    stored_avoid = work[0]["avoid_provider"] if work else None
+    stored_preferred = work[0]["preferred_provider"] if work else None
+    _check(checks, "route_rederives_from_envelope",
+           (derived_avoid, derived_preferred) == (stored_avoid, stored_preferred),
+           f"derived avoid={derived_avoid} preferred={derived_preferred}; "
+           f"stored avoid={stored_avoid} preferred={stored_preferred}")
+    origin = (event.get("actor") or {}).get("provider")
+    _check(checks, "author_provider_excluded", bool(origin) and stored_avoid == origin,
+           f"authored by {origin}; avoid_provider={stored_avoid}")
+
+    remote = published_bytes(event_id)
+    local_payload = json.dumps(event, indent=2, ensure_ascii=False, sort_keys=True) + "\n"
+    _check(checks, "public_readback_is_byte_identical", remote == local_payload,
+           "remote bytes equal the payload local state reproduces" if remote == local_payload
+           else ("no published bytes at this address" if remote is None
+                 else "published bytes differ from local reproduction"))
+
+    if remote is not None:
+        try:
+            published = json.loads(remote)
+        except Exception as exc:
+            published = None
+            _check(checks, "published_envelope_parses", False, str(exc)[:200])
+        if published is not None:
+            pbinds, pclaimed, pmeasured = mt.address_binds_content(published)
+            _check(checks, "published_address_binds_published_bytes", pbinds,
+                   "published address recomputed"
+                   if pbinds else f"claimed {pclaimed} vs measured {pmeasured}")
+            safe, reason = mt.public_safe(published, home=home)
+            _check(checks, "published_envelope_is_public_safe", safe,
+                   reason or "no private path, secret shape, raw payload field or oversize")
+            structural = mt.structural_reason(published)
+            _check(checks, "published_envelope_is_structurally_valid", structural is None,
+                   structural or "well-formed envelope")
+
+    # ---- replay against a snapshot: idempotence has to be measured, not assumed
+    with tempfile.TemporaryDirectory() as tmp:
+        copy = snapshot(STATE_DB, pathlib.Path(tmp) / "replay.sqlite3")
+        before_work = copy.execute("SELECT COUNT(*) FROM work_items").fetchone()[0]
+        before_events = copy.execute("SELECT COUNT(*) FROM mesh_events").fetchone()[0]
+        before_quarantine = copy.execute("SELECT COUNT(*) FROM mesh_quarantine").fetchone()[0]
+
+        created = mt.materialize_coordination_work(copy, event)
+        after_work = copy.execute("SELECT COUNT(*) FROM work_items").fetchone()[0]
+        _check(checks, "replayed_projection_creates_no_duplicate",
+               created is False and after_work == before_work,
+               f"materialize returned {created}; work_items {before_work} -> {after_work}")
+
+        admission = None
+        if remote is not None:
+            admission = mt.admit(copy, remote, path=f"{REMOTE_DIR}/{event_id}.json", home=home)
+            after_events = copy.execute("SELECT COUNT(*) FROM mesh_events").fetchone()[0]
+            after_quarantine = copy.execute("SELECT COUNT(*) FROM mesh_quarantine").fetchone()[0]
+            _check(checks, "readmitting_published_bytes_is_a_duplicate",
+                   admission.outcome == mt.DUPLICATE
+                   and after_events == before_events
+                   and after_quarantine == before_quarantine,
+                   f"admission={admission.outcome}; mesh_events {before_events} -> {after_events}; "
+                   f"quarantine {before_quarantine} -> {after_quarantine}")
+        copy.close()
+
+    # ---- the fence must react to the envelope, not repeat a constant
+    matrix = []
+    for label, mutation in (
+        ("codex_author_to_claude", {"actor": {**event["actor"], "provider": "codex"},
+                                    "audience": ["run8-supervisor", "claude"]}),
+        ("claude_author_to_codex", {"actor": {**event["actor"], "provider": "claude"},
+                                    "audience": ["run8-supervisor", "codex"]}),
+        ("author_is_sole_recipient", {"actor": {**event["actor"], "provider": "codex"},
+                                      "audience": ["run8-supervisor", "codex"]}),
+        ("both_carriers_addressed", {"actor": {**event["actor"], "provider": "codex"},
+                                     "audience": ["codex", "claude"]}),
+        ("external_author", {"actor": {**event["actor"], "provider": "openai"},
+                             "audience": ["claude"]}),
+    ):
+        probe = {**event, **mutation}
+        avoid, preferred = mt.coordination_route(probe)
+        matrix.append({"case": label, "avoid_provider": avoid, "preferred_provider": preferred})
+
+    by_case = {m["case"]: m for m in matrix}
+    _check(checks, "fence_excludes_author_when_an_alternative_exists",
+           by_case["codex_author_to_claude"]["avoid_provider"] == "codex"
+           and by_case["claude_author_to_codex"]["avoid_provider"] == "claude",
+           "exclusion follows the authoring provider in both directions")
+    _check(checks, "fence_never_deadlocks_a_sole_recipient",
+           by_case["author_is_sole_recipient"]["avoid_provider"] is None
+           and by_case["author_is_sole_recipient"]["preferred_provider"] == "codex",
+           "an author addressing only itself is soft-routed, not excluded into starvation")
+    _check(checks, "fence_leaves_external_authors_unexcluded",
+           by_case["external_author"]["avoid_provider"] is None
+           and by_case["external_author"]["preferred_provider"] == "claude",
+           "an external author excludes no local carrier")
+
+    # ---- the obligation id must be injective in the event id
+    # The challenge asks that replay create no duplicate. The dual failure is
+    # cheaper to miss and worse: two distinct envelopes collapsing onto one
+    # obligation, where the dropped second one is indistinguishable from an
+    # honest idempotent replay. Both lossy steps are probed here.
+    alias_stem = "external-chatgpt-" + "x" * (mt.MAX_WORK_ID_STEM - len("external-chatgpt-"))
+    aliases = [
+        ("separator", "local-aaaaaaaaaaaaaaaaaaaa", "local:aaaaaaaaaaaaaaaaaaaa"),
+        ("truncation", alias_stem + "-alpha", alias_stem + "-beta"),
+    ]
+    collisions = [
+        {"case": label, "left": left, "right": right}
+        for label, left, right in aliases
+        if mt.work_item_id(left) == mt.work_item_id(right)
+    ]
+    _check(checks, "distinct_event_ids_keep_distinct_obligations", not collisions,
+           "no legal event-id pair collapses onto one WorkGraph id"
+           if not collisions else f"collapsing pairs: {collisions}")
+    _check(checks, "work_ids_stay_within_their_bound",
+           all(len(mt.work_item_id(e)) <= len("mesh-") + mt.MAX_WORK_ID_STEM
+               for _, left, right in aliases for e in (left, right)),
+           f"derived ids stay within mesh- plus {mt.MAX_WORK_ID_STEM} characters")
+
+    # ---- injectivity must not rename obligations the live WorkGraph owns
+    live_event_ids = [r[0] for r in live.execute("SELECT event_id FROM mesh_events")]
+    live_work_ids = {r[0] for r in live.execute("SELECT id FROM work_items WHERE id LIKE 'mesh-%'")}
+    rederived = {mt.work_item_id(e) for e in live_event_ids}
+    orphaned = sorted(live_work_ids - rederived)
+    _check(checks, "live_obligations_keep_their_identity", not orphaned,
+           f"{len(live_work_ids)} mesh work ids re-derive from {len(live_event_ids)} live event ids"
+           if not orphaned else f"{len(orphaned)} orphaned: {orphaned[:3]}")
+
+    live.close()
+    passed = all(c["passed"] for c in checks)
+    return {
+        "event_id": event_id,
+        "verdict": "review_result" if passed else "trace_divergence",
+        "passed": sum(1 for c in checks if c["passed"]),
+        "failed": sum(1 for c in checks if not c["passed"]),
+        "content_sha256": row["content_sha256"],
+        "authored_by_provider": origin,
+        "work_item": work_id,
+        "work_status": work[0]["status"] if work else None,
+        "avoid_provider": stored_avoid,
+        "preferred_provider": stored_preferred,
+        "published_address": f"{REMOTE_DIR}/{event_id}.json",
+        "mesh_branch_commit": subprocess.run(
+            ["git", "-C", str(REPO), "rev-parse", f"origin/{MESH_BRANCH}"],
+            text=True, capture_output=True, timeout=15).stdout.strip(),
+        "checks": checks,
+        "routing_matrix": matrix,
+        "source": _rel(pathlib.Path(__file__)),
+    }
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("event_id")
+    ap.add_argument("--out", default=None)
+    args = ap.parse_args()
+    report = replay(args.event_id)
+    text = json.dumps(report, indent=2, sort_keys=True) + "\n"
+    if args.out:
+        out = pathlib.Path(args.out)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(text)
+    print(text, end="")
+    return 0 if report["verdict"] == "review_result" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -466,26 +466,69 @@ function toBatchAnalyticsEvent(batch) {
   };
 }
 
-export function createEstateGenerationFabric({ root = process.cwd(), modelRoot, modelBinary, llamaBinary, tools, profiles = discoverGenerationProfiles(), spawnImpl = spawn, maxConcurrency = 2 } = {}) {
+export function createEstateGenerationFabric({
+  root = process.cwd(),
+  modelRoot,
+  modelBinary,
+  llamaBinary,
+  tools,
+  profiles = discoverGenerationProfiles(),
+  spawnImpl = spawn,
+  maxConcurrency = 2,
+  inventoryCacheMs = 5_000,
+  modelCatalogCacheMs = 5_000,
+} = {}) {
   const profileClients = new Map(profiles.map((profile) => [profile.id, {
     profile,
-    client: createGenerationClient(profile, spawnImpl),
+    client: profile.available === false ? null : createGenerationClient(profile, spawnImpl),
   }]));
+  const concurrency = Math.max(1, Math.min(Number(maxConcurrency) || 1, 8));
+  const inventoryTtl = Math.max(0, Math.min(Number(inventoryCacheMs) || 0, 60_000));
+  const modelTtl = Math.max(0, Math.min(Number(modelCatalogCacheMs) || 0, 60_000));
+  let inventoryCache = null;
+  let inventoryAt = 0;
+  let inventoryPending = null;
+  let modelCache = null;
+  let modelAt = 0;
+  let modelPending = null;
 
-  async function inventory() {
-    return tools || discoverNativeTools({ root });
+  async function inventory({ refresh = false } = {}) {
+    if (tools) return tools;
+    const now = Date.now();
+    if (!refresh && inventoryCache && now - inventoryAt < inventoryTtl) return inventoryCache;
+    if (!refresh && inventoryPending) return inventoryPending;
+    inventoryPending = Promise.resolve(discoverNativeTools({ root }))
+      .then((value) => {
+        inventoryCache = value;
+        inventoryAt = Date.now();
+        return value;
+      })
+      .finally(() => { inventoryPending = null; });
+    return inventoryPending;
   }
 
-  async function modelCatalog() {
-    const nativeTools = await inventory();
-    const nativeGenerator = modelBinary
-      || profiles.find((profile) => profile.binary)?.binary
-      || nativeTools.find((tool) => tool.id === 'bonfyre-qwen-fpq' || tool.name === 'bonfyre-qwen-fpq')?.path;
-    return discoverLocalModelProfiles({
-      modelRoot: modelRoot || process.env.BONFYRE_MODEL_ROOT || '/Users/nickgonzales/BonfyreModels',
-      binary: nativeGenerator,
-      llamaBinary,
-    });
+  async function modelCatalog({ refresh = false } = {}) {
+    const now = Date.now();
+    if (!refresh && modelCache && now - modelAt < modelTtl) return modelCache;
+    if (!refresh && modelPending) return modelPending;
+    modelPending = (async () => {
+      const nativeTools = await inventory({ refresh });
+      const nativeGenerator = modelBinary
+        || profiles.find((profile) => profile.binary)?.binary
+        || nativeTools.find((tool) => tool.id === 'bonfyre-qwen-fpq' || tool.name === 'bonfyre-qwen-fpq')?.path;
+      return discoverLocalModelProfiles({
+        modelRoot: modelRoot || process.env.BONFYRE_MODEL_ROOT || '/Users/nickgonzales/BonfyreModels',
+        binary: nativeGenerator,
+        llamaBinary,
+      });
+    })()
+      .then((value) => {
+        modelCache = value;
+        modelAt = Date.now();
+        return value;
+      })
+      .finally(() => { modelPending = null; });
+    return modelPending;
   }
 
   async function verifyModelPackRecovery(options = {}) {
@@ -496,7 +539,7 @@ export function createEstateGenerationFabric({ root = process.cwd(), modelRoot, 
     return [...profileClients.values()].map(({ profile }) => ({
       schema_version: PROFILE_SCHEMA,
       id: profile.id,
-      tool_id: profile.tool_id || basename(profile.binary),
+      tool_id: profile.tool_id || (profile.binary ? basename(profile.binary) : null),
       backend: profile.backend || 'cpu_neon',
       runtime: profile.runtime || 'fpq-native',
       transport: profile.transport || (profile.serverUrl ? 'openai-compatible-http' : 'native-cli'),
@@ -504,7 +547,7 @@ export function createEstateGenerationFabric({ root = process.cwd(), modelRoot, 
       compression: profile.compression || null,
       runtime_env: profile.runtimeEnv || {},
       default_timeout_ms: profile.defaultTimeoutMs || 120_000,
-      model: profile.model || basename(profile.modelPack),
+      model: profile.model || (profile.modelPack ? basename(profile.modelPack) : null),
       model_pack: profile.modelPack,
       tokenizer: profile.tokenizer,
       available: profile.available !== false,
@@ -517,7 +560,8 @@ export function createEstateGenerationFabric({ root = process.cwd(), modelRoot, 
     const tool = catalog.find((candidate) => candidate.id === toolId || candidate.name === toolId);
     if (!tool) throw new Error(`Unknown native tool: ${toolId}`);
     const started = Date.now();
-    const execution = await runTool(tool.path, args.map(String), { spawnImpl, input, timeoutMs });
+    const boundedTimeoutMs = Math.max(1, Math.min(Number(timeoutMs) || 30_000, 120_000));
+    const execution = await runTool(tool.path, args.map(String), { spawnImpl, input, timeoutMs: boundedTimeoutMs });
     const output = execution.stdout;
     const status = execution.timed_out ? 'timed_out' : execution.code === 0 ? 'passed' : 'failed';
     const receipt = {
@@ -543,12 +587,13 @@ export function createEstateGenerationFabric({ root = process.cwd(), modelRoot, 
     if (!selected) {
       const discovered = (await modelCatalog()).find((profile) => profile.id === profileId);
       if (discovered) {
-        selected = { profile: discovered, client: createGenerationClient(discovered, spawnImpl) };
+        selected = { profile: discovered, client: discovered.available === false ? null : createGenerationClient(discovered, spawnImpl) };
         profileClients.set(profileId, selected);
       }
     }
     if (!selected) throw new Error(`Unknown generation profile: ${profileId}`);
     if (selected.profile.available === false) throw new Error(`Generation profile is unavailable: ${(selected.profile.missing || []).join(', ')}`);
+    if (!selected.client) selected.client = createGenerationClient(selected.profile, spawnImpl);
     const started = Date.now();
     const result = await selected.client.generate({ prompt, maxNewTokens, greedy, env, timeoutMs });
     const receipt = {
@@ -574,7 +619,7 @@ export function createEstateGenerationFabric({ root = process.cwd(), modelRoot, 
         catch (error) { results[index] = { status: 'failed', error: error.message, profile_id: requests[index]?.profileId || null }; }
       }
     }
-    await Promise.all(Array.from({ length: Math.min(maxConcurrency, Math.max(1, requests.length)) }, worker));
+    await Promise.all(Array.from({ length: Math.min(concurrency, Math.max(1, requests.length)) }, worker));
     const batch = {
       schema_version: BATCH_RECEIPT_SCHEMA,
       batch_id: randomUUID(),

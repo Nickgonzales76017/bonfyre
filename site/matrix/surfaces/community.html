@@ -1,0 +1,994 @@
+<!doctype html><html lang="en" data-bs-theme="dark"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Community · Aurekai</title>
+<meta name="theme-color" content="#000">
+<!-- lemmy-ui's own built theme (darkly-pureblack) plus its own main.css.
+     Every class below is Lemmy's or Bootstrap 5's, read out of
+     src/shared/components/: .post-listing, .post-listing-card, .upvote /
+     .downvote, .btn-animate, .md-div, and the row/col utilities the project
+     lays its listings out with. Provenance at /matrix/DONOR-LICENSES/lemmy/. -->
+<link rel="stylesheet" href="/assets/donor-lemmy.css?v=746856e6">
+<style>
+/* Only what Lemmy ships and this deployment does not: its icon sprite and its
+   avatar service. Nothing else is restyled. */
+.bf-av{border-radius:6px;object-fit:cover}
+.bf-cant{border-left:3px solid var(--bs-danger);padding-left:.75rem;font-size:.85rem;
+  line-height:1.5;opacity:.9;margin:.5rem 0 0}
+.bf-src{font-size:.78rem;opacity:.6;margin:.35rem 0 0;font-family:var(--bs-font-monospace)}
+.bf-score{min-width:2.4rem}
+.bf-depth{border-left:2px solid var(--bs-border-color);padding-left:.9rem}
+.post-listing{border-bottom:1px solid var(--bs-border-color);padding-bottom:.75rem}
+</style></head><body>
+<nav class="navbar navbar-expand-lg shadow-sm p-0 px-3 sticky-top bg-body-tertiary">
+  <div class="container-lg">
+    <span id="bf-mk" class="navbar-brand"><!--BF_SLOT:0--></span>
+    <ul class="navbar-nav flex-row flex-wrap gap-2" id="bf-nav"><!--BF_SLOT:1--></ul>
+    <div class="ms-auto d-flex align-items-center gap-2 small">
+      <span id="bf-host" class="text-muted"></span>
+      <nav id="bf-hosts" class="d-flex gap-2"></nav>
+    </div>
+  </div>
+</nav>
+
+<div class="container-lg mt-3">
+  <div class="row">
+    <main class="col-12 col-md-8 col-lg-9">
+      <h1 class="h4 mb-1" id="bf-h1"><!--BF_SLOT:2--></h1>
+      <p class="text-muted small mb-3" id="bf-lede"><!--BF_SLOT:3--></p>
+      <p class="text-muted small mb-3" id="bf-standing"><!--BF_SLOT:7--></p>
+      <div class="btn-group btn-group-sm mb-3" role="group" id="bf-sorts"><!--BF_SLOT:4--></div>
+      <div id="bf-feed"><!--BF_SLOT:5--></div>
+    </main>
+    <aside class="col-12 col-md-4 col-lg-3">
+      <div id="bf-side"><!--BF_SLOT:6--></div>
+      <div id="bf-limit" class="text-muted small mt-3"><!--BF_SLOT:8--></div>
+    </aside>
+  </div>
+</div>
+
+<script>
+/* Shared kit for the clone surfaces.
+ *
+ * Every surface below borrows a market interface's *behaviour* -- the layout,
+ * density and gesture people already know -- and reads Aurekai's own live
+ * endpoints. Nothing here imports anybody's ontology: the records are the same
+ * subjects the rest of the estate addresses, rendered in a shape a person has
+ * already learned somewhere else.
+ *
+ * Three rules hold across all of them, because each has a failure that looks
+ * fine:
+ *
+ *   a 4xx is an answer      htmx and fetch both leave a placeholder up forever
+ *                           if a refusal is treated as an outage. Every pane
+ *                           reports refused / empty / failed as three different
+ *                           things and offers the session when one is needed.
+ *
+ *   verbs are offered       Authority gates at effect time. A chip that posted
+ *                           would be asking for a decision this surface has no
+ *                           standing to carry, so nothing here submits.
+ *
+ *   the source is named     Every pane says which endpoint produced it. A
+ *                           surface that hides its source cannot be checked
+ *                           against the deployment it claims to describe.
+ */
+(() => {
+  const K = {};
+
+  K.host = location.hostname;
+  K.territory = K.host.endsWith('.life') ? 'life'
+              : K.host.endsWith('.shop') ? 'shop'
+              : K.host.endsWith('.work') ? 'work'
+              : 'live';
+
+  K.token = () => null; /* same-origin HttpOnly session cookie */
+
+  /* One fetch, three outcomes, never a silent blank. */
+  K.get = async (path, accept) => {
+    const headers = { Accept: accept || 'application/json' };
+    const t = K.token();
+    if (t) headers.Authorization = 'Bearer ' + t;
+    let r;
+    try {
+      r = await fetch(path, { headers });
+    } catch (e) {
+      return { ok: false, kind: 'failed', status: 0, detail: String(e), path };
+    }
+    if (r.status === 401 || r.status === 403)
+      return { ok: false, kind: 'refused', status: r.status, path };
+    if (!r.ok)
+      return { ok: false, kind: 'failed', status: r.status, path };
+    const body = accept && accept.includes('html') ? await r.text() : await r.json();
+    return { ok: true, kind: 'ok', status: r.status, body, path };
+  };
+
+  /* The three refusal states, rendered. A withheld pane offers the session
+   * that would fill it; withholding without offering is a dead end wearing the
+   * clothes of a loading state. */
+  K.note = (res, what) => {
+    const el = document.createElement('div');
+    el.className = 'k-note ' + (res.kind === 'refused' ? 'k-refused' : 'k-failed');
+    if (res.kind === 'refused') {
+      el.innerHTML = '<strong>' + what + ' needs an admitted session.</strong>'
+        + '<p>Authority-gated. Other panes on this page answer without one, so this '
+        + 'is a refusal rather than an absent subject.</p>'
+        + (K.token()
+            ? '<p>You are signed in and this scope was still refused: the session you '
+              + 'hold does not carry it.</p>'
+            : '<p><a class="k-btn" href="/login">Sign in</a></p>');
+    } else {
+      el.innerHTML = '<strong>' + what + ' did not answer.</strong>'
+        + '<p><code>' + res.path + '</code> returned ' + (res.status || 'no response')
+        + '. Nothing is rendered rather than a stale or invented list.</p>';
+    }
+    return el;
+  };
+
+  K.empty = (what, path) => {
+    const el = document.createElement('div');
+    el.className = 'k-note k-empty';
+    el.innerHTML = '<strong>' + what + ' is empty.</strong><p><code>' + path
+      + '</code> answered and returned nothing. That is an empty projection, not a '
+      + 'refusal and not an absent subject.</p>';
+    return el;
+  };
+
+  /* Parse the /_surface/<name> record fragments the address organ serves.
+   * They are <dl class="surface-record"> with <dt>/<dd> pairs, and are the same
+   * bytes a machine reading that path receives. */
+  K.records = (html) => {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return [...doc.querySelectorAll('.surface-record')].map(dl => {
+      const rec = {};
+      const dts = [...dl.querySelectorAll('dt')];
+      const dds = [...dl.querySelectorAll('dd')];
+      dts.forEach((dt, i) => { rec[dt.textContent.trim()] = (dds[i] || {}).textContent || ''; });
+      return rec;
+    });
+  };
+
+  K.surface = async (name) => {
+    const res = await K.get('/_surface/' + name, 'text/html');
+    if (!res.ok) return res;
+    return { ...res, records: K.records(res.body) };
+  };
+
+  /* A verb chip. Offered, never submitted. */
+  K.verbs = (list) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'k-verbs';
+    for (const v of list) {
+      const s = document.createElement('span');
+      s.className = 'k-verb';
+      s.textContent = v;
+      s.title = v + ' is offered here. Whether you may is decided at effect time '
+              + 'by the owner of the effect, not by this surface.';
+      wrap.appendChild(s);
+    }
+    return wrap;
+  };
+
+  K.sourceLine = (paths) => {
+    const p = document.createElement('p');
+    p.className = 'k-source';
+    p.innerHTML = 'Reading ' + paths.map(x => '<code>' + x + '</code>').join(' · ')
+      + ' — the same bytes a machine asking for this path receives.';
+    return p;
+  };
+
+  K.mount = (el, node) => { el.innerHTML = ''; el.appendChild(node); };
+
+
+  /* Avatars from DiceBear (https://dicebear.com), rendered from the subject's
+   * own name as the seed, so the same room gets the same face everywhere in the
+   * estate and nothing has to be uploaded or stored.
+   *
+   * The style is chosen by what the subject *is*, because a human face on a
+   * venue or a binary would be the surface asserting a person exists:
+   *
+   *   subject   a room, a venue, an act, a programme   -> shapes
+   *   machine   a binary, a queue, an endpoint         -> identicon
+   *   peer      a federated instance                   -> rings
+   *   person    an actual human actor                  -> initials
+   *
+   * Style licences: shapes is CC BY 4.0 (Alexis Doreau); identicon, rings and
+   * initials are CC0 1.0. Attribution is carried in the page footer.
+   */
+  K.AVATAR_STYLE = { subject: 'shapes', machine: 'identicon', peer: 'rings',
+                     person: 'initials' };
+
+  K.avatar = (seed, kind, size) => {
+    const style = K.AVATAR_STYLE[kind] || K.AVATAR_STYLE.subject;
+    const p = new URLSearchParams({ seed: String(seed == null ? '' : seed) });
+    if (size) p.set('size', String(size));
+    p.set('radius', '12');
+    return 'https://api.dicebear.com/9.x/' + style + '/svg?' + p.toString();
+  };
+
+  /* An <img> that falls back to the initials block if the avatar service is
+   * unreachable. A broken image where a face should be reads as a broken page;
+   * a monogram reads as a subject that has no picture, which is the truth. */
+  K.avatarImg = (seed, kind, size) => {
+    const s = String(seed == null ? '' : seed);
+    const el = document.createElement('img');
+    el.src = K.avatar(s, kind, size);
+    el.alt = '';
+    el.loading = 'lazy';
+    el.width = size || 44; el.height = size || 44;
+    el.dataset.seed = s;
+    el.addEventListener('error', () => {
+      const box = document.createElement('span');
+      box.className = el.className;
+      box.setAttribute('style', el.getAttribute('style') || '');
+      box.textContent = s.replace(/[^a-z0-9 ]/gi, ' ').trim().split(/\s+/)
+        .slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
+      el.replaceWith(box);
+    }, { once: true });
+    return el;
+  };
+
+  K.avatarAttribution = 'Avatars by <a href="https://dicebear.com">DiceBear</a>, generated '
+    + "from each subject's own name. Shapes is CC BY 4.0 (Alexis Doreau); identicon, rings "
+    + 'and initials are CC0 1.0.';
+
+
+  /* ---- the address plane -------------------------------------------------
+   *
+   * A host on this estate is not a deployment, it is an institution in a
+   * territory. leaflounge.aurekai.shop is the Leaf Lounge as the market sees
+   * it; leaflounge.aurekai.life is the same institution as its own people see
+   * it; theleaflounge.store is the same institution again, under a domain it
+   * owns. Same code, same surfaces, different subject.
+   *
+   * So a surface must not guess whose host it is on from the hostname. It asks
+   * the host, once, and the host answers from the Matrix. A page that guessed
+   * would be right for leaflounge.aurekai.shop and wrong for
+   * theleaflounge.store, which is exactly the case that matters.
+   */
+  K.here = null;
+  K.address = async () => {
+    if (K.here) return K.here;
+    try {
+      const r = await fetch('/.well-known/bonfyre', {headers:{Accept:'application/json'}});
+      K.here = r.ok ? await r.json() : {host: location.hostname, territory: K.territory};
+    } catch (_) {
+      K.here = {host: location.hostname, territory: K.territory};
+    }
+    return K.here;
+  };
+
+  /* The whole estate's address plane, for the surfaces that show it. */
+  K.estate = async () => {
+    try {
+      const r = await fetch('/.well-known/bonfyre/estate', {headers:{Accept:'application/json'}});
+      return r.ok ? await r.json() : null;
+    } catch (_) { return null; }
+  };
+
+  /* A subject's canonical address, and its room. The same path on every host,
+   * because the address belongs to the subject and not to the territory. */
+  K.subject = (kind, id) => '/s/' + encodeURIComponent(kind) + '/' + encodeURIComponent(id);
+  K.room    = (kind, id) => '/room/' + encodeURIComponent(kind) + '/' + encodeURIComponent(id);
+
+  /* An <a> to the subject, so a clone is a representation you can leave. */
+  K.subjectLink = (kind, id, label, cls) => {
+    const a = document.createElement('a');
+    a.href = K.subject(kind, id);
+    a.textContent = label === undefined ? id : label;
+    a.title = 'Its address on this estate: ' + K.subject(kind, id)
+            + ' — the same path on every host. This surface is one representation of it.';
+    if (cls) a.className = cls;
+    return a;
+  };
+
+  /* The institution's other territories, from the Matrix rather than from
+   * string surgery on the hostname. Returns [] when this host holds only one. */
+  K.institutionHosts = async () => {
+    const a = await K.address();
+    return (a && a.institution_hosts) || [];
+  };
+
+  /* Renders the switch as links, marking the one you are standing on. Any
+   * surface can drop this in and become navigable across the institution. */
+  K.hostSwitch = async (current) => {
+    const hosts = await K.institutionHosts();
+    const nav = document.createElement('nav');
+    nav.className = 'k-hosts';
+    nav.setAttribute('aria-label', 'This institution across territories');
+    if (hosts.length < 2) return nav;
+    for (const h of hosts) {
+      const a = document.createElement('a');
+      a.href = location.protocol + '//' + h.host + (current || location.pathname);
+      a.textContent = '.' + h.territory;
+      a.title = h.host + ' — audience ' + (h.audience || 'unstated');
+      if (h.host === location.hostname) a.setAttribute('aria-current', 'page');
+      nav.appendChild(a);
+    }
+    return nav;
+  };
+
+
+  /* ---- four territories, four sets of UX physics -------------------------
+   *
+   * Section 69: they are projections over one Matrix, not four products, but
+   * their physics differ -- and building them as one feed with different icons
+   * would lose exactly what makes each market leader good at what it does.
+   *
+   * So the difference here is not the chips. It is the ordering principle, and
+   * each one answers a different question about the same records:
+   *
+   *   .live  what deserves attention now      ordered by what is on, decaying
+   *   .life  what matters in my world         not ordered by attention at all
+   *   .shop  what economic opportunity is useful   ordered by the offer
+   *   .work  what should move forward         ordered by what blocks what
+   *
+   * A verb outside its territory is a category error, so the verb lists are
+   * per territory and nothing merges them.
+   */
+  K.PHYSICS = {
+    live: {
+      question: 'What deserves attention now?',
+      principle: 'fast attention / occurrence',
+      orders_by: 'what is on now, and how hard it is pressing',
+      decays: true,
+      verbs: ['WATCH','JOIN','GO','FOLLOW','SAVE','SHARE'],
+      /* attention is pressure: something happening now outranks something
+         merely published, and a room reporting its fill outranks one that did
+         not. This is the only territory where recency is allowed to rank. */
+      rank: r => {
+        const on = /doors|tonight|now|set |playing|open/i.test(r.tonight_status || '') ? 2 : 0;
+        const pct = Number((String(r.capacity_note||'').match(/(\d+)\s*percent/)||[])[1] || 0);
+        return on * 100 + pct;
+      },
+      cant: 'attention is not obligation. Nothing on this feed is expecting you, and a '
+          + 'capacity note is what the room published rather than what is true at the door.'
+    },
+    life: {
+      question: 'What matters in my world?',
+      principle: 'durable personal world',
+      orders_by: 'nothing — this is what you already keep, in a stable order',
+      decays: false,
+      verbs: ['MEET','JOIN','GO','SAVE','HELP','FOLLOW','PLAN','REMEMBER','SHARE','MOVE','ASSIGN'],
+      /* The load-bearing difference. A personal world ranked by attention
+         would be a recommendation feed wearing the clothes of a kept set, and
+         the thing that makes it yours is that it does not move when the world
+         gets loud. Stable, alphabetical, no recency anywhere. */
+      rank: null,
+      cant: 'a kept subject is not a recommended one. Nothing here was ranked for you, and '
+          + 'nothing moves up because it got busy.'
+    },
+    shop: {
+      question: 'What economic opportunity is useful?',
+      principle: 'economic opportunity / exchange',
+      orders_by: 'the offer — what is on, and at what price',
+      decays: false,
+      verbs: ['BUY','OFFER','JOIN','SAVE','COMPARE','REQUEST','SELL','FUND','CONTRIBUTE'],
+      /* An offer ranks; a description does not. A record with no offer sorts
+         below every record that has one, because in this territory a subject
+         without terms is not an opportunity. */
+      rank: r => (r.offer_usd ? 1000 - Number(r.offer_usd) : -1),
+      cant: 'an offer is terms a seller will accept. It is not a sale, a reservation, or '
+          + 'anything anybody has bought.'
+    },
+    work: {
+      question: 'What should move forward?',
+      principle: 'obligation / execution',
+      orders_by: 'what blocks what, and what undoing it would cost',
+      decays: false,
+      verbs: ['APPLY','APPROVE','CLAIM','FUND','CONTACT','BOOK','DO','REVIEW','ASSIGN',
+              'RESPOND','ESCALATE'],
+      rank: null,
+      cant: 'an obligation is not an assignment, and a requirement is not funding.'
+    }
+  };
+
+  K.physics = (t) => K.PHYSICS[t || K.territory] || K.PHYSICS.live;
+
+  /* Order a record set by its territory's own principle. .life gets a stable
+   * order on purpose: sorting a kept world by anything would be ranking it. */
+  K.order = (records, t) => {
+    const p = K.physics(t);
+    const out = records.slice();
+    if (!p.rank) {
+      out.sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+      return out;
+    }
+    out.sort((a, b) => p.rank(b) - p.rank(a)
+                    || String(a.name || '').localeCompare(String(b.name || '')));
+    return out;
+  };
+
+  /* A verb outside its territory is a category error, so this is the only
+   * place a surface should get its verbs from. */
+  K.verbsFor = (t) => K.physics(t).verbs.slice();
+
+
+  /* ---- the fifteen commerce facts ----------------------------------------
+   *
+   * Section 70: .shop needs its own falsehood list, and it is long.
+   *
+   *   Product != Listing != Inventory != AvailabilityObservation != Offer !=
+   *   Quote != Cart != Checkout != Commitment != Payment != Settlement !=
+   *   Fulfilment != Delivery != Satisfaction != Ownership
+   *
+   * Each stage names the one owner that can establish it, because these
+   * collapse when a subsystem is asked a question it cannot answer. The
+   * dangerous collapses *skip* rather than step -- "paid" read as "delivered",
+   * "delivered" read as "owned" -- so non-implication holds over every pair,
+   * not over adjacent ones.
+   *
+   * And no stage may be skipped in the other direction either: an exchange
+   * reporting delivery with no fulfilment is describing something the estate
+   * never saw happen.
+   */
+  K.COMMERCE = [
+    {stage:'Product', owner:'a catalogue',
+     knows:'what a product is',
+     cannot:'whether anybody has one',
+     here:'/_surface/capabilities'},
+    {stage:'Listing', owner:'a catalogue entry with terms attached',
+     knows:'that this is offered somewhere, described this way',
+     cannot:'that the description is current, or that the seller still means it',
+     here:'/capability, /ucp/catalog, /acp/products'},
+    {stage:'Inventory', owner:'the merchant',
+     knows:'a count the merchant keeps',
+     cannot:'that this buyer can obtain one',
+     here:null},
+    {stage:'AvailabilityObservation', owner:'an observer, at a time and a place',
+     knows:'that it was obtainable then, there',
+     cannot:'that it is obtainable now, here',
+     here:null},
+    {stage:'Offer', owner:'the seller',
+     knows:'terms the seller will accept',
+     cannot:'that anyone accepted them',
+     here:'/capability'},
+    {stage:'Quote', owner:'the pricing owner, for one caller',
+     knows:'what it would cost this caller now',
+     cannot:'anything held, reserved or promised',
+     here:'/mpp/quote'},
+    {stage:'Cart', owner:'the buyer, assembling',
+     knows:'what one person put together, before anybody agreed to any of it',
+     cannot:'that any of it is obtainable together',
+     here:null},
+    {stage:'Checkout', owner:'the exchange',
+     knows:'that an intent to buy was expressed',
+     cannot:'that it was accepted',
+     here:null},
+    {stage:'Commitment', owner:'CommitmentGraph',
+     knows:'who owes what to whom, under which conditions',
+     cannot:'that the resource moved',
+     here:null},
+    {stage:'Payment', owner:'a payment rail',
+     knows:'that a charge was authorized',
+     cannot:'that money settled',
+     here:'the 402 on /capability/<name>'},
+    {stage:'Settlement', owner:'the ledger, once a facilitator verifies',
+     knows:'that money moved',
+     cannot:'that anything was done for it',
+     here:null},
+    {stage:'Fulfilment', owner:'the seller, doing the thing',
+     knows:'that the seller acted',
+     cannot:'that it reached anybody',
+     here:null},
+    {stage:'Delivery', owner:'a courier',
+     knows:'that a parcel moved',
+     cannot:'that anyone wanted its contents',
+     here:'/epcis/events'},
+    {stage:'Satisfaction', owner:'the buyer, afterwards',
+     knows:'that the person who received it says it was what they wanted',
+     cannot:'that they hold it lawfully',
+     here:null},
+    {stage:'Ownership', owner:'.life, after the transaction leaves the store',
+     knows:'that this is now part of somebody\'s world',
+     cannot:'anything about how it got there',
+     here:null}
+  ];
+
+  /* Non-implication over every pair, not adjacent ones: the dangerous
+   * collapses skip. Answers for any two stages in either direction, because
+   * reading "delivered" off "paid" is as wrong as the reverse. */
+  K.commerceGap = (a, b) => {
+    const i = K.COMMERCE.findIndex(x => x.stage === a);
+    const j = K.COMMERCE.findIndex(x => x.stage === b);
+    if (i < 0 || j < 0 || i === j) return null;
+    const lo = K.COMMERCE[Math.min(i, j)], hi = K.COMMERCE[Math.max(i, j)];
+    return lo.stage + ' does not establish ' + hi.stage + ': ' + lo.owner
+         + ' knows ' + lo.knows + ' and not ' + hi.knows + '. Only ' + hi.owner
+         + ' can establish that.';
+  };
+
+  /* What this deployment actually reaches, probed rather than declared. */
+  K.commerceReached = async () => {
+    const out = {};
+    for (const s of K.COMMERCE)
+      out[s.stage] = {reached:false, why:'no owner for this is admitted here'};
+    const book = await K.surface('capabilities');
+    if (book.ok && book.records.length)
+      out.Product = {reached:true, why:book.records.length + ' in the native book'};
+    const cap = await K.get('/capability');
+    if (cap.ok && (cap.body.capabilities||[]).length) {
+      const n = cap.body.capabilities.length;
+      out.Listing = {reached:true, why:n + ' carried by three carriers'};
+      out.Offer   = {reached:true, why:n + ' with terms a seller will accept'};
+      const first = cap.body.capabilities[0];
+      const q = await K.get('/mpp/quote?capability=' + encodeURIComponent(first.name));
+      if (q.ok) out.Quote = {reached:true, why:'priced for this caller, holding nothing'};
+      try {
+        const g = await fetch(first.resource, {headers:{Accept:'application/json'}});
+        if (g.status === 402) {
+          const b = await g.json();
+          const settles = b.settlement && b.settlement.facilitator_configured;
+          out.Payment = {reached:false,
+            why:'the resource answers 402 and wants a charge; nothing has authorized one'};
+          out.Settlement = {reached:false,
+            why: settles ? 'a facilitator is configured and nothing has settled'
+                         : 'facilitator_configured is false, so nothing here can settle at all'};
+        }
+      } catch (_) {}
+    }
+    const ep = await K.get('/epcis/events');
+    if (ep.ok) out.Delivery = {reached:false,
+      why: ep.body.empty_reason || 'the event list is empty'};
+    return out;
+  };
+
+
+  /* ---- the mark ----------------------------------------------------------
+   *
+   * Aurekai x Bonfyre, as a lockup rather than a word. Bonfyre is the engine;
+   * Aurekai is the larger umbrella, and the two plates say which is which
+   * before anybody reads a sentence about it.
+   *
+   *   [ knight ]  x  [ BY ]  BONFYRE
+   *     paper          ink
+   *
+   * The knight is an engraving, so it keeps a paper ground on every theme --
+   * inverting it for dark mode would turn a woodcut into a photographic
+   * negative. The wordmark plate takes the page's ink instead, which is what
+   * makes the pair read as two things beside each other rather than one badge.
+   *
+   * Every surface here runs a different donor's chrome, so this brings its own
+   * styles, scoped and injected once, and depends on no donor class.
+   */
+  K.MARK_CSS = `
+.bf-mk{display:inline-flex;align-items:center;gap:.5rem;margin-right:1.1rem;
+  text-decoration:none;color:inherit;background:none;border:0;padding:0;cursor:pointer;
+  font:inherit;line-height:1;flex:0 0 auto}
+.bf-mk-plate{width:2.5rem;height:2.5rem;border-radius:.75rem;display:grid;place-items:center;
+  flex:0 0 auto;overflow:hidden;border:1px solid rgba(128,128,128,.35);
+  transition:transform .14s ease,box-shadow .14s ease}
+.bf-mk:hover .bf-mk-plate{transform:translateY(-1px);box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.bf-mk-knight{background:#f4f2ec}
+.bf-mk-knight img{width:88%;height:88%;object-fit:contain;display:block;mix-blend-mode:multiply}
+.bf-mk-by{background:#0e1210;color:#f2f4f0;
+  font:800 .82rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.04em}
+.bf-mk-x{font:400 .78rem/1 ui-monospace,monospace;opacity:.45;flex:0 0 auto}
+.bf-mk-word{font:800 .95rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.045em;
+  white-space:nowrap}
+.bf-mk-sm .bf-mk-plate{width:1.75rem;height:1.75rem;border-radius:.5rem}
+.bf-mk-sm .bf-mk-by{font-size:.62rem}
+.bf-mk-sm .bf-mk-word{font-size:.8rem}
+.bf-mk-pop{position:fixed;z-index:2147483000;width:min(23rem,calc(100vw - 2rem));
+  background:#0e1210;color:#e9efe6;border:1px solid #2a332c;border-radius:.75rem;
+  box-shadow:0 10px 40px rgba(0,0,0,.45);padding:1rem 1.05rem;
+  font:400 .82rem/1.5 ui-sans-serif,system-ui,sans-serif}
+.bf-mk-pop[hidden]{display:none}
+.bf-mk-pop h3{margin:0 0 .15rem;font:700 .95rem/1.2 ui-sans-serif,system-ui,sans-serif}
+.bf-mk-pop .bf-mk-sub{margin:0 0 .7rem;opacity:.62;
+  font:400 .72rem/1.4 ui-monospace,monospace}
+.bf-mk-pop p{margin:0 0 .6rem}
+.bf-mk-pop dl{margin:.7rem 0 0;display:grid;grid-template-columns:auto 1fr;gap:.2rem .7rem;
+  font:400 .72rem/1.5 ui-monospace,monospace}
+.bf-mk-pop dt{opacity:.5;text-transform:uppercase;letter-spacing:.08em;font-size:.62rem;
+  align-self:center}
+.bf-mk-pop dd{margin:0;word-break:break-word}
+.bf-mk-pop .bf-mk-hosts{display:flex;gap:.45rem;flex-wrap:wrap;margin-top:.7rem}
+.bf-mk-pop .bf-mk-hosts a{color:#b9d49a;text-decoration:none;
+  font:400 .72rem/1 ui-monospace,monospace;border:1px solid #2a332c;border-radius:999px;
+  padding:.28rem .55rem}
+.bf-mk-pop .bf-mk-hosts a[aria-current]{background:#1b2a1d;color:#e9efe6}
+.bf-mk-scrim{position:fixed;inset:0;z-index:2147482999;background:transparent}
+.bf-mk-scrim[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){.bf-mk:hover .bf-mk-plate{transform:none}}
+`;
+
+  K.markStyles = () => {
+    if (document.getElementById('bf-mk-style')) return;
+    const st = document.createElement('style');
+    st.id = 'bf-mk-style';
+    st.textContent = K.MARK_CSS;
+    document.head.appendChild(st);
+  };
+
+  /* Aurekai x Bonfyre. Pass {word:false} for a chrome that has no room for the
+   * wordmark, {small:true} for a dense header. */
+  K.mark = (opts) => {
+    opts = opts || {};
+    K.markStyles();
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'bf-mk' + (opts.small ? ' bf-mk-sm' : '');
+    b.setAttribute('aria-haspopup', 'dialog');
+    b.setAttribute('aria-expanded', 'false');
+    b.title = 'Aurekai × Bonfyre — what this is';
+    b.innerHTML =
+      '<span class="bf-mk-plate bf-mk-knight">'
+    + '<img src="/assets/aurekai-knight.png" alt="" width="40" height="40" '
+    + 'loading="eager" decoding="async"></span>'
+    + '<span class="bf-mk-x" aria-hidden="true">×</span>'
+    + '<span class="bf-mk-plate bf-mk-by">BŸ</span>'
+    + (opts.word === false ? '' : '<span class="bf-mk-word">BONFŸRE</span>');
+    b.setAttribute('aria-label', 'Aurekai times Bonfyre');
+    b.addEventListener('click', (e) => { e.preventDefault(); K.markPopover(b); });
+    return b;
+  };
+
+  /* Swap a placeholder for the mark, keeping whatever spacing classes the
+   * donor's own header put on that slot. replaceWith drops them otherwise, and
+   * the mark ends up welded to the nav beside it. */
+  K.mountMark = (id, opts) => {
+    const slot = document.getElementById(id || 'bf-mk');
+    if (!slot) return null;
+    const m = K.mark(opts);
+    if (slot.className) m.className += ' ' + slot.className;
+    slot.replaceWith(m);
+    return m;
+  };
+
+  K.markPopover = async (anchor) => {
+    let pop = document.getElementById('bf-mk-pop');
+    let scrim = document.getElementById('bf-mk-scrim');
+    if (pop && !pop.hidden) { close(); return; }
+    if (!pop) {
+      scrim = document.createElement('div');
+      scrim.id = 'bf-mk-scrim'; scrim.className = 'bf-mk-scrim'; scrim.hidden = true;
+      pop = document.createElement('div');
+      pop.id = 'bf-mk-pop'; pop.className = 'bf-mk-pop'; pop.hidden = true;
+      pop.setAttribute('role', 'dialog');
+      pop.setAttribute('aria-label', 'Aurekai and Bonfyre');
+      document.body.append(scrim, pop);
+      scrim.addEventListener('click', close);
+      addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+    }
+    function close() {
+      pop.hidden = true; scrim.hidden = true;
+      if (anchor) anchor.setAttribute('aria-expanded', 'false');
+    }
+
+    const a = await K.address();
+    const inst = (a.institution || '').replace(/^[a-z]+:/, '').replace(/^aurekai:/, 'aurekai / ');
+    const hosts = a.institution_hosts || [];
+    pop.innerHTML =
+      '<h3>Aurekai × BonfŸre</h3>'
+    + '<p class="bf-mk-sub">the umbrella × the engine</p>'
+    + '<p>Bonfŷre is the engine: it addresses subjects, derives work from the difference '
+    + 'between states, routes it, records what happened and projects the result. Aurekai is '
+    + 'the larger umbrella the engine runs under.</p>'
+    + '<p>This page is one projection. The same engine answers the same subjects on every '
+    + 'host below, in that territory’s own physics.</p>'
+    + '<dl>'
+    + (inst ? '<dt>institution</dt><dd>' + inst + '</dd>' : '')
+    + '<dt>host</dt><dd>' + (a.host || location.hostname) + '</dd>'
+    + '<dt>territory</dt><dd>.' + (a.territory || '') + '</dd>'
+    + (a.audience ? '<dt>audience</dt><dd>' + a.audience + '</dd>' : '')
+    + (a.world ? '<dt>world</dt><dd>' + a.world + '</dd>' : '')
+    + '</dl>'
+    + (hosts.length > 1
+        ? '<div class="bf-mk-hosts">' + hosts.map(h =>
+            '<a href="' + location.protocol + '//' + h.host + location.pathname + '"'
+            + (h.host === location.hostname ? ' aria-current="page"' : '')
+            + '>.' + h.territory + '</a>').join('') + '</div>'
+        : '')
+    + '<div class="bf-mk-hosts"><a href="/territory">the address plane</a>'
+    + '<a href="/">the estate</a></div>';
+
+    pop.hidden = false; scrim.hidden = false;
+    if (anchor) {
+      anchor.setAttribute('aria-expanded', 'true');
+      const r = anchor.getBoundingClientRect();
+      pop.style.top = Math.min(r.bottom + 8, innerHeight - pop.offsetHeight - 8) + 'px';
+      pop.style.left = Math.max(8, Math.min(r.left, innerWidth - pop.offsetWidth - 8)) + 'px';
+    }
+  };
+
+  K.nav = (current) => {
+    const items = [
+      ['/discover', 'Discover'], ['/board', 'Boards'], ['/community', 'Community'],
+      ['/listings', 'Listings'], ['/parcels', 'Parcels'],
+      ['/inbox', 'Inbox'], ['/channels', 'Channels'], ['/stage', 'Stage'],
+      ['/territory', 'Territory']
+    ];
+    const nav = document.createElement('nav');
+    nav.className = 'k-nav';
+    nav.setAttribute('aria-label', 'Surfaces');
+    for (const [href, label] of items) {
+      const a = document.createElement('a');
+      a.href = href; a.textContent = label;
+      if (href === current) a.setAttribute('aria-current', 'page');
+      nav.appendChild(a);
+    }
+    return nav;
+  };
+
+  window.K = K;
+})();
+</script>
+<script>
+
+/* Aurekai's federation inside Lemmy's listing.
+ *
+ * The structure is lemmy-ui's own, from src/shared/components/post/: a
+ * .post-listing per row, the .row/.col-auto/.col.flex-grow-1 split that puts
+ * the score column beside the body, the .upvote/.downvote pair, the
+ * .btn.btn-sm.btn-animate.text-muted action bar, and the .md-div body. Lemmy
+ * lists posts in communities; this lists the peers this estate can reach and
+ * the sources it watches, which is the same shape over a different subject.
+ *
+ * What is Aurekai's: the records, and the things a community listing never has
+ * to say -- a score here is not a vote, and reachability is not agreement.
+ */
+(async () => {
+
+  /* Aurekai x Bonfyre, one lockup, every surface. */
+  K.mountMark('bf-mk', {small: true});
+  const $ = (s,r=document)=>r.querySelector(s);
+  const esc = s => String(s==null?'':s).replace(/[&<>"]/g,
+    c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const host = u => {try{return new URL(u).host;}catch(_){return String(u);}};
+
+  let tt; const toast = t => {
+    let b=$('#bf-toast');
+    if(!b){b=document.createElement('div');b.id='bf-toast';
+      b.className='toast align-items-center text-bg-dark border-0 show position-fixed';
+      b.style.cssText='left:50%;bottom:1.5rem;transform:translateX(-50%);z-index:1080;'
+        +'max-width:min(560px,90vw)';
+      document.body.appendChild(b);}
+    b.innerHTML='<div class="toast-body">'+esc(t)+'</div>';
+    b.style.display='block';
+    clearTimeout(tt);tt=setTimeout(function(){b.style.display='none';},4800);
+  };
+
+  /* whose host this is */
+  const here = await K.address();
+  const instName = (here.institution||'').replace(/^[a-z]+:/,'').replace(/^aurekai:/,'');
+  $('#bf-host').innerHTML = (instName ? '<strong class="text-body">'+esc(instName)
+    +'</strong> &middot; ' : '') + esc(location.hostname);
+  const hs = await K.hostSwitch('/community');
+  for (const a of hs.children) {
+    a.className = 'link-secondary text-decoration-none';
+    if (a.getAttribute('aria-current')) a.className = 'link-light fw-semibold text-decoration-none';
+  }
+  $('#bf-hosts').replaceWith(hs);
+
+  $('#bf-nav').innerHTML = [['/discover','Discover'],['/stage','Stage'],['/channels','Channels'],
+    ['/board','Boards'],['/listings','Listings'],['/parcels','Parcels'],['/inbox','Inbox'],
+    ['/township','Township'],['/territory','Territory']]
+    .map(p=>'<li class="nav-item"><a class="nav-link px-1 py-0 small" href="'+p[0]+'">'
+      +p[1]+'</a></li>').join('');
+
+  /* The CMS federations type carries prose -- "73638 peers observed; 57140
+     shared with hachyderm.io" is a sentence, and a surface rendering it is
+     printing somebody's paragraph. The native owner of this is the
+     ForeignTwinGraph, and it answers at /foreign/edges with real edges:
+     from, predicate, to, carrier, observed_at, evidence, claim_state. Section
+     68 says a pattern reads exactly one owner; this one reads the organ. */
+  const [edgeR, obsR] = await Promise.all([K.get('/foreign/edges'), K.get('/observations')]);
+  const fedR = edgeR;
+  const feed = $('#bf-feed');
+
+  if (!fedR.ok) {
+    feed.innerHTML = '<div class="alert alert-danger" role="alert">'
+      + '<h2 class="h6 alert-heading">The foreign graph needs an admitted session.</h2>'
+      + '<p class="mb-2 small"><code>/foreign/edges</code> answered ' + fedR.status
+      + '. This is a refusal, not an absence of peers.</p>'
+      + '<a href="/login" class="btn btn-sm btn-primary">Sign in</a></div>';
+    return;
+  }
+  const edges = (edgeR.body && edgeR.body.edges) || [];
+  const sources = obsR.ok ? (obsR.body.conflicts || []) : [];
+
+  /* A node is a host the graph names, on either end of an edge. Its facts come
+     from the edges themselves -- who it federates with, what carrier observed
+     that, and when -- rather than from a summary somebody wrote. */
+  const NODES = {};
+  const touch = h => (NODES[h] = NODES[h] || {host:h, out:[], in:[], carriers:new Set(),
+                                              observed:null, evidence:new Set()});
+  for (const e of edges) {
+    const a = touch(e.from), b = touch(e.to);
+    a.out.push(e); b.in.push(e);
+    a.carriers.add(e.carrier);
+    a.evidence.add(e.evidence);
+    if (!a.observed || e.observed_at > a.observed) a.observed = e.observed_at;
+    if (e.federation === e.from) a.isInstance = true;
+  }
+  const nodes = Object.values(NODES);
+
+  /* Lemmy sorts by Hot / New / Top. The equivalents here are real orderings
+     over real fields, and the one Lemmy has that this does not is Hot: nothing
+     here is voted on, so there is no score to decay. */
+  const SORTS = [
+    {id:'edges', label:'Most connected', why:'by how many edges leave the host in the graph'},
+    {id:'carrier', label:'By carrier', why:'grouped by the carrier that observed the edge'},
+    {id:'observed', label:'Last observed', why:'by when the graph last saw the host'},
+    {id:'name', label:'Alphabetical', why:'a stable order that nothing can game'},
+    {id:'sources', label:'Watched sources', why:'the external sources this estate observes'}
+  ];
+  let sort = 'edges';
+
+  const drawSorts = () => {
+    $('#bf-sorts').innerHTML = SORTS.map(s =>
+      '<button type="button" class="btn btn-outline-secondary'
+      + (s.id===sort ? ' active' : '') + '" data-s="'+s.id+'">'+esc(s.label)+'</button>').join('');
+    for (const b of $('#bf-sorts').querySelectorAll('button'))
+      b.addEventListener('click', () => { sort = b.dataset.s; draw(); });
+  };
+
+  /* A peer's "score" is its depth, shown in Lemmy's own score column. It is a
+     distance, not a vote, and the column says so on hover. */
+  const when = t => {
+    if (!t) return '';
+    const d = new Date(t), ms = Date.now() - d.getTime();
+    const days = Math.floor(ms / 86400000);
+    return days === 0 ? 'today' : days === 1 ? 'yesterday' : days + ' days ago';
+  };
+
+  const peerRow = (n) => {
+    const fed = n.out.filter(e => e.predicate === 'federates_with');
+    const disc = n.out.filter(e => e.predicate === 'discovered_via');
+    return '<article class="post-listing my-2">'
+    + '<div class="row mb-1">'
+    + '<div class="col-auto text-center bf-score" title="Edges out of this host in the '
+    + 'ForeignTwinGraph. Not a vote, and nothing here decays.">'
+    + '<div class="text-muted small">edges</div>'
+    + '<div class="fs-5 fw-semibold">' + n.out.length + '</div>'
+    + (n.in.length ? '<div class="text-muted" style="font-size:.7rem">'+n.in.length
+        +' in</div>' : '')
+    + '</div>'
+    + '<div class="col flex-grow-1">'
+    + '<h2 class="h6 mb-1 d-flex align-items-center gap-2 flex-wrap">'
+    + '<img class="bf-av" width="24" height="24" alt="" loading="lazy" src="'
+    + K.avatar(n.host, 'peer', 48) + '">'
+    + esc(n.host)
+    + (n.isInstance ? '<span class="badge text-bg-secondary">instance</span>'
+                    : '<span class="badge text-bg-dark border">named only</span>')
+    + [...n.carriers].map(c=>'<span class="badge text-bg-dark border font-monospace" '
+        + 'style="font-size:.65rem">'+esc(c)+'</span>').join('')
+    + '</h2>'
+    + '<div class="col-auto small text-muted ps-1 mb-2">'
+    + (n.observed ? 'observed ' + when(n.observed) + ' &middot; <span '
+        + 'class="font-monospace" style="font-size:.75rem">' + esc(n.observed) + '</span>'
+        : 'no observation recorded')
+    + '</div>'
+
+    /* the edges themselves, which is the thing the graph actually holds */
+    + (fed.length
+      ? '<div class="bf-depth small mb-2">'
+        + fed.map(e => '<div class="d-flex align-items-center gap-2 mb-1">'
+            + '<span class="badge text-bg-dark border" style="font-size:.65rem">'
+            + esc(e.predicate) + '</span>'
+            + '<span>' + esc(e.to) + '</span>'
+            + '<span class="text-muted ms-auto" style="font-size:.72rem">'
+            + esc(e.claim_state) + ' &middot; ' + esc(e.evidence) + '</span></div>').join('')
+        + '</div>'
+      : '')
+    + (disc.length
+      ? '<div class="small text-muted mb-2">discovered via '
+        + disc.map(e=>'<span class="font-monospace">'+esc(e.to)+'</span> ('
+          + esc(e.carrier) + ')').join(', ') + '</div>'
+      : '')
+
+    + '<div class="row row-cols-auto align-items-center g-3 justify-content-start mt-1">'
+    + '<div class="col"><button class="btn btn-sm border-light-subtle btn-animate text-muted '
+    + 'bf-follow" type="button">Subscribe</button></div>'
+    + '<div class="col"><button class="btn btn-sm border-light-subtle btn-animate text-muted '
+    + 'bf-visit" type="button">Visit</button></div>'
+    + '</div>'
+    + '<p class="bf-cant">Cannot be inferred: every edge here is <span '
+    + 'class="font-monospace">claim_state observed</span>. Somebody\'s peer list said so at '
+    + 'the time it was read. That is not agreement, not a current fact, and not a claim this '
+    + 'estate has verified.</p>'
+    + '<p class="bf-src">/foreign/edges &middot; bonfyre-foreign-graph.v1</p>'
+    + '</div></div></article>';
+  };
+
+  const sourceRow = (c) => {
+    const bad = c.content_still_reachable === false;
+    return '<article class="post-listing my-2"><div class="row mb-1">'
+    + '<div class="col-auto text-center bf-score" title="Observations recorded, not votes.">'
+    + '<div class="text-muted small">obs</div>'
+    + '<div class="fs-5 fw-semibold">' + c.observations + '</div></div>'
+    + '<div class="col flex-grow-1">'
+    + '<h2 class="h6 mb-1 d-flex align-items-center gap-2">'
+    + '<img class="bf-av" width="24" height="24" alt="" loading="lazy" src="'
+    + K.avatar(host(c.source_url), 'machine', 48) + '">'
+    + esc(host(c.source_url))
+    + '<span class="badge text-bg-' + (bad ? 'danger' : 'success') + '">'
+    + (bad ? 'unreachable' : 'reachable') + '</span></h2>'
+    + '<div class="col-auto small text-muted ps-1 mb-1">'
+    + esc(c.latest_kind.replace(/_/g,' ')) + ' &middot; status ' + esc(c.latest_status)
+    + ' &middot; ' + c.content_changes + ' content change'
+    + (c.content_changes === 1 ? '' : 's') + '</div>'
+    + '<div class="md-div small"><p class="mb-1">'
+    + (c.ever_retained_content ? 'bytes retained' : 'never retained') + '</p></div>'
+    + '<p class="bf-cant">Cannot be inferred: a content change is not a meaningful change. '
+    + 'The bytes differed, that is all, and no time is recorded against these rows.</p>'
+    + '<p class="bf-src">/observations</p></div></div></article>';
+  };
+
+  const draw = () => {
+    const s = SORTS.find(x => x.id === sort);
+    $('#bf-lede').textContent = s.why + '. Lemmy sorts by Hot; nothing here is voted on, so '
+      + 'there is no score to decay and no ordering that anybody can push.';
+
+    if (sort === 'sources') {
+      $('#bf-h1').textContent = 'Watched sources';
+      feed.innerHTML = obsR.ok
+        ? (sources.length ? sources.map(sourceRow).join('')
+           : '<p class="text-muted">No sources are watched. An empty projection, not a refusal.</p>')
+        : '<div class="alert alert-warning small">/observations answered ' + obsR.status
+          + '. Nothing is rendered rather than stale or invented.</div>';
+    } else {
+      $('#bf-h1').textContent = 'The foreign graph';
+      let rows = nodes.slice();
+      if (sort === 'edges') rows.sort((a,b) => b.out.length - a.out.length
+        || a.host.localeCompare(b.host));
+      else if (sort === 'observed') rows.sort((a,b) =>
+        String(b.observed||'').localeCompare(String(a.observed||''))
+        || a.host.localeCompare(b.host));
+      else rows.sort((a,b) => a.host.localeCompare(b.host));
+
+      if (sort === 'carrier') {
+        const by = {};
+        for (const e of edges) (by[e.carrier] = by[e.carrier] || []).push(e);
+        feed.innerHTML = Object.keys(by).sort().map(k =>
+          '<h2 class="h6 text-muted mt-4 mb-1 text-uppercase" style="letter-spacing:.08em">'
+          + esc(k) + ' <span class="badge text-bg-secondary">' + by[k].length
+          + ' edge' + (by[k].length===1?'':'s') + '</span></h2>'
+          + by[k].map(e => '<article class="post-listing my-2"><div class="small">'
+            + '<span class="font-monospace">' + esc(e.from) + '</span> '
+            + '<span class="badge text-bg-dark border">' + esc(e.predicate) + '</span> '
+            + '<span class="font-monospace">' + esc(e.to) + '</span>'
+            + '<div class="text-muted mt-1">' + esc(e.evidence) + ' &middot; '
+            + esc(e.claim_state) + ' &middot; ' + when(e.observed_at) + '</div>'
+            + '</div></article>').join('')).join('');
+      } else {
+        feed.innerHTML = rows.length ? rows.map(peerRow).join('')
+          : '<p class="text-muted">The graph holds no edges. An empty projection, not a '
+            + 'refusal.</p>';
+      }
+    }
+    for (const b of feed.querySelectorAll('.bf-follow'))
+      b.addEventListener('click', () => toast(
+        'Subscribing to a peer is an effect on the relationship between two instances, and '
+        + 'this surface has no standing to carry it. Nothing was sent.'));
+    for (const b of feed.querySelectorAll('.bf-visit'))
+      b.addEventListener('click', () => toast(
+        'This estate can reach that peer. Reachability is not agreement, and nothing here '
+        + 'has endorsed it.'));
+    drawSorts();
+  };
+
+  $('#bf-side').innerHTML =
+    '<div class="card mb-3"><div class="card-body">'
+  + '<h2 class="h6 card-title">' + esc(K.physics(K.territory).question) + '</h2>'
+  + '<p class="card-text small text-muted mb-2">' + edges.length + ' edges over '
+  + nodes.length + ' hosts, ' + esc(sources.length) + ' external sources watched.</p>'
+  + '<p class="card-text small text-muted mb-0">Read live from '
+  + '<code>/foreign/edges</code> and <code>/observations</code> &mdash; the ForeignTwinGraph '
+  + 'itself, not a summary of it. Every field on a row below is a field on an edge.</p>'
+  + '</div></div>'
+  + '<div class="card"><div class="card-body">'
+  + '<h2 class="h6 card-title">What a score is not</h2>'
+  + '<p class="card-text small text-muted mb-2">Lemmy puts a vote count in that column. This '
+  + 'puts an edge count in it. Nothing here is voted on, nothing decays, and no ordering can '
+  + 'be pushed by anybody.</p>'
+  + '<p class="card-text small text-muted mb-0">Every edge carries <span '
+  + 'class="font-monospace">claim_state</span>, and every one of them currently reads '
+  + '<span class="font-monospace">observed</span> &mdash; a peer list said so when it was '
+  + 'read. Nothing here is verified, and the graph does not pretend otherwise.</p>'
+  + '</div></div>'
+  + '<p class="bf-src mt-2">' + K.avatarAttribution + '</p>';
+
+  draw();
+})();
+
+</script></body></html>

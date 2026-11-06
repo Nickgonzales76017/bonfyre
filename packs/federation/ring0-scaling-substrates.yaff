@@ -1,0 +1,132 @@
+pack federation-ring0-scaling-substrates
+generation control-1
+provenance direct execution of the canonical validator, 2026-08-26
+authority measured
+note RING 0 of registry federation. Every binding below is REFERENCE_ONLY. No substrate definition is copied into the architecture registry; the canonical estate remains authoritative. The validator was run, not merely located.
+
+federation_ring ring0
+  target the five required scaling substrates
+  design_registry architecture/
+  executable_registry .bonfyre/run8/canonical/estate/Bonfyre_Aurekai_CANONICAL_INTEGRATED_V8_1_FULL_LINEAGE_KERNEL_CONVERGENCE_2026-08-20/
+  atlas_presence 0 of 5
+  canonical_presence 5 of 5
+  binding_presence 5 of 5 as of this pack
+  validator TOOLS/validate_scaling_substrate.py
+  validator_result PASS
+  validator_checks 12 of 12
+  validator_runtime python 3.11.15 or 3.12.13; verified under 3.12.13
+  measured_at 2026-08-26
+
+runtime_finding rf:substrate-python-floor
+  severity medium
+  claim the substrate implementation requires Python 3.10 or newer; the host default python3 is 3.9.6
+  mechanism planner.py calls int.bit_count(), added in Python 3.10
+  observed under the default interpreter the validator raises AttributeError: 'int' object has no attribute 'bit_count'
+  observed under /opt/homebrew/bin/python3.12 every check passes
+  consequence a reader running the validator with the default interpreter would conclude the substrates are broken; they are not
+  ladder_localization capability YES, body YES, service N/A, host runtime NO under default interpreter, YES under 3.11 or 3.12
+  pattern this is the fourth admission-ladder instance this session, after the atlas MCP wrapper, the absent php body and the unhosted AppPack routes
+  action record the interpreter floor as a property of the executable identity, not as a defect
+
+binding bnd:capability-hypergraph-planning
+  claim_id clm:five-substrates-required
+  semantic_identity capability_hypergraph_planning
+  registry_kind canonical-executable
+  relation IMPLEMENTS
+  source_path TOOLS/scaling_substrate/planner.py
+  source_digest 9b7ef384ae1e4b52
+  exports CapabilityOperator, CapabilityDemand, ExecutionPlan, NativeHypergraphPlanner
+  validator_path TOOLS/validate_scaling_substrate.py
+  validated_checks native_hypergraph_planner, planner_authority_ceiling
+  verification_state VERIFIED_BY_MEASUREMENT
+  authority REFERENCE_ONLY
+  isa_role lowers ROUTE, WORK and ALLOCATE
+  observed_at 2026-08-26
+
+binding bnd:executable-closure-hot-index
+  claim_id clm:five-substrates-required
+  semantic_identity executable_closure_hot_index
+  registry_kind canonical-executable
+  relation IMPLEMENTS
+  source_path TOOLS/scaling_substrate/hot_index.py
+  source_digest 2bcda675dd6bfa33
+  exports SparseBitmap, ExecutableClosureIndex, BDDManager
+  validator_path TOOLS/validate_scaling_substrate.py
+  validated_checks sparse_bitmap_intersection, executable_closure_bitmap_index, native_robdd
+  verification_state VERIFIED_BY_MEASUREMENT
+  authority REFERENCE_ONLY
+  isa_role lowers ADDRESS, SELECT and CLOSE alongside incremental derivation
+  observed_at 2026-08-26
+  note a native reduced ordered binary decision diagram is present and passing; the exact-filter stage of the optimization cascade has a real implementation behind it
+
+binding bnd:dialect-trait-interface-pass
+  claim_id clm:five-substrates-required
+  semantic_identity dialect_trait_interface_pass
+  registry_kind canonical-executable
+  relation IMPLEMENTS
+  source_path TOOLS/scaling_substrate/dialects.py
+  source_digest 61c3d73112799c09
+  exports DialectRegistry, Dialect, Operation, Interface, CompilerPass, PassPipeline
+  validator_path TOOLS/validate_scaling_substrate.py
+  validated_checks dialect_trait_interface_pass
+  verification_state VERIFIED_BY_MEASUREMENT
+  authority REFERENCE_ONLY
+  isa_role lowers PROJECT, SHOW AS and operator dispatch
+  observed_at 2026-08-26
+
+binding bnd:incremental-semantic-derivation
+  claim_id clm:five-substrates-required
+  semantic_identity incremental_semantic_derivation
+  registry_kind canonical-executable
+  relation IMPLEMENTS
+  source_path TOOLS/scaling_substrate/derivation.py
+  source_digest 54d7892f853aee02
+  exports ContentAddressedStore, SemanticBuildGraph
+  validator_path TOOLS/validate_scaling_substrate.py
+  validated_checks semantic_build_cache_hits, semantic_dependency_cone_invalidation
+  verification_state VERIFIED_BY_MEASUREMENT
+  authority REFERENCE_ONLY
+  isa_role lowers ADDRESS, SELECT and CLOSE alongside the hot closure index
+  observed_at 2026-08-26
+  significance this is the institutional build system; a content-addressed store and a semantic build graph with dependency-cone invalidation both exist and pass
+  first_workload_candidate the JRSS billing-window decision closure, where a hand-maintained markdown table is currently doing this job
+
+binding bnd:multidimensional-peer-reconciliation
+  claim_id clm:five-substrates-required
+  semantic_identity multidimensional_peer_reconciliation
+  registry_kind canonical-executable
+  relation IMPLEMENTS
+  source_path TOOLS/scaling_substrate/reconcile.py
+  source_digest dff94f9c96e08666
+  exports ReconcileItem, MultidimensionalRangeReconciler, ReconciliationDelta
+  validator_path TOOLS/validate_scaling_substrate.py
+  validated_checks range_reconciliation_local_only, range_reconciliation_remote_only, range_reconciliation_changed, range_reconciliation_prunes
+  verification_state VERIFIED_BY_MEASUREMENT
+  authority REFERENCE_ONLY
+  isa_role lowers DIFF and RECONCILE
+  observed_at 2026-08-26
+  significance the IndependentOracle work designed a comparison and arbitration contract without checking whether a reconciler already existed; it does, with range pruning, and it passes
+
+existence_state ring0
+  exists YES for all five
+  validated_historically YES; V8_1_SCALING_CORRECTION_VALIDATION.md
+  available_on_this_host YES under python 3.11 or 3.12, NO under the default 3.9.6
+  activated UNKNOWN
+  currently_used NO; nothing in the live atlas or the Upper90 packs references them
+  used_by_a_named_estate NO
+  measured_under_that_estate NO
+  eligible_for_lowering NO
+  note each rung recorded separately; passing a validator is not usage
+
+correction cor:oracle-designed-over-existing-reconciler
+  targets clm:independent-oracle
+  finding a multidimensional peer reconciler with range pruning already exists and passes its validator
+  consequence the IndependentOracle arbitration contract should be checked against reconcile.py before any implementation, rather than built beside it
+  status the design work stands; the implementation path changes
+  failure_mode designing over an unfederated registry, which is the exact cost of the registry split
+
+unbound_design_note
+  detail Every entry written into the architecture registry this session is currently unbound: institutional root, namespaces, relationship types, delegation model, product contracts, worlds, compression law, optimization cascade, cheap cognition, optimization proof, preservation boundary, readiness, analysis universe, independent oracle, design lineage, registry federation.
+  binding_presence 0 of 16
+  interpretation not a defect in those entries; a measurement of how far the design registry currently sits from executable reality
+  next_ring ExecutionFrame, SemanticProgramIR, SemanticSlice, SemanticConstraintNetwork, StandingAddress, DecisionSnapshot

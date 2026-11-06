@@ -1,0 +1,125 @@
+#!/usr/bin/env python3
+# Retired: architecture/check-witness-grade.mjs grades the verified Atlas index.
+"""How each `measured` claim in the atlas is backed, and how weakly.
+
+The atlas forbids maturity laundering and enforces it existentially: a
+`measured` architecture must name a witness, and that witness must be openable.
+Sixty-one architectures claim measured or proven on that basis.
+
+Existence is the weakest possible standard. A witness that always passes
+satisfies it. A witness nobody runs satisfies it. A witness that reads none of
+the state its architecture is about satisfies it. This grades the claims against
+three progressively stronger standards and reports the distribution, because the
+distribution is the honest picture and a single number is not:
+
+  named       a witness is declared; nothing more is known
+  runnable    the witness is a file on disk that can be executed
+  exercised   the witness is in the regression this estate actually runs
+  graded      the witness has been shown to go red when a fact it reads changes
+
+Only the last is evidence. The others are administration.
+
+Cannot infer: a graded witness -> a correct architecture. Mutation shows the
+witness reacts to the state; whether the architecture's claim about the world is
+true is a different question this cannot reach.
+"""
+from __future__ import annotations
+
+import json
+import re
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+INDEX = ROOT / "architecture" / "atlas.index.json"
+
+
+def regression_suites() -> set[str]:
+    """Witness paths this estate actually runs.
+
+    Read from the test directories rather than declared anywhere, because a list
+    of what is run, maintained by hand beside the thing that runs it, is two
+    assertions that drift."""
+    out = set()
+    for d in (ROOT / "cmd").glob("*/tests"):
+        for f in d.glob("*.sh"):
+            out.add(str(f.relative_to(ROOT)))
+    for f in (ROOT / "tests").rglob("*.sh"):
+        out.add(str(f.relative_to(ROOT)))
+    return out
+
+
+def graded_witnesses(receipt_path: Path | None) -> dict[str, dict]:
+    """Suites a mutation run has shown to react, and to what."""
+    if not receipt_path or not receipt_path.is_file():
+        return {}
+    try:
+        receipt = json.loads(receipt_path.read_text())
+    except (OSError, ValueError):
+        return {}
+    out: dict[str, dict] = {}
+    for entry in receipt.get("guarded", []):
+        for suite in entry.get("noticed_by", []):
+            row = out.setdefault(suite, {"fields": [], "strengths": set()})
+            row["fields"].append(f"{entry['table']}.{entry['field']}")
+            row["strengths"].add(entry.get("guard") or "ungraded")
+    for row in out.values():
+        row["strengths"] = sorted(row["strengths"])
+    return out
+
+
+def main() -> int:
+    receipt = None
+    for i, a in enumerate(sys.argv):
+        if a == "--mutation" and i + 1 < len(sys.argv):
+            receipt = Path(sys.argv[i + 1])
+    index = json.loads(INDEX.read_text())
+    runs = regression_suites()
+    graded = graded_witnesses(receipt)
+    # A suite name in the mutation plan is its short label; map it back to a path.
+    graded_paths = {p for p in runs
+                    for label in graded
+                    if Path(p).stem in (f"{label}_test", label, f"{label}_e2e")}
+
+    tiers = {"named": [], "runnable": [], "exercised": [], "graded": []}
+    for aid, arch in sorted(index["architectures"].items()):
+        if arch.get("maturity") not in ("measured", "proven"):
+            continue
+        witnesses = arch.get("witnesses") or []
+        paths = [w.split()[0] for w in witnesses
+                 if "/" in w.split()[0] and not w.split()[0].endswith(".archive")]
+        live = [p for p in paths if (ROOT / p).is_file()]
+        tier = "named"
+        if live:
+            tier = "runnable"
+        if any(p in runs for p in live):
+            tier = "exercised"
+        if any(p in graded_paths for p in live):
+            tier = "graded"
+        tiers[tier].append((aid, live[:1]))
+
+    total = sum(len(v) for v in tiers.values())
+    print(f"{total} architectures claim measured or proven\n")
+    for name, note in (
+        ("graded", "a fact it reads was changed and it went red"),
+        ("exercised", "it is in the regression, but has never been shown to fail"),
+        ("runnable", "a file exists; nothing runs it here"),
+        ("named", "a witness is described in prose only"),
+    ):
+        rows = tiers[name]
+        print(f"  {name:<10} {len(rows):>3}   {note}")
+    print()
+    if tiers["graded"]:
+        print("  graded:")
+        for aid, w in tiers["graded"]:
+            print(f"    {aid:<34} {w[0] if w else ''}")
+    print()
+    print("  cannot infer: a graded witness -> a correct architecture; mutation "
+          "shows the witness reacts to the state it reads")
+    if not receipt:
+        print("  (no --mutation receipt given, so nothing could be graded)")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

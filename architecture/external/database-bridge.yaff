@@ -1,0 +1,69 @@
+atlas database-bridge
+
+architecture database-bridge
+  canonical_name DatabaseBridge
+  family external
+  domain Database interoperability
+  layer native
+  semantic_question Did the selected table rows arrive at the destination with matching values, and what types changed?
+  purpose Move table records through DuckDB SQLite, MySQL and PostgreSQL connectors and compare both endpoints after the move; and, for a migration that renames or retypes, map a source schema by cited upstream casting rules and measure a rehearsal against it.
+  maturity implemented
+  command bonfyre bridge db
+  command bonfyre bridge db-verify
+  internal_calculus endpoint parsing -> connector attachment -> selected source tables -> optional target copy -> column alignment -> independent row counts and summed field hashes -> comparison receipt
+  invariant source attachments are read-only; verification and post-copy readback also attach the destination read-only
+  invariant a missing SQLite verification destination is refused without creating a database file
+  invariant each column is a separate hash argument after text conversion; SQL NULL remains distinct from a NUL character and field separators cannot merge column boundaries
+  invariant existing destination tables are retained unless the caller explicitly supplies --replace
+  forbidden_inference matching counts and aggregate hashes -> collision-free equality, a consistent cross-database snapshot, copied constraints or indexes, application compatibility, authorization or a completed migration
+  known_gap row hashes are aggregated and are not a cryptographic proof; values compare after text conversion, type changes are reported separately, and the two reads do not share a source/destination transaction
+  known_gap DuckDB hash behavior may change between versions; both endpoints are compared using the same installed engine during each invocation
+  source_path cmd/BonfyreBridge/src/main.c
+  source_path cmd/BonfyreBridge/tests/db_bridge_test.sh
+  witness cmd/BonfyreBridge/tests/db_bridge_test.sh verifies SQLite transfer, changed values and missing rows, unchanged files during verification, absent destination refusal, separator and NULL/NUL differences, and optionally real MariaDB/PostgreSQL round trips
+  command bonfyre bridge rules
+  command bonfyre bridge schema-map
+  command bonfyre bridge map-verify
+  internal_calculus rules: allowed HTTP 200 ForeignTwin receipt + retained body rehashed to its content_sha256 (or a vendored upstream file, said as such) -> pgloader "Default ... Casting Rules" lines or Frappe self.type_map entries -> rule candidates with exact byte ranges -> sealed rules.json (rules_digest)
+  internal_calculus schema-map: SQLite source read-only (pragma table_info, foreign keys, unique indexes, CHECK count, views, triggers) + authored transform plan (bonfyre.bridge.transform-plan.v1: renames, value maps, prefixes, Frappe DocType target, probes) + sealed rules (+ BonfyreFrappeCompiler SchemaIR) -> each column typed by a cited rule or a named exception -> sealed mapping.json (mapping_digest) and optional rehearsal SQL for a throwaway target
+  internal_calculus map-verify: sealed mapping + SQLite source + rehearsal target (SQLite, or PostgreSQL read through psql with PGTZ=UTC) -> transforms applied to source values -> canonical text per compare kind -> rows matched by mapped key -> per-column sha256 checksums, row counts, missing/extra/differing keys, declared target types, constraint counts, views/triggers by name, probe queries run in each engine's own dialect -> map-verify receipt with diff_digest; --expect re-checks an earlier receipt and exits 4 on drift
+  invariant rules refuses a receipt that is not policy allow with HTTP 200 and a retained body that no longer hashes to the receipt; every rule excerpt is the exact recorded byte range
+  invariant a mapping or rules file that no longer matches its own sealed digest is refused by schema-map, map-verify and bonfyre-brief cited
+  invariant a column no cited rule covers is carried as text and named unmapped-type; views, triggers and CHECK constraints the rehearsal SQL does not rewrite are named not-carried and check-not-carried
+  invariant map-verify never writes either side; an unreachable or unreadable target table reports rows, types and constraints as not matching
+  invariant the receipt's display of a PostgreSQL target never carries its password
+  forbidden_inference a schema mapping typed by pgloader's documented casting rules -> pgloader having run, or pgloader's using-functions having been applied; the bridge writes its own rehearsal SQL and records the using-function names only
+  forbidden_inference a map-verify receipt over the in-repo fixtures -> anything about a customer database; it covers the copy it names and nothing else
+  forbidden_inference an Odoo-to-ERPNext Customer rehearsal on SQLite -> ERPNext accepting the records (controllers, naming series, permissions, Link targets and MariaDB strict mode are not exercised)
+  known_gap transformation evidence covers SQLite sources only; PostgreSQL is a rehearsal target, MariaDB/MySQL and Oracle/SQL Server are neither sources nor targets of map-verify yet
+  known_gap rule sources parsed today: pgloader docs/ref/sqlite.rst (observed) and Frappe mariadb type_map (vendored, not observed); SQLines, ora2pg, OpenUpgrade analysis files and SQLGlot dialect rules are not parsed, and stored procedures, permissions and CDC cutover are not mapped
+  known_gap canonical comparison drops trailing zeros and timestamp fraction zeros; values are compared as canonical text, so a precision change that keeps the same canonical text is not seen
+  source_path cmd/BonfyreBridge/src/transform.c
+  source_path cmd/BonfyreBridge/tests/transform_evidence_test.sh
+  source_path cmd/BonfyreBridge/tests/fixtures/transform
+  witness cmd/BonfyreBridge/tests/transform_evidence_test.sh (make -C cmd/BonfyreBridge test, 2026-10-30) passes 37 checks: 18 pgloader casting rules from the retained ForeignTwin observation open-doc-pgloader-ref-sqlite with exact byte ranges, refused changed body and refused deny receipt, Frappe VARCHAR_LEN resolved to varchar(140); a 4-table SQLite shop mapped 20/20 columns to PostgreSQL and rehearsed on a throwaway PostgreSQL 16 cluster (rows and values match; CHECK, view and trigger named; LIKE 'a%' differs 1;2; vs 1;); a changed value, a deleted row and a retyped column each located and the --expect re-check exits 4; forged mapping refused; password kept out of the receipt; Odoo res_partner mapped onto the compiled ERPNext Customer DocType with Select options and required fields checked, rehearsed and matched on SQLite, and value-map drift located by key
+  witness 2026-10-30 live run retained under output/migration-evidence-20261030 (gitignored): rules from receipt open-doc-pgloader-ref-sqlite-20261030T172509Z-e82d3ccd65.json, Frappe rules from integrations/frappe-bench/apps/frappe (8d9f8321), Customer from ~/.bonfyre/frappe-packs/erpnext/schema-ir.json; PostgreSQL 16.15 diff 317326481ca2 and SQLite ERP diff 3202a22e20b5 each re-checked unchanged
+
+interaction database-bridge-evidence-to-cmd-brief
+  source database-bridge
+  destination cmd-brief
+  relation receipt_citation
+  preserves sealed mapping_digest, diff_digest, rule excerpts with byte ranges and their ForeignTwin receipt names, per-table row counts and checksums, verdict flags and exceptions
+  drops the rehearsal endpoints' authority; the brief cites receipts and never re-runs or upgrades them
+  forbidden_inference a brief that cites a rehearsal receipt -> a verified criterion; criteria stay verified false and name the receipt as rehearsal_evidence
+  invalidates_on map-verify or schema-map receipt schema, the seal, or the brief's evidence reader changing
+  binding cmd/BonfyreBridge/src/transform.c
+  binding cmd/BonfyreBrief/src/evidence.c
+  witness cmd/BonfyreBrief/tests/cited_brief_test.sh
+
+interaction cli-invokes-database-bridge
+  source cmd-c-l-i
+  destination database-bridge
+  relation native_command_dispatch
+  preserves explicit endpoint references, selected tables, move versus verify mode, replacement choice and native exit status
+  drops any inference of external account authority from command availability
+  forbidden_inference a resolved bridge command -> permission to overwrite the destination or publish a migration claim
+  invalidates_on CLI routing, connector behavior or comparison contract changing
+  binding cmd/BonfyreCLI/src/main.c
+  binding cmd/BonfyreBridge/src/main.c
+  witness cmd/BonfyreBridge/tests/db_bridge_test.sh

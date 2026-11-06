@@ -1,0 +1,148 @@
+atlas optimization-proof
+
+architecture optimization-proof
+  canonical_name OptimizationProof
+  owns ProofGate
+  owns CompressionLedger
+  owns CopyReceipt
+  consumes CascadePlan
+  consumes EvidenceGraph
+  consumes RepresentationSelection
+  publishes ProofGate
+  publishes PromotionVerdict
+  family optimization
+  domain Optimization / Promotion gate
+  layer governance
+  semantic_question Is this materialization correct, and is it admissibly represented, and are those two questions being answered separately?
+  purpose Prevent functionally correct but unnecessarily materialized implementations from being promoted. A semantic pass is necessary and not sufficient; a materialization must also prove identity, factoring, delta, borrowing, latent quality, cognitive role and reversibility.
+  maturity architectural
+  source_path cmd/BonfyreCompress/src/physical.c
+  witness cmd/BonfyreCompress/tests/physical_compiler_test.sh records an executed zero-copy receipt and reports copy and hydration amplification separately from declared passport costs
+  node_types ProofGate
+  node_types CompressionLedger
+  node_types CopyReceipt
+  node_types PromotionVerdict
+  edge_types gates
+  edge_types measured_by
+  invariant a semantic proof alone never promotes a materialization
+  invariant a promotion verdict names which gate failed, never a single aggregate score
+  invariant a ledger is a measurement of the machine doing its job, not a vanity metric
+  invariant an unnecessary copy or materialization boundary on a hot path is an architectural failure, not a profiling curiosity
+  invariant a compressed latent representation is admissible only with a measured retrieval-quality envelope
+  invariant every lowering proves it can be lifted or thawed before it is promoted
+  forbidden_inference a correct result -> a promotable implementation
+  forbidden_inference a passing test suite -> an admissible representation
+  forbidden_inference a smaller byte count -> a better representation
+  forbidden_inference a ledger row existing -> a measurement having been taken
+  interacts optimization-cascade
+  interacts compression-law
+  interacts cheap-cognition
+  source_lineage Generation-10 optimization doctrine promotion, 2026-08-26
+
+gate semantic
+  question Is the thing represented correctly?
+gate authority
+  question Is relationship, data and effect ownership correct and exact?
+gate physical
+  question Are identical bodies deduplicated before any encoder runs?
+gate compression
+  question Was repeated structure factored into basis, binding and exception?
+gate zero-copy
+  question Did the hot path borrow where it could have borrowed?
+gate delta
+  question Are changes represented as changes rather than as new snapshots?
+gate latent
+  question Did the compressed representation retain measured retrieval quality?
+gate cognitive
+  question Did the cheap stage stay inside its admissible role?
+gate query
+  question Did the query avoid hydrating state it did not use?
+gate reversibility
+  question Can this lowering be lifted or thawed?
+
+copy_receipt_field bytes_read
+copy_receipt_field bytes_borrowed
+copy_receipt_field bytes_copied
+copy_receipt_field bytes_decompressed
+copy_receipt_field bytes_reencoded
+copy_receipt_field bytes_hydrated
+copy_receipt_field allocations
+copy_receipt_field serialize_count
+copy_receipt_field deserialize_count
+copy_receipt_field materialization_count
+copy_receipt_field borrowed_boundaries
+copy_receipt_field fused_boundaries
+copy_receipt_field useful_bytes
+
+ledger_section raw
+  measure foreign bytes admitted
+ledger_section identity
+  measure unique bodies
+  measure dedup ratio
+  measure content-address hits
+ledger_section exact
+  measure normalized rows
+  measure dictionary size
+  measure packed-state bytes
+  measure factorization ratio
+ledger_section change
+  measure full-state equivalent bytes
+  measure actual delta bytes
+ledger_section storage
+  measure hot bytes
+  measure warm bytes
+  measure cold bytes
+  measure compression ratio by domain dictionary
+ledger_section latent
+  measure baseline full-precision bytes
+  measure selected representation bytes
+  measure retrieval quality at k
+  measure ranking stability
+  measure residual energy
+ledger_section cognitive
+  measure cheap classifications performed
+  measure escalation rate
+  measure expensive operator invocations avoided
+ledger_section execution
+  measure copy amplification
+  measure hydration amplification
+  measure boundary-format parse count
+  measure borrowed boundaries
+  measure fused boundaries
+ledger_section context
+  measure prefill tokens avoided
+  measure prepared state reused
+  measure context cut bytes
+ledger_section architectural
+  measure motifs discovered
+  measure capabilities lowered
+  measure shared bases created
+  measure explicit objects eliminated
+
+representation_selection_protocol
+  baseline full precision
+  candidate half precision
+  candidate integer quantization
+  candidate product quantization
+  candidate polar
+  candidate polar plus residual
+  candidate shared basis plus residual
+  measure bytes
+  measure recall at k
+  measure ranking stability
+  measure distance distortion
+  measure query latency
+  measure decode cost
+  measure memory bandwidth
+  measure residual energy
+  measure temporal stability
+  invariant selection is per subject family and measured, never a global default
+  invariant this protocol applies to dense latent and model representations only and never to authority, permission or evidence lineage
+
+interaction proof-gates-promotion
+  source optimization-proof
+  destination compression-law
+  relation promotion_constraint
+  preserves the separation between semantic correctness and representational admissibility
+  drops any aggregate score that would let a failing gate be averaged away
+  forbidden_inference an implementation passing every functional test -> that implementation being promotable

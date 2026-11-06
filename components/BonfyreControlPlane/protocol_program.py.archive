@@ -1,0 +1,182 @@
+"""Archived Python prototype: protocol-program.mjs lowers the CUE contract library.
+
+ProtocolContract compiled into CommitmentGraph, WorkGraph and the authority and
+evidence obligations. It did not compile into SemanticProgramIR, which meant an
+enactment had no read closure -- so when one of its inputs changed, nothing could
+say whether that enactment was affected. The only safe answer without a read
+closure is "recompile everything", and that is the whole-answer recomputation the
+derivation graph exists to avoid.
+
+This emits the closure the contract already implies. A role's `requires` is what
+it reads; its `produces` is what it writes. The union over roles is the
+enactment's closure, and a FactDelta intersecting it names exactly which roles
+must run again.
+
+Two properties follow, and both are enforced below:
+
+  a delta invalidates by intersection    A change to a parameter no role reads
+                                         affects nothing. A change to one a
+                                         single role reads affects that role and
+                                         whatever depends on its output, and
+                                         nothing else in the estate.
+
+  enactments are independent             Two enactments of one contract share a
+                                         shape and not a closure. A delta scoped
+                                         to one leaves the other valid, because
+                                         the closure is addressed per enactment
+                                         rather than per contract.
+
+Cascade is computed transitively over produced parameters, so invalidating a
+role invalidates everything downstream of what it produced -- but only that.
+Reaching the last role is not a reason to invalidate the first.
+
+Forbidden inferences, falsified by the tests beside this file:
+  a FactDelta               -> global invalidation
+  an invalidated role       -> an invalidated enactment
+  a shared contract         -> a shared closure
+  a written parameter       -> a produced effect
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Iterable, Optional
+
+
+class ProgramError(ValueError):
+    pass
+
+
+@dataclass(frozen=True)
+class ProgramStep:
+    """One role, as a read/write pair against exact parameter addresses."""
+    role: str
+    reads: frozenset[str]
+    writes: frozenset[str]
+
+    def touches(self, parameter: str) -> bool:
+        return parameter in self.reads
+
+
+@dataclass
+class SemanticProgram:
+    """The dependency-addressed form of one enactment.
+
+    Deliberately not a copy of the contract. It holds addresses and edges, which
+    is what the derivation graph needs to answer "which programs does this delta
+    affect" without knowing anything about roles, obligations or protocols.
+    """
+    enactment: str
+    contract: str
+    steps: list[ProgramStep] = field(default_factory=list)
+    given: frozenset[str] = frozenset()
+
+    # ------------------------------------------------------------- closures
+
+    def read_closure(self) -> frozenset[str]:
+        out: set[str] = set()
+        for s in self.steps:
+            out |= s.reads
+        return frozenset(out)
+
+    def write_closure(self) -> frozenset[str]:
+        out: set[str] = set()
+        for s in self.steps:
+            out |= s.writes
+        return frozenset(out)
+
+    def producer_of(self, parameter: str) -> Optional[str]:
+        for s in self.steps:
+            if parameter in s.writes:
+                return s.role
+        return None
+
+    def readers_of(self, parameter: str) -> list[str]:
+        return sorted(s.role for s in self.steps if s.touches(parameter))
+
+    # ---------------------------------------------------------- invalidation
+
+    def affected_by(self, parameter: str) -> list[str]:
+        """Roles that must run again if this parameter changed.
+
+        Transitive over produced parameters: a role that re-runs may produce a
+        different output, and whatever read that output must re-run too. The
+        fixed point stops there rather than sweeping the enactment, because a
+        role upstream of the change is unaffected by it.
+        """
+        dirty: set[str] = set()
+        changed = {parameter}
+        while True:
+            grew = False
+            for s in self.steps:
+                if s.role in dirty or not (s.reads & changed):
+                    continue
+                # A role that reads something changed becomes dirty, and its own
+                # outputs join the changed set in the same step -- otherwise the
+                # fixed point stops one hop short of the roles that read them.
+                dirty.add(s.role)
+                changed |= s.writes
+                grew = True
+            if not grew:
+                break
+        return sorted(dirty)
+
+    def invalidates(self, parameter: str) -> bool:
+        return bool(self.affected_by(parameter))
+
+    def unaffected_by(self, parameter: str) -> list[str]:
+        affected = set(self.affected_by(parameter))
+        return sorted(s.role for s in self.steps if s.role not in affected)
+
+
+def lower(contract, *, enactment: str) -> SemanticProgram:
+    """Compile a contract into the program for one enactment.
+
+    Refuses a non-conformant contract for the same reason enactment does: a
+    program whose roles can never obtain their inputs has a read closure that
+    describes a computation nobody can run.
+    """
+    if not contract.conformant():
+        raise ProgramError(
+            f"refusing to lower non-conformant contract {contract.name!r}: "
+            f"{contract.conformance()}")
+    if not enactment:
+        raise ProgramError(
+            "a program is addressed per enactment; without one, two runs of a "
+            "contract would share a closure and a delta on either would "
+            "invalidate both")
+    steps = [ProgramStep(name, frozenset(r.requires), frozenset(r.produces))
+             for name, r in sorted(contract.roles.items())]
+    return SemanticProgram(enactment=enactment, contract=contract.name,
+                           steps=steps, given=frozenset(contract.given))
+
+
+# ---------------------------------------------------------------- delta fan-out
+
+def affected_programs(programs: Iterable[SemanticProgram],
+                      parameter: str) -> dict[str, list[str]]:
+    """Which enactments a delta touches, and which of their roles.
+
+    The answer for an estate holding many enactments is usually empty, and that
+    is the point: a delta naming one parameter is not a reason to recompute
+    anything that never read it.
+    """
+    out: dict[str, list[str]] = {}
+    for p in programs:
+        roles = p.affected_by(parameter)
+        if roles:
+            out[p.enactment] = roles
+    return out
+
+
+def fact_delta(parameter: str, *, enactment: Optional[str] = None) -> dict:
+    """A FactDelta naming exactly one changed parameter address.
+
+    Shaped for the derivation graph rather than for this module: it carries the
+    address that changed and the enactment it changed within, and no opinion
+    about who should recompute. Deciding that is the graph's job.
+    """
+    if not parameter:
+        raise ProgramError("a FactDelta names the address that changed")
+    return {"parameter": parameter, "enactment": enactment,
+            "global_invalidation": False}

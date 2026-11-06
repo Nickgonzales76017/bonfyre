@@ -1,0 +1,80 @@
+#!/usr/bin/env python3
+"""Historical parity oracle for the native SubjectFabric verifier."""
+
+import argparse
+import json
+import os
+import sqlite3
+import sys
+
+from compile_subject_projection import (
+    digest, file_digest, projection_input_snapshot, projection_output_snapshot,
+)
+
+
+def verify(args):
+    fabric = sqlite3.connect("file:%s?mode=ro" % args.fabric_db, uri=True)
+    cms = sqlite3.connect("file:%s?mode=ro" % args.cms_db, uri=True)
+    try:
+        fabric.execute("BEGIN")
+        cms.execute("BEGIN")
+        row = fabric.execute(
+            "SELECT compiled_at,compiler_sha256,input_digest,projection_digest,manifest_json "
+            "FROM subject_projection_build WHERE build_id=1"
+        ).fetchone()
+        if not row:
+            raise ValueError("projection has no committed build record")
+        manifest = json.loads(row[4])
+        if manifest.get("schema") != "bonfyre.subject-projection-precompute.v4":
+            raise ValueError("unsupported projection build schema")
+        if row[:4] != (
+            manifest["compiled_at"], manifest["compiler_sha256"],
+            manifest["input_digest"], manifest["projection_digest"],
+        ):
+            raise ValueError("build record differs from its committed manifest")
+        compiler_path = os.path.join(os.path.dirname(__file__), "compile_subject_projection.py")
+        if manifest["compiler_sha256"] != file_digest(compiler_path):
+            raise ValueError("compiler changed since this projection was built")
+        inputs = projection_input_snapshot(fabric, cms, args)
+        if inputs != manifest["input_snapshot"] or digest(inputs) != manifest["input_digest"]:
+            raise ValueError("projection input frontier changed")
+        output = projection_output_snapshot(fabric)
+        if output != manifest["projection_tables"] or digest(output) != manifest["projection_digest"]:
+            raise ValueError("projection rows differ from committed build")
+        if args.manifest:
+            with open(args.manifest) as fh:
+                external = json.load(fh)
+            if external != manifest:
+                raise ValueError("external build manifest differs from committed build")
+        return {
+            "schema": "bonfyre.subject-projection-verification.v1",
+            "verified": True,
+            "input_digest": manifest["input_digest"],
+            "projection_digest": manifest["projection_digest"],
+            "routes": output["subject_route"]["rows"],
+            "route_items": output["subject_route_item"]["rows"],
+        }
+    finally:
+        cms.close()
+        fabric.close()
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--fabric-db", required=True)
+    ap.add_argument("--cms-db", required=True)
+    ap.add_argument("--items", required=True)
+    ap.add_argument("--page-composition", required=True)
+    ap.add_argument("--surface-programs", required=True)
+    ap.add_argument("--manifest")
+    args = ap.parse_args()
+    try:
+        print(json.dumps(verify(args), sort_keys=True))
+        return 0
+    except (OSError, sqlite3.Error, KeyError, ValueError) as exc:
+        print("subject projection verification failed: %s" % exc, file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-08",
+  "project": "opportunity:household-local-ai",
+  "cms_project_id": 66,
+  "title": "Find the household document behind an answer",
+  "source": "https://community.n8n.io/t/315978",
+  "buyer_need": "Private document work on a home Mac mini, suitable Google Workspace/Notion handoffs, and a household runbook. The buyer requested an n8n example; the current native proof is not that example.",
+  "design": {
+    "service": "Google Stitch",
+    "existing_project": "https://stitch.withgoogle.com/projects/4130246025382817859",
+    "status": "generation_pending_tool_binding_unavailable",
+    "new_stitch_output_claimed": false,
+    "prompt": "Design a quiet household document workspace for a person using a home Mac. Open on a question field and a small, clearly labelled synthetic household collection. Use warm white, dark readable text and restrained blue, with a compact household identity and small Aurekai sample label. Desktop: document list on the left, search results in the middle, the selected original passage on the right. Mobile: one readable column with a clear back action from the source. The main task is to find the exact document supporting a practical question, inspect the passage and save a note with that citation. Show document title, date if supplied, and page or section only when available. Distinguish retrieved text, the person's own note, and any suggested summary. Let the person correct a note, remove a document from search, and inspect the removal result. Explain that removing from search leaves the original file in place. Include an empty collection, an unsupported file, unavailable local service, a changed source, no supported answer, failed save, failed removal and a successful restart. A sample may run on synthetic material; personal-document import belongs to the local installation. Show where any cloud handoff would send data before the person requests it. Avoid cloud-upload defaults, fabricated confidence percentages, oversized promotional headings, architecture labels, chat bubbles that hide sources and promises of perfect privacy.",
+    "implementation_mapping": {
+      "existing_site_shell": "components/BonfyreServiceSite/shell.mjs",
+      "existing_site_build": "components/BonfyreServiceSite/build.mjs",
+      "existing_reading_section": "components/BonfyreServiceSite/sections/prose.mjs",
+      "existing_sample_owner": "packs/aurekai-work-samples/site/content.json",
+      "existing_lead_intake": "components/BonfyreServiceSite/lead-worker.mjs",
+      "proposed_workspace_extension": "Implemented as the local documents command in components/BonfyreServiceSite/site.mjs; document-workspace.mjs, document-client.mjs and document-workspace.css own the browser flow.",
+      "native_source_owner": "Selected bounded documents.json collection; arbitrary file import and OCR are not connected.",
+      "native_ocr": "cmd/BonfyreOCR/src/main.swift; file-format behavior must be exercised before promises.",
+      "native_embeddings": "cmd/BonfyreEmbed/src/main.c",
+      "native_index": "cmd/BonfyreVec/src/main.c",
+      "local_bridge": "Implemented loopback Bun service with host/origin checks and page session token. Native embedding and vector commands are invoked by fixed argv, with collection identities validated on every operation.",
+      "commercial_record": "Existing Project 66 and service_lead/outbound_message owners; no separate lead database.",
+      "recording_intake": "Extend the existing ServiceSite documents owner; invoke BonfyreTranscribe and BonfyreMediaPrep by fixed argv and preserve copied recording/transcript identities."
+    },
+    "recording_extension": "For an imported local recording, show an unreviewed-transcript notice, retained source time for each paragraph, and a local player with a Play this passage action. Saved notes retain recording digest and time range. Source removal disables playback on the next request; original files and buffered bytes remain. No autoplay, invented speaker identity or claim that ASR confidence is accuracy."
+  },
+  "acceptance": [
+    "A synthetic question opens the exact retained source passage, with no invented page number.",
+    "A question unsupported by the collection does not produce a factual answer merely because nearest neighbors exist.",
+    "A saved note retains its source identity and distinguishes the user's edits from retrieved text.",
+    "Removing a document removes all of its indexed passage IDs and persists after process and browser restart.",
+    "A failed removal leaves the full prior index intact and reports the failure.",
+    "Changing a source invalidates old source references until reindexing and review.",
+    "Original-file deletion is a separate explicit action; index removal is not secure erasure.",
+    "Private material is not included in the public sample or silently sent to cloud services.",
+    "Exercise the exact desktop and mobile routes, invalid inputs, restart, source removal and disconnected local service before sharing a working-preview claim."
+  ],
+  "verified_now": [
+    "Native ONNX embedding and search over 54 internal passages; three selected retrieval questions passed.",
+    "Native exact-ID removal added and installed. Three tests, 32 assertions; existing 16 width checks pass.",
+    "Seven passages removed from a copy of the real index; a fresh native search returned the remaining 47 with none of the removed passages. Original index remains 54/54.",
+    "Local synthetic household workspace: eight documents, 24 passages; native ONNX embedding and search, original paragraph review, cited browser notes and persistent document removal.",
+    "Four owner/API tests with 28 assertions pass. Twenty-two fresh Chrome checks pass, including source identity, invalid input, conflicting tabs, failed removal, full server/browser restart and widths 320 through 1440. No remote page requests observed."
+  ],
+  "remaining": [
+    "Google Stitch generation; existing authored implementation is not a generated Stitch result.",
+    "Buyer-requested n8n example and actual household Mac hardware/access requirements.",
+    "PDF or other file import, OCR review, controlled source updates and a household runbook.",
+    "Broader retrieval evaluation. Similarity returns possible sources rather than factual answers; no universal cosine cutoff is claimed."
+  ],
+  "commercial_next": "Use this local walkthrough to prepare the requested n8n example and a relevant shareable demonstration. Do not send the localhost URL to the prospect. Opening already sent; no follow-up sent in this implementation pass.",
+  "local_preview": "http://127.0.0.1:4177",
+  "browser_evidence": "packs/aurekai-work-samples/site/design/verification-documents-local/browser-verification.json"
+}

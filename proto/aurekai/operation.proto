@@ -1,0 +1,50 @@
+// Typed operation messages. One definition of each small message that today
+// is rebuilt as an informal JSON shape wherever it is sent or read.
+//
+// These are a transport and storage form, not an identity: protobuf does not
+// promise one byte sequence per message across versions and languages, so a
+// message is never identified by a hash of its serialised bytes. Identity is
+// the digest of the canonical field encoding in bonfyre-envelope `digest`.
+syntax = "proto3";
+package aurekai.operation.v1;
+
+// What a browser extension asks of the native host.
+message OperationEnvelope {
+  uint64 id = 1;
+  string operation = 2;      // hello, kept, history, observe, capture, hold
+  string url = 3;
+  bool confirmed = 4;        // the person asked for this, by their own act
+  string selection = 5;
+  string note = 6;
+}
+
+// What the host answers.
+message OperationReply {
+  uint64 id = 1;
+  bool ok = 2;
+  string operation = 3;
+  string url = 4;
+  string refused = 5;
+  string reason = 6;
+  bool truncated = 7;
+  string native_owner = 8;
+  string receipt_path = 9;
+}
+
+// A selection left in the work queue.
+message HeldSelection {
+  string url = 1;
+  string selection = 2;
+  string note = 3;
+  string held_from = 4;
+}
+
+// One attempt at an effect, as the work graph records it.
+message EffectAttempt {
+  bytes mission_id = 1;
+  bytes task_id = 2;
+  bytes input_digest = 3;
+  bytes context_digest = 4;
+  uint64 attempt = 5;
+  string provider = 6;
+}

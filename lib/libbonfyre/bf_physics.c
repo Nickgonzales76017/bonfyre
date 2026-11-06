@@ -96,10 +96,13 @@ int bf_physics_state_save(const BfPhysicsState *s, const char *path) {
         .step    = s->step,
     };
     memset(hdr.pad, 0, sizeof(hdr.pad));
-    fwrite(&hdr, 1, sizeof(hdr), f);
-    fwrite(s->q, sizeof(float), s->dim, f);
-    fwrite(s->p, sizeof(float), s->dim, f);
-    fclose(f);
+    /* A short write or failed close must not be renamed over the last good
+     * state: the caller is told and the previous trajectory point survives. */
+    int ok = fwrite(&hdr, 1, sizeof(hdr), f) == sizeof(hdr) &&
+             fwrite(s->q, sizeof(float), s->dim, f) == s->dim &&
+             fwrite(s->p, sizeof(float), s->dim, f) == s->dim;
+    if (fclose(f) != 0) ok = 0;
+    if (!ok) { unlink(tmp); return -1; }
 
     if (rename(tmp, path) != 0) { unlink(tmp); return -1; }
     return 0;

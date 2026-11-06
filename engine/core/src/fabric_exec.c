@@ -2,12 +2,18 @@
 #include "bonfyre_fabric.h"
 #include "bonfyre_fabric_internal.h"
 #include "bf_filesystem.h"
+#include "bf_authority.h"
 #include "bf_operator.h"
 #include "bf_operator_contract.h"
 #include "bf_workgraph.h"
+#include "bf_lifecycle.h"
+#include "bf_json.h"
+#include "bf_information_policy.h"
+#include "bf_utf8.h"
 #include "bonfyre.h"
 
 #include <errno.h>
+#include <stdbool.h>
 #include <ctype.h>
 #include <glob.h>
 #include <fcntl.h>
@@ -18,6 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -79,7 +86,11 @@ static int ingest_file(sqlite3 *db,const char *path,const char *type,char uri[25
 static int receipt(sqlite3 *db,const char *kind,const char *subject,const char *payload,char out[64],FILE *err){char h[65],ts[32],uri[256];id(out,64,"rcpt",subject);bf_sha256_hex((const uint8_t*)payload,strlen(payload),h);stamp(ts);sqlite3_stmt*s=NULL;sqlite3_prepare_v2(db,"INSERT INTO receipts(id,subject_kind,subject_id,content_hash,payload,created_at) VALUES(?,?,?,?,?,?)",-1,&s,NULL);sqlite3_bind_text(s,1,out,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,2,kind,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,3,subject,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,4,h,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,5,payload,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,6,ts,-1,SQLITE_TRANSIENT);if(step(db,s,err))return -1;snprintf(uri,sizeof(uri),"bonfyre://receipt/%s",out);return namespace_row(db,uri,"receipt",out,"fabric:receipt","hashed",err);}
 
 static int upsert_root(sqlite3 *db,const char *rid,const char *kind,const char *locator,const char *authority,const char *mode,FILE *err){char ts[32];stamp(ts);sqlite3_stmt*s=NULL;sqlite3_prepare_v2(db,"INSERT INTO roots(id,kind,locator,owner,authority_class,durability,trust_level,sensitivity,access_mode,retention,backup_policy,hash_strategy,watch_strategy,materialization_policy,runtime_visibility,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET kind=excluded.kind,locator=excluded.locator,authority_class=excluded.authority_class,access_mode=excluded.access_mode,created_at=excluded.created_at",-1,&s,NULL);sqlite3_bind_text(s,1,rid,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,2,kind,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,3,locator,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,4,"local-user",-1,SQLITE_STATIC);sqlite3_bind_text(s,5,authority,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,6,"durable",-1,SQLITE_STATIC);sqlite3_bind_text(s,7,"local",-1,SQLITE_STATIC);sqlite3_bind_text(s,8,"standard",-1,SQLITE_STATIC);sqlite3_bind_text(s,9,mode,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,10,"policy-default",-1,SQLITE_STATIC);sqlite3_bind_text(s,11,"declared",-1,SQLITE_STATIC);sqlite3_bind_text(s,12,"sha256",-1,SQLITE_STATIC);sqlite3_bind_text(s,13,"bounded",-1,SQLITE_STATIC);sqlite3_bind_text(s,14,"reference",-1,SQLITE_STATIC);sqlite3_bind_text(s,15,"scoped",-1,SQLITE_STATIC);sqlite3_bind_text(s,16,ts,-1,SQLITE_TRANSIENT);return step(db,s,err);}
-static int compile_workspace(sqlite3 *db,const char *path,const char *gen,FILE *err){size_t z;char *txt=read_text(path,&z);if(!txt){fprintf(err,"fabric: cannot read workspace %s\n",path);return -1;}char repo[PATH_MAX],state[PATH_MAX];if(parent_directory(path,repo)||state_dir(state,err)){free(txt);return -1;}char *save=NULL,*line=strtok_r(txt,"\n",&save),rid[128]="",kind[64]="",locator[PATH_MAX]="",authority[96]="governed",mode[64]="read-write";int count=0;while(line){char *p=line;while(*p==' '||*p=='\t')p++;if(!strncmp(p,"root ",5)){if(rid[0]){char resolved[PATH_MAX];if(!strcmp(locator,"platform-default")){if(!strcmp(kind,"state"))snprintf(resolved,sizeof(resolved),"%s",state);else snprintf(resolved,sizeof(resolved),"%s/%s",state,rid);}else if(resolve_from(repo,locator,resolved)){fprintf(err,"fabric: cannot resolve root '%s' locator '%s' relative to %s\n",rid,locator,repo);free(txt);return -1;}if(strcmp(kind,"source"))mkdirs(resolved);if(upsert_root(db,rid,kind,resolved,authority,mode,err)){free(txt);return -1;}count++;}if(sscanf(p,"root %127s",rid)!=1){free(txt);return -1;}kind[0]=locator[0]=0;snprintf(authority,sizeof(authority),"governed");snprintf(mode,sizeof(mode),"read-write");}else if(rid[0]){char k[64],v[1024];if(sscanf(p,"%63s %1023s",k,v)==2){if(!strcmp(k,"kind"))snprintf(kind,sizeof(kind),"%s",v);else if(!strcmp(k,"locator"))snprintf(locator,sizeof(locator),"%s",v);else if(!strcmp(k,"authority"))snprintf(authority,sizeof(authority),"%s",v);else if(!strcmp(k,"mode"))snprintf(mode,sizeof(mode),"%s",v);}}line=strtok_r(NULL,"\n",&save);}if(rid[0]){char resolved[PATH_MAX];if(!strcmp(locator,"platform-default")){if(!strcmp(kind,"state"))snprintf(resolved,sizeof(resolved),"%s",state);else snprintf(resolved,sizeof(resolved),"%s/%s",state,rid);}else if(resolve_from(repo,locator,resolved)){fprintf(err,"fabric: cannot resolve root '%s' locator '%s' relative to %s\n",rid,locator,repo);free(txt);return -1;}if(strcmp(kind,"source"))mkdirs(resolved);if(upsert_root(db,rid,kind,resolved,authority,mode,err)){free(txt);return -1;}count++;}free(txt);if(!count){fprintf(err,"fabric: workspace has no roots\n");return -1;}return record_decl(db,"workspace",path,gen,err);}
+static int compile_workspace(sqlite3 *db,const char *path,const char *gen,FILE *err){size_t z;char *txt=read_text(path,&z);if(!txt){fprintf(err,"fabric: cannot read workspace %s\n",path);return -1;}char repo[PATH_MAX],state[PATH_MAX];if(parent_directory(path,repo)||state_dir(state,err)){free(txt);return -1;}/* These hold tokens parsed out of a workspace line, and a line can be up to
+   1023 bytes. At 128/64/96 a long identifier was silently truncated into a
+   different, valid-looking id -- snprintf is memory-safe but the resulting
+   root would simply be the wrong one. Sized so no valid line can truncate. */
+    char *save=NULL,*line=strtok_r(txt,"\n",&save),rid[1024]="",kind[1024]="",locator[PATH_MAX]="",authority[1024]="governed",mode[1024]="read-write";int count=0;while(line){char *p=line;while(*p==' '||*p=='\t')p++;if(!strncmp(p,"root ",5)){if(rid[0]){char resolved[PATH_MAX];if(!strcmp(locator,"platform-default")){if(!strcmp(kind,"state"))snprintf(resolved,sizeof(resolved),"%s",state);else snprintf(resolved,sizeof(resolved),"%s/%s",state,rid);}else if(resolve_from(repo,locator,resolved)){fprintf(err,"fabric: cannot resolve root '%s' locator '%s' relative to %s\n",rid,locator,repo);free(txt);return -1;}if(strcmp(kind,"source"))mkdirs(resolved);if(upsert_root(db,rid,kind,resolved,authority,mode,err)){free(txt);return -1;}count++;}if(sscanf(p,"root %127s",rid)!=1){free(txt);return -1;}kind[0]=locator[0]=0;snprintf(authority,sizeof(authority),"governed");snprintf(mode,sizeof(mode),"read-write");}else if(rid[0]){char k[64],v[1024];if(sscanf(p,"%63s %1023s",k,v)==2){if(!strcmp(k,"kind"))snprintf(kind,sizeof(kind),"%s",v);else if(!strcmp(k,"locator"))snprintf(locator,sizeof(locator),"%s",v);else if(!strcmp(k,"authority"))snprintf(authority,sizeof(authority),"%s",v);else if(!strcmp(k,"mode"))snprintf(mode,sizeof(mode),"%s",v);}}line=strtok_r(NULL,"\n",&save);}if(rid[0]){char resolved[PATH_MAX];if(!strcmp(locator,"platform-default")){if(!strcmp(kind,"state"))snprintf(resolved,sizeof(resolved),"%s",state);else snprintf(resolved,sizeof(resolved),"%s/%s",state,rid);}else if(resolve_from(repo,locator,resolved)){fprintf(err,"fabric: cannot resolve root '%s' locator '%s' relative to %s\n",rid,locator,repo);free(txt);return -1;}if(strcmp(kind,"source"))mkdirs(resolved);if(upsert_root(db,rid,kind,resolved,authority,mode,err)){free(txt);return -1;}count++;}free(txt);if(!count){fprintf(err,"fabric: workspace has no roots\n");return -1;}return record_decl(db,"workspace",path,gen,err);}
 
 static int bind(sqlite3 *db,const char *op,const char *binary,const char *source,const char *gen,FILE *err){char h[65]="";if(source&&access(source,R_OK)==0)bf_sha256_file(source,h);sqlite3_stmt*s=NULL;sqlite3_prepare_v2(db,"INSERT INTO catalog_bindings(operator_id,binary_name,source_path,installed_path,source_hash,input_contract,output_contract,file_inputs,streaming,cwd_contract,environment_contract,timeout_seconds,cancellation,retry_behavior,resource_requirements,health_probe,workload_probe,quality_probe,produced_families,catalog_generation,binding_state) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(operator_id) DO UPDATE SET binary_name=excluded.binary_name,source_path=excluded.source_path,source_hash=excluded.source_hash,catalog_generation=excluded.catalog_generation,binding_state=excluded.binding_state",-1,&s,NULL);sqlite3_bind_text(s,1,op,-1,SQLITE_TRANSIENT);if(binary)sqlite3_bind_text(s,2,binary,-1,SQLITE_TRANSIENT);else sqlite3_bind_null(s,2);if(source)sqlite3_bind_text(s,3,source,-1,SQLITE_TRANSIENT);else sqlite3_bind_null(s,3);sqlite3_bind_null(s,4);sqlite3_bind_text(s,5,h,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,6,"artifact.v1",-1,SQLITE_STATIC);sqlite3_bind_text(s,7,"artifact.v1",-1,SQLITE_STATIC);sqlite3_bind_text(s,8,"optional",-1,SQLITE_STATIC);sqlite3_bind_text(s,9,"false",-1,SQLITE_STATIC);sqlite3_bind_text(s,10,"mission-directory",-1,SQLITE_STATIC);sqlite3_bind_text(s,11,"scoped",-1,SQLITE_STATIC);sqlite3_bind_int(s,12,30);sqlite3_bind_text(s,13,"process-group",-1,SQLITE_STATIC);sqlite3_bind_text(s,14,"bounded:0",-1,SQLITE_STATIC);sqlite3_bind_text(s,15,"cpu:1",-1,SQLITE_STATIC);sqlite3_bind_text(s,16,"explicit",-1,SQLITE_STATIC);sqlite3_bind_text(s,17,"explicit",-1,SQLITE_STATIC);sqlite3_bind_text(s,18,"explicit",-1,SQLITE_STATIC);sqlite3_bind_text(s,19,"derived-artifact",-1,SQLITE_STATIC);sqlite3_bind_text(s,20,gen,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,21,binary&&source&&access(source,X_OK)==0?"bound":"declared-unbound",-1,SQLITE_STATIC);return step(db,s,err);}
 static int catalog_row(sqlite3*db,const char*i,const char*n,const char*v,const char*in,const char*outp,const char*effect,const char*auth,const char*lane,const char*mat,const char*gen,FILE*err){char ts[32];stamp(ts);sqlite3_stmt*s=NULL;sqlite3_prepare_v2(db,"INSERT INTO catalog(id,kind,name,version,input_schema,output_schema,effect_class,authorization_class,execution_lane,idempotency,retry_semantics,timeout_seconds,source_ref,maturity,health_state,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,version=excluded.version,input_schema=excluded.input_schema,output_schema=excluded.output_schema,effect_class=excluded.effect_class,authorization_class=excluded.authorization_class,execution_lane=excluded.execution_lane,maturity=excluded.maturity,source_ref=excluded.source_ref,health_state='declared'",-1,&s,NULL);sqlite3_bind_text(s,1,i,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,2,"operator",-1,SQLITE_STATIC);sqlite3_bind_text(s,3,n,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,4,v,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,5,in,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,6,outp,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,7,effect,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,8,auth,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,9,lane,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,10,"idempotent",-1,SQLITE_STATIC);sqlite3_bind_text(s,11,"bounded:0",-1,SQLITE_STATIC);sqlite3_bind_int(s,12,30);sqlite3_bind_text(s,13,gen,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,14,mat,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,15,"declared",-1,SQLITE_STATIC);sqlite3_bind_text(s,16,ts,-1,SQLITE_TRANSIENT);return step(db,s,err);}
@@ -604,6 +615,46 @@ static int file_contains_text(const char *path, const char *required) {
     return found;
 }
 
+/* Reads the next word of a text as lowercase letters and digits; returns its
+ * length, or 0 at the end. */
+static size_t next_plain_word(const char **cursor, char *word, size_t size) {
+    const unsigned char *at = (const unsigned char *)*cursor;
+    size_t length = 0;
+
+    while (*at && !isalnum(*at)) at++;
+    while (*at && (isalnum(*at) || *at == '\'')) {
+        if (*at != '\'' && length + 1 < size) word[length++] = (char)tolower(*at);
+        at++;
+    }
+    word[length] = '\0';
+    *cursor = (const char *)at;
+    return length;
+}
+
+/* True when every word of the shorter text appears, in the same order, in the
+ * longer one.  The counts let a caller bound how much was removed or added. */
+static int words_kept_in_order(const char *shorter_path, const char *longer_path,
+                               size_t *shorter_words, size_t *longer_words) {
+    char *shorter = read_text(shorter_path, NULL), *longer = read_text(longer_path, NULL);
+    const char *short_at = shorter, *long_at = longer;
+    char want[96], have[96];
+    int kept = shorter != NULL && longer != NULL;
+
+    *shorter_words = 0; *longer_words = 0;
+    while (kept && next_plain_word(&short_at, want, sizeof(want))) {
+        int found = 0;
+        (*shorter_words)++;
+        while (next_plain_word(&long_at, have, sizeof(have))) {
+            (*longer_words)++;
+            if (!strcmp(want, have)) { found = 1; break; }
+        }
+        kept = found;
+    }
+    while (kept && next_plain_word(&long_at, have, sizeof(have))) (*longer_words)++;
+    free(shorter); free(longer);
+    return kept;
+}
+
 static int file_has_prefix(const char *path, const unsigned char *prefix, size_t prefix_size) {
     unsigned char buffer[16];
     FILE *file;
@@ -666,19 +717,28 @@ static int qwen_integer_field(const char *json, const char *field, int *out) {
 }
 
 static int qwen_parse_single_blender_statement(const char *path) {
-    static const char program[] =
-        "import ast,sys; s=open(sys.argv[1],encoding='utf-8').read(); "
-        "m=ast.parse(s); assert len(m.body)==1; n=m.body[0]; "
-        "assert isinstance(n,ast.Expr) and isinstance(n.value,ast.Call); "
-        "assert 'bpy.ops.mesh.primitive_cube_add' in s";
-    pid_t child = fork();
-    int status = 0;
-    if (child < 0) return 0;
-    if (child == 0) {
-        execl("/usr/bin/python3", "python3", "-c", program, path, (char *)NULL);
-        _exit(127);
+    char buffer[1024];
+    FILE *file;
+    size_t len;
+    char *start;
+    char *end;
+    if (!path) return 0;
+    file = fopen(path, "rb");
+    if (!file) return 0;
+    len = fread(buffer, 1, sizeof(buffer) - 1, file);
+    if (ferror(file) || fgetc(file) != EOF) {
+        fclose(file);
+        return 0;
     }
-    return waitpid(child, &status, 0) == child && WIFEXITED(status) && WEXITSTATUS(status) == 0;
+    fclose(file);
+    buffer[len] = '\0';
+    start = buffer;
+    while (*start && isspace((unsigned char)*start)) start++;
+    end = start + strlen(start);
+    while (end > start && isspace((unsigned char)end[-1])) *--end = '\0';
+    return strncmp(start, "bpy.ops.mesh.primitive_cube_add(", 32) == 0 &&
+           end > start + 32 && end[-1] == ')' &&
+           !strchr(start, ';') && !strchr(start, '#');
 }
 
 static int qwen_blender_line_output(const char *path) {
@@ -861,6 +921,75 @@ static int parse_labeled_double(const char *text, const char *label, double *out
     return 1;
 }
 
+/* One number read from a store the node was handed, opened read-only. The
+ * probes below use it to check an organ's report against the records the
+ * report was made from. */
+static int store_number(const char *path, const char *sql, double *value) {
+    sqlite3 *store = NULL;
+    sqlite3_stmt *statement = NULL;
+    int ok = 0;
+    if (sqlite3_open_v2(path, &store, SQLITE_OPEN_READONLY, NULL) == SQLITE_OK &&
+        sqlite3_prepare_v2(store, sql, -1, &statement, NULL) == SQLITE_OK &&
+        sqlite3_step(statement) == SQLITE_ROW) {
+        *value = sqlite3_column_double(statement, 0);
+        ok = 1;
+    }
+    if (statement) sqlite3_finalize(statement);
+    if (store) sqlite3_close(store);
+    return ok;
+}
+
+/* Lines of a report that contain needle, or every non-empty line when
+ * needle is NULL. */
+static long report_lines(const char *path, const char *needle) {
+    char *text = read_text(path, NULL);
+    long count = 0;
+    if (!text) return -1;
+    for (char *line = text; line && *line; ) {
+        char *end = strchr(line, '\n');
+        if (end) *end = '\0';
+        if (*line && (!needle || strstr(line, needle))) count++;
+        line = end ? end + 1 : NULL;
+    }
+    free(text);
+    return count;
+}
+
+static unsigned int pcap_u32(const unsigned char *bytes, int swapped) {
+    if (swapped)
+        return ((unsigned int)bytes[0] << 24) | ((unsigned int)bytes[1] << 16) |
+            ((unsigned int)bytes[2] << 8) | (unsigned int)bytes[3];
+    return ((unsigned int)bytes[3] << 24) | ((unsigned int)bytes[2] << 16) |
+        ((unsigned int)bytes[1] << 8) | (unsigned int)bytes[0];
+}
+
+/* Walks a classic pcap file and totals its records and captured bytes. */
+static int pcap_record_totals(const char *path, unsigned long long *packets,
+                              unsigned long long *bytes) {
+    unsigned char header[24];
+    unsigned char record[16];
+    unsigned int magic;
+    int swapped;
+    FILE *file = fopen(path, "rb");
+
+    if (!file) return -1;
+    if (fread(header, 1, sizeof(header), file) != sizeof(header)) { fclose(file); return -1; }
+    magic = pcap_u32(header, 0);
+    if (magic == 0xa1b2c3d4u || magic == 0xa1b23c4du) swapped = 0;
+    else if (magic == 0xd4c3b2a1u || magic == 0x4d3cb2a1u) swapped = 1;
+    else { fclose(file); return -1; }
+    *packets = 0;
+    *bytes = 0;
+    while (fread(record, 1, sizeof(record), file) == sizeof(record)) {
+        unsigned int captured = pcap_u32(record + 8, swapped);
+        if (fseek(file, (long)captured, SEEK_CUR) != 0) { fclose(file); return -1; }
+        *packets += 1;
+        *bytes += captured;
+    }
+    fclose(file);
+    return 0;
+}
+
 static int probe_contract_output(const char *probe, const char *path, int semantic_stream,
                                  const char *input_path) {
     static const unsigned char riff_prefix[] = {'R', 'I', 'F', 'F'};
@@ -872,16 +1001,24 @@ static int probe_contract_output(const char *probe, const char *path, int semant
         !strcmp(probe,"relation-created") || !strcmp(probe,"state-transition")) return regular_nonempty_file(path);
     if (!strcmp(probe,"structured-output")) return structured_file(path);
     if (!strcmp(probe,"quant-roundtrip")) {
-        FILE *file = fopen(path, "r");
-        char line[1024];
-        int cosine_pass = 0, reported = 0;
-        if (!file) return 0;
-        while (fgets(line, sizeof(line), file)) {
-            if (strstr(line, "cos=") && strstr(line, "rmse=") && strstr(line, "bpw=")) reported = 1;
-            if (strstr(line, "PASS") && strstr(line, "quantization")) cosine_pass = 1;
-        }
-        fclose(file);
-        return reported && cosine_pass;
+        /* The report must name the model file this node was handed, carry a
+         * per-tensor measurement, and its lowest cosine must be one a
+         * roundtrip can be said to have survived. */
+        char *text;
+        char model_line[PATH_MAX + 16];
+        double measured = 0.0, lowest = 0.0;
+        int ok;
+
+        if (!input_path || !input_path[0]) return 0;
+        text = read_text(path, NULL);
+        if (!text) return 0;
+        snprintf(model_line, sizeof(model_line), "Model: %s\n", input_path);
+        ok = strstr(text, model_line) != NULL &&
+            strstr(text, "cos=") && strstr(text, "rmse=") && strstr(text, "bpw=") &&
+            parse_labeled_double(text, "tensors measured:", &measured) && measured >= 1.0 &&
+            parse_labeled_double(text, "lowest ", &lowest) && lowest >= 0.99 && lowest <= 1.0;
+        free(text);
+        return ok;
     }
     if (!strcmp(probe,"qwen-blender-line")) return qwen_blender_line_output(path);
     if (!strcmp(probe,"model-embedding")) return model_embedding_output(path);
@@ -892,11 +1029,22 @@ static int probe_contract_output(const char *probe, const char *path, int semant
     if (!strcmp(probe,"project-space-state")) return project_space_output(path);
     if (!strcmp(probe,"cms-crud-state")) return cms_crud_output(path);
     if (!strcmp(probe,"nonempty-stream")) return semantic_stream && regular_nonempty_file(path);
-    if (!strcmp(probe,"clean-transcript"))
-        return file_contains_text(path, "Bonfyre completion validates durable evidence");
-    if (!strcmp(probe,"paragraph-structure"))
-        return file_contains_text(path, "Bonfyre completion validates durable evidence") &&
-            valid_utf8_file(path);
+    if (!strcmp(probe,"clean-transcript")) {
+        /* Cleaning only removes: what is left must be the transcript's own
+         * words in their own order, and most of them. */
+        size_t kept = 0, heard = 0;
+        return input_path && input_path[0] && valid_utf8_file(path) &&
+            words_kept_in_order(path, input_path, &kept, &heard) &&
+            kept >= 1 && kept * 2 >= heard;
+    }
+    if (!strcmp(probe,"paragraph-structure")) {
+        /* Paragraphing only rebreaks: every word of the source is still
+         * there in order, and nothing was written in beyond markers. */
+        size_t source = 0, written = 0;
+        return input_path && input_path[0] && valid_utf8_file(path) &&
+            words_kept_in_order(input_path, path, &source, &written) &&
+            source >= 1 && written <= source * 2;
+    }
     if (!strcmp(probe,"brief-semantics"))
         return file_contains_text(path, "## Summary") && file_contains_text(path, "## Action Items");
     if (!strcmp(probe,"proof-semantics"))
@@ -926,9 +1074,24 @@ static int probe_contract_output(const char *probe, const char *path, int semant
         return file_contains_text(path, "Best cosine:") && file_contains_text(path, "HIGH FIDELITY");
     if (!strcmp(probe,"flashqla-semantic"))
         return file_has_prefix(path, (const unsigned char *)"NDGO", 4);
-    if (!strcmp(probe,"kvcache-semantic"))
-        return file_contains_text(path, "KV roundtrip:") && file_contains_text(path, "cos=") &&
-            !file_contains_text(path, "nan");
+    if (!strcmp(probe,"kvcache-semantic")) {
+        /* The report must cover every float in the cache it was handed and
+         * the reconstruction must be one a model could still attend over. */
+        char *text;
+        struct stat input_info;
+        double floats = 0.0, cosine = 0.0;
+        int ok;
+        if (!input_path || !input_path[0] || stat(input_path, &input_info) != 0 ||
+            input_info.st_size < 4) return 0;
+        text = read_text(path, NULL);
+        if (!text) return 0;
+        ok = strstr(text, "nan") == NULL &&
+            parse_labeled_double(text, "KV roundtrip:", &floats) &&
+            floats == (double)(input_info.st_size / 4) &&
+            parse_labeled_double(text, "cos=", &cosine) && cosine >= 0.99 && cosine <= 1.0;
+        free(text);
+        return ok;
+    }
     if (!strcmp(probe,"entity-semantic"))
         return file_contains_text(path, "alice@example.com") && file_contains_text(path, "entity");
     if (!strcmp(probe,"flow-semantic"))
@@ -936,19 +1099,61 @@ static int probe_contract_output(const char *probe, const char *path, int semant
     if (!strcmp(probe,"gate-semantic"))
         return valid_json_document(path) && file_contains_text(path, "\"tier\": \"pro\"") &&
             file_contains_text(path, "\"status\": \"active\"");
-    if (!strcmp(probe,"economy-semantic"))
-        return file_contains_text(path, "completion/execute/local") && file_contains_text(path, "$0.010000");
-    if (!strcmp(probe,"finance-semantic"))
-        return file_contains_text(path, "Added: completion-proof") && file_contains_text(path, "Margin:");
+    /* The next five probes are handed a snapshot of one of the estate's own
+     * stores. Each counts the records in that snapshot itself and requires
+     * the organ's report to account for exactly that many, so the check
+     * follows whatever the estate holds on the day it is run. A store with
+     * nothing in it certifies nothing. */
+    if (!strcmp(probe,"economy-semantic")) {
+        double costs = 0.0;
+        if (!input_path || !store_number(input_path, "SELECT COUNT(*) FROM costs", &costs) || costs < 1.0) return 0;
+        return report_lines(path, NULL) == (long)costs + 1;   /* one heading line */
+    }
+    if (!strcmp(probe,"finance-semantic")) {
+        /* One ranked line per opportunity in the store, and an opportunity
+         * whose compensation nobody has stated must show a dash, not a zero. */
+        double opportunities = 0.0, unstated = 0.0;
+        if (!input_path || !store_number(input_path, "SELECT COUNT(*) FROM opportunities", &opportunities) ||
+            opportunities < 1.0 ||
+            !store_number(input_path, "SELECT COUNT(*) FROM opportunities WHERE compensation_cents IS NULL", &unstated))
+            return 0;
+        return report_lines(path, NULL) == (long)opportunities + 1 &&     /* one heading line */
+            report_lines(path, "\t-\t") >= (long)unstated;
+    }
     if (!strcmp(probe,"control-semantic"))
         return file_contains_text(path, "entropy") && file_contains_text(path, "PASS");
-    if (!strcmp(probe,"meter-record"))
-        return file_contains_text(path, "key=fabric-fixture") &&
-            file_contains_text(path, "op=model-inference") &&
-            file_contains_text(path, "bytes=64");
-    if (!strcmp(probe,"tone-semantic"))
-        return valid_json_document(path) && file_contains_text(path, "\"feature_set\": \"eGeMAPSv02\"") &&
-            file_contains_text(path, "\"feature_count\": 88");
+    if (!strcmp(probe,"meter-record")) {
+        /* The event must be for an operator execution and its byte count
+         * must be the size of the artifact that execution produced, which
+         * is the input this node was handed. */
+        struct stat input_info;
+        char marker[64];
+        if (!input_path || !input_path[0] || stat(input_path, &input_info) != 0) return 0;
+        snprintf(marker, sizeof(marker), "bytes=%lld ", (long long)input_info.st_size);
+        return file_contains_text(path, "[meter] recorded key=") &&
+            file_contains_text(path, "op=operator-execution") &&
+            file_contains_text(path, marker);
+    }
+    if (!strcmp(probe,"tone-semantic")) {
+        /* The report must name its engine and its feature set and agree
+         * with itself: eGeMAPS only from OpenSMILE and then all 88 features,
+         * the estate's own set only from the native engine. Either way the
+         * recording is speech, so a pitch must have been found. */
+        char *text;
+        double count = 0.0, pitch = 0.0;
+        int egemaps, ok;
+        if (!valid_json_document(path)) return 0;
+        text = read_text(path, NULL);
+        if (!text) return 0;
+        egemaps = strstr(text, "\"feature_set\": \"eGeMAPSv02\"") != NULL;
+        ok = parse_labeled_double(text, "\"feature_count\":", &count) &&
+            (egemaps ? (count == 88.0 && strstr(text, "\"engine\": \"opensmile\"") != NULL)
+                     : (count >= 20.0 && strstr(text, "\"engine\": \"native\"") != NULL &&
+                        strstr(text, "\"feature_set\": \"bonfyre-voice-fingerprint\"") != NULL)) &&
+            parse_labeled_double(text, "\"F0semitoneFrom27.5Hz_sma3nz_amean\":", &pitch) && pitch > 0.0;
+        free(text);
+        return ok;
+    }
     if (!strcmp(probe,"tag-semantic"))
         return valid_json_document(path) && file_contains_text(path, "\"language\": \"en\"") &&
             file_contains_text(path, "\"confidence\"");
@@ -957,34 +1162,95 @@ static int probe_contract_output(const char *probe, const char *path, int semant
             file_contains_text(path, "\"format\": \"bonfyre-intake-v1\"");
     if (!strcmp(probe,"time-semantic"))
         return file_contains_text(path, "scheduled:") && file_contains_text(path, "completion-recipe");
-    if (!strcmp(probe,"learn-semantic"))
-        return file_contains_text(path, "run=completion-run") && file_contains_text(path, "score=0.920");
+    if (!strcmp(probe,"learn-semantic")) {
+        /* history shows the thirty newest records. */
+        double feedback = 0.0;
+        if (!input_path || !store_number(input_path, "SELECT COUNT(*) FROM feedback", &feedback) || feedback < 1.0) return 0;
+        return report_lines(path, NULL) == (long)(feedback < 30.0 ? feedback : 30.0) + 1;
+    }
     if (!strcmp(probe,"compete-semantic"))
         return file_contains_text(path, "competition created: comp-completion-recipe-proof-");
-    if (!strcmp(probe,"pay-semantic"))
-        return file_contains_text(path, "Credit $5.00") && file_contains_text(path, "user #42");
+    if (!strcmp(probe,"pay-semantic")) {
+        /* The invoice must count every event in the meter store it was
+         * handed and bill the sum of the costs the meter recorded for them. */
+        double events = 0.0, cost = 0.0;
+        char events_marker[64], cents_marker[64];
+        if (!input_path || !store_number(input_path, "SELECT COUNT(*) FROM events", &events) || events < 1.0 ||
+            !store_number(input_path, "SELECT COALESCE(SUM(cost),0.0) FROM events", &cost)) return 0;
+        snprintf(events_marker, sizeof(events_marker), "Metered events: %ld ", (long)events);
+        snprintf(cents_marker, sizeof(cents_marker), "(%ld cents)", (long)(cost * 100.0 + 0.5));
+        return file_contains_text(path, events_marker) && file_contains_text(path, cents_marker);
+    }
     if (!strcmp(probe,"tier-semantic"))
         return file_contains_text(path, "completion-recipe/proof") && file_contains_text(path, "tier=fast");
-    if (!strcmp(probe,"outreach-semantic"))
-        return file_contains_text(path, "dm -> acceptance@example.com") &&
-            file_contains_text(path, "Offer: completion-proof");
+    if (!strcmp(probe,"outreach-semantic")) {
+        /* report lists the ten newest outbound entries, and must say that
+         * the store does not verify delivery. */
+        double sends = 0.0;
+        if (!input_path || !store_number(input_path, "SELECT COUNT(*) FROM sends", &sends) || sends < 1.0) return 0;
+        return report_lines(path, " -> ") == (long)(sends < 10.0 ? sends : 10.0) &&
+            file_contains_text(path, "does not verify external delivery");
+    }
     if (!strcmp(probe,"surface-semantic"))
         return valid_json_document(path) && file_contains_text(path, "\"valid\":true");
     if (!strcmp(probe,"stitch-semantic"))
         return file_contains_text(path, "MATERIALIZATION PLAN for 'normalized'") &&
             file_contains_text(path, "TOTAL STEPS:");
-    if (!strcmp(probe,"distribute-semantic"))
-        return file_contains_text(path, "Channel: dm") && file_contains_text(path, "proof-backed local-first offer");
+    if (!strcmp(probe,"distribute-semantic")) {
+        /* The count of composed messages must be the count in the store the
+         * node was handed, and the organ must have dispatched none. */
+        double messages = 0.0;
+        char total_marker[48];
+        if (!input_path || !store_number(input_path, "SELECT COUNT(*) FROM outbound_message", &messages) ||
+            messages < 1.0) return 0;
+        snprintf(total_marker, sizeof(total_marker), "\"total\":%ld,", (long)messages);
+        return valid_json_document(path) && file_contains_text(path, "\"kind\":\"outbound-messages\"") &&
+            file_contains_text(path, total_marker) &&
+            file_contains_text(path, "\"dispatched_by_this_command\":0");
+    }
     if (!strcmp(probe,"recipe-validation"))
         return file_contains_text(path, "Recipe is valid") && file_contains_text(path, "SHA-256:");
-    if (!strcmp(probe,"wire-ingest-semantic"))
-        return valid_json_document(path) && file_contains_text(path, "\"packet_count\":2") &&
-            file_contains_text(path, "\"byte_count\":1536") &&
+    if (!strcmp(probe,"wire-ingest-semantic")) {
+        /* The counts are recomputed here from the capture the node was
+         * handed, so the organ's report is checked against the packets and
+         * not against a figure written into this file. */
+        unsigned long long packets = 0, bytes = 0;
+        char packet_marker[64];
+        char byte_marker[64];
+
+        if (!input_path || !input_path[0] || pcap_record_totals(input_path, &packets, &bytes) != 0 ||
+            packets == 0) return 0;
+        snprintf(packet_marker, sizeof(packet_marker), "\"packet_count\":%llu,", packets);
+        snprintf(byte_marker, sizeof(byte_marker), "\"byte_count\":%llu,", bytes);
+        return valid_json_document(path) && file_contains_text(path, packet_marker) &&
+            file_contains_text(path, byte_marker) &&
             file_contains_text(path, "\"mode\":\"metadata-only\"");
-    if (!strcmp(probe,"whisper-semantic"))
-        return valid_json_document(path) && file_contains_text(path, "\"sourceSystem\": \"BonfyreTranscribe\"") &&
-            file_contains_text(path, "completion validates durable evidence") &&
-            file_contains_text(path, "\"confidence\":");
+    }
+    if (!strcmp(probe,"whisper-semantic")) {
+        /* The transcript is checked against its own run: the text file and
+         * the segments say the same words, and no segment ends after the
+         * audio that was heard does. */
+        char directory[PATH_MAX], spoken[PATH_MAX], heard[PATH_MAX];
+        struct stat audio;
+        size_t said = 0, carried = 0;
+        char *text;
+        const char *at, *last = NULL;
+        double end_ms = 0.0;
+
+        if (!valid_json_document(path) || !file_contains_text(path, "\"sourceSystem\": \"BonfyreTranscribe\"") ||
+            !file_contains_text(path, "\"confidence\":") || parent_directory(path, directory) != 0) return 0;
+        snprintf(spoken, sizeof(spoken), "%s/transcript.txt", directory);
+        snprintf(heard, sizeof(heard), "%s/normalized.wav", directory);
+        if (!words_kept_in_order(spoken, path, &said, &carried) || said < 1) return 0;
+        if (stat(heard, &audio) != 0 || audio.st_size <= 44) return 0;
+        text = read_text(path, NULL);
+        if (!text) return 0;
+        for (at = text; (at = strstr(at, "\"t1\":")) != NULL; at += 5) last = at;
+        if (last) end_ms = strtod(last + 5, NULL);
+        free(text);
+        /* normalized.wav is 16 kHz mono 16-bit: 32 bytes to the millisecond. */
+        return end_ms > 0.0 && end_ms <= (double)(audio.st_size - 44) / 32.0 + 1000.0;
+    }
     if (!strcmp(probe,"transcript-family-semantic")) {
         char directory[PATH_MAX];
         char cleaned[PATH_MAX];
@@ -1000,20 +1266,26 @@ static int probe_contract_output(const char *probe, const char *path, int semant
         snprintf(transcript, sizeof(transcript), "%s/transcribe/transcript.json", directory);
         return regular_nonempty_file(cleaned) && regular_nonempty_file(paragraphed) &&
             valid_json_document(transcript) &&
-            file_contains_text(transcript, "completion validates durable evidence");
+            words_kept_in_order(cleaned, transcript, &(size_t){0}, &(size_t){0});
     }
     if (!strcmp(probe,"narrate-semantic")) {
         char directory[PATH_MAX];
         char audio_path[PATH_MAX];
 
+        struct stat audio_info;
+
+        /* Whichever voice spoke, the manifest must say a render completed
+         * and the audio beside it must be a WAV holding more than a header. */
         if (!valid_json_document(path) ||
             !file_contains_text(path, "\"renderStatus\": \"completed\"") ||
-            !file_contains_text(path, "en_US-lessac-medium.onnx") ||
+            !file_contains_text(path, "\"voiceModel\": \"") ||
+            file_contains_text(path, "\"voiceModel\": \"\"") ||
             parent_directory(path, directory) != 0) {
             return 0;
         }
         snprintf(audio_path, sizeof(audio_path), "%s/artifact.wav", directory);
-        return file_has_prefix(audio_path, riff_prefix, sizeof(riff_prefix));
+        return file_has_prefix(audio_path, riff_prefix, sizeof(riff_prefix)) &&
+            stat(audio_path, &audio_info) == 0 && audio_info.st_size > 4096;
     }
     if (!strcmp(probe,"speechloop-semantic")) {
         char directory[PATH_MAX];
@@ -1043,7 +1315,7 @@ static int probe_contract_output(const char *probe, const char *path, int semant
             file_contains_text(path, "Params:   15650534");
     if (!strcmp(probe,"capability-semantic"))
         return file_contains_text(path, "transcribe") && file_contains_text(path, "bonfyre-transcribe") &&
-            file_contains_text(path, "transcript");
+            file_contains_text(path, "[metric: ") && !file_contains_text(path, "$0.");
     if (!strcmp(probe,"index-semantic"))
         return file_contains_text(path, "Indexed") && file_contains_text(path, "artifact families") &&
             file_contains_text(path, "index.sqlite");
@@ -1087,10 +1359,27 @@ static int probe_contract_output(const char *probe, const char *path, int semant
             file_contains_text(path, "\"peers\":2") &&
             !file_contains_text(path, "\"total_uploaded\":0");
     if (!strcmp(probe,"moq-selftest-semantic"))
-        /* A real publisher wrote a random payload to the real ingest
-         * socket; a real subscriber, connecting only afterward, must have
-         * read back byte-identical content replayed by the running relay. */
-        return file_contains_text(path, "\"ready\":true") && file_contains_text(path, "\"payload_matched\":true");
+        /* The native listener and the native client completed a QUIC
+         * handshake and the paired SETUP exchange, a SUBSCRIBE was submitted,
+         * and the server refused it for want of a transport lease. This is a
+         * session and a refusal; it does not show media relayed. */
+        return valid_json_document(path) && file_contains_text(path, "\"ready\":true") &&
+            file_contains_text(path, "\"transport\":\"native_quic\"") &&
+            file_contains_text(path, "\"control_stream\":\"paired_setup_completed\"") &&
+            file_contains_text(path, "\"request_stream\":\"subscribe_submitted\"") &&
+            file_contains_text(path, "\"unauthorized_subscribe_refused\":true");
+    if (!strcmp(probe,"tel-selftest-semantic"))
+        /* A call placed through the organ must exist in the switch when the
+         * switch is asked, be recorded by the organ under the switch's own
+         * identifier, be gone after the organ hangs it up, and the report
+         * must say that none of this reached the telephone network. */
+        return valid_json_document(path) && file_contains_text(path, "\"ready\":true") &&
+            file_contains_text(path, "\"switch\":\"FreeSWITCH") &&
+            file_contains_text(path, "\"switch_has_call_after_call\":true") &&
+            file_contains_text(path, "\"call_recorded_by_organ\":1") &&
+            file_contains_text(path, "\"switch_has_call_after_hangup\":false") &&
+            file_contains_text(path, "\"hangup_of_unknown_call_refused\":true") &&
+            file_contains_text(path, "\"reaches_telephone_network\":false");
     if (!strcmp(probe,"api-selftest-semantic"))
         /* Proves a real ephemeral HTTP listener: a request bearing a key
          * actually inserted into the server's own database is accepted
@@ -1104,8 +1393,15 @@ static int probe_contract_output(const char *probe, const char *path, int semant
         return valid_json_document(path) && file_contains_text(path, "\"status\":\"available\"") &&
             file_contains_text(path, "\"binary\":\"bonfyre-proxy\"");
     if (!strcmp(probe,"detect-objects-semantic"))
-        return valid_json_document(path) && file_contains_text(path, "\"model\": \"yolo-v8\"") &&
-            file_contains_text(path, "\"frame_count\": 1");
+        /* The workload hands this node a photograph with a person in it, so
+         * a detector that ran must have read the frame and boxed something.
+         * An empty list here means no detection happened that can be told
+         * apart from none being attempted. */
+        return valid_json_document(path) && file_contains_text(path, "\"frame_count\": 1") &&
+            file_contains_text(path, "\"frames_not_detected\": 0") &&
+            file_contains_text(path, "\"model\": \"") &&
+            !file_contains_text(path, "\"model\": \"\"") &&
+            file_contains_text(path, "\"detections\": [{\"label\"");
     if (!strcmp(probe,"weaviate-semantic"))
         /* Real (non-dry-run) execution: documentId is genuinely parsed from
          * the real metadata JSON's "id" field, not a canned placeholder. */
@@ -1157,25 +1453,64 @@ static int probe_contract_output(const char *probe, const char *path, int semant
         free(text);
         return ok;
     }
-    if (!strcmp(probe,"sli-semantic"))
-        /* eff_k=4, bits: 8, and tensor count 1 are exactly the values
-         * encoded in the real BQFP fixture being inspected. */
-        return file_contains_text(path, "tensors:  1") && file_contains_text(path, "bits:     8") &&
-            file_contains_text(path, "eff_k=4");
-    if (!strcmp(probe,"sae-semantic"))
-        /* The feature count and layer are exactly what the contract's own
-         * fixed argv requested, so a real synth run is the only way this
-         * text can appear. */
-        return file_contains_text(path, "synthetic \xc3\x97 256 features @ layer 24");
+    if (!strcmp(probe,"sli-semantic")) {
+        /* The report is checked against the header of the file the node was
+         * handed, and that file must carry enough blocks for its weights: a
+         * header and a codebook with no blocks is not an encoded tensor. */
+        unsigned char head[16 + 256 + 24];
+        unsigned long long elements = 0, blocks = 0;
+        unsigned int tile_count;
+        char elements_marker[64], tiles_marker[32];
+        FILE *model;
+        if (!input_path || !input_path[0]) return 0;
+        model = fopen(input_path, "rb");
+        if (!model) return 0;
+        if (fread(head, 1, sizeof(head), model) != sizeof(head)) { fclose(model); return 0; }
+        fclose(model);
+        if (pcap_u32(head, 0) != 0x50464251u) return 0;
+        for (int byte = 7; byte >= 0; byte--) {
+            elements = (elements << 8) | head[272 + byte];
+            blocks = (blocks << 8) | head[280 + byte];
+        }
+        tile_count = pcap_u32(head + 288, 0);
+        if (elements == 0 || blocks == 0 || blocks * 256ull < elements) return 0;
+        snprintf(elements_marker, sizeof(elements_marker), "%llu elem", elements);
+        snprintf(tiles_marker, sizeof(tiles_marker), "eff_k=%u", tile_count);
+        return file_contains_text(path, "tensors:  1") && file_contains_text(path, elements_marker) &&
+            file_contains_text(path, tiles_marker);
+    }
+    if (!strcmp(probe,"sae-semantic")) {
+        /* The dictionary must have been fitted to every vector in the
+         * recording this node was handed, must reconstruct the vectors it
+         * never saw better than their mean does, and must claim no labels. */
+        char *text;
+        struct stat input_info;
+        double vectors = 0.0, dim = 0.0, explained = 0.0, held = 0.0;
+        int ok;
+        if (!input_path || !input_path[0] || stat(input_path, &input_info) != 0) return 0;
+        text = read_text(path, NULL);
+        if (!text) return 0;
+        ok = strstr(text, "\"kind\":\"sae-train\"") != NULL &&
+            parse_labeled_double(text, "\"hidden_dim\":", &dim) && dim >= 1.0 &&
+            parse_labeled_double(text, "\"vectors\":", &vectors) &&
+            vectors * dim * 4.0 == (double)input_info.st_size &&
+            parse_labeled_double(text, "\"held_out\":", &held) && held >= 4.0 &&
+            parse_labeled_double(text, "\"held_out_variance_explained\":", &explained) && explained >= 0.5 &&
+            strstr(text, "\"labelled_features\":0") != NULL;
+        free(text);
+        return ok;
+    }
     if (!strcmp(probe,"reason-semantic")) {
-        /* prompt_hash must equal the real SHA-256 of the actual input
-         * artifact, not a placeholder -- proves the session was genuinely
-         * keyed from this input. */
+        /* The session must be keyed by the digest of the prompt this node
+         * was handed, and a model must have answered it: the organ prints
+         * the answer's size and the model's name only after a completion
+         * came back. */
         char digest[65];
         char marker[96];
         if (!input_path || !input_path[0] || bf_sha256_file(input_path, digest) != 0) return 0;
-        snprintf(marker, sizeof(marker), "prompt_hash: %s", digest);
-        return file_contains_text(path, marker);
+        snprintf(marker, sizeof(marker), "prompt_sha256: %s", digest);
+        return file_contains_text(path, marker) && file_contains_text(path, " bytes from ") &&
+            !file_contains_text(path, ": 0 bytes from ");
     }
     if (!strcmp(probe,"physics-semantic"))
         /* The 3-4-5 fixture vector has a norm of exactly 5; verifying the
@@ -1192,13 +1527,35 @@ static int probe_contract_output(const char *probe, const char *path, int semant
         free(text);
         return ok;
     }
-    if (!strcmp(probe,"net-semantic"))
-        return file_contains_text(path, "status=OK") && file_contains_text(path, "CONVERGED") &&
-            !file_contains_text(path, "status=FAIL") && !file_contains_text(path, "status=GAP");
-    if (!strcmp(probe,"fpqx-semantic"))
-        /* Self-alignment of an identical codebook against itself must
-         * mathematically yield perfect cosine preservation. */
-        return file_contains_text(path, "cosine_mean: 1.0000") && file_contains_text(path, "anchors:");
+    if (!strcmp(probe,"net-semantic")) {
+        /* A netlist ran when every component it names was run as its organ:
+         * the summary's ran count must equal its component count, and more
+         * than one must have run or no net was exercised. */
+        char *text = read_text(path, NULL);
+        double components = 0.0, ran = 0.0;
+        int ok;
+        if (!text) return 0;
+        ok = strstr(text, "status=OK") != NULL && strstr(text, "status=FAIL") == NULL &&
+            parse_labeled_double(text, "components=", &components) &&
+            parse_labeled_double(text, "  ran=", &ran) &&
+            components >= 2.0 && ran == components;
+        free(text);
+        return ok;
+    }
+    if (!strcmp(probe,"fpqx-semantic")) {
+        /* Two different tensors of one model are aligned. Their codebooks
+         * must yield anchors, and a mean cosine that is a real figure: above
+         * zero, and short of the 1.0000 a file aligned with itself gives,
+         * which was all this probe used to accept. */
+        char *text = read_text(path, NULL);
+        double anchors = 0.0, cosine = 0.0;
+        int ok;
+        if (!text) return 0;
+        ok = parse_labeled_double(text, "anchors:", &anchors) && anchors >= 1.0 &&
+            parse_labeled_double(text, "cosine_mean:", &cosine) && cosine > 0.0 && cosine < 0.9999;
+        free(text);
+        return ok;
+    }
     if (!strcmp(probe,"discipl-semantic"))
         return valid_json_document(path) && file_contains_text(path, "\"status\":\"ok\"") &&
             file_contains_text(path, "\"imported_contracts\":34");
@@ -1441,6 +1798,24 @@ static int ingest_discovered_output(sqlite3 *db, const char *output_root, const 
     return ingest_file(db,path,media_type,output_uri,err);
 }
 
+/* Output discovery operates only inside a governed operator directory.  Its
+ * filenames are therefore part of the typed contract, unlike a foreign source
+ * filename.  Retain the concrete realization MIME instead of flattening every
+ * discovered body to application/octet-stream. */
+static const char *discovered_media_type(const char *path) {
+    const char *extension = strrchr(path, '.');
+    if (!extension) return "application/octet-stream";
+    ++extension;
+    if (!strcasecmp(extension, "json")) return "application/json";
+    if (!strcasecmp(extension, "txt") || !strcasecmp(extension, "md")) return "text/plain";
+    if (!strcasecmp(extension, "csv")) return "text/csv";
+    if (!strcasecmp(extension, "jpg") || !strcasecmp(extension, "jpeg")) return "image/jpeg";
+    if (!strcasecmp(extension, "png")) return "image/png";
+    if (!strcasecmp(extension, "wav")) return "audio/wav";
+    if (!strcasecmp(extension, "pdf")) return "application/pdf";
+    return "application/octet-stream";
+}
+
 static int ingest_glob_outputs(sqlite3 *db, const char *output_root, const char *pattern,
                                char output_uri[256], char semantic_path[PATH_MAX], FILE *err) {
     glob_t matches = {0}; char absolute[PATH_MAX]; int result = -1;
@@ -1450,7 +1825,7 @@ static int ingest_glob_outputs(sqlite3 *db, const char *output_root, const char 
     for (size_t index=0; index<matches.gl_pathc; ++index) {
         char uri[256]="";
         if (!regular_nonempty_file(matches.gl_pathv[index]) ||
-            ingest_discovered_output(db,output_root,matches.gl_pathv[index],"application/octet-stream",uri,err)) goto done;
+            ingest_discovered_output(db,output_root,matches.gl_pathv[index],discovered_media_type(matches.gl_pathv[index]),uri,err)) goto done;
         if (!output_uri[0]) { snprintf(output_uri,256,"%s",uri); snprintf(semantic_path,PATH_MAX,"%s",matches.gl_pathv[index]); }
     }
     result = 0;
@@ -1468,7 +1843,7 @@ static int ingest_manifest_outputs(sqlite3 *db, const char *output_root, const c
         if (relative[0]=='/' || strstr(relative,"..") || count >= 64) { fclose(file); return -1; }
         char target[PATH_MAX], uri[256]="";
         snprintf(target,sizeof(target),"%s/%s",output_root,relative);
-        if (!regular_nonempty_file(target) || ingest_discovered_output(db,output_root,target,"application/octet-stream",uri,err)) { fclose(file); return -1; }
+        if (!regular_nonempty_file(target) || ingest_discovered_output(db,output_root,target,discovered_media_type(target),uri,err)) { fclose(file); return -1; }
         if (!output_uri[0]) { snprintf(output_uri,256,"%s",uri); snprintf(semantic_path,PATH_MAX,"%s",target); }
         ++count;
     }
@@ -1556,6 +1931,36 @@ static int execute_operator(sqlite3 *db, const char *mission, const char *node,
     }
     context.arguments = arguments;
     context.argument_count = argument_count;
+    /* A contract may name the receipt of the execution that produced its
+     * input, so an operator that records evidence about an attempt is handed
+     * a real one. An ingested input has none, and a contract that asks for it
+     * then fails to expand. */
+    /* The fabric's own event for that execution holds its receipt, when it
+     * started and how long it ran, so all three come from one row. */
+    char input_receipt[96] = "", input_receipt_at[64] = "", input_receipt_duration[32] = "";
+    if (input && input[0]) {
+        sqlite3_stmt *receipt_statement = NULL;
+        if (sqlite3_prepare_v2(db, "SELECT receipt_id,start_at,duration_ms FROM events "
+                                   "WHERE output_uri=? AND status='complete' AND receipt_id IS NOT NULL "
+                                   "ORDER BY rowid DESC LIMIT 1",
+                               -1, &receipt_statement, NULL) == SQLITE_OK) {
+            sqlite3_bind_text(receipt_statement, 1, input, -1, SQLITE_STATIC);
+            if (sqlite3_step(receipt_statement) == SQLITE_ROW && sqlite3_column_text(receipt_statement, 0)) {
+                snprintf(input_receipt, sizeof(input_receipt), "%s",
+                         (const char *)sqlite3_column_text(receipt_statement, 0));
+                if (sqlite3_column_text(receipt_statement, 1))
+                    snprintf(input_receipt_at, sizeof(input_receipt_at), "%s",
+                             (const char *)sqlite3_column_text(receipt_statement, 1));
+                if (sqlite3_column_type(receipt_statement, 2) != SQLITE_NULL)
+                    snprintf(input_receipt_duration, sizeof(input_receipt_duration), "%lld",
+                             (long long)sqlite3_column_int64(receipt_statement, 2));
+            }
+        }
+        sqlite3_finalize(receipt_statement);
+    }
+    context.input_receipt = input_receipt;
+    context.input_receipt_at = input_receipt_at;
+    context.input_receipt_duration_ms = input_receipt_duration;
     if (bf_operator_contract_expand(&contract, &context, &expansion, process_error, sizeof(process_error)) != 0) {
         fprintf(err, "fabric: contract expansion failed for %s: %s\n", op, process_error);
         return -1;
@@ -1686,27 +2091,601 @@ static int execute_operator(sqlite3 *db, const char *mission, const char *node,
     return 0;
 }
 static int work_run(sqlite3*db,const char*mission,FILE*out,FILE*err){sqlite3_stmt*reset=NULL;sqlite3_prepare_v2(db,"UPDATE workgraph_nodes SET status='ready' WHERE mission_id=? AND status='running'",-1,&reset,NULL);sqlite3_bind_text(reset,1,mission,-1,SQLITE_TRANSIENT);if(step(db,reset,err))return 1;int progress=1,failed=0;while(progress){progress=0;sqlite3_stmt*s=NULL;sqlite3_prepare_v2(db,"SELECT node_id,operator_id,input_uri,depends_on FROM workgraph_nodes WHERE mission_id=? AND status IN ('ready','defined') ORDER BY node_id",-1,&s,NULL);sqlite3_bind_text(s,1,mission,-1,SQLITE_TRANSIENT);while(sqlite3_step(s)==SQLITE_ROW){const char*n=(const char*)sqlite3_column_text(s,0),*op=(const char*)sqlite3_column_text(s,1),*input=(const char*)sqlite3_column_text(s,2),*deps=(const char*)sqlite3_column_text(s,3);int bad=0;if(!ready(db,mission,deps,&bad)){if(bad){sqlite3_stmt*u=NULL;sqlite3_prepare_v2(db,"UPDATE workgraph_nodes SET status='blocked' WHERE mission_id=? AND node_id=?",-1,&u,NULL);sqlite3_bind_text(u,1,mission,-1,SQLITE_TRANSIENT);sqlite3_bind_text(u,2,n,-1,SQLITE_TRANSIENT);step(db,u,err);failed=1;progress=1;}continue;}char output[256]="",rcpt[64]="",payload[1536];BfProcessResult process={0};if(execute_operator(db,mission,n,op,input,output,&process,err)<0){sqlite3_stmt*u=NULL;sqlite3_prepare_v2(db,"UPDATE workgraph_nodes SET status='blocked' WHERE mission_id=? AND node_id=?",-1,&u,NULL);sqlite3_bind_text(u,1,mission,-1,SQLITE_TRANSIENT);sqlite3_bind_text(u,2,n,-1,SQLITE_TRANSIENT);step(db,u,err);failed=1;progress=1;continue;}snprintf(payload,sizeof(payload),"{\"mission\":\"%s\",\"node\":\"%s\",\"operator\":\"%s\",\"contract\":\"%s\",\"contract_generation\":\"%s\",\"family\":\"%s\",\"output\":\"%s\",\"stdout_bytes\":%zu,\"stderr_bytes\":%zu,\"workload_result\":\"%s\",\"quality_result\":\"%s\"}",mission,n,op,process.contract_id,process.contract_generation,process.contract_family,output,process.stdout_bytes,process.stderr_bytes,process.workload_result,process.quality_result);if(receipt(db,"operator-execution",n,payload,rcpt,err)||emit_exec(db,mission,n,op,input,output,&process,rcpt,err)){sqlite3_finalize(s);return 1;}sqlite3_stmt*u=NULL;sqlite3_prepare_v2(db,"UPDATE workgraph_nodes SET status='complete',attempt=attempt+1,output_uri=?,receipt_id=? WHERE mission_id=? AND node_id=?",-1,&u,NULL);sqlite3_bind_text(u,1,output,-1,SQLITE_TRANSIENT);sqlite3_bind_text(u,2,rcpt,-1,SQLITE_TRANSIENT);sqlite3_bind_text(u,3,mission,-1,SQLITE_TRANSIENT);sqlite3_bind_text(u,4,n,-1,SQLITE_TRANSIENT);if(step(db,u,err)){sqlite3_finalize(s);return 1;}sqlite3_stmt*promote=NULL;sqlite3_prepare_v2(db,"UPDATE catalog SET maturity='quality_proven' WHERE id=? AND ?='passed' AND ?='passed'",-1,&promote,NULL);sqlite3_bind_text(promote,1,op,-1,SQLITE_TRANSIENT);sqlite3_bind_text(promote,2,process.workload_result,-1,SQLITE_TRANSIENT);sqlite3_bind_text(promote,3,process.quality_result,-1,SQLITE_TRANSIENT);if(step(db,promote,err)){sqlite3_finalize(s);return 1;}fprintf(out,"node=%s status=complete output=%s receipt=bonfyre://receipt/%s\n",n,output,rcpt);progress=1;}sqlite3_finalize(s);}sqlite3_stmt*c=NULL;sqlite3_prepare_v2(db,"SELECT count(*) FROM workgraph_nodes WHERE mission_id=? AND status!='complete'",-1,&c,NULL);sqlite3_bind_text(c,1,mission,-1,SQLITE_TRANSIENT);int remaining=sqlite3_step(c)==SQLITE_ROW?sqlite3_column_int(c,0):1;sqlite3_finalize(c);char ts[32];stamp(ts);sqlite3_stmt*u=NULL;sqlite3_prepare_v2(db,"UPDATE missions SET status=?,workgraph_cursor=?,updated_at=? WHERE id=?",-1,&u,NULL);sqlite3_bind_text(u,1,remaining?"partial":"complete",-1,SQLITE_STATIC);sqlite3_bind_text(u,2,remaining?"blocked":"terminal",-1,SQLITE_STATIC);sqlite3_bind_text(u,3,ts,-1,SQLITE_TRANSIENT);sqlite3_bind_text(u,4,mission,-1,SQLITE_TRANSIENT);step(db,u,err);return failed||remaining?1:0;}
+
+/* Semantic surfaces invoke a native Power here, rather than growing their own
+ * subprocess runner.  The request must name an already-ingested artifact and
+ * a compiled command.* contract; this adapter only contributes the exact ACT
+ * decision and a durable link to the normal Fabric execution receipt. */
+static int safe_power_token(const char *value) {
+    if (!value || !*value || strlen(value) > 128) return 0;
+    for (; *value; ++value) {
+        if (!(isalnum((unsigned char)*value) || *value == '.' || *value == '_' ||
+              *value == '-' || *value == ':')) return 0;
+    }
+    return 1;
+}
+
+static int power_invoke(sqlite3 *db, int argc, char **argv, FILE *out, FILE *err) {
+    const char *operator_id;
+    const char *actor;
+    const char *purpose;
+    const char *input;
+    BfAuthority *authority = NULL;
+    char mission[96], receipt_id[64] = "", output_uri[256] = "";
+    char generation[65] = "uncompiled", payload[1024];
+    sqlite3_stmt *statement = NULL;
+
+    if (argc != 9 || strcmp(argv[1], "invoke") ||
+        strcmp(argv[3], "--actor") || strcmp(argv[5], "--purpose") ||
+        strcmp(argv[7], "--input")) {
+        fprintf(err, "usage: operator invoke <command.id> --actor <actor> --purpose <purpose> --input <artifact-uri>\n");
+        return 2;
+    }
+    operator_id = argv[2]; actor = argv[4]; purpose = argv[6]; input = argv[8];
+    /* argc includes the terminating option value; keep this explicit so a
+     * future option cannot accidentally become an authority-bearing argv. */
+    if (!safe_power_token(operator_id) || strncmp(operator_id, "command.", 8) ||
+        !safe_power_token(actor) || !safe_power_token(purpose) ||
+        strncmp(input, "bonfyre://artifact/", 19)) {
+        fprintf(err, "fabric: malformed governed native Power invocation\n");
+        return 2;
+    }
+    if (bf_authority_open_database(db, &authority, err) != 0) return 1;
+    int permitted = bf_authority_has(authority, actor, "act", operator_id, NULL, purpose);
+    bf_authority_close(authority);
+    if (permitted != 1) {
+        fprintf(err, "fabric: ACT authority denied for %s on %s (purpose=%s)\n",
+                actor, operator_id, purpose);
+        return 1;
+    }
+    if (!scalar(db, "SELECT value FROM fabric_meta WHERE key=?", "catalog_generation",
+                generation, sizeof(generation)) || !strcmp(generation, "uncompiled")) {
+        fprintf(err, "fabric: native Power invocation requires a compiled catalog\n");
+        return 1;
+    }
+    id(mission, sizeof(mission), "power", operator_id);
+    sqlite3_prepare_v2(db,
+        "INSERT INTO missions(id,status,context_generation,catalog_generation,provider_generation,input_snapshot,artifact_root,workgraph_cursor,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)",
+        -1, &statement, NULL);
+    if (!statement) return 1;
+    char timestamp[32]; stamp(timestamp);
+    sqlite3_bind_text(statement, 1, mission, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement, 2, "defined", -1, SQLITE_STATIC);
+    sqlite3_bind_text(statement, 3, "semantic-shell", -1, SQLITE_STATIC);
+    sqlite3_bind_text(statement, 4, generation, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement, 5, "native", -1, SQLITE_STATIC);
+    sqlite3_bind_text(statement, 6, input, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement, 7, "", -1, SQLITE_STATIC);
+    sqlite3_bind_text(statement, 8, "defined", -1, SQLITE_STATIC);
+    sqlite3_bind_text(statement, 9, timestamp, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement, 10, timestamp, -1, SQLITE_TRANSIENT);
+    if (step(db, statement, err)) return 1;
+    sqlite3_prepare_v2(db,
+        "INSERT INTO workgraph_nodes(mission_id,node_id,operator_id,input_uri,status,attempt,retry_limit,timeout_seconds,depends_on) VALUES(?,?,?,?,'defined',0,0,30,'[]')",
+        -1, &statement, NULL);
+    if (!statement) return 1;
+    sqlite3_bind_text(statement, 1, mission, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement, 2, "invoke", -1, SQLITE_STATIC);
+    sqlite3_bind_text(statement, 3, operator_id, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement, 4, input, -1, SQLITE_TRANSIENT);
+    if (step(db, statement, err) || work_run(db, mission, out, err)) return 1;
+    sqlite3_prepare_v2(db, "SELECT receipt_id,output_uri FROM workgraph_nodes WHERE mission_id=? AND node_id='invoke'",
+                       -1, &statement, NULL);
+    if (!statement) return 1;
+    sqlite3_bind_text(statement, 1, mission, -1, SQLITE_TRANSIENT);
+    if (sqlite3_step(statement) != SQLITE_ROW) { sqlite3_finalize(statement); return 1; }
+    snprintf(receipt_id, sizeof(receipt_id), "%s", sqlite3_column_text(statement, 0));
+    snprintf(output_uri, sizeof(output_uri), "%s", sqlite3_column_text(statement, 1));
+    sqlite3_finalize(statement);
+    snprintf(payload, sizeof(payload),
+             "{\"operator_id\":\"%s\",\"actor\":\"%s\",\"purpose\":\"%s\",\"authority\":\"admitted\",\"input\":\"%s\",\"process_receipt\":\"bonfyre://receipt/%s\"}",
+             operator_id, actor, purpose, input, receipt_id);
+    char authority_receipt[64] = "";
+    if (receipt(db, "native-power-invocation", operator_id, payload, authority_receipt, err)) return 1;
+    fprintf(out, "native_power_operator=%s\nauthority=admitted\nmission=bonfyre://mission/%s\noutput=%s\nprocess_receipt=bonfyre://receipt/%s\nauthority_receipt=bonfyre://receipt/%s\n",
+            operator_id, mission, output_uri, receipt_id, authority_receipt);
+    return 0;
+}
 static const char *work_option(int argc, char **argv, const char *name);
 static long long work_integer_option(int argc, char **argv, const char *name,
                                      long long fallback);
+/* Writes one argv template the way a person types it: the binary becomes the
+ * front-door command, bound values become named places, and a path that
+ * belongs to this machine is never carried into a reference page. */
+static void reference_argv(FILE *out, const char *template_text, const char *name) {
+    char copy[2048], *save = NULL, *token;
+
+    snprintf(copy, sizeof(copy), "%s", template_text);
+    for (token = strtok_r(copy, " ", &save); token; token = strtok_r(NULL, " ", &save)) {
+        if (!strcmp(token, "${binary}")) { fprintf(out, "bonfyre %s", name); continue; }
+        fputc(' ', out);
+        if (token[0] == '/' && strncmp(token, "/usr/", 5) && strncmp(token, "/bin/", 5)) {
+            fputs("<path>", out);
+            continue;
+        }
+        for (const char *at = token; *at; ) {
+            const char *close = at[0] == '$' && at[1] == '{' ? strchr(at, '}') : NULL;
+            if (!close) { fputc(*at++, out); continue; }
+            fputc('<', out);
+            for (const char *inner = at + 2; inner < close; ++inner)
+                fputc(*inner == '.' ? '-' : *inner, out);
+            fputc('>', out);
+            at = close + 1;
+        }
+    }
+}
+
+/* What each check establishes, in the words a reference page uses. */
+static const char *probe_meaning(const char *probe) {
+    static const struct { const char *probe, *meaning; } known[] = {
+        {"output-artifact", "the command exited cleanly and left the output its contract names"},
+        {"artifact-integrity", "the output is a regular, non-empty file whose digest was recorded"},
+        {"sha256-output", "the printed digest is the SHA-256 of the input that was handed over"},
+        {"structured-output", "the output parses as a structured document"},
+        {"clean-transcript", "every word left is one of the transcript's own words, in the original order, and at least half of them remain"},
+        {"paragraph-structure", "every word of the source is still present in order and nothing beyond structure was added"},
+        {"whisper-semantic", "the text file and the timed segments carry the same words, and no segment ends after the audio does"},
+        {"transcript-family-semantic", "the cleaned text, the paragraphed text and the raw transcript are all present and the cleaned words come from the transcript"},
+        {"nonempty-stream", "the command produced output on its stream"},
+        {"quant-roundtrip", "the report names the model it was given and its lowest per-tensor cosine is at least 0.99"},
+    };
+    for (size_t index = 0; index < sizeof(known) / sizeof(known[0]); ++index)
+        if (!strcmp(probe, known[index].probe)) return known[index].meaning;
+    return NULL;
+}
+
+/* Additional path redaction for usage text; this is not disclosure authority. */
+static int reference_showable(const char *text) {
+    return text && *text && !strstr(text, "/Users/") && !strstr(text, "/home/") &&
+        !strstr(text, "/private/") && !strstr(text, "/var/folders/");
+}
+
+/* The first lines of an artifact, fenced, when it is plain text. */
+static char *reference_read_bounded(const char *path, size_t *size) {
+    int descriptor = open(path, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
+    FILE *file;
+    struct stat info;
+    char *text;
+    if (descriptor < 0) return NULL;
+    if (fstat(descriptor, &info) || !S_ISREG(info.st_mode) || info.st_size > 65536) { close(descriptor); return NULL; }
+    file = fdopen(descriptor, "rb");
+    if (!file) { close(descriptor); return NULL; }
+    text = malloc(65538);
+    if (!text) { fclose(file); return NULL; }
+    *size = fread(text, 1, 65537, file);
+    int bad = ferror(file) || *size > 65536 || memchr(text, 0, *size) != NULL;
+    fclose(file);
+    if (bad) { free(text); return NULL; }
+    text[*size] = 0;
+    return text;
+}
+
+static int reference_object_keys(const bf_json_doc_t *doc, const bf_json_node_t *object,
+                                 const char *const *keys, int count) {
+    unsigned int seen = 0;
+    if (!object || object->type != BF_JSON_OBJECT) return 0;
+    for (const bf_json_node_t *child = bf_json_child_first(doc, object); child; child = bf_json_child_next(doc, child)) {
+        int index;
+        for (index = 0; index < count; index++)
+            if (child->key_len == (int)strlen(keys[index]) && !memcmp(child->key, keys[index], (size_t)child->key_len)) break;
+        if (index == count || (seen & (1u << index))) return 0;
+        seen |= 1u << index;
+    }
+    return 1;
+}
+
+static int reference_string(const bf_json_node_t *node, char *out, size_t capacity) {
+    if (!node || node->type != BF_JSON_STRING || node->val.str.len <= 0 ||
+        (size_t)node->val.str.len >= capacity || memchr(node->val.str.ptr, 0, (size_t)node->val.str.len)) return 0;
+    bf_json_get_str_copy(node, out, capacity);
+    return 1;
+}
+
+static int reference_disclosure(sqlite3 *db, const char *path, const char *operator_id, const char *generation,
+                                BfInformationPolicy *policy, char digest[65], FILE *err) {
+    static const char *const root_keys[] = {"schema", "operator", "contract_generation", "fields"};
+    static const char *const field_keys[] = {"field_name", "audiences"};
+    char value[256], field[256];
+    size_t size = 0;
+    char *text = reference_read_bounded(path, &size);
+    sqlite3_stmt *validation = NULL;
+    int complete_json = 0;
+    if (text && sqlite3_prepare_v2(db, "SELECT json_valid(?)", -1, &validation, NULL) == SQLITE_OK) {
+        sqlite3_bind_text(validation, 1, text, (int)size, SQLITE_TRANSIENT);
+        complete_json = sqlite3_step(validation) == SQLITE_ROW && sqlite3_column_int(validation, 0);
+    }
+    if (validation) sqlite3_finalize(validation);
+    bf_json_doc_t *doc = complete_json ? bf_json_parse(text, size, NULL, 0) : NULL;
+    const bf_json_node_t *root = doc ? bf_json_root(doc) : NULL, *fields;
+    int valid = 0;
+    if (!reference_object_keys(doc, root, root_keys, 4) || root->child_count != 4) goto done;
+    if (!reference_string(bf_json_obj_get(doc, root, "schema"), value, sizeof(value)) || strcmp(value, "bonfyre.reference-disclosure.v1")) goto done;
+    if (!reference_string(bf_json_obj_get(doc, root, "operator"), value, sizeof(value)) || strcmp(value, operator_id)) goto done;
+    if (!reference_string(bf_json_obj_get(doc, root, "contract_generation"), value, sizeof(value)) || strcmp(value, generation)) goto done;
+    fields = bf_json_obj_get(doc, root, "fields");
+    if (!fields || fields->type != BF_JSON_ARRAY || fields->child_count > BF_INFORMATION_POLICY_MAX_RULES) goto done;
+    for (const bf_json_node_t *rule = bf_json_child_first(doc, fields); rule; rule = bf_json_child_next(doc, rule)) {
+        unsigned int mask = 0;
+        if (!reference_object_keys(doc, rule, field_keys, 2) || rule->child_count != 2 ||
+            !reference_string(bf_json_obj_get(doc, rule, "field_name"), field, sizeof(field))) goto done;
+        const char *prefix = "bonfyre://artifact/";
+        size_t prefix_size = strlen(prefix);
+        if (strlen(field) != prefix_size + 64 + strlen("#excerpt") || strncmp(field, prefix, prefix_size) || strcmp(field + prefix_size + 64, "#excerpt")) goto done;
+        for (size_t i = prefix_size; i < prefix_size + 64; i++) if (!strchr("0123456789abcdef", field[i])) goto done;
+        const bf_json_node_t *audiences = bf_json_obj_get(doc, rule, "audiences");
+        if (!audiences || audiences->type != BF_JSON_ARRAY || audiences->child_count > BF_INFORMATION_POLICY_MAX_AUDIENCES) goto done;
+        for (const bf_json_node_t *audience = bf_json_child_first(doc, audiences); audience; audience = bf_json_child_next(doc, audience)) {
+            int index;
+            if (!reference_string(audience, value, sizeof(value))) goto done;
+            for (index = 0; index < BF_INFORMATION_POLICY_MAX_AUDIENCES; index++)
+                if (!strcmp(value, bf_information_policy_audience_name((BfDisclosureAudience)index))) break;
+            if (index == BF_INFORMATION_POLICY_MAX_AUDIENCES || (mask & (1u << index))) goto done;
+            mask |= bf_information_policy_audience_mask((BfDisclosureAudience)index);
+        }
+        if (bf_information_policy_disclose(policy, field, mask, "excerpt not disclosed to the public audience") != BF_INFORMATION_POLICY_OK) goto done;
+    }
+    bf_sha256_hex((const uint8_t *)text, size, digest);
+    valid = 1;
+done:
+    if (doc) bf_json_free(doc);
+    free(text);
+    if (!valid) fprintf(err, "fabric: invalid or mismatched reference disclosure declaration\n");
+    return valid;
+}
+
+static void reference_excerpt(sqlite3 *db, FILE *out, const char *uri, const char *label,
+                               const BfInformationPolicy *policy) {
+    sqlite3_stmt *row = NULL;
+    char *text = NULL;
+    size_t size = 0;
+    int lines = 0;
+    char field[256], actual_digest[65], expected_uri[128];
+    BfDisclosureDecision decision;
+    if (!uri || snprintf(field, sizeof(field), "%s#excerpt", uri) >= (int)sizeof(field) ||
+        bf_information_policy_field_decision(policy, field, BF_AUDIENCE_PUBLIC, &decision) != BF_INFORMATION_POLICY_OK || !decision.allowed) {
+        fprintf(out, "%s excerpt withheld: no public disclosure rule.\n\n", label);
+        return;
+    }
+
+    if (sqlite3_prepare_v2(db, "SELECT locator,media_type,digest FROM artifacts WHERE uri=?", -1, &row, NULL) != SQLITE_OK) return;
+    sqlite3_bind_text(row, 1, uri, -1, SQLITE_TRANSIENT);
+    if (sqlite3_step(row) == SQLITE_ROW) {
+        const char *path = (const char *)sqlite3_column_text(row, 0);
+        const char *digest = (const char *)sqlite3_column_text(row, 2);
+        text = reference_read_bounded(path, &size);
+        if (text) {
+            bf_sha256_hex((const uint8_t *)text, size, actual_digest);
+            snprintf(expected_uri, sizeof(expected_uri), "bonfyre://artifact/%s", actual_digest);
+            if (!digest || strcmp(actual_digest, digest) || strcmp(expected_uri, uri) || !bf_utf8_valid(text, size, NULL)) { free(text); text = NULL; }
+        }
+    }
+    sqlite3_finalize(row);
+    if (!text || !reference_showable(text)) { free(text); fprintf(out, "%s excerpt unavailable: retained text did not pass verification.\n\n", label); return; }
+    size_t fence = 3, run = 0;
+    for (size_t i = 0; i < size; i++) { run = text[i] == '`' ? run + 1 : 0; if (run >= fence) fence = run + 1; }
+    for (size_t i = 0; i < fence; i++) fputc('`', out);
+    fprintf(out, "text %s\n", label);
+    for (const char *at = text; *at && lines < 14; ++at) {
+        fputc(*at, out);
+        if (*at == '\n') lines++;
+    }
+    if (size && text[size - 1] != '\n') fputc('\n', out);
+    for (size_t i = 0; i < fence; i++) fputc('`', out);
+    fprintf(out, "\n\n");
+    free(text);
+}
+
+/* The command's own usage text, asked of the binary the catalog binds. */
+static void reference_usage(FILE *out, const char *binary) {
+    int channel[2];
+    pid_t child;
+    char text[8192];
+    size_t used = 0;
+    ssize_t got;
+    int status = 0;
+
+    if (!binary || !binary[0] || strchr(binary, '/') || pipe(channel) != 0) return;
+    child = fork();
+    if (child < 0) { close(channel[0]); close(channel[1]); return; }
+    if (child == 0) {
+        dup2(channel[1], STDOUT_FILENO); dup2(channel[1], STDERR_FILENO);
+        close(channel[0]); close(channel[1]);
+        alarm(5);
+        execlp(binary, binary, "--help", (char *)NULL);
+        _exit(127);
+    }
+    close(channel[1]);
+    while (used + 1 < sizeof(text) && (got = read(channel[0], text + used, sizeof(text) - 1 - used)) > 0) used += (size_t)got;
+    close(channel[0]);
+    waitpid(child, &status, 0);
+    text[used] = '\0';
+    if (used < 12 || !reference_showable(text) || !strstr(text, "sage")) return;
+    fprintf(out, "## Options\n\nThe command's own usage text.\n\n```text\n%s%s```\n\n", text, text[used - 1] == '\n' ? "" : "\n");
+}
+
+/* `operator reference <command.id>`: the reference page for one command,
+ * read from the compiled catalog, its bound contract and the latest verified
+ * run from that generation. Historical events remain in their owner. */
+static int operator_reference(sqlite3 *db, int argc, char **argv, FILE *out, FILE *err) {
+    sqlite3_stmt *row = NULL;
+    const char *id, *meaning;
+    char name[160], contract[160], family[160], binary[160], argv_template[2048], generation[80];
+    char workload[96], quality[96], retries[64], gives[256], input_uri[256] = "", output_uri[256] = "", receipt[96] = "";
+    int witnessed = 0, limit_seconds, related = 0;
+    long long limit_bytes;
+    BfInformationPolicy disclosure;
+    char disclosure_digest[65] = "";
+    bf_information_policy_init(&disclosure);
+
+    if ((argc != 3 && (argc != 5 || strcmp(argv[3], "--disclosure"))) || strncmp(argv[2], "command.", 8)) {
+        fprintf(err, "usage: operator reference <command.id> [--disclosure FILE]\n");
+        return 2;
+    }
+    id = argv[2];
+    if (sqlite3_prepare_v2(db,
+            "SELECT c.name,c.effect_class,c.maturity,b.family,k.id,k.argv_template,k.input_binding,"
+            "k.output_discovery,k.timeout_seconds,k.output_limit_bytes,k.retry_policy,k.workload_probe,"
+            "COALESCE(NULLIF(b.quality_probe_override,''),k.quality_probe),k.generation,"
+            "COALESCE((SELECT binary_name FROM catalog_bindings WHERE operator_id=c.id),'') "
+            "FROM catalog c JOIN operator_contract_bindings b ON b.operator_id=c.id "
+            "JOIN operator_contracts k ON k.id=b.contract_id "
+            "JOIN catalog_bindings cb ON cb.operator_id=c.id "
+            "JOIN fabric_meta m ON m.key='catalog_generation' "
+            "WHERE c.id=? AND b.generation=k.generation AND cb.catalog_generation=k.generation "
+            "AND m.value=k.generation", -1, &row, NULL) != SQLITE_OK) {
+        fprintf(err, "fabric: %s\n", sqlite3_errmsg(db));
+        return 1;
+    }
+    sqlite3_bind_text(row, 1, id, -1, SQLITE_TRANSIENT);
+    if (sqlite3_step(row) != SQLITE_ROW) {
+        sqlite3_finalize(row);
+        fprintf(err, "fabric: no current compiled contract binding for %s\n", id);
+        return 1;
+    }
+    snprintf(name, sizeof(name), "%s", (const char *)sqlite3_column_text(row, 0));
+    snprintf(family, sizeof(family), "%s", (const char *)sqlite3_column_text(row, 3));
+    snprintf(contract, sizeof(contract), "%s", (const char *)sqlite3_column_text(row, 4));
+    snprintf(argv_template, sizeof(argv_template), "%s", (const char *)sqlite3_column_text(row, 5));
+    snprintf(gives, sizeof(gives), "%s", (const char *)sqlite3_column_text(row, 7));
+    limit_seconds = sqlite3_column_int(row, 8);
+    limit_bytes = (long long)sqlite3_column_int64(row, 9);
+    snprintf(retries, sizeof(retries), "%s", (const char *)sqlite3_column_text(row, 10));
+    snprintf(workload, sizeof(workload), "%s", (const char *)sqlite3_column_text(row, 11));
+    snprintf(quality, sizeof(quality), "%s", (const char *)sqlite3_column_text(row, 12));
+    snprintf(binary, sizeof(binary), "%s", (const char *)sqlite3_column_text(row, 14));
+    snprintf(generation, sizeof(generation), "%s", (const char *)sqlite3_column_text(row, 13));
+    if (argc == 5 && !reference_disclosure(db, argv[4], id, generation, &disclosure, disclosure_digest, err)) {
+        sqlite3_finalize(row);
+        return 1;
+    }
+    fprintf(out, "# bonfyre %s\n\n", name);
+    fprintf(out, "Takes one %s and gives `%s`. Bound to contract `%s` in the `%s` family, "
+                 "with effect `%s` and maturity `%s` at catalog generation `%s`.\n\n",
+            sqlite3_column_text(row, 6), gives, contract, family,
+            sqlite3_column_text(row, 1), sqlite3_column_text(row, 2), sqlite3_column_text(row, 13));
+    sqlite3_finalize(row);
+
+    if (disclosure_digest[0]) fprintf(out, "Excerpt disclosure declaration: `%s`.\n\n", disclosure_digest);
+
+    fprintf(out, "## Run it\n\nFrom a terminal, or as one node of a mission that leaves a receipt.\n\n```sh Terminal\n");
+    reference_argv(out, argv_template, name);
+    fprintf(out, "\n```\n\n```sh Mission\n"
+                 "bonfyre fabric artifact ingest <input-path>   # prints uri=bonfyre://artifact/...\n"
+                 "bonfyre fabric mission create first\n"
+                 "bonfyre fabric work add first step %s <uri>\n"
+                 "bonfyre fabric work run first                 # prints the output and its receipt\n```\n\n", id);
+
+    if (sqlite3_prepare_v2(db,
+            "SELECT e.input_uri,e.output_uri,e.duration_ms,e.receipt_id,e.end_at,u.bytes_in,"
+            "json_extract(r.payload,'$.workload_result'),json_extract(r.payload,'$.quality_result'),"
+            "r.payload,r.content_hash "
+            "FROM events e JOIN receipts r ON r.id=e.receipt_id LEFT JOIN usage_ledger u ON u.event_id=e.id "
+            "JOIN execution_metrics m ON m.event_id=e.id AND m.catalog_generation=?3 "
+            "WHERE e.operator_id=?1 AND e.status='complete' AND e.output_uri IS NOT NULL "
+            "AND e.output_uri<>'' AND r.subject_kind='operator-execution' AND r.subject_id=e.task_id "
+            "AND CASE WHEN json_valid(r.payload) THEN "
+            "json_extract(r.payload,'$.operator')=e.operator_id "
+            "AND json_extract(r.payload,'$.contract')=?2 "
+            "AND json_extract(r.payload,'$.contract_generation')=?3 "
+            "AND json_extract(r.payload,'$.mission')=e.mission_id "
+            "AND json_extract(r.payload,'$.node')=e.task_id "
+            "AND json_extract(r.payload,'$.output')=e.output_uri "
+            "AND json_extract(r.payload,'$.workload_result')='passed' "
+            "AND json_extract(r.payload,'$.quality_result')='passed' ELSE 0 END "
+            "ORDER BY e.end_at DESC,e.id DESC", -1, &row, NULL) != SQLITE_OK) {
+        fprintf(err, "fabric: %s\n", sqlite3_errmsg(db));
+        return 1;
+    }
+    sqlite3_bind_text(row, 1, id, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(row, 2, contract, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(row, 3, generation, -1, SQLITE_TRANSIENT);
+    fprintf(out, "## Last verified run\n\n");
+    while (sqlite3_step(row) == SQLITE_ROW) {
+        const char *payload = (const char *)sqlite3_column_text(row, 8);
+        const char *retained_hash = (const char *)sqlite3_column_text(row, 9);
+        char actual_hash[65];
+        if (!payload || !retained_hash) continue;
+        bf_sha256_hex((const uint8_t *)payload, (size_t)sqlite3_column_bytes(row, 8), actual_hash);
+        if (strcmp(actual_hash, retained_hash)) continue;
+        witnessed = 1;
+        snprintf(input_uri, sizeof(input_uri), "%s", (const char *)sqlite3_column_text(row, 0));
+        snprintf(output_uri, sizeof(output_uri), "%s", (const char *)sqlite3_column_text(row, 1));
+        snprintf(receipt, sizeof(receipt), "%s", (const char *)sqlite3_column_text(row, 3));
+        fprintf(out, "| | |\n|---|---|\n| When | %s |\n| In | `%s`, %lld bytes |\n| Out | `%s` |\n"
+                     "| Took | %d ms |\n| Workload check | %s |\n| Quality check | %s |\n| Receipt | `%s` |\n\n",
+                sqlite3_column_text(row, 4), input_uri, (long long)sqlite3_column_int64(row, 5), output_uri,
+                sqlite3_column_int(row, 2), sqlite3_column_text(row, 6), sqlite3_column_text(row, 7), receipt);
+        break;
+    }
+    sqlite3_finalize(row);
+    if (witnessed) {
+        reference_excerpt(db, out, input_uri, "In", &disclosure);
+        reference_excerpt(db, out, output_uri, "Out", &disclosure);
+        fprintf(out, "Read the receipt back:\n\n```sh\nbonfyre fabric receipt show %s\n```\n\n", receipt);
+    } else {
+        fprintf(out, "No verified run recorded for this contract generation in this state.\n\n");
+    }
+
+    fprintf(out, "## What is checked\n\nA run is complete only when both checks pass. The result of each is written into the receipt.\n\n");
+    meaning = probe_meaning(workload);
+    fprintf(out, "- `%s`%s%s\n", workload, meaning ? ": " : "", meaning ? meaning : "");
+    meaning = probe_meaning(quality);
+    fprintf(out, "- `%s`%s%s\n\n", quality, meaning ? ": " : "", meaning ? meaning : "");
+
+    fprintf(out, "## Limits\n\n| Limit | Value |\n|---|---|\n| Time | %d seconds |\n| Output | %lld bytes |\n| Retries | `%s` |\n\n"
+                 "> A run that passes a limit, exits non-zero or fails a check ends as a failed node. Its output is not admitted as an artifact and no later node receives it.\n\n",
+            limit_seconds, limit_bytes, retries);
+
+    reference_usage(out, binary);
+
+    if (sqlite3_prepare_v2(db,
+            "SELECT c.name FROM operator_contract_bindings b JOIN catalog c ON c.id=b.operator_id "
+            "WHERE b.family=? AND b.operator_id<>? ORDER BY c.name", -1, &row, NULL) == SQLITE_OK) {
+        sqlite3_bind_text(row, 1, family, -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(row, 2, id, -1, SQLITE_TRANSIENT);
+        while (sqlite3_step(row) == SQLITE_ROW) {
+            if (!related++) fprintf(out, "## In the same family\n\n");
+            fprintf(out, "- [bonfyre %s](/bonfyre-%s)\n", sqlite3_column_text(row, 0), sqlite3_column_text(row, 0));
+        }
+        sqlite3_finalize(row);
+    }
+    return 0;
+}
+
 static int workflow_start(sqlite3*db,int argc,char**argv,FILE*out,FILE*err){if(argc<5){fprintf(err,"usage: workflow start <mission> <composition> <input-uri>\n");return 2;}sqlite3_stmt*s=NULL;sqlite3_prepare_v2(db,"SELECT node_id,operator_id,depends_on FROM composition_nodes WHERE composition_id=? ORDER BY node_id",-1,&s,NULL);sqlite3_bind_text(s,1,argv[3],-1,SQLITE_TRANSIENT);int n=0;while(sqlite3_step(s)==SQLITE_ROW){sqlite3_stmt*i=NULL;sqlite3_prepare_v2(db,"INSERT OR REPLACE INTO workgraph_nodes(mission_id,node_id,operator_id,input_uri,status,attempt,retry_limit,timeout_seconds,depends_on) VALUES(?,?,?,?, 'defined',0,0,30,?)",-1,&i,NULL);sqlite3_bind_text(i,1,argv[2],-1,SQLITE_TRANSIENT);sqlite3_bind_text(i,2,(const char*)sqlite3_column_text(s,0),-1,SQLITE_TRANSIENT);sqlite3_bind_text(i,3,(const char*)sqlite3_column_text(s,1),-1,SQLITE_TRANSIENT);sqlite3_bind_text(i,4,argv[4],-1,SQLITE_TRANSIENT);sqlite3_bind_text(i,5,(const char*)sqlite3_column_text(s,2),-1,SQLITE_TRANSIENT);if(step(db,i,err)){sqlite3_finalize(s);return 1;}n++;}sqlite3_finalize(s);if(!n){fprintf(err,"fabric: composition not found or empty\n");return 1;}sqlite3_stmt*g=NULL;sqlite3_prepare_v2(db,"UPDATE missions SET catalog_generation=(SELECT value FROM fabric_meta WHERE key='catalog_generation'),workgraph_cursor='defined' WHERE id=?",-1,&g,NULL);sqlite3_bind_text(g,1,argv[2],-1,SQLITE_TRANSIENT);if(step(db,g,err))return 1;fprintf(out,"mission=%s composition=%s nodes=%d state=defined\n",argv[2],argv[3],n);return 0;}
+enum { BF_FRAPPE_MAX_LINEAGES = 64 };
+
+typedef struct {
+    char lineage[64];
+    char app_dir[64];
+    char record_type[160];
+    char company_flow_after[64];
+    int parent_index;
+    int step_index;
+} BfFrappeLineageNode;
+
+static int frappe_catalog_string(const bf_json_doc_t *doc, const bf_json_node_t *object,
+                                 const char *key, char *out, size_t out_size) {
+    const bf_json_node_t *value = bf_json_obj_get(doc, object, key);
+    return value && value->type == BF_JSON_STRING &&
+           bf_json_get_str_copy(value, out, out_size) > 0;
+}
+
+static int load_frappe_lineage_catalog(const char *path, BfFrappeLineageNode nodes[],
+                                       size_t *count_out, FILE *err) {
+    size_t body_size = 0;
+    char *body = read_text(path, &body_size);
+    char parse_error[160] = "";
+    bf_json_doc_t *document = body ? bf_json_parse(body, body_size, parse_error, sizeof(parse_error)) : NULL;
+    const bf_json_node_t *root = document ? bf_json_root(document) : NULL;
+    const bf_json_node_t *lineages = root ? bf_json_obj_get(document, root, "lineages") : NULL;
+    size_t count = 0;
+
+    if (!lineages || lineages->type != BF_JSON_ARRAY) {
+        fprintf(err, "fabric: Frappe lineage catalog is invalid: %s\n",
+                parse_error[0] ? parse_error : path);
+        bf_json_free(document);
+        free(body);
+        return -1;
+    }
+    for (const bf_json_node_t *entry = bf_json_child_first(document, lineages); entry;
+         entry = bf_json_child_next(document, entry)) {
+        const bf_json_node_t *after;
+        BfFrappeLineageNode *node;
+        if (count >= BF_FRAPPE_MAX_LINEAGES || entry->type != BF_JSON_OBJECT) {
+            fprintf(err, "fabric: Frappe lineage catalog exceeds native limits or contains a non-object\n");
+            bf_json_free(document);
+            free(body);
+            return -1;
+        }
+        node = &nodes[count];
+        memset(node, 0, sizeof(*node));
+        node->parent_index = -1;
+        if (!frappe_catalog_string(document, entry, "lineage", node->lineage, sizeof(node->lineage)) ||
+            !frappe_catalog_string(document, entry, "app_dir", node->app_dir, sizeof(node->app_dir)) ||
+            !frappe_catalog_string(document, entry, "representative_doctype",
+                                   node->record_type, sizeof(node->record_type))) {
+            fprintf(err, "fabric: Frappe lineage is missing lineage, app_dir, or representative_doctype\n");
+            bf_json_free(document);
+            free(body);
+            return -1;
+        }
+        after = bf_json_obj_get(document, entry, "company_flow_after");
+        if (after && after->type != BF_JSON_NULL &&
+            !(after->type == BF_JSON_STRING &&
+              bf_json_get_str_copy(after, node->company_flow_after,
+                                   sizeof(node->company_flow_after)) > 0)) {
+            fprintf(err, "fabric: Frappe lineage company_flow_after must be a string or null\n");
+            bf_json_free(document);
+            free(body);
+            return -1;
+        }
+        for (size_t prior = 0; prior < count; ++prior) {
+            if (!strcmp(nodes[prior].lineage, node->lineage) ||
+                !strcmp(nodes[prior].app_dir, node->app_dir)) {
+                fprintf(err, "fabric: Frappe lineage catalog has duplicate lineage or app_dir\n");
+                bf_json_free(document);
+                free(body);
+                return -1;
+            }
+        }
+        ++count;
+    }
+    if (!count) {
+        fprintf(err, "fabric: Frappe lineage catalog is empty\n");
+        bf_json_free(document);
+        free(body);
+        return -1;
+    }
+    for (size_t index = 0; index < count; ++index) {
+        if (!nodes[index].company_flow_after[0]) continue;
+        for (size_t candidate = 0; candidate < count; ++candidate) {
+            if (!strcmp(nodes[index].company_flow_after, nodes[candidate].lineage)) {
+                nodes[index].parent_index = (int)candidate;
+                break;
+            }
+        }
+        if (nodes[index].parent_index < 0) {
+            fprintf(err, "fabric: Frappe lineage %s depends on missing predecessor %s\n",
+                    nodes[index].lineage, nodes[index].company_flow_after);
+            bf_json_free(document);
+            free(body);
+            return -1;
+        }
+    }
+
+    size_t emitted = 0;
+    bool selected[BF_FRAPPE_MAX_LINEAGES] = {false};
+    while (emitted < count) {
+        bool progressed = false;
+        for (size_t index = 0; index < count; ++index) {
+            if (selected[index] ||
+                (nodes[index].parent_index >= 0 && !selected[nodes[index].parent_index])) continue;
+            selected[index] = true;
+            nodes[index].step_index = (int)++emitted;
+            progressed = true;
+        }
+        if (!progressed) {
+            fprintf(err, "fabric: Frappe lineage dependency cycle detected\n");
+            bf_json_free(document);
+            free(body);
+            return -1;
+        }
+    }
+    bf_json_free(document);
+    free(body);
+    *count_out = count;
+    return 0;
+}
+
 static int app_cross_transition(sqlite3 *db, int argc, char **argv, FILE *out, FILE *err) {
-    static const char *families[] = {
-        "frappe", "crm", "erpnext", "erpnext", "erpnext", "hrms",
-        "drive", "wiki", "lms", "helpdesk", "insights"
-    };
-    static const char *pack_families[] = {
-        "frappe", "erpnext", "crm", "hrms", "helpdesk", "lms", "wiki", "drive", "insights"
-    };
-    static const char *types[] = {
-        "PlatformContext", "Deal", "Quotation", "SalesOrder", "Project",
-        "StaffingAssignment", "ProjectFolder", "OperatingProcedure",
-        "TrainingAssignment", "SupportConfiguration", "AnalyticalProjection"
-    };
     const char *mission_option = work_option(argc, argv, "--mission");
+    const char *lineage_catalog = work_option(argc, argv, "--lineage-catalog");
     const char *hold_option = work_option(argc, argv, "--hold-after");
     int hold_after = hold_option != NULL ? atoi(hold_option) : -1;
     int64_t lease_ms = work_integer_option(argc, argv, "--lease-ms", 30000);
+    BfFrappeLineageNode lineages[BF_FRAPPE_MAX_LINEAGES];
+    size_t lineage_count = 0;
     char mission[128];
     char generation[65] = "uncompiled";
     char last_receipt[64] = "";
@@ -1714,20 +2693,22 @@ static int app_cross_transition(sqlite3 *db, int argc, char **argv, FILE *out, F
     BfWorkgraphResult result;
     int completed = 0;
 
-    if (argc < 3) {
-        fprintf(err, "usage: app cross-transition <AppPack-directory> [--mission ID] [--lease-ms N] [--hold-after N]\n");
+    if (argc < 3 || !lineage_catalog) {
+        fprintf(err, "usage: app cross-transition <AppPack-directory> --lineage-catalog <catalog.json> [--mission ID] [--lease-ms N] [--hold-after N]\n");
         return 2;
     }
-    for (size_t index = 0; index < 9; ++index) {
+    if (load_frappe_lineage_catalog(lineage_catalog, lineages, &lineage_count, err) != 0)
+        return 1;
+    for (size_t index = 0; index < lineage_count; ++index) {
         char pack[PATH_MAX];
-        snprintf(pack, sizeof(pack), "%s/%s.apppack.json", argv[2], pack_families[index]);
+        snprintf(pack, sizeof(pack), "%s/%s.apppack.json", argv[2], lineages[index].app_dir);
         if (access(pack, R_OK) != 0) {
             fprintf(err, "fabric: required AppPack missing: %s\n", pack);
             return 1;
         }
     }
     if (mission_option != NULL) snprintf(mission, sizeof(mission), "%s", mission_option);
-    else id(mission, sizeof(mission), "cross-app", "transition");
+    else id(mission, sizeof(mission), "frappe-lineage", "transition");
     scalar(db, "SELECT value FROM fabric_meta WHERE key=?", "catalog_generation",
            generation, sizeof(generation));
     if (bf_workgraph_open_database(db, &graph, err) != 0) return 1;
@@ -1735,17 +2716,31 @@ static int app_cross_transition(sqlite3 *db, int argc, char **argv, FILE *out, F
     if (mission_option == NULL) {
         result = bf_workgraph_create_mission(graph, mission);
         if (result.status != BF_WORKGRAPH_OK) goto workgraph_failure;
-        for (size_t index = 0; index < 11; ++index) {
+        for (size_t step = 1; step <= lineage_count; ++step) {
+            BfFrappeLineageNode *lineage = NULL;
             char node_id[32];
-            char operator_id[160];
+            char operator_id[256];
             BfWorkgraphNodeSpec spec;
-            snprintf(node_id, sizeof(node_id), "step-%02zu", index + 1);
-            snprintf(operator_id, sizeof(operator_id), "application.%s.%s", families[index], types[index]);
+            for (size_t index = 0; index < lineage_count; ++index) {
+                if (lineages[index].step_index == (int)step) {
+                    lineage = &lineages[index];
+                    break;
+                }
+            }
+            if (!lineage) {
+                result.status = BF_WORKGRAPH_INVALID;
+                snprintf(result.error_message, sizeof(result.error_message),
+                         "Frappe lineage topological order is incomplete");
+                goto workgraph_failure;
+            }
+            snprintf(node_id, sizeof(node_id), "step-%02zu", step);
+            snprintf(operator_id, sizeof(operator_id), "application.%s.%s",
+                     lineage->lineage, lineage->record_type);
             memset(&spec, 0, sizeof(spec));
             spec.mission_id = mission;
             spec.node_id = node_id;
             spec.operator_id = operator_id;
-            spec.family = "cross-app";
+            spec.family = "frappe-lineage";
             spec.priority = 100;
             spec.retry_limit = 1;
             spec.timeout_seconds = 30;
@@ -1754,9 +2749,10 @@ static int app_cross_transition(sqlite3 *db, int argc, char **argv, FILE *out, F
             spec.backoff_max_ms = 20;
             result = bf_workgraph_add_node(graph, &spec);
             if (result.status != BF_WORKGRAPH_OK) goto workgraph_failure;
-            if (index > 0) {
+            if (lineage->parent_index >= 0) {
                 char parent_node[32];
-                snprintf(parent_node, sizeof(parent_node), "step-%02zu", index);
+                snprintf(parent_node, sizeof(parent_node), "step-%02d",
+                         lineages[lineage->parent_index].step_index);
                 result = bf_workgraph_add_dependency(graph, mission, node_id,
                                                      parent_node, "require_success");
                 if (result.status != BF_WORKGRAPH_OK) goto workgraph_failure;
@@ -1773,7 +2769,7 @@ static int app_cross_transition(sqlite3 *db, int argc, char **argv, FILE *out, F
     }
 
     for (;;) {
-        BfWorkgraphClaimSpec claim_spec = {"cross-app-worker", "cross-app", lease_ms};
+        BfWorkgraphClaimSpec claim_spec = {"frappe-lineage-worker", "frappe-lineage", lease_ms};
         char token[65];
         char record_id[160];
         char uri[256];
@@ -1781,16 +2777,31 @@ static int app_cross_transition(sqlite3 *db, int argc, char **argv, FILE *out, F
         char pack[PATH_MAX];
         char revision[65];
         char timestamp[32];
-        int index;
+        int step_index;
+        BfFrappeLineageNode *lineage = NULL;
         sqlite3_stmt *statement = NULL;
 
         result = bf_workgraph_claim_next(graph, &claim_spec);
         if (result.status == BF_WORKGRAPH_NOT_ELIGIBLE) break;
         if (result.status != BF_WORKGRAPH_OK) goto workgraph_failure;
         snprintf(token, sizeof(token), "%s", result.claim_token);
-        if (sscanf(result.node_id, "step-%d", &index) != 1 || index < 1 || index > 11) {
+        if (sscanf(result.node_id, "step-%d", &step_index) != 1 ||
+            step_index < 1 || (size_t)step_index > lineage_count) {
             result.status = BF_WORKGRAPH_INVALID;
-            snprintf(result.error_message, sizeof(result.error_message), "invalid cross-app node identifier");
+            snprintf(result.error_message, sizeof(result.error_message),
+                     "invalid Frappe lineage node identifier");
+            goto workgraph_failure;
+        }
+        for (size_t index = 0; index < lineage_count; ++index) {
+            if (lineages[index].step_index == step_index) {
+                lineage = &lineages[index];
+                break;
+            }
+        }
+        if (!lineage) {
+            result.status = BF_WORKGRAPH_INVALID;
+            snprintf(result.error_message, sizeof(result.error_message),
+                     "Frappe lineage node has no catalog entry");
             goto workgraph_failure;
         }
         if (completed == hold_after) {
@@ -1799,13 +2810,15 @@ static int app_cross_transition(sqlite3 *db, int argc, char **argv, FILE *out, F
             fflush(out);
             for (;;) pause();
         }
-        snprintf(record_id, sizeof(record_id), "%s-%d", mission, index);
-        snprintf(uri, sizeof(uri), "bonfyre://application/%s/%s", families[index - 1], record_id);
-        snprintf(pack, sizeof(pack), "%s/%s.apppack.json", argv[2], families[index - 1]);
+        snprintf(record_id, sizeof(record_id), "%s-%d", mission, step_index);
+        snprintf(uri, sizeof(uri), "bonfyre://application/%s/%s",
+                 lineage->lineage, record_id);
+        snprintf(pack, sizeof(pack), "%s/%s.apppack.json", argv[2], lineage->app_dir);
         if (bf_sha256_file(pack, revision) != 0) goto storage_failure;
-        if (index > 1) {
+        if (lineage->parent_index >= 0) {
+            BfFrappeLineageNode *parent = &lineages[lineage->parent_index];
             snprintf(parent_uri, sizeof(parent_uri), "bonfyre://application/%s/%s-%d",
-                     families[index - 2], mission, index - 1);
+                     parent->lineage, mission, parent->step_index);
         }
         if (namespace_row(db, uri, "application", record_id, pack, "app-pack", err) != 0)
             goto storage_failure;
@@ -1813,12 +2826,12 @@ static int app_cross_transition(sqlite3 *db, int argc, char **argv, FILE *out, F
         if (sqlite3_prepare_v2(db,
                 "INSERT INTO application_records(uri,family,record_type,record_id,parent_uri,"
                 "workflow_state,permissions,app_pack_revision,catalog_generation,created_at) "
-                "VALUES(?,?,?,?,?,'complete','native-transition',?,?,?) "
+                "VALUES(?,?,?,?,?,'complete','native-lineage-transition',?,?,?) "
                 "ON CONFLICT(family,record_type,record_id) DO NOTHING",
                 -1, &statement, NULL) != SQLITE_OK) goto storage_failure;
         sqlite3_bind_text(statement, 1, uri, -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(statement, 2, families[index - 1], -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(statement, 3, types[index - 1], -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(statement, 2, lineage->lineage, -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(statement, 3, lineage->record_type, -1, SQLITE_TRANSIENT);
         sqlite3_bind_text(statement, 4, record_id, -1, SQLITE_TRANSIENT);
         if (parent_uri[0]) sqlite3_bind_text(statement, 5, parent_uri, -1, SQLITE_TRANSIENT);
         else sqlite3_bind_null(statement, 5);
@@ -1830,7 +2843,8 @@ static int app_cross_transition(sqlite3 *db, int argc, char **argv, FILE *out, F
             goto storage_failure;
         }
         sqlite3_finalize(statement);
-        result = bf_workgraph_complete(graph, mission, result.node_id, "cross-app-worker", token, uri);
+        result = bf_workgraph_complete(graph, mission, result.node_id,
+                                       "frappe-lineage-worker", token, uri);
         if (result.status != BF_WORKGRAPH_OK) goto workgraph_failure;
         snprintf(last_receipt, sizeof(last_receipt), "%s", result.receipt_id);
         if (sqlite3_prepare_v2(db,
@@ -1850,16 +2864,16 @@ static int app_cross_transition(sqlite3 *db, int argc, char **argv, FILE *out, F
     }
     bf_workgraph_close(graph);
     fprintf(out, "receipt=bonfyre://receipt/%s\nmission=bonfyre://mission/%s\n"
-                 "workgraph=cross-app-transition\nterminal_state=complete\nrecords_created=11\n",
-            last_receipt, mission);
+                 "workgraph=frappe-lineage-transition\nterminal_state=complete\nrecords_created=%zu\n",
+            last_receipt, mission, lineage_count);
     return 0;
 
 storage_failure:
-    fprintf(err, "fabric: cross-app storage failure: %s\n", sqlite3_errmsg(db));
+    fprintf(err, "fabric: Frappe lineage storage failure: %s\n", sqlite3_errmsg(db));
     bf_workgraph_close(graph);
     return 1;
 workgraph_failure:
-    fprintf(err, "fabric: cross-app workgraph failure: %s: %s\n",
+    fprintf(err, "fabric: Frappe lineage WorkGraph failure: %s: %s\n",
             result.error_code, result.error_message);
     bf_workgraph_close(graph);
     return 1;
@@ -1923,14 +2937,18 @@ static int effect_commit(sqlite3 *db, const char *effect_id, int rollback, FILE 
         char path[PATH_MAX]; snprintf(path, sizeof(path), "%s", sqlite3_column_text(query, 0)); sqlite3_finalize(query);
         if (unlink(path) != 0 && errno != ENOENT) { fprintf(err, "fabric: rollback failed: %s\n", strerror(errno)); return 1; }
         sqlite3_stmt *update = NULL; sqlite3_prepare_v2(db, "UPDATE effects SET state='compensated' WHERE id=?", -1, &update, NULL); sqlite3_bind_text(update, 1, effect_id, -1, SQLITE_TRANSIENT);
-        if (step(db, update, err)) return 1; fprintf(out, "effect=bonfyre://effect/%s state=compensated\n", effect_id); return 0;
+        if (step(db, update, err)) return 1;
+        fprintf(out, "effect=bonfyre://effect/%s state=compensated\n", effect_id);
+        return 0;
     }
     if (strcmp(state, "approved") || strcmp(kind, "publish-local")) { fprintf(err, "fabric: effect is unbound or lacks reversible local authority\n"); return 1; }
     sqlite3_prepare_v2(db, "SELECT locator,digest FROM artifacts WHERE uri=?", -1, &query, NULL); sqlite3_bind_text(query, 1, target, -1, SQLITE_TRANSIENT);
     if (sqlite3_step(query) != SQLITE_ROW) { sqlite3_finalize(query); fprintf(err, "fabric: local publication target is not an artifact\n"); return 1; }
     snprintf(source, sizeof(source), "%s", sqlite3_column_text(query, 0)); snprintf(digest, sizeof(digest), "%s", sqlite3_column_text(query, 1)); sqlite3_finalize(query);
     char state_root[PATH_MAX], directory[PATH_MAX], path[PATH_MAX], actual_digest[65], receipt_id[64], timestamp[32], uri[256], payload[1024];
-    if (state_dir(state_root, err)) return 1; snprintf(directory, sizeof(directory), "%s/published", state_root); if (mkdirs(directory)) return 1;
+    if (state_dir(state_root, err)) return 1;
+    snprintf(directory, sizeof(directory), "%s/published", state_root);
+    if (mkdirs(directory)) return 1;
     snprintf(path, sizeof(path), "%s/%s", directory, digest); if (copy_materialized_file(source, path)) { fprintf(err, "fabric: publication materialization failed\n"); return 1; }
     if (bf_sha256_file(path, actual_digest) || strcmp(actual_digest, digest)) { unlink(path); fprintf(err, "fabric: publication digest verification failed\n"); return 1; }
     snprintf(payload, sizeof(payload), "{\"effect\":\"%s\",\"artifact\":\"%s\",\"published_path\":\"%s\"}", effect_id, target, path);
@@ -2167,6 +3185,58 @@ static int work_dispatch(sqlite3 *db, int argc, char **argv, FILE *out, FILE *er
     return print_work_result(&result, out, err);
 }
 
+static int print_lifecycle_result(const BfLifecycleResult *result, FILE *out,
+                                  FILE *err) {
+    FILE *stream = result->status == BF_LIFECYCLE_OK ? out : err;
+    fprintf(stream, "result=%s\nidentity=%s\nstate=%s\nevent_id=%s\nreplayed=%d\nerror_message=%s\n",
+            bf_lifecycle_status_name(result->status), result->identity,
+            result->state, result->event_id, result->replayed,
+            result->error_message);
+    return result->status == BF_LIFECYCLE_OK ? 0 : 1;
+}
+
+static int lifecycle_dispatch(sqlite3 *db, int argc, char **argv, FILE *out,
+                              FILE *err) {
+    BfLifecycleResult result;
+    if (!strcmp(argv[0], "lifecycle") && argc == 2 &&
+        !strcmp(argv[1], "register-restate")) {
+        result = bf_lifecycle_register_restate(db);
+    } else if (!strcmp(argv[0], "lifecycle") && argc == 2 &&
+               !strcmp(argv[1], "register-capability-fulfillment")) {
+        result = bf_lifecycle_register_capability_fulfillment(db);
+    } else if (!strcmp(argv[0], "lifecycle") && argc == 2 &&
+               !strcmp(argv[1], "register-capability-fulfillment-rail")) {
+        result = bf_lifecycle_register_capability_fulfillment_rail(db);
+    } else if (!strcmp(argv[0], "worker-run") && argc >= 2 &&
+               !strcmp(argv[1], "start") && argc == 6) {
+        BfWorkerRunSpec spec = {argv[2], argv[3], argv[4], argv[5]};
+        result = bf_worker_run_start(db, &spec);
+    } else if (!strcmp(argv[0], "worker-run") && argc >= 2 &&
+               !strcmp(argv[1], "step") && argc >= 5) {
+        result = bf_worker_run_step(db, argv[2], argv[3], argv[4],
+                                    work_option(argc, argv, "--receipt"));
+    } else if (!strcmp(argv[0], "worker-run") && argc == 3 &&
+               !strcmp(argv[1], "status")) {
+        result = bf_worker_run_status(db, argv[2]);
+    } else if (!strcmp(argv[0], "protocol-machine") && argc >= 5 &&
+               !strcmp(argv[1], "start")) {
+        BfProtocolInstanceSpec spec = {argv[2], argv[3], argv[4],
+                                       work_option(argc, argv, "--receipt")};
+        result = bf_protocol_instance_start(db, &spec);
+    } else if (!strcmp(argv[0], "protocol-machine") && argc >= 5 &&
+               !strcmp(argv[1], "step")) {
+        result = bf_protocol_instance_step(db, argv[2], argv[3], argv[4],
+                                           work_option(argc, argv, "--receipt"));
+    } else if (!strcmp(argv[0], "protocol-machine") && argc == 3 &&
+               !strcmp(argv[1], "status")) {
+        result = bf_protocol_instance_status(db, argv[2]);
+    } else {
+        fprintf(err, "usage: lifecycle register-restate|register-capability-fulfillment | worker-run start|step|status ... | protocol-machine start|step|status ...\n");
+        return 2;
+    }
+    return print_lifecycle_result(&result, out, err);
+}
+
 static int mcp_dispatch(sqlite3 *db, int argc, char **argv, FILE *out, FILE *err) {
     sqlite3_stmt *statement = NULL;
     char generation[65] = "uncompiled";
@@ -2311,9 +3381,13 @@ static int readiness_dispatch(sqlite3 *db, int argc, char **argv, FILE *out, FIL
 int bf_fabric_extended_dispatch(sqlite3 *db, int argc, char **argv, FILE *out, FILE *err) {
     if (argc < 1) return BF_FABRIC_NOT_HANDLED;
     if (!strcmp(argv[0], "fabric") && argc > 1 && !strcmp(argv[1], "compile")) return compile_all(db, argc, argv, out, err);
+    if (!strcmp(argv[0], "operator") && argc > 1 && !strcmp(argv[1], "reference")) return operator_reference(db, argc, argv, out, err);
+    if (!strcmp(argv[0], "operator") && argc > 1 && !strcmp(argv[1], "invoke")) return power_invoke(db, argc, argv, out, err);
     if (!strcmp(argv[0], "workflow") && argc > 1 && !strcmp(argv[1], "start")) return workflow_start(db, argc, argv, out, err);
     if (!strcmp(argv[0], "work") && argc > 1 && strcmp(argv[1], "run")) return work_dispatch(db, argc, argv, out, err);
     if (!strcmp(argv[0], "work") && argc > 2 && !strcmp(argv[1], "run")) return work_run(db, argv[2], out, err);
+    if (!strcmp(argv[0], "lifecycle") || !strcmp(argv[0], "worker-run") ||
+        !strcmp(argv[0], "protocol-machine")) return lifecycle_dispatch(db, argc, argv, out, err);
     if (!strcmp(argv[0], "mcp")) return mcp_dispatch(db, argc, argv, out, err);
     if (!strcmp(argv[0], "filesystem") && argc == 3 && !strcmp(argv[1], "project")) {
         return bf_filesystem_project(db, argv[2], out, err);

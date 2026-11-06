@@ -1,0 +1,117 @@
+architecture representation-manifold
+  canonical_name Representation Manifold
+  family storage
+  domain Bonfyre
+  layer substrate
+  semantic_question Which physical forms of one semantic subject are useful, and how can each derived form be rebuilt from its exact input frontier?
+  purpose Select and realize useful physical representations on demand without multiplying semantic truth or retaining reconstructable bytes by default.
+  maturity architectural
+  source_path scripts/representation_manifold_shift.py.archive
+  source_path scripts/representation-manifold-shift.mjs
+  source_path scripts/estate-datafusion.mjs
+  source_path schemas/storage/representation-portfolio.cue
+  source_path schemas/storage/representation-manifold.sql
+  source_path scripts/Makefile
+  source_path scripts/representation_manifold_fabric.py.archive
+  source_path scripts/estate_flight_server.py.archive
+  source_path scripts/estate_arrow_stream.py.archive
+  source_path scripts/representation_manifold_forge.py.archive
+  source_path scripts/representation-manifold-forge.mjs
+  source_path scripts/representation-manifold-delta.mjs
+  source_path scripts/representation-manifold-substrait.mjs
+  source_path scripts/representation-manifold-zarr.mjs
+  source_path scripts/representation-manifold-fabric.mjs
+  source_path scripts/representation-manifold-report.mjs
+  source_path scripts/representation-manifold-adbc.mjs
+  source_path scripts/representation-manifold-lance-capability.mjs
+  source_path scripts/representation-manifold-zero-copy.mjs
+  source_path scripts/arrow-runtime-verify.mjs
+  source_path scripts/representation-manifold-carrier.mjs
+  source_path scripts/representation-manifold-gc.mjs
+  source_path scripts/representation-forge.cue
+  source_path scripts/columnar_body.mjs
+  source_path scripts/tests/representation-manifold-forge.test.mjs
+  source_path scripts/tests/representation-manifold-delta.test.mjs
+  source_path scripts/tests/representation-manifold-substrait.test.mjs
+  source_path scripts/tests/representation-manifold-report.test.mjs
+  source_path scripts/tests/representation-manifold-zero-copy.test.mjs
+  source_path scripts/tests/representation-manifold-fabric.test.mjs
+  source_path scripts/tests/representation_manifold_carrier.test.mjs
+  source_path scripts/tests/representation_manifold_gc.test.mjs
+  source_path scripts/representation_manifold_zero_copy.py.archive
+  source_path cmd/BonfyreArrowStream/src/main.cpp
+  source_path cmd/BonfyreArrowStream/tests/verify.cpp
+  source_path cmd/BonfyreArrowStream/tests/arrow_stream_test.sh
+  source_path cmd/BonfyreArrowFlight/src/main.cpp
+  source_path cmd/BonfyreArrowFlight/src/c_data.cpp
+  source_path cmd/BonfyreArrowFlight/include/bonfyre_arrow_c.h
+  source_path cmd/BonfyreArrowFlight/build.mjs
+  source_path cmd/BonfyreArrowFlight/tests/verify.cpp
+  source_path cmd/BonfyreArrowFlight/tests/verify_c_data.cpp
+  source_path cmd/BonfyreArrowFlight/tests/flight_test.mjs
+  source_path cmd/BonfyreZarrForge/src/main.cpp
+  source_path cmd/BonfyreZarrForge/tests/zarr_forge.test.mjs
+  source_path cmd/BonfyreADBCProbe/src/main.c
+  source_path cmd/BonfyreExternalEstate/tools/compile_subject_projection.mjs
+  source_path cmd/BonfyreExternalEstate/tools/verify_subject_projection.py.archive
+  source_path cmd/BonfyreExternalEstate/tools/verify_subject_projection.mjs
+  source_path scripts/workspace_material.mjs
+  source_path scripts/materialize_workspace_package.mjs
+  source_path cmd/BonfyreWebAddress/src/workspace_package.h
+  source_path cmd/BonfyreWebAddress/src/application_workspace.h
+  source_path cmd/BonfyreWebAddress/tests/workspace_material.test.mjs
+  source_path cmd/BonfyreWebAddress/tests/workspace_package_reader.c
+  source_path cmd/BonfyreWebAddress/WORKSPACE-MATERIAL.md
+  witness cmd/BonfyreExternalEstate/tests/subject_projection_precompute_test.sh proves one derived route representation commits its input/output identity with the cut, changes its route digest when rendered material changes, preserves its prior complete cut when a replacement compile fails, and refuses changed inputs or output rows
+  witness cmd/BonfyreExternalEstate/tests/subject_projection_precompute_test.sh proves one normalized source payload can serve multiple exact subject memberships through a compatibility view, while a conflicting payload at the same coordinate is refused and the prior cut remains verifiable
+  witness scripts/tests/representation_manifold_shift.test.mjs proves one SQLite source lowers from a transactionally consistent SQLite snapshot including uncheckpointed WAL rows to a digest-bound Parquet representation, a changed source invalidates reuse, unavailable DuckDB leaves the previous physical cut intact and marks the target pending, a staged Bun/CUE runtime reads the estate, and execution never rewrites the canonical YAFF; the old Python and new runners agreed on subject and representation counts for the fixture before cutover
+  witness scripts/tests/estate-datafusion.test.mjs proves a Bun/DuckDB reader discovers present Parquet representations, exposes their names as queryable views, and fails when the representation root is absent
+  witness scripts/tests/representation-manifold-forge.test.mjs proves a staged Bun/CUE forge plans only authored directed candidate pairs, refuses a digest-changed Parquet root before writing projection state, lowers non-null source/target rows into content-addressed Parquet, records parent edge and input/output/compiler transformation receipts, and verifies an idempotent repeat; candidate adjacency does not establish a semantic relation
+  witness scripts/tests/representation-manifold-forge.test.mjs proves a second demand-driven virtual graph path registers a digest-bound SQL program without materializing graph bytes, records planned rather than materialized transformation receipts, reuses an existing verified program without rewriting it, queries only exact CUE-authored directed candidate pairs, and refuses canonical Parquet drift or ambiguous active roots
+  witness 2026-10-01 read-only Bun Forge plan-all-graphs preflighted all 202 active Parquet roots in 6.24 seconds and identified only two CUE-authored directed graph candidates; no graph bytes or live receipts were written
+  witness scripts/tests/representation-manifold-delta.test.mjs proves demand-gated Delta v1 metadata over a copy-on-write Parquet clone, exact canonical input digest, separate inode, lineage and transformation receipt, idempotent verification, and refusal of changed canonical bytes or unowned view members; a separate Delta Lake reader opened the nested list, decimal, date and null fixture and confirmed version, rows and column names
+  witness scripts/tests/representation-manifold-substrait.test.mjs proves a Bun-generated protobuf named-table scan plan over a digest-verified Parquet root, exact lineage and transformation receipt, batch demand preflight, and an independent DataFusion Consumer executing two rows with the expected columns and IDs from a nested list decimal date null fixture; a read-only live audit generated and independently loaded plans for all 202 authored roots without writing live state
+  witness scripts/tests/representation-manifold-report.test.mjs proves native read-only fabric count inspection, derived JSON/text report writing and symlink-output refusal; its fixture output matched the former Python report before the cutover
+  witness scripts/tests/representation-manifold-adbc.test.mjs proves a tiny Python-free C probe initialized the installed Flight SQL driver's ADBC v1.1 ABI, checked required database/connection/statement/query function pointers, and the Bun binder recorded exact driver/probe digests as driver_initialized_unserved; fake and symlink drivers were refused, and no database, query or Flight SQL service was opened
+  witness scripts/tests/representation-manifold-lance-capability.test.mjs proves the installed Lance activation is only a six-row write/read probe rather than a general Parquet-to-Lance lowerer; its installed digest also fails the declared SHA attestation, so Lance retirement is blocked rather than inferred
+  witness scripts/tests/representation-manifold-zero-copy.test.mjs proves a native zero-copy coordinator verifies canonical Parquet roots, records local dedup and DuckDB execution receipts, stages an XTable config only over an existing Iceberg receipt, and refuses Iceberg add-files without a spec-valid native writer; authored byte policy comes from representation-portfolio.cue
+  witness cmd/BonfyreZarrForge/tests/zarr_forge.test.mjs proves an explicit native Arrow-linked lowerer realizes demand-gated numeric Parquet columns as chunked Zarr arrays with separate null-validity masks, digest-bound source, lineage and executable receipts, idempotent verification and drift refusal; an independent Zarr reader read fixture values and masks
+  witness scripts/tests/representation-manifold-zarr-receipt.test.mjs proves an existing Zarr directory is reused only when a matching materialization receipt verifies exact input digest, current output digest and compiler; altered chunk bytes are refused rather than adopted
+  witness scripts/tests/representation-manifold-fabric.test.mjs proves a licensed relocatable native Arrow bundle binds against a canonical Parquet fixture, streams digest-bound Arrow IPC through local and staged read-only fabric CLIs, and serves a loopback Flight protocol client with exact Parquet values; bind alone mutates receipts, stream/serve require the bound content-addressed catalog and retain the honest installed_unserved state, and changed canonical bytes are refused
+  witness scripts/tests/representation-manifold-fabric.test.mjs proves the installed Bun fabric apply coordinates bounded Substrait, native carrier, report, optional Arrow/ADBC and XTable staging while refusing an unverified Spark conversion; a read-only live audit verified 202 physical Parquet roots and 8 pending native Substrait plans without live mutation
+  witness scripts/tests/representation_manifold_gc.test.mjs proves an explicit-kind native GC dry-runs by default and can evict digest-verified derived regular files or sorted-manifest-verified directories, including Zarr, only with one valid canonical Parquet parent, no shared coordinate and an estate-contained path; it refuses symlink members and preserves lineage, then writes an eviction receipt only after successful removal
+  witness a read-only live-estate native GC dry-run found 11 of 11 physical Zarr directories digest-and-lineage eligible, totaling 446672 bytes; no live bytes were evicted
+  witness scripts/tests/representation_manifold_carrier.test.mjs proves an estate-confined native filesystem carrier verifies canonical Parquet digest and magic, records per-representation seek/read capability, reads exact bytes through the same verified file descriptor, and refuses in-place drift or symlink escape; this is a local filesystem carrier, not all OpenDAL backends
+  witness cmd/BonfyreArrowStream/tests/arrow_stream_test.sh compiles the C++ prototype against injected Arrow/Parquet C++ libraries, writes a two-batch Arrow IPC stream from nested, decimal, date, null and primitive Parquet columns, and uses a separate native Arrow reader to compare schema metadata, batch boundaries and every value with the canonical Parquet reader; it also rejects zero batch size and missing input
+  witness cmd/BonfyreArrowFlight/tests/flight_test.mjs builds a licensed relocatable Python-free native runtime from explicitly supplied Arrow/Parquet/Flight libraries, checks its Flight linkage has no wheel path, proves IPC output through a real pipe plus Flight listing and metadata over loopback gRPC plus a lazy in-process Arrow C Stream ABI, compares nested decimal date null and primitive values to canonical Parquet through separate native readers, and rejects invalid stream arguments or an unknown dataset; the witness requires loopback socket permission and does not establish a live-estate deployment
+  witness cmd/BonfyreWebAddress/tests/workspace_material.test.mjs proves workspace releases share identical file bodies under _bodies/sha256 while each release keeps its exact manifest identity: seven fixture releases with one shared 8 MiB asset hold 58,720,319 logical payload bytes in 8,388,671 body bytes (50,331,648 duplicate body bytes avoided); an unchanged repeat writes no body and no manifest; the native reader linked against libbonfyre SHA-256 serves shared and legacy layouts, refuses missing or corrupt members and symlinked paths, and does not substitute a body from the other layout; 40 tests passed on 2026-10-17, re-run on this Mac after the contribution landed
+  witness integrations/browser/tests/native-workbench-package.test.mjs proves the existing workbench package consumer reads through the shared material API and checks complete declared membership (2 tests, 2026-10-17)
+  known_gap the manifest and route digest are one implemented representation family; the full manifold capability and eviction laws have not been proven across every semantic owner
+  known_gap the native shift has a fixture and staged-runtime witness, not a live estate replay; each SQLite source now has a consistent WAL-inclusive snapshot and data-version drift check, but snapshots across separate owner databases are not one cross-store transaction, and the old home-directory dispatcher has not been cut over
+  known_gap the Bun forge worker replaced the Python entrypoint and can preflight all 202 authored live roots, but its physical and virtual graph, Delta v1 and numeric Zarr realizations remain fixture-bounded; Lance, Iceberg and historical Polars/ADBC realization parity is still missing, and no live-estate forge write was performed. The installed Lance binary is merely a six-row probe and fails its declared digest attestation, not a usable lowerer.
+  known_gap native Substrait only emits a named-table scan over supported Parquet types, not arbitrary SQL operators; all 202 live authored roots passed read-only native planning and DataFusion plan consumption, but no live native Substrait materialization was performed
+  known_gap native Zarr supports numeric arrays and explicit validity masks in a fixture with an explicit Arrow-linked binary; other modalities, codecs and live estate realization are not proven
+  known_gap the native Delta v1 mapper refuses unsupported Parquet types instead of converting them; independent-reader fixture proof does not establish all Delta protocol features or live-estate compatibility, and its copy-on-write clone requires filesystem reflink support
+  known_gap the C++ Arrow IPC writer has a tested relocatable native bundle and true pipe-streaming witness, with 202 native live-estate IPC execution bindings and 202 C Stream bindings observed after registration; the locally available Arrow/Parquet C++ build inputs still came from a PyArrow wheel, so an independent native SDK supply and per-consumer live execution measurements remain open
+  known_gap Arrow Flight has a native C++ protocol and explicit Bun binding/serving witness; 202 live-estate Flight bindings now point to a durable native bundle with installed_unserved state and the old Python executable was superseded and archived, but no live Flight service or remote authentication exists. The native bundle's local Flight C++ build input came from a PyArrow wheel, and remote serving is refused without an authentication design.
+  known_gap read-only IPC streaming uses a receipt-bound fast bundle check: it hashes the selected native executable, checks every bundle member's type and size, and lets the native IPC process hash the already-open canonical Parquet before emitting bytes; it does not rehash same-size native library bytes on every request. Bind and serve use strict full-bundle hashing, and stream has an explicit strict-runtime option.
+  known_gap hostile in-place mutation of an already-open canonical file can race a lazy Arrow stream; normal manifold updates use atomic rename, and Flight checks the digest at each DoGet before opening the reader
+  known_gap native semantic GC handles derived regular files and sorted-manifest-verified directories with exact one-parent lineage, but no live estate deletion was performed; the Bun zero-copy coordinator refuses Iceberg add-files because a spec-valid native writer has not replaced the separate PyIceberg path, and XTable actual metadata synchronization has not run locally because spark-submit is absent
+  known_gap the native filesystem carrier has fixture seek/read and integrity evidence but no live binding or object-store backend proof; the Bun fabric worker composes Substrait, Arrow, local carrier, reporting, native ADBC driver admission and XTable runtime staging, but no live apply or actual XTable conversion was run. ADBC admission verifies only the installed native driver's local ABI, not SQL execution, a Flight SQL client connection or a served endpoint.
+  known_gap shared workspace bodies are written by the materializer and read by the WebAddress reader the public process has served since 2026-10-17 (release ~/.bonfyre/workspace-material-release-20261017, rollback to experience-cohesion-release-20261015); legacy package trees were not migrated, and no orphan-body collection exists; copying a release directory alone is no longer a complete deployment or backup, because its bodies live beside it
+  known_gap workspace reuse still reads and hashes retained bytes on every verify; "no new bytes written" is measured, "no verification I/O" is not claimed
+  invariant one semantic identity may have arbitrarily many RepresentationInstances
+  invariant a RepresentationInstance never becomes semantic authority by materialization
+  invariant every derived representation records exact input frontier, compiler identity, output digest, and reconstruction path
+  invariant subject-material payload may be factored from subject membership only when the source/item/material coordinate has exactly one normalized payload; the compatibility view reconstructs the old subject-scoped read shape, and conflicting payloads halt compilation
+  invariant representation overlap is useful when it unlocks a distinct algebra or delivery property
+  invariant semantics determine representation eligibility; ResourceWeather determines materialization temperature
+  invariant semantic GC may evict reconstructable bytes but preserves lineage
+  witness 2026-10-17 cutover: a canary of the new reader matched live on 39 route/host pairs (byte digests, including the 7 releases that carry assets); after the switch, the four apex sites answered 200 and all 7 legacy release assets read byte-exact through the public edge
+  invariant identical immutable workspace bodies are stored once within one package root; release membership, installations, grants and user state stay per release and are never merged because their bytes are shared
+  internal_calculus SemanticObject -> OccurrenceSpine -> RepresentationGraph -> PhysicalRealization[] -> CapabilityUnlockGraph
+  internal_calculus MaterialRepresentation + MetadataRepresentation + IndexRepresentation + ExecutionRepresentation + PresentationRepresentation
+  forbidden_inference physical duplication -> semantic duplication
+  forbidden_inference cached/current representation -> institutional authority
+  forbidden_inference a shared workspace body exists -> any workspace may read it; body presence grants no access and there is no public bare-digest read route
+  forbidden_inference fixture body bytes avoided -> live estate bytes reclaimed

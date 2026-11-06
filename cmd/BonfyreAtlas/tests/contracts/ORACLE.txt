@@ -1,0 +1,8 @@
+Captured from architecture/compile-contracts.mjs before retirement.
+SHA256 6b26461946af9d0d9f069d559075836173d4dc5e165a0c60e47fdfec42496c2f
+Only generated header command comments replace the retired compiler path.
+The fixtures preserve JSON property order, C escaping, default fields, explicit parent override, tied rank order, worlds and persona rows.
+The six current repository outputs also matched the JS oracle before retirement, with the same command-comment normalization.
+Native HTTP failure diagnostics differ from Bun fetch messages; status acceptance remains exactly 200 or 402.
+Native CLI refuses unknown options and malformed missing-value settlement fields instead of silently accepting them.
+Identifier sorting is witnessed for the declared ASCII estate names; Unicode locale collation equivalence is not claimed.

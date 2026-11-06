@@ -1,0 +1,28 @@
+{
+  "at": "2026-10-08T19:00:36.907Z",
+  "files": [
+    {
+      "path": "red3-planner/index.html",
+      "status": 200,
+      "sha256": "abb03ec70a44920157ac2daea74b6d122e0e2f7b3252d991c3184a5d4a491795",
+      "same": true
+    },
+    {
+      "path": "data/red3-fixtures/planner-client.mjs",
+      "status": 200,
+      "sha256": "d9c0918f446c1c7276d0e9e4f679ed49c7eadc5c8445c8cfe373d1b018f2a887",
+      "same": true
+    },
+    {
+      "path": "data/red3-fixtures/planner-model.mjs",
+      "status": 200,
+      "sha256": "dd0717ae279e10282ba51d4ebe5d8b5baee84583a15e91907c5e5a8712807c04",
+      "same": true
+    }
+  ],
+  "invalid_plan": {
+    "status": 400,
+    "receipt_absent": true
+  },
+  "accepted_submissions": 0
+}

@@ -1,0 +1,5 @@
+carrier_contract fixture
+  carrier okay /okay
+  carrier priced /priced
+other ignored
+  carrier not-in-contract /missing

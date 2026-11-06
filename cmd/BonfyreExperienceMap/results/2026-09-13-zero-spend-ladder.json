@@ -1,0 +1,49 @@
+{
+  "schema": "bonfyre.zero_spend_ladder_closure.v1",
+  "classification": "MEASURED_LADDER_CLOSURE_WITHOUT_SPEND",
+  "observed_at": "2026-09-13",
+  "premise_that_was_wrong": "The rungs above contract_compiled were reported as unreachable because each needs an actor, an authority or money. All three existed and none were pointed at the one interaction the estate has actually performed.",
+  "the_read": {
+    "actor": "BonfyreProject/1.0, the identity the source was shown at request time",
+    "authority": "the source's own robots.txt. The institution granted itself nothing; the server published a standing rule and the rule allowed the path",
+    "money": 0,
+    "note": "The DESCRIBE relation reports authority_required false, so --grant-authority is not passed and cannot be the reason anything closes."
+  },
+  "defect_fixed_before_enacting": {
+    "was": "the driver took the first shape-derived facet, compiling AUTHENTICATE against 1041 sources nobody authenticated to and PUBLISH against sources whose own receipts state that robots allowing a read is not a licence to republish",
+    "now": "2337 contracts, 100 percent DESCRIBE, the relation actually performed"
+  },
+  "gates_each_enactment_passed": [
+    "robots returned a rule and the rule allowed this path",
+    "the fetch returned 200",
+    "the retained bytes still hash to the digest the receipt recorded"
+  ],
+  "results": {
+    "protocol_enacted_and_obligations_closed": 2338,
+    "refused_not_permitted_or_never_fetched": 835,
+    "semantic_carrier_conformant": 519,
+    "of_those_retyped_by_observation": 451,
+    "economic_quoted": 3,
+    "total_spend_usd": 0
+  },
+  "observed_phenotype_tier": {
+    "finding": "502 syndication feeds were typed DATASET and MEDIA_ASSET and only 49 as EVENT, because phenotype was derived from descriptions and a feed's description does not say feed. Its bytes do.",
+    "change": "a third derivation tier, observed, which outranks shape and domain because it rests on what the source actually served"
+  },
+  "economic": {
+    "finding": "the earlier reading -- a quote needs a price from a carrier this estate does not hold -- was true of the carriers and false of the sources",
+    "quotes": [
+      {"occurrence": "external:ext-02606", "human_amount": "0.02", "asset": "USDC", "network": "solana"},
+      {"occurrence": "external:ext-02757", "amount": "5000", "network": "base"},
+      {"occurrence": "external:ext-02782", "amount": "250000", "network": "eip155:8453"}
+    ],
+    "note": "A quote is rung one of five. committed, paid, settled and reconciled all move money and remain unreached, which is a decision rather than a limitation."
+  },
+  "does_not_establish": [
+    "a licence to republish or derive from anything read",
+    "authority over anything else these sources offer",
+    "that the sources agree their obligations were discharged",
+    "an intention to pay any quoted price, or that any price is fair",
+    "anything about capability/authorized, which stays unreached because no authority was granted"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "proposal_contract",
+  "displayName": "Proposal Contract",
+  "description": "Authored lowering contract from ObjectGrammar PROPOSE operations into persistent TargetObligation purpose. Owner predicate semantics are compiled against generated OwnerPredicateGrammar; this declaration never grants authority or proves the target.",
+  "attributes": {
+    "operation": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "semantic_contract": {"type": "string", "required": true},
+    "preference_policy": {"type": "string", "required": true},
+    "predicate_id": {"type": "string", "required": true},
+    "owner": {"type": "string", "required": true},
+    "predicate": {"type": "string", "required": true},
+    "expected_state": {"type": "string", "required": true},
+    "evidence_requirement": {"type": "string", "required": false},
+    "authority_requirement": {"type": "string", "required": false},
+    "valid_start": {"type": "string", "required": false},
+    "valid_end": {"type": "string", "required": false},
+    "status": {"type": "string", "required": true}
+  }
+}

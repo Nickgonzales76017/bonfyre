@@ -1,0 +1,256 @@
+✓ wrote architecture/atlas.index.json (5 architectures)
+✓ wrote architecture/atlas.organs.json (1 organs the capability registry can read)
+exit 0
+== atlas.index.json
+{
+  "architectures": {
+    "alpha": {
+      "canonical_name": "AlphaRedefined",
+      "commands": [],
+      "consumes": [],
+      "derived": [],
+      "domain": "Fixture / Core",
+      "edge_types": [],
+      "experience_chains": [],
+      "family": "substrate",
+      "forbidden_inferences": [],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "Redefined last?",
+      "source_paths": [],
+      "subscribes": [],
+      "views": [
+        "BadView",
+        "FixtureView"
+      ],
+      "witnesses": []
+    },
+    "beta": {
+      "canonical_name": "Beta",
+      "commands": [],
+      "consumes": [
+        "FactA"
+      ],
+      "derived": [],
+      "domain": "Fixture / Edge",
+      "edge_types": [],
+      "experience_chains": [],
+      "family": "apps",
+      "forbidden_inferences": [],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "the source moved to a native owner"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [
+        "FactC"
+      ],
+      "publishes": [],
+      "semantic_question": "Does beta consume?",
+      "source_paths": [
+        "cmd/Nope/missing.c"
+      ],
+      "subscribes": [
+        "FactD"
+      ],
+      "views": [
+        "FixtureView"
+      ],
+      "witnesses": []
+    },
+    "delta": {
+      "canonical_name": "Delta",
+      "commands": [],
+      "consumes": [],
+      "derived": [],
+      "domain": "Fixture / Cmd",
+      "edge_types": [],
+      "experience_chains": [],
+      "family": "command",
+      "forbidden_inferences": [],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [],
+      "layer": "",
+      "maturity": "legendary",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "Unknown grade?",
+      "source_paths": [],
+      "subscribes": [],
+      "views": [],
+      "witnesses": []
+    },
+    "epsilon": {
+      "canonical_name": "",
+      "commands": [],
+      "consumes": [],
+      "derived": [],
+      "domain": "",
+      "edge_types": [],
+      "experience_chains": [],
+      "family": "command",
+      "forbidden_inferences": [],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [],
+      "layer": "",
+      "maturity": "measured",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "",
+      "source_paths": [],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "missing/path/witness.json"
+      ]
+    },
+    "gamma": {
+      "canonical_name": "Gamma",
+      "commands": [],
+      "consumes": [],
+      "derived": [],
+      "domain": "Fixture / Surface",
+      "edge_types": [],
+      "experience_chains": [],
+      "family": "surface",
+      "forbidden_inferences": [],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [],
+      "layer": "",
+      "maturity": "proven",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [
+        "FactA"
+      ],
+      "publishes": [
+        "FactE"
+      ],
+      "semantic_question": "Is gamma an island?",
+      "source_paths": [],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "gone/archived-witness.py.archive"
+      ]
+    }
+  },
+  "edge_classes": {
+    "feeds": {
+      "meaning": "one feeds another",
+      "specialized_by": [
+        "feeds_fast"
+      ]
+    }
+  },
+  "interactions": {
+    "alpha-to-beta": {
+      "destination": "beta",
+      "drops": [
+        "nothing"
+      ],
+      "forbidden_inferences": [],
+      "invalidates_on": [],
+      "preserves": [
+        "the fact"
+      ],
+      "relation": "feeds",
+      "source": "alpha"
+    },
+    "beta-to-alpha": {
+      "destination": "alpha",
+      "drops": [],
+      "forbidden_inferences": [],
+      "invalidates_on": [],
+      "preserves": [],
+      "relation": "returns",
+      "source": "beta"
+    },
+    "ghost-link": {
+      "destination": "",
+      "drops": [],
+      "forbidden_inferences": [],
+      "invalidates_on": [],
+      "preserves": [],
+      "relation": "nowhere",
+      "source": "ghost"
+    }
+  },
+  "phenotypes": {
+    "gamma-phen": {
+      "architecture": "gamma",
+      "consumes": [],
+      "deterministic": "",
+      "distributed": "",
+      "effect_class": "",
+      "incremental": "",
+      "produces": [],
+      "proof_class": "",
+      "supports_retraction": ""
+    },
+    "ghost-phen": {
+      "architecture": "ghost",
+      "consumes": [],
+      "deterministic": "",
+      "distributed": "",
+      "effect_class": "",
+      "incremental": "",
+      "produces": [
+        "something"
+      ],
+      "proof_class": "",
+      "supports_retraction": ""
+    }
+  },
+  "provenance": {
+    "cannot_infer": "a matching digest -> a correct atlas; it says this index was built from these declaration bytes and nothing more",
+    "declaration_digest": "366125aeb08fdfdf2cb46d204398d354b7c2e8541c1b32cdf1b9b9d8cd103900",
+    "declaration_files": 2,
+    "generated_at": "T"
+  },
+  "views": {
+    "BadView": {
+      "collapsed_count": 1,
+      "expands_to": [
+        "alpha"
+      ]
+    },
+    "FixtureView": {
+      "collapsed_count": 2,
+      "expands_to": [
+        "alpha",
+        "beta"
+      ]
+    }
+  }
+}
+== atlas.organs.json
+{
+  "Nope": {
+    "architecture": "beta",
+    "description": "Does beta consume?",
+    "domain": "Fixture / Edge",
+    "family": "apps",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  }
+}

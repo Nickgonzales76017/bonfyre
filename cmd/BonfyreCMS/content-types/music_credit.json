@@ -1,0 +1,16 @@
+{
+  "name": "music_credit",
+  "displayName": "Music Credit",
+  "description": "Evidence-backed attribution relating a person or institution to a Work, Recording, Release or performance subject. A credit is attribution, not identity, employment, ownership, royalty share or legal right.",
+  "attributes": {
+    "credit_id": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "subject_ref": {"type": "string", "required": true},
+    "actor_ref": {"type": "string", "required": true},
+    "role": {"type": "string", "required": true},
+    "credited_as": {"type": "string", "required": false},
+    "territory": {"type": "string", "required": false},
+    "evidence_ref": {"type": "string", "required": false},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

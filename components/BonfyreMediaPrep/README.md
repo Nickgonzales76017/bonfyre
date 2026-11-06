@@ -13,7 +13,7 @@ This is the first low-level Bonfyre binary. It is meant to stay small, fast, and
 ## Build
 
 ```bash
-cd 10-Code/BonfyreMediaPrep
+cd components/BonfyreMediaPrep
 make
 ```
 

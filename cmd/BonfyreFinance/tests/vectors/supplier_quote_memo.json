@@ -1,0 +1,148 @@
+{
+ "schema": "bonfyre.command-vectors.v1",
+ "binary": "bonfyre-finance",
+ "binary_env": "BONFYRE_FINANCE_BIN",
+ "replaces": [
+  "tests/supplier_quote_memo.test.mjs"
+ ],
+ "cases": [
+  {
+   "name": "supplier quote reversals are visible while legitimate taxes and discounts are not false positives",
+   "steps": [
+    {
+     "program": "sqlite3",
+     "argv": [
+      "${tmp}/pay.db",
+      "CREATE TABLE invoices(id INTEGER,amount_cents INTEGER,api_key TEXT,period_start TEXT); CREATE TABLE payments(id INTEGER,amount_cents INTEGER,invoice_id INTEGER,reference TEXT); CREATE TABLE credits(id INTEGER,amount_cents INTEGER,reason TEXT);"
+     ],
+     "exit": 0
+    },
+    {
+     "program": "sqlite3",
+     "argv": [
+      "${tmp}/cms.db",
+      "CREATE TABLE frappe_erpnext_supplier_quotation(id INTEGER PRIMARY KEY,currency TEXT,status TEXT,total REAL,grand_total REAL,total_taxes_and_charges REAL DEFAULT 0,taxes_and_charges_added REAL DEFAULT 0,taxes_and_charges_deducted REAL DEFAULT 0,discount_amount REAL DEFAULT 0,additional_discount_percentage REAL DEFAULT 0,rounding_adjustment REAL DEFAULT 0);INSERT INTO frappe_erpnext_supplier_quotation(id,currency,status,total,grand_total,total_taxes_and_charges) VALUES(1,'USD','draft',250,630,0);INSERT INTO frappe_erpnext_supplier_quotation(id,currency,status,total,grand_total,total_taxes_and_charges) VALUES(2,'USD','draft',630,250,0);"
+     ],
+     "exit": 0
+    },
+    {
+     "argv": [
+      "books",
+      "--pay-db",
+      "${tmp}/pay.db",
+      "--cms-db",
+      "${tmp}/cms.db"
+     ],
+     "exit": 2,
+     "stderr": "",
+     "at": {
+      "recorded_and_not_on_the_books.supplier_quotations_received": 2,
+      "recorded_and_not_on_the_books.supplier_quotations_draft": 2,
+      "recorded_and_not_on_the_books.supplier_quotations_total_usd_cents": 88000,
+      "recorded_and_not_on_the_books.supplier_quotations_unexplained_amount_difference": 2
+     }
+    },
+    {
+     "program": "sqlite3",
+     "argv": [
+      "${tmp}/cms.db",
+      "UPDATE frappe_erpnext_supplier_quotation SET total=630 WHERE id=1; UPDATE frappe_erpnext_supplier_quotation SET total=250 WHERE id=2;"
+     ],
+     "exit": 0
+    },
+    {
+     "argv": [
+      "books",
+      "--pay-db",
+      "${tmp}/pay.db",
+      "--cms-db",
+      "${tmp}/cms.db"
+     ],
+     "exit": 2,
+     "stderr": "",
+     "at": {
+      "recorded_and_not_on_the_books.supplier_quotations_total_usd_cents": 88000,
+      "recorded_and_not_on_the_books.supplier_quotations_unexplained_amount_difference": 0
+     }
+    },
+    {
+     "program": "sqlite3",
+     "argv": [
+      "${tmp}/cms.db",
+      "INSERT INTO frappe_erpnext_supplier_quotation(id,currency,status,total,grand_total,total_taxes_and_charges) VALUES(3,'USD','draft',100,108,8);"
+     ],
+     "exit": 0
+    },
+    {
+     "argv": [
+      "books",
+      "--pay-db",
+      "${tmp}/pay.db",
+      "--cms-db",
+      "${tmp}/cms.db"
+     ],
+     "exit": 2,
+     "stderr": "",
+     "at": {
+      "recorded_and_not_on_the_books.supplier_quotations_unexplained_amount_difference": 0
+     }
+    },
+    {
+     "program": "sqlite3",
+     "argv": [
+      "${tmp}/cms.db",
+      "INSERT INTO frappe_erpnext_supplier_quotation(id,currency,status,total,grand_total,total_taxes_and_charges) VALUES(4,'USD','draft',100,95,0);"
+     ],
+     "exit": 0
+    },
+    {
+     "argv": [
+      "books",
+      "--pay-db",
+      "${tmp}/pay.db",
+      "--cms-db",
+      "${tmp}/cms.db"
+     ],
+     "exit": 2,
+     "stderr": "",
+     "at": {
+      "recorded_and_not_on_the_books.supplier_quotations_unexplained_amount_difference": 1
+     }
+    },
+    {
+     "program": "sqlite3",
+     "argv": [
+      "${tmp}/cms.db",
+      "UPDATE frappe_erpnext_supplier_quotation SET discount_amount=5 WHERE id=4;"
+     ],
+     "exit": 0
+    },
+    {
+     "argv": [
+      "books",
+      "--pay-db",
+      "${tmp}/pay.db",
+      "--cms-db",
+      "${tmp}/cms.db"
+     ],
+     "exit": 2,
+     "stderr": "",
+     "at": {
+      "recorded_and_not_on_the_books.supplier_quotations_unexplained_amount_difference": 0,
+      "recorded_and_not_on_the_books.supplier_quotations_draft": 4,
+      "recorded_and_not_on_the_books.supplier_quotations_total_usd_cents": 108000
+     }
+    },
+    {
+     "program": "sqlite3",
+     "argv": [
+      "${tmp}/pay.db",
+      "SELECT COUNT(*) AS n FROM payments"
+     ],
+     "exit": 0,
+     "stdout": "0\n"
+    }
+   ]
+  }
+ ]
+}

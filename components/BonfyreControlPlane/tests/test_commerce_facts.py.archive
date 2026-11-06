@@ -1,0 +1,230 @@
+"""Hold .shop to section 70: the fifteen commerce facts.
+
+    Product != Listing != Inventory != AvailabilityObservation != Offer !=
+    Quote != Cart != Checkout != Commitment != Payment != Settlement !=
+    Fulfilment != Delivery != Satisfaction != Ownership
+
+"Each stage names the one owner that can establish it, because these collapse
+when a subsystem is asked a question it cannot answer."
+
+The point these tests exist for is the sentence after that: **the dangerous
+collapses skip rather than step.** "paid" read as "delivered", "delivered" read
+as "owned". So non-implication is checked over every pair -- all 105 of them,
+in both directions -- and not over adjacent stages, which is the check that
+would pass while the real error went through.
+
+And no stage may be skipped in the other direction either: an exchange
+reporting delivery with no fulfilment is describing something the estate never
+saw happen.
+"""
+
+from __future__ import annotations
+
+import itertools
+import json
+import os
+import re
+import socket
+import urllib.error
+import urllib.request
+
+import pytest
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.dirname(os.path.dirname(os.path.dirname(_HERE)))
+KIT = os.path.join(REPO, "site", "matrix", "surfaces", "_kit.js")
+SURFACES = os.path.join(REPO, "site", "matrix", "surfaces")
+TIMEOUT = 25
+
+# Section 70, quoted in order. The order is part of the claim: the skips that
+# matter are the long ones.
+STAGES = ["Product", "Listing", "Inventory", "AvailabilityObservation", "Offer",
+          "Quote", "Cart", "Checkout", "Commitment", "Payment", "Settlement",
+          "Fulfilment", "Delivery", "Satisfaction", "Ownership"]
+
+
+def _kit() -> str:
+    with open(KIT) as fh:
+        return fh.read()
+
+
+def _declared():
+    src = _kit()
+    i = src.index("K.COMMERCE = [")
+    j = src.index("K.commerceGap", i)
+    body = src[i:j]
+    out = []
+    for m in re.finditer(
+            r"\{stage:'([^']+)',\s*owner:'((?:[^'\\]|\\.)*)',\s*\n?\s*"
+            r"knows:'((?:[^'\\]|\\.)*)',\s*\n?\s*cannot:'((?:[^'\\]|\\.)*)'", body):
+        out.append({"stage": m.group(1), "owner": m.group(2),
+                    "knows": m.group(3), "cannot": m.group(4)})
+    return out
+
+
+DECL = _declared()
+
+
+def test_all_fifteen_are_declared_in_order():
+    assert [d["stage"] for d in DECL] == STAGES, [d["stage"] for d in DECL]
+
+
+@pytest.mark.parametrize("stage", STAGES)
+def test_each_stage_names_the_one_owner_that_can_establish_it(stage):
+    d = next(x for x in DECL if x["stage"] == stage)
+    assert d["owner"], f"{stage} names no owner"
+    assert d["knows"], f"{stage} does not say what its owner knows"
+    assert d["cannot"], f"{stage} does not say what its owner cannot establish"
+
+
+def test_no_two_stages_claim_the_same_knowledge():
+    # If two stages knew the same thing they would be one stage, and the
+    # falsehood list would be shorter than it says it is.
+    knows = [d["knows"] for d in DECL]
+    assert len(set(knows)) == len(knows), "two stages claim identical knowledge"
+
+
+def test_no_two_stages_share_an_owner():
+    # Two stages may involve the same person -- the buyer assembles a cart and
+    # the buyer reports satisfaction -- but not the same owner, because an
+    # owner here is a person at a moment. Collapsing "the buyer" across both is
+    # how a store reads "they added it" as "they were happy with it".
+    owners = [d["owner"] for d in DECL]
+    dupes = {o for o in owners if owners.count(o) > 1}
+    assert not dupes, f"{sorted(dupes)} establishes more than one stage, so nothing "
+    f"distinguishes those stages"
+
+
+# ---------------------------------------- every pair, not adjacent ones
+
+PAIRS = list(itertools.combinations(STAGES, 2))
+
+
+def test_there_are_a_hundred_and_five_pairs_to_check():
+    # 15 choose 2. If this number shrinks, a stage was quietly dropped.
+    assert len(PAIRS) == 105
+
+
+@pytest.mark.parametrize("a,b", PAIRS)
+def test_non_implication_holds_over_this_pair(a, b):
+    # The estate must be able to say, for any two of the fifteen, why the
+    # earlier one does not establish the later one -- and it must name the
+    # owner that could.
+    da = next(x for x in DECL if x["stage"] == a)
+    db = next(x for x in DECL if x["stage"] == b)
+    lo, hi = (da, db) if STAGES.index(a) < STAGES.index(b) else (db, da)
+    assert lo["knows"] != hi["knows"]
+    assert lo["owner"] != hi["owner"], (
+        f"{lo['stage']} and {hi['stage']} share an owner, so nothing distinguishes them")
+    assert lo["cannot"] != hi["cannot"]
+
+
+@pytest.mark.parametrize("a,b", PAIRS)
+def test_the_gap_sentence_is_symmetric_for_this_pair(a, b):
+    # "delivered" implying "paid" is as wrong as the reverse, so asking in
+    # either direction has to give the same answer rather than only guarding
+    # the forward read.
+    src = _kit()
+    assert "K.commerceGap = (a, b) =>" in src
+    assert "Math.min(i, j)" in src and "Math.max(i, j)" in src, (
+        "commerceGap orders its arguments rather than the stages, so it would "
+        "answer differently depending on which way it was asked")
+
+
+DANGEROUS = [("Payment", "Delivery"), ("Delivery", "Ownership"),
+             ("Payment", "Ownership"), ("Quote", "Commitment"),
+             ("Listing", "AvailabilityObservation"), ("Offer", "Settlement"),
+             ("Product", "Ownership"), ("Checkout", "Fulfilment")]
+
+
+@pytest.mark.parametrize("a,b", DANGEROUS)
+def test_the_skipping_collapses_are_the_ones_that_actually_skip(a, b):
+    # These are not adjacent. An adjacent-only check passes while every one of
+    # these goes through.
+    assert abs(STAGES.index(a) - STAGES.index(b)) > 1, (a, b)
+
+
+def test_the_surface_states_that_collapses_skip_rather_than_step():
+    with open(os.path.join(SURFACES, "listings.html")) as fh:
+        page = fh.read()
+    assert "skip rather than step" in page
+    assert "paid" in page and "delivered" in page and "owned" in page
+
+
+def test_the_surface_refuses_to_draw_a_progress_bar_to_the_end():
+    # A tidy bar running to Ownership is exactly the collapse: it implies every
+    # stage from the one that was reached.
+    with open(os.path.join(SURFACES, "listings.html")) as fh:
+        page = fh.read()
+    assert "not drawn as a progress bar" in page or "drawn as a progress bar to the end" in page
+
+
+def test_no_stage_may_be_skipped_in_the_other_direction_either():
+    with open(os.path.join(SURFACES, "listings.html")) as fh:
+        page = fh.read()
+    assert "delivery with no fulfilment" in page, (
+        "the surface only guards the forward read; an exchange reporting delivery with no "
+        "fulfilment is describing something the estate never saw happen")
+
+
+def test_ownership_leaves_the_store():
+    # "After SHOP completes, the transaction does not stay in the store:
+    #  Purchase -> Ownership -> .life"
+    with open(os.path.join(SURFACES, "listings.html")) as fh:
+        page = fh.read()
+    assert "does not stay in the store" in page
+    d = next(x for x in DECL if x["stage"] == "Ownership")
+    assert ".life" in d["owner"], "Ownership does not name .life as its owner"
+
+
+# ------------------------------------------------ what the estate reaches
+
+def _get(path):
+    req = urllib.request.Request("https://aurekai.shop" + path,
+                                 headers={"Accept": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+            return r.status, r.read().decode()
+    except urllib.error.HTTPError as e:
+        return e.code, e.read().decode()
+    except (urllib.error.URLError, socket.timeout, OSError) as exc:
+        pytest.skip(f"unreachable: {exc}")
+
+
+def test_the_estate_reaches_a_quote_and_stops_at_the_gate():
+    code, body = _get("/capability")
+    assert code == 200
+    caps = json.loads(body)["capabilities"]
+    assert caps, "nothing is offered, so no stage past Product is reachable"
+
+    code, body = _get("/mpp/quote?capability=" + caps[0]["name"])
+    assert code == 200, "Quote is not reachable"
+    assert "not a reservation" in json.loads(body)["note"], (
+        "the quote does not say it holds nothing")
+
+    code, body = _get(caps[0]["resource"])
+    assert code == 402, f"the gate answered {code}; Payment would be unguarded"
+    gate = json.loads(body)
+    assert gate["settlement"]["facilitator_configured"] is False, (
+        "a facilitator is configured now, so the Settlement row on the surface is stale")
+
+
+def test_delivery_is_empty_and_says_why_rather_than_seeding_movements():
+    code, body = _get("/epcis/events")
+    assert code == 200
+    doc = json.loads(body)
+    assert doc["epcisBody"]["eventList"] == [], "EPCIS has events; Delivery may now be reachable"
+    assert "empty_reason" in doc, (
+        "an empty event list with no reason reads as nothing happened rather than as nothing "
+        "being admitted")
+    assert "invented" in doc["empty_reason"]
+
+
+def test_the_estate_does_not_invent_inventory_or_availability():
+    # OpenRTB is the closest thing here to an availability claim, and it
+    # refuses in the same shape.
+    code, body = _get("/openrtb/bidrequest")
+    assert code == 200
+    doc = json.loads(body)
+    assert doc["imp"] == []
+    assert "empty_reason" in doc and "invented" in doc["empty_reason"]

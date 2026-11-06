@@ -1,0 +1,22 @@
+{
+  "hero_mode": "masthead",
+  "navigation_mode": "minimal",
+  "density": "airy",
+  "card_mode": "borderless",
+  "typography_mode": "high-contrast-serif",
+  "layout_tokens": {
+    "ground": "#a63d1c",
+    "ink": "#ffeede",
+    "display": "#fff6ea",
+    "accent": "#ffd7a3",
+    "muted": "#f6cdb0",
+    "rule": "rgba(255,238,222,.3)",
+    "panel": "#93330f",
+    "measure": "40rem",
+    "radius": "2px",
+    "face_display": "\"Fraunces\",ui-serif,Georgia,serif",
+    "face_body": "\"Instrument Sans\",system-ui,sans-serif",
+    "face_mono": "\"DM Mono\",ui-monospace,monospace",
+    "font_href": "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..600&family=Instrument+Sans:wght@400;500;600&display=swap"
+  }
+}

@@ -1,0 +1,12 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-canon","binary_env":"BONFYRE_CANON_BIN","cases":[
+{"name":"structural hash ignores whitespace, content hash does not","files":{"a.json":"{\"b\":2,\"a\":1}\n","b.json":"{ \"b\" : 2, \"a\" : 1 }\n"},"steps":[
+ {"argv":["hash","a.json","o1"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"argv":["hash","b.json","o2"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"program":"cat","argv":["o1/hash.json"],"at":{"type":"structural-hash","structural_hash":"1b0ca3ce9ff226a0","content_hash":"06c6a47fa9e0987f","match_level":"structural-only","size_bytes":14}},
+ {"program":"cat","argv":["o2/hash.json"],"at":{"structural_hash":"1b0ca3ce9ff226a0","content_hash":"d80a9f8fec758397"}}]},
+{"name":"diff reports structural equality and a structural change","files":{"a.json":"{\"b\":2,\"a\":1}\n","c.json":"{\"b\":2,\"a\":1,\"z\":[1]}\n"},"steps":[
+ {"argv":["diff","a.json","a.json","d1"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"program":"cat","argv":["d1/diff.json"],"at":{"structurally_equal":true}},
+ {"argv":["diff","a.json","c.json","d2"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"program":"cat","argv":["d2/diff.json"],"at":{"structurally_equal":false}}]},
+{"name":"canon refuses an unsupported language","files":{"a.c":"int x;\n"},"steps":[{"argv":["hash","a.c"],"env":{"HOME":"${tmp}"},"exit_nonzero":true}]}]}

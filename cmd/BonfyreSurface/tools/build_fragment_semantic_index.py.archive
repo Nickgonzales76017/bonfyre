@@ -1,0 +1,160 @@
+#!/usr/bin/env python3
+"""ARCHIVED: build_fragment_semantic_index.mjs constructs the rebuildable index."""
+
+from __future__ import annotations
+import argparse, hashlib, json, os, re, shutil, subprocess
+from pathlib import Path
+
+
+def binpath(env: str, name: str) -> str:
+    if os.environ.get(env):
+        return os.environ[env]
+    p = Path.home() / ".bonfyre" / "bin" / name
+    return str(p) if p.exists() else name
+
+
+def run(argv: list[str], timeout: int = 1800) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(argv, text=True, capture_output=True, timeout=timeout, check=False)
+
+
+def fetch(query: str, db: str, namespace: str, status: str) -> list[dict]:
+    dbq, nsq = db.replace("'", "''"), namespace.replace("'", "''")
+    where = f"namespace='{nsq}'"
+    if status != "all":
+        where += f" AND status='{status.replace(chr(39), chr(39)*2)}'"
+    sql = (
+        "INSTALL sqlite; LOAD sqlite; "
+        f"ATTACH '{dbq}' AS cms (TYPE sqlite, READ_ONLY); "
+        "SELECT coalesce(string_agg(json_object("
+        "'id',id,'coordinate',coordinate,'page',page,'slot',slot,'audience',audience,"
+        "'kind',kind,'status',status,'eyebrow',coalesce(eyebrow,''),"
+        "'heading',coalesce(heading,''),'body',coalesce(body,''),"
+        "'label',coalesce(label,''),'semantic_tags',coalesce(semantic_tags,''),"
+        "'source_ref',coalesce(source_ref,''),'source_digest',coalesce(source_digest,'')"
+        "), chr(10)), '') AS rows "
+        f"FROM cms.site_fragment WHERE {where}"
+    )
+    r = run([query, "sql", ":memory:", sql], 300)
+    if r.returncode:
+        raise RuntimeError((r.stderr or r.stdout).strip())
+    outer = json.loads(r.stdout or "[]")
+    joined = str(outer[0].get("rows") or "") if outer and isinstance(outer[0], dict) else ""
+    return [json.loads(line) for line in joined.splitlines() if line.strip()]
+
+
+def signature(row: dict) -> str:
+    parts: list[str] = []
+    for key in ("heading", "eyebrow", "body", "label"):
+        text = " ".join(str(row.get(key) or "").split())
+        if text and text not in parts:
+            parts.append(text)
+    try:
+        tags = json.loads(row.get("semantic_tags") or "[]")
+    except (TypeError, json.JSONDecodeError):
+        tags = []
+    if isinstance(tags, list):
+        tags = [
+            tag for tag in tags
+            if isinstance(tag, str)
+            and tag not in {"migration", "compiled-literal"}
+            and not tag.startswith(("function:", "role:", "equivalence:"))
+        ]
+        if tags:
+            parts.append(" ".join(tags))
+    return "\n".join(parts)
+
+
+def vid(coordinate: str) -> str:
+    return hashlib.sha256(coordinate.encode()).hexdigest()[:24]
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--db", required=True)
+    ap.add_argument("--namespace", default="aurekai")
+    ap.add_argument("--status", choices=("draft", "published", "archived", "all"), default="published")
+    ap.add_argument("--work-dir", required=True)
+    ap.add_argument("--vec-db", required=True)
+    ap.add_argument("--backend", choices=("onnx", "hash"), default="onnx")
+    ap.add_argument("--model", default="nomic-embed-text-onnx")
+    ap.add_argument("--dims", type=int, default=768)
+    ap.add_argument("--apply", action="store_true")
+    args = ap.parse_args()
+
+    query = binpath("BONFYRE_QUERY_BINARY", "bonfyre-query")
+    embed = binpath("BONFYRE_EMBED_BINARY", "bonfyre-embed")
+    vec = binpath("BONFYRE_VEC_BINARY", "bonfyre-vec")
+    rows = fetch(query, args.db, args.namespace, args.status)
+
+    work = Path(args.work_dir)
+    input_dir, vectors = work / "input", work / "vectors"
+    if work.exists():
+        shutil.rmtree(work)
+    input_dir.mkdir(parents=True)
+    vectors.mkdir(parents=True)
+    entries: dict[str, dict] = {}
+    skipped = 0
+
+    for row in rows:
+        coordinate, text = str(row.get("coordinate") or ""), signature(row)
+        if not coordinate or not text:
+            skipped += 1
+            continue
+        key = vid(coordinate)
+        (input_dir / f"{key}.txt").write_text(text + "\n", encoding="utf-8")
+        entries[key] = {
+            "coordinate": coordinate, "id": row.get("id"), "page": row.get("page"),
+            "slot": row.get("slot"), "audience": row.get("audience"),
+            "kind": row.get("kind"), "status": row.get("status"),
+            "source_ref": row.get("source_ref"), "source_digest": row.get("source_digest"),
+            "signature_sha256": hashlib.sha256(text.encode()).hexdigest(),
+        }
+
+    manifest = {
+        "schema_version": "bonfyre.surface.semantic-index.v1",
+        "canonical_owner": "BonfyreCMS",
+        "semantic_owner": "BonfyreEmbed/BonfyreVec",
+        "source_db": str(Path(args.db).resolve()), "namespace": args.namespace,
+        "status": args.status, "backend": args.backend, "model": args.model,
+        "dims": args.dims, "queried_count": len(rows),
+        "indexable_count": len(entries), "skipped_empty": skipped, "entries": entries,
+        "forbidden_inference": (
+            "semantic proximity is not exact address equality, publication authority, "
+            "effect authority, evidence, or permission to overwrite canonical content"
+        ),
+    }
+    manifest_path = work / "manifest.json"
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True, ensure_ascii=False) + "\n")
+    summary = {
+        "apply": args.apply, "queried_count": len(rows), "indexable_count": len(entries),
+        "skipped_empty": skipped, "manifest": str(manifest_path),
+        "manifest_sha256": hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
+        "vec_db": args.vec_db, "backend": args.backend, "model": args.model, "dims": args.dims,
+    }
+    if not args.apply:
+        print(json.dumps(summary, sort_keys=True)); return 0
+
+    for suffix in ("", "-shm", "-wal"):
+        p = Path(args.vec_db + suffix)
+        if p.exists(): p.unlink()
+    r = run([vec, "init", args.vec_db], 120)
+    if r.returncode: raise RuntimeError((r.stderr or r.stdout).strip())
+    r = run([
+        embed, "--input-dir", str(input_dir), "--out", str(vectors),
+        "--backend", args.backend, "--model", args.model, "--dims", str(args.dims),
+        "--insert-db", args.vec_db, "--meta-out", str(work / "embed-meta.json"),
+    ])
+    if r.returncode: raise RuntimeError((r.stderr or r.stdout)[-4000:])
+    c = run([vec, "count", args.vec_db], 120)
+    if c.returncode: raise RuntimeError((c.stderr or c.stdout).strip())
+    m = re.search(r"\b(\d+)\b", c.stdout or c.stderr)
+    actual = int(m.group(1)) if m else -1
+    if actual != len(entries):
+        raise RuntimeError(f"vector count mismatch: expected {len(entries)}, got {actual}")
+    summary.update({"vector_count": actual, "verified_complete": True, "publication_effect": False})
+    print(json.dumps(summary, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

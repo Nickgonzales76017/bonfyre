@@ -1,0 +1,39 @@
+{
+  "operator": "SELECT",
+  "program": {
+    "program_id": "household.select.6c6f42f1e20e27fa",
+    "operator": "SELECT",
+    "digest": "bc9c36f81c0a9f4f3466a3781bcfdf6e778055d23d4bedc13708bd1a38317f05",
+    "reads": [
+      "household:food:offer:beans"
+    ],
+    "admitted": true,
+    "hard_failures": []
+  },
+  "count": 1,
+  "records": [
+    {
+      "address": "household:food:offer:beans",
+      "kind": "food.offer",
+      "content_sha256": "e506d6813a05e30149ef8d3b3d1db2a480f6ad601ec86cc795c1b274ecbea9c4",
+      "source_file": "household/food/current-offers.jsonl",
+      "source_refs": [
+        "https://example.test/beans"
+      ],
+      "record": {
+        "offer_id": "beans",
+        "cash_price_usd": "1.79",
+        "merchant": "Target",
+        "source_url": "https://example.test/beans",
+        "price": 1.5,
+        "tags": [
+          "a",
+          null,
+          2
+        ],
+        "in_stock": true
+      }
+    }
+  ]
+}
+exit 0

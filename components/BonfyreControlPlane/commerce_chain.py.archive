@@ -1,0 +1,242 @@
+"""The fifteen things a commerce system routinely collapses into one row.
+
+    Product ≠ Listing ≠ Inventory ≠ AvailabilityObservation ≠ Offer ≠ Quote
+    ≠ Cart ≠ Checkout ≠ Commitment ≠ Payment ≠ Settlement ≠ Fulfillment
+    ≠ Delivery ≠ Satisfaction ≠ Ownership
+
+Every one of those boundaries is a real failure when it is crossed by inference.
+A Shopify product, an eBay listing and "a store two miles away has one" are three
+different facts about the world, and a schema that gives them one universal
+product row has already lost the ability to say which of them is true.
+
+Each stage names the owner that can actually establish it, because the reason
+these collapse is that one subsystem gets asked a question it cannot answer. A
+catalogue knows what a product is and cannot know whether anybody has one. A
+payment processor knows a charge authorized and cannot know whether the money
+settled. A courier knows a parcel moved and cannot know whether the buyer is
+satisfied.
+
+Two rules are enforced here:
+
+  no stage implies the next    Reaching one stage never establishes the stage
+                               after it. This is checked over every pair rather
+                               than over adjacent ones, because the dangerous
+                               collapses skip: "paid" read as "delivered", or
+                               "delivered" read as "owned".
+
+  no stage may be skipped      Recording a stage requires its predecessor to
+                               have been recorded. An order that reports delivery
+                               with no fulfilment is describing something the
+                               estate never saw happen.
+
+Forbidden inferences, falsified by the tests beside this file:
+  a listing            -> a product in inventory
+  inventory            -> availability here, now, to this buyer
+  an offer             -> a quote priced for this buyer
+  a cart               -> intent to buy
+  a checkout           -> a commitment
+  a payment            -> settled money
+  a settlement         -> fulfilment
+  a delivery           -> satisfaction
+  a delivery           -> transferred ownership
+"""
+
+# ARCHIVED 2026-09-06: durable CommerceChain authority moved to
+# engine/core/src/commerce.c (public ABI: engine/core/include/bf_commerce.h),
+# with closed declarations in schemas/control/commerce.{yaff,cue}. This remains
+# a historical/reference oracle only. Follow the native test at
+# engine/core/tests/commerce_test.c; do not restore Python store mutations.
+
+from __future__ import annotations
+
+import sqlite3
+from dataclasses import dataclass
+from typing import Optional
+
+PRODUCT = "product"
+LISTING = "listing"
+INVENTORY = "inventory"
+AVAILABILITY = "availability_observation"
+OFFER = "offer"
+QUOTE = "quote"
+CART = "cart"
+CHECKOUT = "checkout"
+COMMITMENT = "commitment"
+PAYMENT = "payment"
+SETTLEMENT = "settlement"
+FULFILMENT = "fulfilment"
+DELIVERY = "delivery"
+SATISFACTION = "satisfaction"
+OWNERSHIP = "ownership"
+
+STAGES = (PRODUCT, LISTING, INVENTORY, AVAILABILITY, OFFER, QUOTE, CART,
+          CHECKOUT, COMMITMENT, PAYMENT, SETTLEMENT, FULFILMENT, DELIVERY,
+          SATISFACTION, OWNERSHIP)
+STAGE_RANK = {s: i for i, s in enumerate(STAGES)}
+
+
+@dataclass(frozen=True)
+class Stage:
+    name: str
+    establishes: str
+    does_not_establish: str
+    owner: str
+
+
+# The owner is the only party that can establish the stage. Asking any other
+# subsystem is how the collapse happens.
+STAGE_MEANING: dict[str, Stage] = {
+    PRODUCT: Stage(
+        PRODUCT, "a kind of thing exists and can be described",
+        "that anybody has one, sells one, or will part with one",
+        "ObjectContract / catalogue"),
+    LISTING: Stage(
+        LISTING, "a seller has published an intent to sell",
+        "that the thing exists, is in stock, or is theirs",
+        "merchant or marketplace ForeignTwin"),
+    INVENTORY: Stage(
+        INVENTORY, "a seller's own count of what they hold",
+        "that the count is current, or that any of it is reachable by this buyer",
+        "merchant system of record"),
+    AVAILABILITY: Stage(
+        AVAILABILITY, "an observation that one is obtainable at a place and time",
+        "that it will still be obtainable when this buyer acts",
+        "AvailabilityObservation, receipted"),
+    OFFER: Stage(
+        OFFER, "terms a seller will accept from someone",
+        "terms priced for this particular buyer",
+        "MoneyGraph / merchant"),
+    QUOTE: Stage(
+        QUOTE, "terms priced for this buyer, at this moment",
+        "a reservation; the resource is not held",
+        "ProtocolContract quote-accept"),
+    CART: Stage(
+        CART, "items a person gathered",
+        "intent to buy any of them",
+        "surface state"),
+    CHECKOUT: Stage(
+        CHECKOUT, "the remaining variables have been resolved",
+        "that anybody committed to anything",
+        "ActionAperture"),
+    COMMITMENT: Stage(
+        COMMITMENT, "an obligation now exists between two parties",
+        "that money moved, or that the goods exist",
+        "CommitmentGraph"),
+    PAYMENT: Stage(
+        PAYMENT, "a payment instrument was presented and authorized",
+        "that funds settled, or that they will",
+        "payment rail"),
+    SETTLEMENT: Stage(
+        SETTLEMENT, "money actually moved and is final",
+        "that anything was shipped",
+        "MoneyGraph / settlement rail"),
+    FULFILMENT: Stage(
+        FULFILMENT, "the seller acted to send or provide the thing",
+        "that it arrived",
+        "merchant / fulfilment provider"),
+    DELIVERY: Stage(
+        DELIVERY, "the thing reached the buyer",
+        "that it was what they wanted, or that it is now theirs",
+        "carrier / EPCIS custody event"),
+    SATISFACTION: Stage(
+        SATISFACTION, "the buyer accepted the outcome",
+        "that the obligation is discharged in law or in the ledger",
+        "the buyer, and only the buyer"),
+    OWNERSHIP: Stage(
+        OWNERSHIP, "title or control passed",
+        "anything about how the buyer feels about it",
+        "OwnershipTransfer / registry"),
+}
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS commerce_progress(
+  exchange TEXT NOT NULL,
+  stage    TEXT NOT NULL,
+  owner    TEXT NOT NULL,
+  detail   TEXT NOT NULL DEFAULT '',
+  at       TEXT NOT NULL DEFAULT '',
+  PRIMARY KEY(exchange, stage));
+"""
+
+
+class CommerceError(ValueError):
+    pass
+
+
+def ensure_schema(db: sqlite3.Connection) -> None:
+    db.executescript(SCHEMA)
+    db.commit()
+
+
+def implies(earlier: str, later: str) -> bool:
+    """Whether reaching `earlier` establishes `later`.
+
+    Always False unless they are the same stage. Kept as a function rather than
+    left implicit so that a caller reaching for the inference is answered instead
+    of writing its own shortcut.
+    """
+    for s in (earlier, later):
+        if s not in STAGE_RANK:
+            raise CommerceError(f"unknown commerce stage {s!r}")
+    return earlier == later
+
+
+def record(db: sqlite3.Connection, *, exchange: str, stage: str, owner: str,
+           detail: str = "", at: str = "") -> None:
+    """Record that a stage was established, by the owner that can establish it."""
+    if stage not in STAGE_RANK:
+        raise CommerceError(f"unknown commerce stage {stage!r}")
+    expected = STAGE_MEANING[stage].owner
+    if not owner:
+        raise CommerceError(
+            f"{stage!r} is established by {expected}; recording it with no owner "
+            f"is how a stage gets asserted by a subsystem that cannot know it")
+    ensure_schema(db)
+
+    idx = STAGE_RANK[stage]
+    if idx > 0:
+        prior = STAGES[idx - 1]
+        if not reached(db, exchange, prior):
+            raise CommerceError(
+                f"cannot record {stage!r} for {exchange!r}: {prior!r} was never "
+                f"recorded. An exchange that reports {stage} with no {prior} is "
+                f"describing something this estate never saw happen")
+    db.execute("INSERT OR REPLACE INTO commerce_progress"
+               "(exchange,stage,owner,detail,at) VALUES(?,?,?,?,?)",
+               (exchange, stage, owner, detail, at))
+    db.commit()
+
+
+def reached(db: sqlite3.Connection, exchange: str, stage: str) -> bool:
+    if stage not in STAGE_RANK:
+        raise CommerceError(f"unknown commerce stage {stage!r}")
+    ensure_schema(db)
+    return db.execute(
+        "SELECT 1 FROM commerce_progress WHERE exchange=? AND stage=?",
+        (exchange, stage)).fetchone() is not None
+
+
+def furthest(db: sqlite3.Connection, exchange: str) -> Optional[str]:
+    ensure_schema(db)
+    rows = [s for (s,) in db.execute(
+        "SELECT stage FROM commerce_progress WHERE exchange=?", (exchange,))]
+    if not rows:
+        return None
+    return max(rows, key=lambda s: STAGE_RANK[s])
+
+
+def outstanding(db: sqlite3.Connection, exchange: str) -> list[str]:
+    """Stages not yet established. An empty list is a completed exchange."""
+    return [s for s in STAGES if not reached(db, exchange, s)]
+
+
+def what_it_does_not_mean(stage: str) -> str:
+    if stage not in STAGE_MEANING:
+        raise CommerceError(f"unknown commerce stage {stage!r}")
+    return STAGE_MEANING[stage].does_not_establish
+
+
+def owner_of(stage: str) -> str:
+    if stage not in STAGE_MEANING:
+        raise CommerceError(f"unknown commerce stage {stage!r}")
+    return STAGE_MEANING[stage].owner

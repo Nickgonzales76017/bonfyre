@@ -1,0 +1,1 @@
+{"authorization":"Bearer fixture-token","body":{"id":"@ID@","jsonrpc":"2.0","method":"tools/call","params":{"arguments":{"edge_kind":"uses","source_id":"a","source_kind":"artifact","target_id":"b","target_kind":"token"},"name":"dependency_register"}},"content-type":"application/json","mcp-protocol-version":"2025-06-18","request":"POST /mcp"}

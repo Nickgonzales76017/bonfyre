@@ -1,128 +1,64 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bonfyre — bonfyre-oss runtime, docs, and pages</title>
-<meta name="description" content="Bonfyre is a C11 runtime and operator stack published through bonfyre-oss: wire capture, artifacts, recipes, stitching, local AI, pages, proxy, orchestration, and shared runtime modules. MIT licensed.">
-<meta name="theme-color" content="#0d1117">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
-<style>
-:root{--bg:#0d1117;--surface:#161b22;--border:#30363d;--text:#e6edf3;--text-dim:#8b949e;--accent:#f97316;--green:#3fb950;--blue:#58a6ff;--font:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center}
-a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
-.landing{max-width:880px;padding:0 24px;text-align:center}
-.landing h1{font-size:3.4rem;font-weight:800;letter-spacing:-0.03em;margin-bottom:12px}
-.landing h1 span{color:var(--accent)}
-.tagline{font-size:1.2rem;color:var(--text-dim);max-width:620px;margin:0 auto 48px;line-height:1.7}
-.path-cards{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-bottom:48px}
-.path-card{background:var(--surface);border-radius:16px;padding:40px 32px;text-align:left;text-decoration:none;transition:transform .2s,border-color .2s;display:flex;flex-direction:column}
-.path-card:hover{transform:translateY(-4px);text-decoration:none}
-.path-card .emoji{font-size:2.4rem;margin-bottom:16px}
-.path-card h2{font-size:1.4rem;font-weight:700;margin-bottom:8px}
-.path-card .desc{font-size:.95rem;color:var(--text-dim);line-height:1.6;margin-bottom:20px;flex:1}
-.path-card .includes{font-size:.82rem;color:var(--text-dim);line-height:1.8}
-.path-card .includes strong{color:var(--text);font-size:.72rem;text-transform:uppercase;letter-spacing:.04em}
-.path-card .cta{display:inline-block;margin-top:20px;padding:10px 24px;border-radius:6px;font-weight:600;font-size:.95rem;text-decoration:none;transition:opacity .15s}
-.path-card .cta:hover{opacity:.85;text-decoration:none}
-.card-explore{border:2px solid var(--accent)}.card-explore h2{color:var(--accent)}.card-explore .cta{background:var(--accent);color:#fff}
-.card-docs{border:2px solid var(--green)}.card-docs h2{color:var(--green)}.card-docs .cta{background:var(--green);color:#000}
-.stats-row{display:flex;justify-content:center;gap:40px;flex-wrap:wrap;margin-bottom:40px}
-.stat{text-align:center}.stat .num{font-size:1.8rem;font-weight:700;display:block}.stat .label{font-size:.8rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.04em}
-.links-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:24px}
-.links-row a{display:inline-flex;align-items:center;padding:8px 18px;border:1px solid var(--border);border-radius:6px;font-size:.85rem;color:var(--text);text-decoration:none;transition:border-color .15s}
-.links-row a:hover{border-color:var(--accent);text-decoration:none}
-footer{margin-top:40px;font-size:.82rem;color:var(--text-dim)}footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
-@media(max-width:640px){.landing h1{font-size:2.4rem}.path-cards{grid-template-columns:1fr}.stats-row{gap:24px}.stat .num{font-size:1.4rem}}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bonfÿre / Aurekai — work, effects, evidence, learning</title>
+  <meta name="description" content="Bonfÿre is a typed operating machine for authorized work, effects, evidence, replay, and Aurekai learning.">
+  <meta name="theme-color" content="#090d12">
+  <style>
+    :root{--bg:#090d12;--panel:#111923;--line:#273444;--text:#edf3f8;--muted:#9aaabd;--fire:#ff8a3d;--gold:#ffc857;--cyan:#64d8e8;--green:#6ee7a8;--mono:"SFMono-Regular",Consolas,monospace;--sans:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 50% -20%,#1d3342 0,var(--bg) 44%);color:var(--text);font:16px/1.65 var(--sans)}a{color:var(--cyan);text-decoration:none}a:hover{text-decoration:underline}.wrap{width:min(1100px,calc(100% - 36px));margin:auto}.nav{display:flex;justify-content:space-between;align-items:center;padding:22px 0}.brand{font-weight:800;color:var(--text)}.navlinks{display:flex;gap:18px;flex-wrap:wrap}.navlinks a{color:var(--muted)}.hero{padding:90px 0 70px;text-align:center}.eyebrow{color:var(--gold);font:700 .78rem/1 var(--mono);letter-spacing:.13em;text-transform:uppercase}.hero h1{font-size:clamp(3rem,9vw,6.8rem);line-height:.95;letter-spacing:-.065em;margin:22px 0}.hero h1 span{color:var(--fire)}.lede{max-width:790px;margin:0 auto;color:var(--muted);font-size:clamp(1.05rem,2vw,1.28rem)}.actions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:32px}.btn{padding:11px 19px;border:1px solid var(--line);border-radius:9px;color:var(--text);font-weight:700}.btn.primary{background:var(--fire);border-color:var(--fire);color:#17100b}.stats,.grid{display:grid;gap:14px}.stats{grid-template-columns:repeat(3,1fr);margin:0 0 70px}.stat,.card,.truth{background:linear-gradient(145deg,rgba(17,25,35,.96),rgba(12,18,26,.96));border:1px solid var(--line);border-radius:14px}.stat{padding:24px;text-align:center}.stat b{display:block;font-size:2rem;color:var(--gold)}.stat span{color:var(--muted);font-size:.84rem}.section{padding:62px 0;border-top:1px solid var(--line)}h2{font-size:clamp(1.8rem,4vw,3rem);letter-spacing:-.035em;margin:0 0 10px}.sub{color:var(--muted);max-width:760px;margin:0 0 30px}.grid{grid-template-columns:repeat(3,1fr)}.card{padding:24px}.card h3{margin:0 0 8px;color:var(--green)}.card p{color:var(--muted);margin:0}.flow{font:14px/1.8 var(--mono);padding:26px;border:1px solid var(--line);border-radius:14px;background:#080c11;overflow:auto;color:#cfe3ef}.truth{padding:26px;border-left:4px solid var(--gold)}.truth strong{color:var(--gold)}footer{padding:42px 0;color:var(--muted);font-size:.9rem}.footerline{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}@media(max-width:760px){.nav{align-items:flex-start}.navlinks{justify-content:flex-end}.stats,.grid{grid-template-columns:1fr}.hero{padding-top:60px}.stat{text-align:left}.stat b{display:inline;margin-right:10px}}
+  </style>
 </head>
 <body>
-<div class="landing">
-  <h1>🔥 <span>Bonfyre</span></h1>
-  <p class="tagline">bonfyre-oss is the current public source of truth for the Bonfyre runtime, CLI, docs, and Pages surfaces: wire capture, artifacts, recipes, stitching, proxy, orchestration, and local AI in C11.</p>
+  <div class="wrap">
+    <nav class="nav" aria-label="Primary">
+      <a class="brand" href="index.html">🔥 Bonfÿre / Aurekai</a>
+      <div class="navlinks"><a href="explore.html">Explore</a><a href="docs.html">Docs</a><a href="https://github.com/Nickgonzales76017/bonfyre-oss">Source</a></div>
+    </nav>
 
-  <div class="stats-row">
-    <div class="stat"><span class="num" style="color:var(--green)">4×</span><span class="label">Model compression</span></div>
-    <div class="stat"><span class="num" style="color:var(--green)">0.997</span><span class="label">Inference cosine</span></div>
-    <div class="stat"><span class="num" style="color:var(--accent)">53</span><span class="label">Stack binaries</span></div>
-    <div class="stat"><span class="num">26</span><span class="label">Library modules</span></div>
-    <div class="stat"><span class="num">15</span><span class="label"><a href="https://huggingface.co/NICKO" style="color:inherit">Models on HF</a></span></div>
-    <div class="stat"><span class="num">20</span><span class="label">Live apps</span></div>
-    <div class="stat"><span class="num">~2.1 MB</span><span class="label">Total disk</span></div>
-  </div>
+    <header class="hero">
+      <div class="eyebrow">Generation-10 whole-machine view</div>
+      <h1>Intent into <span>evidence.</span></h1>
+      <p class="lede">Bonfÿre turns observations and commitments into typed, authorized work and effects. Aurekai learns from receipts, replay, and divergence—then proves a candidate before it can change the machine.</p>
+      <div class="actions"><a class="btn primary" href="explore.html">Choose a practical path</a><a class="btn" href="docs.html">Inspect the architecture</a></div>
+    </header>
 
-  <div class="path-cards">
-    <a href="explore.html" class="path-card card-explore">
-      <div class="emoji">🚀</div>
-      <h2>What Can Bonfyre Do For Me?</h2>
-      <div class="desc">See what Bonfyre does, who it's for, and how the newer stack pieces fit together in practice — local AI, search, pages, proxy, phone edge, relay, and proof surfaces. No technical jargon required.</div>
-      <div class="includes"><strong>Includes:</strong><br>What it replaces · Industry recipes · Live apps · WordPress · Pipelines · Proxy + relay · Under-the-hood overview</div>
-      <span class="cta">Explore Bonfyre →</span>
-    </a>
-    <a href="docs.html" class="path-card card-docs">
-      <div class="emoji">🔧</div>
-      <h2>Technical Docs &amp; Benchmarks</h2>
-      <div class="desc">FPQ compression deep-dive, FPQ-X operators, KV cache, runtime architecture, proxy/orchestration/relay surfaces, and reproduction commands.</div>
-      <div class="includes"><strong>Includes:</strong><br>FPQ · FPQ-X · KV cache · Benchmarks · Hardware fits · Architecture · Runtime modules · Proxy · Orchestration · Install</div>
-      <span class="cta">Open Technical Docs →</span>
-    </a>
-  </div>
+    <section class="stats" aria-label="System estate">
+      <div class="stat"><b>91</b><span>public Power identities, each with explicit maturity</span></div>
+      <div class="stat"><b>Frappe ×9</b><span>connected institutional product lineages</span></div>
+      <div class="stat"><b>112</b><span>frozen Partner Commons profiles with non-ownership laws</span></div>
+    </section>
 
-  <div class="links-row">
-    <a href="https://github.com/Nickgonzales76017/bonfyre-oss">⭐ bonfyre-oss</a>
-    <a href="https://github.com/Nickgonzales76017/bonfyre">archive / legacy repo</a>
-    <a href="https://huggingface.co/NICKO">🤗 HuggingFace</a>
-    <a href="https://github.com/Nickgonzales76017/hcp-whisper">🎤 HCP Speech</a>
-    <a href="https://nickgonzales76017.github.io/pages-shift-handoff/">📋 Live Proof</a>
-  </div>
-
-  <!-- Recent additions (content-only) -->
-  <section id="recent-additions" style="padding:40px 0">
-    <div class="container">
-      <h2>Recent additions</h2>
-      <p class="subtitle">A compact look at the newer runtime pieces and product-facing surfaces now inside the stack since the last public push.</p>
-      <div class="killer-grid" style="margin-top:16px">
-        <div class="killer-card">
-          <div class="vs">Runtime layer</div>
-          <div class="detail">Shared-nothing reactor, hot-load pipeline stages, coroutine pipeline flow, zero-copy LMDB + FlatBuffers, SIMD JSON + UTF-8, MessagePack events, DNS, logging, mmap, LZ4, Bloom dedup, and fountain-coded swarm delivery.</div>
-        </div>
-        <div class="killer-card">
-          <div class="vs">Newer surfaces</div>
-          <div class="detail">bonfyre-proxy for OpenAI-compatible local APIs, bonfyre-orchestrate for machine-only planning, bonfyre-tel for the communications edge, bonfyre-swarm for metered distribution, bonfyre-narrate for verified audio output, and bonfyre-moq for private realtime media.</div>
-        </div>
-        <div class="killer-card">
-          <div class="vs">Wire -> artifact -> recipe</div>
-          <div class="detail">BonfyreWire now goes beyond flow reports. It can fingerprint devices, materialize canonical artifacts, and generate stitch-compatible recipes from owned or authorized captures.</div>
-        </div>
-        <div class="killer-card">
-          <div class="vs">Registry + CLI health</div>
-          <div class="detail">The command surface is richer too: health-aware `bonfyre list`, repo/install drift checks, subcommand syncing, workflow listing, recipe browsing, and layer registry inspection.</div>
-        </div>
-        <div class="killer-card">
-          <div class="vs">Speech investigation stack</div>
-          <div class="detail">The repo now includes a fuller speech investigation story: architecture, production integration, quickstart, adversarial hypothesis engine, and discovery pipeline documentation.</div>
-        </div>
+    <section class="section">
+      <h2>One machine, several irreducible fabrics.</h2>
+      <p class="sub">The mature system is larger than its native commands, its agents, its model estate, or any hosted surface. Each remains useful because their boundaries remain visible.</p>
+      <div class="grid">
+        <article class="card"><h3>Work and authority</h3><p>WorkGraph, CapabilityClosure, Authority, commitments, resources, and EffectKernel decide what can run and what may take effect.</p></article>
+        <article class="card"><h3>Evidence and replay</h3><p>ReceiptEnvelope, WitnessDAG, EvidenceGraph, trace divergence, shadow worlds, simulation, and backtesting make outcomes inspectable.</p></article>
+        <article class="card"><h3>Learning without takeover</h3><p>Aurekai discovers patterns, tests candidates, promotes proven factors, cools weak routes, and thaws invalid assumptions.</p></article>
+        <article class="card"><h3>Model Commons</h3><p>Models, tokenizers, FPQ/FPQx, local inference, context, retrieval, reasoning, placement, and evaluation keep specialized contracts.</p></article>
+        <article class="card"><h3>Institutional metabolism</h3><p>Frappe ×9, provider readiness, schedules, accounting, funding circuits, risk, and operational side work remain connected but distinct.</p></article>
+        <article class="card"><h3>Open-world participation</h3><p>Partner Commons, ForeignTwins, host profiles, protocols, and external tools contribute specialties without gaining semantic authority.</p></article>
       </div>
+    </section>
 
-      <div style="margin-top:24px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 22px;text-align:left">
-        <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);font-weight:700;margin-bottom:10px">Try The New Surface</div>
-        <div style="font-family:var(--mono);font-size:.82rem;color:var(--text-dim);line-height:1.9;overflow:auto">
-          bonfyre wire --help<br>
-          bonfyre list --health<br>
-          bonfyre workflow list<br>
-          bonfyre recipe list<br>
-          bonfyre layer registry --root layeros/state
-        </div>
-        <div style="margin-top:12px;font-size:.84rem;color:var(--text-dim)">These are the quickest commands for seeing the newer operator model: health-aware CLI surfaces, registry-backed discovery, and the wire-to-artifact path.</div>
-      </div>
-    </div>
-  </section>
+    <section class="section">
+      <h2>The execution circuit</h2>
+      <p class="sub">The cheapest sufficient realization wins only after capability, authority, resource, risk, and evidence constraints are satisfied.</p>
+      <div class="flow">WorkNode → CapabilityClosure → Authority / Resource / Funding admission
+    → native Power | deterministic local tool | local model
+    → bounded agent carrier | distributed provider | human work
+    → EffectKernel → ReceiptEnvelope → EvidenceGraph
+    → replay / shadow / gym → Aurekai → promote | cool | thaw</div>
+    </section>
 
-  <footer>
-    Made by <a href="https://nickgonzales76017.github.io">Nick Gonzales</a> ·
-    <a href="https://github.com/Nickgonzales76017/bonfyre-oss/blob/main/LICENSE">MIT License</a>
-  </footer>
-</div>
+    <section class="section">
+      <div class="truth"><strong>Architecture is not a completion claim.</strong> Generation-10/V8.1 is the validated semantic destination. The live Architecture Atlas marks each organ architectural, declared, implemented, measured, or proven and attaches real source paths and witnesses. The public pages follow that distinction.</div>
+    </section>
+
+    <footer><div class="footerline"><span>Bonfÿre / Aurekai · MIT licensed</span><span><a href="docs.html#start">Quick checks</a> · <a href="https://github.com/Nickgonzales76017/bonfyre-oss/blob/main/CONTRIBUTING.md">Contributing</a></span></div></footer>
+  </div>
 </body>
 </html>

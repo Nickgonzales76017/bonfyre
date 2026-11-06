@@ -1,0 +1,44 @@
+#!/usr/bin/env python3
+"""Compile receipt-observed offers into SourceFrontier merchant candidates.
+
+No title or identifier resemblance crosses merchants here. The only merchant
+candidate is the exact host carried by a merchant offer's observed URL.
+"""
+import argparse, json, urllib.parse
+from pathlib import Path
+
+
+def candidate(offer):
+    body = offer["body"]; href = body.get("canonical_href", "")
+    parsed = urllib.parse.urlparse(href)
+    if parsed.scheme not in ("http", "https") or not parsed.hostname: return None
+    host = parsed.hostname.lower().removeprefix("www.")
+    return {"address": href, "protocol": "commerce-offer", "material": "commerce", "state": "shadow",
+            "truth_level": "observed_link_candidate", "title": body.get("merchant", host),
+            "discovered_from": "receipt-bound merchant_offer %s" % body.get("offer_id", ""),
+            "identity": "", "cannot_infer": "an observed offer URL -> a callable shop API, a whole catalogue, merchant authority, or buyer-specific availability"}
+
+
+def expand(rows):
+    sources, aliases, seen = [], [], set()
+    for item in rows:
+        body = item.get("body", {})
+        if item.get("type") == "merchant_offer":
+            row = candidate(item)
+            if row and row["address"] not in seen: sources.append(row); seen.add(row["address"])
+        if item.get("type") == "product_identity":
+            for key in ("gtin", "asin", "mpn", "sku"):
+                value = body.get(key, "")
+                if value: aliases.append({"product_id": body["product_id"], "kind": key, "value": value, "source_ref": body.get("source_ref", ""), "receipt_ref": body.get("receipt_ref", ""), "cannot_infer": "an alias value -> cross-merchant identity equivalence"})
+    return sources, aliases
+
+
+def main():
+    ap = argparse.ArgumentParser(); ap.add_argument("--input", type=Path, required=True); ap.add_argument("--sources-out", type=Path, required=True); ap.add_argument("--aliases-out", type=Path, required=True); args = ap.parse_args()
+    try: rows = [json.loads(line) for line in args.input.read_text().splitlines() if line.strip()]; sources, aliases = expand(rows)
+    except (OSError, ValueError, KeyError, TypeError) as err: print("commerce expansion compiler: %s" % err); return 2
+    args.sources_out.write_text("".join(json.dumps(x, sort_keys=True) + "\n" for x in sources)); args.aliases_out.write_text("".join(json.dumps(x, sort_keys=True) + "\n" for x in aliases))
+    print(json.dumps({"merchant_candidates": len(sources), "aliases": len(aliases), "cannot_infer": "a candidate is not a shop API, catalogue, or product match"})); return 0
+
+
+if __name__ == "__main__": raise SystemExit(main())

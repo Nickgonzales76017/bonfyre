@@ -1,0 +1,13 @@
+{
+  "name": "bonfyre-matrix-vgpu",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "htmx.org": "^2.0.10",
+    "vgpu": "0.3.1"
+  },
+  "scripts": {
+    "build": "bun build matrix-vgpu.ts --target browser --minify --outfile ../matrix-vgpu.js",
+    "build:htmx": "bun build htmx.ts --target browser --minify --outfile ../matrix-htmx.js"
+  }
+}

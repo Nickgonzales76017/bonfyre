@@ -8,7 +8,7 @@ atlas computational-phenotype
 # it is how an execution phenotype presents itself to the selector.
 #
 # A phenotype block: `phenotype <id>` with `architecture <substrate-id>`, at
-# least one `produces`, and the boolean/enum fields below. atlas.py validates
+# least one `produces`, and the boolean/enum fields below. atlas.mjs validates
 # that the architecture is registered and that produces is named; loss() flags
 # any substrate lacking a phenotype.
 

@@ -1,0 +1,35 @@
+#!/usr/bin/env python3
+"""Lower Scene source dependencies to the legacy internet_source ID boundary."""
+import argparse,json,sqlite3,sys,urllib.parse
+import compile_source_frontier as frontier
+def root_address(url):
+ try:u=frontier.canonical_url(url)
+ except Exception:return None
+ p=urllib.parse.urlsplit(u);host=(p.hostname or '').lower().removeprefix('www.');return '%s://%s/'%((p.scheme or 'https').lower(),host) if host else None
+def census(db):
+ if not db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='internet_source'").fetchone():return {}
+ out={}
+ for source,url,family,kind,tier in db.execute("SELECT source,url,COALESCE(family,''),COALESCE(kind,''),COALESCE(tier,'') FROM internet_source WHERE status='published' AND COALESCE(url,'')<>'' ORDER BY id"):
+  root=root_address(str(url))
+  if root:out.setdefault(root,[]).append({'source':str(source),'url':str(url),'family':str(family),'kind':str(kind),'tier':str(tier)})
+ return out
+def main():
+ p=argparse.ArgumentParser();p.add_argument('--scene-receipts',required=True);p.add_argument('--cms-db',required=True);p.add_argument('--out',required=True);p.add_argument('--legacy-limit',type=int,default=32);a=p.parse_args()
+ if a.legacy_limit<1:p.error('--legacy-limit must be positive')
+ db=sqlite3.connect('file:%s?mode=ro'%a.cms_db,uri=True);known=census(db);db.close();rows=[];totals={'scenes':0,'matched_sources':0,'emitted_sources':0,'dropped_for_legacy_limit':0,'unmatched_roots':0}
+ for scene in frontier.load_rows(a.scene_receipts):
+  if not isinstance(scene,dict) or scene.get('schema')!='bonfyre.scene-source-receipt.v1':continue
+  totals['scenes']+=1;matched=[];unmatched=[];seen=set()
+  for root in scene.get('source_roots') or []:
+   if not isinstance(root,dict):continue
+   address=str(root.get('root_address') or '');choices=known.get(address,[])
+   if not choices:unmatched.append({'root_id':root.get('root_id'),'root_address':address});continue
+   for source in choices:
+    if source['source'] in seen:continue
+    seen.add(source['source']);matched.append({**source,'root_id':root.get('root_id'),'root_address':address})
+  kept=matched[:a.legacy_limit];dropped=matched[a.legacy_limit:];totals['matched_sources']+=len(matched);totals['emitted_sources']+=len(kept);totals['dropped_for_legacy_limit']+=len(dropped);totals['unmatched_roots']+=len(unmatched)
+  rows.append({'schema':'bonfyre.scene-legacy-source-adapter.v1','scene_key':scene.get('scene_key'),'subject_address':scene.get('subject_address'),'actor_scope':scene.get('actor_scope'),'sources':[x['source'] for x in kept],'source_rows':kept,'unmatched_scene_roots':unmatched,'compatibility_loss':{'legacy_limit':a.legacy_limit,'matched_before_limit':len(matched),'dropped_count':len(dropped),'dropped_sources':[x['source'] for x in dropped]},'truth':'published_census_reopen_of_scene_dependencies_only','cannot_infer':['Scene dependency -> source material is visible','published internet_source -> current availability or freshness','legacy source list -> semantic ranking or complete Scene material','dropped legacy source -> source is unimportant']})
+ with open(a.out,'w') as out:
+  for row in rows:out.write(json.dumps(row,sort_keys=True,separators=(',',':'))+'\n')
+ print(json.dumps({'schema':'bonfyre.scene-legacy-source-adapter-summary.v1',**totals,'truth':'published_census_reopen_of_scene_dependencies_only'},sort_keys=True));return 0
+if __name__=='__main__':sys.exit(main())

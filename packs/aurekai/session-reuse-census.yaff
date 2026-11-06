@@ -1,0 +1,148 @@
+pack aurekai-session-reuse-census
+generation control-1
+provenance executable-owner census for the 2026-08-27 maturity session, written in the estate's own binding grammar
+authority measured
+note Written to match fleming-equity-group/reuse-census.yaff rather than invent a sixth pack shape. Every domain need this session touched names its executable_owner and a verification_state. Where I built something the estate already owned, the binding says so and the estate wins.
+
+# ---------------------------------------------------------------------------
+# FINANCIAL MEMBRANE
+# ---------------------------------------------------------------------------
+
+binding session:model-rate-discovery
+  domain_need price any model the organisation uses, without a human lookup per model
+  executable_owner financial_metabolism PriceEvidence / value_provider_usage; rates DERIVED from OpenAI /organization/costs divided by /organization/usage
+  estate_role supply the arithmetic and the basis, not a second ledger
+  evidence 5 models priced; gpt-5 $1.250 vs published $1.250, gpt-5.4 $2.500 vs $2.500, gpt-4o-mini $0.155 vs $0.150 -- three exact agreements
+  evidence gpt-5.6-sol derives 1.91x list and gpt-4.1-mini 1.40x, which is contract pricing a published book cannot show
+  verification_state VERIFIED_BY_MEASUREMENT
+
+binding session:sibling-pricing
+  domain_need price a model absent from every book
+  executable_owner REFUSED -- no owner
+  evidence leave-one-out over 389 published models: median error 59%, 2.0x off, only 61.7% within 2x; worst gpt-oss-20b true $0.030 estimated $2.000 (67x)
+  estate_role rungs 1 (derived from billing) and 2 (published book) cover every real case
+  verification_state KNOWN_GAP
+
+binding session:spend-governance
+  domain_need a budget that depletes and carries authority, replacing a constant
+  executable_owner financial_metabolism.record_funding_route / choose_funding; resource_admission.decide for concurrent spenders; economic_graphs.record_commitment for expiry
+  estate_role supersede BONFYRE_RESOURCE_MAX_DAILY_SPEND_USD, which is declared twice with different values and read by nothing
+  defect choose_funding is currency-scoped not provider-scoped; it funded an OpenRouter request from route:compute/anthropic
+  verification_state VERIFIED_BY_MEASUREMENT
+
+binding session:native-cost-routing
+  domain_need route work to the cheapest adequate model
+  executable_owner bonfyre-economy (legacy) / AkaiEconomy (current) -- 'cost-aware routing and budget enforcement'
+  estate_role I hand-rolled a funding preflight before finding this. The native router, given the derived rates through its own 'cost record' verb, independently returns fasttext-local as cheapest within budget.
+  verification_state OWNER_REUSE_REQUIRED
+
+binding session:usage-metering
+  domain_need meter work and produce an invoice
+  executable_owner bonfyre-meter / AkaiMeter -- record, usage, invoice, top
+  estate_role I hand-rolled token metering. The native meter accepts key/op/bytes/duration and rolls up.
+  verification_state OWNER_REUSE_REQUIRED
+
+# ---------------------------------------------------------------------------
+# DENSITY
+# ---------------------------------------------------------------------------
+
+binding session:artifact-collapse
+  domain_need find and fold equivalent artifact families
+  executable_owner bonfyre-index / AkaiIndex -- reuse, equivalence, collapse-preview, collapse-plan, collapse-ledger, confidence-preview
+  estate_role I hand-rolled Tree-sitter structural detection before finding this. The native engine indexed 12 families from 23 artifact.json, found a shared operator across 7, and planned 6 folds at confidence 'exact-shape'.
+  complement the native engine works over ARTIFACTS; the Tree-sitter pass works over SOURCE. Both are needed; neither replaces the other.
+  verification_state VERIFIED_BY_MEASUREMENT
+
+binding session:source-duplicate-census
+  domain_need find structurally identical functions across the control plane
+  executable_owner Tree-sitter (installed directly; bonfyre-canon advertises Tree-sitter but its extension table holds .json only)
+  evidence 87 modules, 610 function bodies, 11 identical groups, 10 cross-module; largest is 15 identical ensure_schema bodies plus a second group of 6
+  finding the 15/6 split IS the foreign-key split -- the 15 leave PRAGMA foreign_keys at 0, the 6 set it to 1. A single shared helper would have silently enabled constraint enforcement in 15 modules.
+  scale the removal is worth ~15 lines; each body is 3 lines. The census counted copies, not code.
+  verification_state VERIFIED_BY_MEASUREMENT
+
+binding session:compression-law
+  domain_need measure real compression over the estate
+  executable_owner bonfyre-compress (train/pack/savings) -- but its savings report is broken
+  defect raw is summed FILE bytes while compressed is a compressed TAR, so tar padding dominates; reports -58.9% on schemas/ and 0.0% on packs/ against a raw_bytes of 0
+  measured_independently .yaff/.json subsets compress 3.8x (packs) and 7.7x (architecture) at zstd-19; the tool's compressed byte count matches a tar|zstd-19 reference exactly
+  verification_state KNOWN_GAP
+
+# ---------------------------------------------------------------------------
+# PARTNER PROFILES
+# ---------------------------------------------------------------------------
+
+binding session:partner-definition
+  domain_need what a partner IS
+  executable_owner the 41 shipped integration repos under github.com/aurekai and ~/repos -- langchain, temporal, dagster, duckdb, helm, terraform, vscode, mcp, wandb, ...
+  estate_role partner_commons holds METADATA ABOUT them (176 profiles, 1,885 authored role observations); it is not the definition
+  correction I treated 112 names in a markdown table as the partner surface. The shipped repos are the partner surface.
+  verification_state OWNER_REUSE_REQUIRED
+
+binding session:authored-partner-roles
+  domain_need which role a method plays in which fabric, and what it must not own
+  executable_owner the Gen-10 map's own tables -- '82 deep-promoted specialties' (Class, Preserved specialty, Native owner/lane, Primary paths, Pairs with) and the family tables
+  evidence 146 partners carry an authored role; 72 in two or more fabrics; 32 in three or more; nine in FOUR with five distinct roles each (Qlib, vectorbt, ArcticDB, QuantLib, Formance, TigerBeetle, Hyperswitch, Interledger, Mojaloop)
+  evidence 587 declared non-ownership boundaries across 104 distinct statements
+  correction Pairs-with IS the compound graph I was estimating by embedding co-occurrence. Program binding is a JOIN, not a search.
+  verification_state VERIFIED_BY_MEASUREMENT
+
+binding session:method-retrieval
+  domain_need given a problem, find the method
+  executable_owner bonfyre-capability match / AkaiCapability
+  defect advertised as semantic; scores are clean fractions of query-term overlap (0.167, 0.333). 'classify business type from a company name' misses tag-artifact, which is in the registry.
+  estate_role registry wired to its own prober, 37 -> 103 capabilities; the prober's docstring names the exact defect it was written to fix
+  available_fix bonfyre-embed onnx plus bonfyre-vec, used elsewhere this session, are not behind this verb
+  verification_state KNOWN_GAP
+
+# ---------------------------------------------------------------------------
+# UPPER90 DOWNSTREAM
+# ---------------------------------------------------------------------------
+
+binding session:ai-leads-ranking
+  domain_need rank loss-event candidates by expected realized fee
+  executable_owner route_ranker.TernaryRanker plus a selective SSM over per-cell yearly sequences
+  evidence 12-fold walk-forward 2015-2026: ternary+static 45.1% aggregate / 49.1% recent; real-valued weights 47.4%; real-valued + SSM 49.1% / 53.7%; oracle 83.0%
+  finding ternary quantization costs 2.3 pts and the cost is WIDENING (2023 +5.1, 2025 +5.0, 2026 +9.8)
+  reversal the SSM was first refused at +0.1 pts, then reversed when its own reheat condition fired the same session
+  verification_state VERIFIED_BY_MEASUREMENT
+
+binding session:ai-loss-classification
+  domain_need classify the unclassified book
+  executable_owner bonfyre-tag / AkaiTag (fastText) -- NOT a provider API
+  evidence trained on the full 44,326-row labelled corpus (37,676 train / 6,649 held-out, 76 classes) in 16.8s; held-out 64.8% at 50,823 rows/sec; entire 8,820-name unclassified book in 155 ms at $0.00
+  comparison same-size 30-row slice: fastText 83%, mistral-medium 70% at $0.001632; full book $0.00 local vs $0.48 mistral vs $6.00 opus
+  correction my 30-row API benchmark was the wrong scale AND the wrong instrument
+  defect bonfyre-tag's banner claims 'pure C'; it shells to Python fasttext with no startup dependency check
+  verification_state VERIFIED_BY_MEASUREMENT
+
+binding session:risk-envelope
+  domain_need concentration and tail risk of what the ranker selects
+  executable_owner Riskfolio-Lib -- declared role 'signal correlation/concentration/ensemble risk', must not own final decision law
+  evidence ranked selection is LESS concentrated than equal weight (HHI 0.3369 vs 0.4847, 3.0 vs 2.1 effective states) but MORE volatile on every measure -- MAD 7.5x, CVaR 1.9x, MDD 1.8x
+  reading the ranker diversifies WHERE it spends, not WHEN
+  correction I hand-rolled an HHI before installing the partner that owns this
+  verification_state VERIFIED_BY_MEASUREMENT
+
+# ---------------------------------------------------------------------------
+# FLEMING
+# ---------------------------------------------------------------------------
+
+binding session:fleming-already-censused
+  domain_need Fleming property-domain facts on shared machinery
+  executable_owner already declared in fleming-equity-group/reuse-census.yaff -- external-assimilation/ForeignTwin, dialect_trait_interface_pass, BitRegistry/SparseBitmap/ROBDD/ExecutableClosureIndex, MultidimensionalRangeReconciler
+  estate_role Fleming does not claim ownership of generic execution machinery; every binding there is REFERENCE_ONLY
+  correction I listed Fleming as an unexplored estate. It has 5 packs and a complete executable-owner census predating this session.
+  verification_state VERIFIED_BY_MEASUREMENT
+
+# ---------------------------------------------------------------------------
+# WHAT THIS SESSION OWES UPSTREAM
+# ---------------------------------------------------------------------------
+
+binding session:akaiquery-defect
+  domain_need artifact analytics that survive a dynamic schema
+  executable_owner AkaiQuery at github.com/aurekai/native-runtime cmd/AkaiQuery/src/main.c:189
+  defect canned SQL selects count(DISTINCT type) against a table its own scan builds with read_json_auto(union_by_name=true), so the column set is whatever the corpus has
+  fix_verified_locally has_column() via information_schema then branch the stats SQL; builds clean; stats returns 594 artifacts instead of a binder error
+  estate_role the legacy BonfyreQuery fix is worth nothing until it lands upstream
+  verification_state OWNER_REUSE_REQUIRED

@@ -1,0 +1,224 @@
+#!/usr/bin/env python3
+"""Federated machine projection over the design and executable registries.
+
+`atlas validate` answers "what has been modeled?".
+`atlas_machine` answers "what machinery exists, and is any of it bound,
+verified, exercised or used?" — without copying canonical truth between
+registries. Bindings are REFERENCE_ONLY.
+
+Rebuilds incrementally from source digests. A registry whose digests are
+unchanged is served from cache, per the federation invariant that a
+projection is never produced by rescanning everything on every call.
+
+usage: atlas_machine.py [summary|unbound|verification|runtime|substrates|binding <id>]
+"""
+import hashlib
+import json
+import re
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+ATLAS_INDEX = ROOT / "architecture" / "atlas.index.json"
+FEDERATION = ROOT / "packs" / "federation"
+LINEAGE = ROOT / "packs" / "lineage"
+CACHE = ROOT / "architecture" / ".atlas_machine.cache.json"
+
+VERIFICATION_ORDER = [
+    "VERIFIED_BY_MEASUREMENT",
+    "VERIFIED_ON_DISK",
+    "ASSERTED_FROM_DOCUMENT",
+    "ASSERTED_BY_INFERENCE",
+    "CONTRADICTED",
+]
+
+
+def digest_tree(*dirs):
+    h = hashlib.blake2b(digest_size=16)
+    for d in dirs:
+        for p in sorted(Path(d).rglob("*.yaff")) if Path(d).exists() else []:
+            h.update(p.name.encode())
+            h.update(p.read_bytes())
+    if ATLAS_INDEX.exists():
+        h.update(hashlib.blake2b(ATLAS_INDEX.read_bytes(), digest_size=16).digest())
+    return h.hexdigest()
+
+
+def parse_blocks(path):
+    """Minimal YaFF block reader: `<kind> <id>` then indented `key value`."""
+    blocks, cur = [], None
+    for line in path.read_text().splitlines():
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        if not line.startswith(" "):
+            m = re.match(r"^(\S+)(?:\s+(\S.*))?$", line)
+            if m:
+                cur = {"_kind": m.group(1), "_id": (m.group(2) or "").strip(), "_file": path.name}
+                blocks.append(cur)
+        elif cur is not None:
+            m = re.match(r"^\s+(\S+)(?:\s+(.*))?$", line)
+            if m:
+                k, v = m.group(1), (m.group(2) or "").strip()
+                cur.setdefault(k, []).append(v)
+    return blocks
+
+
+def collect():
+    bindings, claims, rings, states, roles = [], [], [], [], []
+    for p in sorted(FEDERATION.glob("*.yaff")) if FEDERATION.exists() else []:
+        for b in parse_blocks(p):
+            if b["_kind"] == "binding":
+                bindings.append(b)
+            elif b["_kind"] == "federation_ring":
+                rings.append(b)
+            elif b["_kind"] == "existence_state":
+                states.append(b)
+            elif b["_kind"] == "body_role":
+                roles.append(b)
+    for p in sorted(LINEAGE.glob("*.yaff")) if LINEAGE.exists() else []:
+        claims += [b for b in parse_blocks(p) if b["_kind"] == "claim"]
+    arch = json.loads(ATLAS_INDEX.read_text()) if ATLAS_INDEX.exists() else {}
+    archs = arch.get("architectures", arch) if isinstance(arch, dict) else {}
+    return bindings, claims, rings, states, roles, archs
+
+
+def one(b, key, default="unknown"):
+    v = b.get(key)
+    return v[0] if v else default
+
+
+def _tally(items, key):
+    out = {}
+    for i in items:
+        v = one(i, key, "unclassified")
+        out[v] = out.get(v, 0) + 1
+    return out
+
+
+def build():
+    bindings, claims, rings, states, roles, archs = collect()
+    bound_ids = {one(b, "semantic_identity") for b in bindings}
+    arch_names = set(archs.keys()) if isinstance(archs, dict) else set()
+    # A binding names its design record explicitly. Identity names and atlas
+    # record ids deliberately differ, so bound design records are counted from
+    # the declared design_record field, never by matching names.
+    bound_records = {one(b, "design_record", "") for b in bindings} - {""}
+    bound_records &= arch_names
+
+    ver = {k: 0 for k in VERIFICATION_ORDER}
+    for b in bindings:
+        v = one(b, "verification_state", "ASSERTED_BY_INFERENCE")
+        ver[v] = ver.get(v, 0) + 1
+    claim_ver = {}
+    for c in claims:
+        v = one(c, "verification", "unrecorded")
+        claim_ver[v] = claim_ver.get(v, 0) + 1
+    claim_status = {}
+    for c in claims:
+        s = one(c, "status", "unrecorded")
+        claim_status[s] = claim_status.get(s, 0) + 1
+
+    return {
+        "coverage": {
+            "design_records": len(arch_names),
+            "executable_identities_bound": len(bound_ids),
+            "bindings": len(bindings),
+            "design_records_bound": len(bound_records),
+            "design_records_unbound": len(arch_names - bound_records),
+            "lineage_claims": len(claims),
+        },
+        "binding_verification": ver,
+        "claim_verification": claim_ver,
+        "claim_status": claim_status,
+        "rings": [
+            {
+                "ring": r["_id"],
+                "target": one(r, "target"),
+                "atlas_presence": one(r, "atlas_presence"),
+                "canonical_presence": one(r, "canonical_presence"),
+                "binding_presence": one(r, "binding_presence"),
+                "validator_result": one(r, "validator_result"),
+                "validator_checks": one(r, "validator_checks"),
+            }
+            for r in rings
+        ],
+        "existence": [
+            {k: v[0] for k, v in s.items() if not k.startswith("_") and k != "note"}
+            for s in states
+        ],
+        "bindings": [
+            {
+                "identity": one(b, "semantic_identity"),
+                "relation": one(b, "relation"),
+                "source": one(b, "source_path"),
+                "digest": one(b, "source_digest"),
+                "design_record": one(b, "design_record", ""),
+                "verification": one(b, "verification_state"),
+                "authority": one(b, "authority"),
+                "isa_role": one(b, "isa_role", ""),
+            }
+            for b in bindings
+        ],
+        "runtime_placement": {
+            "by_role": _tally(roles, "role"),
+            "by_runtime": _tally(roles, "runtime_family"),
+            "effect_path_bodies": [
+                {"body": one(r, "body"), "runtime": one(r, "runtime_family"),
+                 "role": one(r, "role"), "owner": one(r, "current_owner", ""),
+                 "disposition": one(r, "disposition", "")}
+                for r in roles if one(r, "effect_path", "no").upper() == "YES"
+            ],
+        },
+        "unbound_design": sorted(arch_names - bound_records),
+    }
+
+
+def load():
+    d = digest_tree(FEDERATION, LINEAGE)
+    if CACHE.exists():
+        try:
+            c = json.loads(CACHE.read_text())
+            if c.get("digest") == d:
+                c["projection"]["_cache"] = "hit"
+                return c["projection"]
+        except Exception:
+            pass
+    proj = build()
+    CACHE.write_text(json.dumps({"digest": d, "projection": proj}, indent=1))
+    proj["_cache"] = "rebuilt"
+    return proj
+
+
+def main():
+    cmd = sys.argv[1] if len(sys.argv) > 1 else "summary"
+    m = load()
+    if cmd == "summary":
+        out = {k: m[k] for k in ("coverage", "binding_verification", "claim_status",
+                                 "claim_verification", "rings", "existence")}
+        out["_cache"] = m["_cache"]
+        print(json.dumps(out, indent=2))
+    elif cmd == "unbound":
+        print(json.dumps({
+            "design_records_with_no_executable_binding": m["unbound_design"],
+            "count": len(m["unbound_design"]),
+            "note": "not a defect in these records; a measure of distance from executable reality",
+        }, indent=2))
+    elif cmd == "runtime":
+        print(json.dumps(m["runtime_placement"], indent=2))
+    elif cmd == "verification":
+        print(json.dumps({"bindings": m["binding_verification"],
+                          "claims": m["claim_verification"]}, indent=2))
+    elif cmd == "substrates":
+        print(json.dumps({"rings": m["rings"], "existence": m["existence"],
+                          "bindings": m["bindings"]}, indent=2))
+    elif cmd == "binding" and len(sys.argv) > 2:
+        q = sys.argv[2]
+        hits = [b for b in m["bindings"] if q in b["identity"]]
+        print(json.dumps(hits or {"error": f"no binding matching {q}"}, indent=2))
+    else:
+        print(__doc__.strip().splitlines()[-1])
+        sys.exit(2)
+
+
+if __name__ == "__main__":
+    main()

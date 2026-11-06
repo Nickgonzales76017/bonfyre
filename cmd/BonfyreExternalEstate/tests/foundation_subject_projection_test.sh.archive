@@ -1,0 +1,94 @@
+#!/bin/sh
+# Territory apexes are real SubjectFabric subjects, compiled from the admitted
+# estate and its explicit estate-owned SourceCollections.  They must not fall
+# back to a request-time family scan.
+set -eu
+
+root=$(CDPATH= cd -- "$(dirname -- "$0")/../../.." && pwd)
+foundation="$root/cmd/BonfyreExternalEstate/tools/materialize_foundation_subjects.mjs"
+projection="$root/cmd/BonfyreExternalEstate/tools/compile_subject_projection.mjs"
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+
+fabric="$tmp/fabric.db"
+frontier="$tmp/frontier.db"
+cms="$tmp/cms.db"
+items="$tmp/items.jsonl"
+page="$tmp/page.json"
+surface="$tmp/surface.json"
+
+python3 - "$fabric" "$frontier" "$cms" <<'PY'
+import json,sqlite3,sys
+fabric,frontier,cms=sys.argv[1:]
+
+db=sqlite3.connect(fabric)
+db.executescript("""
+CREATE TABLE subject_bundle(subject TEXT,scope TEXT,bundle_digest TEXT,closure_digest TEXT,scene_digest TEXT,compiled_at TEXT,counts_json TEXT,payload_json TEXT,PRIMARY KEY(subject,scope));
+CREATE TABLE subject_reader(subject TEXT,scope TEXT,census_source TEXT,root_id TEXT,channel_id TEXT,material TEXT,protocol TEXT,state TEXT,last_contributed TEXT,contributions INTEGER,first_seen TEXT);
+CREATE TABLE subject_route(subject TEXT,scope TEXT,route TEXT);
+CREATE TABLE subject_route_item(subject TEXT,scope TEXT,route TEXT);
+INSERT INTO subject_bundle VALUES('institution:publisher:kept','public','old','old','','','{}','{}');
+INSERT INTO subject_reader VALUES('institution:publisher:kept','public','kept','r0','c0','news','RSS','admitted','',0,'');
+""")
+db.commit();db.close()
+
+db=sqlite3.connect(frontier)
+db.executescript("""
+CREATE TABLE channel(channel_id TEXT,census_source TEXT,root_id TEXT,material TEXT,protocol TEXT,state TEXT,last_contributed TEXT,contributions INTEGER,first_seen TEXT);
+INSERT INTO channel VALUES('c-news','news-source','root-news','news','RSS','admitted','',0,'2026-01-01');
+INSERT INTO channel VALUES('c-music','music-source','root-music','music','RSS','active','',0,'2026-01-01');
+INSERT INTO channel VALUES('c-hidden','hidden-source','root-hidden','news','RSS','candidate','',0,'2026-01-01');
+""")
+db.commit();db.close()
+
+db=sqlite3.connect(cms)
+db.execute("CREATE TABLE source_collection(id INTEGER PRIMARY KEY,collection_id TEXT,subject_address TEXT,source_selector TEXT,material_kind TEXT,refresh_policy TEXT,status TEXT)")
+db.execute("INSERT INTO source_collection VALUES(NULL,?,?,?,?,?,?)",(
+ 'estate-family-news','estate:aurekai',json.dumps({'grouping':'family','value':'news','source_refs':['news-source']}),json.dumps(['publication_occurrence']),'hourly','published'))
+db.execute("INSERT INTO source_collection VALUES(NULL,?,?,?,?,?,?)",(
+ 'estate-family-music','estate:aurekai',json.dumps({'grouping':'family','value':'music','source_refs':['music-source']}),json.dumps(['publication_occurrence']),'hourly','published'))
+db.commit();db.close()
+PY
+
+bun "$foundation" --fabric-db "$fabric" --frontier-db "$frontier" --out "$tmp/foundation.db" --territory live --territory life >"$tmp/foundation.json"
+
+python3 - "$tmp/foundation.db" <<'PY'
+import json,sqlite3,sys
+db=sqlite3.connect(sys.argv[1])
+assert db.execute("select count(*) from subject_bundle").fetchone()[0]==3
+assert db.execute("select count(*) from subject_reader where subject='institution:aurekai:live'").fetchone()[0]==2
+assert db.execute("select count(*) from subject_reader where subject='institution:aurekai:live' and census_source='hidden-source'").fetchone()[0]==0
+assert db.execute("select count(*) from subject_reader where subject='institution:publisher:kept'").fetchone()[0]==1
+db.close()
+row=json.load(open(sys.argv[1].replace('foundation.db','foundation.json')))
+assert row['admitted_sources']==2,row
+PY
+
+cat >"$items" <<'JSONL'
+{"source":"news-source","family":"news","key":"n1","kind":"story","title":"Exact Estate News","href":"https://news.test/n1","at":100}
+{"source":"music-source","family":"music","key":"m1","kind":"audio","title":"Exact Estate Music","href":"https://music.test/m1","at":200}
+{"source":"hidden-source","family":"news","key":"h1","kind":"story","title":"Candidate Must Not Leak","href":"https://hidden.test/h1","at":300}
+JSONL
+cat >"$page" <<'JSON'
+{"regions":[{"role":"lead","material":"publication","topology":"lead","language":"story","min_items":1,"max_items":8},{"role":"listen","material":"audio","topology":"playlist","language":"tracks","min_items":1,"max_items":8}],"programs":[{"route":"/","territory":"live","title":"Live","lede":"Live route","character":"signal","cannot_infer":"fixture","families":["news"],"source_limit":8,"regions":["lead"]},{"route":"/listen","territory":"any","title":"Listen","lede":"Listen route","character":"sound","cannot_infer":"fixture","families":["music"],"source_limit":8,"regions":["listen"]}]}
+JSON
+cat >"$surface" <<'JSON'
+{"programs":[]}
+JSON
+
+bun "$projection" --fabric-db "$tmp/foundation.db" --cms-db "$cms" --items "$items" --page-composition "$page" --surface-programs "$surface" >"$tmp/projection.json"
+python3 - "$tmp/foundation.db" "$tmp/projection.json" <<'PY'
+import json,sqlite3,sys
+db=sqlite3.connect(sys.argv[1])
+row=db.execute("select basis,collections_json,reader_count,item_count from subject_route where subject=? and route='/'",('institution:aurekai:live',)).fetchone()
+assert row==('estate_source_collection_exact','["estate-family-news"]',1,1),row
+assert db.execute("select m.title from subject_route_item r join subject_material m on m.subject=r.subject and m.scope=r.scope and m.source=r.source and m.item_key=r.item_key and m.material=r.material where r.subject=? and r.route='/'",('institution:aurekai:live',)).fetchone()[0]=='Exact Estate News'
+assert db.execute("select count(*) from subject_route_item r join subject_material m on m.subject=r.subject and m.scope=r.scope and m.source=r.source and m.item_key=r.item_key and m.material=r.material where m.title='Candidate Must Not Leak'").fetchone()[0]==0
+listen=db.execute("select basis,collections_json,item_count from subject_route where subject=? and route='/listen'",('institution:aurekai:live',)).fetchone()
+assert listen==('estate_source_collection_exact','["estate-family-music"]',1),listen
+summary=json.load(open(sys.argv[2]))
+assert summary['basis_counts']['estate_source_collection_exact']==3,summary
+db.close()
+PY
+
+echo "foundation_subject_projection_test: PASS"

@@ -1,0 +1,439 @@
+"""Fulfillment cost and route basis for observed offers.
+
+``food_combination_engine`` values an item: what the shelf price becomes once
+only *declared* promotions are applied.  It deliberately knows nothing about
+what it costs to actually take possession of that item.  This module owns that
+second law and nothing else:
+
+* a fulfillment mode carries a per-order fee and an order minimum, so the
+  effective cash cost of a basket is not the sum of its item prices;
+* an order minimum is a precondition, not a penalty -- a basket that misses it
+  does not get an expensive plan, it gets *no* plan in that mode;
+* a mode either makes the customer travel or it does not, so delivery fees and
+  travel distance are alternatives on a frontier rather than one blended score.
+
+Travel is reported only as a **geodesic lower bound**.  A great-circle tour is
+a proven lower bound on any road tour between the same points, so the number is
+never an estimate of driving distance, time, or fuel cost, and no cost per mile
+is invented.  An unresolved leg makes the whole figure ``None``; it never
+silently becomes zero.
+"""
+
+from __future__ import annotations
+
+import argparse
+import itertools
+import json
+import math
+from dataclasses import dataclass
+from decimal import Decimal
+from pathlib import Path
+from typing import Any, Iterable, Sequence
+
+import food_combination_engine as fce
+
+
+EARTH_RADIUS_MILES = Decimal("3958.7613")
+MAX_BASKET_SIZE = 3
+MAX_TOUR_STOPS = 4
+
+
+class RouteError(ValueError):
+    pass
+
+
+@dataclass(frozen=True)
+class FulfillmentOption:
+    mode: str
+    fee_usd: Decimal
+    minimum_order_usd: Decimal | None
+    customer_travels: bool
+    eligibility: tuple[str, ...]
+    source_url: str
+
+
+@dataclass(frozen=True)
+class MerchantLocation:
+    location_id: str
+    merchant: str
+    merchant_kind: str | None
+    latitude: float | None
+    longitude: float | None
+    address: str | None
+    options: tuple[FulfillmentOption, ...]
+
+    @property
+    def has_coordinates(self) -> bool:
+        return self.latitude is not None and self.longitude is not None
+
+
+@dataclass(frozen=True)
+class RouteOrigin:
+    origin_id: str
+    latitude: float
+    longitude: float
+    label: str
+    source_url: str
+
+
+def parse_location(raw: dict[str, Any]) -> MerchantLocation:
+    options = []
+    for item in raw.get("fulfillment_options", []):
+        if item.get("fee_usd") is None:
+            raise RouteError(f"fulfillment mode {item.get('mode')!r} states no fee; it cannot be priced")
+        minimum = item.get("minimum_order_usd")
+        options.append(FulfillmentOption(
+            mode=item["mode"],
+            fee_usd=fce._money(item["fee_usd"]),
+            minimum_order_usd=fce._money(minimum) if minimum is not None else None,
+            customer_travels=bool(item.get("customer_travels")),
+            eligibility=tuple(item.get("eligibility", [])),
+            source_url=item.get("source_url", ""),
+        ))
+    return MerchantLocation(
+        location_id=raw["location_id"], merchant=raw.get("merchant", ""),
+        merchant_kind=raw.get("merchant_kind"),
+        latitude=raw.get("latitude"), longitude=raw.get("longitude"),
+        address=raw.get("address"), options=tuple(options),
+    )
+
+
+def parse_origin(raw: dict[str, Any]) -> RouteOrigin:
+    if raw.get("latitude") is None or raw.get("longitude") is None:
+        raise RouteError("a route origin without coordinates cannot bound any distance")
+    return RouteOrigin(raw["origin_id"], float(raw["latitude"]), float(raw["longitude"]),
+                       raw.get("label", ""), raw.get("source_url", ""))
+
+
+# --------------------------------------------------------------------------- #
+# Geodesic lower bound.
+# --------------------------------------------------------------------------- #
+
+def geodesic_miles(first: tuple[float, float], second: tuple[float, float]) -> Decimal:
+    """Great-circle distance: a proven lower bound on any surface route."""
+    lat1, lon1 = math.radians(first[0]), math.radians(first[1])
+    lat2, lon2 = math.radians(second[0]), math.radians(second[1])
+    haversine = (math.sin((lat2 - lat1) / 2) ** 2
+                 + math.cos(lat1) * math.cos(lat2) * math.sin((lon2 - lon1) / 2) ** 2)
+    central_angle = 2 * math.asin(min(1.0, math.sqrt(haversine)))
+    return (EARTH_RADIUS_MILES * Decimal(str(central_angle))).quantize(Decimal("0.0001"))
+
+
+def tour_lower_bound_miles(origin: RouteOrigin, stops: Sequence[MerchantLocation]) -> Decimal:
+    """Shortest closed geodesic tour from the origin through every stop.
+
+    With at most :data:`MAX_TOUR_STOPS` stops this is exhaustive rather than
+    heuristic, so the result is exact for the geodesic metric and therefore
+    still a lower bound on the corresponding road tour.
+    """
+    if not stops:
+        return Decimal("0.0000")
+    if len(stops) > MAX_TOUR_STOPS:
+        raise RouteError(f"tour of {len(stops)} stops exceeds the bounded exhaustive limit")
+    home = (origin.latitude, origin.longitude)
+    points = [(stop.latitude, stop.longitude) for stop in stops]
+    best: Decimal | None = None
+    for order in itertools.permutations(points):
+        total = geodesic_miles(home, order[0])
+        for left, right in zip(order, order[1:]):
+            total += geodesic_miles(left, right)
+        total += geodesic_miles(order[-1], home)
+        best = total if best is None or total < best else best
+    return best  # type: ignore[return-value]
+
+
+# --------------------------------------------------------------------------- #
+# Fulfillment plans.
+# --------------------------------------------------------------------------- #
+
+def best_item_valuation(offer: fce.Offer) -> fce.Valuation | None:
+    """Cheapest cash outlay reachable with only explicitly stackable effects."""
+    candidates = []
+    for size in range(len(offer.effects) + 1):
+        for subset in itertools.combinations(offer.effects, size):
+            try:
+                candidates.append(fce.value_offer(offer, [item.effect_id for item in subset]))
+            except fce.OfferError:
+                pass
+    return min(candidates, key=lambda item: item.cash_outlay_usd) if candidates else None
+
+
+def _feasible_modes(location: MerchantLocation | None,
+                    declared_modes: Sequence[frozenset[str]],
+                    subtotal: Decimal) -> list[tuple[FulfillmentOption | None, list[str]]]:
+    """Modes usable for one merchant's share of a basket, with fail-closed reasons."""
+    if location is None or not location.options:
+        return [(None, ["no observed fulfillment option for this merchant; "
+                        "fee and travel are unresolved, not zero"])]
+    plans: list[tuple[FulfillmentOption | None, list[str]]] = []
+    for option in location.options:
+        # Every offer that names its valid modes must name this one.
+        if any(modes and option.mode not in modes for modes in declared_modes):
+            continue
+        if option.minimum_order_usd is not None and subtotal < option.minimum_order_usd:
+            continue
+        plans.append((option, []))
+    if not plans:
+        return []
+    return plans
+
+
+def _merchant_groups(basket: Sequence[tuple[fce.Offer, dict[str, Any]]]
+                     ) -> dict[str, list[tuple[fce.Offer, dict[str, Any]]]]:
+    groups: dict[str, list[tuple[fce.Offer, dict[str, Any]]]] = {}
+    for offer, raw in basket:
+        groups.setdefault(offer.merchant, []).append((offer, raw))
+    return groups
+
+
+def plan_basket(basket: Sequence[tuple[fce.Offer, dict[str, Any]]],
+                locations: dict[str, MerchantLocation],
+                valuations: dict[str, fce.Valuation]) -> list[dict[str, Any]]:
+    """Enumerate every source-supported fulfillment assignment for one basket.
+
+    Enumeration is origin-independent, so the expensive combinatorial pass runs
+    once and every declared origin reuses it through :func:`with_origin`.
+    """
+    groups = _merchant_groups(basket)
+    per_merchant: list[list[dict[str, Any]]] = []
+    for merchant, members in sorted(groups.items()):
+        subtotal = sum((valuations[offer.offer_id].cash_outlay_usd for offer, _ in members), Decimal(0))
+        location_ids = {raw.get("merchant_location_id") for _, raw in members}
+        location = None
+        if len(location_ids) == 1:
+            location = locations.get(next(iter(location_ids)))  # type: ignore[arg-type]
+        declared = [frozenset(raw.get("valid_fulfillment_modes", []) or []) for _, raw in members]
+        options = _feasible_modes(location, declared, subtotal)
+        if not options:
+            return []  # No mode satisfies this merchant's stated terms: the basket has no plan.
+        per_merchant.append([{
+            "merchant": merchant, "location": location, "option": option,
+            "subtotal": subtotal, "unresolved": reasons,
+        } for option, reasons in options])
+
+    rows = []
+    for assignment in itertools.product(*per_merchant):
+        item_cash = sum((valuations[offer.offer_id].cash_outlay_usd for offer, _ in basket), Decimal(0))
+        fee = sum((leg["option"].fee_usd for leg in assignment if leg["option"]), Decimal(0))
+        # A leg with no observed fulfillment option leaves the fee unknown; a leg
+        # with a fee but no store coordinates leaves only the trip unknown.  The
+        # two are tracked apart so neither bound over-claims the other's axis.
+        fee_unresolved = [reason for leg in assignment for reason in leg["unresolved"]]
+        travel_unresolved = list(fee_unresolved)
+        travel_stops = []
+        for leg in assignment:
+            option, location = leg["option"], leg["location"]
+            if option is None or not option.customer_travels:
+                continue
+            if location is None or not location.has_coordinates:
+                travel_unresolved.append(f"{leg['merchant']} pickup has no observed store coordinates")
+                continue
+            travel_stops.append(location.location_id)
+        rows.append({
+            "travel_stop_location_ids": travel_stops,
+            "offer_ids": sorted(offer.offer_id for offer, _ in basket),
+            "merchants": sorted(groups),
+            "merchant_kinds": sorted({raw.get("merchant_kind") for _, raw in basket
+                                      if raw.get("merchant_kind")}),
+            "fulfillment_plan": {leg["merchant"]: (leg["option"].mode if leg["option"] else None)
+                                 for leg in assignment},
+            "item_cash_usd": str(item_cash),
+            "fulfillment_fee_usd": str(fee),
+            # Exact only when every leg stated its fee.  Otherwise the same sum is
+            # still a proven lower bound, because a fulfillment fee is never negative.
+            "total_cash_usd": str(item_cash + fee) if not fee_unresolved else None,
+            "total_cash_lower_bound_usd": str(item_cash + fee),
+            "total_cash_is_exact": not fee_unresolved,
+            "delayed_rebate_usd": str(sum((valuations[offer.offer_id].delayed_rebate_usd
+                                           for offer, _ in basket), Decimal(0))),
+            "points": str(sum((valuations[offer.offer_id].points for offer, _ in basket), Decimal(0))),
+            "protein_g": str(sum((offer.protein_g or Decimal(0) for offer, _ in basket), Decimal(0))),
+            "customer_travels": bool(travel_stops),
+            "unresolved": sorted(set(travel_unresolved)),
+            "fee_unresolved": sorted(set(fee_unresolved)),
+            "status": "observed_component_basket_not_complete_meal",
+            "forbidden_inference": "a priced fulfillment plan is not an order, a quote, "
+                                   "or proof the merchant will fulfil it",
+        })
+    return rows
+
+
+def with_origin(row: dict[str, Any], origin: RouteOrigin,
+                locations: dict[str, MerchantLocation]) -> dict[str, Any]:
+    """Bind one origin-independent plan to a declared origin.
+
+    A plan carrying any unresolved leg keeps ``None`` travel: an unknown leg is
+    never scored as a free one.
+    """
+    stops = [locations[item] for item in row["travel_stop_location_ids"]]
+    travel = None if row["unresolved"] else tour_lower_bound_miles(origin, stops)
+    bound = {key: value for key, value in row.items() if key != "travel_stop_location_ids"}
+    bound["origin_id"] = origin.origin_id
+    bound["travel_miles_geodesic_lower_bound"] = str(travel) if travel is not None else None
+    return bound
+
+
+# --------------------------------------------------------------------------- #
+# Frontier.
+# --------------------------------------------------------------------------- #
+
+OBJECTIVES = (
+    ("total_cash_usd", "min"),
+    ("travel_miles_geodesic_lower_bound", "min"),
+    ("protein_g", "max"),
+)
+
+
+def _objective_values(row: dict[str, Any]) -> tuple[Decimal, ...] | None:
+    values = []
+    for field, sense in OBJECTIVES:
+        raw = row.get(field)
+        if raw is None:
+            return None  # An unresolved axis cannot be compared; the row is not ranked.
+        value = Decimal(raw)
+        values.append(value if sense == "min" else -value)
+    return tuple(values)
+
+
+def pareto_frontier(rows: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Nondominated rows over (total cash, travel lower bound, -protein)."""
+    scored = [(row, _objective_values(row)) for row in rows]
+    comparable = [(row, values) for row, values in scored if values is not None]
+    frontier = []
+    for row, values in comparable:
+        dominated = any(
+            all(other <= mine for other, mine in zip(other_values, values))
+            and any(other < mine for other, mine in zip(other_values, values))
+            for _, other_values in comparable
+        )
+        if not dominated:
+            frontier.append(row)
+    return frontier
+
+
+def _axis(kind: str, rows: list[dict[str, Any]], key, boundary: str,
+          reverse: bool = False) -> dict[str, Any]:
+    if not rows:
+        return {"kind": kind, "selection": None, "boundary": boundary}
+    chosen = (max if reverse else min)(rows, key=key)
+    return {"kind": kind, "selection": chosen, "boundary": boundary}
+
+
+def build_route_projection(raw_offers: list[dict[str, Any]],
+                           raw_locations: list[dict[str, Any]],
+                           raw_origins: list[dict[str, Any]],
+                           max_basket_size: int = MAX_BASKET_SIZE) -> dict[str, Any]:
+    locations = {item["location_id"]: parse_location(item) for item in raw_locations}
+    origins = [parse_origin(item) for item in raw_origins]
+
+    parsed: list[tuple[fce.Offer, dict[str, Any]]] = []
+    condition_only = []
+    for raw in raw_offers:
+        offer = fce.parse_offer(raw)
+        if best_item_valuation(offer) is None:
+            condition_only.append(offer.offer_id)
+            continue
+        parsed.append((offer, raw))
+    valuations = {offer.offer_id: best_item_valuation(offer) for offer, _ in parsed}
+
+    plans: list[dict[str, Any]] = []
+    for size in range(1, min(max_basket_size, len(parsed)) + 1):
+        for basket in itertools.combinations(parsed, size):
+            plans.extend(plan_basket(basket, locations, valuations))  # type: ignore[arg-type]
+    resolved = [row for row in plans if not row["unresolved"]]
+
+    per_origin = []
+    for origin in origins:
+        rows = [with_origin(row, origin, locations) for row in plans]
+        priced = [row for row in rows if row["travel_miles_geodesic_lower_bound"] is not None]
+        # Bounded rows keep a proven lower bound on cash even though some leg's
+        # fee or store is unobserved; they are ranked on that bound and labelled.
+        bounded = [row for row in rows if row["travel_miles_geodesic_lower_bound"] is None]
+        hybrid = [row for row in bounded if {"grocery_retailer", "restaurant"} <= set(row["merchant_kinds"])]
+        two_stop = [row for row in bounded if len(row["merchants"]) == 2]
+        no_travel = [row for row in priced if not row["customer_travels"]]
+        zero_fee = [row for row in priced if Decimal(row["fulfillment_fee_usd"]) == 0]
+        per_origin.append({
+            "origin_id": origin.origin_id,
+            "origin_label": origin.label,
+            "origin_source_url": origin.source_url,
+            "plans_considered": len(plans),
+            "plans_fully_resolved": len(priced),
+            "plans_lower_bounded_only": len(bounded),
+            "pareto_frontier": pareto_frontier(priced),
+            "strategies": [
+                _axis("cheapest_total_cash_including_fees", priced,
+                      lambda row: Decimal(row["total_cash_usd"]),
+                      "fees are included; tax, tip and any unobserved surcharge are not"),
+                _axis("cheapest_item_cash_ignoring_fees", priced,
+                      lambda row: Decimal(row["item_cash_usd"]),
+                      "advertised item cash is not the effective economic cost"),
+                _axis("zero_fulfillment_fee", zero_fee,
+                      lambda row: Decimal(row["total_cash_usd"]),
+                      "a zero fee shifts cost to travel; it does not remove it"),
+                _axis("lowest_travel_lower_bound", priced,
+                      lambda row: Decimal(row["travel_miles_geodesic_lower_bound"]),
+                      "geodesic tour length is a lower bound, never a road distance, "
+                      "drive time, or fuel cost"),
+                _axis("no_customer_travel", no_travel,
+                      lambda row: Decimal(row["total_cash_usd"]),
+                      "delivery removes the trip, not the fee or the delivery-area condition"),
+                _axis("two_stop_cash_lower_bound", two_stop,
+                      lambda row: Decimal(row["total_cash_lower_bound_usd"]),
+                      "ranked on a proven cash lower bound because at least one merchant "
+                      "leg states no fee or store; it is not a total and not a verified trip"),
+                _axis("grocery_restaurant_hybrid_cash_lower_bound", hybrid,
+                      lambda row: Decimal(row["total_cash_lower_bound_usd"]),
+                      "a hybrid plan combines cash observations at a proven lower bound; no "
+                      "cross-merchant promotion is claimed and it is not a complete meal"),
+                _axis("highest_protein_per_total_cash", priced,
+                      lambda row: (Decimal(row["protein_g"]) / Decimal(row["total_cash_usd"])
+                                   if Decimal(row["total_cash_usd"]) > 0 else Decimal(0)),
+                      "protein is item-label nutrition only, and most observed offers "
+                      "state none", reverse=True),
+            ],
+        })
+
+    return {
+        "schema": "bonfyre-food-fulfillment-route-projection.v1",
+        "method": "bounded exhaustive fulfillment assignment per merchant, order minimums "
+                  "fail closed, exact geodesic tour as a lower bound on road distance",
+        "offers_considered": len(raw_offers),
+        "offers_with_cash_valuation": len(parsed),
+        "condition_only_offer_ids": sorted(condition_only),
+        "merchant_locations": sorted(locations),
+        "origins_considered": len(origins),
+        "by_origin": per_origin,
+        "forbidden_inference": [
+            "geodesic lower bound -> road distance, drive time, or fuel cost",
+            "a stated fee or minimum -> a quoted order total",
+            "an unresolved leg -> a zero-cost leg",
+            "a fulfillment plan -> current availability or authorization to purchase",
+        ],
+    }
+
+
+def _read_jsonl(path: Path) -> list[dict[str, Any]]:
+    return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--offers", type=Path, required=True)
+    parser.add_argument("--locations", type=Path, required=True)
+    parser.add_argument("--origins", type=Path, required=True)
+    parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument("--max-basket-size", type=int, default=MAX_BASKET_SIZE)
+    args = parser.parse_args()
+    locations = json.loads(args.locations.read_text())["locations"]
+    origins = json.loads(args.origins.read_text())["origins"]
+    projection = build_route_projection(_read_jsonl(args.offers), locations, origins,
+                                        args.max_basket_size)
+    args.out.write_text(json.dumps(projection, indent=2, sort_keys=True) + "\n")
+    print(json.dumps({"origins": len(projection["by_origin"]),
+                      "offers_with_cash_valuation": projection["offers_with_cash_valuation"]},
+                     sort_keys=True))
+
+
+if __name__ == "__main__":
+    main()

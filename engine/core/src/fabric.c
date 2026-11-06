@@ -1,6 +1,14 @@
+/* POSIX interfaces used below are hidden by glibc under -std=c11 unless a
+   feature macro is set. macOS exposes them regardless, which is why this
+   whole class only surfaced on the Linux deployment host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 #include "bonfyre_fabric.h"
 #include "bonfyre_fabric_internal.h"
 #include "bf_workgraph.h"
+#include "bf_lifecycle.h"
 #include "bonfyre.h"
 
 #include <ctype.h>
@@ -176,6 +184,10 @@ static int open_db(sqlite3 **db_out, FILE *err) {
         return -1;
     }
     if (bf_workgraph_migrate_database(db, err) != 0) {
+        sqlite3_close(db);
+        return -1;
+    }
+    if (bf_lifecycle_migrate_database(db, err) != 0) {
         sqlite3_close(db);
         return -1;
     }

@@ -1,0 +1,19 @@
+{
+  "state": "passed",
+  "first": {
+    "receipt": {
+      "state": "passed"
+    },
+    "seq": 1
+  },
+  "second": {
+    "receipt": {
+      "state": "passed"
+    },
+    "seq": 2
+  },
+  "parity": {
+    "equal": true,
+    "id": "parity-1"
+  }
+}

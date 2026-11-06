@@ -86,6 +86,35 @@ int main(int argc, char **argv) {
         return fail("unbound is not activated");
     }
 
+    /*
+     * A downstream SupplyMatch refresh owns eligibility, not activation
+     * authority. Re-projecting eligibility must preserve the actor set above.
+     */
+    if (bf_activation_project_eligibility(
+            act, "r:1", 1, "DemandBook/SupplyMatch:evidence=test", NULL) != 0) {
+        return fail("project eligibility");
+    }
+    if (bf_activation_state(act, "r:1", 1, 1) != BF_ACT_ACTIVATED) {
+        return fail("eligibility refresh must preserve activate_actor");
+    }
+
+    /* Retraction drops the resource back to QUALIFIED even while authority and
+     * binding are hypothetically present; eligibility is a real gate. */
+    if (bf_activation_project_eligibility(
+            act, "r:1", 0, "DemandBook/SupplyMatch:retracted", NULL) != 0) {
+        return fail("retract eligibility");
+    }
+    if (bf_activation_state(act, "r:1", 1, 1) != BF_ACT_QUALIFIED) {
+        return fail("eligibility retraction must drop to qualified");
+    }
+    if (bf_activation_project_eligibility(
+            act, "r:1", 1, "DemandBook/SupplyMatch:evidence=test2", NULL) != 0) {
+        return fail("restore eligibility");
+    }
+    if (bf_activation_state(act, "r:1", 1, 1) != BF_ACT_ACTIVATED) {
+        return fail("restored eligibility must reuse independent actor/binding");
+    }
+
     bf_activation_close(act);
     printf("DB=%s\n", db_path);
     printf("activation_test: PASS\n");

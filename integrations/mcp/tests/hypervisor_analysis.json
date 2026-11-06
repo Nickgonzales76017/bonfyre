@@ -1,0 +1,130 @@
+{
+  "schema": "bonfyre.oxlint-audit.v1",
+  "analyzer_argv": [
+    "env",
+    "NAPI_RS_NATIVE_LIBRARY_PATH=/Users/nickgonzales/.bun/install/cache/@oxlint/binding-darwin-arm64@1.86.0@@@1/oxlint.darwin-arm64.node",
+    "node",
+    "/Users/nickgonzales/.bun/install/cache/oxlint@1.86.0@@@1/bin/oxlint"
+  ],
+  "status": "pass",
+  "tool": {
+    "name": "Oxlint",
+    "version": "1.86.0"
+  },
+  "files_analyzed": 22,
+  "rules_analyzed": 96,
+  "inputs": [
+    {
+      "path": "integrations/mcp/mission_plan.mjs",
+      "bytes": 6607,
+      "sha256": "d3446c8c476a28c62953417ef05df1ca82d176f95e13a7807adf5cf231051043"
+    },
+    {
+      "path": "integrations/mcp/hypervisor_store.mjs",
+      "bytes": 31548,
+      "sha256": "aedafc9c022e741e692251151f9c9cc2a5819c48018f3275aa8b92d13bf10c6f"
+    },
+    {
+      "path": "integrations/mcp/hypervisor_missions.mjs",
+      "bytes": 19632,
+      "sha256": "e4699dcbdb3f0005be3482f5fb103331647754c62ea1863c00726940031065f3"
+    },
+    {
+      "path": "integrations/mcp/hypervisor_discovery.mjs",
+      "bytes": 4536,
+      "sha256": "6effd8ec7ae0a79a6e6203c3fd8170d8fab39a75589bec9a1a740af1dfb896d6"
+    },
+    {
+      "path": "integrations/mcp/native_probe.mjs",
+      "bytes": 5320,
+      "sha256": "b84ccc20780c7feecca5036eeb79dabd2c637ed253453cb41f83dbfce073e858"
+    },
+    {
+      "path": "integrations/mcp/v6_hypervisor_bridge.mjs",
+      "bytes": 5370,
+      "sha256": "95fbb4962a283cd3a8ede679af04255cc07f03b60f37abf98529c330ae998f2b"
+    },
+    {
+      "path": "integrations/mcp/canonical_json.mjs",
+      "bytes": 4307,
+      "sha256": "72ab7d3f9301d1016c7354abcb1c976365728f71dca4bdc8a730eb7cbb9168ea"
+    },
+    {
+      "path": "integrations/mcp/v6_server.mjs",
+      "bytes": 11419,
+      "sha256": "1adcc9774083deb7b821f587d8101df201467859f7a24ed8ef44684c88d92c97"
+    },
+    {
+      "path": "integrations/mcp/v6_resources.mjs",
+      "bytes": 33899,
+      "sha256": "b1f1f9e0eb6851f8f8b9c5912018313e3e93ac326d13f1cea3f1fcc7d38767ba"
+    },
+    {
+      "path": "integrations/mcp/v6_history.mjs",
+      "bytes": 24690,
+      "sha256": "6f47adc0007233774f58aa29afcb62642aed874c0da1362b8dd472f53d44b3e7"
+    },
+    {
+      "path": "integrations/mcp/recursive_store.mjs",
+      "bytes": 42375,
+      "sha256": "d94a1bd7d6152fe66c12a3bc9e0832d87a9b5b0ca7268252157b2a510ad4e1b7"
+    },
+    {
+      "path": "integrations/mcp/tests/mission_plan.test.mjs",
+      "bytes": 4873,
+      "sha256": "82bc53c29a91a27d7f05284c891329b6a99a1badc0448477717eae68de5f2351"
+    },
+    {
+      "path": "integrations/mcp/tests/hypervisor_store.test.mjs",
+      "bytes": 9715,
+      "sha256": "c634c7e271f951d18c1da96f0fc02597482a62be09caf0d94910f7657f4d6913"
+    },
+    {
+      "path": "integrations/mcp/tests/hypervisor_missions.test.mjs",
+      "bytes": 8569,
+      "sha256": "6d3ec6f15bee5a99faf06515c6697deccd6d5c1e84a33dfabfac3be79ed4c5f9"
+    },
+    {
+      "path": "integrations/mcp/tests/hypervisor_discovery.test.mjs",
+      "bytes": 11724,
+      "sha256": "121141136fa2fd2f5e3db8a3bffb5cd756ea539187d7b5eb09ca9cc151723985"
+    },
+    {
+      "path": "integrations/mcp/tests/v6_hypervisor_bridge.test.mjs",
+      "bytes": 3485,
+      "sha256": "400c5c4b86659dc0478730f9bde9d2023d5c43eef61b835284da55b750b512ce"
+    },
+    {
+      "path": "integrations/mcp/tests/v6_transport.test.mjs",
+      "bytes": 8059,
+      "sha256": "ce59433725479705857e47165c85857d4e872e44729abe8c3bdd20a1bacb5713"
+    },
+    {
+      "path": "integrations/mcp/tests/v6_history.test.mjs",
+      "bytes": 7968,
+      "sha256": "1686e75af5917983dd06c2654e995d46de17e1fa1ef9be41b1070e64945d5f93"
+    },
+    {
+      "path": "integrations/mcp/tests/recursive_store.test.mjs",
+      "bytes": 13933,
+      "sha256": "82e57775cf7a5ae9d3309d5f663ef0da59b93335479b309e2985b33dbb45be9a"
+    },
+    {
+      "path": "tests/hypervisor_history_witness.mjs",
+      "bytes": 4395,
+      "sha256": "b9468ab7c408c2d15bf8812f4622997b134ae66ccce6d944c7ec25e6b88258c2"
+    },
+    {
+      "path": "integrations/mcp/tests/hypervisor_route_benchmark.mjs",
+      "bytes": 4194,
+      "sha256": "8573ad3cb7d485d2434868051918b5decadc3fbaf742f910368ebd58ff3286b7"
+    },
+    {
+      "path": "integrations/mcp/tests/hypervisor_discovery_benchmark.mjs",
+      "bytes": 9572,
+      "sha256": "bf06fffc736bf8d4cb7dc19a0ed54ef137ef381c76f53a2940a41a3f17aeccc5"
+    }
+  ],
+  "scope_sha256": "9a335e6438b7452de1468c5c88beb5ae73f6af52bc05abc4f6d84faf71440689",
+  "diagnostics": []
+}

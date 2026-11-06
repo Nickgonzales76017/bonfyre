@@ -1,0 +1,36 @@
+scope	local HTTPS test carrier; native Auth/CMS/WebAddress; no public deployment
+native_sha256	8213c3e6020a1ff0efb00c9aa5dac02ba05d064d9b045f45825fb279c123cc41
+browser	Chrome/146.0.7680.178
+passed	fallback-no-script renders the exact hidden continuation
+passed	fallback-no-script retains continuation when choosing account creation
+passed	fallback-no-script registration reaches sign-in with the selected item
+passed	fallback-no-script registration did not mint a browser session
+passed	fallback-no-script failed sign-in retains the selected item
+passed	fallback-no-script returns to the real item with query and fragment
+passed	fallback-no-script native session is secure and HttpOnly
+passed	fallback-no-script item was not saved by registration
+passed	fallback-no-script explicit save appears in the person’s native collection
+passed	fallback-no-script layout fits its viewport
+passed	fallback-script renders the exact hidden continuation
+passed	fallback-script retains continuation when choosing account creation
+passed	fallback-script registration reaches sign-in with the selected item
+passed	fallback-script registration did not mint a browser session
+passed	fallback-script failed sign-in retains the selected item
+passed	fallback-script returns to the real item with query and fragment
+passed	fallback-script native session is secure and HttpOnly
+passed	fallback-script item was not saved by registration
+passed	fallback-script explicit save appears in the person’s native collection
+passed	fallback-script layout fits its viewport
+passed	cms-authored-phone renders the exact hidden continuation
+passed	cms-authored-phone retains continuation when choosing account creation
+passed	cms-authored-phone registration reaches sign-in with the selected item
+passed	cms-authored-phone registration did not mint a browser session
+passed	cms-authored-phone failed sign-in retains the selected item
+passed	cms-authored-phone returns to the real item with query and fragment
+passed	cms-authored-phone native session is secure and HttpOnly
+passed	cms-authored-phone item was not saved by registration
+passed	cms-authored-phone explicit save appears in the person’s native collection
+passed	cms-authored-phone layout fits its viewport
+passed	separate browser contexts retain three independent native saved records
+passed	removing the first person’s copy leaves the recipient’s collection intact
+passed	browser runtime reports no JavaScript exceptions

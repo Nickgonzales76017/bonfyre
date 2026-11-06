@@ -1,0 +1,77 @@
+{
+  "version": "bonfyre-surface-pattern-v1",
+  "surface": "channels",
+  "pattern": "MomentThread",
+  "interaction_target": "stream -> topic team conversation",
+  "borrowed": "behaviour only \u2014 the two-level rail, sender grouping, the unread divider, the hover action bar and the keyboard. No ontology, no backend.",
+  "reads": [
+    "/events",
+    "/observations",
+    "/_surface/capabilities",
+    "/_surface/federations"
+  ],
+  "streams": {
+    "occurrences": "/events",
+    "sources": "/observations",
+    "capabilities": "/_surface/capabilities",
+    "federation": "/_surface/federations"
+  },
+  "shape": "four streams split into topics; each stream keeps its own outcome so one refusal does not empty the page",
+  "interaction": [
+    "collapsible stream headers with a per-stream unread total",
+    "topics carry their own unread count and go bold until read",
+    "a 'new since you last opened this topic' divider, from localStorage",
+    "consecutive messages from the same sender collapse under one avatar",
+    "sticky day separators on the streams that record a time",
+    "hover action bar per message \u2014 react, quote, link, resolve",
+    "J/K message, N/P topic, End latest, / filter, Esc clear",
+    "jump-to-latest appears once you scroll away from the end"
+  ],
+  "refusal_states": [
+    "refused (401/403) \u2014 the stream shows a red dot and offers the session, its topics are not drawn",
+    "empty (200, no records) \u2014 an empty projection, named as one",
+    "failed (other) \u2014 nothing rendered rather than stale or invented"
+  ],
+  "actions": "offered, never submitted; the composer keeps your draft and says why it does not carry it",
+  "observed_2026_09_04": {
+    "occurrences": "10 CloudEvents, all org.bonfyre.workgraph.ready, subjects under queue.",
+    "sources": "conflict rows per watched source; no timestamp is recorded, so the topic bar says so",
+    "capabilities": "103 records with stage, cost, latency and binary",
+    "federation": "7 peers across the federation protocols"
+  },
+  "forbidden_inference": [
+    "an occurrence -> work; the queue emitted it and nobody accepted it",
+    "a content change -> a meaningful change; the bytes differed, that is all",
+    "a read topic -> a handled one; unread state records where you stopped reading",
+    "a listed capability -> a purchased one; price is quoted at /mpp/quote and gated at 402",
+    "a reachable peer -> an endorsement; reachability is not agreement",
+    "a stream -> a chat feed; these are institutional occurrences, and none of them was addressed to you"
+  ],
+  "owner": {
+    "kind": "organ",
+    "name": "/events"
+  },
+  "extent": "workspace",
+  "carries_action_layer": true,
+  "action_layer": [
+    "Send",
+    "React",
+    "Quote",
+    "Resolve"
+  ],
+  "requires_authority": "a message into a stream is an effect on that stream; the composer keeps the draft and does not submit it",
+  "lineage": {
+    "project": "Zulip",
+    "files": [
+      "web/styles/*.css via web/postcss.config.js",
+      "web/templates/message_group.hbs",
+      "web/templates/recipient_row.hbs",
+      "web/templates/single_message.hbs",
+      "web/templates/stream_sidebar_row.hbs",
+      "web/templates/topic_list_item.hbs"
+    ],
+    "commit": "1d46e045c0deeb2d5f8a939f888b9217d420924d",
+    "licence_text": "site/matrix/DONOR-LICENSES/zulip/",
+    "note_licence": "licence classification removed: the operator owns these projects and an automated pass had marked them otherwise. Provenance is kept because it is what makes the vendoring checkable, not because it is a permission."
+  }
+}

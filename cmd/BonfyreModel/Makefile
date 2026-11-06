@@ -1,16 +1,31 @@
 CC     ?= cc
 CFLAGS ?= -O2 -Wall -Wextra -std=c11
-LOCAL_CFLAGS = -I../../lib/libbonfyre/include
-LDFLAGS  = -L../../lib/libbonfyre -lbonfyre -lsqlite3
+CFLAGS += -I../BonfyreLex/src
+LOCAL_CFLAGS = -I../../lib/libbonfyre/include -I../../engine/core/include
+# Dead stripping keeps the installed organ inside the native ratchet's byte budget.
+comma := ,
+LDFLAGS  = -lsqlite3 $(if $(filter Darwin,$(shell uname -s)),-Wl$(comma)-dead_strip,-Wl$(comma)--gc-sections)
+LIB = ../../lib/libbonfyre/libbonfyre.a
+# The memory ledger every model loader asks before it loads.
+FABRIC = ../../engine/core/libbonfyre-fabric.a
 TARGET  = bonfyre-model
 SRC     = src/main.c
 
 all: $(TARGET)
 
-$(TARGET): $(SRC)
-	$(CC) $(CFLAGS) $(LOCAL_CFLAGS) -o $(TARGET) $(SRC) $(LDFLAGS)
+test: $(TARGET)
+	python3 ./tests/manifest_test.py ./$(TARGET)
+	./tests/representation_passport_test.sh ./$(TARGET)
+	python3 ./tests/file_verification_test.py ./$(TARGET)
+	./tests/local_test.sh ./$(TARGET)
+
+$(LIB): force-library
+	$(MAKE) -C ../../lib/libbonfyre
+
+$(TARGET): $(SRC) $(LIB)
+	$(CC) $(CFLAGS) $(LOCAL_CFLAGS) -o $(TARGET) $(SRC) $(LIB) $(FABRIC) $(LDFLAGS)
 
 clean:
 	rm -f $(TARGET)
 
-.PHONY: all clean
+.PHONY: all clean test force-library

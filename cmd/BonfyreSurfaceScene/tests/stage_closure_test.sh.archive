@@ -1,0 +1,67 @@
+#!/bin/sh
+set -eu
+root=$(CDPATH= cd -- "$(dirname -- "$0")/../../.." && pwd)
+tool="$root/cmd/BonfyreSurfaceScene/tools/compile_stage_closure.py"
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/bonfyre-stage-closure.XXXXXX")
+trap 'rm -rf "$tmp"' EXIT INT TERM
+
+python3 - "$tmp/items.jsonl" "$tmp/frontier.json" "$tmp/atlas.db" <<'PY'
+import json,sqlite3,sys
+items,frontier,atlas=sys.argv[1:4]
+rows=[]
+def add(kind,n,source):
+    for i in range(n):
+        rows.append({"source":source,"key":"%s-%d"%(kind,i),"kind":kind,"title":"%s %d"%(kind,i),
+                     "ident":"Q%d"%(100+i) if kind in ("event","place") else ""})
+add("event",4,"calendar")
+add("place",40,"places")
+add("photo",16,"commons")
+add("audio",14,"archive")
+add("video",12,"peertube")
+add("post",80,"forums")
+add("story",20,"news")
+with open(items,"w") as f:
+    for r in rows: f.write(json.dumps(r)+"\n")
+json.dump({"root_count":137,"roots":[]},open(frontier,"w"))
+db=sqlite3.connect(atlas)
+db.execute("create table relation(src text,relation text,dst text,evidence text)")
+db.execute("insert into relation values(?,?,?,?)",("event-0","happens_at","qid:Q16557","linker:fixture"))
+db.execute("insert into relation values(?,?,?,?)",("calendar:event-1","mentions","qid:Q123","linker:fixture"))
+db.commit()
+PY
+
+python3 "$tool" --items "$tmp/items.jsonl" --frontier-hierarchy "$tmp/frontier.json" --latent-db "$tmp/atlas.db" --subject "event:test" >"$tmp/dense.json"
+
+python3 - "$tmp/dense.json" <<'PY'
+import json,sys
+d=json.load(open(sys.argv[1]))
+assert d["stageable"] is True
+assert d["typed_counts"]["events"]==4
+assert {"stage","agenda","map","gallery","listen","watch","channels","community","context"} <= set(d["grammars"]),d["grammars"]
+assert d["frontier_root_count"]==137
+gpu={j["job"]:j for j in d["compute_plan"] if j["backend_candidate"]=="vgpu"}
+assert "spatial-neighborhood" in gpu,gpu
+assert "media-similarity" in gpu,gpu
+assert "conversation-cluster" in gpu,gpu
+assert "scene-score" in gpu,gpu
+assert len(d["relations"])==2,d["relations"]
+assert any("gpu candidate" in x for x in d["cannot_infer"])
+PY
+
+python3 - "$tmp/items.jsonl" "$tmp/noevent.jsonl" <<'PY'
+import json,sys
+src,dst=sys.argv[1:3]
+with open(dst,"w") as out:
+    for line in open(src):
+        row=json.loads(line)
+        if row["kind"]!="event": out.write(json.dumps(row)+"\n")
+PY
+python3 "$tool" --items "$tmp/noevent.jsonl" --subject "event:missing" >"$tmp/noevent.json"
+python3 - "$tmp/noevent.json" <<'PY'
+import json,sys
+d=json.load(open(sys.argv[1]))
+assert d["stageable"] is False
+assert "stage" not in d["grammars"] and "agenda" not in d["grammars"]
+assert "watch" in d["grammars"] and "listen" in d["grammars"]
+print("stage closure: PASS")
+PY

@@ -1,0 +1,13 @@
+{
+  "id": "qwen2.5-coder-0.5b-native-fp16-fpq0",
+  "name": "Qwen2.5-Coder-0.5B native FP16 FPQ0 runtime artifact",
+  "description": "Observed native 24-layer Qwen runtime baseline. The FPQ0 container is present but all 290 runtime tensors were native-F16 passthrough in this receipt.",
+  "format": "fpq0",
+  "sha256": "73c4894819f399e04ef252c90b61ab04d031a46ce31bfb95d1053b143da3952e",
+  "size_mb": 942.312559,
+  "transform_family": "FPQ0-v10",
+  "geometry": "decoder-only",
+  "sources": [
+    "file:///Users/nickgonzales/BonfyreModels/fpq/qwen2.5-coder-0.5b-instruct-native-fp16.fpq"
+  ]
+}

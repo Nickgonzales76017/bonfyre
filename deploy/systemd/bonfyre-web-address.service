@@ -1,0 +1,25 @@
+[Unit]
+Description=Bonfyre Matrix Web Address compiler
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+Environment=BONFYRE_WEB_ADDRESS_WORKERS=4
+Environment=BONFYRE_FOREIGN_DISCOVER_BIN=/opt/bonfyre/native-src/scripts/foreign-discover.mjs
+EnvironmentFile=/etc/bonfyre/web-address.env
+ExecStartPre=/usr/local/bin/bonfyre-web-address bootstrap-owned --db ${BONFYRE_MATRIX_DB}
+ExecStart=/usr/local/bin/bonfyre-web-address serve --db ${BONFYRE_MATRIX_DB} --port ${BONFYRE_WEB_ADDRESS_PORT} --workers ${BONFYRE_WEB_ADDRESS_WORKERS} --site-root ${BONFYRE_SITE_ROOT}
+Restart=always
+RestartSec=2
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/bonfyre
+ReadOnlyPaths=/opt/bonfyre/site
+
+[Install]
+WantedBy=multi-user.target

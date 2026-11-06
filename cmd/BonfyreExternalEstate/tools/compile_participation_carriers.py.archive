@@ -1,0 +1,26 @@
+#!/usr/bin/env python3
+"""Historical Python compiler; compile_coordination_family.mjs supersedes it."""
+import argparse, hashlib, json
+from pathlib import Path
+ROOT=Path(__file__).resolve().parents[3]
+ROOTS={
+ "github-repository":"project,operator,support", "reddit-community":"community,operator", "discord-server":"community,operator",
+ "event-organizer":"occurrence,community,operator", "education-institution":"institution,program,household",
+ "resource-directory-entry":"household,institution,opportunity", "property-platform-record":"property,household,institution",
+ "commerce-catalogue":"product,merchant,household", "neighborhood-network":"world,community,household,business"}
+class Refusal(ValueError): pass
+def compile(envelope):
+ required=("provider","carrier_kind","source_ref","receipt_ref","observed_at","payload")
+ if any(not envelope.get(k) for k in required): raise Refusal("carrier envelope missing required receipt-bound field")
+ kind=envelope["carrier_kind"]; payload=envelope["payload"]
+ if kind not in ROOTS or not isinstance(payload,dict): raise Refusal("unknown carrier kind")
+ external,title,href=str(payload.get("id","")),payload.get("title",""),payload.get("url","")
+ if not external or not title or not href.startswith("https://"): raise Refusal("carrier payload needs exact id, title, HTTPS URL")
+ cid="carrier-"+hashlib.sha256((envelope["provider"]+"\x1f"+kind+"\x1f"+external).encode()).hexdigest()[:24]
+ return {"type":"external_participation_carrier","namespace":"root","body":{"carrier_id":cid,"provider":envelope["provider"],"carrier_kind":kind,"external_id":external,"title":title,"canonical_href":href,"candidate_roots":ROOTS[kind],"source_ref":envelope["source_ref"],"receipt_ref":envelope["receipt_ref"],"observed_at":envelope["observed_at"],"cannot_infer":"a public carrier is not a Bonfyre subject, membership, support relation, authority grant, payment, private-data access, or effect right","status":"published"}}
+def main():
+ p=argparse.ArgumentParser();p.add_argument("--input",type=Path,required=True);p.add_argument("--out",type=Path,required=True);a=p.parse_args()
+ try:r=compile(json.loads(a.input.read_text()))
+ except (OSError,ValueError,TypeError) as e:print("participation carrier compiler: %s"%e);return 2
+ a.out.write_text(json.dumps(r,sort_keys=True)+"\n");print(json.dumps({"rows":1,"truth":"public carrier only"}));return 0
+if __name__=="__main__":raise SystemExit(main())

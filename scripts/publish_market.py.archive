@@ -1,0 +1,164 @@
+#!/usr/bin/env python3
+"""Historical parity oracle: observed lots shown as a chain rather than a card.
+
+A marketplace card tells you a thing is for sale and gives you a button. That
+is a lie of omission on someone else's behalf: the button belongs to the
+merchant, the price belongs to the merchant, and the estate showing it owns
+none of it.
+
+What this estate can honestly show is better, and it comes from an organ that
+was measured against all two hundred and twenty-five stage pairs before
+anything called it. A lot is an exchange with fifteen stages. This estate's
+observation establishes exactly two of them -- a product is described, a
+marketplace carries it -- and the other thirteen are shown as what they are:
+outstanding, each naming the party who alone could establish it.
+
+So instead of a button, each lot shows the chain. What has happened, what each
+established fact still does not mean, what has not happened, and whose move it
+is. A reader learns more from that than from a price, and nothing on the page
+claims a fact this estate does not hold.
+
+  publish_market.py --out DIR [--host aurekai.shop]
+"""
+import argparse, html, json, os, sqlite3, subprocess, sys, time
+
+NOW = time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime())
+
+BOUNDARY = ("This estate observed a marketplace publish these lots. Nothing here says the thing "
+            "exists, is in stock, is the seller's to sell, is still obtainable, or carries any "
+            "price this estate has seen. This estate performs no part of any exchange: it records "
+            "what it observed and names who would have to act next.")
+
+
+def esc(v):
+    return html.escape(str(v if v is not None else ""))
+
+
+def stage_vocabulary(commerce_bin):
+    done = subprocess.run([commerce_bin, "stages"], capture_output=True, text=True)
+    try:
+        return {s["stage"]: s for s in json.loads(done.stdout)["stages"]}
+    except Exception:
+        return {}
+
+
+def progress_of(commerce_bin, store, exchange):
+    done = subprocess.run([commerce_bin, "progress", "--db", store, "--exchange", exchange],
+                          capture_output=True, text=True)
+    try:
+        return json.loads(done.stdout)
+    except Exception:
+        return None
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--estate", default=os.path.expanduser("~/.bonfyre/estate-local"))
+    ap.add_argument("--repo", default=os.path.expanduser("~/Developer/Bonfyre"))
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--limit", type=int, default=60)
+    args = ap.parse_args()
+
+    commerce_bin = os.path.join(args.repo, "cmd/BonfyreCommerce/bonfyre-commerce")
+    store = os.path.join(args.estate, "commerce.db")
+    cms_path = os.path.join(args.estate, "cms.db")
+    vocabulary = stage_vocabulary(commerce_bin)
+
+    lots = []
+    if os.path.exists(cms_path):
+        cms = sqlite3.connect("file:%s?mode=ro" % cms_path, uri=True)
+        cms.row_factory = sqlite3.Row
+        try:
+            lots = [dict(r) for r in cms.execute(
+                "SELECT offer_id AS exchange, marketplace, title, canonical_href AS href, observed_at,"
+                " 0 AS price_observed, '' AS currency, cannot_infer"
+                " FROM service_offer"
+                " WHERE namespace='root' AND status='published'"
+                " AND assertion_state='OBSERVED' AND offer_status='observed'"
+                " ORDER BY observed_at DESC LIMIT ?", (args.limit,))]
+        except sqlite3.OperationalError:
+            # Estates published before the owner schema existed can still be
+            # rendered. Once service_offer is present it is authoritative: an
+            # empty owner stream is not permission to revive stale rows.
+            try:
+                lots = [dict(r) for r in cms.execute(
+                    "SELECT exchange, marketplace, title, href, observed_at, price_observed, currency"
+                    " FROM commerce_lot ORDER BY observed_at DESC LIMIT ?", (args.limit,))]
+            except sqlite3.OperationalError:
+                lots = []
+        cms.close()
+
+    out = ['<!doctype html><html lang="en"><head><meta charset="utf-8">',
+           '<meta name="viewport" content="width=device-width,initial-scale=1">',
+           '<title>Lots this estate has observed · Aurekai</title>',
+           '<link rel="stylesheet" href="/assets/tailwind.css">',
+           '<link rel="stylesheet" href="/assets/world.css">',
+           '<script src="/assets/client-organs.js" defer></script>',
+           '<meta name="bonfyre:cannot-infer" content="', esc(BOUNDARY), '">',
+           '</head><body><main class="wrap">',
+           '<header class="region"><h1>Lots this estate has observed</h1>',
+           '<p class="src">', esc(BOUNDARY), '</p>',
+           '<p class="src">Stated ', esc(NOW), '. What it costs this estate to read anything is at '
+           '<a href="/economics">/economics</a>.</p></header>']
+
+    if not lots:
+        out.append('<section class="region"><p class="src">No marketplace lot has been observed '
+                   'yet. That is a fact about what this estate has read, not about what is for '
+                   'sale anywhere.</p></section>')
+    else:
+        out.append('<section class="region"><h2 class="region-label">%d lots</h2></section>' % len(lots))
+        for lot in lots:
+            chain = progress_of(commerce_bin, store, lot["exchange"])
+            out.append('<section class="region"><h2>')
+            if lot["href"].startswith("http"):
+                out.append('<a href="%s" rel="noopener nofollow" target="_blank">%s</a>'
+                           % (esc(lot["href"]), esc(lot["title"])))
+            else:
+                out.append(esc(lot["title"]))
+            out.append('</h2><p class="by"><span>%s</span><span>observed %s</span><span>%s</span></p>'
+                       % (esc(lot["marketplace"]), esc(lot["observed_at"] or "at an unrecorded time"),
+                          esc("price not observed" if not lot["price_observed"]
+                              else "%s %s observed" % (lot["price_observed"], lot["currency"]))))
+            if not chain:
+                out.append('<p class="src">This lot has no chain recorded.</p></section>')
+                continue
+            out.append('<h3 class="region-label">Established</h3><ol class="more">')
+            for row in chain.get("established", []):
+                out.append('<li><strong>%s</strong><span class="by"><span>which does not establish %s</span>'
+                           '</span></li>' % (esc(row["stage"]), esc(row["does_not_establish"])))
+            out.append('</ol>')
+            outstanding = chain.get("outstanding", [])
+            if outstanding:
+                out.append('<h3 class="region-label">Not established — and whose move it is</h3>'
+                           '<ol class="more">')
+                for row in outstanding:
+                    out.append('<li><strong>%s</strong><span class="by"><span>%s</span></span></li>'
+                               % (esc(row["stage"]), esc(row["owner"])))
+                out.append('</ol>')
+            out.append('<p class="src">%s</p></section>' % esc(
+                lot.get("cannot_infer") or chain.get("cannot_infer", "")))
+
+    if vocabulary:
+        out.append('<section class="region"><h2 class="region-label">The chain itself</h2>'
+                   '<p class="src">Fifteen stages, each requiring exactly the one before it. '
+                   'Recording one establishes that stage and nothing later.</p><ol class="more">')
+        for name, row in vocabulary.items():
+            out.append('<li><strong>%s</strong><span class="by"><span>%s</span>'
+                       '<span>does not establish %s</span></span></li>'
+                       % (esc(name), esc(row["owner"]), esc(row["does_not_establish"])))
+        out.append('</ol></section>')
+
+    out.append('</main></body></html>')
+    page = "".join(out)
+
+    os.makedirs(args.out, exist_ok=True)
+    with open(os.path.join(args.out, "market.html"), "w") as f:
+        f.write(page)
+    print(json.dumps({"lots": len(lots), "stages_in_vocabulary": len(vocabulary),
+                      "wrote": "market.html", "bytes": len(page),
+                      "cannot_infer": BOUNDARY}, indent=1))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,3 +1,8 @@
+/* fileno is POSIX, not C11; glibc hides it under -std=c11 without this. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 #include "workgraph_internal.h"
 
 #include <errno.h>

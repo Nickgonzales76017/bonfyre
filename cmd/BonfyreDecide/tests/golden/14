@@ -1,0 +1,56 @@
+exit 0
+{
+ "schema": "bonfyre.books.v3",
+ "lines": 1,
+ "by_learned": 0,
+ "suggested_by_model": 0,
+ "to_review": 1,
+ "amounts_unread": 0,
+ "learned": null,
+ "model": null,
+ "model_artifact_sha256": null,
+ "model_error": "the local model at http://127.0.0.1:9 is not answering (Unable to connect. Is the computer able to access the url?). Start it with: bonfyre-moe serve --port 7000   (see: bonfyre model local)",
+ "seconds": T,
+ "booked_by_account": [],
+ "totals": [],
+ "totals_unavailable": "the file has no amounts, so there are line counts by account and no money totals",
+ "transactions": [
+  {
+   "line": 2,
+   "date": "",
+   "description": "Rent",
+   "amount_cents": -2000,
+   "amount": -20,
+   "amount_text": "-20",
+   "amount_known": true,
+   "amount_unread": false,
+   "account": "",
+   "suggested": "none",
+   "confidence": null,
+   "decided_by": "none",
+   "review": true,
+   "source": {
+    "sha256": "3677507b0a60cf4b97fb4bc66b41a6547e896604288a88248e66aa39b9996e77",
+    "sheet": "Bank",
+    "row": 3,
+    "cells": {
+     "description": "A3",
+     "amount": "B3"
+    },
+    "hidden": false
+   }
+  }
+ ],
+ "receipts": [
+  null
+ ],
+ "cannot_infer": "a booked line -> a reviewed ledger; the client or their bookkeeper still owns the books, and a line sent to review is not booked",
+ "source_workbook": {
+  "filename": "FIX/xlsx/multi.xlsx",
+  "sha256": "3677507b0a60cf4b97fb4bc66b41a6547e896604288a88248e66aa39b9996e77",
+  "sheet": "Bank",
+  "range": "A1:B3",
+  "header_row": 2,
+  "hidden_sheet": false
+ }
+}

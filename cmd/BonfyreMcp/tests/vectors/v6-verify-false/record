@@ -1,0 +1,1 @@
+{"authorization":"Bearer fixture-token","body":{"id":"@ID@","jsonrpc":"2.0","method":"tools/call","params":{"arguments":{},"name":"v6_verify"}},"content-type":"application/json","mcp-protocol-version":"2025-06-18","request":"POST /mcp"}

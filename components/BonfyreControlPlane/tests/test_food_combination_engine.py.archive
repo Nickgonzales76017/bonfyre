@@ -1,0 +1,234 @@
+import sys
+from decimal import Decimal
+from pathlib import Path
+
+import pytest
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import food_combination_engine as fce
+
+
+def _offer(effects, pairs):
+    return fce.parse_offer({"offer_id": "o", "source_url": "https://example.test/o", "observed_at": "2026-08-24T00:00:00Z",
+                            "cash_price_usd": "10", "product_terms": ["beans"], "effects": effects,
+                            "explicit_stack_pairs": pairs})
+
+
+def test_declared_stack_is_exact_and_rebates_points_do_not_reduce_cash():
+    offer = _offer([
+        {"effect_id": "sale", "kind": "sale", "percent": "10"},
+        {"effect_id": "coupon", "kind": "manufacturer_coupon", "amount": "1"},
+        {"effect_id": "rebate", "kind": "rebate", "amount": "2"},
+        {"effect_id": "points", "kind": "points", "amount": "50"},
+    ], [["sale", "coupon"], ["sale", "rebate"], ["sale", "points"], ["coupon", "rebate"], ["coupon", "points"], ["rebate", "points"]])
+    result = fce.value_offer(offer, ["sale", "coupon", "rebate", "points"])
+    assert result.cash_outlay_usd == Decimal("8.0000")
+    assert result.delayed_rebate_usd == Decimal("2.0000")
+    assert result.points == Decimal("50.0000")
+
+
+def test_undeclared_stack_and_unmet_eligibility_fail_closed():
+    offer = _offer([{"effect_id": "a", "kind": "sale", "amount": "1"},
+                    {"effect_id": "b", "kind": "coupon", "amount": "1"}], [])
+    with pytest.raises(fce.OfferError, match="stack-compatible"):
+        fce.value_offer(offer, ["a", "b"])
+    gated = _offer([{"effect_id": "a", "kind": "sale", "amount": "1", "requires": ["membership"]}], [])
+    with pytest.raises(fce.OfferError, match="unmet"):
+        fce.value_offer(gated, ["a"])
+
+
+def test_recipe_match_is_a_lead_not_an_equivalence_or_complete_basket():
+    offer = _offer([], [])
+    recipes = [{"recipe_id": "r", "title": "Beans", "servings": {"count": 2},
+                "ingredients": [{"name": "beans"}, {"name": "mystery substitute"}]}]
+    lead = fce.lexical_recipe_leads(recipes, [offer])[0]
+    assert lead["lexically_matched_ingredients"] == ["beans"]
+    assert lead["unmatched_ingredients"] == ["mystery substitute"]
+    assert lead["status"] == "review_lead_not_substitution_or_complete_basket"
+
+
+def test_projection_keeps_missing_axes_unranked():
+    offer = _offer([], [])
+    projection = fce.build_projection([offer], [])
+    assert projection["pareto_strategies"][1]["selection"] is None
+    assert projection["pareto_strategies"][4]["selection"] is None
+
+
+def test_projection_marks_prepared_food_as_low_cook_without_promoting_it_to_a_meal():
+    offer = fce.parse_offer({
+        "offer_id": "prepared", "source_url": "https://example.test/prepared",
+        "observed_at": "2026-08-24T00:00:00Z", "cash_price_usd": "6",
+        "product_terms": ["prepared food"], "effects": [], "explicit_stack_pairs": [],
+        "channel": "restaurant_value_menu",
+    })
+    selection = fce.build_projection([offer], [])["pareto_strategies"][6]["selection"]
+    assert selection["offer_ids"] == ["prepared"]
+    assert selection["status"] == "observed_component_basket_not_complete_meal"
+
+
+def test_recipe_coverage_requires_source_contained_name_and_explicit_weight_package():
+    offer = fce.parse_offer({
+        "offer_id": "roast", "source_url": "https://example.test/roast",
+        "observed_at": "2026-08-24T00:00:00Z", "cash_price_usd": "10",
+        "product_terms": ["boneless beef chuck roast"], "package_oz": "40.8",
+    })
+    recipe = {"recipe_id": "r", "title": "Roast", "ingredients": [
+        {"name": "beef chuck roast", "quantity": "3", "unit": "lb", "raw": "3 lb beef chuck roast"},
+        {"name": "mystery stock", "quantity": "1", "unit": "c", "raw": "1 c mystery stock"},
+    ]}
+    coverage = fce.recipe_ingredient_coverage([recipe], [offer])
+    match = coverage[0]["covered_ingredients"][0]
+    assert match["name_match_basis"] == "source_product_name_contains_recipe_phrase"
+    assert match["quantity_compatibility"]["packages_required"] == 2
+    assert match["quantity_compatibility"]["unallocated_leftover"]["waste"].startswith("not inferred")
+    assert coverage[0]["status"] == "partial_source_bound_ingredient_coverage_not_complete_recipe_basket"
+
+
+def test_recipe_coverage_does_not_treat_generic_or_alternative_terms_as_exact():
+    offer = fce.parse_offer({
+        "offer_id": "rolls", "source_url": "https://example.test/rolls",
+        "observed_at": "2026-08-24T00:00:00Z", "cash_price_usd": "10",
+        "product_terms": ["pizza rolls"], "package_count": 8,
+    })
+    recipes = [{"recipe_id": "r1", "title": "Bread", "ingredients": [
+        {"name": "rolls", "quantity": "4", "unit": "ea", "raw": "4 ea rolls"}]},
+               {"recipe_id": "r2", "title": "Choice", "ingredients": [
+        {"name": "pizza rolls or crackers", "quantity": "4", "unit": "ea", "raw": "4 ea choice"}]}]
+    assert fce.recipe_ingredient_coverage(recipes, [offer]) == []
+
+
+def test_average_package_weight_is_unit_compatible_but_never_an_exact_leftover():
+    offer = fce.parse_offer({
+        "offer_id": "avg-roast", "source_url": "https://example.test/roast",
+        "observed_at": "2026-08-24T00:00:00Z", "cash_price_usd": "10",
+        "product_terms": ["beef chuck roast"], "package_oz": "40.8",
+        "package_quantity_basis": "source_stated_average",
+    })
+    recipe = {"recipe_id": "r", "title": "Roast", "ingredients": [
+        {"name": "beef chuck roast", "quantity": "3", "unit": "lb", "raw": "3 lb beef chuck roast"}]}
+    match = fce.recipe_ingredient_coverage([recipe], [offer])[0]["covered_ingredients"][0]
+    quantity = match["quantity_compatibility"]
+    assert quantity["status"] == "unit_compatible_source_average_package_not_exact"
+    assert quantity["average_package_count_projection"] == 2
+    assert quantity["unallocated_leftover"]["status"] == "not_determined_from_average_package_weight"
+
+
+def test_seasoned_product_does_not_activate_unseasoned_recipe_ingredient():
+    offer = fce.parse_offer({
+        "offer_id": "seasoned", "source_url": "https://example.test/chicken",
+        "observed_at": "2026-08-24T00:00:00Z", "cash_price_usd": "10",
+        "product_terms": ["seasoned chicken breast for fajitas"], "package_oz": "32",
+    })
+    recipe = {"recipe_id": "r", "title": "Chicken", "ingredients": [
+        {"name": "chicken breast", "quantity": "1", "unit": "lb", "raw": "1 lb chicken breast"}]}
+    assert fce.recipe_ingredient_coverage([recipe], [offer]) == []
+
+
+def test_quantity_promotions_preserve_bogo_buy_x_get_y_and_multibuy_without_cash_allocation():
+    offer = fce.parse_offer({
+        "offer_id": "quantity-laws", "source_url": "https://example.test/quantity-laws",
+        "observed_at": "2026-08-24T00:00:00Z", "cash_price_usd": None,
+        "product_terms": ["observed promotion terms"], "effects": [],
+        "quantity_promotions": [
+            {"promotion_id": "bogo", "law": "bogo", "qualifying_item_terms": ["tea 12 pack"],
+             "qualifying_quantity": 1, "free_item_terms": ["tea 12 pack"], "free_item_quantity": 1,
+             "expires_at": "2026-09-01", "stackability_status": "explicitly_not_stackable"},
+            {"promotion_id": "buy-2-get-1", "law": "buy_x_get_y", "qualifying_item_terms": ["salmon main"],
+             "qualifying_quantity": 2, "free_item_terms": ["sweet potato cubes"], "free_item_quantity": 1,
+             "expiry_source_text": "Expires Tuesday", "stackability_status": "not_stated"},
+            {"promotion_id": "two-for-six", "law": "multibuy", "qualifying_item_terms": ["salad bowl"],
+             "qualifying_quantity": 2,
+             "bundle_cash_price_usd": "6.00", "expires_at": "2026-09-01",
+             "stackability_status": "not_stated"},
+        ],
+    })
+
+    laws = [fce.quantity_promotion_projection(item) for item in offer.quantity_promotions]
+
+    assert laws[0]["law"] == "bogo"
+    assert laws[1]["qualifying_items"] == {"identity_terms": ["salmon main"], "quantity": 2}
+    assert laws[1]["free_items"] == {"identity_terms": ["sweet potato cubes"], "quantity": 1}
+    assert laws[1]["expiry_source_text"] == "Expires Tuesday"
+    assert laws[2]["bundle_cash_outlay_usd"] == "6.0000"
+    assert laws[2]["free_items"] is None
+    assert all(law["per_item_cash_allocation_usd"] is None for law in laws)
+    with pytest.raises(fce.OfferError, match="no per-item cash allocation"):
+        fce.value_offer(offer)
+
+
+def test_quantity_promotions_fail_closed_when_identity_or_multibuy_total_is_missing():
+    base = {"offer_id": "invalid", "source_url": "https://example.test/invalid",
+            "observed_at": "2026-08-24T00:00:00Z", "product_terms": []}
+    with pytest.raises(fce.OfferError, match="free item identities"):
+        fce.parse_offer({**base, "quantity_promotions": [{
+            "promotion_id": "missing-free", "law": "buy_x_get_y", "qualifying_item_terms": ["item"],
+            "qualifying_quantity": 2, "free_item_terms": [], "free_item_quantity": 1,
+        }]})
+    with pytest.raises(fce.OfferError, match="bundle cash price"):
+        fce.parse_offer({**base, "quantity_promotions": [{
+            "promotion_id": "missing-total", "law": "multibuy", "qualifying_item_terms": ["item"],
+            "qualifying_quantity": 2, "free_item_terms": ["item"], "free_item_quantity": 2,
+        }]})
+
+
+def test_store_flyer_quantity_terms_lower_into_canonical_laws_without_inventing_free_items():
+    base = {"source_url": "https://example.test/flyer", "observed_at": "2026-08-24T00:00:00Z",
+            "cash_price_usd": None, "explicit_stack_pairs": [], "expires_at": "2026-08-25T23:59:59-04:00"}
+    rows = [
+        {**base, "offer_id": "unit", "product_terms": ["cheese"], "quantity_promotion": {
+            "kind": "price_when_buy_quantity", "required_quantity": "3", "unit_price_usd": "1.49",
+            "source_term": "WHEN YOU BUY 3"}},
+        {**base, "offer_id": "bundle", "product_terms": ["melon"], "quantity_promotion": {
+            "kind": "bundle_price", "quantity": "3", "bundle_price_usd": "10.00", "source_term": "3 for $10"}},
+        {**base, "offer_id": "bogo", "product_terms": ["guacamole or queso"], "quantity_promotion": {
+            "kind": "buy_get_free", "buy_quantity": "2", "free_quantity": "1", "source_term": "BUY 2 GET 1 FREE"}},
+    ]
+
+    laws = [fce.quantity_promotion_projection(fce.parse_offer(row).quantity_promotions[0]) for row in rows]
+
+    assert laws[0]["law"] == "price_when_buy_quantity"
+    assert laws[0]["unit_cash_price_usd"] == "1.4900"
+    assert laws[0]["free_items"] is None
+    assert laws[1]["law"] == "multibuy"
+    assert laws[1]["bundle_cash_outlay_usd"] == "10.0000"
+    assert laws[1]["free_items"] is None
+    assert laws[2]["free_items"]["identity_terms"] == ["guacamole or queso"]
+    assert all(law["per_item_cash_allocation_usd"] is None for law in laws)
+
+
+def test_bounded_scalar_replay_keeps_all_singletons_and_quantity_laws_without_cubic_growth():
+    scalar_offers = [fce.parse_offer({
+        "offer_id": f"scalar-{number:02d}", "merchant": "Example",
+        "source_url": f"https://example.test/{number}", "observed_at": "2026-08-24T00:00:00Z",
+        "cash_price_usd": str(number + 1), "product_terms": [f"item {number}"],
+    }) for number in range(30)]
+    quantity_offer = fce.parse_offer({
+        "offer_id": "quantity", "merchant": "Example", "source_url": "https://example.test/quantity",
+        "observed_at": "2026-08-24T00:00:00Z", "product_terms": ["tea"],
+        "quantity_promotions": [{
+            "promotion_id": "tea-bogo", "law": "bogo", "qualifying_item_terms": ["tea"],
+            "qualifying_quantity": 1, "free_item_terms": ["tea"], "free_item_quantity": 1,
+        }],
+    })
+
+    projection = fce.build_projection(scalar_offers + [quantity_offer], [],
+                                      max_scalar_combination_offers=5)
+
+    replay = projection["scalar_basket_replay"]
+    assert projection["offers_considered"] == 31
+    assert len(projection["offer_condition_index"]) == 31
+    assert len(projection["quantity_promotions"]) == 1
+    assert replay["scalar_offer_count"] == 30
+    assert replay["singleton_cash_basket_count"] == 30
+    assert replay["combination_frontier_offer_ids"] == [
+        "scalar-00", "scalar-01", "scalar-02", "scalar-03", "scalar-04"]
+    assert replay["omitted_from_multi_offer_search_count"] == 25
+    assert len(projection["cash_baskets"]) == 30 + 10 + 10
+    assert all(set(row["offer_ids"]).issubset(
+        set(replay["combination_frontier_offer_ids"]))
+        for row in projection["cash_baskets"] if len(row["offer_ids"]) > 1)
+
+
+def test_bounded_scalar_replay_requires_a_positive_combination_cap():
+    with pytest.raises(ValueError, match="must be positive"):
+        fce.build_projection([_offer([], [])], [], max_scalar_combination_offers=0)

@@ -1,0 +1,88 @@
+{
+  "schema": "aurekai.commercial-profile-evidence.v1",
+  "person": "Nick Gonzales",
+  "prepared_at": "2026-10-09T07:56:30.583Z",
+  "review_status": "draft_for_nick",
+  "author_supplied": {
+    "source": "gmail:message:1a11f802abc806d2",
+    "experience_years": 10,
+    "rate_usd_per_hour": "40.00",
+    "languages": [
+      "English",
+      "Spanish"
+    ],
+    "invoicing": "solo",
+    "availability": "Flexible with advance notice; GMT overlap. One-hour wording drafted as an acknowledgement aim during agreed working windows, not delivery or 24/7 coverage.",
+    "retention_consent": "Yes, Youssef may retain freelancer details."
+  },
+  "client_work": [
+    {
+      "organization": "Digital Cheetah",
+      "role": "Software development as part of the team",
+      "client_names": [
+        "American Red Cross",
+        "Canadian Red Cross",
+        "USO"
+      ],
+      "basis": "Nick supplied these engagements and stack in his draft; public company page is an organization reference, not proof of personal authorship.",
+      "public_ref": "https://www.digitalcheetah.com/clients"
+    },
+    {
+      "organization": "Upper90 Solutions",
+      "client": "Adjusters International",
+      "role": "Application development and maintenance",
+      "application": "AI Loss Database",
+      "stack": "PHP/MySQL",
+      "scope": "Loss records, payment allocations, estimates and fee splits, imports and reporting",
+      "source": "packs/upper90/products.yaff; packs/upper90/product-contract-ai-loss.yaff",
+      "public_ref": "https://www.adjustersinternational.com/"
+    },
+    {
+      "organization": "Upper90 Solutions",
+      "client": "John R. Steele & Associates",
+      "role": "Application development and maintenance",
+      "application": "JRSS",
+      "stack": "Node.js/Express/PostgreSQL; EJS, htmx, Alpine.js, Bootstrap",
+      "scope": "Equine practice management, daysheets, ownership, billing and reports",
+      "source": "packs/upper90/products.yaff; packs/upper90/product-contract-jrss.yaff",
+      "public_ref": "https://www.steeleclinic.com/"
+    }
+  ],
+  "public_contributions": [
+    {
+      "url": "https://github.com/sipyourdrink-ltd/bernstein/pull/3695",
+      "state": "merged",
+      "scope": "Content-addressed SARIF finding records",
+      "boundary": "Maintainer separately supplied normalization corrections; do not claim sole authorship of those corrections."
+    },
+    {
+      "url": "https://github.com/sipyourdrink-ltd/bernstein/pull/3903",
+      "state": "merged",
+      "scope": "Offline DSSE result-receipt bundle verification"
+    },
+    {
+      "url": "https://github.com/richinmrudul/agentguard/pull/214",
+      "state": "merged",
+      "scope": "Bounded untrusted execution-trace loading"
+    },
+    {
+      "url": "https://github.com/rajudandigam/agent-inspect/pull/229",
+      "state": "merged",
+      "scope": "TypeScript API/CLI/MCP trace-facts parity regression",
+      "boundary": "Regression-test contribution, not authorship of agent-inspect."
+    },
+    {
+      "url": "https://github.com/macports/macports-ports/pull/34009",
+      "state": "merged",
+      "scope": "MacPorts packaging for Bonfyre Statement Import1.0.1",
+      "project": "https://github.com/Nickgonzales76017/bonfyre-statement-import"
+    }
+  ],
+  "excluded_inferences": [
+    "Public company websites are not demonstrations of the private client applications.",
+    "Merged upstream contributions are not commercial client contracts or reference consent.",
+    "The RED3 planner is an Aurekai demonstration, not an established paid RED3 client.",
+    "The Youssef hourly rate is not a TWC price or a standing price for unrelated work.",
+    "No named reference contact has been approved by this profile."
+  ]
+}

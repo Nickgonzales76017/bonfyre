@@ -1,0 +1,22 @@
+{
+  "name": "coverage_volume",
+  "displayName": "Coverage Volume",
+  "description": "What an owner can see, reach, serve or carry from a place: a camera frustum, a delivery radius, a transit service region, a stage's audible area, a radar cell. It describes reach and never entitlement -- a subject inside a coverage volume is not thereby observable, disclosable or servable.",
+  "attributes": {
+    "coverage_id": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "owner_subject": { "type": "string", "required": true },
+    "origin": { "type": "text", "required": true },
+    "heading": { "type": "string" },
+    "pitch": { "type": "string" },
+    "horizontal_extent": { "type": "string" },
+    "vertical_extent": { "type": "string" },
+    "range_m": { "type": "string" },
+    "scale": { "type": "string", "required": true },
+    "region": { "type": "string", "required": true },
+    "cell": { "type": "string", "required": true },
+    "valid_frontier": { "type": "string", "required": true },
+    "quality": { "type": "string" },
+    "derivation": { "type": "string", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

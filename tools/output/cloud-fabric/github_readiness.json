@@ -1,0 +1,10 @@
+{
+  "provider_id": "github",
+  "user_ok": false,
+  "search_ok": false,
+  "user_status": 401,
+  "search_status": 0,
+  "user_error": "[object Object]",
+  "search_error": "search_skipped",
+  "search_count": 0
+}

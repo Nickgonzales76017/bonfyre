@@ -1,0 +1,89 @@
+architecture account-workspace-mcp
+  canonical_name AccountWorkspaceMcp
+  source_path scripts/tests/installed-workspace-contract.test.mjs
+  source_path scripts/tests/fixtures/installed-workspace-contract.json
+  witness scripts/tests/installed-workspace-contract.test.mjs imports exact retained store clients from eleven installed workspace packages across ten families and exercises native creation, edits, conflicts, tombstones, explicit restoration, atomic batches, lost-response readback, cross-account and revoked-write refusal in an isolated estate
+  witness scripts/tests/installed-workspace-contract.test.mjs verifies Catalogue and Room Planning share one destination-owned object and attachment through their original family binding
+  forbidden_inference shared storage-contract acceptance -> complete domain editors, archived-product UX, historical revision browsing, cross-family object identity or a live customer write
+  family surface
+  domain Account / Product continuity through MCP
+  maturity implemented
+  semantic_question Can a signed-in assistant read and revise the same private draft that its user opens in an installed product, without copying records or widening account access?
+  purpose Project existing installed workspace bindings, revisioned drafts and compatible editor continuations through the account MCP carrier, with scalar changes and domain-validated workbook reviews delegated to existing product and native storage owners.
+  source_path integrations/mcp/workspace_mcp.mjs
+  source_path integrations/mcp/workbook_mcp.mjs
+  source_path integrations/mcp/workbook_app_resource.mjs
+  source_path components/BonfyreServiceSite/workbook-mcp-controller.mjs
+  source_path components/BonfyreServiceSite/workbook-mcp-app.mjs
+  source_path components/BonfyreServiceSite/workbook-mcp-app.html
+  source_path components/BonfyreServiceSite/workbook-mcp-build.mjs
+  source_path integrations/mcp/bonfyre_oauth_gateway.mjs
+  source_path cmd/BonfyreWebAddress/src/application_continuation.h
+  source_path cmd/BonfyreWebAddress/src/application_views.h
+  source_path cmd/BonfyreCMS/src/workspace_records.h
+  witness integrations/mcp/tests/workspace_mcp.test.mjs exercises real Auth, CMS, WebAddress and OAuth calls across catalogue, room, audio and recurring-program draft families, exact previews, cross-editor continuation, concurrent edits, current role revocation and lost-response reconciliation
+  witness integrations/mcp/tests/oauth_institution_slice_test.sh retains the separate delegated institution aperture and full administrator boundary
+  witness components/BonfyreServiceSite/tests/workbook-mcp.test.mjs verifies gateway discovery, bounded workbook reads, source-address inspection, exact previews, Univer edits, shared review decisions, native permission checks, concurrency bounds and lost-response reconciliation
+  invariant the request carries its own authenticated session to a deployment-fixed workspace owner; caller arguments cannot select an actor, namespace, database, credential or endpoint
+  invariant the machine binding directory projects the same query and permission checks as Your work; unavailable or incomplete listings refuse rather than manufacturing an empty success
+  invariant workspace_records retains whole-body SHA-256, revision and immutable file references without hydrating media or copying records into another store
+  invariant generic scalar previews bind the exact binding, key, source digest, expected revision and encoded candidate; workspace_update preserves record structure and file references
+  invariant workbook tools fetch bounded workbook and decision bodies, and baseline cells only when requested; they do not download original XLSX bytes
+  invariant workbook previews run the existing Univer and review rules without writing files or records; commits recompute the same candidate with a fifteen-minute review time and retain unchanged original source references
+  invariant at most two workbook operations run concurrently per account carrier instance; worker calculation has a termination deadline and model-visible reads have page and output bounds
+  invariant native WebAddress rechecks current destination access and CMS commits against the expected revision and existing request ledger; transport failures do not trigger automatic write retries
+  invariant native continuation links preserve destination, compatible editor release and saved record identity; unrelated product families are not joined merely because one account can open both
+  invariant declared collection links use retained CONTINUATIONS profiles, including exact-key profiles within a family; record families without a compatible view keep their visible prefix and open the verified owning editor
+  witness cmd/BonfyreWebAddress/tests/installed_subtools_test.mjs checks mapped collections, exact-key audio imports, supporting incoming records and current destination refusal without creating record views
+  invariant delegated private-product sessions retain their existing restricted tool slice; the account workspace carrier is exposed in personal and Bonfyre administrator apertures
+  known_gap generic scalar editing does not run each product domain compiler; only the explicit workbook tools invoke the financial workbook validation and calculation owner
+  known_gap workbook tools require the ServiceSite Univer dependencies in the gateway deployment; current tests do not establish live availability
+  invariant embedded financial views use the official MCP Apps SDK and the same account tools; the static UI resource contains no workbook data or credentials
+  invariant a preview is consumed before dispatch; interrupted saves require a successful record reload, and host notifications cannot replace unfinished edits or confirmed changes
+  known_gap the financial MCP App has protocol and native-owner tests; actual host rendering, browser interaction, public demo adoption, collaborative cursors, cross-destination transfers and provider effects remain unverified
+  forbidden_inference a saved draft or matching preview -> a valid commercial agreement, order, publication, payment, authority grant or performed work
+  forbidden_inference fixture coverage of four draft families -> all products are integrated or a live deployment has been verified
+  interacts account-mcp-continues-native-workspace
+  interacts account-mcp-operates-financial-workbook
+  interacts account-mcp-embeds-financial-review
+
+interaction account-mcp-continues-native-workspace
+  source account-workspace-mcp
+  destination web-address-edge
+  relation current-session-private-product-continuation
+  preserves current account session, destination and role checks, installed application binding, exact record identity, source revision and digest, immutable media references, native write receipt and compatible editor links
+  drops model-generated authority claims, arbitrary endpoints and identities, copied record stores, original media downloads, automatic retries and inferred external effects
+  forbidden_inference successful MCP transport -> authority beyond the native destination or a completed product operation
+  invalidates_on session revocation, destination grants, installation state, native record revisions, editor release or workspace transport contract changes
+  witness integrations/mcp/tests/workspace_mcp.test.mjs
+  binding integrations/mcp/workspace_mcp.mjs
+  binding cmd/BonfyreWebAddress/src/application_continuation.h
+
+interaction account-mcp-operates-financial-workbook
+  source account-workspace-mcp
+  destination financial-workbook
+  relation shared-workbook-calculation-and-review
+  preserves exact saved record revision and digest, original source references, mapped transaction fields, actual Univer edits and recalculation, content-bound row decisions and native current access checks
+  drops scalar patches to workbook blobs, inferred recalculation from cached values, implicit source lineage after moved rows and independent financial approval claims
+  forbidden_inference a workbook tool save -> ledger posting, reconciled accounts, verified financial advice, live deployment or an embedded MCP App
+  invalidates_on workbook schema, review fingerprint semantics, supported formulas, native blob transport, session grants or gateway runtime dependencies changing
+  witness components/BonfyreServiceSite/tests/workbook-mcp.test.mjs
+  binding integrations/mcp/workbook_mcp.mjs
+  binding components/BonfyreServiceSite/workbook-review.mjs
+  binding components/BonfyreServiceSite/workbook-calculation.mjs
+  binding components/BonfyreServiceSite/workbook-calculation-worker.mjs
+
+interaction account-mcp-embeds-financial-review
+  source account-workspace-mcp
+  destination financial-workbook
+  relation embedded-review-over-existing-account-tools
+  preserves current account authorization, workbook identity and revision, bounded source comparison, explicit change confirmation, interrupted-save request identity and exact native editor continuation
+  drops independent UI credentials, a second record store, host notifications replacing unfinished work, implicit write retries and claims of verified browser rendering
+  forbidden_inference SDK handshake or native integration tests -> usable rendering in any particular MCP host, accessibility, financial approval or live deployment
+  invalidates_on MCP Apps SDK contract, workbook tool responses, gateway resource routing, static bundle, installed release or native permissions changing
+  witness components/BonfyreServiceSite/tests/workbook-mcp.test.mjs
+  witness components/BonfyreServiceSite/tests/workbook-mcp-controller.test.mjs
+  witness integrations/mcp/tests/oauth_institution_slice_test.sh
+  binding integrations/mcp/workbook_app_resource.mjs
+  binding components/BonfyreServiceSite/workbook-mcp-app.mjs
+  binding components/BonfyreServiceSite/workbook-mcp-controller.mjs

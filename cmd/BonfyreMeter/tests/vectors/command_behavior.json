@@ -1,0 +1,8 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-meter","binary_env":"BONFYRE_METER_BIN","cases":[
+{"name":"a recorded attempt is counted once, left unpriced without an admitted rate, and accrued as not-a-bill","steps":[
+ {"argv":["record","--key","k1","--op","Brief","--receipt","r1","--attempt-ref","a1","--realization-ref","z1","--at","2026-10-01T00:00:00Z","--bytes","100","--duration","20","--db","m.db"],"env":{"HOME":"${tmp}","BONFYRE_METER_DB":""},"exit":0},
+ {"argv":["record","--key","k1","--op","Brief","--receipt","r1","--attempt-ref","a1","--realization-ref","z1","--at","2026-10-01T00:00:00Z","--bytes","100","--duration","20","--db","m.db"],"env":{"HOME":"${tmp}","BONFYRE_METER_DB":""},"exit":0},
+ {"program":"sqlite3","argv":["m.db","select count(*) from events"],"stdout":"1\n"},
+ {"argv":["usage","--key","k1","--db","m.db"],"env":{"HOME":"${tmp}","BONFYRE_METER_DB":""},"exit":0,"contains":["(1 unpriced)","priced from 0 of 1 events"]},
+ {"argv":["invoice","--key","k1","--period","2026-10","--db","m.db"],"env":{"HOME":"${tmp}","BONFYRE_METER_DB":""},"exit":0,"contains":["ACCRUED USE -- NOT A BILL","Brief x1 = unpriced"]}]},
+{"name":"meter refuses to invent a store in the current directory","steps":[{"argv":["usage","--key","k1"],"env":{"HOME":"${tmp}","BONFYRE_METER_DB":""},"exit":1,"absent":["${tmp}/state/bonfyre-meter.db"]}]}]}

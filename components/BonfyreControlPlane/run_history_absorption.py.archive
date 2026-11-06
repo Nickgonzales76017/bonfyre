@@ -1,0 +1,134 @@
+#!/usr/bin/env python3
+"""Project unique Run 1-7 knowledge into current semantic owners.
+
+The input is a compact, source-backed fixture, not an old supervisor or campaign
+tree.  Projection is idempotent and can be replayed against an in-memory DB for
+backtesting before touching durable state.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sqlite3
+from pathlib import Path
+
+import evidence_graphs as eg
+import partner_commons as pc
+import pattern_graph as pg
+import proof_frontier as pf
+import work_graph as wg
+
+
+DEFAULT_FIXTURE = (
+    Path(__file__).resolve().parents[2] / "packs/run-history/run8-absorption.json"
+)
+
+
+def project(db: sqlite3.Connection, fixture: Path = DEFAULT_FIXTURE) -> dict:
+    payload = json.loads(fixture.read_text())
+    if payload.get("schema_version") != "bonfyre.run-history-absorption.v1":
+        raise ValueError("unsupported run-history absorption fixture")
+
+    eg.ensure_schema(db)
+    pc.ensure_schema(db)
+    pg.ensure_schema(db)
+    pf.ensure_schema(db)
+    wg.ensure_schema(db)
+
+    for plane in payload["work_planes"]:
+        wg.register_plane(db, plane)
+
+    queued = already_present = 0
+    for item in payload["work"]:
+        work_id = wg.enqueue(db, **item)
+        queued += work_id is not None
+        already_present += work_id is None
+
+    for item in payload["partners"]:
+        profile = item["profile"]
+        pc.record_profile(db, pc.PartnerProfile(**profile))
+        pc.record_observation(db, pc.PartnerObservation(**item["observation"]))
+        evidence_id = item["observation"]["source_ref"]
+        claim_id = f"partner-state:{profile['partner_id']}:{item['observation']['state']}"
+        eg.add_claim(db, claim_id, proof_state="measured")
+        eg.relate_evidence(db, evidence=evidence_id, kind=eg.SUPPORTS, claim=claim_id)
+        eg.record_provenance(
+            db, artifact=evidence_id, role="source_institution",
+            node=profile["partner_id"],
+        )
+        eg.record_times(db, claim_id, {
+            "observation_time": item["observation"]["observed_at"],
+            "retrieval_time": payload["captured_at"],
+        })
+
+    for item in payload["evidence"]:
+        eg.add_claim(
+            db, item["claim_id"], depends_on=item.get("depends_on", ()),
+            counters=item.get("counters", ()), proof_state=item["proof_state"],
+        )
+        eg.relate_evidence(
+            db, evidence=item["evidence_ref"], kind=item["kind"],
+            claim=item["claim_id"],
+        )
+
+    for item in payload["solved_invariants"]:
+        pf.record_invariant(db, pf.SolvedInvariant(**item))
+    for item in payload["known_noncauses"]:
+        pf.record_noncause(db, pf.KnownNonCause(**item))
+    for fence in payload["regression_fences"]:
+        for ordinal, layer in enumerate(fence["layers"]):
+            pf.set_layer(
+                db, fence["subject_resource"], ordinal, layer["name"],
+                layer["status"], subject_profile=fence.get("subject_profile", ""),
+                witness_ref=layer.get("witness_ref", ""),
+                detail=layer.get("detail", ""),
+            )
+
+    for item in payload["pattern_clusters"]:
+        candidate = item["candidate"]
+        cluster = {key: value for key, value in item.items() if key != "candidate"}
+        pg.record_cluster(db, pg.PatternCluster(**cluster))
+        pg.propose_candidate(db, cluster_id=cluster["cluster_id"], **candidate)
+
+    for artifact in payload["drive_artifacts"]:
+        eg.record_transform(
+            db, source=artifact["source_ref"], operator="RunHistoryAbsorption",
+            derived=artifact["path"],
+        )
+        eg.record_provenance(
+            db, artifact=artifact["path"], role="truth_owner", node="Drive",
+        )
+    for page in payload["wiki_pages"]:
+        eg.add_claim(db, page["claim_id"], proof_state="measured")
+        eg.relate_evidence(
+            db, evidence=page["path"], kind=eg.SUPPORTS, claim=page["claim_id"],
+        )
+
+    return {
+        "fixture": str(fixture),
+        "partners": len(payload["partners"]),
+        "work_queued": queued,
+        "work_already_present": already_present,
+        "evidence": len(payload["evidence"]),
+        "solved_invariants": len(payload["solved_invariants"]),
+        "known_noncauses": len(payload["known_noncauses"]),
+        "regression_fences": len(payload["regression_fences"]),
+        "pattern_clusters": len(payload["pattern_clusters"]),
+        "drive_artifacts": len(payload["drive_artifacts"]),
+        "wiki_pages": len(payload["wiki_pages"]),
+    }
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--fixture", type=Path, default=DEFAULT_FIXTURE)
+    parser.add_argument("--database", type=Path)
+    args = parser.parse_args()
+    db = sqlite3.connect(str(args.database) if args.database else ":memory:")
+    print(json.dumps(project(db, args.fixture), indent=2, sort_keys=True))
+    db.close()
+
+
+if __name__ == "__main__":
+    main()

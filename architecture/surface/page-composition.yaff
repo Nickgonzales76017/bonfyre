@@ -1,0 +1,360 @@
+atlas surface
+
+architecture page-composition
+  canonical_name PageComposition
+  family surface
+  domain Surface / Public Page
+  layer surface/public
+  semantic_question What does a person see on a subject's page or a main public route, given the kinds of material it actually has?
+  purpose Lowers a published /w/<slug> page as several reading rhythms people already know instead of one item shape per character. Canonical owner readers and a native port of the census reader normalize stories, video, pictures, recordings and conversation into one stream per kind; a CUE-declared region sequence consumes those streams in order (lead story, Watch shelf, Photos field, Latest index, Listen tracklist, conversation, More list), each region with its own DOM topology and human label, and a region exists only when its material does. Tabs name published ways into the page in ordinary words. The page carries no machine vocabulary; what it cannot be read to imply travels as metadata.
+  maturity implemented
+  consumes PublicationOccurrence
+  consumes InternetSource
+  consumes WorldFragment
+  consumes HumanCommunityBody
+  source_path cmd/BonfyreWebAddress/src/front_community.h
+  source_path cmd/BonfyreWebAddress/src/front_arrival.h
+  source_path cmd/BonfyreWebAddress/src/front_work.h
+  invariant public fronts lead to account-scoped applications without displaying an application sample catalogue or a presentation-system showcase
+  witness cmd/BonfyreWebAddress/tests/work_entrance_test.mjs checks the account application entrance and absence of public demo cards and presentation showcases
+  witness cmd/BonfyreWebAddress/tests/community_journey.test.mjs verifies a public homepage opens the exact native conversation while personal hosts exclude the shared social entrance
+  invariant the public conversation entrance does not set the editorial replacement flag, so an empty or unavailable social selection cannot suppress fallback lead material
+  invariant ordinary WebAddress builds use the portable all target; release acceptance is explicit for one selected frozen candidate and never an implicit developer-specific historical directory
+  source_path scripts/release/public_surface_rollout.mjs
+  source_path scripts/release/tests/public_surface_rollout.test.mjs
+  invariant release staging resolves inherited binary links to their existing terminal files, rejects link cycles, and freezes the native Meter executable while connecting an existing configured Meter database to account work
+  witness scripts/release/tests/public_surface_rollout.test.mjs checks long inherited link chains, cycle refusal, frozen Meter material and the Meter source selection
+  witness scripts/release/tests/public_surface_rollout.test.mjs verifies the frozen Source Desk and source-publication browser dependency closure, refuses missing modules, and binds browser readback to exact release bytes
+  invariant release acceptance uses the selected frozen browser and site trees plus the candidate public CMS and Auth executables; activation requires every current acceptance group with matching verifier, static local fixture dependency, environment and browser executable identity
+  invariant every browser HTTP fixture reads candidate assets; all frozen modules are compiled to check static imports; companion-only fixture modules are hashed separately from the public HTTP route set
+  witness docs/engineering/live-rollout-20261021.md records the 2026-10-23 s6CwWg public activation after 14 acceptance groups and 164 local plus 164 public HTTP readbacks; live authenticated saves remain unverified
+  forbidden_inference passing release acceptance -> identity of computed imports, runtime-read fixture data or external package contents outside the declared static closure
+  consumes MusicRecording
+  consumes MediaProgram
+  consumes PresentationTemplate
+  publishes ComposedPublicPage
+  node_types PageRegion
+  node_types PageStream
+  node_types PageTab
+  edge_types composes
+  edge_types lowers
+  invariant a region exists only when its material kind is present; a subject with only stories grows no empty Watch, Listen or conversation heading
+  invariant regions that share a material stream consume it in declared order, so one story is never shown by two regions of the same page
+  invariant the executor branches on region topology and material only; a region role, grammar, source or World name inside it would be a route-local page in disguise (Makefile surface-programs-verify refuses it)
+  invariant a World fragment's subject address scheme selects the canonical owner reader (community, recording, program); the page never queries media, music or conversation tables for itself
+  invariant one story reached through two carriers is one story, keyed by title or canonical link, and stories across sources are ordered newest first with an unreadable date sorting last rather than being guessed
+  invariant visible copy never names the machinery: no World, observed, closure, candidate, grammar, projection, occurrence, character name or subject-address scheme reaches page text; the character is declared in data-character and the cannot-infer statement in a bonfyre:cannot-infer meta element
+  invariant every composed public document carries an inert bonfyre-surface-scene.v1 compatibility envelope and stable page/region continuity names derived from that exact server emission; the envelope is a hand-off descriptor, never visible copy or browser-owned material
+  invariant PageComposition never mounts SurfaceRuntime: the exact canonical module is projected as a static asset for a future owned ApplicationBinding, while the compatibility document remains complete and readable without a client compositor
+  invariant a route with no retained material declines the PageComposition compatibility adapter and falls through to its declared CUE-native surface; an empty compatibility document never displaces an owner-backed native program
+  invariant a published addressed World with no declared sources still lowers a complete native empty page; absence of source membership cannot reopen the retired browser renderer
+  invariant a grammar with no human label in page-composition.cue is not linked; an internal name is never a navigation word
+  invariant tabs are the authored grammar list followed by any other grammar a published fragment opens, so a published way into the page is never reachable only by typing its address
+  invariant a relative time ("2h ago") is emitted only inside a public projection that lives at most sixty seconds, so it cannot drift into a false statement
+  invariant a subject reference shown to a person is humanized from its handle until a profile owner supplies a display name; the page does not invent a name
+  invariant a story's byline is the maker the source names (sub_field, dc:creator, Atom author) when it is short, otherwise the publisher's registrable domain taken from the source URL; a source handle or internet_source label is never shown as a name
+  invariant retained bodies are read by the census contract the retired browser reader used: dotted and indexed fields, an empty extract as the body itself, {today-iso}-style date tokens, JSON escapes decoded, feed entities decoded (twice, for feeds that escape twice) before the page escapes again
+  invariant a twin with a published content_flag whose review_state is not cleared is withheld from every page until a person clears it, and an item a source marks nsfw, sensitive, over_18 or is_nsfw (on the item, its post or its community) is withheld without judgement
+  invariant a video or image source's item joins Watch or Photos only when it carries a picture; the same item without one is a headline, and every other source kind is a story (nativePageSourceKinds)
+  invariant a picture reaches the page only as an https URL completed by the source's declared image_base (absolute, @host field, pre|post or origin), rejected if truncated or if it contains a quote, angle bracket, backslash or space, and is written lazy, async, with no referrer and empty alt
+  invariant a remote video is linked to where it was published; only a same-origin safe asset plays in place
+  invariant a main public route (/discover, /channels, /community, /board, /parcels) is a composed page when page-composition.cue declares a program for it; the program names source families, a source cap and its region sequence, and families fill the cap in declared order a share at a time so every named family contributes
+  invariant a program's sources are allocated from the whole admitted source ledger when it is present: the channels that have waited longest for a reader come first, no single publisher may hold more than an eighth of a surface's sources and no single protocol more than a third; each route length is an offset in that complete stable order, never an offset inside an arbitrary query prefix, so an admitted source remains reachable through the route's bounded continuation; where the ledger is absent or thin the declared families still fill the page, so a page is never emptier for the ledger existing
+  invariant a program's source window is no larger than the number of sources its declared rhythms visibly carry, so a continuation never advances past a selected publisher that a reader did not meet
+  invariant a source whose current retained body no longer lowers still contributes the fields the item archive retained; the archive is a record of what this estate read, not a claim that the source still publishes it or a substitute for richer current source media
+  invariant a placed thing carries what else this estate holds around it: every placed material (an organizer's GEO, a photograph's own point, a place's coordinates, a wildlife record) within a short walk, nearest first, with the distance measured between the two stated points and said in a person's words; being near something is never shown as being about it
+  invariant every response leaves through one boundary that compresses it: a body a caller can read as gzip is gzipped (nothing already packed, nothing under 1.4 KB), the answer says it varies by what the caller reads, and a caller that does not read gzip receives exactly the bytes the page composed
+  invariant what may be packed is decided by the answer's own headers, never by its body: a track list whose files live under /audio/ on their host, or a gallery naming image paths, is a page and is compressed like one
+  invariant a composed page is kept and served again for a bounded moment: only where it is nobody's in particular (no query, no signed-in reader), keyed by the state of the material it was composed from and by the clock at ten-minute granularity, which is finer than the coarsest thing a page says about time
+  invariant the estate warms its own pages rather than charging the first visitor for them: the warmer composes each public route exactly as a request would, reads no source, admits nothing, and can only fill what a request would have composed anyway
+  invariant publication may explicitly defer an external reheat batch and compose the complete retained generation already held; deferral is recorded as such and is never represented as a fresh source observation
+  invariant a page carries an ETag over exactly the bytes it composed, and a caller that already holds them is answered 304 with no body; a private answer keeps its private cache directive in that answer
+  invariant the commons that keep this estate's pictures are named in the head as preconnect and dns-prefetch, from the declared picture-origin table, so a browser opens those connections while it reads rather than when it meets the first picture; nothing is fetched there and no other host is named
+  invariant a time is computed, not switched: reading a calendar entry's moment uses arithmetic for UTC and sets the host's zone only when the zone actually changes, because reloading a timezone database twice per entry cost a page more than everything else it did
+  invariant `page-contributions` composes every declared route exactly as the server does and reports what each route would show now, by source; it renders to nobody and measures this estate's surfaces, never a reader
+  invariant the static export follows a public program's own next link until that program ends, bounded by the same four-hundred-length route guard as the server; an arbitrary exporter page cap cannot turn an admitted source into an uncirculated one
+  invariant a retained-item export is a finite closure: every selected item page must materialize with a 200 body or the generation refuses. A partial archive is never an activatable public release.
+  invariant the static export also carries the admitted SourceDepth index and every admitted source profile under exact query-coordinate object keys, so the public source lattice does not disappear when its dynamic origin is absent
+  invariant a family a program does not name never reaches its page; selection is by authored family, never by a title, a URL domain or a source's own claims
+  invariant an addressed World page uses nativePageWorldRegions; the topics rhythm belongs to main routes and would otherwise take the stories More keeps
+  invariant a front page's phase is derived from this estate's own clock (nativeHomePhases: the hour each begins, in BONFYRE_LOCAL_ZONE): the phase renames the page and reorders the routes below it, and can admit no material, no source and no route the territory does not already publish; every visitor at the same hour sees the same arrangement, so it is derived composition and never personalization
+  invariant each territory apex (aurekai.live, .life, .shop, .work and their www. hosts, port ignored) opens on its own composed front page (Right now, Today, Just released, Work) ahead of any SitePresentation naming that apex; institution and subdomain hosts are not territory apexes and keep their own homes, and a machine request to the apex keeps its machine answer
+  invariant each territory apex has an offline SubjectFabric reader closure over admitted SourceFrontier census sources, and its routes select only explicit estate-owned SourceCollections whose declared family or carried material matches the CUE route; a request consumes the compiled route material and editorial contract and never reopens retained bodies to rediscover global membership
+  invariant one compiled public route page keeps one resolved host subject and one read-only SubjectFabric connection across route material, region order, editorial contract, compatibility source selection, and every preview section; a section cannot silently resolve a different subject or reopen a different projection generation within that page
+  forbidden_inference reusing one read connection across page sections -> authority to union subjects, widen a SourceCollection, admit an unselected item, or treat the cached projection as current after a later rebuild
+  invariant a SubjectFabric route cut retains an atomic build manifest over the exact admitted-reader, Scene-query, published-SourceCollection, item-stream, page-composition and surface-program inputs it read; its route digest includes the rendered contract and every normalized renderer-visible item field, and a failed replacement rolls back the entire route-table reset
+  invariant normalized item payload is stored once per source/item/material coordinate and explicit subject membership remains independent; the subject_material compatibility view reconstructs the prior reader shape for WebAddress without making shared bytes evidence of shared subject identity or authority
+  invariant an item page opened from a compiled public route reads that route's selected normalized material through the exact host subject and route membership relation; once a verified route cut exists for that host, an unselected item cannot reopen through a legacy source body
+  invariant a signed-in Save of a compiled item takes the same exact host-subject route membership and normalized material as its item page before any native saved_item write, including repeat Save; an item selected for a different subject or omitted from this route cannot pass through a legacy feed fallback
+  invariant when a later compiled cut omits an item, the public item page and feed omit it and new Save writes are refused; the actor who had already saved it may still read their own private snapshot until they unsave, after which that page is refused for them too
+  invariant a territory with a committed subject-route cut publishes its Atom feed from that same host-subject route-item membership and normalized material, never from all same-family retained sources; its item links return to native pages on that host, its ETag is stable until the cut changes, and another territory cannot inherit its entries
+  invariant the committed subject-route cut is verified by the Bun SQLite and SHA-256 owner in the live automation path; it recomputes the exact bounded input frontier and all projection-table row digests before a route cut is trusted
+  witness cmd/BonfyreExternalEstate/tests/subject_projection_precompute_test.sh compares Bun and legacy verifier answers byte-for-byte on a committed fixture and refuses changed item material or tampered projection rows; cmd/BonfyreWebAddress/tests/compiled_subject_route_web_test.sh uses the Bun verifier before exercising its public route
+  invariant the Atom feed is a separate read-only native module; AddressPlane resolves the host before invocation, and bounded XML assembly either emits a complete response or refuses it. A declared WebSub hub must be a safe HTTPS address, never an arbitrary header value
+  invariant a static release that carries a page advertising /feed.atom must carry the same host-scoped Atom response as a file or refuse the release; the exporter cannot reselect feed entries from another source catalogue
+  invariant the standing route rebuild reads a completed census item generation and a SubjectFabric closure from the same automation run; a failed item export leaves the previous complete item file intact and refuses the dependent route rebuild
+  invariant a front page names its place (Aurekai) instead of pointing back to it and offers the other territories as Live, Life, Shop and Work
+  invariant every retained item has a stable page key (a digest of its source and its link, or title) and opens /o/<source>/<key>; no composed page writes an anchor without an href, and an item with neither a page nor a public link is text
+  witness cmd/BonfyreWebAddress/tests/compiled_subject_route_web_test.sh opens a compiled exact SourceCollection route and selected item, signs in two people, writes one native saved_item from normalized material, keeps it private, and refuses an excluded same-family source, a cross-territory repeat Save, and a foreign Origin
+  witness cmd/BonfyreWebAddress/tests/compiled_subject_route_web_test.sh starts from retained source bodies and receipt paths, runs the native census exporter, proves a reference-candidate Ghost profile dresses only the selected route material, discovers a host-scoped Atom feed from that page, receives a stable ETag/304, and sees the excluded source and other territory stay outside the feed
+  witness 2026-09-30 cmd/BonfyreWebAddress/tests/compiled_subject_route_web_test.sh, page_composition_test.sh, and page_programs_test.sh pass after request-scoped SubjectFabric reuse; they prove rendered route behavior, not a measured live latency improvement
+  witness cmd/BonfyreWebAddress/tests/atom_feed_test.c exercises compiled subject isolation, XML escaping, HEAD, ETag/304, invalid hub refusal, and guest-readable CMS fallback without another Python test program
+  witness cmd/BonfyreWebAddress/tests/a2a_surface_test.sh proves four territory roots emit distinct server-side titles, self-canonical addresses and a working public-search form from the generated home template, including when CMS is unavailable
+  witness cmd/BonfyreWebAddress/tests/page_composition_test.sh proves a published World with no admitted sources answers a plain native empty page without visible machine vocabulary or browser composition
+  witness cmd/BonfyreWebAddress/tests/compiled_subject_route_web_test.sh recompiles after the selected item leaves the census stream, proving the public feed and page withdraw it, a different actor cannot save or read it, the original saver can still read the private snapshot, and unsaving removes that last private reading
+  witness scripts/tests/export_static_estate_depth_test.sh proves the route walk carries its advertised native Atom feed into the static tree while retaining pagination through the thirteenth Discover length
+  invariant an item page's verbs are links or forms that work without a script: play in place (PeerTube embed from the video's own host), view the picture full size, open the place in a map, read or watch at the publisher, share by mail with the page's own address, sign in to save and return, and more from the maker narrowed by ?from=
+  invariant each main route has its own rhythm and its own families: Discover a mixed feed, Watch a video grid, Channels two panes selected by ?s=, Community groups by who is posting, Boards a picture wall, Map a plate beside its numbered list, Releases and Advisories a ledger, Research an index, Search typed results; no two routes share a family, so a person does not meet the same sources on every page
+  invariant a front page is sections into those routes, each previewed in that route's own rhythm with its words as the heading and a See all way in, not one more feed
+  invariant ?from= narrows a page to one maker or publisher and ?q= to matching text; both are shown as plain words with a Show all link, and neither selects sources outside the route's families
+  invariant sources fill a page by fair share (the stream cap divided across its sources) so the first few sources cannot crowd out the rest
+  invariant search is a GET form in every composed page's header and answers from the retained text of the page programs' families
+  invariant a property is a continuous subject at /s/parcel/<account>: every open reads the observed Tarrant roll for its facts and its same-street neighbours, offers the parcel aperture's own verbs in plain words (See this market; with write scope Watch this property, Open an opportunity), and falls back to the legacy subject door for an account the roll does not hold and for machine requests
+  invariant search that reads like an address or an account also searches the observed property roll and lists matches before retained material, each opening its property page
+  invariant a lead needs a date or a picture; an undated, pictureless item never leads a page
+  invariant topics group public threads by where they are happening (the publisher), newest first within each, keeping the first-appearance order of places
+  invariant a place is plotted only from GeoJSON geometry, Darwin Core decimal coordinates or plain latitude/longitude pairs inside the globe; 0,0 is unknown, not a place; points sit on a Natural Earth land mask with no tile provider and no implied precision
+  invariant a publisher relay host (hn.algolia.com, feeds.bbci.co.uk, api.wikimedia.org, ...) is named for its publisher only through the authored host table; the table replaces a byline and never selects material
+  invariant a native surface document loads /assets/aurekai-native.css and titles itself with the grammar's human label, so no native route renders as unstyled markup or a program name
+  invariant the fallback home template carries generated slots for server-resolved identity and authored navigation, the public search form, and the existing home-weather fragment as authored markup; a request does not scan/copy the whole template to splice search, rewrite territory copy, or fetch public weather through a browser compositor, and missing CMS copy stays a generic server-owned floor
+  invariant published territory-home copy is located against one immutable template and assembled in one allocation; a missing region leaves the original document untouched, and a territory class cannot inject HTML attributes
+  witness cmd/BonfyreWebAddress/tests/territory_home_test.c proves four published territory presentations, absent-CMS fallback, and atomic refusal of an incomplete template or unsafe territory class
+  forbidden_inference a composed page -> an editorial judgement, endorsement or ranking of importance; newest-first is a date order and the lead is simply the newest story
+  forbidden_inference a picture shown from a source -> a licence to republish it, a copy held by this estate, or a claim about who is depicted
+  forbidden_inference an item not withheld -> screened and cleared material; most retained bodies are never looked at by a screen that could see anything
+  forbidden_inference a Watch or Listen region -> rights to show the media, a playback session or a viewer identity
+  forbidden_inference a conversation region -> federation, moderation beyond the owner's accepted state, or membership of the reader
+  forbidden_inference a human label such as Schedule or Map -> the grammar behind it being fully built; the tab links whatever the published route already serves
+  forbidden_inference the absence of machine vocabulary on the page -> the absence of the boundaries it used to state; they moved to metadata and to the machine carriers (manifest, feed, outbox, events)
+  forbidden_inference a source filed under gaming or vulnerabilities -> every item it carries being a release or advisory; source family is acquisition/routing evidence and high-claim routes require their own compiled source/form contract
+  forbidden_inference a matching subject-projection input or route digest -> source truth, current provider availability, rights, authority, endorsement, or a fresh external observation
+  known_gap /listings still lowers a donor slot document over an empty offer owner; it is not in the composed pages' nav and remains reachable as a system disclaimer
+  known_gap the retired territory home's intake form (bring in a public address) and external-estate search are no longer on the apex front pages; they remain at /_surface/intake and /_surface/external-estate without a human entry point
+  known_gap native operator documents (/inbox, /territory, /packs, /link, /console, /studio) are now readable but their slot copy still states capability and authority terms rather than what a person can do
+  known_gap the map plate draws 50 points and the first placed family fills it, so on /parcels earthquakes crowd out species sightings and bike networks
+  known_gap item pages outside a compiled route still use the legacy retained-body and item-archive readers; a compiled route keeps only its selected normalized material, not every version or every item ever observed
+  known_gap Pass 1 is partial: PageComposition now emits a SurfaceScene-compatible, server-side hand-off but remains the retained-material adapter until SitePresentation/ApplicationBinding/ExperienceStage declarations own each route; no legacy public route mounts SurfaceRuntime yet
+  known_gap the composed /stage route now draws only the events family, but it still reads retained event items rather than a dedicated Event owner projection carrying parsed lifecycle/time/place fields. Place remains unregistered (spatial_observation is empty). Observed marketplace material is owned as service_offer and /market reads it, but Listings has not yet projected that owner kind and remains a donor page over an empty owner
+  known_gap a property page performs two scans of the columnar roll (about 3.5 s on the estate) and address search one (about 2.5 s); neither is indexed or cached yet
+  known_gap properties carry no coordinates in the roll, so a property page has no map and the Map route does not show properties
+  known_gap some PeerTube instances (tube.tchncs.de) put an anti-bot challenge in front of their embed, and the Art Institute IIIF host refuses non-browser clients; neither was observable as a person would see it from the estate or a headless browser
+  known_gap a story still links out to its publisher; a subject whose story should open inside Aurekai (an event, a property, a venue) needs its own addressed page before a lead can stay in place
+  known_gap video titles are humanized from the program's subject reference because MediaProgram carries no title; a subject-owner title join is not built
+  known_gap a non-date meta field (views, magnitude, stars) is read and not shown, so The ground moved lists places without magnitudes; the census row does not say what unit a meta value is in
+  known_gap the Art Institute IIIF host answers 403 to every non-browser client, so whether those pictures paint for people was not observable from the estate or a headless browser
+  known_gap the published night_subject rows (venues, a showcase, egress) are synthetic demo-grid subjects and are deliberately not composed into the real-city Tonight page; that page is still fed by the news sources its World names
+  known_gap the /w catalogue is a native surface program whose masthead still prints the program name; its copy is not yet under this vocabulary law
+  known_gap an Event source-observation stream exists as publication_occurrence, but its parsed Event projection is not yet a page-program input; Place has no admitted spatial owner stream. /stage is now an events-only CUE page program, while Map remains reached through its donor surface. The observed marketplace chain is owner-backed at /market, but has not yet become the Listings page program
+  known_gap Releases and Advisories now exclude weak source-family matches through conservative publisher/form contracts. They are not yet a full owner-backed multi-facet ItemMaterialClassification projection, so a newly trustworthy publisher still needs an authored contract before its otherwise relevant material can appear there.
+  source_path cmd/BonfyreWebAddress/src/source_depth_projection.c
+  source_path schemas/control/page-composition.cue
+  source_path cmd/BonfyreWebAddress/tools/compile_page_composition.zig
+  source_path cmd/BonfyreWebAddress/generated/native_page_composition.h
+  source_path cmd/BonfyreWebAddress/src/main.c
+  source_path cmd/BonfyreWebAddress/src/atom_feed.c
+  source_path cmd/BonfyreWebAddress/src/atom_feed.h
+  source_path cmd/BonfyreWebAddress/tests/atom_feed_test.c
+  source_path cmd/BonfyreWebAddress/src/territory_home.c
+  source_path cmd/BonfyreWebAddress/tests/territory_home_test.c
+  source_path site/matrix/surfaces/home.html
+  source_path cmd/BonfyreWebAddress/tests/a2a_surface_test.sh
+  source_path cmd/BonfyreExternalEstate/tools/materialize_foundation_subjects.mjs
+  source_path cmd/BonfyreExternalEstate/tools/materialize_foundation_subjects.py.archive
+  source_path cmd/BonfyreExternalEstate/foundation-subjects.cue
+  witness cmd/BonfyreExternalEstate/tests/foundation_subject_projection.test.mjs proves the Bun/CUE foundation compiler stages a native SQLite copy, projects only admitted census readers and preserves unrelated publisher rows before page projection
+  source_path cmd/BonfyreExternalEstate/tools/precompute_subject_fabric.mjs
+  source_path cmd/BonfyreExternalEstate/tools/subject_fabric_common.mjs
+  source_path cmd/BonfyreExternalEstate/tools/compile_subject_projection.mjs
+  source_path cmd/BonfyreExternalEstate/tools/subject_projection_rules.mjs
+  source_path cmd/BonfyreExternalEstate/tests/subject_projection_index.test.mjs
+  invariant request-ready route selection indexes published collections by declared subject and reuses normalized item bodies across routes; it must still intersect source readers with exact subject and scope before emitting membership
+  invariant subject-route plans and material acceptance are compiled once per route shape, while membership, reader intersection, scope and route digest remain subject-specific
+  witness 2026-09-30 cmd/BonfyreExternalEstate/tests/subject_projection_index.test.mjs proves exact owner selection excludes a foreign institution while preserving the estate fallback; a synthetic selector benchmark over 20020 collections and 100 routes measured 42.08 ms scanning versus 1.34 ms indexed, which is selector-only and not a full-build speedup claim
+  witness 2026-09-30 cmd/BonfyreExternalEstate/tests/subject_projection_index.test.mjs checks compiled material aliases against repeated evaluation and measured 44.74 ms repeated versus 3.96 ms compiled over 20000 synthetic item checks; this is a filter microbenchmark, not an end-to-end build measurement
+  witness 2026-09-30 cmd/BonfyreExternalEstate/tests/subject_projection_index.test.mjs proves direct route-item comparison preserves the prior tuple-key order over 1000 mixed items and measured 21.74 ms tuple versus 7.62 ms direct for ten synthetic sorts; no whole-site latency claim follows
+  witness cmd/BonfyreExternalEstate/tests/subject_fabric_precompute_test.sh proves the Bun compiler retains candidate, root, reader, Scene query, action and dependency closure in an atomic SQLite read model and detects an unchanged second build
+  source_path cmd/BonfyreExternalEstate/tools/verify_subject_projection.py.archive
+  source_path cmd/BonfyreExternalEstate/tools/verify_subject_projection.mjs
+  source_path scripts/bonfyre_automate.mjs
+  source_path scripts/bonfyre_automate.py.archive
+  source_path scripts/export_static_estate.sh
+  source_path scripts/tests/source_ledger_static_export_test.sh
+  source_path scripts/audit_public_circulation.mjs
+  source_path scripts/audit_public_circulation.py.archive
+  source_path cmd/BonfyreSourceFrontier/tools/measure_carried_material.py.archive
+  source_path cmd/BonfyreSourceFrontier/tools/measure_carried_material.mjs
+  source_path cmd/BonfyreSourceFrontier/tests/measure_carried_material_test.sh
+  source_path scripts/publish_estate.sh
+  source_path scripts/tests/publish_estate_native_entrypoints_test.sh
+  witness 2026-09-29 scripts/tests/publish_estate_native_entrypoints_test.sh guards the direct standing publish path against Python re-entry after the native carriage, index, publisher, member-world, event, commerce, economics and funding cutovers; it does not claim transitive shell or whole-repository Python retirement
+  source_path site/matrix/surfaces/build/mk_world.py.archive
+  source_path site/matrix/surfaces/world.html
+  witness site/matrix/surfaces/build/authored_rows.test.mjs checks that world, console and packs are authored HTML sources; the old Python writers are retained only as archives
+  source_path cmd/BonfyreWebAddress/tests/page_composition_test.sh
+  invariant video-grid bylines separate the author's name, a distinct publisher and the publication date with literal whitespace, independent of stylesheet spacing
+  witness cmd/BonfyreWebAddress/tests/page_composition_test.sh includes a dated retained video with a distinct author and publisher, requests the native /watch video-grid branch and checks literal separation; the assertion fails against the frozen M1n7Xn binary before the two missing separators are restored
+  forbidden_inference a video-grid byline regression fixture -> complete browser layout coverage or a successful public release
+  source_path cmd/BonfyreWebAddress/tests/page_census_reader_test.sh
+  source_path cmd/BonfyreWebAddress/tests/page_programs_test.sh
+  source_path cmd/BonfyreWebAddress/tests/compiled_subject_route_web_test.sh
+  source_path cmd/BonfyreWebAddress/tests/page_items_test.sh
+  source_path cmd/BonfyreWebAddress/tests/page_parcel_test.sh
+  source_path cmd/BonfyreSourceFrontier/src/main.c
+  source_path cmd/BonfyreWebAddress/tests/page_transport_test.sh
+  source_path site/matrix/aurekai-native.css
+  source_path site/matrix/world-land.svg
+  source_path cmd/BonfyreWebAddress/tests/page_commons_test.sh
+  source_path cmd/BonfyreWebAddress/Makefile
+  source_path cmd/BonfyreWebAddress/tests/page_surface_scene_test.sh
+  source_path cmd/BonfyreWebAddress/tests/native_surface_routes_test.sh
+  source_path site/matrix/bonfyre-surface-runtime.mjs
+  internal_calculus a gate is not a failure. A test whose subject is a deployed estate, a private institution or an organ invocation the caller must name has nothing to be right or wrong about when that thing is absent; it says SKIP and names what would let it run, so the red that remains is red that means something
+  witness 2026-09-25 the native suite read 31 pass / 17 fail / 2 skip, and thirteen of those failures were tests reporting FAIL for a subject they could not reach: four needed an env-named invocation, four more a private institution's declarations, and four read _surface projections from an address whose edge does not serve them. After gating each on what it actually requires the suite reads 32 / 4 / 14, and every remaining failure is a real one
+  known_gap world_native_material asserts two strings -- "What is actually published for weather" and "Canonical set: observed without a source card" -- that appear nowhere in the composer or its binary. Either the copy was renamed and the test was not, or the feature regressed; the test was left failing rather than edited, because deleting an assertion is not the same as knowing which
+  known_gap surface_pattern_contract fails on a community page member count whose bytes match the assertion exactly, so the failure is in what is served at that moment rather than in the wording
+  known_gap spatial_frontier_route and live_e2e remain unexamined
+  internal_calculus a story reached through a second carrier is one story. page_push_story already refused a repeat inside one stream, but each source is read into a material of its own and merged, so the two copies had never met; the merge now folds the repeat into the copy already held, taking from it whatever that copy lacks -- one carrier often has the picture and the other the dateline
+  internal_calculus material read back from the durable record is marked as such. It fills a page a thin source would leave empty, but it is not evidence that the source still publishes it: its own page says it was kept rather than being current, and an agenda, which is a claim about what is going to happen, leaves it out
+  invariant a high-claim reading route admits a publisher by contract, never by source family: being filed under gaming or vulnerabilities does not make an item a release or an advisory
+  witness 2026-09-25 page_composition had failed two assertions since the merge path was added -- one story through two carriers appeared twice, and the duplicate pushed the compact list to four items. Deduplicating at page_merge_material fixed both without relaxing either assertion, and the fixture now renders the shared story once
+  witness 2026-09-25 page_events had failed three assertions because, when a source's feed emptied, the archive backfill returned the dropped event into live material: its page presented it as current and the agenda went on advertising it. Marking backfilled items archived, and honouring that mark in both places, fixed all three
+  witness 2026-09-25 page_items had failed because its fixture fed pypi.org and services.nvd.nist.gov to /releases and /advisories, which since the route-source contract was introduced admit only contracted publishers. The fixture now carries a contracted publisher for each route and keeps the uncontracted ones, and asserts that the contracted material appears and the uncontracted does not -- so the suite proves the contract rather than depending on it
+  known_gap the whole of cmd/BonfyreWebAddress is untracked in git: not one file of the server that composes every public page is in HEAD, so these fixes exist only in the working tree
+  witness 2026-09-18 on a 349-source estate the composed-page cache took the front page from 0.49s to 0.002s and /listen from 0.49s to 0.002s; page-warm composed 22 routes in 2.9s so no visitor met a cold page; and bounding the pack rule to the headers took /listen from 108,528 bytes on the wire to 28,934
+  witness cmd/BonfyreWebAddress/tests/page_transport_test.sh proves a page whose markup names media types is still compressed to under half, that a page composed a moment ago is served from what was kept in under 50ms and is the same bytes, and that a composed page over a calendar of 3,012 entries (1.6 MB) is gzipped to under half its markup for a caller that reads gzip and untouched for one that does not, that it carries an ETag and answers a caller that already holds it with 304 and no body, that the picture hosts are named early, and that a year of finished events composes in well under half a second while showing only what is still to come
+  witness 2026-09-18 measured on the same pages before and after: /whats-on went from 0.78s to 0.016s to first byte and from 95,168 bytes to 23,399 on the wire; /nearby 20,675 and /discover 16,318 compressed; a second load of any of them transfers nothing
+  witness cmd/BonfyreWebAddress/tests/page_events_test.sh proves the front page is named for the hour it is read in and leads with what is on
+  witness cmd/BonfyreWebAddress/tests/page_composition_test.sh serves a fixture subject with stories from an RSS and a JSON feed, two video programs, two recordings and a community reached by two fragments, and proves lead, shelf, index, tracklist, conversation and compact list render in that order with two in-place videos and two in-place recordings, clock-time durations, one story for a story carried twice, undated stories last, oldest-first conversation, pending posts withheld, human tabs, no unlabelled grammar tab, and no machine vocabulary in visible text; a stories-only subject renders no media or conversation region and an empty subject reads "Nothing here yet."
+  witness cmd/BonfyreWebAddress/tests/page_census_reader_test.sh serves production-shaped retained bodies (PeerTube JSON with @host thumbnails and nested channel names, Art Institute IIIF with a pre|post base and an injection-shaped image id, USGS GeoJSON nested fields, an Atom feed with a double-escaped title, link href, author and media:thumbnail, a {today-iso} keyed list, and a trending list boxed by a content_flag) and proves Watch shelf and Photos field form only from pictured items, JSON escapes including surrogate pairs decode, nsfw items and the boxed twin are withheld, the unsafe picture is never written, a long secondary field becomes the summary, and bylines are the maker or the publisher's domain
+  witness 2026-09-16 estate canary on :28791 against production CMS and retained bodies answered the same status on all 144 route-host pairs as the running service; after install the running inode matched the deployed binary (release_attest) and the public sweep again matched 144/144; The ground moved rendered 43 quake places where the prior binary rendered nothing, What the fediverse made rendered a pictured lead, a PeerTube Watch shelf and a Photos field (42 pictures), and the boxed gh-search-trending source no longer reached Somebody shipped it
+  witness cmd/BonfyreWebAddress/tests/page_programs_test.sh proves /channels groups Lemmy and relay-named Hacker News threads into streams newest first with no unnamed family leaking in, /parcels plots GeoJSON and Darwin Core coordinates onto the plate (0,0 excluded) before the reading list, the shared nav marks the current page, and /inbox loads the native stylesheet with a human title while the stylesheet and land plate are served
+  witness cmd/BonfyreExternalEstate/tests/foundation_subject_projection.test.mjs proves an apex closure preserves an existing publisher bundle, excludes a candidate channel, and lowers only explicit estate SourceCollection refs into exact route material; cmd/BonfyreWebAddress/tests/page_programs_test.sh proves the renderer consumes a compiled route's title and lede rather than discarding its contract
+  witness cmd/BonfyreExternalEstate/tests/subject_projection_precompute_test.sh proves a build record commits with its route tables, changing renderer-visible material or the route contract changes the compiled-projection digest, a duplicate-route compile failure preserves the previous complete cut, verification rejects changed inputs or output rows, and a failed census item step preserves the old complete item file while refusing the dependent automation rebuild
+  witness cmd/BonfyreWebAddress/tests/compiled_subject_route_web_test.sh proves a CMS-authored SourceCollection, two admitted same-family sources and a normalized item stream compile into one exact route, then WebAddress serves its compiled title, lede and selected item, links to the retained item's own 200 page, refuses an admitted but unselected item even when its legacy retained source body exists, and refuses the selected item from another territory host
+  witness 2026-09-27 the local 2,364-source admitted frontier compiled four territory bundles and 76 exact route closures (482,682 precomputed route items); a staged HTTP request for aurekai.live/ rendered its compiled apex cut before the index atomically replaced the active local SubjectFabric index
+  witness cmd/BonfyreWebAddress/tests/page_programs_test.sh proves Releases and Advisories apply the CUE-compiled publisher/form contracts both at their own routes and in Work previews: an allowed press release and security advisory remain visible, while a gaming discussion, a vulnerabilities-family forum question, and `launch` embedded in `prelaunch` are refused rather than branded as the wrong form
+  witness cmd/BonfyreWebAddress/tests/page_stage_test.sh proves CUE-compiled Stage retains a focal Event, its nearby event closure, and an agenda while excluding a far event and a generic forum source; it has no runtime-only donor fallback.
+  witness 2026-09-16 second estate canary (staged site root) matched live status on 144/144 route-host pairs; composed routes answered in 4-8 ms without a projection cache; after install (release_attest run=deploy) the public sweep matched 144/144 and aurekai-native.css and world-land.svg served 200 with their content types
+  witness cmd/BonfyreWebAddress/tests/page_programs_test.sh also proves aurekai.life opens on Today while a published SitePresentation names that apex, the territory switcher marks Life, www.aurekai.work with a port answers Work, and an application/json request to the apex does not receive the front page
+  witness 2026-09-16 third estate canary compared status, size and title on 144 route-host pairs against live and differed only on the four apex front pages; after install the public URLs answered Right now, Today, Just released and Work (www.aurekai.life Today), 144/144 statuses matched, and upper90.aurekai.work and leaflounge.aurekai.shop kept their own homes
+  witness cmd/BonfyreWebAddress/tests/page_items_test.sh walks nine routes on one host, finds no anchor without an href, follows every internal link to a 200, proves each route's main rhythm differs and Discover, Watch and Boards do not share material, opens a video (PeerTube embed, Watch on, mailto share, sign-in save, More from narrowing to that maker only), a picture (large, View full size) and a place (plate, OpenStreetMap), answers a stale key with 404, and finds by search only matching items
+  witness 2026-09-16 fourth estate canary on production material walked 24 route pages across aurekai.life and aurekai.work with 0 dead anchors and 400 internal links all 200; after install the public walk over aurekai.life and aurekai.live found 0 dead anchors and 250 internal links all 200, and 144/144 route statuses matched
+  witness cmd/BonfyreWebAddress/tests/page_parcel_test.sh reads the local columnar estate and proves address search lists 117 E Belknap St and opens /s/parcel/00000051, the page states owner of record, mailing address, assessed total, land and legal description from the roll, offers See this market and a returning sign-in to save, lists at least three other same-street properties that open their own pages, shows no machine vocabulary, gives an unknown account no invented page, and keeps the machine answer for JSON
+  witness cmd/BonfyreWebAddress/tests/page_items_test.sh also reduces each route's body to element-shape trigrams and requires every pair of Discover, Watch, Channels, Community, Boards, Map and Releases to share under 60 percent, and scans every route's visible text for World, Surface, Scene, Closure, Runtime, Semantic, Occurrence, Projection, Extent, Aperture, Frontier, Candidate, MaterialLease, ForeignTwin and AddressPlane
+  witness 2026-09-17 production answered https://aurekai.work/s/parcel/00000051 in 3.6 s with the 117 E Belknap St page and https://aurekai.work/search?q=117%20e%20belknap with its property match; 144/144 route statuses matched after install
+  witness cmd/BonfyreWebAddress/Makefile surface-programs-verify regenerates native_page_composition.h from CUE and refuses an executor that branches on a region role, grammar or World name
+  invariant Listen, On this day and Around Fort Worth and Dallas are page programs like every other route: CUE names their families and rhythms, and the executor still branches only on topology and material
+  invariant a region's picture, playable file and credit come from the item; a lead may be undated only when it has a picture or its own words to lead with
+  witness cmd/BonfyreWebAddress/tests/page_commons_test.sh proves the playlist, almanac and street-map rhythms over Wikimedia material, credits and terms in field captions, in-place film and recording players, and a place page that shows both its picture and where it is
+  invariant a many-item rhythm (wall, grid, field, map, shelf, tracks, feed) takes turns across sources, each newest first, so one prolific source cannot fill it; reading lists keep time order
+  invariant undated things take turns by source before being spread through a dated stream
+  invariant a host that publishes a player for its pages (nativePageEmbedHosts) plays in it; a recording without a file of its own offers Play on its page
+  invariant a licence address or its words read as what they let a person do (nativePageLicences); unrecognized terms promise nothing
+  invariant a source is drawn onto a page for what it demonstrably carries, not only for the family it was filed under: carriage is measured from a retained body (a file the source itself typed audio, video or image, or a calendar's events), kept beside the channel with the count that showed it, and never overwrites the family the source was listed under
+  invariant the publisher-depth page aggregates channel count, protocol count, and read standing once per matched root before ordering; it does not run four correlated channel scans for every publisher row
+  witness cmd/BonfyreWebAddress/tests/page_channels_test.sh proves the aggregate still shows the publisher, protocol, channel, refusal, and exact-coordinate closures
+  invariant Releases, Advisories, and their Work previews use the same CUE-compiled route/source contract. A contract matches an exact host suffix and, where declared, whole title terms; it is a selection gate only and never changes the item's owner, kind, source family, occurrence standing, or authority.
+  invariant Stage is an authored CUE page program over the events family. A focused Stage cuts that event's spatial closure; neither focus nor proximity permits a forum, release, audio, video, or other non-event source to enter.
+  invariant an explicit /channels SourceDepth cut (channel, publisher, protocol, standing or bounded ledger slice) reads only its maintained SourceFrontier relation; it does not parse unrelated retained bodies before rendering the ledger page
+  invariant an item's own evidence outranks its source's filing: a story whose source published an audio file is a recording on this estate's pages, a video file makes a video, and a picture file the source typed and published makes a photograph -- a thumbnail standing beside a story never does
+  invariant no browser renderer: nothing a page says is composed, fetched or replaced by a client. The single script this estate permits drives playback of media the page already named -- it renders no markup, contacts no host, stores nothing, and the page is complete and readable with scripting switched off, its deck hidden until its own script shows it
+  invariant one deck plays a whole track list in turn, at the foot of the list it plays: a person who starts listening keeps listening, and every file is fetched by their own browser from the source that published it
+  invariant how much of one kind of material a page may hold is a memory cost, not a free number: every stream is held at that size while a page composes, multiplied by the compositions in flight, and a machine that also runs a model server and an editor has to survive the estate publishing itself
+  invariant the estate is published twice: as pages a person reads, and as tables a reader can query. The tables choose among pages that already exist and are never a second source of truth -- every row points at something this estate composed, a score between two things remains a measurement of two texts, and a distance remains between two stated points
+  invariant a reader that asks for part of a published object gets that part: the edge answers Range with 206 and never caches one reader's slice under the whole object's address
+  invariant a page is a walk, not one look repeated: every region and every front-page section is dressed in a presentation profile chosen for the material it carries, seeded so the same stop looks the same between visits, and the seam between two of them is drawn rather than hidden
+  invariant a profile the estate has only catalogued dresses a region exactly as a studied one does, and the markup says which standing the one it used has: dressing is this estate's own composition, never a claim to have observed anyone's design
+  invariant motion is the browser's own: parallax and rise-into-view are CSS, ask nothing of a script, and are absent entirely for a reader who has asked for less motion
+  invariant a podcast enclosure plays and is never used as a picture; the Podcasting 2.0 namespace's people, place, transcript, chapters and conversation are shown as the show's statements
+  witness cmd/BonfyreWebAddress/tests/page_composition_test.sh proves video plays in place, that one deck plays the whole queue, that every playable row says what it plays, that the deck stands under the list it plays, that no renderer is fetched or mounted, and that the one permitted script composes nothing, stores nothing and contacts no host
+  witness cmd/BonfyreWebAddress/tests/page_surface_scene_test.sh proves the served runtime asset exactly equals the SurfaceScene owner module, the PageComposition compatibility Scene has page and region continuity identifiers, its envelope composes under the canonical runtime's four-plane model, and legacy documents do not mount it
+  witness cmd/BonfyreWebAddress/tests/native_surface_routes_test.sh proves a material-bearing public route may use PageComposition while an empty one reaches its declared CUE-native program, with neither route falling back to a browser-owned document
+  witness 2026-09-19 at 640 items per stream a single composing worker held 185 MB and four of them left a laptop with 0.1 GB free, killing other work; at 320 the same routes composed 9-10 regions and 232-263 items with the same profile variety, and the standing publish pass now refuses to start below 700 MB free rather than taking the machine down
+  witness 2026-09-18 a front page composed 7 distinct presentation profiles across 6 dressed sections and /stage composed 9 across 3 sections and 5 regions, every one labelled reference_candidate because that is the standing those rows actually have
+  witness 2026-09-18 extracting the authored character into one stylesheet took a composed page from 81,612 bytes to 36,351 and the wire from 21,513 to 9,379; a 3,024-page export fell from 194 MB to 36.8 MB
+  witness 2026-09-18 on a 277-source estate, measured carriage moved /discover from 15 to 44 contributing sources, /board from 2 to 17 (74 pictures), and /listen from 2 sources with nothing playable to 15 sources and 42 recordings that play in the deck
+  witness cmd/BonfyreWebAddress/tests/page_public_commons_test.sh proves Archive films and concerts play in the Archive's player with Public domain read as permissions, a concert without its own file offers Play, a Podcasting 2.0 episode plays with length, guests, place, transcript, chapters and conversation, iNaturalist originals are asked for at medium and large with their extension, and the photo field takes turns across GBIF sightings and Commons photographs
+  witness scripts/tests/export_static_estate_depth_test.sh proves a static export writes a thirteenth route length when the public program offers it and stops at the first empty length rather than emitting a fabricated continuation
+  witness scripts/tests/static_item_archive_closure_test.sh proves a failed retained-item address makes the export refuse with its expected and materialized cardinalities, while the available sibling remains inspectable only as a rejected staging artifact.
+  witness scripts/tests/source_ledger_static_export_test.sh proves source-ledger export carries the complete admitted fixture rather than a first-page sample
+  witness scripts/tests/source_ledger_static_export_test.sh proves source-depth pages with oversized external coordinates materialize under deterministic bounded keys rather than being refused by a filesystem carrier
+  witness cmd/BonfyreWebAddress/tests/page_channels_test.sh proves a multi-kilobyte exact channel coordinate survives bounded transport and direct SourceDepth lowering without being truncated or hydrating unrelated page material
+  witness scripts/tests/public_circulation_audit_test.sh proves the export audit distinguishes active/admitted sources carried by declared route pages from a refused source in old markup, counts paginated route pages, and reports the remaining uncircled set without treating it as a quality judgment
+  witness 2026-09-22 full-estate circulation proof served 148 item links from /discover/13, 152 from /discover/24 and 160 from /discover/25; the first two declared their next link and the terminal twenty-fifth length did not
+  witness 2026-09-22 full-estate static circulation proof walked all 291 Discover lengths plus every declared route and wrote 319 route files with no refusals; it carried 2,070 of 2,364 admitted sources (87.56%), including every selected source window at the checked non-terminal depths, while 249 admissions had no retained item and 45 retained news sources remained outside this particular item-link audit
+  witness 2026-09-24 full-estate carriage refresh read 2,426 retained bodies and projected demonstrated material carriage for 289 channels (218 image, 56 podcast and 18 video carriers); frontier channels with carriage rose from 100 to 286 without changing any channel's canonical family or admission state
+  source_lineage 2026-09-16 correction of the card-shaped public World renderer toward composition over existing interaction languages
+invariant a front-page preview selects a declared region with enough remaining source-scoped material rather than choosing an empty topology; region minimums, maximums and exact source selection remain binding
+  invariant profile and territory-house style values are exact top-level typed fields; quoted font families and numeric weights survive, while nested keys, duplicate fields, decoded NULs, truncation and unsafe CSS are refused
+  source_path cmd/BonfyreWebAddress/src/page_preview_region.h
+  source_path cmd/BonfyreWebAddress/src/page_style_token.h
+  witness cmd/BonfyreWebAddress/tests/page_preview_region_test.c proves available-region selection without mutating source cursors, skipping unavailable layouts, fallback and invalid region refusal
+  witness cmd/BonfyreWebAddress/tests/page_style_token_test.c proves exact structured style extraction, quoted and numeric values, nested/duplicate refusal, no truncated NUL, and isolated database handles
+  witness cmd/BonfyreWebAddress/tests/house_presentation_test.mjs alternates territory and nested personal profiles and confirms styles do not bleed between requests
+  invariant a publisher's own address composes from its readers' archived material even when its compiled "/" route holds no items, and is named by the source record's label when no reference names it
+  witness cmd/BonfyreWebAddress/tests/publisher_front_archive_test.sh composes a publisher host whose compiled "/" cut is empty and checks the archived story, its item link and origin, and the source label as the page title
+  invariant every stylesheet a territory front links is a declared asset route the server answers from the site root
+  witness cmd/BonfyreWebAddress/tests/front_sheets_served_test.sh reads each /assets/*.css linked from src/front_*.h and checks a 200 text/css answer byte-identical to site/matrix
+  invariant the Work front links to account work and application setup without rendering a catalog of app demonstrations; published production designs retain their own address without inserting a showcase into territory or personal fronts
+  witness cmd/BonfyreWebAddress/tests/production_public_projection.test.mjs checks the front omits the production showcase while published designs remain readable
+  witness cmd/BonfyreWebAddress/tests/work_entrance_test.mjs checks each tool row is a grid with square corners on a transparent section, moves on focus and stays still under reduced motion at 1440 and 390 px
+  invariant a territory front omits the conversations section when no public starter exists rather than announcing an empty selection
+  forbidden_inference a publisher front composed from the archive -> that publisher's current site, an endorsement, or a compiled route for that subject
+
+interaction page-composition-reads-owner-material
+  source surface-pattern
+  destination page-composition
+  relation composes_owner_streams
+  preserves canonical owner reader, publication status and visibility, community moderation state, safe same-origin media paths, source attribution by label, and the world's published fragment edges
+  drops source catalogue headings, per-source shelving, character name as copy, raw subject-address schemes and the visible reading-boundary prose
+  forbidden_inference a region rendering material -> that material's owner having admitted it for any purpose beyond public reading
+  invalidates_on world, world_fragment, publication_occurrence, internet_source, community_post, media_program, music_recording or page-composition.cue changes
+  witness cmd/BonfyreWebAddress/tests/page_composition_test.sh
+
+interaction page-composition-hands-off-compatibility-scene
+  source page-composition
+  destination surface-ir
+  relation server_emitted_compatibility_scene
+  preserves exact server-emitted region order, stable region continuity, public/self actor scope, owner-projection fingerprint and the compatibility boundary
+  drops source truth, identity, authority, availability, price, proof, commitment, presence and effect state
+  forbidden_inference a compatibility Scene or projected runtime asset -> an active browser binding, a client compositor, or authority to fetch/derive owner material
+  invalidates_on PageComposition region plan, owner projection fingerprint, addressed route/filter cut or SurfaceRuntime scene contract changes
+  witness cmd/BonfyreWebAddress/tests/page_surface_scene_test.sh
+  binding cmd/BonfyreWebAddress/src/main.c
+  binding cmd/BonfyreWebAddress/Makefile
+  binding cmd/BonfyreSurfaceScene/runtime/surface-runtime.mjs
+
+interaction page-composition-publishes-complete-route-walk
+  source page-composition
+  destination web-lowering
+  relation exports_server_declared_route_continuation
+  preserves the exact public host, route, page-length order, server-emitted next link, and immutable HTML bytes for each emitted length
+  drops source admission authority, raw retained bodies, reader identity, personalization, browser-side composition, and any claim that an exported page is a live source reading
+  forbidden_inference a source appearing in a static route length -> endorsement, editorial ranking, source authority, current availability, or a claim that the page is live
+  invalidates_on page-composition.cue, public route source selection, or static export continuation changes
+  witness scripts/tests/export_static_estate_depth_test.sh
+  binding scripts/export_static_estate.sh
+
+interaction source-frontier-lowers-source-depth-cut
+  source source-frontier
+  destination page-composition
+  relation maintains_ledger_cut
+  preserves exact admitted coordinate, recorded standing, publisher/family relation, retained-carriage measurements and bounded index position
+  drops unrelated retained body content, route-level item selection, source quality judgement, endpoint liveness and authority to fetch again
+  forbidden_inference a SourceDepth page -> current source availability, public-program contribution, endorsement or a claim about what its publisher now says
+  invalidates_on channel state, exact address, publisher/family membership, recorded carriage or bounded index membership
+  witness cmd/BonfyreWebAddress/tests/page_channels_test.sh
+
+interaction page-composition-materializes-subject-route-representation
+  source page-composition
+  destination representation-manifold
+  relation compiles_request_ready_route_cut
+  preserves exact subject and scope, admitted reader coordinates, published SourceCollection and SitePresentation inputs, normalized item bytes, route grammar, compiler identity, committed output digest and reconstruction inputs
+  drops source admission authority, provider freshness, subject identity promotion, rights, and every human or institutional effect
+  forbidden_inference a verified compiled route -> current external truth, authority to act, or proof that every possible presentation is resident
+  invalidates_on admitted SubjectFabric reader, Scene query, published SourceCollection or SitePresentation, normalized item stream, page grammar, surface program, or compiler changing
+  binding cmd/BonfyreExternalEstate/tools/compile_subject_projection.mjs
+  binding cmd/BonfyreExternalEstate/tools/verify_subject_projection.mjs
+  binding scripts/bonfyre_automate.mjs
+  witness cmd/BonfyreExternalEstate/tests/subject_projection_precompute_test.sh
+

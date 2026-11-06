@@ -1,0 +1,90 @@
+pack operator-financial-membrane
+generation control-1
+provenance binding the compute ledger to the autonomous operator, 2026-08-27
+authority measured
+note Continues compute-financial-metabolism and compute-governance-closed. Nothing from those is superseded; this connects them to the thing that was actually spending. The operator is the largest consumer in the estate and it had no funding awareness at all.
+
+# ---------------------------------------------------------------------------
+# THE OPERATOR IS BURNING RIGHT NOW
+# ---------------------------------------------------------------------------
+
+claim clm:operator-live-retry-storm
+  status UNRESOLVED
+  verification MEASURED
+  claim The autonomous operator is failing continuously, at the time of writing, and reports itself paused while doing so.
+  evidence 3,574 runs recorded; run count observed incrementing by 1 every 25-30 seconds during measurement
+  evidence newest three runs at 20:37:53, 20:38:22, 20:38:51 all RateLimitError 429
+  evidence mcp operator_status reports paused=true; launchd com.bonfyre.agents-runtime PID 28220 is alive and dispatching
+  consequence the pause control is not honoured by the runtime, so the documented way to stop it does not stop it
+  cost_qualifier these requests are REJECTED for insufficient quota, so they cost no money; the waste is CPU, disk and 4.8 hours of run time, not dollars
+  action_required either the runtime must honour the pause flag, or the launchd job must be unloaded to stop it
+  stop_command launchctl unload ~/Library/LaunchAgents/com.bonfyre.agents-runtime.plist
+
+claim clm:operator-failure-taxonomy
+  status STANDING
+  verification MEASURED
+  claim Three failure modes account for every operator failure, and only one is still live.
+  total 3,530 failed runs of 3,557; exactly 4 have ever resolved
+  mode_1 1,923 ValidationError on InputTokensDetails.cache_write_tokens, 2026-07-27 to 2026-08-23 -- RESOLVED
+  mode_2 1,367+ credit_balance_exhausted, 2026-08-27 01:00 onward -- LIVE
+  mode_3 225 connection errors
+  note mode_1 was the largest historical failure mode and was cleared by the vendored default added 2026-08-26 22:41; every validation failure predates that patch, which is how the fix is known to have worked
+
+upgrade upg:beta-response-usage-patched
+  status LANDED
+  verification MEASURED
+  target ~/.bonfyre/agents-runtime/venv/.../openai/types/beta/beta_response_usage.py
+  change cache_write_tokens defaulted to 0, mirroring the earlier patch to responses/response_usage.py
+  cause the same latent bug existed on the beta path with no default; responses/ was patched 2026-08-26, beta/ was not
+  verified both InputTokensDetails classes now construct with cached_tokens only and yield cache_write_tokens=0
+  caveat vendored-dependency edit; does not survive a venv rebuild. Backup at scratchpad/beta_response_usage.py.bak
+
+# ---------------------------------------------------------------------------
+# THE GUARD
+# ---------------------------------------------------------------------------
+
+upgrade upg:funding-preflight
+  status LANDED
+  verification MEASURED
+  claim A preflight consulted once refuses every run the operator attempted 1,380 times.
+  mechanism provider-scoped funding route lookup, then a TTL-cached provider balance check
+  organs financial_metabolism funding_routes; the balance surfaces already probed for the ledger
+  result openrouter $0.05 REFUSE (no route), openai $0.05 ADMIT, anthropic $5 ADMIT, anthropic $500 REFUSE (route holds $300)
+  replay 1,380 runs would have been refused before dispatch; 1,380 provider requests avoided
+  cost the guard itself is capped at 288 requests/day by a 300s balance cache
+  boundary the operator is NOT modified; the guard is offered, wiring it in is a separate decision
+
+defect def:choose-funding-is-not-provider-scoped
+  status OPEN
+  verification REPRODUCED
+  target financial_metabolism.choose_funding
+  symptom choose_funding(currency, amount) selects any active route with sufficient balance, so an OpenRouter request was funded by route:compute/anthropic
+  effect a provider whose own budget is exhausted is admitted against another provider's pocket
+  workaround the guard queries funding_routes directly with a provider-scoped route_id prefix
+  fix_shape an optional provider or subject filter on choose_funding
+
+defect def:my-own-guard-skipped-the-overdrawn-case
+  status FIXED
+  verification REPRODUCED
+  claim The first version of the guard admitted the exact case it was written to refuse.
+  symptom the balance test read `bal >= 0 and bal < estimate`, which skips the refusal precisely when the balance is NEGATIVE, i.e. overdrawn
+  detected the replay reported 0 runs prevented against 1,380 that plainly should have been
+  fix a non-positive balance now always refuses, and the -1 sentinel for "reachable but unknown" is handled separately
+  note the replay measurement is what caught it; a guard that is never replayed against real history is not known to guard anything
+
+# ---------------------------------------------------------------------------
+# CARRIED FORWARD, NOT SUPERSEDED
+# ---------------------------------------------------------------------------
+
+note The token and financial work stands as recorded in compute-financial-metabolism and compute-governance-closed:
+note   rates derived from OpenAI billing arithmetic, 5 models, 3 cross-validated exactly against the published book
+note   Claude corrected to $1,660.55 list-rate after dedupe and the opus-4.8 price-id fix, down from an overstated $5,748.75
+note   prompt caching measured at 39% of OpenAI spend and 87% of Anthropic list-rate exposure
+note   sibling pricing refused on calibration; rungs 1 and 2 cover every real case
+note   funding routes, admission control and a commitment replace the contradictory env budget
+note   13 usage occurrences and 13 economic measures at basis='billed' in ~/.bonfyre/compute-ledger.sqlite3
+
+note The MCP work stands and is now partly verified through the surface itself:
+note   project_test_profile still enumerates only the original six profiles, confirming the MCP has NOT been restarted since node-syntax and php-lint were added
+note   operator_status was reachable and returned the goal and run state that produced every finding above
+note   the agents-runtime plist BONFYRE_MCP_BASE correction to 3053 is what made that surface answer at all

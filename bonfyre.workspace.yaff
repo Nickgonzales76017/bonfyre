@@ -1,16 +1,76 @@
 workspace Bonfyre
 version 1
 
-root historical-laboratory
+root historical-evidence
   kind source
-  locator .
-  authority frozen-history
+  locator evidence/origins
+  authority EvidenceGraph
   mode read-only-by-policy
 
 root native-engine
   kind source
   locator engine
   authority native-fabric
+  mode read-write
+
+root command-surfaces
+  kind source
+  locator cmd
+  authority native-fabric
+  mode read-write
+
+root shared-libraries
+  kind source
+  locator lib
+  authority native-fabric
+  mode read-write
+
+root product-components
+  kind source
+  locator components
+  authority native-fabric
+  mode read-write
+
+root architecture-atlas
+  kind contract
+  locator architecture
+  authority architecture-atlas
+  mode read-write
+
+root semantic-contracts
+  kind contract
+  locator schemas
+  authority contract-spine
+  mode read-write
+
+root operator-contracts
+  kind contract
+  locator estate
+  authority capability-closure
+  mode read-write
+
+root evidence
+  kind evidence
+  locator evidence
+  authority EvidenceGraph
+  mode append-by-policy
+
+root integrations
+  kind boundary
+  locator integrations
+  authority boundary-compiler
+  mode read-write
+
+root documentation
+  kind documentation
+  locator docs
+  authority live-implementation
+  mode read-write
+
+root public-site
+  kind surface
+  locator site
+  authority surface-projection
   mode read-write
 
 root runtime-state
@@ -27,9 +87,9 @@ root artifacts
 
 root generated
   kind generated
-  locator platform-default
-  authority fabric-core
-  mode read-write
+  locator generated/projections
+  authority projection-kernel
+  mode generated-only
 
 root model-vault
   kind model

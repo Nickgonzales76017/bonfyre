@@ -3,8 +3,15 @@
  *
  * Cost-model driven strategy selection with memoized results.
  */
+/* CLOCK_MONOTONIC is gated behind a POSIX feature macro on glibc, and the
+ * fixed-width integer types need <stdint.h> explicitly. */
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include "hybrid_reduce.h"
 #include "bench_metrics.h"
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

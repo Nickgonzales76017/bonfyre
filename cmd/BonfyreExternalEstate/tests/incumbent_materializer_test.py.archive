@@ -1,0 +1,12 @@
+#!/usr/bin/env python3
+# Historical witness; incumbent_materialization.test.mjs supersedes it.
+import importlib.util
+from pathlib import Path
+ROOT=Path(__file__).resolve().parents[3];s=importlib.util.spec_from_file_location("m",ROOT/"cmd/BonfyreExternalEstate/tools/materialize_incumbent_records.py");m=importlib.util.module_from_spec(s);s.loader.exec_module(m)
+expect={"github_repository":"project","reddit_community":"community_body","discord_server":"community_body","meetup_event":"publication_occurrence","eventbrite_event":"publication_occurrence","211_resource":"external_resource","clever_institution":"external_resource","property_record":"external_resource","nextdoor_place":"external_resource"}
+for kind,owner in expect.items():
+ r=m.materialize({"provider":"test","kind":kind,"source_ref":"source:test","receipt_ref":"receipt:test","observed_at":"2026-09-28T00:00:00Z","payload":{"id":kind,"title":"Test","url":"https://example.test/x"}})
+ assert r[0]["type"]==owner
+promoted=m.materialize({"provider":"211","kind":"211_household_opportunity","source_ref":"source:test","receipt_ref":"receipt:test","observed_at":"2026-09-28T00:00:00Z","payload":{"id":"211-food","title":"Food","url":"https://example.test/food","functions":"food,transport"}})
+assert promoted[0]["type"]=="household_opportunity"
+print("incumbent materializer: PASS")

@@ -1,0 +1,4 @@
+{"listing_id":"milo-a","property_id":"property:milo","unit_identity":"floorplan:A","advertised_base_rent_monthly_usd":925,"availability_status":"reported_available_now","source_refs":["https://example.test/milo"],"evidence_ref":"housing/receipts#milo","dogs_stated_ok":true}
+{"listing_id":"milo-a1","property_id":"property:milo","unit_identity":"floorplan:A1","advertised_base_rent_monthly_usd":975.5,"availability_status":"reported_available_now","source_refs":["https://example.test/milo"],"evidence_ref":"housing/receipts#milo","pet_status":null}
+{"candidate_id":"cand-9","property_id":"property:other","advertised_monthly_rent_usd":1e3,"price_usd_month":0.30000000000000004}
+{"listing_id":"MILO-b","property_id":"property:milo","advertised_base_rent_monthly_usd":-0.000001}

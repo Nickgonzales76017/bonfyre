@@ -1,0 +1,41 @@
+{
+  "name": "live_session",
+  "displayName": "live_session",
+  "description": "A session somebody says is happening, the heartbeats that keep it live, and what it points at for replay once it ends. No media flows through this estate. A live session is not an audience, not a viewer count, and not a claim anybody is watching.",
+  "attributes": {
+    "session_id": {
+      "type": "string",
+      "required": true,
+      "uniqueWithinNamespace": true
+    },
+    "label": {
+      "type": "string",
+      "required": true
+    },
+    "host_actor": {
+      "type": "string",
+      "required": true
+    },
+    "opened_at": {
+      "type": "string",
+      "required": true
+    },
+    "last_heartbeat_at": {
+      "type": "string"
+    },
+    "ended_at": {
+      "type": "string"
+    },
+    "replay_ref": {
+      "type": "string"
+    },
+    "cannot_infer": {
+      "type": "text",
+      "required": true
+    },
+    "status": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

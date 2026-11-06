@@ -1,0 +1,52 @@
+{
+  "operator": "RECONCILE",
+  "program": {
+    "program_id": "household.reconcile.7979b443e1449286",
+    "operator": "RECONCILE",
+    "digest": "f01e0446f83631ed1c2690620f0b257129d77eba95a29516230cba6670291772",
+    "reads": [
+      "household:housing:listing:MILO-b",
+      "household:housing:listing:milo-a"
+    ],
+    "admitted": true,
+    "hard_failures": []
+  },
+  "left": "household:housing:listing:milo-a",
+  "right": "household:housing:listing:MILO-b",
+  "disposition": "coexisting_distinct_units",
+  "merge_prohibited": true,
+  "reason": "Shared property identity with distinct unit identities is not a duplicate or a price conflict.",
+  "comparison": {
+    "operator": "COMPARE",
+    "program": {
+      "program_id": "household.compare.7979b443e1449286",
+      "operator": "COMPARE",
+      "digest": "34d319e37c9cc731cad1d5da1a0848a7efe0d107e7d726235d872ec48e402230",
+      "reads": [
+        "household:housing:listing:MILO-b",
+        "household:housing:listing:milo-a"
+      ],
+      "admitted": true,
+      "hard_failures": []
+    },
+    "left": "household:housing:listing:milo-a",
+    "right": "household:housing:listing:MILO-b",
+    "same_kind": true,
+    "equal_fields": [
+      "property_id"
+    ],
+    "different_fields": [
+      "advertised_base_rent_monthly_usd",
+      "listing_id"
+    ],
+    "numeric_deltas": [
+      {
+        "field": "advertised_base_rent_monthly_usd",
+        "left": 925,
+        "right": -0.000001,
+        "right_minus_left": -925.000001
+      }
+    ]
+  }
+}
+exit 0

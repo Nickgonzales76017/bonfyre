@@ -1,0 +1,1 @@
+{"cpanelresult":{"apiversion":2,"data":[{"userlist":[{"db":"betaf_shop","user":"betaf_shop"}],"sizemeg":"3.10","db":"betaf_shop","size":"3250585","usercount":1}],"event":{"result":1},"func":"listdbs","module":"MysqlFE"}}

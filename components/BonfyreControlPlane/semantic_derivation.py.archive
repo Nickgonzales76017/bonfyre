@@ -1,0 +1,129 @@
+"""Exact, dependency-addressed semantic derivation over FactDelta inputs."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+from dataclasses import dataclass, field
+from typing import Callable, Iterable, Mapping, Sequence
+
+
+@dataclass(frozen=True, order=True)
+class HybridLogicalClock:
+    physical_ms: int
+    logical: int = 0
+    node: str = "local"
+
+    def tick(self, physical_ms: int) -> "HybridLogicalClock":
+        if physical_ms > self.physical_ms:
+            return HybridLogicalClock(physical_ms, 0, self.node)
+        return HybridLogicalClock(self.physical_ms, self.logical + 1, self.node)
+
+    def merge(self, other: "HybridLogicalClock", physical_ms: int) -> "HybridLogicalClock":
+        top = max(self.physical_ms, other.physical_ms, physical_ms)
+        if top == self.physical_ms == other.physical_ms:
+            logical = max(self.logical, other.logical) + 1
+        elif top == self.physical_ms:
+            logical = self.logical + 1
+        elif top == other.physical_ms:
+            logical = other.logical + 1
+        else:
+            logical = 0
+        return HybridLogicalClock(top, logical, self.node)
+
+
+@dataclass(frozen=True)
+class FactDelta:
+    delta_id: str
+    writes: frozenset[str]
+    causal_frontier: str
+    hlc: HybridLogicalClock
+
+
+@dataclass(frozen=True)
+class ConstraintIR:
+    constraint_id: str
+    hard: bool
+    satisfied: bool
+    source_ref: str
+
+
+@dataclass(frozen=True)
+class SemanticProgramIR:
+    program_id: str
+    operator: str
+    reads: frozenset[str]
+    writes: frozenset[str]
+    constraints: tuple[ConstraintIR, ...] = ()
+
+    @property
+    def digest(self) -> str:
+        body = json.dumps({
+            "id": self.program_id, "operator": self.operator,
+            "reads": sorted(self.reads), "writes": sorted(self.writes),
+            "constraints": [c.__dict__ for c in self.constraints],
+        }, sort_keys=True)
+        return hashlib.sha256(body.encode()).hexdigest()
+
+
+@dataclass(frozen=True)
+class SemanticSlice:
+    delta_id: str
+    affected_programs: tuple[str, ...]
+    read_closure: frozenset[str]
+
+
+@dataclass(frozen=True)
+class DecisionSnapshot:
+    program_id: str
+    admitted: bool
+    hard_failures: tuple[str, ...]
+    learned_signals: tuple[str, ...]
+    read_closure_digest: str
+
+
+@dataclass(frozen=True)
+class AllocationProblem:
+    demand_refs: tuple[str, ...]
+    candidate_refs: tuple[str, ...]
+    hard_constraints: tuple[ConstraintIR, ...]
+
+
+class SemanticDerivationGraph:
+    def __init__(self, programs: Iterable[SemanticProgramIR] = ()) -> None:
+        self.programs: dict[str, SemanticProgramIR] = {}
+        for program in programs:
+            self.add(program)
+
+    def add(self, program: SemanticProgramIR) -> None:
+        if program.program_id in self.programs:
+            raise ValueError(f"duplicate program {program.program_id}")
+        self.programs[program.program_id] = program
+
+    def slice(self, delta: FactDelta) -> SemanticSlice:
+        changed = set(delta.writes)
+        affected: list[str] = []
+        read_closure: set[str] = set()
+        pending = dict(self.programs)
+        # Fixed point permits downstream programs to be listed before producers.
+        while pending:
+            progressed = False
+            for program_id, program in list(pending.items()):
+                if program.reads & changed:
+                    affected.append(program_id)
+                    read_closure.update(program.reads)
+                    changed.update(program.writes)
+                    del pending[program_id]
+                    progressed = True
+            if not progressed:
+                break
+        return SemanticSlice(delta.delta_id, tuple(affected), frozenset(read_closure))
+
+
+def decide(program: SemanticProgramIR) -> DecisionSnapshot:
+    hard_failures = tuple(c.constraint_id for c in program.constraints
+                          if c.hard and not c.satisfied)
+    learned = tuple(c.constraint_id for c in program.constraints if not c.hard)
+    digest = hashlib.sha256("\n".join(sorted(program.reads)).encode()).hexdigest()
+    return DecisionSnapshot(program.program_id, not hard_failures,
+                            hard_failures, learned, digest)

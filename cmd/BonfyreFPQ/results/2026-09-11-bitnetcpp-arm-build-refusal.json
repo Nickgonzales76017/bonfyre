@@ -1,0 +1,10 @@
+{
+  "status": "refused_by_build",
+  "scope": "unmodified upstream Microsoft BitNet.cpp ARM build; not a BitNet inference measurement",
+  "repository": "https://github.com/microsoft/BitNet",
+  "revision": "main shallow clone on 2026-09-11",
+  "host": "Darwin arm64, Apple clang 17.0.0, CMake 4.3.4",
+  "command": "cmake -S /tmp/bonfyre-bitnet-cpp -B /tmp/bonfyre-bitnet-cpp/build -DBITNET_ARM_TL1=OFF -DCMAKE_BUILD_TYPE=Release && cmake --build /tmp/bonfyre-bitnet-cpp/build -j 4",
+  "failure": "unmodified build: libggml-base linkage cannot resolve dequantize_row_i2_s and quantize_i2_s for arm64. A disposable local CMake target-wiring experiment exposed the next upstream ARM compile failure in ggml-cpu.c: use of undeclared identifier src1_cont. No patched binary was accepted as a BitNet execution witness.",
+  "forbidden_inference": "an official BitNet artifact or a cloned source tree means BitNet executed locally"
+}

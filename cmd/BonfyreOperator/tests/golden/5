@@ -1,0 +1,79 @@
+{
+  "operator": "SELECT",
+  "program": {
+    "program_id": "household.select.2175eb3c3492c0b6",
+    "operator": "SELECT",
+    "digest": "3b59be48ba2d4b34fd957ea527e8f86dbb9234557f65f8e4f71201990eb322cf",
+    "reads": [
+      "household:food:offer:Rice-2",
+      "household:food:offer:rice_1"
+    ],
+    "admitted": true,
+    "hard_failures": []
+  },
+  "count": 2,
+  "records": [
+    {
+      "address": "household:food:offer:rice_1",
+      "kind": "food.offer",
+      "content_sha256": "cdb54c9b853155ad429b303354dade5b5a6f13aa912aaca1d05f942f2521a74d",
+      "source_file": "household/food/current-offers.jsonl",
+      "source_refs": [
+        "a",
+        "z"
+      ],
+      "record": {
+        "offer_id": "rice_1",
+        "cash_price_usd": 2.1,
+        "merchant": "Kroger",
+        "source_refs": [
+          "z",
+          "a",
+          "a",
+          ""
+        ],
+        "notes": "multi\nline \"q\"",
+        "nested": {
+          "b": {
+            "y": 2,
+            "x": [
+              1,
+              2
+            ]
+          },
+          "c": 0.1
+        }
+      }
+    },
+    {
+      "address": "household:food:offer:Rice-2",
+      "kind": "food.offer",
+      "content_sha256": "45e09032963e8210d2e998a8c7613e0fda6bea023e3b4eb12aeb7581705e84f7",
+      "source_file": "household/food/current-offers.jsonl",
+      "source_refs": [
+        "https://example.test/rice"
+      ],
+      "record": {
+        "2": 2,
+        "10": 1,
+        "offer_id": "Rice-2",
+        "cash_price_usd": 2.1,
+        "merchant": "Kroger",
+        "source_refs": "https://example.test/rice",
+        "evidence_ref": "",
+        "notes": null,
+        "nested": {
+          "b": {
+            "y": 1,
+            "x": [
+              1,
+              2
+            ]
+          },
+          "a": "éé"
+        }
+      }
+    }
+  ]
+}
+exit 0

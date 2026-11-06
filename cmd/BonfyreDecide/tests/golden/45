@@ -1,0 +1,40 @@
+exit 0
+bonfyre books — book bank and card lines to your accounts, on this machine
+
+Usage:
+  bonfyre books learn --history categorised.csv --out learned.json
+  bonfyre books --transactions bank.csv --learned learned.json [options]
+  bonfyre books --transactions bank.csv --chart chart.txt [options]
+  bonfyre books inspect --workbook bank.xlsx
+  bonfyre books review --report report.json --out review.xlsx
+  bonfyre books --transactions bank.xlsx --sheet Transactions --chart chart.txt --out review.xlsx
+
+learn reads lines you have already categorised (a Category or Account
+column) and keeps what it learned in one file. Booking then answers from that
+file first; a line it is unsure of goes to the local model, which is shown
+your most similar earlier lines. Without learned books every line goes to the
+local model and is held for your review, and a line the local model
+suggests is held for review too. An amount that does not read as money is
+kept as written and the line held; it is never booked as zero. Nothing
+leaves this machine.
+
+Options:
+  --transactions FILE  Bank or card export with a description column (date and amount if present)
+  --learned FILE       What bonfyre books learn wrote
+  --chart FILE         One account per line, "Name: what goes there" (19 at most)
+  --columns MAP        Which header is which, e.g. date=Posted,description=Payee,amount=Amount
+                       (needed when the file could be read two ways)
+  --sheet NAME         Exact XLSX sheet name (required when there is more than one)
+  --header-row N       XLSX header row, numbered from 1 (defaults to the first used row)
+  --out FILE           Review workbook (.xlsx), full report (.json), or categorized CSV
+  --json               Print the full report
+  --model NAME         Prefer this local model (a file name or part of one);
+                       otherwise the front loads the largest that fits
+  --model-endpoint U   Local model server (default http://127.0.0.1:7000)
+
+If the transactions file has an Account or Category column, the summary says
+how many lines matched it.
+
+Example:
+  bonfyre books learn --history examples/history.csv --out learned.json
+  bonfyre books --transactions examples/september.csv --learned learned.json --out booked.csv

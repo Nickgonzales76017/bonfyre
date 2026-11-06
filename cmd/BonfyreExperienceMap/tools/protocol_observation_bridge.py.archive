@@ -1,0 +1,119 @@
+#!/usr/bin/env python3
+# Historical reference retained after native receipt-binding cutover.
+"""Bind one DomainProfile receipt to a compiled, occurrence-scoped contract."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+from pathlib import Path
+
+
+SCHEMA = "bonfyre-protocol-binding.v1"
+
+
+class BindingError(ValueError):
+    pass
+
+
+def canonical_sha256(value: dict) -> str:
+    body = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(body.encode("utf-8")).hexdigest()
+
+
+def sha256_file(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def latest_domain_binding(path: Path, occurrence_id: str) -> dict:
+    found = None
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        row = json.loads(line)
+        if row.get("schema") != "bonfyre-domain-binding.v1":
+            continue
+        if row.get("occurrence_id") != occurrence_id:
+            continue
+        if row.get("binding_validated") is True and row.get("owner") == "DomainProfile" and row.get("state") == "profile_bound":
+            found = row
+    if found is None:
+        raise BindingError(f"{occurrence_id} has no validated DomainProfile receipt")
+    if not isinstance(found.get("semantic_record_sha256"), str) or len(found["semantic_record_sha256"]) != 64:
+        raise BindingError("DomainProfile receipt has no semantic record hash")
+    return found
+
+
+def native_compilation(path: Path, occurrence_id: str) -> dict:
+    row = json.loads(path.read_text(encoding="utf-8"))
+    if row.get("schema") != "bonfyre-protocol-observation-bridge.v1":
+        raise BindingError("wrong native protocol bridge receipt schema")
+    if row.get("registered") is not True or row.get("state") != "compiled":
+        raise BindingError("native protocol bridge did not compile a contract")
+    if row.get("occurrence_id") != occurrence_id:
+        raise BindingError("native protocol bridge receipt is for another occurrence")
+    if row.get("contract") != "ogc-api-common-observation" or row.get("programs") != 3:
+        raise BindingError("native protocol bridge did not compile the declared OGC contract")
+    if row.get("scoped") is not True:
+        raise BindingError("native protocol bridge lost occurrence scope")
+    return row
+
+
+def bind_observation(occurrence_id: str, evidence_path: Path, native_receipt_path: Path) -> dict:
+    domain = latest_domain_binding(evidence_path, occurrence_id)
+    native = native_compilation(native_receipt_path, occurrence_id)
+    return {
+        "schema": SCHEMA,
+        "occurrence_id": occurrence_id,
+        "axis": "protocol",
+        "owner": "ProtocolContract",
+        "state": "compiled",
+        "from_owner": "DomainProfile",
+        "to_owner": "ProtocolContract",
+        "binding_validated": True,
+        "contract": native["contract"],
+        "semantic_record_sha256": domain["semantic_record_sha256"],
+        "domain_binding_sha256": canonical_sha256(domain),
+        "native_registration_receipt_sha256": sha256_file(native_receipt_path),
+        "programs": native["programs"],
+        "cannot_infer": [
+            "compiled contract -> OGC conformance",
+            "compiled contract -> enacted request",
+            "compiled contract -> provider admission, authority or effect",
+        ],
+    }
+
+
+def append_once(path: Path, receipt: dict) -> bool:
+    if path.exists():
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            if (row.get("schema"), row.get("occurrence_id"), row.get("domain_binding_sha256")) == (
+                SCHEMA, receipt["occurrence_id"], receipt["domain_binding_sha256"]
+            ):
+                return False
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(receipt, ensure_ascii=False, sort_keys=True) + "\n")
+    return True
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("occurrence_id")
+    parser.add_argument("--evidence", type=Path, required=True)
+    parser.add_argument("--native-receipt", type=Path, required=True)
+    parser.add_argument("--output", type=Path)
+    args = parser.parse_args()
+    try:
+        receipt = bind_observation(args.occurrence_id, args.evidence, args.native_receipt)
+    except (BindingError, OSError, KeyError, json.JSONDecodeError) as exc:
+        print(json.dumps({"bound": False, "error": str(exc)}, sort_keys=True))
+        return 2
+    if args.output:
+        append_once(args.output, receipt)
+    print(json.dumps(receipt, ensure_ascii=False, sort_keys=True))
+    return 0

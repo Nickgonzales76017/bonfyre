@@ -1,0 +1,31 @@
+{
+  "schema": "bonfyre-decision-live-probe.v1",
+  "date_local": "2026-10-01",
+  "scope": "one already-admitted public-source descriptor; one request per model",
+  "inputs": "read-only Frontier and retained-item snapshots",
+  "outputs": "diagnostic-only; no source, CMS, authority, or effect write",
+  "clef_flash": {
+    "request_sha256": "3de4c1ff79fa6b5ec9bcfda7e226c8b2d0be49a66b9846069e9aa3602a1f34cb",
+    "response_sha256": "be68ecdb05850f2d02a3710eb5dcce44dd77038f2544d91d3f95b68dde7c2f8e",
+    "end_to_end_request_ms": 955,
+    "program_choice": "read",
+    "diagnostic_lane": "review"
+  },
+  "clef": {
+    "request_sha256": "c515c8dab260af249ba21024d477b1f0f888c1dbbe9d4bfc45ca59dc9ce53607",
+    "response_sha256": "09b1d8c51a60aed76c213d2b6b89fbfc28968268dc37620784f8a20dad02ab65",
+    "end_to_end_request_ms": 883,
+    "program_choice": "review",
+    "diagnostic_lane": "review"
+  },
+  "comparison": {
+    "models_disagree": true,
+    "operator_review_required": true,
+    "action": "none"
+  },
+  "cannot_infer": [
+    "one source establishes model accuracy, calibration, or typical latency",
+    "two model answers vote a source program into effect",
+    "a successful Cloudflare request grants any Bonfyre authority"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "name": "governance_proposal",
+  "displayName": "Governance Proposal",
+  "description": "Something a community is being asked, bound to the verb grammar this estate publishes. A proposal is a question recorded: it is never a decision taken, never authority to act on it, and never evidence that anything was carried out. The backing names what would carry it if it were decided; a backing that cannot settle can never produce an effect outside this estate, and one that can is still gated by the world its institution declares.",
+  "attributes": {
+    "proposal_id": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "verb": { "type": "string", "required": true },
+    "subject_ref": { "type": "string", "required": true },
+    "asks": { "type": "text", "required": true },
+    "backing": { "type": "string", "required": true },
+    "opened_at": { "type": "string", "required": true },
+    "closes_at": { "type": "string" },
+    "state": { "type": "string", "required": true },
+    "derived_from": { "type": "string", "required": true },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

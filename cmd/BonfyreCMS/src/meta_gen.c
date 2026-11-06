@@ -7,7 +7,14 @@
  * Similarity metric: structural edit distance on generators,
  * treating $N placeholders and literal values differently.
  */
+/* uint64_t/int64_t come from <stdint.h>; macOS pulled them in transitively
+ * through another header, glibc does not. */
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include "meta_gen.h"
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

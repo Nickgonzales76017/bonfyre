@@ -1,0 +1,192 @@
+from pathlib import Path
+import subprocess
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+HISTORICAL_ROOTS = {
+    "10-Code",
+    ".obsidian",
+    "01-Ideas",
+    "02-Projects",
+    "03-Research",
+    "04-Systems",
+    "05-Monetization",
+    "06-Logs",
+    "08-Transcriptions",
+    "Templates",
+    "bonfyre-opportunity-recovery-20260803-202542",
+    "bonfyre-opportunity-recovery-v2-20260803-205755",
+}
+
+ROOT_CAMPAIGN_FILES = {
+    "artifact.json",
+    "intake-manifest.json",
+    "run7_acceptance.sh",
+    "runtime-inventory.json",
+    "tmp.txt",
+    "variant_patterns.json",
+    "verified_recipes.json",
+}
+
+LEGACY_OUTPUT_ROOTS = {"--out", "--src", "output", "reports", "tmp", "~"}
+
+OWNER_ROOTS = {
+    "production-code": {
+        "components",
+        "Aurekai",
+        "aurekai-continuity-core",
+        "bin",
+        "bonfyre-hyper",
+        "bonfyre-zig",
+        "cmd",
+        "completion",
+        "engine",
+        "feldera",
+        "frontend",
+        "layeros",
+        "lib",
+        "programs",
+        "services",
+        "serm",
+        "workflow",
+    },
+    "architecture-contracts": {"architecture", "estate", "packs", "recipes", "schemas"},
+    "generated-projections": {"generated"},
+    "evidence-fixtures": {"evidence", "examples", "test-speech", "tests"},
+    "integrations": {"integrations", "vendor"},
+    "documentation-site": {"content", "docs", "site"},
+    "repository-operations": {".githooks", ".github", ".sdd", "migration", "scripts", "tools"},
+    "operator-state": {".bonfyre-runtime"},
+}
+
+
+def test_generation10_owner_roots_exist():
+    required = {
+        "engine",
+        "architecture",
+        "schemas",
+        "generated",
+        "evidence",
+        "integrations",
+        "docs",
+        "site",
+        ".bonfyre-runtime",
+    }
+    missing = sorted(name for name in required if not (ROOT / name).is_dir())
+    assert not missing, f"missing Generation-10 owner roots: {missing}"
+
+
+def test_every_tracked_top_level_directory_has_one_owner():
+    tracked = subprocess.run(
+        ["git", "ls-files", "-z"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.split("\0")
+    tracked_roots = {path.split("/", 1)[0] for path in tracked if "/" in path}
+
+    owners_by_root = {}
+    for owner, roots in OWNER_ROOTS.items():
+        for root in roots:
+            owners_by_root.setdefault(root, []).append(owner)
+
+    unclassified = sorted(tracked_roots - owners_by_root.keys())
+    multiply_owned = {
+        root: owners for root, owners in owners_by_root.items() if len(owners) != 1
+    }
+    assert not unclassified, f"tracked root has no Generation-10 owner: {unclassified}"
+    assert not multiply_owned, f"tracked root has multiple owners: {multiply_owned}"
+
+
+def test_notebook_and_campaign_roots_do_not_return():
+    forbidden = HISTORICAL_ROOTS | ROOT_CAMPAIGN_FILES | LEGACY_OUTPUT_ROOTS
+    present = sorted(name for name in forbidden if (ROOT / name).exists())
+    assert not present, f"historical peers returned to repository root: {present}"
+
+
+def test_absorbed_history_has_explicit_evidence_owners():
+    notebook = ROOT / "evidence/origins/notebook-era"
+    assert (notebook / "01-Ideas/_Clusters.md").is_file()
+    assert (notebook / "04-Systems/04-Meta/Vault Operating System.md").is_file()
+    assert (notebook / ".obsidian/app.json").is_file()
+    assert (notebook / "SOURCE_OF_TRUTH_MAP.md").is_file()
+    assert (notebook / "runtime/nightly-brainstorm/nightly.pl").is_file()
+    assert not (ROOT / "components/NightlyBrainstorm").exists()
+    assert (ROOT / "evidence/recovery/opportunity-20260803-v1/recovery_summary.json").is_file()
+    assert (ROOT / "evidence/recovery/opportunity-20260803-v2/README.txt").is_file()
+    assert (ROOT / "evidence/fixtures/ingest-empty/artifact.json").is_file()
+    assert (ROOT / "evidence/fixtures/ingest-empty/intake-manifest.json").is_file()
+    assert (ROOT / "evidence/fixtures/ingest-source/artifact.json").is_file()
+    assert (ROOT / "evidence/fixtures/ingest-source/intake-manifest.json").is_file()
+
+
+def test_generated_material_is_not_in_legacy_output_root():
+    assert not (ROOT / "output").exists()
+    projections = ROOT / "generated/projections"
+    assert (projections / "inventory/capability_manifest.json").is_file()
+    assert (projections / "inventory/runtime-inventory.json").is_file()
+    assert (projections / "estate/live-adapter-receipts.jsonl").is_file()
+
+
+def test_absorbed_principal_loop_is_current_acceptance_surface():
+    witness = ROOT / "tests/acceptance/generation10_principal_loop.sh"
+    assert witness.is_file()
+    assert "GENERATION-10 PRINCIPAL LOOP" in witness.read_text()
+
+
+def test_components_is_the_canonical_product_component_root():
+    components = ROOT / "components"
+    assert (components / "BonfyreControlPlane").is_dir()
+    assert (components / "Makefile").is_file()
+    assert not (ROOT / "10-Code").exists()
+
+
+def test_component_aggregate_only_builds_live_component_directories():
+    makefile = (ROOT / "components/Makefile").read_text().splitlines()
+    start = makefile.index("SUBDIRS = \\")
+    members = []
+    for line in makefile[start + 1 :]:
+        member = line.strip().removesuffix("\\").strip()
+        if member:
+            members.append(member)
+        if not line.rstrip().endswith("\\"):
+            break
+
+    missing = sorted(
+        member for member in members if not (ROOT / "components" / member).is_dir()
+    )
+    assert not missing, f"component aggregate names removed children: {missing}"
+
+
+def test_notebook_writer_is_not_reachable_from_current_scheduler():
+    dispatcher = ROOT / "services/queue-dispatcher/drain_transcription_queue.pl"
+    source = dispatcher.read_text()
+    assert "NightlyBrainstorm" not in source
+    assert "nightly_brainstorm" not in source
+    assert "08-Transcriptions" not in source
+    assert not (ROOT / ".bonfyre-runtime/nightly-brainstorm-queue.json").exists()
+
+
+def test_current_python_does_not_recreate_notebook_roots():
+    legacy_roots = (
+        "02-Projects",
+        "04-Systems",
+        "05-Monetization",
+        "06-Logs",
+        "08-Transcriptions",
+    )
+    forbidden = {
+        f'{base} / "{legacy}"'
+        for base in ("ROOT", "repo_root", "vault", "VAULT_ROOT")
+        for legacy in legacy_roots
+    }
+    offenders = []
+    for owner in (ROOT / "components", ROOT / "services"):
+        for path in owner.rglob("*.py"):
+            source = path.read_text(errors="replace")
+            for literal in forbidden:
+                if literal in source:
+                    offenders.append(f"{path.relative_to(ROOT)}: {literal.strip()}")
+    assert not offenders, f"current Python can recreate notebook roots: {offenders}"

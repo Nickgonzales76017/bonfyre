@@ -1,0 +1,299 @@
+"""Bounded comparison of source-bound household economic projections.
+
+This is a circuit between existing projection owners, rather than another
+household application.  Housing effective-cost observations establish
+recurring and one-time components; food fulfillment projections establish
+component-basket cash and a geodesic travel lower bound.  The circuit only
+joins them when they share an explicit residence identity.  In its absence it
+reports the gap instead of manufacturing a household budget, a driving cost,
+or accounting truth.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+from dataclasses import dataclass
+from decimal import Decimal
+from pathlib import Path
+from typing import Any, Iterable, Mapping
+
+
+SCHEMA = "bonfyre-household-economic-circuit.v1"
+DEFAULT_STATE = Path(".bonfyre/run8-r2c/20260823T032652Z-27525")
+ROUTE_STRATEGIES = (
+    "cheapest_total_cash_including_fees",
+    "no_customer_travel",
+    "lowest_travel_lower_bound",
+)
+
+
+def _decimal(value: object) -> Decimal:
+    return Decimal(str(value))
+
+
+def _money(value: Decimal) -> str:
+    return format(value.quantize(Decimal("0.0001")), "f")
+
+
+def _canonical(value: object) -> bytes:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+
+
+@dataclass(frozen=True)
+class CircuitConstraint:
+    """A required non-collapse rule, evaluated before any comparison is emitted."""
+
+    name: str
+    rule: str
+
+
+@dataclass(frozen=True)
+class EvidenceBundle:
+    """Content addresses of the two projection inputs, not a claim of remote truth."""
+
+    housing_sha256: str
+    food_sha256: str
+
+
+def _component_sum(values: Mapping[str, Any] | None) -> Decimal | None:
+    if not values:
+        return None
+    return sum((_decimal(value) for value in values.values() if value is not None), Decimal(0))
+
+
+def _housing_scenarios(calculations: Iterable[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    """Render declared recurring components without assuming optional applicability."""
+    scenarios: list[dict[str, Any]] = []
+    for item in calculations:
+        listing_id = item.get("listing_id")
+        known = item.get("known_monthly_before_parking_or_pets_usd")
+        if not listing_id or known is None:
+            continue
+        base = _decimal(known)
+        common = {
+            "listing_id": listing_id,
+            "observation_kind": "derived_from_observed_housing_components",
+            "base_rent_monthly_usd": item.get("base_rent_monthly_usd"),
+            "known_required_recurring_usd": item.get("known_required_recurring_usd", {}),
+            "reported_optional_monthly_usd": {
+                "parking": item.get("reported_parking_monthly_usd"),
+                "dog": item.get("reported_dog_monthly_usd"),
+            },
+            "estimated_monthly_usd": None,
+        }
+        scenarios.append({
+            **common,
+            "scenario_id": f"housing:{listing_id}:known-required-only",
+            "scenario_constraints": ["parking_not_selected", "dog_not_selected"],
+            "monthly_component_sum_usd": _money(base),
+        })
+        optional = (
+            ("parking", item.get("reported_parking_monthly_usd")),
+            ("dog", item.get("reported_dog_monthly_usd")),
+        )
+        for label, charge in optional:
+            if charge is None:
+                continue
+            scenarios.append({
+                **common,
+                "scenario_id": f"housing:{listing_id}:reported-{label}",
+                "scenario_constraints": [f"reported_{label}_charge_selected", "applicability_not_verified"],
+                "monthly_component_sum_usd": _money(base + _decimal(charge)),
+            })
+        parking, dog = item.get("reported_parking_monthly_usd"), item.get("reported_dog_monthly_usd")
+        if parking is not None and dog is not None:
+            scenarios.append({
+                **common,
+                "scenario_id": f"housing:{listing_id}:reported-parking-and-dog",
+                "scenario_constraints": [
+                    "reported_parking_charge_selected",
+                    "reported_dog_charge_selected",
+                    "applicability_not_verified",
+                ],
+                "monthly_component_sum_usd": _money(base + _decimal(parking) + _decimal(dog)),
+            })
+    return scenarios
+
+
+def _one_time_components(calculations: Iterable[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for item in calculations:
+        listing_id = item.get("listing_id")
+        if not listing_id:
+            continue
+        for family, key in (("move_in", "reported_move_in_usd"), ("dog", "reported_dog_one_time_usd")):
+            parts = item.get(key)
+            total = _component_sum(parts)
+            if total is not None:
+                rows.append({
+                    "listing_id": listing_id,
+                    "component_family": family,
+                    "reported_components_usd": parts,
+                    "reported_component_sum_usd": _money(total),
+                    "refundability_state": "not_inferred_from_component_label",
+                    "accounting_state": "observed_component_not_billed_paid_or_booked",
+                })
+    return rows
+
+
+def _route_evidence(projection: Mapping[str, Any]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for origin in projection.get("by_origin", []):
+        strategies = {item.get("kind"): item for item in origin.get("strategies", [])}
+        for kind in ROUTE_STRATEGIES:
+            strategy = strategies.get(kind)
+            selection = strategy.get("selection") if strategy else None
+            if selection is None:
+                continue
+            rows.append({
+                "origin_id": origin.get("origin_id"),
+                "origin_source_url": origin.get("origin_source_url"),
+                "strategy": kind,
+                "selection": {
+                    key: selection.get(key)
+                    for key in (
+                        "offer_ids", "merchants", "total_cash_usd", "total_cash_lower_bound_usd",
+                        "total_cash_is_exact", "fulfillment_fee_usd", "fee_unresolved",
+                        "travel_miles_geodesic_lower_bound", "customer_travels", "status",
+                    )
+                },
+                "observation_kind": "source_bound_component_basket_strategy",
+                "estimated_travel_or_food_budget": None,
+            })
+    return rows
+
+
+def _coverage(calculations: Iterable[Mapping[str, Any]],
+              route_projection: Mapping[str, Any],
+              housing_scenarios: Iterable[Mapping[str, Any]],
+              food_strategies: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
+    """Make omissions visible instead of letting an incomplete projection look whole."""
+    calculation_rows = list(calculations)
+    housing_rows = list(housing_scenarios)
+    food_rows = list(food_strategies)
+    excluded_housing = []
+    for item in calculation_rows:
+        listing_id = item.get("listing_id")
+        if not listing_id:
+            excluded_housing.append({
+                "listing_id": None,
+                "reason": "calculation_has_no_listing_identity",
+            })
+        elif item.get("known_monthly_before_parking_or_pets_usd") is None:
+            excluded_housing.append({
+                "listing_id": listing_id,
+                "reason": "no_known_required_recurring_component_sum",
+            })
+    origins = list(route_projection.get("by_origin", []))
+    emitted_origin_ids = {row.get("origin_id") for row in food_rows if row.get("origin_id")}
+    return {
+        "housing_calculation_count": len(calculation_rows),
+        "housing_recurring_scenario_count": len(housing_rows),
+        "housing_calculations_excluded": excluded_housing,
+        "food_route_origin_count": len(origins),
+        "food_route_origin_count_with_emitted_strategy": len(emitted_origin_ids),
+        "food_strategy_count": len(food_rows),
+        "food_strategies_not_emitted": "Strategies without a source-supported selection remain absent, not zero-cost alternatives.",
+    }
+
+
+def _finance_boundary() -> dict[str, Any]:
+    """Name the finance owner and why it has no household posting to project."""
+    return {
+        "owner": "FinancialMetabolism",
+        "economic_measure_state": "not_created",
+        "financial_event_state": "not_observed",
+        "reason": (
+            "The inputs contain observed and derived housing/food components, but no selected lease, "
+            "admitted rate card, billing account, invoice, payment, or booked posting."
+        ),
+        "forbidden_inference": "component projection -> accrued, billed, paid, booked, or spend-authorized money",
+    }
+
+
+def build_circuit(housing_effective_costs: Mapping[str, Any], food_routes: Mapping[str, Any],
+                  *, evidence: EvidenceBundle | None = None) -> dict[str, Any]:
+    """Build a non-promoting household circuit from two current projections."""
+    if housing_effective_costs.get("schema") != "bonfyre-housing-effective-costs.v1":
+        raise ValueError("housing input must be bonfyre-housing-effective-costs.v1")
+    if food_routes.get("schema") != "bonfyre-food-fulfillment-route-projection.v1":
+        raise ValueError("food input must be bonfyre-food-fulfillment-route-projection.v1")
+
+    constraints = (
+        CircuitConstraint("identity_join", "A food route origin joins a housing scenario only through an explicit shared residence identity."),
+        CircuitConstraint("accounting_basis", "Observed and derived components remain neither billed, paid, nor booked accounting truth."),
+        CircuitConstraint("food_scope", "An observed component basket cannot become a weekly or monthly food budget, meal, or availability claim."),
+        CircuitConstraint("travel_scope", "A geodesic lower bound cannot become road miles, drive time, fuel, or travel cost."),
+    )
+    calculations = list(housing_effective_costs.get("calculations", []))
+    housing = _housing_scenarios(calculations)
+    one_time = _one_time_components(calculations)
+    food = _route_evidence(food_routes)
+    coverage = _coverage(calculations, food_routes, housing, food)
+    listing_ids = {row["listing_id"] for row in housing}
+    route_ids = {str(row["origin_id"]) for row in food if row.get("origin_id")}
+    # These namespaces are intentionally different.  Do not make a join from
+    # proximity, similar labels, or co-occurrence in a Run8 directory.
+    joins: list[dict[str, Any]] = []
+    return {
+        "schema": SCHEMA,
+        "owner": "HouseholdEconomicCircuit",
+        "constraints": [{"name": item.name, "rule": item.rule} for item in constraints],
+        "evidence": {
+            "housing_effective_costs_sha256": evidence.housing_sha256 if evidence else hashlib.sha256(_canonical(housing_effective_costs)).hexdigest(),
+            "food_fulfillment_routes_sha256": evidence.food_sha256 if evidence else hashlib.sha256(_canonical(food_routes)).hexdigest(),
+            "evidence_state": "derived_from_current_source_bound_projections",
+        },
+        "housing_recurring_scenarios": housing,
+        "housing_one_time_components": one_time,
+        "food_route_strategies": food,
+        "comparison_coverage": coverage,
+        "finance_boundary": _finance_boundary(),
+        "cross_domain_join": {
+            "state": "no_explicit_residence_identity_join",
+            "joined_scenarios": joins,
+            "housing_listing_ids_considered": sorted(listing_ids),
+            "food_route_origin_ids_considered": sorted(route_ids),
+            "reason": "Current food routes are bound to candidate housing origins, while recurring economics are bound to separate listing identifiers.",
+            "blocked_projection": "No combined monthly household total, travel cost, or monthly food budget is emitted.",
+        },
+        "forbidden_inference": [
+            "candidate route origin -> residence, verified availability, or lease",
+            "reported optional pet or parking charge -> selected or applicable household charge",
+            "deposit label -> refundable amount",
+            "reported component sum -> move-in quote or cash due",
+            "component basket -> meal, weekly food cost, or monthly food budget",
+            "geodesic lower bound -> driving distance, time, fuel, or travel cost",
+            "cross-domain projection -> billed, paid, booked, or spend-authorized accounting truth",
+        ],
+    }
+
+
+def _read(path: Path) -> tuple[dict[str, Any], str]:
+    data = path.read_bytes()
+    return json.loads(data), hashlib.sha256(data).hexdigest()
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--housing", type=Path, default=DEFAULT_STATE / "household/housing/effective-costs.json")
+    parser.add_argument("--food", type=Path, default=DEFAULT_STATE / "household/food/fulfillment-route-options.json")
+    parser.add_argument("--out", type=Path, default=DEFAULT_STATE / "household/cross-domain/economic-circuit.json")
+    args = parser.parse_args(argv)
+    housing, housing_digest = _read(args.housing)
+    food, food_digest = _read(args.food)
+    result = build_circuit(housing, food, evidence=EvidenceBundle(housing_digest, food_digest))
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(json.dumps(result, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(json.dumps({
+        "housing_scenarios": len(result["housing_recurring_scenarios"]),
+        "food_route_strategies": len(result["food_route_strategies"]),
+        "join_state": result["cross_domain_join"]["state"],
+    }, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

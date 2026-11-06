@@ -1,0 +1,161 @@
+#!/usr/bin/env python3
+# Retired: scripts/failure-cohort.mjs reads CUE-authored cause policy.
+"""Mine the operator's failure estate for what to build next.
+
+Every autonomous run that failed left a row saying what it was trying to do and
+why it stopped. Those rows are usually treated as exhaust. They are the only
+record this institution has of what it repeatedly could not do, which makes them
+the best available evidence about where capability is missing.
+
+The output is a ranked list, not a score. Ranking is:
+
+    frequency          how often this class of failure recurs
+    x attempt_cost     how much work it has already consumed
+    x recurrence       whether it is still happening or is historical
+    x closable         whether a fix is available to us at all
+
+A cause nobody can close ranks low however often it happens -- "the account has
+no credit" is frequent, expensive and completely determined, and no engineering
+decision follows from it. A cause that is rare but closable and blocking ranks
+above it.
+
+Cannot infer: a ranked failure is not a prioritized task, an attempt count is
+not a cost in money, and clustering by error text is a heuristic over strings --
+two different faults that print alike will be counted as one.
+"""
+from __future__ import annotations
+
+import json
+import os
+import re
+import sqlite3
+import sys
+
+DB = os.environ.get("BONFYRE_OPERATOR_DB",
+                    os.path.expanduser("~/.bonfyre/operator/operator.sqlite3"))
+
+# A cause is closable when the fix is in reach of this institution. Billing is
+# not an engineering decision; a matcher that never fired is.
+CAUSES = [
+    ("no_credit",        r"insufficient_quota|credit_balance_exhausted|no credits remaining",
+     False, "the account has no credit; a person adds credit or the work stops"),
+    ("bad_credential",   r"invalid_api_key|incorrect api key|authenticationerror",
+     False, "a credential is wrong or revoked; a person replaces it"),
+    ("rate_limited",     r"rate.?limit(?!.*insufficient)|429(?!.*insufficient)",
+     True,  "backoff and route to an independent supplier"),
+    ("mcp_unreachable",  r"connection refused|errno 111|timed out|timeouterror|http 0",
+     True,  "supervise the transport and fail the goal rather than the tool call"),
+    ("tool_missing",     r"unknown tool|no such tool|not registered|tool_not_found",
+     True,  "register the capability or stop advertising it"),
+    ("context_exceeded", r"context.?length|too many tokens|maximum context",
+     True,  "cut the context; this is what the compression estate is for"),
+    ("no_finish",        r"ended without operator_finish|model ended without",
+     True,  "the run produced no disposition; the default retry hid it"),
+]
+
+
+def classify(error: str) -> tuple[str, bool, str]:
+    low = (error or "").lower()
+    for name, pattern, closable, remedy in CAUSES:
+        if re.search(pattern, low):
+            return name, closable, remedy
+    if not low.strip():
+        return "unrecorded", True, "the run failed and recorded no reason; that is its own defect"
+    return "other", True, "unclassified; read the rows before building anything"
+
+
+def main() -> int:
+    if not os.path.isfile(DB):
+        print(f"no operator database at {DB}", file=sys.stderr)
+        return 2
+    db = sqlite3.connect(f"file:{DB}?mode=ro", uri=True)
+    db.row_factory = sqlite3.Row
+    rows = [dict(r) for r in db.execute(
+        "SELECT id,title,state,attempts,last_error,updated_at FROM goals")]
+    db.close()
+
+    newest = max((r["updated_at"] or 0) for r in rows) or 1
+    clusters: dict[str, dict] = {}
+    for r in rows:
+        name, closable, remedy = classify(r["last_error"] or "")
+        c = clusters.setdefault(name, {
+            "cause": name, "closable": closable, "remedy": remedy,
+            "goals": 0, "attempts": 0, "still_live": 0, "titles": [],
+        })
+        c["goals"] += 1
+        c["attempts"] += int(r["attempts"] or 0)
+        if r["state"] in ("retry", "queued"):
+            c["still_live"] += 1
+        if len(c["titles"]) < 3 and r["title"]:
+            c["titles"].append(r["title"])
+
+    import math
+    total_attempts = sum(c["attempts"] for c in clusters.values()) or 1
+    for c in clusters.values():
+        # Recurrence: is it still happening, or is it a scar?
+        c["recurrence"] = 1.0 if c["still_live"] else 0.35
+        c["attempt_share"] = c["attempts"] / total_attempts
+        # Stuckness, not share of total. Share of total attempts rewards exactly
+        # the pathology being measured: a runaway retry loop inflates its own
+        # rank until it drowns out everything a person could actually fix. What
+        # matters is how stuck each instance is, damped, so 400 attempts on one
+        # goal does not outweigh a real gap appearing across twenty.
+        per_goal = c["attempts"] / max(c["goals"], 1)
+        c["stuckness"] = round(math.log1p(per_goal), 3)
+        c["rank"] = round(c["goals"] * c["stuckness"] * c["recurrence"], 3)
+
+    # Partition rather than weight. A cause this institution cannot close is not
+    # a low-priority engineering task, it is not an engineering task -- it sits
+    # on the other side of the human line, and ranking it against build work
+    # invites the two to be traded off against each other. Weighting it down
+    # instead of separating it left "the account has no credit" in first place,
+    # because 119 goals holding 99% of all attempts survived any multiplier
+    # small enough to be defensible.
+    ordered = sorted((c for c in clusters.values() if c["closable"]),
+                     key=lambda c: c["rank"], reverse=True)
+    awaiting = sorted((c for c in clusters.values() if not c["closable"]),
+                      key=lambda c: c["attempts"], reverse=True)
+
+    if "--json" in sys.argv:
+        print(json.dumps({
+            "schema": "bonfyre-failure-cohort.v1",
+            "goals_examined": len(rows),
+            "attempts_examined": total_attempts,
+            "clusters": ordered,
+            "awaiting_person": awaiting,
+            "cannot_infer": [
+                "a ranked failure -> a prioritized task",
+                "an attempt count -> a cost in money",
+                "clustering by error text -> distinct faults (two faults that print alike count as one)",
+            ],
+        }, indent=2))
+        return 0
+
+    print(f"  {len(rows)} goals, {total_attempts} attempts examined")
+    print()
+    print(f"  {'cause':<18}{'goals':>6}{'attempts':>10}{'live':>6}{'rank':>8}  remedy")
+    print("  -- closable here " + "-" * 58)
+    for c in ordered:
+        print(f"  {c['cause']:<18}{c['goals']:>6}{c['attempts']:>10}{c['still_live']:>6}"
+              f"{c['rank']:>8.2f}  {c['remedy'][:54]}")
+    if awaiting:
+        print("  -- past the human line; no build follows from these " + "-" * 22)
+        for c in awaiting:
+            print(f"  {c['cause']:<18}{c['goals']:>6}{c['attempts']:>10}{c['still_live']:>6}"
+                  f"{'--':>8}  {c['remedy'][:54]}")
+    print()
+    if ordered:
+        top = ordered[0]
+        print(f"  build next: {top['cause']} "
+              f"({top['goals']} goals, {top['attempts']} attempts, rank {top['rank']:.2f})")
+        if top["titles"]:
+            print(f"  e.g. {top['titles'][0][:70]}")
+    if awaiting:
+        cost = sum(c["attempts"] for c in awaiting)
+        print(f"  waiting on a person: {cost} attempts across "
+              f"{sum(c['goals'] for c in awaiting)} goals")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

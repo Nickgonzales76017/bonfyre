@@ -1,0 +1,33 @@
+{
+  "operator": "SELECT",
+  "program": {
+    "program_id": "household.select.69beaffd22e25a66",
+    "operator": "SELECT",
+    "digest": "611418dc36751740677b380b33e7fd53142981166dd1509a65c7d1522b17b462",
+    "reads": [
+      "household:food:offer:apple"
+    ],
+    "admitted": true,
+    "hard_failures": []
+  },
+  "count": 1,
+  "records": [
+    {
+      "address": "household:food:offer:apple",
+      "kind": "food.offer",
+      "content_sha256": "80f6d7ff160433f4e98c4e121510d950aff3c19a8e5b18ce7eb22ceafea191b6",
+      "source_file": "household/food/current-offers.jsonl",
+      "source_refs": [],
+      "record": {
+        "offer_id": "apple",
+        "merchant": "Aldi",
+        "source_refs": {
+          "x": 1
+        },
+        "cash_price_usd": null,
+        "pet_status": false
+      }
+    }
+  ]
+}
+exit 0

@@ -1,0 +1,192 @@
+{
+  "operator": "SELECT",
+  "program": {
+    "program_id": "household.select.c762f9a9ec93de5a",
+    "operator": "SELECT",
+    "digest": "b5f71baa5327f04d52278cb5ecbf73355f8b58f11fa5f6363f2d326e8774674d",
+    "reads": [
+      "household:food:offer:Rice-2",
+      "household:food:offer:apple",
+      "household:food:offer:beans",
+      "household:food:offer:rice_1",
+      "household:housing:listing:MILO-b",
+      "household:housing:listing:milo-a",
+      "household:housing:listing:milo-a1",
+      "household:housing:observation:cand-9"
+    ],
+    "admitted": true,
+    "hard_failures": []
+  },
+  "count": 8,
+  "records": [
+    {
+      "address": "household:food:offer:apple",
+      "kind": "food.offer",
+      "content_sha256": "80f6d7ff160433f4e98c4e121510d950aff3c19a8e5b18ce7eb22ceafea191b6",
+      "source_file": "household/food/current-offers.jsonl",
+      "source_refs": [],
+      "record": {
+        "offer_id": "apple",
+        "merchant": "Aldi",
+        "source_refs": {
+          "x": 1
+        },
+        "cash_price_usd": null,
+        "pet_status": false
+      }
+    },
+    {
+      "address": "household:food:offer:beans",
+      "kind": "food.offer",
+      "content_sha256": "e506d6813a05e30149ef8d3b3d1db2a480f6ad601ec86cc795c1b274ecbea9c4",
+      "source_file": "household/food/current-offers.jsonl",
+      "source_refs": [
+        "https://example.test/beans"
+      ],
+      "record": {
+        "offer_id": "beans",
+        "cash_price_usd": "1.79",
+        "merchant": "Target",
+        "source_url": "https://example.test/beans",
+        "price": 1.5,
+        "tags": [
+          "a",
+          null,
+          2
+        ],
+        "in_stock": true
+      }
+    },
+    {
+      "address": "household:food:offer:rice_1",
+      "kind": "food.offer",
+      "content_sha256": "cdb54c9b853155ad429b303354dade5b5a6f13aa912aaca1d05f942f2521a74d",
+      "source_file": "household/food/current-offers.jsonl",
+      "source_refs": [
+        "a",
+        "z"
+      ],
+      "record": {
+        "offer_id": "rice_1",
+        "cash_price_usd": 2.1,
+        "merchant": "Kroger",
+        "source_refs": [
+          "z",
+          "a",
+          "a",
+          ""
+        ],
+        "notes": "multi\nline \"q\"",
+        "nested": {
+          "b": {
+            "y": 2,
+            "x": [
+              1,
+              2
+            ]
+          },
+          "c": 0.1
+        }
+      }
+    },
+    {
+      "address": "household:food:offer:Rice-2",
+      "kind": "food.offer",
+      "content_sha256": "45e09032963e8210d2e998a8c7613e0fda6bea023e3b4eb12aeb7581705e84f7",
+      "source_file": "household/food/current-offers.jsonl",
+      "source_refs": [
+        "https://example.test/rice"
+      ],
+      "record": {
+        "2": 2,
+        "10": 1,
+        "offer_id": "Rice-2",
+        "cash_price_usd": 2.1,
+        "merchant": "Kroger",
+        "source_refs": "https://example.test/rice",
+        "evidence_ref": "",
+        "notes": null,
+        "nested": {
+          "b": {
+            "y": 1,
+            "x": [
+              1,
+              2
+            ]
+          },
+          "a": "éé"
+        }
+      }
+    },
+    {
+      "address": "household:housing:listing:milo-a",
+      "kind": "housing.listing",
+      "content_sha256": "4339ca4fdb1073222407639552d6d4a54b8108b3da50b812d29cf6baa0c9db57",
+      "source_file": "household/housing/current-listings.jsonl",
+      "source_refs": [
+        "housing/receipts#milo",
+        "https://example.test/milo"
+      ],
+      "record": {
+        "listing_id": "milo-a",
+        "property_id": "property:milo",
+        "unit_identity": "floorplan:A",
+        "advertised_base_rent_monthly_usd": 925,
+        "availability_status": "reported_available_now",
+        "source_refs": [
+          "https://example.test/milo"
+        ],
+        "evidence_ref": "housing/receipts#milo",
+        "dogs_stated_ok": true
+      }
+    },
+    {
+      "address": "household:housing:listing:milo-a1",
+      "kind": "housing.listing",
+      "content_sha256": "1f9f9aafb349d6b768c304e6fddda366feaa56d6d65d905566a7d037dbbd2912",
+      "source_file": "household/housing/current-listings.jsonl",
+      "source_refs": [
+        "housing/receipts#milo",
+        "https://example.test/milo"
+      ],
+      "record": {
+        "listing_id": "milo-a1",
+        "property_id": "property:milo",
+        "unit_identity": "floorplan:A1",
+        "advertised_base_rent_monthly_usd": 975.5,
+        "availability_status": "reported_available_now",
+        "source_refs": [
+          "https://example.test/milo"
+        ],
+        "evidence_ref": "housing/receipts#milo",
+        "pet_status": null
+      }
+    },
+    {
+      "address": "household:housing:listing:MILO-b",
+      "kind": "housing.listing",
+      "content_sha256": "6fc1742b11825d5ceb4305ea7d2b95e3788ae9e4a89c0db1130998d6a2a6dd0e",
+      "source_file": "household/housing/current-listings.jsonl",
+      "source_refs": [],
+      "record": {
+        "listing_id": "MILO-b",
+        "property_id": "property:milo",
+        "advertised_base_rent_monthly_usd": -0.000001
+      }
+    },
+    {
+      "address": "household:housing:observation:cand-9",
+      "kind": "housing.observation",
+      "content_sha256": "43cf96d1b02c8d028cc7d9817dc63347eb20ef72ee144afd278d2158caf0bf34",
+      "source_file": "household/housing/current-listings.jsonl",
+      "source_refs": [],
+      "record": {
+        "candidate_id": "cand-9",
+        "property_id": "property:other",
+        "advertised_monthly_rent_usd": 1000,
+        "price_usd_month": 0.30000000000000004
+      }
+    }
+  ]
+}
+exit 0

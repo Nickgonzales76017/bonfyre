@@ -1,0 +1,144 @@
+#!/usr/bin/env python3
+"""Machinery must not carry a product's name; declarations must.
+
+A delegated estate is added by contract declaration. When a product's identifier,
+its legacy table names or its schema string end up inside generic machinery, a
+second product costs another compiled code path -- and the namespace work exists
+precisely to remove that cost.
+
+The rule is not "no names anywhere". Named things should be named: a product
+contract, a report definition, a reconciliation law and a legacy table mapping
+are domain grammar and belong in the pack. What must stay clean is the machinery
+that consumes them.
+
+So this checks one direction only: a file that presents itself as generic must
+not contain a product identifier drawn from the namespace contract itself. The
+product list is read from the declaration rather than hardcoded here, because a
+checker with its own copy of the product names would be the very thing it is
+checking for.
+
+Cannot infer: a file that passes is generic. It says the file does not name a
+declared product, not that its abstractions are right.
+"""
+from __future__ import annotations
+
+import os
+import re
+import sys
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+NAMESPACES = os.path.join(ROOT, "architecture", "institutional", "namespaces.yaff")
+
+# Machinery: things that consume declarations. Packs, contracts and the atlas are
+# declarations and are exempt by definition.
+SCAN_DIRS = ["scripts", "architecture"]
+# Declarations, build artefacts and archives are not machinery: a pack states
+# grammar, a .pyc is output, and an .archive is a record of what was.
+EXEMPT_SUFFIX = (".yaff", ".json", ".md", ".pyc", ".so", ".archive", ".bak")
+
+
+def declared_products() -> set[str]:
+    """Product leaves under a managed namespace, read from the contract."""
+    out = set()
+    for raw in open(NAMESPACES):
+        if raw.startswith("namespace upper90/managed/"):
+            leaf = raw.strip().split("/")[-1]
+            if leaf:
+                out.add(leaf)
+    return out
+
+
+def packs_declared() -> set[str]:
+    out = set()
+    for raw in open(NAMESPACES):
+        if raw.strip().startswith("product_pack "):
+            out.add(os.path.basename(raw.strip().split(" ", 1)[1].strip()))
+    return out
+
+
+def main() -> int:
+    products = declared_products()
+    if not products:
+        print("the namespace contract declares no managed products; nothing to check",
+              file=sys.stderr)
+        return 0
+    packs = packs_declared()
+    # A product's tables are declared in its pack. Machinery naming one of them is
+    # the same violation as naming the product.
+    tables: set[str] = set()
+    for pack in packs:
+        path = os.path.join(ROOT, "packs", "upper90", pack)
+        if os.path.isfile(path):
+            for raw in open(path):
+                line = raw.strip()
+                if line.startswith("table ") or line.startswith("reconcile_entity ") \
+                   or line.startswith("reconcile_allocation "):
+                    for tok in re.split(r"[ ,]+", line.split(" ", 1)[1]):
+                        if tok.startswith("tbl") or tok.startswith("tlkp"):
+                            tables.add(tok)
+
+    violations = []
+    for directory in SCAN_DIRS:
+        base = os.path.join(ROOT, directory)
+        for dirpath, dirs, files in os.walk(base):
+            dirs[:] = [d for d in dirs if d not in ("__pycache__", ".git")]
+            for name in files:
+                if name.endswith(EXEMPT_SUFFIX):
+                    continue
+                path = os.path.join(dirpath, name)
+                rel = os.path.relpath(path, ROOT)
+                try:
+                    body = open(path, errors="replace").read()
+                except OSError:
+                    continue
+                hits = set()
+                for product in products:
+                    # In the filename, which is the loudest form of it.
+                    if product.replace("-", "_") in name or product in name:
+                        hits.add(f"filename names product {product!r}")
+                    # Or in the body, outside a comment quoting this rule.
+                    for m in re.finditer(re.escape(product).replace(r"\-", "[-_]"), body):
+                        line_start = body.rfind("\n", 0, m.start()) + 1
+                        line = body[line_start:body.find("\n", m.start())]
+                        if line.lstrip().startswith(("#", "*", "//")):
+                            continue
+                        if _in_docstring(body, m.start()):
+                            continue
+                        hits.add(f"names product {product!r}")
+                        break
+                for table in tables:
+                    if re.search(r"\b" + re.escape(table) + r"\b", body):
+                        hits.add(f"names {product_of(table, packs)} table {table!r}")
+                if hits:
+                    violations.append((rel, sorted(hits)))
+
+    for rel, hits in sorted(violations):
+        print(f"  {rel}", file=sys.stderr)
+        for h in hits:
+            print(f"      {h}", file=sys.stderr)
+    if violations:
+        print(f"generic machinery names {len(violations)} declared product(s); "
+              "move the grammar into the pack and consume it by namespace", file=sys.stderr)
+        return 1
+    print(f"generic machinery names no declared product "
+          f"({len(products)} products, {len(tables)} declared tables checked)")
+    return 0
+
+
+def _in_docstring(body: str, index: int) -> bool:
+    """Whether this position sits inside a triple-quoted block.
+
+    A module docstring naming the estates a generator renders is prose about
+    the contract, not grammar embedded in code."""
+    before = body[:index]
+    triple_d = chr(34) * 3
+    triple_s = chr(39) * 3
+    return (before.count(triple_d) % 2 == 1) or (before.count(triple_s) % 2 == 1)
+
+
+def product_of(table: str, packs: set[str]) -> str:
+    return "a declared"
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

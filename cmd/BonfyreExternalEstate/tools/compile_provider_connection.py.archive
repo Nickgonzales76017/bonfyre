@@ -1,0 +1,29 @@
+#!/usr/bin/env python3
+"""Historical Python compiler; compile_coordination_family.mjs supersedes it."""
+import argparse, hashlib, json
+from pathlib import Path
+class Refusal(ValueError): pass
+BOUNDARY="a provider connection does not make the provider the semantic owner, prove a person or institution beyond the named proof, grant unlisted capabilities, or authorize payment, publishing, membership, or private-data import"
+def compile(envelope):
+ carrier=envelope.get("carrier") or {}; subject=envelope.get("subject_ref",""); phase=envelope.get("phase",""); at=envelope.get("at","")
+ if not subject or not at or not carrier.get("carrier_id") or not carrier.get("provider"): raise Refusal("subject, carrier identity, provider, and time are required")
+ cid="provider-connection-"+hashlib.sha256((subject+"\x1f"+carrier["carrier_id"]).encode()).hexdigest()[:24]
+ proof=envelope.get("proof") or {}; grant=envelope.get("grant") or {}; caps=[]; state="observed"
+ if phase=="observe": pass
+ elif phase=="verify":
+  if proof.get("state")!="bridge_control_verified" or not proof.get("receipt_ref"): raise Refusal("verify requires a bridge_control_verified receipt")
+  state="verified"
+ elif phase=="connect":
+  if proof.get("state")!="bridge_control_verified" or not proof.get("receipt_ref"): raise Refusal("connect requires a verified proof receipt")
+  caps=grant.get("capabilities")
+  if not isinstance(caps,list) or not caps or not all(isinstance(x,str) and x for x in caps) or not grant.get("receipt_ref"): raise Refusal("connect requires explicit capabilities and provider grant receipt")
+  state="connected"
+ elif phase=="revoke": state="revoked"
+ else: raise Refusal("unknown provider connection phase")
+ return {"type":"external_provider_connection","namespace":"root","body":{"connection_id":cid,"subject_ref":subject,"carrier_id":carrier["carrier_id"],"provider":carrier["provider"],"state":state,"proof_receipt_ref":proof.get("receipt_ref","") if state in ("verified","connected") else "","grant_receipt_ref":grant.get("receipt_ref","") if state=="connected" else "","granted_capabilities":caps,"verified_at":at if state in ("verified","connected") else "","revoked_at":at if state=="revoked" else "","cannot_infer":BOUNDARY,"status":"published"}}
+def main():
+ p=argparse.ArgumentParser();p.add_argument("--input",type=Path,required=True);p.add_argument("--out",type=Path,required=True);a=p.parse_args()
+ try:r=compile(json.loads(a.input.read_text()))
+ except (OSError,ValueError,TypeError) as e:print("provider connection compiler: %s"%e);return 2
+ a.out.write_text(json.dumps(r,sort_keys=True)+"\n");print(json.dumps({"state":r["body"]["state"],"truth":"lifecycle compilation only"}));return 0
+if __name__=="__main__":raise SystemExit(main())

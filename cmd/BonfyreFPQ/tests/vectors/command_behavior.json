@@ -1,0 +1,91 @@
+{
+  "schema": "bonfyre.command-vectors.v1",
+  "binary": "bonfyre-fpq",
+  "binary_env": "BONFYRE_FPQ_BIN",
+  "cases": [
+    {
+      "name": "a stored legacy FPQ file is inspected with its recorded fields",
+      "steps": [
+        {
+          "program": "sh",
+          "argv": [
+            "-c",
+            "\"$1\" inspect \"$2\" 2>&1",
+            "sh",
+            "${organ}/bonfyre-fpq",
+            "${organ}/tests/fixtures/legacy-v4.fpq"
+          ],
+          "env": {
+            "HOME": "${tmp}"
+          },
+          "exit": 0,
+          "contains": [
+            "Shape:           1 × 256 (256 weights)",
+            "Mode:            DIRECT (structured)",
+            "Avg distortion:  0.750000 MSE"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "a safetensors tensor round-trips through seed programs",
+      "steps": [
+        {
+          "program": "sh",
+          "argv": [
+            "-c",
+            "perl mkst.pl 7 > m.safetensors && perl mkst.pl 9 > m2.safetensors"
+          ],
+          "exit": 0
+        },
+        {
+          "program": "sh",
+          "argv": [
+            "-c",
+            "\"$1\" roundtrip m.safetensors --limit 1 2>&1",
+            "sh",
+            "${organ}/bonfyre-fpq"
+          ],
+          "env": {
+            "HOME": "${tmp}"
+          },
+          "exit": 0,
+          "contains": [
+            "Roundtrip Summary",
+            "Best cosine:   0.98"
+          ]
+        }
+      ],
+      "files": {
+        "mkst.pl": "my ($seed,$n)=@ARGV; $n||=256; srand($seed||7); my @t=(\"model.layers.0.mlp.down_proj.weight\",\"model.layers.0.self_attn.q_proj.weight\"); my %h; my $data=\"\"; my $off=0;\nfor my $name (@t){ my $d=pack(\"f<*\", map { (rand()-0.5)*0.08 } 1..$n*$n); $h{$name}=[$off,$off+length($d)]; $data.=$d; $off+=length($d); }\nmy $j=\"{\".join(\",\", map { \"\\\"$_\\\":{\\\"dtype\\\":\\\"F32\\\",\\\"shape\\\":[$n,$n],\\\"data_offsets\\\":[$h{$_}[0],$h{$_}[1]]}\" } @t).\"}\";\n$j.=\" \" x ((8 - length($j) % 8) % 8); print pack(\"Q<\", length($j)).$j.$data;\n"
+      }
+    },
+    {
+      "name": "help is answered, and a truncated file is refused",
+      "files": {
+        "t.fpq": "FPQ"
+      },
+      "steps": [
+        {
+          "argv": [
+            "--help"
+          ],
+          "env": {
+            "HOME": "${tmp}"
+          },
+          "exit": 0
+        },
+        {
+          "argv": [
+            "inspect",
+            "t.fpq"
+          ],
+          "env": {
+            "HOME": "${tmp}"
+          },
+          "exit_nonzero": true
+        }
+      ]
+    }
+  ]
+}

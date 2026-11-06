@@ -1,0 +1,62 @@
+{
+  "delegated_leadership": {
+    "estate": "umbrella",
+    "leadership_object": "workspace",
+    "leadership_permission": "private:read",
+    "leadership_role": "lead"
+  },
+  "forbidden_inference": "a declared estate is not a granted one, and this list is not an authority model: it says which estates exist, never who may enter one",
+  "inherited_roles": {
+    "child": "child-admin"
+  },
+  "managed_estates": [
+    "alpha",
+    "child"
+  ],
+  "note": "the estates an authenticated account may hold a slice in; membership is declared here, admission is decided by the grant",
+  "parents": {
+    "alpha": "umbrella",
+    "child": "explicit-parent",
+    "umbrella": "bonfyre"
+  },
+  "persona_lattice": {
+    "child": [
+      {
+        "capabilities": "publish,edit",
+        "persona": "writer",
+        "rank": "write"
+      },
+      {
+        "capabilities": "observe",
+        "persona": "reader",
+        "rank": "read"
+      }
+    ]
+  },
+  "role_ranks": {
+    "admin": 2,
+    "read": 0,
+    "reader": 0,
+    "write": 1
+  },
+  "roots": [
+    "bonfyre",
+    "child",
+    "second",
+    "umbrella"
+  ],
+  "schema_version": "bonfyre.institution.contract.v1",
+  "slice_estates": [
+    "alpha",
+    "child",
+    "second",
+    "umbrella"
+  ],
+  "source": "architecture/institutional/namespaces.yaff",
+  "worlds": {
+    "bonfyre": "LIVE",
+    "child": "DEMO",
+    "second": "LIVE",
+    "umbrella": "LIVE"
+  }
+}

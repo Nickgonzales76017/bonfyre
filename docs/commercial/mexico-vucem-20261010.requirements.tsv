@@ -1,0 +1,6 @@
+opportunity_id	kind	requirement_key	owner_ref	state	evidence_ref
+mexico:geeksolutions:vucem-pedimento-erpnext-20261010	external	partner_human_response	GeekSolutions	unresolved	gmail:1a12570efd16121f
+mexico:geeksolutions:vucem-pedimento-erpnext-20261010	material	VUCEM_service_contract_version	VUCEM	unresolved	https://www.ventanillaunica.gob.mx/vucem/descargas.html
+mexico:geeksolutions:vucem-pedimento-erpnext-20261010	material	sanitized_ERPNext_pedimento_sample	GeekSolutions	unresolved	gmail:1a12570efd16121f
+mexico:geeksolutions:vucem-pedimento-erpnext-20261010	authority	customer_approval_and_commercial_scope	GeekSolutions	unresolved	gmail:1a12570efd16121f
+mexico:geeksolutions:vucem-pedimento-erpnext-20261010	capability	WSDL_XSD_contract_and_retry_tests	Aurekai	unresolved	https://www.ventanillaunica.gob.mx/ventanilla-ws-pedimentos/ConsultarPedimentoCompletoService

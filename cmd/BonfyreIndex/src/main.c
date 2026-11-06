@@ -1,3 +1,19 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+/* The pin above hides the BSD rusage fields on Darwin, so this file did not
+ * compile on the macOS control plane at all -- the same feature-macro trap the
+ * banner warns about, pointing the other way. _DARWIN_C_SOURCE restores them
+ * without loosening the POSIX baseline the Linux deploy host needs. */
+#ifdef __APPLE__
+#ifndef _DARWIN_C_SOURCE
+#define _DARWIN_C_SOURCE 1
+#endif
+#endif
+
 /*
  * BonfyreIndex — artifact family indexer and search engine.
  *
@@ -25,7 +41,10 @@
 #include <unistd.h>
 #include <sqlite3.h>
 #include <bonfyre.h>
+#include "bf_command_lookup.h"
 
+#include "bf_lex.h"
+#include "../../../lib/libbonfyre/include/bf_help.h"
 #define MAX_LINE 65536
 
 static void iso_timestamp(char *buf, size_t sz) { bf_iso_timestamp(buf, sz); }
@@ -144,11 +163,13 @@ static void compute_canonical_key(ManifestSummary *summary) {
     snprintf(summary->canonical_key, sizeof(summary->canonical_key), "%016llx", h);
 }
 
+/* Delegates to the one implementation. Three byte-identical copies existed.
+ * Note what this is not: it copies the token's bytes as written, so a JSON
+ * escape inside one survives as a backslash. The callers here read slugs that
+ * carry none; a caller that needs the value unescaped wants
+ * bf_lex_json_string_at instead. */
 static void copy_json_token(char *dst, size_t dst_sz, const char *start, size_t len) {
-    if (dst_sz == 0) return;
-    size_t n = len < dst_sz - 1 ? len : dst_sz - 1;
-    memcpy(dst, start, n);
-    dst[n] = '\0';
+    bf_lex_copy_bounded(dst, dst_sz, start, len);
 }
 
 static void manifest_summary_init(ManifestSummary *summary) {
@@ -480,7 +501,7 @@ static int entry_is_dir(const char *path, const struct dirent *ent) {
 
 static void walk_artifacts_build(const char *root, BuildCtx *ctx) {
     DirStack stack = {0};
-    if (dirstack_push(&stack, root) != 0) return;
+    if (dirstack_push(&stack, root) != 0) { dirstack_free(&stack); return; }
 
     for (;;) {
         char *dir_path = dirstack_pop(&stack);
@@ -2073,109 +2094,50 @@ static int cmd_stats(const char *db_path) {
     return 0;
 }
 
+/* Declared locally rather than via bonfyre.h: this file pins _POSIX_C_SOURCE at
+ * the top, and pulling the full header in after <sys/resource.h> re-hides
+ * ru_maxrss on macOS -- the same feature-macro trap the banner above warns
+ * about, in the other direction. One prototype is cheaper than that fight. */
+extern const char *bf_state_path(char *buf, size_t n, const char *env_name,
+                                 const char *relative, const char *explicit_path);
+
 /* ---------- main ---------- */
 
-int main(int argc, char *argv[]) {
-    const char *db = "bonfyre-index.db";
-    int json_mode = 0;
-    const char *root = arg_get(argc, argv, "--root");
+#define INDEX_COMMANDS(X) \
+    X("build", IC_BUILD, 3) \
+    X("bundle-diff", IC_BUNDLE_DIFF, 4) \
+    X("bundle-layout", IC_BUNDLE_LAYOUT, 4) \
+    X("collapse-ledger", IC_COLLAPSE_LEDGER, 3) \
+    X("collapse-plan", IC_COLLAPSE_PLAN, 2) \
+    X("collapse-preview", IC_COLLAPSE_PREVIEW, 2) \
+    X("confidence-preview", IC_CONFIDENCE_PREVIEW, 2) \
+    X("equivalence", IC_EQUIVALENCE, 2) \
+    X("layers", IC_LAYERS, 2) \
+    X("merge-manifest", IC_MERGE_MANIFEST, 3) \
+    X("reuse", IC_REUSE, 2) \
+    X("search", IC_SEARCH, 3) \
+    X("stats", IC_STATS, 2) \
+    X("validate-preview", IC_VALIDATE_PREVIEW, 3)
 
-    /* parse --db */
-    for (int i = 1; i < argc - 1; i++) {
-        if (strcmp(argv[i], "--db") == 0) { db = argv[i+1]; break; }
+enum {
+#define INDEX_ENUM(name, id, minimum_argc) id,
+    INDEX_COMMANDS(INDEX_ENUM)
+#undef INDEX_ENUM
+};
+static const BfCommandEntry index_commands[] = {
+#define INDEX_ENTRY(name, id, minimum_argc) {name, id, minimum_argc, NULL},
+    INDEX_COMMANDS(INDEX_ENTRY)
+#undef INDEX_ENTRY
+};
+
+static int command_limit(int argc, char **argv, int first) {
+    for (int i = first; i < argc - 1; i++) {
+        if (strcmp(argv[i], "--limit") == 0) return atoi(argv[i + 1]);
     }
-    for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "--json") == 0) { json_mode = 1; break; }
-    }
+    return 20;
+}
 
-    if (argc >= 3 && strcmp(argv[1], "build") == 0)
-        return cmd_build(argv[2], db);
-
-    if (argc >= 3 && strcmp(argv[1], "search") == 0) {
-        const char *type = NULL;
-        int limit = 20;
-        for (int i = 3; i < argc - 1; i++) {
-            if (strcmp(argv[i], "--type") == 0) type = argv[i+1];
-            if (strcmp(argv[i], "--limit") == 0) limit = atoi(argv[i+1]);
-        }
-        return cmd_search(argv[2], db, type, limit);
-    }
-
-    if (argc >= 2 && strcmp(argv[1], "reuse") == 0)
-        return cmd_reuse(db);
-
-    if (argc >= 2 && strcmp(argv[1], "equivalence") == 0) {
-        int limit = 20;
-        for (int i = 2; i < argc - 1; i++) {
-            if (strcmp(argv[i], "--limit") == 0) limit = atoi(argv[i+1]);
-        }
-        return cmd_equivalence(db, limit, json_mode);
-    }
-
-    if (argc >= 2 && strcmp(argv[1], "collapse-preview") == 0) {
-        int limit = 20;
-        for (int i = 2; i < argc - 1; i++) {
-            if (strcmp(argv[i], "--limit") == 0) limit = atoi(argv[i+1]);
-        }
-        return cmd_collapse_preview(db, limit, json_mode);
-    }
-
-    if (argc >= 2 && strcmp(argv[1], "confidence-preview") == 0) {
-        int limit = 20;
-        for (int i = 2; i < argc - 1; i++) {
-            if (strcmp(argv[i], "--limit") == 0) limit = atoi(argv[i+1]);
-        }
-        return cmd_confidence_preview(db, limit, json_mode);
-    }
-
-    if (argc >= 2 && strcmp(argv[1], "collapse-plan") == 0) {
-        int limit = 20;
-        for (int i = 2; i < argc - 1; i++) {
-            if (strcmp(argv[i], "--limit") == 0) limit = atoi(argv[i+1]);
-        }
-        return cmd_collapse_plan(db, limit, json_mode);
-    }
-
-    if (argc >= 3 && strcmp(argv[1], "collapse-ledger") == 0) {
-        int limit = 20;
-        for (int i = 3; i < argc - 1; i++) {
-            if (strcmp(argv[i], "--limit") == 0) limit = atoi(argv[i+1]);
-        }
-        return cmd_collapse_ledger(db, argv[2], limit);
-    }
-
-    if (argc >= 3 && strcmp(argv[1], "merge-manifest") == 0) {
-        int limit = 20;
-        for (int i = 3; i < argc - 1; i++) {
-            if (strcmp(argv[i], "--limit") == 0) limit = atoi(argv[i+1]);
-        }
-        return cmd_merge_manifest(db, argv[2], limit);
-    }
-
-    if (argc >= 4 && strcmp(argv[1], "bundle-layout") == 0) {
-        return cmd_bundle_layout(argv[2], argv[3]);
-    }
-
-    if (argc >= 3 && strcmp(argv[1], "validate-preview") == 0) {
-        return cmd_validate_preview_artifact(argv[2]);
-    }
-
-    if (argc >= 4 && strcmp(argv[1], "bundle-diff") == 0) {
-        return cmd_bundle_diff(argv[2], argv[3]);
-    }
-
-    if (argc >= 2 && strcmp(argv[1], "stats") == 0)
-        return cmd_stats(db);
-
-    if (argc >= 2 && strcmp(argv[1], "layers") == 0) {
-        if (bf_layer_rebuild_index(root) != 0) {
-            fprintf(stderr, "bonfyre-index: failed to rebuild layer index\n");
-            return 1;
-        }
-        printf("{\"indexed\":\"layers\",\"root\":\"%s\"}\n", root ? root : "");
-        return 0;
-    }
-
+static void usage(void) {
     fprintf(stderr,
         "BonfyreIndex — artifact family index & search\n\n"
         "Usage:\n"
@@ -2195,5 +2157,65 @@ int main(int argc, char *argv[]) {
         "  Add --json to the preview commands for machine-readable output\n"
         "  bonfyre-index stats [--db F]             Summary statistics\n"
     );
+}
+
+int main(int argc, char *argv[]) {
+    if (bf_help_requested(argc, argv)) { usage(); return 0; }
+    const char *db = NULL;
+    static char db_resolved[PATH_MAX];
+    int json_mode = 0;
+    const char *root = arg_get(argc, argv, "--root");
+
+    /* parse --db */
+    for (int i = 1; i < argc - 1; i++) {
+        if (strcmp(argv[i], "--db") == 0) { db = argv[i+1]; break; }
+    }
+    /* The default was the bare name "bonfyre-index.db", so every invocation
+     * opened or created an index beside wherever the caller stood. */
+    db = bf_state_path(db_resolved, sizeof(db_resolved),
+                       "BONFYRE_INDEX_DB", "state/bonfyre-index.db", db);
+    if (!db) {
+        fprintf(stderr, "[fatal] no index store coordinate: pass --db or set "
+                        "BONFYRE_INDEX_DB. Refusing to create one in the current "
+                        "directory.\n");
+        return 1;
+    }
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--json") == 0) { json_mode = 1; break; }
+    }
+
+    const BfCommandEntry *command = argc < 2 ? NULL : bf_command_lookup(index_commands,
+        sizeof(index_commands) / sizeof(index_commands[0]), argv[1]);
+    if (command && argc >= command->mode) switch (command->id) {
+    case IC_BUILD: return cmd_build(argv[2], db);
+    case IC_SEARCH: {
+        const char *type = NULL;
+        for (int i = 3; i < argc - 1; i++) {
+            if (strcmp(argv[i], "--type") == 0) type = argv[i + 1];
+        }
+        return cmd_search(argv[2], db, type, command_limit(argc, argv, 3));
+    }
+    case IC_REUSE: return cmd_reuse(db);
+    case IC_EQUIVALENCE: return cmd_equivalence(db, command_limit(argc, argv, 2), json_mode);
+    case IC_COLLAPSE_PREVIEW: return cmd_collapse_preview(db, command_limit(argc, argv, 2), json_mode);
+    case IC_CONFIDENCE_PREVIEW: return cmd_confidence_preview(db, command_limit(argc, argv, 2), json_mode);
+    case IC_COLLAPSE_PLAN: return cmd_collapse_plan(db, command_limit(argc, argv, 2), json_mode);
+    case IC_COLLAPSE_LEDGER: return cmd_collapse_ledger(db, argv[2], command_limit(argc, argv, 3));
+    case IC_MERGE_MANIFEST: return cmd_merge_manifest(db, argv[2], command_limit(argc, argv, 3));
+    case IC_BUNDLE_LAYOUT: return cmd_bundle_layout(argv[2], argv[3]);
+    case IC_VALIDATE_PREVIEW: return cmd_validate_preview_artifact(argv[2]);
+    case IC_BUNDLE_DIFF: return cmd_bundle_diff(argv[2], argv[3]);
+    case IC_STATS: return cmd_stats(db);
+    case IC_LAYERS:
+        if (bf_layer_rebuild_index(root) != 0) {
+            fprintf(stderr, "bonfyre-index: failed to rebuild layer index\n");
+            return 1;
+        }
+        printf("{\"indexed\":\"layers\",\"root\":\"%s\"}\n", root ? root : "");
+        return 0;
+    default: break;
+    }
+
+    usage();
     return 1;
 }

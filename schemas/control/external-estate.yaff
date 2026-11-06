@@ -1,0 +1,43 @@
+schema ExternalEstateDescriptor
+generation external-estate-1
+authority ForeignTwin + ProviderGraph + CapabilityClosure
+
+field domain
+  type set[text]
+  role reusable-world-context
+
+field estate_role
+  type set[material_source, media_service, action_adapter, interaction_reference, design_reference, authoring_adapter, compiler_toolchain, transport_carrier, publication_carrier, verification_tool, external_service_candidate, reference_standard]
+  role compositional-reagent-class
+
+field topic_domain
+  type set[text]
+  role direct-human-material-match
+
+field semantic_output
+  type set[text]
+  role typed-foreign-observation
+
+field affordance
+  type set[text]
+  role reusable-capability-class
+
+field carrier
+  type enum[http,feed,mcp,a2a,x402,protocol,file,unknown]
+  role physical-access-carrier
+
+field truth_level
+  type enum[observed_candidate]
+  role source-standing
+
+invariant heterogeneous-density
+  statement broad reuse may name many unrelated possible contexts, but a human World result requires direct topic evidence and an appropriate estate role; a carrier or toolchain label alone is not material
+
+invariant semantic-owner-separation
+  statement an external descriptor contributes candidate observations and realization options only; Identity, Authority, Evidence, Money and Work remain independently owned
+
+forbidden_inference listed source -> live endpoint
+forbidden_inference public descriptor -> credential or remote account binding
+forbidden_inference capability advertisement -> authority, payment approval, provider admission or effect right
+forbidden_inference one domain label -> the complete set of worlds that can use an observation
+forbidden_inference broad reuse or carrier default -> direct human material for that domain

@@ -1,0 +1,47 @@
+atlas surface
+
+architecture foundry-behavior-compiler
+  canonical_name FoundryBehaviorCompiler
+  family surface
+  domain Surface / Subject behavior compilation
+  layer compiler
+  semantic_question How can composed product subjects acquire exact native behaviors without runtime inheritance or fourteen duplicated catalogs?
+  purpose A build-time compiler from fourteen Foundry composition declarations and behavior families to exact ObjectContract rows. It emits only behaviors that name an exact target kind, a verified native owner path, owner-context lowering, unresolved human fields and a cannot-infer boundary. It retains missing owner/address closures and read projections as explicit non-emissions.
+  maturity implemented
+  owns FoundryBehaviorSpec
+  publishes ExactObjectContractCatalog
+  consumes ObjectContract
+  consumes NativeOwner
+  node_types FoundryBehaviorSpec
+  node_types BehaviorFamily
+  node_types OwnerBinding
+  edge_types expands_to_exact_contract
+  invariant inheritance is compile-time only: the running ObjectContract lookup remains exact applies_to_kind equality
+  invariant all fourteen Foundries declare their semantic roots and closure posture, while only exact owner-proven behaviors emit contracts
+  invariant a behavior with no verified owner path, exact address target, or owner-context lowering is reported unresolved and emits no button or contract
+  invariant a read projection is not coerced into an ObjectContract; TeamNeed and FundingWorkPackage remain with their existing Project and Program readers
+  invariant an emitted INVOKE posts directly to the declared native owner with authored local owner context; AtomicForm does not recreate the owner effect
+  forbidden_inference a behavior family -> runtime subtype inheritance or fuzzy applicability
+  forbidden_inference an emitted ObjectContract -> a completed owner effect, authority grant, payment, engagement, acceptance, or settlement
+  forbidden_inference an unresolved behavior -> an absent product need; it identifies the exact closure still to prove
+  source_path schemas/control/foundry-behavior-specs.json
+  source_path cmd/BonfyreCMS/tools/compile_foundry_behavior.mjs
+  source_path cmd/BonfyreCMS/tools/compile_foundry_behavior.py.archive
+  source_path cmd/BonfyreCMS/content-types/object_contract.json
+  source_path cmd/BonfyreWebAddress/src/main.c
+  witness cmd/BonfyreCMS/tools/compile_foundry_behavior.test.mjs
+  witness cmd/BonfyreWebAddress/tests/foundry_behavior_owner_test.sh
+  witness cmd/BonfyreWebAddress/tests/github_foundry_closure_test.sh proves retained GitHub, Reddit, Discord, and Meetup fixtures materialized as Project, CommunityBody, or PublicationOccurrence resolve Project.support, Community.join, or Occurrence.follow exactly and reach authenticated native owner writes
+  known_gap the current exact catalog proves Project support/contribution, Community participation request, local occurrence follow, private household-opportunity save, proposal-addressed vote, and household-institution connection. A public 211 classification does not prove an application/referral owner, while Program execution, Community posting, institutional claim/adoption, occurrence hosting/publication, provider, place, and actor publication remain non-emissions until their actual material/owner closures are published.
+
+interaction foundry-behavior-compiler-lowers-to-object-grammar
+  source foundry-behavior-compiler
+  destination object-grammar
+  relation expands_to_exact_contract
+  preserves exact applies_to_kind, operation, unresolved human fields, authority requirement, owner endpoint and owner-context template
+  drops family/facet names before runtime, so a request sees no inheritance vocabulary to interpret
+  forbidden_inference a compiler-emitted contract -> a native owner accepting or completing the effect
+  forbidden_inference one target's emitted contract -> applicability to a sibling target
+  invalidates_on a behavior spec, ObjectContract schema, native owner route, or owner-context contract changes
+  binding cmd/BonfyreCMS/tools/compile_foundry_behavior.mjs
+  witness cmd/BonfyreWebAddress/tests/foundry_behavior_owner_test.sh

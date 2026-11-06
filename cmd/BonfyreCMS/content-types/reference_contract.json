@@ -1,0 +1,72 @@
+{
+  "name": "reference_contract",
+  "displayName": "Reference Contract",
+  "description": "One authored field that names rows in another type, declared so the naming can be checked. Friendly authoring stays friendly -- an author types or picks names -- and the runtime stops splitting comma-separated strings and hoping they still name something. A reference that no longer resolves is the failure this exists to make impossible to land quietly: a world naming a source that was removed renders less and says nothing, which is indistinguishable from a source that answered with nothing. A reference may name a row in another type, or a column of one: surface_pattern.item_fields names columns of whichever table that same row's reads_type points at, so the target type is read from a field rather than declared as a literal. A pattern backed by an organ rather than a table names no columns at all and is skipped rather than reported broken.",
+  "attributes": {
+    "reference": {
+      "type": "string",
+      "required": true,
+      "uniqueWithinNamespace": true
+    },
+    "holder_type": {
+      "type": "string",
+      "required": true
+    },
+    "holder_key": {
+      "type": "string",
+      "required": true
+    },
+    "holder_field": {
+      "type": "string",
+      "required": true
+    },
+    "target_type": {
+      "type": "string",
+      "required": false
+    },
+    "target_key": {
+      "type": "string",
+      "required": false
+    },
+    "cardinality": {
+      "type": "string",
+      "required": true
+    },
+    "separator": {
+      "type": "string",
+      "required": false
+    },
+    "required_ref": {
+      "type": "string",
+      "required": false
+    },
+    "on_dangling": {
+      "type": "string",
+      "required": true
+    },
+    "means": {
+      "type": "text",
+      "required": true
+    },
+    "cannot_infer": {
+      "type": "text",
+      "required": true
+    },
+    "status": {
+      "type": "string",
+      "required": true
+    },
+    "target_kind": {
+      "type": "string",
+      "required": false
+    },
+    "target_type_field": {
+      "type": "string",
+      "required": false
+    },
+    "skip_when_empty": {
+      "type": "string",
+      "required": false
+    }
+  }
+}

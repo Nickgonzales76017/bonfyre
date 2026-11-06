@@ -1,0 +1,21 @@
+{
+  "name": "saved_item",
+  "displayName": "Saved Item",
+  "description": "A person's private, reversible reference to something they chose to keep, with the public description its source gave at the time. It lets a kept thing outlive its source's latest feed slot. It is not a copy of the source's material, an endorsement, a claim about the thing, or a grant of anything.",
+  "attributes": {
+    "saved": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "actor": {"type": "string", "required": true},
+    "item_ref": {"type": "string", "required": true},
+    "title": {"type": "text", "required": true},
+    "href": {"type": "string", "required": false},
+    "image": {"type": "string", "required": false},
+    "publisher": {"type": "string", "required": false},
+    "maker": {"type": "string", "required": false},
+    "summary": {"type": "text", "required": false},
+    "observed_at": {"type": "string", "required": false},
+    "saved_at": {"type": "string", "required": true},
+    "collection": {"type": "string", "required": true},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

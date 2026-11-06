@@ -1,0 +1,98 @@
+atlas provider
+
+architecture placement-plane
+  owns PlacementDemand
+  owns PlacementReceipt
+  consumes OperationIR
+  consumes ProjectionIR
+  consumes ProgramIR
+  consumes Authority
+  consumes FactDelta
+  publishes PlacementPlan
+  publishes PlacementReceipt
+  canonical_name PlacementPlane
+  family provider
+  domain Provider / Runtime Placement
+  layer provider/realization
+  semantic_question Where may this realization execute, persist, project, and be delivered without changing who semantically owns it?
+  purpose Compiles one provider-neutral PlacementDemand into Cloudflare delivery/material/coordination declarations, Supabase continuity projections, and Oracle native execution bindings. It makes every public control route, durable projection and recovery boundary reviewable from one declaration instead of coupling them through an incidental hostname or one provider's request path.
+  maturity implemented
+  node_types PlacementDemand
+  node_types PlacementPlan
+  node_types PlacementReceipt
+  node_types FailureMatrix
+  node_types ContinuityProjection
+  edge_types places_on
+  edge_types projects_to
+  edge_types delivers_through
+  edge_types reconstructs_from
+  internal_calculus OperationIR / ProjectionIR / ProgramIR -> typed authority, mutability, latency, durability, visibility, mode, effect, data-gravity, failure-tolerance and cost demands -> three-provider realization plan -> evidence-bound PlacementReceipt
+  internal_calculus compiler emits Cloudflare no-Worker exclusions before a broad estate route, ordered Tunnel ingress, direct R2 material-domain plan, Oracle gateway public origins, Supabase continuity schema, Oracle bindings and a per-provider failure matrix from schemas/control/placement-plane.cue
+  internal_calculus full static export emits filesystem-visible route.html objects, then the R2 material publisher mirrors every emitted HTML route to its extensionless object key; this is a route-compatibility projection for direct material delivery, not a second page compiler. The estate Worker remains the public apex realization because it resolves a territory composition and host-specific material before selecting an R2 object
+  internal_calculus OAuth authorization code exchange stores only a sealed session envelope in the Supabase continuity membrane and consumes it atomically; signing keys remain at the credential boundary and authority remains at BonfyreAuth
+  internal_calculus public member paths that arrive through a broad static Worker preserve path/query and redirect to the territory's exact native session sibling; each sibling has an exact no-Worker route, a proxied Tunnel CNAME and ordered Tunnel ingress to WebAddress. When the free Worker request budget is exhausted, the four exact territory apexes can independently lower to the same native/Tunnel realization while wildcard subject delivery remains on the Worker. Authentication, account-link ownership and self-authoring remain native owners rather than Worker behavior
+  invariant semantic authority != provider placement != durable projection != public delivery != execution
+  invariant no realization may be the sole residence of truth required to reconstruct itself
+  invariant a Cloudflare delivery object, Worker route, R2 body, Supabase row or Oracle process is replaceable residency and never semantic ownership
+  invariant material.aurekai.work is a direct immutable R2 material lane and cannot silently become the human page-router, semantic owner, authority or proof boundary
+  invariant a direct material lane cannot replace a territory apex Worker when the Worker resolves territory composition, host-specific subject material, search, or another public program
+  invariant Supabase operational coordination state is a versioned projection; a stale projection cannot mint authority, complete an effect or supersede its native owner
+  invariant an Oracle outage can stop advancement and native effects but cannot erase last proven public material, indexed projections, receipts or the declaration required to reconstruct execution
+  invariant canonical MCP/Auth hosts and legacy aurekai.work compatibility paths explicitly bypass the broad static estate Worker; DNS pointing a canonical host at a Tunnel is insufficient while a wildcard Worker route still matches it
+  invariant a route plan with a no-Worker exclusion is an ordered deployment instruction, not evidence that Cloudflare accepted it
+  invariant a no-Worker member-session route is lawful only when its exact hostname has both a controlled Tunnel DNS binding and a matching Tunnel ingress; removing a Worker route from a territory apex alone sends the request to that apex's ordinary DNS origin, not to a native session owner
+  forbidden_inference a provider selected -> semantic ownership or authority to execute
+  forbidden_inference an available cheap provider -> a valid placement
+  forbidden_inference a Supabase continuity row -> canonical fact or issuer authority
+  forbidden_inference a PlacementReceipt planned -> route/tunnel/schema applied or healthy
+  forbidden_inference a static public response -> Oracle is available or current truth has advanced
+  source_path schemas/control/placement-plane.cue
+  source_path tools/compile_placement_plane.mjs
+  source_path tools/compile_placement_plane.py.archive
+  source_path deploy/supabase/placement-plane.sql
+  source_path deploy/supabase/placement-plane.sql
+  source_path deploy/cloudflared/bonfyre-addressplane-ingress.yml
+  source_path deploy/systemd/bonfyre-oauth-mcp.service
+  source_path integrations/mcp/bonfyre_oauth_gateway.mjs
+  source_path scripts/publish_r2_route_aliases.sh
+  source_path deploy/worker/estate-worker.mjs
+  source_path deploy/cloudflared/bonfyre-addressplane-ingress.yml
+  source_path deploy/launchd/com.bonfyre.public-surface-tunnel.plist
+  source_path scripts/cloudflare-reconcile.cue
+  source_path scripts/cloudflare-reconcile.mjs
+  source_path scripts/tests/cloudflare-reconcile.test.mjs
+  source_path scripts/reconcile_cloudflare_auth_hosts.py.archive
+  source_path scripts/reconcile_cloudflare_member_routes.py.archive
+  source_path scripts/run_cloudflared_continuation.sh
+  source_path scripts/estate_purge.sh
+  source_path scripts/move_dns_to_cloudflare.sh
+  source_path scripts/dns-migration.mjs
+  source_path scripts/foreign_xml.c
+  source_path scripts/tests/dns-migration.test.mjs
+  invariant registrar migration parses namespaced native XML, preserves TXT content and MX priorities and TTLs, refuses unsupported record semantics, reads copied Cloudflare rows back and rechecks the source before explicit nameserver mutation; credentials do not appear in argv or output
+  witness scripts/tests/dns-migration.test.mjs runs the actual shell entrypoint with mocked APIs and native libxml decoding, proves read-only default, exact account/domain guards, record copy readback, source-drift refusal and no registrar mutation after a failed copy; Clang static analysis of foreign_xml.c is clean
+  known_gap DNS migration acknowledgement is not DNS propagation, DNSSEC rollover, or preservation of registrar forwarding services. Unsupported record types are refused rather than silently discarded; NAMECHEAP_API_USER and IPv4 NAMECHEAP_CLIENT_IP must be explicitly configured. No live DNS migration was run for this retirement.
+  source_path scripts/tests/cloudflare-entrypoints.test.mjs
+  invariant tunnel startup and cache purge share the Bun/CUE reconciliation owner; startup gives the connector only its scoped run token, and exact-path purge resolves every unique authored zone before any invalidation
+  forbidden_inference mocked connector startup or accepted purge envelope -> a deployed healthy tunnel or fresh content at every edge
+  witness scripts/tests/cloudflare-entrypoints.test.mjs exercises the real shell entrypoints without Python or live network, preserves quoted and Unicode purge paths, refuses ambiguous zones and upstream failures, strips administrative credentials from connector environment, forwards termination signals, and propagates child exit status
+  source_path scripts/reconcile_cloudflare_public_roots.py.archive
+  source_path scripts/reconcile_cloudflare_tunnel.py.archive
+  witness scripts/tests/cloudflare-reconcile.test.mjs proves the shared native reconciler preserves territory-specific member bindings, dry-run non-mutation, foreign Worker refusal, explicit estate Worker replacement, and unrelated Tunnel ingress
+  witness scripts/tests/placement_plane_test.sh compiles the full declaration and proves canonical MCP/Auth origins are different, the three legacy Worker exclusions survive, the ordered Tunnel plan sends both control hosts to Oracle before the work wildcard, Supabase receives only sealed OAuth transaction continuity plus an atomic consume function, and the failure matrix preserves last proven public material when Oracle is unavailable
+  witness integrations/mcp/tests/oauth_institution_slice_test.sh proves protected-resource metadata advertises mcp.fixture.test while authorization-server metadata advertises auth.fixture.test, preserving separate resource and issuer identities through a real OAuth/MCP gateway fixture
+  witness scripts/tests/publish_r2_route_aliases_test.sh proves the publisher projects every HTML route to the same extensionless R2 object key and excludes non-page files; an incomplete subset is not treated as route coverage
+  witness evidence/placement-plane/bootstrap-2026-09-23.json records the live Supabase continuity migration and Cloudflare managed Tunnel ingress acceptance, while explicitly retaining the denied Worker-route/DNS writes and down Oracle connector as un-applied rather than laundering them into deployment success
+  witness 2026-09-27 auth.aurekai.life, auth.aurekai.live, auth.aurekai.shop and signin.aurekai.work each served the native account HTML, authenticated self-profile fragment and shared HTMX runtime through a healthy four-connection managed Tunnel; each public territory apex redirected member paths to its own sibling while the static Worker continued serving public material
+  witness 2026-09-27 after the free Worker request budget returned 429 on all four public apexes, aurekai.life, aurekai.live, aurekai.shop and aurekai.work each returned 200 through exact no-Worker root routes and proxied Tunnel CNAMEs; the live Life apex completed native signup, login, authenticated account and HTMX runtime reads while wildcard subject routes were not changed
+  witness 2026-10-03 every aurekai host answered Cloudflare 1033 because the managed Tunnel had no connector: its last connection was 2026-09-28 and the Oracle tenancy held no compute instance at all. The connector, the address organ and the OAuth bridge were restarted on the operator's machine from deploy/launchd; the four public apexes returned 200, aurekai.work served authorization-server and protected-resource metadata with the apex as issuer and resource, the authorize page rendered for a ChatGPT connector request, and an unauthenticated POST to /mcp returned 401 with its resource-metadata pointer. No authorization flow was completed
+  witness scripts/tests/cloudflare-reconcile.test.mjs proves the reconciler splits the gateway paths off the apex ahead of its catch-all, leaves a path-scoped rule's service alone, and matches only the seven exact paths
+  interacts provider-graph
+  interacts placement-graph
+  interacts address-plane
+  interacts cmd-auth
+  interacts spatial-observation
+  source_lineage Oracle to Cloudflare/Supabase runtime-placement recovery
+  known_gap The public origin is one laptop. The three units were loaded for the login session from deploy/launchd and are not installed as login agents, so a restart or a network loss on that machine takes every host down again, which is how they went down on 2026-09-28
+  known_gap The OAuth bridge on the operator's machine reads the local copy of the auth store, not the one that lived on the Oracle estate; an account that existed only there cannot sign in, and a connector's earlier tokens are gone
+  known_gap The four member-session siblings are live and separately witnessed, but the canonical OAuth/MCP control-plane hosts still need their own end-to-end authorization-flow witness. The direct material R2 lane remains a bounded material realization rather than a replacement for a public territory Worker.

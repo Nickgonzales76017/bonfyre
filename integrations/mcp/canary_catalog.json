@@ -1,0 +1,310 @@
+[
+  {
+    "name": "canary_status",
+    "description": "Return R4 fixture certificate, canary policy, decision, outcome, authority and receipt status.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false
+    }
+  },
+  {
+    "name": "fixture_correction_run",
+    "description": "Run corrected disposable R4 fixtures for RTK, Cavekit, Bernstein and Agent Deck.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "providers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "rtk",
+              "cavekit",
+              "bernstein",
+              "agent-deck"
+            ]
+          }
+        },
+        "max_agent_turns": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4,
+          "default": 4
+        }
+      },
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false
+    }
+  },
+  {
+    "name": "canary_certificate_list",
+    "description": "List R3/R4 version-bound capability certificates and current validity.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false
+    }
+  },
+  {
+    "name": "canary_certificate_verify",
+    "description": "Verify digest, cleanup, expiry, provider version and eligible state for one capability certificate.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "provider": {
+          "type": "string"
+        },
+        "capability": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "provider",
+        "capability"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false
+    }
+  },
+  {
+    "name": "canary_policy_upsert",
+    "description": "Create or update a capability-specific canary. Only a valid passed certificate, safe effect classes, a distinct fallback and 1-25 percent are accepted.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "capability": {
+          "type": "string"
+        },
+        "provider": {
+          "type": "string"
+        },
+        "fallback_provider": {
+          "type": "string"
+        },
+        "percentage": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 25
+        },
+        "effect_classes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "PURE",
+              "READ_ONLY",
+              "CANDIDATE_WRITE"
+            ]
+          }
+        },
+        "enable": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "required": [
+        "capability",
+        "provider",
+        "fallback_provider",
+        "percentage",
+        "effect_classes"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false
+    }
+  },
+  {
+    "name": "canary_policy_list",
+    "description": "List all proposed, enabled, suspended and disabled capability canaries.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false
+    }
+  },
+  {
+    "name": "canary_policy_state",
+    "description": "Set a canary policy to proposed, enabled, suspended or disabled.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "policy_id": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "proposed",
+            "enabled",
+            "suspended",
+            "disabled"
+          ]
+        }
+      },
+      "required": [
+        "policy_id",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false
+    }
+  },
+  {
+    "name": "canary_route_decide",
+    "description": "Choose a version-bound canary or fallback deterministically from mission/task/capability and effect class.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "mission_id": {
+          "type": "string"
+        },
+        "task_id": {
+          "type": "string"
+        },
+        "capability": {
+          "type": "string"
+        },
+        "effect_class": {
+          "type": "string",
+          "enum": [
+            "PURE",
+            "READ_ONLY",
+            "CANDIDATE_WRITE",
+            "REVERSIBLE_INTERNAL_WRITE",
+            "AUTHORITATIVE_INTERNAL_WRITE",
+            "EXTERNAL_REVERSIBLE_EFFECT",
+            "EXTERNAL_IRREVERSIBLE_EFFECT"
+          ]
+        },
+        "fallback_provider": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "mission_id",
+        "capability",
+        "effect_class"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false
+    }
+  },
+  {
+    "name": "canary_outcome_record",
+    "description": "Record a canary outcome and automatically suspend its policy on bounded regression thresholds.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "decision_id": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "passed",
+            "failed",
+            "fallback",
+            "cancelled"
+          ]
+        },
+        "latency_ms": {
+          "type": "number"
+        },
+        "receipt_digest": {
+          "type": "string"
+        },
+        "payload": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "decision_id",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false
+    }
+  },
+  {
+    "name": "canary_decision_list",
+    "description": "List recent route decisions.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        }
+      },
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false
+    }
+  },
+  {
+    "name": "canary_outcome_list",
+    "description": "List recent canary outcomes.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        }
+      },
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false
+    }
+  },
+  {
+    "name": "canary_receipt_verify",
+    "description": "Verify the complete R4 hash-linked receipt chain.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false
+    }
+  }
+]

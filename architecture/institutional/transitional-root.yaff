@@ -1,0 +1,56 @@
+atlas institutional-transitional-root
+
+architecture transitional-root-absorption
+  canonical_name TransitionalRootAbsorption
+  owns AbsorptionLedger
+  consumes RepositoryTree
+  consumes CommandSurface
+  publishes AbsorptionLedger
+  publishes DeletionProof
+  family institutional
+  domain Institutional / Estate convergence
+  layer cutover
+  semantic_question Which children of the transitional compatibility root still own capability that no current owner provides?
+  purpose Measures every child of the transitional root against the current cmd/, lib/ and engine/ owners at symbol and file granularity, grades the residue, and assigns exactly one cutover fate so a rename can never be mistaken for an absorption.
+  maturity measured
+  node_types TransitionalChild
+  node_types ResidueSymbol
+  node_types CutoverFate
+  edge_types superseded_by
+  edge_types absorbs_into
+  internal_calculus top-level C definition extraction over legacy and current owner trees
+  internal_calculus bf_-namespaced rename resolution for helpers absorbed into lib
+  internal_calculus residue grading across source, documentation, sample output and scratch
+  invariant the transitional root is resolved by measurement, never by hard-coded directory name
+  invariant a child is superseded only when every symbol and durable file has a current owner
+  invariant C definition measurement is formatting-independent, including compact one-line wrappers
+  invariant a symbol surviving only under a legacy_from_ tree is residue, not an owner
+  invariant committed executable build products are deleted under a DeletionProof, never counted as capability
+  invariant an orphan gitlink is registered, vendored, or removed only after its exact mode and object identity receive a disposition proof
+  invariant the root survives while any child still carries unabsorbed capability
+  forbidden_inference renaming or relocating the transitional root -> its children are absorbed
+  forbidden_inference an empty child directory -> the child is worthless, because unregistered gitlinks present as empty
+  forbidden_inference a similarly named remote repository -> it contains or may replace the recorded gitlink object
+  forbidden_inference a legacy source file being larger than its current owner -> it holds unique capability
+  interacts command-law
+  interacts repository-shape
+  source_path tools/transitional_root_absorption.py.archive
+  witness tests/test_transitional_root_absorption.py.archive
+  witness generated/projections/estate/transitional-root-absorption.json
+  witness evidence/verification/transitional-root/build-products-deletion-proof.json
+  witness evidence/verification/transitional-root/auth-pay-source-deletion-proof.json
+  witness evidence/verification/transitional-root/orphan-gitlink-disposition-proof.json
+  source_lineage Generation-10 estate convergence, Phase 0
+  source_lineage measured supersession of 10-Code by the native cmd/ surface
+
+  known_gap every source this entry names is archived, so the supersession measurement is historical; no live native replacement for this audit is witnessed here
+
+interaction transitional-root-measures-command-law
+  source command-law
+  destination transitional-root-absorption
+  relation supersession_evidence_input
+  preserves command identity, current owner path and defined symbol set
+  drops any claim that a legacy tree's age or size implies unique capability
+  forbidden_inference a live cmd/ owner existing -> the legacy tree beneath the transitional root is safe to delete
+  witness test_root_survives_while_any_child_still_owns_capability
+  binding tools/transitional_root_absorption.py

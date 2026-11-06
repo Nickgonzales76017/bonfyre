@@ -1,0 +1,3 @@
+application	module	doctype	is_submittable	source_json	baseline_behavior	observed_match	related_owner_families	doctype_effect_proven
+insights	insights	insights_table_import	1	integrations/frappe-bench/apps/insights/insights/insights/doctype/insights_table_import/insights_table_import.json	-	not_individually_witnessed	unbound	false
+wiki	wiki	wiki_page_patch	1	integrations/frappe-bench/apps/wiki/wiki/wiki/doctype/wiki_page_patch/wiki_page_patch.json	-	not_individually_witnessed	BonfyreCMS	false

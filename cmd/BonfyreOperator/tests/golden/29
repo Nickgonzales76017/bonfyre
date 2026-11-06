@@ -1,0 +1,47 @@
+{
+  "operator": "RECONCILE",
+  "program": {
+    "program_id": "household.reconcile.942cc2f857ce05fe",
+    "operator": "RECONCILE",
+    "digest": "0034953c62c9a554b6a8143863f4886c3f1e3ece817dcda1f464b10e5248eb4d",
+    "reads": [
+      "household:housing:listing:milo-a"
+    ],
+    "admitted": true,
+    "hard_failures": []
+  },
+  "left": "household:housing:listing:milo-a",
+  "right": "household:housing:listing:milo-a",
+  "disposition": "identical_address",
+  "merge_prohibited": false,
+  "reason": "Both operands resolve to the same address.",
+  "comparison": {
+    "operator": "COMPARE",
+    "program": {
+      "program_id": "household.compare.942cc2f857ce05fe",
+      "operator": "COMPARE",
+      "digest": "c5533b311e2733cb01584335965562412eb7fffc788c83c0aa0720d5355a75f1",
+      "reads": [
+        "household:housing:listing:milo-a"
+      ],
+      "admitted": true,
+      "hard_failures": []
+    },
+    "left": "household:housing:listing:milo-a",
+    "right": "household:housing:listing:milo-a",
+    "same_kind": true,
+    "equal_fields": [
+      "advertised_base_rent_monthly_usd",
+      "availability_status",
+      "dogs_stated_ok",
+      "evidence_ref",
+      "listing_id",
+      "property_id",
+      "source_refs",
+      "unit_identity"
+    ],
+    "different_fields": [],
+    "numeric_deltas": []
+  }
+}
+exit 0

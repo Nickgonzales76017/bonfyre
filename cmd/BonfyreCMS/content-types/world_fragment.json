@@ -1,0 +1,25 @@
+{
+  "name": "world_fragment",
+  "displayName": "World Fragment",
+  "description": "One ordered heterogeneous presentation fragment inside an addressed World. It points at semantic material owned elsewhere and declares only how that material is projected here. A fragment does not own subject truth, actor identity, authority, provider admission, payment authority, or an effect.",
+  "attributes": {
+    "fragment_id": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "world": {"type": "string", "required": true},
+    "ordinal": {"type": "integer", "required": true},
+    "subject_address": {"type": "string", "required": true},
+    "surface_grammar": {"type": "string", "required": true},
+    "renderer_family": {"type": "string", "required": true},
+    "renderer_variant": {"type": "string", "required": false},
+    "extent": {"type": "string", "required": true},
+    "template": {"type": "string", "required": false},
+    "source_projection": {"type": "string", "required": false},
+    "media_posture": {"type": "string", "required": false},
+    "temporal_posture": {"type": "string", "required": false},
+    "continuity_group": {"type": "string", "required": false},
+    "visible_sections": {"type": "string", "required": false},
+    "action_aperture": {"type": "string", "required": false},
+    "provenance": {"type": "text", "required": false},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

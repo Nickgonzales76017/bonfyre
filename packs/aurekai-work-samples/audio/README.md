@@ -1,0 +1,1 @@
+Generated tones from `cmd/BonfyreCreatorMix/tools/demo.mjs`. Each source retains only the frames used by the six-second sample. Source identity was verified against `packs/no-simulation/creator-upstream-20261013/demo/bindings.json` before trimming. The initial mixed output retains the native reference digest in `sample.json`. This directory contains no recorded or client audio.

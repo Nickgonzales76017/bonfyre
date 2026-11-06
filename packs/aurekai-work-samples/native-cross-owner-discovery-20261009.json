@@ -1,0 +1,262 @@
+{
+  "schema": "bonfyre.existing-owner.deeper-audit.v1",
+  "captured_at": "2026-10-09T22:34:43.812Z",
+  "source_databases": [
+    "estate-local/cms.db",
+    "estate-local/prices.db",
+    "estate-local/items.db"
+  ],
+  "actual_material": {
+    "retained_items": 70132,
+    "with_retained_sources": 2209,
+    "release_states": [
+      {
+        "state": "admissible",
+        "n": 2192
+      },
+      {
+        "state": "blocked",
+        "n": 10016
+      },
+      {
+        "state": "delivered",
+        "n": 2
+      }
+    ],
+    "release_current_note": "One UT Dallas real retained search delivery, no public reuse grant, other existing deliveries preserve own receipts."
+  },
+  "financial_observation": {
+    "prices": 23954,
+    "source_flags": [
+      {
+        "source": "azure/retail-prices",
+        "count": 1498,
+        "price_values": 1315,
+        "observed_times": 1,
+        "first": "2026-09-26T16:53:03Z",
+        "last": "2026-09-26T16:53:03Z"
+      },
+      {
+        "source": "medicaid/nadac",
+        "count": 8975,
+        "price_values": 1534,
+        "observed_times": 2,
+        "first": "2026-09-26T16:53:06Z",
+        "last": "2026-09-26T16:54:12Z"
+      },
+      {
+        "source": "openfoodfacts/open-prices",
+        "count": 3896,
+        "price_values": 774,
+        "observed_times": 2,
+        "first": "2026-09-26T16:53:23Z",
+        "last": "2026-09-26T16:54:59Z"
+      },
+      {
+        "source": "openrouter/models",
+        "count": 862,
+        "price_values": 199,
+        "observed_times": 1,
+        "first": "2026-09-26T16:53:23Z",
+        "last": "2026-09-26T16:53:23Z"
+      },
+      {
+        "source": "usaspending/spending_by_award",
+        "count": 1984,
+        "price_values": 1933,
+        "observed_times": 2,
+        "first": "2026-09-26T16:53:44Z",
+        "last": "2026-09-26T16:55:15Z"
+      },
+      {
+        "source": "wikidata/P2284",
+        "count": 6739,
+        "price_values": 924,
+        "observed_times": 2,
+        "first": "2026-09-26T16:53:46Z",
+        "last": "2026-09-26T16:55:17Z"
+      }
+    ],
+    "identity_time_repeats": [
+      {
+        "source": "azure/retail-prices",
+        "possible_repeated_identity": 0,
+        "multi_time_identities": 0
+      },
+      {
+        "source": "medicaid/nadac",
+        "possible_repeated_identity": 0,
+        "multi_time_identities": 0
+      },
+      {
+        "source": "openfoodfacts/open-prices",
+        "possible_repeated_identity": 6,
+        "multi_time_identities": 6
+      },
+      {
+        "source": "usaspending/spending_by_award",
+        "possible_repeated_identity": 0,
+        "multi_time_identities": 0
+      },
+      {
+        "source": "wikidata/P2284",
+        "possible_repeated_identity": 0,
+        "multi_time_identities": 0
+      }
+    ],
+    "cms_deltas": [
+      {
+        "source_ref": "azure/retail-prices",
+        "changed": "1315",
+        "from_generation": "2026-09-26T16:53:03Z",
+        "to_generation": "2026-09-26T16:53:03Z"
+      },
+      {
+        "source_ref": "medicaid/nadac",
+        "changed": "1534",
+        "from_generation": "2026-09-26T16:53:06Z",
+        "to_generation": "2026-09-26T16:54:12Z"
+      },
+      {
+        "source_ref": "openfoodfacts/open-prices",
+        "changed": "774",
+        "from_generation": "2026-09-26T16:53:23Z",
+        "to_generation": "2026-09-26T16:54:59Z"
+      },
+      {
+        "source_ref": "openrouter/models",
+        "changed": "199",
+        "from_generation": "2026-09-26T16:53:23Z",
+        "to_generation": "2026-09-26T16:53:23Z"
+      },
+      {
+        "source_ref": "usaspending/spending_by_award",
+        "changed": "1933",
+        "from_generation": "2026-09-26T16:53:44Z",
+        "to_generation": "2026-09-26T16:55:15Z"
+      },
+      {
+        "source_ref": "wikidata/P2284",
+        "changed": "924",
+        "from_generation": "2026-09-26T16:53:46Z",
+        "to_generation": "2026-09-26T16:55:17Z"
+      }
+    ],
+    "false_positive_mechanism": "components/BonfyreProject/src/main.c release_compile groups solely by source and COUNT(DISTINCT amount)>1. Different products and units are counted as material changes. Azure and OpenRouter have one collector instant, so cannot be temporally changed within these observations.",
+    "ownership_boundary": "Do not rewrite historical source_release_delta without modifying/reverifying canonical BonfyreProject component owner; path is not permitted by the current low-risk patch policy.",
+    "no_current_shop_delivery": true
+  },
+  "institutional_funding": {
+    "instances": [
+      {
+        "owner_subject": "person:nick",
+        "site_id": "person-nick",
+        "n": 10
+      }
+    ],
+    "packages": {
+      "n": 31,
+      "unscoped": 31,
+      "no_cost_codes": 31
+    },
+    "live_tracks": [
+      {
+        "id": 49,
+        "project_id": "funding:futo-local-ai-toolkit",
+        "stage": "application_sent_followup_held"
+      },
+      {
+        "id": 50,
+        "project_id": "funding:nlnet-codesupply",
+        "stage": "research_hold"
+      },
+      {
+        "id": 51,
+        "project_id": "funding:nlnet-restack",
+        "stage": "research_hold"
+      },
+      {
+        "id": 54,
+        "project_id": "provider:cloudflare-startup-fit",
+        "stage": "qualification_held"
+      },
+      {
+        "id": 80,
+        "project_id": "funding:emergent-ventures",
+        "stage": "human_authorship_required"
+      },
+      {
+        "id": 81,
+        "project_id": "funding:github-secure-open-source",
+        "stage": "research_hold"
+      },
+      {
+        "id": 102,
+        "project_id": "funding:sentient-open-source-agi",
+        "stage": "application_answers_prepared"
+      },
+      {
+        "id": 103,
+        "project_id": "funding:1517-medici",
+        "stage": "eligibility_unconfirmed"
+      },
+      {
+        "id": 104,
+        "project_id": "funding:open-source-endowment-screen",
+        "stage": "research_excluded"
+      },
+      {
+        "id": 109,
+        "project_id": "funding:openmined-ensembles-winter-2026",
+        "stage": "application_submitted"
+      },
+      {
+        "id": 110,
+        "project_id": "funding:cosmos-ai-grants",
+        "stage": "current_round_closed"
+      },
+      {
+        "id": 111,
+        "project_id": "funding:current-ai-public-goods",
+        "stage": "current_round_closed"
+      },
+      {
+        "id": 112,
+        "project_id": "funding:mozilla-pioneers",
+        "stage": "current_round_closed"
+      },
+      {
+        "id": 126,
+        "project_id": "provider:runpod-starter-review-20261009",
+        "stage": "qualification_sent"
+      }
+    ],
+    "note": "Actual named funding applications are separate Project instances, not 31 independently scoped awards. All historical FundingWorkPackages have [] scope and cost_codes."
+  },
+  "installed_products": {
+    "public_samples": "all five public aurekai-work-samples pages returned HTTP200",
+    "public_territory_serial": "all four territory roots returned HTTP200 with 3–6 second cold responses",
+    "public_web_origin": "port28901 active, two workers",
+    "public_projection_cache_effect": "with all required environment variables in isolated scratch origin, cold LIFE3153ms->warm3ms; LIVE4412ms->4ms; discover5748ms->4ms",
+    "production_deployment_status": "unchanged; allowed patch policy rejects deploy/launchd paths; no production restart or publish"
+  },
+  "source_references": {
+    "price_owner_sha256": "450ff6b9883564e5f5435d3fdf54f648a42b41a92356578de9d30d7f33d31d9a",
+    "price_collector_sha256": "f7df92e66bb63ef2e236d98015067903a0559d67729cbf0829b34dd7e826f300",
+    "funding_compiler_sha256": "db185a3337b7929160375915e0f7734e2901c5149693461505ea079159ce2343",
+    "funding_frontier_sha256": "0625608d1ba63279f04e4e3d0efb75324d2705b5d91809a77e1800d4937560e7",
+    "public_cache_sha256": "e128cafbc9115260a8c042a9d47c93981df002970694b94e1fb9bf8772904628",
+    "launchd_plist_sha256": "7d89dcceedc6e807445288b0b0512f7c4bb3dd02375d75f69643cabc9f8e2e19",
+    "live_cache_isolated_receipt": "89704bc0-37d2-4340-b629-be68e65d727d",
+    "price_join_receipt": "40e06826-bbb7-419e-b4a0-ffcd21892aaa",
+    "release_impact_readonly_receipt": "d6afb3a5-fe84-4bb7-b98b-aecfdb26dfe6"
+  },
+  "forbidden_inferences": [
+    "Collector timestamps are not source effective-price dates",
+    "Price variation across SKUs is not a temporal price change",
+    "FundingWorkPackage does not prove expenditure or award",
+    "Admissible release does not mean material delivered or current publish authority",
+    "Fast scratch cache does not mean production cache installed",
+    "A human-recognizable public page does not mean customers signed up, bought or received service"
+  ]
+}

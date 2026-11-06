@@ -1,0 +1,8 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"build/bonfyre-run","binary_env":"BONFYRE_RUN_BIN","cases":[
+{"name":"a registered recipe is planned in dependency levels without running anything","files":{"in.wav":"x"},"steps":[
+ {"program":"${root}/cmd/BonfyreRecipe/build/bonfyre-recipe","argv":["init","--db","r.db"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"program":"${root}/cmd/BonfyreRecipe/build/bonfyre-recipe","argv":["add","${root}/docs/recipes/A1-audio-quick-brief.json","--db","r.db"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"argv":["A1","--input","in.wav","--out","ro","--dry-run","--db","r.db"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["[DRY RUN] Execution plan","[s02] Transcription (BonfyreTranscribe)","depends_on: s02"],"absent":["${tmp}/ro/brief.md"]}]},
+{"name":"an unknown recipe is refused","files":{"in.wav":"x"},"steps":[
+ {"program":"${root}/cmd/BonfyreRecipe/build/bonfyre-recipe","argv":["init","--db","r.db"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"argv":["ZZ","--input","in.wav","--out","ro","--dry-run","--db","r.db"],"env":{"HOME":"${tmp}"},"exit_nonzero":true}]}]}

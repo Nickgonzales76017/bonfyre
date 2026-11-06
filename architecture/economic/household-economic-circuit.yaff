@@ -1,0 +1,38 @@
+architecture household-economic-circuit
+  canonical_name HouseholdEconomicCircuit
+  family economic
+  domain Economic / Cross-domain Household Comparison
+  layer economic/household
+  semantic_question Which current, source-bound housing recurring components and food route strategies can be compared without fabricating a residence join, a budget, or accounting truth?
+  purpose Reads the existing housing effective-cost and food fulfillment projections, makes scenario-selected recurring and one-time component views, binds their input digests as evidence, and explicitly refuses a cross-domain total unless an explicit residence identity joins the inputs.
+  maturity implemented
+  owns HouseholdRecurringScenario
+  owns HouseholdOneTimeComponentView
+  owns HouseholdComparisonConstraint
+  owns HouseholdProjectionEvidenceBundle
+  owns RefusedResidenceJoin
+  consumes FoodCombinationProjection
+  consumes FinancialPosition
+  consumes Evidence
+  publishes HouseholdEconomicCircuitProjection
+  node_types HouseholdRecurringScenario
+  node_types HouseholdOneTimeComponentView
+  node_types HouseholdComparisonConstraint
+  node_types RefusedResidenceJoin
+  edge_types scenario_selects
+  edge_types evidence_binds
+  edge_types refuses_unproven_join
+  invariant optional pet and parking terms are scenario-selected and remain applicability-unverified unless an explicit source binds them to the selected unit
+  invariant reported deposits and fees remain separately labelled and never imply refundability, money due, paid, billed or booked state
+  invariant food component baskets and geodesic travel lower bounds remain separate from monthly food, driving and fuel projections
+  invariant no cross-domain total exists without an explicit shared residence identity
+  forbidden_inference candidate route origin -> residence, verified availability or lease
+  forbidden_inference observed component basket -> meal, weekly or monthly food budget
+  forbidden_inference geodesic lower bound -> driving distance, time, fuel or travel cost
+  forbidden_inference cross-domain projection -> billed, paid, booked or spend-authorized accounting truth
+  interacts food-combination-is-bounded-by-household-circuit
+  source_path components/BonfyreControlPlane/household_economic_circuit.py.archive
+  witness components/BonfyreControlPlane/tests/test_household_economic_circuit.py.archive
+  witness .bonfyre/run8-r2c/20260823T032652Z-27525/household/cross-domain/economic-circuit.json
+  source_lineage Run8 cross-domain-household-circuit live food and housing comparison
+  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.

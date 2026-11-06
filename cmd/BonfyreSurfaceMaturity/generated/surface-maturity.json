@@ -1,0 +1,665 @@
+{
+    "schema": "bonfyre-surface-maturity.v1",
+    "primary_join": "WorldPublication",
+    "address_rule": "Every transition preserves the same world address unless the visitor explicitly changes world.",
+    "coverage_axes": [
+        {
+            "axis": "identity",
+            "question": "Can retained external material name the subject or publisher it is actually about?",
+            "owners": [
+                "BonfyreSourceFrontier",
+                "EstateIdentityGraph",
+                "BonfyreCMS"
+            ],
+            "evidence": "publisher/source identity fields plus retained observations",
+            "backfill": "PUBLIC_BACKFILL first; unresolved cases remain DISCOVER or HUMAN_VERIFY"
+        },
+        {
+            "axis": "address",
+            "question": "Does an observed subject have a lawful first-party Matrix/WebAddress coordinate without implying ownership?",
+            "owners": [
+                "BonfyreWebAddress",
+                "CanonicalSubjectAddress",
+                "BonfyreCMS"
+            ],
+            "evidence": "site_presentation and Matrix subject/address receipts",
+            "backfill": "address existing observed subjects through their current owner"
+        },
+        {
+            "axis": "material",
+            "question": "Does admitted source standing reach the retained material that a subject or territory can actually read?",
+            "owners": [
+                "BonfyreExternalEstate",
+                "BonfyreSourceFrontier",
+                "ForeignTwinGraph"
+            ],
+            "evidence": "retained items plus admitted/active frontier channels",
+            "backfill": "reconcile standing and retained material; never turn discovery into admission"
+        },
+        {
+            "axis": "subject",
+            "question": "Is dense subject closure precomputed beyond the visible page slice?",
+            "owners": [
+                "SubjectFabric",
+                "BonfyreScopedDemand",
+                "BonfyreSurfaceScene"
+            ],
+            "evidence": "subject bundles, roots, readers, scenes, actions and dependencies",
+            "backfill": "precompute dense subject closure then reconcile readers"
+        },
+        {
+            "axis": "program",
+            "question": "Can useful material become account/subject-scoped continuing work rather than a demo or feed card?",
+            "owners": [
+                "ProgramFabric",
+                "WorkGraph",
+                "BonfyreCMS"
+            ],
+            "evidence": "program instances, source collections, requirements, bindings and continuations",
+            "backfill": "recompile affected instances through ProgramFabric; do not auto-prepare a user program"
+        },
+        {
+            "axis": "surface",
+            "question": "Do live surfaces project the same mature owner closure instead of hand-selected islands?",
+            "owners": [
+                "SurfaceIR",
+                "BonfyreSurfaceScene",
+                "BonfyreWebAddress"
+            ],
+            "evidence": "surface scenes, address closure and owner-backed browser witnesses",
+            "backfill": "lower from subject/program closure rather than adding page-local state"
+        },
+        {
+            "axis": "action",
+            "question": "Do visible actions resolve to exact owners with authority and evidence boundaries intact?",
+            "owners": [
+                "AuthorityGraph",
+                "WorkGraph",
+                "ProtocolContract"
+            ],
+            "evidence": "subject actions, capability programs, receipts and refusals",
+            "backfill": "project existing owner apertures; never manufacture effect authority"
+        },
+        {
+            "axis": "account",
+            "question": "Does account-scoped work carry agents, activity, outputs, inbox state and measured usage across products?",
+            "owners": [
+                "Fabric",
+                "AurekaiActivity",
+                "BonfyreMeter"
+            ],
+            "evidence": "account task scopes, runs, notifications, outputs and usage receipts",
+            "backfill": "project admitted account-scoped runs; missing usage remains not reported"
+        },
+        {
+            "axis": "evidence",
+            "question": "Can every mature projection explain what was observed, derived, admitted and still unresolved?",
+            "owners": [
+                "EvidenceGraph",
+                "ProofFrontierGraph",
+                "ForeignTwinGraph"
+            ],
+            "evidence": "observation, derivation, admission and verification receipts",
+            "backfill": "attach existing evidence and preserve unresolved frontiers instead of filling them cosmetically"
+        }
+    ],
+    "surfaces": [
+        {
+            "surface": "habitat",
+            "route": "/habitat/",
+            "question": "What in this world is mine, saved, private, or becoming part of daily life?",
+            "world_bound": true,
+            "owners": [
+                "BonfyreMatrix",
+                "WorldPublication",
+                "PackGraph",
+                "ActorPresentationCell"
+            ],
+            "runtime_owners": [
+                "BonfyreScopedDemand",
+                "BonfyreMaterialLease"
+            ],
+            "transitions": [
+                "worlds",
+                "boards",
+                "market",
+                "notes"
+            ],
+            "anonymous_use": "A visitor can see the public world; an admitted actor gets the same world narrowed to saved/private relations.",
+            "effect_aperture": "Save, collect, attach a Pack, or create a private note through the exact owner.",
+            "truth_boundary": "personal projection is not ownership of the public subject"
+        },
+        {
+            "surface": "content",
+            "route": "/cms/",
+            "question": "What can be authored, admitted, published, revised, or withdrawn in this world?",
+            "world_bound": true,
+            "owners": [
+                "BonfyreCMS",
+                "ContentWriteSurface",
+                "WorldPublication",
+                "PublicationProgram"
+            ],
+            "runtime_owners": [
+                "BonfyreSurfaceScene"
+            ],
+            "transitions": [
+                "studio",
+                "notes",
+                "build",
+                "worlds"
+            ],
+            "anonymous_use": "Read published material and its provenance without entering an editor.",
+            "effect_aperture": "Create or revise through CMS publication state and owner contracts.",
+            "truth_boundary": "draft or authored content is not public until publication admits it"
+        },
+        {
+            "surface": "notes",
+            "route": "/notes/",
+            "question": "What has a person or institution written down about this world, and what evidence does it cite?",
+            "world_bound": true,
+            "owners": [
+                "PublicationProgram",
+                "WorldPublication",
+                "EvidenceGraph",
+                "ForeignPublicationCorpus"
+            ],
+            "runtime_owners": [
+                "BonfyreRecall"
+            ],
+            "transitions": [
+                "content",
+                "worlds",
+                "observations",
+                "community"
+            ],
+            "anonymous_use": "Read public notes as publications tied to the same addressed world.",
+            "effect_aperture": "Author a note through PublicationProgram/CMS rather than a free-floating blob.",
+            "truth_boundary": "a note is an authored publication, not evidence merely because it cites evidence"
+        },
+        {
+            "surface": "build",
+            "route": "/protocols",
+            "question": "How can this world be observed, projected, paid, federated, or acted on by machines?",
+            "world_bound": true,
+            "owners": [
+                "ProtocolContract",
+                "DomainProfile",
+                "ProtocolFacetCompiler",
+                "MachineMembrane"
+            ],
+            "runtime_owners": [
+                "BonfyreExperienceBinding",
+                "BonfyreBridgeReadiness"
+            ],
+            "transitions": [
+                "link",
+                "observations",
+                "console",
+                "packs"
+            ],
+            "anonymous_use": "See executable protocol doors and exact carrier/projection status.",
+            "effect_aperture": "Declare or compile a protocol binding; effects remain behind protocol and authority gates.",
+            "truth_boundary": "a protocol candidate or compiled contract is not provider authority or effect permission"
+        },
+        {
+            "surface": "tonight",
+            "route": "/tonight",
+            "question": "What changed recently enough to matter to a person deciding what to do next?",
+            "world_bound": true,
+            "owners": [
+                "WorldPublication",
+                "PackGraph",
+                "PublicObservationAperture",
+                "OccurrenceSpine",
+                "SpatialObservation"
+            ],
+            "runtime_owners": [
+                "BonfyrePackCondition",
+                "BonfyreScopedDemand",
+                "BonfyreMaterialLease",
+                "BonfyreMaterialWeatherGate"
+            ],
+            "transitions": [
+                "stage",
+                "parcels",
+                "market",
+                "channels",
+                "observations"
+            ],
+            "anonymous_use": "Immediately answer what is happening, where, how current it is, and what changed.",
+            "effect_aperture": "RSVP/save/follow an admitted occurrence or activate a Pack; do not synthesize an event from source noise.",
+            "truth_boundary": "fresh observation is not a fresh fact and an occurrence is not an offer"
+        },
+        {
+            "surface": "studio",
+            "route": "/studio/",
+            "question": "What work turns observations and drafts into an admitted public or operational artifact?",
+            "world_bound": true,
+            "owners": [
+                "ContentWriteSurface",
+                "WorkGraph",
+                "CommitmentGraph",
+                "BonfyreCMS",
+                "AtomicForm"
+            ],
+            "runtime_owners": [
+                "BonfyreFragmentMigration",
+                "BonfyreWorldCompiler"
+            ],
+            "transitions": [
+                "content",
+                "build",
+                "notes",
+                "console"
+            ],
+            "anonymous_use": "See published outputs and the work lineage that produced them.",
+            "effect_aperture": "Open a purpose-bound authoring or compilation aperture with unresolved human choices only.",
+            "truth_boundary": "a form or work item does not imply an admitted effect"
+        },
+        {
+            "surface": "observations",
+            "route": "/observations",
+            "question": "What did the institution actually observe, when, from where, and what changed?",
+            "world_bound": true,
+            "owners": [
+                "ForeignTwinGraph",
+                "TemporalEvidenceGraph",
+                "PublicObservationAperture",
+                "ProofFrontierGraph"
+            ],
+            "runtime_owners": [
+                "BonfyreObservationBoundary",
+                "BonfyreResourceWeatherDelta"
+            ],
+            "transitions": [
+                "link",
+                "worlds",
+                "parcels",
+                "console"
+            ],
+            "anonymous_use": "Inspect exact external observation receipts and temporal disagreement without accepting the source as truth.",
+            "effect_aperture": "Request or retain an observation only through the boundary, lease and source-standing chain.",
+            "truth_boundary": "an observation is evidence of what was observed, not institutional truth"
+        },
+        {
+            "surface": "market",
+            "route": "/market",
+            "question": "What is actually offered, quoted, committed, settled, or still merely a candidate in this world?",
+            "world_bound": true,
+            "owners": [
+                "CommerceChain",
+                "MoneyGraph",
+                "CommitmentGraph",
+                "BonfyreOffer",
+                "RoundTripTwin"
+            ],
+            "runtime_owners": [
+                "BonfyreFinance"
+            ],
+            "transitions": [
+                "listings",
+                "worlds",
+                "inbox",
+                "observations"
+            ],
+            "anonymous_use": "Compare admitted offers and terms without turning discovered listings into offers.",
+            "effect_aperture": "Quote/accept/settle only through the commerce and commitment owners.",
+            "truth_boundary": "listing or payment presentation does not imply a quote, settlement, fulfillment, or authority"
+        },
+        {
+            "surface": "worlds",
+            "route": "/w",
+            "question": "What coherent situations exist here, and which subjects, conditions, dependencies, and projections make each one a world?",
+            "world_bound": true,
+            "owners": [
+                "WorldPublication",
+                "AddressPlane",
+                "PackGraph",
+                "TerritoryLanding",
+                "SurfaceIR"
+            ],
+            "runtime_owners": [
+                "BonfyreWorldCompiler",
+                "BonfyreScopedFrontier"
+            ],
+            "transitions": [
+                "discover",
+                "tonight",
+                "packs",
+                "territory"
+            ],
+            "anonymous_use": "Enter a real situation instead of choosing a product module.",
+            "effect_aperture": "Follow or instantiate only declared world grammars and admitted subjects.",
+            "truth_boundary": "a world projection does not own the subjects it projects"
+        },
+        {
+            "surface": "discover",
+            "route": "/discover",
+            "question": "What real subjects, worlds, sources, capabilities, and nearby joins are worth entering from here?",
+            "world_bound": true,
+            "owners": [
+                "ExternalEstateIndex",
+                "AddressPlane",
+                "SubjectIndex",
+                "WorldPublication",
+                "RouteRanker"
+            ],
+            "runtime_owners": [
+                "BonfyreParticipation",
+                "BonfyreActivation"
+            ],
+            "transitions": [
+                "worlds",
+                "tonight",
+                "link",
+                "parcels"
+            ],
+            "anonymous_use": "Land on dense, immediately usable situations ranked by join power rather than a card catalogue.",
+            "effect_aperture": "Follow a candidate into its exact owner; discovery itself performs no external effect.",
+            "truth_boundary": "discovered candidate is not admitted evidence, capability, permission, or truth"
+        },
+        {
+            "surface": "boards",
+            "route": "/board",
+            "question": "What has been deliberately arranged, compared, or kept together from this world?",
+            "world_bound": true,
+            "owners": [
+                "WorldPublication",
+                "SurfaceIR",
+                "BonfyreMatrix",
+                "ActorPresentationCell"
+            ],
+            "runtime_owners": [
+                "BonfyreSurfaceScene"
+            ],
+            "transitions": [
+                "worlds",
+                "community",
+                "notes",
+                "studio"
+            ],
+            "anonymous_use": "Browse public boards that compose existing world fragments rather than copying their truth.",
+            "effect_aperture": "Save/reorder/share through the board owner while source subjects retain their own owners.",
+            "truth_boundary": "curation does not transfer authority or duplicate source truth"
+        },
+        {
+            "surface": "community",
+            "route": "/community",
+            "question": "Who is participating around this world, under what membership and governance boundaries?",
+            "world_bound": true,
+            "owners": [
+                "HumanCommunityBody",
+                "RelationshipGraph",
+                "AuthorityGraph",
+                "WorldPublication"
+            ],
+            "runtime_owners": [
+                "BonfyreChannel"
+            ],
+            "transitions": [
+                "channels",
+                "boards",
+                "stage",
+                "inbox"
+            ],
+            "anonymous_use": "Read the public body and its rules before joining.",
+            "effect_aperture": "Join, govern, moderate, or publish only where Authority admits the actor.",
+            "truth_boundary": "external social activity is not institution membership"
+        },
+        {
+            "surface": "listings",
+            "route": "/listings",
+            "question": "Which canonical things are being made available, under what terms and validity frontier?",
+            "world_bound": true,
+            "owners": [
+                "CommerceChain",
+                "BonfyreOffer",
+                "WorldPublication",
+                "CanonicalSubjectAddress"
+            ],
+            "runtime_owners": [
+                "BonfyreParticipation"
+            ],
+            "transitions": [
+                "market",
+                "parcels",
+                "inbox",
+                "worlds"
+            ],
+            "anonymous_use": "See named available things tied to canonical subjects and current terms.",
+            "effect_aperture": "Create/update availability only through the listing/offer owner.",
+            "truth_boundary": "an external listing candidate is not a canonical or active offer"
+        },
+        {
+            "surface": "parcels",
+            "route": "/parcels",
+            "question": "Where is this world physically grounded, what is observed there, and as of what time?",
+            "world_bound": true,
+            "owners": [
+                "ParcelProjection",
+                "SpatialObservation",
+                "WorldPublication",
+                "AddressPlane",
+                "TemporalEvidenceGraph"
+            ],
+            "runtime_owners": [
+                "BonfyreObservationBoundary"
+            ],
+            "transitions": [
+                "territory",
+                "listings",
+                "tonight",
+                "observations"
+            ],
+            "anonymous_use": "Move through places, parcels, routes and spatial observations attached to the same world.",
+            "effect_aperture": "Add an overlay or observation only through spatial/evidence owners.",
+            "truth_boundary": "map coincidence is not identity, ownership, access, or current condition"
+        },
+        {
+            "surface": "inbox",
+            "route": "/inbox",
+            "question": "What requests, obligations, decisions, commitments, or replies need this actor's attention in this world?",
+            "world_bound": true,
+            "owners": [
+                "TargetObligation",
+                "WorkGraph",
+                "CommitmentGraph",
+                "AuthorityGraph"
+            ],
+            "runtime_owners": [
+                "BonfyreWorkflow"
+            ],
+            "transitions": [
+                "studio",
+                "community",
+                "market",
+                "console"
+            ],
+            "anonymous_use": "See only public/requestable apertures when anonymous; private obligations stay outside the closure.",
+            "effect_aperture": "Accept, reply, assign, or discharge only through the exact obligation/work owner.",
+            "truth_boundary": "visibility of a request does not authorize its discharge or external effect"
+        },
+        {
+            "surface": "channels",
+            "route": "/channels",
+            "question": "Where is live or threaded conversation around this world admitted, scoped, and moderated?",
+            "world_bound": true,
+            "owners": [
+                "HumanCommunityBody",
+                "BonfyreChannel",
+                "AuthorityGraph",
+                "SocialPresenceGraph"
+            ],
+            "runtime_owners": [
+                "BonfyreMoQ"
+            ],
+            "transitions": [
+                "community",
+                "stage",
+                "tonight",
+                "inbox"
+            ],
+            "anonymous_use": "Read public channels tied to the world without confusing federation with membership.",
+            "effect_aperture": "Speak, moderate, stream, or bridge only through admitted channel capabilities.",
+            "truth_boundary": "a carrier message or federated identity is not institutional speech or membership"
+        },
+        {
+            "surface": "territory",
+            "route": "/territory",
+            "question": "What geographic, institutional, and presentation boundary is being projected right now?",
+            "world_bound": true,
+            "owners": [
+                "TerritoryLanding",
+                "AddressPlane",
+                "WorldPublication",
+                "SpatialObservation"
+            ],
+            "runtime_owners": [
+                "BonfyreWebAddress"
+            ],
+            "transitions": [
+                "parcels",
+                "township",
+                "discover",
+                "tonight"
+            ],
+            "anonymous_use": "Understand where the current world begins and which lawful projection is being shown.",
+            "effect_aperture": "Change projection/scope without mutating the underlying world.",
+            "truth_boundary": "territory is a view boundary, not ownership of projected subjects"
+        },
+        {
+            "surface": "stage",
+            "route": "/stage",
+            "question": "What occurrences are scheduled, live, past, or becoming actionable in this world?",
+            "world_bound": true,
+            "owners": [
+                "OccurrenceSpine",
+                "WorldPublication",
+                "SurfaceIR",
+                "HumanCommunityBody",
+                "TemporalEvidenceGraph"
+            ],
+            "runtime_owners": [
+                "BonfyreExperienceStage"
+            ],
+            "transitions": [
+                "tonight",
+                "community",
+                "channels",
+                "market"
+            ],
+            "anonymous_use": "See time-ordered occurrences with place, current status and provenance.",
+            "effect_aperture": "RSVP/publish/control an occurrence only through admitted apertures.",
+            "truth_boundary": "scheduled occurrence does not imply ticket availability, capacity, safety, or endorsement"
+        },
+        {
+            "surface": "township",
+            "route": "/township",
+            "question": "How do people, land, services, governance, work, and commerce compose at neighborhood scale?",
+            "world_bound": true,
+            "owners": [
+                "InstitutionGraph",
+                "HumanCommunityBody",
+                "TerritoryLanding",
+                "WorkGraph",
+                "CommerceChain"
+            ],
+            "runtime_owners": [
+                "BonfyreScopedDemand"
+            ],
+            "transitions": [
+                "community",
+                "territory",
+                "parcels",
+                "market"
+            ],
+            "anonymous_use": "Enter the neighborhood as a functioning institution rather than a directory of local pages.",
+            "effect_aperture": "Participate in civic/community/work flows through their separate exact owners.",
+            "truth_boundary": "co-location or community relevance does not create governance authority"
+        },
+        {
+            "surface": "console",
+            "route": "/console",
+            "question": "Why is this world in its current state, what is hot, blocked, invalidated, or waiting?",
+            "world_bound": true,
+            "owners": [
+                "OperatorConsole",
+                "ProofFrontierGraph",
+                "ResourceAdmissionGraph",
+                "WorkGraph",
+                "AddressPlane"
+            ],
+            "runtime_owners": [
+                "BonfyreScopedFrontier",
+                "BonfyreMaterialLease",
+                "BonfyreMaterialWeatherGate",
+                "BonfyreResourceWeatherDelta"
+            ],
+            "transitions": [
+                "observations",
+                "packs",
+                "build",
+                "inbox"
+            ],
+            "anonymous_use": "Expose a safe public explanation of freshness/provenance while privileged diagnostics remain gated.",
+            "effect_aperture": "Operators may inspect/retry exact queues and receipts; the console does not become a second owner.",
+            "truth_boundary": "diagnostic state is not semantic authority and a retry is not permission"
+        },
+        {
+            "surface": "packs",
+            "route": "/packs",
+            "question": "What does this world need to stay useful, and which conditions currently activate or freeze that demand?",
+            "world_bound": true,
+            "owners": [
+                "PackGraph",
+                "TargetObligation",
+                "ResourceReservation",
+                "ResourceAdmissionGraph",
+                "ExternalEstateIndex"
+            ],
+            "runtime_owners": [
+                "BonfyrePackCondition",
+                "BonfyreScopedDemand",
+                "BonfyreScopedFrontier",
+                "BonfyreMaterialLease",
+                "BonfyreScopedLeaseReheat"
+            ],
+            "transitions": [
+                "worlds",
+                "observations",
+                "console",
+                "link"
+            ],
+            "anonymous_use": "See why a world wants particular external reality/capabilities and whether those needs are active.",
+            "effect_aperture": "Activate/deactivate declared Pack demand; physical work is reference-counted and source-standing gated.",
+            "truth_boundary": "pack demand is intent, not a fetch, reservation, permission, or fact"
+        },
+        {
+            "surface": "link",
+            "route": "/link",
+            "question": "What outside source, provider, protocol, federation, or round-trip is this world connected to, and with what evidence?",
+            "world_bound": true,
+            "owners": [
+                "ForeignLinkDesk",
+                "ForeignTwinGraph",
+                "DomainProfile",
+                "ProtocolContract",
+                "RoundTripTwin"
+            ],
+            "runtime_owners": [
+                "BonfyreExperienceBinding",
+                "BonfyreBridgeReadiness"
+            ],
+            "transitions": [
+                "discover",
+                "build",
+                "observations",
+                "worlds"
+            ],
+            "anonymous_use": "Follow provenance from a world subject to the outside thing without collapsing the two identities.",
+            "effect_aperture": "Observe/bind/enact only through ForeignTwin -> DomainProfile -> ProtocolContract owners.",
+            "truth_boundary": "an external link is neither endorsement nor a successful round-trip"
+        }
+    ]
+}

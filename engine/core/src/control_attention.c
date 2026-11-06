@@ -1,7 +1,7 @@
 /*
  * Attention cooling, as a property of a work node rather than a scheduler.
  *
- * Ported from 10-Code/BonfyreControlPlane/scheduling.py. Conformance vectors:
+ * Absorbed from components/BonfyreControlPlane/scheduling.py.archive. Conformance vectors:
  * tests/conformance/control/vectors/cooling.
  */
 

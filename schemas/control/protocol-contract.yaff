@@ -1,0 +1,34 @@
+schema ProtocolContract
+generation protocol-1
+authority engine/core/src/protocol_contract.c
+absorbs components/BonfyreControlPlane/protocol_contract.py
+
+field role
+  type record
+  role information-participant
+  required true
+
+field requires
+  type set[text]
+  role input-parameters
+
+field produces
+  type set[text]
+  role output-parameters
+
+field evidence_required
+  type set[text]
+  role standing-evidence-claims
+
+invariant order-is-derived
+  statement waves are derived from information availability and do not declare carrier message order
+
+invariant obligations-have-one-owner
+  statement enactment opens commitments through CommitmentGraph and holds no second protocol obligation store
+
+invariant closure-has-two-axes
+  statement an enactment is closed only when CommitmentGraph reports no outstanding obligations and every evidence_required claim stands in EvidenceGraph
+
+forbidden_inference conformant contract -> authorized enactment
+forbidden_inference completed enactment -> discharged commitment
+forbidden_inference standing evidence -> proof frontier crossed

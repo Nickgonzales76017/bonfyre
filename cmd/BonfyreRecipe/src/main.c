@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * BonfyreRecipe — Recipe Registry Management
  *
@@ -24,6 +31,11 @@
 #include <unistd.h>
 #include <sqlite3.h>
 #include <bonfyre.h>
+#include "recipe_material.h"
+#include "recipe_week.h"
+#include "recipe_nutrition.h"
+#include "../../../lib/libbonfyre/include/bf_help.h"
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 
 #define MAX_PATH 4096
 #define MAX_JSON 1048576  /* 1 MB max recipe size */
@@ -204,6 +216,7 @@ static int cmd_init(const char *db_path) {
     
     /* Open database */
     sqlite3 *db;
+    /* Fast tier, by decision: a registry rebuilt from recipes; losing the last commits to a power cut costs a re-run. */
     int rc = bf_sqlite3_open(db_path, &db);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Cannot open database: %s\n", sqlite3_errmsg(db));
@@ -819,10 +832,27 @@ static void print_usage(void) {
             "  bonfyre-recipe add <RECIPE.json>\n"
             "  bonfyre-recipe validate <RECIPE.json>\n"
             "  bonfyre-recipe search <QUERY>\n"
-            "  bonfyre-recipe hash <RECIPE.json>\n\n");
+            "  bonfyre-recipe hash <RECIPE.json>\n\n"
+            "  bonfyre-recipe corpus factor SOURCE.jsonl OUTPUT.db\n"
+            "  bonfyre-recipe corpus verify PACK.db SOURCE.jsonl\n"
+            "  bonfyre-recipe corpus export PACK.db\n"
+            "  bonfyre-recipe corpus list PACK.db RECIPE_ID SETS\n\n");
 }
 
 int main(int argc, char **argv) {
+    if (bf_help_requested(argc, argv)) { print_usage(); return 0; }
+    int nutrition=bf_recipe_nutrition_command(argc,argv);
+    if(nutrition>=0)return nutrition;
+    int week=bf_recipe_week_command(argc,argv);
+    if(week>=0)return week;
+    enum { RC_CORPUS };
+    static const BfCommandEntry recipe_commands[] = {
+        {"corpus", RC_CORPUS, 0, NULL},
+    };
+    const BfCommandEntry *command = argc < 2 ? NULL : bf_command_lookup(recipe_commands,
+        sizeof(recipe_commands) / sizeof(recipe_commands[0]), argv[1]);
+    if (command && command->id == RC_CORPUS)
+        return bf_recipe_material_command(argc, argv);
     if (argc < 2) {
         print_usage();
         return 1;

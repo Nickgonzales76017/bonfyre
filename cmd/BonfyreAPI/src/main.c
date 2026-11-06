@@ -44,6 +44,9 @@
 #include <unistd.h>
 #include <sqlite3.h>
 #include <bonfyre.h>
+#include <bf_json.h>
+#include <bf_jsonw.h>
+#include "../../../lib/libbonfyre/include/bf_help.h"
 
 #define VERSION       "2.0.0"
 #define MAX_BODY      (4*1024*1024)
@@ -66,6 +69,8 @@ static char g_static_dir[MAX_PATH_LEN] = "";
 static char g_upload_dir[MAX_PATH_LEN] = "";
 
 static const char *arg_get(int argc, char **argv, const char *flag);
+static int api_scope_exact(const char *key, const char *wanted);
+static int api_public_command(const char *cli, const char *name);
 
 static int delegate_layer_api(int argc, char **argv) {
     if (argc < 4) return 1;
@@ -170,6 +175,7 @@ typedef struct {
     char *body;
     int body_len;
     char auth_token[256];
+    char session_token[128];
     int content_length;
     char content_type[256];
 } HttpRequest;
@@ -195,8 +201,10 @@ static void http_resp_send(HttpResponse *r) {
     else if (r->status == 204) st = "No Content";
     else if (r->status == 400) st = "Bad Request";
     else if (r->status == 401) st = "Unauthorized";
+    else if (r->status == 403) st = "Forbidden";
     else if (r->status == 404) st = "Not Found";
     else if (r->status == 405) st = "Method Not Allowed";
+    else if (r->status == 413) st = "Payload Too Large";
     else if (r->status == 429) st = "Too Many Requests";
     else if (r->status == 500) st = "Internal Server Error";
     else if (r->status == 503) st = "Service Unavailable";
@@ -224,6 +232,27 @@ static void http_resp_json(HttpResponse *r, int status, const char *fmt, ...) {
     r->buf_len = (size_t)(n > 0 ? n : 0);
 }
 
+/* Share the libbonfyre JSON writer across account read responses. Stored
+ * names, file paths, snippets and callback URLs must never become raw JSON. */
+static void api_finish_json(HttpResponse *resp, bf_jsonw *out) {
+    if (out->oom || !out->buf) {
+        bf_jsonw_free(out);
+        http_resp_json(resp, 503, "{\"error\":\"JSON response unavailable\"}");
+        return;
+    }
+    free(resp->buf);
+    resp->buf = out->buf;
+    resp->buf_len = out->len;
+    resp->status = 200;
+    out->buf = NULL;
+    bf_jsonw_free(out);
+}
+
+static const char *api_sqlite_text(sqlite3_stmt *st, int col) {
+    const unsigned char *value = sqlite3_column_text(st, col);
+    return value ? (const char *)value : "";
+}
+
 static int parse_http_request(int fd, HttpRequest *req) {
     memset(req, 0, sizeof(*req));
     req->body = NULL;
@@ -240,7 +269,8 @@ static int parse_http_request(int fd, HttpRequest *req) {
     hdr[total] = '\0';
 
     char *body_marker = strstr(hdr, "\r\n\r\n");
-    size_t header_end = body_marker ? (size_t)(body_marker - hdr) : (size_t)total;
+    if (!body_marker) return -1; /* incomplete header */
+    size_t header_end = (size_t)(body_marker - hdr);
 
     char *line_end = strstr(hdr, "\r\n");
     if (!line_end) return -1;
@@ -251,12 +281,27 @@ static int parse_http_request(int fd, HttpRequest *req) {
     if (qm) { *qm = '\0'; strncpy(req->query, qm + 1, sizeof(req->query) - 1); }
 
     char *hp = line_end + 2;
+    int seen_length = 0;
     while (hp < hdr + header_end) {
         char *he = strstr(hp, "\r\n");
         if (!he || he == hp) break;
         *he = '\0';
-        if (strncasecmp(hp, "Content-Length:", 15) == 0)
-            req->content_length = atoi(hp + 15);
+        if (strncasecmp(hp, "Content-Length:", 15) == 0) {
+            if (++seen_length != 1) return -1;
+            const char *v = hp + 15;
+            while (*v == ' ' || *v == '\t') v++;
+            if (!isdigit((unsigned char)*v)) return -1;
+            unsigned long length = 0;
+            while (isdigit((unsigned char)*v)) {
+                length = length * 10 + (unsigned long)(*v++ - '0');
+                if (length > MAX_BODY) return -2; /* no truncated body */
+            }
+            while (*v == ' ' || *v == '\t') v++;
+            if (*v) return -1;
+            req->content_length = (int)length;
+        }
+        if (strncasecmp(hp, "Transfer-Encoding:", 18) == 0)
+            return -1; /* no chunked framing support or CL/TE ambiguity */
         if (strncasecmp(hp, "Content-Type:", 13) == 0) {
             const char *v = hp + 13; while (*v == ' ') v++;
             strncpy(req->content_type, v, sizeof(req->content_type) - 1);
@@ -266,12 +311,20 @@ static int parse_http_request(int fd, HttpRequest *req) {
             if (strncasecmp(av, "Bearer ", 7) == 0) av += 7;
             strncpy(req->auth_token, av, sizeof(req->auth_token) - 1);
         }
+        if (strncasecmp(hp, "X-Bonfyre-Session:", 18) == 0) {
+            const char *v = hp + 18;
+            while (*v == ' ' || *v == '\t') v++;
+            if (req->session_token[0] || !*v || strlen(v) >= sizeof(req->session_token) ||
+                strspn(v, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.") != strlen(v)) return -1;
+            memcpy(req->session_token, v, strlen(v) + 1);
+        }
         hp = he + 2;
     }
 
-    if (body_marker && req->content_length > 0) {
-        int cap = req->content_length < MAX_BODY ? req->content_length : MAX_BODY;
+    if (req->content_length > 0) {
+        int cap = req->content_length;
         req->body = malloc((size_t)cap + 1);
+        if (!req->body) return -1;
         char *body_start = body_marker + 4;
         size_t in_hdr = (size_t)(total - (body_start - hdr));
         if (in_hdr > 0) {
@@ -285,6 +338,7 @@ static int parse_http_request(int fd, HttpRequest *req) {
             req->body_len += (int)n;
         }
         req->body[req->body_len] = '\0';
+        if (req->body_len != cap) return -1; /* no partial body is a valid write */
     }
     return 0;
 }
@@ -351,6 +405,161 @@ static int run_binary(const char *bin, char *const argv[], char *out, size_t out
     return WIFEXITED(status) ? WEXITSTATUS(status) : -1;
 }
 
+/* Native Auth receives session secrets on stdin, never argv or logs.
+ * An effect still needs current PackGraph and review authority afterwards. */
+static int api_owner_stdin(const char *bin, char *const args[], const char *secret,
+                            char *output, size_t cap) {
+    int in[2] = {-1,-1}, out[2] = {-1,-1};
+    if (!bin || !*bin || !secret || !*secret || cap < 2 ||
+        pipe(in) || pipe(out)) {
+        if (in[0]>=0) close(in[0]); if (in[1]>=0) close(in[1]);
+        if (out[0]>=0) close(out[0]); if (out[1]>=0) close(out[1]);
+        return -1;
+    }
+    pid_t pid=fork();
+    if(pid<0){close(in[0]);close(in[1]);close(out[0]);close(out[1]);return -1;}
+    if(pid==0){
+        close(in[1]);close(out[0]);
+        if(dup2(in[0],STDIN_FILENO)<0 || dup2(out[1],STDOUT_FILENO)<0)_exit(127);
+        close(in[0]);close(out[1]);
+        (void)freopen("/dev/null","w",stderr);
+        execvp(bin,args);_exit(127);
+    }
+    close(in[0]);close(out[1]);
+    size_t off=0,len=strlen(secret);
+    while(off<len){
+        ssize_t n=write(in[1],secret+off,len-off);
+        if(n<0&&errno==EINTR)continue;
+        if(n<=0)break;
+        off+=(size_t)n;
+    }
+    close(in[1]);
+    size_t used=0;int complete=0;
+    while(used+1<cap){
+        ssize_t n=read(out[0],output+used,cap-1-used);
+        if(n<0&&errno==EINTR)continue;
+        if(n<0)break;
+        if(!n){complete=1;break;}
+        used+=(size_t)n;
+    }
+    output[used]='\0';close(out[0]);
+    int status=0;
+    if(waitpid(pid,&status,0)!=pid||!WIFEXITED(status)||WEXITSTATUS(status)||
+       off!=len||!complete)return -1;
+    return 0;
+}
+
+static int api_native_actor(const char *session, int *user, char *actor, size_t capacity) {
+    const char *bin=getenv("BONFYRE_AUTH_BINARY"),*db=getenv("BONFYRE_AUTH_DB");
+    if(!bin||!*bin||!db||!*db||!session||!*session||strlen(session)>120)return 0;
+    char *args[]={(char*)bin,"--db",(char*)db,"actor-closure-stdin",NULL};
+    char output[4096]="",err[96]="";
+    if(api_owner_stdin(bin,args,session,output,sizeof(output)))return 0;
+    bf_json_doc_t *doc=bf_json_parse(output,strlen(output),err,sizeof(err));
+    if(!doc)return 0;
+    const bf_json_node_t *root=bf_json_root(doc);
+    const bf_json_node_t *yes=bf_json_obj_get(doc,root,"authenticated");
+    const bf_json_node_t *principal=bf_json_obj_get(doc,root,"auth_principal");
+    const bf_json_node_t *id=principal?bf_json_obj_get(doc,principal,"user_id"):NULL;
+    const bf_json_node_t *bound=bf_json_obj_get(doc,root,"actor_subject");
+    int ok=yes&&yes->type==BF_JSON_BOOL&&bf_json_get_bool(yes)&&
+        principal&&principal->type==BF_JSON_OBJECT&&id&&id->type==BF_JSON_INT&&
+        bf_json_get_int(id)>0&&bf_json_get_int(id)<2147483647&&
+        bound&&bf_json_get_str_copy(bound,actor,capacity);
+    if(ok)*user=(int)bf_json_get_int(id);
+    bf_json_free(doc);return ok;
+}
+static int api_native_institution(const char *session,const char *institution) {
+    const char *bin=getenv("BONFYRE_AUTH_BINARY"),*db=getenv("BONFYRE_AUTH_DB");
+    if(!bin||!*bin||!db||!*db)return 0;
+    char *args[]={(char*)bin,"--db",(char*)db,"institution-authorize-stdin",
+        "--institution",(char*)institution,"--role","write",NULL};
+    char output[1024]="",err[96]="";
+    if(api_owner_stdin(bin,args,session,output,sizeof(output)))return 0;
+    bf_json_doc_t *doc=bf_json_parse(output,strlen(output),err,sizeof(err));
+    if(!doc)return 0;
+    const bf_json_node_t *yes=bf_json_obj_get(doc,bf_json_root(doc),"authorized");
+    int ok=yes&&yes->type==BF_JSON_BOOL&&bf_json_get_bool(yes);
+    bf_json_free(doc);return ok;
+}
+static int api_authority_name(const char *name,size_t capacity) {
+    if(!name||!*name||strlen(name)>=capacity)return 0;
+    for(const unsigned char *p=(const unsigned char*)name;*p;p++)
+        if(!((*p>='a'&&*p<='z')||(*p>='0'&&*p<='9')||*p=='-'||*p=='.'||*p=='_'))return 0;
+    return 1;
+}
+
+static int api_native_pack(const char *pack,const char *subject,const char *scope,
+                           const char *actor,char *digest,size_t capacity) {
+    const char *bin=getenv("BONFYRE_CMS_BINARY"),*db=getenv("BONFYRE_CMS_DB");
+    if(!bin||!*bin||!db||!*db||!api_authority_name(pack,96)||capacity<65)return 0;
+    char *args[]={(char*)bin,"pack-lifecycle","--operation","current","--pack",(char*)pack,
+        "--version","","--subject",(char*)subject,"--scope",(char*)scope,"--actor",(char*)actor,
+        "--expected-digest","","--expected-revision","0","--db",(char*)db,NULL,NULL,NULL};
+    const char *schemas=getenv("BONFYRE_CMS_SCHEMAS");
+    if(schemas&&*schemas){
+        size_t i=0;while(args[i])i++;
+        args[i++]="--schemas";args[i++]=(char*)schemas;args[i]=NULL;
+    }
+    char output[32768]="";
+    if(run_binary(bin,args,output,sizeof(output)))return 0;
+    int schema=0,active=0;
+    char resolved[65]="",pinned[65]="";
+    char *save=NULL;
+    for(char *line=strtok_r(output,"\n",&save);line;line=strtok_r(NULL,"\n",&save)){
+        char *value=strchr(line,'\t');if(!value)continue;*value++='\0';
+        if(!strcmp(line,"schema"))schema=!strcmp(value,"bonfyre.pack.lifecycle.v1");
+        else if(!strcmp(line,"state"))active=!strcmp(value,"active");
+        else if(!strcmp(line,"digest")&&strlen(value)==64)memcpy(resolved,value,65);
+        else if(!strcmp(line,"pinned_digest")&&strlen(value)==64)memcpy(pinned,value,65);
+    }
+    if(!schema||!active||!*pinned||strcmp(resolved,pinned)||
+       strspn(pinned,"abcdef0123456789")!=64)return 0;
+    memcpy(digest,pinned,65);
+    return 1;
+}
+/* Do not compose an arbitrary valid API key with another user's session.
+ * Only an explicitly bound API-key to Auth-user reference may carry closure. */
+static int api_key_actor_bound(const char *key,int user) {
+    if(!key||!*key||user<1)return 0;
+    pthread_mutex_lock(&g_db_mutex);
+    sqlite3_stmt *st=NULL;int ok=0;
+    if(sqlite3_prepare_v2(g_db,
+        "SELECT 1 FROM api_keys WHERE key=? AND active=1 AND auth_user_id=?",
+        -1,&st,NULL)==SQLITE_OK){
+        sqlite3_bind_text(st,1,key,-1,SQLITE_TRANSIENT);
+        sqlite3_bind_int(st,2,user);
+        ok=sqlite3_step(st)==SQLITE_ROW;
+    }
+    sqlite3_finalize(st);
+    pthread_mutex_unlock(&g_db_mutex);
+    return ok;
+}
+/* Auth + PackGraph are necessary, never sufficient, for an effect. */
+static int api_native_preflight(const HttpRequest *req,const char *context,const char *pack,
+                                char *actor,size_t acap,char *subject,size_t scap,
+                                char *digest,size_t dcap) {
+    int user=0;char bound[192]="";
+    if(!req->session_token[0]||
+       !api_native_actor(req->session_token,&user,bound,sizeof(bound))||
+       !api_key_actor_bound(req->auth_token,user)||
+       !api_authority_name(pack,96))return 0;
+    char work_actor[64];
+    snprintf(work_actor,sizeof(work_actor),"user:%d",user);
+    if(!strcmp(context,"self")){
+        snprintf(subject,scap,"%s",work_actor);
+        if(!api_native_pack(pack,subject,"self",work_actor,digest,dcap))return 0;
+    }else if(!strncmp(context,"institution:",12)){
+        const char *institution=context+12;
+        if(!api_authority_name(institution,64)||
+           !api_native_institution(req->session_token,institution))return 0;
+        snprintf(subject,scap,"%s",context);
+        if(!api_native_pack(pack,subject,"institution",work_actor,digest,dcap))return 0;
+    }else return 0; /* household needs its distinct membership owner */
+    snprintf(actor,acap,"%s",bound);
+    return 1;
+}
+
 /* ── Database ─────────────────────────────────────────────────────── */
 
 /*
@@ -404,7 +613,8 @@ static const char *SCHEMA_SQL =
     "  url TEXT NOT NULL,"
     "  events TEXT DEFAULT 'completed,failed',"
     "  active INTEGER DEFAULT 1,"
-    "  created_at TEXT NOT NULL"
+    "  created_at TEXT NOT NULL,"
+    "  api_key TEXT"
     ");"
 
     "CREATE VIRTUAL TABLE IF NOT EXISTS jobs_fts USING fts5("
@@ -428,6 +638,7 @@ static const char *SCHEMA_SQL =
     "  key TEXT NOT NULL UNIQUE,"
     "  label TEXT,"
     "  scopes TEXT DEFAULT '*',"
+    "  auth_user_id INTEGER,"
     "  active INTEGER DEFAULT 1,"
     "  created_at TEXT NOT NULL"
     ");"
@@ -454,6 +665,37 @@ static sqlite3 *open_db(const char *path) {
         fprintf(stderr, "[api] schema error: %s\n", err);
         sqlite3_free(err); sqlite3_close(db); return NULL;
     }
+    /* Existing deployments created webhooks without owner provenance.
+     * Add the column without rewriting or assigning legacy callbacks. */
+    sqlite3_stmt *columns = NULL;
+    int has_owner = 0;
+    if (sqlite3_prepare_v2(db, "PRAGMA table_info(webhooks)", -1, &columns, NULL) != SQLITE_OK) {
+        sqlite3_close(db); return NULL;
+    }
+    while (sqlite3_step(columns) == SQLITE_ROW) {
+        const char *name = (const char *)sqlite3_column_text(columns, 1);
+        if (name && !strcmp(name, "api_key")) has_owner = 1;
+    }
+    sqlite3_finalize(columns);
+    if (!has_owner && sqlite3_exec(db, "ALTER TABLE webhooks ADD COLUMN api_key TEXT", NULL, NULL, &err) != SQLITE_OK) {
+        fprintf(stderr, "[api] webhook owner migration failed: %s\n", err ? err : sqlite3_errmsg(db));
+        sqlite3_free(err); sqlite3_close(db); return NULL;
+    }
+    /* Legacy keys remain usable for discovery but cannot claim an Actor.
+     * A session may be paired only with its explicitly bound Auth user ID. */
+    columns = NULL; has_owner = 0;
+    if (sqlite3_prepare_v2(db, "PRAGMA table_info(api_keys)", -1, &columns, NULL) != SQLITE_OK) {
+        sqlite3_close(db); return NULL;
+    }
+    while (sqlite3_step(columns) == SQLITE_ROW) {
+        const char *name = (const char *)sqlite3_column_text(columns, 1);
+        if (name && !strcmp(name, "auth_user_id")) has_owner = 1;
+    }
+    sqlite3_finalize(columns);
+    if (!has_owner && sqlite3_exec(db, "ALTER TABLE api_keys ADD COLUMN auth_user_id INTEGER", NULL, NULL, &err) != SQLITE_OK) {
+        fprintf(stderr, "[api] API key actor-binding migration failed: %s\n", err ? err : sqlite3_errmsg(db));
+        sqlite3_free(err); sqlite3_close(db); return NULL;
+    }
     return db;
 }
 
@@ -470,7 +712,7 @@ static const char *default_db(void) {
 /* ── Auth middleware ──────────────────────────────────────────────── */
 
 static int validate_api_key(const char *key) {
-    if (!key || !key[0]) return 1;  /* No key = anonymous access allowed */
+    if (!key || !key[0]) return 0;  /* Protected routes require an actual key. */
 
     pthread_mutex_lock(&g_db_mutex);
     sqlite3_stmt *st;
@@ -715,34 +957,62 @@ static void handle_job_submit(HttpRequest *req, HttpResponse *resp) {
         http_resp_json(resp, 400, "{\"error\":\"empty body\"}"); return;
     }
 
-    /* Parse JSON: {"type":"transcribe","input":"/path","priority":100} */
+    /* Jobs are effectful. Parse a typed request before authorizing an exact
+     * command-specific enqueue scope; substring extraction is not a grammar. */
     char type[64] = "", input[MAX_PATH_LEN] = "";
     int priority = 100;
-    const char *p = req->body;
-
-    const char *tf = strstr(p, "\"type\"");
-    if (tf) {
-        tf = strchr(tf + 6, '"');
-        if (tf) { tf++;
-            int i = 0; while (*tf && *tf != '"' && i < 63) type[i++] = *tf++;
-            type[i] = '\0';
+    char err[128] = "";
+    bf_json_doc_t *doc = bf_json_parse(req->body, (size_t)req->body_len, err, sizeof(err));
+    const bf_json_node_t *root = doc ? bf_json_root(doc) : NULL;
+    if (!root || root->type != BF_JSON_OBJECT) {
+        bf_json_free(doc);
+        http_resp_json(resp, 400, "{\"error\":\"job requires a JSON object\"}"); return;
+    }
+    const bf_json_node_t *t = bf_json_obj_get(doc, root, "type");
+    const bf_json_node_t *in = bf_json_obj_get(doc, root, "input");
+    const bf_json_node_t *pr = bf_json_obj_get(doc, root, "priority");
+    int tlen = 0, ilen = 0;
+    if (!bf_json_get_str(t, &tlen) || tlen <= 0 || tlen >= (int)sizeof(type)) {
+        bf_json_free(doc);
+        http_resp_json(resp, 400, "{\"error\":\"invalid job type\"}"); return;
+    }
+    bf_json_get_str_copy(t, type, sizeof(type));
+    for (int i = 0; i < tlen; i++) {
+        char c = type[i];
+        if (!((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-')) {
+            bf_json_free(doc);
+            http_resp_json(resp, 400, "{\"error\":\"invalid command identity\"}"); return;
         }
     }
-    const char *inf = strstr(p, "\"input\"");
-    if (inf) {
-        inf = strchr(inf + 7, '"');
-        if (inf) { inf++;
-            int i = 0; while (*inf && *inf != '"' && i < (int)sizeof(input) - 1) input[i++] = *inf++;
-            input[i] = '\0';
+    if (in) {
+        if (!bf_json_get_str(in, &ilen) || ilen >= (int)sizeof(input)) {
+            bf_json_free(doc);
+            http_resp_json(resp, 400, "{\"error\":\"invalid job input\"}"); return;
         }
+        bf_json_get_str_copy(in, input, sizeof(input));
     }
-    const char *pf = strstr(p, "\"priority\"");
-    if (pf) {
-        pf += 10; while (*pf && (*pf == ':' || *pf == ' ')) pf++;
-        if (*pf >= '0' && *pf <= '9') priority = atoi(pf);
+    if (pr) {
+        if (pr->type != BF_JSON_INT || bf_json_get_int(pr) < 1 || bf_json_get_int(pr) > 1000) {
+            bf_json_free(doc);
+            http_resp_json(resp, 400, "{\"error\":\"priority must be 1..1000\"}"); return;
+        }
+        priority = (int)bf_json_get_int(pr);
     }
-
-    if (!type[0]) { http_resp_json(resp, 400, "{\"error\":\"missing type\"}"); return; }
+    bf_json_free(doc);
+    char scope[128];
+    int n = snprintf(scope, sizeof(scope), "job:%s:enqueue", type);
+    if (n <= 0 || (size_t)n >= sizeof(scope) || !api_scope_exact(req->auth_token, scope)) {
+        http_resp_json(resp, 403, "{\"error\":\"exact job enqueue scope required\"}"); return;
+    }
+    const char *cli = getenv("BONFYRE_CLI_BINARY");
+    if (!cli || !*cli) cli = "bonfyre";
+    int known = api_public_command(cli, type);
+    if (known <= 0) {
+        http_resp_json(resp, known ? 503 : 404,
+            known ? "{\"error\":\"native job catalog unavailable\"}" :
+                    "{\"error\":\"job type not in public command registry\"}");
+        return;
+    }
 
     /* Create output directory */
     char outdir[MAX_PATH_LEN];
@@ -785,33 +1055,41 @@ static void handle_job_submit(HttpRequest *req, HttpResponse *resp) {
 }
 
 /* GET /api/jobs[/:id] */
-static void handle_job_get(HttpResponse *resp, int job_id) {
+static void handle_job_get(HttpResponse *resp, int job_id, const char *api_key) {
     pthread_mutex_lock(&g_db_mutex);
     sqlite3_stmt *st;
     if (job_id > 0) {
         sqlite3_prepare_v2(g_db,
             "SELECT id,type,status,priority,input_path,output_path,source,worker,"
             "attempts,created_at,claimed_at,completed_at,wall_ms,exit_code,error "
-            "FROM jobs WHERE id=?", -1, &st, NULL);
+            "FROM jobs WHERE id=? AND api_key=?", -1, &st, NULL);
         sqlite3_bind_int(st, 1, job_id);
+        sqlite3_bind_text(st, 2, api_key, -1, SQLITE_TRANSIENT);
         if (sqlite3_step(st) == SQLITE_ROW) {
-            const char *col_text[15];
-            for (int i = 0; i < 15; i++)
-                col_text[i] = sqlite3_column_text(st, i) ? (const char *)sqlite3_column_text(st, i) : "";
-
-            http_resp_json(resp, 200,
-                "{\"data\":{\"id\":%d,\"type\":\"%s\",\"status\":\"%s\",\"priority\":%d,"
-                "\"input\":\"%s\",\"output\":\"%s\",\"source\":\"%s\",\"worker\":\"%s\","
-                "\"attempts\":%d,\"created_at\":\"%s\",\"claimed_at\":\"%s\","
-                "\"completed_at\":\"%s\",\"wall_ms\":%.1f,\"exit_code\":%d"
-                "%s%s%s}}",
-                sqlite3_column_int(st, 0), col_text[1], col_text[2], sqlite3_column_int(st, 3),
-                col_text[4], col_text[5], col_text[6], col_text[7],
-                sqlite3_column_int(st, 8), col_text[9], col_text[10],
-                col_text[11], sqlite3_column_double(st, 12), sqlite3_column_int(st, 13),
-                col_text[14][0] ? ",\"error\":\"" : "",
-                col_text[14][0] ? col_text[14] : "",
-                col_text[14][0] ? "\"" : "");
+            bf_jsonw out;
+            bf_jsonw_init(&out, 0);
+            bf_jsonw_obj(&out);
+            bf_jsonw_key(&out, "data"); bf_jsonw_obj(&out);
+            bf_jsonw_key(&out, "id"); bf_jsonw_int(&out, sqlite3_column_int(st, 0));
+            bf_jsonw_key(&out, "type"); bf_jsonw_str(&out, api_sqlite_text(st, 1));
+            bf_jsonw_key(&out, "status"); bf_jsonw_str(&out, api_sqlite_text(st, 2));
+            bf_jsonw_key(&out, "priority"); bf_jsonw_int(&out, sqlite3_column_int(st, 3));
+            bf_jsonw_key(&out, "input"); bf_jsonw_str(&out, api_sqlite_text(st, 4));
+            bf_jsonw_key(&out, "output"); bf_jsonw_str(&out, api_sqlite_text(st, 5));
+            bf_jsonw_key(&out, "source"); bf_jsonw_str(&out, api_sqlite_text(st, 6));
+            bf_jsonw_key(&out, "worker"); bf_jsonw_str(&out, api_sqlite_text(st, 7));
+            bf_jsonw_key(&out, "attempts"); bf_jsonw_int(&out, sqlite3_column_int(st, 8));
+            bf_jsonw_key(&out, "created_at"); bf_jsonw_str(&out, api_sqlite_text(st, 9));
+            bf_jsonw_key(&out, "claimed_at"); bf_jsonw_str(&out, api_sqlite_text(st, 10));
+            bf_jsonw_key(&out, "completed_at"); bf_jsonw_str(&out, api_sqlite_text(st, 11));
+            bf_jsonw_key(&out, "wall_ms"); bf_jsonw_num(&out, sqlite3_column_double(st, 12));
+            bf_jsonw_key(&out, "exit_code"); bf_jsonw_int(&out, sqlite3_column_int(st, 13));
+            if (api_sqlite_text(st, 14)[0]) {
+                bf_jsonw_key(&out, "error"); bf_jsonw_str(&out, api_sqlite_text(st, 14));
+            }
+            bf_jsonw_obj_end(&out);
+            bf_jsonw_obj_end(&out);
+            api_finish_json(resp, &out);
         } else {
             http_resp_json(resp, 404, "{\"error\":\"job not found\"}");
         }
@@ -819,33 +1097,37 @@ static void handle_job_get(HttpResponse *resp, int job_id) {
     } else {
         sqlite3_prepare_v2(g_db,
             "SELECT id,type,status,priority,source,worker,attempts,"
-            "created_at,completed_at,wall_ms,exit_code FROM jobs ORDER BY id DESC LIMIT 50",
+            "created_at,completed_at,wall_ms,exit_code FROM jobs "
+            "WHERE api_key=? ORDER BY id DESC LIMIT 50",
             -1, &st, NULL);
-        free(resp->buf); resp->buf = NULL; resp->buf_len = 0;
-        FILE *mem = open_memstream(&resp->buf, &resp->buf_len);
-        fprintf(mem, "{\"data\":[");
+        sqlite3_bind_text(st, 1, api_key, -1, SQLITE_TRANSIENT);
+        bf_jsonw out;
+        bf_jsonw_init(&out, 0);
+        bf_jsonw_obj(&out);
+        bf_jsonw_key(&out, "data"); bf_jsonw_arr(&out);
         int i = 0;
         while (sqlite3_step(st) == SQLITE_ROW) {
-            if (i > 0) fprintf(mem, ",");
-            const char *t = sqlite3_column_text(st, 1) ? (const char *)sqlite3_column_text(st, 1) : "";
-            const char *s = sqlite3_column_text(st, 2) ? (const char *)sqlite3_column_text(st, 2) : "";
-            const char *src = sqlite3_column_text(st, 4) ? (const char *)sqlite3_column_text(st, 4) : "";
-            const char *w = sqlite3_column_text(st, 5) ? (const char *)sqlite3_column_text(st, 5) : "";
-            const char *cr = sqlite3_column_text(st, 7) ? (const char *)sqlite3_column_text(st, 7) : "";
-            const char *co = sqlite3_column_text(st, 8) ? (const char *)sqlite3_column_text(st, 8) : "";
-            fprintf(mem,
-                "{\"id\":%d,\"type\":\"%s\",\"status\":\"%s\",\"priority\":%d,"
-                "\"source\":\"%s\",\"worker\":\"%s\",\"attempts\":%d,"
-                "\"created_at\":\"%s\",\"completed_at\":\"%s\","
-                "\"wall_ms\":%.1f,\"exit_code\":%d}",
-                sqlite3_column_int(st, 0), t, s, sqlite3_column_int(st, 3),
-                src, w, sqlite3_column_int(st, 6), cr, co,
-                sqlite3_column_double(st, 9), sqlite3_column_int(st, 10));
+            bf_jsonw_obj(&out);
+            bf_jsonw_key(&out, "id"); bf_jsonw_int(&out, sqlite3_column_int(st, 0));
+            bf_jsonw_key(&out, "type"); bf_jsonw_str(&out, api_sqlite_text(st, 1));
+            bf_jsonw_key(&out, "status"); bf_jsonw_str(&out, api_sqlite_text(st, 2));
+            bf_jsonw_key(&out, "priority"); bf_jsonw_int(&out, sqlite3_column_int(st, 3));
+            bf_jsonw_key(&out, "source"); bf_jsonw_str(&out, api_sqlite_text(st, 4));
+            bf_jsonw_key(&out, "worker"); bf_jsonw_str(&out, api_sqlite_text(st, 5));
+            bf_jsonw_key(&out, "attempts"); bf_jsonw_int(&out, sqlite3_column_int(st, 6));
+            bf_jsonw_key(&out, "created_at"); bf_jsonw_str(&out, api_sqlite_text(st, 7));
+            bf_jsonw_key(&out, "completed_at"); bf_jsonw_str(&out, api_sqlite_text(st, 8));
+            bf_jsonw_key(&out, "wall_ms"); bf_jsonw_num(&out, sqlite3_column_double(st, 9));
+            bf_jsonw_key(&out, "exit_code"); bf_jsonw_int(&out, sqlite3_column_int(st, 10));
+            bf_jsonw_obj_end(&out);
             i++;
         }
-        fprintf(mem, "],\"meta\":{\"total\":%d}}", i);
-        fclose(mem);
-        resp->status = 200;
+        bf_jsonw_arr_end(&out);
+        bf_jsonw_key(&out, "meta"); bf_jsonw_obj(&out);
+        bf_jsonw_key(&out, "total"); bf_jsonw_int(&out, i);
+        bf_jsonw_obj_end(&out);
+        bf_jsonw_obj_end(&out);
+        api_finish_json(resp, &out);
         sqlite3_finalize(st);
     }
     pthread_mutex_unlock(&g_db_mutex);
@@ -874,22 +1156,28 @@ static void handle_events_sse(HttpRequest *req, int fd) {
         since = atoi(since_buf);
 
     while (g_running) {
+        /* Revocation must also close an already-open event stream. */
+        if (!validate_api_key(req->auth_token)) return;
         pthread_mutex_lock(&g_db_mutex);
         sqlite3_stmt *st;
 
         if (filter_job > 0) {
             sqlite3_prepare_v2(g_db,
-                "SELECT id, job_id, event, data, created_at FROM events "
-                "WHERE id > ? AND job_id = ? ORDER BY id ASC LIMIT 50",
+                "SELECT e.id, e.job_id, e.event, e.data, e.created_at FROM events e "
+                "JOIN jobs j ON j.id=e.job_id "
+                "WHERE e.id > ? AND e.job_id = ? AND j.api_key = ? ORDER BY e.id ASC LIMIT 50",
                 -1, &st, NULL);
             sqlite3_bind_int(st, 1, since);
             sqlite3_bind_int(st, 2, filter_job);
+            sqlite3_bind_text(st, 3, req->auth_token, -1, SQLITE_TRANSIENT);
         } else {
             sqlite3_prepare_v2(g_db,
-                "SELECT id, job_id, event, data, created_at FROM events "
-                "WHERE id > ? ORDER BY id ASC LIMIT 50",
+                "SELECT e.id, e.job_id, e.event, e.data, e.created_at FROM events e "
+                "JOIN jobs j ON j.id=e.job_id "
+                "WHERE e.id > ? AND j.api_key = ? ORDER BY e.id ASC LIMIT 50",
                 -1, &st, NULL);
             sqlite3_bind_int(st, 1, since);
+            sqlite3_bind_text(st, 2, req->auth_token, -1, SQLITE_TRANSIENT);
         }
 
         int sent = 0;
@@ -950,65 +1238,72 @@ static void handle_search(HttpRequest *req, HttpResponse *resp) {
         "rank "
         "FROM jobs_fts f "
         "JOIN jobs j ON j.id = f.rowid "
-        "WHERE jobs_fts MATCH ? "
+        "WHERE jobs_fts MATCH ? AND j.api_key = ? "
         "ORDER BY rank "
         "LIMIT ?",
         -1, &st, NULL);
     sqlite3_bind_text(st, 1, q, -1, SQLITE_STATIC);
-    sqlite3_bind_int(st, 2, limit);
+    sqlite3_bind_text(st, 2, req->auth_token, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(st, 3, limit);
 
-    free(resp->buf); resp->buf = NULL; resp->buf_len = 0;
-    FILE *mem = open_memstream(&resp->buf, &resp->buf_len);
-    fprintf(mem, "{\"query\":\"%s\",\"results\":[", q);
+    bf_jsonw out;
+    bf_jsonw_init(&out, 0);
+    bf_jsonw_obj(&out);
+    bf_jsonw_key(&out, "query"); bf_jsonw_str(&out, q);
+    bf_jsonw_key(&out, "results");
+    bf_jsonw_arr(&out);
     int i = 0;
     while (sqlite3_step(st) == SQLITE_ROW) {
-        if (i > 0) fprintf(mem, ",");
-        const char *type_v = sqlite3_column_text(st, 1) ? (const char *)sqlite3_column_text(st, 1) : "";
-        const char *stat_v = sqlite3_column_text(st, 2) ? (const char *)sqlite3_column_text(st, 2) : "";
-        const char *src_v = sqlite3_column_text(st, 3) ? (const char *)sqlite3_column_text(st, 3) : "";
-        const char *cre_v = sqlite3_column_text(st, 4) ? (const char *)sqlite3_column_text(st, 4) : "";
-        const char *snip = sqlite3_column_text(st, 6) ? (const char *)sqlite3_column_text(st, 6) : "";
-        fprintf(mem,
-            "{\"id\":%d,\"type\":\"%s\",\"status\":\"%s\",\"source\":\"%s\","
-            "\"created_at\":\"%s\",\"wall_ms\":%.1f,\"snippet\":\"%s\",\"rank\":%.4f}",
-            sqlite3_column_int(st, 0), type_v, stat_v, src_v, cre_v,
-            sqlite3_column_double(st, 5), snip, sqlite3_column_double(st, 7));
+        bf_jsonw_obj(&out);
+        bf_jsonw_key(&out, "id"); bf_jsonw_int(&out, sqlite3_column_int(st, 0));
+        bf_jsonw_key(&out, "type"); bf_jsonw_str(&out, api_sqlite_text(st, 1));
+        bf_jsonw_key(&out, "status"); bf_jsonw_str(&out, api_sqlite_text(st, 2));
+        bf_jsonw_key(&out, "source"); bf_jsonw_str(&out, api_sqlite_text(st, 3));
+        bf_jsonw_key(&out, "created_at"); bf_jsonw_str(&out, api_sqlite_text(st, 4));
+        bf_jsonw_key(&out, "wall_ms"); bf_jsonw_num(&out, sqlite3_column_double(st, 5));
+        bf_jsonw_key(&out, "snippet"); bf_jsonw_str(&out, api_sqlite_text(st, 6));
+        bf_jsonw_key(&out, "rank"); bf_jsonw_num(&out, sqlite3_column_double(st, 7));
+        bf_jsonw_obj_end(&out);
         i++;
     }
-    fprintf(mem, "],\"total\":%d}", i);
-    fclose(mem);
-    resp->status = 200;
+    bf_jsonw_arr_end(&out);
+    bf_jsonw_key(&out, "total"); bf_jsonw_int(&out, i);
+    bf_jsonw_obj_end(&out);
+    api_finish_json(resp, &out);
     sqlite3_finalize(st);
     pthread_mutex_unlock(&g_db_mutex);
 }
 
 /* ── Webhooks: POST/GET /api/webhooks ─────────────────────────────── */
 
-static void handle_webhook_list(HttpResponse *resp) {
+static void handle_webhook_list(HttpResponse *resp, const char *api_key) {
     pthread_mutex_lock(&g_db_mutex);
     sqlite3_stmt *st;
     sqlite3_prepare_v2(g_db,
-        "SELECT id, url, events, active, created_at FROM webhooks ORDER BY id",
+        "SELECT id, url, events, active, created_at FROM webhooks WHERE api_key=? ORDER BY id",
         -1, &st, NULL);
+    sqlite3_bind_text(st, 1, api_key, -1, SQLITE_TRANSIENT);
 
-    free(resp->buf); resp->buf = NULL; resp->buf_len = 0;
-    FILE *mem = open_memstream(&resp->buf, &resp->buf_len);
-    fprintf(mem, "{\"data\":[");
+    bf_jsonw out;
+    bf_jsonw_init(&out, 0);
+    bf_jsonw_obj(&out);
+    bf_jsonw_key(&out, "data");
+    bf_jsonw_arr(&out);
     int i = 0;
     while (sqlite3_step(st) == SQLITE_ROW) {
-        if (i > 0) fprintf(mem, ",");
-        fprintf(mem,
-            "{\"id\":%d,\"url\":\"%s\",\"events\":\"%s\",\"active\":%d,\"created_at\":\"%s\"}",
-            sqlite3_column_int(st, 0),
-            sqlite3_column_text(st, 1) ? (const char *)sqlite3_column_text(st, 1) : "",
-            sqlite3_column_text(st, 2) ? (const char *)sqlite3_column_text(st, 2) : "",
-            sqlite3_column_int(st, 3),
-            sqlite3_column_text(st, 4) ? (const char *)sqlite3_column_text(st, 4) : "");
+        bf_jsonw_obj(&out);
+        bf_jsonw_key(&out, "id"); bf_jsonw_int(&out, sqlite3_column_int(st, 0));
+        bf_jsonw_key(&out, "url"); bf_jsonw_str(&out, (const char *)sqlite3_column_text(st, 1) ?: "");
+        bf_jsonw_key(&out, "events"); bf_jsonw_str(&out, (const char *)sqlite3_column_text(st, 2) ?: "");
+        bf_jsonw_key(&out, "active"); bf_jsonw_int(&out, sqlite3_column_int(st, 3));
+        bf_jsonw_key(&out, "created_at"); bf_jsonw_str(&out, (const char *)sqlite3_column_text(st, 4) ?: "");
+        bf_jsonw_obj_end(&out);
         i++;
     }
-    fprintf(mem, "],\"total\":%d}", i);
-    fclose(mem);
-    resp->status = 200;
+    bf_jsonw_arr_end(&out);
+    bf_jsonw_key(&out, "total"); bf_jsonw_int(&out, i);
+    bf_jsonw_obj_end(&out);
+    api_finish_json(resp, &out);
     sqlite3_finalize(st);
     pthread_mutex_unlock(&g_db_mutex);
 }
@@ -1019,42 +1314,68 @@ static void handle_webhook_create(HttpRequest *req, HttpResponse *resp) {
     }
 
     char url[1024] = "", events[256] = "completed,failed";
-    const char *p = req->body;
-    const char *uf = strstr(p, "\"url\"");
-    if (uf) {
-        uf = strchr(uf + 5, '"');
-        if (uf) { uf++;
-            int i = 0; while (*uf && *uf != '"' && i < (int)sizeof(url) - 1) url[i++] = *uf++;
-            url[i] = '\0';
-        }
+    char err[128] = "";
+    bf_json_doc_t *doc = bf_json_parse(req->body, (size_t)req->body_len, err, sizeof(err));
+    const bf_json_node_t *root = doc ? bf_json_root(doc) : NULL;
+    const bf_json_node_t *un = root && root->type == BF_JSON_OBJECT
+        ? bf_json_obj_get(doc, root, "url") : NULL;
+    const bf_json_node_t *en = root && root->type == BF_JSON_OBJECT
+        ? bf_json_obj_get(doc, root, "events") : NULL;
+    if (!un || un->type != BF_JSON_STRING || (en && en->type != BF_JSON_STRING)) {
+        bf_json_free(doc);
+        http_resp_json(resp, 400, "{\"error\":\"webhook requires a URL string and optional events string\"}"); return;
     }
-    const char *ef = strstr(p, "\"events\"");
-    if (ef) {
-        ef = strchr(ef + 8, '"');
-        if (ef) { ef++;
-            int i = 0; while (*ef && *ef != '"' && i < (int)sizeof(events) - 1) events[i++] = *ef++;
-            events[i] = '\0';
-        }
+    size_t url_len = 0, events_len = 0;
+    char *decoded_url = bf_json_unescape(un->val.str.ptr, un->val.str.len, &url_len);
+    char *decoded_events = en ? bf_json_unescape(en->val.str.ptr, en->val.str.len, &events_len) : NULL;
+    int invalid = !decoded_url || url_len == 0 || url_len >= sizeof(url) ||
+        memchr(decoded_url, 0, url_len) || strpbrk(decoded_url, "\r\n") ||
+        (strncmp(decoded_url, "https://", 8) && strncmp(decoded_url, "http://", 7)) ||
+        (en && (!decoded_events || events_len == 0 || events_len >= sizeof(events) ||
+                memchr(decoded_events, 0, events_len) || strpbrk(decoded_events, "\r\n")));
+    if (!invalid) {
+        memcpy(url, decoded_url, url_len + 1);
+        if (en) memcpy(events, decoded_events, events_len + 1);
     }
-
-    if (!url[0]) { http_resp_json(resp, 400, "{\"error\":\"missing url\"}"); return; }
+    free(decoded_url);
+    free(decoded_events);
+    bf_json_free(doc);
+    if (invalid) {
+        http_resp_json(resp, 400, "{\"error\":\"invalid webhook URL or events\"}"); return;
+    }
 
     char ts[64]; iso_now(ts, sizeof(ts));
     pthread_mutex_lock(&g_db_mutex);
-    sqlite3_stmt *st;
-    sqlite3_prepare_v2(g_db,
-        "INSERT INTO webhooks (url, events, active, created_at) VALUES (?,?,1,?)",
-        -1, &st, NULL);
+    sqlite3_stmt *st = NULL;
+    if (sqlite3_prepare_v2(g_db,
+        "INSERT INTO webhooks (url, events, active, created_at, api_key) VALUES (?,?,1,?,?)",
+        -1, &st, NULL) != SQLITE_OK) {
+        pthread_mutex_unlock(&g_db_mutex);
+        http_resp_json(resp, 503, "{\"error\":\"webhook store unavailable\"}"); return;
+    }
     sqlite3_bind_text(st, 1, url, -1, SQLITE_STATIC);
     sqlite3_bind_text(st, 2, events, -1, SQLITE_STATIC);
     sqlite3_bind_text(st, 3, ts, -1, SQLITE_STATIC);
-    sqlite3_step(st); sqlite3_finalize(st);
-    int wid = (int)sqlite3_last_insert_rowid(g_db);
+    sqlite3_bind_text(st, 4, req->auth_token, -1, SQLITE_TRANSIENT);
+    int written = sqlite3_step(st) == SQLITE_DONE;
+    sqlite3_finalize(st);
+    int wid = written ? (int)sqlite3_last_insert_rowid(g_db) : 0;
     pthread_mutex_unlock(&g_db_mutex);
-
-    http_resp_json(resp, 201,
-        "{\"data\":{\"id\":%d,\"url\":\"%s\",\"events\":\"%s\",\"active\":true}}",
-        wid, url, events);
+    if (!written) {
+        http_resp_json(resp, 503, "{\"error\":\"webhook write failed\"}"); return;
+    }
+    bf_jsonw out;
+    bf_jsonw_init(&out, 0);
+    bf_jsonw_obj(&out);
+    bf_jsonw_key(&out, "data"); bf_jsonw_obj(&out);
+    bf_jsonw_key(&out, "id"); bf_jsonw_int(&out, wid);
+    bf_jsonw_key(&out, "url"); bf_jsonw_str(&out, url);
+    bf_jsonw_key(&out, "events"); bf_jsonw_str(&out, events);
+    bf_jsonw_key(&out, "active"); bf_jsonw_bool(&out, 1);
+    bf_jsonw_obj_end(&out);
+    bf_jsonw_obj_end(&out);
+    api_finish_json(resp, &out);
+    if (resp->status == 200) resp->status = 201;
 }
 
 /* Proxy: run a Bonfyre command and return its output as JSON. */
@@ -1064,34 +1385,239 @@ static void handle_proxy(HttpResponse *resp, const char *binary, int argc, char 
     for (int i = 0; i < argc && i < 62; i++) run_argv[i + 1] = argv[i];
     run_argv[argc + 1] = NULL;
 
-    char result[MAX_RESULT];
-    int rc = run_binary(binary, run_argv, result, sizeof(result));
+    /* A connection has a 256 KiB stack. Keep the bounded binary result on
+     * the heap; the former 1 MiB stack buffer crashed this route on entry. */
+    char *result = malloc(MAX_RESULT);
+    if (!result) { http_resp_json(resp, 503, "{\"error\":\"command buffer unavailable\"}"); return; }
+    int rc = run_binary(binary, run_argv, result, MAX_RESULT);
     if (rc == 0) {
         const char *p = result; while (*p == ' ' || *p == '\n' || *p == '\t') p++;
         if (*p == '{' || *p == '[') {
             free(resp->buf);
             resp->buf_len = strlen(result);
-            resp->buf = malloc(resp->buf_len + 1);
-            memcpy(resp->buf, result, resp->buf_len + 1);
+            resp->buf = result;
+            result = NULL;
             resp->status = 200;
         } else {
-            http_resp_json(resp, 200, "{\"data\":\"%.*s\"}",
-                (int)(strlen(result) > 4096 ? 4096 : strlen(result)), result);
+            bf_jsonw out;
+            bf_jsonw_init(&out, 0);
+            bf_jsonw_obj(&out);
+            bf_jsonw_key(&out, "data");
+            bf_jsonw_str(&out, result);
+            bf_jsonw_obj_end(&out);
+            if (out.oom) {
+                bf_jsonw_free(&out);
+                http_resp_json(resp, 503, "{\"error\":\"command JSON encoding unavailable\"}");
+            } else {
+                free(resp->buf);
+                resp->buf = out.buf;
+                resp->buf_len = out.len;
+                resp->status = 200;
+            }
         }
     } else {
         http_resp_json(resp, 500, "{\"error\":\"binary failed\",\"code\":%d}", rc);
     }
+    free(result);
+}
+
+/* Discovery delegates to the CLI's sole route catalog. It does not
+ * delegate effects: commands must still pass their owning API/MCP policy. */
+static void handle_commands(HttpRequest *req, HttpResponse *resp) {
+    const char *cli = getenv("BONFYRE_CLI_BINARY");
+    if (!cli || !*cli) cli = "bonfyre";
+    char query[256], all[16];
+    const char *filter = query_param(req->query, "q", query, sizeof(query));
+    const char *labs = query_param(req->query, "all", all, sizeof(all));
+    int with_labs = labs && !strcmp(labs, "1");
+    if (labs && !with_labs && strcmp(labs, "0")) {
+        http_resp_json(resp, 400, "{\"error\":\"all must be 0 or 1\"}"); return;
+    }
+    if (with_labs && !api_scope_exact(req->auth_token, "catalog:all")) {
+        http_resp_json(resp, 403, "{\"error\":\"lab catalog scope required\"}"); return;
+    }
+    char *argv[6] = {(char *)cli, "list", "--json", NULL};
+    int ac = 3;
+    if (with_labs) argv[ac++] = "--all";
+    if (filter && *filter) argv[ac++] = query;
+    argv[ac] = NULL;
+    char *result = malloc(MAX_RESULT);
+    if (!result) { http_resp_json(resp, 503, "{\"error\":\"command catalog buffer unavailable\"}"); return; }
+    result[0] = '\0';
+    int rc = run_binary(cli, argv, result, MAX_RESULT);
+    if (rc != 0) {
+        free(result);
+        http_resp_json(resp, 503, "{\"error\":\"native command catalog unavailable\"}");
+        return;
+    }
+    size_t n = strnlen(result, MAX_RESULT);
+    char err[128] = "";
+    bf_json_doc_t *doc = n < MAX_RESULT ? bf_json_parse(result, n, err, sizeof(err)) : NULL;
+    const bf_json_node_t *root = doc ? bf_json_root(doc) : NULL;
+    const bf_json_node_t *sections = root ? bf_json_obj_get(doc, root, "sections") : NULL;
+    const bf_json_node_t *summary = root ? bf_json_obj_get(doc, root, "summary") : NULL;
+    int valid = root && root->type == BF_JSON_OBJECT &&
+                sections && sections->type == BF_JSON_ARRAY &&
+                summary && summary->type == BF_JSON_OBJECT;
+    bf_json_free(doc);
+    if (!valid) {
+        free(result);
+        http_resp_json(resp, 503, "{\"error\":\"native command catalog malformed\"}");
+        return;
+    }
+    free(resp->buf);
+    resp->buf = result;
+    resp->buf_len = n;
+    resp->status = 200;
+}
+
+/* An exact authority atom in the current API-key scope list. The
+ * historical '*' is never an effect grant. Native owners still verify
+ * object, actor, provider and workflow admission independently. */
+static int api_scope_exact(const char *key, const char *wanted) {
+    if (!key || !*key || !wanted || !*wanted) return 0;
+    size_t n = strlen(wanted);
+    if (n > 511) return 0;
+    int permitted = 0;
+    pthread_mutex_lock(&g_db_mutex);
+    sqlite3_stmt *st = NULL;
+    if (sqlite3_prepare_v2(g_db,
+            "SELECT scopes FROM api_keys WHERE key=? AND active=1", -1, &st, NULL) == SQLITE_OK) {
+        sqlite3_bind_text(st, 1, key, -1, SQLITE_TRANSIENT);
+        if (sqlite3_step(st) == SQLITE_ROW) {
+            const char *scopes = (const char *)sqlite3_column_text(st, 0);
+            for (const char *p = scopes; p && *p;) {
+                while (*p == ' ' || *p == '\t' || *p == ',') p++;
+                const char *start = p;
+                while (*p && *p != ',') p++;
+                const char *end = p;
+                while (end > start && (end[-1] == ' ' || end[-1] == '\t')) end--;
+                if ((size_t)(end - start) == (size_t)n && !memcmp(start, wanted, (size_t)n)) {
+                    permitted = 1;
+                    break;
+                }
+            }
+        }
+    }
+    sqlite3_finalize(st);
+    pthread_mutex_unlock(&g_db_mutex);
+    return permitted;
+}
+
+static int api_command_scope(const char *key, const char *command, const char *verb) {
+    char wanted[512];
+    int n = snprintf(wanted, sizeof(wanted), "command:%s:%s", command, verb);
+    return n > 0 && (size_t)n < sizeof(wanted) && api_scope_exact(key, wanted);
+}
+
+/* Verify one public CLI identity against the CLI catalog itself: aliases,
+ * labs and unregistered local files never become API verbs by convention. */
+static int api_public_command(const char *cli, const char *name) {
+    char *output = malloc(MAX_RESULT);
+    if (!output) return -1;
+    char *argv[] = {(char *)cli, "list", "--json", (char *)name, NULL};
+    int rc = run_binary(cli, argv, output, MAX_RESULT);
+    if (rc != 0) { free(output); return -1; }
+    char err[128] = "";
+    bf_json_doc_t *doc = bf_json_parse(output, strlen(output), err, sizeof(err));
+    if (!doc) { free(output); return -1; }
+    const bf_json_node_t *sections = bf_json_obj_get(doc, bf_json_root(doc), "sections");
+    int found = 0;
+    if (sections && sections->type == BF_JSON_ARRAY) {
+        for (const bf_json_node_t *section = bf_json_child_first(doc, sections); section;
+             section = bf_json_child_next(doc, section)) {
+            const bf_json_node_t *rows = bf_json_obj_get(doc, section, "commands");
+            if (!rows || rows->type != BF_JSON_ARRAY) continue;
+            for (const bf_json_node_t *row = bf_json_child_first(doc, rows); row;
+                 row = bf_json_child_next(doc, row)) {
+                const bf_json_node_t *id = bf_json_obj_get(doc, row, "command");
+                const bf_json_node_t *tier = bf_json_obj_get(doc, row, "tier");
+                const bf_json_node_t *ready = bf_json_obj_get(doc, row, "ready");
+                char idbuf[128], tierbuf[32];
+                if (!bf_json_get_str_copy(id, idbuf, sizeof(idbuf)) ||
+                    !bf_json_get_str_copy(tier, tierbuf, sizeof(tierbuf))) continue;
+                if (!strcmp(idbuf, name) && strcmp(tierbuf, "lab") &&
+                    ready && ready->type == BF_JSON_BOOL && bf_json_get_bool(ready)) {
+                    found = 1;
+                    break;
+                }
+            }
+            if (found) break;
+        }
+    }
+    bf_json_free(doc);
+    free(output);
+    return found;
 }
 
 /* GET /api/binaries/:name/... — proxy to any bonfyre binary */
 static void handle_binary_proxy(HttpRequest *req, HttpResponse *resp,
                                 const char *binary_name, int nseg,
                                 char segs[][256]) {
-    char bin[64]; snprintf(bin, sizeof(bin), "bonfyre-%s", binary_name);
-    char *args[32]; int ac = 0;
+    /* No generic HTTP mutation or credential-bearing body-to-argv bridge.
+     * Those effects require their native account / ActorClosure owner. */
+    if (strcmp(req->method, "GET") || req->body_len > 0 || nseg < 4) {
+        http_resp_json(resp, 403, "{\"error\":\"command execution needs a scoped read route\"}"); return;
+    }
+    const char *name = !strncmp(binary_name, "bonfyre-", 8) ? binary_name + 8 : binary_name;
+    size_t len = strlen(name);
+    if (!len || len > 60 || name[0] < 'a' || name[0] > 'z') {
+        http_resp_json(resp, 404, "{\"error\":\"unknown command\"}"); return;
+    }
+    for (size_t i = 0; i < len; i++) {
+        char c = name[i];
+        if (!((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-')) {
+            http_resp_json(resp, 404, "{\"error\":\"unknown command\"}"); return;
+        }
+    }
+    const char *verb = segs[3];
+    /* A per-key route grant cannot classify an arbitrary native effect.
+     * Only the common help ABI is proven no-effect across the CLI surface.
+     * Other verbs need an explicit native owner effect/read contract. */
+    if (strcmp(verb, "--help") && strcmp(verb, "-h") && strcmp(verb, "help")) {
+        http_resp_json(resp, 403, "{\"error\":\"native effect classification required\"}"); return;
+    }
+    if (!api_command_scope(req->auth_token, name, verb)) {
+        http_resp_json(resp, 403, "{\"error\":\"exact command scope required\"}"); return;
+    }
+    const char *cli = getenv("BONFYRE_CLI_BINARY");
+    if (!cli || !*cli) cli = "bonfyre";
+    int known = api_public_command(cli, name);
+    if (known <= 0) {
+        http_resp_json(resp, known ? 503 : 404,
+            known ? "{\"error\":\"native command registry unavailable\"}" :
+                    "{\"error\":\"command not in the public native registry\"}");
+        return;
+    }
+    char *args[32];
+    int ac = 0;
+    args[ac++] = (char *)name;
     for (int i = 3; i < nseg && ac < 30; i++) args[ac++] = segs[i];
-    if (req->body && req->body_len > 0 && ac < 30) args[ac++] = req->body;
-    handle_proxy(resp, bin, ac, args);
+    handle_proxy(resp, cli, ac, args);
+}
+
+/* One native read-only closure. Actor and PackGraph are checked by their
+ * owners; no reviewed effect, WorkGraph admission or effect capability follows. */
+static void api_authority_preflight(HttpRequest *req,HttpResponse *resp) {
+    char context[128]="",pack[128]="",actor[192]="",subject[192]="",digest[65]="";
+    if(!query_param(req->query,"context",context,sizeof(context))||
+       !query_param(req->query,"pack",pack,sizeof(pack))){
+        http_resp_json(resp,400,"{\"error\":\"Select an exact account context and installed pack\"}");return;
+    }
+    if(!api_native_preflight(req,context,pack,actor,sizeof(actor),
+                             subject,sizeof(subject),digest,sizeof(digest))){
+        http_resp_json(resp,403,"{\"schema\":\"bonfyre.command-authority.v1\",\"admitted\":false,\"reason\":\"current_actor_destination_or_pack_refused\"}");return;
+    }
+    bf_jsonw out;bf_jsonw_init(&out,0);bf_jsonw_obj(&out);
+    bf_jsonw_key(&out,"schema");bf_jsonw_str(&out,"bonfyre.command-authority.v1");
+    bf_jsonw_key(&out,"actor");bf_jsonw_str(&out,actor);
+    bf_jsonw_key(&out,"destination");bf_jsonw_str(&out,subject);
+    bf_jsonw_key(&out,"pack_digest");bf_jsonw_str(&out,digest);
+    bf_jsonw_key(&out,"actor_and_pack_current");bf_jsonw_bool(&out,1);
+    bf_jsonw_key(&out,"admitted");bf_jsonw_bool(&out,0);
+    bf_jsonw_key(&out,"next_required");
+    bf_jsonw_str(&out,"Native reviewed effect and WorkGraph admission for the bound destination");
+    bf_jsonw_obj_end(&out);api_finish_json(resp,&out);
 }
 
 /* ── Main router ──────────────────────────────────────────────────── */
@@ -1112,7 +1638,7 @@ static void route_request(HttpRequest *req, HttpResponse *resp) {
 
         /* Auth check for non-health endpoints */
         if (strcmp(ep, "health") != 0) {
-            if (req->auth_token[0] && !validate_api_key(req->auth_token)) {
+            if (!validate_api_key(req->auth_token)) {
                 http_resp_json(resp, 401, "{\"error\":\"invalid API key\"}"); return;
             }
             if (!rate_limit_check(req->auth_token)) {
@@ -1124,17 +1650,30 @@ static void route_request(HttpRequest *req, HttpResponse *resp) {
 
         if (strcmp(ep, "health") == 0)  { handle_health(resp); return; }
         if (strcmp(ep, "status") == 0)  { handle_status(resp); return; }
+        if (strcmp(ep, "commands") == 0 && strcmp(req->method, "GET") == 0) {
+            handle_commands(req, resp); return;
+        }
+
+        if (strcmp(ep, "authority") == 0 && strcmp(req->method, "GET") == 0) {
+            api_authority_preflight(req, resp); return;
+        }
 
         if (strcmp(ep, "upload") == 0 && strcmp(req->method, "POST") == 0) {
+            if (!api_scope_exact(req->auth_token, "api:upload:create")) {
+                http_resp_json(resp, 403, "{\"error\":\"upload creation scope required\"}"); return;
+            }
             handle_upload(req, resp); return;
         }
 
         if (strcmp(ep, "jobs") == 0) {
             if (strcmp(req->method, "POST") == 0) {
+                if (!api_scope_exact(req->auth_token, "api:jobs:create")) {
+                    http_resp_json(resp, 403, "{\"error\":\"job creation scope required\"}"); return;
+                }
                 handle_job_submit(req, resp); return;
             }
             int jid = nseg >= 3 ? atoi(segs[2]) : 0;
-            handle_job_get(resp, jid); return;
+            handle_job_get(resp, jid, req->auth_token); return;
         }
 
         /* SSE stream — handled specially (does not use HttpResponse) */
@@ -1151,9 +1690,15 @@ static void route_request(HttpRequest *req, HttpResponse *resp) {
 
         if (strcmp(ep, "webhooks") == 0) {
             if (strcmp(req->method, "POST") == 0) {
+                if (!api_scope_exact(req->auth_token, "api:webhooks:create")) {
+                    http_resp_json(resp, 403, "{\"error\":\"webhook creation scope required\"}"); return;
+                }
                 handle_webhook_create(req, resp); return;
             }
-            handle_webhook_list(resp); return;
+            if (!api_scope_exact(req->auth_token, "api:webhooks:read")) {
+                http_resp_json(resp, 403, "{\"error\":\"webhook read scope required\"}"); return;
+            }
+            handle_webhook_list(resp, req->auth_token); return;
         }
 
         if (strcmp(ep, "binaries") == 0 && nseg >= 3) {
@@ -1176,7 +1721,16 @@ static void *connection_handler(void *arg) {
 
     HttpRequest *req = malloc(sizeof(HttpRequest));
     if (!req) { close(fd); atomic_fetch_sub(&g_thread_count, 1); return NULL; }
-    if (parse_http_request(fd, req) != 0) {
+    int parsed = parse_http_request(fd, req);
+    if (parsed != 0) {
+        HttpResponse reject;
+        http_resp_init(&reject, fd);
+        http_resp_json(&reject, parsed == -2 ? 413 : 400,
+            parsed == -2 ? "{\"error\":\"request body exceeds 4 MiB\"}" :
+                            "{\"error\":\"incomplete or invalid HTTP request\"}");
+        http_resp_send(&reject);
+        http_resp_free(&reject);
+        free_request(req);
         free(req); close(fd); atomic_fetch_sub(&g_thread_count, 1); return NULL;
     }
 
@@ -1291,6 +1845,7 @@ static void usage(void) {
 }
 
 int main(int argc, char **argv) {
+    if (bf_help_requested(argc, argv)) { usage(); return 0; }
     if (argc < 2) { usage(); return 1; }
 
     signal(SIGINT, handle_signal);

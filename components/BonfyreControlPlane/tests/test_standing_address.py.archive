@@ -1,0 +1,184 @@
+"""Witness for StandingAddress.
+
+The Deep Ellum feed at 21:12. A Live two blocks away, a post that expires in two
+hours, an Event at 22:30, a creator, and a venue guest list. The tests check that
+ranking is over opportunities rather than objects, that the two loops cannot
+cross, and that entertainment is allowed to win.
+"""
+
+from __future__ import annotations
+
+import os
+import sys
+
+import pytest
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import information_policy as ip  # noqa: E402
+import standing_address as sa  # noqa: E402
+
+
+def _tonight():
+    return [
+        sa.Opportunity("live:neon-june", sa.WATCH, "live", relevance=0.9,
+                       reason="playing two blocks away"),
+        sa.Opportunity("event:dj-set-2230", sa.GO, "live", relevance=0.7,
+                       reason="14 people you follow are nearby"),
+        sa.Opportunity("creator:neon-june", sa.FOLLOW, "live", relevance=0.4),
+        sa.Opportunity("post:trees-line", sa.SAVE, "live", relevance=0.2),
+        sa.Opportunity("offer:guest-list", sa.JOIN, "live", relevance=0.6,
+                       available=False, reason="50 spots, all taken"),
+    ]
+
+
+@pytest.fixture()
+def address():
+    return sa.StandingAddress(actor="person:nick", territory="live")
+
+
+# ------------------------------ the unit is an opportunity, not an object
+
+def test_the_same_subject_can_carry_different_opportunities():
+    watch = sa.Opportunity("creator:neon-june", sa.WATCH, "live")
+    follow = sa.Opportunity("creator:neon-june", sa.FOLLOW, "live")
+    assert watch.subject == follow.subject
+    assert watch.action != follow.action
+    # A feed of objects could not have said this: one creator is two different
+    # things to do, and which one is useful depends on the actor.
+
+
+def test_ranking_orders_opportunities_not_content(address):
+    ranked = address.compile(_tonight())
+    assert [(o.action, o.subject) for o in ranked[:2]] == [
+        (sa.WATCH, "live:neon-june"), (sa.GO, "event:dj-set-2230")]
+
+
+def test_entertainment_is_allowed_to_win(address):
+    ranked = address.compile(_tonight())
+    # The highest-ranked opportunity is WATCH. Nothing here needs a swipe to
+    # become a transaction, and a ranker that pushed BUY to the top because it
+    # is worth more would be optimizing for the estate rather than the actor.
+    assert ranked[0].action == sa.WATCH
+
+
+# ------------------------------------- territory is a context, not a filter
+
+def test_an_action_outside_its_territory_is_a_category_error():
+    with pytest.raises(sa.StandingError) as e:
+        sa.Opportunity("offer:tickets", sa.BUY, "live")
+    assert "category error" in str(e.value)
+    # BUY belongs to .shop. Offering it in .live is not a low-ranking candidate
+    # to be sorted downward; it is the wrong kind of thing entirely.
+    assert sa.BUY in sa.TERRITORY_ACTIONS["shop"]
+
+
+def test_each_territory_offers_its_own_verbs():
+    assert sa.WATCH in sa.TERRITORY_ACTIONS["live"]
+    assert sa.APPLY in sa.TERRITORY_ACTIONS["work"]
+    assert sa.MEET in sa.TERRITORY_ACTIONS["life"]
+    assert sa.BUY in sa.TERRITORY_ACTIONS["shop"]
+    # And JOIN legitimately appears in several: joining a Circle, a guest list
+    # and a buying group are the same verb in different contexts.
+    joins = {t for t, acts in sa.TERRITORY_ACTIONS.items() if sa.JOIN in acts}
+    assert joins == {"life", "live", "shop"}
+
+
+def test_a_candidate_from_another_territory_is_not_offered():
+    work = sa.StandingAddress(actor="person:nick", territory="work")
+    assert work.compile(_tonight()) == []
+    # The night is happening; it is simply not what .work is for.
+
+
+def test_an_unknown_action_or_territory_is_refused():
+    with pytest.raises(sa.StandingError):
+        sa.Opportunity("s", "SCROLL", "live")
+    with pytest.raises(sa.StandingError):
+        sa.Opportunity("s", sa.WATCH, "metaverse")
+
+
+# ---------------------------- availability is about the world, not the actor
+
+def test_an_unavailable_opportunity_ranks_below_every_available_one(address):
+    ranked = address.compile(_tonight())
+    assert ranked[-1].subject == "offer:guest-list"
+    # Its relevance (0.6) beats FOLLOW (0.4) and SAVE (0.2). It still sinks,
+    # because a sold-out thing is not an opportunity however relevant it is.
+    guest = [o for o in ranked if o.subject == "offer:guest-list"][0]
+    assert guest.relevance > ranked[-2].relevance
+
+
+def test_attention_cannot_promote_an_unavailable_opportunity(address):
+    for _ in range(50):
+        address.observe_attention("offer:guest-list", "dwelled")
+    ranked = address.compile(_tonight())
+    assert ranked[-1].subject == "offer:guest-list"
+    # No amount of looking at a sold-out show makes it bookable.
+
+
+# ------------------------------------------ the two loops cannot cross
+
+def test_an_action_cannot_be_recorded_as_an_attention_signal(address):
+    for action in (sa.BUY, sa.BOOK, sa.APPLY, sa.JOIN):
+        with pytest.raises(sa.StandingError) as e:
+            address.observe_attention("s", action)
+        assert "may never open an obligation" in str(e.value)
+
+
+def test_the_attention_loop_opens_no_obligation(address):
+    delta = sa.attention_delta(address, "live:neon-june", "watched")
+    assert delta["loop"] == "attention"
+    assert delta["opens_obligation"] is False
+    # Its envelope names only the standing address it reorders. Invalidating
+    # institutional state from a swipe would be the loops crossing.
+    assert delta["invalidates"] == ["standing:person:nick:live"]
+
+
+def test_the_institutional_loop_requires_something_to_have_happened():
+    with pytest.raises(sa.StandingError) as e:
+        sa.institutional_delta("event:x", sa.BOOK, enactment="", occurrence="")
+    assert "attention signal wearing an Action's name" in str(e.value)
+
+
+def test_the_institutional_loop_names_its_enactment_and_occurrence():
+    delta = sa.institutional_delta("event:dj-set-2230", sa.GO,
+                                   enactment="ef1", occurrence="effect:rsvp-1")
+    assert delta["loop"] == "institutional"
+    assert delta["opens_obligation"] is True
+    assert delta["invalidates"] == ["subject:event:dj-set-2230", "enactment:ef1"]
+
+
+def test_watching_something_fifty_times_never_books_it(address):
+    for _ in range(50):
+        sa.attention_delta(address, "event:dj-set-2230", "watched")
+    ranked = address.compile(_tonight())
+    # Attention moved it to the top. It is still an offer to GO, and nobody has
+    # gone: curiosity did not become a commitment.
+    assert ranked[0].subject == "event:dj-set-2230"
+    assert ranked[0].action == sa.GO
+    assert address.attention["event:dj-set-2230"] == 50.0
+
+
+# --------------------------------- offering an action discloses its subject
+
+def test_a_subject_the_policy_withholds_is_not_offered():
+    policy = ip.InformationPolicy("Opportunity")
+    policy.disclose("subject", to=("institution",), reason="not public")
+    address = sa.StandingAddress(actor="person:nick", territory="live",
+                                 policy=policy)
+    assert address.compile(_tonight()) == []
+    # Offering an action on something an actor may not know exists discloses it,
+    # so the disclosure check runs before the ranking rather than after.
+
+
+def test_a_disclosed_subject_is_offered_normally():
+    policy = ip.InformationPolicy("Opportunity")
+    policy.disclose("subject", to=("public", "institution"))
+    address = sa.StandingAddress(actor="person:nick", territory="live",
+                                 policy=policy)
+    assert len(address.compile(_tonight())) == 5
+
+
+def test_top_bounds_what_is_shown_without_changing_the_order(address):
+    full = address.compile(_tonight())
+    assert address.top(_tonight(), n=2) == full[:2]

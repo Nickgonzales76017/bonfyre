@@ -1,0 +1,179 @@
+architecture account-world-binding
+  canonical_name AccountWorldBinding
+  family surface
+  domain Surface / Account World composition
+  layer native-owner
+  semantic_question Which draft World and bounded spaces are bound to an authenticated account subject, what does each space point to, and which version of it may an anonymous reader see?
+  maturity implemented
+  source_path cmd/BonfyreCMS/src/account_world.c
+  source_path cmd/BonfyreCMS/src/account_world.h
+  source_path schemas/control/account-world.yaff
+  source_path schemas/control/account-world.cue
+  source_path cmd/BonfyreCMS/tests/account_world_test.c
+  source_path cmd/BonfyreWebAddress/src/account_world_web.h
+  source_path cmd/BonfyreWebAddress/tests/account_world_workspace_test.sh
+  source_path cmd/BonfyreWebAddress/tests/account_world_spaces_test.sh
+  source_path site/matrix/world.css
+  consumes PageComposition
+  consumes WorldPublication
+  internal_calculus A binding checks an existing draft World row against its exact namespace and subject; transactional space writes check that binding, apply an optimistic revision and cap each World at 32 spaces.
+  invariant The owner accepts only an already authenticated subject and authorized namespace from a trusted caller; it does not authenticate caller arguments.
+  invariant A bound World cannot be deleted or change identity, subject or namespace; a lifecycle owner is still needed.
+  invariant Each space retains independent renderer, title, template reference and layout reference without copying their source material.
+  invariant account-world-2: a space carries an open-vocabulary medium word, one CUE-compiled World character as its look and an introduction; its items are references only, "<source>/<24 hex key>" into PageComposition material or "space:<id>" portals to sibling spaces in the same World.
+  invariant Release copies style and items at the exact current revision into a separate public version; draft edits after release stay private until released again; one public space per address on a site; withdrawal empties the released items and the reader answers 410.
+  invariant The public reader at /worlds and /worlds/<space> answers only on a published member-profile host with active Matrix presence, re-resolves every item through PageComposition on each request and plays or shows media only when its own source states public domain, CC0, CC BY or CC BY-SA; anything else is linked to where it is published, and a piece gone from its source leaves the page.
+  invariant A space with the 3d renderer says rooms are not open and renders its whole content as the page; nothing autoplays (preload none, no autoplay attribute).
+  invariant The owner studio at /workspace/worlds is the private profile's own dress, starts a draft World through the CMS owner, and posts every change through the same admitted /workspace/world API.
+  cannot_infer a binding or space -> authentication, source rights, public audience, an actual renderer or a published World
+  cannot_infer a medium word -> station schedules, tracklists, podcast feeds, newsroom corrections, LMS courses or any vertical object; those belong to the sibling Worlds owners
+  cannot_infer a released space -> that its media may be played; terms are re-read from the source on every request
+  cannot_infer a 3d renderer choice -> an existing spatial room
+  invariant The private workspace checks the current self session, actor closure and exact site presentation and Matrix presence on every read and mutation; writes check the session and site again immediately before invoking the owner.
+  known_gap Cross-database authority checks are not atomic with the CMS transaction.
+  known_gap The member profile tabs (profile_home.h) do not yet link to /worlds or /workspace/worlds; the studio is reached by URL only.
+  known_gap Items are chosen by pasting a piece reference; there is no picker from saved material or search inside the studio.
+  known_gap Film screenings, a members-only club and a watch diary are now additions to this owner (account-world-cinema). No spatial room, analytics, general comments, schedules, tracklists, chapters, corrections or rights admission for unlicensed media exist here; the shelf and spaces are not yet in the public projection cache, sitemaps or feeds.
+  witness cmd/BonfyreWebAddress/tests/account_world_workspace_test.sh exercises two accounts and two sites, private draft reads, origin refusal, status restrictions, stale revisions and actor revocation through native HTTP.
+  witness cmd/BonfyreCMS/tests/account_world_test.c exercises subject and namespace isolation, three styled spaces, stale revisions, the capacity limit and a refused World identity change and deletion.
+  witness cmd/BonfyreCMS/tests/account_world_test.c also exercises style, reference-only items, self and missing portal refusal, exact-revision release, private draft edits after release, one public address per site, withdrawal and an ended World leaving the public address.
+  witness cmd/BonfyreWebAddress/tests/account_world_spaces_test.sh drives the studio and API over native HTTP: start, three spaces in three World characters, items over four retained sources, release, anonymous reads on the member host only, CC BY audio and public-domain film playing on demand, a rights-reserved film linked instead, CC0 still shown, portals, the 3d flat notice, private draft edits, terms closing and a removed piece re-read from the source, foreign-origin and other-account refusal, withdrawal answering 410 and an ended World.
+
+interaction account-world-binds-publication
+  source account-world-binding
+  destination world-publication
+  relation binds
+  preserves the exact existing World row, namespace and subject and its draft status on mutation
+  drops publication authority and source rights
+  forbidden_inference a draft World binding -> a publicly released World
+
+interaction account-world-checks-profile-site
+  source account-world-binding
+  destination site-presentation-composition
+  relation checks
+  preserves the authenticated user, active person binding, exact published profile site and active Matrix presence on each workspace request
+  drops public publication authority and material rights
+  forbidden_inference a site-scoped draft workspace -> a published World or an authorized material source
+
+interaction account-world-reads-page-composition
+  source account-world-binding
+  destination page-composition
+  relation reads
+  preserves the exact source/key reference, title, maker, terms and links as the source states them on each request
+  drops any copy of the item, and any display right the source does not state
+  forbidden_inference a space that names a piece -> a right to play, show or redistribute it
+
+interaction account-world-dresses-with-world-character
+  source account-world-binding
+  destination world-publication
+  relation presents-with
+  preserves the CUE-compiled World character as a per-space look; world.css owns colour and type
+  drops World source selection and the estate page dress
+  forbidden_inference a space's look -> a claim about its material or a World publication on /w
+
+architecture account-world-cinema
+  canonical_name AccountWorldCinema
+  family surface
+  domain Surface / Account World composition / film culture
+  layer native-owner
+  semantic_question On one account space, which screenings are announced and may play, who belongs to its film club and what have they picked and said, and which watch-diary notes may an anonymous reader see?
+  maturity implemented
+  source_path cmd/BonfyreCMS/src/account_world.c
+  source_path cmd/BonfyreCMS/src/account_world.h
+  source_path schemas/control/account-world.yaff
+  source_path schemas/control/account-world.cue
+  source_path cmd/BonfyreCMS/tests/account_world_cinema_test.c
+  source_path cmd/BonfyreWebAddress/src/account_world_cinema_web.h
+  source_path cmd/BonfyreWebAddress/tests/account_world_cinema_test.sh
+  source_path site/matrix/world.css
+  consumes AccountWorldBinding
+  consumes PageComposition
+  internal_calculus Additions to the AccountWorldBinding owner (account-world-cine tables created by aw_initialize): screenings keyed by world, space and a short name with an ISO minute, a venue, one PageComposition film reference and a draft, announced or cancelled state; a club per space with member rows (member, left, removed), member picks with one vote per member and member posts the host can hide and the author can retract; diary notes of the World's subject with an ISO day, a 0..10 half-star rating, a rewatch flag and private or public visibility. Every owner write rechecks the binding and draft World inside one immediate transaction; every member write rechecks that the space is released, public, its World bound and its club open.
+  invariant A film is always "<source>/<24 hex key>"; no media URL, rights statement, availability claim or audience number is stored.
+  invariant A new or edited screening is a draft; only announced and cancelled screenings of a public space reach the reader; cancelling a draft deletes it, cancelling an announced one keeps it marked cancelled.
+  invariant A screening plays (preload none, behind a disclosure, no autoplay) only when its source, re-read on that request, states public domain or CC0 and gives an https video file; CC BY, reserved or unstated terms are linked to where the film is published with the stated terms.
+  invariant Club talk and picks are readable only by the host and current members; members never see hidden rows; a retracted post keeps no words; a removed member cannot rejoin, read or post; only votes from the host and current members count.
+  invariant A private diary note never leaves the owner studio or API; a public note shows only beside a film that is an item of a released public space.
+  invariant Lists are bounded: 48 screenings per space, 24 open picks, 5000 members, 5000 notes; posts and notes page 20 at a time by keyset cursor.
+  invariant The owner tools appear on every space; the medium word never switches them on.
+  invariant /workspace/world/film admits the site owner for programme, club state, moderation and diary, and any signed-in self session for join, leave, pick, vote, say, retract and member reads; the club room at /workspace/worlds/club is private (no-store) and names members by their account name, never their account number.
+  cannot_infer a screening row -> a right to show the film, a ticket, a venue booking, attendance or that the film is available anywhere
+  cannot_infer a film that plays here -> that every cut, edition, poster or soundtrack of it is public domain; the source's statement covers only the file it names
+  cannot_infer club membership or votes -> enrolment, a course, a credential or any Learning World relation
+  cannot_infer a public diary rating -> a review moderated by anyone but its author, or an aggregate score
+  known_gap No festival catalogue, events with deadlines, polls beyond approval votes, ranked or themed lists, watchlists, favourite four, critic essays, filmographies or credited cast and crew; film identity is whatever the PageComposition source states, with no title/edition/cut distinction.
+  known_gap No spatial theatre: a 3d space still renders as a page, so the accessible 2D path is the only path.
+  known_gap Diary paging is in the API; the studio shows the newest 20 entries. Members cannot keep their own diaries; only the World's subject can.
+  known_gap No reporting by members, rate limits or audit trail for moderation; hide and remove are host actions only.
+  known_gap The optional Cinephile to Learning World handoff, provider availability checks and external watch links are not built.
+  witness cmd/BonfyreCMS/tests/account_world_cinema_test.c exercises draft, announced and cancelled screenings, impossible dates, URL and portal refusal, cross-World refusal, the 48-screening cap, release gating, club open and close, join, leave, removal without rejoin, one pick per film and one vote per member, host-only moderation, retraction clearing words, 21-row post pages and keyset pages, removed members' votes not counting, private and public diary notes, a note on an unreleased film staying off the page, note paging and withdrawal closing the club and programme.
+  witness cmd/BonfyreWebAddress/tests/account_world_cinema_test.sh drives three accounts over native HTTP: programme writes, foreign-origin and other-account refusal, month-grouped weekday dates, a public-domain screening playing behind a disclosure, CC BY and reserved screenings linked with stated terms, closed source terms stopping playback on the next read, draft and cancelled handling, public and private diary notes and API paging, the club door, anonymous and guest refusal, join, picks ranked by votes, hidden posts, named members without account numbers, retract, 20-post pages with an Older link, removal, leave and rejoin, and withdrawal answering 410 and closing the club.
+
+interaction account-world-cinema-extends-binding
+  source account-world-cinema
+  destination account-world-binding
+  relation extends_owner
+  preserves the binding, draft World guard, release and withdrawal of the same owner; screenings, club and diary are visible only through a released public space
+  drops nothing of the parent's publication rules; adds no publication of the World row
+  forbidden_inference a club or programme on a space -> a separate cinema system or a released World
+
+interaction account-world-cinema-reads-page-composition
+  source account-world-cinema
+  destination page-composition
+  relation reads
+  preserves the exact film reference, title, maker, terms, terms link, media file and publisher link as the source states them on each request
+  drops any playback for terms other than public domain or CC0
+  forbidden_inference a scheduled screening -> a right to play, project or redistribute the film
+
+architecture account-world-audio
+  canonical_name AccountWorldAudio
+  family surface
+  domain Surface / Account World composition / radio and podcasts
+  layer native-owner
+  semantic_question On one account space, is it a station or a show, what is on its weekly schedule now and next in the station's own time zone, which items are dated episodes, and which tracks, chapters, transcript lines, clips, people and cited sources mark them in time, so a listener can follow a valid feed and play only what the source states open terms for?
+  maturity implemented
+  source_path cmd/BonfyreCMS/src/account_world_audio.c
+  source_path cmd/BonfyreCMS/src/account_world_audio.h
+  source_path cmd/BonfyreCMS/tests/account_world_audio_test.c
+  source_path cmd/BonfyreWebAddress/src/account_world_audio_web.h
+  source_path cmd/BonfyreWebAddress/tests/account_world_audio_test.sh
+  source_path schemas/control/account-world.yaff
+  source_path schemas/control/account-world.cue
+  source_path site/matrix/world.css
+  consumes AccountWorldBinding
+  consumes PageComposition
+  internal_calculus Additions to the AccountWorldBinding owner (account-world-audio-1 tables created by awa_initialize): one programme row per space (station or show, IANA time zone, language, author, category, explicit flag, optional live-stream piece reference), up to 48 weekly slots (ISO weekday, start minute, length, programme, host, optional piece or sibling-space link), episode details keyed by an item reference the space already holds (season, number, ISO date), and up to 600 time marks per episode (track, chapter, cue, clip, person, source) with start and end milliseconds and a checked flag meaning a confirmed track or a reviewed cue or clip. Each table keeps a draft copy and a released copy; triggers on account_world_release copy the drafts inside the release transaction and drop the released copy on withdrawal. Every owner write rechecks the binding and draft World and advances the exact space revision in one immediate transaction.
+  invariant Recordings and the live stream are always "<source>/<24 hex key>" references; a mark link is an https citation or profile address or a piece reference and is never played; no media URL, rights statement, listener count or availability claim is stored.
+  invariant Audio plays (preload none, no autoplay) and enters the RSS feed as an enclosure only when the piece's own source, re-read on that request, states public domain, CC0, CC BY or CC BY-SA and gives an https file; otherwise the page links to where it is published and the feed leaves the episode out. A live stream with closed terms is linked, a missing one says it is not available.
+  invariant On air now and next are computed per request from the station's time zone through the host zone database; an unknown zone shows no now/next rather than a guess, and the page names the station clock.
+  invariant Unconfirmed tracks are shown with a flag; unreviewed transcript lines and clips never leave the owner studio or API; the public transcript, the .vtt file and podcast:soundbite carry reviewed ones only.
+  invariant /worlds/X/feed.xml is RSS 2.0 with itunes and podcastindex namespaces (podcast:chapters, podcast:transcript, podcast:person, podcast:soundbite) and atom self link, escaped as XML; /worlds/X/schedule.ics is a weekly RRULE calendar in the station TZID; /worlds/X/chapters/N.json follows Podcasting 2.0 chapters 1.2.0; all answer 410 after withdrawal.
+  invariant /workspace/world-audio admits only the site owner through world_web_admit, checks Origin on writes and rereads admission after initialising; the studio section sits on every space and the medium word never switches it on.
+  cannot_infer a programme row or schedule -> a broadcast licence, a performing-rights clearance, a live stream that is actually up, or territorial availability
+  cannot_infer a feed item -> that a directory has accepted the feed, that the enclosure length is known (length is 0), or that the episode was streamed anywhere; presence of a MediaProgram or of this owner never implies a published podcast
+  cannot_infer a confirmed track -> licence to play that track; tracklists are metadata only
+  cannot_infer a reviewed transcript -> machine transcription accuracy; review is the owner's own mark, and no transcription engine runs here
+  known_gap No recording upload or ingest, no automatic transcription and no stream health check; recordings must already be PageComposition pieces and transcripts arrive as pasted WebVTT.
+  known_gap No channel artwork (itunes:image), owner email, podcast:guid or podcast:locked; enclosure length is 0 because the size is not known without fetching the file.
+  known_gap No listener favourites, follows stored server-side, analytics, producer roles beyond the owner, season scheduling of future release dates, video variants or a 3D listening lounge; a 3d space renders as the 2D page.
+  known_gap Now/next arithmetic is in station wall-clock minutes, so the hour around a DST change can be off by that hour; the calendar names a TZID without a VTIMEZONE block.
+  known_gap Feed discovery is a visible link on the page; world_web_public_head has no rel=alternate link yet.
+  known_gap Not released: built and witnessed in a scratch WebAddress copy only; no authenticated or public live readback on an aurekai host.
+  witness cmd/BonfyreCMS/tests/account_world_audio_test.c exercises zone, stream, slot, date and link refusals, another account and stale revisions, marks only on held items, WebVTT import with voice speakers, review that survives re-import, draft privacy, release copying at the exact revision, correction by removal, withdrawal dropping every public copy, an ended World leaving the address and the 600-mark cap.
+  witness cmd/BonfyreWebAddress/tests/account_world_audio_test.sh drives a station and a show over native HTTP: refusals for unknown zones, URL streams, other accounts, stale revisions and foreign origin; a schedule built around the current Chicago clock read back as on air now and next; a CC0 live stream playing; two archive episodes with offsets, a flagged unconfirmed track and seek buttons; chapter jumps, people, cited sources, a reviewed clip, a searchable reviewed transcript and an unreviewed line kept private; a .vtt and chapters JSON; a feed that passes xmllint and XPath checks for channel, atom self, category, two enclosures, pubDate, guid, chapters, transcript, person and one soundbite while a rights-reserved episode stays out; calendar events with RRULE and TZID; draft corrections private until release; closed terms removing playback, a feed item and the live stream; nothing on air after a slot is removed; withdrawal answering 410 for feed, chapters and transcript.
+
+interaction account-world-audio-extends-binding
+  source account-world-audio
+  destination account-world-binding
+  relation extends_owner
+  preserves the binding, draft World guard, exact revision, release and withdrawal of the same owner; programme, schedule, episodes and marks become public only with a released space
+  drops nothing of the parent's publication rules; adds no publication of the World row
+  forbidden_inference a station or show on a space -> a separate radio or podcast system, a released World or a published feed in any directory
+
+interaction account-world-audio-reads-page-composition
+  source account-world-audio
+  destination page-composition
+  relation reads
+  preserves the exact recording reference, title, maker, terms, media file, duration and publisher link as the source states them on each request
+  drops playback and feed enclosure for terms other than public domain, CC0, CC BY or CC BY-SA
+  forbidden_inference an episode, tracklist or schedule slot -> a right to play, stream or redistribute the recording

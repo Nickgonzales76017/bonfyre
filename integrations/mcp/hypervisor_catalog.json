@@ -1,0 +1,827 @@
+[
+  {
+    "name": "hypervisor_status",
+    "description": "Return capability registry, provider, mission, receipt and active execution status.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false
+    }
+  },
+  {
+    "name": "ecosystem_discover",
+    "description": "Detect installed external agent projects and run non-destructive version/help probes.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false
+    }
+  },
+  {
+    "name": "ecosystem_providers",
+    "description": "List registered providers, modes, native commands, capabilities and evaluation evidence.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false
+    }
+  },
+  {
+    "name": "capability_route",
+    "description": "Rank eligible providers for one stable Bonfyre capability contract.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "capability": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string",
+          "default": "global"
+        },
+        "include_shadow": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "required": [
+        "capability"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false
+    }
+  },
+  {
+    "name": "provider_adapters_status",
+    "description": "Probe executable native adapters for Cavemem, RTK, Bernstein, Agent Deck, Caveman Code and Invoker.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false
+    }
+  },
+  {
+    "name": "memory_search",
+    "description": "Search cross-agent Cavemem observations progressively without loading full histories.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string"
+        },
+        "limit": {
+          "type": "integer",
+          "default": 12
+        },
+        "semantic": {
+          "type": "boolean",
+          "default": true
+        }
+      },
+      "required": [
+        "query"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false
+    }
+  },
+  {
+    "name": "compact_command",
+    "description": "Execute an allowlisted command through RTK output compression and return full execution evidence.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "string"
+        },
+        "cwd": {
+          "type": "string"
+        },
+        "timeout": {
+          "type": "integer",
+          "default": 1800
+        }
+      },
+      "required": [
+        "command"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true
+    }
+  },
+  {
+    "name": "bernstein_manifest_compile",
+    "description": "Compile a bounded candidate Bernstein DAG manifest targeting the native task-execute CLI; compilation does not attest scheduler execution.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "mission_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "mission_id"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false
+    }
+  },
+  {
+    "name": "bernstein_manifest_validate",
+    "description": "Validate and dry-run a generated Bernstein workflow manifest.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "manifest_path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "manifest_path"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false
+    }
+  },
+  {
+    "name": "fleet_status",
+    "description": "Read Agent Deck fleet and native session status as JSON.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false
+    }
+  },
+  {
+    "name": "fleet_launch",
+    "description": "Launch a Claude, Codex or other agent through Agent Deck with native session lineage and optional MCP attachments.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "command": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "group": {
+          "type": "string"
+        },
+        "parent": {
+          "type": "string"
+        },
+        "mcps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "path",
+        "title",
+        "command",
+        "message"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true
+    }
+  },
+  {
+    "name": "fleet_session_action",
+    "description": "Show, read output, send, fork, start, stop or restart an Agent Deck native session.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": [
+            "show",
+            "output",
+            "send",
+            "fork",
+            "start",
+            "stop",
+            "restart"
+          ]
+        },
+        "session": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "action",
+        "session"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true
+    }
+  },
+  {
+    "name": "caveman_code_run",
+    "description": "Run Caveman Code in compact one-shot or autonomous goal mode as a shadow or promoted executor.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "prompt": {
+          "type": "string"
+        },
+        "cwd": {
+          "type": "string"
+        },
+        "goal_mode": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "required": [
+        "prompt"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true
+    }
+  },
+  {
+    "name": "invoker_submit",
+    "description": "Submit a confined Invoker workflow only after explicit license approval; submission is an effect, not proof of workflow validity.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workflow_path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workflow_path"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true
+    }
+  },
+  {
+    "name": "task_execute",
+    "description": "Execute one dependency-ready mission task through durable attempts. Proven unchanged success may be reused; uncertain effects require reconciliation, not automatic retry.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "mission_id": {
+          "type": "string"
+        },
+        "task_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "mission_id",
+        "task_id"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true
+    }
+  },
+  {
+    "name": "source_absorb",
+    "description": "Clone a GitHub project into quarantine, pin its commit, inspect license/manifests/CLI declarations, and optionally run safe local checks. It does not install or promote the project.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "repo": {
+          "type": "string"
+        },
+        "ref": {
+          "type": "string"
+        },
+        "execute_tests": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "required": [
+        "repo"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false
+    }
+  },
+  {
+    "name": "mission_compile",
+    "description": "Compile a goal into a durable SPEC.md, invariants, task DAG, verification contract and context budget.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "goal": {
+          "type": "string"
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "requested_capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "budget_tokens": {
+          "type": "integer",
+          "default": 160000
+        },
+        "budget_cost_usd": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "goal"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false
+    }
+  },
+  {
+    "name": "mission_route",
+    "description": "Resolve providers independently for every capability required by a mission.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "mission_id": {
+          "type": "string"
+        },
+        "include_shadow": {
+          "type": "boolean",
+          "default": true
+        }
+      },
+      "required": [
+        "mission_id"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false
+    }
+  },
+  {
+    "name": "mission_execute",
+    "description": "Execute a compiled mission asynchronously through deterministic waves and provider-specific adapters. Code changes remain in isolated relay worktrees unless separately applied.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "mission_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "mission_id"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true
+    }
+  },
+  {
+    "name": "mission_status",
+    "description": "Read mission state, task provider selections, native task pointers and receipt lineage.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "mission_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "mission_id"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false
+    }
+  },
+  {
+    "name": "mission_backpropagate",
+    "description": "Convert a failure into a durable bug record and optionally a generalized invariant with regression proof.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "mission_id": {
+          "type": "string"
+        },
+        "symptom": {
+          "type": "string"
+        },
+        "root_cause": {
+          "type": "string"
+        },
+        "regression_test": {
+          "type": "string"
+        },
+        "generalize": {
+          "type": "boolean",
+          "default": true
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      },
+      "required": [
+        "mission_id",
+        "symptom",
+        "root_cause",
+        "regression_test"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false
+    }
+  },
+  {
+    "name": "session_register",
+    "description": "Register a native Claude, Codex, Caveman Code, Agent Deck or other provider session without copying its transcript.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "provider_id": {
+          "type": "string"
+        },
+        "native_session_id": {
+          "type": "string"
+        },
+        "mission_id": {
+          "type": "string"
+        },
+        "cwd": {
+          "type": "string"
+        },
+        "parent_session_id": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "default": "active"
+        },
+        "metadata": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "provider_id",
+        "native_session_id"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false
+    }
+  },
+  {
+    "name": "session_list",
+    "description": "List native session/thread pointers by mission or provider.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "mission_id": {
+          "type": "string"
+        },
+        "provider_id": {
+          "type": "string"
+        },
+        "limit": {
+          "type": "integer",
+          "default": 100
+        }
+      },
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false
+    }
+  },
+  {
+    "name": "session_handoff",
+    "description": "Compile a provider-specific handoff packet from a native source session and mission without replaying the full transcript.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "session_id": {
+          "type": "string"
+        },
+        "target_provider": {
+          "type": "string"
+        },
+        "mission_id": {
+          "type": "string"
+        },
+        "budget_tokens": {
+          "type": "integer",
+          "default": 16000
+        }
+      },
+      "required": [
+        "session_id",
+        "target_provider"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false
+    }
+  },
+  {
+    "name": "source_update_check",
+    "description": "Compare pinned provider source refs to current GitHub HEAD and create compatibility candidates without upgrading active routes.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "provider_id": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false
+    }
+  },
+  {
+    "name": "context_compile",
+    "description": "Compile a budgeted progressive-disclosure context packet with content-addressed full artifacts.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "mission_id": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string",
+          "default": "generic"
+        },
+        "budget_tokens": {
+          "type": "integer",
+          "default": 24000
+        }
+      },
+      "required": [
+        "mission_id"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false
+    }
+  },
+  {
+    "name": "provider_evaluate",
+    "description": "Run non-destructive capability probes and store per-capability scores and evidence.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "provider_id": {
+          "type": "string"
+        },
+        "capability": {
+          "type": "string"
+        },
+        "execute_extended": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "required": [
+        "provider_id"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false
+    }
+  },
+  {
+    "name": "provider_compare",
+    "description": "Compare latest evaluated providers for a capability.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "capability": {
+          "type": "string"
+        },
+        "providers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "capability"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false
+    }
+  },
+  {
+    "name": "provider_promote",
+    "description": "Promote one evaluated, installed and license-approved provider for a capability and scope.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "provider_id": {
+          "type": "string"
+        },
+        "capability": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string",
+          "default": "global"
+        },
+        "weight": {
+          "type": "number",
+          "default": 1
+        }
+      },
+      "required": [
+        "provider_id",
+        "capability"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true
+    }
+  },
+  {
+    "name": "provider_quarantine",
+    "description": "Remove a provider from automatic routing while preserving source and evidence.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "provider_id": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "provider_id",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true
+    }
+  },
+  {
+    "name": "provider_license_approve",
+    "description": "Record an explicit operator/legal approval for a non-MIT/Apache provider.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "provider_id": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "provider_id",
+        "note"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true
+    }
+  },
+  {
+    "name": "install_plan",
+    "description": "Return reviewed package-manager commands for an ecosystem profile without executing them.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "profile": {
+          "type": "string",
+          "enum": [
+            "lean",
+            "deterministic",
+            "fleet",
+            "full",
+            "recommended"
+          ],
+          "default": "recommended"
+        }
+      },
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false
+    }
+  },
+  {
+    "name": "replay_verify",
+    "description": "Recompute the complete hypervisor receipt chain and identify the first divergence.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false
+    }
+  }
+]

@@ -1,0 +1,17 @@
+{
+  "name": "external_resource",
+  "displayName": "External Resource",
+  "description": "One resource the outside world publishes, as compiled into the external estate index. This is a catalogue of what exists, not a map of ways in and not a claim that anything was read: most entries are specifications, repositories and documentation, which are citations rather than sources. A census row may cite one of these; the two are kept apart because conflating what exists with what this estate reads is how a map becomes an integration list.",
+  "attributes": {
+    "ext_id": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "name": {"type": "string", "required": true},
+    "url": {"type": "string", "required": false},
+    "says": {"type": "text", "required": false},
+    "estate": {"type": "string", "required": true},
+    "grouping": {"type": "string", "required": false},
+    "functions": {"type": "string", "required": false},
+    "related": {"type": "string", "required": false},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

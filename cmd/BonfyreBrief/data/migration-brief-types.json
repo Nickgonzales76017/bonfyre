@@ -1,0 +1,152 @@
+{
+  "schema": "bonfyre.migration-brief-types.v1",
+  "program_template": "research-to-migration",
+  "estimate_label": "Proposed range. This is a planning estimate, not a quote, and it has not been calibrated against delivered work.",
+  "cannot_infer": [
+    "a cited passage -> the source system matches it, or the upstream project supports this customer's case",
+    "an inventory-stated criterion -> a verified or accepted criterion; only a reviewer with authorized access can verify it",
+    "a proposed range -> a price, a quote, an invoice or permission to spend",
+    "a proposed task -> admitted work, provider access, or authority to touch the customer's systems",
+    "a license mention in a README -> the license of the code, or rights to adopt or republish it"
+  ],
+  "types": [
+    {
+      "id": "hosting-account-acquisition",
+      "title": "Hosting account move assessment",
+      "recipient": "the account owner moving sites off an InterWorx, cPanel, Plesk or Virtualmin server",
+      "collections": ["aurekai/aurekai.migration.brief-input.hosting-controls", "aurekai/aurekai.migration.brief-input.primary"],
+      "families": ["software-documentation:hosting"],
+      "selectors": ["migrat", "transfer", "backup", "restore", "account", "domain", "dns", "mail", "api", "command line", "cli", "reseller", "siteworx", "nodeworx", "virtual server", "cpanel", "plesk"],
+      "criteria": [
+        {"id": "inventory", "text": "Every site, domain, mailbox and database on the source account is listed before anything moves.", "needs": ["site_count", "domain_list", "mailbox_count", "database_count"]},
+        {"id": "frozen-source", "text": "A frozen copy of the source account exists and can be restored without the old host.", "needs": ["backup_location"]},
+        {"id": "dns-plan", "text": "DNS records and their current TTLs are recorded, so the cutover can be reversed.", "needs": ["dns_provider"]},
+        {"id": "mail-continuity", "text": "Mail keeps arriving during the move and old mail is copied with folder structure intact.", "needs": ["mailbox_count"]}
+      ],
+      "estimate": {"low": 300, "high": 900, "currency": "USD", "unit": "site", "scale_fact": "site_count", "basis": "reviewer hours per site for inventory, staged copy, mail sync and cutover check"},
+      "tasks": [
+        {"operator": "queue.migration.inventory-intake", "title": "Read the authorized account inventory"},
+        {"operator": "queue.migration.frozen-source", "title": "Confirm a restorable frozen copy of the source"},
+        {"operator": "queue.migration.staged-copy", "title": "Stage the copy on the destination without cutover"},
+        {"operator": "queue.migration.cutover-review", "title": "Review DNS and mail cutover with the account owner"}
+      ]
+    },
+    {
+      "id": "php-rescue",
+      "title": "PHP site rescue assessment",
+      "recipient": "the owner of a PHP or WordPress site stuck on an old PHP version",
+      "collections": ["aurekai/aurekai.migration.brief-input.primary"],
+      "families": ["software-documentation:php"],
+      "selectors": ["php", "upgrade", "compatib", "wordpress", "plugin", "static analysis", "refactor", "testing", "playground", "blueprint", "composer", "deprecat", "migrat", "security"],
+      "criteria": [
+        {"id": "runtime", "text": "The current PHP version and the target version are both named.", "needs": ["php_version", "target_php_version"]},
+        {"id": "extensions", "text": "Plugins, themes and custom code are listed, with the ones nobody maintains marked.", "needs": ["plugin_list"]},
+        {"id": "rehearsal", "text": "The site runs in a throwaway copy on the target version before the live site changes.", "needs": ["staging_url"]}
+      ],
+      "estimate": {"low": 600, "high": 2400, "currency": "USD", "unit": "site", "scale_fact": "site_count", "basis": "reviewer hours for compatibility scan, fixes on a copy, and a rehearsal pass"},
+      "tasks": [
+        {"operator": "queue.migration.inventory-intake", "title": "Read the authorized PHP and plugin inventory"},
+        {"operator": "queue.migration.compat-scan", "title": "Scan the copy for target-version incompatibilities"},
+        {"operator": "queue.migration.rehearsal", "title": "Rehearse the upgrade on a throwaway copy"}
+      ]
+    },
+    {
+      "id": "sql-erp-migration",
+      "title": "SQL and ERP migration assessment",
+      "recipient": "the team moving a database or an Odoo/ERP install to a new engine or version",
+      "collections": ["aurekai/aurekai.migration.brief-input.primary", "aurekai/aurekai.migration.brief-input.specialist", "aurekai-migration-briefs-draft/aurekai.migration.brief-input.sql"],
+      "families": ["software-documentation:sql", "software-documentation:erp"],
+      "selectors": ["convert", "migrat", "dialect", "schema", "oracle", "sql server", "postgres", "mysql", "odoo", "upgrade", "script", "database", "stored procedure", "ddl", "data", "casting rule", "typemod"],
+      "criteria": [
+        {"id": "engines", "text": "Source and destination engines and versions are named.", "needs": ["source_engine", "destination_engine"]},
+        {"id": "objects", "text": "Tables, views, procedures, triggers and permissions are counted on the source.", "needs": ["object_counts"], "evidence": "schema-map"},
+        {"id": "diff", "text": "Row counts, types, constraints and a sample of query results match between source and a rehearsal copy.", "needs": ["rehearsal_database"], "evidence": "map-verify"},
+        {"id": "rollback", "text": "A rollback point exists and the time to restore it is known.", "needs": ["backup_location"]}
+      ],
+      "estimate": {"low": 2500, "high": 12000, "currency": "USD", "unit": "database", "scale_fact": "database_count", "basis": "reviewer hours for object mapping, rehearsal conversion and diff review per database"},
+      "tasks": [
+        {"operator": "queue.migration.inventory-intake", "title": "Read the authorized schema and object inventory"},
+        {"operator": "queue.migration.mapping", "title": "Map types, procedures and constraints from the cited conversion rules"},
+        {"operator": "queue.migration.rehearsal", "title": "Convert into a rehearsal copy"},
+        {"operator": "queue.migration.diff-receipt", "title": "Record row, type and query diffs as receipts"}
+      ]
+    },
+    {
+      "id": "cad-ifc",
+      "title": "CAD and IFC model migration assessment",
+      "recipient": "the design or facilities team moving drawings and building models between tools",
+      "collections": ["aurekai/aurekai.migration.brief-input.specialist", "aurekai-migration-briefs-draft/aurekai.migration.brief-input.cad"],
+      "families": ["software-documentation:cad"],
+      "selectors": ["ifc", "geometry", "bim", "step", "schema", "convert", "ids", "validat", "model", "export", "import", "format", "dxf", "drawing", "specification", "license"],
+      "criteria": [
+        {"id": "formats", "text": "Source file formats and schema versions are named (for example IFC2X3 or IFC4).", "needs": ["source_formats"]},
+        {"id": "sample", "text": "A representative sample model is provided under the customer's authorization.", "needs": ["sample_model"]},
+        {"id": "editability", "text": "What must stay editable after the move (walls, openings, properties) is written down.", "needs": ["editability_requirements"]}
+      ],
+      "estimate": {"low": 1500, "high": 6000, "currency": "USD", "unit": "model set", "scale_fact": "model_set_count", "basis": "reviewer hours for format check, sample conversion and geometry/property comparison"},
+      "tasks": [
+        {"operator": "queue.migration.inventory-intake", "title": "Read the authorized model inventory and sample"},
+        {"operator": "queue.migration.sample-conversion", "title": "Convert the sample and compare geometry and properties"},
+        {"operator": "queue.migration.rights-review", "title": "Review upstream tool licenses before any code adoption"}
+      ]
+    },
+    {
+      "id": "civic-legacy-modernization",
+      "title": "Civic legacy system modernization assessment",
+      "recipient": "a public agency or nonprofit replacing an old data portal, forms system or rules engine",
+      "collections": ["aurekai-migration-briefs-draft/aurekai.migration.brief-input.civic"],
+      "families": ["software-documentation:civic"],
+      "selectors": ["data", "catalog", "api", "publish", "open data", "rules", "legislation", "tax", "benefit", "interview", "form", "document", "workflow", "registration", "integration", "install", "test", "license"],
+      "criteria": [
+        {"id": "records", "text": "The datasets, forms and rules in the current system are listed, with any personal data marked.", "needs": ["system_inventory", "personal_data_classes"]},
+        {"id": "effective-dates", "text": "Each rule or policy carries the date it took effect, so old cases still compute the old way.", "needs": ["policy_effective_dates"]},
+        {"id": "public-access", "text": "What the public can read today stays readable after the move.", "needs": ["public_endpoints"]}
+      ],
+      "estimate": {"low": 4000, "high": 20000, "currency": "USD", "unit": "system", "scale_fact": "system_count", "basis": "reviewer hours for inventory, rule and dataset mapping, and a parallel-run plan"},
+      "tasks": [
+        {"operator": "queue.migration.inventory-intake", "title": "Read the authorized system inventory"},
+        {"operator": "queue.migration.pii-review", "title": "Mark personal data and the rules that govern it"},
+        {"operator": "queue.migration.parallel-run", "title": "Plan a parallel run against the old system"}
+      ]
+    },
+    {
+      "id": "verification-rollback",
+      "title": "Migration verification and rollback plan",
+      "recipient": "whoever signs off a migration and needs proof it worked and a way back if it did not",
+      "collections": ["aurekai/aurekai.migration.brief-input.specialist", "aurekai-migration-briefs-draft/aurekai.migration.brief-input.rollback"],
+      "families": ["software-documentation:verify"],
+      "selectors": ["crawl", "archive", "warc", "browser", "backup", "restore", "snapshot", "verif", "integrity", "encrypt", "deduplicat", "reproducible", "test"],
+      "criteria": [
+        {"id": "before-capture", "text": "The source site or system is captured before the move so it can be compared afterwards.", "needs": ["capture_scope"]},
+        {"id": "restore-drill", "text": "A restore from backup has been performed once, with the time it took recorded.", "needs": ["restore_drill_minutes"]},
+        {"id": "sign-off", "text": "A named person signs off the comparison before the old system is retired.", "needs": ["sign_off_owner"]}
+      ],
+      "estimate": {"low": 400, "high": 1800, "currency": "USD", "unit": "system", "scale_fact": "system_count", "basis": "reviewer hours for before/after capture, comparison and a restore drill"},
+      "tasks": [
+        {"operator": "queue.migration.before-capture", "title": "Capture the source before the move"},
+        {"operator": "queue.migration.restore-drill", "title": "Run and time one restore from backup"},
+        {"operator": "queue.migration.compare", "title": "Compare before and after captures for sign-off"}
+      ]
+    },
+    {
+      "id": "document-archive-extraction",
+      "title": "Document and archive extraction assessment",
+      "recipient": "a records or operations team moving scanned files, PDFs and office documents into a searchable archive",
+      "collections": ["aurekai-migration-briefs-draft/aurekai.migration.brief-input.document", "aurekai-migration-briefs-draft/aurekai.migration.brief-input.rollback"],
+      "families": ["software-documentation:document", "software-documentation:verify"],
+      "selectors": ["extract", "pdf", "ocr", "parse", "metadata", "document", "table", "layout", "convert", "format", "pii", "anonymi", "redact", "detect", "archive", "backup", "license"],
+      "criteria": [
+        {"id": "corpus", "text": "The document formats and rough counts are listed, including scans that need OCR.", "needs": ["document_formats", "document_count"]},
+        {"id": "rights", "text": "Who owns the documents and what may be kept, shown or shared is recorded for each collection.", "needs": ["rights_holder", "retention_rules"]},
+        {"id": "personal-data", "text": "The kinds of personal data to detect or redact are named, and a person approves the rules before any run.", "needs": ["pii_categories", "pii_rule_owner"]}
+      ],
+      "estimate": {"low": 800, "high": 4000, "currency": "USD", "unit": "collection", "scale_fact": "collection_count", "basis": "reviewer hours for a sample extraction, metadata mapping and a personal-data rule review"},
+      "tasks": [
+        {"operator": "queue.migration.inventory-intake", "title": "Read the authorized document inventory and sample"},
+        {"operator": "queue.migration.sample-conversion", "title": "Extract the sample and compare text, tables and metadata"},
+        {"operator": "queue.migration.pii-review", "title": "Agree the personal-data rules before anything is extracted at scale"},
+        {"operator": "queue.migration.rights-review", "title": "Review upstream tool and model licenses before adoption"}
+      ]
+    }
+  ]
+}

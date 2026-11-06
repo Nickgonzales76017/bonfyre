@@ -1,0 +1,9 @@
+F	d up;t 10;u up;t 1
+L	d left;t 4;u left;t 1
+R	d right;t 4;u right;t 1
+U	d use;t 2;u use;t 34
+SL	d strafeleft;t 8;u strafeleft;t 1
+SR	d straferight;t 8;u straferight;t 1
+X	d fire;t 3;u fire;t 5
+l	d left;t 1;u left;t 1
+r	d right;t 1;u right;t 1

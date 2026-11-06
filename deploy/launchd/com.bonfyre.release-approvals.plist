@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Runs scripts/release/approved_activation.sh when the work board writes an approval.
+     Install once: sed "s#__HOME__#$HOME#g" deploy/launchd/com.bonfyre.release-approvals.plist > ~/Library/LaunchAgents/com.bonfyre.release-approvals.plist
+     then: launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.bonfyre.release-approvals.plist -->
+<plist version="1.0"><dict>
+<key>Label</key><string>com.bonfyre.release-approvals</string>
+<key>ProgramArguments</key><array><string>/bin/sh</string><string>__HOME__/Developer/Bonfyre/scripts/release/approved_activation.sh</string><string>run</string></array>
+<key>WatchPaths</key><array><string>__HOME__/.bonfyre/state/approvals</string></array>
+<key>StartInterval</key><integer>120</integer>
+<key>EnvironmentVariables</key><dict><key>PATH</key><string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string><key>BONFYRE_BUN_BINARY</key><string>__HOME__/.bun/bin/bun</string></dict>
+<key>StandardOutPath</key><string>__HOME__/.bonfyre/logs/release-approvals.log</string>
+<key>StandardErrorPath</key><string>__HOME__/.bonfyre/logs/release-approvals.log</string>
+</dict></plist>

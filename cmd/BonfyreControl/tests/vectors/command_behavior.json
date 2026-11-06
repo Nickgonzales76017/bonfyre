@@ -1,0 +1,10 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-control","binary_env":"BONFYRE_CONTROL_BIN","cases":[
+{"name":"entropy pre-flight passes real prose and fails a degenerate input","files":{"t.txt":"Speaker 1: Um, so we, we need to fix the the website by Friday.\nSpeaker 2: Okay. The checkout page is broken and customers cannot pay.\nSpeaker 1: Right, uh, and we should also update the pricing page.\n","low.txt":{"prefix":"","repeat":"a\n","count":500,"suffix":""}},"steps":[
+ {"argv":["entropy-check","t.txt"],"env":{"HOME":"${tmp}","BONFYRE_CONTROL_DB":"${tmp}/c.db","BONFYRE_SAE_DICT":""},"exit":0,"contains":["result     : PASS"]},
+ {"argv":["entropy-check","low.txt"],"env":{"HOME":"${tmp}","BONFYRE_CONTROL_DB":"${tmp}/c.db","BONFYRE_SAE_DICT":""},"exit":2,"contains":["entropy    : 0.0000 bits","FAIL"]}]},
+{"name":"sae-gate with no dictionary gates nothing and says so","files":{"t.txt":"some text\n"},"steps":[{"argv":["sae-gate","t.txt"],"env":{"HOME":"${tmp}","BONFYRE_CONTROL_DB":"${tmp}/c.db","BONFYRE_SAE_DICT":""},"exit":0,"contains":["NOT_GATED_NO_DICTIONARY"]}]},
+{"name":"a valid policy is stored and an invalid kind is refused","files":{"good.json":"{\"id\":\"p2\",\"kind\":\"cost\",\"rule\":{\"max_usd\":1}}","bad.json":"{\"id\":\"p1\",\"kind\":\"nonsense\"}"},"steps":[
+ {"argv":["policy","add","bad.json"],"env":{"HOME":"${tmp}","BONFYRE_CONTROL_DB":"${tmp}/c.db","BONFYRE_SAE_DICT":""},"exit":1},
+ {"argv":["policy","add","good.json"],"env":{"HOME":"${tmp}","BONFYRE_CONTROL_DB":"${tmp}/c.db","BONFYRE_SAE_DICT":""},"exit":0,"contains":["policy added: p2  kind=cost"]},
+ {"argv":["policy","show","p2"],"env":{"HOME":"${tmp}","BONFYRE_CONTROL_DB":"${tmp}/c.db","BONFYRE_SAE_DICT":""},"exit":0,"contains":["kind    : cost","{\"max_usd\":1}"]},
+ {"argv":["policy","list"],"env":{"HOME":"${tmp}","BONFYRE_CONTROL_DB":"${tmp}/c.db","BONFYRE_SAE_DICT":""},"exit":0,"contains":["p2","cost-global-llm-cap"],"excludes":["p1 "]}]}]}

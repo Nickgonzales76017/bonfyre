@@ -1,0 +1,12 @@
+{
+  "artifact": "qwen2.5-coder-0.5b-instruct-native-fp16.fpq",
+  "format": "FPQ0",
+  "version": 10,
+  "tensors": 290,
+  "weights": 494032768,
+  "stored_bytes": 988086334,
+  "verdict": "STRUCTURALLY_READABLE_ONLY",
+  "command": "cmd/BonfyreFPQ/bonfyre-fpq inspect /Users/nickgonzales/BonfyreModels/fpq/qwen2.5-coder-0.5b-instruct-native-fp16.fpq",
+  "executed_on": "2026-09-11",
+  "does_not_establish": ["full tensor reconstruction", "layer execution parity", "logit parity", "generation behavior", "task behavior", "fused block execution"]
+}

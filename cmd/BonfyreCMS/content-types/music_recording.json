@@ -1,0 +1,19 @@
+{
+  "name": "music_recording",
+  "displayName": "Music Recording",
+  "description": "Canonical identity for one recorded performance/fixation of a Music Work. The Recording may reference a master asset but does not become a Release, Track position, credit statement, right, offer or playback session.",
+  "attributes": {
+    "recording_id": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "work_ref": {"type": "string", "required": true},
+    "title": {"type": "string", "required": true},
+    "primary_artist_ref": {"type": "string", "required": true},
+    "isrc": {"type": "string", "required": false},
+    "master_asset_ref": {"type": "string", "required": false},
+    "duration_ms": {"type": "integer", "required": false},
+    "recorded_at": {"type": "datetime", "required": false},
+    "recorded_place_ref": {"type": "string", "required": false},
+    "evidence_refs": {"type": "json", "required": false},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

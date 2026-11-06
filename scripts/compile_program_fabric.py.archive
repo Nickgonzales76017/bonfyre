@@ -1,0 +1,270 @@
+#!/usr/bin/env python3
+"""Run a generalized program inside a world that already exists.
+
+Fifty grant-defined ideas are not fifty products and must not become fifty page
+trees.  Each one is a configuration of machinery this estate already has: a
+subject, its world, its slots, the sources it reads, the work it does and the
+money that pays for it.  What was missing was the layer that says *this subject
+is running this kind of program, so these existing owners should participate*.
+
+Two moves, and nothing else:
+
+  load      the fifty templates become program_template rows -- declarations of
+            what a program of that kind would require.  A template is not a
+            programme anyone is running and names a funder only as the kind of
+            stream such work is usually funded by.
+
+  compile   a subject that actually uses one gets a program_instance, the
+            slots that instance needs in its own world, and a binding per slot.
+            A slot is lowered by an application only where an application
+            genuinely lowers that material; the rest are published as declared
+            slots no surface can fill yet, which is the true state rather than
+            an empty page section pretending to be a feature.
+
+The estate's own capability_program is an action contract -- application kind,
+action, what it consumes and produces, the authority it requires and what it
+projects on failure -- so a program's "capability families" are not written
+there.  Claiming a capability without its authority requirement is the exact
+laundering the atlas forbids, so this writes requirements instead: obligations
+the program carries, open until something satisfies them.
+
+  compile_program_fabric.py load [--packs FILE]
+  compile_program_fabric.py compile --subject S --site-id ID --program P [--program P ...]
+"""
+import argparse, json, os, re, sqlite3, sys, time
+
+NOW = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+TEMPLATE_CANNOT_INFER = (
+    "a template is what a program of this kind would require; it is not a program anyone is "
+    "running, not an award, not an application for one, and naming a funding stream is not a "
+    "claim that this estate has any relationship with that funder")
+INSTANCE_CANNOT_INFER = (
+    "this subject is running this kind of program in this estate; that is not authority to act "
+    "on anyone's behalf, not a funded award, and not a relationship with any funder named by "
+    "the template")
+PACKAGE_CANNOT_INFER = (
+    "a work package is a declared scope kept distinct from other streams so one real effort "
+    "supported by several of them can be told apart from one cost claimed more than once; it is "
+    "never a claim that money was awarded, applied for, billed, paid, booked or authorized")
+BINDING_CANNOT_INFER = (
+    "a slot with no lowering application is a declared part of this program that no surface can "
+    "fill yet; it is not a feature that exists and not an empty one that failed")
+
+# Which of this estate's lowered applications can actually carry a program role.
+# A role with no entry gets a published slot and no application: the machine
+# says the part exists and cannot be shown, which is worth more than a section
+# that renders nothing.
+ROLE_LOWERED_BY = {
+    "notices": ("Newsroom", "source_collection"),
+    "newsroom": ("Newsroom", "source_collection"),
+    "sources": ("PublicationFeed", "source_collection"),
+    "evidence": ("PublicationFeed", "source_collection"),
+    "board": ("Board", "world"),
+    "work": ("Board", "world"),
+    "case": ("Board", "world"),
+    "community": ("Community", "community"),
+}
+
+
+def slug(text, cap=64):
+    flat = re.sub(r"[^a-z0-9]+", "-", (text or "").lower())
+    return re.sub(r"-+", "-", flat).strip("-")[:cap].strip("-")
+
+
+class Store:
+    def __init__(self, path, namespace="root"):
+        self.db = sqlite3.connect(path)
+        self.db.execute("PRAGMA journal_mode=WAL")
+        self.ns = namespace
+        self.cache = {}
+
+    def cols(self, table):
+        if table not in self.cache:
+            self.cache[table] = [r[1] for r in self.db.execute("PRAGMA table_info(%s)" % table)]
+        return self.cache[table]
+
+    def put(self, table, key_field, row):
+        cols = self.cols(table)
+        if not cols:
+            raise SystemExit("the CMS has no %s type registered" % table)
+        record = {"namespace": self.ns, "created_at": NOW, "updated_at": NOW,
+                  "published_at": "", "status": "published"}
+        for name, value in row.items():
+            record[name] = json.dumps(value) if isinstance(value, (dict, list)) else value
+        fields = [c for c in cols if c in record and c != "id"]
+        self.db.execute(
+            "INSERT INTO \"%s\"(%s) VALUES(%s) ON CONFLICT(namespace,\"%s\") DO UPDATE SET %s" % (
+                table, ",".join('"%s"' % f for f in fields), ",".join("?" for _ in fields),
+                key_field, ",".join('"%s"=excluded."%s"' % (f, f) for f in fields if f != "created_at")),
+            [record[f] for f in fields])
+
+    def done(self):
+        self.db.commit()
+        self.db.close()
+
+
+def load_templates(store, packs_path):
+    doc = json.load(open(packs_path))
+    packs = doc["packs"] if isinstance(doc, dict) else doc
+    for pack in packs:
+        store.put("program_template", "template_id", {
+            "template_id": pack["program_id"],
+            "name": pack.get("name", pack["program_id"]),
+            "archetype": pack.get("archetype", ""),
+            "ordinal": pack.get("ordinal", 0),
+            "subject_kinds": pack.get("subject_kinds", []),
+            "semantic_slots": pack.get("semantic_slots", []),
+            "capability_families": pack.get("capability_families", []),
+            "owner_bindings": pack.get("owner_bindings", []),
+            # Named as candidates, because that is all a template can honestly say.
+            "funding_candidates": pack.get("grant_stack", []),
+            "surface_policy": pack.get("surface_policy", "bind_into_existing_world"),
+            "page_policy": pack.get("page_policy", "no_dedicated_page_required"),
+            "description": pack.get("description", ""),
+            "cannot_infer": TEMPLATE_CANNOT_INFER,
+        })
+    return len(packs)
+
+
+def compile_instance(store, subject, site_id, template_id, ordinal_base):
+    row = store.db.execute(
+        "SELECT name, archetype, semantic_slots, capability_families, funding_candidates"
+        " FROM program_template WHERE namespace=? AND template_id=? AND status='published'",
+        (store.ns, template_id)).fetchone()
+    if not row:
+        return None
+    name, archetype, slots_json, families_json, funding_json = row
+    slots = json.loads(slots_json or "[]")
+    families = json.loads(families_json or "[]")
+    funders = json.loads(funding_json or "[]")
+
+    instance = "%s-%s" % (site_id, slug(template_id))
+    store.put("program_instance", "instance_id", {
+        "instance_id": instance, "template_id": template_id, "owner_subject": subject,
+        "site_id": site_id, "archetype": archetype, "opened_at": NOW,
+        "cannot_infer": INSTANCE_CANNOT_INFER,
+    })
+
+    lowered, declared = 0, 0
+    for index, role in enumerate(slots, 1):
+        slot_id = "%s-%s" % (instance, slug(role, 24))
+        store.put("semantic_slot", "slot_id", {
+            "slot_id": slot_id, "site_id": site_id, "slot_name": slug(role, 24),
+            "ordinal": ordinal_base + index, "extent": "section",
+            "accepts": [role], "min_material_quality": "observed",
+            "max_items": 12, "htmx_boundary": "slot-%s" % slug(role, 24),
+        })
+        carries = ROLE_LOWERED_BY.get(role)
+        if carries:
+            kind, selector = carries
+            collection = "%s-sources" % instance if selector == "source_collection" else ""
+            store.put("application_binding", "binding_id", {
+                "binding_id": "%s-app" % slot_id, "site_id": site_id, "slot_id": slot_id,
+                "application_kind": kind,
+                "material_query": {selector: "%s-world" % instance} if selector != "source_collection" else {},
+                "source_collection": collection,
+                "continuity_key": "%s:%s" % (instance, role),
+            })
+            lowered += 1
+        else:
+            declared += 1
+        store.put("program_binding", "binding_id", {
+            "binding_id": slot_id, "instance_id": instance, "site_id": site_id,
+            "slot_id": slot_id, "program_role": role,
+            "lowered_by": carries[0] if carries else "",
+            "continuity_key": "%s:%s" % (instance, role),
+            "cannot_infer": BINDING_CANNOT_INFER,
+        })
+
+    # What the program needs read, stated as a demand rather than as feeds. The
+    # selector is what SourceFrontier is asked to resolve; until it has, the
+    # collection names no source and a reading surface over it stays empty.
+    store.put("source_collection", "collection_id", {
+        "collection_id": "%s-sources" % instance, "subject_address": subject,
+        "source_selector": {"source_refs": [], "grouping": "program",
+                            "value": name, "capability_families": families,
+                            "resolver": "SourceFrontier"},
+        "material_kind": ["publication_occurrence"], "refresh_policy": "on_observation",
+    })
+
+    # The obligations the program carries, one per capability family it needs
+    # and one per funding stream it could be paid by. Open until something
+    # satisfies them; nothing here says any of them is met.
+    for family in families:
+        store.put("program_requirement", "requirement_id", {
+            "requirement_id": "%s-needs-%s" % (instance, slug(family, 24)),
+            "instance_id": instance, "kind": "capability",
+            "statement": "this program needs %s, and this estate has not shown that it has it here"
+                         % family.replace("_", " "),
+            "owner": "CapabilityClosure", "state": "open",
+            "cannot_infer": "an open requirement is an obligation recorded, never one met, and "
+                            "never authority to meet it",
+        })
+    for index, funder in enumerate(funders, 1):
+        package = "%s-funding-%d" % (instance, index)
+        store.put("funding_work_package", "package_id", {
+            "package_id": package, "instance_id": instance, "funding_program": funder,
+            "scope": [], "cost_codes": [],
+            "distinctness_rule": "scope and cost codes must not overlap another package on this instance",
+            "cannot_infer": PACKAGE_CANNOT_INFER,
+        })
+        store.put("program_requirement", "requirement_id", {
+            "requirement_id": "%s-scope" % package, "instance_id": instance, "kind": "funding_scope",
+            "statement": "the scope and cost codes this work package covers are not stated, so no cost "
+                         "can be allocated to %s here" % funder,
+            "owner": "Finance", "state": "open",
+            "cannot_infer": PACKAGE_CANNOT_INFER,
+        })
+
+    return {"instance": instance, "name": name, "archetype": archetype,
+            "slots": len(slots), "lowered": lowered, "declared_unlowered": declared,
+            "requirements": len(families) + len(funders), "work_packages": len(funders)}
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("verb", choices=["load", "compile"])
+    ap.add_argument("--estate", default=os.path.expanduser("~/.bonfyre/estate-local"))
+    ap.add_argument("--packs", default="")
+    ap.add_argument("--subject", default="")
+    ap.add_argument("--site-id", default="")
+    ap.add_argument("--program", action="append", default=[])
+    args = ap.parse_args()
+
+    store = Store(os.path.join(args.estate, "cms.db"))
+    if args.verb == "load":
+        if not args.packs:
+            print(json.dumps({"error": "load needs --packs"}))
+            return 2
+        count = load_templates(store, args.packs)
+        store.done()
+        print(json.dumps({"templates": count, "cannot_infer": TEMPLATE_CANNOT_INFER}, indent=1))
+        return 0
+
+    if not args.subject or not args.site_id or not args.program:
+        print(json.dumps({"error": "compile needs --subject, --site-id and at least one --program"}))
+        return 2
+
+    # Programs are added after whatever the world already publishes, so
+    # attaching one never reorders a subject's own composition.
+    base = store.db.execute(
+        "SELECT COALESCE(MAX(ordinal),0) FROM semantic_slot WHERE namespace=? AND site_id=?",
+        (store.ns, args.site_id)).fetchone()[0]
+    compiled, missing = [], []
+    for template in args.program:
+        done = compile_instance(store, args.subject, args.site_id, template, base)
+        if done is None:
+            missing.append(template)
+        else:
+            compiled.append(done)
+            base += done["slots"]
+    store.done()
+    print(json.dumps({"subject": args.subject, "site_id": args.site_id,
+                      "compiled": compiled, "no_such_template": missing,
+                      "cannot_infer": INSTANCE_CANNOT_INFER}, indent=1))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

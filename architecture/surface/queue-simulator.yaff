@@ -1,0 +1,50 @@
+atlas surface
+
+architecture queue-simulator
+  canonical_name Process simulator
+  family surface
+  domain Surface / Queued work, staffing and flow
+  layer application
+  semantic_question For a process of stations joined by routes, with arrivals by hour or an exact trace, how long does work wait at each station, how many give up or are turned away, how busy are staff, and what hourly staff meets a waiting goal?
+  purpose A Work Samples workspace built from the claude-skills capacity-planner donor as an instrument rather than prose: a draggable process map, a day strip where arrivals and hourly staff are edited directly, queueing formulas worked out on every edit, a seeded event simulation in a worker with 95% intervals across runs, playback of a simulated day on the map, run-against-run comparison, and real arrivals replayed from NYC 311 open data
+  maturity implemented
+  consumes NYC Open Data 311 Service Requests (erm2-nwe9), read live from the visitor's browser and once retained with its query and response digest
+  publishes ProcessModel JSON, per-station results CSV, visit log CSV, share link
+  node_types Station, Route, ArrivalProfile, ArrivalTrace, ServiceDistribution, HourlyStaffing, SimulationRun, Comparison
+  internal_calculus Erlang C by the stable Erlang B recursion; M/M/c waits exact, other variability by the Allen–Cunneen correction, named as an approximation on the page
+  internal_calculus traffic equations solved by repeated substitution; a cycle that never reaches the exit is reported instead of simulated
+  internal_calculus non-homogeneous arrivals by thinning; exponential patience with lazy removal; queue limits turn work away; staff changes take effect at each hour
+  internal_calculus a station's staff-hours a day become people by hours each and time away; a twelve-month hiring sequence sizes each month's starters so that, once ramped linearly and after monthly leaving, capacity meets that later month's need, and months that cannot be covered in time are reported
+  internal_calculus staffing per hour is the smallest staff whose formula service level meets the station's goal; the simulation then checks it
+  invariant every run is repeatable from its seed; replications use derived seeds so a comparison against a kept run uses the same draws
+  invariant a difference between two runs is called better or worse only when the 95% intervals do not overlap
+  invariant arrivals labelled as the city's records are the retained or live records; handling times, staff and patience are labelled as assumptions until a visitor replaces them
+  invariant a model with routes not summing to 100%, staff outside 0–500 or no entry is described and not run
+  witness components/BonfyreServiceSite/tests/process-sim.test.mjs checks Erlang C against published values (11 agents at 10 erlangs, 0.6821), simulated wait, utilisation and service level inside the interval of the exact M/M/c answer, seed repeatability, routing proportions with a rework loop, abandonment and blocking, hourly staffing meeting its target by formula and in simulation, refusal of broken models, lognormal moments, timestamp and duration import, and interval-based comparison
+  witness components/BonfyreServiceSite/tests/queues-research-browser.mjs run against a local build on 2026-10-19 at 1440 and 390 px: forty people today against the found staffing produced a hiring sequence; a run finished, formula staffing raised the answered share from 42% to 87% in simulation, no sideways scroll
+  witness packs/aurekai-work-samples/site/nyc311-phone-20261006.json retains 2,225 phone-created NYC 311 requests for Tuesday 6 October 2026 with the query and response SHA-256
+  forbidden_inference a simulated staffing plan -> a hiring decision, a rota anyone has agreed to, or a forecast of a future day
+  forbidden_inference a 311 service request created by phone -> a call handled by a 311 agent; calls that created no request are absent from the data
+  forbidden_inference formula agreement with simulation -> agreement with the real operation; handling times in the example are assumptions
+  known_gap not yet published to aurekai-work-samples.pages.dev; the deploy is the operator's to run
+  known_gap no native save or continuation; work is kept in browser storage, a share link and downloaded files
+  known_gap priorities between work types and skill-based routing are not modelled
+  source_path components/BonfyreServiceSite/process-sim.mjs
+  source_path components/BonfyreServiceSite/process-sim-worker.mjs
+  source_path components/BonfyreServiceSite/process-sim-client.mjs
+  source_path components/BonfyreServiceSite/process-sim-material.mjs
+  source_path components/BonfyreServiceSite/process-sim.css
+  source_path components/BonfyreServiceSite/sections/simulation.mjs
+  source_path components/BonfyreServiceSite/tests/process-sim.test.mjs
+  source_path packs/aurekai-work-samples/site/nyc311-phone-20261006.json
+  source_lineage 2026-10-19 claude-skills business-operations/skills/capacity-planner at 19392f7a; ChatGPT sandbox build rejected by Nick as faking
+
+interaction service-site-packages-queue-simulator
+  source service-site
+  destination queue-simulator
+  relation packages_workspace
+  preserves the retained arrivals byte for byte with their query and digest, and the engine the tests run under one versioned asset prefix
+  drops nothing a visitor edits; the package carries no visitor state
+  forbidden_inference a packaged workspace -> a published one; publication is a separate deploy
+  invalidates_on process-sim sources, retained arrivals, simulation section markup
+  witness components/BonfyreServiceSite/process-sim-material.mjs

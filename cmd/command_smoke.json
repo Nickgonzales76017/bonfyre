@@ -192,7 +192,7 @@
     },
     {
       "binary": "bonfyre-frappe-compiler",
-      "bytes": 1457,
+      "bytes": 1570,
       "command": "BonfyreFrappeCompiler",
       "probe": "--help",
       "responds": true

@@ -10,7 +10,7 @@ Tiny native sync/contract utility for Bonfyre browser and local artifacts.
 ## Build
 
 ```bash
-cd 10-Code/BonfyreSync
+cd components/BonfyreSync
 make
 ```
 

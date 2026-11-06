@@ -1,0 +1,47 @@
+diff --git a/components/BonfyreServiceSite/tests/documents-recording-browser.test.mjs b/components/BonfyreServiceSite/tests/documents-recording-browser.test.mjs
+--- a/components/BonfyreServiceSite/tests/documents-recording-browser.test.mjs
++++ b/components/BonfyreServiceSite/tests/documents-recording-browser.test.mjs
+@@ -18,6 +18,24 @@
+ let server,browser;
+ const checks=[],errors=[],outside=[];
+ const check=(name,value)=>{assert.ok(value,name);checks.push(name);console.log('PASS '+name);};
++// A data URL is an inline resource, not a network destination. Keep that
++// distinct from same-origin HTTP and blob resources; do not ignore other schemes.
++function localPageResource(address, kind) {
++ try {
++  const url=new URL(address);
++  if(['http:','https:'].includes(url.protocol))return url.origin===origin&&!url.username&&!url.password;
++  if(url.protocol==='blob:')return url.origin===origin;
++  return url.protocol==='data:'&&kind==='image'&&/^data:image\/svg\+xml;base64,/i.test(address);
++ } catch {return false;}
++}
++for(const [address,kind,expected] of [
++ [origin,'document',true],[origin+'/api/media?id=recording','fetch',true],
++ ['blob:'+origin+'/test','media',true],['data:image/svg+xml;base64,PHN2Zy8+','image',true],
++ ['https://example.invalid/media','media',false],[origin+'.example.invalid/','document',false],
++ ['blob:https://example.invalid/test','media',false],['data:text/html,hello','document',false],
++ ['data:image/svg+xml;base64,PHN2Zy8+','script',false],['file:///tmp/test','media',false],
++ ['ws://example.invalid/socket','websocket',false],['not a URL','other',false]
++])assert.equal(localPageResource(address,kind),expected,'request boundary: '+address);
+ async function start(){
+  server=Bun.spawn(['bun',join(repo,'components/BonfyreServiceSite/site.mjs'),'documents',dir,'--port',String(port)],{stdout:'pipe',stderr:'pipe'});
+  const reader=server.stdout.getReader();let text='';const timer=setTimeout(()=>server.kill(),60000);
+@@ -28,7 +46,7 @@
+ const launch=()=>puppeteer.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',userDataDir:profile});
+ async function open(){
+  const p=await browser.newPage();p.setDefaultTimeout(15000);
+- p.on('pageerror',e=>errors.push(e.message));p.on('request',r=>{if(!r.url().startsWith(origin+'/')&&!r.url().startsWith('blob:'+origin+'/'))outside.push(r.url());});
++ p.on('pageerror',e=>errors.push(e.message));p.on('request',r=>{if(!localPageResource(r.url(),r.resourceType()))outside.push(r.url());});
+  await p.setViewport({width:1440,height:1080});await p.goto(origin,{waitUntil:'networkidle0'});await p.waitForSelector('body[data-ready=true]');return p;
+ }
+ const idle=p=>p.waitForFunction(()=>!document.body.hasAttribute('aria-busy'));
+@@ -68,6 +86,9 @@
+  await browser.close();browser=null;await stop();await start();browser=await launch();page=await open();
+  check('Recording removal survives process and browser restart',await page.$eval('[data-document=recording]',n=>n.disabled));
+  check('Timed note survives full browser restart',await page.$eval('#notes',n=>n.innerText.includes('lecture will be brief')&&n.innerText.includes('0:06–0:10')));
++ writeFileSync(join(proof,'network-observation.json'),JSON.stringify({
++  at:new Date().toISOString(),outside,scope:'page request events only; no process-wide or websocket audit'
++ },null,2)+'\n');
+  check('No browser exceptions',errors.length===0);check('No external page or recording requests',outside.length===0);
+  writeFileSync(join(proof,'browser-verification.json'),JSON.stringify({at:new Date().toISOString(),checks,errors,outside,recording_sha256:media.sha256,transcript_sha256:media.transcript_sha256,review:'unreviewed',human_listening_verified:false,playback_verified:true,process_restart:true,browser_restart:true},null,2)+'\n');
+ } finally {if(browser)await browser.close();await stop();rmSync(dir,{recursive:true,force:true});}

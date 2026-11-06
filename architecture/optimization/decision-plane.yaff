@@ -1,0 +1,161 @@
+atlas optimization-decision-plane
+
+architecture decision-plane
+  canonical_name DecisionPlane
+  owns DecisionCase
+  owns TypedQuestionProgram
+  owns DiagnosticDecisionReceipt
+  consumes ExactCandidateSet
+  consumes InformationPolicy
+  publishes DecisionProposal
+  family optimization
+  domain Optimization / Typed semantic decisions
+  layer execution
+  semantic_question Which semantic ambiguity remains after exact masking, and can several atomic judgments about one subject avoid a more expensive operator?
+  purpose Compile one exact-owner-bounded subject into atomic typed questions and numeric decision programs, preserve model-specific joint versus independent evaluation semantics, execute authored uncertainty and loss projections, and measure whether a selective decision saves downstream work without promoting it to truth or effects.
+  maturity implemented
+  source_path components/BonfyreDecision/decision-plane.cue
+  source_path components/BonfyreDecision/decision-plane.mjs
+  source_path components/BonfyreDecision/typed-decision.mjs
+  source_path components/BonfyreDecision/native-head.mjs
+  source_path components/BonfyreDecision/local-inference.mjs
+  source_path components/BonfyreDecision/installed-runtime.mjs
+  source_path components/BonfyreDecision/local-systemone.mjs
+  source_path scripts/residual-to-work.mjs
+  source_path components/BonfyreDecision/tests/typed-decision.test.mjs
+  source_path components/BonfyreDecision/frontier-adapters.mjs
+  source_path components/BonfyreDecision/tests/decision-plane.test.mjs
+  source_path components/BonfyreDecision/tests/decision-outcomes.test.mjs
+  source_path components/BonfyreControlPlane/obligation-work.mjs
+  source_path cmd/BonfyreContextCut/context_cut.mjs
+  source_path integrations/mcp/recursive_overlay.mjs
+  witness components/BonfyreDecision/tests/decision-plane.test.mjs proves one-state multi-question compilation, exact finite candidate validation, public-only hosted execution, Cloudflare/Jev typed response validation, explicit provider-call budgets, bounded concurrent deduplication, three owner adapters, and measured selective value refusal
+  witness cmd/BonfyreContextCut/tests/context_cut_test.sh proves a normal purpose-bound ContextCut publishes a reconstructable DecisionCase frontier that plans without a provider call or resident source-text duplication
+  witness integrations/mcp/tests/recursive_overlay.test.mjs proves the live gateway compiles current read-only tool candidates into a non-effecting DecisionPlane receipt and refuses effecting tools or private hosted state
+  witness components/BonfyreDecision/tests/typed-decision.test.mjs proves contiguous typed probability columns, stable logit lowering, bounded wire-rounding validation, dependence-free conjunction bounds, authored asymmetric loss and abstention, default compiled projections in MCP and Flow adapters, private local-logit execution without hosted calls, recipe invalidation and cancellation of sibling requests
+  witness components/BonfyreDecision/tests/local-inference.test.mjs proves bounded process-local deterministic logit reuse across ordinary assessment calls, current-contract reprojection, model and policy invalidation, independent receipt identity, cancellation and failure exclusion, and explicit inference-count accounting
+  witness scripts/tests/residual-to-work.test.mjs proves the normal production work-planning CLI emits private source-receipt-bound typed cases from its CUE owner mapping without model calls, claims, or changes to effect authorization
+  witness components/BonfyreDecision/tests/decision-outcomes.test.mjs proves common externally labeled Brier, logarithmic and ordinal scoring, request and evaluation-unit deduplication, model-partitioned evidence, changed-answer refusal, and exact binomial tail inversion with exhaustive small-sample coverage checks
+  witness components/BonfyreControlPlane/tests/obligation-decision-frontier.test.mjs proves ordinary obligation lowering exposes a lazy private decision fingerprint without a second state store, preserves native queue ownership and tuple shape, and refuses stale proposals before or after local assessment
+  internal_calculus one semantic subject plus atomic typed questions; Clef uses joint schema attention while Jev documents independent evaluation, neither contract establishes statistical independence of events
+  internal_calculus authored finite schema -> cached column-offset program -> local logits or hosted marginals -> uncertainty-preserving projection -> explicit loss and review proposal
+  internal_calculus exact shortlist -> decision probabilities -> selective proposal -> separately measured downstream cost
+  invariant the exact owner supplies a finite candidate set and receipt digest before the model sees any state
+  invariant a decision case projects only fields declared by the program and refuses oversized state instead of silently truncating it
+  invariant long ContextCut bodies are assessed in independently receipted bounded chunks, and a later DecisionCut may omit the entire body only if every chunk supports omission
+  invariant hosted execution receives only public information-policy state; no private or SHADOW state becomes executable from a model answer
+  invariant full per-option probabilities are retained; confidence is not treated as the probability that the chosen answer is correct
+  invariant the program digest includes output projections and selection costs; a changed recipe cannot consume old receipts as if behavior were unchanged
+  invariant combining marginal probabilities uses dependence-free conjunction bounds rather than multiplication without an independence witness
+  invariant a locally injected inference owner declares its model artifact digest and field-coupling semantics; local logits never implicitly trigger a hosted fallback
+  invariant absent an explicit hosted provider the common assessment path selects the installed pinned native Clef owner; planning loads no model, private local state never acquires a remote fallback, and exact owners retain effect authority
+  invariant local confidence semantics and implementation identity are explicit; typed probability answers preserve exact zeros and are not relabeled as maximum-option confidence
+  witness components/BonfyreDecision/tests/installed-runtime.test.mjs proves one shared startup, caller-local cancellation, identity checks, idle eviction without interrupting users, joined shutdown and refusal to overlap a failed shutdown with a new process
+  witness components/BonfyreDecision/tests/local-systemone.test.mjs proves artifact hash admission, authenticated owned-loopback transport, bounded text-only request and response validation, reserved marker refusal, cancellation and exact-zero typed probabilities using an explicitly synthetic child fixture
+  invariant only explicitly deterministic local owners reuse complete request logits; CUE bounds retained entries and logit bytes, and every assessment revalidates its current owner contract before reuse
+  invariant local inference residency retains no state text or authority receipt; model, request, owner, mask, gate, information policy and program identity partition reuse, and hosted aliases never enter the cache
+  invariant malformed score expectations, nonmaximal choices, missing option mass and nonfinite logits are refused before owner projection
+  invariant identical purpose and chunk text under the same owner mask, program, gate and information policy share a provider request only within one bounded run, while each exact candidate keeps a separate receipt; provider aliases are not cross-run cache identities
+  invariant concurrent calls sharing one local owner or prefill backend remain serialized through owned output snapshots; independent owners may execute in parallel, and cancellation never releases a backend before it finishes
+  invariant hosted execution requires an explicit maximum provider-call budget, and MCP intent may not be silently classified as public
+  invariant a model answer is a non-effecting proposal; label quality and total system cost must be measured before a selective cut is promoted
+  invariant normal answer receipts bind their validated distributions; proper-loss reports separate model and program identities, and neither loss statistics nor a digest authenticates external labels
+  invariant ordinary outcome evaluation replays the authored selection loss table against external labels and reports review deferral, wrong suggestions and review-required bypass separately; saved relative loss is not measured operational savings
+  invariant a supplied ordinal answer legend must match the authored rubric; missing legends remain supported for internal native answers and do not establish full hosted wire conformance
+  witness components/BonfyreDecision/tests/decision-outcomes.test.mjs proves shared labeled selection replay against always-review, negative relative utility for wrong confident suggestions, and refusal of conflicting score legends without changing effect authority
+  invariant selective promotion compares the one-sided exact binomial risk upper bound against authored risk tolerance and requires an explicit fixed-policy independent-holdout assumption, not merely zero observed mistakes
+  invariant obligation decision cases are reconstructed from native commitment and queue rows; model assessment rechecks the read fingerprint and cannot claim, reassign or discharge work
+  forbidden_inference a typed model response -> exactness, source truth, evidence, authority, effect permission, or calibrated correctness in an unevaluated domain
+  forbidden_inference a hosted model latency or provider benchmark -> Bonfyre end-to-end savings
+  known_gap the TypeSafe Jev model weights and internal architecture are not public; only its documented wire contract and behavior can be integrated or evaluated
+  known_gap the standalone C joint-head binding remains tested with synthetic backbone activations; the separate pinned quantized native runtime does not establish BF16 reference parity or production accuracy and savings
+  known_gap no labeled Bonfyre production corpus yet demonstrates a positive selective value gate; this implementation does not automatically replace existing work
+  known_gap ordinary residual and obligation work planning now expose Flow cases and obligation assessment can use a pinned local owner, but native WorkGraph execution does not consume model role suggestions; MCP remains an explicit read-only planning tool
+  known_gap proper scoring and finite-sample risk bounds exist, but trusted production labels, representative independent samples and a training implementation are not supplied by these evaluation primitives
+  interacts decision-cut
+  interacts context-cut-compiler
+  interacts mcp-recursive-native-overlay
+  interacts work-graph
+  interacts decision-program
+  interacts native-joint-decision-head
+  interacts native-clef-runtime
+  interacts protocol-contract
+
+architecture native-joint-decision-head
+  canonical_name NativeJointDecisionHead
+  owns JointSchemaHeadExecution
+  owns NativeDecisionWeightLayout
+  consumes JointSchemaBackboneActivations
+  consumes OutputEmbeddingOptionMeans
+  publishes TypedOptionLogits
+  family optimization
+  domain Optimization / Native typed decision computation
+  layer execution
+  semantic_question Can one prefill representation produce all bounded question logits through option-specific evidence routing and cross-field attention without autoregressive answer generation?
+  purpose Implement the released Clef head equations as a shared C operation with a stable Bun/Node binding, explicit finite schema spans, immutable imported weights and bounded caller-owned scratch memory.
+  maturity implemented
+  source_path lib/libbonfyre/include/bf_decision_head.h
+  source_path lib/libbonfyre/src/bf_decision_head.c
+  source_path components/BonfyreDecision/native/head_binding.c
+  source_path components/BonfyreDecision/native-head.mjs
+  source_path components/BonfyreDecision/native-import.mjs
+  source_path components/BonfyreDecision/schema-encoder.mjs
+  source_path components/BonfyreDecision/tests/native-head-bench.c
+  source_path components/BonfyreDecision/tests/native-head-benchmark.json
+  witness components/BonfyreDecision/tests/native-head.test.mjs compares scalar and Accelerate paths to independently expressed dense head equations, exercises joint field dependence and permutation equivariance, rejects malformed spans and buffers, and executes native head outputs through ContextCut, MCP and Flow shared assessment contracts using an explicitly synthetic backbone
+  witness components/BonfyreDecision/tests/native-head-safety.c exercises 183 raw/immutable-owner shape, lifetime and arena cases, failure output preservation and arithmetic limits under AddressSanitizer and UndefinedBehaviorSanitizer
+  witness components/BonfyreDecision/tests/native-head-benchmark.json retains three interleaved synthetic native-only trials and source/binary fingerprints; immutable-owner median improvements are 2.16x, 2.20x and 4.47x without claiming backbone, trained-model or application speedup
+  witness components/BonfyreDecision/tests/native-import.test.mjs proves bounded standalone safetensors import into actual native execution, exact file digests, tensor layout refusal and exhaustive finite F16 and BF16 conversion; fixtures are synthetic rather than released trained tensors
+  witness components/BonfyreDecision/tests/schema-encoder.test.mjs proves the pinned upstream text segmentation and span layout with an injected fixture tokenizer, Unicode ordering and explicit refusal of unsupported JSON numbers, media and truncation
+  internal_calculus hidden normalization -> option context and lexical projections -> option evidence attention -> weighted option summaries -> joint field decoder attention -> lexical prior plus gated cosine and residual scoring
+  internal_calculus native named tensor layout -> immutable F32 snapshot -> caller-owned linear scratch arena -> ordered option logits -> semantic schema-column remapping
+  internal_calculus text schema segments -> pinned tokenizer token IDs and spans -> native prefill -> distinct option-token output-embedding gather -> per-option means -> shared C head; no vocabulary-sized generated answer logits
+  invariant native execution performs no heap allocation in the C kernel and retains no request pointers or mutable global state
+  invariant attention accumulates online softmax and does not allocate a query-by-token score matrix; layer scratch is reused across depth
+  invariant opaque C model ownership copies and validates immutable weights once; the raw pointer ABI still rescans caller-owned weights each invocation, and no public trust flag skips validation
+  invariant residual scoring packs at most 32 options per matrix multiply across field boundaries and reuses option-summary exponentials; bounded extra scratch is measured rather than hidden
+  invariant local evaluator identity binds head tensors, backbone, encoder and compiled native implementation; none of these may be silently substituted
+  invariant local evaluator identity includes the Bun adapter implementation digest; changing the bridge cannot reuse a prior executable passport
+  invariant tensor import refuses duplicate JSON keys, missing or extra tensors, shape drift, holes, overlapping data, nonfinite values and changed source files; source file hashes remain distinct from converted F32 tensor identity
+  invariant the text encoder refuses overflow instead of truncating state; safe-integer JSON and text-only support are explicit restrictions rather than full upstream processor equivalence
+  invariant deterministic text encoders compile and reuse complete ordered schema token programs by default under entry and serialized-payload budgets; changed rubrics or field order invalidate reuse, private state is never resident, and warm requests retain byte and token admission limits
+  witness components/BonfyreDecision/tests/schema-encoder.test.mjs compares 100 distinct-state records against uncached encoding with identical tokens and spans, reducing fixture tokenizer invocations from 2700 to 126 while retaining zero state bytes; it proves LRU eviction, mutation isolation, changed-rubric recompilation and warm-budget refusal, not trained-model throughput
+  witness components/BonfyreDecision/tests/native-head.test.mjs exercises both raw addon and wrapped entrypoints against detached storage, spoofed buffer properties, shared backing stores and hostile getters; native admission uses engine-owned buffer metadata rather than invoking request-owned accessors
+  invariant the input must explicitly attest to an untruncated complete request and exact schema; a mismatched option order is remapped by identity rather than interpreted positionally
+  invariant Node-API refuses overlapping, shared, nonfinite or incorrectly shaped buffers before logits can be consumed; the trusted C ABI requires nonoverlapping inputs
+  forbidden_inference a matching synthetic head calculation -> released Clef accuracy, PyTorch parity, compatible Qwen backbone, multimodal support, calibrated decisions or production performance improvement
+  forbidden_inference decision logits -> candidate admission, evidence, permission or an executable effect
+  known_gap numerical checks use an independent double-precision dense equation reference; the attempted temporary PyTorch oracle installation exhausted disk space and upstream framework parity is not established
+  known_gap no trained tensors, model tokenizer, multimodal processor or compatible native Qwen3.5 backbone are supplied by this head implementation
+  known_gap the default 256 MiB head workspace does not admit the released Flash geometry at the full upstream 16384-token limit; increasing context requires measured resource admission or a lower-residency implementation, not only changing the advertised token maximum
+  known_gap F32 scalar and Apple Accelerate are implemented; Metal, CUDA, Wasm SIMD, BF16 parity and trained-head benchmarks remain unimplemented
+  interacts decision-plane
+
+architecture decision-cut
+  canonical_name DecisionCut
+  owns DerivedContextCut
+  consumes DiagnosticDecisionReceipt
+  consumes ContextCut
+  publishes DerivedContextCut
+  family optimization
+  domain Optimization / Context representation
+  layer context
+  semantic_question Can a receipted semantic decision omit clearly irrelevant context tokens without losing the exact recoverable frontier or pretending to establish evidence completeness?
+  purpose Reuse an exact ContextCut's verified token spans and body receipts to compile a smaller purpose-specific representation; only a labeled held-out evaluation with measured net savings can make an ADMIT-derived cut an execution candidate.
+  maturity implemented
+  source_path components/BonfyreDecision/decision-cut.mjs
+  source_path components/BonfyreDecision/tests/decision-cut.test.mjs
+  witness components/BonfyreDecision/tests/decision-cut.test.mjs proves physical token reuse and reduction, stale receipt refusal, recoverable omitted identities, SHADOW refusal, and held-out selective evaluation before an execution candidate is emitted
+  invariant every decision receipt is rebound to the current exact candidate, purpose, mask, request and body digest before it can select a token span
+  invariant held-out evaluation excludes target request, body digest and source identity; only locally artifact-bound model receipts currently qualify reusable execution candidates, not hosted model-name assertions
+  invariant ContextCut promotion uses the common sample-size-aware risk bound and exact answer digest validation; a small zero-error fixture cannot certify zero false-omission risk
+  invariant evaluation labels bind case and unit through a verified label receipt digest; complete single-body examples are required so correlated chunks cannot inflate the trial count
+  invariant ambiguous or contradictory passages remain in the derived cut; only strongly irrelevant passages can be omitted by the model
+  invariant an omitted body remains in the recoverable frontier and the original ContextCut remains intact
+  invariant a SHADOW ContextCut cannot become an execution candidate even with a favorable model and evaluation report
+  forbidden_inference a smaller context or model score -> evidence completeness, truth, safety, authority, or effect permission
+  known_gap the physical reduction is proven on a fixture only; no production token or generation-cost saving is claimed
+  known_gap held-out labels and baseline/fallback timings are operator-supplied; a trusted evaluation corpus and production metering are still required before execution promotion is operational
+  known_gap grouped multi-chunk body evaluation is not implemented; chunked evaluation rows are refused rather than counted as independent body omission trials
+  interacts decision-plane
+  interacts context-cut-compiler

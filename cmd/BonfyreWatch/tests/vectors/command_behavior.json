@@ -1,0 +1,4 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-watch","binary_env":"BONFYRE_WATCH_BIN","cases":[
+{"name":"a dropped file is planned in dry-run and triggers the repository pipeline once","files":{"inbox/t.csv":"name,qty\nwidget,3\n"},"steps":[
+ {"argv":["inbox","--pipeline","pipeline","--root","ws","--out","wo","--once","--dry-run"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["\"event\":\"planned\",\"path\":\"inbox/t.csv\""]},
+ {"argv":["inbox","--pipeline","pipeline","--root","ws","--out","wo","--once"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["\"event\":\"triggered\""]}]}]}

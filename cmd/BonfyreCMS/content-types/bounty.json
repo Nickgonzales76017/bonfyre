@@ -1,0 +1,16 @@
+{
+  "name": "bounty",
+  "displayName": "Bounty",
+  "description": "A discrete piece of work a project has named a figure against. A stated bounty is what a project says the work is worth to it: it is not an award, not an offer capable of acceptance, and not a claim that the money exists or has been set aside.",
+  "attributes": {
+    "bounty_id": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "project_id": { "type": "string", "required": true },
+    "task": { "type": "text", "required": true },
+    "amount_stated": { "type": "string", "required": true },
+    "currency": { "type": "string", "required": true },
+    "state": { "type": "string", "required": true },
+    "derived_from": { "type": "string", "required": true },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

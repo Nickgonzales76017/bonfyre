@@ -1,7 +1,7 @@
 /*
  * Resource admission, decided before work starts rather than during.
  *
- * Ported from 10-Code/BonfyreControlPlane/resource_admission.py. Conformance
+ * Absorbed from components/BonfyreControlPlane/resource_admission.py.archive. Conformance
  * vectors: tests/conformance/control/vectors/admission.
  */
 
@@ -27,8 +27,8 @@ static void human_size(int64_t bytes, char *out, size_t out_size)
     }
 }
 
-BfAdmissionDecision bf_admission_decide(const BfAdmissionRequest *request,
-                                        const BfAdmissionPolicy *policy)
+BfAdmissionDecision bf_control_admission_decide(const BfAdmissionRequest *request,
+                                                const BfAdmissionPolicy *policy)
 {
     BfAdmissionDecision decision;
     memset(&decision, 0, sizeof(decision));
@@ -102,7 +102,7 @@ BfAdmissionDecision bf_admission_decide(const BfAdmissionRequest *request,
     return decision;
 }
 
-const char *bf_admission_verdict_name(BfAdmissionVerdict verdict)
+const char *bf_control_admission_verdict_name(BfAdmissionVerdict verdict)
 {
     switch (verdict) {
     case BF_ADMISSION_ADMIT: return "admit";

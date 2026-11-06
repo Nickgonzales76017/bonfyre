@@ -6,6 +6,9 @@ stable operations:
 
 - `fetchPost(id)`: reads a post through the WordPress REST API, with bounded
   TTL/LRU caching and concurrent-request coalescing.
+- `discoverPublicCapabilities()`: reads only the public REST route index and
+  reports the exact post/page/media/taxonomy/Woo/ActivityPub routes it found.
+  It does not treat a WordPress fingerprint as write access or site authority.
 - `normalizeWebhook(...)`: verifies an HMAC-SHA256 webhook and converts it to a
   stable Bonfyre event envelope with an idempotency key.
 - `toNativeCmsEntry(event)`: projects that envelope into the native CMS entry

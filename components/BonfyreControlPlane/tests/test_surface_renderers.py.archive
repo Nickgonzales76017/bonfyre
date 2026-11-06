@@ -1,0 +1,329 @@
+"""Hold the separation that was missing: renderer is not pattern is not route.
+
+Four things were fused --
+
+    ROUTE + SURFACE PATTERN + RENDERER + CURRENT DATA SOURCE
+
+-- which is why nine deployed surfaces read as nine products. Pinry's masonry
+could only ever show an EphemeralBoard because the masonry *was* /board, and
+the navigation could only ask "where do you want to go?".
+
+Pulled apart, a SurfacePattern stays what it always was -- one semantic view
+over exactly one owner -- and a SurfaceRenderer is the human interaction
+grammar on its own: the masonry, the stream-to-topic keyboard, the facet rail
+and compare tray. The same grammar can then carry a different owner without
+being rebuilt, and the nav asks "how do you want to view this world?" instead.
+
+These tests exist to stop the seam closing again. A renderer that names an
+owner has become a pattern; a pattern that names a grammar has become a
+renderer; and either one is the fusion coming back.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import re
+import socket
+import urllib.error
+import urllib.request
+
+import pytest
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.dirname(os.path.dirname(os.path.dirname(_HERE)))
+KIT = os.path.join(REPO, "site", "matrix", "surfaces", "_kit.js")
+SURFACES = os.path.join(REPO, "site", "matrix", "surfaces")
+MAIN_C = os.path.join(REPO, "cmd", "BonfyreWebAddress", "src", "main.c")
+
+TIMEOUT = 25
+HOST = "https://ron.aurekai.work"
+
+# The grammars the deployed frontend carries, named. Watch is a media grammar,
+# not the filesystem BonfyreWatch organ.
+RENDERERS = ["vertical", "stage", "thread", "board", "community", "market",
+             "search", "spatial", "work", "inspector", "watch"]
+
+# Section 14: the drawer groups by the kind of thing a person is doing. A view
+# control that lists ten peers is a route list with a new heading.
+GROUPS = ["social", "visual", "economic", "work", "inspect"]
+
+EXTENTS = {"chip", "card", "section", "page", "workspace"}
+
+
+def _get(path, host=HOST, accept="application/json"):
+    req = urllib.request.Request(host + path, headers={"Accept": accept})
+    try:
+        with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+            return r.status, r.read().decode(), dict(r.headers)
+    except urllib.error.HTTPError as e:
+        return e.code, e.read().decode(), dict(e.headers)
+    except (urllib.error.URLError, socket.timeout, OSError) as exc:
+        pytest.skip(f"unreachable: {exc}")
+
+
+def _kit():
+    with open(KIT) as fh:
+        return fh.read()
+
+
+@pytest.fixture(scope="module")
+def registry():
+    code, body, _ = _get("/_surface/renderers")
+    assert code == 200, code
+    return json.loads(body)
+
+
+# ------------------------------------------------ the registry is authored
+
+def test_the_renderers_are_authored_rather_than_compiled(registry):
+    # Section 68: adding a surface should be an authoring act. A renderer list
+    # living in a binary is a deployment.
+    assert registry["reads"] == "surface_renderer"
+    assert [r["renderer"] for r in registry["records"]] == RENDERERS
+
+
+@pytest.mark.parametrize("name", RENDERERS)
+def test_each_renderer_states_its_grammar_seam_and_limit(registry, name):
+    r = next(x for x in registry["records"] if x["renderer"] == name)
+    assert r["canonical_name"], name
+    assert len(r["grammar"]) > 40, f"{name} does not describe an interaction grammar"
+    assert r["seam"], f"{name} names no seam for protocol augmentation"
+    assert r["renders"], f"{name} names nothing it can render"
+    assert r["cannot_infer"], f"{name} does not say what it must not be read to imply"
+
+
+@pytest.mark.parametrize("name", RENDERERS)
+def test_a_renderer_declares_only_extents_from_the_vocabulary(registry, name):
+    r = next(x for x in registry["records"] if x["renderer"] == name)
+    got = set(r["extents"].split())
+    assert got and got <= EXTENTS, (name, sorted(got - EXTENTS))
+
+
+def test_a_renderer_names_no_owner(registry):
+    # The whole point of the separation. A renderer that reads something has
+    # become a pattern, and the grammar is welded to a source again.
+    for r in registry["records"]:
+        assert "reads_type" not in r and "reads_organ" not in r, r["renderer"]
+        # It may say what kinds of pattern it can render; it may not name a
+        # CMS type or an organ binary.
+        assert not re.search(r"\b(bonfyre-[a-z]+|_profile|_twin|night_subject)\b",
+                             r["renders"]), (r["renderer"], r["renders"])
+
+
+def test_a_pattern_names_no_grammar():
+    # The mirror check. A pattern that describes a facet rail has absorbed the
+    # renderer, and two things can then disagree about what a surface is.
+    code, body, _ = _get("/_surface/")
+    assert code == 200
+    for s in json.loads(body)["surfaces"]:
+        blob = json.dumps(s).lower()
+        for word in ("masonry", "keyboard", "facet rail", "compare tray", "theatre"):
+            assert word not in blob, (s["pattern"], word)
+
+
+def test_every_deployed_surface_has_a_renderer_extracted_from_it(registry):
+    # Phase one preserves every route. What became portable is the grammar, so
+    # each deployed page should be named as the place one was extracted from.
+    froms = {r.get("extracted_from") for r in registry["records"]}
+    for route in ("/discover", "/stage", "/channels", "/board", "/community",
+                  "/listings", "/parcels", "/inbox", "/territory"):
+        assert route in froms, route
+
+
+def test_two_renderers_were_extracted_from_the_one_route_that_held_two(registry):
+    # /parcels carried a dense search grammar and a map canvas. Extracting one
+    # renderer from it would have trapped the map in property search forever.
+    from_parcels = [r["renderer"] for r in registry["records"]
+                    if r.get("extracted_from") == "/parcels"]
+    assert sorted(from_parcels) == ["search", "spatial"], from_parcels
+
+
+def test_the_donor_lineage_survives_the_extraction(registry):
+    donors = {r["renderer"]: r.get("donor") for r in registry["records"]}
+    for name, donor in [("vertical", "Pixelfed"), ("stage", "Mobilizon"),
+                        ("thread", "Zulip"), ("board", "Pinry"),
+                        ("community", "lemmy-ui"), ("market", "Next.js Commerce"),
+                        ("spatial", "MapLibre GL JS"), ("work", "Plane")]:
+        assert donors[name] == donor, (name, donors[name])
+    # The two that borrow nothing say so rather than being given a donor.
+    assert not donors["search"] and not donors["inspector"] and not donors["watch"]
+
+
+# ---------------------------------------------------------- the view control
+
+def test_the_kit_carries_a_frame_and_not_just_a_route():
+    src = _kit()
+    assert "K.frame = " in src and "K.frameURL = " in src
+    block = src[src.index("K.frame = "):src.index("K.renderers = ")]
+    for coord in ("subject", "context", "territory", "audience", "extent"):
+        assert coord in block, coord
+
+
+def test_changing_the_view_keeps_the_frame():
+    src = _kit()
+    block = src[src.index("K.frameURL = "):src.index("K._renderers")]
+    assert "new URLSearchParams(location.search)" in block, (
+        "frameURL builds a fresh query, so switching view would drop the subject")
+    assert "route || frame.route" in block
+
+
+def test_the_drawer_groups_by_what_a_person_is_doing():
+    src = _kit()
+    block = src[src.index("K.VIEW_GROUP"):src.index("K.viewsFor")]
+    assert re.findall(r"^\s*\['([a-z]+)',", block, re.M) == GROUPS
+
+
+def test_a_view_illuminates_only_where_it_is_deployed():
+    src = _kit()
+    block = src[src.index("K.viewsFor"):src.index("K.VIEW_CSS")]
+    assert "lit: !!route" in block
+    assert "not deployed on this host" in block, (
+        "an unlit view gives no reason, so the drawer is a menu of doors some of "
+        "which open onto nothing")
+
+
+def test_the_shared_chrome_mounts_the_view_control():
+    with open(MAIN_C) as fh:
+        c = fh.read()
+    assert "BF_VIEW_MOUNT" in c
+    assert "K.viewControl('bf-view')" in c, (
+        "only the pages that were rewritten get a view control, so the nav keeps "
+        "asking where do you want to go")
+
+
+def test_the_view_control_reaches_a_compiled_estate_page():
+    code, body, _ = _get("/protocols", host="https://aurekai.work", accept="text/html")
+    assert code == 200
+    assert 'id="bf-view"' in body
+    assert "viewControl" in body
+
+
+# ------------------------------------------------------- the subject index
+
+def test_the_index_answers_for_every_kind():
+    code, body, _ = _get("/subjects?limit=1000")
+    assert code == 200
+    doc = json.loads(body)
+    assert doc["schema"] == "bonfyre-subject-index.v1"
+    assert doc["count"] > 300, doc["count"]
+    assert len(doc["kinds"]) >= 10
+    assert "presence is a projection" in doc["cannot_infer"]
+
+
+def test_the_index_is_one_list_and_not_ours_and_theirs():
+    # Reverse federation is structural here: a foreign twin is a subject in the
+    # same index as an institution. Two lists would make the outside a feature.
+    doc = json.loads(_get("/subjects?limit=1000")[1])
+    assert "ForeignTwin" in doc["kinds"]
+    assert "Institution" in doc["kinds"]
+
+
+def test_naming_one_subject_returns_its_projections():
+    doc = json.loads(_get("/subjects?id=institution:leaf-lounge")[1])
+    s = doc["subjects"][0]
+    assert s["addresses"] == len(s["address"])
+    assert s["presences"] == len(s["presence"])
+    terr = {p["territory"] for p in s["presence"]}
+    assert len(terr) > 1, (
+        "the subject the estate holds in four territories comes back with one, so "
+        "the projection matrix would draw a single column")
+
+
+def test_the_index_stays_a_list_until_a_subject_is_named():
+    # A constellation per row would make the index quadratic and would also be
+    # answering a question nobody asked.
+    doc = json.loads(_get("/subjects?limit=5")[1])
+    assert all("presence" not in s for s in doc["subjects"])
+
+
+# --------------------------------------------------- retained foreign bytes
+
+def test_the_receipts_say_which_bytes_are_still_on_disk():
+    code, body, _ = _get("/foreign/receipts")
+    assert code == 200
+    doc = json.loads(body)
+    assert doc["count"] > 0
+    kept = [r for r in doc["receipts"] if r["body"]]
+    assert kept, "nothing retained; /link has no material"
+    for r in kept:
+        assert r["body_href"].startswith("/foreign/body?twin=")
+    # A receipt whose body was cooled off disk must not claim to have one.
+    cold = [r for r in doc["receipts"] if not r["body"]]
+    assert cold, "every receipt claims bytes; the cooling pass is not being noticed"
+
+
+def test_retained_bytes_are_never_a_document_on_this_origin():
+    doc = json.loads(_get("/foreign/receipts")[1])
+    twin = next(r["twin"] for r in doc["receipts"] if r["body"])
+    code, body, headers = _get("/foreign/body?twin=" + twin, accept="*/*")
+    assert code == 200
+    assert headers["Content-Type"].startswith("text/plain"), headers["Content-Type"]
+    assert headers["X-Content-Type-Options"] == "nosniff"
+    assert "sandbox" in headers["Content-Security-Policy"]
+    assert "X-Bonfyre-Content-Sha256" in headers
+    assert "not a claim" in headers["X-Bonfyre-Cannot-Infer"]
+    assert body
+
+
+@pytest.mark.parametrize("attack", [
+    "../../../etc/passwd", "..%2f..%2fetc%2fpasswd", ".ssh/id_rsa",
+    "aurekai-auth-md-20260902T023408Z-3f34da0315/../../../etc/hosts",
+])
+def test_a_twin_name_never_becomes_a_path(attack):
+    code, body, _ = _get("/foreign/body?twin=" + urllib.parse.quote(attack, safe=""))
+    assert code in (400, 404), code
+    assert "passwd" not in body and "PRIVATE KEY" not in body
+
+
+def test_the_receipt_does_not_get_to_name_any_file():
+    # The receipt is a file this process wrote, which is not a reason to trust
+    # a path inside it. The check is in the source because a receipt with a
+    # rewritten body_path is the thing being defended against.
+    with open(MAIN_C) as fh:
+        c = fh.read()
+    fn = c[c.index("static int serve_foreign_body"):c.index("static int serve_foreign_twins")]
+    assert 'strncmp(bpath, bodies, strlen(bodies))' in fn
+    assert 'strstr(bpath, "..")' in fn
+
+
+def test_the_safe_file_check_is_stricter_than_the_identifier_check():
+    with open(MAIN_C) as fh:
+        c = fh.read()
+    fn = c[c.index("static int foreign_safe_file"):c.index("/* Retained foreign bytes")]
+    assert "text[i + 1] == '.'" in fn, (
+        "foreign_safe_file admits '..', which studio_safe_ident does too, and one "
+        "of these becomes a path")
+
+
+# ------------------------------------------------------------- the surfaces
+
+@pytest.mark.parametrize("name", ["console", "link"])
+def test_the_new_surfaces_are_served_and_declared(name):
+    code, _, _ = _get("/" + name, accept="text/html")
+    assert code == 200
+    with open(os.path.join(SURFACES, name + ".json")) as fh:
+        d = json.load(fh)
+    assert d["extent"] in EXTENTS
+    assert d["forbidden_inference"]
+    assert d["reads"]
+
+
+def test_the_console_starts_from_the_subject_and_not_from_a_pattern_stack():
+    with open(os.path.join(SURFACES, "console.html")) as fh:
+        page = fh.read()
+    assert "/subjects" in page
+    assert "PROJECTION MATRIX" in page.upper()
+    assert "one subject" in page.lower()
+
+
+def test_the_link_desk_builds_accounts_from_observed_metadata_only():
+    with open(os.path.join(SURFACES, "link.html")) as fh:
+        page = fh.read()
+    assert "/foreign/receipts" in page
+    assert "authorization_endpoint" in page
+    assert "submits nothing from here" in page or "submitted from here" in page, (
+        "the link desk does not say that it hands the door over rather than "
+        "walking through it")
+    # No hand-typed provider list: the endpoints come out of the documents.
+    assert "accounts.google.com" not in page and "api.twitter.com" not in page

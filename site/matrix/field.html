@@ -1,0 +1,809 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>The field · Aurekai</title>
+<link rel="stylesheet" href="/assets/tailwind.css">
+<link rel="stylesheet" href="/assets/world.css">
+<script src="/assets/client-organs.js" defer></script>
+<meta name="description" content="Every channel this estate knows of, drawn at once: how it came to know of each one, and how far each one got.">
+<meta name="bonfyre:cannot-infer" content="A point here is a channel address this estate has a record of. It is not a source it reads, not a claim the address answers, and not an endorsement of what it carries. The overwhelming majority are candidates nothing has admitted.">
+<style>
+  /* The field is the page. Everything else gets out of its way. */
+  :root { --field-ink: #f4f1ea; --field-dim: rgba(244,241,234,.62); }
+  /* The field is dark by construction, so the words on it are set explicitly
+     rather than inherited: a profile that dressed this page in dark ink would
+     make every label vanish into the field it labels. */
+  body, .over, .axis, #probe { color: var(--field-ink); }
+  .over p, .legend, .tally { color: var(--field-dim); }
+  .masthead h1, .tally .big, .legend b { color: var(--field-ink); }
+  body { margin: 0; overflow: hidden; background: #0b0c0e; }
+  #field { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+  .over {
+    position: fixed; z-index: 10; pointer-events: none;
+    padding: max(1rem, env(safe-area-inset-top)) 1.1rem 1rem;
+  }
+  .over * { pointer-events: auto; }
+  .masthead { top: 0; left: 0; max-width: min(34rem, 92vw); }
+  .masthead h1 { margin: 0 0 .3rem; font-size: clamp(1.1rem, 3.4vw, 1.6rem); letter-spacing: .01em; }
+  .masthead p { margin: 0 0 .5rem; font-size: .84rem; line-height: 1.55; }
+  .ways { display: flex; gap: .9rem; margin: 0 0 .5rem; font-size: .7rem;
+          letter-spacing: .09em; text-transform: uppercase; }
+  .ways a { color: var(--field-dim); text-decoration: none; }
+  .ways a:hover { color: var(--field-ink); }
+  .corner {
+    position: fixed; z-index: 10; left: 1.1rem; bottom: 2.4rem;
+    display: flex; flex-direction: column; gap: .7rem;
+    max-width: min(23rem, 88vw); pointer-events: none;
+  }
+  .corner > * { pointer-events: auto; }
+  .legend { font-size: .76rem; line-height: 1.55; }
+  .legend b { font-weight: 600; }
+  .legend .row { display: flex; gap: .5rem; align-items: baseline; }
+  .swatch { width: .62rem; height: .62rem; border-radius: 50%; display: inline-block; flex: none; }
+  .tally { top: max(1rem, env(safe-area-inset-top)); right: 1.1rem; text-align: right;
+           font-size: .8rem; line-height: 1.5; }
+  .tally .big { font-size: clamp(1.4rem, 5vw, 2.2rem); font-weight: 600; display: block; line-height: 1.1; }
+  .axis {
+    position: fixed; z-index: 5; font-size: .68rem; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--field-dim); pointer-events: none;
+  }
+  #state-note { margin: 0; font-size: .74rem; line-height: 1.5;
+                color: var(--field-dim); }
+  #probe {
+    position: fixed; z-index: 20; pointer-events: none; max-width: min(30rem, 86vw);
+    padding: .6rem .8rem; font-size: .8rem; line-height: 1.5;
+    background: #14161a; color: var(--field-ink);
+    border: 1px solid rgba(242,239,233,.2); border-radius: 2px;
+    box-shadow: 0 10px 34px rgba(0,0,0,.45); display: none;
+  }
+  #probe .addr { word-break: break-all; opacity: .85; }
+  #probe .refuse { margin-top: .4rem; opacity: .7; font-size: .74rem; }
+  #asked {
+    position: fixed; z-index: 30; right: 1rem; bottom: 1rem; width: min(27rem, 90vw);
+    max-height: min(24rem, 60vh); overflow: auto; pointer-events: auto;
+    padding: .8rem .9rem; font-size: .8rem; line-height: 1.55;
+    background: #14161a; color: var(--field-ink);
+    border: 1px solid rgba(242,239,233,.24); border-radius: 2px;
+    box-shadow: 0 16px 48px rgba(0,0,0,.55); display: none;
+  }
+  #asked h2 { font-size: .74rem; letter-spacing: .1em; text-transform: uppercase;
+    opacity: .6; margin: 0 0 .5rem; font-weight: 500; }
+  #asked .addr { word-break: break-all; margin-bottom: .5rem; }
+  #asked ol { margin: .4rem 0 0; padding-left: 1.1rem; }
+  #asked li { margin-bottom: .35rem; }
+  #asked a { color: inherit; }
+  #asked .refuse { margin-top: .6rem; opacity: .68; font-size: .73rem; }
+  #asked button { position: absolute; top: .4rem; right: .5rem; background: none;
+    border: 0; color: inherit; opacity: .55; cursor: pointer; font-size: .9rem; }
+  @media (prefers-reduced-motion: reduce) { #field { transition: none; } }
+</style>
+</head>
+<body>
+<canvas id="field" aria-label="every channel this estate knows of, as one field"></canvas>
+
+<div class="over masthead">
+  <h1>The field</h1>
+  <p>Every channel address this estate holds a record of, drawn at once. Across:
+     how it came to know of it. Up: how far it got. Nothing here is a source it reads.</p>
+  <nav class="ways"><a href="/press">the press</a><a href="/edition">the edition</a><a href="/archive">the reading room</a></nav>
+  <p class="src" id="reading">Reading the estate's own catalogue, straight from the object store…</p>
+</div>
+
+<div class="corner">
+  <div class="legend" id="legend"></div>
+  <p id="state-note"></p>
+</div>
+<div class="over tally" id="tally"></div>
+<div class="axis" id="axis-x" style="bottom:.5rem;left:50%;transform:translateX(-50%)">how this estate came to know of it →</div>
+<div class="axis" id="axis-y" style="left:.5rem;top:50%;transform:rotate(-90deg) translateX(-50%);transform-origin:left center">how far it got →</div>
+<div id="cells" class="over" style="inset:0;padding:0"></div>
+<div id="asked" role="status" aria-live="polite"></div>
+<div id="probe" role="status"></div>
+
+<script type="importmap">
+{ "imports": { "apache-arrow": "/assets/apache-arrow.mjs?b=87b6553fdf" } }
+</script>
+<script type="module">
+/* The field.
+ *
+ * This estate holds a record of a hundred and nine thousand channel addresses
+ * and reads about two thousand of them. Every page that says "sources" flattens
+ * that into one number. Here the whole population is drawn at once, so the
+ * ratio is the first thing a reader sees rather than a caveat underneath one.
+ *
+ * Nothing is composed in the browser. The catalogue is the estate's own
+ * columnar publication, read from the object store by byte range; the axes are
+ * the ledger's own columns, not a layout that looks nice; and a point carries
+ * the address it actually has. What the browser adds is the ability to see a
+ * hundred thousand of them at once, which is not something a server can send.
+ *
+ * Positions are facts:
+ *   across  truth_level -- how the estate came to know of the address at all
+ *   up      state       -- how far that address got through admission
+ *   colour  protocol    -- what kind of thing the address claims to be
+ * Scatter inside a cell is deterministic from the channel id, so a point does
+ * not move between visits; it carries no meaning and is not read as any.
+ */
+
+const TRUTHS = [
+  ["listed", "somebody's list named it"],
+  ["observed_link_candidate", "a page linked it"],
+  ["observed_index_candidate", "an index offered it"],
+  ["protocol_derived_candidate", "a convention says it would live there"],
+  ["observed_candidate", "this estate observed it"],
+];
+const STATES = [
+  ["candidate", "nothing has asked it yet"],
+  ["shadow", "asked, not yet readable"],
+  ["eligible", "it answered and parsed"],
+  ["admitted", "this estate reads it"],
+  ["active", "it is contributing now"],
+];
+/* Colour comes from the estate's own palette variables where they exist, so the
+ * field is dressed by whatever profile is serving it rather than by a second
+ * palette invented here. */
+const PROTO_COLOUR = [
+  [0.40, 0.72, 0.92], [0.98, 0.76, 0.30], [0.62, 0.88, 0.52], [0.96, 0.52, 0.58],
+  [0.74, 0.62, 0.96], [0.45, 0.90, 0.82], [0.99, 0.65, 0.42], [0.82, 0.82, 0.86],
+];
+
+const reading = document.getElementById("reading");
+const stateNote = document.getElementById("state-note");
+const canvas = document.getElementById("field");
+
+let offThread = false;
+let held = null;  /* the query engine stays up: a click asks it another question */
+let materialAt = location.origin + "/catalog/material.parquet";
+function say(words) { reading.textContent = words; }
+let keptWords = "";  /* which copy of the catalogue this tab is reading */
+function note(words) {
+  stateNote.textContent = words + (offThread && words
+    ? " Its spatial index was built on another thread." : "")
+    + (keptWords && words ? " " + keptWords : "");
+}
+
+/* ----------------------------------------------------------------- kept copy */
+
+/* The catalogue is a publication, so a copy of it can be kept on this device.
+ * Each file is asked for with the stamp of the copy already held: the estate
+ * answers "unchanged" and nothing is downloaded, or sends the newer one and it
+ * replaces the kept copy. When the estate cannot be reached the kept copy is
+ * read, and the page says so. A device with no private file store keeps
+ * nothing and reads by byte range as before. */
+async function keptCatalogue(name) {
+  const url = location.origin + "/catalog/" + name;
+  let dir = null;
+  try {
+    const root = await navigator.storage.getDirectory();
+    dir = await root.getDirectoryHandle("catalogue", { create: true });
+  } catch (_) { return null; }
+  const text = async file => {
+    try { return await (await (await dir.getFileHandle(file)).getFile()).text(); } catch (_) { return ""; }
+  };
+  const bytes = async () => {
+    try { return new Uint8Array(await (await (await dir.getFileHandle(name)).getFile()).arrayBuffer()); } catch (_) { return null; }
+  };
+  const write = async (file, body) => {
+    const out = await (await dir.getFileHandle(file, { create: true })).createWritable();
+    await out.write(body); await out.close();
+  };
+  const stamp = await text(name + ".etag");
+  const have = stamp ? await bytes() : null;
+  let answer;
+  try {
+    answer = await fetch(url, { cache: "no-store", headers: have ? { "If-None-Match": stamp } : {} });
+  } catch (_) {
+    if (have) return { bytes: have, how: "offline", stamp };
+    throw new Error("the estate cannot be reached and no copy of the catalogue is kept on this device");
+  }
+  if (answer.status === 304 && have) return { bytes: have, how: "unchanged", stamp };
+  if (!answer.ok) {
+    if (have) return { bytes: have, how: "offline", stamp };
+    throw new Error("the catalogue answered " + answer.status);
+  }
+  const freshStamp = answer.headers.get("etag") || "";
+  /* An edge that sends the object again without being asked to has still
+   * said, by its stamp, that nothing changed. */
+  if (have && freshStamp && freshStamp === stamp) return { bytes: have, how: "unchanged", stamp };
+  const fresh = new Uint8Array(await answer.arrayBuffer());
+  if (freshStamp) {
+    /* The stamp is written last: a copy without its stamp is never trusted. */
+    try { await write(name, fresh); await write(name + ".etag", freshStamp); } catch (_) {}
+  }
+  return { bytes: fresh, how: have ? "refreshed" : "first", stamp: freshStamp };
+}
+
+/* ------------------------------------------------------------------ catalogue */
+
+async function readCatalogue() {
+  const base = location.origin;
+  const duckdb = await import("/assets/duckdb-browser.mjs?b=87b6553fdf");
+  if (!duckdb || !duckdb.AsyncDuckDB) throw new Error("the query engine did not load");
+
+  say("Starting a query engine in this tab…");
+  /* Its worker script is fetched by this page for the same reason as the
+   * engine below: a worker's own script is not asked of the keeper. */
+  const script = await fetch("/assets/duckdb-browser-eh.worker.js?b=87b6553fdf");
+  if (!script.ok) throw new Error("the query engine's worker answered " + script.status);
+  const worker = new Worker(URL.createObjectURL(new Blob([await script.text()], { type: "application/javascript" })));
+  const logger = new duckdb.ConsoleLogger(duckdb.LogLevel.WARNING);
+  const db = new duckdb.AsyncDuckDB(logger, worker);
+  /* The engine is fetched by this page and handed over as bytes. Left to
+   * fetch it itself, the worker asks from an address the keeper does not
+   * answer for, and the field would not open with the estate out of reach. */
+  const engine = await fetch("/assets/duckdb-eh.wasm?b=87b6553fdf");
+  if (!engine.ok) throw new Error("the query engine answered " + engine.status);
+  const engineAt = URL.createObjectURL(new Blob([await engine.arrayBuffer()], { type: "application/wasm" }));
+  await db.instantiate(engineAt);
+  URL.revokeObjectURL(engineAt);
+  const conn = await db.connect();
+
+  /* Kept copies are handed to the engine as files of its own; a device that
+   * keeps nothing reads the same two tables over the wire by byte range. */
+  let url = base + "/catalog/source_channel.parquet";
+  let roots = base + "/catalog/source_root.parquet";
+  const channelCopy = await keptCatalogue("source_channel.parquet");
+  const rootCopy = channelCopy ? await keptCatalogue("source_root.parquet") : null;
+  if (channelCopy && rootCopy) {
+    await db.registerFileBuffer("source_channel.parquet", channelCopy.bytes);
+    await db.registerFileBuffer("source_root.parquet", rootCopy.bytes);
+    url = "source_channel.parquet"; roots = "source_root.parquet";
+    const hows = [channelCopy.how, rootCopy.how];
+    keptWords = hows.includes("offline")
+      ? "The estate could not be reached; this is the copy kept on this device from the last visit."
+      : hows.includes("refreshed") ? "The catalogue had changed since the last visit, and the copy kept on this device was replaced."
+      : hows.includes("first") ? "A copy of the catalogue is now kept on this device."
+      : "The catalogue has not changed since the last visit; nothing was downloaded again.";
+    document.documentElement.dataset.catalogue = hows.includes("offline") ? "offline"
+      : hows.includes("refreshed") ? "refreshed" : hows.includes("first") ? "first" : "unchanged";
+    /* What was kept from each publisher is asked for on a click. It is kept
+     * in the background so a click still answers with the estate out of reach. */
+    keptCatalogue("material.parquet").then(async copy => {
+      if (!copy) return;
+      await db.registerFileBuffer("material.parquet", copy.bytes);
+      materialAt = "material.parquet";
+      document.documentElement.dataset.material = copy.how;
+    }).catch(() => {});
+    say("Reading the catalogue kept on this device…");
+  } else {
+    say("Reading the catalogue out of the object store, by byte range…");
+  }
+  /* One pass, aggregated in the engine rather than shipped row by row: the
+   * browser needs a position and an identity per point, not the whole ledger. */
+  const rows = await conn.query(`
+    SELECT c.channel_id, c.root_id, c.address, c.protocol, c.truth_level,
+           c.state, c.material,
+           COALESCE(r.name, '') AS root_name,
+           COALESCE(r.host, '') AS root_host
+    FROM read_parquet('${url}') c
+    LEFT JOIN read_parquet('${roots}') r
+           ON r.root_id = c.root_id
+  `);
+  const counts = await conn.query(`
+    SELECT state, COUNT(*) AS n FROM read_parquet('${url}') GROUP BY state
+  `);
+  held = conn;
+  return { rows, counts, conn };
+}
+
+/* --------------------------------------------------------------------- layout */
+
+function hash32(text) {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 16777619) >>> 0;
+  }
+  return h >>> 0;
+}
+
+function place(rows) {
+  const n = rows.numRows;
+  const xy = new Float32Array(n * 2);
+  const rgb = new Float32Array(n * 3);
+  const truthAt = new Map(TRUTHS.map(([k], i) => [k, i]));
+  const stateAt = new Map(STATES.map(([k], i) => [k, i]));
+  const protoAt = new Map();
+  const identity = new Array(n);
+  const seenTruth = new Set(), seenState = new Set();
+
+  const col = {
+    channel_id: rows.getChild("channel_id"),
+    address: rows.getChild("address"),
+    protocol: rows.getChild("protocol"),
+    truth_level: rows.getChild("truth_level"),
+    state: rows.getChild("state"),
+    material: rows.getChild("material"),
+    root_id: rows.getChild("root_id"),
+    root_name: rows.getChild("root_name"),
+    root_host: rows.getChild("root_host"),
+  };
+
+  for (let i = 0; i < n; i++) {
+    const id = String(col.channel_id.get(i) ?? i);
+    const truth = String(col.truth_level.get(i) ?? "listed");
+    const state = String(col.state.get(i) ?? "candidate");
+    const proto = String(col.protocol.get(i) ?? "unknown");
+    if (!protoAt.has(proto)) protoAt.set(proto, protoAt.size);
+    seenTruth.add(truth); seenState.add(state);
+
+    const tx = truthAt.has(truth) ? truthAt.get(truth) : TRUTHS.length;
+    const sy = stateAt.has(state) ? stateAt.get(state) : 0;
+    const h = hash32(id);
+    /* Deterministic scatter inside the cell: a point keeps its place between
+     * visits, and the jitter is not read as a measurement of anything. */
+    const jx = ((h & 0xffff) / 0xffff - 0.5) * 0.82;
+    const jy = (((h >>> 16) & 0xffff) / 0xffff - 0.5) * 0.74;
+
+    xy[i * 2] = (tx + 0.5 + jx) / (TRUTHS.length + 1) * 2 - 1;
+    xy[i * 2 + 1] = (sy + 0.5 + jy) / STATES.length * 2 - 1;
+
+    const c = PROTO_COLOUR[protoAt.get(proto) % PROTO_COLOUR.length];
+    /* Admitted and active carry their full colour; a candidate is dim, because
+     * a candidate is not a source and should not look like one. */
+    /* An admitted channel is a source; a candidate is a record of an address.
+     * The first is meant to read as present and the second as a haze, because
+     * that is the actual difference between them. */
+    const lit = (state === "admitted" || state === "active") ? 1.0 : 0.42;
+    rgb[i * 3] = c[0] * lit; rgb[i * 3 + 1] = c[1] * lit; rgb[i * 3 + 2] = c[2] * lit;
+
+    identity[i] = { id, address: String(col.address.get(i) ?? ""), proto, truth, state,
+                    material: String(col.material.get(i) ?? ""),
+                    name: String(col.root_name.get(i) ?? ""),
+                    host: String(col.root_host.get(i) ?? "") };
+  }
+  /* Rows and columns nothing landed in are not drawn: an empty band of a chart
+   * is a shape a reader tries to interpret, and there is nothing there. */
+  const usedTruths = TRUTHS.map(([k]) => k).filter((k) => seenTruth.has(k));
+  const usedStates = STATES.map(([k]) => k).filter((k) => seenState.has(k));
+  const tIndex = new Map(usedTruths.map((k, i) => [k, i]));
+  const sIndex = new Map(usedStates.map((k, i) => [k, i]));
+  for (let i = 0; i < n; i++) {
+    const one = identity[i];
+    const h = hash32(one.id);
+    const jx = ((h & 0xffff) / 0xffff - 0.5) * 0.84;
+    const jy = (((h >>> 16) & 0xffff) / 0xffff - 0.5) * 0.78;
+    const tx = tIndex.has(one.truth) ? tIndex.get(one.truth) : usedTruths.length - 1;
+    const sy = sIndex.has(one.state) ? sIndex.get(one.state) : 0;
+    xy[i * 2] = (tx + 0.5 + jx) / usedTruths.length * 2 - 1;
+    xy[i * 2 + 1] = (sy + 0.5 + jy) / usedStates.length * 2 - 1;
+  }
+  return { xy, rgb, identity, protoAt, n, usedTruths, usedStates };
+}
+
+/* --------------------------------------------------------------------- render */
+
+async function drawWithGPU(field) {
+  if (!navigator.gpu) return false;
+  const adapter = await navigator.gpu.requestAdapter();
+  if (!adapter) return false;
+  const device = await adapter.requestDevice();
+  const ctx = canvas.getContext("webgpu");
+  if (!ctx) return false;
+  const format = navigator.gpu.getPreferredCanvasFormat();
+  ctx.configure({ device, format, alphaMode: "premultiplied" });
+
+  const positions = device.createBuffer({
+    size: field.xy.byteLength, usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+  });
+  device.queue.writeBuffer(positions, 0, field.xy);
+  const colours = device.createBuffer({
+    size: field.rgb.byteLength, usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+  });
+  device.queue.writeBuffer(colours, 0, field.rgb);
+  const view = device.createBuffer({ size: 16, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+
+  const shader = device.createShaderModule({ code: `
+    struct View { pan: vec2f, zoom: f32, point: f32 };
+    @group(0) @binding(0) var<uniform> view: View;
+    struct Out { @builtin(position) pos: vec4f, @location(0) tint: vec3f };
+    @vertex fn vs(@location(0) at: vec2f, @location(1) tint: vec3f) -> Out {
+      var o: Out;
+      let p = (at - view.pan) * view.zoom;
+      o.pos = vec4f(p, 0.0, 1.0);
+      o.tint = tint;
+      return o;
+    }
+    @fragment fn fs(@location(0) tint: vec3f) -> @location(0) vec4f {
+      return vec4f(tint * 1.25, 0.95);
+    }
+  `});
+
+  const pipeline = device.createRenderPipeline({
+    layout: "auto",
+    vertex: { module: shader, entryPoint: "vs", buffers: [
+      { arrayStride: 8, attributes: [{ shaderLocation: 0, offset: 0, format: "float32x2" }] },
+      { arrayStride: 12, attributes: [{ shaderLocation: 1, offset: 0, format: "float32x3" }] },
+    ]},
+    fragment: { module: shader, entryPoint: "fs", targets: [{ format, blend: {
+      color: { srcFactor: "src-alpha", dstFactor: "one", operation: "add" },
+      alpha: { srcFactor: "one", dstFactor: "one", operation: "add" },
+    }}]},
+    primitive: { topology: "point-list" },
+  });
+  const binding = device.createBindGroup({
+    layout: pipeline.getBindGroupLayout(0),
+    entries: [{ binding: 0, resource: { buffer: view } }],
+  });
+
+  const camera = { pan: [0, 0], zoom: 1 };
+  function frame() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.floor(canvas.clientWidth * dpr);
+    canvas.height = Math.floor(canvas.clientHeight * dpr);
+    device.queue.writeBuffer(view, 0,
+      new Float32Array([camera.pan[0], camera.pan[1], camera.zoom, 1]));
+    const encoder = device.createCommandEncoder();
+    const pass = encoder.beginRenderPass({ colorAttachments: [{
+      view: ctx.getCurrentTexture().createView(),
+      clearValue: { r: 0.043, g: 0.047, b: 0.055, a: 1 },
+      loadOp: "clear", storeOp: "store",
+    }]});
+    pass.setPipeline(pipeline);
+    pass.setBindGroup(0, binding);
+    pass.setVertexBuffer(0, positions);
+    pass.setVertexBuffer(1, colours);
+    pass.draw(field.n);
+    pass.end();
+    device.queue.submit([encoder.finish()]);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  /* Panning and zooming a field is reading it, so it is on by default. */
+  let dragging = false, last = [0, 0], moved = 0;
+  canvas.addEventListener("pointerdown", (e) => {
+    dragging = true; last = [e.clientX, e.clientY]; moved = 0;
+  });
+  window.addEventListener("pointerup", () => { dragging = false; });
+  canvas.addEventListener("pointermove", (e) => {
+    if (dragging) {
+      camera.pan[0] -= (e.clientX - last[0]) / canvas.clientWidth * 2 / camera.zoom;
+      camera.pan[1] += (e.clientY - last[1]) / canvas.clientHeight * 2 / camera.zoom;
+      moved += Math.abs(e.clientX - last[0]) + Math.abs(e.clientY - last[1]);
+      last = [e.clientX, e.clientY];
+    }
+    probeAt(e, field, camera);
+  });
+  canvas.addEventListener("click", (e) => {
+    /* A drag that ends is not a click on what it ended over. */
+    if (moved > 5) return;
+    const one = pointAt(e, field, camera);
+    if (one) askAbout(one);
+  });
+  canvas.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    camera.zoom = Math.min(Math.max(camera.zoom * (e.deltaY < 0 ? 1.12 : 0.89), 0.6), 60);
+  }, { passive: false });
+  note("Drawn on this device's own graphics hardware. Drag to move, scroll to close in, click a point to ask what this estate kept from it.");
+  return true;
+}
+
+function drawWithCanvas(field) {
+  /* No WebGPU here. The field is still the field -- it is drawn once instead of
+   * every frame, and it says so rather than pretending to be the same thing. */
+  const ctx = canvas.getContext("2d");
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = Math.floor(canvas.clientWidth * dpr);
+  canvas.height = Math.floor(canvas.clientHeight * dpr);
+  ctx.fillStyle = "#0b0c0e";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  for (let i = 0; i < field.n; i++) {
+    const x = (field.xy[i * 2] * 0.5 + 0.5) * canvas.width;
+    const y = (1 - (field.xy[i * 2 + 1] * 0.5 + 0.5)) * canvas.height;
+    const r = Math.round(field.rgb[i * 3] * 255);
+    const g = Math.round(field.rgb[i * 3 + 1] * 255);
+    const b = Math.round(field.rgb[i * 3 + 2] * 255);
+    ctx.fillStyle = `rgba(${r},${g},${b},0.9)`;
+    ctx.fillRect(x, y, 1.6 * dpr, 1.6 * dpr);
+  }
+  note("This device offers no WebGPU, so the field is drawn once rather than live. "
+     + "It is the same hundred thousand records either way.");
+  const still = { pan: [0, 0], zoom: 1 };
+  canvas.addEventListener("pointermove", (e) => probeAt(e, field, still));
+  canvas.addEventListener("click", (e) => {
+    const one = pointAt(e, field, still);
+    if (one) askAbout(one);
+  });
+}
+
+/* ---------------------------------------------------------------------- probe */
+
+let spatial = null;
+const probe = document.getElementById("probe");
+
+async function organReady(name, patience) {
+  /* The organ layer loads on its own schedule. The field waits a moment for it
+   * and then gets on without it rather than blocking on a thing that may not
+   * be coming. */
+  const until = Date.now() + (patience || 2500);
+  while (Date.now() < until) {
+    if (window[name]) return window[name];
+    await new Promise((r) => setTimeout(r, 60));
+  }
+  return null;
+}
+
+async function buildIndex(field) {
+  const mod = await import("/assets/vendor-flatbush.min.js").catch(() => null);
+  const Flatbush = (mod && (mod.default || mod.Flatbush)) || window.Flatbush;
+  if (typeof Flatbush !== "function") return null;
+
+  /* Built on another thread when the offload organ is here, because the first
+   * seconds of the field are the ones a reader judges it by and a hundred
+   * thousand boxes is enough work to be felt. */
+  /* That worker loads its own scripts, which the keeper does not answer for.
+   * With the estate out of reach it would wait on them for ever, so the index
+   * is built here instead. */
+  const reachable = document.documentElement.dataset.catalogue !== "offline";
+  const offload = reachable ? await organReady("bfOffload") : null;
+  if (offload) {
+    try {
+      const far = offload("/assets/field-index.worker.js");
+      const bytes = await far.index(field.xy, field.n);
+      if (bytes) { offThread = true; return Flatbush.from(bytes); }
+    } catch (ignored) { /* built here instead, below */ }
+  }
+  const index = new Flatbush(field.n);
+  for (let i = 0; i < field.n; i++) {
+    index.add(field.xy[i * 2], field.xy[i * 2 + 1], field.xy[i * 2], field.xy[i * 2 + 1]);
+  }
+  index.finish();
+  return index;
+}
+
+function pointAt(event, field, camera) {
+  /* Screen back to field space, so the thing under the cursor is the thing
+   * named -- not the nearest thing to where the cursor was a frame ago. */
+  if (!spatial) return null;
+  const fx = ((event.clientX / canvas.clientWidth) * 2 - 1) / camera.zoom + camera.pan[0];
+  const fy = (1 - (event.clientY / canvas.clientHeight) * 2) / camera.zoom + camera.pan[1];
+  const r = 0.012 / camera.zoom;
+  const near = spatial.search(fx - r, fy - r, fx + r, fy + r);
+  return near.length ? field.identity[near[0]] : null;
+}
+
+function probeAt(event, field, camera) {
+  const one = pointAt(event, field, camera);
+  if (!one) { probe.style.display = "none"; return; }
+  const truth = (TRUTHS.find(([k]) => k === one.truth) || [one.truth, one.truth])[1];
+  const state = (STATES.find(([k]) => k === one.state) || [one.state, one.state])[1];
+  probe.innerHTML = "";
+  const addr = document.createElement("div");
+  addr.className = "addr";
+  /* A reader knows "ABC News". Nobody knows a feedburner URL. */
+  addr.textContent = one.name || one.host || one.address || one.id;
+  const how = document.createElement("div");
+  how.textContent = truth + " · " + state + (one.proto ? " · " + one.proto : "");
+  const refuse = document.createElement("div");
+  refuse.className = "refuse";
+  refuse.textContent = (one.state === "admitted" || one.state === "active")
+    ? "This estate reads this one. Click to ask it what it kept. That is not a claim it still publishes what was read."
+    : "A record of an address, nothing more: this estate does not read it, and its answering is not established.";
+  probe.append(addr, how, refuse);
+  probe.style.display = "block";
+  const w = probe.offsetWidth, h = probe.offsetHeight;
+  probe.style.left = Math.min(event.clientX + 14, window.innerWidth - w - 8) + "px";
+  probe.style.top = Math.min(event.clientY + 14, window.innerHeight - h - 8) + "px";
+}
+
+/* ---------------------------------------------------------------------- ask */
+
+const asked = document.getElementById("asked");
+
+function shut() { asked.style.display = "none"; }
+
+function panel(title, address) {
+  asked.innerHTML = "";
+  const close = document.createElement("button");
+  close.type = "button";
+  close.setAttribute("aria-label", "close");
+  close.textContent = "×";
+  close.addEventListener("click", shut);
+  const head = document.createElement("h2");
+  head.textContent = title;
+  const addr = document.createElement("div");
+  addr.className = "addr";
+  addr.textContent = address;
+  asked.append(close, head, addr);
+  asked.style.display = "block";
+  return asked;
+}
+
+async function askAbout(one) {
+  /* A point becomes two questions, asked of two different things.
+   *
+   * The first is asked of the columnar catalogue already open in this tab:
+   * what did this estate keep from this publisher? That is answered by SQL
+   * over bytes read out of the object store, on this device, with nothing
+   * sent anywhere.
+   *
+   * The second is asked of the estate's own read-only aperture over the wire
+   * -- the same aperture any other reader gets. Neither answer is a reading of
+   * the source itself, and neither is a claim it still publishes any of it.
+   */
+  const who = one.name || one.host || one.address || one.id;
+  /* What to ask the wire with. The publisher the catalogue actually files
+   * things under beats a masthead sixty characters long. */
+  let knownAs = one.host || who;
+  const box = panel("What this estate kept", who);
+  const sub = document.createElement("div");
+  sub.className = "refuse";
+  sub.textContent = (one.host ? one.host + " · " : "") + (one.address || one.id);
+  box.append(sub);
+
+  const here = document.createElement("div");
+  here.className = "refuse";
+  here.textContent = "Asking the catalogue in this tab…";
+  box.append(here);
+
+  if (held && one.host) {
+    try {
+      /* A channel is registered under the host that serves it -- feeds.npr.org --
+       * and what was kept is filed under the publisher it came from -- npr.org.
+       * The same publisher, written at two depths. Matching on the tail joins
+       * them without pretending a match on the whole host. */
+      const host = String(one.host).replace(/'/g, "''");
+      const kept = await held.query(
+        "SELECT publisher, title, href, published_at FROM read_parquet('"
+        + materialAt + "') WHERE title <> '' "
+        + "AND publisher <> '' AND ('" + host + "' = publisher OR '" + host
+        + "' LIKE '%.' || publisher) ORDER BY published_at DESC LIMIT 6");
+      if (kept.numRows) knownAs = String(kept.getChild("publisher").get(0) || one.host);
+      here.textContent = kept.numRows
+        ? "Kept from " + knownAs + ", read in this tab out of the object store:"
+        : "This estate has kept nothing from " + one.host + ". That is a fact about "
+          + "what it has read, not about what the address publishes.";
+      if (kept.numRows) {
+        const t = kept.getChild("title"), h = kept.getChild("href");
+        const list = document.createElement("ol");
+        for (let i = 0; i < kept.numRows; i++) {
+          const li = document.createElement("li");
+          const href = String(h.get(i) || "");
+          if (href) {
+            const a = document.createElement("a");
+            a.href = href; a.rel = "noopener noreferrer"; a.target = "_blank";
+            a.textContent = String(t.get(i) || "");
+            li.append(a);
+          } else { li.textContent = String(t.get(i) || ""); }
+          list.append(li);
+        }
+        box.append(list);
+      }
+    } catch (why) {
+      here.textContent = "The catalogue did not answer: " + String(why.message || why)
+        + ". Nothing has been guessed in its place.";
+    }
+  } else {
+    here.textContent = held
+      ? "No publisher is recorded for this address, so there is nothing to look up by."
+      : "The query engine is not up in this tab, so nothing was looked up.";
+  }
+
+  const ask = await organReady("bfAsk");
+  const wire = document.createElement("div");
+  wire.className = "refuse";
+  box.append(wire);
+  if (!ask) {
+    wire.textContent = "The aperture is not loaded in this tab, so the estate was not asked.";
+    return;
+  }
+  wire.textContent = "Asking the estate's aperture over the wire…";
+  try {
+    const answer = await ask("estate_search", { q: knownAs, want: 5 });
+    const text = (answer && answer.content || []).map((p) => p.text || "").join("");
+    let said = null;
+    try { said = JSON.parse(text); } catch (ignored) { /* shown as it came */ }
+    if (!said) { wire.textContent = text.slice(0, 400); return; }
+    const rows = said.rows || [];
+    wire.textContent = rows.length
+      ? "And over the wire, the aperture answers with " + said.kept + " for “" + said.asked + "”:"
+      : "Over the wire, the aperture has nothing carrying “" + said.asked + "”.";
+    if (rows.length) {
+      const list = document.createElement("ol");
+      rows.forEach((row) => {
+        const li = document.createElement("li");
+        const a = document.createElement("a");
+        a.href = row.href || "#"; a.rel = "noopener noreferrer"; a.target = "_blank";
+        a.textContent = row.title || row.address;
+        li.append(a);
+        if (row.publisher) {
+          const by = document.createElement("span");
+          by.className = "refuse";
+          by.textContent = " " + row.publisher;
+          li.append(by);
+        }
+        list.append(li);
+      });
+      box.append(list);
+    }
+  } catch (why) {
+    wire.textContent = "The aperture did not answer: " + String(why.message || why)
+      + ". Nothing has been guessed in its place.";
+  }
+  const refuse = document.createElement("div");
+  refuse.className = "refuse";
+  refuse.textContent = "Both answers are things this estate retained. Neither is a claim that "
+    + "the source still publishes them, nor that any of it is true. The aperture grants no "
+    + "authority and performs no effect.";
+  box.append(refuse);
+}
+
+/* ----------------------------------------------------------------------- said */
+
+function cellLabels(usedTruths, usedStates) {
+  /* Every cell says what it is. An unlabelled grid of a hundred thousand dots
+   * is a picture; a labelled one is a reading. */
+  const box = document.getElementById("cells");
+  box.innerHTML = "";
+  usedTruths.forEach((t, i) => {
+    const el = document.createElement("div");
+    el.style.cssText = `position:absolute;bottom:1.4rem;left:${(i + 0.5) / usedTruths.length * 100}%;`
+      + `transform:translateX(-50%);font-size:.7rem;text-align:center;max-width:9rem;`
+      + `color:var(--field-dim);line-height:1.3`;
+    el.textContent = (TRUTHS.find(([k]) => k === t) || [t, t])[1];
+    box.appendChild(el);
+  });
+  usedStates.forEach((st, i) => {
+    const el = document.createElement("div");
+    el.style.cssText = `position:absolute;right:1.1rem;bottom:${(i + 0.5) / usedStates.length * 100}%;`
+      + `transform:translateY(50%);font-size:.72rem;letter-spacing:.04em;text-align:right;`
+      + `max-width:13rem;color:var(--field-dim)`;
+    el.textContent = st + " — " + (STATES.find(([k]) => k === st) || [st, st])[1];
+    box.appendChild(el);
+  });
+}
+
+function legend(field, counts) {
+  const box = document.getElementById("legend");
+  const protos = [...field.protoAt.entries()].slice(0, 6);
+  box.innerHTML = "<div class='row'><b>what the address claims to be</b></div>"
+    + protos.map(([name, at]) => {
+        const c = PROTO_COLOUR[at % PROTO_COLOUR.length];
+        const css = `rgb(${c.map((v) => Math.round(v * 255)).join(",")})`;
+        return `<div class="row"><span class="swatch" style="background:${css}"></span>${name}</div>`;
+      }).join("")
+    + "<div class='row' style='opacity:.6;margin-top:.4rem'>dim: a candidate nothing has admitted</div>";
+
+  const tally = document.getElementById("tally");
+  const byState = {};
+  const s = counts.getChild("state"), nn = counts.getChild("n");
+  for (let i = 0; i < counts.numRows; i++) byState[String(s.get(i))] = Number(nn.get(i));
+  const read = (byState.admitted || 0) + (byState.active || 0);
+  tally.innerHTML = `<span class="big">${field.n.toLocaleString()}</span>`
+    + `addresses this estate holds a record of<br>`
+    + `<span class="big">${read.toLocaleString()}</span>`
+    + `of them it actually reads`;
+  say(`Read from the estate's own columnar catalogue in this tab. `
+    + `${field.n.toLocaleString()} records, ${read.toLocaleString()} of them sources.`);
+}
+
+/* ----------------------------------------------------------------------- wake */
+
+/* The page, the query engine and the drawing code are kept by a worker that
+ * answers only for this address, so the field opens with the estate out of
+ * reach. It keeps nothing else and serves no other page. */
+if ("serviceWorker" in navigator)
+  navigator.serviceWorker.register("/field-keeper.js", { scope: "/field" }).catch(() => {});
+
+(async function () {
+  try {
+    const { rows, counts } = await readCatalogue();
+    say("Placing " + rows.numRows.toLocaleString() + " records…");
+    const field = place(rows);
+    legend(field, counts);
+    cellLabels(field.usedTruths, field.usedStates);
+    spatial = await buildIndex(field);
+    const gpu = await drawWithGPU(field);
+    if (!gpu) drawWithCanvas(field);
+  } catch (why) {
+    say("The field could not be drawn: " + String(why.message || why)
+      + ". Nothing has been guessed in its place.");
+    note("");
+  }
+})();
+</script>
+</body>
+</html>

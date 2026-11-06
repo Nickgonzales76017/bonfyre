@@ -1,0 +1,77 @@
+atlas surface
+
+architecture civic-transparency
+  canonical_name CivicTransparency
+  family surface
+  domain Surface / Civic records
+  layer surface
+  semantic_question What does the public record say about license plate reader cameras in North Texas towns -- how many are mapped per town, what councils voted on, how a resident asks for the rest -- without ever holding where one camera stands or where one car went?
+  purpose An original civic transparency site (Who Watches the Road, site program civic-watch) built from ForeignTwin receipts by civic-ledger and written with the documented `bonfyre-web-address site` verbs, styled by its own presentation template. Six standing pages (cameras, council votes, ask your city, search logs, sources, fix something) and a dated front page that doubles as the correction log.
+  maturity implemented
+  consumes ForeignObservation
+  consumes SitePresentation
+  publishes CivicRecordPage
+  node_types TownReaderCount
+  node_types CouncilAgendaItem
+  node_types SourceRead
+  node_types CorrectionMessage
+  state_types read
+  state_types refused
+  state_types failed_kept_previous
+  internal_calculus civic-ledger towns: Overpass statistics elements only; any positional key refuses the whole body; a town crossing county lines is counted once
+  internal_calculus civic-ledger council: Legistar matters deduplicated by MatterId, kept only when the title names a reader system or its vendor, first title line only, newest first, linked back to the city's LegislationDetail page
+  internal_calculus civic-ledger reads: every read attempted, including robots refusals and server errors, as a table on the Sources page
+  internal_calculus build.sh observe: a failed re-read never replaces the last usable receipt
+  invariant a body is parsed only when its receipt says robots allowed the read, the source answered 200 and the bytes still hash to content_sha256
+  invariant no element with lat, lon, center, geometry, bounds, nodes or members is ever accepted; the site counts by town and county only
+  invariant a registration or plate-display ordinance that merely says "license plate" is not listed as a reader item
+  invariant corrections arrive through the site's contact page into the owner's inbox; nothing a visitor sends is published automatically, and sender names are never published
+  invariant every generated page names its source and the day it was read; OpenStreetMap counts carry ODbL attribution
+  forbidden_inference a mapped reader count -> the number of cameras a city operates; it is volunteer-mapped and unconfirmed
+  forbidden_inference an agenda item -> an executed contract or a current deployment; check the item's status and the city's own page
+  forbidden_inference a council absent from the page -> that the city has no readers; its agenda service may have failed or live elsewhere
+  forbidden_inference robots allowing a read -> a licence to republish beyond the stated terms (ODbL attribution, public record)
+  forbidden_inference this site -> a tool for locating, avoiding or tracking a camera, a vehicle or a person; it holds none of that and will not offer a plate lookup
+  forbidden_inference a site built in a fixture home -> a site published to the internet; placement on a live host is a human step
+  source_path cmd/BonfyreSourceFrontier/tools/civic_ledger.c
+  source_path cmd/BonfyreSourceFrontier/tests/civic_ledger_test.sh
+  source_path cmd/BonfyreSourceFrontier/Makefile
+  source_path docs/experiences/civic-transparency/build.sh
+  source_path docs/experiences/civic-transparency/BRIEF.md
+  source_path docs/experiences/civic-transparency/pages/ask.md
+  source_path docs/experiences/civic-transparency/pages/search-logs.md
+  source_path docs/experiences/civic-transparency/pages/sources.md
+  source_path docs/experiences/civic-transparency/pages/fix.md
+  source_path docs/experiences/presentations/civic-watch.json
+  source_path cmd/BonfyreWebAddress/tests/civic_watch_site_test.sh
+  witness cmd/BonfyreSourceFrontier/tests/civic_ledger_test.sh: 30 checks -- town dedupe and sort, county totals, ODbL attribution, refusal of a body carrying one position, of raw elements, of drifted bytes, of robots refusals, of non-200 reads and of unlicensed bodies; council dedupe, reader-only filter, first-line titles, JSON escape decoding, markup neutralised, unsafe GUID and host refused; reads table rows (2026-10-30)
+  witness cmd/BonfyreWebAddress/tests/civic_watch_site_test.sh with BONFYRE_TEST_WEB_BINARY from a scratch build: 39 checks -- build and idempotent rebuild through the site verbs, eight routes answer 200, presentation applied, starter post replaced, counts, record links and failed reads served, letter copyable, a contact-page correction reaches `site inbox` and is not published, no coordinate-like number and no machine vocabulary in visible text (2026-10-30)
+  witness 2026-10-30 live ForeignTwin reads: Overpass at maps.mail.ru returned 154 town and 4 county totals (4,328 mapped readers across Dallas, Tarrant, Collin and Denton counties); overpass-api.de refused by robots and left alone; Legistar answered for Dallas (6 reader items), Fort Worth (8), McKinney (1) and Plano (0), and with 500 for Arlington, Irving, Garland, Frisco and Denton; headless Chrome screenshots of all eight routes at 1440 and 390 px
+  known_gap not placed on any live host; the fixture host is watch.example.test and placement plus the edge publish path is the owner's step
+  known_gap five Legistar clients answered 500 on the day of reading; cities on Granicus or CivicClerk need their own reader
+  known_gap town counts depend on one Overpass mirror that answers 504 under load; the previous read is kept when it does
+  known_gap the site kit renders the post author subject (institution:civic-watch) in hidden markup on the front page
+  interacts foreign-twin
+  interacts presentation-template
+
+interaction foreign-twin-feeds-civic-transparency
+  source foreign-twin
+  destination civic-transparency
+  relation receipted_public_record_projection
+  preserves source URL, read time, robots decision, HTTP status, content digest, ODbL notice, city record identity and link
+  drops camera positions (refused, never parsed), presenter lines, items that do not name a reader system, raw bodies
+  forbidden_inference a ForeignTwin receipt -> the truth of what the source says; it is evidence the source said it at that time
+  invalidates_on a new observation of the same source, or a body that no longer hashes to its receipt
+  witness cmd/BonfyreSourceFrontier/tests/civic_ledger_test.sh
+  binding cmd/BonfyreSourceFrontier/tools/civic_ledger.c
+
+interaction civic-transparency-styled-by-presentation-template
+  source civic-transparency
+  destination presentation-template
+  relation site_presentation_binding
+  preserves the site's faces, palette, hero, navigation, density and card modes
+  drops nothing of the page's content
+  forbidden_inference a presentation -> a claim about the records the pages show
+  invalidates_on `site set --presentation` with another file
+  witness cmd/BonfyreWebAddress/tests/civic_watch_site_test.sh
+  binding docs/experiences/presentations/civic-watch.json

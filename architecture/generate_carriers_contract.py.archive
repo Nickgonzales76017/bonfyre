@@ -1,0 +1,118 @@
+#!/usr/bin/env python3
+"""Render and verify the carrier contract.
+
+Three assertions of which protocols this institution speaks disagreed: the
+/protocols page named ten, the carriers skill said eighteen and listed
+seventeen, capability_fulfillment mapped six coordinates. Probing settled it at
+seventeen.
+
+Default run emits the JSON the surfaces read. `--check` re-probes every declared
+carrier against a live origin, so a carrier that stops answering fails here
+rather than remaining declared -- the failure mode a static list cannot catch.
+
+Cannot infer: a carrier that answers is authorized, priced, or willing. This
+verifies that something responds, which is the only claim the contract makes.
+"""
+from __future__ import annotations
+
+import json
+import sys
+import urllib.error
+import urllib.request
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+CONTRACT = ROOT / "architecture" / "external" / "carriers.contract.yaff"
+JSON_OUT = ROOT / "integrations" / "mcp" / "carriers_contract.json"
+
+
+def parse() -> list[dict[str, str]]:
+    carriers: list[dict[str, str]] = []
+    inside = False
+    for raw in CONTRACT.read_text().splitlines():
+        if not raw.strip() or raw.lstrip().startswith("#"):
+            continue
+        if not raw.startswith(" "):
+            inside = raw.startswith("carrier_contract ")
+            continue
+        if not inside:
+            continue
+        key, _, rest = raw.strip().partition(" ")
+        if key != "carrier":
+            continue
+        name, _, path = rest.partition(" ")
+        if name and path:
+            carriers.append({"name": name, "path": path})
+    if not carriers:
+        raise SystemExit("carrier contract declares no carriers")
+    return carriers
+
+
+def render(carriers: list[dict[str, str]]) -> str:
+    return json.dumps(
+        {
+            "schema_version": "bonfyre.carriers.contract.v1",
+            "source": "architecture/external/carriers.contract.yaff",
+            "count": len(carriers),
+            "carriers": carriers,
+            "forbidden_inference": (
+                "a served carrier is not an authorized, priced, or willing one"
+            ),
+        },
+        indent=2,
+    ) + "\n"
+
+
+def probe(origin: str, carriers: list[dict[str, str]]) -> int:
+    failed = 0
+    for carrier in carriers:
+        url = origin.rstrip("/") + carrier["path"]
+        request = urllib.request.Request(
+            url, headers={"Accept": "application/json", "Host": "aurekai.life"}
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=15) as response:
+                status = response.status
+        except urllib.error.HTTPError as http_error:
+            status = http_error.code
+        except Exception as error:  # noqa: BLE001
+            print(f"  {carrier['name']:<12} unreachable: {str(error)[:60]}", file=sys.stderr)
+            failed += 1
+            continue
+        ok = status in (200, 402)
+        print(f"  {carrier['name']:<12} {status} {'' if ok else '<-- declared but not serving'}")
+        if not ok:
+            failed += 1
+    return failed
+
+
+def main() -> int:
+    carriers = parse()
+    text = render(carriers)
+    if "--check" in sys.argv:
+        if not JSON_OUT.is_file() or JSON_OUT.read_text() != text:
+            print(
+                "carriers_contract.json disagrees with the contract; "
+                "re-run architecture/generate_carriers_contract.py",
+                file=sys.stderr,
+            )
+            return 1
+        origin = next(
+            (a.split("=", 1)[1] for a in sys.argv if a.startswith("--origin=")),
+            "http://127.0.0.1:8787",
+        )
+        print(f"probing {len(carriers)} declared carriers against {origin}")
+        failed = probe(origin, carriers)
+        if failed:
+            print(f"{failed} declared carrier(s) not serving", file=sys.stderr)
+            return 1
+        print(f"all {len(carriers)} declared carriers answer")
+        return 0
+    JSON_OUT.parent.mkdir(parents=True, exist_ok=True)
+    JSON_OUT.write_text(text)
+    print(f"wrote {JSON_OUT.relative_to(ROOT)} ({len(carriers)} carriers)")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

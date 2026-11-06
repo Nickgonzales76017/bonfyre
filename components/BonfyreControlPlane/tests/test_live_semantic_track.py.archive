@@ -1,0 +1,379 @@
+"""Archived Python witness; live-semantic-track.test.mjs covers the Deep Ellum scenario.
+
+Neon June plays Reno's, says on air that they are at Trees on Friday, thanks a
+sponsor, and the stream ends. The tests follow that occurrence through speech,
+claim, corroboration, cooling and sponsor closure -- and refuse each shortcut
+along the way.
+"""
+
+from __future__ import annotations
+
+import os
+import sqlite3
+import sys
+
+import pytest
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import commitment_graph as cg  # noqa: E402
+import live_semantic_track as lst  # noqa: E402
+
+MIN = 60_000
+
+
+@pytest.fixture()
+def track():
+    t = lst.LiveSemanticTrack("live:neon-june-2026-09-04")
+    t.say(0, "hey Deep Ellum", speaker="Neon June")
+    t.say(18 * MIN, "we're playing Trees again Friday", speaker="Neon June")
+    t.append(lst.SemanticEvent(18 * MIN, "place", "Trees"))
+    t.append(lst.SemanticEvent(25 * MIN, "sponsor_mention", "Red Bull",
+                               speaker="Neon June"))
+    t.append(lst.SemanticEvent(39 * MIN, "cta", "tickets are in our profile",
+                               speaker="Neon June"))
+    t.append(lst.SemanticEvent(40 * MIN, "clip_candidate", "friday-announcement"))
+    t.append(lst.SemanticEvent(41 * MIN, "chat", "line at Trees is insane"))
+    return t
+
+
+@pytest.fixture()
+def ledger():
+    return lst.ClaimLedger()
+
+
+# ------------------------------------------------ an utterance is not a claim
+
+def test_speaking_does_not_produce_a_claim(track):
+    assert len(track.by_kind("utterance")) == 2
+    assert track.by_kind("claim") == []
+    # "we're playing Trees Friday" was said. Nothing has asserted it yet.
+
+
+def test_promoting_an_utterance_to_a_claim_is_an_explicit_act(track, ledger):
+    claim = ledger.from_utterance(
+        track, 18 * MIN, claim_id="c1", asserter="Neon June",
+        subject="event:trees-friday", assertion="Neon June plays Trees on Friday")
+    assert claim.asserter == "Neon June"
+    assert len(track.by_kind("claim")) == 1
+
+
+def test_an_unattributed_assertion_is_refused(ledger):
+    with pytest.raises(lst.TrackError) as e:
+        ledger.assert_claim(lst.ClaimObservation(
+            "c1", 0, asserter="", subject="s", assertion="they play Friday"))
+    assert "rumour" in str(e.value)
+
+
+# ------------------------------------------------- a claim is not a fact
+
+def test_a_claim_is_never_proven_by_this_module(track, ledger):
+    ledger.from_utterance(track, 18 * MIN, claim_id="c1", asserter="Neon June",
+                          subject="event:trees-friday", assertion="plays Friday")
+    ledger.corroborate("c1", source="foreign:trees-calendar",
+                       kind="EventListingObservation")
+    ledger.corroborate("c1", source="foreign:venue-instagram",
+                       kind="ForeignOccurrence")
+    assert ledger.crystallizable() == ["c1"]
+    # Well-attested and still not proven. The frontier decides, not the count.
+    assert ledger.proven("c1") is False
+
+
+def test_corroboration_below_threshold_does_not_crystallize(track, ledger):
+    ledger.from_utterance(track, 18 * MIN, claim_id="c1", asserter="Neon June",
+                          subject="event:trees-friday", assertion="plays Friday")
+    ledger.corroborate("c1", source="foreign:trees-calendar",
+                       kind="EventListingObservation")
+    assert ledger.crystallizable() == []
+    assert ledger.independent_sources("c1") == ["foreign:trees-calendar"]
+
+
+def test_one_source_repeating_itself_is_one_source(track, ledger):
+    ledger.from_utterance(track, 18 * MIN, claim_id="c1", asserter="Neon June",
+                          subject="event:trees-friday", assertion="plays Friday")
+    for _ in range(5):
+        ledger.corroborate("c1", source="foreign:trees-calendar",
+                           kind="EventListingObservation")
+    # A noisy feed must not manufacture a consensus by talking more.
+    assert ledger.independent_sources("c1") == ["foreign:trees-calendar"]
+    assert ledger.crystallizable() == []
+
+
+def test_the_asserter_cannot_corroborate_their_own_claim(track, ledger):
+    ledger.from_utterance(track, 18 * MIN, claim_id="c1", asserter="Neon June",
+                          subject="event:trees-friday", assertion="plays Friday")
+    ledger.corroborate("c1", source="asserter:Neon June", kind="RepeatedOnAir")
+    ledger.corroborate("c1", source="foreign:trees-calendar",
+                       kind="EventListingObservation")
+    assert ledger.independent_sources("c1") == ["foreign:trees-calendar"]
+    assert ledger.crystallizable() == []
+
+
+def test_dependent_corroboration_does_not_count(track, ledger):
+    ledger.from_utterance(track, 18 * MIN, claim_id="c1", asserter="Neon June",
+                          subject="event:trees-friday", assertion="plays Friday")
+    ledger.corroborate("c1", source="aggregator:reposts-the-calendar",
+                       kind="ForeignOccurrence", independent=False)
+    ledger.corroborate("c1", source="foreign:trees-calendar",
+                       kind="EventListingObservation")
+    assert ledger.independent_sources("c1") == ["foreign:trees-calendar"]
+
+
+# ---------------------------------- ephemeral cools, institutional survives
+
+def test_chat_and_atmosphere_cool_while_claims_survive(track, ledger):
+    ledger.from_utterance(track, 18 * MIN, claim_id="c1", asserter="Neon June",
+                          subject="event:trees-friday", assertion="plays Friday")
+    kept, expired = track.cool()
+    kept_kinds = sorted({e.kind for e in kept})
+    expired_kinds = sorted({e.kind for e in expired})
+
+    # cta sits at SOCIAL, below the cooling floor: a call to action is ordinary
+    # publication, not evidence, and it cools with the rest of the timeline.
+    assert kept_kinds == ["claim", "sponsor_mention"]
+    assert "chat" in expired_kinds
+    assert "utterance" in expired_kinds
+    assert "clip_candidate" in expired_kinds
+
+
+def test_an_expired_event_still_happened(track):
+    _kept, expired = track.cool()
+    chat = [e for e in expired if e.kind == "chat"]
+    assert chat and chat[0].at_ms == 41 * MIN
+    # Cooling is a statement about storage, not about the world. The track
+    # still holds what it recorded; cool() reports the partition.
+    assert len(track.events) == 7
+
+
+def test_the_retention_tier_of_a_kind_is_declared_not_guessed(track):
+    with pytest.raises(lst.TrackError) as e:
+        track.append(lst.SemanticEvent(0, "vibe", "good"))
+    assert "declaring a retention tier" in str(e.value)
+
+
+# ------------------------------------- ranking may not read from the future
+
+def test_at_or_before_never_returns_a_later_moment(track):
+    known = track.at_or_before(20 * MIN)
+    assert all(e.at_ms <= 20 * MIN for e in known)
+    assert not [e for e in known if e.kind == "sponsor_mention"]
+    # At 20 minutes the sponsor has not been mentioned yet, so a surface
+    # compiled at that moment cannot claim it was.
+
+
+def test_windows_partition_rather_than_double_count(track):
+    first = track.window(0, 25 * MIN)
+    second = track.window(25 * MIN, 60 * MIN)
+    assert len(first) + len(second) == len(track.events)
+    assert not (set(map(id, first)) & set(map(id, second)))
+
+
+def test_the_media_clock_starts_at_stream_start(track):
+    with pytest.raises(lst.TrackError):
+        track.append(lst.SemanticEvent(-1, "chat", "before the stream?"))
+
+
+# --------------------------------------------- hierarchical compression
+
+def test_compression_reports_the_hierarchy(track, ledger):
+    ledger.from_utterance(track, 18 * MIN, claim_id="c1", asserter="Neon June",
+                          subject="event:trees-friday", assertion="plays Friday")
+    c = track.compression()
+    assert c["utterances"] == 2
+    assert c["semantic_events"] == 8
+    assert c["claims"] == 1
+    # Raw volume in, few institutional moments out -- and the durable set is a
+    # strict minority of the track, which is the whole point.
+    assert c["durable_events"] < c["semantic_events"]
+
+
+# ------------------------------ a spoken mention is not a discharged obligation
+
+def test_a_sponsor_mention_does_not_discharge_the_sponsor_obligation(track):
+    db = sqlite3.connect(":memory:")
+    cg.ensure_schema(db)
+    try:
+        cg.record_commitment(db, commitment_id="s1", committer="Neon June",
+                             beneficiary="Red Bull",
+                             resource="two spoken acknowledgements on air",
+                             enactment="sponsor:2026-09")
+        assert len(track.sponsor_mentions("Red Bull")) == 1
+        # The contract asked for two. One mention is evidence toward the
+        # obligation and not its discharge, and only the contract knows that.
+        assert cg.status(db, "s1") == cg.OPEN
+    finally:
+        db.close()
+
+
+def test_meeting_the_contracted_count_lets_the_obligation_be_discharged(track):
+    db = sqlite3.connect(":memory:")
+    cg.ensure_schema(db)
+    try:
+        cg.record_commitment(db, commitment_id="s1", committer="Neon June",
+                             beneficiary="Red Bull",
+                             resource="two spoken acknowledgements on air",
+                             enactment="sponsor:2026-09")
+        track.append(lst.SemanticEvent(52 * MIN, "sponsor_mention", "Red Bull",
+                                       speaker="Neon June"))
+        mentions = track.sponsor_mentions("Red Bull")
+        assert len(mentions) == 2
+        cg.discharge(db, "s1", actor="institution",
+                     detail=f"two acknowledgements at {[m.at_ms for m in mentions]}")
+        assert cg.commitment_delivered(db, "s1") is True
+    finally:
+        db.close()
+
+
+def test_sponsor_matching_is_case_insensitive_but_not_fuzzy(track):
+    assert len(track.sponsor_mentions("red bull")) == 1
+    assert track.sponsor_mentions("Red") == []
+    # A substring match would let "Red" close a Red Bull obligation, and a
+    # sponsor contract is not the place for a generous string comparison.
+
+
+# ------------------------------------ a clip candidate is not a published clip
+
+def test_a_clip_candidate_is_only_a_candidate(track):
+    candidates = track.by_kind("clip_candidate")
+    assert len(candidates) == 1
+    # It cools with the rest of the exhaust. Publishing is a separate act with
+    # its own authority, and a candidate that survived cooling would look like
+    # a clip that exists.
+    _kept, expired = track.cool()
+    assert candidates[0] in expired
+
+
+# ------------------------------------- the machine simulcast, one profile
+
+def test_one_moment_projects_into_four_machine_grammars():
+    import domain_profile as dp
+    t = lst.LiveSemanticTrack("live:neon-june")
+    t.append(lst.SemanticEvent(18 * MIN, "claim", "plays Trees Friday",
+                               speaker="Neon June"))
+    profile = dp.live_profile()
+    record = dp.moment_record("live:neon-june", t.events[0])
+    carriers = ["cloudevents", "activitypub", "atproto", "mcp"]
+
+    for c in carriers:
+        assert profile.render(record, c)["fields"]
+    assert profile.disagreements(record, carriers) == []
+    assert profile.render(record, "cloudevents")["fields"]["type"] == "claim"
+    assert profile.render(record, "atproto")["fields"]["$type"] == "claim"
+
+
+def test_activitypub_carries_no_media_clock():
+    import domain_profile as dp
+    t = lst.LiveSemanticTrack("live:x")
+    t.append(lst.SemanticEvent(1000, "claim", "x", speaker="s"))
+    profile = dp.live_profile()
+    record = dp.moment_record("live:x", t.events[0])
+    ap = profile.render(record, "activitypub")["fields"]
+    # A social timeline has no place for an offset into a stream. Omitting it is
+    # the standard's shape, not an oversight.
+    assert "time" not in ap and "createdAt" not in ap
+    assert profile.render(record, "cloudevents")["fields"]["time"] == 1000
+
+
+def test_withholding_the_speaker_withholds_it_on_every_machine_carrier():
+    import domain_profile as dp
+    import information_policy as ip
+    policy = ip.InformationPolicy("LiveMoment")
+    for f in ("occurrence", "at_ms", "kind", "value", "source"):
+        policy.disclose(f, to=("public", "institution"))
+    policy.disclose("speaker", to=("institution",),
+                    reason="speaker identity is not released to the public feed")
+
+    profile = dp.live_profile(policy)
+    t = lst.LiveSemanticTrack("live:x")
+    t.append(lst.SemanticEvent(1000, "claim", "plays Friday", speaker="Neon June"))
+    record = dp.moment_record("live:x", t.events[0])
+
+    # A speaker shipped on the machine carrier while withheld on the social one
+    # would be a leak nobody would notice.
+    for carrier in ("activitypub", "atproto", "mcp"):
+        rendered = profile.render(record, carrier, audience="public")
+        assert "Neon June" not in str(rendered), carrier
+    assert profile.render(record, "mcp", audience="institution"
+                          )["fields"]["speaker"] == "Neon June"
+
+
+# ------------------------------------------ retention is a lattice, not a boolean
+
+def test_tiers_are_ordered_and_the_cooling_floor_sits_inside_them():
+    assert lst.TIERS == (lst.FLASH, lst.CHAT, lst.MOMENT, lst.SOCIAL,
+                         lst.SAVED, lst.INSTITUTIONAL, lst.EVIDENTIARY,
+                         lst.ECONOMIC)
+    assert lst.survives_cooling(lst.SAVED) is True
+    assert lst.survives_cooling(lst.SOCIAL) is False
+    # A boolean could not have expressed this: saved and social are both
+    # "kept for a while" and only one of them survives pressure.
+
+
+def test_a_reaction_and_a_settled_payment_are_not_the_same_kind_of_ephemeral():
+    t = lst.LiveSemanticTrack("x")
+    t.append(lst.SemanticEvent(0, "reaction", "heart"))
+    t.append(lst.SemanticEvent(1, "chat", "hi"))
+    t.append(lst.SemanticEvent(2, "commerce", "ticket purchased"))
+    assert [e.tier() for e in t.events] == [lst.FLASH, lst.CHAT, lst.ECONOMIC]
+    assert t.by_tier()[lst.FLASH] == 1
+    assert t.by_tier()[lst.ECONOMIC] == 1
+
+
+def test_popularity_does_not_promote_a_record():
+    t = lst.LiveSemanticTrack("x")
+    t.append(lst.SemanticEvent(0, "chat", "this is the best set ever"))
+    for reason in ("popular", "referenced", "survived", "engagement"):
+        with pytest.raises(lst.TrackError) as e:
+            t.promote(0, to=lst.SAVED, reason=reason)
+        assert "does not justify promotion" in str(e.value)
+    assert t.events[0].tier() == lst.CHAT
+
+
+def test_an_explicit_action_promotes_a_record_and_it_then_survives_cooling():
+    t = lst.LiveSemanticTrack("x")
+    t.append(lst.SemanticEvent(0, "chat", "meet us at the side door"))
+    assert t.cool()[1], "it cools before anyone saves it"
+
+    t.promote(0, to=lst.SAVED, reason="explicit_action")
+    kept, expired = t.cool()
+    assert [e.kind for e in kept] == ["chat"]
+    assert expired == []
+
+
+def test_evidence_promotes_a_record(track):
+    t = lst.LiveSemanticTrack("x")
+    t.append(lst.SemanticEvent(0, "clip_candidate", "the announcement"))
+    t.promote(0, to=lst.EVIDENTIARY, reason="evidence")
+    assert t.events[0].tier() == lst.EVIDENTIARY
+    assert t.cool()[1] == []
+
+
+def test_retention_moves_upward_only():
+    t = lst.LiveSemanticTrack("x")
+    t.append(lst.SemanticEvent(0, "commerce", "payment settled"))
+    with pytest.raises(lst.TrackError) as e:
+        t.promote(0, to=lst.CHAT, reason="explicit_action")
+    assert "cannot demote" in str(e.value)
+    # Lowering retention would delete something the estate already took
+    # responsibility for, which is not a promotion policy's business.
+    assert t.events[0].tier() == lst.ECONOMIC
+
+
+def test_an_unknown_tier_is_refused_at_both_ends():
+    t = lst.LiveSemanticTrack("x")
+    with pytest.raises(lst.TrackError):
+        t.append(lst.SemanticEvent(0, "chat", "x", retention="forever"))
+    t.append(lst.SemanticEvent(0, "chat", "x"))
+    with pytest.raises(lst.TrackError):
+        t.promote(0, to="forever", reason="evidence")
+
+
+def test_storage_is_not_memory(track, ledger):
+    # The raw stream cools away. What the occurrence produced does not, and the
+    # two are different questions about the same night.
+    ledger.from_utterance(track, 18 * MIN, claim_id="c1", asserter="Neon June",
+                          subject="event:trees-friday", assertion="plays Friday")
+    kept, expired = track.cool()
+    assert len(expired) > len(kept), "most of a live stream is exhaust"
+    assert {e.kind for e in kept} == {"claim", "sponsor_mention"}
+    assert ledger.claims["c1"].asserter == "Neon June"

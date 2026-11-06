@@ -1,0 +1,305 @@
+"""Archived Python ProtocolContract; active declarations live in schemas/control/protocol-contract.cue.
+
+MCP, A2A, ACP and their peers move messages competently and say nothing about
+what a participant owes, what authority they hold, or whether an output was
+computed from information its producer was entitled to. A transport can complete
+perfectly while leaving an obligation open, and no carrier notices, because none
+of them model obligation.
+
+This compiles a declared interaction into owners that already exist. There is no
+protocol state store: commitments live in CommitmentGraph, disclosure in
+InformationPolicy. A second store would become a second truth about one exchange.
+
+Ordering is *derived*, not declared. A contract states which information each
+role requires and produces; the compiler computes the order from that causality,
+which is the BSPL lesson: prescribing a message sequence serializes work that was
+never actually dependent, and hides the concurrency a multi-party exchange has.
+
+Three conformance conditions, after Supple, each with a distinct failure:
+
+  liveness   can every role eventually obtain what it requires? A role whose
+             inputs nobody produces will wait forever, and a message-sequence
+             specification cannot tell you that in advance.
+
+  safety     can two roles race to produce the same authoritative output? If so
+             the winner is decided by timing, and the exchange has no answer to
+             "which one was correct".
+
+  integrity  was an output computed only from information its producer was
+             entitled to read? A schema validator passes a well-formed message
+             that laundered a withheld field into a derived value.
+
+Forbidden inferences, falsified by the tests beside this file:
+  a completed enactment -> a discharged commitment
+  a conformant contract -> a lawful interaction for this actor
+  a derived ordering    -> an execution guarantee
+  a carrier answering   -> the obligation being met
+"""
+
+# COMPATIBILITY BOUNDARY (do not add durable enactment behavior here): native
+# declaration/conformance/wave/enactment lives in engine/core/src/
+# protocol_contract.c via bf_protocol_contract.h, with CUE/YAFF inputs under
+# schemas/control/protocol-contract.*. ProtocolLibrary, ProtocolEvidence,
+# ObligationWork, and ProtocolProgram still call this reference; migrate their
+# generated bindings before archiving this file.
+
+from __future__ import annotations
+
+import sqlite3
+from dataclasses import dataclass, field
+from typing import Iterable, Optional
+
+import commitment_graph as cg
+import information_policy as ip
+
+
+class ProtocolError(ValueError):
+    """A contract that could not hold. Raised at compile time, not at run time."""
+
+
+@dataclass(frozen=True)
+class Role:
+    """One participant, specified by information rather than by messages.
+
+    `requires` and `produces` name information parameters. `reads` is what this
+    role is entitled to see -- it defaults to what it requires, and widening it
+    is a deliberate act, because a role that reads more than it needs is the
+    integrity failure waiting to happen.
+    """
+    name: str
+    requires: frozenset[str] = frozenset()
+    produces: frozenset[str] = frozenset()
+    authority: str = ""
+    reads: Optional[frozenset[str]] = None
+
+    def entitled_to(self) -> frozenset[str]:
+        return self.reads if self.reads is not None else self.requires
+
+
+@dataclass(frozen=True)
+class CommitmentSpec:
+    """An obligation this interaction creates when it is enacted."""
+    key: str
+    committer: str          # role name
+    beneficiary: str        # role name
+    resource: str
+    discharged_by: str = ""  # information parameter whose production discharges it
+
+
+@dataclass
+class ProtocolContract:
+    name: str
+    roles: dict[str, Role] = field(default_factory=dict)
+    keys: frozenset[str] = frozenset()
+    given: frozenset[str] = frozenset()      # information present before the exchange
+    commitments: list[CommitmentSpec] = field(default_factory=list)
+    evidence_required: frozenset[str] = frozenset()
+
+    # ------------------------------------------------------------- declaration
+
+    def role(self, name: str, *, requires: Iterable[str] = (),
+             produces: Iterable[str] = (), authority: str = "",
+             reads: Optional[Iterable[str]] = None) -> "ProtocolContract":
+        if name in self.roles:
+            raise ProtocolError(f"role {name!r} declared twice in {self.name!r}")
+        self.roles[name] = Role(name, frozenset(requires), frozenset(produces),
+                                authority, None if reads is None else frozenset(reads))
+        return self
+
+    def commits(self, key: str, *, committer: str, beneficiary: str, resource: str,
+                discharged_by: str = "") -> "ProtocolContract":
+        for who in (committer, beneficiary):
+            if who not in self.roles:
+                raise ProtocolError(
+                    f"commitment {key!r} names role {who!r}, which {self.name!r} "
+                    f"does not declare")
+        self.commitments.append(
+            CommitmentSpec(key, committer, beneficiary, resource, discharged_by))
+        return self
+
+    # ------------------------------------------------------------- causality
+
+    def producers(self) -> dict[str, list[str]]:
+        out: dict[str, list[str]] = {}
+        for r in self.roles.values():
+            for p in r.produces:
+                out.setdefault(p, []).append(r.name)
+        return {k: sorted(v) for k, v in out.items()}
+
+    def causal_order(self) -> list[list[str]]:
+        """Roles grouped into waves that may run concurrently.
+
+        Wave n contains every role whose requirements are satisfied by `given`
+        plus everything produced in waves before it. Two roles in the same wave
+        have no information dependency between them, so serializing them would
+        be an invention of the specification rather than a fact about the
+        exchange.
+
+        Raises on a contract that cannot make progress -- see liveness_errors
+        for the diagnosis, which names the roles and the parameters they wait on.
+        """
+        blocked = self.liveness_errors()
+        if blocked:
+            raise ProtocolError(
+                f"{self.name!r} cannot order: " +
+                "; ".join(f"{role} waits forever on {sorted(params)}"
+                          for role, params in sorted(blocked.items())))
+        available = set(self.given) | set(self.keys)
+        remaining = dict(self.roles)
+        waves: list[list[str]] = []
+        while remaining:
+            wave = sorted(n for n, r in remaining.items()
+                          if r.requires <= available)
+            if not wave:  # pragma: no cover -- liveness_errors precludes this
+                raise ProtocolError(f"{self.name!r} stalled with {sorted(remaining)}")
+            waves.append(wave)
+            for n in wave:
+                available |= remaining.pop(n).produces
+        return waves
+
+    # ------------------------------------------------------- conformance: three
+
+    def liveness_errors(self) -> dict[str, frozenset[str]]:
+        """Roles that can never obtain their inputs, and what they wait on.
+
+        Computed as a fixed point: repeatedly admit every role whose needs are
+        met, until nothing more can be admitted. Whatever remains is genuinely
+        unreachable rather than merely late.
+        """
+        available = set(self.given) | set(self.keys)
+        remaining = dict(self.roles)
+        progressed = True
+        while progressed:
+            progressed = False
+            for n, r in list(remaining.items()):
+                if r.requires <= available:
+                    available |= r.produces
+                    del remaining[n]
+                    progressed = True
+        return {n: frozenset(r.requires - available) for n, r in remaining.items()}
+
+    def safety_errors(self) -> dict[str, list[str]]:
+        """Information parameters more than one role can produce.
+
+        Whichever arrives first wins, so the value is decided by timing and the
+        exchange cannot say which producer was authoritative.
+        """
+        return {p: who for p, who in self.producers().items() if len(who) > 1}
+
+    def integrity_errors(self, policy: Optional[ip.InformationPolicy] = None,
+                         audience: str = "public") -> dict[str, frozenset[str]]:
+        """Outputs computed from information the producer was not entitled to.
+
+        Two sources of entitlement, both checked. A role must be entitled within
+        the contract (its declared `reads`), and where a policy is supplied, the
+        parameter must also be disclosable to this audience. A well-formed
+        message carrying a value derived from a withheld field is exactly what a
+        schema validator waves through.
+        """
+        out: dict[str, frozenset[str]] = {}
+        for r in self.roles.values():
+            if not r.produces:
+                continue
+            unentitled = set(r.requires - r.entitled_to())
+            if policy is not None:
+                for param in r.entitled_to():
+                    allowed, _ = policy.field_decision(param, audience)
+                    if not allowed and param in r.requires:
+                        unentitled.add(param)
+            if unentitled:
+                out[r.name] = frozenset(unentitled)
+        return out
+
+    def conformance(self, policy: Optional[ip.InformationPolicy] = None,
+                    audience: str = "public") -> dict[str, object]:
+        return {
+            "liveness": {k: sorted(v) for k, v in self.liveness_errors().items()},
+            "safety": self.safety_errors(),
+            "integrity": {k: sorted(v)
+                          for k, v in self.integrity_errors(policy, audience).items()},
+        }
+
+    def conformant(self, policy: Optional[ip.InformationPolicy] = None,
+                   audience: str = "public") -> bool:
+        c = self.conformance(policy, audience)
+        return not any(c.values())
+
+    # --------------------------------------------------------------- enactment
+
+    def enact(self, db: sqlite3.Connection, *, enactment_id: str,
+              actors: dict[str, str], at: str = "") -> list[str]:
+        """Open this contract's commitments in CommitmentGraph.
+
+        The graph owns the obligations; this only names them. Every commitment
+        carries the enactment id, so an obligation is traceable to the exchange
+        that made it rather than standing free.
+        """
+        if not self.conformant():
+            raise ProtocolError(
+                f"refusing to enact non-conformant contract {self.name!r}: "
+                f"{self.conformance()}")
+        missing = set(self.roles) - set(actors)
+        if missing:
+            raise ProtocolError(f"enactment {enactment_id!r} has no actor for "
+                                f"role(s) {sorted(missing)}")
+        cg.ensure_schema(db)
+        opened = []
+        for spec in self.commitments:
+            cid = f"{enactment_id}:{spec.key}"
+            cg.record_commitment(
+                db, commitment_id=cid, committer=actors[spec.committer],
+                beneficiary=actors[spec.beneficiary], resource=spec.resource,
+                conditions=spec.discharged_by, authority=self.roles[spec.committer].authority,
+                enactment=enactment_id, at=at)
+            opened.append(cid)
+        return opened
+
+    def outstanding_after(self, db: sqlite3.Connection,
+                          enactment_id: str) -> list[tuple[str, str]]:
+        """What this enactment still owes, with the state it is owed in.
+
+        The question the carriers cannot answer. An exchange whose messages all
+        completed can still leave obligations open, and that residue is the
+        reason to model commitments at all.
+        """
+        out = []
+        for spec in self.commitments:
+            cid = f"{enactment_id}:{spec.key}"
+            st = cg.status(db, cid)
+            if st is not None and st not in cg.TERMINAL:
+                out.append((cid, st))
+        return sorted(out)
+
+    def closed(self, db: sqlite3.Connection, enactment_id: str) -> bool:
+        """Whether every obligation this enactment created has reached a terminal
+        state. Message completion is not consulted, because it never settled
+        this question."""
+        return not self.outstanding_after(db, enactment_id)
+
+
+# ------------------------------------------------------ a real interaction
+
+def quote_accept() -> ProtocolContract:
+    """Quote-accept: the pattern behind this estate's own priced capabilities.
+
+    A buyer asks, a seller quotes, the buyer accepts, the seller delivers. The
+    structure is identical for a venue booking and a parcel-underwriting call;
+    what differs is the DomainProfile that gives it vocabulary and evidence.
+
+    Note what the contract does NOT say: nothing here fixes the order in which
+    messages travel. The ordering falls out of who needs what.
+    """
+    return (ProtocolContract("quote-accept", keys=frozenset({"exchange_id"}),
+                             given=frozenset({"capability", "buyer_identity"}))
+            .role("buyer", requires={"capability", "buyer_identity"},
+                  produces={"request"}, authority="request:capability")
+            .role("seller", requires={"request"}, produces={"quote"},
+                  authority="quote:capability")
+            .role("settlement", requires={"quote"}, produces={"acceptance"},
+                  authority="accept:quote")
+            .role("deliverer", requires={"acceptance"}, produces={"delivery"},
+                  authority="deliver:capability")
+            .commits("delivery", committer="deliverer", beneficiary="buyer",
+                     resource="the quoted capability", discharged_by="delivery")
+            .commits("payment", committer="buyer", beneficiary="seller",
+                     resource="the quoted amount", discharged_by="acceptance"))

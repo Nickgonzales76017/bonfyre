@@ -1,0 +1,474 @@
+{
+ "schema": "bonfyre.command-vectors.v1",
+ "binary": "bonfyre-experience-map",
+ "binary_env": "BONFYRE_EXPERIENCE_TEST_BINARY",
+ "replaces": [
+  "tests/native_resolution.test.mjs"
+ ],
+ "cases": [
+  {
+   "name": "an objective returns source owners, directed contracts and workflows without claiming execution",
+   "files": {
+    "owner_graph.json": "{\"schema\":\"bonfyre.experience-owner-graph.v1\",\"atlas_declaration_digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"owners\":[{\"id\":\"training-request\",\"semantic_question\":\"Ask a coach for a training routine\",\"experience_chains\":[\"learning\"],\"known_gaps\":[\"payment unconnected\"],\"forbidden_inferences\":[\"request -> paid entitlement\"],\"witnesses\":[\"fixture-test\"]},{\"id\":\"work-graph\",\"semantic_question\":\"Durable work\",\"experience_chains\":[],\"maturity\":\"declared\"},{\"id\":\"publication\",\"semantic_question\":\"Publish reviewed material\",\"experience_chains\":[]},{\"id\":\"unrelated\",\"semantic_question\":\"A separate owner\",\"experience_chains\":[]}],\"interactions\":[{\"id\":\"request-work\",\"source\":\"training-request\",\"destination\":\"work-graph\",\"preserves\":[\"claim identity\"],\"forbidden_inferences\":[\"claim -> authority\"]},{\"id\":\"work-publication\",\"source\":\"work-graph\",\"destination\":\"publication\"}],\"workflows\":[{\"id\":\"learning\",\"stages\":[\"practice\",\"review\"]}]}"
+   },
+   "steps": [
+    {
+     "argv": [
+      "resolve",
+      "I want a training routine",
+      "1"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 0,
+     "at": {
+      "anchors.*.id": [
+       "training-request"
+      ],
+      "owners": [
+       {
+        "id": "training-request",
+        "semantic_question": "Ask a coach for a training routine",
+        "experience_chains": [
+         "learning"
+        ],
+        "known_gaps": [
+         "payment unconnected"
+        ],
+        "forbidden_inferences": [
+         "request -> paid entitlement"
+        ],
+        "witnesses": [
+         "fixture-test"
+        ]
+       },
+       {
+        "id": "work-graph",
+        "semantic_question": "Durable work",
+        "experience_chains": [],
+        "maturity": "declared"
+       }
+      ],
+      "interactions": [
+       {
+        "id": "request-work",
+        "source": "training-request",
+        "destination": "work-graph",
+        "preserves": [
+         "claim identity"
+        ],
+        "forbidden_inferences": [
+         "claim -> authority"
+        ]
+       }
+      ],
+      "workflows": [
+       {
+        "id": "learning",
+        "stages": [
+         "practice",
+         "review"
+        ]
+       }
+      ],
+      "execution_authorized": false,
+      "executable_chain_proven": false,
+      "atlas_declaration_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     },
+     "has": {
+      "unresolved": "economic commitment and paid entitlement"
+     }
+    }
+   ]
+  },
+  {
+   "name": "graph expansion includes incoming edges once and never invents transitive connections",
+   "files": {
+    "owner_graph.json": "{\"schema\":\"bonfyre.experience-owner-graph.v1\",\"atlas_declaration_digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"owners\":[{\"id\":\"training-request\",\"semantic_question\":\"Ask a coach for a training routine\",\"experience_chains\":[\"learning\"],\"known_gaps\":[\"payment unconnected\"],\"forbidden_inferences\":[\"request -> paid entitlement\"],\"witnesses\":[\"fixture-test\"]},{\"id\":\"work-graph\",\"semantic_question\":\"Durable work\",\"experience_chains\":[],\"maturity\":\"declared\"},{\"id\":\"publication\",\"semantic_question\":\"Publish reviewed material\",\"experience_chains\":[]},{\"id\":\"unrelated\",\"semantic_question\":\"A separate owner\",\"experience_chains\":[]}],\"interactions\":[{\"id\":\"request-work\",\"source\":\"training-request\",\"destination\":\"work-graph\",\"preserves\":[\"claim identity\"],\"forbidden_inferences\":[\"claim -> authority\"]},{\"id\":\"work-publication\",\"source\":\"work-graph\",\"destination\":\"publication\"}],\"workflows\":[{\"id\":\"learning\",\"stages\":[\"practice\",\"review\"]}]}"
+   },
+   "steps": [
+    {
+     "argv": [
+      "resolve",
+      "work-graph",
+      "1"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "at": {
+      "owners.*.id": [
+       "publication",
+       "training-request",
+       "work-graph"
+      ],
+      "interactions.*.id": [
+       "request-work",
+       "work-publication"
+      ],
+      "expansion": "one_hop_undirected",
+      "owners.2.maturity": "declared"
+     }
+    }
+   ]
+  },
+  {
+   "name": "a source correction or removed edge changes the next read with no saved routing database",
+   "files": {
+    "owner_graph.json": "{\"schema\":\"bonfyre.experience-owner-graph.v1\",\"atlas_declaration_digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"owners\":[{\"id\":\"training-request\",\"semantic_question\":\"Ask a coach for a training routine\",\"experience_chains\":[\"learning\"],\"known_gaps\":[\"revised gap\"],\"forbidden_inferences\":[\"request -> paid entitlement\"],\"witnesses\":[\"fixture-test\"]},{\"id\":\"work-graph\",\"semantic_question\":\"Durable work\",\"experience_chains\":[],\"maturity\":\"declared\"},{\"id\":\"publication\",\"semantic_question\":\"Publish reviewed material\",\"experience_chains\":[]},{\"id\":\"unrelated\",\"semantic_question\":\"A separate owner\",\"experience_chains\":[]}],\"interactions\":[],\"workflows\":[{\"id\":\"learning\",\"stages\":[\"practice\",\"review\"]}]}"
+   },
+   "steps": [
+    {
+     "argv": [
+      "resolve",
+      "training-request",
+      "1"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "len": {
+      "owners": 1
+     },
+     "at": {
+      "interactions": [],
+      "owners.0.known_gaps": [
+       "revised gap"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "unknown objectives, injection text, stopwords and invalid bounds do not become a default route",
+   "files": {
+    "owner_graph.json": "{\"schema\":\"bonfyre.experience-owner-graph.v1\",\"atlas_declaration_digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"owners\":[{\"id\":\"training-request\",\"semantic_question\":\"Ask a coach for a training routine\",\"experience_chains\":[\"learning\"],\"known_gaps\":[\"payment unconnected\"],\"forbidden_inferences\":[\"request -> paid entitlement\"],\"witnesses\":[\"fixture-test\"]},{\"id\":\"work-graph\",\"semantic_question\":\"Durable work\",\"experience_chains\":[],\"maturity\":\"declared\"},{\"id\":\"publication\",\"semantic_question\":\"Publish reviewed material\",\"experience_chains\":[]},{\"id\":\"unrelated\",\"semantic_question\":\"A separate owner\",\"experience_chains\":[]}],\"interactions\":[{\"id\":\"request-work\",\"source\":\"training-request\",\"destination\":\"work-graph\",\"preserves\":[\"claim identity\"],\"forbidden_inferences\":[\"claim -> authority\"]},{\"id\":\"work-publication\",\"source\":\"work-graph\",\"destination\":\"publication\"}],\"workflows\":[{\"id\":\"learning\",\"stages\":[\"practice\",\"review\"]}]}"
+   },
+   "steps": [
+    {
+     "argv": [
+      "resolve",
+      "xyzzynonexistent",
+      "5"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 1,
+     "at": {
+      "status": "no_match",
+      "owners": []
+     }
+    },
+    {
+     "argv": [
+      "resolve",
+      "xyzzynonexistent'; DROP TABLE owners; --",
+      "5"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 1,
+     "at": {
+      "status": "no_match",
+      "owners": []
+     }
+    },
+    {
+     "argv": [
+      "resolve",
+      "the and I",
+      "1"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 2,
+     "stdout": ""
+    },
+    {
+     "argv": [
+      "resolve",
+      {
+       "repeat": "x",
+       "count": 4097
+      },
+      "1"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 2,
+     "stdout": ""
+    },
+    {
+     "argv": [
+      "resolve",
+      "training",
+      "0"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 2,
+     "stdout": ""
+    },
+    {
+     "argv": [
+      "resolve",
+      "training",
+      "11"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 2,
+     "stdout": ""
+    },
+    {
+     "argv": [
+      "resolve",
+      "training",
+      "1tail"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 2,
+     "stdout": ""
+    }
+   ]
+  },
+  {
+   "name": "damaged or ambiguous graphs emit no partial result",
+   "files": {
+    "owner_graph.json": "{\"schema\":\"bonfyre.experience-owner-graph.v1\",\"atlas_declaration_digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"owners\":[{\"id\":\"training-request\",\"semantic_question\":\"Ask a coach for a training routine\",\"experience_chains\":[\"learning\"],\"known_gaps\":[\"payment unconnected\"],\"forbidden_inferences\":[\"request -> paid entitlement\"],\"witnesses\":[\"fixture-test\"]},{\"id\":\"work-graph\",\"semantic_question\":\"Durable work\",\"experience_chains\":[],\"maturity\":\"declared\"},{\"id\":\"publication\",\"semantic_question\":\"Publish reviewed material\",\"experience_chains\":[]},{\"id\":\"unrelated\",\"semantic_question\":\"A separate owner\",\"experience_chains\":[]}],\"interactions\":[{\"id\":\"request-work\",\"source\":\"training-request\",\"destination\":\"work-graph\",\"preserves\":[\"claim identity\"],\"forbidden_inferences\":[\"claim -> authority\"]},{\"id\":\"work-publication\",\"source\":\"work-graph\",\"destination\":\"publication\"}],\"workflows\":[{\"id\":\"learning\",\"stages\":[\"practice\",\"review\"]}]}"
+   },
+   "steps": [
+    {
+     "write": {
+      "owner_graph.json": "{"
+     },
+     "argv": [
+      "resolve",
+      "training",
+      "1"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 2,
+     "stdout": ""
+    },
+    {
+     "write": {
+      "owner_graph.json": "{\"schema\":\"bonfyre.experience-owner-graph.v1\",\"atlas_declaration_digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"owners\":[{\"id\":\"training-request\",\"semantic_question\":\"Ask a coach for a training routine\",\"experience_chains\":[\"learning\"],\"known_gaps\":[\"payment unconnected\"],\"forbidden_inferences\":[\"request -> paid entitlement\"],\"witnesses\":[\"fixture-test\"]},{\"id\":\"work-graph\",\"semantic_question\":\"Durable work\",\"experience_chains\":[],\"maturity\":\"declared\"},{\"id\":\"publication\",\"semantic_question\":\"Publish reviewed material\",\"experience_chains\":[]},{\"id\":\"unrelated\",\"semantic_question\":\"A separate owner\",\"experience_chains\":[]},{\"id\":\"training-request\",\"semantic_question\":\"Ask a coach for a training routine\",\"experience_chains\":[\"learning\"],\"known_gaps\":[\"payment unconnected\"],\"forbidden_inferences\":[\"request -> paid entitlement\"],\"witnesses\":[\"fixture-test\"]}],\"interactions\":[{\"id\":\"request-work\",\"source\":\"training-request\",\"destination\":\"work-graph\",\"preserves\":[\"claim identity\"],\"forbidden_inferences\":[\"claim -> authority\"]},{\"id\":\"work-publication\",\"source\":\"work-graph\",\"destination\":\"publication\"}],\"workflows\":[{\"id\":\"learning\",\"stages\":[\"practice\",\"review\"]}]}"
+     },
+     "argv": [
+      "resolve",
+      "training",
+      "1"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 2,
+     "stdout": ""
+    },
+    {
+     "write": {
+      "owner_graph.json": "{\"schema\":\"bonfyre.experience-owner-graph.v1\",\"atlas_declaration_digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"owners\":[{\"id\":\"training-request\",\"semantic_question\":\"Ask a coach for a training routine\",\"experience_chains\":[\"learning\"],\"known_gaps\":[\"payment unconnected\"],\"forbidden_inferences\":[\"request -> paid entitlement\"],\"witnesses\":[\"fixture-test\"]},{\"id\":\"work-graph\",\"semantic_question\":\"Durable work\",\"experience_chains\":[],\"maturity\":\"declared\"},{\"id\":\"publication\",\"semantic_question\":\"Publish reviewed material\",\"experience_chains\":[]},{\"id\":\"unrelated\",\"semantic_question\":\"A separate owner\",\"experience_chains\":[]}],\"interactions\":[{\"id\":\"missing\",\"source\":\"training-request\",\"destination\":\"absent\"}],\"workflows\":[{\"id\":\"learning\",\"stages\":[\"practice\",\"review\"]}]}"
+     },
+     "argv": [
+      "resolve",
+      "training",
+      "1"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 2,
+     "stdout": ""
+    },
+    {
+     "write": {
+      "owner_graph.json": "{\"schema\":\"bonfyre.experience-owner-graph.v1\",\"atlas_declaration_digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"owners\":[{\"id\":\"training-request\",\"semantic_question\":\"Ask a coach for a training routine\",\"experience_chains\":[\"learning\"],\"known_gaps\":[\"payment unconnected\"],\"forbidden_inferences\":[\"request -> paid entitlement\"],\"witnesses\":[\"fixture-test\"]},{\"id\":\"work-graph\",\"semantic_question\":\"Durable work\",\"experience_chains\":[],\"maturity\":\"declared\"},{\"id\":\"publication\",\"semantic_question\":\"Publish reviewed material\",\"experience_chains\":[]},{\"id\":\"unrelated\",\"semantic_question\":\"A separate owner\",\"experience_chains\":[]}],\"interactions\":[{\"id\":\"request-work\",\"source\":\"training-request\",\"destination\":\"work-graph\",\"preserves\":[\"claim identity\"],\"forbidden_inferences\":[\"claim -> authority\"]},{\"id\":\"work-publication\",\"source\":\"work-graph\",\"destination\":\"publication\"}],\"workflows\":[]}"
+     },
+     "argv": [
+      "resolve",
+      "training",
+      "1"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 2,
+     "stdout": ""
+    },
+    {
+     "write": {
+      "owner_graph.json": "{\"schema\":\"bonfyre.experience-owner-graph.v1\",\"atlas_declaration_digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"owners\":{},\"interactions\":[{\"id\":\"request-work\",\"source\":\"training-request\",\"destination\":\"work-graph\",\"preserves\":[\"claim identity\"],\"forbidden_inferences\":[\"claim -> authority\"]},{\"id\":\"work-publication\",\"source\":\"work-graph\",\"destination\":\"publication\"}],\"workflows\":[{\"id\":\"learning\",\"stages\":[\"practice\",\"review\"]}]}"
+     },
+     "argv": [
+      "resolve",
+      "training",
+      "1"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 2,
+     "stdout": ""
+    },
+    {
+     "write": {
+      "owner_graph.json": "{\"schema\":\"wrong\",\"atlas_declaration_digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"owners\":[{\"id\":\"training-request\",\"semantic_question\":\"Ask a coach for a training routine\",\"experience_chains\":[\"learning\"],\"known_gaps\":[\"payment unconnected\"],\"forbidden_inferences\":[\"request -> paid entitlement\"],\"witnesses\":[\"fixture-test\"]},{\"id\":\"work-graph\",\"semantic_question\":\"Durable work\",\"experience_chains\":[],\"maturity\":\"declared\"},{\"id\":\"publication\",\"semantic_question\":\"Publish reviewed material\",\"experience_chains\":[]},{\"id\":\"unrelated\",\"semantic_question\":\"A separate owner\",\"experience_chains\":[]}],\"interactions\":[{\"id\":\"request-work\",\"source\":\"training-request\",\"destination\":\"work-graph\",\"preserves\":[\"claim identity\"],\"forbidden_inferences\":[\"claim -> authority\"]},{\"id\":\"work-publication\",\"source\":\"work-graph\",\"destination\":\"publication\"}],\"workflows\":[{\"id\":\"learning\",\"stages\":[\"practice\",\"review\"]}]}"
+     },
+     "argv": [
+      "resolve",
+      "training",
+      "1"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 2,
+     "stdout": ""
+    },
+    {
+     "write": {
+      "owner_graph.json": "{\"schema\":\"bonfyre.experience-owner-graph.v1\",\"atlas_declaration_digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"owners\":[{\"id\":\"training-request\",\"semantic_question\":\"Ask a coach for a training routine\",\"experience_chains\":[\"learning\"],\"known_gaps\":[\"payment unconnected\"],\"forbidden_inferences\":[\"request -> paid entitlement\"],\"witnesses\":[\"fixture-test\"]},{\"id\":\"work-graph\",\"semantic_question\":\"Durable work\",\"experience_chains\":[],\"maturity\":\"declared\"},{\"id\":\"publication\",\"semantic_question\":\"Publish reviewed material\",\"experience_chains\":[]},{\"id\":\"unrelated\",\"semantic_question\":\"A separate owner\",\"experience_chains\":[]}],\"interactions\":[{\"id\":\"request-work\",\"source\":\"training-request\",\"destination\":\"work-graph\",\"preserves\":[\"claim identity\"],\"forbidden_inferences\":[\"claim -> authority\"]},{\"id\":\"work-publication\",\"source\":\"work-graph\",\"destination\":\"publication\"}],\"workflows\":[{\"id\":\"learning\",\"stages\":[\"practice\",\"review\"]}]}\u0000"
+     },
+     "argv": [
+      "resolve",
+      "training",
+      "1"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 2,
+     "stdout": ""
+    },
+    {
+     "write": {
+      "owner_graph.json": "{\"schema\":\"bonfyre.experience-owner-graph.v1\",\"atlas_declaration_digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"owners\":[{\"id\":\"training-request\\u0000tail\",\"semantic_question\":\"Ask a coach for a training routine\",\"experience_chains\":[\"learning\"],\"known_gaps\":[\"payment unconnected\"],\"forbidden_inferences\":[\"request -> paid entitlement\"],\"witnesses\":[\"fixture-test\"]},{\"id\":\"work-graph\",\"semantic_question\":\"Durable work\",\"experience_chains\":[],\"maturity\":\"declared\"},{\"id\":\"publication\",\"semantic_question\":\"Publish reviewed material\",\"experience_chains\":[]},{\"id\":\"unrelated\",\"semantic_question\":\"A separate owner\",\"experience_chains\":[]}],\"interactions\":[{\"id\":\"request-work\",\"source\":\"training-request\",\"destination\":\"work-graph\",\"preserves\":[\"claim identity\"],\"forbidden_inferences\":[\"claim -> authority\"]},{\"id\":\"work-publication\",\"source\":\"work-graph\",\"destination\":\"publication\"}],\"workflows\":[{\"id\":\"learning\",\"stages\":[\"practice\",\"review\"]}]}"
+     },
+     "argv": [
+      "resolve",
+      "training",
+      "1"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 2,
+     "stdout": ""
+    },
+    {
+     "write": {
+      "owner_graph.json": "{\"schema\":\"bonfyre.experience-owner-graph.v1\",\"atlas_declaration_digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"owners\":[{\"id\":\"training-request\",\"id\":\"other\",\"semantic_question\":\"Ask a coach for a training routine\",\"experience_chains\":[\"learning\"],\"known_gaps\":[\"payment unconnected\"],\"forbidden_inferences\":[\"request -> paid entitlement\"],\"witnesses\":[\"fixture-test\"]},{\"id\":\"work-graph\",\"semantic_question\":\"Durable work\",\"experience_chains\":[],\"maturity\":\"declared\"},{\"id\":\"publication\",\"semantic_question\":\"Publish reviewed material\",\"experience_chains\":[]},{\"id\":\"unrelated\",\"semantic_question\":\"A separate owner\",\"experience_chains\":[]}],\"interactions\":[{\"id\":\"request-work\",\"source\":\"training-request\",\"destination\":\"work-graph\",\"preserves\":[\"claim identity\"],\"forbidden_inferences\":[\"claim -> authority\"]},{\"id\":\"work-publication\",\"source\":\"work-graph\",\"destination\":\"publication\"}],\"workflows\":[{\"id\":\"learning\",\"stages\":[\"practice\",\"review\"]}]}"
+     },
+     "argv": [
+      "resolve",
+      "training",
+      "1"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 2,
+     "stdout": ""
+    },
+    {
+     "write": {
+      "owner_graph.json": "{\"schema\":\"bonfyre.experience-owner-graph.v1\",\"atlas_declaration_digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"owners\":[{\"id\":23,\"experience_chains\":[]}],\"interactions\":[{\"id\":\"request-work\",\"source\":\"training-request\",\"destination\":\"work-graph\",\"preserves\":[\"claim identity\"],\"forbidden_inferences\":[\"claim -> authority\"]},{\"id\":\"work-publication\",\"source\":\"work-graph\",\"destination\":\"publication\"}],\"workflows\":[{\"id\":\"learning\",\"stages\":[\"practice\",\"review\"]}]}"
+     },
+     "argv": [
+      "resolve",
+      "training",
+      "1"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 2,
+     "stdout": ""
+    },
+    {
+     "write": {
+      "owner_graph.json": "{\"schema\":\"bonfyre.experience-owner-graph.v1\",\"atlas_declaration_digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"owners\":[{\"id\":\"training-request\",\"experience_chains\":\"learning\"}],\"interactions\":[{\"id\":\"request-work\",\"source\":\"training-request\",\"destination\":\"work-graph\",\"preserves\":[\"claim identity\"],\"forbidden_inferences\":[\"claim -> authority\"]},{\"id\":\"work-publication\",\"source\":\"work-graph\",\"destination\":\"publication\"}],\"workflows\":[{\"id\":\"learning\",\"stages\":[\"practice\",\"review\"]}]}"
+     },
+     "argv": [
+      "resolve",
+      "training",
+      "1"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 2,
+     "stdout": ""
+    }
+   ]
+  },
+  {
+   "name": "the retained training objective exposes real request, WorkGraph and publication owners",
+   "steps": [
+    {
+     "argv": [
+      "resolve",
+      "member training creator program request publication",
+      "5"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${organ}/generated"
+     },
+     "exit": 0,
+     "has": {
+      "owners.*.id": "training-creator-request"
+     },
+     "in_file": {
+      "owners": [
+       "${organ}/generated/owner_graph.json",
+       "owners"
+      ],
+      "interactions": [
+       "${organ}/generated/owner_graph.json",
+       "interactions"
+      ]
+     }
+    },
+    {
+     "argv": [
+      "resolve",
+      "member training creator program request publication",
+      "5"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${organ}/generated"
+     },
+     "has": {
+      "owners.*.id": "work-graph"
+     }
+    },
+    {
+     "argv": [
+      "resolve",
+      "member training creator program request publication",
+      "5"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${organ}/generated"
+     },
+     "has": {
+      "owners.*.id": "training-program-publication",
+      "workflows.*.id": "creator-publish"
+     }
+    }
+   ]
+  }
+ ]
+}

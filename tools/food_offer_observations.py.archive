@@ -1,0 +1,804 @@
+#!/usr/bin/env python3
+"""Normalize receipted grocery/restaurant bodies into food offers and locations.
+
+Every record produced here is bound to a ForeignTwin observation receipt and is
+parsed only while the retained body still hashes to that receipt's
+``content_sha256``.  A source that does not state a field leaves it absent; no
+price, fee, minimum, coordinate, eligibility or stack relation is ever inferred.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import html
+import json
+import re
+from pathlib import Path
+from typing import Any, Iterable
+from xml.etree import ElementTree
+
+
+OFFER_SCHEMA = "bonfyre-household-food-offer.v1"
+LOCATION_SCHEMA = "bonfyre-household-merchant-location.v1"
+SOURCE_SCHEMA = "bonfyre-household-food-source.v1"
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _decimal_text(value: Any) -> str | None:
+    """Keep money as the exact source text; never coerce through float."""
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+
+# --------------------------------------------------------------------------- #
+# Parsers.  Each returns (offers, locations, observations).
+# --------------------------------------------------------------------------- #
+
+_TARGET_GEO = re.compile(r'\\"geo\\":\{\\"latitude\\":(-?[0-9.]+),\\"longitude\\":(-?[0-9.]+)\}')
+_TARGET_ADDR = re.compile(
+    r'\\"street_address\\":\\"(?P<street>[^"\\]+)\\".{0,200}?'
+    r'\\"city\\":\\"(?P<city>[^"\\]+)\\".{0,80}?'
+    r'\\"region\\":\\"(?P<region>[^"\\]+)\\".{0,80}?'
+    r'\\"postal_code\\":\\"(?P<postal>[^"\\]+)\\"'
+)
+
+
+def parse_target_store(receipt: dict[str, Any], body: bytes) -> tuple[list, list, list]:
+    """Target advertises store pages in its own sitemap; read only geography."""
+    text = body.decode("utf-8", errors="replace")
+    geo = _TARGET_GEO.search(text)
+    addr = _TARGET_ADDR.search(text)
+    if not geo:
+        return [], [], [{"source_id": receipt["twin_id"],
+                         "note": "no geographic_specifications block in served body"}]
+    store_id = receipt["twin_id"].rsplit("-", 1)[-1]
+    location = {
+        "schema": LOCATION_SCHEMA,
+        "location_id": f"target-store-{store_id}",
+        "merchant": "Target",
+        "merchant_kind": "grocery_retailer",
+        "store_id": store_id,
+        "latitude": float(geo.group(1)),
+        "longitude": float(geo.group(2)),
+        "source_url": receipt["source_url"],
+        "observed_at": receipt["observed_at"],
+        "body_sha256": receipt["content_sha256"],
+        "fulfillment_options": [],
+        "fact_boundary": "Store geography is observed; no store-specific price, "
+                         "inventory, or availability is asserted.",
+    }
+    if addr:
+        location["address"] = (f"{addr.group('street')}, {addr.group('city')}, "
+                               f"{addr.group('region')} {addr.group('postal')}")
+    return [], [location], []
+
+
+def parse_dominos_profile(receipt: dict[str, Any], body: bytes) -> tuple[list, list, list]:
+    """A store profile states the fulfillment fee, order minimums and coordinates."""
+    data = json.loads(body)
+    coords = data.get("StoreCoordinates") or {}
+    store_id = str(data.get("StoreID") or "")
+    options: list[dict[str, Any]] = []
+    if data.get("AllowCarryoutOrders"):
+        options.append({
+            "mode": "Carryout",
+            "fee_usd": "0.00",
+            "fee_basis": "source states no carryout fee line",
+            "minimum_order_usd": _decimal_text(data.get("MinimumCarryoutOrderAmount")),
+            "eligibility": [f"store {store_id} carryout hours "
+                            f"{(data.get('ServiceHoursDescription') or {}).get('Carryout', 'unstated')}"],
+            "customer_travels": True,
+            "source_url": receipt["source_url"],
+        })
+    if data.get("AllowDeliveryOrders"):
+        options.append({
+            "mode": "Delivery",
+            "fee_usd": _decimal_text(data.get("DeliveryFee")),
+            "fee_basis": "source-stated per-order DeliveryFee",
+            "minimum_order_usd": _decimal_text(data.get("MinimumDeliveryOrderAmount")),
+            "eligibility": [f"store {store_id} delivery hours "
+                            f"{(data.get('ServiceHoursDescription') or {}).get('Delivery', 'unstated')}",
+                            "delivery address must fall inside the store's delivery area "
+                            "(not observed)"],
+            "customer_travels": False,
+            "source_url": receipt["source_url"],
+        })
+    location = {
+        "schema": LOCATION_SCHEMA,
+        "location_id": f"dominos-store-{store_id}",
+        "merchant": "Domino's Pizza",
+        "merchant_kind": "restaurant",
+        "store_id": store_id,
+        "address": " / ".join((data.get("AddressDescription") or "").split("\n")).strip(" /"),
+        "latitude": float(coords["StoreLatitude"]) if coords.get("StoreLatitude") else None,
+        "longitude": float(coords["StoreLongitude"]) if coords.get("StoreLongitude") else None,
+        "source_url": receipt["source_url"],
+        "observed_at": receipt["observed_at"],
+        "body_sha256": receipt["content_sha256"],
+        "fulfillment_options": options,
+        "is_open_now_claim": bool(data.get("IsOpen")),
+        "fact_boundary": "Fee, minimum and hours are as stated by the store profile at "
+                         "observation time; they are not a quote and bind no order.",
+    }
+    return [], [location], []
+
+
+def parse_dominos_menu(receipt: dict[str, Any], body: bytes) -> tuple[list, list, list]:
+    """Coupons carry an exact price and declared valid service methods."""
+    data = json.loads(body)
+    store_id = str((data.get("Misc") or {}).get("StoreID") or "")
+    offers = []
+    priced = 0
+    for code, coupon in sorted((data.get("Coupons") or {}).items()):
+        tags = coupon.get("Tags") or {}
+        price = _decimal_text(coupon.get("Price"))
+        methods = [str(item) for item in tags.get("ValidServiceMethods", [])]
+        eligibility = []
+        if tags.get("EffectiveOn"):
+            eligibility.append(f"effective on or after {tags['EffectiveOn']}")
+        if tags.get("ExpiresOn"):
+            eligibility.append(f"expires {tags['ExpiresOn']}")
+        if coupon.get("Bundle"):
+            eligibility.append("bundle coupon: the stated price covers the whole declared bundle")
+        if coupon.get("Local"):
+            eligibility.append(f"local to store {store_id}")
+        if price is None:
+            eligibility.append("source states no fixed cash price for this coupon")
+        else:
+            priced += 1
+        offers.append({
+            "schema": OFFER_SCHEMA,
+            "offer_id": f"dominos-{store_id}-coupon-{code}",
+            "merchant": "Domino's Pizza",
+            "merchant_kind": "restaurant",
+            "merchant_location_id": f"dominos-store-{store_id}",
+            "source_url": receipt["source_url"],
+            "observed_at": receipt["observed_at"],
+            "body_sha256": receipt["content_sha256"],
+            "product_terms": [coupon.get("Name", "")],
+            "cash_price_usd": price,
+            "effects": [],
+            "explicit_stack_pairs": [],
+            "valid_fulfillment_modes": methods,
+            "eligibility": eligibility,
+            "fulfillment": [],
+            "geography": f"store {store_id}",
+            "fact_boundary": "A published coupon price is not a quote, an order total, or "
+                             "proof the item is currently made; tax and tip are excluded.",
+        })
+    observation = {
+        "source_id": receipt["twin_id"],
+        "note": f"{len(offers)} coupons observed, {priced} carrying an exact cash price; "
+                "the source declares no coupon-to-coupon stack relation, so no pair is stackable",
+    }
+    return offers, [], [observation]
+
+
+def parse_dominos_locator(receipt: dict[str, Any], body: bytes) -> tuple[list, list, list]:
+    data = json.loads(body)
+    stores = [{"store_id": str(item.get("StoreID")),
+               "min_distance_source_units": item.get("MinDistance"),
+               "address": " / ".join((item.get("AddressDescription") or "").split("\n")).strip(" /"),
+               "is_online_now": item.get("IsOnlineNow")}
+              for item in (data.get("Stores") or [])]
+    return [], [], [{"source_id": receipt["twin_id"],
+                     "note": f"{len(stores)} delivery-capable stores listed for the queried address",
+                     "stores": stores[:10],
+                     "fact_boundary": "A locator distance is the source's own figure for its "
+                                      "queried address, not a route from any household origin."}]
+
+
+_PRICE = re.compile(r"\$[0-9]+\.[0-9]{2}")
+_FIESTA_VALIDITY = re.compile(r"<strong>\s*Valid:\s*(?P<validity>.*?)</strong>", re.IGNORECASE | re.DOTALL)
+_FIESTA_PRODUCT = re.compile(
+    r'<div class="product-container">.*?<p>(?P<item>.*?)</p>\s*'
+    r'(?:<span class="notice">(?P<notice>.*?)</span>)?\s*'
+    r'<p class="price">(?P<price>.*?)</p>',
+    re.IGNORECASE | re.DOTALL,
+)
+_FIESTA_STORE_TITLE = re.compile(r'singleStore\s*=\s*\{"title":"(?P<title>[^"]+)"')
+_FIESTA_STORE_ADDRESS = re.compile(r'"address":"(?P<address>[^"]+)"')
+_FIESTA_STORE_LAT = re.compile(r'"lat":"(?P<latitude>-?[0-9.]+)"')
+_FIESTA_STORE_LON = re.compile(r'"lng":"(?P<longitude>-?[0-9.]+)"')
+_TOM_THUMB_STORE_ID = re.compile(r"storeId=(?P<store_id>[0-9]+)")
+_TOM_THUMB_LATITUDE = re.compile(r'itemprop="latitude" content="(?P<latitude>-?[0-9.]+)"')
+_TOM_THUMB_LONGITUDE = re.compile(r'itemprop="longitude" content="(?P<longitude>-?[0-9.]+)"')
+_TOM_THUMB_STREET = re.compile(r'itemprop="streetAddress" content="(?P<street>[^"]+)"')
+_TOM_THUMB_CITY = re.compile(r'itemprop="addressLocality" content="(?P<city>[^"]+)"')
+_TOM_THUMB_REGION = re.compile(r'itemprop="addressRegion"[^>]*>(?P<region>[^<]+)<')
+_TOM_THUMB_POSTAL = re.compile(r'itemprop="postalCode"[^>]*>(?P<postal>[^<]+)<')
+_TOM_THUMB_PRICE = re.compile(r"\$(?P<amount>[0-9]+(?:\.[0-9]{2})?)")
+_TOM_THUMB_FOR_PRICE = re.compile(
+    r"\b(?P<quantity>[0-9]+)\s+for\s+\$(?P<amount>[0-9]+(?:\.[0-9]{2})?)",
+    re.IGNORECASE,
+)
+_TOM_THUMB_PRICE_WHEN_BUY = re.compile(r"\bWHEN YOU BUY\s+(?P<quantity>[0-9]+)\b", re.IGNORECASE)
+_TOM_THUMB_BUY_GET = re.compile(
+    r"\bBUY\s+(?P<buy_quantity>[0-9]+)\s+GET\s+(?P<free_quantity>[0-9]+)\s+FREE\b",
+    re.IGNORECASE,
+)
+_TOM_THUMB_PERCENT_OFF = re.compile(r"\b(?P<percent>[0-9]+)%\s+OFF\b", re.IGNORECASE)
+_TOM_THUMB_ITEM_QUANTITY = re.compile(
+    r"\b[0-9]+(?:\.[0-9]+)?(?:\s*-\s*[0-9]+(?:\.[0-9]+)?)?\s*"
+    r"(?:oz\.?|lb\.?|ct\.?|pk\.?|pack|mL|roll|bottles?)\b",
+    re.IGNORECASE,
+)
+
+
+def _tom_thumb_item_text(label: str) -> str:
+    """Keep the ad's item wording, stopping only at a promotion fragment."""
+    parts = []
+    for fragment in (part.strip() for part in label.split(",")):
+        if not fragment:
+            continue
+        if (_TOM_THUMB_PRICE.search(fragment)
+                or re.search(r"\b(?:MEMBER PRICE|BUY|GET|EARN|OFF|POINTS)\b", fragment, re.I)):
+            break
+        parts.append(fragment)
+    return ", ".join(parts).strip()
+
+
+def _tom_thumb_price_fields(label: str) -> tuple[str | None, str | None, dict[str, Any] | None]:
+    """Return source-stated cash and quantity law without allocating a bundle price."""
+    for_price = _TOM_THUMB_FOR_PRICE.search(label)
+    if for_price:
+        return None, None, {
+            "kind": "bundle_price",
+            "quantity": for_price.group("quantity"),
+            "bundle_price_usd": for_price.group("amount"),
+            "source_term": for_price.group(0),
+        }
+    price = _TOM_THUMB_PRICE.search(label)
+    price_when_buy = _TOM_THUMB_PRICE_WHEN_BUY.search(label)
+    buy_get = _TOM_THUMB_BUY_GET.search(label)
+    percent_off = _TOM_THUMB_PERCENT_OFF.search(label)
+    if buy_get:
+        return None, None, {
+            "kind": "buy_get_free",
+            "buy_quantity": buy_get.group("buy_quantity"),
+            "free_quantity": buy_get.group("free_quantity"),
+            "source_term": buy_get.group(0),
+        }
+    if percent_off and not price:
+        return None, None, {
+            "kind": "percent_off",
+            "percent": percent_off.group("percent"),
+            "source_term": percent_off.group(0),
+        }
+    if not price:
+        return None, None, None
+    after = label[price.end():]
+    if re.match(r"\s*OFF\b", after, re.I):
+        return None, None, {
+            "kind": "dollar_off",
+            "amount_usd": price.group("amount"),
+            "source_term": price.group(0) + after.split(",", 1)[0],
+        }
+    basis = "lb" if re.match(r"\s*lb\b", after, re.I) else ("ea" if re.match(r"\s*ea\b", after, re.I) else None)
+    if price_when_buy:
+        return None, basis, {
+            "kind": "price_when_buy_quantity",
+            "required_quantity": price_when_buy.group("quantity"),
+            "unit_price_usd": price.group("amount"),
+            "price_basis": basis,
+            "source_term": price_when_buy.group(0),
+        }
+    return price.group("amount"), basis, None
+
+
+def _tom_thumb_quantity_laws(item_id: str, item: str, promotion: dict[str, Any] | None,
+                              expires_at: str | None) -> list[dict[str, Any]]:
+    """Translate complete flyer quantity laws to the canonical owner.
+
+    The legacy ``quantity_promotion`` descriptor is kept so existing consumers
+    can still display the source wording.  Only BOGO/buy-get-free and a stated
+    multibuy group total have all fields required by ``QuantityPromotion``.
+    A multibuy names a priced group, not a free-item leg, and therefore emits
+    no free-item fields or per-item cash allocation.
+    """
+    if not promotion:
+        return []
+    kind = promotion["kind"]
+    if kind == "bundle_price":
+        quantity = int(promotion["quantity"])
+        return [{
+            "promotion_id": f"tom-thumb-weekly-ad-{item_id}-multibuy",
+            "law": "multibuy",
+            "qualifying_item_terms": [item],
+            "qualifying_quantity": quantity,
+            "bundle_cash_price_usd": promotion["bundle_price_usd"],
+            "expires_at": expires_at,
+            "stackability_status": "not_stated",
+            "conditions": [promotion["source_term"]],
+        }]
+    if kind == "buy_get_free":
+        buy_quantity = int(promotion["buy_quantity"])
+        free_quantity = int(promotion["free_quantity"])
+        return [{
+            "promotion_id": f"tom-thumb-weekly-ad-{item_id}-buy-get-free",
+            "law": "bogo" if buy_quantity == free_quantity == 1 else "buy_x_get_y",
+            "qualifying_item_terms": [item],
+            "qualifying_quantity": buy_quantity,
+            "free_item_terms": [item],
+            "free_item_quantity": free_quantity,
+            "expires_at": expires_at,
+            "stackability_status": "not_stated",
+            "conditions": [promotion["source_term"]],
+        }]
+    return []
+
+
+def parse_tom_thumb_weekly_ad(receipt: dict[str, Any], body: bytes) -> tuple[list, list, list]:
+    """Parse a public Flipp SFML flyer bound to a selected Tom Thumb store.
+
+    The flyer supplies item labels and flyer-level validity only.  It contains
+    no cart state, inventory or membership state, so those are never projected.
+    """
+    try:
+        root = ElementTree.fromstring(body)
+    except ElementTree.ParseError:
+        return [], [], [{"source_id": receipt["twin_id"],
+                         "note": "weekly-ad payload was not parseable SFML; no prices normalized"}]
+    store_id = str(receipt.get("store_id") or "")
+    if not store_id:
+        return [], [], [{"source_id": receipt["twin_id"],
+                         "note": "weekly-ad receipt has no selected store identifier; no prices normalized"}]
+    offers = []
+    seen_item_ids: set[str] = set()
+    for area in root.findall(".//{*}area"):
+        item_id = (area.get("item-id") or "").strip()
+        label = (area.get("label") or "").strip()
+        if not item_id or not label or item_id in seen_item_ids:
+            continue
+        seen_item_ids.add(item_id)
+        item = _tom_thumb_item_text(label)
+        cash_price, price_basis, quantity_promotion = _tom_thumb_price_fields(label)
+        is_gas_reward = item.casefold().startswith("gas rewards")
+        if is_gas_reward:
+            # The dollar figures in this label describe a loyalty reward, not
+            # the cash price of an item, so they never populate cash_price_usd.
+            cash_price, price_basis = None, None
+        member_price = bool(re.search(r"\bMEMBER PRICE\b", label, re.I))
+        points = re.search(r"\bEARN\s+(?P<multiplier>[0-9]+)X\s+POINTS\b", label, re.I)
+        # These are headings/entry points, not price observations.  A declared
+        # quantity law or percentage-off law is still retained as an offer.
+        if not item or (cash_price is None and quantity_promotion is None):
+            continue
+        loyalty_terms = []
+        if member_price:
+            loyalty_terms.append("member price")
+        if points:
+            loyalty_terms.append(f"earn {points.group('multiplier')}x points")
+        if is_gas_reward:
+            loyalty_terms.append("source-stated digital gas-reward condition; not cash item price")
+        offers.append({
+            "schema": OFFER_SCHEMA,
+            "offer_id": f"tom-thumb-{store_id}-weekly-ad-{item_id}",
+            "merchant": "Tom Thumb",
+            "merchant_kind": "grocery_retailer",
+            "merchant_location_id": f"tom-thumb-store-{store_id}",
+            "source_url": receipt["source_url"],
+            "observed_at": receipt["observed_at"],
+            "expires_at": receipt.get("valid_to"),
+            "body_sha256": receipt["content_sha256"],
+            "product_terms": [item],
+            "source_item_label": label,
+            "cash_price_usd": cash_price,
+            "price_basis": price_basis,
+            "quantity_terms": _TOM_THUMB_ITEM_QUANTITY.findall(item),
+            # Keep source-only promotion prose separate from the canonical
+            # quantity laws.  The combination engine refuses the old
+            # ``quantity_promotion`` field so a descriptive condition cannot
+            # accidentally bypass QuantityPromotion's validation.
+            "quantity_observation": quantity_promotion,
+            "quantity_promotions": _tom_thumb_quantity_laws(
+                item_id, item, quantity_promotion, receipt.get("valid_to")),
+            "loyalty_terms": loyalty_terms,
+            # Co-present member prices and point multipliers are retained above,
+            # but the source states no cross-offer stacking rule.
+            "explicit_stack_pairs": [],
+            "fulfillment": [],
+            "geography": f"Tom Thumb store {store_id}, Dallas TX",
+            "fact_boundary": "A store-selected weekly-ad label is not item availability, "
+                             "cart price, household membership, clipped offer, reward value, "
+                             "or permission to transact. Multibuy and BOGO terms retain no "
+                             "invented per-item cash allocation.",
+        })
+    return offers, [], [{
+        "source_id": receipt["twin_id"],
+        "note": f"{len(offers)} item/promotion labels parsed from a store {store_id} weekly-ad payload; "
+                "cash, loyalty, quantity, BOGO/multibuy and expiry remain source-scoped",
+    }]
+
+
+def parse_tom_thumb_store(receipt: dict[str, Any], body: bytes) -> tuple[list, list, list]:
+    """Parse a public store-local promotion without inventing a cart quote."""
+    text = body.decode("utf-8", errors="replace")
+    store = _TOM_THUMB_STORE_ID.search(text)
+    latitude = _TOM_THUMB_LATITUDE.search(text)
+    longitude = _TOM_THUMB_LONGITUDE.search(text)
+    street = _TOM_THUMB_STREET.search(text)
+    city = _TOM_THUMB_CITY.search(text)
+    region = _TOM_THUMB_REGION.search(text)
+    postal = _TOM_THUMB_POSTAL.search(text)
+    if not store or not latitude or not longitude or not street or not city or not region or not postal:
+        return [], [], [{"source_id": receipt["twin_id"],
+                          "note": "Tom Thumb store page misses store identity fields; nothing normalized"}]
+    store_id = store.group("store_id")
+    location_id = f"tom-thumb-store-{store_id}"
+    source_url = receipt["source_url"]
+    location = {
+        "schema": LOCATION_SCHEMA,
+        "location_id": location_id,
+        "merchant": "Tom Thumb",
+        "merchant_kind": "grocery_retailer",
+        "store_id": store_id,
+        "address": (f"{street.group('street')}, {city.group('city')}, "
+                    f"{region.group('region')} {postal.group('postal')}"),
+        "latitude": float(latitude.group("latitude")),
+        "longitude": float(longitude.group("longitude")),
+        "source_url": source_url,
+        "observed_at": receipt["observed_at"],
+        "body_sha256": receipt["content_sha256"],
+        "fulfillment_options": [],
+        "fact_boundary": "The page advertises DriveUp & Go pickup and grocery delivery, "
+                         "but states no fee or order minimum, so it contributes no priced mode.",
+    }
+    if "TO SAVE $30 YOU MUST SPEND $75 OR MORE" not in text:
+        return [], [location], [{"source_id": receipt["twin_id"],
+                                  "note": "store location normalized; SAVE30 text was absent"}]
+    offer = {
+        "schema": OFFER_SCHEMA,
+        "offer_id": f"tom-thumb-{store_id}-save30-first-online-order",
+        "merchant": "Tom Thumb",
+        "merchant_kind": "grocery_retailer",
+        "merchant_location_id": location_id,
+        "source_url": source_url,
+        "observed_at": receipt["observed_at"],
+        "body_sha256": receipt["content_sha256"],
+        "product_terms": ["qualifying grocery items"],
+        "cash_price_usd": None,
+        "effects": [{
+            "effect_id": f"tom-thumb-{store_id}-save30-first-order",
+            "kind": "coupon",
+            "amount": "30.00",
+            "stack_group": "tom-thumb-first-order",
+            "requires": [
+                "first online grocery order for household",
+                "single qualifying transaction subtotal at least $75 after other promotions",
+                "company-owned Tom Thumb web or mobile channel",
+                "pickup or delivery selected",
+                "SAVE30 entered at checkout",
+                "eligible qualifying items excluding source-stated exclusions",
+                "order scheduled before undisclosed offer expiration",
+            ],
+        }],
+        "explicit_stack_pairs": [],
+        "valid_fulfillment_modes": ["Pickup", "Delivery"],
+        "eligibility": [
+            "one use per household",
+            "the source says promotion may not combine with any other promotion, offer, discount, or savings",
+            "household eligibility and final application are validated before order finalization",
+            "source does not state an exact expiration date in the observed body",
+        ],
+        "fulfillment": [],
+        "geography": f"Tom Thumb store {store_id}, Dallas TX",
+        "channel": "grocery_first_order_condition",
+        "fact_boundary": "This is a conditional first-order discount, not a household eligibility, "
+                         "cart quote, selected-item availability, or effective cash price. Pickup and "
+                         "delivery fees/minima remain unresolved.",
+    }
+    return [offer], [location], [{
+        "source_id": receipt["twin_id"],
+        "note": f"Tom Thumb store {store_id} plus a $30 first online pickup/delivery condition; "
+                "no item price, fee, or points-to-cash conversion parsed",
+    }]
+
+
+def parse_unparsed_html(receipt: dict[str, Any], body: bytes) -> tuple[list, list, list]:
+    """Retain a fetched surface that served no machine-readable price."""
+    text = body.decode("utf-8", errors="replace")
+    return [], [], [{"source_id": receipt["twin_id"],
+                     "note": f"served body carries {len(_PRICE.findall(text))} price-shaped strings and "
+                             "no machine-readable offer structure; retained as an unparsed source",
+                     "fact_boundary": "An unparsed source is not an absence of offers."}]
+
+
+def _fiesta_money(text: str) -> str:
+    """Turn a source-written dollar/cents amount into decimal text only."""
+    value = text.strip().replace("$", "")
+    if value.endswith("¢"):
+        return f"{int(value[:-1]) / 100:.2f}"
+    return value
+
+
+def _fiesta_price_law(offer_id: str, item: str, price: str, notice: str,
+                      validity: str) -> tuple[str | None, str | None, list[dict[str, Any]]]:
+    """Keep multibuy and conditional-unit terms as non-allocating laws."""
+    multi = re.fullmatch(r"(?P<count>[0-9]+)\s*/\s*(?P<money>\$?[0-9]+(?:\.[0-9]+)?¢?)", price)
+    if multi:
+        return None, None, [{
+            "promotion_id": f"{offer_id}-multibuy",
+            "law": "multibuy",
+            "qualifying_item_terms": [item],
+            "qualifying_quantity": int(multi.group("count")),
+            "bundle_cash_price_usd": _fiesta_money(multi.group("money")),
+            "stackability_status": "not_stated",
+            "conditions": [price, notice, f"validity text: {validity}"],
+        }]
+    scalar = re.fullmatch(r"(?P<money>\$?[0-9]+(?:\.[0-9]+)?¢?)\s*(?P<basis>lb|ea)", price, re.I)
+    if not scalar:
+        return None, None, []
+    amount, basis = _fiesta_money(scalar.group("money")), scalar.group("basis").lower()
+    quantity = re.search(r"when you purchase\s+(?P<count>[0-9]+)", notice, re.I)
+    if quantity:
+        return None, basis, [{
+            "promotion_id": f"{offer_id}-price-when-buy",
+            "law": "price_when_buy_quantity",
+            "qualifying_item_terms": [item],
+            "qualifying_quantity": int(quantity.group("count")),
+            "unit_cash_price_usd": amount,
+            "stackability_status": "not_stated",
+            "conditions": [price, notice, f"validity text: {validity}"],
+        }]
+    return amount, basis, []
+
+
+def parse_fiestamart_weekly_specials(receipt: dict[str, Any], body: bytes) -> tuple[list, list, list]:
+    """Parse public Fiesta homepage specials without guessing selected stores."""
+    text = body.decode("utf-8", errors="replace")
+    validity_match = _FIESTA_VALIDITY.search(text)
+    validity = html.unescape(validity_match.group("validity")).strip() if validity_match else "not stated"
+    offers = []
+    for match in _FIESTA_PRODUCT.finditer(text):
+        item = html.unescape(re.sub(r"<[^>]+>", "", match.group("item"))).strip()
+        notice = html.unescape(re.sub(r"<[^>]+>", "", match.group("notice") or "")).strip()
+        price = html.unescape(re.sub(r"<[^>]+>", "", match.group("price"))).strip()
+        if not item or not price:
+            continue
+        normalized = re.sub(r"[^a-z0-9]+", "-", item.lower()).strip("-")
+        offer_id = f"fiestamart-weekly-special-{normalized}-20260824"
+        cash_price, price_basis, quantity_promotions = _fiesta_price_law(
+            offer_id, item, price, notice, validity)
+        offers.append({
+            "schema": OFFER_SCHEMA,
+            "offer_id": offer_id,
+            "merchant": "Fiesta Mart",
+            "merchant_kind": "ethnic_grocery_retailer",
+            "source_url": receipt["source_url"],
+            "observed_at": receipt["observed_at"],
+            "body_sha256": receipt["content_sha256"],
+            "product_terms": [item],
+            "source_price_text": price,
+            "source_selection_terms": notice,
+            "source_validity_text": validity,
+            "cash_price_usd": cash_price,
+            "price_basis": price_basis,
+            "quantity_promotions": quantity_promotions,
+            "effects": [],
+            "explicit_stack_pairs": [],
+            "fulfillment": [],
+            "geography": "Fiesta Mart selected stores; exact store identity not stated",
+            "fact_boundary": "The public homepage labels this special 'In Selected Stores Only' "
+                             "and does not identify those stores. It is therefore not joined to a "
+                             "Dallas location, cart, inventory, membership, checkout total, or "
+                             "permission to transact. Quantity terms retain no per-item allocation.",
+        })
+    return offers, [], [{
+        "source_id": receipt["twin_id"],
+        "note": f"{len(offers)} current homepage special terms parsed with validity text {validity!r}; "
+                "selected-store identity remains unstated",
+    }]
+
+
+def parse_fiestamart_store(receipt: dict[str, Any], body: bytes) -> tuple[list, list, list]:
+    """Retain a Fiesta store identity separately from non-store-selected specials."""
+    text = body.decode("utf-8", errors="replace")
+    title = _FIESTA_STORE_TITLE.search(text)
+    address = _FIESTA_STORE_ADDRESS.search(text)
+    latitude = _FIESTA_STORE_LAT.search(text)
+    longitude = _FIESTA_STORE_LON.search(text)
+    if not all((title, address, latitude, longitude)):
+        return [], [], [{"source_id": receipt["twin_id"],
+                         "note": "Fiesta store identity fields absent; no location normalized"}]
+    store_id = re.search(r"#\s*(?P<id>[0-9]+)", title.group("title"))
+    if not store_id:
+        return [], [], [{"source_id": receipt["twin_id"],
+                         "note": "Fiesta store number absent; no location normalized"}]
+    location = {
+        "schema": LOCATION_SCHEMA,
+        "location_id": f"fiestamart-store-{store_id.group('id')}",
+        "merchant": "Fiesta Mart",
+        "merchant_kind": "ethnic_grocery_retailer",
+        "store_id": store_id.group("id"),
+        "address": html.unescape(address.group("address")),
+        "latitude": float(latitude.group("latitude")),
+        "longitude": float(longitude.group("longitude")),
+        "source_url": receipt["source_url"],
+        "observed_at": receipt["observed_at"],
+        "body_sha256": receipt["content_sha256"],
+        "fulfillment_options": [],
+        "fact_boundary": "This is a source-stated store identity and geography only. The page links "
+                         "to Weekly Ad but does not declare that a particular homepage special applies "
+                         "at this store.",
+    }
+    return [], [location], [{
+        "source_id": receipt["twin_id"],
+        "note": f"Fiesta Mart store {store_id.group('id')} location normalized without joining ad terms",
+    }]
+
+
+PARSERS = {
+    "target_store": parse_target_store,
+    "dominos_profile": parse_dominos_profile,
+    "dominos_menu": parse_dominos_menu,
+    "dominos_locator": parse_dominos_locator,
+    "tom_thumb_store": parse_tom_thumb_store,
+    "tom_thumb_weekly_ad": parse_tom_thumb_weekly_ad,
+    "fiestamart_weekly_specials": parse_fiestamart_weekly_specials,
+    "fiestamart_store": parse_fiestamart_store,
+    "unparsed_html": parse_unparsed_html,
+}
+
+
+def parser_for(twin_id: str) -> str | None:
+    if twin_id.startswith("target-store-"):
+        return "target_store"
+    if twin_id.startswith("dominos-store-") and twin_id.endswith("-profile"):
+        return "dominos_profile"
+    if twin_id.startswith("dominos-store-") and twin_id.endswith("-menu"):
+        return "dominos_menu"
+    if twin_id.startswith("dominos-locator-"):
+        return "dominos_locator"
+    if twin_id.startswith("fiestamart-"):
+        return "fiestamart_store" if "store-" in twin_id else "fiestamart_weekly_specials"
+    if twin_id.startswith("tom-thumb-store-") and twin_id.endswith("-weekly-ad-api"):
+        return "tom_thumb_weekly_ad"
+    if twin_id.startswith("tom-thumb-") and twin_id.endswith("-current"):
+        return "tom_thumb_store"
+    return None
+
+
+def foreign_observation_receipts(receipts: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Select the receipt shape that owns a retained foreign observation.
+
+    The durable food ledger also carries source summaries and corpus receipts.
+    They are useful provenance, but lack the per-observation URL/time fields and
+    must not be replayed as though they were ForeignTwin observations.
+    """
+    return [receipt for receipt in receipts
+            if receipt.get("schema") == "bonfyre-foreign-observation.v1"]
+
+
+def source_summary(receipts: Iterable[dict[str, Any]], result: dict[str, Any]) -> dict[str, Any]:
+    """Project only source-observation provenance into the normalizer receipt."""
+    observations = foreign_observation_receipts(receipts)
+    return {
+        "schema": SOURCE_SCHEMA,
+        "source_id": "cross-source-food-observations-20260824",
+        "source_urls": sorted({item["source_url"] for item in observations
+                               if item.get("source_url")}),
+        "observed_at": min((item["observed_at"] for item in observations
+                            if item.get("observed_at")), default=None),
+        "observations": result["observations"],
+        "boundaries": result["boundaries"],
+        "robots_denied": [{"host": "www.aldi.us",
+                           "rule": "User-Agent: * / Disallow: /",
+                           "note": "never fetched; absence of ALDI offers is robots compliance, "
+                                   "not absence of ALDI inventory"}],
+        "fact_boundary": "Observation is not availability, not a quote, and not permission to "
+                         "transact. Cash, fee, rebate and points bases stay distinct.",
+    }
+
+
+def normalize(receipts: Iterable[dict[str, Any]], root: Path) -> dict[str, Any]:
+    offers: list[dict[str, Any]] = []
+    locations: list[dict[str, Any]] = []
+    observations: list[dict[str, Any]] = []
+    boundaries: list[dict[str, Any]] = []
+    for receipt in foreign_observation_receipts(receipts):
+        twin = receipt.get("twin_id", "")
+        if receipt.get("http_status") != 200:
+            boundaries.append({"source_id": twin, "kind": "boundary_response",
+                               "http_status": receipt.get("http_status"),
+                               "note": "a non-200 response yields no offers and is not absence of inventory"})
+            continue
+        body_path = receipt.get("body_path")
+        if not body_path:
+            boundaries.append({"source_id": twin, "kind": "no_retained_body"})
+            continue
+        path = root / body_path if not Path(body_path).is_absolute() else Path(body_path)
+        if not path.exists():
+            boundaries.append({"source_id": twin, "kind": "retained_body_absent"})
+            continue
+        if sha256_file(path) != receipt.get("content_sha256"):
+            boundaries.append({"source_id": twin, "kind": "retained_body_digest_mismatch",
+                               "note": "the body no longer hashes to its receipt, so it was not parsed"})
+            continue
+        name = parser_for(twin)
+        if name is None:
+            boundaries.append({"source_id": twin, "kind": "no_parser"})
+            continue
+        new_offers, new_locations, new_observations = PARSERS[name](receipt, path.read_bytes())
+        offers.extend(new_offers)
+        locations.extend(new_locations)
+        observations.extend(new_observations)
+    return {"offers": offers, "locations": locations,
+            "observations": observations, "boundaries": boundaries}
+
+
+def merge_jsonl(path: Path, rows: list[dict[str, Any]], key: str) -> int:
+    """Write owned rows without truncating rows this tool does not own."""
+    existing: dict[str, dict[str, Any]] = {}
+    order: list[str] = []
+    if path.exists():
+        for line in path.read_text().splitlines():
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            identity = row.get(key) or json.dumps(row, sort_keys=True)
+            if identity not in existing:
+                order.append(identity)
+            existing[identity] = row
+    for row in rows:
+        identity = row[key]
+        if identity not in existing:
+            order.append(identity)
+        existing[identity] = row
+    path.write_text("".join(json.dumps(existing[item], sort_keys=True) + "\n" for item in order))
+    return len(order)
+
+
+def merge_locations(path: Path, locations: list[dict[str, Any]]) -> int:
+    """Upsert observed locations without removing another source family's rows."""
+    existing: dict[str, dict[str, Any]] = {}
+    if path.exists():
+        document = json.loads(path.read_text())
+        existing = {item["location_id"]: item for item in document.get("locations", [])}
+    existing.update({item["location_id"]: item for item in locations})
+    path.write_text(json.dumps(
+        {"schema": LOCATION_SCHEMA + "-set",
+         "locations": sorted(existing.values(), key=lambda item: item["location_id"])},
+        indent=2, sort_keys=True) + "\n")
+    return len(existing)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--receipts", type=Path, required=True)
+    parser.add_argument("--root", type=Path, default=Path("."))
+    parser.add_argument("--offers-out", type=Path, required=True)
+    parser.add_argument("--locations-out", type=Path, required=True)
+    parser.add_argument("--sources-out", type=Path)
+    args = parser.parse_args()
+
+    receipts = [json.loads(line) for line in args.receipts.read_text().splitlines() if line.strip()]
+    result = normalize(receipts, args.root)
+    # Bind the output receipt to the same eligible receipt frontier before
+    # materializing any derived household projections.
+    projection = source_summary(receipts, result) if args.sources_out else None
+
+    offer_rows = merge_jsonl(args.offers_out, result["offers"], "offer_id")
+    location_rows = merge_locations(args.locations_out, result["locations"])
+    if args.sources_out:
+        merge_jsonl(args.sources_out, [projection], "source_id")
+
+    print(json.dumps({"offers_written": len(result["offers"]), "offer_rows_total": offer_rows,
+                      "locations_written": len(result["locations"]),
+                      "location_rows_total": location_rows,
+                      "observations": len(result["observations"]),
+                      "boundaries": result["boundaries"]}, indent=2, sort_keys=True))
+
+
+if __name__ == "__main__":
+    main()

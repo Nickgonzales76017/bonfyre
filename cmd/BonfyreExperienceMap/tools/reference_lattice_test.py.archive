@@ -1,0 +1,43 @@
+#!/usr/bin/env python3
+"""Retired witness: native owner is compile_experience_map.test.mjs."""
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+GEN = ROOT / "generated"
+
+
+def rows(name: str) -> list[dict]:
+    with (GEN / name).open(encoding="utf-8") as handle:
+        return [json.loads(line) for line in handle if line.strip()]
+
+
+def main() -> int:
+    manifest = json.loads((GEN / "manifest.json").read_text(encoding="utf-8"))
+    estate = manifest["interaction_reference_lattice"]
+    evidence = rows("interaction_evidence.jsonl")
+    lattice = rows("chain_reference_lattice.jsonl")
+
+    assert estate["market_reference_is_not_selection_boundary"] is True
+    assert estate["all_references_are_evidence_only"] is True
+    assert estate["donor_interaction_references"] == 19
+    assert estate["frappe_interaction_references"] == 9
+    assert estate["ghost_art_direction_candidates"] == 238
+    assert estate["total_evidence"] == len(evidence) == 20 + 19 + 9 + 238
+    assert len(lattice) == manifest["human_chain_count"]
+    assert estate["chains_with_interaction_reference"] == manifest["human_chain_count"]
+    assert all(row["selection_state"] == "evidence_only" for row in lattice)
+    assert all("reference -> executable application" in row["cannot_infer"]
+               for row in evidence if row["provenance"] in {"donor", "frappe"})
+    assert all(row["selection_state"] == "unobserved_candidate"
+               for row in evidence if row["provenance"] == "ghost")
+    assert not any(row["selection_state"] == "selected" for row in evidence)
+    print("reference lattice: PASS")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,142 @@
+#!/usr/bin/env python3
+"""Materialize World composition from authored World grammar references.
+
+This is an authoring compiler, not a second World store.  A World already
+names the sources it composes and the interaction grammars it needs.  This
+tool makes the presentation-only bridge explicit as ``world_fragment`` rows
+so the native Web lowerer can compose the same World through several mature
+interaction phenotypes.  It never copies a source body, identity, authority,
+or effect into the CMS.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sqlite3
+import subprocess
+import sys
+
+
+FAMILY = {
+    "discover": ("vertical", "faceted_stream", "page"),
+    "stage": ("stage", "calendar_timeline", "page"),
+    "channels": ("thread", "stream_topics", "section"),
+    "community": ("community", "activity_body", "section"),
+    "board": ("board", "masonry_collection", "page"),
+    "spatial": ("spatial", "map_layers", "page"),
+    "listings": ("market", "availability_compare", "page"),
+    "search": ("search", "query_results", "page"),
+    "inbox": ("work", "obligation_timeline", "workspace"),
+    "territory": ("inspector", "address_inspector", "page"),
+    "observations": ("thread", "observation_timeline", "section"),
+    "worlds": ("board", "world_shelf", "page"),
+    "packs": ("work", "dependency_kanban", "workspace"),
+    "link": ("inspector", "relationship_inspector", "page"),
+    "studio": ("work", "composition_kanban", "workspace"),
+    "console": ("inspector", "observatory", "workspace"),
+    # Existing World rows predate the fifteen named surface grammars and
+    # already carry renderer-family names.  Keep them valid historical
+    # authoring input while lowering them through the same explicit row.
+    "vertical": ("vertical", "faceted_stream", "page"),
+    "thread": ("thread", "stream_topics", "section"),
+    "market": ("market", "availability_compare", "page"),
+    "work": ("work", "obligation_timeline", "workspace"),
+    "inspector": ("inspector", "address_inspector", "page"),
+}
+
+# The early World rows used renderer-family names in ``grammars``.  Surface
+# grammar is the stable public vocabulary, so normalize that historical input
+# during materialization instead of teaching every lowerer two vocabularies.
+GRAMMAR = {
+    "vertical": "discover",
+    "thread": "channels",
+    "market": "listings",
+    "work": "inbox",
+    "inspector": "territory",
+    "search": "discover",
+}
+
+
+def published_worlds(db: sqlite3.Connection):
+    return db.execute(
+        "SELECT namespace,world,COALESCE(subject,''),COALESCE(template,''),"
+        "COALESCE(grammars,'') FROM world WHERE status='published' ORDER BY id"
+    ).fetchall()
+
+
+def existing(db: sqlite3.Connection) -> set[str]:
+    return {
+        r[0]
+        for r in db.execute(
+            "SELECT fragment_id FROM world_fragment WHERE status='published'"
+        )
+    }
+
+
+def row(namespace: str, world: str, subject: str, template: str,
+        grammar: str, ordinal: int) -> dict[str, object]:
+    family, variant, extent = FAMILY[grammar]
+    surface_grammar = GRAMMAR.get(grammar, grammar)
+    return {
+        "fragment_id": f"{world}:{grammar}",
+        "world": world,
+        "ordinal": ordinal,
+        "subject_address": subject or f"world:{world}",
+        "surface_grammar": surface_grammar,
+        "renderer_family": family,
+        "renderer_variant": variant,
+        "extent": extent,
+        "template": template,
+        "source_projection": f"/_surface/world-material?world={world}&fragment={grammar}",
+        "media_posture": "native",
+        "temporal_posture": "retained_observation",
+        "continuity_group": world,
+        "visible_sections": "material,provenance,why_here",
+        "action_aperture": "",
+        "provenance": "compiled from World.grammars; source bodies remain owned by ForeignTwin receipts",
+        "cannot_infer": "a rendered World fragment is not source truth, actor authority, provider admission, payment authority, or an effect grant",
+        "status": "published",
+    }
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--db", required=True)
+    ap.add_argument("--cms", required=True)
+    ap.add_argument("--schemas", required=True)
+    ap.add_argument("--check", action="store_true")
+    args = ap.parse_args()
+
+    db = sqlite3.connect(args.db)
+    try:
+        known = existing(db)
+        wanted = []
+        for namespace, world, subject, template, grammars in published_worlds(db):
+            for ordinal, grammar in enumerate(
+                (g.strip() for g in grammars.split(",") if g.strip()), start=10
+            ):
+                if grammar not in FAMILY:
+                    raise SystemExit(f"unsupported World grammar: {world}:{grammar}")
+                item = row(namespace, world, subject, template, grammar, ordinal)
+                if item["fragment_id"] not in known:
+                    wanted.append((namespace, item))
+    finally:
+        db.close()
+
+    if args.check:
+        print(json.dumps({"missing": len(wanted), "fragment_ids": [r[1]["fragment_id"] for r in wanted]}))
+        return 1 if wanted else 0
+
+    for namespace, item in wanted:
+        subprocess.run(
+            [args.cms, "entry", "create", "world_fragment", json.dumps(item),
+             "--ns", namespace, "--db", args.db, "--schemas", args.schemas],
+            check=True,
+        )
+    print(json.dumps({"materialized": len(wanted), "state": "world_fragment_rows"}))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

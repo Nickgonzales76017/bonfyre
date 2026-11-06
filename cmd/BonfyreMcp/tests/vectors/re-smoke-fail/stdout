@@ -1,0 +1,12 @@
+{
+  "state": "failed",
+  "artifact": {
+    "artifact_id": "artifact-1"
+  },
+  "tokens": {
+    "artifact_id": "tokens-1"
+  },
+  "replay": {
+    "verified": false
+  }
+}

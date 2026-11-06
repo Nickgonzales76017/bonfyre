@@ -1,0 +1,54 @@
+{
+  "archive_spatial_gap": {
+    "item_table_has_lat": false,
+    "item_table_has_lon": false,
+    "page_parser_has_spatial": true
+  },
+  "estate": "/Users/nickgonzales/.bonfyre/estate-local",
+  "oauth_findings": [],
+  "oauth_live": {
+    "authorization_server": {
+      "body_prefix": "{\"type\":\"https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/\",\"title\":\"Error 1027: This website has been temporarily rate limited\",\"status\":429,\"detail\":\"The site owner has exceeded their Workers free tier daily request limit. The limit resets at midnight UTC.\",\"instance\":\"a3fa3b623b2d1deb\",\"error_code\":1027,\"error_name\":\"workers_daily_limit\",\"error_category\":\"rate_limit\",\"ray_id\":\"a3fa3b623b2d1deb\",\"timestamp\":\"2026-09-23T14:27:45Z\",\"zone\":\"aureka",
+      "content_type": "application/json; charset=utf-8",
+      "error": null,
+      "status": 429,
+      "www_authenticate": ""
+    },
+    "authorize_minimal": {
+      "body_prefix": "{\"type\":\"https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/\",\"title\":\"Error 1027: This website has been temporarily rate limited\",\"status\":429,\"detail\":\"The site owner has exceeded their Workers free tier daily request limit. The limit resets at midnight UTC.\",\"instance\":\"a3fa3b63ceba0b0a\",\"error_code\":1027,\"error_name\":\"workers_daily_limit\",\"error_category\":\"rate_limit\",\"ray_id\":\"a3fa3b63ceba0b0a\",\"timestamp\":\"2026-09-23T14:27:45Z\",\"zone\":\"aureka",
+      "content_type": "application/json; charset=utf-8",
+      "error": null,
+      "status": 429,
+      "www_authenticate": ""
+    },
+    "mcp": {
+      "body_prefix": "{\"type\":\"https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/\",\"title\":\"Error 1027: This website has been temporarily rate limited\",\"status\":429,\"detail\":\"The site owner has exceeded their Workers free tier daily request limit. The limit resets at midnight UTC.\",\"instance\":\"a3fa3b62fa0ef0c0\",\"error_code\":1027,\"error_name\":\"workers_daily_limit\",\"error_category\":\"rate_limit\",\"ray_id\":\"a3fa3b62fa0ef0c0\",\"timestamp\":\"2026-09-23T14:27:45Z\",\"zone\":\"aureka",
+      "content_type": "application/json; charset=utf-8",
+      "error": null,
+      "status": 429,
+      "www_authenticate": ""
+    },
+    "protected_resource": {
+      "body_prefix": "{\"type\":\"https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/\",\"title\":\"Error 1027: This website has been temporarily rate limited\",\"status\":429,\"detail\":\"The site owner has exceeded their Workers free tier daily request limit. The limit resets at midnight UTC.\",\"instance\":\"a3fa3b617962f081\",\"error_code\":1027,\"error_name\":\"workers_daily_limit\",\"error_category\":\"rate_limit\",\"ray_id\":\"a3fa3b617962f081\",\"timestamp\":\"2026-09-23T14:27:45Z\",\"zone\":\"aureka",
+      "content_type": "application/json; charset=utf-8",
+      "error": null,
+      "status": 429,
+      "www_authenticate": ""
+    }
+  },
+  "oauth_source_summary": {
+    "/mcp": true,
+    "S256": true,
+    "WWW-Authenticate": true,
+    "code_challenge": true,
+    "oauth-authorization-server": true,
+    "oauth-protected-resource": true,
+    "oauth/authorize": true,
+    "oauth/token": true,
+    "openid-configuration": true,
+    "serve_.*oauth|oauth_.*authorize|authorize_.*oauth": true
+  },
+  "repo": "/Users/nickgonzales/Developer/Bonfyre",
+  "schema": "bonfyre-spatial-oauth-closeout.v1",
+  "timestamp": "2026-09-23T14:27:44.080923+00:00"
+}

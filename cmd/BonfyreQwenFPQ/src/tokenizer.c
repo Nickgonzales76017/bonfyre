@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * tokenizer.c — BPE tokenizer for FPQ Ember runtime
  *
@@ -17,6 +24,7 @@
 #include <stdint.h>
 #include <ctype.h>
 
+#include "bf_lex.h"
 /* ═══════════════════════════════════════════════════════
  * Internal structures
  * ═══════════════════════════════════════════════════════ */
@@ -213,60 +221,13 @@ static int byte_level_codepoint_to_byte(const tokenizer_t *tok, uint32_t cp) {
 /* Parse a JSON string (starting after the opening '"').
  * Writes decoded bytes into dst (up to dstlen-1), null-terminates.
  * Returns pointer after closing '"'. */
+/* Delegates to the one implementation. This copy decoded \uXXXX to UTF-8 but
+ * took a high surrogate alone, so a vocabulary entry outside the BMP came back
+ * as a broken pair and matched nothing. The shared reader joins the pair. */
 static const char *parse_json_string(const char *p, char *dst, int dstlen) {
-    int i = 0;
-    while (*p && *p != '"') {
-        if (*p == '\\' && p[1]) {
-            p++;
-            switch (*p) {
-                case '"':  if (i < dstlen-1) dst[i++] = '"';  break;
-                case '\\': if (i < dstlen-1) dst[i++] = '\\'; break;
-                case '/':  if (i < dstlen-1) dst[i++] = '/';  break;
-                case 'n':  if (i < dstlen-1) dst[i++] = '\n'; break;
-                case 'r':  if (i < dstlen-1) dst[i++] = '\r'; break;
-                case 't':  if (i < dstlen-1) dst[i++] = '\t'; break;
-                case 'b':  if (i < dstlen-1) dst[i++] = '\b'; break;
-                case 'f':  if (i < dstlen-1) dst[i++] = '\f'; break;
-                case 'u': {
-                    /* \uXXXX — decode to UTF-8 */
-                    if (p[1] && p[2] && p[3] && p[4]) {
-                        unsigned int cp = 0;
-                        for (int j = 1; j <= 4; j++) {
-                            char c = p[j];
-                            cp <<= 4;
-                            if (c >= '0' && c <= '9') cp |= (unsigned)(c - '0');
-                            else if (c >= 'a' && c <= 'f') cp |= (unsigned)(c - 'a' + 10);
-                            else if (c >= 'A' && c <= 'F') cp |= (unsigned)(c - 'A' + 10);
-                        }
-                        p += 4;
-                        /* Encode codepoint to UTF-8 */
-                        if (cp < 0x80) {
-                            if (i < dstlen-1) dst[i++] = (char)cp;
-                        } else if (cp < 0x800) {
-                            if (i+1 < dstlen-1) {
-                                dst[i++] = (char)(0xC0 | (cp >> 6));
-                                dst[i++] = (char)(0x80 | (cp & 0x3F));
-                            }
-                        } else {
-                            if (i+2 < dstlen-1) {
-                                dst[i++] = (char)(0xE0 | (cp >> 12));
-                                dst[i++] = (char)(0x80 | ((cp >> 6) & 0x3F));
-                                dst[i++] = (char)(0x80 | (cp & 0x3F));
-                            }
-                        }
-                    }
-                    break;
-                }
-                default: if (i < dstlen-1) dst[i++] = *p; break;
-            }
-        } else {
-            if (i < dstlen-1) dst[i++] = *p;
-        }
-        p++;
-    }
-    dst[i] = '\0';
-    if (*p == '"') p++;
-    return p;
+    const char *end = p;
+    if (dstlen > 0) bf_lex_json_string_at(p, dst, (size_t)dstlen, &end);
+    return end;
 }
 
 /* Find a JSON key in a JSON object blob. Returns pointer to the value,

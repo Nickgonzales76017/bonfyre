@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101916">
+  <title>Look up a property · Aurekai</title>
+  <link rel="stylesheet" href="/assets/matrix.css">
+  <link rel="stylesheet" href="/assets/matrix-aperture.css">
+  <style>
+  .flow{max-width:820px;margin:0 auto}
+  .flow-search{display:flex;gap:10px;margin:28px 0 8px;flex-wrap:wrap}
+  .flow-search input{flex:1 1 320px;padding:14px 16px;border:1px solid var(--ink);background:#fff;
+    color:var(--ink);font:500 17px/1.4 'DM Sans',Arial,sans-serif;letter-spacing:-.02em}
+  .flow-search input:focus{outline:none;box-shadow:4px 4px 0 #dce1d2}
+  .flow-hint{margin:0 0 34px;color:#657068;font:500 12px 'DM Mono',monospace}
+  .flow-results{list-style:none;padding:0;margin:0 0 10px;border-top:1px solid var(--line)}
+  .flow-result{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:3px;width:100%;
+    padding:14px 12px;border-bottom:1px solid var(--line)}
+  .flow-result:hover{background:#eef3e2}
+  .fr-addr{font-size:17px;letter-spacing:-.03em}
+  .fr-meta{font-size:11px;color:#657068}
+  .flow-parcel,.flow-market,.flow-act{border:1px solid var(--ink);background:#fff;padding:24px;margin:26px 0}
+  .flow-parcel h3,.flow-market h3,.flow-act h3{margin:8px 0 16px;font-size:30px;font-weight:500;letter-spacing:-.05em}
+  .flow-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:0;margin:0 0 16px;
+    border-top:1px solid var(--line)}
+  .flow-facts div{padding:11px 0;border-bottom:1px solid var(--line)}
+  .flow-facts dt{font:500 10px 'DM Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:#657068}
+  .flow-facts dd{margin:3px 0 0;font-size:19px;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+  .flow-note{margin:0;color:#526159;font-size:13px;line-height:1.55;max-width:64ch}
+  .flow-next{margin-top:18px}
+  .flow-empty{padding:22px 0;color:#657068;font:500 13px 'DM Mono',monospace}
+  .htmx-request{opacity:.5}
+  .mono{font-family:'DM Mono',monospace}
+  </style>
+</head>
+<body>
+  <canvas class="matrix-gpu" id="matrix-gpu" aria-hidden="true"></canvas>
+  <div class="grain" aria-hidden="true"></div>
+  <header class="topbar">
+    <a class="wordmark" href="/">BONF<span>Ÿ</span>RE</a>
+    <nav><a href="/property">Property</a><a href="/notes/">Notes</a><a href="/cms/">Content</a>
+         <a href="/protocols">Build</a><a href="/studio/">Studio</a></nav>
+    <a class="small-link" href="/account" id="session-link">Account <span>→</span></a>
+  </header>
+  <main class="wrap">
+    <section class="hero" style="padding:52px 0 0">
+      <div class="eyebrow"><i></i><span>Step 1 · find it</span></div>
+      <h1>What is on <em>this land?</em></h1>
+      <p class="lede">Search the observed Tarrant appraisal roll by street address or account number.
+        Everything you see was admitted under a public observe right and carries the page digest it came from.</p>
+    </section>
+
+    <div class="flow">
+      <form class="flow-search" hx-get="/property/search" hx-target="#flow-step1" hx-swap="innerHTML"
+            hx-trigger="submit, keyup[key=='Enter'] from:find input">
+        <input type="text" name="q" placeholder="e.g. COLLINS ST or 02145189" autocomplete="off" required>
+        <button class="button primary" type="submit">Search <span>→</span></button>
+      </form>
+      <p class="flow-hint">6,535,062 receipted observations · 500,142 parcels projected</p>
+      <div id="flow-step1"></div>
+    </div>
+  </main>
+
+  <footer class="footer wrap">
+    <a class="wordmark" href="/">BONF<span>Ÿ</span>RE</a>
+    <p>Public record, observed and receipted. Not an appraisal, a listing, or advice.</p>
+    <a href="/protocols">Read it as data ↗</a>
+  </footer>
+
+  <script defer src="/assets/matrix-htmx.js"></script>
+  <script src="/assets/matrix.js"></script>
+  <script>
+  /* The one action in this flow that writes. It reports what it created and
+     what that does not mean, rather than only a status. */
+  document.addEventListener('click', async ev => {
+    const b = ev.target.closest('[data-watch]'); if(!b) return;
+    const acct = (document.querySelector('.flow-act h3')||{}).textContent.replace(/^Act on\s*/,'').trim();
+    b.disabled = true; b.textContent = 'Opening work…';
+    try{
+      const r = await fetch('/studio/v1/fleming/watch',{method:'POST',
+        headers:{'Content-Type':'application/json'}, credentials:'same-origin',
+        body:JSON.stringify({account:acct})});
+      const d = await r.json().catch(()=>({}));
+      const host = b.closest('.flow-next');
+      if(r.status===403){ host.innerHTML='<p class="flow-note">This account is signed in but not authorized to open work.</p>'; return; }
+      if(!r.ok){ host.innerHTML='<p class="flow-note">Could not open work: '+(d.error||r.status)+'</p>'; return; }
+      host.innerHTML='<p class="flow-note"><strong>Watching.</strong> Mission <span class="mono">'+d.mission_id+
+        '</span> is now claimable in the work graph. Nothing has been offered, promised, or paid.</p>';
+    }catch(e){ b.disabled=false; b.textContent='Watch this parcel'; }
+  });
+  </script>
+</body>
+</html>

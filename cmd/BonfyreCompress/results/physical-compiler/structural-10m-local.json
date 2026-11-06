@@ -1,0 +1,16 @@
+{
+  "status": "measured",
+  "cohort": "synthetic_structural",
+  "records": 10000000,
+  "compiled_handles": 10000000,
+  "operations_per_passport": 1,
+  "elapsed_ns": 60580737000,
+  "sqlite_bytes": 4039991296,
+  "bytes_per_passport": 403.99913,
+  "wall_seconds": 61.19,
+  "maximum_resident_bytes": 2339651584,
+  "peak_memory_footprint_bytes": 4397769728,
+  "host": "Darwin arm64, 16 GiB RAM",
+  "command": "cmd/BonfyreCompress/bonfyre-compress benchmark-structural --records 10000000",
+  "scope": "physical registry compilation only; not traffic, users, sources, retrieval quality, BitNet, FPQ, or Internet-scale capacity"
+}

@@ -116,7 +116,11 @@ architecture physical-asset
   layer provider
   semantic_question What can this physical asset actually do right now, derived from component health, proof, model and calibration?
   purpose A physical asset (robot, vehicle, cell) is a Bonfyre Resource whose capabilities are DERIVED, never statically declared: a capability is a conjunction of component-health / proof / model / calibration gates, maintained by the same DBSP circuit as ReachableCapacity. External Providers (OpenCat device IO, Kratos physics, CARLA, ...) supply the gates. A single telemetry -1 withdraws the capability incrementally, which is what stops WorkGraph assigning it and opens the maintenance cascade.
-  maturity measured
+  maturity implemented
+  # Demoted: every witness this carried was archived. The evidence was
+  # retired and the claim was never revisited, which is the laundering the
+  # atlas forbids -- reclaiming measured needs a witness that runs today.
+  known_gap physical-asset lost its live witness to archival and holds implemented until one runs again
   owns DerivedCapability
   derived DerivedCapability
   consumes DeviceTelemetry
@@ -139,7 +143,7 @@ architecture physical-asset
   interacts kratos-provider
   interacts feldera
   interacts work-graph
-  source_path components/BonfyreControlPlane/physical_asset.py
-  witness components/BonfyreControlPlane/tests/test_physical_asset.py
+  source_path components/BonfyreControlPlane/physical_asset.py.archive
+  witness components/BonfyreControlPlane/tests/test_physical_asset.py.archive
   source_lineage external-repo composition -- physical asset as derived-capability Resource
   known_gap proven for a robot climb capability through the live reachable_capacity DBSP circuit (telemetry -1 -> capability withdrawn); binding real OpenCat telemetry + Kratos proofs at the device boundary is the external-provider wiring

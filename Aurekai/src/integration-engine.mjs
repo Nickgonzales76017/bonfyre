@@ -13,8 +13,18 @@ function normalizeKey(value) {
     .replace(/^-+|-+$/g, "");
 }
 
+function canonicalize(value) {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (value && typeof value === "object") {
+    const out = {};
+    for (const key of Object.keys(value).sort()) out[key] = canonicalize(value[key]);
+    return out;
+  }
+  return value;
+}
+
 function stableHash(payload) {
-  return createHash("sha256").update(JSON.stringify(payload)).digest("hex");
+  return createHash("sha256").update(JSON.stringify(canonicalize(payload))).digest("hex");
 }
 
 function nowIso() {
@@ -248,7 +258,7 @@ function buildTargetIndex(repoRoot, registry) {
       if (mapping.lineage_edge_family) descriptor.lineageEdgeFamily = mapping.lineage_edge_family;
       if (mapping.claim_families.length > 0) descriptor.claimFamilies = mapping.claim_families;
       if (mapping.commerce_profile) descriptor.commerceProfile = mapping.commerce_profile;
-      pushTarget(index, target, descriptor);
+      pushTarget(index, target, descriptor, descriptor.surface);
     }
   }
 
@@ -275,7 +285,7 @@ function buildTargetIndex(repoRoot, registry) {
     if (mapping.lineage_edge_family) descriptor.lineageEdgeFamily = mapping.lineage_edge_family;
     if (mapping.claim_families.length > 0) descriptor.claimFamilies = mapping.claim_families;
     if (mapping.commerce_profile) descriptor.commerceProfile = mapping.commerce_profile;
-    pushTarget(index, target, descriptor);
+    pushTarget(index, target, descriptor, descriptor.surface);
   }
 
   for (const target of registry.ingress_adapters?.thin_kernel_projectors || []) {
@@ -301,7 +311,7 @@ function buildTargetIndex(repoRoot, registry) {
     if (mapping.lineage_edge_family) descriptor.lineageEdgeFamily = mapping.lineage_edge_family;
     if (mapping.claim_families.length > 0) descriptor.claimFamilies = mapping.claim_families;
     if (mapping.commerce_profile) descriptor.commerceProfile = mapping.commerce_profile;
-    pushTarget(index, target, descriptor);
+    pushTarget(index, target, descriptor, descriptor.surface);
   }
 
   for (const target of registry.ingress_adapters?.protocol_observer_layers || []) {
@@ -327,7 +337,7 @@ function buildTargetIndex(repoRoot, registry) {
     if (mapping.lineage_edge_family) descriptor.lineageEdgeFamily = mapping.lineage_edge_family;
     if (mapping.claim_families.length > 0) descriptor.claimFamilies = mapping.claim_families;
     if (mapping.commerce_profile) descriptor.commerceProfile = mapping.commerce_profile;
-    pushTarget(index, target, descriptor);
+    pushTarget(index, target, descriptor, descriptor.surface);
   }
 
   const stateMachine = registry.state_machine_integrations || {};
@@ -350,6 +360,7 @@ function buildTargetIndex(repoRoot, registry) {
       };
       descriptor.stateMachineTypes = buildStateMachineMembership(registry, target);
       pushTarget(index, target, descriptor, `state-machine:${normalizeKey(group)}`);
+      pushTarget(index, target, descriptor, descriptor.surface);
     }
   }
 
@@ -688,10 +699,17 @@ function makeCommittedState(descriptor, event, residualAssessment, mutationBound
     committed_at: runContext.timestamp,
   };
 
+  // state_hash commits to semantic state only. Run identity and wall-clock live
+  // in run_hash, so an unchanged state commits to the same hash across runs and
+  // lineage, replay and dedup can address it by content.
+  const { integration_run_id, committed_at, ...semanticPayload } = statePayload;
+
   return {
     schema_version: "aurekai.committed_state.v1",
     state_id: `${slugifyTarget(descriptor.target)}:${runContext.runId}`,
-    state_hash: stableHash(statePayload),
+    state_hash: stableHash(semanticPayload),
+    run_hash: stableHash(statePayload),
+    commitment_basis: "semantic",
     target: descriptor.target,
     surface: descriptor.surface,
     category: descriptor.category,
@@ -1089,9 +1107,16 @@ function makeCommerceContinuityBundle(descriptor, event, residualAssessment, com
     invoice_id: invoiceId,
     chargeability_claim_id: chargeabilityClaim.claim_id,
     policy_family: policyDecision.policy_family || descriptor.policyFamily || "treasury",
-    continuity_verdict: chargeabilityEvaluation.evaluation_result,
+    invoice_refs: [invoiceId],
+    // The engine models continuity up to the point of settlement, never past it.
+    // A settlement ref exists only if the host supplied one.
+    settlement_refs: Array.isArray(event?.settlement_refs) ? event.settlement_refs.map(String) : [],
+    continuity_verdict: policyDecision.decision,
+    chargeability_result: chargeabilityEvaluation.evaluation_result,
+    deformation_thresholds: slaContinuity.deformation_thresholds,
+    triggered_fail_conditions: chargeabilityEvaluation.triggered_fail_conditions || [],
     continuity_budget: Number(event?.continuity_budget ?? 1),
-    emitted_at: runContext.timestamp,
+    issued_at: runContext.timestamp,
     references: {
       fulfillment_transition_id: fulfillmentTransition.transition_id,
       delivery_witness_id: deliveryWitness.witness_id,
@@ -1374,11 +1399,12 @@ export function executeIntegration(repoRoot, input) {
   const registry = readRegistry(repoRoot);
   const index = buildTargetIndex(repoRoot, registry);
   const key = normalizeKey(input.target);
-  const descriptor = index.get(key);
+  const descriptor = (input.surface ? index.get(`${input.surface}:${key}`) : null) || index.get(key);
 
   if (!descriptor) {
     const known = listIntegrationTargets(repoRoot).map((entry) => entry.target);
-    throw new Error(`Unknown integration target: ${input.target}. Known targets: ${known.join(", ")}`);
+    const scope = input.surface ? ` on surface ${input.surface}` : "";
+    throw new Error(`Unknown integration target: ${input.target}${scope}. Known targets: ${known.join(", ")}`);
   }
 
   return executeWithDescriptor(repoRoot, descriptor, input);
@@ -1390,6 +1416,7 @@ export function executeSurfaceBatch(repoRoot, input) {
   for (const item of targets) {
     const result = executeIntegration(repoRoot, {
       target: item.target,
+      surface: item.surface,
       event: input.event,
       persist: input.persist,
       enforceDoctrine: input.enforceDoctrine,

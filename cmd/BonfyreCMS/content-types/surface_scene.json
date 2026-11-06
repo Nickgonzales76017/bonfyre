@@ -1,0 +1,29 @@
+{
+  "name": "surface_scene",
+  "displayName": "Surface Scene",
+  "description": "Generated presentation closure for one addressed subject/site/World and actor presentation scope. It composes existing World, SiteProgram, fragments, slots, bindings, stages, renderers, patterns, ObjectContracts and interaction profile by reference. It owns no underlying material, identity, authority, price, availability, proof, commitment, presence, target state or effect; request-time owners must answer those facts again.",
+  "attributes": {
+    "scene_key": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "subject_address": {"type": "string", "required": true},
+    "world": {"type": "string", "required": false},
+    "site_id": {"type": "string", "required": false},
+    "actor_scope": {"type": "string", "required": true},
+    "source_digest": {"type": "string", "required": true},
+    "focus": {"type": "json", "required": true},
+    "lenses": {"type": "json", "required": true},
+    "world_material": {"type": "json", "required": true},
+    "fragments": {"type": "json", "required": true},
+    "slots": {"type": "json", "required": true},
+    "bindings": {"type": "json", "required": true},
+    "stages": {"type": "json", "required": true},
+    "renderers": {"type": "json", "required": true},
+    "patterns": {"type": "json", "required": true},
+    "presentation": {"type": "json", "required": true},
+    "operations": {"type": "json", "required": true},
+    "interaction": {"type": "json", "required": true},
+    "runtime_queries": {"type": "json", "required": true},
+    "dependencies": {"type": "json", "required": true},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

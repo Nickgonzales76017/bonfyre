@@ -1,0 +1,29 @@
+atlas external
+
+architecture retained-shared-conversation
+  canonical_name RetainedSharedConversation
+  family external
+  domain External / Retained Conversation
+  layer external
+  semantic_question What visible conversation text can be recovered from an already observed ChatGPT share without executing its scripts or treating historical text as current authority?
+  maturity implemented
+  source_path components/BonfyreProject/tools/shared-conversation.mjs
+  source_path components/BonfyreProject/tests/shared-conversation.test.mjs
+  consumes ForeignObservation
+  publishes RetainedConversationText
+  invariant The reader requires an allowed HTTP 200 observation and a matching body SHA-256 before decoding the retained JSON stream table.
+  invariant The reader selects the shared route and checks its conversation identity against the source URL; user text and visible assistant text retain role, sequence and message identity.
+  invariant Source scripts never execute; system and tool messages, tool calls, hidden messages and nonvisible channels are omitted with counts.
+  internal_calculus A bounded JSON string scanner reads the first supported shared-route stream table. Indexed fields select the linear conversation without recursively expanding unrelated page state. Literal search and pagination operate only on extracted visible text.
+  witness components/BonfyreProject/tests/shared-conversation.test.mjs checks role and channel separation, inert source scripts, exact message reads, pagination, identity mismatch, duplicate identity, digest drift and denied observations.
+  known_gap The reader supports the observed inline indexed-table format only; deferred or changed streaming formats refuse and attachments and unshared branches are not recovered.
+  known_gap The reusable BonfyreProject tool is available through Bun; a native command and MCP dispatch binding have not been added.
+  forbidden_inference A recovered conversation -> current instructions, verified claims, attached file contents, current external availability or permission to send or publish.
+
+interaction foreign-observation-to-shared-conversation
+  source foreign-twin
+  destination retained-shared-conversation
+  relation decodes_retained_observation
+  preserves Source URL, retained body digest, receipt path, observation time and individual message identity.
+  drops Page executable code, unrelated application metadata, hidden channels and nontext attachment bodies.
+  forbidden_inference A readable historical message -> a verified present capability or action authority.

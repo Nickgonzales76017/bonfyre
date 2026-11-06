@@ -1,0 +1,237 @@
+#!/usr/bin/env python3
+"""Compile or run Jev's bounded public-program review over the admitted frontier.
+
+Jev is useful here as a fast, typed *judgment* over a source descriptor, not
+as a source reader, admission authority, publisher, or effect runner.  The
+compiler therefore reads only the estate's already-admitted channel fields and
+retained-item count, asks small independent questions in bounded batches, and
+writes receipt-bound diagnostic assessments.  Nothing in this program mutates
+the frontier or changes a public route.
+
+Without --execute this writes the exact, content-addressed request plan.  That
+makes the whole-estate opportunity visible and reviewable even when a provider
+credential is unavailable.  With --execute it calls TypeSafe's System One API,
+validates every typed answer, and retains the raw response digest beside each
+assessment.  A missing, malformed, partial, or low-confidence answer becomes
+``review``; it never becomes an inferred source fact.
+"""
+import argparse
+import hashlib
+import json
+import os
+import sqlite3
+import sys
+import time
+import urllib.error
+import urllib.request
+
+SCHEMA = "bonfyre-jev-program-plane.v1"
+PROGRAMS = {
+    "read": "A current reader-facing written program is the clearest fit.",
+    "listen": "A current audio or podcast program is the clearest fit.",
+    "watch": "A current video program is the clearest fit.",
+    "events": "A current calendar or event program is the clearest fit.",
+    "images": "A current image-led program is the clearest fit.",
+    "review": "The descriptor is insufficient or ambiguous; do not select a program.",
+}
+ATTENTION = [
+    "defer: an admitted descriptor with no retained material or no clear present program fit",
+    "inspect: retained material suggests a possible program fit that needs an operator check",
+    "prioritize: retained material and descriptor make a current program review especially useful",
+]
+
+
+def canonical(value):
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+
+def digest(value):
+    return hashlib.sha256(canonical(value).encode("utf-8")).hexdigest()
+
+
+def sources(frontier, archive):
+    with sqlite3.connect(f"file:{frontier}?mode=ro", uri=True) as db:
+        rows = db.execute(
+            "SELECT c.channel_id,c.exact_address,c.title,c.material,c.protocol,c.carries,"
+            "c.cadence,c.census_source,c.contributions "
+            "FROM channel c WHERE c.state IN ('admitted','active') "
+            "AND COALESCE(c.census_source,'')<>'' ORDER BY c.exact_address"
+        ).fetchall()
+    # The item database can be absent in a read-only planning environment.  In
+    # that case an honest zero is not a claim that the source has no material;
+    # it is explicitly marked unknown below.
+    archive_available = bool(archive and os.path.isfile(archive))
+    if archive_available:
+        with sqlite3.connect(f"file:{archive}?mode=ro", uri=True) as db:
+            counts = dict(db.execute("SELECT source,COUNT(*) FROM item GROUP BY source"))
+    else:
+        counts = {}
+    out = []
+    for channel_id, address, title, material, protocol, carries, cadence, census, contributions in rows:
+        out.append({
+            "channel_id": channel_id,
+            "address": address,
+            "title": title or "",
+            "declared_material": material or "unknown",
+            "protocol": protocol or "unknown",
+            "measured_carries": carries or "",
+            "cadence": cadence or "",
+            "census_source": census,
+            "contributions": int(contributions or 0),
+            "retained_items": int(counts.get(census, 0)) if archive_available else None,
+            "retained_items_state": "observed" if archive_available else "unknown",
+        })
+    return out
+
+
+def questions(source):
+    state = {"source": source,
+             "boundary": "This is an observed admitted source descriptor. It is not a claim of authority, correctness, availability, rights, payment, or a command to publish."}
+    return state, {
+        "program": {
+            "type": "choice",
+            "instructions": {
+                "question": "Which declared public program, if any, is the clearest diagnostic review lane for `source`? Choose review unless the descriptor and retained-material state support one lane. This is not permission to publish or alter the source.",
+                "source": source,
+            },
+            "criteria": PROGRAMS,
+        },
+        "attention": {
+            "type": "score",
+            "instructions": {
+                "question": "How soon should an operator inspect the program fit of `source`? Judge only the stated descriptor and retained-material state; unknown material must not be treated as absent.",
+                "source": source,
+            },
+            "criteria": ATTENTION,
+        },
+        "needs_exact_review": {
+            "type": "noul",
+            "instructions": "Does the descriptor leave an ambiguity that requires an exact owner or operator review before any program change?",
+            "criteria": {"true": "Any ambiguity, unknown material state, rights, or currentness needs exact review.",
+                         "false": "The descriptor itself is enough for a diagnostic review label only, not for an effect."},
+        },
+    }
+
+
+def request_for(batch):
+    all_questions = {}
+    state = {"sources": []}
+    for index, source in enumerate(batch):
+        source_state, source_questions = questions(source)
+        state["sources"].append(source_state["source"])
+        for name, question in source_questions.items():
+            all_questions[f"s{index}_{name}"] = question
+    return {"model": "jev-latest", "state": state, "questions": all_questions}
+
+
+def bounded(value):
+    return isinstance(value, (int, float)) and 0 <= value <= 1
+
+
+def validate_answers(payload, batch):
+    answers = payload.get("answers") if isinstance(payload, dict) else None
+    if not isinstance(answers, dict):
+        raise ValueError("response has no answers map")
+    result = []
+    for index, source in enumerate(batch):
+        program = answers.get(f"s{index}_program")
+        attention = answers.get(f"s{index}_attention")
+        exact = answers.get(f"s{index}_needs_exact_review")
+        if not isinstance(program, dict) or program.get("type") != "choice" or program.get("choice") not in PROGRAMS:
+            raise ValueError(f"source {index}: invalid program answer")
+        if not bounded(program.get("confidence")):
+            raise ValueError(f"source {index}: invalid program confidence")
+        probabilities = program.get("probabilities")
+        if not isinstance(probabilities, dict) or set(probabilities) != set(PROGRAMS) or not all(bounded(v) for v in probabilities.values()):
+            raise ValueError(f"source {index}: invalid program probabilities")
+        if abs(sum(probabilities.values()) - 1) > 0.02:
+            raise ValueError(f"source {index}: program probabilities do not sum to one")
+        if not isinstance(attention, dict) or attention.get("type") != "score" or not bounded(attention.get("confidence")):
+            raise ValueError(f"source {index}: invalid attention answer")
+        if not isinstance(exact, dict) or exact.get("type") != "noul" or not bounded(exact.get("noul")):
+            raise ValueError(f"source {index}: invalid exact-review answer")
+        # The model is a review aid. Confidence has an intentionally conservative
+        # threshold and any material/exact-review ambiguity wins over a lane.
+        confidence = float(program["confidence"])
+        chosen = program["choice"]
+        must_review = source["retained_items_state"] != "observed" or exact["noul"] >= 0.35
+        diagnostic_lane = chosen if confidence >= 0.75 and not must_review else "review"
+        result.append({
+            "source": source,
+            "program_choice": chosen,
+            "program_confidence": confidence,
+            "program_probabilities": probabilities,
+            "attention_score": attention.get("score"),
+            "attention_confidence": attention["confidence"],
+            "needs_exact_review_probability": exact["noul"],
+            "diagnostic_lane": diagnostic_lane,
+            "action": "none",
+        })
+    return result
+
+
+def post(endpoint, api_key, payload):
+    body = canonical(payload).encode("utf-8")
+    request = urllib.request.Request(endpoint, data=body, method="POST", headers={
+        "Authorization": f"Bearer {api_key}", "Content-Type": "application/json",
+        "Accept": "application/json", "User-Agent": "Bonfyre-JevProgramPlane/1",
+    })
+    failure = None
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(request, timeout=45) as response:
+                return json.loads(response.read().decode("utf-8"))
+        except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, json.JSONDecodeError) as exc:
+            failure = exc
+            if getattr(exc, "code", 0) not in (429, 500, 502, 503, 504) and not isinstance(exc, urllib.error.URLError):
+                break
+            time.sleep(1 + attempt)
+    raise RuntimeError(f"Jev request refused: {failure}")
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--frontier", required=True)
+    parser.add_argument("--archive", help="items.db; omitted means retained item counts are unknown")
+    parser.add_argument("--out", required=True, help="JSONL plan or receipt output")
+    parser.add_argument("--execute", action="store_true", help="call Jev; otherwise emit an exact request plan")
+    parser.add_argument("--endpoint", default="https://api.typesafe.ai/v1/systemone")
+    parser.add_argument("--batch-size", type=int, default=85, help="sources per API request (max 85 = 255 typed questions)")
+    args = parser.parse_args()
+    if not os.path.isfile(args.frontier): parser.error("--frontier must be an existing frontier.db")
+    if args.batch_size < 1 or args.batch_size > 85: parser.error("--batch-size must be 1..85")
+    if args.execute and not args.endpoint.startswith("https://"):
+        parser.error("--execute endpoint must use https")
+    api_key = os.environ.get("TYPESAFE_API_KEY", "")
+    if args.execute and not api_key:
+        parser.error("--execute requires TYPESAFE_API_KEY; no uncredentialed request is attempted")
+
+    frontier = sources(args.frontier, args.archive)
+    os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
+    rows, planned, reviewed = [], 0, 0
+    for start in range(0, len(frontier), args.batch_size):
+        batch = frontier[start:start + args.batch_size]
+        request = request_for(batch)
+        request_digest = digest(request)
+        if not args.execute:
+            rows.append({"schema": SCHEMA, "state": "planned", "action": "none", "batch": start // args.batch_size,
+                         "sources": len(batch), "request_digest": request_digest,
+                         "cannot_infer": "a plan, source descriptor, or Jev question does not alter admission, public publication, authority, rights, evidence, payment, or effects"})
+            planned += len(batch)
+            continue
+        response = post(args.endpoint, api_key, request)
+        response_digest = digest(response)
+        for assessment in validate_answers(response, batch):
+            rows.append({"schema": SCHEMA, "state": "diagnostic", "model": response.get("model", "unknown"),
+                         "request_digest": request_digest, "response_digest": response_digest, **assessment,
+                         "cannot_infer": "typed diagnostic output is not source truth, admission, publication, authority, payment, or an effect"})
+            reviewed += 1
+    with open(args.out, "w", encoding="utf-8") as handle:
+        for row in rows: handle.write(canonical(row) + "\n")
+    print(json.dumps({"schema": SCHEMA, "mode": "execute" if args.execute else "plan",
+                      "admitted_sources": len(frontier), "planned": planned, "diagnostic_assessments": reviewed,
+                      "batches": (len(frontier) + args.batch_size - 1) // args.batch_size, "out": args.out}))
+
+
+if __name__ == "__main__":
+    main()

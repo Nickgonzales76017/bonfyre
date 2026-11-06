@@ -1,0 +1,17 @@
+[Unit]
+Description=Reheat external sources every five minutes
+Documentation=https://aurekai.work/link
+
+[Timer]
+# The timer is the heartbeat, not the schedule. It fires often and the reheat
+# decides what is actually due: a source with a six-hour cadence is asked
+# every six hours no matter how often this wakes up, and a frozen source is
+# never asked at all. Making the timer the schedule is how a crawler happens.
+OnBootSec=3min
+OnUnitActiveSec=5min
+AccuracySec=30s
+RandomizedDelaySec=45s
+Persistent=true
+
+[Install]
+WantedBy=timers.target

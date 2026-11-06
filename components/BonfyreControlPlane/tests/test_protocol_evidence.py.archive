@@ -1,0 +1,313 @@
+"""Witness for evidence closure, including parity with the compiled C organ.
+
+Same approach as the authority parity test: link engine/core/libbonfyre-fabric.a
+and ask the real bf_evidence functions the same questions on the same database.
+Two implementations of a kind-gated directional store that are never compared
+are two stores.
+"""
+
+from __future__ import annotations
+
+import os
+import shutil
+import sqlite3
+import subprocess
+import sys
+
+import pytest
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import protocol_contract as pc  # noqa: E402
+import protocol_evidence as pe  # noqa: E402
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.dirname(os.path.dirname(os.path.dirname(_HERE)))
+LIB = os.path.join(REPO, "engine", "core", "libbonfyre-fabric.a")
+INC = os.path.join(REPO, "engine", "core", "include")
+
+
+@pytest.fixture()
+def db():
+    conn = sqlite3.connect(":memory:")
+    pe.ensure_schema(conn)
+    yield conn
+    conn.close()
+
+
+@pytest.fixture()
+def contract():
+    return (pc.ProtocolContract(
+        "underwrite", given=frozenset({"parcel"}),
+        evidence_required=frozenset({"claim:assessed-value", "claim:ownership"}))
+        .role("underwriter", requires={"parcel"}, produces={"opinion"},
+              authority="underwrite:parcel"))
+
+
+# ------------------------------------------------ a supporting row is not proof
+
+def test_a_support_makes_a_claim_stand_without_proving_it(db):
+    pe.relate(db, evidence="receipt:tad-roll", kind=pe.SUPPORTS,
+              claim="claim:assessed-value")
+    assert pe.verdict(db, "claim:assessed-value") == pe.SUPPORTED
+    assert pe.stands(db, "claim:assessed-value") is True
+    # Standing is about the store's current position, not about truth. The
+    # proof frontier owns that and is not consulted here.
+
+
+def test_an_unevidenced_claim_does_not_stand(db):
+    assert pe.verdict(db, "claim:nothing") == pe.UNEVIDENCED
+    assert pe.stands(db, "claim:nothing") is False
+
+
+# ---------------------------------------- contradiction outranks support
+
+def test_a_contested_claim_does_not_stand_even_with_support(db):
+    pe.relate(db, evidence="receipt:tad-roll", kind=pe.SUPPORTS,
+              claim="claim:assessed-value")
+    pe.relate(db, evidence="receipt:dcad-roll", kind=pe.CONTRADICTS,
+              claim="claim:assessed-value")
+    assert pe.verdict(db, "claim:assessed-value") == pe.CONTESTED
+    assert pe.stands(db, "claim:assessed-value") is False
+    # Reporting this as supported because a supporting row exists would let
+    # whoever wrote last decide the verdict.
+
+
+def test_order_of_writing_does_not_change_the_verdict(db):
+    pe.relate(db, evidence="a", kind=pe.CONTRADICTS, claim="c")
+    pe.relate(db, evidence="b", kind=pe.SUPPORTS, claim="c")
+    assert pe.verdict(db, "c") == pe.CONTESTED
+    pe.relate(db, evidence="d", kind=pe.SUPPORTS, claim="c")
+    assert pe.verdict(db, "c") == pe.CONTESTED
+
+
+# --------------------------------------------- falsification is terminal
+
+def test_a_falsified_claim_cannot_be_rescued_by_reproduction(db):
+    pe.relate(db, evidence="run:1", kind=pe.FALSIFIES, claim="c")
+    pe.relate(db, evidence="run:2", kind=pe.REPRODUCES, claim="c")
+    pe.relate(db, evidence="run:3", kind=pe.SUPPORTS, claim="c")
+    assert pe.verdict(db, "c") == pe.FALSIFIED
+    assert pe.stands(db, "c") is False
+
+
+def test_reproduction_strengthens_a_claim_that_was_not_falsified(db):
+    pe.relate(db, evidence="run:1", kind=pe.SUPPORTS, claim="c")
+    assert pe.verdict(db, "c") == pe.SUPPORTED
+    pe.relate(db, evidence="run:2", kind=pe.REPRODUCES, claim="c")
+    assert pe.verdict(db, "c") == pe.REPRODUCED
+    assert pe.stands(db, "c") is True
+
+
+# ------------------------------------------------------- direction is real
+
+def test_supports_is_directional(db):
+    pe.relate(db, evidence="A", kind=pe.SUPPORTS, claim="B")
+    assert pe.relations(db, "B") == [("A", pe.SUPPORTS)]
+    # Asking backwards returns nothing rather than the answer to another
+    # question.
+    assert pe.relations(db, "A") == []
+    assert pe.stands(db, "B") is True
+    assert pe.stands(db, "A") is False
+
+
+def test_an_undeclared_kind_is_refused_where_it_is_written(db):
+    with pytest.raises(pe.EvidenceError) as e:
+        pe.relate(db, evidence="A", kind="vibes", claim="B")
+    assert "undeclared evidence kind" in str(e.value)
+    with pytest.raises(pe.EvidenceError):
+        pe.relations(db, "B", kind="vibes")
+
+
+def test_a_relation_needs_both_ends(db):
+    with pytest.raises(pe.EvidenceError):
+        pe.relate(db, evidence="", kind=pe.SUPPORTS, claim="B")
+
+
+# ------------------------------------- an enactment closes on two conditions
+
+def test_an_enactment_with_terminal_obligations_may_still_lack_evidence(db, contract):
+    cdb = sqlite3.connect(":memory:")
+    try:
+        report = pe.close_enactment(cdb, db, contract, "ex1")
+        # No obligations at all in this contract, so that half is satisfied.
+        assert report["obligations_terminal"] is True
+        assert report["evidence_closed"] is False
+        assert report["unevidenced"] == {
+            "claim:assessed-value": pe.UNEVIDENCED,
+            "claim:ownership": pe.UNEVIDENCED}
+        assert report["closed"] is False
+    finally:
+        cdb.close()
+
+
+def test_the_report_separates_the_two_reasons_it_is_not_closed(db, contract):
+    import commitment_graph as cg
+    cdb = sqlite3.connect(":memory:")
+    cg.ensure_schema(cdb)
+    try:
+        contract.commits("opine", committer="underwriter",
+                         beneficiary="underwriter", resource="an opinion")
+        contract.enact(cdb, enactment_id="ex1",
+                       actors={"underwriter": "aurekai.life"})
+        pe.relate(db, evidence="receipt:roll", kind=pe.SUPPORTS,
+                  claim="claim:assessed-value")
+        pe.relate(db, evidence="receipt:deed", kind=pe.SUPPORTS,
+                  claim="claim:ownership")
+
+        report = pe.close_enactment(cdb, db, contract, "ex1")
+        # Evidence stands; the obligation does not. A caller told only "not
+        # closed" could not tell which of these to chase.
+        assert report["evidence_closed"] is True
+        assert report["obligations_terminal"] is False
+        assert report["outstanding"] == [("ex1:opine", cg.OPEN)]
+        assert report["closed"] is False
+
+        cg.discharge(cdb, "ex1:opine")
+        assert pe.close_enactment(cdb, db, contract, "ex1")["closed"] is True
+    finally:
+        cdb.close()
+
+
+def test_a_contradicted_requirement_reopens_evidence_closure(db, contract):
+    cdb = sqlite3.connect(":memory:")
+    try:
+        pe.relate(db, evidence="receipt:roll", kind=pe.SUPPORTS,
+                  claim="claim:assessed-value")
+        pe.relate(db, evidence="receipt:deed", kind=pe.SUPPORTS,
+                  claim="claim:ownership")
+        assert pe.evidence_closed(db, contract) is True
+
+        pe.relate(db, evidence="receipt:appeal", kind=pe.CONTRADICTS,
+                  claim="claim:assessed-value")
+        assert pe.evidence_closed(db, contract) is False
+        assert pe.unevidenced(db, contract) == {"claim:assessed-value": pe.CONTESTED}
+    finally:
+        cdb.close()
+
+
+def test_a_contract_declaring_no_evidence_is_closed_on_that_axis(db):
+    bare = pc.ProtocolContract("bare").role("a", produces={"x"})
+    assert pe.evidence_closed(db, bare) is True
+
+
+# ------------------------------------------------ parity with the C organ
+
+HARNESS = r"""
+#include <stdio.h>
+#include <string.h>
+#include "bf_evidence.h"
+int main(int argc, char **argv) {
+    /* db op evidence kind claim */
+    BfEvidence *e = NULL;
+    if (bf_evidence_open(argv[1], &e, stderr) != 0) return 2;
+    int rc = 0;
+    if (strcmp(argv[2], "relate") == 0) {
+        rc = (int)bf_evidence_relate(e, argv[3], argv[4], argv[5]);
+        printf("%d\n", rc);
+    } else if (strcmp(argv[2], "retract") == 0) {
+        rc = (int)bf_evidence_retract(e, argv[3], argv[4], argv[5]);
+        printf("%d\n", rc);
+    } else if (strcmp(argv[2], "count") == 0) {
+        printf("%lld\n", (long long)bf_evidence_supporters_count(e, argv[3]));
+    } else {
+        rc = bf_evidence_supports(e, argv[3], argv[4]);
+        printf("%d\n", rc);
+    }
+    bf_evidence_close(e);
+    return 0;
+}
+"""
+
+
+def _build(tmp_path):
+    cc = shutil.which("cc") or shutil.which("clang") or shutil.which("gcc")
+    if cc is None or not os.path.exists(LIB):
+        return None
+    src = tmp_path / "ev.c"
+    src.write_text(HARNESS)
+    out = tmp_path / "ev"
+    proc = subprocess.run([cc, str(src), LIB, "-I", INC, "-lsqlite3", "-o", str(out)],
+                          capture_output=True, text=True)
+    if proc.returncode != 0:
+        pytest.skip(f"evidence harness did not build: {proc.stderr[:400]}")
+    return str(out)
+
+
+@pytest.fixture(scope="module")
+def harness(tmp_path_factory):
+    built = _build(tmp_path_factory.mktemp("evparity"))
+    if built is None:
+        pytest.skip("no C toolchain or libbonfyre-fabric.a")
+    return built
+
+
+def test_the_c_organ_reads_rows_this_module_wrote(harness, tmp_path):
+    path = str(tmp_path / "ev.db")
+    db = sqlite3.connect(path)
+    pe.ensure_schema(db)
+    pe.relate(db, evidence="A", kind=pe.SUPPORTS, claim="B")
+    db.close()
+
+    yes = subprocess.run([harness, path, "supports", "A", "B"],
+                         capture_output=True, text=True, timeout=30)
+    assert yes.stdout.strip() == "1"
+    # Direction, confirmed by the organ that owns the store rather than assumed.
+    no = subprocess.run([harness, path, "supports", "B", "A"],
+                        capture_output=True, text=True, timeout=30)
+    assert no.stdout.strip() == "0"
+
+
+def test_this_module_reads_rows_the_c_organ_wrote(harness, tmp_path):
+    path = str(tmp_path / "ev2.db")
+    subprocess.run([harness, path, "relate", "R", "reproduces", "C"],
+                   capture_output=True, text=True, timeout=30)
+    db = sqlite3.connect(path)
+    try:
+        assert pe.relations(db, "C") == [("R", pe.REPRODUCES)]
+        assert pe.verdict(db, "C") == pe.REPRODUCED
+    finally:
+        db.close()
+
+
+def test_retraction_agrees_with_the_c_organ(harness, tmp_path):
+    path = str(tmp_path / "ev3.db")
+    db = sqlite3.connect(path)
+    pe.ensure_schema(db)
+    pe.relate(db, evidence="A", kind=pe.SUPPORTS, claim="B")
+    assert pe.stands(db, "B") is True
+
+    # Retract through Python; the C organ must agree the support is gone.
+    assert pe.retract(db, evidence="A", kind=pe.SUPPORTS, claim="B") is True
+    assert pe.stands(db, "B") is False
+    db.close()
+
+    out = subprocess.run([harness, path, "supports", "A", "B"],
+                         capture_output=True, text=True, timeout=30)
+    assert out.stdout.strip() == "0"
+
+
+def test_retraction_is_idempotent_like_the_organ(tmp_path):
+    db = sqlite3.connect(":memory:")
+    pe.ensure_schema(db)
+    try:
+        assert pe.retract(db, evidence="A", kind=pe.SUPPORTS, claim="B") is False
+        # Withdrawing something that was never there is not an error: a
+        # consequence plane retracting on a schedule should not have to know.
+    finally:
+        db.close()
+
+
+def test_supporter_counts_agree_with_the_c_organ(harness, tmp_path):
+    path = str(tmp_path / "ev4.db")
+    db = sqlite3.connect(path)
+    pe.ensure_schema(db)
+    for src in ("A", "B", "C"):
+        pe.relate(db, evidence=src, kind=pe.SUPPORTS, claim="X")
+    pe.relate(db, evidence="D", kind=pe.CONTRADICTS, claim="X")
+    assert pe.supporters(db, "X") == ["A", "B", "C"]
+    db.close()
+
+    out = subprocess.run([harness, path, "count", "X", "", ""],
+                         capture_output=True, text=True, timeout=30)
+    assert out.stdout.strip() == "3", "a contradiction is not a supporter"

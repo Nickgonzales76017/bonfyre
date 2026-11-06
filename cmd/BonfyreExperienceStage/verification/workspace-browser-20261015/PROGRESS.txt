@@ -1,0 +1,31 @@
+RUN	1792454661152
+release	a5b379ab187e523c3d1eb090a33d014287491c4d37594520bbb7b4c151183e5a
+PASS	ordinary destination entrance opens the existing catalogue editor
+PASS	editor navigation keeps the selected organization
+PASS	the installed organization opens the existing rendered product and camera tools
+PASS	model-bound dimensions remain available in the native editor
+PASS	retained option pricing survives the hosting boundary
+PASS	catalogue output opens the original specialized room editor
+PASS	actual model bytes were committed before the destination opened
+PASS	catalogue and room retain source product and exact fixture identities
+PASS	room save changes the same native record instead of a browser copy
+PASS	the specialized room editor offers related views of its actual saved object
+PASS	related-view review leaves unsaved editing untouched
+PASS	related-view review describes the saved version without copying pending input
+PASS	related views remain usable at phone width
+PASS	the chosen related view opens the exact same plan in another installation
+PASS	a related view does not create a second plan
+PASS	discarding an unsaved edit still requires the user’s reload confirmation
+PASS	reopening restores the confirmed save rather than an unsaved navigation copy
+PASS	saved work is visible through the second member’s ordinary entrance
+PASS	the native continuation opened the same plan in the separately installed room editor
+PASS	a second member and separately installed product reopen the same saved work
+PASS	another authorized browser updates that same plan
+PASS	the first member sees the other member’s saved revision after reopening
+PASS	the existing two-dimensional planning canvas remains usable
+PASS	the next product’s procurement brief retains the supplier SKU and subtotal
+PASS	destination navigation and room editor fit a phone
+PASS	the installed editor uses package-pinned storage code
+PASS	native editing creates no fallback browser draft database
+PASS	operational navigation makes no unscoped public-view requests
+PASS	the real browser journey raised no application exception

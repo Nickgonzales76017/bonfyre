@@ -1,0 +1,45 @@
+{
+  "schema": "bonfyre.worker-lifecycle-restate-recovery.v1",
+  "work_item": "discovered-8478c9c0da679f5e",
+  "observed_at": "2026-08-21T08:56:50Z",
+  "substrate": {
+    "name": "Restate",
+    "server_version": "1.7.5",
+    "server_image_digest": "sha256:675b85e7bf674f9dfda04a391fa33e850650d57e464b694ca8df5866acad95cc",
+    "python_sdk_version": "1.0.3",
+    "service_discovery": "passed"
+  },
+  "execution": {
+    "workgraph_nodes": 2,
+    "checkpoint": {
+      "node_a": "complete",
+      "node_b": "ready"
+    },
+    "fault": "bridge process killed during durable sleep",
+    "recovery": {
+      "bridge_restarted": true,
+      "effect_kernel_reconciliation_preceded_resume": true,
+      "node_b": "complete"
+    },
+    "native_receipts_observed": 6
+  },
+  "identity_readback": {
+    "worker_run_rows": 1,
+    "worker_run_transitions": 3,
+    "protocol_machine_rows": 1,
+    "protocol_machine_transitions": 4,
+    "duplicate_logical_identities": 0,
+    "duplicate_transitions": 0
+  },
+  "forbidden_inferences": [
+    "provider process identity -> WorkerRun, ProtocolMachine or WorkGraph identity",
+    "Restate durability -> WorkGraph meaning or EffectKernel authority",
+    "legal ProtocolMachine transition -> external effect success"
+  ],
+  "witnesses": [
+    "engine/core/tests/lifecycle_test.c",
+    "tests/restate_integration.sh",
+    "services/bonfyre-restate-adapter/app.py.archive"
+  ],
+  "result": "passed"
+}

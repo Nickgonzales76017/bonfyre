@@ -29,6 +29,12 @@ if [[ -d "$OUT_DIR" ]] && [[ -n "$(ls -A "$OUT_DIR" 2>/dev/null || true)" ]] && 
 fi
 
 if [[ "$FORCE" == "true" ]]; then
+  if [[ -d "$OUT_DIR" && -n "$(ls -A "$OUT_DIR" 2>/dev/null || true)" ]]; then
+    if [[ ! -f "$OUT_DIR/split-manifest.json" ]] || ! node -e 'const fs=require("node:fs"); const data=JSON.parse(fs.readFileSync(process.argv[1])); if(data.package!=="@aurekai/continuity-core")process.exit(1)' "$OUT_DIR/split-manifest.json"; then
+      echo "Refusing --force on a directory not owned by the continuity-core split: $OUT_DIR" >&2
+      exit 1
+    fi
+  fi
   rm -rf "$OUT_DIR"
 fi
 
@@ -55,33 +61,17 @@ sed -i '' 's#"../kernel/src/trajectory-calculus.mjs"#"./trajectory-calculus.mjs"
 sed -i '' 's#"../../src/integration-engine.mjs"#"./integration-engine.mjs"#g' "$OUT_DIR/src/index.mjs"
 sed -i '' 's#"../../src/integration-connectors.mjs"#"./integration-connectors.mjs"#g' "$OUT_DIR/src/index.mjs"
 
-cat > "$OUT_DIR/package.json" <<'EOF'
-{
-  "name": "@aurekai/continuity-core",
-  "version": "0.1.0-alpha.0",
-  "description": "Standalone Aurekai continuity kernel",
-  "type": "module",
-  "license": "MIT",
-  "exports": {
-    ".": "./src/index.mjs",
-    "./state": "./src/state-runtime.mjs",
-    "./transition": "./src/transition-runtime.mjs",
-    "./trajectory": "./src/trajectory-runtime.mjs",
-    "./trajectory-calculus": "./src/trajectory-calculus.mjs",
-    "./claim": "./src/claim-runtime.mjs",
-    "./policy": "./src/policy-registry.mjs",
-    "./chart": "./src/chart-registry.mjs",
-    "./schema-registry": "./src/schema-registry.mjs",
-    "./state-runtime": "./src/state-runtime.mjs"
-  },
-  "engines": {
-    "node": ">=18"
-  },
-  "scripts": {
-    "verify": "node ./scripts/verify-split.mjs"
-  }
-}
-EOF
+# Derive split package exports and version from their canonical package owner.
+# Repeating them here lets the split silently omit a newly exported subpath.
+node - "$ROOT_DIR/kernel/package.json" "$OUT_DIR/package.json" <<'NODE'
+const fs = require('node:fs');
+const [source, destination] = process.argv.slice(2);
+const pkg = JSON.parse(fs.readFileSync(source, 'utf8'));
+pkg.description = 'Standalone Aurekai continuity kernel';
+pkg.engines = { node: '>=18' };
+pkg.scripts = { ...pkg.scripts, verify: 'node ./scripts/verify-split.mjs' };
+fs.writeFileSync(destination, JSON.stringify(pkg, null, 2) + '\n');
+NODE
 
 cat > "$OUT_DIR/scripts/verify-split.mjs" <<'EOF'
 import { resolve } from "node:path";

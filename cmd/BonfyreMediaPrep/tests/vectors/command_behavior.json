@@ -1,0 +1,7 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-media-prep","binary_env":"BONFYRE_MEDIA_PREP_BIN","cases":[
+{"name":"inspect, resample and chunk a real speech recording","steps":[{"program":"say","argv":["-o","s.aiff","We need to fix the checkout page by Friday. Customers cannot pay."],"exit":0},{"program":"ffmpeg","argv":["-loglevel","error","-i","s.aiff","-ar","16000","-ac","1","s.wav"],"exit":0},
+ {"argv":["inspect","s.wav"],"env":{"HOME":"${tmp}","BONFYRE_FRAGMENT_STORE":"${tmp}/frag.db","BONFYRE_VOCAB_DB":"${tmp}/vocab.bfvocab"},"exit":0,"at":{"streams.0.codec_type":"audio","streams.0.sample_rate":"16000","streams.0.channels":1}},
+ {"argv":["normalize","s.wav","n.wav","--sample-rate","8000"],"env":{"HOME":"${tmp}","BONFYRE_FRAGMENT_STORE":"${tmp}/frag.db","BONFYRE_VOCAB_DB":"${tmp}/vocab.bfvocab"},"exit":0},
+ {"argv":["inspect","n.wav"],"env":{"HOME":"${tmp}","BONFYRE_FRAGMENT_STORE":"${tmp}/frag.db","BONFYRE_VOCAB_DB":"${tmp}/vocab.bfvocab"},"exit":0,"at":{"streams.0.sample_rate":"8000"}},
+ {"argv":["chunk","s.wav","c%03d.wav","--segment-seconds","2"],"env":{"HOME":"${tmp}","BONFYRE_FRAGMENT_STORE":"${tmp}/frag.db","BONFYRE_VOCAB_DB":"${tmp}/vocab.bfvocab"},"exit":0,"present":["${tmp}/c000.wav","${tmp}/c001.wav"]}]},
+{"name":"inspect refuses a file that is not media","files":{"x.wav":"not audio"},"steps":[{"argv":["inspect","x.wav"],"env":{"HOME":"${tmp}","BONFYRE_FRAGMENT_STORE":"${tmp}/frag.db","BONFYRE_VOCAB_DB":"${tmp}/vocab.bfvocab"},"exit_nonzero":true}]}]}

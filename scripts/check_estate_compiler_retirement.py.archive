@@ -1,0 +1,110 @@
+#!/usr/bin/env python3
+"""Fail-closed fence for the retired legacy estate compiler.
+
+The frozen V8.1 direction explicitly keeps YaFF Scan as a documented design,
+not a live estate compiler. A successor is admissible only when the retirement
+contract names a current Atlas architecture and owner, declares a non-append-
+only snapshot state model, and supplies positive age/bytes/count bounds.
+"""
+from __future__ import annotations
+
+import json
+import os
+import pathlib
+import subprocess
+import sys
+from typing import Any
+
+
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+POLICY_PATH = ROOT / "architecture/estate-compiler-retirement.json"
+REQUIRED_RETENTION_BOUNDS = ("max_age_seconds", "max_bytes", "max_snapshots")
+REQUIRED_FROZEN_SECTION = "YaFF Scan should be documented deeply, but not turned into an estate compiler right now"
+REQUIRED_FROZEN_PROHIBITION = REQUIRED_FROZEN_SECTION + "."
+
+
+def load_policy(path: pathlib.Path = POLICY_PATH) -> dict[str, Any]:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def validate_successor(policy: dict[str, Any], root: pathlib.Path = ROOT) -> list[str]:
+    errors: list[str] = []
+    if policy.get("status") != "retired":
+        errors.append("estate compiler status must remain retired")
+    authority = policy.get("frozen_authority") or {}
+    authority_path = root / str(authority.get("path", ""))
+    section = str(authority.get("section", ""))
+    if section != REQUIRED_FROZEN_SECTION:
+        errors.append("retirement contract does not preserve the frozen V8.1 section")
+    if authority.get("prohibition") != REQUIRED_FROZEN_PROHIBITION:
+        errors.append("retirement contract does not preserve the frozen V8.1 prohibition")
+    # The active Run8 estate is operator state rather than a required checkout
+    # fixture. When present, verify the citation against its frozen bytes; when
+    # absent (for example in CI), the self-contained contract remains the fence.
+    if authority_path.is_file() and section not in authority_path.read_text(encoding="utf-8"):
+        errors.append("frozen V8.1 prohibition section is missing")
+
+    successor = policy.get("successor")
+    if successor is None:
+        return errors
+    if not isinstance(successor, dict):
+        return errors + ["successor must be null or an object"]
+
+    architecture_id = successor.get("architecture_id")
+    owner = successor.get("owner")
+    if not isinstance(architecture_id, str) or not architecture_id.strip():
+        errors.append("successor requires an explicit current architecture_id")
+    else:
+        result = subprocess.run(
+            [sys.executable, str(root / "architecture/atlas.py"), "get", architecture_id],
+            cwd=root,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            errors.append("successor architecture_id is not current in the Atlas")
+        else:
+            identity_line = result.stdout.splitlines()[0] if result.stdout.splitlines() else ""
+            normalized_identity = "".join(identity_line.lower().split()).replace("-", "")
+            if "estatecompiler" not in normalized_identity:
+                errors.append("successor architecture_id does not explicitly define an estate compiler")
+    if not isinstance(owner, str) or not owner.strip():
+        errors.append("successor requires an explicit owner")
+    if successor.get("state_model") in {None, "append_only_snapshots"}:
+        errors.append("successor requires a non-append-only snapshot state model")
+
+    retention = successor.get("retention") or {}
+    for bound in REQUIRED_RETENTION_BOUNDS:
+        value = retention.get(bound)
+        if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
+            errors.append(f"successor retention.{bound} must be a positive integer")
+    if successor.get("generated_projections_are_authority") is not False:
+        errors.append("generated projections cannot become semantic authority")
+    return errors
+
+
+def live_runtime_residue(policy: dict[str, Any]) -> list[pathlib.Path]:
+    residue = []
+    for raw in policy.get("retired_runtime_paths", []):
+        path = pathlib.Path(os.path.expandvars(str(raw))).expanduser()
+        if path.exists() or path.is_symlink():
+            residue.append(path)
+    return residue
+
+
+def main() -> int:
+    policy = load_policy()
+    errors = validate_successor(policy)
+    residue = live_runtime_residue(policy)
+    if policy.get("successor") is None and residue:
+        errors.append("retired runtime residue remains: " + ", ".join(p.name for p in residue))
+    if errors:
+        for error in errors:
+            print(f"FAIL: {error}", file=sys.stderr)
+        return 1
+    print("PASS: legacy estate compiler remains retired behind the frozen V8.1 fence")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

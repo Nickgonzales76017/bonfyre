@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * BonfyreGraph — Flagship II: Canonical Functional Normalization
  *
@@ -646,6 +653,10 @@ int family_remove_entry(sqlite3 *db, const char *content_type, int target_id) {
 
 /* Light-weight rebind: update _family_members bindings without re-hashing family.
    Assumes structural shape (fields/types) hasn't changed — only values. */
+static int tensor_cells_from_bindings(sqlite3 *db, int family_id,
+                                      const char *content_type, int target_id,
+                                      const char *bindings);
+
 int family_rebind_entry(sqlite3 *db, const char *content_type, int target_id) {
     char sql[1024];
     sqlite3_stmt *stmt = NULL;
@@ -684,6 +695,14 @@ int family_rebind_entry(sqlite3 *db, const char *content_type, int target_id) {
     sqlite3_bind_int(upd, 3, target_id);
     int rc = (sqlite3_step(upd) == SQLITE_DONE) ? 0 : -1;
     sqlite3_finalize(upd);
+    /* A value-only update still changes the binding vector, so the cells the
+     * index reads and the index itself both have to follow. Rebinding the
+     * membership and leaving the index on the old vector is how a store ends up
+     * returning confident neighbours for content that no longer says that. */
+    if (rc == 0 && family_id > 0) {
+        tensor_cells_from_bindings(db, family_id, content_type, target_id, bind);
+        ann_index_member(db, family_id, target_id);
+    }
     if (rc == 0 && family_id > 0 &&
         compact_pack_family(db, family_id, content_type) != 0)
         rc = -1;
@@ -705,6 +724,192 @@ int family_count_orphans(sqlite3 *db, const char *content_type) {
     if (sqlite3_step(st) == SQLITE_ROW) count = sqlite3_column_int(st, 0);
     sqlite3_finalize(st);
     return count;
+}
+
+/* Materialize tensor cells from the bindings we just computed.
+ *
+ * The create path was fully wired -- membership, eigenvalue accumulation, memo
+ * invalidation, ANN indexing, compaction -- and indexed nothing, because
+ * ann_index_member reads _tensor_cells and only delta_tensor_apply ever wrote
+ * them. Cells were populated by the sync path and never by authoring, so an
+ * estate that had only ever been authored had 61 family members, a 12,288-row
+ * projection matrix, and zero indexed vectors.
+ *
+ * The vector already exists here: bindings is the row's values in field order,
+ * which is exactly what extract_vector reads back out. This writes it in the
+ * shape the indexer looks for, at the moment it is known.
+ *
+ * Cannot infer: an indexed member -> a semantically embedded one. Strings are
+ * hashed to a coordinate, not embedded; this makes structural recall work, and
+ * says nothing about meaning. */
+static int tensor_cells_from_bindings(sqlite3 *db, int family_id,
+                                      const char *content_type, int target_id,
+                                      const char *bindings) {
+    sqlite3_stmt *ins = NULL;
+    const char *p = bindings;
+    int position = 0;
+    int written = 0;
+    char field[32];
+
+    if (!db || !bindings || family_id <= 0) return 0;
+    while (*p && *p != '[') p++;
+    if (!*p) return 0;
+    p++;
+
+    if (sqlite3_prepare_v2(db,
+            "INSERT OR REPLACE INTO _tensor_cells "
+            "(family_id, target_type, target_id, position, field_name, "
+            " val_text, val_num, val_type) VALUES (?1,?2,?3,?4,?5,?6,?7,?8)",
+            -1, &ins, NULL) != SQLITE_OK) return -1;
+
+    while (*p && *p != ']') {
+        while (*p == ' ' || *p == ',' || *p == '\n') p++;
+        if (!*p || *p == ']') break;
+        sqlite3_reset(ins);
+        sqlite3_clear_bindings(ins);
+        sqlite3_bind_int(ins, 1, family_id);
+        sqlite3_bind_text(ins, 2, content_type, -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int(ins, 3, target_id);
+        sqlite3_bind_int(ins, 4, position);
+        /* field_name is NOT NULL. The binding vector is positional -- the field
+         * it came from is recoverable from the content type's attribute order --
+         * so name it for what it is rather than leaving it null and losing every
+         * insert to a constraint. */
+        snprintf(field, sizeof(field), "bind:%d", position);
+        sqlite3_bind_text(ins, 5, field, -1, SQLITE_TRANSIENT);
+        if (*p == '"') {
+            const char *start = ++p;
+            char *value;
+            size_t len;
+            while (*p && !(*p == '"' && p[-1] != '\\')) p++;
+            len = (size_t)(p - start);
+            value = malloc(len + 1);
+            if (!value) break;
+            memcpy(value, start, len);
+            value[len] = '\0';
+            sqlite3_bind_text(ins, 6, value, -1, SQLITE_TRANSIENT);
+            sqlite3_bind_null(ins, 7);
+            sqlite3_bind_int(ins, 8, 0);
+            if (sqlite3_step(ins) == SQLITE_DONE) written++;
+            free(value);
+            if (*p == '"') p++;
+        } else {
+            char *end = NULL;
+            double number = strtod(p, &end);
+            if (end == p) { while (*p && *p != ',' && *p != ']') p++; continue; }
+            sqlite3_bind_null(ins, 6);
+            sqlite3_bind_double(ins, 7, number);
+            sqlite3_bind_int(ins, 8, 1);
+            if (sqlite3_step(ins) == SQLITE_DONE) written++;
+            p = end;
+        }
+        position++;
+    }
+    sqlite3_finalize(ins);
+    /* Report what was written, not what was attempted. The first version bound
+     * a NULL field_name, lost every row to the constraint, and returned a happy
+     * count because nothing checked the step result. */
+    if (written < position) {
+        fprintf(stderr, "[canonical] tensor cells: wrote %d of %d for %s/%d: %s\n",
+                written, position, content_type, target_id, sqlite3_errmsg(db));
+    }
+    return written;
+}
+
+/* bf_cms_backfill_cells -- derive missing tensor cells from existing bindings.
+ *
+ * The create and rebind paths now write cells as content is authored, but that
+ * only helps content authored after the fix. Anything already in the store had
+ * bindings and no cells: a member the indexer skips silently, because a member
+ * with no vector is indistinguishable from one that has not been reached yet.
+ *
+ * Rather than a one-off migration script, this is called by ann_build_index, so
+ * a build repairs what it is about to index. Content imported by any path that
+ * writes bindings without cells -- a bulk load, a restore, a future sync -- is
+ * healed by the next build rather than stranding until someone notices the
+ * count is short.
+ *
+ * Cannot infer: a backfilled cell -> a cell equal to what the create path would
+ * have written at authoring time. It is derived from the bindings as they stand
+ * now, which is the same source, read later. */
+/* bf_cms_prune_orphan_cells -- the other half of the reconciliation.
+ *
+ * Deleting an entry removes the row and its family membership, and left its
+ * tensor cells behind. The index is built from cells rather than from
+ * membership, so a deleted door stayed indexed: `ann stats` reported eight
+ * members over seven rows, and the vector remained eligible to be returned as
+ * a neighbour of something real. A lookup layer that can answer with content
+ * that no longer exists is worse than one that cannot answer.
+ *
+ * Backfilling missing cells and pruning orphaned ones are the same invariant
+ * read in two directions -- cells and membership describe the same set -- so
+ * both run before a build. Neither is a migration; both are reconciliation,
+ * and a store that is already correct is left untouched by both.
+ *
+ * Cannot infer: a pruned cell -> a deleted entry. A cell is pruned when no
+ * membership claims it, which is also what a rebind looks like mid-flight;
+ * the following backfill re-derives anything still owed. */
+int bf_cms_prune_orphan_cells(sqlite3 *db, const char *content_type) {
+    sqlite3_stmt *del = NULL;
+    int pruned = 0;
+
+    if (!db) return 0;
+    if (sqlite3_prepare_v2(db,
+            "DELETE FROM _tensor_cells WHERE id IN ("
+            "  SELECT c.id FROM _tensor_cells c JOIN _families f ON f.id = c.family_id "
+            "  WHERE (?1 = 'all' OR f.content_type = ?1) "
+            "    AND NOT EXISTS (SELECT 1 FROM _family_members m "
+            "                    WHERE m.family_id = c.family_id "
+            "                      AND m.target_type = c.target_type "
+            "                      AND m.target_id = c.target_id))",
+            -1, &del, NULL) != SQLITE_OK) {
+        fprintf(stderr, "[canonical] prune: %s\n", sqlite3_errmsg(db));
+        return 0;
+    }
+    sqlite3_bind_text(del, 1, content_type ? content_type : "all", -1, SQLITE_TRANSIENT);
+    if (sqlite3_step(del) == SQLITE_DONE) pruned = sqlite3_changes(db);
+    sqlite3_finalize(del);
+    if (pruned)
+        fprintf(stderr, "[canonical] pruned %d orphaned cell(s)\n", pruned);
+    return pruned;
+}
+
+int bf_cms_backfill_cells(sqlite3 *db, const char *content_type) {
+    sqlite3_stmt *scan = NULL;
+    int repaired = 0;
+
+    if (!db) return 0;
+    /* Members holding a vector that the cell table has no row for. The NOT
+     * EXISTS is the whole point: never rewrite cells for a member that already
+     * has them, so a build stays idempotent and cannot clobber a cell the
+     * create path wrote from a binding that has since changed. */
+    if (sqlite3_prepare_v2(db,
+            "SELECT m.family_id, f.content_type, m.target_id, m.bindings "
+            "FROM _family_members m JOIN _families f ON f.id = m.family_id "
+            "WHERE m.bindings IS NOT NULL AND m.bindings != '' "
+            "  AND (?1 = 'all' OR f.content_type = ?1) "
+            "  AND NOT EXISTS (SELECT 1 FROM _tensor_cells c "
+            "                  WHERE c.family_id = m.family_id "
+            "                    AND c.target_type = m.target_type "
+            "                    AND c.target_id = m.target_id)",
+            -1, &scan, NULL) != SQLITE_OK) {
+        fprintf(stderr, "[canonical] backfill: %s\n", sqlite3_errmsg(db));
+        return 0;
+    }
+    sqlite3_bind_text(scan, 1, content_type ? content_type : "all", -1, SQLITE_TRANSIENT);
+
+    while (sqlite3_step(scan) == SQLITE_ROW) {
+        int family_id = sqlite3_column_int(scan, 0);
+        const char *type = (const char *)sqlite3_column_text(scan, 1);
+        int target_id = sqlite3_column_int(scan, 2);
+        const char *bind = (const char *)sqlite3_column_text(scan, 3);
+        if (tensor_cells_from_bindings(db, family_id, type, target_id, bind) > 0)
+            repaired++;
+    }
+    sqlite3_finalize(scan);
+    if (repaired)
+        fprintf(stderr, "[canonical] backfilled cells for %d member(s)\n", repaired);
+    return repaired;
 }
 
 int family_refresh_entry(sqlite3 *db, const char *content_type, int target_id) {
@@ -773,6 +978,10 @@ int family_refresh_entry(sqlite3 *db, const char *content_type, int target_id) {
         char fid_str[32];
         snprintf(fid_str, sizeof(fid_str), "%d", family_row_id);
         hybrid_memo_invalidate(db, fid_str);
+
+        /* Cells first: the indexer reads them, and nothing else writes them
+         * on the authoring path. */
+        tensor_cells_from_bindings(db, family_row_id, content_type, target_id, bind);
 
         /* Incrementally index new member in ANN */
         ann_index_member(db, family_row_id, target_id);

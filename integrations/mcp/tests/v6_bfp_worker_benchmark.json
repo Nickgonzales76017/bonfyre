@@ -1,0 +1,65 @@
+{
+  "schema": "bonfyre.bfp-worker-isolation-benchmark.v1",
+  "measured_at": "2026-10-03T04:31:12.512Z",
+  "sources": {
+    "../owned_worker_pool.mjs": "48020c2ea9d8a81abb747865fa1752253c618e6812b16ab2b79570d6e145b79b",
+    "../v6_bfp_worker.mjs": "a7dd3c6805610787d64952914f54412238b9dd25fb4ec77adc07912492f0aa10",
+    "../v6_bfp.mjs": "c453abf88dcc45f6c329857be9236fef343d45de4de008c72060757cdc96f81b",
+    "../canonical_json.mjs": "716024fd5fed4fb7978acad868dfc40575fff1049a74b65515d732d5b54ee8a2",
+    "./v6_bfp_worker_benchmark.mjs": "fb790d86cd7c367ace8b1242bc8ca4ec3be63ca4060b9bda4b24b898a50f473b"
+  },
+  "runtime": "bun",
+  "node_compat_version": "v24.3.0",
+  "bun": "1.3.13",
+  "platform": "darwin-arm64",
+  "archive_bytes": 343295361,
+  "archive_sha256": "ad772583e20042937bb8b34043560568dbe05cb2447ae89944f807700c97a61c",
+  "verified_sections": 64,
+  "warmup_pairs": 1,
+  "measured_pairs": 3,
+  "summary": {
+    "direct": {
+      "p50_ms": 546.5840840000001,
+      "maximum_timer_gap_ms": 549.0066670000001,
+      "samples": [
+        {
+          "elapsed_ms": 536.6647079999998,
+          "maximum_timer_gap_ms": 538.194166,
+          "timer_ticks": 2
+        },
+        {
+          "elapsed_ms": 548.3449580000001,
+          "maximum_timer_gap_ms": 549.0066670000001,
+          "timer_ticks": 2
+        },
+        {
+          "elapsed_ms": 546.5840840000001,
+          "maximum_timer_gap_ms": 546.8329999999996,
+          "timer_ticks": 2
+        }
+      ]
+    },
+    "worker": {
+      "p50_ms": 546.3649159999998,
+      "maximum_timer_gap_ms": 5.420250000000124,
+      "samples": [
+        {
+          "elapsed_ms": 546.3649159999998,
+          "maximum_timer_gap_ms": 2.8677090000001044,
+          "timer_ticks": 242
+        },
+        {
+          "elapsed_ms": 530.6237919999999,
+          "maximum_timer_gap_ms": 2.6274160000002666,
+          "timer_ticks": 237
+        },
+        {
+          "elapsed_ms": 574.0923750000002,
+          "maximum_timer_gap_ms": 5.420250000000124,
+          "timer_ticks": 252
+        }
+      ]
+    }
+  },
+  "scope": "Local warmed same-file same-verifier comparison. Timer gap measures main-event-loop interference, not distributed throughput or compression gain."
+}

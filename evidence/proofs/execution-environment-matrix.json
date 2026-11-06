@@ -1,0 +1,815 @@
+{
+  "forbidden_inferences": [
+    "catalog presence does not imply runtime health",
+    "credential reachability does not grant effect authority",
+    "a version command does not prove task-level semantic completion",
+    "one expired copy of a conflicting variable name does not prove the capability is unavailable",
+    "a cataloged executable path does not prove an installed runtime; an OS shim can answer for an absent one",
+    "measured routing latency is provider weather, not a durable cost or availability guarantee"
+  ],
+  "observed_at": "2026-08-21T13:08:18.969067+00:00",
+  "resource_weather": {
+    "environments_created": 0,
+    "environments_reused": 1,
+    "free_disk_gib": 22.731,
+    "heavy_downloads_performed": 0,
+    "model_calls_spent": 5
+  },
+  "schema": "BonfyreResourceEnvironmentEvidence-v1",
+  "source_catalog_version": "Run8EnvironmentCatalog-v5",
+  "summary": {
+    "conda_env_count": 0,
+    "degraded": 2,
+    "healthy": 40,
+    "not_selected": 2,
+    "pyenv_env_count": 0,
+    "surface_count": 44,
+    "unavailable": 0
+  },
+  "surfaces": [
+    {
+      "catalog_version": "Python 3.9.6",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "python3",
+      "owning_subsystem": "control-plane",
+      "path": "/usr/bin/python3",
+      "probe": "bounded_execution",
+      "regeneration_cost": "os_managed_low",
+      "resolution": "catalog_path",
+      "suitable_work_classes": [
+        "machine_execution",
+        "proof_replay_backtest"
+      ],
+      "surface_id": "runtime:python3"
+    },
+    {
+      "catalog_version": "pip 21.2.4 from /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/site-packages/pip (python 3.9)",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "pip3",
+      "owning_subsystem": "python-package-fabric",
+      "path": "/usr/bin/pip3",
+      "probe": "bounded_execution",
+      "regeneration_cost": "os_managed_low",
+      "resolution": "catalog_path",
+      "suitable_work_classes": [
+        "environment_repair"
+      ],
+      "surface_id": "runtime:pip3"
+    },
+    {
+      "catalog_version": "v26.5.0",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "node",
+      "owning_subsystem": "integration-estate",
+      "path": "/opt/homebrew/bin/node",
+      "probe": "bounded_execution",
+      "regeneration_cost": "homebrew_low",
+      "resolution": "catalog_path",
+      "suitable_work_classes": [
+        "product_surface",
+        "contract_projection"
+      ],
+      "surface_id": "runtime:node"
+    },
+    {
+      "catalog_version": "11.17.0",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "npm",
+      "owning_subsystem": "integration-estate",
+      "path": "/opt/homebrew/bin/npm",
+      "probe": "bounded_execution",
+      "regeneration_cost": "homebrew_low",
+      "resolution": "catalog_path",
+      "suitable_work_classes": [
+        "product_surface",
+        "dependency_validation"
+      ],
+      "surface_id": "runtime:npm"
+    },
+    {
+      "catalog_version": "9.15.1",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "pnpm",
+      "owning_subsystem": "integration-estate",
+      "path": "/opt/homebrew/bin/pnpm",
+      "probe": "bounded_execution",
+      "regeneration_cost": "homebrew_low",
+      "resolution": "catalog_path",
+      "suitable_work_classes": [
+        "product_surface",
+        "dependency_validation"
+      ],
+      "surface_id": "runtime:pnpm"
+    },
+    {
+      "catalog_version": "1.3.13",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "bun",
+      "owning_subsystem": "integration-estate",
+      "path": "$USER_HOME/.bun/bin/bun",
+      "probe": "bounded_execution",
+      "regeneration_cost": "user_install_low",
+      "resolution": "catalog_path",
+      "suitable_work_classes": [
+        "product_surface",
+        "machine_execution"
+      ],
+      "surface_id": "runtime:bun"
+    },
+    {
+      "catalog_version": "deno 2.7.11 (stable, release, aarch64-apple-darwin)",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "deno",
+      "owning_subsystem": "integration-estate",
+      "path": "/opt/homebrew/bin/deno",
+      "probe": "bounded_execution",
+      "regeneration_cost": "homebrew_low",
+      "resolution": "catalog_path",
+      "suitable_work_classes": [
+        "product_surface",
+        "machine_execution"
+      ],
+      "surface_id": "runtime:deno"
+    },
+    {
+      "catalog_version": "go version go1.27.0 darwin/arm64",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "go",
+      "owning_subsystem": "native-runtime",
+      "path": "/opt/homebrew/bin/go",
+      "probe": "bounded_execution",
+      "regeneration_cost": "homebrew_medium",
+      "resolution": "no_live_installation",
+      "suitable_work_classes": [
+        "native_runtime_defect",
+        "partner_contribution"
+      ],
+      "surface_id": "runtime:go"
+    },
+    {
+      "catalog_version": "cargo 1.96.0 (30a34c682 2026-05-25) (Homebrew)",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "cargo",
+      "owning_subsystem": "native-runtime",
+      "path": "/opt/homebrew/bin/cargo",
+      "probe": "bounded_execution",
+      "regeneration_cost": "homebrew_medium",
+      "resolution": "catalog_path",
+      "suitable_work_classes": [
+        "native_runtime_defect",
+        "machine_execution"
+      ],
+      "surface_id": "runtime:cargo"
+    },
+    {
+      "catalog_version": "rustc 1.96.0 (ac68faa20 2026-05-25) (Homebrew)",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "rustc",
+      "owning_subsystem": "native-runtime",
+      "path": "/opt/homebrew/bin/rustc",
+      "probe": "bounded_execution",
+      "regeneration_cost": "homebrew_medium",
+      "resolution": "catalog_path",
+      "suitable_work_classes": [
+        "native_runtime_defect",
+        "machine_execution"
+      ],
+      "surface_id": "runtime:rustc"
+    },
+    {
+      "catalog_version": "Apple clang version 17.0.0 (clang-1700.0.13.5)",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "cc",
+      "owning_subsystem": "native-kernel",
+      "path": "/usr/bin/cc",
+      "probe": "bounded_execution",
+      "regeneration_cost": "os_managed_low",
+      "resolution": "catalog_path",
+      "suitable_work_classes": [
+        "native_runtime_defect",
+        "contract_projection"
+      ],
+      "surface_id": "runtime:cc"
+    },
+    {
+      "catalog_version": "Apple clang version 17.0.0 (clang-1700.0.13.5)",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "clang",
+      "owning_subsystem": "native-kernel",
+      "path": "/usr/bin/clang",
+      "probe": "bounded_execution",
+      "regeneration_cost": "os_managed_low",
+      "resolution": "catalog_path",
+      "suitable_work_classes": [
+        "native_runtime_defect",
+        "contract_projection"
+      ],
+      "surface_id": "runtime:clang"
+    },
+    {
+      "catalog_version": "Apple clang version 17.0.0 (clang-1700.0.13.5)",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "gcc",
+      "owning_subsystem": "native-kernel",
+      "path": "/usr/bin/gcc",
+      "probe": "bounded_execution",
+      "regeneration_cost": "os_managed_low",
+      "resolution": "catalog_path",
+      "suitable_work_classes": [
+        "native_runtime_defect",
+        "contract_projection"
+      ],
+      "surface_id": "runtime:gcc"
+    },
+    {
+      "catalog_version": "cmake version 4.3.4",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "cmake",
+      "owning_subsystem": "native-build-fabric",
+      "path": "/opt/homebrew/bin/cmake",
+      "probe": "bounded_execution",
+      "regeneration_cost": "homebrew_low",
+      "resolution": "catalog_path",
+      "suitable_work_classes": [
+        "native_runtime_defect",
+        "dependency_validation"
+      ],
+      "surface_id": "runtime:cmake"
+    },
+    {
+      "catalog_version": "1.13.2",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "ninja",
+      "owning_subsystem": "native-build-fabric",
+      "path": "/opt/homebrew/bin/ninja",
+      "probe": "bounded_execution",
+      "regeneration_cost": "homebrew_low",
+      "resolution": "catalog_path",
+      "suitable_work_classes": [
+        "native_runtime_defect",
+        "dependency_validation"
+      ],
+      "surface_id": "runtime:ninja"
+    },
+    {
+      "catalog_version": "GNU Make 3.81",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "make",
+      "owning_subsystem": "native-build-fabric",
+      "path": "/usr/bin/make",
+      "probe": "bounded_execution",
+      "regeneration_cost": "os_managed_low",
+      "resolution": "catalog_path",
+      "suitable_work_classes": [
+        "native_runtime_defect",
+        "dependency_validation"
+      ],
+      "surface_id": "runtime:make"
+    },
+    {
+      "catalog_version": "This is perl 5, version 34, subversion 1 (v5.34.1) built for darwin-thread-multi-2level",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "perl",
+      "owning_subsystem": "queue-and-legacy-services",
+      "path": "/usr/bin/perl",
+      "probe": "bounded_execution",
+      "regeneration_cost": "os_managed_low",
+      "resolution": "catalog_path",
+      "suitable_work_classes": [
+        "machine_execution",
+        "estate_convergence"
+      ],
+      "surface_id": "runtime:perl"
+    },
+    {
+      "catalog_version": "ruby 2.6.10p210 (2022-04-12 revision 67958) [universal.arm64e-darwin24]",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "ruby",
+      "owning_subsystem": "system-automation",
+      "path": "/usr/bin/ruby",
+      "probe": "bounded_execution",
+      "regeneration_cost": "os_managed_low",
+      "resolution": "catalog_path",
+      "suitable_work_classes": [
+        "machine_execution"
+      ],
+      "surface_id": "runtime:ruby"
+    },
+    {
+      "catalog_version": "",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "java",
+      "owning_subsystem": "foreign-runtime",
+      "path": "/opt/homebrew/opt/openjdk/bin/java",
+      "probe": "bounded_execution",
+      "regeneration_cost": "os_managed_medium",
+      "resolution": "installed_alternate_reused",
+      "suitable_work_classes": [
+        "machine_execution",
+        "partner_contribution"
+      ],
+      "surface_id": "runtime:java"
+    },
+    {
+      "catalog_version": "Docker version 29.6.2, build dfc4efb",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "docker",
+      "owning_subsystem": "container-fabric",
+      "path": "/usr/local/bin/docker",
+      "probe": "bounded_execution",
+      "regeneration_cost": "desktop_state_high",
+      "resolution": "catalog_path",
+      "suitable_work_classes": [
+        "machine_execution",
+        "proof_replay_backtest"
+      ],
+      "surface_id": "runtime:docker"
+    },
+    {
+      "catalog_version": "git version 2.39.5 (Apple Git-154)",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "git",
+      "owning_subsystem": "evidence-and-partner-fabric",
+      "path": "/usr/bin/git",
+      "probe": "bounded_execution",
+      "regeneration_cost": "os_managed_low",
+      "resolution": "catalog_path",
+      "suitable_work_classes": [
+        "partner_contribution",
+        "proof_replay_backtest"
+      ],
+      "surface_id": "runtime:git"
+    },
+    {
+      "catalog_version": "3.43.2 2023-10-10 13:08:14 1b37c146ee9ebb7acd0160c0ab1fd11017a419fa8a3187386ed8cb32b709aapl (64-bit)",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "sqlite3",
+      "owning_subsystem": "event-work-resource-graphs",
+      "path": "/usr/bin/sqlite3",
+      "probe": "bounded_execution",
+      "regeneration_cost": "os_managed_low",
+      "resolution": "catalog_path",
+      "suitable_work_classes": [
+        "machine_execution",
+        "proof_replay_backtest"
+      ],
+      "surface_id": "runtime:sqlite3"
+    },
+    {
+      "catalog_version": "hvm 2.0.22",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "hvm",
+      "owning_subsystem": "native-runtime",
+      "path": "$USER_HOME/.cargo/bin/hvm",
+      "probe": "bounded_execution",
+      "regeneration_cost": "cargo_install_medium",
+      "resolution": "catalog_path",
+      "suitable_work_classes": [
+        "native_runtime_defect",
+        "model_context_provider"
+      ],
+      "surface_id": "runtime:hvm"
+    },
+    {
+      "catalog_version": "codex-cli 0.146.0",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "codex",
+      "owning_subsystem": "provider-graph",
+      "path": "/opt/homebrew/bin/codex",
+      "probe": "bounded_execution",
+      "regeneration_cost": "homebrew_low",
+      "resolution": "catalog_path",
+      "suitable_work_classes": [
+        "provider_execution"
+      ],
+      "surface_id": "runtime:codex"
+    },
+    {
+      "catalog_version": "2.1.238 (Claude Code)",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "claude",
+      "owning_subsystem": "provider-graph",
+      "path": "$USER_HOME/.local/bin/claude",
+      "probe": "bounded_execution",
+      "regeneration_cost": "user_install_low",
+      "resolution": "catalog_path",
+      "suitable_work_classes": [
+        "provider_execution"
+      ],
+      "surface_id": "runtime:claude"
+    },
+    {
+      "catalog_version": "Homebrew 6.0.18-96-gac9e7ac",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "brew",
+      "owning_subsystem": "machine-package-fabric",
+      "path": "/opt/homebrew/bin/brew",
+      "probe": "bounded_execution",
+      "regeneration_cost": "network_medium",
+      "resolution": "catalog_path",
+      "suitable_work_classes": [
+        "environment_repair"
+      ],
+      "surface_id": "runtime:brew"
+    },
+    {
+      "catalog_version": "1.16.2",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "pipx",
+      "owning_subsystem": "python-tool-fabric",
+      "path": "/opt/homebrew/bin/pipx",
+      "probe": "bounded_execution",
+      "regeneration_cost": "homebrew_low",
+      "resolution": "catalog_path",
+      "suitable_work_classes": [
+        "environment_repair",
+        "machine_execution"
+      ],
+      "surface_id": "runtime:pipx"
+    },
+    {
+      "catalog_version": "discovered_during_smoke",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "clang++",
+      "owning_subsystem": "native-kernel",
+      "path": "/usr/bin/clang++",
+      "probe": "bounded_execution",
+      "regeneration_cost": "os_managed_low",
+      "resolution": "catalog_path",
+      "suitable_work_classes": [
+        "native_runtime_defect",
+        "contract_projection"
+      ],
+      "surface_id": "runtime:clang++"
+    },
+    {
+      "catalog_version": "discovered_during_smoke",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "g++",
+      "owning_subsystem": "native-kernel",
+      "path": "/usr/bin/g++",
+      "probe": "bounded_execution",
+      "regeneration_cost": "os_managed_low",
+      "resolution": "catalog_path",
+      "suitable_work_classes": [
+        "native_runtime_defect",
+        "contract_projection"
+      ],
+      "surface_id": "runtime:g++"
+    },
+    {
+      "catalog_version": "discovered_during_smoke",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "gh",
+      "owning_subsystem": "github-foreign-twin",
+      "path": "/opt/homebrew/bin/gh",
+      "probe": "bounded_execution",
+      "regeneration_cost": "homebrew_low",
+      "resolution": "catalog_path",
+      "suitable_work_classes": [
+        "partner_contribution",
+        "proof_replay_backtest"
+      ],
+      "surface_id": "runtime:gh"
+    },
+    {
+      "catalog_version": "discovered_during_smoke",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "aws",
+      "owning_subsystem": "cloud-fabric",
+      "path": "/opt/homebrew/bin/aws",
+      "probe": "bounded_execution",
+      "regeneration_cost": "homebrew_medium",
+      "resolution": "catalog_path",
+      "suitable_work_classes": [
+        "cloud_read_only",
+        "machine_execution"
+      ],
+      "surface_id": "runtime:aws"
+    },
+    {
+      "catalog_version": "discovered_during_smoke",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "oci",
+      "owning_subsystem": "cloud-fabric",
+      "path": "/opt/homebrew/bin/oci",
+      "probe": "bounded_execution",
+      "regeneration_cost": "pipx_or_homebrew_medium",
+      "resolution": "catalog_path",
+      "suitable_work_classes": [
+        "cloud_read_only",
+        "machine_execution"
+      ],
+      "surface_id": "runtime:oci"
+    },
+    {
+      "catalog_version": "discovered_during_smoke",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "cloudflared",
+      "owning_subsystem": "cloud-fabric",
+      "path": "/opt/homebrew/bin/cloudflared",
+      "probe": "bounded_execution",
+      "regeneration_cost": "homebrew_low",
+      "resolution": "catalog_path",
+      "suitable_work_classes": [
+        "cloud_read_only",
+        "machine_execution"
+      ],
+      "surface_id": "runtime:cloudflared"
+    },
+    {
+      "catalog_version": "discovered_during_smoke",
+      "exit_code": 0,
+      "health": "healthy",
+      "kind": "runtime",
+      "name": "curl",
+      "owning_subsystem": "external-tool-fabric",
+      "path": "/usr/bin/curl",
+      "probe": "bounded_execution",
+      "regeneration_cost": "os_managed_low",
+      "resolution": "catalog_path",
+      "suitable_work_classes": [
+        "cloud_read_only",
+        "proof_replay_backtest"
+      ],
+      "surface_id": "runtime:curl"
+    },
+    {
+      "check_count": 2,
+      "checks_passed": 2,
+      "health": "healthy",
+      "kind": "python_venv",
+      "name": "restate-adapter",
+      "owning_subsystem": "restate-workgraph-bridge",
+      "path": "$REPO/services/bonfyre-restate-adapter/venv",
+      "probe": "isolated_import_and_dependency_check",
+      "regeneration_cost": "medium_existing_lockless_venv",
+      "suitable_work_classes": [
+        "machine_execution",
+        "proof_replay_backtest",
+        "native_runtime_defect"
+      ],
+      "surface_id": "venv:restate-adapter"
+    },
+    {
+      "health": "healthy",
+      "kind": "docker_context",
+      "name": "default",
+      "owning_subsystem": "container-fabric",
+      "probe": "client_server_api_roundtrip",
+      "regeneration_cost": "high_stateful_daemon",
+      "suitable_work_classes": [
+        "machine_execution",
+        "proof_replay_backtest",
+        "partner_contribution"
+      ],
+      "surface_id": "docker-context:default"
+    },
+    {
+      "health": "healthy",
+      "kind": "docker_context",
+      "name": "desktop-linux",
+      "owning_subsystem": "container-fabric",
+      "probe": "client_server_api_roundtrip",
+      "regeneration_cost": "high_stateful_daemon",
+      "suitable_work_classes": [
+        "machine_execution",
+        "proof_replay_backtest",
+        "partner_contribution"
+      ],
+      "surface_id": "docker-context:desktop-linux"
+    },
+    {
+      "declared_key_count": 4,
+      "disposition": "not_selected_task_irrelevant_secret_bearing",
+      "failing_probes": [],
+      "health": "not_selected",
+      "kind": "reference_environment",
+      "name": ".env",
+      "owning_subsystem": "model-pipeline",
+      "probes": {},
+      "regeneration_cost": "high_secret_or_authority_reconciliation",
+      "suitable_work_classes": [
+        "cloud_read_only",
+        "model_context_provider",
+        "machine_execution"
+      ],
+      "surface_id": "dotenv:.env"
+    },
+    {
+      "declared_key_count": 38,
+      "disposition": "selected_read_only_cloud_probe",
+      "failing_probes": [
+        "cloudflare_api_token_read",
+        "cloudflare_r2_transport"
+      ],
+      "health": "degraded",
+      "kind": "reference_environment",
+      "name": "cloud.refs.env",
+      "owning_subsystem": "cloud-fabric",
+      "probes": {
+        "aws_read": "healthy",
+        "cloudflare_api_token_read": "degraded_auth_rejected",
+        "cloudflare_r2_transport": "degraded_transport_refused"
+      },
+      "regeneration_cost": "high_secret_or_authority_reconciliation",
+      "suitable_work_classes": [
+        "cloud_read_only",
+        "model_context_provider",
+        "machine_execution"
+      ],
+      "surface_id": "dotenv:cloud.refs.env"
+    },
+    {
+      "declared_key_count": 33,
+      "disposition": "not_selected_shadow_reference",
+      "failing_probes": [],
+      "health": "not_selected",
+      "kind": "reference_environment",
+      "name": "cloud.refs.sanitized.env",
+      "owning_subsystem": "cloud-fabric",
+      "probes": {},
+      "regeneration_cost": "high_secret_or_authority_reconciliation",
+      "suitable_work_classes": [
+        "cloud_read_only",
+        "model_context_provider",
+        "machine_execution"
+      ],
+      "surface_id": "dotenv:cloud.refs.sanitized.env"
+    },
+    {
+      "declared_key_count": 36,
+      "disposition": "selected_read_only_oracle_probe",
+      "failing_probes": [],
+      "health": "healthy",
+      "kind": "reference_environment",
+      "name": "oracle.refs.env",
+      "owning_subsystem": "cloud-fabric",
+      "probes": {
+        "authority_gate": "healthy",
+        "oracle_read": "healthy"
+      },
+      "regeneration_cost": "high_secret_or_authority_reconciliation",
+      "suitable_work_classes": [
+        "cloud_read_only",
+        "model_context_provider",
+        "machine_execution"
+      ],
+      "surface_id": "dotenv:oracle.refs.env"
+    },
+    {
+      "declared_key_count": 21,
+      "disposition": "selected_read_only_provider_probe",
+      "failing_probes": [
+        "github_read"
+      ],
+      "health": "degraded",
+      "kind": "reference_environment",
+      "name": "provider.refs.env",
+      "owning_subsystem": "provider-graph",
+      "probes": {
+        "authority_gate": "healthy",
+        "github_read": "degraded_auth_rejected",
+        "openai_read": "healthy"
+      },
+      "regeneration_cost": "high_secret_or_authority_reconciliation",
+      "suitable_work_classes": [
+        "cloud_read_only",
+        "model_context_provider",
+        "machine_execution"
+      ],
+      "surface_id": "dotenv:provider.refs.env"
+    },
+    {
+      "health": "healthy",
+      "kind": "capability",
+      "name": "github-read",
+      "owning_subsystem": "github-foreign-twin",
+      "probe": "multi_source_credential_resolution",
+      "regeneration_cost": "high_secret_or_authority_reconciliation",
+      "resolved_source": "gh_cli_keyring",
+      "sources": {
+        "dotenv:cloud.refs.env#GITHUB_PAT": "healthy",
+        "dotenv:provider.refs.env#GITHUB_PAT": "degraded_auth_rejected",
+        "gh_cli_keyring": "healthy"
+      },
+      "suitable_work_classes": [
+        "partner_contribution",
+        "proof_replay_backtest",
+        "cloud_read_only"
+      ],
+      "surface_id": "capability:github-read"
+    },
+    {
+      "fastest_live_route": "groq",
+      "health": "healthy",
+      "kind": "capability",
+      "live_route_count": 4,
+      "measured_route_count": 5,
+      "model_calls_spent": 5,
+      "name": "model-commons-routing",
+      "owning_subsystem": "provider-graph",
+      "probe": "bounded_real_completion_per_route",
+      "regeneration_cost": "high_secret_or_authority_reconciliation",
+      "routes": {
+        "aistudio": {
+          "health": "degraded_route_rejected",
+          "http_status": "503",
+          "latency_seconds": 3.983
+        },
+        "groq": {
+          "health": "healthy",
+          "http_status": "200",
+          "latency_seconds": 0.392
+        },
+        "mistral": {
+          "health": "healthy",
+          "http_status": "200",
+          "latency_seconds": 0.728
+        },
+        "openai": {
+          "health": "healthy",
+          "http_status": "200",
+          "latency_seconds": 1.151
+        },
+        "openrouter": {
+          "health": "healthy",
+          "http_status": "200",
+          "latency_seconds": 1.289
+        }
+      },
+      "suitable_work_classes": [
+        "model_context_provider",
+        "open_world_learning",
+        "cloud_read_only"
+      ],
+      "surface_id": "capability:model-commons-routing"
+    }
+  ]
+}

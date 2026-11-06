@@ -1,0 +1,68 @@
+atlas surface
+
+architecture event-material
+  canonical_name EventMaterial
+  family surface
+  domain Surface / Events
+  layer surface
+  semantic_question What has an organization said will happen, when does it happen in the hours of the place it happens in, what phase is it in right now, and what can a person do about it?
+  purpose An event is not a story about an event. Where an organization publishes its own calendar, that calendar is the organizer's statement, and this estate reads it as one: iCalendar entries become event material with a start, an end, a place and a link, admitted through the same census contract as every other source (extract ics:vevent). The material has its own stream, its own forward-reading rhythm (an agenda grouped by day, soonest first, saying how long until), and its own page, which changes with the phase the event is in. The page hands over two things a listing cannot: the event as a file a calendar understands, written by this estate and saying so, and the way there when the organizer stated where it is. The same page states itself once more for machines as a schema.org Event whose isBasedOn is the organizer's own address.
+  maturity implemented
+  consumes InternetCensus
+  consumes SourceFrontier
+  publishes EventItem
+  publishes CompiledCalendar
+  node_types EventItem
+  node_types EventPhase
+  edge_types published_by_organizer
+  invariant an event's time is what its calendar states: a UTC stamp, a stamp in the zone the calendar names (honoured through the host's zone database, never assumed), or a whole day; an unreadable stamp is no time at all and the entry is not carried
+  invariant hours are shown in the zone this estate keeps (BONFYRE_LOCAL_ZONE, America/Chicago by default), so an event at noon in Fort Worth never reads as five in the evening, while the machine projection carries the same moment in UTC
+  invariant a folded line is one value, an escaped comma is a comma, and a control character never reaches a page or a JSON line
+  invariant an event that has already finished is not "what's on": an entry with a stated end keeps its place until that end, one without until its day is over, and the words on the agenda use the same reading as the filter that kept it
+  invariant an event stream is ordered soonest first and never joins the mix, which is what was published, in the order it was published
+  invariant a published PublicationOccurrence retains the owner kind of its admitted source: an internet_source explicitly typed event is filed in the events family and reaches the Event stream, never a generic story stream merely because PublicationOccurrence is shared material
+  invariant publish-time event source refiling is selected in Bun and written only through the native CMS update command; a dry run changes no owner row, a CMS refusal remains a refusal, and a second successful owner pass is empty
+  invariant the phase (coming up, this week, later today, starting soon, happening now, just finished, already happened) is derived from the organizer's own start and end against the current moment, never from a claim anyone made about the event
+  invariant the calendar file this estate writes names this estate as its compiler, names the organizer as the source of the facts, carries the organizer's address, and tells the reader to check that source before relying on it
+  invariant the machine projection states only what the page states, with isBasedOn pointing at the organizer's address, and says in words that it is not an invitation, a reservation or a promise
+  forbidden_inference an event on this estate -> a reservation, a ticket, an invitation or a promise that it will happen
+  forbidden_inference a compiled calendar file -> the organizer's own calendar, or their authority over what it says
+  forbidden_inference a time shown here -> the organizer's current time; a start, a place or a ticket may have changed since the calendar was read
+  forbidden_inference a place named in a calendar -> a known, resolved or admitted Place identity
+  invariant an event's place line is joined to an identity only by the linker's exact rules, and only from the place line itself: a talk about Dallas held in Denton happens in Denton; where no place is named, the organization whose calendar it is stands as where it happens
+  known_gap a place identity joined to an event does not yet bring that place's own pictures, map or opening hours onto the event's page
+  known_gap recurrence rules (RRULE) are not expanded: a repeating entry is carried once, at the start its calendar states
+  known_gap only iCalendar is read; Localist, Trumba and The Events Calendar JSON APIs are probed for their calendar files rather than read natively
+  known_gap the phases exist on the item page; a route does not yet compose "tonight" or "still open" from the phase across many organizers
+  known_gap an event carries no offer: where a ticket exists, its price, availability and capacity are not read, so nothing here can be bought
+  source_path schemas/control/page-composition.cue
+  source_path cmd/BonfyreWebAddress/src/main.c
+  source_path cmd/BonfyreWebAddress/tests/page_events_test.sh
+  source_path cmd/BonfyreWebAddress/tests/page_occurrence_event_test.sh
+  source_path cmd/BonfyreSourceFrontier/tools/probe_event_channels.mjs
+  source_path cmd/BonfyreSurfaceScene/tools/compile_stage_closure.mjs
+  source_path cmd/BonfyreSurfaceScene/tools/compile_stage_closure.py.archive
+  source_path cmd/BonfyreSurfaceScene/tests/stage_closure.test.mjs
+  source_path scripts/project_event_sources.py.archive
+  source_path scripts/project_event_sources.mjs
+  source_path scripts/publish_estate.sh
+  source_path scripts/tests/project_event_sources_test.py.archive
+  source_path scripts/tests/project_event_sources_test.sh
+  source_path scripts/tests/project_event_sources_owner_test.sh
+  witness cmd/BonfyreWebAddress/tests/page_events_test.sh proves a calendar written around the current moment is read as events rather than stories, that a finished entry is not carried, that a folded line is one title and an escaped comma a comma, that a time in a named zone is that zone's time, that the agenda is grouped by day with the soonest first and says how long until, that something under way says "on now", that an event page names its phase in a person's words and states when it starts, until when, where and who published it, that it offers the event as a calendar file and the way there when it is placed, that the file names this estate as its compiler and the organizer as the source of the facts, that the machine projection is an Event based on the organizer's address and refuses to be read as an invitation, and that the whole agenda downloads as one file carrying nothing that has finished
+  witness 2026-09-18 on the estate 61 events were joined to where they happen (27 to Texas Christian University, 4 to Fort Worth by the organizer's own place line, the rest to the organization whose calendar it is), and both universities' identity pages carry Happening here with each event's own forward-reading time
+  witness 2026-09-17 two public university calendars admitted by robots (calendar.utdallas.edu with 2,500 entries, calendar.tcu.edu with 696) were read into 115 upcoming events; /whats-on showed them grouped by day with "on now", "in 54m" and "Friday 3pm", and an exhibition's own page read "Happening now", 12:00PM until 5:00PM at the Fort Worth Contemporary Arts Gallery, with its compiled calendar file (2.7 KB) and the agenda file (34 KB)
+  witness cmd/BonfyreWebAddress/tests/page_occurrence_event_test.sh proves a future, observed public PublicationOccurrence from an event source enters /whats-on as an agenda item and its owner boundary remains metadata rather than visible copy; scripts/tests/project_event_sources_test.sh matched the legacy command and output and proves CMS refusal, while scripts/tests/project_event_sources_owner_test.sh proves the real CMS update and idempotent second pass without a Python test runner
+  witness cmd/BonfyreSourceFrontier/tests/probe_event_channels_test.mjs proves an event calendar is not offered as a CMS source until its exact source twin owns a fresh retained calendar body and receipt
+  witness cmd/BonfyreSurfaceScene/tests/stage_closure.test.mjs proves a Stage closure exists only with event material, joins typed observed media and exact relations, and labels GPU fanout as a candidate rather than executed work
+  source_lineage 2026-09-17 the 40k+ target: typed material, so a source estate becomes situations rather than more feed items
+
+interaction event-material-reads-published-calendars
+  source internet-census
+  destination event-material
+  relation admits_calendar_channels
+  preserves the organizer's own address, the calendar's stated times and zone, and the identity of the publisher when the census names one
+  drops entries that have finished, entries with no readable time, and everything in the calendar that is not an event
+  forbidden_inference an admitted calendar -> the organizer's endorsement, or a right to republish their calendar as one's own
+  invalidates_on census publication, the organizer's calendar changing, the reheat window
+  witness cmd/BonfyreWebAddress/tests/page_events_test.sh

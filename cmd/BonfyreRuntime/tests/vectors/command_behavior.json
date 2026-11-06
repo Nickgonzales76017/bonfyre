@@ -1,0 +1,10 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-runtime","binary_env":"BONFYRE_RUNTIME_BIN","cases":[
+{"name":"pipeline chains processes by pipes and parallel reports a failing group","steps":[
+ {"argv":["pipeline","--","printf","b\na\nc\n","--","sort"],"env":{"HOME":"${tmp}"},"exit":0,"stdout":"a\nb\nc\n"},
+ {"argv":["parallel","--","/bin/sh","-c","exit 3","--","/bin/sh","-c","echo ok"],"env":{"HOME":"${tmp}"},"exit":3,"contains":["ok"]}]},
+{"name":"a delegate exit status is preserved","steps":[
+ {"argv":["queue","x"],"env":{"HOME":"${tmp}","BONFYRE_QUEUE_BINARY":"/usr/bin/true"},"exit":0},
+ {"argv":["queue","x"],"env":{"HOME":"${tmp}","BONFYRE_QUEUE_BINARY":"/usr/bin/false"},"exit":1}]},
+{"name":"doctor (command.doctor) reports registries and catalogue state as JSON","steps":[
+ {"argv":["doctor","--json"],"env":{"HOME":"${tmp}","BONFYRE_CATALOG_DB":"${tmp}/cat.db","BONFYRE_CAPABILITY_DB":"${tmp}/cap.db"},"contains":["\"preflight\"","\"registries\""]},
+ {"argv":["capabilities"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["\"generator\":\"bonfyre-runtime capabilities\""]}]}]}

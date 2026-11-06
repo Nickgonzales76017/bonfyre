@@ -1,0 +1,45 @@
+#!/bin/bash
+# Vet live Bonfyre state against the CUE schemas. Exits nonzero on violation,
+# so this is usable as a gate rather than a report.
+set -uo pipefail
+HERE="$(cd "$(dirname "$0")" && pwd)"
+TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
+python3.12 - "$TMP" <<'PY'
+import json,sqlite3,sys
+from pathlib import Path
+out=Path(sys.argv[1])
+C=sqlite3.connect(Path.home()/".bonfyre/partner-commons.sqlite3")
+L=sqlite3.connect(Path.home()/".bonfyre/compute-ledger.sqlite3")
+def lst(x):
+    if not x: return []
+    try:
+        v=json.loads(x); return v if isinstance(v,list) else [str(v)]
+    except Exception: return [s for s in str(x).split("\n") if s.strip()]
+(out/"profiles.json").write_text(json.dumps([dict(zip(
+ ["partner_id","name","specialty","connects_to","does_not_own","remote_url"],r))
+ for r in C.execute("select partner_id,name,specialty,connects_to,does_not_own,remote_url from partner_profiles")]))
+(out/"routes.json").write_text(json.dumps([
+ {"route_id":r[0],"funding_ref":r[1],"currency":r[2],"remaining":float(r[3]),
+  "authority_ref":r[4],"active":bool(r[5])}
+ for r in L.execute("select route_id,funding_ref,currency,remaining,authority_ref,active from funding_routes")]))
+inv=[]
+for db in (C,L):
+    for r in db.execute("select invariant_id,subject_resource,layer,statement,truth_plane,status,proof_refs,reheat_conditions from solved_invariants"):
+        inv.append({"invariant_id":r[0],"subject_resource":r[1],"layer":r[2],"statement":r[3],
+                    "truth_plane":r[4],"status":r[5],"proof_refs":lst(r[6]),"reheat_conditions":lst(r[7])})
+(out/"invariants.json").write_text(json.dumps(inv))
+caps=[]
+for r in C.execute("select public_name,kind,maturity,location,contract,placement,authority,proof_ref from capability_identities"):
+    d={"public_name":r[0],"kind":r[1],"maturity":r[2],"location":r[3],"contract":r[4],"placement":r[5],"authority":r[6]}
+    if r[7]: d["proof_ref"]=r[7]
+    caps.append(d)
+(out/"capabilities.json").write_text(json.dumps(caps))
+PY
+rc=0
+for pair in "ProfilesStrict:profiles" "Routes:routes" "Invariants:invariants" "Capabilities:capabilities"; do
+  d="#${pair%%:*}"; f="${pair##*:}"
+  printf "%-16s" "$f"
+  if cue vet -d "$d" "$HERE/bonfyre.cue" "$TMP/$f.json" 2>/tmp/vet.err; then echo "PASS"
+  else echo "FAIL"; head -3 /tmp/vet.err | sed 's/^/    /'; rc=1; fi
+done
+exit $rc

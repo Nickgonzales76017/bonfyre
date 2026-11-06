@@ -1,0 +1,205 @@
+#!/usr/bin/env python3
+"""Lower retained commerce provider payloads into receipt-bound owner rows.
+
+This program performs no HTTP, credential lookup, checkout, or product-title
+matching. SourceFrontier/ForeignTwin retain a lawful response first; this step
+then accepts only a declared provider shape and preserves its receipt.
+"""
+from __future__ import annotations
+
+import argparse, hashlib, json, sys
+from decimal import Decimal, InvalidOperation
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[3]
+DEFAULT_SPEC = ROOT / "schemas/control/commerce-observation-providers.json"
+BOUNDARY = "an observed product, offer, price, or availability is a source statement at one time; it is not inventory truth, a buyer quote, reservation, checkout authority, payment, settlement, delivery, or ownership"
+
+
+class Refusal(ValueError): pass
+
+
+def stable(prefix, *parts):
+    return prefix + "-" + hashlib.sha256("\x1f".join(map(str, parts)).encode()).hexdigest()[:24]
+
+
+def minor_price(value, divisor=100):
+    if isinstance(value, str):
+        if not value.strip().isdigit(): raise Refusal("price must be an integer minor-unit string")
+        value = int(value.strip())
+    if not isinstance(value, int) or value < 0: raise Refusal("price must be a non-negative minor unit")
+    return f"{value // divisor}.{value % divisor:0{len(str(divisor - 1))}d}"
+
+
+def decimal_price(value):
+    try: amount = Decimal(str(value))
+    except (InvalidOperation, ValueError): raise Refusal("price must be a non-negative decimal")
+    if not amount.is_finite() or amount < 0: raise Refusal("price must be a non-negative decimal")
+    return format(amount.normalize(), "f") if amount else "0"
+
+
+def row(kind, body): return {"type": kind, "namespace": "root", "body": body}
+
+
+def identity(source, receipt, at, merchant, external, title, brand="", sku="", gtin="", asin="", mpn=""):
+    pid = stable("product", source, merchant, external)
+    return pid, row("product_identity", {"product_id": pid, "title": title, "brand": brand, "gtin": gtin,
+        "sku": sku, "asin": asin, "mpn": mpn, "source_ref": source, "receipt_ref": receipt,
+        "observed_at": at, "cannot_infer": "an identifier alias -> variant equivalence, merchant stock, or a right to buy", "status": "published"})
+
+
+def offer(source, receipt, at, merchant, pid, external, href, seller="", condition="new"):
+    if not href: raise Refusal("observed merchant offer needs canonical_href")
+    oid = stable("offer", source, merchant, external, href)
+    return oid, row("merchant_offer", {"offer_id": oid, "product_id": pid, "merchant": merchant, "seller": seller or merchant,
+        "canonical_href": href, "condition": condition, "fulfillment": "", "source_ref": source,
+        "receipt_ref": receipt, "observed_at": at, "cannot_infer": BOUNDARY, "status": "published"})
+
+
+def price_row(source, receipt, at, pid, amount, currency, kind="current", oid=""):
+    return row("price_observation", {"observation_id": stable("price", source, pid, oid, amount, at, kind), "product_id": pid,
+        "offer_id": oid, "amount": amount, "currency": currency, "kind": kind, "source_ref": source,
+        "receipt_ref": receipt, "observed_at": at, "cannot_infer": BOUNDARY, "status": "published"})
+
+
+def availability_row(source, receipt, at, oid, available):
+    return row("availability_observation", {"observation_id": stable("availability", source, oid, str(available), at), "offer_id": oid,
+        "state": "in_stock" if available else "out_of_stock", "quantity_stated": "", "source_ref": source,
+        "receipt_ref": receipt, "observed_at": at, "cannot_infer": BOUNDARY, "status": "published"})
+
+
+def base(envelope):
+    return tuple(envelope[k] for k in ("source_ref", "receipt_ref", "observed_at", "merchant"))
+
+
+def woocommerce(envelope):
+    source, receipt, at, merchant = base(envelope); payload = envelope["payload"]
+    if not isinstance(payload, list): raise Refusal("woocommerce payload must be an array")
+    rows = []
+    for product in payload:
+        prices = product.get("prices") or {}; external, title, href = str(product.get("id", "")), product.get("name", ""), product.get("permalink", "")
+        if not external or not title or not href: raise Refusal("woocommerce product needs id, name, permalink")
+        brands = product.get("brands") or [{}]
+        pid, product_row = identity(source, receipt, at, merchant, external, title, brands[0].get("name", ""), product.get("sku", ""))
+        oid, offer_row = offer(source, receipt, at, merchant, pid, external, href)
+        rows += [product_row, offer_row, price_row(source, receipt, at, pid, minor_price(prices.get("price"), 10 ** int(prices.get("currency_minor_unit", 2))), prices.get("currency_code", ""), oid=oid), availability_row(source, receipt, at, oid, bool(product.get("is_in_stock")))]
+    return rows
+
+
+def shopify(envelope):
+    source, receipt, at, merchant = base(envelope); product = envelope["payload"]
+    if not isinstance(product, dict) or not product.get("id") or not product.get("title") or not product.get("url"): raise Refusal("shopify payload needs id, title, url")
+    rows = []
+    for variant in product.get("variants") or []:
+        if not variant.get("id"): raise Refusal("shopify variant needs id")
+        external = f"{product['id']}:{variant['id']}"
+        pid, product_row = identity(source, receipt, at, merchant, external, product["title"], product.get("vendor", ""), variant.get("sku", ""), variant.get("barcode", ""))
+        oid, offer_row = offer(source, receipt, at, merchant, pid, external, product["url"])
+        rows += [product_row, offer_row, price_row(source, receipt, at, pid, minor_price(variant.get("price")), product.get("currency", "USD"), oid=oid), availability_row(source, receipt, at, oid, bool(variant.get("available")))]
+    return rows
+
+
+def ebay_browse(envelope):
+    """eBay Browse's documented item-summary fields, post-token retrieval."""
+    source, receipt, at, merchant = base(envelope); payload = envelope["payload"]
+    items = payload.get("itemSummaries", []) if isinstance(payload, dict) else []
+    if not isinstance(items, list): raise Refusal("ebay browse payload needs itemSummaries")
+    rows = []
+    for item in items:
+        external, title, href = item.get("itemId", ""), item.get("title", ""), item.get("itemWebUrl", "")
+        money = item.get("price") or {}
+        if not external or not title or not href or "value" not in money or not money.get("currency"): raise Refusal("ebay item needs identity, URL, and price")
+        gtin = item.get("gtin", "") if isinstance(item.get("gtin", ""), str) else ""
+        pid, product_row = identity(source, receipt, at, merchant, external, title, "", "", gtin)
+        oid, offer_row = offer(source, receipt, at, merchant, pid, external, href, item.get("seller", {}).get("username", ""), str(item.get("condition", "new")).lower())
+        state = str(item.get("availabilityStatus", "")).upper()
+        rows += [product_row, offer_row, price_row(source, receipt, at, pid, decimal_price(money["value"]), money["currency"], oid=oid)]
+        if state in ("IN_STOCK", "OUT_OF_STOCK"):
+            rows.append(availability_row(source, receipt, at, oid, state == "IN_STOCK"))
+    return rows
+
+
+def keepa_normalized(envelope):
+    """Lower a credentialed Keepa receipt after its collector names offers/history.
+
+    The collector must preserve its raw provider receipt and only pass the
+    documented fields it actually decoded: asin, title, offer href/amount and
+    dated history points. It cannot make a missing provider field appear.
+    """
+    source, receipt, at, merchant = base(envelope); product = envelope["payload"]
+    if not isinstance(product, dict) or not product.get("asin") or not product.get("title"): raise Refusal("keepa normalized payload needs asin and title")
+    pid, product_row = identity(source, receipt, at, merchant, product["asin"], product["title"], product.get("brand", ""), asin=product["asin"])
+    rows = [product_row]
+    for point in product.get("history", []):
+        if not point.get("observed_at") or "amount" not in point or not point.get("currency"): raise Refusal("keepa history point needs observed_at, amount, currency")
+        rows.append(price_row(source, receipt, point["observed_at"], pid, decimal_price(point["amount"]), point["currency"], "historical"))
+    for item in product.get("offers", []):
+        if not item.get("href") or "amount" not in item or not item.get("currency"): raise Refusal("keepa offer needs href, amount, currency")
+        oid, offer_row = offer(source, receipt, at, merchant, pid, item.get("id", item["href"]), item["href"], item.get("seller", ""), item.get("condition", "new"))
+        rows += [offer_row, price_row(source, receipt, at, pid, decimal_price(item["amount"]), item["currency"], oid=oid)]
+        if isinstance(item.get("available"), bool): rows.append(availability_row(source, receipt, at, oid, item["available"]))
+    return rows
+
+
+def open_prices(envelope):
+    """Receipt-backed crowd-observed historical prices; no live Offer implied."""
+    source, receipt, at, merchant = base(envelope); payload = envelope["payload"]
+    items = payload.get("items", []) if isinstance(payload, dict) else []
+    if not isinstance(items, list): raise Refusal("open prices payload needs items")
+    rows = []
+    for item in items:
+        external = str(item.get("product_code", "")); title = item.get("product_name", "") or external
+        if not external or "price" not in item or not item.get("currency"): raise Refusal("open prices item needs product_code, price, currency")
+        location = item.get("location") or {}; observed_merchant = location.get("osm_name") or merchant
+        # Open Prices calls this a product code. It may be a GTIN, but that
+        # must be asserted by its source rather than inferred from digits.
+        pid, product_row = identity(source, receipt, at, observed_merchant, external, title, sku=external)
+        rows += [product_row, price_row(source, receipt, item.get("observed_at") or at, pid, decimal_price(item["price"]), item["currency"], "historical_paid")]
+    return rows
+
+
+ADAPTERS = {"woocommerce-store-api": woocommerce, "shopify-ajax": shopify, "ebay-browse": ebay_browse, "keepa": keepa_normalized, "open-prices": open_prices}
+
+
+def provider_map(spec):
+    return {item["id"]: item for section in ("phenotypes", "providers") for item in spec.get(section, [])}
+
+
+def classify_probe(spec, probe):
+    """Classify only a declared endpoint response that actually answered."""
+    root, responses = probe.get("root", ""), probe.get("responses", {})
+    if not isinstance(root, str) or not root or not isinstance(responses, dict): raise Refusal("probe needs root and responses")
+    candidates = []
+    woo = responses.get("/wp-json/wc/store/v1/products")
+    if isinstance(woo, list) and woo and isinstance(woo[0], dict) and {"id", "name", "prices"} <= set(woo[0]):
+        candidates.append({"root": root, "phenotype": "woocommerce-store-api", "truth_level": "observed_endpoint_shape", "next": "retain public product response through ForeignTwin before materialization"})
+    shop = responses.get("/products/<handle>.js")
+    if isinstance(shop, dict) and {"id", "title", "variants"} <= set(shop):
+        candidates.append({"root": root, "phenotype": "shopify-ajax", "truth_level": "observed_endpoint_shape", "next": "discover a public product handle before materialization"})
+    suggest = responses.get("/search/suggest.json")
+    products = (((suggest or {}).get("resources") or {}).get("results") or {}).get("products") if isinstance(suggest, dict) else None
+    if isinstance(products, list) and products and isinstance(products[0], dict) and (products[0].get("url") or products[0].get("handle")):
+        candidates.append({"root": root, "phenotype": "shopify-ajax", "truth_level": "observed_endpoint_shape", "next": "retain a returned public product handle through ForeignTwin before materialization"})
+    return candidates
+
+
+def compile_envelope(spec, envelope):
+    declared = provider_map(spec); provider = envelope.get("phenotype") or envelope.get("provider")
+    if provider not in declared or provider not in ADAPTERS: raise Refusal("undeclared or unimplemented commerce provider")
+    for field in ("source_ref", "receipt_ref", "observed_at", "merchant", "payload"):
+        if not envelope.get(field): raise Refusal(f"missing {field}")
+    return ADAPTERS[provider](envelope)
+
+
+def main():
+    ap = argparse.ArgumentParser(); ap.add_argument("--spec", type=Path, default=DEFAULT_SPEC); ap.add_argument("--input", type=Path, required=True); ap.add_argument("--out", type=Path, required=True); ap.add_argument("--mode", choices=("materialize", "classify"), default="materialize"); args = ap.parse_args()
+    try:
+        spec, payload = json.loads(args.spec.read_text()), json.loads(args.input.read_text())
+        rows = classify_probe(spec, payload) if args.mode == "classify" else compile_envelope(spec, payload)
+    except (OSError, json.JSONDecodeError, Refusal, KeyError, IndexError, TypeError) as e:
+        print(f"commerce observation compiler: {e}", file=sys.stderr); return 2
+    args.out.write_text("".join(json.dumps(r, sort_keys=True) + "\n" for r in rows))
+    print(json.dumps({"rows": len(rows), "mode": args.mode, "cannot_infer": BOUNDARY}))
+
+
+if __name__ == "__main__": raise SystemExit(main())

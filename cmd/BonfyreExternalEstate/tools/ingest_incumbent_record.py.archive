@@ -1,0 +1,28 @@
+#!/usr/bin/env python3
+"""Historical Python ingest; ingest_incumbent_record.mjs owns this path.
+
+Collection, normalization, materialization, and owner write remain explicit
+steps. This runner performs no network operation and never upgrades public
+material to authority.
+"""
+import argparse, importlib.util, json, sqlite3, subprocess
+from pathlib import Path
+ROOT=Path(__file__).resolve().parents[3]
+UNIQUE={"project":"project_id","community_body":"community","publication_occurrence":"occurrence_id","external_resource":"ext_id","household_opportunity":"opportunity_id"}
+def load_materializer():
+ s=importlib.util.spec_from_file_location("incumbent_materializer",ROOT/"cmd/BonfyreExternalEstate/tools/materialize_incumbent_records.py");m=importlib.util.module_from_spec(s);s.loader.exec_module(m);return m
+def main():
+ p=argparse.ArgumentParser();p.add_argument("--input",type=Path,required=True);p.add_argument("--cms",required=True);p.add_argument("--db",required=True);p.add_argument("--schemas",required=True);a=p.parse_args()
+ try:envelope=json.loads(a.input.read_text());rows=load_materializer().materialize(envelope)
+ except (OSError,ValueError,TypeError) as e:print("incumbent ingest: %s"%e);return 2
+ migrated=subprocess.run([a.cms,"schema","migrate","--db",a.db,"--schemas",a.schemas],capture_output=True,text=True)
+ if migrated.returncode:print("incumbent ingest: CMS schema migration failed");return 2
+ written=[]
+ for row in rows:
+  key=UNIQUE[row["type"]]; con=sqlite3.connect(a.db); found=con.execute("SELECT id FROM %s WHERE namespace=? AND %s=?"%(row["type"],key),(row["namespace"],row["body"][key])).fetchone();con.close()
+  command=[a.cms,"entry","update",row["type"],str(found[0]),json.dumps(row["body"],separators=(",",":"))] if found else [a.cms,"entry","create",row["type"],json.dumps(row["body"],separators=(",",":"))]
+  run=subprocess.run(command+["--ns",row["namespace"],"--db",a.db,"--schemas",a.schemas],capture_output=True,text=True)
+  if run.returncode:print("incumbent ingest: CMS write failed for %s"%row["type"]);return 2
+  written.append("updated:"+row["type"] if found else "created:"+row["type"])
+ print(json.dumps({"written":written,"truth":"receipt-bound public material only; no authority or provider effect"}));return 0
+if __name__=="__main__":raise SystemExit(main())

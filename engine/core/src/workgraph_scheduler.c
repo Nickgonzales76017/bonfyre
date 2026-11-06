@@ -299,16 +299,30 @@ static int finish_attempt(BfWorkgraph *graph, const BfWorkgraphResult *result,
     return 0;
 }
 
-BfWorkgraphResult bf_workgraph_complete(BfWorkgraph *graph, const char *mission_id,
+static BfWorkgraphResult complete_revision(BfWorkgraph *graph, const char *mission_id,
                                         const char *node_id, const char *worker_id,
-                                        const char *claim_token, const char *output_uri) {
+                                        const char *claim_token, const char *output_uri,
+                                        int64_t expected_revision) {
     BfWorkgraphResult result = bf_workgraph_result(BF_WORKGRAPH_OK, mission_id, node_id, NULL, NULL);
     sqlite3_stmt *statement = NULL;
     int64_t now = bf_workgraph_now_ms();
 
     if (graph == NULL) return bf_workgraph_result(BF_WORKGRAPH_INVALID, mission_id, node_id, "invalid_argument", "graph is required");
     if (bf_workgraph_begin(graph, &result) != 0) return result;
-    if (bf_workgraph_validate_claim(graph, &result, worker_id, claim_token, 0) != 0) goto failure;
+    if (bf_workgraph_validate_claim(graph, &result, worker_id, claim_token, 0) != 0) {
+        if (result.status == BF_WORKGRAPH_OK) goto storage_failure;
+        goto failure;
+    }
+    if (expected_revision >= 0) {
+        BfWorkgraphCheckpoint checkpoint;
+        BfWorkgraphResult read = bf_workgraph_checkpoint_read(graph, mission_id, node_id, &checkpoint);
+        if (read.status != BF_WORKGRAPH_OK) { result = read; goto failure; }
+        if (checkpoint.revision != expected_revision) {
+            result = bf_workgraph_result(BF_WORKGRAPH_CONFLICT, mission_id, node_id,
+                "checkpoint_conflict", "A newer draft is saved. Reload it before delivering.");
+            goto failure;
+        }
+    }
     if (sqlite3_prepare_v2(graph->db,
             "UPDATE workgraph_nodes SET status='complete',output_uri=?,terminal_at_ms=?,updated_at_ms=?,"
             "lease_owner=NULL,claim_token_hash=NULL,lease_expires_at_ms=NULL,visibility_deadline_ms=NULL "
@@ -320,8 +334,9 @@ BfWorkgraphResult bf_workgraph_complete(BfWorkgraph *graph, const char *mission_
     sqlite3_bind_int64(statement, 3, now);
     sqlite3_bind_text(statement, 4, mission_id, -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(statement, 5, node_id, -1, SQLITE_TRANSIENT);
-    if (sqlite3_step(statement) != SQLITE_DONE) { sqlite3_finalize(statement); goto storage_failure; }
+    if (sqlite3_step(statement) != SQLITE_DONE) goto storage_failure;
     sqlite3_finalize(statement);
+    statement = NULL;
     if (finish_attempt(graph, &result, "complete", NULL, now) != 0 ||
         bf_workgraph_promote_dependents(graph, mission_id, &result) != 0 ||
         bf_workgraph_update_mission(graph, mission_id, &result) != 0 ||
@@ -338,6 +353,203 @@ storage_failure:
     result.status = BF_WORKGRAPH_STORAGE_ERROR;
     snprintf(result.error_code, sizeof(result.error_code), "complete_storage_failed");
     snprintf(result.error_message, sizeof(result.error_message), "%s", sqlite3_errmsg(graph->db));
+    return result;
+}
+
+BfWorkgraphResult bf_workgraph_complete(BfWorkgraph *graph, const char *mission_id,
+                                        const char *node_id, const char *worker_id,
+                                        const char *claim_token, const char *output_uri) {
+    return complete_revision(graph, mission_id, node_id, worker_id, claim_token, output_uri, -1);
+}
+
+BfWorkgraphResult bf_workgraph_complete_checkpoint(BfWorkgraph *graph, const char *mission_id,
+                                                  const char *node_id, const char *worker_id,
+                                                  const char *claim_token, const char *output_uri,
+                                                  int64_t expected_revision) {
+    if (expected_revision < 1) return bf_workgraph_result(BF_WORKGRAPH_INVALID, mission_id, node_id,
+        "invalid_revision", "A saved draft revision is required.");
+    return complete_revision(graph, mission_id, node_id, worker_id, claim_token, output_uri, expected_revision);
+}
+
+BfWorkgraphResult bf_workgraph_checkpoint_read(BfWorkgraph *graph, const char *mission_id,
+                                              const char *node_id, BfWorkgraphCheckpoint *record) {
+    BfWorkgraphResult result = bf_workgraph_result(BF_WORKGRAPH_OK, mission_id, node_id, NULL, NULL);
+    sqlite3_stmt *statement = NULL;
+    if (!graph || !record || !mission_id || !node_id || strlen(mission_id) >= sizeof(result.mission_id) ||
+        strlen(node_id) >= sizeof(result.node_id)) return bf_workgraph_result(BF_WORKGRAPH_INVALID,
+        mission_id, node_id, "invalid_checkpoint", "Graph, node and checkpoint record are required.");
+    memset(record, 0, sizeof(*record));
+    if (bf_workgraph_load_result(graph, &result) != 0) {
+        if (result.status == BF_WORKGRAPH_OK) goto storage_failure;
+        return result;
+    }
+    if (sqlite3_prepare_v2(graph->db,
+        "SELECT revision,artifact_uri,worker_id,created_at_ms FROM workgraph_checkpoints "
+        "WHERE mission_id=? AND node_id=? ORDER BY revision DESC LIMIT 1", -1, &statement, NULL) != SQLITE_OK) goto storage_failure;
+    sqlite3_bind_text(statement, 1, mission_id, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement, 2, node_id, -1, SQLITE_TRANSIENT);
+    int rc = sqlite3_step(statement);
+    if (rc == SQLITE_ROW) {
+        record->revision = sqlite3_column_int64(statement, 0);
+        snprintf(record->artifact_uri, sizeof(record->artifact_uri), "%s", sqlite3_column_text(statement, 1));
+        snprintf(record->worker_id, sizeof(record->worker_id), "%s", sqlite3_column_text(statement, 2));
+        record->created_at_ms = sqlite3_column_int64(statement, 3);
+    } else if (rc != SQLITE_DONE) goto storage_failure;
+    sqlite3_finalize(statement);
+    return result;
+storage_failure:
+    sqlite3_finalize(statement);
+    return bf_workgraph_result(BF_WORKGRAPH_STORAGE_ERROR, mission_id, node_id,
+        "checkpoint_read_failed", "Cannot read the saved checkpoint.");
+}
+
+BfWorkgraphResult bf_workgraph_checkpoint_save(BfWorkgraph *graph, const char *mission_id,
+                                              const char *node_id, const char *worker_id,
+                                              const char *claim_token, int64_t expected_revision,
+                                              const char *artifact_uri, BfWorkgraphCheckpoint *record) {
+    BfWorkgraphResult result = bf_workgraph_result(BF_WORKGRAPH_OK, mission_id, node_id, NULL, NULL);
+    BfWorkgraphCheckpoint previous;
+    sqlite3_stmt *statement = NULL;
+    if (!graph || !record || !artifact_uri || !artifact_uri[0] || strlen(artifact_uri) >= sizeof(record->artifact_uri) ||
+        !worker_id || strlen(worker_id) >= sizeof(record->worker_id) || !mission_id || !node_id ||
+        strlen(mission_id) >= sizeof(result.mission_id) || strlen(node_id) >= sizeof(result.node_id) ||
+        expected_revision < 0 || expected_revision >= 9007199254740991LL)
+        return bf_workgraph_result(BF_WORKGRAPH_INVALID, mission_id, node_id,
+            "invalid_checkpoint", "A bounded artifact URI and expected revision are required.");
+    if (bf_workgraph_begin(graph, &result) != 0) return result;
+    if (bf_workgraph_validate_claim(graph, &result, worker_id, claim_token, 0) != 0) {
+        if (result.status == BF_WORKGRAPH_OK) goto storage_failure;
+        goto failure;
+    }
+    BfWorkgraphResult read = bf_workgraph_checkpoint_read(graph, mission_id, node_id, &previous);
+    if (read.status != BF_WORKGRAPH_OK) { result = read; goto failure; }
+    if (previous.revision != expected_revision) {
+        result = bf_workgraph_result(BF_WORKGRAPH_CONFLICT, mission_id, node_id,
+            "checkpoint_conflict", "A newer draft is saved. Reload it before saving.");
+        goto failure;
+    }
+    if (sqlite3_prepare_v2(graph->db,
+        "INSERT INTO workgraph_checkpoints(mission_id,node_id,revision,artifact_uri,worker_id,created_at_ms) VALUES(?,?,?,?,?,?)",
+        -1, &statement, NULL) != SQLITE_OK) goto storage_failure;
+    int64_t now = bf_workgraph_now_ms();
+    sqlite3_bind_text(statement, 1, mission_id, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement, 2, node_id, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int64(statement, 3, expected_revision + 1);
+    sqlite3_bind_text(statement, 4, artifact_uri, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement, 5, worker_id, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int64(statement, 6, now);
+    if (sqlite3_step(statement) != SQLITE_DONE) goto storage_failure;
+    sqlite3_finalize(statement); statement = NULL;
+    if (bf_workgraph_commit(graph, &result) != 0) goto failure;
+    memset(record, 0, sizeof(*record));
+    record->revision = expected_revision + 1; record->created_at_ms = now;
+    snprintf(record->artifact_uri, sizeof(record->artifact_uri), "%s", artifact_uri);
+    snprintf(record->worker_id, sizeof(record->worker_id), "%s", worker_id);
+    return result;
+storage_failure:
+    sqlite3_finalize(statement);
+    result = bf_workgraph_result(BF_WORKGRAPH_STORAGE_ERROR, mission_id, node_id,
+        "checkpoint_save_failed", "Cannot save the checkpoint.");
+failure:
+    bf_workgraph_rollback(graph);
+    return result;
+}
+
+static int attest_token(const char *value, size_t minimum, size_t maximum, const char *extra) {
+    size_t length = value != NULL ? strlen(value) : 0;
+    if (length < minimum || length > maximum) return 0;
+    for (const char *p = value; *p; ++p) {
+        if (!((*p >= '0' && *p <= '9') || (*p >= 'a' && *p <= 'z') || (*p >= 'A' && *p <= 'Z') ||
+              *p == '-' || (extra != NULL && strchr(extra, *p) != NULL))) return 0;
+    }
+    return 1;
+}
+
+static int attest_handoff(const char *value) {
+    if (value == NULL || value[0] == '\0') return 1;
+    if (strlen(value) != 71 || strncmp(value, "sha256:", 7) != 0) return 0;
+    for (const char *p = value + 7; *p; ++p) {
+        if (!((*p >= '0' && *p <= '9') || (*p >= 'a' && *p <= 'f'))) return 0;
+    }
+    return 1;
+}
+
+/* Count prior run attestations matching a condition, inside the open transaction. */
+static int attest_count(BfWorkgraph *graph, const char *sql, const char *a, const char *b, int c,
+                        int64_t *count) {
+    sqlite3_stmt *statement = NULL;
+    if (sqlite3_prepare_v2(graph->db, sql, -1, &statement, NULL) != SQLITE_OK) return -1;
+    sqlite3_bind_text(statement, 1, a, -1, SQLITE_TRANSIENT);
+    if (b != NULL) sqlite3_bind_text(statement, 2, b, -1, SQLITE_TRANSIENT);
+    if (c >= 0) sqlite3_bind_int(statement, 3, c);
+    int rc = sqlite3_step(statement);
+    *count = rc == SQLITE_ROW ? sqlite3_column_int64(statement, 0) : -1;
+    sqlite3_finalize(statement);
+    return rc == SQLITE_ROW ? 0 : -1;
+}
+
+#define ATTESTED_RUNS "SELECT count(*) FROM workgraph_transitions t JOIN receipts r ON r.id=t.receipt_id " \
+    "WHERE r.subject_kind='workgraph-transition' AND json_valid(r.payload) " \
+    "AND json_extract(r.payload,'$.transition')='run_attested' "
+
+BfWorkgraphResult bf_workgraph_attest_run(BfWorkgraph *graph, const char *mission_id,
+                                          const char *node_id, const char *worker_id,
+                                          const char *claim_token,
+                                          const BfWorkgraphRunEvidence *run) {
+    BfWorkgraphResult result = bf_workgraph_result(BF_WORKGRAPH_OK, mission_id, node_id, NULL, NULL);
+    BfWorkgraphEvidence evidence = {
+        .transition_domain = BF_WORKGRAPH_TRANSITION_NODE,
+        .execution_attempt = -1,
+        .compensation_attempt = -1,
+        .from_state = NULL,
+        .to_state = "run_attested",
+        .run = run,
+    };
+    int64_t count = 0;
+
+    if (graph == NULL || mission_id == NULL || node_id == NULL ||
+        strlen(mission_id) >= sizeof(result.mission_id) || strlen(node_id) >= sizeof(result.node_id) ||
+        run == NULL || run->agent == NULL || (strcmp(run->agent, "claude") && strcmp(run->agent, "codex")))
+        return bf_workgraph_result(BF_WORKGRAPH_INVALID, mission_id, node_id, "invalid_run_evidence",
+            "A claimed node and a claude or codex harness are required.");
+    if (!attest_token(run->provider_session_ref, 8, 64, NULL))
+        return bf_workgraph_result(BF_WORKGRAPH_INVALID, mission_id, node_id, "invalid_session_ref",
+            "The provider session id must be 8 to 64 letters, digits or hyphens.");
+    if (run->model_id != NULL && run->model_id[0] != '\0' && !attest_token(run->model_id, 1, 96, "._:"))
+        return bf_workgraph_result(BF_WORKGRAPH_INVALID, mission_id, node_id, "invalid_model_id",
+            "The model id must be 1 to 96 letters, digits or . _ : -.");
+    if (!attest_handoff(run->handoff_receipt))
+        return bf_workgraph_result(BF_WORKGRAPH_INVALID, mission_id, node_id, "invalid_handoff_receipt",
+            "A handoff receipt is named as sha256: and 64 lowercase hex digits.");
+    if (bf_workgraph_begin(graph, &result) != 0) return result;
+    if (bf_workgraph_validate_claim(graph, &result, worker_id, claim_token, 0) != 0) {
+        if (result.status == BF_WORKGRAPH_OK) goto storage_failure;
+        goto failure;
+    }
+    if (attest_count(graph, ATTESTED_RUNS "AND t.mission_id=?1 AND t.node_id=?2 AND t.attempt=?3",
+                     mission_id, node_id, result.attempt, &count) != 0) goto storage_failure;
+    if (count > 0) {
+        result = bf_workgraph_result(BF_WORKGRAPH_CONFLICT, mission_id, node_id, "run_already_attested",
+            "This attempt already names its run; a new session needs a new attempt.");
+        goto failure;
+    }
+    if (attest_count(graph, ATTESTED_RUNS "AND json_extract(r.payload,'$.provider_session_ref')=?1",
+                     run->provider_session_ref, NULL, -1, &count) != 0) goto storage_failure;
+    if (count > 0) {
+        result = bf_workgraph_result(BF_WORKGRAPH_CONFLICT, mission_id, node_id, "session_bound_elsewhere",
+            "This provider session already names another attempt.");
+        goto failure;
+    }
+    if (bf_workgraph_write_evidence_ex(graph, &result, &evidence, worker_id, NULL) != 0 ||
+        bf_workgraph_commit(graph, &result) != 0) goto storage_failure;
+    return result;
+storage_failure:
+    result = bf_workgraph_result(BF_WORKGRAPH_STORAGE_ERROR, mission_id, node_id,
+        "attest_storage_failed", sqlite3_errmsg(graph->db));
+    bf_workgraph_rollback(graph);
+    return result;
+failure:
+    bf_workgraph_rollback(graph);
     return result;
 }
 

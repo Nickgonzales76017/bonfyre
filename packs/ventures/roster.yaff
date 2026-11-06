@@ -1,0 +1,63 @@
+pack ventures-roster
+generation control-1
+provenance existing pack census 2026-08-26
+authority asserted
+note This roster projects existing packs into the Ventures root product. It adds no facts to any family it references. Reachability of an opportunity is determined by the existing opportunity machinery against proof, work and authority; nothing here declares an opportunity available.
+
+venture ven:utd-vdc
+  display_name UT Dallas Venture Development Center
+  kind institutional
+  populated_by packs/utd-vdc
+  state REAL
+  detail Actors and work already recorded, including unresolved contact identities and a directory dependency that gates a promotion offer.
+
+venture ven:acm-queue
+  display_name ACM Queue
+  kind institutional
+  populated_by packs/acm-queue
+  state REAL
+  detail Editorial relationship, outline, publication work and distribution.
+
+venture ven:tarbell
+  display_name Tarbell
+  kind institutional
+  populated_by packs/tarbell
+  state REAL
+  detail Investigative and evidence institution: people, priorities, work and watches.
+
+venture ven:institutional-opportunities
+  display_name Institutional Opportunities
+  kind opportunity-family
+  populated_by packs/institutional-opportunities
+  state REAL
+  detail Reachable, unlockable and blocked opportunities, with blocking causes including human submission, maintainer merge and intellectual property authority.
+
+venture ven:adjacent-opportunities
+  display_name Adjacent Opportunities
+  kind opportunity-family
+  populated_by packs/adjacent-opportunities
+  state REAL
+
+venture ven:technical-institutions
+  display_name Technical Institutions
+  kind institutional
+  populated_by packs/technical-institutions
+  state REAL
+
+venture ven:defcad
+  display_name DEFCAD
+  kind relationship
+  state DECLARED
+  populated_by none
+  detail Established as a visible root relationship and idea node. No contacts, no work, no eligibility and no history are recorded, because none have been rehydrated. Deliberately left empty rather than filled with plausible detail.
+
+venture ven:dfw-ecosystem
+  display_name DFW ecosystem
+  kind relationship-family
+  state DECLARED
+  populated_by none
+  detail Universities, incubators, makerspaces, local businesses, creators and physical resources are named in the product topology. Only UT Dallas has a populated pack today.
+
+invariant a venture is REAL only where a pack populates it
+forbidden_inference an opportunity being listed -> that opportunity being reachable
+forbidden_inference a DECLARED venture -> an absent relationship

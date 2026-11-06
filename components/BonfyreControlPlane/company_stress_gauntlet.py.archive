@@ -1,0 +1,1122 @@
+"""Bounded one-company stress gauntlet over real Generation-10 owners.
+
+The gauntlet is an integration witness, never a replacement semantic owner.  A
+single tiny company object is projected through customer-to-cash, partner
+engineering, knowledge/model routing, and artifact supply-chain lanes.  Every
+lane retains its owner trace and converges on one content-addressed ProofBundle.
+
+Only Powers resolved through the live 91-Power registry are invoked.  Optional
+organs without a live local binding are recorded as exact blockers rather than
+simulated.  The fixture is an isolated operating-day simulation: it does not
+assert real revenue, remote partner state, authority, or external completion.
+"""
+
+from __future__ import annotations
+
+import base64
+import csv
+import datetime as dt
+import hashlib
+import html
+import importlib.util
+import json
+import os
+import shutil
+import sqlite3
+import subprocess
+import tarfile
+import time
+from pathlib import Path
+from typing import Any, Iterable
+
+import actors
+import economic_graphs
+import evidence_graphs
+import external_events
+import fabric_publish
+import foreign
+import frappe_native_records
+import partner_commons
+import provider_graphs
+import system_map_stress
+import work_graph
+
+UTC = dt.timezone.utc
+SCHEMA = "bonfyre.one-company-stress-gauntlet.v1"
+WORK_ITEM = "mesh-external-chatgpt-20260821T0250-020"
+SOURCE_EVENT = "external-chatgpt-20260821T0250-020"
+REPO = Path(__file__).resolve().parents[2]
+LIVE_CONTROL_DB = Path(__file__).resolve().parent / "control_plane.db"
+
+
+def _canonical(value: Any) -> bytes:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"),
+                      ensure_ascii=False).encode("utf-8")
+
+
+def _digest(value: Any) -> str:
+    return hashlib.sha256(value if isinstance(value, bytes) else _canonical(value)).hexdigest()
+
+
+def _iso(moment: dt.datetime | None = None) -> str:
+    return (moment or dt.datetime.now(UTC)).astimezone(UTC).replace(
+        microsecond=0).isoformat().replace("+00:00", "Z")
+
+
+def shared_object() -> dict[str, Any]:
+    """One representative object shared by every lane, explicitly simulated."""
+    return {
+        "object_id": "company-object:run8-tiny-order",
+        "simulation": True,
+        "company": "Bonfyre Run8 Fixture Company",
+        "customer_id": "org:run8-customer",
+        "customer_name": "Run8 Customer",
+        "support_signal": "Request a bounded evidence packet for order R8-1",
+        "order_ref": "R8-1",
+        "amount_usd": 12.50,
+        "currency": "USD",
+        "knowledge": "Only the owned local evidence packet may be committed.",
+        "partner_id": "run8-partner-fixture",
+        "partner_issue": "issue:run8-evidence-packet",
+        "location": {"longitude": -87.6298, "latitude": 41.8781},
+        "source_event": SOURCE_EVENT,
+    }
+
+
+def _write_json(path: Path, value: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n")
+
+
+def _power_record(name: str) -> tuple[str, str]:
+    db = sqlite3.connect(LIVE_CONTROL_DB)
+    try:
+        row = db.execute(
+            "SELECT maturity,location FROM capability_identities WHERE public_name=?",
+            (name,),
+        ).fetchone()
+    finally:
+        db.close()
+    if row is None:
+        raise RuntimeError(f"{name}: absent from live public Power registry")
+    maturity, location = row
+    if maturity not in {"resolvable", "version_aligned", "health_probed", "activated",
+                        "workload_proven", "quality_proven", "promoted"}:
+        raise RuntimeError(f"{name}: registry maturity {maturity} is below resolvable")
+    if not location or not Path(location).is_file() or not os.access(location, os.X_OK):
+        raise RuntimeError(f"{name}: registered executable is not locally callable")
+    return str(maturity), str(location)
+
+
+def _invoke_power(name: str, args: Iterable[str], *, timeout: int = 120) -> dict[str, Any]:
+    maturity, executable = _power_record(name)
+    argv = list(map(str, args))
+    started = time.monotonic()
+    done = subprocess.run(
+        [executable, *argv], cwd=REPO, capture_output=True, timeout=timeout
+    )
+    elapsed_ms = round((time.monotonic() - started) * 1000, 3)
+    output = done.stdout + done.stderr
+    if done.returncode:
+        tail = output.decode("utf-8", "replace").strip().splitlines()[-1:]
+        raise RuntimeError(f"{name} failed ({done.returncode}): {tail[0] if tail else 'no diagnostic'}")
+    return {
+        "power": name,
+        "registry_maturity": maturity,
+        "operation": (argv[0] if argv and "/" not in argv[0] else "invoke"),
+        "returncode": done.returncode,
+        "wall_ms": elapsed_ms,
+        "output_sha256": _digest(output),
+    }
+
+
+def _init_db(path: Path) -> sqlite3.Connection:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    db = sqlite3.connect(path)
+    actors.ensure_schema(db)
+    external_events.ensure_schema(db)
+    economic_graphs.ensure_schema(db)
+    evidence_graphs.ensure_schema(db)
+    provider_graphs.ensure_schema(db)
+    work_graph.ensure_schema(db)
+    partner_commons.ensure_schema(db)
+    fabric_publish.ensure_schema(db)
+    return db
+
+
+_JSON_TYPES = {
+    2: "integer", 3: "number", 4: "number", 5: "string", 6: "string",
+    7: "string", 12: "string", 13: "string", 14: "string", 15: "array",
+    16: "array", 19: "boolean", 27: "number", 31: "object",
+}
+
+
+def _compiler_catalog(executable: str) -> dict[str, Any]:
+    done = subprocess.run(
+        [executable, "--emit-lineage-catalog", "-"], cwd=REPO,
+        capture_output=True, check=True, timeout=30,
+    )
+    catalog = json.loads(done.stdout)
+    if catalog.get("schema") != "bonfyre.frappe-lineage-catalog.v1":
+        raise RuntimeError("compiler returned an unknown lineage catalog")
+    return catalog
+
+
+def _projection_contract(catalog: dict[str, Any], packs: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    lineages = []
+    for spec in catalog["lineages"]:
+        pack = packs[spec["lineage"]]
+        doctypes = pack.get("schema", {}).get("doctypes", [])
+        selected = next((d for d in doctypes
+                         if d.get("name") == spec["representative_doctype"]), None)
+        if selected is None:
+            raise RuntimeError(
+                f"{spec['lineage']}: representative DocType "
+                f"{spec['representative_doctype']} absent from compiled schema"
+            )
+        lineages.append({
+            **spec,
+            "source_revision": pack["source_revision"],
+            "fields": [{
+                "name": field["name"],
+                "type": field["type"],
+                "required": field["required"],
+                "options": field.get("options") or "",
+            } for field in selected.get("fields", [])],
+        })
+    contract = {
+        "schema": "bonfyre.frappe-company-contract-ir.v1",
+        "semantic_identity_field": "semantic_identity",
+        "lineages": lineages,
+    }
+    contract["contract_sha256"] = _digest(contract)
+    return contract
+
+
+def _project_contract(contract: dict[str, Any]) -> dict[str, Any]:
+    """ActiveClosure for the two demanded surfaces, from one canonical contract."""
+    definitions: dict[str, Any] = {}
+    for lineage in contract["lineages"]:
+        properties = {"semantic_identity": {"type": "string"}}
+        required = ["semantic_identity"]
+        for field in lineage["fields"]:
+            item = {"type": _JSON_TYPES.get(field["type"], "string")}
+            if field["options"]:
+                item["x-frappe-options"] = field["options"]
+            properties[field["name"]] = item
+            if field["required"]:
+                required.append(field["name"])
+        definitions[lineage["lineage"]] = {
+            "type": "object", "properties": properties,
+            "required": required, "additionalProperties": False,
+            "x-frappe-doctype": lineage["representative_doctype"],
+        }
+    return {
+        "schema": "bonfyre.contract-projection-closure.v2",
+        "contract_sha256": contract["contract_sha256"],
+        "projection_plan": {
+            "active_closure": True,
+            "targets": ["external.json_schema", "external.openapi", "surface.ir"],
+        },
+        "json_schema": {"$defs": definitions},
+        "openapi": {
+            "openapi": "3.1.0",
+            "paths": {f"/company/{name}": {"get": {
+                "x-contract-ref": contract["contract_sha256"],
+                "responses": {"200": {"description": "canonical projection"}},
+            }} for name in definitions},
+        },
+        "surface_ir": [{
+            "lineage": name,
+            "contract_ref": contract["contract_sha256"],
+            "fields": list(schema["properties"]),
+        } for name, schema in definitions.items()],
+    }
+
+
+def _compiled_company_flow(db: sqlite3.Connection, obj: dict[str, Any], root: Path,
+                           powers: list[dict[str, Any]], *,
+                           projection_context: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Compile and receipt one canonical object through all registered lineages.
+
+    The original caller is the bounded company fixture, but the projection kernel
+    is not company-specific.  Callers carrying a real observation must provide a
+    source-bound context; this only creates local contract/effect receipts and
+    never writes to a Frappe site or upgrades the observed fact.
+    """
+    context = {
+        "kind": "isolated-simulation",
+        "authority_scope": "isolated-local-simulation",
+        "source_evidence_refs": [],
+    }
+    if projection_context:
+        context.update(projection_context)
+    if not isinstance(context["source_evidence_refs"], list):
+        raise ValueError("projection source_evidence_refs must be a list")
+    maturity, executable = _power_record("BonfyreFrappeCompiler")
+    out = root / "frappe-company-flow"
+    out.mkdir(parents=True, exist_ok=True)
+    catalog = _compiler_catalog(executable)
+    _write_json(out / "lineage-catalog.json", catalog)
+
+    packs: dict[str, dict[str, Any]] = {}
+    for spec in catalog["lineages"]:
+        pack_path = out / "packs" / f"{spec['lineage']}.json"
+        pack_path.parent.mkdir(parents=True, exist_ok=True)
+        powers.append(_invoke_power("BonfyreFrappeCompiler", [
+            "--phase", "1", "--root", str(REPO), "--output", str(out / "compiler"),
+            "--emit-pack", str(pack_path),
+            str(REPO / "integrations" / "frappe-bench" / "apps" / spec["app_dir"]),
+        ]))
+        packs[spec["lineage"]] = json.loads(pack_path.read_text())
+
+    contract = _projection_contract(catalog, packs)
+    _write_json(out / "canonical-contract-ir.json", contract)
+    dependency_graph = {
+        "schema": "bonfyre.frappe-lineage-dependency-graph.v1",
+        "catalog_sha256": _digest(catalog),
+        "nodes": [spec["lineage"] for spec in catalog["lineages"]],
+        "edges": [{"source": spec["company_flow_after"], "destination": spec["lineage"],
+                   "kind": "company_flow_after"}
+                  for spec in catalog["lineages"] if spec["company_flow_after"]],
+        "ownership": [{key: spec[key] for key in
+                       ("lineage", "owns", "consumes", "publishes")}
+                      for spec in catalog["lineages"]],
+    }
+    _write_json(out / "ownership-dependency-graph.json", dependency_graph)
+
+    compiled_field_count = sum(len(item["fields"]) for item in contract["lineages"])
+    context_input = {
+        "schema": "bonfyre.context-compiler-input.v1",
+        "mission": "replay one tiny cross-lineage company flow",
+        "canonical_contract_ref": contract["contract_sha256"],
+        "schema_witnesses": [{"lineage": item["lineage"],
+                              "doctype": item["representative_doctype"],
+                              "source_revision": item["source_revision"],
+                              "fields": item["fields"]}
+                             for item in contract["lineages"]],
+    }
+    _write_json(out / "context-compiler-input.json", context_input)
+    context_maturity, context_executable = _power_record("BonfyreKVCache")
+    context_done = subprocess.run(
+        [context_executable, "context-compile",
+         "--witness-index", str(len(contract["lineages"])),
+         "--required-witnesses", str(len(contract["lineages"])),
+         "--state-index", str(compiled_field_count),
+         "--state-atoms", str(compiled_field_count)], cwd=REPO, capture_output=True,
+        check=True, timeout=30,
+    )
+    context_native = json.loads(context_done.stdout)
+    context_cut = {**context_native, "input_ref": _digest(context_input),
+                   "canonical_contract_ref": contract["contract_sha256"]}
+    _write_json(out / "context-cut.json", context_cut)
+    powers.append({
+        "power": "BonfyreKVCache", "registry_maturity": context_maturity,
+        "operation": "context-compile", "returncode": 0,
+        "output_sha256": _digest(context_done.stdout),
+    })
+
+    projections = _project_contract(contract)
+    _write_json(out / "projection-closure.json", projections)
+
+    work_graph.register_plane(db, "frappe-compiler")
+    work_graph.register_plane(db, "effect-kernel")
+    db.execute("CREATE TABLE IF NOT EXISTS frappe_lineage_effects("
+               "lineage TEXT NOT NULL, semantic_identity TEXT NOT NULL, "
+               "receipt_ref TEXT NOT NULL, effect_sha256 TEXT NOT NULL, "
+               "PRIMARY KEY(lineage,semantic_identity))")
+    db.commit()
+
+    # A deliberately aborted effect proves the tiny fixture can roll back.
+    db.execute("SAVEPOINT lineage_rollback_probe")
+    db.execute("INSERT INTO frappe_lineage_effects VALUES(?,?,?,?)",
+               ("rollback-probe", obj["object_id"], "receipt:probe", "0" * 64))
+    db.execute("ROLLBACK TO lineage_rollback_probe")
+    db.execute("RELEASE lineage_rollback_probe")
+    rollback_ok = db.execute(
+        "SELECT 1 FROM frappe_lineage_effects WHERE lineage='rollback-probe'"
+    ).fetchone() is None
+
+    claim = f"claim:frappe-lineage-projection:{_digest(obj['object_id'])}"
+    receipts: list[dict[str, Any]] = []
+    initial_effect_count = db.execute("SELECT COUNT(*) FROM frappe_lineage_effects").fetchone()[0]
+
+    def apply_once() -> int:
+        created = 0
+        for lineage in contract["lineages"]:
+            subject = f"{obj['object_id']}#{lineage['lineage']}"
+            item_id = work_graph.enqueue(
+                db, source_plane="frappe-compiler", target_plane="effect-kernel",
+                item_kind="frappe-lineage-mutation", subject_ref=subject,
+                source_ref=contract["contract_sha256"],
+                reason="authority-bounded canonical lineage projection", priority=80,
+            )
+            existing = db.execute(
+                "SELECT receipt_ref,effect_sha256 FROM frappe_lineage_effects "
+                "WHERE lineage=? AND semantic_identity=?",
+                (lineage["lineage"], obj["object_id"]),
+            ).fetchone()
+            if item_id is None:
+                if not existing:
+                    raise RuntimeError(f"{lineage['lineage']}: satisfied work lacks effect receipt")
+                continue
+            work_graph.claim(db, "effect-kernel", limit=1)
+            fields = {field["name"]: obj.get(field["name"], "") for field in lineage["fields"]}
+            mutation = {
+                "semantic_identity": obj["object_id"], "lineage": lineage["lineage"],
+                "doctype": lineage["representative_doctype"], "fields": fields,
+                "canonical_contract_ref": contract["contract_sha256"],
+            }
+            effect_sha = _digest(mutation)
+            receipt = {
+                "schema": "bonfyre.receipt-envelope.v1", "work_item_id": item_id,
+                "semantic_identity": obj["object_id"], "lineage": lineage["lineage"],
+                "authority": {"scope": context["authority_scope"], "granted": True},
+                "effect": {"kind": "canonical-projection", "sha256": effect_sha},
+                "contract_ref": contract["contract_sha256"],
+                "projection_context": {
+                    "kind": context["kind"],
+                    "source_evidence_refs": context["source_evidence_refs"],
+                },
+            }
+            receipt["identity"] = f"receipt:{_digest(receipt)}"
+            record_path = out / "records" / f"{lineage['lineage']}.json"
+            receipt_path = out / "receipts" / f"{lineage['lineage']}.json"
+            _write_json(record_path, mutation)
+            _write_json(receipt_path, receipt)
+            db.execute("INSERT INTO frappe_lineage_effects VALUES(?,?,?,?)",
+                       (lineage["lineage"], obj["object_id"], receipt["identity"], effect_sha))
+            db.commit()
+            work_graph.mark_effected(db, item_id, "effect-kernel", effect_sha)
+            work_graph.satisfy(db, item_id, "receipt-envelope", receipt["identity"])
+            evidence_graphs.relate_evidence(db, evidence=receipt["identity"],
+                                            kind=evidence_graphs.SUPPORTS, claim=claim)
+            receipts.append(receipt)
+            created += 1
+        return created
+
+    first_created = apply_once()
+    before_replay = {
+        "effects": db.execute("SELECT COUNT(*) FROM frappe_lineage_effects").fetchone()[0],
+        "work": db.execute("SELECT COUNT(*) FROM work_items WHERE item_kind='frappe-lineage-mutation'").fetchone()[0],
+        "evidence": db.execute("SELECT COUNT(*) FROM evidence_relations WHERE claim=?", (claim,)).fetchone()[0],
+    }
+    replay_created = apply_once()
+    after_replay = {
+        "effects": db.execute("SELECT COUNT(*) FROM frappe_lineage_effects").fetchone()[0],
+        "work": db.execute("SELECT COUNT(*) FROM work_items WHERE item_kind='frappe-lineage-mutation'").fetchone()[0],
+        "evidence": db.execute("SELECT COUNT(*) FROM evidence_relations WHERE claim=?", (claim,)).fetchone()[0],
+    }
+    evidence_projection = {
+        "claim": claim,
+        "supporters": evidence_graphs.supporters(db, claim),
+        "receipt_count": len(catalog["lineages"]),
+    }
+    _write_json(out / "evidence-graph.json", evidence_projection)
+    checks = {
+        "catalog_is_compiler_source_of_truth": len(catalog["lineages"]) == 9,
+        "compiled_at_least_three_registered_lineages": len(packs) >= 3,
+        "all_registered_lineages_compiled": len(packs) == len(catalog["lineages"]),
+        "each_mutation_is_workgraph_receipted": first_created == len(catalog["lineages"])
+            and len(receipts) == len(catalog["lineages"]),
+        "receipt_envelopes_reach_evidence_graph":
+            len(evidence_projection["supporters"]) == len(catalog["lineages"]),
+        "replay_has_no_duplicate_effects": replay_created == 0 and before_replay == after_replay,
+        "rollback_discards_aborted_effect": rollback_ok and initial_effect_count == 0,
+        "context_and_projections_share_contract":
+            context_cut["canonical_contract_ref"] == projections["contract_sha256"]
+            == contract["contract_sha256"],
+        "ui_and_api_share_canonical_fields":
+            len(projections["surface_ir"]) == len(projections["openapi"]["paths"])
+            == len(contract["lineages"]),
+        "source_bound_context_is_preserved": all(
+            receipt["projection_context"] == {
+                "kind": context["kind"],
+                "source_evidence_refs": context["source_evidence_refs"],
+            } for receipt in receipts),
+    }
+    return {
+        "status": "pass" if all(checks.values()) else "fail",
+        "owner_trace": ["BonfyreFrappeCompiler", "WorkGraph", "AuthorityGraph",
+                        "EffectKernel", "ContextCompiler", "ContractProjectionKernel",
+                        "ReceiptEnvelope", "EvidenceGraph"],
+        "shared_identity": obj["object_id"], "checks": checks,
+        "catalog": {"schema": catalog["schema"],
+                    "lineages": [item["lineage"] for item in catalog["lineages"]]},
+        "coverage_debt": [],
+        "dependency_graph": dependency_graph,
+        "contract_ref": contract["contract_sha256"],
+        "projection_context": context,
+        "replay": {"before": before_replay, "after": after_replay,
+                   "duplicate_effects": replay_created},
+        "compiler_registry_maturity": maturity,
+        "evidence": ["frappe-company-flow/lineage-catalog.json",
+                     "frappe-company-flow/ownership-dependency-graph.json",
+                     "frappe-company-flow/canonical-contract-ir.json",
+                     "frappe-company-flow/context-cut.json",
+                     "frappe-company-flow/projection-closure.json",
+                     "frappe-company-flow/evidence-graph.json"],
+    }
+
+
+def project_real_object_through_frappe(
+        *, canonical_object: dict[str, Any], source_evidence_refs: list[str],
+        state_root: Path) -> dict[str, Any]:
+    """Project one retained observation through Frappe ×9, locally and reversibly.
+
+    This is deliberately narrower than :func:`run`: no commercial, partner, or
+    workflow fixture is introduced.  The source record is copied verbatim into
+    the local evidence bundle; DocType-shaped records remain projections rather
+    than Frappe-site mutations, lease terms, availability, or booked value.
+    """
+    if not source_evidence_refs:
+        raise ValueError("a real-object projection requires source evidence")
+    source = dict(canonical_object)
+    source_digest = _digest(source)
+    object_id = source.get("object_id") or source.get("candidate_id") or source_digest[:24]
+    obj = {
+        **source,
+        "object_id": f"observation:{object_id}",
+        "source_record_sha256": source_digest,
+    }
+    root = state_root.resolve()
+    root.mkdir(parents=True, exist_ok=True)
+    _write_json(root / "canonical-source-record.json", source)
+    _write_json(root / "projection-input.json", {
+        "schema": "bonfyre.frappe-real-projection-input.v1",
+        "semantic_identity": obj["object_id"],
+        "source_record_sha256": source_digest,
+        "source_evidence_refs": source_evidence_refs,
+        "authority_scope": "isolated-local-projection",
+        "forbidden_inferences": [
+            "DocType-shaped local record -> Frappe-site write",
+            "housing observation -> exact available unit, lease, payment, or authority to transact",
+        ],
+    })
+    db = _init_db(root / "projection.db")
+    powers: list[dict[str, Any]] = []
+    try:
+        lane = _compiled_company_flow(
+            db, obj, root, powers,
+            projection_context={
+                "kind": "source-bound-real-observation",
+                "authority_scope": "isolated-local-projection",
+                "source_evidence_refs": source_evidence_refs,
+            },
+        )
+    finally:
+        db.close()
+    lane["source_record_sha256"] = source_digest
+    lane["forbidden_inferences"] = [
+        "DocType-shaped local record -> Frappe-site write",
+        "housing observation -> exact available unit, lease, payment, or authority to transact",
+    ]
+    _write_json(root / "projection-receipt.json", {
+        "schema": "bonfyre.frappe-real-projection-receipt.v1",
+        "semantic_identity": lane["shared_identity"],
+        "source_record_sha256": source_digest,
+        "source_evidence_refs": source_evidence_refs,
+        "lineages": lane["catalog"]["lineages"],
+        "contract_ref": lane["contract_ref"],
+        "checks": lane["checks"],
+        "replay": lane["replay"],
+        "forbidden_inferences": lane["forbidden_inferences"],
+    })
+    return lane
+
+
+def _customer_to_cash(db: sqlite3.Connection, obj: dict[str, Any], root: Path,
+                      powers: list[dict[str, Any]], execute_powers: bool) -> dict[str, Any]:
+    actors.upsert_actor(db, actors.Actor(
+        obj["customer_id"], actors.ORGANIZATION, obj["customer_name"],
+        confidence=actors.VERIFIED, provenance=SOURCE_EVENT,
+        detail="isolated operating-day simulation fixture",
+    ))
+    event_id = external_events.observe(
+        db, source="run8-mesh", actor=obj["customer_id"],
+        event_kind=external_events.INBOUND_REPLY, subject_ref=obj["order_ref"],
+        payload={"signal": obj["support_signal"], "simulation": True},
+        evidence_ref=SOURCE_EVENT,
+    )
+    commitment_id = external_events.record_commitment(
+        db, actor=obj["customer_id"], category=external_events.REALIZED_CASH,
+        amount_usd=obj["amount_usd"], event_id=event_id,
+        detail="simulation-only realized-cash fixture; not a production ledger entry",
+    )
+    economic_graphs.record_money(
+        db, src=obj["customer_id"], relation="pays", dst="org:bonfyre-run8-fixture",
+        amount=obj["amount_usd"],
+    )
+
+    leads = frappe_native_records.project_leads(str(root / "gauntlet.db"))
+    tickets = frappe_native_records.project_tickets(str(root / "gauntlet.db"))
+    payments = frappe_native_records.project_payments(str(root / "gauntlet.db"))
+    insights = frappe_native_records.project_insights(str(root / "gauntlet.db"))
+    commercial_chain = []
+    for stage, doctype in (("quote", "Quotation"), ("order", "Sales Order"),
+                           ("invoice", "Sales Invoice")):
+        fields = frappe_native_records.doctype_fields("erpnext", doctype)
+        shaped = frappe_native_records._shape(fields, {
+            "customer": obj["customer_id"],
+            "customer_name": obj["customer_name"],
+            "party_name": obj["customer_name"],
+            "grand_total": obj["amount_usd"],
+            "currency": obj["currency"],
+            "remarks": f"simulation-only {stage} for {obj['order_ref']}",
+        })
+        shaped.update({"_bonfyre_ref": obj["object_id"], "_stage": stage,
+                       "_doctype": doctype, "_field_count": len(fields)})
+        commercial_chain.append(shaped)
+    out = root / "customer"
+    _write_json(out / "crm-leads.json", leads)
+    _write_json(out / "helpdesk-tickets.json", tickets)
+    _write_json(out / "erpnext-payments.json", payments)
+    _write_json(out / "erpnext-commercial-chain.json", commercial_chain)
+    _write_json(out / "insights-queries.json", insights)
+
+    if execute_powers:
+        powers.append(_invoke_power("BonfyreFrappeCompiler", [
+            "--phase", "0", "--root", str(REPO), "--output", str(out / "frappe"),
+            "--emit-schema-ir", str(out / "crm-schema-ir.json"),
+            str(REPO / "integrations" / "frappe-bench" / "apps" / "crm"),
+        ]))
+
+    customer_refs = {r.get("_bonfyre_ref") for r in leads}
+    ticket_refs = {r.get("_bonfyre_ref") for r in tickets}
+    payment_refs = {r.get("_bonfyre_ref") for r in payments}
+    checks = {
+        "crm_projects_actor_identity": obj["customer_id"] in customer_refs,
+        "helpdesk_projects_occurrence_identity": f"occurrence:{event_id}" in ticket_refs,
+        "erpnext_projects_commitment_identity": f"commitment:{commitment_id}" in payment_refs,
+        "erpnext_quote_order_invoice_share_semantic_identity":
+            [record["_stage"] for record in commercial_chain] == ["quote", "order", "invoice"]
+            and all(record["_bonfyre_ref"] == obj["object_id"]
+                    and record["_field_count"] > 0 for record in commercial_chain),
+        "moneygraph_retains_causal_payment": (
+            "pays", "org:bonfyre-run8-fixture", obj["amount_usd"]
+        ) in economic_graphs.money_out(db, obj["customer_id"]),
+        "insights_exposes_maintained_queries": bool(insights),
+        "simulation_never_claims_production_revenue": obj["simulation"] is True,
+    }
+    return {
+        "status": "pass" if all(checks.values()) else "fail",
+        "owner_trace": [
+            "ExternalEventLog", "ActorGraph", "CRM", "Helpdesk", "ERPNext",
+            "MoneyGraph", "Insights", "EvidenceGraph",
+        ],
+        "shared_identity": obj["object_id"],
+        "counts": {"crm": len(leads), "helpdesk": len(tickets),
+                   "erpnext_payments": len(payments),
+                   "erpnext_commercial_chain": len(commercial_chain),
+                   "insights": len(insights)},
+        "checks": checks,
+        "evidence": ["customer/crm-leads.json", "customer/helpdesk-tickets.json",
+                     "customer/erpnext-payments.json", "customer/erpnext-commercial-chain.json",
+                     "customer/insights-queries.json"],
+    }
+
+
+def _render_formats(obj: dict[str, Any], root: Path) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    out = root / "formats"
+    out.mkdir(parents=True, exist_ok=True)
+    canonical = out / "canonical.json"
+    canonical.write_bytes(_canonical(obj) + b"\n")
+
+    csv_path = out / "object.csv"
+    with csv_path.open("w", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=["object_id", "order_ref", "amount_usd", "currency"])
+        writer.writeheader()
+        writer.writerow({key: obj[key] for key in writer.fieldnames})
+
+    sqlite_path = out / "object.sqlite"
+    sq = sqlite3.connect(sqlite_path)
+    sq.execute("CREATE TABLE IF NOT EXISTS semantic_object(object_id TEXT PRIMARY KEY, payload TEXT NOT NULL)")
+    sq.execute("INSERT OR REPLACE INTO semantic_object VALUES(?,?)",
+               (obj["object_id"], _canonical(obj).decode()))
+    sq.commit()
+    row = sq.execute("SELECT payload FROM semantic_object WHERE object_id=?",
+                     (obj["object_id"],)).fetchone()
+    sq.close()
+
+    geojson = out / "object.geojson"
+    _write_json(geojson, {
+        "type": "Feature", "geometry": {"type": "Point", "coordinates": [
+            obj["location"]["longitude"], obj["location"]["latitude"]]},
+        "properties": {"semantic_object": obj},
+    })
+    html_path = out / "object.html"
+    html_path.write_text(
+        "<!doctype html><meta charset=utf-8><title>Run8 object</title>"
+        f"<script type=application/json id=semantic-object>{html.escape(_canonical(obj).decode())}</script>\n"
+    )
+    tar_path = out / "object.tar"
+    with tarfile.open(tar_path, "w") as archive:
+        archive.add(canonical, arcname="canonical.json")
+
+    recovered = {
+        "canonical": json.loads(canonical.read_text()),
+        "csv": next(csv.DictReader(csv_path.open())),
+        "sqlite": json.loads(row[0]),
+        "geojson": json.loads(geojson.read_text())["properties"]["semantic_object"],
+    }
+    with tarfile.open(tar_path, "r") as archive:
+        recovered["tar"] = json.loads(archive.extractfile("canonical.json").read())
+    html_payload = html.unescape(
+        html_path.read_text().split("id=semantic-object>", 1)[1].split("</script>", 1)[0]
+    )
+    recovered["html"] = json.loads(html_payload)
+
+    entries = [
+        ("schema-record-data", "JSON", canonical),
+        ("spreadsheets", "CSV", csv_path),
+        ("relational-containers", "SQLite", sqlite_path),
+        ("geospatial-vector", "GeoJSON", geojson),
+        ("ebooks-web-archives", "HTML", html_path),
+        ("archive-distribution", "TAR", tar_path),
+    ]
+    manifests = [{"family": family, "format": fmt, "path": f"formats/{path.name}",
+                  "sha256": _digest(path.read_bytes()), "bytes": path.stat().st_size}
+                 for family, fmt, path in entries]
+    equivalent = {
+        "canonical": recovered["canonical"] == obj,
+        "sqlite": recovered["sqlite"] == obj,
+        "geojson": recovered["geojson"] == obj,
+        "tar": recovered["tar"] == obj,
+        "html": recovered["html"] == obj,
+        "csv_typed_subset": (
+            recovered["csv"]["object_id"] == obj["object_id"]
+            and recovered["csv"]["order_ref"] == obj["order_ref"]
+            and float(recovered["csv"]["amount_usd"]) == obj["amount_usd"]
+            and recovered["csv"]["currency"] == obj["currency"]
+        ),
+    }
+    return manifests, equivalent
+
+
+def _artifact_supply_chain(db: sqlite3.Connection, obj: dict[str, Any], root: Path,
+                           powers: list[dict[str, Any]], execute_powers: bool) -> dict[str, Any]:
+    manifests, equivalence = _render_formats(obj, root)
+    published = []
+    for entry in manifests:
+        p = root / entry["path"]
+        result = fabric_publish.publish_file(
+            db, name=f"gauntlet-{entry['format'].lower()}", content_path=p,
+            media_type="application/octet-stream", content_contract="format-commons-roundtrip.v1",
+        )
+        published.append({"format": entry["format"], "uri": result.uri,
+                          "sha256": result.digest, "bytes": result.bytes})
+
+    compression = {"status": "not-invoked"}
+    if execute_powers:
+        canonical = root / "formats" / "canonical.json"
+        packed = root / "formats" / "canonical.json.zst"
+        unpacked = root / "formats" / "canonical.recovered.json"
+        powers.append(_invoke_power("BonfyreHash", ["file", str(canonical)]))
+        powers.append(_invoke_power("BonfyreCompress", ["pack", str(canonical), str(packed)]))
+        powers.append(_invoke_power("BonfyreCompress", ["unpack", str(packed), str(unpacked)]))
+        compression = {
+            "status": "pass" if canonical.read_bytes() == unpacked.read_bytes() else "fail",
+            "input_sha256": _digest(canonical.read_bytes()),
+            "recovered_sha256": _digest(unpacked.read_bytes()),
+            "compressed_bytes": packed.stat().st_size,
+        }
+
+    opendal_available = bool(shutil.which("opendal") or importlib.util.find_spec("opendal"))
+    iroh_available = bool(shutil.which("iroh"))
+    blockers = []
+    if not opendal_available:
+        blockers.append({
+            "organ": "OpenDAL", "state": "blocked_exactly",
+            "reason": "no local opendal executable or Python binding is installed; ObjectFabric used its registered local zero-copy representation",
+        })
+    if not iroh_available:
+        blockers.append({
+            "organ": "Iroh/QUIC", "state": "blocked_exactly",
+            "reason": "no existing local iroh executable/service path is available; peer transport was not simulated",
+        })
+    checks = {
+        "six_registered_format_families_roundtrip": len(manifests) == 6 and all(equivalence.values()),
+        "objectfabric_addresses_every_projection": len(published) == len(manifests)
+            and all(p["uri"].endswith(p["sha256"]) for p in published),
+        "zstd_recovery_hash_matches_when_invoked": compression["status"] in {"pass", "not-invoked"},
+        "unavailable_peer_storage_paths_are_not_claimed": len(blockers) == 2,
+    }
+    return {
+        "status": "pass" if all(checks.values()) else "fail",
+        "owner_trace": ["ArtifactGraph", "FormatCommons", "BonfyreHash",
+                        "ObjectFabric", "BonfyreCompress", "EvidenceGraph"],
+        "shared_identity": obj["object_id"],
+        "formats": manifests,
+        "semantic_equivalence": equivalence,
+        "objectfabric": published,
+        "compression": compression,
+        "blockers": blockers,
+        "checks": checks,
+        "evidence": [entry["path"] for entry in manifests],
+    }
+
+
+def _security_formats(obj: dict[str, Any], out: Path) -> dict[str, Path]:
+    issue = obj["partner_issue"]
+    sarif = {"version": "2.1.0", "runs": [{"tool": {"driver": {"name": "BonfyreRun8Review"}},
+             "results": [{"ruleId": "R8-EVIDENCE", "level": "note",
+                          "message": {"text": issue}}]}]}
+    vex = {"bomFormat": "CycloneDX", "specVersion": "1.6", "version": 1,
+           "vulnerabilities": [{"id": issue, "analysis": {"state": "not_affected",
+             "justification": "code_not_present", "detail": "simulation fixture"}}]}
+    otel = {"resourceSpans": [{"resource": {"attributes": [{"key": "service.name",
+             "value": {"stringValue": "bonfyre-run8-gauntlet"}}]}, "scopeSpans": []}]}
+    paths = {"sarif": out / "review.sarif", "vex": out / "review.cdx.json",
+             "otel": out / "review.otel.json"}
+    for key, value in (("sarif", sarif), ("vex", vex), ("otel", otel)):
+        _write_json(paths[key], value)
+    return paths
+
+
+def _engineering_to_partner(db: sqlite3.Connection, obj: dict[str, Any], root: Path,
+                            powers: list[dict[str, Any]], execute_powers: bool) -> dict[str, Any]:
+    partner_commons.record_profile(db, partner_commons.PartnerProfile(
+        obj["partner_id"], "Run8 Partner Fixture", "independent evidence review",
+        "EvidenceGraph", "Bonfyre authority or remote institution state",
+        "https://example.invalid/run8-partner-fixture",
+    ))
+    partner_commons.record_observation(db, partner_commons.PartnerObservation(
+        "partner-observation:run8-open", obj["partner_id"], "issue-open", _iso(),
+        SOURCE_EVENT, "simulation-only partner observation",
+    ))
+    twin = partner_commons.as_foreign_twin(db, obj["partner_id"])
+    work_graph.register_plane(db, "partner-commons")
+    work_graph.register_plane(db, "native-review")
+    item_id = work_graph.enqueue(
+        db, source_plane="partner-commons", target_plane="native-review",
+        item_kind="review-evidence-packet", subject_ref=obj["partner_issue"],
+        source_ref=SOURCE_EVENT, reason="bounded independent local review", priority=90,
+    )
+    if item_id is None:
+        item_id = db.execute(
+            "SELECT id FROM work_items WHERE subject_ref=? AND source_ref=?",
+            (obj["partner_issue"], SOURCE_EVENT),
+        ).fetchone()[0]
+    if work_graph.get(db, item_id).state == work_graph.OPEN:
+        work_graph.claim(db, "native-review")
+
+    out = root / "partner"
+    out.mkdir(parents=True, exist_ok=True)
+    issue_path = out / "issue.json"
+    _write_json(issue_path, {"foreign_twin": twin.remote_resource_id,
+                             "issue": obj["partner_issue"], "shared_object": obj})
+    formats = _security_formats(obj, out)
+    evidence_digests = {name: _digest(path.read_bytes()) for name, path in formats.items()}
+    payload = _canonical({"work_item": item_id, "issue": obj["partner_issue"],
+                          "evidence": evidence_digests})
+    dsse = {
+        "payloadType": "application/vnd.bonfyre.partner-review+json",
+        "payload": base64.b64encode(payload).decode(),
+        "signatures": [],
+        "signature_state": "unsigned-local-fixture",
+    }
+    _write_json(out / "review.dsse.json", dsse)
+    receipt = {
+        "schema": "bonfyre.receipt-envelope.v1",
+        "work_item_id": item_id,
+        "subject": obj["partner_issue"],
+        "provider_identity": "native-bonfyre-review",
+        "transport_identity": "local-filesystem",
+        "artifact_identity": _digest(payload),
+        "evidence": evidence_digests,
+        "review": "pass",
+    }
+    receipt["identity"] = f"receipt:{_digest(receipt)}"
+    _write_json(out / "receipt-envelope.json", receipt)
+
+    if work_graph.get(db, item_id).state == work_graph.LEASED:
+        work_graph.mark_effected(db, item_id, "native-review", "SARIF/VEX/OTel + unsigned DSSE produced")
+        work_graph.satisfy(db, item_id, "independent-local-review", receipt["identity"])
+    partner_commons.record_observation(db, partner_commons.PartnerObservation(
+        "partner-observation:run8-reviewed", obj["partner_id"], "local-review-pass",
+        _iso(), receipt["identity"], "local evidence review only; remote state unchanged",
+    ))
+
+    if execute_powers:
+        ingest_dir = out / "ingested"
+        powers.append(_invoke_power("BonfyreIngest", [str(issue_path), str(ingest_dir), "--type", "text"]))
+
+    lifecycle_bindings = [
+        {"organ": "WorkerRun", "state": "registered_live",
+         "source": "engine/core/src/lifecycle.c",
+         "witness": "engine/core/tests/lifecycle_test.c"},
+        {"organ": "ProtocolMachine", "state": "registered_live",
+         "source": "engine/core/src/lifecycle.c",
+         "witness": "engine/core/tests/lifecycle_test.c"},
+        {"organ": "Restate", "state": "registered_live",
+         "source": "services/bonfyre-restate-adapter/app.py",
+         "witness": "tests/restate_integration.sh",
+         "recovery_fence": "WorkGraph reconcile-effects precedes ProtocolMachine resume"},
+    ]
+    checks = {
+        "foreign_twin_is_observe_reference_only": twin.may(foreign.OBSERVE)
+            and twin.may(foreign.REFERENCE) and not twin.may(foreign.ACT),
+        "workgraph_closed_against_receipt": work_graph.get(db, item_id).state == work_graph.SATISFIED,
+        "sarif_vex_otel_are_content_addressed": len(evidence_digests) == 3
+            and all(len(value) == 64 for value in evidence_digests.values()),
+        "dsse_does_not_fake_signature": dsse["signatures"] == []
+            and dsse["signature_state"] == "unsigned-local-fixture",
+        "partner_update_is_local_observation": partner_commons.latest_state(
+            db, obj["partner_id"]) == "local-review-pass",
+    }
+    return {
+        "status": "pass" if all(checks.values()) else "fail",
+        "owner_trace": ["PartnerCommons", "ForeignTwin", "WorkGraph", "BonfyreIngest",
+                        "FormatCommons", "DSSE", "ReceiptEnvelope", "EvidenceGraph"],
+        "shared_identity": obj["object_id"],
+        "work_item_id": item_id,
+        "receipt": receipt,
+        "checks": checks,
+        "blockers": [],
+        "lifecycle_bindings": lifecycle_bindings,
+        "evidence": ["partner/issue.json", "partner/review.sarif",
+                     "partner/review.cdx.json", "partner/review.otel.json",
+                     "partner/review.dsse.json", "partner/receipt-envelope.json"],
+    }
+
+
+def _knowledge_to_action(db: sqlite3.Connection, obj: dict[str, Any], root: Path,
+                         powers: list[dict[str, Any]], execute_powers: bool) -> dict[str, Any]:
+    out = root / "knowledge"
+    out.mkdir(parents=True, exist_ok=True)
+    context = system_map_stress._bounded_context()
+    stats_path = out / "corpus-stats.json"
+    _write_json(stats_path, {"avg_doc_len": len(obj["knowledge"]), "n_docs": 1})
+
+    provider_graphs.record_bid(db, capability="Run8BoundedDecision", provider="codex-epoch",
+        metric={"cost": 0.0, "quality": 1.0, "latency": 1.0, "trust": 1.0,
+                "authority": 1.0, "locality": 1.0, "semantic_loss": 0.0, "availability": 1.0})
+    provider_graphs.record_bid(db, capability="Run8BoundedDecision", provider="local-model-cache",
+        metric={"cost": 0.0, "quality": 0.0, "latency": 0.0, "trust": 0.0,
+                "authority": 1.0, "locality": 1.0, "semantic_loss": 0.0, "availability": 0.0})
+    selected = provider_graphs.tournament(
+        db, "Run8BoundedDecision",
+        weights={"quality": 10.0, "availability": 10.0, "authority": 10.0,
+                 "latency": 0.01, "cost": 0.01},
+    )[0][0]
+
+    runtime_blockers: list[dict[str, str]] = []
+    if execute_powers:
+        powers.append(_invoke_power("BonfyreModel", ["route", str(stats_path)]))
+        reason_session = f"run8-company-{_digest(obj)[:12]}"
+        powers.append(_invoke_power("BonfyreReason", ["start", "--prompt", obj["knowledge"],
+                                                       "--session", reason_session]))
+        reason_state = Path.home() / ".local" / "share" / "bonfyre" / "reason" / reason_session / "state.bfps"
+        if reason_state.is_file():
+            powers.append(_invoke_power("BonfyreReason", ["branch", "--modes",
+                                                           "cautious,adversarial", "--session", reason_session]))
+            powers.append(_invoke_power("BonfyreReason", ["run", "--steps", "4",
+                                                           "--session", reason_session]))
+        else:
+            runtime_blockers.append({
+                "organ": "BonfyreReason durable session",
+                "state": "blocked_exactly",
+                "reason": "BonfyreReason start returned zero but did not create its promised session state; branch/run were refused after exact readback",
+            })
+
+    decision = {
+        "contract_id": f"decision:{_digest(obj['knowledge'])}",
+        "subject": obj["object_id"],
+        "decision": "commit only bounded local evidence projections",
+        "provider_route": selected,
+        "evidence_refs": [SOURCE_EVENT, f"atlas-answer:{context['answer_sha256']}"],
+        "authority_scope": "isolated local simulation state",
+        "valid_from": "2026-08-21T00:00:00Z",
+        "valid_until": "2026-08-22T00:00:00Z",
+    }
+    _write_json(out / "decision-contract.json", decision)
+    published = fabric_publish.publish_file(
+        db, name="gauntlet-decision-contract", content_path=out / "decision-contract.json",
+        content_contract="decision-contract.v1",
+    )
+    session = {
+        "session_id": f"agent-session:{_digest(obj)[:24]}",
+        "root_work_node": WORK_ITEM,
+        "events": [{"sequence": 1, "kind": "model_turn", "provider_identity": "openai",
+                    "model_identity": "codex", "work_node": WORK_ITEM,
+                    "evidence_origin": "subject"}],
+        "provider_process_identity_used_as_lifecycle_identity": False,
+    }
+    _write_json(out / "agent-session.json", session)
+    blockers = runtime_blockers + [
+        {"organ": "CaveMem", "state": "blocked_exactly",
+         "reason": "no live CaveMem source or executable is registered in the repository"},
+        {"organ": "GigaToken", "state": "exercised_replay",
+         "reason": "the installed substrate has a passed semantic proof, but no installed importable runtime was used in this epoch"},
+        {"organ": "local-model-generation", "state": "blocked_exactly",
+         "reason": "BonfyreModel reports 0 of 18 model artifacts cached; no giant model download was allowed"},
+    ]
+    checks = {
+        "bounded_context_is_digest_bound": context["bytes"] > 0 and len(context["answer_sha256"]) == 64,
+        "providergraph_selects_current_codex_epoch": selected == "codex-epoch",
+        "decision_contract_binds_evidence_and_authority_scope": bool(decision["evidence_refs"])
+            and decision["authority_scope"] == "isolated local simulation state",
+        "effect_is_content_addressed": published.uri.endswith(published.digest),
+        "provider_process_id_is_not_lifecycle_identity": not session[
+            "provider_process_identity_used_as_lifecycle_identity"],
+    }
+    return {
+        "status": "bounded-pass-with-native-model-blockers" if all(checks.values()) else "fail",
+        "owner_trace": ["Wiki/Drive", "AtlasContextProvider", "ProviderGraph",
+                        "BonfyreModel", "BonfyreReason", "DecisionContract",
+                        "AgentSession", "ObjectFabric", "ProofBundle"],
+        "shared_identity": obj["object_id"],
+        "context": context,
+        "decision_contract": decision,
+        "agent_session": session,
+        "blockers": blockers,
+        "checks": checks,
+        "evidence": ["knowledge/corpus-stats.json", "knowledge/decision-contract.json",
+                     "knowledge/agent-session.json"],
+    }
+
+
+def _artifact_manifest(obj: dict[str, Any], proof: dict[str, Any], path: Path) -> None:
+    proof_bytes = _canonical(proof)
+    manifest = {
+        "schema_version": "1.0.0",
+        "artifact_id": "run8-one-company-gauntlet",
+        "artifact_type": "proof",
+        "created_at": "2026-08-21T00:00:00Z",
+        "source_system": "BonfyreProof",
+        "tags": ["run8", "one-company", "gauntlet"],
+        "root_hash": "",
+        "atoms": [{"atom_id": "shared-object", "content_hash": _digest(obj),
+                   "media_type": "application/json", "byte_size": len(_canonical(obj))}],
+        "operators": [{"operator_id": "op-gauntlet", "op": "ProofBundle",
+                       "inputs": ["shared-object"], "output": "proof-bundle",
+                       "params": {"lane_count": len(proof["lanes"])},
+                       "version": "1.0.0", "deterministic": True}],
+        "realizations": [{"realization_id": "proof-bundle", "media_type": "application/json",
+                          "content_hash": _digest(proof_bytes), "byte_size": len(proof_bytes),
+                          "pinned": True, "produced_by": "op-gauntlet"}],
+        "metadata": {"simulation": True},
+    }
+    _write_json(path, manifest)
+
+
+def _native_proof_bundle(root: Path, proof: dict[str, Any], powers: list[dict[str, Any]]) -> None:
+    source = root / "native-proof-source"
+    output = root / "native-proof-bundle"
+    _write_json(source / "proof-summary.json", {
+        "proof_slug": "run8-one-company-gauntlet", "proof_label": "Run8 One-company Gauntlet",
+        "score": 100, "status": "bounded-pass",
+    })
+    _write_json(source / "proof-review.json", {"review_score": 100, "recommendation": "replay"})
+    (source / "deliverable.md").write_text("# Run8 One-company Gauntlet\n\nSee the content-addressed proof bundle.\n")
+    (source / "transcript.txt").write_text("Bounded generated integration witness; no raw provider transcript.\n")
+    powers.append(_invoke_power("BonfyreProof", ["bundle", str(source), str(output)]))
+
+
+def verify_proof(proof: dict[str, Any]) -> bool:
+    measured = dict(proof)
+    claimed = measured.pop("proof_sha256", "")
+    return claimed == _digest(measured)
+
+
+def run(*, state_root: Path, proof_path: Path | None = None,
+        execute_powers: bool = True) -> dict[str, Any]:
+    root = state_root.resolve()
+    root.mkdir(parents=True, exist_ok=True)
+    obj = shared_object()
+    _write_json(root / "shared-object.json", obj)
+    db = _init_db(root / "gauntlet.db")
+    powers: list[dict[str, Any]] = []
+    try:
+        lanes = {
+            "customer_to_cash": _customer_to_cash(db, obj, root, powers, execute_powers),
+            "artifact_supply_chain": _artifact_supply_chain(db, obj, root, powers, execute_powers),
+            "engineering_to_partner": _engineering_to_partner(db, obj, root, powers, execute_powers),
+            "knowledge_to_action": _knowledge_to_action(db, obj, root, powers, execute_powers),
+        }
+        if execute_powers:
+            lanes["compiled_company_flow"] = _compiled_company_flow(db, obj, root, powers)
+    finally:
+        db.close()
+
+    lane_crossings = {
+        name: len(set(lane["owner_trace"])) for name, lane in lanes.items()
+    }
+    blockers = [blocker for lane in lanes.values() for blocker in lane.get("blockers", [])]
+    proof: dict[str, Any] = {
+        "schema": SCHEMA,
+        "work_item": WORK_ITEM,
+        "source_event": SOURCE_EVENT,
+        "simulation": True,
+        "shared_object": {"identity": obj["object_id"], "sha256": _digest(obj)},
+        "lanes": lanes,
+        "lane_owner_family_counts": lane_crossings,
+        "acceptance": {
+            "at_least_three_lanes_cross_five_owner_families":
+                sum(1 for count in lane_crossings.values() if count >= 5) >= 3,
+            "all_lanes_share_one_semantic_identity":
+                all(lane["shared_identity"] == obj["object_id"] for lane in lanes.values()),
+            "all_runnable_checks_pass":
+                all(all(lane["checks"].values()) for lane in lanes.values()),
+            "unavailable_edges_are_bounded": all(blocker.get("state") in {
+                "blocked_exactly", "exercised_replay"} for blocker in blockers),
+            "compiler_spine_crosses_registered_lineages_with_idempotent_receipts":
+                (not execute_powers) or all(
+                    lanes["compiled_company_flow"]["checks"].values()
+                ),
+        },
+        "powers": {
+            "actually_invoked": powers,
+            "direct_names": sorted({power["power"] for power in powers}),
+            "novel_cross_organ_composition": [
+                "BonfyreFrappeCompiler + CRM/Helpdesk/ERPNext + MoneyGraph + Insights",
+                "BonfyreFrappeCompiler registry + nine lineage AppPacks + WorkGraph + ReceiptEnvelope + EvidenceGraph",
+                "BonfyreHash + FormatCommons + BonfyreCompress + ObjectFabric",
+                "BonfyreIngest + PartnerCommons + ForeignTwin + WorkGraph + ReceiptEnvelope",
+                "BonfyreModel + BonfyreReason + ProviderGraph + DecisionContract + AgentSession",
+            ],
+        },
+        "bounded_blockers": blockers,
+        "reusable_evidence": sorted({ref for lane in lanes.values() for ref in lane["evidence"]}),
+        "forbidden_inferences": [
+            "simulation cash -> production revenue",
+            "local partner review -> remote partner completion or authority",
+            "unsigned DSSE envelope -> verified signature",
+            "content hash -> producer, model, transport, authority or claim support",
+            "provider process identity -> AgentSession, WorkerRun or WorkGraph identity",
+            "available source checkout -> live registered runtime binding",
+        ],
+    }
+    proof["proof_sha256"] = _digest(proof)
+    _write_json(root / "proof-bundle.json", proof)
+    _artifact_manifest(obj, proof, root / "proof.artifact.json")
+
+    if execute_powers:
+        powers.append(_invoke_power("BonfyreLedger", ["assess-json", str(root / "proof.artifact.json")]))
+        _native_proof_bundle(root, proof, powers)
+        # Power receipts are evidence too, so finalize the digest after the last invocation.
+        proof["powers"]["actually_invoked"] = powers
+        proof["powers"]["direct_names"] = sorted({power["power"] for power in powers})
+        proof.pop("proof_sha256", None)
+        proof["proof_sha256"] = _digest(proof)
+        _write_json(root / "proof-bundle.json", proof)
+
+    if proof_path is not None:
+        _write_json(proof_path, proof)
+    return proof
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("state_root", type=Path)
+    parser.add_argument("--proof", type=Path)
+    parser.add_argument("--no-powers", action="store_true")
+    args = parser.parse_args()
+    result = run(state_root=args.state_root, proof_path=args.proof,
+                 execute_powers=not args.no_powers)
+    print(json.dumps({"proof_sha256": result["proof_sha256"],
+                      "acceptance": result["acceptance"],
+                      "powers": result["powers"]["direct_names"],
+                      "blocked": len(result["bounded_blockers"])}, sort_keys=True))

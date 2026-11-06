@@ -1,0 +1,10 @@
+{
+  "provider_id": "fly",
+  "api_ok": true,
+  "api_error": null,
+  "readiness": {
+    "machines_worker_lane": "ready",
+    "volume_backed_worker_lane": "ready",
+    "regional_fallback_worker_lane": "ready"
+  }
+}

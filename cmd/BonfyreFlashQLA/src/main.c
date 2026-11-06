@@ -247,32 +247,6 @@ static int detect_sm_major(void) {
     return major;
 }
 
-/*
- * Check if the flash_qla Python package is importable.
- * Uses fork/execvp — no shell command construction, no injection risk.
- */
-static int check_flashqla_pkg(void) {
-    pid_t pid = fork();
-    if (pid < 0) return 0;
-    if (pid == 0) {
-        /* Silence stdout/stderr in the child */
-        int devnull = open("/dev/null", O_WRONLY);
-        if (devnull >= 0) {
-            dup2(devnull, STDOUT_FILENO);
-            dup2(devnull, STDERR_FILENO);
-            close(devnull);
-        }
-        char *const args[] = {
-            "python3", "-c", "from flash_qla import chunk_gated_delta_rule", NULL
-        };
-        execvp("python3", args);
-        _exit(127);
-    }
-    int status = 0;
-    waitpid(pid, &status, 0);
-    return WIFEXITED(status) && WEXITSTATUS(status) == 0;
-}
-
 /* ─────────────────────────────────────────────────────────────────── */
 
 /* forward declaration for use in doctor */
@@ -291,19 +265,16 @@ static int cmd_doctor(void) {
     else
         printf("    env override:  (none — using auto/tile)\n");
 
-    /* CUDA / SM detection (compare-external only) */
-    printf("\n  External FlashQLA (compare-external subcommand only):\n");
+    /* CUDA / SM detection is evidence only; it never dispatches a foreign runtime. */
+    printf("\n  External FlashQLA boundary (archived):\n");
     int sm = detect_sm_major();
     if (sm == 0)
         printf("    CUDA:     not detected (nvidia-smi unavailable or no GPU)\n");
     else
         printf("    CUDA:     SM %d.x (%s)\n",
                sm, sm >= 9 ? "SM90+ — FlashQLA capable" : "below SM90");
-    int fq = check_flashqla_pkg();
-    printf("    flash_qla: %s\n",
-           fq ? "AVAILABLE (flash_qla importable)"
-              : "not installed  (pip install -v git+https://github.com/QwenLM/FlashQLA)");
-    printf("    requirements: SM90+  CUDA 12.8+  PyTorch 2.8+\n");
+    printf("    foreign runtime: not dispatched by Bonfyre\n");
+    printf("    requirements: SM90+  CUDA 12.8+  PyTorch 2.8+ remain ForeignTwin evidence\n");
 
     printf("\n  production dispatch path: BonfyreGDN tile kernel (zero deps)\n");
     printf("  to override:  BONFYRE_FLASHQLA_BACKEND=ref|tile|avx2|neon\n");
@@ -311,73 +282,15 @@ static int cmd_doctor(void) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
- * Python / FlashQLA dispatch — compare-external only.
- * Not used in production.  fork/exec, no shell injection risk.
+ * Foreign FlashQLA execution is intentionally absent. It is not a Bonfyre
+ * capability until it has a native or governed external-organ realization.
  * ═══════════════════════════════════════════════════════════════════ */
 
-static int dispatch_to_python_flashqla(const char *in_path, const char *out_path) {
-    char tmp_py[MAX_PATH];
-    snprintf(tmp_py, sizeof(tmp_py), "/tmp/bonfyre_flashqla_%d.py", (int)getpid());
-
-    FILE *py = fopen(tmp_py, "w");
-    if (!py) { perror(tmp_py); return 1; }
-
-    /* The script reads paths from argv[1]/argv[2] — no interpolation. */
-    fprintf(py,
-        "import sys, struct, torch\n"
-        "from flash_qla import chunk_gated_delta_rule\n"
-        "\n"
-        "MAGIC_IN  = 0x414C4742\n"
-        "MAGIC_OUT = 0x4F47444E\n"
-        "\n"
-        "in_path, out_path = sys.argv[1], sys.argv[2]\n"
-        "\n"
-        "with open(in_path, 'rb') as f:\n"
-        "    magic, ver, B, T, H, K, V = struct.unpack('<7I', f.read(28))\n"
-        "    assert magic == MAGIC_IN, f'bad magic {magic:#010x}'\n"
-        "    scale, = struct.unpack('<f', f.read(4))\n"
-        "    has_h0, = struct.unpack('<I', f.read(4))\n"
-        "    def rd(n):\n"
-        "        raw = f.read(n * 4)\n"
-        "        return torch.frombuffer(bytearray(raw), dtype=torch.float32).clone()\n"
-        "    q    = rd(B*T*H*K).reshape(B,T,H,K).to(torch.bfloat16).cuda()\n"
-        "    k    = rd(B*T*H*K).reshape(B,T,H,K).to(torch.bfloat16).cuda()\n"
-        "    v    = rd(B*T*H*V).reshape(B,T,H,V).to(torch.bfloat16).cuda()\n"
-        "    g    = rd(B*T*H  ).reshape(B,T,H  ).to(torch.bfloat16).cuda()\n"
-        "    beta = rd(B*T*H  ).reshape(B,T,H  ).to(torch.bfloat16).cuda()\n"
-        "    h0   = None\n"
-        "    if has_h0:\n"
-        "        h0 = rd(B*H*K*V).reshape(B,H,K,V).to(torch.bfloat16).cuda()\n"
-        "\n"
-        "o, h_fin = chunk_gated_delta_rule(\n"
-        "    q=q, k=k, v=v, g=g, beta=beta, scale=float(scale),\n"
-        "    initial_state=h0, output_final_state=True)\n"
-        "\n"
-        "o_f32  = o.cpu().to(torch.float32).contiguous()\n"
-        "hf_f32 = h_fin.cpu().to(torch.float32).contiguous()\n"
-        "\n"
-        "with open(out_path, 'wb') as f:\n"
-        "    f.write(struct.pack('<7I', MAGIC_OUT, 1, B, T, H, K, V))\n"
-        "    f.write(o_f32.numpy().tobytes())\n"
-        "    f.write(hf_f32.numpy().tobytes())\n"
-        "\n"
-        "print(f'flashqla(py): B={B} T={T} H={H} K={K} V={V} -> {out_path}')\n"
-    );
-    fclose(py);
-
-    pid_t pid = fork();
-    if (pid < 0) { remove(tmp_py); return 1; }
-    if (pid == 0) {
-        /* Child: exec python3 directly — paths are argv, never shell-interpolated */
-        char *const args[] = { "python3", tmp_py, (char *)in_path, (char *)out_path, NULL };
-        execvp("python3", args);
-        _exit(127);
-    }
-    int status = 0;
-    waitpid(pid, &status, 0);
-    remove(tmp_py);
-
-    return (WIFEXITED(status) && WEXITSTATUS(status) == 0) ? 0 : 1;
+static int dispatch_to_archived_external(const char *in_path, const char *out_path) {
+    (void)in_path;
+    (void)out_path;
+    fprintf(stderr, "compare-external: foreign FlashQLA dispatch is archived; use the native tile backend\n");
+    return 2;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -631,8 +544,7 @@ static int cmd_verify(int argc, char **argv) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
- * compare-external — run Python FlashQLA and compare with tile kernel.
- * For benchmarking against upstream.  Not used in production.
+ * compare-external is retained as an explicit unavailable ForeignTwin boundary.
  * ═══════════════════════════════════════════════════════════════════ */
 static int cmd_compare_external(int argc, char **argv) {
     const char *in_path  = bf_arg_value(argc, argv, "--in");
@@ -640,21 +552,7 @@ static int cmd_compare_external(int argc, char **argv) {
     if (!in_path)  { fprintf(stderr, "flashqla compare-external: --in required\n");  return 1; }
     if (!out_path) { fprintf(stderr, "flashqla compare-external: --out required\n"); return 1; }
 
-    int sm = detect_sm_major();
-    if (sm < 9) {
-        fprintf(stderr, "compare-external: SM%d < 90 — Python FlashQLA requires Hopper (H100/H200)\n",
-                sm);
-        return 1;
-    }
-    if (!check_flashqla_pkg()) {
-        fprintf(stderr,
-            "compare-external: flash_qla not importable.\n"
-            "  pip install -v git+https://github.com/QwenLM/FlashQLA\n");
-        return 1;
-    }
-
-    printf("flashqla compare-external: SM%d — running Python FlashQLA...\n", sm);
-    return dispatch_to_python_flashqla(in_path, out_path);
+    return dispatch_to_archived_external(in_path, out_path);
 }
 
 /* ═══════════════════════════════════════════════════════════════════

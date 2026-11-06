@@ -1,0 +1,228 @@
+atlas institutional-namespaces
+
+architecture institutional-namespaces
+  canonical_name InstitutionalNamespaces
+  owns RootNamespace
+  consumes AddressExpr
+  consumes PackState
+  publishes RootNamespace
+  publishes PopulationState
+  family institutional
+  domain Institution / AddressPlane namespaces
+  layer forwarding
+  semantic_question What is the stable address of this estate, and is that address backed by state today?
+  purpose Give every root product and delegated estate one AddressPlane namespace so the atlas can descend from the engine root into a specific relationship, managed client, capability or work item without a bespoke lookup per product.
+  maturity architectural
+  node_types Namespace
+  node_types PopulationState
+  edge_types descends_from
+  edge_types populated_by
+  invariant every root namespace declares one population state from REAL, SEEDED or DECLARED
+  invariant DECLARED means the namespace exists and nothing populates it; it is never rendered as an existing estate
+  invariant a namespace is populated by packs or existing state, never by this file
+  invariant an estate's namespace is stable across repopulation so addresses survive a rebuild of the state beneath them
+  invariant the delegated parent declares its leadership tuple -- estate, role, scope, permission and object -- so a vertical organ asks who leads a delegated estate by reading the contract rather than by comparing five compiled strings
+  invariant a delegated parent declares its whole leadership tuple or none of it; a half-declared leadership is two authority sources disagreeing, and the generator refuses it
+  forbidden_inference a delegated vertical's storage carrying a tenant's name -> that tenant being the type of every delegated estate (the rows were always estate-aware; only the table names were not)
+  forbidden_inference a DECLARED namespace -> an empty estate that may be discarded
+  forbidden_inference a SEEDED namespace -> a materialized product
+  interacts address-plane
+  interacts institutional-root
+  source_path cmd/BonfyreAtlas/src/contracts.h
+  witness cmd/BonfyreAtlas/bonfyre-atlas compile-contracts institutions --check-generated proves the institutional JSON and C header agree with this namespace contract without granting access
+  source_lineage disk census 2026-08-26
+
+namespace bonfyre
+  population REAL
+  detail Engine and product substrate. Root of every namespace below.
+
+namespace bonfyre/internal
+  population REAL
+  populated_by .bonfyre/run8/state.sqlite3
+  populated_by packs/run-history
+  populated_by packs/system-upgrades
+  detail Bonfyre operating itself. Run8 is the native operating system for building Bonfyre with Bonfyre, not a setup phase that ends.
+
+namespace bonfyre/internal/run8/work
+  population REAL
+  detail 136 work_items at census
+namespace bonfyre/internal/run8/epochs
+  population REAL
+  detail 192 epochs at census
+namespace bonfyre/internal/run8/receipts
+  population REAL
+  detail 192 receipts at census, 125 claude and 67 codex
+namespace bonfyre/internal/run8/proof
+  population REAL
+  detail 507 anti_amnesia records at census
+namespace bonfyre/internal/run8/providers
+  population REAL
+  detail 2 provider_state rows at census
+namespace bonfyre/internal/run8/mesh
+  population REAL
+  detail 118 mesh_events and 112 mesh_delivery rows at census
+
+namespace bonfyre/personal
+  population REAL
+  populated_by tools/food_offer_observations.py
+  populated_by tools/housing_*.py
+  populated_by .bonfyre/run8-r2c/*/epochs/*/physical-realization-food/
+  detail Private product. Owner-scoped today, household-scoped later, without copying the business hierarchy into it.
+namespace bonfyre/personal/food
+  population REAL
+namespace bonfyre/personal/housing
+  population REAL
+namespace bonfyre/personal/external
+  population DECLARED
+  detail Observed institutions, accounts, memberships and eventual effect rails. Reserved deliberately; public observation, personal relationship and realization are three different things.
+
+namespace bonfyre/habitat
+  population SEEDED
+  populated_by packs/habitat-human-factors
+  detail Standalone social and spatial experiment. Its product language is person, group, space, presence, invite; not client, tenant, invoice.
+
+namespace bonfyre/ventures
+  population REAL
+  populated_by packs/utd-vdc
+  populated_by packs/acm-queue
+  populated_by packs/tarbell
+  populated_by packs/institutional-opportunities
+  populated_by packs/adjacent-opportunities
+  populated_by packs/technical-institutions
+  detail Bonfyre's own future-facing institutional estate. Reachability is determined against proof, work and authority rather than by declaring an opportunity available.
+
+namespace bonfyre/ventures/fleming-equity-group
+  population SEEDED
+  populated_by packs/fleming-equity-group
+  detail A DFW commercial-property relationship estate. The seed contains source-bound observations, a non-actionable flyer fixture and work; it does not establish a client agreement, title, licensing, buyer appetite or an opportunity's reachability.
+
+namespace bonfyre/collaborations
+  population DECLARED
+  detail Direct project collaborations such as Bernstein, DeepEval, AgentGuard, Agent Inspect, Deputy, ChainWeaver. Namespace established without state. To be derived from actual issue, PR and maintainer evidence, never by promoting a Partner Commons profile into a fake relationship.
+
+namespace bonfyre/partner-commons
+  population REAL
+  detail Method and realization bank. Not an integration list and not a relationship list.
+
+namespace bonfyre/delegated
+  population REAL
+  detail Estates Bonfyre delegates to an operating business that holds its own relationships, clients and users.
+
+namespace upper90
+  population REAL
+  populated_by packs/upper90
+  parent bonfyre
+  delegated_parent true
+  leadership_role upper90-leadership
+  leadership_permission upper90:private-access
+  leadership_object upper90-private-workspace
+  detail First complete delegated vertical. Reference implementation of institutional delegation.
+  detail The parent link is declared rather than inferred: upper90 is a top-level
+  detail namespace, not bonfyre/upper90, so nesting does not carry it. A bonfyre
+  detail grant opens upper90 and everything upper90 manages; the reverse never holds.
+  detail The leadership tuple is declared here because the vertical organ tested
+  detail it as five separate string literals -- estate, role, scope, permission and
+  detail object. That is institutional law living in an organ, so a second delegated
+  detail parent would have required a code change rather than a contract line.
+namespace upper90/relationships
+  population REAL
+namespace upper90/providers
+  population REAL
+namespace upper90/capabilities
+  population REAL
+namespace upper90/managed
+  population REAL
+namespace upper90/managed/jrss
+  population REAL
+  inherited_role jrss-internal-admin
+namespace upper90/managed/ai-loss
+  population REAL
+  inherited_role ai-loss-admin
+  # The pack carrying this product's grammar. Declared here so generic machinery
+  # discovers a namespace's contracts rather than embedding the product's name in
+  # a filename, a schema string or an import.
+  product_pack packs/upper90/product-contract-ai-loss.yaff
+namespace upper90/managed/leads
+  population REAL
+  inherited_role leads-demo-admin
+  detail Held a live institution grant and an MCP institutional slice while this
+  detail contract declared no namespace for it. Distinct from upper90/demo, which
+  detail is the Leads Demo -- a DemoInstitution in world DEMO, not this estate.
+namespace upper90/demo
+  population SEEDED
+  detail Leads Demo. A DemoInstitution in world DEMO, not a client with fake data.
+namespace upper90/work
+  population REAL
+
+# Deep Ellum Night Grid -- the demo institution the authority lattice is tested
+# against.
+#
+# Declared as its own root rather than under upper90 because it is not a client
+# Upper90 manages; it is a separate institution that happens to execute in the
+# DEMO world. Putting it under upper90/managed would have made every lattice
+# assertion about it also an assertion about Upper90's ancestry, which is
+# exactly the contortion the frontier warns against.
+#
+# Every persona below is synthetic. The venues, creators and sponsor are
+# invented for this estate and are not observations of real Deep Ellum
+# businesses. A real business may still enter through ForeignTwin with its own
+# epistemic status; it never becomes one of these.
+
+namespace nightgrid
+  population SEEDED
+  world DEMO
+  demo_institution true
+  detail Deep Ellum Night Grid. A DemoInstitution in world DEMO: synthetic members,
+  detail real institutional mechanics. It exists to hold the intermediate authority
+  detail states no real estate currently occupies -- one-institution read, write
+  detail without finance, finance without admin, publication without member
+  detail administration -- and to be one Matrix world projected across four
+  detail territories rather than four demo sites.
+  detail Cannot infer: a persona exercising a capability here -> that capability
+  detail being authorized in a LIVE institution.
+  detail Bound at nightgrid.aurekai.live with institution:nightgrid registered in
+  detail matrix_institutions as a DemoInstitution in world DEMO. Five synthetic
+  detail subjects are authored in CMS and projected by four surface patterns that
+  detail read the one content type with different field sets, which is the whole
+  detail demonstration: one Matrix world seen four lawful ways, not four datasets.
+  detail Served at /tonight on all four territories rather than at a dedicated host:
+  detail a separate nightgrid host would have needed its own certificate and would
+  detail have proved the opposite thing, that the demo is a site rather than a
+  detail projection. A reader can open two territories side by side and see one
+  detail institution described two lawful ways.
+namespace nightgrid/venues
+  population SEEDED
+namespace nightgrid/creators
+  population SEEDED
+namespace nightgrid/campaigns
+  population SEEDED
+namespace nightgrid/events
+  population SEEDED
+namespace nightgrid/safety
+  population SEEDED
+
+# The persona lattice. Each line is a role, the institutional rank it holds, and
+# the capability class it is allowed to touch. The point of declaring it is that
+# "a venue operator must not gain district admin" becomes a row a test can read
+# rather than a sentence in a plan.
+persona_lattice nightgrid
+  persona organizer      admin  events,members,publication
+  persona venue          write  merchant,offers,capacity
+  persona creator        write  creator,deliverables
+  persona sponsor        write  finance,campaign-budget
+  persona editor         write  publication
+  persona safety         write  safety,operations
+  persona member         read   participation
+  persona machine        read   machine-closure
+
+# The institutional role lattice, ranked.
+#
+# read < write < admin was a strcmp ladder inside BonfyreAuth. A rank decides
+# whether a held grant satisfies a required role, so the ordering is an
+# authority policy, not a formatting detail -- and it was legible only by
+# reading the comparison that used it.
+institution_roles
+  role read 0
+  role write 1
+  role admin 2
+  forbidden_inference a higher rank -> authority over an estate the grant does not name

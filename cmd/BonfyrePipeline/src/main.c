@@ -1,3 +1,19 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+/* The POSIX pin above hides BSD interfaces on Darwin -- strcasecmp, ru_maxrss,
+ * MSG_DONTWAIT, INADDR_LOOPBACK -- so this file did not compile on the macOS
+ * control plane at all. _DARWIN_C_SOURCE restores them without loosening the
+ * POSIX baseline the Linux deploy host needs. */
+#ifdef __APPLE__
+#ifndef _DARWIN_C_SOURCE
+#define _DARWIN_C_SOURCE 1
+#endif
+#endif
+
 /*
  * BonfyrePipeline — unified single-process pipeline.
  *
@@ -24,6 +40,9 @@
 #include <sqlite3.h>
 #include <bonfyre.h>
 
+#include "bf_lex.h"
+#include "../../../lib/libbonfyre/include/bf_help.h"
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 extern char **environ;
 
 /* ================================================================
@@ -56,18 +75,11 @@ static long current_max_rss_kb(void) {
  * ================================================================ */
 
 /* Lightweight JSON string extraction for key files */
+/* Delegates to the one implementation. This copy stopped at the first quote,
+ * never unescaped, and on overflow wrote a prefix and returned success -- so a
+ * truncated value was indistinguishable from a whole one at a gate. */
 static int gate_json_str(const char *json, const char *key, char *out, size_t sz) {
-    char needle[256]; snprintf(needle, sizeof(needle), "\"%s\"", key);
-    const char *p = strstr(json, needle);
-    if (!p) { out[0] = '\0'; return 0; }
-    p += strlen(needle);
-    while (*p && (*p == ' ' || *p == ':' || *p == '\t')) p++;
-    if (*p != '"') { out[0] = '\0'; return 0; }
-    p++;
-    size_t i = 0;
-    while (*p && *p != '"' && i < sz - 1) out[i++] = *p++;
-    out[i] = '\0';
-    return 1;
+    return bf_lex_json_string(json, key, out, sz);
 }
 
 static int pipeline_gate(const char *key, const char *key_file,
@@ -753,7 +765,21 @@ static int pipeline_ledger(const char *outdir, const char *family,
 /* Forward declaration — transcript pipeline defined after main */
 static int pipeline_transcript(const char *audio_input, const char *outdir);
 
+static void usage(void) {
+    fprintf(stderr,
+            "BonfyrePipeline — unified single-process pipeline\n\n"
+            "Usage:\n"
+            "  bonfyre-pipeline run <input> --out DIR [--type TYPE] [--artifacts DIR]\n"
+            "      [--key KEY] [--key-file F] [--tier TIER]\n\n"
+            "Audio files (.wav/.mp3/.m4a/.flac/.ogg or --type audio):\n"
+            "  Runs transcript pipeline: transcribe → clean → brief → proof → tag → offer → pack\n\n"
+            "Other types:\n"
+            "  Runs data pipeline: gate → ingest → index → compress → meter → stitch → ledger\n"
+        );
+}
+
 int main(int argc, char *argv[]) {
+    if (bf_help_requested(argc, argv)) { usage(); return 0; }
     const char *input = NULL;
     const char *type = "text";
     const char *outdir = NULL;
@@ -762,7 +788,13 @@ int main(int argc, char *argv[]) {
     const char *key_file = NULL;  /* #15 */
     const char *tier = "free";
 
-    if (argc >= 2 && strcmp(argv[1], "run") == 0) {
+    enum { PL_RUN };
+    static const BfCommandEntry pipeline_commands[] = {
+        {"run", PL_RUN, 0, NULL},
+    };
+    const BfCommandEntry *command = argc < 2 ? NULL : bf_command_lookup(pipeline_commands,
+        sizeof(pipeline_commands) / sizeof(pipeline_commands[0]), argv[1]);
+    if (command && command->id == PL_RUN) {
         if (argc >= 3) input = argv[2];
         for (int i = 3; i < argc - 1; i++) {
             if (strcmp(argv[i], "--type") == 0) type = argv[i+1];
@@ -796,16 +828,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (!input || !outdir) {
-        fprintf(stderr,
-            "BonfyrePipeline — unified single-process pipeline\n\n"
-            "Usage:\n"
-            "  bonfyre-pipeline run <input> --out DIR [--type TYPE] [--artifacts DIR]\n"
-            "      [--key KEY] [--key-file F] [--tier TIER]\n\n"
-            "Audio files (.wav/.mp3/.m4a/.flac/.ogg or --type audio):\n"
-            "  Runs transcript pipeline: transcribe → clean → brief → proof → tag → offer → pack\n\n"
-            "Other types:\n"
-            "  Runs data pipeline: gate → ingest → index → compress → meter → stitch → ledger\n"
-        );
+        usage();
         return 1;
     }
 

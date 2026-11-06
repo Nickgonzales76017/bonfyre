@@ -1,0 +1,247 @@
+#!/usr/bin/env python3
+# Archived after Bun inventory compiler cutover.
+"""Every list this estate holds, imported into one ledger without adding them up.
+
+Each inventory keeps its own label all the way through, so the report can say
+how many roots and channels two inventories share instead of pretending their
+totals stack:
+
+  EXTERNAL_ESTATE_V4        the 4,891 observed external-estate occurrences
+  ADDRESS_PLANE             candidate advertisements over those occurrences
+  PUBLICATION_FEEDS         the normalised feed corpus behind the publications
+  DISCOVERY_CANDIDATES      addresses a discovery pass proposed
+  PUBLIC_DATASET_REGISTRY   the dataset registry's candidates
+  LIVE_SOURCE_DISCOVERY     what the live source compiler admitted
+  PUBLIC_COMMONS_PASSPORT   the public estate passports
+
+Nothing here reads the network and nothing is admitted: an inventory row is a
+listing.  The census (what the pages actually read) is linked separately by
+`bonfyre-source-frontier census-link`, which is the only step that admits.
+
+  compile_inventories.py --db frontier.db --frontier BIN [--out DIR] [--v4-jsonl F]
+      [--v4-sqlite F] [--advertisements F] [--feeds F] [--discovery F]
+      [--dataset-registry F] [--live-sources F] [--passports F]
+"""
+import argparse, json, os, re, sqlite3, subprocess, sys
+
+# What an address's shape says it probably speaks.  A guess about protocol is
+# not a claim about rights, availability or content.
+PROTOCOL_HINTS = [
+    (r"\.ics(\?|$)|/ical|icalendar", "ics"),
+    (r"/rss|rss\.xml|feed\.xml|\.rss(\?|$)|RSSFeed\.aspx", "rss"),
+    (r"/atom|atom\.xml", "atom"),
+    (r"feed/?$|/feeds?/", "rss"),
+    (r"feed\.json|\.json_feed", "json_feed"),
+    (r"/api/views/|/resource/[a-z0-9]{4}-[a-z0-9]{4}", "socrata"),
+    (r"/api/3/action/|/dataset\.json", "ckan"),
+    (r"/arcgis/rest/|/FeatureServer|/MapServer", "arcgis"),
+    (r"openapi\.json|swagger\.json|/v3/api-docs", "openapi"),
+    (r"/graphql", "graphql"),
+    (r"gtfs.*\.zip|/gtfs-rt|/vehiclepositions|/tripupdates", "gtfs"),
+    (r"gbfs\.json|/gbfs/", "gbfs"),
+    (r"/stac|catalog\.json", "stac"),
+    (r"oai2?\?|/oai-pmh", "oai_pmh"),
+    (r"/sparql", "sparql"),
+    (r"\.well-known/mcp|/mcp(\?|$)", "mcp"),
+    (r"\.well-known/agent(-card)?\.json|/a2a", "a2a"),
+    (r"/beckn|/bap|/bpp", "beckn"),
+    (r"x402", "x402"),
+    (r"sitemap.*\.xml", "sitemap"),
+    (r"\.wsdl|/soap", "soap"),
+    (r"/api(/|$)", "json_api"),
+]
+
+MATERIAL_HINTS = [
+    ("ics", "event"), ("socrata", "dataset"), ("ckan", "dataset"), ("arcgis", "dataset"),
+    ("stac", "dataset"), ("gtfs", "mobility"), ("gbfs", "mobility"), ("oai_pmh", "research"),
+    ("rss", "publication"), ("atom", "publication"), ("json_feed", "publication"),
+]
+
+
+def protocol_of(url, declared=""):
+    if declared:
+        return declared
+    low = url.lower()
+    for pattern, name in PROTOCOL_HINTS:
+        if re.search(pattern, low):
+            return name
+    return "unknown"
+
+
+def material_of(protocol, declared=""):
+    if declared:
+        return declared
+    for p, m in MATERIAL_HINTS:
+        if protocol == p:
+            return m
+    return ""
+
+
+def row(url, label_fields=None, **fields):
+    out = {"address": url}
+    out.update({k: v for k, v in fields.items() if v})
+    out.setdefault("protocol", protocol_of(url, fields.get("protocol", "")))
+    material = material_of(out["protocol"], fields.get("material", ""))
+    if material:
+        out["material"] = material
+    if label_fields:
+        out.update(label_fields)
+    return out
+
+
+def from_v4_jsonl(path):
+    for line in open(path, encoding="utf-8"):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            doc = json.loads(line)
+        except ValueError:
+            continue
+        url = doc.get("primary_url") or ""
+        if not url:
+            continue
+        projection = doc.get("projection") or {}
+        kind = doc.get("source_kind") or ""
+        yield row(url, listing_id=doc.get("id", ""), name=doc.get("observed_name", ""), kind=kind,
+                  truth_level=doc.get("truth_level", "observed_candidate"),
+                  protocol={"rss": "rss", "public_api": "", "mcp": "mcp", "x402": "x402",
+                            "x402_spec": "x402", "machine_protocol": ""}.get(kind, ""),
+                  material="capability" if "PAY" in (projection.get("candidate_affordances") or []) else "")
+
+
+def from_v4_sqlite(path):
+    con = sqlite3.connect("file:%s?mode=ro" % path, uri=True)
+    for ident, name, url, kind in con.execute("SELECT id, observed_name, primary_url, source_kind FROM occurrence"):
+        if url:
+            yield row(url, listing_id=ident or "", name=name or "", kind=kind or "", truth_level="observed_candidate",
+                      protocol={"rss": "rss", "mcp": "mcp", "x402": "x402", "x402_spec": "x402"}.get(kind or "", ""))
+    con.close()
+
+
+def from_advertisements(path, v4_urls):
+    """An advertisement is the AddressPlane's projection of an occurrence, not a
+    new source.  Importing it under its own label is what makes the overlap
+    visible instead of letting two inventories both claim the same root."""
+    con = sqlite3.connect("file:%s?mode=ro" % path, uri=True)
+    try:
+        rows = con.execute("SELECT identity, candidate_kind FROM candidate_advertisement").fetchall()
+    except sqlite3.OperationalError:
+        con.close()
+        return
+    for identity, kind in rows:
+        match = re.search(r"ext[-_](\d{5})", identity or "")
+        url = v4_urls.get("ext-%s" % match.group(1)) if match else None
+        if url:
+            yield row(url, kind=kind or "")
+    con.close()
+
+
+def from_feed_corpus(path):
+    con = sqlite3.connect("file:%s?mode=ro" % path, uri=True)
+    try:
+        rows = con.execute("SELECT COALESCE(label,''), COALESCE(url,''), COALESCE(kind,''), COALESCE(family,'') FROM internet_source").fetchall()
+    except sqlite3.OperationalError:
+        con.close()
+        return
+    for label, url, kind, family in rows:
+        if url:
+            yield row(url, name=label, protocol="rss" if kind.startswith("rss") else "", material="publication", kind=family)
+    con.close()
+
+
+def from_discovery(path):
+    for line in open(path, encoding="utf-8", errors="replace"):
+        parts = line.strip().split("|")
+        if len(parts) >= 2 and parts[1].startswith("http"):
+            yield row(parts[1], kind="discovery")
+
+
+def from_dataset_registry(path):
+    for line in open(path, encoding="utf-8"):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            doc = json.loads(line)
+        except ValueError:
+            continue
+        url = doc.get("url") or doc.get("landing_page") or doc.get("address") or ""
+        if not url:
+            continue
+        refusal = "" if (doc.get("robots") in (None, "", "allow")) else "robots: %s" % doc.get("robots")
+        yield row(url, name=doc.get("title", "") or doc.get("name", ""), material="dataset",
+                  kind=doc.get("publisher", ""), refusal=refusal)
+
+
+def from_live_sources(path):
+    doc = json.load(open(path, encoding="utf-8"))
+    rows = doc if isinstance(doc, list) else doc.get("rows", [])
+    for r in rows:
+        url = r.get("url") or ""
+        if url:
+            yield row(url, name=r.get("publisher_name", "") or r.get("label", ""), identity=r.get("publisher_ident", ""),
+                      material={"podcasts": "audio", "local-voices": "publication"}.get(r.get("family", ""), ""),
+                      kind=r.get("family", ""), census_source=r.get("source", ""), state="eligible")
+
+
+def from_passports(path):
+    doc = json.load(open(path, encoding="utf-8"))
+    rows = doc if isinstance(doc, list) else doc.get("passports", doc.get("rows", []))
+    for r in rows if isinstance(rows, list) else []:
+        for url in [r.get("root"), r.get("endpoint")] + list(r.get("endpoints", []) or []):
+            if url and str(url).startswith("http"):
+                yield row(str(url), name=r.get("name", "") or r.get("id", ""), kind="public commons",
+                          rights=r.get("licence", "") or r.get("rights", ""), state="eligible")
+
+
+SOURCES = [
+    ("EXTERNAL_ESTATE_V4", "v4_jsonl", from_v4_jsonl),
+    ("EXTERNAL_ESTATE_V4", "v4_sqlite", from_v4_sqlite),
+    ("ADDRESS_PLANE", "advertisements", None),
+    ("PUBLICATION_FEEDS", "feeds", from_feed_corpus),
+    ("DISCOVERY_CANDIDATES", "discovery", from_discovery),
+    ("PUBLIC_DATASET_REGISTRY", "dataset_registry", from_dataset_registry),
+    ("LIVE_SOURCE_DISCOVERY", "live_sources", from_live_sources),
+    ("PUBLIC_COMMONS_PASSPORT", "passports", from_passports),
+]
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--db", required=True)
+    ap.add_argument("--frontier", required=True, help="bonfyre-source-frontier binary")
+    ap.add_argument("--out", default=None, help="directory to keep the generated listings")
+    for _, name, _ in SOURCES:
+        ap.add_argument("--" + name.replace("_", "-"))
+    args = ap.parse_args()
+    out = args.out or os.path.join(os.path.dirname(os.path.abspath(args.db)), "listings")
+    os.makedirs(out, exist_ok=True)
+    subprocess.run([args.frontier, "init", "--db", args.db], check=True, capture_output=True)
+    v4_urls, report = {}, {}
+    for label, name, reader in SOURCES:
+        path = getattr(args, name)
+        if not path or not os.path.exists(path):
+            continue
+        if name == "advertisements":
+            rows = from_advertisements(path, v4_urls)
+        else:
+            rows = reader(path)
+        listing = os.path.join(out, "%s.%s.jsonl" % (label.lower(), name))
+        written = 0
+        with open(listing, "w") as f:
+            for r in rows:
+                match = re.search(r"ext[-_](\d{5})", r.get("listing_id", ""))
+                if match:
+                    v4_urls.setdefault("ext-%s" % match.group(1), r["address"])
+                f.write(json.dumps(r) + "\n")
+                written += 1
+        done = subprocess.run([args.frontier, "import", "--db", args.db, "--label", label, "--jsonl", listing],
+                              capture_output=True, text=True)
+        report[label] = json.loads(done.stdout.splitlines()[-1]) if done.returncode == 0 and done.stdout.strip() else {"error": done.stderr.strip()[:200], "listed": written}
+    print(json.dumps(report))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

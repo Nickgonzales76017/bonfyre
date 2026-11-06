@@ -1,0 +1,49 @@
+atlas optimization-decision-program
+
+architecture decision-program
+  canonical_name DecisionProgram
+  owns BoundedDecisionQuestion
+  owns DecisionAssessment
+  consumes ExactCandidateSet
+  consumes AdmittedSourceDescriptor
+  publishes DiagnosticReviewQueue
+  family optimization
+  domain Optimization / typed model decisions
+  layer execution
+  semantic_question Can a typed, joint multi-question model reduce human review work on an exact candidate set without becoming source truth or effect authority?
+  purpose Compile bounded state and CUE-authored choice, score and noul questions into a model request; validate the returned distribution, preserve request and response digests, compare models on exactly the same descriptor, and leave disagreement or uncertainty for an operator.
+  maturity implemented
+  source_path cmd/BonfyreExternalEstate/decision-program-plane.cue
+  source_path cmd/BonfyreExternalEstate/tools/decision_program_plane.mjs
+  source_path components/BonfyreDecision/typed-decision.mjs
+  source_path components/BonfyreDecision/installed-runtime.mjs
+  source_path components/BonfyreDecision/local-inference.mjs
+  source_path cmd/BonfyreExternalEstate/tests/decision_program_plane.test.mjs
+  source_path cmd/BonfyreExternalEstate/results/clef-first-live-probe.json
+  source_path cmd/BonfyreExternalEstate/results/clef-scale-assessment.json
+  witness cmd/BonfyreExternalEstate/tests/decision_program_plane.test.mjs proves source-indexed string questions, typed distribution validation, bounded Clef and Clef-flash requests, receipt-bound model comparison and refusal of mismatched sources or an effecting row
+  witness cmd/BonfyreExternalEstate/tests/source_fabric_cycle_impact.test.mjs proves the Source Fabric cycle excludes decision experiments and refuses legacy decision options because no avoided work has been measured
+  witness cmd/BonfyreExternalEstate/results/clef-first-live-probe.json records one live request each to Clef and Clef-flash on the same admitted source, distinct response digests, model disagreement, and a retained review outcome; it is not a calibration, accuracy or typical-latency measurement
+  witness cmd/BonfyreExternalEstate/results/clef-scale-assessment.json records a local estate snapshot of admitted and candidate channel volume and retained item volume while identifying zero replaced downstream work in the existing decision program
+  invariant the exact owner supplies the finite candidate set; the model neither discovers nor admits a source
+  invariant choice, score and noul questions are authored once in CUE and the bounded request carries source-indexed string instructions, not arbitrary JS prompt branches
+  invariant a model response must validate against the authored answer shape before it becomes a diagnostic receipt
+  invariant ordinary source assessment selects the same pinned local owner and serialized inference lane as ContextCut, MCP and Flow; planning neither loads weights nor requests hosted credentials
+  invariant execution requires an explicit total call budget before model startup; hosted retry attempts consume that budget and private source descriptors cannot be overridden by a public batch attestation
+  invariant hosted egress requires explicit provider selection and public information classification; source admission and a public-looking address do not imply permission to send descriptors remotely
+  witness cmd/BonfyreExternalEstate/tests/decision_program_plane.test.mjs proves default local and CLI planning without model residency, shared fixture inference and provenance, missing budget refusal, hosted privacy and retry accounting, and score legend validation without effect authority
+  invariant a request carries one semantic source with all of its questions; separate source records run through the shared bounded scheduler rather than being fused into Clef joint field attention
+  invariant review lanes use option probability rather than provider-specific confidence, and ordered scores retain and validate their complete probability distributions
+  invariant the comparison requires identical source descriptors and distinct receipt-bound model responses; disagreement produces operator review, never a vote
+  invariant a diagnostic may label or prioritize human review only; source standing, rights, publication, payment and effects remain with their exact owners
+  invariant a model diagnostic is not a recurring production step until a named downstream operation, measured baseline, avoided-work count, quality floor, and total cost comparison exist
+  forbidden_inference model confidence or model agreement -> exactness, admission, publication or authority
+  forbidden_inference one live two-model probe -> domain accuracy, calibration, typical latency, or a cheaper whole-system execution path
+  known_gap one live source demonstrates connectivity and guarded consumption, not measured review reduction; no production consumer replaces expensive work today, so the Source Fabric cycle does not invoke this experimental owner
+  known_gap the bounded CLI reads Cloudflare account and API token from process environment; the sealed BonfyreCredentials store is not yet its execution boundary
+  known_gap ContextCut, MCP and Flow share the runtime and typed probability substrate but retain distinct owner-authored question programs; no cross-domain quality or avoided-work claim follows from shared execution
+  known_gap this owner is text-only; the native execution bridge does not establish upstream multimodal support or production quality and cost savings
+  interacts source-frontier
+  interacts cheap-cognition
+  interacts decision-plane
+  interacts native-clef-runtime

@@ -1,0 +1,21 @@
+[Unit]
+Description=Aurekai external-estate read-only candidate surface
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+EnvironmentFile=/etc/bonfyre/external-estate.env
+ExecStart=/usr/bin/node ${AUREKAI_REPO_ROOT}/Aurekai/src/external-estate-server.mjs
+Restart=always
+RestartSec=2
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadOnlyPaths=/opt/bonfyre
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,35 @@
+{
+  "schema": "bonfyre.project-delta.cutover.v1",
+  "date": "2026-10-02",
+  "service": "gui/503/com.bonfyre.project-delta-watcher",
+  "previous": {
+    "program": "/usr/bin/python3",
+    "script": "~/.bonfyre/mcp/project_watcher.py",
+    "pid": 1007,
+    "process_exit_verified": true,
+    "plist_sha256": "9427f8a73c267f29309b7c18b862f6471ea15f2556f189bb73bcbc07c702ca94",
+    "rollback_plist": "/private/tmp/bonfyre-watcher-cutover.GS5O6Y/original.plist"
+  },
+  "installed": {
+    "program": "/Users/nickgonzales/.bun/bin/bun",
+    "script": "integrations/mcp/project_delta_watcher.mjs",
+    "script_sha256": "534fd2b7fceb9ae826b445f9101a4a4881497e78699b4d19e8d94d7deaed2d17",
+    "plist": "deploy/launchd/com.bonfyre.project-delta-watcher.plist",
+    "plist_sha256": "c1064c55dbcea2a6fbabc91823839bc075c3378459f9f7e36f2bd676a7d85cb4",
+    "state": "running",
+    "pid_after_backoff_restart": 58469,
+    "non_program_plist_configuration_unchanged": true
+  },
+  "upstream": {
+    "configured_gateway": "http://127.0.0.1:13052",
+    "observation": "no listener; existing com.bonfyre.mcp-mesh-tunnel service is unloaded",
+    "live_delivery_verified": false,
+    "tunnel_modified_or_started": false
+  },
+  "verification": {
+    "watcher_fixture_tests": 8,
+    "watcher_assertions": 91,
+    "includes": ["snapshot parity", "bounded Git and HTTP", "journal encoding", "fake-clock retry backoff", "latest pending delivery"]
+  },
+  "forbidden_inference": "A running Bun producer and passing fixtures do not prove remote delivery, content-complete invalidation, retirement of other Python services, or exactly-once effects. PIDs and temporary rollback files are historical observations, not permanent resources."
+}

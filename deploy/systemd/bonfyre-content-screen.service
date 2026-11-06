@@ -1,0 +1,14 @@
+[Unit]
+Description=Bonfyre retained-content presentation screen
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Environment=BONFYRE_FOREIGN_BODIES=/var/lib/bonfyre/foreign/bodies
+Environment=BONFYRE_FOREIGN_RECEIPTS=/var/lib/bonfyre/foreign/receipts
+Environment=BONFYRE_SCREEN_TERMS=/var/lib/bonfyre/content-screen/terms.txt
+Environment=BONFYRE_CMS_DB=/var/lib/bonfyre/cms/bonfyre_cms.db
+ExecStart=/usr/bin/env bun /opt/bonfyre/native-src/scripts/content-screen.mjs
+# Missing private terms is reported as "looked at nothing", not a clean estate.
+SuccessExitStatus=2

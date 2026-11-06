@@ -1,0 +1,288 @@
+#!/usr/bin/env python3
+# Archived after Bun live-source compiler cutover.
+"""Compile live public sources from identity, without writing them by hand.
+
+Discovery starts from Wikidata (read through QLever): local organizations of the
+four Dallas-Fort Worth counties with an official website, feed or Mastodon
+address; U.S. public media and institutions that publish a feed; notable
+podcasts with a feed.  For each candidate:
+
+  1. a feed address is resolved -- the feed Wikidata names (P1019), else the
+     feed the organization's own homepage advertises (<link rel="alternate">),
+     else its Mastodon account's public feed (P4033);
+  2. the feed is sampled through the ForeignTwin observer (robots preflight,
+     receipt, retained body) under the source's own twin, so an admitted source
+     is readable by pages at once;
+  3. the sample is judged: at least three items, titles on nearly all of them,
+     something published recently, and a podcast that does not declare itself
+     explicit;
+  4. an admitted source is written as a census row carrying its publisher's
+     identity (publisher_ident, publisher_name) so its posts appear on that
+     organization's or place's identity page; a candidate that fails is kept as
+     evidence and not written.
+
+Every decision is written to the evidence file with the receipt digest and the
+measured sample, so a person can see why something was or was not admitted.
+
+  compile_live_sources.py --project BIN --foreign ROOT --out rows.json --evidence evidence.jsonl
+      [--channels local,media,podcasts] [--limit N] [--pace SECONDS]
+"""
+import argparse, hashlib, json, os, re, subprocess, sys, time, urllib.parse, urllib.request
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
+
+AGENT = "BonfyreProject/1.0 (+https://aurekai.work/)"
+QLEVER = "https://qlever.dev/api/wikidata"
+PREFIXES = ("PREFIX wd: <http://www.wikidata.org/entity/> PREFIX wdt: <http://www.wikidata.org/prop/direct/> "
+            "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX wikibase: <http://wikiba.se/ontology#> ")
+
+QUERIES = {
+    "local": PREFIXES + """
+SELECT ?org (SAMPLE(?l) AS ?name) (SAMPLE(?feed) AS ?feedurl) (SAMPLE(?web) AS ?site) (SAMPLE(?ma) AS ?mastodon) (SAMPLE(?tl) AS ?type) (MAX(?n) AS ?links) WHERE {
+  VALUES ?county { wd:Q110412 wd:Q111168 wd:Q111174 wd:Q109265 }
+  ?org wdt:P131+ ?county ; wikibase:sitelinks ?n ; rdfs:label ?l . FILTER(LANG(?l)="en")
+  FILTER NOT EXISTS { ?org wdt:P31 wd:Q5 }
+  OPTIONAL { ?org wdt:P1019 ?feed } OPTIONAL { ?org wdt:P856 ?web } OPTIONAL { ?org wdt:P4033 ?ma }
+  FILTER(BOUND(?feed) || BOUND(?web) || BOUND(?ma))
+  OPTIONAL { ?org wdt:P31 ?t . ?t rdfs:label ?tl . FILTER(LANG(?tl)="en") }
+} GROUP BY ?org HAVING(MAX(?n) >= 8) ORDER BY DESC(?links) LIMIT 150""",
+    "media": PREFIXES + """
+SELECT ?org (SAMPLE(?l) AS ?name) (SAMPLE(?feed) AS ?feedurl) (SAMPLE(?cls) AS ?class) (MAX(?n) AS ?links) WHERE {
+  VALUES ?cls { wd:Q11032 wd:Q1110794 wd:Q1616075 wd:Q14350 wd:Q1126006 }
+  ?org wdt:P31 ?cls ; wdt:P1019 ?feed ; wdt:P17 wd:Q30 ; wikibase:sitelinks ?n ; rdfs:label ?l . FILTER(LANG(?l)="en")
+} GROUP BY ?org HAVING(MAX(?n) >= 10) ORDER BY DESC(?links) LIMIT 80""",
+    "texas": PREFIXES + """
+SELECT ?org (SAMPLE(?l) AS ?name) (SAMPLE(?feed) AS ?feedurl) (SAMPLE(?web) AS ?site) (SAMPLE(?cls) AS ?class) (MAX(?n) AS ?links) WHERE {
+  VALUES ?cls { wd:Q33506 wd:Q3918 wd:Q7075 wd:Q17431399 wd:Q1110794 wd:Q11032 wd:Q1616075 wd:Q14350 }
+  ?org wdt:P31 ?cls ; wdt:P131+ wd:Q1439 ; wikibase:sitelinks ?n ; rdfs:label ?l . FILTER(LANG(?l)="en")
+  OPTIONAL { ?org wdt:P1019 ?feed } OPTIONAL { ?org wdt:P856 ?web }
+  FILTER(BOUND(?feed) || BOUND(?web))
+} GROUP BY ?org HAVING(MAX(?n) >= 6) ORDER BY DESC(?links) LIMIT 120""",
+    "podcasts": PREFIXES + """
+SELECT ?org (SAMPLE(?l) AS ?name) (SAMPLE(?feed) AS ?feedurl) (MAX(?n) AS ?links) WHERE {
+  ?org wdt:P31 wd:Q24634210 ; wdt:P1019 ?feed ; wikibase:sitelinks ?n ; rdfs:label ?l . FILTER(LANG(?l)="en")
+} GROUP BY ?org HAVING(MAX(?n) >= 3) ORDER BY DESC(?links) LIMIT 80""",
+}
+# Where the publishing platforms most organizations use put their feed, tried in
+# order only when a homepage advertises none: CivicPlus news flashes (most North
+# Texas city governments), WordPress, Drupal and static-site generators.
+CONVENTIONAL_FEEDS = ["/RSSFeed.aspx?ModID=1&CID=All-newsflash.xml", "/feed/", "/rss.xml", "/news/rss", "/feed", "/rss", "/index.xml", "/atom.xml"]
+NEWS_CLASSES = {"Q11032", "Q1110794", "Q1616075", "Q14350", "Q1126006"}
+FRESH_DAYS = {"local": 180, "media": 60, "podcasts": 365, "texas": 180}
+
+
+def qlever(query):
+    url = QLEVER + "?" + urllib.parse.urlencode({"query": re.sub(r"\s+", " ", query)})
+    with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": AGENT, "Accept": "application/sparql-results+json"}), timeout=180) as r:
+        return json.load(r)["results"]["bindings"]
+
+
+def slug(text, qid):
+    s = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")[:40].strip("-")
+    return "auto-%s-%s" % (s or "source", qid.lower())
+
+
+def observe(project, foreign, twin, url):
+    receipts, bodies = os.path.join(foreign, "receipts"), os.path.join(foreign, "bodies")
+    os.makedirs(receipts, exist_ok=True); os.makedirs(bodies, exist_ok=True)
+    receipt, body = os.path.join(receipts, twin + ".json"), os.path.join(bodies, twin + ".body")
+    subprocess.run([project, "foreign", "observe", twin, url, "--receipt", receipt, "--body", body, "--observe-right", "public"],
+                   capture_output=True, text=True, timeout=120)
+    last = {}
+    if os.path.exists(receipt):
+        lines = [l for l in open(receipt).read().splitlines() if l.strip().startswith("{")]
+        if lines:
+            last = json.loads(lines[-1])
+    text = ""
+    if os.path.exists(body) and 200 <= int(last.get("http_status") or 0) < 300:
+        text = open(body, "rb").read(2_000_000).decode("utf-8", "replace")
+    return last, text
+
+
+def discover_feed(html, base):
+    for m in re.finditer(r"<link\b[^>]*>", html[:400_000], re.I):
+        tag = m.group(0)
+        if not re.search(r"rel=[\"']?alternate", tag, re.I) or not re.search(r"type=[\"']?application/(rss|atom)\+xml", tag, re.I):
+            continue
+        href = re.search(r"href=[\"']([^\"']+)", tag, re.I)
+        if href:
+            url = urllib.parse.urljoin(base, href.group(1).replace("&amp;", "&"))
+            if url.startswith(("https://", "http://")) and "comments" not in url.lower():
+                return url
+    return None
+
+
+def parse_date(text):
+    text = text.strip()
+    try:
+        return parsedate_to_datetime(text).astimezone(timezone.utc)
+    except Exception:
+        pass
+    m = re.match(r"(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?", text)
+    if m:
+        try:
+            return datetime(int(m.group(1)), int(m.group(2)), int(m.group(3)), int(m.group(4) or 0), int(m.group(5) or 0), tzinfo=timezone.utc)
+        except ValueError:
+            return None
+    return None
+
+
+def judge(text, channel):
+    """What the sample shows, and whether it is admitted."""
+    element = "item" if re.search(r"<item[\s>]", text) else "entry" if re.search(r"<entry[\s>]", text) else None
+    report = {"element": element}
+    if not element:
+        report["refused"] = "not an RSS or Atom feed"
+        return report
+    head = text[: text.find("<%s" % element)]
+    if re.search(r"<itunes:explicit>\s*(yes|true|explicit)\s*</itunes:explicit>", head, re.I):
+        report["refused"] = "the show declares itself explicit"
+        return report
+    language = re.search(r"<language>\s*([A-Za-z-]+)\s*</language>", head) or re.search(r"<feed[^>]+xml:lang=[\"']([A-Za-z-]+)", head)
+    report["language"] = language.group(1).lower() if language else None
+    if report["language"] and not report["language"].startswith("en"):
+        # Pages here are read in English; a feed that says it is not is left out.
+        report["refused"] = "the feed is published in %s" % report["language"]
+        return report
+    blocks = re.findall(r"<%s[\s>].*?</%s>" % (element, element), text, re.S)[:40]
+    titled = sum(1 for b in blocks if re.search(r"<title[^>]*>\s*(<!\[CDATA\[)?\s*\S", b))
+    dates = []
+    for b in blocks:
+        d = re.search(r"<(pubDate|published|updated|dc:date)[^>]*>([^<]+)<", b)
+        if d:
+            parsed = parse_date(d.group(2))
+            if parsed and (parsed - datetime.now(timezone.utc)).days <= 2:   # a date in the future is not news
+                dates.append(parsed)
+    newest = max(dates) if dates else None
+    audio = sum(1 for b in blocks if re.search(r"<enclosure[^>]+type=[\"']audio/", b))
+    video = sum(1 for b in blocks if re.search(r"<enclosure[^>]+type=[\"']video/", b))
+    pictured = sum(1 for b in blocks if re.search(r"<media:(thumbnail|content)|<enclosure[^>]+type=[\"']image/|itunes:image", b))
+    age_days = (datetime.now(timezone.utc) - newest).days if newest else None
+    report.update({"items": len(blocks), "titled": titled, "dated": len(dates), "newest": newest.isoformat() if newest else None,
+                   "age_days": age_days, "audio": audio, "video": video, "pictured": pictured})
+    if len(blocks) < 3:
+        report["refused"] = "fewer than three items"
+    elif titled < 0.8 * len(blocks):
+        report["refused"] = "too few titled items"
+    elif age_days is None or age_days > FRESH_DAYS[channel]:
+        report["refused"] = "nothing published in the last %d days" % FRESH_DAYS[channel]
+    return report
+
+
+def row_for(candidate, feed, report, receipt):
+    channel, name, qid = candidate["channel"], candidate["name"], candidate["qid"]
+    kind = "audio" if report["audio"] >= max(1, report["items"] // 2) else "video" if report["video"] >= max(1, report["items"] // 2) else "text"
+    family = ("podcasts" if channel == "podcasts" else "local-voices" if channel == "local"
+              else "news" if channel == "texas" and candidate.get("class") in NEWS_CLASSES
+              else "news" if candidate.get("class") in NEWS_CLASSES else "institutions")
+    source = slug(name, qid)
+    return {
+        "source": source, "family": family, "kind": kind,
+        "label": name[:60], "says": ("what %s publishes" % name)[:200],
+        "twin": source, "tier": "WARM" if family == "news" else "COLD",
+        "cadence_seconds": 3600 if family == "news" else 21600 if family == "local-voices" else 86400,
+        "url": feed, "front_door": "no",
+        "reading": {"extract": "rss:" + report["element"], "title_field": "title"},
+        "publisher_ident": qid, "publisher_name": name[:200], "compiled_by": "live-source-compiler",
+        "note": ("compiled from Wikidata %s (%s) on %s: %d items, newest %s days old, receipt %s; posts are %s's own statements"
+                 % (qid, channel, time.strftime("%Y-%m-%d"), report["items"], report["age_days"], (receipt.get("content_sha256") or "")[:16], name))[:600],
+    }
+
+
+def candidates(channels, limit):
+    out = []
+    for channel in channels:
+        for b in qlever(QUERIES[channel]):
+            qid = b["org"]["value"].rsplit("/", 1)[1]
+            c = {"channel": channel, "qid": qid, "name": b["name"]["value"], "links": int(float(b.get("links", {}).get("value", "0")))}
+            for key in ("feedurl", "site", "mastodon", "type"):
+                if key in b:
+                    c[key] = b[key]["value"]
+            if "class" in b:
+                c["class"] = b["class"]["value"].rsplit("/", 1)[1]
+            out.append(c)
+    seen, unique = set(), []
+    for c in out:
+        if c["qid"] in seen:
+            continue
+        seen.add(c["qid"]); unique.append(c)
+    return unique[:limit] if limit else unique
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--project", required=True); ap.add_argument("--foreign", required=True)
+    ap.add_argument("--out", required=True); ap.add_argument("--evidence", required=True)
+    ap.add_argument("--channels", default="local,texas,media,podcasts"); ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--pace", type=float, default=0.5)
+    args = ap.parse_args()
+    rows, admitted, refused = [], 0, 0
+    with open(args.evidence, "w") as evidence:
+        for c in candidates(args.channels.split(","), args.limit):
+            record = {"qid": c["qid"], "name": c["name"], "channel": c["channel"]}
+            feed = c.get("feedurl")
+            if not feed and c.get("mastodon") and "@" in c["mastodon"]:
+                user, _, host = c["mastodon"].lstrip("@").partition("@")
+                if user and host:
+                    feed = "https://%s/@%s.rss" % (host, user)
+                    record["route"] = "mastodon"
+            if not feed and c.get("site"):
+                probe = "probe-home-" + hashlib.sha256(c["site"].encode()).hexdigest()[:16]
+                receipt, html = observe(args.project, args.foreign, probe, c["site"])
+                record["homepage"] = {"url": c["site"], "http_status": receipt.get("http_status"), "policy": receipt.get("policy_decision")}
+                feed = discover_feed(html, c["site"]) if html else None
+                if feed:
+                    record["route"] = "homepage feed link"
+                elif receipt.get("policy_decision") == "allow" and receipt.get("http_status"):
+                    origin = "%s://%s" % (urllib.parse.urlparse(receipt.get("final_url") or c["site"]).scheme or "https", urllib.parse.urlparse(c["site"]).netloc)
+                    for path in CONVENTIONAL_FEEDS:
+                        guess = origin + path
+                        probe_receipt, probe_text = observe(args.project, args.foreign, probe, guess)
+                        time.sleep(args.pace)
+                        if probe_text and re.search(r"<(rss|feed)[\s>]", probe_text[:4000]):
+                            feed, record["route"] = guess, "platform feed path"
+                            break
+                        if probe_receipt.get("policy_decision") not in (None, "allow"):
+                            break
+                time.sleep(args.pace)
+            elif feed:
+                record.setdefault("route", "wikidata feed")
+            if not feed:
+                record["refused"] = "no feed found"
+                refused += 1
+                evidence.write(json.dumps(record) + "\n")
+                continue
+            twin = slug(c["name"], c["qid"])
+            receipt, text = observe(args.project, args.foreign, twin, feed)
+            record.update({"feed": feed, "http_status": receipt.get("http_status"), "policy": receipt.get("policy_decision"),
+                           "receipt_sha256": receipt.get("content_sha256")})
+            if receipt.get("policy_decision") and receipt.get("policy_decision") != "allow":
+                record["refused"] = "robots or observe policy: %s" % receipt.get("policy_decision")
+            elif not text:
+                record["refused"] = "the feed did not answer (%s)" % receipt.get("http_status")
+            else:
+                report = judge(text, c["channel"])
+                record["sample"] = report
+                if "refused" in report:
+                    record["refused"] = report["refused"]
+                else:
+                    rows.append(row_for(c, feed, report, receipt))
+                    record["admitted"] = rows[-1]["source"]
+            if "refused" in record:
+                refused += 1
+                for suffix in (".json", ".body"):
+                    # a refused sample is not left to be read as a source
+                    path = os.path.join(args.foreign, "bodies" if suffix == ".body" else "receipts", twin + suffix)
+                    if suffix == ".body" and os.path.exists(path):
+                        os.unlink(path)
+            else:
+                admitted += 1
+            evidence.write(json.dumps(record) + "\n")
+            time.sleep(args.pace)
+    json.dump(rows, open(args.out, "w"), indent=1)
+    print(json.dumps({"admitted": admitted, "refused": refused, "families": {f: sum(1 for r in rows if r["family"] == f) for f in sorted({r["family"] for r in rows})}}))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

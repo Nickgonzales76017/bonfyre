@@ -1,0 +1,230 @@
+"""Witness for derived retention holds.
+
+The load-bearing test is that holds *lift*. Placing a hold when a reason appears
+is the easy half; releasing it when the reason ends is what separates a retention
+policy from a system that keeps everything and has an explanation.
+"""
+
+from __future__ import annotations
+
+import os
+import sqlite3
+import sys
+
+import pytest
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import commitment_graph as cg  # noqa: E402
+import protocol_evidence as pe  # noqa: E402
+import retention_gc as gc  # noqa: E402
+import retention_holds as rh  # noqa: E402
+
+HOUR = 60 * 60 * 1000
+DAY = 24 * HOUR
+LATER = 60 * DAY
+LIVE = "live:neon-june-2026-09-04"
+
+
+@pytest.fixture()
+def db():
+    conn = sqlite3.connect(":memory:")
+    rh.ensure_schema(conn)
+    yield conn
+    conn.close()
+
+
+@pytest.fixture()
+def night(db):
+    for rid, kind in (("r:chat", "chat"), ("r:utterance", "utterance"),
+                      ("r:clip", "clip_candidate")):
+        gc.retain(db, record_id=rid, occurrence=LIVE, kind=kind, written_at=0)
+    return db
+
+
+def _promise(db, cid="c1"):
+    cg.record_commitment(db, commitment_id=cid, committer="creator",
+                         beneficiary="venue", resource="the Friday set",
+                         enactment="ef1")
+    return cid
+
+
+# ------------------------------------- an open obligation holds without being asked
+
+def test_an_open_commitment_derives_a_hold(night):
+    _promise(night)
+    rh.rests_on(night, commitment_id="c1", record_id="r:chat")
+
+    result = rh.reconcile(night)
+    assert result["placed"] == ["open_obligation:r:chat"]
+    assert gc.holds_on(night, "r:chat") == [
+        (gc.HOLD_OBLIGATION, rh.HOLDER_OBLIGATION)]
+    # Nobody had to remember to place it, which is the point: an owner that has
+    # to remember is an owner that will eventually forget.
+
+
+def test_a_derived_hold_survives_a_sweep_that_would_otherwise_remove_it(night):
+    _promise(night)
+    rh.rests_on(night, commitment_id="c1", record_id="r:chat")
+    removed, refused = rh.collect(night, now=LATER)
+
+    assert "r:chat" not in removed
+    assert gc.body_of(night, "r:chat") is not None
+    held = [r for r in refused if r.record_id == "r:chat"][0]
+    assert "open_obligation by CommitmentGraph" in held.reason
+    # The other records had no reason to stay.
+    assert removed == ["r:clip", "r:utterance"]
+
+
+# ------------------------------------------------ the hold lifts when the reason ends
+
+def test_discharging_the_commitment_releases_its_hold(night):
+    _promise(night)
+    rh.rests_on(night, commitment_id="c1", record_id="r:chat")
+    rh.reconcile(night)
+    assert gc.holds_on(night, "r:chat")
+
+    cg.discharge(night, "c1", detail="played the set")
+    result = rh.reconcile(night)
+    assert result["released"] == ["open_obligation:r:chat"]
+    assert gc.holds_on(night, "r:chat") == []
+
+
+def test_a_compensated_violation_also_ends_the_reason(night):
+    _promise(night)
+    rh.rests_on(night, commitment_id="c1", record_id="r:chat")
+    rh.reconcile(night)
+
+    cg.violate(night, "c1", detail="never showed")
+    # A violation is not terminal: the obligation is still owed, so the record
+    # that evidences it is still held.
+    rh.reconcile(night)
+    assert gc.holds_on(night, "r:chat")
+
+    cg.compensate(night, "c1", detail="refunded")
+    rh.reconcile(night)
+    assert gc.holds_on(night, "r:chat") == []
+
+
+def test_a_released_record_is_then_actually_removed(night):
+    _promise(night)
+    rh.rests_on(night, commitment_id="c1", record_id="r:chat")
+    assert "r:chat" not in rh.collect(night, now=LATER)[0]
+
+    cg.discharge(night, "c1")
+    removed, _ = rh.collect(night, now=LATER)
+    assert removed == ["r:chat"]
+    assert gc.happened(night, "r:chat") is True
+
+
+# --------------------------------------------- evidence holds and retraction lifts
+
+def test_a_live_evidence_relation_derives_a_hold(night):
+    pe.relate(night, evidence="r:utterance", kind=pe.SUPPORTS,
+              claim="claim:trees-friday")
+    result = rh.reconcile(night)
+    assert result["placed"] == ["evidence_reference:r:utterance"]
+    assert rh.why_held(night, "r:utterance")[gc.HOLD_EVIDENCE] == [
+        "claim:trees-friday"]
+
+
+def test_retracting_the_relation_releases_the_hold(night):
+    pe.relate(night, evidence="r:utterance", kind=pe.SUPPORTS, claim="c")
+    rh.reconcile(night)
+    assert gc.holds_on(night, "r:utterance")
+
+    pe.retract(night, evidence="r:utterance", kind=pe.SUPPORTS, claim="c")
+    result = rh.reconcile(night)
+    assert result["released"] == ["evidence_reference:r:utterance"]
+    assert gc.holds_on(night, "r:utterance") == []
+
+
+def test_a_contradicting_relation_holds_the_record_too(night):
+    # Evidence against a claim is still evidence, and deleting it would leave
+    # only the supporting side of a contested question.
+    pe.relate(night, evidence="r:utterance", kind=pe.CONTRADICTS, claim="c")
+    rh.reconcile(night)
+    assert gc.holds_on(night, "r:utterance")
+
+
+# ----------------------------------- both reasons must end, not either one
+
+def test_a_record_held_for_two_reasons_needs_both_to_end(night):
+    _promise(night)
+    rh.rests_on(night, commitment_id="c1", record_id="r:chat")
+    pe.relate(night, evidence="r:chat", kind=pe.SUPPORTS, claim="c")
+    rh.reconcile(night)
+    assert len(gc.holds_on(night, "r:chat")) == 2
+
+    cg.discharge(night, "c1")
+    rh.reconcile(night)
+    assert gc.holds_on(night, "r:chat") == [
+        (gc.HOLD_EVIDENCE, rh.HOLDER_EVIDENCE)]
+    assert "r:chat" not in rh.collect(night, now=LATER)[0]
+
+    pe.retract(night, evidence="r:chat", kind=pe.SUPPORTS, claim="c")
+    assert rh.collect(night, now=LATER)[0] == ["r:chat"]
+
+
+def test_why_held_reports_the_reasons_not_the_rows(night):
+    _promise(night)
+    rh.rests_on(night, commitment_id="c1", record_id="r:chat")
+    pe.relate(night, evidence="r:chat", kind=pe.SUPPORTS, claim="claim:x")
+    rh.reconcile(night)
+
+    why = rh.why_held(night, "r:chat")
+    # A hold row says a record is kept. This says what would have to end first,
+    # which is the question anybody trying to release it actually has.
+    assert why[gc.HOLD_OBLIGATION] == ["c1"]
+    assert why[gc.HOLD_EVIDENCE] == ["claim:x"]
+
+
+# --------------------------------------------- a caller-placed hold is untouched
+
+def test_reconcile_does_not_release_a_legal_hold_it_did_not_place(night):
+    gc.hold(night, "r:clip", kind=gc.HOLD_LEGAL, holder="counsel")
+    rh.reconcile(night)
+    # Derivation reconciles only the holds it owns. A legal hold placed out of
+    # band is nobody else's to lift.
+    assert gc.holds_on(night, "r:clip") == [(gc.HOLD_LEGAL, "counsel")]
+    assert "r:clip" not in rh.collect(night, now=LATER)[0]
+
+
+def test_reconcile_does_not_release_a_user_save(night):
+    gc.hold(night, "r:chat", kind=gc.HOLD_USER, holder="person:nick")
+    rh.reconcile(night)
+    assert gc.holds_on(night, "r:chat") == [(gc.HOLD_USER, "person:nick")]
+
+
+# ------------------------------------------------------------ refusals at the edge
+
+def test_an_obligation_that_was_never_opened_cannot_justify_retention(night):
+    with pytest.raises(rh.HoldError) as e:
+        rh.rests_on(night, commitment_id="c:never", record_id="r:chat")
+    assert "never opened" in str(e.value)
+    # Otherwise a caller could keep a record forever by naming a commitment
+    # that does not exist.
+
+
+def test_reconcile_is_idempotent(night):
+    _promise(night)
+    rh.rests_on(night, commitment_id="c1", record_id="r:chat")
+    first = rh.reconcile(night)
+    second = rh.reconcile(night)
+    assert first["placed"] == ["open_obligation:r:chat"]
+    assert second == {"placed": [], "released": []}
+
+
+def test_holds_lift_even_when_nothing_calls_reconcile_between(night):
+    _promise(night)
+    rh.rests_on(night, commitment_id="c1", record_id="r:chat")
+    rh.collect(night, now=HOUR)          # holds placed by the sweep itself
+    cg.discharge(night, "c1")
+    # collect reconciles first, so a sweep never runs against stale holds.
+    assert rh.collect(night, now=LATER)[0] == ["r:chat", "r:clip", "r:utterance"]
+
+
+def test_a_record_nothing_rests_on_is_swept_normally(night):
+    removed, _ = rh.collect(night, now=LATER)
+    assert removed == ["r:chat", "r:clip", "r:utterance"]
+    assert all(gc.happened(night, r) for r in removed)

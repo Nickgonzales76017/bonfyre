@@ -1,0 +1,193 @@
+#!/usr/bin/env python3
+"""Ask every provider what it is, now, and write down only what it answered.
+
+The refresh document is explicit that its own statuses are stale: logs are
+time-separated and disagree with each other, some adapters were called
+catalogue, shadow or absent in one pass and active in the next.  So nothing
+here is copied from it.  Each provider is asked directly, and what is written
+down is one of a small number of honest verdicts:
+
+  reachable        it answered as itself, with the credential this estate holds
+  refused          it answered and rejected the credential
+  no_credential    this estate holds no key for it, so it was not asked
+  unreachable      the address did not answer
+  not_probeable    it is a library or a local runtime, not an endpoint to ask
+
+A provider this estate cannot ask is never recorded as working, and a provider
+that answers is never recorded as more than reachable: reachability is not
+capability, not pricing, and not permission to spend anything.
+
+  refresh_providers.py --out receipts.jsonl [--only cloudflare]
+"""
+import argparse, json, os, sys, time, urllib.error, urllib.request
+
+AGENT = "BonfyreProviderFrontier/2.0 (provider refresh; aurekai.life)"
+
+
+def env(name):
+    value = os.environ.get(name, "")
+    return value.strip()
+
+
+def ask(url, headers=None, timeout=25, method="GET", body=None):
+    request = urllib.request.Request(url, method=method, data=body)
+    request.add_header("User-Agent", AGENT)
+    for key, value in (headers or {}).items():
+        request.add_header(key, value)
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as answer:
+            return answer.status, answer.read(4096).decode("utf-8", "replace")
+    except urllib.error.HTTPError as problem:
+        return problem.code, problem.read(2048).decode("utf-8", "replace")
+    except Exception as problem:                 # the address is someone else's
+        return 0, str(problem)[:160]
+
+
+def verdict(status):
+    if status == 0:
+        return "unreachable"
+    if status in (401, 403):
+        return "refused"
+    if 200 <= status < 300:
+        return "reachable"
+    if status == 404:
+        return "reachable"          # it answered as itself; the path was wrong
+    return "answered_%d" % status
+
+
+# Providers this estate can actually ask, and how to ask them.  A provider is
+# listed here only when there is a real endpoint that says who you are; a
+# library or a local runtime is recorded as not_probeable rather than guessed.
+def probes():
+    cf_token, cf_account = env("CF_TOKEN"), env("CF_ACCT")
+    out = []
+
+    if cf_token and cf_account:
+        base = "https://api.cloudflare.com/client/v4/accounts/%s" % cf_account
+        head = {"Authorization": "Bearer " + cf_token}
+        for provider, plane, path in (
+            ("cloudflare-workers-ai", "edge-inference", "/ai/models/search?per_page=1"),
+            ("cloudflare-vectorize", "vector", "/vectorize/v2/indexes"),
+            ("cloudflare-queues", "queue", "/queues"),
+            ("cloudflare-r2", "artifact-store", "/r2/buckets"),
+            ("cloudflare-d1", "data", "/d1/database"),
+            ("cloudflare-workflows", "workflow", "/workflows"),
+            ("cloudflare-pages", "surface", "/pages/projects?per_page=1"),
+            ("cloudflare-workers", "edge-runtime", "/workers/scripts"),
+            ("cloudflare-kv", "state", "/storage/kv/namespaces"),
+        ):
+            out.append((provider, plane, base + path, head, "CLOUDFLARE_info"))
+
+    simple = [
+        ("openai", "cloud-llm", "https://api.openai.com/v1/models", "OPENAI_API_KEY", "Bearer"),
+        ("anthropic", "cloud-llm", "https://api.anthropic.com/v1/models", "ANTHROPIC_API_KEY", "x-api-key"),
+        ("gemini", "cloud-llm", "https://generativelanguage.googleapis.com/v1beta/models", "GEMINI_API_KEY", "query"),
+        ("groq", "cloud-llm", "https://api.groq.com/openai/v1/models", "GROQ_API_KEY", "Bearer"),
+        ("perplexity", "cloud-llm", "https://api.perplexity.ai/chat/completions", "PERPLEXITY_API_KEY", "Bearer"),
+        ("mistral", "cloud-llm", "https://api.mistral.ai/v1/models", "MISTRAL_API_KEY", "Bearer"),
+        ("xai", "cloud-llm", "https://api.x.ai/v1/models", "XAI_API_KEY", "Bearer"),
+        ("cohere", "cloud-llm", "https://api.cohere.com/v1/models", "COHERE_API_KEY", "Bearer"),
+        ("deepseek", "cloud-llm", "https://api.deepseek.com/models", "DEEPSEEK_API_KEY", "Bearer"),
+        ("openrouter", "meta-router", "https://openrouter.ai/api/v1/models", "OPENROUTER_API_KEY", "Bearer"),
+        ("together-ai", "cloud-inference", "https://api.together.xyz/v1/models", "TOGETHER_API_KEY", "Bearer"),
+        ("fireworks-ai", "cloud-inference", "https://api.fireworks.ai/inference/v1/models", "FIREWORKS_API_KEY", "Bearer"),
+        ("cerebras", "cloud-inference", "https://api.cerebras.ai/v1/models", "CEREBRAS_API_KEY", "Bearer"),
+        ("deepinfra", "cloud-inference", "https://api.deepinfra.com/v1/openai/models", "DEEPINFRA_API_KEY", "Bearer"),
+        ("replicate", "cloud-inference", "https://api.replicate.com/v1/models", "REPLICATE_API_TOKEN", "Bearer"),
+        ("baseten", "cloud-inference", "https://api.baseten.co/v1/models", "BASETEN_API_KEY", "Bearer"),
+        ("modal", "compute-inference", "https://api.modal.com/v1/apps", "MODAL_TOKEN_ID", "Bearer"),
+        ("fal-ai", "media-inference", "https://fal.run/health", "FAL_KEY", "Bearer"),
+        ("novita", "cloud-inference", "https://api.novita.ai/v3/openai/models", "NOVITA_API_KEY", "Bearer"),
+        ("huggingface-inference-providers", "meta-router", "https://huggingface.co/api/whoami-v2", "HF_TOKEN", "Bearer"),
+        ("supabase", "data", None, "SUPABASE_ACCESS_TOKEN", "Bearer"),
+        ("neon", "data", "https://console.neon.tech/api/v2/projects", "NEON_API_KEY", "Bearer"),
+        ("turso", "data", "https://api.turso.tech/v1/organizations", "TURSO_API_TOKEN", "Bearer"),
+        ("upstash", "state", None, "UPSTASH_REDIS_REST_TOKEN", "Bearer"),
+        ("render", "compute", "https://api.render.com/v1/owners?limit=1", "RENDER_API_KEY", "Bearer"),
+        ("vercel", "surface", "https://api.vercel.com/v2/user", "VERCEL_TOKEN", "Bearer"),
+        ("railway", "compute", None, "RAILWAY_TOKEN", "Bearer"),
+        ("fly", "compute", None, "FLY_API_TOKEN", "Bearer"),
+        ("github", "tooling", "https://api.github.com/user", "GITHUB_PAT", "token"),
+        ("firecrawl", "ingest", "https://api.firecrawl.dev/v1/team/credit-usage", "FIRECRAWL_API_KEY", "Bearer"),
+        ("posthog", "telemetry", "https://us.posthog.com/api/projects/", "POSTHOG_API_KEY", "Bearer"),
+        ("sentry", "telemetry", "https://sentry.io/api/0/organizations/", "SENTRY_AUTH_TOKEN", "Bearer"),
+    ]
+    for provider, plane, url, key_name, scheme in simple:
+        token = env(key_name)
+        if not token or not url:
+            out.append((provider, plane, None, None, key_name))
+            continue
+        if scheme == "Bearer":
+            head = {"Authorization": "Bearer " + token}
+        elif scheme == "token":
+            head = {"Authorization": "token " + token}
+        elif scheme == "x-api-key":
+            head = {"x-api-key": token, "anthropic-version": "2023-06-01"}
+        else:
+            url, head = url + "?key=" + token, {}
+        out.append((provider, plane, url, head, key_name))
+    return out
+
+
+# Things the document lists that are not endpoints: libraries, local runtimes
+# and research backends.  Asking a library whether it is reachable is a
+# category error, and recording one as active because a log once said so is
+# exactly what this refresh exists to stop.
+NOT_ENDPOINTS = {
+    "hvm4": "runtime", "egglog": "rewrite", "verus": "proof", "burn": "inference",
+    "tract": "inference", "lance": "vector", "daft": "data", "yaff": "compiler",
+    "automerge": "state", "feldera": "stream", "hydro": "placement", "cubecl": "gpu",
+    "gigatoken": "compression", "restate": "workflow", "llama-cpp": "local-inference",
+    "vllm": "local-inference", "sglang": "local-inference", "tgi": "local-inference",
+    "mlx": "local-inference", "onnx-runtime": "local-inference", "litellm": "meta-router",
+    "ollama-local": "local-llm", "agent-deck": "agent-execution", "cavemem": "memory",
+    "bernstein": "workflow", "rtk": "tooling",
+}
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--only", default="")
+    args = ap.parse_args()
+
+    rows, counts = [], {}
+    started = time.time()
+    for provider, plane, url, head, key_name in probes():
+        if args.only and args.only not in provider:
+            continue
+        if url is None:
+            row = {"provider": provider, "plane": plane, "verdict": "no_credential",
+                   "wants": key_name}
+        else:
+            status, said = ask(url, head)
+            row = {"provider": provider, "plane": plane, "verdict": verdict(status),
+                   "http_status": status}
+            if status == 0:
+                row["why"] = said[:120]
+        row["asked_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        rows.append(row)
+        counts[row["verdict"]] = counts.get(row["verdict"], 0) + 1
+        print("  %-34s %-14s %s" % (provider, plane, row["verdict"]), file=sys.stderr)
+
+    for provider, plane in sorted(NOT_ENDPOINTS.items()):
+        if args.only and args.only not in provider:
+            continue
+        rows.append({"provider": provider, "plane": plane, "verdict": "not_probeable",
+                     "why": "a library or local runtime, not an endpoint that says who you are",
+                     "asked_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())})
+        counts["not_probeable"] = counts.get("not_probeable", 0) + 1
+
+    with open(args.out, "w") as out:
+        for row in rows:
+            out.write(json.dumps(row) + "\n")
+    print(json.dumps({"providers": len(rows), "by_verdict": counts,
+                      "seconds": round(time.time() - started, 1),
+                      "cannot_infer": "reachable means a provider answered as itself with the credential this "
+                                      "estate holds; it is not capability, not pricing, not quota, and not "
+                                      "permission to spend anything"}))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

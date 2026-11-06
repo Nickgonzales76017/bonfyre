@@ -1,0 +1,22 @@
+{
+  "name": "training_program_release",
+  "displayName": "Training Program Release",
+  "description": "A studio-scoped public training program version. Publication does not grant coaching consent or prove a paid entitlement.",
+  "attributes": {
+    "release_key": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "publication_key": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "program_key": {"type": "string", "required": true},
+    "version": {"type": "integer", "required": true},
+    "title": {"type": "string", "required": true},
+    "summary": {"type": "text", "required": true},
+    "routine": {"type": "json", "required": true},
+    "content_sha": {"type": "string", "required": true},
+    "submission_sha": {"type": "string", "required": true},
+    "origin_request": {"type": "string"},
+    "origin_delivery_sha": {"type": "string"},
+    "origin_draft": {"type": "string"},
+    "origin_draft_revision": {"type": "integer"},
+    "publisher_actor": {"type": "string", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

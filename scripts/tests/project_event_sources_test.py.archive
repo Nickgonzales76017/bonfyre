@@ -1,0 +1,68 @@
+#!/usr/bin/env python3
+"""Archived owner witness; the live witness is project_event_sources_owner_test.sh."""
+from __future__ import annotations
+
+import json
+import pathlib
+import sqlite3
+import subprocess
+import sys
+import tempfile
+
+
+ROOT = pathlib.Path(__file__).resolve().parents[2]
+
+
+def main() -> int:
+    cms = ROOT / "cmd/BonfyreCMS/bonfyre-cms"
+    projector = ROOT / "scripts/project_event_sources.mjs"
+    if not cms.exists():
+        print("project event sources: CMS binary missing", file=sys.stderr)
+        return 2
+    with tempfile.TemporaryDirectory(prefix="bonfyre-event-sources.") as temp:
+        estate = pathlib.Path(temp) / "estate"
+        estate.mkdir()
+        db = sqlite3.connect(estate / "cms.db")
+        db.execute("CREATE TABLE internet_source(id INTEGER PRIMARY KEY, namespace TEXT, created_at TEXT,"
+                   " updated_at TEXT, published_at TEXT, status TEXT, family TEXT, source TEXT, kind TEXT, label TEXT)")
+        db.execute("INSERT INTO internet_source VALUES(1,'root','','','','published','news','calendar-a','event','Calendar A')")
+        db.execute("INSERT INTO internet_source VALUES(2,'root','','','','published','news','story-a','text','Story A')")
+        db.commit()
+        db.close()
+        # The projector carries every owner field through CMS; a compact
+        # schema fixture verifies its selection and idempotence separately.
+        schemas = estate / "schemas"
+        schemas.mkdir()
+        (schemas / "internet_source.json").write_text((ROOT / "cmd/BonfyreCMS/content-types/internet_source.json").read_text())
+        # Use the actual owner schema/table rather than a hand-written update.
+        subprocess.run([str(cms), "schema", "migrate", "--db", str(estate / "owned.db"),
+                        "--schemas", str(schemas)], check=True, capture_output=True, text=True)
+        owned = sqlite3.connect(estate / "owned.db")
+        owned.execute("INSERT INTO internet_source(namespace,created_at,updated_at,published_at,status,family,source,label,says,url,twin,state,tier,kind,extract)"
+                      " VALUES('root','','','','published','news','calendar-a','Calendar A','calendar','https://calendar.example/events.ics','calendar-a','observed','WARM','event','ics:vevent')")
+        owned.execute("INSERT INTO internet_source(namespace,created_at,updated_at,published_at,status,family,source,label,says,url,twin,state,tier,kind,extract)"
+                      " VALUES('root','','','','published','news','story-a','Story A','story','https://example.test/feed','story-a','observed','WARM','text','rss:item')")
+        owned.commit(); owned.close()
+        estate.joinpath("cms.db").unlink()
+        estate.joinpath("owned.db").rename(estate / "cms.db")
+        for expected in (1, 0):
+            run = subprocess.run(["bun", str(projector), "--estate", str(estate),
+                                  "--repo", str(ROOT), "--apply"], capture_output=True, text=True)
+            if run.returncode:
+                print(run.stdout, run.stderr, file=sys.stderr)
+                return 1
+            if json.loads(run.stdout)["event_sources_refiled"] != expected:
+                print("project event sources: non-idempotent owner refile", file=sys.stderr)
+                return 1
+        db = sqlite3.connect(estate / "cms.db")
+        rows = dict(db.execute("SELECT source,family FROM internet_source"))
+        db.close()
+        if rows != {"calendar-a": "events", "story-a": "news"}:
+            print("project event sources: changed a non-event or missed calendar", file=sys.stderr)
+            return 1
+    print("project event sources: PASS")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

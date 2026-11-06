@@ -1,0 +1,167 @@
+atlas commands-project-node
+
+architecture mcp-project-native-owner
+  canonical_name McpProjectNativeOwner
+  family commands
+  domain MCP / Local project and native operation owner
+  maturity measured
+  semantic_question Can the complete local project MCP surface run without Python while preserving its local checkout, native stores, approval gates and durable receipt boundaries?
+  purpose Replace the launchd Python project node with one Bun transport and bounded semantic owners for project reads, operator mutations, composed native operations and the shared Spines surface; configured HTTPS placement changes execution location without substituting the project checkout or inventing another evaluator.
+  node_types ProjectTool
+  node_types PatchReceipt
+  node_types GenerationReceipt
+  state_types admitted
+  state_types refused
+  state_types outcome_uncertain
+  internal_calculus captured thirty-tool catalog -> structural argument validation -> exact owner table -> bounded subprocess or native store operation -> typed result and existing owner receipts
+  invariant bearer authentication precedes body parsing or owner invocation; non-read-only operations serialize within the service and overload refuses rather than creating an unbounded queue
+  invariant subprocess argv is never interpolated into a local shell; timeout and output overflow terminate the process group and cannot be returned as truncated success
+  invariant project reads stay beneath the configured local checkout; search arguments cannot select ripgrep options, and Git reads disable external diff, textconv and fsmonitor helpers
+  invariant project_read accepts one range or at most sixteen related file ranges, with whole-file SHA-256 and conditional content omission; batches share 32 MiB source and 512 KiB result limits and never claim an atomic multi-file snapshot
+  invariant native discovery can filter and page capability summaries without executing binaries; family and capability manifests load once per request, and the next request reads fresh metadata
+  invariant path-only patch preview reports exact preimages, touched-path dirty state and existing write constraints without creating operator state or conferring apply authority; patch validation and effect-time checks remain required
+  invariant Atlas queries invoke the existing root-relative Bun query owner and retain its provenance instead of importing a retired Python module or independently reimplementing registry semantics
+  invariant manual patches require the existing write gate and approval token; low-risk patches retain configured path, size and dirty-file policy; postimage mismatch refuses rollback and commit
+  invariant Python syntax execution is retired explicitly; Bun syntax parsing neither executes source nor claims type or runtime verification
+  invariant cloudflare-bridge verification builds the existing native queue and runs a fixed local fixture suite; arbitrary paths and targets refuse, and build or test failure remains failure
+  witness integrations/mcp/tests/project_operator.test.mjs verifies fixed bridge scope, build-before-test ordering and failure propagation
+  interacts project-mcp-verifies-cloudflare-bridge
+  invariant native inventory and invocation inspect executable format without executing candidates and refuse interpreter launchers rather than preserving hidden Python execution through a native-looking filename
+  invariant Matrix has only its configured local or remote native store; an absent configuration refuses without creating a substitute database
+  invariant ForeignTwin observation and native invocation share BONFYRE_FOREIGN_ROOT, defaulting to the existing local MCP foreign store; configured absolute or home-relative roots are honored for both receipts and retained bodies, and cwd-relative roots refuse
+  forbidden_inference an authenticated tool invocation or available native binary -> institutional, payment, publication, foreign or delegation authority
+  forbidden_inference byte-level patch checks -> atomic exclusion of external writers or proof of semantic correctness
+  forbidden_inference passing fixtures or a constructible Bun server -> a deployed replacement or complete retirement of other Python services
+  source_path integrations/mcp/project_catalog.json
+  source_path integrations/mcp/project_node.mjs
+  source_path integrations/mcp/control_plane_app_build.mjs
+  source_path integrations/mcp/control_plane_app_resource.mjs
+  source_path integrations/mcp/project_runtime.mjs
+  source_path integrations/mcp/project_reads.mjs
+  source_path integrations/mcp/project_operator.mjs
+  source_path integrations/mcp/project_native.mjs
+  source_path integrations/mcp/project_spines.mjs
+  source_path integrations/mcp/tests/project_workflow_benchmark.mjs
+  source_path integrations/mcp/project_owner.mjs
+  source_path integrations/mcp/project_v6.mjs
+  source_path integrations/mcp/project_fabric.mjs
+  source_path deploy/launchd/project_mcp_cutover.mjs
+  witness integrations/mcp/tests/project_node.test.mjs covers thirty original routes, twenty-nine shared Spines routes and eighteen V6 routes, resource and prompt bindings, authentication and structural refusal
+  witness integrations/mcp/tests/project_spines.test.mjs composes the real Spines/Wasm owner through a simulated HTTPS transport; preserves write/STOP gates and requires an explicitly scoped remote credential
+  witness integrations/mcp/tests/project_v6.test.mjs dedicated remote credentials, fixed endpoint, exact owner catalog, pre-dispatch write and STOP refusal
+  witness packs/no-simulation/mcp-workflow-20261017/project-fabric-live.json records the October 17 eighty-six-tool live catalogue, exact five-operation delivery schemas and authenticated Project-to-Fabric reads after scoped service reloads; all Fabric durable tables, receipts and STOP controls are unchanged
+  known_gap the live delivery witness exercises status and receipt reads, not every composed operation or a paid model mission; V6 Python mission compilation still needs native replacement
+  witness integrations/mcp/tests/project_reads.test.mjs covers real Git status/diff, root confinement, option injection, bounded tree/read and the existing Atlas owner
+  witness integrations/mcp/tests/project_node.test.mjs exercises batched and conditional source reads and nonmutating path preflight over authenticated loopback HTTP through the existing tools
+  witness packs/no-simulation/mcp-workflow-20261017/measurement.json records local HTTP result bytes for full, paginated and targeted inventory, eight-file batched reads and unchanged refreshes; timings are single current-implementation observations, not before-and-after remote latency evidence
+  witness packs/no-simulation/mcp-workflow-20261017/live-readback.json records the scoped October 17 project-service reload and authenticated readback of filtered discovery, batch reads, conditional refresh and path preflight with unchanged configuration and operator STOP state
+  witness packs/no-simulation/mcp-workflow-20261017/chatgpt-connector-readback.json verifies authenticated current-source reads through the ChatGPT app; its earlier schemas still strip inventory filters and refuse batched reads
+  witness packs/no-simulation/mcp-workflow-20261017/app-refresh-readback.json records successful filtered inventory, two-file batch reads, conditional unchanged reads and path-only preflight through the refreshed ChatGPT app on October 17
+  witness packs/no-simulation/mcp-workflow-20261017/app-relay-readback.json records all five delivery tools exposed in the refreshed app and successful app calls for Fabric status, compact task status and receipt discovery; operator admission remains paused with no active or queued tasks
+  known_gap app delivery discovery and read routes are verified, while submission through guarded apply is covered by real HTTP fixtures with injected agents; no live model quality or production task execution is claimed
+  witness integrations/mcp/tests/project_operator.test.mjs covers isolated patch and SQLite operator state transitions without live mutations
+  witness integrations/mcp/tests/project_operator.test.mjs verifies mode-change rollback refusal against recorded postimage modes under umask 077 and 022
+  witness integrations/mcp/tests/project_node.test.mjs builds and serves the SDK dependency-inclusive control-plane bundle through the authenticated resource path within the 512 KiB limit; 2026-10-23 operator and node suites pass 26 tests
+  witness integrations/mcp/tests/project_native.test.mjs covers native format admission, configured Matrix coordinates and composed generation/fulfillment owner receipts with offline fixtures
+  witness integrations/mcp/tests/project_native.test.mjs exercises observation followed by native lookup with both default and explicit ForeignTwin roots, verifies retained body bytes and refuses cwd-dependent roots
+  witness integrations/mcp/tests/project_native.test.mjs executes the compiled BonfyreProject owner against a retained receipt through the same MCP invocation path, beyond the mocked transport checks
+  witness 2026-10-07 live native MCP observation 635f56ae-653d-4181-bc47-c375efe050de retained the RED3 Acrylic Shirt Display Easel page; resolution ed973250-2420-4d38-b64f-5c21abdb463c found that full HTTP-200 observation in the configured store with matching digest 3164c2a35518262c5d0b132f71d424ee2906a70fb4ee67b50ba6698ec7425981; project cl:red3-product-pages retains the receipt reference
+  forbidden_inference agreement between observation and lookup roots -> complete source coverage, public visibility or rights to act against the observed client
+  witness integrations/mcp/tests/project_runtime.test.mjs covers literal argv, timeout, output overflow, strict decoding and retired-interpreter refusal
+  witness integrations/mcp/tests/project_transport_adversarial.test.mjs covers malformed request identity, credential redaction, concurrency limits and timeout cleanup of a SIGTERM-resistant grandchild
+  witness integrations/mcp/tests/project_live_witness.mjs verifies real HTTP authentication, all thirty catalog names, five resources, two templates, four prompts and concrete local read owners without operator effects
+  witness integrations/mcp/tests/project_node_cutover.json records the 2026-10-02 launchd promotion, old Python PID exit, unchanged non-program configuration and live Bun HTTP witness
+  witness integrations/mcp/tests/project_node_read_benchmark.json records twenty-five alternating warmed HTTP samples per owner with bounded-read parity and scoped latency gains; it is not a system-wide scaling measurement
+  known_gap portable filesystem confinement is not openat2-style exclusion of a hostile process swapping ancestor directories during an operation; the checkout and configured owner roots remain trusted local state
+  invariant a generation projection attempt is retained as outcome_uncertain before invoking a native owner; matching pending or failed receipts inside the bounded retry lookup prohibit automatic replay and preserve generated output for reconciliation
+  known_gap exotic rename, copy, deletion, mode-changing, binary and symlink patches refuse; legacy patch receipts lacking mode evidence cannot be automatically reverted
+  known_gap the installed Bun owner's real model generation, downstream native projections and configured remote Matrix route have not been exercised by this cutover witness
+  known_gap facilitator decimal or exponent numeric tokens refuse rather than claiming Python JSON digest equivalence without a lossless numeric representation
+  known_gap generation retry lookup currently covers at most 512 directory entries and one hour; it is a bounded local recovery aid, not global idempotency or an exactly-once guarantee
+  known_gap receipt replacement is atomic for process-level failure recovery but does not fsync file and directory metadata for sudden-power-loss durability
+
+interaction recursive-mcp-uses-local-project-owner
+  source mcp-recursive-native-overlay
+  destination mcp-project-native-owner
+  relation exact-local-owner-rpc
+  preserves authenticated project tool schemas, local checkout identity, native-store coordinates, approval gates and returned receipts
+  drops any implication that the remote overlay checkout is the local project or that listing a tool grants effect authority
+  forbidden_inference a remote gateway tool listing -> a reachable, authorized or successfully executed local owner
+  witness integrations/mcp/tests/recursive_overlay.test.mjs
+  binding integrations/mcp/recursive_overlay.cue
+  binding integrations/mcp/project_node.mjs
+
+interaction project-node-uses-delivery-fabric
+  source mcp-project-native-owner
+  destination dual-agent-fabric-native-owner
+  relation exact-catalog-bound-delivery-rpc
+  preserves five existing operation names and schemas, durable task and receipt identity, Project write admission, Fabric STOP and queue policy, source snapshot coverage and effect-time Project patch checks
+  drops duplicated task stores, automatic resume, automatic retries after uncertain effects and caller-selected endpoints
+  forbidden_inference an advertised implementation relay -> provider authorization, an accepting broker, successful implementation or permission to apply
+  witness integrations/mcp/tests/project_fabric.test.mjs verifies fixed placement, dedicated remote credentials, pre-dispatch write and STOP gates, cancellation while stopped, schema validation and propagated uncertain errors
+  witness integrations/mcp/tests/fabric_project_workflow.test.mjs exercises real HTTP from Project to Fabric and back to Project apply, real Git isolation and Bun tests with deterministic agents
+  witness integrations/mcp/tests/oauth_institution_slice_test.sh refuses delivery reads and effects for personal and institution sessions and preserves the existing administrative upstream
+  binding integrations/mcp/project_fabric.mjs
+  binding integrations/mcp/project_owner.mjs
+  binding integrations/mcp/project_node.mjs
+  binding integrations/mcp/bonfyre_oauth_gateway.mjs
+
+interaction project-node-uses-bounded-atlas
+  source mcp-project-native-owner
+  destination atlas-context-provider
+  relation shared-root-relative-query
+  preserves operation, identifier or query, bounded answer and index provenance
+  drops full registry serialization and independent transport-side Atlas semantics
+  forbidden_inference a returned Atlas projection -> canonical truth independent of its provenance
+  witness integrations/mcp/tests/project_reads.test.mjs
+  binding integrations/mcp/project_reads.mjs
+  binding architecture/atlas-query.mjs
+
+interaction project-generation-names-proof-owners
+  source mcp-project-native-owner
+  destination mcp-generation-proof
+  relation receipted-native-projection
+  preserves local completion digest and exact CMS, ArtifactGraph, Flow and DisCIPL owner coordinates
+  drops any inference that generation, a stored row or a defined WorkGraph enacts an external effect
+  forbidden_inference a returned generation receipt -> independent verification of every referenced owner projection
+  witness integrations/mcp/tests/project_native.test.mjs
+  binding integrations/mcp/project_native.mjs
+  invariant the OAuth gateway issues the BonfyreAuth session as the access token with expires_in equal to the session's remaining lifetime (from http-login expires_at) and a sealed refresh token (AES-256-GCM, key derived from the seal secret or the project token file, no server state); a refresh_token grant is honoured only while bonfyre-auth verify still accepts the session and the client_id matches, so logout, expiry or a disabled account ends it
+  witness integrations/mcp/tests/oauth_institution_slice_test.sh runs the full authorization-code flow with PKCE against a fixture BonfyreAuth: expires_in beyond one day, refresh returns the live session, tampered or other-client refresh tokens and a logged-out session are refused (2026-10-17)
+  witness packs/no-simulation/mcp-timing-20261017/findings.md: before the refresh grant, ChatGPT tool calls stalled 13-24 minutes on authentication retry because the gateway declared an 8-hour token with no refresh token while sessions lasted 7 days
+  forbidden_inference a refresh token -> standing authority; it is the session sealed, and dies with the session
+  source_path integrations/mcp/project_products.mjs
+  source_path integrations/mcp/tests/project_products.test.mjs
+  invariant the products owner exposes books_learn, books_profiles, books_book, monitor_mentions and manifest_lot: the bank export, watch and listing text travel in the call, the product modules decide, learned books are named profiles kept 0600 under ~/.bonfyre/estate-local/books; every operation but books_learn is declared read-only, and a local model that cannot be admitted is reported, not hidden
+  witness integrations/mcp/tests/project_products.test.mjs proves profile learn/list/book with an unread amount held and the model unavailable reported, path-like profile names and undeclared arguments refused, an empty archive answered without a model, and a manifest that needs the model refused with the reason (2026-10-17); over live :3051, books_learn on 6,000 lines took 810 ms and books_book on 1,500 lines 568 ms
+  forbidden_inference a booked line returned to a chat -> a posted ledger entry; books_book posts nothing
+  known_gap a books profile belongs to this machine, not to a client organisation; ChatGPT sees new operations only after its cached tool list is refreshed
+
+architecture project-spines-distributed-binding
+  canonical_name ProjectSpinesDistributedBinding
+  family commands
+  domain Execution / Authenticated owner federation
+  maturity implemented
+  semantic_question Can the same temporal, reduction and placement operations be reached across an authenticated machine boundary without copying their semantics or exporting general credentials?
+  internal_calculus original Spines catalog -> Project operation table -> fixed local or HTTPS owner -> original operation and receipt
+  invariant all twenty-nine schemas and operation identities derive from one Spines catalog; caller arguments cannot choose the endpoint or executable
+  invariant proof-writing reads require write admission, operator STOP remains authoritative, and HTTPS requires a separately configured owner credential
+  invariant public, self and institution apertures do not inherit administrative Spines operations
+  forbidden_inference simulated HTTPS or a portable Wasm module -> deployed multi-host execution, tenant-safe scheduling or production scaling
+  source_path integrations/mcp/project_spines.mjs
+  source_path integrations/mcp/owned_mcp_client.mjs
+  source_path integrations/mcp/bonfyre_oauth_gateway.mjs
+  witness integrations/mcp/tests/project_spines.test.mjs
+  witness integrations/mcp/tests/oauth_institution_slice_test.sh actual gateway fixture refuses self/institution reduction with zero upstream calls and forwards an admitted administrative reduction once
+  known_gap public mcp.aurekai.work metadata observed on 2026-10-03 exposes the read-only estate aperture with no authorization server, not the declared protected gateway; no two-host execution is inferred
+  known_gap remote operation responses are authenticated transport evidence, not hardware attestation or independent correctness verification
+
+interaction project-spines-reuses-semantic-owner
+  source project-spines-distributed-binding
+  destination native-spines-bun-owner
+  relation authenticated-location-independent-owner-call
+  preserves operation schemas, bounded execution, owner receipts, candidate classification and effect refusal
+  drops duplicated remote algorithms and an assumption that placement grants authority
+  forbidden_inference a selected remote endpoint -> authorization to disclose arbitrary tenant data or commit effects
+  binding integrations/mcp/project_spines.mjs
+  witness integrations/mcp/tests/project_spines.test.mjs

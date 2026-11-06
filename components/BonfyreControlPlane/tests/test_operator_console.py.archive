@@ -1,0 +1,387 @@
+"""Archived Python witness: native Bun parity is operator-console.test.mjs.
+
+The AddressPlane stopped being a catalogue to read about and became something a
+person operates: `ron.aurekai.work` is a host, `/console` is where its own
+person decides what is shown and how dense it is, and every one of those
+decisions is in the URL rather than in this browser's storage -- which is what
+makes a shape something you can hand to someone.
+
+So these tests check the four dials are real rather than decorative:
+
+    extent      the density dial, served by the organ (S68)
+    mode        six modes over four territories, verbs per mode (S76)
+    keep        the retention lattice as an admission floor (S61)
+    the outside the external internet, observed rather than claimed (S60)
+
+The extent tests are the load-bearing ones. A client that dimmed its own verbs
+at card extent would be a client being polite about a rule; the point is that
+the address organ withholds the effect class itself, caps the records, and
+refuses an extent above the one a pattern was authored at. Those are checked
+against the deployment, not against the page's source.
+
+Network tests skip when unreachable rather than passing on a fixture.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import re
+import socket
+import urllib.error
+import urllib.request
+
+import pytest
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.dirname(os.path.dirname(os.path.dirname(_HERE)))
+KIT = os.path.join(REPO, "site", "matrix", "surfaces", "_kit.js")
+SURFACES = os.path.join(REPO, "site", "matrix", "surfaces")
+MAIN_C = os.path.join(REPO, "cmd", "BonfyreWebAddress", "src", "main.c")
+
+TIMEOUT = 25
+HOST = "https://ron.aurekai.work"
+
+EXTENTS = ["chip", "card", "section", "page", "workspace"]
+# Section 61, quoted in order. The order is the lattice.
+TIERS = ["FLASH", "CHAT", "MOMENT", "SOCIAL", "SAVED", "INSTITUTIONAL",
+         "EVIDENTIARY", "ECONOMIC"]
+# Section 76: six modes over four territories, one Matrix subject underneath.
+MODES = {"live": ["occurrence"], "life": ["personal", "household"],
+         "shop": ["exchange"], "work": ["professional", "business"]}
+
+
+def _kit() -> str:
+    with open(KIT) as fh:
+        return fh.read()
+
+
+def _get(path, host=HOST, accept="application/json"):
+    req = urllib.request.Request(host + path, headers={"Accept": accept})
+    try:
+        with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+            return r.status, r.read().decode()
+    except urllib.error.HTTPError as e:
+        return e.code, e.read().decode()
+    except (urllib.error.URLError, socket.timeout, OSError) as exc:
+        pytest.skip(f"unreachable: {exc}")
+
+
+# ------------------------------------------------ an institution is a host
+
+def test_a_person_gets_a_host_and_it_resolves_to_them():
+    # S12: Aurekai users create institutions, not applications. An institution
+    # is a host, so a person having one is the whole claim.
+    code, body = _get("/.well-known/bonfyre")
+    assert code == 200
+    doc = json.loads(body)
+    assert doc["host"] == "ron.aurekai.work"
+    assert doc["institution"] == "person:ron", doc["institution"]
+    assert doc["canonical_host"] == "ron.aurekai.work", (
+        "the host falls back to the apex, so it is not its own institution")
+
+
+def test_a_host_nobody_has_created_still_completes_tls():
+    # The failure this replaced: the public server carried one enumerated
+    # certificate, so a subdomain issued after it failed TLS before the Matrix
+    # edge ever saw the name -- and creating an institution meant reissuing a
+    # certificate, which is not something an end user can do.
+    code, _ = _get("/.well-known/bonfyre", host="https://nobody-yet.aurekai.work")
+    assert code in (200, 404), code
+
+
+def test_the_apex_still_has_its_own_certificate():
+    # The wildcard does not carry the apex names. Splitting the server by
+    # certificate must not have moved the apex onto a certificate without it.
+    for apex in ("https://aurekai.work", "https://aurekai.live",
+                 "https://theleaflounge.store"):
+        code, _ = _get("/.well-known/bonfyre", host=apex)
+        assert code == 200, (apex, code)
+
+
+# ------------------------------------------------------------- extent (S68)
+
+def test_the_catalogue_says_the_dial_exists():
+    code, body = _get("/_surface/")
+    assert code == 200
+    doc = json.loads(body)
+    assert doc["extents"] == EXTENTS
+    assert "extent" in doc.get("extent_parameter", "")
+    assert "action layer" in doc.get("extent_note", "")
+
+
+@pytest.mark.parametrize("extent,cap", [("chip", 1), ("card", 3), ("section", 8)])
+def test_a_narrowed_extent_caps_the_records_and_says_what_it_withheld(extent, cap):
+    code, body = _get("/_surface/funding?extent=" + extent)
+    assert code == 200
+    doc = json.loads(body)
+    assert doc["extent"] == extent
+    assert len(doc["records"]) <= cap
+    whole = json.loads(_get("/_surface/funding")[1])
+    if len(whole["records"]) > cap:
+        assert doc["withheld_by_extent"] == len(whole["records"]) - cap, (
+            "a reference that quietly stopped at the budget would read as the whole set")
+
+
+@pytest.mark.parametrize("extent", ["chip", "card", "section"])
+def test_the_organ_withholds_the_action_layer_below_page_extent(extent):
+    # "A card offering BOOK asks for a decision from a thumbnail." The client
+    # is not trusted to dim its own verbs.
+    code, body = _get("/_surface/funding?extent=" + extent)
+    assert code == 200
+    doc = json.loads(body)
+    assert doc["carries_action_layer"] is False
+    assert doc["effect_class"] == "", (
+        f"{extent} extent still reports an effect class, so a reference advertises "
+        f"an action layer")
+    assert "not room to act" in doc["action_layer_withheld_because"]
+
+
+def test_page_extent_keeps_the_action_layer():
+    doc = json.loads(_get("/_surface/funding?extent=page")[1])
+    assert doc["carries_action_layer"] is True
+    assert doc["effect_class"], "page extent lost its effect class"
+
+
+def test_extent_narrows_and_never_grants():
+    # Asking above the authored extent is not a density preference; it is a
+    # request for an action layer nobody authored. Refuse rather than clamp.
+    code, body = _get("/_surface/funding?extent=workspace")
+    assert code == 409, code
+    doc = json.loads(body)
+    assert doc["error"] == "extent_exceeds_authored"
+    assert doc["authored"] == "page"
+    assert "cannot grant" in doc["reason"]
+
+
+def test_an_unknown_extent_is_refused_with_the_list():
+    code, body = _get("/_surface/funding?extent=enormous")
+    assert code == 400, code
+    doc = json.loads(body)
+    assert doc["error"] == "unknown_extent"
+    assert doc["extents"] == EXTENTS
+
+
+def test_an_unset_extent_is_not_the_same_as_a_card():
+    # Until the migration is applied everywhere, an absent extent column must
+    # stay permissive: silently demoting every authored pattern to "no action
+    # layer" would take the estate's own surfaces down for a migration.
+    doc = json.loads(_get("/_surface/funding")[1])
+    assert doc["carries_action_layer"] is True
+    assert doc["extent_authored"] == "page"
+
+
+# --------------------------------------------------------------- mode (S76)
+
+def test_six_modes_over_four_territories():
+    src = _kit()
+    i = src.index("K.MODES = {")
+    body = src[i:src.index("K.modes = (t)", i)]
+    for territory, ids in MODES.items():
+        for mid in ids:
+            assert "id: '" + mid + "'" in body, (territory, mid)
+    assert sum(len(v) for v in MODES.values()) == 6
+
+
+def _mode_verbs():
+    src = _kit()
+    body = src[src.index("K.MODES = {"):src.index("K.modes = (t)")]
+    out = {}
+    for m in re.finditer(r"\{ id: '([a-z]+)', label: '[^']*', of: '([a-z]+)',"
+                         r".*?verbs: \[([^\]]*)\]", body, re.S):
+        out[(m.group(2), m.group(1))] = re.findall(r"'([A-Z]+)'", m.group(3))
+    return out
+
+
+def _territory_verbs(territory):
+    src = _kit()
+    i = src.index("K.PHYSICS = {")
+    body = src[i:src.index("K.physics = (t)", i)]
+    j = body.index(territory + ": {")
+    return re.findall(r"'([A-Z]+)'", body[j:].split("verbs:")[1].split("]")[0])
+
+
+@pytest.mark.parametrize("key", sorted(_mode_verbs()))
+def test_a_modes_verbs_are_a_subset_of_its_territorys(key):
+    # This is the rule that caught the real gap: .life did not carry ASSIGN
+    # until household needed it for chores.
+    territory, mode = key
+    verbs = set(_mode_verbs()[key])
+    assert verbs <= set(_territory_verbs(territory)), (
+        key, sorted(verbs - set(_territory_verbs(territory))))
+
+
+@pytest.mark.parametrize("territory", sorted(MODES))
+def test_the_modes_of_a_territory_together_use_all_of_its_verbs(territory):
+    # A territory verb no mode carries is a verb nothing can offer, which means
+    # either the verb or the modes are wrong.
+    union = set()
+    for (t, _m), verbs in _mode_verbs().items():
+        if t == territory:
+            union |= set(verbs)
+    assert union == set(_territory_verbs(territory)), (
+        territory, sorted(set(_territory_verbs(territory)) - union))
+
+
+def test_the_two_worlds_of_life_and_work_carry_different_verbs():
+    # S76: "a household plans and moves; a business approves and funds.
+    # Offering one set for both is the same category error as offering BUY in
+    # .live."
+    v = _mode_verbs()
+    assert set(v[("life", "personal")]) != set(v[("life", "household")])
+    assert set(v[("work", "professional")]) != set(v[("work", "business")])
+    assert "ASSIGN" in v[("life", "household")], "chores have no way to be given out"
+    assert "APPROVE" not in v[("work", "professional")], (
+        "a person's own obligations do not include approving them")
+
+
+# ---------------------------------------------------------- retention (S61)
+
+def test_the_retention_lattice_is_declared_in_order():
+    src = _kit()
+    body = src[src.index("K.RETENTION = ["):src.index("K.retentionRank")]
+    assert re.findall(r"tier: '([A-Z]+)'", body) == TIERS
+
+
+def test_a_patterns_tier_is_read_from_what_it_reads():
+    # "Nothing is promoted because it was popular, referenced, or merely
+    # survived." A tier inferred from traffic would be exactly that.
+    src = _kit()
+    body = src[src.index("K.RETENTION_OF_PATTERN = {"):src.index("K.retentionOf")]
+    for tier in re.findall(r": '([A-Z]+)'", body):
+        assert tier in TIERS, tier
+    assert "count" not in body and "rank" not in body
+
+
+# ------------------------------------------------------------ outside (S60)
+
+def test_the_foreign_graph_is_edges_and_not_sentences():
+    # The failure this replaced: the community surface rendered the CMS
+    # `federations` type, whose rows carry paragraphs, so the outside world
+    # arrived as prose. The native owner holds edges.
+    code, body = _get("/foreign/edges")
+    assert code == 200
+    doc = json.loads(body)
+    assert doc["schema"] == "bonfyre-foreign-graph.v1"
+    for e in doc["edges"]:
+        for field in ("from", "predicate", "to", "carrier", "observed_at",
+                      "evidence", "claim_state"):
+            assert field in e, (field, e)
+        assert e["claim_state"] == "observed", (
+            "an edge claiming more than observation would make the graph a claim "
+            "about the far side")
+
+
+def test_observing_a_source_is_an_effect_the_estate_owns():
+    # The observe action lives on the link desk now that the console became a
+    # subject instrument. The claim is unchanged: whoever offers it must go
+    # through the estate's own ForeignTwin owner rather than fetching itself.
+    page = open(os.path.join(SURFACES, "link.html")).read()
+    assert "/studio/v1/self/foreign/observe" in page, (
+        "the link desk observes by some other route than the estate's ForeignTwin owner")
+    assert "K.observeForeign" in page
+    src = _kit()
+    assert "robots preflight" in src or "robots" in src
+
+
+def test_observing_without_a_session_is_refused_rather_than_attempted():
+    req = urllib.request.Request(HOST + "/studio/v1/self/foreign/observe",
+                                 data=b'{"twin_id":"example","url":"https://example.com"}',
+                                 headers={"Content-Type": "application/json"},
+                                 method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+            code = r.status
+    except urllib.error.HTTPError as e:
+        code = e.code
+    except (urllib.error.URLError, socket.timeout, OSError) as exc:
+        pytest.skip(f"unreachable: {exc}")
+    assert code in (401, 403), (
+        f"the observe endpoint answered {code} to an unauthenticated caller")
+
+
+# ------------------------------------------------------- the shape is a URL
+
+def test_the_shape_lives_in_the_address_and_not_in_this_browser():
+    src = _kit()
+    assert "K.shapeToURL" in src and "K.shapeFromURL" in src
+    block = src[src.index("K.shapeFromURL"):src.index("K.nav = (current)")]
+    assert "localStorage" not in block, (
+        "the shape is kept in this browser, so it is a setting rather than "
+        "something a person can hand to someone else")
+    for key in ("mode", "keep", "'x'", "'d'", "off"):
+        assert key in block, key
+
+
+def test_the_global_extent_is_one_parameter_and_not_one_per_pattern():
+    # The first version wrote every pattern into `d`, which produced a correct
+    # address nobody would ever send anyone.
+    src = _kit()
+    block = src[src.index("K.shapeToURL"):src.index("K.nav = (current)")]
+    assert "p.set('x', shape.extent)" in block
+    assert "filter(([, v]) => v !== (shape.extent || 'page'))" in block
+
+
+def test_the_console_is_served_on_every_host():
+    for host in ("https://ron.aurekai.work", "https://aurekai.work",
+                 "https://aurekai.life"):
+        code, _ = _get("/console", host=host, accept="text/html")
+        assert code == 200, (host, code)
+
+
+def test_the_console_reads_organs_rather_than_describing_them():
+    page = open(os.path.join(SURFACES, "console.html")).read()
+    for path in ("K.catalogue(", "/subjects", "K.foreignEdges(", "K.address(",
+                 "/foreign/twins"):
+        assert path in page, path
+    # Every pane names the path that produced it.
+    assert "K.sourceLine(" in page
+    # And the three refusal states are the kit's, not re-implemented here.
+    assert "K.note(" in page and "K.empty(" in page
+
+
+def test_the_surfaces_take_the_withheld_action_layer_from_the_organ():
+    # No surface decides for itself whether a pattern carries an action layer.
+    # The organ withholds the effect class and states the reason; the pages
+    # relay it. A page computing this from the extent could disagree with the
+    # thing that actually served the records.
+    src = _kit()
+    assert "K.applyExtentToFragments" in src
+    block = src[src.index("K.shapeBar = "):src.index("K.frame = ")]
+    assert "carries_action_layer" not in block and "action_layer" not in block, (
+        "the shared dial reasons about action layers itself instead of leaving it "
+        "to the organ")
+    code, body = _get("/_surface/funding?extent=card")
+    doc = json.loads(body)
+    assert doc["carries_action_layer"] is False
+    assert doc["action_layer_withheld_because"]
+
+
+# ------------------------------------------- the dial reaches the whole estate
+
+def test_the_estate_pages_carry_the_dial_too():
+    # The compiled estate pages load their content from the same /_surface/
+    # paths. Leaving the dial on one page would make density a property of the
+    # console rather than of the address.
+    src = _kit()
+    assert "K.shapeBar" in src and "K.applyExtentToFragments" in src
+    with open(MAIN_C) as fh:
+        c = fh.read()
+    assert "K.shapeBar('bf-shape')" in c, (
+        "the shared chrome does not mount the dial, so only the console has one")
+    assert "BF_SHAPE_MOUNT" in c
+
+
+def test_the_dial_is_not_drawn_where_there_is_nothing_to_narrow():
+    src = _kit()
+    block = src[src.index("K.shapeBar = "):src.index("K.nav = (current)")]
+    assert "if (!first)" in block, (
+        "the dial draws on pages with no /_surface/ fragment, where it does nothing")
+
+
+def test_the_estate_page_narrows_over_the_address():
+    code, body = _get("/_surface/doors?page=protocols&extent=card", accept="text/html")
+    assert code == 200
+    assert body.count('class="door"') <= 3
+    assert "surface-withheld" in body, (
+        "a narrowed estate page does not say what it withheld")

@@ -1,0 +1,13 @@
+{
+  "name": "household",
+  "displayName": "Household",
+  "description": "The people who share a life and therefore a calendar, a set of bills and a school run. A household is composed for the people in it and is not shared by existing: what it holds is read by its own members and by nobody else, including this estate's operators.",
+  "attributes": {
+    "household_id": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "label": { "type": "string", "required": true },
+    "steward": { "type": "string", "required": true },
+    "opened_at": { "type": "string", "required": true },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

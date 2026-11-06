@@ -1,0 +1,100 @@
+#!/usr/bin/env python3
+"""Historical parity oracle: placed neighbourhood compiled on the vGPU.
+
+Pages were answering "what is around here" by scanning the sources of one
+route per request and measuring distances in C, which is both slow and narrow:
+it could only see the material that route happens to name.  The estate already
+had a vGPU kernel for exactly this shape of work and nothing called it.
+
+This feeds that kernel the whole estate's placed material -- places, events a
+calendar put a point on, photographs with their own coordinates, wildlife
+records -- in tiles, and stores the k nearest for each one beside the item
+archive.  A page then reads a neighbourhood instead of computing one.
+
+The compute is an acceleration boundary and nothing more: a distance is
+between two stated points.  It establishes no relation, no attendance, no
+access and no recommendation, and the receipt says which backend actually ran.
+
+  compile_neighbourhood.py --items census-items.jsonl --db items.db
+      [--kernel .../stage-compute-vgpu.mjs] [--k 8] [--tile 2048]
+      [--backend auto] [--max-km 4]
+"""
+import argparse, json, os, sqlite3, subprocess, sys, time
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--items", required=True)
+    ap.add_argument("--db", required=True)
+    ap.add_argument("--kernel", default=os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                     "..", "runtime", "stage-compute-vgpu.mjs"))
+    ap.add_argument("--k", type=int, default=8)
+    ap.add_argument("--tile", type=int, default=2048)
+    ap.add_argument("--backend", default="auto")
+    ap.add_argument("--max-km", type=float, default=4.0)
+    ap.add_argument("--node", default="node")
+    args = ap.parse_args()
+
+    material, placed = {}, 0
+    for line in open(args.items, encoding="utf-8"):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            item = json.loads(line)
+        except ValueError:
+            continue
+        if not item.get("placed"):
+            continue
+        kind = item.get("kind") or "story"
+        material.setdefault(kind, []).append({
+            "key": "o/%s/%s" % (item["source"], item["key"]),
+            "source": item["source"], "title": item.get("title", "")[:200],
+            "kind": kind, "lon": item.get("lon"), "lat": item.get("lat"),
+        })
+        placed += 1
+    if placed < 2:
+        print(json.dumps({"placed": placed, "skipped": "fewer than two placed things"}))
+        return 0
+
+    closure = {"schema": "bonfyre.stage-closure.v1", "material": material}
+    started = time.time()
+    done = subprocess.run([args.node, os.path.abspath(args.kernel), "--backend", args.backend,
+                           "--k", str(args.k), "--tile", str(args.tile)],
+                          input=json.dumps(closure), capture_output=True, text=True, timeout=3600)
+    if done.returncode != 0:
+        sys.stderr.write(done.stderr[-500:])
+        return 2
+    answer = json.loads(done.stdout.strip().splitlines()[-1])
+    receipt, rows = answer["receipt"], answer.get("nearest", [])
+
+    con = sqlite3.connect(args.db)
+    con.execute("PRAGMA journal_mode=DELETE")
+    con.execute("CREATE TABLE IF NOT EXISTS neighbour(address TEXT NOT NULL, near_address TEXT NOT NULL,"
+                " kind TEXT DEFAULT '', metres REAL NOT NULL, rank INTEGER NOT NULL, computed TEXT NOT NULL,"
+                " PRIMARY KEY(address, near_address))")
+    con.execute("CREATE INDEX IF NOT EXISTS neighbour_by_address ON neighbour(address, rank)")
+    stamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    kept = 0
+    con.execute("BEGIN")
+    con.execute("DELETE FROM neighbour")          # the estate's placed material has moved on
+    for row in rows:
+        for rank, near in enumerate(row.get("near", [])):
+            if near["meters"] > args.max_km * 1000:
+                continue
+            con.execute("INSERT OR REPLACE INTO neighbour(address, near_address, kind, metres, rank, computed)"
+                        " VALUES(?,?,?,?,?,?)",
+                        (row["key"], near["key"], near.get("kind", ""), near["meters"], rank, stamp))
+            kept += 1
+    con.commit()
+    con.close()
+    print(json.dumps({"placed": placed, "neighbourhoods": len(rows), "pairs_kept": kept,
+                      "backend": receipt.get("actual_backend"), "tiles": receipt.get("tiles"),
+                      "pairs": receipt.get("pairs"), "kernel_ms": receipt.get("elapsed_ms"),
+                      "seconds": round(time.time() - started, 1),
+                      "cannot_infer": "a distance between two stated points is not a relation, an access, an attendance or a recommendation"}))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

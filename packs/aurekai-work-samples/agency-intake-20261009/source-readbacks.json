@@ -1,0 +1,34 @@
+[
+  {
+    "id": "so-design",
+    "url": "https://sodesign.online/careers/",
+    "exit": 0,
+    "stdout": "",
+    "stderr": "",
+    "receipt": "/Users/nickgonzales/Developer/Bonfyre/packs/aurekai-work-samples/agency-intake-20261009/so-design.receipt.json"
+  },
+  {
+    "id": "understack",
+    "url": "https://understack.it/en/work-with-us/",
+    "exit": 0,
+    "stdout": "",
+    "stderr": "",
+    "receipt": "/Users/nickgonzales/Developer/Bonfyre/packs/aurekai-work-samples/agency-intake-20261009/understack.receipt.json"
+  },
+  {
+    "id": "buddydevelopers",
+    "url": "https://buddydevelopers.com/career/",
+    "exit": 0,
+    "stdout": "",
+    "stderr": "",
+    "receipt": "/Users/nickgonzales/Developer/Bonfyre/packs/aurekai-work-samples/agency-intake-20261009/buddydevelopers.receipt.json"
+  },
+  {
+    "id": "red3-current",
+    "url": "https://aurekai-work-samples.pages.dev/red3-planner/",
+    "exit": 0,
+    "stdout": "",
+    "stderr": "",
+    "receipt": "/Users/nickgonzales/Developer/Bonfyre/packs/aurekai-work-samples/agency-intake-20261009/red3-current.receipt.json"
+  }
+]

@@ -1,0 +1,38 @@
+atlas external
+# The Aurekai continuity kernel. A foreign protocol event enters, and one
+# content-addressed committed state leaves with its transitions, lineage edges,
+# export projections, functional claims and policy decision attached. It is the
+# ingress edge of the public platform layer: it projects and it refuses. It does
+# not settle, pay, authorize, or observe a chain.
+
+architecture aurekai-continuity-kernel
+  canonical_name AurekaiContinuityKernel
+  family external
+  domain External / Continuity
+  layer kernel
+  semantic_question What committed state, transitions, lineage and claims does a foreign protocol event become, and may that projection cross the ingress doctrine?
+  purpose Projects a host protocol event into Aurekai kernel semantics across five declared surfaces -- hard-fork, soft-fork, adapter, observer, state-machine -- emitting one content-addressed committed state plus its transitions, lineage edges, export projections, functional claims and policy decision, and, where a commerce profile applies, the fulfilment/delivery/invoice/treasury chain. It projects and refuses; it never settles or authorizes.
+  maturity measured
+  consumes HostProtocolEvent
+  publishes CommittedState
+  publishes FunctionalClaim
+  publishes LineageEdge
+  publishes ExportProjection
+  forbidden_inference a committed state -> a settled one (treasury continuity carries only settlement_refs the host supplied; the kernel records none of its own)
+  forbidden_inference a doctrine pass -> an authorized mutation (ingress doctrine checks the projection is well formed, not that the host may act)
+  forbidden_inference a residual taxonomy -> measured protocol risk (the calibrator scores the event it was handed; it observes no chain and reads no node)
+  forbidden_inference a declared target -> a reachable integration (the registry names 108 protocols; naming one builds no connector)
+  invariant state_hash commits to semantic state alone -- run identity and wall clock live in run_hash, so an unchanged state commits to one hash across runs
+  invariant hashing is order-independent over host event keys
+  invariant a name declared on two surfaces resolves to a distinct committed state per surface
+  invariant a protocol-critical surface with no mutation boundary is refused under enforce-doctrine
+  invariant every emitted object validates against its published schema in Aurekai/schemas
+  source_path Aurekai/src/integration-engine.mjs
+  source_path Aurekai/kernel/src/index.mjs
+  source_path Aurekai/registry/integrations.json
+  source_path Aurekai/registry/protocol-mutation-boundaries.json
+  witness Aurekai/tests/integration-kernel.test.mjs
+  source_lineage extracted from the Bonfyre native runtime as the public platform ingress edge
+  known_gap the mutation-boundary registry covers 21 protocols, so 122 of 198 target/surface pairs cannot pass enforce-doctrine
+  known_gap aurekai.adapter.contract.v1, aurekai.deploy.v1 and aurekai.state_object.v1 are published schemas that no code path emits
+  known_gap no target has ever been driven from a live endpoint in this tree; every measurement here is a synthetic host event

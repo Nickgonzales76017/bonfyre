@@ -1,0 +1,176 @@
+#!/usr/bin/env python3
+"""Archived after Bun/CUE cutover. Turn an unmet condition into a search target the market can be asked for.
+
+A closure residual is not a complaint. It is a precise statement of something
+this institution needs and cannot currently obtain, which is exactly the input a
+live gym wants: a target, several phrasings of it, and the capability that would
+have to answer.
+
+The phrasings matter. A condition stated one way is a query one provider
+understands and another does not, so the same need is deformed into several
+vocabularies -- the way a lender, a registry, a directory and a person would each
+say it. That is the same deformation discipline already used on addresses, moved
+from identity onto need.
+
+What this refuses to do is claim a market. Naming a target and phrasing it is
+rung one; a route that could answer it is rung two; a trial that ran is rung
+three. This produces rung one and says so.
+
+Cannot infer: a target is a demand anyone will meet, a phrasing is a query that
+works, or a named capability is a credentialed one.
+"""
+from __future__ import annotations
+
+import json
+import os
+import re
+import subprocess
+import sys
+from datetime import datetime, timezone
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+
+# How a need gets said. Each row is a vocabulary a different kind of source
+# speaks; the same condition reached through any of them must resolve to the
+# same requirement, which is what a trial would check.
+VOICES = {
+    "evidence":  ["{c} record", "{c} statement", "verified {c}", "{c} documentation"],
+    "partner":   ["{c} partner", "{c} operator", "experienced {c} principal",
+                  "{c} joint venture"],
+    "capital":   ["{c} financing", "{c} facility", "{c} funding route"],
+    "authority": ["{c} permit", "{c} authorisation", "{c} approval process"],
+    "contract":  ["{c} quote", "{c} coverage", "{c} terms"],
+    "work":      ["{c} plan", "{c} scheduling", "{c} staffing"],
+    "space":     ["{c} availability", "{c} booking", "{c} hold"],
+    "people":    ["{c} confirmation", "{c} booking", "{c} availability"],
+    "economics": ["{c} model", "{c} projection"],
+}
+
+# Which capability would have to answer. Named so the rung ladder can refuse a
+# route that does not close it, exactly as the retrieval market already does.
+CAPABILITY = {
+    "evidence": "retrieval.record", "partner": "discovery.entity",
+    "capital": "capital.route", "authority": "authority.lookup",
+    "contract": "quote.request", "work": "work.plan",
+    "space": "availability.lookup", "people": "availability.lookup",
+    "economics": "computation.internal",
+}
+
+
+def iso_now() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def phrase(condition: str, kind: str) -> list[str]:
+    readable = condition.replace("-", " ").replace("_", " ")
+    out = []
+    words = set(readable.lower().split())
+    for template in VOICES.get(kind, ["{c}"]):
+        # Skip a template whose distinguishing word the condition already says.
+        # "permit" through the authority voice produced "permit permit", which is
+        # not a second way of asking, it is the same way said twice.
+        extra = {w for w in template.lower().replace("{c}", " ").split() if w}
+        if extra & words:
+            continue
+        out.append(template.format(c=readable))
+    # A bare restatement is always a phrasing: a target nobody deformed is still
+    # a target, and omitting it would make the plainest query the one never asked.
+    out.insert(0, readable)
+    seen, unique = set(), []
+    for p in out:
+        key = re.sub(r"\s+", " ", p.strip().lower())
+        if key not in seen:
+            seen.add(key)
+            unique.append(p.strip())
+    return unique
+
+
+def has_voice(kind: str) -> bool:
+    return kind in VOICES
+
+
+def main() -> int:
+    domain = subject = None
+    for i, a in enumerate(sys.argv):
+        if a == "--domain" and i + 1 < len(sys.argv): domain = sys.argv[i + 1]
+        if a == "--subject" and i + 1 < len(sys.argv): subject = sys.argv[i + 1]
+    if not domain or not subject:
+        print("usage: residual_target.py --domain <d> --subject <s> [--json]",
+              file=sys.stderr)
+        return 2
+
+    proc = subprocess.run(
+        ["bun", os.path.join(HERE, "closure-algebra.mjs"),
+         "--domain", domain, "--subject", subject, "--json"],
+        capture_output=True, text=True, env={**os.environ})
+    if not proc.stdout.strip():
+        print("the closure produced nothing", file=sys.stderr)
+        return 2
+    closure = json.loads(proc.stdout)
+
+    # The residual: conditions that did not close, and resolvers not yet
+    # load-bearing. Both are things the outside world might supply.
+    closed = set(closure.get("closed_at_fixed_point", []))
+    unknown = set(closure.get("unknown_not_counted_as_blocked", []))
+    waiting: dict[str, list[str]] = {}
+    for b in closure.get("resolvers_blocked", []):
+        for w in b["waiting_on"]:
+            waiting.setdefault(w, []).append(b["resolver"])
+
+    gain = {h["condition"]: h["gain"] for h in closure.get("closure_hypotheses", [])}
+    targets = []
+    for cond in sorted(set(gain) - closed):
+        # The condition's own declared kind, not the class of whatever happens to
+        # be blocked on it. Taking the blocker's class typed a partner
+        # requirement as evidence, because the resolver waiting on it was a
+        # sponsor -- the need belongs to the condition, not to who is waiting.
+        kind = closure.get("condition_kinds", {}).get(cond, "")
+        if not kind:
+            kind = closure.get("condition_resolvable_by", {}).get(cond, "")
+        if not kind:
+            kind = "authority" if cond in unknown else "evidence"
+        targets.append({
+            "condition": cond,
+            "kind": kind,
+            "unlocks_resolvers": gain.get(cond, 0),
+            "blocks_resolvers": sorted(waiting.get(cond, [])),
+            "state": "unknown" if cond in unknown else "unmet",
+            "phrasings": phrase(cond, kind),
+            "capability_that_would_answer": CAPABILITY.get(kind, "retrieval.search"),
+            "rung": "named",
+            "phrasing_vocabulary": kind if has_voice(kind) else
+                                   "none declared for this kind; the plain restatement "
+                                   "is the only phrasing offered",
+        })
+    targets.sort(key=lambda t: (-t["unlocks_resolvers"], -len(t["blocks_resolvers"])))
+
+    receipt = {
+        "schema": "bonfyre-residual-target.v1",
+        "domain": domain, "subject": subject, "ran_at": iso_now(),
+        "effect_class": "PURE",
+        "targets": targets,
+        "rung_reached": "named",
+        "rungs": ["named", "capability declared", "route admissible", "trial executed",
+                  "result retrieved", "requirement closed"],
+        "cannot_infer": [
+            "a target -> a demand anyone will meet",
+            "a phrasing -> a query that works",
+            "a named capability -> a credentialed one",
+            "a named target -> a measured market",
+        ],
+    }
+    if "--json" in sys.argv:
+        print(json.dumps(receipt, indent=2))
+        return 0
+    print(f"  {domain} / {subject}: {len(targets)} residual target(s)")
+    print(f"  rung reached: named  (of {' -> '.join(receipt['rungs'])})")
+    print()
+    for t in targets:
+        print(f"  {t['condition']:<24}{t['kind']:<11}unlocks {t['unlocks_resolvers']}  "
+              f"needs {t['capability_that_would_answer']}")
+        print(f"      asked as: {' | '.join(t['phrasings'][:3])}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

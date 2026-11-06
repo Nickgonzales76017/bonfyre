@@ -1,0 +1,18 @@
+[Unit]
+Description=Bonfyre TargetObligation inverse residual worker
+After=bonfyre-address-worker.service
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=ubuntu
+EnvironmentFile=/etc/bonfyre/address-plane.env
+# Consumes only InverseCompiler-partitioned dependency cuts. It reevaluates
+# native owner predicates and emits proposed residuals; it never performs an
+# effect, payment, reservation, commitment or authority grant.
+ExecStart=/usr/local/bin/bonfyre-semantic-optimizer inverse-drain --db ${BONFYRE_INVERSE_DB} --lowerer-dir ${BONFYRE_LOWERER_INBOX} --limit 128
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/bonfyre

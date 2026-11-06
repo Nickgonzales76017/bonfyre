@@ -15,11 +15,29 @@ on:
       - "engine/**"
       - "lib/**"
       - "cmd/BonfyreFS/**"
+      - "cmd/BonfyreWebAddress/**"
+      - "cmd/BonfyreDomain/**"
+      - "deploy/nginx/bonfyre-addressplane.conf"
+      - "deploy/cloudflared/bonfyre-addressplane-ingress.yml"
+      - "deploy/systemd/bonfyre-web-address.*"
+      - "cmd/BonfyreOperator/**"
+      - "bin/**"
       - "programs/**"
       - "build.zig"
       - "schemas/control/**"
       - "tests/conformance/**"
       - "components/BonfyreControlPlane/**"
+      - "components/**/*.sh"
+      - "cmd/**/*.sh"
+      - "scripts/**"
+      - "integrations/mcp/**"
+      - "architecture/tests/**"
+      - "deploy/**/*.sh"
+      - "deploy/launchd/**"
+      - "mcp/**/*.sh"
+      - "services/**/*.sh"
+      - "services/bonfyre-restate-native/**"
+      - "tests/restate_integration.sh"
       - "tools/transitional_root_absorption.py"
       - "tests/test_transitional_root_absorption.py"
       - "generated/projections/estate/transitional-root-absorption.json"
@@ -32,44 +50,251 @@ permissions:
   contents: read
 
 jobs:
+  shared-runtime-analysis:
+    name: shared runtime adversarial contracts and shell analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install actual analyzers and fixture dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck ripgrep jq
+
+      - name: Verify observation, invalidation, packaging and argument boundaries
+        run: |
+          bun integrations/mcp/native/build_spines_wasm.mjs --verify
+          bun test \
+            integrations/mcp/tests/project_delta_watcher.test.mjs \
+            integrations/mcp/tests/project_node.test.mjs \
+            integrations/mcp/tests/project_spines.test.mjs \
+            integrations/mcp/tests/project_v6.test.mjs \
+            integrations/mcp/tests/canonical_json.test.mjs \
+            integrations/mcp/tests/mission_plan.test.mjs \
+            integrations/mcp/tests/hypervisor_missions.test.mjs \
+            integrations/mcp/tests/hypervisor_store.test.mjs \
+            integrations/mcp/tests/hypervisor_discovery.test.mjs \
+            integrations/mcp/tests/hypervisor_adapters.test.mjs \
+            integrations/mcp/tests/hypervisor_context.test.mjs \
+            integrations/mcp/tests/hypervisor_evaluation.test.mjs \
+            integrations/mcp/tests/hypervisor_execution.test.mjs \
+            integrations/mcp/tests/hypervisor_sources.test.mjs \
+            integrations/mcp/tests/hypervisor_server.test.mjs \
+            integrations/mcp/tests/hypervisor_cli.test.mjs \
+            integrations/mcp/tests/v6_hypervisor_bridge.test.mjs \
+            integrations/mcp/tests/v6_store.test.mjs \
+            integrations/mcp/tests/v6_transport.test.mjs \
+            integrations/mcp/tests/v6_resources.test.mjs \
+            integrations/mcp/tests/v6_history.test.mjs \
+            integrations/mcp/tests/v6_missions.test.mjs \
+            integrations/mcp/tests/v6_bfp.test.mjs \
+            integrations/mcp/tests/owned_worker_pool.test.mjs \
+            integrations/mcp/tests/project_runtime.test.mjs \
+            integrations/mcp/tests/project_run_cancel.test.mjs \
+            integrations/mcp/tests/owned_mcp_client.test.mjs \
+            integrations/mcp/tests/fabric_store.test.mjs \
+            integrations/mcp/tests/fabric_work.test.mjs \
+            integrations/mcp/tests/fabric_transport.test.mjs \
+            integrations/mcp/tests/fabric_estate.test.mjs \
+            integrations/mcp/tests/spines_store.test.mjs \
+            integrations/mcp/tests/spines_temporal.test.mjs \
+            integrations/mcp/tests/spines_reasoning.test.mjs \
+            integrations/mcp/tests/spines_wasm.test.mjs \
+            integrations/mcp/tests/spines_model.test.mjs \
+            integrations/mcp/tests/spines_transport.test.mjs \
+            integrations/mcp/tests/spines_integration.test.mjs \
+            integrations/mcp/tests/hook_bridge.test.mjs \
+            integrations/mcp/tests/project_reads.test.mjs \
+            integrations/mcp/tests/project_operator.test.mjs \
+            integrations/mcp/tests/project_native.test.mjs \
+            integrations/mcp/tests/project_transport_adversarial.test.mjs \
+            integrations/mcp/tests/operator_store.test.mjs \
+            integrations/mcp/tests/operator_tools.test.mjs \
+            integrations/mcp/tests/operator_daemon.test.mjs \
+            integrations/mcp/tests/operator_integration.test.mjs \
+            integrations/mcp/tests/canary_transport.test.mjs \
+            integrations/mcp/tests/canary_store.test.mjs \
+            integrations/mcp/tests/canary_fixtures.test.mjs \
+            integrations/mcp/tests/canary_integration.test.mjs \
+            integrations/mcp/tests/recursive_transport.test.mjs \
+            integrations/mcp/tests/recursive_store.test.mjs \
+            integrations/mcp/tests/recursive_integration.test.mjs \
+            deploy/launchd/tests/service_cutover.test.mjs \
+            scripts/tests/apply_fact_deltas.test.mjs \
+            scripts/tests/appliance_manifest.test.mjs \
+            scripts/tests/shell_argument_boundaries.test.mjs \
+            scripts/tests/shellcheck_audit.test.mjs \
+            scripts/tests/oxlint_audit.test.mjs \
+            architecture/tests/pure_tier_witness.test.mjs
+
+      - name: Require actual JavaScript analyzer coverage
+        run: |
+          bun scripts/analysis/oxlint_audit.mjs \
+            integrations/mcp/project_node.mjs \
+            integrations/mcp/project_spines.mjs \
+            integrations/mcp/project_owner.mjs \
+            integrations/mcp/project_v6.mjs \
+            integrations/mcp/v6_catalog.mjs \
+            integrations/mcp/mission_plan.mjs \
+            integrations/mcp/hypervisor_missions.mjs \
+            integrations/mcp/hypervisor_store.mjs \
+            integrations/mcp/hypervisor_discovery.mjs \
+            integrations/mcp/hypervisor_adapters.mjs \
+            integrations/mcp/hypervisor_context.mjs \
+            integrations/mcp/hypervisor_evaluation.mjs \
+            integrations/mcp/hypervisor_execution.mjs \
+            integrations/mcp/hypervisor_sources.mjs \
+            integrations/mcp/hypervisor_server.mjs \
+            integrations/mcp/hypervisor_catalog.mjs \
+            integrations/mcp/hypervisor_cli.mjs \
+            integrations/mcp/native_probe.mjs \
+            integrations/mcp/v6_hypervisor_bridge.mjs \
+            integrations/mcp/v6_store.mjs \
+            integrations/mcp/v6_server.mjs \
+            integrations/mcp/v6_resources.mjs \
+            integrations/mcp/v6_history.mjs \
+            integrations/mcp/v6_missions.mjs \
+            integrations/mcp/v6_bfp.mjs \
+            integrations/mcp/v6_bfp_worker.mjs \
+            integrations/mcp/owned_worker_pool.mjs \
+            tests/v6_history_witness.mjs \
+            integrations/mcp/project_runtime.mjs \
+            integrations/mcp/owned_mcp_client.mjs \
+            integrations/mcp/fabric_server.mjs \
+            integrations/mcp/fabric_store.mjs \
+            integrations/mcp/fabric_work.mjs \
+            integrations/mcp/fabric_estate.mjs \
+            integrations/mcp/hook_bridge.mjs \
+            integrations/mcp/tests/fabric_live_witness.mjs \
+            integrations/mcp/spines_store.mjs \
+            integrations/mcp/spines_temporal.mjs \
+            integrations/mcp/spines_reasoning.mjs \
+            integrations/mcp/spines_wasm.mjs \
+            integrations/mcp/spines_wasm_core.mjs \
+            integrations/mcp/native/build_spines_wasm.mjs \
+            integrations/mcp/spines_model.mjs \
+            integrations/mcp/spines_server.mjs \
+            integrations/mcp/spines_cli.mjs \
+            integrations/mcp/tests/spines_live_witness.mjs \
+            tests/spines_history_witness.mjs \
+            deploy/launchd/spines_cutover.mjs \
+            integrations/mcp/project_reads.mjs \
+            integrations/mcp/project_operator.mjs \
+            integrations/mcp/project_native.mjs \
+            integrations/mcp/operator_store.mjs \
+            integrations/mcp/operator_tools.mjs \
+            integrations/mcp/operator_daemon.mjs \
+            integrations/mcp/http_boundary.mjs \
+            integrations/mcp/canonical_json.mjs \
+            integrations/mcp/recursive_server.mjs \
+            integrations/mcp/recursive_store.mjs \
+            integrations/mcp/recursive_cli.mjs \
+            integrations/mcp/tests/recursive_live_witness.mjs \
+            tests/recursive_native_witness.mjs \
+            integrations/mcp/canary_server.mjs \
+            integrations/mcp/canary_store.mjs \
+            integrations/mcp/canary_fixtures.mjs \
+            integrations/mcp/canary_cli.mjs \
+            integrations/mcp/tests/project_live_witness.mjs \
+            integrations/mcp/tests/canary_live_witness.mjs \
+            deploy/launchd/operator_cutover.mjs \
+            deploy/launchd/service_cutover.mjs \
+            deploy/launchd/fabric_cutover.mjs \
+            deploy/launchd/recursive_cutover.mjs \
+            deploy/launchd/canary_cutover.mjs \
+            deploy/launchd/project_mcp_cutover.mjs
+
+      # Warnings remain visible. Unsupported shells are reported as unanalysed,
+      # never counted as passing. Actual errors and unavailable tools fail.
+      - name: Audit all discovered shell owners with source-bound evidence
+        run: bun scripts/analysis/shellcheck_audit.mjs
+
   control-conformance:
-    name: control vectors (native + reference)
+    name: native control conformance
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reject new Python runtime sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          base_ref="$(printenv GITHUB_BASE_REF || true)"
+          if [ -z "$base_ref" ]; then base_ref=main; fi
+          base="origin/$base_ref"
+          if ! git rev-parse --verify --quiet "$base" >/dev/null; then
+            base="$(git rev-parse HEAD^)"
+          fi
+          added="$(git diff --name-only --diff-filter=A "$base"...HEAD | grep -E '\.py$' || true)"
+          if [ -n "$added" ]; then
+            echo "::error::New Python source is forbidden. Extend C, Zig, C++, or Bun/TypeScript instead."
+            printf '%s\n' "$added"
+            exit 1
+          fi
+
+      - name: Reject Python runtime wrappers
+        shell: bash
+        run: |
+          set -euo pipefail
+          wrappers="$(rg -n -e '(^|[[:space:]])python(3)?([[:space:]]|$)' bin --glob '!*.py' || true)"
+          if [ -n "$wrappers" ]; then
+            echo "::error::bin/ launchers must dispatch native or Bun-compiled commands, never Python."
+            printf '%s\n' "$wrappers"
+            exit 1
+          fi
+
+      - name: Reject interpreter-backed shell paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          shell_paths="$(rg -n -i '(^|[^[:alnum:]_])python3?([^[:alnum:]_]|$)' scripts bin components cmd services integrations/erpnext_app --glob '*.sh' --glob 'bonfyre-*' --glob '*.pl' --glob '!*archive' || true)"
+          if [ -n "$shell_paths" ]; then
+            echo "::error::Runtime shell paths must use native/Bun organs, never an interpreter."
+            printf '%s\n' "$shell_paths"
+            exit 1
+          fi
+
+      - name: Reject interpreter exec from native runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          exec_edges="$(rg -n -i 'exec[a-z]*\([^\n]*python|system\([^\n]*python' engine cmd lib components --glob '*.{c,cc,cpp}' --glob '!*archive' || true)"
+          if [ -n "$exec_edges" ]; then
+            echo "::error::Native runtime may not spawn an interpreter."
+            printf '%s\n' "$exec_edges"
+            exit 1
+          fi
+
+      - name: Reject executable Python in absorbed estates
+        shell: bash
+        run: |
+          set -euo pipefail
+          python_files="$(find components scripts services bin cmd .bonfyre integrations/erpnext_app content/contributions -path '*/venv/*' -prune -o -type f -name '*.py' -print 2>/dev/null || true)"
+          if [ -n "$python_files" ]; then
+            echo "::error::Absorbed estates may retain only .py.archive evidence, never executable .py files."
+            printf '%s\n' "$python_files"
+            exit 1
+          fi
 
       - uses: mlugg/setup-zig@v1
         with:
           version: 0.13.0
 
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Replay retired ControlPlane witnesses in Bun
+        run: make control-plane-native-test
+
       - name: Replay vectors against the native kernel
         run: zig build test-control
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install reference-test runner
-        run: python3 -m pip install pytest
-
-      - name: Full reference implementation still agrees
-        working-directory: components/BonfyreControlPlane
-        run: python3 -m pytest tests/ -q
-
-      - name: Compatibility-root absorption ledger is current
-        run: python3 tools/transitional_root_absorption.py --verify
-
-      - name: Vectors still describe the reference
-        run: python3 tests/conformance/control/generate_vectors.py --check
-
-      - name: Vectors are committed in sync with the generator
-        run: |
-          python3 tests/conformance/control/generate_vectors.py
-          if ! git diff --quiet -- tests/conformance/control/vectors; then
-            echo "::error::vectors/ is stale; re-run generate_vectors.py and commit"
-            git --no-pager diff --stat -- tests/conformance/control/vectors
-            exit 1
-          fi
+      - name: Native control suite is self-contained
+        run: make -C engine/core test
 
   fabric-roundtrip:
     name: BonfyreFS mounts a real fabric
@@ -143,6 +368,33 @@ jobs:
                  ls -1 "$MOUNT/Artifacts"; fusermount -u "$MOUNT"; exit 1; }
 
           fusermount -u "$MOUNT"
+
+  restate-native:
+    name: native Restate durable carrier
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Build and discover the native Restate service
+        run: make -C services/bonfyre-restate-native test
+
+  url-matrix:
+    name: native URL matrix and owned-domain boundary
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install native URL dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsqlite3-dev libcurl4-openssl-dev
+
+      - name: Exercise address constellation, host context, carriers, and DNS guard
+        run: |
+          make -C cmd/BonfyreWebAddress test
+          make -C cmd/BonfyreDomain test
 
   native-commands:
     name: cmd/Bonfyre* build and answer

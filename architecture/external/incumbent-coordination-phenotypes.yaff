@@ -1,0 +1,68 @@
+atlas external
+
+architecture incumbent-coordination-phenotypes
+  canonical_name IncumbentCoordinationPhenotypes
+  family external
+  domain External / Institutional carriers
+  layer compilation
+  semantic_question Which incumbent platforms carry public material, institutional work, and authority boundaries without becoming the semantic owner of an Aurekai subject?
+  purpose A compiler maps WordPress, moderated community, support, event, education, household-resource, resident-property, commerce, and neighborhood coordination bottlenecks into separately named subject roots, public carriers, and authority bridges. A receipt-bound materializer lowers public GitHub repositories to Project, Reddit/Discord records to observed CommunityBody, Meetup/Eventbrite records to PublicationOccurrence, and 211/Clever/property/Nextdoor records to ExternalResource; an ingest runner writes these native CMS owners and replay-updates them by their semantic external key. A separate ExternalResource Promotion compiler may lower a retained 211 resource with explicit public service classifications to HouseholdOpportunity, whose only current behavior is a private local save. It refuses private roles, payment, enrollment, eligibility, referral, and authority. A shared provider-connection compiler closes every carrier through observed, verified, connected, and revoked states: connection requires a named bridge-control proof plus a provider grant receipt naming its exact capabilities. WordPress is the first connected bridge: an installable read-only plugin signs a nonce-scoped HTTPS-site challenge with its pairing secret; every other authority bridge remains deferred.
+  maturity implemented
+  owns IncumbentCoordinationPhenotype
+  publishes CoordinationClosure
+  consumes SourceFrontier
+  consumes ExternalAccountLink
+  node_types CoordinationCarrier
+  node_types AuthorityBridge
+  edge_types participates_through
+  edge_types verified_by_bridge
+  invariant a phenotype separates public carrier, subject roots, and authority bridge; no provider account becomes a universal owner
+  invariant only the WordPress bridge can currently verify installed-bridge control, and its proof is scoped to one clean HTTPS site and nonce
+  invariant all deferred bridges remain named gaps, not claimed provider integrations
+  invariant the five public carrier phenotypes share one ForeignTwin observation runner; it emits a normalized envelope only after the observer has retained both a body and a receipt, and the replay-safe CMS ingest delegates schema validation and writes to the native CMS owner
+  forbidden_inference an installed WordPress bridge -> Actor identity, institutional authority, publication ownership, external OAuth grant, private data access, or a right to publish
+  forbidden_inference a public Reddit, Discord, Patreon, Meetup, SIS, 211, property, marketplace, or neighborhood carrier -> membership, money movement, authority, or private-provider access
+  source_path schemas/control/incumbent-coordination-phenotypes.json
+  source_path cmd/BonfyreExternalEstate/tools/compile_coordination_family.mjs
+  source_path integrations/wordpress/bridge.mjs
+  source_path integrations/wordpress/plugin/aurekai-bridge.php
+  source_path cmd/BonfyreExternalEstate/tools/materialize_incumbent_records.mjs
+  source_path cmd/BonfyreExternalEstate/tools/collect_public_carrier.mjs
+  source_path cmd/BonfyreExternalEstate/tools/promote_external_resource.mjs
+  source_path cmd/BonfyreExternalEstate/tools/normalize_incumbent_provider_records.mjs
+  source_path cmd/BonfyreExternalEstate/tools/ingest_incumbent_record.mjs
+  source_path cmd/BonfyreCMS/content-types/external_participation_carrier.json
+  source_path cmd/BonfyreCMS/content-types/external_provider_connection.json
+  witness cmd/BonfyreExternalEstate/tests/coordination_family.test.mjs
+  witness integrations/wordpress/bridge.test.mjs
+  witness integrations/wordpress/plugin.test.mjs
+  witness cmd/BonfyreExternalEstate/tests/incumbent_materialization.test.mjs
+  witness cmd/BonfyreExternalEstate/tests/public_carrier_collector.test.mjs
+  witness cmd/BonfyreExternalEstate/tests/incumbent_ingest_owner_test.sh
+  witness cmd/BonfyreWebAddress/tests/github_foundry_closure_test.sh proves retained GitHub, Reddit, Discord, and Meetup public carrier fixtures are replay-safely ingested as Project, CommunityBody, or PublicationOccurrence and reach their exact signed-in native support, CommunityMembership-request, or local-occurrence-follow owner writes
+  known_gap the plugin contract is statically tested but not yet exercised inside a WordPress runtime, and no CMS ceremony advances an institution claim from bridge-control verification.
+
+interaction incumbent-coordination-phenotypes-uses-source-frontier
+  source incumbent-coordination-phenotypes
+  destination source-frontier
+  relation maps_public_carriers
+  preserves public carrier family, carrier endpoint class, and source standing
+  drops provider-private state, authority, membership, and all effects
+  forbidden_inference a public carrier mapping -> a callable source or institution connection
+  invalidates_on a carrier declaration or SourceFrontier standing changing
+  binding cmd/BonfyreExternalEstate/tools/compile_coordination_family.mjs
+  witness cmd/BonfyreExternalEstate/tests/coordination_family.test.mjs
+
+interaction incumbent-coordination-phenotypes-reaches-foundry-behavior
+  source incumbent-coordination-phenotypes
+  destination foundry-behavior-compiler
+  relation materializes_subject_for_exact_behavior
+  preserves retained carrier receipt reference, external semantic key, Project, CommunityBody, or PublicationOccurrence identity, and exact native owner contract
+  drops provider-private membership, role, payment, authority, attendance, and every effect until the authenticated native owner receives an explicit action
+  forbidden_inference a public GitHub, Reddit, Discord, or Meetup carrier materialized as a native subject -> carrier ownership, provider membership, external role, attendance, authority, or an automatic native action
+  invalidates_on collector, materializer, CMS Project, CommunityBody, PublicationOccurrence, or OccurrenceFollow schema, Foundry behavior spec, AddressPlane subject lookup, or native support/community-request/occurrence-follow owner changing
+  binding cmd/BonfyreExternalEstate/tools/collect_public_carrier.mjs
+  binding cmd/BonfyreExternalEstate/tools/ingest_incumbent_record.mjs
+  binding cmd/BonfyreCMS/tools/compile_foundry_behavior.mjs
+  binding cmd/BonfyreWebAddress/src/main.c
+  witness cmd/BonfyreWebAddress/tests/github_foundry_closure_test.sh

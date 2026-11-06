@@ -1,0 +1,7 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-net","binary_env":"BONFYRE_NET_BIN","cases":[
+{"name":"organs named by a netlist run as real processes: speech is made and heard back","files":{"say.txt":"The estate keeps a receipt for every piece of work it does.\n","speak.bfnet":".WORLD speak-and-hear\n.COMPONENT say BonfyreNarrate say.txt ${out}\n.COMPONENT hear BonfyreTranscribe ${say}/artifact.wav ${out}\n.NET say.audio hear.input audio\n"},"steps":[
+ {"program":"sh","argv":["-c","mkdir -p .local/share && ln -s \"$1/.local/share/whisper\" .local/share/whisper","sh","${home}"],"exit":0},
+ {"argv":["exec","speak.bfnet","--out","run"],"env":{"HOME":"${tmp}","PATH":"${root}/cmd/BonfyreNarrate:${root}/cmd/BonfyreTranscribe:/usr/bin:/bin:/opt/homebrew/bin","BONFYRE_FRAGMENT_STORE":"${tmp}/frag.db"},"exit":0,"contains":["status=OK"],"present":["${tmp}/run/say/artifact.wav","${tmp}/run/hear/transcript.txt"]},
+ {"program":"cat","argv":["run/hear/transcript.txt"],"contains":["receipt for every piece of work"]}]},
+{"name":"a netlist of organs the circuit runtime cannot run does not compile","steps":[
+ {"argv":["compile","${organ}/tests/frontier_gym_minimal.bfnet","--out","f.bfcircuit"],"env":{"HOME":"${tmp}","PATH":"${root}/cmd/BonfyreNarrate:${root}/cmd/BonfyreTranscribe:/usr/bin:/bin:/opt/homebrew/bin","BONFYRE_FRAGMENT_STORE":"${tmp}/frag.db"},"exit_nonzero":true}]}]}

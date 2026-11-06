@@ -1,0 +1,69 @@
+{
+  "operator": "DIFF",
+  "program": {
+    "program_id": "household.diff.2175eb3c3492c0b6",
+    "operator": "DIFF",
+    "digest": "393725831bab3d214acf0b17b5c6df17891d991c05332e0e22d5f9f1b1925aa0",
+    "reads": [
+      "household:food:offer:Rice-2",
+      "household:food:offer:rice_1"
+    ],
+    "admitted": true,
+    "hard_failures": []
+  },
+  "left": "household:food:offer:Rice-2",
+  "right": "household:food:offer:rice_1",
+  "changes": [
+    {
+      "path": "$.10",
+      "left": 1,
+      "right": null
+    },
+    {
+      "path": "$.2",
+      "left": 2,
+      "right": null
+    },
+    {
+      "path": "$.evidence_ref",
+      "left": "",
+      "right": null
+    },
+    {
+      "path": "$.nested.a",
+      "left": "éé",
+      "right": null
+    },
+    {
+      "path": "$.nested.b.y",
+      "left": 1,
+      "right": 2
+    },
+    {
+      "path": "$.nested.c",
+      "left": null,
+      "right": 0.1
+    },
+    {
+      "path": "$.notes",
+      "left": null,
+      "right": "multi\nline \"q\""
+    },
+    {
+      "path": "$.offer_id",
+      "left": "Rice-2",
+      "right": "rice_1"
+    },
+    {
+      "path": "$.source_refs",
+      "left": "https://example.test/rice",
+      "right": [
+        "z",
+        "a",
+        "a",
+        ""
+      ]
+    }
+  ]
+}
+exit 0

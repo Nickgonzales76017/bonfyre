@@ -1,0 +1,22 @@
+[Unit]
+Description=Bonfyre ResourceWeather — compile whole-census standing into scoped material refresh
+After=bonfyre-address-worker.service bonfyre-lowering-consumers.service
+
+[Service]
+Type=oneshot
+# Project runs only as `foreign reheat --dry-run` beneath the native refresh
+# worker. The worker atomically advances the whole-census ResourceWeather
+# frontier and emits only matching material intent; WebSub/ForeignTwin remain
+# the separately bounded owner of an actual foreign read and receipt.
+User=ubuntu
+Group=ubuntu
+EnvironmentFile=/etc/bonfyre/address-plane.env
+ExecStart=/usr/local/bin/bonfyre-resource-weather-refresh refresh --project /usr/local/bin/bonfyre-project --transition /usr/local/bin/bonfyre-resource-weather-transition --weather ${BONFYRE_RESOURCE_WEATHER_SNAPSHOT} --db ${BONFYRE_RESOURCE_WEATHER_TRANSITION_DB} --delta-bin /usr/local/bin/bonfyre-resource-weather-delta --reheat-bin /usr/local/bin/bonfyre-material-weather-reheat --weather-gate /usr/local/bin/bonfyre-material-weather-gate --gate-db ${BONFYRE_MATERIAL_WEATHER_GATE_DB} --address-db ${BONFYRE_EXTERNAL_ESTATE_DB} --lease-db ${BONFYRE_MATERIAL_LEASE_DB} --reheat-db ${BONFYRE_RESOURCE_WEATHER_REHEAT_DB} --acquire-dir ${BONFYRE_MATERIAL_ACQUIRE_DIR} --cancel-dir ${BONFYRE_MATERIAL_CANCEL_DIR} --out-dir ${BONFYRE_MATERIAL_ADMITTED_DIR} --delta-dir ${BONFYRE_RESOURCE_WEATHER_DELTA_DIR}
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=600
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+NoNewPrivileges=true
+ReadWritePaths=/var/lib/bonfyre

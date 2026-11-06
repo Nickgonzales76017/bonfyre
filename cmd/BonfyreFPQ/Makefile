@@ -8,7 +8,8 @@
 #   Other  → scalar fallback, all functionality preserved
 
 CC      ?= cc
-CFLAGS  ?= -O3 -march=native -Wall -Wextra -std=c11
+CFLAGS  ?= -O3 -march=native -Wall -Wextra -std=c11 -ffunction-sections -fdata-sections
+CFLAGS += -I../BonfyreLex/src
 CFLAGS  += -Iinclude
 LDFLAGS ?= -lm
 UNAME_S := $(shell uname -s)
@@ -54,12 +55,12 @@ SRCS := $(SRC_DIR)/fwht.c \
 OBJS := $(patsubst $(SRC_DIR)/%.c,$(BUILD)/%.o,$(SRCS))
 BIN  := bonfyre-fpq
 
-.PHONY: all clean test
+.PHONY: all clean test test-serialization
 
 all: $(BIN)
 
 $(BIN): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+	$(CC) $(CFLAGS) -Wl,-dead_strip -o $@ $^ $(LDFLAGS)
 
 $(BUILD)/%.o: $(SRC_DIR)/%.c $(INC_DIR)/fpq.h $(wildcard $(INC_DIR)/weight_algebra.h) | $(BUILD)
 	$(CC) $(CFLAGS) -c -o $@ $<
@@ -71,7 +72,31 @@ clean:
 	rm -rf $(BUILD) $(BIN)
 
 # Quick roundtrip test on a whisper model
-test: $(BIN)
+../../lib/libbonfyre/libbonfyre.a:
+	$(MAKE) -C ../../lib/libbonfyre
+
+$(BUILD)/serialization-test: tests/serialization.c $(filter-out $(BUILD)/main.o,$(OBJS)) ../../lib/libbonfyre/libbonfyre.a
+	$(CC) $(CFLAGS) -I../../lib/libbonfyre/include -o $@ $^ $(LDFLAGS)
+
+$(BUILD)/serialization-faults: tests/serialization_faults.c src/serialize.c $(filter-out $(BUILD)/main.o $(BUILD)/serialize.o,$(OBJS))
+	$(CC) $(CFLAGS) -o $@ tests/serialization_faults.c $(filter-out $(BUILD)/main.o $(BUILD)/serialize.o,$(OBJS)) $(LDFLAGS)
+
+test-serialization: $(BUILD)/serialization-test $(BUILD)/serialization-faults
+	$(abspath $(BUILD))/serialization-test tests/fixtures $(BUILD)/serialization-witness.json
+	cue vet serialization.cue $(BUILD)/serialization-witness.json
+	cue export serialization.cue tests/serialization_contract.cue -e '#File & #ContractCase' > /dev/null
+	@for invalid in 'version: 5' 'flags: 2' 'version: 3' 'flags: 0' 'layout: "per-block"' \
+	  'tensor_count: 2' 'tensors: [{dictionary_count: 2}]' 'tensors: [{block_count: 2}]' \
+	  'tensors: [{mode: 2}]' 'tensors: [{blocks: [{dictionary_index: 1}]}]' \
+	  'tensors: [{blocks: [{node_count: 4}]}]' 'tensors: [{blocks: [{qjl_words: 1}]}]'; do \
+	  if cue export serialization.cue tests/serialization_contract.cue -e "#File & #ContractCase & {$$invalid}" > /dev/null 2>&1; then \
+	    echo "CUE accepted malformed FPQ metadata: $$invalid"; exit 1; \
+	  fi; \
+	done
+	@echo 'FPQ! CUE metadata contract: six native file witnesses and 12 refusal cases PASS'
+	$(abspath $(BUILD))/serialization-faults tests/fixtures/legacy-v3.fpq
+
+test: $(BIN) test-serialization
 	@echo "=== FPQ Roundtrip Test ==="
 	@if [ -f models/ggml-base.en.bin ]; then \
 		./$(BIN) roundtrip models/ggml-base.en.bin --limit 5 --report --max-nodes 32 --tolerance 0.01; \

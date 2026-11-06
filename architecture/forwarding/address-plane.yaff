@@ -24,17 +24,132 @@ architecture address-plane
   edge_types eligible_for
   edge_types blackholes
   internal_calculus bitwise eligibility (have & need)==need
+  internal_calculus ExternalEstate candidate forwarding: deterministic declared axis/term registry -> 62-bit-safe masks -> required intersection plus prohibited-term rejection before exact owner work
+  internal_calculus temporal forwarding: ExternalEstate temporal owner classification -> bearing publication modes only -> explicit temporal AddressAxis -> shared masks; not_evident emits no negative coordinate
+  internal_calculus CandidateAdvertisement compilation: canonical owner emission -> typed descriptor and declared dependency references -> shared deterministic mask registry -> kind partition -> required/prohibited cut -> exact verifier
+  internal_calculus provider embedding forwarding: a complete ProviderState embedding run with every requested projection stored -> durable ProviderEmbeddingRun FactDelta -> typed latent provider CandidateAdvertisement (provider/model/representation/embedding coordinates only) -> shared mask cut -> ProviderCompiler exact run recheck and unrequested derived capability artifact -> later purpose-bound ResourceAdmission; provider vectors remain a representation, never semantic owner state
+  internal_calculus physical representation export: every currently compiled CandidateAdvertisement, including all 4,891 ExternalEstate occurrences, -> content-digested declared RepresentationPassport with one shared address-index basis plus a typed binding -> PhysicalCompiler dense handles and operation support rows; runtime receipts remain separate before any cost claim
+  internal_calculus durable publication/change worker: CMS, TargetObligation, ProviderState, ModelCatalog, ProtocolCommons and authenticated MCP closure snapshots preflight into a disposable generation then atomically replace only their retired owner populations; that generation emits a fsync'd content-digested physical-passport snapshot to PhysicalCompiler only through an optional native ResourceAdmission snapshot-build grant (ADMIT, DEFER, and REJECT remain separate, with a released transient grant after compilation); PhysicalCompiler atomically replaces dense handles only when the snapshot digest moved; WebAddress and ForeignTwin FactDeltas atomically enqueue each declared dependency cut with its lowerer reference, then fsync+rename one idempotent handoff envelope into that lowerer’s inbox
+  internal_calculus resource-weather material reheat: the native refresh worker invokes BonfyreProject only as `foreign reheat --dry-run`, validates and atomically publishes its whole-census ResourceWeather snapshot, then advances a durable content-addressed frontier. A source's tier or scheduler decision transition produces a FactDelta named by both snapshot digests and targets only still-leased intent carrying that exact source coordinate: an initial pending lease may admit HOT/WARM material work, while a current HOT/WARM lease refreshes only on its exact `not due -> due` delta. COLD/FROZEN retain demand; WebSub -> ForeignTwin owns the later bounded read/receipt loop. Cancellation remains lease-owned and prevents a later HOT delta from resurrecting a zero-lease intent.
+  internal_calculus McpApertureIR compilation: authenticated actor/address/target/policy closure digests plus typed MCP and MediaLibrary CandidateAdvertisements -> the shared required/prohibited mask cut -> deterministic content-addressed private aperture containing only resource/resource-template/tool/prompt descriptors and their exact verifier references; a valid refreshed closure atomically retires absent derived MCP descriptors without touching their owners; list eligibility remains separate from later gateway authorization
   internal_calculus ternary proof vector (+1 proven / 0 unresolved / -1 KnownNonCause)
   internal_calculus authority mask compiled from non-revoked in-window grants
+  invariant a host is an institution in a territory, never a deployment; the same code and the same surfaces answer on leaflounge.aurekai.shop and theleaflounge.store, for a different subject
+  invariant WebAddress binds a public subject only through an exact built-in territory apex/www address or the latest published SitePresentation for that normalized host; a suffix alone cannot bind an arbitrary subdomain, a malformed port is refused, and a truncated subject address is never accepted
+  invariant the institution holding an address is published, not only stored; a surface that cannot name whose host it is standing on is a projection of nobody, and deriving it from the hostname is wrong for exactly the institution that carries a domain of its own
+  invariant an institution's other territories come from the Matrix rather than from string surgery on the hostname, because the one case that matters -- an owned domain -- has no subdomain to cut up
+  invariant the address document answers any origin; cross-territory resolution is the point of an address plane, and a browser refusing it is the plane failing rather than the estate protecting anything. Nothing else gains that: a gated pattern stays gated
+  invariant a surface links a subject's address only where that address resolves; this estate runs 103 capabilities it does not address, and a page linking all of them would be inventing 99 addresses to look complete
   invariant bits are a compiled machine index, not meaning
+  invariant the 4,891 ExternalEstate occurrences compile as external_occurrence CandidateAdvertisements from canonical occurrence terms and contain no copied body, provider state, authority, evidence or effect fact
+  invariant temporal:not_evident is epistemic absence, not temporal:false, a prohibition, a static-state claim, or a candidate eligibility fact; only owner-classified bearing modes enter the temporal forwarding axis
+  invariant candidate kind remains typed before selection; an ExternalEstate occurrence and a CMS-declared external source cannot become a renderer, provider, protocol enactment or compute placement because they share an eligible bit
+  invariant a published World source reference compiles its exact CMS source coordinate, its publication-source coordinate and its retained ForeignTwin topic into that World advertisement's dependency set; a receipt-bound observation or a post-commit CMS publication delta therefore reaches only the declared World `SurfaceIR` cut, never a global foreign refresh
+  invariant CandidateAdvertisement carries only reproducible coordinates and owner/lowerer/verifier references; it contains no copied authority, provider weather, evidence, proof, commitment or effect state
+  invariant a FactDelta dependency hit produces an affected recomputation cut only; it cannot itself select, authorize, prove or execute a candidate
+  invariant MaterialCompiler emits an observation request only; WebSub's durable SourceDirty ingress coalesces that request by topic and the later ForeignTwin owner independently applies observe-right, robots and receipt law before any body or FactDelta can exist
+  invariant a ForeignTwin-caused MaterialCompiler handoff retains its causal write set and may materialize only the matching owner receipt reference; it cannot create another observation request for that same receipt-driven cut
+  invariant a ResourceWeather FactDelta is a source-standing coordinate, not a semantic fact, source selection, authority, read grant, observed body or evidence result; it can wake only matching still-leased physical intent: an initial pending lease, or an already-admitted HOT/WARM lease whose exact scheduler decision newly became due
+  invariant an MCP aperture digest is a cache key for a caller-scoped derived descriptor, never a bearer, actor fact, authorization decision, task completion, or proof frontier
+  invariant a stateless MCP 2026 request binds its self-described JSON-RPC method and target to `Mcp-Method`/`Mcp-Name` before the adapter verifies the bearer and derives opaque closure coordinates; it can forward a call only when the current native aperture explicitly advertises that exact MCP tool, then only to the existing exact owner lane, so an HTTP header, static gateway catalog or cached aperture cannot become authority
+  invariant a MediaLibrary MCP template/tool can appear only from a typed media_library aperture survivor; its actual catalog or representation-plan read derives the actor from the current Auth ActorClosure and rechecks MediaLibrary access, never from a caller coordinate, cached aperture or resource URI
+  invariant a physical representation passport describes a reusable candidate index body rather than copying its owner facts; its compile result is an eligible body cut, never a selected physical plan
+  invariant resource admission controls only the measured transient physical-passport snapshot aperture; a grant neither makes a candidate selected nor establishes durable representation capacity, authority, proof, or owner state
   invariant eligibility rejects the impossible; it never grants authority or proves anything
   invariant a blackholed hypothesis is negative forwarding state, not a permanent truth
   forbidden_inference eligible -> authorized
+  forbidden_inference a host carrying an address -> that host granting anything
+  forbidden_inference an anonymous resolution -> this reader's eligibility (eligibility is per caller; probing another territory from here answers for nobody in particular)
+  forbidden_inference runnable -> addressable (the native capability book and the addressed subjects are two registers, and on this deployment they do not overlap)
   forbidden_inference a mask match -> a semantic match
+  forbidden_inference a dependency intersection -> a state transition or global invalidation
+  forbidden_inference a visible MCP operation -> authority to invoke it or permission to create an effect
   forbidden_inference a blackholed hypothesis -> permanently false (a reheat reopens it)
   native_format graf
-  source_path components/BonfyreControlPlane/address_plane.py
-  witness components/BonfyreControlPlane/tests/test_address_plane.py
+  source_path components/BonfyreControlPlane/address_plane.py.archive
+  source_path cmd/BonfyreWebAddress/src/main.c
+  source_path cmd/BonfyreWebAddress/src/subject_address.c
+  source_path cmd/BonfyreWebAddress/src/subject_address.h
+  source_path cmd/BonfyreWebAddress/tests/subject_address_test.c
+  witness cmd/BonfyreWebAddress/tests/subject_address_test.c proves apex resolution without CMS, exact published SitePresentation resolution, no arbitrary subdomain inference, malformed-port refusal, and truncated subject refusal
+  source_path cmd/BonfyreWebAddress/src/public_projection_cache.c
+  source_path cmd/BonfyreWebAddress/tests/public_projection_busy_test.c
+  invariant a captured public response is reusable only for HTTP 200; errors and redirects remain uncached, and a response too large to retain is streamed to its caller instead of dropped
+  witness cmd/BonfyreWebAddress/tests/public_projection_busy_test.c checks status eligibility, byte-exact streaming beyond the cache size limit, and nonblocking cache writes under contention
+  source_path cmd/BonfyreWebAddress/tests/world_native_material_test.sh
+  source_path cmd/BonfyreWebAddress/tests/site_program_native_test.sh
+  source_path cmd/BonfyreExternalEstate/src/main.c
+  source_path cmd/BonfyreExternalEstate/tests/external_estate_test.sh
+  source_path cmd/BonfyreLoweringWorkers/src/main.c
+  source_path integrations/mcp/bonfyre_mcp_2026_adapter.mjs
+  source_path integrations/mcp/tests/mcp_2026_aperture_test.sh
+  source_path integrations/mcp/tests/media_actor_closure_test.sh
+  source_path deploy/systemd/bonfyre-mcp-2026-aperture.service
+  source_path cmd/BonfyreCompress/src/physical.c
+  source_path engine/core/include/bf_admission.h
+  source_path engine/core/src/admission.c
+  source_path schemas/control/representation-passport.cue
+  source_path cmd/BonfyreWebSub/src/main.c
+  source_path lib/libbonfyre/include/bf_command_lookup.h
+  source_path scripts/tests/native_command_tables.test.mjs
+  invariant WebSub resolves one of seven declared verbs before invoking curl or any subscription operation; reconcile retains a bounded 4096-row ceiling but allocates only for rows actually returned rather than placing roughly twenty-one megabytes on the thread stack
+  forbidden_inference a recognized WebSub verb, a subscription row, or a SourceDirty demand -> verified foreign evidence, renewed authority, or permission to observe a source
+  witness 2026-09-30 cmd/BonfyreWebSub/tests/websub_test.sh passes in optimized and AddressSanitizer/UndefinedBehaviorSanitizer builds after the descriptor cut and demand-sized reconcile allocation; AddressSanitizer identified the former fixed-size stack array as a stack overflow, not a dispatch lookup fault
+  source_path cmd/BonfyreWebSub/tests/websub_test.sh
+  source_path cmd/BonfyreMaterialLease/src/main.c
+  source_path cmd/BonfyreMaterialWeatherGate/src/main.c
+  source_path cmd/BonfyreResourceWeatherDelta/src/main.c
+  source_path cmd/BonfyreMaterialWeatherReheat/src/main.c
+  source_path cmd/BonfyreResourceWeatherTransition/src/main.c
+  source_path cmd/BonfyreResourceWeatherTransition/tests/resource_weather_transition_test.sh
+  source_path cmd/BonfyreResourceWeatherTransition/tests/project_weather_transition_test.sh
+  source_path cmd/BonfyreResourceWeatherRefresh/src/main.c
+  source_path cmd/BonfyreResourceWeatherRefresh/tests/resource_weather_refresh_test.sh
+  source_path cmd/BonfyreMaterialWeatherReheat/tests/material_weather_reheat_test.sh
+  source_path cmd/BonfyreMaterialWeatherReheat/tests/weather_material_bridge_test.sh
+  source_path deploy/systemd/bonfyre-websub-demand.service
+  source_path deploy/systemd/bonfyre-websub-demand.timer
+  source_path deploy/systemd/bonfyre-reheat.service
+  source_path deploy/systemd/bonfyre-lowering-consumers.service
+  source_path cmd/BonfyreCMS/src/main.c
+  source_path cmd/BonfyreCMS/tests/fact_delta_test.sh
+  source_path deploy/systemd/bonfyre-address-worker.service
+  source_path deploy/systemd/address-plane.env.example
+  source_path deploy/systemd/bonfyre-address-worker.timer
+  source_path deploy/systemd/bonfyre-public-projection-worker.service
+  source_path deploy/systemd/bonfyre-public-projection-worker.timer
+  source_path deploy/systemd/bonfyre-inverse-compiler-worker.service
+  source_path deploy/systemd/bonfyre-inverse-compiler-worker.timer
+  source_path cmd/BonfyreLoweringWorkers/src/main.c
+  source_path cmd/BonfyreLoweringWorkers/tests/lowering_workers_test.sh
+  source_path deploy/systemd/bonfyre-lowering-consumers.service
+  source_path deploy/systemd/bonfyre-lowering-consumers.timer
+  source_path schemas/control/address-advertisement.cue
+  source_path site/matrix/surfaces/_kit.js
+  source_path site/matrix/surfaces/territory.html
+  witness components/BonfyreControlPlane/tests/clone-surfaces.test.mjs holds the published plane against the live estate: a host names the institution that holds it, an institution is one subject across its territories with one host each, an institution that carries its own domain is still found through the Matrix, the address document answers a foreign origin, and a clone links a subject's address only where that address resolves
+  witness cmd/BonfyreExternalEstate/tests/external_estate_test.sh imports ExternalEstate plus CMS/SiteProgram, TargetObligation, Provider, Model/compute, authenticated MCP 2026-07-28 JSON-RPC closure refresh and ProtocolCommons owner emissions; it proves a complete source generation is preflighted before atomic replacement, stale selected owner advertisements retire without touching other populations, a CMS World carries both its exact declared ForeignTwin topic and publication-source coordinate to a `SurfaceIR:world` handoff, malformed MCP output cannot replace a valid closure, a closure-scoped McpApertureIR uses the shared mask cut and carries no authority result, the worker flushes completed owner-generation receipts before forking its fsync'd RepresentationPassport snapshot so a receipt can never be misparsed as a physical declaration, invokes PhysicalCompiler only after a native ADMIT build grant and releases that transient grant, a REJECT leaves no replacement physical registry, and WebAddress-shaped CMS deltas enter only their declared lowerer queue
+  witness cmd/BonfyreExternalEstate/tests/external_estate_test.sh proves the retained 4,891-row corpus persists 1,156 temporal-bearing and 3,735 temporal:not_evident owner states, emits temporal terms only for bearing modes, and changes AddressPlane membership between temporal:feed and temporal:forecast while retaining eligible_for_further_consideration until ForeignTwin's exact owner check
+  witness cmd/BonfyreExternalEstate/tests/external_estate_test.sh proves the CMS lowering preserves what a published row declares rather than flattening it to an identity and a label: a SourceCollection carries its declared domains, source refs, material kinds and refresh policy; a CapabilityProgram carries consumes, produces, carrier candidates, capability requirements, authority requirement and transition conditions; a SiteProgram carries the experiences, bindings, collections and capability programs it composes, plus the dependency edges on each; and the forwarding cut answers a carrier, authority, flow and composition question from those terms, selects nothing for a carrier no row declared, and retires the SiteProgram composition behind its capability program's own frontier
+  witness cmd/BonfyreExternalEstate/tests/external_estate_test.sh holds the forwarding vocabulary to one declaration: the whole emitted population -- every CMS, TargetObligation, Provider, Model, MCP, ProtocolCommons and InformationPolicy advertisement of a real generation, not a hand-written sample beside them -- is validated against schemas/control/address-advertisement.cue, an undeclared axis is refused where a term is parsed, and the binary's own kind and axis lists are compared with the CUE declaration so the two copies cannot drift apart while both keep passing
+  witness cmd/BonfyreExternalEstate/tests/external_estate_test.sh proves a complete ProviderState embedding run with matching requested/stored projection counts emits a separate typed provider candidate carrying only provider/model/representation/embedding coordinates and `ProviderState:embedding_run` / `ProviderCompiler:embedding` references; it remains distinct from a generic physical provider materialization
+  witness cmd/BonfyreLoweringWorkers/tests/lowering_workers_test.sh proves ProviderCompiler reopens only a complete matching ProviderEmbeddingRun and stores its provider/model/representation/dimensions as an `unrequested` derived artifact rather than admitting a later operation
+  witness estate/generated/provider-embedding-delta-reconciliation-2026-09.json records two real ProviderState completion writes entering FactDelta forwarding; each cut one provider candidate and dispatched exactly one typed ProviderCompiler handoff without provider execution, semantic selection or effect
+  witness integrations/mcp/tests/mcp_2026_aperture_test.sh proves the additive stateless MCP 2026 ingress rejects missing/mismatched self-description headers, verifies native bearer admission before compiling an opaque-address native aperture, exposes that closure only as a derived resource/read-only refresh result, hides the staged gateway's unadvertised static tool, refuses a call to it before forwarding, and forwards an explicitly advertised owner tool only through the exact authenticated owner lane
+  witness integrations/mcp/tests/media_actor_closure_test.sh proves real native MediaLibrary and CreatorChannel advertisements become MCP resource templates/tools, an Auth-bound actor reads its own audio catalog, direct representation plan and current channel surface through the stateless MCP carrier, and revoking the same principal-to-actor binding refuses a further catalog before it reaches either owner
+  witness cmd/BonfyreCMS/tests/fact_delta_test.sh proves only a committed published CMS row emits an atomic FactDelta; its schema-declared unique owner coordinate and a PublicationOccurrence's exact source coordinates survive, draft rows emit no projection cut, and a configured handoff failure is explicit rather than reported as delivered
+  witness cmd/BonfyreExternalEstate/tests/external_estate_test.sh exports the actual mixed ExternalEstate and owner CandidateAdvertisement population as CUE-validated content-digested physical passports, compiles them into dense handles, and proves an MCP projection is only eligible for further physical consideration rather than selected
+  witness cmd/BonfyreWebSub/tests/websub_test.sh proves a successful receipt-bound ForeignTwin re-observation first becomes a durable ForeignTwin FactDelta and no duplicate source reread is needed to retry its local forwarding handoff
+  witness cmd/BonfyreWebSub/tests/websub_test.sh proves fifty typed MaterialCompiler observation demands coalesce through the native WebSub-owned SourceDirty ingress before one bounded ForeignTwin observation; demand acceptance emits no body, receipt, FactDelta, evidence, authority or effect
+  witness cmd/BonfyreWebSub/tests/material_demand_bridge_test.sh proves a MaterialCompiler request passes through WebSub SourceDirty and a receipt-validated ForeignTwin observation, whose FactDelta reaches AddressPlane and returns as a receipt-bound material artifact without re-enqueueing the source
+  witness cmd/BonfyreMaterialWeatherReheat/tests/weather_material_bridge_test.sh proves a FROZEN -> HOT ResourceWeather FactDelta admits only its held leased source, then crosses the native MaterialCompiler, WebSub SourceDirty, receipt-bound ForeignTwin and AddressPlane return path without a self-exciting reread
+  witness cmd/BonfyreResourceWeatherTransition/tests/resource_weather_transition_test.sh proves an initial whole-census snapshot establishes a frontier without work, a later content-different HOT snapshot processes one source-scoped reheat delta, and retrying its exact digest produces no further material handoff
+  witness cmd/BonfyreResourceWeatherTransition/tests/project_weather_transition_test.sh proves the actual BonfyreProject `foreign reheat --dry-run` schema feeds the durable transition without a foreign receipt/body
+  witness cmd/BonfyreResourceWeatherRefresh/tests/resource_weather_refresh_test.sh proves the native worker atomically compiles a fixture whole-census Project weather frontier and emits one source-scoped material handoff while making no foreign read
+  witness cmd/BonfyreLoweringWorkers/results/2026-09-12-external-estate-material-demand.json proves the real 4,891-source ExternalEstate population compiles one typed external-occurrence handoff through MaterialCompiler:external into exactly one rechecked ForeignTwin observation demand without reading the source
+  source_path components/BonfyreControlPlane/semantic_operator.py.archive
+  witness components/BonfyreControlPlane/tests/test_address_plane.py.archive
+  witness components/BonfyreControlPlane/tests/test_semantic_operator.py.archive
   internal_calculus route funnel: capability -> authority -> proof rejection over the real estate
   internal_calculus CID prefix routing: longest-prefix placement partitions over content digests
   internal_calculus SID SimHash: angle-preserving LSH over real Bonfyre embeddings (bonfyre-embed)
@@ -48,13 +163,24 @@ architecture address-plane
   interacts capability-closure
   interacts lance
   interacts hash-identity
-  source_path components/BonfyreControlPlane/bonfyre_sid.py
+  source_path components/BonfyreControlPlane/bonfyre_sid.py.archive
   source_path components/BonfyreControlPlane/substrate/feldera_route_set_daemon.rs
-  witness components/BonfyreControlPlane/tests/test_cid_sid.py
+  witness components/BonfyreControlPlane/tests/test_cid_sid.py.archive
   witness ~/.bonfyre/substrates/v6.1/feldera/route-set-proof.jsonl
-  witness components/BonfyreControlPlane/tests/test_substrate_feldera.py
+  witness components/BonfyreControlPlane/tests/test_substrate_feldera.py.archive
   source_lineage AddressPlane / institutional packet-switching vision
   known_gap SID ANN via bonfyre-vec awaits the sqlite-vec extension; the learned-optimizer layer is built (see route-ranker)
+  known_gap native `SurfaceIR:*`, `InverseCompiler:*`, `MCP:*`, `ProtocolCompiler:late_carrier`, and `MaterialCompiler:*` consumers now accept only their own envelopes. MCP rechecks an authenticated closure snapshot and retains a content-addressed derived descriptor, ProtocolCompiler rechecks the declared chain without enactment, and MaterialCompiler rechecks published CMS source, source-collection, and pack-demand declarations plus current ExternalEstate occurrence topics. Source and external occurrence consumers produce only a ForeignTwin observation demand; generic collection and pack-demand consumers retain rechecked derived declarations; programme collections with template references now delegate source-membership refresh to the existing programme resolver before acknowledging their lowerer handoff. The remaining material boundary is carrier execution and source selection under their own rights and adapter policy; the additive MCP 2026 ingress preserves the staged gateway while stateless clients migrate, but gates even its hand-authored upstream tools behind explicit native aperture advertisements until their owner contracts lower further. AddressPlane intentionally owns forwarding/delivery and never executes any lowerer itself
+  known_gap AddressPlane exports its shared index family now; each exact owner still owes measured per-body passports and runtime CopyReceipts before representation cost can participate in ResourceAdmission
+
+  source_path cmd/BonfyreExternalEstate/src/address_resolve.c
+  source_path cmd/BonfyreExternalEstate/src/address_resolve.h
+  source_path cmd/BonfyreExternalEstate/tools/resolve_program_demand.mjs
+  source_path scripts/tests/program_resolution_native.test.mjs
+  invariant the native forward command, Recipe and WebAddress share one typed C resolution function over the existing index; feature code does not reimplement its SQL or inspect occurrence JSON
+  invariant native resolution reads names, references, masks and dependencies in one read snapshot and reports eligible versus returned counts; unknown coordinates and storage failures are distinct
+  invariant source-collection dependencies retain complete declared references up to an explicit capacity; overflow refuses rather than silently dropping dependencies after thirty-two entries
+  witness scripts/tests/program_resolution_native.test.mjs compiles real programmes against native owner advertisements, propagates the eightieth source dependency through FactDelta, and runs the existing lowerer to refresh the original collection
 
 architecture route-ranker
   canonical_name RouteRanker
@@ -70,10 +196,18 @@ architecture route-ranker
   internal_calculus ternary linear score; weights = correlation sign thresholded to {-1,0,+1}
   invariant the ranker only reorders eligible survivors; it never changes eligibility, grants authority, or proves anything
   invariant a feature's weak signal collapses to 0 rather than pretending to matter
+  cannot_infer surviving the mask -> being lawful, available, affordable or true; the cut removes what is impossible and every exact owner still decides afterwards
+  cannot_infer a term on a candidate -> a grant, a proof, a provider admission, a relation, a payment or an effect right; an axis says which question a value answers, never that the answer is permitted
+  cannot_infer a learned re-ordering -> a change in eligibility; the ternary head reorders survivors and can never add one, remove one, or override a gate
+  cannot_infer a candidate advertisement -> the owner record it was derived from; it is disposable, it can be stale, and it replaces no owner state and no effect-time check
+  cannot_infer an empty result -> the subject not existing; a cut that selects nothing is a cut, not a denial and not an absence
   forbidden_inference a high rank -> a correct or authorized route (the exact closure still verifies the top choice)
   forbidden_inference a learned weight -> a large training set (currently ~10 real workload_proven successes)
-  source_path components/BonfyreControlPlane/route_ranker.py
-  witness components/BonfyreControlPlane/tests/test_route_ranker.py
+  source_path components/BonfyreControlPlane/route_ranker.py.archive
+  witness components/BonfyreControlPlane/tests/test_route_ranker.py.archive
   interacts address-plane
   source_lineage AddressPlane / BitNet learned-forwarding vision
   known_gap richer structural features (SID / masks / cost buckets / prior similar-route outcomes) and more routing-outcome records; a real BitNet backend when one exists in Bonfyre
+  known_gap the canonical address resolves a shell and nothing more; the lenses that fill a subject out -- its world, its discussion, its map, its offers -- are separate reads and nothing yet hydrates them into the page
+  known_gap subject addressing covers parcel, capability and note; the capability register that resolves is the priced catalogue, so 103 runnable capabilities have no address
+  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.

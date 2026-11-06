@@ -1,0 +1,58 @@
+{
+  "schema": "aurekai.payment-option-comparison.v1",
+  "input_ref": "opportunity:twc-website-rfp",
+  "reference_date": "2026-10-09",
+  "reference_date_basis": "Observation-date normalization for quotation comparison; no subscription or contract starts on this date.",
+  "currency": "USD",
+  "assumption_notice": "Actual published prices. Equal uninterrupted twelve-month service is required for this comparison. Both payment-in-advance and arrears conventions are calculated because an accepted subcontract billing schedule has not been received. Annual refundability and monthly cancellation differ and are not priced by these indifference rates. No borrowing rate or lender offer is assumed. Input amounts in this run were read from the current canonical CMS price observations, preserving their source receipt references.",
+  "alternatives": [
+    {
+      "id": "gold-advance",
+      "months": 12,
+      "billing_timing": "advance",
+      "upfront_amount": "4680.00",
+      "periodic_amount": "435.00",
+      "source_refs": [
+        "cms:price_observation:craigslist-zero-close:twc:published:sitecare-gold-monthly:20261009",
+        "cms:price_observation:craigslist-zero-close:twc:published:sitecare-gold-annual:20261009",
+        "/Users/nickgonzales/Developer/Bonfyre/packs/aurekai-work-samples/twc-sitecare-pricing.receipt.json"
+      ]
+    },
+    {
+      "id": "gold-arrears",
+      "months": 12,
+      "billing_timing": "arrears",
+      "upfront_amount": "4680.00",
+      "periodic_amount": "435.00",
+      "source_refs": [
+        "cms:price_observation:craigslist-zero-close:twc:published:sitecare-gold-monthly:20261009",
+        "cms:price_observation:craigslist-zero-close:twc:published:sitecare-gold-annual:20261009",
+        "/Users/nickgonzales/Developer/Bonfyre/packs/aurekai-work-samples/twc-sitecare-pricing.receipt.json"
+      ]
+    },
+    {
+      "id": "diamond-advance",
+      "months": 12,
+      "billing_timing": "advance",
+      "upfront_amount": "23880.00",
+      "periodic_amount": "2190.00",
+      "source_refs": [
+        "cms:price_observation:craigslist-zero-close:twc:published:sitecare-diamond-monthly:20261009",
+        "cms:price_observation:craigslist-zero-close:twc:published:sitecare-diamond-annual:20261009",
+        "/Users/nickgonzales/Developer/Bonfyre/packs/aurekai-work-samples/twc-sitecare-pricing.receipt.json"
+      ]
+    },
+    {
+      "id": "diamond-arrears",
+      "months": 12,
+      "billing_timing": "arrears",
+      "upfront_amount": "23880.00",
+      "periodic_amount": "2190.00",
+      "source_refs": [
+        "cms:price_observation:craigslist-zero-close:twc:published:sitecare-diamond-monthly:20261009",
+        "cms:price_observation:craigslist-zero-close:twc:published:sitecare-diamond-annual:20261009",
+        "/Users/nickgonzales/Developer/Bonfyre/packs/aurekai-work-samples/twc-sitecare-pricing.receipt.json"
+      ]
+    }
+  ]
+}

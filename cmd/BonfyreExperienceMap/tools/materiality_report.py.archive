@@ -1,0 +1,288 @@
+#!/usr/bin/env python3
+"""Measure whether ExperienceMap bindings are materially usable, not merely non-empty.
+
+This is a generation/audit helper. It does not own semantic truth, provider admission,
+authority, or effects. It reports where the compiled ExperienceMap still relies on
+fallbacks, weak reference coverage, or stale downstream projections.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+from collections import Counter, defaultdict
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+GEN = ROOT / "generated"
+
+GENERIC_PROTOCOL = {"machine-generic"}
+GENERIC_HUMAN = {"discover"}
+
+ROLE_CLASSES = {
+    "material": {"material_source", "media_service"},
+    "action": {"action_adapter", "authoring_adapter"},
+    "interaction_reference": {"interaction_reference"},
+    "design_reference": {"design_reference"},
+    "compiler": {"compiler_toolchain"},
+    "carrier": {"transport_carrier", "publication_carrier"},
+    "verification": {"verification_tool"},
+    "service": {"external_service_candidate"},
+    "standard": {"reference_standard"},
+}
+
+
+def load_json(path: Path) -> dict:
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def load_jsonl(name: str) -> list[dict]:
+    path = GEN / name
+    if not path.exists():
+        return []
+    rows = []
+    with path.open(encoding="utf-8") as handle:
+        for line in handle:
+            if line.strip():
+                rows.append(json.loads(line))
+    return rows
+
+
+def role_classes(roles: list[str]) -> list[str]:
+    owned = set(roles or [])
+    return [name for name, members in ROLE_CLASSES.items() if owned.intersection(members)]
+
+
+def materiality_score(row: dict) -> int:
+    """Small diagnostic score; never used as authority or admission."""
+    score = 0
+    p = set(row.get("protocol_chains") or [])
+    h = set(row.get("human_chains") or [])
+    if p and not p.issubset(GENERIC_PROTOCOL):
+        score += 1
+    if h and not h.issubset(GENERIC_HUMAN):
+        score += 1
+    if row.get("reagent_roles"):
+        score += 1
+    if row.get("direct_domains"):
+        score += 1
+    if row.get("home_blueprints"):
+        score += 1
+    if row.get("slug_roots"):
+        score += 1
+    return score
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--write", action="store_true")
+    parser.add_argument("--strict", action="store_true",
+                        help="fail on structural gaps or stale stage projection")
+    args = parser.parse_args()
+
+    external = load_jsonl("external_bindings.jsonl")
+    ghosts = load_jsonl("ghost_bindings.jsonl")
+    apps = load_jsonl("app_bindings.jsonl")
+    chains = load_jsonl("chains.jsonl")
+    protocols = load_jsonl("protocols.jsonl")
+    homes = load_jsonl("home_blueprints.jsonl")
+    leaders = load_jsonl("leaders.jsonl")
+    interaction_evidence = load_jsonl("interaction_evidence.jsonl")
+    chain_reference_lattice = load_jsonl("chain_reference_lattice.jsonl")
+    typed_application_programs = load_jsonl("typed_application_programs.jsonl")
+    typed_application_nodes = load_jsonl("typed_application_nodes.jsonl")
+    urls = load_jsonl("url_grammars.jsonl")
+    primary_manifest = load_json(GEN / "manifest.json")
+    stage_manifest = load_json(GEN / "stage_manifest.json")
+
+    expected_stage_records = len(external) + len(ghosts) + len(apps)
+    actual_stage_records = int(stage_manifest.get("binding_records") or 0)
+    stage_projection_stale = actual_stage_records != expected_stage_records
+
+    protocol_generic = []
+    human_generic = []
+    missing_protocol = []
+    missing_human = []
+    missing_home = []
+    missing_territory = []
+    missing_roles = []
+    weak_materiality = []
+
+    human_counts = Counter()
+    protocol_counts = Counter()
+    home_counts = Counter()
+    territory_counts = Counter()
+    slug_counts = Counter()
+    role_counts = Counter()
+    role_class_counts = Counter()
+    score_counts = Counter()
+    generic_source_kinds = Counter()
+
+    gaps = []
+    for row in external:
+        protocols_for_row = set(row.get("protocol_chains") or [])
+        humans_for_row = set(row.get("human_chains") or [])
+        if not protocols_for_row:
+            missing_protocol.append(row)
+            gaps.append({"gap": "missing_protocol", "id": row.get("id"), "name": row.get("name")})
+        elif protocols_for_row.issubset(GENERIC_PROTOCOL):
+            protocol_generic.append(row)
+            generic_source_kinds[row.get("source_kind", "unknown")] += 1
+            gaps.append({"gap": "generic_protocol_only", "id": row.get("id"), "name": row.get("name"),
+                         "source_kind": row.get("source_kind"), "protocol_chains": sorted(protocols_for_row)})
+        if not humans_for_row:
+            missing_human.append(row)
+            gaps.append({"gap": "missing_human_chain", "id": row.get("id"), "name": row.get("name")})
+        elif humans_for_row.issubset(GENERIC_HUMAN):
+            human_generic.append(row)
+            gaps.append({"gap": "discover_only", "id": row.get("id"), "name": row.get("name"),
+                         "source_kind": row.get("source_kind")})
+        if not row.get("home_blueprints"):
+            missing_home.append(row)
+            gaps.append({"gap": "missing_home_blueprint", "id": row.get("id"), "name": row.get("name")})
+        if not row.get("territories"):
+            missing_territory.append(row)
+            gaps.append({"gap": "missing_territory", "id": row.get("id"), "name": row.get("name")})
+        if not row.get("reagent_roles"):
+            missing_roles.append(row)
+            gaps.append({"gap": "missing_reagent_role", "id": row.get("id"), "name": row.get("name"),
+                         "source_kind": row.get("source_kind")})
+
+        score = materiality_score(row)
+        score_counts[score] += 1
+        if score <= 2:
+            weak_materiality.append(row)
+            gaps.append({"gap": "weak_materiality", "id": row.get("id"), "name": row.get("name"),
+                         "score": score, "source_kind": row.get("source_kind")})
+
+        human_counts.update(row.get("human_chains") or [])
+        protocol_counts.update(row.get("protocol_chains") or [])
+        home_counts.update(row.get("home_blueprints") or [])
+        territory_counts.update(row.get("territories") or [])
+        slug_counts.update(row.get("slug_roots") or [])
+        role_counts.update(row.get("reagent_roles") or [])
+        role_class_counts.update(role_classes(row.get("reagent_roles") or []))
+
+    all_chain_ids = {row.get("id") for row in chains if row.get("id")}
+    all_protocol_ids = {row.get("id") for row in protocols if row.get("id")}
+    all_home_ids = {row.get("id") for row in homes if row.get("id")}
+
+    leader_chain_counts = Counter()
+    for row in leaders:
+        chain_ids = row.get("chain_ids") or []
+        if isinstance(chain_ids, str):
+            chain_ids = [x for x in chain_ids.split() if x]
+        leader_chain_counts.update(chain_ids)
+    chains_without_market_reference = sorted(all_chain_ids - set(leader_chain_counts))
+    lattice_by_chain = {row.get("chain_id"): row for row in chain_reference_lattice}
+    chains_without_interaction_reference = sorted(
+        cid for cid in all_chain_ids
+        if not int(lattice_by_chain.get(cid, {}).get("interaction_reference_count") or 0))
+    chains_without_any_reference_evidence = sorted(
+        cid for cid in all_chain_ids
+        if not int(lattice_by_chain.get(cid, {}).get("reference_count") or 0))
+    interaction_provenance = Counter(row.get("provenance", "unknown") for row in interaction_evidence)
+
+    protocol_unpopulated = sorted(all_protocol_ids - set(protocol_counts))
+    human_unpopulated_external = sorted(all_chain_ids - set(human_counts))
+    home_unpopulated_external = sorted(all_home_ids - set(home_counts))
+
+    app_kind_counts = Counter(row.get("record_kind", "unknown") for row in apps)
+    app_human_counts = Counter(x for row in apps for x in row.get("human_chains", []))
+    ghost_human_counts = Counter(x for row in ghosts for x in row.get("human_chains", []))
+
+    report = {
+        "schema": "bonfyre.experience-materiality.v1",
+        "truth_level": "compiled_diagnostic_projection",
+        "cannot_infer": [
+            "materiality score -> source admission",
+            "chain fit -> semantic identity",
+            "protocol specificity -> authority or permission",
+            "market reference -> copied ontology, UI, code, or product ownership",
+            "reagent role -> provider availability",
+        ],
+        "primary_build_digest": primary_manifest.get("build_digest"),
+        "external": {
+            "total": len(external),
+            "specific_protocol": len(external) - len(protocol_generic) - len(missing_protocol),
+            "generic_protocol_only": len(protocol_generic),
+            "generic_protocol_only_by_source_kind": dict(sorted(generic_source_kinds.items())),
+            "missing_protocol": len(missing_protocol),
+            "specific_human": len(external) - len(human_generic) - len(missing_human),
+            "discover_only": len(human_generic),
+            "missing_human": len(missing_human),
+            "missing_home": len(missing_home),
+            "missing_territory": len(missing_territory),
+            "missing_reagent_role": len(missing_roles),
+            "weak_materiality_score_le_2": len(weak_materiality),
+            "materiality_score_distribution": dict(sorted(score_counts.items())),
+            "reagent_role_counts": dict(role_counts.most_common()),
+            "reagent_role_class_counts": dict(role_class_counts.most_common()),
+            "human_chain_counts": dict(human_counts.most_common()),
+            "protocol_chain_counts": dict(protocol_counts.most_common()),
+            "home_blueprint_counts": dict(home_counts.most_common()),
+            "territory_counts": dict(territory_counts.most_common()),
+            "slug_root_counts": dict(slug_counts.most_common()),
+        },
+        "reference_lattice": {
+            "selection_boundary": "none; all rows are evidence-only until a SiteProgram selects a compatible renderer",
+            "market_leaders": len(leaders),
+            "human_chains": len(all_chain_ids),
+            "chains_with_market_reference": len(set(leader_chain_counts)),
+            "chains_without_market_reference": chains_without_market_reference,
+            "market_reference_chain_counts": dict(leader_chain_counts.most_common()),
+            "interaction_evidence_total": len(interaction_evidence),
+            "interaction_evidence_by_provenance": dict(sorted(interaction_provenance.items())),
+            "chains_with_interaction_reference": len(all_chain_ids) - len(chains_without_interaction_reference),
+            "chains_without_interaction_reference": chains_without_interaction_reference,
+            "chains_without_any_reference_evidence": chains_without_any_reference_evidence,
+            "ghost_references": len(ghosts),
+            "ghost_chain_counts": dict(ghost_human_counts.most_common()),
+            "app_reference_records": len(apps),
+            "app_reference_kind_counts": dict(app_kind_counts.most_common()),
+            "app_reference_chain_counts": dict(app_human_counts.most_common()),
+        },
+        "typed_application_estate": {
+            "programs": len(typed_application_programs),
+            "nodes": len(typed_application_nodes),
+            "programs_without_nodes": sorted(
+                set(all_chain_ids) - {row.get("experience_id") for row in typed_application_nodes}),
+            "selected_nodes": sum(row.get("selection_state") == "selected" for row in typed_application_nodes),
+            "note": "typed declarations are not runtime selections; SiteProgram still supplies lawful material and renderer selection",
+        },
+        "occupancy": {
+            "human_chains_unpopulated_by_external": human_unpopulated_external,
+            "protocol_chains_unpopulated_by_external": protocol_unpopulated,
+            "home_blueprints_unpopulated_by_external": home_unpopulated_external,
+            "url_grammars": len(urls),
+        },
+        "stage_projection": {
+            "expected_records_from_current_inputs": expected_stage_records,
+            "actual_records_in_stage_manifest": actual_stage_records,
+            "stale": stage_projection_stale,
+            "delta": expected_stage_records - actual_stage_records,
+            "stage_manifest_digest": stage_manifest.get("digest"),
+        },
+        "partner_inventory": primary_manifest.get("partner_inventory", {}),
+        "structural_green": not any((missing_protocol, missing_human, missing_home, missing_territory)),
+        "material_green": not any((protocol_generic, human_generic, missing_roles, weak_materiality,
+                                   chains_without_interaction_reference, stage_projection_stale)),
+    }
+
+    if args.write:
+        (GEN / "materiality_manifest.json").write_text(
+            json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        with (GEN / "materiality_gaps.jsonl").open("w", encoding="utf-8") as handle:
+            for gap in gaps:
+                handle.write(json.dumps(gap, ensure_ascii=False, sort_keys=True) + "\n")
+
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    if args.strict and (not report["structural_green"] or stage_projection_stale):
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

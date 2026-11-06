@@ -162,8 +162,8 @@ papers on larger models. BonfyreFPQ v8 is tested on Qwen 0.5B.
 
 ```bash
 # Weight quantization benchmark
-cd 10-Code/BonfyreFPQ
-python perplexity_benchmark.py --mode v8 --bits 3
+cd cmd/BonfyreFPQ
+python scripts/perplexity_benchmark.py --mode v8 --bits 3
 
 # KV cache benchmark
 python kvcache_benchmark.py --bits 3

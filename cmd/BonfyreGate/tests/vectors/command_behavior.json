@@ -1,0 +1,8 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-gate","binary_env":"BONFYRE_GATE_BIN","cases":[
+{"name":"a free key allows its entitlements and denies the rest","steps":[
+ {"argv":["issue","--tier","free","--org","Acme","--out","k.json"],"env":{"HOME":"${tmp}"},"exit":0,"present":["${tmp}/k.json"]},
+ {"program":"cat","argv":["k.json"],"at":{"tier":"free","org":"Acme","status":"active","entitlements.allowed_ops":"Ingest,Brief,Proof"}},
+ {"argv":["check","k.json"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["Status:  ACTIVE"]},
+ {"argv":["guard","k.json","--op","Brief"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"argv":["guard","k.json","--op","transcribe"],"env":{"HOME":"${tmp}"},"exit":1}]},
+{"name":"an expired key is reported expired","files":{"k.json":"{\"key_id\":\"bfk_x\",\"version\":\"1.0.0\",\"tier\":\"free\",\"org\":\"Acme\",\"issued_at\":\"2019-12-01T00:00:00Z\",\"expires_at\":\"2020-01-01T00:00:00Z\",\"entitlements\":{\"max_artifacts\":10,\"max_bytes\":52428800,\"rate_limit_hr\":5,\"allowed_ops\":\"Ingest,Brief,Proof\"},\"status\":\"active\"}"},"steps":[{"argv":["check","k.json"],"env":{"HOME":"${tmp}"},"exit":2,"contains":["EXPIRED"]}]}]}

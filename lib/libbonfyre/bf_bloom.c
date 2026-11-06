@@ -6,6 +6,7 @@
  * where h1 = FNV-1a(key, seed1), h2 = FNV-1a(key, seed2).
  * This gives k independent hash functions from 2 base hashes.
  */
+#include <stdint.h>
 
 #include "bf_bloom.h"
 

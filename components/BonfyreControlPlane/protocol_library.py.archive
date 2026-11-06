@@ -1,0 +1,659 @@
+"""Archived Python protocol library; active declarations live in schemas/control/protocol-library.cue.
+
+These are reusable multi-party patterns, not products. Each is a ProtocolContract
+with real information causality and real obligations, so the compiler's three
+conformance conditions apply to the library itself: a pattern that could not make
+progress, or that let two roles race to produce one authoritative value, cannot
+be registered here. The test beside this file enforces that over every entry.
+
+The FIPA lineage is imported rather than renamed. Contract Net formalized
+manager, participants, call for proposals, deadline, proposal, refusal,
+selection, acceptance and result in 2002; nothing about the current agent wave
+made that obsolete, and re-deriving it under a new name would lose twenty-five
+years of knowing where it breaks.
+
+One modelling note, because it recurs. A *role* here is an act, not a person: it
+is defined by what information it needs and yields. Contract Net's manager both
+issues the call and makes the award, and those are two acts separated by
+everybody else's proposals -- so they are two roles, and one actor fills both at
+enactment. Collapsing them into a single role would make the manager require a
+proposal in order to emit the call that solicits it, which is a cycle rather than
+a protocol. That the compiler reports it as one is the point.
+
+All ten families the estate's design names now carry at least one pattern. That
+is a floor, not a finish: the design lists roughly a hundred candidates, and what
+is here is the subset whose information causality can be stated exactly today.
+A pattern is added when its roles, inputs and obligations are known -- never as
+an empty contract, which would pass conformance by having no roles at all and is
+the laundering this registry exists to prevent.
+"""
+
+from __future__ import annotations
+
+from typing import Callable
+
+from protocol_contract import ProtocolContract
+
+# Families from the Protocol Commons design. A family with no entries reports
+# zero rather than a placeholder; every family currently carries at least one.
+FAMILIES = (
+    "identity", "authority", "work", "evidence", "economic",
+    "data_compute", "foreign_world", "social", "physical", "meta",
+)
+
+
+# ------------------------------------------------------------------ authority
+
+def scoped_delegation() -> ProtocolContract:
+    """Authority handed down without being handed over.
+
+    The principal issues an envelope bounded by scope and purpose; the delegate
+    accepts and performs. The obligation runs from the delegate back to the
+    principal, and CommitmentGraph keeps the principal accountable to whoever
+    they promised in the first place -- delegation is not release.
+    """
+    return (ProtocolContract(
+        "scoped-delegation",
+        keys=frozenset({"delegation_id"}),
+        given=frozenset({"principal_authority", "scope", "purpose", "expiry"}))
+        .role("principal",
+              requires={"principal_authority", "scope", "purpose", "expiry"},
+              produces={"delegation_envelope"}, authority="delegate:scope")
+        .role("delegate", requires={"delegation_envelope"},
+              produces={"acceptance"}, authority="accept:delegation")
+        .role("performer", requires={"acceptance"}, produces={"performance"},
+              authority="perform:within-scope")
+        .commits("perform_within_scope", committer="delegate", beneficiary="principal",
+                 resource="performance bounded by the delegated scope and purpose",
+                 discharged_by="performance"))
+
+
+def authority_challenge() -> ProtocolContract:
+    """Ask an actor to demonstrate the authority they are relying on.
+
+    The challenge is separate from the act. An actor who cannot answer has not
+    necessarily done anything wrong -- they have failed to show a grant, and the
+    verdict says which.
+    """
+    return (ProtocolContract(
+        "authority-challenge",
+        keys=frozenset({"challenge_id"}),
+        given=frozenset({"asserted_act", "subject"}))
+        .role("challenger", requires={"asserted_act", "subject"},
+              produces={"authority_challenge"}, authority="challenge:act")
+        .role("asserter", requires={"authority_challenge"},
+              produces={"authority_showing"}, authority="answer:challenge")
+        .role("adjudicator", requires={"authority_showing"}, produces={"verdict"},
+              authority="adjudicate:authority")
+        .commits("show_authority", committer="asserter", beneficiary="challenger",
+                 resource="a showing of the authority relied on",
+                 discharged_by="authority_showing"))
+
+
+# ----------------------------------------------------------------------- work
+
+def contract_net() -> ProtocolContract:
+    """FIPA Contract Net, imported rather than reinvented.
+
+    A caller announces a task, participants propose, an awarder selects, the
+    awardee performs. `caller` and `awarder` are the same actor at enactment and
+    two roles here, because the award depends on proposals that the call
+    solicits -- one role holding both acts is a cycle, and the liveness check
+    reports it as one.
+    """
+    return (ProtocolContract(
+        "contract-net",
+        keys=frozenset({"cfp_id"}),
+        given=frozenset({"task", "deadline"}))
+        .role("caller", requires={"task", "deadline"},
+              produces={"call_for_proposals"}, authority="announce:task")
+        .role("participant", requires={"call_for_proposals"},
+              produces={"proposal"}, authority="propose:task")
+        .role("awarder", requires={"proposal"}, produces={"award"},
+              authority="award:task", reads={"proposal", "task"})
+        .role("awardee", requires={"award"}, produces={"result"},
+              authority="perform:task")
+        .commits("perform_awarded_task", committer="awardee", beneficiary="caller",
+                 resource="the awarded task, performed by the deadline",
+                 discharged_by="result")
+        .commits("honor_the_award", committer="caller", beneficiary="awardee",
+                 resource="the terms proposed and accepted",
+                 discharged_by="award"))
+
+
+def mission_lease() -> ProtocolContract:
+    """Durable work claimed under a lease, with partial completion first-class.
+
+    The disposition role exists so that a report of partial work has somewhere
+    to go other than success or failure. A lease that could only be completed or
+    dropped would force the worker to misreport, and the estate would learn the
+    wrong thing.
+    """
+    return (ProtocolContract(
+        "mission-lease",
+        keys=frozenset({"mission_id"}),
+        given=frozenset({"mission", "lease_window"}))
+        .role("offerer", requires={"mission", "lease_window"},
+              produces={"offer"}, authority="offer:mission")
+        .role("claimant", requires={"offer"}, produces={"lease"},
+              authority="claim:mission")
+        .role("worker", requires={"lease"}, produces={"completion_report"},
+              authority="work:mission")
+        .role("reviewer", requires={"completion_report"}, produces={"disposition"},
+              authority="dispose:mission")
+        .commits("complete_or_escalate", committer="claimant", beneficiary="offerer",
+                 resource="the leased mission, completed or escalated before the lease expires",
+                 discharged_by="disposition"))
+
+
+# ------------------------------------------------------------------- evidence
+
+def evidence_challenge() -> ProtocolContract:
+    """A claim is contested and must be answered with evidence.
+
+    The verdict is produced by an adjudicator that reads the evidence and not
+    the claim, so a confident assertion cannot substitute for a witness.
+    """
+    return (ProtocolContract(
+        "evidence-challenge",
+        keys=frozenset({"challenge_id"}),
+        given=frozenset({"claim"}))
+        .role("challenger", requires={"claim"}, produces={"challenge"},
+              authority="challenge:claim")
+        .role("respondent", requires={"challenge"}, produces={"evidence"},
+              authority="respond:challenge")
+        .role("adjudicator", requires={"evidence"}, produces={"verdict"},
+              authority="adjudicate:evidence", reads={"evidence"})
+        .commits("answer_the_challenge", committer="respondent", beneficiary="challenger",
+                 resource="evidence sufficient to cross the proof frontier",
+                 discharged_by="evidence"))
+
+
+# ------------------------------------------------------------------- economic
+
+def escrow() -> ProtocolContract:
+    """Funds held by a third party until delivery is observed.
+
+    Two obligations run in opposite directions and neither discharges the other:
+    the deliverer owes the payer a delivery, and the escrow agent owes the
+    deliverer a release. A protocol that modelled only one would let a released
+    payment stand in for a delivery that never happened.
+    """
+    return (ProtocolContract(
+        "escrow",
+        keys=frozenset({"escrow_id"}),
+        given=frozenset({"agreement", "amount"}))
+        .role("payer", requires={"agreement", "amount"}, produces={"deposit"},
+              authority="deposit:escrow")
+        .role("agent", requires={"deposit"}, produces={"hold_confirmation"},
+              authority="hold:escrow")
+        .role("deliverer", requires={"hold_confirmation"}, produces={"delivery"},
+              authority="deliver:agreement")
+        .role("releaser", requires={"delivery"}, produces={"release"},
+              authority="release:escrow")
+        .commits("deliver_the_agreement", committer="deliverer", beneficiary="payer",
+                 resource="the agreed goods or capability", discharged_by="delivery")
+        .commits("release_the_held_funds", committer="agent", beneficiary="deliverer",
+                 resource="the held amount, on observed delivery",
+                 discharged_by="release"))
+
+
+def sponsor_obligation() -> ProtocolContract:
+    """A sponsorship closed by the owners that can actually observe each part.
+
+    The obligations are of different kinds and no single observer can see them
+    all: what was said is observed by the live semantic track, what was
+    published is observed by a round-trip ForeignTwin against the external
+    platform, and what it earned is economic. Modelling them as one "delivered"
+    flag is how sponsorship becomes a trust exercise with a screenshot attached.
+
+    Payment runs the other way and is discharged by evidence, not by the
+    creator's own report -- which is the only arrangement under which the
+    sponsor does not need to take the creator's word for it.
+    """
+    return (ProtocolContract(
+        "sponsor-obligation",
+        keys=frozenset({"sponsor_contract_id"}),
+        given=frozenset({"sponsor_contract", "live_occurrence"}))
+        .role("creator", requires={"sponsor_contract", "live_occurrence"},
+              produces={"spoken_acknowledgement"}, authority="perform:sponsorship")
+        .role("publisher", requires={"spoken_acknowledgement"},
+              produces={"published_clip"}, authority="publish:clip")
+        .role("observer", requires={"published_clip"},
+              produces={"external_observation"}, authority="observe:foreign")
+        .role("settler", requires={"external_observation"},
+              produces={"settlement_evidence"}, authority="settle:sponsorship",
+              reads={"external_observation"})
+        .commits("speak_the_acknowledgements", committer="creator",
+                 beneficiary="settler",
+                 resource="the contracted spoken acknowledgements, on air",
+                 discharged_by="spoken_acknowledgement")
+        .commits("publish_the_clip", committer="publisher", beneficiary="settler",
+                 resource="one clip published to the agreed platforms",
+                 discharged_by="published_clip")
+        .commits("pay_on_evidence", committer="settler", beneficiary="creator",
+                 resource="the sponsorship fee, on observed performance",
+                 discharged_by="settlement_evidence"))
+
+
+# --------------------------------------------------------------------- social
+
+def event_formation() -> ProtocolContract:
+    """An ephemeral signal crystallizing into a durable Event.
+
+    Somebody says on air that they are playing a venue on Friday. That is a
+    claim, not an Event. A venue calendar and an independent listing corroborate
+    it; only then is it worth putting in front of whoever admits Events.
+
+    The obligation created is the interesting part and is easy to miss: an
+    asserter who announced a performance to an audience owes that audience the
+    performance. It is discharged by performing and not by the Event being
+    admitted, because a listed show that nobody plays is still a broken promise.
+    """
+    return (ProtocolContract(
+        "event-formation",
+        keys=frozenset({"claim_id"}),
+        given=frozenset({"ephemeral_signal"}))
+        .role("asserter", requires={"ephemeral_signal"}, produces={"claim"},
+              authority="assert:claim")
+        .role("corroborator", requires={"claim"}, produces={"corroboration"},
+              authority="observe:foreign")
+        .role("admitter", requires={"corroboration"}, produces={"admitted_event"},
+              authority="admit:event", reads={"corroboration"})
+        .commits("perform_as_announced", committer="asserter",
+                 beneficiary="admitter",
+                 resource="the performance the claim announced",
+                 discharged_by="performance"))
+
+
+# ------------------------------------------------------------------- physical
+
+def reservation() -> ProtocolContract:
+    """A resource held for a window, which is not the same as consumed.
+
+    The hold obliges the holder to keep the resource available. It says nothing
+    about the requester turning up, which is a separate obligation a caller may
+    add through a DomainProfile if their domain requires it.
+    """
+    return (ProtocolContract(
+        "reservation",
+        keys=frozenset({"reservation_id"}),
+        given=frozenset({"resource", "window"}))
+        .role("requester", requires={"resource", "window"},
+              produces={"reservation_request"}, authority="request:reservation")
+        .role("holder", requires={"reservation_request"}, produces={"hold"},
+              authority="hold:resource")
+        .role("confirmer", requires={"hold"}, produces={"confirmation"},
+              authority="confirm:reservation")
+        .commits("keep_the_resource_available", committer="holder",
+                 beneficiary="requester",
+                 resource="the resource, available through the reserved window",
+                 discharged_by="confirmation"))
+
+
+
+# ------------------------------------------------------------------- identity
+
+def subject_introduction() -> ProtocolContract:
+    """One party is introduced to another by somebody they both already trust.
+
+    The introducer is the point. A cold approach and a vouched-for one are
+    different institutional acts, and the obligation created runs from the
+    introducer to the introduced -- an introduction is a small piece of
+    reputation staked on somebody else's behaviour.
+    """
+    return (ProtocolContract(
+        "subject-introduction",
+        keys=frozenset({"introduction_id"}),
+        given=frozenset({"introducer", "subject_a", "subject_b"}))
+        .role("introducer", requires={"introducer", "subject_a", "subject_b"},
+              produces={"introduction"}, authority="introduce:subject")
+        .role("recipient", requires={"introduction"}, produces={"acknowledgement"},
+              authority="receive:introduction")
+        .commits("stand_behind_the_introduction", committer="introducer",
+                 beneficiary="recipient",
+                 resource="the introducer's account of the party introduced",
+                 discharged_by="acknowledgement"))
+
+
+def relationship_admission() -> ProtocolContract:
+    """A proposed relationship becomes real only when the other side admits it.
+
+    Following is unilateral; a relationship is not. The proposer owes nothing
+    until admission, and the admitter owes what the relationship's kind implies
+    -- which is why the kind is an input rather than something inferred later.
+    """
+    return (ProtocolContract(
+        "relationship-admission",
+        keys=frozenset({"relationship_id"}),
+        given=frozenset({"proposer", "counterparty", "relationship_kind"}))
+        .role("proposer", requires={"proposer", "counterparty", "relationship_kind"},
+              produces={"proposal"}, authority="propose:relationship")
+        .role("admitter", requires={"proposal"}, produces={"admission"},
+              authority="admit:relationship")
+        .commits("honour_the_relationship", committer="admitter",
+                 beneficiary="proposer",
+                 resource="what this kind of relationship obliges",
+                 discharged_by="admission"))
+
+
+# --------------------------------------------------------------- data/compute
+
+def minimum_dataset_slice() -> ProtocolContract:
+    """Ask for the smallest slice that answers the question, not the dataset.
+
+    The requester states a question; the holder returns a slice bounded to it.
+    Modelling this as a protocol rather than a query is what makes the bound
+    reviewable: a slice that exceeded the question is a disclosure, and nobody
+    can see that if the request was just a SELECT.
+    """
+    return (ProtocolContract(
+        "minimum-dataset-slice",
+        keys=frozenset({"request_id"}),
+        given=frozenset({"question", "requester_purpose"}))
+        .role("requester", requires={"question", "requester_purpose"},
+              produces={"slice_request"}, authority="request:data")
+        .role("bounder", requires={"slice_request"}, produces={"slice_bound"},
+              authority="bound:disclosure", reads={"slice_request"})
+        .role("holder", requires={"slice_bound"}, produces={"slice"},
+              authority="release:data", reads={"slice_bound"})
+        .commits("release_only_within_the_bound", committer="holder",
+                 beneficiary="bounder",
+                 resource="data no wider than the bound allows",
+                 discharged_by="slice"))
+
+
+def compute_placement() -> ProtocolContract:
+    """Where a computation runs is admitted, not assumed.
+
+    A placement that reached a provider without admission is a cost and a
+    disclosure nobody approved. The obligation runs from the executor back to
+    whoever admitted the placement, because the admission is what they relied on.
+    """
+    return (ProtocolContract(
+        "compute-placement",
+        keys=frozenset({"placement_id"}),
+        given=frozenset({"workload", "resource_ceiling"}))
+        .role("planner", requires={"workload", "resource_ceiling"},
+              produces={"placement_plan"}, authority="plan:compute")
+        .role("admitter", requires={"placement_plan"}, produces={"admission"},
+              authority="admit:resource")
+        .role("executor", requires={"admission"}, produces={"result"},
+              authority="execute:compute")
+        .commits("stay_within_the_admitted_ceiling", committer="executor",
+                 beneficiary="admitter",
+                 resource="execution within the admitted resource ceiling",
+                 discharged_by="result"))
+
+
+# -------------------------------------------------------------- foreign world
+
+def foreign_observation() -> ProtocolContract:
+    """Observe a foreign source under its own terms, and retain what was seen.
+
+    Robots preflight is a role rather than a step, because the decision to
+    observe is separable from the observing and is the part that can refuse. The
+    obligation is to retain the receipt: an observation nobody can re-examine is
+    an assertion about a source rather than an observation of it.
+    """
+    return (ProtocolContract(
+        "foreign-observation",
+        keys=frozenset({"twin_id"}),
+        given=frozenset({"source_url", "observe_right"}))
+        .role("preflight", requires={"source_url", "observe_right"},
+              produces={"policy_decision"}, authority="preflight:foreign")
+        .role("observer", requires={"policy_decision"}, produces={"retained_body"},
+              authority="observe:foreign", reads={"policy_decision", "source_url"})
+        .role("receipting", requires={"retained_body"}, produces={"receipt"},
+              authority="receipt:observation")
+        .commits("retain_a_re_examinable_receipt", committer="receipting",
+                 beneficiary="observer",
+                 resource="a receipt naming what was fetched, when and from where",
+                 discharged_by="receipt"))
+
+
+def carrier_upgrade() -> ProtocolContract:
+    """A source discovered to speak something better than HTML.
+
+    The upgrade is proposed against evidence that the richer carrier answers,
+    never against its mere advertisement. A well-known path returning 200 is not
+    a working carrier, and this is the pattern that keeps the two apart.
+    """
+    return (ProtocolContract(
+        "carrier-upgrade",
+        keys=frozenset({"source_id"}),
+        given=frozenset({"current_carrier", "candidate_carrier"}))
+        .role("prober", requires={"current_carrier", "candidate_carrier"},
+              produces={"probe_result"}, authority="probe:foreign")
+        .role("verifier", requires={"probe_result"}, produces={"upgrade_evidence"},
+              authority="verify:carrier", reads={"probe_result"})
+        .role("adopter", requires={"upgrade_evidence"}, produces={"adoption"},
+              authority="adopt:carrier")
+        .commits("read_through_the_upgraded_carrier", committer="adopter",
+                 beneficiary="verifier",
+                 resource="subsequent reads through the verified carrier",
+                 discharged_by="adoption"))
+
+
+# ------------------------------------------------------------------ meta
+
+def agent_delegation() -> ProtocolContract:
+    """A principal delegates an operation to an agent, bounded and revocable.
+
+    The agent's obligation is to stay inside the envelope, and it is owed to the
+    principal rather than to whoever the agent deals with. That direction is the
+    whole safety property: an agent that satisfied a counterparty by exceeding
+    its envelope has still broken its only promise.
+    """
+    return (ProtocolContract(
+        "agent-delegation",
+        keys=frozenset({"delegation_id"}),
+        given=frozenset({"principal", "operation", "purpose", "ceiling"}))
+        .role("principal", requires={"principal", "operation", "purpose", "ceiling"},
+              produces={"envelope"}, authority="delegate:operation")
+        .role("agent", requires={"envelope"}, produces={"acceptance"},
+              authority="accept:delegation")
+        .role("actor", requires={"acceptance"}, produces={"agent_result"},
+              authority="act:within-envelope")
+        .role("auditor", requires={"agent_result"}, produces={"conformance_report"},
+              authority="audit:delegation", reads={"agent_result", "envelope"})
+        .commits("act_only_within_the_envelope", committer="agent",
+                 beneficiary="principal",
+                 resource="action bounded by the delegated purpose and ceiling",
+                 discharged_by="conformance_report"))
+
+
+# ------------------------------------------------- territory-specific patterns
+
+def collective_purchase() -> ProtocolContract:
+    """Demand aggregated until a threshold makes an offer real.
+
+    Nobody is committed until the threshold is met, and everybody is committed
+    at the same moment when it is. Modelling the threshold as a produced
+    parameter rather than a counter is what makes that simultaneity real.
+    """
+    return (ProtocolContract(
+        "collective-purchase",
+        keys=frozenset({"group_buy_id"}),
+        given=frozenset({"offer", "threshold"}))
+        .role("initiator", requires={"offer", "threshold"},
+              produces={"group_offer"}, authority="open:collective")
+        .role("participant", requires={"group_offer"}, produces={"pledge"},
+              authority="pledge:collective")
+        .role("threshold_check", requires={"pledge"}, produces={"threshold_met"},
+              authority="evaluate:collective", reads={"pledge", "threshold"})
+        .role("seller", requires={"threshold_met"}, produces={"acceptance"},
+              authority="accept:collective")
+        .commits("honour_the_group_price", committer="seller",
+                 beneficiary="initiator",
+                 resource="the offered terms once the threshold is met",
+                 discharged_by="acceptance")
+        .commits("pay_the_pledged_amount", committer="participant",
+                 beneficiary="seller", resource="each participant's pledged amount",
+                 discharged_by="threshold_met"))
+
+
+def ownership_transfer() -> ProtocolContract:
+    """Title passes, which is not the same as the thing arriving.
+
+    Deliberately separate from delivery: a parcel can arrive without title
+    passing and title can pass without anything moving. The registry is a role
+    because somebody has to be answerable for the record.
+    """
+    return (ProtocolContract(
+        "ownership-transfer",
+        keys=frozenset({"transfer_id"}),
+        given=frozenset({"asset", "from_party", "to_party"}))
+        .role("transferor", requires={"asset", "from_party", "to_party"},
+              produces={"transfer_intent"}, authority="transfer:ownership")
+        .role("registry", requires={"transfer_intent"}, produces={"record"},
+              authority="record:ownership")
+        .role("transferee", requires={"record"}, produces={"acceptance"},
+              authority="accept:ownership")
+        .commits("record_the_transfer", committer="registry",
+                 beneficiary="transferee",
+                 resource="a durable record that title passed",
+                 discharged_by="record"))
+
+
+def job_application() -> ProtocolContract:
+    """A published role, an application, a review, a decision.
+
+    The reviewer reads the application and not the applicant's other subjects,
+    which is an integrity bound rather than a courtesy: a decision computed from
+    information the reviewer was not given is the failure this catches.
+    """
+    return (ProtocolContract(
+        "job-application",
+        keys=frozenset({"application_id"}),
+        given=frozenset({"job_posting", "applicant"}))
+        .role("publisher", requires={"job_posting"}, produces={"published_role"},
+              authority="publish:role")
+        .role("applicant", requires={"published_role", "applicant"},
+              produces={"application"}, authority="apply:role")
+        .role("reviewer", requires={"application"}, produces={"assessment"},
+              authority="review:application", reads={"application"})
+        .role("decider", requires={"assessment"}, produces={"decision"},
+              authority="decide:hiring", reads={"assessment"})
+        .commits("answer_the_application", committer="decider",
+                 beneficiary="applicant",
+                 resource="a decision communicated to the applicant",
+                 discharged_by="decision"))
+
+
+def quorum_decision() -> ProtocolContract:
+    """A decision that needs several people, not one approver.
+
+    The quorum check is its own role so that "enough people agreed" is a
+    produced fact with an owner, rather than a count somebody did in their head.
+    """
+    return (ProtocolContract(
+        "quorum-decision",
+        keys=frozenset({"decision_id"}),
+        given=frozenset({"proposal", "quorum_rule"}))
+        .role("proposer", requires={"proposal", "quorum_rule"},
+              produces={"tabled_proposal"}, authority="propose:decision")
+        .role("voter", requires={"tabled_proposal"}, produces={"vote"},
+              authority="vote:decision")
+        .role("teller", requires={"vote"}, produces={"quorum_result"},
+              authority="count:votes", reads={"vote", "quorum_rule"})
+        .role("recorder", requires={"quorum_result"}, produces={"decision_snapshot"},
+              authority="record:decision")
+        .commits("record_what_was_decided", committer="recorder",
+                 beneficiary="proposer",
+                 resource="a snapshot of the decision and the quorum that made it",
+                 discharged_by="decision_snapshot"))
+
+
+def mutual_aid() -> ProtocolContract:
+    """Somebody needs something; a neighbour offers; nobody is billed.
+
+    Deliberately not an economic pattern. The obligation is to show up, and it
+    is owed to the person who asked -- an aid offer that quietly became an
+    invoice would be the failure, so no money parameter exists to carry one.
+    """
+    return (ProtocolContract(
+        "mutual-aid",
+        keys=frozenset({"request_id"}),
+        given=frozenset({"need", "locality"}))
+        .role("asker", requires={"need", "locality"}, produces={"aid_request"},
+              authority="ask:aid")
+        .role("helper", requires={"aid_request"}, produces={"aid_offer"},
+              authority="offer:aid")
+        .role("acceptor", requires={"aid_offer"}, produces={"aid_acceptance"},
+              authority="accept:aid")
+        .commits("show_up_as_offered", committer="helper", beneficiary="asker",
+                 resource="the help that was offered, at the time offered",
+                 discharged_by="aid_acceptance"))
+
+
+# ------------------------------------------------------------------- registry
+
+LIBRARY: dict[str, dict[str, Callable[[], ProtocolContract]]] = {
+    "identity": {
+        "subject-introduction": subject_introduction,
+        "relationship-admission": relationship_admission,
+    },
+    "authority": {
+        "scoped-delegation": scoped_delegation,
+        "authority-challenge": authority_challenge,
+    },
+    "work": {
+        "contract-net": contract_net,
+        "mission-lease": mission_lease,
+        "job-application": job_application,
+        "quorum-decision": quorum_decision,
+    },
+    "evidence": {
+        "evidence-challenge": evidence_challenge,
+    },
+    "economic": {
+        "escrow": escrow,
+        "sponsor-obligation": sponsor_obligation,
+        "collective-purchase": collective_purchase,
+        "ownership-transfer": ownership_transfer,
+    },
+    "data_compute": {
+        "minimum-dataset-slice": minimum_dataset_slice,
+        "compute-placement": compute_placement,
+    },
+    "foreign_world": {
+        "foreign-observation": foreign_observation,
+        "carrier-upgrade": carrier_upgrade,
+    },
+    "physical": {
+        "reservation": reservation,
+    },
+    "social": {
+        "event-formation": event_formation,
+        "mutual-aid": mutual_aid,
+    },
+    "meta": {
+        "agent-delegation": agent_delegation,
+    },
+}
+
+
+class UnknownProtocol(KeyError):
+    pass
+
+
+def get(family: str, name: str) -> ProtocolContract:
+    if family not in LIBRARY:
+        raise UnknownProtocol(f"unknown family {family!r}; known: {sorted(LIBRARY)}")
+    builder = LIBRARY[family].get(name)
+    if builder is None:
+        available = sorted(LIBRARY[family]) or "none implemented in this family"
+        raise UnknownProtocol(f"unknown protocol {name!r} in {family!r}; have: {available}")
+    return builder()
+
+
+def all_protocols() -> list[tuple[str, str, ProtocolContract]]:
+    return [(fam, name, builder())
+            for fam in sorted(LIBRARY)
+            for name, builder in sorted(LIBRARY[fam].items())]
+
+
+def coverage() -> dict[str, int]:
+    """How many patterns each family actually carries. A zero is a real answer."""
+    return {fam: len(entries) for fam, entries in sorted(LIBRARY.items())}

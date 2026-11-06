@@ -1,0 +1,51 @@
+#!/usr/bin/env python3
+"""Diagnose where a large source estate fails to become useful Scene dependency."""
+import argparse, json, sys
+from collections import defaultdict, Counter
+import compile_source_frontier as frontier
+def rows(path): return frontier.load_rows(path) if path else []
+def by_root(path): return {str(r["root_id"]):r for r in rows(path) if isinstance(r,dict) and r.get("root_id")}
+def group(path):
+    out=defaultdict(list)
+    for r in rows(path):
+        if isinstance(r,dict) and r.get("root_id"): out[str(r["root_id"])].append(r)
+    return out
+def impacts(path):
+    out=defaultdict(lambda:{"closures":0,"scenes":0,"subjects":0})
+    for r in rows(path):
+        if not isinstance(r,dict) or not r.get("root_id"): continue
+        d=out[str(r["root_id"])]; d["closures"]=max(d["closures"],int(r.get("affected_closures") or r.get("subject_reuse") or 0)); d["scenes"]=max(d["scenes"],int(r.get("affected_scenes") or r.get("scene_reuse") or 0)); d["subjects"]=max(d["subjects"],int(r.get("affected_subjects") or r.get("subject_reuse") or 0))
+    return out
+def scene_edges(path):
+    edge,empty=defaultdict(set),[]
+    for r in rows(path):
+        if not isinstance(r,dict) or r.get("schema")!="bonfyre.scene-source-receipt.v1": continue
+        scene=str(r.get("scene_key") or ""); roots=r.get("source_roots") or []
+        if not roots: empty.append({"scene_key":scene,"subject_address":r.get("subject_address"),"actor_scope":r.get("actor_scope"),"candidate_dependencies":len(r.get("external_candidate_dependencies") or []),"action_apertures":len(r.get("action_apertures") or [])})
+        for root in roots:
+            if isinstance(root,dict) and root.get("root_id"): edge[str(root["root_id"])].add(scene)
+    return edge,empty
+def add(a,c,s,e,q): a.append({"code":c,"severity":s,"evidence":e,"investigate":q})
+def main():
+    p=argparse.ArgumentParser(); p.add_argument("--roots",required=True); p.add_argument("--gaps",required=True); p.add_argument("--pressure"); p.add_argument("--impact"); p.add_argument("--scene-receipts"); p.add_argument("--attention"); p.add_argument("--out",required=True); p.add_argument("--scene-out"); p.add_argument("--pressure-threshold",type=int,default=4); a=p.parse_args()
+    roots,pressure,impact,gaps,attention=by_root(a.roots),by_root(a.pressure),impacts(a.impact),group(a.gaps),by_root(a.attention); scene,empty=scene_edges(a.scene_receipts); result=[]; counts=Counter()
+    for rid,root in roots.items():
+        pr,im,gs,att,sc=pressure.get(rid,{}),impact.get(rid,{}),gaps.get(rid,[]),attention.get(rid,{}),scene.get(rid,set()); admitted=int(root.get("admitted_channels") or 0); active=int(root.get("active_channels") or 0); occ=int(pr.get("candidate_occurrences") or 0); closures=int(pr.get("candidate_closure_reuse") or 0); found=[]
+        if admitted and not sc and not im.get("closures"): add(found,"ADMITTED_NO_CLOSURE_IMPACT","high",{"admitted_channels":admitted,"active_channels":active},"is demand binding, owner lowering, identity joining, or Scene dependency propagation missing?")
+        if occ>=a.pressure_threshold and not im.get("closures"): add(found,"PRESSURED_WITHOUT_OBSERVED_IMPACT","high",{"candidate_occurrences":occ,"candidate_closure_reuse":closures},"why does repeated ScopedDemand survival not reach a ForeignTwin-backed reverse dependency?")
+        if im.get("closures") and not sc: add(found,"CLOSURE_IMPACT_WITHOUT_SCENE_EDGE","high",{"affected_closures":im.get("closures"),"affected_subjects":im.get("subjects")},"are affected closures absent from persisted SurfaceScene or failing Scene dependency compilation?")
+        if sc and not active: add(found,"SCENE_DEPENDS_ON_NONACTIVE_ROOT","medium",{"scene_edges":len(sc),"admitted_channels":admitted},"is this cold historical material, a candidate-only path, or stale admission state?")
+        if gs and (im.get("closures") or sc): add(found,"IMPACTFUL_ROOT_HAS_OPEN_GAPS","medium",{"gap_kinds":sorted({str(g.get("kind")) for g in gs if g.get("kind")}),"affected_closures":im.get("closures",0),"scene_edges":len(sc)},"which gap closure most reduces uncertainty or unlocks an exact capability for already-dependent Scenes?")
+        if att.get("temperature")=="hot" and not im.get("closures"): add(found,"HOT_FROM_PRESSURE_ONLY","medium",{"attention_basis":att.get("basis"),"candidate_occurrences":occ},"should this stay hot until bounded exact-owner observation proves reuse, then cool if it does not?")
+        if active and not occ and not im.get("closures") and not sc: add(found,"ACTIVE_BUT_UNREFERENCED","low",{"active_channels":active},"is this intentionally latent, or has no Pack/World/Scene learned how to ask for it?")
+        if not found: continue
+        for x in found: counts[x["code"]]+=1
+        result.append({"schema":"bonfyre.source-starvation-diagnostic.v1","root_id":rid,"root_address":root.get("address") or root.get("root_address"),"provenance":root.get("provenance") or [],"scene_edges":len(sc),"issues":found,"truth":"engineering_diagnostic_not_semantic_failure_verdict","cannot_infer":["no Scene edge -> source has no value","candidate pressure -> source should be admitted","open gap -> permission to acquire/contact/pay/combine","diagnostic severity -> semantic rank or provider preference"]})
+    sev={"high":0,"medium":1,"low":2}; result.sort(key=lambda r:(min(sev.get(i["severity"],9) for i in r["issues"]),-len(r["issues"]),r["root_id"]))
+    with open(a.out,"w") as out:
+        for r in result: out.write(json.dumps(r,sort_keys=True,separators=(",",":"))+"\n")
+    if a.scene_out:
+        with open(a.scene_out,"w") as out:
+            for r in empty: r.update({"schema":"bonfyre.scene-source-starvation-diagnostic.v1","truth":"scene_dependency_diagnostic_not_material_failure_verdict"}); out.write(json.dumps(r,sort_keys=True,separators=(",",":"))+"\n")
+    print(json.dumps({"schema":"bonfyre.source-starvation-summary.v1","roots":len(roots),"roots_with_diagnostics":len(result),"issue_counts":dict(sorted(counts.items())),"scenes_without_source_dependency":len(empty),"truth":"engineering_diagnostic_not_semantic_failure_verdict"},sort_keys=True)); return 0
+if __name__=="__main__": sys.exit(main())

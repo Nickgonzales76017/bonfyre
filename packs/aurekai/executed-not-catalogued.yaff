@@ -1,0 +1,86 @@
+pack executed-not-catalogued
+generation control-1
+provenance running the partner methods rather than listing them, 2026-08-27
+authority measured
+note CUE was installed the entire session and never invoked while I hand-rolled the exact-compatibility stage it exists for. This pass executes the methods that are actually present on the machine and records what each one proved or refused to prove. Nothing from the token, financial, MCP or commons work is superseded.
+
+# ---------------------------------------------------------------------------
+# CUE -- EXECUTED, AND IT REJECTS THINGS
+# ---------------------------------------------------------------------------
+
+upgrade upg:cue-schemas-installed
+  status LANDED
+  verification MEASURED
+  location ~/Documents/Bonfyre/schemas/bonfyre.cue plus vet.sh
+  claim Bonfyre state is now schema-enforced rather than convention-enforced.
+  covers PartnerProfile, PartnerProfileStrict, FundingRoute, PriceEvidence, EconomicMeasure, SolvedInvariant, Capability
+  passes 176 profiles, 3 funding routes, 19 invariants, 15 capabilities
+  gate vet.sh exits nonzero on violation, so it is usable as a gate and not merely a report
+
+claim clm:cue-has-teeth
+  status STANDING
+  verification MEASURED
+  claim The schemas reject bad state, proven by negative test rather than assumed.
+  rejected a capability at maturity 'promoted' carrying proof_ref 'pending'
+  rejected a SolvedInvariant with an empty reheat_conditions list
+  encoded an EconomicMeasure at basis 'unknown' must carry unknown_reason and must NOT carry an amount; at any other basis it must carry currency and amount. That forbids both failure modes seen this session -- guessing a number into the ledger, and omitting the reason from an unknown.
+  encoded PriceEvidence must be bitemporal; effective_at and observed_at are different facts and financial_metabolism rejects a price carrying only one
+  encoded every partner must declare a non-ownership boundary; all 176 pass the strict schema
+
+claim clm:cue-caught-my-own-inconsistency
+  status STANDING
+  verification MEASURED
+  finding 15 program capabilities used uppercase public_names (bonfyre.program.A-opportunity-fabric) against an estate convention of lowercase
+  resolution the DATA was normalised, not the schema loosened
+  note this is the value of a schema over a convention: the convention had been violated by me, silently, fifteen times
+
+# ---------------------------------------------------------------------------
+# METHODS EXECUTED
+# ---------------------------------------------------------------------------
+
+upgrade upg:zstd-compression-law-measured
+  status LANDED
+  verification MEASURED
+  method zstd, present on the machine
+  packs 322,334 raw -> 90,525 at level 9 (3.6x) -> 85,722 at level 19 (3.8x)
+  architecture 763,849 raw -> 110,034 at level 9 (6.9x) -> 99,405 at level 19 (7.7x)
+  reading the architecture tree compresses roughly twice as hard as the packs tree, which is the signature of higher internal redundancy and is consistent with the 12 duplicate mechanic families found in the control plane
+
+upgrade upg:duckdb-over-the-ledger
+  status LANDED
+  verification MEASURED
+  method duckdb with the sqlite extension, attached read-only over the compute ledger
+  finding the ledger RECONCILES against the provider invoice
+  detail 13 measures at basis='billed' total $18.8544 -- gpt-5.6-sol $11.055, gpt-5.4 $3.2186, gpt-4o-mini $2.3445, gpt-5 $2.2352, gpt-4.1-mini $0.001
+  detail the OpenAI organization total for the same window is $19.3810, of which $0.34 is 'web search tool calls', a line item carrying no model tokens and therefore correctly absent from a token ledger
+  residual rounding
+  note amounts are stored as text by the Decimal path, so any analytic query must try_cast; a sum over the raw column fails rather than silently truncating, which is the better failure
+
+# ---------------------------------------------------------------------------
+# METHODS THAT COULD NOT BE EXECUTED, AND WHY
+# ---------------------------------------------------------------------------
+
+claim clm:bonfyre-canon-grammar-is-json-only
+  status STANDING
+  verification REPRODUCED
+  claim bonfyre-canon advertises Tree-sitter structural canonicalization but supports only .json
+  evidence status returns ok; hash on a .py file returns 'Unsupported file type'; the binary's embedded extension table contains .json alone
+  consequence it cannot perform structural duplicate detection over the control plane, which is Python; that is why the duplicate-mechanic census was done by reading rather than by structural hashing
+  action_required a Python grammar would make Program O's census mechanical rather than manual
+
+claim clm:most-partner-methods-are-not-installed
+  status STANDING
+  verification MEASURED
+  claim The commons lists 176 methods; the machine can execute a small fraction of them.
+  present cue, duckdb, zstd, wasmtime, helm, kubectl, docker, ffmpeg, llama-cli, bonfyre-canon, bonfyre-pack, and the bonfyre-* native family
+  absent tigerbeetle, formance, feldera, restate, lance, iroh, nix, terraform, pulumi, tree-sitter CLI, simdjson, mlflow, dvc, and every Python quant library (vectorbt, qlib, riskfolio, QuantLib, nautilus_trader, arcticdb, deepeval)
+  consequence a profile at maturity 'defined' whose binary is absent cannot be promoted past 'defined' honestly; the capability ladder's rung 3 (installed) is the real gate and most of the commons has not passed it
+  note llama-cli is present but the only local model in cache is nomic-embed-text, an embedding model, so local GENERATION is unavailable without a further download; the zero-token inference path is therefore still unproven
+
+# ---------------------------------------------------------------------------
+# CARRIED FORWARD INTACT
+# ---------------------------------------------------------------------------
+
+note token/financial: derived rates from OpenAI billing arithmetic, Claude corrected to $1,660.55, caching at 39% OpenAI and 87% Anthropic list-rate, sibling pricing refused on calibration, funding routes and admission control replacing the contradictory env budget
+note operator: full failure taxonomy over 3,530 failures, the beta_response_usage patch, the funding preflight that refuses all 1,380 credit-exhausted runs, and the live finding that the operator ignores its own pause flag
+note commons: 176 profiles, 1,885 observations, the 82 authored deep-promotions with their Pairs-with graph, program binding as a join, and the four real capability gaps

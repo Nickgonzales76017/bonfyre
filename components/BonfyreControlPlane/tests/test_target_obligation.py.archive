@@ -1,0 +1,40 @@
+import sqlite3, sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import target_obligation as target
+
+
+def test_failure_cools_realization_without_terminating_target():
+    db = sqlite3.connect(":memory:")
+    target.require(db, target_id="T", target="semantic goal", source_frontier="HEAD")
+    target.record_occurrence(db, occurrence_id="O", target_id="T",
+                             realization="provider-a", state="FAILED",
+                             outcome={"carrier": "failed", "semantic": "unknown"})
+    target.cool_failure(db, realization_key="provider-a", dependency_digest="d1",
+                        validator_version="v1", result="timeout")
+    assert target.realization_is_cooled(db, "provider-a", "d1")
+    assert target.get(db, "T").state == target.OPEN
+
+
+def test_wait_reenters_and_only_proof_terminates():
+    db = sqlite3.connect(":memory:")
+    target.require(db, target_id="T", target="goal", source_frontier="HEAD")
+    target.wait_for(db, target_id="T", predicate_id="P",
+                    predicate={"kind": "dependency_changed"})
+    assert target.get(db, "T").state == target.WAITING_EXTERNAL_PREDICATE
+    target.satisfy_predicate(db, "P")
+    assert target.get(db, "T").state == target.OPEN
+    target.prove(db, "T", ["evidence://receipt"])
+    assert target.get(db, "T").state == target.PROVEN
+
+
+def test_proof_requires_evidence():
+    db = sqlite3.connect(":memory:")
+    target.require(db, target_id="T", target="goal", source_frontier="HEAD")
+    try:
+        target.prove(db, "T", [])
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("proof without evidence was accepted")

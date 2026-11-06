@@ -1,0 +1,3 @@
+#!/bin/sh
+export BONFYRE_FOREIGN_ROOT="/Users/nickgonzales/.bonfyre/foreign" BONFYRE_FOREIGN_RECEIPTS="/Users/nickgonzales/.bonfyre/foreign/receipts" BONFYRE_BROWSER_QUEUE_DB="/Users/nickgonzales/.bonfyre/foreign/held.db"
+exec "/Users/nickgonzales/.bun/bin/bun" "/Users/nickgonzales/Developer/Bonfyre/integrations/browser/host/bonfyre-browser-host.mjs"

@@ -34,7 +34,7 @@ Runs both active product loops.
 ## Run
 
 ```bash
-cd 10-Code/ProductPipelines
+cd components/ProductPipelines
 python3 orchestrate.py list
 python3 orchestrate.py run transcription-revenue
 python3 orchestrate.py run service-delivery

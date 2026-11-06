@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 /*
  * BonfyreOutreach — quiet distribution engine.
  *
@@ -33,6 +40,7 @@
 #include <time.h>
 #include <sqlite3.h>
 #include "bonfyre.h"
+#include "../../../lib/libbonfyre/include/bf_help.h"
 
 #define MAX_PATH  2048
 #define MAX_NAME  256
@@ -46,7 +54,8 @@ typedef struct {
 } Channel;
 
 static const Channel CHANNELS[] = {
-    {"dm",      "Direct messages (Twitter, LinkedIn, email)"},
+    {"dm",      "Direct messages (social/in-app)"},
+    {"email",   "Email correspondence (source-bound threads)"},
     {"listing", "Marketplace listings (Fiverr, Upwork, etc.)"},
     {"post",    "Content posts (Twitter, Reddit, Indie Hackers)"},
     {"landing", "Landing page / link-in-bio"},
@@ -63,30 +72,21 @@ typedef struct {
 
 static const Template TEMPLATES[] = {
     {"dm", "founder-cold",
-     "Hey [NAME] -- I run a small transcription service built on local AI. "
-     "I turn interview recordings into clean transcripts + summaries + action items, "
-     "usually same-day. Would you want to try one for free so you can see the quality?"},
+     "Hi [NAME], I build and maintain local-first document and business workflow tools. "
+     "If there is a specific task your team needs to complete, I can share relevant completed work "
+     "and discuss the scope before proposing terms."},
     {"dm", "operator-cold",
-     "Hi [NAME] -- I noticed you're doing a lot of calls/interviews. "
-     "I offer fast AI transcription with human QA -- transcripts, summaries, and action items "
-     "delivered same-day. Want me to run a sample on one of your recordings?"},
+     "Hi [NAME], I work on reliable processing and handoff for documents, recordings and "
+     "operational records. What output and deadline would be useful for your team? "
+     "I can review a real example and confirm feasibility before quoting."},
     {"listing", "service-listing",
-     "# Professional AI Transcription Service\n\n"
-     "Fast, accurate transcription powered by local AI with human quality checks.\n\n"
-     "## What You Get\n"
-     "- Clean, formatted transcript\n"
-     "- Executive summary with key points\n"
-     "- Action items extracted automatically\n\n"
-     "## Pricing\n"
-     "- Standard (< 30 min): $12\n"
-     "- Extended (30-60 min): $20\n"
-     "- Deep (60+ min, multi-speaker): $35\n\n"
-     "Same-day delivery. Satisfaction guaranteed."},
+     "INTERNAL DRAFT ONLY. Scope, pricing, turnaround, capacity and review criteria "
+     "must be based on the actual buyer request and confirmed supplier capability. "
+     "An earlier proof score or internal benchmark does not establish sale terms."},
     {"post", "value-post",
-     "I built a local AI transcription pipeline that turns messy recordings into "
-     "clean transcripts + summaries + action items.\n\n"
-     "No cloud. No subscriptions. Just send a file, get a deliverable.\n\n"
-     "Happy to run a free sample if anyone wants to test it."},
+     "Aurekai has working examples of source-backed document, catalogue and workflow "
+     "processing. Product previews are available for evaluation; scope, permissions "
+     "and commercial terms depend on the actual project."},
 };
 #define NUM_TEMPLATES (int)(sizeof(TEMPLATES)/sizeof(TEMPLATES[0]))
 
@@ -133,9 +133,46 @@ static const char *SCHEMA_SQL =
     "  sent_at TEXT NOT NULL,"
     "  reply_type TEXT,"
     "  reply_notes TEXT,"
-    "  replied_at TEXT"
+    "  replied_at TEXT,"
+    "  source_message_id TEXT,"
+    "  source_sent_at TEXT,"
+    "  reply_message_id TEXT"
     ");";
 
+/* Source evidence stays separate from offer identity; add nullable columns
+ * without changing pre-existing sends or their recorded timestamps. */
+static int ensure_evidence_columns(sqlite3 *db) {
+    const char *names[]={"source_message_id","source_sent_at","reply_message_id"};
+    for(size_t i=0;i<3;i++) {
+        sqlite3_stmt *st=NULL;
+        if(sqlite3_prepare_v2(db,"PRAGMA table_info(sends)",-1,&st,NULL)!=SQLITE_OK)return 1;
+        int found=0;
+        while(sqlite3_step(st)==SQLITE_ROW) {
+            const char *column=(const char*)sqlite3_column_text(st,1);
+            if(column && strcmp(column,names[i])==0) found=1;
+        }
+        sqlite3_finalize(st);
+        if(!found) {
+            char sql[128];
+            snprintf(sql,sizeof(sql),"ALTER TABLE sends ADD COLUMN %s TEXT",names[i]);
+            if(sqlite3_exec(db,sql,NULL,NULL,NULL)!=SQLITE_OK)return 1;
+        }
+    }
+    return sqlite3_exec(db,
+        "CREATE TABLE IF NOT EXISTS outreach_responses ("
+        "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "send_id INTEGER NOT NULL REFERENCES sends(id),"
+        "source_message_id TEXT NOT NULL UNIQUE,"
+        "received_at TEXT NOT NULL,"
+        "classification TEXT NOT NULL,"
+        "notes TEXT);"
+        "CREATE INDEX IF NOT EXISTS ix_outreach_responses_send "
+        "ON outreach_responses(send_id,received_at);"
+        "CREATE UNIQUE INDEX IF NOT EXISTS ux_outreach_source ON sends(source_message_id) "
+        "WHERE source_message_id IS NOT NULL;"
+        "CREATE UNIQUE INDEX IF NOT EXISTS ux_outreach_reply ON sends(reply_message_id) "
+        "WHERE reply_message_id IS NOT NULL;",NULL,NULL,NULL)!=SQLITE_OK;
+}
 static sqlite3 *open_db(const char *path) {
     sqlite3 *db;
     if (sqlite3_open(path,&db)!=SQLITE_OK){
@@ -146,6 +183,10 @@ static sqlite3 *open_db(const char *path) {
     if (sqlite3_exec(db,SCHEMA_SQL,NULL,NULL,&err)!=SQLITE_OK){
         fprintf(stderr,"Schema error: %s\n",err);
         sqlite3_free(err); sqlite3_close(db); return NULL;
+    }
+    if (ensure_evidence_columns(db)!=0) {
+        fprintf(stderr,"Outreach evidence migration refused: %s\n",sqlite3_errmsg(db));
+        sqlite3_close(db); return NULL;
     }
     return db;
 }
@@ -220,11 +261,70 @@ static int cmd_send(sqlite3 *db, const char *channel, const char *target,
     sqlite3_step(st); sqlite3_finalize(st);
 
     int send_id=(int)sqlite3_last_insert_rowid(db);
-    printf("Logged send #%d: %s -> %s\n",send_id,channel,target);
+    printf("Recorded outbound entry #%d locally: %s -> %s (delivery NOT verified by this command)\n",send_id,channel,target);
     if (offer) printf("  Offer: %s\n",offer);
     return 0;
 }
 
+/* Record already-sent correspondence with its original source and timestamp.
+ * This operation never dispatches a message. */
+static int cmd_backfill(sqlite3 *db,const char *channel,const char *target,
+                        const char *offer,const char *source,const char *sent_at) {
+    if(!channel || !*channel || !target || !*target || !source ||
+       strncmp(source,"gmail:",6)!=0 || strlen(source)<8 || !sent_at ||
+       strlen(sent_at)<19) {
+        fprintf(stderr,"backfill requires --channel --target --source gmail:ID --sent-at ISO\n");
+        return 2;
+    }
+    sqlite3_stmt *st=NULL;
+    if(sqlite3_prepare_v2(db,
+      "SELECT id,source_sent_at FROM sends WHERE source_message_id=? OR "
+      "substr(COALESCE(offer_name,''),-length(?))=? LIMIT 1",
+      -1,&st,NULL)!=SQLITE_OK)return 1;
+    sqlite3_bind_text(st,1,source,-1,SQLITE_STATIC);
+    sqlite3_bind_text(st,2,source,-1,SQLITE_STATIC);
+    sqlite3_bind_text(st,3,source,-1,SQLITE_STATIC);
+    if(sqlite3_step(st)==SQLITE_ROW) {
+        int id=sqlite3_column_int(st,0);
+        const char *prior=(const char*)sqlite3_column_text(st,1);
+        int conflict=prior && strcmp(prior,sent_at)!=0;
+        sqlite3_finalize(st);
+        if(conflict) {
+            fprintf(stderr,"backfill: source %s has a different original timestamp; refusing overwrite\n",source);
+            return 2;
+        }
+        if(sqlite3_prepare_v2(db,
+          "UPDATE sends SET source_message_id=?,source_sent_at=? WHERE id=? "
+          "AND (source_message_id IS NULL OR source_message_id=?)",
+          -1,&st,NULL)!=SQLITE_OK)return 1;
+        sqlite3_bind_text(st,1,source,-1,SQLITE_STATIC);
+        sqlite3_bind_text(st,2,sent_at,-1,SQLITE_STATIC);
+        sqlite3_bind_int(st,3,id);
+        sqlite3_bind_text(st,4,source,-1,SQLITE_STATIC);
+        int ok=sqlite3_step(st)==SQLITE_DONE;
+        sqlite3_finalize(st);
+        if(!ok || sqlite3_changes(db)!=1)return 1;
+        printf("Already linked source %s as #%d; original timestamp retained; not resent\n",source,id);
+        return 0;
+    }
+    sqlite3_finalize(st);
+    if(sqlite3_prepare_v2(db,
+      "INSERT INTO sends(channel,target,offer_name,sent_at,source_message_id,source_sent_at) "
+      "VALUES(?,?,?,?,?,?)",-1,&st,NULL)!=SQLITE_OK)return 1;
+    sqlite3_bind_text(st,1,channel,-1,SQLITE_STATIC);
+    sqlite3_bind_text(st,2,target,-1,SQLITE_STATIC);
+    if(offer && *offer)sqlite3_bind_text(st,3,offer,-1,SQLITE_STATIC);
+    else sqlite3_bind_null(st,3);
+    sqlite3_bind_text(st,4,sent_at,-1,SQLITE_STATIC);
+    sqlite3_bind_text(st,5,source,-1,SQLITE_STATIC);
+    sqlite3_bind_text(st,6,sent_at,-1,SQLITE_STATIC);
+    int ok=sqlite3_step(st)==SQLITE_DONE;
+    sqlite3_finalize(st);
+    if(!ok) { fprintf(stderr,"backfill: %s\n",sqlite3_errmsg(db));return 1; }
+    printf("Backfilled source %s as #%lld (NO dispatch)\n",source,
+           (long long)sqlite3_last_insert_rowid(db));
+    return 0;
+}
 static int cmd_reply(sqlite3 *db, int send_id, const char *type, const char *notes) {
     sqlite3_stmt *st;
     sqlite3_prepare_v2(db,"SELECT id FROM sends WHERE id=?",-1,&st,NULL);
@@ -249,6 +349,91 @@ static int cmd_reply(sqlite3 *db, int send_id, const char *type, const char *not
 
     printf("Send #%d: reply logged (%s)\n",send_id,type);
     return 0;
+}
+
+/* Reconcile a real external reply; do not use the local observation time,
+ * replace an earlier classification, or count automated replies as humans. */
+/* Every counterparty message is its own source-linked fact. Earlier requests
+ * remain visible after a later decline; sends.reply_type is the current view. */
+static int cmd_reply_evidence(sqlite3 *db,int id,const char *type,
+                              const char *source,const char *received_at,
+                              const char *notes) {
+    if(id<1 || !source || strncmp(source,"gmail:",6)!=0 || strlen(source)<8 ||
+       !received_at || strlen(received_at)<19 || !type ||
+       (strcmp(type,"positive") && strcmp(type,"negative") &&
+        strcmp(type,"neutral") && strcmp(type,"automated"))) {
+        fprintf(stderr,"reply-evidence: --id --type positive|negative|neutral|automated --source gmail:ID --at ISO required\n");
+        return 2;
+    }
+    sqlite3_stmt *st=NULL;
+    int result=1;
+    if(sqlite3_exec(db,"BEGIN IMMEDIATE",NULL,NULL,NULL)!=SQLITE_OK)return 1;
+    if(sqlite3_prepare_v2(db,
+       "SELECT send_id,classification FROM outreach_responses WHERE source_message_id=?",
+       -1,&st,NULL)!=SQLITE_OK)goto fail;
+    sqlite3_bind_text(st,1,source,-1,SQLITE_STATIC);
+    if(sqlite3_step(st)==SQLITE_ROW) {
+        int same=sqlite3_column_int(st,0)==id;
+        const char *prior=(const char*)sqlite3_column_text(st,1);
+        same=same && prior && strcmp(prior,type)==0;
+        sqlite3_finalize(st);st=NULL;
+        if(same) {
+            sqlite3_exec(db,"COMMIT",NULL,NULL,NULL);
+            printf("Reply %s already linked; no change\n",source);
+            return 0;
+        }
+        fprintf(stderr,"reply-evidence: source %s belongs to another classification or outreach\n",source);
+        result=2;goto fail;
+    }
+    sqlite3_finalize(st);st=NULL;
+    if(sqlite3_prepare_v2(db,
+       "SELECT reply_type,reply_message_id,replied_at FROM sends WHERE id=?",
+       -1,&st,NULL)!=SQLITE_OK)goto fail;
+    sqlite3_bind_int(st,1,id);
+    if(sqlite3_step(st)!=SQLITE_ROW) {
+        fprintf(stderr,"reply-evidence: outreach #%d not found\n",id);
+        result=2;goto fail;
+    }
+    const char *prior_type=(const char*)sqlite3_column_text(st,0);
+    const char *prior_ref=(const char*)sqlite3_column_text(st,1);
+    const char *prior_at=(const char*)sqlite3_column_text(st,2);
+    int unresolved_legacy=prior_type && !prior_ref;
+    int newer=!prior_at || strcmp(received_at,prior_at)>=0;
+    sqlite3_finalize(st);st=NULL;
+    if(unresolved_legacy) {
+        fprintf(stderr,"reply-evidence: legacy manual response on #%d needs source reconciliation\n",id);
+        result=2;goto fail;
+    }
+    if(sqlite3_prepare_v2(db,
+       "INSERT INTO outreach_responses(send_id,source_message_id,received_at,classification,notes) "
+       "VALUES(?,?,?,?,?)",-1,&st,NULL)!=SQLITE_OK)goto fail;
+    sqlite3_bind_int(st,1,id);
+    sqlite3_bind_text(st,2,source,-1,SQLITE_STATIC);
+    sqlite3_bind_text(st,3,received_at,-1,SQLITE_STATIC);
+    sqlite3_bind_text(st,4,type,-1,SQLITE_STATIC);
+    sqlite3_bind_text(st,5,notes?notes:"",-1,SQLITE_STATIC);
+    if(sqlite3_step(st)!=SQLITE_DONE)goto fail;
+    sqlite3_finalize(st);st=NULL;
+    if(newer) {
+        if(sqlite3_prepare_v2(db,
+           "UPDATE sends SET reply_type=?,reply_message_id=?,replied_at=?,reply_notes=? "
+           "WHERE id=?",-1,&st,NULL)!=SQLITE_OK)goto fail;
+        sqlite3_bind_text(st,1,type,-1,SQLITE_STATIC);
+        sqlite3_bind_text(st,2,source,-1,SQLITE_STATIC);
+        sqlite3_bind_text(st,3,received_at,-1,SQLITE_STATIC);
+        sqlite3_bind_text(st,4,notes?notes:"",-1,SQLITE_STATIC);
+        sqlite3_bind_int(st,5,id);
+        if(sqlite3_step(st)!=SQLITE_DONE || sqlite3_changes(db)!=1)goto fail;
+        sqlite3_finalize(st);st=NULL;
+    }
+    if(sqlite3_exec(db,"COMMIT",NULL,NULL,NULL)!=SQLITE_OK)goto fail;
+    printf("Outreach #%d observed %s from %s; current=%s; not a sale\n",
+           id,type,source,newer?"updated":"newer response retained");
+    return 0;
+fail:
+    sqlite3_finalize(st);
+    sqlite3_exec(db,"ROLLBACK",NULL,NULL,NULL);
+    return result;
 }
 
 static int cmd_pending(sqlite3 *db) {
@@ -302,7 +487,7 @@ static int cmd_followup(sqlite3 *db, int specific_id) {
         int days=age_days(sent);
         const char *move=followup_move(days);
 
-        printf("## Follow-Up For Send #%d\n\n",specific_id);
+        printf("## Follow-Up Review For Outbound Record #%d (not a dispatch)\n\n",specific_id);
         printf("- Target: %s\n",tgt);
         printf("- Offer: %s\n",offer);
         printf("- Age: %dd\n",days);
@@ -312,18 +497,13 @@ static int cmd_followup(sqlite3 *db, int specific_id) {
         if (days<=1)
             printf("No follow-up yet. Give this send a little more time.\n");
         else if (days<=3)
-            printf("Hi %s -- following up in case this got buried. "
-                   "I put together this offer and can still run a quick sample if helpful.\n",tgt);
+            printf("REVIEW ONLY: %s. Check the real recipient, previous delivery, and currently approved scope before any follow-up.\n",tgt);
         else if (days<=7)
-            printf("Hi %s -- one more nudge. I already have a proof-backed example, "
-                   "and the current offer is ready. If you want, I can run one file "
-                   "and let the output speak for itself.\n",tgt);
+            printf("REVIEW ONLY: %s. Evidence or an offer may have changed; verify the thread before drafting another request.\n",tgt);
         else
-            printf("Hi %s -- closing the loop for now. "
-                   "If transcript + summary + action-item cleanup becomes useful later, "
-                   "I can pick this back up quickly.\n",tgt);
+            printf("REVIEW ONLY: %s. Preserve the contact record and current response status; do not assume repeated outreach is welcome.\n",tgt);
     } else {
-        printf("%-5s %-25s %-36s %-6s %s\n","ID","Target","Offer","Age","Next Move");
+        printf("%-5s %-25s %-36s %-6s %s\n","ID","Target","Offer","Age","Review Condition");
         printf("-------------------------------------------------------------------------------\n");
         int count=0;
         while (sqlite3_step(st)==SQLITE_ROW) {
@@ -343,8 +523,8 @@ static int cmd_followup(sqlite3 *db, int specific_id) {
 
 static int cmd_report(sqlite3 *db) {
     /* Channel performance */
-    printf("## Channel Performance\n\n");
-    printf("%-12s %-6s %-6s %-6s %-8s %s\n","Channel","Sent","+","-","Silent","Rate");
+    printf("## Recorded Outreach (this store does not verify external delivery)\n\n");
+    printf("%-12s %-6s %-6s %-6s %-8s %s\n","Channel","Rows","+","-","Unknown","Rate");
     printf("------------------------------------------------\n");
 
     for (int i=0;i<NUM_CHANNELS;i++) {
@@ -369,7 +549,7 @@ static int cmd_report(sqlite3 *db) {
     }
 
     /* Recent sends */
-    printf("\n## Recent Sends\n\n");
+    printf("\n## Recent Recorded Outbound Entries\n\n");
     sqlite3_stmt *st;
     sqlite3_prepare_v2(db,
         "SELECT id,channel,target,offer_name,reply_type,sent_at FROM sends ORDER BY sent_at DESC LIMIT 10",
@@ -389,7 +569,7 @@ static int cmd_report(sqlite3 *db) {
     sqlite3_finalize(st);
 
     /* Offer performance */
-    printf("\n## Offer Performance\n\n");
+    printf("\n## Linked Offer Records (not verified sales)\n\n");
     sqlite3_prepare_v2(db,
         "SELECT COALESCE(offer_name,'unlinked') as oname,"
         "COUNT(*) as total,"
@@ -398,7 +578,7 @@ static int cmd_report(sqlite3 *db) {
         "SUM(CASE WHEN reply_type IS NULL THEN 1 ELSE 0 END) as waiting "
         "FROM sends GROUP BY oname ORDER BY total DESC",
         -1,&st,NULL);
-    printf("%-42s %-6s %-6s %-6s %s\n","Offer","Sent","+","-","Waiting");
+    printf("%-42s %-6s %-6s %-6s %s\n","Offer","Rows","+","-","Unknown");
     printf("----------------------------------------------------------------------\n");
     while (sqlite3_step(st)==SQLITE_ROW) {
         const char *offer=(const char*)sqlite3_column_text(st,0);
@@ -414,18 +594,22 @@ static int cmd_report(sqlite3 *db) {
 
 static int cmd_status(sqlite3 *db) {
     sqlite3_stmt *st;
-    int total=0, replied=0, positive=0, pending=0, followup_due=0;
+    int total=0, replied=0, positive=0, pending=0, automated=0, followup_due=0;
 
     sqlite3_prepare_v2(db,"SELECT COUNT(*) FROM sends",-1,&st,NULL);
     if (sqlite3_step(st)==SQLITE_ROW) total=sqlite3_column_int(st,0);
     sqlite3_finalize(st);
 
-    sqlite3_prepare_v2(db,"SELECT COUNT(*) FROM sends WHERE reply_type IS NOT NULL",-1,&st,NULL);
+    sqlite3_prepare_v2(db,"SELECT COUNT(*) FROM sends WHERE reply_type IN ('positive','negative','neutral')",-1,&st,NULL);
     if (sqlite3_step(st)==SQLITE_ROW) replied=sqlite3_column_int(st,0);
     sqlite3_finalize(st);
 
     sqlite3_prepare_v2(db,"SELECT COUNT(*) FROM sends WHERE reply_type='positive'",-1,&st,NULL);
     if (sqlite3_step(st)==SQLITE_ROW) positive=sqlite3_column_int(st,0);
+    sqlite3_finalize(st);
+
+    sqlite3_prepare_v2(db,"SELECT COUNT(*) FROM sends WHERE reply_type='automated'",-1,&st,NULL);
+    if (sqlite3_step(st)==SQLITE_ROW) automated=sqlite3_column_int(st,0);
     sqlite3_finalize(st);
 
     sqlite3_prepare_v2(db,"SELECT COUNT(*) FROM sends WHERE reply_type IS NULL",-1,&st,NULL);
@@ -464,11 +648,12 @@ static int cmd_status(sqlite3 *db) {
     double pos_rate=replied>0?(double)positive/replied:0;
 
     printf("BonfyreOutreach Status\n");
-    printf("  Total sends:    %d\n",total);
-    printf("  Replies:        %d | Response rate: %.0f%%\n",replied,resp_rate*100);
-    printf("  Positive:       %d | Positive rate: %.0f%%\n",positive,pos_rate*100);
-    printf("  Pending:        %d\n",pending);
-    printf("  Follow-up due:  %d\n",followup_due);
+    printf("  Logged entries (external delivery unverified): %d\n",total);
+    printf("  Classified responses: %d | Share of records: %.0f%%\n",replied,resp_rate*100);
+    printf("  Recorded positive: %d | Share of classified: %.0f%%\n",positive,pos_rate*100);
+    printf("  Automated acknowledgments (not human responses): %d\n",automated);
+    printf("  Unclassified: %d\n",pending);
+    printf("  Follow-up candidates (verify externally): %d\n",followup_due);
     printf("  Best channel:   %s (%d%%)\n",best_ch,best_rate);
     return 0;
 }
@@ -489,6 +674,8 @@ static void usage(void) {
         "  bonfyre-outreach [--db FILE] templates --channel CH\n"
         "  bonfyre-outreach [--db FILE] send --channel CH --target WHO [--offer NAME] [--message TPL]\n"
         "  bonfyre-outreach [--db FILE] reply --id ID --type positive|negative|neutral [--notes N]\n"
+        "  bonfyre-outreach [--db FILE] reply-evidence --id ID --type positive|negative|neutral|automated --source gmail:ID --at ISO [--notes N]\n"
+        "  bonfyre-outreach [--db FILE] backfill --channel CH --target WHO --source gmail:ID --sent-at ISO [--offer KEY]\n"
         "  bonfyre-outreach [--db FILE] pending\n"
         "  bonfyre-outreach [--db FILE] followup [--id ID]\n"
         "  bonfyre-outreach [--db FILE] report\n"
@@ -496,6 +683,7 @@ static void usage(void) {
 }
 
 int main(int argc, char **argv) {
+    if (bf_help_requested(argc, argv)) { usage(); return 0; }
     if (argc<2){ usage(); return 1; }
 
     const char *db_path=arg_get(argc,argv,"--db");
@@ -537,6 +725,17 @@ int main(int argc, char **argv) {
         const char *notes=arg_get(cmd_argc,cmd_argv,"--notes");
         if (!id_s||!type){ fprintf(stderr,"Missing --id, --type\n"); rc=1; goto done; }
         rc=cmd_reply(db,atoi(id_s),type,notes);
+    } else if (strcmp(cmd,"reply-evidence")==0) {
+        const char *id=arg_get(cmd_argc,cmd_argv,"--id");
+        rc=cmd_reply_evidence(db,id?atoi(id):0,
+            arg_get(cmd_argc,cmd_argv,"--type"),
+            arg_get(cmd_argc,cmd_argv,"--source"),
+            arg_get(cmd_argc,cmd_argv,"--at"),
+            arg_get(cmd_argc,cmd_argv,"--notes"));
+    } else if (strcmp(cmd,"backfill")==0) {
+        rc=cmd_backfill(db,arg_get(cmd_argc,cmd_argv,"--channel"),
+            arg_get(cmd_argc,cmd_argv,"--target"),arg_get(cmd_argc,cmd_argv,"--offer"),
+            arg_get(cmd_argc,cmd_argv,"--source"),arg_get(cmd_argc,cmd_argv,"--sent-at"));
     } else if (strcmp(cmd,"pending")==0) {
         rc=cmd_pending(db);
     } else if (strcmp(cmd,"followup")==0) {

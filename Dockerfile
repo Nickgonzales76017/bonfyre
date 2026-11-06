@@ -8,12 +8,14 @@
 FROM debian:bookworm-slim AS build
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc make libc6-dev libsqlite3-dev zlib1g-dev pkg-config ca-certificates \
+    gcc make libc6-dev libsqlite3-dev libcurl4-openssl-dev zlib1g-dev pkg-config ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /src
 COPY lib/ lib/
 COPY cmd/ cmd/
+COPY engine/core/ engine/core/
+COPY site/matrix/ /opt/bonfyre/site/
 COPY Makefile .
 
 # Build everything that compiles with standard deps.
@@ -37,12 +39,18 @@ RUN mkdir -p /out/bin /out/lib && \
 FROM debian:bookworm-slim AS runtime
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libsqlite3-0 curl ca-certificates \
+    libsqlite3-0 libcurl4 curl ca-certificates nodejs \
     && rm -rf /var/lib/apt/lists/* \
     && useradd -r -s /usr/sbin/nologin -m bonfyre
 
 COPY --from=build /out/bin/ /usr/local/bin/
 COPY --from=build /out/lib/ /usr/local/lib/
+COPY --from=build /opt/bonfyre/site/ /opt/bonfyre/site/
+# The public candidate-estate service is a bounded Node edge/runtime; native
+# owners still own authority, evidence, money and effects.  Its source corpus
+# is compiled during estate authoring and copied read-only into the image.
+COPY Aurekai/ /opt/bonfyre/Aurekai/
+COPY estate/generated/external-estate-v4/ /opt/bonfyre/estate/generated/external-estate-v4/
 
 # Data directory for SQLite DB + uploads
 RUN mkdir -p /data/uploads && chown -R bonfyre:bonfyre /data
@@ -51,6 +59,7 @@ VOLUME /data
 ENV BONFYRE_DB=/data/queue.db
 ENV BONFYRE_UPLOAD_DIR=/data/uploads
 ENV BONFYRE_PORT=9999
+ENV BONFYRE_SITE_ROOT=/opt/bonfyre/site
 
 USER bonfyre
 EXPOSE 9999

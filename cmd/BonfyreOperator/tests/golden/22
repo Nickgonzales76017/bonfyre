@@ -1,0 +1,20 @@
+{
+  "operator": "PROVE",
+  "program": {
+    "program_id": "household.prove.69beaffd22e25a66",
+    "operator": "PROVE",
+    "digest": "9febb49e31f76845cde808cc60a318172a4a81384f5f9eeb40abf273f8c6b9d0",
+    "reads": [
+      "household:food:offer:apple"
+    ],
+    "admitted": true,
+    "hard_failures": []
+  },
+  "address": "household:food:offer:apple",
+  "claim": "price",
+  "proof_state": "not_proven",
+  "observed_fields": [],
+  "source_refs": [],
+  "reason": "A source-bound projection can establish record identity and preserve an observation, but it does not independently prove current availability, eligibility, pet acceptance, or cost."
+}
+exit 0

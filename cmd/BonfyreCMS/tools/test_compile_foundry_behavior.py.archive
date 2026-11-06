@@ -1,0 +1,71 @@
+#!/usr/bin/env python3
+"""Focused compiler witness for exact Foundry behavior lowering."""
+from __future__ import annotations
+
+import importlib.util
+import json
+import tempfile
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[3]
+TOOL = ROOT / "cmd/BonfyreCMS/tools/compile_foundry_behavior.py"
+SPEC = ROOT / "schemas/control/foundry-behavior-specs.json"
+module_spec = importlib.util.spec_from_file_location("foundry_behavior", TOOL)
+assert module_spec and module_spec.loader
+compiler = importlib.util.module_from_spec(module_spec)
+module_spec.loader.exec_module(compiler)
+
+result = compiler.compile_spec(json.loads(SPEC.read_text()))
+contracts = {(row["applies_to_kind"], row["birth_operation"]): row for row in result["contracts"]}
+assert len(result["foundries"]) == 14
+assert {row["foundry"] for row in result["foundries"]} == compiler.EXPECTED_FOUNDRIES
+assert set(contracts) == {
+    ("project", "Project.support"), ("project", "Project.join"),
+    ("institution", "Institution.connect"),
+    ("governance_proposal", "GovernanceProposal.vote"),
+    ("community_body", "Community.join"),
+    ("publication_occurrence", "Occurrence.follow"),
+    ("household_opportunity", "HouseholdOpportunity.save"),
+}
+support = contracts[("project", "Project.support")]
+assert support["submit_to"] == "/govern/support"
+assert support["owner_subject_param"] == "id"
+assert support["owner_subject_value"] == "subject_identifier"
+assert support["return_template"] == "/s/project/{subject_identifier}"
+assert support["birth_mode"] == "INVOKE"
+connect = contracts[("institution", "Institution.connect")]
+assert connect["submit_to"] == "/govern/connect"
+assert connect["owner_subject_param"] == "institution"
+vote = contracts[("governance_proposal", "GovernanceProposal.vote")]
+assert vote["submit_to"] == "/govern/vote"
+assert vote["human_fields"] == "choice"
+assert vote["return_template"] == ""
+follow = contracts[("publication_occurrence", "Occurrence.follow")]
+assert follow["submit_to"] == "/govern/occurrence-follow"
+assert follow["return_template"] == "/s/publication_occurrence/{subject_identifier}"
+opportunity = contracts[("household_opportunity", "HouseholdOpportunity.save")]
+assert opportunity["submit_to"] == "/govern/opportunity-save"
+assert all(row["birth_operation"] not in {"Project.vote", "Project.propose", "Project.settle"}
+           for row in result["contracts"])
+assert {row["operation"] for row in result["unresolved"]} == {
+    "Project.propose", "Project.vote", "Project.settle", "Institution.claim", "Institution.adopt",
+    "GovernanceProposal.decide", "Community.publish", "Program.run",
+    "Occurrence.host", "Occurrence.publish", "HouseholdOpportunity.request", "Provider.offer", "PlaceAsset.observe", "Actor.publish"}
+assert {row["operation"] for row in result["projections"]} == {
+    "Project.viewNeeds", "Project.viewFunding", "Program.viewRequirements"}
+
+bad = json.loads(SPEC.read_text())
+bad["families"][0]["behaviors"][0]["owner_path"] = "https://not-an-owner.example"
+try:
+    compiler.compile_spec(bad)
+except compiler.SpecError:
+    pass
+else:
+    raise AssertionError("non-local owner path was emitted")
+
+with tempfile.TemporaryDirectory() as temp:
+    output = Path(temp) / "catalog.json"
+    output.write_text(json.dumps(result))
+    assert json.loads(output.read_text())["contracts"] == result["contracts"]
+
+print("foundry behavior compiler: PASS")

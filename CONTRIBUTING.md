@@ -4,18 +4,17 @@ Thanks for your interest. Here's how you can help.
 
 ## Constitutional rule: where semantics may live
 
-**No new authoritative Bonfÿre semantic may be introduced solely in Python.**
-Every new semantic must either extend the native kernel, or begin as an
-explicitly temporary reference implementation with a named native absorption
-target recorded in `schemas/`.
+**Do not add Python source.** New Bonfÿre runtime, tooling, tests, and
+conformance code belongs in C, Zig, C++, or Bun/TypeScript. CI rejects every
+new .py file.
 
-Python is permitted for Frappe-native app code, migration and import tooling,
-reference implementations and conformance oracles, and adapters to the external
-Python ecosystem. It is not the authoritative implementation of work lifecycle,
-occurrences, receipts, actor and relationship semantics, capability closure,
-provider state, resource admission, structural cooling, context-cut compilation,
-plane scheduling, authority transitions, or projection and replay. Those are
-kernel concepts.
+Existing Python is a shrinking compatibility boundary, not a place to extend
+the product. A migration may alter an existing Python oracle only to compare it
+with a native owner while that owner is being absorbed. It is never the
+authoritative implementation of work lifecycle, occurrences, receipts, actor
+and relationship semantics, capability closure, provider state, resource
+admission, structural cooling, context-cut compilation, plane scheduling,
+authority transitions, or projection and replay. Those are kernel concepts.
 
 **A campaign is data, not a source tree.** Instantiating a workload should add a
 directory under `packs/`, never a module. If a campaign needs new runtime code,
@@ -80,6 +79,16 @@ Open an issue with:
 - The binary and command that failed
 - Expected vs actual output
 - Minimal reproduction steps
+
+## Writing
+
+Use the shared [Humanizer skill](.agents/skills/humanizer/SKILL.md) when writing or editing prose for people: site copy, interface labels and messages, documentation, release notes, proposals, support replies, and agent updates. Read the source and identify the audience before editing. Use embedded mode for finished copy.
+
+Lead with what the reader needs to know or do. Prefer specific verbs and familiar words. Keep technical names when the reader needs them, and explain an unfamiliar term where it first matters. Remove process narration, repeated caveats, generic praise and claims of importance that add no information. Let the purpose of the text determine its length and tone; sales copy, instructions and technical explanations should not all sound alike.
+
+Keep facts, necessary qualifications, quantities, citations and supported commercial claims. Edit current authored prose at its source. Leave source quotations, archived conversations, receipts, historical evidence, formal contracts, identifiers, commands, URLs and stored state unchanged. Do not apply a word blacklist or rewrite source material to make it sound less like AI. A readability edit does not verify a technical claim or authorize publication.
+
+For client tools and outreach, also use [client-sales](.agents/skills/client-sales/SKILL.md). Introductory phone and video calls are free; the current 15-draft batch awaits Nick's approval.
 
 ## License
 

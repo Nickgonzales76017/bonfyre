@@ -1,0 +1,58 @@
+architecture project-primitive
+  canonical_name ProjectPrimitive
+  family institutional
+  domain Institutional / One effort, every facet at once
+  layer capability
+  semantic_question What does a community need in one place to bring something into being and then keep it running?
+  purpose A project with six faces of one object rather than six products: what it is reaching for, what keeps it running, what it costs in the open, the discrete work it has priced, the people it lacks, and how it decides. Each face carries the acts a member can actually perform against it.
+  maturity implemented
+  node_types Project
+  node_types TeamNeed
+  node_types Bounty
+  node_types ProjectSupport
+  node_types OperatorArchetype
+  edge_types derived_from
+  edge_types supported_by
+  internal_calculus the target is a stage in a life that continues, not an ending: a campaign reaching its figure becomes a publication that still costs something to run
+  internal_calculus every project was derived from a program the estate already held, so none of it is a mock-up and binding it states no new fact
+  internal_calculus where a grammar was studied is recorded as provenance in the same sense a page region records a reading rhythm; no donor code runs and no donor vocabulary reaches a page
+  internal_calculus the pitch is "bring the thing you already know how to operate", so the archetypes name what an operator already has before this estate exists and what stops being someone else's dependency
+  invariant no act on a project moves money; support is an intention recorded before any payment and independent of whether one happens
+  invariant a member holds one position on a proposal at a time, so changing a vote replaces it rather than adding to a tally
+  invariant every act carries the name of whoever performed it; nothing is recorded anonymously
+  forbidden_inference stated support -> a payment, a pledge this estate can collect, or evidence that value moved
+  forbidden_inference a name against a role -> an engagement, a contract, or a claim that anyone accepted
+  forbidden_inference a stated bounty -> an award or an offer capable of acceptance
+  forbidden_inference naming the platform an operator came from -> that platform knowing this estate exists, participating, or having been approached
+  source_path schemas/control/operators.cue
+  source_path cmd/BonfyreWebAddress/tools/compile_operators.zig
+  source_path cmd/BonfyreWebAddress/generated/native_operators.h
+  source_path cmd/BonfyreWebAddress/src/main.c
+  source_path cmd/BonfyreCMS/content-types/project.json
+  source_path cmd/BonfyreCMS/content-types/team_need.json
+  source_path cmd/BonfyreCMS/content-types/bounty.json
+  source_path cmd/BonfyreCMS/content-types/project_support.json
+  source_path engine/core/include/bf_commitment.h
+  source_path engine/core/src/commitment.c
+  witness 2026-09-26 ten projects, sixty roles wanted and thirty-one bounties derived through the CMS organ from ten program instances, thirty-one funding work packages and the obligations against them
+  witness 2026-09-26 served natively at /s/project/<id>: eleven working forms, twelve vote buttons, six roles to put a name to and a support form, all posting to handlers this estate carries out
+  witness 2026-09-26 exercised end to end by a signed-in member: a vote recorded and then replaced, a role joined, and support stated at 40 -- each row carrying its own refusal
+  witness 2026-09-26 ten operator archetypes and six project facets compiled from CUE into generated/native_operators.h by a generator that refuses an unknown field, and served at /s/operators/archetypes
+  internal_calculus stating support and putting a name to a role are both promises, so they are written to the estate's own CommitmentGraph rather than left as rows in a content table: the difference is between a record of an intention and an obligation the estate can be asked about later
+  internal_calculus nothing a member clicks discharges anything. Delivery requires an explicit discharge event, and the rail's own discipline is that a promise is never a delivery and delegation never releases the original obligor
+  invariant where no commitment rail is configured the act records nothing on it rather than inventing one
+  forbidden_inference a commitment in the open state -> anything delivered, owed in law, or collectable by this estate
+  witness 2026-09-26 the promise rail is connected: a stated support and a joined role were recorded on the native CommitmentGraph as "support of 120 USD, stated" and "a role this project says it lacks", both committed by user:1, both in state open, and the project room reads their state off the graph rather than off the row that rendered the form
+  internal_calculus a quote is what this estate pays an outside provider, never what it might charge for itself. The first build of this quoted the estate's own capability out of the estate's own book -- a number it had written down about itself, presented as a price -- which is a synthetic quote and the wrong direction. The figure a project carries is its external cost, and that is the only one with a document behind it
+  internal_calculus a rate is read from the meter, where a price may only enter with the evidence that admits it, and a provider with no admitted rate is refused rather than guessed at
+  internal_calculus presenting is not settling. A payment reference is retained as a digest of what was shown, and a promise is discharged only on a verified payment, so a presented one leaves the commitment open and says so
+  invariant a DEMO institution has no facilitator however the environment is configured, and an institution that declares no world is treated as LIVE, because the failure directions are not symmetric
+  forbidden_inference a quote -> money owed, held, or a price anyone agreed to pay
+  forbidden_inference an admitted rate -> a rate that still holds; it is what the provider's own document said on the date recorded
+  forbidden_inference a facilitator standing behind an institution -> a transaction that landed
+  witness 2026-09-26 quoted from evidence rather than from itself: exa at 0.007000 USD per query, carrying the document that admitted it -- exa's own /search answering HTTP 402 x402 stating breakdown.search=0.006999999999999999 USDC on eip155:8453 -- and firecrawl at 1.0 FIRECRAWL_CREDIT per credit on its credit-usage reading of 979 of 1000 after 22 scrapes
+  witness 2026-09-26 a provider with no admitted rate is refused: openai returned "a price may only enter the book with the document that admits it, so usage would be counted and left unpriced, never counted as free"
+  witness 2026-09-26 the declared world gates the rail rather than the environment: with the same facilitator configured, institution nightgrid -- declared DEMO in bf_institutions.h -- was refused and institution bonfyre, declared LIVE, was quoted through it
+  known_gap the chain stops at presentation. Nothing verifies a payment, so no commitment has been discharged and none should be: verification is the step that would, and it is not built
+  known_gap the meter refuses a usage event without a receipt, an attempt reference, a realization and a time, which is right, and nothing yet produces those four for a member's payment
+  known_gap the facets are declared for six modes and the rooms render five; a recurring supporter relationship has no renderer yet

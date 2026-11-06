@@ -1,0 +1,26 @@
+#!/usr/bin/env python3
+"""Compare Scene source receipts without turning temporal co-change into causality."""
+import argparse,json,sys
+from collections import defaultdict
+import compile_source_frontier as frontier
+def load(p): return {str(r["scene_key"]):r for r in frontier.load_rows(p) if isinstance(r,dict) and r.get("scene_key")}
+def roots(r): return {str(x["root_id"]) for x in (r.get("source_roots") or []) if isinstance(x,dict) and x.get("root_id")}
+def refs(r): return {str(x.get("ref")) for x in (r.get("foreign_twin_dependencies") or []) if isinstance(x,dict) and x.get("ref")}
+def vals(r,k): return {str(x) for x in (r.get(k) or []) if isinstance(x,(str,int,float))}
+def main():
+ p=argparse.ArgumentParser();p.add_argument("--before",required=True);p.add_argument("--after",required=True);p.add_argument("--out",required=True);p.add_argument("--root-out");p.add_argument("--trigger-root");a=p.parse_args();before,after=load(a.before),load(a.after);deltas=[];stats=defaultdict(lambda:{"dependent_before":0,"dependent_after":0,"scenes_changed":0,"scene_digest_changed":0,"roots_added":0,"roots_removed":0,"apertures_added":0,"apertures_removed":0,"lenses_added":0,"lenses_removed":0})
+ for key in sorted(set(before)|set(after)):
+  b,c=before.get(key),after.get(key);br,ar=roots(b or {}),roots(c or {});allr=br|ar
+  if a.trigger_root and a.trigger_root not in allr: continue
+  ba,aa=vals(b or {},"action_apertures"),vals(c or {},"action_apertures");bl,al=vals(b or {},"lenses"),vals(c or {},"lenses");bf,af=refs(b or {}),refs(c or {});born=b is None;retired=c is None;digest=bool(b and c and b.get("surface_scene_digest")!=c.get("surface_scene_digest"))
+  if not (born or retired or digest or br!=ar or ba!=aa or bl!=al or bf!=af): continue
+  deltas.append({"schema":"bonfyre.scene-source-delta.v1","scene_key":key,"state":"born" if born else "retired" if retired else "changed","subject_address":(c or b).get("subject_address"),"actor_scope":(c or b).get("actor_scope"),"scene_digest_changed":digest,"source_roots_added":sorted(ar-br),"source_roots_removed":sorted(br-ar),"foreign_dependencies_added":sorted(af-bf),"foreign_dependencies_removed":sorted(bf-af),"action_apertures_added":sorted(aa-ba),"action_apertures_removed":sorted(ba-aa),"lenses_added":sorted(al-bl),"lenses_removed":sorted(bl-al),"dependent_roots":sorted(allr),"truth":"temporal_scene_dependency_cochange_not_source_causality","cannot_infer":["dependent source -> caused Scene change","new aperture -> source authorized or enabled action","Scene digest change -> visible user-facing difference"]})
+  for rid in allr:
+   d=stats[rid];d["dependent_before"]+=rid in br;d["dependent_after"]+=rid in ar;d["scenes_changed"]+=1;d["scene_digest_changed"]+=digest;d["roots_added"]+=len(ar-br);d["roots_removed"]+=len(br-ar);d["apertures_added"]+=len(aa-ba);d["apertures_removed"]+=len(ba-aa);d["lenses_added"]+=len(al-bl);d["lenses_removed"]+=len(bl-al)
+ with open(a.out,"w") as out:
+  for r in deltas: out.write(json.dumps(r,sort_keys=True,separators=(",",":"))+"\n")
+ if a.root_out:
+  with open(a.root_out,"w") as out:
+   for rid,d in sorted(stats.items(),key=lambda x:(-x[1]["scenes_changed"],x[0])): out.write(json.dumps({"schema":"bonfyre.source-scene-cochange.v1","root_id":rid,**d,"truth":"dependent_scene_cochange_not_source_causality","cannot_infer":["co-change -> causal contribution","aperture delta -> source enabled action","high co-change count -> source quality or authority"]},sort_keys=True,separators=(",",":"))+"\n")
+ print(json.dumps({"schema":"bonfyre.scene-source-delta-summary.v1","before_scenes":len(before),"after_scenes":len(after),"changed_scenes":len(deltas),"roots_with_dependent_cochange":len(stats),"trigger_root":a.trigger_root or "","truth":"temporal_scene_dependency_cochange_not_source_causality"},sort_keys=True));return 0
+if __name__=="__main__":sys.exit(main())

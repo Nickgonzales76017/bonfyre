@@ -1,0 +1,139 @@
+#!/usr/bin/env python3
+"""Archived after Bun cutover. Which resolvers may be bought, under what policy, and what the purchase closes.
+
+The point is not that an agent can buy an API. It is that a small machine
+purchase can remove a condition blocking a large world, and that the estate can
+say why the purchase was justified, what it closed, what budget owned it and
+what outcome proved it useful.
+
+So this decides admissibility and stops there. It computes nothing about payment
+rails and holds no credential: a decision to spend is not a payment, and the two
+must not live in the same place. Whatever eventually pays reads this and is
+answerable to the authority that owns money.
+
+The refusals carry the weight:
+
+    a resolver with no measured leverage is not bought, however cheap
+    a resolver with no declared cost is not bought, because an unpriced purchase
+      has no ceiling
+    a spend above the policy ceiling is referred, not silently trimmed
+    a class of work with no loss budget cannot buy an approximation at all
+
+Cannot infer: an admitted spend is an approved one, a closed condition is a
+delivered result, or a policy ceiling is a budget. This says a purchase would be
+within policy; it does not release money.
+"""
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+import sys
+from datetime import datetime, timezone
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+
+
+def iso_now() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def main() -> int:
+    domain = subject = None
+    ceiling = 10.0
+    min_leverage = 1
+    world_value = 0.0
+    for i, a in enumerate(sys.argv):
+        if a == "--domain" and i + 1 < len(sys.argv): domain = sys.argv[i + 1]
+        if a == "--subject" and i + 1 < len(sys.argv): subject = sys.argv[i + 1]
+        if a == "--ceiling" and i + 1 < len(sys.argv): ceiling = float(sys.argv[i + 1])
+        if a == "--min-leverage" and i + 1 < len(sys.argv): min_leverage = int(sys.argv[i + 1])
+        if a == "--world-value" and i + 1 < len(sys.argv): world_value = float(sys.argv[i + 1])
+    if not domain or not subject:
+        print("usage: closure_spend.py --domain <d> --subject <s> [--ceiling N] "
+              "[--min-leverage N] [--world-value N] [--json]", file=sys.stderr)
+        return 2
+
+    proc = subprocess.run(
+        ["bun", os.path.join(HERE, "closure-algebra.mjs"),
+         "--domain", domain, "--subject", subject, "--json"],
+        capture_output=True, text=True, env={**os.environ})
+    if not proc.stdout.strip():
+        print(f"the closure produced nothing: {(proc.stderr or '')[-160:]}", file=sys.stderr)
+        return 2
+    closure = json.loads(proc.stdout)
+
+    decisions = []
+    for l in closure.get("resolver_leverage", []):
+        name = l["resolver"]
+        lev = l["closure_contribution"]
+        cost = l.get("cost_usd")
+        prob = l.get("success_probability")
+        row = {"resolver": name, "class": l.get("class", ""),
+               "closure_contribution": lev, "cost_usd": cost,
+               "success_probability": prob}
+        if lev < min_leverage:
+            row.update(admit=False, because=(
+                f"closes nothing measurable; a purchase that removes no condition is "
+                f"not cheap, it is waste"))
+        elif l.get("free"):
+            row.update(admit=False, because=(
+                "free, so there is nothing to authorise; it needs work or a "
+                "commitment rather than money"))
+        elif not l["priced"]:
+            row.update(admit=False, because=(
+                "no declared cost, so a purchase would have no ceiling; price it "
+                "before admitting it"))
+        elif cost > ceiling:
+            row.update(admit=False, referred=True, because=(
+                f"${cost:,.2f} exceeds the ${ceiling:,.2f} policy ceiling; referred "
+                f"rather than trimmed, because a ceiling that bends is a suggestion"))
+        else:
+            expected = (lev * prob * world_value) if world_value else None
+            row.update(admit=True, expected_value_unlocked=expected, because=(
+                f"${cost:,.2f} is within the ${ceiling:,.2f} ceiling and removes "
+                f"{lev} condition(s) at {prob:.0%} likelihood"))
+            if world_value and expected is not None and expected < cost:
+                row.update(admit=False, because=(
+                    f"within the ceiling, but the ${expected:,.2f} it would unlock is "
+                    f"less than the ${cost:,.2f} it costs"))
+        decisions.append(row)
+
+    admitted = [d for d in decisions if d.get("admit")]
+    referred = [d for d in decisions if d.get("referred")]
+    receipt = {
+        "schema": "bonfyre-closure-spend.v1",
+        "domain": domain, "subject": subject, "decided_at": iso_now(),
+        "effect_class": "PURE", "money_moved": False,
+        "policy": {"ceiling_usd": ceiling, "min_leverage": min_leverage,
+                   "world_value_usd": world_value or None},
+        "decisions": decisions,
+        "admitted": [d["resolver"] for d in admitted],
+        "admitted_total_usd": round(sum(d["cost_usd"] for d in admitted), 2),
+        "referred_to_a_person": [d["resolver"] for d in referred],
+        "cannot_infer": [
+            "an admitted spend -> an approved one",
+            "an admitted spend -> a payment; nothing here holds a credential or moves money",
+            "a closed condition -> a delivered result",
+            "a policy ceiling -> a budget",
+        ],
+    }
+    if "--json" in sys.argv:
+        print(json.dumps(receipt, indent=2))
+        return 0
+    print(f"  {domain} / {subject}")
+    print(f"  policy: at most ${ceiling:,.2f} per resolver, at least {min_leverage} "
+          f"condition(s) closed" + (f", world valued at ${world_value:,.0f}" if world_value else ""))
+    print()
+    for d in decisions:
+        mark = "ADMIT " if d.get("admit") else ("refer " if d.get("referred") else "no    ")
+        cost = f"${d['cost_usd']:,.2f}" if d["cost_usd"] is not None else "unpriced"
+        print(f"  {mark} {d['resolver']:<22}{cost:>10}  {d['because'][:60]}")
+    print()
+    print(f"  admitted ${receipt['admitted_total_usd']:,.2f} across "
+          f"{len(admitted)} resolver(s); no money moved")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

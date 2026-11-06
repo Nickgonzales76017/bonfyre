@@ -1,0 +1,703 @@
+"""Exact, provenance-bound food offer composition.
+
+This is deliberately a small general primitive rather than a food app.  It
+normalizes an observed offer, applies only *declared* compatible promotions,
+and keeps cash paid, delayed rebates, and points on distinct bases.  A lexical
+recipe match is a lead for review, never a substitution or a complete basket.
+"""
+
+from __future__ import annotations
+
+import argparse
+import itertools
+import json
+import re
+from dataclasses import dataclass
+from decimal import Decimal
+from fractions import Fraction
+from pathlib import Path
+from typing import Any, Iterable
+
+
+MONEY = Decimal
+ALLOWED_EFFECTS = frozenset({"sale", "loyalty", "coupon", "manufacturer_coupon", "rebate", "points"})
+NONCASH_EFFECTS = frozenset({"rebate", "points"})
+QUANTITY_PROMOTION_LAWS = frozenset({"bogo", "buy_x_get_y", "multibuy", "price_when_buy_quantity"})
+STACKABILITY_STATUSES = frozenset({"explicitly_stackable", "explicitly_not_stackable", "not_stated"})
+WEIGHT_UNITS_OZ = {"oz": Decimal("1"), "ounce": Decimal("1"), "ounces": Decimal("1"),
+                   "lb": Decimal("16"), "lbs": Decimal("16"), "pound": Decimal("16"),
+                   "pounds": Decimal("16")}
+COUNT_UNITS = frozenset({"ea", "each"})
+# A source term such as "pizza rolls" must not activate a recipe merely because
+# it contains an unrelated generic word such as "rolls".  One-word matches are
+# therefore allowed only when the normalized names are identical.
+UNUSABLE_INGREDIENT_NAMES = frozenset({"or", "to", "il", "beef", "chicken", "bone", "rolls"})
+UNSUPPORTED_PREPARED_SOURCE_MODIFIERS = frozenset({"seasoned", "marinated", "breaded", "cooked", "prepared"})
+# Every scalar offer still receives a singleton projection.  Only the
+# combinatorial two-/three-offer circuit is capped, so a weekly-ad expansion
+# cannot make a durable replay grow cubically.
+DEFAULT_MAX_SCALAR_COMBINATION_OFFERS = 24
+
+
+def _money(value: str | int | float | Decimal) -> Decimal:
+    return Decimal(str(value)).quantize(Decimal("0.0001"))
+
+
+def _norm(value: str) -> str:
+    return " ".join(re.sub(r"[^a-z0-9]+", " ", value.lower()).split())
+
+
+def _singular_words(value: str) -> str:
+    """Conservative plural normalization for otherwise identical food names."""
+    words = []
+    for word in _norm(value).split():
+        if len(word) > 3 and word.endswith("s") and not word.endswith("ss"):
+            word = word[:-1]
+        words.append(word)
+    return " ".join(words)
+
+
+def _quantity(value: Any) -> Decimal | None:
+    """Parse the simple exact quantities emitted by the FFTS normalizer."""
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    try:
+        return sum((Decimal(part.numerator) / Decimal(part.denominator)
+                    for part in (Fraction(piece) for piece in text.split())), Decimal(0))
+    except (ValueError, ZeroDivisionError):
+        return None
+
+
+def _format_quantity(value: Decimal) -> str:
+    return format(value.normalize(), "f")
+
+
+def _name_match(recipe_name: str, source_term: str) -> str | None:
+    """Return only source-supported name relations, never a substitution.
+
+    An exact normalized name is safe.  A multiword recipe name contained in a
+    more specific source product name is also retained: for example, a source
+    explicitly naming "boneless beef chuck roast" supports the recipe phrase
+    "beef chuck roast".  The inverse does not hold; generic source tortillas
+    do not establish corn or flour tortillas.
+    """
+    recipe = _singular_words(recipe_name)
+    source = _singular_words(source_term)
+    if not recipe or recipe in UNUSABLE_INGREDIENT_NAMES or " or " in recipe:
+        return None
+    if any(word in source.split() for word in UNSUPPORTED_PREPARED_SOURCE_MODIFIERS):
+        return None
+    if recipe == source:
+        return "normalized_name_exact"
+    if len(recipe.split()) >= 2 and f" {recipe} " in f" {source} ":
+        return "source_product_name_contains_recipe_phrase"
+    return None
+
+
+@dataclass(frozen=True)
+class Effect:
+    effect_id: str
+    kind: str
+    amount: Decimal | None
+    percent: Decimal | None
+    stack_group: str
+    requires: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class QuantityPromotion:
+    """A source-declared quantity law, deliberately distinct from money effects.
+
+    These promotions can promise free items or a total for a group of items,
+    but the source frequently does not price the individual legs.  They must
+    therefore never enter the scalar cash-effect calculation.
+    """
+    promotion_id: str
+    law: str
+    qualifying_item_terms: tuple[str, ...]
+    qualifying_quantity: int
+    free_item_terms: tuple[str, ...]
+    free_item_quantity: int | None
+    bundle_cash_price_usd: Decimal | None
+    unit_cash_price_usd: Decimal | None
+    expires_at: str | None
+    expiry_source_text: str | None
+    stackability_status: str
+    stackable_with_effect_ids: tuple[str, ...]
+    conditions: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class Offer:
+    offer_id: str
+    merchant: str
+    source_url: str
+    observed_at: str
+    product_terms: tuple[str, ...]
+    cash_price_usd: Decimal | None
+    package_count: int | None
+    package_oz: Decimal | None
+    package_quantity_basis: str
+    protein_g: Decimal | None
+    effects: tuple[Effect, ...]
+    quantity_promotions: tuple[QuantityPromotion, ...]
+    explicit_stack_pairs: frozenset[frozenset[str]]
+    fulfillment: tuple[str, ...]
+    geography: str | None
+    channel: str
+    conditions: tuple[str, ...]
+    eligibility: tuple[str, ...]
+    fact_boundary: str | None
+
+    def source_conditions(self) -> dict[str, Any]:
+        """The exact observed constraints, indexed once in the projection."""
+        return {
+            "source_url": self.source_url,
+            "observed_at": self.observed_at,
+            "geography": self.geography,
+            "fulfillment": list(self.fulfillment),
+            "conditions": list(self.conditions),
+            "eligibility": list(self.eligibility),
+            "fact_boundary": self.fact_boundary,
+            "package_quantity_basis": self.package_quantity_basis,
+            "quantity_promotions": [quantity_promotion_projection(item)
+                                    for item in self.quantity_promotions],
+            "availability": "not asserted by this projection",
+        }
+
+
+@dataclass(frozen=True)
+class Valuation:
+    offer_id: str
+    cash_outlay_usd: Decimal
+    delayed_rebate_usd: Decimal
+    points: Decimal
+    applied_effect_ids: tuple[str, ...]
+
+    @property
+    def cash_after_rebate_is_not_a_price(self) -> Decimal:
+        """Reporting convenience only; callers must label it as non-cash."""
+        return self.cash_outlay_usd - self.delayed_rebate_usd
+
+
+class OfferError(ValueError):
+    pass
+
+
+def _parse_quantity_promotions(raw: dict[str, Any]) -> tuple[QuantityPromotion, ...]:
+    """Parse complete quantity laws without completing source-silent terms."""
+    parsed = []
+    seen_ids = set()
+    rows = list(raw.get("quantity_promotions", []))
+    legacy = raw.get("quantity_promotion")
+    if legacy:
+        kind = legacy.get("kind")
+        terms = list(raw.get("product_terms", []))
+        if kind == "buy_get_free":
+            rows.append({
+                "promotion_id": f"{raw.get('offer_id', 'offer')}-quantity-law",
+                "law": "buy_x_get_y", "qualifying_item_terms": terms,
+                "qualifying_quantity": legacy.get("buy_quantity"), "free_item_terms": terms,
+                "free_item_quantity": legacy.get("free_quantity"), "expires_at": raw.get("expires_at"),
+                "stackability_status": "not_stated", "conditions": [legacy.get("source_term", "")],
+            })
+        elif kind == "bundle_price":
+            rows.append({
+                "promotion_id": f"{raw.get('offer_id', 'offer')}-quantity-law",
+                "law": "multibuy", "qualifying_item_terms": terms,
+                "qualifying_quantity": legacy.get("quantity"),
+                "bundle_cash_price_usd": legacy.get("bundle_price_usd"),
+                "expires_at": raw.get("expires_at"), "stackability_status": "not_stated",
+                "conditions": [legacy.get("source_term", "")],
+            })
+        elif kind == "price_when_buy_quantity":
+            rows.append({
+                "promotion_id": f"{raw.get('offer_id', 'offer')}-quantity-law",
+                "law": "price_when_buy_quantity", "qualifying_item_terms": terms,
+                "qualifying_quantity": legacy.get("required_quantity"),
+                "unit_cash_price_usd": legacy.get("unit_price_usd"),
+                "expires_at": raw.get("expires_at"), "stackability_status": "not_stated",
+                "conditions": [legacy.get("source_term", "")],
+            })
+    for item in rows:
+        promotion_id = str(item.get("promotion_id") or "")
+        law = item.get("law")
+        qualifying = tuple(_norm(term) for term in item.get("qualifying_item_terms", []) if _norm(term))
+        free = tuple(_norm(term) for term in item.get("free_item_terms", []) if _norm(term))
+        if not promotion_id or promotion_id in seen_ids:
+            raise OfferError("quantity promotion ids must be present and unique per offer")
+        if law not in QUANTITY_PROMOTION_LAWS:
+            raise OfferError(f"unsupported quantity promotion law {law!r}")
+        if not qualifying:
+            raise OfferError("quantity promotions require source-declared qualifying item identities")
+        try:
+            qualifying_quantity = int(item["qualifying_quantity"])
+            free_item_quantity = (int(item["free_item_quantity"])
+                                  if item.get("free_item_quantity") is not None else None)
+        except (KeyError, TypeError, ValueError) as exc:
+            raise OfferError("quantity promotions require a positive qualifying quantity") from exc
+        if qualifying_quantity < 1 or (free_item_quantity is not None and free_item_quantity < 1):
+            raise OfferError("quantity promotion quantities must be positive")
+        if law in {"bogo", "buy_x_get_y"} and (not free or free_item_quantity is None):
+            raise OfferError("free-item quantity promotions require source-declared free item identities and quantities")
+        if law == "bogo" and (qualifying_quantity != 1 or free_item_quantity != 1):
+            raise OfferError("bogo must have one qualifying and one free item")
+        bundle_price = item.get("bundle_cash_price_usd")
+        unit_price = item.get("unit_cash_price_usd")
+        if law == "multibuy" and bundle_price is None:
+            raise OfferError("multibuy requires an exact source-stated bundle cash price")
+        if law != "multibuy" and bundle_price is not None:
+            raise OfferError("only multibuy may carry a bundle cash price")
+        if law == "multibuy" and (free or free_item_quantity is not None):
+            raise OfferError("multibuy states a group total, not invented free items")
+        if law == "price_when_buy_quantity" and unit_price is None:
+            raise OfferError("price_when_buy_quantity requires an exact source-stated unit cash price")
+        if law != "price_when_buy_quantity" and unit_price is not None:
+            raise OfferError("only price_when_buy_quantity may carry a source-stated unit cash price")
+        if law == "price_when_buy_quantity" and (free or free_item_quantity is not None):
+            raise OfferError("price_when_buy_quantity states no invented free items")
+        stackability = item.get("stackability_status", "not_stated")
+        if stackability not in STACKABILITY_STATUSES:
+            raise OfferError(f"unsupported quantity-promotion stackability status {stackability!r}")
+        stackable_with = tuple(item.get("stackable_with_effect_ids", []))
+        if stackability != "explicitly_stackable" and stackable_with:
+            raise OfferError("only explicitly stackable quantity promotions may name compatible effects")
+        seen_ids.add(promotion_id)
+        parsed.append(QuantityPromotion(
+            promotion_id, law, qualifying, qualifying_quantity, free, free_item_quantity,
+            _money(bundle_price) if bundle_price is not None else None,
+            _money(unit_price) if unit_price is not None else None,
+            item.get("expires_at"), item.get("expiry_source_text"), stackability,
+            stackable_with, tuple(item.get("conditions", [])),
+        ))
+    return tuple(parsed)
+
+
+def parse_offer(raw: dict[str, Any]) -> Offer:
+    if not raw.get("offer_id") or not raw.get("source_url") or not raw.get("observed_at"):
+        raise OfferError("offer identity, source_url, and observed_at are required")
+    price = raw.get("cash_price_usd")
+    effects = []
+    for item in raw.get("effects", []):
+        kind = item["kind"]
+        if kind not in ALLOWED_EFFECTS:
+            raise OfferError(f"unsupported effect kind {kind!r}")
+        amount = _money(item["amount"]) if item.get("amount") is not None else None
+        percent = _money(item["percent"]) if item.get("percent") is not None else None
+        if (amount is None) == (percent is None):
+            raise OfferError("each effect has exactly one of amount or percent")
+        if amount is not None and amount < 0 or percent is not None and not (Decimal(0) <= percent <= Decimal(100)):
+            raise OfferError("effect amounts and percents must be nonnegative")
+        effects.append(Effect(item["effect_id"], kind, amount, percent,
+                              item.get("stack_group", kind), tuple(item.get("requires", []))))
+    pairs = frozenset(frozenset(pair) for pair in raw.get("explicit_stack_pairs", []))
+    quantity_promotions = _parse_quantity_promotions(raw)
+    return Offer(
+        raw["offer_id"], raw.get("merchant", ""), raw["source_url"], raw["observed_at"],
+        tuple(_norm(term) for term in raw.get("product_terms", [])),
+        _money(price) if price is not None else None,
+        int(raw["package_count"]) if raw.get("package_count") is not None else None,
+        _money(raw["package_oz"]) if raw.get("package_oz") is not None else None,
+        raw.get("package_quantity_basis", "source_stated_package_measure"),
+        _money(raw["protein_g"]) if raw.get("protein_g") is not None else None,
+        tuple(effects), quantity_promotions, pairs, tuple(raw.get("fulfillment", [])), raw.get("geography"),
+        raw.get("channel", "unspecified"), tuple(raw.get("conditions", [])),
+        tuple(raw.get("eligibility", [])), raw.get("fact_boundary"),
+    )
+
+
+def _compatible(effects: Iterable[Effect], pairs: frozenset[frozenset[str]]) -> bool:
+    selected = tuple(effects)
+    for left, right in itertools.combinations(selected, 2):
+        if left.stack_group == right.stack_group:
+            return False
+        if frozenset((left.effect_id, right.effect_id)) not in pairs:
+            return False
+    return True
+
+
+def value_offer(offer: Offer, effect_ids: Iterable[str] = ()) -> Valuation:
+    """Value an observed offer with exact Decimal arithmetic.
+
+    A source must explicitly list every selected pair as stackable.  An offer
+    with no cash price may be retained as a condition observation but cannot
+    become a cash-valued strategy.
+    """
+    if offer.quantity_promotions:
+        raise OfferError("quantity promotion requires quantity_promotion_projection; no per-item cash allocation exists")
+    chosen = tuple(effect for effect in offer.effects if effect.effect_id in set(effect_ids))
+    unknown = set(effect_ids) - {effect.effect_id for effect in offer.effects}
+    if unknown:
+        raise OfferError(f"unknown effect ids: {sorted(unknown)}")
+    if any(effect.requires for effect in chosen):
+        raise OfferError("unmet effect requirements cannot be assumed satisfied")
+    if not _compatible(chosen, offer.explicit_stack_pairs):
+        raise OfferError("effects are not explicitly stack-compatible")
+    if offer.cash_price_usd is None:
+        raise OfferError("a condition-only offer has no cash valuation")
+    cash = offer.cash_price_usd
+    rebate = Decimal(0)
+    points = Decimal(0)
+    for effect in chosen:
+        value = effect.amount if effect.amount is not None else cash * effect.percent / Decimal(100)
+        if effect.kind == "rebate":
+            rebate += value
+        elif effect.kind == "points":
+            points += value
+        else:
+            cash = max(Decimal(0), cash - value)
+    return Valuation(offer.offer_id, cash, rebate, points, tuple(effect.effect_id for effect in chosen))
+
+
+def quantity_promotion_projection(promotion: QuantityPromotion) -> dict[str, Any]:
+    """Project a promotion law without allocating a cash value to any item.
+
+    A multibuy can publish a group cash total.  That is useful as a group
+    observation, but dividing it across qualifying/free items would invent an
+    allocation that the retailer did not state.
+    """
+    return {
+        "promotion_id": promotion.promotion_id,
+        "law": promotion.law,
+        "qualifying_items": {"identity_terms": list(promotion.qualifying_item_terms),
+                               "quantity": promotion.qualifying_quantity},
+        "free_items": ({"identity_terms": list(promotion.free_item_terms),
+                        "quantity": promotion.free_item_quantity}
+                       if promotion.free_item_quantity is not None else None),
+        "expires_at": promotion.expires_at,
+        "expiry_source_text": promotion.expiry_source_text,
+        "stackability": {"status": promotion.stackability_status,
+                          "with_effect_ids": list(promotion.stackable_with_effect_ids)},
+        "conditions": list(promotion.conditions),
+        "bundle_cash_outlay_usd": (str(promotion.bundle_cash_price_usd)
+                                    if promotion.bundle_cash_price_usd is not None else None),
+        "unit_cash_price_usd": (str(promotion.unit_cash_price_usd)
+                                if promotion.unit_cash_price_usd is not None else None),
+        "per_item_cash_allocation_usd": None,
+        "cash_boundary": (
+            "The source states a bundle total only; no qualifying or free item cash allocation is inferred."
+            if promotion.bundle_cash_price_usd is not None else
+            "The source states a conditional unit price; no basket total, free item, or cash allocation is inferred."
+            if promotion.unit_cash_price_usd is not None else
+            "No cash price is stated for this quantity law; no cash valuation is inferred."),
+        "status": "source_bound_quantity_promotion_not_checkout_quote",
+    }
+
+
+def lexical_recipe_leads(recipes: Iterable[dict[str, Any]], offers: Iterable[Offer]) -> list[dict[str, Any]]:
+    """Return review leads, retaining unmatched ingredients and no equivalence claim."""
+    terms = {term for offer in offers for term in offer.product_terms}
+    leads = []
+    for recipe in recipes:
+        ingredients = [_norm(item["name"]) for item in recipe.get("ingredients", [])]
+        matched = sorted(name for name in ingredients if name in terms)
+        if matched:
+            leads.append({
+                "recipe_id": recipe["recipe_id"], "title": recipe["title"],
+                "servings": recipe.get("servings", {}).get("count"),
+                "lexically_matched_ingredients": matched,
+                "unmatched_ingredients": sorted(name for name in ingredients if name not in terms),
+                "status": "review_lead_not_substitution_or_complete_basket",
+            })
+    return leads
+
+
+def _quantity_compatibility(ingredient: dict[str, Any], offer: Offer) -> dict[str, Any]:
+    """Prove package compatibility or retain the exact reason it is unknown.
+
+    Package leftovers are an arithmetic remainder, not a claim of food waste:
+    a later plan may allocate them to another recipe and storage suitability is
+    not available in either source input.
+    """
+    required = _quantity(ingredient.get("quantity"))
+    unit = _norm(str(ingredient.get("unit") or ""))
+    if required is None:
+        return {"status": "quantity_unparseable", "recipe_quantity": ingredient.get("quantity"),
+                "recipe_unit": ingredient.get("unit")}
+    if unit in WEIGHT_UNITS_OZ and offer.package_oz is not None:
+        required_oz = required * WEIGHT_UNITS_OZ[unit]
+        if offer.package_quantity_basis == "source_stated_average":
+            average_packages = int((required_oz / offer.package_oz).to_integral_value(rounding="ROUND_CEILING"))
+            return {
+                "status": "unit_compatible_source_average_package_not_exact",
+                "recipe_requirement": {"quantity": _format_quantity(required), "unit": unit,
+                                       "ounces": _format_quantity(required_oz)},
+                "source_average_package": {"quantity": _format_quantity(offer.package_oz), "unit": "oz"},
+                "average_package_count_projection": average_packages,
+                "unallocated_leftover": {"status": "not_determined_from_average_package_weight",
+                                         "waste": "not inferred; no physical package or storage observation exists"},
+            }
+        packages = int((required_oz / offer.package_oz).to_integral_value(rounding="ROUND_CEILING"))
+        leftover_oz = offer.package_oz * packages - required_oz
+        return {
+            "status": "compatible_source_stated_weight_package",
+            "recipe_requirement": {"quantity": _format_quantity(required), "unit": unit,
+                                   "ounces": _format_quantity(required_oz)},
+            "source_package": {"quantity": _format_quantity(offer.package_oz), "unit": "oz"},
+            "packages_required": packages,
+            "unallocated_leftover": {"quantity": _format_quantity(leftover_oz), "unit": "oz",
+                                     "waste": "not inferred; storage and later allocation are unobserved"},
+        }
+    if unit in COUNT_UNITS and offer.package_count is not None:
+        packages = int((required / Decimal(offer.package_count)).to_integral_value(rounding="ROUND_CEILING"))
+        leftover = Decimal(offer.package_count * packages) - required
+        return {
+            "status": "compatible_source_stated_count_package",
+            "recipe_requirement": {"quantity": _format_quantity(required), "unit": "each"},
+            "source_package": {"quantity": offer.package_count, "unit": "each"},
+            "packages_required": packages,
+            "unallocated_leftover": {"quantity": _format_quantity(leftover), "unit": "each",
+                                     "waste": "not inferred; storage and later allocation are unobserved"},
+        }
+    return {
+        "status": "not_quantity_compatible_from_source_record",
+        "recipe_requirement": {"quantity": _format_quantity(required), "unit": ingredient.get("unit")},
+        "source_package": {"package_oz": _format_quantity(offer.package_oz) if offer.package_oz is not None else None,
+                           "package_count": offer.package_count},
+        "boundary": "No density, package count, or unit conversion is inferred.",
+    }
+
+
+def recipe_ingredient_coverage(recipes: Iterable[dict[str, Any]], offers: Iterable[Offer]) -> list[dict[str, Any]]:
+    """Join FFTS ingredients to priced grocery packages under strict evidence.
+
+    The result is deliberately partial.  A compatible ingredient package does
+    not establish the other ingredients, local availability, a purchase, or a
+    complete recipe price.
+    """
+    grocery_offers = [offer for offer in offers if offer.cash_price_usd is not None and not offer.channel.startswith("restaurant")]
+    coverage = []
+    for recipe in recipes:
+        matches = []
+        for ingredient in recipe.get("ingredients", []):
+            for offer in grocery_offers:
+                for term in offer.product_terms:
+                    basis = _name_match(ingredient.get("name", ""), term)
+                    if not basis:
+                        continue
+                    quantity = _quantity_compatibility(ingredient, offer)
+                    if not (quantity["status"].startswith("compatible_") or
+                            quantity["status"].startswith("unit_compatible_")):
+                        continue
+                    matches.append({
+                        "ingredient": {"name": ingredient.get("name"), "quantity": ingredient.get("quantity"),
+                                       "unit": ingredient.get("unit"), "raw": ingredient.get("raw")},
+                        "offer_id": offer.offer_id,
+                        "name_match_basis": basis,
+                        "quantity_compatibility": quantity,
+                        "source_conditions_ref": f"offer:{offer.offer_id}",
+                    })
+        if matches:
+            coverage.append({
+                "recipe_id": recipe["recipe_id"],
+                "title": recipe["title"],
+                "servings": recipe.get("servings", {}).get("count"),
+                "covered_ingredients": matches,
+                "ingredient_count": len(recipe.get("ingredients", [])),
+                "status": "partial_source_bound_ingredient_coverage_not_complete_recipe_basket",
+                "boundary": "Uncovered ingredients, local availability, cooking yield, storage, and waste are not inferred.",
+            })
+    return coverage
+
+
+def _best_scalar_valuation(offer: Offer) -> Valuation | None:
+    """Return the least cash valuation permitted by this one source record."""
+    candidates = []
+    for size in range(len(offer.effects) + 1):
+        for subset in itertools.combinations(offer.effects, size):
+            try:
+                candidates.append(value_offer(offer, [item.effect_id for item in subset]))
+            except OfferError:
+                pass
+    return min(candidates, key=lambda item: item.cash_outlay_usd) if candidates else None
+
+
+def _scalar_basket_frontier(offers: list[Offer], max_scalar_combination_offers: int
+                            ) -> tuple[list[Offer], list[Offer], dict[str, Any]]:
+    """Keep all scalar singletons but cap only multi-offer basket candidates.
+
+    Quantity laws never enter this frontier: even a source-stated group total
+    has no individual cash allocation.  Ranking uses only each offer's
+    declared-compatible scalar valuation and is a bounded work scheduling
+    decision, not a claim that omitted offers are worse strategies.
+    """
+    if max_scalar_combination_offers < 1:
+        raise ValueError("max_scalar_combination_offers must be positive")
+    eligible = []
+    for offer in offers:
+        if offer.quantity_promotions:
+            continue
+        valuation = _best_scalar_valuation(offer)
+        if valuation is not None:
+            eligible.append((offer, valuation))
+    eligible.sort(key=lambda item: (item[1].cash_outlay_usd, item[0].merchant, item[0].offer_id))
+    frontier = eligible[:max_scalar_combination_offers]
+    frontier_ids = {offer.offer_id for offer, _ in frontier}
+    return [offer for offer, _ in eligible], [offer for offer, _ in frontier], {
+        "schema": "bonfyre-food-scalar-basket-replay.v1",
+        "method": "all source-valued scalar offers receive singleton baskets; only two-/three-offer scalar combinations are replayed from a deterministic declared-cash frontier",
+        "scalar_offer_count": len(eligible),
+        "singleton_cash_basket_count": len(eligible),
+        "max_scalar_combination_offers": max_scalar_combination_offers,
+        "combination_frontier_offer_ids": [offer.offer_id for offer, _ in frontier],
+        "combination_frontier_offer_count": len(frontier),
+        "omitted_from_multi_offer_search_offer_ids": [
+            offer.offer_id for offer, _ in eligible if offer.offer_id not in frontier_ids
+        ],
+        "omitted_from_multi_offer_search_count": len(eligible) - len(frontier),
+        "selection_boundary": "The frontier bounds replay work using source-declared scalar cash valuations. Omitted offers remain current source observations and singleton baskets; no exhaustive ranking, dominance, ineligibility, or inferior-strategy claim is made.",
+        "quantity_law_boundary": "Quantity promotions remain separately projected source laws and never become scalar basket candidates or per-item cash allocations.",
+    }
+
+
+def _observed_baskets(singleton_offers: list[Offer], combination_offers: list[Offer]) -> list[dict[str, Any]]:
+    """Enumerate all singleton scalar records and bounded multi-offer baskets."""
+    rows = []
+    for size, candidates in ((1, singleton_offers), (2, combination_offers), (3, combination_offers)):
+        for basket in itertools.combinations(candidates, size):
+            valuations = [_best_scalar_valuation(offer) for offer in basket]
+            if all(valuations):
+                rows.append({
+                    "offer_ids": [item.offer_id for item in basket],
+                    "merchant_count": len({item.merchant for item in basket}),
+                    "cash_outlay_usd": str(sum((item.cash_outlay_usd for item in valuations), Decimal(0))),
+                    "delayed_rebate_usd": str(sum((item.delayed_rebate_usd for item in valuations), Decimal(0))),
+                    "points": str(sum((item.points for item in valuations), Decimal(0))),
+                    "protein_g": str(sum((item.protein_g or Decimal(0) for item in basket), Decimal(0))),
+                    "fulfillment": sorted({mode for item in basket for mode in item.fulfillment}),
+                    "status": "observed_component_basket_not_complete_meal",
+                })
+    return rows
+
+
+def build_projection(offers: list[Offer], recipes: list[dict[str, Any]], *,
+                     max_scalar_combination_offers: int = DEFAULT_MAX_SCALAR_COMBINATION_OFFERS
+                     ) -> dict[str, Any]:
+    scalar_singletons, scalar_combination_frontier, basket_replay = _scalar_basket_frontier(
+        offers, max_scalar_combination_offers)
+    baskets = _observed_baskets(scalar_singletons, scalar_combination_frontier)
+    leads = lexical_recipe_leads(recipes, offers)
+    coverage = recipe_ingredient_coverage(recipes, offers)
+    quantity_promotions = [
+        {"offer_id": offer.offer_id, **quantity_promotion_projection(promotion)}
+        for offer in offers for promotion in offer.quantity_promotions
+    ]
+    one_store = [basket for basket in baskets if basket["merchant_count"] == 1]
+    restaurant_offer_ids = {offer.offer_id for offer in offers if offer.channel.startswith("restaurant")}
+    restaurant_singletons = [
+        basket for basket in baskets
+        if len(basket["offer_ids"]) == 1 and basket["offer_ids"][0] in restaurant_offer_ids
+    ]
+    restaurant_low_cook = (
+        min(restaurant_singletons, key=lambda item: Decimal(item["cash_outlay_usd"]))
+        if restaurant_singletons else None
+    )
+    return {
+        "schema": "bonfyre-food-combination-projection.v1",
+        "method": "all source-valued scalar singletons plus a bounded deterministic scalar multi-offer frontier, source-bound quantity-promotion laws, Decimal arithmetic, source-contained normalized ingredient phrases, and explicit package-unit compatibility; no inferred stackability, per-item cash allocation, substitution, availability, storage, or waste",
+        "offers_considered": len(offers),
+        "offer_condition_index": {offer.offer_id: offer.source_conditions() for offer in offers},
+        "scalar_basket_replay": basket_replay,
+        "quantity_promotions": quantity_promotions,
+        "cash_baskets": baskets,
+        "recipe_review_leads": leads,
+        "recipe_ingredient_coverage": coverage,
+        "pareto_strategies": [
+            {"kind": "absolute_cheapest_observed_component", "selection": min(baskets, key=lambda item: Decimal(item["cash_outlay_usd"])) if baskets else None,
+             "boundary": "component cost only; not a meal total"},
+            {"kind": "per_serving", "selection": None,
+             "boundary": "no complete recipe basket has exact priced coverage; partial package coverage preserves leftovers without calling them waste"},
+            {"kind": "protein", "selection": max(baskets, key=lambda item: Decimal(item["protein_g"])) if baskets else None,
+             "boundary": "protein is only item-label nutrition, not recipe nutrition"},
+            {"kind": "one_store", "selection": min(one_store, key=lambda item: Decimal(item["cash_outlay_usd"])) if one_store else None,
+             "boundary": "merchant count is observed; travel distance/cost is not"},
+            {"kind": "two_stop", "selection": None,
+             "boundary": "no second merchant with current normalized cash observation"},
+            {"kind": "low_travel", "selection": None,
+             "boundary": "origin and route observations absent"},
+            {"kind": "low_cook", "selection": restaurant_low_cook,
+             "boundary": "selection is an observed prepared-food cash price; it does not assert meal nutrition, availability, fees, or wait time"},
+            {"kind": "batch_freezer", "selection": None,
+             "boundary": "recipe text alone does not establish freezer suitability"},
+            {"kind": "grocery_restaurant_hybrid", "selection": None,
+             "boundary": "cash observations at separate merchants do not establish a compatible hybrid promotion or a complete meal"},
+        ],
+        "missing_for_complete_pareto": ["verified product-specific stack pairs", "quantity-promotion checkout eligibility and any source-stated allocation rule", "reward-rate binding to particular cash offers", "route origin and travel cost", "priced complete recipe ingredient coverage", "local grocery availability and final checkout price", "storage/yield evidence needed to allocate leftovers or quantify waste"],
+    }
+
+
+def build_deal_graph(offers: list[Offer], recipes: list[dict[str, Any]]) -> dict[str, Any]:
+    """Project provenance, conditions and strictly package-compatible recipe links."""
+    leads = lexical_recipe_leads(recipes, offers)
+    coverage = recipe_ingredient_coverage(recipes, offers)
+    nodes = [{"id": f"offer:{offer.offer_id}", "kind": "ObservedOffer"} for offer in offers]
+    nodes.extend({"id": f"quantity-promotion:{promotion.promotion_id}", "kind": "QuantityPromotion"}
+                 for offer in offers for promotion in offer.quantity_promotions)
+    nodes.extend({"id": f"recipe:{lead['recipe_id']}", "kind": "RecipeObservation"} for lead in leads)
+    nodes.extend({"id": f"recipe:{row['recipe_id']}", "kind": "RecipeObservation"} for row in coverage
+                 if f"recipe:{row['recipe_id']}" not in {node["id"] for node in nodes})
+    edges = [{"source": f"offer:{offer.offer_id}", "relation": "observed_at", "destination": offer.source_url}
+             for offer in offers]
+    for offer in offers:
+        edges.append({"source": f"offer:{offer.offer_id}", "relation": "source_conditions",
+                      "destination": f"offer:{offer.offer_id}", "conditions": offer.source_conditions()})
+        for promotion in offer.quantity_promotions:
+            projection = quantity_promotion_projection(promotion)
+            promotion_id = f"quantity-promotion:{promotion.promotion_id}"
+            edges.append({"source": f"offer:{offer.offer_id}", "relation": "has_quantity_promotion",
+                          "destination": promotion_id, "promotion": projection})
+            edges.append({"source": promotion_id, "relation": "qualifies_with",
+                          "destination": f"offer:{offer.offer_id}",
+                          "items": projection["qualifying_items"]})
+            if projection["free_items"] is not None:
+                edges.append({"source": promotion_id, "relation": "awards_free_items",
+                              "destination": f"offer:{offer.offer_id}",
+                              "items": projection["free_items"],
+                              "forbidden_inference": "free-item identity -> per-item cash value or checkout quote"})
+    for lead in leads:
+        for ingredient in lead["lexically_matched_ingredients"]:
+            edges.append({"source": f"offer-term:{ingredient}", "relation": "lexical_review_lead",
+                          "destination": f"recipe:{lead['recipe_id']}",
+                          "forbidden_inference": "lexical match -> substitution or complete basket"})
+    for row in coverage:
+        for match in row["covered_ingredients"]:
+            edges.append({"source": f"offer:{match['offer_id']}", "relation": "source_name_and_quantity_covers",
+                          "destination": f"recipe:{row['recipe_id']}", "ingredient": match["ingredient"],
+                          "name_match_basis": match["name_match_basis"],
+                          "quantity_compatibility": match["quantity_compatibility"],
+                          "forbidden_inference": "partial ingredient package -> complete recipe, current availability, purchase, storage suitability, or waste"})
+    return {"schema": "bonfyre-food-deal-graph.v1", "nodes": nodes, "edges": edges,
+            "forbidden_inference": "offer or recipe observation -> current availability, authorized purchase, complete meal, or waste"}
+
+
+def _read_jsonl(path: Path) -> list[dict[str, Any]]:
+    return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--offers", type=Path, required=True)
+    parser.add_argument("--recipes", type=Path, required=True)
+    parser.add_argument("--out", type=Path)
+    parser.add_argument("--graph-out", type=Path)
+    parser.add_argument("--max-scalar-combination-offers", type=int,
+                        default=DEFAULT_MAX_SCALAR_COMBINATION_OFFERS)
+    args = parser.parse_args()
+    if args.out is None and args.graph_out is None:
+        parser.error("at least one of --out or --graph-out is required")
+    offers = [parse_offer(item) for item in _read_jsonl(args.offers)]
+    recipes = _read_jsonl(args.recipes)
+    if args.out:
+        projection = build_projection(
+            offers, recipes,
+            max_scalar_combination_offers=args.max_scalar_combination_offers)
+        args.out.write_text(json.dumps(projection, indent=2, sort_keys=True) + "\n")
+    if args.graph_out:
+        args.graph_out.write_text(json.dumps(build_deal_graph(offers, recipes), indent=2, sort_keys=True) + "\n")
+
+
+if __name__ == "__main__":
+    main()

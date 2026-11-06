@@ -1,0 +1,186 @@
+#!/usr/bin/env python3
+# Historical 402 discovery reference retained after native cutover.
+"""Pull prices from the internet, and admit only the ones a document states.
+
+This estate had two admitted rates. Two is not a price book, and without one it
+cannot say what a piece of future work would cost -- only what the two things it
+already pays for cost.
+
+The highest-leverage price document on the internet is the one a server sends
+about itself. HTTP 402 exists to say "this costs money, here is how much", and
+the x402 convention puts the amount, the asset and the chain in the body. A
+server answering 402 has quoted itself; nothing has to be inferred, scraped
+from a marketing page, or guessed.
+
+So this probes endpoints the estate already knows about, and admits a rate only
+when the response *states* one. What it will not do: read a price off a pricing
+page, average what similar services charge, or carry a rate forward because it
+seemed right last month. A provider with no stated price stays unpriced, and
+usage of it is counted and left unpriced rather than counted as free.
+
+Every fetch honours robots.txt and identifies itself. An endpoint that refuses
+is recorded as having refused, not retried under another name.
+
+  sweep_rates.py [--limit N] [--admit] [--from FILE]
+"""
+import argparse, json, os, re, subprocess, sys, time, urllib.error, urllib.parse, urllib.request
+import urllib.robotparser as robotparser
+
+AGENT = "Aurekai/1.0 (price discovery; honours robots.txt; contact via aurekai.live)"
+METER = os.path.expanduser("~/.bonfyre/bin/bonfyre-meter")
+
+# What a stated price looks like in a 402 body, across the shapes servers use.
+# Each is a claim the server made about itself; none is inferred.
+AMOUNT_PATTERNS = [
+    # x402: {"maxAmountRequired":"1000","asset":"0x...","network":"base"}
+    (r'"maxAmountRequired"\s*:\s*"?([0-9.]+)"?', "maxAmountRequired"),
+    (r'"amount"\s*:\s*"?([0-9.]+)"?', "amount"),
+    (r'"price"\s*:\s*"?([0-9.]+)"?', "price"),
+    (r'"cost"\s*:\s*"?([0-9.]+)"?', "cost"),
+    (r'breakdown\.[a-z]+\s*=\s*([0-9.]+)', "breakdown"),
+]
+CURRENCY_PATTERNS = [
+    (r'"asset"\s*:\s*"([A-Za-z0-9:_-]+)"', None),
+    (r'\b(USDC|USDT|DAI|ETH|USD|EUR|GBP)\b', None),
+]
+
+
+def robots_allows(url, cache):
+    """A price is not worth taking from somewhere that asked not to be read."""
+    parts = urllib.parse.urlsplit(url)
+    root = "%s://%s" % (parts.scheme, parts.netloc)
+    if root not in cache:
+        rp = robotparser.RobotFileParser()
+        rp.set_url(root + "/robots.txt")
+        try:
+            rp.read()
+        except Exception:
+            # Unreadable robots is not permission. The estate treats silence as
+            # refusal here, because a price is never urgent enough to guess.
+            cache[root] = None
+            return False
+        cache[root] = rp
+    rp = cache[root]
+    if rp is None:
+        return False
+    try:
+        return rp.can_fetch(AGENT, url)
+    except Exception:
+        return False
+
+
+def probe(url, patience=12):
+    """Ask once. A 402 is the answer this is looking for; anything else is not."""
+    req = urllib.request.Request(url, headers={"User-Agent": AGENT, "Accept": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=patience) as answer:
+            return answer.status, dict(answer.headers), answer.read(4096).decode("utf-8", "replace")
+    except urllib.error.HTTPError as e:
+        try:
+            body = e.read(4096).decode("utf-8", "replace")
+        except Exception:
+            body = ""
+        return e.code, dict(e.headers or {}), body
+    except Exception as why:
+        return 0, {}, str(why)[:160]
+
+
+def stated_price(status, headers, body):
+    """Only a stated amount counts. No inference, no default, no fallback."""
+    if status != 402:
+        return None
+    hay = body + " " + " ".join("%s: %s" % kv for kv in headers.items())
+    amount = field = None
+    for pattern, name in AMOUNT_PATTERNS:
+        m = re.search(pattern, hay)
+        if m:
+            try:
+                amount = float(m.group(1))
+            except ValueError:
+                continue
+            field = name
+            break
+    if amount is None:
+        return None
+    currency = ""
+    for pattern, _ in CURRENCY_PATTERNS:
+        m = re.search(pattern, hay)
+        if m:
+            currency = m.group(1)
+            break
+    return {"amount": amount, "currency": currency or "unstated", "field": field}
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--frontier", default=os.path.expanduser("~/.bonfyre/estate-local/frontier.db"))
+    ap.add_argument("--meter", default=os.path.expanduser("~/.bonfyre/estate-local/meter.db"))
+    ap.add_argument("--limit", type=int, default=40)
+    ap.add_argument("--admit", action="store_true", help="write the rates this finds into the meter")
+    ap.add_argument("--from", dest="listfile", help="probe these URLs instead of the frontier's")
+    args = ap.parse_args()
+
+    urls = []
+    if args.listfile:
+        urls = [l.strip() for l in open(args.listfile) if l.strip() and not l.startswith("#")]
+    else:
+        import sqlite3
+        db = sqlite3.connect("file:%s?mode=ro" % args.frontier, uri=True)
+        # Endpoints shaped like something that charges: an API surface rather
+        # than a feed. A feed that wanted money would say so too, but these are
+        # where a 402 is worth one request.
+        urls = [r[0] for r in db.execute(
+            "SELECT exact_address FROM channel"
+            " WHERE (protocol IN ('x402','json','api','openapi','graphql','mcp')"
+            "        OR exact_address LIKE '%/api/%')"
+            " AND exact_address LIKE 'http%' ORDER BY state='admitted' DESC LIMIT ?",
+            (args.limit,))]
+        db.close()
+
+    cache, found, refused, blocked, asked = {}, [], 0, 0, 0
+    for url in urls[:args.limit]:
+        if not robots_allows(url, cache):
+            blocked += 1
+            continue
+        asked += 1
+        status, headers, body = probe(url)
+        price = stated_price(status, headers, body)
+        if not price:
+            refused += 1
+            continue
+        host = urllib.parse.urlsplit(url).netloc
+        evidence = ("%s answered HTTP 402 on %s stating %s=%s%s"
+                    % (url, time.strftime("%Y-%m-%d"), price["field"], price["amount"],
+                       " " + price["currency"] if price["currency"] != "unstated" else ""))
+        rate = {"provider": host, "op": "http_request", "unit": "request",
+                "amount": price["amount"], "currency": price["currency"],
+                "evidence": evidence[:480]}
+        found.append(rate)
+        if args.admit:
+            subprocess.run([METER, "admit-rate", "--provider", rate["provider"],
+                            "--op", rate["op"], "--unit", rate["unit"],
+                            "--amount", str(rate["amount"]), "--currency", rate["currency"],
+                            "--effective-at", time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                            "--evidence", rate["evidence"]],
+                           env=dict(os.environ, BONFYRE_METER_DB=args.meter),
+                           capture_output=True)
+        time.sleep(0.3)
+
+    print(json.dumps({
+        "asked": asked,
+        "declined_by_robots": blocked,
+        "answered_without_a_stated_price": refused,
+        "stated_a_price": len(found),
+        "admitted": len(found) if args.admit else 0,
+        "rates": found[:8],
+        "cannot_infer":
+            "a rate admitted here is what a server said about itself in an HTTP 402 on the date "
+            "recorded. It is not a rate that still holds, not a price anyone agreed to pay, and "
+            "not evidence that this estate has paid it. A provider that stated no price is left "
+            "unpriced, and usage of it is counted and left unpriced rather than counted as free.",
+    }, indent=1))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

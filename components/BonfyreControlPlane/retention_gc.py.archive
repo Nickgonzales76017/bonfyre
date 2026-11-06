@@ -1,0 +1,260 @@
+# ARCHIVED 2026-09-06: absorbed by engine/core/src/retention.c (bf_retention.h).
+# This is retained as a Python reference witness only. New behavior belongs in
+# the native owner and schemas/control/retention.{yaff,cue}; do not revive this
+# file as a second SQLite authority.
+"""RetentionGC -- removing what may go, and refusing what may not.
+
+The retention lattice says which tier a record sits in. Nothing acted on it, so
+the lattice was a description of what *could* be removed by something that did
+not exist. This is that something.
+
+Three things decide whether a record may be removed, and all three must agree:
+
+    tier        below the cooling floor
+    lifetime    the tier's lifetime has elapsed on the clock
+    holds       nothing is holding it
+
+The order matters less than the fact that **a hold outranks the clock**. An
+elapsed lifetime is permission to consider removal, never permission to remove:
+a chat message referenced by an open obligation, cited as evidence, or under a
+legal hold stays, and the reason it stays is recorded rather than inferred.
+
+The other half is the distinction §61 turns on. Removing a record's *body* is not
+the same as denying the moment. A tombstone survives every removal:
+
+    the material is gone      the body cannot be read again
+    the fact is not           something happened here, at this moment, of this
+                              kind, and the estate still knows that
+
+That is what lets a raw Live disappear while "the Event occurred, the creator
+appeared, the sponsor obligation was fulfilled" remains true. A GC that deleted
+the fact along with the bytes would be enforcing amnesia rather than retention.
+
+Forbidden inferences, falsified by the tests beside this file:
+  an elapsed lifetime   -> permission to remove
+  a removed body        -> the moment not having happened
+  a tombstone           -> recoverable content
+  a released hold       -> a record that was always removable
+"""
+
+from __future__ import annotations
+
+import sqlite3
+from dataclasses import dataclass
+from typing import Iterable, Optional
+
+import live_semantic_track as lst
+
+# How long a tier's material is kept once written, in milliseconds of the same
+# clock the caller supplies. Tiers at or above the cooling floor have no
+# lifetime: they are not removed by time passing at all.
+TIER_LIFETIME_MS = {
+    lst.FLASH: 5 * 60 * 1000,           # minutes
+    lst.CHAT: 6 * 60 * 60 * 1000,       # hours
+    lst.MOMENT: 3 * 24 * 60 * 60 * 1000,   # days
+    lst.SOCIAL: 30 * 24 * 60 * 60 * 1000,  # weeks
+}
+
+# Why a record cannot be removed even though its clock ran out. Each names a
+# different owner, because "who is holding this" is the question a refusal has
+# to answer for anybody to release it.
+HOLD_OBLIGATION = "open_obligation"     # CommitmentGraph
+HOLD_EVIDENCE = "evidence_reference"    # EvidenceGraph
+HOLD_LEGAL = "legal_hold"               # an institution, out of band
+HOLD_USER = "user_saved"                # the person whose record it is
+
+HOLD_KINDS = (HOLD_OBLIGATION, HOLD_EVIDENCE, HOLD_LEGAL, HOLD_USER)
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS retained(
+  record_id  TEXT PRIMARY KEY,
+  occurrence TEXT NOT NULL,
+  kind       TEXT NOT NULL,
+  tier       TEXT NOT NULL,
+  written_at INTEGER NOT NULL,
+  body       TEXT NOT NULL DEFAULT '');
+
+CREATE TABLE IF NOT EXISTS retention_hold(
+  record_id TEXT NOT NULL,
+  hold      TEXT NOT NULL,
+  holder    TEXT NOT NULL,
+  PRIMARY KEY(record_id, hold, holder));
+
+CREATE TABLE IF NOT EXISTS tombstone(
+  record_id  TEXT PRIMARY KEY,
+  occurrence TEXT NOT NULL,
+  kind       TEXT NOT NULL,
+  tier       TEXT NOT NULL,
+  written_at INTEGER NOT NULL,
+  removed_at INTEGER NOT NULL);
+"""
+
+
+class RetentionError(ValueError):
+    pass
+
+
+def ensure_schema(db: sqlite3.Connection) -> None:
+    db.executescript(SCHEMA)
+    db.commit()
+
+
+@dataclass(frozen=True)
+class Refusal:
+    record_id: str
+    reason: str
+    holder: str = ""
+
+    def __str__(self) -> str:
+        who = f" ({self.holder})" if self.holder else ""
+        return f"{self.record_id}: {self.reason}{who}"
+
+
+def retain(db: sqlite3.Connection, *, record_id: str, occurrence: str, kind: str,
+           written_at: int, body: str = "") -> None:
+    """Write a record under the tier its kind declares."""
+    if kind not in lst.KIND_TIER:
+        raise RetentionError(
+            f"unknown kind {kind!r}; a record's tier comes from its declared kind")
+    ensure_schema(db)
+    db.execute("INSERT OR REPLACE INTO retained"
+               "(record_id,occurrence,kind,tier,written_at,body)"
+               " VALUES(?,?,?,?,?,?)",
+               (record_id, occurrence, kind, lst.KIND_TIER[kind], written_at, body))
+    db.commit()
+
+
+def hold(db: sqlite3.Connection, record_id: str, *, kind: str, holder: str) -> None:
+    """Place a hold. A hold outranks the clock and names who placed it."""
+    if kind not in HOLD_KINDS:
+        raise RetentionError(
+            f"unknown hold {kind!r}; a hold names which owner is keeping the "
+            f"record, and an unnamed one cannot be released by anybody")
+    if not holder:
+        raise RetentionError("a hold names its holder or nobody can release it")
+    ensure_schema(db)
+    db.execute("INSERT OR REPLACE INTO retention_hold(record_id,hold,holder)"
+               " VALUES(?,?,?)", (record_id, kind, holder))
+    db.commit()
+
+
+def release(db: sqlite3.Connection, record_id: str, *, kind: str,
+            holder: str) -> bool:
+    ensure_schema(db)
+    cur = db.execute("DELETE FROM retention_hold"
+                     " WHERE record_id=? AND hold=? AND holder=?",
+                     (record_id, kind, holder))
+    db.commit()
+    return cur.rowcount > 0
+
+
+def holds_on(db: sqlite3.Connection, record_id: str) -> list[tuple[str, str]]:
+    ensure_schema(db)
+    return sorted((h, who) for h, who in db.execute(
+        "SELECT hold,holder FROM retention_hold WHERE record_id=?", (record_id,)))
+
+
+# ----------------------------------------------------------------- the decision
+
+def removable(db: sqlite3.Connection, record_id: str, now: int) -> tuple[bool, str]:
+    """(may_remove, reason). The reason is populated whichever way it goes."""
+    ensure_schema(db)
+    row = db.execute("SELECT tier,written_at FROM retained WHERE record_id=?",
+                     (record_id,)).fetchone()
+    if row is None:
+        return False, "no such record"
+    tier, written_at = row
+
+    if lst.survives_cooling(tier):
+        return False, (f"tier {tier} is at or above the cooling floor; time "
+                       f"passing does not remove it")
+    lifetime = TIER_LIFETIME_MS.get(tier)
+    if lifetime is None:
+        return False, f"tier {tier} declares no lifetime"
+    if now - written_at < lifetime:
+        return False, f"tier {tier} lifetime has not elapsed"
+
+    existing = holds_on(db, record_id)
+    if existing:
+        kinds = ", ".join(f"{h} by {who}" for h, who in existing)
+        return False, f"held: {kinds}"
+    return True, "tier is below the floor, its lifetime elapsed, nothing holds it"
+
+
+def collect(db: sqlite3.Connection, now: int, *,
+            occurrence: Optional[str] = None) -> tuple[list[str], list[Refusal]]:
+    """Remove what may go. Returns (removed, refused).
+
+    Every removal writes a tombstone first. The body is gone; that something of
+    this kind happened at this moment is not, because those are different facts
+    and only one of them is expensive to keep.
+    """
+    ensure_schema(db)
+    sql = "SELECT record_id FROM retained"
+    args: list = []
+    if occurrence is not None:
+        sql += " WHERE occurrence=?"
+        args.append(occurrence)
+
+    removed: list[str] = []
+    refused: list[Refusal] = []
+    for (rid,) in db.execute(sql, args).fetchall():
+        ok, reason = removable(db, rid, now)
+        if not ok:
+            holder = ""
+            hs = holds_on(db, rid)
+            if hs:
+                holder = ", ".join(who for _h, who in hs)
+            refused.append(Refusal(rid, reason, holder))
+            continue
+        row = db.execute(
+            "SELECT occurrence,kind,tier,written_at FROM retained WHERE record_id=?",
+            (rid,)).fetchone()
+        db.execute("INSERT OR REPLACE INTO tombstone"
+                   "(record_id,occurrence,kind,tier,written_at,removed_at)"
+                   " VALUES(?,?,?,?,?,?)", (rid, *row, now))
+        db.execute("DELETE FROM retained WHERE record_id=?", (rid,))
+        removed.append(rid)
+    db.commit()
+    return sorted(removed), refused
+
+
+# ------------------------------------------------------------------- reading
+
+def body_of(db: sqlite3.Connection, record_id: str) -> Optional[str]:
+    ensure_schema(db)
+    row = db.execute("SELECT body FROM retained WHERE record_id=?",
+                     (record_id,)).fetchone()
+    return row[0] if row else None
+
+
+def happened(db: sqlite3.Connection, record_id: str) -> bool:
+    """Whether the estate knows this moment occurred, body or not.
+
+    True for a live record and true for a tombstoned one. This is the question
+    that separates material retention from institutional history, and answering
+    it False after a GC pass would be the amnesia this module refuses.
+    """
+    ensure_schema(db)
+    for table in ("retained", "tombstone"):
+        if db.execute(f"SELECT 1 FROM {table} WHERE record_id=?",
+                      (record_id,)).fetchone():
+            return True
+    return False
+
+
+def tombstone_of(db: sqlite3.Connection, record_id: str) -> Optional[dict]:
+    ensure_schema(db)
+    row = db.execute(
+        "SELECT occurrence,kind,tier,written_at,removed_at FROM tombstone"
+        " WHERE record_id=?", (record_id,)).fetchone()
+    if row is None:
+        return None
+    return {"record_id": record_id, "occurrence": row[0], "kind": row[1],
+            "tier": row[2], "written_at": row[3], "removed_at": row[4]}
+
+
+def surviving(db: sqlite3.Connection, occurrence: str) -> list[str]:
+    ensure_schema(db)
+    return sorted(r for (r,) in db.execute(
+        "SELECT record_id FROM retained WHERE occurrence=?", (occurrence,)))

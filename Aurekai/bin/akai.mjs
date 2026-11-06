@@ -18,6 +18,12 @@ import {
   validateIntegrationEvent,
 } from "../src/integration-connectors.mjs";
 import { scaffoldIntegrationRepos } from "../src/integration-repo-scaffold.mjs";
+import {
+  composeExternalWorld,
+  getExternalOccurrence,
+  listExternalEstate,
+  probeExternalOccurrence,
+} from "../src/external-estate-runtime.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = dirname(__dirname);
@@ -29,6 +35,9 @@ function printHelp() {
   console.log("Usage:");
   console.log("  akai doctor --deep");
   console.log("  akai dashboard");
+  console.log("  akai creator:compile --input timeline.json [--shard-frames N] [--from N --to N] [--source-projection all|used]");
+  console.log("  akai creator:edit --input timeline.json --edit edit.json");
+  console.log("  akai creator:pcm-plan --plan plan.json --bindings bindings.json --window-index N --channels N --output FILE [--sparse-silence]");
   console.log("  akai run <recipe> [--input FILE] [--sae-audit] [--semantic-cache]");
   console.log("  akai install --user|--system [--service]");
   console.log("  akai uninstall --user|--system [--service]");
@@ -36,9 +45,13 @@ function printHelp() {
   console.log("  akai model:inspect ...");
   console.log("  akai fpqx:align-sae ...");
   console.log("  akai integrations [--json]");
+  console.log("  akai external-estate:list [--query TEXT] [--domain DOMAIN] [--world WORLD] [--affordance NAME] [--json]");
+  console.log("  akai external-estate:inspect --id EXT-00001|external:ext-00001 [--json]");
+  console.log("  akai external-estate:world --world WORLD [--limit N] [--json]");
+  console.log("  akai external-estate:probe --id EXT-00001 [--timeout-ms N] [--json]  # explicit HEAD only");
   console.log("  akai forks [--json]");
   console.log("  akai integrate:list [--surface hard-fork|soft-fork|adapter|observer|state-machine] [--group NAME] [--json]");
-  console.log("  akai integrate:run --target NAME [--event-json JSON|--event-file FILE] [--enforce-doctrine] [--persist] [--json]");
+  console.log("  akai integrate:run --target NAME [--surface SURFACE] [--event-json JSON|--event-file FILE] [--enforce-doctrine] [--persist] [--json]");
   console.log("  akai integrate:batch --surface hard-fork|soft-fork|adapter|observer|state-machine [--event-json JSON|--event-file FILE] [--enforce-doctrine] [--persist] [--json]");
   console.log("  akai integrate:state-machine --type TYPE [--event-json JSON|--event-file FILE] [--enforce-doctrine] [--persist] [--json]");
   console.log("  akai integrate:ingest --target NAME [--endpoint URL|--input-file FILE|--event-json JSON] [--use-template ID] [--environment NAME] [--request-body-json JSON|--request-body-file FILE] [--strict] [--persist] [--json]");
@@ -46,7 +59,7 @@ function printHelp() {
   console.log("  akai integrate:presets [--target NAME] [--json]");
   console.log("  akai integrate:templates [--target NAME] [--environment NAME] [--json]");
   console.log("  akai integrate:validate-event --target NAME [--input-file FILE|--event-json JSON] [--json]");
-  console.log("  akai integrate:scaffold-repos [--target NAME|--all] [--out-dir DIR] [--json]");
+  console.log("  akai integrate:scaffold-repos [--target NAME|--all] [--out-dir DIR] [--virtual|--verify] [--json]");
   console.log("");
   console.log("Grouped compatibility commands:");
   console.log("  akai sae activate ...   -> akai sae:activate ...");
@@ -180,6 +193,17 @@ if (rawArgs.length === 0 || rawArgs[0] === "--help" || rawArgs[0] === "-h" || ra
   process.exit(0);
 }
 
+if (["creator:compile", "creator:edit", "creator:pcm-plan"].includes(rawArgs[0])) {
+  try {
+    const { runCreatorCommand } = await import("../src/creator-cli.mjs");
+    printPayload(runCreatorCommand(rawArgs[0], rawArgs.slice(1)), true);
+    process.exit(0);
+  } catch (error) {
+    console.error(error?.message || String(error));
+    process.exit(1);
+  }
+}
+
 if (rawArgs[0] === "manifest:print") {
   const manifestPath = join(repoRoot, "aurekai.manifest.json");
   process.stdout.write(readFileSync(manifestPath, "utf8"));
@@ -215,6 +239,7 @@ if (rawArgs[0] === "integrate:list" || (rawArgs[0] === "integrate" && rawArgs[1]
 if (rawArgs[0] === "integrate:run" || (rawArgs[0] === "integrate" && rawArgs[1] === "run")) {
   const args = rawArgs[0] === "integrate" ? rawArgs.slice(2) : rawArgs.slice(1);
   const target = getFlagValue(args, "--target");
+  const surface = getFlagValue(args, "--surface");
   const asJson = args.includes("--json");
   const persist = args.includes("--persist");
   const enforceDoctrine = args.includes("--enforce-doctrine");
@@ -226,10 +251,11 @@ if (rawArgs[0] === "integrate:run" || (rawArgs[0] === "integrate" && rawArgs[1] 
 
   const event = parseEventPayload(args);
   try {
-    const result = runKernelIntegration(repoRoot, { target, event, persist, enforceDoctrine });
+    const result = runKernelIntegration(repoRoot, { target, surface, event, persist, enforceDoctrine });
     printPayload({
       schema_version: "aurekai.integration_run_result.v1",
       target,
+      surface: result.envelope.surface,
       persisted_to: result.persistedTo,
       execution: result.envelope,
     }, asJson);
@@ -422,6 +448,8 @@ if (rawArgs[0] === "integrate:scaffold-repos" || (rawArgs[0] === "integrate" && 
   const outDir = getFlagValue(args, "--out-dir");
   const asJson = args.includes("--json");
   const all = args.includes("--all");
+  const virtual = args.includes("--virtual"), verify = args.includes("--verify");
+  if (virtual && verify) { console.error("--virtual and --verify are exclusive"); process.exit(2); }
 
   if (!target && !all) {
     console.error("Missing --target or --all for integrate:scaffold-repos");
@@ -432,6 +460,7 @@ if (rawArgs[0] === "integrate:scaffold-repos" || (rawArgs[0] === "integrate" && 
     const result = scaffoldIntegrationRepos(repoRoot, {
       target: all ? null : target,
       outDir,
+      mode: virtual ? "virtual" : verify ? "verify" : "materialize",
     });
     printPayload(result, asJson);
     process.exit(0);
@@ -453,6 +482,51 @@ if (rawArgs[0] === "integrate:presets" || (rawArgs[0] === "integrate" && rawArgs
     presets,
   }, asJson);
   process.exit(0);
+}
+
+/* The external estate is a read-only candidate corpus.  These commands never
+ * make a provider relationship; only `probe` performs a caller-requested HEAD
+ * request, without following redirects or retaining a response body. */
+if (rawArgs[0].startsWith("external-estate:")) {
+  const commandArgs = rawArgs.slice(1);
+  const asJson = commandArgs.includes("--json");
+  const estateRoot = dirname(repoRoot);
+  const id = getFlagValue(commandArgs, "--id");
+  const query = getFlagValue(commandArgs, "--query");
+  const domain = getFlagValue(commandArgs, "--domain");
+  const world = getFlagValue(commandArgs, "--world");
+  const affordance = getFlagValue(commandArgs, "--affordance");
+  const sourceKind = getFlagValue(commandArgs, "--source-kind");
+  const limit = getFlagValue(commandArgs, "--limit");
+  try {
+    if (rawArgs[0] === "external-estate:list") {
+      printPayload(listExternalEstate(estateRoot, { query, domain, world, affordance, sourceKind, limit }), asJson);
+      process.exit(0);
+    }
+    if (rawArgs[0] === "external-estate:inspect") {
+      if (!id) throw new Error("Missing --id for external-estate:inspect");
+      const record = getExternalOccurrence(estateRoot, id);
+      if (!record) throw new Error(`Unknown external occurrence: ${id}`);
+      printPayload(record, asJson);
+      process.exit(0);
+    }
+    if (rawArgs[0] === "external-estate:world") {
+      if (!world) throw new Error("Missing --world for external-estate:world");
+      printPayload(composeExternalWorld(estateRoot, world, { limit }), asJson);
+      process.exit(0);
+    }
+    if (rawArgs[0] === "external-estate:probe") {
+      if (!id) throw new Error("Missing --id for external-estate:probe");
+      const record = getExternalOccurrence(estateRoot, id);
+      if (!record) throw new Error(`Unknown external occurrence: ${id}`);
+      printPayload(await probeExternalOccurrence(record, { timeoutMs: getFlagValue(commandArgs, "--timeout-ms") }), asJson);
+      process.exit(0);
+    }
+    throw new Error(`Unknown external-estate command: ${rawArgs[0]}`);
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  }
 }
 
 const args = normalizeArgs(rawArgs);

@@ -1,0 +1,29 @@
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT / "tools"))
+
+import housing_concession_arbitrage as arbitrage  # noqa: E402
+
+
+def test_public_unit_curve_keeps_term_fee_and_promotion_boundaries() -> None:
+    page = '''<tr data-uid="3104"><a href="3-3104/"></a>
+    <td data-base-unit-price="1408.0" data-fee-property="105.98" data-fee-floorplan="0" data-fee-unit="0">
+    <span style="order: 1;">$1513.98</span><span class="floorplans__floorplan-price-term">14 months</span>
+    <a href="/apply-now/?MoveInDate=8/23/2026&amp;unitID=108">Lease Now</a></td></tr>'''
+    result = arbitrage.derive(page, observed_at="2026-08-24T03:08:11Z", source_url="https://example.test/a3")
+    assert result["curve"] == [{
+        "unit_id": "3-3104", "move_in_date": "2026-08-23", "lease_term_months": 14,
+        "base_rent_monthly_usd": 1408.0, "quoted_required_monthly_delta_usd": 105.98,
+        "quoted_total_monthly_leasing_price_usd": 1513.98, "quoted_total_matches_components": True,
+    }]
+    economics = result["economics"][0]
+    assert economics["move_in_cash_known_non_deposit_usd"] == 245.0
+    assert economics["full_term_known_cost_excluding_variable_charges_usd"] == 21440.72
+    assert economics["one_dog"]["full_term_effective_monthly_excluding_unallocated_annual_screening_usd"] == 1585.05
+    assert economics["conditional_concession"]["unit_binding"] == "unresolved_select_homes"
+    assert len(result["reconciliation_work"]) == 2

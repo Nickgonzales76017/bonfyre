@@ -1,0 +1,220 @@
+#!/usr/bin/env python3
+"""Hold back retained material that should not be projected automatically.
+
+The estate now reads thousands of external sources. Something ugly in a feed,
+a scraped page or a social source should not become a card on .life or .live
+because nobody looked. This looks, cheaply, and boxes what it finds.
+
+What it is not: a moderation product, a verdict, or a deletion. The
+observation, its receipt and its bytes are untouched. A flag says only
+
+    do not project this automatically until somebody has decided how it
+    should appear
+
+and the type carries that in its own cannot_infer. Flagged is not illegal,
+false, or malicious. Not flagged is not safe -- most of what flows through here
+is never looked at by any screen that could see meaning.
+
+The match is on normalised spelling, because a plain word list is defeated by a
+space, a digit or an accent. Normalisation is the whole of the method: it sees
+spellings and nothing else, and it is blind to context, quotation and reclaimed
+use, which is exactly why a flag is a reason to look rather than a finding.
+
+The terms live outside this repository, on the estate, because a list of slurs
+is not something to commit. A screen with no term file is honest about it and
+flags nothing rather than reporting a clean estate.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import re
+import subprocess
+import sys
+import unicodedata
+
+BODIES = os.environ.get("BONFYRE_FOREIGN_BODIES", "/var/lib/bonfyre/foreign/bodies")
+RECEIPTS = os.environ.get("BONFYRE_FOREIGN_RECEIPTS", "/var/lib/bonfyre/foreign/receipts")
+TERMS = os.environ.get("BONFYRE_SCREEN_TERMS", "/var/lib/bonfyre/content-screen/terms.txt")
+CMS = os.environ.get("BONFYRE_CMS", "/usr/local/bin/bonfyre-cms")
+DB = os.environ.get("BONFYRE_CMS_DB", "/var/lib/bonfyre/cms/bonfyre_cms.db")
+
+SCREEN = "native-text-normalised"
+VERSION = "1"
+
+CANNOT_INFER = (
+    "flagged is not illegal, false, malicious, or deleted, and not flagged is "
+    "not safe. This says the material must not be projected automatically into "
+    "ordinary human surfaces until its presentation state is resolved; the "
+    "observation, its receipt and its bytes are untouched."
+)
+
+# Substitutions a spelling is transformed with to get past a plain word list.
+LEET = str.maketrans({"0": "o", "1": "i", "3": "e", "4": "a", "5": "s",
+                      "7": "t", "8": "b", "9": "g", "@": "a", "$": "s",
+                      "!": "i", "|": "i", "+": "t"})
+
+
+def normalise(text: str) -> str:
+    """Fold a spelling to the form a term list can match.
+
+    Two corrections, both found by testing the claim rather than assuming it.
+
+    A symbol only stands in for a letter between letters. Substituting
+    unconditionally turned `SPAM!!!` into `spamiii`, because trailing
+    punctuation became part of the word.
+
+    A term spelled out with separators -- `s p a m`, `s-p-a-m` -- survived
+    normalisation as separate letters and then matched nothing, which meant the
+    screen missed the exact evasion it exists to catch. Runs of single letters
+    are rejoined; only runs, so ordinary prose keeps its words and `a spam` does
+    not become `aspam`.
+    """
+    t = unicodedata.normalize("NFKD", text)
+    t = "".join(c for c in t if not unicodedata.combining(c))
+    t = t.lower()
+    # a substitution is a letter only when letters are on both sides
+    # letters on both sides, or `SPAM!!!` keeps substituting into the run of
+    # punctuation after the word and comes out as `spamii`
+    t = re.sub(r"(?<=[a-z])([0-9@$!|+])(?=[a-z])",
+               lambda m: m.group(1).translate(LEET), t)
+    t = re.sub(r"^([0-9@$!|+])(?=[a-z])", lambda m: m.group(1).translate(LEET), t)
+    t = re.sub(r"[^a-z]+", " ", t).strip()
+    # rejoin a spelled-out run: three or more single letters in a row
+    return re.sub(r"\b(?:[a-z] ){2,}[a-z]\b",
+                  lambda m: m.group(0).replace(" ", ""), t)
+
+
+def load_terms(path: str):
+    if not os.path.exists(path):
+        return None
+    out = []
+    with open(path, encoding="utf-8") as fh:
+        for line in fh:
+            line = line.split("#", 1)[0].strip()
+            if line:
+                out.append(normalise(line).strip())
+    return [t for t in out if t]
+
+
+def redact(term: str) -> str:
+    """A flag is read by people. It records that a term matched, in a form that
+    does not reprint it in full on a public page."""
+    return term[0] + "*" * max(len(term) - 1, 1) if term else ""
+
+
+def last_receipt_line(twin: str):
+    path = os.path.join(RECEIPTS, f"{twin}.json")
+    if not os.path.exists(path):
+        return {}
+    with open(path, "rb") as fh:
+        fh.seek(0, os.SEEK_END)
+        size = fh.tell()
+        fh.seek(max(0, size - 65536))
+        tail = fh.read().decode("utf-8", "replace")
+    for line in reversed(tail.splitlines()):
+        line = line.strip()
+        if line.startswith("{"):
+            try:
+                return json.loads(line)
+            except ValueError:
+                continue
+    return {}
+
+
+def existing_flags():
+    import sqlite3
+    try:
+        con = sqlite3.connect(f"file:{DB}?mode=ro", uri=True)
+        rows = {r[0] for r in con.execute("SELECT flag FROM content_flag")}
+        con.close()
+        return rows
+    except Exception:
+        return set()
+
+
+def write_flag(row, dry):
+    if dry:
+        print(f"  would flag {row['flag']}")
+        return True
+    p = subprocess.run([CMS, "entry", "create", "content_flag", "--db", DB,
+                        "--ns", "root", json.dumps(row, ensure_ascii=False)],
+                       capture_output=True, text=True)
+    last = ((p.stdout or p.stderr).strip().splitlines() or [""])[-1]
+    if '"created":true' not in last:
+        print(f"  FAILED {row['flag']}: {last[:160]}", file=sys.stderr)
+        return False
+    return True
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--twin", help="screen one twin rather than every retained body")
+    a = ap.parse_args()
+
+    terms = load_terms(TERMS)
+    if terms is None:
+        # An empty page must not read as a clean estate.
+        print(json.dumps({
+            "schema": "bonfyre-content-screen.v1",
+            "screen": SCREEN,
+            "state": "installed_without_terms",
+            "terms_path": TERMS,
+            "screened": 0, "flagged": 0,
+            "cannot_infer": "no term list is authored on this estate, so this "
+                            "screen looked at nothing. That is not a finding "
+                            "that nothing would have matched."}, indent=2))
+        return 2
+    if not terms:
+        print(f"term file {TERMS} is present and empty", file=sys.stderr)
+        return 2
+
+    have = existing_flags()
+    names = ([a.twin] if a.twin
+             else sorted(f[:-5] for f in os.listdir(BODIES) if f.endswith(".body")))
+    screened = flagged = 0
+
+    for twin in names:
+        path = os.path.join(BODIES, f"{twin}.body")
+        if not os.path.exists(path):
+            continue
+        with open(path, "rb") as fh:
+            raw = fh.read(2 * 1024 * 1024)
+        text = normalise(raw.decode("utf-8", "replace"))
+        screened += 1
+        hits = {}
+        for term in terms:
+            n = text.count(f" {term} ")
+            if n:
+                hits[term] = n
+        if not hits:
+            continue
+        receipt = last_receipt_line(twin)
+        for term, n in sorted(hits.items()):
+            fid = "cf-" + hashlib.sha256(
+                f"{twin}|{SCREEN}|{term}".encode()).hexdigest()[:16]
+            if fid in have:
+                continue
+            row = dict(flag=fid, twin=twin, source=twin,
+                       observed_at=receipt.get("observed_at", ""),
+                       receipt_ref=receipt.get("content_sha256", ""),
+                       screen=SCREEN, screen_version=VERSION,
+                       signal="term matched in normalised spelling",
+                       matched=redact(term), sample_count=str(n),
+                       review_state="boxed", cannot_infer=CANNOT_INFER,
+                       status="published")
+            if write_flag(row, a.dry_run):
+                flagged += 1
+
+    print(json.dumps({"schema": "bonfyre-content-screen.v1", "screen": SCREEN,
+                      "state": "installed", "terms": len(terms),
+                      "screened": screened, "flagged": flagged,
+                      "cannot_infer": CANNOT_INFER}, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

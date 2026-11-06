@@ -1,0 +1,207 @@
+"""Archived Python ingest; native-ingest.mjs now feeds the native organ output into a LiveSemanticTrack.
+
+LiveSemanticTrack was a shape waiting on its ingest: BonfyreTranscribe,
+BonfyreSegment and BonfyreClips are live binaries and nothing carried what they
+produce into a track. This does, by running them and parsing what comes back.
+
+Nothing here decides what a chapter is or which moment is worth clipping. The
+organs decide, and their answers are frequently not the ones a reader would
+guess -- on the Deep Ellum stream BonfyreClips ranks the sponsor thank-you above
+the show announcement, scoring it 47.0 against 35.0 and giving "actionable" as
+part of its reason. Treating that as authoritative rather than overriding it is
+the point of routing through them at all.
+
+Two conversions are the whole risk surface, and both are places this has already
+been wrong:
+
+  seconds to milliseconds   The organs speak seconds as floats against the media
+                            clock's origin. The track speaks integer
+                            milliseconds. Getting this wrong shifts every event
+                            by three orders of magnitude and still looks like a
+                            working track.
+
+  their taxonomy, not ours  BonfyreSegment labels a boundary intro / idea /
+                            closing. Those are its words. They are carried into
+                            the track's `value` rather than remapped, because a
+                            remapping is a second opinion nobody asked for and
+                            it silently drifts when the organ's taxonomy changes.
+
+Forbidden inferences, falsified by the tests beside this file:
+  a clip candidate    -> a published clip
+  a high clip score   -> an important moment (it is that organ's ranking)
+  a boundary          -> a chapter a person would draw
+  a transcribed line  -> a claim
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+from dataclasses import dataclass
+from typing import Optional
+
+import live_semantic_track as lst
+
+BIN_DIR = os.environ.get("BONFYRE_BIN", os.path.expanduser("~/.bonfyre/bin"))
+SEGMENT = os.path.join(BIN_DIR, "bonfyre-segment")
+CLIPS = os.path.join(BIN_DIR, "bonfyre-clips")
+
+
+class IngestError(RuntimeError):
+    pass
+
+
+def _sec_to_ms(seconds: float) -> int:
+    """The one conversion. Rounded rather than truncated, because a boundary at
+    14.099999 is the same instant as one at 14.1 and truncating puts them in
+    different milliseconds."""
+    return int(round(float(seconds) * 1000))
+
+
+def _run(argv: list[str]) -> str:
+    proc = subprocess.run(argv, capture_output=True, text=True, timeout=120)
+    if proc.returncode != 0:
+        raise IngestError(f"{os.path.basename(argv[0])} failed "
+                          f"({proc.returncode}): "
+                          f"{proc.stderr.strip() or proc.stdout.strip()}")
+    return proc.stdout
+
+
+def available() -> bool:
+    return os.path.exists(SEGMENT) and os.path.exists(CLIPS)
+
+
+# ------------------------------------------------------------- transcript
+
+def ingest_transcript(track: lst.LiveSemanticTrack, whisper_json: str, *,
+                      speaker: str = "") -> int:
+    """Whisper segments become utterances at their real media-clock offsets."""
+    with open(whisper_json) as fh:
+        doc = json.load(fh)
+    segments = doc.get("segments")
+    if segments is None:
+        raise IngestError(
+            f"{whisper_json} carries no segments[]; the organs read Whisper JSON "
+            f"with segments[].start/end/text and this is a different shape")
+    for seg in segments:
+        text = (seg.get("text") or "").strip()
+        if not text:
+            continue
+        track.say(_sec_to_ms(seg["start"]), text, speaker=speaker)
+    return len(track.by_kind("utterance"))
+
+
+# --------------------------------------------------------------- boundaries
+
+@dataclass(frozen=True)
+class Boundary:
+    index: int
+    label: str
+    kind: str            # the organ's own word: intro | idea | closing | ...
+    start_ms: int
+    end_ms: int
+
+
+def run_segment(whisper_json: str, out_dir: str) -> list[Boundary]:
+    """Run BonfyreSegment and read the boundaries it drew."""
+    if not os.path.exists(SEGMENT):
+        raise IngestError(f"BonfyreSegment not present at {SEGMENT}")
+    _run([SEGMENT, "all", whisper_json, out_dir])
+    path = os.path.join(out_dir, "boundaries.json")
+    if not os.path.exists(path):
+        raise IngestError(f"BonfyreSegment wrote no boundaries.json in {out_dir}")
+    with open(path) as fh:
+        doc = json.load(fh)
+    return [Boundary(index=b["index"], label=b["label"], kind=b["type"],
+                     start_ms=_sec_to_ms(b["start"]), end_ms=_sec_to_ms(b["end"]))
+            for b in doc.get("boundaries", [])]
+
+
+def ingest_boundaries(track: lst.LiveSemanticTrack,
+                      boundaries: list[Boundary]) -> int:
+    """Boundaries become chapters, carrying the organ's own label."""
+    for b in boundaries:
+        track.append(lst.SemanticEvent(b.start_ms, "chapter", b.label,
+                                       source="native:BonfyreSegment"))
+    return len(boundaries)
+
+
+# -------------------------------------------------------------------- clips
+
+@dataclass(frozen=True)
+class ClipCandidate:
+    rank: int
+    score: float
+    start_ms: int
+    end_ms: int
+    reasons: tuple[str, ...]
+    text: str
+
+
+def run_clips(whisper_json: str, out_dir: str, *, top: int = 5
+              ) -> list[ClipCandidate]:
+    """Run BonfyreClips and read the candidates it scored."""
+    if not os.path.exists(CLIPS):
+        raise IngestError(f"BonfyreClips not present at {CLIPS}")
+    _run([CLIPS, "all", whisper_json, out_dir, "--top", str(top)])
+    path = os.path.join(out_dir, "clips.json")
+    if not os.path.exists(path):
+        raise IngestError(f"BonfyreClips wrote no clips.json in {out_dir}")
+    with open(path) as fh:
+        doc = json.load(fh)
+    return [ClipCandidate(rank=c["rank"], score=float(c["score"]),
+                          start_ms=_sec_to_ms(c["start"]),
+                          end_ms=_sec_to_ms(c["end"]),
+                          reasons=tuple((c.get("reasons") or "").split()),
+                          text=(c.get("text") or "").strip())
+            for c in doc.get("clips", [])]
+
+
+def ingest_clips(track: lst.LiveSemanticTrack,
+                 clips: list[ClipCandidate]) -> int:
+    """Clip candidates become candidates. They stay at MOMENT tier and cool."""
+    for c in clips:
+        track.append(lst.SemanticEvent(
+            c.start_ms, "clip_candidate", f"rank {c.rank} score {c.score:g}",
+            source="native:BonfyreClips"))
+    return len(clips)
+
+
+# ---------------------------------------------------------------- the whole run
+
+@dataclass
+class IngestResult:
+    track: lst.LiveSemanticTrack
+    utterances: int
+    boundaries: list[Boundary]
+    clips: list[ClipCandidate]
+
+
+def ingest_stream(occurrence_id: str, whisper_json: str, out_dir: str, *,
+                  speaker: str = "", top: int = 5) -> IngestResult:
+    """Transcript, boundaries and clip candidates into one track.
+
+    The organs run in the order their inputs allow; all three read the same
+    Whisper JSON, so nothing here depends on one having run before another.
+    """
+    track = lst.LiveSemanticTrack(occurrence_id)
+    utterances = ingest_transcript(track, whisper_json, speaker=speaker)
+    boundaries = run_segment(whisper_json, os.path.join(out_dir, "seg"))
+    ingest_boundaries(track, boundaries)
+    clips = run_clips(whisper_json, os.path.join(out_dir, "clip"), top=top)
+    ingest_clips(track, clips)
+    return IngestResult(track=track, utterances=utterances,
+                        boundaries=boundaries, clips=clips)
+
+
+def clip_covering(clips: list[ClipCandidate], at_ms: int
+                  ) -> Optional[ClipCandidate]:
+    """The highest-ranked candidate spanning a moment, if any.
+
+    Used to ask whether the organs independently found a moment interesting --
+    which is a different question from whether it mattered institutionally, and
+    the two disagree often enough to be worth asking separately.
+    """
+    covering = [c for c in clips if c.start_ms <= at_ms < c.end_ms]
+    return min(covering, key=lambda c: c.rank) if covering else None

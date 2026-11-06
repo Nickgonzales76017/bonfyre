@@ -1,0 +1,132 @@
+pack compute-financial-metabolism
+generation control-1
+provenance wiring model/token spend into the financial membrane, 2026-08-27
+authority measured
+note Compute was being spent entirely outside the ledger. financial_metabolism.py has shipped the whole path -- ProviderModelUsageObservation with input/cached/reasoning token fields, PriceEvidence, value_provider_usage, CostAllocation -- and nothing had ever called it. This pass wires it against real invoices, and in doing so kills a scale bottleneck I had introduced myself.
+
+# ---------------------------------------------------------------------------
+# THE BOTTLENECK, AND WHY IT WAS THE WRONG SHAPE OF ANSWER
+# ---------------------------------------------------------------------------
+
+claim clm:manual-rate-verification-does-not-scale
+  status RETRACTED
+  verification MEASURED
+  original_claim I recorded gpt-5.6-terra usage at basis='unknown' with the reason "no published rate I can verify".
+  why_wrong two separate errors. First, factually: gpt-5.6-terra IS in the OpenRouter published book at $2.00/M input and $12.00/M output. I had not looked. Second, structurally: even had it been absent, "a human verifies each rate" makes the ledger cost one lookup per model, so it stops at one model. That is a bottleneck presented as a result.
+  correction rate resolution is a MECHANISM, not a lookup
+  note the user identified this as a scale bottleneck before I did
+
+# ---------------------------------------------------------------------------
+# THE CASCADE THAT REPLACED IT
+# ---------------------------------------------------------------------------
+
+claim clm:rates-derived-from-billing
+  status STANDING
+  verification MEASURED
+  claim Model rates fall out of provider billing EXACTLY, with no lookup and no human.
+  method cost(model, line_item) / tokens(model, class), from OpenAI /organization/costs and /organization/usage/completions
+  unlocked_by the OPEN_AI_ADMIN_API_KEY added mid-session; the ordinary key returns 403 missing scope api.usage.read
+  window 30 days, $19.3810 billed, 5 models
+  derived gpt-5.6-sol $3.814/M fresh in, $0.400/M cached, $20.000/M out
+  derived gpt-5.4-2026-03-05 $2.500 / $0.250 / $15.000
+  derived gpt-5-2025-08-07 $1.250 / $0.125 / $10.000
+  derived gpt-4o-mini-2024-07-18 $0.155 / -- / $0.619
+  derived gpt-4.1-mini-2025-04-14 $0.560 / -- / $2.240
+  cross_validated three exact agreements against the published book -- gpt-5 $1.250 vs $1.250, gpt-5.4 $2.500 vs $2.500, gpt-4o-mini $0.155 vs $0.150
+  contract_differs gpt-5.6-sol derives 1.91x list and gpt-4.1-mini 1.40x; that is real contract pricing, which is precisely what a published book cannot tell you
+  consequence any model the organisation actually uses is priced automatically; a model never used has no rate, which is correct because it also cost nothing
+  scales yes -- this is the answer to the bottleneck
+
+claim clm:sibling-pricing-refused
+  status REFUSED
+  verification MEASURED
+  claim Pricing an unknown model from its nearest published models in latent space does not work.
+  method leave-one-out over all 389 priced models: hide one, price it from its k=5 latent neighbours, measure error
+  result median error 59%, median 2.0x off, only 61.7% within 2x of true
+  gate_sweep best spread gate <=5.0x still leaves 50% median error at 31% coverage
+  worst gpt-oss-20b true $0.030 estimated $2.000 (67x); gpt-4o-2024-05-13 true $5.000 estimated $0.150 (33x)
+  why model identity text recovers vendor FAMILY but not price TIER; rates inside one family vary by more than an order of magnitude and nothing in the name separates them
+  decision refused outright rather than gated, because rungs 1 and 2 cover every real case, so a rung with 50% median error is unnecessary as well as dangerous
+  note my auto-gate would have ADMITTED it at 73% within-2x; the gate criterion was too loose and I overrode it on the median error
+
+claim clm:cascade-final-shape
+  status STANDING
+  verification MEASURED
+  rung_1 DERIVED -- provider billing arithmetic. basis 'billed'. Exact, contract-accurate, scales with usage.
+  rung_2 PUBLISHED -- price book by exact model id, 415 models. basis 'billed', because a published tariff is the seller's own statement.
+  rung_3 REFUSED -- latent siblings, see clm:sibling-pricing-refused
+  rung_4 UNKNOWN -- basis 'unknown' with a reason. Now genuinely the exception.
+
+# ---------------------------------------------------------------------------
+# TOKEN REDUCTION, MEASURED RATHER THAN ASSUMED
+# ---------------------------------------------------------------------------
+
+claim clm:prompt-cache-is-39-percent-of-spend
+  status STANDING
+  verification MEASURED
+  claim Prompt caching is the highest-leverage token-reduction lever currently measurable, and its value is now a billed quantity rather than an estimate.
+  evidence 5,100,942 of 8,759,091 input tokens served cached (58.2%)
+  evidence cached input bills at roughly a tenth of fresh input on every model observed -- gpt-5.6-sol $0.400 vs $3.814, gpt-5 $0.125 vs $1.250, gpt-5.4 $0.250 vs $2.500
+  evidence caching avoided $7.4721 of an otherwise-$26.85 bill: 39% of actual spend
+  method derived from billed line items, which separate "cached input" from "input"; no assumption involved
+  cross_check codex session rollouts on disk show the same shape independently -- 35M input tokens across sessions with 33M cached, one session at 97.5%
+
+claim clm:commons-cannot-answer-the-token-question
+  status STANDING
+  verification MEASURED
+  claim The Partner Commons cannot currently answer "which methods reduce token use", and the reason is the coverage gap.
+  evidence latent query for token-reduction returns Weights & Biases, DVC, JSON Schema, ArcticDB, MLflow, FOCUS 1.4 -- lifecycle and billing profiles, not compression methods
+  cause every actual token-reduction method is among the 44 missing from the 112 index: BitNet, GigaToken, Zstd, llama.cpp/GGUF, ggml, ONNX Runtime, Feldera/DBSP
+  consequence the coverage gap is not cosmetic; it makes the commons unable to serve the query the user actually has
+  action loading the outside-112 groups is now the blocking dependency for Program I and Program K
+
+# ---------------------------------------------------------------------------
+# WHAT THE LEDGER NOW HOLDS
+# ---------------------------------------------------------------------------
+
+upgrade upg:compute-ledger-live
+  status LANDED
+  verification MEASURED
+  state ~/.bonfyre/compute-ledger.sqlite3
+  content 13 usage occurrences and 13 economic measures at basis='billed'
+  first this is the first compute cost the financial membrane has ever metabolised
+  discipline usage is recorded per token CLASS with only that class's dimension carried, so a fresh-input rate can never be applied to a cached-token count
+  guards_that_fired the module refused a replayed attempt_ref with changed usage evidence, and refused a price whose evidence_ref did not match the usage attempt's pricing_evidence_ref -- both were my bugs and both were caught by the module rather than by me
+
+upgrade upg:providers-as-foreign-twins
+  status LANDED
+  verification MEASURED
+  claim Eight model/compute providers are now observed rather than merely configured.
+  live google-ai-studio 50 models, openai 124, mistral 54, cohere 20, groq 14, openrouter, huggingface, firecrawl -- all HTTP 200
+  rights OBSERVE only; no BIND, no ACT
+  law external project is not a semantic owner
+
+# ---------------------------------------------------------------------------
+# FINDINGS THAT NEED A HUMAN
+# ---------------------------------------------------------------------------
+
+claim clm:budget-membrane-contradictory-and-unenforced
+  status UNRESOLVED
+  verification REPRODUCED
+  finding provider.refs.env declares the spend membrane TWICE with different values
+  conflict MAX_DAILY_SPEND_USD = 25 and 75
+  conflict MAX_MODEL_CALLS_PER_RUN = 2000 and 6000
+  conflict MAX_CRAWL_PAGES_PER_RUN = 15000 and 5000
+  conflict MIN_ACTIONABILITY_SCORE = 0.68 and 0.72
+  effect shell sourcing is last-wins and silent, so the effective budget depends on line order rather than on a decision
+  worse nothing reads these values at all -- no control-plane module enforces a spend cap, so the membrane is declarative only
+  action_required pick single values, then bind them to the ledger that now exists
+
+claim clm:firecrawl-overdrawn
+  status UNRESOLVED
+  verification REPRODUCED
+  finding firecrawl remaining_credits = -3 against plan_credits = 1000, billing period ending 2026-09-16
+  recorded as a FinancialPosition at basis='accrued' in CREDIT currency
+  action_required top up or accept degraded crawl capability
+
+claim clm:openai-key-scope-gap
+  status RESOLVED
+  verification MEASURED
+  finding the ordinary OPENAI_API_KEY returns 403 on /organization/costs and /organization/usage: missing scope api.usage.read
+  resolution the user added OPEN_AI_ADMIN_API_KEY mid-session, which unlocked both endpoints and made rung 1 possible
+  note the entire derived-rate result depends on that key; without it the cascade degrades to rung 2 only

@@ -1,0 +1,602 @@
+"""The census, the reheat, and the wall that shows instead of telling.
+
+Three claims, and each one has a way to be wrong:
+
+  the census is a map, not an integration list
+      wrong if every row is observed, because then the map is the walk and
+      "hold almost nothing" is a slogan
+
+  reheating is scheduled against pressure, not on a clock
+      wrong if the timer is the schedule, or if a refusal is retried, or if a
+      source nobody's closure needs stays hot forever
+
+  the landing page shows rather than tells
+      wrong if the visible copy is internal vocabulary, or if the wall is
+      hardcoded against eighteen source shapes instead of reading the contract
+      the census carries
+
+The last one is the reason the extraction contract lives on the census row.
+Eighteen special cases compiled into a landing page is the branch-per-product
+shape one layer up, and it fails the same architecture test.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import re
+import socket
+import urllib.error
+import urllib.request
+
+import pytest
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.dirname(os.path.dirname(os.path.dirname(_HERE)))
+HOME = os.path.join(REPO, "site", "matrix", "surfaces", "home.html")
+KIT = os.path.join(REPO, "site", "matrix", "surfaces", "_kit.js")
+MAIN_C = os.path.join(REPO, "cmd", "BonfyreWebAddress", "src", "main.c")
+UNITS = os.path.join(REPO, "deploy", "systemd")
+
+TIMEOUT = 30
+HOST = "https://aurekai.live"
+
+TIERS = ["HOT", "WARM", "COLD", "FROZEN"]
+LABELS = {"hot", "realtime", "query", "bulk", "web", "auth", "action",
+          "spatial", "economic", "evidentiary"}
+
+
+def _get(path, accept="application/json", host=HOST):
+    req = urllib.request.Request(host + path, headers={"Accept": accept})
+    try:
+        with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+            return r.status, r.read().decode("utf-8", "replace"), dict(r.headers)
+    except urllib.error.HTTPError as e:
+        return e.code, e.read().decode("utf-8", "replace"), dict(e.headers)
+    except (urllib.error.URLError, socket.timeout, OSError) as exc:
+        pytest.skip(f"unreachable: {exc}")
+
+
+@pytest.fixture(scope="module")
+def census():
+    code, body, _ = _get("/_surface/internet-census")
+    assert code == 200, code
+    return json.loads(body)["records"]
+
+
+def _page():
+    with open(HOME) as fh:
+        return fh.read()
+
+
+def _kit():
+    """The one interpreter of the census contract. The wall used to carry
+    its own copy; three copies of one contract had already drifted."""
+    with open(KIT) as fh:
+        return fh.read()
+
+
+# --------------------------------------------------------------- the census
+
+def test_the_census_is_a_map_and_not_an_integration_list(census):
+    assert len(census) > 150, len(census)
+    observed = [r for r in census if r["state"] == "observed"]
+    assert observed, "nothing is observed; the map has never been walked"
+    assert len(observed) < len(census) / 3, (
+        f"{len(observed)} of {len(census)} rows are observed. A census where most "
+        f"of the map has been walked is an integration list, and holding almost "
+        f"nothing stops being true")
+
+
+@pytest.mark.parametrize("field", ["source", "label", "says", "state"])
+def test_every_census_row_carries_this(census, field):
+    for r in census:
+        assert r.get(field), (r.get("source"), field)
+
+
+def test_every_label_is_from_the_vocabulary(census):
+    for r in census:
+        got = set(r["label"].split())
+        assert got <= LABELS, (r["source"], sorted(got - LABELS))
+
+
+def test_a_says_line_is_in_plain_words(census):
+    # The census is what the landing page speaks with. A row whose says line is
+    # internal vocabulary puts that vocabulary on the page.
+    # "organ" is a word about this estate's own parts, and a says line is for a
+    # stranger. It is checked as a whole word so that "organising" is not a hit.
+    banned = ["surfacepattern", "foreigntwin", "closure", "extent",
+              "addressable", "projection"]
+    for r in census:
+        low = r["says"].lower()
+        for w in banned:
+            assert w not in low, (r["source"], w, r["says"])
+        assert not re.search(r"\borgan\b", low), (r["source"], r["says"])
+
+
+def test_an_observed_row_carries_the_contract_for_reading_it_back(census):
+    for r in census:
+        if r["state"] != "observed":
+            continue
+        assert r["twin"], (r["source"], "observed with no twin")
+        assert r["url"], (r["source"], "observed with no url")
+        assert r["title_field"], (
+            f"{r['source']} is observed and nothing says which field is the title, "
+            f"so a page reading it would have to know its shape")
+
+
+def test_a_refused_row_says_why_and_is_frozen(census):
+    refused = [r for r in census if r["state"] == "refused"]
+    assert refused, "nothing refused; the wall's honesty panel would be empty"
+    for r in refused:
+        assert r["tier"] == "FROZEN", (r["source"], r["tier"])
+        assert not r["twin"], (r["source"], "a refusal that still holds a twin")
+
+
+# ---------------------------------------------------------------- the reheat
+
+def test_the_weather_is_published(monkeypatch=None):
+    code, body, _ = _get("/foreign/weather")
+    assert code == 200, code
+    w = json.loads(body)
+    assert w["schema"] == "bonfyre-resource-weather.v1"
+    assert "sources" in w and w["sources"]
+    assert "read" in w and "skipped" in w
+    assert "never a fresh fact" in w["cannot_infer"]
+
+
+def test_the_tier_is_derived_each_run_rather_than_stored():
+    # The authored tier is a floor; standing and demand move it. If the two were
+    # always equal the derivation would be doing nothing.
+    w = json.loads(_get("/foreign/weather")[1])
+    for s in w["sources"]:
+        assert "authored_tier" in s and "tier" in s, s
+        assert s["authored_tier"] in TIERS and s["tier"] in TIERS, s
+
+
+def test_the_reheat_mostly_decides_not_to_read():
+    # If every wake read everything, the timer would be the schedule and this
+    # would be a crawler with extra steps.
+    w = json.loads(_get("/foreign/weather")[1])
+    for s in w["sources"]:
+        assert "decision" in s, s
+    decisions = [s["decision"] for s in w["sources"]]
+    assert any(d.startswith("not due") or d.startswith("frozen") for d in decisions), (
+        "every source was due on the same wake, so nothing is being paced")
+
+
+def test_the_timer_is_the_heartbeat_and_not_the_schedule():
+    with open(os.path.join(UNITS, "bonfyre-reheat.timer")) as fh:
+        t = fh.read()
+    assert "OnUnitActiveSec=5min" in t
+    assert "the timer is the heartbeat" in t.lower() or "not the schedule" in t.lower(), (
+        "nothing in the unit says the cadence lives in the data, so somebody will "
+        "tune the timer and think they tuned the crawl")
+
+
+PROJECT_C = os.path.join(REPO, "components", "BonfyreProject", "src", "main.c")
+
+
+def _reheat_source():
+    with open(PROJECT_C) as fh:
+        src = fh.read()
+    i = src.index("static int foreign_reheat(")
+    return src[i:src.index("\nint main(", i)]
+
+
+def test_the_scheduler_is_the_organ_that_owns_the_store():
+    # It was a Python script beside the organ, with its own copy of where the
+    # receipts live and its own idea of what a receipt looks like. Two programs
+    # that disagree about a receipt is one of them being wrong quietly.
+    with open(os.path.join(REPO, "deploy", "systemd", "bonfyre-reheat.service")) as fh:
+        unit = fh.read()
+    assert "bonfyre-project foreign reheat" in unit, (
+        "the timer runs something other than the organ")
+    assert "/usr/local/bin/bonfyre-reheat" not in unit
+    with open(PROJECT_C) as fh:
+        src = fh.read()
+    assert "static int foreign_reheat(" in src
+    assert 'strcmp(argv[2], "reheat")' in src
+
+
+def test_the_scheduler_writes_nothing_back_to_the_census():
+    # The census is authored intent -- the url, the cadence, the contract. When
+    # a source was last read is a fact already in its own receipt, and mutating
+    # a row to say so is two places that can disagree.
+    body = _reheat_source()
+    assert "SQLITE_OPEN_READONLY" in body, "the census is opened writable"
+    assert "UPDATE" not in body.upper().replace("UPDATED", ""), body[:200]
+
+
+def test_a_refusal_freezes_rather_than_being_retried():
+    body = _reheat_source()
+    assert 'strcmp(policy, "robots_disallow")' in body
+    assert "rank = 0" in body
+    assert "not asked again until something changes there" in body
+
+
+def test_the_scheduler_reads_the_last_line_of_a_receipt():
+    with open(PROJECT_C) as fh:
+        src = fh.read()
+    fn = src[src.index("static int reheat_last_receipt("):]
+    fn = fn[:fn.index("\nstatic ")]
+    assert "while (fgets" in fn and "last" in fn, (
+        "the scheduler reads a receipt from the start, which answers with the first "
+        "time a source was ever seen")
+
+
+def test_only_an_activated_pack_keeps_a_source_warm():
+    body = _reheat_source()
+    assert "pack_activation" in body
+    assert "pack_installation" not in body, (
+        "an installed pack keeps the network warm, and holding a pack is not "
+        "running it")
+
+
+def test_hot_sources_are_read_more_often_than_cold_ones(census):
+    w = json.loads(_get("/foreign/weather")[1])
+    tiers = {s["source"]: s["tier"] for s in w["sources"]}
+    assert set(tiers.values()) & {"HOT"}, "nothing is hot"
+    assert set(tiers.values()) & {"COLD", "WARM"}, (
+        "everything is hot, so the tier is not doing anything")
+
+
+def test_every_observed_source_has_been_read_recently():
+    # From the weather, not from the census: the census holds intent and the
+    # receipt holds when.
+    w = json.loads(_get("/foreign/weather")[1])
+    never = [s["source"] for s in w["sources"] if s["age_seconds"] < 0]
+    assert not never, f"in the census with a twin and never read: {never}"
+
+
+# ------------------------------------------------------------ retained bytes
+
+def test_the_retained_bytes_are_reachable_by_twin(census):
+    observed = [r for r in census if r["state"] == "observed"][:4]
+    assert observed
+    for r in observed:
+        code, body, headers = _get("/foreign/body?twin=" + r["twin"], "*/*")
+        assert code == 200, (r["source"], code)
+        assert headers["Content-Type"].startswith("text/plain")
+        assert body.strip(), r["source"]
+
+
+def test_the_receipt_is_read_from_its_last_line():
+    # A receipt file is the twin's history, appended. Reading from the start
+    # answers with the first time a source was ever seen, which is the wrong
+    # body the moment anything is reheated -- and wrong in a way that looks
+    # like it is working.
+    with open(MAIN_C) as fh:
+        src = fh.read()
+    fn = src[src.index("static int serve_foreign_body"):]
+    fn = fn[:fn.index("static int serve_foreign_weather")]
+    assert "Take the last line" in fn or "last line" in fn
+    assert "memmove(receipt, last" in fn
+
+
+def test_a_reheated_twin_serves_the_newest_body(census):
+    # Two observations exist for the hot sources by now. The body served has to
+    # be the recent one, which is checkable: it parses, and the receipt's own
+    # digest header is not the first observation's.
+    hot = [r for r in census if r["state"] == "observed" and r["tier"] == "HOT"]
+    if not hot:
+        pytest.skip("nothing hot")
+    code, body, headers = _get("/foreign/body?twin=" + hot[0]["twin"], "*/*")
+    assert code == 200
+    assert headers.get("X-Bonfyre-Content-Sha256")
+    assert headers.get("X-Bonfyre-Observed-At")
+
+
+# ------------------------------------------------- the page shows, not tells
+
+def test_the_census_interpreter_holds_the_contract_not_the_arrival_page():
+    kit, page = _kit(), _page()
+    assert "row.extract" in kit and "row.title_field" in kit, (
+        "the contract is not read anywhere")
+    assert "K.readSource" not in page, "the public arrival aperture became a second census reader"
+    for shape in ("hits", "mostread", "trendingScore", "features", "eventList"):
+        # A source-specific field name is a special case compiled in, and it is
+        # no better in the kit than it was in the page.
+        for where, text in (("page", page), ("kit", kit)):
+            assert re.search(r"['\"]" + shape + r"['\"]", text) is None, (where, shape)
+
+
+def test_the_arrival_page_does_not_retain_or_render_census_bodies():
+    page = _page()
+    assert "/foreign/body" not in page
+    assert "foreign/weather" in page
+    assert "available carrier" in page
+
+
+def test_the_page_does_not_turn_refusals_into_a_catalogue_section():
+    page = _page()
+    assert "asked, and told no" not in page
+    assert "data-sec=\"locked\"" not in page
+
+
+def test_the_visible_copy_does_not_explain_the_estate_to_a_stranger():
+    page = _page()
+    body = page[page.index("<body>"):]
+    # Only the words a reader sees. Comments and identifiers are allowed to be
+    # precise; the copy is not allowed to be internal.
+    visible = re.sub(r"/\*.*?\*/", "", body, flags=re.S)
+    visible = re.sub(r"\bK\.[A-Za-z_]+", "", visible)
+    for word in ["capabilities in the book", "things it can do", "estate's own parts",
+                 "interaction grammar", "SurfacePattern", "pack closure", "extent"]:
+        assert word not in visible, (
+            f"the landing page says {word!r} to a stranger who has never heard it")
+
+
+def test_the_rail_is_navigation_not_an_instrument_panel():
+    page = _page()
+    assert "BONF" in page
+    for href in ('href=\"/discover\"', 'href=\"/market\"', 'href=\"/studio/\"'):
+        assert href in page
+    assert "const rail = {" not in page
+
+
+def test_the_landing_page_leads_with_a_real_input_not_estate_explanation():
+    page = _page()
+    assert 'action="/_surface/intake"' in page
+    assert "Prepare route" in page
+    assert "does not fetch, publish, or claim" in page
+
+
+def test_the_landing_page_puts_the_real_input_before_secondary_doors():
+    page = _page()
+    aperture = page.index('action="/_surface/intake"')
+    moves = page.index('class="wrap moves"')
+    assert aperture < moves
+
+# ------------------------------------------------- things you can look at
+
+MEDIA_KINDS = {"video", "image", "post"}
+
+
+def test_something_observed_carries_a_picture(census):
+    # A trending tag is a word about the visible world. A thumbnail is the
+    # visible world. A census with no media-bearing source cannot show either.
+    media = [r for r in census if r["state"] == "observed" and r["kind"] in MEDIA_KINDS]
+    assert len(media) >= 3, [r["source"] for r in media]
+    for r in media:
+        # A feed item's picture and link are read from the item itself -- media:
+        # thumbnail, enclosure, an img in the body -- because a feed does not
+        # name them the way an API does. feed:auto records that choice.
+        assert r["image_field"], (r["source"], "media with no picture field")
+        assert r["link_field"], (r["source"], "media with no way out to the source")
+
+
+def test_every_observed_row_says_what_kind_it_is(census):
+    for r in census:
+        if r["state"] != "observed":
+            continue
+        assert r["kind"] in MEDIA_KINDS | {"text"}, (r["source"], r["kind"])
+
+
+def test_a_relative_thumbnail_resolves_against_the_host_that_made_it(census):
+    # A federated search returns videos from many instances, and a relative
+    # thumbnail path resolves against the host that made the video, not the one
+    # that answered the query.
+    fed = next((r for r in census if r["source"] == "sepia-videos"), None)
+    if fed:
+        assert fed["image_base"].startswith("@"), (
+            "the federated search resolves thumbnails against one fixed origin, so "
+            "every video from another instance shows a broken image")
+    assert "base.startsWith('@')" in _kit(), (
+        "the interpreter no longer completes a federated image path")
+
+
+def test_a_media_source_actually_returns_pictures(census):
+    media = [r for r in census if r["state"] == "observed"
+             and r["kind"] in MEDIA_KINDS and not r["extract"].startswith("rss:")]
+    checked = 0
+    for r in media:
+        code, body, _ = _get("/foreign/body?twin=" + r["twin"], "*/*")
+        if code != 200:
+            continue
+        try:
+            doc = json.loads(body)
+        except ValueError:
+            continue
+        node = doc
+        for part in (r["extract"] or "").split("."):
+            if not part:
+                continue
+            if isinstance(node, list):
+                if not part.isdigit() or int(part) >= len(node):
+                    node = None
+                    break
+                node = node[int(part)]
+            elif isinstance(node, dict):
+                node = node.get(part)
+            else:
+                node = None
+                break
+        if not isinstance(node, list) or not node:
+            # A source whose shape moved is a real finding, and it is the
+            # scheduler's to notice on its next read rather than this test's to
+            # assert against one snapshot. It is not counted as checked.
+            continue
+        # At least one item has to carry a picture, or the tile is a caption on
+        # a grey rectangle.
+        def pick(obj, path):
+            for part in path.split("."):
+                if isinstance(obj, list):
+                    if not part.isdigit() or int(part) >= len(obj):
+                        return None
+                    obj = obj[int(part)]
+                elif isinstance(obj, dict):
+                    obj = obj.get(part)
+                else:
+                    return None
+            return obj
+        imgs = [pick(x, r["image_field"]) for x in node[:12]]
+        assert any(isinstance(i, str) and i for i in imgs), (
+            r["source"], "not one item carries a picture")
+        checked += 1
+    assert checked >= 2, f"only {checked} media sources were readable"
+
+
+def test_the_public_root_has_no_census_wall_to_mistake_for_current_truth():
+    page = _page()
+    assert 'id="reels"' not in page
+    assert 'id="wall"' not in page
+
+
+def test_the_public_root_uses_no_remote_media_body():
+    page = _page()
+    assert "<img" not in page
+    assert "thumbnail" not in page
+
+
+def test_the_console_shows_a_name_rather_than_a_digest():
+    with open(os.path.join(REPO, "site", "matrix", "surfaces", "console.html")) as fh:
+        page = fh.read()
+    assert "const label = (s)" in page
+    assert "budgetrequest:01135de0" in page or "is a list nobody can use" in page
+    # And the index has to supply it.
+    doc = json.loads(_get("/subjects?limit=1000")[1])
+    labelled = [s for s in doc["subjects"] if s.get("label")]
+    assert len(labelled) > len(doc["subjects"]) / 2, (
+        f"only {len(labelled)} of {len(doc['subjects'])} subjects have anything "
+        f"readable to show")
+
+
+def test_the_console_outside_panel_shows_what_is_being_read_now():
+    with open(os.path.join(REPO, "site", "matrix", "surfaces", "console.html")) as fh:
+        page = fh.read()
+    assert "internet-census" in page, (
+        "the console's outside panel still shows only the federation edge list")
+    assert "/foreign/body?twin=" in page
+
+def test_a_row_that_answers_for_today_carries_a_token_rather_than_a_date(census):
+    """A date written into a URL or an extraction path makes the row true for
+    one day and quietly empty after that. nasa-neo keyed its answer by a
+    literal date and would have gone silent the next morning."""
+    for r in census:
+        for field in ("url", "extract"):
+            v = r.get(field) or ""
+            assert not re.search(r"(?<![0-9])20[0-9]{2}[-/][0-9]{2}[-/][0-9]{2}(?![0-9])", v), (
+                r["source"], field, v)
+
+
+def test_the_date_vocabulary_is_the_same_on_both_halves_of_a_row():
+    """The URL that asks for today and the path into an answer keyed by today
+    are read by different programs. Two vocabularies is two ways to be wrong
+    about the same row."""
+    kit = _kit()
+    with open(os.path.join(REPO, "components", "BonfyreProject", "src", "main.c")) as fh:
+        organ = fh.read()
+    for token in ("today", "yesterday", "today-iso", "yesterday-iso",
+                  "week-ago", "week-ago-iso"):
+        # The kit writes these as regex literals, so the braces are escaped.
+        assert re.search(r"\\?\{%s\\?\}" % re.escape(token), kit), (
+            "the kit does not resolve", token)
+        assert "{%s}" % token in organ, ("the reheat does not resolve", token)
+
+
+def test_a_named_read_does_not_republish_itself_as_the_weather():
+    """--source reads one row. Writing that as the weather file would tell
+    every surface that sixty-four sources had gone away."""
+    with open(os.path.join(REPO, "components", "BonfyreProject", "src", "main.c")) as fh:
+        organ = fh.read()
+    assert "if (weather_path && *weather_path && !only)" in organ, (
+        "a named read republishes the whole weather from one row")
+    assert '"frozen; a name does not overrule a refusal"' in organ, (
+        "naming a source overrules its refusal")
+
+
+def test_a_retained_body_is_replaced_atomically():
+    """It was fetched straight into the file the estate serves, so for as long
+    as the network took a reader saw a truncated file or none at all. The
+    reheat wakes every five minutes and rewrites the hot twins, so
+    /foreign/body answered 404 for whichever twin was mid-fetch -- intermittent,
+    and only under load, which is why it read as a flaky test."""
+    import os
+    here = os.path.dirname(os.path.abspath(__file__))
+    repo = os.path.dirname(os.path.dirname(os.path.dirname(here)))
+    with open(os.path.join(repo, "components", "BonfyreProject", "src", "main.c")) as fh:
+        src = fh.read()
+    fn = src[src.index("static int observe_foreign("):]
+    fn = fn[:fn.index("\nstatic ")]
+    assert "rename(staged, retain_body_path)" in fn, (
+        "the body is written into the served path directly")
+    assert ".staging" in fn
+    # a rename across filesystems is a copy and stops being atomic
+    assert "/tmp/%s.staging" not in fn
+    # a failed fetch must not replace a good observation with nothing
+    assert "body_bytes > 0" in fn, (
+        "an empty fetch can overwrite the last good body")
+
+
+def test_the_body_route_answers_while_a_source_is_being_re_observed(census):
+    """The behavioural half: read a hot twin repeatedly and require that none
+    of the reads lands in a hole."""
+    hot = [r for r in census if r["state"] == "observed" and r["tier"] == "HOT"]
+    if not hot:
+        pytest.skip("nothing hot")
+    codes = []
+    for r in hot[:6]:
+        code, _, _ = _get("/foreign/body?twin=" + r["twin"], "*/*")
+        codes.append((r["twin"], code))
+    bad = [t for t, c in codes if c != 200]
+    assert not bad, f"twins that answered no body: {bad}"
+
+
+def test_a_field_that_is_absent_leaves_nothing_behind():
+    """studio_json_field returned 0 without touching its output, which reads as
+    harmless until the caller's buffer is a stack slot the same function filled
+    on the previous request. /foreign/body did exactly that: a receipt line with
+    no body_path left bpath pointing at the last twin served, that path passed
+    the inside-the-bodies-directory guard because it was a real body, and the
+    estate answered 200 with one twin's retained bytes under another twin's
+    name and an empty digest."""
+    import os
+    here = os.path.dirname(os.path.abspath(__file__))
+    repo = os.path.dirname(os.path.dirname(os.path.dirname(here)))
+    with open(os.path.join(repo, "cmd", "BonfyreWebAddress", "src", "main.c")) as fh:
+        src = fh.read()
+    fn = src[src.index("static int studio_json_field("):]
+    fn = fn[:fn.index("\n}\n") + 3]
+    assert "out[0] = '\\0'" in fn, "an absent field leaves the caller's buffer alone"
+
+
+def test_two_twins_never_serve_each_other_bytes(census):
+    """The behavioural half. Ask for one twin, then another, and require that
+    the second answers with its own body rather than the first's."""
+    got = []
+    for r in [x for x in census if x["state"] == "observed"][:6]:
+        code, body, headers = _get("/foreign/body?twin=" + r["twin"], "*/*")
+        if code != 200:
+            continue
+        got.append((r["twin"], headers.get("X-Bonfyre-Content-Sha256", ""), len(body)))
+    assert len(got) >= 3, got
+    # a body served with no digest is one whose receipt did not name it
+    undigested = [t for t, sha, _ in got if not sha]
+    assert not undigested, f"served bytes with no digest: {undigested}"
+    # and no two twins may answer with byte-identical bodies of the same length
+    # unless their digests agree, which would mean the sources really match
+    by_len = {}
+    for twin, sha, n in got:
+        if n in by_len and by_len[n][1] != sha:
+            raise AssertionError(f"{twin} and {by_len[n][0]} served the same {n} bytes "
+                                 f"under different digests")
+        by_len[n] = (twin, sha)
+
+
+def test_the_newest_observation_is_the_one_served(census):
+    """A receipt is appended forever. Reading its first 64KB and taking the last
+    line inside that prefix served a ten-hour-old observation as current once
+    the history outgrew the buffer -- wrong in a way that looks like it works."""
+    hot = [r for r in census if r["state"] == "observed" and r["tier"] == "HOT"]
+    if not hot:
+        pytest.skip("nothing hot")
+    stale = []
+    for r in hot[:5]:
+        code, _, headers = _get("/foreign/body?twin=" + r["twin"], "*/*")
+        if code != 200:
+            continue
+        served = headers.get("X-Bonfyre-Observed-At", "")
+        if served and r.get("last_seen") and served < r["last_seen"][:len(served)]:
+            stale.append((r["twin"], served, r["last_seen"]))
+    assert not stale, f"served an older observation than the census records: {stale}"

@@ -1,0 +1,153 @@
+#!/usr/bin/env python3
+"""Archived Python hook; active entrypoint is agent-session.mjs.
+
+AgentSession already models exactly what a coding agent does to itself -- a
+model turn with provider and model identity, a context compaction with distinct
+before/after references and a stated reason, a strategy change -- and its whole
+point is that session identity survives the provider changing underneath it.
+Claude Code knows every one of those moments and, until now, told nobody.
+
+So the hooks emit them. Not as proof of anything: these are host-origin
+observations written by the runtime about itself, and the schema is explicit
+that host evidence cannot satisfy subject provider fidelity. No ReceiptEvidence
+and no ReceiptEnvelope is written, because a receipt claiming verified producer
+fidelity needs a `producer_verifier_ref` and nothing here verifies the producer.
+What is written is the event sequence, honestly labelled.
+
+Cannot infer, stated where it is produced:
+  - a provider session reference is not an AgentSession identity, so the
+    session id here is minted and stable and Claude's own id is carried beside
+    it as `provider_session_ref`
+  - provider attribution is not authority, effect safety, quality, ownership or
+    evidence sufficiency
+  - a model turn observed by the host is not a verified producer fidelity claim
+  - the minted root work node is a coordinate this stream owns; it is not a
+    WorkGraph mission and binds no institutional work
+
+Events are appended, never rewritten, and `sequence` is monotonic and
+contiguous per session because the schema requires it to be.
+"""
+import hashlib
+import json
+import os
+import sys
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parents[2]
+OUT = REPO / ".bonfyre-runtime" / "agent-sessions"
+
+KIND = {
+    "SessionStart": None,          # boundary, not an AgentEvent kind
+    "Stop": "model_turn",
+    "SubagentStop": "model_turn",
+    "PreCompact": "context_compaction",
+    "SessionEnd": None,
+}
+
+
+def session_identity(provider_ref: str) -> str:
+    """Mint an identity that does not move when the provider does.
+
+    Derived from the provider's session reference only so the same run keeps one
+    id across turns; it is deliberately not that reference, because the schema
+    forbids reading one as the other.
+    """
+    digest = hashlib.sha256(f"aurekai-agent-session:{provider_ref}".encode()).hexdigest()[:32]
+    return f"agent-session:{digest}"
+
+
+def next_sequence(state: Path) -> int:
+    try:
+        n = int(state.read_text().strip())
+    except Exception:
+        n = 0
+    n += 1
+    try:
+        state.write_text(str(n))
+    except Exception:
+        pass
+    return n
+
+
+def main() -> int:
+    try:
+        event = json.load(sys.stdin)
+    except Exception:
+        return 0
+
+    name = event.get("hook_event_name") or ""
+    provider_ref = str(event.get("session_id") or "unknown")
+    session_id = session_identity(provider_ref)
+
+    try:
+        OUT.mkdir(parents=True, exist_ok=True)
+    except Exception:
+        return 0
+
+    stream = OUT / f"{session_id.split(':', 1)[1]}.jsonl"
+    state = OUT / f"{session_id.split(':', 1)[1]}.seq"
+    observed = datetime.now(timezone.utc).isoformat()
+
+    kind = KIND.get(name)
+    if kind is None:
+        # A boundary is recorded as a boundary rather than promoted to an event
+        # kind the schema does not have.
+        record = {
+            "schema": "aurekai-agent-session-observation.v1",
+            "session_id": session_id,
+            "provider_session_ref": provider_ref,
+            "boundary": name.lower() or "unknown",
+            "observed_at": observed,
+            "cwd": event.get("cwd") or "",
+            "truth": "host_origin_observation_not_receipt_evidence",
+        }
+    else:
+        record = {
+            "schema": "aurekai-agent-session-observation.v1",
+            "session_id": session_id,
+            "sequence": next_sequence(state),
+            "kind": kind,
+            "evidence_origin": "host",
+            "work_node": f"work:{session_id}",
+            "observed_at": observed,
+            "provider_session_ref": provider_ref,
+            "truth": "host_origin_observation_not_receipt_evidence",
+            "cannot_infer": [
+                "provider_session_ref -> AgentSession identity",
+                "host evidence -> subject provider fidelity",
+                "provider attribution -> authority, effect safety, quality, "
+                "ownership or evidence sufficiency",
+                "this observation -> verified producer fidelity (no producer_verifier_ref exists)",
+            ],
+        }
+        if kind == "model_turn":
+            # Required by the schema at this kind. Recorded as observed, with
+            # the model left as the runtime reported it rather than guessed.
+            record["provider_identity"] = "provider:anthropic"
+            record["model_identity"] = (
+                event.get("model", {}).get("id")
+                or event.get("model", {}).get("display_name")
+                or os.environ.get("ANTHROPIC_MODEL")
+                or "model:unreported"
+            )
+            record["subagent"] = name == "SubagentStop"
+        if kind == "context_compaction":
+            # Distinct before/after references and an observable reason are what
+            # make compaction observable rather than a silent discontinuity.
+            trigger = event.get("trigger") or "unknown"
+            record["context_before_ref"] = f"context:{provider_ref}:{record['sequence'] - 1}"
+            record["context_after_ref"] = f"context:{provider_ref}:{record['sequence']}"
+            record["reason_ref"] = f"reason:compaction:{trigger}"
+
+    try:
+        with stream.open("a") as fh:
+            fh.write(json.dumps(record, separators=(",", ":")) + "\n")
+    except Exception:
+        pass
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

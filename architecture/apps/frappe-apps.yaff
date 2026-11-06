@@ -5,8 +5,9 @@ atlas apps
 # (consumes), per the wiring riff SS5. The Frappe apps are REAL installed products
 # under integrations/frappe-bench/apps (hundreds of DocTypes each, extracted by
 # cmd/BonfyreFrappeCompiler) -- maturity implemented, each app fact grounded in a
-# real DocType (witness_frappe_apps.py). The remaining wiring per app is the
-# runtime write-back of its facts into fabric.db. `atlas.py wiring` shows which
+# real DocType. The native compiler now reads installed DocType JSON directly;
+# the remaining wiring per app is the runtime write-back of its facts into
+# fabric.db. `atlas.mjs wiring` shows which
 # app<->fabric feedback loops close (CRM<->actor, HRMS<->work, ERPNext<->provider).
 
 architecture frappe-core
@@ -18,15 +19,319 @@ architecture frappe-core
   purpose Donates DocType schemas, forms, permissions, workflows, reports. Shapes records; it never owns the authority that gates them.
   maturity implemented
   source_path integrations/frappe-bench/apps/frappe
-  source_path cmd/BonfyreFrappeCompiler/frappe_schema_parser.py
-  witness components/BonfyreControlPlane/witness_frappe_apps.py
+  source_path lib/libbonfyre/src/bonfyre_frappe_compiler.c
+  witness cmd/BonfyreFrappeCompiler/tests/native_schema_ingest_smoke.sh
+  witness cmd/BonfyreFrappeCompiler/tests/cms_status_roundtrip_test.sh compiles the real ToDo status, creates and updates a native CMS record, refuses an alias collision without replacing the output, and withholds conditions that still read the donor name
+  invariant a donor status is projected as frappe_status with an explicit source alias; CMS publication status stays separate, and donor-status conditions are withheld until translated
+  known_gap status values are carried with their donor enumeration metadata; the CMS write owner does not yet enforce those enumeration values, and no Frappe controller or remote write follows
   owns DocType
   consumes Authority
   publishes SurfaceGrammar
   publishes Policy
   forbidden_inference a DocType exists -> the record is authorized (Authority gates; a DocType only shapes)
   source_lineage aurekai institution vision (9 Frappe apps as one institutional graph)
-  known_gap the Frappe app is real and installed (DocTypes extracted by BonfyreFrappeCompiler); the remaining wiring is the runtime write-back of its facts into fabric.db
+  invariant the lineage registry is declared in architecture/apps/app-lineages.contract.yaff and generated; it was a C table inside the compiler, which made the set of application grammars answerable only by building a binary
+  invariant a lineage records the dialect its grammar was first extracted from; Frappe is that provenance for all nine and is not the type of an application lineage, the same distinction that kept Upper90 a real institution without making it the type of every delegated one
+  forbidden_inference a declared lineage -> a running application (none of the nine is installed on the serving estate; the bench exists only on a workstation)
+  witness cmd/BonfyreAtlas/bonfyre-atlas compile-contracts app-lineages --check, and the generated catalogue is byte-identical to the hardcoded table it replaced
+  internal_calculus compiled DocType metadata lowers to InteractionFingerprints: a bounded vector of evidenced generic grammars (record form, grid, lifecycle board, timeline, calendar, correspondence, relationship inspector, composition table, editor, preview, spatial or progression). This is a renderer-selection input, not a clone of a Frappe screen.
+  invariant an InteractionFingerprint is extracted from parsed fields and record posture; it does not use application-name branches to manufacture an interaction grammar
+  cannot_infer an InteractionFingerprint -> a Frappe controller, permission, document, runtime, authority, effect right or a requirement to reproduce a donor interface
+  known_gap native phase-one extraction produces metadata grammar only; runtime write-back and controller/effect admission remain separate owners
+
+architecture frappe-interaction-fingerprint
+  canonical_name FrappeInteractionFingerprint
+  family apps
+  domain Apps / Measured interaction grammar
+  layer surface
+  semantic_question Which generic human interaction grammars does one compiled DocType actually evidence?
+  purpose The native Frappe compiler extracts a reproducible vector from parsed field types, labels and record posture. It lets a Bonfyre renderer recognize kanban, timeline, calendar, correspondence, relationship, composition, editor, file-preview, spatial and progression affordances without importing Frappe UI code or hardcoding an application page family.
+  maturity measured
+  source_path cmd/BonfyreFrappeCompiler/src/main.c
+  source_path cmd/BonfyreFrappeCompiler/tests/native_schema_ingest_smoke.sh
+  consumes DocType
+  publishes DerivedView
+  invariant fingerprint roles are derived from parsed metadata and record posture, not application-name branches
+  invariant the fingerprint is renderer-selection evidence only and owns neither document state nor a controller/effect boundary
+  cannot_infer an interaction fingerprint -> a Frappe runtime, controller, permission, document, authority, effect right or donor implementation requirement
+  witness cmd/BonfyreFrappeCompiler/tests/native_schema_ingest_smoke.sh emits valid CRM fingerprints whose every row carries the controller/permission boundary
+  witness 2026-09-26 the bridge exists: the same parse now also emits a surface program per DocType, the composer reads it out of a store, and the organ a field needs is named from the field's own kind rather than chosen by a renderer
+  interacts fingerprints-select-no-renderer
+
+interaction fingerprints-select-no-renderer
+  source frappe-interaction-fingerprint
+  destination frappe-surface-program
+  relation evidences
+  preserves the fingerprint as renderer-selection evidence only: it names grammars a DocType can support and selects nothing
+  drops any path by which naming a grammar could commit the estate to reproducing the donor's page
+  forbidden_inference a grammar named -> a page that must exist, or a donor interface this estate owes anybody
+  witness 2026-09-26 both are emitted from one parse of the same 1,152 DocTypes; the fingerprint names grammars, the surface program names layout and fields, and neither writes the other
+
+architecture frappe-surface-program
+  canonical_name FrappeSurfaceProgram
+  family apps
+  domain Apps / What a compiled record kind looks like
+  layer surface
+  semantic_question A DocType was parsed in full. What does a reader actually get shown, and which of its fields will this estate refuse?
+  purpose The layout a DocType states about itself -- tabs, sections, columns -- with every field carrying the generic presentation it asks for, the client organ that answers it, and the reason it is withheld when it is. Emitted both as JSON and into a store the composer queries, and rendered natively at /s/apps/<app> and /s/record-kind/<slug>.
+  maturity measured
+  node_types SurfaceProgram
+  node_types FieldPresentation
+  edge_types laid_out_as
+  internal_calculus the compiler always parsed this and then published a list of names. "surface:crm/CRM Notification", forty-four times: every tab and section break, every field kind, every mandatory flag and every link target was dropped at the last step, and a renderer handed only a name has to invent all of it. Inventing it is how a compiled application turns back into a hand-written page
+  internal_calculus a field's presentation is generic and the estate's own -- prose, money, reference, composition, place -- never a Frappe fieldtype leaked into a page, because the presentation is what a reader sees and the fieldtype is what the donor stored
+  internal_calculus most fields need no script, and the emitter says so: an organ named where none is required is how a page acquires a script it never uses. Only a child table and a geolocation name one
+  internal_calculus a refused field is named with its reason rather than omitted, because a field missing from a page and a field this estate will not show are different facts
+  internal_calculus a tab empty in the metadata is recorded as empty rather than disappearing: the donor's client fills it at run time and this estate does not run that client
+  internal_calculus what a record kind reaches into is read off its own fields -- amounts mean it carries a price, submittable means an act that binds, a field naming a student or guardian means it reaches into a household -- so the cross-links are derived and not decoration
+  invariant a program is the shape of a record and never a record: no document of any of these kinds exists in this estate
+  invariant a password field is never emitted with a presentation, and a button is named as an action somebody may take rather than wired to one
+  invariant every field of a DocType appears exactly once, as rendered or as withheld; the counts are checked against the layout
+  forbidden_inference a surface program -> a Frappe runtime, controller, permission, saved document or effect right
+  forbidden_inference a rendered layout -> that this estate can read or write records of that DocType anywhere
+  forbidden_inference a field marked required -> a validation this estate performs; it is the donor's statement about its own records
+  source_path cmd/BonfyreFrappeCompiler/src/main.c
+  source_path cmd/BonfyreWebAddress/src/main.c
+  source_path site/matrix/client-organs.js
+  witness 2026-09-26 nine applications compiled: 1,152 DocTypes, 17,003 fields resolved as 12,459 with a stated presentation, 154 withheld with the reason, and 4,390 layout breaks that the previous output discarded entirely
+  witness 2026-09-26 withheld for stated reasons and no others: 107 buttons because a donor button invokes that donor's controller, 43 password fields because a secret is never rendered here, and 4 fields that frappe's own new-doctype-1 and new-doctype-2 gave a label and no name
+  witness 2026-09-26 organs are named only where a field asks for one: 298 DocTypes need the virtualised list, 3 need the spatial index, and the remaining 851 need no script at all
+  witness 2026-09-26 served natively: /s/apps/crm renders 44 record kinds in one virtualised list, and /s/record-kind/crm-crm-lead renders all nine tabs of CRM Lead -- including the two that are empty in the metadata, each naming why -- with 3 money fields, 3 child tables and 1 household-facing field derived as what it reaches into
+  internal_calculus who would recognise a record kind is a declared pairing, not a resemblance. An archetype is offered only where a property the compiler measured off the fields is actually present, and naming somebody is recognition rather than permission
+  invariant an affinity may only require one of the five properties the compiler measures, and a sixth cannot appear without the build refusing
+  invariant a fieldname reaches into a household only as a whole underscore-separated segment of a declared name; a substring test is forbidden in the source and the build asserts its absence
+  forbidden_inference an archetype named beside a record kind -> a role anybody holds, permission to act on one, or a record of that kind held here for anyone
+  source_path schemas/control/operators.cue
+  source_path cmd/BonfyreWebAddress/tools/compile_operators.zig
+  witness 2026-09-26 fifteen affinities declared in CUE bind eleven archetypes to the five measured properties, and the record-kind room names them from the fields: Sales Invoice offers the PTA officer, room parent, club admin, marketplace seller, deal curator, forum maintainer, supported creator and newsletter writer, each with the reason declared and its own cannot-infer
+  witness 2026-09-26 the household test was wrong three ways and measurement caught all three. Asking whether a fieldname contained the word made CRM Lead reach into a household through no_of_employees, a dropdown for company size; it would have made every Frappe child row's parent into somebody's parent (57 fields); and "member" is club membership in every app that has it (63). Declared names matched as whole segments left one candidate, erpnext's price_not_uom_dependent, which withdrew the declared name "dependent" as well
+  witness 2026-09-26 the honest measured result across all 1,152 record kinds: none reaches into a household. LMS comes closest with a show_students setting and a member_type whose options include "Student", neither of which is a person's record -- the same finding as the frontier's, where no roster or student-record plane appears anywhere either
+  known_gap the store holds what the compiler last wrote and carries no source revision per program, so a reader cannot tell which commit of an application a layout came from
+  witness 2026-09-26 the tenth application was not a compile bug. bonfyre_erpnext, the estate's own overlay, is a tree of empty directories and .DS_Store files with no DocType JSON anywhere in it. The compiler knew that and said "No Frappe DocType metadata was found beneath the app path" into a list nobody printed, while the caller reported "error code: -2" -- so the refusals are now written to stderr as they happen, because a refusal nobody can read is indistinguishable from a crash
+  known_gap bonfyre_erpnext holds no DocType of its own, so the estate's own overlay contributes no record kind; whether it should is a question about the overlay and not about the compiler
+  known_gap the generated contracts were prerequisites of nothing. Nine of the twelve headers were listed against the binary and the governance grammar, the institution planes and the operator affinities were not, so changing one left the running server compiled against the old one -- measured here, where a withdrawn household name stayed in the binary after the header had dropped it. The build now depends on every generated header, and that is a whole class of silent staleness that was only found by checking the bytes
+  interacts record-kinds-offer-the-operator-grammar
+
+interaction record-kinds-offer-the-operator-grammar
+  source frappe-surface-program
+  destination project-primitive
+  relation recognised_by
+  preserves the archetype as a population this estate is for, never a role anybody holds here and never an authority
+  drops any path by which naming somebody beside a record kind could become permission to act on one
+  forbidden_inference an archetype offered -> a role granted, a record held, or an institution agreeing to anything
+  witness 2026-09-26 the pairing is declared in CUE and evidenced by the compiler: an archetype appears only where a property measured off that DocType's own fields is present, and the build refuses a sixth property nobody measures
+  binding schemas/control/operators.cue
+  binding cmd/BonfyreWebAddress/src/main.c
+
+architecture frappe-condition-plan
+  canonical_name FrappeConditionPlan
+  family apps
+  domain Apps / When a compiled record kind shows, requires, locks or folds a field
+  layer surface
+  semantic_question A DocType says a field depends on something. Under the donor's own semantics, what exactly does it depend on, which fields can change the answer, and which declarations are outside what this estate can evaluate?
+  purpose The four donor properties that carry a condition -- depends_on, mandatory_depends_on, read_only_depends_on, collapsible_depends_on -- compiled into one source-preserving plan per distinct expression, with every declaring field kept as a use bound to that plan and every field a plan reads kept as an edge to the uses it can change. A declaration outside the supported operations is kept with the operation it is missing.
+  maturity measured
+  node_types ConditionPlan
+  node_types ConditionUse
+  edge_types read_by
+  internal_calculus the donor evaluates a condition three ways and they disagree: a bare string is a field lookup where an empty list is absent, eval: is a JavaScript expression where an empty list is true, and fn: triggers a client script. The first two are compiled under exactly those rules and the third is refused by name, because one permissive evaluator would be right about none of them
+  internal_calculus a plan is a body and a use is a binding. Event repeats one condition across seven weekday fields; that is one plan with seven uses, and the read edges say a change to repeat_on reaches those seven and a change to color reaches none
+  internal_calculus the source is preserved where it is probably a defect. `doc.report_type=="Report Builder" || "Custom Report"` is always true and a bare `doc.icon` is a lookup of a field called "doc.icon" and always false; both compile as written and are reported as constant rather than repaired
+  internal_calculus the missing-operation report is the backlog: seven declarations wait on one ERPNext inventory predicate and four on an array callback, which is a different statement from twenty-two adapters remaining
+  invariant every declaration is exactly one of compiled or refused with a named missing operation; the counts are checked against the uses
+  invariant loose and strict equality, in_list, includes and indexOf stay distinct operations in the plan text
+  invariant where the donor expression would throw -- a member of an absent value, an unbound parent or environment value -- evaluation refuses with the reason and returns no boolean
+  forbidden_inference a compiled plan -> a validation this estate performs, or a permission; it is the donor's client-side form rule
+  forbidden_inference a condition said on a record-kind page -> a form that reacts; this estate holds no record of these kinds to edit, so the page states the rule and toggles nothing
+  forbidden_inference requiredWhen enforced by the CMS -> the donor's server validation; it is this estate applying the donor's form rule to its own entries
+  forbidden_inference an environment value this estate binds -> the donor client's state; developer mode off and the registered lineages are this estate's own statements
+  forbidden_inference two plans of one shape -> equivalent behaviour
+  forbidden_inference a result marked constant -> a correction applied; the source is kept as written
+  source_path lib/libbonfyre/src/bonfyre_frappe_condition.c
+  source_path lib/libbonfyre/include/bonfyre_frappe_condition.h
+  source_path cmd/BonfyreFrappeCompiler/src/main.c
+  source_path cmd/BonfyreWebAddress/src/main.c
+  source_path cmd/BonfyreCMS/src/main.c
+  witness cmd/BonfyreFrappeCompiler/tests/condition_plan_contract_test.sh
+  witness cmd/BonfyreCMS/tests/conditional_required_test.sh
+  witness cmd/BonfyreWebAddress/tests/condition_words_held_desk_test.sh
+  source_path cmd/BonfyreFrappeCompiler/tests/browser_condition_parity.mjs
+  witness 2026-10-03 cmd/BonfyreFrappeCompiler/tests/browser_condition_parity.mjs in Chrome 146, headless, sandbox on, loading one local file: every compiled eval: condition of six applications evaluated by the native plan and by the donor's own evaluator form (let out = <code>; return out) with the donor's own in_list, cint, cstr and lstrip source loaded. frappe 262 conditions and 3,741 generated records, erpnext 438 and 6,065, hrms 109 and 1,388, crm 12 and 144, lms 22 and 263, helpdesk 22 and 258: 11,859 records, none disagreeing; 100 conditions withheld because they read the parent record or the estate's bindings
+  witness 2026-10-03 the same run first found three disagreements, all one cause: two lists compared with == or != (doc.uom != doc.stock_uom). The browser answers by object identity and the plan refused. A list now carries where in the record it was read from, and two lists are the same only when that is the same place; the three records then agreed
+  invariant in the form dialect a list or record read from a record equals only a value read from that same place in that same record; a list the expression writes equals nothing. In the server dialect two lists compare by what they hold, and that is refused rather than answered by identity
+  forbidden_inference agreement with a browser on generated records -> agreement on every record, or agreement of the server-side Python dialect, which no browser evaluates
+  witness 2026-10-03 the comparison extended to conditions that read the parent record, each given a generated parent and the donor's open-form global bound to it: 923 conditions and 12,693 records across the six applications (frappe 266 and 3,802, erpnext 491 and 6,828, hrms 110 and 1,398, crm 12 and 144, lms 22 and 263, helpdesk 22 and 258), none disagreeing; 10 conditions remain withheld because they read which applications are installed
+  known_gap the browser comparison leaves out the 10 conditions that read an estate binding, and generates records from a fixed pool of values; a field holding a record, a date object or a number outside that pool is not exercised
+  witness 2026-10-01 three consumers read one plan. The compiler writes a row per use into the store the composer queries, said in the DocType's own labels: 2,589 rows, 2,534 said as a sentence, 18 as always or never, 15 as depending on named fields or the donor's setup, 22 as a rule not evaluated here. The record-kind room for Event now reads "only when Repeat this Event is ticked and Repeat On is Weekly" on seven fields and carries no expression text
+  witness 2026-10-01 the CMS enforces the same rule on write: Number Card compiled to a content type carries requiredWhen, an entry of type Document Type without a document_type is refused on create and rolled back on update, and one of type Custom without it is stored. A rule reading a field the content type does not carry, the parent, or the environment stays behind and is listed with the reason
+  witness 2026-10-01 the environment has an owner: frappe.boot.developer_mode is bound to off, frappe.boot.versions to the registered lineages, cur_frm.doc to the parent document, and a name bound to nothing refuses
+  witness 2026-10-01 nine applications compiled: 2,589 declarations, 2,567 compiled into 1,204 plans, 22 refused by name -- 13 on two ERPNext client predicates, 4 on array callbacks, 2 on flt whose parse depends on the number format, 2 on frappe client utilities, 1 on a computed member
+  witness 2026-10-01 frappe alone: 659 declarations, 658 compiled, 325 plans, 70 shapes; Event's seven weekday fields share plan cp-0f0d69d66019c4f42abdf4764eb29857 and Dashboard Chart's chart_type is read by 14 uses
+  witness 2026-10-01 eleven plans are constant and say so: six bare strings that are not field names (doc.contributed, doc.icon, doc.party_type, doc.received_amount, doc.returned_qty, doc.payment_gateway_account), `!is_expression`, a collapsible_depends_on of "1", two literal `eval:true`, and Report's `|| "Custom Report"`
+  known_gap nothing in a browser re-evaluates a plan when a field changes, because no page here edits a record of these kinds; the read edges that would drive it are emitted and unconsumed
+  known_gap visibility, read-only and collapse rules are stated on the page and enforced nowhere; only the mandatory rule has a store that applies it
+  known_gap string comparison orders by bytes and the donor orders by UTF-16 units; they differ only for text outside the basic plane
+  interacts condition-plans-state-the-rule
+
+interaction condition-plans-state-the-rule
+  source frappe-condition-plan
+  destination frappe-surface-program
+  relation refines
+  preserves the surface program's depends_on text unchanged; the condition rows sit beside it in the same store, keyed by the same program and field
+  drops any path by which a rule stated on a page could be read as the page reacting to a field change
+  forbidden_inference a rule stated beside a field -> that the rendered page shows, hides, requires or locks that field accordingly
+  witness 2026-10-01 both are written by one binary from one parse; the composer reads frappe_condition for each field it lays out and falls back to the DocType's own text when a store predates the table
+  binding cmd/BonfyreFrappeCompiler/src/main.c
+  binding cmd/BonfyreWebAddress/src/main.c
+
+architecture frappe-notification-binding
+  canonical_name FrappeNotificationBinding
+  family apps
+  domain Apps / What a donor notification becomes when nothing here sends
+  layer surface
+  semantic_question A DocType's application says: when this happens to a record and this holds, tell these people this. Which of that can this estate decide and write, and what does it do with the result?
+  purpose A donor Notification definition bound to owners that already exist. The trigger and the Python condition are compiled; given one event and one record the binding says whether it fires, reads an address off the record where one is there, writes the subject and body by running the donor's own template -- printing, if, for, set, over the same server dialect the condition uses -- and yields a held message that the queue files once. No part of it transmits.
+  maturity measured
+  node_types NotificationPlan
+  node_types HeldMessage
+  edge_types fires_on
+  internal_calculus the donor evaluates a notification's condition on its server in Python, where an empty list is false, text never equals a number, and not binds looser than a comparison. It is a second dialect over the same plan nodes, marked in the plan text, never the form dialect reused because it looked similar
+  internal_calculus three kinds of trigger are decided here: something happened to a record, one field took a new value, a date on the record is a stated number of days away. A method or custom trigger is a controller hook and is refused by name
+  internal_calculus a recipient is a selector first and an address second. A field yields an address only when the record holds one; a role, an assignment, or a field naming a person yields a recipient this estate cannot reach, and says why
+  internal_calculus a standard notification's body is the file beside its definition, chosen by message_type, and not the message the definition carries; reading the wrong one renders a different message, which the first pass here did
+  internal_calculus the template engine is one implementation over the plan nodes: a loop variable is an environment binding, a filter is a node, and a name the donor's template never defines is printed as written because that is what the donor prints
+  internal_calculus where the donor consults a site or user date setting this estate states one format of its own: the ISO calendar date first so text sorts as time does, the weekday after it for the person reading, the 24-hour clock -- 2026-10-02 Fri 14:30. No zone is added, because a time stored on a record is in whatever zone the record means. A strftime pattern the template writes out is the author's own and is honoured as written
+  internal_calculus where the donor links a record's name into its desk, the name is written and the link is not. No record of these kinds is held here and no desk is served, so a link would claim a page exists
+  internal_calculus a method on a template variable is the last name of the path, so start.date() is date applied to start and never a function called start.date
+  invariant a held message carries transmitted false in every state, and a message whose text could not be written carries no state at all
+  invariant the same definition, event, record and day yield the same key, and filing it twice leaves one job
+  invariant a definition switched off never fires
+  invariant a hook is handed the write -- kind, event, entry, the row now and the row before -- because it runs before the write is released and cannot read it from the store
+  invariant a condition reading a field the store keeps for its own use is not answered from that store's row
+  forbidden_inference a held message -> a sent, delivered or read one
+  forbidden_inference a recipient with an address -> somebody who knows the message exists
+  forbidden_inference a notification decided here -> the donor's scheduler or document events running; the caller supplies the event and the day
+  forbidden_inference a job in the queue -> authority to act on it
+  forbidden_inference a composed body -> the text the donor would have sent; dates and desk links are this estate's own statements and the message says so
+  forbidden_inference a time written without a zone -> a time in this estate's zone
+  source_path cmd/BonfyreFrappeCompiler/src/main.c
+  source_path lib/libbonfyre/src/bonfyre_frappe_condition.c
+  source_path cmd/BonfyreFrappeCompiler/tools/held_message_hook.sh
+  source_path cmd/BonfyreWebAddress/src/main.c
+  source_path cmd/BonfyreCMS/src/main.c
+  witness cmd/BonfyreFrappeCompiler/tests/notification_held_message_test.sh
+  witness cmd/BonfyreCMS/tests/hook_held_message_test.sh
+  witness cmd/BonfyreWebAddress/tests/condition_words_held_desk_test.sh
+  witness 2026-10-01 the desk has a fifth queue, Messages written and held, counted against the queue store: with one composed message filed, a stranger is told there is one and not what it says or whom it names
+  witness 2026-10-01 temporary native Auth sessions exercise the desk boundary: an anonymous reader and a free account see the held count without the subject or document; a write-scoped account sees the named row through its browser cookie; after logout that cookie sees only the count again; the queue node is byte-identical before and after the desk reads
+  witness 2026-10-01 end to end through three owners: Fiscal Year compiled to a content type, a hook registered on it, an entry created by hand fires nothing, an entry with auto_created 1 leaves one held message in the queue carrying the composed body and no address, the same write presented again leaves one, and an update hands the hook the row as it stood before
+  witness 2026-10-01 eight definitions across hrms, lms and erpnext: all eight decided here, five with a compiled Python condition and three with none. With only field substitution one was composed in full; with blocks, filters, indexing, range, flt and str.format three are -- Retention Bonus, Training Feedback, Material Request Receipt -- and the other five each name one call: format_value, formatdate, format_date, get_datetime, get_url
+  witness 2026-10-01 with the estate's date format, datetime operations, bold and the withheld desk link, seven of eight are composed in full. Training Scheduled sets two variables, compares their dates and prints Friday, 02 Oct 2026 and 09:00 AM to 05:30 PM by its own patterns; Fiscal Year indexes and ranges over its companies and writes 2027-01-01 Fri; Exit Interview lists its interviewers. The eighth, New job alert, needs the donor site's address and is refused by name
+  witness 2026-10-01 Material Request Receipt renders as the donor renders it: one table row per item received and none for the item that was not, 5 printed as 5.0 and 2.456 as 2.46, an absent company as None
+  witness 2026-10-01 Exit Interview Scheduled fires one day before the record's date while it is scheduled and not cancelled, addresses the two people in its email field, names the assignees as unreachable, and does not fire a week early, after cancellation, or on Submit
+  witness 2026-10-01 Retention Bonus is written whole -- subject and body from the record -- addressed to a role nobody here holds, and filed through bonfyre-queue under family held-message twice with one job to show for it
+  known_gap one of eight bodies is not written: it builds a link from the donor site's address, which this estate does not hold
+  known_gap dates are written in this estate's format on purpose, so those messages differ from the donor's by design; a named babel format such as medium or short is answered with the same one format
+  known_gap a markdown body is rendered as markdown and not converted to HTML, and the donor converts before it renders; the two orders can differ where a template block spans a markdown construct
+  known_gap flt rounds as C rounds a binary double; the donor rounds by its configured method, and the two differ on exact halves
+  known_gap the store raises New and Save through its hooks; nothing asks daily, so a notification that counts days to a date fires only when a caller presents the day
+  known_gap the desk counts held messages and names them to an account with write scope, and offers no act: nothing yet hands one over, withholds it or drops it, so the queue only grows
+  known_gap the desk reads the store named by BONFYRE_HELD_MESSAGE_DB and no deployment names one yet
+  known_gap a hook is registered by a row in the store's _hooks table; there is no command that registers one
+  known_gap a content type carries no child table and keeps status for itself, so a rule reading a donor status is refused from a store row and a body listing child rows lists none
+  known_gap set_property_after_alert, attachments and the non-email channels are read and not acted on
+  interacts notification-decided-by-condition-plan
+  interacts notification-yields-held-message
+  interacts notification-filed-through-queue
+
+interaction notification-decided-by-condition-plan
+  source frappe-condition-plan
+  destination frappe-notification-binding
+  relation evidences
+  preserves the dialect: a notification's condition is compiled as Python and a field's as the form's JavaScript, over one set of plan nodes
+  drops any path by which a condition that cannot be evaluated counts as holding
+  forbidden_inference a condition that holds -> a message that should be sent
+  witness 2026-10-01 five notification conditions compile to plans marked py; a record that fails one yields fires false with the reason, and a condition outside the supported operations yields no answer
+  binding lib/libbonfyre/src/bonfyre_frappe_condition.c
+
+interaction notification-yields-held-message
+  source frappe-notification-binding
+  destination held-message
+  relation refines
+  preserves the held-message states and that every one of them has transmitted false
+  drops the donor's send: there is no transport here to hand the message to
+  forbidden_inference a composed notification -> a held message somebody has decided about
+  witness 2026-10-01 the prepared output carries state composed and transmitted false, or no state when the text could not be written; the test asserts both
+  binding cmd/BonfyreFrappeCompiler/src/main.c
+
+interaction notification-filed-through-queue
+  source frappe-notification-binding
+  destination cmd-queue
+  relation publishes
+  preserves the queue's own lease and discharge; the binding files a job and claims nothing
+  drops any second queue, outbox or refresh loop for donor notifications
+  forbidden_inference a filed job -> work done, or a worker that exists for that family
+  witness 2026-10-01 enqueue under family held-message with the message key as mission and --if-absent: two filings, depth total 1
+  binding cmd/BonfyreFrappeCompiler/tests/notification_held_message_test.sh
+
+architecture frappe-metric-plan
+  canonical_name FrappeMetricPlan
+  family apps
+  domain Apps / What a donor card or chart asks of a store
+  layer surface
+  semantic_question An application ships a number on a dashboard. What exactly is it a count or sum of, narrowed how, and can a store this estate already has answer it?
+  purpose A donor Number Card or Dashboard Chart compiled into one read: a function of a field over the records of one kind, narrowed by filters, grouped by a field or laid out over time. A compiled plan is answered from one table of one store, opened read only with every value bound, or refused by the name of what stands in the way: donor code, a field the store does not hold, or something the reader has not said.
+  maturity measured
+  node_types MetricPlan
+  node_types MetricReading
+  edge_types reads_from
+  internal_calculus the corpus is a small vocabulary. Five functions, thirteen filter operators, the donor's named timespans, a group-by, and five intervals cover every card and chart that is not the donor running its own code
+  internal_calculus a dynamic filter is an expression the donor's client evaluates. The common one asks for the reader's default company, and here that is a thing the reader says: unsaid, the metric is not answered, because a number silently taken over every company is a different number
+  internal_calculus the other dynamic filters are evaluated by the same form dialect the field conditions use, with today bound to the day being asked about and the donor's client state bound empty, so an expression that falls back when no fiscal year is set falls back
+  internal_calculus three refusals are kept apart because they are closed by different people: an operation this estate does not perform, a field the store does not carry, and something the reader has to say
+  internal_calculus a column a store keeps for its own use is not the donor's field of the same name. A content type's status is draft or published; a donor Employee's status is Active or Left. Reading one as the other gives a number about nothing
+  internal_calculus a week starts on Monday here, as ISO 8601 counts it; the donor reads the first day of the week from a site setting
+  invariant every definition is exactly one of compiled or refused with a named operation
+  invariant the store is opened read only, the table and field names are checked as plain identifiers, and every filter value is bound
+  invariant a metric that needs the reader to say something returns no number until they do
+  invariant a field the table does not hold refuses; it is never counted as zero
+  forbidden_inference a compiled metric -> a number; it is answered only against a store carrying the fields it reads
+  forbidden_inference a number read here -> the donor's number; the donor applies its own permissions and its own week
+  forbidden_inference a number read from a store -> a fact about the world; the store holds what was written to it
+  source_path cmd/BonfyreFrappeCompiler/src/main.c
+  source_path lib/libbonfyre/src/bonfyre_frappe_condition.c
+  witness cmd/BonfyreFrappeCompiler/tests/metric_read_test.sh
+  witness 2026-10-02 the corpus across erpnext, hrms and lms: 134 definitions, 98 compiled, 36 refused by name -- 25 backed by a donor report, 4 by a method, 4 by a custom source, 3 over a child table. Nothing is refused for an operator, a timespan or an interval this estate lacks
+  witness 2026-10-02 55 of the compiled metrics need the reader to say their company, and say so
+  witness 2026-10-02 answered from a store: employees joining this quarter counts 2 at one company and 1 at another and refuses with none said; employees by department returns its groups largest first; incoming bills by month over the last year returns thirteen periods with the drafts left out by the definition's own filter and an empty month as zero
+  witness 2026-10-02 the status collision is refused when the caller names the columns a store keeps: the same chart answers from a table whose status is the donor's and refuses from one whose status is the store's
+  source_path cmd/BonfyreWebAddress/src/main.c
+  witness cmd/BonfyreWebAddress/tests/condition_words_held_desk_test.sh compiles hrms into the surface store and serves two record-kind rooms: Job Applicant carries one line per metric read with a grouped chart said as "how many there are, for each country", Job Requisition names Time to Fill as not counted and why without the donor's method name, and a record kind nothing counts says nothing about counting
+  witness cmd/BonfyreFrappeCompiler/tests/metric_read_test.sh checks the surface store carries the same definition and compiled counts as the emitted plans, and that every row is either said or refused
+  invariant the record-kind room says each metric from its compiled plan in words and never shows the donor's function, method path or filter expression
+  witness cmd/BonfyreWebAddress/tests/condition_words_held_desk_test.sh keeps records of two compiled kinds in a content store and checks that a signed-in reader sees a grouped chart answered largest first, a card filtered on the donor's status refused because the store's status is its own, and a company-scoped card answered per company with no number across companies; that a stranger is told records are kept and given no number and no name from them; and that the store is byte-identical afterwards
+  internal_calculus a record kind's records are read from the content type the compiler names for it (frappe_<app>_<doctype>); the definition travels in the surface store beside its plan and is handed to the compiler's reader on standard input, so the page owns no read of its own
+  internal_calculus where the donor would ask the reader's company, the room asks nobody: each company the kept records name gets its own number, up to eight, and a subject room takes no parameter
+  invariant a number, and any name drawn from a record, is said only to a signed-in reader
+  forbidden_inference a number said on a record-kind room -> a number about every company; a company-scoped metric is answered per company or not at all
+  forbidden_inference signed in -> entitled to these records under the donor's permissions; the donor's role and user permissions are not applied here
+  known_gap the live content store holds no records of any compiled kind, so every live room says what would be counted and gives no number; the answered path is witnessed on a fixture store only
+  known_gap any signed-in reader sees the numbers; the donor's per-role and per-user permissions are not modelled, and more than eight companies are cut off without saying so
+  known_gap the desk does not carry a metric
+  known_gap the caller names the columns a store keeps for itself; a store read without that list can be mis-answered where a name collides
+  known_gap a content type compiled from a DocType carries no docstatus and no child table, so a metric filtered on docstatus is refused from such a store
+  known_gap an average over periods is the mean of the rows in each period, as the donor computes it; a heatmap chart shape is refused
+  interacts metric-filters-evaluated-by-condition-dialect
+
+interaction metric-filters-evaluated-by-condition-dialect
+  source frappe-condition-plan
+  destination frappe-metric-plan
+  relation evidences
+  preserves the form dialect: a dynamic filter is compiled and evaluated by the same plan nodes a field condition uses
+  drops a second expression evaluator for dashboards
+  forbidden_inference an expression that evaluates -> the value the donor's client would have produced; the client state is bound empty here
+  witness 2026-10-02 the fiscal-year fallback expression -- a template literal, a slice and today -- compiles to one plan and yields this calendar year's first and last day when no fiscal year is bound
+  binding lib/libbonfyre/src/bonfyre_frappe_condition.c
 
 architecture erpnext
   canonical_name ERPNext
@@ -37,8 +342,8 @@ architecture erpnext
   purpose Donates double-entry transaction truth, inventory, party economics. Authoritative for realized Value and Receipt; feeds provider evidence and Insights.
   maturity implemented
   source_path integrations/frappe-bench/apps/erpnext
-  source_path cmd/BonfyreFrappeCompiler/frappe_schema_parser.py
-  witness components/BonfyreControlPlane/witness_frappe_apps.py
+  source_path lib/libbonfyre/src/bonfyre_frappe_compiler.c
+  witness cmd/BonfyreFrappeCompiler/tests/native_schema_ingest_smoke.sh
   owns Value
   owns Receipt
   consumes WorkState
@@ -47,7 +352,7 @@ architecture erpnext
   publishes Receipt
   forbidden_inference a forecast -> realized money (Value here is booked/realized, never projected)
   source_lineage aurekai institution vision (9 Frappe apps as one institutional graph)
-  known_gap the Frappe app is real and installed (DocTypes extracted by BonfyreFrappeCompiler); the remaining wiring is the runtime write-back of its facts into fabric.db
+  known_gap native phase-one extraction produces metadata grammar only; runtime write-back and controller/effect admission remain separate owners
 
 architecture crm
   canonical_name CRM
@@ -58,8 +363,8 @@ architecture crm
   purpose Donates the relationship/timeline/deal grammar. A projection over actors it does not own -- actor-graph owns identity; CRM surfaces the relationship.
   maturity implemented
   source_path integrations/frappe-bench/apps/crm
-  source_path cmd/BonfyreFrappeCompiler/frappe_schema_parser.py
-  witness components/BonfyreControlPlane/witness_frappe_apps.py
+  source_path lib/libbonfyre/src/bonfyre_frappe_compiler.c
+  witness cmd/BonfyreFrappeCompiler/tests/native_schema_ingest_smoke.sh
   consumes Actor
   consumes Relation
   consumes OccurrenceProjection
@@ -67,7 +372,7 @@ architecture crm
   publishes DealState
   forbidden_inference a CRM record -> a verified actor identity (CRM projects; actor-graph owns identity)
   source_lineage aurekai institution vision (9 Frappe apps as one institutional graph)
-  known_gap the Frappe app is real and installed (DocTypes extracted by BonfyreFrappeCompiler); the remaining wiring is the runtime write-back of its facts into fabric.db
+  known_gap native phase-one extraction produces metadata grammar only; runtime write-back and controller/effect admission remain separate owners
 
 architecture hrms
   canonical_name HRMS
@@ -78,15 +383,15 @@ architecture hrms
   purpose Donates availability, qualification, attendance, shift. Authoritative for HumanCapacity; feeds WorkGraph routing.
   maturity implemented
   source_path integrations/frappe-bench/apps/hrms
-  source_path cmd/BonfyreFrappeCompiler/frappe_schema_parser.py
-  witness components/BonfyreControlPlane/witness_frappe_apps.py
+  source_path lib/libbonfyre/src/bonfyre_frappe_compiler.c
+  witness cmd/BonfyreFrappeCompiler/tests/native_schema_ingest_smoke.sh
   owns HumanCapacity
   consumes Actor
   consumes WorkState
   publishes HumanCapacity
   forbidden_inference attendance present -> capability proven (availability is not demonstrated proficiency)
   source_lineage aurekai institution vision (9 Frappe apps as one institutional graph)
-  known_gap the Frappe app is real and installed (DocTypes extracted by BonfyreFrappeCompiler); the remaining wiring is the runtime write-back of its facts into fabric.db
+  known_gap native phase-one extraction produces metadata grammar only; runtime write-back and controller/effect admission remain separate owners
 
 architecture helpdesk
   canonical_name Helpdesk
@@ -97,8 +402,8 @@ architecture helpdesk
   purpose Donates problem lifecycle, SLA, assignment, escalation. Folds inbound occurrences into structured tickets.
   maturity implemented
   source_path integrations/frappe-bench/apps/helpdesk
-  source_path cmd/BonfyreFrappeCompiler/frappe_schema_parser.py
-  witness components/BonfyreControlPlane/witness_frappe_apps.py
+  source_path lib/libbonfyre/src/bonfyre_frappe_compiler.c
+  witness cmd/BonfyreFrappeCompiler/tests/native_schema_ingest_smoke.sh
   owns TicketState
   consumes Actor
   consumes WorkState
@@ -106,7 +411,7 @@ architecture helpdesk
   publishes TicketState
   forbidden_inference a ticket resolved -> the underlying problem is gone (resolution is a claim, not proof)
   source_lineage aurekai institution vision (9 Frappe apps as one institutional graph)
-  known_gap the Frappe app is real and installed (DocTypes extracted by BonfyreFrappeCompiler); the remaining wiring is the runtime write-back of its facts into fabric.db
+  known_gap native phase-one extraction produces metadata grammar only; runtime write-back and controller/effect admission remain separate owners
 
 architecture lms
   canonical_name LMS
@@ -117,15 +422,15 @@ architecture lms
   purpose Donates prerequisites, progression, assessment, credential. Feeds capability/opportunity eligibility and evidence of proficiency.
   maturity implemented
   source_path integrations/frappe-bench/apps/lms
-  source_path cmd/BonfyreFrappeCompiler/frappe_schema_parser.py
-  witness components/BonfyreControlPlane/witness_frappe_apps.py
+  source_path lib/libbonfyre/src/bonfyre_frappe_compiler.c
+  witness cmd/BonfyreFrappeCompiler/tests/native_schema_ingest_smoke.sh
   owns Credential
   consumes Actor
   publishes Credential
   publishes Evidence
   forbidden_inference a course completed -> capability proven for work (completion is not demonstrated proficiency)
   source_lineage aurekai institution vision (9 Frappe apps as one institutional graph)
-  known_gap the Frappe app is real and installed (DocTypes extracted by BonfyreFrappeCompiler); the remaining wiring is the runtime write-back of its facts into fabric.db
+  known_gap native phase-one extraction produces metadata grammar only; runtime write-back and controller/effect admission remain separate owners
 
 architecture wiki
   canonical_name Wiki
@@ -136,15 +441,15 @@ architecture wiki
   purpose Donates knowledge hierarchy, revision, citation. A knowledge claim carries its evidence and proof-frontier state; invalidated evidence marks the claim stale.
   maturity implemented
   source_path integrations/frappe-bench/apps/wiki
-  source_path cmd/BonfyreFrappeCompiler/frappe_schema_parser.py
-  witness components/BonfyreControlPlane/witness_frappe_apps.py
+  source_path lib/libbonfyre/src/bonfyre_frappe_compiler.c
+  witness cmd/BonfyreFrappeCompiler/tests/native_schema_ingest_smoke.sh
   owns KnowledgeClaim
   consumes Evidence
   consumes ProofFrontier
   publishes KnowledgeClaim
   forbidden_inference published knowledge -> current truth (a claim can be invalidated after publication)
   source_lineage aurekai institution vision (9 Frappe apps as one institutional graph)
-  known_gap the Frappe app is real and installed (DocTypes extracted by BonfyreFrappeCompiler); the remaining wiring is the runtime write-back of its facts into fabric.db
+  known_gap native phase-one extraction produces metadata grammar only; runtime write-back and controller/effect admission remain separate owners
 
 architecture drive
   canonical_name Drive
@@ -155,8 +460,8 @@ architecture drive
   purpose Donates the mature file/folder/share/version grammar to BonfyreFS -- the visual grammar of the universal namespace. A projection; Authority still gates effects.
   maturity implemented
   source_path integrations/frappe-bench/apps/drive
-  source_path cmd/BonfyreFrappeCompiler/frappe_schema_parser.py
-  witness components/BonfyreControlPlane/witness_frappe_apps.py
+  source_path lib/libbonfyre/src/bonfyre_frappe_compiler.c
+  witness cmd/BonfyreFrappeCompiler/tests/native_schema_ingest_smoke.sh
   consumes Artifact
   consumes Authority
   consumes RouteAdvertisement
@@ -166,7 +471,7 @@ architecture drive
   publishes RepresentationHistory
   forbidden_inference a share grant -> authority to act (Drive shares a projection; Authority gates the effect)
   source_lineage aurekai institution vision (9 Frappe apps as one institutional graph)
-  known_gap the Frappe app is real and installed (DocTypes extracted by BonfyreFrappeCompiler); the remaining wiring is the runtime write-back of its facts into fabric.db
+  known_gap native phase-one extraction produces metadata grammar only; runtime write-back and controller/effect admission remain separate owners
 
 architecture insights
   canonical_name Insights
@@ -177,8 +482,8 @@ architecture insights
   purpose Donates query/metric/dashboard composition. The human grammar of Feldera's maintained derived state; charts differential truth, never commits.
   maturity implemented
   source_path integrations/frappe-bench/apps/insights
-  source_path cmd/BonfyreFrappeCompiler/frappe_schema_parser.py
-  witness components/BonfyreControlPlane/witness_frappe_apps.py
+  source_path lib/libbonfyre/src/bonfyre_frappe_compiler.c
+  witness cmd/BonfyreFrappeCompiler/tests/native_schema_ingest_smoke.sh
   owns DerivedView
   consumes ReachableCapacity
   consumes Value
@@ -187,4 +492,4 @@ architecture insights
   publishes DerivedView
   forbidden_inference a dashboard number -> a committed fact (Insights charts derived state; it never commits)
   source_lineage aurekai institution vision (9 Frappe apps as one institutional graph)
-  known_gap the Frappe app is real and installed (DocTypes extracted by BonfyreFrappeCompiler); the remaining wiring is the runtime write-back of its facts into fabric.db
+  known_gap native phase-one extraction produces metadata grammar only; runtime write-back and controller/effect admission remain separate owners

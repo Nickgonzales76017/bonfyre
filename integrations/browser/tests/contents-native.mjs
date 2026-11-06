@@ -1,0 +1,52 @@
+import {projectProgramWorkspaceSetup,publishSetups} from '../../../scripts/publish_experience_setups.mjs';
+import assert from 'node:assert/strict';
+import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join,resolve} from 'node:path';
+import {createRequire} from 'node:module';
+import {nativeWorkbenchPackage} from '../native-workbench-package.mjs';
+import {workspaceFixture} from '../../../cmd/BonfyreWebAddress/tests/workspace_fixture.mjs';
+import {observe,compileReferencedDraft} from '../extension/observation.mjs';
+import {replaceContents} from '../extension/contents.mjs';
+import {sourceUpdatePlan,sourceUpdateWrites} from '../extension/contents-operations.mjs';
+const root=resolve(import.meta.dir,'../../..'),temp=mkdtempSync(join(tmpdir(),'native-contents-')),packageRoot=join(temp,'packages'),out=process.env.WORKBENCH_NATIVE_PROOF??join(root,'output/verification/workbench-contents-20261015/native');mkdirSync(out,{recursive:true});
+const catalog=JSON.parse(readFileSync(join(root,'integrations/browser/extension/catalog.json'),'utf8')),checks=[],errors=[],wire=[];let f,browser;
+const check=(label,value)=>{assert.ok(value,label);checks.push(label);console.log('PASS '+label);};
+const capture=(price='10.00',date='2026-10-15T10:00:00Z')=>({url:'https://fixture.invalid/native-coffee',title:'Native fixture coffee',fixture:true,captured_at:date,structured:[{'@type':'Product',name:'Native coffee',sku:'NATIVE-COFFEE',url:'https://fixture.invalid/native-coffee',offers:{'@type':'Offer',price,priceCurrency:'USD'}}]});
+const first=await observe(capture(),catalog),later=await observe(capture('12.00','2026-10-16T10:00:00Z'),catalog);
+const input=id=>({program_id:'draft:native:'+id,template_id:catalog.templates.find(t=>t.pattern==='discovery_box').id,owner_subject:'person:proposal-author',name:'Shared program '+id,sample:true,terms:{currency:'USD',price_cents:4500,shipping_cents:200,max_members:1,quantity_per_member:1,start_date:'2026-11-01',cadence:{unit:'month',every:1},auto_renew:true,cancellation:'Review before renewing.',return_policy:'Arrange a remedy with the supplier.'}});
+const proposal=id=>compileReferencedDraft(catalog,replaceContents(input(id),'defaults',[{id:'line:coffee',source:first.id,offer:0,quantity:2}]),[first]);
+try{
+ const pack=await nativeWorkbenchPackage({packageRoot}),again=await nativeWorkbenchPackage({packageRoot});check('native packaging reuses one immutable release for the same reviewed sources',pack.id===again.id&&pack.files===26);
+ process.env.BONFYRE_WORKSPACE_RELEASE=pack.id;process.env.BONFYRE_WORKSPACE_PACKAGES=packageRoot;f=await workspaceFixture();
+ f.pack('recurring-programs','Sources and recurring programs');f.add('pack_demand',{pack:'recurring-programs',demand_kind:'workspace',needs:'recurring-programs',preferred_sources:pack.id,fields:'programs/',status:'published'});
+ for(const prefix of ['draft:','observation:'])f.add('pack_demand',{pack:'recurring-programs',demand_kind:'workspace-record',needs:'recurring-programs',fields:prefix,status:'published'});
+ const definition={records:projectProgramWorkspaceSetup(pack.id),binary:f.cms,db:f.db,schemas:join(f.home,'schemas'),apply:true};const published=publishSetups(definition);check('program setup publication retains one native definition and replays without duplicates',published.created===6&&publishSetups(definition).created===0);
+ const actual=await f.install('experience.source-programs.workspace','institution:workspace-team');check('the actual published configuration opens the same program editor',actual.path.endsWith('/programs/'));
+ const binding=await f.install('recurring-programs','institution:workspace-team'),owner=f.store(binding),writer=f.store(binding,f.writer),reader=f.store(binding,f.reader);
+ const retained=await owner.saveLocal(first.id,first,0);await owner.saveLocal(later.id,later,0);
+ const a=await owner.saveLocal('draft:native:one',proposal('one'),0),b=await owner.saveLocal('draft:native:two',proposal('two'),0);
+ check('an authorized second person reads the same native program records',((await writer.readLocal('draft:')).find(r=>r.key===a.key)).value.cycle_preview[0].contents.modeled_cents===2200);
+ const plan=sourceUpdatePlan(catalog,await writer.readLocal('draft:'),await writer.readLocal('observation:'),first.id,later.id);
+ await owner.saveLocal(a.key,{...a.value,name:'Owner revised this program'},a.revision);
+ let conflict=false;try{await writer.saveLocalBatch(sourceUpdateWrites(plan,[a.key,b.key]));}catch{conflict=true;}
+ check('the native transaction rolls back every selected program after a stale review',conflict&&(await owner.readLocal(b.key))[0].revision===b.revision);
+ const next=sourceUpdatePlan(catalog,await writer.readLocal('draft:'),await writer.readLocal('observation:'),first.id,later.id);await writer.saveLocalBatch(sourceUpdateWrites(next,[a.key,b.key]));
+ const saved=await reader.readLocal('draft:');check('a reader sees both completed native source updates with exact recalculated costs',saved.length===2&&saved.every(r=>r.value.cycle_preview[0].contents.modeled_cents===2600));
+ check('adoption does not rewrite the retained source body or revision',(await owner.readLocal(first.id))[0].revision===retained.revision);
+ let refused=false;try{await reader.saveLocal(b.key,{...b.value,name:'Not permitted'},saved.find(r=>r.key===b.key).revision);}catch{refused=true;}check('native read-only access cannot mutate a saved program',refused);
+ const outsider=await f.raw(binding.path,f.other),anonymous=await f.raw(binding.path,null);check('an unrelated or anonymous user cannot open the native program workspace',outsider.status===403&&anonymous.status!==200);
+ const personal=await f.install('recurring-programs','self',f.other);check('another personal destination starts without the institution\u2019s records',(await f.store(personal,f.other).readLocal('draft:')).length===0);
+ const free=Number(Bun.spawnSync(['/usr/bin/memory_pressure','-Q'],{stdout:'pipe'}).stdout.toString().match(/free percentage: (\d+)%/)?.[1]);if(!(free>=18))throw Error('Native browser verification requires 18% free memory.');
+ const puppeteer=createRequire(join(root,'tools/creator-ingest/package.json'))('puppeteer');browser=await puppeteer.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,args:['--disable-gpu','--disable-dev-shm-usage']});
+ async function open(user){const context=await browser.createBrowserContext(),page=await context.newPage();page.setDefaultTimeout(12000);page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());page.on('request',r=>{if(r.method()==='POST')wire.push({path:new URL(r.url()).pathname,type:r.headers()['content-type']});});const cookie=user.cookie.split(';')[0],cut=cookie.indexOf('=');await page.setCookie({name:cookie.slice(0,cut),value:cookie.slice(cut+1),url:f.base,httpOnly:true});await page.setViewport({width:1440,height:1000});const entrance=await page.goto(f.base+'/apps?context=institution:workspace-team');check('authenticated native destination opens for user '+user.id,entrance.status()===200);await page.click('a[data-work-saved][href="/apps/'+binding.id+'/_work"]');await page.waitForSelector('[data-work-continue]');const selected=await page.evaluateHandle(key=>[...document.querySelectorAll('[data-work-continue]')].find(a=>new URL(a.href).searchParams.get('key')===key),a.key);assert.ok(selected.asElement());await selected.asElement().click();await selected.dispose();await page.waitForSelector('[data-draft-id="'+a.key+'"]');await page.waitForFunction(()=>document.body.dataset.programLoading==='false');check('the native continuation reopens the exact program for user '+user.id,new URL(page.url()).searchParams.get('draft')===a.key);return {context,page};}
+ const ownerBrowser=await open(f.owner),page=ownerBrowser.page;check('native storage is identified in the actual workspace interface',await page.$eval('#web-workspace-notice',e=>e.textContent.includes('workspace-team')));
+ await page.click('[data-draft-id="'+a.key+'"]');await page.waitForFunction(()=>document.body.dataset.programLoading==='false');await page.click('[data-view=contents]');await page.waitForSelector('.contents-line');
+ await page.$eval('.contents-line-actions input',el=>{el.value='3';el.dispatchEvent(new Event('change',{bubbles:true}));});await page.click('#contents-use');await page.click('#compile');await page.click('#save-draft');await page.waitForFunction(()=>document.querySelector('#workspace-notice').textContent.includes('Draft kept in this native workspace'));
+ check('the product editor saves a reviewed quantity change through native CMS',((await writer.readLocal(a.key))[0]).value.terms.contents.defaults[0].quantity===3);
+ const secondBrowser=await open(f.writer),second=secondBrowser.page;await second.click('[data-draft-id="'+a.key+'"]');await second.waitForFunction(()=>document.body.dataset.programLoading==='false');check('a second browser and authorized person continue the same saved program',await second.$eval('.cycle-card',e=>e.textContent.includes('$38.00')));
+ check('native records use MessagePack writes with no browser-only fallback',wire.some(r=>r.path===binding.endpoint&&/msgpack/.test(r.type))&&await second.evaluate(async()=>(await indexedDB.databases()).every(db=>db.name!=='aurekai-browser-workbench-v1')));
+ await second.click('[data-view=contents]');await second.screenshot({path:join(out,'native-shared-contents.png')});await secondBrowser.context.close();await ownerBrowser.context.close();
+ check('no browser exceptions during native continuation',errors.length===0);
+ writeFileSync(join(out,'readback.yaff'),'native-program-workspace verified\n  package '+pack.id+'\n  web_binary '+f.fingerprint+'\n  checks '+checks.length+'\n  data_scope isolated_accounts_and_databases\n  native_store existing_CMS_MessagePack\n  same_interface true\n  new_backend false\n'+checks.map(c=>'  witness '+c).join('\n')+'\n');
+}catch(error){writeFileSync(join(out,'failure.txt'),String(error.stack)+'\n'+errors.join('\n')+'\n'+(f?.serverLog?.()??'').slice(-4000));throw error;}finally{await browser?.close();await f?.close();rmSync(temp,{recursive:true,force:true});}

@@ -1,0 +1,32 @@
+scope	public configuration deployment; actual product backend provisioning remains open
+backup	/Users/nickgonzales/.bonfyre/adoption-release-20261015.vDTA3W
+backup_receipt	af8ae0cb-8ffd-4aba-b9c9-1c718bb58beb
+backup_integrity_receipt	bcf01f85-3916-4e88-a7e4-63c77d921e05
+cms_install_receipt	541d93ff-185f-4c67-b1e1-877ad0f48b05
+cms_publication_receipt	542fb141-014e-4129-a0ae-fe7f425c67b5
+configuration_count	10
+published_cms_rows	71
+final_missing_rows	0
+final_publication_readback_receipt	fcb3d549-8f68-46e6-9390-fbc8376753b7
+service_restart_receipt	83de5644-71c9-49ab-9f91-3c3ebb7c02ff
+service_readback_receipt	57b61499-eb2e-42c6-9d9a-3749abb29285
+service_pid_at_readback	49294
+cms_signed_binary_sha256	75793ed030b49af6861d4d4823ef1c2d19db8cb9c829c79c480360f957f58c09
+web_checkout_binary_sha256	96eb194e390997dd94db31f6aabe6d25262d80f0e2d26508c17b9ccfa0524bd7
+public_http_readback_receipt	fdaffc57-9700-4808-a271-67912de6ce90
+public_html_readback_receipt	6f589cc1-3192-4111-b050-027a4a1b4955
+public_routes	https://aurekai.work/packs/setup https://aurekai.life/packs/setup https://aurekai.live/packs/setup https://aurekai.shop/packs/setup
+samples_cms_navigation_receipt	c341e751-1375-4c65-9eb1-43005703b7c7
+samples_publication_receipt	c127020f-a6c2-4c58-bdc3-431baf1e2898
+samples_provider_readback_receipt	5c77994d-686c-495a-9612-a58461f2aab4
+samples_deployment	7326617c-b2d9-4505-9c0e-fc802371ce2b
+github_adoption_pr	47 fd80b9d32ea4e2e2a8a344fed8c9ccfdec285996 merged
+github_script_readback_receipt	96fed17a-a7d6-49bc-abc8-a3164c993b82
+github_retention_pr	48 ef287ea1c8eded1432732cfd38d63b76a3517aa6 merged; run tracked separately
+public_signup_browser	unexecuted; test-file creation blocked; no verification accounts created
+editor_header_integration	unapplied; builder outside patch authority; homepage navigation published
+pages_run_38809543945	retention and deployment passed; public product-to-room checks passed; carousel capture-load wait timed out
+pages_retained_commit	97dd09c5c3536f42dc7bd1a87fb13b754f427dd1
+public_carousel_test_fix	cc049fdb5fb56ed365150d6e4d13cd80a448720b; concurrent Spaces lane; scroll lazy captures into view before image-readiness checks
+native_navigation	root authored navigation is empty and fallback is in use; adding one row would replace the fallback links; left unchanged
+pages_run_38810193140	completed success 2026-10-15T21:35:36Z; source checks, local browser, release retention, Pages deployment and actual public studio/carousel verification passed

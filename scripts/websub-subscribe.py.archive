@@ -1,0 +1,222 @@
+#!/usr/bin/env python3
+"""Subscribe to a publisher's hub so it tells us when a topic changes.
+
+Rung two of the carrier ladder, and the only rung where the quiet sources cost
+literally nothing: below this, every watcher polls, and almost every poll
+learns that nothing happened.
+
+    websub-subscribe.py discover <topic-url>
+    websub-subscribe.py subscribe <topic-url> [--hub URL] [--lease 86400]
+    websub-subscribe.py reconcile [--window 3600]
+    websub-subscribe.py list
+    websub-subscribe.py unsubscribe <token>
+
+Discovery follows the spec's order: Link headers first, then the document's own
+`<link rel="hub">`, because a header is authoritative and cheap and the body may
+be large. The callback is random per subscription and carries its own secret, so
+a signature proves a delivery came from the hub we handed that secret to, and
+one leaked callback cannot be replayed against another.
+"""
+from __future__ import annotations
+
+import json
+import os
+import re
+import secrets
+import sqlite3
+import subprocess
+import sys
+import urllib.parse
+
+DB = os.environ.get("BONFYRE_WEBSUB_DB", "/var/lib/bonfyre/state/websub.db")
+ORIGIN = os.environ.get("BONFYRE_PUBLIC_ORIGIN", "https://aurekai.life")
+UA = "BonfyreWebSub/1.0 (+https://aurekai.life/protocols)"
+
+
+def db(write: bool = False) -> sqlite3.Connection:
+    conn = sqlite3.connect(DB, timeout=10)
+    conn.row_factory = sqlite3.Row
+    if write:
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS subscriptions("
+            "token TEXT PRIMARY KEY, topic TEXT NOT NULL, hub TEXT NOT NULL,"
+            "secret TEXT NOT NULL, state TEXT NOT NULL DEFAULT 'pending',"
+            "lease_expires INTEGER DEFAULT 0, created_at TEXT, verified_at TEXT,"
+            "last_delivery_at TEXT, last_fetch_at INTEGER DEFAULT 0,"
+            "deliveries INTEGER DEFAULT 0, rejected INTEGER DEFAULT 0)")
+    return conn
+
+
+def discover(topic: str) -> tuple[str | None, str]:
+    """Return (hub, self-url). Headers win over markup: cheaper and authoritative."""
+    out = subprocess.run(
+        ["curl", "-sS", "-m", "25", "-A", UA, "-L", "--max-redirs", "3", "-D", "-", topic],
+        capture_output=True, text=True, timeout=60).stdout
+    head, _, body = out.partition("\r\n\r\n")
+    if not body:
+        head, _, body = out.partition("\n\n")
+    hub = self_url = None
+    for m in re.finditer(r'(?im)^link:\s*(.+)$', head):
+        for part in m.group(1).split(","):
+            href = re.search(r'<([^>]+)>', part)
+            rel = re.search(r'rel\s*=\s*"?([^";]+)', part)
+            if not (href and rel):
+                continue
+            rels = rel.group(1).lower().split()
+            if "hub" in rels and not hub:
+                hub = urllib.parse.urljoin(topic, href.group(1))
+            if "self" in rels and not self_url:
+                self_url = urllib.parse.urljoin(topic, href.group(1))
+    if not hub:
+        for m in re.finditer(r'<link\b[^>]*>', body[:200_000], re.I):
+            tag = m.group(0)
+            rel = (re.search(r'rel=["\']([^"\']+)', tag, re.I) or [None, ""])[1].lower()
+            href = (re.search(r'href=["\']([^"\']+)', tag, re.I) or [None, ""])[1]
+            if href and "hub" in rel.split():
+                hub = urllib.parse.urljoin(topic, href)
+                break
+    return hub, (self_url or topic)
+
+
+def subscribe(topic, hub, lease, quiet=False):
+    found, self_url = discover(topic)
+    hub = hub or found
+    if not hub:
+        report = {
+            "topic": topic, "hub": None,
+            "result": "no hub advertised",
+            "detail": ("This publisher does not offer push. Fall to the next rung: "
+                       "a feed with stable item ids, or a sitemap lastmod delta. "
+                       "Do not poll the page."),
+        }
+        if not quiet:
+            print(json.dumps(report, indent=2))
+        return 1
+
+    token = secrets.token_hex(16)
+    secret = secrets.token_hex(32)
+    callback = f"{ORIGIN}/websub/{token}"
+
+    # The row must exist before the hub verifies, because verification arrives
+    # within milliseconds and is refused if the callback is unknown.
+    conn = db(write=True)
+    conn.execute("INSERT INTO subscriptions(token,topic,hub,secret,state,created_at) "
+                 "VALUES(?,?,?,?, 'pending', datetime('now'))",
+                 (token, self_url, hub, secret))
+    conn.commit()
+
+    form = urllib.parse.urlencode({
+        "hub.callback": callback,
+        "hub.mode": "subscribe",
+        "hub.topic": self_url,
+        "hub.secret": secret,
+        "hub.lease_seconds": str(lease),
+    })
+    proc = subprocess.run(
+        ["curl", "-sS", "-m", "30", "-A", UA, "-o", "/dev/null", "-w", "%{http_code}",
+         "-X", "POST", hub, "-H", "Content-Type: application/x-www-form-urlencoded",
+         "-d", form], capture_output=True, text=True, timeout=60)
+    code = proc.stdout.strip()
+    accepted = code in ("202", "204", "200")
+    if not accepted:
+        conn.execute("UPDATE subscriptions SET state='refused' WHERE token=?", (token,))
+        conn.commit()
+    row = conn.execute("SELECT state FROM subscriptions WHERE token=?", (token,)).fetchone()
+    conn.close()
+    report = {
+        "topic": self_url, "hub": hub, "callback": callback,
+        "hub_response": code, "state": row["state"] if row else "?",
+        "note": ("202 means the hub accepted the request, not that it verified. "
+                 "It will GET the callback with a challenge; the row becomes active "
+                 "only when that arrives and its hub.topic matches exactly."),
+    }
+    if not quiet:
+        print(json.dumps(report, indent=2))
+    return 0 if accepted else 1
+
+
+
+def reconcile(window: int = 3600) -> int:
+    """Renew subscriptions before their lease runs out.
+
+    A WebSub lease is finite and the hub simply stops delivering when it ends.
+    Nothing announces that: the topic goes quiet and looks like a source with no
+    news, which is the worst possible failure because it is indistinguishable
+    from success. Renewal is a subscribe with the same topic and a fresh secret,
+    sent while the old lease is still live.
+
+    Run this on a timer well inside the shortest lease you hold."""
+    conn = db(write=True)
+    now = int(subprocess.run(["date", "+%s"], capture_output=True, text=True).stdout.strip())
+    rows = conn.execute(
+        "SELECT token, topic, hub, state, lease_expires FROM subscriptions "
+        "WHERE state IN ('active','pending') AND lease_expires > 0 "
+        "AND lease_expires - ? < ?", (now, window)).fetchall()
+    expired = conn.execute(
+        "SELECT token FROM subscriptions WHERE state='active' AND lease_expires > 0 "
+        "AND lease_expires <= ?", (now,)).fetchall()
+    for r in expired:
+        conn.execute("UPDATE subscriptions SET state='expired' WHERE token=?", (r["token"],))
+    conn.commit()
+    conn.close()
+
+    renewed = []
+    for r in rows:
+        # Re-subscribing mints a new callback and secret rather than reusing the
+        # old ones: a lease boundary is the natural place to rotate, and the old
+        # callback stops being useful to anyone who learned it.
+        rc = subscribe(r["topic"], r["hub"], 86400, quiet=True)
+        renewed.append({"topic": r["topic"], "renewed": rc == 0})
+    print(json.dumps({
+        "checked_at": now, "renewal_window_seconds": window,
+        "expired_marked": len(expired), "renewed": renewed,
+        "note": ("A lease that lapses is silent, not loud: the topic simply stops "
+                 "delivering and reads as a quiet source."),
+    }, indent=2))
+    return 0
+
+
+def main(argv: list[str]) -> int:
+    if not argv:
+        print(__doc__.strip(), file=sys.stderr)
+        return 2
+    cmd = argv[0]
+    if cmd == "discover" and len(argv) > 1:
+        hub, self_url = discover(argv[1])
+        print(json.dumps({"topic": argv[1], "self": self_url, "hub": hub,
+                          "pushable": bool(hub)}, indent=2))
+        return 0
+    if cmd == "subscribe" and len(argv) > 1:
+        hub = None
+        lease = 86400
+        if "--hub" in argv:
+            hub = argv[argv.index("--hub") + 1]
+        if "--lease" in argv:
+            lease = int(argv[argv.index("--lease") + 1])
+        return subscribe(argv[1], hub, lease)
+    if cmd == "reconcile":
+        window = int(argv[argv.index("--window") + 1]) if "--window" in argv else 3600
+        return reconcile(window)
+    if cmd == "list":
+        conn = db()
+        rows = [dict(r) for r in conn.execute(
+            "SELECT token, topic, hub, state, deliveries, rejected,"
+            " last_delivery_at, lease_expires FROM subscriptions ORDER BY created_at DESC")]
+        conn.close()
+        for r in rows:
+            r.pop("secret", None)
+        print(json.dumps(rows, indent=2))
+        return 0
+    if cmd == "unsubscribe" and len(argv) > 1:
+        conn = db(write=True)
+        conn.execute("UPDATE subscriptions SET state='unsubscribed' WHERE token=?", (argv[1],))
+        conn.commit()
+        conn.close()
+        print("marked unsubscribed; the hub is told at the next reconcile")
+        return 0
+    print(__doc__.strip(), file=sys.stderr)
+    return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

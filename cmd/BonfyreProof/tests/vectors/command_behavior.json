@@ -1,0 +1,5 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-proof","binary_env":"BONFYRE_PROOF_BIN","cases":[
+{"name":"proof scores a real brief against its source and bundles it","files":{"t.txt":"Speaker 1: Um, so we, we need to fix the the website by Friday.\nSpeaker 2: Okay. The checkout page is broken and customers cannot pay.\nSpeaker 1: Right, uh, and we should also update the pricing page.\n"},"steps":[{"program":"${root}/cmd/BonfyreBrief/bonfyre-brief","argv":["t.txt","bout","--title","Demo"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"argv":["full","bout","pout"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["Score: 100/100 (pass)","grounded in source: 4","Recommendation: approve"],"present":["${tmp}/pout/proof-bundle.json","${tmp}/pout/deliverable.md","${tmp}/pout/transcript.txt"]},
+ {"program":"cat","argv":["pout/proof-bundle.json"],"at":{"qualityStatus":"pass","recommendation":"approve","qualityScore":100}}]},
+{"name":"proof refuses a directory with no brief","steps":[{"argv":["full","empty","pout"],"env":{"HOME":"${tmp}"},"exit_nonzero":true,"absent":["${tmp}/pout/proof-bundle.json"]}]}]}

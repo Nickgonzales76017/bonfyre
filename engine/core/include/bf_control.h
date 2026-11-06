@@ -4,7 +4,7 @@
 /*
  * Control-plane primitives absorbed from the Run 6 postmortem.
  *
- * These are the semantics the Python reference in 10-Code/BonfyreControlPlane
+ * These are the semantics the Python reference in components/BonfyreControlPlane
  * pinned down, ported to the kernel. The reference stays as a conformance
  * oracle; this is the authority. Specifications live under schemas/control as
  * YaFF, and the replay vectors under tests/conformance/control.
@@ -111,9 +111,9 @@ typedef struct BfAdmissionDecision {
     char reason[192];
 } BfAdmissionDecision;
 
-BfAdmissionDecision bf_admission_decide(const BfAdmissionRequest *request,
-                                        const BfAdmissionPolicy *policy);
-const char *bf_admission_verdict_name(BfAdmissionVerdict verdict);
+BfAdmissionDecision bf_control_admission_decide(const BfAdmissionRequest *request,
+                                                const BfAdmissionPolicy *policy);
+const char *bf_control_admission_verdict_name(BfAdmissionVerdict verdict);
 
 /* ----------------------------------------------------------------- attention
  *

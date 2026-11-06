@@ -1,0 +1,12 @@
+{
+  "schema": "bonfyre-commerce-observation-routing.v1",
+  "cannot_infer": "a planned route is not permission to call a provider, a fresh result, a product match, or an external commercial effect",
+  "routes": [
+    {"intent":"product.resolve","requires":["product.resolve"],"prefer":["woocommerce-store-api","shopify-ajax","keepa","ebay-browse","open-prices"]},
+    {"intent":"offer.observe","requires":["offer.observe"],"prefer":["woocommerce-store-api","shopify-ajax","ebay-browse","keepa"]},
+    {"intent":"price.current","requires":["price.observe"],"prefer":["woocommerce-store-api","shopify-ajax","ebay-browse","open-prices","keepa"]},
+    {"intent":"price.history","requires":["price.history"],"prefer":["keepa","open-prices"]},
+    {"intent":"availability.observe","requires":["availability.observe"],"prefer":["woocommerce-store-api","shopify-ajax","ebay-browse","keepa"]},
+    {"intent":"merchant.discover","requires":["merchant.discover"],"prefer":["sovrn-commerce","rakuten-product-search","comparison-api","affiliate-feed"]}
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "at": "2026-10-08T21:43:45.897Z",
+  "origin": "http://127.0.0.1:60004",
+  "checks": [
+    "Service offer appears",
+    "Published page has no preview notice",
+    "Samples identify their source and status",
+    "Primary action opens the brief",
+    "No horizontal overflow at 390",
+    "No horizontal overflow at 320",
+    "All four work samples linked",
+    "Sample opens /red3-planner/",
+    "Sample opens /catalogue/",
+    "Sample opens /archive/",
+    "Sample opens /wix-review/",
+    "Empty brief stays unsent",
+    "Generated worker retains the brief once",
+    "Brief includes task, tools and timing",
+    "Failed server request prepares the complete email fallback",
+    "Failed request does not show server acceptance",
+    "No page errors"
+  ],
+  "errors": [],
+  "writes": [
+    {
+      "url": "http://127.0.0.1:60004/api/lead",
+      "body": "{\"form\":\"work-request\",\"page\":\"/\",\"company_website\":\"\",\"fields\":[{\"label\":\"Your name\",\"value\":\"Aurekai verification only\"},{\"label\":\"Email\",\"value\":\"verification@example.invalid\"},{\"label\":\"What needs to work?\",\"value\":\"Synthetic test of the project brief. No customer request.\"},{\"label\":\"Current tools or public URL\",\"value\":\"Sample catalogue\"},{\"label\":\"Deadline or timing\",\"value\":\"Test only\"}]}"
+    },
+    {
+      "url": "http://127.0.0.1:60004/api/lead",
+      "body": "{\"form\":\"work-request\",\"page\":\"/\",\"company_website\":\"\",\"fields\":[{\"label\":\"Your name\",\"value\":\"Aurekai verification only\"},{\"label\":\"Email\",\"value\":\"verification@example.invalid\"},{\"label\":\"What needs to work?\",\"value\":\"Synthetic test of the project brief. No customer request.\"},{\"label\":\"Current tools or public URL\",\"value\":\"Sample catalogue\"},{\"label\":\"Deadline or timing\",\"value\":\"Test only\"}]}"
+    }
+  ],
+  "retainedLocalLeads": [
+    "lead:2026-10-08T21:43:44.286Z:f8e5dfe0-4b6b-4c1f-8d42-1e6e46d8595a"
+  ]
+}

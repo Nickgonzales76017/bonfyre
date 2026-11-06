@@ -1,0 +1,182 @@
+pack federation-ring1-semantic-execution
+generation control-1
+provenance current-source sweep and witness execution, 2026-08-26
+authority measured
+note RING 1 run under the corrected search order: current source, then current witness, then architecture record, then runtime exercise, and only then the canonical estate. The canonical estate was not consulted for any binding below. Three of six identities are real, three are not what the architecture registry says they are.
+
+federation_ring ring1
+  target ExecutionFrame, SemanticProgramIR, SemanticSlice, SemanticConstraintNetwork, StandingAddress, DecisionSnapshot
+  current_source components/BonfyreControlPlane/
+  witness_result 15 passed in 0.08s
+  witness_command archived Python reference; native replacement is zig build test-semantic-operator plus engine/core semantic_derivation_test
+  witness_runtime python 3.9.6, the host default
+  measured_at 2026-08-26
+  present 3 of 6
+  absent 3 of 6
+  note the 15-test result matches the historical M2 fabric count; today's run independently confirms it in current source
+
+binding bnd:semantic-program-ir
+  claim_id clm:ring1-semantic-execution
+  semantic_identity SemanticProgramIR
+  registry_kind current-source
+  relation IMPLEMENTS
+  design_record semantic-derivation
+  source_path components/BonfyreControlPlane/semantic_derivation.py.archive
+  also_referenced components/BonfyreControlPlane/semantic_operator.py.archive
+  witness_path components/BonfyreControlPlane/tests/test_semantic_derivation.py.archive
+  verification_state VERIFIED_BY_MEASUREMENT
+  authority REFERENCE_ONLY
+  fields program_id, operator, reads, writes, constraints
+  behaviour a content digest over identity, operator, sorted reads, sorted writes and constraints
+  gap no frame field of any kind
+  observed_at 2026-08-26
+
+binding bnd:semantic-slice
+  claim_id clm:ring1-semantic-execution
+  semantic_identity SemanticSlice
+  registry_kind current-source
+  relation IMPLEMENTS
+  design_record semantic-derivation
+  source_path components/BonfyreControlPlane/semantic_derivation.py.archive
+  witness_path components/BonfyreControlPlane/tests/test_semantic_derivation.py.archive
+  verification_state VERIFIED_BY_MEASUREMENT
+  authority REFERENCE_ONLY
+  observed_at 2026-08-26
+
+binding bnd:decision-snapshot
+  claim_id clm:ring1-semantic-execution
+  semantic_identity DecisionSnapshot
+  registry_kind current-source
+  relation IMPLEMENTS
+  design_record semantic-derivation
+  source_path components/BonfyreControlPlane/semantic_derivation.py.archive
+  witness_path components/BonfyreControlPlane/tests/test_semantic_derivation.py.archive
+  verification_state VERIFIED_BY_MEASUREMENT
+  authority REFERENCE_ONLY
+  fields program_id, admitted, hard_failures, learned_signals, read_closure_digest
+  behaviour separates hard constraint failures from learned signals and emits a read-closure digest
+  gap no frame association
+  observed_at 2026-08-26
+
+absence abs:semantic-constraint-network
+  semantic_identity SemanticConstraintNetwork
+  state ABSENT_FROM_CURRENT_SOURCE
+  searched components/BonfyreControlPlane/, all Python
+  found nothing by that name anywhere in current source
+  nearest ConstraintIR with four fields: constraint_id, hard, satisfied, source_ref
+  design_claim the semantic-derivation architecture record declares ownership of SemanticConstraintNetwork
+  design_maturity that record is marked maturity implemented
+  verdict the architecture registry claims a richer implementation than landed
+  resolution of the three possibilities considered, the third holds: not present elsewhere, not an implicit projection with matching semantics, simply overstated
+  correct_relation the current machinery is a semantic predecessor, not an implementation
+  action revise the design record's ownership claim rather than build to match it
+  severity medium; a record marked implemented is load-bearing for anything that trusts atlas maturity
+
+absence abs:standing-address
+  semantic_identity StandingAddress
+  state ABSENT_FROM_CURRENT_SOURCE
+  searched components/BonfyreControlPlane/, all Python
+  historical_claim an M2 ledger assigned AddressPlane, Closure and StandingAddress to address_plane.py as REUSE_AS_IS
+  found address_plane.py contains BitRegistry, authority_have_mask, authority_need_mask, capability_mask, eligible, proof_ternary, is_blackholed, cid_prefix, PrefixRoute, route_cid, RouteDemand, RouteResult and route
+  characterization authority and capability bitmask admission plus content-identifier routing
+  not_found no Address, AddressSet, AddressQuery, AddressClosure or StandingAddress type; no live membership maintained against a FactDelta
+  verdict the historical REUSE_AS_IS claim overstates what is there
+  behavioral_test_required create a standing address, observe membership, apply a relevant delta and observe the change, then apply an irrelevant delta and prove membership untouched
+  note a name mismatch would have been acceptable; the absent thing is the behavior, not the name
+
+absence abs:execution-frame
+  semantic_identity ExecutionFrame
+  state ABSENT_FROM_CURRENT_SOURCE
+  name_collision PhysicalExecutionFrame exists in components/BonfyreControlPlane/physical_derivation.py
+  collision_detail its fields are revision, repository path, environment variables, capability and resource weather
+  collision_verdict a physical and toolchain coordinate, not the institutional coordinate
+  design_definition institution, actor, world, causal frontier, authority, information scope
+  overlap none of the six design dimensions appears in the physical frame
+  consequence the intended derivation key cannot currently include an execution frame, because neither SemanticProgramIR nor DecisionSnapshot carries one
+  inference_ceiling_case a filename or symbol match that is not a semantic match; exactly the class the admission rule was written for
+  predecessor_search_pending authority.py, execution_environment.py and any world or frontier fields elsewhere in current source
+  verdict likely WRAP_ADAPTER over existing coordinates rather than a new owner, pending that search
+
+structural_finding sf:two-bitmap-implementations
+  finding two independent bitmap admission implementations exist and appear unaware of each other
+  implementation_a canonical estate scaling_substrate/hot_index.py with SparseBitmap, ExecutableClosureIndex and a native ROBDD, 3 checks passing
+  implementation_b current source address_plane.py with BitRegistry and authority/capability masks, exercised by its own tests
+  significance the exact-filter stage of the optimization cascade has two physical candidates and no binding between them
+  action the semantic query optimizer's physical plan catalog should carry both, measured, before either is treated as the implementation
+
+validator_census vc:canonical-tools
+  registry canonical-executable
+  total 17
+  safety all 17 read-only; no network calls, no writes, no deletions
+  runtime python 3.12.13
+  pass 6
+  blocked 11
+  pass_list board_optimization, manifest, optimized_machine, scaling_substrate, second_order_machine, semantic_aware_optimization
+  blocked_cause ModuleNotFoundError: No module named 'yaml'
+  blocked_scope no interpreter on this host has PyYAML; checked 3.9.6, 3.11.15 and 3.12.13
+  blocked_verdict a missing dependency, not a fault in the validators or the machinery they cover
+  ladder_localization capability YES, body YES, host dependency NO
+  correction an earlier estimate of 25 validators was wrong; the TOOLS directory holds 17 validators plus build scripts
+  note board_optimization, optimized_machine, second_order_machine and semantic_aware_optimization all pass and cover machinery nothing in the live atlas references
+
+runtime_finding rf:no-single-interpreter
+  finding no interpreter on this host can run the whole estate
+  detail 3.9.6 has pytest and runs the current-source witnesses; it cannot run the scaling substrates, which need int.bit_count from 3.10
+  detail 3.12.13 runs the scaling substrates; it lacks pytest
+  detail no interpreter has PyYAML, which 11 canonical validators require
+  consequence any single-interpreter verification sweep produces a false picture of the machine
+  action interpreter and dependency set are properties of an executable identity and belong in its binding and in ProjectPassport
+
+resolution res:execution-frame-predecessors
+  targets abs:execution-frame
+  measured 2026-08-26
+  method dimension-by-dimension search of current source for owners, by type and by behavior
+  verdict WRAP_ADAPTER for four of six dimensions; two are genuinely absent
+  supersedes the earlier verdict of ABSENT, which was true of the name and misleading about the parts
+
+dimension dim:institution
+  state PRESENT
+  owner components/BonfyreControlPlane/shadow_institution.py
+dimension dim:actor
+  state PRESENT
+  owner components/BonfyreControlPlane/actors.py
+  detail class Actor
+dimension dim:authority
+  state PRESENT
+  owner components/BonfyreControlPlane/authority.py
+  detail AuthorityEdge with grant, revoke, delegate and has_authority
+dimension dim:causal-frontier
+  state PRESENT
+  owner components/BonfyreControlPlane/semantic_derivation.py.archive
+  detail carried as a field on FactDelta alongside a HybridLogicalClock type
+  note not a standalone type; the coordinate exists on the change object rather than on a frame
+dimension dim:world
+  state ABSENT
+  searched world, shadow, live, replay, simulated, counterfactual
+  found only a comment using the phrase world-expansion in resource_activation.py
+  consequence copy-on-write semantic worlds have no current-source representation
+dimension dim:information-scope
+  state ABSENT
+  searched information_scope, information policy, visibility, disclosure, declassification
+  found nothing
+  consequence information flow cannot currently be part of any derivation key or admission decision
+
+finding fnd:execution-environment-is-not-a-frame
+  claim execution_environment.py is not an ExecutionFrame predecessor
+  evidence its surface is resolve_runtime, probe_runtime, probe_venv, dotenv_disposition and sanitize_text
+  characterization runtime and toolchain probing
+  correct_home ProjectPassport
+  pattern the second name-shaped false lead in RING 1, after PhysicalExecutionFrame
+
+method_correction mc:false-negative-grep
+  claim an earlier search in this pass reported no HLC in current source
+  cause the shell pattern was mis-escaped, so the search silently matched nothing
+  found HybridLogicalClock was a real class in semantic_derivation.py.archive and FactDelta carried both hlc and causal_frontier
+  failure_class a tool error producing a confident absence claim, which is the same shape as an inference from a name
+  standing_rule an absence result from a search is only as strong as the search; confirm an absence by a second method before recording it
+
+disposition ExecutionFrame
+  action do not write a new module
+  action bind the four present dimensions as a small immutable packed value
+  action treat world and information scope as the two real gaps
+  blocking_for the intended derivation key, which cannot include a frame while SemanticProgramIR and DecisionSnapshot carry none

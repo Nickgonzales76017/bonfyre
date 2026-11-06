@@ -1,6 +1,7 @@
 /*
  * test_bonfyre.c — tests for libbonfyre runtime library.
  */
+#include <stdint.h>
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -191,7 +192,7 @@ TEST(json_int) {
 }
 
 TEST(operator_registry_count) {
-    assert(BF_OPERATOR_COUNT == 47);
+    assert(BF_OPERATOR_COUNT == 53);
 }
 
 TEST(operator_find) {

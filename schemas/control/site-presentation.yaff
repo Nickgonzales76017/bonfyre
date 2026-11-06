@@ -1,0 +1,381 @@
+schema SitePresentation
+generation site-presentation-1
+authority CMS + SurfaceIR + AddressPlane + InformationPolicy
+
+field site_id
+  type text
+  required true
+  role stable-site-identity
+
+field host
+  type text
+  required true
+  role addressed-host
+
+field subject_address
+  type text
+  required true
+  role semantic-subject-reference
+
+field profile
+  type text
+  required true
+  role observed-ghost-profile-reference
+
+field territory
+  type enum
+  values life live shop work
+  required true
+
+field navigation
+  type json
+  required true
+  role presentation-navigation-only
+
+field status
+  type enum
+  values draft published retired
+  required true
+
+invariant profile-is-presentation-only
+  statement changing profile changes only visual composition and slot geometry; it never changes host identity, subject truth, source admission, rights, authority or effects
+
+invariant host-is-addressed
+  statement host resolves through AddressPlane and cannot be selected from browser state or a caller-provided actor coordinate
+
+forbidden_inference SitePresentation profile -> Ghost code, donor backend, source admission, material truth, audience entitlement or authority
+forbidden_inference SitePresentation host -> ownership of every subject or source shown there
+
+schema SemanticSlot
+generation site-presentation-1
+authority CMS + SurfaceIR
+
+field slot_id
+  type text
+  required true
+  role stable-slot-identity
+
+field site_id
+  type text
+  required true
+  role parent-site-reference
+
+field slot_name
+  type enum
+  values hero lead feature secondary ticker rail gallery body sidebar footer_feature
+  required true
+
+field ordinal
+  type u64
+  required true
+
+field extent
+  type enum
+  values chip card section page workspace immersive
+  required true
+
+field accepts
+  type set[text]
+  required true
+  role typed-material-or-application-acceptance
+
+field min_material_quality
+  type enum
+  values any standard high
+  required true
+
+field max_items
+  type u64
+  required true
+
+field htmx_boundary
+  type text
+  role native-fragment-boundary
+
+field status
+  type enum
+  values draft published retired
+  required true
+
+invariant slot-never-names-a-source
+  statement a slot accepts typed material or an application, not raw external source IDs, protocol names or execution chains
+
+invariant slot-is-not-an-owner
+  statement a slot chooses extent and placement only; it cannot grant disclosure, authority, spend, effect or provider admission
+
+forbidden_inference SemanticSlot accepts Article -> an Article exists or is lawful to publish
+forbidden_inference SemanticSlot accepts Watch -> a video or media right exists
+
+schema SourceCollection
+generation site-presentation-1
+authority CMS + PackGraph + ForeignTwin
+
+field collection_id
+  type text
+  required true
+  role stable-editorial-reagent-group
+
+field subject_address
+  type text
+  required true
+  role scoped-world-or-topic
+
+field source_selector
+  type json
+  required true
+  role observed-source-selection-only
+
+field material_kind
+  type set[text]
+  required true
+  role typed-material-output
+
+field refresh_policy
+  type text
+  required true
+  role ResourceWeather-demand-reference
+
+field status
+  type enum
+  values draft published retired
+  required true
+
+invariant collection-is-not-content
+  statement a collection groups observed source candidates for a typed material compiler; it is not itself a public feed, post, event or provider
+
+forbidden_inference SourceCollection selector -> source freshness, rights, body retention, publication permission or material truth
+
+schema ApplicationBinding
+generation site-presentation-1
+authority CMS + SurfaceIR + InformationPolicy
+
+field binding_id
+  type text
+  required true
+  role stable-composition-identity
+
+field site_id
+  type text
+  required true
+
+field slot_id
+  type text
+  required true
+
+field application_kind
+  type enum
+  values PublicationFeed Newsroom Article Gallery Watch Listen Podcast Thread Community Board LiveEvent Calendar Scoreboard Standings Ticker MarketTape QuoteBook Product Marketplace Checkout Ticketing Map Route Property HousingSearch Restaurant Reservation Ride Shipment Tracking Weather Incident Alert ResearchPaper Dataset Experiment Repository IssueTracker BuildStatus Documentation SupportCase ServiceRequest Grant FundingOpportunity Job Applicant Course Lesson Quiz ProviderDirectory Appointment Policy Claim Portfolio Asset Vehicle Maintenance Facility UtilityStatus
+  required true
+
+field material_query
+  type json
+  required true
+  role typed-owner-query
+
+field source_collection
+  type text
+  role optional-reagent-input
+
+field action_aperture
+  type text
+  role native-effect-reference
+
+field continuity_key
+  type text
+  role playback-or-interaction-continuity-reference
+
+field status
+  type enum
+  values draft published retired
+  required true
+
+invariant application-is-not-a-source-renderer
+  statement application_kind defines interaction physics over typed material; raw source names, protocol labels and chain labels are never human application names
+
+invariant effect-remains-native
+  statement an action_aperture names a native owner gate and cannot itself authorize a mutation, payment, booking, publication or spend
+
+forbidden_inference ApplicationBinding action_aperture -> actor authority, payment authority, provider admission or completed effect
+forbidden_inference ApplicationBinding source_collection -> a source record is content
+
+schema CapabilityProgram
+generation site-presentation-1
+authority CapabilityClosure + AuthorityGraph + CommitmentGraph + EvidenceGraph
+
+field program_id
+  type text
+  required true
+  role executable-capability-identity
+
+field application_kind
+  type text
+  required true
+
+field action
+  type text
+  required true
+
+field consumes
+  type set[text]
+  required true
+
+field produces
+  type set[text]
+  required true
+
+field carrier_candidates
+  type set[text]
+  required true
+
+field capability_requirements
+  type set[text]
+  required true
+
+field authority_requirement
+  type text
+  required true
+
+field transition_conditions
+  type json
+  required true
+
+field failure_projection
+  type text
+  required true
+
+field status
+  type enum
+  values draft published retired
+  required true
+
+invariant carrier-is-subprogram
+  statement MCP, Beckn, x402, OpenAPI and other carriers are selected only beneath a typed human action; none is an application identity or visible catalogue item
+
+invariant capability-does-not-commit
+  statement a resolved capability is an eligible execution phenotype and never a completed purchase, booking, payment, publication or transfer
+
+forbidden_inference CapabilityProgram carrier_candidates -> runnable provider, price, credential, authority, spend approval or settlement
+
+schema ExperienceStage
+generation site-presentation-1
+authority SurfaceIR + CapabilityClosure + AuthorityGraph
+
+field stage_id
+  type text
+  required true
+
+field experience
+  type text
+  required true
+
+field application_kind
+  type text
+  required true
+
+field consumes
+  type set[text]
+  required true
+
+field produces
+  type set[text]
+  required true
+
+field material_queries
+  type json
+  required true
+
+field renderer
+  type text
+  required true
+
+field extent
+  type enum
+  values chip card section page workspace immersive
+  required true
+
+field actions
+  type set[text]
+  required true
+
+field next_stage_rules
+  type json
+  required true
+
+field empty_projection
+  type text
+  required true
+
+field refused_projection
+  type text
+  required true
+
+field status
+  type enum
+  values draft published retired
+  required true
+
+schema SiteProgram
+generation site-presentation-1
+authority CMS + SurfaceIR + SitePresentation + InformationPolicy + CapabilityClosure
+
+field program_id
+  type text
+  required true
+  role stable-site-program-identity
+
+field site_id
+  type text
+  required true
+  role SitePresentation-reference
+
+field experience_programs
+  type set[text]
+  required true
+  role human-purpose-reference
+
+field application_bindings
+  type set[text]
+  required true
+  role typed-application-reference
+
+field renderer_preferences
+  type json
+  required true
+  role portable-interaction-renderer-tournament-input
+
+field source_collections
+  type set[text]
+  required true
+  role reagent-collection-reference
+
+field capability_programs
+  type set[text]
+  required true
+  role carrier-subprogram-reference
+
+field actor_presentations
+  type json
+  required true
+  role presentation-class-variation-only
+
+field status
+  type enum
+  values draft published retired
+  required true
+
+invariant program-does-not-duplicate-site-identity
+  statement subject, territory and Ghost profile resolve through SitePresentation; SiteProgram composes them and may not restate or override them
+
+invariant program-requires-typed-application-edges
+  statement each referenced application binding must name a typed ApplicationKind and each executable action remains behind its named native aperture
+
+invariant renderer-is-portable
+  statement renderer preferences choose interaction behavior only; a Pixelfed, Mobilizon, Lemmy, Zulip, Pinry, MapLibre, commerce or work grammar is never bound to one route or semantic owner
+
+forbidden_inference SiteProgram renderer preference -> material existence, actor identity, authority, provider admission, payment, spend or effect
+forbidden_inference SiteProgram source collection -> content, source rights, freshness or publication permission
+
+invariant stage-needs-a-real-application
+  statement each published stage names a typed application and material or capability transition; a prose chain token cannot be a stage
+
+forbidden_inference ExperienceStage action -> authority, provider admission, payment authority or a completed effect

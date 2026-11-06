@@ -1,0 +1,23 @@
+{
+  "at": "2026-10-08T21:48:07.091Z",
+  "origin": "https://aurekai-work-samples.pages.dev",
+  "checks": [
+    "Service offer appears",
+    "Published page has no preview notice",
+    "Samples identify their source and status",
+    "Primary action opens the brief",
+    "No horizontal overflow at 390",
+    "No horizontal overflow at 320",
+    "All four work samples linked",
+    "Sample opens /red3-planner/",
+    "Sample opens /catalogue/",
+    "Sample opens /archive/",
+    "Sample opens /wix-review/",
+    "Empty brief stays unsent",
+    "No page errors",
+    "Live checks do not submit test requests"
+  ],
+  "errors": [],
+  "writes": [],
+  "retainedLocalLeads": []
+}

@@ -1,0 +1,63 @@
+#!/usr/bin/env python3
+"""Compile every retained public credited-name coordinate into static keys.
+
+`/people` is an evidence directory, not an identity resolver. Each exact
+profile is addressed by the pair (printed name, asserting source); a legacy
+name-only coordinate is separately materialized as a source chooser. Static
+R2 has no database to answer those query coordinates, so this is the finite,
+read-only closure the edge is allowed to serve.
+"""
+import argparse
+import hashlib
+import sqlite3
+from pathlib import Path
+from urllib.parse import quote
+
+def encoded(value):
+    """Match JavaScript encodeURIComponent for a canonical public query."""
+    return quote(value, safe="-_.!~*'()")
+
+
+def coordinate(who, source=None):
+    query = "who=" + encoded(who)
+    if source is not None:
+        query += "&source=" + encoded(source)
+    # Human names are Unicode and APFS is normalization/case-insensitive by
+    # default. Even two distinct percent-encoded semantic queries can collide
+    # as filesystem leaves. The query stays the public coordinate; its stable
+    # digest is the carrier-safe material key on every filesystem and R2.
+    key = "people/__q/h/" + hashlib.sha256(query.encode("ascii")).hexdigest() + ".html"
+    return "/people?" + query, key
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--archive", required=True, help="items.db to read without mutation")
+    parser.add_argument("--null", action="store_true",
+                        help="write path/key fields as NUL-delimited pairs for xargs -0")
+    args = parser.parse_args()
+    archive = Path(args.archive)
+    if not archive.is_file():
+        parser.error("--archive must be an existing items.db")
+    with sqlite3.connect(f"file:{archive}?mode=ro", uri=True) as db:
+        names = db.execute(
+            "SELECT DISTINCT by FROM item WHERE COALESCE(by,'')<>'' ORDER BY by")
+        observations = db.execute(
+            "SELECT source, by FROM item WHERE COALESCE(source,'')<>'' AND COALESCE(by,'')<>'' "
+            "GROUP BY source, by ORDER BY source, by")
+        for (who,) in names:
+            path, key = coordinate(who)
+            if args.null:
+                print(path, key, sep="\0", end="\0")
+            else:
+                print(f"{path}\t{key}")
+        for source, who in observations:
+            path, key = coordinate(who, source)
+            if args.null:
+                print(path, key, sep="\0", end="\0")
+            else:
+                print(f"{path}\t{key}")
+
+
+if __name__ == "__main__":
+    main()

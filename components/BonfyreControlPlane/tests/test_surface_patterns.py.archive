@@ -1,0 +1,202 @@
+"""Hold the clone surfaces to section 68: SurfacePatterns are compiled views.
+
+A pattern declares four things, and every one of them is checkable:
+
+    the owner it reads      exactly one -- a CMS type or a native organ
+    the extent              page | workspace | section | card | chip
+    the action layer        only a page or a workspace carries one
+    the authority           what that layer demands at effect time
+
+and records its lineage, which is what turns "only the look was borrowed" from
+a slogan into a claim somebody can check against a licence directory and a
+commit.
+
+These are file tests over the descriptors plus one network test over the live
+catalogue. They skip rather than pass when the deployment is unreachable.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import socket
+import sys
+import urllib.error
+import urllib.request
+
+import pytest
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.dirname(os.path.dirname(os.path.dirname(_HERE)))
+SURFACES = os.path.join(REPO, "site", "matrix", "surfaces")
+LICENCES = os.path.join(REPO, "site", "matrix", "DONOR-LICENSES")
+TIMEOUT = 20
+
+# The extents a pattern may render at, smallest to largest. The split is the
+# whole point: the first three are references to a surface, the last two are
+# the surface.
+EXTENTS = ("chip", "card", "section", "page", "workspace")
+ACTING_EXTENTS = ("page", "workspace")
+
+def _declared(path: str):
+    with open(path) as fh:
+        doc = json.load(fh)
+    return doc if doc.get("version") == "bonfyre-surface-pattern-v1" else None
+
+
+def _all():
+    out = {}
+    for f in sorted(os.listdir(SURFACES)):
+        if not f.endswith(".json"):
+            continue
+        doc = _declared(os.path.join(SURFACES, f))
+        if doc:
+            out[os.path.splitext(f)[0]] = doc
+    return out
+
+
+DECLS = _all()
+
+
+def test_there_are_declared_patterns_at_all():
+    assert DECLS, "no surface declares itself a pattern; section 68 is unenforced"
+
+
+@pytest.mark.parametrize("name", sorted(DECLS))
+def test_a_pattern_reads_exactly_one_owner(name):
+    # "A pattern reading both would be two patterns sharing a name, whose human
+    # and machine projections could diverge with nothing noticing."
+    d = DECLS[name]
+    owner = d.get("owner")
+    assert owner, f"{name} does not say what it reads"
+    assert owner.get("kind") in ("type", "organ"), owner
+    assert owner.get("name"), f"{name} names no owner"
+    assert "reads_type" not in d, f"{name} still carries a second owner"
+
+
+@pytest.mark.parametrize("name", sorted(DECLS))
+def test_a_pattern_declares_an_extent_from_the_vocabulary(name):
+    d = DECLS[name]
+    assert d.get("extent") in EXTENTS, (name, d.get("extent"))
+
+
+@pytest.mark.parametrize("name", sorted(DECLS))
+def test_extent_decides_the_action_layer(name):
+    # "Only a page or a workspace carries one; a chip, card or section is a
+    # reference to a surface, and there is no room to act inside a reference."
+    d = DECLS[name]
+    # Extent permits an action layer; it does not compel one. A workspace that
+    # composes and never commits is a legitimate read-only workspace -- /packs
+    # shows what behaviour is running and changing it is an authoring act. What
+    # the rule forbids is the other direction: a reference that acts.
+    carries = d["extent"] in ACTING_EXTENTS
+    if not carries:
+        assert d.get("carries_action_layer") is False, (name, d["extent"])
+    if not d.get("carries_action_layer"):
+        assert not d.get("action_layer"), (
+            f"{name} carries no action layer and still declares "
+            f"{d.get('action_layer')}")
+    if not carries:
+        assert not d.get("action_layer"), (
+            f"{name} renders at {d['extent']} and still offers "
+            f"{d.get('action_layer')} -- a card offering BOOK asks for a decision "
+            f"from a thumbnail")
+
+
+@pytest.mark.parametrize("name", sorted(DECLS))
+def test_an_action_layer_says_what_authority_it_demands(name):
+    d = DECLS[name]
+    if d.get("action_layer"):
+        assert d.get("requires_authority"), (
+            f"{name} offers {d['action_layer']} and never says who decides")
+        assert len(d["requires_authority"]) > 20, "a placeholder is not a declaration"
+
+
+@pytest.mark.parametrize("name", sorted(DECLS))
+def test_the_page_offers_no_verb_its_pattern_did_not_declare(name):
+    # The declaration is not decoration: what the page renders has to match it.
+    d = DECLS[name]
+    with open(os.path.join(SURFACES, name + ".html")) as fh:
+        page = fh.read()
+    for verb in d.get("action_layer", []):
+        assert verb in page, f"{name} declares {verb} and never offers it"
+
+
+@pytest.mark.parametrize("name", sorted(DECLS))
+def test_lineage_is_recorded_and_checkable(name):
+    # "Lineage is recorded on each, which is what makes 'only the look was
+    # borrowed' a checkable claim rather than a slogan."
+    #
+    # Provenance, not permission. Which project, which files, which commit --
+    # so the vendored asset can be diffed against its source. The licence
+    # classification that used to live here was wrong: the operator owns these
+    # projects and an automated pass had marked them otherwise.
+    d = DECLS[name]
+    lin = d.get("lineage")
+    assert lin is not None, f"{name} records no lineage"
+    if lin.get("project") is None:
+        # borrowing nothing is a lineage too, and it has to say so
+        assert lin.get("note"), f"{name} borrows nothing and does not say why"
+        return
+    assert lin.get("files"), f"{name} names a donor and no files"
+    if lin.get("licence_text"):
+        d_ = os.path.join(REPO, lin["licence_text"])
+        assert os.path.isdir(d_), f"{name} points at {lin['licence_text']}, which is not there"
+        assert lin.get("commit"), f"{name} records no commit, so the files cannot be checked"
+        commit = open(os.path.join(d_, "COMMIT")).read().strip()
+        assert lin["commit"] == commit, (
+            f"{name} records {lin['commit'][:12]} and the vendored asset came from "
+            f"{commit[:12]}")
+
+
+@pytest.mark.parametrize("name", sorted(DECLS))
+def test_a_borrowed_pattern_loads_the_project_it_names(name):
+    d = DECLS[name]
+    lin = d["lineage"]
+    if not lin.get("licence_text"):
+        return
+    key = lin["licence_text"].rstrip("/").split("/")[-1]
+    with open(os.path.join(SURFACES, name + ".html")) as fh:
+        page = fh.read()
+    assert "donor-" + key + "." in page or key == "maplibre", (
+        f"{name} claims lineage from {lin['project']} and does not load its asset")
+
+
+# ------------------------------------------- the live catalogue agrees
+
+def _catalogue():
+    req = urllib.request.Request("https://aurekai.live/_surface/",
+                                 headers={"Accept": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+            return json.loads(r.read().decode())
+    except (urllib.error.URLError, socket.timeout, OSError, ValueError) as exc:
+        pytest.skip(f"catalogue unreachable: {exc}")
+
+
+def test_the_catalogue_reports_an_extent_for_every_pattern():
+    cat = _catalogue()
+    assert cat.get("surfaces"), "the catalogue lists nothing"
+    for s in cat["surfaces"]:
+        assert "extent" in s, (
+            f"{s['pattern']} is listed without an extent, so nothing can tell whether it "
+            f"is allowed to carry an action layer")
+        assert "carries_action_layer" in s
+
+
+def test_the_catalogue_refuses_an_action_layer_below_a_page():
+    # The organ enforces this at read time rather than trusting the row: a
+    # pattern authored as a card with an effect class is reported without one.
+    cat = _catalogue()
+    for s in cat["surfaces"]:
+        if s.get("extent") in ("chip", "card", "section"):
+            assert s["carries_action_layer"] is False, s
+            assert not s.get("effect_class"), (
+                f"{s['pattern']} renders at {s['extent']} and the catalogue still "
+                f"advertises {s['effect_class']}")
+
+
+def test_the_catalogue_carries_lineage_where_a_pattern_has_one():
+    cat = _catalogue()
+    assert any("lineage" in s for s in cat["surfaces"]), (
+        "no pattern in the live catalogue carries a lineage field at all")

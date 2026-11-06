@@ -1,0 +1,80 @@
+#!/bin/sh
+# Starts a real FreeSWITCH that has no way out (the event socket on loopback
+# and calls that stay inside the switch), then drives it with bonfyre-tel:
+# a call is placed, the switch is asked whether that call exists, the call is
+# hung up, and the switch is asked again. Every field reported is what the
+# switch or the organ said.
+# What this does not prove: no trunk, no carrier and no telephone is involved;
+# nothing here reaches the telephone network, and no message is sent.
+set -eu
+
+root_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+tel="$root_dir/bonfyre-tel"
+switch=$(command -v freeswitch || true)
+cli=$(command -v fs_cli || true)
+[ -n "$switch" ] && [ -n "$cli" ] || { echo "no freeswitch on PATH; tel has no switch to talk to" >&2; exit 1; }
+prefix=$(CDPATH= cd -- "$(dirname -- "$(readlink "$switch" 2>/dev/null | sed "s|^\.\./|$(dirname "$switch")/../|" || echo "$switch")")/.." && pwd)
+[ -d "$prefix/etc/freeswitch" ] || prefix=$(CDPATH= cd -- "$(dirname -- "$switch")/.." && pwd)
+[ -d "$prefix/etc/freeswitch" ] || { echo "cannot find the switch's configuration under $prefix" >&2; exit 1; }
+mods=$prefix/lib/freeswitch/mod
+
+run=$(mktemp -d "${TMPDIR:-/tmp}/bonfyre-tel-selftest.XXXXXX")
+mkdir -p "$run/conf" "$run/log" "$run/db" "$run/run" "$run/rec"
+cp -R "$prefix/etc/freeswitch/" "$run/conf/"
+port=$((20000 + $$ % 20000))
+while nc -z 127.0.0.1 "$port" 2>/dev/null; do port=$((port + 1)); done
+cat > "$run/conf/autoload_configs/modules.conf.xml" <<'XML'
+<configuration name="modules.conf" description="Modules">
+  <modules>
+    <load module="mod_logfile"/>
+    <load module="mod_event_socket"/>
+    <load module="mod_loopback"/>
+    <load module="mod_commands"/>
+    <load module="mod_dptools"/>
+    <load module="mod_dialplan_xml"/>
+  </modules>
+</configuration>
+XML
+cat > "$run/conf/autoload_configs/event_socket.conf.xml" <<XML
+<configuration name="event_socket.conf" description="Socket Client">
+  <settings>
+    <param name="nat-map" value="false"/>
+    <param name="listen-ip" value="127.0.0.1"/>
+    <param name="listen-port" value="$port"/>
+    <param name="password" value="ClueCon"/>
+  </settings>
+</configuration>
+XML
+
+cleanup() {
+  "$switch" -stop -run "$run/run" >/dev/null 2>&1 || true
+  pid=$(cat "$run/run/freeswitch.pid" 2>/dev/null || true)
+  n=0
+  while [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; do
+    n=$((n + 1)); [ "$n" -ge 60 ] && { kill -9 "$pid" 2>/dev/null || true; break; }
+    sleep 0.1
+  done
+  rm -rf "$run"
+}
+trap cleanup EXIT INT TERM
+
+"$switch" -nc -nonat -conf "$run/conf" -log "$run/log" -db "$run/db" -run "$run/run" -mod "$mods" -recordings "$run/rec" >/dev/null 2>&1
+n=0
+until nc -z 127.0.0.1 "$port" 2>/dev/null; do
+  n=$((n + 1)); [ "$n" -ge 300 ] && { echo "switch did not open its event socket" >&2; tail -5 "$run/log/freeswitch.log" >&2 || true; exit 1; }
+  sleep 0.1
+done
+ask() { "$cli" -H 127.0.0.1 -P "$port" -p ClueCon -x "$1" 2>/dev/null | tail -1; }
+version=$("$cli" -H 127.0.0.1 -P "$port" -p ClueCon -x version 2>/dev/null | grep -m1 "FreeSWITCH" | tr -d '"')
+
+uuid=$(BONFYRE_TEL_ROUTE='loopback/{to}/default' "$tel" call --port "$port" --from 1000 --to 9196 --db "$run/tel.db" 2>"$run/call.err")
+exists_after_call=$(ask "uuid_exists $uuid")
+recorded=$(sqlite3 "$run/tel.db" "select count(*) from calls where uuid='$uuid' and status='active'")
+"$tel" hangup --port "$port" --uuid "$uuid" >/dev/null 2>&1
+sleep 0.5
+exists_after_hangup=$(ask "uuid_exists $uuid")
+if "$tel" hangup --port "$port" --uuid 00000000-0000-0000-0000-000000000000 >/dev/null 2>&1; then unknown_refused=false; else unknown_refused=true; fi
+
+printf '{"ready":true,"switch":"%s","event_socket":"127.0.0.1:%s","call_uuid":"%s","switch_has_call_after_call":%s,"call_recorded_by_organ":%s,"switch_has_call_after_hangup":%s,"hangup_of_unknown_call_refused":%s,"reaches_telephone_network":false}\n' \
+  "$version" "$port" "$uuid" "$exists_after_call" "$recorded" "$exists_after_hangup" "$unknown_refused"
+[ "$exists_after_call" = true ] && [ "$recorded" = 1 ] && [ "$exists_after_hangup" = false ] && [ "$unknown_refused" = true ]

@@ -1,0 +1,87 @@
+{
+ "families": 6,
+ "both_have_main": 6,
+ "delegating": [
+  "BonfyreBravo"
+ ],
+ "atlas_names_unbuilt_source": [
+  "BonfyreBravo"
+ ],
+ "installed_older_than_source": [
+  "BonfyreBravo"
+ ],
+ "rows": [
+  {
+   "family": "BonfyreAlpha",
+   "cmd_builds_from": [
+    "cmd/BonfyreAlpha/src/main.c"
+   ],
+   "delegates_to_components": false,
+   "both_have_main": true,
+   "installed": "cmd build",
+   "atlas": "names the built source",
+   "unbuilt_beside_build_edge": false
+  },
+  {
+   "family": "BonfyreBravo",
+   "cmd_builds_from": [
+    "components/BonfyreBravo/src/main.c"
+   ],
+   "delegates_to_components": true,
+   "both_have_main": true,
+   "installed": "older than its source",
+   "atlas": "names a source the build does not use",
+   "unbuilt_beside_build_edge": true
+  },
+  {
+   "family": "BonfyreCMS",
+   "cmd_builds_from": [
+    "cmd/BonfyreCMS/src/main.c"
+   ],
+   "delegates_to_components": false,
+   "both_have_main": true,
+   "installed": "components build",
+   "atlas": "names the built source",
+   "unbuilt_beside_build_edge": false
+  },
+  {
+   "family": "BonfyreDelta",
+   "cmd_builds_from": [
+    "cmd/BonfyreDelta/src/main.c"
+   ],
+   "delegates_to_components": false,
+   "both_have_main": true,
+   "installed": "not installed",
+   "atlas": "no entry",
+   "unbuilt_beside_build_edge": false
+  },
+  {
+   "family": "BonfyreEcho",
+   "cmd_builds_from": [
+    "cmd/BonfyreEcho/src/main.c",
+    "cmd/BonfyreEcho/src/missing.c"
+   ],
+   "delegates_to_components": false,
+   "both_have_main": true,
+   "installed": "another build of this source",
+   "atlas": "names the built source",
+   "unbuilt_beside_build_edge": false
+  },
+  {
+   "family": "BonfyreEmpty",
+   "cmd_builds_from": [
+    "cmd/BonfyreEmpty/include/only.h"
+   ],
+   "delegates_to_components": false,
+   "both_have_main": true,
+   "installed": "not installed",
+   "atlas": "names the built source",
+   "unbuilt_beside_build_edge": false
+  }
+ ],
+ "cannot_infer": [
+  "a components/ twin -> a redundant copy (several carry operations the cmd/ program lacks)",
+  "an installed binary matching the cmd build -> the components program is unused (callers may name it directly)",
+  "a matching hash -> the same behaviour as a rebuild from changed source"
+ ]
+}

@@ -1,0 +1,53 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {join} from 'node:path';
+import {createRequire} from 'node:module';
+import {execFileSync} from 'node:child_process';
+import {workspaceFixture,root} from './workspace_fixture.mjs';
+import {portfolio,projectSetups,projectCreatorWorkspaceSetup,publishSetups} from '../../../scripts/publish_experience_setups.mjs';
+import {materializeCreatorWorkspace} from '../../../scripts/materialize_creator_workspace.mjs';
+import {digest} from '../../../integrations/browser/workspace-value.mjs';
+const free=Number(execFileSync('memory_pressure',['-Q'],{encoding:'utf8'}).match(/free percentage: (\d+)%/)?.[1]);if(!(free>=18))throw Error('Browser verification requires available memory.');
+const f=await workspaceFixture(),checks=[],errors=[];let browser;
+const check=(text,yes)=>{assert.ok(yes,text);checks.push(text);console.log('PASS '+text);};
+const source=Bun.serve({hostname:'127.0.0.1',port:0,fetch(request){const p=new URL(request.url).pathname;if(p==='/creator-sample.mjs')return new Response(readFileSync(join(root,'components/BonfyreServiceSite/creator-sample.mjs')),{headers:{'content-type':'text/javascript'}});if(p==='/store.mjs')return new Response(readFileSync(join(root,'integrations/browser/extension/store.mjs')),{headers:{'content-type':'text/javascript'}});return new Response('<!doctype html><html><body><h1>Isolated existing audio source</h1><script type="module" src="/store.mjs"></script></body></html>',{headers:{'content-type':'text/html'}});}});
+const publicSource=process.env.CREATOR_ADOPTION_PUBLIC==='1';
+const sourceURL=publicSource?'https://aurekai-work-samples.pages.dev/audio/':'http://127.0.0.1:'+source.port+'/audio/';
+async function button(page,label){await page.bringToFront();const h=await page.evaluateHandle(label=>[...document.querySelectorAll('button')].find(b=>b.textContent.trim()===label&&b.getClientRects().length),label);assert.ok(h.asElement(),label);await h.asElement().click();await h.dispose();}
+try{
+ const release=await materializeCreatorWorkspace(),rows=portfolio(readFileSync(join(root,'cmd/BonfyreExperienceStage/experience-maturities.yaff'),'utf8'));
+ publishSetups({records:[...projectSetups(rows,[5]),...projectCreatorWorkspaceSetup(release.id)],binary:f.cms,db:f.db,schemas:join(f.home,'schemas'),apply:true});const binding=await f.install('experience.native-creator-studio.workspace','institution:workspace-team');
+ const puppeteer=createRequire(join(root,'tools/creator-ingest/package.json'))('puppeteer');browser=await puppeteer.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,protocolTimeout:20000,userDataDir:join(f.home,'audio-adoption-browser'),args:['--no-sandbox']});process.once('SIGTERM',()=>{browser?.process()?.kill('SIGTERM');process.exit(143);});
+ const page=await browser.newPage();page.setDefaultTimeout(25000);page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.type()==='beforeunload'?d.accept():d.dismiss());
+ const [name,...parts]=f.owner.cookie.split('=');await page.setCookie({name,value:parts.join('='),url:f.base,httpOnly:true,sameSite:'Lax'});
+ const origin=await browser.newPage();await origin.goto(sourceURL);
+ const key='draft:creator:'+release.sample+':imports';
+ const sourceHash=await origin.evaluate(async({key,publicSource})=>{
+  const script=document.querySelector('script[src$="/creator-client.mjs"]');
+  const base=publicSource?new URL('.',script.src).href:location.origin+'/';
+  if(publicSource&&'draft:creator:'+JSON.parse(document.querySelector('[data-creator-config]').textContent).id+':imports'!==key)throw Error('The source and destination audio families differ.');
+  window.audioTestStoreBase=base;
+  const {saveLocal}=await import(base+'store.mjs'),{wavBytes}=await import(base+'creator-sample.mjs'),samples=new Float32Array(144000*2);for(let i=0;i<samples.length;i++)samples[i]=Math.sin(i/40)*.2;const bytes=new Uint8Array(wavBytes(samples,{frames:144000,channels:2,sample_rate:48000}));
+  const digest=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(b=>b.toString(16).padStart(2,'0')).join('');
+  await saveLocal(key,{title:'Existing source session',permission:'licensed',files:[{name:'kept-recording.wav',bytes:bytes.buffer,sha256:digest}],clips:[{at:80,from:40,frames:800,gain:.45,muted:false}]},0);
+  await saveLocal('training:member:primary',{history:[{private:true}]},0);return digest;
+ },{key,publicSource});
+ await page.goto(f.base+binding.path+'?workspace=imports&view=timeline');await page.waitForSelector('[data-adopt-browser]');
+ await page.evaluate(async source=>{document.querySelector('[data-adopt-browser]').remove();const base=document.querySelector('meta[name="bonfyre-workspace-store"]').content.replace('_records','');const {installWorkspaceAdoption}=await import(base+'bridge/workspace-adoption.mjs');installWorkspaceAdoption({sources:[['Isolated audio source',source]]});},sourceURL);
+ await button(page,'Bring browser drafts');const popupPromise=new Promise(resolve=>page.once('popup',resolve));await button(page,'Open Isolated audio source');const popup=await popupPromise;popup.setDefaultTimeout(25000);
+ await popup.waitForSelector('dialog[open]');await button(popup,'Show my saved drafts');await popup.waitForSelector('dialog input[type="checkbox"]');
+ check('audio source selection excludes private training records',await popup.$$eval('dialog input[type="checkbox"]',(nodes,key)=>nodes.length===1&&nodes[0].value===key,key));
+ await popup.click('dialog input[type="checkbox"]');await button(popup,'Send selected work for review');await page.waitForSelector('dialog input[type="checkbox"]');
+ check('source confirmation does not write the destination',(await f.store(binding).readLocal()).length===0);
+ await button(page,'Adopt selected drafts');await page.waitForFunction(()=>document.querySelector('dialog [role="status"]').textContent.includes('1 drafts adopted'));
+ const imported=(await f.store(binding).readLocal())[0];
+ check('the adopted audio retains exact record identity and clip coordinates',imported.key===key&&imported.value.clips[0].at===80&&imported.value.clips[0].from===40&&imported.value.clips[0].gain===.45);
+ check('original binary recording bytes cross the consent boundary intact',imported.value.files[0].bytes instanceof ArrayBuffer&&await digest(imported.value.files[0].bytes)===sourceHash);
+ check('recording permission requires review in the new destination',imported.value.permission==='unreviewed'&&imported.value.sourcePermission==='licensed');
+ const original=await origin.evaluate(async()=>{const {readLocal}=await import(window.audioTestStoreBase+'store.mjs');const row=(await readLocal('draft:creator:'))[0];return {revision:row.revision,permission:row.value.permission,bytes:row.value.files[0].bytes.byteLength};});
+ check('adoption leaves the original session and revision untouched',original.revision===1&&original.permission==='licensed'&&original.bytes===576044);
+ await button(page,'Reload editor');await page.waitForSelector('[data-audio="workspace"][data-ready="true"][data-busy="false"]');
+ check('adopted work reopens in the actual native waveform editor',await page.$eval('[data-audio="title"]',el=>el.value==='Existing source session')&&await page.$$eval('[data-audio="source-list"] article',rows=>rows.length===1));
+ check('the two-origin audio adoption has no script exceptions',errors.length===0);
+ console.log('CREATOR_ADOPTION_PASS\t'+checks.length+'\nsource_mode\t'+(publicSource?'public-source-isolated-native':'isolated-source-isolated-native'));
+}finally{await browser?.close();source.stop(true);await f.close();}

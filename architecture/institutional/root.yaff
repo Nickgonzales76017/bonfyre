@@ -1,0 +1,53 @@
+atlas institutional-root
+
+architecture institutional-root
+  canonical_name InstitutionalRoot
+  owns RootTopology
+  consumes InstitutionEnvelope
+  consumes DelegationEnvelope
+  consumes PackState
+  publishes RootTopology
+  publishes ProductRoster
+  family institutional
+  domain Institution / Root topology
+  layer institutional
+  semantic_question Which first-class product or estate owns this subject, and does that owner hold it directly or by delegation?
+  purpose Separate Bonfyre the engine from the products and estates it supports, so that a delegated operating business, a private product, a standalone experiment and Bonfyre's own internal operation can each hold their own relationships, clients and users without collapsing into one tenant list.
+  maturity architectural
+  node_types RootProduct
+  node_types InstitutionEnvelope
+  node_types DelegatedEstate
+  node_types RelationshipOwner
+  edge_types delegates_to
+  edge_types owns_relationship
+  edge_types manages_client
+  edge_types populated_by
+  invariant Aurekai is the company umbrella and Bonfyre is the engine and product substrate; neither name is a synonym for the other
+  invariant a root product is real only when a pack or existing state populates it; a namespace without state is declared unpopulated rather than described as existing
+  invariant delegation is recursive: Bonfyre delegates to an operating business, which delegates to its managed clients, which serve downstream organizations and users
+  invariant a delegated estate owns its own external relationships; Bonfyre models and operates them but does not own them
+  invariant capability and method may move between estates while private institutional data does not move with them
+  forbidden_inference a product namespace existing -> the product has state
+  forbidden_inference Bonfyre operating a provider relationship -> Bonfyre owning that relationship
+  forbidden_inference a Partner Commons profile existing -> a live relationship with that project
+  forbidden_inference an estate reusing shared machinery -> that estate sharing another estate's data closure
+  interacts repository-shape
+  interacts authority
+  interacts institutional-namespaces
+  interacts delegation-model
+  source_path architecture/institutional/namespaces.yaff
+  source_path architecture/institutional/delegation-model.yaff
+  source_path architecture/institutional/relationship-types.yaff
+  source_path architecture/institutional/product-contracts.yaff
+  source_path architecture/institutional/worlds.yaff
+  source_lineage Generation-10 product topology separation, 2026-08-26
+  source_lineage disk census of populated versus declared estates
+
+interaction root-reads-pack-state
+  source institutional-root
+  destination institutional-namespaces
+  relation population_evidence_input
+  preserves the distinction between a declared namespace and a populated estate
+  drops any claim that a namespace listed in this architecture is therefore materialized
+  forbidden_inference this file naming a root product -> that product being populated
+  binding packs/

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Every ten minutes: bring the requests client sites are holding into the CMS
+     and hold a message for each business. Nothing is sent to anybody.
+     Install: sed "s#__HOME__#$HOME#g; s#__REPO__#<repo path>#g" this file > ~/Library/LaunchAgents/com.bonfyre.service-site-leads.plist -->
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.bonfyre.service-site-leads</string>
+  <key>ProgramArguments</key><array>
+    <string>__HOME__/.bun/bin/bun</string>
+    <string>__REPO__/components/BonfyreServiceSite/site.mjs</string>
+    <string>leads</string>
+  </array>
+  <key>EnvironmentVariables</key><dict>
+    <key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:__HOME__/.bun/bin</string>
+    <key>HOME</key><string>__HOME__</string>
+  </dict>
+  <key>StartInterval</key><integer>600</integer>
+  <key>RunAtLoad</key><true/>
+  <key>StandardOutPath</key><string>__HOME__/.bonfyre/service-sites/leads.out.log</string>
+  <key>StandardErrorPath</key><string>__HOME__/.bonfyre/service-sites/leads.err.log</string>
+</dict></plist>

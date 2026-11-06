@@ -1,0 +1,100 @@
+{
+  "name": "surface_pattern",
+  "displayName": "Surface Pattern",
+  "description": "Declarative SurfaceIR read descriptor compiled into symmetric human and machine projections. It may name a CMS type or an allowlisted native organ, select and order fields, and declare read authority; it cannot declare an effect or choose an executable path. A pattern may declare one affordance per record -- an href template whose {field} placeholders name columns it already serves, and a label -- so a reader can act on a row without the page growing a renderer to build the link. Only served fields may appear; a placeholder naming anything else drops the affordance rather than emitting a link with a hole in it.",
+  "attributes": {
+    "pattern": {
+      "type": "string",
+      "required": true,
+      "uniqueWithinNamespace": true
+    },
+    "reads_type": {
+      "type": "string",
+      "required": false
+    },
+    "record_namespace": {
+      "type": "string",
+      "required": false
+    },
+    "selector_field": {
+      "type": "string",
+      "required": false
+    },
+    "order_by": {
+      "type": "string",
+      "required": false,
+      "default": "id"
+    },
+    "item_fields": {
+      "type": "string",
+      "required": true
+    },
+    "shape": {
+      "type": "string",
+      "required": true
+    },
+    "effect_class": {
+      "type": "string",
+      "required": true
+    },
+    "requires_authority": {
+      "type": "string",
+      "required": false
+    },
+    "visible_when": {
+      "type": "string",
+      "required": false
+    },
+    "status_filter": {
+      "type": "string",
+      "required": false,
+      "default": "published"
+    },
+    "time_field": {
+      "type": "string",
+      "required": false
+    },
+    "time_mode": {
+      "type": "string",
+      "required": false,
+      "default": "any"
+    },
+    "reads_organ": {
+      "type": "string",
+      "required": false
+    },
+    "organ_command": {
+      "type": "string",
+      "required": false
+    },
+    "title": {
+      "type": "string",
+      "required": false
+    },
+    "caption": {
+      "type": "text",
+      "required": false
+    },
+    "extent": {
+      "type": "string",
+      "required": false,
+      "default": "page"
+    },
+    "lineage": {
+      "type": "text",
+      "required": false
+    },
+    "status": {
+      "type": "string",
+      "required": true
+    },
+    "record_action_href": {
+      "type": "string",
+      "required": false
+    },
+    "record_action_label": {
+      "type": "string",
+      "required": false
+    }
+  }
+}

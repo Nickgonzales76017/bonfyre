@@ -1,0 +1,60 @@
+{
+  "version": "bonfyre-surface-pattern-v1",
+  "surface": "parcels",
+  "pattern": "ParcelSearch",
+  "interaction_target": "property and local-availability search",
+  "borrowed": "behaviour only \u2014 the persistent query bar, recent searches, a dense sortable result table with the money right-aligned, a distribution strip and a sticky detail. No ontology, no backend.",
+  "reads": [
+    "/property/search?q=",
+    "/property/parcel?account=",
+    "/property/market?city=",
+    "/property/act?account="
+  ],
+  "shape": "search the receipted roll, read one parcel, then read the market it sits in",
+  "interaction": [
+    "recent searches kept in this browser",
+    "assessed-value band and city-code filters, the city list built from what came back",
+    "sortable columns \u2014 address, account, city, assessed \u2014 with tabular figures",
+    "a 14-bin distribution of assessed value across the returned rows, with the chosen parcel marked",
+    "a rank strip showing where the parcel sits inside the returned set",
+    "this parcel / its market / what next, each a live fragment from its own path",
+    "saved parcels tray in this browser",
+    "J/K row, Enter open, S save, / search, Esc clear"
+  ],
+  "refusal_states": [
+    "refused (401/403) \u2014 offers the session that would fill it",
+    "empty (200, no rows) \u2014 an empty query, named as one",
+    "failed (other) \u2014 nothing rendered rather than stale or invented"
+  ],
+  "actions": "offered, never submitted; saving a parcel is a note in this browser and the roll is not told",
+  "observed_2026_09_04": {
+    "search": "25 rows per query; city arrives as a numeric code, and the market path wants that code rather than a city name",
+    "parcel": "account, taxpayer of record, year built, living area, lot, land value, total assessed",
+    "act": "reading is open; opening work needs a write-scoped session"
+  },
+  "forbidden_inference": [
+    "an observation -> a fact about the world; it records what a source published, with a receipt",
+    "a taxpayer name of record -> the legal owner",
+    "an assessed value -> an appraisal, a listing price, or an offer",
+    "a median across these results -> the market; it is computed over the rows one query returned",
+    "a rank inside one query -> a rank in the market",
+    "a saved parcel -> a claim, a lien position, or anybody being contacted"
+  ],
+  "owner": {
+    "kind": "organ",
+    "name": "/property/search"
+  },
+  "extent": "page",
+  "carries_action_layer": true,
+  "action_layer": [],
+  "requires_authority": "reading is open; opening work on a parcel needs a write-scoped session, and this surface never asks for one",
+  "lineage": {
+    "project": "MapLibre GL JS",
+    "files": [
+      "dist/maplibre-gl.js",
+      "dist/maplibre-gl.css"
+    ],
+    "also": "CARTO dark-matter basemap over OpenStreetMap data",
+    "note_licence": "licence classification removed: the operator owns these projects and an automated pass had marked them otherwise. Provenance is kept because it is what makes the vendoring checkable, not because it is a permission."
+  }
+}

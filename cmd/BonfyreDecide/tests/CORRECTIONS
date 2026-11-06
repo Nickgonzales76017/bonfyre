@@ -1,0 +1,15 @@
+Deliberate differences from the retired Bun programs (components/BonfyreDecision,
+cmd/Bonfyre{Books,Monitor,Manifest}/bonfyre-*), whose behaviour the golden
+vectors otherwise record.
+
+1. XLSX text cells are XML-unescaped once, as OOXML specifies. SheetJS 0.20.3
+   decoded inline string (t="str") values twice, so a cell whose text is the
+   literal "&amp;" was imported as "&". Books promises literal user strings;
+   case 27 (fixtures/xlsx/unicode.xlsx) now keeps "Café <b>&amp;</b> 😀".
+   The review workbook writer escapes once as well, so the text survives a
+   round trip through any OOXML reader.
+
+2. Added: `bonfyre books review --report report.json --out review.xlsx` writes
+   the review workbook from a Books report, so callers that held a report
+   (the ServiceSite workbook tests) use the native writer instead of
+   importing books-workbook.mjs. Case 45 (books --help) shows the new line.

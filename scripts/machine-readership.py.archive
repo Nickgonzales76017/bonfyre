@@ -1,0 +1,111 @@
+#!/usr/bin/env python3
+"""What machines actually read here, from the access log rather than from theory.
+
+The machine readership was assumed to be a future concern. It is not: known
+crawlers were already arriving and being answered 404 for the discovery files
+they explicitly asked for. This reads the real log and says who came, what they
+asked for, what they got, and which representation they preferred.
+
+It is deliberately observational. A user agent is a claim, not a credential --
+anyone can send `Googlebot` -- so nothing here treats a name as identity or
+grants anything on the strength of it. The value is in the shape: which
+representations are actually wanted, whether our answers were useful, and which
+consumers we are failing.
+
+Usage: machine-readership.py [access.log ...]
+"""
+import re
+import sys
+from collections import Counter, defaultdict
+
+# Declared families, not verified identities. Grouped by what the operator says
+# the bot is for, because purpose is what should shape the representation.
+FAMILIES = {
+    "ai-training-or-retrieval": r"(gptbot|claudebot|anthropic|perplexitybot|ccbot|bytespider|amazonbot|applebot-extended|meta-externalagent|google-extended)",
+    "search": r"(googlebot|bingbot|applebot|duckduckbot|yandexbot|baiduspider)",
+    "social-preview": r"(twitterbot|facebookexternalhit|linkedinbot|slackbot|discordbot|pinterest|whatsapp|telegrambot)",
+    "seo-analytics": r"(ahrefsbot|semrushbot|mj12bot|dotbot|screamingfrog)",
+    "archive": r"(ia_archiver|archive\.org_bot|wayback)",
+    "feed": r"(feedly|feedfetcher|rssbot|superfeedr)",
+    "monitoring": r"(uptimerobot|pingdom|statuscake|datadog)",
+}
+LINE = re.compile(r'^(\S+).*?"(\w+) (\S+) [^"]*" (\d{3}) (\S+)(?: "[^"]*")? "([^"]*)"')
+
+
+def family_of(agent: str) -> tuple[str, str] | tuple[None, None]:
+    """Return (family, the declared bot token).
+
+    Nearly every crawler sends `Mozilla/5.0 (compatible; Googlebot/2.1; ...)`,
+    so the first word of the agent string is `Mozilla` for almost all of them.
+    Naming them by that is useless -- the token that identifies the bot is the
+    one that matched."""
+    low = agent.lower()
+    for name, pattern in FAMILIES.items():
+        m = re.search(pattern, low)
+        if m:
+            return name, m.group(0)
+    return None, None
+
+
+def main(paths: list[str]) -> int:
+    seen = Counter()
+    by_family = Counter()
+    status_by_agent = defaultdict(Counter)
+    paths_by_family = defaultdict(Counter)
+    discovery_misses = Counter()
+    total = 0
+
+    for path in paths:
+        try:
+            fh = open(path, errors="replace")
+        except OSError as exc:
+            print(f"skipping {path}: {exc}", file=sys.stderr)
+            continue
+        with fh:
+            for line in fh:
+                m = LINE.match(line)
+                if not m:
+                    continue
+                _ip, _verb, url, status, _bytes, agent = m.groups()
+                total += 1
+                fam, name = family_of(agent)
+                if not fam:
+                    continue
+                seen[name] += 1
+                by_family[fam] += 1
+                status_by_agent[name][status] += 1
+                paths_by_family[fam][url.split("?")[0]] += 1
+                if status == "404" and re.match(r"^/(robots\.txt|sitemap|feed|\.well-known)", url):
+                    discovery_misses[url.split("?")[0]] += 1
+
+    print(f"{total} requests read; {sum(seen.values())} from a declared machine family\n")
+
+    print("BY PURPOSE — what the operator says the bot is for")
+    for fam, n in by_family.most_common():
+        print(f"  {n:6d}  {fam}")
+
+    print("\nBY DECLARED AGENT")
+    for name, n in seen.most_common(12):
+        codes = ", ".join(f"{c}x{k}" for k, c in status_by_agent[name].most_common(3))
+        print(f"  {n:6d}  {name:28s} {codes}")
+
+    if discovery_misses:
+        print("\nDISCOVERY REQUESTS ANSWERED 404 — machines asked and were told nothing exists")
+        for url, n in discovery_misses.most_common(10):
+            print(f"  {n:6d}  {url}")
+
+    print("\nMOST-WANTED PATHS PER PURPOSE")
+    for fam in list(by_family):
+        top = ", ".join(f"{u} ({c})" for u, c in paths_by_family[fam].most_common(3))
+        print(f"  {fam}: {top}")
+
+    print(
+        "\nA user agent is a claim, not a credential. Nothing above is treated as\n"
+        "identity, and no access decision is made from it. This is the shape of the\n"
+        "readership, which is what should inform which representations exist."
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:] or ["/var/log/nginx/access.log"]))

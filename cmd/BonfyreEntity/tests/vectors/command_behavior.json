@@ -1,0 +1,22 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-entity","binary_env":"BONFYRE_ENTITY_BIN","cases":[
+{"name":"a repeated observation resolves to the same entity","steps":[
+ {"argv":["resolve","email","bob@example.test"],"env":{"HOME":"${tmp}","BONFYRE_ENTITY_DB":"${tmp}/e.db"},"exit":0,"contains":["new entity: bob@example.test → id=entity-email-b9cbc374472a9f89"]},
+ {"argv":["resolve","email","bob@example.test"],"env":{"HOME":"${tmp}","BONFYRE_ENTITY_DB":"${tmp}/e.db"},"exit":0,"contains":["resolved: bob@example.test → entity=entity-email-b9cbc374472a9f89","confidence=1.000"]},
+ {"argv":["show","entity-email-b9cbc374472a9f89"],"env":{"HOME":"${tmp}","BONFYRE_ENTITY_DB":"${tmp}/e.db"},"exit":0,"contains":["observations: 2"]},
+ {"argv":["search","bob"],"env":{"HOME":"${tmp}","BONFYRE_ENTITY_DB":"${tmp}/e.db"},"exit":0,"contains":["entity-email-b9cbc374472a9f89"]}]},
+{"name":"merge moves observations and links and removes the source","steps":[
+ {"argv":["resolve","email","bob@example.test"],"env":{"HOME":"${tmp}","BONFYRE_ENTITY_DB":"${tmp}/e.db"},"exit":0},
+ {"argv":["resolve","email","al@example.test"],"env":{"HOME":"${tmp}","BONFYRE_ENTITY_DB":"${tmp}/e.db"},"exit":0},
+ {"argv":["resolve","email","cy@example.test"],"env":{"HOME":"${tmp}","BONFYRE_ENTITY_DB":"${tmp}/e.db"},"exit":0},
+ {"argv":["link","entity-email-b9cbc374472a9f89","entity-email-154f30b2403e153b","0.7"],"env":{"HOME":"${tmp}","BONFYRE_ENTITY_DB":"${tmp}/e.db"},"exit":0},
+ {"argv":["link","entity-email-154f30b2403e153b","entity-email-d8b66a5b4ac5f723","0.4"],"env":{"HOME":"${tmp}","BONFYRE_ENTITY_DB":"${tmp}/e.db"},"exit":0},
+ {"argv":["merge","entity-email-b9cbc374472a9f89","entity-email-154f30b2403e153b"],"env":{"HOME":"${tmp}","BONFYRE_ENTITY_DB":"${tmp}/e.db"},"exit":0,"contains":["1 observations moved"]},
+ {"argv":["show","entity-email-154f30b2403e153b"],"env":{"HOME":"${tmp}","BONFYRE_ENTITY_DB":"${tmp}/e.db"},"exit":1},
+ {"program":"sqlite3","argv":["${tmp}/e.db","select a||'>'||b from links; select obs_count from entities where id='entity-email-b9cbc374472a9f89'"],"stdout":"entity-email-b9cbc374472a9f89>entity-email-d8b66a5b4ac5f723\n2\n"}]},
+{"name":"unknown entities and out-of-range confidences are refused","steps":[
+ {"argv":["resolve","email","bob@example.test"],"env":{"HOME":"${tmp}","BONFYRE_ENTITY_DB":"${tmp}/e.db"},"exit":0},
+ {"argv":["show","nope"],"env":{"HOME":"${tmp}","BONFYRE_ENTITY_DB":"${tmp}/e.db"},"exit":1},
+ {"argv":["link","entity-email-b9cbc374472a9f89","nope","0.5"],"env":{"HOME":"${tmp}","BONFYRE_ENTITY_DB":"${tmp}/e.db"},"exit":1},
+ {"argv":["merge","entity-email-b9cbc374472a9f89","nope"],"env":{"HOME":"${tmp}","BONFYRE_ENTITY_DB":"${tmp}/e.db"},"exit":1},
+ {"argv":["merge","entity-email-b9cbc374472a9f89","entity-email-b9cbc374472a9f89"],"env":{"HOME":"${tmp}","BONFYRE_ENTITY_DB":"${tmp}/e.db"},"exit":1},
+ {"argv":["status"],"env":{"HOME":"${tmp}","BONFYRE_ENTITY_DB":"${tmp}/e.db"},"exit":0,"contains":["entities    : 1","links       : 0"]}]}]}

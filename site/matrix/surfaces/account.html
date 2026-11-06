@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Your account · Aurekai</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chivo:wght@400;700;900&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{--ground:#F0EEE9;--panel:#FFF;--ink:#141613;--dim:#5C6158;--rule:#D6D3CB;
+  --live:#1D6E3F;--bad:#96331F}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ground:#0E100D;--panel:#171A15;--ink:#E4E7DE;--dim:#8E958A;--rule:#2A2E27;
+  --live:#5FCB87;--bad:#E4795E}}
+:root[data-theme="dark"]{--ground:#0E100D;--panel:#171A15;--ink:#E4E7DE;--dim:#8E958A;
+  --rule:#2A2E27;--live:#5FCB87;--bad:#E4795E}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--ground);color:var(--ink);
+  font-family:"Chivo",system-ui,sans-serif;display:grid;place-items:center;padding:24px}
+main{width:100%;max-width:33rem}
+.kicker{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--live);margin:0 0 10px}
+h1{font-weight:900;font-size:clamp(30px,7vw,42px);line-height:1;letter-spacing:-.03em;margin:0 0 22px}
+.card{background:var(--panel);border:1px solid var(--rule);padding:20px;display:grid;gap:14px}
+.row{display:flex;justify-content:space-between;gap:16px;align-items:baseline;
+  padding-bottom:12px;border-bottom:1px solid var(--rule)}
+.row:last-of-type{border-bottom:none;padding-bottom:0}
+.lb{font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--dim)}
+.v{font-family:"JetBrains Mono",monospace;font-size:13.5px;word-break:break-all;text-align:right}
+.msg{font-family:"JetBrains Mono",monospace;font-size:12.5px;line-height:1.5;
+  padding:11px 13px;border-left:3px solid var(--bad);color:var(--dim);margin:0}
+button{font:inherit;font-weight:700;font-size:15px;padding:11px;cursor:pointer;
+  background:var(--ink);color:var(--ground);border:none;width:100%}
+button:focus-visible{outline:2px solid var(--live);outline-offset:2px}
+.alt{margin:18px 0 0;color:var(--dim);font-size:15px}
+a{color:inherit;font-weight:700}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <p class="kicker">aurekai · account</p>
+  <h1>Your account</h1>
+  <div id="out"><p class="msg">Reading your session…</p></div>
+  <p class="alt"><a href="/habitat/">Habitat</a> · <a href="/ops/">Operations</a> ·
+     <a href="/cms/">Content</a> · <a href="/">Entry point</a></p>
+</main>
+<script>
+const out = document.getElementById("out");
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c =>
+  ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function signedOut(why){
+  out.innerHTML = `<p class="msg">${esc(why)}</p>
+    <p class="alt"><a href="/login">Sign in</a> or <a href="/signup">create an account</a>.</p>`;
+}
+
+(async () => {
+  try{
+    const r = await fetch("/account", { headers: { Accept: "application/json" }, credentials: "same-origin" });
+    const d = await r.json().catch(() => ({}));
+    if(!r.ok || !d.valid){
+      signedOut("That session has expired or been revoked.");
+      return;
+    }
+    const u = d.user || {};
+    out.innerHTML = `<div class="card">
+      <div class="row"><span class="lb">Name</span><span class="v">${esc(u.name)}</span></div>
+      <div class="row"><span class="lb">Email</span><span class="v">${esc(u.email)}</span></div>
+      <div class="row"><span class="lb">Tier</span><span class="v">${esc(u.tier)}</span></div>
+      <div class="row"><span class="lb">Account id</span><span class="v">${esc(u.id)}</span></div>
+      <button id="out-btn" type="button">Sign out</button>
+    </div>`;
+    document.getElementById("out-btn").addEventListener("click", async () => {
+      try{ await fetch("/logout", { method:"POST", credentials:"same-origin" }); }catch(_){}
+      signedOut("Signed out. The browser session was revoked on the server.");
+    });
+  } catch(e){
+    signedOut("Could not reach the account service.");
+  }
+})();
+</script>
+</body>
+</html>

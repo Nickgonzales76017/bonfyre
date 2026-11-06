@@ -1,0 +1,107 @@
+#!/usr/bin/env python3
+"""Measure which admitted sources actually reach exported public programs.
+
+Admission is capability to be read; an item link in a static public program is
+evidence of public circulation.  The two are deliberately reported separately:
+this audit measures an estate export, not readership, source quality, traffic,
+endorsement, or a publisher's relationship with Aurekai.
+"""
+import argparse
+import json
+import os
+import re
+import sqlite3
+import sys
+from pathlib import Path
+
+
+ITEM_SOURCE = re.compile(r'href=["\']/o/([^/"\'?#]+)/')
+PROGRAM_ROUTE = re.compile(r'^\s*\{"(/[^"]*)",')
+CANNOT_INFER = (
+    "a source linked from an exported public program is not an endorsement, "
+    "traffic measurement, quality ranking, current availability claim, or a "
+    "relationship with that publisher"
+)
+
+
+def declared_routes(header: Path):
+    routes = []
+    for line in header.read_text(encoding="utf-8").splitlines():
+        match = PROGRAM_ROUTE.match(line)
+        if match and match.group(1) not in routes:
+            routes.append(match.group(1))
+    # /stage is a declared native public program rather than one CUE row.
+    if "/stage" not in routes:
+        routes.append("/stage")
+    return routes
+
+
+def page_files(dist: Path, route: str):
+    if route == "/":
+        candidate = dist / "index.html"
+        return [candidate] if candidate.is_file() else []
+    flat = dist / (route.lstrip("/") + ".html")
+    numbered = dist / route.lstrip("/")
+    pages = [flat] if flat.is_file() else []
+    if numbered.is_dir():
+        # A route may compile finite query coordinates below its own address
+        # (the admitted /channels ledger does this for static R2 delivery).
+        # Those are still pages of this declared route, not an unmeasured
+        # sidecar. Recurse without assuming a filename is numeric.
+        pages.extend(sorted(numbered.rglob("*.html"), key=lambda p: str(p.relative_to(numbered))))
+    return pages
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--estate", default=os.path.expanduser("~/.bonfyre/estate-local"))
+    parser.add_argument("--dist", required=True, help="static estate directory to measure")
+    parser.add_argument("--program-header", default="cmd/BonfyreWebAddress/generated/native_page_composition.h")
+    parser.add_argument("--json", action="store_true", help="emit compact JSON")
+    args = parser.parse_args()
+
+    dist, header = Path(args.dist), Path(args.program_header)
+    if not dist.is_dir() or not header.is_file():
+        parser.error("--dist and --program-header must exist")
+    frontier = Path(args.estate) / "frontier.db"
+    if not frontier.is_file():
+        parser.error("frontier.db is required under --estate")
+
+    with sqlite3.connect("file:%s?mode=ro" % frontier, uri=True) as db:
+        admitted = {row[0] for row in db.execute(
+            "SELECT DISTINCT census_source FROM channel "
+            "WHERE state IN ('admitted','active') AND COALESCE(census_source,'')<>''")}
+
+    routes = {}
+    all_linked = set()
+    for route in declared_routes(header):
+        linked = set()
+        pages = page_files(dist, route)
+        for page in pages:
+            linked.update(ITEM_SOURCE.findall(page.read_text(encoding="utf-8", errors="replace")))
+        admitted_here = linked & admitted
+        all_linked.update(linked)
+        routes[route] = {
+            "pages": len(pages),
+            "item_links": sum(1 for _ in linked),
+            "admitted_sources": len(admitted_here),
+            "admission_coverage_percent": round(100 * len(admitted_here) / len(admitted), 2) if admitted else 0.0,
+        }
+
+    visible = all_linked & admitted
+    result = {
+        "schema": "bonfyre-public-circulation.v1",
+        "admitted_sources": len(admitted),
+        "publicly_circulating_admitted_sources": len(visible),
+        "admission_coverage_percent": round(100 * len(visible) / len(admitted), 2) if admitted else 0.0,
+        "linked_but_not_currently_admitted": len(all_linked - admitted),
+        "not_yet_circulating_count": len(admitted - visible),
+        "not_yet_circulating_sample": sorted(admitted - visible)[:20],
+        "routes": routes,
+        "cannot_infer": CANNOT_INFER,
+    }
+    print(json.dumps(result, separators=(",", ":") if args.json else None, indent=None if args.json else 2, sort_keys=True))
+
+
+if __name__ == "__main__":
+    main()

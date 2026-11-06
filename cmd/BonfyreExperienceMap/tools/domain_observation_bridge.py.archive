@@ -1,0 +1,226 @@
+#!/usr/bin/env python3
+"""Bind retained ForeignTwin observations through the canonical DomainProfile owner."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+from html.parser import HTMLParser
+import json
+from pathlib import Path
+import sys
+
+
+ROOT = Path(__file__).resolve().parents[3]
+CONTROL = ROOT / "components" / "BonfyreControlPlane"
+sys.path.insert(0, str(CONTROL))
+
+import domain_profile as dp  # noqa: E402
+
+
+SCHEMA = "bonfyre-domain-binding.v1"
+PARSER = "html-metadata-v1"
+
+
+class BindingError(ValueError):
+    pass
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def canonical_sha256(value: dict) -> str:
+    body = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(body.encode("utf-8")).hexdigest()
+
+
+class MetadataParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self.in_title = False
+        self.title_parts: list[str] = []
+        self.meta: dict[str, str] = {}
+
+    def handle_starttag(self, tag: str, attrs) -> None:
+        values = {str(k).lower(): str(v) for k, v in attrs if k and v is not None}
+        if tag.lower() == "title":
+            self.in_title = True
+        if tag.lower() != "meta":
+            return
+        key = values.get("property") or values.get("name")
+        content = values.get("content")
+        if key and content:
+            self.meta[key.lower()] = content.strip()
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag.lower() == "title":
+            self.in_title = False
+
+    def handle_data(self, data: str) -> None:
+        if self.in_title and data.strip():
+            self.title_parts.append(data.strip())
+
+    def record(self, fallback_url: str) -> dict:
+        title = " ".join(self.title_parts).strip()
+        record = {
+            "name": self.meta.get("og:title") or title,
+            "authority": self.meta.get("og:site_name"),
+            "description": self.meta.get("description") or self.meta.get("og:description"),
+            "source_url": self.meta.get("og:url") or fallback_url,
+        }
+        updated = self.meta.get("og:updated_time") or self.meta.get("article:modified_time")
+        if updated:
+            record["updated_at"] = updated
+        missing = sorted(k for k, value in record.items() if not value)
+        if missing:
+            raise BindingError(f"parser {PARSER} did not produce required field(s): {missing}")
+        return record
+
+
+def reference_standard_profile() -> dp.DomainProfile:
+    fields = frozenset({"name", "authority", "description", "source_url", "updated_at"})
+    profile = dp.DomainProfile(
+        name="reference-standard",
+        semantic_fields=fields,
+        evidence_requirements=frozenset({"foreign_observation_receipt", "ingest_artifact"}),
+    )
+    profile.project_into(
+        "semantic-json",
+        "Bonfyre semantic record",
+        {name: name for name in sorted(fields)},
+    )
+    return profile
+
+
+def latest_retained_observation(path: Path, occurrence_id: str) -> dict:
+    found = None
+    with path.open(encoding="utf-8") as handle:
+        for line in handle:
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            if row.get("schema") != "bonfyre-foreign-observation.v1":
+                continue
+            if row.get("twin_id") != occurrence_id:
+                continue
+            if row.get("observation_kind") == "source_observed" and row.get("body_path"):
+                found = row
+    if found is None:
+        raise BindingError(f"{occurrence_id} has no retained ForeignTwin observation")
+    return found
+
+
+def bind_observation(occurrence_id: str, receipt_path: Path, ingest_dir: Path) -> dict:
+    observation = latest_retained_observation(receipt_path, occurrence_id)
+    body_path = Path(observation["body_path"])
+    observed_hash = observation.get("content_sha256")
+    if not observed_hash or sha256_file(body_path) != observed_hash:
+        raise BindingError("retained body no longer matches its ForeignTwin receipt")
+
+    manifest_path = ingest_dir / "intake-manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if manifest.get("status") != "ready":
+        raise BindingError("ingest artifact is not ready")
+    if manifest.get("source_content_hash") != observed_hash:
+        raise BindingError("ingest source hash does not match ForeignTwin content hash")
+
+    normalized_path = ingest_dir / manifest["normalized_path"]
+    normalized_hash = manifest.get("normalized_content_hash")
+    if not normalized_hash or sha256_file(normalized_path) != normalized_hash:
+        raise BindingError("normalized artifact no longer matches its ingest manifest")
+
+    metadata_parser = MetadataParser()
+    metadata_parser.feed(normalized_path.read_text(encoding="utf-8", errors="replace"))
+    record = metadata_parser.record(observation["source_url"])
+
+    profile = reference_standard_profile()
+    available_evidence = {"foreign_observation_receipt", "ingest_artifact"}
+    missing_evidence = set(profile.evidence_requirements) - available_evidence
+    if missing_evidence:
+        raise BindingError(f"profile evidence requirements are not satisfied: {sorted(missing_evidence)}")
+    undeclared = set(record) - set(profile.semantic_fields)
+    if undeclared:
+        raise BindingError(f"parser produced undeclared semantic field(s): {sorted(undeclared)}")
+
+    rendered = profile.render(record, "semantic-json")
+    if rendered["fields"] != record:
+        raise BindingError("DomainProfile projection changed the declared semantic record")
+
+    receipt = {
+        "schema": SCHEMA,
+        "occurrence_id": occurrence_id,
+        "axis": "semantic",
+        "owner": "DomainProfile",
+        "state": "profile_bound",
+        "from_owner": "ForeignTwin",
+        "to_owner": "DomainProfile",
+        "profile": profile.name,
+        "parser": PARSER,
+        "binding_validated": True,
+        "source_url": observation["source_url"],
+        "source_content_sha256": observed_hash,
+        "normalized_content_sha256": normalized_hash,
+        "foreign_receipt_sha256": canonical_sha256(observation),
+        "ingest_manifest_sha256": sha256_file(manifest_path),
+        "semantic_record_sha256": canonical_sha256(record),
+        "semantic_fields": sorted(record),
+        "evidence_requirements": sorted(profile.evidence_requirements),
+        "cannot_infer": [
+            "profile binding -> external standard conformance",
+            "semantic extraction -> source authority",
+            "retained bytes -> provider admission or callable capability",
+        ],
+    }
+    return receipt
+
+
+def append_once(path: Path, receipt: dict) -> bool:
+    if path.exists():
+        with path.open(encoding="utf-8") as handle:
+            for line in handle:
+                if not line.strip():
+                    continue
+                row = json.loads(line)
+                if (
+                    row.get("schema") == SCHEMA
+                    and row.get("occurrence_id") == receipt["occurrence_id"]
+                    and row.get("semantic_record_sha256") == receipt["semantic_record_sha256"]
+                ):
+                    return False
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(receipt, ensure_ascii=False, sort_keys=True) + "\n")
+    return True
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("occurrence_id")
+    parser.add_argument("--observation-receipts", type=Path, required=True)
+    parser.add_argument("--ingest-dir", type=Path, required=True)
+    parser.add_argument("--output", type=Path)
+    args = parser.parse_args()
+
+    try:
+        receipt = bind_observation(
+            args.occurrence_id,
+            args.observation_receipts,
+            args.ingest_dir,
+        )
+    except (BindingError, OSError, KeyError, json.JSONDecodeError) as exc:
+        print(json.dumps({"bound": False, "error": str(exc)}, sort_keys=True))
+        return 2
+
+    if args.output:
+        append_once(args.output, receipt)
+    print(json.dumps(receipt, ensure_ascii=False, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

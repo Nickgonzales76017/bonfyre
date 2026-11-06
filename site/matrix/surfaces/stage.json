@@ -1,0 +1,73 @@
+{
+  "version": "bonfyre-surface-pattern-v1",
+  "surface": "stage",
+  "pattern": "LiveCreatorRoom",
+  "interaction_target": "live-room layout \u2014 channel rail, stage, side track, theatre mode",
+  "borrowed": "behaviour only, and Mobilizon\u2019s own Tailwind build from its tailwind.config.cjs plus the scoped stylesheet of DateCalendarIcon.vue. No ontology, no backend.",
+  "reads": [
+    "/_surface/night-<territory>",
+    "/_surface/night-events"
+  ],
+  "shape": "one page over live Aurekai endpoints; every pane names the path that produced it",
+  "interaction": [
+    "rail of rooms on now, ordered room -> programme -> act -> way out",
+    "the stage carries the room's own status line at stage size",
+    "a fill meter parsed from the room's capacity sentence, labelled reported",
+    "a room that described its capacity in words gets a described meter, not a number",
+    "About / Also tonight / Schedule tabs; the schedule is the gated one",
+    "'also tonight' is derived from records naming each other, not from a category",
+    "the track polls /events every 20s, pins to the newest and pauses when you scroll up",
+    "theatre mode collapses both rails; Escape leaves it",
+    "arrow keys change room, T theatre, F follow, R refresh"
+  ],
+  "refusal_states": [
+    "refused (401/403) \u2014 night-events is gated, and the tab says so while the rest of the page keeps reading",
+    "empty (200, no records) \u2014 an empty projection, named as one",
+    "failed (other) \u2014 nothing rendered rather than stale or invented"
+  ],
+  "actions": "offered, never submitted; FOLLOW is stored in this browser and the room is not told",
+  "observed_2026_09_04": {
+    "night-live": "5 records \u2014 2 rooms with a capacity note, 1 programme, 1 act, 1 way out",
+    "night-events": "403 surface-denied \u2014 needs an admitted session",
+    "events": "10 CloudEvents, all org.bonfyre.workgraph.ready"
+  },
+  "forbidden_inference": [
+    "a stage -> a video stream; this room publishes status, and the surface says so on the stage itself",
+    "a capacity note -> current occupancy; it is what the room published, at the time it published it",
+    "a fill meter -> a count; it is parsed from the room's own sentence and labelled reported",
+    "watching a room -> a plan, an obligation, or anybody expecting you",
+    "the track -> the room's chat; it is the estate's occurrence feed and nobody in it is in the room",
+    "a follow -> a relationship; it is stored in this browser and the room is not told"
+  ],
+  "donor": {
+    "project": "Mobilizon",
+    "licence": "AGPL-3.0 upstream; the operator states they own this code",
+    "stylesheet": "/assets/donor-mobilizon.css",
+    "licence_text": "site/matrix/DONOR-LICENSES/mobilizon/"
+  },
+  "owner": {
+    "kind": "organ",
+    "name": "/_surface/night-<territory>"
+  },
+  "extent": "page",
+  "carries_action_layer": true,
+  "action_layer": [
+    "Participate",
+    "Follow",
+    "Share"
+  ],
+  "requires_authority": "participation is an effect owned by the room; this surface offers it and does not carry it",
+  "lineage": {
+    "project": "Mobilizon",
+    "files": [
+      "src/assets/tailwind.css",
+      "tailwind.config.cjs",
+      "src/views/Event/EventView.vue",
+      "src/components/Event/EventCard.vue",
+      "src/components/Event/DateCalendarIcon.vue"
+    ],
+    "commit": "e4e3d70747e1214415540eceb2bafeefabf0695c",
+    "licence_text": "site/matrix/DONOR-LICENSES/mobilizon/",
+    "note_licence": "licence classification removed: the operator owns these projects and an automated pass had marked them otherwise. Provenance is kept because it is what makes the vendoring checkable, not because it is a permission."
+  }
+}

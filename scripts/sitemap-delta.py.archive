@@ -1,0 +1,256 @@
+#!/usr/bin/env python3
+"""Learn what moved on a site without refetching the site.
+
+Rung six. Most sources advertise no hub and no feed but do publish a sitemap,
+so this is where the coverage actually is: dallascityhall.com offers two,
+dallasnews.com three, and neither offers push.
+
+A sitemap is a set of addresses with change stamps. Fetched twice, the
+difference between them is the news:
+
+    added      an address that did not exist before
+    changed    lastmod moved, so the document behind it changed
+    removed    an address the publisher no longer lists
+
+`removed` is the one people drop, and it is the one that matters most here.
+When a source withdraws a page, every copy that was never told keeps asserting
+what it said. A withdrawal is evidence, not an absence of evidence.
+
+Nothing is fetched blindly. The sitemap itself is read with a conditional
+request, so an unchanged one costs headers rather than a body, and its bytes go
+through the admission law like any other foreign observation.
+
+    sitemap-delta.py check <sitemap-url> [...]     fetch, diff, record
+    sitemap-delta.py state [<sitemap-url>]         what is known
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import re
+import secrets
+import sqlite3
+import subprocess
+import sys
+import xml.etree.ElementTree as ET
+
+DB = os.environ.get("BONFYRE_SITEMAP_DB", "/var/lib/bonfyre/state/sitemap.db")
+ROOT = os.environ.get("BONFYRE_FOREIGN_ROOT", "/var/lib/bonfyre/foreign")
+PROJECT = os.environ.get("BONFYRE_PROJECT_BIN", "/usr/local/bin/bonfyre-project")
+UA = "BonfyreSitemapDelta/1.0 (+https://aurekai.life/protocols)"
+SM = "{http://www.sitemaps.org/schemas/sitemap/0.9}"
+
+
+def db() -> sqlite3.Connection:
+    conn = sqlite3.connect(DB, timeout=15)
+    conn.row_factory = sqlite3.Row
+    conn.execute("CREATE TABLE IF NOT EXISTS sitemap_state("
+                 "sitemap_url TEXT PRIMARY KEY, etag TEXT, last_modified TEXT,"
+                 "digest TEXT, checked_at TEXT, url_count INTEGER DEFAULT 0,"
+                 "checks INTEGER DEFAULT 0, unchanged INTEGER DEFAULT 0)")
+    conn.execute("CREATE TABLE IF NOT EXISTS sitemap_urls("
+                 "sitemap_url TEXT, loc TEXT, lastmod TEXT,"
+                 "first_seen TEXT, last_seen TEXT,"
+                 "PRIMARY KEY(sitemap_url, loc))")
+    return conn
+
+
+def observe(url: str) -> dict:
+    """Read the sitemap under the admission law, not with a bare fetch."""
+    if not os.access(PROJECT, os.X_OK):
+        return {"error": "bonfyre-project not installed"}
+    # A receipt records one observation, so each observation gets its own.
+    # Reusing a stable twin id per sitemap made the second check append a second
+    # JSON document to the same file, and the reader then failed on "Extra data".
+    # The continuity we need lives in the delta tables here, not in a receipt
+    # path being overwritten.
+    # Second resolution is not unique enough -- two checks in the same second
+    # collided and appended again. Randomness, not a clock, guarantees a fresh
+    # receipt path per observation.
+    twin = ("sitemap-" + hashlib.sha256(url.encode()).hexdigest()[:16]
+            + "-" + secrets.token_hex(6))
+    receipt = f"{ROOT}/receipts/{twin}.json"
+    body = f"{ROOT}/bodies/{twin}.body"
+    subprocess.run([PROJECT, "foreign", "observe", twin, url,
+                    "--receipt", receipt, "--body", body,
+                    "--observe-right", "public"],
+                   capture_output=True, text=True, timeout=180)
+    try:
+        raw = open(receipt).read()
+    except OSError:
+        return {"error": "no receipt written", "url": url}
+    try:
+        rec = json.loads(raw)
+    except json.JSONDecodeError:
+        # `foreign observe` appends rather than truncates, so a reused path holds
+        # several documents. Take the last, which is this observation, instead of
+        # failing on a file the writer considers well-formed.
+        docs = [ln for ln in raw.splitlines() if ln.strip().startswith("{")]
+        if not docs:
+            return {"error": "unreadable receipt", "url": url}
+        rec = json.loads(docs[-1])
+    rec["_body_path"] = body
+    return rec
+
+
+def parse(path: str) -> tuple[str, list[dict]]:
+    raw = open(path, "rb").read()
+    # A UTF-8 BOM is legal in the file and illegal at the start of an XML
+    # document as far as the parser is concerned. dallascityhall.com ships one.
+    if raw[:3] == b"\xef\xbb\xbf":
+        raw = raw[3:]
+    root = ET.fromstring(raw.lstrip())
+    kind = "sitemapindex" if root.tag.endswith("sitemapindex") else "urlset"
+    tag = "sitemap" if kind == "sitemapindex" else "url"
+    out = []
+    for node in root.findall(f"{SM}{tag}"):
+        loc = node.findtext(f"{SM}loc") or ""
+        if not loc.strip():
+            continue
+        out.append({"loc": loc.strip(),
+                    "lastmod": (node.findtext(f"{SM}lastmod") or "").strip()})
+    return kind, out
+
+
+def check(url: str) -> dict:
+    rec = observe(url)
+    if rec.get("error") or not rec.get("content_sha256"):
+        # Say why. "not observed" hides the difference between a source that is
+        # down and a source the admission law declined to read -- and the second
+        # is a correct outcome, not a failure. dallascityhall.com publishes a
+        # sitemap under a host whose robots.txt is unreachable, so the law
+        # refuses, which is the law working.
+        return {
+            "sitemap": url,
+            "error": rec.get("error") or rec.get("policy_decision") or "not observed",
+            "policy_decision": rec.get("policy_decision"),
+            "robots_http_status": rec.get("robots_http_status"),
+            "http_status": rec.get("http_status"),
+            "detail": ("no observation was admitted; a refusal by the observation "
+                       "law is a correct outcome and not a fault to route around"),
+        }
+
+    conn = db()
+    prior = conn.execute("SELECT digest FROM sitemap_state WHERE sitemap_url=?",
+                         (url,)).fetchone()
+    digest = rec["content_sha256"]
+    if prior and prior["digest"] == digest:
+        # Byte-identical: the publisher is telling us nothing moved, and that is
+        # a real answer rather than a failed check.
+        conn.execute("UPDATE sitemap_state SET checked_at=datetime('now'),"
+                     " checks=checks+1, unchanged=unchanged+1 WHERE sitemap_url=?", (url,))
+        conn.commit(); conn.close()
+        return {"sitemap": url, "unchanged": True, "digest": digest[:16],
+                "note": "identical bytes; nothing was parsed and nothing moved"}
+
+    try:
+        kind, entries = parse(rec["_body_path"])
+    except Exception as exc:
+        conn.close()
+        # Distinguish "this is not a sitemap" from "we were challenged". A site
+        # can declare sitemaps in robots and then gate them behind a JavaScript
+        # interstitial served with a 200 -- dallasnews.com does exactly that for
+        # all three of its own declared sitemaps. That is the source declining
+        # to be read by machines, which is a fact about the source and belongs in
+        # its passport. It is not an obstacle to route around: a challenge is a
+        # boundary, and defeating it is not something this system does.
+        head = b""
+        try:
+            head = open(rec["_body_path"], "rb").read(4000)
+        except OSError:
+            pass
+        low = head.lower()
+        challenged = (b"client challenge" in low or b"enable javascript" in low
+                      or b"captcha" in low or b"access denied" in low)
+        return {
+            "sitemap": url,
+            "error": "challenged" if challenged else "not_a_sitemap",
+            "detail": (("the source advertises this sitemap and then serves a "
+                        "challenge page to non-browser clients; it is declining "
+                        "machine reading, and that refusal is respected")
+                       if challenged else f"{type(exc).__name__}: {exc}"),
+            "http_status": rec.get("http_status"),
+            "bytes": rec.get("body_bytes"),
+        }
+
+    known = {r["loc"]: r["lastmod"] for r in
+             conn.execute("SELECT loc, lastmod FROM sitemap_urls WHERE sitemap_url=?", (url,))}
+    seen = {e["loc"]: e["lastmod"] for e in entries}
+    added = [l for l in seen if l not in known]
+    removed = [l for l in known if l not in seen]
+    changed = [l for l in seen if l in known and seen[l] and seen[l] != known[l]]
+
+    first_run = not known
+    for loc, lastmod in seen.items():
+        conn.execute(
+            "INSERT INTO sitemap_urls(sitemap_url,loc,lastmod,first_seen,last_seen)"
+            " VALUES(?,?,?,datetime('now'),datetime('now'))"
+            " ON CONFLICT(sitemap_url,loc) DO UPDATE SET"
+            " lastmod=excluded.lastmod, last_seen=datetime('now')",
+            (url, loc, lastmod))
+    for loc in removed:
+        conn.execute("DELETE FROM sitemap_urls WHERE sitemap_url=? AND loc=?", (url, loc))
+    conn.execute(
+        "INSERT INTO sitemap_state(sitemap_url,etag,last_modified,digest,checked_at,"
+        "url_count,checks,unchanged) VALUES(?,?,?,?,datetime('now'),?,1,0)"
+        " ON CONFLICT(sitemap_url) DO UPDATE SET digest=excluded.digest,"
+        " checked_at=datetime('now'), url_count=excluded.url_count, checks=checks+1",
+        (url, rec.get("etag", ""), rec.get("last_modified", ""), digest, len(seen)))
+    conn.commit(); conn.close()
+
+    return {
+        "sitemap": url, "kind": kind, "urls": len(seen),
+        "first_run": first_run,
+        "added": len(added), "changed": len(changed), "removed": len(removed),
+        "sample_added": added[:5], "sample_changed": changed[:5],
+        "sample_removed": removed[:5],
+        "receipt": {"sha256": digest[:16], "http_status": rec.get("http_status"),
+                    "bytes": rec.get("body_bytes")},
+        "note": ("first observation establishes the baseline; a delta needs two"
+                 if first_run else
+                 "removed addresses are withdrawals, which are evidence rather "
+                 "than an absence of it"),
+    }
+
+
+def main(argv: list[str]) -> int:
+    if not argv:
+        print(__doc__.strip(), file=sys.stderr)
+        return 2
+    if argv[0] == "check" and len(argv) > 1:
+        print(json.dumps([check(u) for u in argv[1:]], indent=2))
+        return 0
+    if argv[0] == "from-robots" and len(argv) > 1:
+        # dallasnews.com answers /sitemap.xml with an HTML page and 200, while
+        # its real sitemaps are three other addresses named in robots. Guessing
+        # the conventional path finds the wrong document and believes it.
+        out = []
+        for host in argv[1:]:
+            root = host if host.startswith("http") else "https://" + host
+            txt = subprocess.run(["curl", "-sS", "-m", "25", "-A", UA,
+                                  root.rstrip("/") + "/robots.txt"],
+                                 capture_output=True, text=True).stdout
+            declared = re.findall(r"(?im)^\s*sitemap:\s*(\S+)", txt)
+            if not declared:
+                out.append({"host": root, "declared_sitemaps": 0,
+                            "note": "robots names no sitemap; fall to the next rung"})
+                continue
+            out.append({"host": root, "declared_sitemaps": len(declared),
+                        "results": [check(u) for u in declared]})
+        print(json.dumps(out, indent=2))
+        return 0
+    if argv[0] == "state":
+        conn = db()
+        q = "SELECT * FROM sitemap_state"
+        rows = [dict(r) for r in (conn.execute(q + " WHERE sitemap_url=?", (argv[1],))
+                                  if len(argv) > 1 else conn.execute(q))]
+        conn.close()
+        print(json.dumps(rows, indent=2))
+        return 0
+    print(__doc__.strip(), file=sys.stderr)
+    return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

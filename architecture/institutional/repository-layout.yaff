@@ -1,0 +1,39 @@
+architecture repository-shape
+  canonical_name RepositoryShape
+  family institutional
+  domain Institution / Repository
+  layer institutional
+  semantic_question Which physical root owns this class of source, projection, evidence, integration, documentation, or operator state?
+  purpose Keep current implementation and contracts visibly separate from generated projections, evidence, mutable state, and absorbed historical origins.
+  maturity implemented
+  source_path bonfyre.workspace.yaff
+  source_path docs/repository-layout.md
+  source_path evidence/README.md
+  source_path evidence/origins/native-cutover/README.md
+  source_path evidence/origins/native-cutover/compatibility-oracles-2026-09-09.zip
+  source_path generated/README.md
+  source_path components/README.md
+  source_path services/queue-dispatcher/README.md
+  source_path architecture/estate-compiler-retirement.json
+  source_path docs/state-coordinates.md
+  witness tests/test_repository_shape.py.archive
+  witness tests/test_estate_compiler_retirement.py.archive
+  node_types RepositoryOwner
+  node_types PhysicalRoot
+  edge_types physically_owned_by
+  invariant an organ builds on every environment it is expected to run in: a POSIX feature pin that hides the BSD interfaces a file already uses makes it uncompilable on the control plane while still building on the deploy host, so the pin carries a platform guard rather than a silent per-machine capability difference
+  invariant a WAL-mode store is copied through a consistent snapshot, never by copying the main database file alone: the write-ahead log routinely holds more recent state than the file beside it, so a plain cp yields a backup that restores silently to an older moment and reports no error while doing it
+  invariant a tenant never appears in the name of an organ's functions, environment variables or routes: a delegated vertical is resolved from the namespace contract, so a second vertical needs a contract row rather than a parallel accessor, route and variable for every one of its parts; table names still carrying a tenant are a schema migration and are named here as owed rather than treated as done
+  invariant an institutional fact is declared once and rendered, never asserted independently by each organ that needs it: the settlement rail, the estate list, the served carriers and the content-type set each have a contract in architecture/ and a generator or checker, so a fact asserted in four places cannot drift into four different answers with nothing to notice
+  invariant a store is named by a declaration and never by the caller's working directory: an organ resolves an explicit flag, then the environment's declaration, then one machine store under the state root, and refuses while naming the variable to set rather than creating a store beside $PWD; a bare-filename default produces stores that are indistinguishable from the real one once they exist
+  invariant a delegating organ resolves a peer organ in both shipped layouts: an explicit environment override first, then a peer in the same directory as the running binary (the managed install, where every organ is a peer in one bin directory), then the checkout sibling under its own component directory, each confirmed by a real executable test; resolving only the checkout shape breaks delegation in every installation the software actually ships as
+  invariant campaigns and runs are evidence, fixtures, packs, receipts, or operator state rather than parallel implementation roots
+  invariant independently buildable product components live under components and the notebook-era 10-Code root cannot return
+  invariant any root consumed by a background carrier must physically reside outside macOS TCC-protected Desktop/Documents/Downloads territory; a compatibility path may be a symlink, but its resolved root must be readable by the carrier
+  invariant retired notebook writers live under evidence origins and cannot remain scheduled production services
+  invariant the legacy estate compiler remains retired unless a successor names a current Atlas architecture and owner, uses a non-append-only snapshot state model, and declares positive age, byte, and snapshot-count retention bounds
+  forbidden_inference physical placement -> semantic authority
+  forbidden_inference a configured BONFYRE_ROOT path -> that a background process may read it
+  forbidden_inference a documented YaFF Scan design -> authority to run an estate compiler
+  source_lineage Generation-10 repository convergence
+  witness 2026-08-30 LaunchAgent-backed MCP used the Developer root directly while the legacy Documents compatibility symlink remained valid; local Atlas/status/tree and Oracle-tunneled Atlas reads passed

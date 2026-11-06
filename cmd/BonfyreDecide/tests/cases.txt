@@ -1,0 +1,47 @@
+books learn --history EX/history.csv --out TMP/learned-out.json
+books learn --history EX/sample-bank.csv --out TMP/x.json
+books --transactions EX/september.csv --learned TMP/learned.json --model-endpoint http://127.0.0.1:9 --json
+books --transactions EX/september.csv --learned TMP/learned.json --model-endpoint http://127.0.0.1:9 --out TMP/booked.csv
+books --transactions EX/sample-bank.csv --learned TMP/learned.json MOCK --json
+books --transactions EX/sample-bank.csv --chart EX/schedule-c-chart.txt MOCK --json
+books --transactions EX/sample-bank.csv --chart EX/schedule-c-chart.txt MOCK
+books --transactions EX/sample-bank.csv --chart FIX/chart4.txt --columns date=Date,amount=Amount MOCK --json
+books --transactions EX/sample-bank.csv --chart FIX/chart4.txt --columns nope=x MOCK
+books --transactions EX/sample-bank.csv
+books --transactions EX/sample-bank.csv --chart EX/sample-bank.csv --out EX/sample-bank.csv
+books --transactions FIX/xlsx/coords.xlsx --chart FIX/chart4.txt --model-endpoint http://127.0.0.1:9 --json
+books --transactions FIX/xlsx/multi.xlsx --chart FIX/chart4.txt --model-endpoint http://127.0.0.1:9 --json
+books --transactions FIX/xlsx/multi.xlsx --sheet Bank --header-row 2 --chart FIX/chart4.txt --model-endpoint http://127.0.0.1:9 --json
+books --transactions FIX/xlsx/multi.xlsx --sheet Bank --header-row 2.5 --chart FIX/chart4.txt --model-endpoint http://127.0.0.1:9
+books --transactions FIX/xlsx/formula1.xlsx --chart FIX/chart4.txt --model-endpoint http://127.0.0.1:9
+books --transactions FIX/xlsx/formula2.xlsx --chart FIX/chart4.txt --model-endpoint http://127.0.0.1:9
+books --transactions FIX/xlsx/formula3.xlsx --chart FIX/chart4.txt --model-endpoint http://127.0.0.1:9
+books --transactions FIX/xlsx/dupcol.xlsx --chart FIX/chart4.txt --model-endpoint http://127.0.0.1:9
+books --transactions FIX/xlsx/both.xlsx --chart FIX/chart4.txt --model-endpoint http://127.0.0.1:9
+books --transactions FIX/xlsx/merged.xlsx --chart FIX/chart4.txt --model-endpoint http://127.0.0.1:9
+books --transactions FIX/xlsx/wide.xlsx --chart FIX/chart4.txt --model-endpoint http://127.0.0.1:9
+books --transactions FIX/xlsx/debitcredit.xlsx --chart FIX/chart4.txt --model-endpoint http://127.0.0.1:9 --json
+books --transactions FIX/xlsx/hiddensheet.xlsx --chart FIX/chart4.txt --model-endpoint http://127.0.0.1:9 --json
+books --transactions FIX/xlsx/date1904.xlsx --chart FIX/chart4.txt --model-endpoint http://127.0.0.1:9 --json
+books --transactions FIX/xlsx/date1900.xlsx --chart FIX/chart4.txt --model-endpoint http://127.0.0.1:9 --json
+books --transactions FIX/xlsx/unicode.xlsx --chart FIX/chart4.txt --model-endpoint http://127.0.0.1:9 --json
+books inspect --workbook FIX/xlsx/hiddensheet.xlsx
+books inspect --workbook FIX/xlsx/multi.xlsx
+books inspect --workbook FIX/houston-35.html
+monitor --watch Target --about Target_Corporation,_the_US_retail_chain --days 36500 --archive ARCHIVE MOCK --json
+monitor --watch Target --about Target_Corporation,_the_US_retail_chain --days 36500 --archive ARCHIVE MOCK
+monitor --watch target --watch Target_Corp --about Target_Corporation --days 36500 --limit 1 --archive ARCHIVE MOCK --json
+monitor --watch Nobody --about x --days 36500 --archive ARCHIVE MOCK
+monitor --watch Target --about --days 36500 --archive ARCHIVE MOCK
+monitor --watch Target --about x --archive TMP/missing.db MOCK
+monitor --watch Target --about Target --days 36500 --archive ARCHIVE --model-endpoint http://127.0.0.1:9
+monitor --watch Target --about Target --days 36500 --archive ARCHIVE --model-endpoint http://example.com:7000
+monitor --about x
+manifest --listing FIX/houston-35.html --listing FIX/toner.txt --listing FIX/brandonly.txt --lot houston MOCK --json
+manifest --listing FIX/houston-35.html --listing FIX/toner.txt --listing FIX/brandonly.txt --lot houston MOCK --itad TMP/itad.tsv
+manifest --photo FIX/lab-1.jpg --photo FIX/lab-2.jpg --photo FIX/blank.png --listing FIX/houston-35.html MOCK --json
+manifest --photo FIX/lab-1.jpg MOCK
+manifest MOCK
+books --help
+monitor --help
+manifest -h

@@ -1,0 +1,16 @@
+--providers has an unsupported value
+Bonfyre Hypervisor v5 Fixture Correction + Capability Canary R4.
+Usage: bonfyre-canary [--version | --help] <command> [arguments]
+Commands:
+  status                         Canary status
+  certificates                   List capability certificates
+  verify                         Verify the receipt chain
+  policies                       List canary policies
+  fixtures run [--providers rtk cavekit bernstein agent-deck] [--max-agent-turns N]
+  certificate verify PROVIDER CAPABILITY
+  policy upsert CAPABILITY PROVIDER FALLBACK_PROVIDER [--percentage N] [--effect-class CLASS]... [--enable]
+  policy state POLICY_ID proposed|enabled|suspended|disabled
+  route MISSION_ID CAPABILITY [--effect-class CLASS] [--task-id ID] [--fallback-provider PROVIDER]
+  outcome DECISION_ID passed|failed|fallback|cancelled [--latency-ms N] [--receipt-digest DIGEST]
+  decisions [--limit N]
+  outcomes [--limit N]

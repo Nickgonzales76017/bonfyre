@@ -14,8 +14,8 @@ Local speech-splitting CLI with a stable chunk manifest contract.
 ## Usage
 
 ```bash
-python3 bin/silero_vad_cli.py --audio input.wav --out out/chunks
-python3 bin/silero_vad_cli.py --audio input.wav --out out/chunks --min-speech 1.0 --padding 0.15
+The interpreter-backed CLI is archived. Speech segmentation is provided by
+`bonfyre-media-prep split-speech` until a native VAD organ is bound.
 ```
 
 ## Notes

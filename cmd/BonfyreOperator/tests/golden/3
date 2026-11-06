@@ -1,0 +1,119 @@
+{
+  "operator": "SELECT",
+  "program": {
+    "program_id": "household.select.521e8fb10527164d",
+    "operator": "SELECT",
+    "digest": "910931d6e54e6ab0d4ee9c64128f8d80194bfcd221c81a75ad4972607bae911a",
+    "reads": [
+      "household:food:offer:Rice-2",
+      "household:food:offer:apple",
+      "household:food:offer:beans",
+      "household:food:offer:rice_1"
+    ],
+    "admitted": true,
+    "hard_failures": []
+  },
+  "count": 4,
+  "records": [
+    {
+      "address": "household:food:offer:apple",
+      "kind": "food.offer",
+      "content_sha256": "80f6d7ff160433f4e98c4e121510d950aff3c19a8e5b18ce7eb22ceafea191b6",
+      "source_file": "household/food/current-offers.jsonl",
+      "source_refs": [],
+      "record": {
+        "offer_id": "apple",
+        "merchant": "Aldi",
+        "source_refs": {
+          "x": 1
+        },
+        "cash_price_usd": null,
+        "pet_status": false
+      }
+    },
+    {
+      "address": "household:food:offer:beans",
+      "kind": "food.offer",
+      "content_sha256": "e506d6813a05e30149ef8d3b3d1db2a480f6ad601ec86cc795c1b274ecbea9c4",
+      "source_file": "household/food/current-offers.jsonl",
+      "source_refs": [
+        "https://example.test/beans"
+      ],
+      "record": {
+        "offer_id": "beans",
+        "cash_price_usd": "1.79",
+        "merchant": "Target",
+        "source_url": "https://example.test/beans",
+        "price": 1.5,
+        "tags": [
+          "a",
+          null,
+          2
+        ],
+        "in_stock": true
+      }
+    },
+    {
+      "address": "household:food:offer:rice_1",
+      "kind": "food.offer",
+      "content_sha256": "cdb54c9b853155ad429b303354dade5b5a6f13aa912aaca1d05f942f2521a74d",
+      "source_file": "household/food/current-offers.jsonl",
+      "source_refs": [
+        "a",
+        "z"
+      ],
+      "record": {
+        "offer_id": "rice_1",
+        "cash_price_usd": 2.1,
+        "merchant": "Kroger",
+        "source_refs": [
+          "z",
+          "a",
+          "a",
+          ""
+        ],
+        "notes": "multi\nline \"q\"",
+        "nested": {
+          "b": {
+            "y": 2,
+            "x": [
+              1,
+              2
+            ]
+          },
+          "c": 0.1
+        }
+      }
+    },
+    {
+      "address": "household:food:offer:Rice-2",
+      "kind": "food.offer",
+      "content_sha256": "45e09032963e8210d2e998a8c7613e0fda6bea023e3b4eb12aeb7581705e84f7",
+      "source_file": "household/food/current-offers.jsonl",
+      "source_refs": [
+        "https://example.test/rice"
+      ],
+      "record": {
+        "2": 2,
+        "10": 1,
+        "offer_id": "Rice-2",
+        "cash_price_usd": 2.1,
+        "merchant": "Kroger",
+        "source_refs": "https://example.test/rice",
+        "evidence_ref": "",
+        "notes": null,
+        "nested": {
+          "b": {
+            "y": 1,
+            "x": [
+              1,
+              2
+            ]
+          },
+          "a": "éé"
+        }
+      }
+    }
+  ]
+}
+exit 0

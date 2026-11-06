@@ -1,0 +1,60 @@
+#!/usr/bin/env python3
+"""Archived after cutover to cloudflare-reconcile.mjs. Keep the remotely-managed public connector aligned with local ingress."""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import urllib.error
+import urllib.request
+
+API = "https://api.cloudflare.com/client/v4"
+TUNNEL_ID = "495b264d-9a9d-4676-a5a7-e2ae6b45c1a3"
+PUBLIC_HOSTS = {
+    "aurekai.life", "*.aurekai.life", "aurekai.live", "*.aurekai.live",
+    "aurekai.shop", "*.aurekai.shop", "aurekai.work", "*.aurekai.work",
+    "theleaflounge.store", "*.theleaflounge.store",
+}
+
+
+def api(method: str, path: str, token: str, body: dict | None = None) -> dict:
+    request = urllib.request.Request(
+        API + path,
+        data=None if body is None else json.dumps(body).encode("utf-8"),
+        method=method,
+        headers={"Authorization": "Bearer " + token, "Content-Type": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            answer = json.load(response)
+    except urllib.error.HTTPError as exc:
+        answer = json.loads(exc.read().decode("utf-8", "replace"))
+    if not answer.get("success"):
+        raise RuntimeError(json.dumps(answer.get("errors", answer), separators=(",", ":")))
+    return answer
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--apply", action="store_true")
+    args = parser.parse_args()
+    token = os.environ.get("CLOUDFLARE_API_TOKEN", "")
+    account = os.environ.get("CLOUDFLARE_ACCOUNT_ID", "")
+    if not token or not account:
+        parser.error("CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID are required")
+    path = f"/accounts/{account}/cfd_tunnel/{TUNNEL_ID}/configurations"
+    current = api("GET", path, token).get("result", {}).get("config", {})
+    ingress = current.get("ingress", [])
+    changed = []
+    for row in ingress:
+        if row.get("hostname") in PUBLIC_HOSTS and row.get("service") != "http://127.0.0.1:28901":
+            changed.append(row.get("hostname"))
+            row["service"] = "http://127.0.0.1:28901"
+    if args.apply and changed:
+        api("PUT", path, token, {"config": current})
+    print(json.dumps({"apply": args.apply, "changed": changed, "ingress_rules": len(ingress)}, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

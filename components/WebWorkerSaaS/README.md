@@ -23,7 +23,7 @@ Everything else — client details, output preferences, turnaround targets — i
 ## Run
 
 ```bash
-cd 10-Code/WebWorkerSaaS
+cd components/WebWorkerSaaS
 python3 -m http.server 8080
 ```
 
@@ -45,7 +45,7 @@ For the install prompt and service worker, use a real origin like `http://localh
 Use **Export Package** for a single-file handoff:
 
 ```bash
-cd 10-Code/LocalAITranscriptionService
+cd components/LocalAITranscriptionService
 PYTHONPATH=src python3 -m local_ai_transcription_service.cli --intake-package job.package.json
 ```
 
