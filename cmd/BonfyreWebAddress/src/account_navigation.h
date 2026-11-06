@@ -82,13 +82,36 @@ static int serve_account_navigation(const char *method,const char *target,const 
     fputs("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: private, no-store\r\nVary: Cookie, Authorization\r\nReferrer-Policy: no-referrer\r\nX-Content-Type-Options: nosniff\r\nConnection: close\r\n\r\n",stdout);
     account_navigation_emit(bearer,auth_db);return 1;
 }
-/* The setup and installed-work shell is already private. Fill its session slot
- * before sending bytes, so ordinary navigation also works without JavaScript. */
-static void account_navigation_chrome(const char *format,const char *links,const char *bearer,const char *auth_db) {
+/* Account pages use the same native presentation contract as the public
+ * pages. Decorate only the owned head/body boundaries; never rewrite the
+ * session slot, owner content or any saved-work action. */
+static void account_navigation_chrome_presented(const char *format,const char *links,
+    const char *bearer,const char *auth_db,const char *extra_head,const char *body_attributes) {
     int size=snprintf(NULL,0,format,links);
     if(size<0||size>256*1024)return;
     char *body=malloc((size_t)size+1);if(!body)return;
     snprintf(body,(size_t)size+1,format,links);
+    if(extra_head && *extra_head && body_attributes && *body_attributes){
+        char *head=strstr(body,"</head>");
+        char *open=head?strstr(head,"<body"):NULL;
+        char *end=open?strchr(open,'>'):NULL;
+        size_t hlen=strlen(extra_head),alen=strlen(body_attributes);
+        if(head&&open&&end&&hlen<65536&&alen<1024&&
+           (size_t)size+hlen+alen<512*1024){
+            char *decorated=malloc((size_t)size+hlen+alen+1);
+            if(decorated){
+                size_t off=0,n=(size_t)(head-body);
+                memcpy(decorated+off,body,n);off+=n;
+                memcpy(decorated+off,extra_head,hlen);off+=hlen;
+                n=(size_t)(end-head);
+                memcpy(decorated+off,head,n);off+=n;
+                memcpy(decorated+off,body_attributes,alen);off+=alen;
+                n=(size_t)size-(size_t)(end-body);
+                memcpy(decorated+off,end,n);off+=n;decorated[off]=0;
+                free(body);body=decorated;
+            }
+        }
+    }
     const char *start="<!--BF_SESSION_BEGIN-->",*end="<!--BF_SESSION_END-->";
     char *a=strstr(body,start),*b=a?strstr(a,end):NULL;
     if(a&&b){fwrite(body,1,(size_t)(a-body),stdout);fputs(start,stdout);account_navigation_emit(bearer,auth_db);fputs(b,stdout);}else fputs(body,stdout);

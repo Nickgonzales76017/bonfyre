@@ -19,7 +19,7 @@ const git = async (argv, cwd) => {
   if (result.exit_code !== 0) throw new Error(`fixture git failed: ${argv.join(' ')}`);
 };
 
-async function fixture({ withGit = false, agentRunner, useDefaultRunner = false, run = projectRun, projectTool, estateStatus, policyOverride = {} } = {}) {
+async function fixture({ withGit = false, agentRunner, useDefaultRunner = false, run = projectRun, projectTool, estateStatus, policyOverride = {}, diskAvailableBytes = ()=>8*1024*1024*1024 } = {}) {
   const scratch = mkdtempSync(join(tmpdir(), 'bonfyre-fabric-work-'));
   const root = join(scratch, 'repo'), home = join(scratch, 'fabric');
   mkdirSync(root);
@@ -43,7 +43,7 @@ async function fixture({ withGit = false, agentRunner, useDefaultRunner = false,
     agents: { ...basePolicy.agents, ...override.agents } };
   const owner = createFabricWork({ store, policy: actualPolicy, projectRoot: root, token: 'fixture-token',
     run, ...(useDefaultRunner ? {} : { agentRunner: agentRunner || defaultRunner }),
-    projectTool, estateStatus, env: {}, stopPaths: [join(scratch, 'STOP')] });
+    projectTool, estateStatus, diskAvailableBytes, env: {}, stopPaths: [join(scratch, 'STOP')] });
   return { scratch, root, home, store, owner, called, cleanup() { store.close(); rmSync(scratch, { recursive: true, force: true }); } };
 }
 
@@ -541,4 +541,26 @@ test('a selected input changing during final review retains the candidate and re
     expect(readFileSync(join(f.root,'README.md'),'utf8')).toBe('fixture repository\n');expect(readFileSync(join(f.root,'context.txt'),'utf8')).toBe('new user context\n');
     expect(existsSync(result.patch_receipt.path)).toBe(true);
   }finally{f.cleanup();}
+});
+
+
+test('low disk blocks a new relay before worktree creation or paid agent work',async()=>{
+ const f=await fixture({withGit:true,diskAvailableBytes:()=>512*1024*1024});
+ try{
+  const id=f.store.createTask({kind:'relay',title:'disk refusal',prompt:'Do not run agents',apply_to_project:false});
+  await expect(f.owner.execute(id)).rejects.toThrow(/disk runway below policy/);
+  expect(f.store.task(id)).toMatchObject({state:'blocked'});
+  expect(f.called).toHaveLength(0);
+  expect(f.store.summary().locks).toEqual([]);
+  expect(existsSync(join(f.home,'worktrees',id))).toBe(false);
+ }finally{f.cleanup();}
+});
+test('healthy disk permits the existing governed relay path',async()=>{
+ const f=await fixture({withGit:true,diskAvailableBytes:()=>4n*1024n*1024n*1024n});
+ try{
+  const id=f.store.createTask({kind:'relay',title:'disk healthy',prompt:'A fixture',apply_to_project:false});
+  const result=await f.owner.execute(id);
+  expect(result.tests.every(row=>row.exit_code===0)).toBe(true);
+  expect(f.called.length).toBeGreaterThan(0);
+ }finally{f.cleanup();}
 });

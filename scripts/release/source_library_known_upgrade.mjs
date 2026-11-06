@@ -49,6 +49,9 @@ export const sourceLibraryKnownUpgradeSpec=Object.freeze({
   'integrations/browser/repository-pack-intake.mjs',
   'integrations/browser/repository-fpq-review.mjs',
   'integrations/browser/repository-cut-studio.mjs',
+  'integrations/browser/antithesis-reliability-studio.mjs',
+  'integrations/browser/antithesis-reliability.mjs',
+  'integrations/browser/antithesis-triage-intake.mjs',
   'integrations/browser/warehouse-studio.mjs',
   'integrations/browser/program-service-continuations.mjs',
   'integrations/browser/program-service-policy.mjs',
@@ -56,7 +59,7 @@ export const sourceLibraryKnownUpgradeSpec=Object.freeze({
  baseRoot:release=>release,
  versionFor:(candidate,base)=>({
   pack:sourceLibraryPack,version:'source-known-'+candidate.slice(0,40),
-  root:candidate,parent_root:base,changed:'Known Sources, Warehouse Intelligence, reviewed Git/JOSH original retention, source-bound FPQ review and PackGraph drafts with installed-app continuations; package '+candidate,
+  root:candidate,parent_root:base,changed:'Known Sources, Warehouse Intelligence, reviewed Git/JOSH original retention, source-bound FPQ review, Antithesis Reliability Lab and PackGraph drafts with installed-app continuations; package '+candidate,
   proof:'scripts/release/tests/source_library_known_upgrade.test.mjs',status:'published'
  }),
  materialize:materializeKnownSourceLibrary,
@@ -88,6 +91,14 @@ export const sourceLibraryKnownUpgradeSpec=Object.freeze({
     fpq.includes(Buffer.from('reviewRepositoryFPQGeneration'))&&
     cutClient.includes(Buffer.from('Prepare local FPQ review')),
     'Repository cut continuation must retain the exact native source-cut digest.');
+  const lab=(await readWorkspaceFile(root,id,'sources/warehouse/index.html')).toString();
+  assert(lab.includes('data-antithesis-reliability')&&lab.includes('antithesis-reliability-studio.mjs'),
+    'Antithesis Reliability Lab must share the Source Library successor.');
+  const labClient=await readWorkspaceFile(root,id,'sources/antithesis-reliability-studio.mjs');
+  const labIntake=await readWorkspaceFile(root,id,'bridge/antithesis-triage-intake.mjs');
+  assert(labClient.includes(Buffer.from('Review original retention'))&&
+    labIntake.includes(Buffer.from('prepareAntithesisTriageIntake')),
+    'Antithesis triage must be reviewed and retained through the native source owner.');
   const client=await readWorkspaceFile(root,id,'sources/warehouse-studio.mjs');
   const contract=await readWorkspaceFile(root,id,'bridge/warehouse-portfolio.mjs');
   assert(client.includes(Buffer.from('warehouseInstalledTools'))&&

@@ -33,6 +33,11 @@ export function warehouseStudioPage({navigation,navigationCSS}={}){
   '[data-repository-cut-studio] .repository-fpq-review{border-top:1px solid #9bb9a3;margin-top:24px;padding-top:14px}'+
   '[data-repository-cut-studio] pre{white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%}'+
   '[data-repository-cut-studio] p,[data-repository-cut-studio] small,[data-repository-cut-studio] section{min-width:0;max-width:100%;overflow-wrap:anywhere}';
+ const antithesisCSS=css.replaceAll('[data-warehouse-studio]','[data-antithesis-reliability]')+
+  '[data-antithesis-reliability]{border-top:2px solid #91b29c;margin-top:20px}'+
+  '[data-antithesis-reliability] input[type=text]{display:block;width:min(610px,100%);max-width:100%;box-sizing:border-box;padding:12px;border:1px solid #a6b7ac;border-radius:10px;margin-top:6px}'+
+  '[data-antithesis-reliability] li,[data-antithesis-reliability] p{overflow-wrap:anywhere}'+
+  '[data-antithesis-reliability] dialog{max-width:min(650px,90vw);border:1px solid #9ebda5;border-radius:14px;padding:24px}';
  const html='<html lang="en"><head><meta charset="utf-8">'
   +'<meta name="viewport" content="width=device-width,initial-scale=1">'
   +'<meta name="bonfyre-workspace-store" content="/apps/__WORKSPACE__/_records">'
@@ -41,12 +46,14 @@ export function warehouseStudioPage({navigation,navigationCSS}={}){
   +'<meta name="bonfyre-workspace-release" content="__RELEASE__">'
   +'<title>Warehouse intelligence · Aurekai</title>'
   +'<link rel="stylesheet" href="../library.css">'
-  +'<style>'+navigationCSS+css+repositoryCSS+'</style></head><body>'
+  +'<style>'+navigationCSS+css+repositoryCSS+antithesisCSS+'</style></head><body>'
   +navigation
   +'<main data-warehouse-studio>'
   +'<noscript>JavaScript is required to review a native portfolio. No sources have been modified.</noscript>'
   +'</main><section data-repository-cut-studio></section>'+
+  '<section data-antithesis-reliability></section>'+
   '<script type="module" src="../warehouse-studio.mjs"></script>'+
-  '<script type="module" src="../repository-cut-studio.mjs"></script></body></html>';
+  '<script type="module" src="../repository-cut-studio.mjs"></script>'+
+  '<script type="module" src="../antithesis-reliability-studio.mjs"></script></body></html>';
  return '<!doctype html>'+html;
 }

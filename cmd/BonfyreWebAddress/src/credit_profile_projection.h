@@ -26,7 +26,7 @@ static void bf_credit_publications(sqlite3 *db,const char *by,const char *source
     if(media_only && (!page_image_url_safe(image) || page_picture_withheld(image)))continue;
     fputs("<article class=\"ph-post\" data-credit-publication>",stdout);
     if(image&&page_image_url_safe(image)&&!page_picture_withheld(image))page_emit_picture(image,"ph-credit-media");
-    fputs("<h3><a href=\"/o/",stdout);
+    fputs("<h3><a href=\"https://aurekai.work/o/",stdout);
    url_query_value(source);fputc('/',stdout);url_query_value(key);fputs("\">",stdout);html(title);
    fputs("</a></h3><p>",stdout);
    const char *publisher=(const char*)sqlite3_column_text(s,2),*kind=(const char*)sqlite3_column_text(s,3),*date=(const char*)sqlite3_column_text(s,4);
@@ -55,11 +55,16 @@ static int serve_credit_profile(const char *method,const char *target,const char
     char flag[8]={0},by[513]={0},source[4097]={0},tab[24]="overview",host[128]={0};
     const char *archive=getenv("BONFYRE_ITEM_ARCHIVE_DB");
     sqlite3 *db=NULL;sqlite3_stmt *st=NULL;int found=0;
+    /* The exported /people?who&source leaf is the public, read-only profile
+     * when this same exact-source evidence gate admits it. Explicit profile=1
+     * retains strict 404 semantics for unadmitted source credits. */
+    int explicit_profile=query_value(query,"profile",flag,sizeof(flag));
     if(strcmp(method,"GET")||strcmp(target,"/people")||
-       !query_value(query,"profile",flag,sizeof(flag))||strcmp(flag,"1"))return 0;
+       (explicit_profile&&strcmp(flag,"1")))return 0;
     if(!query_value(query,"who",by,sizeof(by))||
        !query_value(query,"source",source,sizeof(source))||
        !bf_people_name_plausible(by)||!bf_credit_profile_host(by,source,host)){
+        if(!explicit_profile)return 0;
         ph_error(404,"No exact source-attributed profile exists for this coordinate.\n");
         return 1;
     }
@@ -69,7 +74,7 @@ static int serve_credit_profile(const char *method,const char *target,const char
         int valid=0;
         for(size_t i=0;i<sizeof(allowed)/sizeof(allowed[0]);i++)
             if(!strcmp(chosen,allowed[i]))valid=1;
-        if(!valid){ph_error(404,"This public profile section is unavailable.\n");return 1;}
+        if(!valid){if(!explicit_profile)return 0;ph_error(404,"This public profile section is unavailable.\n");return 1;}
         snprintf(tab,sizeof(tab),"%s",chosen);
     }
     if(!archive||!(db=bf_sqlite_open_readonly_path(archive,1500))){
@@ -102,7 +107,7 @@ static int serve_credit_profile(const char *method,const char *target,const char
         if(sqlite3_step(source_decl)==SQLITE_ROW)found=0;
         sqlite3_finalize(source_decl);sqlite3_close(cms);
     }
-    if(!found){sqlite3_close(db);ph_error(404,"No retained publication credits that name and source.\n");return 1;}
+    if(!found){sqlite3_close(db);if(!explicit_profile)return 0;ph_error(404,"No retained publication credits that name and source.\n");return 1;}
     BfCreditProfileParent parent;
     sqlite3 *parent_cms=cms_path&&*cms_path?bf_sqlite_open_readonly_path(cms_path,1500):NULL;
     bf_credit_profile_parent(parent_cms,db,by,source,&parent);

@@ -3,9 +3,9 @@
 import { spawn } from 'node:child_process';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
-import { closeSync, existsSync, openSync, writeSync } from 'node:fs';
+import { closeSync, existsSync, openSync, statfsSync, writeSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { basename, join, resolve } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { projectRun } from './project_runtime.mjs';
 import { fabricGitEnvironment } from './fabric_store.mjs';
 
@@ -108,11 +108,36 @@ async function defaultAgentRunner({ argv, cwd, env, stdoutPath, stderrPath, time
 
 export function createFabricWork({ store, policy, projectRoot, token = '',
   run = projectRun, agentRunner = defaultAgentRunner, projectTool, estateStatus, env = process.env,
-  stopPaths = [join(homedir(), '.bonfyre/operator/HALT'), join(homedir(), '.bonfyre/dev-fabric/STOP')] } = {}) {
+  stopPaths = [join(homedir(), '.bonfyre/operator/HALT'), join(homedir(), '.bonfyre/dev-fabric/STOP')],
+  diskAvailableBytes } = {}) {
   if (!store || !strictObject(policy) || typeof run !== 'function' || typeof agentRunner !== 'function') throw new Error('invalid fabric owner');
   if (policy.repair_failed_tests !== undefined && typeof policy.repair_failed_tests !== 'boolean')
     throw new Error('repair_failed_tests policy must be boolean');
   projectRoot = resolve(text(projectRoot, 'project root', 16384));
+  if(diskAvailableBytes!==undefined && typeof diskAvailableBytes!=='function')
+    throw new Error('diskAvailableBytes must be a probe function');
+  const minDiskMiB=policy.min_free_disk_mib??3072;
+  if(!Number.isSafeInteger(minDiskMiB)||minDiskMiB<1||minDiskMiB>65536)
+    throw new Error('invalid minimum free disk in Fabric policy');
+  function fabricDiskRunway(){
+    let bytes;
+    if(diskAvailableBytes)bytes=diskAvailableBytes();
+    else{
+      let path=store.worktreeRoot||projectRoot;
+      while(!existsSync(path)){
+        const parent=dirname(path);if(parent===path)throw new Error('Fabric storage root unavailable');
+        path=parent;
+      }
+      const stat=statfsSync(path,{bigint:true});
+      bytes=stat.bavail*stat.bsize;
+    }
+    if((typeof bytes!=='bigint'&&!Number.isSafeInteger(bytes))||bytes<0)
+      throw new Error('Fabric disk runway could not be measured');
+    const available=BigInt(bytes),minimum=BigInt(minDiskMiB)*1048576n;
+    if(available<minimum)
+      throw stopError('Fabric disk runway below policy: '+(available/1048576n)+
+        ' MiB free; require '+minDiskMiB+' MiB before worktree or agent admission');
+  }
   if (!Array.isArray(stopPaths) || stopPaths.some(path => typeof path !== 'string')) throw new Error('invalid STOP paths');
   const controllers = new Map(), taskAborts = new Map(), tasks = new Map(), taskContext = new AsyncLocalStorage();
   const now = () => Date.now() / 1000;
@@ -277,6 +302,10 @@ export function createFabricWork({ store, policy, projectRoot, token = '',
     return diff;
   }
   async function relay(taskId, task, prompt = task.prompt) {
+    check(taskId);
+    // Refuse expensive agent sessions and worktrees on an exhausted disk.
+    // This pauses only the selected relay, not the global operator.
+    fabricDiskRunway();
     if (task.apply_to_project && typeof projectTool !== 'function') throw stopError('Project patch owner unavailable before relay execution');
     if (!store.acquireLock(task.apply_to_project ? 'worktree-write' : `worktree-write:${taskId}`, taskId, 10800)) throw fail('write relay lane is busy'); // isolated, non-applying relays run in parallel
     check(taskId);

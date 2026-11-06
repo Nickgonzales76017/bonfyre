@@ -69,7 +69,7 @@ test('every source-qualified maker profile uses the shared public member shell w
  for(const id of ['overview','posts','gallery','about','communities','organizations']){
    expect(response.body.includes('id="'+id+'"') || response.body.includes("id='"+id+"'")).toBe(true);expect(response.body).toContain('href="#'+id+'"');
  }
- expect(response.body).toContain('data-credit-posts');expect(response.body).toContain('A credited article');
+ expect(response.body).toContain('data-credit-posts');expect(response.body).toContain('A credited article');expect(response.body).toContain('href="https://aurekai.work/o/maker-source-fixture/dddddddddddddddddddddddd"');
  expect(response.body).toContain('data-credit-gallery');expect(response.body).toContain('data-credit-publication');
   expect(response.body).toContain('class="ph-credit-media" src="https://publisher.example.test/art.jpg"');
   expect(response.body).toContain('data-publication-continuation');

@@ -587,7 +587,11 @@ int bf_people_index_ordered(FILE *out, const char *archive_path, const char *rou
         fputs("<li data-credit-card data-credit-name='", out); esc(out, name);
         fputs("' data-publisher-account='",out);esc(out,publisher_id);
         fputs("' data-publisher-subaccount='",out);esc(out,subaccount_id);
-        fputs("'><h3><a href='", out);if(primary_credit[0]){fputs("https://",out);esc(out,primary_credit);fputs("/",out);}else{esc(out,route);fputs("?who=",out);url(out,name);}fputs("' data-profile-host='",out);esc(out,primary_credit);fputs("'>",out);esc(out,name);fputs("</a></h3>",out);
+        /* A byline first opens the exact source-cut the static estate exports.
+         * The credited host remains a separate profile link. */
+        fputs("'><h3><a href='",out);esc(out,route);fputs("?who=",out);url(out,name);
+        if(primary_credit[0] && sole_source){fputs("&amp;source=",out);url(out,sole_source);}
+        fputs("' data-profile-host='",out);esc(out,primary_credit);fputs("'>",out);esc(out,name);fputs("</a></h3>",out);
         if(publisher_name[0]){fputs("<p class='people-publisher-parent' data-publisher-name>Under ",out);
             esc(out,publisher_name);fputs(" <span>· publisher account</span></p>",out);}
         sqlite3_reset(latest); sqlite3_bind_text(latest, 1, name, -1, SQLITE_TRANSIENT); sqlite3_bind_text(latest, 2, sole_source, -1, SQLITE_TRANSIENT);
@@ -603,7 +607,9 @@ int bf_people_index_ordered(FILE *out, const char *archive_path, const char *rou
         while (sqlite3_step(where) == SQLITE_ROW) {
             const char *source = (const char *)sqlite3_column_text(where, 0), *label = (const char *)sqlite3_column_text(where, 1);
             if (listed++) fputs("; ", out);
-            if(primary_credit[0]){fputs("<a data-credit-evidence data-credit-source='",out);esc(out,source);fputs("' href='https://",out);esc(out,primary_credit);fputs("/'>",out);}
+            if(primary_credit[0]){fputs("<a data-credit-evidence data-credit-source='",out);esc(out,source);
+                fputs("' href='",out);esc(out,route);fputs("?who=",out);url(out,name);
+                fputs("&amp;source=",out);url(out,source);fputs("'>",out);}
             esc(out, label && *label ? label : source);if(primary_credit[0])fputs("</a>",out);
             char credited_host[128]={0};
             if(bf_credit_profile_host(name,source,credited_host)){
@@ -611,6 +617,11 @@ int bf_people_index_ordered(FILE *out, const char *archive_path, const char *rou
                 fputs("' aria-label='Open exact source-attributed profile'>",out);
                 fputs(BF_ICON_USER,out);fputs(" Public profile</a>",out);
             }
+            /* Exact-source origin reader remains usable when its separately
+             * published credited subdomain has not reached the edge yet. */
+            fputs(" <a class='relationship-link' data-credit-source-read href='",out);esc(out,route);
+            fputs("?who=",out);url(out,name);fputs("&amp;source=",out);url(out,source);
+            fputs("'>Read publications here</a>",out);
             fprintf(out, " <span>(%d)</span> <a class='relationship-link' data-relationship-review href='https://signin.aurekai.work/relationships?context=self&amp;who=", sqlite3_column_int(where, 2));
             url(out, name); fputs("&amp;source=", out); url(out, source); fputs("'>keep track</a>", out);
         }

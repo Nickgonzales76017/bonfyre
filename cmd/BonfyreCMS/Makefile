@@ -168,3 +168,38 @@ account-world-literature-test: tests/account_world_literature_test.c src/account
 	@set -eu; witness=$$(mktemp "$${TMPDIR:-/tmp}/account-world-literature.XXXXXX"); \
 	trap 'rm -f "$$witness"' 0 1 2 15; \
 	$(CC) $(CFLAGS) -Werror tests/account_world_literature_test.c src/account_world.c src/account_world_literature.c -lsqlite3 -o "$$witness"; "$$witness"
+
+# Reference designs -> design_fingerprint records, at any daily volume.
+#   make design-intake SOURCE=stitch-20261106 ZIPS="$HOME/Downloads/stitch_*.zip"
+# Unzips each archive under $(DESIGN_ROOT)/$(SOURCE), measures every code.html
+# with packs/aurekai/presentation/design-intake.sql (DuckDB) and imports the
+# rows through the CMS owner in update mode, so a re-run refreshes rather than
+# duplicates. Rows are unselected observations; promotion to a
+# presentation_template or route_presentation row is a reviewed step.
+DESIGN_ROOT ?= $(HOME)/.bonfyre/design-references
+DESIGN_DB ?= $(HOME)/.bonfyre/estate-local/cms.db
+.PHONY: design-intake
+design-intake: $(TARGET)
+	@test -n "$(SOURCE)" && test -n "$(ZIPS)" || { echo 'usage: make design-intake SOURCE=name ZIPS="a.zip b.zip"' >&2; exit 2; }
+	@mkdir -p "$(DESIGN_ROOT)/$(SOURCE)"
+	@for z in $(ZIPS); do d="$(DESIGN_ROOT)/$(SOURCE)/$$(basename "$$z" .zip | tr ' ()' '_--')"; mkdir -p "$$d"; unzip -o -q "$$z" -d "$$d"; done
+	@set -e; out=$$(mktemp "$${TMPDIR:-/tmp}/design-intake.XXXXXX"); seen=$$(mktemp "$${TMPDIR:-/tmp}/design-seen.XXXXXX"); \
+	 trap 'rm -f "$$out" "$$out.new" "$$seen"' 0 1 2 15; \
+	 { echo "SET VARIABLE designs = '$(DESIGN_ROOT)/$(SOURCE)/*/*/*/code.html'; SET VARIABLE source = '$(SOURCE)';"; \
+	   grep -v '^[[:space:]]*--' ../../packs/aurekai/presentation/design-intake.sql; } | duckdb -noheader -list > "$$out"; \
+	 sqlite3 -readonly "$(DESIGN_DB)" "SELECT '\"fingerprint_id\":\"'||fingerprint_id||'\"' FROM design_fingerprint" > "$$seen" 2>/dev/null || :; \
+	 grep -v -F -f "$$seen" "$$out" > "$$out.new" || :; \
+	 echo "measured $$(wc -l < "$$out" | tr -d ' ') designs from $(SOURCE); $$(wc -l < "$$out.new" | tr -d ' ') new"; \
+	 if [ -s "$$out.new" ]; then ./$(TARGET) entry import-jsonl design_fingerprint "$$out.new" --db "$(DESIGN_DB)" | tail -1; fi
+
+# Where each measured design lands: candidate routes by pattern and whether its
+# tokens already match the template those routes wear. Read-only.
+#   make design-review SOURCE=stitch-20261106   -> $(DESIGN_ROOT)/$(SOURCE)/review.csv
+.PHONY: design-review
+design-review:
+	@test -n "$(SOURCE)" || { echo 'usage: make design-review SOURCE=name' >&2; exit 2; }
+	@mkdir -p "$(DESIGN_ROOT)/$(SOURCE)"
+	@{ echo "SET VARIABLE source = '$(SOURCE)';"; \
+	   grep -v '^[[:space:]]*--' ../../packs/aurekai/presentation/design-review.sql | sed "s#__CMS_DB__#$(DESIGN_DB)#"; } | \
+	 duckdb -header -csv > "$(DESIGN_ROOT)/$(SOURCE)/review.csv"
+	@echo "review queue: $(DESIGN_ROOT)/$(SOURCE)/review.csv ($$(($$(wc -l < "$(DESIGN_ROOT)/$(SOURCE)/review.csv") - 1)) designs)"

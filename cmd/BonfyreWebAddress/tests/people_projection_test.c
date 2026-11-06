@@ -258,17 +258,20 @@ int main(void) {
     {
         char sole_host[128],direct[256];
         if(!bf_credit_profile_host("Robin Shah","source-three",sole_host))fail("unique source profile host");
-        snprintf(direct,sizeof(direct),"data-credit-name='Robin Shah' data-publisher-account='' data-publisher-subaccount=''><h3><a href='https://%s/' data-profile-host='%s'",sole_host,sole_host);
+        snprintf(direct,sizeof(direct),"data-credit-name='Robin Shah' data-publisher-account='' data-publisher-subaccount=''><h3><a href='/people?who=Robin%20Shah&amp;source=source-three' data-profile-host='%s'",sole_host);
         if(!strstr(index,direct))fail("single-source People name did not open its public profile");
         char alex_a[128],alex_b[128],link_a[256],link_b[256];
         if(!bf_credit_profile_host("Alex Rivera","source-one",alex_a)||!bf_credit_profile_host("Alex Rivera","source-two",alex_b))fail("source profile hosts");
-        snprintf(link_a,sizeof(link_a),"data-credit-name='Alex Rivera' data-publisher-account='' data-publisher-subaccount=''><h3><a href='https://%s/' data-profile-host='%s'",alex_a,alex_a);
-        snprintf(link_b,sizeof(link_b),"data-credit-name='Alex Rivera' data-publisher-account='' data-publisher-subaccount=''><h3><a href='https://%s/' data-profile-host='%s'",alex_b,alex_b);
+        snprintf(link_a,sizeof(link_a),"data-credit-name='Alex Rivera' data-publisher-account='' data-publisher-subaccount=''><h3><a href='/people?who=Alex%20Rivera&amp;source=source-one' data-profile-host='%s'",alex_a);
+        snprintf(link_b,sizeof(link_b),"data-credit-name='Alex Rivera' data-publisher-account='' data-publisher-subaccount=''><h3><a href='/people?who=Alex%20Rivera&amp;source=source-two' data-profile-host='%s'",alex_b);
         if(!strstr(index,link_a)||!strstr(index,link_b)||!strcmp(alex_a,alex_b))
-            fail("each source credit must open its own public profile");
+            fail("each source credit must open its own exported origin reader");
         snprintf(link_a,sizeof(link_a),"data-credit-profile href='https://%s/'",alex_a);
         snprintf(link_b,sizeof(link_b),"data-credit-profile href='https://%s/'",alex_b);
         if(!strstr(index,link_a)||!strstr(index,link_b))fail("source-profile continuations remained on legacy dossier URLs");
+        if(!strstr(index,"data-credit-source-read href='/people?who=Alex%20Rivera&amp;source=source-one'") ||
+           !strstr(index,"data-credit-source-read href='/people?who=Alex%20Rivera&amp;source=source-two'"))
+            fail("source-qualified publication reader lost its same-origin path");
     }
     free(index);
 

@@ -673,6 +673,15 @@ github-app-route-witness: tests/connect_github_app_route_test.c src/connect_gith
 	@set -eu; witness=$$(mktemp "$${TMPDIR:-/tmp}/bonfyre-github-route.XXXXXX"); \
 	trap 'rm -f "$$witness"' 0 1 2 15; \
 	$(CC) $(CFLAGS) tests/connect_github_app_route_test.c -o "$$witness"; "$$witness"
+# CMS route composition is inherited by nested pages and controlled sign-in hosts.
+ROUTE_PRESENTATION_TEST := build/route-presentation-test
+$(ROUTE_PRESENTATION_TEST): tests/route_presentation_test.c src/route_presentation.h src/site_presentation.c src/site_presentation.h | build
+	$(CC) $(CFLAGS) $(BUILD_INCLUDES) -o $@ tests/route_presentation_test.c src/site_presentation.c -lsqlite3
+.PHONY: route-presentation-witness
+all test: route-presentation-witness
+route-presentation-witness: $(ROUTE_PRESENTATION_TEST)
+	./$(ROUTE_PRESENTATION_TEST)
+
 
 $(PEOPLE_PROJECTION_TEST): tests/people_projection_test.c src/people_projection.c src/people_projection.h src/people_name_filter.h $(ROOT)/lib/libbonfyre/include/bf_sqlite_path.h src/credit_profile_host.h $(ROOT)/lib/libbonfyre/src/bf_sha256.c
 	$(CC) $(CFLAGS) $(BUILD_INCLUDES) -o $@ tests/people_projection_test.c $(ROOT)/lib/libbonfyre/src/bf_sha256.c -lsqlite3

@@ -35,3 +35,20 @@ Each design folder in the Downloads zips holds `code.html` and `screen.png`.
 Example, 2026-11-05: `aurekai_organization_profile_workspaces_2` draws a member and
 org profile with feeds, circles, nested workspaces and collaborators. `/organisations`
 served a plain publisher list, and names showed raw escapes (`™`, `–`).
+
+## Daily volume (91+ designs a day)
+
+Two commands per drop, no per-design work and no new code:
+
+```
+make -C cmd/BonfyreCMS design-intake SOURCE=stitch-YYYYMMDD ZIPS="$HOME/Downloads/stitch_*.zip"
+make -C cmd/BonfyreCMS design-review SOURCE=stitch-YYYYMMDD
+```
+
+`design-intake` unzips under `~/.bonfyre/design-references/<SOURCE>`, measures every
+`code.html` (packs/aurekai/presentation/design-intake.sql) and records one
+`design_fingerprint` row per design; re-running skips designs already recorded.
+`design-review` writes `review.csv`: each design's pattern, the live routes wearing
+that pattern, and whether its tokens match their template. Review the rows that
+differ, using the screenshot steps above. Adopt a design by changing records
+(`route_presentation`, `presentation_template`), never by adding source files.

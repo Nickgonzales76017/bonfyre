@@ -42,6 +42,31 @@ static void pack_presentation_style(void){
     ".pack-glyph{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;margin:0 0 14px;border-radius:13px;background:#e4eed9;color:#244f34}.pack-glyph svg{width:23px;height:23px;flex:none}.wf-tools .pack-glyph{background:#243b2a;color:#b5df32}"
     "</style>",stdout);
     fputs(bf_pack_browser_style,stdout);
+    /* A CMS-authored Stitch pattern must reach the real account UI, not only
+     * leave an inert data attribute on the body. Owner components stay intact. */
+    fputs("<style id=\"ak-account-composition\">"
+      "body[data-aurekai-pattern]:has(>main.pack-workspace){background:var(--bf-ground,#0d130f)!important;color:var(--bf-ink,#eef1e8)!important;font-family:var(--bf-face-body,\'DM Sans\',system-ui,sans-serif)}"
+      "body[data-aurekai-pattern]>.pack-workspace{width:min(calc(100% - 40px),1500px);max-width:1500px;color:inherit;padding:clamp(24px,4vw,60px) 0 90px}"
+      "body[data-aurekai-pattern]>.pack-workspace h1{font-family:var(--bf-face-display,\'DM Sans\',system-ui,sans-serif);font-weight:var(--bf-display-weight,600);font-size:clamp(2.6rem,6vw,6rem);line-height:1.04;letter-spacing:-.05em;max-width:19ch;color:var(--bf-display-ink,#eef1e8)}"
+      "body[data-aurekai-pattern]>.pack-workspace>p,body[data-aurekai-pattern]>.pack-workspace>section>p{color:var(--bf-muted,#9fae9a);max-width:76ch}"
+      "body[data-aurekai-pattern]>.pack-workspace>section{border-top:1px solid var(--bf-rule,#2e3a31);padding-top:clamp(22px,3vw,40px);margin-top:clamp(28px,4vw,60px)}"
+      "body[data-aurekai-pattern]>.pack-workspace>section>h2{font-family:var(--bf-face-display,\'DM Sans\',system-ui,sans-serif);font-weight:600;color:inherit}"
+      "body[data-aurekai-pattern]>.pack-workspace :is(.pack-panel,.pack-tool,.pack-card,.account-tool-shelf){border:1px solid var(--bf-rule,#2e3a31)!important;border-radius:var(--bf-radius,14px)!important;background:var(--bf-panel,#151d18)!important;color:var(--bf-ink,#eef1e8)!important;box-shadow:none}"
+      "body[data-aurekai-pattern]>.pack-workspace :is(.pack-copy h3,.pack-purpose,.pack-card h3,.pack-card p,.pack-panel p,.pack-panel a,.pack-card a,.account-tool-shelf>p){color:inherit!important}"
+      "body[data-aurekai-pattern]>.pack-workspace :is(.pack-card,.pack-panel){padding:clamp(16px,2vw,26px);min-width:0}"
+      "body[data-aurekai-pattern]>.pack-workspace :is(.relationship-destination,form:not([data-silent])){border-color:var(--bf-rule,#2e3a31);color:inherit}"
+      "body[data-aurekai-pattern]>.pack-workspace>form{background:var(--bf-panel,#151d18)!important;border-color:var(--bf-rule,#2e3a31)!important}"
+      "body[data-aurekai-pattern]>.pack-workspace :is(input,select,textarea){background:var(--bf-ground,#0d130f);color:var(--bf-ink,#eef1e8);border-color:var(--bf-rule,#2e3a31);max-width:100%}"
+      "body[data-aurekai-pattern]>.pack-workspace :is(button,.pack-card-actions [data-work-editor],.pack-card-actions [data-setup-review]){background:var(--bf-accent,#b5df32);color:var(--bf-ground,#0d130f);border-color:var(--bf-accent,#b5df32);font-weight:650}"
+      "body[data-aurekai-pattern]>.pack-workspace :is(a,button,input,select,textarea,summary):focus-visible{outline:3px solid var(--bf-accent,#b5df32);outline-offset:3px}"
+      "body[data-aurekai-pattern]>.pack-workspace .pack-subtools{background:var(--bf-ground,#0d130f);border-color:var(--bf-rule,#2e3a31)}"
+      "body[data-aurekai-pattern]>.pack-workspace .pack-subtools summary{color:var(--bf-ink,#eef1e8)}"
+      "body[data-aurekai-pattern]>.pack-workspace .pack-subtool-list a{background:var(--bf-panel,#151d18);color:var(--bf-ink,#eef1e8)!important}"
+      "body[data-aurekai-pattern]>.pack-workspace :is(.pack-kind,.pack-warning){background:var(--bf-accent,#b5df32);color:var(--bf-ground,#0d130f)}"
+      "body[data-aurekai-pattern]>.pack-workspace table{width:100%;display:block;overflow-x:auto;max-width:100%}"
+      "@media(max-width:720px){body[data-aurekai-pattern]>.pack-workspace{width:calc(100% - 28px);padding:22px 0 70px}body[data-aurekai-pattern]>.pack-workspace .pack-cards{grid-template-columns:minmax(0,1fr)}body[data-aurekai-pattern]>.pack-workspace h1{font-size:clamp(2.4rem,12vw,4rem)}}"
+      "@media(prefers-reduced-motion:reduce){body[data-aurekai-pattern]>.pack-workspace :is(.pack-tool,.pack-preview,.pack-card){animation:none!important;transition:none!important;transform:none!important}}"
+      "</style>",stdout);
 }
 static void pack_presentation_search(void){
     fputs(bf_pack_browser_controls,stdout);

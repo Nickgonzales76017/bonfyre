@@ -29,6 +29,10 @@ int main(void) {
         "INSERT INTO route_presentation(territory,route,when_query_key,pattern,template,status) VALUES"
         "('work','/people',NULL,'directory',NULL,'published'),"
         "('work','/people','who','detail',NULL,'published'),"
+        "('work','/s',NULL,'detail','night-ledger','published'),"
+        "('work','/s/prices',NULL,'reader',NULL,'published'),"
+        "('work','/apps',NULL,'workbench',NULL,'published'),"
+        "('work','/relationships',NULL,'workbench','night-ledger','published'),"
         "('life','/','',  'discover','night-ledger','published'),"
         "('shop','/market',NULL,'market',NULL,'draft'),"
         "('live','/bad',NULL,'x\" onload=\"y',NULL,'published');"
@@ -43,6 +47,15 @@ int main(void) {
     if (bf_route_presentation_pattern("aurekai.live", "/bad", NULL)) return fail("unsafe pattern must not apply");
     if (bf_route_presentation_pattern("example.com", "/people", NULL)) return fail("only Aurekai apexes");
     if (bf_route_presentation_pattern("aurekai.work", "/missing", NULL)) return fail("no row, no change");
+    if (!(p = bf_route_presentation_pattern("aurekai.work", "/s/prices/observed", NULL)) || strcmp(p, "reader")) return fail("longest route family wins");
+    if (!(p = bf_route_presentation_pattern("aurekai.work", "/s/other", NULL)) || strcmp(p, "detail")) return fail("nested source route inherits detail");
+    if (!(p = bf_route_presentation_pattern("signin.aurekai.work", "/apps/ws-123/_work", NULL)) || strcmp(p, "workbench")) return fail("signed-in app inherits Work territory");
+    if (!(p = bf_route_presentation_pattern("signin.aurekai.work", "/relationships", "context=self")) || strcmp(p, "workbench")) return fail("signed-in relationship workspace");
+    if (!(p = bf_route_presentation_pattern("auth.aurekai.life", "/", NULL)) || strcmp(p, "discover")) return fail("account authority inherits Life territory");
+    if (bf_route_presentation_pattern("nick.aurekai.work", "/apps/ws-123/_work", NULL)) return fail("subject domain must retain its own surface");
+    if (bf_route_presentation_pattern("bad.signin.aurekai.work", "/relationships", NULL)) return fail("untrusted subdomain may not borrow account presentation");
+    if (bf_route_presentation_pattern("aurekai.work", "/silly", NULL) || bf_route_presentation_pattern("aurekai.work", "/applications", NULL)) return fail("prefix must stop on segment");
+    if (bf_route_presentation_pattern("auth.aurekai.life", "/missing", NULL)) return fail("root must not cover undeclared paths");
     if (!(p = bf_route_presentation_native_pattern("life", "/")) || strcmp(p, "discover")) return fail("native territory lookup");
 
     mem = open_memstream(&out, &len);

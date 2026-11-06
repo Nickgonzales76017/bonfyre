@@ -76,6 +76,12 @@ test('unclaimed credited profile dogfoods exact retained publications without be
  const sourceA=await request(url,{user:null});
  expect(sourceA.status).toBe(200);
  expect(sourceA.body).toContain('data-credit-observation');
+  const canonical=await request('/people?who=Avery%20Observer&source=source-a',{user:null});
+  expect(canonical.status).toBe(200);
+  expect(canonical.body).toContain('data-credit-observation');
+  expect(canonical.body).toContain('data-profile-template="organization-subprofile-v1"');
+  expect(canonical.body).toContain('A source A authored report');
+  expect(canonical.body).not.toContain('A source B separate report');
  expect(sourceA.body).toContain('data-profile-page');
  expect(sourceA.body).toContain('data-profile-template="organization-subprofile-v1"');
  expect(sourceA.body).toContain('A source A authored report');

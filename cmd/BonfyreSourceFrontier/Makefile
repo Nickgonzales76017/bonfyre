@@ -8,6 +8,12 @@ MANAGED_PREFIX ?= $(HOME)/.bonfyre
 
 all: $(TARGET) $(STATIC_MANIFEST) $(CIVIC_LEDGER)
 
+# Antithesis cohort is a source-backed review fixture, not a provider installation.
+.PHONY: antithesis-cohort-witness
+test: antithesis-cohort-witness
+antithesis-cohort-witness:
+	node --test ./tests/antithesis_cohort.test.mjs
+
 # Retained material and multiple exact feed-item provenance are release gates.
 .PHONY: source-material-witness
 all test: source-material-witness

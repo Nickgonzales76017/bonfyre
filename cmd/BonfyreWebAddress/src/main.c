@@ -511,6 +511,7 @@ static int serve(BfMatrix *m, int argc, char **argv) {
           * x402 clients were handed HTML. */
          studio_html_mode = accept_hdr[0] && strstr(accept_hdr, "text/html") != NULL;
          page_request_bearer=bearer;page_request_auth_db=auth_db;
+         psetup_presentation_host=host;psetup_presentation_route=target;psetup_presentation_query=query;
          snprintf(account_request_territory,sizeof(account_request_territory),"%s",territory_of(host));
          account_signin_path=sso_territory(host)?"/session/continue":"/login";
          int nav_path=snprintf(account_return_path,sizeof(account_return_path),"%s%s%s",target,*query?"?":"",query);

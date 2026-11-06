@@ -40,8 +40,9 @@ static inline int bf_route_presentation_lookup(const char *territory, const char
     if (!(db = cms_open_ro())) return 0;
     if (sqlite3_prepare_v2(db,
           "SELECT pattern,COALESCE(template,''),COALESCE(when_query_key,'') FROM route_presentation "
-          "WHERE status='published' AND territory=?1 AND route=?2 "
-          "ORDER BY (COALESCE(when_query_key,'')<>'') DESC,id DESC", -1, &st, NULL) == SQLITE_OK) {
+          "WHERE status='published' AND territory=?1 AND "
+          "(route=?2 OR (route<>'/' AND substr(?2,1,length(route)+1)=route||'/')) "
+          "ORDER BY length(route) DESC,(COALESCE(when_query_key,'')<>'') DESC,id DESC", -1, &st, NULL) == SQLITE_OK) {
         sqlite3_bind_text(st, 1, territory, -1, SQLITE_STATIC);
         sqlite3_bind_text(st, 2, route, -1, SQLITE_STATIC);
         while (!found && sqlite3_step(st) == SQLITE_ROW) {
@@ -60,10 +61,22 @@ static inline int bf_route_presentation_lookup(const char *territory, const char
     return found;
 }
 
+/* Only the declared territory front doors and native account authorities
+ * inherit a territory presentation. Arbitrary creator/publisher subdomains
+ * retain their own independently published subject compositions. */
+static inline const char *bf_route_presentation_territory(const char *host) {
+    if (!host) return NULL;
+    if (!strcmp(host,"aurekai.work") || !strcmp(host,"signin.aurekai.work")) return "work";
+    if (!strcmp(host,"aurekai.life") || !strcmp(host,"auth.aurekai.life")) return "life";
+    if (!strcmp(host,"aurekai.live") || !strcmp(host,"auth.aurekai.live")) return "live";
+    if (!strcmp(host,"aurekai.shop") || !strcmp(host,"auth.aurekai.shop")) return "shop";
+    return NULL;
+}
 static inline const char *bf_route_presentation_pattern(const char *host, const char *route, const char *query) {
     static char pattern[65], template_name[65];
-    if (!host || strncmp(host, "aurekai.", 8)) return NULL;
-    return bf_route_presentation_lookup(host + 8, route, query, pattern, template_name) ? pattern : NULL;
+    const char *territory = bf_route_presentation_territory(host);
+    if (!territory) return NULL;
+    return bf_route_presentation_lookup(territory, route, query, pattern, template_name) ? pattern : NULL;
 }
 static inline const char *bf_route_presentation_native_pattern(const char *territory, const char *route) {
     static char pattern[65], template_name[65];
@@ -112,9 +125,9 @@ static inline int bf_route_presentation_emit_authored(const char *host, const ch
           "Cache-Control: private, no-store\r\nVary: Host, Accept, Cookie\r\n"
           "Connection: close\r\n\r\n", stdout);
     fwrite(body, 1, (size_t)(head - body), stdout);
-    bf_route_presentation_emit_head_for(stdout, host + 8, route, query, pattern);
+    bf_route_presentation_emit_head_for(stdout, bf_route_presentation_territory(host), route, query, pattern);
     fwrite(head, 1, (size_t)(close - head), stdout);
-    bf_route_presentation_emit_body_attribute_for(stdout, host + 8, route, query, pattern);
+    bf_route_presentation_emit_body_attribute_for(stdout, bf_route_presentation_territory(host), route, query, pattern);
     fputs(close, stdout);
     return 1;
 }

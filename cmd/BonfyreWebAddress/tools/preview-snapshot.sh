@@ -9,12 +9,31 @@ live=${BONFYRE_PREVIEW_LIVE:-"$HOME/.bonfyre/estate-local"}
 shared=${BONFYRE_PREVIEW_SNAPSHOT_HOME:-"$HOME/.bonfyre/preview-shared"}
 home=${BONFYRE_PREVIEW_HOME:?Set BONFYRE_PREVIEW_HOME to a private lane directory}
 [ -d "$live" ] || { echo 'preview snapshot: missing live SQLite source' >&2; exit 1; }
-mkdir -p "$shared" "$home"
 live=$(CDPATH='' cd -- "$live" && pwd -P)
+# Check the closest existing ancestor BEFORE mkdir: aliases inside the live
+# estate must not even create an empty preview directory in production.
+for target in "$shared" "$home"; do
+ case "$target" in /*) ;; *) echo 'preview snapshot: use absolute paths' >&2; exit 2 ;; esac
+ case "$target" in "$live"|"$live"/*)
+  echo 'preview snapshot: cannot place preview files under live estate' >&2; exit 2 ;;
+ esac
+ parent=$target
+ until [ -d "$parent" ]; do
+  parent=${parent%/*}
+  [ -n "$parent" ] || parent=/
+ done
+ physical=$(CDPATH='' cd -- "$parent" && pwd -P)
+ case "$physical" in "$live"|"$live"/*)
+  echo 'preview snapshot: path aliases live estate' >&2; exit 2 ;;
+ esac
+done
+mkdir -p "$shared" "$home"
 shared=$(CDPATH='' cd -- "$shared" && pwd -P)
 home=$(CDPATH='' cd -- "$home" && pwd -P)
 case "$shared" in "$live"|"$live"/*) echo 'preview snapshot: shared snapshot cannot be in live estate' >&2; exit 2;; esac
 case "$home" in "$live"|"$live"/*) echo 'preview snapshot: lane cannot be in live estate' >&2; exit 2;; esac
+case "$home" in "$shared"/*) echo 'preview snapshot: nested lane inside snapshot refused' >&2; exit 2 ;; esac
+case "$shared" in "$home"/*) echo 'preview snapshot: nested snapshot inside lane refused' >&2; exit 2 ;; esac
 [ "$home" != "$shared" ] && [ "$home" != / ] && [ "$shared" != / ] || {
  echo 'preview snapshot: separate private lane and shared snapshot directories required' >&2; exit 2;
 }
@@ -25,7 +44,15 @@ for db in matrix auth cms; do
 done
 lock="$shared/.preparing"
 held=0
-cleanup() { if [ "$held" = 1 ]; then rmdir "$lock" 2>/dev/null || :; fi; }
+temp_matrix=''
+temp_auth=''
+temp_cms=''
+cleanup() {
+ [ -z "$temp_matrix" ] || rm -f "$temp_matrix"
+ [ -z "$temp_auth" ] || rm -f "$temp_auth"
+ [ -z "$temp_cms" ] || rm -f "$temp_cms"
+ if [ "$held" = 1 ]; then rmdir "$lock" 2>/dev/null || :; fi
+}
 trap cleanup 0
 trap 'exit 130' 1 2 3 15
 tries=0
@@ -35,6 +62,14 @@ until mkdir "$lock" 2>/dev/null; do
  sleep 0.2
 done
 held=1
+[ ! -L "$shared/.ready" ] || { echo 'preview snapshot: linked ready marker refused' >&2; exit 2; }
+if [ -f "$shared/.ready" ]; then
+ for db in matrix auth cms; do
+  [ -s "$shared/$db.db" ] && [ ! -L "$shared/$db.db" ] || {
+   echo 'preview snapshot: ready marker has missing or linked database' >&2; exit 1;
+  }
+ done
+fi
 if [ ! -f "$shared/.ready" ] || [ "$action" = refresh ]; then
  # One source backup consumes real blocks; subsequent copy-on-write clones are cheap.
  need=65536
@@ -47,15 +82,23 @@ if [ ! -f "$shared/.ready" ] || [ "$action" = refresh ]; then
   echo "preview snapshot: insufficient disk ($free KiB free, $need KiB required)" >&2
   exit 1
  }
- trap 'rm -f "$shared/matrix.db.$$" "$shared/auth.db.$$" "$shared/cms.db.$$"; cleanup' 0
+ # If interrupted midway through three atomic renames, a mixed generation
+ # must never be served as ready on the next invocation.
+ rm -f "$shared/.ready"
  for db in matrix auth cms; do
-  tmp="$shared/$db.db.$$"
+  tmp=$(mktemp "$shared/$db.db.XXXXXXXX")
+  case "$db" in
+    matrix) temp_matrix=$tmp ;;
+    auth) temp_auth=$tmp ;;
+    cms) temp_cms=$tmp ;;
+  esac
   sqlite3 "$live/$db.db" ".backup '$tmp'"
   [ -s "$tmp" ] || { echo "preview snapshot: failed backing up $db" >&2; exit 1; }
  done
- for db in matrix auth cms; do mv -f "$shared/$db.db.$$" "$shared/$db.db"; done
+ mv -f "$temp_matrix" "$shared/matrix.db"
+ mv -f "$temp_auth" "$shared/auth.db"
+ mv -f "$temp_cms" "$shared/cms.db"
  date -u '+%Y-%m-%dT%H:%M:%SZ' > "$shared/.ready"
- trap cleanup 0
 fi
 for db in matrix auth cms; do
  if [ -e "$home/$db.db" ] || [ -L "$home/$db.db" ]; then

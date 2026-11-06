@@ -4213,7 +4213,7 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
            doc->actor && *doc->actor ? "private, no-store" : front_community_route(page_render_host,doc->route) ?
            "public, no-cache, max-age=0, must-revalidate" : "public, max-age=60, stale-while-revalidate=300");
     page_emit_head(template, head_end, doc->title, doc->lede);
-    bf_route_presentation_emit_head_for(stdout, page_render_host && !strncmp(page_render_host, "aurekai.", 8) ? page_render_host + 8 : NULL,
+    bf_route_presentation_emit_head_for(stdout, bf_route_presentation_territory(page_render_host),
         doc->route, doc->raw_query, ctx.experience_pattern);
     bf_native_experience_emit_head(stdout,bf_native_experience_find(ctx.experience_pattern));
     if (doc->route)
@@ -4254,7 +4254,7 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
     fputs("\" data-character=\"", stdout); html(doc->character);
     if (doc->template_name && *doc->template_name && studio_safe_slug_arg(doc->template_name)) { fputs("\" data-template=\"", stdout); html(doc->template_name); }
     fputs("\"", stdout);
-    bf_route_presentation_emit_body_attribute_for(stdout, page_render_host && !strncmp(page_render_host, "aurekai.", 8) ? page_render_host + 8 : NULL,
+    bf_route_presentation_emit_body_attribute_for(stdout, bf_route_presentation_territory(page_render_host),
         doc->route, doc->raw_query, ctx.experience_pattern);
     fputs("><main class=\"wrap\" data-bonfyre-region=\"page-main\" data-bonfyre-continuity=\"page-main\">", stdout);
     page_emit_nav(doc);

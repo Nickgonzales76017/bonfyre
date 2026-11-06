@@ -27,6 +27,12 @@ test('Aurekai source library retains a review-only warehouse studio in its exist
   expect(source).toContain('./warehouse/');
   expect(html).toContain('data-repository-cut-studio');
   expect(html).toContain('repository-cut-studio.mjs');
+  expect(html).toContain('data-antithesis-reliability');
+  expect(html).toContain('antithesis-reliability-studio.mjs');
+  const lab=(await readWorkspaceFile(root,result.id,'sources/antithesis-reliability-studio.mjs')).toString();
+  const labIntake=(await readWorkspaceFile(root,result.id,'bridge/antithesis-triage-intake.mjs')).toString();
+  expect(lab).toContain('Review original retention');
+  expect(labIntake).toContain('prepareAntithesisTriageIntake');
   const cut=await readWorkspaceFile(root,result.id,'bridge/repository-cuts.mjs');
   const cutUI=await readWorkspaceFile(root,result.id,'sources/repository-cut-studio.mjs');
   const cutIntake=await readWorkspaceFile(root,result.id,'bridge/repository-cut-intake.mjs');

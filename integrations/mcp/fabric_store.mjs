@@ -435,7 +435,17 @@ export function createFabricStore({ home, projectRoot, worktreeRoot, now = () =>
     const receipt = await run(['git','-c','core.hooksPath=/dev/null','-c','core.fsmonitor=false',...args],
       {cwd,env:fabricGitEnvironment(env),timeoutMs,maxOutputBytes:MAX_BYTES,signal,input});
     checkSignal(signal); checkTask?.();
-    if (!receipt || receipt.exit_code !== 0 || receipt.timeout || receipt.overflow || receipt.cancelled) throw new Error('git operation failed or output exceeded bounds'); return receipt.stdout;
+    if (!receipt || receipt.exit_code !== 0 || receipt.timeout || receipt.overflow || receipt.cancelled) {
+      // Preserve the failure class and bounded Git diagnostic; without these,
+      // checkout exhaustion, ref conflicts and output limits look identical.
+      const why = !receipt ? 'no receipt' : [
+        `exit=${receipt.exit_code}`, receipt.timeout ? 'timeout' : '',
+        receipt.overflow ? 'output limit' : '', receipt.cancelled ? 'cancelled' : '',
+        String(receipt.stderr || '').slice(-400).replace(/[^\\x20-\\x7e]/g, ' '),
+      ].filter(Boolean).join('; ');
+      throw new Error(`git operation failed or output exceeded bounds (${why})`);
+    }
+    return receipt.stdout;
   }
   async function registeredWorktree(path,signal,checkTask) {
     const listing = await git(['worktree','list','--porcelain','-z'],projectRoot,60000,signal,checkTask);
@@ -584,10 +594,10 @@ export function createFabricStore({ home, projectRoot, worktreeRoot, now = () =>
     if (!/^[0-9a-f]{40,64}$/.test(commit)) throw new Error('invalid base commit');
     if (isTaskCancelled(id)) throw new Error('task cancelled');
     let selected = branch;
-    try { await git(['worktree','add','-b',branch,'--',path,commit],projectRoot,180000,signal,checkTask); }
+    try { await git(['worktree','add','--quiet','-b',branch,'--',path,commit],projectRoot,180000,signal,checkTask); }
     catch (error) {
       if (existsSync(path) || isTaskCancelled(id)) throw error;
-      await git(['worktree','add','--detach','--',path,commit],projectRoot,180000,signal,checkTask); selected = '(detached)';
+      await git(['worktree','add','--quiet','--detach','--',path,commit],projectRoot,180000,signal,checkTask); selected = '(detached)';
     }
     if (!await registeredWorktree(path,signal,checkTask)) throw new Error('new worktree registration missing');
     if (isTaskCancelled(id)) throw new Error('task cancelled after worktree creation; worktree retained');

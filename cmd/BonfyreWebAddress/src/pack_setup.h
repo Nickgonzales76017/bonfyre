@@ -128,13 +128,31 @@ static int psetup_call(const char *operation, const PackSetupInput *in, const ch
     return psetup_parse(output,out) ? rc : -1;
 }
 #include "pack_presentation.h"
+/* Request-local pointers are refreshed before each synchronous dispatch.
+ * No account page inherits a previous host, path or query. */
+static const char *psetup_presentation_host;
+static const char *psetup_presentation_route;
+static const char *psetup_presentation_query;
 static void psetup_start(int code, const char *title) {
     printf("HTTP/1.1 %d %s\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: private, no-store\r\nReferrer-Policy: same-origin\r\nX-Content-Type-Options: nosniff\r\nConnection: close\r\n\r\n",code,code==200?"OK":code==403?"Forbidden":code==409?"Conflict":"Unavailable");
     /* Fill the shared navigation slot once. Appending the value separately
      * exposes a second menu and leaves the template's format slot unfilled. */
     /* Reuse authored navigation without mounting the public World drawer.
      * These operations use their exact saved-work continuation instead. */
-    fputs(BF_PAGE_OPEN,stdout); html(title); account_navigation_chrome(BF_PAGE_AFTER_TITLE,site_nav_links(),page_request_bearer,page_request_auth_db);
+    const char *pattern=bf_route_presentation_pattern(psetup_presentation_host,psetup_presentation_route,psetup_presentation_query);
+    char *head_extra=NULL,*body_extra=NULL;size_t head_n=0,body_n=0;
+    if(pattern){
+        FILE *head=open_memstream(&head_extra,&head_n),*attrs=open_memstream(&body_extra,&body_n);
+        if(head&&attrs){
+            const char *territory=bf_route_presentation_territory(psetup_presentation_host);
+            bf_route_presentation_emit_head_for(head,territory,psetup_presentation_route,psetup_presentation_query,pattern);
+            bf_route_presentation_emit_body_attribute_for(attrs,territory,psetup_presentation_route,psetup_presentation_query,pattern);
+        }
+        if(head)fclose(head);if(attrs)fclose(attrs);
+    }
+    fputs(BF_PAGE_OPEN,stdout);html(title);
+    account_navigation_chrome_presented(BF_PAGE_AFTER_TITLE,site_nav_links(),page_request_bearer,page_request_auth_db,head_extra,body_extra);
+    free(head_extra);free(body_extra);
     fputs("<style>.pack-workspace{max-width:1120px;margin:auto;padding:42px 24px 80px}.pack-workspace h1{font-size:clamp(2rem,5vw,3.7rem);line-height:1.08}.pack-workspace h2{font-size:1.25rem}.pack-grid{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:32px;margin-top:30px}.pack-panel{padding:24px;border:1px solid currentColor;border-radius:12px;min-width:0}.pack-panel p{line-height:1.6}.pack-workspace select,.pack-workspace button{min-height:44px;font:inherit;padding:10px 14px;border-radius:8px}.pack-workspace select{max-width:100%}.pack-workspace button{cursor:pointer}.pack-workspace form{margin:14px 0}.pack-workspace code{overflow-wrap:anywhere;font-size:.8rem}.pack-workspace table{width:100%;border-collapse:collapse;font-size:.94rem}.pack-workspace th,.pack-workspace td{padding:14px 6px;text-align:left;border-bottom:1px solid currentColor;overflow-wrap:anywhere}.pack-workspace td:first-child{max-width:250px}.pack-actions{display:flex;gap:12px;flex-wrap:wrap}.pack-link{display:block;overflow-wrap:anywhere;line-height:1.6}.pack-status{font-weight:700}.pack-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}.pack-warning{padding:18px;border:2px solid currentColor;border-radius:10px}@media(max-width:760px){.pack-grid{grid-template-columns:1fr}.pack-workspace{padding:28px 16px}.pack-panel{padding:18px}.pack-workspace table{font-size:.85rem}}</style><main class=\"pack-workspace\">",stdout);
     pack_presentation_style();
 }

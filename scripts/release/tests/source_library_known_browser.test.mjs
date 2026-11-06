@@ -61,7 +61,9 @@ test('known source is reviewed, written once in native store and reopened withou
    await page.evaluate(()=>[...document.querySelectorAll('.known-source-results button')].find(x=>x.textContent==='Review bookmark').click());
    await page.waitForSelector('dialog.known-source-review[open]');
    await page.evaluate(()=>[...document.querySelectorAll('dialog.known-source-review button')].find(x=>x.textContent==='Save reviewed bookmark').click());
-   await page.waitForSelector('dialog.known-source-review a[href*="record="]');
+   // The saved link persists across modal reopening. Wait for this second
+   // review's verdict, not the link already present from the first save.
+   await page.waitForFunction(()=>document.querySelector('dialog.known-source-review [role=status]')?.textContent?.includes('already saved'));
    expect(await page.$eval('dialog.known-source-review [role=status]',x=>x.textContent)).toContain('already saved');
    expect(requests.filter(r=>r.method==='POST'&&r.url.includes('operation=write'))).toHaveLength(1);
   await page.evaluate(()=>document.querySelector('dialog.known-source-review a').click());

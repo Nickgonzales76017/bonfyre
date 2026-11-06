@@ -345,3 +345,141 @@ test('FPQ source-cut review binds its exact prompt and refuses tampered generati
   expect(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  }finally{await ctx.close();}
 },75000);
+
+
+test('Bombadil-style signed-in repository-cut mutation exploration refuses forged provenance without effects',async()=>{
+ const ctx=await browser.createBrowserContext(),p=await ctx.newPage(),errors=[],requests=[];
+ const original=readFileSync(repositoryCut,'utf8');
+ const mutations=[
+  s=>s.replace('cut_digest: ','cut_digest: 00'),
+  s=>s.replace('josh_filter: :/datasets','josh_filter: :/../../private'),
+  s=>s.replace('source_repository: source-datasets','source_repository: ../../secrets'),
+  s=>s.replace('publication_authority: none','publication_authority: approved'),
+  s=>s.replace('install_authority: none','install_authority: approved'),
+  s=>s.replace('schema: bonfyre.repository-cut.v1','schema: unexpected'),
+  s=>s.replace('virtual_commit: '+'a'.repeat(40),'virtual_commit: forged'),
+  s=>s.replace('virtual_tree: '+'b'.repeat(40),'virtual_tree: forgery'),
+  s=>s.replace('canonical_mapping: unverified','canonical_mapping: verified'),
+ ];
+ try{
+  p.setDefaultTimeout(18000);await p.setViewport({width:390,height:820});
+  p.on('pageerror',error=>errors.push(error.message));
+  p.on('request',r=>requests.push({method:r.method(),url:r.url()}));
+  const [name,...rest]=fixture.owner.cookie.split('=');
+  await p.setCookie({name,value:rest.join('='),url:fixture.base,httpOnly:true,sameSite:'Lax'});
+  await p.goto(fixture.base+binding.path+'warehouse/',{waitUntil:'domcontentloaded'});
+  const selector='[data-repository-cut-studio]';
+  const input=await p.$(selector+' input[aria-label="Choose native JOSH repository-cut receipts"]');
+  expect(input).not.toBeNull();
+  for(let i=0;i<mutations.length;i++){
+   const path=join(temp,'fuzzed-'+i+'.yaff');
+   const modified=mutations[i](original);
+   expect(modified).not.toBe(original);
+   writeFileSync(path,modified);
+   await input.uploadFile(path);
+   await p.evaluate(()=>[...document.querySelectorAll('[data-repository-cut-studio] button')]
+      .find(b=>b.textContent==='Verify repository cuts').click());
+   await p.waitForFunction(()=>document.querySelector('[data-repository-cut-studio] [role=status]')
+     ?.textContent.includes('Verification refused'));
+   expect(await p.$eval(selector+' .wp-list',el=>el.textContent)).not.toContain('source-datasets');
+   expect(await p.$(selector+' .wp-detail dl')).toBeNull();
+   expect(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  }
+  // The next valid selection must recover without mixing rejected input.
+  await input.uploadFile(repositoryCut);
+  await p.evaluate(()=>[...document.querySelectorAll('[data-repository-cut-studio] button')]
+   .find(b=>b.textContent==='Verify repository cuts').click());
+  await p.waitForSelector(selector+' .wp-source');
+  expect(await p.$eval(selector+' .wp-source',el=>el.textContent)).toContain('source-datasets');
+  expect(requests.filter(r=>r.method!=='GET')).toHaveLength(0);
+  expect(errors).toEqual([]);
+ }finally{await ctx.close();}
+},90000);
+
+
+test('Antithesis reliability lab retains one exact triage original after explicit signed-in review',async()=>{
+ const sourceSHA='b'.repeat(64),commit='a'.repeat(40),repo='antithesishq/glitch-grid';
+ const report={schema_version:'0.1',status:'complete',summary:'Untrusted candidate',
+  selection:{applied:'fixture only',runs_considered:1},grouping:{applied:'same source',inferred:false},
+  runs:[{run_id:'run-001',created_at:'2026-11-06T00:00:00Z',group:'fixture',status:'completed',
+    commit,triage_report_url:null,properties_failed:1,properties_passed:0,instrumentation:'ok',notes:''}],
+  skipped_runs:[],failures:[{property:'No duplicate effect after retry',run_group:'fixture',
+    classification:'new',failing_runs:['run-001'],baseline_runs:[],rate:'1/1',
+    known_issue:null,evidence:[{run_id:'run-001',input_hash:'a',vtime:'0',container:'fixture',
+     excerpt:'PRIVATE NEVER_LEAK_FROM_REPORT'}],root_cause:'untrusted',
+    confidence:'low',category:'unknown',source_refs:[],suggested_fix:'no action',
+    patch_file:'patches/ignored.patch',recommended_debug_session:null,
+    reproduce_commands:['snouty runs exec NEVER_LEAK_FROM_REPORT']}],
+  known_issues_not_seen:[],ignored:[],not_investigated:[],run_health:[],errors:[]};
+ const original=JSON.stringify(report);
+ const filename='antithesis-findings.json',path=join(temp,filename);
+ writeFileSync(path,original);
+ const invalid=join(temp,'antithesis-failure.json');
+ writeFileSync(invalid,JSON.stringify({...report,runs:[{...report.runs[0],commit:'c'.repeat(40)}]}));
+ const ctx=await browser.createBrowserContext(),p=await ctx.newPage(),requests=[],errors=[];
+ try{
+  p.setDefaultTimeout(20000);await p.setViewport({width:390,height:850});
+  p.on('request',request=>requests.push({method:request.method(),url:request.url()}));
+  p.on('pageerror',error=>errors.push(error.message));
+  const [name,...rest]=fixture.owner.cookie.split('=');
+  await p.setCookie({name,value:rest.join('='),url:fixture.base,httpOnly:true,sameSite:'Lax'});
+  await p.goto(fixture.base+binding.path+'warehouse/',{waitUntil:'domcontentloaded'});
+  const root='[data-antithesis-reliability]',control=root+' input[aria-label="Antithesis triage findings JSON"]';
+  await p.waitForSelector(control);
+  await p.type(root+' input[aria-label="Antithesis source repository"]',repo);
+  await p.type(root+' input[aria-label="Antithesis tested Git commit"]',commit);
+  await p.type(root+' input[aria-label="Antithesis source digest"]',sourceSHA);
+  const inspect=async()=>p.evaluate(()=>[...document.querySelectorAll('[data-antithesis-reliability] button')]
+   .find(b=>b.textContent==='Inspect triage report').click());
+  await (await p.$(control)).uploadFile(invalid);await inspect();
+  await p.waitForFunction(()=>document.querySelector('[data-antithesis-reliability] [role=status]')
+   ?.textContent.includes('refused'));
+  expect(await p.$eval(root+' [aria-label="Antithesis reviewed findings"]',x=>x.textContent)).toBe('');
+  expect(requests.filter(x=>x.method!=='GET')).toHaveLength(0);
+  await (await p.$(control)).uploadFile(path);await inspect();
+  await p.waitForFunction(()=>document.querySelector('[data-antithesis-reliability] [role=status]')
+   ?.textContent.includes('structure and digest checked'));
+  const findings=await p.$eval(root+' [aria-label="Antithesis reviewed findings"]',x=>x.textContent);
+  expect(findings).toContain('1 unverified failure candidates');
+  expect(findings).not.toContain('NEVER_LEAK_FROM_REPORT');
+  expect(findings).not.toContain('snouty runs exec');
+  expect(requests.filter(x=>x.method!=='GET')).toHaveLength(0);
+  await p.evaluate(()=>[...document.querySelectorAll('[data-antithesis-reliability] button')]
+   .find(b=>b.textContent==='Review original retention').click());
+  await p.waitForSelector('dialog[open]');
+  expect(await p.$eval('dialog[open]',n=>n.textContent)).toContain('does not authenticate Antithesis');
+  await p.evaluate(()=>[...document.querySelectorAll('dialog[open] button')]
+   .find(b=>b.textContent==='Save original as reviewed source').click());
+  await p.waitForFunction(()=>document.querySelector('dialog[open] [role=status]')
+   ?.textContent.includes('Retained at revision'));
+  const saved=(await fixture.store(binding).readLocal('source-material:'))
+   .filter(row=>row.value?.filename===filename);
+  expect(saved).toHaveLength(1);
+  expect(saved[0].revision).toBe(1);
+  expect(saved[0].value).toMatchObject({kind:'file',textLike:true,
+   filename,collection:'Antithesis Reliability Lab',
+   tags:['antithesis','reliability','triage','unverified']});
+  expect(await saved[0].value.original.text()).toBe(original);
+  expect(requests.filter(x=>x.method==='POST'&&x.url.includes('operation=write'))).toHaveLength(1);
+  await p.evaluate(()=>document.querySelector('dialog[open]').close());
+  await p.waitForFunction(()=>document.querySelector('dialog')===null);
+  await p.evaluate(()=>[...document.querySelectorAll('[data-antithesis-reliability] button')]
+   .find(b=>b.textContent==='Review original retention').click());
+  try{
+   await p.waitForFunction(()=>document.querySelector('dialog[open]')?.textContent
+    .includes('already exists'),{timeout:5500});
+  }catch(error){
+   const debug=await p.evaluate(()=>({
+    open:document.querySelector('dialog[open]')?.textContent||null,
+    allDialogs:document.querySelectorAll('dialog').length,
+    activeStatus:document.querySelector('[data-antithesis-reliability] [role=status]')?.textContent,
+    enabled:[...document.querySelectorAll('[data-antithesis-reliability] button')].map(x=>[x.textContent,x.disabled])
+   }));
+   throw Error('Second review state: '+JSON.stringify(debug)+' / '+error.message);
+  }
+  expect(await p.$eval('dialog[open] button',x=>x.disabled)).toBe(true);
+  expect(requests.filter(x=>x.method==='POST'&&x.url.includes('operation=write'))).toHaveLength(1);
+  expect(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  expect(errors).toEqual([]);
+ }finally{await ctx.close();}
+},90000);

@@ -1025,6 +1025,12 @@ architecture design-fingerprint
   known_gap every one of the 238 marketplace references still needs separately observed masthead anatomy, hero anatomy, editorial sequence, image geometry, responsive collapse, interaction posture and typed semantic-slot contracts before it may become a selectable GhostProfile
   witness cmd/BonfyreCMS/tools/ghost_public_anatomy.test.mjs measures public landmark, masthead, hero, editorial, media-geometry, interaction and typed-slot evidence from a bounded fixture; it proves the output retains no donor markup and carries the non-authority refusal
   witness 2026-09-29 the Bun Ghost compiler reproduced all 238 Python marketplace candidates and 238 fingerprints exactly, and Makefile presentation-template-test verifies the candidate-versus-observation boundary
+  source_path packs/aurekai/presentation/design-intake.sql
+  source_path packs/aurekai/presentation/design-review.sql
+  source_path cmd/BonfyreCMS/Makefile
+  witness 2026-11-06 make -C cmd/BonfyreCMS design-intake measured 91 Stitch reference designs (8 archives, duplicates collapsed) from code.html into 91 design_fingerprint rows in the live CMS (reference_source stitch-20261104); a re-run imported 0, so a daily drop is idempotent. design-review placed all 91 on existing routes by pattern, and the most common declared token set across 86 designs became the aurekai-stitch-night template, after which 82 of 91 match it.
+  forbidden_inference a design_fingerprint pattern -> the design was reviewed or its route presentation selected; the pattern is a heuristic over the name and measured anatomy
+  forbidden_inference a matching token set -> visual parity with the design; layout and interaction stay with each page owner
 
 interaction fingerprint-measures-template
   source design-fingerprint
