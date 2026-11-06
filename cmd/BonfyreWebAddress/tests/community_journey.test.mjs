@@ -23,6 +23,39 @@ async function join(key,user=member){const p=await get(path(key,'join'),user),r=
 async function accept(key,user=member,steward=owner){const p=await get(path(key,'members'),steward),forms=[...p.body.matchAll(/<form\b[^>]*>[\s\S]*?<\/form>/g)];const selected=forms.find(m=>m[0].includes('value="accept"')&&m[0].includes('value="user:'+user.id+'"'));if(!selected)throw Error('Exact membership request missing');const r=await send(form(selected[0],'accept'),steward);expect(r.status).toBe(303);}
 async function publish(key,user=owner,{text='Useful original contribution.',title='A workshop question',parent=''}={}){const p=await get(path(key,parent?'reply':'write',parent),user);if(p.status!==200)throw Error('Editor refused '+p.status);const op=parent?'reply':'post',input={...form(p.body,op),title:parent?'':title,text},review=await send(input,user,'/community/preview');expect(review.status).toBe(200);const approved=form(review.body,op),r=await send(approved,user);if(r.status!==303)throw Error('Publish refused '+r.status+': '+r.body.slice(-2000));return {key:new URL(r.headers.get('location'),'https://aurekai.life').searchParams.get('post'),reviewed:approved};}
 const row=(table,key,value)=>f.sql.query('SELECT * FROM '+table+' WHERE '+key+'=?1 AND namespace=\'root\'').get(value);
+test('an explicitly created local guild is a real stewarded community, not inferred apprenticeship or financial authority',async()=>{
+ const starting=await get('/guild/new');expect(starting.status).toBe(200);
+ const draft={...form(starting.body,'create-guild'),title:'Independent Repair Guild',text:'A public circle for craft learning, repair stories and stewardship.'};
+ const preview=await send(draft,owner,'/community/preview');expect(preview.status).toBe(200);expect(preview.body).toContain('Create this guild');
+ const before=f.sql.query('SELECT count(*) n FROM community_body').get().n;
+ const created=await send(form(preview.body,'create-guild'));expect(created.status).toBe(303);
+ const key=new URL(created.headers.get('location'),'https://aurekai.life').searchParams.get('community');
+ expect(key).toMatch(/^guild-[a-f0-9]{64}$/);
+ const saved=f.sql.query('SELECT governance_scope,status,moderation_policy FROM community_body WHERE community=?').get(key);
+ expect(saved).toEqual({governance_scope:'local-guild',status:'published',moderation_policy:'aurekai-member-conversation-v1'});
+ expect(f.sql.query('SELECT count(*) n FROM community_body').get().n).toBe(before+1);
+ const replay=await send(form(preview.body,'create-guild'));expect(replay.status).toBe(303);
+ expect(f.sql.query('SELECT count(*) n FROM community_body').get().n).toBe(before+1);
+ const guilds=await get('/guilds',null),general=await get('/communities',null);
+ expect(guilds.status).toBe(200);expect(guilds.body).toContain('Independent Repair Guild');
+ expect(guilds.body).toContain('action="/guilds"');expect(general.body).toContain('Independent Repair Guild');
+ expect((await get('/guilds?q=unmatched',null)).body).not.toContain('Independent Repair Guild');
+ expect((await get('/guilds?cursor=invalid',null)).status).toBe(400);
+ const ordinary=await create('Ordinary walking community');
+ expect((await get('/guilds',null)).body).not.toContain('Ordinary walking community');
+ expect((await get(path(key),null)).status).toBe(200);
+ expect((await get(path(key,'write'),member)).status).toBe(403);
+ await join(key);expect((await get(path(key,'write'),member)).status).toBe(403);
+ await accept(key);expect((await get(path(key,'write'),member)).status).toBe(200);
+ const notice=await publish(key,member,{title:'Bench check',text:'Bring tools and a safe inspection plan.'});
+ expect((await get(path(key,'thread',notice.key),null)).body).toContain('Bench check');
+ const membershipPage=await get(path(key,'members'));expect(membershipPage.status).toBe(200);
+ const revocation=form(membershipPage.body,'revoke');expect((await send(revocation)).status).toBe(303);
+ expect((await get(path(key,'write'),member)).status).toBe(403);
+ expect(f.sql.query('SELECT count(*) n FROM pack_installation').get().n).toBe(0);
+ expect(f.authsql.query('SELECT count(*) n FROM institution_grants').get().n).toBe(0);
+});
+
 test('ordinary creation previews before writes, commits founding membership atomically, and replays exactly',async()=>{
  const p=await get('/community/new'),before=f.sql.query('SELECT count(*) AS n FROM community_body').get().n,input={...form(p.body,'create'),title:'Unfamiliar repair circle',text:'Share repair questions. Café & community. <script>not executable</script>'};
  const preview=await send(input,owner,'/community/preview');expect(preview.status).toBe(200);expect(f.sql.query('SELECT count(*) AS n FROM community_body').get().n).toBe(before);expect(preview.body).toContain('&lt;script&gt;');const approved=form(preview.body,'create'),r=await send(approved);expect(r.status).toBe(303);const key=new URL(r.headers.get('location'),'https://aurekai.life').searchParams.get('community'),membership=f.sql.query('SELECT * FROM community_membership WHERE community=?1').all(key);expect(membership).toHaveLength(1);expect(membership[0].member_subject).toBe('user:'+owner.id);expect(membership[0].state).toBe('active');expect((await send(approved)).headers.get('location')).toBe(r.headers.get('location'));expect((await send({...approved,title:'Conflicting use of the same request'})).status).toBe(409);expect(f.sql.query('SELECT count(*) AS n FROM community_body').get().n).toBe(before+1);

@@ -30,7 +30,7 @@ beforeAll(async()=>{
     return new Response('No external action exists in this fixture',{status:404});
   }});
 });
-afterAll(async()=>{await browser?.close();server?.stop(true);});
+afterAll(async()=>{await browser?.close();server?.stop(true);},30000);
 async function visit(extra=''){
   const context=await browser.newContext({viewport:{width:1280,height:900}}),page=await context.newPage();page.setDefaultTimeout(3000);const errors=[];page.on('pageerror',error=>errors.push(error.message));
   await page.goto(server.url+'apps/fixture?context=institution%3Astudio'+extra);

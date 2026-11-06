@@ -20,7 +20,7 @@ beforeAll(async()=>{f=await packSetupFixture({beforeServe:({home,env})=>{workInd
  f.add('saved_item',{saved:'owner-save',actor:'user:'+owner.id,item_ref:'newsdesk/'+'1'.repeat(24),title:'Owner private bookmark',href:'https://example.test/original',publisher:'Source publisher',summary:'Private saved excerpt MUST NOT be published',saved_at:'2026-10-21T05:00:00Z',collection:'Reading',cannot_infer:'Private fixture.',status:'published'});f.add('saved_item',{saved:'other-save',actor:'user:'+other.id,item_ref:'newsdesk/'+'2'.repeat(24),title:'Other account private bookmark',href:'https://example.test/other',summary:'Other private body',collection:'Other reading',saved_at:'2026-10-21T05:00:00Z',cannot_infer:'Private fixture.',status:'published'});
  matrix=new Database(db);browser=await createRequire(join(root,'tools/creator-ingest/package.json'))('puppeteer').launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',args:['--disable-background-networking']});
 },60000);
-afterAll(async()=>{await browser?.close();matrix?.close();await f?.close();});
+afterAll(async()=>{await browser?.close();matrix?.close();await f?.close();},30000);
 test('Stitch member feed filters only actually published site posts and keeps private data out',async()=>{
  const work=await publicPage('work'),life=await publicPage('life');
  const ctx=await browser.createBrowserContext(),page=await ctx.newPage(),errors=[];

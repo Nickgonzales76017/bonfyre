@@ -12,7 +12,7 @@ const command=(op,value)=>{const packet=join(f.home,'reviewed-page.packet');try{
 const read=()=>command('page-read',route);
 const save=(value=design,published=true)=>command('page-write',JSON.stringify(publicationPayload(value,route,read(),published)));
 beforeAll(async()=>{f=await fixture();copyFileSync(join(root,'cmd/BonfyreCMS/content-types/site_fragment.json'),join(f.home,'schemas/site_fragment.json'));f.run(f.cms,['schema','migrate','--db',f.db,'--schemas',join(f.home,'schemas')]);f.run(f.web,['domain','--db',join(f.home,'matrix.db'),'--host','127.0.0.1','--territory','work','--scope','public','--world','CANDIDATE','--repr','HTML','--evidence','fixture:public-production']);route=await publicationRoute('fixture:public-design');path='/productions/'+namespace+route;save();},30000);
-afterAll(async()=>{await browser?.close();await f?.close();});
+afterAll(async()=>{await browser?.close();await f?.close();},30000);
 test('all territories expose the exact published design and public MessagePack only',async()=>{
   for(const host of ['aurekai.work','aurekai.life','aurekai.live','aurekai.shop']){const r=await f.request(path,{host});expect(r.status).toBe(200);expect(r.body).toContain(design.title);expect(r.body).toContain('data-production-reuse');expect(r.headers.get('cache-control')).toBe('no-store');}
   for(const host of ['aurekai.work','aurekai.life','aurekai.live','aurekai.shop']){const r=await f.request('/',{host});expect(r.status).toBe(200);expect(r.body).not.toContain('/_surface/production-home.js');expect(r.body).not.toContain('data-home-showcase');}

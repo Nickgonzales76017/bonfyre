@@ -40,7 +40,7 @@ beforeAll(async()=>{
  }
  browser=await createRequire(join(root,'tools/creator-ingest/package.json'))('puppeteer').launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',args:['--disable-background-networking']});
 },60000);
-afterAll(async()=>{await browser?.close();await f?.close();});
+afterAll(async()=>{await browser?.close();await f?.close();},30000);
 test('guest source and selected profile sections preserve exact sign-in continuation without performing a write',async()=>{
  const before=f.sql.query('SELECT count(*) AS n FROM occurrence_follow').get().n;
  const guest=await detail('occurrence','journey-lecture',null);

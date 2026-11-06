@@ -4,7 +4,7 @@ import {join} from 'node:path';
 import {fixture,root} from './auth_continuation_fixture.mjs';
 let f,browser;
 beforeAll(async()=>{f=await fixture();},30000);
-afterAll(async()=>{await browser?.close();await f?.close();});
+afterAll(async()=>{await browser?.close();await f?.close();},30000);
 test('the native public item exposes its own QR, with no external generator or account payload',async()=>{
  const page=await f.request(f.path,{host:'aurekai.life'});expect(page.status).toBe(200);expect(page.body).toContain('Open on another device');expect(page.body).toContain(f.path+'.qr.svg');
  const qr=await f.request(f.path+'.qr.svg',{host:'aurekai.life'});expect(qr.status).toBe(200);expect(qr.headers.get('content-type')).toContain('image/svg+xml');expect(qr.headers.get('content-security-policy')).toContain("default-src 'none'");

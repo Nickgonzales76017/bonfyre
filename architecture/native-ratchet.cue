@@ -10,10 +10,10 @@ package nativeratchet
 budget: {
 	// Authored .mjs in the working tree (tracked or untracked, not ignored,
 	// vendored code excluded).
-	authored_mjs_files: 1544
-	authored_mjs_lines: 167053
+	authored_mjs_files: 1517
+	authored_mjs_lines: 166990
 	// .js/.cjs/.ts/.tsx/.py: retiring .mjs must not move the code sideways.
-	other_script_files: 80
+	other_script_files: 77
 	// .mjs that bun compiles into an executable. Only browser code, tests and
 	// thin edges may stay JS; anything installed as a program is C.
 	bun_compile_sites: 0

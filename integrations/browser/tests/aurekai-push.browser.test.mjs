@@ -15,7 +15,7 @@ beforeAll(async()=>{
     return new Response('No native action is available in this fixture',{status:404});
   }});
 });
-afterAll(async()=>{await browser?.close();server?.stop(true);});
+afterAll(async()=>{await browser?.close();server?.stop(true);},30000);
 
 test('real module service worker installs and actual IndexedDB deduplicates concurrent delivery reservations across cache instances',async()=>{
   const context=await browser.newContext(),page=await context.newPage();

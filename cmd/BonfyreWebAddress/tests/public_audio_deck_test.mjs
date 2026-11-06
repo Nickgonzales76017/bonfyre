@@ -32,7 +32,7 @@ beforeAll(async()=>{
  nativeHTML=(await f.request('/listen',{host:'127.0.0.1'})).body;expect(nativeHTML).toContain('bf-audio');expect(nativeHTML).toContain(mediaBase);
  const puppeteer=createRequire(join(root,'tools/creator-ingest/package.json'))('puppeteer');browser=await puppeteer.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,acceptInsecureCerts:true,args:['--no-sandbox','--disable-dev-shm-usage']});
 },30000);
-afterAll(async()=>{await browser?.close();await f?.close();if(media)await new Promise(resolve=>media.close(resolve));writeFileSync(join(evidence,'verification.tsv'),'scope\tnative RSS + generated local WAV + Chrome, no customer account or publication\nweb_sha256\t'+(f?.fingerprint||'')+'\n'+passed.map(name=>'pass\t'+name).join('\n')+'\n'+errors.map(e=>'browser_error\t'+e.replaceAll('\n',' ')).join('\n'));console.log('PUBLIC_LISTENING_EVIDENCE '+evidence);});
+afterAll(async()=>{await browser?.close();await f?.close();if(media)await new Promise(resolve=>media.close(resolve));writeFileSync(join(evidence,'verification.tsv'),'scope\tnative RSS + generated local WAV + Chrome, no customer account or publication\nweb_sha256\t'+(f?.fingerprint||'')+'\n'+passed.map(name=>'pass\t'+name).join('\n')+'\n'+errors.map(e=>'browser_error\t'+e.replaceAll('\n',' ')).join('\n'));console.log('PUBLIC_LISTENING_EVIDENCE '+evidence);},30000);
 async function open(width=1440,prepare=null){
  const context=await browser.createBrowserContext(),page=await context.newPage();page.setDefaultTimeout(10000);
  // Request interception has no socket address. Chrome consequently requires
