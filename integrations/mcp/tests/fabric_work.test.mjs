@@ -483,7 +483,7 @@ test('real subprocess runner kills an ignoring grandchild process group on cance
 test('real subprocess output overflow never becomes a successful dispatch', async () => {
   const f = await fixture({ useDefaultRunner: true, policyOverride: scratch => {
     const launcher = join(scratch, 'noisy-agent.mjs');
-    writeFileSync(launcher, `#!${process.execPath}\nprocess.stdout.write('x'.repeat(9 * 1024 * 1024)); setInterval(() => {}, 60000);\n`);
+    writeFileSync(launcher, `#!${process.execPath}\nprocess.stdout.write('x'.repeat(65 * 1024 * 1024)); setInterval(() => {}, 60000);\n`);
     chmodSync(launcher, 0o700);
     return { agents: { codex: { ...policy().agents.codex, command: launcher } } };
   } });
