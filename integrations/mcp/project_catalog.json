@@ -780,7 +780,7 @@
     },
     {
       "name": "native_tool_invoke",
-      "description": "Invoke a compiled Bonfyre native cmd/Bonfyre* binary (e.g. BonfyreEmbed, BonfyreVec, BonfyreGraph, BonfyreCMS) directly with argv-style arguments, cwd set to its own directory.",
+      "description": "Invoke one audited read-only command of a compiled Bonfyre native owner. Generic argv rejects all other verbs, extra arguments and mutation routes. Use destination-owned MCP/HTTP tools for effects; those require current ActorClosure, PackGraph and independent reviewed WorkGraph admission.",
       "inputSchema": {
         "type": "object",
         "properties": {

@@ -49,6 +49,12 @@ for publisher, rates in [("Router A",(0.000001,0.000002)),("Router B",(0.000004,
 db.execute("UPDATE observed_price SET evidence_ref='https://prices.example.test/list' WHERE item='Fixture Paged 000'")
 db.execute("INSERT INTO observed_price(source,publisher,item,amount,currency,unit,region,kind,evidence_ref,observed_at) VALUES(?,?,?,?,?,?,?,?,?,?)",("fake-service","Not a model price","Fixture model",99,"USD","each","","service","fixture:service","2026-09-30T00:00:00Z"))
 db.execute("INSERT INTO observed_price(source,publisher,item,amount,currency,unit,region,kind,evidence_ref,observed_at) VALUES(?,?,?,?,?,?,?,?,?,?)",("fixture-list","Fresh public publisher","Fixture Recent Service",12.5,"USD","each","US","service","https://prices.example.test/latest","2026-10-02T00:00:00Z"))
+for publisher,amount in [("Comparative Low",10),("Comparative Middle",12),("Comparative High",15)]:
+ db.execute("INSERT INTO observed_price(source,publisher,item,amount,currency,unit,region,kind,evidence_ref,observed_at) VALUES(?,?,?,?,?,?,?,?,?,?)",
+            ("fixture-comparison",publisher,"Fixture Comparative Transport",amount,"USD","each","Dallas","service",f"https://prices.example.test/{publisher.lower().replace(chr(32),chr(45))}","2026-09-29T12:00:00Z"))
+for publisher,amount,unit,region,date in [("Different date",800,"each","Dallas","2026-10-02T12:00:00Z"),("Different unit",700,"hour","Dallas","2026-09-29T12:00:00Z"),("Different region",600,"each","Austin","2026-09-29T12:00:00Z"),("Different currency",500,"each","Dallas","2026-09-29T12:00:00Z")]:
+ db.execute("INSERT INTO observed_price(source,publisher,item,amount,currency,unit,region,kind,evidence_ref,observed_at) VALUES(?,?,?,?,?,?,?,?,?,?)",
+            ("fixture-comparison",publisher,"Fixture Comparative Transport",amount,"EUR" if publisher=="Different currency" else "USD",unit,region,"service","fixture:private",date))
 db.commit();db.close()
 PY
 python3 - "$tmp/models.db" <<'PY'
@@ -170,6 +176,15 @@ check("Fixture Paged 000" in first and "Fixture Paged 059" in first and "Fixture
 check('href="https://prices.example.test/list"' in first, "price row links to its public retained source")
 code, second = fetch("/s/prices/observed?kind=service&q=Fixture%20Paged&offset=60")
 check("Fixture Paged 060" in second and "Fixture Paged 069" in second and "Fixture Paged 000" not in second and "Previous prices" in second, "next price page preserves search and exposes previous")
+
+code, compared = fetch("/s/prices/observed?kind=service&q=Fixture%20Comparative%20Transport")
+check(code == "200" and '<section data-price-comparison>' in compared, "searched item produces a same-scope publisher comparison")
+comparison = compared.split('<section data-price-comparison>',1)[1].split("</section>",1)[0]
+check("Comparative Low" in comparison and "Comparative High" in comparison, "lowest and highest prices retain source publisher names")
+check("10.00 USD" in comparison and "15.00 USD" in comparison and "3 · <time>2026-09-29</time>" in comparison, "same-day comparison reports grounded prices, publisher count and day")
+check("$800.00" not in comparison and "$700.00" not in comparison and "$600.00" not in comparison and "$500.00" not in comparison, "different day, units, region and currency cannot contaminate the comparable price range")
+check("not live checkout offers or guaranteed savings" in comparison, "dated comparisons are not mistaken for live quotes")
+check("href=\"https://prices.example.test/comparative-low\"" in compared, "individual comparison remains tied to original publisher evidence")
 
 code, models = fetch("/s/prices/observed?kind=inference&q=Fixture%20model")
 check(code == "200" and "Router A" in models and "Router B" in models, "model rows retain publisher identity")
@@ -365,4 +380,74 @@ if problems:
     for p in problems: print("  -", p)
     sys.exit(1)
 PY
+if [ -n "$(printenv BONFYRE_PRICE_ROOM_ONLY 2>/dev/null || true)" ]; then
+  before_price=$(sqlite3 "$tmp/prices.db" "SELECT count(*),sum(amount),count(DISTINCT publisher) FROM observed_price")
+  PRICE_BROWSER_PORT="$port" PRICE_BROWSER_ROOT="$root" node <<'JS'
+const assert=require('node:assert/strict');
+const path=require('node:path');
+const {createRequire}=require('node:module');
+const http=require('node:http');
+const root=process.env.PRICE_BROWSER_ROOT,port=Number(process.env.PRICE_BROWSER_PORT);
+const puppeteer=createRequire(path.join(root,'tools/creator-ingest/package.json'))('puppeteer');
+(async()=>{
+ const browser=await puppeteer.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',args:['--disable-background-networking','--disable-extensions']});
+ const context=await browser.createBrowserContext(),page=await context.newPage(),errors=[],verbs=[];
+ try{
+  page.on('pageerror',e=>errors.push(e.message));page.setDefaultTimeout(12000);
+  await page.setRequestInterception(true);
+  page.on('request',async req=>{
+   try{
+    const url=new URL(req.url());
+    if(url.origin!=='https://aurekai.life'||url.pathname!=='/s/prices/observed'){
+      await req.respond({status:204,body:''});return;
+    }
+    verbs.push(req.method());
+    const result=await new Promise((resolve,reject)=>{
+      const wire=http.request({hostname:'127.0.0.1',port,path:url.pathname+url.search,
+        method:req.method(),headers:{Host:'aurekai.life',Accept:'text/html'}},res=>{
+          const chunks=[];res.on('data',x=>chunks.push(x));
+          res.on('end',()=>resolve({status:res.statusCode,body:Buffer.concat(chunks)}));
+        });
+      wire.on('error',reject);wire.end();
+    });
+    await req.respond({status:result.status,contentType:'text/html; charset=utf-8',body:result.body});
+   }catch(e){errors.push('Price transport '+e.message);await req.abort().catch(()=>{});}
+  });
+  const navigate=path=>page.goto('https://aurekai.life'+path,{waitUntil:'domcontentloaded'});
+  const advance=f=>Promise.all([page.waitForNavigation({waitUntil:'domcontentloaded'}),f()]);
+  await page.setViewport({width:390,height:844});
+  const arrival=await navigate('/s/prices/observed');assert.equal(arrival.status(),200);
+  assert.match(await page.$eval('body',n=>n.textContent),/Find out what things cost/);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'390px opening overflow');
+  await advance(()=>page.click('a[href="/s/prices/observed?kind=service"]'));
+  assert.equal(await page.$eval('input[name=kind]',n=>n.value),'service');
+  assert.equal(await page.$eval('a[href="/s/prices/observed?kind=service"]',n=>n.getAttribute('aria-current')),'page');
+  await page.type('.price-find [name=q]','Fixture Comparative Transport');
+  await advance(()=>page.click('.price-find button'));
+  const comparison=await page.$eval('[data-price-comparison]',n=>n.textContent);
+  for(const good of ['Same-day publisher comparisons','Comparative Low','Comparative High','10.00 USD','15.00 USD'])
+    assert(comparison.includes(good),'Missing comparison '+good);
+  for(const bad of ['800.00','700.00','600.00','500.00'])
+    assert(!comparison.includes(bad),'Incompatible observation in comparison');
+  assert.match(comparison,/not live checkout offers or guaranteed savings/);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'390px comparison overflow');
+  assert.equal(await page.$eval('a[href="https://prices.example.test/comparative-low"]',n=>n.getAttribute('href')),'https://prices.example.test/comparative-low');
+  await navigate('/s/prices/observed?kind=service&q=Fixture%20Paged');
+  let body=await page.$eval('body',n=>n.textContent);
+  assert(body.includes('Fixture Paged 000')&&!body.includes('Fixture Paged 060'));
+  await advance(()=>page.click('.price-pages a:last-child'));
+  body=await page.$eval('body',n=>n.textContent);
+  assert(body.includes('Fixture Paged 060')&&!body.includes('Fixture Paged 000'));
+  assert.match(page.url(),/offset=60/);
+  await page.setViewport({width:1365,height:900});
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'desktop overflow');
+  assert(verbs.length>=5&&verbs.every(x=>x==='GET'),'unexpected write method');
+  assert.deepEqual(errors,[]);
+  console.log('PRICE_BROWSER_PASS: categories, same-day comparisons, provenance, paging, mobile/desktop, no writes');
+ }finally{await page.close();await context.close();await browser.close();}
+})().catch(e=>{console.error(e);process.exitCode=1;});
+JS
+  after_price=$(sqlite3 "$tmp/prices.db" "SELECT count(*),sum(amount),count(DISTINCT publisher) FROM observed_price")
+  [ "$before_price" = "$after_price" ] || { echo 'PRICE_BROWSER_FAIL: price ledger mutated' >&2; exit 1; }
+fi
 echo 'page items: PASS'

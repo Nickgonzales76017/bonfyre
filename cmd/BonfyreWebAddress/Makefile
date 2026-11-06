@@ -65,6 +65,10 @@ $(SOURCE_HIERARCHY_TEST): tests/source_hierarchy_projection_test.c $(SOURCE_HIER
 all: native-link-footprint-witness source-hierarchy-witness
 all: native-compact-footprint-witness
 test: source-hierarchy-witness
+.PHONY: preview-snapshot-witness
+test: preview-snapshot-witness
+preview-snapshot-witness:
+	sh tools/preview-snapshot.test.sh
 source-hierarchy-witness: $(SOURCE_HIERARCHY_TEST)
 	./$(SOURCE_HIERARCHY_TEST)
 
@@ -81,14 +85,11 @@ SURFACE_PROGRAM_HEADER := generated/native_surface_programs.h
 PRESENTATION_CELL_HEADER := generated/native_presentation_cells.h
 MACHINE_SURFACE_HEADER := generated/native_machine_surfaces.h
 EXPERIENCE_PROGRAM_HEADER := generated/native_experience_composition.h
-EXPERIENCE_ROUTE_HEADER := generated/native_experience_routes.h
 $(EXPERIENCE_PROGRAM_HEADER): generated/native_page_composition.h ../BonfyreSurfaceScene/runtime/experience-programs.mjs ../BonfyreSurfaceScene/runtime/stitch-grammar.mjs tools/compile_experience_programs.mjs
 	@bun tools/compile_experience_programs.mjs
-$(EXPERIENCE_ROUTE_HEADER): $(EXPERIENCE_PROGRAM_HEADER)
-	@bun tools/compile_experience_programs.mjs
-build/web_main.o build/compact/web_main.o: $(EXPERIENCE_PROGRAM_HEADER) $(EXPERIENCE_ROUTE_HEADER)
+build/web_main.o build/compact/web_main.o: $(EXPERIENCE_PROGRAM_HEADER)
 .PHONY: native-experience-composition-witness
-native-experience-composition-witness: $(EXPERIENCE_PROGRAM_HEADER) $(EXPERIENCE_ROUTE_HEADER)
+native-experience-composition-witness: $(EXPERIENCE_PROGRAM_HEADER)
 	@bun tools/compile_experience_programs.mjs generated/native_page_composition.h $(EXPERIENCE_PROGRAM_HEADER) --check
 TEMPLATE_SLOT_HEADER := generated/native_template_slots.h
 PACK_BROWSER_HEADER := generated/native_pack_browser.h
@@ -475,7 +476,7 @@ subject-address-witness: $(SUBJECT_ADDRESS_TEST)
 projection-witness: $(PROJECTION_TEST)
 	./$(PROJECTION_TEST)
 $(TERRITORY_HOME_TEST): tests/territory_home_test.c $(TERRITORY_HOME_SOURCE) src/territory_home.h
-	$(CC) $(CFLAGS) -Isrc -o $@ tests/territory_home_test.c $(TERRITORY_HOME_SOURCE) -lsqlite3
+	$(CC) $(CFLAGS) -Isrc -o $@ tests/territory_home_test.c $(TERRITORY_HOME_SOURCE) src/site_presentation.c -lsqlite3
 territory-home-witness: $(TERRITORY_HOME_TEST)
 	./$(TERRITORY_HOME_TEST)
 household-plane-witness: $(TARGET)

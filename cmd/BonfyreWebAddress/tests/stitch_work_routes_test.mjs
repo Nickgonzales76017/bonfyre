@@ -60,16 +60,6 @@ try {
       "--ns","root","--db",cmsdb,"--schemas",schemas],{env,stdio:"ignore",timeout:20000});
   }
   execFileSync(web,["bootstrap-owned","--db",matrixdb],{env,stdio:"ignore",timeout:20000});
-  const port=await freePort();
-  child=spawn(web,["serve","--db",matrixdb,"--auth-db",authdb,"--port",String(port),
-    "--site-root",join(root,"site/matrix")],{cwd:root,env,stdio:"ignore"});
-  let ready=false;
-  for(let i=0;i<100;i++){
-    if(child.exitCode!==null)throw Error("WebAddress quit before startup: "+child.exitCode);
-    try{const r=await get(port,"/healthz","aurekai.work");if(r.status<500){ready=true;break;}}catch{}
-    await sleep(60);
-  }
-  assert(ready,"isolated WebAddress could not start");
   const cases=[
     ["/","discover"],["/today","discover"],["/people","directory"],
     ["/organisations","directory"],["/jobs","directory"],["/business","reader"],
@@ -84,6 +74,31 @@ try {
     ["/apps","workbench"],["/account","workbench"],["/connections","connections"],
     ["/crm","workbench"],["/projects","workbench"],["/offers","market"]
   ];
+  // Route presentation is CMS data: seed the fixture store with one published
+  // route_presentation row per expected composition, as an author would.
+  for (const [route,pattern] of cases)
+    execFileSync(cms,["entry","create","route_presentation",JSON.stringify({territory:"work",route,pattern,status:"published"}),
+      "--ns","root","--db",cmsdb,"--schemas",schemas],{env,stdio:"ignore",timeout:20000});
+  const crossApex=[
+    ["aurekai.life","/","discover"],["aurekai.life","/food","discover"],
+    ["aurekai.life","/whats-on","discover"],["aurekai.live","/","discover"],
+    ["aurekai.live","/watch","media"],["aurekai.live","/whats-on","discover"],
+    ["aurekai.shop","/","discover"],["aurekai.shop","/deals","market"],
+    ["aurekai.shop","/recalls","reader"]
+  ];
+  for (const [host,route,pattern] of crossApex)
+    execFileSync(cms,["entry","create","route_presentation",JSON.stringify({territory:host.slice(8),route,pattern,status:"published"}),
+      "--ns","root","--db",cmsdb,"--schemas",schemas],{env,stdio:"ignore",timeout:20000});
+  const port=await freePort();
+  child=spawn(web,["serve","--db",matrixdb,"--auth-db",authdb,"--port",String(port),
+    "--site-root",join(root,"site/matrix")],{cwd:root,env,stdio:"ignore"});
+  let ready=false;
+  for(let i=0;i<100;i++){
+    if(child.exitCode!==null)throw Error("WebAddress quit before startup: "+child.exitCode);
+    try{const r=await get(port,"/healthz","aurekai.work");if(r.status<500){ready=true;break;}}catch{}
+    await sleep(60);
+  }
+  assert(ready,"isolated WebAddress could not start");
   let sourceBoundCompositions=0;
   let covered=0;
   for(const [route,pattern] of cases){
@@ -94,7 +109,7 @@ try {
     }
     assert(r.body.includes('data-aurekai-pattern="'+pattern+'"'),
       "Unexpected composition "+route+": expected "+pattern);
-    assert(r.body.includes('content="'+pattern+'"') && r.body.includes("aurekai-work-composition"),
+    assert(r.body.includes('content="'+pattern+'"') && r.body.includes('href="/assets/composition.css'),
       "No native style for "+route);
     const sceneText=r.body.match(/<template id="bonfyre-surface-scene"[^>]*>([\s\S]*?)<\/template>/);
     if(sceneText){
@@ -122,20 +137,13 @@ try {
   assert(covered>=5,"Not enough real Work route coverage: "+covered);
   // All four apexes receive only their own source-backed native route grammar.
   // Owner-routed pages which are not in this isolated fixture remain unasserted.
-  const crossApex=[
-    ["aurekai.life","/","discover"],["aurekai.life","/food","discover"],
-    ["aurekai.life","/whats-on","discover"],["aurekai.live","/","discover"],
-    ["aurekai.live","/watch","media"],["aurekai.live","/whats-on","discover"],
-    ["aurekai.shop","/","discover"],["aurekai.shop","/deals","market"],
-    ["aurekai.shop","/recalls","reader"]
-  ];
   const coveredApex=new Map([['aurekai.life',0],['aurekai.live',0],['aurekai.shop',0]]);
   for(const [host,route,pattern] of crossApex){
     const response=await get(port,route,host);
     if(response.status!==200){console.log("OWNER ROUTE "+host+route+": HTTP "+response.status);continue;}
     assert(response.body.includes('data-aurekai-pattern="'+pattern+'"'),
       "Incorrect native apex pattern "+host+route);
-    assert(response.body.includes('content="'+pattern+'"')&&response.body.includes("aurekai-work-composition"),
+    assert(response.body.includes('content="'+pattern+'"')&&response.body.includes('href="/assets/composition.css'),
       "Missing native composition head "+host+route);
     coveredApex.set(host,coveredApex.get(host)+1);
   }

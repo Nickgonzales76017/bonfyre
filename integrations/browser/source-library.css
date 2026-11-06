@@ -46,3 +46,9 @@ main[data-source-library][data-reading-mode=focus][data-reader-dim=true] .source
 body:has(main[data-source-library][data-reading-mode=focus][data-reader-ground=obsidian]){background:#0f1511;color:#dee4dd}
 body:has(main[data-source-library][data-reading-mode=focus][data-reader-ground=twilight]){background:#171d19;color:#e9ebdc}
 body:has(main[data-source-library][data-reading-mode=focus][data-reader-ground=sepia]){background:#252b27;color:#f2e7d1}
+main[data-source-library] .source-citation-review{padding:18px;border:1px solid var(--zen-line,#b9c7b5);border-radius:14px;background:var(--zen-panel,#f3ede4);color:var(--zen-ink,#213e2d);margin:16px 0}
+main[data-source-library] .source-citation-review h4{font:500 clamp(20px,2.5vw,26px)/1.2 Georgia,serif;margin:0 0 8px}
+main[data-source-library] .source-citation-review p{font:13px/1.5 system-ui;margin:9px 0}
+main[data-source-library] .source-citation-text{display:block;width:100%;max-width:100%;min-height:170px;resize:vertical;padding:12px;border:1px solid var(--zen-line,#b9c7b5);border-radius:8px;background:var(--zen-bg,#fff8f0);color:var(--zen-ink,#213e2d);font:12px/1.55 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
+main[data-source-library] .source-citation-review button{min-height:44px;margin-top:12px}
+main[data-source-library] .source-citation-review :is(textarea,button):focus-visible{outline:2px solid var(--zen-accent,#8e4e1e);outline-offset:3px}

@@ -553,7 +553,7 @@ static int serve_authored_page(const char *method, const char *target, const cha
             site_speculation_html());
         sqlite3_finalize(st);
         sqlite3_close(db);
-        if (!bf_stitch_work_emit_authored(host, route, query, body))
+        if (!bf_route_presentation_emit_authored(host, route, query, body))
             protocol_reply(200, "text/html; charset=utf-8", body);
         return 1;
     }

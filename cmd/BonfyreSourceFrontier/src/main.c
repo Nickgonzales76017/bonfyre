@@ -80,6 +80,56 @@ static int exec_sql(sqlite3 *db, const char *sql) {
     if (sqlite3_exec(db, sql, NULL, NULL, &err) != SQLITE_OK) { fprintf(stderr, "sqlite: %s\n", err ? err : "error"); sqlite3_free(err); return 0; }
     return 1;
 }
+/* Some upstream inventories double-escape names, so a parsed value still holds
+ * the text "™". root.name is a display name owned here: decode any
+ * literal \uXXXX (and surrogate pairs) to UTF-8 in place before storing. */
+static int hexval(char c) { return c >= '0' && c <= '9' ? c - '0' : c >= 'a' && c <= 'f' ? c - 'a' + 10 : c >= 'A' && c <= 'F' ? c - 'A' + 10 : -1; }
+static unsigned read_u16(const char *p) {
+    unsigned v = 0;
+    for (int i = 0; i < 4; i++) { int h = hexval(p[i]); if (h < 0) return 0x110000; v = v * 16 + (unsigned)h; }
+    return v;
+}
+static int decode_literal_escapes(char *s) {
+    char *r = s, *w = s; int changed = 0;
+    while (s && *r) {
+        unsigned cp;
+        if (r[0] == '\\' && r[1] == 'u' && (cp = read_u16(r + 2)) < 0x110000 && cp) {
+            size_t used = 6;
+            if (cp >= 0xD800 && cp <= 0xDBFF && r[6] == '\\' && r[7] == 'u') {
+                unsigned lo = read_u16(r + 8);
+                if (lo >= 0xDC00 && lo <= 0xDFFF) { cp = 0x10000 + ((cp - 0xD800) << 10) + (lo - 0xDC00); used = 12; }
+            }
+            if (cp >= 0xD800 && cp <= 0xDFFF) { *w++ = *r++; continue; }
+            if (cp < 0x80) *w++ = (char)cp;
+            else if (cp < 0x800) { *w++ = (char)(0xC0 | (cp >> 6)); *w++ = (char)(0x80 | (cp & 0x3F)); }
+            else if (cp < 0x10000) { *w++ = (char)(0xE0 | (cp >> 12)); *w++ = (char)(0x80 | ((cp >> 6) & 0x3F)); *w++ = (char)(0x80 | (cp & 0x3F)); }
+            else { *w++ = (char)(0xF0 | (cp >> 18)); *w++ = (char)(0x80 | ((cp >> 12) & 0x3F)); *w++ = (char)(0x80 | ((cp >> 6) & 0x3F)); *w++ = (char)(0x80 | (cp & 0x3F)); }
+            r += used; changed = 1;
+        } else *w++ = *r++;
+    }
+    if (s) *w = '\0';
+    return changed;
+}
+/* Repair names stored before decoding happened at import. Idempotent. */
+static int cmd_normalize_names(sqlite3 *db) {
+    sqlite3_stmt *sel = NULL, *up = NULL; int fixed = 0;
+    sqlite3_prepare_v2(db, "SELECT root_id,name FROM root WHERE instr(name, char(92)||'u')>0", -1, &sel, NULL);
+    sqlite3_prepare_v2(db, "UPDATE root SET name=?1 WHERE root_id=?2", -1, &up, NULL);
+    exec_sql(db, "BEGIN");
+    while (sel && up && sqlite3_step(sel) == SQLITE_ROW) {
+        char name[1024];
+        snprintf(name, sizeof(name), "%s", (const char *)sqlite3_column_text(sel, 1));
+        if (!decode_literal_escapes(name)) continue;
+        sqlite3_reset(up);
+        sqlite3_bind_text(up, 1, name, -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(up, 2, (const char *)sqlite3_column_text(sel, 0), -1, SQLITE_TRANSIENT);
+        if (sqlite3_step(up) == SQLITE_DONE) fixed++;
+    }
+    exec_sql(db, "COMMIT");
+    sqlite3_finalize(sel); sqlite3_finalize(up);
+    printf("{\"normalized_names\":%d}\n", fixed);
+    return 1;
+}
 
 static const char *jstr(const bf_json_doc_t *doc, const bf_json_node_t *obj, const char *key, char *buf, size_t cap) {
     const bf_json_node_t *n = bf_json_obj_get(doc, obj, key);
@@ -278,6 +328,7 @@ static int import_row(Import *im, const bf_json_doc_t *doc, const bf_json_node_t
     if (jstr(doc, row, "refusal", buf, sizeof(buf))) snprintf(refusal, sizeof(refusal), "%s", buf);
     if (jstr(doc, row, "truth_level", buf, sizeof(buf))) snprintf(truth, sizeof(truth), "%s", buf);
     jstr(doc, row, "name", name, sizeof(name));
+    decode_literal_escapes(name);
     jstr(doc, row, "identity", identity, sizeof(identity));
     jstr(doc, row, "kind", kind, sizeof(kind));
     jstr(doc, row, "material", material, sizeof(material));
@@ -1361,6 +1412,7 @@ static void usage(void) {
     X("gaps", FC_GAPS) \
     X("import", FC_IMPORT) \
     X("init", FC_INIT) \
+    X("normalize-names", FC_NORMALIZE_NAMES) \
     X("qualification-work", FC_QUALIFICATION_WORK) \
     X("report", FC_REPORT) \
     X("starvation", FC_STARVATION) \
@@ -1413,6 +1465,7 @@ int main(int argc, char **argv) {
     if (!db) return 2;
     switch (command->id) {
     case FC_INIT: printf("{\"ready\":true}\n"); ok = 1; break;
+    case FC_NORMALIZE_NAMES: ok = cmd_normalize_names(db); break;
     case FC_IMPORT:
         if (arg(argc, argv, "--label") && arg(argc, argv, "--jsonl"))
             ok = cmd_import(db, arg(argc, argv, "--label"), arg(argc, argv, "--jsonl"));

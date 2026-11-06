@@ -177,6 +177,7 @@ static int serve_matrix_asset(BfMatrix *m, const char *host_in, const char *targ
         {"/assets/donor-lemmy.css", "donor-lemmy.css", "text/css; charset=utf-8"},
         {"/assets/donor-plane.css", "donor-plane.css", "text/css; charset=utf-8"},
         {"/assets/aurekai-composed.css", "aurekai-composed.css", "text/css; charset=utf-8"},
+        {"/assets/composition.css", "composition.css", "text/css; charset=utf-8"},
         {"/assets/aurekai-site-program.css", "aurekai-site-program.css", "text/css; charset=utf-8"},
         {"/assets/own-site.css", "own-site.css", "text/css; charset=utf-8"},
         {"/assets/aurekai-bar.css", "aurekai-bar.css", "text/css; charset=utf-8"},

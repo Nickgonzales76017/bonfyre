@@ -83,7 +83,7 @@ export function checkSource(value){
 export async function prepareFile(file,{title=file?.name??'',collection='',tags=[],notes=''}={}){
  fail(file instanceof Blob&&typeof file.name==='string'&&file.name.length>0&&file.size>0&&file.size<=sourceFileLimit,'Choose a nonempty original file of at most 24 MiB.');
  const bytes=new Uint8Array(await file.arrayBuffer()),contentSHA256=await sourceHash(bytes),ext=file.name.split('.').pop().toLowerCase();
- const textLike=['txt','md','markdown','csv','tsv','vtt','srt','ris','log','xml'].includes(ext)&&!bytes.subarray(0,8192).includes(0);
+ const textLike=['txt','md','markdown','csv','tsv','vtt','srt','ris','log','xml','yaff','cue','diff','patch','yaml','yml','toml'].includes(ext)&&!bytes.subarray(0,8192).includes(0);
  let preview='';if(textLike)preview=new TextDecoder().decode(bytes.subarray(0,8000));
  const media=bytes[0]===0x89&&bytes[1]===0x50?'image/png':bytes[0]===0xff&&bytes[1]===0xd8?'image/jpeg':String.fromCharCode(...bytes.subarray(0,4))==='%PDF'?'application/pdf':textLike?'text/plain':/^(audio|video)\//.test(file.type)?file.type:'application/octet-stream';
  const value={schema:'bonfyre.source-material.v1',id:await sourceHash(utf8.encode(file.name+'\0'+contentSHA256)),kind:'file',state:'active',title,collection,tags:sourceTags(tags),notes,original:file,filename:file.name,media,bytes:file.size,contentSHA256,textLike,preview,createdAt:new Date().toISOString(),history:[]};

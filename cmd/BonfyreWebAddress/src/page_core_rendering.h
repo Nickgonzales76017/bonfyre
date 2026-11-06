@@ -1903,7 +1903,7 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
     case BF_PAGE_TOPOLOGY_AGENDA:
         /* An agenda is read forwards and grouped by the day something happens,
          * with the place under it: the rhythm of a printed listings page. */
-        fputs("<style>.agenda-tools{display:grid;grid-template-columns:auto minmax(190px,1fr) auto;align-items:end;gap:12px 18px;padding:21px 24px;margin:18px 0 18px;border:1px solid var(--w-rule,#444935);border-radius:17px;background:var(--w-panel,#171d19);color:var(--w-ink,#dee4dd);font:14px/1.45 system-ui}.agenda-tools .agenda-choices{display:flex;flex-wrap:wrap;gap:7px}.agenda-tools button{min-height:44px;padding:9px 16px;border:1px solid var(--w-rule,#444935);border-radius:999px;color:inherit;background:transparent;font:600 13px/1.2 system-ui;cursor:pointer}.agenda-tools button[aria-pressed=true]{background:var(--w-accent,#d0fc4f);color:var(--w-ground,#0f1511);border-color:var(--w-accent,#d0fc4f)}.agenda-tools label{display:grid;gap:6px;font:600 12px/1.2 system-ui;min-width:0}.agenda-tools input{width:100%;min-width:0;min-height:44px;padding:9px 12px;border:1px solid var(--w-rule,#444935);background:var(--w-ground,#0f1511);color:var(--w-ink,#dee4dd);border-radius:8px}.agenda-tools output{font:12px/1.4 system-ui}.agenda-tools small{grid-column:1/-1;color:var(--w-muted,#c5c9af)}ol.agenda li[hidden]{display:none!important}.agenda-tools :is(button,input):focus-visible{outline:2px solid var(--w-accent,#d0fc4f);outline-offset:3px}@media(max-width:760px){.agenda-tools{grid-template-columns:1fr 1fr;padding:17px}.agenda-tools .agenda-choices{grid-column:1/-1}.agenda-tools label{grid-column:1/-1}}@media(max-width:530px){.agenda-tools{grid-template-columns:1fr}.agenda-tools output{grid-column:1/-1}}@media(prefers-reduced-motion:reduce){.agenda-tools *{transition:none!important}}</style><div class=\"agenda-tools\" data-agenda-controls role=\"group\" aria-label=\"Filter published upcoming events\"><div class=\"agenda-choices\"><button type=\"button\" data-agenda-filter=\"all\" aria-pressed=\"true\">All dates</button><button type=\"button\" data-agenda-filter=\"weekend\" aria-pressed=\"false\">This weekend</button></div><label>Find event or venue<input type=\"search\" data-agenda-search maxlength=\"120\" placeholder=\"Find in this agenda\"></label><output data-agenda-count role=\"status\" aria-live=\"polite\"></output><small>Filters only the published events loaded in this agenda. Open an event for its source details.</small></div>",stdout);
+        fputs("<style>.agenda-tools{display:grid;grid-template-columns:auto minmax(190px,1fr) auto;align-items:end;gap:12px 18px;padding:21px 24px;margin:18px 0 18px;border:1px solid var(--w-rule,#444935);border-radius:17px;background:var(--w-panel,#171d19);color:var(--w-ink,#dee4dd);font:14px/1.45 system-ui}.agenda-tools .agenda-choices{display:flex;flex-wrap:wrap;gap:7px}.agenda-tools button{min-height:44px;padding:9px 16px;border:1px solid var(--w-rule,#444935);border-radius:999px;color:inherit;background:transparent;font:600 13px/1.2 system-ui;cursor:pointer}.agenda-tools button[aria-pressed=true]{background:var(--w-accent,#d0fc4f);color:var(--w-ground,#0f1511);border-color:var(--w-accent,#d0fc4f)}.agenda-tools label{display:grid;gap:6px;font:600 12px/1.2 system-ui;min-width:0}.agenda-tools input{width:100%;min-width:0;min-height:44px;padding:9px 12px;border:1px solid var(--w-rule,#444935);background:var(--w-ground,#0f1511);color:var(--w-ink,#dee4dd);border-radius:8px}.agenda-tools output{font:12px/1.4 system-ui}.agenda-tools small{grid-column:1/-1;color:var(--w-muted,#c5c9af)}ol.agenda li[hidden]{display:none!important}.agenda-tools :is(button,input):focus-visible{outline:2px solid var(--w-accent,#d0fc4f);outline-offset:3px}@media(max-width:760px){.agenda-tools{grid-template-columns:1fr 1fr;padding:17px}.agenda-tools .agenda-choices{grid-column:1/-1}.agenda-tools label{grid-column:1/-1}}@media(max-width:530px){.agenda-tools{grid-template-columns:1fr}.agenda-tools output{grid-column:1/-1}}@media(prefers-reduced-motion:reduce){.agenda-tools *{transition:none!important}}</style><div class=\"agenda-tools\" data-agenda-controls role=\"group\" aria-label=\"Filter published upcoming events\"><div class=\"agenda-choices\"><button type=\"button\" data-agenda-filter=\"all\" aria-pressed=\"true\">All dates</button><button type=\"button\" data-agenda-filter=\"today\" aria-pressed=\"false\">Starts today</button><button type=\"button\" data-agenda-filter=\"seven\" aria-pressed=\"false\">Next 7 days</button><button type=\"button\" data-agenda-filter=\"weekend\" aria-pressed=\"false\">This weekend</button></div><label>Find event or venue<input type=\"search\" data-agenda-search maxlength=\"120\" placeholder=\"Find in this agenda\"></label><output data-agenda-count role=\"status\" aria-live=\"polite\"></output><small>Filters only the published events loaded in this agenda. Open an event for its source details.</small></div>",stdout);
         fputs("<ol class=\"agenda\">", stdout);
         for (k = 0; k < take; k++) {
             const PageItem *item = &stream->item[stream->cursor + k];
@@ -1928,24 +1928,24 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
              * upcoming Saturday/Sunday through this Sunday, not all future weekends.
              * A missing timestamp never becomes a weekend claim. */
             {
-                struct tm event_tm, current_tm; int weekend = 0;
+                struct tm event_tm, current_tm; int weekend = 0, offset = -1;
                 if (item->at > 0 && page_local_time(item->at, &event_tm) && page_local_time(now, &current_tm)) {
                     int year = current_tm.tm_year + 1900;
                     int year_days = 365 + (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0));
-                    int offset = event_tm.tm_year == current_tm.tm_year ? event_tm.tm_yday - current_tm.tm_yday :
+                    offset = event_tm.tm_year == current_tm.tm_year ? event_tm.tm_yday - current_tm.tm_yday :
                         event_tm.tm_year == current_tm.tm_year + 1 ? year_days - current_tm.tm_yday + event_tm.tm_yday : -1;
                     int until_sunday = current_tm.tm_wday == 0 ? 0 : 7 - current_tm.tm_wday;
                     weekend = offset >= 0 && offset <= until_sunday &&
                         (event_tm.tm_wday == 0 || event_tm.tm_wday == 6);
                 }
-                printf("<data data-agenda-weekend=\"%d\" hidden></data>", weekend);
+                printf("<data data-agenda-weekend=\"%d\" data-agenda-day-offset=\"%d\" hidden></data>", weekend, offset);
             }
             if (when[0]) { fputs("<span class=\"starts\">", stdout); html(when); fputs("</span>", stdout); }
             if (item->where[0]) { fputs("<span class=\"at\">", stdout); html(item->where); fputs("</span>", stdout); }
             fputs("<span class=\"by\">", stdout); html(item->by); fputs("</span></li>", stdout);
         }
         fputs("</ol>", stdout);
-        fputs("<script>(function(){\n const script=document.currentScript,agenda=script?.previousElementSibling,tools=agenda?.previousElementSibling;\n if(!agenda?.matches('ol.agenda')||!tools?.hasAttribute('data-agenda-controls'))return;\n const entries=[...agenda.children].filter(n=>n.matches('li.agenda-item'));\n const dates=[...agenda.children].filter(n=>n.matches('li.agenda-day'));\n const query=tools.querySelector('[data-agenda-search]'),count=tools.querySelector('[data-agenda-count]');\n const filters=[...tools.querySelectorAll('[data-agenda-filter]')];let mode='all';\n function update(){const term=query.value.trim().toLocaleLowerCase();let visible=0;\n  for(const item of entries){const weekend=item.querySelector('[data-agenda-weekend]')?.dataset.agendaWeekend==='1';\n   const match=(mode==='all'||weekend)&&(!term||item.textContent.toLocaleLowerCase().includes(term));\n   item.hidden=!match;if(match)visible++;}\n  for(const date of dates){let cursor=date.nextElementSibling,hasVisible=false;\n   while(cursor&&!cursor.matches('li.agenda-day')){if(cursor.matches('li.agenda-item')&&!cursor.hidden)hasVisible=true;cursor=cursor.nextElementSibling;}\n   date.hidden=!hasVisible;}\n  for(const button of filters)button.setAttribute('aria-pressed',String(button.dataset.agendaFilter===mode));\n  count.textContent='Showing '+visible+' of '+entries.length+' published events on this page.';\n }\n for(const button of filters)button.addEventListener('click',()=>{mode=button.dataset.agendaFilter==='weekend'?'weekend':'all';update();});\n query.addEventListener('input',update);update();\n})();</script>", stdout);
+        fputs("<script>(function(){\n const script=document.currentScript,agenda=script?.previousElementSibling,tools=agenda?.previousElementSibling;\n if(!agenda?.matches('ol.agenda')||!tools?.hasAttribute('data-agenda-controls'))return;\n const entries=[...agenda.children].filter(n=>n.matches('li.agenda-item'));\n const dates=[...agenda.children].filter(n=>n.matches('li.agenda-day'));\n const query=tools.querySelector('[data-agenda-search]'),count=tools.querySelector('[data-agenda-count]');\n const filters=[...tools.querySelectorAll('[data-agenda-filter]')];let mode='all';\n function update(){const term=query.value.trim().toLocaleLowerCase();let visible=0;\n  for(const item of entries){const signal=item.querySelector('[data-agenda-weekend]');const weekend=signal?.dataset.agendaWeekend==='1';const offset=Number(signal?.dataset.agendaDayOffset);const known=signal&&Number.isInteger(offset)&&offset>=0;const windowOk=mode==='all'||(mode==='weekend'&&weekend)||(mode==='today'&&known&&offset===0)||(mode==='seven'&&known&&offset<7);\n   const match=windowOk&&(!term||item.textContent.toLocaleLowerCase().includes(term));\n   item.hidden=!match;if(match)visible++;}\n  for(const date of dates){let cursor=date.nextElementSibling,hasVisible=false;\n   while(cursor&&!cursor.matches('li.agenda-day')){if(cursor.matches('li.agenda-item')&&!cursor.hidden)hasVisible=true;cursor=cursor.nextElementSibling;}\n   date.hidden=!hasVisible;}\n  for(const button of filters)button.setAttribute('aria-pressed',String(button.dataset.agendaFilter===mode));\n  count.textContent='Showing '+visible+' of '+entries.length+' published events on this page.';\n }\n for(const button of filters)button.addEventListener('click',()=>{mode=['all','today','seven','weekend'].includes(button.dataset.agendaFilter)?button.dataset.agendaFilter:'all';update();});\n query.addEventListener('input',update);update();\n})();</script>", stdout);
         break;
     case BF_PAGE_TOPOLOGY_LIST:
         fputs("<ol class=\"more\">", stdout);
@@ -2844,7 +2844,7 @@ static const char *page_native_experience_pattern(const PageDocument *doc, const
     const char *exact, *subject, *grammar;
     unsigned publications=0,media=0,places=0,posts=0;
     if (!doc) return NULL;
-    exact=bf_stitch_work_pattern(page_render_host,doc->route,doc->raw_query);
+    exact=bf_route_presentation_pattern(page_render_host,doc->route,doc->raw_query);
     if (exact) return exact;
     subject=doc->subject_address;
     if (!(doc->world && *doc->world) && !(subject && *subject)) return NULL;
@@ -4213,7 +4213,8 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
            doc->actor && *doc->actor ? "private, no-store" : front_community_route(page_render_host,doc->route) ?
            "public, no-cache, max-age=0, must-revalidate" : "public, max-age=60, stale-while-revalidate=300");
     page_emit_head(template, head_end, doc->title, doc->lede);
-    bf_stitch_work_emit_head(stdout, ctx.experience_pattern);
+    bf_route_presentation_emit_head_for(stdout, page_render_host && !strncmp(page_render_host, "aurekai.", 8) ? page_render_host + 8 : NULL,
+        doc->route, doc->raw_query, ctx.experience_pattern);
     bf_native_experience_emit_head(stdout,bf_native_experience_find(ctx.experience_pattern));
     if (doc->route)
         fputs("<link rel=\"alternate\" type=\"application/atom+xml\" title=\"Aurekai public updates\" href=\"/feed.atom\">", stdout);
@@ -4253,7 +4254,8 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
     fputs("\" data-character=\"", stdout); html(doc->character);
     if (doc->template_name && *doc->template_name && studio_safe_slug_arg(doc->template_name)) { fputs("\" data-template=\"", stdout); html(doc->template_name); }
     fputs("\"", stdout);
-    bf_stitch_work_emit_body_attribute(stdout, ctx.experience_pattern);
+    bf_route_presentation_emit_body_attribute_for(stdout, page_render_host && !strncmp(page_render_host, "aurekai.", 8) ? page_render_host + 8 : NULL,
+        doc->route, doc->raw_query, ctx.experience_pattern);
     fputs("><main class=\"wrap\" data-bonfyre-region=\"page-main\" data-bonfyre-continuity=\"page-main\">", stdout);
     page_emit_nav(doc);
     if (doc->world) { fputs("<nav class=\"tabs\" aria-label=\"Ways in\">", stdout); page_emit_world_tabs(db, doc); fputs("</nav>", stdout); }

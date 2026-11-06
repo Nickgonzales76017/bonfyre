@@ -30,6 +30,19 @@ assert.throws(()=>composeStitchWorkspace({...original,bindings:[]},real,{pattern
 const spatial=composeStitchWorkspace(original,real,{pattern:"spatial"});
 assert.equal(spatial.initial,"aurekai-comparison");
 assert.equal(spatial.panels.length,2);
+const alone=makeScene();
+alone.bindings=alone.bindings.slice(0,1);
+const single=composeStitchWorkspace(alone,new Map([["editor-a",real.get("editor-a")]]),{pattern:"spatial"});
+assert.equal(single.layouts.length,1,"Single installed app cannot support a comparison");
+assert.equal(single.initial,"aurekai-focus");
+assert.equal(single.commands.size,1,"A single layout retains only its own admitted command");
+const triple=makeScene();
+triple.bindings.push({binding_id:"editor-c",slot_id:"app",application_kind:"Editor",action_aperture:""});
+const multi=composeStitchWorkspace(triple,new Map([...real,["editor-c",adapter("Editor C")]]),{pattern:"workbench"});
+for(const layout of multi.layouts){
+  assert.deepEqual(layout.panels.map(p=>p.relative||null),[null,"editor-a","editor-b"],
+    "Panels must form a bounded, non-overlapping placement chain");
+}
 assert.equal(spatial.commands.size,1);
 for(const [reference,pattern] of Object.entries(STITCH_REFERENCES)){
   const plan=composeStitchWorkspace(original,real,{reference});

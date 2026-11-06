@@ -1189,3 +1189,18 @@ body.item-page{
   --w-accent:#b5df32;--w-face-body:var(--sans);--w-face-display:var(--sans);
   background:var(--w-ground);color:var(--w-ink)
 }
+
+/* A territory record that names a published presentation_template wears it:
+   territory_home.c scopes the template's tokens to body[data-bf-template]
+   and this block maps them onto the shared dress. Pages without a template
+   are untouched. The template must define every token it relies on. */
+body[data-bf-template]{
+  --w-ground:var(--bf-ground);--w-ink:var(--bf-ink);--w-display:var(--bf-display-ink);
+  --w-accent:var(--bf-accent);--w-muted:var(--bf-muted);--w-rule:var(--bf-rule);--w-panel:var(--bf-panel);
+  --w-face-display:var(--bf-face-display);--w-face-body:var(--bf-face-body);--w-face-mono:var(--bf-face-mono);
+  --w-display-size:var(--bf-display-size);--w-display-weight:var(--bf-display-weight);
+  --w-display-transform:var(--bf-display-transform);--w-display-tracking:var(--bf-display-tracking);
+  --w-display-leading:var(--bf-display-leading);--w-radius:var(--bf-radius);
+  --w-card-border:var(--bf-card-border);--w-card-shadow:var(--bf-card-shadow);
+  --w-gap:var(--bf-gap);--w-measure:var(--bf-measure);
+}

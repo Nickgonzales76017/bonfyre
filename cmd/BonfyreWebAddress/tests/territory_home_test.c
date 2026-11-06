@@ -79,6 +79,26 @@ int main(void) {
     free(incomplete);
     free(unsafe);
     sqlite3_close(db);
+    {
+        /* Current schema: a territory record that names a published template wears it. */
+        sqlite3 *tdb = NULL;
+        char *dressed = owned(TEMPLATE);
+        int ok = dressed && sqlite3_open(":memory:", &tdb) == SQLITE_OK &&
+          sqlite3_exec(tdb,
+            "CREATE TABLE territory_presentation (id INTEGER PRIMARY KEY,territory TEXT,eyebrow TEXT,head TEXT,lede TEXT,question TEXT,character TEXT,cannot_infer TEXT,template TEXT,status TEXT);"
+            "CREATE TABLE presentation_template (id INTEGER PRIMARY KEY,template TEXT,status TEXT,layout_tokens TEXT,hero_mode TEXT,navigation_mode TEXT,density TEXT,card_mode TEXT,typography_mode TEXT);"
+            "INSERT INTO territory_presentation(territory,eyebrow,head,lede,question,character,cannot_infer,template,status) VALUES"
+            "('work','e','What moves','l','q','desk','b','night-ledger','published');"
+            "INSERT INTO presentation_template(template,status,layout_tokens,hero_mode,navigation_mode,density,card_mode,typography_mode) VALUES"
+            "('night-ledger','published','{\"ground\":\"#0f1511\",\"accent\":\"#d0fc4f\"}','lead','header','standard','soft-panel','mixed');",
+            NULL, NULL, NULL) == SQLITE_OK &&
+          bf_apply_territory_home_presentation(tdb, &dressed, "work") &&
+          strstr(dressed, "<body data-bf-template=\"night-ledger\" class=\"work\">") &&
+          strstr(dressed, "body[data-bf-template]{--bf-ground:#0f1511;--bf-accent:#d0fc4f;}");
+        free(dressed);
+        if (tdb) sqlite3_close(tdb);
+        if (!ok) { fputs("territory home: failed template\n", stderr); return 1; }
+    }
     puts("territory home: PASS");
     return 0;
 }

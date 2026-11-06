@@ -28,6 +28,7 @@ test: $(TARGET)
 	ARROW_CPP_LIBARROW="$(ARROW_LIBDIR)/libarrow.dylib" \
 	ARROW_CPP_LIBPARQUET="$(ARROW_LIBDIR)/libparquet.dylib" \
 	sh tests/arrow_stream_test.sh
+	bun test tests/aurekai_josh_packgraph.test.mjs
 
 install: $(TARGET)
 	@[ -n "$(PREFIX)" ] || { echo "say PREFIX (and DESTDIR for a staged install)" >&2; exit 1; }

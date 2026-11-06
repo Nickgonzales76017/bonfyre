@@ -89,3 +89,41 @@ test('Stitch Zen reader switches actual text font and four grounds, dims chrome 
   expect(errors).toEqual([]);
  }finally{await context.close();}
 });
+test('Stitch reader prepares an exact reviewed source quotation with content digest and no publication',async()=>{
+ const row=await saved(),{page,context,errors,requests}=await open(f.owner,library.path+'?'+new URLSearchParams({record:row.key}));
+ try{
+  await page.waitForSelector('.source-preview-text');await click(page,'Focus selected source');
+  await click(page,'Open original file');await page.waitForSelector('.source-original-text');
+  requests.length=0;
+  await click(page,'Prepare source citation');
+  expect(await page.$eval('.source-citation-review',n=>n.hidden)).toBe(true);
+  expect(await page.$eval('.source-actions',n=>n.textContent)).not.toContain('Citation published');
+  expect(await page.$eval('.source-original-text',n=>n.textContent)).toBe(original);
+  const quote='Final retained passage 🧭';
+  await page.evaluate(quote=>{
+   const pre=document.querySelector('.source-original-text'),node=pre.firstChild,start=node.textContent.lastIndexOf(quote);
+   if(start<0)throw Error('Exact original selection could not be located');
+   const range=document.createRange();range.setStart(node,start);range.setEnd(node,start+quote.length);
+   const selection=getSelection();selection.removeAllRanges();selection.addRange(range);
+  },quote);
+  const selectionWitness=await page.evaluate(()=>{const s=getSelection(),r=s.rangeCount?s.getRangeAt(0):null;return {text:s.toString(),start:r?.startContainer?.parentElement?.className,end:r?.endContainer?.parentElement?.className};});
+  expect(selectionWitness.text).toBe(quote);expect(selectionWitness.start).toContain('source-original-text');expect(selectionWitness.end).toContain('source-original-text');
+  await click(page,'Prepare source citation');
+  const reviewed=await page.$eval('.source-citation-text',n=>n.value);
+  expect(reviewed+'; '+await page.$eval('.source-citation-review',n=>n.previousElementSibling?.textContent)).toContain('Source: '+row.value.title);
+  expect(reviewed).toContain('Account-local source: '+row.key);
+  expect(reviewed).toContain('Original SHA-256: '+row.value.contentSHA256);
+  expect(reviewed).toContain('Recorded revision: '+row.revision);
+  expect(reviewed).toContain('Exact selected passage:\n'+quote);
+  expect(reviewed).not.toContain('window.sourceInjected=true');
+  expect(reviewed).not.toContain('Each original line remains');
+  expect(reviewed).toContain('not independently verified or published');
+  expect(await page.$eval('.source-citation-text',n=>n.readOnly)).toBe(true);
+  expect(requests.filter(r=>r.method==='POST')).toHaveLength(0);
+  await page.setViewport({width:390,height:900});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+  const noQuote=await page.$eval('.source-citation-review',n=>n.hidden);
+  expect(noQuote).toBe(false);
+  expect(errors).toEqual([]);
+ }finally{await context.close();}
+});

@@ -27,7 +27,7 @@ test: $(TARGET)
 	@node tests/experience_composition_test.mjs
 	@bun ../BonfyreWebAddress/tools/compile_experience_programs.mjs ../BonfyreWebAddress/generated/native_page_composition.h ../BonfyreWebAddress/generated/native_experience_composition.h --check
 	@tmp=$$(mktemp /tmp/bonfyre-exp-XXXXXX); trap 'rm -f "$$tmp"' EXIT; $(CC) -std=c11 -Wall -Wextra -Werror ../BonfyreWebAddress/tests/native_experience_composition_test.c -o "$$tmp" && "$$tmp"
-	@tmp=$$(mktemp /tmp/bonfyre-apex-XXXXXX); trap 'rm -f "$$tmp"' EXIT; $(CC) -std=c11 -Wall -Wextra -Werror ../BonfyreWebAddress/tests/stitch_work_presentation_test.c -o "$$tmp" && "$$tmp"
+	@tmp=$$(mktemp /tmp/bonfyre-apex-XXXXXX); trap 'rm -f "$$tmp"' EXIT; $(CC) -std=c11 -Wall -Wextra -Werror ../BonfyreWebAddress/tests/route_presentation_test.c ../BonfyreWebAddress/src/site_presentation.c -lsqlite3 -o "$$tmp" && "$$tmp"
 	@node tests/native_experience_browser_test.mjs
 	@node tests/stitch_dom_test.mjs
 	@node tests/stitch_workspace_test.mjs

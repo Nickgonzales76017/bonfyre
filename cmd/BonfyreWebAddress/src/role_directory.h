@@ -104,7 +104,7 @@ static int serve_role_leave(const char *method,const char *target,const char *bo
     if(sqlite3_step(st)==SQLITE_DONE)changed=sqlite3_changes(db)>0;
     else {sqlite3_finalize(st);sqlite3_close(db);
         protocol_reply(503,"text/plain; charset=utf-8","The role change did not complete; reopen it before retrying.\n");return 1;}
-    sqlite3_finalize(st);
+    sqlite3_finalize(st);st=NULL;
     if(!changed&&sqlite3_prepare_v2(db,
        "SELECT 1 FROM role_assignment WHERE namespace='root' AND status='published' "
        "AND actor_subject=?1 AND assignment_id=?2 AND state='ended' LIMIT 1",
@@ -197,18 +197,21 @@ static int serve_role_directory(const char *method,const char *target,const char
     if(!page_session_actor(bearer,auth_db,actor,sizeof(actor))){
         protocol_reply(401,"text/plain; charset=utf-8","Sign in to use personal operating roles.\n");return 1;
     }
-    char q[97]="",page_text[6]="",assignment[289]="";
+    char q[97]="",page_text[6]="",assignment[289]="",scope[96]="";
     if(query&&strlen(query)>2048){protocol_reply(400,"text/plain; charset=utf-8","Bound the role search.\n");return 1;}
     if(query){
         query_value(query,"q",q,sizeof(q));
         query_value(query,"page",page_text,sizeof(page_text));
         query_value(query,"assignment",assignment,sizeof(assignment));
+        query_value(query,"scope",scope,sizeof(scope));
     }
     if((page_text[0]&&(strlen(page_text)>4||strspn(page_text,"0123456789")!=strlen(page_text)))||
-       (assignment[0]&&(q[0]||page_text[0]))||
-       (assignment[0]&&strspn(assignment,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_:.")!=strlen(assignment))){
+       (assignment[0]&&(q[0]||page_text[0]||scope[0]))||
+       (assignment[0]&&strspn(assignment,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_:.")!=strlen(assignment) )||
+       (scope[0]&&strspn(scope,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_:.")!=strlen(scope))){
         protocol_reply(400,"text/plain; charset=utf-8","Choose one role view and a bounded page.\n");return 1;
     }
+    if(!scope[0])snprintf(scope,sizeof(scope),"global");
     unsigned page=page_text[0]?(unsigned)strtoul(page_text,NULL,10):0;
     if(page>400){protocol_reply(400,"text/plain; charset=utf-8","Role page exceeds the supported range.\n");return 1;}
     sqlite3 *db=cms_open_ro();
@@ -241,8 +244,8 @@ static int serve_role_directory(const char *method,const char *target,const char
           "Only operations admitted by their actual owner can execute.</p>"
           "<form class=\"role-search\" action=\"/roles\" method=\"get\">"
           "<label>Find an operating role<input name=\"q\" type=\"search\" maxlength=\"96\" value=\"",stdout);
-    html(q);fputs("\" placeholder=\"Role, craft or operating subject\"></label>"
-          "<button type=\"submit\">Search roles</button></form>"
+    html(q);fputs("\" placeholder=\"Role, craft or operating subject\"></label><input type=\"hidden\" name=\"scope\" value=\"",stdout);
+    html(scope);fputs("\"><button type=\"submit\">Search roles</button></form>"
           "<ol class=\"role-cards\">",stdout);
     int found=0,step=0;
     while((step=sqlite3_step(s))==SQLITE_ROW && found<24){
@@ -265,7 +268,8 @@ static int serve_role_directory(const char *method,const char *target,const char
         fputs("<form method=\"post\" action=\"/roles/assume\"><input type=\"hidden\" name=\"role\" value=\"",stdout);
         html(id);fputs("\"><input type=\"hidden\" name=\"return\" value=\"/roles\">"
           "<label>Apply in scope<input name=\"scope\" maxlength=\"95\" required pattern=\"[A-Za-z0-9._:-]+\" "
-          "value=\"global\" aria-label=\"Role context scope\"></label>"
+          "value=\"",stdout);
+        html(scope);fputs("\" aria-label=\"Role context scope\"></label>"
           "<button type=\"submit\">Use this operating posture</button></form></li>",stdout);
     }
     sqlite3_finalize(s);
@@ -273,10 +277,10 @@ static int serve_role_directory(const char *method,const char *target,const char
     if(!found)fputs("<p>No published roles match this search. No role is inferred.</p>",stdout);
     fputs("<nav class=\"role-pages\" aria-label=\"Role registry pages\">",stdout);
     if(page){fputs("<a rel=\"prev\" href=\"/roles?page=",stdout);printf("%u",page-1);
-        fputs("&amp;q=",stdout);url_query_value(q);fputs("\">Previous roles</a>",stdout);}
+        fputs("&amp;q=",stdout);url_query_value(q);fputs("&amp;scope=",stdout);url_query_value(scope);fputs("\">Previous roles</a>",stdout);}
     if((found==24||step==SQLITE_ROW)&&page<400){
         fputs("<a rel=\"next\" href=\"/roles?page=",stdout);printf("%u",page+1);
-        fputs("&amp;q=",stdout);url_query_value(q);fputs("\">More roles</a>",stdout);
+        fputs("&amp;q=",stdout);url_query_value(q);fputs("&amp;scope=",stdout);url_query_value(scope);fputs("\">More roles</a>",stdout);
     }
     fputs("</nav></section>",stdout);role_dir_foot();sqlite3_close(db);return 1;
 }

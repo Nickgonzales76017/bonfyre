@@ -198,6 +198,7 @@ static void http_resp_free(HttpResponse *r) { free(r->buf); r->buf = NULL; }
 static void http_resp_send(HttpResponse *r) {
     const char *st = "OK";
     if (r->status == 201) st = "Created";
+    else if (r->status == 202) st = "Accepted";
     else if (r->status == 204) st = "No Content";
     else if (r->status == 400) st = "Bad Request";
     else if (r->status == 401) st = "Unauthorized";
@@ -614,7 +615,10 @@ static const char *SCHEMA_SQL =
     "  events TEXT DEFAULT 'completed,failed',"
     "  active INTEGER DEFAULT 1,"
     "  created_at TEXT NOT NULL,"
-    "  api_key TEXT"
+    "  api_key TEXT,"
+    "  actor TEXT,"
+    "  subject TEXT,"
+    "  pack_digest TEXT"
     ");"
 
     "CREATE VIRTUAL TABLE IF NOT EXISTS jobs_fts USING fts5("
@@ -630,7 +634,10 @@ static const char *SCHEMA_SQL =
     "  size_bytes INTEGER,"
     "  content_type TEXT,"
     "  uploaded_at TEXT NOT NULL,"
-    "  api_key TEXT"
+    "  api_key TEXT,"
+    "  actor TEXT,"
+    "  subject TEXT,"
+    "  pack_digest TEXT"
     ");"
 
     "CREATE TABLE IF NOT EXISTS api_keys ("
@@ -653,6 +660,22 @@ static const char *SCHEMA_SQL =
     "  wall_ms REAL,"
     "  created_at TEXT NOT NULL"
     ");";
+
+static int api_ensure_column(sqlite3 *db, const char *table,
+                             const char *column, const char *alter) {
+    char query[96];
+    if (snprintf(query,sizeof(query),"PRAGMA table_info(%s)",table) >= (int)sizeof(query)) return 0;
+    sqlite3_stmt *st=NULL;
+    if (sqlite3_prepare_v2(db,query,-1,&st,NULL)!=SQLITE_OK)return 0;
+    int found=0;
+    while(sqlite3_step(st)==SQLITE_ROW){
+        const char *name=(const char*)sqlite3_column_text(st,1);
+        if(name&&!strcmp(name,column))found=1;
+    }
+    sqlite3_finalize(st);
+    if(found)return 1;
+    return sqlite3_exec(db,alter,NULL,NULL,NULL)==SQLITE_OK;
+}
 
 static sqlite3 *open_db(const char *path) {
     sqlite3 *db;
@@ -695,6 +718,21 @@ static sqlite3 *open_db(const char *path) {
     if (!has_owner && sqlite3_exec(db, "ALTER TABLE api_keys ADD COLUMN auth_user_id INTEGER", NULL, NULL, &err) != SQLITE_OK) {
         fprintf(stderr, "[api] API key actor-binding migration failed: %s\n", err ? err : sqlite3_errmsg(db));
         sqlite3_free(err); sqlite3_close(db); return NULL;
+    }
+    const struct {const char *table,*column,*alter;} additions[] = {
+        {"webhooks","actor","ALTER TABLE webhooks ADD COLUMN actor TEXT"},
+        {"webhooks","subject","ALTER TABLE webhooks ADD COLUMN subject TEXT"},
+        {"webhooks","pack_digest","ALTER TABLE webhooks ADD COLUMN pack_digest TEXT"},
+        {"uploads","actor","ALTER TABLE uploads ADD COLUMN actor TEXT"},
+        {"uploads","subject","ALTER TABLE uploads ADD COLUMN subject TEXT"},
+        {"uploads","pack_digest","ALTER TABLE uploads ADD COLUMN pack_digest TEXT"},
+    };
+    for(size_t i=0;i<sizeof(additions)/sizeof(additions[0]);i++) {
+        if(!api_ensure_column(db,additions[i].table,additions[i].column,additions[i].alter)){
+            fprintf(stderr,"[api] account owner schema migration failed: %s.%s\n",
+                additions[i].table,additions[i].column);
+            sqlite3_close(db);return NULL;
+        }
     }
     return db;
 }
@@ -743,24 +781,6 @@ static void log_request(const char *method, const char *path,
     sqlite3_bind_int(st, 4, status);
     sqlite3_bind_double(st, 5, wall_ms);
     sqlite3_bind_text(st, 6, ts, -1, SQLITE_STATIC);
-    sqlite3_step(st);
-    sqlite3_finalize(st);
-    pthread_mutex_unlock(&g_db_mutex);
-}
-
-/* ── Event emission (shared with queue) ───────────────────────────── */
-
-static void emit_event(int job_id, const char *event, const char *data) {
-    char ts[64]; iso_now(ts, sizeof(ts));
-    pthread_mutex_lock(&g_db_mutex);
-    sqlite3_stmt *st;
-    sqlite3_prepare_v2(g_db,
-        "INSERT INTO events (job_id, event, data, created_at) VALUES (?,?,?,?)",
-        -1, &st, NULL);
-    sqlite3_bind_int(st, 1, job_id);
-    sqlite3_bind_text(st, 2, event, -1, SQLITE_STATIC);
-    sqlite3_bind_text(st, 3, data ? data : "", -1, SQLITE_STATIC);
-    sqlite3_bind_text(st, 4, ts, -1, SQLITE_STATIC);
     sqlite3_step(st);
     sqlite3_finalize(st);
     pthread_mutex_unlock(&g_db_mutex);
@@ -827,128 +847,232 @@ static void handle_health(HttpResponse *resp) {
         "{\"status\":\"ok\",\"version\":\"%s\",\"service\":\"bonfyre-api\"}", VERSION);
 }
 
-/* GET /api/status — system dashboard */
-static void handle_status(HttpResponse *resp) {
+/* A key-scoped dashboard is not a global operator census. */
+static sqlite3_stmt *api_status_row(const char *sql,const char *key) {
+    sqlite3_stmt *st=NULL;
+    if(sqlite3_prepare_v2(g_db,sql,-1,&st,NULL)!=SQLITE_OK){
+        sqlite3_finalize(st);return NULL;
+    }
+    sqlite3_bind_text(st,1,key,-1,SQLITE_TRANSIENT);
+    if(sqlite3_step(st)!=SQLITE_ROW){
+        sqlite3_finalize(st);return NULL;
+    }
+    return st;
+}
+static void handle_status(HttpResponse *resp,const char *key) {
+    int total_jobs=0,completed=0,failed=0,queued=0,running=0;
+    int total_uploads=0,event_count=0,webhook_count=0,webhook_drafts=0,req_count=0;
+    sqlite3_int64 total_bytes=0;
+    double avg_wall=0;
     pthread_mutex_lock(&g_db_mutex);
-
-    int total_jobs = 0, completed = 0, failed = 0, queued = 0, running = 0;
-    int total_uploads = 0;
-    long total_bytes = 0;
-    double avg_wall = 0;
-    int event_count = 0, webhook_count = 0, key_count = 0;
-    int req_count = 0;
-
-    sqlite3_stmt *st;
-    sqlite3_prepare_v2(g_db, "SELECT status, COUNT(*) FROM jobs GROUP BY status",
-        -1, &st, NULL);
-    while (sqlite3_step(st) == SQLITE_ROW) {
-        const char *s = (const char *)sqlite3_column_text(st, 0);
-        int c = sqlite3_column_int(st, 1);
-        total_jobs += c;
-        if (s && strcmp(s, "completed") == 0) completed = c;
-        else if (s && strcmp(s, "failed") == 0) failed = c;
-        else if (s && strcmp(s, "queued") == 0) queued = c;
-        else if (s && strcmp(s, "running") == 0) running = c;
-    }
+    sqlite3_stmt *st=api_status_row(
+        "SELECT COUNT(*),COALESCE(SUM(status='completed'),0),"
+        "COALESCE(SUM(status='failed'),0),COALESCE(SUM(status='queued'),0),"
+        "COALESCE(SUM(status='running'),0),"
+        "COALESCE(AVG(CASE WHEN wall_ms>0 THEN wall_ms END),0)"
+        " FROM jobs WHERE api_key=?",key);
+    if(!st)goto failure;
+    total_jobs=sqlite3_column_int(st,0);completed=sqlite3_column_int(st,1);
+    failed=sqlite3_column_int(st,2);queued=sqlite3_column_int(st,3);
+    running=sqlite3_column_int(st,4);avg_wall=sqlite3_column_double(st,5);
     sqlite3_finalize(st);
-
-    sqlite3_prepare_v2(g_db, "SELECT AVG(wall_ms) FROM jobs WHERE wall_ms>0",
-        -1, &st, NULL);
-    if (sqlite3_step(st) == SQLITE_ROW) avg_wall = sqlite3_column_double(st, 0);
-    sqlite3_finalize(st);
-
-    sqlite3_prepare_v2(g_db, "SELECT COUNT(*), COALESCE(SUM(size_bytes),0) FROM uploads",
-        -1, &st, NULL);
-    if (sqlite3_step(st) == SQLITE_ROW) {
-        total_uploads = sqlite3_column_int(st, 0);
-        total_bytes = (long)sqlite3_column_int64(st, 1);
-    }
-    sqlite3_finalize(st);
-
-    sqlite3_prepare_v2(g_db, "SELECT COUNT(*) FROM events", -1, &st, NULL);
-    if (sqlite3_step(st) == SQLITE_ROW) event_count = sqlite3_column_int(st, 0);
-    sqlite3_finalize(st);
-
-    sqlite3_prepare_v2(g_db, "SELECT COUNT(*) FROM webhooks WHERE active=1",
-        -1, &st, NULL);
-    if (sqlite3_step(st) == SQLITE_ROW) webhook_count = sqlite3_column_int(st, 0);
-    sqlite3_finalize(st);
-
-    sqlite3_prepare_v2(g_db, "SELECT COUNT(*) FROM api_keys WHERE active=1",
-        -1, &st, NULL);
-    if (sqlite3_step(st) == SQLITE_ROW) key_count = sqlite3_column_int(st, 0);
-    sqlite3_finalize(st);
-
-    sqlite3_prepare_v2(g_db, "SELECT COUNT(*) FROM request_log", -1, &st, NULL);
-    if (sqlite3_step(st) == SQLITE_ROW) req_count = sqlite3_column_int(st, 0);
-    sqlite3_finalize(st);
-
+    st=api_status_row("SELECT COUNT(*),COALESCE(SUM(size_bytes),0)"
+        " FROM uploads WHERE api_key=?",key);
+    if(!st)goto failure;
+    total_uploads=sqlite3_column_int(st,0);
+    total_bytes=sqlite3_column_int64(st,1);sqlite3_finalize(st);
+    st=api_status_row(
+        "SELECT COUNT(*) FROM events e JOIN jobs j ON j.id=e.job_id WHERE j.api_key=?",key);
+    if(!st)goto failure;
+    event_count=sqlite3_column_int(st,0);sqlite3_finalize(st);
+    st=api_status_row(
+        "SELECT COALESCE(SUM(active=1),0),COALESCE(SUM(active=0),0)"
+        " FROM webhooks WHERE api_key=?",key);
+    if(!st)goto failure;
+    webhook_count=sqlite3_column_int(st,0);
+    webhook_drafts=sqlite3_column_int(st,1);sqlite3_finalize(st);
+    st=api_status_row("SELECT COUNT(*) FROM request_log WHERE api_key=?",key);
+    if(!st)goto failure;
+    req_count=sqlite3_column_int(st,0);sqlite3_finalize(st);
     pthread_mutex_unlock(&g_db_mutex);
-
-    http_resp_json(resp, 200,
-        "{\"status\":\"ok\",\"version\":\"%s\","
-        "\"jobs\":{\"total\":%d,\"queued\":%d,\"running\":%d,\"completed\":%d,\"failed\":%d,\"avg_wall_ms\":%.1f},"
-        "\"uploads\":{\"total\":%d,\"bytes\":%ld},"
-        "\"events\":%d,\"webhooks\":%d,\"api_keys\":%d,\"requests_logged\":%d,"
-        "\"active_threads\":%d}",
-        VERSION, total_jobs, queued, running, completed, failed, avg_wall,
-        total_uploads, total_bytes,
-        event_count, webhook_count, key_count, req_count,
-        atomic_load(&g_thread_count));
+    http_resp_json(resp,200,
+        "{\"status\":\"ok\",\"scope\":\"api_key\",\"version\":\"%s\","
+        "\"jobs\":{\"total\":%d,\"queued\":%d,\"running\":%d,\"completed\":%d,"
+        "\"failed\":%d,\"avg_wall_ms\":%.1f},"
+        "\"uploads\":{\"total\":%d,\"bytes\":%lld},"
+        "\"events\":%d,\"webhooks\":%d,\"webhook_drafts\":%d,"
+        "\"requests_logged\":%d}",
+        VERSION,total_jobs,queued,running,completed,failed,avg_wall,
+        total_uploads,(long long)total_bytes,event_count,webhook_count,webhook_drafts,
+        req_count);
+    return;
+failure:
+    pthread_mutex_unlock(&g_db_mutex);
+    http_resp_json(resp,503,"{\"error\":\"scoped status unavailable\"}");
 }
 
 /* POST /api/upload */
-static void handle_upload(HttpRequest *req, HttpResponse *resp) {
+static void handle_upload(HttpRequest *req, HttpResponse *resp,
+                          const char *actor,const char *subject,const char *digest) {
     if (!req->body || req->body_len <= 0) {
         http_resp_json(resp, 400, "{\"error\":\"empty body\"}"); return;
     }
 
     char ts[64]; iso_now(ts, sizeof(ts));
-    char fname[256];
-    snprintf(fname, sizeof(fname), "upload_%ld_%d", (long)time(NULL), getpid());
-
-    char *fn_param = strstr(req->query, "filename=");
-    if (fn_param) {
-        fn_param += 9;
-        char safe[128]; int si = 0;
-        while (*fn_param && *fn_param != '&' && si < (int)sizeof(safe) - 1) {
-            char c = *fn_param++;
-            if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
-                (c >= '0' && c <= '9') || c == '-' || c == '_' || c == '.')
-                safe[si++] = c;
-        }
-        safe[si] = '\0';
-        if (si > 0) snprintf(fname, sizeof(fname), "%ld_%s", (long)time(NULL), safe);
+    char fpath[MAX_PATH_LEN], fname[256];
+    int path_length=snprintf(fpath,sizeof(fpath),"%s/upload-%ld-XXXXXX",
+                             g_upload_dir,(long)time(NULL));
+    if(path_length<0||(size_t)path_length>=sizeof(fpath)){
+        http_resp_json(resp,503,"{\"error\":\"upload store path unavailable\"}");return;
     }
-
-    char fpath[MAX_PATH_LEN];
-    snprintf(fpath, sizeof(fpath), "%s/%s", g_upload_dir, fname);
-
-    FILE *f = fopen(fpath, "wb");
-    if (!f) { http_resp_json(resp, 500, "{\"error\":\"cannot write file\"}"); return; }
-    fwrite(req->body, 1, (size_t)req->body_len, f);
-    fclose(f);
-
+    /* Private staging must never overwrite a prior account's file or follow
+     * an existing symlink. mkstemp creates a unique 0600 file atomically. */
+    int fd=mkstemp(fpath);
+    if(fd<0){http_resp_json(resp,503,"{\"error\":\"upload store unavailable\"}");return;}
+    const char *basename=strrchr(fpath,'/');
+    snprintf(fname,sizeof(fname),"%s",basename?basename+1:fpath);
+    size_t off=0,length=(size_t)req->body_len;
+    int written=1;
+    while(off<length){
+        ssize_t n=write(fd,req->body+off,length-off);
+        if(n<0&&errno==EINTR)continue;
+        if(n<=0){written=0;break;}
+        off+=(size_t)n;
+    }
+    if(close(fd)!=0)written=0;
+    if(!written){
+        unlink(fpath);
+        http_resp_json(resp,503,"{\"error\":\"private upload staging failed\"}");return;
+    }
     pthread_mutex_lock(&g_db_mutex);
-    sqlite3_stmt *st;
-    sqlite3_prepare_v2(g_db,
-        "INSERT INTO uploads (filename,path,size_bytes,content_type,uploaded_at,api_key) "
-        "VALUES (?,?,?,?,?,?)", -1, &st, NULL);
+    sqlite3_stmt *st=NULL;
+    int prepared=sqlite3_prepare_v2(g_db,
+        "INSERT INTO uploads (filename,path,size_bytes,content_type,uploaded_at,api_key,actor,subject,pack_digest) "
+        "VALUES (?,?,?,?,?,?,?,?,?)", -1, &st, NULL)==SQLITE_OK;
+    if(!prepared){
+        sqlite3_finalize(st);
+        pthread_mutex_unlock(&g_db_mutex);
+        unlink(fpath);
+        http_resp_json(resp,503,"{\"error\":\"private upload store unavailable\"}");return;
+    }
     sqlite3_bind_text(st, 1, fname, -1, SQLITE_STATIC);
     sqlite3_bind_text(st, 2, fpath, -1, SQLITE_STATIC);
     sqlite3_bind_int(st, 3, req->body_len);
     sqlite3_bind_text(st, 4, req->content_type, -1, SQLITE_STATIC);
     sqlite3_bind_text(st, 5, ts, -1, SQLITE_STATIC);
-    if (req->auth_token[0]) sqlite3_bind_text(st, 6, req->auth_token, -1, SQLITE_STATIC);
-    else sqlite3_bind_null(st, 6);
-    sqlite3_step(st); sqlite3_finalize(st);
-    int upload_id = (int)sqlite3_last_insert_rowid(g_db);
+    sqlite3_bind_text(st, 6, req->auth_token, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(st, 7, actor, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(st, 8, subject, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(st, 9, digest, -1, SQLITE_TRANSIENT);
+    int stored=sqlite3_step(st)==SQLITE_DONE;
+    sqlite3_finalize(st);
+    int upload_id=stored?(int)sqlite3_last_insert_rowid(g_db):0;
     pthread_mutex_unlock(&g_db_mutex);
+    if(!stored){
+        unlink(fpath);
+        http_resp_json(resp,503,"{\"error\":\"private upload record refused\"}");return;
+    }
+    /* No absolute host filesystem path crosses the HTTP boundary. */
+    bf_jsonw out;bf_jsonw_init(&out,0);bf_jsonw_obj(&out);
+    bf_jsonw_key(&out,"data");bf_jsonw_obj(&out);
+    bf_jsonw_key(&out,"id");bf_jsonw_int(&out,upload_id);
+    bf_jsonw_key(&out,"filename");bf_jsonw_str(&out,fname);
+    bf_jsonw_key(&out,"size");bf_jsonw_int(&out,req->body_len);
+    bf_jsonw_key(&out,"destination");bf_jsonw_str(&out,subject);
+    bf_jsonw_key(&out,"pack_digest");bf_jsonw_str(&out,digest);
+    bf_jsonw_key(&out,"state");bf_jsonw_str(&out,"private_staging");
+    bf_jsonw_obj_end(&out);
+    bf_jsonw_key(&out,"meta");bf_jsonw_obj(&out);
+    bf_jsonw_key(&out,"uploaded");bf_jsonw_bool(&out,1);
+    bf_jsonw_key(&out,"executable");bf_jsonw_bool(&out,0);
+    bf_jsonw_obj_end(&out);bf_jsonw_obj_end(&out);
+    api_finish_json(resp,&out);
+    if(resp->status==200)resp->status=201;
+}
 
-    http_resp_json(resp, 201,
-        "{\"data\":{\"id\":%d,\"filename\":\"%s\",\"size\":%d,\"path\":\"%s\"},"
-        "\"meta\":{\"uploaded\":true}}",
-        upload_id, fname, req->body_len, fpath);
+/* The separate native Review owner is the only route from an approved
+ * command intent to a WorkGraph command mission. No shell, argv from HTTP,
+ * environment secrets or API-side approval flags are admitted. */
+static void api_reviewed_command(HttpRequest *req,HttpResponse *resp,
+                                 const char *command,const char *subject,
+                                 const char *pack_digest) {
+    const char *runner=getenv("BONFYRE_COMMAND_DISPATCH");
+    const char *bun=getenv("BONFYRE_BUN_BINARY");
+    if(!runner||runner[0]!='/'||!bun||bun[0]!='/'){
+        http_resp_json(resp,409,"{\"state\":\"review_required\",\"admitted\":false,"
+            "\"next_owner\":\"BonfyreReview/BonfyreQueue\"}");return;
+    }
+    char err[128]="",program[96]="",review_id[96]="",source_sha[65]="";
+    bf_json_doc_t *doc=bf_json_parse(req->body,(size_t)req->body_len,err,sizeof(err));
+    const bf_json_node_t *root=doc?bf_json_root(doc):NULL;
+    const bf_json_node_t *prog=root?bf_json_obj_get(doc,root,"program"):NULL;
+    const bf_json_node_t *rev=root?bf_json_obj_get(doc,root,"review_id"):NULL;
+    const bf_json_node_t *sha=root?bf_json_obj_get(doc,root,"source_sha256"):NULL;
+    int good=prog&&rev&&sha&&bf_json_get_str_copy(prog,program,sizeof(program))&&
+        bf_json_get_str_copy(rev,review_id,sizeof(review_id))&&
+        bf_json_get_str_copy(sha,source_sha,sizeof(source_sha));
+    bf_json_free(doc);
+    if(!good||!api_authority_name(program,sizeof(program))||
+       !api_authority_name(review_id,sizeof(review_id))||
+       strlen(source_sha)!=64||strspn(source_sha,"abcdef0123456789")!=64){
+        http_resp_json(resp,400,"{\"error\":\"Exact program, review ID and source SHA-256 required\"}");
+        return;
+    }
+    char context[128]="";
+    if(!query_param(req->query,"context",context,sizeof(context))){
+        http_resp_json(resp,400,"{\"error\":\"Account destination required\"}");return;
+    }
+    bf_jsonw input;bf_jsonw_init(&input,0);bf_jsonw_obj(&input);
+    bf_jsonw_key(&input,"token");bf_jsonw_str(&input,req->session_token);
+    bf_jsonw_key(&input,"command");bf_jsonw_str(&input,command);
+    bf_jsonw_key(&input,"program");bf_jsonw_str(&input,program);
+    bf_jsonw_key(&input,"context");bf_jsonw_str(&input,context);
+    bf_jsonw_key(&input,"reviewId");bf_jsonw_str(&input,review_id);
+    bf_jsonw_key(&input,"sourceSha256");bf_jsonw_str(&input,source_sha);
+    bf_jsonw_obj_end(&input);
+    if(input.oom||!input.buf){
+        bf_jsonw_free(&input);
+        http_resp_json(resp,503,"{\"error\":\"Native review envelope unavailable\"}");return;
+    }
+    char response[16384]="";
+    char *argv[]={(char*)bun,(char*)runner,NULL};
+    int invoked=api_owner_stdin(bun,argv,input.buf,response,sizeof(response));
+    bf_jsonw_free(&input);
+    if(invoked){
+        http_resp_json(resp,503,"{\"error\":\"Native review owner unavailable\"}");return;
+    }
+    bf_json_doc_t *out=bf_json_parse(response,strlen(response),err,sizeof(err));
+    const bf_json_node_t *top=out?bf_json_root(out):NULL;
+    const bf_json_node_t *st=top?bf_json_obj_get(out,top,"status"):NULL;
+    int code=st&&st->type==BF_JSON_INT?(int)bf_json_get_int(st):0;
+    const bf_json_node_t *result=top?bf_json_obj_get(out,top,"result"):NULL;
+    const bf_json_node_t *admitted=result?bf_json_obj_get(out,result,"admitted"):NULL;
+    const bf_json_node_t *actual_command=result?bf_json_obj_get(out,result,"command"):NULL;
+    const bf_json_node_t *actual_program=result?bf_json_obj_get(out,result,"program"):NULL;
+    const bf_json_node_t *actual_subject=result?bf_json_obj_get(out,result,"subject"):NULL;
+    const bf_json_node_t *actual_digest=result?bf_json_obj_get(out,result,"pack_digest"):NULL;
+    const bf_json_node_t *actual_operator=result?bf_json_obj_get(out,result,"operator_id"):NULL;
+    char val_command[96]="",val_program[96]="",val_subject[192]="",
+         val_digest[65]="",val_operator[128]="",expected_operator[128]="";
+    snprintf(expected_operator,sizeof(expected_operator),"queue.%s",command);
+    int valid=code==202&&admitted&&admitted->type==BF_JSON_BOOL&&
+        bf_json_get_bool(admitted)&&
+        bf_json_get_str_copy(actual_command,val_command,sizeof(val_command))&&
+        bf_json_get_str_copy(actual_program,val_program,sizeof(val_program))&&
+        bf_json_get_str_copy(actual_subject,val_subject,sizeof(val_subject))&&
+        bf_json_get_str_copy(actual_digest,val_digest,sizeof(val_digest))&&
+        bf_json_get_str_copy(actual_operator,val_operator,sizeof(val_operator))&&
+        !strcmp(val_command,command)&&!strcmp(val_program,program)&&
+        !strcmp(val_subject,subject)&&!strcmp(val_digest,pack_digest)&&
+        !strcmp(val_operator,expected_operator);
+    bf_json_free(out);
+    if(valid){
+        http_resp_json(resp,202,"%s",response);return;
+    }
+    if(code==400||code==401||code==403||code==404||code==409){
+        http_resp_json(resp,code,"%s",response);return;
+    }
+    http_resp_json(resp,503,"{\"error\":\"Reviewed execution proof unavailable\"}");
 }
 
 /* POST /api/jobs — async: enqueue and return immediately */
@@ -1014,6 +1138,19 @@ static void handle_job_submit(HttpRequest *req, HttpResponse *resp) {
         return;
     }
 
+    /* A native effect intent is an already-reviewed source reference, never
+     * a caller-provided argv, input path or arbitrary priority. */
+    char json_error[128]="";
+    bf_json_doc_t *review_doc=bf_json_parse(req->body,(size_t)req->body_len,
+                                              json_error,sizeof(json_error));
+    const bf_json_node_t *review_root=review_doc?bf_json_root(review_doc):NULL;
+    const bf_json_node_t *review_ref=review_root?bf_json_obj_get(review_doc,review_root,"review_id"):NULL;
+    const bf_json_node_t *program_ref=review_root?bf_json_obj_get(review_doc,review_root,"program"):NULL;
+    const bf_json_node_t *source_ref=review_root?bf_json_obj_get(review_doc,review_root,"source_sha256"):NULL;
+    int has_review=review_ref||program_ref||source_ref;
+    int has_direct=review_root&&(bf_json_obj_get(review_doc,review_root,"input")||
+      bf_json_obj_get(review_doc,review_root,"priority"));
+    bf_json_free(review_doc);
     /* Catalogue presence + API key scope is not permission to enqueue.
      * Refuse until the selected native destination has an active pack and
      * an effect-specific BonfyreReview/WorkGraph decision. The Review owner
@@ -1029,13 +1166,22 @@ static void handle_job_submit(HttpRequest *req, HttpResponse *resp) {
         http_resp_json(resp,403,"{\"schema\":\"bonfyre.command-authority.v1\",\"admitted\":false,\"reason\":\"current_actor_destination_or_pack_refused\"}");
         return;
     }
+    if(has_review){
+        if(has_direct){
+            http_resp_json(resp,400,"{\"error\":\"Reviewed effects use source-bound intent, not raw input or priority\"}");
+            return;
+        }
+        api_reviewed_command(req,resp,type,subject,digest);
+        return;
+    }
     http_resp_json(resp,409,
         "{\"schema\":\"bonfyre.command-authority.v1\","
         "\"state\":\"review_required\",\"admitted\":false,"
         "\"command\":\"%s\",\"destination\":\"%s\","
         "\"pack_digest\":\"%s\","
+        "\"requested_priority\":%d,\"source_retained\":false,"
         "\"next_owner\":\"BonfyreReview/BonfyreQueue\"}",
-        type,subject,digest);
+        type,subject,digest,priority);
 }
 
 /* GET /api/jobs[/:id] */
@@ -1292,7 +1438,8 @@ static void handle_webhook_list(HttpResponse *resp, const char *api_key) {
     pthread_mutex_unlock(&g_db_mutex);
 }
 
-static void handle_webhook_create(HttpRequest *req, HttpResponse *resp) {
+static void handle_webhook_create(HttpRequest *req, HttpResponse *resp,
+                                 const char *actor,const char *subject,const char *digest) {
     if (!req->body || req->body_len <= 0) {
         http_resp_json(resp, 400, "{\"error\":\"empty body\"}"); return;
     }
@@ -1332,7 +1479,8 @@ static void handle_webhook_create(HttpRequest *req, HttpResponse *resp) {
     pthread_mutex_lock(&g_db_mutex);
     sqlite3_stmt *st = NULL;
     if (sqlite3_prepare_v2(g_db,
-        "INSERT INTO webhooks (url, events, active, created_at, api_key) VALUES (?,?,1,?,?)",
+        "INSERT INTO webhooks (url, events, active, created_at, api_key,actor,subject,pack_digest) "
+        "VALUES (?,?,0,?,?,?,?,?)",
         -1, &st, NULL) != SQLITE_OK) {
         pthread_mutex_unlock(&g_db_mutex);
         http_resp_json(resp, 503, "{\"error\":\"webhook store unavailable\"}"); return;
@@ -1341,6 +1489,9 @@ static void handle_webhook_create(HttpRequest *req, HttpResponse *resp) {
     sqlite3_bind_text(st, 2, events, -1, SQLITE_STATIC);
     sqlite3_bind_text(st, 3, ts, -1, SQLITE_STATIC);
     sqlite3_bind_text(st, 4, req->auth_token, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(st, 5, actor, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(st, 6, subject, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(st, 7, digest, -1, SQLITE_TRANSIENT);
     int written = sqlite3_step(st) == SQLITE_DONE;
     sqlite3_finalize(st);
     int wid = written ? (int)sqlite3_last_insert_rowid(g_db) : 0;
@@ -1355,7 +1506,10 @@ static void handle_webhook_create(HttpRequest *req, HttpResponse *resp) {
     bf_jsonw_key(&out, "id"); bf_jsonw_int(&out, wid);
     bf_jsonw_key(&out, "url"); bf_jsonw_str(&out, url);
     bf_jsonw_key(&out, "events"); bf_jsonw_str(&out, events);
-    bf_jsonw_key(&out, "active"); bf_jsonw_bool(&out, 1);
+    bf_jsonw_key(&out, "active"); bf_jsonw_bool(&out, 0);
+    bf_jsonw_key(&out, "state"); bf_jsonw_str(&out, "pending_review");
+    bf_jsonw_key(&out, "destination"); bf_jsonw_str(&out, subject);
+    bf_jsonw_key(&out, "pack_digest"); bf_jsonw_str(&out, digest);
     bf_jsonw_obj_end(&out);
     bf_jsonw_obj_end(&out);
     api_finish_json(resp, &out);
@@ -1534,13 +1688,13 @@ static int api_public_command(const char *cli, const char *name) {
     return found;
 }
 
-/* GET /api/binaries/:name/... — proxy to any bonfyre binary */
+/* GET /api/binaries/:name/--help — exact audited native CLI read */
 static void handle_binary_proxy(HttpRequest *req, HttpResponse *resp,
                                 const char *binary_name, int nseg,
                                 char segs[][256]) {
     /* No generic HTTP mutation or credential-bearing body-to-argv bridge.
      * Those effects require their native account / ActorClosure owner. */
-    if (strcmp(req->method, "GET") || req->body_len > 0 || nseg < 4) {
+    if (strcmp(req->method, "GET") || req->body_len > 0 || nseg != 4) {
         http_resp_json(resp, 403, "{\"error\":\"command execution needs a scoped read route\"}"); return;
     }
     const char *name = !strncmp(binary_name, "bonfyre-", 8) ? binary_name + 8 : binary_name;
@@ -1573,11 +1727,8 @@ static void handle_binary_proxy(HttpRequest *req, HttpResponse *resp,
                     "{\"error\":\"command not in the public native registry\"}");
         return;
     }
-    char *args[32];
-    int ac = 0;
-    args[ac++] = (char *)name;
-    for (int i = 3; i < nseg && ac < 30; i++) args[ac++] = segs[i];
-    handle_proxy(resp, cli, ac, args);
+    char *args[] = {(char *)name, (char *)verb};
+    handle_proxy(resp, cli, 2, args);
 }
 
 /* One native read-only closure. Actor and PackGraph are checked by their
@@ -1602,6 +1753,25 @@ static void api_authority_preflight(HttpRequest *req,HttpResponse *resp) {
     bf_jsonw_key(&out,"next_required");
     bf_jsonw_str(&out,"Native reviewed effect and WorkGraph admission for the bound destination");
     bf_jsonw_obj_end(&out);api_finish_json(resp,&out);
+}
+
+/* Only private staging is allowed after both the API-key scope and the
+ * current native Auth/PackGraph closure. Publication, callback activation,
+ * foreign I/O and WorkGraph dispatch remain review-owned effects. */
+static int api_draft_authority(HttpRequest *req,HttpResponse *resp,
+                               char *actor,size_t acap,char *subject,size_t scap,
+                               char *digest,size_t dcap) {
+    char context[128]="",pack[96]="";
+    if(!query_param(req->query,"context",context,sizeof(context))||
+       !query_param(req->query,"pack",pack,sizeof(pack))){
+        http_resp_json(resp,400,"{\"error\":\"Select an exact account context and installed pack\"}");
+        return 0;
+    }
+    if(!api_native_preflight(req,context,pack,actor,acap,subject,scap,digest,dcap)){
+        http_resp_json(resp,403,"{\"schema\":\"bonfyre.command-authority.v1\",\"admitted\":false,\"reason\":\"current_actor_destination_or_pack_refused\"}");
+        return 0;
+    }
+    return 1;
 }
 
 /* ── Main router ──────────────────────────────────────────────────── */
@@ -1633,7 +1803,7 @@ static void route_request(HttpRequest *req, HttpResponse *resp) {
         }
 
         if (strcmp(ep, "health") == 0)  { handle_health(resp); return; }
-        if (strcmp(ep, "status") == 0)  { handle_status(resp); return; }
+        if (strcmp(ep, "status") == 0)  { handle_status(resp,req->auth_token); return; }
         if (strcmp(ep, "commands") == 0 && strcmp(req->method, "GET") == 0) {
             handle_commands(req, resp); return;
         }
@@ -1646,7 +1816,9 @@ static void route_request(HttpRequest *req, HttpResponse *resp) {
             if (!api_scope_exact(req->auth_token, "api:upload:create")) {
                 http_resp_json(resp, 403, "{\"error\":\"upload creation scope required\"}"); return;
             }
-            handle_upload(req, resp); return;
+            char actor[192]="",subject[192]="",digest[65]="";
+            if(!api_draft_authority(req,resp,actor,sizeof(actor),subject,sizeof(subject),digest,sizeof(digest)))return;
+            handle_upload(req, resp, actor, subject, digest); return;
         }
 
         if (strcmp(ep, "jobs") == 0) {
@@ -1677,7 +1849,9 @@ static void route_request(HttpRequest *req, HttpResponse *resp) {
                 if (!api_scope_exact(req->auth_token, "api:webhooks:create")) {
                     http_resp_json(resp, 403, "{\"error\":\"webhook creation scope required\"}"); return;
                 }
-                handle_webhook_create(req, resp); return;
+                char actor[192]="",subject[192]="",digest[65]="";
+                if(!api_draft_authority(req,resp,actor,sizeof(actor),subject,sizeof(subject),digest,sizeof(digest)))return;
+                handle_webhook_create(req, resp, actor, subject, digest); return;
             }
             if (!api_scope_exact(req->auth_token, "api:webhooks:read")) {
                 http_resp_json(resp, 403, "{\"error\":\"webhook read scope required\"}"); return;

@@ -189,7 +189,9 @@ static const BfPageRegion *front_life_region(const char *role) {
 
 /* Dallas and Fort Worth, as a box on the map. */
 static int front_life_in_dfw(const PageItem *item) {
-    if (item->placed && item->lat > 32.3 && item->lat < 33.5 && item->lon > -97.7 && item->lon < -96.3) return 1;
+    /* A real coordinate outranks a passing place-name mention in the text. */
+    if (item->placed) return item->lat > 32.3 && item->lat < 33.5 &&
+                             item->lon > -97.7 && item->lon < -96.3;
     return item->where[0] && (strstr(item->where, "Dallas") || strstr(item->where, "Fort Worth") ||
                               strstr(item->where, "Arlington") || strstr(item->where, "Plano") || strstr(item->where, "Denton"));
 }
@@ -201,7 +203,7 @@ static int front_life_out(PageMaterial *const *sections, size_t count, const Pag
     const BfPageRegion *agenda = front_life_region("soon"), *map = front_life_region("places");
     int pass, placed = 0, local = 0, k; size_t s; time_t now = ctx->now;
     if (!soon) return 0;
-    for (pass = 0; pass < 2; pass++)
+    for (pass = 0; pass < (local ? 1 : 2); pass++)
         for (s = 0; s < count; s++) {
             const PageStream *events = sections[s] ? &sections[s]->stream[BF_PAGE_MATERIAL_EVENT] : NULL;
             for (k = events ? events->cursor : 0; events && k < events->count && soon->count < 8; k++) {

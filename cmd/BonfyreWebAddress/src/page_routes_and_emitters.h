@@ -1034,7 +1034,7 @@ static int page_emit_entities(const char *title) {
         int has_where = page_entity_observation(db, eid, "location", where, sizeof(where),
                                                 where_from, sizeof(where_from));
         if (!shown++)
-            fputs("<section class=\"region names\"><h2 class=\"region-label\">What this names</h2>"
+            fputs("<section class=\"region names\"><h2 class=\"region-label\">Names and references</h2>"
                   "<ol class=\"more\">", stdout);
         fputs("<li><strong>", stdout); html(display); fputs("</strong> — ", stdout);
         html(kind);

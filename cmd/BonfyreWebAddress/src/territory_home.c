@@ -1,4 +1,5 @@
 #include "territory_home.h"
+#include "site_presentation.h"
 
 #include <ctype.h>
 #include <stdint.h>
@@ -132,18 +133,56 @@ static int apply_body_class(char **bodyp, const char *territory) {
     return replace_once(bodyp, "<body>", body_tag);
 }
 
+/* A territory record may name a published presentation_template. Its tokens are
+ * scoped to body[data-bf-template]; world.css maps them onto the territory dress.
+ * No template, or an unpublished one, leaves the page exactly as it was. */
+static int apply_territory_template(sqlite3 *db, char **bodyp, const char *name) {
+    char *style = NULL, attr[200];
+    size_t len = 0;
+    FILE *mem;
+    int ok = 1;
+    if (!name || !*name) return 1;
+    for (const char *c = name; *c; c++)
+        if (!(isalnum((unsigned char)*c) || *c == '-' || *c == '_' || *c == ':')) return 1;
+    mem = open_memstream(&style, &len);
+    if (!mem) return 1;
+    if (!bf_site_presentation_emit_scoped(mem, db, name, "body[data-bf-template]")) { fclose(mem); free(style); return 1; }
+    fclose(mem);
+    if (style && len && snprintf(attr, sizeof(attr), "<body data-bf-template=\"%s\" ", name) < (int)sizeof(attr)) {
+        size_t cap = len + 8;
+        char *head = malloc(cap);
+        if (head) {
+            snprintf(head, cap, "%s</head>", style);
+            if (strstr(*bodyp, "</head>")) ok = replace_once(bodyp, "</head>", head) && replace_once(bodyp, "<body ", attr);
+            else { /* headless fragments: the style travels just ahead of the body tag */
+                size_t acap = len + strlen(attr) + 1;
+                char *both = malloc(acap);
+                ok = both && snprintf(both, acap, "%s%s", style, attr) < (int)acap && replace_once(bodyp, "<body ", both);
+                free(both);
+            }
+            free(head);
+        }
+    }
+    free(style);
+    return ok;
+}
+
 int bf_apply_territory_home_presentation(sqlite3 *db, char **bodyp, const char *territory) {
     sqlite3_stmt *st = NULL;
     char label[32], eyebrow[512], head[1024], lede[2048], question[1024];
-    char character[256], cannot_infer[2048];
+    char character[256], cannot_infer[2048], template_name[128];
     static const char *ids[] = {"territory", "eyebrow", "title", "sub", "orbit-label", "look-title", "look-copy"};
     const char *values[7];
 
     if (!db || !bodyp || !*bodyp || !territory || !*territory ||
-        sqlite3_prepare_v2(db,
-          "SELECT territory,eyebrow,head,lede,question,character,cannot_infer "
+        (sqlite3_prepare_v2(db,
+          "SELECT territory,eyebrow,head,lede,question,character,cannot_infer,template "
           "FROM territory_presentation WHERE territory=?1 AND status='published' "
-          "ORDER BY id DESC LIMIT 1", -1, &st, NULL) != SQLITE_OK)
+          "ORDER BY id DESC LIMIT 1", -1, &st, NULL) != SQLITE_OK &&
+         sqlite3_prepare_v2(db, /* stores created before the template column */
+          "SELECT territory,eyebrow,head,lede,question,character,cannot_infer,'' "
+          "FROM territory_presentation WHERE territory=?1 AND status='published' "
+          "ORDER BY id DESC LIMIT 1", -1, &st, NULL) != SQLITE_OK))
         return apply_body_class(bodyp, territory); /* CMS copy is absent; Matrix territory is still resolved. */
     sqlite3_bind_text(st, 1, territory, -1, SQLITE_TRANSIENT);
     if (sqlite3_step(st) != SQLITE_ROW) { sqlite3_finalize(st); return apply_body_class(bodyp, territory); }
@@ -154,6 +193,7 @@ int bf_apply_territory_home_presentation(sqlite3 *db, char **bodyp, const char *
     copy_column(question, sizeof(question), st, 4);
     copy_column(character, sizeof(character), st, 5);
     copy_column(cannot_infer, sizeof(cannot_infer), st, 6);
+    copy_column(template_name, sizeof(template_name), st, 7);
     sqlite3_finalize(st);
     if (!label[0]) return 0;
 
@@ -164,5 +204,6 @@ int bf_apply_territory_home_presentation(sqlite3 *db, char **bodyp, const char *
     values[4] = question;
     values[5] = character;
     values[6] = cannot_infer;
-    return apply_presentation(bodyp, label, ids, values);
+    if (!apply_presentation(bodyp, label, ids, values)) return 0;
+    return apply_territory_template(db, bodyp, template_name);
 }

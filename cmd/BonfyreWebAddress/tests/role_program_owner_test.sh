@@ -70,6 +70,18 @@ curl -fsS -H "$host" -H "Cookie: bonfyre_session=$session" "$base/roles?q=intern
 grep -q 'Internet Operator' "$tmp/roles.html"
 if grep -q 'Brand Operator' "$tmp/roles.html"; then echo 'role directory search leaked unrelated roles' >&2; exit 1; fi
 [ "$(curl -sS -o /dev/null -w '%{http_code}' -H "$host" -H "Cookie: bonfyre_session=$session" "$base/roles?page=9999")" = 400 ]
+curl -fsS -H "$host" -H "Cookie: bonfyre_session=$session" "$base/roles?scope=community%3Afixture" >"$tmp/scoped-roles.html"
+grep -q 'name="scope" value="community:fixture"' "$tmp/scoped-roles.html"
+grep -q 'value="community:fixture" aria-label="Role context scope"' "$tmp/scoped-roles.html"
+curl -fsS -H "$host" -H "Cookie: bonfyre_session=$session" "$base/roles?q=internet&scope=community%3Afixture" >"$tmp/scoped-filtered.html"
+[ "$(grep -o 'data-role-program' "$tmp/scoped-filtered.html" | wc -l | tr -d ' ')" = 1 ]
+grep -q 'name="scope" value="community:fixture"' "$tmp/scoped-filtered.html"
+[ "$(curl -sS -o /dev/null -w '%{http_code}' -H "$host" -H "Cookie: bonfyre_session=$session" "$base/roles?scope=community%2Fwrong")" = 400 ]
+[ "$(sqlite3 "$cmsdb" "SELECT count(*) FROM role_assignment;")" = 0 ]
+[ "$(curl -sS -o /dev/null -w '%{http_code}' -X POST -H "$host" -H "Cookie: bonfyre_session=$session" -d 'role=internet-operator&scope=global&return=/roles' "$base/roles/assume")" = 403 ]
+[ "$(curl -sS -o /dev/null -w '%{http_code}' -X POST -H "$host" -H "Cookie: bonfyre_session=$session" -H 'Origin: null' -d 'role=internet-operator&scope=global&return=/roles' "$base/roles/assume")" = 403 ]
+[ "$(curl -sS -o /dev/null -w '%{http_code}' -X POST -H "$host" -H "Cookie: bonfyre_session=$session" -H 'Origin: https://foreign.example.test' -d 'role=internet-operator&scope=global&return=/roles' "$base/roles/assume")" = 403 ]
+[ "$(curl -sS -o /dev/null -w '%{http_code}' -X POST -H 'Host: aurekai.shop' -H "Cookie: bonfyre_session=$session" -H 'Origin: https://aurekai.shop' -d 'role=internet-operator&scope=global&return=/roles' "$base/roles/assume")" = 404 ]
 [ "$(sqlite3 "$cmsdb" "SELECT count(*) FROM role_assignment;")" = 0 ]
 code=$(curl -sS -o /dev/null -w '%{http_code}' -X POST -H "$host" -H "Cookie: bonfyre_session=$session" -H 'Origin: http://aurekai.life' \
   -d 'role=internet-operator&scope=community:fixture&return=/subjects' "$base/roles/assume")
@@ -133,4 +145,6 @@ grep -q "href=\"/roles?assignment=$second\"" "$tmp/roles.html"
 [ "$(sqlite3 "$cmsdb" "SELECT count(*) FROM role_assignment WHERE actor_subject='user:1'")" = 2 ]
 [ "$(curl -sS -o /dev/null -w '%{http_code}' -X POST -H "$host" -H "Cookie: bonfyre_session=$session" -H 'Origin: http://aurekai.life' -d 'role=internet-operator&scope=community:fixture&return=/roles' "$base/roles/assume")" = 303 ]
 [ "$(sqlite3 "$cmsdb" "SELECT state FROM role_assignment WHERE assignment_id='$assignment'")" = assumed ]
+BONFYRE_ROLE_BROWSER_BASE="$base" BONFYRE_ROLE_BROWSER_SESSION="$session" \
+  bun "$root/cmd/BonfyreWebAddress/tests/role_directory_browser_test.mjs"
 echo 'role program owner: PASS'

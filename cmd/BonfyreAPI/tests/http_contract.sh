@@ -174,6 +174,13 @@ granted=$(curl -s -o "$run_dir/help.json" -w '%{http_code}' \
     exit 1
 }
 python3 -c 'import json,sys; value=json.load(open(sys.argv[1])); assert isinstance(value.get("data"),str)' "$run_dir/help.json"
+extended=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $key" \
+    "http://127.0.0.1:$port/api/binaries/hash/--help/--delete")
+[ "$extended" = 403 ] || {
+    echo "API contract: a help scope admitted extra native argv ($extended)" >&2
+    exit 1
+}
+
 post=$(curl -s -o /dev/null -w '%{http_code}' \
     -X POST -H "Authorization: Bearer $key" -H "Content-Type: application/json" \
     -d '{"password":"do-not-leak-to-argv"}' \
@@ -284,19 +291,26 @@ legacy_owner=$(sqlite3 "$db" "SELECT COUNT(*) FROM webhooks WHERE api_key IS NUL
     echo "API contract: webhook owner migration did not preserve legacy state" >&2
     exit 1
 }
-sqlite3 "$db" "UPDATE api_keys SET scopes='api:webhooks:create,api:webhooks:read' WHERE key IN ('$key','$other');"
+sqlite3 "$db" "UPDATE api_keys SET scopes='api:webhooks:create,api:webhooks:read',auth_user_id=1 WHERE key IN ('$key','$other');"
+hook_unbound=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H "Authorization: Bearer $key" \
+    -H "Content-Type: application/json" -d '{"url":"https://example.org/hooks/unbound"}' "http://127.0.0.1:$port/api/webhooks")
+[ "$hook_unbound" = 400 ] || { echo "API contract: webhook draft accepted missing account context" >&2; exit 1; }
 hook_a=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H "Authorization: Bearer $key" \
-    -H "Content-Type: application/json" -d '{"url":"https://example.org/hooks/owner-a"}' "http://127.0.0.1:$port/api/webhooks")
+    -H "X-Bonfyre-Session: $session" -H "Content-Type: application/json" \
+    -d '{"url":"https://example.org/hooks/owner-a"}' "http://127.0.0.1:$port/api/webhooks?context=self&pack=api-scope")
 hook_b=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H "Authorization: Bearer $other" \
-    -H "Content-Type: application/json" -d '{"url":"https://example.org/hooks/owner-b"}' "http://127.0.0.1:$port/api/webhooks")
+    -H "X-Bonfyre-Session: $session" -H "Content-Type: application/json" \
+    -d '{"url":"https://example.org/hooks/owner-b"}' "http://127.0.0.1:$port/api/webhooks?context=self&pack=api-scope")
 [ "$hook_a" = 201 ] && [ "$hook_b" = 201 ] || {
     echo "API contract: account-owned webhook registration failed" >&2
     exit 1
 }
 invalid_webhook=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H "Authorization: Bearer $key" \
-    -H "Content-Type: application/json" -d '{"url":42}' "http://127.0.0.1:$port/api/webhooks")
+    -H "X-Bonfyre-Session: $session" -H "Content-Type: application/json" \
+    -d '{"url":42}' "http://127.0.0.1:$port/api/webhooks?context=self&pack=api-scope")
 unsafe_webhook=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H "Authorization: Bearer $key" \
-    -H "Content-Type: application/json" -d '{"url":"javascript:alert(1)"}' "http://127.0.0.1:$port/api/webhooks")
+    -H "X-Bonfyre-Session: $session" -H "Content-Type: application/json" \
+    -d '{"url":"javascript:alert(1)"}' "http://127.0.0.1:$port/api/webhooks?context=self&pack=api-scope")
 [ "$invalid_webhook" = 400 ] && [ "$unsafe_webhook" = 400 ] || {
     echo "API contract: invalid webhook grammar reached storage" >&2
     exit 1
@@ -307,6 +321,53 @@ curl -fsS -H "Authorization: Bearer $key" "http://127.0.0.1:$port/api/webhooks" 
 curl -fsS -H "Authorization: Bearer $other" "http://127.0.0.1:$port/api/webhooks" > "$run_dir/hooks-b.json"
 python3 -c 'import json,sys; a=json.load(open(sys.argv[1])); b=json.load(open(sys.argv[2])); assert [x["url"] for x in a["data"]]==["https://example.org/hooks/owner-a?flag=\"quoted\""]; assert [x["url"] for x in b["data"]]==["https://example.org/hooks/owner-b"]' "$run_dir/hooks-a.json" "$run_dir/hooks-b.json"
 sqlite3 "$db" "UPDATE api_keys SET scopes='*' WHERE key='$key';"
+# Callback registration is retained as an account-owned, inert draft.
+inactive_hooks=$(sqlite3 "$db" "SELECT COUNT(*) FROM webhooks WHERE active=0 AND actor='actor:api-owner' AND subject='user:1' AND length(pack_digest)=64 AND api_key IN ('$key','$other');")
+[ "$inactive_hooks" = 2 ] || {
+    echo "API contract: draft callback escaped the native account/pack boundary" >&2
+    exit 1
+}
+sqlite3 "$db" "UPDATE api_keys SET auth_user_id=NULL WHERE key='$other';"
+
+# Uploads are private, source-owned staging, never public distribution.
+sqlite3 "$db" "UPDATE api_keys SET scopes='api:upload:create' WHERE key='$key';"
+upload_unbound=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
+    -H "Authorization: Bearer $key" -d 'local-fixture' \
+    "http://127.0.0.1:$port/api/upload?context=self&pack=api-scope")
+[ "$upload_unbound" = 403 ] || {
+    echo "API contract: key-only upload bypassed current Auth" >&2; exit 1
+}
+upload_stage=$(curl -s -o "$run_dir/upload.json" -w '%{http_code}' -X POST \
+    -H "Authorization: Bearer $key" -H "X-Bonfyre-Session: $session" \
+    -d 'local-fixture' "http://127.0.0.1:$port/api/upload?context=self&pack=api-scope")
+[ "$upload_stage" = 201 ] || {
+    echo "API contract: current account-owned upload staging failed ($upload_stage)" >&2; exit 1
+}
+# Two same-name uploads in one run must be distinct private files and
+# must not leak their absolute on-disk paths into the API response.
+upload_again=$(curl -s -o "$run_dir/upload-second.json" -w '%{http_code}' -X POST \
+    -H "Authorization: Bearer $key" -H "X-Bonfyre-Session: $session" \
+    -d 'second-fixture' "http://127.0.0.1:$port/api/upload?context=self&pack=api-scope&filename=fixture")
+[ "$upload_again" = 201 ] || { echo "API contract: repeated private upload failed" >&2; exit 1; }
+python3 -c 'import json,sys; a,b=[json.load(open(p)) for p in sys.argv[1:]]; assert a["data"]["filename"]!=b["data"]["filename"]; assert all("path" not in d["data"] and d["data"]["state"]=="private_staging" and d["meta"]["executable"] is False for d in (a,b))' "$run_dir/upload.json" "$run_dir/upload-second.json"
+first_upload=$(sqlite3 "$db" "SELECT path FROM uploads ORDER BY id LIMIT 1;")
+second_upload=$(sqlite3 "$db" "SELECT path FROM uploads ORDER BY id DESC LIMIT 1;")
+[ "$first_upload" != "$second_upload" ] && [ "$(cat "$first_upload")" = "local-fixture" ] && [ "$(cat "$second_upload")" = "second-fixture" ] || {
+    echo "API contract: staged upload bytes collided" >&2; exit 1
+}
+
+upload_provenance=$(sqlite3 "$db" "SELECT COUNT(*) FROM uploads WHERE actor='actor:api-owner' AND subject='user:1' AND length(pack_digest)=64 AND api_key='$key';")
+[ "$upload_provenance" = 2 ] || {
+    echo "API contract: upload did not retain the account and PackGraph pin" >&2; exit 1
+}
+sqlite3 "$db" "UPDATE api_keys SET scopes='*' WHERE key='$key';"
+
+
+# A scoped dashboard cannot expose the global queue, callback, upload,
+# or actor/key census to another account.
+curl -fsS -H "Authorization: Bearer $key" "http://127.0.0.1:$port/api/status" > "$run_dir/status-a.json"
+curl -fsS -H "Authorization: Bearer $other" "http://127.0.0.1:$port/api/status" > "$run_dir/status-b.json"
+python3 -c 'import json,sys; a,b=[json.load(open(p)) for p in sys.argv[1:]]; assert a["scope"]==b["scope"]=="api_key"; assert a["jobs"]["total"]==b["jobs"]["total"]==1; assert a["uploads"]["total"]==2 and b["uploads"]["total"]==0; assert a["events"]==b["events"]==1; assert a["webhooks"]==b["webhooks"]==0 and a["webhook_drafts"]==b["webhook_drafts"]==1; assert all("api_keys" not in v and "active_threads" not in v for v in (a,b))' "$run_dir/status-a.json" "$run_dir/status-b.json"
 
 # An API key cannot adopt another account session, even if that session is
 # live and the pack is installed. Its Auth-user binding is independent.
@@ -331,6 +392,17 @@ stale_pack=$(curl -s -o /dev/null -w '%{http_code}' \
     -H "Authorization: Bearer $key" -H "X-Bonfyre-Session: $session" \
     "http://127.0.0.1:$port/api/authority?context=self&pack=api-scope")
 [ "$stale_pack" = 403 ] || { echo "API contract: stale PackGraph digest was accepted" >&2; exit 1; }
+sqlite3 "$db" "UPDATE api_keys SET scopes='api:upload:create' WHERE key='$key';"
+uploads_before=$(sqlite3 "$db" "SELECT COUNT(*) FROM uploads;")
+stale_upload=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
+    -H "Authorization: Bearer $key" -H "X-Bonfyre-Session: $session" \
+    -d 'stale-fixture' "http://127.0.0.1:$port/api/upload?context=self&pack=api-scope")
+uploads_after=$(sqlite3 "$db" "SELECT COUNT(*) FROM uploads;")
+[ "$stale_upload" = 403 ] && [ "$uploads_before" = "$uploads_after" ] || {
+    echo "API contract: stale PackGraph allowed an account effect" >&2; exit 1
+}
+sqlite3 "$db" "UPDATE api_keys SET scopes='*' WHERE key='$key';"
+
 sqlite3 "$BONFYRE_CMS_DB" "UPDATE pack_demand SET needs='Original fixture' WHERE pack='api-scope';"
 curl -fsS -H "Authorization: Bearer $key" -H "X-Bonfyre-Session: $session" \
     "http://127.0.0.1:$port/api/authority?context=self&pack=api-scope" >/dev/null

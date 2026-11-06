@@ -41,11 +41,22 @@ export const sourceLibraryKnownUpgradeSpec=Object.freeze({
   'scripts/materialize_source_library.mjs','scripts/workspace_material.mjs','scripts/workspace_continuation.mjs',
   lanePath,'cmd/BonfyreSourceFrontier/tools/source_material.mjs',
   'integrations/browser/source-library.mjs','integrations/browser/workspace-store.mjs',
-  'integrations/browser/workspace-destinations.mjs'],
+  'integrations/browser/workspace-destinations.mjs',
+  'scripts/warehouse_aurekai_page.mjs',
+  'integrations/browser/warehouse-portfolio.mjs',
+  'integrations/browser/repository-cuts.mjs',
+  'integrations/browser/repository-cut-intake.mjs',
+  'integrations/browser/repository-pack-intake.mjs',
+  'integrations/browser/repository-fpq-review.mjs',
+  'integrations/browser/repository-cut-studio.mjs',
+  'integrations/browser/warehouse-studio.mjs',
+  'integrations/browser/program-service-continuations.mjs',
+  'integrations/browser/program-service-policy.mjs',
+  'cmd/BonfyreWarehouse/src/warehouse_portfolio.h'],
  baseRoot:release=>release,
  versionFor:(candidate,base)=>({
   pack:sourceLibraryPack,version:'source-known-'+candidate.slice(0,40),
-  root:candidate,parent_root:base,changed:'Known source catalogue and reviewed native bookmark handoff; package '+candidate,
+  root:candidate,parent_root:base,changed:'Known Sources, Warehouse Intelligence, reviewed Git/JOSH original retention, source-bound FPQ review and PackGraph drafts with installed-app continuations; package '+candidate,
   proof:'scripts/release/tests/source_library_known_upgrade.test.mjs',status:'published'
  }),
  materialize:materializeKnownSourceLibrary,
@@ -56,6 +67,32 @@ export const sourceLibraryKnownUpgradeSpec=Object.freeze({
   assert.equal(sha(lane),sha(readFileSync(join(repository,lanePath))),'Known source module changed.');
   const material=await readWorkspaceFile(root,id,'sources/source-material.mjs');
   assert(material.includes(Buffer.from('export function knownSourcePage(')),'Retained-source contract is missing.');
+  const warehouse=(await readWorkspaceFile(root,id,'sources/warehouse/index.html')).toString();
+  assert(warehouse.includes('data-warehouse-studio')&&warehouse.includes('bonfyre-workspace-store'),
+    'Warehouse intelligence must be bound inside this source-library workspace.');
+  assert((await readWorkspaceFile(root,id,'sources/index.html')).toString().includes('./warehouse/'),
+    'Warehouse entry is missing from Source Library.');
+  const repositoryPage=(await readWorkspaceFile(root,id,'sources/warehouse/index.html')).toString();
+  assert(repositoryPage.includes('data-repository-cut-studio')&&
+    repositoryPage.includes('repository-cut-studio.mjs'),
+    'Repository cuts must be inside the existing Source Library successor.');
+  const cutClient=await readWorkspaceFile(root,id,'sources/repository-cut-studio.mjs');
+  const cutModel=await readWorkspaceFile(root,id,'bridge/repository-cuts.mjs');
+  const intake=await readWorkspaceFile(root,id,'bridge/repository-cut-intake.mjs');
+  const packIntake=await readWorkspaceFile(root,id,'bridge/repository-pack-intake.mjs');
+  const fpq=await readWorkspaceFile(root,id,'bridge/repository-fpq-review.mjs');
+  assert(cutClient.includes(Buffer.from('readRepositoryCutCollection'))&&
+    cutModel.includes(Buffer.from('repositoryCutContinuations'))&&
+    intake.includes(Buffer.from('saveReviewedRepositoryCut'))&&
+    packIntake.includes(Buffer.from('repositoryCutPackDemand'))&&
+    fpq.includes(Buffer.from('reviewRepositoryFPQGeneration'))&&
+    cutClient.includes(Buffer.from('Prepare local FPQ review')),
+    'Repository cut continuation must retain the exact native source-cut digest.');
+  const client=await readWorkspaceFile(root,id,'sources/warehouse-studio.mjs');
+  const contract=await readWorkspaceFile(root,id,'bridge/warehouse-portfolio.mjs');
+  assert(client.includes(Buffer.from('warehouseInstalledTools'))&&
+    contract.includes(Buffer.from('programServiceContinuations')),
+    'Warehouse continuation must use account-owned installed workspaces.');
  }
 });
 export const reviewSourceLibraryKnownUpgrade=adapter=>reviewWorkspaceUpgrade(adapter,sourceLibraryKnownUpgradeSpec);

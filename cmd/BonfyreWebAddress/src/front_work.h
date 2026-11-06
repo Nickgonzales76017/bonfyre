@@ -69,7 +69,12 @@ static void front_work_material(sqlite3 *db, PageProjectionRead *projection, con
 /* Stories a beat can run: written things and recordings that say what they
  * are and when, not yet shown, newest first.  Places and events belong to
  * other fronts. */
-static int front_work_precedes(const PageItem *a, const PageItem *b, int pictured_first) {
+static int front_work_precedes(const PageItem *a, const PageItem *b, int pictured_first, time_t now) {
+    /* A current report without imagery outranks an older illustrated one.
+     * Artwork is still preferred within the seven-day editorial window. */
+    int a_fresh = a->at >= now - 7 * 86400;
+    int b_fresh = b->at >= now - 7 * 86400;
+    if (pictured_first && a_fresh != b_fresh) return a_fresh > b_fresh;
     int a_pic = pictured_first && page_image_url_safe(a->image);
     int b_pic = pictured_first && page_image_url_safe(b->image);
     if (a_pic != b_pic) return a_pic > b_pic;
@@ -100,11 +105,11 @@ static int front_work_stories(PageMaterial *material, PageItem **out, int cap, i
             if (!item->title[0] || !item->at || item->at > now || front_work_seen(item)) continue;
             for (j = 0; j < n && !front_work_same_story(out[j], item); j++) {}
             if (j < n) {
-                if (!front_work_precedes(item, out[j], pictured_first)) continue;
+                if (!front_work_precedes(item, out[j], pictured_first, now)) continue;
                 for (int move = j; move + 1 < n; move++) out[move] = out[move + 1];
                 n--;
             }
-            for (j = 0; j < n && !front_work_precedes(item, out[j], pictured_first); j++) {}
+            for (j = 0; j < n && !front_work_precedes(item, out[j], pictured_first, now); j++) {}
             if (j >= cap) continue;
             if (n < cap) n++;
             for (int move = n - 1; move > j; move--) out[move] = out[move - 1];
@@ -208,11 +213,10 @@ static int front_editorial_work(sqlite3 *db, PageProjectionRead *projection, con
         front_work_material(db, projection, program, beat_material[beat_count]);
         beats[beat_count++] = program;
     }
-    /* The lead: the newest pictured story across every beat, else the newest. */
+    /* The lead favors current stories before old illustrated stories. */
     for (i = 0; i < beat_count; i++) {
         n = front_work_stories(beat_material[i], pool, 1, 1, now);
-        if (n && (!lead || (page_image_url_safe(pool[0]->image) > page_image_url_safe(lead->image)) ||
-                  (page_image_url_safe(pool[0]->image) == page_image_url_safe(lead->image) && pool[0]->at > lead->at))) {
+        if (n && (!lead || front_work_precedes(pool[0], lead, 1, now))) {
             lead = pool[0]; lead_beat = beats[i];
         }
     }

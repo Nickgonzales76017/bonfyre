@@ -4,13 +4,12 @@
 import {readFileSync,writeFileSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {EXPERIENCE_PROGRAMS,EXPERIENCE_APEX_ROUTES,experienceZone} from '../../BonfyreSurfaceScene/runtime/experience-programs.mjs';
+import {EXPERIENCE_PROGRAMS,experienceZone} from '../../BonfyreSurfaceScene/runtime/experience-programs.mjs';
 import {STITCH_PATTERNS} from '../../BonfyreSurfaceScene/runtime/stitch-grammar.mjs';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const input=process.argv[2]||resolve(root,'generated/native_page_composition.h');
 const output=process.argv[3]||resolve(root,'generated/native_experience_composition.h');
-const routesOutput=resolve(root,'generated/native_experience_routes.h');
 const source=readFileSync(input,'utf8');
 const group=source.match(/static const BfPageRegion bf_page_regions\[\] = \{([\s\S]*?)\n\};/);
 if(!group)throw Error('Missing the native PageComposition region table');
@@ -40,19 +39,6 @@ table.push('#define BF_NATIVE_EXPERIENCE_COUNT (sizeof(bf_native_experience_prog
 table.push('#define BF_NATIVE_EXPERIENCE_REGION_COUNT '+roles.length);
 table.push('#endif');
 const rendered=table.join('\n')+'\n';
-const routeTables=[
- '/* Generated from SurfaceScene experience-programs.mjs. Do not edit. */',
- '#ifndef BONFYRE_NATIVE_EXPERIENCE_ROUTES_H',
- '#define BONFYRE_NATIVE_EXPERIENCE_ROUTES_H'
-];
-for(const [apex,routes] of Object.entries(EXPERIENCE_APEX_ROUTES)){
- routeTables.push('static const BfStitchWorkRoute bf_stitch_'+apex+'_routes[] = {');
- for(const [route,pattern] of routes)routeTables.push('  {'+JSON.stringify(route)+','+JSON.stringify(pattern)+'},');
- routeTables.push('};');
-}
-routeTables.push('#endif');
-const routesRendered=routeTables.join('\n')+'\n';
 if(process.argv.includes('--check')){
  if(readFileSync(output,'utf8')!==rendered)throw Error('Native experience compilation drift');
- if(readFileSync(routesOutput,'utf8')!==routesRendered)throw Error('Native experience route compilation drift');
-}else {writeFileSync(output,rendered);writeFileSync(routesOutput,routesRendered);}
+}else {writeFileSync(output,rendered);}

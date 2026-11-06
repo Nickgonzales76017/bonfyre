@@ -57,6 +57,44 @@ async function refresh(append=false){
  assert(merged.size<=1000,'Use another collection before loading more than 1,000 materials.');rows=[...merged.values()];cursor=p.cursor;epoch=p.epoch;hasMore=p.more;paint();say(rows.length+' source records loaded. Original files are fetched only when opened.');root.dataset.ready='true';
 }
 async function exact(row){const r=await store.readVersion(row.key);live();assert(r&&!r.deleted&&r.revision===row.revision,'This source changed. Reload it before applying an edit.');checkSource(r.value);return r;}
+function mountSourceCitation(text,version,preview,{signal}){
+ const panel=el('section'),status=el('p'),body=el('textarea'),prepare=button('Prepare source citation',async()=>{
+  try{
+   const quote=selectedQuote();
+   assert(quote.length>0,'Select a passage inside this original source first.');
+   assert(quote.length<=2000,'Select no more than 2,000 characters for one citation.');
+   const current=await exact(version);signal.throwIfAborted();
+   assert(text.isConnected,'The original source is no longer open.');
+   assert(/^[a-f0-9]{64}$/.test(current.value.contentSHA256),'Original source digest is unavailable.');
+   assert(current.value.kind==='file'&&current.value.textLike,'Only retained original text can be quoted.');
+   body.value=['Source: '+current.value.title,'Account-local source: '+current.key,
+      'Original SHA-256: '+current.value.contentSHA256,'Recorded revision: '+current.revision,
+      'Exact selected passage:',quote,
+      'A quotation from retained original text; not independently verified or published.'].join('\n');
+   panel.hidden=false;status.textContent='Review the exact quotation and retained source identity before copying.';
+  }catch(error){body.value='';panel.hidden=true;status.textContent=error.message;}
+ });
+ let cached='';
+ const inSource=range=>text.contains(range.startContainer)&&text.contains(range.endContainer);
+ const selectedQuote=()=>{
+  const selection=window.getSelection();
+  if(selection?.rangeCount&&inSource(selection.getRangeAt(0)))return selection.toString().trim();
+  return cached;
+ };
+ document.addEventListener('selectionchange',()=>{
+  const selection=window.getSelection();
+  if(selection?.rangeCount&&inSource(selection.getRangeAt(0)))cached=selection.toString().trim();
+ },{signal});
+ body.className='source-citation-text';body.readOnly=true;body.rows=10;body.setAttribute('aria-label','Prepared source citation');
+ status.setAttribute('role','status');status.setAttribute('aria-live','polite');status.textContent='Select an exact passage in the opened original.';
+ const copy=button('Copy reviewed citation',async()=>{
+  try{assert(body.value,'Prepare a citation before copying.');await navigator.clipboard.writeText(body.value);status.textContent='Reviewed citation copied. Nothing was saved or published.';}
+  catch{body.focus();body.select();status.textContent='Clipboard not available. The reviewed citation is selected for manual copy.';}
+ });
+ panel.className='source-citation-review';panel.hidden=true;
+ panel.append(el('h4','Exact source citation'),el('p','This uses a selection from retained original bytes, not an AI summary or a publisher assertion.'),body,copy);
+ preview.append(prepare,status,panel);
+}
 async function inspect(record,host,{signal}){
  const row=record.record,v=row.value,preview=el('section'),actions=el('div');actions.className='source-actions';activeSource=record.id;readerFocus.disabled=false;readerHint.textContent='Reading '+v.title+'. Focus mode keeps your current source and native inspector controls.';
  host.append(el('p',(v.tags||[]).join(' \u00B7 ')),el('p',v.notes||'No notes yet.'),preview,actions);
@@ -72,7 +110,7 @@ async function inspect(record,host,{signal}){
    else if(v.media.startsWith('audio/')){media=el('audio');media.controls=true;media.preload='none';}
    else if(v.media.startsWith('video/')){media=el('video');media.controls=true;media.preload='none';}
    if(media){media.src=url;preview.append(media);}load.disabled=true;releases.push(()=>URL.revokeObjectURL(url));
-   if(v.textLike){try{const body=await readSourceText(full,{readOnly:true});signal.throwIfAborted();const text=el('pre',body);text.className='source-original-text';preview.replaceChildren(el('p','Complete original text · '+bytes(original.size)),text,download);mountTextSearch(text,{signal});}catch(error){if(signal.aborted)return;preview.append(el('p',error.message));}}
+   if(v.textLike){try{const body=await readSourceText(full,{readOnly:true});signal.throwIfAborted();const text=el('pre',body);text.className='source-original-text';preview.replaceChildren(el('p','Complete original text · '+bytes(original.size)),text,download);mountTextSearch(text,{signal});mountSourceCitation(text,full,preview,{signal});}catch(error){if(signal.aborted)return;preview.append(el('p',error.message));}}
   }));preview.append(load);
  }
  const releases=[];actions.append(button('Edit details',()=>edit(row)),button(v.state==='active'?'Archive source':'Restore source',()=>changeState([row],v.state==='active'?'archive':'restore')));

@@ -80,6 +80,9 @@ test('guild programmes bind exact ProgrammeFabric records to a reviewed guild an
  expect((await get(route,owner)).body).toContain('Workshop Inspection and Learning');
  const steward=await get(route,owner);expect(steward.status).toBe(200);
  expect(steward.body).toContain('data-community-programmes');expect(steward.body).toContain('Document bench inspection before supervised work');
+ expect(steward.body).toContain('data-guild-role-bridge');
+ expect(steward.body).toContain('/roles?scope=community%3A'+key);
+ expect(steward.body).toContain('they do not enroll members, grant authority or execute guild operations');
  expect(steward.body).toContain('Retained evidence reference is present');
  expect(steward.body).not.toContain('PRIVATE-UNVERIFIED-REFERENCE');
  expect(steward.body).not.toContain('unrelated-program-');

@@ -984,6 +984,16 @@ architecture presentation-template
   cannot_infer a data-bf-profile attribute on a territory, room or member page -> that the page is drawn in that template; since 2026-10-12 those pages share one dress and the attribute records only which row was resolved
   source_path site/matrix/world.css
   witness 2026-10-12 cmd/BonfyreWebAddress/tests/site_product_test.sh, site_program_native_test.sh, page_programs_test.sh, page_composition_test.sh and surface_pattern_contract_test.sh pass on the build that serves the shared dress; the look itself was checked by screenshot only and has no automated witness
+  source_path cmd/BonfyreCMS/content-types/route_presentation.json
+  source_path cmd/BonfyreWebAddress/src/route_presentation.h
+  source_path cmd/BonfyreWebAddress/tests/route_presentation_test.c
+  source_path site/matrix/composition.css
+  source_path packs/aurekai/presentation/route-presentation.jsonl
+  source_path packs/aurekai/presentation/presentation-template-stitch.jsonl
+  witness 2026-11-06 route-level presentation became CMS data: route_presentation rows (territory, route, optional query key, pattern, optional template) replaced the compiled Stitch route table and stitch_work_presentation.h; 86 of 86 seeded routes matched the live pattern attribute on a preview of the same stores, and route_presentation_test.c, stitch_work_routes_test.mjs (28 routes, rows seeded from its own cases) and page_composition_test.sh pass.
+  witness 2026-11-06 a route_presentation row that names a published template (aurekai-stitch-night, taken from the Stitch design code.html Tailwind tokens) dresses that route through bf_site_presentation_emit_scoped and body[data-bf-template]; territory_presentation.template now applies the same way on territory homes (territory_home_test.c covers both schemas).
+  forbidden_inference a route_presentation row -> the route's page matches its Stitch design; a row chooses rhythm and tokens, design parity is reviewed per design in COVERAGE.tsv
+  forbidden_inference a design system arriving as rows -> new rendering code for that design system; the renderer is unchanged and unsupported layout is an owner gap, not a per-design file
 
 architecture design-fingerprint
   canonical_name DesignFingerprint

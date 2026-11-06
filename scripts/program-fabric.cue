@@ -346,7 +346,21 @@ programFabric: {
         "description": "Continue analysis in its own editor."
       }
     ],
+    "campaigns": [
+      {
+        "kind": "workspace",
+        "pack": "experience.source-campaign.workspace",
+        "label": "Source-to-campaign studio",
+        "description": "Open the installed campaign editor to review analytical source evidence before building a campaign. No campaign is created by this continuation."
+      }
+    ],
     "programs": [
+      {
+        "kind": "workspace",
+        "pack": "experience.source-programs.workspace",
+        "label": "Sources and recurring programs",
+        "description": "Review pinned source evidence in an installed recurring-program editor. No saved program, subscription or schedule is created."
+      },
       {
         "kind": "surface",
         "id": "programs",

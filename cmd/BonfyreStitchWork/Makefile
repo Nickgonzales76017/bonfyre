@@ -9,11 +9,12 @@ test: all
 	@sh ../BonfyreWebAddress/tests/account_world_spaces_test.sh
 	@sh ../BonfyreWebAddress/tests/account_world_cinema_test.sh
 	@sh ../BonfyreWebAddress/tests/source_push_operations_test.sh ../BonfyreWebAddress/bonfyre-web-address
+	@BONFYRE_PRICE_ROOM_ONLY=1 sh ../BonfyreWebAddress/tests/page_items_test.sh ../BonfyreWebAddress/bonfyre-web-address
 	@sh ../BonfyreWebAddress/tests/page_saved_test.sh ../BonfyreWebAddress/bonfyre-web-address
 	@$(MAKE) -C ../BonfyreWebAddress native-experience-composition-witness
 	@cc -std=c11 -Wall -Wextra -Werror ../BonfyreWebAddress/tests/native_experience_composition_test.c -o /tmp/bonfyre-experience-test-$$$$ && \
 	  /tmp/bonfyre-experience-test-$$$$ && rm -f /tmp/bonfyre-experience-test-$$$$
-	@cc -std=c11 -Wall -Wextra -Werror ../BonfyreWebAddress/tests/stitch_work_presentation_test.c -o /tmp/bonfyre-stitch-work-test-$$$$ && \
+	@cc -std=c11 -Wall -Wextra -Werror ../BonfyreWebAddress/tests/route_presentation_test.c ../BonfyreWebAddress/src/site_presentation.c -lsqlite3 -o /tmp/bonfyre-stitch-work-test-$$$$ && \
 	  /tmp/bonfyre-stitch-work-test-$$$$ && rm -f /tmp/bonfyre-stitch-work-test-$$$$
 	@$(MAKE) -C ../BonfyreWebAddress people-projection-witness
 	@bun test ../../integrations/browser/tests/source-catalogue.test.mjs

@@ -724,13 +724,13 @@ static void bf_surface_render_native_document(const BfNativeSurfaceProgram *prog
     unsigned short slot;
     if(!strcmp(program->program,"link")){
         fputs("<body", stdout);
-        bf_stitch_work_emit_body_attribute(stdout, bf_stitch_work_native_pattern(ctx->territory, program->route));
+        bf_route_presentation_emit_body_attribute_for(stdout, ctx->territory, program->route, NULL, bf_route_presentation_native_pattern(ctx->territory, program->route));
         fputs(">" BF_ESTATE_BAR,stdout);source_desk_content();fputs("</body></html>",stdout);return;
     }
     fputs("<body class=\"bf-native-surface renderer-", stdout); html(program->presentation->renderer);
     fputs(" territory-", stdout); html(ctx->territory);
     fputs("\"", stdout);
-    bf_stitch_work_emit_body_attribute(stdout, bf_stitch_work_native_pattern(ctx->territory, program->route));
+    bf_route_presentation_emit_body_attribute_for(stdout, ctx->territory, program->route, NULL, bf_route_presentation_native_pattern(ctx->territory, program->route));
     fputs(">" BF_ESTATE_BAR "<main class=\"bf-native-layout\"><header class=\"bf-native-masthead\"><p class=\"bf-native-kicker\">AUREKAI · ", stdout);
     html(ctx->territory); fputs("</p><h1>", stdout);
     html(page_grammar_label(program->program) ? page_grammar_label(program->program) : program->program);
@@ -774,7 +774,7 @@ static int emit_native_donor_surface(const char *path, const char *kind, const c
           else {
               fwrite(body,1,(size_t)(head_end-body),stdout);
               fputs("<link rel=\"stylesheet\" href=\"/assets/aurekai-native.css?v=2\">",stdout);
-              bf_stitch_work_emit_head(stdout, bf_stitch_work_native_pattern(territory, program->route));
+              bf_route_presentation_emit_head_for(stdout, territory, program->route, NULL, bf_route_presentation_native_pattern(territory, program->route));
               fputs("</head>",stdout);
           }
           bf_surface_render_native_document(program, &ctx);
@@ -787,12 +787,12 @@ static int emit_native_donor_surface(const char *path, const char *kind, const c
           char *close = open ? strchr(open, '>') : NULL;
           const char *first = next_native_marker(body, kind);
           if (close && close < limit && (!first || first > close)) {
-              const char *pattern = bf_stitch_work_native_pattern(territory, program->route);
+              const char *pattern = bf_route_presentation_native_pattern(territory, program->route);
               if (pattern && head_end && head_end < open) {
                   fwrite(body, 1, (size_t)(head_end - body), stdout);
-                  bf_stitch_work_emit_head(stdout, pattern);
+                  bf_route_presentation_emit_head_for(stdout, territory, program->route, NULL, pattern);
                   fwrite(head_end, 1, (size_t)(close - head_end), stdout);
-                  bf_stitch_work_emit_body_attribute(stdout, pattern);
+                  bf_route_presentation_emit_body_attribute_for(stdout, territory, program->route, NULL, pattern);
                   fputc('>', stdout);
               } else fwrite(body, 1, (size_t)(close + 1 - body), stdout);
               fputs(BF_ESTATE_BAR, stdout); surface_emit_reading_controls(&ctx); cursor = close + 1;

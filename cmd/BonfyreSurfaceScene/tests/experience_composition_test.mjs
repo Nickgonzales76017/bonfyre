@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {EXPERIENCE_PROGRAMS,EXPERIENCE_APEX_ROUTES,experienceZone,compileSceneExperience} from "../runtime/experience-programs.mjs";
+import {EXPERIENCE_PROGRAMS,experienceZone,compileSceneExperience} from "../runtime/experience-programs.mjs";
 import {STITCH_PATTERNS,STITCH_REFERENCES} from "../runtime/stitch-grammar.mjs";
 import {composeStitchScene} from "../runtime/stitch-composition.mjs";
 
@@ -19,16 +19,6 @@ for(const row of compiled){
   const views=EXPERIENCE_PROGRAMS[pattern].views;
   assert.equal(Number(bits),(views.includes("focus")?1:0)|(views.includes("compare")?2:0));
 }
-const nativeRoutes=readFileSync(new URL("../../BonfyreWebAddress/generated/native_experience_routes.h",import.meta.url),"utf8");
-let totalRoutes=0;
-for(const [apex,declared] of Object.entries(EXPERIENCE_APEX_ROUTES)){
-  const block=nativeRoutes.match(new RegExp("static const BfStitchWorkRoute bf_stitch_"+apex+"_routes\\[\\] = \\{([\\s\\S]*?)\\};"));
-  assert(block,"Native route table missing "+apex);
-  const resolved=[...block[1].matchAll(/^\s*\{"([^"]+)","([^"]+)"\},?$/gm)].map(x=>[x[1],x[2]]);
-  assert.deepEqual(resolved,declared,"Apex routes must share the executable experience registry: "+apex);
-  totalRoutes+=resolved.length;
-}
-assert.equal(totalRoutes,86);
 const scene={
   schema:"bonfyre-surface-scene.v1",source_digest:"sha256:retained-snapshot",
   focus:{subject_address:"community:example",actor_scope:"institution"},

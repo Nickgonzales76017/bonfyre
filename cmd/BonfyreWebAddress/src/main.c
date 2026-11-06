@@ -79,7 +79,7 @@
 
 #include "glyph_set.h"
 #include "detail_depth.h"
-#include "stitch_work_presentation.h"
+#include "route_presentation.h"
 
 /* One bar for every page family.  Front pages print it with the reader's place
  * already marked; a native surface, a donor surface, a subject room and the

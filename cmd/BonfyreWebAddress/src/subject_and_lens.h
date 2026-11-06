@@ -1674,6 +1674,64 @@ static int serve_subject(const char *method, const char *target, const char *que
               "<input type=\"search\" name=\"q\" value=\"%s\" placeholder=\"Find a price: a drug, a model, a machine, a product\" aria-label=\"Find a price\">"
               "<button type=\"submit\">Find</button></form>",
               want_kind[0] ? "<input type=\"hidden\" name=\"kind\" value=\"" : "", want_kind[0] ? want_kind : "", want_kind[0] ? "\">" : "", ewq);
+            /* Compare only exact product/service identity and unit on the same
+             * observation day and in the same currency and region. A source's
+             * recorded price is never a current offer or a saving claim. */
+            if(want_q[0]&&!models&&sqlite3_prepare_v2(db,
+                  "SELECT o.kind,o.item,o.currency,COALESCE(o.unit,''),COALESCE(o.region,''),"
+                  "substr(o.observed_at,1,10),COUNT(DISTINCT o.publisher),MIN(o.amount),MAX(o.amount),"
+                  "(SELECT p.publisher FROM observed_price p WHERE p.kind=o.kind AND p.item=o.item "
+                  "AND p.currency=o.currency AND COALESCE(p.unit,'')=COALESCE(o.unit,'') "
+                  "AND COALESCE(p.region,'')=COALESCE(o.region,'') "
+                  "AND substr(p.observed_at,1,10)=substr(o.observed_at,1,10) "
+                  "AND p.amount>0 ORDER BY p.amount ASC,p.publisher ASC LIMIT 1),"
+                  "(SELECT p.publisher FROM observed_price p WHERE p.kind=o.kind AND p.item=o.item "
+                  "AND p.currency=o.currency AND COALESCE(p.unit,'')=COALESCE(o.unit,'') "
+                  "AND COALESCE(p.region,'')=COALESCE(o.region,'') "
+                  "AND substr(p.observed_at,1,10)=substr(o.observed_at,1,10) "
+                  "AND p.amount>0 ORDER BY p.amount DESC,p.publisher ASC LIMIT 1)"
+                  " FROM observed_price o WHERE o.amount>0 AND o.item<>'' "
+                  "AND length(o.observed_at)>=10 AND o.kind NOT IN('inference','compute') "
+                  "AND (?1='' OR o.kind=?1) AND instr(lower(o.item),lower(?2))>0 "
+                  "GROUP BY o.kind,o.item,o.currency,o.unit,o.region,substr(o.observed_at,1,10)"
+                  " HAVING COUNT(DISTINCT o.publisher)>=2 AND MAX(o.amount)>MIN(o.amount)"
+                  " ORDER BY COUNT(DISTINCT o.publisher) DESC,o.item LIMIT 12",
+                  -1,&st,NULL)==SQLITE_OK){
+                int compared=0;
+                sqlite3_bind_text(st,1,want_kind,-1,SQLITE_STATIC);
+                sqlite3_bind_text(st,2,want_q,-1,SQLITE_STATIC);
+                while(sqlite3_step(st)==SQLITE_ROW&&fw<sizeof(facts)-4096){
+                    const char *code=price_currency((const char*)sqlite3_column_text(st,2));
+                    if(!code)continue;
+                    char item[360],unit[128],region[128],lower[180],upper[180],lo[48],hi[48],day[16];
+                    html_escape((const char*)sqlite3_column_text(st,1),item,sizeof(item));
+                    html_escape(price_unit_words((const char*)sqlite3_column_text(st,3)),unit,sizeof(unit));
+                    html_escape((const char*)sqlite3_column_text(st,4),region,sizeof(region));
+                    html_escape((const char*)sqlite3_column_text(st,9),lower,sizeof(lower));
+                    html_escape((const char*)sqlite3_column_text(st,10),upper,sizeof(upper));
+                    snprintf(day,sizeof(day),"%.10s",(const char*)sqlite3_column_text(st,5));
+                    price_amount(sqlite3_column_double(st,7),lo,sizeof(lo));
+                    price_amount(sqlite3_column_double(st,8),hi,sizeof(hi));
+                    if(!compared++)fw+=(size_t)snprintf(facts+fw,sizeof(facts)-fw,
+                        "<section data-price-comparison><h3 class=\"room-h\">Same-day publisher comparisons</h3>"
+                        "<p class=\"subj-note\">Only identical listed items, units, regions, currencies and observation days are grouped. "
+                        "These historical statements are not live checkout offers or guaranteed savings. "
+                        "Inspect each publisher observation below before relying on a comparison.</p>"
+                        "<table class=\"price-table\"><thead><tr><th scope=\"col\">Item and scope</th>"
+                        "<th scope=\"col\">Lowest recorded</th><th scope=\"col\">Highest recorded</th>"
+                        "<th scope=\"col\">Publishers</th></tr></thead><tbody>");
+                    fw+=(size_t)snprintf(facts+fw,sizeof(facts)-fw,
+                        "<tr><th scope=\"row\">%s <small>%s%s%s · %s</small></th>"
+                        "<td><strong>%s %s</strong> <small>%s</small></td>"
+                        "<td><strong>%s %s</strong> <small>%s</small></td>"
+                        "<td>%lld · <time>%s</time></td></tr>",
+                        item,unit,region[0]?" · ":"",region,code,
+                        lo,code,lower,hi,code,upper,
+                        (long long)sqlite3_column_int64(st,6),day);
+                }
+                if(compared){fw+=(size_t)snprintf(facts+fw,sizeof(facts)-fw,"</tbody></table></section>");shown+=compared;}
+                sqlite3_finalize(st);st=NULL;
+            }
             if (models) {
                 if (sqlite3_prepare_v2(db,
                       "SELECT item, publisher, MAX(CASE WHEN unit='token in' THEN amount END), MAX(CASE WHEN unit='token out' THEN amount END),"

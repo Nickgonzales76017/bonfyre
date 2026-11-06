@@ -14,7 +14,7 @@ const panelPlan = (bindings,direction,zones) => bindings.map((item,i) => i===0 ?
   {id:item.binding_id,direction:"within"} :
   {id:item.binding_id,direction:direction==="comparison"?(i%2?"right":"below") :
     direction==="desk"?(["wide","hero"].includes(zones.get(item.slot_id))?"below":"right"):"below",
-    relative:bindings[0].binding_id});
+    relative:bindings[i-1].binding_id});
 
 export function composeStitchWorkspace(scene,contributions,options={}) {
   const decorated=composeStitchScene(scene,options);
@@ -30,12 +30,15 @@ export function composeStitchWorkspace(scene,contributions,options={}) {
   if (!Array.isArray(existing?.layouts) || existing.layouts.length===0) {
     const bindings=decorated.bindings;
     const zones=new Map(composition.regions.map(region=>[region.id,region.zone]));
-    const layouts=[
+    const layouts=bindings.length===1 ? [
+      {id:"aurekai-focus",panels:panelPlan(bindings,"focus",zones)}
+    ] : [
       {id:"aurekai-focus",panels:panelPlan(bindings,"focus",zones)},
       {id:"aurekai-desk",panels:panelPlan(bindings,"desk",zones)},
       {id:"aurekai-comparison",panels:panelPlan(bindings,"comparison",zones)}
     ];
-    const first=focusShells.has(design.shell)?"aurekai-focus":
+    const first=bindings.length===1?"aurekai-focus":
+      focusShells.has(design.shell)?"aurekai-focus":
       compareShells.has(design.shell)?"aurekai-comparison":"aurekai-desk";
     decorated.interaction.desktop_posture={...existing,layouts,initial_layout:first};
   }

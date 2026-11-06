@@ -271,3 +271,243 @@ test("independent read-only recovery verification rejects drift and accepts only
       state:"RECOVERY_REFUSED",verified:false,invalid_heads:1});
   }finally{rmSync(estate,{recursive:true,force:true});}
 });
+
+test("query plan is pinned and returns candidate local or distributed resource stages",()=>{
+  const estate=create();
+  try{
+    const base=["query-plan","--estate",estate,"--semantic-kind","example","--kind","parquet",
+      "--operation","aggregate","--generation","1","--memory-limit-bytes","1048576",
+      "--workers","4","--input-bound-bytes","4096"];
+    expect(run(...base).code).not.toBe(0);
+    expect(run("seed","--apply","--estate",estate).code).toBe(0);
+    const local=run(...base);
+    expect(local.code).toBe(0);
+    expect(local.data).toMatchObject({
+      schema:"bonfyre.warehouse.query-plan.v1",decision:"LOCAL_CANDIDATE",
+      operation:"aggregate",proposed_route:"local-duckdb-candidate",
+      input_bound_bytes:4096,worker_count:4,actor_closure_verified:false,
+      packgraph_verified:false,scheduler_admitted:false,exchange_executed:false,
+      physical_bytes_verified:false,left:{semantic_kind:"example",generation:1,digest:hex("a")}});
+    const big=base.map(x=>x==="4096"?"600000":x);
+    expect(run(...big).data).toMatchObject({decision:"DISTRIBUTED_CANDIDATE",
+      proposed_route:"distributed-exchange-candidate",aggregate_stage_budget_bytes:1048576,
+      proposed_stages:["bounded-scan","partial-aggregate","partition-exchange","final-aggregate"]});
+    const limited=big.map(x=>x==="4"?"1":x);
+    expect(run(...limited).data).toMatchObject({decision:"RESOURCE_REFUSED",
+      proposed_route:"none",proposed_stages:[],scheduler_admitted:false});
+    expect(run(...base.map(x=>x==="4096"?"1":x)).code).not.toBe(0);
+    expect(run(...base.map(x=>x==="1048576"?"0":x)).code).not.toBe(0);
+    expect(run(...base.map(x=>x==="4096"?"18446744073709551615":x)).code).not.toBe(0);
+    expect(run(...base.map(x=>x==="1"?"2":x)).code).not.toBe(0);
+  }finally{rmSync(estate,{recursive:true,force:true});}
+});
+test("query planning binds both join inputs and refuses drift rather than silently rebinding",()=>{
+  const estate=create();
+  try{
+    const db=new Database(join(estate,"representation-manifold.db"));
+    db.query("INSERT INTO source_binding VALUES(?,?,?,?,?)").run("/tmp/r","right","right","sqlite",null);
+    db.query("INSERT INTO representation_target VALUES(?,?,?,?,?)")
+      .run("right","parquet","physical",null,"right target");
+    db.query("INSERT INTO representation_instance "
+      +"(id,kind,authority,frontier,digest,schema_ref,created_at,reconstructable,state) "
+      +"VALUES(?,?,?,?,?,?,?,?,?)").run("right-rep","parquet","derived","f2",hex("b"),
+      "right","2026-11-05T00:00:00Z",1,"physical");
+    db.query("INSERT INTO physical_realization VALUES(?,?,?,?,?,?,?,?,?)")
+      .run("right-body","right-rep","file","/never-open-right",128,hex("b"),"warm",1,"2026-11-05");
+    db.close();
+    expect(run("seed","--apply","--estate",estate).code).toBe(0);
+    const args=["query-plan","--estate",estate,"--semantic-kind","example","--kind","parquet",
+      "--operation","join","--generation","1","--input-bound-bytes","500000",
+      "--memory-limit-bytes","1048576","--workers","4",
+      "--right-semantic-kind","right","--right-generation","1","--right-input-bound-bytes","400000"];
+    const plan=run(...args);
+    expect(plan.code).toBe(0);
+    expect(plan.data).toMatchObject({decision:"DISTRIBUTED_CANDIDATE",
+      operation:"join",input_bound_bytes:900000,
+      proposed_stages:["bounded-scan","partition-exchange","join-stage","result-merge"],
+      left:{representation_id:"current",digest:hex("a"),generation:1},
+      right:{representation_id:"right-rep",digest:hex("b"),generation:1},
+      worker_recovery_verified:false,scheduler_admitted:false});
+    expect(run(...args.map(x=>x==="400000"?"1":x)).code).not.toBe(0);
+    const edit=new Database(join(estate,"representation-manifold.db"));
+    edit.query("UPDATE physical_realization SET available=0 WHERE id='right-body'").run();
+    edit.close();
+    expect(run(...args).code).not.toBe(0);
+  }finally{rmSync(estate,{recursive:true,force:true});}
+});
+
+test("metadata pressure census classifies old unbound reconstructable history without deleting",()=>{
+  const estate=create();
+  try{
+    const db=new Database(join(estate,"representation-manifold.db"));
+    const ri=db.query("INSERT INTO representation_instance "
+      +"(id,kind,authority,frontier,digest,schema_ref,created_at,reconstructable,state) "
+      +"VALUES(?,?,?,?,?,?,?,?,?)");
+    const stamp="2026-01-01T00:00:00Z";
+    ri.run("orphan-old","parquet","derived","f",hex("c"),"orphan",stamp,1,"reconstructable");
+    ri.run("referenced-old","parquet","derived","f",hex("c"),"orphan",stamp,1,"reconstructable");
+    ri.run("receipted-old","parquet","derived","f",hex("c"),"orphan",stamp,1,"reconstructable");
+    ri.run("unbound-new","parquet","derived","f",hex("c"),"orphan",
+      "2026-11-30T00:00:00Z",1,"reconstructable");
+    ri.run("bound-old","parquet","derived","f",hex("c"),"example",stamp,1,"reconstructable");
+    ri.run("auth-old","parquet","source","f",hex("c"),"orphan",stamp,1,"reconstructable");
+    db.query("INSERT INTO representation_edge VALUES(?,?,?,?,?)")
+      .run("referenced-old","current","derived","materialized",stamp);
+    db.query("INSERT INTO eviction_receipt VALUES(?,?,?,?,?,?,?,?,?)")
+      .run("e1","receipted-old","parquet","/old",hex("c"),10,
+        "obsolete","/none","2026-01-01");
+    db.close();
+    const argv=["retention","--estate",estate,"--cutoff","2026-06-01T00:00:00Z"];
+    const first=run(...argv);
+    expect(first.code).toBe(0);
+    expect(first.data).toMatchObject({
+      schema:"bonfyre.warehouse.metadata-pressure.v1",state:"RETAINED_METADATA_CENSUS",
+      representation_instances:7,pinned_heads:0,instances_without_current_source:5,
+      old_reconstructable_without_available_body:5,
+      unreferenced_history_candidates:1,eviction_receipts:1,
+      deleted:0,gc_authority:false,candidate_safe_to_delete:false});
+    expect(run("seed","--apply","--estate",estate).code).toBe(0);
+    expect(run(...argv).data).toMatchObject({
+      pinned_heads:1,unreferenced_history_candidates:1});
+    const verify=new Database(join(estate,"representation-manifold.db"),{readonly:true});
+    expect(verify.query("SELECT COUNT(*) n FROM representation_instance").get().n).toBe(7);
+    verify.close();
+  }finally{rmSync(estate,{recursive:true,force:true});}
+});
+test("metadata pressure census rejects malformed retention cutoffs",()=>{
+  const estate=create();
+  try{
+    for(const bad of ["2026-01-01","2026-01-01T00:00:00Z;DELETE",
+      "2026-01-01T00:00:00+00:00","wrong",
+      "2026-13-01T00:00:00Z","2026-02-30T00:00:00Z",
+      "2025-02-29T00:00:00Z","2026-01-01T24:00:00Z"])
+      expect(run("retention","--estate",estate,"--cutoff",bad).code).not.toBe(0);
+    expect(run("retention","--estate",estate).code).not.toBe(0);
+    expect(run("retention","--estate",estate,
+      "--cutoff","2026-06-01T00:00:00Z","--apply").code).not.toBe(0);
+  }finally{rmSync(estate,{recursive:true,force:true});}
+});
+
+
+test("202-table metadata stress with 100k retired generations and one indexed generation advance",()=>{
+  const estate=create();
+  try{
+    const db=new Database(join(estate,"representation-manifold.db"));
+    const addSource=db.query("INSERT INTO source_binding VALUES(?,?,?,?,?)");
+    const target=db.query("INSERT INTO representation_target VALUES(?,?,?,?,?)");
+    const ri=db.query("INSERT INTO representation_instance "
+      +"(id,kind,authority,frontier,digest,schema_ref,created_at,reconstructable,state) "
+      +"VALUES(?,?,?,?,?,?,?,?,?)");
+    const body=db.query("INSERT INTO physical_realization VALUES(?,?,?,?,?,?,?,?,?)");
+    const transaction=db.transaction(()=>{
+      for(let i=1;i<202;i++){
+        const semantic="source-"+i,id="active-"+i;
+        addSource.run("/tmp/db-"+i,"events",semantic,"sqlite",null);
+        target.run(semantic,"parquet","physical",null,"materialized");
+        ri.run(id,"parquet","derived","f",hex("a"),semantic,
+          "2026-11-05T00:00:00Z",1,"physical");
+        body.run("body-"+i,id,"file","/never-open-"+i,44+i,hex("a"),
+          "warm",1,"2026-11-05");
+      }
+      for(let i=0;i<100000;i++)
+        ri.run("retired-"+i,"parquet","derived","f",hex("e"),
+          "deleted-"+Math.floor(i/100),"2026-01-01T00:00:00Z",1,"reconstructable");
+    });
+    transaction();db.close();
+    const seedStart=performance.now();
+    const seeded=run("seed","--apply","--estate",estate);
+    const seedMs=Math.round(performance.now()-seedStart);
+    expect(seeded.code).toBe(0);
+    expect(seeded.data).toMatchObject({state:"HEADS_SEEDED",source_keys:202,
+      seeded:202,statistics_updated:202,physical_mutations:0});
+    expect(run("verify","--estate",estate).data).toMatchObject({
+      state:"WAREHOUSE_METADATA_VERIFIED",verified:true,heads:202,statistics:202});
+    const retention=run("retention","--estate",estate,
+      "--cutoff","2026-06-01T00:00:00Z");
+    expect(retention.code).toBe(0);
+    expect(retention.data).toMatchObject({
+      representation_instances:100202,instances_without_current_source:100000,
+      unreferenced_history_candidates:100000,deleted:0,gc_authority:false});
+    const writable=new Database(join(estate,"representation-manifold.db"));
+    writable.transaction(()=>{
+      writable.query("INSERT INTO representation_instance "
+        +"(id,kind,authority,frontier,digest,schema_ref,created_at,reconstructable,state) "
+        +"VALUES(?,?,?,?,?,?,?,?,?)").run("current-next","parquet","derived","f-next",
+          hex("b"),"example","2026-11-06T00:00:00Z",1,"physical");
+      writable.query("INSERT INTO physical_realization VALUES(?,?,?,?,?,?,?,?,?)")
+        .run("next-body","current-next","file","/never-open-next",46,
+          hex("b"),"warm",1,"2026-11-06");
+      writable.query("UPDATE physical_realization SET available=0 WHERE id='body'").run();
+    })();
+    writable.close();
+    const casStart=performance.now();
+    const update=bindWarehouseHead(estate,{semanticKind:"example",representationKind:"parquet",
+      representationId:"current-next",digest:hex("b"),expectedGeneration:1});
+    const casMs=Math.round(performance.now()-casStart);
+    expect(update.head.generation).toBe(2);
+    const verification=run("verify","--estate",estate);
+    expect(verification.data).toMatchObject({verified:true,heads:202,invalid_heads:0});
+    const planDb=new Database(join(estate,"representation-manifold.db"),{readonly:true});
+    const plan=planDb.query("EXPLAIN QUERY PLAN SELECT id FROM representation_instance "
+      +"WHERE schema_ref=? AND kind=? ORDER BY created_at DESC,id DESC LIMIT 1")
+      .all("example","parquet");
+    expect(plan.some(x=>x.detail.includes("idx_warehouse_ri_latest"))).toBe(true);
+    expect(planDb.query("SELECT COUNT(*) n FROM representation_instance").get().n)
+      .toBe(100203);
+    planDb.close();
+    console.log("WAREHOUSE_CHURN_FIXTURE",JSON.stringify({
+      active_sources:202,retired_generations:100000,seed_ms:seedMs,
+      one_table_cas_ms:casMs,metadata_verification:"PASS",
+      scope:"temporary-local-SQLite-fixture-not-PostHog-scale"}));
+  }finally{rmSync(estate,{recursive:true,force:true});}
+});
+
+test("Aurekai portfolio pages 202 active data products without leaking body paths",()=>{
+ const estate=create();
+ try{
+  const db=new Database(join(estate,"representation-manifold.db"));
+  const tx=db.transaction(()=>{
+    const source=db.query("INSERT INTO source_binding VALUES(?,?,?,?,?)");
+    const target=db.query("INSERT INTO representation_target VALUES(?,?,?,?,?)");
+    const repr=db.query("INSERT INTO representation_instance "
+      +"(id,kind,authority,frontier,digest,schema_ref,created_at,reconstructable,state) "
+      +"VALUES(?,?,?,?,?,?,?,?,?)");
+    const body=db.query("INSERT INTO physical_realization VALUES(?,?,?,?,?,?,?,?,?)");
+    for(let i=1;i<202;i++){
+      const k="src-"+String(i).padStart(3,"0"),id="rid-"+i;
+      source.run("/tmp/private-"+i,"table",k,"sqlite",null);
+      target.run(k,"parquet","physical",null,"target");
+      repr.run(id,"parquet","derived","f",hex("a"),k,"2026-11-05T00:00:00Z",1,"physical");
+      body.run("body-"+i,id,"file","/private/bytes-"+i,100,hex("a"),"warm",1,"2026-11-05");
+    }
+  });tx();db.close();
+  expect(run("portfolio","--estate",estate,"--offset","0","--limit","100").data.state)
+    .toBe("NOT_INSTALLED");
+  expect(run("seed","--apply","--estate",estate).code).toBe(0);
+  const first=run("portfolio","--estate",estate,"--offset","0","--limit","100");
+  const second=run("portfolio","--estate",estate,"--offset","100","--limit","100");
+  const third=run("portfolio","--estate",estate,"--offset","200","--limit","100");
+  expect(first.code).toBe(0);
+  expect(first.data).toMatchObject({schema:"bonfyre.warehouse.portfolio.v1",
+    state:"READ_ONLY",total:202,offset:0,next_offset:100,read_only:true,
+    execution_authority:false,tenant_access_verified:false,physical_bytes_verified:false});
+  expect(first.data.rows).toHaveLength(100);
+  expect(second.data.rows).toHaveLength(100);
+  expect(third.data.rows).toHaveLength(2);
+  expect(third.data.next_offset).toBeNull();
+  expect(first.data.rows[0]).toMatchObject({semantic_kind:"example",state:"PINNED_METADATA",
+    representation_kind:"parquet",generation:1,representation_id:"current",
+    digest:hex("a"),realization_count:1,max_realization_bytes:44});
+  const outputs=[first,second,third].map(r=>r.stdout).join("");
+  expect(outputs).not.toContain("/private/");
+  expect(outputs).not.toContain("/tmp/private");
+  expect(outputs).not.toContain("source_db");
+  expect(run("portfolio","--estate",estate,"--offset","0","--limit","101").code).not.toBe(0);
+  expect(run("portfolio","--estate",estate,"--offset","-1","--limit","10").code).not.toBe(0);
+  const change=new Database(join(estate,"representation-manifold.db"));
+  change.query("UPDATE physical_realization SET available=0 WHERE id='body'").run();
+  change.close();
+  const changed=run("portfolio","--estate",estate,"--offset","0","--limit","100");
+  expect(changed.data.rows[0]).toEqual({semantic_kind:"example",state:"UNAVAILABLE"});
+ }finally{rmSync(estate,{recursive:true,force:true});}
+});

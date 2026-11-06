@@ -42,6 +42,137 @@ static void spo_filters(const char *q,const char *state) {
     }
     fputs("</select></label><button type=\"submit\">Filter subscriptions</button></form>",stdout);
 }
+/* The material-demand ledger and the downstream FactDelta obligation are
+ * separate native WebSub stores. An unbound demand must not disappear merely
+ * because no subscription was ever established. All three views are read-only.
+ * The UI reveals source host plus stable hash only, never URLs or identity. */
+static void spo_source_label(const char *topic) {
+    char domain[192],digest[65];
+    spo_domain(topic,domain);
+    bf_sha256_hex((const uint8_t*)(topic?topic:""),topic?strlen(topic):0,digest);
+    digest[12]=0;
+    fputs("<strong>",stdout);
+    html(*domain?domain:"Source address withheld");
+    fputs("</strong> <small>source ",stdout);
+    html(digest);
+    fputs("</small>",stdout);
+}
+/* Three independent bounded pagination coordinates, one per native ledger. */
+static int spo_parse_page(const char *raw,unsigned *out){
+    if(!raw||!*raw){*out=0;return 1;}
+    if(strlen(raw)>4||strspn(raw,"0123456789")!=strlen(raw))return 0;
+    unsigned n=(unsigned)strtoul(raw,NULL,10);
+    if(n>500)return 0;
+    *out=n;return 1;
+}
+static void spo_page_links(const char *q,const char *state,unsigned page,
+                           unsigned dpage,unsigned fpage,int view,int more){
+    unsigned at=view==0?page:view==1?dpage:fpage;
+    if(at>=500)more=0; /* Each ledger is independently bounded. */
+    if(!at&&!more)return;
+    const char *anchor=view==0?"subscriptions":view==1?"material-demands":"fact-handoffs";
+    const char *labels[]={"subscription","material demand","FactDelta handoff"};
+    fputs("<nav class=\"spo-paging\" aria-label=\"",stdout);html(labels[view]);
+    fputs(" pages\">",stdout);
+    for(int dir=-1;dir<=1;dir+=2){
+        if((dir<0&&!at)||(dir>0&&!more))continue;
+        unsigned step=dir<0?at-1:at+1;
+        unsigned sp=view==0?step:page,dp=view==1?step:dpage,fp=view==2?step:fpage;
+        fputs("<a href=\"/sources/push?state=",stdout);url_query_value(state);
+        fputs("&amp;q=",stdout);url_query_value(q);
+        fputs("&amp;page=",stdout);printf("%u",sp);
+        fputs("&amp;dpage=",stdout);printf("%u",dp);
+        fputs("&amp;fpage=",stdout);printf("%u",fp);
+        fputs("#",stdout);html(anchor);fputs("\">",stdout);
+        fputs(dir<0?"Previous ":"More ",stdout);html(labels[view]);
+        fputs("s</a>",stdout);
+    }
+    fputs("</nav>",stdout);
+}
+static void spo_material_demands(sqlite3 *db,const char *q,const char *state,unsigned page,unsigned dpage,unsigned fpage) {
+    sqlite3_stmt *st=NULL;int n=0,step=0;
+    fputs("<section id=\"material-demands\" data-source-material-demands>"
+          "<h2>MaterialCompiler observation demands</h2>"
+          "<p>These are retained requests for new source observations. They do not "
+          "require an active hub subscription. A request does not prove that any "
+          "foreign content has been read or admitted.</p>",stdout);
+    const char *sql=
+        "SELECT d.topic,COUNT(*),MAX(d.last_requested_at),"
+        "COALESCE((SELECT s.state FROM source_dirty s WHERE s.topic=d.topic "
+        " ORDER BY s.dirty_at DESC LIMIT 1),'not queued'),"
+        "COALESCE((SELECT s.attempts FROM source_dirty s WHERE s.topic=d.topic "
+        " ORDER BY s.dirty_at DESC LIMIT 1),0) "
+        "FROM source_dirty_demand d "
+        "WHERE (?1='' OR instr(lower(d.topic),lower(?1))>0) "
+        "GROUP BY d.topic ORDER BY MAX(d.last_requested_at) DESC,d.topic "
+        "LIMIT 26 OFFSET ?2";
+    if(sqlite3_prepare_v2(db,sql,-1,&st,NULL)!=SQLITE_OK){
+        sqlite3_finalize(st);
+        fputs("<p role=\"status\">The material-demand ledger is not yet available in this carrier.</p></section>",stdout);
+        return;
+    }
+    sqlite3_bind_text(st,1,q,-1,SQLITE_TRANSIENT);
+    sqlite3_bind_int(st,2,(int)dpage*25);
+    fputs("<ol class=\"spo-ledger\">",stdout);
+    while((step=sqlite3_step(st))==SQLITE_ROW && n<25){
+        const char *topic=(const char*)sqlite3_column_text(st,0);
+        const char *status=(const char*)sqlite3_column_text(st,3);
+        if(!topic||!*topic)continue;
+        n++;
+        fputs("<li data-material-demand>",stdout);
+        spo_source_label(topic);
+        fputs("<dl><div><dt>Distinct requests</dt><dd>",stdout);
+        printf("%lld",(long long)sqlite3_column_int64(st,1));
+        fputs("</dd></div><div><dt>Latest request</dt><dd>",stdout);
+        printf("%lld",(long long)sqlite3_column_int64(st,2));
+        fputs("</dd></div><div><dt>Observation queue</dt><dd>",stdout);
+        html(status?status:"not queued");
+        fputs("</dd></div><div><dt>Observation attempts</dt><dd>",stdout);
+        printf("%d",sqlite3_column_int(st,4));
+        fputs("</dd></div></dl></li>",stdout);
+    }
+    if(!n)fputs("<li>No material observation demands match this view.</li>",stdout);
+    fputs("</ol>",stdout);
+    spo_page_links(q,state,page,dpage,fpage,1,step==SQLITE_ROW);
+    fputs("</section>",stdout);
+    sqlite3_finalize(st);
+}
+static void spo_fact_handoffs(sqlite3 *db,const char *q,const char *state,unsigned page,unsigned dpage,unsigned fpage) {
+    sqlite3_stmt *st=NULL;int n=0,step=0;
+    fputs("<section id=\"fact-handoffs\" data-source-fact-handoffs>"
+          "<h2>ForeignTwin to FactDelta handoffs</h2>"
+          "<p>Each retained row is a downstream notification obligation after a "
+          "ForeignTwin observation. It is not proof of publication, delivery, "
+          "fact verification, or completion by the receiving owner.</p>",stdout);
+    const char *sql=
+        "SELECT topic,observed_at,attempts FROM foreign_delta "
+        "WHERE (?1='' OR instr(lower(topic),lower(?1))>0) "
+        "ORDER BY observed_at DESC,topic LIMIT 26 OFFSET ?2";
+    if(sqlite3_prepare_v2(db,sql,-1,&st,NULL)!=SQLITE_OK){
+        sqlite3_finalize(st);
+        fputs("<p role=\"status\">The FactDelta handoff ledger is not yet available in this carrier.</p></section>",stdout);
+        return;
+    }
+    sqlite3_bind_text(st,1,q,-1,SQLITE_TRANSIENT);
+    sqlite3_bind_int(st,2,(int)fpage*25);
+    fputs("<ol class=\"spo-ledger\">",stdout);
+    while((step=sqlite3_step(st))==SQLITE_ROW && n<25){
+        const char *topic=(const char*)sqlite3_column_text(st,0);
+        if(!topic||!*topic)continue;
+        n++;
+        fputs("<li data-fact-handoff>",stdout);spo_source_label(topic);
+        fputs("<dl><div><dt>Recorded observation time</dt><dd>",stdout);
+        printf("%lld",(long long)sqlite3_column_int64(st,1));
+        fputs("</dd></div><div><dt>Handoff attempts</dt><dd>",stdout);
+        printf("%d",sqlite3_column_int(st,2));
+        fputs("</dd></div><div><dt>Standing</dt><dd>Pending downstream notification</dd></div></dl></li>",stdout);
+    }
+    if(!n)fputs("<li>No pending native FactDelta handoffs match this view.</li>",stdout);
+    fputs("</ol>",stdout);
+    spo_page_links(q,state,page,dpage,fpage,2,step==SQLITE_ROW);
+    fputs("</section>",stdout);
+    sqlite3_finalize(st);
+}
 static int serve_source_push_operations(const char *method,const char *target,
                                         const char *query,const char *host,
                                         const char *bearer,const char *auth_db) {
@@ -54,18 +185,21 @@ static int serve_source_push_operations(const char *method,const char *target,
        strcmp(scope,"institution")||strcmp(subject,"institution:bonfyre")){
         aw_error(403,"An active Bonfyre institution administrator is required.\n");return 1;
     }
-    char q[81]="",state[24]="all",pageno[12]="";
+    char q[81]="",state[24]="all",pageno[12]="",dno[12]="",fno[12]="";
     if(query){
         if(strlen(query)>2048){aw_error(400,"Bound the source filter.\n");return 1;}
         query_value(query,"q",q,sizeof(q));query_value(query,"state",state,sizeof(state));
         query_value(query,"page",pageno,sizeof(pageno));
+        query_value(query,"dpage",dno,sizeof(dno));query_value(query,"fpage",fno,sizeof(fno));
     }
     if(!*state)snprintf(state,sizeof(state),"all");
-    if(!spo_state_ok(state)||(*pageno&&(strspn(pageno,"0123456789")!=strlen(pageno)||strlen(pageno)>4))){
-        aw_error(400,"Choose a supported filter and page.\n");return 1;
+    if(!spo_state_ok(state)){
+        aw_error(400,"Choose a supported transport state.\n");return 1;
     }
-    unsigned page=*pageno?(unsigned)strtoul(pageno,NULL,10):0;
-    if(page>500){aw_error(400,"Page exceeds the bounded operator view.\n");return 1;}
+    unsigned page=0,dpage=0,fpage=0;
+    if(!spo_parse_page(pageno,&page)||!spo_parse_page(dno,&dpage)||!spo_parse_page(fno,&fpage)){
+        aw_error(400,"Choose supported bounded page coordinates.\n");return 1;
+    }
     sqlite3 *db=websub_open(0);
     if(!db){aw_error(503,"The WebSub carrier store is not connected.\n");return 1;}
     sqlite3_stmt *st=NULL;
@@ -108,6 +242,12 @@ static int serve_source_push_operations(const char *method,const char *target,
           ".spo-list summary{cursor:pointer;padding:16px;display:flex;gap:12px;flex-wrap:wrap;justify-content:space-between;align-items:center}"
           ".spo-list summary strong{overflow-wrap:anywhere}.spo-list dl{padding:0 16px 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px}"
           ".spo-list dt{font:600 12px system-ui}.spo-list dd{margin:4px 0 0;overflow-wrap:anywhere}"
+          ".spo-rail{display:flex;gap:16px;flex-wrap:wrap;margin:22px 0}"
+          ".spo-ledger{list-style:none;display:grid;gap:12px;padding:0;margin:14px 0 22px}"
+          ".spo-ledger li{padding:16px 18px;border:1px solid var(--w-rule,#46564d);border-radius:13px;background:var(--w-panel,#17221a)}"
+          ".spo-ledger dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:12px;margin:14px 0 0}"
+          ".spo-ledger dt{font:600 12px/1.5 system-ui}.spo-ledger dd{margin:4px 0 0;font:14px/1.4 system-ui}"
+          ".spo #material-demands,.spo #fact-handoffs{margin:46px 0 0;padding-top:18px;border-top:1px solid var(--w-rule,#46564d)}"
           ".spo-steps{border-block:1px solid var(--w-rule,#46564d);padding:15px 0;margin:24px 0}"
           ".spo-paging{display:flex;gap:20px;margin-top:20px}"
           ".spo :is(button,input,select,a,summary):focus-visible{outline:2px solid var(--w-accent,#d0fc4f);outline-offset:3px}"
@@ -118,7 +258,9 @@ static int serve_source_push_operations(const char *method,const char *target,
           "<p>Inspect the native transport. A challenge confirms that the hub knows the topic; "
           "an HMAC check admits a callback; a dirty source requests separate ForeignTwin observation. "
           "None of these alone establishes a new fact or publishes material.</p></header>",stdout);
+    fputs("<nav class=\"spo-rail\" aria-label=\"Native source pipeline\"><a href=\"#subscriptions\">Subscriptions</a><a href=\"#material-demands\">Material observation demands</a><a href=\"#fact-handoffs\">FactDelta handoffs</a></nav>",stdout);
     spo_filters(q,state);
+    fputs("<section id=\"subscriptions\"><h2>Hub subscriptions and delivery</h2>",stdout);
     fputs("<ol class=\"spo-list\" data-source-push-list>",stdout);
     int n=0;time_t now=time(NULL);int rc;
     while((rc=sqlite3_step(st))==SQLITE_ROW&&n<25){
@@ -158,16 +300,15 @@ static int serve_source_push_operations(const char *method,const char *target,
         fputs("</dd></div></dl></details></li>",stdout);
     }
     int more=rc==SQLITE_ROW;
-    sqlite3_finalize(st);sqlite3_close(db);
+    sqlite3_finalize(st);
     if(!n)fputs("<li>No matching subscriptions in the retained native carrier.</li>",stdout);
-    fputs("</ol><nav class=\"spo-paging\" aria-label=\"Subscription pages\">",stdout);
-    if(page){fputs("<a href=\"/sources/push?page=",stdout);printf("%u",page-1);
-        fputs("&amp;state=",stdout);html(state);fputs("&amp;q=",stdout);url_query_value(q);
-        fputs("\">Previous subscriptions</a>",stdout);}
-    if(more&&page<500){fputs("<a href=\"/sources/push?page=",stdout);printf("%u",page+1);
-        fputs("&amp;state=",stdout);html(state);fputs("&amp;q=",stdout);url_query_value(q);
-        fputs("\">More subscriptions</a>",stdout);}
-    fputs("</nav><section class=\"spo-steps\"><h2>From a feed to retained knowledge</h2>"
+    fputs("</ol>",stdout);
+    spo_page_links(q,state,page,dpage,fpage,0,more);
+    fputs("</section>",stdout);
+    spo_material_demands(db,q,state,page,dpage,fpage);
+    spo_fact_handoffs(db,q,state,page,dpage,fpage);
+    sqlite3_close(db);
+    fputs("<section class=\"spo-steps\"><h2>From a feed to retained knowledge</h2>"
           "<p>Discovery → subscribed with a separate authority receipt → hub challenge → "
           "HMAC-authenticated change notice → SourceDirty queue → receipted ForeignTwin read. "
           "If an upstream host is silent, that is not evidence that no articles were published.</p>"

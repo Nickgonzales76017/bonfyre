@@ -43,6 +43,14 @@ export const programServicePolicy = {
         "label": "Boards"
       }
     ],
+    "campaigns": [
+      {
+        "description": "Open the installed campaign editor to review analytical source evidence before building a campaign. No campaign is created by this continuation.",
+        "kind": "workspace",
+        "label": "Source-to-campaign studio",
+        "pack": "experience.source-campaign.workspace"
+      }
+    ],
     "case": [
       {
         "description": "Prepare case material in connected instruments.",
@@ -226,6 +234,12 @@ export const programServicePolicy = {
       }
     ],
     "programs": [
+      {
+        "description": "Review pinned source evidence in an installed recurring-program editor. No saved program, subscription or schedule is created.",
+        "kind": "workspace",
+        "label": "Sources and recurring programs",
+        "pack": "experience.source-programs.workspace"
+      },
       {
         "description": "Return to ProgramFabric for this destination.",
         "href": "/programs",

@@ -98,12 +98,14 @@ static sqlite3_stmt *selected(sqlite3 *db,const char *profile) {
     if(sqlite3_step(st)!=SQLITE_ROW || !tokens_valid(db,(const char *)sqlite3_column_text(st,0),0)) {sqlite3_finalize(st);return NULL;}
     return st;
 }
-void bf_site_presentation_emit(FILE *out,sqlite3 *db,const char *profile) {
+/* Tokens are scoped by the caller: member sites use .site-composition, territory
+ * pages body[data-bf-template]. One emitter, one record shape, no per-surface copy. */
+int bf_site_presentation_emit_scoped(FILE *out,sqlite3 *db,const char *profile,const char *selector) {
     sqlite3_stmt *st=selected(db,profile),*token=NULL;
-    if(!st) return;
+    if(!st || !selector || !*selector || strpbrk(selector,"{}<>;")) {if(st) sqlite3_finalize(st); return 0;}
     sqlite3_prepare_v2(db,"SELECT key,value FROM json_each(?1)",-1,&token,NULL);
     sqlite3_bind_text(token,1,(const char *)sqlite3_column_text(st,0),-1,SQLITE_STATIC);
-    fputs("<style data-bf-source=\"presentation_template\">.site-composition{",out);
+    fprintf(out,"<style data-bf-source=\"presentation_template\">%s{",selector);
     while(sqlite3_step(token)==SQLITE_ROW) {
         const char *key=(const char *)sqlite3_column_text(token,0),*v=(const char *)sqlite3_column_text(token,1);
         int i=role_index(key);if(i>=0) fprintf(out,"%s:%s;",roles[i].css,v);
@@ -112,7 +114,10 @@ void bf_site_presentation_emit(FILE *out,sqlite3 *db,const char *profile) {
     while(sqlite3_step(token)==SQLITE_ROW) if(!strcmp((const char *)sqlite3_column_text(token,0),"font_href")) {
         fputs("<link rel=\"stylesheet\" data-bf-fonts href=\"",out);escaped(out,(const char *)sqlite3_column_text(token,1));fputs("\">",out);
     }
-    sqlite3_finalize(token);sqlite3_finalize(st);
+    sqlite3_finalize(token);sqlite3_finalize(st);return 1;
+}
+void bf_site_presentation_emit(FILE *out,sqlite3 *db,const char *profile) {
+    bf_site_presentation_emit_scoped(out,db,profile,".site-composition");
 }
 void bf_site_presentation_attributes(FILE *out,sqlite3 *db,const char *profile) {
     sqlite3_stmt *st=selected(db,profile);if(!st) return;

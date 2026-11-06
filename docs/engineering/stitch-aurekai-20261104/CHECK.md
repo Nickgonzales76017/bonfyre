@@ -11,6 +11,11 @@ Each design folder in the Downloads zips holds `code.html` and `screen.png`.
 2. Unzip the archive named in `archive_sources` into a scratch folder:
    `unzip -o -q ~/Downloads/'stitch_aurekai_item_detail_page (2).zip' -d "$SCRATCH"`
 3. Start the preview of the current tree: `make -C cmd/BonfyreWebAddress preview`.
+   For concurrent isolated lanes use a distinct port and home, e.g.
+   `BONFYRE_PREVIEW_PORT=28921 BONFYRE_PREVIEW_HOME="${TMPDIR:-/tmp}/stitch-preview-identity" make -C cmd/BonfyreWebAddress preview`.
+   The variable is `BONFYRE_PREVIEW_PORT`, **not** `BONFYRE_PREVIEW_28921`.
+   Give the agent read access to the design files before asking it to compare
+   images, and use the lane's actual port in the browser resolver below.
 4. Screenshot the route at the design's width (read it with `file screen.png`):
 
    ```

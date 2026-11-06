@@ -42,6 +42,35 @@ try{
  await page.click("[data-ak-region=\"2\"] [data-exp-focus]");
  assert.deepEqual(await page.$$eval("[data-ak-region]:not([hidden])",nodes=>nodes.map(n=>n.dataset.akRegion)),["2"]);
  await page.click("[data-exp-mode=overview]");
+ assert.equal(await page.$eval("[data-exp-search]",node=>node.getAttribute("aria-label")),"Find in published sections");
+ await page.type("[data-exp-search]","Screening catalogue");
+ assert.deepEqual(await page.$$eval("[data-ak-region]:not([hidden])",nodes=>nodes.map(n=>n.dataset.akRegion)),["2"],
+   "Search must narrow only the C-emitted published regions");
+ assert.equal(await page.$eval("[data-exp-status]",node=>node.textContent),"1 of 3 published sections match");
+ await page.keyboard.press("Escape");
+ assert.equal(await page.$eval("[data-exp-search]",node=>node.value),"","Escape clears the local search without requesting data");
+ await page.click("[data-exp-mode=overview]");
+ await page.evaluate(()=>document.querySelector("[data-exp-search]").blur());
+ await page.keyboard.press("/");
+ assert.equal(await page.evaluate(()=>document.activeElement?.hasAttribute("data-exp-search")),true,
+   "Slash reaches the local search from a non-editable focus");
+ await page.type("[data-exp-search]","not an owner record");
+ assert.equal(await page.$$eval("[data-ak-region]:not([hidden])",nodes=>nodes.length),0,
+   "An unmatched search must not materialize a fake record");
+ await page.keyboard.press("Escape");
+ assert.equal(await page.$eval("[data-exp-lanes]",n=>n.hidden),false,"Published lane controls are usable");
+ assert.equal(await page.$eval("[data-exp-lane-filter=primary]",n=>n.hidden),true,
+   "Unpublished lanes must never be offered as real facets");
+ await page.click("[data-exp-lane-filter=rail]");
+ assert.deepEqual(await page.$$eval("[data-ak-region]:not([hidden])",nodes=>nodes.map(n=>n.dataset.akRegion)),["1"],
+   "Related lens reveals only real rail material");
+ assert.equal(await page.$eval("[data-exp-lane-filter=rail]",n=>n.getAttribute("aria-pressed")),"true");
+ await page.keyboard.press("Escape");
+ assert.deepEqual(await page.$$eval("[data-ak-region]:not([hidden])",nodes=>nodes.map(n=>n.dataset.akRegion)),["0","1","2"],
+   "Escape restores the published owner sequence");
+ await page.click("[data-exp-lane-filter=wide]");
+ assert.deepEqual(await page.$$eval("[data-ak-region]:not([hidden])",nodes=>nodes.map(n=>n.dataset.akRegion)),["2"]);
+ await page.click("[data-exp-lane-filter=all]");
  for(const width of [390,768,1365]){
    await page.setViewport({width,height:820});
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,

@@ -344,7 +344,7 @@ static void rows_readers(Sess *s, Emit *e, int limit) {
           " WHERE COALESCE(c.protocol,'')<>'' GROUP BY c.protocol ORDER BY n DESC LIMIT ?1", -1, &st, NULL) != SQLITE_OK) { sqlite3_finalize(st); return; }
     sqlite3_bind_int(st, 1, limit);
     while (sqlite3_step(st) == SQLITE_ROW)
-        row(e, "reader", "/channels?way=", col(st, 0), NULL, NULL, bf_detail_reader_words(col(st, 0)), "The tool that read it", sqlite3_column_int(st, 1));
+        row(e, "reader", "/channels?way=", col(st, 0), NULL, NULL, bf_detail_reader_words(col(st, 0)), "Source format", sqlite3_column_int(st, 1));
     sqlite3_finalize(st);
 }
 
@@ -402,7 +402,7 @@ static void shape_row(Sess *s, Emit *e, const char *slug, const char *caption) {
 }
 
 static void rows_shapes_for(Sess *s, Emit *e, const char *what) {
-    for (size_t i = 0; i < SHAPES; i++) if (!strcmp(shapes[i].what, what)) shape_row(s, e, shapes[i].slug, "How it would be filed in");
+    for (size_t i = 0; i < SHAPES; i++) if (!strcmp(shapes[i].what, what)) shape_row(s, e, shapes[i].slug, "Related record type in");
 }
 
 static void rows_shapes(Sess *s, Emit *e) {
@@ -414,7 +414,7 @@ static void rows_shapes(Sess *s, Emit *e) {
             char fam[96]; snprintf(fam, sizeof(fam), "family:%s", col(st, 1));
             for (size_t i = 0; i < SHAPES; i++)
                 if (!seen[i] && (!strcmp(shapes[i].what, col(st, 0)) || !strcmp(shapes[i].what, fam))) {
-                    seen[i] = 1; shape_row(s, e, shapes[i].slug, "How it would be filed in");
+                    seen[i] = 1; shape_row(s, e, shapes[i].slug, "Related record type in");
                 }
         }
     }

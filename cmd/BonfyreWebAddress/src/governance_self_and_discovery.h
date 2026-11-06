@@ -495,22 +495,20 @@ static int serve_role_assume(const char *method, const char *target, const char 
         protocol_reply(405, "text/plain; charset=utf-8", "Assuming a role is a form submission.\n");
         return 1;
     }
-    {
-        const char *origin = raw ? strstr(raw, "\nOrigin:") : NULL;
-        if (!origin && raw) origin = strstr(raw, "\norigin:");
-        if (origin) {
-            char value[300] = {0}, https[300], http[300];
-            sscanf(origin + 8, " %299[^\r\n]", value);
-            snprintf(https, sizeof(https), "https://%s", host ? host : "");
-            snprintf(http, sizeof(http), "http://%s", host ? host : "");
-            if (strcmp(value, https) && strcmp(value, http) && strcmp(value, "null")) {
-                protocol_reply(403, "text/plain; charset=utf-8", "Assuming a role is only accepted from this site.\n");
-                return 1;
-            }
-        }
-    }
     if (!page_session_actor(bearer, auth_db, actor, sizeof(actor))) {
         protocol_reply(401, "text/plain; charset=utf-8", "Sign in first: a role posture belongs to an actor.\n");
+        return 1;
+    }
+    if (!host || (strcmp(host,"aurekai.life") && strcmp(host,"aurekai.work"))) {
+        protocol_reply(404, "text/plain; charset=utf-8", "Operating roles are not available at this address.\n");
+        return 1;
+    }
+    char origin[300]="", https[300], http[300];
+    snprintf(https,sizeof(https),"https://%s",host);
+    snprintf(http,sizeof(http),"http://%s",host);
+    if (!aw_header(raw,"Origin",origin,sizeof(origin)) ||
+        (strcmp(origin,https) && strcmp(origin,http))) {
+        protocol_reply(403, "text/plain; charset=utf-8", "Assuming a role requires a submission from this site.\n");
         return 1;
     }
     if (!body || !query_value(body, "role", role, sizeof(role)) || !role[0] ||

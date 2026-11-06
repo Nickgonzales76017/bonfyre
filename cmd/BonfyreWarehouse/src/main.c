@@ -111,6 +111,9 @@ static int integrity(sqlite3 *db) {
 
 #include "cohort_audit.h"
 #include "warehouse_verify.h"
+#include "warehouse_query_plan.h"
+#include "warehouse_retention.h"
+#include "warehouse_portfolio.h"
 static int head(sqlite3 *db, const char *semantic, const char *kind, int explain) {
   if (!key(semantic) || !key(kind)) return 0;
   if (table_exists(db, "warehouse_snapshot_head") != 1) {
@@ -162,27 +165,50 @@ static int head(sqlite3 *db, const char *semantic, const char *kind, int explain
 }
 static int usage(void) {
   fputs("usage: bonfyre-warehouse status|integrity|cohorts|verify --estate ABSOLUTE_DIR\n"
-        "       bonfyre-warehouse head|plan --estate ABSOLUTE_DIR --semantic-kind NAME --kind FORMAT\n", stderr);
+        "       bonfyre-warehouse portfolio --estate ABSOLUTE_DIR --offset N --limit 1..100\n"
+        "       bonfyre-warehouse retention --estate ABSOLUTE_DIR --cutoff YYYY-MM-DDTHH:MM:SSZ\n"
+        "       bonfyre-warehouse head|plan --estate ABSOLUTE_DIR --semantic-kind NAME --kind FORMAT\n"
+        "       bonfyre-warehouse query-plan --estate ABSOLUTE_DIR --semantic-kind NAME --kind parquet\n"
+        "         --operation scan|aggregate|join --generation N --input-bound-bytes N\n"
+        "         --memory-limit-bytes N --workers N [--right-semantic-kind NAME\n"
+        "         --right-generation N --right-input-bound-bytes N]\n", stderr);
   return 2;
 }
 int main(int argc, char **argv) {
   const char *action = argc > 1 ? argv[1] : NULL;
   const char *estate = NULL, *semantic = NULL, *kind = NULL;
+  const char *operation=NULL,*generation=NULL,*input_bound=NULL,*memory=NULL,*workers=NULL;
+  const char *right_semantic=NULL,*right_generation=NULL,*right_bound=NULL,*cutoff=NULL,*offset=NULL,*limit=NULL;
+  int planning=action && !strcmp(action,"query-plan");
   if (!action || (strcmp(action, "status") && strcmp(action, "integrity") && strcmp(action, "cohorts") && strcmp(action, "verify") &&
-                  strcmp(action, "head") && strcmp(action, "plan")))
+                  strcmp(action, "head") && strcmp(action, "plan") && strcmp(action, "query-plan") &&
+                  strcmp(action, "retention") && strcmp(action, "portfolio")))
     return usage();
   for (int i = 2; i < argc; i += 2) {
     if (i + 1 >= argc) return usage();
     if (!strcmp(argv[i], "--estate") && !estate) estate = argv[i+1];
     else if (!strcmp(argv[i], "--semantic-kind") && !semantic) semantic = argv[i+1];
     else if (!strcmp(argv[i], "--kind") && !kind) kind = argv[i+1];
+    else if (!strcmp(action,"portfolio") && !strcmp(argv[i],"--offset") && !offset) offset=argv[i+1];
+    else if (!strcmp(action,"portfolio") && !strcmp(argv[i],"--limit") && !limit) limit=argv[i+1];
+    else if (!strcmp(action,"retention") && !strcmp(argv[i],"--cutoff") && !cutoff) cutoff=argv[i+1];
+    else if (planning && !strcmp(argv[i],"--operation") && !operation) operation=argv[i+1];
+    else if (planning && !strcmp(argv[i],"--generation") && !generation) generation=argv[i+1];
+    else if (planning && !strcmp(argv[i],"--input-bound-bytes") && !input_bound) input_bound=argv[i+1];
+    else if (planning && !strcmp(argv[i],"--memory-limit-bytes") && !memory) memory=argv[i+1];
+    else if (planning && !strcmp(argv[i],"--workers") && !workers) workers=argv[i+1];
+    else if (planning && !strcmp(argv[i],"--right-semantic-kind") && !right_semantic) right_semantic=argv[i+1];
+    else if (planning && !strcmp(argv[i],"--right-generation") && !right_generation) right_generation=argv[i+1];
+    else if (planning && !strcmp(argv[i],"--right-input-bound-bytes") && !right_bound) right_bound=argv[i+1];
     else return usage();
   }
   if (!estate || estate[0] != '/' || strlen(estate) >= PATH_MAX - 40) return usage();
-  if (!strcmp(action, "status") || !strcmp(action, "integrity") || !strcmp(action, "cohorts") || !strcmp(action, "verify")) {
-    if (semantic || kind) return usage();
+  if (!strcmp(action, "status") || !strcmp(action, "integrity") || !strcmp(action, "cohorts") || !strcmp(action, "verify") || !strcmp(action,"retention") || !strcmp(action,"portfolio")) {
+    if (semantic || kind || (!strcmp(action,"retention") && !cutoff) || (!strcmp(action,"portfolio") && (!offset||!limit))) return usage();
   }
   else if (!semantic || !kind) return usage();
+  if (planning && (!operation || !generation || !input_bound || !memory || !workers ||
+                   strcmp(kind,"parquet"))) return usage();
   char path[PATH_MAX];
   if (snprintf(path, sizeof(path), "%s/representation-manifold.db", estate) >= (int)sizeof(path))
     return usage();
@@ -205,7 +231,13 @@ int main(int argc, char **argv) {
   int ok = !strcmp(action, "status") ? status(db) :
     !strcmp(action, "integrity") ? integrity(db) :
     !strcmp(action, "cohorts") ? warehouse_cohorts(db) :
-    !strcmp(action, "verify") ? warehouse_verify(db) : head(db, semantic, kind, !strcmp(action, "plan"));
+    !strcmp(action, "verify") ? warehouse_verify(db) :
+    !strcmp(action, "retention") ? warehouse_retention(db,cutoff) :
+    !strcmp(action, "portfolio") ? warehouse_portfolio(db,offset,limit) :
+    planning ? warehouse_query_plan(db,operation,
+      (warehouse_query_input){semantic,kind,generation,input_bound},
+      (warehouse_query_input){right_semantic,"parquet",right_generation,right_bound},
+      memory,workers) : head(db, semantic, kind, !strcmp(action, "plan"));
   if (sqlite3_exec(db, "ROLLBACK", NULL, NULL, NULL) != SQLITE_OK) ok = 0;
   sqlite3_close(db);
   if (!ok) fputs("invalid or unavailable manifold metadata\n", stderr);

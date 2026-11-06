@@ -144,6 +144,9 @@ static void cjw_programmes(sqlite3 *db,const CjrCommunity *community,int steward
     fputs("</ol>",stdout);
     if(count>=20||step==SQLITE_ROW)
         fputs("<p>Additional programmes exist in the owning programme workspace.</p>",stdout);
+    char role_scope[140];snprintf(role_scope,sizeof(role_scope),"community:%s",community->key);
+    fputs("<p><a data-guild-role-bridge href=\"/roles?scope=",stdout);url_query_value(role_scope);
+    fputs("\">Choose a role for this guild</a>. Role postures organize your work; they do not enroll members, grant authority or execute guild operations.</p>",stdout);
     fputs("<p><a href=\"",stdout);cjw_href(community->key,"write",NULL);
     fputs("\">Document a workshop observation</a>. A member's reviewed contribution "
           "does not, by itself, satisfy a formal programme requirement.</p></section>",stdout);
