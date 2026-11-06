@@ -25792,7 +25792,8 @@
         "cmd/BonfyreRepositoryFabric/tests/smoke.sh proves, live against a real self-hosted Forgejo 17.0.1 instance (launchd service work.aurekai.forgejo, 127.0.0.1:3400) using a sealed bonfyre-credentials forgejo token: connect reports the credential accepted, provision creates a real repository under the aurekai organization (HTTP 201) and is idempotent on a second call, resolve reads its metadata (HTTP 200), view reads its file listing (HTTP 200), observe reads its commit history (HTTP 200), and service lists its webhooks (HTTP 200)",
         "2026-11-04 manual session on the same live Forgejo instance beyond the smoke script: checkout cloned aurekai/repository-fabric-proof through an ephemeral 0600 git-credentials file passed to git -c credential.helper=store --file=<path>, landed README.md and a prior change-created file on disk, and left neither the token in .git/config nor the credentials file behind afterward; change created notes/hello.txt (HTTP 201) and then updated the same path by first reading its sha and PUTing with it (HTTP 200); service add created a real webhook (HTTP 201, id 1) pointed at a placeholder https address",
         "2026-11-04 josh (josh-cli's built binary, named josh, and josh-proxy) built clean from source and proved live against aurekai/repository-fabric-proof over HTTP with the same ephemeral-credential-file pattern: josh clone ... \":/\" ... reproduced the full tree (README.md, notes/hello.txt) while josh clone ... \":/notes\" ... re-rooted the same commit at notes/ and yielded exactly hello.txt, nothing else; the real dependency this exposed is that JOSH's git fetch --porcelain requires git 2.41+ and fails under the macOS system git (2.39.5, /usr/bin/git) with \"unknown option porcelain\", so any caller of josh clone/fetch must put a newer git (Homebrew git 2.54.0 at /opt/homebrew/opt/git/bin) ahead of /usr/bin/git on PATH",
-        "cmd/BonfyreRepositoryFabric/tests/smoke.sh now also proves, live: checkout with no --filter still clones through plain git (mode:\"git\") and lands a file created moments earlier by change; checkout --filter \":/\" when josh is built instead execs the real josh binary (mode:\"josh\"), with GIT_CONFIG_COUNT/KEY_0/VALUE_0 carrying the same ephemeral credential and Homebrew git added to PATH only when present; an invalid filter spec (anything not starting with ':' or carrying characters outside JOSH's own grammar) is refused before any process is spawned"
+        "cmd/BonfyreRepositoryFabric/tests/smoke.sh now also proves, live: checkout with no --filter still clones through plain git (mode:\"git\") and lands a file created moments earlier by change; checkout --filter \":/\" when josh is built instead execs the real josh binary (mode:\"josh\"), with GIT_CONFIG_COUNT/KEY_0/VALUE_0 carrying the same ephemeral credential and Homebrew git added to PATH only when present; an invalid filter spec (anything not starting with ':' or carrying characters outside JOSH's own grammar) is refused before any process is spawned",
+        "2026-11-05 the installed ~/.bonfyre/bin/bonfyre-repository-fabric passed every smoke.sh check live against Forgejo (provision, resolve, view, observe, service list/add, change, plain-git checkout and JOSH filtered checkout) with BONFYRE_CREDENTIALS_PROVIDERS pointing at cmd/BonfyreCredentials/provider-credentials.json; the provider list pinned in the live web service plist (release Gxwqxp) has no forgejo entry."
       ]
     },
     "repository-shape": {
@@ -30865,6 +30866,60 @@
       ],
       "witnesses": [
         "~/.bonfyre/substrates/v6.1/verus/semantic-proof.json"
+      ]
+    },
+    "warehouse": {
+      "canonical_name": "Warehouse",
+      "commands": [],
+      "consumes": [
+        "representation-manifold"
+      ],
+      "derived": [],
+      "domain": "Bonfyre",
+      "edge_types": [],
+      "experience_chains": [],
+      "family": "storage",
+      "forbidden_inferences": [
+        "a query-plan estimate -> the query was run, or its cost is a measured result",
+        "a verify or integrity result -> the physical bytes behind a head are present or correct (physical_bytes_verified stays false)",
+        "warehouse_heads_installed false on the live estate -> the organ failed; the head owner has not installed any heads yet"
+      ],
+      "internal_calculi": [],
+      "invariants": [
+        "every verb opens the manifold read-only and refuses a symlinked or missing manifold rather than following it",
+        "query-plan is an estimate bounded by the caller's declared input, memory and worker limits; it executes no SQL and opens no physical data"
+      ],
+      "known_gaps": [
+        "the live estate has no warehouse heads installed, so integrity, cohorts and portfolio have only fixture evidence"
+      ],
+      "layer": "substrate",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [
+        "WarehouseHead",
+        "WarehouseQueryPlan"
+      ],
+      "owns": [],
+      "publishes": [
+        "WarehouseInspection"
+      ],
+      "semantic_question": "Which derived warehouse snapshot heads does the Representation Manifold hold, are they intact, and what would a bounded query over them cost, without opening physical data or executing anything?",
+      "source_paths": [
+        "cmd/BonfyreWarehouse/src/main.c",
+        "cmd/BonfyreWarehouse/src/warehouse_verify.h",
+        "cmd/BonfyreWarehouse/src/warehouse_query_plan.h",
+        "cmd/BonfyreWarehouse/src/warehouse_retention.h",
+        "cmd/BonfyreWarehouse/src/warehouse_portfolio.h",
+        "cmd/BonfyreWarehouse/src/cohort_audit.h",
+        "cmd/BonfyreWarehouse/Makefile",
+        "cmd/BonfyreWarehouse/tests/native_warehouse.test.mjs"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/BonfyreWarehouse/tests/native_warehouse.test.mjs passes 19 of 19 against the 2026-11-05 build.",
+        "2026-11-05 read-only status against the live estate (~/.bonfyre/estate-local) returned state READ_ONLY with 2184 representation instances, 1428 available realizations, 202 source bindings, 0 warehouse heads installed, physical_bytes_verified false and execution_authority false.",
+        "2026-11-05 installed to ~/.bonfyre/bin/bonfyre-warehouse; the installed binary answered the same live status."
       ]
     },
     "web-address-edge": {
@@ -40707,6 +40762,21 @@
       "relation": "formal_verification",
       "source": "verus"
     },
+    "warehouse-reads-representation-manifold": {
+      "destination": "representation-manifold",
+      "drops": [
+        "physical payloads and any write or install authority over heads"
+      ],
+      "forbidden_inferences": [
+        "a head readable through this interaction -> the head is current for its input frontier"
+      ],
+      "invalidates_on": [],
+      "preserves": [
+        "semantic kind, format, generation and declared byte bounds of each derived head"
+      ],
+      "relation": "reads_heads",
+      "source": "warehouse"
+    },
     "watch-workout-files-enter-member-history": {
       "destination": "member-training",
       "drops": [
@@ -41203,9 +41273,9 @@
   },
   "provenance": {
     "cannot_infer": "a matching digest -> a correct atlas; it says this index was built from these declaration bytes and nothing more",
-    "declaration_digest": "aed3e035c1d73896d10c90667ee271b220cdad61f84ed9529b2b7a207ecf625a",
-    "declaration_files": 149,
-    "generated_at": "2026-11-04T23:25:50Z"
+    "declaration_digest": "469d1a3ecaed90f690bbd62f290173b76ad72f8d4641167684126e6c56187ffd",
+    "declaration_files": 150,
+    "generated_at": "2026-11-06T03:38:15Z"
   },
   "views": {
     "CapabilityView": {

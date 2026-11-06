@@ -1520,6 +1520,15 @@
     "maturity": "implemented",
     "publishes": ""
   },
+  "BonfyreWarehouse": {
+    "architecture": "warehouse",
+    "description": "Which derived warehouse snapshot heads does the Representation Manifold hold, are they intact, and what would a bounded query over them cost, without opening physical data or executing anything?",
+    "domain": "Bonfyre",
+    "family": "storage",
+    "layer": "substrate",
+    "maturity": "implemented",
+    "publishes": "WarehouseInspection"
+  },
   "BonfyreWatch": {
     "architecture": "cmd-watch",
     "description": "What does the BonfyreWatch capability organ realize, and by what contract?",

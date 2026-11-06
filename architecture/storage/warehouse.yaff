@@ -1,0 +1,38 @@
+architecture warehouse
+  canonical_name Warehouse
+  family storage
+  domain Bonfyre
+  layer substrate
+  semantic_question Which derived warehouse snapshot heads does the Representation Manifold hold, are they intact, and what would a bounded query over them cost, without opening physical data or executing anything?
+  purpose Native read-only inspection of derived warehouse snapshot heads in the canonical Representation Manifold: status, integrity, cohorts, verify, portfolio pages, retention by cutoff, head and plan lookup, and a bounded query-plan estimate (scan, aggregate, join) under declared input, memory and worker limits. The manifold head owner remains the only writer.
+  maturity implemented
+  consumes representation-manifold
+  publishes WarehouseInspection
+  node_types WarehouseHead
+  node_types WarehouseQueryPlan
+  state_types read_only
+  source_path cmd/BonfyreWarehouse/src/main.c
+  source_path cmd/BonfyreWarehouse/src/warehouse_verify.h
+  source_path cmd/BonfyreWarehouse/src/warehouse_query_plan.h
+  source_path cmd/BonfyreWarehouse/src/warehouse_retention.h
+  source_path cmd/BonfyreWarehouse/src/warehouse_portfolio.h
+  source_path cmd/BonfyreWarehouse/src/cohort_audit.h
+  source_path cmd/BonfyreWarehouse/Makefile
+  source_path cmd/BonfyreWarehouse/tests/native_warehouse.test.mjs
+  witness cmd/BonfyreWarehouse/tests/native_warehouse.test.mjs passes 19 of 19 against the 2026-11-05 build.
+  witness 2026-11-05 read-only status against the live estate (~/.bonfyre/estate-local) returned state READ_ONLY with 2184 representation instances, 1428 available realizations, 202 source bindings, 0 warehouse heads installed, physical_bytes_verified false and execution_authority false.
+  invariant every verb opens the manifold read-only and refuses a symlinked or missing manifold rather than following it
+  invariant query-plan is an estimate bounded by the caller's declared input, memory and worker limits; it executes no SQL and opens no physical data
+  forbidden_inference a query-plan estimate -> the query was run, or its cost is a measured result
+  forbidden_inference a verify or integrity result -> the physical bytes behind a head are present or correct (physical_bytes_verified stays false)
+  forbidden_inference warehouse_heads_installed false on the live estate -> the organ failed; the head owner has not installed any heads yet
+  known_gap the live estate has no warehouse heads installed, so integrity, cohorts and portfolio have only fixture evidence
+  witness 2026-11-05 installed to ~/.bonfyre/bin/bonfyre-warehouse; the installed binary answered the same live status.
+
+interaction warehouse-reads-representation-manifold
+  source warehouse
+  destination representation-manifold
+  relation reads_heads
+  preserves semantic kind, format, generation and declared byte bounds of each derived head
+  drops physical payloads and any write or install authority over heads
+  forbidden_inference a head readable through this interaction -> the head is current for its input frontier
