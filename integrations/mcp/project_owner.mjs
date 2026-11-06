@@ -22,8 +22,8 @@ export function createProjectOwner({ name, tools, urlEnv, tokenFileEnv, defaultU
     if (!definition) throw new Error(`unbound ${name === 'spines' ? 'Spines' : name.toUpperCase()} operation`);
     if (definition.annotations?.readOnlyHint !== true) {
       if (env.BONFYRE_MCP_PROJECT_WRITE_ENABLED !== '1') throw new Error('project write gate disabled');
-      if (!stopExempt.has(operation) && existsSync(join(env.BONFYRE_OPERATOR_HOME || join(home, '.bonfyre/operator'), 'STOP')))
-        throw new Error(`STOP active; ${name === 'spines' ? 'Spines' : name.toUpperCase()} dispatch refused`);
+      if (!stopExempt.has(operation) && existsSync(join(env.BONFYRE_OPERATOR_HOME || join(home, '.bonfyre/operator'), 'HALT')))
+        throw new Error(`HALT active; ${name === 'spines' ? 'Spines' : name.toUpperCase()} dispatch refused`);
     }
     if (!ownerCall) {
       const endpoint = mcpEndpoint(`${(env[urlEnv] || defaultUrl).replace(/\/$/, '')}/mcp`);

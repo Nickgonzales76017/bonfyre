@@ -23,7 +23,7 @@ export function v6Config(env = process.env, userHome = homedir()) {
 
 export async function createV6Server({ token, store, resources, history, missions, bfp, stopPaths, maxConcurrent = 16, ...options } = {}) {
   store ||= createV6Store(options);
-  stopPaths ||= [join(store.home, 'STOP'), join(options.userHome || homedir(), '.bonfyre/operator/STOP')];
+  stopPaths ||= [join(store.home, 'STOP'), join(options.userHome || homedir(), '.bonfyre/operator/HALT')];
   const stopped = () => stopPaths.some(existsSync);
   const checkStop = () => { if (stopped()) throw new Error('STOP active; V6 mutation refused'); };
   // Engines share one store. All durability transitions recheck STOP, including

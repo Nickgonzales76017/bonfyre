@@ -38,15 +38,15 @@ test('remote route and credential are deployment-owned, never derived from calle
     request: async () => { throw new Error('must not export project token'); } });
   await expect(unscoped('r6_rules_list', {})).rejects.toThrow('own configured credential');
 });
-test('write gate and STOP refuse before network admission, including misleading historical reads', async () => {
+test('write gate and HALT refuse before network admission, including misleading historical reads', async () => {
   const { home } = fixture(); let requests = 0;
   const request = async () => { requests++; throw new Error('must not dispatch'); };
   const closed = createProjectSpines({ home, env: {}, token: 'project-token', request });
   for (const name of ['r6_helix_compile', 'spines_verify', 'r5_parity_verify'])
     await expect(closed(name, {})).rejects.toThrow('write gate');
-  const operator = join(home, 'operator'); mkdirSync(operator); writeFileSync(join(operator, 'STOP'), 'preserve');
+  const operator = join(home, 'operator'); mkdirSync(operator); writeFileSync(join(operator, 'HALT'), 'preserve'); writeFileSync(join(operator, 'STOP'), 'autonomous pause only');
   const stopped = createProjectSpines({ home, env: { BONFYRE_MCP_PROJECT_WRITE_ENABLED: '1', BONFYRE_OPERATOR_HOME: operator }, token: 'project-token', request });
-  await expect(stopped('r6_helix_reduce', {})).rejects.toThrow('STOP');
+  await expect(stopped('r6_helix_reduce', {})).rejects.toThrow('HALT');
   expect(requests).toBe(0);
 });
 test('Project authenticated route composes real Spines/Wasm through a simulated HTTPS owner, not a second evaluator', async () => {

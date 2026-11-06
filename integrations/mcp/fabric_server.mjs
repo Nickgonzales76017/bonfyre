@@ -28,12 +28,12 @@ export function fabricConfig(env = process.env, userHome = homedir()) {
     mcpUrl: mcpEndpoint(env.BONFYRE_MCP_URL || 'http://127.0.0.1:13052/mcp'),
     projectUrl: mcpEndpoint(env.BONFYRE_PROJECT_MCP_URL || 'http://127.0.0.1:3051/mcp'),
     ...(env.BONFYRE_PROJECT_MCP_TOKEN_FILE ? { projectToken: readFileSync(env.BONFYRE_PROJECT_MCP_TOKEN_FILE, 'utf8').trim() } : {}),
-    stopPaths: [join(home, 'STOP'), join(userHome, '.bonfyre/operator/STOP')] };
+    stopPaths: [join(home, 'STOP'), join(userHome, '.bonfyre/operator/HALT')] };
 }
 
 export async function createFabricServer({ token, home, projectRoot, worktreeRoot, policyPath, policy, store, work, estate, agentRunner, authorizeAccount, pushDelivery, modelWork, nativeModel, modelMeter, outputTransfer,
   mcpUrl = 'http://127.0.0.1:13052/mcp', projectUrl = 'http://127.0.0.1:3051/mcp', projectToken, run = projectRun, request = fetch, env = process.env,
-  stopPaths = [join(home || homedir(), 'STOP'), join(homedir(), '.bonfyre/operator/STOP')], maxConcurrent = 16, maxQueued = 64 } = {}) {
+  stopPaths = [join(home || homedir(), 'STOP'), join(homedir(), '.bonfyre/operator/HALT')], maxConcurrent = 16, maxQueued = 64 } = {}) {
   if (!token) throw new Error('fabric token missing');
   if (!policy) {
     const bytes = readFileSync(policyPath); if (bytes.length > 100_000) throw new Error('fabric policy exceeds budget');

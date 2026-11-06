@@ -66,11 +66,11 @@ export function createProjectReads({ root, env = process.env, run, catalogTools 
     return path;
   }
 
-  async function execute(argv, { timeoutMs = 30_000, allowed = [0], env: executionEnv = childEnv } = {}) {
+  async function execute(argv, { timeoutMs = 30_000, allowed = [0], env: executionEnv = childEnv, truncate = false } = {}) {
     const receipt = await run(argv, { cwd: project, timeoutMs, env: executionEnv });
-    if (!receipt || receipt.timeout || receipt.overflow || !allowed.includes(receipt.exit_code)) throw new Error(`${basename(argv[0])} read failed${receipt?.timeout ? ': timeout' : receipt?.overflow ? ': output limit' : ''}`);
+    if (!receipt || receipt.timeout || (receipt.overflow && !truncate) || !allowed.includes(receipt.exit_code)) throw new Error(`${basename(argv[0])} read failed${receipt?.timeout ? ': timeout' : receipt?.overflow ? ': output limit' : ''}`);
     if (typeof receipt.stdout !== 'string' || typeof receipt.stderr !== 'string') throw new Error('invalid read receipt');
-    if (Buffer.byteLength(receipt.stdout) > RESPONSE_BYTES || Buffer.byteLength(receipt.stderr) > RESPONSE_BYTES) throw new Error('read output exceeds 512 KiB');
+    if (Buffer.byteLength(receipt.stdout) > RESPONSE_BYTES || Buffer.byteLength(receipt.stderr) > RESPONSE_BYTES) { if (truncate && Buffer.byteLength(receipt.stderr) <= RESPONSE_BYTES) { let bytes = 0; const kept = []; for (const line of receipt.stdout.split('\n')) { if ((bytes += Buffer.byteLength(line) + 1) > RESPONSE_BYTES) break; kept.push(line); } return { ...receipt, stdout: kept.join('\n'), truncated: true }; } throw new Error('read output exceeds 512 KiB'); } // search keeps whole lines within budget
     return receipt;
   }
   const git = argv => execute(['git', '--no-pager', '--literal-pathspecs', '-c', 'core.fsmonitor=false', ...argv]);
@@ -449,12 +449,12 @@ export function createProjectReads({ root, env = process.env, run, catalogTools 
         fields(args, ['query', 'path', 'glob', 'limit']);
         const query = text(args.query, undefined, 'query', 16_384), requested = text(args.path, '.', 'project path');
         const target = confined(requested), limit = integer(args.limit, 200, 1, 1000, 'limit');
-        const argv = ['rg', '--no-config', '--no-follow', '--line-number', '--column', '--no-heading', '--color', 'never', '--max-count', String(limit)];
-        if (args.glob !== undefined) argv.push('--glob', text(args.glob, undefined, 'glob'));
+        const argv = ['rg', '--no-config', '--no-follow', '--line-number', '--column', '--no-heading', '--color', 'never', '--max-count', String(limit), '--max-columns', '400', '--max-columns-preview', '--max-filesize', '2M']; // per-file cap; long generated lines trimmed
+        argv.push(...(args.glob !== undefined ? ['--glob', text(args.glob, undefined, 'glob')] : ['--glob', '!architecture/atlas.index.json', '--glob', '!site/spaces/**', '--glob', '!**/*.min.js']));
         argv.push('-e', query, '--', target);
-        const result = await execute(argv, { allowed: [0, 1] });
+        const result = await execute(argv, { allowed: [0, 1], truncate: true });
         confined(target);
-        return { query, path: requested, matches: result.stdout.split(/\r?\n/).filter(Boolean).slice(0, limit), exit_code: result.exit_code, stderr: result.stderr };
+        const matches = result.stdout.split(/\r?\n/).filter(Boolean); return { query, path: requested, matches: matches.slice(0, limit), exit_code: result.exit_code, stderr: result.stderr, ...(result.truncated || matches.length > limit ? { truncated: true } : {}) };
       }
       case 'project_diff': {
         fields(args, ['path', 'staged', 'stat_only']);

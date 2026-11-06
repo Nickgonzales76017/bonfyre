@@ -49,6 +49,17 @@ pre-commit hook, in CI, and on every script write by Claude.
 - Install hooks once: `git config core.hooksPath .githooks`.
 - No `Co-Authored-By` commit trailer; no "Generated with Claude Code" PR footer.
 
+## See a page change in seconds — `make -C cmd/BonfyreWebAddress preview`
+
+Builds the tree's `bonfyre-web-address` and serves it on `:28911` against
+copies of the live stores in `~/.bonfyre/preview` (never the live ones; the
+live service and its release are untouched). About 15 s from edit to page.
+`preview-refresh` re-copies the stores; `preview-stop` stops it.
+`curl -H 'Host: aurekai.work' -H 'Accept: text/html' http://127.0.0.1:28911/<route>`,
+or Chrome with `--host-resolver-rules="MAP aurekai.work:80 127.0.0.1:28911"`
+and `http://aurekai.work/<route>` (assets only answer for estate hosts).
+Check pages here before staging a release.
+
 ## Client work and sales copy
 
 For prospect research, client tools, demo work and outreach, read

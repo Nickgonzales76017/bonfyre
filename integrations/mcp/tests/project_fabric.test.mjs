@@ -43,8 +43,8 @@ test('Fabric placement uses a fixed endpoint and requires a separate remote cred
   expect(seen).toHaveLength(1);
 });
 
-test('STOP blocks submissions, permits cancellation, and never bypasses the write gate', async () => {
-  const home = fixture(), operator = join(home, 'operator'); mkdirSync(operator); writeFileSync(join(operator, 'STOP'), 'keep stopped');
+test('HALT blocks submissions, permits cancellation, and never bypasses the write gate', async () => {
+  const home = fixture(), operator = join(home, 'operator'); mkdirSync(operator); writeFileSync(join(operator, 'HALT'), 'keep stopped'); writeFileSync(join(operator, 'STOP'), 'autonomous pause only');
   const calls = [];
   const request = async (_url, options) => {
     const body = JSON.parse(options.body); calls.push(body.params.name);
@@ -52,7 +52,7 @@ test('STOP blocks submissions, permits cancellation, and never bypasses the writ
   };
   const env = { BONFYRE_OPERATOR_HOME: operator, BONFYRE_MCP_PROJECT_WRITE_ENABLED: '1' };
   const call = createProjectFabric({ home, env, token: 'fixture', request });
-  await expect(call('implementation_relay', { prompt: 'must not submit' })).rejects.toThrow('STOP');
+  await expect(call('implementation_relay', { prompt: 'must not submit' })).rejects.toThrow('HALT');
   expect(await call('task_cancel', { task_id: 'fixture' })).toEqual({ received: 'task_cancel' });
   expect(await call('fabric_status', {})).toEqual({ received: 'fabric_status' });
   delete env.BONFYRE_MCP_PROJECT_WRITE_ENABLED;

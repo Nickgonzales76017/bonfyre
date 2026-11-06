@@ -38,16 +38,16 @@ test('V6 HTTPS uses only a dedicated credential and fixed configured endpoint', 
   await expect(noDedicated('v6_status', {})).rejects.toThrow('own configured credential');
 });
 
-test('V6 write admission and STOP refuse before outbound dispatch', async () => {
+test('V6 write admission and HALT refuse before outbound dispatch', async () => {
   const home = fixture(); let dispatched = 0;
   const request = async () => { dispatched++; throw new Error('must not dispatch'); };
   const gated = createProjectV6({ home, token: 'project', env: {}, request });
   await expect(gated('v6_sparse_snapshot', { confirm: true })).rejects.toThrow('write gate');
-  const operator = join(home, 'operator'); mkdirSync(operator); writeFileSync(join(operator, 'STOP'), 'preserve');
+  const operator = join(home, 'operator'); mkdirSync(operator); writeFileSync(join(operator, 'HALT'), 'preserve'); writeFileSync(join(operator, 'STOP'), 'autonomous pause only');
   const stopped = createProjectV6({ home, token: 'project', env: {
     BONFYRE_MCP_PROJECT_WRITE_ENABLED: '1', BONFYRE_OPERATOR_HOME: operator,
   }, request });
-  await expect(stopped('v6_history_federate', { confirm: true })).rejects.toThrow('STOP');
+  await expect(stopped('v6_history_federate', { confirm: true })).rejects.toThrow('HALT');
   expect(dispatched).toBe(0);
 });
 

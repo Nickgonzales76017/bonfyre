@@ -108,7 +108,7 @@ async function defaultAgentRunner({ argv, cwd, env, stdoutPath, stderrPath, time
 
 export function createFabricWork({ store, policy, projectRoot, token = '',
   run = projectRun, agentRunner = defaultAgentRunner, projectTool, estateStatus, env = process.env,
-  stopPaths = [join(homedir(), '.bonfyre/operator/STOP'), join(homedir(), '.bonfyre/dev-fabric/STOP')] } = {}) {
+  stopPaths = [join(homedir(), '.bonfyre/operator/HALT'), join(homedir(), '.bonfyre/dev-fabric/STOP')] } = {}) {
   if (!store || !strictObject(policy) || typeof run !== 'function' || typeof agentRunner !== 'function') throw new Error('invalid fabric owner');
   if (policy.repair_failed_tests !== undefined && typeof policy.repair_failed_tests !== 'boolean')
     throw new Error('repair_failed_tests policy must be boolean');

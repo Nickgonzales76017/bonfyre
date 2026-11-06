@@ -27,7 +27,7 @@ export async function createSpinesServer({ token, store, temporal, reasoning, mo
   temporal ||= (await import('./spines_temporal.mjs')).createTemporalEngine(store);
   reasoning ||= (await import('./spines_reasoning.mjs')).createReasoningEngine(store);
   model ||= (await import('./spines_model.mjs')).createModelEngine(store);
-  stopPaths ||= [join(store.home, 'STOP'), join(homedir(), '.bonfyre/operator/STOP')];
+  stopPaths ||= [join(store.home, 'STOP'), join(homedir(), '.bonfyre/operator/HALT')];
   const stopped = () => stopPaths.some(existsSync);
   const check = () => { if (stopped()) throw new Error('STOP active; spines mutation refused'); };
   let healthObservation;

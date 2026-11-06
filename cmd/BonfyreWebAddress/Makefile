@@ -867,3 +867,13 @@ account-world-audio-test: $(TARGET)
 account-world-cinema-test: $(TARGET)
 	sh tests/account_world_cinema_test.sh
 build/web_main.o build/compact/web_main.o: src/account_world_cinema_web.h
+
+# Fast local preview of the tree build against copies of the live stores.
+# Never touches the live service; see tools/preview.sh for the browser recipe.
+.PHONY: preview preview-refresh preview-stop
+preview: $(TARGET)
+	@sh tools/preview.sh serve
+preview-refresh: $(TARGET)
+	@sh tools/preview.sh refresh
+preview-stop:
+	@sh tools/preview.sh stop
