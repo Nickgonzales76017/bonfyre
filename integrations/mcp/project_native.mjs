@@ -107,11 +107,21 @@ const canonicalNativeName = name => /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(name) &&
 // The generic argv aperture cannot be an unreviewed effect carrier.
 // Only commands with a specific audited pure/read contract can cross it.
 // Mutations use destination-owned native tools with their own authority.
-function nativeReadIntent(family, argv) {
+function nativeReadIntent(family, argv, home) {
   if (argv.length === 1 && ['--help', '-h', '--version'].includes(argv[0])) return true;
   if (family === 'BonfyreCMS') return argv.length === 2 && argv[0] === 'schema' && argv[1] === 'list';
   if (family === 'BonfyreWitness') return argv.length === 1 && argv[0] === 'status';
   if (family === 'BonfyreExperienceMap') return argv.length === 1 && argv[0] === 'stats';
+  // Audited read-only inspector. The separate seeder is not admitted here.
+  if (family === 'BonfyreWarehouse') {
+    const estate = path.join(home, '.bonfyre', 'estate-local');
+    if (argv[1] !== '--estate' || argv[2] !== estate) return false;
+    if (argv.length === 3) return ['status', 'integrity', 'cohorts', 'verify'].includes(argv[0]);
+    if (argv.length !== 7 || !['head', 'plan'].includes(argv[0])) return false;
+    return argv[3] === '--semantic-kind'
+      && /^[A-Za-z0-9_.:/-]{1,240}$/.test(argv[4])
+      && argv[5] === '--kind' && argv[6] === 'parquet';
+  }
   if (family === 'BonfyreProject' && argv[0] === 'foreign') {
     if (argv.length === 2 && argv[1] === 'conflicts') return true;
     if (argv.length === 3 && ['resolve', 'history'].includes(argv[1]))
@@ -593,7 +603,7 @@ export function createProjectNative({ root, home, env = process.env, run, reques
     if (!Array.isArray(args.args ?? []) || !(args.args ?? []).every((item) => typeof item === 'string')) throw new Error('args must be a list of strings');
     const candidate = await candidates(family);
     if (!candidate) throw new Error(`no native executable found for ${family}; interpreter launchers are refused`);
-    if (!nativeReadIntent(family, args.args || []))
+    if (!nativeReadIntent(family, args.args || [], home))
       throw new Error('native effect requires a destination-owned ActorClosure, PackGraph, and reviewed execution owner; generic argv is read-only');
     const resources = await nativeResourceEnvironment(family);
     const result = await execute(candidate.file, args.args || [], { cwd: candidate.source === 'managed' ? path.dirname(candidate.file) : home, timeoutMs: clamp(args.timeout_seconds, 60, 5, 600) * 1000, extraEnv: resources.extraEnv });

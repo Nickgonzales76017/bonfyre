@@ -12,6 +12,16 @@ const ddl="CREATE TABLE IF NOT EXISTS warehouse_snapshot_head("
   +"generation INTEGER NOT NULL CHECK(generation>0),representation_id TEXT NOT NULL,"
   +"digest TEXT NOT NULL,frontier TEXT NOT NULL,created_at TEXT NOT NULL,changed_at TEXT NOT NULL,"
   +"PRIMARY KEY(semantic_kind,representation_kind))";
+const ddlStats="CREATE TABLE IF NOT EXISTS warehouse_snapshot_stats("
+  +"semantic_kind TEXT NOT NULL,representation_kind TEXT NOT NULL,"
+  +"generation INTEGER NOT NULL,representation_id TEXT NOT NULL,digest TEXT NOT NULL,"
+  +"realization_count INTEGER NOT NULL,max_realization_bytes INTEGER,frontier_rows INTEGER,"
+  +"updated_at TEXT NOT NULL,PRIMARY KEY(semantic_kind,representation_kind))";
+const indexDDL=[
+  "CREATE INDEX IF NOT EXISTS idx_warehouse_ri_latest ON representation_instance(schema_ref,kind,created_at DESC,id DESC)",
+  "CREATE INDEX IF NOT EXISTS idx_warehouse_pr_live ON physical_realization(representation_id,available,digest)",
+  "CREATE INDEX IF NOT EXISTS idx_warehouse_sb_kind ON source_binding(semantic_kind)"
+];
 const readSql="SELECT * FROM warehouse_snapshot_head WHERE semantic_kind=? AND representation_kind=?";
 function valid(name,value){
   if(typeof value!=="string" || !/^[a-zA-Z0-9_.:/-]{1,240}$/.test(value))
@@ -26,6 +36,12 @@ function open(estate,readonly){
 function isInstalled(db){
   return !!db.query("SELECT 1 ok FROM sqlite_master WHERE type='table' AND name='warehouse_snapshot_head'").get();
 }
+function declaredPhysicalTarget(db,semanticKind,representationKind){
+  const sources=db.query("SELECT COUNT(*) n FROM source_binding WHERE semantic_kind=?").get(semanticKind)?.n;
+  const target=db.query("SELECT status FROM representation_target WHERE semantic_kind=? AND representation_kind=?")
+    .get(semanticKind,representationKind);
+  return sources===1 && target?.status==="physical";
+}
 function sourceRow(db,id,semanticKind,representationKind){
   return db.query("SELECT ri.id,ri.digest,ri.frontier,ri.created_at FROM representation_instance ri "
     +"WHERE ri.id=? AND ri.schema_ref=? AND ri.kind=? AND ri.state='physical' "
@@ -39,9 +55,11 @@ export function installWarehouseHead(estate){
     db.exec("BEGIN IMMEDIATE");
     try{
       const names=new Set(db.query("SELECT name FROM sqlite_master WHERE type='table'").all().map(r=>r.name));
-      for(const required of ["representation_instance","physical_realization","source_binding"])
+      for(const required of ["representation_instance","physical_realization","source_binding","representation_target"])
         if(!names.has(required)) throw Error("missing manifold table: "+required);
       db.exec(ddl);
+      db.exec(ddlStats);
+      for(const index of indexDDL) db.exec(index);
       db.exec("COMMIT");
     }catch(e){db.exec("ROLLBACK");throw e;}
     return {state:"DERIVED_HEAD_INSTALLED",database:"representation-manifold.db",effect_authority:false};
@@ -56,10 +74,17 @@ export function readWarehouseHead(estate,{semanticKind,representationKind}){
       if(!isInstalled(db)) return {state:"NOT_INSTALLED",head:null};
       const head=db.query(readSql).get(semanticKind,representationKind);
       if(!head) return {state:"NO_HEAD",head:null};
+      if(!declaredPhysicalTarget(db,semanticKind,representationKind))
+        return {state:"SOURCE_OR_TARGET_AMBIGUOUS",head:null};
       const row=sourceRow(db,head.representation_id,semanticKind,representationKind);
       if(!row||row.digest!==head.digest||row.frontier!==head.frontier||row.created_at!==head.created_at)
         return {state:"STALE_HEAD_REFUSED",head:null};
-      return {state:"METADATA_HEAD_CURRENT",head,physical_bytes_verified:false,
+      const stats=db.query("SELECT 1 ok FROM sqlite_master WHERE type=\'table\' AND name=\'warehouse_snapshot_stats\'").get() &&
+        db.query("SELECT * FROM warehouse_snapshot_stats "
+        +"WHERE semantic_kind=? AND representation_kind=?").get(semanticKind,representationKind);
+      const currentStats=stats?.generation===head.generation &&
+        stats?.representation_id===head.representation_id && stats?.digest===head.digest ? stats:null;
+      return {state:"METADATA_HEAD_CURRENT",head,stats:currentStats,physical_bytes_verified:false,
         source_authority:false,execution_authority:false};
     }finally{db.exec("ROLLBACK");}
   }finally{db.close();}
@@ -76,8 +101,8 @@ export function bindWarehouseHead(estate,{semanticKind,representationKind,repres
     db.exec("BEGIN IMMEDIATE");
     try{
       if(!isInstalled(db)) throw Error("head not installed");
-      if(!db.query("SELECT 1 ok FROM source_binding WHERE semantic_kind=? AND representation_kind=? LIMIT 1")
-        .get(semanticKind,representationKind)) throw Error("no declared source binding");
+      if(!declaredPhysicalTarget(db,semanticKind,representationKind))
+        throw Error("unique source binding and declared physical target required");
       const row=sourceRow(db,representationId,semanticKind,representationKind);
       if(!row||row.digest!==digest) throw Error("no matching live digest and representation");
       const old=db.query(readSql).get(semanticKind,representationKind);
@@ -101,6 +126,20 @@ export function bindWarehouseHead(estate,{semanticKind,representationKind,repres
         db.query("INSERT INTO warehouse_snapshot_head VALUES(?,?,?,?,?,?,?,?)")
           .run(semanticKind,representationKind,head.generation,row.id,row.digest,row.frontier,row.created_at,head.changed_at);
       }
+      const observation=db.query("SELECT COUNT(*) n,MAX(bytes) max_bytes "
+        +"FROM physical_realization WHERE representation_id=? AND available=1 AND digest=?")
+        .get(representationId,digest);
+      const parsed=/(?:^|;)rows:(\d+)(?:;|$)/.exec(row.frontier);
+      const number=parsed?Number(parsed[1]):null;
+      const frontierRows=Number.isSafeInteger(number)?number:null;
+      db.query("INSERT INTO warehouse_snapshot_stats VALUES(?,?,?,?,?,?,?,?,?) "
+        +"ON CONFLICT(semantic_kind,representation_kind) DO UPDATE SET "
+        +"generation=excluded.generation,representation_id=excluded.representation_id,"
+        +"digest=excluded.digest,realization_count=excluded.realization_count,"
+        +"max_realization_bytes=excluded.max_realization_bytes,frontier_rows=excluded.frontier_rows,"
+        +"updated_at=excluded.updated_at")
+        .run(semanticKind,representationKind,head.generation,row.id,row.digest,
+          observation.n,observation.max_bytes,frontierRows,head.changed_at);
       db.exec("COMMIT");
       return {state:"HEAD_ADVANCED",head,physical_bytes_verified:false,
         source_authority:false,execution_authority:false};

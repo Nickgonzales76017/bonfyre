@@ -1014,44 +1014,28 @@ static void handle_job_submit(HttpRequest *req, HttpResponse *resp) {
         return;
     }
 
-    /* Create output directory */
-    char outdir[MAX_PATH_LEN];
-    snprintf(outdir, sizeof(outdir), "%s/job_%ld_%d", g_upload_dir, (long)time(NULL), getpid());
-    mkdir(outdir, 0755);
-
-    char ts[64]; iso_now(ts, sizeof(ts));
-
-    /* INSERT into shared queue — the queue worker daemon will pick it up */
-    pthread_mutex_lock(&g_db_mutex);
-    sqlite3_stmt *st;
-    sqlite3_prepare_v2(g_db,
-        "INSERT INTO jobs (type,status,priority,input_path,output_path,source,api_key,created_at,max_retries) "
-        "VALUES (?,?,?,?,?,?,?,?,?)", -1, &st, NULL);
-    sqlite3_bind_text(st, 1, type, -1, SQLITE_STATIC);
-    sqlite3_bind_text(st, 2, "queued", -1, SQLITE_STATIC);
-    sqlite3_bind_int(st, 3, priority);
-    sqlite3_bind_text(st, 4, input, -1, SQLITE_STATIC);
-    sqlite3_bind_text(st, 5, outdir, -1, SQLITE_STATIC);
-    sqlite3_bind_text(st, 6, "api", -1, SQLITE_STATIC);
-    if (req->auth_token[0]) sqlite3_bind_text(st, 7, req->auth_token, -1, SQLITE_STATIC);
-    else sqlite3_bind_null(st, 7);
-    sqlite3_bind_text(st, 8, ts, -1, SQLITE_STATIC);
-    sqlite3_bind_int(st, 9, 3);
-    sqlite3_step(st); sqlite3_finalize(st);
-    int job_id = (int)sqlite3_last_insert_rowid(g_db);
-    pthread_mutex_unlock(&g_db_mutex);
-
-    /* Emit enqueue event */
-    char evdata[256];
-    snprintf(evdata, sizeof(evdata),
-        "{\"source\":\"api\",\"priority\":%d}", priority);
-    emit_event(job_id, "queued", evdata);
-
-    /* Return immediately — the worker will execute the binary */
-    http_resp_json(resp, 202,
-        "{\"data\":{\"id\":%d,\"type\":\"%s\",\"status\":\"queued\",\"priority\":%d},"
-        "\"meta\":{\"async\":true,\"poll\":\"/api/jobs/%d\",\"stream\":\"/api/events?job_id=%d\"}}",
-        job_id, type, priority, job_id, job_id);
+    /* Catalogue presence + API key scope is not permission to enqueue.
+     * Refuse until the selected native destination has an active pack and
+     * an effect-specific BonfyreReview/WorkGraph decision. The Review owner
+     * enqueues approved work itself; generic HTTP must not duplicate it. */
+    char context[128]="",pack[96]="",actor[192]="",subject[192]="",digest[65]="";
+    if(!query_param(req->query,"context",context,sizeof(context))||
+       !query_param(req->query,"pack",pack,sizeof(pack))){
+        http_resp_json(resp,400,"{\"error\":\"Select an exact account and installed pack\"}");
+        return;
+    }
+    if(!api_native_preflight(req,context,pack,actor,sizeof(actor),
+                             subject,sizeof(subject),digest,sizeof(digest))){
+        http_resp_json(resp,403,"{\"schema\":\"bonfyre.command-authority.v1\",\"admitted\":false,\"reason\":\"current_actor_destination_or_pack_refused\"}");
+        return;
+    }
+    http_resp_json(resp,409,
+        "{\"schema\":\"bonfyre.command-authority.v1\","
+        "\"state\":\"review_required\",\"admitted\":false,"
+        "\"command\":\"%s\",\"destination\":\"%s\","
+        "\"pack_digest\":\"%s\","
+        "\"next_owner\":\"BonfyreReview/BonfyreQueue\"}",
+        type,subject,digest);
 }
 
 /* GET /api/jobs[/:id] */

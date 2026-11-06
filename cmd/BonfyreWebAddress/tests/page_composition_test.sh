@@ -35,6 +35,8 @@ entry() { "$cms" entry create "$1" "$2" --ns root --db "$cmsdb" --schemas "$sche
 entry world '{"world":"tonight-proof","title":"Tonight near Deep Ellum","character":"zine","template":"ghost-wire","lede":"Shows, sets and what people are saying after dark.","subject":"place:deep-ellum","sources":"ellum-listings,city-desk","grammars":"stage,board,community,unlabelled-internal","cannot_infer":"a listing is not a ticket","status":"published"}'
 entry world '{"world":"stories-only","title":"City desk","character":"journal","lede":"Local reporting.","subject":"topic:city","sources":"city-desk","grammars":"","cannot_infer":"a story is not an Aurekai claim","status":"published"}'
 entry world '{"world":"quiet-proof","title":"Quiet street","character":"almanac","lede":"Nothing published yet.","subject":"place:quiet","sources":"","grammars":"","cannot_infer":"an empty page is not an empty street","status":"published"}'
+entry world '{"world":"maker-profile","title":"Maya Lee","character":"profile","lede":"A published maker identity.","subject":"person:maya-lee","sources":"","grammars":"","cannot_infer":"a source address is not a verified membership","status":"published"}'
+entry world '{"world":"collective-profile","title":"Nine Volt Collective","character":"profile","lede":"A published organization identity.","subject":"organization:nine-volt-collective","sources":"","grammars":"","cannot_infer":"an organization address is not a member grant","status":"published"}'
 
 frag() { entry world_fragment "{\"fragment_id\":\"tonight-proof:$1\",\"world\":\"tonight-proof\",\"ordinal\":$2,\"subject_address\":\"$3\",\"surface_grammar\":\"$4\",\"renderer_family\":\"$4\",\"renderer_variant\":\"page\",\"extent\":\"page\",\"source_projection\":\"/_surface/world-material\",\"visible_sections\":\"page\",\"cannot_infer\":\"a fragment is not the subject\",\"status\":\"published\"}"; }
 frag stage 1 place:deep-ellum stage
@@ -88,7 +90,8 @@ cat >"$tmp/foreign/bodies/city.body" <<'JSON'
 JSON
 printf '%s\n' "{\"body_path\":\"$tmp/foreign/bodies/ellum.body\"}" >"$tmp/foreign/receipts/ellum-twin.json"
 printf '%s\n' "{\"body_path\":\"$tmp/foreign/bodies/city.body\"}" >"$tmp/foreign/receipts/city-twin.json"
-# /watch uses the video grid; the World above uses the separate video shelf.
+# An observed, unbound video source is not automatically installed on /watch.
+# World recordings below are admitted through their own programme records.
 cat >"$tmp/foreign/bodies/grid.body" <<'JSON'
 {"items":[{"title":"A walk through the studio","published":"2024-11-27T12:00:00Z","url":"https://grid.test/studio","image":"https://grid.test/studio.jpg","author":"Maya Chen"}]}
 JSON
@@ -99,6 +102,8 @@ matrix="$tmp/matrix.db"
 port=$(python3 -c "import socket; s=socket.socket(); s.bind(('127.0.0.1',0)); print(s.getsockname()[1]); s.close()")
 BONFYRE_CMS_BINARY="$cms" BONFYRE_CMS_DB="$cmsdb" BONFYRE_CMS_SCHEMAS="$schemas" \
 BONFYRE_FOREIGN_ROOT="$tmp/foreign" \
+BONFYRE_ITEM_ARCHIVE_DB="$tmp/absent-items.db" BONFYRE_SUBJECT_FABRIC_DB="$tmp/absent-subject-fabric.db" \
+BONFYRE_SOURCE_FRONTIER_DB="$tmp/absent-frontier.db" BONFYRE_PUBLIC_PROJECTION_DB="$tmp/absent-projection.db" \
   "$web" serve --db "$matrix" --auth-db "$tmp/auth.db" --port "$port" \
   --site-root "$root/site/matrix" >"$tmp/server.log" 2>&1 &
 pid=$!
@@ -115,11 +120,13 @@ get /w/tonight-proof >"$tmp/page.html"
 get /w/stories-only >"$tmp/stories.html"
 get /w/quiet-proof >"$tmp/quiet.html"
 get /watch >"$tmp/grid.html"
+get /w/maker-profile >"$tmp/maker.html"
+get /w/collective-profile >"$tmp/collective.html"
 
-python3 - "$tmp/page.html" "$tmp/stories.html" "$tmp/quiet.html" "$tmp/grid.html" <<'PY' || exit 1
-import html, re, sys
+python3 - "$tmp/page.html" "$tmp/stories.html" "$tmp/quiet.html" "$tmp/grid.html" "$tmp/maker.html" "$tmp/collective.html" <<'PY' || exit 1
+import html, json, re, sys
 
-page, stories, quiet, grid = (open(p, encoding="utf-8").read() for p in sys.argv[1:5])
+page, stories, quiet, grid, maker, collective = (open(p, encoding="utf-8").read() for p in sys.argv[1:7])
 problems = []
 def check(ok, why):
     if not ok: problems.append(why)
@@ -157,9 +164,19 @@ account = [body for body in scripts if "document.currentScript.closest('.ak-bar'
 home = [body for body in scripts if "if(location.pathname!=='/')return;" in body or
         "if(location.pathname!=='/'||" in body]
 check(len(players) == 1, "exactly one player controls the named queue")
-check(len(account) == 1 and "data-account-slot" in account[0], "one scoped native account updater")
-check(len(home) == 2, "only the two path-guarded home enhancements accompany the page")
-check(len(scripts) == len(players) + len(account) + len(home), "no unclassified page scripts")
+check(len(account) == 0 and page.count("data-account-slot") >= 1,
+      "the account access slot is native markup, not a second account updater")
+check(len(home) == 1, "only one path-guarded shared-home enhancement accompanies this World")
+check("Sign in" in visible(page), "public World keeps an explicit account entry point")
+experience = [body for body in scripts if "root.dataset.expView" in body and "data-exp-mode" in body]
+check(len(experience) == 1, "exactly one native experience controller arranges published regions")
+check(len(scripts) == len(players) + len(account) + len(home) + len(experience),
+      "no unclassified page scripts or competing content renderers")
+for body in experience:
+    check(not re.search(r"fetch\(|XMLHttpRequest|innerHTML|outerHTML|document\.write|insertAdjacent|WebSocket|localStorage|eval\(|Function\(", body),
+          "a composable layout changes only visibility, never reads or writes owner material")
+    check("dataset.akRegion" in body and "hidden" in body and "Escape" in body,
+          "native experience has explicit section coordinates, reversible focus and keyboard exit")
 for body in players:
     check(not re.search(r"fetch\(|XMLHttpRequest|innerHTML|outerHTML|document\.write|insertAdjacent|import\s|WebSocket|localStorage", body),
           "the player composes nothing, stores nothing and contacts no host")
@@ -213,15 +230,14 @@ text = visible(page)
 for label in ("Watch", "Latest", "Listen", "What people are saying", "More", "Maya Lee", "Nine Volt Collective", "Deep Ellum regulars", "ellumlistings.test", "citydesk.test"):
     check(label in text, "visible: " + label)
 check('</span><span class="via">' not in page and not re.search(r'</span><time\b', page), "byline tokens keep literal separation")
-check('class="video-grid"' in grid and 'A walk through the studio' in grid,
-      "dated video reaches the grid branch, not only the World shelf")
-check(bool(re.search(r'<span class="by"><span>Maya Chen</span>\s+<span class="via">grid\.test</span>\s+<time>[^<]+</time>', grid)),
-      "video grid separates the distinct author, publisher and date with literal whitespace")
-check('class="page-media-card"' in grid, "media records own a card outside their primary item link")
-check(bool(re.search(r'data-item-detail href="/o/grid-video/[0-9a-f]{24}"',grid)), "same retained video has an exact item page")
-check('data-item-credit href="/people?who=Maya%20Chen&amp;source=grid-video"' in grid, "same video opens observed creator credit, not an inferred member")
-check(bool(re.search(r'data-item-continue href="/feed-use\?context=self&amp;item=grid-video%2F[0-9a-f]{24}"',grid)), "same video reaches the installed app chooser without a duplicate source")
-check('<nav class="page-item-continuations"' in grid, "item choices remain a separate accessible navigation from playback")
+check("<title>Watch</title>" in grid and "Nothing here right now." in visible(grid),
+      "an isolated Watch owner shows an honest empty catalogue without a bound media source")
+check("A walk through the studio" not in grid and "data-item-continue" not in grid,
+      "the unbound video candidate is not inferred to be playable or installed")
+check('<nav class="page-item-continuations"' in page and 'data-item-detail href="/o/' in page,
+      "published World material retains exact item navigation")
+check('data-item-credit href="/people?who=' in page and 'data-item-continue href="/feed-use?context=self&amp;item=' in page,
+      "the World retains observed attribution and an owner-checked app handoff")
 banned = r"\b(worlds?|observed|observation|closure|candidates?|grammars?|projection|retained|admitted|occurrences?|zine|boundary|subject|fragment|renderer|carrier)\b|\b(person|artist|recording|program|community|venue|place):"
 leak = re.findall(banned, text, flags=re.I)
 check(not leak, "no machine vocabulary on the page: %s" % sorted(set(l[0] or l[1] for l in leak)))
@@ -236,11 +252,30 @@ check("Watch" not in stext and "Listen" not in stext, "no empty media headings")
 # A subject with nothing says so plainly.
 check("Nothing here right now." in quiet, "empty page is plain")
 check(not re.search(banned, visible(quiet), flags=re.I), "empty page has no machine vocabulary")
+check('name="aurekai:composition" content="profile"' in maker and 'data-aurekai-pattern="profile"' in maker,
+      "a published person subject selects the shared profile program without a per-person route")
+check('name="aurekai:composition" content="organization"' in collective and 'data-aurekai-pattern="organization"' in collective,
+      "a published organization subject selects its shared composition without a per-org route")
+for body, label in ((maker, "person"),(collective, "organization")):
+    check("Nothing here right now." in visible(body) and "data-item-detail" not in body,
+          label + " without published material invents neither posts nor records")
+for body, subject in ((maker, "person:maya-lee"), (collective, "organization:nine-volt-collective")):
+    template = re.search(r'<template id="bonfyre-surface-scene"[^>]*>(.*?)</template>', body, re.S)
+    check(template is not None, subject + " has a native scene identity carrier")
+    if template:
+        try: scene = json.loads(template.group(1))
+        except (ValueError, TypeError): scene = {}
+        check(scene.get("focus", {}).get("subject_address") == subject,
+              subject + " retains its exact published subject, not a path-derived identity")
+        check(not scene.get("operations", {}).get("apertures"),
+              subject + " empty profile cannot acquire an inferred effect")
 
 if problems:
     print("page composition: FAIL")
     for p in problems: print("  -", p)
     sys.exit(1)
 PY
+node "$root/cmd/BonfyreWebAddress/tests/native_experience_page_test.mjs" "$tmp/page.html" discover
+node "$root/cmd/BonfyreWebAddress/tests/native_experience_page_test.mjs" "$tmp/stories.html" reader
 
 echo 'page composition: PASS'

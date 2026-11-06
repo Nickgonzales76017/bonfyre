@@ -8,7 +8,7 @@ const test=(name,fn,timeout=45000)=>runTest(name,fn,timeout);
 let f,owner,member,outsider,browser;let serial=0;
 beforeAll(async()=>{
  f=await packSetupFixture({beforeServe:({home,env})=>{env.BONFYRE_PUBLIC_PROJECTION_DB=pathJoin(home,'public-projection.db');}});
- for(const type of ['community_body','community_membership','community_post','community_reaction','community_presence','site_presentation'])copyFileSync(pathJoin(root,'cmd/BonfyreCMS/content-types',type+'.json'),pathJoin(f.home,'schemas',type+'.json'));
+ for(const type of ['community_body','community_membership','community_post','community_reaction','community_presence','site_presentation','program_template','program_instance','program_requirement'])copyFileSync(pathJoin(root,'cmd/BonfyreCMS/content-types',type+'.json'),pathJoin(f.home,'schemas',type+'.json'));
  f.run(f.cms,['schema','migrate','--db',f.db,'--schemas',pathJoin(f.home,'schemas')]);
  owner=await f.login('community-owner@example.test');member=await f.login('community-member@example.test');outsider=await f.login('community-outsider@example.test');
  browser=await createRequire(pathJoin(root,'tools/creator-ingest/package.json'))('puppeteer').launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',args:['--disable-background-networking']});
@@ -55,6 +55,66 @@ test('an explicitly created local guild is a real stewarded community, not infer
  expect(f.sql.query('SELECT count(*) n FROM pack_installation').get().n).toBe(0);
  expect(f.authsql.query('SELECT count(*) n FROM institution_grants').get().n).toBe(0);
 });
+test('guild programmes bind exact ProgrammeFabric records to a reviewed guild and preserve membership and evidence boundaries',async()=>{
+ const {key}=await (async()=>{const p=await get('/guild/new');const preview=await send({...form(p.body,'create-guild'),title:'Precision Craft Studio',text:'Document craft safety, shared observations and the work people want to learn.'},owner,'/community/preview');
+  const created=await send(form(preview.body,'create-guild'));expect(created.status).toBe(303);return {key:new URL(created.headers.get('location'),'https://aurekai.life').searchParams.get('community')};})();
+ const root=f.sql.query('SELECT governance_scope FROM community_body WHERE community=?').get(key);expect(root.governance_scope).toBe('local-guild');
+ f.add('program_template',{template_id:'craft-inspection-v1',name:'Workshop Inspection and Learning',archetype:'guild-practice',
+  subject_kinds:['community_body'],semantic_slots:['workshop','observations'],capability_families:['education','documentation'],
+  owner_bindings:{program:'BonfyreProgramFabric'},surface_policy:'member-only',page_policy:'published',
+  description:'A supervised sequence of observations for the workshop. No credentials are awarded.',
+  cannot_infer:'Template alone does not enroll members or grant access.',status:'published'});
+ const linked={instance_id:'craft-sessions-'+key.slice(0,15),template_id:'craft-inspection-v1',
+  owner_subject:'community_body:'+key,site_id:key,archetype:'guild-practice',opened_at:'2026-11-05T00:00:00Z',
+  cannot_infer:'No enrollment or skill validation',status:'published'};
+ f.add('program_instance',linked);
+ f.add('program_requirement',{requirement_id:'inspect-bench-'+key.slice(0,15),instance_id:linked.instance_id,
+  kind:'evidence',statement:'Document bench inspection before supervised work',owner:'community_body:'+key,
+  satisfied_by:'claimed-by-operator',evidence_ref:'PRIVATE-UNVERIFIED-REFERENCE',deadline:'2026-11-25',state:'open',
+  cannot_infer:'An unverified reference does not prove work completed.',status:'published'});
+ const other=await create('Unrelated community');
+ f.add('program_instance',{...linked,instance_id:'unrelated-program-'+key.slice(0,15),owner_subject:'community_body:'+other.key,site_id:other.key});
+ const route=path(key,'programs');
+ expect((await get(route,null)).status).toBe(303);expect((await get(route,outsider)).status).toBe(403);
+ expect((await get(route,member)).status).toBe(403);
+ expect((await get(route,owner)).body).toContain('Workshop Inspection and Learning');
+ const steward=await get(route,owner);expect(steward.status).toBe(200);
+ expect(steward.body).toContain('data-community-programmes');expect(steward.body).toContain('Document bench inspection before supervised work');
+ expect(steward.body).toContain('Retained evidence reference is present');
+ expect(steward.body).not.toContain('PRIVATE-UNVERIFIED-REFERENCE');
+ expect(steward.body).not.toContain('unrelated-program-');
+ expect((await get(path(other.key,'programs'))).status).toBe(400);
+ await join(key);expect((await get(route,member)).status).toBe(403);await accept(key);
+ const participant=await get(route,member);expect(participant.status).toBe(200);
+ expect(participant.body).toContain('Document bench inspection before supervised work');
+ expect(participant.body).not.toContain('Retained evidence reference is present');
+ expect(participant.body).toContain('Document a workshop observation');
+ const before=f.sql.query('SELECT state,satisfied_by,evidence_ref FROM program_requirement WHERE requirement_id=?').get('inspect-bench-'+key.slice(0,15));
+ const note=await publish(key,member,{title:'Bench inspection observation',text:'Visual check completed. Review by workshop steward is still needed.'});
+ expect((await get(path(key,'thread',note.key),null)).body).toContain('Visual check completed');
+ const foreign=await publish(other.key,owner,{title:'Other workshop evidence',text:'A separate community retains its own observation and details.'});
+ f.add('program_requirement',{requirement_id:'guild-source-confirmed-'+key.slice(0,15),instance_id:linked.instance_id,
+  kind:'evidence',statement:'A workshop note requires independent steward review',owner:'community_body:'+key,
+  evidence_ref:'community_post:'+note.key,state:'open',cannot_infer:'A visible note is not proof of competency.',status:'published'});
+ f.add('program_requirement',{requirement_id:'guild-source-wrong-'+key.slice(0,15),instance_id:linked.instance_id,
+  kind:'evidence',statement:'Cross-community evidence must not be linked',owner:'community_body:'+key,
+  evidence_ref:'community_post:'+foreign.key,state:'open',cannot_infer:'Evidence does not cross community authority.',status:'published'});
+ const evidencePage=await get(route,member);expect(evidencePage.status).toBe(200);
+ expect(evidencePage.body).toContain('data-requirement-source-note');
+ expect((evidencePage.body.match(/data-requirement-source-note/g)||[])).toHaveLength(1);
+ expect(evidencePage.body).toContain('post='+note.key);
+ expect(evidencePage.body).not.toContain(foreign.key);
+ expect(evidencePage.body).not.toContain('A separate community retains its own observation');
+ expect(evidencePage.body).not.toContain('PRIVATE-UNVERIFIED-REFERENCE');
+ expect(evidencePage.body).toContain('completion is not verified');
+ const after=f.sql.query('SELECT state,satisfied_by,evidence_ref FROM program_requirement WHERE requirement_id=?').get('inspect-bench-'+key.slice(0,15));
+ expect(after).toEqual(before);
+ const members=await get(path(key,'members'));expect((await send(form(members.body,'revoke'))).status).toBe(303);
+ expect((await get(route,member)).status).toBe(403);
+ expect((await get(route,owner)).status).toBe(200);
+ expect(f.sql.query('SELECT count(*) n FROM pack_installation').get().n).toBe(0);
+});
+
 
 test('ordinary creation previews before writes, commits founding membership atomically, and replays exactly',async()=>{
  const p=await get('/community/new'),before=f.sql.query('SELECT count(*) AS n FROM community_body').get().n,input={...form(p.body,'create'),title:'Unfamiliar repair circle',text:'Share repair questions. Café & community. <script>not executable</script>'};

@@ -59,6 +59,54 @@ test('native inventory and invoke refuse executable Python launchers without exe
   expect(f.calls.length).toBe(1);
 });
 
+test('generic native invoke cannot bypass effect ownership or append mutation arguments to reads', async () => {
+  const f = await fixture();
+  const attempts = [
+    {family:'BonfyreCMS',args:['entry','create','pack_activation','{}']},
+    {family:'BonfyreCMS',args:['schema','list','--db','/tmp/unowned.db']},
+    {family:'BonfyreCMS',args:['pack-lifecycle','--operation','activate']},
+    {family:'BonfyreProject',args:['foreign','twins','--query','source','--mutate','true']},
+    {family:'BonfyreProject',args:['foreign','twins','--page','1','--page','2']},
+  ];
+  for (const attempt of attempts)
+    await expect(f.project.call('native_tool_invoke', attempt)).rejects.toThrow(/reviewed execution owner|read-only/);
+  expect(f.calls.length).toBe(0);
+});
+
+test('warehouse native read-only contract admits exact estate reads but not seed effects', async () => {
+  const f = await fixture();
+  const familiesWithWarehouse = {...families,
+    'bonfyre-warehouse':'BonfyreWarehouse',
+    'bonfyre-warehouse-seed':'BonfyreWarehouseSeed'};
+  await writeFile(path.join(f.managed,'.families.json'),JSON.stringify(familiesWithWarehouse));
+  for(const name of ['bonfyre-warehouse','bonfyre-warehouse-seed'])
+    await writeFile(path.join(f.managed,name),Buffer.from([0xcf,0xfa,0xed,0xfe,0]),{mode:0o755});
+  const estate=path.join(f.home,'.bonfyre','estate-local');
+  for(const cmd of ['status','integrity','cohorts','verify']) {
+    const result=await f.project.call('native_tool_invoke',
+      {family:'BonfyreWarehouse',args:[cmd,'--estate',estate]});
+    expect(result.status).toBe('passed');
+  }
+  for(const cmd of ['head','plan']) {
+    const result=await f.project.call('native_tool_invoke',
+      {family:'BonfyreWarehouse',args:[cmd,'--estate',estate,'--semantic-kind',
+        'cms.objects','--kind','parquet']});
+    expect(result.status).toBe('passed');
+  }
+  expect(f.calls).toHaveLength(6);
+  const forbidden=[
+    {family:'BonfyreWarehouse',args:['seed','--apply','--estate',estate]},
+    {family:'BonfyreWarehouse',args:['status','--estate',estate,'--apply']},
+    {family:'BonfyreWarehouse',args:['status','--estate','/tmp/other']},
+    {family:'BonfyreWarehouse',args:['head','--estate',estate,'--semantic-kind','x;drop','--kind','parquet']},
+    {family:'BonfyreWarehouse',args:['head','--estate',estate,'--semantic-kind','cms.objects','--kind','sqlite']},
+    {family:'BonfyreWarehouseSeed',args:['seed','--apply','--estate',estate]}
+  ];
+  for(const args of forbidden)
+    await expect(f.project.call('native_tool_invoke',args)).rejects.toThrow(/reviewed execution owner|read-only/);
+  expect(f.calls).toHaveLength(6);
+});
+
 test('estate capability read composes native tools, models, adapters and fleet without provider execution', async () => {
   const f = await fixture();
   const registryDir = path.join(f.home, '.local', 'share', 'bonfyre');

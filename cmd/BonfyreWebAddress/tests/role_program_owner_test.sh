@@ -55,6 +55,22 @@ done
 curl -fsS -X POST -H "$host" -d '{"email":"roles@foundry.test","name":"Role Fixture","password":"a-long-enough-passphrase"}' "$base/signup" >/dev/null
 session=$(curl -fsS -X POST -H "$host" -d '{"email":"roles@foundry.test","password":"a-long-enough-passphrase"}' "$base/login" | python3 -c 'import json,sys; print(json.load(sys.stdin)["session"]["token"])')
 [ -n "$session" ]
+[ "$(curl -sS -o /dev/null -w '%{http_code}' -H "$host" "$base/roles")" = 401 ]
+[ "$(curl -sS -o /dev/null -w '%{http_code}' -H 'Host: other.example.test' -H "Cookie: bonfyre_session=$session" "$base/roles")" = 404 ]
+[ "$(curl -sS -o /dev/null -w '%{http_code}' -X POST -H "$host" -H "Cookie: bonfyre_session=$session" "$base/roles")" = 405 ]
+curl -fsS -H "$host" -H "Cookie: bonfyre_session=$session" "$base/roles" >"$tmp/roles.html"
+grep -q 'data-role-directory' "$tmp/roles.html"
+[ "$(grep -o 'data-role-program' "$tmp/roles.html" | wc -l | tr -d ' ')" = 3 ]
+grep -q 'name="role" value="internet-operator"' "$tmp/roles.html"
+grep -q 'Authority required, not granted' "$tmp/roles.html"
+grep -q 'Operations not yet connected' "$tmp/roles.html"
+grep -q 'No operating postures are recorded' "$tmp/roles.html"
+curl -fsS -H "$host" -H "Cookie: bonfyre_session=$session" "$base/roles?q=internet" >"$tmp/roles.html"
+[ "$(grep -o 'data-role-program' "$tmp/roles.html" | wc -l | tr -d ' ')" = 1 ]
+grep -q 'Internet Operator' "$tmp/roles.html"
+if grep -q 'Brand Operator' "$tmp/roles.html"; then echo 'role directory search leaked unrelated roles' >&2; exit 1; fi
+[ "$(curl -sS -o /dev/null -w '%{http_code}' -H "$host" -H "Cookie: bonfyre_session=$session" "$base/roles?page=9999")" = 400 ]
+[ "$(sqlite3 "$cmsdb" "SELECT count(*) FROM role_assignment;")" = 0 ]
 code=$(curl -sS -o /dev/null -w '%{http_code}' -X POST -H "$host" -H "Cookie: bonfyre_session=$session" -H 'Origin: http://aurekai.life' \
   -d 'role=internet-operator&scope=community:fixture&return=/subjects' "$base/roles/assume")
 [ "$code" = 303 ]
@@ -79,9 +95,42 @@ printf '%s' "$workspace" | grep -q 'not authority grants'
 printf '%s' "$workspace" | grep -q '"context_scope":"community:fixture"'
 second_workspace=$(curl -fsS -H "$host" -H "Cookie: bonfyre_session=$session" "$base/roles/workspace?assignment=$second")
 printf '%s' "$second_workspace" | grep -q '"context_scope":"community:second"'
+curl -fsS -H "$host" -H "Cookie: bonfyre_session=$session" "$base/roles" >"$tmp/roles.html"
+grep -q 'data-role-assignment' "$tmp/roles.html"
+grep -q "href=\"/roles?assignment=$assignment\"" "$tmp/roles.html"
+grep -q "href=\"/roles?assignment=$second\"" "$tmp/roles.html"
+curl -fsS -H "$host" -H "Cookie: bonfyre_session=$session" "$base/roles?assignment=$assignment" >"$tmp/role-detail.html"
+grep -q 'data-role-posture' "$tmp/role-detail.html"
+grep -q 'community:fixture' "$tmp/role-detail.html"
+grep -q 'Work queues' "$tmp/role-detail.html"
+grep -q 'Operations not yet bound' "$tmp/role-detail.html"
+grep -q 'Authority still required' "$tmp/role-detail.html"
+grep -q "href=\"/roles/workspace?assignment=$assignment\"" "$tmp/role-detail.html"
+[ "$(sqlite3 "$cmsdb" "SELECT count(*) FROM role_assignment;")" = 2 ]
 curl -fsS -X POST -H "$host" -d '{"email":"other-role@foundry.test","name":"Other","password":"a-long-enough-passphrase"}' "$base/signup" >/dev/null
 other=$(curl -fsS -X POST -H "$host" -d '{"email":"other-role@foundry.test","password":"a-long-enough-passphrase"}' "$base/login" | python3 -c 'import json,sys; print(json.load(sys.stdin)["session"]["token"])')
 [ "$(curl -sS -o /dev/null -w '%{http_code}' -H "$host" -H "Cookie: bonfyre_session=$other" "$base/roles/workspace?assignment=$assignment")" = 404 ]
+[ "$(curl -sS -o /dev/null -w '%{http_code}' -H "$host" -H "Cookie: bonfyre_session=$other" "$base/roles?assignment=$assignment")" = 404 ]
+curl -fsS -H "$host" -H "Cookie: bonfyre_session=$other" "$base/roles" >"$tmp/other-roles.html"
+if grep -q "$assignment" "$tmp/other-roles.html"; then echo 'personal role assignments leaked to another actor' >&2; exit 1; fi
 [ "$(curl -sS -o /dev/null -w '%{http_code}' -X POST -H "$host" -H "Cookie: bonfyre_session=$session" -H 'Origin: http://aurekai.life' -d 'role=not-a-role&scope=global' "$base/roles/assume")" = 404 ]
 
+grep -q 'action="/roles/leave"' "$tmp/role-detail.html"
+[ "$(curl -sS -o /dev/null -w '%{http_code}' -X POST -H "$host" -H "Cookie: bonfyre_session=$other" -H 'Origin: http://aurekai.life' -d "assignment=$assignment" "$base/roles/leave")" = 404 ]
+[ "$(curl -sS -o /dev/null -w '%{http_code}' -X POST -H "$host" -H "Cookie: bonfyre_session=$session" -d "assignment=$assignment" "$base/roles/leave")" = 403 ]
+[ "$(curl -sS -o /dev/null -w '%{http_code}' -X POST -H "$host" -H "Cookie: bonfyre_session=$session" -H 'Origin: https://untrusted.test' -d "assignment=$assignment" "$base/roles/leave")" = 403 ]
+[ "$(curl -sS -o /dev/null -w '%{http_code}' -H "$host" -H "Cookie: bonfyre_session=$session" "$base/roles/leave")" = 405 ]
+[ "$(sqlite3 "$cmsdb" "SELECT state FROM role_assignment WHERE assignment_id='$assignment'")" = assumed ]
+[ "$(curl -sS -o /dev/null -w '%{http_code}' -X POST -H "$host" -H "Cookie: bonfyre_session=$session" -H 'Origin: http://aurekai.life' -d "assignment=$assignment" "$base/roles/leave")" = 303 ]
+[ "$(sqlite3 "$cmsdb" "SELECT state FROM role_assignment WHERE assignment_id='$assignment'")" = ended ]
+[ "$(sqlite3 "$cmsdb" "SELECT state FROM role_assignment WHERE assignment_id='$second'")" = assumed ]
+[ "$(curl -sS -o /dev/null -w '%{http_code}' -H "$host" -H "Cookie: bonfyre_session=$session" "$base/roles?assignment=$assignment")" = 404 ]
+[ "$(curl -sS -o /dev/null -w '%{http_code}' -H "$host" -H "Cookie: bonfyre_session=$session" "$base/roles/workspace?assignment=$assignment")" = 404 ]
+[ "$(curl -sS -o /dev/null -w '%{http_code}' -X POST -H "$host" -H "Cookie: bonfyre_session=$session" -H 'Origin: http://aurekai.life' -d "assignment=$assignment" "$base/roles/leave")" = 303 ]
+curl -fsS -H "$host" -H "Cookie: bonfyre_session=$session" "$base/roles" >"$tmp/roles.html"
+if grep -q "href=\"/roles?assignment=$assignment\"" "$tmp/roles.html"; then echo 'ended role still appears current' >&2; exit 1; fi
+grep -q "href=\"/roles?assignment=$second\"" "$tmp/roles.html"
+[ "$(sqlite3 "$cmsdb" "SELECT count(*) FROM role_assignment WHERE actor_subject='user:1'")" = 2 ]
+[ "$(curl -sS -o /dev/null -w '%{http_code}' -X POST -H "$host" -H "Cookie: bonfyre_session=$session" -H 'Origin: http://aurekai.life' -d 'role=internet-operator&scope=community:fixture&return=/roles' "$base/roles/assume")" = 303 ]
+[ "$(sqlite3 "$cmsdb" "SELECT state FROM role_assignment WHERE assignment_id='$assignment'")" = assumed ]
 echo 'role program owner: PASS'

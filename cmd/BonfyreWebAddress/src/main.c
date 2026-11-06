@@ -133,6 +133,7 @@ static const char *opt(int argc, char **argv, const char *name) { for (int i = 2
 #include "credit_profile_projection.h"
 #include "world_federation_and_protocols.h"
 #include "governance_self_and_discovery.h"
+#include "role_directory.h"
 #include "private_session_and_flow_routes.h"
 #include "machine_web_and_websub.h"
 #include "source_push_operations.h"
@@ -639,6 +640,8 @@ static int serve(BfMatrix *m, int argc, char **argv) {
         if(!handled) handled=govern_act(method,target,bodyp,b,host,bearer,auth_db);
         if(!handled) handled=serve_role_assume(method,target,bodyp,b,host,bearer,auth_db);
         if(!handled) handled=serve_role_workspace(method,target,query,bearer,auth_db);
+        if(!handled) handled=serve_role_directory(method,target,query,host,bearer,auth_db);
+        if(!handled) handled=serve_role_leave(method,target,bodyp,b,host,bearer,auth_db);
         if(!handled && root && !strcmp(target,"/saved") && !strcmp(method,"GET"))
             handled=emit_saved_page(root,host,bearer,auth_db);
         if(!handled && root && !strncmp(target,"/o/",3))

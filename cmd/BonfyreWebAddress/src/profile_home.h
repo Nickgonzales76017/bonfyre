@@ -107,7 +107,7 @@ typedef struct {const char *title,*href,*glyph,*description;} PhJourneyLink;
 static void ph_journey(const PhSite *site){
     static const PhJourneyLink paths[][3]={
         {{"Sources","/sources",BF_ICON_RSS,"Read published sources"},{"Recipes","/recipes",BF_ICON_BOOK,"Search and plan from retained recipes"},{"Feeds","/channels",BF_ICON_ACTIVITY,"Explore publishers and live channels"}},
-        {{"Profile","/profile",BF_ICON_USER,"Your own account and sites"},{"Collections","/profile?tab=saved",BF_ICON_BOOKMARK,"Private saved sources and collections"},{NULL,NULL,NULL,NULL}},
+        {{"Profile","/profile",BF_ICON_USER,"Your own account and sites"},{"Collections","/profile?tab=saved",BF_ICON_BOOKMARK,"Private saved sources and collections"},{"Operating roles","https://aurekai.work/roles",BF_ICON_BRIEFCASE,"Choose your scoped working posture"}},
         {{"Posts",NULL,BF_ICON_FILE_TEXT,"Write, review and publish"},{"Worlds",NULL,BF_ICON_WORLD,"Build spaces with retained references"},{"Programs","/programs?context=self",BF_ICON_BOARD,"Continue work in installed programs"}}
     };
     static const char *stages[]={"discover","keep","create"};

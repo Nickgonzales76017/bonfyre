@@ -247,14 +247,27 @@ denied_hook_read=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bea
     exit 1
 }
 sqlite3 "$db" "UPDATE api_keys SET scopes='api:jobs:create,job:transcribe:enqueue' WHERE key='$key';"
-created=$(curl -s -o "$run_dir/queued.json" -w '%{http_code}' -X POST \
+before_enqueue=$(sqlite3 "$db" "SELECT count(*) FROM jobs;")
+key_only=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
     -H "Authorization: Bearer $key" -H "Content-Type: application/json" \
-    -d '{"type":"transcribe","input":"fixture-only","priority":100}' "http://127.0.0.1:$port/api/jobs")
-[ "$created" = 202 ] || {
-    echo "API contract: exact type-scoped job creation returned $created" >&2
-    exit 1
+    -d '{"type":"transcribe","input":"fixture-only","priority":100}' \
+    "http://127.0.0.1:$port/api/jobs?context=self&pack=api-scope")
+[ "$key_only" = 403 ] || {
+    echo "API contract: type-scoped API key bypassed native actor" >&2; exit 1
 }
-python3 -c 'import json,sys; x=json.load(open(sys.argv[1])); assert x["data"]["type"]=="transcribe" and x["data"]["status"]=="queued"' "$run_dir/queued.json"
+review_needed=$(curl -s -o "$run_dir/job-review.json" -w '%{http_code}' -X POST \
+    -H "Authorization: Bearer $key" -H "X-Bonfyre-Session: $session" \
+    -H "Content-Type: application/json" \
+    -d '{"type":"transcribe","input":"fixture-only","priority":100}' \
+    "http://127.0.0.1:$port/api/jobs?context=self&pack=api-scope")
+[ "$review_needed" = 409 ] || {
+    echo "API contract: unreviewed generic queue admission returned $review_needed" >&2; exit 1
+}
+python3 -c 'import json,sys; x=json.load(open(sys.argv[1])); assert x["state"]=="review_required" and x["admitted"] is False and x["next_owner"]=="BonfyreReview/BonfyreQueue"' "$run_dir/job-review.json"
+after_enqueue=$(sqlite3 "$db" "SELECT count(*) FROM jobs;")
+[ "$before_enqueue" = "$after_enqueue" ] || {
+    echo "API contract: review refusal still wrote a queue job" >&2; exit 1
+}
 bad_type=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
     -H "Authorization: Bearer $key" -H "Content-Type: application/json" \
     -d '{"type":"pay","input":"effect-not-authorized"}' "http://127.0.0.1:$port/api/jobs")

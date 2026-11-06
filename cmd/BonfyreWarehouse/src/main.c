@@ -92,8 +92,11 @@ static int integrity(sqlite3 *db) {
       &dangling_receipt)) return 0;
   if (table_exists(db, "warehouse_snapshot_head") == 1 &&
       !count_rows(db, "SELECT COUNT(*) FROM warehouse_snapshot_head h "
-        "WHERE NOT EXISTS(SELECT 1 FROM source_binding sb WHERE "
-        "sb.semantic_kind=h.semantic_kind AND sb.representation_kind=h.representation_kind) "
+        "WHERE (SELECT COUNT(*) FROM source_binding sb "
+        "WHERE sb.semantic_kind=h.semantic_kind)!=1 "
+        "OR NOT EXISTS(SELECT 1 FROM representation_target rt "
+        "WHERE rt.semantic_kind=h.semantic_kind "
+        "AND rt.representation_kind=h.representation_kind AND rt.status='physical') "
         "OR NOT EXISTS(SELECT 1 FROM representation_instance ri WHERE ri.id=h.representation_id "
         "AND ri.digest=h.digest AND ri.frontier=h.frontier AND ri.state='physical' "
         "AND EXISTS(SELECT 1 FROM physical_realization pr WHERE pr.representation_id=ri.id "
@@ -105,6 +108,9 @@ static int integrity(sqlite3 *db) {
     (long long)dangling_receipt, (long long)stale_head);
   return 1;
 }
+
+#include "cohort_audit.h"
+#include "warehouse_verify.h"
 static int head(sqlite3 *db, const char *semantic, const char *kind, int explain) {
   if (!key(semantic) || !key(kind)) return 0;
   if (table_exists(db, "warehouse_snapshot_head") != 1) {
@@ -117,6 +123,9 @@ static int head(sqlite3 *db, const char *semantic, const char *kind, int explain
     "AND ri.digest=h.digest AND ri.frontier=h.frontier AND ri.created_at=h.created_at "
     "AND ri.state='physical' AND EXISTS(SELECT 1 FROM physical_realization pr "
     "WHERE pr.representation_id=ri.id AND pr.available=1 AND pr.digest=ri.digest)) "
+    "AND (SELECT COUNT(*) FROM source_binding sb WHERE sb.semantic_kind=h.semantic_kind)=1 "
+    "AND EXISTS(SELECT 1 FROM representation_target rt WHERE rt.semantic_kind=h.semantic_kind "
+    "AND rt.representation_kind=h.representation_kind AND rt.status='physical') "
     "FROM warehouse_snapshot_head h WHERE h.semantic_kind=? AND h.representation_kind=?";
   const char *plan_sql = "EXPLAIN QUERY PLAN SELECT generation FROM warehouse_snapshot_head "
     "WHERE semantic_kind=? AND representation_kind=?";
@@ -152,14 +161,14 @@ static int head(sqlite3 *db, const char *semantic, const char *kind, int explain
   return good;
 }
 static int usage(void) {
-  fputs("usage: bonfyre-warehouse status|integrity --estate ABSOLUTE_DIR\n"
+  fputs("usage: bonfyre-warehouse status|integrity|cohorts|verify --estate ABSOLUTE_DIR\n"
         "       bonfyre-warehouse head|plan --estate ABSOLUTE_DIR --semantic-kind NAME --kind FORMAT\n", stderr);
   return 2;
 }
 int main(int argc, char **argv) {
   const char *action = argc > 1 ? argv[1] : NULL;
   const char *estate = NULL, *semantic = NULL, *kind = NULL;
-  if (!action || (strcmp(action, "status") && strcmp(action, "integrity") &&
+  if (!action || (strcmp(action, "status") && strcmp(action, "integrity") && strcmp(action, "cohorts") && strcmp(action, "verify") &&
                   strcmp(action, "head") && strcmp(action, "plan")))
     return usage();
   for (int i = 2; i < argc; i += 2) {
@@ -170,7 +179,7 @@ int main(int argc, char **argv) {
     else return usage();
   }
   if (!estate || estate[0] != '/' || strlen(estate) >= PATH_MAX - 40) return usage();
-  if (!strcmp(action, "status") || !strcmp(action, "integrity")) {
+  if (!strcmp(action, "status") || !strcmp(action, "integrity") || !strcmp(action, "cohorts") || !strcmp(action, "verify")) {
     if (semantic || kind) return usage();
   }
   else if (!semantic || !kind) return usage();
@@ -194,7 +203,9 @@ int main(int argc, char **argv) {
     return 1;
   }
   int ok = !strcmp(action, "status") ? status(db) :
-    !strcmp(action, "integrity") ? integrity(db) : head(db, semantic, kind, !strcmp(action, "plan"));
+    !strcmp(action, "integrity") ? integrity(db) :
+    !strcmp(action, "cohorts") ? warehouse_cohorts(db) :
+    !strcmp(action, "verify") ? warehouse_verify(db) : head(db, semantic, kind, !strcmp(action, "plan"));
   if (sqlite3_exec(db, "ROLLBACK", NULL, NULL, NULL) != SQLITE_OK) ok = 0;
   sqlite3_close(db);
   if (!ok) fputs("invalid or unavailable manifold metadata\n", stderr);

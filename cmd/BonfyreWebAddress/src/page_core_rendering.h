@@ -1626,7 +1626,7 @@ static void page_emit_item_continuations(const PageItem *item) {
         fputs("\">Credited maker</a>",stdout);
     }
     fputs("<a data-item-keep href=\"/o/",stdout);page_url_escape(item->source);
-    fputs("/",stdout);page_url_escape(item->key);fputs("#item-keep\">Keep for my Worlds</a>",stdout);
+    fputs("/",stdout);page_url_escape(item->key);fputs("#item-keep\">Keep for later</a>",stdout);
     fputs("<a data-item-continue href=\"/feed-use?context=self&amp;item=",stdout);
     page_url_escape(item->source); fputs("%2F",stdout); page_url_escape(item->key);
     fputs("\">Use in my apps</a></nav>",stdout);
