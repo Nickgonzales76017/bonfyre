@@ -64,6 +64,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y shellcheck ripgrep jq
 
+      # cmd/BonfyreAtlas generates its field table from atlas-fields.cue.
+      - uses: cue-lang/setup-cue@v1.0.0
       - name: Verify observation, invalidation, packaging and argument boundaries
         run: |
           # project reads query the Atlas through its native owner binary.
@@ -390,6 +392,10 @@ jobs:
       # make compiles the experience declarations into C headers with bun when a
       # fresh checkout leaves their inputs newer than the generated output.
       - uses: oven-sh/setup-bun@v2
+      # tools/domain_profiles.mk compiles the domain profiles with Zig.
+      - uses: mlugg/setup-zig@v1
+        with:
+          version: 0.13.0
 
       - name: Install native URL dependencies
         run: |
