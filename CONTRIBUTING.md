@@ -90,6 +90,18 @@ Keep facts, necessary qualifications, quantities, citations and supported commer
 
 For client tools and outreach, also use [client-sales](.agents/skills/client-sales/SKILL.md). Introductory phone and video calls are free; the current 15-draft batch awaits Nick's approval.
 
+## README acceptance contract
+
+Every new or materially revised README must let an unfamiliar reader answer, without sales prose or internal shorthand:
+
+1. **Business:** who uses it, the concrete outcome, and how it fits Aurekai's reusable-software investment model.
+2. **Project:** what this repository actually owns, what it consumes or produces, and whether it is a public experience, active source, experimental component, scaffold or historical extraction.
+3. **Technical:** the runnable entry point, dependencies, source/contract owner, and a reproducible test or witness.
+4. **Maturity:** distinguish declared, implemented, measured, locally tested and publicly deployed. Quote the specific revision or environment whenever numbers are included.
+5. **Limits:** do not turn a provider configuration into a signed partnership, a demo into a customer deployment, an agent proposal into an approved action, or a quote into revenue.
+
+Retain domain-specific detail: Bonfÿre repositories should lead with technical ownership and verification; Aurekai products should lead with audience, workflow and observable outcome. Reference the [shared business/project/technical model](docs/aurekai-bonfyre-model.md). Do not paste a generic company pitch into every README.
+
 ## License
 
 Review the repository [license](LICENSE) and any component-specific notices before contributing. This guide does not create a separate contributor license or override an existing license.
