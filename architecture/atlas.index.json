@@ -1518,7 +1518,7 @@
         "integrations/browser/tests/provider-continuation.test.mjs",
         "integrations/browser/tests/provider-continuation.browser.test.mjs",
         "integrations/mcp/tests/fabric_push.test.mjs verifies encrypted RFC8291 packets, actual loopback HTTP signature and content verification, recipient isolation, revocation, bounded retries and uncertain-send preservation",
-        "cmd/BonfyreAuth/tests/background_access_test.py compiles the current native account policy helper and verifies active-user, institution-role and household-access parity",
+        "cmd/BonfyreAuth/tests/background_access_test.sh compiles the current native account policy helper and verifies active-user, institution-role and household-access parity",
         "integrations/browser/tests/aurekai-push.test.mjs",
         "integrations/browser/tests/aurekai-push.browser.test.mjs",
         "integrations/browser/tests/aurekai-push-rail.browser.test.mjs",
@@ -4187,8 +4187,8 @@
       "subscribes": [],
       "views": [],
       "witnesses": [
-        "cmd/BonfyreAuth/tests/institution_members_test.py exercises existing-account team changes, generated ancestry, scope isolation, expiry-bounded delegation, self-change denial, escaped member output, pagination and revocation while a mutation waits for the writer lock",
-        "cmd/BonfyreAuth/tests/institution_members_test.py checks stale review refusal including a concurrent writer, no-grant expectations, expired grants, expiry preservation and temporary administrator caps",
+        "cmd/BonfyreAuth/tests/institution_members_test.sh exercises existing-account team changes, generated ancestry, scope isolation, expiry-bounded delegation, self-change denial, escaped member output, pagination and revocation while a mutation waits for the writer lock",
+        "cmd/BonfyreAuth/tests/institution_members_test.sh checks stale review refusal including a concurrent writer, no-grant expectations, expired grants, expiry preservation and temporary administrator caps",
         "components/BonfyreServiceSite/tests/training-creator.test.mjs verifies credential stdin login, actor closure, institution-authorize-stdin and logout-stdin against real native sessions and revoked grants",
         "scripts/tests/catalog_persona_retirement.test.mjs invokes the real persona provisioner with mocked SSH, validates all DEMO contract rows before account calls, rejects malformed signup IDs before grants, keeps passwords off argv/stdout, and preserves an existing credential file on failure; it does not provision live accounts",
         "packs/no-simulation/command-evidence-20261010.tsv",
@@ -7502,8 +7502,8 @@
       "views": [],
       "witnesses": [
         "cmd/BonfyreModel/tests/representation_passport_test.sh",
-        "cmd/BonfyreModel/tests/manifest_test.py",
-        "cmd/BonfyreModel/tests/file_verification_test.py verifies exact synthetic bytes, mutation and absent-cache refusal, directory read errors, unknown-hash persistence and database constraint failure",
+        "cmd/BonfyreModel/tests/manifest_test.sh",
+        "cmd/BonfyreModel/tests/file_verification_test.sh verifies exact synthetic bytes, mutation and absent-cache refusal, directory read errors, unknown-hash persistence and database constraint failure",
         "packs/no-simulation/model-hash-20261013/benchmark.json records five alternating native verify runs on 128 MiB plus 17 synthetic bytes with exact digests; median 0.718 to 0.127 seconds on this Mac",
         "packs/no-simulation/models-compression-guide-20261011.json",
         "cmd/BonfyreModel/tests/local_test.sh checks bonfyre-model local against a fixture ledger: a held checkpoint reads loaded, one larger than spendable memory reads waits"
@@ -8596,7 +8596,7 @@
       "witnesses": [
         "packs/no-simulation/command-evidence-20261010.tsv",
         "cmd/BonfyreQuant/tests/roundtrip_test.sh measures named tensors of a real safetensors model and refuses with no model, a text file, or a tensor that is not there",
-        "cmd/BonfyreQuant/tests/physical_roundtrip_test.py",
+        "cmd/BonfyreQuant/tests/physical_roundtrip_test.sh",
         "packs/no-simulation/models-compression-guide-20261011.json",
         "cmd/BonfyreQuant/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.quant=fail"
       ]
@@ -10186,7 +10186,7 @@
       "subscribes": [],
       "views": [],
       "witnesses": [
-        "cmd/BonfyreSwarm/tests/scoped_transfer_test.py",
+        "cmd/BonfyreSwarm/tests/scoped_transfer_test.c",
         "integrations/mcp/tests/fabric_output_transfer.test.mjs exercises actual native peers against a retained scoped Fabric output, current account authority, exact replay across restart, revocation before receiver dispatch, owner shutdown, and unavailable evidence",
         "packs/no-simulation/command-evidence-20261010.tsv",
         "cmd/BonfyreSwarm/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.swarm=pass"
@@ -12750,7 +12750,9 @@
       "family": "surface",
       "forbidden_inferences": [
         "a DesignFingerprint -> copied Ghost code, a Ghost backend, paid assets, semantic truth, source admission, audience entitlement or an authority to act",
-        "visual similarity -> a material claim, suitability or a right to publish"
+        "visual similarity -> a material claim, suitability or a right to publish",
+        "a design_fingerprint pattern -> the design was reviewed or its route presentation selected; the pattern is a heuristic over the name and measured anatomy",
+        "a matching token set -> visual parity with the design; layout and interaction stay with each page owner"
       ],
       "internal_calculi": [
         "ghost:<template> is stable reference-candidate identity; the current vector is a bounded marketplace-metadata-derived comparison aid and is checked unique across the 238-reference census, but it is not evidence of an independently observed complete page profile"
@@ -12782,14 +12784,18 @@
         "cmd/BonfyreCMS/tools/ghost_public_anatomy.mjs",
         "cmd/BonfyreCMS/tools/ghost_marketplace_templates.test.mjs",
         "cmd/BonfyreCMS/tools/ghost_public_anatomy.test.mjs",
-        "cmd/BonfyreCMS/tools/install_ghost_marketplace_templates.sh"
+        "cmd/BonfyreCMS/tools/install_ghost_marketplace_templates.sh",
+        "packs/aurekai/presentation/design-intake.sql",
+        "packs/aurekai/presentation/design-review.sql",
+        "cmd/BonfyreCMS/Makefile"
       ],
       "subscribes": [],
       "views": [],
       "witnesses": [
         "cmd/BonfyreCMS/Makefile presentation-template-test emits and validates exactly 238 unique reference candidates and vectors, explicitly marked not selectable SiteProfiles",
         "cmd/BonfyreCMS/tools/ghost_public_anatomy.test.mjs measures public landmark, masthead, hero, editorial, media-geometry, interaction and typed-slot evidence from a bounded fixture; it proves the output retains no donor markup and carries the non-authority refusal",
-        "2026-09-29 the Bun Ghost compiler reproduced all 238 Python marketplace candidates and 238 fingerprints exactly, and Makefile presentation-template-test verifies the candidate-versus-observation boundary"
+        "2026-09-29 the Bun Ghost compiler reproduced all 238 Python marketplace candidates and 238 fingerprints exactly, and Makefile presentation-template-test verifies the candidate-versus-observation boundary",
+        "2026-11-06 make -C cmd/BonfyreCMS design-intake measured 91 Stitch reference designs (8 archives, duplicates collapsed) from code.html into 91 design_fingerprint rows in the live CMS (reference_source stitch-20261104); a re-run imported 0, so a daily drop is idempotent. design-review placed all 91 on existing routes by pattern, and the most common declared token set across 86 designs became the aurekai-stitch-night template, after which 82 of 91 match it."
       ]
     },
     "destination-release": {
@@ -15159,7 +15165,6 @@
         "scripts/tests/source-publication-browser.test.mjs",
         "site/matrix/surfaces/link.html",
         "site/matrix/surfaces/link.json",
-        "site/matrix/surfaces/build/link_workspace_contract.mjs",
         "site/matrix/surfaces/build/link_workspace_test.sh",
         "components/BonfyreProject/tests/foreign_release_projection_test.sh",
         "cmd/BonfyreWebAddress/src/main.c",
@@ -17273,6 +17278,7 @@
         "owns reduction mechanics, not the meaning of the structure reduced"
       ],
       "known_gaps": [
+        "the reducing binary vendor/hvm4/src/hvm4 is built on the estate machine from the pinned submodule's hvm.c and is not committed; a fresh checkout has the source and the witness but must build the binary before the witness can run",
         "this entry carried `implemented` with a source_path and a witness that were both .py.archive, and a known_gap reading \"installed binary is HVM2 (2.0.22); HVM4 upgrade + hvm-lang front-end still pending\". All three were stale: vendor/hvm4/src/hvm4 is a built arm64 binary answering HVM 4.0 that reduces the bench programs vendored beside it. The capability arrived and was never told to the registry, which went on citing evidence that had been retired -- and a capability the estate cannot see is one it will rebuild by hand.",
         "hvm-lang is still not present; programs are written in HVM4 core syntax, and nothing here compiles a higher-level front end down to it",
         "the reduction is sequential; HVM4 describes itself as a sequential Interaction Calculus runtime, so nothing in this estate is yet getting parallel reduction out of it",
@@ -17289,7 +17295,6 @@
       "semantic_question": "What is the bounded reduction of this selected symbolic or computational structure?",
       "source_paths": [
         "vendor/hvm4/src/hvm.c",
-        "vendor/hvm4/src/hvm4",
         "components/BonfyreControlPlane/substrate_hvm.py.archive"
       ],
       "subscribes": [],
@@ -23221,7 +23226,9 @@
         "a template -> the publication it was studied from; wearing a newsroom's typography does not make anything on the page reported, edited or filed",
         "a design language -> a claim about the material; confidence, urgency and authority are typographic choices this estate made and say nothing about how sure anybody is of what is written",
         "a template applying -> a template being appropriate; the address will dress any world in any language, and nothing checks that the result is honest",
-        "a data-bf-profile attribute on a territory, room or member page -> that the page is drawn in that template; since 2026-10-12 those pages share one dress and the attribute records only which row was resolved"
+        "a data-bf-profile attribute on a territory, room or member page -> that the page is drawn in that template; since 2026-10-12 those pages share one dress and the attribute records only which row was resolved",
+        "a route_presentation row -> the route's page matches its Stitch design; a row chooses rhythm and tokens, design parity is reviewed per design in COVERAGE.tsv",
+        "a design system arriving as rows -> new rendering code for that design system; the renderer is unchanged and unsupported layout is an owner gap, not a per-design file"
       ],
       "internal_calculi": [
         "six templates authored as CMS rows and served at /_surface/presentation-templates, each carrying a layout_tokens object over a closed list of presentation roles -- ground, ink, display, accent, muted, rule, panel, three faces, the display metrics, radius, card border and shadow, gap and measure. The reader resolves a template from the address first and the authored world second, parses the tokens, and sets them inline on the body so no selector has to out-specify another. A role a template does not mention keeps the character's own."
@@ -23262,7 +23269,13 @@
         "site/matrix/surfaces/build/presentation-templates.jsonl",
         "site/matrix/surfaces/build/install_authored_rows.mjs",
         "site/matrix/surfaces/world.html",
-        "site/matrix/world.css"
+        "site/matrix/world.css",
+        "cmd/BonfyreCMS/content-types/route_presentation.json",
+        "cmd/BonfyreWebAddress/src/route_presentation.h",
+        "cmd/BonfyreWebAddress/tests/route_presentation_test.c",
+        "site/matrix/composition.css",
+        "packs/aurekai/presentation/route-presentation.jsonl",
+        "packs/aurekai/presentation/presentation-template-stitch.jsonl"
       ],
       "subscribes": [],
       "views": [],
@@ -23272,7 +23285,9 @@
         "site/matrix/surfaces/build/authored_rows.test.mjs checks the six authored presentation templates and local import preflight without remote SSH",
         "components/BonfyreControlPlane/tests/worlds.test.mjs checks that no template names a content type or an organ, that each carries its reference and a parseable token object covering every colour role, that each loads the faces it names, that no two are the same language by ground, accent and display face together, that the address beats the authored template, that every failure path in the resolver returns nothing, and that each character still declares its own ground so it can stand alone",
         "2026-09-29 the Bun palette compiler reproduced all 1,152 prior Python rows exactly after the intentional reference URL move, and compile_palette_profiles.test.mjs verifies eight families, closed roles and reference-candidate status",
-        "2026-10-12 cmd/BonfyreWebAddress/tests/site_product_test.sh, site_program_native_test.sh, page_programs_test.sh, page_composition_test.sh and surface_pattern_contract_test.sh pass on the build that serves the shared dress; the look itself was checked by screenshot only and has no automated witness"
+        "2026-10-12 cmd/BonfyreWebAddress/tests/site_product_test.sh, site_program_native_test.sh, page_programs_test.sh, page_composition_test.sh and surface_pattern_contract_test.sh pass on the build that serves the shared dress; the look itself was checked by screenshot only and has no automated witness",
+        "2026-11-06 route-level presentation became CMS data: route_presentation rows (territory, route, optional query key, pattern, optional template) replaced the compiled Stitch route table and stitch_work_presentation.h; 86 of 86 seeded routes matched the live pattern attribute on a preview of the same stores, and route_presentation_test.c, stitch_work_routes_test.mjs (28 routes, rows seeded from its own cases) and page_composition_test.sh pass.",
+        "2026-11-06 a route_presentation row that names a published template (aurekai-stitch-night, taken from the Stitch design code.html Tailwind tokens) dresses that route through bf_site_presentation_emit_scoped and body[data-bf-template]; territory_presentation.template now applies the same way on territory homes (territory_home_test.c covers both schemas)."
       ]
     },
     "preservation-boundary": {
@@ -27854,8 +27869,9 @@
         "components/BonfyreServiceSite/README.md",
         "components/BonfyreServiceSite/tests/catalogue-baseline.test.mjs",
         "components/BonfyreServiceSite/tests/catalogue-live-intake.test.mjs",
-        "components/BonfyreServiceSite/tools/product-review-pdf.py",
-        "components/BonfyreServiceSite/tools/product-review-requirements.txt",
+        "components/BonfyreServiceSite/tools/product-review.c",
+        "components/BonfyreServiceSite/tools/product-review-test.sh",
+        "components/BonfyreServiceSite/tools/Makefile",
         "components/BonfyreServiceSite/catalogue-review.mjs",
         "components/BonfyreServiceSite/tests/catalogue-review.test.mjs",
         "packs/aurekai-work-samples/site/lead.mjs",
@@ -27919,6 +27935,7 @@
         "2026-10-08 the prepared RED3 sample passed 45 local browser checks and 37 published browser checks including seven proposed changes, save and reload, desktop and mobile layouts; the live run submitted nothing. Evidence: packs/aurekai-work-samples/site/design/verification-preparation-local/browser-verification.json and packs/aurekai-work-samples/site/design/verification-preparation-live/browser-verification.json. Publication used site.mjs publish for aurekai-work-samples on the estate account; no Fleming deployment occurred",
         "2026-10-08 catalogue, lead recovery and routing tests pass 27 tests and 195 assertions; six preparation fields survive generated intake, native enrichment and the compiled CMS, while invented preparation originals, unknown fields and excess lengths are refused",
         "2026-10-08 product-review-pdf.py rendered the RED3 easel sample from retained product-copy JSON and the observed image into output/pdf/red3-easel-copy-review.pdf; pdfinfo reported one page and the final Poppler rendering was visually inspected. The sample includes proposed copy and unresolved supplier facts and is referenced by native project 21",
+        "2026-11-06 product-review.c (C over bf_json/bf_jsonw) replaced the reportlab renderer: product-review-test.sh renders a fixture with quotes, markup, \\u escapes and a surrogate pair to HTML and, through real headless Chrome with a throwaway profile and a dead proxy, to a one-page PDF whose text pdftotext reads back; a draft review and an unknown output kind are refused. The PDF page was rendered with pdftoppm and inspected. The retained RED3 input JSON is not on disk, so the RED3 sheet itself was not re-rendered",
         "components/BonfyreServiceSite/tests/catalogue-model.test.mjs checks decimal cents, invalid values, source identity, draft restoration and checksummed packaging",
         "2026-10-07 components/BonfyreServiceSite/tests/catalogue-browser.test.mjs passes 26 checks in fresh Chrome processes over the retained Redwood Rings and AJ Collectives catalogues: edit and review, reload and browser restart, stale-tab conflict, service items, store switching, empty and failed loads, corrupted piece, and 320/390/768/1440 layouts",
         "2026-10-07 the same catalogue-browser.test.mjs ran with CATALOGUE_TEST_ORIGIN=https://aurekai-work-samples.pages.dev and passed all 26 checks against the published workspace, using real pointer and keyboard title edits, browser restart and isolated stale-tab, failed-request and corrupted-chunk tests; the run observed no external writes; result is packs/aurekai-work-samples/site/design/verification-live/browser-verification.json",
@@ -41273,9 +41290,9 @@
   },
   "provenance": {
     "cannot_infer": "a matching digest -> a correct atlas; it says this index was built from these declaration bytes and nothing more",
-    "declaration_digest": "469d1a3ecaed90f690bbd62f290173b76ad72f8d4641167684126e6c56187ffd",
+    "declaration_digest": "a36a694f0b7ebb670a09c7420666a222c9df6fd9ef39a6271528d859965735d3",
     "declaration_files": 150,
-    "generated_at": "2026-11-06T03:38:15Z"
+    "generated_at": "2026-11-07T01:28:41Z"
   },
   "views": {
     "CapabilityView": {

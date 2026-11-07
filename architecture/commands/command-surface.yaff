@@ -1911,7 +1911,7 @@ architecture cmd-swarm
   invariant local verification starts two loopback native peers only on an explicit action; customer packets cannot supply a file path, digest, host, transport key or recipient grant
   invariant an exclusive retained request claim and scoped Fabric receipt make exact retries observational; an uncertain transfer is never silently retransmitted
   invariant a verified local result confirms both native receipts and received byte identity; its temporary received copy and transport key are removed, and no remote delivery or pairing claim is made
-  witness cmd/BonfyreSwarm/tests/scoped_transfer_test.py
+  witness cmd/BonfyreSwarm/tests/scoped_transfer_test.c
   witness integrations/mcp/tests/fabric_output_transfer.test.mjs exercises actual native peers against a retained scoped Fabric output, current account authority, exact replay across restart, revocation before receiver dispatch, owner shutdown, and unavailable evidence
   witness packs/no-simulation/command-evidence-20261010.tsv
   witness cmd/BonfyreSwarm/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.swarm=pass

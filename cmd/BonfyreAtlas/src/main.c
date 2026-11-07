@@ -206,7 +206,31 @@ static Strs views_of(const Atlas *a, const char *id) {
 }
 
 static int looks_like_path(const char *v) { size_t n = strlen(v); return strchr(v, '/') && !strchr(v, ' ') && !(n && v[n - 1] == '.'); }
+/* The public repository cannot carry machine-local evidence: paths outside the
+ * tree, under the home directory, or matched by the repository's own ignore
+ * rules (client tenants, private packs, generated stores). With
+ * BONFYRE_ATLAS_PUBLIC_CHECKOUT=1 (CI only) such a path that does not open is
+ * counted and reported instead of refused; the estate machine, where the
+ * pre-commit hook runs without that variable, still opens every one. A path
+ * inside the tree that is not ignored must open everywhere. */
+static Strs local_only;
+static int public_checkout(void) { const char *v = getenv("BONFYRE_ATLAS_PUBLIC_CHECKOUT"); return v && !strcmp(v, "1"); }
+static int declared_local(const char *p) {
+    if (p[0] == '/' || p[0] == '~' || !strncmp(p, "../", 3)) return 1;
+    for (const char *q = p; *q; q++) if (*q == '\'' || *q == '\\') return 0;
+    char *cmd = fmt("git -C '%s' check-ignore -q --no-index -- '%s' 2>/dev/null", opens_root, p);
+    int rc = system(cmd); free(cmd);
+    return rc == 0;
+}
+static int opens_here(const char *p);
 static int opens(const char *p) {
+    if (opens_here(p)) return 1;
+    if (!public_checkout() || !declared_local(p)) return 0;
+    for (int i = 0; i < local_only.n; i++) if (!strcmp(local_only.v[i], p)) return 1;
+    push(&local_only, strdup(p));
+    return 1;
+}
+static int opens_here(const char *p) {
     const char *home = getenv("HOME");
     char *expanded = !strcmp(p, "~") ? strdup(home ? home : "") : !strncmp(p, "~/", 2) ? fmt("%s/%s", home ? home : "", p + 2) : strdup(p);
     int ok = exists(expanded);
@@ -1357,6 +1381,7 @@ int main(int argc, char **argv) {
         backing(&a, &e);
         if (e.n) { printf("✗ atlas invalid: %d error(s)\n", e.n); for (int i = 0; i < e.n; i++) printf("    %s\n", e.v[i]); return 1; }
         printf("✓ atlas valid: %d architectures, %d views, %d interactions, %d phenotypes, %d edge-classes\n", a.arch.n, a.view.n, a.inter.n, a.pheno.n, a.edge.n);
+        if (local_only.n) printf("  %d machine-local path(s) are not in this public checkout and were not opened here; the estate machine's pre-commit validation opens them\n", local_only.n);
         if (a.duplicates.n) printf("  note: %d duplicate block IDs are last-definition-wins; run atlas.mjs fields\n", a.duplicates.n);
         return 0;
     }

@@ -39,8 +39,8 @@ architecture hvm4
   purpose Bounded recursive reduction of selected symbolic/computational structures.
   maturity measured
   source_path vendor/hvm4/src/hvm.c
-  source_path vendor/hvm4/src/hvm4
   witness architecture/tests/hvm4_reduction_test.sh
+  known_gap the reducing binary vendor/hvm4/src/hvm4 is built on the estate machine from the pinned submodule's hvm.c and is not committed; a fresh checkout has the source and the witness but must build the binary before the witness can run
   known_gap this entry carried `implemented` with a source_path and a witness that were both .py.archive, and a known_gap reading "installed binary is HVM2 (2.0.22); HVM4 upgrade + hvm-lang front-end still pending". All three were stale: vendor/hvm4/src/hvm4 is a built arm64 binary answering HVM 4.0 that reduces the bench programs vendored beside it. The capability arrived and was never told to the registry, which went on citing evidence that had been retired -- and a capability the estate cannot see is one it will rebuild by hand.
   known_gap hvm-lang is still not present; programs are written in HVM4 core syntax, and nothing here compiles a higher-level front end down to it
   known_gap the reduction is sequential; HVM4 describes itself as a sequential Interaction Calculus runtime, so nothing in this estate is yet getting parallel reduction out of it

@@ -1,0 +1,82 @@
+"""ARCHIVED: content-screens.jsonl and local Bun import replace this SSH writer.
+
+A screen that exists only as an intention still belongs in the register,
+because the difference between "we look at this" and "we intend to look at
+this" is exactly what a reader of /observations/flagged needs to know. A
+declared-not-installed screen produces no flags, and saying so is more honest
+than an empty page that looks like a clean bill of health.
+"""
+import json, subprocess
+
+KEY="/Users/nickgonzales/.ssh/bonfyre_oracle"; HOST="ubuntu@aurekai.live"
+DB="/var/lib/bonfyre/cms/bonfyre_cms.db"; CMS="/usr/local/bin/bonfyre-cms"
+
+ROWS = [
+ dict(screen="native-text-normalised", looks_at="text",
+      method="normalise transformed spellings -- case, diacritics, digit and "
+             "symbol substitutions, and separators inserted between letters -- "
+             "then match an authored term list against the normalised form",
+      state="installed",
+      sees="a term written to evade a plain word list: spaced out, punctuated "
+           "through, digits for letters, or accented",
+      cannot_see="meaning, context, quotation, reclaimed usage, or a term this "
+                 "estate never authored; it matches spellings and nothing else",
+      cannot_infer="a match is not a judgement about the material or the source. "
+                   "It says a term appeared in a normalised form, which is a "
+                   "reason to decide how something should appear rather than a "
+                   "finding that it is wrong",
+      status="published"),
+
+ dict(screen="source-declared-sensitivity", looks_at="structured fields",
+      method="honour the source's own nsfw, sensitive, over_18 and is_nsfw "
+             "fields as the source set them",
+      state="installed",
+      sees="what a source says about its own item",
+      cannot_see="anything a source did not mark, and anything from a source "
+                 "with no such field at all",
+      cannot_infer="an unmarked item is not an unobjectionable one; most "
+                   "sources mark nothing, and honouring a flag is reading a "
+                   "field rather than forming a view",
+      status="published"),
+
+ dict(screen="obscenity", looks_at="text",
+      method="transformed-spelling matcher built for obfuscated variants rather "
+             "than plain word lists",
+      state="declared",
+      reference_name="obscenity",
+      reference_url="https://github.com/jo3-l/obscenity",
+      reference_note="a Node library; this estate's ingest is C and Python, so "
+                     "running it means taking a Node runtime into the observation "
+                     "path. Declared rather than installed, and it produces no "
+                     "flags in this state.",
+      sees="nothing yet",
+      cannot_see="nothing yet; it is not running",
+      cannot_infer="a declared screen is not a running one, and its absence from "
+                   "the flag list is not evidence that nothing would have matched",
+      status="published"),
+
+ dict(screen="nsfwjs", looks_at="images",
+      method="client-side image classification returning label probabilities",
+      state="declared",
+      reference_name="NSFWJS",
+      reference_url="https://github.com/infinitered/nsfwjs",
+      reference_note="classification needs the bytes, and this estate keeps an "
+                     "address, a digest and a receipt rather than the image. "
+                     "Running it means deciding to fetch and hold pictures, "
+                     "which is a change to what the estate retains and not only "
+                     "a change to what it screens.",
+      sees="nothing yet",
+      cannot_see="nothing yet; it is not running",
+      cannot_infer="an unscreened image is not a screened-and-cleared one; no "
+                   "image in this estate has been classified",
+      status="published"),
+]
+
+def sh(a):
+    return subprocess.run(["ssh","-i",KEY,HOST," ".join(a)],capture_output=True,text=True)
+
+for r in ROWS:
+    p=json.dumps(r, ensure_ascii=False).replace('"','\\"')
+    out=sh([CMS,"entry","create","content_screen","--db",DB,"--ns","root",f'"{p}"'])
+    print(f"{r['screen']:28} {r['state']:10}",
+          ((out.stdout or out.stderr).strip().splitlines() or [""])[-1])

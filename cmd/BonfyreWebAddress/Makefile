@@ -844,7 +844,7 @@ authored-publication-browser: $(TARGET)
 .PHONY: account-source-cohesion-witness
 test: account-source-cohesion-witness
 account-source-cohesion-witness: $(TARGET)
-	bun test tests/account_source_integrated.test.mjs ../../site/matrix/surfaces/build/source_cut.test.mjs
+	bun test tests/account_source_integrated.test.mjs ../../site/matrix/surfaces/build/source_cut.test.mjs ../../site/matrix/surfaces/build/authored_rows.test.mjs
 	sh ../../site/matrix/surfaces/build/link_workspace_test.sh
 
 # Shared visible/device seeking can be checked without a browser or live media.

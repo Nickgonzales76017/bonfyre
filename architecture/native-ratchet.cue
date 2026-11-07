@@ -14,10 +14,15 @@ budget: {
 	// FPQ review, command-review and Antithesis integrations landed as +34
 	// files / +4,460 lines of browser and test JS. They are the next port
 	// target; the budget only goes down from these figures.
-	authored_mjs_files: 1551
-	authored_mjs_lines: 171450
+	// Same review, 2026-11-06: site/matrix/surfaces/build was cited by the
+	// atlas but never committed; it lands as +3 files / +185 lines (the
+	// authored-row installer and the two tests now run by WebAddress), with
+	// its 17-line link contract ported into link_workspace_test.sh.
+	authored_mjs_files: 1554
+	authored_mjs_lines: 171635
 	// .js/.cjs/.ts/.tsx/.py: retiring .mjs must not move the code sideways.
-	other_script_files: 55
+	// 53 after the Swarm transfer test and product-review renderer went to C.
+	other_script_files: 53
 	// .mjs that bun compiles into an executable. Only browser code, tests and
 	// thin edges may stay JS; anything installed as a program is C.
 	bun_compile_sites: 0
@@ -36,7 +41,9 @@ installed: {
 	// at link time (its code alone is ~3.1MB). This budget is raised to its
 	// standalone floor; it drops again only if WebAddress itself shrinks.
 	largest_bin_bytes: 3197392
-	installed_bonfyre_bytes: 11767084
+	// +124,808 bytes 2026-11-06: the native C organs bonfyre-warehouse and
+	// bonfyre-repository-fabric installed for the JOSH/Warehouse integration.
+	installed_bonfyre_bytes: 11891892
 }
 
 #Measure: {

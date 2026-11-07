@@ -321,11 +321,24 @@ static int st_capabilities(void) {
 static int st_index_open(const st_options *o, sqlite3 **db) {
     struct stat s;
     if (!lstat(o->index, &s) && (!S_ISREG(s.st_mode) || s.st_uid != geteuid())) return -1;
+    /* SQLITE_OPEN_NOFOLLOW refuses a symlink in any path component, and on
+     * macOS /tmp and /var are symlinks. The leaf is refused above; the index
+     * opens under its resolved parent so only a symlinked leaf is refused. */
+    char parent[PATH_MAX], resolved[PATH_MAX], path[PATH_MAX];
+    const char *slash = strrchr(o->index, '/');
+    const char *leaf = slash ? slash + 1 : o->index;
+    size_t parent_len = slash ? (slash == o->index ? 1 : (size_t)(slash - o->index)) : 1;
+    if (!*leaf || parent_len >= sizeof(parent)) return -1;
+    if (slash) { memcpy(parent, o->index, parent_len); parent[parent_len] = 0; }
+    else strcpy(parent, ".");
+    if (!realpath(parent, resolved)) return -1;
+    int written = snprintf(path, sizeof(path), "%s/%s", strcmp(resolved, "/") ? resolved : "", leaf);
+    if (written < 0 || (size_t)written >= sizeof(path)) return -1;
     int flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
 #ifdef SQLITE_OPEN_NOFOLLOW
     flags |= SQLITE_OPEN_NOFOLLOW;
 #endif
-    if (sqlite3_open_v2(o->index, db, flags, NULL) != SQLITE_OK) return -1;
+    if (sqlite3_open_v2(path, db, flags, NULL) != SQLITE_OK) return -1;
     sqlite3_busy_timeout(*db, 1000);
     return sqlite3_exec(*db,
         "CREATE TABLE IF NOT EXISTS swarm_scoped_transfers ("

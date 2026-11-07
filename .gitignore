@@ -198,3 +198,13 @@ tests/vectors/bonfyre-vectors
 # Regenerate them on demand from Aurekai/registry instead of tracking hundreds
 # of JSON manifests as pretend source repositories.
 Aurekai/generated/integration-repos/
+
+# Private, machine-local evidence. The repository is public: these stay on the
+# estate machine. The atlas names some of them; its public-checkout validation
+# (BONFYRE_ATLAS_PUBLIC_CHECKOUT=1) counts them instead of opening them.
+/packs/no-simulation/
+/packs/personal/
+/packs/wholesale-20k/
+/cmd/BonfyreProviderEstate/acquisition.tsv
+/docs/engineering/handoff-backfill-20261019/onboarding-enrollment.tsv
+/components/BonfyreServiceSite/tools/product-review

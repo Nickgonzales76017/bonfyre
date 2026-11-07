@@ -1,5 +1,7 @@
 /* Reads one JSON document per line; prints JSON.stringify(v,null,2) then the
  * canonical (sorted, compact) form. tests/bf_jsonw_parity.sh diffs it with bun. */
+#define _POSIX_C_SOURCE 200809L /* getline and ssize_t under strict -std=c11 on glibc */
+#include <sys/types.h>
 #include "bf_jsonw.h"
 #include "bf_jv.h"
 #include <stdio.h>
