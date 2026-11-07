@@ -76,10 +76,10 @@ architecture cmd-auth
   source_path cmd/BonfyreAuth/src/main.c
   source_path cmd/BonfyreAuth/tests/actor_closure_test.sh
   source_path cmd/BonfyreAuth/src/institution_members.h
-  witness cmd/BonfyreAuth/tests/institution_members_test.py exercises existing-account team changes, generated ancestry, scope isolation, expiry-bounded delegation, self-change denial, escaped member output, pagination and revocation while a mutation waits for the writer lock
+  witness cmd/BonfyreAuth/tests/institution_members_test.sh exercises existing-account team changes, generated ancestry, scope isolation, expiry-bounded delegation, self-change denial, escaped member output, pagination and revocation while a mutation waits for the writer lock
   invariant session team mutations acquire the native write transaction before checking current admin authority; delegated grants cannot outlive that authority
   invariant reviewed team changes can require an exact current direct role and expiry within the same write transaction; mismatches return conflict, and role changes retain or shorten existing expiry
-  witness cmd/BonfyreAuth/tests/institution_members_test.py checks stale review refusal including a concurrent writer, no-grant expectations, expired grants, expiry preservation and temporary administrator caps
+  witness cmd/BonfyreAuth/tests/institution_members_test.sh checks stale review refusal including a concurrent writer, no-grant expectations, expired grants, expiry preservation and temporary administrator caps
   forbidden_inference direct institution membership rows -> all inherited memberships, verified identity, invitation delivery or account provisioning
   witness components/BonfyreServiceSite/tests/training-creator.test.mjs verifies credential stdin login, actor closure, institution-authorize-stdin and logout-stdin against real native sessions and revoked grants
   source_path scripts/provision_nightgrid_personas.sh
