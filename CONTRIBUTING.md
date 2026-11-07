@@ -1,6 +1,11 @@
 # Contributing to Bonfÿre
 
-Thanks for your interest. Here's how you can help.
+Bonfÿre is the native execution and capability engine beneath Aurekai.
+Contributions should make an existing capability more correct, reusable,
+observable or easy to adopt—not add another isolated project implementation.
+
+[Operating model](docs/aurekai-bonfyre-model.md) ·
+[Architecture Atlas](architecture/README.md) · [Quickstart](QUICKSTART.md)
 
 ## Constitutional rule: where semantics may live
 
@@ -26,13 +31,13 @@ belongs in packs and databases, not in a new implementation tree each time.
 
 - Fork, branch, PR. Keep PRs focused on one thing.
 - All C code: C11 standard, `-Wall -Wextra`, no warnings.
-- Each binary is one `src/main.c` + one `Makefile`. Keep it that way.
-- Test your changes: `make clean && make && make test` in the binary's directory.
+- Follow the canonical native owner and its existing file layout; don't create a new binary for a workload already expressible as a pack/recipe.
+- Run the relevant owner's tests and independent evidence checks. Do not claim the whole estate passed because one component compiled.
 
 ## What we want help with
 
 ### High priority
-- **Language bindings** — Node.js, Python, Rust, Go wrappers for `liblambda-tensors`
+- **Language bindings** — independently scoped interoperability adapters for reusable native libraries (without growing the core Python runtime)
 - **Package manager support** — Homebrew formula, Debian/Ubuntu packages, AUR, Nix
 - **Docker image** — Multi-stage build, scratch-based, minimal
 - **Bug reports** — Especially on Linux distros we haven't tested
@@ -44,14 +49,16 @@ belongs in packs and databases, not in a new implementation tree each time.
 - Test coverage
 - CI/CD setup
 
-### How to add a new binary
+### Before adding a native capability
 
-1. Create `cmd/BonfyreYourThing/src/main.c`
-2. Create `cmd/BonfyreYourThing/Makefile` (copy from any existing binary)
-3. Follow the pattern: `status` command, `--help`, `--version`, JSON output
-4. Add it to `install.sh`
-5. Add it to the README table
-6. Open a PR
+1. Query `bun architecture/atlas.mjs search <concept>` and identify the current owner and source/witness contracts.
+2. Check whether the need is a **workload instance** (put it in a pack) or a **missing reusable primitive**.
+3. Implement the primitive in the owner, using native C and its actual YAFF/CUE and typed artifact boundaries; do not create parallel authority, work or evidence stores.
+4. Add a test that exercises the expected result and a refusal/denial path. Keep the test data independent of private customer state.
+5. Update the Atlas entry with exact paths, evidence and a truthful maturity level; update relevant docs without promising universal release.
+6. Open a focused PR describing affected consumers, release risks, licensing and rollback/readback steps.
+
+If an external adapter requires JSON or another wire format, confine that encoding to the declared compatibility boundary. Internal canonical semantics and artifacts should not be implemented as ad hoc JSON contracts.
 
 ## Code style
 
@@ -61,7 +68,7 @@ belongs in packs and databases, not in a new implementation tree each time.
 - `UPPER_CASE` for constants and macros
 - Keep binaries self-contained — minimize cross-binary dependencies
 - SQLite for any persistent state
-- JSON for inter-binary communication
+- Typed native contracts and retained artifacts (YAFF/CUE and owner-defined formats) for internal coordination; JSON only at explicit compatibility/API boundaries
 
 ## Building
 
@@ -88,7 +95,7 @@ Lead with what the reader needs to know or do. Prefer specific verbs and familia
 
 Keep facts, necessary qualifications, quantities, citations and supported commercial claims. Edit current authored prose at its source. Leave source quotations, archived conversations, receipts, historical evidence, formal contracts, identifiers, commands, URLs and stored state unchanged. Do not apply a word blacklist or rewrite source material to make it sound less like AI. A readability edit does not verify a technical claim or authorize publication.
 
-For client tools and outreach, also use [client-sales](.agents/skills/client-sales/SKILL.md). Introductory phone and video calls are free; the current 15-draft batch awaits Nick's approval.
+For customer-facing commercial work, follow its separate approval, evidence, publication and outreach policies. Repository contribution rights do not grant permission to send messages, access customer information or perform financial effects.
 
 ## README acceptance contract
 
