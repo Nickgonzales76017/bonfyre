@@ -1,7 +1,9 @@
 /* Native owner for the origin refinement on OccurrenceSpine.  It shares the
  * historical occurrence_origin table with the Python reference while giving
  * native clients the same refusal law and bounded provenance traversal. */
+#ifndef _DEFAULT_SOURCE
 #define _DEFAULT_SOURCE /* strsep under strict -std=c11 on glibc */
+#endif
 #include "bf_occurrence_origin.h"
 
 #include <sqlite3.h>

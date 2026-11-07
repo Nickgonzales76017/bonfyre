@@ -1,6 +1,8 @@
 CC ?= cc
 CFLAGS ?= -O2 -Wall -Wextra -Werror -std=c11
 CFLAGS += -I../../cmd/BonfyreLex/src
+# GCC reports brace-less one-line guards that clang accepts.
+CFLAGS += -Wno-misleading-indentation
 
 # gcc's -Wformat-truncation fires ~39 times in fabric_exec.c where snprintf
 # writes a bounded token into a fixed buffer. Every one is memory-safe --
