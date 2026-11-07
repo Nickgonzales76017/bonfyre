@@ -174,6 +174,31 @@ static void shared_structure_is_computed_once(void) {
     bf_fg_cache_free(cache);
 }
 
+/* The CMS-policy example from the 2026-11-07 research thread: publish needs
+ * an approved author, public render needs publication and a licence.
+ * Variables x=publish y=approved l=licensed r=rendered. Each implication
+ * a -> b is a factor weighted 1 when satisfied and z when violated, so
+ * Z(z) is the violation generating polynomial H(z). Evaluating H at three
+ * integer points and interpolating recovers its coefficients exactly. */
+static bf_fg_count_t policy_at(uint64_t z) {
+    bf_factor_graph *g = bf_fg_new(4);
+    /* bit 0 = a, bit 1 = b; violated only when a=1, b=0 (index 1) */
+    uint64_t implies[4] = {1, z, 1, 1};
+    uint32_t xy[2] = {0, 1}, rx[2] = {3, 0}, rl[2] = {3, 2};
+    bf_fg_add_factor(g, xy, 2, implies); bf_fg_add_factor(g, rx, 2, implies); bf_fg_add_factor(g, rl, 2, implies);
+    bf_fg_count_t v = 0; bf_fg_count(g, NULL, NULL, &v, NULL); bf_fg_free(g);
+    return v;
+}
+static void policy_violation_polynomial_is_recovered_exactly(void) {
+    CHECK(policy_at(0) == 7, "7 valid policy configurations (got %llu)", (unsigned long long)policy_at(0));
+    CHECK(policy_at(1) == 16, "all 16 assignments at z=1");
+    /* H(z) = c0 + c1 z + c2 z^2 from H(0), H(1), H(2) by exact differences. */
+    long long h0 = (long long)policy_at(0), h1 = (long long)policy_at(1), h2 = (long long)policy_at(2);
+    long long c0 = h0, c2 = (h2 - 2 * h1 + h0) / 2, c1 = h1 - h0 - c2;
+    CHECK(c0 == 7 && c1 == 6 && c2 == 3, "H(z) = 7 + 6z + 3z^2 (got %lld + %lldz + %lldz^2)", c0, c1, c2);
+    CHECK(policy_at(3) == (bf_fg_count_t)(7 + 6 * 3 + 3 * 9), "H(3) agrees with the recovered polynomial");
+}
+
 static void width_and_overflow_are_refused(void) {
     /* A 26-cycle of pairwise factors has width 3; a clique over 26 does not. */
     bf_factor_graph *g = bf_fg_new(26); uint64_t ones[4] = {1, 1, 1, 1};
@@ -196,7 +221,7 @@ static void width_and_overflow_are_refused(void) {
 
 int main(void) {
     random_cnf(); random_weighted(); clause_lowering(); auxiliary_definitions_preserve_counts();
-    shared_structure_is_computed_once(); width_and_overflow_are_refused();
+    shared_structure_is_computed_once(); policy_violation_polynomial_is_recovered_exactly(); width_and_overflow_are_refused();
     printf("bf_factor: %s (%d checks)\n", failures ? "FAIL" : "PASS", checks);
     return failures ? 1 : 0;
 }
