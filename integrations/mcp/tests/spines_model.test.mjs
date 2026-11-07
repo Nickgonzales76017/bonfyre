@@ -50,7 +50,7 @@ test('inventory bounds discovery, refuses script execution and never verifies mo
   expect(result.models.find(x=>x.name==='BonfyreQwenFPQ').path).toBe(realpathSync(join(cmd,'bonfyre-qwen-fpq')));
   expect(model.inventory()).toHaveLength(2);
   const phenotype=model.compilePhenotype({model_family:'Qwen',token_roots:['t'],token_count:123,context_window:2048});
-  expect(phenotype.weights.representation).toBe('FPQ');expect(phenotype.weights.verified).toBe(false);expect(phenotype.authoritative).toBe(false);
+  expect(phenotype.weights.representation).toBe('unresolved');expect(phenotype.weights.inventory_hint).toBe('FPQ');expect(phenotype.weights.verified).toBe(false);expect(phenotype.authoritative).toBe(false);
 });
 
 test('native executable mutated during version probe cannot become durable inventory',async()=>{

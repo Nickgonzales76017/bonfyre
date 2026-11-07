@@ -33,7 +33,7 @@ test.skipIf(!Object.values(binaries).every(existsSync))('actual C and default Wa
     const denied = await owner.call('mission_r6_authority', { mission: { id: 'mission-fixture' }, effect_class: 'EXTERNAL_IRREVERSIBLE_EFFECT' });
     expect(denied.state).toBe('blocked'); expect(denied.authority.zig_executed).toBe(false);
     const phenotype = await owner.call('r7_phenotype_compile', { mission_id: 'mission-fixture', model_family: 'BonfyreQwenFPQ', token_count: 40 });
-    expect(phenotype.weights.verified).toBe(false); expect(phenotype.weights.representation).toBe('unknown');
+    expect(phenotype.weights.verified).toBe(false); expect(phenotype.weights.representation).toBe('unresolved');
     expect(phenotype.weights.representation_owner).toBe('ModelRepresentationPassport');
     const kernel = await owner.call('r7_kernel_parity', {}); expect(kernel.state).toBe('passed');
     const placement = await owner.call('r7_placement_compile', { mission_id: 'mission-fixture', phenotype_id: phenotype.phenotype_id, privacy_class: 'internal', effect_class: 'CANDIDATE_WRITE', remote_allowed: false });
