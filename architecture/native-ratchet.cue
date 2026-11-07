@@ -10,10 +10,14 @@ package nativeratchet
 budget: {
 	// Authored .mjs in the working tree (tracked or untracked, not ignored,
 	// vendored code excluded).
-	authored_mjs_files: 1517
-	authored_mjs_lines: 166990
+	// Raised 2026-11-06 by Nick's review: the Warehouse, JOSH repository-cut,
+	// FPQ review, command-review and Antithesis integrations landed as +34
+	// files / +4,460 lines of browser and test JS. They are the next port
+	// target; the budget only goes down from these figures.
+	authored_mjs_files: 1551
+	authored_mjs_lines: 171450
 	// .js/.cjs/.ts/.tsx/.py: retiring .mjs must not move the code sideways.
-	other_script_files: 77
+	other_script_files: 55
 	// .mjs that bun compiles into an executable. Only browser code, tests and
 	// thin edges may stay JS; anything installed as a program is C.
 	bun_compile_sites: 0
