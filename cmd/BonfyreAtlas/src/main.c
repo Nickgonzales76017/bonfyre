@@ -217,6 +217,12 @@ static Strs local_only;
 static int public_checkout(void) { const char *v = getenv("BONFYRE_ATLAS_PUBLIC_CHECKOUT"); return v && !strcmp(v, "1"); }
 static int declared_local(const char *p) {
     if (p[0] == '/' || p[0] == '~' || !strncmp(p, "../", 3)) return 1;
+    /* A tracked symlink in the path leads out of the tree (.bonfyre). */
+    for (const char *q = strchr(p, '/'); q; q = strchr(q + 1, '/')) {
+        char *prefix = fmt("%s/%.*s", opens_root, (int)(q - p), p); struct stat st;
+        int link = lstat(prefix, &st) == 0 && S_ISLNK(st.st_mode); free(prefix);
+        if (link) return 1;
+    }
     for (const char *q = p; *q; q++) if (*q == '\'' || *q == '\\') return 0;
     char *cmd = fmt("git -C '%s' check-ignore -q --no-index -- '%s' 2>/dev/null", opens_root, p);
     int rc = system(cmd); free(cmd);
