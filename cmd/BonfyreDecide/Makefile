@@ -16,7 +16,7 @@ LDFLAGS += -Wl,-dead_strip
 else
 LDFLAGS += -Wl,--gc-sections
 endif
-SRCS     = src/main.c src/dp_core.c src/dp_util.c src/dp_gguf.c src/books.c src/books_xlsx.c src/monitor.c src/manifest.c
+SRCS     = src/main.c src/dp_core.c src/dp_util.c src/dp_gguf.c src/books.c src/books_xlsx.c src/monitor.c src/manifest.c src/plane.c
 TARGET   = bonfyre-decide
 LINKS    = bonfyre-books bonfyre-monitor bonfyre-manifest
 
@@ -54,3 +54,8 @@ install: all
 
 clean:
 	rm -rf build $(TARGET) $(LINKS)
+
+# The DecisionPlane core over JSON, against vectors recorded from the JS plane.
+.PHONY: test-plane
+test-plane: $(TARGET)
+	sh tests/plane_parity.sh ./$(TARGET)

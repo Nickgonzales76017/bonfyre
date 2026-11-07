@@ -12,6 +12,7 @@
  * Node pool: pre-allocated, doubles on overflow (amortized O(1)).
  * No recursion in parser — explicit stack.
  */
+#include <errno.h>
 #include <stdint.h>
 
 #include "bf_json.h"
@@ -207,8 +208,12 @@ static int parse_number(parser_t *p, bf_json_node_t *n) {
         n->type = BF_JSON_DOUBLE;
         n->val.d = strtod(start, NULL);
     } else {
-        n->type = BF_JSON_INT;
-        n->val.i = strtoll(start, NULL, 10);
+        /* An integer literal beyond int64 is a number like any other (JSON and
+         * JS read it as a double); strtoll would saturate it to INT64_MAX. */
+        errno = 0;
+        long long v = strtoll(start, NULL, 10);
+        if (errno == ERANGE) { n->type = BF_JSON_DOUBLE; n->val.d = strtod(start, NULL); }
+        else { n->type = BF_JSON_INT; n->val.i = v; }
     }
     return 0;
 }

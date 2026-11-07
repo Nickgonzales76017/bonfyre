@@ -104,5 +104,6 @@ char *dp_to_fixed(double v, int digits);
 int books_main(int argc, char **argv);
 int monitor_main(int argc, char **argv);
 int manifest_main(int argc, char **argv);
+int plane_main(int argc, char **argv);
 
 #endif

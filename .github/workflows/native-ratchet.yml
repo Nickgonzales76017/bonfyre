@@ -47,3 +47,4 @@ jobs:
         run: |
           make -C lib/libbonfyre
           bash cmd/BonfyreDecide/tests/parity.sh
+          make -C cmd/BonfyreDecide test-plane
