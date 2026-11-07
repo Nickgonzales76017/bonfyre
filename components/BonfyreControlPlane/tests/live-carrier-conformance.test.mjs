@@ -1,5 +1,5 @@
 import { test, expect } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { nativeDomainProfiles, parcelLiveSurface, parcelLiveRoutes } from '../domain-profile.mjs';
 
@@ -63,7 +63,7 @@ live('carrier pages are stable on repeated reads', async () => {
   expect(new Set(reads.map(row => row.ogc.account)).size).toBe(1);
 });
 test('projection orders on stored observation_id, not parsed account', () => {
-  const source = readFileSync(resolve(repo, 'cmd/BonfyreWebAddress/src/main.c'), 'utf8');
+  const source = [resolve(repo, 'cmd/BonfyreWebAddress/src/main.c'), ...readdirSync(resolve(repo, 'cmd/BonfyreWebAddress/src')).filter(n => /\.(c|h)$/.test(n) && n !== 'main.c').sort().map(n => resolve(repo, 'cmd/BonfyreWebAddress/src', n))].map(p => readFileSync(p, 'utf8')).join('\n');
   const start = source.indexOf('static int parcel_projection_sql(');
   expect(start).toBeGreaterThanOrEqual(0);
   const end = source.indexOf('\n}\n', start);

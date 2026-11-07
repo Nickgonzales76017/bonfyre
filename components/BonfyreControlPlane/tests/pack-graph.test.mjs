@@ -1,9 +1,10 @@
 import { test, expect } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const repo = resolve(import.meta.dir, '../../..');
-const main = readFileSync(resolve(repo, 'cmd/BonfyreWebAddress/src/main.c'), 'utf8');
+const src = resolve(repo, 'cmd/BonfyreWebAddress/src'); // every source: the overlay owner lives in a header
+const main = readdirSync(src).filter(n => /\.(c|h)$/.test(n)).map(n => readFileSync(resolve(src, n), 'utf8')).join('\n');
 const surfaces = resolve(repo, 'site/matrix/surfaces');
 const layers = ['official', 'institution', 'community', 'household', 'scenario'];
 const verbs = ['hide', 'add', 'specialize', 'present', 'tighten', 'default'];
@@ -75,7 +76,7 @@ test('unknown overlay verb is refused out loud', () => {
 
 test('tighten narrows and never widens', () => {
   const fn = main.slice(main.indexOf('static int pack_audience_rank'));
-  const body = main.slice(main.indexOf('!strcmp(verb, "tighten")')).split('} else')[0];
+  const body = fn.slice(fn.indexOf('!strcmp(verb, "tighten")')).split('} else')[0];
   expect(body).toContain('r < audience_rank');
   const order = [...fn.slice(0, fn.indexOf('\n}')).matchAll(/"([a-z]+)"/g)].map(m => m[1]);
   expect(order[0]).toBe('self');

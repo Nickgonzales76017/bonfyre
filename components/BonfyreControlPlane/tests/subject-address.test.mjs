@@ -1,9 +1,9 @@
 import { test, expect } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const repo = resolve(import.meta.dir, '../../..');
-const main = readFileSync(resolve(repo, 'cmd/BonfyreWebAddress/src/main.c'), 'utf8');
+const main = [resolve(repo, 'cmd/BonfyreWebAddress/src/main.c'), ...readdirSync(resolve(repo, 'cmd/BonfyreWebAddress/src')).filter(n => /\.(c|h)$/.test(n) && n !== 'main.c').sort().map(n => resolve(repo, 'cmd/BonfyreWebAddress/src', n))].map(p => readFileSync(p, 'utf8')).join('\n');
 const live = test.skipIf(!process.env.BONFYRE_LIVE_WITNESS);
 
 async function get(path, accept = 'text/html') {
