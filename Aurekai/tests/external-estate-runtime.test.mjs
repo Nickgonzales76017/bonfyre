@@ -1,4 +1,4 @@
-import test from "node:test";
+import nodeTest from "node:test";
 import assert from "node:assert/strict";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -30,6 +30,9 @@ import {
 import { PRESENTATION_CELLS, presentationCell, validatePresentationCells } from "../src/presentation-cell-catalog.mjs";
 
 const repoRoot = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
+// Machine-local corpus (ignored); tests that read it skip where it is absent.
+const FREE = new Set(["address shape cannot manufacture actor or authority", "fifteen grammars by four presentation classes compile into exactly sixty presentation-only cells", "only the addressed host derives a territory", "a probe refuses a non-http target before any transport action"]);
+const test = (name, fn) => nodeTest(name, (t) => FREE.has(name) || existsSync(join(repoRoot, "estate/generated/external-estate-v4/observed-external-estate.jsonl")) ? fn(t) : t.skip("machine-local corpus absent"));
 
 test("the live-query corpus preserves every supplied external occurrence", () => {
   clearExternalEstateCache();

@@ -188,6 +188,8 @@ if (rawArgs.length === 0 || rawArgs[0] === "--help" || rawArgs[0] === "-h" || ra
 
 if (rawArgs[0] === "creator:compile" || rawArgs[0] === "creator:edit") {
   const args=rawArgs.slice(1), input=getFlagValue(args,"--input");
+  const allowed=["--input","--json",...(rawArgs[0]==="creator:edit"?["--edit"]:["--shard-frames","--from","--to","--source-projection"])], flags=args.filter(a=>a.startsWith("--"));
+  if (new Set(flags).size!==flags.length || flags.some(f=>!allowed.includes(f))) { console.error("Creator options must be known and given once"); process.exit(2); }
   if (!input || !existsSync(input)) {
     console.error("Creator timeline requires an existing --input JSON file");
     process.exit(2);

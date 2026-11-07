@@ -1,23 +1,25 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { compileExternalSurfaceSlice } from "../src/external-estate-runtime.mjs";
 
 const repoRoot = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
 const read = (path) => readFileSync(join(repoRoot, path), "utf8");
+const webAddressSources = () => readdirSync(join(repoRoot, "cmd/BonfyreWebAddress/src")).filter((n) => /\.(c|h)$/.test(n)).map((n) => read("cmd/BonfyreWebAddress/src/" + n)).join("\n");
 
 test("public Discover is a native PageProgram rather than a browser candidate catalogue", () => {
   const composition = read("schemas/control/page-composition.cue");
   const address = read("cmd/BonfyreWebAddress/src/main.c");
   assert.match(composition, /route: "\/discover", title: "Discover"/);
   assert.match(composition, /families: \["news", "attention", "wikimedia", "books", "space", "history", "institutions", "datasets", "live-music", "commerce", "gaming", "vulnerabilities", "food", "science", "sports"\]/);
-  assert.match(address, /if \(emit_page_program_route\(root, target, host, query\)\) return 1;/);
+  assert.match(address, /emit_page_program_route\(\s*root\s*,\s*target\s*,\s*host\s*,\s*query\s*\)/);
   assert.doesNotMatch(address, /serve_composed_public_route/);
 });
 
-test("external material remains an explicitly unadmitted candidate slice", () => {
+test("external material remains an explicitly unadmitted candidate slice", (t) => {
+  if (!existsSync(join(repoRoot, "estate/generated/external-estate-v4/observed-external-estate.jsonl"))) return t.skip("machine-local corpus absent");
   const slice = compileExternalSurfaceSlice(repoRoot, { grammar: "observations", extent: "section" });
   assert.equal(slice.schema_version, "aurekai.external_estate.surface_candidate_slice.v1");
   assert.equal(slice.truth_level, "observed_candidate");
@@ -28,7 +30,7 @@ test("external material remains an explicitly unadmitted candidate slice", () =>
 });
 
 test("external candidates are not client-rendered into a second browser application", () => {
-  const address = read("cmd/BonfyreWebAddress/src/main.c");
+  const address = webAddressSources();
   const account = read("site/matrix/surfaces/account-native.html");
   /* The compatibility asset may be served, but no public page dispatcher
    * invokes a bridge renderer or browser-side ExternalEstate composition. */

@@ -7,6 +7,8 @@ LIB      = ../../lib/libbonfyre
 CUE_SRC  = ../../components/BonfyreDecision/decision-plane.cue
 CFLAGS  ?= -Os -Wall -Wextra -Werror -std=gnu11 -D_GNU_SOURCE -D_DEFAULT_SOURCE -D_DARWIN_C_SOURCE
 CFLAGS  += -ffp-contract=off -I$(LIB)/include -Ibuild -Isrc -flto -ffunction-sections -fdata-sections
+# GCC reports brace-less one-line guards that clang accepts.
+CFLAGS  += -Wno-misleading-indentation
 LDFLAGS += -flto
 LDLIBS   = -lsqlite3 -lz -lm
 ifeq ($(shell uname),Darwin)

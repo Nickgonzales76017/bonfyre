@@ -18,8 +18,10 @@ budget: {
 	// atlas but never committed; it lands as +3 files / +185 lines (the
 	// authored-row installer and the two tests now run by WebAddress), with
 	// its 17-line link contract ported into link_workspace_test.sh.
+	// +12 lines: Aurekai's creator CLI refuses unknown and repeated options,
+	// and tests that read the machine-local observed corpus skip without it.
 	authored_mjs_files: 1554
-	authored_mjs_lines: 171635
+	authored_mjs_lines: 171647
 	// .js/.cjs/.ts/.tsx/.py: retiring .mjs must not move the code sideways.
 	// 53 after the Swarm transfer test and product-review renderer went to C.
 	other_script_files: 53

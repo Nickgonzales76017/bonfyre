@@ -38,8 +38,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: true
+
+      # The hvm4 entry cites source in this one public submodule; the
+      # federated submodules are not needed and do not all resolve.
+      - name: Check out the hvm4 submodule
+        run: git submodule update --init vendor/hvm4
 
       - uses: oven-sh/setup-bun@v2
 

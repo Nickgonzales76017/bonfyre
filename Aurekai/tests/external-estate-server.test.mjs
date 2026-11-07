@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
 
 const repoRoot = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
+const noCorpus = () => !existsSync(join(repoRoot, "estate/generated/external-estate-v4/observed-external-estate.jsonl"));
 const serverPath = join(repoRoot, "Aurekai", "src", "external-estate-server.mjs");
 
 async function freePort() {
@@ -45,6 +46,7 @@ async function startPublicEstate(extraEnv = {}) {
 }
 
 test("public World ships one cacheable closure through HTML and JSON", async (t) => {
+  if (noCorpus()) return t.skip("machine-local corpus absent");
   const { child, origin } = await startPublicEstate();
   t.after(() => { if (!child.killed) child.kill("SIGTERM"); });
   const path = "/external-estate/worlds/farm-cold-chain-household";
@@ -120,6 +122,7 @@ test("public World ships one cacheable closure through HTML and JSON", async (t)
 });
 
 test("product map exposes every World and lens route through one digest", async (t) => {
+  if (noCorpus()) return t.skip("machine-local corpus absent");
   const { child, origin } = await startPublicEstate();
   t.after(() => { if (!child.killed) child.kill("SIGTERM"); });
   const human = await fetch(`${origin}/external-estate/worlds`);
@@ -138,6 +141,7 @@ test("product map exposes every World and lens route through one digest", async 
 });
 
 test("production World carrier can require the native forwarding witness", async (t) => {
+  if (noCorpus()) return t.skip("machine-local corpus absent");
   const addressIndexPath = join(process.env.HOME || "", ".bonfyre", "estate", "estate.db");
   const addressPlaneBinary = join(repoRoot, "cmd", "BonfyreExternalEstate", "bonfyre-external-estate");
   if (!existsSync(addressIndexPath) || !existsSync(addressPlaneBinary)) {
@@ -161,6 +165,7 @@ test("production World carrier can require the native forwarding witness", async
 });
 
 test("a required native forwarding witness fails closed instead of falling back to a catalogue route", async (t) => {
+  if (noCorpus()) return t.skip("machine-local corpus absent");
   const { child, origin } = await startPublicEstate({
     BONFYRE_ADDRESS_INDEX: "/definitely/not/an/address-plane.db",
     BONFYRE_WORLD_REQUIRE_NATIVE_FORWARDING: "1",
