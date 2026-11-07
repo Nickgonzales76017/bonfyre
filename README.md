@@ -4,7 +4,7 @@
 <h1 align="center">Bonfÿre</h1>
 
 <p align="center">
-  <strong>Software for tools, sites and apps that keep track of who may do what, and what was done.</strong>
+  <strong>Native infrastructure for compounding software: retained knowledge, reusable capabilities, authorized execution and verifiable results.</strong>
 </p>
 
 <p align="center">
@@ -22,9 +22,26 @@
   <a href="CONTRIBUTING.md">Contributing</a>
 </p>
 
-Bonfÿre is the software underneath. Aurekai is what gets built and run on it:
-tools for a team, sites that carry a customer's own name, apps their customers
-keep using, and the links between systems that already exist.
+**Aurekai is the business and public operating network. Bonfÿre is its technical engine.**
+AI agents can generate software faster than conventional teams can plan, coordinate
+and integrate it. The goal is not more disconnected code: it is to turn engineering
+work into reusable, verified capabilities that make later projects easier.
+
+| Question | Aurekai | Bonfÿre |
+|---|---|---|
+| **Why** | Invest software, AI and engineering into useful digital businesses, applications and opportunities | Eliminate repeated integration, lost context and unverified agent output |
+| **What** | [Work](https://aurekai.work), [Life](https://aurekai.life), [Live](https://aurekai.live), [Shop](https://aurekai.shop); customer and partner experiences | Matrix, capability closure, WorkGraph, native commands, model/agent execution, evidence and authority |
+| **How value compounds** | Deploy common capabilities across a growing estate and public network | Retain source identities, typed contracts, tested implementation and reusable operational knowledge |
+| **What counts as proof** | Actual delivered outcomes, customer acceptance and commercial records | Source revision, test witness, effect authorization, receipt and destination readback |
+
+Aurekai's model is *similar to digital private equity*: its productive capital is
+engineering hours, AI compute, shared software and distribution rather than
+only cash. This is an **operating-model analogy**, not a claim that every
+participating business is owned by Aurekai or that Aurekai is an investment fund.
+
+**Project path:** goal → retained context → existing capability → missing-work plan
+→ bounded execution → independent verification → reusable improvement.
+[Business, project and technical contract](docs/aurekai-bonfyre-model.md).
 
 ## See it running
 
@@ -266,6 +283,17 @@ payments, provider credits apart from cash, and dashboards apart from the
 accounting records they display.
 
 ## What's available today
+
+**Maturity is source- and release-specific.** The local November 2026 development
+atlas records 555 architecture entries (302 implemented, 146 measured, 73
+declared, 34 architectural), while the Bonfÿre V6.1.0 execution inventory
+records 93 native commands, 1,840 Frappe-derived schema definitions, 20,487
+WorkGraph nodes and 14 active backend adapters. These figures are **local
+architecture/runtime observations**, not claimed to be compiled, deployed or
+available from this public GitHub `main` branch. They also do not establish that
+any particular public site is on that same release. See the explicit
+[verification boundary](docs/aurekai-bonfyre-model.md#readme-and-release-evidence-contract).
+
 
 The public [work samples](https://aurekai-work-samples.pages.dev/) and
 [guides](https://docs.aurekai.work/) demonstrate current browser, publishing,
