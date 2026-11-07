@@ -1418,7 +1418,6 @@ architecture cmd-project
   witness cmd/BonfyreProject/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.project=pass
   source_lineage the 91-command capability surface
   known_gap operator command.project quality-proven on a real input in the command workload of 2026-10-10 (receipt rcpt-bb62d1683675403dfe85), one run on one input; realizes WorkState; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing
-  known_gap cmd/BonfyreProject/src/main.c remains on disk beside the build edge that bypasses it; it is neither removed nor reconciled with the components source it is not built from
   source_path components/BonfyreProject/src/message_review.h
   source_path components/BonfyreProject/tests/message_review.test.mjs
   invariant message review projects the canonical project and outbound_message tables through a read-only snapshot and never dispatches or changes a record

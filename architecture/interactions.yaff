@@ -504,7 +504,7 @@ interaction partner-commons-projects-foreign-twin
   drops remote mutation rights and any claim that cached state is current remote truth
   forbidden_inference a partner observation -> bind or act authority
   witness partner_state_is_a_rights_limited_foreign_twin
-  binding cmd/BonfyreProject/src/main.c
+  binding components/BonfyreProject/src/main.c
 
 interaction external-estate-density-feeds-foreign-twin
   source external-estate-density

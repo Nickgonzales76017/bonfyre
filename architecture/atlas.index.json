@@ -8332,8 +8332,7 @@
         "message review projects the canonical project and outbound_message tables through a read-only snapshot and never dispatches or changes a record"
       ],
       "known_gaps": [
-        "operator command.project quality-proven on a real input in the command workload of 2026-10-10 (receipt rcpt-bb62d1683675403dfe85), one run on one input; realizes WorkState; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing",
-        "cmd/BonfyreProject/src/main.c remains on disk beside the build edge that bypasses it; it is neither removed nor reconciled with the components source it is not built from"
+        "operator command.project quality-proven on a real input in the command workload of 2026-10-10 (receipt rcpt-bb62d1683675403dfe85), one run on one input; realizes WorkState; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
       ],
       "layer": "",
       "maturity": "implemented",
@@ -19319,7 +19318,7 @@
         "a scheme change is a declared non-fold and is reported apart from misses; http and https are different origins, and folding them needs the digests to agree, which needs an outbound fetch"
       ],
       "known_gaps": [
-        "the current source of cmd/BonfyreProject/src/main.c does not dispatch `foreign` commands despite the existing gym, provider-trial and WebAddress callers expecting them; native fixture witnesses prove cohort and receipt contracts, not live foreign-owner availability",
+        "native fixture witnesses prove cohort and receipt contracts, not live foreign-owner availability (the installed bonfyre-project, built from components/BonfyreProject, does dispatch `foreign`: `foreign observe` returned an allowed receipt on 2026-11-07; the unbuilt cmd/BonfyreProject/src/main.c shim that lacked it was retired)",
         "MarketCeiling is unmeasured because no external supplier is declared as a provider_route yet; the estate holds provider credentials in a secrets store this process is not permitted to read, so the routes must be declared by name before the same contract can measure the market",
         "DirectSourceCeiling is declared and not exercised per run, because re-fetching every source is an outbound cost against third parties; a refresh is a separate rate-aware act",
         "deformation families are declared in the contract grammar and no gym uses them yet; the first gym measures decay rather than retrieval under degraded description",
@@ -41340,9 +41339,9 @@
   },
   "provenance": {
     "cannot_infer": "a matching digest -> a correct atlas; it says this index was built from these declaration bytes and nothing more",
-    "declaration_digest": "20aa52dae3dd347f1c2c7253a4d18a115476798ce124395691baf2be702334f7",
+    "declaration_digest": "75054c9c736aaabf2ebc3b24afa6bd5ed07a511a6effe2f60d4b10d1908e0aad",
     "declaration_files": 151,
-    "generated_at": "2026-11-07T23:11:32Z"
+    "generated_at": "2026-11-07T23:14:36Z"
   },
   "views": {
     "CapabilityView": {
