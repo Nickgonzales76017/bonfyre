@@ -49,7 +49,7 @@ const roots = [];
 afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true }); });
 function fixture() { const root = mkdtempSync(join(tmpdir(), 'clef-build-guard-')); roots.push(root); return root; }
 function run(args) { return Bun.spawnSync(['sh', script, ...args], { stdout: 'pipe', stderr: 'pipe' }); }
-
+const macOnly = test.skipIf(process.platform !== 'darwin'); // build-clef.sh refuses off macOS first
 test('source-only builder refuses missing arguments and relative outputs before doing work', () => {
   expect(run([]).exitCode).toBe(2);
   const result = run(['relative-build']);
@@ -66,7 +66,7 @@ test('existing output is never overwritten, including a failed build', () => {
   expect(readFileSync(join(root, 'owner'), 'utf8')).toBe('existing owner');
 });
 
-test('offline archive digest mismatch is refused before extraction or CMake execution', () => {
+macOnly('offline archive digest mismatch is refused before extraction or CMake execution', () => {
   const root = fixture();
   const archive = join(root, 'untrusted.tar.gz');
   const out = join(root, 'runtime');
@@ -94,7 +94,7 @@ test('runtime passport distinguishes trained source, lossy representation, and b
   expect(lock.execution.trained_reference_parity).toContain('not-measured');
 });
 
-test('verified offline source reaches packaged native artifact and honest build receipt', () => {
+macOnly('verified offline source reaches packaged native artifact and honest build receipt', () => {
   const root = fixture();
   const source = join(root, 'fixture-source');
   const mockbin = join(root, 'mockbin');
@@ -146,7 +146,7 @@ fi
   expect(Bun.spawnSync([regression]).exitCode).toBe(0);
 });
 
-test('a modified source patch is refused before creating output or extracting source', () => {
+macOnly('a modified source patch is refused before creating output or extracting source', () => {
   const root = fixture(), out = join(root, 'runtime');
   copyFileSync(script, join(root, 'build-clef.sh'));
   copyFileSync(resolve(import.meta.dir, '../native/clef-runtime.lock.json'), join(root, 'clef-runtime.lock.json'));
@@ -158,7 +158,7 @@ test('a modified source patch is refused before creating output or extracting so
   expect(existsSync(out)).toBe(false);
 });
 
-test('source context drift refuses patch application before invoking the compiler', () => {
+macOnly('source context drift refuses patch application before invoking the compiler', () => {
   const root = fixture(), source = join(root, 'fixture-source'), out = join(root, 'runtime');
   mkdirSync(join(source, 'src'), { recursive: true });
   writeFileSync(join(source, 'src/llama-model-loader.cpp'), '// incompatible loader revision\n');
