@@ -1,12 +1,12 @@
 import {afterEach,expect,test} from 'bun:test';
-import {copyFileSync,mkdirSync,mkdtempSync,readFileSync,realpathSync,rmSync,writeFileSync} from 'node:fs';
+import {copyFileSync,existsSync,mkdirSync,mkdtempSync,readFileSync,realpathSync,rmSync,writeFileSync} from 'node:fs';
 import {homedir,tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {createModelEngine} from '../spines_model.mjs';
 import {createSpinesStore} from '../spines_store.mjs';
 import {projectRun} from '../project_runtime.mjs';
 import {parsedDocument} from '../canonical_json.mjs';
-const probe=process.env.BONFYRE_KERNEL_PROBE??join(homedir(),'.local/bin/bonfyre-kernel-probe');
+const probe=process.env.BONFYRE_KERNEL_PROBE??join(homedir(),'.local/bin/bonfyre-kernel-probe');const probeTest=test.skipIf(!existsSync(probe)); // installed organ, as spines_integration does
 const roots=[],stores=[];
 function fixture({run,system='linux'}={}){
   const root=realpathSync(mkdtempSync(join(tmpdir(),'spines-model-')));roots.push(root);
@@ -17,7 +17,7 @@ function fixture({run,system='linux'}={}){
 }
 afterEach(()=>{for(const store of stores.splice(0))store.close();for(const root of roots.splice(0))rmSync(root,{recursive:true,force:true});});
 
-test('native CPU probe verifies real dot/variance and layernorm bytes without claiming GPU inference',async()=>{
+probeTest('native CPU probe verifies real dot/variance and layernorm bytes without claiming GPU inference',async()=>{
   const {store,model}=fixture();const result=await model.kernelParity();
   expect(result.state).toBe('passed');expect(result.candidate.count).toBe(8);expect(result.reference.dot).toBe(120);
   expect(result.probe_identity.sha256).toHaveLength(64);expect(result.evidence_scope).toBe('eight-element-native-cpu-reference-only');
@@ -29,7 +29,7 @@ test('another backend cannot relabel CPU parity as Metal or CUDA proof',async()=
   const result=await model.kernelParity('Metal');expect(result.state).toBe('blocked');expect(result.probe).toBeNull();expect(calls).toBe(0);
 });
 
-test('valid-looking native numbers with failing exit or incorrect count cannot pass',async()=>{
+probeTest('valid-looking native numbers with failing exit or incorrect count cannot pass',async()=>{
   for(const variant of ['exit','count','layernorm','timed_out','cancelled']){
     const {model}=fixture({run:async(argv,options)=>{
       const result=await projectRun(argv,options),body=JSON.parse(result.stdout);
@@ -39,7 +39,7 @@ test('valid-looking native numbers with failing exit or incorrect count cannot p
   }
 });
 
-test('inventory bounds discovery, refuses script execution and never verifies model weights',async()=>{
+probeTest('inventory bounds discovery, refuses script execution and never verifies model weights',async()=>{
   let calls=0;const {store,model}=fixture({run:async(argv,options)=>{calls++;return projectRun(argv,options);}});
   const cmd=join(store.projectRoot,'cmd','BonfyreQwenFPQ');mkdirSync(cmd,{recursive:true});
   copyFileSync(probe,join(cmd,'bonfyre-qwen-fpq'));
@@ -53,7 +53,7 @@ test('inventory bounds discovery, refuses script execution and never verifies mo
   expect(phenotype.weights.representation).toBe('unresolved');expect(phenotype.weights.inventory_hint).toBe('FPQ');expect(phenotype.weights.verified).toBe(false);expect(phenotype.authoritative).toBe(false);
 });
 
-test('native executable mutated during version probe cannot become durable inventory',async()=>{
+probeTest('native executable mutated during version probe cannot become durable inventory',async()=>{
   const {store,model}=fixture({run:async argv=>{writeFileSync(argv[0],'changed');return {exit_code:0,stdout:'version',stderr:'',duration_ms:0};}});
   const dir=join(store.projectRoot,'bin');mkdirSync(dir);copyFileSync(probe,join(dir,'llama-cli'));
   await expect(model.discoverModels()).rejects.toThrow('changed');expect(model.inventory()).toHaveLength(0);
