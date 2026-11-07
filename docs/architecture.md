@@ -1,9 +1,28 @@
 # Bonfÿre / Aurekai architecture
 
-Bonfÿre is a typed institutional operating machine. Aurekai is its
-evidence-bound learning loop. The architecture preserves distinct semantic
-owners and lets many physical realizations serve them; it does not make one
-language, binary, database, model, agent, or hosted product the whole system.
+**Bonfÿre is the native, typed institutional operating engine. Aurekai is
+the digital investment and operating business that builds public experiences,
+applications, services and opportunities on that engine.** Aurekai also owns a
+feedback-and-promotion loop informed by Bonfÿre evidence; that loop is *one
+function of the business*, not its full definition.
+
+The operating reason for the architecture is concrete: AI accelerates code
+production, while lost context, specialist knowledge gaps, meetings, handoffs
+and downstream integration can still block delivery. Bonfÿre makes source
+identity, capability, work, authority, execution and evidence reusable so each
+verified project can improve later projects rather than become an isolated
+implementation.
+
+The architecture preserves distinct semantic owners and lets many physical
+realizations serve them; no single language, binary, model, agent, database or
+hosted product constitutes the entire platform.
+
+[Business, project and technical model](aurekai-bonfyre-model.md) ·
+[Working public experiences](https://aurekai-work-samples.pages.dev/) ·
+[Aurekai Work](https://aurekai.work) ·
+[Life](https://aurekai.life) ·
+[Live](https://aurekai.live) ·
+[Shop](https://aurekai.shop)
 
 ## Authority and truth
 
@@ -55,7 +74,8 @@ foreign / digital / physical / human worlds
         replay · shadow · simulation · backtesting
                          │
                          ▼
-              Aurekai learning and promotion
+       reviewed Aurekai product / partner use
+           + learning and promotion
 ```
 
 ## Semantic owners
@@ -85,9 +105,11 @@ Execution produces ReceiptEnvelopes, witnesses, trace divergence, and proof
 bundles. Replay, shadow worlds, simulations, gyms, walk-forward evaluation, and
 institutional backtesting compare candidate behavior with observed behavior.
 
-Aurekai consumes that evidence to discover recurring patterns and candidate
-factors. Promotion requires proof and validation. Learning may propose a new
-route or factor; it may not mutate semantic truth or cross an authority line.
+The Aurekai operating business uses that evidence to improve products,
+customer workflows, partner implementations and reusable capabilities.
+Aurekai's optimization/learning loop can discover recurring patterns and
+candidate factors. Promotion requires proof and validation; a learned route
+may never mutate semantic truth or cross an authority line.
 
 ### Projection kernel
 
