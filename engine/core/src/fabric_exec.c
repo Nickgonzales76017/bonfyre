@@ -2538,7 +2538,9 @@ static int operator_reference(sqlite3 *db, int argc, char **argv, FILE *out, FIL
 
     reference_usage(out, binary);
 
-    if (sqlite3_prepare_v2(db,
+    /* service_dependent records that a contract waits on an outside service;
+     * it is a status, not a function, so it relates no commands to each other. */
+    if (strcmp(family, "service_dependent") && sqlite3_prepare_v2(db,
             "SELECT c.name FROM operator_contract_bindings b JOIN catalog c ON c.id=b.operator_id "
             "WHERE b.family=? AND b.operator_id<>? ORDER BY c.name", -1, &row, NULL) == SQLITE_OK) {
         sqlite3_bind_text(row, 1, family, -1, SQLITE_TRANSIENT);

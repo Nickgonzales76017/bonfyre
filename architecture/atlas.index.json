@@ -41342,7 +41342,7 @@
     "cannot_infer": "a matching digest -> a correct atlas; it says this index was built from these declaration bytes and nothing more",
     "declaration_digest": "20aa52dae3dd347f1c2c7253a4d18a115476798ce124395691baf2be702334f7",
     "declaration_files": 151,
-    "generated_at": "2026-11-07T23:09:58Z"
+    "generated_at": "2026-11-07T23:10:31Z"
   },
   "views": {
     "CapabilityView": {
