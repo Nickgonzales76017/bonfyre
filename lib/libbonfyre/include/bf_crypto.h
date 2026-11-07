@@ -9,7 +9,7 @@
  *   - Otherwise, self-contained portable implementations:
  *       BLAKE2b for hashing/HMAC/KDF
  *       XSalsa20-Poly1305 for AEAD (secretbox)
- *       Ed25519 for signing
+ *   Signing is not provided here; Ed25519 lives in cmd/BonfyreSign (libsodium).
  *
  * All keys are fixed-size byte arrays. No heap allocation in hot paths.
  */

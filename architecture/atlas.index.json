@@ -12655,7 +12655,6 @@
       ],
       "known_gaps": [
         "the estate probes two paths per source and there are more: /.well-known/mcp.json, /.well-known/ai-plugin.json and /llms.txt all appeared in the operation lists and none were swept",
-        "the produced class is blocked by a real defect rather than by policy. bf_crypto advertises Ed25519 signing in its header and implements a symmetric HMAC tag: `pk` is H(seed) and cannot verify anything, and bf_crypto_sign_verify is a stub returning -1 for every input. Nothing calls it today, so nothing is broken in production, but a caller reading sign_keygen(pk, sk) would reasonably publish pk and ship a signature no counterparty can check. The header now says what it implements; the fix is libsodium and not a hand-rolled curve",
         "the issued class needs 19 registrations and every one of them is a commitment a person makes rather than a capability this estate can add",
         "github.com carries 2,670 of the MCP occurrences because their primary_url is a repository rather than an endpoint. The per-host cap removed them and the service behind each repository was never reached"
       ],
@@ -41339,9 +41338,9 @@
   },
   "provenance": {
     "cannot_infer": "a matching digest -> a correct atlas; it says this index was built from these declaration bytes and nothing more",
-    "declaration_digest": "75054c9c736aaabf2ebc3b24afa6bd5ed07a511a6effe2f60d4b10d1908e0aad",
+    "declaration_digest": "a4b82637e08828b186278337e6aa8eaf154bdd60de83f091518d28e90fb883b6",
     "declaration_files": 151,
-    "generated_at": "2026-11-07T23:14:36Z"
+    "generated_at": "2026-11-07T23:16:13Z"
   },
   "views": {
     "CapabilityView": {
