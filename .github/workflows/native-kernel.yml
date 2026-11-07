@@ -392,7 +392,8 @@ jobs:
       # make compiles the experience declarations into C headers with bun when a
       # fresh checkout leaves their inputs newer than the generated output.
       - uses: oven-sh/setup-bun@v2
-      # tools/domain_profiles.mk compiles the domain profiles with Zig.
+      # tools/domain_profiles.mk exports the profiles with CUE and compiles them with Zig.
+      - uses: cue-lang/setup-cue@v1.0.0
       - uses: mlugg/setup-zig@v1
         with:
           version: 0.13.0

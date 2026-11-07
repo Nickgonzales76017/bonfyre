@@ -6,6 +6,8 @@ LIB      = ../../lib/libbonfyre
 CUE_SRC  = ../../architecture/atlas-fields.cue
 CFLAGS  ?= -Os -Wall -Wextra -Werror -std=gnu11 -D_GNU_SOURCE -D_DEFAULT_SOURCE -D_DARWIN_C_SOURCE
 CFLAGS  += -ffp-contract=off -I$(LIB)/include -Ibuild -flto -ffunction-sections -fdata-sections
+# Dense one-statement-per-clause C is deliberate here; GCC reads it as misleading indentation.
+CFLAGS  += -Wno-misleading-indentation
 LDFLAGS += -flto
 ifeq ($(shell uname),Darwin)
 LDFLAGS += -Wl,-dead_strip
