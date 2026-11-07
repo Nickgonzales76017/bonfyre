@@ -162,6 +162,8 @@ native-dispatch-audit:
 	bun scripts/analysis/native_dispatch_audit.mjs
 
 control-plane-native-test:
+	$(MAKE) -C cmd/BonfyreQueue
+	$(MAKE) -C cmd/BonfyreTime
 	bun test components/BonfyreControlPlane/tests/*.test.mjs
 
 .PHONY: decision-plane-test

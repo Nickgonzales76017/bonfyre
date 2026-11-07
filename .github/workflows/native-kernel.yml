@@ -407,6 +407,8 @@ jobs:
 
       - name: Exercise address constellation, host context, carriers, and DNS guard
         run: |
+          # Fetch the pinned, digest-checked QR source; builds never fetch it.
+          make -C cmd/BonfyreWebAddress prepare-public-code
           make -C cmd/BonfyreWebAddress test
           make -C cmd/BonfyreDomain test
 
