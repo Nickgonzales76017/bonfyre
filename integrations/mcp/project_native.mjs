@@ -132,7 +132,7 @@ function nativeReadIntent(family, argv, home) {
     if (Object.keys(values).length !== (argv.length - 2) / 2 ||
         Object.keys(values).some(key => !['--query', '--page', '--limit'].includes(key))) return false;
     if (values['--query'] !== undefined && (values['--query'].length > 160 ||
-        /[\x00-\x1f]/.test(values['--query']))) return false;
+        /[\x00-\x1f]/.test(values['--query']))) return false; // oxlint-disable-line no-control-regex -- refuses control characters
     if (values['--page'] !== undefined && !/^(?:0|[1-9]\d{0,5})$/.test(values['--page'])) return false;
     if (values['--limit'] !== undefined && !/^(?:[1-9]|[1-9]\d{1,2})$/.test(values['--limit'])) return false;
     return true;
@@ -465,7 +465,7 @@ export function createProjectNative({ root, home, env = process.env, run, reques
     return { entry, list: [...new Set([...Object.entries(hints).flatMap(([key, values]) => lower.includes(key) ? values : []), ...(entry.subcommands || []).map((verb) => `cmd:${verb}`)])].sort() };
   }
   async function mapConcurrent(values, concurrency, worker) {
-    const results = new Array(values.length);
+    const results = Array.from({ length: values.length });
     let cursor = 0;
     async function runWorker() {
       while (cursor < values.length) {
@@ -739,7 +739,7 @@ export function createProjectNative({ root, home, env = process.env, run, reques
       throw new Error('public ForeignTwin origin must be an HTTPS origin');
     }
     const query = String(args.query ?? '').trim();
-    if (query.length > 160 || /[\u0000-\u001f\u007f]/.test(query)) throw new Error('query exceeds public source filter bound');
+    if (query.length > 160 || /[\u0000-\u001f\u007f]/.test(query)) throw new Error('query exceeds public source filter bound'); // oxlint-disable-line no-control-regex -- refuses control characters
     const offset = Number(args.offset ?? 0);
     if (!Number.isSafeInteger(offset) || offset < 0 || offset > 100000) throw new Error('offset must be 0..100000');
     const expected = String(args.expected_generation ?? '');
@@ -751,7 +751,7 @@ export function createProjectNative({ root, home, env = process.env, run, reques
     if (civicEvent !== null && (!Number.isSafeInteger(civicEvent) || civicEvent < 1 || civicEvent > 10000000))
       throw new Error('civic_event_id must be a positive Legistar event identifier');
     if (!Array.isArray(grantTerms) || grantTerms.length > 4 || grantTerms.some(term =>
-        typeof term !== 'string' || !term.trim() || term.length > 100 || /[\u0000-\u001f\u007f]/.test(term)))
+        typeof term !== 'string' || !term.trim() || term.length > 100 || /[\u0000-\u001f\u007f]/.test(term))) // oxlint-disable-line no-control-regex -- refuses control characters
       throw new Error('grant terms must be at most 4 printable strings of 1..100 characters');
     if (!Array.isArray(caseUrls) || caseUrls.length > 12 ||
         !Array.isArray(related) || related.length > 4) throw new Error('case URLs (max 12) and related queries (max 4) must be arrays');
@@ -768,7 +768,7 @@ export function createProjectNative({ root, home, env = process.env, run, reques
     if (!query && !urls.length) throw new Error('query or case_urls required for a bounded public source release');
     const effectiveQuery = query || new URL(urls[0]).hostname;
     for (const term of related) {
-      if (typeof term !== 'string' || !term.trim() || term.length > 80 || /[\u0000-\u001f\u007f]/.test(term))
+      if (typeof term !== 'string' || !term.trim() || term.length > 80 || /[\u0000-\u001f\u007f]/.test(term)) // oxlint-disable-line no-control-regex -- refuses control characters
         throw new Error('related query must be 1..80 printable characters');
     }
     const readbacks = [];

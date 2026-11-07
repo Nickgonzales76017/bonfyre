@@ -5,6 +5,7 @@
 #include "bf_matrix.h"
 
 #include <stdio.h>
+#include <stdlib.h> /* mkstemp */
 #include <string.h>
 #include <unistd.h>
 

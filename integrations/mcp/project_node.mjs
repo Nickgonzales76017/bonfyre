@@ -29,7 +29,7 @@ if (!capabilityPackValidation.ok) throw new Error(
   `invalid capability packs: ${capabilityPackValidation.issues.map((item) => `${item.pack}:${item.role}:${item.name}:${item.issue}`).join(', ')}`);
 const publicTools = CATALOG.tools.map(tool => {
   const publicTool = Object.fromEntries(Object.entries(tool).filter(([key]) => key !== 'x-bonfyre-owner'));
-  if (['mcp_capability_lens', 'mcp_product_plan', 'mcp_portfolio_plan'].includes(tool.name)) publicTool._meta = { ...(publicTool._meta || {}), ui: { resourceUri: CONTROL_PLANE_APP_URI } };
+  if (['mcp_capability_lens', 'mcp_product_plan', 'mcp_portfolio_plan'].includes(tool.name)) publicTool._meta = { ...publicTool._meta, ui: { resourceUri: CONTROL_PLANE_APP_URI } };
   return publicTool;
 });
 export function projectConfig(env = process.env, home = homedir()) {
@@ -219,7 +219,7 @@ export async function createProjectNode({ root, home = homedir(), env = process.
   async function runReadBundle(requests = [], requestedConcurrency = 4) {
     const concurrency = Math.max(1, Math.min(Number(requestedConcurrency) || 4, 8));
     const bundleStarted = Date.now();
-    const results = new Array(requests.length);
+    const results = Array.from({ length: requests.length });
     const requestIds = requests.map((item) => item?.id).filter((id) => id !== undefined);
     if (new Set(requestIds).size !== requestIds.length) throw new Error('mcp_read_bundle call ids must be unique');
     const localReads = new Map();
