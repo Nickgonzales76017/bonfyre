@@ -5172,10 +5172,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "certification of command.distribute is blocked for want of a real input, see its contract in estate/operator-contracts.yaff; the binary answers --help, which is not a witness; realizes DistributeCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+        "operator command.distribute quality-proven on a real input in the certification of 2026-11-07 (receipt rcpt-f9ae95815825fa80a63b), one run on one input; realizes DistributeCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
       ],
       "layer": "",
-      "maturity": "implemented",
+      "maturity": "measured",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -5187,6 +5187,7 @@
       "subscribes": [],
       "views": [],
       "witnesses": [
+        "packs/no-simulation/command-evidence-20261107-real-input.tsv: command.distribute quality_proven, receipt rcpt-f9ae95815825fa80a63b, workload and quality probe passed over an ids-and-states export of the live CMS outbound_message table (135 messages); fabric state retained at ~/.bonfyre/certification/20261107",
         "cmd/BonfyreDistribute/tests/message_test.sh",
         "cmd/BonfyreDistribute/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.distribute=pass"
       ]
@@ -5281,11 +5282,11 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "certification of command.economy is blocked for want of a real input, see its contract in estate/operator-contracts.yaff; the binary answers --help, which is not a witness; realizes Value; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing",
+        "operator command.economy quality-proven on a real input in the certification of 2026-11-07 (receipt rcpt-436fcbf8b5e960a231ed), one run on one input; realizes Value; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing",
         "thirteen other commands still open their stores through the forgiving fast-tier helper, and Finance, Pay and Meter do not use the helper at all; nobody has decided a durability tier for each"
       ],
       "layer": "",
-      "maturity": "implemented",
+      "maturity": "measured",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -5300,6 +5301,7 @@
       "subscribes": [],
       "views": [],
       "witnesses": [
+        "packs/no-simulation/command-evidence-20261107-real-input.tsv: command.economy quality_proven, receipt rcpt-436fcbf8b5e960a231ed, workload and quality probe passed over a snapshot of ~/.local/share/bonfyre/economy.db (406 costs); fabric state retained at ~/.bonfyre/certification/20261107",
         "packs/no-simulation/command-evidence-20261010.tsv",
         "2026-10-12 lib/libbonfyre/tests/sqlite_policy_test.c (14 checks, run by make test in lib/libbonfyre) shows the durable tier opening in WAL with synchronous FULL, the fast tier with NORMAL, both read back from SQLite, and a store that cannot be opened returning an error with no handle; cmd/BonfyreEconomy opens its ledger at the durable tier and its existing store opened and listed budgets on the rebuilt binary",
         "cmd/BonfyreEconomy/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.economy=pass"
@@ -5885,10 +5887,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "certification of command.finance is blocked for want of a real input, see its contract in estate/operator-contracts.yaff; the binary answers --help, which is not a witness; realizes Value; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+        "operator command.finance quality-proven on a real input in the certification of 2026-11-07 (receipt rcpt-9f1da9e3b059dc69b2f3), one run on one input; realizes Value; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
       ],
       "layer": "",
-      "maturity": "implemented",
+      "maturity": "measured",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -5902,6 +5904,7 @@
       "subscribes": [],
       "views": [],
       "witnesses": [
+        "packs/no-simulation/command-evidence-20261107-real-input.tsv: command.finance quality_proven, receipt rcpt-9f1da9e3b059dc69b2f3, workload and quality probe passed over a snapshot of ~/.bonfyre/estate-local/finance.db, the live service store (21 opportunities); fabric state retained at ~/.bonfyre/certification/20261107",
         "cmd/BonfyreFinance/tests/vectors/zero_close.json",
         "cmd/BonfyreFinance/tests/vectors/*.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.finance=pass"
       ]
@@ -6744,10 +6747,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "certification of command.learn is blocked for want of a real input, see its contract in estate/operator-contracts.yaff; the binary answers --help, which is not a witness; realizes Capability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+        "operator command.learn quality-proven on a real input in the certification of 2026-11-07 (receipt rcpt-14cc5d42e9fc21f6943c), one run on one input; realizes Capability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
       ],
       "layer": "",
-      "maturity": "implemented",
+      "maturity": "measured",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -6761,6 +6764,7 @@
       "subscribes": [],
       "views": [],
       "witnesses": [
+        "packs/no-simulation/command-evidence-20261107-real-input.tsv: command.learn quality_proven, receipt rcpt-14cc5d42e9fc21f6943c, workload and quality probe passed over a snapshot of ~/.local/share/bonfyre/learn.db (233 feedback rows); fabric state retained at ~/.bonfyre/certification/20261107",
         "packs/no-simulation/command-evidence-20261010.tsv",
         "cmd/BonfyreLearn/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.learn=pass"
       ]
@@ -7936,10 +7940,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "certification of command.outreach is blocked for want of a real input, see its contract in estate/operator-contracts.yaff; the binary answers --help, which is not a witness; realizes OutreachCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+        "operator command.outreach quality-proven on a real input in the certification of 2026-11-07 (receipt rcpt-1244756c94e695f8e198), one run on one input; realizes OutreachCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
       ],
       "layer": "",
-      "maturity": "implemented",
+      "maturity": "measured",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -7951,6 +7955,7 @@
       "subscribes": [],
       "views": [],
       "witnesses": [
+        "packs/no-simulation/command-evidence-20261107-real-input.tsv: command.outreach quality_proven, receipt rcpt-1244756c94e695f8e198, workload and quality probe passed over a snapshot of ~/.local/share/bonfyre/outreach.db (42 sends); fabric state retained at ~/.bonfyre/certification/20261107",
         "cmd/BonfyreOutreach/tests/commercial_outreach_test.sh",
         "cmd/BonfyreOutreach/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.outreach=pass"
       ]
@@ -41338,9 +41343,9 @@
   },
   "provenance": {
     "cannot_infer": "a matching digest -> a correct atlas; it says this index was built from these declaration bytes and nothing more",
-    "declaration_digest": "e8118fa6213bcaf59cbc2e2cd300e9f37f7d18467d7f686f2848ac243a5aeab0",
+    "declaration_digest": "714f9dbce1d0bb53fb7a82693c01d856f4dd806cada1912fee54097848e2ab66",
     "declaration_files": 151,
-    "generated_at": "2026-11-07T23:18:04Z"
+    "generated_at": "2026-11-07T23:27:53Z"
   },
   "views": {
     "CapabilityView": {

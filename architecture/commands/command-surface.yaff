@@ -417,7 +417,8 @@ architecture cmd-distribute
   domain Command / Distribute
   semantic_question What does the BonfyreDistribute capability organ realize, and by what contract?
   purpose Command-surface organ realizing the DistributeCapability capability. A first-class Bonfyre capability, advertised and composable, not a script.
-  maturity implemented
+  maturity measured
+  witness packs/no-simulation/command-evidence-20261107-real-input.tsv: command.distribute quality_proven, receipt rcpt-f9ae95815825fa80a63b, workload and quality probe passed over an ids-and-states export of the live CMS outbound_message table (135 messages); fabric state retained at ~/.bonfyre/certification/20261107
   command BonfyreDistribute
   internal_calculus bonfyre-distribute binary
   forbidden_inference the command exists -> its effect is authorized (Authority gates the commit)
@@ -425,7 +426,7 @@ architecture cmd-distribute
   witness cmd/BonfyreDistribute/tests/message_test.sh
   witness cmd/BonfyreDistribute/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.distribute=pass
   source_lineage the 91-command capability surface
-  known_gap certification of command.distribute is blocked for want of a real input, see its contract in estate/operator-contracts.yaff; the binary answers --help, which is not a witness; realizes DistributeCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing
+  known_gap operator command.distribute quality-proven on a real input in the certification of 2026-11-07 (receipt rcpt-f9ae95815825fa80a63b), one run on one input; realizes DistributeCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing
 
 architecture cmd-domain
   canonical_name BonfyreDomain
@@ -447,7 +448,8 @@ architecture cmd-economy
   domain Economic / Economy
   semantic_question What does the BonfyreEconomy capability organ realize, and by what contract?
   purpose Command-surface organ realizing the Value capability. A first-class Bonfyre capability, advertised and composable, not a script.
-  maturity implemented
+  maturity measured
+  witness packs/no-simulation/command-evidence-20261107-real-input.tsv: command.economy quality_proven, receipt rcpt-436fcbf8b5e960a231ed, workload and quality probe passed over a snapshot of ~/.local/share/bonfyre/economy.db (406 costs); fabric state retained at ~/.bonfyre/certification/20261107
   command BonfyreEconomy
   publishes Value
   internal_calculus bonfyre-economy binary
@@ -455,7 +457,7 @@ architecture cmd-economy
   source_path cmd/BonfyreEconomy/src/main.c
   witness packs/no-simulation/command-evidence-20261010.tsv
   source_lineage the 91-command capability surface
-  known_gap certification of command.economy is blocked for want of a real input, see its contract in estate/operator-contracts.yaff; the binary answers --help, which is not a witness; realizes Value; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing
+  known_gap operator command.economy quality-proven on a real input in the certification of 2026-11-07 (receipt rcpt-436fcbf8b5e960a231ed), one run on one input; realizes Value; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing
   source_path lib/libbonfyre/src/bf_sqlite.c
   witness 2026-10-12 lib/libbonfyre/tests/sqlite_policy_test.c (14 checks, run by make test in lib/libbonfyre) shows the durable tier opening in WAL with synchronous FULL, the fast tier with NORMAL, both read back from SQLite, and a store that cannot be opened returning an error with no handle; cmd/BonfyreEconomy opens its ledger at the durable tier and its existing store opened and listed budgets on the rebuilt binary
   witness cmd/BonfyreEconomy/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.economy=pass
@@ -616,7 +618,8 @@ architecture cmd-finance
   domain Economic / Finance
   semantic_question What does the BonfyreFinance capability organ realize, and by what contract?
   purpose Command-surface organ realizing the Value capability. A first-class Bonfyre capability, advertised and composable, not a script.
-  maturity implemented
+  maturity measured
+  witness packs/no-simulation/command-evidence-20261107-real-input.tsv: command.finance quality_proven, receipt rcpt-9f1da9e3b059dc69b2f3, workload and quality probe passed over a snapshot of ~/.bonfyre/estate-local/finance.db, the live service store (21 opportunities); fabric state retained at ~/.bonfyre/certification/20261107
   command BonfyreFinance
   publishes Value
   internal_calculus bonfyre-finance binary
@@ -625,7 +628,7 @@ architecture cmd-finance
   witness cmd/BonfyreFinance/tests/vectors/zero_close.json
   witness cmd/BonfyreFinance/tests/vectors/*.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.finance=pass
   source_lineage the 91-command capability surface
-  known_gap certification of command.finance is blocked for want of a real input, see its contract in estate/operator-contracts.yaff; the binary answers --help, which is not a witness; realizes Value; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing
+  known_gap operator command.finance quality-proven on a real input in the certification of 2026-11-07 (receipt rcpt-9f1da9e3b059dc69b2f3), one run on one input; realizes Value; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing
 
 architecture cmd-flash-q-l-a
   canonical_name BonfyreFlashQLA
@@ -943,7 +946,8 @@ architecture cmd-learn
   domain Capability / Acquisition
   semantic_question What does the BonfyreLearn capability organ realize, and by what contract?
   purpose Command-surface organ realizing the Capability capability. A first-class Bonfyre capability, advertised and composable, not a script.
-  maturity implemented
+  maturity measured
+  witness packs/no-simulation/command-evidence-20261107-real-input.tsv: command.learn quality_proven, receipt rcpt-14cc5d42e9fc21f6943c, workload and quality probe passed over a snapshot of ~/.local/share/bonfyre/learn.db (233 feedback rows); fabric state retained at ~/.bonfyre/certification/20261107
   command BonfyreLearn
   publishes Capability
   internal_calculus bonfyre-learn binary
@@ -952,7 +956,7 @@ architecture cmd-learn
   witness packs/no-simulation/command-evidence-20261010.tsv
   witness cmd/BonfyreLearn/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.learn=pass
   source_lineage the 91-command capability surface
-  known_gap certification of command.learn is blocked for want of a real input, see its contract in estate/operator-contracts.yaff; the binary answers --help, which is not a witness; realizes Capability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing
+  known_gap operator command.learn quality-proven on a real input in the certification of 2026-11-07 (receipt rcpt-14cc5d42e9fc21f6943c), one run on one input; realizes Capability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing
 
 architecture cmd-ledger
   canonical_name BonfyreLedger
@@ -1294,7 +1298,8 @@ architecture cmd-outreach
   domain Command / Outreach
   semantic_question What does the BonfyreOutreach capability organ realize, and by what contract?
   purpose Command-surface organ realizing the OutreachCapability capability. A first-class Bonfyre capability, advertised and composable, not a script.
-  maturity implemented
+  maturity measured
+  witness packs/no-simulation/command-evidence-20261107-real-input.tsv: command.outreach quality_proven, receipt rcpt-1244756c94e695f8e198, workload and quality probe passed over a snapshot of ~/.local/share/bonfyre/outreach.db (42 sends); fabric state retained at ~/.bonfyre/certification/20261107
   command BonfyreOutreach
   internal_calculus bonfyre-outreach binary
   forbidden_inference the command exists -> its effect is authorized (read-only, but scope still applies)
@@ -1302,7 +1307,7 @@ architecture cmd-outreach
   witness cmd/BonfyreOutreach/tests/commercial_outreach_test.sh
   witness cmd/BonfyreOutreach/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.outreach=pass
   source_lineage the 91-command capability surface
-  known_gap certification of command.outreach is blocked for want of a real input, see its contract in estate/operator-contracts.yaff; the binary answers --help, which is not a witness; realizes OutreachCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing
+  known_gap operator command.outreach quality-proven on a real input in the certification of 2026-11-07 (receipt rcpt-1244756c94e695f8e198), one run on one input; realizes OutreachCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing
 
 architecture cmd-pack
   canonical_name BonfyrePack
