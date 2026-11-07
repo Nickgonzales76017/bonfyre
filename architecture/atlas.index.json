@@ -3907,10 +3907,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreActors (bonfyre-actors, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -3990,10 +3990,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreAgentContract (bonfyre-agent-contract, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -4126,10 +4126,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; realizes AttentionCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+        "built by make -C cmd/BonfyreAttention (bonfyre-attention, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; realizes AttentionCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -4215,10 +4215,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreBitNet (bonfyre-bitnet, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -4321,7 +4321,7 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreBraidAudit (bonfyre-braid-audit) but prints nothing on --help and exits 2 (checked 2026-11-07), so it is not yet a usable command; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
       "maturity": "declared",
@@ -4356,10 +4356,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreBridgeReadiness (bonfyre-bridge-readiness, answers --help, not installed; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -4775,10 +4775,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreCommerce (bonfyre-commerce, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -5019,10 +5019,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreCredentials (bonfyre-credentials, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -5210,10 +5210,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreDisturbanceAudit (bonfyre-disturbance-audit, answers --help, not installed; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -5245,10 +5245,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; realizes DomainCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+        "built by make -C cmd/BonfyreDomain (bonfyre-domain, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; realizes DomainCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -5489,7 +5489,7 @@
         "each JSON value's kind is checked against its field before the library reads it, because the library's own reader takes the text \"yes\" for true"
       ],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work",
+        "built by make -C cmd/BonfyreEnvelope (bonfyre-envelope, answers --help, not installed; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work",
         "no boundary uses these messages yet: the browser host, the queue and the native commands still pass JSON. The definitions cover four messages, and a generated reader exists for C++ only"
       ],
       "layer": "",
@@ -5530,10 +5530,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreExperienceBinding (bonfyre-experience-binding, answers --help, not installed; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -5653,10 +5653,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreExperienceStage (bonfyre-experience-stage, answers --help, not installed; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -5691,10 +5691,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreExternalEstate (bonfyre-external-estate, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -5813,10 +5813,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreFacet (bonfyre-facet, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -6041,10 +6041,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreFragmentMigration (bonfyre-fragment-migration, answers --help, not installed; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -6248,10 +6248,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; realizes GitHubWatchCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+        "built by make -C cmd/BonfyreGitHubWatch (bonfyre-github-watch, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; realizes GitHubWatchCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -6373,10 +6373,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreHousehold (bonfyre-household, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -6633,10 +6633,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreLatentAtlas (bonfyre-latent-atlas, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -6824,10 +6824,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreLex (bonfyre-lex, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -6860,10 +6860,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; realizes LifecycleCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+        "built by make -C cmd/BonfyreLifecycle (bonfyre-lifecycle, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; realizes LifecycleCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -6937,10 +6937,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreMCPProof (bonfyre-mcp-proof, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -7102,10 +7102,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreMaterialWeatherGate (bonfyre-material-weather-gate, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -7137,10 +7137,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreMaterialWeatherReheat (bonfyre-material-weather-reheat, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -7209,10 +7209,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreMediaLibrary (bonfyre-media-library, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -7668,10 +7668,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreObservationBoundary (bonfyre-observation-boundary, answers --help, not installed; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -7901,10 +7901,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreOrigin (bonfyre-origin, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -7974,10 +7974,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreOwnerContract (bonfyre-owner-contract, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -8049,10 +8049,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyrePackCondition (bonfyre-pack-condition, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -8085,10 +8085,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyrePackConditionDelta (bonfyre-pack-condition-delta, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -8161,10 +8161,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreParticipation (bonfyre-participation, answers --help, not installed; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -8420,10 +8420,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; realizes ProviderCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+        "built by make -C cmd/BonfyreProvider (bonfyre-provider, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; realizes ProviderCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -8537,10 +8537,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyrePublicWorld (bonfyre-public-world, answers --help, not installed; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -8821,10 +8821,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreRecall (bonfyre-recall, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -9024,7 +9024,7 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreResourceWeatherDelta (bonfyre-resource-weather-delta) but prints nothing on --help and exits 2 (checked 2026-11-07), so it is not yet a usable command; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
       "maturity": "declared",
@@ -9059,10 +9059,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreResourceWeatherRefresh (bonfyre-resource-weather-refresh, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -9094,10 +9094,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreResourceWeatherTransition (bonfyre-resource-weather-transition, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -9129,10 +9129,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreRetention (bonfyre-retention, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -9393,7 +9393,7 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreScopedDemand (bonfyre-scoped-demand-reheat) but prints nothing on --help and exits 2 (checked 2026-11-07), so it is not yet a usable command; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
       "maturity": "declared",
@@ -9429,10 +9429,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreScopedFrontier (bonfyre-scoped-frontier, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -9464,10 +9464,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreScopedLeaseReheat (bonfyre-scoped-lease-reheat, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -9499,10 +9499,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreScopedReheat (bonfyre-scoped-reheat, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -9534,10 +9534,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreScopedRespecialize (bonfyre-scoped-respecialize, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -9640,10 +9640,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreSemanticOperation (bonfyre-semantic-operation, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -9710,7 +9710,7 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreShowcaseCrosswalk (bonfyre-showcase-crosswalk) but prints nothing on --help and exits 2 (checked 2026-11-07), so it is not yet a usable command; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
       "maturity": "declared",
@@ -9745,10 +9745,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreShowcaseEstate (bonfyre-showcase-estate, answers --help, not installed; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -9780,10 +9780,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreSign (bonfyre-sign, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -9893,10 +9893,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreSpatial (bonfyre-spatial, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -9966,10 +9966,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreStanding (bonfyre-standing, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -10083,10 +10083,10 @@
       ],
       "known_gaps": [
         "only publisher institutions are composed as lake subjects; products, people, places and Programs do not yet join retained items through subject relations",
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreSurfaceMaturity (bonfyre-surface-maturity, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -10125,10 +10125,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreSurfaceScene (bonfyre-surface-scene, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -10286,10 +10286,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreTargetAttention (bonfyre-target-attention, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -10869,10 +10869,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreWebSub (bonfyre-websub, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -10904,7 +10904,7 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreWebSubLeaseGate (bonfyre-websub-lease-gate) but prints nothing on --help and exits 2 (checked 2026-11-07), so it is not yet a usable command; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
       "maturity": "declared",
@@ -11023,10 +11023,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreWorldCompiler (bonfyre-world-compiler, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -41338,9 +41338,9 @@
   },
   "provenance": {
     "cannot_infer": "a matching digest -> a correct atlas; it says this index was built from these declaration bytes and nothing more",
-    "declaration_digest": "a4b82637e08828b186278337e6aa8eaf154bdd60de83f091518d28e90fb883b6",
+    "declaration_digest": "e8118fa6213bcaf59cbc2e2cd300e9f37f7d18467d7f686f2848ac243a5aeab0",
     "declaration_files": 151,
-    "generated_at": "2026-11-07T23:16:13Z"
+    "generated_at": "2026-11-07T23:18:04Z"
   },
   "views": {
     "CapabilityView": {

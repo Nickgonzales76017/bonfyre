@@ -53,13 +53,13 @@ architecture cmd-attention
   domain Command / Attention
   semantic_question What does the BonfyreAttention capability organ realize, and by what contract?
   purpose Command-surface organ realizing the AttentionCapability capability. A first-class Bonfyre capability, advertised and composable, not a script.
-  maturity declared
+  maturity implemented
   command BonfyreAttention
   internal_calculus BonfyreAttention binary
   forbidden_inference the command exists -> its effect is authorized (read-only, but scope still applies)
   source_path cmd/BonfyreAttention/src/main.c
   source_lineage the 91-command capability surface
-  known_gap source-only, not built; realizes AttentionCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing
+  known_gap built by make -C cmd/BonfyreAttention (bonfyre-attention, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; realizes AttentionCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing
 
 architecture cmd-auth
   canonical_name BonfyreAuth
@@ -433,13 +433,13 @@ architecture cmd-domain
   domain Command / Domain
   semantic_question What does the BonfyreDomain capability organ realize, and by what contract?
   purpose Command-surface organ realizing the DomainCapability capability. A first-class Bonfyre capability, advertised and composable, not a script.
-  maturity declared
+  maturity implemented
   command BonfyreDomain
   internal_calculus BonfyreDomain binary
   forbidden_inference the command exists -> its effect is authorized (read-only, but scope still applies)
   source_path cmd/BonfyreDomain/src/main.c
   source_lineage the 91-command capability surface
-  known_gap source-only, not built; realizes DomainCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing
+  known_gap built by make -C cmd/BonfyreDomain (bonfyre-domain, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; realizes DomainCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing
 
 architecture cmd-economy
   canonical_name BonfyreEconomy
@@ -761,13 +761,13 @@ architecture cmd-git-hub-watch
   domain Command / GitHubWatch
   semantic_question What does the BonfyreGitHubWatch capability organ realize, and by what contract?
   purpose Command-surface organ realizing the GitHubWatchCapability capability. A first-class Bonfyre capability, advertised and composable, not a script.
-  maturity declared
+  maturity implemented
   command BonfyreGitHubWatch
   internal_calculus BonfyreGitHubWatch binary
   forbidden_inference the command exists -> its effect is authorized (read-only, but scope still applies)
   source_path cmd/BonfyreGitHubWatch/src/main.c
   source_lineage the 91-command capability surface
-  known_gap source-only, not built; realizes GitHubWatchCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing
+  known_gap built by make -C cmd/BonfyreGitHubWatch (bonfyre-github-watch, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; realizes GitHubWatchCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing
 
 architecture cmd-graph
   canonical_name BonfyreGraph
@@ -977,13 +977,13 @@ architecture cmd-lifecycle
   domain Command / Lifecycle
   semantic_question What does the BonfyreLifecycle capability organ realize, and by what contract?
   purpose Command-surface organ realizing the LifecycleCapability capability. A first-class Bonfyre capability, advertised and composable, not a script.
-  maturity declared
+  maturity implemented
   command BonfyreLifecycle
   internal_calculus BonfyreLifecycle binary
   forbidden_inference the command exists -> its effect is authorized (read-only, but scope still applies)
   source_path cmd/BonfyreLifecycle/src/main.c
   source_lineage the 91-command capability surface
-  known_gap source-only, not built; realizes LifecycleCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing
+  known_gap built by make -C cmd/BonfyreLifecycle (bonfyre-lifecycle, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; realizes LifecycleCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing
 
 architecture cmd-m-f-a-dict
   canonical_name BonfyreMFADict
@@ -1447,13 +1447,13 @@ architecture cmd-provider
   domain Command / Provider
   semantic_question What does the BonfyreProvider capability organ realize, and by what contract?
   purpose Command-surface organ realizing the ProviderCapability capability. A first-class Bonfyre capability, advertised and composable, not a script.
-  maturity declared
+  maturity implemented
   command BonfyreProvider
   internal_calculus BonfyreProvider binary
   forbidden_inference the command exists -> its effect is authorized (read-only, but scope still applies)
   source_path cmd/BonfyreProvider/src/main.c
   source_lineage the 91-command capability surface
-  known_gap source-only, not built; realizes ProviderCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing
+  known_gap built by make -C cmd/BonfyreProvider (bonfyre-provider, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; realizes ProviderCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing
 
 architecture cmd-provider-frontier
   canonical_name BonfyreProviderFrontier
@@ -2421,13 +2421,13 @@ architecture cmd-actors
   domain Command / Actors
   semantic_question What does the BonfyreActors capability organ realize, and by what contract?
   purpose Command-surface organ realizing the ActorsCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreActors
   internal_calculus BonfyreActors binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreActors/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreActors (bonfyre-actors, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-agent-contract
   canonical_name BonfyreAgentContract
@@ -2435,13 +2435,13 @@ architecture cmd-agent-contract
   domain Command / AgentContract
   semantic_question What does the BonfyreAgentContract capability organ realize, and by what contract?
   purpose Command-surface organ realizing the AgentContractCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreAgentContract
   internal_calculus BonfyreAgentContract binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreAgentContract/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreAgentContract (bonfyre-agent-contract, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-bit-net
   canonical_name BonfyreBitNet
@@ -2449,13 +2449,13 @@ architecture cmd-bit-net
   domain Command / BitNet
   semantic_question What does the BonfyreBitNet capability organ realize, and by what contract?
   purpose Command-surface organ realizing the BitNetCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreBitNet
   internal_calculus BonfyreBitNet binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreBitNet/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreBitNet (bonfyre-bitnet, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-braid-audit
   canonical_name BonfyreBraidAudit
@@ -2469,7 +2469,7 @@ architecture cmd-braid-audit
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreBraidAudit/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreBraidAudit (bonfyre-braid-audit) but prints nothing on --help and exits 2 (checked 2026-11-07), so it is not yet a usable command; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-bridge-readiness
   canonical_name BonfyreBridgeReadiness
@@ -2477,13 +2477,13 @@ architecture cmd-bridge-readiness
   domain Command / BridgeReadiness
   semantic_question What does the BonfyreBridgeReadiness capability organ realize, and by what contract?
   purpose Command-surface organ realizing the BridgeReadinessCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreBridgeReadiness
   internal_calculus BonfyreBridgeReadiness binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreBridgeReadiness/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreBridgeReadiness (bonfyre-bridge-readiness, answers --help, not installed; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-commerce
   canonical_name BonfyreCommerce
@@ -2491,13 +2491,13 @@ architecture cmd-commerce
   domain Command / Commerce
   semantic_question What does the BonfyreCommerce capability organ realize, and by what contract?
   purpose Command-surface organ realizing the CommerceCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreCommerce
   internal_calculus BonfyreCommerce binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreCommerce/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreCommerce (bonfyre-commerce, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-context-cut
   canonical_name BonfyreContextCut
@@ -2518,13 +2518,13 @@ architecture cmd-credentials
   domain Command / Credentials
   semantic_question What does the BonfyreCredentials capability organ realize, and by what contract?
   purpose Command-surface organ realizing the CredentialsCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreCredentials
   internal_calculus BonfyreCredentials binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreCredentials/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreCredentials (bonfyre-credentials, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-demand-convergence
   canonical_name BonfyreDemandConvergence
@@ -2545,13 +2545,13 @@ architecture cmd-disturbance-audit
   domain Command / DisturbanceAudit
   semantic_question What does the BonfyreDisturbanceAudit capability organ realize, and by what contract?
   purpose Command-surface organ realizing the DisturbanceAuditCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreDisturbanceAudit
   internal_calculus BonfyreDisturbanceAudit binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreDisturbanceAudit/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreDisturbanceAudit (bonfyre-disturbance-audit, answers --help, not installed; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-experience-binding
   canonical_name BonfyreExperienceBinding
@@ -2559,7 +2559,7 @@ architecture cmd-experience-binding
   domain Command / ExperienceBinding
   semantic_question What does the BonfyreExperienceBinding capability organ realize, and by what contract?
   purpose Command-surface organ realizing the ExperienceBindingCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreExperienceBinding
   internal_calculus BonfyreExperienceBinding binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
@@ -2568,7 +2568,7 @@ architecture cmd-experience-binding
   source_path cmd/BonfyreExperienceBinding/src/html_metadata.c
   source_path cmd/BonfyreExperienceBinding/src/html_metadata.h
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreExperienceBinding (bonfyre-experience-binding, answers --help, not installed; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-experience-convergence
   canonical_name BonfyreExperienceConvergence
@@ -2618,7 +2618,7 @@ architecture cmd-experience-stage
   domain Command / ExperienceStage
   semantic_question What does the BonfyreExperienceStage capability organ realize, and by what contract?
   purpose Command-surface organ realizing the ExperienceStageCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreExperienceStage
   internal_calculus BonfyreExperienceStage binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
@@ -2627,7 +2627,7 @@ architecture cmd-experience-stage
   source_path cmd/BonfyreExperienceStage/src/compiler.c
   source_path cmd/BonfyreExperienceStage/src/compiler.h
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreExperienceStage (bonfyre-experience-stage, answers --help, not installed; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-external-estate
   canonical_name BonfyreExternalEstate
@@ -2635,13 +2635,13 @@ architecture cmd-external-estate
   domain Command / ExternalEstate
   semantic_question What does the BonfyreExternalEstate capability organ realize, and by what contract?
   purpose Command-surface organ realizing the ExternalEstateCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreExternalEstate
   internal_calculus BonfyreExternalEstate binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreExternalEstate/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreExternalEstate (bonfyre-external-estate, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-facet
   canonical_name BonfyreFacet
@@ -2649,13 +2649,13 @@ architecture cmd-facet
   domain Command / Facet
   semantic_question What does the BonfyreFacet capability organ realize, and by what contract?
   purpose Command-surface organ realizing the FacetCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreFacet
   internal_calculus BonfyreFacet binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreFacet/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreFacet (bonfyre-facet, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-fragment-migration
   canonical_name BonfyreFragmentMigration
@@ -2663,7 +2663,7 @@ architecture cmd-fragment-migration
   domain Command / FragmentMigration
   semantic_question What does the BonfyreFragmentMigration capability organ realize, and by what contract?
   purpose Command-surface organ realizing the FragmentMigrationCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreFragmentMigration
   internal_calculus BonfyreFragmentMigration binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
@@ -2672,7 +2672,7 @@ architecture cmd-fragment-migration
   source_path cmd/BonfyreFragmentMigration/src/compile.c
   source_path cmd/BonfyreFragmentMigration/src/compile.h
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreFragmentMigration (bonfyre-fragment-migration, answers --help, not installed; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-household
   canonical_name BonfyreHousehold
@@ -2680,13 +2680,13 @@ architecture cmd-household
   domain Command / Household
   semantic_question What does the BonfyreHousehold capability organ realize, and by what contract?
   purpose Command-surface organ realizing the HouseholdCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreHousehold
   internal_calculus BonfyreHousehold binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreHousehold/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreHousehold (bonfyre-household, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-latent-atlas
   canonical_name BonfyreLatentAtlas
@@ -2694,13 +2694,13 @@ architecture cmd-latent-atlas
   domain Command / LatentAtlas
   semantic_question What does the BonfyreLatentAtlas capability organ realize, and by what contract?
   purpose Command-surface organ realizing the LatentAtlasCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreLatentAtlas
   internal_calculus BonfyreLatentAtlas binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreLatentAtlas/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreLatentAtlas (bonfyre-latent-atlas, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-lex
   canonical_name BonfyreLex
@@ -2708,14 +2708,14 @@ architecture cmd-lex
   domain Command / Lex
   semantic_question What does the BonfyreLex capability organ realize, and by what contract?
   purpose Command-surface organ realizing the LexCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreLex
   internal_calculus BonfyreLex binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreLex/src/bf_lex.h
   source_path cmd/BonfyreLex/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreLex (bonfyre-lex, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-lowering-workers
   canonical_name BonfyreLoweringWorkers
@@ -2743,7 +2743,7 @@ architecture cmd-m-c-p-proof
   domain Command / MCPProof
   semantic_question What does the BonfyreMCPProof capability organ realize, and by what contract?
   purpose Command-surface organ realizing the MCPProofCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreMCPProof
   internal_calculus BonfyreMCPProof binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
@@ -2752,7 +2752,7 @@ architecture cmd-m-c-p-proof
   source_path cmd/BonfyreMCPProof/src/discipl.c
   source_path cmd/BonfyreMCPProof/src/flow.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreMCPProof (bonfyre-mcp-proof, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-material-lease
   canonical_name BonfyreMaterialLease
@@ -2774,13 +2774,13 @@ architecture cmd-material-weather-gate
   domain Command / MaterialWeatherGate
   semantic_question What does the BonfyreMaterialWeatherGate capability organ realize, and by what contract?
   purpose Command-surface organ realizing the MaterialWeatherGateCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreMaterialWeatherGate
   internal_calculus BonfyreMaterialWeatherGate binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreMaterialWeatherGate/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreMaterialWeatherGate (bonfyre-material-weather-gate, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-material-weather-reheat
   canonical_name BonfyreMaterialWeatherReheat
@@ -2788,13 +2788,13 @@ architecture cmd-material-weather-reheat
   domain Command / MaterialWeatherReheat
   semantic_question What does the BonfyreMaterialWeatherReheat capability organ realize, and by what contract?
   purpose Command-surface organ realizing the MaterialWeatherReheatCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreMaterialWeatherReheat
   internal_calculus BonfyreMaterialWeatherReheat binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreMaterialWeatherReheat/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreMaterialWeatherReheat (bonfyre-material-weather-reheat, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-media-library
   canonical_name BonfyreMediaLibrary
@@ -2802,13 +2802,13 @@ architecture cmd-media-library
   domain Command / MediaLibrary
   semantic_question What does the BonfyreMediaLibrary capability organ realize, and by what contract?
   purpose Command-surface organ realizing the MediaLibraryCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreMediaLibrary
   internal_calculus BonfyreMediaLibrary binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreMediaLibrary/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreMediaLibrary (bonfyre-media-library, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-observation-boundary
   canonical_name BonfyreObservationBoundary
@@ -2816,13 +2816,13 @@ architecture cmd-observation-boundary
   domain Command / ObservationBoundary
   semantic_question What does the BonfyreObservationBoundary capability organ realize, and by what contract?
   purpose Command-surface organ realizing the ObservationBoundaryCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreObservationBoundary
   internal_calculus BonfyreObservationBoundary binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreObservationBoundary/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreObservationBoundary (bonfyre-observation-boundary, answers --help, not installed; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-origin
   canonical_name BonfyreOrigin
@@ -2830,13 +2830,13 @@ architecture cmd-origin
   domain Command / Origin
   semantic_question What does the BonfyreOrigin capability organ realize, and by what contract?
   purpose Command-surface organ realizing the OriginCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreOrigin
   internal_calculus BonfyreOrigin binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreOrigin/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreOrigin (bonfyre-origin, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-owner-contract
   canonical_name BonfyreOwnerContract
@@ -2844,7 +2844,7 @@ architecture cmd-owner-contract
   domain Command / OwnerContract
   semantic_question What does the BonfyreOwnerContract capability organ realize, and by what contract?
   purpose Command-surface organ realizing the OwnerContractCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreOwnerContract
   internal_calculus BonfyreOwnerContract binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
@@ -2852,7 +2852,7 @@ architecture cmd-owner-contract
   source_path cmd/BonfyreOwnerContract/src/catalog.h
   source_path cmd/BonfyreOwnerContract/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreOwnerContract (bonfyre-owner-contract, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-pack-condition
   canonical_name BonfyrePackCondition
@@ -2860,14 +2860,14 @@ architecture cmd-pack-condition
   domain Command / PackCondition
   semantic_question What does the BonfyrePackCondition capability organ realize, and by what contract?
   purpose Command-surface organ realizing the PackConditionCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyrePackCondition
   internal_calculus BonfyrePackCondition binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyrePackCondition/src/main.c
   source_path cmd/BonfyrePackCondition/src/outbox.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyrePackCondition (bonfyre-pack-condition, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-pack-condition-delta
   canonical_name BonfyrePackConditionDelta
@@ -2875,7 +2875,7 @@ architecture cmd-pack-condition-delta
   domain Command / PackConditionDelta
   semantic_question What does the BonfyrePackConditionDelta capability organ realize, and by what contract?
   purpose Command-surface organ realizing the PackConditionDeltaCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyrePackConditionDelta
   internal_calculus BonfyrePackConditionDelta binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
@@ -2884,7 +2884,7 @@ architecture cmd-pack-condition-delta
   source_path cmd/BonfyrePackConditionDelta/src/bridge_parse.h
   source_path cmd/BonfyrePackConditionDelta/src/bridge_project.h
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyrePackConditionDelta (bonfyre-pack-condition-delta, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-participation
   canonical_name BonfyreParticipation
@@ -2892,7 +2892,7 @@ architecture cmd-participation
   domain Command / Participation
   semantic_question What does the BonfyreParticipation capability organ realize, and by what contract?
   purpose Command-surface organ realizing the ParticipationCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreParticipation
   internal_calculus BonfyreParticipation binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
@@ -2901,7 +2901,7 @@ architecture cmd-participation
   source_path cmd/BonfyreParticipation/src/entry.c
   source_path cmd/BonfyreParticipation/src/evidence.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreParticipation (bonfyre-participation, answers --help, not installed; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-public-world
   canonical_name BonfyrePublicWorld
@@ -2909,13 +2909,13 @@ architecture cmd-public-world
   domain Command / PublicWorld
   semantic_question What does the BonfyrePublicWorld capability organ realize, and by what contract?
   purpose Command-surface organ realizing the PublicWorldCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyrePublicWorld
   internal_calculus BonfyrePublicWorld binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyrePublicWorld/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyrePublicWorld (bonfyre-public-world, answers --help, not installed; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-recall
   canonical_name BonfyreRecall
@@ -2923,7 +2923,7 @@ architecture cmd-recall
   domain Command / Recall
   semantic_question What does the BonfyreRecall capability organ realize, and by what contract?
   purpose Command-surface organ realizing the RecallCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreRecall
   internal_calculus BonfyreRecall binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
@@ -2932,7 +2932,7 @@ architecture cmd-recall
   source_path cmd/BonfyreRecall/src/query.c
   source_path cmd/BonfyreRecall/src/recall.h
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreRecall (bonfyre-recall, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-resource-weather-delta
   canonical_name BonfyreResourceWeatherDelta
@@ -2946,7 +2946,7 @@ architecture cmd-resource-weather-delta
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreResourceWeatherDelta/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreResourceWeatherDelta (bonfyre-resource-weather-delta) but prints nothing on --help and exits 2 (checked 2026-11-07), so it is not yet a usable command; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-resource-weather-refresh
   canonical_name BonfyreResourceWeatherRefresh
@@ -2954,13 +2954,13 @@ architecture cmd-resource-weather-refresh
   domain Command / ResourceWeatherRefresh
   semantic_question What does the BonfyreResourceWeatherRefresh capability organ realize, and by what contract?
   purpose Command-surface organ realizing the ResourceWeatherRefreshCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreResourceWeatherRefresh
   internal_calculus BonfyreResourceWeatherRefresh binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreResourceWeatherRefresh/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreResourceWeatherRefresh (bonfyre-resource-weather-refresh, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-resource-weather-transition
   canonical_name BonfyreResourceWeatherTransition
@@ -2968,13 +2968,13 @@ architecture cmd-resource-weather-transition
   domain Command / ResourceWeatherTransition
   semantic_question What does the BonfyreResourceWeatherTransition capability organ realize, and by what contract?
   purpose Command-surface organ realizing the ResourceWeatherTransitionCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreResourceWeatherTransition
   internal_calculus BonfyreResourceWeatherTransition binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreResourceWeatherTransition/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreResourceWeatherTransition (bonfyre-resource-weather-transition, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-retention
   canonical_name BonfyreRetention
@@ -2982,13 +2982,13 @@ architecture cmd-retention
   domain Command / Retention
   semantic_question What does the BonfyreRetention capability organ realize, and by what contract?
   purpose Command-surface organ realizing the RetentionCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreRetention
   internal_calculus BonfyreRetention binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreRetention/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreRetention (bonfyre-retention, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-scoped-convergence
   canonical_name BonfyreScopedConvergence
@@ -3016,7 +3016,7 @@ architecture cmd-scoped-demand
   source_path cmd/BonfyreScopedDemand/src/main.c
   source_path cmd/BonfyreScopedDemand/src/reheat.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreScopedDemand (bonfyre-scoped-demand-reheat) but prints nothing on --help and exits 2 (checked 2026-11-07), so it is not yet a usable command; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-scoped-frontier
   canonical_name BonfyreScopedFrontier
@@ -3024,13 +3024,13 @@ architecture cmd-scoped-frontier
   domain Command / ScopedFrontier
   semantic_question What does the BonfyreScopedFrontier capability organ realize, and by what contract?
   purpose Command-surface organ realizing the ScopedFrontierCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreScopedFrontier
   internal_calculus BonfyreScopedFrontier binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreScopedFrontier/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreScopedFrontier (bonfyre-scoped-frontier, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-scoped-lease-reheat
   canonical_name BonfyreScopedLeaseReheat
@@ -3038,13 +3038,13 @@ architecture cmd-scoped-lease-reheat
   domain Command / ScopedLeaseReheat
   semantic_question What does the BonfyreScopedLeaseReheat capability organ realize, and by what contract?
   purpose Command-surface organ realizing the ScopedLeaseReheatCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreScopedLeaseReheat
   internal_calculus BonfyreScopedLeaseReheat binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreScopedLeaseReheat/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreScopedLeaseReheat (bonfyre-scoped-lease-reheat, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-scoped-reheat
   canonical_name BonfyreScopedReheat
@@ -3052,13 +3052,13 @@ architecture cmd-scoped-reheat
   domain Command / ScopedReheat
   semantic_question What does the BonfyreScopedReheat capability organ realize, and by what contract?
   purpose Command-surface organ realizing the ScopedReheatCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreScopedReheat
   internal_calculus BonfyreScopedReheat binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreScopedReheat/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreScopedReheat (bonfyre-scoped-reheat, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-scoped-respecialize
   canonical_name BonfyreScopedRespecialize
@@ -3066,13 +3066,13 @@ architecture cmd-scoped-respecialize
   domain Command / ScopedRespecialize
   semantic_question What does the BonfyreScopedRespecialize capability organ realize, and by what contract?
   purpose Command-surface organ realizing the ScopedRespecializeCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreScopedRespecialize
   internal_calculus BonfyreScopedRespecialize binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreScopedRespecialize/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreScopedRespecialize (bonfyre-scoped-respecialize, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-scoped-weather-convergence
   canonical_name BonfyreScopedWeatherConvergence
@@ -3093,13 +3093,13 @@ architecture cmd-semantic-operation
   domain Command / SemanticOperation
   semantic_question What does the BonfyreSemanticOperation capability organ realize, and by what contract?
   purpose Command-surface organ realizing the SemanticOperationCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreSemanticOperation
   internal_calculus BonfyreSemanticOperation binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreSemanticOperation/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreSemanticOperation (bonfyre-semantic-operation, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-semantic-optimizer
   canonical_name BonfyreSemanticOptimizer
@@ -3127,7 +3127,7 @@ architecture cmd-showcase-crosswalk
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreShowcaseCrosswalk/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreShowcaseCrosswalk (bonfyre-showcase-crosswalk) but prints nothing on --help and exits 2 (checked 2026-11-07), so it is not yet a usable command; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-showcase-estate
   canonical_name BonfyreShowcaseEstate
@@ -3135,13 +3135,13 @@ architecture cmd-showcase-estate
   domain Command / ShowcaseEstate
   semantic_question What does the BonfyreShowcaseEstate capability organ realize, and by what contract?
   purpose Command-surface organ realizing the ShowcaseEstateCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreShowcaseEstate
   internal_calculus BonfyreShowcaseEstate binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreShowcaseEstate/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreShowcaseEstate (bonfyre-showcase-estate, answers --help, not installed; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-sign
   canonical_name BonfyreSign
@@ -3149,13 +3149,13 @@ architecture cmd-sign
   domain Command / Sign
   semantic_question What does the BonfyreSign capability organ realize, and by what contract?
   purpose Command-surface organ realizing the SignCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreSign
   internal_calculus BonfyreSign binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreSign/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreSign (bonfyre-sign, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-source-frontier
   canonical_name BonfyreSourceFrontier
@@ -3181,13 +3181,13 @@ architecture cmd-spatial
   domain Command / Spatial
   semantic_question What does the BonfyreSpatial capability organ realize, and by what contract?
   purpose Command-surface organ realizing the SpatialCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreSpatial
   internal_calculus BonfyreSpatial binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreSpatial/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreSpatial (bonfyre-spatial, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-standing
   canonical_name BonfyreStanding
@@ -3195,13 +3195,13 @@ architecture cmd-standing
   domain Command / Standing
   semantic_question What does the BonfyreStanding capability organ realize, and by what contract?
   purpose Command-surface organ realizing the StandingCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreStanding
   internal_calculus BonfyreStanding binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreStanding/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreStanding (bonfyre-standing, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-surface-maturity
   canonical_name BonfyreSurfaceMaturity
@@ -3209,7 +3209,7 @@ architecture cmd-surface-maturity
   domain Command / SurfaceMaturity
   semantic_question What does the BonfyreSurfaceMaturity capability organ realize, and by what contract?
   purpose Command-surface organ realizing the SurfaceMaturityCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreSurfaceMaturity
   internal_calculus BonfyreSurfaceMaturity binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
@@ -3226,7 +3226,7 @@ architecture cmd-surface-maturity
   forbidden_inference a full lake floor -> subjects that are correct, current or endorsed by the publishers they stand for
   forbidden_inference an item reached by a subject -> an item that is about that subject; a reader binds a source, not the meaning of each item
   known_gap only publisher institutions are composed as lake subjects; products, people, places and Programs do not yet join retained items through subject relations
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreSurfaceMaturity (bonfyre-surface-maturity, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-surface-scene
   canonical_name BonfyreSurfaceScene
@@ -3234,13 +3234,13 @@ architecture cmd-surface-scene
   domain Command / SurfaceScene
   semantic_question What does the BonfyreSurfaceScene capability organ realize, and by what contract?
   purpose Command-surface organ realizing the SurfaceSceneCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreSurfaceScene
   internal_calculus BonfyreSurfaceScene binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreSurfaceScene/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreSurfaceScene (bonfyre-surface-scene, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-target-attention
   canonical_name BonfyreTargetAttention
@@ -3248,13 +3248,13 @@ architecture cmd-target-attention
   domain Command / TargetAttention
   semantic_question What does the BonfyreTargetAttention capability organ realize, and by what contract?
   purpose Command-surface organ realizing the TargetAttentionCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreTargetAttention
   internal_calculus BonfyreTargetAttention binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreTargetAttention/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreTargetAttention (bonfyre-target-attention, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-web-sub
   canonical_name BonfyreWebSub
@@ -3262,13 +3262,13 @@ architecture cmd-web-sub
   domain Command / WebSub
   semantic_question What does the BonfyreWebSub capability organ realize, and by what contract?
   purpose Command-surface organ realizing the WebSubCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreWebSub
   internal_calculus BonfyreWebSub binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreWebSub/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreWebSub (bonfyre-websub, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-web-sub-lease-gate
   canonical_name BonfyreWebSubLeaseGate
@@ -3282,7 +3282,7 @@ architecture cmd-web-sub-lease-gate
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreWebSubLeaseGate/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreWebSubLeaseGate (bonfyre-websub-lease-gate) but prints nothing on --help and exits 2 (checked 2026-11-07), so it is not yet a usable command; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-world-compiler
   canonical_name BonfyreWorldCompiler
@@ -3290,13 +3290,13 @@ architecture cmd-world-compiler
   domain Command / WorldCompiler
   semantic_question What does the BonfyreWorldCompiler capability organ realize, and by what contract?
   purpose Command-surface organ realizing the WorldCompilerCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreWorldCompiler
   internal_calculus BonfyreWorldCompiler binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreWorldCompiler/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreWorldCompiler (bonfyre-world-compiler, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-a-d-b-c-probe
   canonical_name BonfyreADBCProbe
@@ -3393,7 +3393,7 @@ architecture cmd-envelope
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreEnvelope/src/main.cc
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreEnvelope (bonfyre-envelope, answers --help, not installed; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
   source_path proto/aurekai/operation.proto
   source_path cmd/BonfyreEnvelope/Makefile
   source_path cmd/BonfyreEnvelope/tests/envelope_test.sh
