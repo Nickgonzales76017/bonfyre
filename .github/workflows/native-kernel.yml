@@ -74,7 +74,7 @@ jobs:
           make -C cmd/BonfyreAtlas
           make -C cmd/BonfyreProject bonfyre-project
           # The MCP control-plane app bundles @modelcontextprotocol/ext-apps.
-          bun install --frozen-lockfile --cwd components/BonfyreServiceSite
+          (cd components/BonfyreServiceSite && bun install --frozen-lockfile)
           bun integrations/mcp/native/build_spines_wasm.mjs --verify
           bun test \
             integrations/mcp/tests/project_delta_watcher.test.mjs \

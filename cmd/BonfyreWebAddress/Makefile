@@ -77,7 +77,11 @@ all: native-compact-footprint-witness
 endif
 test: source-hierarchy-witness
 .PHONY: preview-snapshot-witness
+# The preview copies live stores with APFS copy-on-write clones and refuses
+# without them, so its witness runs on macOS.
+ifeq ($(shell uname -s),Darwin)
 test: preview-snapshot-witness
+endif
 preview-snapshot-witness:
 	sh tools/preview-snapshot.test.sh
 source-hierarchy-witness: $(SOURCE_HIERARCHY_TEST)
