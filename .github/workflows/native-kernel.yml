@@ -420,7 +420,8 @@ jobs:
           (cd components/BonfyreServiceSite && bun install --frozen-lockfile)
           # Fetch the pinned, digest-checked QR source; builds never fetch it.
           make -C cmd/BonfyreWebAddress prepare-public-code
-          # WebAddress witnesses run the CMS owner.
+          # WebAddress witnesses run the CMS owner, which links libbonfyre.
+          make -C lib/libbonfyre
           make -C cmd/BonfyreCMS bonfyre-cms
           make -C cmd/BonfyreWebAddress test
           make -C cmd/BonfyreDomain test
