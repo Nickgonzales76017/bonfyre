@@ -1,4 +1,20 @@
-# Benchmarks
+# Historical measurements — not current platform benchmarks
+
+> **Archived experimental evidence.** The tables below describe earlier Bonfÿre/Lambda Tensors/HCP and model work on the stated samples and systems. They are preserved for reproducibility, **not** a current release scorecard, universal performance claim, production SLA, cross-provider comparison, or evidence that every binary is deployed.
+
+| Reading a number | Required context |
+|---|---|
+| **47 binaries / ~2.1 MB** | Earlier binary inventory and packaging measurements; not today's Bonfÿre command plane or installed system |
+| **5–8 ms pipeline** | Narrow local orchestration stages on specific inputs; **not** transcription of a complete audio file or end-to-end remote delivery |
+| **Compression ratios** | The specified family/corpus/representation only; quality, decode cost and random access must be compared on equivalent work |
+| **Transcription/HCP quality** | Selected proxy metrics and audio examples; not a validated word-error-rate or general zero-hallucination guarantee |
+| **Provider comparisons** | Re-run against current services, pricing, comparable workloads and human-labeled ground truth before reuse |
+
+For current implementation truth, consult the [source](../cmd/), [Architecture Atlas](../architecture/) and [technical guide](https://nickgonzales76017.github.io/bonfyre/docs.html). The [Aurekai/Bonfÿre operating contract](aurekai-bonfyre-model.md) explains why measurements are separate from public deployment and commercial acceptance.
+
+---
+
+## Original benchmark record
 
 All benchmarks on Apple M-series, single-threaded unless noted.
 
