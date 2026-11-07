@@ -5,6 +5,13 @@ ifeq ($(shell uname -s),Darwin)
 # Expose no-follow descriptor traversal before system headers are parsed.
 CFLAGS += -D_DARWIN_C_SOURCE
 endif
+ifeq ($(shell uname -s),Linux)
+# glibc hides strcasestr, strptime and timegm behind _GNU_SOURCE once a source
+# file asks for _POSIX_C_SOURCE. GCC's -Wall also reports brace-less one-line
+# guards and possible snprintf truncation, which clang does not; the bounded
+# writers check their own lengths.
+CFLAGS += -D_GNU_SOURCE -Wno-misleading-indentation -Wno-format-truncation
+endif
 CFLAGS += -I../BonfyreLex/src
 # Packed receipts are read where zstd is present; without it the organ reads
 # loose receipts only, as it always did. Linked statically when the archive is there.

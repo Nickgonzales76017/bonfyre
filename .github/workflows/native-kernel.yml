@@ -224,6 +224,8 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: cue-lang/setup-cue@v1.0.0
+
       - name: Reject new Python runtime sources
         shell: bash
         run: |
