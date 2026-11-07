@@ -1,0 +1,26 @@
+architecture factor-reduction
+  canonical_name FactorReduction
+  owns SharedFactorSummary
+  publishes ExactFactorCount
+  family optimization
+  domain Optimization / Exact combinatorial reduction
+  layer execution
+  semantic_question What is the exact sum over all assignments of a product of typed Boolean factors, and which parts of it were already computed for a related problem?
+  purpose One exact reduction kernel beneath the commands instead of one optimizer per command. Typed constraints (clauses, exclusions, dependencies, integer weights) become a factor graph; each connected component is eliminated once and its count is shared by structural digest across a family of problems, so the cost of a shared piece is paid once and reused.
+  maturity measured
+  source_path lib/libbonfyre/include/bf_factor.h
+  source_path lib/libbonfyre/src/bf_factor.c
+  source_path lib/libbonfyre/Makefile
+  witness lib/libbonfyre/tests/factor_count_test.c compares every count with brute-force enumeration over 400 random CNFs and 300 random weighted factor graphs, checks clause lowering, an auxiliary AND definition that preserves the count, refusal of an over-wide clique and of a 2^128 count, and exact 2^127; on a family of 2000 problems built from 6 shared pieces it eliminated 11 components and answered 39954 from the cache with every answer equal to fresh elimination (make -C lib/libbonfyre test-factor; also clean under ASan and UBSan, 2026-11-07)
+  internal_calculi variable elimination
+  node_types ConstraintFactor
+  node_types SharedFactorSummary
+  invariant counts are exact unsigned 128-bit integers; overflow is refused, never wrapped
+  invariant an elimination wider than the bound is refused, never approximated
+  invariant a component digest covers renamed scopes and full tables, so a cached count is reused only for a component built identically
+  invariant a clause holding v and not v adds nothing; an empty clause makes the count zero
+  forbidden_inference a configuration counted as valid -> that configuration being authorized or committed
+  forbidden_inference two components with different digests -> two different structures; isomorphic pieces built in a different order are computed twice
+  forbidden_inference a fast count on a bounded-width family -> tractability of an arbitrary formula
+  forbidden_inference shared FPQ seed programs -> equal exact factors
+  known_gap no command calls it yet; CMS reduction, policy configurations and repository compositions are the first intended callers
