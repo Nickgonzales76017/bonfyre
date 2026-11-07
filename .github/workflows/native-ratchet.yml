@@ -37,7 +37,7 @@ jobs:
   # reports (floating-point output, cause not yet isolated), so byte parity
   # runs on the platform that recorded the vectors.
   decide-parity:
-    runs-on: macos-14
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - uses: cue-lang/setup-cue@v1.0.0

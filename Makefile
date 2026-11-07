@@ -166,6 +166,7 @@ control-plane-native-test:
 
 .PHONY: decision-plane-test
 decision-plane-test:
+	$(MAKE) -C components/BonfyreDecision/native
 	bun test components/BonfyreDecision/tests cmd/BonfyreExternalEstate/tests/decision_program_plane.test.mjs scripts/tests/residual-to-work.test.mjs
 
 .PHONY: operator-entrypoints-test
