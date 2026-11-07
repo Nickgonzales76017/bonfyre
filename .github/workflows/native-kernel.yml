@@ -416,6 +416,8 @@ jobs:
 
       - name: Exercise address constellation, host context, carriers, and DNS guard
         run: |
+          # The CRM/finance witness imports ServiceSite's workbook (Univer).
+          (cd components/BonfyreServiceSite && bun install --frozen-lockfile)
           # Fetch the pinned, digest-checked QR source; builds never fetch it.
           make -C cmd/BonfyreWebAddress prepare-public-code
           make -C cmd/BonfyreWebAddress test

@@ -208,3 +208,6 @@ Aurekai/generated/integration-repos/
 /cmd/BonfyreProviderEstate/acquisition.tsv
 /docs/engineering/handoff-backfill-20261019/onboarding-enrollment.tsv
 /components/BonfyreServiceSite/tools/product-review
+
+# Local symlinks to installed dependencies (worktrees) are never source.
+node_modules
