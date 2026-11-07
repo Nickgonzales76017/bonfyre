@@ -26,6 +26,10 @@ run_case() {   # impl name svc script env argv -> writes $out/{stdout,stderr,exi
         port=$(cat "$t/port")
         local up; up=$(printf '%s' "$svc" | tr a-z A-Z)
         env_args+=("BONFYRE_${up}_URL=http://127.0.0.1:$port")
+    else
+        # No fixture: point at a closed port so a case never reaches whatever
+        # owner happens to be running on the recording machine.
+        env_args+=("BONFYRE_$(printf '%s' "$svc" | tr a-z A-Z)_URL=http://127.0.0.1:1")
     fi
     if [ "$envs" != "-" ]; then
         for kv in $envs; do
