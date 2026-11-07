@@ -65,6 +65,7 @@ typedef struct DpOwner {
 
 bf_jv *dp_compile_case(const bf_jv *input, const bf_jv *policy);
 bf_jv *dp_proposal(const bf_jv *receipt, const bf_jv *policy);
+bf_jv *dp_assess_hosted(const bf_jv *compiled, const char *provider, int execute, const char *account_id, double timeout_ms, const bf_jv *policy);
 /* assessDecisionCases(cases, {localEvaluator, execute: true, maxCalls, concurrency: 1}) */
 bf_jv *dp_assess_cases(bf_jv *cases, DpOwner *local, long max_calls, const bf_jv *policy);
 

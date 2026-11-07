@@ -6,6 +6,10 @@
  *   plane policy                                   -> the compiled policy
  *   plane compile           stdin decision case    -> compiled case
  *   plane proposal          stdin receipt          -> proposal (or null)
+ *   plane assess            stdin {compiled, provider, execute, account_id?, timeout_ms?}
+ *                           -> receipt from a hosted provider (planned when
+ *                              execute is false); the credential is read from
+ *                              the provider's credential_env, never from input
  *
  * Every verb reads one JSON document from stdin and writes one line of JSON
  * (or hex) to stdout. Output objects are written with sorted keys, matching
@@ -38,7 +42,7 @@ static void emit(const bf_jv *v) {
 }
 
 int plane_main(int argc, char **argv) {
-    if (argc < 1) { fputs("usage: bonfyre-decide plane digest|policy|compile|proposal < input.json\n", stderr); return 2; }
+    if (argc < 1) { fputs("usage: bonfyre-decide plane digest|policy|compile|proposal|assess < input.json\n", stderr); return 2; }
     const char *verb = argv[0];
     bf_jv *policy = dp_policy();
     if (!strcmp(verb, "policy")) { emit(policy); bf_jv_free(policy); return 0; }
@@ -50,6 +54,15 @@ int plane_main(int argc, char **argv) {
     } else if (!strcmp(verb, "proposal")) {
         bf_jv *p = dp_proposal(in, policy);
         if (p) { emit(p); bf_jv_free(p); } else puts("null");
+    } else if (!strcmp(verb, "assess")) {
+        const bf_jv *compiled = bf_jv_get(in, "compiled");
+        const char *provider = bf_jv_s(bf_jv_get(in, "provider"));
+        const bf_jv *ex = bf_jv_get(in, "execute");
+        if (!compiled || !provider) dp_fail("assess needs compiled and provider");
+        double timeout = bf_jv_n(bf_jv_get(in, "timeout_ms"), 45000);
+        bf_jv *r = dp_assess_hosted(compiled, provider, ex && ex->type == BF_JV_BOOL && ex->b,
+                                    bf_jv_s(bf_jv_get(in, "account_id")), timeout, policy);
+        emit(r); bf_jv_free(r);
     } else {
         fprintf(stderr, "bonfyre-decide plane: unknown verb %s\n", verb); bf_jv_free(in); bf_jv_free(policy); return 2;
     }
