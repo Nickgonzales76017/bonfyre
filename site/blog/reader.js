@@ -39,124 +39,309 @@
     window.addEventListener('resize', update, { passive: true });
     update();
   }
-  const start = widget.querySelector('[data-narration-play]');
-  const pause = widget.querySelector('[data-narration-pause]');
+  /* Journal audio edition: native recorded audio when a track exists;
+     browser speech otherwise. The latter shows a text-position map, never
+     purports to show measured audio amplitudes. */
+  const play = widget.querySelector('[data-narration-play]');
+  const back = widget.querySelector('[data-narration-back]');
+  const forward = widget.querySelector('[data-narration-forward]');
   const stop = widget.querySelector('[data-narration-stop]');
   const rate = widget.querySelector('[data-narration-rate]');
   const status = widget.querySelector('[data-narration-status]');
+  const seek = widget.querySelector('[data-narration-seek]');
+  const elapsed = widget.querySelector('[data-narration-elapsed]');
+  const total = widget.querySelector('[data-narration-total]');
   const progress = widget.querySelector('[data-narration-progress]');
-  const supported = typeof speechSynthesis !== 'undefined' && typeof SpeechSynthesisUtterance !== 'undefined';
-  let pieces = [], cursor = 0, generation = 0, paused = false, active = false, currentNode = null;
-  const clearNode = () => { if (currentNode) currentNode.classList.remove('narration-reading'); currentNode = null; };
-  const setState = (state, label) => {
-    widget.dataset.state = state;
-    status.textContent = label;
-    start.disabled = !supported || state === 'playing' || state === 'starting';
-    start.textContent = state === 'paused' ? '▶ Resume' : state === 'playing' ? '▶ Playing' : '▶ Play';
-    pause.disabled = state !== 'playing';
-    stop.disabled = state === 'idle' || state === 'unavailable' || state === 'finished';
+  const wave = widget.querySelector('[data-narration-wave]');
+  const symbol = widget.querySelector('[data-narration-symbol]');
+  const audio = widget.querySelector('[data-narration-media]');
+  const bars = [...wave.querySelectorAll('i')];
+  const isRecording = Boolean(audio);
+  const speechSupported = typeof speechSynthesis !== 'undefined' && typeof SpeechSynthesisUtterance !== 'undefined';
+  const synth = speechSupported ? speechSynthesis : null;
+  const recordingSupported = Boolean(audio && typeof audio.play === 'function');
+  const supported = isRecording ? recordingSupported : speechSupported;
+  const opening = document.querySelector('.ed-opening');
+  let openingVisible = true;
+  let pieces = [], prefix = [0], words = 0;
+  let cursor = 0, generation = 0, paused = false, active = false;
+  let currentNode = null, position = 0, duration = 0, seekUpdating = false;
+
+  const fmt = seconds => {
+    const n = Math.max(0, Math.round(Number(seconds) || 0));
+    return Math.floor(n / 60) + ':' + String(n % 60).padStart(2, '0');
   };
-  if (!supported) {
-    setState('unavailable', 'Narration is unavailable in this browser. The essay remains readable below.');
-    return;
-  }
-  const synth = speechSynthesis;
-  const chooseVoice = () => {
-    const options = synth.getVoices();
-    const locale = document.documentElement.lang || 'en';
-    return options.find(v => v.lang.toLowerCase().startsWith(locale.toLowerCase()) && v.localService) ||
-           options.find(v => v.lang.toLowerCase().startsWith(locale.toLowerCase())) || null;
+  const clearHighlight = () => {
+    if (currentNode) currentNode.classList.remove('narration-reading');
+    currentNode = null;
+  };
+  const setHighlight = node => {
+    if (currentNode === node) return;
+    clearHighlight();
+    currentNode = node;
+    if (node) node.classList.add('narration-reading');
   };
   const textFor = node => {
     const copy = node.cloneNode(true);
-    copy.querySelectorAll('.journal-cite,.journal-cite-back').forEach(n => n.remove());
+    copy.querySelectorAll('.journal-cite,.journal-cite-back,.source-backlinks').forEach(n => n.remove());
     return (copy.textContent || '').replace(/\s+/g, ' ').trim();
   };
   const prepare = () => {
+    if (pieces.length) return;
     const nodes = [document.querySelector('#article-title'), document.querySelector('.ed-deck'),
-       ...article.querySelectorAll(':scope > h2, :scope > h3, :scope > p, :scope > ul')].filter(Boolean);
-    const result = [];
+      ...article.querySelectorAll(':scope > h2, :scope > h3, :scope > p, :scope > ul, :scope > blockquote')].filter(Boolean);
     for (const node of nodes) {
       const text = textFor(node);
       if (!text) continue;
       const sentences = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [text];
       let chunk = '';
       for (const sentence of sentences) {
-        const words = sentence.trim().split(/\s+/);
-        for (let i = 0; i < words.length; i++) {
-          if ((chunk + ' ' + words[i]).length > 260 && chunk) {
-            result.push({ text: chunk.trim(), node });
+        for (const word of sentence.trim().split(/\s+/).filter(Boolean)) {
+          if (chunk && chunk.length + word.length > 240) {
+            pieces.push({ text: chunk.trim(), node });
             chunk = '';
           }
-          chunk += (chunk ? ' ' : '') + words[i];
+          chunk += (chunk ? ' ' : '') + word;
         }
       }
-      if (chunk.trim()) result.push({ text: chunk.trim(), node });
+      if (chunk.trim()) pieces.push({ text: chunk.trim(), node });
     }
-    return result;
+    prefix = [0];
+    for (const part of pieces) {
+      part.weight = Math.max(1,part.text.split(/\s+/).length);
+      words += part.weight;
+      prefix.push(words);
+    }
+    duration = (words / 165) * 60;
+    total.textContent = isRecording ? '—:—' : '≈ ' + fmt(duration / Number(rate.value));
+    back.disabled = false;
+    forward.disabled = false;
   };
-  const finished = () => {
-    if (progress) progress.value = 100;
-    active = false; paused = false; clearNode();
-    setState('finished', 'Finished · Read again or continue the essay below');
+  const seekPercent = value => Math.max(0, Math.min(1, Number(value) || 0));
+  const repaint = fraction => {
+    position = seekPercent(fraction);
+    if (!seekUpdating) seek.value = String(Math.round(position * 1000));
+    progress.value = Math.round(position * 100);
+    wave.style.setProperty('--audio-position', (position * 100).toFixed(2) + '%');
+    bars.forEach((bar, i) => { bar.classList.toggle('is-read', (i + .5) / bars.length <= position); });
+    seek.setAttribute('aria-valuetext', Math.round(position * 100) + '% through the article');
+    const actualDuration = isRecording ? audio.duration : duration / Number(rate.value);
+    elapsed.textContent = fmt(position * (Number.isFinite(actualDuration) ? actualDuration : duration));
+  };
+  const dock = () => {
+    const visible = active && !openingVisible && supported;
+    widget.classList.toggle('is-docked', visible);
+    widget.dataset.docked = visible ? 'true' : 'false';
+  };
+  if (opening && typeof IntersectionObserver !== 'undefined') {
+    const observer = new IntersectionObserver(entries => {
+      openingVisible = entries[0]?.isIntersecting ?? true;
+      dock();
+    }, { threshold: .025 });
+    observer.observe(opening);
+    window.addEventListener('pagehide', () => observer.disconnect(), { once: true });
+  }
+  const state = (name, label) => {
+    widget.dataset.state = name;
+    status.textContent = label;
+    symbol.textContent = name === 'playing' || name === 'starting' ? 'Ⅱ' : '▶';
+    play.setAttribute('aria-label', name === 'playing' || name === 'starting' ? 'Pause article narration' : 'Play article narration');
+    play.disabled = !supported || name === 'starting';
+    stop.disabled = !(active || paused || name === 'finished');
+    dock();
+  };
+  const selectedVoice = () => {
+    const locale = (document.documentElement.lang || 'en').toLowerCase();
+    const voices = synth.getVoices();
+    return voices.find(v => v.lang.toLowerCase().startsWith(locale) && v.localService) ||
+           voices.find(v => v.lang.toLowerCase().startsWith(locale)) || null;
+  };
+  const currentIndex = () => {
+    for (let i = 0; i < pieces.length; i++)
+      if (prefix[i + 1] / Math.max(1,words) > position) return i;
+    return Math.max(0,pieces.length-1);
+  };
+  const finish = () => {
+    active = false; paused = false;
+    clearHighlight();
+    repaint(1);
+    state('finished', 'Finished · Read or listen again');
   };
   const speakNext = token => {
-    if (token !== generation || paused) return;
-    if (cursor >= pieces.length) { finished(); return; }
-    if (progress) progress.value = Math.round(cursor * 100 / pieces.length);
-    const item = pieces[cursor++];
-    clearNode();
-    currentNode = item.node;
-    currentNode.classList.add('narration-reading');
-    const utterance = new SpeechSynthesisUtterance(item.text);
+    if (token !== generation || paused || !active) return;
+    if (cursor >= pieces.length) { finish(); return; }
+    const part = pieces[cursor];
+    const index = cursor++;
+    setHighlight(part.node);
+    repaint(prefix[index] / Math.max(1,words));
+    const utterance = new SpeechSynthesisUtterance(part.text);
     utterance.lang = document.documentElement.lang || 'en-US';
-    utterance.rate = Number(rate.value) || 1;
-    const voice = chooseVoice();
+    utterance.rate = Number(rate.value);
+    const voice = selectedVoice();
     if (voice) utterance.voice = voice;
-    utterance.onstart = () => { if (token === generation && !paused) setState('playing', 'Playing · Part ' + cursor + ' of ' + pieces.length); };
+    utterance.onstart = () => { if (token === generation && !paused) state('playing','Reading passage '+(index+1)+' of '+pieces.length); };
+    utterance.onboundary = event => {
+      if (token !== generation || !active || paused || !part.text.length) return;
+      const within = Math.max(0,Math.min(1,event.charIndex/part.text.length));
+      repaint((prefix[index] + part.weight*within)/Math.max(1,words));
+    };
     utterance.onend = () => {
-      if (token !== generation || paused) return;
-      if (progress) progress.value = Math.round(cursor * 100 / pieces.length);
+      if (token !== generation || paused || !active) return;
+      repaint(prefix[index+1] / Math.max(1,words));
       speakNext(token);
     };
     utterance.onerror = event => {
       if (token !== generation) return;
-      if (event.error === 'canceled' || event.error === 'interrupted') return;
-      active = false; clearNode();
-      setState('idle', 'Narration stopped: ' + (event.error || 'speech service unavailable'));
+      if (event.error === 'interrupted' || event.error === 'canceled') return;
+      active=false; paused=false; clearHighlight();
+      state('idle','Audio could not start: '+(event.error || 'browser speech unavailable'));
     };
     synth.speak(utterance);
   };
-  start.addEventListener('click', () => {
-    if (paused) {
-      paused = false;
-      synth.resume();
-      setState('playing', 'Playing · Part ' + cursor + ' of ' + pieces.length);
-      return;
-    }
-    generation += 1;
+  const speechStart = () => {
+    prepare();
+    if (!pieces.length) { state('idle','No readable article text'); return; }
+    generation++;
     synth.cancel();
-    pieces = prepare();
-    cursor = 0;
-    if (progress) progress.value = 0;
-    if (!pieces.length) { setState('idle', 'No readable article text was found'); return; }
     active = true; paused = false;
-    setState('starting', 'Starting browser narration…');
+    cursor = currentIndex();
+    state('starting','Starting your browser’s voice…');
     speakNext(generation);
-  });
-  pause.addEventListener('click', () => {
+  };
+  const speechPause = () => {
     if (!active || paused) return;
-    paused = true;
+    paused=true;
     synth.pause();
-    setState('paused', 'Paused · Part ' + cursor + ' of ' + pieces.length);
+    state('paused','Paused · Resume whenever you like');
+  };
+  const speechResume = () => {
+    if (!paused) return;
+    paused=false;
+    synth.resume();
+    state('playing','Resumed · Reading the article');
+  };
+  const stopAll = () => {
+    generation++;
+    if (isRecording) { audio.pause(); audio.currentTime = 0; }
+    else if (synth) { synth.cancel(); }
+    active=false;paused=false;cursor=0;
+    clearHighlight();
+    repaint(0);
+    state('idle',isRecording?'Recorded edition · Ready':'Browser voice · Ready');
+  };
+  const jumpTo = fraction => {
+    const f = seekPercent(fraction);
+    if (isRecording) {
+      if (Number.isFinite(audio.duration) && audio.duration > 0)
+        audio.currentTime = f * audio.duration;
+      repaint(f);
+    } else {
+      prepare();
+      const wasPlaying = active && !paused;
+      generation++;
+      synth.cancel();
+      cursor = pieces.length ? Math.min(pieces.length-1, Math.max(0,
+        prefix.findIndex((v,i) => i > 0 && v/Math.max(1,words) >= f)-1)) : 0;
+      // A speech synthesizer can only restart at a passage boundary.
+      // Display that boundary rather than pretending to seek to a millisecond.
+      repaint(prefix[cursor] / Math.max(1, words));
+      paused = false;
+      active = false;
+      clearHighlight();
+      if (wasPlaying) speechStart();
+      else state('idle','Ready from passage '+(cursor+1)+' · Play to listen');
+    }
+  };
+  const jumpPassages = offset => {
+    if (isRecording) {
+      if (Number.isFinite(audio.duration) && audio.duration > 0) {
+        audio.currentTime = Math.max(0,Math.min(audio.duration,audio.currentTime+offset*15));
+        repaint(audio.currentTime / audio.duration);
+      }
+    } else {
+      prepare();
+      const index = Math.max(0,Math.min(pieces.length-1,currentIndex()+offset));
+      jumpTo(prefix[index]/Math.max(1,words));
+    }
+  };
+
+  if (isRecording) {
+    audio.playbackRate=Number(rate.value);
+    audio.addEventListener('loadedmetadata',()=>{
+      if (Number.isFinite(audio.duration) && audio.duration > 0) total.textContent=fmt(audio.duration);
+    });
+    audio.addEventListener('play',()=>{active=true;paused=false;state('playing','Playing the recorded article');});
+    audio.addEventListener('pause',()=>{if (active && !audio.ended) {paused=true;state('paused','Paused · Recorded edition');}});
+    audio.addEventListener('timeupdate',()=>{
+      if (Number.isFinite(audio.duration) && audio.duration > 0) repaint(audio.currentTime/audio.duration);
+    });
+    audio.addEventListener('ended',finish);
+    audio.addEventListener('error',()=>{active=false;paused=false;state('unavailable','Recording unavailable · Read the article below');});
+    // True amplitude peaks: only for an actual audio asset.
+    if (typeof AudioContext !== 'undefined' || typeof webkitAudioContext !== 'undefined') {
+      const AudioCtx=window.AudioContext || window.webkitAudioContext;
+      (async()=>{
+        try {
+          const response=await fetch(audio.currentSrc || audio.src);
+          if (!response.ok) return;
+          const context=new AudioCtx();
+          const buffer=await context.decodeAudioData(await response.arrayBuffer());
+          const channel=buffer.getChannelData(0);
+          for(let i=0;i<bars.length;i++){
+            const from=Math.floor(i*channel.length/bars.length);
+            const to=Math.max(from+1,Math.floor((i+1)*channel.length/bars.length));
+            const step=Math.max(1,Math.floor((to-from)/500));
+            let sum=0,count=0;
+            for(let j=from;j<to;j+=step){sum+=channel[j]*channel[j];count++;}
+            const peak=Math.sqrt(sum/Math.max(1,count));
+            bars[i].style.setProperty('--level',Math.round(9+Math.min(1,peak*5)*47)+'px');
+          }
+          wave.dataset.measured='true';
+          await context.close();
+        } catch { wave.dataset.measured='false'; }
+      })();
+    }
+  } else {
+    prepare();
+  }
+  play.addEventListener('click', async()=>{
+    if (!supported) return;
+    if (isRecording) {
+      if (!audio.paused) audio.pause();
+      else {
+        try { await audio.play(); } catch { state('unavailable','Recording could not play'); }
+      }
+    } else if (active && !paused) speechPause();
+    else if (paused) speechResume();
+    else speechStart();
   });
-  stop.addEventListener('click', () => {
-    generation += 1; active = false; paused = false; synth.cancel(); clearNode();
-    if (progress) progress.value = 0;
-    setState('idle', 'Browser voice · Ready');
+  back.addEventListener('click',()=>jumpPassages(-1));
+  forward.addEventListener('click',()=>jumpPassages(1));
+  stop.addEventListener('click',stopAll);
+  seek.addEventListener('input',()=>{
+    seekUpdating=true;
+    const f=Number(seek.value)/1000;
+    progress.value=Math.round(f*100);
+    wave.style.setProperty('--audio-position',(f*100).toFixed(2)+'%');
+    bars.forEach((bar,i)=>bar.classList.toggle('is-read',(i+.5)/bars.length<=f));
+    seek.setAttribute('aria-valuetext',Math.round(f*100)+'% through article');
+    seekUpdating=false;
   });
-  window.addEventListener('pagehide', () => {
-    generation += 1; synth.cancel(); clearNode();
-  }, { once: true });
-  setState('idle', 'Browser voice · Ready');
+  seek.addEventListener('change',()=>jumpTo(Number(seek.value)/1000));
+  rate.addEventListener('change',()=>{
+    if (isRecording) audio.playbackRate=Number(rate.value);
+    else total.textContent='≈ '+fmt(duration/Number(rate.value));
+    if (active && !isRecording) status.textContent='Speed '+rate.value+'× applies from the next spoken passage';
+  });
+  // Preserve actual reader progress only in the page URL via navigation; no
+  // analytics, cookies, or remote audio synthesis calls are added.
+  window.addEventListener('pagehide',()=>{
+    generation++;
+    if (synth) synth.cancel();
+    if (audio) audio.pause();
+    clearHighlight();
+  },{once:true});
+  repaint(0);
+  if (!supported) state('unavailable','This browser cannot play the audio edition');
+  else state('idle',isRecording?'Recorded edition · Ready':'Browser voice · Ready');
 })();
