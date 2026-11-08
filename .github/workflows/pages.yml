@@ -115,6 +115,13 @@ jobs:
           export CHROME_PATH="$(command -v google-chrome)"
           node scripts/tests/workspace-composition-browser.mjs
           node scripts/tests/workspace-docking-browser.mjs
+      - name: Build Aurekai Journal and verify authored articles
+        run: |
+          node --check scripts/build-blog.mjs
+          node --check site/blog/filter.js
+          node scripts/build-blog.mjs
+          node scripts/build-blog.mjs --check
+          node --test scripts/tests/blog-build.test.mjs
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
