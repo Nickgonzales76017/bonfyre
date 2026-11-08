@@ -52,7 +52,7 @@ body.journal-garden{background:var(--garden-paper);color:#213a30}
 .journal-garden .garden-close .head p{max-width:440px;color:#526957}
 
 /* Eight intentional editorial compositions: the art, header and text move together. */
-.journal-garden.garden-reverse .garden-hero-figure{order:-1}
+.journal-garden.garden-reverse .garden-figure{order:-1}
 .journal-garden.garden-reverse .garden-hero-grid{grid-template-columns:minmax(250px,.82fr) minmax(0,1fr)}
 .journal-garden.garden-centered .garden-hero-grid{display:flex;flex-direction:column;text-align:center;gap:12px;padding-bottom:50px}
 .journal-garden.garden-centered .garden-hero-copy{max-width:1050px}
