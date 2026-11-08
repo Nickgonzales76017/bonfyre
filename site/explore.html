@@ -1,741 +1,111 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bonfyre — What It Does For You</title>
-<meta name="description" content="Bonfyre turns messy business input — calls, files, notes, recordings — into something useful. See real-world uses for your industry.">
-<meta name="theme-color" content="#0d1117">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
-<style>
-:root{--bg:#0d1117;--surface:#161b22;--border:#30363d;--text:#e6edf3;--text-dim:#8b949e;--accent:#f97316;--accent-dim:#c2410c;--green:#3fb950;--blue:#58a6ff;--red:#f85149;--font:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;--mono:"SF Mono","Fira Code",Menlo,Consolas,monospace}
-*{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}
-body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased}
-a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
-.container{max-width:960px;margin:0 auto;padding:0 24px}
-.site-nav{position:sticky;top:0;z-index:100;background:rgba(13,17,23,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:10px 0}
-.site-nav .container{display:flex;align-items:center;gap:8px;overflow-x:auto;scrollbar-width:none}
-.site-nav .container::-webkit-scrollbar{display:none}
-.nav-brand{font-weight:700;font-size:1rem;color:var(--accent);text-decoration:none;white-space:nowrap;margin-right:8px}
-.nav-brand:hover{text-decoration:none}
-.site-nav a:not(.nav-brand){font-size:.8rem;color:var(--text-dim);text-decoration:none;white-space:nowrap;padding:4px 10px;border-radius:4px;transition:color .15s,background .15s}
-.site-nav a:not(.nav-brand):hover{color:var(--text);background:var(--surface);text-decoration:none}
-.hero{text-align:center;padding:80px 0 60px;border-bottom:1px solid var(--border)}
-.hero h1{font-size:3rem;font-weight:800;letter-spacing:-.03em;margin-bottom:12px}
-.hero h1 span{color:var(--accent)}
-.hero .tagline{font-size:1.15rem;color:var(--text-dim);max-width:640px;margin:0 auto 32px;line-height:1.7}
-section{padding:64px 0;border-bottom:1px solid var(--border)}section:last-child{border-bottom:none}
-section h2{font-size:1.8rem;font-weight:700;margin-bottom:8px;letter-spacing:-.01em}
-section .subtitle{color:var(--text-dim);margin-bottom:36px;font-size:1.05rem}
-.killer-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:24px}
-.killer-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:24px}
-.killer-card .vs{font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:4px}
-.killer-card .ratio{font-size:2.2rem;font-weight:800;color:var(--accent);line-height:1.1;margin-bottom:4px}
-.killer-card .detail{font-size:.85rem;color:var(--text-dim)}
-.use-cases{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
-.use-case{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:24px;transition:border-color .15s}
-.use-case:hover{border-color:var(--accent)}
-.use-case h3{font-size:1rem;color:var(--accent);margin-bottom:8px;font-weight:600}
-.use-case p{font-size:.9rem;color:var(--text-dim);margin-bottom:12px}
-.recipe-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
-.recipe-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:24px;transition:border-color .15s}
-.recipe-card:hover{border-color:var(--accent)}
-.recipe-card h3{font-size:1rem;font-weight:600;color:var(--accent);margin-bottom:12px}
-.recipe-card .recipe-step{margin-bottom:10px}
-.recipe-card .recipe-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:2px}
-.recipe-card .recipe-label.have{color:var(--text-dim)}
-.recipe-card .recipe-label.does{color:var(--blue)}
-.recipe-card .recipe-label.get{color:var(--green)}
-.recipe-card .recipe-label.try{color:var(--accent)}
-.recipe-card .recipe-text{font-size:.82rem;color:var(--text-dim);line-height:1.5}
-.wp-uses{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:36px}
-.wp-use{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;transition:border-color .15s}
-.wp-use:hover{border-color:var(--accent)}
-.wp-use h3{font-size:.95rem;font-weight:600;color:var(--text);margin-bottom:6px}
-.wp-use p{font-size:.85rem;color:var(--text-dim);line-height:1.5}
-.wp-sprawl{display:grid;grid-template-columns:1fr auto 1fr;gap:0;max-width:700px;margin:24px auto;align-items:start}
-.wp-sprawl-col{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px}
-.wp-sprawl-col h4{font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
-.wp-sprawl-col.sprawl{border-color:var(--red)}.wp-sprawl-col.sprawl h4{color:var(--red)}
-.wp-sprawl-col.clean{border-color:var(--green)}.wp-sprawl-col.clean h4{color:var(--green)}
-.wp-sprawl-vs{display:flex;align-items:center;padding:0 16px;font-size:.85rem;font-weight:700;color:var(--text-dim)}
-.wp-sprawl-col ul{list-style:none;font-size:.8rem;color:var(--text-dim);line-height:1.8}
-.apps-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
-.app-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;transition:border-color .15s,transform .15s;text-decoration:none;display:block}
-.app-card:hover{border-color:var(--accent);transform:translateY(-2px);text-decoration:none}
-.app-card .app-name{font-size:1rem;font-weight:600;color:var(--text);margin-bottom:6px}
-.app-card .app-desc{font-size:.85rem;color:var(--text-dim);margin-bottom:10px;line-height:1.4}
-.app-card .app-pipeline{font-family:var(--mono);font-size:.75rem;color:var(--accent);background:var(--bg);padding:4px 8px;border-radius:4px;display:inline-block}
-.btn-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 24px;border-radius:6px;font-size:.95rem;font-weight:600;text-decoration:none;transition:background .15s}
-.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:var(--accent-dim);text-decoration:none}
-.btn-outline{border:1px solid var(--border);color:var(--text)}.btn-outline:hover{border-color:var(--text-dim);text-decoration:none}
-.wp-fit-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-.wp-fit-tag{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:4px 14px;font-size:.8rem;color:var(--text-dim)}
-footer{padding:40px 0;text-align:center;color:var(--text-dim);font-size:.85rem}
-footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
-@media(max-width:640px){.hero h1{font-size:2.2rem}section{padding:40px 0}.killer-card .ratio{font-size:1.8rem}.apps-grid{grid-template-columns:1fr}.wp-sprawl{grid-template-columns:1fr}.wp-sprawl-vs{padding:8px 0;justify-content:center}}
-</style>
-<meta name="robots" content="noindex,follow">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Aurekai builds and operates digital businesses, publishing networks, software services, creator tools and marketplaces, using Bonfÿre as its shared native platform.">
+<meta name="theme-color" content="#f5f3eb">
+<meta property="og:title" content="Aurekai — Businesses, products and communities">
+<meta property="og:description" content="How Aurekai develops and operates businesses, connects people and sources, and uses Bonfÿre across its applications.">
+<link rel="canonical" href="https://nickgonzales76017.github.io/bonfyre/explore.html">
+<link rel="stylesheet" href="assets/aurekai-field-guide.css">
+<title>Aurekai — Businesses, products and communities</title>
+<link rel="stylesheet" href="assets/aurekai-research.css">
 </head>
 <body>
-<aside role="note" aria-label="Source version notice" style="background:#f2efe7;color:#233d35;border-bottom:2px solid #b35436;padding:13px 24px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px 24px;font:600 13px/1.55 system-ui,sans-serif;position:relative;z-index:300"><span><strong>EARLIER BONFŸRE REFERENCE</strong> · Archived implementation notes and historical measurements; not today's release guarantees.</span><span style="display:flex;flex-wrap:wrap;gap:16px"><a style="color:#914327;text-decoration:underline" href="https://aurekai-work-samples.pages.dev/">Current working demos ↗</a><a style="color:#914327;text-decoration:underline" href="https://github.com/Nickgonzales76017/bonfyre">Current engine ↗</a></span></aside>
+<a class="skip" href="#main">Skip to content</a>
+<header class="top"><div class="shell"><a class="brand" href="./"><span class="mark">A</span> AUREKAI <small>/ BONFŸRE</small></a><nav aria-label="Site navigation"><a href="./">Home</a><a href="#business">Business</a><a href="#applications">Applications</a><a href="#worlds">Network</a><a href="market.html">Research</a><a href="blog/">Journal</a><a href="docs.html">Bonfÿre</a><a href="modules/">Source</a></nav></div></header>
+<main id="main">
+<section class="hero"><div class="shell hero-grid">
+<div><span class="eyebrow">Aurekai / the operating business</span>
+<h1>We build and run<br><em>digital businesses.</em></h1>
+<p class="lead">Aurekai develops applications, services and online experiences for its own projects and for other organizations. That could mean a company website and its back office, a creator's publication, a place for a community to organize, or a market built around inventory from several suppliers.</p>
+<p class="lead">Each one has different customers and work to do. They share Bonfÿre, the native software platform we use for accounts, data, finance, media, models, integrations and running the applications themselves.</p>
+<div class="actions"><a class="button primary" href="#applications">See the products</a><a class="button" href="docs.html">Bonfÿre technology</a></div></div>
+<aside class="plate"><span class="eyebrow">HOW AUREKAI GROWS</span><h2>New work builds on work we've already done.</h2><p>We can build a catalogue for one shop, then use much of the same technology for procurement, room planning or another retailer. The second project benefits from the first; both remain their own businesses.</p></aside>
+</div></section>
+<div class="ribbon"><div class="shell"><span>BUSINESSES</span><span>PEOPLE &amp; COMMUNITIES</span><span>PUBLICATIONS &amp; MEDIA</span><span>MARKETS</span><span>SHARED TECHNOLOGY</span></div></div>
 
-<nav class="site-nav">
-  <div class="container">
-    <a href="index.html" class="nav-brand">🔥 Bonfyre</a>
-    <div style="display:flex;gap:4px">
-      <a href="#what-it-replaces">What It Replaces</a>
-      <a href="#upgrades">What's New</a>
-      <a href="#solutions">Solutions</a>
-      <a href="#hardware">Does My Hardware Work?</a>
-      <a href="#use-cases">Use Cases</a>
-      <a href="#wordpress">WordPress</a>
-      <a href="#recipes">Recipes</a>
-      <a href="#apps">Live Apps</a>
-      <a href="docs.html#relay" style="color:#b392f0">Realtime Relay →</a>
-      <a href="docs.html" style="color:var(--green)">Technical Docs →</a>
-    </div>
-  </div>
-</nav>
+<section class="block" id="business"><div class="shell">
+<div class="head"><div><span class="eyebrow">The company</span><h2>One company can support many kinds of businesses.</h2></div>
+<p>An agency working with several shops, a publisher with contributors, a local service business and a creator with an audience should each have an experience that fits them. They shouldn't all look like the same software product with a new logo.</p></div>
+<p style="max-width:950px;color:var(--muted);font-size:1.06rem;line-height:1.85;margin-bottom:18px">Aurekai's model is to invest engineering time, software, AI, knowledge and distribution in those operations. Some opportunities are products we build; others involve providing software or services to existing businesses, sourcing or licensing. We can share technical work while keeping each business's customers and commercial relationships distinct.</p>
+<p class="research-lead" style="margin-bottom:30px">The market is already moving in that direction. The <a class="intext-source" href="https://www.uschamber.com/technology/2026-empowering-small-business-report">U.S. Chamber's October 2026 study</a> found 41% of surveyed small businesses using six or more technology platforms. Meanwhile <a class="intext-source" href="https://w3techs.com/technologies/comparison/cm-wordpress">W3Techs' November 7 survey</a> still finds WordPress on 39.4% of measured websites. Businesses have years of useful content, customer relationships and operations inside these systems. We want to connect and improve that investment.</p>
+<div class="grid">
+<article class="card"><span class="num">EXISTING BUSINESSES</span><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#store"></use></svg></span><h3>Make their systems useful together.</h3><p>Keep a business's established customers and information while improving its website, forms, reporting, records or back office. Our work includes WordPress, PHP, database migrations, Frappe applications and browser tools.</p><a href="https://docs.aurekai.work/">Business and integration guides ↗</a></article>
+<article class="card"><span class="num">PUBLISHERS &amp; CREATORS</span><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#mic"></use></svg></span><h3>Give their work more places to go.</h3><p>Articles, videos, field recordings and posts can live on a creator's profile and also appear in channels, reading rooms, collections or community publications. Their source and contributors remain part of the record.</p><a href="https://aurekai.live">Media and creator tools ↗</a></article>
+<article class="card"><span class="num">PRODUCTS &amp; RESOURCES</span><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#bag"></use></svg></span><h3>Work with what's already available.</h3><p>Wholesale offers, secondhand equipment, supplier catalogues, property information, spare compute and external services are useful starting points. We develop ways to organize them into better products and working commercial relationships.</p><a href="https://aurekai.shop">Products and sourcing ↗</a></article>
+</div>
+</div></section>
 
-<header class="hero">
-  <div class="container">
-    <h1>🔥 <span>Bonfyre</span></h1>
-    <p class="tagline">Bonfyre is a behind-the-scenes engine that takes messy business input — calls, files, notes, recordings — and turns it into something useful, organized, and ready to use. No cloud bills. No vendor lock-in. Runs on your hardware.</p>
+<section class="block alt" id="worlds"><div class="shell">
+<div class="head"><div><span class="eyebrow">Aurekai online</span><h2>Four areas of the same network.</h2></div>
+<p>Aurekai uses four public domains to help people find what matters to them. A person, organization, brand or project can also have its own subdomain or independent website, connected to the appropriate parts of the network.</p></div>
+<div class="grid four">
+<article class="card"><span class="num">AUREKAI.WORK</span><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#briefcase"></use></svg></span><h3>Work</h3><p>Companies, jobs, operations, relationships, opportunities and business applications.</p><a href="https://aurekai.work">Open Work ↗</a></article>
+<article class="card"><span class="num">AUREKAI.LIFE</span><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#people"></use></svg></span><h3>Life</h3><p>People and organizations, profiles, communities, collections and personal publishing.</p><a href="https://aurekai.life">Open Life ↗</a></article>
+<article class="card"><span class="num">AUREKAI.LIVE</span><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#radio"></use></svg></span><h3>Live</h3><p>Channels, creators, recordings, media, live appearances and publications.</p><a href="https://aurekai.live">Open Live ↗</a></article>
+<article class="card"><span class="num">AUREKAI.SHOP</span><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#cart"></use></svg></span><h3>Shop</h3><p>Goods, offers, catalogues, procurement, services and commercial experiences.</p><a href="https://aurekai.shop">Open Shop ↗</a></article>
+</div>
+<p class="note" style="margin-top:22px">An independent business doesn't need to adopt Aurekai's branding on its customer website. The point of the common platform is to supply the services behind that business while it keeps its own name, identity and relationships. Our <a href="https://docs.aurekai.work/three-businesses">three-business white-label example</a> shows that model.</p>
+</div></section>
 
-    <div style="display:flex;gap:24px;justify-content:center;flex-wrap:wrap;margin:0 auto 28px;max-width:820px">
-      <div style="background:var(--surface);border:2px solid var(--accent);border-radius:10px;padding:18px 28px;flex:1;min-width:260px;text-align:left">
-        <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);font-weight:700;margin-bottom:6px">AI That Runs On Your Machine</div>
-        <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:6px">AI models shrunk 4× so they run on laptops, phones, and small devices.</div>
-        <div style="font-size:.82rem;color:var(--text-dim);line-height:1.5">No cloud needed. Your data stays private. Models run directly on your hardware — even a Raspberry Pi.</div>
-      </div>
-      <div style="background:var(--surface);border:2px solid var(--green);border-radius:10px;padding:18px 28px;flex:1;min-width:260px;text-align:left">
-        <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;color:var(--green);font-weight:700;margin-bottom:6px">A Complete Backend In 2 MB</div>
-        <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:6px">53 binaries around a 26-module runtime that stretch from local AI to delivery.</div>
-        <div style="font-size:.82rem;color:var(--text-dim);line-height:1.5">Transcription · search · auth · payments · proxy · orchestration · telephony · relay · swarm delivery · verified narration — all local, all $0/month.</div>
-      </div>
-    </div>
+<section class="block soft" id="applications"><div class="shell">
+<div class="head"><div><span class="eyebrow">What we build</span><h2>Applications people can use.</h2></div>
+<p>Bonfÿre already spans much more than website templates or chatbots. Aurekai brings those capabilities into places where people run businesses, make things, buy products and organize their work.</p></div>
+<div class="items">
+<a class="item" href="https://aurekai.work"><span class="n">01</span><strong>Business applications</strong><span>CRM, customer relationships, ERPNext, HRMS, Helpdesk, finance, learning and project workspaces.</span><b>↗</b></a>
+<a class="item" href="https://docs.aurekai.work/three-businesses"><span class="n">02</span><strong>Websites and independent brands</strong><span>Branded customer sites, shared back-office tooling, site modernization and account-specific services.</span><b>↗</b></a>
+<a class="item" href="https://nickgonzales76017.github.io/pages-podcast-plant/studio/"><span class="n">03</span><strong>Creator and publishing tools</strong><span>Audio workspaces, transcripts, narration, source libraries, profiles and publication destinations.</span><b>↗</b></a>
+<a class="item" href="https://nickgonzales76017.github.io/bonfyre/spaces/product-room/"><span class="n">04</span><strong>Shopping and product design</strong><span>Catalogues, product configurations, room layouts, procurement and sourcing workflows.</span><b>↗</b></a>
+<a class="item" href="https://nickgonzales76017.github.io/pages-town-box/civic-council/"><span class="n">05</span><strong>Publishing and public information</strong><span>Community pages, document collections, public records, reading rooms and civic projects.</span><b>↗</b></a>
+<a class="item" href="https://aurekai-work-samples.pages.dev/documents/"><span class="n">06</span><strong>Research and local data tools</strong><span>Document search, retained source material, data analysis, offline software and application integrations.</span><b>↗</b></a>
+</div></div></section>
 
-    <div style="display:flex;justify-content:center;gap:40px;flex-wrap:wrap;margin-bottom:36px">
-      <div style="text-align:center"><span style="display:block;font-size:2rem;font-weight:700;color:var(--accent)">$0/month</span><span style="font-size:.85rem;color:var(--text-dim)">No cloud bills</span></div>
-      <div style="text-align:center"><span style="display:block;font-size:2rem;font-weight:700;color:var(--green)">100% private</span><span style="font-size:.85rem;color:var(--text-dim)">Data never leaves</span></div>
-      <div style="text-align:center"><span style="display:block;font-size:2rem;font-weight:700">20</span><span style="font-size:.85rem;color:var(--text-dim)">Live apps running now</span></div>
-      <div style="text-align:center"><span style="display:block;font-size:2rem;font-weight:700">15</span><span style="font-size:.85rem;color:var(--text-dim)"><a href="https://huggingface.co/NICKO" style="color:inherit">AI models published</a></span></div>
-      <div style="text-align:center"><span style="display:block;font-size:2rem;font-weight:700">26</span><span style="font-size:.85rem;color:var(--text-dim)">Shared library modules</span></div>
-      <div style="text-align:center"><span style="display:block;font-size:2rem;font-weight:700;color:#b392f0">Relay</span><span style="font-size:.85rem;color:var(--text-dim)">Private realtime media in C</span></div>
-    </div>
+<section class="block" id="connections"><div class="shell">
+<div class="head"><div><span class="eyebrow">Connected work</span><h2>Different applications can work with the same information.</h2></div>
+<p>Here's where a shared software foundation changes what we can build. Each application handles its own work, but source information, company relationships and account permissions can travel between them.</p></div>
+<div class="grid">
+<article class="card"><span class="num">A NEW JOB LISTING</span><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#file"></use></svg></span><h3>Discovery and CRM</h3><p>A job posted by a company can appear in discovery and remain linked to that company. An account's CRM might use it to create an opportunity; a media application might turn the posting into a narrated update. We're developing the account-app routing so those continuations use the one retained listing.</p><a href="https://aurekai.work">Work and relationships ↗</a></article>
+<article class="card"><span class="num">A SUPPLIER PRODUCT</span><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#cart"></use></svg></span><h3>Catalogue and room planning</h3><p>The same product can appear in a catalogue, a sourcing comparison and a room layout. The shopper selects dimensions, options and quantities, while the commercial work continues in the account's own applications.</p><a href="https://nickgonzales76017.github.io/bonfyre/spaces/catalogue/">Catalogue studio ↗</a></article>
+<article class="card"><span class="num">A PUBLICATION</span><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#archive"></use></svg></span><h3>Profiles and collections</h3><p>We are organizing source-linked publications so the people and organizations behind them have useful homes on Aurekai. Their articles and recordings can be gathered into posts, communities, channels and subject collections and remain available on the original publisher's page.</p><a href="https://aurekai.life">Profiles and communities ↗</a></article>
+</div>
+</div></section>
 
-    <div class="btn-row">
-      <a href="https://github.com/Nickgonzales76017/bonfyre-oss" class="btn btn-primary">View on GitHub</a>
-      <a href="https://nickgonzales76017.github.io/pages-shift-handoff/" class="btn btn-outline">See a live proof →</a>
-      <a href="#recipes" class="btn btn-outline">Find your industry ↓</a>
-      <a href="#apps" class="btn btn-outline">20 live apps ↓</a>
-    </div>
-  </div>
-</header>
+<section class="block soft" id="market-reading"><div class="shell">
+<div class="head"><div><span class="eyebrow">What we're reading</span><h2>Building for real changes in these markets.</h2></div><p>The technology and economic case for Aurekai shows up in recent research on small businesses, creators, older websites and AI. We use those reports to decide which problems deserve more engineering time.</p></div>
+<div class="articles">
+<article class="article-row"><div class="icon-heading"><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#radio"></use></svg></span><h3>Creators need practical business tools.</h3></div>
+<p>The <a class="intext-source" href="https://www.iab.com/blog/2026-iab-creatorfronts-event-recap/">Interactive Advertising Bureau's 2026 CreatorFronts research</a> describes creator advertising as a projected $44 billion U.S. market in 2026. The IAB calls for <q>reducing friction in the Creator Economy</q>. That's why we are developing creator profiles, source libraries, editing, channels and paths into other business applications.</p>
+<a class="research-source" href="https://www.iab.com/blog/2026-iab-creatorfronts-event-recap/">IAB CreatorFronts · September 2026 ↗</a></article>
+<article class="article-row"><div class="icon-heading"><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#cpu"></use></svg></span><h3>AI is becoming part of regular work.</h3></div>
+<p><a class="intext-source" href="https://hai.stanford.edu/ai-index/2026-ai-index-report/economy">Stanford HAI's 2026 AI Index</a> reports AI use in at least one function at 88% of surveyed organizations in 2025. Dedicated agent deployment is still earlier. Bonfÿre's native tools, WorkGraph and model routing are being developed so an account's applications can use AI in actual workflows.</p>
+<a class="research-source" href="https://hai.stanford.edu/ai-index/2026-ai-index-report/economy">Stanford AI Index · Economy ↗</a></article>
+</div>
+<p class="research-note" style="margin-top:25px">The figures above come from industry surveys and forecasts. For links to original reports on five market areas, see the <a class="intext-source" href="market.html">full Aurekai market research page</a>.</p>
+</div></section><section class="block alt" id="bonfyre"><div class="shell">
+<div class="head"><div><span class="eyebrow">Bonfÿre</span><h2>The software behind the businesses.</h2></div>
+<p>Bonfÿre has native systems for identity, accounts, data, application schemas, WorkGraph, agents, models, finance, web delivery and media. Aurekai's products use those common services, with their own accounts, content and application workflows.</p></div>
+<div class="grid">
+<article class="card"><span class="num">ACCOUNTS AND APPLICATIONS</span><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#layers"></use></svg></span><h3>Records and operations</h3><p>CRM, ERPNext, Helpdesk, HRMS, Drive, Wiki, LMS, Insights and application data projected into the appropriate account workspace.</p><a href="docs.html#inventory">Application architecture ↗</a></article>
+<article class="card"><span class="num">DATA AND SOURCES</span><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#database"></use></svg></span><h3>One place to understand the material</h3><p>Matrix, Source Library, records, indexing, SQL, analysis, knowledge and relationships across people, institutions and products.</p><a href="docs.html#architecture">Data and identity ↗</a></article>
+<article class="card"><span class="num">AGENTS AND COMPUTE</span><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#cpu"></use></svg></span><h3>Tools that can carry out work</h3><p>Native commands, local models, MCP, WorkGraph, compute placement, media processing and declared external services.</p><a href="docs.html#operators">Execution and models ↗</a></article>
+</div></div></section>
 
-<!-- Public-source proof banner -->
-<section style="padding:40px 0;background:linear-gradient(135deg,rgba(63,185,80,.06) 0%,rgba(13,17,23,1) 60%)">
-  <div class="container">
-    <h2 style="text-align:center">What's under the hood</h2>
-    <p class="subtitle" style="text-align:center">This isn't a wrapper around someone else's tooling. Every piece is built from scratch in C.</p>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;max-width:1040px;margin:0 auto 32px">
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px">
-        <div style="font-size:1.6rem;font-weight:800;color:var(--accent);margin-bottom:4px">51</div>
-        <div style="font-size:.9rem;font-weight:600;color:var(--text);margin-bottom:6px">Static C binaries</div>
-        <div style="font-size:.82rem;color:var(--text-dim);line-height:1.5">Each is 20–60 KB (except the quantizer at 227 KB). No runtime dependencies. No containers. No Node.js. Just copy the binary and run it.</div>
-      </div>
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px">
-        <div style="font-size:1.6rem;font-weight:800;color:var(--green);margin-bottom:4px">26</div>
-        <div style="font-size:.9rem;font-weight:600;color:var(--text);margin-bottom:6px">Shared library modules</div>
-        <div style="font-size:.82rem;color:var(--text-dim);line-height:1.5">Crypto, compression, threading, JSON parsing, Unicode, networking, config management, containers, CLI — all in one 180 KB library. Zero external dependencies beyond libc.</div>
-      </div>
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px">
-        <div style="font-size:1.6rem;font-weight:800;color:var(--blue);margin-bottom:4px">~2.1 MB</div>
-        <div style="font-size:.9rem;font-weight:600;color:var(--text);margin-bottom:6px">Total disk footprint</div>
-        <div style="font-size:.82rem;color:var(--text-dim);line-height:1.5">The entire backend — auth, payments, search, transcription, CMS, API gateway, compression, pipeline engine — fits in less space than a single JPEG photo.</div>
-      </div>
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px">
-        <div style="font-size:1.6rem;font-weight:800;color:var(--accent);margin-bottom:4px">5–8 ms</div>
-        <div style="font-size:.9rem;font-weight:600;color:var(--text);margin-bottom:6px">Per pipeline stage</div>
-        <div style="font-size:.82rem;color:var(--text-dim);line-height:1.5">Audio in, invoice out. Each processing stage completes in single-digit milliseconds. Re-runs skip unchanged stages entirely via content-addressed caching.</div>
-      </div>
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px">
-        <div style="font-size:1.6rem;font-weight:800;color:var(--green);margin-bottom:4px">4×</div>
-        <div style="font-size:.9rem;font-weight:600;color:var(--text);margin-bottom:6px">AI model compression</div>
-        <div style="font-size:.82rem;color:var(--text-dim);line-height:1.5">3-bit quantization with 0.9999+ cosine similarity. AI models that required $10K cloud GPUs now run on a $500 laptop. 15 models published on HuggingFace.</div>
-      </div>
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px">
-        <div style="font-size:1.6rem;font-weight:800;color:var(--blue);margin-bottom:4px">167</div>
-        <div style="font-size:.9rem;font-weight:600;color:var(--text);margin-bottom:6px">Tests pass</div>
-        <div style="font-size:.82rem;color:var(--text-dim);line-height:1.5">Full test suite, all reproducible from source. Every benchmark number on this site comes from scripts in the repo that you can run yourself.</div>
-      </div>
-    </div>
-    <div style="max-width:740px;margin:0 auto;text-align:center">
-      <p style="font-size:.88rem;color:var(--text-dim);line-height:1.7">Bonfyre's binaries are organized into four layers: <strong style="color:var(--text)">Substrate</strong> (ingest, normalize, segment), <strong style="color:var(--text)">Transform</strong> (transcribe, summarize, score, embed), <strong style="color:var(--text)">Surface</strong> (format, render, deliver), and <strong style="color:var(--text)">Value</strong> (price, invoice, pay, prove). Each operator declares whether it's cacheable, reversible, and idempotent — so the pipeline can parallelize, skip, and retry safely.</p>
-    </div>
-  </div>
-</section>
-
-<section id="upgrades">
-  <div class="container">
-    <h2>What changed since the last public push</h2>
-    <p class="subtitle">The stack is not just bigger. The shape of the product has changed in useful ways.</p>
-    <div class="killer-grid">
-      <div class="killer-card">
-        <div class="vs">Network observation became a product surface</div>
-        <div class="ratio">capture → recipe</div>
-        <div class="detail">BonfyreWire now fingerprints devices, emits canonical artifacts, and generates stitch-compatible recipes from owned or authorized captures. It is not just packet accounting anymore.</div>
-      </div>
-      <div class="killer-card">
-        <div class="vs">CLI became more operationally truthful</div>
-        <div class="ratio">health-aware</div>
-        <div class="detail">`bonfyre list --health`, `bonfyre doctor sync-subcommands`, workflow listing, recipe browsing, and layer registry inspection now make the runtime easier to inspect and trust after updates.</div>
-      </div>
-      <div class="killer-card">
-        <div class="vs">Speech moved from feature to system</div>
-        <div class="ratio">stacked</div>
-        <div class="detail">The repo now carries a deeper speech investigation story: architecture, production integration, quickstart, hypothesis engine, and discovery pipeline work, not just a standalone transcription binary.</div>
-      </div>
-      <div class="killer-card">
-        <div class="vs">Pages and runtime are converging</div>
-        <div class="ratio">repo-aligned</div>
-        <div class="detail">The public docs, Pages workflows, and runtime packaging are being pointed at `bonfyre-oss` so the repo, the site, and the automation describe the same product instead of different snapshots.</div>
-      </div>
-    </div>
-    <div style="max-width:780px;margin:24px auto 0;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:22px 24px">
-      <div style="font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);font-weight:700;margin-bottom:10px">What That Means In Practice</div>
-      <p style="font-size:.9rem;color:var(--text-dim);line-height:1.7;margin-bottom:14px">A week ago the public story was still mostly compression, transcription, and backend footprint. The newer repo shape adds a more operational Bonfyre: captures become artifacts, artifacts become recipes, recipes become execution plans, and the CLI now exposes more of the health and registry state needed to work with that system confidently.</p>
-      <div style="font-family:var(--mono);font-size:.8rem;color:var(--text-dim);line-height:1.9;overflow:auto">
-        bonfyre wire ingest-pcap capture.pcap --dumb-device --root layeros/state<br>
-        bonfyre wire probe &lt;capture_id&gt; --root layeros/state<br>
-        bonfyre wire artifacts &lt;capture_id&gt; --root layeros/state<br>
-        bonfyre wire recipe &lt;capture_id&gt; --root layeros/state &gt; recipe.json<br>
-        bonfyre stitch plan recipe.json
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Public-source proof banner -->
-<section style="padding:40px 0;background:linear-gradient(135deg,rgba(249,115,22,.06) 0%,rgba(13,17,23,1) 60%)">
-  <div class="container" style="text-align:center">
-    <div style="display:inline-block;background:var(--surface);border:2px solid var(--accent);border-radius:12px;padding:32px 48px;max-width:800px">
-      <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);font-weight:700;margin-bottom:8px">See It Working Right Now</div>
-      <div style="font-size:2rem;font-weight:800;color:var(--text);letter-spacing:-.02em;margin-bottom:8px">YouTube video in. Organized proof out.</div>
-      <p style="font-size:1rem;color:var(--text-dim);max-width:640px;margin:0 auto 20px;line-height:1.6">The Shift Handoff app takes linked public videos, transcribes them locally, generates summaries and proof bundles, and removes the original media. Everything is traceable back to the source.</p>
-      <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:16px">
-        <div style="text-align:center"><span style="display:block;font-size:1.8rem;font-weight:700;color:var(--accent)">3</span><span style="font-size:.75rem;color:var(--text-dim)">source videos processed</span></div>
-        <div style="text-align:center"><span style="display:block;font-size:1.8rem;font-weight:700;color:var(--green)">24-36×</span><span style="font-size:.75rem;color:var(--text-dim)">faster than realtime</span></div>
-        <div style="text-align:center"><span style="display:block;font-size:1.8rem;font-weight:700;color:var(--blue)">0</span><span style="font-size:.75rem;color:var(--text-dim)">copies of source media kept</span></div>
-        <div style="text-align:center"><span style="display:block;font-size:1.8rem;font-weight:700">1 click</span><span style="font-size:.75rem;color:var(--text-dim)">back to the original</span></div>
-      </div>
-      <div class="btn-row">
-        <a href="https://nickgonzales76017.github.io/pages-shift-handoff/" class="btn btn-primary">Open the live proof app →</a>
-        <a href="https://github.com/Nickgonzales76017/hcp-whisper" class="btn btn-outline">View speech engine →</a>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- What It Replaces -->
-<section id="what-it-replaces">
-  <div class="container">
-    <h2>What Bonfyre replaces</h2>
-    <p class="subtitle">Real cost and complexity savings. These are real numbers.</p>
-    <div class="killer-grid">
-      <div class="killer-card">
-        <div class="vs">vs Strapi (content management)</div>
-        <div class="ratio">1,742× smaller</div>
-        <div class="detail">500 MB install → 287 KB binary. 400 npm packages → 0 dependencies. Cold start 2 min → instant. Dynamic schemas, token auth, REST API, full-text search — backed by a 26-module C runtime with its own SIMD JSON parser, BLAKE2b crypto, LZ4 compression, and work-stealing thread pool.</div>
-      </div>
-      <div class="killer-card">
-        <div class="vs">vs Deepgram / OpenAI (transcription)</div>
-        <div class="ratio">$0 / minute</div>
-        <div class="detail">Cloud transcription at $0.006/min adds up fast. Bonfyre runs HCP-enhanced Whisper locally: speaker segmentation, filler detection, hallucination filtering via Hyperscan pattern fusion (>1 GB/s), and quality scoring with OpenSMILE eGeMAPSv02 (88 audio features). Visible metrics, not a black box. <a href="https://nickgonzales76017.github.io/pages-shift-handoff/" style="color:var(--accent)">See live proof →</a></div>
-      </div>
-      <div class="killer-card">
-        <div class="vs">vs Pinecone (search)</div>
-        <div class="ratio">$0 / month</div>
-        <div class="detail">$70–250/mo hosted vector search → local NEON SIMD cosine similarity in 5 ms. Embeddings stored in zero-copy LMDB (pointer casts into mmap — no deserialization). BM25 text ranking for hybrid results. Runs on your machine, scales to millions of documents.</div>
-      </div>
-      <div class="killer-card">
-        <div class="vs">vs Twilio (phone)</div>
-        <div class="ratio">No per-call billing</div>
-        <div class="detail">SaaS vendor lock-in → local communications edge. bonfyre-tel handles calls, SMS, MMS, routing, and identity/event state; bonfyre-moq covers browser-native live media; fountain-coded swarm delivery helps move artifacts across unreliable links. No recurring fees, no per-minute markup.</div>
-      </div>
-      <div class="killer-card">
-        <div class="vs">vs full SaaS stack</div>
-        <div class="ratio">$0 / month total</div>
-        <div class="detail">Auth + billing + API gateway + CMS + vector search + OpenAI-compatible proxy + local orchestration + phone edge + relay: typically multiple vendors and glue services. Bonfyre keeps those surfaces in one stack, backed by the same shared runtime, for ~2.1 MB on disk.</div>
-      </div>
-      <div class="killer-card" style="border-color:rgba(249,115,22,.4)">
-        <div class="vs">vs cloud AI APIs</div>
-        <div class="ratio">100% private</div>
-        <div class="detail">Your data never leaves your device. You can still point existing AI clients at a local OpenAI-compatible endpoint through bonfyre-proxy, but the work stays on your hardware and can run offline when the path allows it.</div>
-      </div>
-      <div class="killer-card" style="border-color:rgba(179,146,240,.5)">
-        <div class="vs">vs LiveKit / Twilio Media (real-time relay)</div>
-        <div class="ratio" style="color:#b392f0">$0 / stream</div>
-        <div class="detail">bonfyre-moq is a pure C WebTransport/MoQ relay for private realtime audio and media fan-out. No SaaS relay bill, no Node.js in production, no per-stream markup. It fits the same local-backend story as the rest of Bonfyre instead of pushing you into a separate realtime vendor stack. <a href="docs.html#relay" style="color:#b392f0">Details →</a></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Solutions -->
-<section id="solutions" style="background:linear-gradient(135deg,rgba(179,146,240,.06) 0%,rgba(13,17,23,1) 60%)">
-  <div class="container">
-    <h2>Real solutions across industries</h2>
-    <p class="subtitle">These workflows weren't possible before — they needed expensive cloud GPUs or huge servers. Now they run on your laptop.</p>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;max-width:1040px;margin:0 auto 40px">
-
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px;transition:border-color .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
-        <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px">⚖️ Legal: Private Client Calls → Organized Briefs</div>
-        <p style="font-size:.85rem;color:var(--text-dim);line-height:1.5;margin-bottom:10px">Record a client intake call. Bonfyre transcribes it locally (HCP Whisper with speaker segmentation), identifies key issues via BM25 ranking, scores transcript quality, and packages everything into a structured brief with content-addressed artifacts. Your client's data never touches the cloud — BLAKE2b hashing proves provenance.</p>
-        <div style="font-size:.78rem;color:var(--green)">Previously required: $400/month in cloud APIs</div>
-      </div>
-
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px;transition:border-color .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
-        <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px">🏥 Healthcare: Local SOAP Notes</div>
-        <p style="font-size:.85rem;color:var(--text-dim);line-height:1.5;margin-bottom:10px">Patient conversations transcribed and summarized into structured SOAP notes — all on-premise. HIPAA-compliant by default because nothing leaves the building. XSalsa20-Poly1305 encryption at rest, Ed25519 signing for audit trails. An 8 GB device runs the entire stack: transcription, summarization, quality scoring, and delivery.</p>
-        <div style="font-size:.78rem;color:var(--green)">Previously required: Cloud subscription + compliance overhead</div>
-      </div>
-
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px;transition:border-color .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
-        <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px">🎙️ Podcast → Monetized Asset</div>
-        <p style="font-size:.85rem;color:var(--text-dim);line-height:1.5;margin-bottom:10px">Drop in a raw episode → get a transcript (speaker-segmented), show notes, social media clips, and a checkout page with dynamic pricing — all generated locally in under 5 minutes. The pipeline: bonfyre-intake → bonfyre-transcribe → bonfyre-summarize → bonfyre-format → bonfyre-offer. Each stage is content-addressed; re-runs skip unchanged work.</p>
-        <div style="font-size:.78rem;color:var(--green)">Previously required: GPT-4 API + Descript + manual work</div>
-      </div>
-
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px;transition:border-color .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
-        <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px">🎬 Video Production: Longer, Cheaper</div>
-        <p style="font-size:.85rem;color:var(--text-dim);line-height:1.5;margin-bottom:10px">AI video generation models that used to need $10K+ cloud GPUs now run on a $2,000 workstation. Generate longer sequences without running out of memory — Bonfyre's compression makes the difference.</p>
-        <div style="font-size:.78rem;color:var(--green)">Previously required: Cloud GPU rental at $3–5/hour</div>
-      </div>
-
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px;transition:border-color .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
-        <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px">🌍 Field Research: Record → Archive → Search</div>
-        <p style="font-size:.85rem;color:var(--text-dim);line-height:1.5;margin-bottom:10px">Record interviews in the field with no internet. Bonfyre transcribes on-device, embeds documents for SIMD vector search, creates searchable archives with zero-copy LMDB caching, and publishes a static site — all from a MacBook. Fountain codes handle lossy syncs back to base.</p>
-        <div style="font-size:.78rem;color:var(--green)">Previously required: Cloud transcription + database hosting</div>
-      </div>
-
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px;transition:border-color .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
-        <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px">🏫 Education: Lectures → Course Materials</div>
-        <p style="font-size:.85rem;color:var(--text-dim);line-height:1.5;margin-bottom:10px">Record a 90-minute lecture. Bonfyre transcribes it, generates structured notes, and produces a study guide — all locally. Student data never goes to any third party.</p>
-        <div style="font-size:.78rem;color:var(--green)">Previously required: Otter.ai subscription + manual editing</div>
-      </div>
-
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px;transition:border-color .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
-        <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px">🏭 Manufacturing: Inspection Without Cloud</div>
-        <p style="font-size:.85rem;color:var(--text-dim);line-height:1.5;margin-bottom:10px">Run AI quality inspection on the factory floor with no internet required. A small device handles the entire model + logging + API. Fits in a 10-watt power envelope.</p>
-        <div style="font-size:.78rem;color:var(--green)">Previously required: Cloud GPU + internet connection</div>
-      </div>
-
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px;transition:border-color .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
-        <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px">🛰️ Defense / Remote: Air-Gapped AI</div>
-        <p style="font-size:.85rem;color:var(--text-dim);line-height:1.5;margin-bottom:10px">Full AI inference on hardware with no internet connection. Bonfyre's compression means large AI models now fit on portable, field-deployable devices.</p>
-        <div style="font-size:.78rem;color:var(--green)">Previously required: Specialized military hardware or satellite uplink</div>
-      </div>
-
-      <div style="background:var(--surface);border:2px solid rgba(179,146,240,.4);border-radius:10px;padding:24px;transition:border-color .15s" onmouseover="this.style.borderColor='#b392f0'" onmouseout="this.style.borderColor='rgba(179,146,240,.4)'">
-        <div style="font-size:1rem;font-weight:700;color:#b392f0;margin-bottom:8px">Real-Time Media, Still In The Bonfyre Style</div>
-        <p style="font-size:.85rem;color:var(--text-dim);line-height:1.5;margin-bottom:10px">bonfyre-moq is the realtime version of the same idea as the rest of Bonfyre: a small C binary you can run yourself. It terminates WebTransport, speaks MoQ, records stream events to SQLite, and gives you a private relay primitive for live audio, agent calls, and browser-native media flows.</p>
-        <div style="font-size:.78rem;color:var(--green)">Previously required: LiveKit/Twilio-style media infrastructure or a custom relay team</div>
-        <div style="margin-top:10px"><a href="docs.html#relay" style="color:#b392f0;font-size:.82rem">Technical details →</a></div>
-      </div>
-
-    </div>
-
-    <div style="max-width:680px;margin:0 auto;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:22px 28px;text-align:center">
-      <div style="font-size:.95rem;font-weight:600;color:var(--text);margin-bottom:8px">The common pattern</div>
-      <p style="font-size:.9rem;color:var(--text-dim);line-height:1.7">Calls, files, notes, recordings, repos, and live streams come in → Bonfyre processes them locally → organized output comes out as summaries, briefs, archives, pages, audio, search surfaces, and delivery flows. No cloud dependency. No recurring vendor chain.</p>
-    </div>
-  </div>
-</section>
-
-<!-- Hardware Guide -->
-<section id="hardware">
-  <div class="container">
-    <h2>Does my hardware work?</h2>
-    <p class="subtitle">If you have a laptop made in the last 5 years, you can probably run Bonfyre. Here's what different hardware can handle.</p>
-    <div style="overflow-x:auto;margin-bottom:36px">
-      <table style="width:100%;border-collapse:collapse;font-size:.85rem;min-width:520px">
-        <thead>
-          <tr style="border-bottom:2px solid var(--border);color:var(--text-dim)">
-            <th style="text-align:left;padding:10px 14px;font-weight:600">What You Have</th>
-            <th style="text-align:left;padding:10px 14px;font-weight:600">What You Can Run</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr style="border-bottom:1px solid var(--border)">
-            <td style="padding:10px 14px;font-weight:600">Raspberry Pi / 8 GB device</td>
-            <td style="padding:10px 14px;color:var(--text-dim)">Small AI models, local transcription, full pipeline processing</td>
-          </tr>
-          <tr style="border-bottom:1px solid var(--border);background:rgba(88,166,255,.04)">
-            <td style="padding:10px 14px;font-weight:600">MacBook / 16 GB laptop</td>
-            <td style="padding:10px 14px;color:var(--text-dim)">Speech transcription + AI inference + video processing — all running together</td>
-          </tr>
-          <tr style="border-bottom:1px solid var(--border)">
-            <td style="padding:10px 14px;font-weight:600">MacBook Pro / 64 GB Mac</td>
-            <td style="padding:10px 14px;color:var(--text-dim)">Large AI models (14B parameters), full video generation, 32K-token context windows</td>
-          </tr>
-          <tr style="border-bottom:1px solid var(--border);background:rgba(88,166,255,.04)">
-            <td style="padding:10px 14px;font-weight:600">Cloud GPU (T4 / 16 GB)</td>
-            <td style="padding:10px 14px;color:var(--text-dim)">Everything a 64 GB Mac can do, plus batch processing and multi-model workflows</td>
-          </tr>
-          <tr>
-            <td style="padding:10px 14px;font-weight:600">Workstation GPU (RTX 4090+)</td>
-            <td style="padding:10px 14px;color:var(--text-dim)">Full video generation, multi-second sequences, all models simultaneously</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <div style="max-width:680px;margin:0 auto;background:var(--surface);border:2px solid var(--green);border-radius:10px;padding:20px 28px;text-align:center">
-      <div style="font-size:.95rem;font-weight:600;color:var(--green);margin-bottom:6px">The key insight</div>
-      <p style="font-size:.9rem;color:var(--text-dim);line-height:1.7">AI models that used to require expensive cloud GPUs now fit on hardware you already own. Bonfyre's compression technology makes models ~4× smaller while keeping quality at 99.9%+. That's the difference between "cloud only" and "runs on your laptop."</p>
-    </div>
-  </div>
-</section>
-
-<!-- Use Cases -->
-<section id="use-cases">
-  <div class="container">
-    <h2>Pick the one that matches your problem</h2>
-    <p class="subtitle">Each is a standalone starting point — you don't need to understand the whole system.</p>
-    <div class="use-cases">
-      <div class="use-case">
-        <h3>Content Management</h3>
-        <p>Replace bloated CMS platforms with a 287 KB binary. Dynamic schemas, token auth, REST API, full-text search — 1,742× smaller than Strapi with zero npm dependencies. <a href="https://github.com/Nickgonzales76017/bonfyre-cms">Repo →</a></p>
-      </div>
-      <div class="use-case">
-        <h3>Local Transcription</h3>
-        <p>HCP-enhanced Whisper runs locally: speaker segmentation, filler/hallucination filtering, quality scoring (88 audio features via eGeMAPSv02). No cloud, no API keys, no per-minute charges. <a href="https://nickgonzales76017.github.io/pages-shift-handoff/">Live proof →</a> <a href="https://github.com/Nickgonzales76017/bonfyre-intake">Repo →</a></p>
-      </div>
-      <div class="use-case">
-        <h3>Audio → Invoice Pipeline</h3>
-        <p>Drop in audio → transcript → summary → quality score → pricing → packaged deliverable. 5–8 ms per stage. Content-addressed caching skips unchanged stages on re-runs. <a href="https://github.com/Nickgonzales76017/bonfyre-pipeline">Repo →</a></p>
-      </div>
-      <div class="use-case">
-        <h3>Smart Search</h3>
-        <p>NEON SIMD cosine similarity + BM25 text ranking. Zero-copy LMDB storage (pointer casts into mmap). Replace $250/mo Pinecone with local 5 ms queries. <a href="https://github.com/Nickgonzales76017/bonfyre-embed">Repo →</a></p>
-      </div>
-      <div class="use-case">
-        <h3>Self-Hosted Backend</h3>
-        <p>Auth, metering, API gateway, rate limiting, telephony, proxy, orchestration, work-stealing thread pools, compression, config, and CLI surfaces — all backed by the same shared runtime instead of a pile of separate services. <a href="https://github.com/Nickgonzales76017/bonfyre">Repo →</a></p>
-      </div>
-      <div class="use-case">
-        <h3>AI Model Compression</h3>
-        <p>3-bit quantization via E8 lattice snap + μ-law warp + 16D RVQ. Cosine 0.9999+. 15 models published on <a href="https://huggingface.co/NICKO">HuggingFace</a>. Run on a $500 laptop what used to require a $10K GPU. <a href="https://github.com/Nickgonzales76017/bonfyre-oss">Repo →</a></p>
-      </div>
-      <div class="use-case">
-        <h3>OpenAI Drop-In Replacement</h3>
-        <p>53 KB binary. Set OPENAI_API_BASE=http://localhost:8787. Same endpoints, local processing, $0 cost. Good when you want existing tools to keep working while Bonfyre handles transcription, briefing, and local model-facing flows underneath.</p>
-      </div>
-      <div class="use-case">
-        <h3>Machine-Only Orchestration</h3>
-        <p>bonfyre-orchestrate is not a chat wrapper. It is a planner layer that scores pathways, stores policy memory, and decides when extra Bonfyre blocks like narrate, render, emit, or pack should be used to improve the result.</p>
-      </div>
-      <div class="use-case">
-        <h3>Long-Context AI</h3>
-        <p>KV cache compression: 4× more context tokens in the same VRAM. 9 optimization passes. Works with both nn.Linear and FPQ layers. Process entire 90-minute lectures in a single pass.</p>
-      </div>
-      <div class="use-case">
-        <h3>Verified Narration</h3>
-        <p>bonfyre-narrate turns briefs, updates, and changelogs into audio with inline feature extraction, fidelity scoring, and refinement. It is not just “TTS added later” — it is a proof-minded output layer in the same stack.</p>
-      </div>
-      <div class="use-case" style="border-color:rgba(179,146,240,.4)">
-        <h3 style="color:#b392f0">Private Realtime Relay</h3>
-        <p>Run a private WebTransport/MoQ relay in C for browser-native audio, live agent sessions, and local media fan-out. Same Bonfyre values: local-first, low overhead, SQLite logs, no recurring relay vendor tax. <a href="docs.html#relay">Docs →</a></p>
-      </div>
-      <div class="use-case" style="border-color:rgba(88,166,255,.4)">
-        <h3 style="color:var(--blue)">Communications And Delivery</h3>
-        <p>Use SIP where it fits, MoQ where it fits, and swarm delivery where it fits. Bonfyre now has a broader transport story: telephony, browser-native relay, QUIC-aware artifact movement, and metered peer distribution in one family.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- WordPress -->
-<section id="wordpress">
-  <div class="container">
-    <h2>WordPress users</h2>
-    <p class="subtitle">Keep using WordPress for the front end. Let Bonfyre handle the heavy lifting behind the scenes.</p>
-
-    <div class="wp-uses">
-      <div class="wp-use"><h3>1. Podcast → blog posts</h3><p>Turn episode audio into draft posts, summaries, and quotes automatically.</p></div>
-      <div class="wp-use"><h3>2. Smart site search</h3><p>Search by meaning, not just keywords. Replace bloated search plugins.</p></div>
-      <div class="wp-use"><h3>3. Auto article briefs</h3><p>Create editorial summaries from long transcripts or notes.</p></div>
-      <div class="wp-use"><h3>4. Premium member gateway</h3><p>Back premium content tiers without plugin sprawl.</p></div>
-      <div class="wp-use"><h3>5. Lead magnet generator</h3><p>Produce PDFs, EPUBs, and guides from your WordPress content.</p></div>
-      <div class="wp-use"><h3>6. Knowledge base search</h3><p>Index docs, FAQs, and help content for fast retrieval.</p></div>
-      <div class="wp-use"><h3>7. Client portal backend</h3><p>WordPress handles presentation. Bonfyre handles auth, metering, and deliverables.</p></div>
-      <div class="wp-use"><h3>8. Call recordings → CRM notes</h3><p>Raw call audio into organized, quality-scored client packets.</p></div>
-      <div class="wp-use"><h3>9. Auto-tagging archives</h3><p>Enrich old content with topics, categories, and clusters.</p></div>
-      <div class="wp-use"><h3>10. Content repurposing</h3><p>Turn one post into snippets, email copy, and social-ready assets.</p></div>
-      <div class="wp-use"><h3>11. Research library</h3><p>Semantic index + artifact pipeline for PDFs and transcripts.</p></div>
-      <div class="wp-use"><h3>12. Proposal automation</h3><p>Quoting and billing from proof bundles to invoices.</p></div>
-      <div class="wp-use"><h3>13. Voice memo publishing</h3><p>Upload voice notes, publish cleaned, summarized versions.</p></div>
-      <div class="wp-use"><h3>14. Local AI features</h3><p>Transcription and search without cloud APIs or vendor lock-in.</p></div>
-      <div class="wp-use"><h3>15. Fast static publishing</h3><p>WordPress as editor, Bonfyre to emit alternate outputs and feeds.</p></div>
-    </div>
-
-    <h3 style="font-size:1.1rem;margin:32px 0 16px">Replace plugin sprawl</h3>
-    <div class="wp-sprawl">
-      <div class="wp-sprawl-col sprawl">
-        <h4>Typical WordPress</h4>
-        <ul>
-          <li>Yoast SEO — $99/yr</li>
-          <li>MemberPress — $179/yr</li>
-          <li>SearchWP — $99/yr</li>
-          <li>WP All Import — $99/yr</li>
-          <li>Gravity Forms — $59/yr</li>
-          <li>WooCommerce + 8 add-ons</li>
-          <li>Deepgram/Otter — $/min</li>
-          <li>Zapier — $49/mo</li>
-        </ul>
-      </div>
-      <div class="wp-sprawl-vs">vs</div>
-      <div class="wp-sprawl-col clean">
-        <h4>Bonfyre</h4>
-        <ul>
-          <li>53 binaries in the stack + 26-module runtime — $0/month</li>
-          <li>~2.1 MB total on disk</li>
-          <li>Auth + billing + metering</li>
-          <li>Local transcription</li>
-          <li>Smart search</li>
-          <li>Multi-format output</li>
-          <li>Dynamic pricing</li>
-          <li>Zero vendor lock-in</li>
-        </ul>
-      </div>
-    </div>
-
-    <h3 style="font-size:1.1rem;margin:32px 0 12px">Good fit</h3>
-    <div class="wp-fit-list">
-      <span class="wp-fit-tag">Publishers</span>
-      <span class="wp-fit-tag">Agencies</span>
-      <span class="wp-fit-tag">Course creators</span>
-      <span class="wp-fit-tag">Membership sites</span>
-      <span class="wp-fit-tag">Podcast networks</span>
-      <span class="wp-fit-tag">Documentation portals</span>
-      <span class="wp-fit-tag">Niche research sites</span>
-      <span class="wp-fit-tag">Local businesses</span>
-    </div>
-  </div>
-</section>
-
-<!-- Recipes -->
-<section id="recipes">
-  <div class="container">
-    <h2>Real-world recipes</h2>
-    <p class="subtitle">You don't need to understand the technical details. Bonfyre takes your messy business input and turns it into something useful.</p>
-    <div class="recipe-grid">
-
-      <div class="recipe-card">
-        <h3>🏢 Property Managers</h3>
-        <div class="recipe-step"><div class="recipe-label have">What you already have</div><div class="recipe-text">Maintenance calls, voicemails, inspection notes, resident complaints, vendor quotes.</div></div>
-        <div class="recipe-step"><div class="recipe-label does">What Bonfyre does</div><div class="recipe-text">Turns recordings and notes into clean summaries, searchable records, follow-up items, and downloadable packets.</div></div>
-        <div class="recipe-step"><div class="recipe-label get">What you get</div><div class="recipe-text">Fewer missed requests, faster vendor coordination, cleaner records.</div></div>
-        <div class="recipe-step"><div class="recipe-label try">Try this</div><div class="recipe-text">Resident leaves a voicemail → upload it → get a transcript, summary, issue type, follow-up notes, and maintenance packet.</div></div>
-      </div>
-
-      <div class="recipe-card">
-        <h3>🍺 Bars & Nightlife</h3>
-        <div class="recipe-step"><div class="recipe-label have">What you already have</div><div class="recipe-text">Staff updates, vendor calls, event ideas, shift notes, inventory issues, promo materials.</div></div>
-        <div class="recipe-step"><div class="recipe-label does">What Bonfyre does</div><div class="recipe-text">Organizes into shift summaries, event prep notes, staff instructions, vendor records, and promo content.</div></div>
-        <div class="recipe-step"><div class="recipe-label get">What you get</div><div class="recipe-text">Less confusion between shifts, smoother event planning, less wasted time.</div></div>
-        <div class="recipe-step"><div class="recipe-label try">Try this</div><div class="recipe-text">Manager records a voice memo after a busy night → shift recap, issue list, and event lessons-learned.</div></div>
-      </div>
-
-      <div class="recipe-card">
-        <h3>🍕 Restaurants</h3>
-        <div class="recipe-step"><div class="recipe-label have">What you already have</div><div class="recipe-text">Staff training notes, supplier calls, customer comments, shift reports, menu updates.</div></div>
-        <div class="recipe-step"><div class="recipe-label does">What Bonfyre does</div><div class="recipe-text">Turns that into clean training docs, supplier summaries, manager reports, and feedback trends.</div></div>
-        <div class="recipe-step"><div class="recipe-label get">What you get</div><div class="recipe-text">Better staff consistency, easier training, fewer details getting lost.</div></div>
-        <div class="recipe-step"><div class="recipe-label try">Try this</div><div class="recipe-text">Weekly manager meeting recorded → clear summary, action list, staff notices, training updates.</div></div>
-      </div>
-
-      <div class="recipe-card">
-        <h3>✂️ Salons & Barbershops</h3>
-        <div class="recipe-step"><div class="recipe-label have">What you already have</div><div class="recipe-text">Team updates, service notes, customer questions, training needs, promo ideas.</div></div>
-        <div class="recipe-step"><div class="recipe-label does">What Bonfyre does</div><div class="recipe-text">Organizes into service guides, training materials, marketing drafts, and a staff knowledge base.</div></div>
-        <div class="recipe-step"><div class="recipe-label get">What you get</div><div class="recipe-text">Faster onboarding, more consistent service, less repeated instructions.</div></div>
-        <div class="recipe-step"><div class="recipe-label try">Try this</div><div class="recipe-text">Owner records "how we handle premium appointments" → staff guide, checklist, and FAQ page.</div></div>
-      </div>
-
-      <div class="recipe-card">
-        <h3>🏋️ Gyms & Fitness Studios</h3>
-        <div class="recipe-step"><div class="recipe-label have">What you already have</div><div class="recipe-text">Coach notes, member questions, program explanations, onboarding conversations.</div></div>
-        <div class="recipe-step"><div class="recipe-label does">What Bonfyre does</div><div class="recipe-text">Creates member onboarding materials, coach summaries, training guides, searchable internal knowledge.</div></div>
-        <div class="recipe-step"><div class="recipe-label get">What you get</div><div class="recipe-text">Better member experience, less repeated explanation, cleaner team communication.</div></div>
-        <div class="recipe-step"><div class="recipe-label try">Try this</div><div class="recipe-text">Coach records a new class explanation → member description, coaching notes, and onboarding content.</div></div>
-      </div>
-
-      <div class="recipe-card">
-        <h3>🔧 Local Service Businesses</h3>
-        <div class="recipe-step"><div class="recipe-label have">What you already have</div><div class="recipe-text">Phone calls, job notes, technician updates, customer questions, estimates.</div></div>
-        <div class="recipe-step"><div class="recipe-label does">What Bonfyre does</div><div class="recipe-text">Turns that into clean summaries, estimate materials, follow-up drafts, and job documentation.</div></div>
-        <div class="recipe-step"><div class="recipe-label get">What you get</div><div class="recipe-text">Faster quoting, better follow-up, fewer details through the cracks.</div></div>
-        <div class="recipe-step"><div class="recipe-label try">Try this</div><div class="recipe-text">Technician leaves a job-site voice note → job summary, customer recap, and estimate-ready notes.</div></div>
-      </div>
-
-      <div class="recipe-card">
-        <h3>🏠 Real Estate Teams</h3>
-        <div class="recipe-step"><div class="recipe-label have">What you already have</div><div class="recipe-text">Showing notes, listing ideas, client calls, buyer concerns, neighborhood research.</div></div>
-        <div class="recipe-step"><div class="recipe-label does">What Bonfyre does</div><div class="recipe-text">Organizes into client-ready summaries, listing support material, and searchable deal notes.</div></div>
-        <div class="recipe-step"><div class="recipe-label get">What you get</div><div class="recipe-text">Better communication, faster follow-up, more polished client service.</div></div>
-        <div class="recipe-step"><div class="recipe-label try">Try this</div><div class="recipe-text">Agent uploads buyer consultation recording → needs summary, budget priorities, follow-up recommendations.</div></div>
-      </div>
-
-      <div class="recipe-card">
-        <h3>🛡️ Insurance Agencies</h3>
-        <div class="recipe-step"><div class="recipe-label have">What you already have</div><div class="recipe-text">Client calls, policy explanations, onboarding materials, renewal questions.</div></div>
-        <div class="recipe-step"><div class="recipe-label does">What Bonfyre does</div><div class="recipe-text">Turns conversations into clear summaries, training materials, FAQ content, and intake records.</div></div>
-        <div class="recipe-step"><div class="recipe-label get">What you get</div><div class="recipe-text">Clearer communication, easier staff training, less policy confusion.</div></div>
-        <div class="recipe-step"><div class="recipe-label try">Try this</div><div class="recipe-text">Customer call uploaded → policy discussion summary, next-step notes, follow-up checklist.</div></div>
-      </div>
-
-      <div class="recipe-card">
-        <h3>⚖️ Law Offices</h3>
-        <div class="recipe-step"><div class="recipe-label have">What you already have</div><div class="recipe-text">Client intake calls, meeting notes, matter updates, document reviews.</div></div>
-        <div class="recipe-step"><div class="recipe-label does">What Bonfyre does</div><div class="recipe-text">Structures into organized summaries, intake records, case prep notes, and packaged materials.</div></div>
-        <div class="recipe-step"><div class="recipe-label get">What you get</div><div class="recipe-text">More usable internal records, less time reorganizing conversations.</div></div>
-        <div class="recipe-step"><div class="recipe-label try">Try this</div><div class="recipe-text">Client intake call → transcript, intake summary, issues list, organized review packet.</div></div>
-      </div>
-
-      <div class="recipe-card">
-        <h3>🏥 Medical & Dental Offices</h3>
-        <div class="recipe-step"><div class="recipe-label have">What you already have</div><div class="recipe-text">Staff procedures, patient education material, office training notes, admin processes.</div></div>
-        <div class="recipe-step"><div class="recipe-label does">What Bonfyre does</div><div class="recipe-text">Turns those into reusable office guides, staff SOPs, patient handouts, and searchable documentation.</div></div>
-        <div class="recipe-step"><div class="recipe-label get">What you get</div><div class="recipe-text">Better consistency and easier staff training.</div></div>
-        <div class="recipe-step"><div class="recipe-label try">Try this</div><div class="recipe-text">Office manager records a front-desk process → written SOP, checklist, new-staff training material.</div></div>
-      </div>
-
-      <div class="recipe-card">
-        <h3>💚 Nonprofits</h3>
-        <div class="recipe-step"><div class="recipe-label have">What you already have</div><div class="recipe-text">Meeting recordings, community interviews, field notes, grant ideas, donor drafts.</div></div>
-        <div class="recipe-step"><div class="recipe-label does">What Bonfyre does</div><div class="recipe-text">Turns them into reports, grant support material, board packets, and outreach drafts.</div></div>
-        <div class="recipe-step"><div class="recipe-label get">What you get</div><div class="recipe-text">Less admin overhead, more polished outputs from a small team.</div></div>
-        <div class="recipe-step"><div class="recipe-label try">Try this</div><div class="recipe-text">Program debrief uploaded → summary, outcomes list, grant-language draft, board update.</div></div>
-      </div>
-
-      <div class="recipe-card">
-        <h3>📚 Schools & Training Orgs</h3>
-        <div class="recipe-step"><div class="recipe-label have">What you already have</div><div class="recipe-text">Lectures, workshop recordings, training notes, teacher knowledge, learning content.</div></div>
-        <div class="recipe-step"><div class="recipe-label does">What Bonfyre does</div><div class="recipe-text">Turns that into study guides, training documents, searchable archives, and reusable course materials.</div></div>
-        <div class="recipe-step"><div class="recipe-label get">What you get</div><div class="recipe-text">More value from the same teaching time, easier content reuse.</div></div>
-        <div class="recipe-step"><div class="recipe-label try">Try this</div><div class="recipe-text">Workshop recording uploaded → summary, lesson notes, handout draft, archive entry.</div></div>
-      </div>
-
-      <div class="recipe-card">
-        <h3>⛪ Churches & Faith Communities</h3>
-        <div class="recipe-step"><div class="recipe-label have">What you already have</div><div class="recipe-text">Sermons, teaching notes, ministry updates, volunteer instructions, archive material.</div></div>
-        <div class="recipe-step"><div class="recipe-label does">What Bonfyre does</div><div class="recipe-text">Turns them into summaries, newsletters, volunteer guides, and searchable ministry archives.</div></div>
-        <div class="recipe-step"><div class="recipe-label get">What you get</div><div class="recipe-text">Better communication, easier reuse of important content.</div></div>
-        <div class="recipe-step"><div class="recipe-label try">Try this</div><div class="recipe-text">Sermon audio uploaded → transcript, summary, devotional notes, newsletter-ready content.</div></div>
-      </div>
-
-      <div class="recipe-card">
-        <h3>🏛️ Museums & Historical Groups</h3>
-        <div class="recipe-step"><div class="recipe-label have">What you already have</div><div class="recipe-text">Oral histories, archive notes, exhibit research, recordings, educational material.</div></div>
-        <div class="recipe-step"><div class="recipe-label does">What Bonfyre does</div><div class="recipe-text">Organizes into searchable archives, summaries, educational packets, and public-ready content.</div></div>
-        <div class="recipe-step"><div class="recipe-label get">What you get</div><div class="recipe-text">Preservation work that is easier to access and reuse.</div></div>
-        <div class="recipe-step"><div class="recipe-label try">Try this</div><div class="recipe-text">Oral history recording → transcript, topic summary, archive entry, exhibit-support content.</div></div>
-      </div>
-
-      <div class="recipe-card">
-        <h3>💼 Agencies & Consultants</h3>
-        <div class="recipe-step"><div class="recipe-label have">What you already have</div><div class="recipe-text">Client calls, workshop recordings, sales notes, proposals, reports.</div></div>
-        <div class="recipe-step"><div class="recipe-label does">What Bonfyre does</div><div class="recipe-text">Turns those into clean summaries, proposals, report drafts, pricing support, and client-ready deliverables.</div></div>
-        <div class="recipe-step"><div class="recipe-label get">What you get</div><div class="recipe-text">Faster service delivery, more polished outputs from the same conversations.</div></div>
-        <div class="recipe-step"><div class="recipe-label try">Try this</div><div class="recipe-text">Discovery call uploaded → transcript, executive summary, next steps, proposal starter packet.</div></div>
-      </div>
-
-      <div class="recipe-card">
-        <h3>🎧 Clubs & Event Venues</h3>
-        <div class="recipe-step"><div class="recipe-label have">What you already have</div><div class="recipe-text">DJ notes, promoter messages, event recaps, guest lists, sponsor conversations.</div></div>
-        <div class="recipe-step"><div class="recipe-label does">What Bonfyre does</div><div class="recipe-text">Turns scattered event info into organized summaries, promo assets, sponsor packets, and planning records.</div></div>
-        <div class="recipe-step"><div class="recipe-label get">What you get</div><div class="recipe-text">Better run events, cleaner communication, faster promo cycles.</div></div>
-        <div class="recipe-step"><div class="recipe-label try">Try this</div><div class="recipe-text">Post-event notes uploaded → event summary, top issues, social post ideas, sponsor recap.</div></div>
-      </div>
-
-    </div>
-    <p style="margin-top:32px;font-size:.9rem"><a href="https://github.com/Nickgonzales76017/bonfyre-recipes">Browse all recipes →</a></p>
-  </div>
-</section>
-
-<!-- Live Apps -->
-<section id="apps">
-  <div class="container"><p><a href="index.html#experiences"><strong>Open the current demo directory →</strong></a> · <a href="https://aurekai-work-samples.pages.dev/#samples">Aurekai Work Samples</a></p></div>
-  <div class="container">
-    <h2>20 live apps running right now</h2>
-    <p class="subtitle">Real applications you can click and use. Each one is powered by Bonfyre behind the scenes.</p>
-    <div class="apps-grid">
-      <a href="https://nickgonzales76017.github.io/pages-shift-handoff/" class="app-card"><div class="app-name">Shift Handoff Board</div><div class="app-desc">Public videos become traceable shift cards, transcripts, briefs, and proof bundles.</div></a>
-      <a href="https://nickgonzales76017.github.io/pages-memory-atlas/" class="app-card"><div class="app-name">Memory Atlas</div><div class="app-desc">Voice notes transcribed and placed on an interactive timeline.</div></a>
-      <a href="https://nickgonzales76017.github.io/pages-freelancer-evidence/" class="app-card"><div class="app-name">Freelancer Evidence Vault</div><div class="app-desc">Client calls become timestamped invoices and proof-of-work records.</div></a>
-      <a href="https://nickgonzales76017.github.io/pages-customer-voice/" class="app-card"><div class="app-name">Customer Voice Board</div><div class="app-desc">Customer interviews distilled into a searchable insight dashboard.</div></a>
-      <a href="https://nickgonzales76017.github.io/pages-family-history/" class="app-card"><div class="app-name">Family History Museum</div><div class="app-desc">Family recordings organized into a browsable oral history museum.</div></a>
-      <a href="https://nickgonzales76017.github.io/pages-podcast-plant/" class="app-card"><div class="app-name">Podcast Plant</div><div class="app-desc">Raw audio becomes a published podcast site with RSS feed.</div></a>
-      <a href="https://nickgonzales76017.github.io/pages-postmortem-atlas/" class="app-card"><div class="app-name">Postmortem Atlas</div><div class="app-desc">War room recordings become searchable postmortem archives.</div></a>
-      <a href="https://nickgonzales76017.github.io/pages-explain-repo/" class="app-card"><div class="app-name">Explain This Repo</div><div class="app-desc">Source code analyzed and turned into an onboarding guide.</div></a>
-      <a href="https://nickgonzales76017.github.io/pages-town-box/" class="app-card"><div class="app-name">Town Box</div><div class="app-desc">Meeting recordings become public-facing town dashboards.</div></a>
-      <a href="https://nickgonzales76017.github.io/pages-grant-evidence/" class="app-card"><div class="app-name">Grant Evidence Pack</div><div class="app-desc">Stories and interviews packaged into grant-ready evidence bundles.</div></a>
-      <a href="https://nickgonzales76017.github.io/pages-micro-consulting/" class="app-card"><div class="app-name">Micro-Consulting Storefront</div><div class="app-desc">Package and price consulting engagements with dynamic pricing.</div></a>
-      <a href="https://nickgonzales76017.github.io/pages-legal-prep/" class="app-card"><div class="app-name">Personal Legal Prep Binder</div><div class="app-desc">Documents scored, tagged, and packed into legal-ready binders.</div></a>
-      <a href="https://nickgonzales76017.github.io/pages-oss-cockpit/" class="app-card"><div class="app-name">OSS Maintainer Cockpit</div><div class="app-desc">Issues and PRs turned into a searchable knowledge base.</div></a>
-      <a href="https://nickgonzales76017.github.io/pages-release-radio/" class="app-card"><div class="app-name">Release-Note Radio</div><div class="app-desc">Changelogs narrated into audio and published as an RSS site.</div></a>
-      <a href="https://nickgonzales76017.github.io/pages-async-standup/" class="app-card"><div class="app-name">Async Standup Newspaper</div><div class="app-desc">Voice standups analyzed and rendered as a daily newspaper.</div></a>
-      <a href="https://nickgonzales76017.github.io/pages-competitive-intel/" class="app-card"><div class="app-name">Competitive Intelligence Scrapbook</div><div class="app-desc">Market data searchable in a smart intel database.</div></a>
-      <a href="https://nickgonzales76017.github.io/pages-sales-distiller/" class="app-card"><div class="app-name">Sales Call Distiller</div><div class="app-desc">Sales calls analyzed, clipped, tagged, and made searchable.</div></a>
-      <a href="https://nickgonzales76017.github.io/pages-procurement-memory/" class="app-card"><div class="app-name">Procurement Memory Site</div><div class="app-desc">Procurement docs embedded into a searchable ledger.</div></a>
-      <a href="https://nickgonzales76017.github.io/pages-museum-exhibit/" class="app-card"><div class="app-name">Museum Exhibit Builder</div><div class="app-desc">Audio clips rendered into interactive museum exhibit pages.</div></a>
-      <a href="https://nickgonzales76017.github.io/pages-local-archive/" class="app-card"><div class="app-name">Local Archive Explorer</div><div class="app-desc">Documents indexed into a searchable local archive.</div></a>
-    </div>
-  </div>
-</section>
-
-<!-- CTA -->
-  
-  <!-- Recent additions (content-only) -->
-  <section id="recent-additions" style="padding:40px 0">
-    <div class="container">
-      <h2>Recent additions</h2>
-      <p class="subtitle">Newer runtime pieces and outward-facing surfaces, summarized without turning this page into release notes.</p>
-      <div class="killer-grid" style="margin-top:16px">
-        <div class="killer-card">
-          <div class="vs">Runtime additions</div>
-          <div class="detail">Reactor, hot-load stages, coroutine pipeline flow, zero-copy cache + manifests, SIMD JSON and UTF-8, DNS, logging, mmap, MessagePack, LZ4, Bloom dedup, and the newer fountain/swarm path.</div>
-        </div>
-        <div class="killer-card">
-          <div class="vs">Newer product surfaces</div>
-          <div class="detail">bonfyre-proxy, bonfyre-orchestrate, bonfyre-tel, bonfyre-moq, bonfyre-swarm, bonfyre-narrate, bonfyre-quant, and bonfyre-kvcache broadened the stack beyond “transcribe and summarize.”</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-<section style="text-align:center;padding:80px 0">
-  <div class="container">
-    <h2>Open source. MIT licensed. $0/month.</h2>
-    <p class="subtitle">53 binaries in the stack. 26 shared library modules. Pages, proxy, orchestration, relay, and delivery still keep the same local-first shape.</p>
-    <div class="btn-row">
-      <a href="https://github.com/Nickgonzales76017/bonfyre-oss" class="btn btn-primary">⭐ Star on GitHub</a>
-      <a href="https://github.com/Nickgonzales76017/bonfyre-oss" class="btn btn-primary" style="background:var(--green)">⭐ Star bonfyre-oss</a>
-      <a href="https://huggingface.co/NICKO" class="btn btn-outline">HuggingFace models</a>
-      <a href="docs.html" class="btn btn-outline" style="border-color:var(--green);color:var(--green)">Technical docs →</a>
-    </div>
-  </div>
-</section>
-
-<footer>
-  <div class="container">
-    <p>Made by <a href="https://nickgonzales76017.github.io">Nick Gonzales</a> · <a href="https://github.com/Nickgonzales76017/bonfyre-oss">GitHub</a> · <a href="https://github.com/Nickgonzales76017/bonfyre-oss/blob/main/LICENSE">MIT License</a> · <a href="docs.html">Technical Docs</a></p>
-    <p style="margin-top:8px"><a href="#" style="color:var(--text-dim);font-size:.85rem">↑ Back to top</a></p>
-  </div>
-</footer>
-
-</body>
-</html>
+<section class="block alt" id="from-the-journal"><div class="shell">
+<div class="head"><div><span class="eyebrow">From the journal</span><h2>The questions behind these products.</h2></div><p>We've been exploring the same business problems in articles, experiments and project conversations. Here are two pieces about how the operating model shapes what we build.</p></div>
+<div class="grid">
+<article class="card"><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#store"></use></svg></span><h3>Three shops shouldn't look like the same website.</h3><p>Our white-label work starts with real differences in customer needs, even when the underlying software is shared.</p><a href="blog/three-brands-one-foundation/">Read the article ↗</a></article>
+<article class="card"><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#radio"></use></svg></span><h3>A publisher deserves a home.</h3><p>Why articles, authors, collections and communities belong together in more than a discovery feed.</p><a href="blog/a-publisher-deserves-a-home/">Read the article ↗</a></article>
+<article class="card"><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#bag"></use></svg></span><h3>A product should stay the same product.</h3><p>What happens when a catalogue item becomes a room-plan selection and then a procurement decision?</p><a href="blog/the-catalogue-and-the-room/">Read the article ↗</a></article>
+</div></div></section>
+<section class="block soft" id="start"><div class="shell">
+<div class="head"><div><span class="eyebrow">Explore</span><h2>Start with the part that interests you.</h2></div><p>Look at the public products, try an application or read the native source. There's no need to learn the entire architecture before finding the piece you can use.</p></div>
+<div class="items">
+<a class="item" href="https://aurekai.work"><span class="n">01</span><strong>Aurekai Work</strong><span>Organizations, opportunities and business applications.</span><b>↗</b></a>
+<a class="item" href="https://aurekai-work-samples.pages.dev/"><span class="n">02</span><strong>Applications and studios</strong><span>Hands-on examples for planning, research, data, procurement, documents and creative work.</span><b>↗</b></a>
+<a class="item" href="docs.html"><span class="n">03</span><strong>Bonfÿre technical guide</strong><span>Native architecture, data systems, commands, application integration and models.</span><b>↗</b></a>
+<a class="item" href="https://github.com/Nickgonzales76017/bonfyre"><span class="n">04</span><strong>GitHub source</strong><span>Native code, companion repositories, tools and development documentation.</span><b>↗</b></a>
+</div></div></section>
+</main>
+<footer class="footer"><div class="shell"><span>Aurekai / products and businesses</span><span><a href="./">Home</a> · <a href="market.html">Research</a> · <a href="docs.html">Bonfÿre</a> · <a href="https://docs.aurekai.work/">Guides</a></span></div></footer>
+</body></html>

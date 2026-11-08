@@ -4,59 +4,71 @@
 <h1 align="center">Bonfÿre</h1>
 
 <p align="center">
-  <strong>Native infrastructure for compounding software: retained knowledge, reusable capabilities, authorized execution and verifiable results.</strong>
+  <strong>The native software behind Aurekai’s businesses, applications and public network.</strong>
 </p>
 
 <p align="center">
-  <a href="#see-it-running">See it running</a> ·
+  <a href="#what-the-shared-software-makes-possible">What it does</a> ·
   <a href="#building-blocks">Building blocks</a> ·
   <a href="#federated-workspace">Federated workspace</a> ·
   <a href="https://nickgonzales76017.github.io/bonfyre/modules/">Source atlas (70)</a> ·
   <a href="#start-here">Start here</a> ·
-  <a href="#the-whole-machine">Whole machine</a> ·
+  <a href="#system-architecture">Architecture</a> ·
   <a href="docs/client-operations-portfolio.md">Client work</a> ·
   <a href="#whats-available-today">Available today</a> ·
   <a href="https://docs.aurekai.work/">Guides</a> ·
   <a href="https://aurekai-work-samples.pages.dev/">Work samples</a> ·
+  <a href="https://nickgonzales76017.github.io/bonfyre/market.html">Market research</a> ·
   <a href="docs/architecture.md">Architecture</a> ·
   <a href="CONTRIBUTING.md">Contributing</a>
 </p>
 
-**Aurekai is the business and public operating network. Bonfÿre is its technical engine.**
-AI agents can generate software faster than conventional teams can plan, coordinate
-and integrate it. The goal is not more disconnected code: it is to turn engineering
-work into reusable, verified capabilities that make later projects easier.
+**Bonfÿre is the software behind Aurekai.** We use it to build websites and applications, work with existing business systems, run local models, connect outside data and coordinate work across the products Aurekai operates.
 
-| Question | Aurekai | Bonfÿre |
-|---|---|---|
-| **Why** | Invest software, AI and engineering into useful digital businesses, applications and opportunities | Eliminate repeated integration, lost context and unverified agent output |
-| **What** | [Work](https://aurekai.work), [Life](https://aurekai.life), [Live](https://aurekai.live), [Shop](https://aurekai.shop); customer and partner experiences | Matrix, capability closure, WorkGraph, native commands, model/agent execution, evidence and authority |
-| **How value compounds** | Deploy common capabilities across a growing estate and public network | Retain source identities, typed contracts, tested implementation and reusable operational knowledge |
-| **What counts as proof** | Actual delivered outcomes, customer acceptance and commercial records | Source revision, test witness, effect authorization, receipt and destination readback |
+Aurekai is one operating business that can support many different experiences. A shop can have its own brand and customers. A creator can have a profile, channel and publications. An organization can use CRM, finance, project and service tools. Bonfÿre supplies many of the common pieces while each business keeps the parts that belong to it.
 
-Aurekai's model is *similar to digital private equity*: its productive capital is
-engineering hours, AI compute, shared software and distribution rather than
-only cash. This is an **operating-model analogy**, not a claim that every
-participating business is owned by Aurekai or that Aurekai is an investment fund.
+This repository is the technical side of that work. Its native implementation covers Matrix identity and addressing, Source Library, data systems, business application schemas, WorkGraph, agents, Model Commons, media, commerce and public web composition. The public GitHub tree and the locally installed runtime are published on separate schedules.
 
-**Project path:** goal → retained context → existing capability → missing-work plan
-→ bounded execution → independent verification → reusable improvement.
-[Business, project and technical contract](docs/aurekai-bonfyre-model.md).
+## What the shared software makes possible
 
-## See it running
+**Independent customer sites.** Our [three-business example](https://docs.aurekai.work/three-businesses) shows how a retailer can get its own website, branding, content and tools while an agency manages several clients using shared infrastructure. That includes separate accounts and customer access, not just changing a page's colors.
 
-| What | Where |
+**Business applications that talk to one another.** The Frappe-derived app work connects CRM, ERPNext, HRMS, Helpdesk, LMS, Wiki, Drive and Insights schemas to native workspaces. A company can work with relationships, finance, staff and service records without creating a separate integration system for every pair of applications.
+
+**Information that has more than one use.** A job listing can be discovered publicly, continued into an account's CRM and used to prepare a narrated update. A publisher's content can belong to a profile and also appear in a collection or channel. The source stays identifiable while receiving applications manage their own work. These cross-application paths are ongoing product and integration work.
+
+**Products that go beyond a catalogue.** Aurekai's [room planner](https://nickgonzales76017.github.io/bonfyre/spaces/product-room/) and [product configuration workspace](https://nickgonzales76017.github.io/bonfyre/spaces/catalogue/) combine product information, choices, dimensions and spatial layout. Similar source information also supports procurement and business operations.
+
+**Native tools and computation.** The Bonfÿre codebase includes C/Zig-centered commands for data, models, media, workflows, finance and integrations, alongside model runtimes, agents and external backends. A developer can inspect the [technical guide](https://nickgonzales76017.github.io/bonfyre/docs.html) or start with an individual tool.
+
+The larger business model is explained in [Aurekai and Bonfÿre](docs/aurekai-bonfyre-model.md), including how software, engineering time, external resources and distribution become reusable assets across the company.
+
+## Why we're working in these markets
+
+The organizations Aurekai works with already depend on many systems. In the <a href="https://www.uschamber.com/technology/2026-empowering-small-business-report">U.S. Chamber's 2026 small-business survey</a>, 41% of respondents used six or more technology platforms. Our native business-app and integration work helps with that everyday complexity: CRM, finance, inventory, content and operating tools need to work together.
+
+There's also a large base of established websites and published work to build on. <a href="https://w3techs.com/technologies/comparison/cm-wordpress">W3Techs reported WordPress usage at 39.4% of measured websites on November 7, 2026</a>. For a company with years of content, forms, reports and customer history, modernization means carrying that business forward.
+
+For creators, the <a href="https://www.iab.com/blog/2026-iab-creatorfronts-event-recap/">IAB's September 2026 CreatorFronts report</a> projected roughly $44 billion in U.S. creator advertising for 2026 and called for better operational infrastructure around creative work. For AI, <a href="https://hai.stanford.edu/ai-index/2026-ai-index-report/economy">Stanford's 2026 AI Index</a> reported adoption by 88% of surveyed organizations, while deployment of AI agents in particular business functions was still early. Those are useful reasons to build creator tools and native application/agent execution as part of a broader operating platform.
+
+The [market research guide](https://nickgonzales76017.github.io/bonfyre/market.html) links the original publications, dates and specific Aurekai product areas. These are external market indicators, separate from our product and operating results.
+
+## From the journal
+
+The [Aurekai Journal](https://nickgonzales76017.github.io/bonfyre/blog/) now collects sixteen public articles adapted from earlier project conversations and experiments. They follow the questions behind the software—[building the business around an AI-generated app](https://nickgonzales76017.github.io/bonfyre/blog/why-ai-needs-an-operating-company/), [moving a source into several account applications](https://nickgonzales76017.github.io/bonfyre/blog/a-job-posting-has-more-than-one-job/), [Frappe's application grammars](https://nickgonzales76017.github.io/bonfyre/blog/frappe-as-an-application-language/), and [local model performance](https://nickgonzales76017.github.io/bonfyre/blog/the-memory-wall-in-local-models/).
+
+The editable Markdown lives in [`editorial/posts/`](editorial/posts/). GitHub Pages builds the articles, [RSS feed](https://nickgonzales76017.github.io/bonfyre/blog/feed.xml), and stable [post index](editorial/README.md). The public URLs are designed to stay the same when native CMS integration replaces the static builder.
+
+## Aurekai's public network
+
+| Destination | What people find there |
 |---|---|
-| Team tools you can use in the browser: a fixture planner, a product editor, a shipment-file check | [Work samples](https://aurekai-work-samples.pages.dev/) |
-| Three shop sites with their own looks, run from one installation | [Three businesses](https://docs.aurekai.work/three-businesses) |
-| A training app for a studio, for members and coaches | [Walk-through](https://aurekai-work-samples.pages.dev/training/) |
-| Search over your own documents, on your own computer | [Walk-through](https://aurekai-work-samples.pages.dev/documents/) |
-| Step-by-step guides: white-label delivery, recordings, requests to books, migration | [Guides](https://docs.aurekai.work/) |
-| Public calendar source → LIVE homepage and Stage, read-only receipt with preserved unknown costs | [Source-to-customer witness](.github/workflows/source-customer-closure.yml) |
-| What this looks like for a service network, a media business, a community project and others | [Product families](https://docs.aurekai.work/operating-products) |
+| [aurekai.work](https://aurekai.work) | Businesses, organizations, jobs, professional applications and opportunities |
+| [aurekai.life](https://aurekai.life) | People, communities, profiles, collections and publishing |
+| [aurekai.live](https://aurekai.live) | Creators, media, recordings, channels and public experiences |
+| [aurekai.shop](https://aurekai.shop) | Products, sourcing, offers, catalogues and commerce |
 
-The samples use public or made-up data. Paid memberships and card payments are
-not part of the training sample.
+The domains are places to enter Aurekai; businesses and creators can also have independent sites and subdomains. Browse the [product guide](https://nickgonzales76017.github.io/bonfyre/explore.html) for a fuller look at how these systems fit together.
 
 ## Use a smaller piece
 
@@ -137,9 +149,7 @@ rather than blocking normal submodule initialization.
 
 ## Building blocks
 
-Nine areas of the development codebase are being cut into independently usable
-libraries. Some sources are not yet on public `main`; none is a versioned,
-supported package release.
+Bonfÿre spans core native systems and interoperable application families. The repository exposes source and integration boundaries for each:
 
 | Area | What it does | Where it lives |
 |---|---|---|
@@ -168,16 +178,11 @@ compute, external participation and interfaces. Identity, authority,
 capability, work, effects, evidence, resources and commitments each have a
 separate owner.
 
-Aurekai uses execution traces and proof bundles to propose better factors and
-routes. Those proposals must pass the system's validation and authorization
-checks before they can change how it runs.
+Bonfÿre also supplies execution history, simulation and optimization capabilities for Aurekai's operating programs. These sit alongside the application, media, commerce, finance and public experience systems.
 
-The Generation-10/V8.1 system map is the architectural basis. The live
-repository is the implementation truth. When they differ, the
-development Architecture Atlas records the live maturity and
-witnesses; a declared or architectural organ is never presented as proven.
+The Generation-10/V8.1 system map is the architectural basis. The architecture Atlas records component ownership, implementations, measurements and development work across the native estate.
 
-## The whole machine
+## System architecture
 
 ```text
 intent / observation / foreign state
@@ -200,7 +205,7 @@ intent / observation / foreign state
  replay · shadow · simulation · backtesting
                  │
                  ▼
-       Aurekai: learn → test → promote/cool/thaw
+       Aurekai: apps · networks · programs · commerce
 ```
 
 Each part has a defined responsibility:
@@ -213,9 +218,9 @@ Each part has a defined responsibility:
 | **Authority + EffectKernel** | Who may do what, with idempotency and effect ceilings checked at execution time. |
 | **Contract Projection Kernel v2** | ActiveClosure-demanded projections into native ABIs, data/query forms, APIs, WIT/Wasm, Frappe surfaces, evidence, evolution, tests, and packs. |
 | **Evidence and replay** | Receipts, witness DAGs, trace divergence, proof bundles, deterministic replay, shadow execution, simulation, and institutional backtesting. |
-| **Aurekai** | Evidence-bound learning: discover candidates, backtest, run gyms, shadow, promote or cool, and thaw invalid factors. |
+| **Optimization & learning** | Discover improvements, run simulations, backtest, evaluate, and update reusable execution strategies. Aurekai is the operating business that consumes these capabilities. |
 
-### Public capabilities
+### Capability programs
 
 The Generation-10 architecture preserves **91 Power identities**. Each identity moves through a
 maturity ladder—defined, implemented, built, resolvable, health-probed,
@@ -284,30 +289,17 @@ accounting records they display.
 
 ## What's available today
 
-**Maturity is source- and release-specific.** The local November 2026 development
-atlas records 555 architecture entries (302 implemented, 146 measured, 73
-declared, 34 architectural), while the Bonfÿre V6.1.0 execution inventory
-records 93 native commands, 1,840 Frappe-derived schema definitions, 20,487
-WorkGraph nodes and 14 active backend adapters. These figures are **local
-architecture/runtime observations**, not claimed to be compiled, deployed or
-available from this public GitHub `main` branch. They also do not establish that
-any particular public site is on that same release. See the explicit
-[verification boundary](docs/aurekai-bonfyre-model.md#readme-and-release-evidence-contract).
+The November 7, 2026 installed native estate and architecture registry report:
 
+| System | Inventory |
+|---|---:|
+| Native command families | **93** |
+| Frappe-derived application schemas | **1,840 DocTypes / 51 modules** |
+| WorkGraph | **20,487 nodes / 45,412 edges** |
+| Active backend adapters | **14** |
+| Architecture Atlas | **556 entries: 346 implemented, 152 measured, 24 declared, 34 architectural** |
 
-The public [work samples](https://aurekai-work-samples.pages.dev/) and
-[guides](https://docs.aurekai.work/) demonstrate current browser, publishing,
-document, integration and training workflows. Samples use fictional or public
-data. They are not proof of paid customer deployment, card processing or
-completed private-service contracts.
-
-**Source release boundary:** public `main` contains an earlier source snapshot
-alongside recently reviewed documentation. Newer native components, the
-Architecture Atlas, white-label ServiceSite source and cross-owner
-implementations are undergoing separate privacy, licensing and
-independent-install review. This README describes the design and available
-demonstrations; it does not imply every referenced development source
-directory is already in `main`.
+These are counts for the installed V6.1.0 estate and architecture registry; the public GitHub source and individual Aurekai deployments may use different revisions. The component Atlas and release workflows track the corresponding implementation states.
 
 Published source currently sits under [`cmd/`](cmd/), [`engine/`](engine/),
 [`lib/`](lib/) and [`integrations/`](integrations/).

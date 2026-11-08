@@ -1,7 +1,18 @@
 # Bonfÿre quickstart
 
-Choose the shortest path that answers your question. You don't need to build the
-entire development estate to see how Bonfÿre is used.
+**Aurekai** invests engineering, AI, reusable software and distribution in
+public products and digital opportunities. **Bonfÿre** is its native engine:
+source context, identity, capabilities, work, authority, execution and evidence.
+
+AI can generate software quickly; what matters here is whether a result is
+composable, authorized, verified and reusable. Choose the shortest path that
+answers your question. You do not need the entire development estate to begin.
+
+[Business and technical model](docs/aurekai-bonfyre-model.md) ·
+[Aurekai Work](https://aurekai.work) ·
+[Life](https://aurekai.life) ·
+[Live](https://aurekai.live) ·
+[Shop](https://aurekai.shop)
 
 ## 1. See the public work
 
@@ -18,10 +29,11 @@ git clone https://github.com/Nickgonzales76017/bonfyre.git
 cd bonfyre
 ```
 
-Public `main` contains an earlier native source snapshot. The newer Architecture
-Atlas, ServiceSite and integrated institutional work are being reviewed separately
-before publication; do not assume their local development instructions are
-already executable from this checkout.
+Public `main` contains a published source cut, Architecture Atlas, demos,
+components and reviewed documents. The **local operating runtime and public
+source can differ in revision and capability**. A named architecture, buildable
+command, external provider profile and deployed service each require separate
+verification. Read the command's own dependencies and tests before using it.
 
 The present source is organized under `cmd/`, `lib/`, `engine/` and
 `integrations/`. Historical notebook material is under
@@ -30,8 +42,10 @@ being an alternative source root.
 
 ### Optional: work across the other repositories
 
-The default clone does **not** fetch the 47 pinned public companion
-submodules. You can select only the repositories relevant to a job:
+The default clone does **not** initialize the federated source donors.
+The current public source atlas enumerates **70 pinned source references**
+(69 companions plus an upstream reference); these are not automatically
+installed integrations. Select only the repositories relevant to the job:
 
 ```bash
 bash scripts/federated_modules.sh list
@@ -40,9 +54,9 @@ bash scripts/federated_modules.sh init extractions
 bash scripts/federated_modules.sh status products
 ```
 
-Profiles are `products`, `extractions`, `examples`, `aurekai`, `lineage`,
-`upstream`, `frappe`, `interfaces`, `one PATH`, and `all`. Run `init lineage` only
-for older source histories. The Frappe and interface donor families are large
+Profiles include `products`, `extractions`, `examples`, `aurekai`,
+`performance`, `lineage`, `upstream`, `frappe`, `interfaces`, `one PATH`,
+and `all`. Run `init lineage` only for older source histories. The Frappe and interface donor families are large
 and source-only; fetch just one project when possible:
 
 ```bash
@@ -91,9 +105,12 @@ Only use a capture you own or are authorized to inspect:
 ./cmd/BonfyreWire/bonfyre-wire recipe <capture_id> --root layeros/state > recipe.json
 ```
 
-This gives a reviewable chain: observation → typed artifacts → proposed recipe.
-Inspect the output before using a downstream compiler or executor. Generating a
-recipe is not authorization to execute it.
+This example demonstrates an observation → artifacts → proposed-recipe
+boundary. The redirect to `recipe.json` is a compatibility output for this
+specific command, not the platform's canonical internal interchange format.
+Modern native owners use typed artifacts and declared contracts. Inspect the
+output and exact source revision before any downstream compiler or executor.
+Generating a recipe is **not** authority to execute it.
 
 ## 5. Continue with the right guide
 
