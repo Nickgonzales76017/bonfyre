@@ -738,6 +738,8 @@ architecture cmd-gate
   source_path cmd/BonfyreGate/src/main.c
   witness packs/no-simulation/command-evidence-20261010.tsv
   witness cmd/BonfyreGate/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.gate=fail
+  witness 2026-11-08: keys are Ed25519-signed by the institution identity through bonfyre-sign over every field but the signature; check and guard verify against BONFYRE_GATE_TRUST and refuse with nothing trusted. The 2026-10-29 defect (editing allowed_ops in key.json granted the op) is closed: the third vector case edits a key, checks with no trust and with another institution key, and all three are refused; a signed key past expiry is EXPIRED. Keys are now written with bf_jv, so an org with a quote no longer breaks the JSON
+  forbidden_inference a key that verifies -> a paid or current customer; it says the institution issued these entitlements and the bytes have not moved, not that anything was bought or that the issuer has not since revoked it
   source_lineage the 91-command capability surface
   known_gap operator command.gate quality-proven on a real input in the command workload of 2026-10-10 (receipt rcpt-a34f8ee78fa1cab41ee2), one run on one input; realizes Authority; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing
 
@@ -1399,6 +1401,7 @@ architecture cmd-pipeline
   source_path cmd/BonfyrePipeline/src/main.c
   witness packs/no-simulation/command-evidence-20261010.tsv
   witness cmd/BonfyrePipeline/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.pipeline=fail
+  witness 2026-11-08: the gate step delegates a --key-file to bonfyre-gate guard (signature verified) instead of its own unsigned substring check, and with no key file reports the licence as not checked instead of PASS for "default-key"; the meter step records usage with cost NULL instead of a price table of its own (admitted rates are BonfyreMeter's). Vector case 3: a signed key runs, an edited key stops the run before ingest, cost is NULL
   source_lineage the 91-command capability surface
   known_gap operator command.pipeline quality-proven on a real input in the command workload of 2026-10-10 (receipt rcpt-21a5554200c5c53f67f0), one run on one input; realizes PipelineCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing
 

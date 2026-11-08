@@ -6164,7 +6164,8 @@
       "experience_chains": [],
       "family": "command",
       "forbidden_inferences": [
-        "the command exists -> its effect is authorized (Authority gates the commit)"
+        "the command exists -> its effect is authorized (Authority gates the commit)",
+        "a key that verifies -> a paid or current customer; it says the institution issued these entitlements and the bytes have not moved, not that anything was bought or that the issuer has not since revoked it"
       ],
       "internal_calculi": [
         "bonfyre-gate binary"
@@ -6189,7 +6190,8 @@
       "views": [],
       "witnesses": [
         "packs/no-simulation/command-evidence-20261010.tsv",
-        "cmd/BonfyreGate/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.gate=fail"
+        "cmd/BonfyreGate/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.gate=fail",
+        "2026-11-08: keys are Ed25519-signed by the institution identity through bonfyre-sign over every field but the signature; check and guard verify against BONFYRE_GATE_TRUST and refuse with nothing trusted. The 2026-10-29 defect (editing allowed_ops in key.json granted the op) is closed: the third vector case edits a key, checks with no trust and with another institution key, and all three are refused; a signed key past expiry is EXPIRED. Keys are now written with bf_jv, so an org with a quote no longer breaks the JSON"
       ]
     },
     "cmd-gen": {
@@ -8311,7 +8313,8 @@
       "views": [],
       "witnesses": [
         "packs/no-simulation/command-evidence-20261010.tsv",
-        "cmd/BonfyrePipeline/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.pipeline=fail"
+        "cmd/BonfyrePipeline/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.pipeline=fail",
+        "2026-11-08: the gate step delegates a --key-file to bonfyre-gate guard (signature verified) instead of its own unsigned substring check, and with no key file reports the licence as not checked instead of PASS for \"default-key\"; the meter step records usage with cost NULL instead of a price table of its own (admitted rates are BonfyreMeter's). Vector case 3: a signed key runs, an edited key stops the run before ingest, cost is NULL"
       ]
     },
     "cmd-project": {
@@ -41346,9 +41349,9 @@
   },
   "provenance": {
     "cannot_infer": "a matching digest -> a correct atlas; it says this index was built from these declaration bytes and nothing more",
-    "declaration_digest": "2f50c6620da943b39c2b309896813e99254775b6ff3ed304e551554c207119ea",
+    "declaration_digest": "0561ae4258454b141441775c0255399faf2d0b7bad0401f5378228594731ef22",
     "declaration_files": 151,
-    "generated_at": "2026-11-08T07:48:39Z"
+    "generated_at": "2026-11-08T07:55:08Z"
   },
   "views": {
     "CapabilityView": {

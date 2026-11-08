@@ -23,6 +23,14 @@ bin=$(CDPATH= cd -- "$(dirname -- "$bin")" && pwd -P)/$(basename -- "$bin")
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 
+# Keys are signed by the institution identity and verified against a trusted
+# public key, so this test makes its own identity and trusts only that.
+sign=${BONFYRE_SIGN_BIN:-$(CDPATH= cd -- "$(dirname -- "$0")/../../BonfyreSign" && pwd -P)/bonfyre-sign}
+[ -x "$sign" ] || { echo "bonfyre-sign not built at $sign" >&2; exit 1; }
+mkdir -m 700 "$tmp/k"
+"$sign" keygen --key-dir "$tmp/k" >/dev/null
+export BONFYRE_SIGN_BIN="$sign" BONFYRE_GATE_KEY_DIR="$tmp/k" BONFYRE_GATE_TRUST="$tmp/k/institution.ed25519.public"
+
 "$bin" issue --tier free --org Test --out "$tmp/free.json" >/dev/null 2>&1
 "$bin" issue --tier pro  --org Test --out "$tmp/pro.json"  >/dev/null 2>&1
 "$bin" issue --tier enterprise --org Test --out "$tmp/ent.json" >/dev/null 2>&1
