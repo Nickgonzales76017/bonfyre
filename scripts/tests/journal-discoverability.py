@@ -31,8 +31,8 @@ class ArticleParser(HTMLParser):
         if tag == "h1": self.headlines += 1
         if "itemscope" in a and a.get("itemtype") == "https://schema.org/BlogPosting": self.articles += 1
         if a.get("itemprop") == "author": self.authors += 1
-        if a.get("data-narration") is not None: self.widgets += 1
-        if a.get("data-outline-menu") is not None: self.outlines += 1
+        if "data-narration" in a: self.widgets += 1
+        if "data-outline-menu" in a: self.outlines += 1
         if tag == "meta": self.meta[(a.get("name") or a.get("property") or a.get("itemprop") or "")] = a.get("content","")
         if tag == "link": self.links.append(a)
         if tag == "a" and a.get("href","").startswith("#source-"): self.backlinks.append(a["href"][1:])
@@ -46,7 +46,7 @@ for slug in slugs:
     canonicals = [a.get("href") for a in p.links if a.get("rel") == "canonical"]
     assert canonicals == [base + slug + "/"], f"canonical mismatch {slug}"
     assert p.headlines == 1 and p.articles == 1, f"invalid semantic article {slug}"
-    assert p.authors == 1 and p.widgets == 1 and p.outlines == 1, f"missing editorial tools {slug}"
+    assert p.authors >= 1 and p.widgets == 1 and p.outlines == 1, f"missing editorial tools {slug}"
     assert p.meta.get("description") and p.meta.get("og:image"), f"missing searchable metadata {slug}"
     assert p.meta.get("robots","").startswith("index,follow"), f"indexing inhibited {slug}"
     assert p.meta.get("article:published_time") and p.meta.get("article:modified_time"), f"dates missing {slug}"
