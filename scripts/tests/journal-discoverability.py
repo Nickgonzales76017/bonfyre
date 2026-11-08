@@ -29,7 +29,7 @@ class ArticleParser(HTMLParser):
             assert a["id"] not in self.ids, f"duplicate anchor {a['id']}"
             self.ids.add(a["id"])
         if tag == "h1": self.headlines += 1
-        if a.get("itemscope") is not None and a.get("itemtype") == "https://schema.org/BlogPosting": self.articles += 1
+        if "itemscope" in a and a.get("itemtype") == "https://schema.org/BlogPosting": self.articles += 1
         if a.get("itemprop") == "author": self.authors += 1
         if a.get("data-narration") is not None: self.widgets += 1
         if a.get("data-outline-menu") is not None: self.outlines += 1
