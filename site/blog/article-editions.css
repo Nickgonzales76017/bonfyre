@@ -441,3 +441,12 @@
 .journal-afterword-actions button:hover,.journal-afterword-actions button:focus-visible{background:#f1e8dc;color:#204737}
 .journal-afterword-actions button:focus-visible{outline:2px solid #ffcf9d;outline-offset:3px}
 .journal-afterword-actions [role="status"]{font:.69rem/1.5 system-ui,sans-serif;color:#e1cfb6}
+
+/* A recording gets signal-derived peaks only after audio has decoded. A
+   simple progress rail is preferable to fabricated peaks on a decode failure. */
+.journal-audio-player[data-mode="recording"] .journal-audio-wave:not([data-measured="true"]) i{
+  height:4px!important;max-height:4px!important;border-radius:0;background:#859a8a;opacity:.62;
+}
+.journal-audio-player[data-mode="recording"] .journal-audio-wave:not([data-measured="true"]) i.is-read{
+  background:#ba7952;opacity:1;
+}
