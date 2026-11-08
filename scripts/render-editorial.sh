@@ -337,6 +337,7 @@ def build_citation_notes(markup, post):
 def reader_outline(post):
     headings=[line[3:].strip() for line in post["body"].splitlines() if line.startswith("## ")]
     links=''.join('<a href="#'+sid(h)+'">'+esc(h)+'</a>' for h in headings)
+    links+='<a href="#journal-afterword">A question worth keeping</a>'
     links+='<a href="#journal-sources">Sources and references</a>'
     if EDITORIAL_BRIDGES.get(post["slug"]) or EDITORIAL_BACKLINKS.get(post["slug"]):
         links+='<a href="#journal-connections">Ideas in conversation</a>'
@@ -455,6 +456,26 @@ def editorial_conversation(post):
             '<div class="journal-conversation-grid">'+''.join(cards)+'</div></section>')
 
 
+
+# A deliberately edited question at the end of every existing article.
+# This is original editorial work, not a quotation attributed to another writer.
+PARTING_QUESTIONS_PATH = ROOT / "editorial" / "reader-questions.tsv"
+PARTING_QUESTIONS = {}
+for lineno, row in enumerate(PARTING_QUESTIONS_PATH.read_text(encoding="utf-8").splitlines(),1):
+    if not row.strip() or row.startswith("#"):
+        continue
+    parts = row.split("\t")
+    if len(parts) != 2:
+        raise ValueError(f"Invalid reader-question row {lineno}")
+    key, question = [v.strip() for v in parts]
+    if key not in known_slugs or key in PARTING_QUESTIONS or not question.endswith("?"):
+        raise ValueError(f"Invalid or duplicate reader question {lineno}")
+    PARTING_QUESTIONS[key] = question
+missing_questions = [p["slug"] for p in posts
+                     if not (p.get("parting_question") or PARTING_QUESTIONS.get(p["slug"]))]
+if missing_questions:
+    raise ValueError("Articles missing closing questions: "+", ".join(missing_questions))
+
 def article_page(p):
     slug = p["slug"]
     fmt, tone, media = p["art"]
@@ -483,8 +504,8 @@ def article_page(p):
         raise ValueError(f"Unsupported epigraph source URL: {slug}")
     attribution = ('<a href="'+esc(epigraph_url)+'" rel="noopener noreferrer">'+esc(epigraph_credit)+'</a>') if epigraph_url else esc(epigraph_credit)
     epigraph_html = ('<figure class="journal-epigraph"><blockquote>“'+esc(epigraph_text.strip("“”"))+'”</blockquote><figcaption>'+attribution+'</figcaption></figure>') if epigraph_text and epigraph_credit else ""
-    question = p.get("parting_question","")
-    reflection_html = ('<aside class="journal-afterword"><span class="eyebrow">A question worth keeping</span><h2>'+esc(question)+'</h2>'+series_html+'</aside>') if question else ""
+    question = p.get("parting_question") or PARTING_QUESTIONS.get(slug, "")
+    reflection_html = ('<aside class="journal-afterword" id="journal-afterword"><span class="eyebrow">A question worth keeping</span><h2>'+esc(question)+'</h2>'+series_html+'</aside>') if question else ""
     external = ('<p><a href="'+esc(prim)+'" rel="noopener noreferrer">Related reference ↗</a></p>') if prim and prim.startswith("https://") else ""
     named_posts = {q["slug"]:q for q in posts}
     if slug in series_order:
