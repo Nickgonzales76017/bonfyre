@@ -1,0 +1,41 @@
+name: Aurekai Journal Validation
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'editorial/posts/**'
+      - 'scripts/render-editorial.sh'
+      - 'site/blog/**'
+      - '.github/workflows/journal.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Checkout journal source
+        uses: actions/checkout@v4
+      - name: Render journal from editable Markdown
+        run: sh scripts/render-editorial.sh
+      - name: Check deterministic output and public entry points
+        shell: bash
+        run: |
+          set -euo pipefail
+          sh scripts/render-editorial.sh --check
+          test "$(find site/blog -mindepth 2 -maxdepth 2 -name index.html | wc -l)" -eq 46
+          test "$(grep -c '<item>' site/blog/feed.xml)" -eq 46
+          test "$(grep -c '<url>' site/blog/sitemap.xml)" -eq 47
+          test "$(wc -l < site/blog/post-index.tsv)" -eq 47
+          grep -q 'All articles / 46' site/blog/index.html
+          grep -q 'data-filter="Debates"' site/blog/index.html
+          grep -q 'data-filter="Mathematics"' site/blog/index.html
+          grep -q 'data-filter="Markets"' site/blog/index.html
+          grep -q 'data-filter="Science"' site/blog/index.html
+      - name: Archive website output
+        uses: actions/upload-artifact@v4
+        with:
+          name: aurekai-journal-static
+          retention-days: 14
+          path: site/blog
