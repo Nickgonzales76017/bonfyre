@@ -40,6 +40,17 @@ scenario('concurrent build input is rebuilt instead of deploying stale generated
  const r=run(f,{beforePush:n=>{if(n===1)f.change('source.txt','new upstream');}});
  assert.equal(r.attempts,2);assert.equal(f.current('site/index.txt'),'new upstream');assert.equal(f.verified(),2);
 });
+scenario('new editorial-only source is retained without rebuilding an unrelated tested studio release',f=>{
+ mkdirSync(join(f.two,'editorial'),{recursive:true});
+ writeFileSync(join(f.one,'source.txt'),'two');
+ f.git(f.one,'add','source.txt');
+ f.git(f.one,'commit','-m','Updated studio input');
+ const r=run(f,{beforePush:n=>{if(n===1)f.change('editorial/post.md','published essay');}});
+ assert.equal(r.attempts,2);
+ assert.equal(f.current('editorial/post.md'),'published essay');
+ assert.equal(f.current('site/index.txt'),'two');
+ assert.equal(f.verified(),1);
+});
 scenario('a reconciliation that fails verification never reaches the remote release',f=>{
  assert.throws(()=>run(f,{beforePush:n=>{if(n===1)f.change('source.txt','bad');}}),/Invalid new source/);
  assert.equal(f.current('source.txt'),'bad');assert.equal(f.current('site/index.txt'),'one');

@@ -49,8 +49,19 @@ export function retainRelease({cwd, paths, verify, attempts = 3, beforePush = ()
       git(['rebase', '--abort'], true);
       throw Error('Concurrent release conflict; upstream was not overwritten. ' + (rebased.stderr || '').slice(-2000));
     }
+    // An editorial-only concurrent commit cannot change the tested studio or
+    // instrument projections. The later Journal render consumes the rebased
+    // editorial source. Do not rerun expensive unrelated studio tests here.
+    const incoming = git(['diff', '--name-only', '-z', basis, upstream]).stdout.split('\\0').filter(Boolean);
+    const editorialOnly = incoming.length > 0 && incoming.every(p =>
+      p.startsWith('editorial/') ||
+      p.startsWith('site/blog/') ||
+      p.startsWith('site/series/') ||
+      p === 'scripts/render-editorial.sh' ||
+      p === 'scripts/tests/journal-discoverability.py' ||
+      p === '.github/workflows/journal.yml');
     basis = upstream;
-    verify();
+    if (!editorialOnly) verify();
     commitProjection();
   }
   throw Error('Release was not retained.');
