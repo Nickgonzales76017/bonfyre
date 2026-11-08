@@ -380,3 +380,25 @@
   .journal-audio-play,.journal-audio-wave i{transition:none}
   .journal-audio-play:hover:not(:disabled){transform:none}
 }
+
+/* Follow an argument by ear from any actual section heading; share the
+   approximate passage without manufacturing a publisher recording. */
+.journal-audio-copy{background:transparent;color:#8a533e;border:0;cursor:pointer;
+  font:.74rem/1.4 system-ui,sans-serif;font-weight:750;padding:7px 5px;text-decoration:underline;text-underline-offset:4px}
+.journal-audio-copy:hover{color:#603921}
+.journal-audio-jump{white-space:nowrap;color:#bb8c67!important;font-weight:800;text-decoration:underline!important;text-underline-offset:4px}
+.journal-listen-from{
+  display:inline-flex;align-items:center;gap:6px;float:right;vertical-align:middle;
+  background:#e8ede4;border:1px solid #adbfad;color:#32644a;cursor:pointer;
+  margin:6px 0 6px 18px;padding:9px 11px;
+  font:750 .68rem/1.2 system-ui,sans-serif!important;text-transform:uppercase;letter-spacing:.06em;
+  border-radius:0;letter-spacing:.065em;text-decoration:none;
+}
+.journal-listen-from:hover,.journal-listen-from:focus-visible{background:#d2e1d2;border-color:#789e80}
+.journal-listen-from:focus-visible{outline:2px solid #a66b4c;outline-offset:3px}
+.journal-audio-player.is-docked .journal-audio-copy{display:none}
+.ed-title-panel .ed-title-utility{flex-wrap:wrap}
+@media(max-width:650px){
+  .journal-listen-from{float:none;margin:15px 0 2px;display:flex;width:max-content;max-width:100%}
+  .journal-audio-copy{font-size:.68rem;padding-inline:5px}
+}
