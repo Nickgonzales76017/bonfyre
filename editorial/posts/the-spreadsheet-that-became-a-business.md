@@ -9,6 +9,11 @@ status: edited-public
 topics: Excel, end user programming, modeling, business
 origin: Original Aurekai thesis series developed from prior platform design conversations and public research
 source_url: https://support.microsoft.com/en-us/excel
+series: access
+epigraph: The Analytical Engine weaves algebraic patterns just as the Jacquard loom weaves flowers and leaves.
+epigraph_credit: Ada Lovelace · Notes on the Analytical Engine (1843)
+epigraph_url: https://mathshistory.st-andrews.ac.uk/Biographies/Lovelace/quotations/
+parting_question: What familiar tool do people already use for work its designers never imagined?
 ---
 
 A spreadsheet is an unlikely place to operate a company. Yet businesses have used workbooks to forecast revenue, price products, track inventory, schedule staff, manage manufacturing and plan entire investments.

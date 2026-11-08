@@ -9,6 +9,11 @@ status: edited-public
 topics: AI code, software abundance, maintenance, trust
 origin: Original Aurekai thesis series developed from prior platform design conversations and public research
 source_url: https://metr.org/blog/2026-02-24-uplift-update/
+series: access
+epigraph: The cheaper the artifact, the more valuable the judgment around it.
+epigraph_credit: Aurekai Journal · Editorial reflection (2026)
+epigraph_url: 
+parting_question: What changes when maintaining an application becomes more expensive than creating it?
 ---
 
 There is a plausible future in which someone can make a small application more cheaply than purchasing a specialist subscription. A teacher makes a learning tool. A shop owner describes an inventory process and gets a prototype. A publisher devises a new way to explore an archive.

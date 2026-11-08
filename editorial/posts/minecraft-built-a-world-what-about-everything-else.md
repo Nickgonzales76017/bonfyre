@@ -9,6 +9,11 @@ status: edited-public
 topics: Minecraft, creator ecosystems, accessible tools, worlds
 origin: Original Aurekai thesis series developed from prior platform design conversations and public research
 source_url: https://www.minecraft.net/en-us/partner
+series: access
+epigraph: Where members believe that their contributions matter
+epigraph_credit: Henry Jenkins · Confronting the Challenges of Participatory Culture (2006)
+epigraph_url: https://henryjenkins.org/blog/2006/10/confronting_the_challenges_of.html
+parting_question: What is the smallest building block that could let an entire community invent its own uses?
 ---
 
 A block in Minecraft is a remarkably modest thing. Give people familiar materials, consistent rules and places to meet, and those blocks become villages, adventures, machines, classrooms, games and entire social worlds. People share what they built, teach each other, organize communities and sometimes make a living from it.

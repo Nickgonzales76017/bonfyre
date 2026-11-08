@@ -9,6 +9,11 @@ status: edited-public
 topics: creative access, expressive capacity, internet culture, composition
 origin: Aurekai editorial series on verification, accessible creation and living digital institutions; original sources linked
 source_url: https://www.minecraft.net/en-us/partner
+series: access
+epigraph: the miracle of a few written signs being able to contain immortal imagery
+epigraph_credit: Vladimir Nabokov · Pale Fire, commentary to line 991 (1962)
+epigraph_url: https://www.thenabokovian.org/quotations
+parting_question: Which things cannot exist because we have mistaken the limits of interfaces for the limits of people's imagination?
 ---
 
 A person knows a great deal about something nobody has thought to turn into an application. It might be neighborhood history, a specialist trade, a collecting community, a style of music or the little-known logistics of a local event.

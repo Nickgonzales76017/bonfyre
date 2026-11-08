@@ -9,6 +9,11 @@ status: edited-public
 topics: small business, access, economics, reusable systems
 origin: Original Aurekai thesis series developed from prior platform design conversations and public research
 source_url: https://www.uschamber.com/technology/2026-empowering-small-business-report
+series: access
+epigraph: Access is not the same thing as a subscription to complexity.
+epigraph_credit: Aurekai Journal · Editorial reflection (2026)
+epigraph_url: 
+parting_question: Who could operate a real institution if the infrastructure were understandable, affordable and theirs to direct?
 ---
 
 A large company can pay for inventory, forecasting, customer relationships, compliance, media production and the specialists who connect its systems. A small organization may need much of the same functionality, but the owner has to decide which headaches can be afforded.
