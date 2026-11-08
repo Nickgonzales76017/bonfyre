@@ -4,16 +4,16 @@
 <h1 align="center">Bonfÿre</h1>
 
 <p align="center">
-  <strong>Native operating infrastructure for Aurekai: applications, identity, data, agents, models, finance and execution.</strong>
+  <strong>The native software behind Aurekai’s businesses, applications and public network.</strong>
 </p>
 
 <p align="center">
-  <a href="#aurekai-products-and-experiences">Aurekai products</a> ·
+  <a href="#what-the-shared-software-makes-possible">What it does</a> ·
   <a href="#building-blocks">Building blocks</a> ·
   <a href="#federated-workspace">Federated workspace</a> ·
   <a href="https://nickgonzales76017.github.io/bonfyre/modules/">Source atlas (70)</a> ·
   <a href="#start-here">Start here</a> ·
-  <a href="#the-whole-machine">Whole machine</a> ·
+  <a href="#system-architecture">Architecture</a> ·
   <a href="docs/client-operations-portfolio.md">Client work</a> ·
   <a href="#whats-available-today">Available today</a> ·
   <a href="https://docs.aurekai.work/">Guides</a> ·
@@ -22,30 +22,36 @@
   <a href="CONTRIBUTING.md">Contributing</a>
 </p>
 
-**Bonfÿre is the native operating platform behind Aurekai.** It connects applications, sources, institutional identity, agents, models, finance, and execution into a reusable system.
+**Bonfÿre is the software behind Aurekai.** We use it to build websites and applications, work with existing business systems, run local models, connect outside data and coordinate work across the products Aurekai operates.
 
-**Aurekai** develops and operates digital products across [Work](https://aurekai.work), [Life](https://aurekai.life), [Live](https://aurekai.live), and [Shop](https://aurekai.shop). It invests engineering, compute, software, distribution and operating capacity into new products and opportunities. Bonfÿre is the shared technology that lets one project strengthen others.
+Aurekai is one operating business that can support many different experiences. A shop can have its own brand and customers. A creator can have a profile, channel and publications. An organization can use CRM, finance, project and service tools. Bonfÿre supplies many of the common pieces while each business keeps the parts that belong to it.
 
-| Aurekai business | Bonfÿre platform |
+This repository is the technical side of that work. Its native implementation covers Matrix identity and addressing, Source Library, data systems, business application schemas, WorkGraph, agents, Model Commons, media, commerce and public web composition. The public GitHub tree and the locally installed runtime are published on separate schedules.
+
+## What the shared software makes possible
+
+**Independent customer sites.** Our [three-business example](https://docs.aurekai.work/three-businesses) shows how a retailer can get its own website, branding, content and tools while an agency manages several clients using shared infrastructure. That includes separate accounts and customer access, not just changing a page's colors.
+
+**Business applications that talk to one another.** The Frappe-derived app work connects CRM, ERPNext, HRMS, Helpdesk, LMS, Wiki, Drive and Insights schemas to native workspaces. A company can work with relationships, finance, staff and service records without creating a separate integration system for every pair of applications.
+
+**Information that has more than one use.** A job listing can be discovered publicly, continued into an account's CRM and used to prepare a narrated update. A publisher's content can belong to a profile and also appear in a collection or channel. The source stays identifiable while receiving applications manage their own work. These cross-application paths are ongoing product and integration work.
+
+**Products that go beyond a catalogue.** Aurekai's [room planner](https://nickgonzales76017.github.io/bonfyre/spaces/product-room/) and [product configuration workspace](https://nickgonzales76017.github.io/bonfyre/spaces/catalogue/) combine product information, choices, dimensions and spatial layout. Similar source information also supports procurement and business operations.
+
+**Native tools and computation.** The Bonfÿre codebase includes C/Zig-centered commands for data, models, media, workflows, finance and integrations, alongside model runtimes, agents and external backends. A developer can inspect the [technical guide](https://nickgonzales76017.github.io/bonfyre/docs.html) or start with an individual tool.
+
+The larger business model is explained in [Aurekai and Bonfÿre](docs/aurekai-bonfyre-model.md), including how software, engineering time, external resources and distribution become reusable assets across the company.
+
+## Aurekai's public network
+
+| Destination | What people find there |
 |---|---|
-| People, organizations, communities, creators, marketplaces and businesses | Matrix identities, addresses, institutions, relationships and source graph |
-| Account workspaces, commercial programs and applications | CRM/ERPNext/HRMS/Helpdesk/LMS/Insights/Wiki/Drive integration and native application composition |
-| Publishing, media, product catalogues, commerce, spatial experiences | Media pipelines, source libraries, Model Commons, spatial and web systems |
-| Investment of development capacity into digital opportunities | WorkGraph, capability composition, agent orchestration, native runtime, resource and finance systems |
+| [aurekai.work](https://aurekai.work) | Businesses, organizations, jobs, professional applications and opportunities |
+| [aurekai.life](https://aurekai.life) | People, communities, profiles, collections and publishing |
+| [aurekai.live](https://aurekai.live) | Creators, media, recordings, channels and public experiences |
+| [aurekai.shop](https://aurekai.shop) | Products, sourcing, offers, catalogues and commerce |
 
-The underlying shift is economic: AI can build software quickly, while conventional planning and fragmented organizational knowledge limit what actually reaches users. Aurekai uses software and engineering as productive capital; Bonfÿre makes that capital reusable. [Business and technical model](docs/aurekai-bonfyre-model.md).
-
-## Aurekai products and experiences
-
-| Product area | What lives there |
-|---|---|
-| [Aurekai Work](https://aurekai.work) | Organizations, jobs, operations, relationships, professional services, applications and opportunities |
-| [Aurekai Life](https://aurekai.life) | Profiles, publishing, collections, people, organizations and communities |
-| [Aurekai Live](https://aurekai.live) | Creators, channels, media, recording, narration and publishing |
-| [Aurekai Shop](https://aurekai.shop) | Products, catalogues, offers, sourcing, room planning, commerce and markets |
-| [Bonfÿre technical guide](https://nickgonzales76017.github.io/bonfyre/docs.html) | Native system components, models, WorkGraph, applications, resource management and interfaces |
-
-The [application gallery](https://nickgonzales76017.github.io/bonfyre/#experiences) and [work samples](https://aurekai-work-samples.pages.dev/) include interactive examples for catalogue work, spatial product design, media editing, acquisition, research, document analysis, workflow planning and connected application use. The [product guide](https://nickgonzales76017.github.io/bonfyre/explore.html) describes the broader product families.
+The domains are places to enter Aurekai; businesses and creators can also have independent sites and subdomains. Browse the [product guide](https://nickgonzales76017.github.io/bonfyre/explore.html) for a fuller look at how these systems fit together.
 
 ## Use a smaller piece
 
@@ -159,7 +165,7 @@ Bonfÿre also supplies execution history, simulation and optimization capabiliti
 
 The Generation-10/V8.1 system map is the architectural basis. The architecture Atlas records component ownership, implementations, measurements and development work across the native estate.
 
-## The whole machine
+## System architecture
 
 ```text
 intent / observation / foreign state
@@ -197,7 +203,7 @@ Each part has a defined responsibility:
 | **Evidence and replay** | Receipts, witness DAGs, trace divergence, proof bundles, deterministic replay, shadow execution, simulation, and institutional backtesting. |
 | **Optimization & learning** | Discover improvements, run simulations, backtest, evaluate, and update reusable execution strategies. Aurekai is the operating business that consumes these capabilities. |
 
-### Public capabilities
+### Capability programs
 
 The Generation-10 architecture preserves **91 Power identities**. Each identity moves through a
 maturity ladder—defined, implemented, built, resolvable, health-probed,
