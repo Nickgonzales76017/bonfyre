@@ -9,6 +9,11 @@ status: edited-public
 topics: internet operators, publishers, local news, community, ownership
 origin: Aurekai editorial investigation of independent internet operators, archives, rights, ownership and public access
 source_url: https://reutersinstitute.politics.ox.ac.uk/digital-news-report/2026/dnr-executive-summary
+series: operators
+epigraph: more Americans are bowling today than ever before, but bowling in organized leagues has plummeted
+epigraph_credit: Robert D. Putnam · Bowling Alone: America's Declining Social Capital (1995)
+epigraph_url: https://www.tesd.net/cms/lib/PA01001259/Centricity/Domain/1114/BowlingAlone.pdf
+parting_question: Which online communities are growing in audience while losing the people and institutions that made participation worthwhile?
 ---
 
 We tend to describe the internet through platforms and their audiences: search engines, social networks, creators and consumers. The people doing the daily work of keeping smaller digital places useful disappear into those categories.
@@ -42,5 +47,19 @@ The key is not to convert every operator into an influencer. It is to make the w
 Shared infrastructure should reduce the administrative cost of operating these spaces while preserving their own names, ownership and rules. The platform can support distribution without claiming that the operator's work belongs to the platform.
 
 The next internet will be shaped by whoever can keep a useful institution alive after the first viral post is forgotten.
+
+## Bowling without leagues
+
+Robert Putnam's bowling observation is a useful introduction to this problem. People can continue doing an activity even as the associations that give it social texture weaken. Likewise, an internet can publish more posts, clips and newsletters while losing stable groups, editors, moderators, shared norms, physical archives and local institutions that make participation meaningful.
+
+That does not mean the old institutions were always better. Forums could be exclusionary. Local papers could overlook whole communities. Gatekeepers sometimes abused their power. The goal is not nostalgia. It is to preserve what was valuable, make it possible to challenge what wasn't, and reduce the costs of forming better alternatives.
+
+## An operator is more than an account
+
+A local radio producer may possess decades of recordings. A collector may understand which recordings matter. A family may hold rights in a deceased broadcaster's work. A library may preserve copies under restricted access. A researcher may add context, while a clipper introduces a small excerpt to a new audience. These roles create different kinds of value and carry different kinds of authority.
+
+If one platform collapses, the value should not necessarily collapse with it. Durable source records, transparent attribution, documented permissions, successor arrangements and independent distribution routes can help. Where labor or licensing relationships are unequal, unions, guilds, cooperatives and collecting societies may provide forms of collective power appropriate to their participants.
+
+Preservation is not a license to exploit everything that survives. And ownership is not an excuse to erase public memory. A mature system must accommodate both the continuity of culture and the legitimate interests of the people whose work constitutes it.
 
 Related: [The local archive that never got uploaded](https://nickgonzales76017.github.io/bonfyre/blog/the-local-archive-that-never-got-uploaded/) and [The profile is bigger than the person](https://nickgonzales76017.github.io/bonfyre/blog/the-profile-is-bigger-than-the-person/).

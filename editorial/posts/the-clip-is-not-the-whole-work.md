@@ -9,6 +9,11 @@ status: edited-public
 topics: clipping, media, provenance, creator rights, distribution
 origin: Aurekai editorial investigation of independent internet operators, archives, rights, ownership and public access
 source_url: https://reutersinstitute.politics.ox.ac.uk/digital-news-report/2026/dnr-executive-summary
+series: operators
+epigraph: A fragment can travel farther than the work that gave it meaning.
+epigraph_credit: Aurekai Journal · Editorial reflection (2026)
+epigraph_url: 
+parting_question: What would change if every excerpt could lead its audience back to the people, context and permissions behind it?
 ---
 
 A long interview becomes a thirty-second video. The clip reaches far more people than the original recording. It may introduce a person, book, community or idea to an audience that would never have found the full conversation.

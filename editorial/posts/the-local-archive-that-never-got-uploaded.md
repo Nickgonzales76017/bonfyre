@@ -9,6 +9,11 @@ status: edited-public
 topics: local history, oral history, radio, preservation, digital archives
 origin: Aurekai editorial investigation of independent internet operators, archives, rights, ownership and public access
 source_url: https://www.loc.gov/collections/public-broadcasting-web-archive/about-this-collection/
+series: operators
+epigraph: This index card, this slender rubber band
+epigraph_credit: Vladimir Nabokov · Pale Fire, lines 533–534 (1962)
+epigraph_url: https://nabokovsociety.org/topic/line-1001-shades-poem-lake-omega-pale-fire
+parting_question: Whose ordinary records will disappear because nobody recognizes them as an archive yet?
 ---
 
 A great deal of cultural history isn't waiting behind a search result. It is in a filing cabinet, a cassette box, a community bulletin, a hard drive from a retired producer, a club's old web server or a stack of unlabeled photographs.

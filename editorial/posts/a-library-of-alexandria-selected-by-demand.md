@@ -9,6 +9,11 @@ status: edited-public
 topics: digital preservation, archives, indexing, invisible internet, history
 origin: Aurekai editorial investigation of independent internet operators, archives, rights, ownership and public access
 source_url: https://www.unesco.org/en/legal-affairs/charter-preservation-digital-heritage?hub=66535
+series: operators
+epigraph: I always thought of paradise as being a library.
+epigraph_credit: Jorge Luis Borges · Interview with Willis Barnstone (1980)
+epigraph_url: https://gwern.net/doc/borges/1980-borges.pdf
+parting_question: What will future generations never know because it failed to attract our attention today?
 ---
 
 We are building extraordinary ways to search and summarize human knowledge. At the same time, the records from which that knowledge can be retrieved are incomplete. Some are preserved in great detail; others disappear without ever being indexed.

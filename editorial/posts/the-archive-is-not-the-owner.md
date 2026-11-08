@@ -9,6 +9,11 @@ status: edited-public
 topics: creator rights, archival ethics, ownership, licensing, labor
 origin: Aurekai editorial investigation of independent internet operators, archives, rights, ownership and public access
 source_url: https://www.wga.org/contracts/know-your-rights/artificial-intelligence
+series: operators
+epigraph: Keeping a work safe is not the same as being entitled to use it.
+epigraph_credit: Aurekai Journal · Editorial reflection (2026)
+epigraph_url: 
+parting_question: Who may preserve the work, who may access it, and who has the right to grant a new use?
 ---
 
 A creator uploads an interview to a platform. A fan makes a short clip. A research project adds a transcript. An archive preserves the recording. A model provider indexes text extracted from it. Five useful things may have happened, but there is no reason to assume the five participants now have identical rights.
