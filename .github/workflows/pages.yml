@@ -158,7 +158,7 @@ jobs:
             await page.waitForURL('**/fieldwork/');
             assert.equal(await page.locator('input[type="number"]').count(),0);
             await page.goto('http://127.0.0.1:8765/discover/',{waitUntil:'domcontentloaded'});
-            await page.waitForFunction(()=>document.querySelectorAll('[data-kind="article"]').length===expectedArticles,expectedArticles,{timeout:12000});
+            await page.waitForFunction(n=>document.querySelectorAll('[data-kind="article"]').length===n,expectedArticles,{timeout:12000});
             assert.equal(await page.locator('[data-kind="studio"]').count(),20);
             assert.equal(await page.locator('[data-kind="tool"]').count(),4);
             assert.equal(await page.locator('[data-kind="article"]').count(),expectedArticles);
