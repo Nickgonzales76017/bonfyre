@@ -45,6 +45,9 @@ scenario('new editorial-only source is retained without rebuilding an unrelated 
  writeFileSync(join(f.one,'source.txt'),'two');
  f.git(f.one,'add','source.txt');
  f.git(f.one,'commit','-m','Updated studio input');
+ // The retained studio source must already exist upstream. A concurrent
+ // editorial-only commit is a descendant of that tested basis, not a sibling.
+ f.git(f.one,'push','origin','main');
  const r=run(f,{beforePush:n=>{if(n===1)f.change('editorial/post.md','published essay');}});
  assert.equal(r.attempts,2);
  assert.equal(f.current('editorial/post.md'),'published essay');
