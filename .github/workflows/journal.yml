@@ -5,6 +5,8 @@ on:
     paths:
       - 'editorial/posts/**'
       - 'scripts/render-editorial.sh'
+      - 'scripts/retain-tested-pages.mjs'
+      - 'scripts/tests/retain-tested-pages.test.mjs'
       - 'site/blog/**'
       - 'site/series/**'
       - '.github/workflows/journal.yml'
@@ -57,6 +59,8 @@ jobs:
           test "$(grep -c 'class="essay-chapter ' site/series/index.html)" -eq 4
       - name: Verify article search and reading readiness
         run: python3 scripts/tests/editorial-search-readiness.py
+      - name: Verify editorial-only rebase preserves the tested release
+        run: node --test scripts/tests/retain-tested-pages.test.mjs
       - name: Archive website output
         uses: actions/upload-artifact@v4
         with:
