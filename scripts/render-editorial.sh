@@ -385,14 +385,14 @@ def narrator(post):
         </div>
         <label class="journal-audio-rate">Speed <select data-narration-rate aria-label="Narration playback speed">
          <option value="0.85">0.85×</option><option value="1" selected>1×</option>
-         <option value="1.15">1.15×</option><option value="1.35">1.35×</option><option value="1.5">1.5×</option></select></label>
+         <option value="1.15">1.15×</option><option value="1.35">1.35×</option><option value="1.5">1.5×</option></select></label><label class="journal-audio-voice-choice" data-voice-choice-label>Voice <select data-narration-voice aria-label="Choose a better browser voice"><option value="">Finding voices…</option></select></label>
         <button type="button" data-narration-copy class="journal-audio-copy" aria-label="Copy a link to this spoken passage">Copy passage link</button>
         <a href="#read-story" class="journal-audio-transcript">Read along ↓</a>
       </div>
       <progress data-narration-progress max="100" value="0" class="journal-audio-progress">0%</progress>
       <p class="journal-audio-disclosure">'''
       + ('Waveform represents the published audio recording. Reading remains available below.' if media else
-         'Uses your browser’s speech voice. The bars map the text’s spoken passages, not a measured audio signal; seeking skips between passages.') + '''</p>'''
+         'Uses your selected device or browser voice; quality depends on voices installed. The bars represent spoken-text position, not measured audio.') + '''</p>'''
       + media + '''</section>''')
 
 
