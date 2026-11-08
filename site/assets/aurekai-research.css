@@ -31,3 +31,6 @@
 @media(max-width:960px){.research-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:680px){.research-grid,.articles{grid-template-columns:1fr}.research-story{padding:20px}.research-lead{font-size:1rem}}
 @media(prefers-reduced-motion:reduce){.glyph{transition:none}}
+/* The seventh navigation link fits naturally at tablet widths. */
+.top nav a{white-space:nowrap}
+@media(max-width:1080px){.top .wrap{flex-wrap:wrap;padding-top:14px;padding-bottom:14px}.top .wrap nav{margin-left:0;flex-wrap:wrap;gap:12px 20px}.top .shell{flex-wrap:wrap;padding-top:14px;padding-bottom:14px}}
