@@ -146,6 +146,8 @@ jobs:
             assert.equal(await page.locator('a[href="../spaces/catalogue/"]').count(),1);
             assert.equal(await page.locator('a[href="../blog/"]').count()>=1,true);
             for(const image of await page.locator('.fw-cover-art img, .fw-product-image img').all()){
+              await image.scrollIntoViewIfNeeded();
+              await image.evaluate(el=>el.decode());
               assert.equal(await image.evaluate(el=>el.complete && el.naturalWidth>0),true);
             }
             await page.locator('a[href="#inventory"]').first().click();
