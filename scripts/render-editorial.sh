@@ -197,6 +197,10 @@ def parse_doc(path):
     if meta["icon"] not in ALLOWED_ICONS:
         raise ValueError(f"Missing icon in {path}")
     datetime.strptime(meta["published"], "%Y-%m-%d")
+    if meta.get("updated"):
+        datetime.strptime(meta["updated"], "%Y-%m-%d")
+        if meta["updated"] < meta["published"]:
+            raise ValueError(f"Update date precedes publication: {path}")
     if meta["status"] != "edited-public":
         return None
     meta["body"] = match.group(2).strip()
@@ -515,6 +519,11 @@ def article_page(p):
       "keywords":[w.strip() for w in p["topics"].split(",") if w.strip()],
       "wordCount":len(p["body"].split()),
       "image":[image_url]}
+    dialogue_links = [e["to"] for e in EDITORIAL_BRIDGES.get(slug, [])]
+    dialogue_links += EDITORIAL_BACKLINKS.get(slug, [])
+    dialogue_links = list(dict.fromkeys(link for link in dialogue_links if link != slug))[:8]
+    if dialogue_links:
+        schema["relatedLink"]=[BASE_URL+link+"/" for link in dialogue_links]
     if source_urls:
         schema["citation"]=source_urls
     if series_id:
@@ -638,19 +647,28 @@ for p in posts:
     items.append(f'<item><title>{xml_escape(p["title"])}</title><link>{link}</link><guid isPermaLink="true">{link}</guid><pubDate>{pubdate(p["published"])}</pubDate><category>{xml_escape(p["category"])}</category><description>{xml_escape(p["description"])}</description></item>')
 rss = '<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0"><channel><title>Aurekai Journal</title><link>'+BASE_URL+'</link><description>Research and articles from Aurekai and Bonfÿre</description><language>en-us</language>\n' + '\n'.join(items) + '\n</channel></rss>\n'
 write("feed.xml", rss)
-urls = [BASE_URL, BASE_URL+"about/", "https://nickgonzales76017.github.io/bonfyre/series/"] + [BASE_URL+p["slug"]+"/" for p in posts]
-sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + '\n'.join('<url><loc>'+u+'</loc><lastmod>2026-11-08</lastmod></url>' for u in urls) + '\n</urlset>\n'
+# Use individual authored dates, never a synthetic site-wide modification date.
+# Static landing pages omit lastmod when their exact edit time is not known.
+article_sitemap_dates = {
+    BASE_URL+post["slug"]+"/":post.get("updated",post["published"]) for post in posts
+}
+urls = [BASE_URL, BASE_URL+"about/", "https://nickgonzales76017.github.io/bonfyre/series/"] + list(article_sitemap_dates)
+def sitemap_entry(url):
+    date = article_sitemap_dates.get(url)
+    return "<url><loc>"+xml_escape(url)+"</loc>" + (
+        "<lastmod>"+date+"</lastmod>" if date else "") + "</url>"
+sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + '\n'.join(
+    sitemap_entry(url) for url in urls) + '\n</urlset>\n'
 write("sitemap.xml", sitemap)
 
-# A discoverable root sitemap covers the Journal and public entry points. This
-# is a true URL list, not a claim that Google has indexed the articles.
+# Serve the same per-article dates from the site-wide sitemap. All other
+# pages remain discoverable without inventing a modification timestamp.
 site_urls = ["https://nickgonzales76017.github.io/bonfyre/",
              "https://nickgonzales76017.github.io/bonfyre/discover/",
              "https://nickgonzales76017.github.io/bonfyre/fieldwork/"]
 site_urls += urls
 root_sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + '\n'.join(
-    '<url><loc>'+u+'</loc><lastmod>2026-11-08</lastmod></url>' for u in dict.fromkeys(site_urls)
-) + '\n</urlset>\n'
+    sitemap_entry(url) for url in dict.fromkeys(site_urls)) + '\n</urlset>\n'
 root_sitemap_path = ROOT / "site" / "sitemap.xml"
 if CHECK:
     if not root_sitemap_path.exists() or root_sitemap_path.read_text(encoding="utf-8") != root_sitemap:
