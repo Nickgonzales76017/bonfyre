@@ -102,6 +102,18 @@ Aurekai can organize these resources into products or business relationships. So
 
 The shared software makes that range possible. A piece of source handling, a new account application, a finance integration or a creator tool can become useful in more than one part of the business.
 
+## Research informing the product portfolio
+
+The research helps us choose where software investment could matter most. In its [October 2026 report](https://www.uschamber.com/technology/2026-empowering-small-business-report), the U.S. Chamber found that 41% of surveyed small businesses use six or more technology platforms. A company with CRM, inventory, staff, finance and online sales already has plenty of software; the opportunity is making those systems useful together.
+
+Existing websites matter, too. [W3Techs reported that WordPress powered 39.4% of measured websites on November 7, 2026](https://w3techs.com/technologies/comparison/cm-wordpress). That helps explain why our legacy PHP, WordPress, database and hosting modernization work sits alongside the newer native web platform. Content, reports and business relationships built over years have real value.
+
+For creators, the [IAB's September 2026 CreatorFronts recap](https://www.iab.com/blog/2026-iab-creatorfronts-event-recap/) projects around $44 billion in U.S. creator advertising during 2026 and describes the need for <q>reducing friction in the Creator Economy</q>. Channels, profiles, publishing, source libraries, customer relationships and offers are parts of that practical infrastructure.
+
+And [Stanford HAI's 2026 AI Index](https://hai.stanford.edu/ai-index/2026-ai-index-report/economy) reports 88% of surveyed organizations used AI in at least one function in 2025, while agent deployment in particular functions remained much earlier. Bonfÿre's native agent and application work addresses what happens after a model produces output: the receiving systems, data, resources and people involved.
+
+These are dated third-party observations, not measurements of Aurekai revenue or adoption. The [Aurekai market research page](https://nickgonzales76017.github.io/bonfyre/market.html) links the original sources and the product examples that led us to them.
+
 ## Current development estate
 
 The local Bonfÿre V6.1.0 runtime and architecture registry reported these figures on November 7, 2026:
