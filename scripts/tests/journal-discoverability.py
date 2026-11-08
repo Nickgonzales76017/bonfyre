@@ -45,7 +45,7 @@ for slug in slugs:
     p.feed(page.read_text(encoding="utf-8"))
     canonicals = [a.get("href") for a in p.links if a.get("rel") == "canonical"]
     assert canonicals == [base + slug + "/"], f"canonical mismatch {slug}"
-    assert p.headlines == 1 and p.articles == 1, f"invalid semantic article {slug}"
+    assert p.headlines == 1 and p.articles == 1, f"invalid semantic article {slug}: h1={p.headlines}, BlogPosting={p.articles}, headlinks={len(p.links)}"
     assert p.authors >= 1 and p.widgets == 1 and p.outlines == 1, f"missing editorial tools {slug}"
     assert p.meta.get("description") and p.meta.get("og:image"), f"missing searchable metadata {slug}"
     assert p.meta.get("robots","").startswith("index,follow"), f"indexing inhibited {slug}"
