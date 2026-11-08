@@ -115,13 +115,13 @@ jobs:
           export CHROME_PATH="$(command -v google-chrome)"
           node scripts/tests/workspace-composition-browser.mjs
           node scripts/tests/workspace-docking-browser.mjs
-      - name: Check static Aurekai Journal publication files
+      - name: Build and verify 46 Aurekai Journal articles
         run: |
-          test -f site/blog/index.html
-          test -f site/blog/feed.xml
-          test -f site/blog/post-index.tsv
-          test "$(find site/blog -mindepth 2 -maxdepth 2 -name index.html | wc -l)" -ge 16
-          grep -q 'Aurekai Journal' site/blog/index.html
+          sh scripts/render-editorial.sh
+          sh scripts/render-editorial.sh --check
+          test "$(find site/blog -mindepth 2 -maxdepth 2 -name index.html | wc -l)" -eq 46
+          test "$(grep -c '<item>' site/blog/feed.xml)" -eq 46
+          grep -q 'All articles / 46' site/blog/index.html
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
