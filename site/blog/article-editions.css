@@ -433,3 +433,11 @@
 .journal-audio-voice-choice select:focus-visible{outline:2px solid #a46b4d;outline-offset:2px}
 @media(max-width:650px){.journal-audio-voice-choice{font-size:.65rem}
  .journal-audio-voice-choice select{max-width:135px;font-size:.64rem}}
+
+/* A portable ending: share the actual question with its source, never a synthetic quote card. */
+.journal-afterword-actions{display:flex;align-items:center;gap:12px 20px;flex-wrap:wrap;padding-top:18px;margin-top:21px;border-top:1px solid #729381}
+.journal-afterword-actions a,.journal-afterword-actions button{font:750 .73rem/1.5 system-ui,sans-serif;color:#f5cfaf;display:inline-flex;align-items:center;min-height:38px}
+.journal-afterword-actions button{background:none;border:1px solid #a9bdaf;cursor:pointer;padding:8px 14px}
+.journal-afterword-actions button:hover,.journal-afterword-actions button:focus-visible{background:#f1e8dc;color:#204737}
+.journal-afterword-actions button:focus-visible{outline:2px solid #ffcf9d;outline-offset:3px}
+.journal-afterword-actions [role="status"]{font:.69rem/1.5 system-ui,sans-serif;color:#e1cfb6}

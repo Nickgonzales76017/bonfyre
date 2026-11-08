@@ -505,7 +505,7 @@ def article_page(p):
     attribution = ('<a href="'+esc(epigraph_url)+'" rel="noopener noreferrer">'+esc(epigraph_credit)+'</a>') if epigraph_url else esc(epigraph_credit)
     epigraph_html = ('<figure class="journal-epigraph"><blockquote>“'+esc(epigraph_text.strip("“”"))+'”</blockquote><figcaption>'+attribution+'</figcaption></figure>') if epigraph_text and epigraph_credit else ""
     question = p.get("parting_question") or PARTING_QUESTIONS.get(slug, "")
-    reflection_html = ('<aside class="journal-afterword" id="journal-afterword"><span class="eyebrow">A question worth keeping</span><h2>'+esc(question)+'</h2>'+series_html+'</aside>') if question else ""
+    reflection_html = ('<aside class="journal-afterword" id="journal-afterword"><span class="eyebrow">A question worth keeping</span><h2>'+esc(question)+'</h2>'+series_html+'<div class="journal-afterword-actions"><a href="#journal-afterword">Permalink to this thought</a><button type="button" data-reflection-share>Share this question ↗</button><span role="status" data-reflection-status></span></div></aside>') if question else ""
     external = ('<p><a href="'+esc(prim)+'" rel="noopener noreferrer">Related reference ↗</a></p>') if prim and prim.startswith("https://") else ""
     named_posts = {q["slug"]:q for q in posts}
     if slug in series_order:

@@ -453,3 +453,51 @@
     }
   }
 })();
+
+
+/* Original end-of-essay questions belong to the author; sharing points to
+   the actual essay and never sends text to an analytics or social endpoint. */
+(() => {
+  "use strict";
+  const share = document.querySelector("[data-reflection-share]");
+  if (!share) return;
+  const article = document.querySelector("#journal-afterword");
+  const question = article?.querySelector("h2")?.textContent?.trim();
+  const status = article?.querySelector("[data-reflection-status]");
+  if (!question || !status) return;
+  share.addEventListener("click", async () => {
+    const url = new URL(location.href);
+    url.search = "";
+    url.hash = "journal-afterword";
+    const text = question + "\n— Aurekai Journal";
+    if (navigator.share) {
+      try {
+        await navigator.share({title: document.title, text, url: url.toString()});
+        status.textContent = "Question shared";
+        return;
+      } catch (error) {
+        if (error?.name === "AbortError") return;
+      }
+    }
+    const value = text + "\n" + url.toString();
+    let copied = false;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(value);
+        copied = true;
+      }
+    } catch (_) {}
+    if (!copied) {
+      const field = document.createElement("textarea");
+      field.value = value;
+      field.setAttribute("aria-hidden", "true");
+      field.style.cssText = "position:fixed;left:-9999px;top:0";
+      document.body.appendChild(field);
+      field.select();
+      try { copied = document.execCommand("copy"); } catch (_) {}
+      field.remove();
+    }
+    status.textContent = copied ? "Question and article link copied" :
+      "Copy this article's address to share the question";
+  });
+})();

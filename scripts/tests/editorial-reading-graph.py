@@ -53,6 +53,7 @@ for slug, targets in refs.items():
     p=Article();p.feed(path.read_text())
     assert "journal-connections" in p.ids,f"missing editorial conversation: {slug}"
     assert "journal-afterword" in p.ids,f"missing editorial parting question: {slug}"
+    assert "data-reflection-share" in path.read_text(),f"missing reflection share: {slug}"
     urls=set(p.links)
     for target in targets:
         assert "../"+target+"/" in urls,f"missing cross-reading link {slug} → {target}"
