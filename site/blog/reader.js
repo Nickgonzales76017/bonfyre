@@ -31,7 +31,7 @@
   const setState = (state, label) => {
     widget.dataset.state = state;
     status.textContent = label;
-    start.disabled = !supported || state === 'playing';
+    start.disabled = !supported || state === 'playing' || state === 'starting';
     start.textContent = state === 'paused' ? '▶ Resume' : state === 'playing' ? '▶ Playing' : '▶ Play';
     pause.disabled = state !== 'playing';
     stop.disabled = state === 'idle' || state === 'unavailable' || state === 'finished';
@@ -121,7 +121,7 @@
     if (progress) progress.value = 0;
     if (!pieces.length) { setState('idle', 'No readable article text was found'); return; }
     active = true; paused = false;
-    setState('playing', 'Starting browser narration…');
+    setState('starting', 'Starting browser narration…');
     speakNext(generation);
   });
   pause.addEventListener('click', () => {
