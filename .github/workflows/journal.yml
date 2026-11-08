@@ -4,6 +4,10 @@ on:
     branches: [main]
     paths:
       - 'editorial/posts/**'
+      - 'editorial/reading-bridges.tsv'
+      - 'scripts/tests/journal-discoverability.py'
+      - 'scripts/tests/editorial-*.py'
+      - 'site/index.html'
       - 'scripts/render-editorial.sh'
       - 'scripts/retain-tested-pages.mjs'
       - 'scripts/tests/retain-tested-pages.test.mjs'
