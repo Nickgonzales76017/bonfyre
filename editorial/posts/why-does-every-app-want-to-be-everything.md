@@ -9,6 +9,11 @@ status: edited-public
 topics: composability, super apps, software convergence, interoperability
 origin: Original Aurekai thesis series developed from prior platform design conversations and public research
 source_url: https://www.notion.com/templates
+series: living
+epigraph: When every product builds the same rooms, the doors between them matter more than the rooms.
+epigraph_credit: Aurekai Journal · Editorial reflection (2026)
+epigraph_url: 
+parting_question: What can an institution compose without forcing everyone into the same application?
 ---
 
 Open enough applications and their menus begin to look alike. Writing software acquires tasks and databases. Social networks acquire shopping and payments. A storefront adds memberships and community tools. A game becomes a marketplace for the things its players create.

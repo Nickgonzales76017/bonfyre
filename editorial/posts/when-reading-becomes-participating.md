@@ -9,6 +9,11 @@ status: edited-public
 topics: visual essays, publishing, interaction, civic research, participation
 origin: Original Aurekai thesis series developed from prior platform design conversations and public research
 source_url: https://pudding.cool/pudding-cup/
+series: living
+epigraph: There is no Frigate like a Book.
+epigraph_credit: Emily Dickinson · There is no Frigate like a Book
+epigraph_url: https://www.poetryfoundation.org/poems/52178/there-is-no-frigate-like-a-book-1286
+parting_question: What could a reader do next without turning the story itself into a control panel?
 ---
 
 Some of the web's best experiences are still stories. They combine original reporting with visual pacing, evidence and a point of view. Their interactions aren't arbitrary controls; they let people understand something that would be harder to communicate in ordinary paragraphs.

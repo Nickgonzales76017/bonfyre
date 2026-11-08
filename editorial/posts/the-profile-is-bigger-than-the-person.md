@@ -9,6 +9,11 @@ status: edited-public
 topics: profiles, identity, communities, collections, authorship
 origin: Original Aurekai thesis series developed from prior platform design conversations and public research
 source_url: https://github.com/bluesky-social/bsky-docs/blob/main/docs/advanced-guides/atproto.md
+series: living
+epigraph: I am large, I contain multitudes.
+epigraph_credit: Walt Whitman · Song of Myself
+epigraph_url: https://www.poetryfoundation.org/poems/45477/song-of-myself-1892-version
+parting_question: Which relationships, works, and commitments disappear when a person is represented by only a biography and a feed?
 ---
 
 The familiar online profile is small: photograph, name, biography, links, feed. That's usually enough to identify an account. It's rarely enough to represent a person's work, much less a business, research organization, place or collection.
