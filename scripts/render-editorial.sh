@@ -278,6 +278,65 @@ def editorial_body(post):
         insert_at = len(rendered)
     return rendered[:insert_at] + visual + rendered[insert_at:]
 
+
+# Editorial source trails are built only from real authored outbound links.
+from urllib.parse import urlsplit
+SERIES_READING_ORDER = {
+ "authority":["the-machine-told-me-so","when-everyone-agrees-who-is-thinking","the-internet-of-bad-ideas"],
+ "living":["sites-are-dead-long-live-the-web","the-profile-is-bigger-than-the-person","when-reading-becomes-participating","why-does-every-app-want-to-be-everything"],
+ "access":["nobody-called-the-pizza-shops-slop","we-didnt-run-out-of-ideas","minecraft-built-a-world-what-about-everything-else","the-spreadsheet-that-became-a-business","who-gets-to-have-sophisticated-software","what-happens-when-anyone-can-make-an-app"],
+ "operators":["who-keeps-the-internet-alive","the-local-archive-that-never-got-uploaded","a-library-of-alexandria-selected-by-demand","the-archive-is-not-the-owner","the-clip-is-not-the-whole-work","the-internet-has-an-inheritance-problem","a-union-for-the-internet"]
+}
+SERIES_LABELS = {"authority":"Authority and judgment","living":"Beyond websites","access":"Expression and participation","operators":"Internet operators"}
+
+def build_citation_notes(markup, post):
+    citations, labels, mentions = {}, {}, {}
+    link_re = re.compile(r'<a href="(https?://[^"]+)" rel="noopener noreferrer">([^<]+)</a>')
+    def annotate(match):
+        url, label = match.group(1), match.group(2)
+        if "nickgonzales76017.github.io/bonfyre/" in url:
+            return match.group(0)
+        if url not in citations:
+            citations[url] = len(citations)+1
+            labels[url] = label
+            mentions[url] = []
+        n = citations[url]
+        ref = "source-ref-%d-%d" % (n, len(mentions[url])+1)
+        mentions[url].append(ref)
+        return match.group(0) + '<sup class="journal-cite"><a href="#source-%d" id="%s" aria-label="Reference %d">[%d]</a></sup>' % (n,ref,n,n)
+    marked = link_re.sub(annotate, markup)
+    rows = []
+    for url,n in citations.items():
+        domain = urlsplit(html.unescape(url)).netloc.removeprefix("www.")
+        back = ''.join('<a href="#'+m+'" class="journal-cite-back" aria-label="Back to reference '+str(n)+'">↩</a>' for m in mentions[url])
+        rows.append('<li id="source-'+str(n)+'"><a itemprop="citation" href="'+url+'" rel="noopener noreferrer">'+labels[url]+'</a><span class="source-domain">'+esc(domain)+'</span><span class="source-backlinks">'+back+'</span></li>')
+    primary = post.get("source_url","")
+    context = ('<p class="journal-primary-source"><strong>Related source context:</strong> <a itemprop="citation" href="'+esc(primary)+'" rel="noopener noreferrer">'+esc(urlsplit(primary).netloc.removeprefix("www."))+'</a>. Source links do not imply endorsement.</p>') if primary.startswith("https://") and primary not in citations else ""
+    empty = '<p>There are no separately linked external references in the body of this editorial essay. See the retained publication lineage below.</p>' if not rows and not context else ""
+    return marked, ('<section id="journal-sources" class="journal-sources" aria-labelledby="journal-sources-heading"><h2 id="journal-sources-heading">Sources and further reading</h2><p class="journal-sources-intro">References point to original material linked in the essay, not independently invented citations.</p>'+
+                    ('<ol>'+''.join(rows)+'</ol>' if rows else "")+context+empty+'</section>')
+
+def reader_outline(post):
+    headings=[line[3:].strip() for line in post["body"].splitlines() if line.startswith("## ")]
+    links=''.join('<a href="#'+sid(h)+'">'+esc(h)+'</a>' for h in headings)
+    links+='<a href="#journal-sources">Sources and references</a>'
+    return '<div class="reader-outline-menu" data-outline-menu><button type="button" class="reader-outline-trigger" aria-expanded="false" aria-controls="reader-outline-list">Essay outline <span aria-hidden="true">⌄</span></button><nav id="reader-outline-list" class="reader-outline-links" aria-label="Essay sections">'+links+'</nav></div>'
+
+def narrator():
+    bars=''.join('<i aria-hidden="true" style="--bar:'+str(12+(i*29)%58)+'%"></i>' for i in range(24))
+    return ('<div class="narration-widget" data-narration data-state="idle"><div class="narration-track"><div class="narration-wave" aria-hidden="true">'+bars+'</div><div class="narration-copy"><strong>Listen to this essay</strong><span data-narration-status role="status" aria-live="polite">Browser voice · Ready</span></div></div>'
+            '<div class="narration-controls"><button type="button" data-narration-play>▶ Play</button><button type="button" data-narration-pause disabled>Ⅱ Pause</button><button type="button" data-narration-stop disabled>■ Stop</button><label>Speed <select data-narration-rate aria-label="Narration speed"><option value="0.85">0.85×</option><option value="1" selected>1×</option><option value="1.15">1.15×</option><option value="1.35">1.35×</option></select></label></div>'
+            '<p class="narration-disclosure">Uses your browser voice; no recorded track is claimed. Animated bars show playback activity, not measured sound levels.</p></div>')
+
+def byline(post):
+    series=post.get("series","")
+    label=SERIES_LABELS.get(series,"Aurekai Journal")
+    href='../../series/#'+series if series else '../'
+    return ('<div class="journal-author-row"><span class="journal-author-mark" aria-hidden="true">A</span><div>'
+            '<p class="journal-byline">By <span itemprop="author" itemscope itemtype="https://schema.org/Organization"><a href="../about/" itemprop="url"><span itemprop="name">Aurekai editorial</span></a></span></p>'
+            '<p class="journal-from">From <a href="'+href+'">'+esc(label)+'</a> · <time datetime="'+esc(post["published"])+'" itemprop="datePublished">'+esc(post["published"])+'</time> · Edited public essay</p></div></div>')
+
+
 def article_page(p):
     slug = p["slug"]
     fmt, tone, media = p["art"]
