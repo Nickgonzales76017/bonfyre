@@ -53,6 +53,12 @@ For creators, the <a href="https://www.iab.com/blog/2026-iab-creatorfronts-event
 
 The [market research guide](https://nickgonzales76017.github.io/bonfyre/market.html) links the original publications, dates and specific Aurekai product areas. These are external market indicators, separate from our product and operating results.
 
+## From the journal
+
+The [Aurekai Journal](https://nickgonzales76017.github.io/bonfyre/blog/) now collects sixteen public articles adapted from earlier project conversations and experiments. They follow the questions behind the software—[building the business around an AI-generated app](https://nickgonzales76017.github.io/bonfyre/blog/why-ai-needs-an-operating-company/), [moving a source into several account applications](https://nickgonzales76017.github.io/bonfyre/blog/a-job-posting-has-more-than-one-job/), [Frappe's application grammars](https://nickgonzales76017.github.io/bonfyre/blog/frappe-as-an-application-language/), and [local model performance](https://nickgonzales76017.github.io/bonfyre/blog/the-memory-wall-in-local-models/).
+
+The editable Markdown lives in [`editorial/posts/`](editorial/posts/). GitHub Pages builds the articles, [RSS feed](https://nickgonzales76017.github.io/bonfyre/blog/feed.xml), and stable [post index](editorial/README.md). The public URLs are designed to stay the same when native CMS integration replaces the static builder.
+
 ## Aurekai's public network
 
 | Destination | What people find there |

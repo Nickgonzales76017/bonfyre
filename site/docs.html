@@ -13,7 +13,7 @@
 </head>
 <body>
 <a class="skip" href="#main">Skip to technical content</a>
-<header class="top"><div class="shell"><a class="brand" href="./"><span class="mark">B</span> BONFŸRE <small>/ TECHNICAL GUIDE</small></a><nav aria-label="Technical navigation"><a href="./">Home</a><a href="explore.html">Product guide</a><a href="market.html">Research</a><a href="#architecture">Architecture</a><a href="#install">Start here</a><a href="modules/">Source atlas</a></nav></div></header>
+<header class="top"><div class="shell"><a class="brand" href="./"><span class="mark">B</span> BONFŸRE <small>/ TECHNICAL GUIDE</small></a><nav aria-label="Technical navigation"><a href="./">Home</a><a href="explore.html">Product guide</a><a href="market.html">Research</a><a href="blog/">Journal</a><a href="#architecture">Architecture</a><a href="#install">Start here</a><a href="modules/">Source atlas</a></nav></div></header>
 <main id="main">
 <section class="hero"><div class="shell hero-grid"><div>
 <span class="eyebrow">Bonfÿre / technical guide</span>
@@ -100,6 +100,14 @@ Each application manages its own information and work.</pre>
 </tbody></table></div>
 <p class="note">Historical FPQ and performance experiments are retained in the <a href="https://github.com/Nickgonzales76017/bonfyre/blob/a82e93343db16c390ca709cf3196e7c1b1576b8d/site/docs.html">research archive</a>. Current architectural implementation and version details live in the source Atlas.</p>
 </div></section>
+<section class="block alt" id="technical-journal"><div class="shell">
+<div class="head"><div><span class="eyebrow">Engineering notes</span><h2>What we learned while building it.</h2></div>
+<p>These articles came out of the actual implementation work: native model runtimes, application grammars, parallel coding agents and shipping public experiences.</p></div>
+<div class="grid">
+<article class="card"><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#database"></use></svg></span><h3>Frappe as an application language</h3><p>Taking the useful business vocabulary of DocTypes into native applications.</p><a href="blog/frappe-as-an-application-language/">Read the article ↗</a></article>
+<article class="card"><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#network"></use></svg></span><h3>When two coding agents disagree</h3><p>Planning, implementation, review and separate source revisions.</p><a href="blog/two-coding-agents-one-worktree/">Read the article ↗</a></article>
+<article class="card"><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#globe"></use></svg></span><h3>The deployment passed. Why was the site old?</h3><p>Why public delivery has to follow the destination rather than the build log.</p><a href="blog/the-deployment-was-green-but-the-site-was-old/">Read the article ↗</a></article>
+</div></div></section>
 <section class="block" id="install"><div class="shell">
 <div class="head"><div><span class="eyebrow">08 / GET STARTED</span><h2>Getting started with the source.</h2></div><p>Explore the native source, architectural registry and component families. The public GitHub source and installed operating runtime are maintained as separate versioned cuts.</p></div>
 <pre>git clone https://github.com/Nickgonzales76017/bonfyre.git
