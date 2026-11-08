@@ -231,7 +231,7 @@ def body_html(source):
         if not block: continue
         if block.startswith("## "):
             title = block[3:].strip()
-            rendered.append('<h2 id="' + sid(title) + '">' + inline(title) + '</h2>')
+            rendered.append('<h2 id="' + sid(title) + '">' + inline(title) + ' <a href="#'+sid(title)+'" class="section-permalink" aria-label="Permanent link to section: '+esc(title)+'">§</a></h2>')
         elif block.startswith("### "):
             title = block[4:].strip()
             rendered.append('<h3 id="' + sid(title) + '">' + inline(title) + '</h3>')
@@ -311,7 +311,7 @@ def build_citation_notes(markup, post):
         n = citations[url]
         ref = "source-ref-%d-%d" % (n, len(mentions[url])+1)
         mentions[url].append(ref)
-        return match.group(0) + '<sup class="journal-cite"><a href="#source-%d" id="%s" aria-label="Reference %d">[%d]</a></sup>' % (n,ref,n,n)
+        return match.group(0) + '<sup class="journal-cite"><a href="#source-%d" id="%s" aria-label="Reference %d">[%d]</a><span class="journal-cite-preview" aria-hidden="true">%s</span></sup>' % (n,ref,n,n,esc(label))
     marked = link_re.sub(annotate, markup)
     rows = []
     for url,n in citations.items():
@@ -462,6 +462,7 @@ def article_page(p):
 </div>
 </section>
 <section class="ed-edition-rule"><div class="shell"><span>{esc(p["category"])} / {esc(p["published"])}</span><span>Independent sources and original analysis</span><a href="../../series/">Explore the four series ↗</a></div></section>
+<div class="reader-scroll-track" aria-hidden="true"><span data-reader-scroll></span></div>
 <div class="reader-toolbar" aria-label="Article reading tools"><div class="shell">{narrator()}{reader_outline(p)}</div></div>
 <section class="journal-article-shell ed-reading" id="read-story"><div class="shell journal-article-layout">
 <article class="article-body" itemscope itemtype="https://schema.org/BlogPosting"><meta itemprop="headline" content="{esc(p["title"])}"><meta itemprop="datePublished" content="{esc(p["published"])}"><meta itemprop="dateModified" content="{esc(modified)}"><meta itemprop="mainEntityOfPage" content="{canonical}"><meta itemprop="image" content="{esc(image_url)}"><span itemprop="author" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="Aurekai editorial"><meta itemprop="url" content="https://nickgonzales76017.github.io/bonfyre/blog/about/"></span><span itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="Aurekai"><meta itemprop="url" content="https://aurekai.work/"></span>

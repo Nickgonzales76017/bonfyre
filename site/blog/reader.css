@@ -63,3 +63,14 @@
 .narration-progress::-webkit-progress-bar{background:#d3dfd1}
 .narration-progress::-webkit-progress-value{background:#a87555}
 .narration-progress::-moz-progress-bar{background:#a87555}
+
+/* Research-friendly passage links and citation previews: readable without JavaScript. */
+.reader-scroll-track{position:fixed;top:0;left:0;right:0;height:3px;z-index:70;pointer-events:none;background:transparent}
+.reader-scroll-track>span{display:block;height:100%;width:100%;transform:scaleX(0);transform-origin:left;background:#ab6f4f}
+.section-permalink{display:inline-block;font:.75em/1 system-ui,sans-serif!important;vertical-align:middle;text-decoration:none!important;opacity:.22;margin-left:8px;color:#a76a49!important}
+.article-body h2:hover .section-permalink,.section-permalink:focus-visible{opacity:1}
+.journal-cite{position:relative}
+.journal-cite-preview{display:none;position:absolute;bottom:calc(100% + 8px);left:0;width:max-content;max-width:260px;background:#173d30;color:#f9f3e8;border:1px solid #b7a78c;padding:10px 13px;box-shadow:0 9px 23px #17291b33;font:.76rem/1.55 system-ui,sans-serif;white-space:normal;z-index:5}
+.journal-cite:hover .journal-cite-preview,.journal-cite:focus-within .journal-cite-preview{display:block}
+@media(hover:none){.section-permalink{opacity:.7}}
+@media(prefers-reduced-motion:reduce){.reader-scroll-track>span{transition:none}}

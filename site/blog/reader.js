@@ -19,6 +19,26 @@
   const widget = document.querySelector('[data-narration]');
   const article = document.querySelector('.article-body');
   if (!widget || !article) return;
+  const scrollMeter = document.querySelector('[data-reader-scroll]');
+  if (scrollMeter) {
+    let pending = false;
+    const measure = () => {
+      pending = false;
+      const pageTop = article.getBoundingClientRect().top + window.scrollY;
+      const total = Math.max(1, article.offsetHeight);
+      const readingPosition = window.scrollY + window.innerHeight * 0.3;
+      const fraction = Math.max(0, Math.min(1, (readingPosition - pageTop) / total));
+      scrollMeter.style.transform = 'scaleX(' + fraction.toFixed(4) + ')';
+    };
+    const update = () => {
+      if (pending) return;
+      pending = true;
+      window.requestAnimationFrame(measure);
+    };
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update, { passive: true });
+    update();
+  }
   const start = widget.querySelector('[data-narration-play]');
   const pause = widget.querySelector('[data-narration-pause]');
   const stop = widget.querySelector('[data-narration-stop]');
