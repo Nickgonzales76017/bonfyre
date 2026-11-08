@@ -122,6 +122,54 @@ jobs:
           test "$(find site/blog -mindepth 2 -maxdepth 2 -name index.html | wc -l)" -eq 46
           test "$(grep -c '<item>' site/blog/feed.xml)" -eq 46
           grep -q 'All articles / 46' site/blog/index.html
+      - name: Browser-check the research lab and cross-site explorer
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory site >/tmp/aurekai-pages-http.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          sleep 1
+          export CHROME_PATH="$(command -v google-chrome)"
+          node --input-type=module <<'NODE'
+          import { chromium } from './.spaces-tools/node_modules/playwright/index.mjs';
+          import assert from 'node:assert/strict';
+          const browser = await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH,args:['--no-sandbox']});
+          const page = await browser.newPage({viewport:{width:1366,height:900}});
+          const errors=[];
+          page.on('pageerror',e=>errors.push(e.message));
+          try {
+            await page.goto('http://127.0.0.1:8765/labs/',{waitUntil:'domcontentloaded'});
+            assert.match(await page.locator('[data-out="precision"]').textContent(),/16\.1%/);
+            assert.match(await page.locator('[data-out="lot-profit"]').textContent(),/650/);
+            assert.match(await page.locator('[data-out="scope-savings"]').textContent(),/29,000/);
+            assert.equal((await page.locator('[data-out="model-winner"]').textContent()).trim(),'Route B');
+            await page.locator('#base-fpr').fill('1');
+            assert.match(await page.locator('[data-out="precision"]').textContent(),/49%/);
+            await page.locator('[data-reset="base-form"]').click();
+            assert.match(await page.locator('[data-out="precision"]').textContent(),/16\.1%/);
+            await page.locator('#lot-salable').fill('50');
+            assert.match(await page.locator('[data-out="lot-profit"]').textContent(),/550/);
+            await page.locator('#model-recovery').fill('0');
+            assert.equal((await page.locator('[data-out="model-winner"]').textContent()).trim(),'Route A');
+            await page.goto('http://127.0.0.1:8765/discover/',{waitUntil:'domcontentloaded'});
+            await page.waitForFunction(()=>document.querySelectorAll('[data-kind="article"]').length===46,{timeout:12000});
+            assert.equal(await page.locator('[data-kind="studio"]').count(),20);
+            assert.equal(await page.locator('[data-kind="tool"]').count(),5);
+            assert.equal(await page.locator('[data-kind="article"]').count(),46);
+            await page.getByRole('button',{name:'Articles',exact:true}).click();
+            assert.equal(await page.locator('[data-kind="studio"]:visible').count(),0);
+            assert.equal(await page.locator('[data-kind="article"]:visible').count(),46);
+            await page.getByRole('button',{name:'Studios',exact:true}).click();
+            assert.equal(await page.locator('[data-kind="studio"]:visible').count(),20);
+            await page.locator('#discover-search').fill('podcast');
+            assert.ok((await page.locator('[data-kind="studio"]:visible').count())>=1);
+            await page.goto('http://127.0.0.1:8765/blog/why-base-rates-change-camera-matching-claims/',{waitUntil:'domcontentloaded'});
+            assert.ok(await page.locator('a[href="../../labs/#base-rates"]').count()>=1);
+            assert.equal(errors.length,0,'browser errors: '+errors.join('; '));
+            console.log('PASS: four research models, 20 studios, 46 articles, article model links, search/filter');
+          } finally { await browser.close(); }
+          NODE
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
