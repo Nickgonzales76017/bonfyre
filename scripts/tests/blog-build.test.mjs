@@ -25,7 +25,7 @@ test("journal index has categories, search, links and accessible controls",() =>
  assert.ok(html.includes('id="journal-search"'));
  assert.ok(html.includes('aria-pressed="true"'));
  assert.ok(html.includes('aria-live="polite"'));
- assert.ok(html.includes("blog/filter.js"));
+ assert.ok(html.includes("./filter.js"));
  for(const p of md)assert.ok(html.includes("blog/"+p.replace(/\.md$/,"")+"/"));
 });
 test("RSS, sitemap and future import index cover the same sixteen articles",() => {
