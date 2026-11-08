@@ -36,6 +36,10 @@ jobs:
           grep -q 'data-filter="Mathematics"' site/blog/index.html
           grep -q 'data-filter="Markets"' site/blog/index.html
           grep -q 'data-filter="Science"' site/blog/index.html
+          test -f site/sitemap.xml
+          grep -q 'bonfyre/blog/the-machine-told-me-so/' site/sitemap.xml
+          grep -q 'application/ld+json' site/blog/the-machine-told-me-so/index.html
+          grep -q 'BreadcrumbList' site/blog/the-machine-told-me-so/index.html
           test -f site/blog/reader.js
           test -f site/blog/reader.css
           test -f site/blog/about/index.html

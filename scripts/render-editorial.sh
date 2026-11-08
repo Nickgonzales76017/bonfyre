@@ -3,7 +3,7 @@
 # Run at repository root: sh scripts/render-editorial.sh [--check]
 set -eu
 python3 - "$@" <<'PY'
-import hashlib, html, os, pathlib, re, sys
+import hashlib, html, os, pathlib, re, sys, json
 from datetime import datetime, timezone
 from xml.sax.saxutils import escape as xml_escape
 
@@ -389,6 +389,41 @@ def article_page(p):
     topic_labels = ''.join('<span class="journal-topic">'+esc(t.strip())+'</span>' for t in p["topics"].split(",") if t.strip())
     cover_visual = media_figure(p, "../../") if media else editorial_detail(p)
     colorvars = "--ed-dark:"+dark+";--ed-paper:"+cream+";--ed-accent:"+accent+";--ed-ink:"+ink
+
+    source_urls = list(dict.fromkeys(
+        re.findall(r'\]\((https?://[^\s)]+)\)',p["body"])))
+    source_urls = [u for u in source_urls if "nickgonzales76017.github.io/bonfyre/" not in u]
+    if prim and prim.startswith("https://") and prim not in source_urls:
+        source_urls.append(prim)
+    schema={"@context":"https://schema.org","@type":"BlogPosting",
+      "@id":canonical+"#article","url":canonical,
+      "mainEntityOfPage":{"@type":"WebPage","@id":canonical},
+      "headline":p["title"],"description":p["description"],"inLanguage":"en-US",
+      "datePublished":p["published"]+"T12:00:00+00:00",
+      "dateModified":modified+"T12:00:00+00:00",
+      "author":{"@type":"Organization","name":"Aurekai editorial",
+        "url":"https://nickgonzales76017.github.io/bonfyre/blog/about/"},
+      "publisher":{"@type":"Organization","name":"Aurekai","url":"https://aurekai.work/"},
+      "articleSection":p["category"],
+      "keywords":[w.strip() for w in p["topics"].split(",") if w.strip()],
+      "wordCount":len(p["body"].split()),
+      "image":[image_url]}
+    if source_urls:
+        schema["citation"]=source_urls
+    if series_id:
+        schema["isPartOf"]={"@type":"CollectionPage",
+          "url":"https://nickgonzales76017.github.io/bonfyre/series/#"+series_id,
+          "name":series_names[series_id]}
+    else:
+        schema["isPartOf"]={"@type":"Blog",
+          "url":"https://nickgonzales76017.github.io/bonfyre/blog/",
+          "name":"Aurekai Journal"}
+    jsonld=json.dumps(schema,ensure_ascii=False,separators=(",",":")).replace("<","\\u003c")
+    breadcrumb={"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[
+      {"@type":"ListItem","position":1,"name":"Aurekai Journal","item":"https://nickgonzales76017.github.io/bonfyre/blog/"},
+      {"@type":"ListItem","position":2,"name":p["title"],"item":canonical}]}
+    breadcrumb_ld=json.dumps(breadcrumb,ensure_ascii=False,separators=(",",":")).replace("<","\\u003c")
+
     page_label = p["category"]+" / "+p["published"]
     return f'''<!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="{dark}">
@@ -401,6 +436,7 @@ def article_page(p):
 <meta name="author" content="Aurekai editorial"><meta property="article:published_time" content="{esc(p["published"])}T12:00:00Z">
 <meta property="article:section" content="{esc(p["category"])}"><meta name="twitter:card" content="summary_large_image">
 <link rel="canonical" href="{canonical}"><link rel="alternate" type="application/rss+xml" title="Aurekai Journal" href="../feed.xml">
+<link rel="sitemap" type="application/xml" href="../../sitemap.xml"><script type="application/ld+json">{jsonld}</script><script type="application/ld+json">{breadcrumb_ld}</script>
 <link rel="stylesheet" href="../../assets/aurekai-field-guide.css"><link rel="stylesheet" href="../../assets/aurekai-research.css">
 <link rel="author" href="../about/"><link rel="stylesheet" href="../blog.css"><link rel="stylesheet" href="../article-editions.css"><link rel="stylesheet" href="../reader.css"><script defer src="../reader.js"></script>
 </head><body class="ed-journal format-{fmt} tone-{tone} {'ed-with-media' if media else 'ed-type-led'}" style="{colorvars}">
@@ -495,6 +531,23 @@ write("feed.xml", rss)
 urls = [BASE_URL, BASE_URL+"about/", "https://nickgonzales76017.github.io/bonfyre/series/"] + [BASE_URL+p["slug"]+"/" for p in posts]
 sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + '\n'.join('<url><loc>'+u+'</loc><lastmod>2026-11-08</lastmod></url>' for u in urls) + '\n</urlset>\n'
 write("sitemap.xml", sitemap)
+
+# A discoverable root sitemap covers the Journal and public entry points. This
+# is a true URL list, not a claim that Google has indexed the articles.
+site_urls = ["https://nickgonzales76017.github.io/bonfyre/",
+             "https://nickgonzales76017.github.io/bonfyre/discover/",
+             "https://nickgonzales76017.github.io/bonfyre/fieldwork/"]
+site_urls += urls
+root_sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + '\n'.join(
+    '<url><loc>'+u+'</loc><lastmod>2026-11-08</lastmod></url>' for u in dict.fromkeys(site_urls)
+) + '\n</urlset>\n'
+root_sitemap_path = ROOT / "site" / "sitemap.xml"
+if CHECK:
+    if not root_sitemap_path.exists() or root_sitemap_path.read_text(encoding="utf-8") != root_sitemap:
+        raise AssertionError("Out-of-date site-wide sitemap")
+else:
+    root_sitemap_path.write_text(root_sitemap,encoding="utf-8")
+
 columns = ["subject_id","slug","category","published","source_path","source_sha256","canonical_url","primary_source_url"]
 records = ['\t'.join(columns)]
 for p in posts:
