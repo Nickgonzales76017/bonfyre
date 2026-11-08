@@ -1,0 +1,110 @@
+/* Botanical editorial covers. Every article gets seeded original tree etching,
+   one of eight compositions, and its own quiet forest/ink/paper palette. */
+body.journal-garden{background:var(--garden-paper);color:#213a30}
+.journal-garden .garden-hero{position:relative;overflow:hidden;background:var(--garden-deep);color:#f9f2e3;isolation:isolate;min-height:680px;border-bottom:1px solid #889a83}
+.journal-garden .garden-hero::before{content:"";position:absolute;inset:22px;border:1px solid color-mix(in srgb,var(--garden-ink) 22%,transparent);pointer-events:none;z-index:3}
+.journal-garden .garden-hero::after{content:"";position:absolute;inset:auto 28px 18px;max-width:1360px;border-bottom:1px solid color-mix(in srgb,var(--garden-ink) 24%,transparent);margin:auto;pointer-events:none}
+.journal-garden .garden-hero-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,.82fr);align-items:center;gap:clamp(26px,5vw,90px);padding-block:clamp(55px,8vw,110px) clamp(56px,7vw,105px);min-height:645px;position:relative;z-index:2}
+.journal-garden .garden-hero-copy{min-width:0;max-width:760px;padding:18px 0}
+.journal-garden .garden-hero .journal-breadcrumb{color:var(--garden-ink);font-size:.7rem;letter-spacing:.11em;text-transform:uppercase;font-weight:740}
+.journal-garden .garden-hero .journal-breadcrumb a{color:var(--garden-ink);text-underline-offset:4px}
+.garden-folio{font:.69rem/1.8 system-ui,sans-serif;letter-spacing:.17em;text-transform:uppercase;color:var(--garden-accent);font-weight:750;margin:26px 0 20px}
+.garden-folio span{color:var(--garden-ink);opacity:.72;margin-left:12px}
+.journal-garden .garden-hero h1{font:500 clamp(3.6rem,6.6vw,7.4rem)/.97 Georgia,"Times New Roman",serif;letter-spacing:-.061em;color:#fbf4e6;margin:16px 0 32px;text-wrap:balance}
+.garden-subtitle{font:400 clamp(1.12rem,1.8vw,1.45rem)/1.6 Georgia,serif;color:var(--garden-ink);max-width:650px;margin:0 0 29px}
+.garden-tags{display:flex;flex-wrap:wrap;gap:11px 20px;align-items:center;font:.67rem/1.5 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.115em;color:var(--garden-ink);opacity:.88}
+.garden-tags span+span::before{content:"✦";color:var(--garden-accent);font-size:.65rem;margin-right:18px}
+.garden-read-link{display:inline-flex;align-items:center;gap:20px;font:.75rem/1.5 system-ui,sans-serif;font-weight:760;text-decoration:none;text-transform:uppercase;letter-spacing:.07em;color:#172e27;background:var(--garden-accent);border:1px solid var(--garden-accent);padding:13px 19px;margin-top:38px}
+.garden-read-link:hover,.garden-read-link:focus-visible{background:#f4ddbd;border-color:#f4ddbd;color:#143027}
+.garden-figure{margin:0;position:relative;min-width:0;align-self:stretch;display:flex;justify-content:center;align-items:center}
+.garden-figure::before{content:"";position:absolute;inset:6% 4% 11%;border:1px solid var(--garden-ink);opacity:.26;z-index:1;pointer-events:none}
+.garden-figure img{display:block;width:100%;max-width:590px;height:clamp(390px,49vw,650px);object-fit:cover;object-position:center;filter:drop-shadow(0 18px 22px rgba(2,25,15,.2))}
+.garden-figure figcaption{position:absolute;left:14%;right:14%;bottom:5%;font:.62rem/1.4 system-ui,sans-serif;color:var(--garden-ink);letter-spacing:.12em;text-transform:uppercase;text-align:center;background:var(--garden-deep);padding:5px 6px}
+.garden-hero-serial{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:center;padding:0 0 29px;color:var(--garden-ink);text-transform:uppercase;letter-spacing:.11em;font:.65rem/1.6 system-ui,sans-serif;position:relative;z-index:2}
+.garden-hero-serial a{color:var(--garden-accent);text-underline-offset:4px}
+.garden-hero .garden-side-ornament{position:absolute;top:0;bottom:0;left:0;width:14px;background:repeating-linear-gradient(to bottom,var(--garden-accent) 0,var(--garden-accent) 2px,transparent 2px,transparent 32px);opacity:.24}
+.journal-garden .journal-article-shell{background:var(--garden-paper);padding:clamp(55px,7vw,100px) 0}
+.journal-garden .journal-article-layout{grid-template-columns:minmax(0,740px) minmax(190px,1fr);gap:clamp(35px,6vw,100px);justify-content:center}
+.journal-garden .article-body{font:400 clamp(1.03rem,1.2vw,1.12rem)/1.92 Georgia,"Times New Roman",serif;color:#273f35}
+.journal-garden .article-body>p:first-of-type{font:400 clamp(1.2rem,1.85vw,1.45rem)/1.7 Georgia,serif;color:#234436}
+.journal-garden .article-body h2{color:#204334;letter-spacing:-.043em;border-top:1px solid #c0c9ba;padding-top:26px;font-size:clamp(2rem,3.2vw,3rem)}
+.journal-garden .article-body h3{color:#365447}
+.journal-garden .article-body a{color:#955334;text-underline-offset:4px}
+.journal-garden .article-body a:hover{color:#5f3d28}
+.journal-garden .journal-side-sticky{border-top:2px solid #315342;padding-top:24px}
+.journal-garden .journal-side-sticky .eyebrow{color:#985436}
+.journal-garden .journal-side-sticky a{color:#254938}
+.journal-garden .journal-side-sticky hr{border-top-color:#b4c2b5}
+.journal-garden .journal-source-note{background:#e9eee4;border-left-color:#ad7455;color:#405d4c}
+.journal-garden .journal-afterword{background:#214637}
+.journal-garden .journal-epigraph{border-color:#b17b58;background:#eaf0e5}
+.journal-garden .journal-topic{background:#e7ede3}
+.journal-garden .garden-chapterline{margin:0 0 37px;padding:12px 0;border-top:1px solid #c6cdbf;border-bottom:1px solid #c6cdbf;display:flex;justify-content:space-between;gap:18px;font:.68rem/1.5 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.105em;color:#506958}
+.journal-garden .garden-margin-art{height:85px;overflow:hidden;margin:0 0 28px;border-bottom:1px solid #bbc7b8}
+.journal-garden .garden-margin-art img{width:100%;height:300px;object-fit:cover;object-position:center 24%;opacity:.50;filter:saturate(.7)}
+.journal-garden .garden-related{display:flex;flex-direction:column;width:min(100%,250px);gap:9px;text-decoration:none;align-items:flex-start;overflow:hidden;padding:0 0 15px;border-bottom:1px solid #b7c3b4}
+.journal-garden .garden-related img{width:100%;height:115px;object-fit:cover;object-position:center 40%;border:1px solid #d4d4c8}
+.journal-garden .garden-related span{color:#254538;font:500 1rem/1.35 Georgia,serif}
+.journal-garden .garden-related:hover span{text-decoration:underline}
+.journal-garden .garden-related-group{display:flex;gap:18px;flex-wrap:wrap}
+.journal-garden .garden-close{background:#dfe8de;border-top:1px solid #c6d0c3}
+.journal-garden .garden-close .head h2{font:500 clamp(2rem,3vw,3rem)/1.2 Georgia,serif;color:#234535}
+.journal-garden .garden-close .head p{max-width:440px;color:#526957}
+
+/* Eight intentional editorial compositions: the art, header and text move together. */
+.journal-garden.garden-reverse .garden-hero-figure{order:-1}
+.journal-garden.garden-reverse .garden-hero-grid{grid-template-columns:minmax(250px,.82fr) minmax(0,1fr)}
+.journal-garden.garden-centered .garden-hero-grid{display:flex;flex-direction:column;text-align:center;gap:12px;padding-bottom:50px}
+.journal-garden.garden-centered .garden-hero-copy{max-width:1050px}
+.journal-garden.garden-centered .journal-breadcrumb,.journal-garden.garden-centered .garden-tags{justify-content:center}
+.journal-garden.garden-centered .garden-figure{width:min(730px,94%);height:380px;overflow:hidden;align-self:center}
+.journal-garden.garden-centered .garden-figure img{height:510px;max-width:none;object-position:center 38%}
+.journal-garden.garden-centered .garden-figure figcaption{bottom:4%}
+.journal-garden.garden-framed .garden-hero-grid{padding-top:85px}
+.journal-garden.garden-framed .garden-hero-copy{border:1px solid color-mix(in srgb,var(--garden-ink) 40%,transparent);padding:clamp(22px,3vw,47px);background:color-mix(in srgb,var(--garden-deep) 88%,#fff 12%)}
+.journal-garden.garden-panorama .garden-hero-grid{grid-template-columns:1fr;gap:0;padding-top:70px;padding-bottom:22px}
+.journal-garden.garden-panorama .garden-hero-copy{max-width:1070px}
+.journal-garden.garden-panorama .garden-figure{height:330px;overflow:hidden;max-width:1200px}
+.journal-garden.garden-panorama .garden-figure img{height:660px;max-width:none;object-fit:cover;object-position:center 46%}
+.journal-garden.garden-offset .garden-hero-grid{grid-template-columns:1.2fr .8fr}
+.journal-garden.garden-offset .garden-hero-copy{padding-left:clamp(14px,3vw,56px);border-left:3px solid var(--garden-accent)}
+.journal-garden.garden-offset .garden-figure{transform:translateY(40px)}
+.journal-garden.garden-letterpress .garden-hero-copy{background:var(--garden-paper);color:var(--garden-deep);padding:clamp(24px,4vw,48px);box-shadow:14px 14px 0 rgba(255,255,255,.09)}
+.journal-garden.garden-letterpress .garden-hero h1{color:var(--garden-deep)}
+.journal-garden.garden-letterpress .garden-subtitle,.journal-garden.garden-letterpress .garden-hero .journal-breadcrumb,.journal-garden.garden-letterpress .garden-hero .journal-breadcrumb a{color:#365a49}
+.journal-garden.garden-letterpress .garden-folio span,.journal-garden.garden-letterpress .garden-tags{color:#57705d}
+.journal-garden.garden-letterpress .garden-read-link{background:var(--garden-deep);color:var(--garden-paper);border-color:var(--garden-deep)}
+.journal-garden.garden-diptych .garden-hero-grid{grid-template-columns:1fr 1fr;gap:0;padding-block:72px}
+.journal-garden.garden-diptych .garden-hero-copy{position:relative;z-index:2;background:var(--garden-deep);border-left:1px solid var(--garden-ink);border-block:1px solid var(--garden-ink);padding:40px 30px}
+.journal-garden.garden-diptych .garden-figure{border:1px solid var(--garden-ink);min-height:570px}
+
+/* The Journal directory is also an illustrated bookcase, rather than text-only tiles. */
+.journal-card-cover{height:132px;margin:-4px -4px 16px;overflow:hidden;background:#193d32;border:1px solid #315746;position:relative}
+.journal-card-cover img{width:100%;height:100%;object-fit:cover;object-position:center 33%;display:block;transition:transform .3s ease}
+.journal-card:hover .journal-card-cover img{transform:scale(1.045)}
+.journal-card-cover::after{content:"";position:absolute;inset:12px;border:1px solid rgba(241,223,190,.32);pointer-events:none}
+@media(max-width:1000px){.journal-garden .journal-article-layout{grid-template-columns:minmax(0,1fr) 190px}.garden-hero-grid{gap:20px}}
+@media(max-width:780px){
+ .journal-garden .garden-hero-grid,.journal-garden.garden-reverse .garden-hero-grid,.journal-garden.garden-offset .garden-hero-grid,.journal-garden.garden-diptych .garden-hero-grid{grid-template-columns:1fr}
+ .journal-garden .garden-hero-grid{padding-block:48px 45px;min-height:0}
+ .journal-garden .garden-hero h1{font-size:clamp(3rem,10.5vw,5.2rem)}
+ .journal-garden .garden-hero::before{inset:10px}
+ .journal-garden .garden-figure{height:280px;align-self:center;width:100%;overflow:hidden}
+ .journal-garden .garden-figure img{height:470px;max-width:none;object-position:center 38%}
+ .journal-garden .garden-figure figcaption{bottom:8px}
+ .journal-garden.garden-reverse .garden-hero-figure{order:0}
+ .journal-garden.garden-centered .garden-figure{height:240px}
+ .journal-garden.garden-offset .garden-hero-copy{padding-left:24px}
+ .journal-garden.garden-offset .garden-figure{transform:none}
+ .journal-garden.garden-panorama .garden-figure{height:220px}
+ .journal-garden.garden-diptych .garden-figure{min-height:0}
+ .journal-garden .journal-article-layout{grid-template-columns:1fr}
+ .journal-garden .journal-article-side{display:block;order:-1}
+ .journal-garden .journal-side-sticky{position:static}
+ .journal-garden .garden-margin-art{display:none}
+ .journal-garden .journal-article-shell{padding:45px 0}
+ .journal-garden .garden-hero-serial{padding-bottom:20px}
+ .journal-garden .garden-tags span+span::before{margin-right:12px}
+ .journal-garden .journal-card-cover{height:155px}
+}
+@media(prefers-reduced-motion:reduce){.journal-card-cover img{transition:none}.journal-card:hover .journal-card-cover img{transform:none}}

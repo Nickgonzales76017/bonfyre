@@ -40,3 +40,7 @@ The operators series includes digital inheritance and collective bargaining powe
 ## Editorial roadmap
 
 The long-term journal can grow toward approximately 500 articles spanning independent business operations, supplier markets, local models, application grammars, physical resources, publishing, civic information, standards, applied mathematics, and careful challenges to popular technology claims. The goal is a useful research publication, not volume alone.
+
+## Botanical article design
+
+Each public article receives an original, deterministic vector tree drawing in `site/blog/<slug>/cover.svg`, plus one of eight magazine cover compositions in `site/blog/article-garden.css`. The article slug fixes its illustration, colors, and layout even when the prose is edited. The same artwork appears on its journal discovery card, in the masthead, and in contextual recommendations. Forest green, line-engraved botanical motifs, cream reading paper, serif hierarchy, source links, mobile accessibility and conventional scroll navigation are retained across variations. `scripts/editorial_botanical.py` generates the art with the Python standard library; `scripts/tests/check-editorial-design.py` verifies every cover and article. No third-party image or model credit is required for these original generated drawings.

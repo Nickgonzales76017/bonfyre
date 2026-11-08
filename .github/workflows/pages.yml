@@ -119,6 +119,7 @@ jobs:
         run: |
           sh scripts/render-editorial.sh
           sh scripts/render-editorial.sh --check
+          python3 scripts/tests/check-editorial-design.py
           test "$(find site/blog -mindepth 2 -maxdepth 2 -name index.html | wc -l)" -eq "$(grep -l '^status: edited-public$' editorial/posts/*.md | wc -l)"
           test "$(grep -c '<item>' site/blog/feed.xml)" -eq "$(grep -l '^status: edited-public$' editorial/posts/*.md | wc -l)"
           grep -q "All articles / $(grep -l '^status: edited-public$' editorial/posts/*.md | wc -l)" site/blog/index.html

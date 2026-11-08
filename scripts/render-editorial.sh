@@ -7,6 +7,10 @@ import hashlib, html, os, pathlib, re, sys
 from datetime import datetime, timezone
 from xml.sax.saxutils import escape as xml_escape
 
+# Article-specific tree etchings and cover compositions, no external assets or dependencies.
+sys.path.insert(0, str(pathlib.Path.cwd() / "scripts"))
+from editorial_botanical import style_for, illustration_svg
+
 ROOT = pathlib.Path.cwd()
 SOURCE = ROOT / "editorial" / "posts"
 TARGET = ROOT / "site" / "blog"
@@ -124,9 +128,12 @@ def article_page(p):
     if len(related) < 3:
         related.extend(q for q in posts if q["slug"] != slug and q not in related)
     related = related[:3]
-    recommendations = ''.join('<a class="journal-related" href="../'+q["slug"]+'/">'+esc(q["title"])+' ↗</a>' for q in related)
+    recommendations = ''.join('<a class="journal-related garden-related" href="../'+q["slug"]+'/"><img src="../'+q["slug"]+'/cover.svg" alt="" loading="lazy"><span>'+esc(q["title"])+' ↗</span></a>' for q in related)
     canonical = BASE_URL + slug + "/"
     topic_labels = ''.join('<span class="journal-topic">'+esc(t.strip())+'</span>' for t in p["topics"].split(",") if t.strip())
+    garden = style_for(p)
+    garden_css = ('--garden-deep:'+garden["dark"]+';--garden-ink:'+garden["ink"]+
+                  ';--garden-accent:'+garden["accent"]+';--garden-paper:'+garden["paper"])
     return f'''<!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f5f3eb">
 <title>{esc(p["title"])} — Aurekai Journal</title>
@@ -134,36 +141,47 @@ def article_page(p):
 <meta property="og:title" content="{esc(p["title"])}"><meta property="og:description" content="{esc(p["description"])}"><meta property="og:type" content="article">
 <meta name="author" content="Aurekai editorial"><meta property="article:published_time" content="{esc(p["published"])}T12:00:00Z"><meta property="article:section" content="{esc(p["category"])}"><meta name="twitter:card" content="summary">
 <link rel="canonical" href="{canonical}"><link rel="alternate" type="application/rss+xml" title="Aurekai Journal" href="../feed.xml">
-<link rel="stylesheet" href="../../assets/aurekai-field-guide.css"><link rel="stylesheet" href="../../assets/aurekai-research.css"><link rel="stylesheet" href="../blog.css">
-</head><body><a class="skip" href="#main">Skip to article</a>
+<link rel="stylesheet" href="../../assets/aurekai-field-guide.css"><link rel="stylesheet" href="../../assets/aurekai-research.css"><link rel="stylesheet" href="../blog.css"><link rel="stylesheet" href="../article-garden.css">
+</head><body class="journal-garden garden-{garden["variant"]}" style="{garden_css}"><a class="skip" href="#main">Skip to article</a>
 <header class="top"><div class="shell"><a class="brand" href="../../"><span class="mark">A</span> AUREKAI <small>/ JOURNAL</small></a>
 <nav aria-label="Site navigation"><a href="../../">Home</a><a href="../../discover/">Explore</a><a href="../">Journal</a><a href="../../fieldwork/">Fieldwork</a><a href="../../series/">Series</a><a href="../../docs.html">Bonfÿre</a></nav></div></header>
-<main id="main"><section class="journal-article-hero"><div class="shell journal-article-head">
-<nav class="journal-breadcrumb" aria-label="Breadcrumb"><a href="../">Journal</a><span>/</span><span>{esc(p["category"])}</span></nav>
-{icon(p, "../../")}<div class="eyebrow">{esc(p["category"])} · {mins} min read</div>
-<h1>{esc(p["title"])}</h1><p class="lead">{esc(p["description"])}</p>
-<div class="journal-meta"><span>Aurekai / Bonfÿre</span><span>{esc(p["published"])}</span><span>Edited public article</span></div>
-</div></section>
-<section class="journal-article-shell"><div class="shell journal-article-layout">
-<article class="article-body" itemscope itemtype="https://schema.org/BlogPosting"><meta itemprop="headline" content="{esc(p["title"])}"><meta itemprop="datePublished" content="{esc(p["published"])}">{epigraph_html}{body_html(p["body"])}\n{reflection_html}
+<main id="main"><section class="garden-hero" aria-labelledby="article-title">
+<div class="garden-side-ornament" aria-hidden="true"></div>
+<div class="shell garden-hero-grid">
+<div class="garden-hero-copy">
+<nav class="journal-breadcrumb" aria-label="Breadcrumb"><a href="../">Aurekai Journal</a><span>/</span><span>{esc(p["category"])}</span></nav>
+<p class="garden-folio">Field Notes <span>Study {garden["index"]} / {esc(garden["family"].title())}</span></p>
+<h1 id="article-title">{esc(p["title"])}</h1>
+<p class="garden-subtitle">{esc(p["description"])}</p>
+<div class="garden-tags"><span>{esc(p["category"])}</span><span>{mins} minute read</span><span>{esc(p["published"])}</span></div>
+<a class="garden-read-link" href="#read-story">Read the story <span aria-hidden="true">↓</span></a>
+</div>
+<figure class="garden-figure"><img src="./cover.svg" width="760" height="900" loading="eager" fetchpriority="high" alt="Original {esc(garden["family"])} tree and botanical line illustration created for this article.">
+<figcaption>Aurekai / Botanical study {garden["index"]}</figcaption></figure>
+</div>
+<div class="shell garden-hero-serial"><span>An Aurekai Journal essay</span><span>Independent research · original illustrations</span><a href="../../series/">Explore the series ↗</a></div>
+</section>
+<section class="journal-article-shell" id="read-story"><div class="shell journal-article-layout">
+<article class="article-body" itemscope itemtype="https://schema.org/BlogPosting"><meta itemprop="headline" content="{esc(p["title"])}"><meta itemprop="datePublished" content="{esc(p["published"])}"><div class="garden-chapterline"><span>Journal / {esc(p["category"])}</span><span>Reading room · {garden["index"]}</span></div>{epigraph_html}{body_html(p["body"])}\n{reflection_html}
 <div class="journal-source-note"><strong>About this article.</strong> {esc(p["origin"])}. {("The article responds to or examines the linked original source." if prim else "Adapted and researched for public reading.")} <a href="https://github.com/Nickgonzales76017/bonfyre/blob/main/{esc(p["source_path"])}">Editable source ↗</a></div>
 </article>
-<aside class="journal-article-side"><div class="journal-side-sticky"><span class="eyebrow">In this article</span>{toc}<hr>
+<aside class="journal-article-side"><div class="journal-side-sticky"><div class="garden-margin-art" aria-hidden="true"><img src="./cover.svg" alt="" loading="lazy"></div><span class="eyebrow">In this article</span>{toc}<hr>
 {external}<div class="journal-topics">{topic_labels}</div><p><a href="../../discover/">All applications ↗</a> · <a href="../">All articles ↗</a></p></div></aside>
 </div></section>
-<section class="block alt"><div class="shell"><div class="head"><div><span class="eyebrow">Keep reading</span><h2>Related articles</h2></div><p>More research from Aurekai and Bonfÿre.</p></div>
-<div class="journal-footer-links">{recommendations}<a href="../">All {len(posts)} articles ↗</a></div></div></section>
+<section class="block alt garden-close"><div class="shell"><div class="head"><div><span class="eyebrow">Keep reading</span><h2>Related articles</h2></div><p>More research from Aurekai and Bonfÿre.</p></div>
+<div class="journal-footer-links garden-related-group">{recommendations}<a href="../">All {len(posts)} articles ↗</a></div></div></section>
 </main><footer class="footer"><div class="shell"><span>Aurekai / Bonfÿre · Journal</span><span><a href="../">Journal</a> · <a href="../../market.html">Research</a> · <a href="../../docs.html">Technology</a></span></div></footer></body></html>
 '''
 
 for p in posts:
+    write(p["slug"] + "/cover.svg", illustration_svg(p))
     write(p["slug"] + "/index.html", article_page(p))
 
 def card(p):
     search = ' '.join([p["title"], p["description"], p["topics"], p["category"]]).lower()
     return f'''<article class="journal-card" data-article data-category="{esc(p["category"])}" data-search="{esc(search)}">
 <a class="journal-card-link" href="./{p["slug"]}/"><div class="journal-card-top">{icon(p, "../")}<span class="eyebrow">{esc(p["category"])}</span></div>
-<h3>{esc(p["title"])}</h3><p>{esc(p["description"])}</p>
+<div class="journal-card-cover" aria-hidden="true"><img src="./{p["slug"]}/cover.svg" alt="" loading="lazy" width="760" height="900"></div><h3>{esc(p["title"])}</h3><p>{esc(p["description"])}</p>
 <div class="journal-card-bottom"><span>{esc(p["published"])}</span><span>Read article ↗</span></div></a></article>'''
 
 index_file = TARGET / "index.html"
