@@ -93,7 +93,7 @@ def validate():
         check(article.get("publisher",{}).get("name") == "Aurekai", f"Publisher mismatch: {slug}")
         check(article.get("datePublished") and article.get("dateModified"), f"Date metadata missing: {slug}")
         check(article.get("image") and article["image"][0] == doc.meta["og:image"], f"Article image mismatch: {slug}")
-        check("narration-widget" in markup and 'data-narration-play' in markup, f"Missing narration UI: {slug}")
+        check("journal-audio-player" in markup and 'data-narration-play' in markup and 'data-narration-seek' in markup and 'data-narration-wave' in markup, f"Missing playable audio edition: {slug}")
         check("reader-outline-menu" in markup and "journal-author-row" in markup, f"Missing outline/byline: {slug}")
         check("journal-sources" in markup, f"Missing references section: {slug}")
         check('src="../reader.js"' in markup, f"Missing reader script: {slug}")
