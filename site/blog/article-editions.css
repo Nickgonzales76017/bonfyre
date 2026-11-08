@@ -265,3 +265,118 @@
 .format-dossier .ed-editor-chapters a,.format-broadsheet .ed-editor-chapters a,.format-culture-feature .ed-editor-chapters a,.format-manifesto .ed-editor-chapters a{color:#234535}
 .format-manifesto .ed-editor-chapters{max-width:450px}
 @media(max-width:850px){.ed-editor-note{min-height:0}.ed-editor-chapters{gap:0}}
+
+
+/* LISTENING EDITION v2 — article-first, tactile, and usable without a
+   published audio track. A recording gets measured peaks; browser speech
+   gets a deliberately labeled text-derived spoken-passage map. */
+.ed-title-panel .journal-audio-player{margin:6px 0 28px}
+.journal-audio-player{
+  --audio-ink:#223f31;--audio-muted:#6d7e70;--audio-wash:#f9f7ef;--audio-line:#ccd4c6;
+  position:relative;z-index:2;width:100%;max-width:720px;
+  background:var(--audio-wash);color:var(--audio-ink);
+  border:1px solid #b5c1b4;box-shadow:6px 7px 0 rgba(39,81,57,.09);
+  padding:20px 23px 15px;font:400 .84rem/1.4 system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+}
+.journal-audio-player .journal-audio-topline{
+  display:flex;justify-content:space-between;align-items:center;gap:7px 15px;
+  padding-bottom:13px;border-bottom:1px solid var(--audio-line);
+  color:var(--audio-muted);font-size:.62rem;font-weight:750;letter-spacing:.15em;text-transform:uppercase;
+}
+.journal-audio-kicker{color:#935738}
+.journal-audio-main{display:grid;grid-template-columns:auto minmax(0,1fr);gap:17px;align-items:center;padding:19px 0 7px}
+.journal-audio-play{height:66px;width:66px;min-width:66px;border:0;border-radius:50%;
+  background:#214b38;color:#faf2e5;display:grid;place-items:center;
+  box-shadow:0 0 0 5px #e6ebdf;cursor:pointer;transition:background .15s ease,transform .15s ease}
+.journal-audio-play:hover:not(:disabled){background:#386b4f;transform:scale(1.035)}
+.journal-audio-play:disabled{opacity:.45;cursor:not-allowed}
+.journal-audio-play>span{font-size:1.3rem;line-height:1;transform:translateX(1px)}
+.journal-audio-player[data-state="playing"] .journal-audio-play>span{transform:none}
+.journal-audio-content{min-width:0;width:100%}
+.journal-audio-heading{display:flex;justify-content:space-between;gap:5px 16px;align-items:baseline;flex-wrap:wrap;margin:0 0 8px}
+.journal-audio-heading strong{font:500 clamp(1.15rem,1.6vw,1.45rem)/1.16 Georgia,serif;letter-spacing:-.018em}
+.journal-audio-heading span{font-size:.69rem;color:#687d6c}
+.journal-audio-wave-wrap{position:relative;height:61px;display:block;min-width:0}
+.journal-audio-wave{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:2px;overflow:hidden;pointer-events:none}
+.journal-audio-wave i{display:block;flex:1 1 0;height:var(--level,22px);min-height:7px;max-height:51px;
+  min-width:1px;background:#aab9a8;border-radius:1px;opacity:.8;
+  transition:background .14s linear;pointer-events:none}
+.journal-audio-wave i.is-read{background:#bd805c;opacity:1}
+.journal-audio-wave[data-measured="true"] i{border-radius:3px}
+.journal-audio-wave-wrap input[type="range"]{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:1;
+  background:transparent;cursor:pointer;appearance:none;-webkit-appearance:none;z-index:2}
+.journal-audio-wave-wrap input[type="range"]::-webkit-slider-runnable-track{background:transparent;height:100%}
+.journal-audio-wave-wrap input[type="range"]::-moz-range-track{background:transparent;height:100%;border:0}
+.journal-audio-wave-wrap input[type="range"]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;
+  height:58px;width:2px;border:0;background:#a15a37;box-shadow:0 0 0 1px rgba(249,247,239,.45);border-radius:1px}
+.journal-audio-wave-wrap input[type="range"]::-moz-range-thumb{height:54px;width:2px;background:#a15a37;border:0;border-radius:1px}
+.journal-audio-wave-wrap:focus-within{outline:2px solid #bb7457;outline-offset:3px}
+.journal-audio-wave-wrap input[type="range"]:focus-visible{outline:0}
+.journal-audio-time{display:flex;justify-content:space-between;gap:10px;color:#607568;
+  font:690 .69rem/1.6 system-ui,sans-serif;font-variant-numeric:tabular-nums}
+.journal-audio-actions{display:flex;justify-content:space-between;align-items:center;gap:14px 24px;flex-wrap:wrap;
+  border-top:1px solid var(--audio-line);margin-top:16px;padding-top:13px}
+.journal-audio-navigation{display:flex;align-items:center;gap:3px}
+.journal-audio-navigation button{background:transparent;border:0;min-height:32px;cursor:pointer;color:#28513c;
+  font:.74rem/1.5 system-ui,sans-serif;font-weight:700;display:inline-flex;align-items:center;gap:5px;padding:5px 9px}
+.journal-audio-navigation button:hover{background:#e6eadf}
+.journal-audio-navigation button:disabled{opacity:.35;cursor:not-allowed}
+.journal-audio-rate{display:inline-flex;align-items:center;gap:9px;font-size:.7rem;font-weight:740;color:#5b7260}
+.journal-audio-rate select{border:1px solid #bac9b7;background:white;color:#224435;font-weight:740;
+  border-radius:0;padding:7px 6px;min-height:32px}
+.journal-audio-transcript{font:.75rem/1.5 system-ui,sans-serif;font-weight:770;color:#8a533e;text-underline-offset:4px}
+.journal-audio-disclosure{font:.65rem/1.55 system-ui,sans-serif;color:#687f6f;margin:13px 0 0}
+.journal-audio-progress{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.journal-audio-player :is(button,select,a,input):focus-visible{outline:2px solid #a66b4c;outline-offset:3px}
+.journal-audio-player[data-state="playing"] .journal-audio-kicker{color:#2f7654}
+.journal-audio-player[data-state="unavailable"] .journal-audio-wave,
+.journal-audio-player[data-state="unavailable"] .journal-audio-play{opacity:.34}
+.journal-audio-player.is-docked{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);
+  max-width:820px;width:min(93vw,820px);padding:11px 17px 10px;z-index:1000;box-shadow:0 14px 45px #183e30a8;
+  border-color:#afbdab;background:#fbfaf5}
+.journal-audio-player.is-docked .journal-audio-topline,.journal-audio-player.is-docked .journal-audio-disclosure{display:none}
+.journal-audio-player.is-docked .journal-audio-main{padding:0}
+.journal-audio-player.is-docked .journal-audio-play{height:50px;width:50px;min-width:50px;box-shadow:0 0 0 3px #e6ebdf}
+.journal-audio-player.is-docked .journal-audio-wave-wrap{height:41px}
+.journal-audio-player.is-docked .journal-audio-wave{height:41px}
+.journal-audio-player.is-docked .journal-audio-wave i{max-height:36px;transform:scaleY(.68)}
+.journal-audio-player.is-docked .journal-audio-wave-wrap input[type="range"]::-webkit-slider-thumb{height:40px}
+.journal-audio-player.is-docked .journal-audio-heading{margin-bottom:2px}
+.journal-audio-player.is-docked .journal-audio-heading strong{font-size:1.09rem}
+.journal-audio-player.is-docked .journal-audio-actions{margin-top:6px;padding-top:6px}
+.journal-audio-player.is-docked .journal-audio-transcript{display:none}
+.reader-toolbar-label{color:#51695a;font:.73rem/1.4 system-ui,sans-serif;font-weight:680;letter-spacing:.02em}
+.reader-toolbar-label a{color:#2c6b49;text-underline-offset:3px}
+/* On smaller covers the listening edition remains full-width, not hidden
+   behind a tiny utilities dropdown. */
+@media(max-width:1180px){
+  .journal-audio-player{padding:16px 15px 13px}
+  .journal-audio-heading span{font-size:.63rem}
+  .journal-audio-play{width:55px;height:55px;min-width:55px}
+  .journal-audio-main{gap:14px}
+}
+@media(max-width:650px){
+  .ed-title-panel .journal-audio-player{margin:8px 0 27px}
+  .journal-audio-topline{font-size:.59rem}
+  .journal-audio-main{gap:12px}
+  .journal-audio-play{width:53px;height:53px;min-width:53px;box-shadow:0 0 0 3px #e6ebdf}
+  .journal-audio-heading{display:block}
+  .journal-audio-heading strong{display:block;margin-bottom:2px}
+  .journal-audio-heading span{font-size:.62rem;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .journal-audio-wave-wrap{height:48px}
+  .journal-audio-wave i{max-height:39px}
+  .journal-audio-navigation{flex:1}
+  .journal-audio-navigation button{padding:5px 7px}
+  .journal-audio-actions{gap:7px 9px}
+  .journal-audio-transcript{font-size:.67rem}
+  .journal-audio-disclosure{font-size:.63rem}
+  .journal-audio-player.is-docked{bottom:8px;width:calc(100% - 16px);padding:10px 12px}
+  .journal-audio-player.is-docked .journal-audio-heading span{display:none}
+  .journal-audio-player.is-docked .journal-audio-navigation{gap:0}
+  .journal-audio-player.is-docked .journal-audio-navigation span{display:none}
+  .reader-toolbar .shell{padding-block:12px}
+}
+@media(prefers-reduced-motion:reduce){
+  .journal-audio-play,.journal-audio-wave i{transition:none}
+  .journal-audio-play:hover:not(:disabled){transform:none}
+}
