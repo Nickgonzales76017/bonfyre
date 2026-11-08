@@ -14,6 +14,11 @@ epigraph: more Americans are bowling today than ever before, but bowling in orga
 epigraph_credit: Robert D. Putnam · Bowling Alone: America's Declining Social Capital (1995)
 epigraph_url: https://www.tesd.net/cms/lib/PA01001259/Centricity/Domain/1114/BowlingAlone.pdf
 parting_question: Which online communities are growing in audience while losing the people and institutions that made participation worthwhile?
+audio_file: edition.mp3
+audio_voice: af_heart
+audio_model: Kokoro-82M v1.0
+audio_review: provisional-neural-pilot
+audio_body_sha256: a84a8c0efbd5a604e14de9822d0606d0984745da919a9c7aec2580850808ecb2
 ---
 
 We tend to describe the internet through platforms and their audiences: search engines, social networks, creators and consumers. The people doing the daily work of keeping smaller digital places useful disappear into those categories.

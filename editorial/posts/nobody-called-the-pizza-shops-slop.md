@@ -14,6 +14,11 @@ epigraph: Not every new storefront has to invent the street.
 epigraph_credit: Aurekai Journal · Editorial reflection (2026)
 epigraph_url: 
 parting_question: Are we judging what ordinary people have made, or the impoverished tools we've given them for making it matter?
+audio_file: edition.mp3
+audio_voice: af_heart
+audio_model: Kokoro-82M v1.0
+audio_review: provisional-neural-pilot
+audio_body_sha256: 8c92df2356c8ce8b4f0ee49a38d02fe3a9cf103bdb570017e3852db2aa082c94
 ---
 
 Imagine a town where opening a small restaurant once required hiring an architect, a software company and a distribution consultant. When those costs fall, more restaurants open. Some are forgettable. Some are magnificent. Some become neighborhood gathering places. Their value isn't exhausted by the novelty of their menus.

@@ -14,6 +14,11 @@ epigraph: Obedience can be impeccable while the objective remains unexamined.
 epigraph_credit: Aurekai Journal · Editorial reflection (2026)
 epigraph_url: 
 parting_question: Who is allowed to say the work should not have begun?
+audio_file: edition.mp3
+audio_voice: af_heart
+audio_model: Kokoro-82M v1.0
+audio_review: provisional-neural-pilot
+audio_body_sha256: 055fc0139c0f55bf44d384bf4fc822573423b56d878d458c3bccb143e0b9ec95
 ---
 
 In 1963, psychologist Stanley Milgram published the results of an experiment in which ordinary participants, following the directions of an authority figure, were willing to administer what they believed were dangerous electric shocks to another person. The apparatus was staged; the apparent recipient was a confederate. But the participant's dilemma was real, and the study raised difficult questions about obedience and responsibility.

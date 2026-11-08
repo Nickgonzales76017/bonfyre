@@ -14,6 +14,11 @@ epigraph: The medium is the message.
 epigraph_credit: Marshall McLuhan · Understanding Media (1964)
 epigraph_url: https://www.britannica.com/biography/Marshall-McLuhan
 parting_question: If your website vanished tomorrow, which parts of your institution would still have somewhere to live?
+audio_file: edition.mp3
+audio_voice: af_heart
+audio_model: Kokoro-82M v1.0
+audio_review: provisional-neural-pilot
+audio_body_sha256: 2c32d244ed485efaf95f6d7fa0f0fb6984abb9d811d1849e7bbc86901c609c89
 ---
 
 A website was once the obvious place to explain who you were. Then it became the place to publish, sell, recruit, schedule, invoice and talk to customers. As those jobs became more demanding, we moved them into specialized applications. The website stayed at the center of the diagram, even as the important work moved elsewhere.
