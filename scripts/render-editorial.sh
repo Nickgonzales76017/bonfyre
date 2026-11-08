@@ -380,6 +380,7 @@ def narrator(post):
         <label class="journal-audio-rate">Speed <select data-narration-rate aria-label="Narration playback speed">
          <option value="0.85">0.85×</option><option value="1" selected>1×</option>
          <option value="1.15">1.15×</option><option value="1.35">1.35×</option><option value="1.5">1.5×</option></select></label>
+        <button type="button" data-narration-copy class="journal-audio-copy" aria-label="Copy a link to this spoken passage">Copy passage link</button>
         <a href="#read-story" class="journal-audio-transcript">Read along ↓</a>
       </div>
       <progress data-narration-progress max="100" value="0" class="journal-audio-progress">0%</progress>
@@ -505,7 +506,7 @@ def article_page(p):
 <div class="ed-cover-bottom"><span>Independent editorial / {esc(p["published"])}</span><span>01 — {mins} min read</span></div>
 </div>
 <div class="ed-title-panel">
-<div class="ed-title-utility"><a href="../">← Journal</a><span>{esc(page_label)}</span></div>
+<div class="ed-title-utility"><a href="../">← Journal</a><span>{esc(page_label)}</span><a href="#audio-edition" class="journal-audio-jump">▶ Listen</a></div>
 <p class="ed-section-label">The Aurekai Journal <span> / An essay</span></p>
 <h1 id="article-title">{esc(p["title"])}</h1>
 <p class="ed-deck">{esc(p["description"])}</p>
@@ -550,7 +551,7 @@ def card(p):
     return f'''<article class="journal-card ed-card card-{tone}" data-article data-category="{esc(p["category"])}" data-search="{esc(search)}">
 <a class="journal-card-link" href="./{p["slug"]}/"><div class="journal-card-top"><span class="eyebrow">{esc(p["category"])}</span><span class="ed-card-kind">{esc(fmt.replace("-"," "))}</span></div>
 <div class="ed-card-cover">{art}</div><h3>{esc(p["title"])}</h3><p>{esc(p["description"])}</p>{outline_preview}
-<div class="journal-card-bottom"><span>{esc(p["published"])}</span><span>Read article ↗</span></div></a></article>'''
+<div class="journal-card-bottom"><span>{esc(p["published"])}</span><span>Read / listen ↗</span></div></a></article>'''
 
 index_file = TARGET / "index.html"
 index = index_file.read_text(encoding="utf-8")
