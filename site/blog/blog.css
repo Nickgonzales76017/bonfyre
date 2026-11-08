@@ -62,3 +62,12 @@
 @media(max-width:1000px){.journal-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.journal-article-layout{grid-template-columns:1fr}.journal-article-side{display:none}}
 @media(max-width:720px){.journal-feature{grid-template-columns:1fr}.journal-feature-aside{border-left:0;border-top:1px solid #597164;padding:22px 0 0}.journal-grid{grid-template-columns:1fr}.journal-search-label{width:100%;align-items:flex-start;flex-direction:column}.journal-search-label input{width:100%;max-width:none}.journal-hero h1{font-size:clamp(3rem,11vw,5.5rem)}.journal-card-link{min-height:260px}}
 @media(prefers-reduced-motion:reduce){.journal-card{transition:none}.journal-card:hover{transform:none}}
+/* Source-linked research models and article topic navigation. */
+.journal-lab-link{margin:48px 0 28px;padding:27px 30px;border:1px solid #aab9a5;background:var(--mist)}
+.journal-lab-link .eyebrow{color:var(--rust)}
+.journal-lab-link h3{font:500 clamp(1.7rem,2.4vw,2.15rem)/1.2 Georgia,serif;margin:13px 0 12px;color:var(--forest)}
+.journal-lab-link p{font:.9rem/1.72 var(--sans);margin:0 0 16px;color:var(--muted)}
+.journal-lab-link>a{font:750 .82rem var(--sans);color:var(--rust);text-decoration:none}
+.journal-lab-link>a:hover{text-decoration:underline}
+.journal-topics{display:flex;flex-wrap:wrap;gap:6px;margin:5px 0 20px}
+.journal-topic{border:1px solid var(--line);background:var(--mist);padding:5px 9px;color:var(--forest);font:.71rem var(--sans);font-weight:650}
