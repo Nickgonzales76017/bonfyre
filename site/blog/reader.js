@@ -49,6 +49,7 @@
   const rate = widget.querySelector('[data-narration-rate]');
   const status = widget.querySelector('[data-narration-status]');
   const seek = widget.querySelector('[data-narration-seek]');
+  const copyLink = widget.querySelector('[data-narration-copy]');
   const elapsed = widget.querySelector('[data-narration-elapsed]');
   const total = widget.querySelector('[data-narration-total]');
   const progress = widget.querySelector('[data-narration-progress]');
@@ -304,6 +305,25 @@
   } else {
     prepare();
   }
+  // Useful continuation directly from the article: a reader can listen from
+  // the exact section they have reached, without replaying the headline.
+  if (!isRecording && supported) {
+    for (const heading of article.querySelectorAll(':scope > h2')) {
+      const index = pieces.findIndex(part => part.node === heading);
+      if (index < 0) continue;
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'journal-listen-from';
+      button.textContent = '▶ Listen from here';
+      button.setAttribute('aria-label','Listen from section: ' + heading.textContent.trim());
+      button.addEventListener('click', () => {
+        jumpTo(prefix[index]/Math.max(1,words));
+        if (!active) speechStart();
+      });
+      heading.appendChild(button);
+    }
+  }
+
   play.addEventListener('click', async()=>{
     if (!supported) return;
     if (isRecording) {
@@ -341,7 +361,40 @@
     if (audio) audio.pause();
     clearHighlight();
   },{once:true});
+  if (copyLink) copyLink.addEventListener('click',async()=>{
+    const url = new URL(window.location.href);
+    url.hash = 'audio-edition';
+    url.searchParams.set('listen',String(Math.round(position*1000)));
+    const value = url.toString();
+    let copied = false;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(value);
+        copied = true;
+      }
+    } catch {}
+    if (!copied) {
+      const field = document.createElement('textarea');
+      field.value = value;
+      field.style.cssText = 'position:fixed;left:-9999px;top:0';
+      document.body.appendChild(field);
+      field.select();
+      try { copied = document.execCommand('copy'); } catch {}
+      field.remove();
+    }
+    status.textContent = copied ? 'Passage link copied' : 'Copy the page URL to share this article';
+  });
   repaint(0);
-  if (!supported) state('unavailable','This browser cannot play the audio edition');
-  else state('idle',isRecording?'Recorded edition · Ready':'Browser voice · Ready');
+  if (!supported) {
+    back.disabled = true;forward.disabled = true;seek.disabled = true;rate.disabled = true;
+    state('unavailable','This browser cannot play the audio edition');
+  } else {
+    state('idle',isRecording?'Recorded edition · Ready':'Browser voice · Ready');
+    // A shared link can cue a passage, but playback always needs a user click.
+    const cue = new URLSearchParams(window.location.search).get('listen');
+    if (cue && /^\d{1,4}$/.test(cue) && Number(cue) <= 1000) {
+      jumpTo(Number(cue)/1000);
+      status.textContent='Shared passage ready · Press play to listen';
+    }
+  }
 })();
