@@ -14,7 +14,7 @@ A small team can now make something ambitious quickly, but it may not know enoug
 
 Our answer is to keep the useful parts of every project—code, data models, connections, product knowledge, distribution, relationships and operating routines—available for the next one. In Aurekai those assets are part of the business. In Bonfÿre they're represented as software that can be combined, executed and improved.
 
-The “digital private equity” analogy fits the investment side: rather than only committing cash, Aurekai can contribute engineering hours, AI compute, reusable applications, technical operations and access to distribution. The commercial relationship depends on the project, whether that's a product we own, a service engagement, a licence, a partnership or a share in the outcome.
+The “digital private equity” analogy fits because Aurekai can invest engineering hours, AI compute, reusable applications, technical operations and distribution alongside financial capital. The commercial relationship depends on the project, whether that's a product we own, a service engagement, a licence, a partnership or a share in the outcome.
 
 ## How the businesses fit together
 
@@ -26,13 +26,13 @@ There are several ways someone might encounter Aurekai.
 
 **A buyer or supplier** may need catalogues, product options, pricing, procurement, freight or a way to see how goods fit in a physical space. The spatial product work connects catalogue entries and selected items to 2D/3D room planning. The same product information can help several applications.
 
-**An organization** may need CRM, finance, staff, projects, service tickets, training and documents. The Frappe-derived application work makes those established business grammars available within the native Bonfÿre system. A business isn't required to manage all those functions in one giant application.
+**An organization** may need CRM, finance, staff, projects, service tickets, training and documents. The Frappe-derived application work makes those established business grammars available within the native Bonfÿre system. A business can choose the applications it needs, and each one can handle its own records and workflows.
 
 **A person or community** may have a public profile, collections, posts, members and shared projects. The plan for Aurekai profiles and organizations is broader than a feed of posts: the profile is a recognizable place for the person's contributions, publications, relationships and activities.
 
 **An external provider or existing system** may supply inventory, data, an API, software, computing resources or distribution. Bonfÿre discovers and describes what is available; Aurekai looks for practical ways those resources can contribute to a real business or product.
 
-These aren't separate vertical markets that each require their own stack. They use different parts of the same company and technical infrastructure.
+The teams and products need different interfaces, but their accounts, source systems, computing tools and business applications can draw from the same infrastructure.
 
 ## The four public destinations
 
@@ -84,7 +84,7 @@ That's a different problem from generating a static product image. The data and 
 
 ### When public information gets a proper home
 
-A publication isn't simply another entry in a news feed. The publisher has a profile or organization; its posts have authors, subjects, sources and audiences; a collection or community can gather relevant work without pretending to own it. Work on publisher sites, reading rooms and profiles connects these pieces.
+A publication has a publisher, authors, source material and readers. The publisher's profile can gather that material, and collections or communities can bring related work together while linking back to the people who made it. Work on publisher sites, reading rooms and profiles connects these pieces.
 
 This also applies to civic records, local archives and community material. The goal is for people to find the underlying source, the people involved and useful related work in the same experience.
 
@@ -123,4 +123,4 @@ These figures describe the installed development system. The public repository a
 - [White-label businesses](https://docs.aurekai.work/three-businesses), [operating-products guide](https://docs.aurekai.work/operating-products) and [work samples](https://aurekai-work-samples.pages.dev/)
 - [Quickstart](../QUICKSTART.md), [contributing](../CONTRIBUTING.md) and [source atlas](https://nickgonzales76017.github.io/bonfyre/modules/)
 
-The public pages introduce the products. The technical documentation explains what developers can use and how it works. Version-specific test results and operating restrictions belong with the systems they describe, rather than taking over the company's introduction.
+The public pages introduce the products. The technical documentation explains what developers can use and how it works. Developers can find version-specific tests, operating requirements and limits in the documents for each component.
