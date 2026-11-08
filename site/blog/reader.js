@@ -151,12 +151,67 @@
     stop.disabled = !(active || paused || name === 'finished');
     dock();
   };
-  const selectedVoice = () => {
-    const locale = (document.documentElement.lang || 'en').toLowerCase();
-    const voices = synth.getVoices();
-    return voices.find(v => v.lang.toLowerCase().startsWith(locale) && v.localService) ||
-           voices.find(v => v.lang.toLowerCase().startsWith(locale)) || null;
+  const voiceSelect = widget.querySelector('[data-narration-voice]');
+  const voiceChoiceLabel = widget.querySelector('[data-voice-choice-label]');
+  const voiceKey = v => [v.voiceURI || '', v.name || '', v.lang || ''].join('|');
+  let voiceList = [];
+  // Prefer voices labeled natural/enhanced or browser neural voices, not the
+  // previously enforced localService-first default (often robotic).
+  const voiceScore = v => {
+    const name = (v.name || '').toLowerCase();
+    const lang = (v.lang || '').toLowerCase();
+    let score = lang.startsWith('en') ? 100 : 0;
+    if (/natural|neural|premium|enhanced|google us english|google uk english|siri/.test(name)) score += 65;
+    if (/microsoft (aria|jenny|guy|ava)/.test(name)) score += 45;
+    if (/samantha|daniel|serena|ava|zoe|allison/.test(name)) score += 18;
+    if (/albert|bad news|bells|boing|bubbles|cellos|jester|trinoids|zarvox|whisper|wobble/.test(name)) score -= 200;
+    // Availability and name matter more than whether the voice is offline.
+    return score;
   };
+  const refreshVoices = () => {
+    if (!voiceSelect || !synth) return;
+    const raw = synth.getVoices() || [];
+    voiceList = [...raw].filter(v => (v.lang || '').toLowerCase().startsWith('en') || !v.lang)
+      .sort((a,b) => voiceScore(b)-voiceScore(a));
+    const previous = voiceSelect.value;
+    voiceSelect.replaceChildren();
+    for (const v of voiceList) {
+      const option = document.createElement('option');
+      option.value = voiceKey(v);
+      option.textContent = (v.name || 'System voice') + (v.lang ? ' · '+v.lang : '');
+      voiceSelect.appendChild(option);
+    }
+    if (voiceList.length) {
+      if (voiceList.some(v => voiceKey(v) === previous)) voiceSelect.value = previous;
+      else voiceSelect.value = voiceKey(voiceList[0]);
+      voiceSelect.disabled = false;
+      if (voiceChoiceLabel) voiceChoiceLabel.hidden = false;
+    } else {
+      const option = document.createElement('option');
+      option.textContent = 'Device default';
+      option.value = '';
+      voiceSelect.appendChild(option);
+      voiceSelect.disabled = true;
+      if (voiceChoiceLabel) voiceChoiceLabel.hidden = false;
+    }
+  };
+  const selectedVoice = () => {
+    if (!synth) return null;
+    const voices = synth.getVoices() || [];
+    return voices.find(v => voiceKey(v) === (voiceSelect?.value || ''))
+      || [...voices].sort((a,b) => voiceScore(b)-voiceScore(a))[0]
+      || null;
+  };
+  if (synth && !isRecording) {
+    refreshVoices();
+    if (typeof synth.addEventListener === 'function')
+      synth.addEventListener('voiceschanged',refreshVoices);
+    else if ('onvoiceschanged' in synth) synth.onvoiceschanged = refreshVoices;
+    voiceSelect?.addEventListener('change',() => {
+      const name = selectedVoice()?.name || 'chosen voice';
+      status.textContent = name + ' selected · Applies to the next passage';
+    });
+  } else if (voiceChoiceLabel) voiceChoiceLabel.hidden = true;
   const currentIndex = () => {
     for (let i = 0; i < pieces.length; i++)
       if (prefix[i + 1] / Math.max(1,words) > position) return i;
