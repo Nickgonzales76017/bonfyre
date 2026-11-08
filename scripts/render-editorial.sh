@@ -136,44 +136,99 @@ def _tree(rng, x, bottom, height, spread, family, ink, accent, density):
     return ''.join(result)
 
 def illustration_svg(post):
-    st=style_for(post)
-    rng=random.Random(st["seed"])
-    width,height=760,900
-    ink,accent,dark=st["ink"],st["accent"],st["dark"]
-    parts=[f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img" aria-labelledby="art-title">',
-           f'<title id="art-title">Original {st["family"]} botanical line illustration for {html.escape(post["title"])}</title>',
-           f'<rect width="{width}" height="{height}" fill="{dark}"/>',
-           f'<rect x="28" y="28" width="704" height="844" rx="1" fill="none" stroke="{ink}" opacity=".42"/>']
-    # Hand-engraved radiating/contour rings, with a unique eccentric center.
-    cx=380+rng.randint(-90,90); cy=377+rng.randint(-125,95)
-    for j in range(10):
-        radius=52+j*29+rng.uniform(-3,3)
-        dash=("4 8" if j%3==0 else "none")
-        parts.append(f'<ellipse cx="{cx}" cy="{cy}" rx="{radius:.1f}" ry="{radius*.83:.1f}" fill="none" stroke="{accent}" stroke-width=".7" opacity="{max(.08,.4-j*.025):.2f}" stroke-dasharray="{dash}" transform="rotate({st["rotation"]} {cx} {cy})"/>')
-    # Tiny marginal latitude marks and nature-notebook plotting ticks.
-    for j in range(24):
-        y=55+j*34
-        x=54 if j%2==0 else 706
-        length=10 if j%4 else 20
-        parts.append(_path(f"M {_point(x,y)} h {length if x<380 else -length}",accent,.7,.35))
-    placements=((-16,825,565,185),(350,850,675,220),(742,830,580,165))
-    family=st["family"]
-    for i,(x,y,h,s) in enumerate(placements):
-        dx=rng.uniform(-18,18)
-        shift=0 if i==1 else rng.uniform(-24,24)
-        stem_family=family if i!=2 else SPECIES[(SPECIES.index(family)+1+st["seed"]%3)%len(SPECIES)]
-        parts.append(_tree(rng,x+dx,y+shift,h+rng.randint(-45,55),s,stem_family,ink,accent,10+(st["seed"]//(i+1))%5))
-    for i in range(35):
-        x=rng.uniform(60,700); y=rng.uniform(65,800)
-        size=rng.uniform(1.2,4.0)
-        if i%4==0:
-            parts.append(_path(f"M {_point(x-size,y)} h {2*size:.1f} M {_point(x,y-size)} v {2*size:.1f}",accent,.7,.5))
+    st = style_for(post)
+    rng = random.Random(st["seed"])
+    width, height = 760, 900
+    ink, accent, dark = st["ink"], st["accent"], st["dark"]
+    mode = st["variant"]
+    parts = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img" aria-labelledby="art-title">',
+        f'<title id="art-title">Original botanical study of {html.escape(post["title"])}</title>',
+        f'<defs><linearGradient id="shadow" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="{dark}"/><stop offset=".53" stop-color="{dark}"/><stop offset="1" stop-color="#0d2925"/></linearGradient></defs>',
+        '<rect width="760" height="900" fill="url(#shadow)"/>',
+        f'<rect x="28" y="28" width="704" height="844" fill="none" stroke="{ink}" opacity=".44"/>',
+    ]
+    # Antique field-guide ruling, inset rules, and unique register marks.
+    for j in range(23):
+        y = 64 + j * 34
+        for x, direction in ((51, 1), (709, -1)):
+            size = 20 if j % 5 == 0 else 10
+            parts.append(_path(f"M {_point(x,y)} h {size*direction}", accent, .9, .55))
+    if mode in ("folio", "reverse"):
+        # Window of negative space with trees rising from both page edges.
+        halo_x = 390 if mode == "folio" else 310
+        parts.append(f'<circle cx="{halo_x}" cy="410" r="196" fill="none" stroke="{accent}" stroke-width="1.1" opacity=".49"/>')
+        for k in range(9):
+            rr = 80 + k*23
+            parts.append(f'<circle cx="{halo_x}" cy="410" r="{rr}" fill="none" stroke="{ink}" stroke-width=".55" opacity="{.10+k*.013:.3f}"/>')
+        forest = (
+            [(74, 847, 680, 188, "cedar", 15), (685, 860, 630, 181, "willow", 12), (28, 824, 500, 128, "pine", 11)]
+            if mode == "folio" else
+            [(665, 860, 730, 229, "oak", 15), (95, 855, 525, 144, "birch", 12), (732, 830, 610, 167, "fern", 11)]
+        )
+    elif mode == "centered":
+        # A single collected botanical specimen surrounded by a field diagram.
+        cx, cy = 380+rng.randint(-50,50), 360
+        for k in range(15):
+            rr = 70+k*20
+            parts.append(f'<ellipse cx="{cx}" cy="{cy}" rx="{rr}" ry="{rr*.83:.1f}" transform="rotate(-17 {cx} {cy})" fill="none" stroke="{accent}" stroke-width=".65" opacity="{.40-k*.018:.2f}"/>')
+        forest=[(380, 840, 685, 220, "cedar", 17),(50,840,450,115,"fern",13),(710,840,470,120,"willow",11)]
+    elif mode == "framed":
+        # A layered birch grove. Vertical trunks lend this issue a different rhythm.
+        for x in range(105,750,90):
+            parts.append(_path(f"M {x},102 V 824", accent, .55, .21))
+        for k in range(8):
+            y=152+k*90
+            parts.append(_path(f"M 79,{y} H 681", ink, .55, .19))
+        forest=[(104,851,675,85,"birch",10),(274,847,585,115,"birch",12),(484,851,708,120,"oak",12),(664,850,605,95,"birch",11)]
+    elif mode == "panorama":
+        # Distant mountain contours and a low forest at dusk.
+        for k in range(6):
+            y=370+k*45
+            d=f"M 34,{y+40} Q 190,{y-90+rng.randint(-20,20)} 374,{y+10} T 735,{y-20}"
+            parts.append(_path(d,accent,1.0,.2+k*.06))
+        parts.append(f'<circle cx="555" cy="253" r="89" fill="none" stroke="{accent}" stroke-width="1.2" opacity=".58"/>')
+        forest=[(70,861,460,115,"pine",11),(210,851,610,145,"cedar",13),(370,853,565,150,"pine",12),(536,859,680,160,"cedar",15),(704,849,490,135,"fern",12)]
+    elif mode == "offset":
+        # Broad overhanging boughs and fine lower-edge shrubs.
+        for k in range(10):
+            parts.append(_path(f"M 30,{105+k*22} C 260,{72+k*20} 450,{200+k*9} 730,{70+k*26}",ink,.7,.22))
+        forest=[(120,859,735,260,"oak",15),(683,852,510,165,"willow",12),(430,861,315,140,"fern",11)]
+    elif mode == "letterpress":
+        # Opposing pressed specimens, with inset instrument lines.
+        for k in range(13):
+            rr=75+k*20
+            parts.append(f'<ellipse cx="380" cy="438" rx="{rr}" ry="{rr*.77:.1f}" transform="rotate(24 380 438)" fill="none" stroke="{accent}" opacity=".19" stroke-width=".75"/>')
+        forest=[(105,859,640,200,"fern",17),(660,842,650,190,"willow",16),(370,861,265,100,"birch",10)]
+        parts.append(_path("M 150 128 H 610 M 150 772 H 610",ink,1.1,.62))
+    else:  # diptych
+        # Two contrasting tree studies on opposite sides of a ruled page.
+        parts.append(_path("M 380 55 V 845", accent, 1.15, .49))
+        for k in range(10):
+            y=110+k*72
+            parts.append(_path(f"M 363,{y} h 34", ink, .9, .48))
+        forest=[(156,862,715,180,"cedar",16),(335,850,515,110,"birch",12),(512,846,645,198,"oak",17),(710,853,555,138,"willow",12)]
+    # Stable but distinct geometry within each editorial composition.
+    for i,(x,y,h,spread,family,density) in enumerate(forest):
+        x += rng.uniform(-19,19)
+        h += rng.randint(-40,40)
+        y += rng.randint(-10,10)
+        if (st["seed"] >> (i*5)) % 7 == 0 and mode not in ("framed","diptych"):
+            family = SPECIES[(SPECIES.index(family)+1+st["seed"]%4)%len(SPECIES)]
+        parts.append(_tree(rng,x,y,h,spread,family,ink,accent,density))
+    # Distinct constellation of crosshairs and microscopic specimen marks.
+    for i in range(32):
+        x,y=rng.uniform(57,703),rng.uniform(73,810)
+        size=rng.uniform(1.8,5.0)
+        if i % 4 == 0:
+            parts.append(_path(f"M {_point(x-size,y)} h {2*size:.1f} M {_point(x,y-size)} v {2*size:.1f}",accent,.9,.44))
         else:
-            parts.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{size*.34:.2f}" fill="{accent}" opacity=".3"/>')
-    parts.append(f'<path d="M 56 813 H 704 M 56 82 H 190 M 570 82 H 704" stroke="{ink}" stroke-width=".85" fill="none" opacity=".62"/>')
-    parts.append(f'<circle cx="380" cy="82" r="5.5" fill="none" stroke="{accent}" opacity=".85"/>')
+            parts.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{size*.32:.2f}" fill="{accent}" opacity=".34"/>')
+    parts.append(_path("M 58 819 H 702 M 58 82 H 187 M 575 82 H 702", ink, 1.15, .65))
+    parts.append(f'<circle cx="380" cy="82" r="6.5" fill="none" stroke="{accent}" stroke-width="1.1" opacity=".82"/>')
     parts.append('</svg>\n')
     return ''.join(parts)
+
 
 def esc(s):
     return html.escape(str(s), quote=True)
