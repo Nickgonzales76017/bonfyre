@@ -1,0 +1,41 @@
+# Source article	Relationship	Existing destination	Editorial reason
+sites-are-dead-long-live-the-web	The technical problem	digital-identity-is-not-a-single-login-box	Recognizing an institution across services is a different problem from signing in.
+sites-are-dead-long-live-the-web	The human stakes	who-keeps-the-internet-alive	A connected presence matters only if the people and associations around it endure.
+the-profile-is-bigger-than-the-person	The underlying mathematics	stable-identifiers-are-equivalence-classes	Different representations need an honest account of when they name the same subject.
+the-profile-is-bigger-than-the-person	An institutional example	a-publisher-deserves-a-home	Publishing illustrates how one identity can support many kinds of participation.
+when-reading-becomes-participating	A working example	a-job-posting-has-more-than-one-job	One retained source can support different account-owned continuations without becoming several invented facts.
+when-reading-becomes-participating	The responsibility	the-archive-is-not-the-owner	Participation does not erase the original publisher's rights or provenance.
+why-does-every-app-want-to-be-everything	The protocol boundary	mcp-a2a-activitypub-and-atproto-are-different-tools	Different kinds of connection need different identity and authority contracts.
+why-does-every-app-want-to-be-everything	The application substrate	frappe-as-an-application-language	A shared application grammar can provide reuse without forcing a universal interface.
+the-machine-told-me-so	The evidence problem	three-headlines-can-still-be-one-source	Several apparently agreeing reports may trace to a single original assertion.
+the-machine-told-me-so	The business test	shopifys-ai-memo-needs-an-outcome-metric	A convincing process needs an outcome metric that can challenge the plan.
+when-everyone-agrees-who-is-thinking	An empirical check	metr-study-and-the-missing-counterfactual	A measured counterfactual can complicate a story repeated by an entire team.
+when-everyone-agrees-who-is-thinking	Testing the real system	screenshots-cannot-test-a-distributed-system	Passing visual checks is not equivalent to proving behavior and effects.
+the-internet-of-bad-ideas	Choosing the business	productized-service-first-is-not-every-founders-rule	A compelling operating model still needs evidence that it fits a real customer.
+the-internet-of-bad-ideas	The operating answer	why-ai-needs-an-operating-company	Delivery requires an organization that can maintain and learn from the result.
+nobody-called-the-pizza-shops-slop	The economic constraint	ai-lowered-entry-cost-not-customer-service-cost	Cheaper production does not make the relationships and obligations of a business free.
+nobody-called-the-pizza-shops-slop	The possible environment	sites-are-dead-long-live-the-web	Expressive tools become richer when they can make lasting, connected places.
+we-didnt-run-out-of-ideas	Untapped resources	useful-things-are-already-out-there	The missing ingredient may be access to existing knowledge and capacity.
+we-didnt-run-out-of-ideas	Creators in practice	creators-need-operating-infrastructure-not-only-better-media-models	A creator needs distribution, administration and control, not just a better generative model.
+minecraft-built-a-world-what-about-everything-else	A familiar precedent	the-spreadsheet-that-became-a-business	Simple composable primitives can support uses their designers never specified.
+minecraft-built-a-world-what-about-everything-else	The design tension	why-does-every-app-want-to-be-everything	Composable environments differ from one application trying to own every activity.
+the-spreadsheet-that-became-a-business	From model to space	the-catalogue-and-the-room	Shared product records can support a room plan as well as a conventional table.
+the-spreadsheet-that-became-a-business	The application layer	frappe-as-an-application-language	Business structures need reusable schemas and ownership beyond a single spreadsheet.
+who-gets-to-have-sophisticated-software	The migration question	what-a-legacy-migration-really-moves	Making tools accessible includes preserving the business operations that already exist.
+who-gets-to-have-sophisticated-software	The operating model	why-ai-needs-an-operating-company	Shared operating capacity helps smaller institutions afford durable software.
+what-happens-when-anyone-can-make-an-app	The production constraint	vibe-coding-is-not-a-production-method	Generating an application does not prove it can be operated safely.
+what-happens-when-anyone-can-make-an-app	The actual finish line	when-the-agent-finishes-coding	An agent completing code is only one stage of delivery and support.
+who-keeps-the-internet-alive	The older network	rss-is-still-a-great-source-of-time	Open publication protocols can preserve distribution beyond any one feed.
+who-keeps-the-internet-alive	A publisher's home	a-publisher-deserves-a-home	Independent editorial institutions need an address, history and tools of their own.
+the-local-archive-that-never-got-uploaded	An audio example	from-audio-to-something-people-can-use	An audio collection gains value through intelligible preservation and continuation.
+the-local-archive-that-never-got-uploaded	Civic records	a-council-agenda-can-be-useful	Public records become useful when context and original sources remain accessible.
+a-library-of-alexandria-selected-by-demand	The source problem	three-headlines-can-still-be-one-source	Repetition and popularity should not masquerade as independent historical evidence.
+a-library-of-alexandria-selected-by-demand	The continuity problem	the-internet-has-an-inheritance-problem	Preservation also requires institutions that can survive their original caretakers.
+the-archive-is-not-the-owner	Rights in another market	property-listings-need-rights-not-just-fields	A structured record does not automatically carry permission to redistribute its contents.
+the-archive-is-not-the-owner	A licensing distinction	source-available-is-not-the-same-as-open-source	Access to source material and permission to reuse it are different things.
+the-clip-is-not-the-whole-work	Audio and authorship	from-audio-to-something-people-can-use	Editing improves discovery without replacing a source's context or consent.
+the-clip-is-not-the-whole-work	Independent evidence	three-headlines-can-still-be-one-source	A widely distributed fragment can hide how little original reporting lies behind it.
+the-internet-has-an-inheritance-problem	Older systems	what-a-legacy-migration-really-moves	Succession requires moving business records and knowledge, not just changing hosting.
+the-internet-has-an-inheritance-problem	Continuing identity	the-profile-is-bigger-than-the-person	An enduring public presence must not imply a deceased creator can grant new consent.
+a-union-for-the-internet	The creator's position	creators-need-operating-infrastructure-not-only-better-media-models	Collective support includes distribution, records, administration and leverage.
+a-union-for-the-internet	Economic authority	machine-payments-are-not-machine-purchasing-authority	Shared finance infrastructure still needs explicit limits on who can commit value.

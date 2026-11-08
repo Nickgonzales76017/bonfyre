@@ -406,3 +406,18 @@
   .journal-listen-from{float:none;margin:15px 0 2px;display:flex;width:max-content;max-width:100%}
   .journal-audio-copy{font-size:.68rem;padding-inline:5px}
 }
+
+/* Source-edited reading bridges expose cross-series relationships, not algorithmically invented agreement. */
+.journal-conversation{margin:58px 0 44px;padding:0;border-top:2px solid var(--ed-accent,#a96649)}
+.journal-conversation-intro{padding:26px 0 21px}
+.article-body .journal-conversation h2{font:500 clamp(1.8rem,3vw,2.55rem)/1.18 Georgia,serif;letter-spacing:-.025em;margin:8px 0 10px;color:var(--ed-ink,#263f34)}
+.journal-conversation-intro>p{font:.84rem/1.7 system-ui,sans-serif;color:#54695e;margin:0;max-width:640px}
+.journal-conversation-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.article-body .journal-conversation-card{display:flex;flex-direction:column;align-items:stretch;gap:12px;padding:21px 19px;border:1px solid #b6c3b7;background:#eef0e6;color:#234838;text-decoration:none;min-width:0}
+.article-body .journal-conversation-card:hover,.article-body .journal-conversation-card:focus-visible{background:#e1e8dc;border-color:#75977e}
+.journal-conversation-card>span{font:.66rem/1.5 system-ui,sans-serif;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#a25b3e}
+.journal-conversation-card strong{font:500 clamp(1.17rem,1.75vw,1.46rem)/1.31 Georgia,serif;letter-spacing:-.015em;color:#244737}
+.article-body .journal-conversation-card p{font:.78rem/1.66 system-ui,sans-serif;color:#506559;margin:0;flex:1}
+.journal-conversation-card small{font:.72rem/1.4 system-ui,sans-serif;color:#82523c;font-weight:750}
+.journal-conversation-return{background:#f4f1e8!important}
+@media(max-width:650px){.journal-conversation-grid{grid-template-columns:1fr}.journal-conversation{margin-top:38px}}

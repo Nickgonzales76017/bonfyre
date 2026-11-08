@@ -334,6 +334,8 @@ def reader_outline(post):
     headings=[line[3:].strip() for line in post["body"].splitlines() if line.startswith("## ")]
     links=''.join('<a href="#'+sid(h)+'">'+esc(h)+'</a>' for h in headings)
     links+='<a href="#journal-sources">Sources and references</a>'
+    if EDITORIAL_BRIDGES.get(post["slug"]) or EDITORIAL_BACKLINKS.get(post["slug"]):
+        links+='<a href="#journal-connections">Ideas in conversation</a>'
     return '<div class="reader-outline-menu" data-outline-menu><button type="button" class="reader-outline-trigger" aria-expanded="false" aria-controls="reader-outline-list">Essay outline <span aria-hidden="true">⌄</span></button><nav id="reader-outline-list" class="reader-outline-links" aria-label="Essay sections">'+links+'</nav></div>'
 
 def narrator(post):
@@ -399,12 +401,63 @@ def byline(post):
             '<p class="journal-from">From <a href="'+href+'">'+esc(label)+'</a> · <time datetime="'+esc(post["published"])+'" itemprop="datePublished">'+esc(post["published"])+'</time> · Edited public essay</p></div></div>')
 
 
+
+# Human-edited relationships join existing essays. They are not produced by
+# keyword matching, claimed as citations, or confused with author endorsement.
+EDITORIAL_BRIDGES_PATH = ROOT / "editorial" / "reading-bridges.tsv"
+EDITORIAL_BRIDGES = {}
+EDITORIAL_BACKLINKS = {}
+known_slugs = {post["slug"] for post in posts}
+for number, raw in enumerate(EDITORIAL_BRIDGES_PATH.read_text(encoding="utf-8").splitlines(), 1):
+    if not raw.strip() or raw.startswith("#"):
+        continue
+    fields = raw.split("\t")
+    if len(fields) != 4:
+        raise ValueError(f"Invalid reading-bridge field count at line {number}")
+    source, relation, destination, reason = [v.strip() for v in fields]
+    if (source not in known_slugs or destination not in known_slugs
+        or source == destination or not relation or not reason):
+        raise ValueError(f"Reading bridge has missing article or explanation at line {number}")
+    if any(x["to"] == destination for x in EDITORIAL_BRIDGES.get(source, [])):
+        raise ValueError(f"Duplicate reading bridge at line {number}")
+    EDITORIAL_BRIDGES.setdefault(source, []).append(
+        {"to": destination, "relation": relation, "reason": reason})
+    EDITORIAL_BACKLINKS.setdefault(destination, []).append(source)
+if len(EDITORIAL_BRIDGES) < 20 or sum(map(len,EDITORIAL_BRIDGES.values())) < 40:
+    raise ValueError("The editorial conversation graph is incomplete")
+POST_BY_SLUG = {post["slug"]: post for post in posts}
+
+def editorial_conversation(post):
+    outgoing = EDITORIAL_BRIDGES.get(post["slug"], [])
+    incoming = [ref for ref in EDITORIAL_BACKLINKS.get(post["slug"], [])
+                if ref not in {e["to"] for e in outgoing}]
+    if not outgoing and not incoming:
+        return ""
+    cards = []
+    for edge in outgoing[:2]:
+        target = POST_BY_SLUG[edge["to"]]
+        cards.append('<a class="journal-conversation-card" href="../'+esc(target["slug"])+'/">'
+            '<span>'+esc(edge["relation"])+'</span><strong>'+esc(target["title"])+'</strong>'
+            '<p>'+esc(edge["reason"])+'</p><small>Follow this connection ↗</small></a>')
+    for ref in incoming[:2]:
+        origin = POST_BY_SLUG[ref]
+        cards.append('<a class="journal-conversation-card journal-conversation-return" href="../'+esc(origin["slug"])+'/">'
+            '<span>Another essay leads here</span><strong>'+esc(origin["title"])+'</strong>'
+            '<p>'+esc(origin["description"])+'</p><small>Read the earlier argument ↗</small></a>')
+    return ('<section class="journal-conversation" id="journal-connections" aria-labelledby="journal-connections-title">'
+            '<div class="journal-conversation-intro"><span class="eyebrow">Across the Journal</span>'
+            '<h2 id="journal-connections-title">Ideas in conversation</h2>'
+            '<p>Read these essays alongside this one. Each takes its own position; a connection is not an endorsement or an additional source citation.</p></div>'
+            '<div class="journal-conversation-grid">'+''.join(cards)+'</div></section>')
+
+
 def article_page(p):
     slug = p["slug"]
     fmt, tone, media = p["art"]
     dark, cream, accent, ink = PALETTES[tone]
     mins = max(2, (len(p["body"].split()) + 209) // 210)
     rendered_body, notes_html = build_citation_notes(editorial_body(p), p)
+    conversation = editorial_conversation(p)
     modified = p.get("updated", p["published"])
     image_url = media_url(media, "https://nickgonzales76017.github.io/bonfyre/") if media else "https://nickgonzales76017.github.io/bonfyre/series/media/"+({"authority":"authority-loop.svg","living":"living-subject.svg","access":"expression-ecosystem.svg","operators":"operators-continuity.svg"}.get(p.get("series"),"living-subject.svg"))
     series_order = SERIES_READING_ORDER.get(p.get("series",""), [])
@@ -523,6 +576,7 @@ def article_page(p):
 {epigraph_html}{rendered_body}
 {reflection_html}
 {notes_html}
+{conversation}
 <div class="journal-source-note"><strong>About this article.</strong> {esc(p["origin"])}. {("The linked external material is cited for context, not as an endorsement." if prim else "Original analysis prepared for public reading.")}
 <a href="https://github.com/Nickgonzales76017/bonfyre/blob/main/{esc(p["source_path"])}">View editorial source ↗</a></div>
 </article>
