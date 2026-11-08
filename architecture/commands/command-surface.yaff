@@ -1960,7 +1960,8 @@ architecture cmd-tel
   domain Command / Tel
   semantic_question What does the BonfyreTel capability organ realize, and by what contract?
   purpose Command-surface organ realizing the TelCapability capability. A first-class Bonfyre capability, advertised and composable, not a script.
-  maturity implemented
+  maturity measured
+  witness packs/no-simulation/command-evidence-20261107-real-input.tsv: command.tel quality_proven, receipt rcpt-6cbc1ebf282f874f5e92, workload and quality probe passed over the bound self-test: a loopback-only FreeSWITCH 1.11.3, one call placed, seen by the switch, hung up, gone, unknown-call hangup refused, no trunk reached; fabric state ~/.bonfyre/certification/20261107
   command BonfyreTel
   internal_calculus bonfyre-tel binary
   forbidden_inference the command exists -> its effect is authorized (read-only, but scope still applies)
@@ -1968,7 +1969,7 @@ architecture cmd-tel
   witness packs/no-simulation/command-evidence-20261010.tsv
   witness cmd/BonfyreTel/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.tel=pass
   source_lineage the 91-command capability surface
-  known_gap certification of command.tel is blocked for want of a real input, see its contract in estate/operator-contracts.yaff; the binary answers --help, which is not a witness; realizes TelCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing
+  known_gap operator command.tel quality-proven in the certification of 2026-11-07 (receipt rcpt-6cbc1ebf282f874f5e92), one run on one input; realizes TelCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing
 
 architecture cmd-tier
   canonical_name BonfyreTier
@@ -2008,7 +2009,8 @@ architecture cmd-tone
   domain Command / Tone
   semantic_question What does the BonfyreTone capability organ realize, and by what contract?
   purpose Command-surface organ realizing the ToneCapability capability. A first-class Bonfyre capability, advertised and composable, not a script.
-  maturity implemented
+  maturity measured
+  witness packs/no-simulation/command-evidence-20261107-real-input.tsv: command.tone quality_proven, receipt rcpt-768c11e636896c1177d8, workload and quality probe passed over a narrated recording from ~/.bonfyre/narrate-cache (synthesized speech, 520 frames, 396 voiced) measured as 27 bonfyre-voice-fingerprint features; a music mix (0 voiced frames, rcpt-14eefebdb96ba09fa20e) also passed. No recorded human voice was available; fabric state ~/.bonfyre/certification/20261107
   command BonfyreTone
   internal_calculus bonfyre-tone binary
   forbidden_inference the command exists -> its effect is authorized (read-only, but scope still applies)
@@ -2016,7 +2018,7 @@ architecture cmd-tone
   witness packs/no-simulation/command-evidence-20261010.tsv
   witness cmd/BonfyreTone/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.tone=pass
   source_lineage the 91-command capability surface
-  known_gap certification of command.tone is blocked for want of a real input, see its contract in estate/operator-contracts.yaff; the binary answers --help, which is not a witness; its eGeMAPSv02 extraction contract is explicitly blocked until CapabilityClosure admits an OpenSMILE binary plus configuration. The binary's presence never implies the external model/config dependency is runnable; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing
+  known_gap operator command.tone quality-proven in the certification of 2026-11-07 (receipt rcpt-768c11e636896c1177d8), one run on one input; its eGeMAPSv02 extraction contract is explicitly blocked until CapabilityClosure admits an OpenSMILE binary plus configuration. The binary's presence never implies the external model/config dependency is runnable; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing
 
 architecture cmd-transcribe
   canonical_name BonfyreTranscribe
