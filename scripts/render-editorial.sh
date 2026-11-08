@@ -204,6 +204,8 @@ def parse_doc(path):
     if meta["status"] != "edited-public":
         return None
     meta["body"] = match.group(2).strip()
+    if meta.get("audio_file") and meta.get("audio_body_sha256") != hashlib.sha256(meta["body"].encode("utf-8")).hexdigest():
+        raise ValueError(f"Recorded narration is stale relative to edited prose: {path}")
     if len(meta["body"].split()) < 140:
         raise ValueError(f"Article too short for public journal: {path}")
     meta["source_path"] = str(path.relative_to(ROOT))
@@ -368,7 +370,7 @@ def narrator(post):
     return ('''<section class="journal-audio-player" id="audio-edition" data-narration data-state="idle" data-mode="'''
         + ('recording' if media else 'browser') + '''" aria-label="Listen to this article">
       <div class="journal-audio-topline"><span class="journal-audio-kicker">The listening edition</span>
-      <span class="journal-audio-format">''' + ('Recorded narration' if media else 'Browser voice / no recording required') + '''</span></div>
+      <span class="journal-audio-format">''' + (('AI-narrated edition · '+post.get("audio_voice", "editorial voice") if post.get("audio_model") else 'Recorded narration') if media else 'Browser voice / no recording required') + '''</span></div>
       <div class="journal-audio-main">
         <button class="journal-audio-play" type="button" data-narration-play aria-label="Play article narration"><span aria-hidden="true" data-narration-symbol>▶</span></button>
         <div class="journal-audio-content"><div class="journal-audio-heading"><strong>Listen to this article</strong>
@@ -392,7 +394,9 @@ def narrator(post):
       </div>
       <progress data-narration-progress max="100" value="0" class="journal-audio-progress">0%</progress>
       <p class="journal-audio-disclosure">'''
-      + ('Waveform represents the published audio recording. Reading remains available below.' if media else
+      + (('AI-generated narration using '+post.get("audio_model", "a recorded speech model")+
+           '; a provisional voice edition. Waveform represents actual published audio.' if post.get("audio_model") else
+          'Waveform represents the published audio recording. Reading remains available below.') if media else
          'Uses your selected device or browser voice; quality depends on voices installed. The bars represent spoken-text position, not measured audio.') + '''</p>'''
       + media + '''</section>''')
 
