@@ -37,7 +37,8 @@ jobs:
           # Additional Journal routes such as /about/ are not article records.
           test "$(grep -c '^post:' site/blog/post-index.tsv)" -eq "$expected"
           test "$(grep -c '<item>' site/blog/feed.xml)" -eq "$expected"
-          test "$(grep -c '<url>' site/blog/sitemap.xml)" -eq "$((expected+3))"
+          # Journal landing, About, Series, and Connections atlas supplement the article URLs.
+          test "$(grep -c '<url>' site/blog/sitemap.xml)" -eq "$((expected+4))"
           test "$(wc -l < site/blog/post-index.tsv)" -eq "$((expected+1))"
           grep -q "All articles / $expected" site/blog/index.html
           grep -q 'data-filter="Debates"' site/blog/index.html
