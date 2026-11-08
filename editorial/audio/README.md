@@ -1,0 +1,1 @@
+Generate nine MP3 voice auditions from real Aurekai essays using the open-licensed Kokoro-82M neural model. The action retains model and audio hashes. The samples are for editorial listening review, not automatic publication. No paid speech provider or cloned human voice is used. Human approval is necessary before publishing a narrator across the Journal.
