@@ -8520,7 +8520,8 @@
       "views": [],
       "witnesses": [
         "packs/no-simulation/command-evidence-20261010.tsv",
-        "cmd/BonfyreProxy/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.proxy=fail"
+        "cmd/BonfyreProxy/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.proxy=fail",
+        "2026-11-07: /v1/chat/completions and /v1/audio/transcriptions killed the server (SIGBUS): each handler held a 4 MB result buffer on a 512 KB connection-thread stack, and both still called brief/transcribe with a retired --out /dev/stdout form. Buffers moved to the heap, handlers call bonfyre-brief <file> <dir> and bonfyre-transcribe <audio> <dir> --language L and return brief.md / transcript.txt|srt|vtt; the second vector case (two chat completions in a row, empty conversation 400, health after) passes and fails on the old source"
       ]
     },
     "cmd-public-world": {
@@ -41345,9 +41346,9 @@
   },
   "provenance": {
     "cannot_infer": "a matching digest -> a correct atlas; it says this index was built from these declaration bytes and nothing more",
-    "declaration_digest": "ae78a99f35bab071b67327a87f8bd70e87a417d16e62abefb5403052c52a8676",
+    "declaration_digest": "2f50c6620da943b39c2b309896813e99254775b6ff3ed304e551554c207119ea",
     "declaration_files": 151,
-    "generated_at": "2026-11-08T07:44:15Z"
+    "generated_at": "2026-11-08T07:48:39Z"
   },
   "views": {
     "CapabilityView": {

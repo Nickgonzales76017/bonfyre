@@ -21,6 +21,7 @@
  *   OPENAI_API_KEY=anything    # accepted but ignored
  */
 #define _GNU_SOURCE
+#include <dirent.h>
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
@@ -445,7 +446,22 @@ static void handle_models(HttpResponse *r) {
 
 /* ── POST /v1/audio/transcriptions ───────────────────────────────── */
 
-static void handle_transcription(HttpRequest *req, HttpResponse *r) {
+/* Remove a directory this process made and the plain files a tool wrote in it. */
+static void remove_flat_dir(const char *dir) {
+    DIR *d = opendir(dir);
+    if (d) {
+        struct dirent *e; char path[MAX_PATH_LEN];
+        while ((e = readdir(d))) {
+            if (!strcmp(e->d_name, ".") || !strcmp(e->d_name, "..")) continue;
+            snprintf(path, sizeof(path), "%s/%s", dir, e->d_name);
+            unlink(path);
+        }
+        closedir(d);
+    }
+    rmdir(dir);
+}
+
+static void handle_transcription_into(HttpRequest *req, HttpResponse *r, char *result) {
     /* Extract uploaded audio file */
     char audio_path[MAX_PATH_LEN];
     if (extract_multipart_file(req, audio_path, sizeof(audio_path)) < 0) {
@@ -465,7 +481,6 @@ static void handle_transcription(HttpRequest *req, HttpResponse *r) {
 
     LOG_INFO("transcribe: file=%s model=%s lang=%s fmt=%s", audio_path, model, language, response_format);
 
-    char result[MAX_RESULT];
     size_t result_len = 0;
     int rc;
 
@@ -487,15 +502,33 @@ static void handle_transcription(HttpRequest *req, HttpResponse *r) {
             (char *)fmt_flag,
             NULL
         };
-        rc = run_binary(g_hcp_bin, argv, result, sizeof(result), &result_len);
+        rc = run_binary(g_hcp_bin, argv, result, MAX_RESULT, &result_len);
     } else if (g_transcribe_bin[0] && access(g_transcribe_bin, X_OK) == 0) {
-        char *argv[] = {
-            (char *)g_transcribe_bin,
-            audio_path,
-            "--out", "/dev/stdout",
-            NULL
-        };
-        rc = run_binary(g_transcribe_bin, argv, result, sizeof(result), &result_len);
+        /* bonfyre-transcribe <input-audio> <output-dir> --language L writes
+         * transcript.txt/.srt/.vtt (and working files) into the directory. */
+        char out_dir[MAX_PATH_LEN];
+        snprintf(out_dir, sizeof(out_dir), "%s/asr_%d_%lx.XXXXXX", TEMP_DIR, getpid(), (unsigned long)pthread_self());
+        if (!mkdtemp(out_dir)) { unlink(audio_path); resp_json(r, 500, "{\"error\":{\"message\":\"Failed to create output directory\"}}"); return; }
+        char *argv[] = { (char *)g_transcribe_bin, audio_path, out_dir, "--language", language, NULL };
+        rc = run_binary(g_transcribe_bin, argv, result, MAX_RESULT, &result_len);
+        if (rc == 0) {
+            const char *want = !strcmp(response_format, "srt") ? "transcript.srt"
+                             : !strcmp(response_format, "vtt") ? "transcript.vtt" : "transcript.txt";
+            char path[MAX_PATH_LEN];
+            snprintf(path, sizeof(path), "%s/%s", out_dir, want);
+            FILE *tf = fopen(path, "rb");
+            if (!tf) rc = 1;
+            else {
+                result_len = fread(result, 1, MAX_RESULT - 1, tf); fclose(tf);
+                if (!strcmp(want, "transcript.txt")) {
+                    size_t a = 0; while (a < result_len && (result[a] == ' ' || result[a] == '\n')) a++;
+                    while (result_len > a && (result[result_len - 1] == ' ' || result[result_len - 1] == '\n')) result_len--;
+                    memmove(result, result + a, result_len - a); result_len -= a;
+                }
+                result[result_len] = '\0';
+            }
+        }
+        remove_flat_dir(out_dir);
     } else {
         resp_json(r, 500,
             "{\"error\":{\"message\":\"No transcription backend available. "
@@ -558,7 +591,7 @@ static void handle_transcription(HttpRequest *req, HttpResponse *r) {
 
 /* ── POST /v1/chat/completions ───────────────────────────────────── */
 
-static void handle_chat(HttpRequest *req, HttpResponse *r) {
+static void handle_chat_into(HttpRequest *req, HttpResponse *r, char *result) {
     if (!g_brief_bin[0] || access(g_brief_bin, X_OK) != 0) {
         resp_json(r, 500,
             "{\"error\":{\"message\":\"bonfyre-brief not available\","
@@ -618,23 +651,29 @@ static void handle_chat(HttpRequest *req, HttpResponse *r) {
 
     /* Write input to temp file */
     char input_path[MAX_PATH_LEN];
-    snprintf(input_path, sizeof(input_path), "%s/chat_%d.txt", TEMP_DIR, getpid());
+    snprintf(input_path, sizeof(input_path), "%s/chat_%d_%lx.txt", TEMP_DIR, getpid(), (unsigned long)pthread_self());
     FILE *fp = fopen(input_path, "w");
     if (!fp) { resp_json(r, 500, "{\"error\":{\"message\":\"Failed to create temp file\"}}"); return; }
     fputs(input_text, fp);
     fclose(fp);
 
-    /* Run bonfyre-brief */
-    char result[MAX_RESULT];
+    /* Run bonfyre-brief <transcript-file> <output-dir>; it writes brief.md,
+     * brief-meta.json and artifact.json there. The reply is brief.md. */
     size_t result_len = 0;
-    char *argv[] = {
-        (char *)g_brief_bin,
-        input_path,
-        "--out", "/dev/stdout",
-        NULL
-    };
-    int rc = run_binary(g_brief_bin, argv, result, sizeof(result), &result_len);
+    char out_dir[MAX_PATH_LEN];
+    snprintf(out_dir, sizeof(out_dir), "%s/chat_%d_%lx.XXXXXX", TEMP_DIR, getpid(), (unsigned long)pthread_self());
+    if (!mkdtemp(out_dir)) { unlink(input_path); resp_json(r, 500, "{\"error\":{\"message\":\"Failed to create output directory\"}}"); return; }
+    char *argv[] = { (char *)g_brief_bin, input_path, out_dir, NULL };
+    int rc = run_binary(g_brief_bin, argv, result, MAX_RESULT, &result_len);
     unlink(input_path);
+    if (rc == 0) {
+        char brief_path[MAX_PATH_LEN];
+        snprintf(brief_path, sizeof(brief_path), "%s/brief.md", out_dir);
+        FILE *bf = fopen(brief_path, "rb");
+        if (!bf) rc = 1;
+        else { result_len = fread(result, 1, MAX_RESULT - 1, bf); result[result_len] = '\0'; fclose(bf); }
+    }
+    remove_flat_dir(out_dir);
 
     if (rc != 0) {
         resp_json(r, 500,
@@ -663,6 +702,16 @@ static void handle_chat(HttpRequest *req, HttpResponse *r) {
         "}",
         id_buf, (long)time(NULL), escaped ? escaped : "");
     free(escaped);
+}
+
+/* The result buffer is MAX_RESULT (4 MB) and each connection runs on a
+ * THREAD_STACK (512 KB) thread, so it lives on the heap: on the stack every
+ * chat or transcription request overflowed it and the server died (SIGBUS). */
+static void with_result(void (*handler)(HttpRequest *, HttpResponse *, char *), HttpRequest *req, HttpResponse *r) {
+    char *result = malloc(MAX_RESULT);
+    if (!result) { resp_json(r, 500, "{\"error\":{\"message\":\"out of memory\",\"type\":\"server_error\"}}"); return; }
+    handler(req, r, result);
+    free(result);
 }
 
 /* ── Request router ──────────────────────────────────────────────── */
@@ -703,10 +752,10 @@ static void handle_request(int fd) {
         handle_models(&resp);
     }
     else if (strcmp(req.path, "/v1/audio/transcriptions") == 0 && strcmp(req.method, "POST") == 0) {
-        handle_transcription(&req, &resp);
+        with_result(handle_transcription_into, &req, &resp);
     }
     else if (strcmp(req.path, "/v1/chat/completions") == 0 && strcmp(req.method, "POST") == 0) {
-        handle_chat(&req, &resp);
+        with_result(handle_chat_into, &req, &resp);
     }
     else if (strncmp(req.path, "/v1/", 4) == 0) {
         resp_json(&resp, 404,
