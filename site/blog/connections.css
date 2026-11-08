@@ -55,3 +55,11 @@
 @media(max-width:1000px){.atlas-essays{grid-template-columns:repeat(2,minmax(0,1fr))}.atlas-filter-wrap{display:block}.atlas-filter-wrap input{max-width:550px}.atlas-filter-wrap .atlas-search-label{display:block;margin:21px 0 8px}.atlas-result-count{margin:10px 0}}
 @media(max-width:700px){.atlas-hero-inner{grid-template-columns:1fr}.atlas-compass{max-width:420px;transform:none}.atlas-compass-core{transform:translate(-50%,-50%)}.atlas-essays{grid-template-columns:1fr}.atlas-section-header{align-items:start;flex-direction:column}}
 @media print{.atlas-page .top,.atlas-filter-wrap,.atlas-compass,.atlas-links summary{display:none}.atlas-hero{background:#fff;color:#222}.atlas-hero p,.atlas-hero h1{color:#111}.atlas-essay{break-inside:avoid}.atlas-links{display:none}}
+
+/* Editorial contents list replaces the rotated diagram on the Reading Guide. */
+.journal-guide-contents{align-self:center;display:flex;flex-direction:column;border-top:2px solid #dfb28f;min-width:0}
+.journal-guide-contents>span{padding:18px 2px;color:#e3ba9a;font:750 .73rem/1.4 system-ui,sans-serif;letter-spacing:.11em;text-transform:uppercase}
+.journal-guide-contents a{display:flex;gap:20px;align-items:center;border-top:1px solid #637d6c;padding:15px 3px;color:#f8f0e4;text-decoration:none;font:500 clamp(1.09rem,1.65vw,1.4rem)/1.3 Georgia,serif}
+.journal-guide-contents a b{font:750 .76rem/1 system-ui,sans-serif;color:#e2af88;min-width:23px}
+.journal-guide-contents a:hover,.journal-guide-contents a:focus-visible{color:#f5c79f;text-decoration:underline;text-underline-offset:4px}
+@media(max-width:700px){.journal-guide-contents{margin-top:6px}}

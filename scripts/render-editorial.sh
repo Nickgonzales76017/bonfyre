@@ -455,9 +455,9 @@ def editorial_conversation(post):
             '<p>'+esc(origin["description"])+'</p><small>Read the earlier argument ↗</small></a>')
     return ('<section class="journal-conversation" id="journal-connections" aria-labelledby="journal-connections-title">'
             '<div class="journal-conversation-intro"><span class="eyebrow">Across the Journal</span>'
-            '<h2 id="journal-connections-title">Ideas in conversation</h2>'
-            '<p>Read these essays alongside this one. Each takes its own position; a connection is not an endorsement or an additional source citation.</p></div>'
-            '<div class="journal-conversation-grid">'+''.join(cards)+'</div><p class="journal-atlas-more"><a href="../connections/">Explore all 66 essays in the connections atlas ↗</a></p></section>')
+            '<h2 id="journal-connections-title">Related reading</h2>'
+            '<p>More articles that explore this subject from another angle.</p></div>'
+            '<div class="journal-conversation-grid">'+''.join(cards)+'</div><p class="journal-atlas-more"><a href="../connections/">Browse more articles in the Reading Guide ↗</a></p></section>')
 
 
 
@@ -639,7 +639,7 @@ def connections_atlas_page():
         ("authority", "02", "Authority and judgment", "Independent verification, organizational purpose, and the right to question a brief."),
         ("access", "03", "Expression and participation", "Why powerful creative tools need richer opportunities for participation."),
         ("operators", "04", "Internet operators", "People, archives, rights, and institutions that keep culture alive."),
-        ("other", "05", "Across the research desk", "Technical work, practical cases, mathematics, operating economics, and adjacent questions.")
+        ("other", "05", "More from the Journal", "Research, case studies, mathematics and practical questions.")
     ]
     assigned = {slug for paths in SERIES_READING_ORDER.values() for slug in paths}
     items = []
@@ -664,11 +664,11 @@ def connections_atlas_page():
                     '<p>'+esc(link["reason"])+'</p></li>')
             for link in incoming:
                 other=POST_BY_SLUG[link]
-                connections.append('<li><span>Other essays linking here</span>'
+                connections.append('<li><span>More on this subject</span>'
                     '<a href="../'+esc(other["slug"])+'/">'+esc(other["title"])+'</a></li>')
             bridge_count=len(outgoing)+len(incoming)
             trail=('<details class="atlas-links"><summary>'+str(bridge_count)+
-                ' editorial connection'+('s' if bridge_count!=1 else '')+'</summary>'
+                ' related article'+('s' if bridge_count!=1 else '')+'</summary>'
                 '<ul>'+''.join(connections)+'</ul></details>') if connections else ''
             items.append(slug)
             cards.append('<article class="atlas-essay" data-essay data-family="'+family+
@@ -688,12 +688,12 @@ def connections_atlas_page():
             '<h2>'+esc(name)+'</h2><p>'+esc(description)+'</p></div></div>'
             '<div class="atlas-essays">'+''.join(cards)+'</div></section>')
     if len(items)!=len(posts) or len(set(items))!=len(posts):
-        raise ValueError("The editorial atlas must index every essay exactly once")
+        raise ValueError("The reading guide must include every essay exactly once")
     edited_links=sum(map(len,EDITORIAL_BRIDGES.values()))
     canonical=BASE_URL+"connections/"
     schema={"@context":"https://schema.org","@type":"CollectionPage",
-      "name":"The Aurekai Journal · Connections atlas","url":canonical,
-      "description":"Navigate all of the Journal's existing essays and their individually edited intellectual connections.",
+      "name":"Aurekai Journal · Reading Guide","url":canonical,
+      "description":"Browse Journal articles by topic, with related reading selected by the editors.",
       "publisher":{"@type":"Organization","name":"Aurekai","url":"https://aurekai.work/"},
       "mainEntity":{"@type":"ItemList","numberOfItems":len(posts),
         "itemListElement":[{"@type":"ListItem","position":n+1,"url":BASE_URL+slug+"/",
@@ -701,47 +701,51 @@ def connections_atlas_page():
     jsonld=json.dumps(schema,ensure_ascii=False,separators=(",",":")).replace("<","\\u003c")
     controls=''.join('<button type="button" data-atlas-filter="'+family+'" aria-pressed="'+
         ("true" if n==0 else "false")+'">'+esc(label)+'</button>' for n,(family,label) in
-        enumerate([("all","All 66 essays"),("living","Living web"),("authority","Judgment"),
+        enumerate([("all","All "+str(len(posts))+" essays"),("living","Living web"),("authority","Judgment"),
                    ("access","Expression"),("operators","Operators"),("other","Wider research")]))
     return '''<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#1b4033">
-<title>Connections atlas — Aurekai Journal</title>
-<meta name="description" content="A navigable, editorially curated atlas connecting all 66 Aurekai Journal essays: four reading series, research, evidence, technical investigations and institutional history.">
-<meta property="og:title" content="A map of the work — Aurekai Journal"><meta property="og:type" content="website">
+<title>Reading Guide — Aurekai Journal</title>
+<meta name="description" content="Browse Aurekai Journal essays by topic, including four related series, research, technical investigations and cultural history.">
+<meta property="og:title" content="Reading Guide — Aurekai Journal"><meta property="og:type" content="website">
 <meta property="og:url" content="'''+canonical+'''">
 <link rel="canonical" href="'''+canonical+'''">
 <link rel="stylesheet" href="../../assets/aurekai-field-guide.css">
 <link rel="stylesheet" href="../blog.css"><link rel="stylesheet" href="../connections.css">
 <script type="application/ld+json">'''+jsonld+'''</script>
 <script src="../connections.js" defer></script></head>
-<body class="atlas-page"><a class="skip" href="#atlas-main">Skip to essay map</a>
+<body class="atlas-page"><a class="skip" href="#atlas-main">Skip to articles</a>
 <header class="top"><div class="shell"><a class="brand" href="../../"><span class="mark">A</span> AUREKAI <small>/ JOURNAL</small></a>
 <nav aria-label="Site navigation"><a href="../../">Home</a><a href="../">Journal</a><a href="../../series/">Four series</a><a href="../../discover/">Explore applications</a></nav></div></header>
 <main id="atlas-main"><section class="atlas-hero"><div class="shell atlas-hero-inner">
-<div><span class="atlas-kicker">The Journal / A reading atlas</span>
-<h1>One body of work.<br><em>Many ways through.</em></h1>
-<p>No new essays and no invented connections. This map reveals how the existing arguments touch one another—an economic question leads to a technical one, or a historical question to a question of rights.</p>
+<div><span class="atlas-kicker">The Journal / Reading Guide</span>
+<h1>Find your next read.<br><em>Start with a subject.</em></h1>
+<p>Explore the articles by subject, from the future of the web to independent publishing, business, science and technology. You can begin anywhere and follow related stories as you read.</p>
 <div class="atlas-stats"><span><strong>'''+str(len(posts))+'''</strong> published essays</span>
-<span><strong>'''+str(edited_links)+'''</strong> edited connections</span>
+<span><strong>'''+str(edited_links)+'''</strong> suggested further reads</span>
 <span><strong>4</strong> connected series</span></div>
-</div><div class="atlas-compass" aria-hidden="true">
-<span>01 <b>Living web</b></span><span>02 <b>Judgment</b></span>
-<span>03 <b>Expression</b></span><span>04 <b>Stewardship</b></span>
-<div class="atlas-compass-core">A<span>J</span></div></div></div></section>
+</div><nav class="journal-guide-contents" aria-label="Sections of the Journal">
+<span>In this guide</span>
+<a href="#atlas-living"><b>01</b> Profiles and the web</a>
+<a href="#atlas-authority"><b>02</b> AI and judgment</a>
+<a href="#atlas-access"><b>03</b> Creative tools</a>
+<a href="#atlas-operators"><b>04</b> Internet operators</a>
+<a href="#atlas-other"><b>05</b> More articles</a>
+</nav></div></section>
 <section class="atlas-guide"><div class="shell"><div class="atlas-guide-title">
-<span class="atlas-kicker">Find a route</span><h2>Pick a subject. Follow its consequences.</h2>
-<p>Every title links to the article itself. Expand its connections to see the editorial reason for reading another piece alongside it.</p></div>
+<span class="atlas-kicker">Browse by topic</span><h2>Explore the essays.</h2>
+<p>Choose a topic or search for something specific. Each article suggests other worthwhile reading.</p></div>
 <div class="atlas-filter-wrap"><div class="atlas-filters" role="group" aria-label="Filter the atlas">
 '''+controls+'''</div>
-<label class="atlas-search-label" for="atlas-search">Find an idea or topic</label>
+<label class="atlas-search-label" for="atlas-search">Search articles</label>
 <input id="atlas-search" data-atlas-search type="search" autocomplete="off"
 placeholder="e.g. publishing, rights, agents, archives…">
 <p class="atlas-result-count" data-atlas-status role="status" aria-live="polite">All '''+str(len(posts))+''' essays shown</p></div></div></section>
 <div class="shell atlas-directory">'''+''.join(groups)+'''
-<p class="atlas-empty" data-atlas-empty hidden>No essays match your selection. Clear the search or choose another series.</p>
+<p class="atlas-empty" data-atlas-empty hidden>No articles match your search. Try another keyword or topic.</p>
 </div></main>
-<footer class="footer"><div class="shell"><span>Aurekai / Bonfÿre · All editorial relations come from the edited source archive.</span>
+<footer class="footer"><div class="shell"><span>Aurekai / Bonfÿre · Original essays, research and credited sources.</span>
 <span><a href="../">Journal</a> · <a href="../../series/">Reading series</a> · <a href="../feed.xml">RSS</a> · <a href="../about/">Editorial desk</a></span></div></footer>
 </body></html>'''
 
@@ -768,7 +772,7 @@ if start < 0 or end < 0:
 index = index[:start] + '<div class="journal-grid">' + '\n'.join(map(card, posts)) + '</div>\n' + index[end:]
 if '<a href="./connections/">' not in index:
     index = index.replace('<a href="#articles">Browse the article index ↓</a>',
-        '<a href="./connections/">Explore the connections atlas ↗</a><a href="#articles">Browse the article index ↓</a>')
+        '<a href="./connections/">Browse the Reading Guide ↗</a><a href="#articles">Browse the article index ↓</a>')
 index = re.sub(r'All articles / \d+', 'All articles / ' + str(len(posts)), index)
 index = re.sub(r'Showing \d+ articles', 'Showing ' + str(len(posts)) + ' articles', index)
 fstart = index.find('<div class="journal-filters"')

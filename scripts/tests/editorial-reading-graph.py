@@ -78,16 +78,24 @@ for sitemap in [site/"sitemap.xml",blog/"sitemap.xml"]:
             assert len(data[url])==10 and data[url][4]=="-" and data[url][7]=="-",f"bad lastmod {slug}"
     assert data.get("https://nickgonzales76017.github.io/bonfyre/series/") is None,"unverified static landing lastmod"
 atlas_path=blog/"connections"/"index.html"
-assert atlas_path.is_file(),"Missing generated connections atlas"
+assert atlas_path.is_file(),"Missing generated Reading Guide"
 atlas=atlas_path.read_text(encoding="utf-8")
-assert atlas.count(' data-essay data-family=')==len(posts), "Atlas omits one or more essays"
-assert 'data-atlas-search' in atlas and 'data-atlas-filter="operators"' in atlas, "Missing accessible atlas navigation"
+assert "<title>Reading Guide — Aurekai Journal</title>" in atlas, "Reader-facing title reverted"
+assert "Connections atlas" not in atlas and "A map of the work" not in atlas, "Internal jargon leaked to readers"
+assert "journal-guide-contents" in atlas, "Missing printed contents navigation"
+for name in ("Profiles and the web", "AI and judgment", "Creative tools", "Internet operators"):
+    assert name in atlas, f"Guide is missing a named section: {name}"
+home=(site/"index.html").read_text(encoding="utf-8")
+assert "<h3>Source atlas</h3>" not in home, "Internal source-library naming leaked onto homepage"
+
+assert atlas.count(' data-essay data-family=')==len(posts), "Reading Guide omits one or more essays"
+assert 'data-atlas-search' in atlas and 'data-atlas-filter="operators"' in atlas, "Missing accessible topic navigation"
 for slug in posts:
-    assert '../'+slug+'/' in atlas,f"Atlas lacks article link: {slug}"
-assert (blog/"connections.css").is_file() and (blog/"connections.js").is_file(),"Missing atlas resources"
+    assert '../'+slug+'/' in atlas,f"Reading Guide lacks article link: {slug}"
+assert (blog/"connections.css").is_file() and (blog/"connections.js").is_file(),"Missing Reading Guide resources"
 for sitemap in [site/"sitemap.xml",blog/"sitemap.xml"]:
     raw=ElementTree.parse(sitemap)
     urls={el.findtext("s:loc",namespaces=ns) for el in raw.findall(".//s:url",ns)}
-    assert base+"connections/" in urls,"Atlas missing from sitemap"
+    assert base+"connections/" in urls,"Reading Guide missing from sitemap"
 
 print(f"JOURNAL_READING_GRAPH_PASS {len(edges)} edited links / {len(refs)} connected existing essays / both directions / truthful sitemap dates")
