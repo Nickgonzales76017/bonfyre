@@ -122,7 +122,7 @@ jobs:
           test "$(find site/blog -mindepth 2 -maxdepth 2 -name index.html | wc -l)" -eq 46
           test "$(grep -c '<item>' site/blog/feed.xml)" -eq 46
           grep -q 'All articles / 46' site/blog/index.html
-      - name: Browser-check the research lab and cross-site explorer
+      - name: Browser-check Fieldwork stories and cross-site search
         shell: bash
         run: |
           set -euo pipefail
@@ -134,40 +134,40 @@ jobs:
           node --input-type=module <<'NODE'
           import { chromium } from './.spaces-tools/node_modules/playwright/index.mjs';
           import assert from 'node:assert/strict';
-          const browser = await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH,args:['--no-sandbox']});
-          const page = await browser.newPage({viewport:{width:1366,height:900}});
+          const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH,args:['--no-sandbox']});
+          const page=await browser.newPage({viewport:{width:1366,height:900}});
           const errors=[];
           page.on('pageerror',e=>errors.push(e.message));
           try {
-            await page.goto('http://127.0.0.1:8765/labs/',{waitUntil:'domcontentloaded'});
-            assert.match(await page.locator('[data-out="precision"]').textContent(),/16\.1%/);
-            assert.match(await page.locator('[data-out="lot-profit"]').textContent(),/650/);
-            assert.match(await page.locator('[data-out="scope-savings"]').textContent(),/29,000/);
-            assert.equal((await page.locator('[data-out="model-winner"]').textContent()).trim(),'Route B');
-            await page.locator('#base-fpr').fill('1');
-            assert.match(await page.locator('[data-out="precision"]').textContent(),/49%/);
-            await page.locator('[data-reset="base-form"]').click();
-            assert.match(await page.locator('[data-out="precision"]').textContent(),/16\.1%/);
-            await page.locator('#lot-salable').fill('50');
-            assert.match(await page.locator('[data-out="lot-profit"]').textContent(),/550/);
-            await page.locator('#model-recovery').fill('0');
-            assert.equal((await page.locator('[data-out="model-winner"]').textContent()).trim(),'Route A');
+            await page.goto('http://127.0.0.1:8765/fieldwork/',{waitUntil:'networkidle'});
+            assert.equal(await page.locator('h1').count(),1);
+            assert.equal(await page.locator('.fw-chapter').count(),5);
+            assert.equal(await page.locator('.fw-story-index a').count(),5);
+            assert.equal(await page.locator('a[href="../spaces/catalogue/"]').count(),1);
+            assert.equal(await page.locator('a[href="../blog/"]').count()>=1,true);
+            for(const image of await page.locator('.fw-cover-art img, .fw-product-image img').all()){
+              assert.equal(await image.evaluate(el=>el.complete && el.naturalWidth>0),true);
+            }
+            await page.locator('a[href="#inventory"]').first().click();
+            assert.equal(new URL(page.url()).hash,'#inventory');
+            await page.goto('http://127.0.0.1:8765/labs/',{waitUntil:'load'});
+            await page.waitForURL('**/fieldwork/');
+            assert.equal(await page.locator('input[type="number"]').count(),0);
             await page.goto('http://127.0.0.1:8765/discover/',{waitUntil:'domcontentloaded'});
             await page.waitForFunction(()=>document.querySelectorAll('[data-kind="article"]').length===46,{timeout:12000});
             assert.equal(await page.locator('[data-kind="studio"]').count(),20);
-            assert.equal(await page.locator('[data-kind="tool"]').count(),5);
+            assert.equal(await page.locator('[data-kind="tool"]').count(),4);
             assert.equal(await page.locator('[data-kind="article"]').count(),46);
             await page.getByRole('button',{name:'Articles',exact:true}).click();
-            assert.equal(await page.locator('[data-kind="studio"]:visible').count(),0);
             assert.equal(await page.locator('[data-kind="article"]:visible').count(),46);
-            await page.getByRole('button',{name:'Studios',exact:true}).click();
-            assert.equal(await page.locator('[data-kind="studio"]:visible').count(),20);
             await page.locator('#discover-search').fill('podcast');
+            await page.getByRole('button',{name:'Studios',exact:true}).click();
             assert.ok((await page.locator('[data-kind="studio"]:visible').count())>=1);
             await page.goto('http://127.0.0.1:8765/blog/why-base-rates-change-camera-matching-claims/',{waitUntil:'domcontentloaded'});
-            assert.ok(await page.locator('a[href="../../labs/#base-rates"]').count()>=1);
-            assert.equal(errors.length,0,'browser errors: '+errors.join('; '));
-            console.log('PASS: four research models, 20 studios, 46 articles, article model links, search/filter');
+            assert.equal(await page.locator('a[href="../../fieldwork/"]').count(),1);
+            assert.equal(await page.locator('a[href*="/labs/#"]').count(),0);
+            assert.equal(errors.length,0,errors.join('; '));
+            console.log('PASS: five editorial chapters, source imagery, article routes and directory search');
           } finally { await browser.close(); }
           NODE
       - name: Setup Pages

@@ -112,14 +112,6 @@ def article_page(p):
     related = related[:3]
     recommendations = ''.join('<a class="journal-related" href="../'+q["slug"]+'/">'+esc(q["title"])+' ↗</a>' for q in related)
     canonical = BASE_URL + slug + "/"
-    lab_targets = {
-      "why-base-rates-change-camera-matching-claims": ("base-rates","Test the base-rate calculation"),
-      "a-wholesale-lot-is-an-equation-not-a-discount": ("wholesale","Estimate a wholesale lot"),
-      "the-math-behind-sharing-software-across-businesses": ("shared","Model shared software costs"),
-      "why-the-cheapest-token-isnt-the-cheapest-answer": ("model-cost","Compare AI task costs"),
-    }
-    lab = lab_targets.get(slug)
-    lab_link = '<aside class="journal-lab-link"><div class="eyebrow">Try the numbers</div><h3>'+esc(lab[1])+'</h3><p>Change the assumptions in the interactive research lab and compare the outcome with this article.</p><a href="../../labs/#'+lab[0]+'">Open the model ↗</a></aside>' if lab else ""
     topic_labels = ''.join('<span class="journal-topic">'+esc(t.strip())+'</span>' for t in p["topics"].split(",") if t.strip())
     return f'''<!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f5f3eb">
@@ -131,7 +123,7 @@ def article_page(p):
 <link rel="stylesheet" href="../../assets/aurekai-field-guide.css"><link rel="stylesheet" href="../../assets/aurekai-research.css"><link rel="stylesheet" href="../blog.css">
 </head><body><a class="skip" href="#main">Skip to article</a>
 <header class="top"><div class="shell"><a class="brand" href="../../"><span class="mark">A</span> AUREKAI <small>/ JOURNAL</small></a>
-<nav aria-label="Site navigation"><a href="../../">Home</a><a href="../../discover/">Explore</a><a href="../">Journal</a><a href="../../labs/">Research Lab</a><a href="../../docs.html">Bonfÿre</a></nav></div></header>
+<nav aria-label="Site navigation"><a href="../../">Home</a><a href="../../discover/">Explore</a><a href="../">Journal</a><a href="../../fieldwork/">Fieldwork</a><a href="../../docs.html">Bonfÿre</a></nav></div></header>
 <main id="main"><section class="journal-article-hero"><div class="shell journal-article-head">
 <nav class="journal-breadcrumb" aria-label="Breadcrumb"><a href="../">Journal</a><span>/</span><span>{esc(p["category"])}</span></nav>
 {icon(p, "../../")}<div class="eyebrow">{esc(p["category"])} · {mins} min read</div>
@@ -140,7 +132,6 @@ def article_page(p):
 </div></section>
 <section class="journal-article-shell"><div class="shell journal-article-layout">
 <article class="article-body" itemscope itemtype="https://schema.org/BlogPosting"><meta itemprop="headline" content="{esc(p["title"])}"><meta itemprop="datePublished" content="{esc(p["published"])}">{body_html(p["body"])}
-{lab_link}
 <div class="journal-source-note"><strong>About this article.</strong> {esc(p["origin"])}. {("The article responds to or examines the linked original source." if prim else "Adapted and researched for public reading.")} <a href="https://github.com/Nickgonzales76017/bonfyre/blob/main/{esc(p["source_path"])}">Editable source ↗</a></div>
 </article>
 <aside class="journal-article-side"><div class="journal-side-sticky"><span class="eyebrow">In this article</span>{toc}<hr>
