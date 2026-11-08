@@ -29,16 +29,25 @@ jobs:
           # Additional Journal routes such as /about/ are not article records.
           test "$(grep -c '^post:' site/blog/post-index.tsv)" -eq "$expected"
           test "$(grep -c '<item>' site/blog/feed.xml)" -eq "$expected"
-          test "$(grep -c '<url>' site/blog/sitemap.xml)" -eq "$((expected+1))"
+          test "$(grep -c '<url>' site/blog/sitemap.xml)" -eq "$((expected+3))"
           test "$(wc -l < site/blog/post-index.tsv)" -eq "$((expected+1))"
           grep -q "All articles / $expected" site/blog/index.html
           grep -q 'data-filter="Debates"' site/blog/index.html
           grep -q 'data-filter="Mathematics"' site/blog/index.html
           grep -q 'data-filter="Markets"' site/blog/index.html
           grep -q 'data-filter="Science"' site/blog/index.html
+          test -f site/blog/reader.js
+          test -f site/blog/reader.css
+          test -f site/blog/about/index.html
           test -f site/series/index.html
           grep -q 'id="authority"' site/series/index.html
           grep -q 'id="operators"' site/series/index.html
+          grep -q 'reader-outline-menu' site/blog/the-machine-told-me-so/index.html
+          grep -q 'narration-widget' site/blog/who-keeps-the-internet-alive/index.html
+          grep -q 'journal-sources' site/blog/the-machine-told-me-so/index.html
+          grep -q 'itemscope itemtype="https://schema.org/BlogPosting"' site/blog/the-machine-told-me-so/index.html
+          grep -q 'og:image' site/blog/the-machine-told-me-so/index.html
+          grep -q 'journal-card-outline' site/blog/index.html
           test "$(grep -c 'class="essay-chapter ' site/series/index.html)" -eq 4
       - name: Archive website output
         uses: actions/upload-artifact@v4

@@ -45,3 +45,13 @@
 @media(max-width:780px){.reader-toolbar .shell{grid-template-columns:1fr}.reader-outline-menu{order:-1}.reader-outline-links{left:0;right:auto}.narration-wave{min-width:80px}.narration-controls{margin-top:12px}}
 @media(hover:none){.journal-card-outline{max-height:none;opacity:1;padding:6px 0}.reader-outline-links{width:min(360px,88vw)}}
 @media(prefers-reduced-motion:reduce){.narration-widget[data-state="playing"] .narration-wave i{animation:none;opacity:1}.journal-card-outline{transition:none}}
+/* Integrate the reader controls into the later editorial-editions layout. */
+.ed-journal .journal-author-row{border-top:1px solid #b6c3b7;padding-top:15px;margin:21px 0 0}
+.ed-journal .journal-author-row p{color:#375648!important}
+.ed-journal .journal-author-row .journal-from{color:#5b7263!important}
+.ed-journal .journal-author-row a{color:#235440}
+.ed-journal .journal-author-mark{background:var(--ed-dark);color:var(--ed-paper)}
+.ed-journal .reader-toolbar{background:var(--ed-paper)}
+.ed-reading .journal-sources ol{padding-left:26px}
+.ed-reading .journal-sources li{font-family:system-ui,sans-serif}
+.ed-card:hover .journal-card-outline,.ed-card:focus-within .journal-card-outline{max-height:190px;opacity:1}

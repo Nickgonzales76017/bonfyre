@@ -350,6 +350,12 @@ def article_page(p):
     fmt, tone, media = p["art"]
     dark, cream, accent, ink = PALETTES[tone]
     mins = max(2, (len(p["body"].split()) + 209) // 210)
+    rendered_body, notes_html = build_citation_notes(editorial_body(p), p)
+    modified = p.get("updated", p["published"])
+    image_url = media_url(media, "https://nickgonzales76017.github.io/bonfyre/") if media else "https://nickgonzales76017.github.io/bonfyre/series/media/"+({"authority":"authority-loop.svg","living":"living-subject.svg","access":"expression-ecosystem.svg","operators":"operators-continuity.svg"}.get(p.get("series"),"living-subject.svg"))
+    series_order = SERIES_READING_ORDER.get(p.get("series",""), [])
+    series_position = series_order.index(slug)+1 if slug in series_order else 0
+    series_badge = "Essay "+str(series_position)+" of "+str(len(series_order)) if series_position else "Aurekai Journal"
     toc = "".join('<a href="#'+sid(line[3:])+'">'+esc(line[3:])+'</a>'
         for line in p["body"].splitlines() if line.startswith("## "))
     prim = p.get("source_url")
@@ -368,8 +374,13 @@ def article_page(p):
     epigraph_html = ('<figure class="journal-epigraph"><blockquote>“'+esc(epigraph_text.strip("“”"))+'”</blockquote><figcaption>'+attribution+'</figcaption></figure>') if epigraph_text and epigraph_credit else ""
     question = p.get("parting_question","")
     reflection_html = ('<aside class="journal-afterword"><span class="eyebrow">A question worth keeping</span><h2>'+esc(question)+'</h2>'+series_html+'</aside>') if question else ""
-    external = ('<p><a href="'+esc(prim)+'" rel="noopener noreferrer">Original outside source ↗</a></p>') if prim and prim.startswith("https://") else ""
-    related = [q for q in posts if q["slug"] != slug and q["category"] == p["category"]][:3]
+    external = ('<p><a href="'+esc(prim)+'" rel="noopener noreferrer">Related reference ↗</a></p>') if prim and prim.startswith("https://") else ""
+    named_posts = {q["slug"]:q for q in posts}
+    if slug in series_order:
+        pos = series_order.index(slug)
+        related = [named_posts[n] for n in (series_order[pos+1:]+series_order[:pos]) if n in named_posts][:3]
+    else:
+        related = [q for q in posts if q["slug"] != slug and q["category"] == p["category"]][:3]
     if len(related) < 3:
         related.extend(q for q in posts if q["slug"] != slug and q not in related)
     related = related[:3]
@@ -382,13 +393,16 @@ def article_page(p):
     return f'''<!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="{dark}">
 <title>{esc(p["title"])} — Aurekai Journal</title>
-<meta name="description" content="{esc(p["description"])}">
+<meta name="description" content="{esc(p["description"])}"><meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:site_name" content="Aurekai Journal"><meta property="og:url" content="{canonical}"><meta property="og:image" content="{esc(image_url)}"><meta property="og:image:alt" content="Editorial image for {esc(p["title"])}">
+<meta name="twitter:title" content="{esc(p["title"])}"><meta name="twitter:description" content="{esc(p["description"])}"><meta name="twitter:image" content="{esc(image_url)}">
+<meta property="article:modified_time" content="{esc(modified)}T12:00:00Z">
 <meta property="og:title" content="{esc(p["title"])}"><meta property="og:description" content="{esc(p["description"])}"><meta property="og:type" content="article">
 <meta name="author" content="Aurekai editorial"><meta property="article:published_time" content="{esc(p["published"])}T12:00:00Z">
-<meta property="article:section" content="{esc(p["category"])}"><meta name="twitter:card" content="summary">
+<meta property="article:section" content="{esc(p["category"])}"><meta name="twitter:card" content="summary_large_image">
 <link rel="canonical" href="{canonical}"><link rel="alternate" type="application/rss+xml" title="Aurekai Journal" href="../feed.xml">
 <link rel="stylesheet" href="../../assets/aurekai-field-guide.css"><link rel="stylesheet" href="../../assets/aurekai-research.css">
-<link rel="stylesheet" href="../blog.css"><link rel="stylesheet" href="../article-editions.css">
+<link rel="author" href="../about/"><link rel="stylesheet" href="../blog.css"><link rel="stylesheet" href="../article-editions.css"><link rel="stylesheet" href="../reader.css"><script defer src="../reader.js"></script>
 </head><body class="ed-journal format-{fmt} tone-{tone} {'ed-with-media' if media else 'ed-type-led'}" style="{colorvars}">
 <a class="skip" href="#main">Skip to article</a>
 <header class="top"><div class="shell"><a class="brand" href="../../"><span class="mark">A</span> AUREKAI <small>/ JOURNAL</small></a>
@@ -406,15 +420,17 @@ def article_page(p):
 <p class="ed-section-label">The Aurekai Journal <span> / An essay</span></p>
 <h1 id="article-title">{esc(p["title"])}</h1>
 <p class="ed-deck">{esc(p["description"])}</p>
-<div class="ed-title-foot"><span>Aurekai editorial</span><span>{mins} minute read</span><a href="#read-story">Begin reading ↓</a></div>
+<div class="ed-title-foot"><span>{esc(series_badge)}</span><span>{mins} minute read</span><a href="#read-story">Begin reading ↓</a></div>{byline(p)}
 </div>
 </div>
 </section>
 <section class="ed-edition-rule"><div class="shell"><span>{esc(p["category"])} / {esc(p["published"])}</span><span>Independent sources and original analysis</span><a href="../../series/">Explore the four series ↗</a></div></section>
+<div class="reader-toolbar" aria-label="Article reading tools"><div class="shell">{narrator()}{reader_outline(p)}</div></div>
 <section class="journal-article-shell ed-reading" id="read-story"><div class="shell journal-article-layout">
-<article class="article-body" itemscope itemtype="https://schema.org/BlogPosting"><meta itemprop="headline" content="{esc(p["title"])}"><meta itemprop="datePublished" content="{esc(p["published"])}">
-{epigraph_html}{editorial_body(p)}
+<article class="article-body" itemscope itemtype="https://schema.org/BlogPosting"><meta itemprop="headline" content="{esc(p["title"])}"><meta itemprop="datePublished" content="{esc(p["published"])}"><meta itemprop="dateModified" content="{esc(modified)}"><meta itemprop="mainEntityOfPage" content="{canonical}"><meta itemprop="image" content="{esc(image_url)}"><span itemprop="author" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="Aurekai editorial"><meta itemprop="url" content="https://nickgonzales76017.github.io/bonfyre/blog/about/"></span><span itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="Aurekai"><meta itemprop="url" content="https://aurekai.work/"></span>
+{epigraph_html}{rendered_body}
 {reflection_html}
+{notes_html}
 <div class="journal-source-note"><strong>About this article.</strong> {esc(p["origin"])}. {("The linked external material is cited for context, not as an endorsement." if prim else "Original analysis prepared for public reading.")}
 <a href="https://github.com/Nickgonzales76017/bonfyre/blob/main/{esc(p["source_path"])}">View editorial source ↗</a></div>
 </article>
@@ -438,9 +454,11 @@ def card(p):
     search = ' '.join([p["title"], p["description"], p["topics"], p["category"]]).lower()
     art = ('<img src="'+esc(media_url(media,"../"))+'" alt="" width="720" height="480" loading="lazy">' if media else
        '<span class="ed-card-feature">'+esc(p["title"])+'</span>')
+    outline = [line[3:].strip() for line in p["body"].splitlines() if line.startswith("## ")][:3]
+    outline_preview = ('<div class="journal-card-outline" aria-hidden="true"><strong>Inside the essay</strong>'+''.join('<span>'+esc(h)+'</span>' for h in outline)+'</div>') if outline else ""
     return f'''<article class="journal-card ed-card card-{tone}" data-article data-category="{esc(p["category"])}" data-search="{esc(search)}">
 <a class="journal-card-link" href="./{p["slug"]}/"><div class="journal-card-top"><span class="eyebrow">{esc(p["category"])}</span><span class="ed-card-kind">{esc(fmt.replace("-"," "))}</span></div>
-<div class="ed-card-cover">{art}</div><h3>{esc(p["title"])}</h3><p>{esc(p["description"])}</p>
+<div class="ed-card-cover">{art}</div><h3>{esc(p["title"])}</h3><p>{esc(p["description"])}</p>{outline_preview}
 <div class="journal-card-bottom"><span>{esc(p["published"])}</span><span>Read article ↗</span></div></a></article>'''
 
 index_file = TARGET / "index.html"
@@ -474,7 +492,7 @@ for p in posts:
     items.append(f'<item><title>{xml_escape(p["title"])}</title><link>{link}</link><guid isPermaLink="true">{link}</guid><pubDate>{pubdate(p["published"])}</pubDate><category>{xml_escape(p["category"])}</category><description>{xml_escape(p["description"])}</description></item>')
 rss = '<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0"><channel><title>Aurekai Journal</title><link>'+BASE_URL+'</link><description>Research and articles from Aurekai and Bonfÿre</description><language>en-us</language>\n' + '\n'.join(items) + '\n</channel></rss>\n'
 write("feed.xml", rss)
-urls = [BASE_URL] + [BASE_URL+p["slug"]+"/" for p in posts]
+urls = [BASE_URL, BASE_URL+"about/", "https://nickgonzales76017.github.io/bonfyre/series/"] + [BASE_URL+p["slug"]+"/" for p in posts]
 sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + '\n'.join('<url><loc>'+u+'</loc><lastmod>2026-11-08</lastmod></url>' for u in urls) + '\n</urlset>\n'
 write("sitemap.xml", sitemap)
 columns = ["subject_id","slug","category","published","source_path","source_sha256","canonical_url","primary_source_url"]
