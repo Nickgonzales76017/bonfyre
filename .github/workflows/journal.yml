@@ -25,6 +25,8 @@ jobs:
         run: |
           set -euo pipefail
           sh scripts/render-editorial.sh --check
+          python3 scripts/tests/journal-discoverability.py
+          node --check site/blog/reader.js
           expected="$(grep -l '^status: edited-public$' editorial/posts/*.md | wc -l)"
           # Additional Journal routes such as /about/ are not article records.
           test "$(grep -c '^post:' site/blog/post-index.tsv)" -eq "$expected"

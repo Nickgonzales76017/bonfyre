@@ -24,6 +24,7 @@
   const stop = widget.querySelector('[data-narration-stop]');
   const rate = widget.querySelector('[data-narration-rate]');
   const status = widget.querySelector('[data-narration-status]');
+  const progress = widget.querySelector('[data-narration-progress]');
   const supported = typeof speechSynthesis !== 'undefined' && typeof SpeechSynthesisUtterance !== 'undefined';
   let pieces = [], cursor = 0, generation = 0, paused = false, active = false, currentNode = null;
   const clearNode = () => { if (currentNode) currentNode.classList.remove('narration-reading'); currentNode = null; };
@@ -75,12 +76,14 @@
     return result;
   };
   const finished = () => {
+    if (progress) progress.value = 100;
     active = false; paused = false; clearNode();
     setState('finished', 'Finished · Read again or continue the essay below');
   };
   const speakNext = token => {
     if (token !== generation || paused) return;
     if (cursor >= pieces.length) { finished(); return; }
+    if (progress) progress.value = Math.round(cursor * 100 / pieces.length);
     const item = pieces[cursor++];
     clearNode();
     currentNode = item.node;
@@ -91,7 +94,11 @@
     const voice = chooseVoice();
     if (voice) utterance.voice = voice;
     utterance.onstart = () => { if (token === generation && !paused) setState('playing', 'Playing · Part ' + cursor + ' of ' + pieces.length); };
-    utterance.onend = () => { if (token === generation && !paused) speakNext(token); };
+    utterance.onend = () => {
+      if (token !== generation || paused) return;
+      if (progress) progress.value = Math.round(cursor * 100 / pieces.length);
+      speakNext(token);
+    };
     utterance.onerror = event => {
       if (token !== generation) return;
       if (event.error === 'canceled' || event.error === 'interrupted') return;
@@ -111,6 +118,7 @@
     synth.cancel();
     pieces = prepare();
     cursor = 0;
+    if (progress) progress.value = 0;
     if (!pieces.length) { setState('idle', 'No readable article text was found'); return; }
     active = true; paused = false;
     setState('playing', 'Starting browser narration…');
@@ -124,6 +132,7 @@
   });
   stop.addEventListener('click', () => {
     generation += 1; active = false; paused = false; synth.cancel(); clearNode();
+    if (progress) progress.value = 0;
     setState('idle', 'Browser voice · Ready');
   });
   window.addEventListener('pagehide', () => {

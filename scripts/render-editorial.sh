@@ -334,6 +334,7 @@ def narrator():
     bars=''.join('<i aria-hidden="true" style="--bar:'+str(12+(i*29)%58)+'%"></i>' for i in range(24))
     return ('<div class="narration-widget" data-narration data-state="idle"><div class="narration-track"><div class="narration-wave" aria-hidden="true">'+bars+'</div><div class="narration-copy"><strong>Listen to this essay</strong><span data-narration-status role="status" aria-live="polite">Browser voice · Ready</span></div></div>'
             '<div class="narration-controls"><button type="button" data-narration-play>▶ Play</button><button type="button" data-narration-pause disabled>Ⅱ Pause</button><button type="button" data-narration-stop disabled>■ Stop</button><label>Speed <select data-narration-rate aria-label="Narration speed"><option value="0.85">0.85×</option><option value="1" selected>1×</option><option value="1.15">1.15×</option><option value="1.35">1.35×</option></select></label></div>'
+            '<progress class="narration-progress" data-narration-progress max="100" value="0" aria-label="Narration progress"></progress>'
             '<p class="narration-disclosure">Uses your browser voice; no recorded track is claimed. Animated bars show playback activity, not measured sound levels.</p></div>')
 
 def byline(post):

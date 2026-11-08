@@ -12,7 +12,7 @@
 .narration-copy{display:flex;gap:2px;flex-direction:column;font:.7rem/1.55 system-ui,sans-serif;color:#5a685a}
 .narration-copy strong{font-size:.82rem;color:#1d4034}.narration-wave{height:33px;display:flex;align-items:center;gap:2px;min-width:120px;max-width:145px}
 .narration-wave i{display:block;height:var(--bar);width:3px;min-height:4px;border-radius:2px;background:#b07b5c;opacity:.45;transform-origin:center}
-.narration-widget[data-state="playing"] .narration-wave i{opacity:.9;animation:speech-activity .72s ease-in-out infinite alternate;animation-delay:calc(var(--bar) * -1s)}
+.narration-widget[data-state="playing"] .narration-wave i{opacity:.9;animation:speech-activity .72s ease-in-out infinite alternate;animation-delay:-.1s}
 .narration-widget[data-state="paused"] .narration-wave i{opacity:.55}
 @keyframes speech-activity{from{transform:scaleY(.42)}to{transform:scaleY(1.15)}}
 .narration-controls{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-top:9px}
@@ -55,3 +55,11 @@
 .ed-reading .journal-sources ol{padding-left:26px}
 .ed-reading .journal-sources li{font-family:system-ui,sans-serif}
 .ed-card:hover .journal-card-outline,.ed-card:focus-within .journal-card-outline{max-height:190px;opacity:1}
+
+.narration-widget[data-state="playing"] .narration-wave i:nth-child(3n){animation-delay:-.31s}
+.narration-widget[data-state="playing"] .narration-wave i:nth-child(4n){animation-delay:-.49s}
+.narration-widget[data-state="playing"] .narration-wave i:nth-child(5n){animation-delay:-.68s}
+.narration-progress{display:block;margin-top:12px;width:min(100%,530px);height:5px;appearance:none;border:0;background:#d3dfd1;color:#a87555}
+.narration-progress::-webkit-progress-bar{background:#d3dfd1}
+.narration-progress::-webkit-progress-value{background:#a87555}
+.narration-progress::-moz-progress-bar{background:#a87555}
