@@ -105,6 +105,20 @@ def article_page(p):
     toc = "".join('<a href="#'+sid(line[3:])+'">'+esc(line[3:])+'</a>'
         for line in p["body"].splitlines() if line.startswith("## "))
     prim = p.get("source_url")
+    series_id = p.get("series", "")
+    series_names = {"authority":"Authority and judgment", "living":"Beyond websites", "access":"Expression and participation", "operators":"Internet operators"}
+    if series_id and series_id not in series_names:
+        raise ValueError(f"Unknown editorial series: {series_id}")
+    series_html = ('<a class="journal-series-link" href="../../series/#'+series_id+'">Explore '+esc(series_names[series_id])+' ↗</a>') if series_id else ""
+    epigraph_text = p.get("epigraph", "")
+    epigraph_credit = p.get("epigraph_credit", "")
+    epigraph_url = p.get("epigraph_url", "")
+    if epigraph_url and not epigraph_url.startswith("https://"):
+        raise ValueError(f"Unsupported epigraph source URL: {slug}")
+    attribution = ('<a href="'+esc(epigraph_url)+'" rel="noopener noreferrer">'+esc(epigraph_credit)+'</a>') if epigraph_url else esc(epigraph_credit)
+    epigraph_html = ('<figure class="journal-epigraph"><blockquote>“'+esc(epigraph_text.strip("“”"))+'”</blockquote><figcaption>'+attribution+'</figcaption></figure>') if epigraph_text and epigraph_credit else ""
+    question = p.get("parting_question", "")
+    reflection_html = ('<aside class="journal-afterword"><span class="eyebrow">A parting thought</span><h2>'+esc(question)+'</h2>'+series_html+'</aside>') if question else ""
     external = '<p><a href="'+esc(prim)+'" rel="noopener noreferrer">Original outside source ↗</a></p>' if prim and prim.startswith("https://") else ""
     related = [q for q in posts if q["slug"] != slug and q["category"] == p["category"]][:3]
     if len(related) < 3:
@@ -131,7 +145,7 @@ def article_page(p):
 <div class="journal-meta"><span>Aurekai / Bonfÿre</span><span>{esc(p["published"])}</span><span>Edited public article</span></div>
 </div></section>
 <section class="journal-article-shell"><div class="shell journal-article-layout">
-<article class="article-body" itemscope itemtype="https://schema.org/BlogPosting"><meta itemprop="headline" content="{esc(p["title"])}"><meta itemprop="datePublished" content="{esc(p["published"])}">{body_html(p["body"])}
+<article class="article-body" itemscope itemtype="https://schema.org/BlogPosting"><meta itemprop="headline" content="{esc(p["title"])}"><meta itemprop="datePublished" content="{esc(p["published"])}">{epigraph_html}{body_html(p["body"])}\n{reflection_html}
 <div class="journal-source-note"><strong>About this article.</strong> {esc(p["origin"])}. {("The article responds to or examines the linked original source." if prim else "Adapted and researched for public reading.")} <a href="https://github.com/Nickgonzales76017/bonfyre/blob/main/{esc(p["source_path"])}">Editable source ↗</a></div>
 </article>
 <aside class="journal-article-side"><div class="journal-side-sticky"><span class="eyebrow">In this article</span>{toc}<hr>

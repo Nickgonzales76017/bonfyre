@@ -65,3 +65,19 @@
 /* Source-linked research models and article topic navigation. */
 .journal-topics{display:flex;flex-wrap:wrap;gap:6px;margin:5px 0 20px}
 .journal-topic{border:1px solid var(--line);background:var(--mist);padding:5px 9px;color:var(--forest);font:.71rem var(--sans);font-weight:650}
+
+/* Epigraphs and afterwords share the authored Journal series metadata. */
+.journal-epigraph{margin:0 0 48px;padding:27px clamp(20px,4vw,34px);border-left:3px solid var(--rust);background:var(--mist)}
+.journal-epigraph blockquote{font:italic 500 clamp(1.45rem,2.6vw,2.25rem)/1.48 Georgia,serif;color:var(--ink);margin:0}
+.journal-epigraph figcaption{font:.8rem/1.6 system-ui,sans-serif;color:var(--muted);margin-top:17px}
+.journal-epigraph figcaption a{color:var(--forest)}
+.journal-afterword{margin:64px 0 42px;padding:clamp(25px,4vw,40px);background:var(--night);color:#f5f3eb}
+.article-body .journal-afterword h2{font:500 clamp(1.5rem,3vw,2.35rem)/1.37 Georgia,serif;margin:17px 0 27px;color:#f5f3eb}
+.journal-afterword .eyebrow{color:#ebbd9e}
+.article-body .journal-afterword a{color:#f6c6ab;font-size:.87rem}
+.journal-series-promo{background:var(--mist);border-bottom:1px solid var(--line)}
+.journal-series-promo .shell{display:flex;justify-content:space-between;align-items:center;gap:24px;padding-top:28px;padding-bottom:28px}
+.journal-series-promo h2{font:500 clamp(1.4rem,2.5vw,2.3rem)/1.25 Georgia,serif;margin:5px 0 0}
+.journal-series-promo a{border:1px solid var(--forest);padding:14px 18px;color:var(--forest);font-weight:750;text-decoration:none;white-space:nowrap}
+.journal-series-promo a:hover{background:var(--forest);color:#fff}
+@media(max-width:720px){.journal-series-promo .shell{align-items:flex-start;flex-direction:column}.journal-series-promo a{white-space:normal}}
