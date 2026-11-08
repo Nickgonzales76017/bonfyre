@@ -189,5 +189,18 @@ records = ['\t'.join(columns)]
 for p in posts:
     records.append('\t'.join(["post:"+p["slug"],p["slug"],p["category"],p["published"],p["source_path"],p["source_sha256"],BASE_URL+p["slug"]+"/",p.get("source_url","")]))
 write("post-index.tsv", '\n'.join(records)+'\n')
+# Search records for the public cross-site directory.
+discovery_index = ROOT / "site" / "discover" / "article-index.tsv"
+discovery_rows = ["slug\tcategory\ttitle\tdescription\ttopics\tpublished\tcanonical_url"]
+for post in posts:
+    discovery_rows.append("\t".join([post["slug"],post["category"],post["title"],post["description"],post["topics"],post["published"],BASE_URL+post["slug"]+"/"]))
+discovery_content = "\n".join(discovery_rows)+"\n"
+if CHECK:
+    if not discovery_index.exists() or discovery_index.read_text(encoding="utf-8") != discovery_content:
+        raise AssertionError("Outdated public article search index")
+else:
+    discovery_index.parent.mkdir(parents=True,exist_ok=True)
+    discovery_index.write_text(discovery_content,encoding="utf-8")
+
 print(f'Aurekai Journal: {len(posts)} authored articles, {len(categories)} categories, RSS, sitemap, and native-import index ' + ('verified' if CHECK else 'built'))
 PY
