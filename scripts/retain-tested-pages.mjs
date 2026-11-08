@@ -52,7 +52,7 @@ export function retainRelease({cwd, paths, verify, attempts = 3, beforePush = ()
     // An editorial-only concurrent commit cannot change the tested studio or
     // instrument projections. The later Journal render consumes the rebased
     // editorial source. Do not rerun expensive unrelated studio tests here.
-    const incoming = git(['diff', '--name-only', '-z', basis, upstream]).stdout.split('\\0').filter(Boolean);
+    const incoming = git(['diff', '--name-only', '-z', basis, upstream]).stdout.split('\0').filter(Boolean);
     const editorialOnly = incoming.length > 0 && incoming.every(p =>
       p.startsWith('editorial/') ||
       p.startsWith('site/blog/') ||
