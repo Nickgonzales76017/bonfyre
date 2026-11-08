@@ -7,6 +7,14 @@ import hashlib, html, os, pathlib, re, sys
 from datetime import datetime, timezone
 from xml.sax.saxutils import escape as xml_escape
 
+ROOT = pathlib.Path.cwd()
+SOURCE = ROOT / "editorial" / "posts"
+TARGET = ROOT / "site" / "blog"
+BASE_URL = "https://nickgonzales76017.github.io/bonfyre/blog/"
+CHECK = "--check" in sys.argv[1:]
+ALLOWED_ICONS = set(re.findall(r'<symbol id="([^"]+)"', (ROOT / "site/assets/product-icons.svg").read_text()))
+CATEGORIES = ["All", "Debates", "Mathematics", "Standards", "Markets", "Science", "Business", "Applications", "Publishing", "Commerce", "Engineering", "Research"]
+
 # The editorial desk chooses the presentation per story. No hash, randomness,
 # generated illustration, placeholder photo, or fabricated magazine issue.
 # Format: slug | opening format | colorway | licensed/owned visual (or none).
