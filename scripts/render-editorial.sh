@@ -314,6 +314,39 @@ def write(relative, content):
 def icon(p, prefix):
     return '<span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="' + prefix + 'assets/product-icons.svg#' + esc(p["icon"]) + '"></use></svg></span>'
 
+
+ARGUMENT_TURNS = {"the-machine-told-me-so":["Every checkpoint passes","The goal never gets questioned","Review the purpose independently"],"when-everyone-agrees-who-is-thinking":["Everyone reports progress","The same premise guides every reviewer","Protect evidence-backed disagreement"],"the-internet-of-bad-ideas":["A prototype works","Usefulness is untested","Let real-world feedback change the plan"],"sites-are-dead-long-live-the-web":["A homepage represents a business","Its work lives across disconnected systems","One subject, several legitimate views"],"the-profile-is-bigger-than-the-person":["A profile lists a biography","Work and relationships are elsewhere","Connect authorship, projects, and community"],"when-reading-becomes-participating":["A reader reaches the final paragraph","The story has no meaningful continuation","Offer optional, authorized participation"],"why-does-every-app-want-to-be-everything":["Each app wants the whole user","Institutions cannot move their work","Compose tools while retaining boundaries"],"nobody-called-the-pizza-shops-slop":["More people can publish","Most tools stop at generating a page","Support relationships and real services"],"we-didnt-run-out-of-ideas":["Specialist knowledge stays invisible","Publishing tools do not support the work","Make those interests operable together"],"minecraft-built-a-world-what-about-everything-else":["Simple creative building blocks","Serious activity still needs infrastructure","Let communities invent their own uses"],"the-spreadsheet-that-became-a-business":["A flexible grid becomes a business model","The model is trapped in one file","Connect decisions, records, and operations"],"who-gets-to-have-sophisticated-software":["Capability exists somewhere","Cost and complexity ration access","Make the capability understandable and usable"],"what-happens-when-anyone-can-make-an-app":["An app arrives quickly","Operations, rights, and maintenance remain","Give creation an accountable lifecycle"],"who-keeps-the-internet-alive":["Activity and audiences grow","Small social institutions lose operators","Support the people who maintain continuity"],"the-local-archive-that-never-got-uploaded":["A community holds recordings and records","The search index cannot see them","Preserve context with lawful discovery"],"a-library-of-alexandria-selected-by-demand":["Popular material gets copied","Low-attention history disappears","Preserve without ranking by popularity alone"],"the-archive-is-not-the-owner":["A copy has been saved","Possession is mistaken for permission","Record custody, rights, and access separately"],"the-clip-is-not-the-whole-work":["An excerpt travels widely","Original meaning and credits fall away","Connect the clip to its people and sources"],"the-internet-has-an-inheritance-problem":["A founder leaves an institution","Logins, rights, and memory have no successor","Plan stewardship before the emergency"],"a-union-for-the-internet":["Each operator negotiates alone","Platforms concentrate leverage","Build lawful collective infrastructure"]}
+SERIES_MEDIA = {"authority":["authority-loop.svg","The loop and the missing question","A review can prove that the requested task was completed without establishing that the request was right.","A completed task and successful verification feed back into the original brief. Independent purpose and impact questions interrupt the closed loop."],"living":["living-subject.svg","One subject, different legitimate views","A publisher, person, community, and application can point to the same source without becoming the same owner.","One central subject connects to four separate views: profile, publication, community, and authorized applications."],"access":["expression-ecosystem.svg","From output to participation","A prompt can generate a page. An ecosystem needs tools that sustain relationships and institutions.","A generated page reaches one artifact while a common tool layer branches into collections, communities, and sustainable services."],"operators":["operators-continuity.svg","What survives a change of operator?","Preservation succeeds when material, people, authority, and continuity are not confused.","A timeline connects creation, maintenance, stewardship transfer, and new contributions, while custody, rights, access, and governance remain distinct."]}
+
+def editorial_argument(post):
+    values = ARGUMENT_TURNS.get(post["slug"])
+    series = post.get("series", "")
+    visual = SERIES_MEDIA.get(series)
+    if not values or not visual:
+        return ""
+    media, title, caption, alt = visual
+    stages = ("The familiar path", "What falls through", "The design opportunity")
+    steps = ''.join('<li><span class="argument-step">'+esc(stages[i])+'</span><strong>'+esc(v)+'</strong></li>' for i,v in enumerate(values))
+    return ('<figure class="journal-argument-figure">'
+            '<div class="argument-head"><span>Visual argument / '+esc(series)+'</span><strong>'+esc(title)+'</strong></div>'
+            '<img loading="lazy" decoding="async" width="1200" height="700" src="../../series/media/'+esc(media)+'" alt="'+esc(alt)+'">'
+            '<figcaption>'+esc(caption)+' <a href="../../series/#'+esc(series)+'">Explore this series ↗</a></figcaption>'
+            '<ol class="argument-turns">'+steps+'</ol></figure>')
+
+def editorial_body(post):
+    rendered = body_html(post["body"])
+    visual = editorial_argument(post)
+    if not visual:
+        return rendered
+    headings = list(re.finditer(r'<h2 id="', rendered))
+    if len(headings) >= 2:
+        insert_at = headings[1].start()
+    elif headings:
+        insert_at = headings[0].start()
+    else:
+        insert_at = len(rendered)
+    return rendered[:insert_at] + visual + rendered[insert_at:]
+
 def article_page(p):
     slug = p["slug"]
     mins = max(2, (len(p["body"].split()) + 209) // 210)
@@ -373,7 +406,7 @@ def article_page(p):
 <div class="shell garden-hero-serial"><span>An Aurekai Journal essay</span><span>Independent research · original illustrations</span><a href="../../series/">Explore the series ↗</a></div>
 </section>
 <section class="journal-article-shell" id="read-story"><div class="shell journal-article-layout">
-<article class="article-body" itemscope itemtype="https://schema.org/BlogPosting"><meta itemprop="headline" content="{esc(p["title"])}"><meta itemprop="datePublished" content="{esc(p["published"])}"><div class="garden-chapterline"><span>Journal / {esc(p["category"])}</span><span>Reading room · {garden["index"]}</span></div>{epigraph_html}{body_html(p["body"])}\n{reflection_html}
+<article class="article-body" itemscope itemtype="https://schema.org/BlogPosting"><meta itemprop="headline" content="{esc(p["title"])}"><meta itemprop="datePublished" content="{esc(p["published"])}"><div class="garden-chapterline"><span>Journal / {esc(p["category"])}</span><span>Reading room · {garden["index"]}</span></div>{epigraph_html}{editorial_body(p)}\n{reflection_html}
 <div class="journal-source-note"><strong>About this article.</strong> {esc(p["origin"])}. {("The article responds to or examines the linked original source." if prim else "Adapted and researched for public reading.")} <a href="https://github.com/Nickgonzales76017/bonfyre/blob/main/{esc(p["source_path"])}">Editable source ↗</a></div>
 </article>
 <aside class="journal-article-side"><div class="journal-side-sticky"><div class="garden-margin-art" aria-hidden="true"><img src="./cover.svg" alt="" loading="lazy"></div><span class="eyebrow">In this article</span>{toc}<hr>
