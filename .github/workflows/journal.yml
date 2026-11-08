@@ -55,6 +55,8 @@ jobs:
           grep -q 'og:image' site/blog/the-machine-told-me-so/index.html
           grep -q 'journal-card-outline' site/blog/index.html
           test "$(grep -c 'class="essay-chapter ' site/series/index.html)" -eq 4
+      - name: Verify article search and reading readiness
+        run: python3 scripts/tests/editorial-search-readiness.py
       - name: Archive website output
         uses: actions/upload-artifact@v4
         with:
