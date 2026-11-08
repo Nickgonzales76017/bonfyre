@@ -1,6 +1,6 @@
 # Aurekai Journal — public articles and editorial source
 
-The Aurekai Journal currently holds **46 edited articles**: sixteen essays based on earlier Aurekai/Bonfÿre work and thirty additional pieces examining external research, mathematical claims, tools, markets, standards, and original posts on X.
+The Aurekai Journal currently holds **54 edited articles**: sixteen essays based on earlier Aurekai/Bonfÿre work thirty additional pieces examining external research, mathematical claims, tools, markets, standards, and original posts on X, plus eight new essays on living web presences and accessible software ecosystems.
 
 The editorial Markdown in `editorial/posts/*.md` is authoritative. Each article has a stable slug, canonical URL, category, icon, publication date, source lineage, and `status: edited-public`. Posts responding to outside material include a `source_url` for the primary source. These are independently written articles, **not raw chat exports or endorsements by the cited organizations**.
 
@@ -22,6 +22,10 @@ No new installed JavaScript program is introduced, and the native code-budget ra
 The TSV manifest maps each post to a stable `post:<slug>` identity and the original Markdown path, SHA-256, canonical URL, and cited primary source URL. BonfÿreCMS / Matrix / Source Library can consume these records later while retaining the existing public article URLs.
 
 A public article must be reviewed before setting `status: edited-public`. Do not publish raw project conversation logs, private customer details, credentials, account tokens or unpublished integration contracts. Attributed quotations should be short and linked to their original context; mathematical examples must identify hypothetical inputs instead of presenting them as measured results.
+
+## Current series: Sites are dead. Long live the web.
+
+Eight source-linked essays published November 8, 2026 examine living profiles, participatory publication, creative ecosystems, software convergence, spreadsheets, small-business access and AI-driven software abundance. Start with `sites-are-dead-long-live-the-web`. All articles distinguish product ambitions from verified shipped features.
 
 ## Editorial roadmap
 

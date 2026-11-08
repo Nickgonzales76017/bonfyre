@@ -115,13 +115,13 @@ jobs:
           export CHROME_PATH="$(command -v google-chrome)"
           node scripts/tests/workspace-composition-browser.mjs
           node scripts/tests/workspace-docking-browser.mjs
-      - name: Build and verify 46 Aurekai Journal articles
+      - name: Build and verify Aurekai Journal articles
         run: |
           sh scripts/render-editorial.sh
           sh scripts/render-editorial.sh --check
-          test "$(find site/blog -mindepth 2 -maxdepth 2 -name index.html | wc -l)" -eq 46
-          test "$(grep -c '<item>' site/blog/feed.xml)" -eq 46
-          grep -q 'All articles / 46' site/blog/index.html
+          test "$(find site/blog -mindepth 2 -maxdepth 2 -name index.html | wc -l)" -eq "$(grep -l '^status: edited-public$' editorial/posts/*.md | wc -l)"
+          test "$(grep -c '<item>' site/blog/feed.xml)" -eq "$(grep -l '^status: edited-public$' editorial/posts/*.md | wc -l)"
+          grep -q "All articles / $(grep -l '^status: edited-public$' editorial/posts/*.md | wc -l)" site/blog/index.html
       - name: Browser-check Fieldwork stories and cross-site search
         shell: bash
         run: |
@@ -134,9 +134,11 @@ jobs:
           node --input-type=module <<'NODE'
           import { chromium } from './.spaces-tools/node_modules/playwright/index.mjs';
           import assert from 'node:assert/strict';
+          import { readFileSync } from 'node:fs';
           const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH,args:['--no-sandbox']});
           const page=await browser.newPage({viewport:{width:1366,height:900}});
           const errors=[];
+          const expectedArticles=readFileSync('site/discover/article-index.tsv','utf8').trimEnd().split('\n').length-1;
           page.on('pageerror',e=>errors.push(e.message));
           try {
             await page.goto('http://127.0.0.1:8765/fieldwork/',{waitUntil:'networkidle'});
@@ -156,12 +158,12 @@ jobs:
             await page.waitForURL('**/fieldwork/');
             assert.equal(await page.locator('input[type="number"]').count(),0);
             await page.goto('http://127.0.0.1:8765/discover/',{waitUntil:'domcontentloaded'});
-            await page.waitForFunction(()=>document.querySelectorAll('[data-kind="article"]').length===46,{timeout:12000});
+            await page.waitForFunction(()=>document.querySelectorAll('[data-kind="article"]').length===expectedArticles,expectedArticles,{timeout:12000});
             assert.equal(await page.locator('[data-kind="studio"]').count(),20);
             assert.equal(await page.locator('[data-kind="tool"]').count(),4);
-            assert.equal(await page.locator('[data-kind="article"]').count(),46);
+            assert.equal(await page.locator('[data-kind="article"]').count(),expectedArticles);
             await page.getByRole('button',{name:'Articles',exact:true}).click();
-            assert.equal(await page.locator('[data-kind="article"]:visible').count(),46);
+            assert.equal(await page.locator('[data-kind="article"]:visible').count(),expectedArticles);
             await page.locator('#discover-search').fill('podcast');
             await page.getByRole('button',{name:'Studios',exact:true}).click();
             assert.ok((await page.locator('[data-kind="studio"]:visible').count())>=1);

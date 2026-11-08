@@ -24,11 +24,12 @@ jobs:
         run: |
           set -euo pipefail
           sh scripts/render-editorial.sh --check
-          test "$(find site/blog -mindepth 2 -maxdepth 2 -name index.html | wc -l)" -eq 46
-          test "$(grep -c '<item>' site/blog/feed.xml)" -eq 46
-          test "$(grep -c '<url>' site/blog/sitemap.xml)" -eq 47
-          test "$(wc -l < site/blog/post-index.tsv)" -eq 47
-          grep -q 'All articles / 46' site/blog/index.html
+          expected="$(grep -l '^status: edited-public$' editorial/posts/*.md | wc -l)"
+          test "$(find site/blog -mindepth 2 -maxdepth 2 -name index.html | wc -l)" -eq "$expected"
+          test "$(grep -c '<item>' site/blog/feed.xml)" -eq "$expected"
+          test "$(grep -c '<url>' site/blog/sitemap.xml)" -eq "$((expected+1))"
+          test "$(wc -l < site/blog/post-index.tsv)" -eq "$((expected+1))"
+          grep -q "All articles / $expected" site/blog/index.html
           grep -q 'data-filter="Debates"' site/blog/index.html
           grep -q 'data-filter="Mathematics"' site/blog/index.html
           grep -q 'data-filter="Markets"' site/blog/index.html
