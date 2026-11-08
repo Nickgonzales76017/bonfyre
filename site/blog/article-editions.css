@@ -396,7 +396,11 @@
 }
 .journal-listen-from:hover,.journal-listen-from:focus-visible{background:#d2e1d2;border-color:#789e80}
 .journal-listen-from:focus-visible{outline:2px solid #a66b4c;outline-offset:3px}
-.journal-audio-player.is-docked .journal-audio-copy{display:none}
+.journal-audio-player.is-docked .journal-audio-copy{font-size:.69rem;white-space:nowrap}
+@media(max-width:650px){
+  .journal-audio-player.is-docked .journal-audio-copy{display:inline-flex;font-size:0;padding:5px}
+  .journal-audio-player.is-docked .journal-audio-copy::before{content:"↗";font-size:1rem;line-height:1}
+}
 .ed-title-panel .ed-title-utility{flex-wrap:wrap}
 @media(max-width:650px){
   .journal-listen-from{float:none;margin:15px 0 2px;display:flex;width:max-content;max-width:100%}
