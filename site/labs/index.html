@@ -26,7 +26,7 @@
 <div class="lab-section-heading"><div><div class="eyebrow">01 / Applied probability</div><h2>How many alerts are actually right?</h2><p>A detector can have high sensitivity and still produce mostly false alerts when the event is rare. Try changing the event rate or the detector's false-positive rate.</p></div><a href="../blog/why-base-rates-change-camera-matching-claims/">Read the base-rate article ↗</a></div>
 <div class="lab-workspace"><form class="lab-controls" id="base-form"><fieldset><legend>Detector assumptions</legend>
 <label for="base-total">Total observations <span class="field-help">Number of cases checked</span></label><input id="base-total" type="number" min="100" max="10000000" step="100" value="10000" required>
-<label for="base-prevalence">Actual event rate (%) <span class="field-help">How often the event occurs</span></label><input id="base-prevalence" type="number" min="0.01" max="99" step="0.1" value="1" required>
+<label for="base-prevalence">Actual event rate (%) <span class="field-help">How often the event occurs</span></label><input id="base-prevalence" type="number" min="0" max="99" step="0.1" value="1" required>
 <label for="base-sensitivity">Sensitivity (%) <span class="field-help">Real events correctly flagged</span></label><input id="base-sensitivity" type="number" min="0" max="100" step="0.5" value="95" required>
 <label for="base-fpr">False-positive rate (%) <span class="field-help">Ordinary cases incorrectly flagged</span></label><input id="base-fpr" type="number" min="0" max="100" step="0.5" value="5" required></fieldset>
 <button type="button" class="reset" data-reset="base-form">Restore example values</button></form>
@@ -60,7 +60,7 @@
 <div class="lab-section-heading"><div><div class="eyebrow">03 / Economies of scope</div><h2>When does sharing infrastructure pay off?</h2><p>Compare five independent implementations with one shared platform plus distinct business-specific work. Vary the portfolio and watch the break-even point.</p></div><a href="../blog/the-math-behind-sharing-software-across-businesses/">Read the scope-economics article ↗</a></div>
 <div class="lab-workspace"><form class="lab-controls" id="scope-form"><fieldset><legend>Portfolio assumptions</legend>
 <label for="scope-count">Number of businesses</label><input type="number" id="scope-count" min="1" max="100" step="1" value="5" required>
-<label for="scope-independent">Independent implementation per business ($)</label><input type="number" id="scope-independent" min="1" max="10000000" step="500" value="12000" required>
+<label for="scope-independent">Independent implementation per business ($)</label><input type="number" id="scope-independent" min="0" max="10000000" step="500" value="12000" required>
 <label for="scope-platform">One-time shared platform ($)</label><input type="number" id="scope-platform" min="0" max="100000000" step="1000" value="16000" required>
 <label for="scope-custom">Adaptation per business ($)</label><input type="number" id="scope-custom" min="0" max="10000000" step="500" value="3000" required></fieldset>
 <button type="button" class="reset" data-reset="scope-form">Restore example values</button></form>
