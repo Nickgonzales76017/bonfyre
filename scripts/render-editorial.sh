@@ -155,12 +155,18 @@ def media_figure(p, prefix, with_credit=True):
             + ('<figcaption>'+credit+'</figcaption>' if with_credit else '')+'</figure>')
 
 def editorial_detail(p):
-    # All material in text-led covers is from this authored article, not
-    # generated decorative claims, made-up quotes or fabricated statistics.
+    # Typographic covers ARE the article's own table of contents, not
+    # duplicated stock illustration or invented aphorism.
     headings = [line[3:].strip() for line in p["body"].splitlines() if line.startswith("## ")]
     lead = headings[0] if headings else p["description"]
+    chapters = ''.join(
+        '<li><a href="#'+sid(title)+'"><span>'+f"{i:02d}"+'</span><em>'+esc(title)+'</em></a></li>'
+        for i, title in enumerate(headings[1:4], 2))
     section = p.get("series") or p["category"].lower()
-    return '<div class="ed-editor-note"><span class="ed-editor-label">Inside this story</span><strong>'+esc(lead)+'</strong><span>'+esc(section.replace("-", " ").title())+' / Source-linked essay</span></div>'
+    return ('<div class="ed-editor-note"><span class="ed-editor-label">The article / Contents</span>'
+            '<strong>'+esc(lead)+'</strong>'
+            + ('<ol class="ed-editor-chapters">'+chapters+'</ol>' if chapters else '')
+            + '<span>'+esc(section.replace("-", " ").title())+' / Original editorial</span></div>')
 
 def esc(s):
     return html.escape(str(s), quote=True)

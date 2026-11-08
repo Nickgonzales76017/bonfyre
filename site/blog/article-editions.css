@@ -250,3 +250,18 @@
 .ed-card-cover{height:165px}
 }
 @media(prefers-reduced-motion:reduce){.ed-journal *, .ed-index-cover *{scroll-behavior:auto;transition:none!important}}
+
+/* Typographic plates use the actual article outline instead of decorative filler. */
+.ed-editor-note{gap:20px;min-height:340px}
+.ed-editor-note>strong{display:block}
+.ed-editor-chapters{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0;border-top:1px solid rgba(242,232,208,.38);width:100%}
+.ed-editor-chapters li{margin:0;padding:0;border-bottom:1px solid rgba(242,232,208,.32)}
+.ed-editor-chapters a{display:grid;grid-template-columns:30px 1fr;gap:13px;padding:12px 0;text-decoration:none;color:#f5f0e4;align-items:start}
+.ed-editor-chapters a:hover em,.ed-editor-chapters a:focus-visible em{text-decoration:underline}
+.ed-editor-chapters span{font:700 .63rem/1.6 system-ui,sans-serif;letter-spacing:.1em;color:var(--ed-accent)}
+.ed-editor-chapters em{font:400 clamp(.9rem,1.15vw,1.08rem)/1.37 Georgia,serif;font-style:normal}
+.format-dossier .ed-editor-chapters,.format-broadsheet .ed-editor-chapters,.format-culture-feature .ed-editor-chapters,.format-manifesto .ed-editor-chapters{border-top-color:rgba(60,90,70,.35)}
+.format-dossier .ed-editor-chapters li,.format-broadsheet .ed-editor-chapters li,.format-culture-feature .ed-editor-chapters li,.format-manifesto .ed-editor-chapters li{border-bottom-color:rgba(60,90,70,.30)}
+.format-dossier .ed-editor-chapters a,.format-broadsheet .ed-editor-chapters a,.format-culture-feature .ed-editor-chapters a,.format-manifesto .ed-editor-chapters a{color:#234535}
+.format-manifesto .ed-editor-chapters{max-width:450px}
+@media(max-width:850px){.ed-editor-note{min-height:0}.ed-editor-chapters{gap:0}}
