@@ -123,7 +123,7 @@ def article_page(p):
 <link rel="stylesheet" href="../../assets/aurekai-field-guide.css"><link rel="stylesheet" href="../../assets/aurekai-research.css"><link rel="stylesheet" href="../blog.css">
 </head><body><a class="skip" href="#main">Skip to article</a>
 <header class="top"><div class="shell"><a class="brand" href="../../"><span class="mark">A</span> AUREKAI <small>/ JOURNAL</small></a>
-<nav aria-label="Site navigation"><a href="../../">Home</a><a href="../../discover/">Explore</a><a href="../">Journal</a><a href="../../fieldwork/">Fieldwork</a><a href="../../docs.html">Bonfÿre</a></nav></div></header>
+<nav aria-label="Site navigation"><a href="../../">Home</a><a href="../../discover/">Explore</a><a href="../">Journal</a><a href="../../fieldwork/">Fieldwork</a><a href="../../series/">Series</a><a href="../../docs.html">Bonfÿre</a></nav></div></header>
 <main id="main"><section class="journal-article-hero"><div class="shell journal-article-head">
 <nav class="journal-breadcrumb" aria-label="Breadcrumb"><a href="../">Journal</a><span>/</span><span>{esc(p["category"])}</span></nav>
 {icon(p, "../../")}<div class="eyebrow">{esc(p["category"])} · {mins} min read</div>

@@ -6,6 +6,7 @@ on:
       - 'editorial/posts/**'
       - 'scripts/render-editorial.sh'
       - 'site/blog/**'
+      - 'site/series/**'
       - '.github/workflows/journal.yml'
   workflow_dispatch:
 permissions:
@@ -34,6 +35,10 @@ jobs:
           grep -q 'data-filter="Mathematics"' site/blog/index.html
           grep -q 'data-filter="Markets"' site/blog/index.html
           grep -q 'data-filter="Science"' site/blog/index.html
+          test -f site/series/index.html
+          grep -q 'id="authority"' site/series/index.html
+          grep -q 'id="operators"' site/series/index.html
+          test "$(grep -c 'class="essay-chapter ' site/series/index.html)" -eq 4
       - name: Archive website output
         uses: actions/upload-artifact@v4
         with:

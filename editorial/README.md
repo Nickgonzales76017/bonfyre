@@ -1,6 +1,6 @@
 # Aurekai Journal — public articles and editorial source
 
-The Aurekai Journal currently holds **54 edited articles**: sixteen essays based on earlier Aurekai/Bonfÿre work thirty additional pieces examining external research, mathematical claims, tools, markets, standards, and original posts on X, plus eight new essays on living web presences and accessible software ecosystems.
+The Aurekai Journal currently holds **64 edited articles**: sixteen essays based on earlier Aurekai/Bonfÿre work, thirty additional pieces examining external research, mathematical claims, tools, markets, standards, and original posts on X, plus eight essays on living web presences and accessible software ecosystems, five essays on independent judgment and expression, and five essays on internet operators, preservation and ownership.
 
 The editorial Markdown in `editorial/posts/*.md` is authoritative. Each article has a stable slug, canonical URL, category, icon, publication date, source lineage, and `status: edited-public`. Posts responding to outside material include a `source_url` for the primary source. These are independently written articles, **not raw chat exports or endorsements by the cited organizations**.
 
@@ -26,6 +26,10 @@ A public article must be reviewed before setting `status: edited-public`. Do not
 ## Current series: Sites are dead. Long live the web.
 
 Eight source-linked essays published November 8, 2026 examine living profiles, participatory publication, creative ecosystems, software convergence, spreadsheets, small-business access and AI-driven software abundance. Start with `sites-are-dead-long-live-the-web`. All articles distinguish product ambitions from verified shipped features.
+
+## Editorial reading series
+
+The public `site/series/index.html` is a designed reading map connecting the independent judgment, living profiles, accessible software and internet operator series to public source research and existing studio examples. The pages are static and work without client-side scripting. Their real-application links are marked as public examples rather than unverified production capabilities.
 
 ## Editorial roadmap
 
