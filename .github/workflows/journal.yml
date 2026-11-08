@@ -52,6 +52,8 @@ jobs:
           grep -q 'id="operators"' site/series/index.html
           grep -q 'reader-outline-menu' site/blog/the-machine-told-me-so/index.html
           grep -q 'journal-audio-player' site/blog/who-keeps-the-internet-alive/index.html
+          grep -q 'data-narration-play' site/blog/who-keeps-the-internet-alive/index.html
+          grep -q 'journal-audio-transcript' site/blog/who-keeps-the-internet-alive/index.html
           grep -q 'data-narration-seek' site/blog/who-keeps-the-internet-alive/index.html
           grep -q 'data-narration-wave' site/blog/the-machine-told-me-so/index.html
           grep -q 'href="#audio-edition"' site/blog/the-machine-told-me-so/index.html
