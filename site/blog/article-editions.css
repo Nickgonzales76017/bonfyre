@@ -421,3 +421,15 @@
 .journal-conversation-card small{font:.72rem/1.4 system-ui,sans-serif;color:#82523c;font-weight:750}
 .journal-conversation-return{background:#f4f1e8!important}
 @media(max-width:650px){.journal-conversation-grid{grid-template-columns:1fr}.journal-conversation{margin-top:38px}}
+
+/* Reader-selectable voice avoids forcing the lowest-quality local system
+   synthesizer while reviewed studio recordings are being prepared. */
+.journal-audio-voice-choice{display:inline-flex;align-items:center;gap:7px;color:#526c59;
+  font:730 .7rem/1.35 system-ui,sans-serif}
+.journal-audio-voice-choice[hidden]{display:none}
+.journal-audio-voice-choice select{min-height:32px;min-width:85px;max-width:170px;
+  background:#fff;color:#214435;border:1px solid #afbfaa;padding:6px 5px;
+  font:700 .72rem/1.35 system-ui,sans-serif}
+.journal-audio-voice-choice select:focus-visible{outline:2px solid #a46b4d;outline-offset:2px}
+@media(max-width:650px){.journal-audio-voice-choice{font-size:.65rem}
+ .journal-audio-voice-choice select{max-width:135px;font-size:.64rem}}
