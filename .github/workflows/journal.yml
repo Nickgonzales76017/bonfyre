@@ -26,7 +26,8 @@ jobs:
           set -euo pipefail
           sh scripts/render-editorial.sh --check
           expected="$(grep -l '^status: edited-public$' editorial/posts/*.md | wc -l)"
-          test "$(find site/blog -mindepth 2 -maxdepth 2 -name index.html | wc -l)" -eq "$expected"
+          # Additional Journal routes such as /about/ are not article records.
+          test "$(grep -c '^post:' site/blog/post-index.tsv)" -eq "$expected"
           test "$(grep -c '<item>' site/blog/feed.xml)" -eq "$expected"
           test "$(grep -c '<url>' site/blog/sitemap.xml)" -eq "$((expected+1))"
           test "$(wc -l < site/blog/post-index.tsv)" -eq "$((expected+1))"

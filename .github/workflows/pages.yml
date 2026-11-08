@@ -119,7 +119,112 @@ jobs:
         run: |
           sh scripts/render-editorial.sh
           sh scripts/render-editorial.sh --check
-          test "$(find site/blog -mindepth 2 -maxdepth 2 -name index.html | wc -l)" -eq "$(grep -l '^status: edited-public$' editorial/posts/*.md | wc -l)"
+          # Other Journal routes (such as /about/) are not article records.
+          test "$(grep -c '^post:' site/blog/post-index.tsv)" -eq "$(grep -l '^status: edited-public
+          test "$(grep -c '<item>' site/blog/feed.xml)" -eq "$(grep -l '^status: edited-public$' editorial/posts/*.md | wc -l)"
+          grep -q "All articles / $(grep -l '^status: edited-public$' editorial/posts/*.md | wc -l)" site/blog/index.html
+      - name: Browser-check Fieldwork stories and cross-site search
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory site >/tmp/aurekai-pages-http.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          sleep 1
+          export CHROME_PATH="$(command -v google-chrome)"
+          node --input-type=module <<'NODE'
+          import { chromium } from './.spaces-tools/node_modules/playwright/index.mjs';
+          import assert from 'node:assert/strict';
+          import { readFileSync } from 'node:fs';
+          const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH,args:['--no-sandbox']});
+          const page=await browser.newPage({viewport:{width:1366,height:900}});
+          const errors=[];
+          const expectedArticles=readFileSync('site/discover/article-index.tsv','utf8').trimEnd().split('\n').length-1;
+          page.on('pageerror',e=>errors.push(e.message));
+          try {
+            await page.goto('http://127.0.0.1:8765/fieldwork/',{waitUntil:'networkidle'});
+            assert.equal(await page.locator('h1').count(),1);
+            assert.equal(await page.locator('.fw-chapter').count(),5);
+            assert.equal(await page.locator('.fw-story-index a').count(),5);
+            assert.equal(await page.locator('a[href="../spaces/catalogue/"]').count(),1);
+            assert.equal(await page.locator('a[href="../blog/"]').count()>=1,true);
+            for(const image of await page.locator('.fw-cover-art img, .fw-product-image img').all()){
+              await image.scrollIntoViewIfNeeded();
+              await image.evaluate(el=>el.decode());
+              assert.equal(await image.evaluate(el=>el.complete && el.naturalWidth>0),true);
+            }
+            await page.locator('a[href="#inventory"]').first().click();
+            assert.equal(new URL(page.url()).hash,'#inventory');
+            await page.goto('http://127.0.0.1:8765/labs/',{waitUntil:'load'});
+            await page.waitForURL('**/fieldwork/');
+            assert.equal(await page.locator('input[type="number"]').count(),0);
+            await page.goto('http://127.0.0.1:8765/discover/',{waitUntil:'domcontentloaded'});
+            await page.waitForFunction(n=>document.querySelectorAll('[data-kind="article"]').length===n,expectedArticles,{timeout:12000});
+            assert.equal(await page.locator('[data-kind="studio"]').count(),20);
+            assert.equal(await page.locator('[data-kind="tool"]').count(),4);
+            assert.equal(await page.locator('[data-kind="article"]').count(),expectedArticles);
+            await page.getByRole('button',{name:'Articles',exact:true}).click();
+            assert.equal(await page.locator('[data-kind="article"]:visible').count(),expectedArticles);
+            await page.locator('#discover-search').fill('podcast');
+            await page.getByRole('button',{name:'Studios',exact:true}).click();
+            assert.ok((await page.locator('[data-kind="studio"]:visible').count())>=1);
+            await page.goto('http://127.0.0.1:8765/blog/why-base-rates-change-camera-matching-claims/',{waitUntil:'domcontentloaded'});
+            assert.equal(await page.locator('a[href="../../fieldwork/"]').count(),1);
+            assert.equal(await page.locator('a[href*="/labs/#"]').count(),0);
+            assert.equal(errors.length,0,errors.join('; '));
+            console.log('PASS: five editorial chapters, source imagery, article routes and directory search');
+          } finally { await browser.close(); }
+          NODE
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Verify the actual public studio
+        env:
+          SPACES_ORIGIN: https://nickgonzales76017.github.io
+          SPACES_EVIDENCE: spaces-live-evidence
+          SPACES_STUDIO_REQUIRED: '1'
+        run: |
+          export PLAYWRIGHT_MODULE="$PWD/.spaces-tools/node_modules/playwright/index.mjs"
+          export CHROME_PATH="$(command -v google-chrome)"
+          node scripts/tests/spaces-live-browser.mjs
+      - name: Verify the public composed workflows
+        env:
+          WORKSPACE_ORIGIN: https://nickgonzales76017.github.io
+          WORKSPACE_EVIDENCE: workspace-live-evidence
+        run: |
+          export PLAYWRIGHT_MODULE="$PWD/.spaces-tools/node_modules/playwright/index.mjs"
+          export CHROME_PATH="$(command -v google-chrome)"
+          node scripts/tests/workspace-composition-browser.mjs
+          node scripts/tests/workspace-docking-browser.mjs
+      - name: Verify actual public instruments and downloaded results
+        env:
+          INSTRUMENT_ORIGIN: https://nickgonzales76017.github.io/bonfyre/instruments/
+          INSTRUMENT_EVIDENCE: instrument-live-evidence
+        run: |
+          export PLAYWRIGHT_MODULE="$PWD/.spaces-tools/node_modules/playwright/index.mjs"
+          export CHROME_PATH="$(command -v google-chrome)"
+          node scripts/tests/instruments-browser.mjs
+      - name: Keep local and live browser results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spaces-release-evidence
+          retention-days: 30
+          path: |
+            spaces-evidence
+            spaces-live-evidence
+            workspace-evidence
+            workspace-live-evidence
+            instrument-evidence
+            instrument-live-evidence
+            site/instruments/SOURCE.tsv
+ editorial/posts/*.md | wc -l)"
           test "$(grep -c '<item>' site/blog/feed.xml)" -eq "$(grep -l '^status: edited-public$' editorial/posts/*.md | wc -l)"
           grep -q "All articles / $(grep -l '^status: edited-public$' editorial/posts/*.md | wc -l)" site/blog/index.html
       - name: Browser-check Fieldwork stories and cross-site search
