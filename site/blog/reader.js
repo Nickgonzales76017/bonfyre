@@ -73,7 +73,7 @@
     return (copy.textContent || '').replace(/\s+/g, ' ').trim();
   };
   const prepare = () => {
-    const nodes = [document.querySelector('#article-title'), document.querySelector('.garden-subtitle'),
+    const nodes = [document.querySelector('#article-title'), document.querySelector('.ed-deck'),
        ...article.querySelectorAll(':scope > h2, :scope > h3, :scope > p, :scope > ul')].filter(Boolean);
     const result = [];
     for (const node of nodes) {
