@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f5f3eb"><title>Research Lab — Try the numbers | Aurekai</title>
+<meta name="description" content="Interactive, source-linked calculators for base rates, wholesale lots, shared business infrastructure and AI task costs. Explore the assumptions behind Aurekai Journal articles.">
+<meta property="og:title" content="Research Lab — Try the numbers | Aurekai"><meta property="og:type" content="website">
+<link rel="canonical" href="https://nickgonzales76017.github.io/bonfyre/labs/">
+<link rel="stylesheet" href="../assets/aurekai-field-guide.css"><link rel="stylesheet" href="../assets/aurekai-research.css"><link rel="stylesheet" href="labs.css">
+</head>
+<body><a class="skip" href="#main">Skip to calculators</a>
+<header class="top"><div class="shell"><a class="brand" href="../"><span class="mark">A</span> AUREKAI <small>/ RESEARCH LAB</small></a>
+<nav aria-label="Site navigation"><a href="../">Home</a><a href="../discover/">Explore</a><a href="../blog/">Journal</a><a href="../market.html">Research</a><a href="../docs.html">Bonfÿre</a></nav></div></header>
+<main id="main">
+<section class="lab-hero"><div class="shell"><div class="eyebrow">Aurekai Journal / Interactive research</div>
+<h1>Change the assumptions.<br><em>See what changes.</em></h1>
+<p class="lead">Some arguments deserve more than a paragraph. These four small models let you test the numbers used in our articles about detection, buying inventory, sharing software across businesses and choosing AI tools.</p>
+<div class="lab-hero-actions"><a class="button primary" href="#base-rates">Try the first model</a><a class="button" href="../blog/">Read the research</a></div>
+<p class="lab-method">All values are illustrative. Outputs are arithmetic under the selected assumptions, not predictions or recommendations for a real transaction, model, organization or surveillance system. Each model links the article that explains its limits.</p>
+</div></section>
+<nav class="lab-index" aria-label="Choose a model"><div class="shell lab-index-grid">
+<a href="#base-rates"><svg><use href="../assets/product-icons.svg#network"></use></svg><span>Base rates and false alarms</span><b>01</b></a>
+<a href="#wholesale"><svg><use href="../assets/product-icons.svg#cart"></use></svg><span>Wholesale lot economics</span><b>02</b></a>
+<a href="#shared"><svg><use href="../assets/product-icons.svg#building"></use></svg><span>Sharing business software</span><b>03</b></a>
+<a href="#model-cost"><svg><use href="../assets/product-icons.svg#cpu"></use></svg><span>The cost of an AI task</span><b>04</b></a>
+</div></nav>
+<section class="lab-section" id="base-rates"><div class="shell">
+<div class="lab-section-heading"><div><div class="eyebrow">01 / Applied probability</div><h2>How many alerts are actually right?</h2><p>A detector can have high sensitivity and still produce mostly false alerts when the event is rare. Try changing the event rate or the detector's false-positive rate.</p></div><a href="../blog/why-base-rates-change-camera-matching-claims/">Read the base-rate article ↗</a></div>
+<div class="lab-workspace"><form class="lab-controls" id="base-form"><fieldset><legend>Detector assumptions</legend>
+<label for="base-total">Total observations <span class="field-help">Number of cases checked</span></label><input id="base-total" type="number" min="100" max="10000000" step="100" value="10000" required>
+<label for="base-prevalence">Actual event rate (%) <span class="field-help">How often the event occurs</span></label><input id="base-prevalence" type="number" min="0.01" max="99" step="0.1" value="1" required>
+<label for="base-sensitivity">Sensitivity (%) <span class="field-help">Real events correctly flagged</span></label><input id="base-sensitivity" type="number" min="0" max="100" step="0.5" value="95" required>
+<label for="base-fpr">False-positive rate (%) <span class="field-help">Ordinary cases incorrectly flagged</span></label><input id="base-fpr" type="number" min="0" max="100" step="0.5" value="5" required></fieldset>
+<button type="button" class="reset" data-reset="base-form">Restore example values</button></form>
+<div class="lab-outcome" id="base-result" aria-live="polite" aria-atomic="true">
+<div class="lab-outcome-label">Of the flagged cases, the estimated share that are true</div><div class="lab-big" data-out="precision">16.1%</div>
+<div class="lab-bars" aria-hidden="true"><div class="lab-bar-true" data-bar="true" style="width:16.1%"></div><div class="lab-bar-false" data-bar="false" style="width:83.9%"></div></div>
+<div class="lab-legend"><span><i class="swatch true"></i><strong data-out="tp">95</strong> true alerts</span><span><i class="swatch false"></i><strong data-out="fp">495</strong> false alerts</span></div>
+<p class="lab-explain" data-out="base-explain">With a 1% event rate, 95 true events and 495 ordinary cases are flagged. The detector catches most real events but most alerts are not real events.</p>
+</div></div><p class="lab-footnote">The calculation uses expected counts (which may be fractional for some inputs) and assumes constant detection performance. It says nothing about the accuracy or fairness of a particular real system. Background: <a href="https://www.nist.gov/itl/iad/image-group/face-recognition-vendor-test-frvt">NIST face-recognition evaluations ↗</a>.</p>
+</div></section>
+<section class="lab-section alt" id="wholesale"><div class="shell">
+<div class="lab-section-heading"><div><div class="eyebrow">02 / Inventory and resale</div><h2>Is a discounted lot actually profitable?</h2><p>Discounts compare asking prices with estimated retail value. Profit depends on what can actually be sold and what it costs to move the goods.</p></div><a href="../blog/a-wholesale-lot-is-an-equation-not-a-discount/">Read the wholesale analysis ↗</a></div>
+<div class="lab-workspace"><form class="lab-controls" id="lot-form"><fieldset><legend>Lot assumptions</legend>
+<label for="lot-retail">Advertised retail value ($)</label><input type="number" id="lot-retail" min="0" max="100000000" step="100" value="10000" required>
+<label for="lot-salable">Saleable inventory (%)</label><input type="number" id="lot-salable" min="0" max="100" step="5" value="70" required>
+<label for="lot-recovery">Average resale price / retail (%)</label><input type="number" id="lot-recovery" min="0" max="300" step="5" value="60" required>
+<label for="lot-buy">Purchase price ($)</label><input type="number" id="lot-buy" min="0" step="100" value="2000" required>
+<label for="lot-freight">Freight ($)</label><input type="number" id="lot-freight" min="0" step="50" value="500" required>
+<label for="lot-labor">Testing and labor ($)</label><input type="number" id="lot-labor" min="0" step="50" value="350" required>
+<label for="lot-fees">Selling fees ($)</label><input type="number" id="lot-fees" min="0" step="50" value="400" required>
+<label for="lot-returns">Expected returns and losses ($)</label><input type="number" id="lot-returns" min="0" step="50" value="300" required></fieldset>
+<button type="button" class="reset" data-reset="lot-form">Restore example values</button></form>
+<div class="lab-outcome" id="lot-result" aria-live="polite" aria-atomic="true">
+<div class="lab-outcome-label">Estimated lot profit</div><div class="lab-big" data-out="lot-profit">$650</div>
+<div class="lab-compare"><div><small>Gross resale</small><strong data-out="lot-revenue">$4,200</strong></div><div><small>Total costs</small><strong data-out="lot-costs">$3,550</strong></div></div>
+<div class="lab-bars" aria-hidden="true"><div class="lab-bar-true" data-bar="lot-revenue" style="width:54%"></div><div class="lab-bar-false" data-bar="lot-cost" style="width:46%"></div></div>
+<p class="lab-explain" data-out="lot-explain">An advertised 80% discount does not produce an 80% margin. This hypothetical lot nets $650 before taxes, storage and the time value of your money.</p>
+</div></div><p class="lab-footnote">Saleable inventory and recovery are estimates, not guarantees. Validate quantities, condition, seller terms, shipping and return policies before buying. See <a href="https://www.gsaauctions.gov/">GSA Auctions ↗</a> for an example of real surplus listing conditions.</p>
+</div></section>
+<section class="lab-section" id="shared"><div class="shell">
+<div class="lab-section-heading"><div><div class="eyebrow">03 / Economies of scope</div><h2>When does sharing infrastructure pay off?</h2><p>Compare five independent implementations with one shared platform plus distinct business-specific work. Vary the portfolio and watch the break-even point.</p></div><a href="../blog/the-math-behind-sharing-software-across-businesses/">Read the scope-economics article ↗</a></div>
+<div class="lab-workspace"><form class="lab-controls" id="scope-form"><fieldset><legend>Portfolio assumptions</legend>
+<label for="scope-count">Number of businesses</label><input type="number" id="scope-count" min="1" max="100" step="1" value="5" required>
+<label for="scope-independent">Independent implementation per business ($)</label><input type="number" id="scope-independent" min="1" max="10000000" step="500" value="12000" required>
+<label for="scope-platform">One-time shared platform ($)</label><input type="number" id="scope-platform" min="0" max="100000000" step="1000" value="16000" required>
+<label for="scope-custom">Adaptation per business ($)</label><input type="number" id="scope-custom" min="0" max="10000000" step="500" value="3000" required></fieldset>
+<button type="button" class="reset" data-reset="scope-form">Restore example values</button></form>
+<div class="lab-outcome" id="scope-result" aria-live="polite" aria-atomic="true">
+<div class="lab-outcome-label">Difference at this portfolio size</div><div class="lab-big" data-out="scope-savings">$29,000 saved</div>
+<div class="lab-compare"><div><small>Independent build</small><strong data-out="scope-independent-cost">$60,000</strong></div><div><small>Shared platform + adaptation</small><strong data-out="scope-shared-cost">$31,000</strong></div></div>
+<div class="lab-bars" aria-hidden="true"><div class="lab-bar-false" data-bar="scope-independent" style="width:66%"></div><div class="lab-bar-true" data-bar="scope-shared" style="width:34%"></div></div>
+<p class="lab-explain" data-out="scope-explain">At these prices, the shared approach breaks even with two businesses. The difference excludes ongoing coordination and domain-specific obligations.</p>
+</div></div><p class="lab-footnote">A simplified fixed-cost illustration. Real platforms have hosting, staff, governance and cross-business coordination costs; customer data and account permissions must remain separated.</p>
+</div></section>
+<section class="lab-section alt" id="model-cost"><div class="shell">
+<div class="lab-section-heading"><div><div class="eyebrow">04 / Model selection</div><h2>What does a completed AI task cost?</h2><p>A cheap model call can become expensive when it fails on a high-cost task. Compare two hypothetical routes with different prices and failure rates.</p></div><a href="../blog/why-the-cheapest-token-isnt-the-cheapest-answer/">Read the model-cost article ↗</a></div>
+<div class="lab-workspace"><form class="lab-controls" id="model-form"><fieldset><legend>Task assumptions</legend>
+<label for="model-a-price">Route A price per call ($)</label><input type="number" id="model-a-price" min="0" max="100000" step=".01" value=".01" required>
+<label for="model-a-failure">Route A failure rate (%)</label><input type="number" id="model-a-failure" min="0" max="100" step="1" value="10" required>
+<label for="model-b-price">Route B price per call ($)</label><input type="number" id="model-b-price" min="0" max="100000" step=".01" value=".05" required>
+<label for="model-b-failure">Route B failure rate (%)</label><input type="number" id="model-b-failure" min="0" max="100" step="1" value="2" required>
+<label for="model-recovery">Cost of a failed task ($)</label><input type="number" id="model-recovery" min="0" max="1000000" step=".25" value="2" required></fieldset>
+<button type="button" class="reset" data-reset="model-form">Restore example values</button></form>
+<div class="lab-outcome" id="model-result" aria-live="polite" aria-atomic="true">
+<div class="lab-outcome-label">Lower expected cost per attempt</div><div class="lab-big" data-out="model-winner">Route B</div>
+<div class="lab-compare"><div><small>Route A expected cost</small><strong data-out="model-a-cost">$0.21</strong></div><div><small>Route B expected cost</small><strong data-out="model-b-cost">$0.09</strong></div></div>
+<div class="lab-bars" aria-hidden="true"><div class="lab-bar-false" data-bar="model-a" style="width:70%"></div><div class="lab-bar-true" data-bar="model-b" style="width:30%"></div></div>
+<p class="lab-explain" data-out="model-explain">Route A charges less per call, but more failures make it costlier under these assumptions. Expected cost includes one failure cost, not a full retry sequence.</p>
+</div></div><p class="lab-footnote">Example rates are invented. Real comparison requires comparable task sets, quality, provider limits, latency, review and retry behavior. See also <a href="../blog/metr-study-and-the-missing-counterfactual/">METR and productivity measurement ↗</a>.</p>
+</div></section>
+<section class="lab-bottom"><div class="shell"><div class="eyebrow">Where the numbers go next</div><h2>Use the model to ask a better question.</h2><p>These calculators expose assumptions. They are not substitutes for domain expertise, qualified advice or validating current data. Continue into the underlying articles or use the <a href="../discover/">site explorer</a> to find the software and source material behind them.</p>
+<div class="lab-hero-actions"><a class="button primary" href="../blog/">Browse the journal</a><a class="button" href="../explore.html">See the applications</a></div></div></section>
+</main><footer class="footer"><div class="shell"><span>Aurekai / Interactive Research Lab</span><span><a href="../">Home</a> · <a href="../blog/">Journal</a> · <a href="../discover/">Explore</a></span></div></footer>
+<script src="labs.js" defer></script></body></html>
