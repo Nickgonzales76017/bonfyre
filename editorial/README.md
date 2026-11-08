@@ -1,23 +1,11 @@
-# Aurekai Journal — authored editorial source
+# Aurekai Journal — editable editorial source
 
-The articles in `editorial/posts/*.md` are edited public essays derived from earlier Aurekai and Bonfÿre project conversations, technical experiments and research discussions. They are original editorial synthesis, **not exported chats or verbatim quotations**.
+The source articles in `editorial/posts/*.md` are public-facing essays adapted from earlier Aurekai and Bonfÿre discussions, experiments and research. They are not raw chat exports or verbatim transcripts.
 
-The static builder is `scripts/build-blog.mjs`. It writes a searchable index, one stable HTML URL per post, RSS, an XML sitemap and `post-index.tsv` for future CMS migration.
+Each article has stable front matter: slug, title, description, category, icon, date, editorial status, topics and origin. Its corresponding static page is checked into `site/blog/<slug>/index.html` and served at `https://nickgonzales76017.github.io/bonfyre/blog/<slug>/`.
 
-Run from the repository root:
+The static journal also contains an article index, subject search, RSS, XML sitemap and `site/blog/post-index.tsv`. The manifest carries the subject identity `post:<slug>`, source path and canonical URL for a later move to BonfÿreCMS, Matrix and Source Library.
 
-```sh
-node scripts/build-blog.mjs
-node scripts/build-blog.mjs --check
-node --test scripts/tests/blog-build.test.mjs
-```
+**No new JavaScript service or generator is installed.** Bonfÿre's native source-size ratchet remains unchanged. For now the Markdown is the editable source and the HTML files are committed publication artifacts. After native CMS authoring is connected, these coordinates and identities can become output from the existing native publishing owners.
 
-## Native publication later
-
-Each Markdown front matter contains a stable slug, title, description, category, icon, publication date, status, topics and origin. The generated `site/blog/post-index.tsv` also includes a stable `post:<slug>` identity, source path, SHA-256 of the authored body and canonical URL.
-
-When moving into BonfÿreCMS / Matrix / Source Library, retain the slug and canonical URL as the public coordinate and map author/content/source into the native owners. The static site is a delivery format; it creates **no** CMS, publication, financial or foreign-system effects now.
-
-Only source documents marked `status: edited-public` enter the build. The editorial archive may later include private research notes with other statuses, but those must never be emitted by the static compiler.
-
-The published articles use public-facing examples. Do not paste raw chat exports, credentials, private customer details or internal source bodies into these files.
+Articles use public examples and link to official sources and project pages. Do not add raw chat logs, account identifiers, credentials or private customer data to the public editorial directory.
