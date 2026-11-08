@@ -1,0 +1,152 @@
+name: Aurekai Journal Neural Audio Pilot
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/journal-neural-pilot.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: write
+jobs:
+  publish-pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install local open-licensed voice runtime
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends espeak-ng ffmpeg
+          python -m pip install 'kokoro-onnx==0.6.1' 'soundfile==0.13.1'
+      - uses: actions/cache@v4
+        with:
+          path: .voice-cache
+          key: journal-kokoro-fp16-v1.1
+      - name: Fetch pinned voice inputs
+        run: |
+          set -euo pipefail
+          mkdir -p .voice-cache editorial/audio/pilot
+          base='https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.1'
+          test -s .voice-cache/kokoro-v1.0.fp16.onnx || curl -fL --retry 3 "$base/kokoro-v1.0.fp16.onnx" -o .voice-cache/kokoro-v1.0.fp16.onnx
+          test -s .voice-cache/voices-v1.0.bin || curl -fL --retry 3 "$base/voices-v1.0.bin" -o .voice-cache/voices-v1.0.bin
+          test "$(wc -c < .voice-cache/kokoro-v1.0.fp16.onnx)" -gt 100000000
+          test "$(wc -c < .voice-cache/voices-v1.0.bin)" -gt 10000000
+          sha256sum .voice-cache/* > editorial/audio/pilot/model-hashes.txt
+      - name: Synthesize four edited essays in one consistent voice
+        timeout-minutes: 55
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          from kokoro_onnx import Kokoro
+          import re,hashlib,json,subprocess
+          import numpy as np
+          import soundfile as sf
+          slugs=['sites-are-dead-long-live-the-web',
+                 'the-machine-told-me-so',
+                 'who-keeps-the-internet-alive',
+                 'nobody-called-the-pizza-shops-slop']
+          voice='af_heart'
+          tts=Kokoro('.voice-cache/kokoro-v1.0.fp16.onnx','.voice-cache/voices-v1.0.bin')
+          results=[]
+          try:
+            for slug in slugs:
+              source=Path('editorial/posts',slug+'.md')
+              raw=source.read_text(encoding='utf-8')
+              header,body=raw.split('\n---\n',1)
+              title=re.search(r'(?m)^title: (.+)$',header).group(1).strip()
+              segments=[]
+              for block in re.split(r'\n\s*\n',body):
+                part=block.strip()
+                if not part or part.startswith(('![','- ','> ')) or len(part.split())<6:continue
+                part=re.sub(r'^#{1,5}\s+','',part)
+                part=re.sub(r'\[([^\]]+)\]\(https?://[^)]+\)',r'\1',part)
+                part=re.sub(r'https?://\S+','',part).replace('**','').replace(chr(96),'')
+                part=re.sub(r'\s+',' ',part).strip()
+                if len(part.split())>=6:segments.append(part)
+              script=title+'.\n\n'+'\n\n'.join(segments)
+              if len(script.split())<400:raise RuntimeError('Unexpectedly short article '+slug)
+              chunks=[]
+              for paragraph in re.split(r'\n\s*\n',script):
+                current=''
+                for word in paragraph.split():
+                  if current and len(current)+len(word)+1>210:
+                    chunks.append(current);current=''
+                  current+=(' ' if current else '')+word
+                if current:chunks.append(current)
+              pieces=[]
+              for passage in chunks:
+                samples,sr=tts.create(passage,voice=voice,speed=.96,lang='en-us')
+                if sr!=24000:raise RuntimeError('Unexpected model rate')
+                pieces.extend([np.asarray(samples,dtype=np.float32).reshape(-1),
+                               np.zeros(5520,dtype=np.float32)])
+              pcm=np.concatenate(pieces)
+              duration=len(pcm)/24000
+              rms=float(np.sqrt(np.mean(np.square(pcm.astype(np.float64)))))
+              peak=float(np.max(np.abs(pcm)))
+              if duration<95 or rms<.003 or peak>=1.2:raise RuntimeError('Audio QA failed '+slug)
+              dest=Path('site/blog',slug)
+              dest.mkdir(parents=True,exist_ok=True)
+              wav=dest/'edition-tmp.wav'
+              mp3=dest/'edition.mp3'
+              sf.write(wav,np.clip(pcm,-1,1),24000)
+              subprocess.run(['ffmpeg','-nostdin','-hide_banner','-loglevel','error','-y',
+                '-i',str(wav),'-af','loudnorm=I=-16:TP=-1.5:LRA=11',
+                '-ar','24000','-ac','1','-c:a','libmp3lame','-b:a','80k',str(mp3)],check=True)
+              wav.unlink()
+              if mp3.stat().st_size<100000:raise RuntimeError('Empty published audio')
+              # Bind every recorded edition to the exact public prose revision.
+              lines=[line for line in header.splitlines() if not line.startswith(
+                ('audio_file:','audio_voice:','audio_model:','audio_review:','audio_body_sha256:'))]
+              lines+=['audio_file: edition.mp3','audio_voice: '+voice,
+                'audio_model: Kokoro-82M v1.0',
+                'audio_review: provisional-neural-pilot',
+                'audio_body_sha256: '+hashlib.sha256(body.strip().encode()).hexdigest()]
+              source.write_text('\n'.join(lines)+'\n---\n'+body,encoding='utf-8')
+              item=dict(slug=slug,voice=voice,duration_seconds=round(duration,1),
+                audio_sha256=hashlib.sha256(mp3.read_bytes()).hexdigest(),
+                spoken_text_sha256=hashlib.sha256(script.encode()).hexdigest(),
+                bytes=mp3.stat().st_size,review='provisional-neural-pilot')
+              results.append(item)
+              print(json.dumps(item),flush=True)
+          finally:
+            tts.voices.close()
+          assert len(results)==4
+          Path('editorial/audio/pilot/manifest.json').write_text(json.dumps(results,indent=2)+'\n')
+          PY
+          sh scripts/render-editorial.sh
+          sh scripts/render-editorial.sh --check
+          python3 scripts/tests/editorial-search-readiness.py
+      - name: Retain complete audio and provenance for human review
+        uses: actions/upload-artifact@v4
+        with:
+          name: aurekai-neural-audio-pilot
+          retention-days: 30
+          path: |
+            editorial/audio/pilot/
+            site/blog/sites-are-dead-long-live-the-web/edition.mp3
+            site/blog/the-machine-told-me-so/edition.mp3
+            site/blog/who-keeps-the-internet-alive/edition.mp3
+            site/blog/nobody-called-the-pizza-shops-slop/edition.mp3
+      - name: Promote provisional source-bound editions
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config user.name 'Aurekai Audio Publisher'
+          git config user.email 'audio-publisher@users.noreply.github.com'
+          git add editorial/posts/*.md site/blog/*/edition.mp3
+          git commit -m 'Publish four source-bound neural narration pilot editions'
+          git reset --hard HEAD
+          git fetch origin main
+          git rebase origin/main
+          git push origin HEAD:main
+          gh api -X POST "repos/$GITHUB_REPOSITORY/actions/workflows/pages.yml/dispatches" -f ref=main
