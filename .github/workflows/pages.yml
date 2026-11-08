@@ -120,7 +120,8 @@ jobs:
           sh scripts/render-editorial.sh
           sh scripts/render-editorial.sh --check
           # Other Journal routes (such as /about/) are not article records.
-          test "$(grep -c '^post:' site/blog/post-index.tsv)" -eq "$(grep -l '^status: edited-public          test "$(grep -c '<item>' site/blog/feed.xml)" -eq "$(grep -l '^status: edited-public$' editorial/posts/*.md | wc -l)"
+          test "$(grep -c '^post:' site/blog/post-index.tsv)" -eq "$(grep -l 'status: edited-public' editorial/posts/*.md | wc -l)"
+          test "$(grep -c '<item>' site/blog/feed.xml)" -eq "$(grep -l '^status: edited-public$' editorial/posts/*.md | wc -l)"
           grep -q "All articles / $(grep -l '^status: edited-public$' editorial/posts/*.md | wc -l)" site/blog/index.html
       - name: Browser-check Fieldwork stories and cross-site search
         shell: bash
