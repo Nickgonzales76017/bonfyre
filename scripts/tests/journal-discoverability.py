@@ -56,7 +56,8 @@ for slug in slugs:
 
 ns = {"sm":"http://www.sitemaps.org/schemas/sitemap/0.9"}
 urls = {el.text for el in ET.parse(root / "sitemap.xml").findall(".//sm:loc",ns)}
-expected = {base,base+"about/","https://nickgonzales76017.github.io/bonfyre/series/"}
+expected = {base,base+"about/",base+"connections/","https://nickgonzales76017.github.io/bonfyre/series/"}
+assert (root/"connections"/"index.html").is_file(), "Connections atlas missing"
 expected.update(base+slug+"/" for slug in slugs)
 assert urls == expected, f"sitemap drift: missing={expected-urls}, extra={urls-expected}"
 feed = (root / "feed.xml").read_text(encoding="utf-8")
