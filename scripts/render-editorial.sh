@@ -427,7 +427,7 @@ for number, raw in enumerate(EDITORIAL_BRIDGES_PATH.read_text(encoding="utf-8").
     EDITORIAL_BRIDGES.setdefault(source, []).append(
         {"to": destination, "relation": relation, "reason": reason})
     EDITORIAL_BACKLINKS.setdefault(destination, []).append(source)
-if len(EDITORIAL_BRIDGES) < 20 or sum(map(len,EDITORIAL_BRIDGES.values())) < 40:
+if len(EDITORIAL_BRIDGES) < 41 or sum(map(len,EDITORIAL_BRIDGES.values())) < 61:
     raise ValueError("The editorial conversation graph is incomplete")
 POST_BY_SLUG = {post["slug"]: post for post in posts}
 

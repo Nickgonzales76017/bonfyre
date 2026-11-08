@@ -23,7 +23,7 @@ for n,line in enumerate(source.read_text().splitlines(),1):
     assert a in posts and b in posts and a!=b and relation and reason,f"bad relation at {n}"
     assert (a,b) not in {(e[0],e[2]) for e in edges},f"duplicate relation at {n}"
     edges.append(fields)
-assert len(edges)>=40 and len({e[0] for e in edges})>=20
+assert len(edges)>=61 and len({e[0] for e in edges})>=41
 
 class Article(HTMLParser):
     def __init__(self):
@@ -46,6 +46,7 @@ refs={}
 for a,_,b,_ in edges:
     refs.setdefault(a,set()).add(b)
     refs.setdefault(b,set()).add(a)
+assert set(refs) == set(posts), "Every published article should participate in the edited reading graph"
 for slug, targets in refs.items():
     path=blog/slug/"index.html"
     assert path.is_file(),f"no rendered article {slug}"
