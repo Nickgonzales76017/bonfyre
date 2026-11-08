@@ -31,6 +31,12 @@ Eight source-linked essays published November 8, 2026 examine living profiles, p
 
 The public `site/series/index.html` is a designed reading map connecting the independent judgment, living profiles, accessible software and internet operator series to public source research and existing studio examples. The pages are static and work without client-side scripting. Their real-application links are marked as public examples rather than unverified production capabilities.
 
+## Four connected reading paths
+
+The public [four-series edition](https://nickgonzales76017.github.io/bonfyre/series/) connects **20 essays** on the living web, authority and independent verification, expressive access, and internet operators. Each article has its own attributed epigraph and closing reflection, with links back to the relevant series. Published quotations are linked to source contexts; original Aurekai editorial reflections are explicitly identified.
+
+The operators series includes digital inheritance and collective bargaining power alongside preservation, research, clipping, local media, creator rights and distribution. Rights, archival custody, access and ownership are not assumed to be interchangeable.
+
 ## Editorial roadmap
 
 The long-term journal can grow toward approximately 500 articles spanning independent business operations, supplier markets, local models, application grammars, physical resources, publishing, civic information, standards, applied mathematics, and careful challenges to popular technology claims. The goal is a useful research publication, not volume alone.
