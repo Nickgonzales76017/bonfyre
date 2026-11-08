@@ -443,7 +443,7 @@ def editorial_conversation(post):
         cards.append('<a class="journal-conversation-card" href="../'+esc(target["slug"])+'/">'
             '<span>'+esc(edge["relation"])+'</span><strong>'+esc(target["title"])+'</strong>'
             '<p>'+esc(edge["reason"])+'</p><small>Follow this connection ↗</small></a>')
-    for ref in incoming[:2]:
+    for ref in incoming:
         origin = POST_BY_SLUG[ref]
         cards.append('<a class="journal-conversation-card journal-conversation-return" href="../'+esc(origin["slug"])+'/">'
             '<span>Another essay leads here</span><strong>'+esc(origin["title"])+'</strong>'
