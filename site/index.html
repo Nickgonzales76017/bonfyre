@@ -91,6 +91,27 @@
     @media(max-width:850px){.hero-grid,.head,.endinner{grid-template-columns:1fr}.plate{min-height:auto;max-width:560px}.devgrid{grid-template-columns:1fr}.head p{max-width:580px}}
     @media(max-width:620px){nav{flex-wrap:wrap;justify-content:flex-end}nav a:nth-child(1){display:none}.top .wrap{gap:8px}.brand span{font-size:.78rem}nav{gap:15px}.item{grid-template-columns:32px 1fr 28px;gap:12px}.item .detail{grid-column:2;grid-row:2}.item .arrow{grid-column:3;grid-row:1}.plate{padding:25px}.plate h2{font-size:2.3rem}h1{font-size:clamp(3.4rem,13vw,5rem)}}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{transition:none!important}}
+
+    /* The Journal's four linked series belong on the main entry point, not only inside /blog/. */
+    .home-series{margin:26px 0 52px;background:#224438;color:#f7f2e6;border:1px solid #698476;overflow:hidden}
+    .home-series-top{padding:clamp(24px,4vw,47px);display:grid;grid-template-columns:minmax(0,1fr) minmax(185px,.35fr);gap:26px;align-items:end}
+    .home-series-top .eyebrow{color:#eab894}
+    .home-series-top h3{font:500 clamp(2.6rem,5vw,5.3rem)/1.04 Georgia,serif;letter-spacing:-.045em;margin:15px 0}
+    .home-series-top h3 em{font-weight:400;color:#e2b28a}
+    .home-series-top p{max-width:650px;color:#d7e2d9;margin:0;line-height:1.75}
+    .home-series-edition-link{justify-self:end;align-self:end;display:inline-flex;gap:20px;align-items:center;padding:15px 19px;border:1px solid #c8d5c9;text-decoration:none;font-size:.83rem;font-weight:800;color:#f5e5d0}
+    .home-series-edition-link:hover,.home-series-edition-link:focus-visible{background:#e7d7c5;color:#224438}
+    .home-series-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid #708b7b}
+    .home-series-chapter{display:flex;flex-direction:column;gap:15px;min-width:0;padding:clamp(21px,2.8vw,34px);border-right:1px solid #708b7b;color:inherit;text-decoration:none;min-height:310px;transition:background .18s}
+    .home-series-chapter:last-child{border-right:0}
+    .home-series-chapter:hover,.home-series-chapter:focus-visible{background:#31594a}
+    .home-series-num{font:.67rem/1.5 system-ui,sans-serif;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#e7bc9b}
+    .home-series-chapter strong{font:500 clamp(1.45rem,2.1vw,2.2rem)/1.18 Georgia,serif;letter-spacing:-.025em}
+    .home-series-chapter>span:nth-child(3){font:.84rem/1.65 system-ui,sans-serif;color:#d7e4db}
+    .home-series-cta{margin-top:auto;font:.76rem/1.5 system-ui,sans-serif;font-weight:800;color:#f1c7a6}
+    .home-series-note{margin:0;padding:14px clamp(21px,3vw,34px);font:.71rem/1.5 system-ui,sans-serif;color:#ccdbcf;border-top:1px solid #708b7b}
+    @media(max-width:950px){.home-series-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.home-series-chapter{min-height:250px;border-bottom:1px solid #708b7b}.home-series-chapter:nth-child(2){border-right:0}.home-series-chapter:nth-last-child(-n+2){border-bottom:0}}
+    @media(max-width:650px){.home-series-top{grid-template-columns:1fr}.home-series-edition-link{justify-self:start}.home-series-grid{grid-template-columns:1fr}.home-series-chapter{min-height:unset;border-right:0;border-bottom:1px solid #708b7b!important}.home-series-chapter:last-child{border-bottom:0!important}}
   </style>
   <link rel="stylesheet" href="assets/showcase.css">
   <script defer src="assets/showcase.js"></script>
@@ -99,7 +120,7 @@
 <body>
   <header class="top"><div class="wrap">
     <a class="brand" href="https://github.com/Nickgonzales76017/bonfyre" aria-label="Bonfÿre canonical repository"><img src="https://github.com/user-attachments/assets/7785a8d6-6e28-4892-8958-3daf85414f05" alt=""><span>BONFŸRE <small>/ AUREKAI</small></span></a>
-    <nav aria-label="Main navigation"><a href="#systems">Platform</a><a href="discover/">Explore</a><a href="explore.html">Products</a><a href="market.html">Research</a><a href="fieldwork/">Fieldwork</a><a href="blog/">Journal</a><a href="docs.html">Technical</a><a href="modules/">Source atlas</a><a href="https://aurekai-work-samples.pages.dev/#ask">Start a project ↗</a></nav>
+    <nav aria-label="Main navigation"><a href="#systems">Platform</a><a href="discover/">Explore</a><a href="explore.html">Products</a><a href="series/">Series</a><a href="blog/">Journal</a><a href="docs.html">Technical</a><a href="https://aurekai-work-samples.pages.dev/#ask">Start a project ↗</a></nav>
   </div></header>
   <main>
     <section class="hero"><div class="wrap hero-grid">
@@ -205,7 +226,21 @@
     </div></section>
     <section class="block light" id="journal"><div class="wrap">
 <div class="head"><div><div class="eyebrow">From our notebooks</div><h2>What we've been working through.</h2></div>
-<p>Before these ideas became websites or native commands, we spent months exploring them in project conversations. The <a class="intext-source" href="blog/">Aurekai Journal</a> now has 46 articles: project histories alongside responses to notable X posts, worked mathematics, outside standards, science and market investigations. Each links back to the underlying source or software.</p></div>
+<p>The <a class="intext-source" href="blog/">Aurekai Journal</a> publishes research, project histories, mathematical investigations and arguments about the internet we are building. Four connected essay series now explore living profiles, independent judgment, accessible expression, and the people who keep online culture alive. Each has its own sources and reading path.</p></div>
+
+<section class="home-series" aria-labelledby="home-series-title">
+<div class="home-series-top"><div><span class="eyebrow">November 2026 / An editorial edition</span>
+<h3 id="home-series-title">The internet is not <em>finished.</em></h3>
+<p>Four separate arguments about how people create, judge, connect and sustain a digital world. Read any essay independently, or follow the full collection.</p>
+</div><a class="home-series-edition-link" href="series/">Explore the four-series edition <span aria-hidden="true">↗</span></a></div>
+<div class="home-series-grid">
+<a class="home-series-chapter" href="series/#living"><span class="home-series-num">01 / Profiles &amp; connections</span><strong>Beyond websites.</strong><span>What if an institution could exist across its publications, communities and applications without losing its identity?</span><span class="home-series-cta">Four essays <span aria-hidden="true">↗</span></span></a>
+<a class="home-series-chapter" href="series/#authority"><span class="home-series-num">02 / Judgment &amp; AI</span><strong>Who gets to decide?</strong><span>What happens when every part of a project is verified, but nobody challenges the reason for building it?</span><span class="home-series-cta">Three essays <span aria-hidden="true">↗</span></span></a>
+<a class="home-series-chapter" href="series/#access"><span class="home-series-num">03 / Expression &amp; access</span><strong>More than making.</strong><span>If everybody can create software, why are meaningful participation and working institutions still so hard?</span><span class="home-series-cta">Six essays <span aria-hidden="true">↗</span></span></a>
+<a class="home-series-chapter" href="series/#operators"><span class="home-series-num">04 / Operators &amp; inheritance</span><strong>Who keeps it alive?</strong><span>The people, rights and cultural memory that must survive changing platforms and disappearing operators.</span><span class="home-series-cta">Seven essays <span aria-hidden="true">↗</span></span></a>
+</div>
+<p class="home-series-note">Source-linked editorial essays · Readable without an account · Independent arguments, not claims that every proposed feature has launched</p>
+</section>
 <div class="fieldwork-feature">
 <div class="fieldwork-feature-copy"><span class="fieldwork-feature-kicker">Aurekai Fieldwork / Issue 01</span><h3>Five stories worth <em>following.</em></h3>
 <p>A viral accounting claim, public meeting records, wholesale inventory, a creator's archive and the rise of coding agents. Follow the original sources into the applications we're building.</p>
@@ -217,7 +252,7 @@
 <a class="devcard" href="blog/why-ai-needs-an-operating-company/"><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#building"></use></svg></span><div class="eyebrow">Business</div><h3>AI can build the app. Who builds the business?</h3><p>Why we started treating development work and operating knowledge as part of a shared business rather than one-off projects.</p><span class="go">Read the article ↗</span></a>
 <a class="devcard" href="blog/a-job-posting-has-more-than-one-job/"><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#briefcase"></use></svg></span><div class="eyebrow">Applications</div><h3>A job posting has more than one job.</h3><p>One original listing can support discovery, a company profile, CRM and a narrated update when applications work together.</p><span class="go">Read the article ↗</span></a>
 <a class="devcard" href="blog/the-memory-wall-in-local-models/"><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#cpu"></use></svg></span><div class="eyebrow">Engineering</div><h3>We found the memory wall before the speed.</h3><p>Notes from the early FPQ and Qwen experiments, and why a model being loaded doesn't mean a useful answer is fast.</p><span class="go">Read the article ↗</span></a>
-</div><p style="margin:25px 0 0"><a class="intext-source" href="blog/">Browse all 46 articles →</a> · <a class="intext-source" href="discover/">Explore 20 application examples →</a> · <a class="intext-source" href="blog/feed.xml">RSS feed ↗</a></p>
+</div><p style="margin:25px 0 0"><a class="intext-source" href="blog/">Browse the Journal →</a> · <a class="intext-source" href="discover/">Explore 20 application examples →</a> · <a class="intext-source" href="blog/feed.xml">RSS feed ↗</a></p>
 </div></section>
 <section class="block light" id="developers"><div class="wrap">
   <div class="head"><div><div class="eyebrow">For developers</div><h2>Build on Bonfÿre.</h2></div><p>Bonfÿre is a working codebase as well as Aurekai's internal platform. You can inspect the native commands and application integrations, use an independent component or explore how the full system fits together.</p></div>
