@@ -9,6 +9,11 @@ status: edited-public
 topics: psychological safety, organizational learning, AI verification, dissent
 origin: Aurekai editorial series on verification, accessible creation and living digital institutions; original sources linked
 source_url: https://journals.sagepub.com/doi/10.2307/2666999
+series: authority
+epigraph: Any fact becomes important when it's connected to another.
+epigraph_credit: Umberto Eco · Foucault's Pendulum (1988)
+epigraph_url: https://www.jthjournal.org/article/S1538-7836%2822%2902605-8/fulltext
+parting_question: Does your review process uncover a new perspective, or merely connect existing assumptions more convincingly?
 ---
 
 A project meeting can be full of capable people and have almost no real disagreement. Everyone knows their assignment. Everyone reports progress. Each review checks whether the deliverable meets its stated requirements. The room sounds healthy, but one uncomfortable question never gets asked: why are we doing this?

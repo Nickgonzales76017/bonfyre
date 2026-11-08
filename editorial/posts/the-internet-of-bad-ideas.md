@@ -9,6 +9,11 @@ status: edited-public
 topics: AI software, evidence, institutional review, software abundance
 origin: Aurekai editorial series on verification, accessible creation and living digital institutions; original sources linked
 source_url: https://airc.nist.gov/airmf-resources/playbook/manage/
+series: authority
+epigraph: A successful deployment is not evidence of a worthwhile purpose.
+epigraph_credit: Aurekai Journal · Editorial reflection (2026)
+epigraph_url: 
+parting_question: What evidence would persuade an organization to abandon an idea its software implements perfectly?
 ---
 
 For much of the web's history, putting an idea into working software required significant effort. That effort filtered out some bad ideas and delayed plenty of good ones. Neither outcome was inherently desirable, but the cost forced some questions to be asked before a system was built.
