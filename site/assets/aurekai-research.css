@@ -34,3 +34,24 @@
 /* The seventh navigation link fits naturally at tablet widths. */
 .top nav a{white-space:nowrap}
 @media(max-width:1080px){.top .wrap{flex-wrap:wrap;padding-top:14px;padding-bottom:14px}.top .wrap nav{margin-left:0;flex-wrap:wrap;gap:12px 20px}.top .shell{flex-wrap:wrap;padding-top:14px;padding-bottom:14px}}
+
+/* Fieldwork issue cover: original public app imagery and editorial navigation. */
+.fieldwork-feature{position:relative;display:grid;grid-template-columns:1fr .85fr;min-height:440px;background:#193d31;color:#f8f4e8;overflow:hidden;margin:16px 0 32px}
+.fieldwork-feature-copy{position:relative;z-index:1;padding:clamp(34px,5vw,65px);display:flex;flex-direction:column;align-items:flex-start;justify-content:center}
+.fieldwork-feature-kicker{color:#e8b99d;font:.7rem/1.5 var(--sans);font-weight:820;text-transform:uppercase;letter-spacing:.12em}
+.fieldwork-feature-copy h3{font:500 clamp(2.5rem,4.5vw,4.4rem)/1.08 Georgia,serif;letter-spacing:-.055em;max-width:650px;margin:17px 0}
+.fieldwork-feature-copy h3 em{color:#e5b393;font-weight:400}
+.fieldwork-feature-copy p{font:.9rem/1.75 var(--sans);color:#d3e0d7;max-width:540px;margin:7px 0 25px}
+.fieldwork-feature-copy a{font:.81rem var(--sans);font-weight:780;border:1px solid #e8b99d;color:#f6eddf;padding:13px 17px;text-decoration:none}
+.fieldwork-feature-copy a:hover{background:#2b624b}
+.fieldwork-feature-media{position:relative;min-height:435px}
+.fieldwork-feature-media figure{position:absolute;margin:0;background:#e8e3d7;border:7px solid #faf6ec;box-shadow:0 24px 44px #132b2288;overflow:hidden}
+.fieldwork-feature-media img{display:block;width:100%;height:100%;object-fit:cover}
+.fieldwork-feature-hero{inset:16% -15% 23% -2%;transform:rotate(4deg)}
+.fieldwork-feature-stamp{inset:40% 49% 2% -8%;transform:rotate(-8deg)}
+.fieldwork-feature-stamp img{object-fit:contain;background:#123e32}
+.fieldwork-feature-number{position:absolute;right:9%;top:8%;border-radius:50%;border:1px solid #e8b99d;background:#193d31;color:#e8b99d;display:grid;place-items:center;height:95px;width:95px;font:500 2.7rem Georgia,serif}
+.fieldwork-feature-section{padding-top:55px;padding-bottom:20px;background:var(--paper)}
+@media(max-width:900px){.fieldwork-feature{grid-template-columns:1fr .7fr}}
+@media(max-width:670px){.fieldwork-feature{grid-template-columns:1fr}.fieldwork-feature-media{min-height:290px}.fieldwork-feature-hero{inset:4% -5% 10% 9%}.fieldwork-feature-stamp{inset:32% 52% 0 0}.fieldwork-feature-number{height:72px;width:72px;font-size:2rem}}
+@media(prefers-reduced-motion:reduce){.fieldwork-feature-media figure{transition:none}}
