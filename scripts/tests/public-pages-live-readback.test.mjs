@@ -25,7 +25,7 @@ function fixture(){
  const cleanup=()=>rmSync(siteDir,{recursive:true,force:true});
  return {siteDir,records,response,cleanup,expected:PUBLIC_PAGES.length+JOURNAL_STATIC.length+articles.length};
 }
-test('all article editions, CSS, JS, feeds and seven site pages have exact public witnesses',async()=>{
+test('all article editions, CSS, JS, feeds and eleven primary site pages have exact public witnesses',async()=>{
  const f=fixture();
  try{
   const calls=[];

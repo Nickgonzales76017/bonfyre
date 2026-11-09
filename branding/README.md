@@ -49,3 +49,7 @@ Corporate home, product guide and application discovery use the existing product
 ## Public brand landing
 
 The canonical public company narrative is [About Aurekai](https://nickgonzales76017.github.io/bonfyre/about/). It ties the brand promise to genuine Work Samples, the Bonfÿre technology role and the four destination links; the awareness campaign line is presented as ambition rather than existing market-leading customer evidence.
+
+## Public release verification
+
+`PUBLIC_PAGES` now includes the new About landing and the other branded market, fieldwork and native-address pages. GitHub Pages post-deployment acceptance compares the **exact deployed bytes** with the release files and refuses stale HTML; a green brand-source test is not enough to claim live publication. The four separately deployed Aurekai apex domains require their own native release/readback.

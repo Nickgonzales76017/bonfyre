@@ -86,6 +86,13 @@ test('public company landing connects product proof, engine role and all four de
  assert.ok(src('site/discover/index.html').includes('href="../about/"'));
 });
 
+test('release readback includes every newly branded destination',()=>{
+ const code=src('scripts/public-pages-live-readback.mjs');
+ for(const route of ['about/','market.html','fieldwork/','matrix/']){
+   assert.ok(code.includes("'"+route+"'"),route+' was omitted from the live byte-verification path');
+ }
+});
+
 test('native production-gallery mirrors the four exact apex texts without claiming activation',()=>{
  const c=src('cmd/BonfyreWebAddress/src/production_home.h');
  assert.match(c,/location\.hostname/);
