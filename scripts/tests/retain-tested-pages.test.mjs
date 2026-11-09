@@ -63,6 +63,33 @@ scenario('a real generated-file conflict aborts without overwriting upstream',f=
  assert.throws(()=>run(f,{verify,beforePush:n=>{if(n===1)f.change('site/index.txt','their different page');}}),/conflict/);
  assert.equal(f.current('site/index.txt'),'their different page');assert.equal(f.git(f.one,'symbolic-ref','--short','HEAD'),'main');
 });
+scenario('a competing authored homepage is preserved while its tested generated cards are rebuilt',f=>{
+ const verify=()=>{
+   const contents=readFileSync(join(f.one,'site/index.txt'),'utf8');
+   const authored=contents.split('\\n[generated]')[0];
+   const source=readFileSync(join(f.one,'source.txt'),'utf8');
+   writeFileSync(join(f.one,'site/index.txt'),authored+'\\n[generated]'+source);
+ };
+ const result=run(f,{verify,reconcileGeneratedPaths:['site/index.txt'],
+   beforePush:n=>{if(n===1)f.change('site/index.txt','updated page written by the editor');}});
+ assert.equal(result.attempts,2);
+ assert.equal(f.current('site/index.txt'),'updated page written by the editor\\n[generated]one');
+ assert.equal(f.current('source.txt'),'one');
+});
+scenario('an unexpected generated-file conflict still fails when homepage recovery is enabled',f=>{
+ writeFileSync(join(f.one,'site/other.txt'),'original');
+ f.git(f.one,'add','site/other.txt');f.git(f.one,'commit','-m','Base generated file');
+ f.git(f.one,'push','origin','main');
+ f.git(f.two,'pull','--ff-only');
+ const verify=()=>{writeFileSync(join(f.one,'site/other.txt'),'our released version');};
+ assert.throws(()=>run(f,{verify,reconcileGeneratedPaths:['site/index.txt'],
+   beforePush:n=>{if(n===1)f.change('site/other.txt','another generated version');}}),
+   /Concurrent release conflict/);
+ assert.equal(f.current('site/other.txt'),'another generated version');
+});
+scenario('the homepage recovery allowlist cannot name a non-generated source file',f=>{
+ assert.throws(()=>run(f,{reconcileGeneratedPaths:['source.txt']}),/explicit retained outputs/);
+});
 scenario('unrelated staged work is never included in a release commit',f=>{
  writeFileSync(join(f.one,'source.txt'),'staged work');f.git(f.one,'add','source.txt');
  assert.throws(()=>run(f),/Unrelated staged work/);assert.equal(f.current('source.txt'),'one');assert.equal(f.verified(),0);

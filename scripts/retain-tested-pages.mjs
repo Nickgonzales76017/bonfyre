@@ -4,9 +4,10 @@ import {existsSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 
-export function retainRelease({cwd, paths, verify, attempts = 3, beforePush = () => {}, pushResult = null}) {
+export function retainRelease({cwd, paths, verify, attempts = 3, beforePush = () => {}, pushResult = null, reconcileGeneratedPaths = []}) {
   if (!cwd || !Array.isArray(paths) || !paths.length || typeof verify !== 'function' || !Number.isInteger(attempts) || attempts < 1 || attempts > 3) throw Error('Explicit repository, generated paths and verification are required.');
   if (paths.some(p => !/^[a-zA-Z0-9_./-]+$/.test(p) || p.startsWith('/') || p.split('/').some(s => !s || s === '.' || s === '..'))) throw Error('Unsafe generated path.');
+  if (!Array.isArray(reconcileGeneratedPaths) || reconcileGeneratedPaths.some(p => !paths.includes(p))) throw Error('Only explicit retained outputs may be reconciled.');
   const allowed = path => paths.some(p => path === p || path.startsWith(p + '/'));
   const git = (args, optional = false) => {
     const result = spawnSync('git', args, {cwd, encoding: 'utf8', timeout: 60000, maxBuffer: 4 * 1024 * 1024});
@@ -46,8 +47,29 @@ export function retainRelease({cwd, paths, verify, attempts = 3, beforePush = ()
     if (attempt === attempts) throw Error('Concurrent source changes exhausted the bounded retention attempts.');
     const rebased = git(['rebase', 'refs/remotes/origin/main'], true);
     if (rebased.status !== 0) {
+      const conflicted = git(['diff', '--name-only', '--diff-filter=U', '-z'], true).stdout.split('\\0').filter(Boolean);
+      const newPaths = git(['diff', '--name-only', '-z', basis, upstream]).stdout.split('\\0').filter(Boolean);
       git(['rebase', '--abort'], true);
-      throw Error('Concurrent release conflict; upstream was not overwritten. ' + (rebased.stderr || '').slice(-2000));
+      // Never resolve an ambiguous release conflict by choosing ours or theirs.
+      // Only regenerate an explicitly approved, source-derived public page from
+      // the newer upstream copy. All studio/instrument output conflicts remain
+      // hard stops; no force push, dropped source commits or blind merge.
+      const canRegenerate = conflicted.length > 0 &&
+        conflicted.every(p => reconcileGeneratedPaths.includes(p)) &&
+        !newPaths.some(p => allowed(p) && !reconcileGeneratedPaths.includes(p));
+      if (!canRegenerate) {
+        throw Error('Concurrent release conflict; upstream was not overwritten. ' + (rebased.stderr || '').slice(-2000));
+      }
+      // The tested basis is already an ancestor of upstream (checked above).
+      // Therefore every authored source commit is retained before rebuilding.
+      // The verifier must replay the deterministic generator on the latest
+      // authored HTML and recheck the release, rather than transplanting a
+      // stale output from an older GitHub Actions run.
+      git(['reset', '--hard', 'refs/remotes/origin/main']);
+      basis = upstream;
+      verify();
+      commitProjection();
+      continue;
     }
     // An editorial-only concurrent commit cannot change the tested studio or
     // instrument projections. The later Journal render consumes the rebased
@@ -86,6 +108,6 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     run(['scripts/prepare-instruments-discovery.mjs']);
     run(['--test', 'scripts/tests/showcase-directory.test.mjs']);
   };
-  const result = retainRelease({cwd, paths: ['site/spaces', 'site/instruments', 'site/index.html', 'vendor/spaces-helpers-20261015'], verify});
+  const result = retainRelease({cwd, paths: ['site/spaces', 'site/instruments', 'site/index.html', 'vendor/spaces-helpers-20261015'], verify, reconcileGeneratedPaths: ['site/index.html']});
   console.log('PAGES_RETENTION_PASS\t' + result.head + '\tattempts\t' + result.attempts + '\trecovered\t' + result.recovered);
 }
