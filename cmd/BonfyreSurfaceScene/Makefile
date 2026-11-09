@@ -29,6 +29,7 @@ $(AUTHORING_CSS): $(AUTHORING_JS) $(AUTHORING_SRC)/authoring.css
 test: $(TARGET)
 	@node --test tests/authoring_prototype.test.mjs
 	@node --test tests/authoring-tree.test.mjs
+	@node --test tests/authoring-ui-history.test.mjs
 	@node --test tests/authoring-cms.test.mjs
 	@node tools/compile_authoring.mjs --check
 	@node tools/compile_authoring_native_tree.mjs --check

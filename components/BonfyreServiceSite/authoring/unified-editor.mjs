@@ -110,20 +110,23 @@ export async function mountAurekaiAuthoring(root,{initial,loaders=deps,onReview,
  function bindModes(){
   for(const [key,label]of [["grapesjs","Design"],["puck","Structure"],["editorjs","Article"]])
    modeButtons[key]=makeButton(label,modeBar,()=>{void switchMode(key);});
-  controls.set("undo",makeButton("Undo",actions,()=>{if(session.undo())void remount();}));
-  controls.set("redo",makeButton("Redo",actions,()=>{if(session.redo())void remount();}));
+  controls.set("undo",makeButton("Undo",actions,()=>{void history("undo");}));
+  controls.set("redo",makeButton("Redo",actions,()=>{void history("redo");}));
   controls.set("review",makeButton("Review",actions,()=>void review()));
   controls.set("save",makeButton("Save draft",actions,()=>void save()));
  }
  function dirtyControls(){
-  controls.get("undo").disabled=!session.canUndo()||busy;
+  controls.get("undo").disabled=(!session.canUndo()&&!mounted?.hasPending?.())||busy;
   controls.get("redo").disabled=!session.canRedo()||busy;
   controls.get("review").disabled=busy;controls.get("save").disabled=busy;
   for(const [name,button]of Object.entries(modeButtons))
    button.setAttribute("aria-current",String(mode===name));
  }
  async function apply(next){
-  try{session.replace(next);changes++;status(ui,"Draft updated ("+changes+" edits).");dirtyControls();}
+  try{
+   if(JSON.stringify(next)===JSON.stringify(session.snapshot()))return;
+   session.replace(next);changes++;status(ui,"Draft updated ("+changes+" edits).");dirtyControls();
+  }
   catch(e){status(ui,e.message,true);throw e;}
  }
  async function flush(){
@@ -149,8 +152,8 @@ export async function mountAurekaiAuthoring(root,{initial,loaders=deps,onReview,
   editor.loadProjectData(toGrapesProject(session.snapshot()));
   editor.on("component:selected",cmp=>{selected=cmp?.getAttributes()?.["data-coordinate"]||null;});
   let changed=false;
-  editor.on("update",()=>{changed=true;});
-  return {flush:async()=>{
+  editor.on("update",()=>{changed=true;dirtyControls();});
+  return {hasPending:()=>changed,flush:async()=>{
    if(changed)await apply(fromGrapesProject(editor.getProjectData(),
      session.snapshot().site_id,session.snapshot().page));
    changed=false;
@@ -163,10 +166,10 @@ export async function mountAurekaiAuthoring(root,{initial,loaders=deps,onReview,
   let latest=null;
   reactRoot.render(React.createElement(Puck,{
    config:makePuckConfig(React),data:toPuckData(session.snapshot()),
-   onChange(data){latest=data;},
+   onChange(data){latest=data;dirtyControls();},
    onPublish(data){latest=data;void review();}
   }));
-  return {flush:async()=>{
+  return {hasPending:()=>latest!==null,flush:async()=>{
    if(latest)await apply(fromPuckData(latest,session.snapshot().site_id,session.snapshot().page));
    latest=null;
   },destroy:()=>reactRoot.unmount()};
@@ -183,24 +186,28 @@ export async function mountAurekaiAuthoring(root,{initial,loaders=deps,onReview,
   stage.append(picker);
   const holder=element("div","authoring-article");stage.append(holder);
   const EditorJS=Core.default;
-  let current=new EditorJS({
-   holder,autofocus:true,data:toEditorBlocks(find(snapshot.blocks,selected)),
+  let articleDirty=false;
+  const createArticleEditor=data=>new EditorJS({
+   holder,autofocus:true,data,
    tools:{header:{class:Header.default},list:{class:List.default},
     quote:{class:Quote.default},table:{class:Table.default}},
+   onChange(){articleDirty=true;dirtyControls();}
   });
+  let current=createArticleEditor(toEditorBlocks(find(snapshot.blocks,selected)));
   picker.addEventListener("change",()=>{void (async()=>{
    await saveArticle();await current.destroy();selected=picker.value;
-   current=new EditorJS({holder,autofocus:true,
-    data:toEditorBlocks(find(session.snapshot().blocks,selected)),
-    tools:{header:{class:Header.default},list:{class:List.default},
-     quote:{class:Quote.default},table:{class:Table.default}}});
+   articleDirty=false;
+   current=createArticleEditor(toEditorBlocks(find(session.snapshot().blocks,selected)));
   })().catch(e=>status(ui,e.message,true));});
   async function saveArticle(){
+   if(!articleDirty)return;
    await current.isReady;
    const body=await current.save();
    await apply(applyEditorBlocks(session.snapshot(),selected,body));
+   articleDirty=false;
   }
-  return {flush:saveArticle,destroy:async()=>{await current.isReady;current.destroy();}};
+  return {hasPending:()=>articleDirty,flush:saveArticle,
+   destroy:async()=>{await current.isReady;current.destroy();}};
  }
  async function switchMode(next){
   if(busy||!["grapesjs","puck","editorjs"].includes(next))return;
@@ -212,7 +219,21 @@ export async function mountAurekaiAuthoring(root,{initial,loaders=deps,onReview,
   }catch(e){status(ui,e.message,true);}
   finally{busy=false;dirtyControls();}
  }
- async function remount(){const next=mode;await destroy();await switchMode(next);}
+ async function history(direction){
+  if(busy)return false;
+  busy=true;dirtyControls();
+  try{
+   // The current visual editor may have unsaved browser state. Admit it to
+   // the shared history before undo/redo instead of discarding pending edits.
+   await flush();
+   if(!session[direction]())return false;
+   await destroy();
+   mounted=await ({grapesjs:openGrapes,puck:openPuck,editorjs:openArticle}[mode])();
+   status(ui,direction==="undo"?"Edit undone.":"Edit restored.");
+   return true;
+  }catch(e){status(ui,e.message,true);return false;}
+  finally{busy=false;dirtyControls();}
+ }
  async function review(){
   if(busy)return;
   busy=true;dirtyControls();
@@ -228,5 +249,6 @@ export async function mountAurekaiAuthoring(root,{initial,loaders=deps,onReview,
   }catch(e){status(ui,e.message,true);}finally{busy=false;dirtyControls();}
  }
  bindModes();dirtyControls();void switchMode("grapesjs");
- return {session,mode:()=>mode,switchMode,review,save,destroy:async()=>{await destroy();root.replaceChildren();}};
+ return {session,mode:()=>mode,switchMode,undo:()=>history("undo"),redo:()=>history("redo"),
+  review,save,destroy:async()=>{await destroy();root.replaceChildren();}};
 }
