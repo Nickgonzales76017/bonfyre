@@ -202,7 +202,17 @@ jobs:
             await page.getByRole('button',{name:'Application examples',exact:true}).click();
             assert.ok((await page.locator('[data-kind="studio"]:visible').count())>=1);
             await page.goto('http://127.0.0.1:8765/blog/why-base-rates-change-camera-matching-claims/',{waitUntil:'domcontentloaded'});
-            assert.equal(await page.locator('a[href="../../fieldwork/"]').count(),1);
+            // Article headers use the same seven clear routes as the rest of the site.
+            // Fieldwork remains available through the directory and Journal; it is no
+            // longer a primary navigation link on every individual article.
+            for (const [href, label] of [
+              ['../../explore.html','Businesses'],['../../discover/','Applications'],
+              ['../','Journal'],['../../series/','Four series'],
+              ['../../docs.html','Technology']
+            ]) {
+              assert.equal(await page.locator('header nav a[href="'+href+'"]', {hasText:label}).count(),1,
+                'Missing article navigation: '+label);
+            }
             assert.equal(await page.locator('a[href*="/labs/#"]').count(),0);
             // Editorial audio is a real published recording, never the device
             // speech synthesizer or a fake, randomly generated waveform.

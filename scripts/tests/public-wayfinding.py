@@ -93,6 +93,10 @@ check("Read the related article" in market, "Research references lost")
 workflow = (ROOT / ".github/workflows/pages.yml").read_text(encoding="utf-8")
 check("name:'Application examples',exact:true" in workflow,
       "Browser validation still expects the old Studios filter name")
+check("header nav a[href" in workflow and "Missing article navigation:" in workflow,
+      "Article navigation browser acceptance must follow current public site routes")
+check("page.locator('a[href=\"../../fieldwork/\"]')" not in workflow,
+      "Deprecated Fieldwork header navigation assertion reintroduced")
 check("scripts/tests/public-wayfinding.py" in workflow, "Pages publication lacks navigation test")
 check("needs.current.outputs.latest" in workflow and "steps.retention.outputs.superseded" in workflow,
       "Outdated Pages build could publish stale public copy")
