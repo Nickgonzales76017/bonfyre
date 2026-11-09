@@ -38,9 +38,16 @@ case "$answer" in
     "200 text/css"*) cmp -s "$tmp/native-brand.css" "$root/site/matrix/front-brand.css" || fail 'brand CSS does not equal source-owned bytes' ;;
     *) fail "native shared brand asset returned $answer" ;;
 esac
+brand_css_version=$(grep -oE 'front-brand\\.css\\?v=[0-9a-f]{16}' "$tmp/work.html" | head -1 | sed 's/.*=//')
+[ -n "$brand_css_version" ] || fail 'no digest-versioned brand stylesheet in Work HTML'
+versioned_answer=$(curl -sS -o "$tmp/brand-versioned.css" -w '%{http_code} %{content_type}' -H 'Host: aurekai.work' "$base/assets/front-brand.css?v=$brand_css_version")
+case "$versioned_answer" in
+    "200 text/css"*) cmp -s "$tmp/brand-versioned.css" "$root/site/matrix/front-brand.css" || fail 'versioned brand CSS bytes differ from source' ;;
+    *) fail "native versioned brand CSS returned $versioned_answer" ;;
+esac
 python3 - "$tmp" <<'PY'
 import pathlib,re,sys
-root=pathlib.Path(sys.argv[1]); problems=[]; ledes=set()
+root=pathlib.Path(sys.argv[1]); problems=[]; ledes=set(); brand_versions=set()
 def check(ok,msg):
     if not ok: problems.append(msg)
 doors=['/people','/communities','/apps?context=self','/programs?context=self','/sources','/w','/organisations']
@@ -59,7 +66,9 @@ for territory in ('live','life','shop','work'):
     check('<h1 class="af-brand-title" id="af-brand-title">' in page,f'{territory}: native brand is the document H1')
     check('<header class="hero">' not in page,f'{territory}: no redundant generic lead')
     check(0<=page.find('data-brand-masthead')<page.find('data-front-arrival'),f'{territory}: brand precedes material doors')
-    check(0<=page.find('href="/assets/front-brand.css"')<page.find('</head>'),f'{territory}: CSS loads in document head')
+    stylesheet=re.search(r'<link[^>]*href="/assets/front-brand\.css\?v=([0-9a-f]{16})"[^>]*>',page[:page.find('</head>')])
+    check(bool(stylesheet),f'{territory}: versioned native CSS loads in document head')
+    if stylesheet: brand_versions.add(stylesheet.group(1))
 
     check(f'data-brand-territory="{territory}"' in page,f'{territory}: exact host brand')
     check('<title>'+brand[territory][0]+'</title>' in page,f'{territory}: source-owned title')
@@ -77,7 +86,7 @@ for territory in ('live','life','shop','work'):
     brand_nav=re.search(r'<nav class="af-brand-nav"[^>]*>.*?</nav>',page,re.S)
     check(bool(brand_nav) and brand_nav.group(0).count('aria-current="page"')==1,f'{territory}: exactly one active apex within the brand navigation')
     check(f'href="https://aurekai.{territory}/" aria-current="page"' in page,f'{territory}: active apex is correct')
-    check('href="/assets/front-brand.css"' in page,f'{territory}: shared cached stylesheet')
+    check('front-brand.css?v=' in page,f'{territory}: digest-versioned shared stylesheet')
     check('af-brand-title' in page and 'af-brand-links' in page,f'{territory}: editorial hierarchy and real actions')
     check('af-brand-nav' in page and 'af-brand-side' in page,f'{territory}: responsive native branded navigation')
     check(len(re.findall(r'<article\b[^>]*\bdata-arrival-door\b',page))==7,f'{territory}: seven doors')
@@ -98,6 +107,7 @@ for territory in ('live','life','shop','work'):
     m=re.search(r'data-arrival-lede>([^<]+)',page); check(bool(m),f'{territory}: lede')
     if m: ledes.add(m.group(1))
 check(len(ledes)==4,'territory-specific ledes')
+check(len(brand_versions)==1,'the four territories use one immutable versioned brand stylesheet')
 if problems:
     for territory in ('live','life','shop','work'):
         page=(root/f'{territory}.html').read_text()
