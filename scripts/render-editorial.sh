@@ -346,59 +346,43 @@ def reader_outline(post):
     return '<div class="reader-outline-menu" data-outline-menu><button type="button" class="reader-outline-trigger" aria-expanded="false" aria-controls="reader-outline-list">Essay outline <span aria-hidden="true">⌄</span></button><nav id="reader-outline-list" class="reader-outline-links" aria-label="Essay sections">'+links+'</nav></div>'
 
 def narrator(post):
-    # The waveform-like phrase map for browser speech is based on authored
-    # sentence lengths, never disguised as measured audio amplitude.
-    sentences = [x for x in re.split(r'(?<=[.!?])\s+', re.sub(r'\[[^\]]+\]\(https?://[^)]+\)', '',post["body"])) if x.strip()]
-    if not sentences:
-        sentences = [post["description"]]
-    total = len(post["body"].split())
-    pattern = []
-    for i in range(72):
-        words = len(sentences[min(len(sentences)-1, i*len(sentences)//72)].split())
-        height = 12 + min(40, int(words*1.3))
-        pattern.append('<i style="--level:'+str(height)+'px"></i>')
-    estimated = max(1, round(total/165))
-    file_name = post.get("audio_file", "")
-    media = ""
-    if file_name:
-        if not re.fullmatch(r'[\w-]+\.(?:mp3|m4a|ogg|wav|opus)',file_name):
-            raise ValueError(f"Invalid audio asset name for {post['slug']}")
-        source_audio = TARGET / post["slug"] / file_name
-        if not source_audio.is_file():
-            raise ValueError(f"Audio declared but absent for {post['slug']}: {file_name}")
-        media = '<audio data-narration-media preload="metadata" src="./'+esc(file_name)+'"></audio>'
-    return ('''<section class="journal-audio-player" id="audio-edition" data-narration data-state="idle" data-mode="'''
-        + ('recording' if media else 'browser') + '''" aria-label="Listen to this article">
-      <div class="journal-audio-topline"><span class="journal-audio-kicker">The listening edition</span>
-      <span class="journal-audio-format">''' + (('AI-narrated edition · '+post.get("audio_voice", "editorial voice") if post.get("audio_model") else 'Recorded narration') if media else 'Browser voice / no recording required') + '''</span></div>
-      <div class="journal-audio-main">
-        <button class="journal-audio-play" type="button" data-narration-play aria-label="Play article narration"><span aria-hidden="true" data-narration-symbol>▶</span></button>
-        <div class="journal-audio-content"><div class="journal-audio-heading"><strong>Listen to this article</strong>
-          <span data-narration-status role="status" aria-live="polite">Ready to listen</span></div>
-          <div class="journal-audio-wave-wrap"><div class="journal-audio-wave" data-narration-wave aria-hidden="true">'''
-        + ''.join(pattern) + '''</div><input type="range" min="0" max="1000" value="0" step="1"
-        data-narration-seek aria-label="Seek article narration by position" aria-valuetext="Beginning" /></div>
-          <div class="journal-audio-time"><span data-narration-elapsed>0:00</span><span data-narration-total>About '''
-        + str(estimated) + ''' min</span></div></div></div>
-      <div class="journal-audio-actions">
-        <div class="journal-audio-navigation">
-          <button type="button" data-narration-back aria-label="Previous spoken passage">↶ <span>Back</span></button>
-          <button type="button" data-narration-forward aria-label="Next spoken passage"><span>Next</span> ↷</button>
-          <button type="button" data-narration-stop aria-label="Stop narration" disabled>■ <span>Stop</span></button>
-        </div>
-        <label class="journal-audio-rate">Speed <select data-narration-rate aria-label="Narration playback speed">
-         <option value="0.85">0.85×</option><option value="1" selected>1×</option>
-         <option value="1.15">1.15×</option><option value="1.35">1.35×</option><option value="1.5">1.5×</option></select></label><label class="journal-audio-voice-choice" data-voice-choice-label>Voice <select data-narration-voice aria-label="Choose a better browser voice"><option value="">Finding voices…</option></select></label>
-        <button type="button" data-narration-copy class="journal-audio-copy" aria-label="Copy a link to this spoken passage">Copy passage link</button>
-        <a href="#read-story" class="journal-audio-transcript">Read along ↓</a>
-      </div>
-      <progress data-narration-progress max="100" value="0" class="journal-audio-progress">0%</progress>
-      <p class="journal-audio-disclosure">'''
-      + (('AI-generated narration using '+post.get("audio_model", "a recorded speech model")+
-           '; a provisional voice edition. Waveform represents actual published audio.' if post.get("audio_model") else
-          'Waveform represents the published audio recording. Reading remains available below.') if media else
-         'Uses your selected device or browser voice; quality depends on voices installed. The bars represent spoken-text position, not measured audio.') + '''</p>'''
-      + media + '''</section>''')
+    """One finished recording, one listening experience. Never browser TTS.
+
+    The editorial desk chooses a narrator and records the actual manuscript.
+    If Sarah's verified edition is absent, show the article as literature
+    rather than assembling an unreliable synthetic voice in the reader's browser.
+    """
+    name = post.get("audio_file", "")
+    voice = post.get("audio_voice", "")
+    if not name or voice != "af_sarah":
+        return ""
+    if not re.fullmatch(r"[\w-]+\.(mp3|m4a|ogg|opus)", name):
+        raise ValueError(f"Invalid recorded audio for {post['slug']}")
+    audio = TARGET / post["slug"] / name
+    if not audio.is_file() or audio.stat().st_size < 100000:
+        raise ValueError(f"Missing or incomplete Sarah recording: {post['slug']}")
+    # No fake waveform. The client reads real amplitudes from the attached
+    # recording if decode support is available, otherwise a simple seek line.
+    return ('''<section class="ed-audio" id="audio-edition" data-narration aria-labelledby="listen-heading">
+<div class="ed-audio-inner">
+  <div class="ed-audio-label"><span>Audio edition</span><span>Sarah · AI narration</span></div>
+  <h2 id="listen-heading">Listen to this story</h2>
+  <audio data-audio-source controls preload="metadata" src="./'''
+    + esc(name) + '''" aria-label="Listen to the Sarah-narrated audio edition">Your browser does not support audio playback.</audio>
+  <div class="ed-audio-controls" data-audio-ui hidden>
+    <button class="ed-audio-play" data-audio-play type="button" aria-label="Play Sarah narration"><span data-audio-icon aria-hidden="true">▶</span></button>
+    <div class="ed-audio-transport">
+      <div class="ed-audio-timeline"><input data-audio-seek type="range" min="0" max="1000" value="0" step="1" aria-label="Seek within recorded narration" disabled>
+        <div class="ed-audio-wave" data-audio-wave aria-hidden="true"></div></div>
+      <div class="ed-audio-clock"><time data-audio-elapsed>0:00</time><time data-audio-duration>–:––</time></div>
+    </div>
+    <button class="ed-audio-speed" data-audio-speed type="button" aria-label="Playback speed, one times">1×</button>
+    <button class="ed-audio-dismiss" data-audio-dismiss type="button" aria-label="Close floating audio player">×</button>
+  </div>
+  <div class="ed-audio-foot"><span data-audio-status role="status" aria-live="polite">Recorded edition</span><a href="#read-story">Read the article ↓</a>
+  <a href="./''' + esc(name) + '''" download>Save MP3</a></div>
+  <p class="ed-audio-disclosure">Narrated using the Kokoro Sarah synthetic voice; the article text is the editorial source. Audio is a provisional edition.</p>
+</div></section>''')
 
 
 def byline(post):
@@ -593,7 +577,7 @@ def article_page(p):
 <div class="ed-cover-bottom"><span>Independent editorial / {esc(p["published"])}</span><span>01 — {mins} min read</span></div>
 </div>
 <div class="ed-title-panel">
-<div class="ed-title-utility"><a href="../">← Journal</a><span>{esc(page_label)}</span><a href="#audio-edition" class="journal-audio-jump">▶ Listen</a></div>
+<div class="ed-title-utility"><a href="../">← Journal</a><span>{esc(page_label)}</span>{(\'<a href="#audio-edition" class="journal-audio-jump">Listen ↘</a>\' if p.get("audio_file") and p.get("audio_voice") == "af_sarah" else "")}</div>
 <p class="ed-section-label">The Aurekai Journal <span> / An essay</span></p>
 <h1 id="article-title">{esc(p["title"])}</h1>
 <p class="ed-deck">{esc(p["description"])}</p>
@@ -604,7 +588,7 @@ def article_page(p):
 </section>
 <section class="ed-edition-rule"><div class="shell"><span>{esc(p["category"])} / {esc(p["published"])}</span><span>Independent sources and original analysis</span><a href="../../series/">Explore the four series ↗</a></div></section>
 <div class="reader-scroll-track" aria-hidden="true"><span data-reader-scroll></span></div>
-<div class="reader-toolbar" aria-label="Article reading tools"><div class="shell"><span class="reader-toolbar-label">Continue reading · <a href="#audio-edition">Listen to this article ↑</a></span>{reader_outline(p)}</div></div>
+<div class="reader-toolbar" aria-label="Article reading tools"><div class="shell"><span class="reader-toolbar-label">Continue reading · Aurekai Journal</span>{reader_outline(p)}</div></div>
 <section class="journal-article-shell ed-reading" id="read-story"><div class="shell journal-article-layout">
 <article class="article-body" itemscope itemtype="https://schema.org/BlogPosting"><meta itemprop="headline" content="{esc(p["title"])}"><meta itemprop="datePublished" content="{esc(p["published"])}"><meta itemprop="dateModified" content="{esc(modified)}"><meta itemprop="mainEntityOfPage" content="{canonical}"><meta itemprop="image" content="{esc(image_url)}"><span itemprop="author" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="Aurekai editorial"><meta itemprop="url" content="https://nickgonzales76017.github.io/bonfyre/blog/about/"></span><span itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="Aurekai"><meta itemprop="url" content="https://aurekai.work/"></span>
 {epigraph_html}{rendered_body}
@@ -760,7 +744,7 @@ def card(p):
     return f'''<article class="journal-card ed-card card-{tone}" data-article data-category="{esc(p["category"])}" data-search="{esc(search)}">
 <a class="journal-card-link" href="./{p["slug"]}/"><div class="journal-card-top"><span class="eyebrow">{esc(p["category"])}</span><span class="ed-card-kind">{esc(fmt.replace("-"," "))}</span></div>
 <div class="ed-card-cover">{art}</div><h3>{esc(p["title"])}</h3><p>{esc(p["description"])}</p>{outline_preview}
-<div class="journal-card-bottom"><span>{esc(p["published"])}</span><span>Read / listen ↗</span></div></a></article>'''
+<div class="journal-card-bottom"><span>{esc(p["published"])}</span><span>{'Read / listen ↗' if p.get('audio_file') and p.get('audio_voice') == 'af_sarah' else 'Read article ↗'}</span></div></a></article>'''
 
 index_file = TARGET / "index.html"
 index = index_file.read_text(encoding="utf-8")
@@ -854,10 +838,9 @@ if CHECK:
         markup=(TARGET/p["slug"]/"index.html").read_text(encoding="utf-8")
         formats.add(fmt)
         if (markup.count('<h1 id="article-title">')!=1 or
-            markup.count('data-narration data-state="idle"')!=1 or
-            'data-narration-seek' not in markup or
-            'data-narration-wave' not in markup or
-            'href="#audio-edition"' not in markup or
+            ('data-narration' in markup) != (p.get("audio_voice") == "af_sarah" and bool(p.get("audio_file"))) or
+            'data-narration-voice' in markup or
+            'speechSynthesis' in markup or
             f'class="ed-journal format-{fmt} tone-{tone} ' not in markup or
             'href="../article-editions.css"' not in markup or
             'id="read-story"' not in markup or
