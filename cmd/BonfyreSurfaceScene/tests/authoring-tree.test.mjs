@@ -36,7 +36,7 @@ test("responsive values, read-only fields and escaping boundary are enforced",()
  assert.throws(()=>applyAuthoringEdit(source,{type:"style",id:"casework",viewport:"phone",value:{background:"url(javascript:evil)"}}),/invalid|forbidden/);
  assert.throws(()=>applyAuthoringEdit(source,{type:"style",id:"casework",viewport:"phone",value:{position:"absolute"}}),/arbitrary/);
  assert.throws(()=>applyAuthoringEdit(source,{type:"style",id:"casework",viewport:"phone",value:{columns:14}}),/invalid/);
- assert.throws(()=>applyAuthoringEdit(source,{type:"insert",parent:"first-project",block:card("casework","Duplicate")}),/duplicate/);
+ assert.throws(()=>applyAuthoringEdit(source,{type:"insert",parent:"casework",block:card("first-project","Duplicate")}),/duplicate/);
  assert.throws(()=>applyAuthoringEdit(source,{type:"move",id:"casework",parent:"first-project"}),/subtree/);
  assert.throws(()=>applyAuthoringEdit(source,{type:"update",id:"first-project",field:"href",value:"javascript:alert(1)"}),/unsafe URL/);
  const readOnly=applyAuthoringEdit(source,{type:"update",id:"first-project",field:"readOnly",value:true});
