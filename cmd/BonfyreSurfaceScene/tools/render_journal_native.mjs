@@ -44,7 +44,8 @@ for(const file of articles){
    'data-edition-format="'+doc.blocks[0].props.metadata.edition_format+'"',
    'data-colorway="'+doc.blocks[0].props.metadata.colorway+'"'])
   assert.ok(page.includes(required),"native output lost "+required+" for "+slug);
- assert.ok(page.includes("<h2>"),"native editorial chapters absent "+slug);
+ assert.ok(page.includes("<h2 id=\"chapter-01\">"),"source native chapter IDs absent "+slug);
+ assert.ok(page.includes('class="bf-article-toc"'),"chapter navigation missing "+slug);
  const art=journalArtDirection(slug);
  if(art.media){
   assert.ok(page.includes('class="bf-edition-image"'),"credited image missing "+slug);
