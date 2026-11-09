@@ -28,16 +28,41 @@ BONFYRE_CMS_BINARY="$cms" BONFYRE_CMS_DB="$cmsdb" BONFYRE_CMS_SCHEMAS="$schemas"
 pid=$!; base="http://127.0.0.1:$port"; attempt=0
 until curl -fsS -o /dev/null -H 'Host: aurekai.work' "$base/healthz" 2>/dev/null; do attempt=$((attempt+1)); [ "$attempt" -lt 100 ] && kill -0 "$pid" 2>/dev/null || { cat "$tmp/server.log" >&2; fail 'server did not become ready'; }; sleep 0.05; done
 for territory in live life shop work; do curl -fsS -H "Host: aurekai.$territory" -H 'Accept: text/html' "$base/" >"$tmp/$territory.html"; done
+# The public brand must not leak into a person's site or an unrelated Host.
+curl -sS -H 'Host: independent.example.test' -H 'Accept: text/html' "$base/" >"$tmp/independent.html" || :
+if grep -q 'data-brand-masthead' "$tmp/independent.html"; then
+    fail 'unrelated host inherited the Aurekai brand'
+fi
 python3 - "$tmp" <<'PY'
 import pathlib,re,sys
 root=pathlib.Path(sys.argv[1]); problems=[]; ledes=set()
 def check(ok,msg):
     if not ok: problems.append(msg)
 doors=['/people','/communities','/apps?context=self','/programs?context=self','/sources','/w','/organisations']
+brand={
+    'work':('Build the business people remember.','/apps?context=self'),
+    'life':('Make your corner of the internet your own.','/people'),
+    'live':('Give your work more places to go.','/channels'),
+    'shop':('Build the business behind every product.','/retail')
+}
 values=['Arrival Program','Arrival Community','Arrival Feed','Arrival World','arrival.example.test']
 for territory in ('live','life','shop','work'):
     page=(root/f'{territory}.html').read_text()
     check(f'data-territory="{territory}"' in page,f'{territory}: arrival territory')
+    check(page.count('data-brand-masthead')==1,f'{territory}: native brand experience is mounted exactly once')
+    check(f'data-brand-territory="{territory}"' in page,f'{territory}: exact host brand')
+    check('Built on software.<br>Driven by Aurekai.' in page,f'{territory}: enduring Aurekai signature')
+    check(brand[territory][0] in page,f'{territory}: correct territory-specific headline')
+    check(f'href="{brand[territory][1]}"' in page,f'{territory}: real destination-owned primary action')
+    check('href="https://nickgonzales76017.github.io/bonfyre/about/"' in page,f'{territory}: working company story')
+    check(page.count('<nav class="af-brand-nav"')==1,f'{territory}: one visible four-apex navigation')
+    for apex in ('work','life','live','shop'):
+        check(f'href="https://aurekai.{apex}/"' in page,f'{territory}: link to {apex}')
+    check(page.count('aria-current="page"')==1,f'{territory}: exactly one active apex')
+    check(f'href="https://aurekai.{territory}/" aria-current="page"' in page,f'{territory}: active apex is correct')
+    check('@media(max-width:600px)' in page,f'{territory}: narrow-screen design')
+    check('af-brand-title' in page and 'af-brand-links' in page,f'{territory}: editorial hierarchy and real actions')
+    check('af-brand[data-brand-territory='+territory+']' in page,f'{territory}: scoped art direction')
     check(len(re.findall(r'<article\b[^>]*\bdata-arrival-door\b',page))==7,f'{territory}: seven doors')
     primary=page.split('<details class="front-arrival-more"',1)[0]
     secondary=page.split('<details class="front-arrival-more"',1)[-1]
