@@ -72,7 +72,7 @@ for territory in ('live','life','shop','work'):
     check(f'href="https://aurekai.{territory}/" aria-current="page"' in page,f'{territory}: active apex is correct')
     check('href="/assets/front-brand.css"' in page,f'{territory}: shared cached stylesheet')
     check('af-brand-title' in page and 'af-brand-links' in page,f'{territory}: editorial hierarchy and real actions')
-    check('data-brand-masthead' in page and 'data-brand-territory='+territory in page,f'{territory}: scoped native art direction')
+    check('af-brand-nav' in page and 'af-brand-side' in page,f'{territory}: responsive native branded navigation')
     check(len(re.findall(r'<article\b[^>]*\bdata-arrival-door\b',page))==7,f'{territory}: seven doors')
     primary=page.split('<details class="front-arrival-more"',1)[0]
     secondary=page.split('<details class="front-arrival-more"',1)[-1]
