@@ -12,6 +12,8 @@ on:
       - 'cmd/BonfyreWebAddress/src/front_editorial.h'
       - 'cmd/BonfyreWebAddress/tests/front_brand.test.mjs'
       - 'scripts/native_apex_live_readback.mjs'
+      - 'scripts/release/public_surface_rollout.mjs'
+      - 'scripts/release/tests/public_surface_rollout.test.mjs'
       - 'scripts/tests/native-apex-live-readback.test.mjs'
       - 'cmd/BonfyreWebAddress/tests/front_arrival_test.sh'
       - '.github/workflows/native-brand.yml'
@@ -26,6 +28,8 @@ on:
       - 'cmd/BonfyreWebAddress/src/front_editorial.h'
       - 'cmd/BonfyreWebAddress/tests/front_brand.test.mjs'
       - 'scripts/native_apex_live_readback.mjs'
+      - 'scripts/release/public_surface_rollout.mjs'
+      - 'scripts/release/tests/public_surface_rollout.test.mjs'
       - 'scripts/tests/native-apex-live-readback.test.mjs'
       - 'cmd/BonfyreWebAddress/tests/front_arrival_test.sh'
       - '.github/workflows/native-brand.yml'
@@ -47,6 +51,11 @@ jobs:
         run: node --test cmd/BonfyreWebAddress/tests/front_brand.test.mjs
       - name: Verify public four-apex release witness rejects stale HTML and altered CSS
         run: node --test scripts/tests/native-apex-live-readback.test.mjs
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.13'
+      - name: Verify managed activation rejects stale four-apex HTML and changed CSS
+        run: bun test scripts/release/tests/public_surface_rollout.test.mjs
 
   native-http-witness:
     name: Real WebAddress/CMS four-apex HTTP fixture
