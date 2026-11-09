@@ -187,12 +187,20 @@ export async function mountAurekaiAuthoring(root,{initial,loaders=deps,onReview,
   const holder=element("div","authoring-article");stage.append(holder);
   const EditorJS=Core.default;
   let articleDirty=false;
-  const createArticleEditor=data=>new EditorJS({
-   holder,autofocus:true,data,
-   tools:{header:{class:Header.default},list:{class:List.default},
-    quote:{class:Quote.default},table:{class:Table.default}},
-   onChange(){articleDirty=true;dirtyControls();}
-  });
+  // The upstream Editor.js onChange callback is an input hint, not a durable
+  // change receipt. Real paste, composition and automated editing may not set
+  // the hint before a review/save. Compare actual serialized block data.
+  const editorialSignature=blocks=>JSON.stringify(blocks.map(b=>({type:b.type,data:b.data})));
+  let baseline="";
+  const createArticleEditor=data=>{
+   baseline=editorialSignature(data.blocks);
+   return new EditorJS({
+    holder,autofocus:true,data,
+    tools:{header:{class:Header.default},list:{class:List.default},
+     quote:{class:Quote.default},table:{class:Table.default}},
+    onChange(){articleDirty=true;dirtyControls();}
+   });
+  };
   let current=createArticleEditor(toEditorBlocks(find(snapshot.blocks,selected)));
   picker.addEventListener("change",()=>{void (async()=>{
    await saveArticle();await current.destroy();selected=picker.value;
@@ -200,10 +208,13 @@ export async function mountAurekaiAuthoring(root,{initial,loaders=deps,onReview,
    current=createArticleEditor(toEditorBlocks(find(session.snapshot().blocks,selected)));
   })().catch(e=>status(ui,e.message,true));});
   async function saveArticle(){
-   if(!articleDirty)return;
    await current.isReady;
    const body=await current.save();
-   await apply(applyEditorBlocks(session.snapshot(),selected,body));
+   const signature=editorialSignature(body.blocks);
+   if(signature!==baseline){
+    await apply(applyEditorBlocks(session.snapshot(),selected,body));
+    baseline=signature;
+   }
    articleDirty=false;
   }
   return {hasPending:()=>articleDirty,flush:saveArticle,
