@@ -1,4 +1,4 @@
-// Release reuse is permitted only for exact editorial source edits since an
+// Release reuse is permitted only for exact editorial or corporate brand edits since an
 // existing bot-authored, hash-verified studio/instrument release.
 import {spawnSync} from 'node:child_process';
 import {readFileSync,lstatSync,realpathSync} from 'node:fs';
@@ -20,6 +20,43 @@ export function articleOnlyChanges(paths){
       EDITORIAL_SOURCES.has(p) ||
       /^scripts\/tests\/(?:editorial-|journal-|public-editorial-language|editorial-publication-bridge)[a-z0-9-]*\.py$/.test(p)
     ));
+}
+// Public presentation edits do not change retained studio or instrument bytes.
+// These are *exact* source paths, not directories or executable owners in bulk.
+// The signed receipts below still must match all derived outputs before reuse.
+const PUBLIC_BRAND_PRESENTATIONS=new Set([
+  'site/index.html',
+  'site/about/index.html',
+  'site/explore.html',
+  'site/discover/index.html',
+  'site/market.html',
+  'site/fieldwork/index.html',
+  'site/matrix/index.html',
+  'site/matrix/front-brand.css',
+  'site/docs.html',
+  'branding/voice.mjs',
+  'branding/README.md',
+  'branding/social-copy.md',
+  'README.md',
+  'Aurekai/README.md',
+  'docs/aurekai-bonfyre-model.md',
+  'docs/client-operations-portfolio.md',
+  'components/BonfyreServiceSite/README.md',
+  'scripts/tests/aurekai-brand.test.mjs',
+  '.github/workflows/aurekai-brand.yml',
+  '.github/workflows/native-brand.yml',
+  'cmd/BonfyreWebAddress/src/front_brand.h',
+  'cmd/BonfyreWebAddress/src/front_editorial.h',
+  'cmd/BonfyreWebAddress/src/page_core_rendering.h',
+  'cmd/BonfyreWebAddress/generated/native_brand_cuts.h',
+  'cmd/BonfyreWebAddress/tools/compile_brand_cuts.mjs',
+  'cmd/BonfyreWebAddress/tests/front_brand.test.mjs',
+  'cmd/BonfyreWebAddress/tests/front_arrival_test.sh'
+]);
+export function retainedPresentationChanges(paths){
+  return Array.isArray(paths)&&paths.length>0&&paths.every(path=>
+    typeof path==='string'&&!path.includes('..')&&
+    (articleOnlyChanges([path])||PUBLIC_BRAND_PRESENTATIONS.has(path)));
 }
 function git(args,cwd){
   const p=spawnSync('git',args,{cwd,encoding:'utf8',timeout:30000,maxBuffer:2*1024*1024});
@@ -60,7 +97,7 @@ export function verifyRetainedAssets(root){
   return {spaces,instruments};
 }
 export function classify({event='push',changed=[],releaseFound=false}={}){
-  return event==='push'&&releaseFound&&articleOnlyChanges(changed);
+  return event==='push'&&releaseFound&&retainedPresentationChanges(changed);
 }
 export function currentReleaseScope({cwd=process.cwd(),event=process.env.GITHUB_EVENT_NAME}={}){
   if(event!=='push')return {editorial_only:false,reason:'manual release: full build'};
@@ -70,9 +107,9 @@ export function currentReleaseScope({cwd=process.cwd(),event=process.env.GITHUB_
   const diff=git(['diff','--name-only',retained[0]+'..HEAD'],cwd);
   const changed=diff?diff.split('\n'):[];
   if(!classify({event,changed,releaseFound:true}))
-    return {editorial_only:false,reason:'non-editorial or empty change set',changed:changed.length};
+    return {editorial_only:false,reason:'non-presentation, studio-affecting or empty change set',changed:changed.length};
   try{
-    return {editorial_only:true,reason:'source-only change and verified artifact hashes',
+    return {editorial_only:true,reason:'source-only editorial or brand presentation with verified studio/instrument digests',
       changed:changed.length,receipts:verifyRetainedAssets(cwd)};
   }catch(err){
     return {editorial_only:false,reason:'retained artifact verification refused: '+err.message};

@@ -22,6 +22,8 @@ on:
       - 'packs/aurekai-work-samples/site/content.json'
       - 'cmd/BonfyreWebAddress/src/production_home.h'
       - 'scripts/tests/aurekai-brand.test.mjs'
+      - 'scripts/pages-editorial-scope.mjs'
+      - 'scripts/tests/pages-editorial-scope.test.mjs'
       - '.github/workflows/aurekai-brand.yml'
   pull_request:
     paths:
@@ -44,6 +46,8 @@ on:
       - 'packs/aurekai-work-samples/site/content.json'
       - 'cmd/BonfyreWebAddress/src/production_home.h'
       - 'scripts/tests/aurekai-brand.test.mjs'
+      - 'scripts/pages-editorial-scope.mjs'
+      - 'scripts/tests/pages-editorial-scope.test.mjs'
       - '.github/workflows/aurekai-brand.yml'
   workflow_dispatch:
 permissions:
@@ -59,5 +63,7 @@ jobs:
           node-version: '22'
       - name: Check brand variants, distribution, four entrances and independent brand boundary
         run: node --test scripts/tests/aurekai-brand.test.mjs
+      - name: Refuse unverified or studio-affecting public release fast paths
+        run: node --test scripts/tests/pages-editorial-scope.test.mjs
       - name: Verify exact-byte public release readback fixture across eleven routes
         run: node --test scripts/tests/public-pages-live-readback.test.mjs
