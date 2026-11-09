@@ -25,6 +25,8 @@ on:
       - 'scripts/tests/public-pages-live-readback.test.mjs'
       - 'scripts/pages-source-freshness.mjs'
       - 'scripts/tests/pages-source-freshness.test.mjs'
+      - 'scripts/range-static-site.mjs'
+      - 'scripts/tests/range-static-site.test.mjs'
       - '.github/workflows/journal.yml'
   workflow_dispatch:
 permissions:
@@ -88,6 +90,8 @@ jobs:
         run: python3 scripts/tests/public-wayfinding.py
       - name: Verify latest-source protection across generated release commits
         run: node --test scripts/tests/pages-source-freshness.test.mjs
+      - name: Check media server HTTP range and loading semantics
+        run: node --test scripts/tests/range-static-site.test.mjs
       - name: Verify static-site readback harness against local fixtures
         run: node --test scripts/tests/public-pages-live-readback.test.mjs
       - name: Archive website output

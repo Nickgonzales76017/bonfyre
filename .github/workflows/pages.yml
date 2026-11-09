@@ -50,6 +50,8 @@ jobs:
         run: python3 scripts/tests/public-wayfinding.py
       - name: Verify bot release commits do not supersede authored source
         run: node --test scripts/tests/pages-source-freshness.test.mjs
+      - name: Verify local media byte-range serving for article audio
+        run: node --test scripts/tests/range-static-site.test.mjs
       - name: Test public Pages readback witnesses and stale-site rejection
         run: node --test scripts/tests/public-pages-live-readback.test.mjs
       - name: Check application directory and retained release
@@ -156,7 +158,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 -m http.server 8765 --bind 127.0.0.1 --directory site >/tmp/aurekai-pages-http.log 2>&1 &
+          node scripts/range-static-site.mjs site 8765 >/tmp/aurekai-pages-http.log 2>&1 &
           server=$!
           trap 'kill "$server" 2>/dev/null || true' EXIT
           sleep 1
@@ -235,9 +237,14 @@ jobs:
                 el.dispatchEvent(new Event('input',{bubbles:true}));
                 el.dispatchEvent(new Event('change',{bubbles:true}));
               });
-              assert.ok(await page.locator('[data-audio-source]').evaluate(el=>
-                Math.abs(el.currentTime/el.duration-.4)<.06
-              ));
+              // Seek to a nonbuffered passage over real HTTP range requests.
+              // HTMLMediaElement seeking is asynchronous; verify actual decoded
+              // playback position rather than immediately reading after change.
+              await page.waitForFunction(()=>{
+                const el=document.querySelector('[data-audio-source]');
+                return el && Number.isFinite(el.duration) && el.duration>0 &&
+                  Math.abs(el.currentTime/el.duration-.4)<.06 && !el.seeking;
+              },null,{timeout:15000});
               await page.locator('[data-audio-speed]').click();
               assert.equal(await page.locator('[data-audio-source]').evaluate(el=>el.playbackRate),1.25);
               await page.setViewportSize({width:390,height:844});
