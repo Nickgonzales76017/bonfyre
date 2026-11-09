@@ -5,7 +5,7 @@ import {dirname,join,resolve} from 'node:path';
 import {createHash} from 'node:crypto';
 import {encode} from '../../../integrations/browser/workspace-msgpack.mjs';
 import {readProgramServicePolicy,renderProgramServicePolicy} from '../../project-program-service-policy.mjs';
-import {freezeBrowser,freezePrograms,uniqueInputs,configurePrograms,inspectRelease,freezeSiteAlias,terminalBin,verifyInputs,verifyBrowser,browserReadback,programReadback,retryReadbackTransport,acceptanceEnvironment,acceptanceIdentity,requireAcceptance,requireFrozenAcceptance,verifyPromotionReceipt,findExtensionChromium} from '../public_surface_rollout.mjs';
+import {freezeBrowser,freezePrograms,uniqueInputs,configurePrograms,inspectRelease,freezeSiteAlias,terminalBin,verifyInputs,verifyBrowser,browserReadback,programReadback,retryReadbackTransport,acceptanceEnvironment,acceptanceIdentity,requireAcceptance,requireFrozenAcceptance,verifyPromotionReceipt,findExtensionChromium,nativeBrandReleaseWitness} from '../public_surface_rollout.mjs';
 
 const projectRoot=resolve(import.meta.dir,'../../..');
 const homes=[];
@@ -34,7 +34,8 @@ function stageFixture(f){
  const browserInputs=freezeBrowser(f.source,f.release);
  const backup=Buffer.from('fixture original service plist\n');put(join(f.release,'previous-service.plist'),backup);
  put(join(f.release,'candidate-service.plist'),'fixture candidate service plist\n');
- const members=[...closure.map(path=>'native/'+path),...browserAssets.map(name=>'browser/'+name),'runtime/bin/cue','bin/bonfyre-web-address','bin/bonfyre-site','bin/bonfyre-meter','candidate-service.plist','previous-service.plist'];
+ put(join(f.release,'site/front-brand.css'),readFileSync(join(projectRoot,'site/matrix/front-brand.css')));
+ const members=[...closure.map(path=>'native/'+path),...browserAssets.map(name=>'browser/'+name),'site/front-brand.css','runtime/bin/cue','bin/bonfyre-web-address','bin/bonfyre-site','bin/bonfyre-meter','candidate-service.plist','previous-service.plist'];
  const material=members.map(path=>({path,sha256:sha(readFileSync(join(f.release,path)))}));
  const stage={kind:'public-surface-release-v2',directory:f.release,previousHash:sha(backup),inputs:uniqueInputs([...frozen.inputs,...browserInputs]),material,runtimes:configured.runtimes};
  put(join(f.release,'stage.mpk'),encode(stage),0o600);
@@ -249,12 +250,35 @@ test('frozen release verification is bound to its own accepted stage instead of 
  expect(()=>requireFrozenAcceptance(f.release,sha(readFileSync(join(f.release,'stage.mpk'))))).toThrow();
 });
 
+
+test('native activation can only accept four exact apex titles and matching frozen CSS bytes',()=>{
+ const css=readFileSync(join(projectRoot,'site/matrix/front-brand.css'));
+ const ver='8d90117e7d4af5ad',hosts=['work','life','live','shop'];
+ const titles={work:'Build the business people remember.',life:'Make your corner of the internet your own.',live:'Give your work more places to go.',shop:'Build the business behind every product.'};
+ for(const t of hosts){
+  const host='aurekai.'+t,url='https://'+host+'/',title=titles[t];
+  const html='<!doctype html><html><head><title>'+title+'</title><meta property="og:title" content="'+title+'">'+
+   '<link rel="canonical" href="'+url+'"><link rel="stylesheet" href="/assets/front-brand.css?v='+ver+'"></head>'+
+   '<body><main><section data-brand-masthead data-brand-territory="'+t+'">Built on software.<br>Driven by Aurekai.'+
+   '<h1 class="af-brand-title" id="af-brand-title">'+title+'</h1><nav class="af-brand-nav">'+
+   hosts.map(x=>'<a href="https://aurekai.'+x+'/"'+(x===t?' aria-current="page"':'')+'>'+x+'</a>').join('')+
+   '</nav></section></main></body></html>';
+  const home={status:200,text:html},reply={status:200,type:'text/css; charset=utf-8',text:css.toString(),sha256:sha(css)};
+  expect(nativeBrandReleaseWitness(host,home,reply,css)).toMatchObject({status:200,sha256:sha(css)});
+  expect(()=>nativeBrandReleaseWitness('other.aurekai.work',home,reply,css)).toThrow('Only the four exact');
+  expect(()=>nativeBrandReleaseWitness(host,{status:200,text:html.replace(title,'Older homepage')},reply,css)).toThrow();
+  expect(()=>nativeBrandReleaseWitness(host,home,{...reply,text:'altered CSS'},css)).toThrow('public stylesheet bytes differ');
+  expect(()=>nativeBrandReleaseWitness(host,home,{...reply,type:'text/html'},css)).toThrow('content type');
+ }
+});
+
 test('promotion receipt proves the exact frozen route set and refuses altered activation evidence',()=>{
  const f=fixture(),{stage}=stageFixture(f),stageHash=sha(readFileSync(join(f.release,'stage.mpk'))),material=new Map(stage.material.map(row=>[row.path,row.sha256]));
  const companions=new Set(['extension/workbench-shell.mjs','extension/panel-enrollment.mjs','extension/enrollment-integrity.mjs']);
  const programs=['program-workspace.mjs','program-service-continuations.mjs','program-service-policy.mjs','program-source-work.mjs','program-workspace.css'];
  const base=[
   {route:'/',status:200,sha256:'c'.repeat(64)},
+  {route:'/assets/front-brand.css',status:200,sha256:material.get('site/front-brand.css')},
   ...browserAssets.filter(name=>!companions.has(name)).map(name=>({route:'/apps/'+name,status:200,sha256:material.get('browser/'+name)})),
   {route:'/apps/_activity',status:403},
   ...programs.map(name=>({route:'/apps/'+name,status:200,sha256:material.get('browser/'+name)})),
@@ -267,6 +291,7 @@ test('promotion receipt proves the exact frozen route set and refuses altered ac
  expect(verifyPromotionReceipt(f.release,stage,stageHash)).toMatchObject({stageHash,databaseWrites:false});
  const altered=structuredClone(promoted);altered.publicRoutes.find(row=>row.route.startsWith('/apps/')&&row.sha256).sha256='0'.repeat(64);put(join(f.release,'promoted.mpk'),encode(altered),0o600);
  expect(()=>verifyPromotionReceipt(f.release,stage,stageHash)).toThrow();
+ const alteredCss=structuredClone(promoted);alteredCss.publicRoutes.find(row=>row.route==='/assets/front-brand.css').sha256='f'.repeat(64);put(join(f.release,'promoted.mpk'),encode(alteredCss),0o600);expect(()=>verifyPromotionReceipt(f.release,stage,stageHash)).toThrow();
  const wrongStage=structuredClone(promoted);wrongStage.stageHash='f'.repeat(64);put(join(f.release,'promoted.mpk'),encode(wrongStage),0o600);
  expect(()=>verifyPromotionReceipt(f.release,stage,stageHash)).toThrow();
 });
@@ -359,10 +384,11 @@ test('acceptance children omit changing launcher identity while retaining every 
 });
 test('installed-extension acceptance prefers explicit or cached Chrome for Testing instead of implicit branded Chrome',()=>{
  const f=fixture(),explicit=join(f.home,'explicit-chrome'),cache=join(f.home,'.cache/puppeteer/chrome/999999/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing');
+ const fallback=findExtensionChromium({},{homeDir:f.home,arch:'arm64'}); // Portable baseline before explicit/cache.
  put(explicit,'#!/bin/sh\nexit 0\n',0o755);put(cache,'#!/bin/sh\nexit 0\n',0o755);
  expect(findExtensionChromium({BONFYRE_EXTENSION_CHROMIUM_BINARY:explicit},{homeDir:f.home,arch:'arm64'})).toBe(realpathSync(explicit));
  expect(findExtensionChromium({},{homeDir:f.home,arch:'arm64'})).toBe(realpathSync(cache));
- rmSync(explicit);rmSync(cache);expect(findExtensionChromium({},{homeDir:f.home,arch:'arm64'})).toBeNull();
+ rmSync(explicit);rmSync(cache);expect(findExtensionChromium({},{homeDir:f.home,arch:'arm64'})).toBe(fallback);
 });
 test('acceptance identity covers imported fixtures, verifier, groups, environment and runtime bytes',async()=>{
  const f=fixture(),sourceRoot=f.source;put(join(sourceRoot,'gate.mjs'),'export const gate = 1;');put(join(sourceRoot,'fixture.mjs'),'export const value = 1;');put(join(sourceRoot,'test.mjs'),'import {value} from "./fixture.mjs";console.log(value);');
