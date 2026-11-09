@@ -577,7 +577,7 @@ def article_page(p):
 <div class="ed-cover-bottom"><span>Independent editorial / {esc(p["published"])}</span><span>01 — {mins} min read</span></div>
 </div>
 <div class="ed-title-panel">
-<div class="ed-title-utility"><a href="../">← Journal</a><span>{esc(page_label)}</span>{(\'<a href="#audio-edition" class="journal-audio-jump">Listen ↘</a>\' if p.get("audio_file") and p.get("audio_voice") == "af_sarah" else "")}</div>
+<div class="ed-title-utility"><a href="../">← Journal</a><span>{esc(page_label)}</span>{('<a href="#audio-edition" class="journal-audio-jump">Listen ↘</a>' if p.get("audio_file") and p.get("audio_voice") == "af_sarah" else "")}</div>
 <p class="ed-section-label">The Aurekai Journal <span> / An essay</span></p>
 <h1 id="article-title">{esc(p["title"])}</h1>
 <p class="ed-deck">{esc(p["description"])}</p>
