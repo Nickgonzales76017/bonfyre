@@ -2,7 +2,7 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {newAuthoringTree,validateAuthoringTree,applyAuthoringEdit,createAuthoringSession,
  toPuckData,fromPuckData,toGrapesProject,fromGrapesProject,toEditorBlocks,
- applyEditorBlocks,TREE_SCHEMA} from "../runtime/authoring-tree.mjs";
+ applyEditorBlocks,TREE_SCHEMA,CONTAINER_KINDS} from "../runtime/authoring-tree.mjs";
 const card=(id,heading)=>({id,kind:"profile-card",props:{heading,variant:"forest"},
  responsive:{desktop:{layout:"grid",columns:2},phone:{layout:"stack"}},children:[]});
 const nested=()=>{
@@ -77,4 +77,21 @@ test("cross-account imports, arbitrary CSS or HTML bypasses are rejected",()=>{
  assert.throws(()=>validateAuthoringTree({...doc,site_id:"other/../../../"}),/site ID/);
  assert.throws(()=>validateAuthoringTree({...doc,blocks:[{id:"script",kind:"javascript",props:{body:"alert(1)"},children:[]}]}),/unregistered block/);
  assert.throws(()=>validateAuthoringTree({...doc,blocks:[{id:"bad",kind:"profile-card",props:{style:"<style>"},children:[]}]}),/unregistered prop/);
+});
+
+test("Puck slots, GrapesJS drop targets and native container ownership share one grammar",()=>{
+ assert.deepEqual(CONTAINER_KINDS,["profile-section","profile-story","service:cases","service:prose","service:hero"]);
+ const doc=nested(),newBlock=card("grandchild","Invalid nesting");
+ assert.throws(()=>applyAuthoringEdit(doc,{type:"insert",parent:"first-project",block:newBlock}),/container/);
+ const illegal=structuredClone(doc);
+ illegal.blocks[0].children[0].children=[newBlock];
+ assert.throws(()=>validateAuthoringTree(illegal),/non-container/);
+ const moved=applyAuthoringEdit(doc,{type:"move",id:"first-project",parent:"casework",index:1});
+ assert.equal(moved.blocks[0].children[1].id,"first-project");
+ assert.throws(()=>applyAuthoringEdit(doc,{type:"move",id:"second-project",parent:"first-project",index:0}),/container/);
+ const nestedStory=newAuthoringTree("person-first-work");
+ nestedStory.blocks=[{id:"story",kind:"profile-story",props:{heading:"Written work"},responsive:{},
+   children:[card("story-card","A supported child")]}];
+ assert.deepEqual(fromPuckData(toPuckData(validateAuthoringTree(nestedStory)),nestedStory.site_id),nestedStory);
+ assert.deepEqual(fromGrapesProject(toGrapesProject(nestedStory),nestedStory.site_id),nestedStory);
 });

@@ -10,6 +10,9 @@ export const SERVICE_COMPONENTS=Object.freeze([
  "calculator","proof","amounts","training","source","documents","media"
 ]);
 const validTypes=new Set([...AUTHORING_BLOCKS.map(x=>x.kind),...SERVICE_COMPONENTS.map(x=>"service:"+x)]);
+// One container grammar for native C, Puck slots and GrapesJS drop targets.
+export const CONTAINER_KINDS=Object.freeze(["profile-section","profile-story","service:cases","service:prose","service:hero"]);
+const containers=new Set(CONTAINER_KINDS);
 const themes=new Set(["paper","forest","night","rust","wide","slate","editorial"]);
 const own=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
 const clone=x=>structuredClone(x);
@@ -114,6 +117,7 @@ export function validateAuthoringTree(source){
    if(!styles||typeof styles!=="object"||Array.isArray(styles))fail("responsive invalid");
    for(const [device,style] of Object.entries(styles)){if(!deviceSet.has(device))fail("unknown viewport");validateStyle(style);}
    if(!Array.isArray(b.children))fail("children must be explicit");
+   if(b.children.length&&!containers.has(b.kind))fail("non-container cannot own children: "+b.kind);
    visit(b.children,depth+1);
   }
  }
@@ -138,6 +142,7 @@ function find(doc,id){
 function destination(doc,parent){
  if(parent==null)return doc.blocks;
  const target=find(doc,parent);if(!target)fail("parent not found");
+ if(!containers.has(target.node.kind))fail("parent is not a container");
  return target.node.children;
 }
 function stripIncoming(block){

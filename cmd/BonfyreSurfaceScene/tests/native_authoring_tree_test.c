@@ -27,6 +27,8 @@ int main(void){
  ck(!bf_authoring_tree_add(t,"unsafe/tag","profile-card",NULL,0),"unsafe id refused");
  ck(!bf_authoring_tree_add(t,"unrecognized","user-script",NULL,0),"unknown type refused");
  ck(!bf_authoring_tree_add(t,"grandchild","profile-card","first",0),"non-container denied");
+ ck(bf_authoring_tree_add(t,"story-child","profile-card","second",0),"story container accepts child");
+ ck(bf_authoring_tree_remove(t,"story-child"),"remove nested child");
  ck(!bf_authoring_tree_move(t,"section-a","first",0),"subtree cycle denied");
  ck(bf_authoring_tree_move(t,"quote","section-a",1),"cross parent move");
  ck(bf_authoring_tree_nchildren(t,"section-a")==3,"moved child count");

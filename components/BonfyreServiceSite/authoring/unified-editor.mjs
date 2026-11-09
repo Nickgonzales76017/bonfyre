@@ -2,12 +2,12 @@
 // GrapesJS handles visual canvas/blocks/styles; Puck owns typed nested layouts;
 // Editor.js owns selected article text. Editors NEVER save raw HTML/CSS to CMS.
 import {AUTHORING_BLOCKS} from "../../../cmd/BonfyreSurfaceScene/runtime/authoring-prototype.mjs";
-import {SERVICE_COMPONENTS,createAuthoringSession,validateAuthoringTree,
+import {SERVICE_COMPONENTS,CONTAINER_KINDS,createAuthoringSession,validateAuthoringTree,
  toPuckData,fromPuckData,toGrapesProject,fromGrapesProject,
  toEditorBlocks,applyEditorBlocks} from "../../../cmd/BonfyreSurfaceScene/runtime/authoring-tree.mjs";
 
 const kinds=[...AUTHORING_BLOCKS.map(x=>x.kind),...SERVICE_COMPONENTS.map(x=>"service:"+x)];
-const groups=new Set(["profile-section","service:cases","service:prose","service:hero"]);
+const groups=new Set(CONTAINER_KINDS);
 const fields=["heading","body","eyebrow","label","href","variant"];
 const get=(obj,key,fallback="")=>obj?.[key]??fallback;
 const find=(nodes,id)=>{
