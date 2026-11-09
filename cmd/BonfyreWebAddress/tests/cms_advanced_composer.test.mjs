@@ -4,6 +4,10 @@ import {join} from "node:path";
 import {createRequire} from "node:module";
 import {newAuthoringTree,validateAuthoringTree} from "../../BonfyreSurfaceScene/runtime/authoring-tree.mjs";
 import {encodeNativeAuthoring} from "../../BonfyreSurfaceScene/runtime/authoring-carrier.mjs";
+import {journalArticles,authoringFromJournal,stageJournalDraftForNamespace,extractJournalSource} from "../../BonfyreSurfaceScene/tools/import_journal.mjs";
+import {treeFromNativeSnapshot,toNativePageWrite} from "../../../components/BonfyreServiceSite/authoring/native-cms.mjs";
+import {readFileSync} from "node:fs";
+
 import {packSetupFixture,root,password} from "./pack_setup_fixture.mjs";
 let f,writer,other,browser;
 const route="/unified-authoring-proof",json=x=>JSON.parse(x.body);
@@ -150,3 +154,55 @@ test("native C authoring preview requires current namespace, exact writer sessio
  expect(response.body).toContain("Attached public record");
  expect(response.body).not.toContain("<script>");
 });
+
+test("90 real Journal articles become isolated native CMS drafts and C previews with exact source readback",async()=>{
+ const files=journalArticles(join(root,"editorial/posts"));
+ expect(files.length).toBe(90);
+ const coordinates=new Set();
+ let kept=0;
+ for(const file of files){
+  const raw=readFileSync(join(root,"editorial/posts",file));
+  const source=authoringFromJournal(file,raw);
+  const base=json(await f.request("/cms/compose/page?route="+encodeURIComponent(source.page),
+   {cookie:writer.cookie}));
+  expect(base.id).toBe(0);
+  const draft=stageJournalDraftForNamespace(source,base.snapshot.namespace);
+  const prepared=toNativePageWrite(base,draft,{
+   pageDraft:{title:draft.blocks[0].props.heading,
+    heading:draft.blocks[0].props.heading,lede:draft.blocks[0].props.body}
+  });
+  expect(prepared.page.status).toBe("draft");
+  expect(prepared.fragments.length).toBe(2);
+  for(const part of prepared.fragments){
+   expect(coordinates.has(part.coordinate)).toBe(false);
+   coordinates.add(part.coordinate);
+  }
+  const saved=await f.request("/cms/compose/page",{cookie:writer.cookie,
+   form:JSON.stringify(prepared),headers:{"Content-Type":"application/json"}});
+  if(saved.status!==200)throw Error("Native CMS refused "+file+": "+saved.status+" "+saved.body.slice(0,350));
+  const reopened=json(await f.request("/cms/compose/page?route="+encodeURIComponent(source.page),
+    {cookie:writer.cookie}));
+  expect(reopened.id).toBeGreaterThan(0);
+  const roundtrip=treeFromNativeSnapshot(reopened);
+  expect(Buffer.from(extractJournalSource(roundtrip)).equals(raw)).toBe(true);
+  expect(roundtrip.blocks[1].props.source_digest).toBe(source.blocks[1].props.source_digest);
+  expect(roundtrip.blocks[0].props.metadata.publication).toBe("not-granted");
+  expect(reopened.snapshot.fragments.every(x=>x.status==="draft")).toBe(true);
+  if([0,44,89].includes(kept)){
+   const preview=await f.request("/cms/compose/preview",{cookie:writer.cookie,
+    form:"BFAU2:"+Buffer.from(encodeNativeAuthoring(roundtrip)).toString("hex"),
+    headers:{"Content-Type":"text/plain"}});
+   expect(preview.status).toBe(200);
+   expect(preview.body).toContain('data-release="draft-preview-only"');
+   expect(preview.body).toContain('<div class="bf-markdown">');
+   expect(preview.body).toContain('data-source-ref="editorial/posts/'+file+'"');
+   const otherScope=json(await f.request("/cms/compose/page?route="+encodeURIComponent(source.page),
+    {cookie:other.cookie}));
+   expect(otherScope.id).toBe(0);
+  }
+  kept++;
+ }
+ expect(kept).toBe(90);
+ expect(coordinates.size).toBe(180);
+ console.log("AUREKAI_90_NATIVE_CMS_DRAFTS_PASS 90 complete source reads / 180 unique fragments / 3 owner-gated C previews / 0 publications");
+},240000);
