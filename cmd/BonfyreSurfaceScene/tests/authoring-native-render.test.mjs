@@ -25,6 +25,11 @@ try{
  for(const [name,doc] of [["journal",journalScene()],["profile",profileScene()]]){
   const wire=join(temp,name+".bfau"),output=join(temp,name+".html");
   writeFileSync(wire,encodeNativeAuthoring(doc));
+  const receipt=join(temp,name+"-reopened.bfau");
+  const reopen=execute(exe,["--roundtrip",wire,receipt]);
+  assert.equal(reopen.status,0,name+" C re-emission failed "+reopen.stderr);
+  assert.deepEqual(readFileSync(receipt),readFileSync(wire),
+   "Native C must preserve every source field byte-for-byte");
   const result=execute(exe,[wire,output]);
   assert.equal(result.status,0,name+" native render failed "+result.stderr);
   const html=readFileSync(output,"utf8");
