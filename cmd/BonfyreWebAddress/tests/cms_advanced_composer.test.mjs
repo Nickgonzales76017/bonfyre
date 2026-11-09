@@ -2,6 +2,8 @@ import {test,expect,beforeAll,afterAll} from "bun:test";
 import {copyFileSync} from "node:fs";
 import {join} from "node:path";
 import {createRequire} from "node:module";
+import {newAuthoringTree,validateAuthoringTree} from "../../BonfyreSurfaceScene/runtime/authoring-tree.mjs";
+import {encodeNativeAuthoring} from "../../BonfyreSurfaceScene/runtime/authoring-carrier.mjs";
 import {packSetupFixture,root,password} from "./pack_setup_fixture.mjs";
 let f,writer,other,browser;
 const route="/unified-authoring-proof",json=x=>JSON.parse(x.body);
@@ -109,3 +111,30 @@ test("real GrapesJS/Puck/Editor.js modes preserve a native CMS draft and account
   expect(errors).toEqual([]);
  }finally{await ctx.close();}
 },60000);
+
+test("native C authoring preview requires current namespace, exact writer session and same-origin",async()=>{
+ const site=json(await f.request("/cms/compose/page?route="+encodeURIComponent(route),
+  {cookie:writer.cookie})).snapshot.namespace;
+ const doc=newAuthoringTree(site,route);
+ doc.blocks=[{id:"preview-section",kind:"profile-section",
+   props:{heading:"Visible C title",body:"<script>alert(1)</script> & provenance"},
+   responsive:{desktop:{layout:"grid",columns:2},phone:{layout:"stack",columns:1}},
+   children:[{id:"source-quote",kind:"profile-quote",props:{body:"Attached public record"},
+    responsive:{},children:[]}]}];
+ validateAuthoringTree(doc);
+ const bytes=encodeNativeAuthoring(doc),payload="BFAU2:"+Buffer.from(bytes).toString("hex");
+ const send=async(cookie,form=payload,headers={})=>f.request("/cms/compose/preview",{
+  ...(cookie?{cookie}:{}),form,headers:{"Content-Type":"text/plain",...headers}
+ });
+ expect((await send("")).status).toBe(403);
+ expect((await send(other.cookie)).status).toBe(403);
+ expect((await send(writer.cookie,"BFAU2:1234")).status).toBe(400);
+ const response=await send(writer.cookie);
+ expect(response.status).toBe(200);
+ expect(response.body).toContain('data-release="draft-preview-only"');
+ expect(response.body).toContain('data-id="preview-section"');
+ expect(response.body).toContain("Visible C title");
+ expect(response.body).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
+ expect(response.body).toContain("Attached public record");
+ expect(response.body).not.toContain("<script>");
+});

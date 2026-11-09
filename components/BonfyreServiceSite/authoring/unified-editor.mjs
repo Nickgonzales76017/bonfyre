@@ -88,7 +88,7 @@ const deps={
 // A mode is a different specialist editing interaction within the same desk,
 // never an independent content store. The currently mounted mode is flushed
 // before switching; failed validation keeps the editor and its draft intact.
-export async function mountAurekaiAuthoring(root,{initial,loaders=deps,onReview,onSaveDraft}={}){
+export async function mountAurekaiAuthoring(root,{initial,loaders=deps,onReview,onPreview,onSaveDraft}={}){
  if(!root||typeof root.replaceChildren!=="function")throw Error("A DOM host is required");
  if(typeof onSaveDraft!=="function"||typeof onReview!=="function")
   throw Error("Destination-owned save and review callbacks are required");
@@ -113,12 +113,16 @@ export async function mountAurekaiAuthoring(root,{initial,loaders=deps,onReview,
   controls.set("undo",makeButton("Undo",actions,()=>{void history("undo");}));
   controls.set("redo",makeButton("Redo",actions,()=>{void history("redo");}));
   controls.set("review",makeButton("Review",actions,()=>void review()));
+  if(typeof onPreview==="function")
+   controls.set("preview",makeButton("Native preview",actions,()=>void preview()));
   controls.set("save",makeButton("Save draft",actions,()=>void save()));
  }
  function dirtyControls(){
   controls.get("undo").disabled=(!session.canUndo()&&!mounted?.hasPending?.())||busy;
   controls.get("redo").disabled=!session.canRedo()||busy;
-  controls.get("review").disabled=busy;controls.get("save").disabled=busy;
+  controls.get("review").disabled=busy;
+  if(controls.has("preview"))controls.get("preview").disabled=busy;
+  controls.get("save").disabled=busy;
   for(const [name,button]of Object.entries(modeButtons))
    button.setAttribute("aria-current",String(mode===name));
  }
@@ -245,6 +249,16 @@ export async function mountAurekaiAuthoring(root,{initial,loaders=deps,onReview,
   }catch(e){status(ui,e.message,true);return false;}
   finally{busy=false;dirtyControls();}
  }
+ async function preview(){
+  if(busy||typeof onPreview!=="function")return;
+  busy=true;dirtyControls();
+  try{
+   await flush();
+   await onPreview(session.snapshot());
+   status(ui,"Native C preview opened. Draft only; not published.");
+  }catch(e){status(ui,e.message,true);}
+  finally{busy=false;dirtyControls();}
+ }
  async function review(){
   if(busy)return;
   busy=true;dirtyControls();
@@ -261,5 +275,5 @@ export async function mountAurekaiAuthoring(root,{initial,loaders=deps,onReview,
  }
  bindModes();dirtyControls();void switchMode("grapesjs");
  return {session,mode:()=>mode,switchMode,undo:()=>history("undo"),redo:()=>history("redo"),
-  review,save,destroy:async()=>{await destroy();root.replaceChildren();}};
+  review,preview,save,destroy:async()=>{await destroy();root.replaceChildren();}};
 }

@@ -28,3 +28,12 @@ body.authoring-page{margin:0;background:#eeeee7;color:#1b382d;font:15px/1.5 syst
 .authoring-review h2{font:500 32px Georgia,serif}
 .authoring-review-list{line-height:2;max-height:55vh;overflow:auto}
 @media(max-width:760px){.authoring-toolbar{padding:12px}.authoring-stage{margin:0 5px}.authoring-top{padding:12px}}
+
+.authoring-native-preview{width:min(96vw,1440px);max-width:none;height:min(94vh,1050px);max-height:94vh;padding:0;border:1px solid #85968a;border-radius:17px;background:#f4f2eb;color:#213a31;overflow:hidden}
+.authoring-native-preview::backdrop{background:#0a211dc7}
+.authoring-preview-top{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:#1f4034;color:#fff;padding:14px 22px}
+.authoring-preview-top h2{margin:0;font:600 21px Georgia,serif}
+.authoring-preview-top p{margin:0;font:12px system-ui;flex:1;min-width:200px;color:#d7e6dc}
+.authoring-preview-close{padding:9px 16px;border-radius:8px;border:1px solid #b6c6b9;background:#f1efe6;color:#1e4032;min-height:42px;cursor:pointer;font-weight:650}
+.authoring-preview-frame{display:block;width:100%;height:calc(100% - 76px);min-height:350px;border:0;background:white}
+@media(max-width:760px){.authoring-preview-top{padding:10px}.authoring-native-preview{height:94vh}.authoring-preview-frame{height:calc(100% - 115px)}}
