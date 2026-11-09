@@ -59,6 +59,7 @@ test('Work Samples receives the brand; independent sites keep their names',()=>{
  const hero=content.sections.find(x=>x.kind==='hero');
  assert.equal(hero.headline,'Built on software. *Driven by Aurekai.*');
  assert.match(content.footer.about,/Independent customer brands remain their own/);
+ assert.ok(content.navigation.some(x=>x.label==='About Aurekai'&&x.href.endsWith('/bonfyre/about/')));
  assert.match(src('components/BonfyreServiceSite/README.md'),/independent customer sites retain their own names and branding/);
 });
 test('GitHub, model and distribution documents distinguish business and native engine',()=>{
