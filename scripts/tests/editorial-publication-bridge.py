@@ -30,6 +30,20 @@ assert all(f["page"] in {p["route"] for p in pages} for f in fragments), "Orphan
 assert all(f["source_ref"] and f["source_digest"] for f in fragments), "Missing source provenance"
 assert len([f for f in fragments if f["kind"]=="article-body"])==66, "Lost article bodies"
 assert len([f for f in fragments if f["kind"]=="article-credit"])==66, "Lost author relationships"
+assert len([f for f in fragments if f["kind"]=="article-presentation"])==66, "Lost editorial art direction"
+media_path=root/"editorial/media-sources.tsv"
+art_path=root/"editorial/art-direction.tsv"
+def tsv_rows(path):
+    return list(csv.DictReader([line for line in path.read_text(encoding="utf-8").splitlines()
+               if line.strip() and not line.startswith("#")],delimiter="\t"))
+directions={r["slug"]:r for r in tsv_rows(art_path)}
+media={r["key"]:r for r in tsv_rows(media_path)}
+assert len(directions)==66 and len(media)==12
+assert len([f for f in fragments if f["kind"]=="article-media-credit"])==sum(bool(x["media"]) for x in directions.values()), "Lost source media"
+assert len([f for f in fragments if f["kind"]=="article-audio-edition"])==sum(bool((root/"editorial/posts"/(s+".md")).read_text(encoding="utf-8").split("---",2)[1].find("audio_file:")>=0) for s in directions), "Lost recorded edition"
+art_sha=sha256(art_path.read_bytes()).hexdigest()
+media_sha=sha256(media_path.read_bytes()).hexdigest()
+
 assert all(f["audience"]=="public" for f in fragments), "Accidental private projection"
 
 source_count=0
@@ -48,7 +62,17 @@ for p in pages:
     assert body["source_ref"]==path.as_posix() and body["source_digest"]==digest, slug
     assert body["body"]==raw.split("\n---\n",1)[1].strip(), "Lost exact article body: "+slug
     assert author["href"]==identity and "Aurekai editorial" in author["body"], "Authorship mismatch: "+slug
+    art=directions[slug]
+    selected=next(f for f in fragments if f["coordinate"]=="journal:post:"+slug+":presentation")
+    assert selected["source_ref"]=="editorial/art-direction.tsv" and selected["source_digest"]==art_sha, slug
+    assert selected["body"]=="format: "+art["format"]+"\ncolorway: "+art["colorway"]+"\nmedia: "+(art["media"] or "none"), slug
+    if art["media"]:
+        record=media[art["media"]]
+        credited=next(f for f in fragments if f["coordinate"]=="journal:post:"+slug+":media")
+        assert credited["source_ref"]=="editorial/media-sources.tsv" and credited["source_digest"]==media_sha, slug
+        assert record["caption"] in credited["body"] and record["uri"] in credited["body"], slug
     html=(blog/slug/"index.html").read_text(encoding="utf-8")
+    assert "format-"+art["format"]+" tone-"+art["colorway"] in html, slug
     assert '<link rel="author" href="../authors/aurekai-editorial/">' in html, slug
     scripts=re.findall(r'<script type="application/ld\+json">(.*?)</script>',html,re.S)
     schemas=[json.loads(x) for x in scripts]

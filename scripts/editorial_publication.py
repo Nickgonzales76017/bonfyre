@@ -175,7 +175,7 @@ def as_csv(fields, rows):
     return buffer.getvalue()
 
 
-def build_native_draft(root, posts, authors, relations, check=False):
+def build_native_draft(root, posts, authors, relations, media_sources=None, check=False):
     """Projection for existing BonfyreCMS site_page/site_fragment owners.
 
     Never connects to production or invokes a CMS effect. Records are drafts,
@@ -201,6 +201,11 @@ def build_native_draft(root, posts, authors, relations, check=False):
             raise ValueError("Invalid authored reading relationship")
         outgoing[fields[0]].append(fields)
     pages, fragments = [], []
+    media_sources = media_sources or {}
+    art_ref = "editorial/art-direction.tsv"
+    art_digest = sha256((root/art_ref).read_bytes()).hexdigest()
+    media_ref = "editorial/media-sources.tsv"
+    media_digest = sha256((root/media_ref).read_bytes()).hexdigest()
     manifest=["subject_id\tcanonical_url\tauthor_id\tseries\tcategory\tsource_ref\tsource_sha256\tstatus"]
     def page(route,title,lede,note):
         pages.append({"namespace":NAMESPACE,"route":route,"title":title,"eyebrow":"Aurekai Journal",
@@ -234,6 +239,25 @@ def build_native_draft(root, posts, authors, relations, check=False):
             fragment(route,"post:"+slug+":related",4,"editorial-related", "\n".join(lines),
                      "editorial/reading-bridges.tsv",
                      sha256(Path(relations).read_bytes()).hexdigest())
+        # Presentation is a source-bound, review-held fragment, not a grant to
+        # publish or a substitute for the native SitePresentation/SurfaceIR owner.
+        fmt, colorway, media_key = p["art"]
+        fragment(route,"post:"+slug+":presentation",5,"article-presentation",
+                 "format: "+fmt+"\ncolorway: "+colorway+"\nmedia: "+(media_key or "none"),
+                 art_ref,art_digest,"Editorial presentation")
+        if media_key:
+            if media_key not in media_sources:
+                raise ValueError("Article media has no source-owned credits: "+slug)
+            uri, caption, credit_url = media_sources[media_key]
+            fragment(route,"post:"+slug+":media",6,"article-media-credit",
+                     "key: "+media_key+"\nuri: "+uri+"\ncredit: "+caption+"\nsource: "+(credit_url or "first-party"),
+                     media_ref,media_digest,caption,credit_url)
+        if p.get("audio_file"):
+            fragment(route,"post:"+slug+":audio",7,"article-audio-edition",
+                     "file: "+p["audio_file"]+"\nvoice: "+p.get("audio_voice","")
+                     +"\nmodel: "+p.get("audio_model","")+"\nreview: "+p.get("audio_review","")
+                     +"\nmanuscript_sha256: "+p.get("audio_body_sha256",""),
+                     source_ref,digest,"Recorded narration (review-held)")
         manifest.append("\t".join(["post:"+slug,url,p["author_id"],p.get("series",""),p["category"],
                                    source_ref,digest,"draft"]))
     for slug, author in sorted(authors.items()):

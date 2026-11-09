@@ -33,34 +33,29 @@ PALETTES = {
 # Verified originals or existing real product screenshots only.
 # Wikimedia FilePath redirects to the named image; caption links to the
 # authoritative file page and identifies illustrative historical imagery.
-MEDIA = {
- "forest": ("https://commons.wikimedia.org/wiki/Special:FilePath/Mist_around_a_forest_%28Unsplash%29.jpg?width=1200",
-   "Real forest photograph, Austin Schmid, 2016 (CC0). Illustrative cover photograph.",
-   "https://commons.wikimedia.org/wiki/File:Mist_around_a_forest_(Unsplash).jpg"),
- "library": ("https://commons.wikimedia.org/wiki/Special:FilePath/A_reading_room_at_the_Library_of_Congress%2C_Washington%2C_D.C._LCCN2011648351.jpg?width=1200",
-   "Library of Congress reading room, historic photograph, public domain. Illustrative archival image.",
-   "https://commons.wikimedia.org/wiki/File:A_reading_room_at_the_Library_of_Congress,_Washington,_D.C._LCCN2011648351.jpg"),
- "books": ("https://commons.wikimedia.org/wiki/Special:FilePath/Bookshelves_at_the_library.jpg?width=1200",
-   "Library shelves, Westcott Phillip / U.S. Fish and Wildlife Service, public domain. Illustrative photograph.",
-   "https://commons.wikimedia.org/wiki/File:Bookshelves_at_the_library.jpg"),
- "radio": ("https://commons.wikimedia.org/wiki/Special:FilePath/Radio_studio._Controll_%28sic%29_room._Looking_into_studio_LOC_matpc.03328.jpg?width=1200",
-   "Historic radio control room, Matson Collection / Library of Congress, public domain. Illustrative image.",
-   "https://commons.wikimedia.org/wiki/File:Radio_studio._Controll_(sic)_room._Looking_into_studio_LOC_matpc.03328.jpg"),
- "broadcast": ("https://commons.wikimedia.org/wiki/Special:FilePath/Radio_studio._Controll_%28sic%29_room._Looking_into_studio_LOC_matpc.03328.jpg?width=1200",
-   "Historic radio studio, Matson Collection / Library of Congress, public domain. Illustrative image.",
-   "https://commons.wikimedia.org/wiki/File:Radio_studio._Controll_(sic)_room._Looking_into_studio_LOC_matpc.03328.jpg"),
- "printing": ("https://commons.wikimedia.org/wiki/Special:FilePath/Printing_press.jpg?width=1200",
-   "Printing press engraving by W. Lowry after J. Farey, 1819, public domain (Wellcome Collection).",
-   "https://commons.wikimedia.org/wiki/File:Printing_press.jpg"),
- "calculator": ("https://commons.wikimedia.org/wiki/Special:FilePath/Old_produx_mechanical_calculator.jpg?width=1200",
-   "Old Produx mechanical calculator photographed by Drummyfish, CC0. Illustrative photograph.",
-   "https://commons.wikimedia.org/wiki/File:Old_produx_mechanical_calculator.jpg"),
- "room": ("local:spaces/shots/studio-room-selection.png", "Aurekai / Bonfÿre, real public room-planning studio screenshot.", ""),
- "product": ("local:spaces/shots/studio-product.png", "Aurekai / Bonfÿre, real public product studio screenshot.", ""),
- "research": ("local:instruments/shots/research-desktop.png", "Aurekai / Bonfÿre, real research instrument screenshot.", ""),
- "process": ("local:instruments/shots/process-desktop.png", "Aurekai / Bonfÿre, real process instrument screenshot.", ""),
- "schema": ("local:instruments/shots/schema-desktop.png", "Aurekai / Bonfÿre, real schema instrument screenshot.", "")
-}
+MEDIA_PATH = ROOT / "editorial" / "media-sources.tsv"
+
+def editorial_media():
+    lines = [line for line in MEDIA_PATH.read_text(encoding="utf-8").splitlines()
+             if line.strip() and not line.startswith("#")]
+    if not lines or lines[0] != "key\turi\tcaption\tcredit_url":
+        raise ValueError("Invalid editorial media source header")
+    records = {}
+    for number, line in enumerate(lines[1:], 2):
+        fields = [item.strip() for item in line.split("\t")]
+        if len(fields) != 4:
+            raise ValueError(f"Invalid media credit row {number}")
+        key, uri, caption, credit = fields
+        if (not re.fullmatch(r'[a-z0-9]+(?:-[a-z0-9]+)*', key)
+            or key in records or not caption
+            or not (uri.startswith("https://") or uri.startswith("local:"))
+            or (credit and not credit.startswith("https://"))
+            or (uri.startswith("https://") and not credit)):
+            raise ValueError(f"Unreviewed media source row {number}")
+        records[key] = (uri, caption, credit)
+    return records
+
+MEDIA = editorial_media()
 
 def editorial_specs():
     result = {}
@@ -730,7 +725,8 @@ def card(p, number):
 <div class="journal-card-bottom"><time datetime="{esc(p["published"])}">{esc(p["published"])}</time><span>{'Read / listen ↗' if p.get('audio_file') and p.get('audio_voice') == 'af_sarah' else 'Read article ↗'}</span></div></div></a></article>'''
 
 
-index_file = TARGET / "index.html"
+# One authored template, independent of the last generated publication.
+index_file = ROOT / "editorial" / "templates" / "journal-index.html"
 index = index_file.read_text(encoding="utf-8")
 # Preserve the existing journal design and its accessible client-side filter.
 grid_start = re.search(r'<div class="journal-grid"(?: data-journal-grid)?>', index)
@@ -791,7 +787,7 @@ write("authors/index.html", author_index(AUTHORS, posts))
 for author_slug, author_profile in sorted(AUTHORS.items()):
     authored = [p for p in posts if p["author_id"] == author_slug]
     write("authors/"+author_slug+"/index.html", public_author_page(author_profile, authored))
-cms_pages, cms_fragments = build_native_draft(ROOT, posts, AUTHORS, EDITORIAL_BRIDGES_PATH, check=CHECK)
+cms_pages, cms_fragments = build_native_draft(ROOT, posts, AUTHORS, EDITORIAL_BRIDGES_PATH, media_sources=MEDIA, check=CHECK)
 print(f"JOURNAL_NATIVE_DRAFT_READY {cms_pages} pages / {cms_fragments} fragments / review-required")
 
 def pubdate(value):

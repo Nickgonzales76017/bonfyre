@@ -1,0 +1,15 @@
+# Reviewed media sources: exact URI, attribution, origin.
+# Local screenshots are first-party assets.
+key	uri	caption	credit_url
+forest	https://commons.wikimedia.org/wiki/Special:FilePath/Mist_around_a_forest_%28Unsplash%29.jpg?width=1200	Real forest photograph, Austin Schmid, 2016 (CC0). Illustrative cover photograph.	https://commons.wikimedia.org/wiki/File:Mist_around_a_forest_(Unsplash).jpg
+library	https://commons.wikimedia.org/wiki/Special:FilePath/A_reading_room_at_the_Library_of_Congress%2C_Washington%2C_D.C._LCCN2011648351.jpg?width=1200	Library of Congress reading room, historic photograph, public domain. Illustrative archival image.	https://commons.wikimedia.org/wiki/File:A_reading_room_at_the_Library_of_Congress,_Washington,_D.C._LCCN2011648351.jpg
+books	https://commons.wikimedia.org/wiki/Special:FilePath/Bookshelves_at_the_library.jpg?width=1200	Library shelves, Westcott Phillip / U.S. Fish and Wildlife Service, public domain. Illustrative photograph.	https://commons.wikimedia.org/wiki/File:Bookshelves_at_the_library.jpg
+radio	https://commons.wikimedia.org/wiki/Special:FilePath/Radio_studio._Controll_%28sic%29_room._Looking_into_studio_LOC_matpc.03328.jpg?width=1200	Historic radio control room, Matson Collection / Library of Congress, public domain. Illustrative image.	https://commons.wikimedia.org/wiki/File:Radio_studio._Controll_(sic)_room._Looking_into_studio_LOC_matpc.03328.jpg
+broadcast	https://commons.wikimedia.org/wiki/Special:FilePath/Radio_studio._Controll_%28sic%29_room._Looking_into_studio_LOC_matpc.03328.jpg?width=1200	Historic radio studio, Matson Collection / Library of Congress, public domain. Illustrative image.	https://commons.wikimedia.org/wiki/File:Radio_studio._Controll_(sic)_room._Looking_into_studio_LOC_matpc.03328.jpg
+printing	https://commons.wikimedia.org/wiki/Special:FilePath/Printing_press.jpg?width=1200	Printing press engraving by W. Lowry after J. Farey, 1819, public domain (Wellcome Collection).	https://commons.wikimedia.org/wiki/File:Printing_press.jpg
+calculator	https://commons.wikimedia.org/wiki/Special:FilePath/Old_produx_mechanical_calculator.jpg?width=1200	Old Produx mechanical calculator photographed by Drummyfish, CC0. Illustrative photograph.	https://commons.wikimedia.org/wiki/File:Old_produx_mechanical_calculator.jpg
+room	local:spaces/shots/studio-room-selection.png	Aurekai / Bonfÿre, real public room-planning studio screenshot.	
+product	local:spaces/shots/studio-product.png	Aurekai / Bonfÿre, real public product studio screenshot.	
+research	local:instruments/shots/research-desktop.png	Aurekai / Bonfÿre, real research instrument screenshot.	
+process	local:instruments/shots/process-desktop.png	Aurekai / Bonfÿre, real process instrument screenshot.	
+schema	local:instruments/shots/schema-desktop.png	Aurekai / Bonfÿre, real schema instrument screenshot.	

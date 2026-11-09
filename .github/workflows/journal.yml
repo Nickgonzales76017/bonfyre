@@ -9,6 +9,8 @@ on:
       - 'scripts/tests/editorial-publication-bridge.py'
       - 'site/blog/authors.css'
       - 'editorial/reading-bridges.tsv'
+      - 'editorial/media-sources.tsv'
+      - 'editorial/templates/**'
       - 'editorial/art-direction.tsv'
       - 'scripts/tests/journal-discoverability.py'
       - 'scripts/tests/editorial-*.py'
