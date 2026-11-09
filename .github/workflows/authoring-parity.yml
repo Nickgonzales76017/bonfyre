@@ -94,6 +94,14 @@ jobs:
           make -C cmd/BonfyreAuth bonfyre-auth
           make -C cmd/BonfyreCMS bonfyre-cms
           make -C cmd/BonfyreWebAddress bonfyre-web-address
+      - name: Test pinned Mustach native C templates with complete escapes and bounded output
+        run: |
+          cc -std=c11 -Wall -Wextra -Werror -D_GNU_SOURCE -Ilib/libbonfyre/include \
+            cmd/BonfyreSurfaceScene/tests/native_authoring_template_test.c \
+            cmd/BonfyreSurfaceScene/src/authoring_template.c \
+            cmd/BonfyreSurfaceScene/vendor/mustach/mini-mustach.c \
+            lib/libbonfyre/libbonfyre.a -lm -o /tmp/bonfyre-authoring-mustach
+          /tmp/bonfyre-authoring-mustach
       - name: Build authoring editor bundle for the native server
         run: make -C cmd/BonfyreSurfaceScene authoring-bundle
       - name: Exercise GrapesJS, Puck, Editor.js, account isolation and native draft readback
