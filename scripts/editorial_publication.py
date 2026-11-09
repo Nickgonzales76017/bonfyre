@@ -242,7 +242,7 @@ def build_native_draft(root, posts, authors, relations, check=False):
         fragment(route,"author:"+slug+":bio",1,"author-biography",author["body"],
                  author["source_path"],author["source_sha256"])
         fragment(route,"author:"+slug+":articles",2,"authored-articles",
-                 "\n".join("- ["+p["title"]+"]("+PUBLIC_BASE+"blog/"+p["slug"]+"/")"
+                 "\n".join(f"- [{p['title']}]({PUBLIC_BASE}blog/{p['slug']}/)"
                      for p in posts if p["author_id"]==slug),author["source_path"],author["source_sha256"])
         manifest.append("\t".join(["author:"+slug,author["url"],slug,"","Authors",
                               author["source_path"],author["source_sha256"],"draft"]))
