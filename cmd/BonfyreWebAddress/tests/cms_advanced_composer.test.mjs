@@ -82,6 +82,18 @@ test("real GrapesJS/Puck/Editor.js modes preserve a native CMS draft and account
    node.focus();node.textContent="Edited in the real Editor.js canvas";
    node.dispatchEvent(new InputEvent("input",{bubbles:true,inputType:"insertText"}));
   });
+  // Unsaved Editor.js document must be previewable through the actual C
+  // owner, not through a browser-only imitation or a published mutation.
+  await tab.evaluate(()=>{
+   [...document.querySelectorAll(".authoring-actions button")]
+    .find(x=>x.textContent==="Native preview")?.click();
+  });
+  await tab.waitForSelector(".authoring-native-preview[open]",{timeout:20000});
+  const nativeFrame=await (await tab.$(".authoring-preview-frame")).contentFrame();
+  await nativeFrame.waitForSelector('[data-release="draft-preview-only"]',{timeout:15000});
+  const nativeBody=await nativeFrame.$eval("#content",x=>x.textContent);
+  expect(nativeBody).toContain("Edited in the real Editor.js canvas");
+  await tab.click(".authoring-preview-close");
   await tab.evaluate(()=>{
    [...document.querySelectorAll(".authoring-actions button")]
     .find(x=>x.textContent==="Review")?.click();
