@@ -2,7 +2,8 @@
 // GrapesJS handles visual canvas/blocks/styles; Puck owns typed nested layouts;
 // Editor.js owns selected article text. Editors NEVER save raw HTML/CSS to CMS.
 import {AUTHORING_BLOCKS} from "../../../cmd/BonfyreSurfaceScene/runtime/authoring-prototype.mjs";
-import {SERVICE_COMPONENTS,CONTAINER_KINDS,createAuthoringSession,validateAuthoringTree,
+import {mountAuthoringInspector} from "./inspector.mjs";
+import {SERVICE_COMPONENTS,CONTAINER_KINDS,createAuthoringSession,validateAuthoringTree,applyAuthoringEdit,
  toPuckData,fromPuckData,toGrapesProject,fromGrapesProject,
  toEditorBlocks,applyEditorBlocks} from "../../../cmd/BonfyreSurfaceScene/runtime/authoring-tree.mjs";
 
@@ -96,7 +97,7 @@ export async function mountAurekaiAuthoring(root,{initial,loaders=deps,onReview,
  const desk=element("div","aurekai-authoring");
  const toolbar=element("header","authoring-toolbar"),modeBar=element("nav","authoring-modes");
  const actions=element("div","authoring-actions"),statusBox=element("p","authoring-status");
- const stage=element("main","authoring-stage"),modeButtons={};
+ const stage=element("main","authoring-stage"),side=element("aside","authoring-inspector"),modeButtons={};
  const ui={desk,toolbar,modeBar,actions,status:statusBox,stage};
  let mounted=null,mode=null,selected=null,busy=false,changes=0;
  const controls=new Map();
@@ -105,7 +106,7 @@ export async function mountAurekaiAuthoring(root,{initial,loaders=deps,onReview,
   parent.append(btn);return btn;
  };
  toolbar.append(element("h1","","Aurekai · Edit your site"),modeBar,actions);
- desk.append(toolbar,statusBox,stage);
+ desk.append(toolbar,statusBox,stage,side);
  root.replaceChildren(desk);
  function bindModes(){
   for(const [key,label]of [["grapesjs","Design"],["puck","Structure"],["editorjs","Article"],["markdown","Markdown source"]])
@@ -127,10 +128,23 @@ export async function mountAurekaiAuthoring(root,{initial,loaders=deps,onReview,
   for(const [name,button]of Object.entries(modeButtons))
    button.setAttribute("aria-current",String(mode===name));
  }
+ let inspector=null;
+ async function editSelected(operation,label){
+  if(busy)return;
+  busy=true;dirtyControls();
+  try{
+   await flush();
+   await apply(applyAuthoringEdit(session.snapshot(),operation));
+   await destroy();
+   mounted=await ({grapesjs:openGrapes,puck:openPuck,editorjs:openArticle,markdown:openMarkdown}[mode])();
+   status(ui,label+" updated in native draft. Not published.");
+  }catch(e){status(ui,e.message,true);}
+  finally{busy=false;dirtyControls();inspector?.render();}
+ }
  async function apply(next){
   try{
    if(JSON.stringify(next)===JSON.stringify(session.snapshot()))return;
-   session.replace(next);changes++;status(ui,"Draft updated ("+changes+" edits).");dirtyControls();
+   session.replace(next);changes++;status(ui,"Draft updated ("+changes+" edits).");dirtyControls();inspector?.render();
   }
   catch(e){status(ui,e.message,true);throw e;}
  }
@@ -315,7 +329,13 @@ export async function mountAurekaiAuthoring(root,{initial,loaders=deps,onReview,
    status(ui,"Draft saved at revision "+String(result.revision||"confirmed")+". Not published.");
   }catch(e){status(ui,e.message,true);}finally{busy=false;dirtyControls();}
  }
- bindModes();dirtyControls();void switchMode("grapesjs");
+ bindModes();
+ inspector=mountAuthoringInspector(side,{
+  snapshot:()=>session.snapshot(),selected:()=>selected,
+  onSelect:id=>{selected=id;inspector?.render();},
+  onEdit:editSelected
+ });
+ dirtyControls();void switchMode("grapesjs");
  return {session,mode:()=>mode,switchMode,undo:()=>history("undo"),redo:()=>history("redo"),
-  review,preview,save,destroy:async()=>{await destroy();root.replaceChildren();}};
+  review,preview,save,destroy:async()=>{inspector?.dispose();await destroy();root.replaceChildren();}};
 }

@@ -42,3 +42,22 @@ body.authoring-page{margin:0;background:#eeeee7;color:#1b382d;font:15px/1.5 syst
 .authoring-markdown-source{display:block;width:calc(100% - 50px);min-height:min(72vh,900px);margin:10px auto 28px;padding:clamp(15px,2.4vw,32px);background:#fbfcf9;color:#1b3026;border:1px solid #9cae9e;border-radius:9px;resize:vertical;font:14px/1.68 ui-monospace,SFMono-Regular,Consolas,monospace;tab-size:2;white-space:pre;overflow:auto}
 .authoring-markdown-source:focus-visible{outline:3px solid #a95b30;outline-offset:2px}
 @media(max-width:760px){.authoring-markdown-source{width:calc(100% - 16px);min-height:70vh}}
+
+/* Shared responsive controls for GrapesJS, Puck and Editor.js. */
+.authoring-page .aurekai-authoring{grid-template-columns:minmax(0,1fr) 300px;column-gap:0}
+.authoring-toolbar,.authoring-status{grid-column:1/-1}
+.authoring-stage{grid-column:1;min-width:0}
+.authoring-inspector{grid-column:2;grid-row:3;max-height:calc(100vh - 185px);overflow-y:auto;margin:0 12px 18px 0;padding:20px;background:#f6f8f2;border:1px solid #b9c9bb;border-radius:12px}
+.authoring-inspector h2{font:500 24px Georgia,serif;margin:0}
+.authoring-inspector-note{font:12px/1.55 system-ui;color:#536958}
+.authoring-inspector-heading{margin:25px 0 12px;border-top:1px solid #d0dbce;padding-top:15px;font:750 11px system-ui;letter-spacing:.12em;text-transform:uppercase}
+.authoring-inspector-field{display:grid;gap:6px;margin:12px 0;color:#475f51;font:700 11px system-ui}
+.authoring-inspector-control{max-width:100%;width:100%;background:#fff;color:#203929;border:1px solid #aabaae;border-radius:7px;padding:9px;font:13px/1.4 system-ui}
+.authoring-inspector-control:focus-visible{outline:3px solid #ba7658;outline-offset:1px}
+.authoring-inspector-control:disabled{background:#ecf0eb;color:#829184}
+.authoring-inspector-field textarea{min-height:76px;resize:vertical}
+.authoring-inspector-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.authoring-inspector-actions button{min-height:42px;border:1px solid #9dae9f;border-radius:7px;background:white;color:#254734;font:650 12px system-ui;cursor:pointer}
+.authoring-inspector-actions button:disabled{opacity:.45;cursor:not-allowed}
+.authoring-inspector-source{display:block;font:11px/1.5 ui-monospace,monospace;overflow-wrap:anywhere;padding:7px;margin:8px 0;background:#e7eee7}
+@media(max-width:1340px){.authoring-page .aurekai-authoring{grid-template-columns:minmax(0,1fr)}.authoring-stage,.authoring-inspector{grid-column:1;grid-row:auto}.authoring-inspector{max-height:none;margin:0 8px 22px}}
