@@ -32,6 +32,7 @@ test: $(TARGET)
 	@node --test tests/authoring-ui-history.test.mjs
 	@node --test tests/authoring-cms.test.mjs
 	@node --test tests/authoring-carrier.test.mjs
+	@node --test tests/authoring-native-render.test.mjs
 	@node tools/compile_authoring.mjs --check
 	@node tools/compile_authoring_native_tree.mjs --check
 	@tmp=$$(mktemp /tmp/bonfyre-native-authoring-XXXXXX); trap 'rm -f "$$tmp"' EXIT; $(CC) -std=c11 -Wall -Wextra -Werror tests/native_authoring_tree_test.c -o "$$tmp" && "$$tmp"

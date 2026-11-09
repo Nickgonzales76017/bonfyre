@@ -1,0 +1,12 @@
+import {writeFileSync,mkdirSync} from "node:fs";
+import {dirname} from "node:path";
+import {fileURLToPath} from "node:url";
+import {journalScene,profileScene} from "../tests/fixtures/authoring-publication.mjs";
+import {encodeNativeAuthoring} from "../runtime/authoring-carrier.mjs";
+const [name,destination]=process.argv.slice(2);
+if(!["journal","profile"].includes(name)||!destination)throw Error("Use: node tools/export_authoring_carrier.mjs journal|profile FILE.bfau");
+const document=name==="journal"?journalScene():profileScene();
+const bytes=encodeNativeAuthoring(document);
+mkdirSync(dirname(destination),{recursive:true});
+writeFileSync(destination,bytes);
+console.log("AUTHORING_NATIVE_EXPORT",name,bytes.length,"bytes",document.site_id,document.page);

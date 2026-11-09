@@ -22,6 +22,8 @@ jobs:
           node-version: '22'
       - name: Test typed trees, editor adapters and CMS roundtrips
         run: node --test cmd/BonfyreSurfaceScene/tests/authoring_prototype.test.mjs cmd/BonfyreSurfaceScene/tests/authoring-tree.test.mjs cmd/BonfyreSurfaceScene/tests/authoring-ui-history.test.mjs cmd/BonfyreSurfaceScene/tests/authoring-carrier.test.mjs cmd/BonfyreSurfaceScene/tests/authoring-cms.test.mjs
+      - name: Compile both unrelated experiences through native C and verify SSR
+        run: node --test cmd/BonfyreSurfaceScene/tests/authoring-native-render.test.mjs
       - name: Assert generated C headers match source
         run: |
           node cmd/BonfyreSurfaceScene/tools/compile_authoring.mjs --check
