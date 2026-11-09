@@ -3,6 +3,9 @@ on:
   push:
     branches: [main]
     paths:
+      - 'branding/voice.mjs'
+      - 'cmd/BonfyreWebAddress/tools/compile_brand_cuts.mjs'
+      - 'cmd/BonfyreWebAddress/generated/native_brand_cuts.h'
       - 'cmd/BonfyreWebAddress/src/front_brand.h'
       - 'cmd/BonfyreWebAddress/src/front_editorial.h'
       - 'cmd/BonfyreWebAddress/tests/front_brand.test.mjs'
@@ -10,6 +13,9 @@ on:
       - '.github/workflows/native-brand.yml'
   pull_request:
     paths:
+      - 'branding/voice.mjs'
+      - 'cmd/BonfyreWebAddress/tools/compile_brand_cuts.mjs'
+      - 'cmd/BonfyreWebAddress/generated/native_brand_cuts.h'
       - 'cmd/BonfyreWebAddress/src/front_brand.h'
       - 'cmd/BonfyreWebAddress/src/front_editorial.h'
       - 'cmd/BonfyreWebAddress/tests/front_brand.test.mjs'
@@ -27,5 +33,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Refuse drift between authored Aurekai voice and native C
+        run: node cmd/BonfyreWebAddress/tools/compile_brand_cuts.mjs --check
       - name: Compile C brand edition and verify four-apex art, routes and independent-host refusal
         run: node --test cmd/BonfyreWebAddress/tests/front_brand.test.mjs

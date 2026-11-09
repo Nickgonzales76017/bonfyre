@@ -9,20 +9,7 @@ typedef struct {
     const char *territory, *index, *category, *headline, *description;
     const char *action, *label;
 } FrontBrandCut;
-static const FrontBrandCut front_brand_cuts[]={
-    {"work","01 / 04","BUSINESS / WORK","Build the business people remember.",
-     "Your customer experience depends on the systems behind it. Bring websites, customer relationships, finance and operations into useful work.",
-     "/apps?context=self","Open your applications"},
-    {"life","02 / 04","PEOPLE / LIFE","Make your corner of the internet your own.",
-     "Profiles, communities, collections and the work people share deserve more than a disposable feed. Keep the things that matter connected.",
-     "/people","Explore people"},
-    {"live","03 / 04","PUBLISHING / LIVE","Give your work more places to go.",
-     "An article, show or recording should find its audience without losing who made it, its source or the story around it.",
-     "/channels","Explore channels"},
-    {"shop","04 / 04","COMMERCE / SHOP","Build the business behind every product.",
-     "A product moves through a supplier, a catalogue, inventory, a decision and a buyer. The software should support all of that work.",
-     "/retail","Explore retail"}
-};
+#include "../generated/native_brand_cuts.h"
 static void front_brand_emit(const char *territory){
     if(!territory)return;
     const FrontBrandCut *selected=NULL;
@@ -34,9 +21,11 @@ static void front_brand_emit(const char *territory){
     fputs("\" aria-labelledby=\"af-brand-title\"><div class=\"af-brand-top\">"
           "<div class=\"af-brand-mark\">AUREKAI<span>",stdout);
     html(selected->index);
-    fputs(" &middot; THE OPERATING BUSINESS</span></div>"
-          "<span class=\"af-brand-signature\">Built on software.<br>Driven by Aurekai.</span></div>"
-          "<div class=\"af-brand-body\"><div><p class=\"af-brand-category\">",stdout);
+    fputs(" &middot; THE OPERATING BUSINESS</span></div><span class=\"af-brand-signature\">",stdout);
+    html(front_brand_signature_first);
+    fputs("<br>",stdout);
+    html(front_brand_signature_second);
+    fputs("</span></div><div class=\"af-brand-body\"><div><p class=\"af-brand-category\">",stdout);
     html(selected->category);
     fputs("</p><h2 class=\"af-brand-title\" id=\"af-brand-title\">",stdout);
     html(selected->headline);

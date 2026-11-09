@@ -6,6 +6,7 @@ import {tmpdir} from 'node:os';
 import {join,resolve,dirname} from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
+import {AUREKAI_VOICE} from '../../../branding/voice.mjs';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const temp=mkdtempSync(join(tmpdir(),'bf-brand-'));
@@ -38,12 +39,10 @@ const render=territory=>{
  assert.equal(r.status,0,r.stderr);
  return r.stdout;
 };
-const corpus={
- work:{title:'Build the business people remember.',cta:'/apps?context=self',word:'finance'},
- life:{title:'Make your corner of the internet your own.',cta:'/people',word:'communities'},
- live:{title:'Give your work more places to go.',cta:'/channels',word:'recording'},
- shop:{title:'Build the business behind every product.',cta:'/retail',word:'catalogue'}
-};
+const corpus=Object.fromEntries(Object.entries(AUREKAI_VOICE.channels).map(([territory,channel])=>[territory,{
+ title:channel.title,cta:AUREKAI_VOICE.fronts[territory].action,
+ word:({work:'finance',life:'communities',live:'recording',shop:'catalogue'})[territory]
+}]));
 for(const [territory,data] of Object.entries(corpus))test('native '+territory+' edition has authored art, route and correct context',()=>{
  const html=render(territory);
  assert.match(html,new RegExp('data-brand-territory="'+territory+'"'));
@@ -52,6 +51,7 @@ for(const [territory,data] of Object.entries(corpus))test('native '+territory+' 
  assert.ok(html.includes('href="'+data.cta+'"'));
  assert.ok(html.toLowerCase().includes(data.word));
  assert.ok(html.includes('Built on software.<br>Driven by Aurekai.'));
+ assert.ok(html.includes(AUREKAI_VOICE.fronts[territory].category));
  assert.ok(html.includes('href="https://nickgonzales76017.github.io/bonfyre/about/"'));
  assert.equal((html.match(/aria-current="page"/g)||[]).length,1);
  assert.ok(html.includes('href="https://aurekai.'+territory+'/" aria-current="page"'));

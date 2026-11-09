@@ -103,6 +103,15 @@ EXPERIENCE_PROGRAM_HEADER := generated/native_experience_composition.h
 $(EXPERIENCE_PROGRAM_HEADER): generated/native_page_composition.h ../BonfyreSurfaceScene/runtime/experience-programs.mjs ../BonfyreSurfaceScene/runtime/stitch-grammar.mjs tools/compile_experience_programs.mjs
 	@bun tools/compile_experience_programs.mjs
 build/web_main.o build/compact/web_main.o: $(EXPERIENCE_PROGRAM_HEADER)
+# The brand voice is compiled from one owned source; branding is not authorization.
+BRAND_CUT_HEADER := generated/native_brand_cuts.h
+$(BRAND_CUT_HEADER): ../../branding/voice.mjs tools/compile_brand_cuts.mjs
+	@node tools/compile_brand_cuts.mjs
+build/web_main.o build/compact/web_main.o: $(BRAND_CUT_HEADER)
+.PHONY: native-brand-copy-witness
+all test: native-brand-copy-witness
+native-brand-copy-witness: $(BRAND_CUT_HEADER)
+	@node tools/compile_brand_cuts.mjs --check
 .PHONY: native-experience-composition-witness
 native-experience-composition-witness: $(EXPERIENCE_PROGRAM_HEADER)
 	@bun tools/compile_experience_programs.mjs generated/native_page_composition.h $(EXPERIENCE_PROGRAM_HEADER) --check
