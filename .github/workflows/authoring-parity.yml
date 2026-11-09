@@ -96,7 +96,7 @@ jobs:
           make -C cmd/BonfyreWebAddress bonfyre-web-address
       - name: Test pinned Mustach native C templates with complete escapes and bounded output
         run: |
-          cc -std=c11 -Wall -Wextra -Werror -D_GNU_SOURCE -Ilib/libbonfyre/include \
+          cc -std=c11 -Wall -Wextra -Werror -Ilib/libbonfyre/include \
             cmd/BonfyreSurfaceScene/tests/native_authoring_template_test.c \
             cmd/BonfyreSurfaceScene/src/authoring_template.c \
             cmd/BonfyreSurfaceScene/vendor/mustach/mini-mustach.c \
