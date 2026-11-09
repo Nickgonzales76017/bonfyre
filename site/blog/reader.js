@@ -48,6 +48,7 @@
   const duration = player.querySelector('[data-audio-duration]');
   const speed = player.querySelector('[data-audio-speed]');
   const wave = player.querySelector('[data-audio-wave]');
+  const timeline = player.querySelector('.ed-audio-timeline');
   const status = player.querySelector('[data-audio-status]');
   const dismiss = player.querySelector('[data-audio-dismiss]');
   const opening = document.querySelector('.ed-opening');
@@ -80,7 +81,11 @@
       if (!isSeeking) seek.value = String(Math.round(current / audio.duration * 1000));
       seek.setAttribute('aria-valuetext',format(current)+' of '+format(audio.duration));
     }
-    wave.style.setProperty('--played',playable() ? (current / audio.duration * 100).toFixed(2)+'%' : '0%');
+    const fraction = playable() ? current / audio.duration : 0;
+    timeline.style.setProperty('--played',(fraction * 100).toFixed(2)+'%');
+    wave.querySelectorAll('i').forEach((bar,i,bars)=>{
+      bar.classList.toggle('is-read',(i+.5)/bars.length <= fraction);
+    });
     dock();
   };
   const updateState = () => {
@@ -118,7 +123,7 @@
       const preview = Number(seek.value)/1000*audio.duration;
       elapsed.textContent=format(preview);
       seek.setAttribute('aria-valuetext',format(preview)+' of '+format(audio.duration));
-      wave.style.setProperty('--played',(Number(seek.value)/10).toFixed(2)+'%');
+      timeline.style.setProperty('--played',(Number(seek.value)/10).toFixed(2)+'%');
     }
   });
   const commitSeek = () => {
