@@ -22,6 +22,8 @@ on:
       - 'packs/aurekai-work-samples/site/content.json'
       - 'cmd/BonfyreWebAddress/src/production_home.h'
       - 'scripts/tests/aurekai-brand.test.mjs'
+      - 'scripts/pages-editorial-scope.mjs'
+      - 'scripts/tests/pages-editorial-scope.test.mjs'
       - '.github/workflows/aurekai-brand.yml'
   pull_request:
     paths:
@@ -44,6 +46,8 @@ on:
       - 'packs/aurekai-work-samples/site/content.json'
       - 'cmd/BonfyreWebAddress/src/production_home.h'
       - 'scripts/tests/aurekai-brand.test.mjs'
+      - 'scripts/pages-editorial-scope.mjs'
+      - 'scripts/tests/pages-editorial-scope.test.mjs'
       - '.github/workflows/aurekai-brand.yml'
   workflow_dispatch:
 permissions:
