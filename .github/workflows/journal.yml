@@ -7,6 +7,7 @@ on:
       - 'editorial/authors/**'
       - 'scripts/editorial_publication.py'
       - 'scripts/tests/editorial-publication-bridge.py'
+      - 'cmd/BonfyreCMS/content-types/site_page.json'
       - 'site/blog/authors.css'
       - 'editorial/reading-bridges.tsv'
       - 'editorial/media-sources.tsv'
@@ -34,6 +35,13 @@ on:
       - 'scripts/tests/pages-source-freshness.test.mjs'
       - 'scripts/range-static-site.mjs'
       - 'scripts/tests/range-static-site.test.mjs'
+      - '.github/workflows/journal.yml'
+  pull_request:
+    paths:
+      - 'editorial/**'
+      - 'scripts/editorial_publication.py'
+      - 'scripts/tests/editorial-publication-bridge.py'
+      - 'cmd/BonfyreCMS/content-types/site_page.json'
       - '.github/workflows/journal.yml'
   workflow_dispatch:
 permissions:
