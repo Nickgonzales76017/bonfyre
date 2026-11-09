@@ -93,7 +93,15 @@ def validate():
         check(article.get("publisher",{}).get("name") == "Aurekai", f"Publisher mismatch: {slug}")
         check(article.get("datePublished") and article.get("dateModified"), f"Date metadata missing: {slug}")
         check(article.get("image") and article["image"][0] == doc.meta["og:image"], f"Article image mismatch: {slug}")
-        check("journal-audio-player" in markup and 'data-narration-play' in markup and 'data-narration-seek' in markup and 'data-narration-wave' in markup, f"Missing playable audio edition: {slug}")
+        source = (ROOT / "editorial" / "posts" / (slug + ".md")).read_text(encoding="utf-8")
+        has_sarah = "audio_file: edition.mp3" in source and "audio_voice: af_sarah" in source
+        check(('data-narration' in markup) == has_sarah, f"Incorrect recorded-edition visibility: {slug}")
+        check('speechSynthesis' not in markup and 'data-narration-voice' not in markup, f"Browser voice picker leaked: {slug}")
+        if has_sarah:
+            check('data-audio-source' in markup and 'data-audio-seek' in markup and 'data-audio-play' in markup, f"Recorded edition transport missing: {slug}")
+            check('src="./edition.mp3"' in markup, f"Missing source-bound MP3: {slug}")
+        else:
+            check('id="audio-edition"' not in markup, f"Unrecorded article advertises listening: {slug}")
         check("reader-outline-menu" in markup and "journal-author-row" in markup, f"Missing outline/byline: {slug}")
         check("journal-sources" in markup, f"Missing references section: {slug}")
         check('src="../reader.js"' in markup, f"Missing reader script: {slug}")
