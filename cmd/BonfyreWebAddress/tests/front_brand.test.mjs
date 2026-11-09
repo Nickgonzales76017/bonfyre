@@ -28,6 +28,9 @@ writeFileSync(c,[
  '#include "front_brand.h"',
  'int main(int argc,char **argv){',
  '  if(argc!=2)return 2;',
+ '  if(!front_brand_public_host("aurekai.work","/"))return 3;',
+ '  if(front_brand_public_host("customer.aurekai.work","/"))return 4;',
+ '  if(front_brand_public_host("aurekai.work","/other"))return 5;',
  '  front_brand_emit(argv[1]);',
  '  return 0;',
  '}'
