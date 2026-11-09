@@ -12,6 +12,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "../vendor/md4c/md4c-html.h"
+#include "../generated/native_editorial_media.h"
 #include "../../BonfyreWebAddress/generated/native_authoring_tree.h"
 
 #define BF_WIRE_LIMIT (4u * 1024u * 1024u)
@@ -381,6 +382,72 @@ static int bf_render_editorial(FILE *f,const BfWireNode *n){
  }
  return 1;
 }
+/* Only the original, reviewed Journal route may claim its own media key.
+ * The indexed source registry, not an editable CMS property, supplies URI and
+ * attribution. This is presentation in a non-public preview, not a rights grant.
+ */
+static const BfEditorialVisual *bf_editorial_visual(const char *route){
+ if(!route||strncmp(route,"/blog/",6))return NULL;
+ const char *slug=route+6;
+ for(unsigned i=0;i<bf_reviewed_journal_visual_count;i++){
+  const BfEditorialVisual *record=&bf_reviewed_journal_visuals[i];
+  size_t len=strlen(record->slug);
+  if(!strncmp(slug,record->slug,len)&&slug[len]=='/'&&slug[len+1]=='\0')
+   return record;
+ }
+ return NULL;
+}
+static int bf_editorial_cover_chapter(FILE *out,const BfWireScene *scene){
+ for(uint32_t i=0;i<scene->count;i++){
+  const BfWireNode *part=&scene->nodes[i];
+  const char *format=bf_wire_val(part,"/props/metadata/format");
+  if(!format||strcmp(format,"markdown"))continue;
+  const char *text=bf_wire_val(part,"/props/body");
+  if(!text)continue;
+  const char *chapter=strstr(text,"\n## ");
+  if(!chapter)continue;
+  chapter+=4;
+  const char *end=strchr(chapter,'\n');
+  if(!end)end=chapter+strlen(chapter);
+  if(end==chapter)continue;
+  size_t n=(size_t)(end-chapter);
+  if(n>230)n=230;
+  char label[231];memcpy(label,chapter,n);label[n]=0;
+  fputs("<div class=\"bf-chapter-cover\"><span>The article / Contents</span><strong>",out);
+  bf_html_escape(out,label);
+  fputs("</strong></div>",out);
+  return 1;
+ }
+ return 0;
+}
+static int bf_render_editorial_cover(FILE *out,const BfWireScene *scene,
+                                     const char *format,const char *tone,
+                                     const char *key){
+ const BfEditorialVisual *reviewed=bf_editorial_visual(scene->route);
+ if(!reviewed){
+  if(key&&*key)return 0; // Unknown routes must never claim curated imagery.
+  return 1;
+ }
+ if(!format||strcmp(format,reviewed->format)||
+    !tone||strcmp(tone,reviewed->color)||
+    !key||strcmp(key,reviewed->key))return 0;
+ if(!*reviewed->key)return bf_editorial_cover_chapter(out,scene);
+ if(strncmp(reviewed->url,"https://",8))return 0;
+ fputs("<figure class=\"bf-edition-image\" data-media-key=\"",out);
+ bf_html_escape(out,reviewed->key);
+ fputs("\"><img src=\"",out);
+ bf_html_escape(out,reviewed->url);
+ fputs("\" alt=\"",out);bf_html_escape(out,reviewed->caption);
+ fputs("\" loading=\"lazy\" decoding=\"async\" width=\"1200\" height=\"900\">",out);
+ fputs("<figcaption>",out);
+ if(*reviewed->credit){
+  fputs("<a href=\"",out);bf_html_escape(out,reviewed->credit);
+  fputs("\" rel=\"noopener noreferrer\" target=\"_blank\">",out);
+  bf_html_escape(out,reviewed->caption);fputs("</a>",out);
+ }else bf_html_escape(out,reviewed->caption);
+ fputs("</figcaption></figure>",out);
+ return 1;
+}
 static const char *bf_semantic_tag(const char *kind){
  if(!strcmp(kind,"profile-hero")||!strcmp(kind,"service:hero"))return "header";
  if(!strcmp(kind,"profile-quote"))return "blockquote";
@@ -437,11 +504,7 @@ static int bf_render_node(FILE *f,const BfWireScene *s,const BfWireNode *n,int d
   const char *h=!strcmp(tag,"header")?"h1":"h2";
   fprintf(f,"<%s>",h);bf_html_escape(f,heading);fprintf(f,"</%s>",h);
  }
- if(media_key&&*media_key){
-  fputs("<div class=\"bf-media-pending bf-cover-source\" data-media-key=\"",f);
-  bf_html_escape(f,media_key);
-  fputs("\">Assigned credited art; native asset-rights binding remains review-held</div>",f);
- }
+ if(edition_format&&!bf_render_editorial_cover(f,s,edition_format,colorway,media_key))return 0;
  if(!strcmp(tag,"figure")){
   const char *asset=bf_wire_val(n,"/props/asset_ref");
   if(asset){fputs("<div class=\"bf-media-pending\" data-asset-ref=\"",f);bf_html_escape(f,asset);
@@ -545,6 +608,15 @@ static int bf_wire_render(FILE *f,const BfWireScene *s){
  ".bf-block[data-edition-format=culture-feature]{padding:clamp(30px,5vw,75px);border-bottom:4px solid #c28b60}"
  ".bf-block[data-edition-format=comparative]{border-top:3px solid #728d88;border-bottom:3px solid #728d88;padding:50px}"
  ".bf-block[data-edition-format=studio-edition]{padding:45px;box-shadow:inset 0 0 0 1px #c8cbc3}"
+ ".bf-journal-back{margin-top:65px;padding:25px;border-top:1px solid #c9d3cb;font:700 13px system-ui}"
+ ".bf-journal-back a{color:#274b3b;text-decoration-thickness:1px}"
+ ".bf-edition-image{margin:25px 0 0;max-width:100%;background:#101d1b;overflow:hidden}"
+ ".bf-edition-image img{display:block;width:100%;height:auto;max-height:450px;object-fit:cover}"
+ ".bf-edition-image figcaption{padding:12px 15px;font:12px/1.5 system-ui;color:#f3f4e9;background:#172a25}"
+ ".bf-edition-image figcaption a{color:inherit;text-decoration:underline;text-underline-offset:3px}"
+ ".bf-chapter-cover{border-top:1px solid currentColor;margin-top:35px;padding:18px 0 28px;max-width:68ch}"
+ ".bf-chapter-cover span{display:block;letter-spacing:.14em;text-transform:uppercase;font:bold 11px system-ui;opacity:.75}"
+ ".bf-chapter-cover strong{display:block;margin:18px 0 5px;font:500 clamp(23px,3vw,49px)/1.16 Georgia,serif;letter-spacing:-.02em}"
  ".bf-cover-source{font:600 12px/1.6 system-ui;letter-spacing:.06em;padding:60px 20px;background:transparent;border:1px solid currentColor;margin-top:24px}"
  "@media(max-width:680px){.bf-block[data-edition-format]{padding:22px}.bf-cover-source{padding:32px 15px}}"
  ".bf-markdown{font:1.13rem/1.78 Georgia,serif;max-width:77ch;margin:auto}"
@@ -570,6 +642,11 @@ static int bf_wire_render(FILE *f,const BfWireScene *s){
   for(uint32_t i=0;i<s->count;i++)if(!*s->nodes[i].parent&&s->nodes[i].position==(uint32_t)k){
    node=&s->nodes[i];break;}
   if(!node||!bf_render_node(f,s,node,0))return 0;
+ }
+ if(bf_editorial_visual(s->route)){
+  fputs("<nav class=\"bf-journal-back\" aria-label=\"Original Journal source\"><a href=\"https://nickgonzales76017.github.io/bonfyre",f);
+  bf_html_escape(f,s->route);
+  fputs("\">Read the original published edition</a></nav>",f);
  }
  fputs("</main><footer role=\"note\" style=\"padding:20px;text-align:center\">"
  "Authoring preview only. No publication, rights or account admission inferred.</footer></body></html>\n",f);
