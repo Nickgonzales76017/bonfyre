@@ -49,6 +49,9 @@ test('native document head uses the same exact-root source contract',()=>{
  assert.ok(page.includes('og:title'));
  assert.ok(page.includes('og:description'));
  assert.ok(page.includes('canonical'));
+ assert.ok(page.includes('front_brand_emit(brand_head->territory)'));
+ assert.ok(page.includes('if (brand_head) fputs('));
+ assert.ok(!readFileSync(join(root,'src/front_editorial.h'),'utf8').includes('front_brand_emit(territory)'));
 });
 const render=territory=>{
  const r=spawnSync(out,[territory],{encoding:'utf8',timeout:5000});
@@ -74,7 +77,9 @@ for(const [territory,data] of Object.entries(corpus))test('native '+territory+' 
  for(const apex of Object.keys(corpus)) assert.ok(html.includes('href="https://aurekai.'+apex+'/"'));
  assert.match(html,/aria-labelledby="af-brand-title"/);
  assert.match(html,/aria-label="Aurekai destinations"/);
- assert.match(html,/href="\/assets\/front-brand.css"/);
+ assert.match(html,/<h1 class="af-brand-title" id="af-brand-title">/);
+ assert.ok(!html.includes('<h2 class="af-brand-title"'));
+ assert.ok(!html.includes('<link rel="stylesheet"'));
  assert.match(css,/@media\(max-width:600px\)/);
  assert.match(css,/:focus-visible/);
  assert.match(css,/prefers-reduced-motion/);
@@ -92,7 +97,8 @@ test('four variations have scoped palettes and one authentic company proof route
  assert.equal(new Set(Object.values(corpus).map(x=>x.title)).size,4);
  for(const territory of Object.keys(corpus)){
   assert.ok(css.includes('.af-brand[data-brand-territory='+territory+']'));
-  assert.ok(outputs[territory].includes('href="/assets/front-brand.css"'));
+  assert.ok(!outputs[territory].includes('href="/assets/front-brand.css"'));
+  assert.ok(outputs[territory].includes('<h1 class="af-brand-title"'));
   assert.ok(outputs[territory].includes('data-brand-masthead'));
  }
 });

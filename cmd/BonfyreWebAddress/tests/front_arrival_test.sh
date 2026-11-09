@@ -55,6 +55,12 @@ for territory in ('live','life','shop','work'):
     page=(root/f'{territory}.html').read_text()
     check(f'data-territory="{territory}"' in page,f'{territory}: arrival territory')
     check(page.count('data-brand-masthead')==1,f'{territory}: native brand experience is mounted exactly once')
+    check(page.count('<h1')==1,f'{territory}: exactly one primary heading')
+    check('<h1 class="af-brand-title" id="af-brand-title">' in page,f'{territory}: native brand is the document H1')
+    check('<header class="hero">' not in page,f'{territory}: no redundant generic lead')
+    check(page.index('data-brand-masthead') < page.index('data-front-arrival'),f'{territory}: brand precedes material doors')
+    check(page.index('href="/assets/front-brand.css"') < page.index('</head>'),f'{territory}: CSS loads in document head')
+
     check(f'data-brand-territory="{territory}"' in page,f'{territory}: exact host brand')
     check('<title>'+brand[territory][0]+'</title>' in page,f'{territory}: source-owned title')
     check('property="og:title" content="'+brand[territory][0]+'"' in page,f'{territory}: social preview title')
