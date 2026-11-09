@@ -11,6 +11,8 @@ on:
       - 'cmd/BonfyreWebAddress/src/page_core_rendering.h'
       - 'cmd/BonfyreWebAddress/src/front_editorial.h'
       - 'cmd/BonfyreWebAddress/tests/front_brand.test.mjs'
+      - 'scripts/native_apex_live_readback.mjs'
+      - 'scripts/tests/native-apex-live-readback.test.mjs'
       - 'cmd/BonfyreWebAddress/tests/front_arrival_test.sh'
       - '.github/workflows/native-brand.yml'
   pull_request:
@@ -23,6 +25,8 @@ on:
       - 'cmd/BonfyreWebAddress/src/page_core_rendering.h'
       - 'cmd/BonfyreWebAddress/src/front_editorial.h'
       - 'cmd/BonfyreWebAddress/tests/front_brand.test.mjs'
+      - 'scripts/native_apex_live_readback.mjs'
+      - 'scripts/tests/native-apex-live-readback.test.mjs'
       - 'cmd/BonfyreWebAddress/tests/front_arrival_test.sh'
       - '.github/workflows/native-brand.yml'
   workflow_dispatch:
@@ -41,6 +45,8 @@ jobs:
         run: node cmd/BonfyreWebAddress/tools/compile_brand_cuts.mjs --check
       - name: Compile C brand edition and verify four-apex art, routes and independent-host refusal
         run: node --test cmd/BonfyreWebAddress/tests/front_brand.test.mjs
+      - name: Verify public four-apex release witness rejects stale HTML and altered CSS
+        run: node --test scripts/tests/native-apex-live-readback.test.mjs
 
   native-http-witness:
     name: Real WebAddress/CMS four-apex HTTP fixture
@@ -68,3 +74,37 @@ jobs:
           make -C cmd/BonfyreWebAddress bonfyre-web-address
       - name: Serve all four host roots and verify HTML, CSS and host boundaries
         run: sh cmd/BonfyreWebAddress/tests/front_arrival_test.sh ./cmd/BonfyreWebAddress/bonfyre-web-address
+      - name: Freeze verified Linux source-build candidate without private stores
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cut="$RUNNER_TEMP/native-apex-candidate"
+          mkdir -p "$cut"
+          cp cmd/BonfyreWebAddress/bonfyre-web-address "$cut/"
+          cp cmd/BonfyreCMS/bonfyre-cms "$cut/"
+          cp site/matrix/front-brand.css "$cut/"
+          printf '%s\n' "source_sha=$GITHUB_SHA" "scope=linux-native four-apex, not activated" >"$cut/RECEIPT.txt"
+          (cd "$cut" && sha256sum bonfyre-web-address bonfyre-cms front-brand.css >SHA256SUMS)
+      - name: Retain tested candidate for managed stage/verify/activate
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-apex-candidate-${{ github.sha }}
+          path: ${{ runner.temp }}/native-apex-candidate/
+          if-no-files-found: error
+          retention-days: 7
+
+
+  live-readback:
+    name: Public four-apex release readback (never source-only approval)
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Refuse a public release unless four exact hosts serve current HTML and CSS bytes
+        run: node scripts/native_apex_live_readback.mjs
