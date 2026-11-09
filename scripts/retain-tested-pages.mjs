@@ -47,8 +47,8 @@ export function retainRelease({cwd, paths, verify, attempts = 3, beforePush = ()
     if (attempt === attempts) throw Error('Concurrent source changes exhausted the bounded retention attempts.');
     const rebased = git(['rebase', 'refs/remotes/origin/main'], true);
     if (rebased.status !== 0) {
-      const conflicted = git(['diff', '--name-only', '--diff-filter=U', '-z'], true).stdout.split('\\0').filter(Boolean);
-      const newPaths = git(['diff', '--name-only', '-z', basis, upstream]).stdout.split('\\0').filter(Boolean);
+      const conflicted = git(['diff', '--name-only', '--diff-filter=U', '-z'], true).stdout.split('\0').filter(Boolean);
+      const newPaths = git(['diff', '--name-only', '-z', basis, upstream]).stdout.split('\0').filter(Boolean);
       git(['rebase', '--abort'], true);
       // Never resolve an ambiguous release conflict by choosing ours or theirs.
       // Only regenerate an explicitly approved, source-derived public page from
