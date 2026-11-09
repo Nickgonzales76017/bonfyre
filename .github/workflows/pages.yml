@@ -56,6 +56,8 @@ jobs:
           node-version: '22'
       - name: Check public navigation and calls to action
         run: python3 scripts/tests/public-wayfinding.py
+      - name: Test public Pages readback witnesses and stale-site rejection
+        run: node --test scripts/tests/public-pages-live-readback.test.mjs
       - name: Check application directory and retained release
         run: |
           node --test scripts/tests/showcase-directory.test.mjs scripts/tests/retain-tested-pages.test.mjs scripts/tests/component-contracts.test.mjs scripts/tests/workspace-composition.test.mjs scripts/tests/instruments-core.test.mjs
@@ -268,6 +270,12 @@ jobs:
         if: steps.retention.outputs.superseded != 'true'
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Verify exact public homepage, applications and Journal HTML
+        if: steps.retention.outputs.superseded != 'true'
+        env:
+          PAGES_ORIGIN: https://nickgonzales76017.github.io/bonfyre/
+          PUBLIC_PAGES_EVIDENCE: spaces-live-evidence
+        run: node scripts/public-pages-live-readback.mjs
       - name: Verify the actual public studio
         if: steps.retention.outputs.superseded != 'true'
         env:
