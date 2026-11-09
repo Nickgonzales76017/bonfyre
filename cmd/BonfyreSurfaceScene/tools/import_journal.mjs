@@ -42,13 +42,13 @@ export function authoringFromJournal(path,contents){
  const tree=newAuthoringTree("aurekai-journal","/blog/"+name+"/");
  const digest=hash(source);
  tree.blocks=[
-  {id:"journal-hero",kind:"profile-hero",
+  {id:name+"-hero",kind:"profile-hero",
    props:{heading:front.title,body:front.description,eyebrow:"AUREKAI JOURNAL / "+(front.category||"Editorial"),
     variant:"editorial",
     metadata:{source:"editorial/posts",sha256:digest,publishing_status:"review-required",category:front.category||"Editorial"}},
    responsive:{desktop:{layout:"feature",width:"wide",typography:"serif",padding:32},
     phone:{layout:"stack",width:"full",typography:"serif",padding:12}},children:[]},
-  {id:"journal-content",kind:"profile-story",
+  {id:name+"-content",kind:"profile-story",
    props:{body:raw,heading:"The full investigation",
     source_ref:"editorial/posts/"+name+".md",source_digest:digest,
     metadata:{format:"markdown",frontmatter:true,slug:name,source_bytes:source.length,source_encoding:"UTF-8"}},
@@ -57,10 +57,27 @@ export function authoringFromJournal(path,contents){
  ];
  return validateAuthoringTree(tree);
 }
+// Admission is the destination CMS owner's responsibility. This pure plan
+// explicitly copies a public editorial source to a chosen draft namespace;
+// it cannot grant publication rights or silently impersonate source ownership.
+export function stageJournalDraftForNamespace(source,namespace){
+ validateAuthoringTree(source);
+ if(source.site_id!=="aurekai-journal"||
+    !/^[-a-z0-9]{2,95}$/.test(namespace))
+  throw Error("Journal source/destination identity is not admissible");
+ const doc=structuredClone(source);
+ doc.site_id=namespace;
+ const hero=doc.blocks.find(x=>x.kind==="profile-hero");
+ if(!hero)throw Error("Source article has no hero");
+ hero.props.metadata={...hero.props.metadata,
+  imported_from:"aurekai-journal",review:"required",publication:"not-granted"};
+ return validateAuthoringTree(doc);
+}
 export function extractJournalSource(tree){
  validateAuthoringTree(tree);
  if(tree.site_id!=="aurekai-journal"||tree.blocks.length!==2)throw Error("not an imported Journal document");
- const content=tree.blocks.find(x=>x.id==="journal-content");
+ const content=tree.blocks.find(x=>x.kind==="profile-story"&&
+  x.props.metadata?.format==="markdown");
  if(!content||content.kind!=="profile-story"||content.props.metadata?.format!=="markdown")
   throw Error("source Markdown is unavailable");
  return Buffer.from(content.props.body,"utf8");

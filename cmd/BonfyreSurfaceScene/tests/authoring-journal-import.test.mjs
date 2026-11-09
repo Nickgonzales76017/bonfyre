@@ -4,7 +4,7 @@ import {readFileSync,mkdtempSync,rmSync,readdirSync} from "node:fs";
 import {join} from "node:path";
 import {tmpdir} from "node:os";
 import {createHash} from "node:crypto";
-import {journalArticles,authoringFromJournal,extractJournalSource,exportAllJournal}
+import {journalArticles,authoringFromJournal,extractJournalSource,exportAllJournal,stageJournalDraftForNamespace}
  from "../tools/import_journal.mjs";
 import {encodeNativeAuthoring,decodeNativeAuthoring} from "../runtime/authoring-carrier.mjs";
 import {toGrapesProject,fromGrapesProject,toPuckData,fromPuckData} from "../runtime/authoring-tree.mjs";
@@ -41,4 +41,25 @@ test("source importer refuses wrong frontmatter identity and unreviewed composit
  assert.throws(()=>authoringFromJournal("wrong.md",
   "---\nslug: rightful\ntitle: Original\ndescription: Source\n---\nContent\n"),/identity/);
  assert.throws(()=>authoringFromJournal("valid.md","Content without frontmatter"),/frontmatter/);
+});
+
+test("90 CMS-scoped pages do not collide on site-global fragment coordinates",()=>{
+ const fileRoot=new URL("../../../editorial/posts/",import.meta.url);
+ const all=new Set(),ns="person-import-review";
+ for(const file of journalArticles()){
+  const original=authoringFromJournal(file,readFileSync(new URL(file,fileRoot)));
+  const staged=stageJournalDraftForNamespace(original,ns);
+  assert.equal(staged.site_id,ns);
+  assert.equal(staged.blocks[0].props.metadata.publication,"not-granted");
+  assert.deepEqual(extractJournalSource(staged),extractJournalSource(original));
+  for(const block of staged.blocks){
+   assert.ok(!all.has(block.id),"CMS coordinate collision: "+block.id);
+   all.add(block.id);
+  }
+ }
+ assert.equal(all.size,180);
+ assert.throws(()=>stageJournalDraftForNamespace(
+  authoringFromJournal(journalArticles()[0],
+   readFileSync(new URL(journalArticles()[0],fileRoot))),"admin:root"),
+   /identity/);
 });
