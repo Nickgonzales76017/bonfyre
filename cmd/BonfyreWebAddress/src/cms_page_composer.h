@@ -1,6 +1,7 @@
 #ifndef BONFYRE_CMS_PAGE_COMPOSER_H
 #define BONFYRE_CMS_PAGE_COMPOSER_H
 #include "cms_page_composer_markup.h"
+#include "cms_advanced_composer_markup.h"
 /* A browser carrier for the existing namespace-scoped CMS page aggregate. */
 static void cms_composer_reply(int code,const char *type,const char *body) {
     printf("HTTP/1.1 %d %s\r\nContent-Type: %s\r\nCache-Control: private, no-store\r\nVary: Cookie, Authorization\r\nX-Content-Type-Options: nosniff\r\nReferrer-Policy: same-origin\r\nX-Frame-Options: SAMEORIGIN\r\nContent-Length: %zu\r\nConnection: close\r\n\r\n%s",
@@ -8,8 +9,9 @@ static void cms_composer_reply(int code,const char *type,const char *body) {
 }
 static int serve_cms_composer(const char *method,const char *target,const char *query,const char *body,
                              const char *bearer,const char *auth_db,const char *origin,const char *host) {
+    int advanced=!strcmp(target,"/cms/compose/advanced");
     int home=!strcmp(target,"/cms/compose"),page=!strcmp(target,"/cms/compose/page"),listing=!strcmp(target,"/cms/compose/pages");
-    if(!home&&!page&&!listing)return 0;
+    if(!home&&!page&&!listing&&!advanced)return 0;
     int writing=page&&!strcmp(method,"POST");
     if((!writing&&strcmp(method,"GET"))||(writing&&(!body||!*body||strlen(body)>220000))) {
         cms_composer_reply(400,"application/json","{\"error\":\"Use a complete page request within the 220 KB save limit.\"}");return 1;
@@ -33,6 +35,7 @@ static int serve_cms_composer(const char *method,const char *target,const char *
         cms_composer_reply(503,"application/json","{\"error\":\"The page composition owner is not configured.\"}");return 1;
     }
     if(home){sqlite3_close(db);cms_composer_reply(200,"text/html; charset=utf-8",cms_page_composer_markup);return 1;}
+    if(advanced){sqlite3_close(db);cms_composer_reply(200,"text/html; charset=utf-8",cms_advanced_composer_markup);return 1;}
     if(listing){
         sqlite3_stmt *st=NULL;const char *result=NULL;
         if(sqlite3_prepare_v2(db,"SELECT json_object('pages',json_group_array(json_object('route',route,'title',title)),'has_more',(SELECT count(*)>512 FROM site_page WHERE namespace=?1)) FROM (SELECT route,title FROM site_page WHERE namespace=?1 ORDER BY route LIMIT 512)",-1,&st,NULL)==SQLITE_OK){

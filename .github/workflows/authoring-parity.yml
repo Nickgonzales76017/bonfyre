@@ -1,0 +1,45 @@
+name: Native authoring parity witness
+on:
+  push:
+    branches: ['work/full-parity-authoring-*']
+  pull_request:
+    paths:
+      - 'components/BonfyreServiceSite/authoring/**'
+      - 'cmd/BonfyreSurfaceScene/**'
+      - 'cmd/BonfyreWebAddress/src/cms*'
+      - 'cmd/BonfyreWebAddress/generated/native_authoring*.h'
+      - 'cmd/BonfyreWebAddress/tests/cms_advanced_composer.test.mjs'
+      - '.github/workflows/authoring-parity.yml'
+permissions:
+  contents: read
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test typed trees, editor adapters and CMS roundtrips
+        run: node --test cmd/BonfyreSurfaceScene/tests/authoring_prototype.test.mjs cmd/BonfyreSurfaceScene/tests/authoring-tree.test.mjs cmd/BonfyreSurfaceScene/tests/authoring-cms.test.mjs
+      - name: Assert generated C headers match source
+        run: |
+          node cmd/BonfyreSurfaceScene/tools/compile_authoring.mjs --check
+          node cmd/BonfyreSurfaceScene/tools/compile_authoring_native_tree.mjs --check
+      - name: Run C structural contracts
+        run: |
+          cc -std=c11 -Wall -Wextra -Werror cmd/BonfyreSurfaceScene/tests/native_authoring_tree_test.c -o /tmp/authoring-tree-check
+          /tmp/authoring-tree-check
+          cc -std=c11 -Wall -Wextra -Werror cmd/BonfyreSurfaceScene/tests/native_authoring_contract_test.c -o /tmp/authoring-contract-check
+          /tmp/authoring-contract-check
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.13'
+      - name: Install actual GrapesJS, Puck and Editor.js dependencies
+        working-directory: components/BonfyreServiceSite/authoring
+        run: bun install --frozen-lockfile --ignore-scripts
+      - name: Build the real unified browser authoring bundle
+        working-directory: components/BonfyreServiceSite/authoring
+        run: |
+          bun build ./entry.mjs --target browser --minify --outfile /tmp/aurekai-authoring-editor.js
+          test -s /tmp/aurekai-authoring-editor.js

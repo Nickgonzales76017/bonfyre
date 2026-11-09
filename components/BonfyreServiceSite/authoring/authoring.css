@@ -1,0 +1,30 @@
+/* Browser-only editor; public profile readers never load this asset. */
+:root{color-scheme:light}
+body.authoring-page{margin:0;background:#eeeee7;color:#1b382d;font:15px/1.5 system-ui}
+.authoring-page .authoring-top{display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding:15px 24px;background:#1e4032;color:#f4f1e8}
+.authoring-page .authoring-top a{color:inherit;text-decoration:none}
+.authoring-page .authoring-top strong{font:600 18px Georgia,serif}
+.authoring-page .authoring-top form{display:flex;align-items:center;gap:9px;margin-left:auto}
+.authoring-page .authoring-top label{display:flex;align-items:center;gap:7px;font-size:12px}
+.authoring-page .authoring-top input{width:clamp(130px,20vw,250px);border:1px solid #98a99b;border-radius:8px;padding:8px;background:white;color:#1e4032}
+.authoring-page .authoring-top button{border:1px solid #abbeaf;border-radius:8px;background:#f7f3e8;color:#1e4032;padding:8px 15px;font-weight:650;cursor:pointer}
+.authoring-page .aurekai-authoring{display:grid;gap:12px;min-height:calc(100vh - 100px)}
+.authoring-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:14px 24px;background:#f8f7f1;border-bottom:1px solid #b5c3b8}
+.authoring-toolbar h1{margin:0;font:500 clamp(20px,2.4vw,30px) Georgia,serif}
+.authoring-modes,.authoring-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.authoring-modes button,.authoring-actions button,.authoring-review button{border:1px solid #879c8d;border-radius:10px;background:#fff;color:#1e4032;padding:10px 14px;min-height:44px;font:600 13px system-ui;cursor:pointer}
+.authoring-modes button[aria-current=true]{background:#1e4032;color:white}
+.authoring-actions button:last-child{background:#315a3a;color:white}
+.authoring-toolbar button:focus-visible{outline:3px solid #b55d3c;outline-offset:3px}
+.authoring-toolbar button:disabled{opacity:.48;cursor:not-allowed}
+.authoring-status{margin:0;padding:5px 24px;color:#426451;font:13px system-ui}
+.authoring-status[data-error=true],.authoring-error{color:#9c3029}
+.authoring-stage{min-width:0;margin:0 14px 18px;background:white;border:1px solid #b5c3b8;border-radius:15px;overflow:hidden;min-height:65vh}
+.authoring-canvas,.authoring-puck{min-height:65vh}
+.authoring-article-selector{margin:18px;max-width:calc(100% - 36px);padding:10px;border:1px solid #a9b8ab;border-radius:8px}
+.authoring-article{width:min(850px,calc(100% - 40px));min-height:460px;margin:0 auto}
+.authoring-review{width:min(92vw,850px);max-height:85vh;padding:26px;border:1px solid #9ba99e;border-radius:18px;background:#fffdf5;color:#1b382d}
+.authoring-review::backdrop{background:#10281aa6}
+.authoring-review h2{font:500 32px Georgia,serif}
+.authoring-review-list{line-height:2;max-height:55vh;overflow:auto}
+@media(max-width:760px){.authoring-toolbar{padding:12px}.authoring-stage{margin:0 5px}.authoring-top{padding:12px}}

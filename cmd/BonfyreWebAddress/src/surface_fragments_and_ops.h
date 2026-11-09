@@ -138,6 +138,8 @@ static int serve_matrix_asset(BfMatrix *m, const char *host_in, const char *targ
         {"/assets/tailwind.css", "tailwind.css", "text/css; charset=utf-8"},
         {"/assets/matrix-aperture.css", "matrix-aperture.css", "text/css; charset=utf-8"},
         {"/assets/matrix.js", "matrix.js", "application/javascript; charset=utf-8"},
+        {"/assets/authoring-editor.js", "authoring-editor.js", "application/javascript; charset=utf-8"},
+        {"/assets/authoring-editor.css", "authoring-editor.css", "text/css; charset=utf-8"},
         {"/assets/matrix-htmx.js", "matrix-htmx.js", "application/javascript; charset=utf-8"},
         {"/assets/matrix-vgpu.js", "matrix-vgpu.js", "application/javascript; charset=utf-8"},
         /* Client organs: the four things a server cannot do from a distance --
