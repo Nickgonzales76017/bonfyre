@@ -104,10 +104,10 @@ jobs:
           /tmp/bonfyre-authoring-mustach
       - name: Build authoring editor bundle for the native server
         run: make -C cmd/BonfyreSurfaceScene authoring-bundle
-      - name: Exercise GrapesJS, Puck, Editor.js, account isolation and native draft readback
-        run: bun test --timeout 65000 cmd/BonfyreWebAddress/tests/cms_advanced_composer.test.mjs
       - name: Compile two authoring documents to the same native C HTML preview
         run: node cmd/BonfyreSurfaceScene/tools/export_authoring_previews.mjs
+      - name: Exercise real editors, 90 native CMS drafts and identical C HTTP/static output
+        run: bun test --timeout 240000 cmd/BonfyreWebAddress/tests/cms_advanced_composer.test.mjs
       - name: Compile all 90 actual articles from one native source contract
         run: node cmd/BonfyreSurfaceScene/tools/render_journal_native.mjs
       - name: Verify 90 articles and 2 sample scenes across 390, 980 and 1440 pixels

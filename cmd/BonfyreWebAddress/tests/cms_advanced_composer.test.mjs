@@ -6,7 +6,9 @@ import {newAuthoringTree,validateAuthoringTree} from "../../BonfyreSurfaceScene/
 import {encodeNativeAuthoring} from "../../BonfyreSurfaceScene/runtime/authoring-carrier.mjs";
 import {journalArticles,authoringFromJournal,stageJournalDraftForNamespace,extractJournalSource} from "../../BonfyreSurfaceScene/tools/import_journal.mjs";
 import {treeFromNativeSnapshot,toNativePageWrite} from "../../../components/BonfyreServiceSite/authoring/native-cms.mjs";
-import {readFileSync} from "node:fs";
+import {readFileSync,writeFileSync,mkdtempSync,rmSync} from "node:fs";
+import {tmpdir} from "node:os";
+import {spawnSync} from "node:child_process";
 
 import {packSetupFixture,root,password} from "./pack_setup_fixture.mjs";
 let f,writer,other,browser;
@@ -162,6 +164,9 @@ test("90 real Journal articles become isolated native CMS drafts and C previews 
  const files=journalArticles(join(root,"editorial/posts"));
  expect(files.length).toBe(90);
  const coordinates=new Set();
+ const directory=mkdtempSync(join(tmpdir(),"bf-90-native-parity-"));
+ const nativeExe=join(root,"cmd/BonfyreSurfaceScene/build/authoring-previews/bf-authoring-preview-native");
+ let byteEqual=0;
  let kept=0;
  for(const file of files){
   const raw=readFileSync(join(root,"editorial/posts",file));
@@ -191,14 +196,22 @@ test("90 real Journal articles become isolated native CMS drafts and C previews 
   expect(roundtrip.blocks[1].props.source_digest).toBe(source.blocks[1].props.source_digest);
   expect(roundtrip.blocks[0].props.metadata.publication).toBe("not-granted");
   expect(reopened.snapshot.fragments.every(x=>x.status==="draft")).toBe(true);
+  // Same account-owned carrier must render byte-identically through C
+  // as both a static draft preview and an authenticated HTTP preview.
+  const wire=encodeNativeAuthoring(roundtrip),name=file.slice(0,-3);
+  const input=join(directory,name+".bfau"),html=join(directory,name+".html");
+  writeFileSync(input,wire);
+  const rendered=spawnSync(nativeExe,[input,html],{encoding:"utf8",timeout:20000});
+  expect(rendered.status).toBe(0);
+  const preview=await f.request("/cms/compose/preview",{cookie:writer.cookie,
+   form:"BFAU2:"+Buffer.from(wire).toString("hex"),
+   headers:{"Content-Type":"text/plain"}});
+  expect(preview.status).toBe(200);
+  expect(preview.body).toBe(readFileSync(html,"utf8"));
+  expect(preview.body).toContain('data-release="draft-preview-only"');
+  expect(preview.body).toContain('<div class="bf-markdown">');
+  byteEqual++;
   if([0,44,89].includes(kept)){
-   const preview=await f.request("/cms/compose/preview",{cookie:writer.cookie,
-    form:"BFAU2:"+Buffer.from(encodeNativeAuthoring(roundtrip)).toString("hex"),
-    headers:{"Content-Type":"text/plain"}});
-   expect(preview.status).toBe(200);
-   expect(preview.body).toContain('data-release="draft-preview-only"');
-   expect(preview.body).toContain('<div class="bf-markdown">');
-   expect(preview.body).toContain('data-source-ref="editorial/posts/'+file+'"');
    const otherScope=json(await f.request("/cms/compose/page?route="+encodeURIComponent(source.page),
     {cookie:other.cookie}));
    expect(otherScope.id).toBe(0);
@@ -207,7 +220,10 @@ test("90 real Journal articles become isolated native CMS drafts and C previews 
  }
  expect(kept).toBe(90);
  expect(coordinates.size).toBe(180);
- console.log("AUREKAI_90_NATIVE_CMS_DRAFTS_PASS 90 complete source reads / 180 unique fragments / 3 owner-gated C previews / 0 publications");
+ expect(byteEqual).toBe(90);
+ rmSync(directory,{recursive:true,force:true});
+ console.log("AUREKAI_90_NATIVE_CMS_DRAFTS_PASS 90 complete reads / 180 unique fragments / 0 publications");
+ console.log("AUREKAI_90_NATIVE_HTTP_STATIC_PARITY_PASS 90 byte-identical C representations of the same account-owned drafts");
 },240000);
 
 test("edit a real imported Journal Markdown source in the unified desk; preview with C and persist both digests",async()=>{
