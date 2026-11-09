@@ -11,6 +11,28 @@ const root=resolve(fileURLToPath(new URL("../../..",import.meta.url)));
 const input=resolve(root,"editorial/posts");
 const hash=content=>createHash("sha256").update(content).digest("hex");
 const slugPattern=/^[a-z0-9][a-z0-9-]{1,110}$/;
+const artPath=resolve(root,"editorial/art-direction.tsv");
+const artDirection=(()=>{
+ const rows=readFileSync(artPath,"utf8").split(/\r?\n/);
+ const definitions=new Map();
+ for(const line of rows){
+  if(!line||line.startsWith("#")||line.startsWith("slug\t"))continue;
+  const parts=line.split("\t");
+  if(parts.length!==4)throw Error("Invalid authored art-direction row");
+  const [slug,format,colorway,media]=parts;
+  if(definitions.has(slug)||!slugPattern.test(slug)||!/^[a-z-]+$/.test(format)||
+    !/^[a-z-]+$/.test(colorway)||!/^[a-z-]*$/.test(media))
+   throw Error("Duplicate or unsafe editorial art assignment: "+slug);
+  definitions.set(slug,{format,colorway,media});
+ }
+ if(definitions.size!==90)throw Error("Art assignments must cover exactly 90 Journal sources");
+ return definitions;
+})();
+export function journalArtDirection(slug){
+ const direction=artDirection.get(slug);
+ if(!direction)throw Error("No original art direction assigned to "+slug);
+ return structuredClone(direction);
+}
 export function journalArticles(dir=input){
  return readdirSync(dir).filter(x=>x.endsWith(".md")).sort();
 }
@@ -40,12 +62,13 @@ export function authoringFromJournal(path,contents){
  const name=basename(path,".md");
  if(!slugPattern.test(name)||name!==front.slug)throw Error("file identity and source slug differ: "+path);
  const tree=newAuthoringTree("aurekai-journal","/blog/"+name+"/");
- const digest=hash(source);
+ const digest=hash(source),art=journalArtDirection(name);
  tree.blocks=[
   {id:name+"-hero",kind:"profile-hero",
    props:{heading:front.title,body:front.description,eyebrow:"AUREKAI JOURNAL / "+(front.category||"Editorial"),
     variant:"editorial",
-    metadata:{source:"editorial/posts",sha256:digest,publishing_status:"review-required",category:front.category||"Editorial"}},
+    metadata:{source:"editorial/posts",sha256:digest,publishing_status:"review-required",
+     category:front.category||"Editorial",edition_format:art.format,colorway:art.colorway,media_key:art.media}},
    responsive:{desktop:{layout:"feature",width:"wide",typography:"serif",padding:32},
     phone:{layout:"stack",width:"full",typography:"serif",padding:12}},children:[]},
   {id:name+"-content",kind:"profile-story",

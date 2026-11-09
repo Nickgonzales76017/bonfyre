@@ -4,7 +4,7 @@ import {readFileSync,mkdtempSync,rmSync,readdirSync} from "node:fs";
 import {join} from "node:path";
 import {tmpdir} from "node:os";
 import {createHash} from "node:crypto";
-import {journalArticles,authoringFromJournal,extractJournalSource,exportAllJournal,stageJournalDraftForNamespace}
+import {journalArticles,authoringFromJournal,extractJournalSource,exportAllJournal,stageJournalDraftForNamespace,journalArtDirection}
  from "../tools/import_journal.mjs";
 import {encodeNativeAuthoring,decodeNativeAuthoring} from "../runtime/authoring-carrier.mjs";
 import {toGrapesProject,fromGrapesProject,toPuckData,fromPuckData} from "../runtime/authoring-tree.mjs";
@@ -62,4 +62,23 @@ test("90 CMS-scoped pages do not collide on site-global fragment coordinates",()
   authoringFromJournal(journalArticles()[0],
    readFileSync(new URL(journalArticles()[0],fileRoot))),"admin:root"),
    /identity/);
+});
+
+test("all 90 original editorial art assignments survive typed browser/native source import",()=>{
+ const formats=new Set(),colors=new Set(),covered=new Set(),media=[];
+ const sourceRoot=new URL("../../../editorial/posts/",import.meta.url);
+ for(const file of journalArticles()){
+  const slug=file.slice(0,-3),art=journalArtDirection(slug);
+  const doc=authoringFromJournal(file,readFileSync(new URL(file,sourceRoot)));
+  const stored=decodeNativeAuthoring(encodeNativeAuthoring(doc)).blocks[0].props.metadata;
+  assert.equal(stored.edition_format,art.format);
+  assert.equal(stored.colorway,art.colorway);
+  assert.equal(stored.media_key,art.media);
+  formats.add(art.format);colors.add(art.colorway);covered.add(slug);
+  if(art.media)media.push(art.media);
+ }
+ assert.equal(covered.size,90);
+ assert.equal(formats.size,14);
+ assert.equal(colors.size,6);
+ assert.equal(media.length,12);
 });
