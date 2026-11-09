@@ -7,7 +7,7 @@ import {fileURLToPath} from "node:url";
 import {spawnSync} from "node:child_process";
 import {createHash} from "node:crypto";
 import assert from "node:assert/strict";
-import {exportAllJournal,journalArticles,authoringFromJournal} from "./import_journal.mjs";
+import {exportAllJournal,journalArticles,authoringFromJournal,journalArtDirection} from "./import_journal.mjs";
 const root=resolve(fileURLToPath(new URL("..",import.meta.url)));
 const repo=resolve(root,"../.."),sourceDir=join(repo,"editorial/posts");
 const output=resolve(process.argv[2]||join(root,"build/journal-native"));
@@ -45,6 +45,17 @@ for(const file of articles){
    'data-colorway="'+doc.blocks[0].props.metadata.colorway+'"'])
   assert.ok(page.includes(required),"native output lost "+required+" for "+slug);
  assert.ok(page.includes("<h2>"),"native editorial chapters absent "+slug);
+ const art=journalArtDirection(slug);
+ if(art.media){
+  assert.ok(page.includes('class="bf-edition-image"'),"credited image missing "+slug);
+  assert.ok(page.includes('data-media-key="'+art.media+'"'),"wrong image source "+slug);
+  assert.ok(page.includes("<figcaption>"),"attribution missing "+slug);
+  assert.ok(!page.includes("Assigned credited art; native asset-rights binding remains review-held"),
+   "retired placeholder returned "+slug);
+ }else{
+  assert.ok(page.includes('class="bf-chapter-cover"'),"authored typographic cover missing "+slug);
+  assert.ok(!page.includes('class="bf-edition-image"'),"unsourced photo invented "+slug);
+ }
  assert.doesNotMatch(page,/<script\b|<iframe\b|<object\b/i,"unsafe native output "+slug);
  manifest+=[slug,sha(src),sha(readFileSync(carrier)),sha(readFileSync(round)),sha(buffer),doc.page].join("\t")+"\n";
  rows.push({slug,title:doc.blocks[0].props.heading,

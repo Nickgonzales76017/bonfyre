@@ -24,6 +24,8 @@ jobs:
         run: node --test cmd/BonfyreSurfaceScene/tests/authoring_prototype.test.mjs cmd/BonfyreSurfaceScene/tests/authoring-tree.test.mjs cmd/BonfyreSurfaceScene/tests/authoring-ui-history.test.mjs cmd/BonfyreSurfaceScene/tests/authoring-carrier.test.mjs cmd/BonfyreSurfaceScene/tests/authoring-journal-import.test.mjs cmd/BonfyreSurfaceScene/tests/authoring-cms.test.mjs
       - name: Compile both unrelated experiences through native C and verify SSR
         run: node --test cmd/BonfyreSurfaceScene/tests/authoring-native-render.test.mjs
+      - name: Check native C visual registry against independently reviewed art sources
+        run: node cmd/BonfyreSurfaceScene/tools/compile_editorial_media.mjs --check
       - name: Render all 90 source-owned articles through C and retain exact digests
         run: node cmd/BonfyreSurfaceScene/tools/render_journal_native.mjs
       - uses: actions/upload-artifact@v4

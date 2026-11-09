@@ -65,7 +65,10 @@ test("all 90 true Journal editions have usable native C layouts on desktop, tabl
      source:document.querySelector("[data-source-ref]")?.getAttribute("data-source-ref"),
      release:document.body.dataset.release,
      site:document.body.dataset.site,
-     forbidden:!!document.querySelector("script,iframe,object")
+     forbidden:!!document.querySelector("script,iframe,object"),
+     sourceImage:document.querySelectorAll("figure.bf-edition-image img").length,
+     credit:document.querySelectorAll("figure.bf-edition-image figcaption").length,
+     chapterCover:document.querySelectorAll(".bf-chapter-cover").length
     }));
     expect(metric.scroll).toBeLessThanOrEqual(metric.viewport+1);
     expect(metric.release).toBe("draft-preview-only");
@@ -73,6 +76,8 @@ test("all 90 true Journal editions have usable native C layouts on desktop, tabl
     expect(metric.forbidden).toBe(false);
     expect(metric.source).toBe("editorial/posts/"+file.slice(0,-5)+".md");
     expect(metric.chapters).toBeGreaterThan(0);
+    expect(metric.sourceImage+metric.chapterCover).toBe(1);
+    expect(metric.credit).toBe(metric.sourceImage);
     if([0,44,89].includes(inspected)&&width!==980)
      await page.screenshot({path:join(directory,file.slice(0,-5)+"-"+width+".png"),fullPage:true});
     inspected++;
