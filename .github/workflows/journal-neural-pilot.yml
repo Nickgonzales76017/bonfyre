@@ -39,7 +39,7 @@ jobs:
           test "$(wc -c < .voice-cache/kokoro-v1.0.fp16.onnx)" -gt 100000000
           test "$(wc -c < .voice-cache/voices-v1.0.bin)" -gt 10000000
           sha256sum .voice-cache/* > editorial/audio/pilot/model-hashes.txt
-      - name: Synthesize four edited essays in one consistent voice
+      - name: Produce continuous, unhurried Sarah editorial narration
         timeout-minutes: 55
         shell: bash
         run: |
@@ -77,31 +77,21 @@ jobs:
                 elif len(part.split())>=6:segments.append(part)
               script=title+'.\n\n'+'\n\n'.join(segments)
               if len(script.split())<400:raise RuntimeError('Unexpectedly short article '+slug)
-              # Complete sentences preserve prose cadence; never reset the
-              # synthesizer arbitrarily in the middle of a thought.
-              chunks=[]
-              for paragraph in re.split(r'\n\s*\n',script):
-                lines=[]
-                for sentence in re.split(r'(?<=[.!?])\s+',paragraph):
-                  sentence=sentence.strip()
-                  while len(sentence)>245:
-                    # Prefer a clause break; only fall back to a word boundary
-                    # when the manuscript genuinely contains a long sentence.
-                    choices=[m.end() for m in re.finditer(r'[,;:—]\s+',sentence[:245])
-                             if 90<=m.end()<=225]
-                    cut=choices[-1] if choices else sentence.rfind(' ',110,235)
-                    if cut<0:raise RuntimeError('Unbreakable narration passage')
-                    lines.append(sentence[:cut].strip())
-                    sentence=sentence[cut:].strip()
-                  if sentence:lines.append(sentence)
-                for i,line in enumerate(lines):
-                  chunks.append((line,.38 if i==len(lines)-1 else .10))
+              # Keep whole paragraphs within Kokoro's overlapping synthesis
+              # windows. The prior workflow reset prosody every ~210 chars.
+              # Its own punctuation-aware pauses give commas, clauses and
+              # periods different lengths without a stitched-sentence effect.
               pieces=[]
-              for passage,breath in chunks:
-                samples,sr=tts.create(passage,voice=voice,speed=.96,lang='en-us')
-                if sr!=24000:raise RuntimeError('Unexpected model rate')
-                pieces.extend([np.asarray(samples,dtype=np.float32).reshape(-1),
-                               np.zeros(int(24000*breath),dtype=np.float32)])
+              for paragraph in re.split(r'\n\s*\n',script):
+                paragraph=paragraph.strip()
+                if not paragraph:continue
+                samples,sr=tts.create(paragraph,voice=voice,speed=.86,lang='en-us',
+                  trim=True,sentence_pause=.36,clause_pause=.14,continuous=True)
+                if sr!=24000:raise RuntimeError('Unexpected model sample rate')
+                samples=np.asarray(samples,dtype=np.float32).reshape(-1)
+                if not samples.size or not np.all(np.isfinite(samples)):
+                  raise RuntimeError('Invalid audio samples')
+                pieces.extend([samples,np.zeros(int(24000*.30),dtype=np.float32)])
               pcm=np.concatenate(pieces)
               duration=len(pcm)/24000
               rms=float(np.sqrt(np.mean(np.square(pcm.astype(np.float64)))))
