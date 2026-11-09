@@ -15,7 +15,7 @@ epigraph_credit: Robert D. Putnam · Bowling Alone: America's Declining Social C
 epigraph_url: https://www.tesd.net/cms/lib/PA01001259/Centricity/Domain/1114/BowlingAlone.pdf
 parting_question: Which online communities are growing in audience while losing the people and institutions that made participation worthwhile?
 audio_file: edition.mp3
-audio_voice: af_heart
+audio_voice: af_sarah
 audio_model: Kokoro-82M v1.0
 audio_review: provisional-neural-pilot
 audio_body_sha256: a84a8c0efbd5a604e14de9822d0606d0984745da919a9c7aec2580850808ecb2

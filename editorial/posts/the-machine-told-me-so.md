@@ -15,7 +15,7 @@ epigraph_credit: Aurekai Journal · Editorial reflection (2026)
 epigraph_url: 
 parting_question: Who is allowed to say the work should not have begun?
 audio_file: edition.mp3
-audio_voice: af_heart
+audio_voice: af_sarah
 audio_model: Kokoro-82M v1.0
 audio_review: provisional-neural-pilot
 audio_body_sha256: 055fc0139c0f55bf44d384bf4fc822573423b56d878d458c3bccb143e0b9ec95
