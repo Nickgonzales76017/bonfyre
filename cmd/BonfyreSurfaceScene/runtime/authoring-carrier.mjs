@@ -112,7 +112,7 @@ export function decodeNativeAuthoring(payload){
  for(let n=0;n<count;n++){
   const id=r.string(),kind=r.string(),parent=r.string(),position=r.u32(),fieldCount=r.u32();
   if(byId.has(id)||fieldCount>30000)fail("duplicate node or oversized node");
-  const node={id,kind,props:{},responsive:{},children:[]};
+  const node={id,kind,children:[]};
   for(let i=0;i<fieldCount;i++)place(node,r.string(),r.string(),r.string());
   const siblings=parent?byId.get(parent)?.children:roots;
   if(!siblings||siblings.length!==position)fail("invalid node ownership or order");
