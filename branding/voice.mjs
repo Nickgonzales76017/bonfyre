@@ -24,7 +24,7 @@ export const AUREKAI_VOICE = Object.freeze({
     partner:"Your brand stays yours. The software can get stronger together."
   })
 });
-export const OWNED_BRAND_HOSTS = Object.freeze(["aurekai.work","aurekai.life","aurekai.live","aurekai.shop","aurekai-work-samples.pages.dev","nickgonzales76017.github.io"]);
+export const OWNED_BRAND_HOSTS = Object.freeze(["aurekai.work","aurekai.life","aurekai.live","aurekai.shop","aurekai-work-samples.pages.dev","docs.aurekai.work"]);
 export function isAurekaiOwnedBrandHost(host) {
   return OWNED_BRAND_HOSTS.includes(String(host||"").toLowerCase());
 }

@@ -41,3 +41,7 @@ Use professional editorial hierarchy: one clear headline, one specific explanati
 ## Rollout
 
 The repository controls its own Pages and Work Samples authored sources; the source-owned `branding/voice.mjs` is the text contract. `scripts/tests/aurekai-brand.test.mjs` checks critical placements. The runtime four-apex showcase has separate source and activation; a GitHub change alone is not a live four-domain deployment. Social accounts, Google Business, YouTube and LinkedIn are *prepared copy*, not posted until separately reviewed and admitted.
+
+## Verified social-preview asset and four-apex scope
+
+Corporate home, product guide and application discovery use the existing product-workspace screenshot `site/spaces/shots/studio-product.png` for social previews. This is a real Aurekai application surface, not fictitious client art. Published production showcases on the four exact Aurekai apex hosts use different headings and descriptions. The native source is not a live deployment; independently hosted customer sites do not inherit Aurekai branding.
