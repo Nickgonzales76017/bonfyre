@@ -13,6 +13,13 @@ on:
       - 'scripts/tests/retain-tested-pages.test.mjs'
       - 'site/blog/**'
       - 'site/series/**'
+      - 'site/discover/**'
+      - 'site/fieldwork/**'
+      - 'site/explore.html'
+      - 'site/market.html'
+      - 'site/matrix/index.html'
+      - 'site/modules/index.html'
+      - 'scripts/tests/public-editorial-language.py'
       - '.github/workflows/journal.yml'
   workflow_dispatch:
 permissions:
@@ -70,6 +77,8 @@ jobs:
         run: node --test scripts/tests/retain-tested-pages.test.mjs
       - name: Verify two-way editorial reading graph and truthful publication dates
         run: python3 scripts/tests/editorial-reading-graph.py
+      - name: Verify public labels, links and understandable language
+        run: python3 scripts/tests/public-editorial-language.py
       - name: Archive website output
         uses: actions/upload-artifact@v4
         with:
