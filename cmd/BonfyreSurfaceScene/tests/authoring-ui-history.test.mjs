@@ -25,7 +25,7 @@ test("pending canvas edits become undoable before mode switching and redo restor
    type:"insert",block:{id:"section",kind:"profile-section",props:{heading:"Before"},
     responsive:{desktop:{layout:"stack"}},children:[]}
   });
-  const api=mountAurekaiAuthoring(root,{
+  const api=await mountAurekaiAuthoring(root,{
    initial:document,onReview:async()=>{},onSaveDraft:async()=>({committed:true}),
    loaders:{grapesjs:async()=>({init(){
     const editor={
