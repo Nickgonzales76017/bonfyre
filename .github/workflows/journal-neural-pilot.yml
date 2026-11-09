@@ -56,6 +56,70 @@ jobs:
                  'nobody-called-the-pizza-shops-slop']
           voice='af_sarah'
           tts=Kokoro('.voice-cache/kokoro-v1.0.fp16.onnx','.voice-cache/voices-v1.0.bin')
+          # Audition three slower synthesis speeds against Sarah's *actual*
+          # spoken pace, not overall duration padded with silent gaps.
+          def measured_pace(signal,words):
+            signal=np.asarray(signal,dtype=np.float32)
+            frame=600
+            count=len(signal)//frame
+            if count<4:raise RuntimeError('Voice sample too short')
+            power=np.sqrt(np.mean(np.square(signal[:count*frame].reshape(count,frame).astype(np.float64)),axis=1))
+            threshold=max(.0018,float(np.percentile(power,80))*.10)
+            silent=power<threshold
+            silent_seconds=0.0
+            run=0
+            for flag in list(silent)+[False]:
+              if flag:run+=1
+              elif run:
+                if run>=7:silent_seconds+=run*.025
+                run=0
+            seconds=len(signal)/24000
+            voiced=max(.001,seconds-silent_seconds)
+            return {'voiced_wpm':round(words/voiced*60,1),
+              'overall_wpm':round(words/seconds*60,1),
+              'silence_fraction':round(silent_seconds/seconds,3),
+              'seconds':round(seconds,2)}
+          first=Path('editorial/posts/sites-are-dead-long-live-the-web.md').read_text(encoding='utf8')
+          first_body=first.split('\n---\n',1)[1]
+          sample_paras=[]
+          for block in re.split(r'\n\s*\n',first_body):
+            part=block.strip()
+            if part.startswith(('![','> ','## ')) or len(part.split())<7:continue
+            part=re.sub(r'\[([^\]]+)\]\(https?://[^)]+\)',r'\1',part)
+            part=re.sub(r'https?://\S+','',part).replace('**','')
+            sample_paras.append(' '.join(part.split()))
+            if sum(len(v.split()) for v in sample_paras)>=170:break
+          sample='\n\n'.join(sample_paras)
+          sample_words=len(re.findall(r"\b[\w]+(?:[-'][\w]+)*\b",sample))
+          if sample_words<100:raise RuntimeError('No suitable pacing excerpt')
+          candidates=[]
+          qa=Path('editorial/audio/qa')
+          qa.mkdir(parents=True,exist_ok=True)
+          for candidate in (.80,.85,.90):
+            audio,rate=tts.create(sample,voice=voice,speed=candidate,
+              lang='en-us',trim=True,sentence_pause=.36,
+              clause_pause=.14,continuous=True)
+            if rate!=24000:raise RuntimeError('Model rate drift')
+            stats=measured_pace(audio,sample_words)
+            wav=qa/('sarah-'+str(candidate).replace('.','p')+'.wav')
+            mp3=wav.with_suffix('.mp3')
+            sf.write(str(wav),np.asarray(audio,dtype=np.float32),24000)
+            subprocess.run(['ffmpeg','-nostdin','-hide_banner','-loglevel','error','-y',
+              '-i',str(wav),'-af','loudnorm=I=-16:TP=-1.5:LRA=11',
+              '-c:a','libmp3lame','-b:a','80k',str(mp3)],check=True)
+            wav.unlink()
+            row={'speed':candidate,'file':str(mp3),'sample_words':sample_words,**stats}
+            candidates.append(row)
+            print('NARRATION_PACE_AUDITION '+json.dumps(row),flush=True)
+          accepted=[r for r in candidates if 128<=r['voiced_wpm']<=156]
+          if not accepted:raise RuntimeError('No natural-pacing candidate; refuse publication')
+          chosen=min(accepted,key=lambda r:abs(r['voiced_wpm']-142))
+          selected_speed=chosen['speed']
+          (qa/'pace-metrics.json').write_text(json.dumps({
+            'narrator':'Sarah','target_voiced_wpm':142,'candidates':candidates,
+            'selected':chosen,'review':'objective pace only; full listening review pending'
+          },indent=2)+'\n')
+          print('NARRATION_PACE_SELECTED '+json.dumps(chosen),flush=True)
           results=[]
           try:
             for slug in slugs:
@@ -85,7 +149,7 @@ jobs:
               for paragraph in re.split(r'\n\s*\n',script):
                 paragraph=paragraph.strip()
                 if not paragraph:continue
-                samples,sr=tts.create(paragraph,voice=voice,speed=.86,lang='en-us',
+                samples,sr=tts.create(paragraph,voice=voice,speed=selected_speed,lang='en-us',
                   trim=True,sentence_pause=.36,clause_pause=.14,continuous=True)
                 if sr!=24000:raise RuntimeError('Unexpected model sample rate')
                 samples=np.asarray(samples,dtype=np.float32).reshape(-1)
@@ -97,6 +161,12 @@ jobs:
               rms=float(np.sqrt(np.mean(np.square(pcm.astype(np.float64)))))
               peak=float(np.max(np.abs(pcm)))
               if duration<95 or rms<.003 or peak>=1.2:raise RuntimeError('Audio QA failed '+slug)
+              speech_words=len(re.findall(r"\b[\w]+(?:[-'][\w]+)*\b",script))
+              pace=measured_pace(pcm,speech_words)
+              if not 125<=pace['voiced_wpm']<=160:
+                raise RuntimeError('Unnatural articulation speed: '+slug+' '+str(pace))
+              if pace['silence_fraction']>.35:
+                raise RuntimeError('Excessive stitched silence: '+slug+' '+str(pace))
               dest=Path('site/blog',slug)
               dest.mkdir(parents=True,exist_ok=True)
               wav=dest/'edition-tmp.wav'
@@ -112,13 +182,15 @@ jobs:
                 ('audio_file:','audio_voice:','audio_model:','audio_review:','audio_body_sha256:'))]
               lines+=['audio_file: edition.mp3','audio_voice: '+voice,
                 'audio_model: Kokoro-82M v1.0',
+                'audio_speed: '+str(selected_speed),
                 'audio_review: provisional-neural-pilot',
                 'audio_body_sha256: '+hashlib.sha256(body.strip().encode()).hexdigest()]
               source.write_text('\n'.join(lines)+'\n---\n'+body,encoding='utf-8')
               item=dict(slug=slug,voice=voice,duration_seconds=round(duration,1),
                 audio_sha256=hashlib.sha256(mp3.read_bytes()).hexdigest(),
                 spoken_text_sha256=hashlib.sha256(script.encode()).hexdigest(),
-                bytes=mp3.stat().st_size,review='provisional-neural-pilot')
+                bytes=mp3.stat().st_size,review='provisional-neural-pilot',
+                synthesis_speed=selected_speed,**pace)
               results.append(item)
               print(json.dumps(item),flush=True)
           finally:
@@ -129,6 +201,7 @@ jobs:
           sh scripts/render-editorial.sh
           sh scripts/render-editorial.sh --check
           python3 scripts/tests/editorial-search-readiness.py
+          test -s editorial/audio/qa/pace-metrics.json
       - name: Retain complete audio and provenance for human review
         uses: actions/upload-artifact@v4
         with:
@@ -136,6 +209,7 @@ jobs:
           retention-days: 30
           path: |
             editorial/audio/pilot/
+            editorial/audio/qa/
             site/blog/sites-are-dead-long-live-the-web/edition.mp3
             site/blog/the-machine-told-me-so/edition.mp3
             site/blog/who-keeps-the-internet-alive/edition.mp3
