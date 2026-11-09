@@ -89,12 +89,37 @@ test("all 90 true Journal editions have usable native C layouts on desktop, tabl
     inspected++;
    }
   }
-  await page.setViewport({width:390,height:900});
-  await page.goto("file://"+join(directory,"index.html"));
-  expect(await page.$$eval(".edition",nodes=>nodes.length)).toBe(90);
-  const grid=await page.$eval(".grid",e=>getComputedStyle(e).gridTemplateColumns);
-  expect(grid.split(" ").length).toBe(1);
-  await page.screenshot({path:join(directory,"review-index-phone.png"),fullPage:true});
+  for(const width of [1440,980,390]){
+   await page.setViewport({width,height:900});
+   await page.goto("file://"+join(directory,"index.html"),{waitUntil:"load"});
+   const stats=await page.evaluate(()=>({
+    cards:document.querySelectorAll(".edition").length,
+    photos:document.querySelectorAll(".edition .card-photo img").length,
+    typography:document.querySelectorAll(".edition .card-typography").length,
+    formats:new Set([...document.querySelectorAll(".edition")].map(e=>e.dataset.format)).size,
+    colorways:new Set([...document.querySelectorAll(".edition")].map(e=>e.dataset.colorway)).size,
+    overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,
+    columns:getComputedStyle(document.querySelector(".grid")).gridTemplateColumns.split(" ").length,
+    sourceLinks:[...document.querySelectorAll(".edition>a")].every(a=>a.href.endsWith(".html")),
+    title:document.title
+   }));
+   expect(stats.cards).toBe(90);
+   expect(stats.photos).toBe(12);
+   expect(stats.typography).toBe(78);
+   expect(stats.formats).toBe(14);
+   expect(stats.colorways).toBe(6);
+   expect(stats.sourceLinks).toBe(true);
+   expect(stats.overflow).toBeLessThanOrEqual(1);
+   expect(stats.columns).toBe(width===390?1:width===980?2:3);
+   if(width!==980)
+    await page.screenshot({path:join(directory,"review-index-"+width+".png"),fullPage:true});
+   await page.click('.view-label');
+   const listLayout=await page.$eval(".grid",node=>getComputedStyle(node).gridTemplateColumns);
+   expect(listLayout.split(" ").length).toBe(1);
+   expect(await page.$eval(".grid",node=>node.scrollWidth<=document.documentElement.clientWidth+1)).toBe(true);
+   if(width===1440)await page.screenshot({path:join(directory,"review-index-list-1440.png"),fullPage:true});
+  }
   console.log("JOURNAL_90_NATIVE_BROWSER_ACCEPTANCE_PASS 90 articles × 3 viewports / 0 overflows");
+  console.log("JOURNAL_EDITORIAL_COVER_BROWSER_PASS 12 credited photos / 78 authored type covers / 14 formats / 6 palettes");
  }finally{await browser.close();}
 },120000);

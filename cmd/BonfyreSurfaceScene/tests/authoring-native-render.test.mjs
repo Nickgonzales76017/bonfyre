@@ -59,6 +59,20 @@ try{
    assert.ok(html.includes('data-id="project-b"'),"different project preserved");
   }
  }
+
+ // A caller cannot assign an approved public photograph to an arbitrary
+ // destination or invent a media-rights grant in the editable document.
+ const forged=profileScene();
+ forged.blocks[0].props.metadata={
+  edition_format:"cover-spread",colorway:"forest",media_key:"forest",
+  asset_approved:true,publication:"published"
+ };
+ const forgedWire=join(temp,"forged-editorial-image.bfau");
+ const forgedHtml=join(temp,"forged-editorial-image.html");
+ writeFileSync(forgedWire,encodeNativeAuthoring(forged));
+ const rejected=execute(exe,[forgedWire,forgedHtml]);
+ assert.equal(rejected.status,5,"source catalog cannot be impersonated");
+ assert.equal(existsSync(forgedHtml),false,"no approved-look HTML on rejected media");
  const clean=encodeNativeAuthoring(journalScene());
  for(const [suffix,payload] of [["truncated",clean.subarray(0,clean.length-18)],
     ["spoofed",Uint8Array.from(clean, (x,i)=>i===0?0:x)]]){
