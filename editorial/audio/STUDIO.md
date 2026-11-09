@@ -1,0 +1,9 @@
+Aurekai Journal narration is a retained publication asset, not a live synthesis feature.
+
+Current production candidate: Qwen3-TTS 1.7B Base MLX (Apache-2.0), conditioned on a licensed Kokoro Sarah reference. This is an audition, NOT an approved replacement for the four existing recorded editions. The first Apple Silicon run generates spoken samples from two real edited articles with exact source and audio fingerprints. Do not change site/blog or post front matter as part of an audition.
+
+Because the articles change infrequently, spend compute to generate and review an article once. Cache the master by SHA-256 of edited prose, the complete spoken manuscript, model version, settings and reference voice. Reproduce only on source change or explicit remaster. Preserve the original uncompressed master and distribute an encoded version; both must be traceable to the manuscript. If recorded, the player uses measured audio amplitude and exact playback timing.
+
+Acceptance requires a full listen-through plus automatic text coverage checks: dates, names, acronyms, skipped or repeated sentences, speech artifacts, volume, clipping, silence and chapter transitions. A plausible words-per-minute measurement is not approval. A reviewer must choose the final voice and sign off before a separate publication workflow binds audio to articles.
+
+Reference models: Qwen3 1.7B Base at https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base and mlx-community/Qwen3-TTS-12Hz-1.7B-Base-4bit. The macos-15 GitHub-hosted runner is an M1 with 7 GiB unified memory, hence the 4-bit edition; the owner's M3 with 16 GiB permits later bf16 or alternate expressive models without paid voice APIs. Chatterbox Multilingual V3 is an alternate audition candidate, but its upstream research implementation was retired in August 2026. Avoid confusing model quality claims with verified humanlike narration.
