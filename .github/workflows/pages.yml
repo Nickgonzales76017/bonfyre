@@ -207,7 +207,7 @@ jobs:
             // longer a primary navigation link on every individual article.
             for (const [href, label] of [
               ['../../explore.html','Businesses'],['../../discover/','Applications'],
-              ['../','Journal'],['../../series/','Four series'],
+              ['../../blog/','Journal'],['../../series/','Four series'],
               ['../../docs.html','Technology']
             ]) {
               assert.equal(await page.locator('header nav a[href="'+href+'"]', {hasText:label}).count(),1,
