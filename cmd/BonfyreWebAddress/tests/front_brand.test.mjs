@@ -1,7 +1,7 @@
 // Compile the production C renderer instead of reimplementing its brand in a test.
 import {after,test} from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync,writeFileSync,rmSync} from 'node:fs';
+import {mkdtempSync,writeFileSync,readFileSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join,resolve,dirname} from 'node:path';
 import {spawnSync} from 'node:child_process';
@@ -34,6 +34,18 @@ writeFileSync(c,[
 ].join('\n')+'\n');
 const compile=spawnSync(process.env.CC||'cc',['-std=c11','-Wall','-Wextra','-Werror','-pedantic','-I',join(root,'src'),c,'-o',out],{encoding:'utf8',timeout:30000});
 assert.equal(compile.status,0,'native C compilation failed: '+compile.stderr);
+test('native document head uses the same exact-root source contract',()=>{
+ const header=readFileSync(join(root,'src/front_brand.h'),'utf8');
+ const page=readFileSync(join(root,'src/page_core_rendering.h'),'utf8');
+ assert.ok(header.includes('front_brand_public_host'));
+ assert.ok(header.includes('strcmp(route,"/")'));
+ assert.ok(header.includes('!strcmp(host,expected)'));
+ assert.ok(page.includes('front_brand_public_host(page_render_host,doc->route)'));
+ assert.ok(page.includes('brand_head?brand_head->headline:doc->title'));
+ assert.ok(page.includes('og:title'));
+ assert.ok(page.includes('og:description'));
+ assert.ok(page.includes('canonical'));
+});
 const render=territory=>{
  const r=spawnSync(out,[territory],{encoding:'utf8',timeout:5000});
  assert.equal(r.status,0,r.stderr);

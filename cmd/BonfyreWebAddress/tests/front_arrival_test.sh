@@ -51,6 +51,11 @@ for territory in ('live','life','shop','work'):
     check(f'data-territory="{territory}"' in page,f'{territory}: arrival territory')
     check(page.count('data-brand-masthead')==1,f'{territory}: native brand experience is mounted exactly once')
     check(f'data-brand-territory="{territory}"' in page,f'{territory}: exact host brand')
+    check('<title>'+brand[territory][0]+'</title>' in page,f'{territory}: source-owned title')
+    check('property="og:title" content="'+brand[territory][0]+'"' in page,f'{territory}: social preview title')
+    check('property="og:description"' in page,f'{territory}: social description')
+    check(f'<link rel="canonical" href="https://aurekai.{territory}/">' in page,f'{territory}: exact canonical address')
+
     check('Built on software.<br>Driven by Aurekai.' in page,f'{territory}: enduring Aurekai signature')
     check(brand[territory][0] in page,f'{territory}: correct territory-specific headline')
     check(f'href="{brand[territory][1]}"' in page,f'{territory}: real destination-owned primary action')
