@@ -15,6 +15,7 @@ on:
       - 'scripts/tests/journal-discoverability.py'
       - 'scripts/tests/editorial-*.py'
       - 'scripts/tests/editorial-home-source.py'
+      - 'scripts/tests/editorial-directory-browser.mjs'
       - 'site/index.html'
       - 'scripts/render-editorial.sh'
       - 'scripts/retain-tested-pages.mjs'
@@ -113,6 +114,18 @@ jobs:
           test "$(grep -c 'class="essay-chapter ' site/series/index.html)" -eq 4
       - name: Verify independently authored journal template and stable output
         run: python3 scripts/tests/editorial-home-source.py
+      - name: Browser-verify all cards, layouts and working directory filters
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --prefix .spaces-tools --ignore-scripts --no-audit --no-fund playwright@1.56.1
+          node scripts/range-static-site.mjs site 8765 >/tmp/journal-browser-http.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          sleep 1
+          export PLAYWRIGHT_MODULE="$PWD/.spaces-tools/node_modules/playwright/index.mjs"
+          export CHROME_PATH="$(command -v google-chrome)"
+          node scripts/tests/editorial-directory-browser.mjs
       - name: Verify article search and reading readiness
         run: python3 scripts/tests/editorial-search-readiness.py
       - name: Verify editorial-only rebase preserves the tested release
