@@ -33,6 +33,11 @@ curl -sS -H 'Host: independent.example.test' -H 'Accept: text/html' "$base/" >"$
 if grep -q 'data-brand-masthead' "$tmp/independent.html"; then
     fail 'unrelated host inherited the Aurekai brand'
 fi
+answer=$(curl -sS -o "$tmp/native-brand.css" -w '%{http_code} %{content_type}' -H 'Host: aurekai.work' "$base/assets/front-brand.css")
+case "$answer" in
+    "200 text/css"*) cmp -s "$tmp/native-brand.css" "$root/site/matrix/front-brand.css" || fail 'brand CSS does not equal source-owned bytes' ;;
+    *) fail "native shared brand asset returned $answer" ;;
+esac
 python3 - "$tmp" <<'PY'
 import pathlib,re,sys
 root=pathlib.Path(sys.argv[1]); problems=[]; ledes=set()
@@ -65,9 +70,9 @@ for territory in ('live','life','shop','work'):
         check(f'href="https://aurekai.{apex}/"' in page,f'{territory}: link to {apex}')
     check(page.count('aria-current="page"')==1,f'{territory}: exactly one active apex')
     check(f'href="https://aurekai.{territory}/" aria-current="page"' in page,f'{territory}: active apex is correct')
-    check('@media(max-width:600px)' in page,f'{territory}: narrow-screen design')
+    check('href="/assets/front-brand.css"' in page,f'{territory}: shared cached stylesheet')
     check('af-brand-title' in page and 'af-brand-links' in page,f'{territory}: editorial hierarchy and real actions')
-    check('af-brand[data-brand-territory='+territory+']' in page,f'{territory}: scoped art direction')
+    check('data-brand-masthead' in page and 'data-brand-territory='+territory in page,f'{territory}: scoped native art direction')
     check(len(re.findall(r'<article\b[^>]*\bdata-arrival-door\b',page))==7,f'{territory}: seven doors')
     primary=page.split('<details class="front-arrival-more"',1)[0]
     secondary=page.split('<details class="front-arrival-more"',1)[-1]

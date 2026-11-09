@@ -9,6 +9,7 @@ import {fileURLToPath} from 'node:url';
 import {AUREKAI_VOICE} from '../../../branding/voice.mjs';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
+const css=readFileSync(join(root,'../../site/matrix/front-brand.css'),'utf8');
 const temp=mkdtempSync(join(tmpdir(),'bf-brand-'));
 after(()=>rmSync(temp,{recursive:true,force:true}));
 const c=join(temp,'brand-render.c'),out=join(temp,'brand-render');
@@ -73,9 +74,10 @@ for(const [territory,data] of Object.entries(corpus))test('native '+territory+' 
  for(const apex of Object.keys(corpus)) assert.ok(html.includes('href="https://aurekai.'+apex+'/"'));
  assert.match(html,/aria-labelledby="af-brand-title"/);
  assert.match(html,/aria-label="Aurekai destinations"/);
- assert.match(html,/@media\(max-width:600px\)/);
- assert.match(html,/:focus-visible/);
- assert.match(html,/prefers-reduced-motion/);
+ assert.match(html,/href="\/assets\/front-brand.css"/);
+ assert.match(css,/@media\(max-width:600px\)/);
+ assert.match(css,/:focus-visible/);
+ assert.match(css,/prefers-reduced-motion/);
  assert.equal((html.match(/<nav/g)||[]).length,1);
  assert.equal((html.match(/<\/nav>/g)||[]).length,1);
  assert.ok(!html.includes('<script'));
@@ -89,7 +91,8 @@ test('four variations have scoped palettes and one authentic company proof route
  const outputs=Object.fromEntries(Object.keys(corpus).map(t=>[t,render(t)]));
  assert.equal(new Set(Object.values(corpus).map(x=>x.title)).size,4);
  for(const territory of Object.keys(corpus)){
-  assert.ok(outputs[territory].includes('.af-brand[data-brand-territory='+territory+']'));
+  assert.ok(css.includes('.af-brand[data-brand-territory='+territory+']'));
+  assert.ok(outputs[territory].includes('href="/assets/front-brand.css"'));
   assert.ok(outputs[territory].includes('data-brand-masthead'));
  }
 });
