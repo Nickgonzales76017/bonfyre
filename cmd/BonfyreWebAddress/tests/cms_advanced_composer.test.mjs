@@ -80,6 +80,22 @@ test("real GrapesJS/Puck/Editor.js modes preserve a native CMS draft and account
   });
   await ready("grapesjs");
   expect(await tab.$(".gjs-editor")).not.toBeNull();
+  // Shared native inspector: change actual responsive tokens and a media
+  // caption while GrapesJS is mounted, then cross into Puck/Editor.js.
+  await tab.waitForSelector('.authoring-inspector-control[aria-label="Viewport"]',{timeout:15000});
+  const inspect=async(label,value)=>tab.$eval(
+   '.authoring-inspector-control[aria-label="'+label+'"]',
+   (input,next)=>{input.value=next;input.dispatchEvent(new Event("change",{bubbles:true}));},value);
+  await inspect("Viewport","phone");
+  await inspect("Layout","grid");
+  await tab.waitForFunction(()=>document.querySelector(".authoring-status")
+   ?.textContent?.includes("phone layout updated"),{timeout:15000});
+  await inspect("Columns","2");
+  await tab.waitForFunction(()=>document.querySelector(".authoring-status")
+   ?.textContent?.includes("phone columns updated"),{timeout:15000});
+  await inspect("Credit / caption","Reviewed caption retained across specialist editors");
+  await tab.waitForFunction(()=>document.querySelector(".authoring-status")
+   ?.textContent?.includes("Credit / caption updated"),{timeout:15000});
   await switchTo("Structure");
   await ready("puck");
   await tab.waitForFunction(()=>document.querySelector(".authoring-puck")?.children.length>0,
@@ -127,6 +143,9 @@ test("real GrapesJS/Puck/Editor.js modes preserve a native CMS draft and account
   const savedTags=typeof retainedTags==="string"?JSON.parse(retainedTags):retainedTags;
   expect(savedTags.authoring_v1.editorial?.length).toBeGreaterThan(0);
   expect(savedTags.authoring_v1.editorial[0].data.text).toContain("Edited in the real Editor.js canvas");
+  expect(savedTags.authoring_v1.responsive.phone.layout).toBe("grid");
+  expect(savedTags.authoring_v1.responsive.phone.columns).toBe(2);
+  expect(savedTags.authoring_v1.props.caption).toBe("Reviewed caption retained across specialist editors");
   expect(json(await f.request("/cms/compose/page?route="+encodeURIComponent(route),
    {cookie:other.cookie})).id).toBe(0);
   expect(errors).toEqual([]);
