@@ -51,6 +51,7 @@ identity="https://nickgonzales76017.github.io/bonfyre/blog/authors/aurekai-edito
 for p in pages:
     if "/authors/" in p["route"]:
         assert p["route"]=="/blog/authors/aurekai-editorial/"
+        assert p["editorial_kind"]=="author-profile" and p["author_subject_ref"]=="author:aurekai-editorial"
         continue
     slug=p["route"].removeprefix("/blog/").strip("/")
     path=root/"editorial/posts"/(slug+".md")
@@ -66,6 +67,15 @@ for p in pages:
     selected=next(f for f in fragments if f["coordinate"]=="journal:post:"+slug+":presentation")
     assert selected["source_ref"]=="editorial/art-direction.tsv" and selected["source_digest"]==art_sha, slug
     assert selected["body"]=="format: "+art["format"]+"\ncolorway: "+art["colorway"]+"\nmedia: "+(art["media"] or "none"), slug
+    contract=json.loads(selected["projection_contract"])
+    assert contract["schema"]=="aurekai.journal.edition.v1" and contract["review_required"] is True
+    assert contract["subject_id"]=="post:"+slug and contract["canonical_url"].endswith("/blog/"+slug+"/")
+    assert contract["format"]==art["format"] and contract["colorway"]==art["colorway"]
+    assert contract["media_key"]==(art["media"] or None) and contract["authored_source_sha256"]==digest
+    assert selected["slot"]=="cover" and selected["variant_key"]=="journal-"+art["format"]
+    assert json.loads(selected["semantic_tags"])[-1]==art["format"]
+    assert p["editorial_kind"]=="article" and p["author_subject_ref"]=="author:aurekai-editorial"
+    assert p["author_credit"]=="Aurekai editorial" and p["editorial_published_on"] and p["editorial_updated_on"]
     if art["media"]:
         record=media[art["media"]]
         credited=next(f for f in fragments if f["coordinate"]=="journal:post:"+slug+":media")
