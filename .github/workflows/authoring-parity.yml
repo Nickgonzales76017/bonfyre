@@ -73,6 +73,11 @@ jobs:
           bun install --frozen-lockfile --ignore-scripts
           cd ../../../tools/creator-ingest
           npm ci --no-audit --no-fund
+      - name: Prepare exact pinned public QR C sources
+        run: |
+          cd cmd/BonfyreWebAddress
+          bun tools/prepare_public_code.mjs --fetch
+          bun tools/prepare_public_code.mjs --check
       - name: Build local native authentication, CMS and WebAddress
         run: |
           make -C lib/libbonfyre
