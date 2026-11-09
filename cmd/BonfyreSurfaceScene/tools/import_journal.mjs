@@ -75,7 +75,10 @@ export function stageJournalDraftForNamespace(source,namespace){
 }
 export function extractJournalSource(tree){
  validateAuthoringTree(tree);
- if(tree.site_id!=="aurekai-journal"||tree.blocks.length!==2)throw Error("not an imported Journal document");
+ if(tree.blocks.length!==2||
+   (tree.site_id!=="aurekai-journal"&&
+    !tree.blocks.some(x=>x.props.metadata?.imported_from==="aurekai-journal")))
+  throw Error("not an imported Journal document");
  const content=tree.blocks.find(x=>x.kind==="profile-story"&&
   x.props.metadata?.format==="markdown");
  if(!content||content.kind!=="profile-story"||content.props.metadata?.format!=="markdown")
