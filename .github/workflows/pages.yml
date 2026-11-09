@@ -29,15 +29,7 @@ jobs:
           set -euo pipefail
           git fetch --no-tags origin '+refs/heads/main:refs/remotes/origin/main'
           upstream="$(git rev-parse refs/remotes/origin/main)"
-          if [ "$GITHUB_SHA" = "$upstream" ]; then
-            echo 'latest=true' >> "$GITHUB_OUTPUT"
-          elif git merge-base --is-ancestor "$GITHUB_SHA" "$upstream"; then
-            echo 'latest=false' >> "$GITHUB_OUTPUT"
-            echo 'Superseded by a newer source commit; leaving publication to its queued run.'
-          else
-            echo 'The tested commit is not part of the current main history.' >&2
-            exit 1
-          fi
+          node scripts/pages-source-freshness.mjs "$GITHUB_SHA" "$upstream" >> "$GITHUB_OUTPUT"
   deploy:
     needs: current
     if: ${{ needs.current.outputs.latest == 'true' }}
@@ -56,6 +48,8 @@ jobs:
           node-version: '22'
       - name: Check public navigation and calls to action
         run: python3 scripts/tests/public-wayfinding.py
+      - name: Verify bot release commits do not supersede authored source
+        run: node --test scripts/tests/pages-source-freshness.test.mjs
       - name: Test public Pages readback witnesses and stale-site rejection
         run: node --test scripts/tests/public-pages-live-readback.test.mjs
       - name: Check application directory and retained release
