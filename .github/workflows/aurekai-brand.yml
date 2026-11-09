@@ -59,5 +59,7 @@ jobs:
           node-version: '22'
       - name: Check brand variants, distribution, four entrances and independent brand boundary
         run: node --test scripts/tests/aurekai-brand.test.mjs
+      - name: Refuse unverified or studio-affecting public release fast paths
+        run: node --test scripts/tests/pages-editorial-scope.test.mjs
       - name: Verify exact-byte public release readback fixture across eleven routes
         run: node --test scripts/tests/public-pages-live-readback.test.mjs
