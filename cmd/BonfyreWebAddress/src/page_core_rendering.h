@@ -4213,7 +4213,21 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
            "Vary: Host, Accept, Cookie\r\nX-Bonfyre-World-Projection: native\r\nConnection: close\r\n\r\n",
            doc->actor && *doc->actor ? "private, no-store" : front_community_route(page_render_host,doc->route) ?
            "public, no-cache, max-age=0, must-revalidate" : "public, max-age=60, stale-while-revalidate=300");
-    page_emit_head(template, head_end, doc->title, doc->lede);
+    const FrontBrandCut *brand_head=front_brand_public_host(page_render_host,doc->route);
+    page_emit_head(template, head_end, brand_head?brand_head->headline:doc->title,
+                   brand_head?brand_head->description:doc->lede);
+    if(brand_head){
+        fputs("<meta property=\"og:type\" content=\"website\"><meta property=\"og:title\" content=\"",stdout);
+        html(brand_head->headline);
+        fputs("\"><meta property=\"og:description\" content=\"",stdout);
+        html(brand_head->description);
+        fputs("\"><meta name=\"twitter:card\" content=\"summary\">"
+              "<meta property=\"og:url\" content=\"https://aurekai.",stdout);
+        html(brand_head->territory);
+        fputs("/\"><link rel=\"canonical\" href=\"https://aurekai.",stdout);
+        html(brand_head->territory);
+        fputs("/\">",stdout);
+    }
     bf_route_presentation_emit_head_for(stdout, bf_route_presentation_territory(page_render_host),
         doc->route, doc->raw_query, ctx.experience_pattern);
     bf_native_experience_emit_head(stdout,bf_native_experience_find(ctx.experience_pattern));
