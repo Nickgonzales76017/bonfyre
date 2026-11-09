@@ -25,7 +25,10 @@ beforeAll(async()=>{
  browser=await puppeteer.launch({
   executablePath:process.env.BONFYRE_TEST_CHROME||
    (process.platform==="darwin"?"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome":puppeteer.executablePath()),
-  headless:true,args:["--no-sandbox","--host-resolver-rules=MAP aurekai.life 127.0.0.1"]});
+  headless:true,args:["--no-sandbox","--host-resolver-rules=MAP aurekai.life 127.0.0.1",
+   // Only the isolated browser test uses HTTP on a loopback-mapped hostname.
+   // Production editors require an ordinary HTTPS secure context for SHA-256.
+   "--unsafely-treat-insecure-origin-as-secure=http://aurekai.life:"+f.port]});
 },45000);
 afterAll(async()=>{await browser?.close();await f?.close();},45000);
 test("the advanced editor inherits existing native session and serves its real bundle",async()=>{
@@ -206,3 +209,51 @@ test("90 real Journal articles become isolated native CMS drafts and C previews 
  expect(coordinates.size).toBe(180);
  console.log("AUREKAI_90_NATIVE_CMS_DRAFTS_PASS 90 complete source reads / 180 unique fragments / 3 owner-gated C previews / 0 publications");
 },240000);
+
+test("edit a real imported Journal Markdown source in the unified desk; preview with C and persist both digests",async()=>{
+ const file=journalArticles(join(root,"editorial/posts"))[0];
+ const original=authoringFromJournal(file,readFileSync(join(root,"editorial/posts",file)));
+ const browserContext=await browser.createBrowserContext(),page=await browserContext.newPage();
+ const [name,...bits]=writer.cookie.split("=");
+ const host="http://aurekai.life:"+f.port;
+ try{
+  await page.setCookie({name,value:bits.join("="),url:host,httpOnly:true});
+  const response=await page.goto(host+"/cms/compose/advanced?route="+encodeURIComponent(original.page),
+   {waitUntil:"networkidle0",timeout:30000});
+  expect(response.status()).toBe(200);
+  await page.waitForFunction(()=>[...document.querySelectorAll(".authoring-modes button")]
+    .some(x=>x.textContent==="Markdown source"),{timeout:15000});
+  await page.evaluate(()=>[...document.querySelectorAll(".authoring-modes button")]
+   .find(x=>x.textContent==="Markdown source").click());
+  await page.waitForSelector(".authoring-markdown-source",{timeout:15000});
+  const actual=await page.$eval(".authoring-markdown-source",e=>e.value);
+  expect(actual).toBe(readFileSync(join(root,"editorial/posts",file),"utf8"));
+  const addition="\n\n## A reviewed amendment\n\nNative source authoring preserves provenance.\n";
+  await page.$eval(".authoring-markdown-source",(e,postscript)=>{
+   e.value+=postscript;e.dispatchEvent(new Event("input",{bubbles:true}));
+  },addition);
+  await page.evaluate(()=>[...document.querySelectorAll(".authoring-actions button")]
+   .find(x=>x.textContent==="Native preview").click());
+  await page.waitForSelector(".authoring-native-preview[open]",{timeout:20000});
+  const frame=await (await page.$(".authoring-preview-frame")).contentFrame();
+  await frame.waitForSelector(".bf-markdown",{timeout:15000});
+  const html=await frame.$eval(".bf-markdown",el=>el.textContent);
+  expect(html).toContain("A reviewed amendment");
+  expect(html).toContain("Native source authoring preserves provenance.");
+  await page.click(".authoring-preview-close");
+  await page.evaluate(()=>[...document.querySelectorAll(".authoring-actions button")]
+   .find(x=>x.textContent==="Save draft").click());
+  await page.waitForFunction(()=>document.querySelector(".authoring-status")
+    ?.textContent?.includes("Draft saved"),{timeout:20000});
+  const reopened=json(await f.request("/cms/compose/page?route="+encodeURIComponent(original.page),
+   {cookie:writer.cookie}));
+  const current=treeFromNativeSnapshot(reopened).blocks[1].props;
+  expect(current.body).toContain("A reviewed amendment");
+  expect(current.source_digest).toBe(original.blocks[1].props.source_digest);
+  expect(current.metadata.changed_from_original).toBe(true);
+  const expected=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(current.body));
+  expect(current.metadata.draft_sha256).toBe(Buffer.from(expected).toString("hex"));
+  expect(reopened.snapshot.fragments.every(x=>x.status==="draft")).toBe(true);
+  console.log("JOURNAL_NATIVE_SOURCE_EDITOR_PASS original provenance unchanged / derived SHA-256 verified / C preview and CMS draft readback");
+ }finally{await browserContext.close();}
+},90000);
