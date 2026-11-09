@@ -140,7 +140,7 @@ jobs:
       - name: Verify native CMS draft records and source-owned author profiles
         run: python3 scripts/tests/editorial-publication-bridge.py
       - name: Verify native draft reconciliation and protected publication boundaries
-        run: python3 -m unittest discover -s scripts/tests -p editorial_native_reconcile_test.py -v
+        run: node --test scripts/tests/editorial-native-reconcile.test.mjs
       - name: Verify static-site readback harness against local fixtures
         run: node --test scripts/tests/public-pages-live-readback.test.mjs
       - name: Preserve reviewable native CMS draft projection
