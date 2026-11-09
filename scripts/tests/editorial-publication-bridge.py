@@ -32,7 +32,7 @@ assert len([f for f in fragments if f["kind"]=="article-body"])==66, "Lost artic
 assert len([f for f in fragments if f["kind"]=="editorial-presentation"])==66, "Lost article design contracts"
 art_path=root/"editorial/art-direction.tsv"
 art_digest=sha256(art_path.read_bytes()).hexdigest()
-art_rows=[line.split("\\t") for line in art_path.read_text(encoding="utf-8").splitlines()[3:] if line.strip() and not line.startswith("#")]
+art_rows=[line.split("\t") for line in art_path.read_text(encoding="utf-8").splitlines()[3:] if line.strip() and not line.startswith("#")]
 art_by_slug={row[0]:row[1:] for row in art_rows}
 assert len(art_by_slug)==66 and all(len(v)==3 for v in art_by_slug.values()), "Art assignments drifted"
 assert len([f for f in fragments if f["kind"]=="article-credit"])==66, "Lost author relationships"
