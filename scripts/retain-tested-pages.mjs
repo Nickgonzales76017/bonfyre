@@ -7,7 +7,7 @@ import {pathToFileURL} from 'node:url';
 export function retainRelease({cwd, paths, verify, attempts = 3, beforePush = () => {}, pushResult = null, reconcileGeneratedPaths = []}) {
   if (!cwd || !Array.isArray(paths) || !paths.length || typeof verify !== 'function' || !Number.isInteger(attempts) || attempts < 1 || attempts > 3) throw Error('Explicit repository, generated paths and verification are required.');
   if (paths.some(p => !/^[a-zA-Z0-9_./-]+$/.test(p) || p.startsWith('/') || p.split('/').some(s => !s || s === '.' || s === '..'))) throw Error('Unsafe generated path.');
-  if (!Array.isArray(reconcileGeneratedPaths) || reconcileGeneratedPaths.some(p => !paths.includes(p))) throw Error('Only explicit retained outputs may be reconciled.');
+  if (!Array.isArray(reconcileGeneratedPaths) || reconcileGeneratedPaths.some(p => !paths.some(root => p === root || p.startsWith(root + '/')))) throw Error('Only explicit retained outputs may be reconciled.');
   const allowed = path => paths.some(p => path === p || path.startsWith(p + '/'));
   const git = (args, optional = false) => {
     const result = spawnSync('git', args, {cwd, encoding: 'utf8', timeout: 60000, maxBuffer: 4 * 1024 * 1024});
