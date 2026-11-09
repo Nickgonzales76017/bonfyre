@@ -40,7 +40,9 @@ for(const file of articles){
  run(exe,[carrier,html]);
  const buffer=readFileSync(html),page=buffer.toString("utf8");
  for(const required of ['data-release="draft-preview-only"',
-   '<div class="bf-markdown">','data-route="'+doc.page+'"','data-source-ref="editorial/posts/'+file+'"'])
+   '<div class="bf-markdown">','data-route="'+doc.page+'"','data-source-ref="editorial/posts/'+file+'"',
+   'data-edition-format="'+doc.blocks[0].props.metadata.edition_format+'"',
+   'data-colorway="'+doc.blocks[0].props.metadata.colorway+'"'])
   assert.ok(page.includes(required),"native output lost "+required+" for "+slug);
  assert.ok(page.includes("<h2>"),"native editorial chapters absent "+slug);
  assert.doesNotMatch(page,/<script\b|<iframe\b|<object\b/i,"unsafe native output "+slug);

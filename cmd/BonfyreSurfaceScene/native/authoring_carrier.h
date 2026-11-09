@@ -394,6 +394,12 @@ static int bf_render_node(FILE *f,const BfWireScene *s,const BfWireNode *n,int d
  const char *body=bf_wire_val(n,"/props/body"),*variant=bf_wire_val(n,"/props/variant");
  const char *eyebrow=bf_wire_val(n,"/props/eyebrow");
  const char *source_format=bf_wire_val(n,"/props/metadata/format");
+ const char *edition_format=bf_wire_val(n,"/props/metadata/edition_format");
+ const char *colorway=bf_wire_val(n,"/props/metadata/colorway");
+ const char *media_key=bf_wire_val(n,"/props/metadata/media_key");
+ if((edition_format&&!bf_wire_token(edition_format))||
+    (colorway&&!bf_wire_token(colorway))||
+    (media_key&&*media_key&&!bf_wire_token(media_key)))return 0;
  int is_markdown=source_format&&!strcmp(source_format,"markdown");
  if(!variant)variant="paper";
  if(!bf_wire_token(variant))return 0;
@@ -410,6 +416,8 @@ static int bf_render_node(FILE *f,const BfWireScene *s,const BfWireNode *n,int d
  fprintf(f,"<%s class=\"bf-block bf-variant-",tag);bf_html_escape(f,variant);
  fputs("\" data-id=\"",f);bf_html_escape(f,n->id);
  fputs("\" data-kind=\"",f);bf_html_escape(f,n->kind);
+ if(edition_format){fputs("\" data-edition-format=\"",f);bf_html_escape(f,edition_format);}
+ if(colorway){fputs("\" data-colorway=\"",f);bf_html_escape(f,colorway);}
  fputs("\" data-layout-desktop=\"",f);bf_html_escape(f,layouts[0]);
  fputs("\" data-layout-tablet=\"",f);bf_html_escape(f,layouts[1]);
  fputs("\" data-layout-phone=\"",f);bf_html_escape(f,layouts[2]);
@@ -428,6 +436,11 @@ static int bf_render_node(FILE *f,const BfWireScene *s,const BfWireNode *n,int d
  if(!is_markdown&&heading&&*heading){
   const char *h=!strcmp(tag,"header")?"h1":"h2";
   fprintf(f,"<%s>",h);bf_html_escape(f,heading);fprintf(f,"</%s>",h);
+ }
+ if(media_key&&*media_key){
+  fputs("<div class=\"bf-media-pending bf-cover-source\" data-media-key=\"",f);
+  bf_html_escape(f,media_key);
+  fputs("\">Assigned credited art; native asset-rights binding remains review-held</div>",f);
  }
  if(!strcmp(tag,"figure")){
   const char *asset=bf_wire_val(n,"/props/asset_ref");
@@ -512,6 +525,28 @@ static int bf_wire_render(FILE *f,const BfWireScene *s){
  ".bf-block pre{overflow:auto;background:#14282d;color:white;padding:20px}"
  ".bf-block table{border-collapse:collapse;width:100%}.bf-block td,.bf-block th{text-align:left;border-bottom:1px solid #d2d5d0;padding:10px}"
  ".bf-table-scroll{max-width:100%;overflow-x:auto}"
+ ".bf-block[data-colorway=ink]{background:#17232c;color:#faf6ef}"
+ ".bf-block[data-colorway=forest]{background:#183d33;color:#f6f6ea}"
+ ".bf-block[data-colorway=olive]{background:#e9ead7;color:#2b3324}"
+ ".bf-block[data-colorway=slate]{background:#e4e8ea;color:#28343b}"
+ ".bf-block[data-colorway=brick]{background:#f1e4db;color:#612d28}"
+ ".bf-block[data-colorway=copper]{background:#f5e7d5;color:#5a381f}"
+ ".bf-block[data-edition-format=cover-spread]{padding:clamp(32px,7vw,110px);min-height:50vh}"
+ ".bf-block[data-edition-format=broadsheet]{border-top:10px double currentColor;text-align:center;padding:55px 24px}"
+ ".bf-block[data-edition-format=manifesto]{border-left:10px solid currentColor;padding:40px 55px}"
+ ".bf-block[data-edition-format=column]{max-width:73ch;margin:0 auto 30px;padding:30px}"
+ ".bf-block[data-edition-format=field-report]{border-top:5px solid #b59162;padding:36px}"
+ ".bf-block[data-edition-format=business-review]{border-top:5px solid #809b8c;padding:40px}"
+ ".bf-block[data-edition-format=market-ledger]{border-top:5px solid #a26f45;padding:40px}"
+ ".bf-block[data-edition-format=archive]{border:1px double #8a8d7c;padding:clamp(25px,5vw,80px)}"
+ ".bf-block[data-edition-format=dossier]{border-left:5px solid #83938a;padding:40px}"
+ ".bf-block[data-edition-format=research-note]{border:1px solid #a0aba5;padding:40px}"
+ ".bf-block[data-edition-format=system-brief]{border-top:8px solid #597d70;padding:38px}"
+ ".bf-block[data-edition-format=culture-feature]{padding:clamp(30px,5vw,75px);border-bottom:4px solid #c28b60}"
+ ".bf-block[data-edition-format=comparative]{border-top:3px solid #728d88;border-bottom:3px solid #728d88;padding:50px}"
+ ".bf-block[data-edition-format=studio-edition]{padding:45px;box-shadow:inset 0 0 0 1px #c8cbc3}"
+ ".bf-cover-source{font:600 12px/1.6 system-ui;letter-spacing:.06em;padding:60px 20px;background:transparent;border:1px solid currentColor;margin-top:24px}"
+ "@media(max-width:680px){.bf-block[data-edition-format]{padding:22px}.bf-cover-source{padding:32px 15px}}"
  ".bf-markdown{font:1.13rem/1.78 Georgia,serif;max-width:77ch;margin:auto}"
  ".bf-markdown h2{font:600 clamp(29px,3vw,42px)/1.18 Georgia,serif;margin:1.7em 0 .6em}"
  ".bf-markdown h3{font:600 1.45rem/1.3 Georgia,serif;margin:1.3em 0 .5em}"
