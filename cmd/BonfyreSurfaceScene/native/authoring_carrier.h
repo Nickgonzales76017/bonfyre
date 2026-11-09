@@ -55,7 +55,7 @@ static void bf_wire_clear(BfWireScene *s){
 static const BfWireField *bf_wire_field(const BfWireNode *node,const char *path){
  if(!node||!path)return NULL;
  for(uint32_t i=0;i<node->fields_count;i++)
-  if(!strcmp(node->fields[i].path,path))return &node->fields[i];
+  if(node->fields[i].path&&!strcmp(node->fields[i].path,path))return &node->fields[i];
  return NULL;
 }
 static const char *bf_wire_val(const BfWireNode *node,const char *path){
@@ -139,7 +139,7 @@ static int bf_wire_read(FILE *input,BfWireScene *out){
    if(!valid)break;
    for(uint32_t k=0;k<j;k++)if(!strcmp(f->path,n->fields[k].path)){valid=0;break;}
   }
-  if(!bf_wire_field(n,"/props")||!bf_wire_field(n,"/responsive"))valid=0;
+  if(valid&&(!bf_wire_field(n,"/props")||!bf_wire_field(n,"/responsive")))valid=0;
   if(valid){
    const char *heading=bf_wire_val(n,"/props/heading"),*body=bf_wire_val(n,"/props/body");
    if((heading&&!bf_authoring_tree_text(tree,n->id,"heading",heading))||
