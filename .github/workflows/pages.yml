@@ -170,41 +170,44 @@ jobs:
             await page.goto('http://127.0.0.1:8765/blog/why-base-rates-change-camera-matching-claims/',{waitUntil:'domcontentloaded'});
             assert.equal(await page.locator('a[href="../../fieldwork/"]').count(),1);
             assert.equal(await page.locator('a[href*="/labs/#"]').count(),0);
-            // The journal keeps an actual play/pause interaction and seekable
-            // speech position map, not an inert marketing waveform.
-            await page.addInitScript(() => {
-              window.__journalSpoken=[];
-              Object.defineProperty(window,'SpeechSynthesisUtterance',{configurable:true,value:class {
-                constructor(text){this.text=text;this.lang='en-US';this.rate=1;}
-              }});
-              Object.defineProperty(window,'speechSynthesis',{configurable:true,value:{
-                getVoices:()=>[{lang:'en-US',localService:true}],
-                speak:utterance=>{window.__journalSpoken.push(utterance.text);queueMicrotask(()=>utterance.onstart?.());},
-                cancel:()=>{},pause:()=>{},resume:()=>{}
-              }});
-            });
+            // Editorial audio is a real published recording, never the device
+            // speech synthesizer or a fake, randomly generated waveform.
             await page.goto('http://127.0.0.1:8765/blog/the-machine-told-me-so/',{waitUntil:'domcontentloaded'});
-            assert.equal(await page.locator('[data-narration-wave] i').count(),72);
-            assert.equal(await page.locator('[data-narration-play]').isVisible(),true);
-            assert.equal(await page.locator('[data-narration-seek]').isVisible(),true);
-            await page.locator('[data-narration-play]').click();
-            await page.waitForFunction(()=>window.__journalSpoken.length>0);
-            assert.equal(await page.locator('[data-narration]').getAttribute('data-state'),'playing');
-            await page.locator('[data-narration-play]').click();
-            assert.equal(await page.locator('[data-narration]').getAttribute('data-state'),'paused');
-            await page.locator('[data-narration-play]').click();
-            await page.locator('[data-narration-forward]').click();
-            assert.ok((await page.evaluate(()=>window.__journalSpoken.length))>=2);
-            await page.locator('[data-narration-seek]').evaluate(el=>{
-              el.value='600';el.dispatchEvent(new Event('input',{bubbles:true}));
-              el.dispatchEvent(new Event('change',{bubbles:true}));
-            });
-            assert.ok(Number(await page.locator('[data-narration-progress]').getAttribute('value'))>=40);
-            await page.locator('[data-narration-stop]').click();
-            assert.equal(await page.locator('[data-narration]').getAttribute('data-state'),'idle');
-            await page.setViewportSize({width:390,height:844});
-            assert.equal(await page.locator('[data-narration-play]').isVisible(),true);
-            await page.setViewportSize({width:1366,height:900});
+            assert.equal(await page.locator('[data-narration-voice]').count(),0);
+            assert.equal(await page.locator('.journal-audio-voice-choice').count(),0);
+            const edition=page.locator('[data-narration]');
+            if (await edition.count()) {
+              assert.equal(await page.locator('[data-audio-source][src="./edition.mp3"]').count(),1);
+              await page.waitForFunction(()=>{
+                const audio=document.querySelector('[data-audio-source]');
+                return audio && Number.isFinite(audio.duration) && audio.duration > 0;
+              },{timeout:20000});
+              assert.equal(await page.locator('[data-audio-play]').isVisible(),true);
+              await page.locator('[data-audio-play]').click();
+              await page.waitForFunction(()=>{
+                const audio=document.querySelector('[data-audio-source]');
+                return !audio.paused && audio.currentTime > 0;
+              },{timeout:12000});
+              await page.locator('[data-audio-play]').click();
+              assert.equal(await page.locator('[data-audio-source]').evaluate(el=>el.paused),true);
+              await page.locator('[data-audio-seek]').evaluate(el=>{
+                el.value='400';
+                el.dispatchEvent(new Event('input',{bubbles:true}));
+                el.dispatchEvent(new Event('change',{bubbles:true}));
+              });
+              assert.ok(await page.locator('[data-audio-source]').evaluate(el=>
+                Math.abs(el.currentTime/el.duration-.4)<.06
+              ));
+              await page.locator('[data-audio-speed]').click();
+              assert.equal(await page.locator('[data-audio-source]').evaluate(el=>el.playbackRate),1.25);
+              await page.setViewportSize({width:390,height:844});
+              assert.equal(await page.locator('[data-audio-play]').isVisible(),true);
+              await page.setViewportSize({width:1366,height:900});
+            } else {
+              assert.equal(await page.locator('#audio-edition').count(),0);
+              assert.equal(await page.locator('a.journal-audio-jump').count(),0);
+            }
+            assert.equal(await page.locator('[data-narration-voice]').count(),0);
             assert.equal(errors.length,0,errors.join('; '));
             console.log('PASS: five editorial chapters, source imagery, article routes and directory search');
           } finally { await browser.close(); }

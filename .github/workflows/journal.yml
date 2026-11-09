@@ -56,12 +56,9 @@ jobs:
           grep -q 'id="authority"' site/series/index.html
           grep -q 'id="operators"' site/series/index.html
           grep -q 'reader-outline-menu' site/blog/the-machine-told-me-so/index.html
-          grep -q 'journal-audio-player' site/blog/who-keeps-the-internet-alive/index.html
-          grep -q 'data-narration-play' site/blog/who-keeps-the-internet-alive/index.html
-          grep -q 'journal-audio-transcript' site/blog/who-keeps-the-internet-alive/index.html
-          grep -q 'data-narration-seek' site/blog/who-keeps-the-internet-alive/index.html
-          grep -q 'data-narration-wave' site/blog/the-machine-told-me-so/index.html
-          grep -q 'href="#audio-edition"' site/blog/the-machine-told-me-so/index.html
+          # The research audio contract is checked per-article: Sarah MP3 or no player.
+          ! grep -q 'data-narration-voice' site/blog/the-machine-told-me-so/index.html
+          ! grep -q 'speechSynthesis' site/blog/the-machine-told-me-so/index.html
           grep -q 'journal-sources' site/blog/the-machine-told-me-so/index.html
           grep -q 'itemscope itemtype="https://schema.org/BlogPosting"' site/blog/the-machine-told-me-so/index.html
           grep -q 'og:image' site/blog/the-machine-told-me-so/index.html
