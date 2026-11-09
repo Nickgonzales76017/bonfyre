@@ -10,6 +10,17 @@ typedef struct {
     const char *action, *label;
 } FrontBrandCut;
 #include "../generated/native_brand_cuts.h"
+/* Only the exact Aurekai apex root may inherit this public brand identity.
+ * Neither an independently branded site nor a nested route is affected. */
+static const FrontBrandCut *front_brand_public_host(const char *host,const char *route){
+    if(!host||!route||strcmp(route,"/"))return NULL;
+    for(size_t i=0;i<sizeof(front_brand_cuts)/sizeof(front_brand_cuts[0]);i++){
+        char expected[64];
+        int n=snprintf(expected,sizeof(expected),"aurekai.%s",front_brand_cuts[i].territory);
+        if(n>0&&(size_t)n<sizeof(expected)&&!strcmp(host,expected))return &front_brand_cuts[i];
+    }
+    return NULL;
+}
 static void front_brand_emit(const char *territory){
     if(!territory)return;
     const FrontBrandCut *selected=NULL;
