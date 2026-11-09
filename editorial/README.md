@@ -65,3 +65,7 @@ Native BonfyreCMS drafts now retain each article's presentation choice, credited
 ## Reuse verified releases for editorial-only changes
 
 The Pages current-source job uses `scripts/pages-editorial-scope.mjs` to compare the source with the last exact bot-authored studio/instrument release. Only journal-source edits are eligible for a fast publish, and the retained studio and instrument manifests are rechecked by exact file size and SHA-256. Manual dispatch, missing receipts, Pages pipeline changes, native changes and application edits run the complete studio build. Both branches regenerate the Journal, verify its native drafts, check browser behavior, deploy and run public readback. This is a reuse of existing verified artifacts, not an inferred live provider or publication grant.
+
+## Live publication acceptance
+
+The Pages post-deployment readback verifies exact bytes for **every published article HTML**, the Journal CSS and reader JavaScript, RSS and sitemaps, source index, author pages, and the seven primary public routes. Source identities come from the generated post index, not a manually curated sample. Cache-busting digests, bounded retries and a retained per-file receipt refuse a green release when any article or editorial stylesheet is stale. This verifies public bytes only, not the rights or quality of narrated recordings.

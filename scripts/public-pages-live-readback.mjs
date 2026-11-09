@@ -16,6 +16,38 @@ export const PUBLIC_PAGES = Object.freeze([
   ['blog/connections/index.html', 'blog/connections/'],
   ['docs.html', 'docs.html']
 ]);
+export const JOURNAL_STATIC = Object.freeze([
+  ['blog/blog.css','blog/blog.css'],
+  ['blog/article-editions.css','blog/article-editions.css'],
+  ['blog/reader.css','blog/reader.css'],
+  ['blog/reader.js','blog/reader.js'],
+  ['blog/feed.xml','blog/feed.xml'],
+  ['blog/sitemap.xml','blog/sitemap.xml'],
+  ['blog/post-index.tsv','blog/post-index.tsv'],
+  ['blog/authors/index.html','blog/authors/'],
+  ['blog/authors/aurekai-editorial/index.html','blog/authors/aurekai-editorial/'],
+  ['discover/article-index.tsv','discover/article-index.tsv'],
+  ['sitemap.xml','sitemap.xml']
+]);
+export function publicationTargets(siteDir){
+  const index=readFileSync(resolve(siteDir,'blog/post-index.tsv'),'utf8');
+  const rows=index.trimEnd().split('\n').map(row=>row.split('\t'));
+  if(!rows.length||rows[0].slice(0,2).join('\t')!=='subject_id\tslug')
+    throw Error('Invalid Journal publication index');
+  const seen=new Set(),articles=[];
+  for(const row of rows.slice(1)){
+    const slug=row[1];
+    if(row[0]!=='post:'+slug||!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)||seen.has(slug))
+      throw Error('Invalid or duplicate Journal source identity');
+    seen.add(slug);
+    articles.push(['blog/'+slug+'/index.html','blog/'+slug+'/']);
+  }
+  if(articles.length<46)throw Error('Incomplete Journal edition set: '+articles.length);
+  const targets=[...PUBLIC_PAGES,...JOURNAL_STATIC,...articles];
+  if(new Set(targets.map(([f])=>f)).size!==targets.length)
+    throw Error('Duplicate publication target');
+  return {targets,articleCount:articles.length};
+}
 const sha256 = data => createHash('sha256').update(data).digest('hex');
 const quote = value => String(value).replace(/[\t\n\r]/g, ' ');
 export async function checkPublishedPages({
@@ -28,7 +60,8 @@ export async function checkPublishedPages({
 } = {}) {
   if (!origin.startsWith('https://') || !origin.endsWith('/')) throw Error('Expected exact HTTPS Pages origin ending in /');
   if (!Number.isInteger(attempts) || attempts < 1 || attempts > 12) throw Error('Invalid bounded retry count');
-  const expected = PUBLIC_PAGES.map(([file, route]) => {
+  const {targets,articleCount}=publicationTargets(siteDir);
+  const expected = targets.map(([file, route]) => {
     const body = readFileSync(resolve(siteDir,file));
     return {file,route,digest:sha256(body),size:body.byteLength};
   });
@@ -36,7 +69,10 @@ export async function checkPublishedPages({
   const receipts = new Map(), errors = new Map();
   for (let attempt=1;attempt<=attempts && remaining.size;attempt++) {
     const pending=[...remaining.values()];
-    await Promise.all(pending.map(async p => {
+    // Limit parallel cache-bypass reads; 66 articles should never fan out as
+    // unbounded simultaneous CDN requests.
+    for(let start=0;start<pending.length;start+=12)
+    await Promise.all(pending.slice(start,start+12).map(async p => {
       const url = new URL(p.route,origin);
       // Avoid a CDN returning an earlier HTML response under the same URL.
       url.searchParams.set('check', p.digest.slice(0,16));
@@ -77,14 +113,14 @@ export async function checkPublishedPages({
   if (remaining.size) {
     throw Error('PUBLIC_PAGES_READBACK_FAIL: '+[...remaining.keys()].map(k=>k+': '+(errors.get(k)??'unverified')).join(' | '));
   }
-  return {verified:receipts.size,receipts:[...receipts.values()]};
+  return {verified:receipts.size,articleCount,receipts:[...receipts.values()]};
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   try {
     const result = await checkPublishedPages({origin:process.env.PAGES_ORIGIN || undefined,
       evidenceDir:process.env.PUBLIC_PAGES_EVIDENCE || 'spaces-live-evidence'});
-    const line='PUBLIC_PAGES_READBACK_PASS '+result.verified+' exact HTML files';
+    const line='PUBLIC_PAGES_READBACK_PASS '+result.verified+' exact public files / '+result.articleCount+' individual articles';
     console.log(line);
     if(process.env.GITHUB_STEP_SUMMARY) {
       appendFileSync(process.env.GITHUB_STEP_SUMMARY,
