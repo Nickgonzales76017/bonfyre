@@ -5,6 +5,7 @@ import {writeFileSync,mkdirSync,readFileSync} from "node:fs";
 import {join,resolve} from "node:path";
 import {fileURLToPath} from "node:url";
 import {createHash} from "node:crypto";
+import {deepStrictEqual} from "node:assert/strict";
 import {journalScene,profileScene} from "../tests/fixtures/authoring-publication.mjs";
 import {encodeNativeAuthoring,decodeNativeAuthoring} from "../runtime/authoring-carrier.mjs";
 const root=resolve(fileURLToPath(new URL("..",import.meta.url)));
@@ -23,8 +24,8 @@ let receipts="site\troute\tcarrier_sha256\tpreview_sha256\n";
 for(const [name,create] of [["journal",journalScene],["profile",profileScene]]){
  const doc=create(),wire=join(dir,name+".bfau"),html=join(dir,name+".html");
  const bytes=encodeNativeAuthoring(doc);
- if(JSON.stringify(decodeNativeAuthoring(bytes))!==JSON.stringify(doc))
-  throw Error("source document and native carrier diverged");
+ deepStrictEqual(decodeNativeAuthoring(bytes),doc,
+  "source document and native carrier diverged");
  writeFileSync(wire,bytes);
  run(exe,[wire,html]);
  receipts+=doc.site_id+"\t"+doc.page+"\t"+sha(bytes)+"\t"+sha(readFileSync(html))+"\n";
