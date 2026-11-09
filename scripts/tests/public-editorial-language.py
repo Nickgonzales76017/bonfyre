@@ -56,7 +56,8 @@ for path in PAGES:
     html,page=parse(SITE/path)
     text=" ".join(page.text)
     match=PHRASES.search(text)
-    require(not match,f"Reader-facing jargon in {path}: {match.group(0)!r}, context={text[max(0,match.start()-42):match.end()+45]!r}")
+    if match:
+        raise AssertionError(f"Reader-facing jargon in {path}: {match.group(0)!r}, context={text[max(0,match.start()-42):match.end()+45]!r}")
     require("<h1" in html,f"Missing page heading: {path}")
 directory,disc=parse(SITE/"discover"/"index.html")
 require(directory.count('class="discovery-card"')==24,"Directory must retain 20 public examples plus 4 tools")
