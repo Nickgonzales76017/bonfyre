@@ -68,7 +68,7 @@ Start with these instead of an old `akai` installation recipe:
 - [Architecture and semantic owners](../docs/architecture.md) — native responsibility and verification contracts
 - [Quickstart](../QUICKSTART.md) — current public source entry points
 - [Aurekai public work samples](https://aurekai-work-samples.pages.dev/) — experience-level demonstrations with their limits
-- [Current federated source atlas](https://nickgonzales76017.github.io/bonfyre/modules/) — pinned companions and upstream lineages
+- [Public source libraries](https://nickgonzales76017.github.io/bonfyre/modules/) — pinned companions and upstream lineages
 
 ## Historical reference
 

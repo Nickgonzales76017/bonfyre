@@ -11,7 +11,7 @@
   <a href="#what-the-shared-software-makes-possible">What it does</a> ·
   <a href="#building-blocks">Building blocks</a> ·
   <a href="#federated-workspace">Federated workspace</a> ·
-  <a href="https://nickgonzales76017.github.io/bonfyre/modules/">Source atlas (70)</a> ·
+  <a href="https://nickgonzales76017.github.io/bonfyre/modules/">Source libraries (70)</a> ·
   <a href="#start-here">Start here</a> ·
   <a href="#system-architecture">Architecture</a> ·
   <a href="docs/client-operations-portfolio.md">Client work</a> ·
@@ -89,7 +89,7 @@ are grouped under [`integrations/federated/`](integrations/federated/) and
 [`examples/federated/`](examples/federated/), not added as 69 new root
 directories.
 
-**[Explore the complete, searchable source atlas →](https://nickgonzales76017.github.io/bonfyre/modules/)**
+**[Browse the source libraries →](https://nickgonzales76017.github.io/bonfyre/modules/)**
 Every entry links to its owning GitHub repository and its exact pinned commit,
 and identifies whether it is a standalone tool, an older source extraction,
 an integration donor, or historical lineage. Gitlinks reference **other**

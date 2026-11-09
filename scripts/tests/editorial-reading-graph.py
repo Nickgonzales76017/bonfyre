@@ -87,6 +87,10 @@ for name in ("Profiles and the web", "AI and judgment", "Creative tools", "Inter
     assert name in atlas, f"Guide is missing a named section: {name}"
 home=(site/"index.html").read_text(encoding="utf-8")
 assert "<h3>Source atlas</h3>" not in home, "Internal source-library naming leaked onto homepage"
+modules=(site/"modules"/"index.html").read_text(encoding="utf-8")
+assert "<title>Bonfÿre — Code and Reference Libraries</title>" in modules, "Public source library title drifted"
+assert "THE SOURCE ATLAS" not in modules and "Many sources.<br>One" not in modules, "Technical source catalogue reverted to promotional jargon"
+
 
 assert atlas.count(' data-essay data-family=')==len(posts), "Reading Guide omits one or more essays"
 assert 'data-atlas-search' in atlas and 'data-atlas-filter="operators"' in atlas, "Missing accessible topic navigation"
