@@ -45,7 +45,9 @@ static void bf_wire_clear(BfWireScene *s){
  if(!s)return;
  for(uint32_t i=0;i<s->count;i++){
   BfWireNode *n=&s->nodes[i];free(n->id);free(n->kind);free(n->parent);
-  for(uint32_t j=0;j<n->fields_count;j++){free(n->fields[j].path);free(n->fields[j].value);}
+  if(n->fields)for(uint32_t j=0;j<n->fields_count;j++){
+   free(n->fields[j].path);free(n->fields[j].value);
+  }
   free(n->fields);
  }
  free(s->nodes);free(s->site);free(s->route);memset(s,0,sizeof(*s));
