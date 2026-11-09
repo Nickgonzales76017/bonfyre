@@ -18,7 +18,7 @@ AUTHORING_JS = ../../site/matrix/authoring-editor.js
 AUTHORING_CSS = ../../site/matrix/authoring-editor.css
 .PHONY: authoring-bundle
 authoring-bundle: $(AUTHORING_JS) $(AUTHORING_CSS)
-$(AUTHORING_JS): $(AUTHORING_SRC)/entry.mjs $(AUTHORING_SRC)/launch.mjs $(AUTHORING_SRC)/unified-editor.mjs $(AUTHORING_SRC)/native-cms.mjs $(AUTHORING_SRC)/package.json runtime/authoring-tree.mjs runtime/authoring-prototype.mjs
+$(AUTHORING_JS): $(AUTHORING_SRC)/entry.mjs $(AUTHORING_SRC)/launch.mjs $(AUTHORING_SRC)/unified-editor.mjs $(AUTHORING_SRC)/inspector.mjs $(AUTHORING_SRC)/native-cms.mjs $(AUTHORING_SRC)/package.json runtime/authoring-tree.mjs runtime/authoring-prototype.mjs
 	cd $(AUTHORING_SRC) && bun install --frozen-lockfile --ignore-scripts
 	cd $(AUTHORING_SRC) && bun build ./entry.mjs --target browser --minify --outfile ../../../site/matrix/authoring-editor.js
 $(AUTHORING_CSS): $(AUTHORING_JS) $(AUTHORING_SRC)/authoring.css
