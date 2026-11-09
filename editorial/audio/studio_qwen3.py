@@ -22,6 +22,12 @@ def main():
     from mlx_audio.tts.utils import load_model
     import mlx.core as mx
     model=load_model("mlx-community/Qwen3-TTS-12Hz-1.7B-Base-4bit")
+    reference_samples, reference_rate = sf.read(ref, dtype="float32")
+    if reference_rate != 24000:
+        raise RuntimeError("Sarah reference must be 24 kHz")
+    # MLX v0.3 accepts an in-memory waveform, not a string filename.
+    # Keeping the same mlx array also reuses the model's ICL prompt cache.
+    reference_audio = mx.array(reference_samples)
     manifest=[]
     for slug in slugs:
         raw=(ROOT/"editorial/posts"/(slug+".md")).read_text()
@@ -34,7 +40,7 @@ def main():
         if len(spoken)>440: spoken=spoken[:spoken.rfind(".",100,440)+1]
         if len(spoken)<100: raise RuntimeError("No coherent excerpt")
         sound=[]
-        for piece in model.generate(text=spoken,ref_audio=str(ref),ref_text=REF):
+        for piece in model.generate(text=spoken,ref_audio=reference_audio,ref_text=REF):
             mx.eval(piece.audio)
             sound.append(np.asarray(piece.audio,dtype=np.float32).reshape(-1))
         audio=np.concatenate(sound)
