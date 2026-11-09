@@ -276,10 +276,10 @@ def editorial_argument(post):
     if not values or not visual:
         return ""
     media, title, caption, alt = visual
-    stages = ("The familiar path", "What falls through", "The design opportunity")
+    stages = ("What happens", "What it misses", "What could change")
     steps = ''.join('<li><span class="argument-step">'+esc(stages[i])+'</span><strong>'+esc(v)+'</strong></li>' for i,v in enumerate(values))
     return ('<figure class="journal-argument-figure">'
-            '<div class="argument-head"><span>Visual argument / '+esc(series)+'</span><strong>'+esc(title)+'</strong></div>'
+            '<div class="argument-head"><span>Illustration</span><strong>'+esc(title)+'</strong></div>'
             '<img loading="lazy" decoding="async" width="1200" height="700" src="../../series/media/'+esc(media)+'" alt="'+esc(alt)+'">'
             '<figcaption>'+esc(caption)+' <a href="../../series/#'+esc(series)+'">Explore this series ↗</a></figcaption>'
             '<ol class="argument-turns">'+steps+'</ol></figure>')
@@ -342,7 +342,7 @@ def reader_outline(post):
     links+='<a href="#journal-afterword">A question worth keeping</a>'
     links+='<a href="#journal-sources">Sources and references</a>'
     if EDITORIAL_BRIDGES.get(post["slug"]) or EDITORIAL_BACKLINKS.get(post["slug"]):
-        links+='<a href="#journal-connections">Ideas in conversation</a>'
+        links+='<a href="#journal-connections">Related articles</a>'
     return '<div class="reader-outline-menu" data-outline-menu><button type="button" class="reader-outline-trigger" aria-expanded="false" aria-controls="reader-outline-list">Essay outline <span aria-hidden="true">⌄</span></button><nav id="reader-outline-list" class="reader-outline-links" aria-label="Essay sections">'+links+'</nav></div>'
 
 def narrator(post):
