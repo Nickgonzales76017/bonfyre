@@ -4,6 +4,10 @@ on:
     branches: [main]
     paths:
       - 'editorial/posts/**'
+      - 'editorial/authors/**'
+      - 'scripts/editorial_publication.py'
+      - 'scripts/tests/editorial-publication-bridge.py'
+      - 'site/blog/authors.css'
       - 'editorial/reading-bridges.tsv'
       - 'scripts/tests/journal-discoverability.py'
       - 'scripts/tests/editorial-*.py'
@@ -52,7 +56,7 @@ jobs:
           test "$(grep -c '^post:' site/blog/post-index.tsv)" -eq "$expected"
           test "$(grep -c '<item>' site/blog/feed.xml)" -eq "$expected"
           # Journal landing, About, Series, and Connections atlas supplement the article URLs.
-          test "$(grep -c '<url>' site/blog/sitemap.xml)" -eq "$((expected+4))"
+          test "$(grep -c '<url>' site/blog/sitemap.xml)" -eq "$((expected+6))"
           test "$(wc -l < site/blog/post-index.tsv)" -eq "$((expected+1))"
           grep -q "All articles / $expected" site/blog/index.html
           grep -q 'data-filter="Debates"' site/blog/index.html
@@ -92,8 +96,17 @@ jobs:
         run: node --test scripts/tests/pages-source-freshness.test.mjs
       - name: Check media server HTTP range and loading semantics
         run: node --test scripts/tests/range-static-site.test.mjs
+      - name: Verify native CMS draft records and source-owned author profiles
+        run: python3 scripts/tests/editorial-publication-bridge.py
       - name: Verify static-site readback harness against local fixtures
         run: node --test scripts/tests/public-pages-live-readback.test.mjs
+      - name: Preserve reviewable native CMS draft projection
+        uses: actions/upload-artifact@v4
+        with:
+          name: journal-native-cms-draft
+          path: build/publication/
+          retention-days: 30
+          if-no-files-found: error
       - name: Archive website output
         uses: actions/upload-artifact@v4
         with:

@@ -153,6 +153,8 @@ jobs:
           test "$(grep -c '^post:' site/blog/post-index.tsv)" -eq "$(grep -l 'status: edited-public' editorial/posts/*.md | wc -l)"
           test "$(grep -c '<item>' site/blog/feed.xml)" -eq "$(grep -l '^status: edited-public$' editorial/posts/*.md | wc -l)"
           grep -q "All articles / $(grep -l '^status: edited-public$' editorial/posts/*.md | wc -l)" site/blog/index.html
+      - name: Verify 66 articles and public author profiles have safe native drafts
+        run: python3 scripts/tests/editorial-publication-bridge.py
       - name: Browser-check Fieldwork stories and cross-site search
         if: steps.retention.outputs.superseded != 'true'
         shell: bash
