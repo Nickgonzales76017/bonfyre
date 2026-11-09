@@ -2,13 +2,18 @@ CC      ?= cc
 CFLAGS  ?= -O2 -Wall -Wextra -std=c11 -ffunction-sections -fdata-sections -I../../lib/libbonfyre/include -I../../engine/core/include
 LDFLAGS ?= ../../lib/libbonfyre/libbonfyre.a -lsqlite3
 TARGET   = bonfyre-auth
+# Mach-O and ELF use different section-garbage-collection linker flags.
+DEAD_STRIP := -Wl,--gc-sections
+ifeq ($(shell uname -s),Darwin)
+DEAD_STRIP := -Wl,-dead_strip
+endif
 
 .PHONY: all clean test
 
 all: $(TARGET)
 
 $(TARGET): src/main.c src/institution_members.h src/organization_workspace.h src/session_handoff.h src/background_access.h ../BonfyreCMS/src/household_access.h
-	$(CC) $(CFLAGS) -Wl,-dead_strip -o $@ $< $(LDFLAGS)
+	$(CC) $(CFLAGS) $(DEAD_STRIP) -o $@ $< $(LDFLAGS)
 
 clean:
 	rm -f $(TARGET)
