@@ -47,6 +47,23 @@ int main(void){
  ck(bf_authoring_tree_remove(t,"section-a"),"remove subtree");
  ck(t->count==1&&bf_authoring_tree_index(t,"section-b")==0,"subtree removed");
  ck(bf_authoring_tree_index(other,"other")==0,"second account isolated");
+ // Non-subtree nodes interleaved with descendants must not overwrite
+ // intermediate parent information while the deletion walk is in progress.
+ BfAuthoringTree *mix=calloc(1,sizeof(*mix));ck(mix!=NULL,"interleaved allocation");
+ ck(bf_authoring_tree_add(mix,"root-a","profile-section",NULL,0),"interleaved root");
+ ck(bf_authoring_tree_add(mix,"other-one","profile-card",NULL,1),"unrelated first");
+ ck(bf_authoring_tree_add(mix,"branch-c","profile-section","root-a",0),"nested section");
+ ck(bf_authoring_tree_add(mix,"other-two","profile-card",NULL,2),"unrelated second");
+ ck(bf_authoring_tree_add(mix,"other-three","profile-card",NULL,3),"unrelated third");
+ ck(bf_authoring_tree_add(mix,"leaf-d","profile-card","branch-c",0),"late grandchild");
+ ck(bf_authoring_tree_remove(mix,"root-a"),"remove interleaved subtree");
+ ck(mix->count==3,"interleaved subtree count");
+ ck(bf_authoring_tree_index(mix,"leaf-d")<0,"late descendant removed");
+ ck(bf_authoring_tree_index(mix,"branch-c")<0,"intermediate removed");
+ View m={0};ck(bf_authoring_tree_walk(mix,visitor,&m),"interleaved walk");
+ ck(strstr(m.sequence,"other-one")&&strstr(m.sequence,"other-two")&&
+    strstr(m.sequence,"other-three"),"retained unrelated roots");
+ bf_authoring_tree_clear(mix);free(mix);
  bf_authoring_tree_clear(copy);bf_authoring_tree_clear(t);bf_authoring_tree_clear(other);
  free(copy);free(t);free(other);
  puts("native authoring tree PASS");return 0;

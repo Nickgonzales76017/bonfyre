@@ -175,12 +175,16 @@ static inline void bf_authoring_tree_reindex(BfAuthoringTree *t){
 }
 static inline int bf_authoring_tree_remove(BfAuthoringTree *t,const char *id){
  if(bf_authoring_tree_index(t,id)<0)return 0;
- size_t write=0,old=t->count;
+ // Snapshot ancestry before compaction: an earlier unrelated move must not
+ // erase a parent needed to recognize a later descendant.
+ const size_t old=t->count;
+ unsigned char removed[BF_AUTHORING_TREE_MAX]={0};
+ for(size_t i=0;i<old;i++)
+  removed[i]=(unsigned char)bf_authoring_tree_contains(t,id,t->nodes[i].id);
+ size_t write=0;
  for(size_t i=0;i<old;i++){
   BfAuthoringNode *n=&t->nodes[i];
-  if(bf_authoring_tree_contains(t,id,n->id)){
-   free(n->heading);free(n->body);continue;
-  }
+  if(removed[i]){free(n->heading);free(n->body);continue;}
   if(write!=i)t->nodes[write]=*n;
   write++;
  }
