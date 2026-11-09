@@ -108,7 +108,7 @@ export async function mountAurekaiAuthoring(root,{initial,loaders=deps,onReview,
  desk.append(toolbar,statusBox,stage);
  root.replaceChildren(desk);
  function bindModes(){
-  for(const [key,label]of [["grapesjs","Design"],["puck","Structure"],["editorjs","Article"]])
+  for(const [key,label]of [["grapesjs","Design"],["puck","Structure"],["editorjs","Article"],["markdown","Markdown source"]])
    modeButtons[key]=makeButton(label,modeBar,()=>{void switchMode(key);});
   controls.set("undo",makeButton("Undo",actions,()=>{void history("undo");}));
   controls.set("redo",makeButton("Redo",actions,()=>{void history("redo");}));
@@ -123,6 +123,7 @@ export async function mountAurekaiAuthoring(root,{initial,loaders=deps,onReview,
   controls.get("review").disabled=busy;
   if(controls.has("preview"))controls.get("preview").disabled=busy;
   controls.get("save").disabled=busy;
+  modeButtons.markdown.disabled=busy||!all(session.snapshot()).some(n=>n.props.metadata?.format==="markdown");
   for(const [name,button]of Object.entries(modeButtons))
    button.setAttribute("aria-current",String(mode===name));
  }
@@ -224,12 +225,50 @@ export async function mountAurekaiAuthoring(root,{initial,loaders=deps,onReview,
   return {hasPending:()=>articleDirty,flush:saveArticle,
    destroy:async()=>{await current.isReady;current.destroy();}};
  }
+ async function openMarkdown(){
+  const snapshot=session.snapshot(),sources=all(snapshot).filter(n=>n.props.metadata?.format==="markdown");
+  if(!sources.length)throw Error("There is no source-backed Markdown in this page");
+  selected=sources.some(n=>n.id===selected)?selected:sources[0].id;
+  const label=element("label","authoring-source-label",
+   "Complete Markdown and frontmatter · original source lineage retained");
+  const picker=element("select","authoring-article-selector");
+  for(const item of sources){
+   const option=element("option","",item.props.heading||item.id);
+   option.value=item.id;option.selected=item.id===selected;picker.append(option);
+  }
+  const source=element("textarea","authoring-markdown-source");
+  source.setAttribute("aria-label","Complete source Markdown");
+  source.setAttribute("spellcheck","false");
+  const read=()=>find(session.snapshot().blocks,selected)?.props.body||"";
+  let baseline=read();source.value=baseline;
+  stage.append(label,picker,source);
+  source.addEventListener("input",()=>dirtyControls());
+  async function flushSource(){
+   if(source.value===baseline)return;
+   if(!globalThis.crypto?.subtle)throw Error("Browser SHA-256 is unavailable");
+   const digest=await globalThis.crypto.subtle.digest("SHA-256",
+    new TextEncoder().encode(source.value));
+   const sha=[...new Uint8Array(digest)].map(x=>x.toString(16).padStart(2,"0")).join("");
+   const doc=session.snapshot(),node=find(doc.blocks,selected);
+   if(!node||node.props.metadata?.format!=="markdown")throw Error("Markdown ownership changed");
+   node.props.body=source.value;
+   node.props.metadata={...node.props.metadata,draft_sha256:sha,
+    changed_from_original:true,publication:"review-required"};
+   await apply(validateAuthoringTree(doc));
+   baseline=source.value;
+  }
+  picker.addEventListener("change",()=>{void (async()=>{
+   await flushSource();selected=picker.value;
+   baseline=read();source.value=baseline;dirtyControls();
+  })().catch(error=>status(ui,error.message,true));});
+  return {hasPending:()=>source.value!==baseline,flush:flushSource,destroy:()=>{}};
+ }
  async function switchMode(next){
-  if(busy||!["grapesjs","puck","editorjs"].includes(next))return;
+  if(busy||!["grapesjs","puck","editorjs","markdown"].includes(next))return;
   busy=true;dirtyControls();
   try{
    await flush();await destroy();mode=next;
-   mounted=await ({grapesjs:openGrapes,puck:openPuck,editorjs:openArticle}[next])();
+   mounted=await ({grapesjs:openGrapes,puck:openPuck,editorjs:openArticle,markdown:openMarkdown}[next])();
    status(ui,"Editing "+next+" · same Aurekai draft.");
   }catch(e){status(ui,e.message,true);}
   finally{busy=false;dirtyControls();}
@@ -243,7 +282,7 @@ export async function mountAurekaiAuthoring(root,{initial,loaders=deps,onReview,
    await flush();
    if(!session[direction]())return false;
    await destroy();
-   mounted=await ({grapesjs:openGrapes,puck:openPuck,editorjs:openArticle}[mode])();
+   mounted=await ({grapesjs:openGrapes,puck:openPuck,editorjs:openArticle,markdown:openMarkdown}[mode])();
    status(ui,direction==="undo"?"Edit undone.":"Edit restored.");
    return true;
   }catch(e){status(ui,e.message,true);return false;}
