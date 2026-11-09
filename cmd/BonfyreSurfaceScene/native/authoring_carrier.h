@@ -205,13 +205,22 @@ static int bf_safe_https(const char *s){
 /* Source Markdown is a typed retained value; native MD4C changes only its
  * preview. Raw HTML is disabled; external media become rights-held placeholders.
  */
-typedef struct {FILE *stream;size_t used;int failed;} BfMarkdownSink;
+typedef struct {char *bytes;size_t used,capacity;int failed;} BfMarkdownSink;
 static void bf_md_output(const MD_CHAR *data,MD_SIZE length,void *context){
  BfMarkdownSink *sink=(BfMarkdownSink*)context;
+ size_t amount=(size_t)length;
  if(sink->failed)return;
- if((size_t)length>1048576u-sink->used||
-    fwrite(data,1,(size_t)length,sink->stream)!=(size_t)length){sink->failed=1;return;}
- sink->used+=(size_t)length;
+ if(amount>1048576u-sink->used){sink->failed=1;return;}
+ size_t required=sink->used+amount;
+ if(required>sink->capacity){
+  size_t capacity=sink->capacity?sink->capacity:4096;
+  while(capacity<required)capacity*=2;
+  char *newbytes=(char *)realloc(sink->bytes,capacity);
+  if(!newbytes){sink->failed=1;return;}
+  sink->bytes=newbytes;sink->capacity=capacity;
+ }
+ if(amount)memcpy(sink->bytes+sink->used,data,amount);
+ sink->used=required;
 }
 static int bf_md_safe_url(const char *s,size_t n){
  if(!s||!n||n>1800)return 0;
@@ -257,16 +266,13 @@ static int bf_render_markdown(FILE *out,const char *original,int frontmatter){
   if(!end)return 0;
   body=end+5;
  }
- char *html=NULL;size_t size=0;FILE *mem=open_memstream(&html,&size);
- if(!mem)return 0;
- BfMarkdownSink sink={.stream=mem,.used=0,.failed=0};
+ BfMarkdownSink sink={0};
  const unsigned flags=MD_FLAG_NOHTML|MD_FLAG_TABLES|MD_FLAG_STRIKETHROUGH|MD_FLAG_TASKLISTS;
  int status=md_html(body,(MD_SIZE)strlen(body),bf_md_output,&sink,flags,0);
- if(fclose(mem))status=-1;
- if(status||sink.failed||!html){free(html);return 0;}
+ if(status||sink.failed){free(sink.bytes);return 0;}
  fputs("<div class=\"bf-markdown\">",out);
- int safe=bf_md_verified_markup(out,html,size);
- fputs("</div>",out);free(html);
+ int safe=bf_md_verified_markup(out,sink.bytes?sink.bytes:"",sink.used);
+ fputs("</div>",out);free(sink.bytes);
  return safe&&!ferror(out);
 }
 static int bf_inline(FILE *f,const char *s){
