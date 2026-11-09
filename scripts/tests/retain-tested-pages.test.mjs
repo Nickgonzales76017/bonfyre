@@ -66,14 +66,14 @@ scenario('a real generated-file conflict aborts without overwriting upstream',f=
 scenario('a competing authored homepage is preserved while its tested generated cards are rebuilt',f=>{
  const verify=()=>{
    const contents=readFileSync(join(f.one,'site/index.txt'),'utf8');
-   const authored=contents.split('\\n[generated]')[0];
+   const authored=contents.split('\n[generated]')[0];
    const source=readFileSync(join(f.one,'source.txt'),'utf8');
-   writeFileSync(join(f.one,'site/index.txt'),authored+'\\n[generated]'+source);
+   writeFileSync(join(f.one,'site/index.txt'),authored+'\n[generated]'+source);
  };
  const result=run(f,{verify,reconcileGeneratedPaths:['site/index.txt'],
    beforePush:n=>{if(n===1)f.change('site/index.txt','updated page written by the editor');}});
  assert.equal(result.attempts,2);
- assert.equal(f.current('site/index.txt'),'updated page written by the editor\\n[generated]one');
+ assert.equal(f.current('site/index.txt'),'updated page written by the editor\n[generated]one');
  assert.equal(f.current('source.txt'),'one');
 });
 scenario('an unexpected generated-file conflict still fails when homepage recovery is enabled',f=>{
