@@ -18,6 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       latest: ${{ steps.source.outputs.latest }}
+      editorial_only: ${{ steps.scope.outputs.editorial_only }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -30,6 +31,13 @@ jobs:
           git fetch --no-tags origin '+refs/heads/main:refs/remotes/origin/main'
           upstream="$(git rev-parse refs/remotes/origin/main)"
           node scripts/pages-source-freshness.mjs "$GITHUB_SHA" "$upstream" >> "$GITHUB_OUTPUT"
+      - name: Prove editorial-only scope against retained artifact receipts
+        id: scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test scripts/tests/pages-editorial-scope.test.mjs
+          node scripts/pages-editorial-scope.mjs >> "$GITHUB_OUTPUT"
   deploy:
     needs: current
     if: ${{ needs.current.outputs.latest == 'true' }}
@@ -59,25 +67,26 @@ jobs:
           node --test scripts/tests/showcase-directory.test.mjs scripts/tests/retain-tested-pages.test.mjs scripts/tests/component-contracts.test.mjs scripts/tests/workspace-composition.test.mjs scripts/tests/instruments-core.test.mjs
           test -f site/spaces/RELEASE.tsv
       - name: Detect retained helper dependencies
+        if: ${{ needs.current.outputs.editorial_only != 'true' }}
         id: helpers
         run: |
           if test -f vendor/spaces-helpers-20261015/SOURCE.txt; then echo 'needed=false' >> "$GITHUB_OUTPUT"; else echo 'needed=true' >> "$GITHUB_OUTPUT"; fi
       - uses: actions/download-artifact@v4
-        if: steps.helpers.outputs.needed == 'true'
+        if: ${{ needs.current.outputs.editorial_only != 'true' && steps.helpers.outputs.needed == 'true' }}
         with:
           name: spaces-helper-inputs
           run-id: 38803211793
           github-token: ${{ github.token }}
           path: studio-inputs/archives
       - uses: actions/download-artifact@v4
-        if: steps.helpers.outputs.needed == 'true'
+        if: ${{ needs.current.outputs.editorial_only != 'true' && steps.helpers.outputs.needed == 'true' }}
         with:
           name: product-scene-public-inputs
           run-id: 38791615713
           github-token: ${{ github.token }}
           path: studio-inputs/retained
       - name: Verify archives and extract without installation scripts
-        if: steps.helpers.outputs.needed == 'true'
+        if: ${{ needs.current.outputs.editorial_only != 'true' && (steps.helpers.outputs.needed == 'true') }}
         shell: bash
         run: |
           set -euo pipefail
@@ -97,6 +106,7 @@ jobs:
           tar -xzf studio-inputs/archives/pmndrs-vanilla-1.25.0.tgz -C studio-inputs/drei
           tar -xzf studio-inputs/retained/upstream/three-0.180.0.tgz -C studio-inputs/three
       - name: Build immutable studio UI packages
+        if: ${{ needs.current.outputs.editorial_only != 'true' }}
         run: |
           node --check components/BonfyreServiceSite/product-scene-tools.mjs
           node --check scripts/upgrade-spaces.mjs
@@ -105,6 +115,7 @@ jobs:
       - name: Install pinned browser driver and SQLite without lifecycle scripts
         run: npm install --prefix .spaces-tools --ignore-scripts --no-audit --no-fund playwright@1.56.1 sql.js@1.13.0
       - name: Build and verify the four working instruments
+        if: ${{ needs.current.outputs.editorial_only != 'true' }}
         env:
           INSTRUMENT_REQUIRE_SQLITE: '1'
         run: |
@@ -113,6 +124,7 @@ jobs:
           export CHROME_PATH="$(command -v google-chrome)"
           node scripts/tests/instruments-browser.mjs
       - name: Verify rendered product and room interactions before publication
+        if: ${{ needs.current.outputs.editorial_only != 'true' }}
         env:
           SPACES_STUDIO_REQUIRED: '1'
         run: |
@@ -120,11 +132,13 @@ jobs:
           export CHROME_PATH="$(command -v google-chrome)"
           node scripts/tests/spaces-live-browser.mjs
       - name: Connect showcase entries to the tested releases
+        if: ${{ needs.current.outputs.editorial_only != 'true' }}
         run: |
           node scripts/prepare-spaces-discovery.mjs
           node scripts/prepare-instruments-discovery.mjs
           node --test scripts/tests/showcase-directory.test.mjs
       - name: Retain tested release and helper licences
+        if: ${{ needs.current.outputs.editorial_only != 'true' }}
         id: retention
         shell: bash
         env:
@@ -137,7 +151,7 @@ jobs:
           export CHROME_PATH="$(command -v google-chrome)"
           node scripts/retain-tested-pages.mjs
       - name: Verify final composed workspaces and retained editors
-        if: steps.retention.outputs.superseded != 'true'
+        if: ${{ needs.current.outputs.editorial_only != 'true' && (steps.retention.outputs.superseded != 'true') }}
         env:
           WORKSPACE_EVIDENCE: workspace-evidence
         run: |
@@ -317,7 +331,7 @@ jobs:
           PUBLIC_PAGES_EVIDENCE: spaces-live-evidence
         run: node scripts/public-pages-live-readback.mjs
       - name: Verify the actual public studio
-        if: steps.retention.outputs.superseded != 'true'
+        if: ${{ needs.current.outputs.editorial_only != 'true' && (steps.retention.outputs.superseded != 'true') }}
         env:
           SPACES_ORIGIN: https://nickgonzales76017.github.io
           SPACES_EVIDENCE: spaces-live-evidence
@@ -327,7 +341,7 @@ jobs:
           export CHROME_PATH="$(command -v google-chrome)"
           node scripts/tests/spaces-live-browser.mjs
       - name: Verify the public composed workflows
-        if: steps.retention.outputs.superseded != 'true'
+        if: ${{ needs.current.outputs.editorial_only != 'true' && (steps.retention.outputs.superseded != 'true') }}
         env:
           WORKSPACE_ORIGIN: https://nickgonzales76017.github.io
           WORKSPACE_EVIDENCE: workspace-live-evidence
@@ -337,7 +351,7 @@ jobs:
           node scripts/tests/workspace-composition-browser.mjs
           node scripts/tests/workspace-docking-browser.mjs
       - name: Verify actual public instruments and downloaded results
-        if: steps.retention.outputs.superseded != 'true'
+        if: ${{ needs.current.outputs.editorial_only != 'true' && (steps.retention.outputs.superseded != 'true') }}
         env:
           INSTRUMENT_ORIGIN: https://nickgonzales76017.github.io/bonfyre/instruments/
           INSTRUMENT_EVIDENCE: instrument-live-evidence

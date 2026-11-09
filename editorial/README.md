@@ -61,3 +61,7 @@ The player uses one house voice, real duration and seeking, playback speed, a na
 The canonical Journal landing is `editorial/templates/journal-index.html`, never the previously generated `site/blog/index.html`. The builder composes this authored source with reviewed articles, palettes, credited media, authors and reading relationships. A build cannot inherit stale cards or controls from the previous publish.
 
 Native BonfyreCMS drafts now retain each article's presentation choice, credited media (when present), and recorded audio metadata (when present), with exact source-file digests. These records remain `draft`, not live publication or rights clearance by themselves.
+
+## Reuse verified releases for editorial-only changes
+
+The Pages current-source job uses `scripts/pages-editorial-scope.mjs` to compare the source with the last exact bot-authored studio/instrument release. Only journal-source edits are eligible for a fast publish, and the retained studio and instrument manifests are rechecked by exact file size and SHA-256. Manual dispatch, missing receipts, Pages pipeline changes, native changes and application edits run the complete studio build. Both branches regenerate the Journal, verify its native drafts, check browser behavior, deploy and run public readback. This is a reuse of existing verified artifacts, not an inferred live provider or publication grant.
