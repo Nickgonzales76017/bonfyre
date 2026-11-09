@@ -18,7 +18,9 @@ function run(bin,args){
  return p;
 }
 run(process.env.CC||"cc",["-std=c11","-Wall","-Wextra","-Werror",
- join(root,"tests/native_authoring_carrier_main.c"),"-o",exe]);
+ join(root,"tests/native_authoring_carrier_main.c"),
+ join(root,"vendor/md4c/md4c.c"),join(root,"vendor/md4c/md4c-html.c"),
+ join(root,"vendor/md4c/entity.c"),"-o",exe]);
 const sha=x=>createHash("sha256").update(x).digest("hex");
 let receipts="site\troute\tcarrier_sha256\tpreview_sha256\n";
 for(const [name,create] of [["journal",journalScene],["profile",profileScene]]){

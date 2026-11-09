@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <ctype.h>
+#include "../vendor/md4c/md4c-html.h"
 #include "../../BonfyreWebAddress/generated/native_authoring_tree.h"
 
 #define BF_WIRE_LIMIT (4u * 1024u * 1024u)
@@ -201,6 +202,73 @@ static int bf_safe_https(const char *s){
   if(*p<=32||*p=='<'||*p=='>'||*p=='"'||*p=='\''||*p=='\\')return 0;
  return 1;
 }
+/* Source Markdown is a typed retained value; native MD4C changes only its
+ * preview. Raw HTML is disabled; external media become rights-held placeholders.
+ */
+typedef struct {FILE *stream;size_t used;int failed;} BfMarkdownSink;
+static void bf_md_output(const MD_CHAR *data,MD_SIZE length,void *context){
+ BfMarkdownSink *sink=(BfMarkdownSink*)context;
+ if(sink->failed)return;
+ if((size_t)length>1048576u-sink->used||
+    fwrite(data,1,(size_t)length,sink->stream)!=(size_t)length){sink->failed=1;return;}
+ sink->used+=(size_t)length;
+}
+static int bf_md_safe_url(const char *s,size_t n){
+ if(!s||!n||n>1800)return 0;
+ char value[1801];memcpy(value,s,n);value[n]='\0';
+ if(strstr(value,"&#")||strstr(value,"&colon;"))return 0;
+ for(size_t i=0;i<n;i++)
+  if((unsigned char)value[i]<32||value[i]=='\\'||value[i]=='"'||
+     value[i]=='\''||value[i]=='<'||value[i]=='>')return 0;
+ if(!strncmp(value,"https://",8)||!strncmp(value,"http://",7)){
+  const char *authority=strstr(value,"://")+3;
+  return *authority&&strchr(authority,'.')&&!strchr(authority,'@');
+ }
+ if(!strncmp(value,"mailto:",7))return strchr(value+7,'@')!=NULL;
+ if(value[0]=='/'&&value[1]=='/')return 0;
+ return !strchr(value,':')&&!strstr(value,"//");
+}
+static int bf_md_verified_markup(FILE *out,const char *html,size_t n){
+ const char *end=html+n;
+ for(const char *p=html;p<end;){
+  if(end-p>=4&&!strncmp(p,"<img",4)){
+   const char *close=memchr(p,'>',(size_t)(end-p));
+   if(!close||close-p>4096)return 0;
+   fputs("<span class=\"bf-media-pending\">Referenced image held for rights review</span>",out);
+   p=close+1;continue;
+  }
+  if(end-p>=6&&!strncmp(p,"href=\"",6)){
+   const char *start=p+6,*close=memchr(start,'"',(size_t)(end-start));
+   if(!close||!bf_md_safe_url(start,(size_t)(close-start)))return 0;
+   fwrite(p,1,(size_t)(close+1-p),out);p=close+1;continue;
+  }
+  if(end-p>=5&&!strncmp(p,"src=\"",5))return 0;
+  if(end-p>=7&&!strncmp(p,"<script",7))return 0;
+  fputc(*p++,out);
+ }
+ return !ferror(out);
+}
+static int bf_render_markdown(FILE *out,const char *original,int frontmatter){
+ if(!original)return 0;
+ const char *body=original;
+ if(frontmatter){
+  if(strncmp(original,"---\n",4))return 0;
+  const char *end=strstr(original+4,"\n---\n");
+  if(!end)return 0;
+  body=end+5;
+ }
+ char *html=NULL;size_t size=0;FILE *mem=open_memstream(&html,&size);
+ if(!mem)return 0;
+ BfMarkdownSink sink={.stream=mem,.used=0,.failed=0};
+ const unsigned flags=MD_FLAG_NOHTML|MD_FLAG_TABLES|MD_FLAG_STRIKETHROUGH|MD_FLAG_TASKLISTS;
+ int status=md_html(body,(MD_SIZE)strlen(body),bf_md_output,&sink,flags,0);
+ if(fclose(mem))status=-1;
+ if(status||sink.failed||!html){free(html);return 0;}
+ fputs("<div class=\"bf-markdown\">",out);
+ int safe=bf_md_verified_markup(out,html,size);
+ fputs("</div>",out);free(html);
+ return safe&&!ferror(out);
+}
 static int bf_inline(FILE *f,const char *s){
  // Editor.js permits a small inline formatting alphabet. This parser only
  // emits its known tags, escapes every other byte, and rejects unsafe links.
@@ -319,6 +387,8 @@ static int bf_render_node(FILE *f,const BfWireScene *s,const BfWireNode *n,int d
  const char *tag=bf_semantic_tag(n->kind),*heading=bf_wire_val(n,"/props/heading");
  const char *body=bf_wire_val(n,"/props/body"),*variant=bf_wire_val(n,"/props/variant");
  const char *eyebrow=bf_wire_val(n,"/props/eyebrow");
+ const char *source_format=bf_wire_val(n,"/props/metadata/format");
+ int is_markdown=source_format&&!strcmp(source_format,"markdown");
  if(!variant)variant="paper";
  if(!bf_wire_token(variant))return 0;
  const char *layouts[3];const char *devices[]={"desktop","tablet","phone"};
@@ -349,7 +419,7 @@ static int bf_render_node(FILE *f,const BfWireScene *s,const BfWireNode *n,int d
  if(ref){fputs("<span class=\"bf-source\" data-source-ref=\"",f);bf_html_escape(f,ref);
   fputs("\">Source retained · publication rights separately reviewed</span>",f);}
  if(eyebrow&&*eyebrow){fputs("<p class=\"bf-eyebrow\">",f);bf_html_escape(f,eyebrow);fputs("</p>",f);}
- if(heading&&*heading){
+ if(!is_markdown&&heading&&*heading){
   const char *h=!strcmp(tag,"header")?"h1":"h2";
   fprintf(f,"<%s>",h);bf_html_escape(f,heading);fprintf(f,"</%s>",h);
  }
@@ -361,9 +431,12 @@ static int bf_render_node(FILE *f,const BfWireScene *s,const BfWireNode *n,int d
   const char *caption=bf_wire_val(n,"/props/caption");
   if(caption&&*caption){fputs("<figcaption>",f);bf_html_escape(f,caption);fputs("</figcaption>",f);}
  }
- int result=bf_render_editorial(f,n);
- if(!result)return 0;
- if(result==-1&&body&&*body){
+ int result=0;
+ if(is_markdown){
+  if(!bf_render_markdown(f,body,bf_wire_bool(n,"/props/metadata/frontmatter")))return 0;
+ }else result=bf_render_editorial(f,n);
+ if(!is_markdown&&!result)return 0;
+ if(!is_markdown&&result==-1&&body&&*body){
   fputs("<div class=\"bf-prose\">",f);
   const char *start=body,*p=body;
   while(1){
@@ -433,6 +506,14 @@ static int bf_wire_render(FILE *f,const BfWireScene *s){
  ".bf-block pre{overflow:auto;background:#14282d;color:white;padding:20px}"
  ".bf-block table{border-collapse:collapse;width:100%}.bf-block td,.bf-block th{text-align:left;border-bottom:1px solid #d2d5d0;padding:10px}"
  ".bf-table-scroll{max-width:100%;overflow-x:auto}"
+ ".bf-markdown{font:1.13rem/1.78 Georgia,serif;max-width:77ch;margin:auto}"
+ ".bf-markdown h2{font:600 clamp(29px,3vw,42px)/1.18 Georgia,serif;margin:1.7em 0 .6em}"
+ ".bf-markdown h3{font:600 1.45rem/1.3 Georgia,serif;margin:1.3em 0 .5em}"
+ ".bf-markdown a{color:inherit;text-decoration-color:#ae824f;text-underline-offset:3px}"
+ ".bf-markdown p{margin:1.1em 0}.bf-markdown li{margin:.5em 0}"
+ ".bf-markdown ul,.bf-markdown ol{padding-left:1.6em}"
+ ".bf-markdown blockquote{font-style:italic;margin:1.5em 0}"
+ ".bf-markdown table{display:block;max-width:100%;overflow-x:auto}"
  ".bf-block[data-layout-desktop=grid]>.bf-children,.bf-block[data-layout-desktop=columns]>.bf-children{display:grid;grid-template-columns:repeat(var(--bf-col-d),minmax(0,1fr));gap:24px}"
  "@media(max-width:1000px){.bf-block[data-layout-tablet=grid]>.bf-children{display:grid;grid-template-columns:repeat(var(--bf-col-t),minmax(0,1fr))}}"
  "@media(max-width:680px){main{padding:16px}.bf-block{padding:var(--bf-pad-p,0px)}"

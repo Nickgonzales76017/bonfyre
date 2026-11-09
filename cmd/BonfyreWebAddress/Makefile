@@ -53,6 +53,8 @@ OBJECTS := $(WEB_OBJECTS) $(CORE_OBJECTS) build/lib_bf_sha256.o build/lib_bf_sta
 OBJECTS += build/public_qr.o build/campaign_link.o build/lib_bf_utf8.o build/account_world.o
 OBJECTS += build/account_world_audio.o
 OBJECTS += build/account_world_literature.o
+MD4C_DIR := ../BonfyreSurfaceScene/vendor/md4c
+OBJECTS += build/md4c_parser.o build/md4c_html.o build/md4c_entity.o
 # These inputs are prepared explicitly once from verified retained bodies or
 # the pinned upstream release. Normal builds never contact an external source.
 .PHONY: public-code-inputs prepare-public-code
@@ -409,6 +411,12 @@ build/compact/lib_bf_jsonw.o: $(ROOT)/lib/libbonfyre/bf_jsonw.c | build/compact
 	$(CC) $(COMPACT_FLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
 build/compact/lib_bf_msgpack.o: $(ROOT)/lib/libbonfyre/bf_msgpack.c | build/compact
 	$(CC) $(COMPACT_FLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
+build/compact/md4c_parser.o: $(MD4C_DIR)/md4c.c $(MD4C_DIR)/md4c.h | build/compact
+	$(CC) $(filter-out -Werror,$(COMPACT_FLAGS)) -c $< -o $@
+build/compact/md4c_html.o: $(MD4C_DIR)/md4c-html.c $(MD4C_DIR)/md4c-html.h $(MD4C_DIR)/entity.h | build/compact
+	$(CC) $(filter-out -Werror,$(COMPACT_FLAGS)) -c $< -o $@
+build/compact/md4c_entity.o: $(MD4C_DIR)/entity.c $(MD4C_DIR)/entity.h | build/compact
+	$(CC) $(filter-out -Werror,$(COMPACT_FLAGS)) -c $< -o $@
 build/compact/web_%.o: src/%.c | build/compact
 	$(CC) $(COMPACT_FLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
 build/compact/core_%.o: $(ROOT)/engine/core/src/%.c | build/compact
@@ -460,6 +468,13 @@ build/address_resolve.o: ../BonfyreExternalEstate/src/address_resolve.c ../Bonfy
 	$(CC) $(CFLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
 build/record_factor.o: ../BonfyreCompress/src/record_factor.c ../BonfyreCompress/src/record_factor.h | build
 	$(CC) $(CFLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
+build/md4c_parser.o: $(MD4C_DIR)/md4c.c $(MD4C_DIR)/md4c.h | build
+	$(CC) $(filter-out -Werror,$(CFLAGS)) -c $< -o $@
+build/md4c_html.o: $(MD4C_DIR)/md4c-html.c $(MD4C_DIR)/md4c-html.h $(MD4C_DIR)/entity.h | build
+	$(CC) $(filter-out -Werror,$(CFLAGS)) -c $< -o $@
+build/md4c_entity.o: $(MD4C_DIR)/entity.c $(MD4C_DIR)/entity.h | build
+	$(CC) $(filter-out -Werror,$(CFLAGS)) -c $< -o $@
+build/web_main.o build/compact/web_main.o: ../BonfyreSurfaceScene/native/authoring_carrier.h $(MD4C_DIR)/md4c-html.h
 build/web_%.o: src/%.c | build
 	$(CC) $(CFLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
 build/core_%.o: $(ROOT)/engine/core/src/%.c | build

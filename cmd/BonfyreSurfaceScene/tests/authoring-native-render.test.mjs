@@ -16,7 +16,9 @@ function execute(bin,args){
 function build(){
  const exe=join(temp,"authoring-preview");
  const cc=execute(process.env.CC||"cc",["-std=c11","-Wall","-Wextra","-Werror",
-  join(root,"tests/native_authoring_carrier_main.c"),"-o",exe]);
+  join(root,"tests/native_authoring_carrier_main.c"),
+  join(root,"vendor/md4c/md4c.c"),join(root,"vendor/md4c/md4c-html.c"),
+  join(root,"vendor/md4c/entity.c"),"-o",exe]);
  assert.equal(cc.status,0,"native C compile failed "+cc.stderr);
  return exe;
 }
