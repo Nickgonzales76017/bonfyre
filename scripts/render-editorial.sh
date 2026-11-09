@@ -151,8 +151,8 @@ def parse_doc(path):
     return meta
 
 posts = [p for p in (parse_doc(path) for path in sorted(SOURCE.glob("*.md"))) if p]
-if len(posts) < 46:
-    raise ValueError(f"Expected 46 edited articles, found {len(posts)}")
+if len(posts) < 90:
+    raise ValueError(f"Expected at least 90 edited articles, found {len(posts)}")
 if len({p["slug"] for p in posts}) != len(posts):
     raise ValueError("Duplicate public article slug")
 posts.sort(key=lambda p: (p["published"], p["title"].lower()), reverse=True)
@@ -700,6 +700,64 @@ placeholder="e.g. publishing, rights, agents, archives…">
 </body></html>'''
 
 
+# Domain investigations use reviewed, source-owned editorial lenses rather than
+# guessing a category or a connection from the title.
+COMPLEXITY_PATH = ROOT / "editorial" / "complexity-lenses.tsv"
+DOMAIN_LENSES = {}
+for number,line in enumerate(COMPLEXITY_PATH.read_text(encoding="utf-8").splitlines(),1):
+    if not line or line.startswith("#") or line=="slug\tdomain\tlens\tquestion":
+        continue
+    fields=line.split("\t")
+    if len(fields)!=4:
+        raise ValueError(f"Invalid investigation lens row {number}")
+    slug,domain,lens,question=[v.strip() for v in fields]
+    if slug not in POST_BY_SLUG or slug in DOMAIN_LENSES or not domain or not lens or not question.endswith("?"):
+        raise ValueError(f"Unreviewed investigation lens at row {number}")
+    DOMAIN_LENSES[slug]=(domain,lens,question)
+if len(DOMAIN_LENSES)<24:
+    raise ValueError("Investigation library must retain the full editorial starting cohort")
+
+def complexity_guide_page():
+    domains=list(dict.fromkeys(v[0] for v in DOMAIN_LENSES.values()))
+    blocks=[]
+    for number,domain in enumerate(domains,1):
+        cards=[]
+        for slug,(section,lens,question) in DOMAIN_LENSES.items():
+            if section!=domain: continue
+            post=POST_BY_SLUG[slug]
+            outgoing=EDITORIAL_BRIDGES.get(slug,[])
+            connection=outgoing[0] if outgoing else None
+            related=('<p class="lens-related">Related reading: <a href="../'+esc(connection["to"])+'/">'+
+                     esc(POST_BY_SLUG[connection["to"]]["title"])+'</a></p>') if connection else ''
+            cards.append('<article class="lens-card"><div class="lens-card-meta"><span>'+esc(lens)+
+                '</span><span>'+esc(post["category"])+'</span></div><h3><a href="../'+esc(slug)+
+                '/">'+esc(post["title"])+'</a></h3><p>'+esc(post["description"])+'</p>'+
+                '<p class="lens-question">'+esc(question)+'</p>'+related+'</article>')
+        blocks.append('<section id="lens-'+str(number)+'" class="lens-section"><div class="lens-section-head">'+
+            '<span class="lens-number">'+f"{number:02d}"+' / '+str(len(cards))+' investigations</span><h2>'+
+            esc(domain)+'</h2></div><div class="lens-cards">'+''.join(cards)+'</div></section>')
+    nav=''.join('<a href="#lens-'+str(i+1)+'"><span>'+f"{i+1:02d}"+'</span>'+esc(name)+'</a>' for i,name in enumerate(domains))
+    names=json.dumps([{"slug":slug,"domain":domain,"lens":lens} for slug,(domain,lens,_) in DOMAIN_LENSES.items()],ensure_ascii=False,separators=(",",":"))
+    return '''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Questions beneath the obvious — Aurekai Journal</title>
+<meta name="description" content="Original Aurekai investigations into hidden complexity across identity, markets, time, media, research and software.">
+<link rel="canonical" href="'''+BASE_URL+'''complexity/">
+<link rel="stylesheet" href="../../assets/aurekai-field-guide.css"><link rel="stylesheet" href="../complexity.css"></head>
+<body class="lens-page"><a class="skip" href="#main">Skip to investigations</a>
+<header class="top"><div class="shell"><a class="brand" href="../../"><span class="mark">A</span> AUREKAI <small>/ JOURNAL</small></a>
+<nav aria-label="Site navigation"><a href="../../">Home</a><a href="../../explore.html">Businesses</a><a href="../../discover/">Applications</a><a href="../">Journal</a><a href="../../series/">Four series</a><a href="../../docs.html">Technology</a><a href="https://aurekai-work-samples.pages.dev/#ask">Discuss a project ↗</a></nav></div></header>
+<main id="main"><section class="lens-hero"><div class="shell lens-hero-grid"><div><p class="lens-kicker">Aurekai Journal / Investigations</p>
+<h1>What looks simple <em>isn't.</em></h1><p class="lens-standfirst">A time, a name, a price, a map point, a recording, a search result. Each one carries rules, relationships and responsibilities that disappear when software calls it a field.</p>
+<p>These original reports follow those missing distinctions into business, culture, public institutions and daily life. Their evidence comes from named primary standards and institutions, not from a list of programming mistakes.</p>
+<a class="lens-browse" href="#lenses">Explore the investigations ↓</a></div>
+<aside class="lens-index"><span>Six ways into the work</span>'''+nav+'''</aside></div></section>
+<section id="lenses" class="lens-intro"><div class="shell"><p class="lens-kicker">24 / Independent reports</p><h2>Every small field is a question about the world.</h2>
+<p>Choose a subject, then follow the edited links into the rest of the Journal. Scenarios are explanatory, not claims that a named institution suffered the hypothetical failure.</p></div></section>
+<div class="shell lens-sections">'''+''.join(blocks)+'''</div></main>
+<footer class="lens-footer"><div class="shell"><a href="../">All Journal articles</a><a href="../connections/">Reading Guide</a><a href="../feed.xml">Journal RSS</a><span>Aurekai / Bonfÿre · Original analysis with named sources.</span></div></footer>
+</body></html>'''
+
+
 def card(p, number):
     """Editorial card: one clear headline and either credited photography or
     a typographic plate formed from a real chapter title. No synthetic cover."""
@@ -783,6 +841,7 @@ if '<nav aria-label="Site navigation">' not in index:
 index = re.sub(r'<nav aria-label="Site navigation">[\s\S]*?</nav>', '<nav aria-label="Site navigation"><a href="../">Home</a><a href="../explore.html">Businesses</a><a href="../discover/">Applications</a><a href="../blog/">Journal</a><a href="../series/">Four series</a><a href="../docs.html">Technology</a><a href="https://aurekai-work-samples.pages.dev/#ask">Discuss a project ↗</a></nav>', index, count=1)
 write("index.html", index)
 write("connections/index.html", connections_atlas_page())
+write("complexity/index.html", complexity_guide_page())
 write("authors/index.html", author_index(AUTHORS, posts))
 for author_slug, author_profile in sorted(AUTHORS.items()):
     authored = [p for p in posts if p["author_id"] == author_slug]
@@ -803,7 +862,7 @@ write("feed.xml", rss)
 article_sitemap_dates = {
     BASE_URL+post["slug"]+"/":post.get("updated",post["published"]) for post in posts
 }
-urls = [BASE_URL, BASE_URL+"about/", BASE_URL+"connections/", BASE_URL+"authors/"] + [author["url"] for author in AUTHORS.values()] + ["https://nickgonzales76017.github.io/bonfyre/series/"] + list(article_sitemap_dates)
+urls = [BASE_URL, BASE_URL+"about/", BASE_URL+"connections/", BASE_URL+"complexity/", BASE_URL+"authors/"] + [author["url"] for author in AUTHORS.values()] + ["https://nickgonzales76017.github.io/bonfyre/series/"] + list(article_sitemap_dates)
 def sitemap_entry(url):
     date = article_sitemap_dates.get(url)
     return "<url><loc>"+xml_escape(url)+"</loc>" + (

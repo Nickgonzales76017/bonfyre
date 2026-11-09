@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """End-to-end source → public author pages → native CMS draft checks.
 
-This verifies the current 66 credited essays without claiming they have been
+This verifies the full credited essay inventory without claiming they have been
 imported into or published from the native BonfyreCMS runtime.
 """
 import csv
@@ -21,16 +21,18 @@ def csv_rows(filename):
 
 pages=csv_rows("cms-site-page.csv")
 fragments=csv_rows("cms-site-fragment.csv")
-assert len(pages)==67, f"Expected exactly 66 essays and one organizational author; got {len(pages)}"
-assert len(set(p["route"] for p in pages))==67, "Repeated canonical route"
+article_count=sum(1 for p in (root/"editorial/posts").glob("*.md") if "\nstatus: edited-public\n" in p.read_text(encoding="utf-8"))
+assert article_count>=90, f"Published article inventory unexpectedly small: {article_count}"
+assert len(pages)==article_count+1, f"Expected {article_count} essays and one organizational author; got {len(pages)}"
+assert len(set(p["route"] for p in pages))==article_count+1, "Repeated canonical route"
 assert len(set(f["coordinate"] for f in fragments))==len(fragments), "Repeated fragment coordinate"
 assert all(row["namespace"]=="aurekai-journal" and row["status"]=="draft" for row in pages), "Unsafe automatic publication"
 assert all(row["namespace"]=="aurekai-journal" and row["status"]=="draft" for row in fragments), "Unsafe fragment publication"
 assert all(f["page"] in {p["route"] for p in pages} for f in fragments), "Orphaned CMS fragment"
 assert all(f["source_ref"] and f["source_digest"] for f in fragments), "Missing source provenance"
-assert len([f for f in fragments if f["kind"]=="article-body"])==66, "Lost article bodies"
-assert len([f for f in fragments if f["kind"]=="article-credit"])==66, "Lost author relationships"
-assert len([f for f in fragments if f["kind"]=="article-presentation"])==66, "Lost editorial art direction"
+assert len([f for f in fragments if f["kind"]=="article-body"])==article_count, "Lost article bodies"
+assert len([f for f in fragments if f["kind"]=="article-credit"])==article_count, "Lost author relationships"
+assert len([f for f in fragments if f["kind"]=="article-presentation"])==article_count, "Lost editorial art direction"
 media_path=root/"editorial/media-sources.tsv"
 art_path=root/"editorial/art-direction.tsv"
 def tsv_rows(path):
@@ -38,7 +40,7 @@ def tsv_rows(path):
                if line.strip() and not line.startswith("#")],delimiter="\t"))
 directions={r["slug"]:r for r in tsv_rows(art_path)}
 media={r["key"]:r for r in tsv_rows(media_path)}
-assert len(directions)==66 and len(media)==12
+assert len(directions)==article_count and len(media)==12
 assert len([f for f in fragments if f["kind"]=="article-media-credit"])==sum(bool(x["media"]) for x in directions.values()), "Lost source media"
 assert len([f for f in fragments if f["kind"]=="article-audio-edition"])==sum(bool((root/"editorial/posts"/(s+".md")).read_text(encoding="utf-8").split("---",2)[1].find("audio_file:")>=0) for s in directions), "Lost recorded edition"
 art_sha=sha256(art_path.read_bytes()).hexdigest()
@@ -91,17 +93,17 @@ for p in pages:
     assert article["author"]["@type"]=="Organization", "No inferred individual authors"
     assert "citation" not in article or all(x.startswith("https://") for x in article["citation"])
     source_count+=1
-assert source_count==66
+assert source_count==article_count
 author_page=blog/"authors/aurekai-editorial/index.html"
 author_markup=author_page.read_text(encoding="utf-8")
 assert author_markup.count('class="author-feature"')==4
-assert author_markup.count('<li><a href="../../')==66
+assert author_markup.count('<li><a href="../../')==article_count
 assert 'Organization' in author_markup and 'not an individual person' in author_markup
 assert (blog/"authors/index.html").exists()
 for page in [blog/"authors/index.html",author_page]:
     assert 'rel="canonical"' in page.read_text(encoding="utf-8")
 source_lines=(build/"source-receipts.tsv").read_text(encoding="utf-8").splitlines()
-assert len(source_lines)==68 and all(line.endswith("\tdraft") for line in source_lines[1:])
+assert len(source_lines)==article_count+2 and all(line.endswith("\tdraft") for line in source_lines[1:])
 
 print(f"EDITORIAL_PUBLICATION_BRIDGE_PASS {source_count} original essays / {len(pages)} native draft pages / {len(fragments)} sourced fragments / 1 real organizational credit")
 print("Publication remains held for owner review; source rows do not attest live native CMS admission.")

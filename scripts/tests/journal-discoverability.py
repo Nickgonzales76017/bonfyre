@@ -10,9 +10,10 @@ index = root / "post-index.tsv"
 rows = index.read_text(encoding="utf-8").strip().splitlines()
 assert rows and rows[0].startswith("subject_id\t"), "missing canonical source index"
 slugs = [line.split("\t")[1] for line in rows[1:]]
-assert len(slugs) == 66, f"unexpected authored article count: {len(slugs)}"
+assert len(slugs) >= 90, f"unexpected authored article count: {len(slugs)}"
 assert len(set(slugs)) == len(slugs), "duplicate slugs"
 assert (root / "about/index.html").exists(), "editorial policy unavailable"
+assert (root / "complexity/index.html").exists(), "domain investigations guide missing"
 assert (root / "authors/index.html").exists(), "authorship directory unavailable"
 assert (root / "authors/aurekai-editorial/index.html").exists(), "author profile unavailable"
 assert (root / "reader.js").exists() and (root / "reader.css").exists(), "reader assets missing"
@@ -61,7 +62,7 @@ for slug in slugs:
 
 ns = {"sm":"http://www.sitemaps.org/schemas/sitemap/0.9"}
 urls = {el.text for el in ET.parse(root / "sitemap.xml").findall(".//sm:loc",ns)}
-expected = {base,base+"about/",base+"connections/",base+"authors/",base+"authors/aurekai-editorial/","https://nickgonzales76017.github.io/bonfyre/series/"}
+expected = {base,base+"about/",base+"connections/",base+"complexity/",base+"authors/",base+"authors/aurekai-editorial/","https://nickgonzales76017.github.io/bonfyre/series/"}
 assert (root/"connections"/"index.html").is_file(), "Connections atlas missing"
 expected.update(base+slug+"/" for slug in slugs)
 assert urls == expected, f"sitemap drift: missing={expected-urls}, extra={urls-expected}"

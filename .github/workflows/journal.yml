@@ -13,6 +13,8 @@ on:
       - 'editorial/media-sources.tsv'
       - 'editorial/templates/**'
       - 'editorial/art-direction.tsv'
+      - 'editorial/complexity-lenses.tsv'
+      - 'site/blog/complexity.css'
       - 'scripts/tests/journal-discoverability.py'
       - 'scripts/tests/journal-browser.mjs'
       - 'scripts/tests/editorial-*.py'
@@ -68,7 +70,7 @@ jobs:
           test "$(grep -c '^post:' site/blog/post-index.tsv)" -eq "$expected"
           test "$(grep -c '<item>' site/blog/feed.xml)" -eq "$expected"
           # Journal landing, About, Series, and Connections atlas supplement the article URLs.
-          test "$(grep -c '<url>' site/blog/sitemap.xml)" -eq "$((expected+6))"
+          test "$(grep -c '<url>' site/blog/sitemap.xml)" -eq "$((expected+7))"
           test "$(wc -l < site/blog/post-index.tsv)" -eq "$((expected+1))"
           grep -q "All articles / $expected" site/blog/index.html
           grep -q 'data-filter="Debates"' site/blog/index.html

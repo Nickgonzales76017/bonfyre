@@ -23,7 +23,7 @@ for n,line in enumerate(source.read_text().splitlines(),1):
     assert a in posts and b in posts and a!=b and relation and reason,f"bad relation at {n}"
     assert (a,b) not in {(e[0],e[2]) for e in edges},f"duplicate relation at {n}"
     edges.append(fields)
-assert len(edges)>=61 and len({e[0] for e in edges})>=41
+assert len(edges)>=105 and len({e[0] for e in edges})>=65
 
 class Article(HTMLParser):
     def __init__(self):

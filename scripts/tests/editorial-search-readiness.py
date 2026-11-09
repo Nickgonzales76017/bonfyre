@@ -64,7 +64,7 @@ def get_url_loc(node):
 def validate():
     manifest = BLOG / "post-index.tsv"
     rows = [r.split("\t") for r in manifest.read_text().strip().splitlines()[1:]]
-    check(len(rows) >= 66, "Article manifest unexpectedly shrank")
+    check(len(rows) >= 90, "Article manifest unexpectedly shrank")
     slugset = set()
     for row in rows:
         slug = row[1]

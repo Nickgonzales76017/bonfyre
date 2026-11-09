@@ -1,0 +1,27 @@
+# 24 independently authored domain investigations, not a reproduction of an external index.
+# One reviewed lens per source article; grouping and order are explicit editorial choices.
+slug	domain	lens	question
+the-hour-that-does-not-exist	Time and place	Civil time	Which rule keeps a recurring promise at the intended local hour?
+a-person-is-not-their-name-field	People and belonging	Identity	When does a name describe someone without proving who they are?
+an-address-is-not-a-place-to-live	Time and place	Housing	Does a mailing route establish residence, ownership or a delivery entrance?
+a-coordinate-is-not-a-map-of-reality	Time and place	Geography	Can a map disclose the accuracy of the feature it places?
+email-accepted-does-not-mean-email-delivered	People and belonging	Communication	At which stage did communication actually succeed?
+a-price-needs-a-unit-a-time-and-a-party	Money and markets	Prices	What is being sold, for whom and under which conditions?
+a-phone-number-is-not-a-person	People and belonging	Telecommunications	Who controls the route today, and what does that authorize?
+the-character-counter-that-cannot-see-letters	Language and media	Unicode	What exactly is the application counting when a reader types?
+a-song-is-not-a-file	Language and media	Music rights	Which work, recording, release and permission does the file represent?
+captions-transcripts-and-translation-are-different-works	Language and media	Accessible media	How can a viewer trace each interpretation to the source recording?
+the-research-link-that-did-not-preserve-the-research	Evidence and public institutions	Research preservation	What was the precise version of evidence behind the claim?
+a-url-is-not-a-permanent-home	Evidence and public institutions	Digital inheritance	Who maintains identity after a URL, domain or operator changes?
+the-product-code-is-not-the-inventory	Money and markets	Supply chains	Does a product identifier prove stock availability or rights to sell?
+the-train-arrived-after-midnight-yesterday	Time and place	Transport	What does a service day mean when vehicles cross midnight?
+temperature-is-not-a-single-number	Time and place	Measurement	Is this a temperature, a temperature difference or a model estimate?
+a-job-posting-is-not-a-job-opening	Money and markets	Employment	What proves an employer is accepting applications now?
+the-legal-company-name-is-not-the-business	People and belonging	Organizations	What is the contracting party beneath a public-facing brand?
+an-exchange-rate-is-not-a-settled-payment	Money and markets	Finance	Which rate governed the final, authorized and settled transfer?
+the-spreadsheet-import-that-was-not-just-data	Software and operations	Interoperability	When does imported data become a command or lose its original type?
+the-search-result-is-not-the-same-question	Software and operations	Search	Was this exact evidence, a transformed match or semantic similarity?
+the-page-number-that-moved-while-you-were-reading	Software and operations	Data consistency	Which fixed set did the reader believe they were reviewing?
+a-release-number-is-not-the-binary-you-ran	Software and operations	Release identity	Which artifact ran, and what did users actually receive?
+a-cache-hit-is-not-current-information	Software and operations	Caching	What policy permits old bytes to represent current truth?
+a-vulnerability-number-is-not-your-risk	Software and operations	Security	What exposure makes this issue urgent in this installation?

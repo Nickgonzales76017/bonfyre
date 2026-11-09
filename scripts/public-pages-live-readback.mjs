@@ -21,6 +21,8 @@ export const JOURNAL_STATIC = Object.freeze([
   ['blog/article-editions.css','blog/article-editions.css'],
   ['blog/reader.css','blog/reader.css'],
   ['blog/reader.js','blog/reader.js'],
+  ['blog/complexity.css','blog/complexity.css'],
+  ['blog/complexity/index.html','blog/complexity/'],
   ['blog/feed.xml','blog/feed.xml'],
   ['blog/sitemap.xml','blog/sitemap.xml'],
   ['blog/post-index.tsv','blog/post-index.tsv'],
