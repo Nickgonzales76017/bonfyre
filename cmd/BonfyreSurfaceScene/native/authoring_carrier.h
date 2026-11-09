@@ -203,7 +203,7 @@ static int bf_render_editorial(FILE *f,const BfWireNode *n){
  if(count==-1)return -1; // caller renders plain-body paragraphs
  if(count<0||count>256)return 0;
  for(int i=0;i<count;i++){
-  char prefix[96],path[180];snprintf(prefix,sizeof(prefix),"/props/editorial/%d",i);
+  char prefix[96],path[240];snprintf(prefix,sizeof(prefix),"/props/editorial/%d",i);
   snprintf(path,sizeof(path),"%s/type",prefix);
   const char *type=bf_wire_val(n,path);if(!type)return 0;
   snprintf(path,sizeof(path),"%s/data/text",prefix);const char *txt=bf_wire_val(n,path);
@@ -216,14 +216,18 @@ static int bf_render_editorial(FILE *f,const BfWireNode *n){
     fprintf(f,"<h%d>",level);if(!bf_inline(f,txt))return 0;fprintf(f,"</h%d>",level);
    }else{fputs("<p>",f);if(!bf_inline(f,txt))return 0;fputs("</p>",f);}
   }else if(!strcmp(type,"quote")){
-   if(!txt)return 0;fputs("<blockquote><p>",f);if(!bf_inline(f,txt))return 0;fputs("</p>",f);
+   if(!txt)return 0;
+   fputs("<blockquote><p>",f);
+   if(!bf_inline(f,txt))return 0;
+   fputs("</p>",f);
    snprintf(path,sizeof(path),"%s/data/caption",prefix);
    const char *caption=bf_wire_val(n,path);
    if(caption){fputs("<cite>",f);bf_html_escape(f,caption);fputs("</cite>",f);}
    fputs("</blockquote>",f);
   }else if(!strcmp(type,"code")){
    snprintf(path,sizeof(path),"%s/data/code",prefix);const char *code=bf_wire_val(n,path);
-   if(!code)return 0;fputs("<pre><code>",f);bf_html_escape(f,code);fputs("</code></pre>",f);
+   if(!code)return 0;
+   fputs("<pre><code>",f);bf_html_escape(f,code);fputs("</code></pre>",f);
   }else if(!strcmp(type,"delimiter"))fputs("<hr class=\"bf-editorial-rule\">",f);
   else if(!strcmp(type,"list")||!strcmp(type,"checklist")){
    snprintf(path,sizeof(path),"%s/data/items",prefix);
@@ -242,7 +246,8 @@ static int bf_render_editorial(FILE *f,const BfWireNode *n){
      snprintf(path,sizeof(path),"%s/checked",item);
      fprintf(f,"<input type=\"checkbox\" disabled%s> ",bf_wire_bool(n,path)?" checked":"");
     }
-    if(!bf_inline(f,val))return 0;fputs("</li>",f);
+    if(!bf_inline(f,val))return 0;
+    fputs("</li>",f);
    }
    fputs(ordered?"</ol>":"</ul>",f);
   }else if(!strcmp(type,"table")){
