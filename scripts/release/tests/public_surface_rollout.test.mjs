@@ -384,10 +384,11 @@ test('acceptance children omit changing launcher identity while retaining every 
 });
 test('installed-extension acceptance prefers explicit or cached Chrome for Testing instead of implicit branded Chrome',()=>{
  const f=fixture(),explicit=join(f.home,'explicit-chrome'),cache=join(f.home,'.cache/puppeteer/chrome/999999/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing');
+ const fallback=findExtensionChromium({},{homeDir:f.home,arch:'arm64'}); // Portable baseline before explicit/cache.
  put(explicit,'#!/bin/sh\nexit 0\n',0o755);put(cache,'#!/bin/sh\nexit 0\n',0o755);
  expect(findExtensionChromium({BONFYRE_EXTENSION_CHROMIUM_BINARY:explicit},{homeDir:f.home,arch:'arm64'})).toBe(realpathSync(explicit));
  expect(findExtensionChromium({},{homeDir:f.home,arch:'arm64'})).toBe(realpathSync(cache));
- rmSync(explicit);rmSync(cache);expect(findExtensionChromium({},{homeDir:f.home,arch:'arm64'})).toBeNull();
+ rmSync(explicit);rmSync(cache);expect(findExtensionChromium({},{homeDir:f.home,arch:'arm64'})).toBe(fallback);
 });
 test('acceptance identity covers imported fixtures, verifier, groups, environment and runtime bytes',async()=>{
  const f=fixture(),sourceRoot=f.source;put(join(sourceRoot,'gate.mjs'),'export const gate = 1;');put(join(sourceRoot,'fixture.mjs'),'export const value = 1;');put(join(sourceRoot,'test.mjs'),'import {value} from "./fixture.mjs";console.log(value);');

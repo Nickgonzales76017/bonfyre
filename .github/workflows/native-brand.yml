@@ -51,6 +51,7 @@ jobs:
         run: node --test cmd/BonfyreWebAddress/tests/front_brand.test.mjs
       - name: Verify public four-apex release witness rejects stale HTML and altered CSS
         run: node --test scripts/tests/native-apex-live-readback.test.mjs
+      - uses: cue-lang/setup-cue@v1.0.0
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: '1.3.13'
