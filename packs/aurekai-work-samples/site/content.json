@@ -6,8 +6,8 @@
   "leads": "server",
   "business": {
     "name": "Aurekai",
-    "page_title": "Custom web tools, sites and integrations | Aurekai",
-    "description": "Custom web tools, client sites and integrations. Try working examples and tell Nick what your team needs to get done."
+    "page_title": "Built on software. Driven by Aurekai. | Work Samples",
+    "description": "Built on software. Driven by Aurekai. Try working examples of connected business tools, client sites, operations and publishing; discuss what your team needs to build."
   },
   "contact": {
     "name": "Nick Gonzales",
@@ -41,6 +41,10 @@
       "href": "https://nickgonzales76017.github.io/bonfyre/"
     },
     {
+      "label": "About Aurekai",
+      "href": "https://nickgonzales76017.github.io/bonfyre/about/"
+    },
+    {
       "label": "Aurekai setup",
       "href": "https://aurekai.work/packs/setup"
     },
@@ -60,9 +64,9 @@
   "sections": [
     {
       "kind": "hero",
-      "overline": "Remote development for businesses and agencies",
-      "headline": "Custom web tools, *sites and integrations*",
-      "lede": "Tools for catalogues, planning and the work between systems. Try an example, then send the task your team needs to finish.",
+      "overline": "Software for businesses and the brands behind them",
+      "headline": "Built on software. *Driven by Aurekai.*",
+      "lede": "Software runs every business. We build practical tools for catalogues, planning, publishing and the work between systems. Try the applications, then tell us what you need to make possible.",
       "button": "Send a project brief",
       "href": "/#ask",
       "secondary": {
@@ -929,7 +933,7 @@
     }
   ],
   "footer": {
-    "about": "Aurekai · Custom web tools, sites and integrations by Nick Gonzales. Remote delivery for businesses and agencies.",
+    "about": "Built on software. Driven by Aurekai. Custom websites, operating tools and integrations for businesses and agencies. Independent customer brands remain their own.",
     "notice": {
       "title": "About these samples",
       "text": "These examples use public or made-up data. Named businesses have not commissioned or endorsed them."

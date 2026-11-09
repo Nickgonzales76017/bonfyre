@@ -1,0 +1,61 @@
+name: Aurekai Brand Voice
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'branding/**'
+      - 'site/index.html'
+      - 'site/about/**'
+      - 'site/explore.html'
+      - 'site/discover/index.html'
+      - 'site/market.html'
+      - 'site/docs.html'
+      - 'site/fieldwork/index.html'
+      - 'site/series/index.html'
+      - 'site/matrix/index.html'
+      - 'editorial/templates/journal-index.html'
+      - 'README.md'
+      - 'Aurekai/README.md'
+      - 'docs/aurekai-bonfyre-model.md'
+      - 'docs/client-operations-portfolio.md'
+      - 'components/BonfyreServiceSite/README.md'
+      - 'packs/aurekai-work-samples/site/content.json'
+      - 'cmd/BonfyreWebAddress/src/production_home.h'
+      - 'scripts/tests/aurekai-brand.test.mjs'
+      - '.github/workflows/aurekai-brand.yml'
+  pull_request:
+    paths:
+      - 'branding/**'
+      - 'site/index.html'
+      - 'site/about/**'
+      - 'site/explore.html'
+      - 'site/discover/index.html'
+      - 'site/market.html'
+      - 'site/docs.html'
+      - 'site/fieldwork/index.html'
+      - 'site/series/index.html'
+      - 'site/matrix/index.html'
+      - 'editorial/templates/journal-index.html'
+      - 'README.md'
+      - 'Aurekai/README.md'
+      - 'docs/aurekai-bonfyre-model.md'
+      - 'docs/client-operations-portfolio.md'
+      - 'components/BonfyreServiceSite/README.md'
+      - 'packs/aurekai-work-samples/site/content.json'
+      - 'cmd/BonfyreWebAddress/src/production_home.h'
+      - 'scripts/tests/aurekai-brand.test.mjs'
+      - '.github/workflows/aurekai-brand.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  brand-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check brand variants, distribution, four entrances and independent brand boundary
+        run: node --test scripts/tests/aurekai-brand.test.mjs

@@ -4,7 +4,7 @@
 <h1 align="center">Bonfÿre</h1>
 
 <p align="center">
-  <strong>The native software behind Aurekai’s businesses, applications and public network.</strong>
+  <strong>The native software behind Aurekai’s businesses, applications and public network.</strong><br><small>Built on software. Driven by Aurekai.</small>
 </p>
 
 <p align="center">
@@ -18,6 +18,7 @@
   <a href="#whats-available-today">Available today</a> ·
   <a href="https://docs.aurekai.work/">Guides</a> ·
   <a href="https://aurekai-work-samples.pages.dev/">Work samples</a> ·
+  <a href="https://nickgonzales76017.github.io/bonfyre/about/">About Aurekai</a> ·
   <a href="https://nickgonzales76017.github.io/bonfyre/market.html">Market research</a> ·
   <a href="docs/architecture.md">Architecture</a> ·
   <a href="CONTRIBUTING.md">Contributing</a>
