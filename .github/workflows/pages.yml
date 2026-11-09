@@ -12,7 +12,35 @@ concurrency:
   group: pages
   cancel-in-progress: false
 jobs:
+  current:
+    # Retained release commits must not start another expensive release.
+    if: ${{ github.event_name != 'push' || github.actor != 'github-actions[bot]' || !startsWith(github.event.head_commit.message, 'release(spaces):') }}
+    runs-on: ubuntu-latest
+    outputs:
+      latest: ${{ steps.source.outputs.latest }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Confirm latest main source before expensive compilation
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin '+refs/heads/main:refs/remotes/origin/main'
+          upstream="$(git rev-parse refs/remotes/origin/main)"
+          if [ "$GITHUB_SHA" = "$upstream" ]; then
+            echo 'latest=true' >> "$GITHUB_OUTPUT"
+          elif git merge-base --is-ancestor "$GITHUB_SHA" "$upstream"; then
+            echo 'latest=false' >> "$GITHUB_OUTPUT"
+            echo 'Superseded by a newer source commit; leaving publication to its queued run.'
+          else
+            echo 'The tested commit is not part of the current main history.' >&2
+            exit 1
+          fi
   deploy:
+    needs: current
+    if: ${{ needs.current.outputs.latest == 'true' }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -99,6 +127,7 @@ jobs:
           node scripts/prepare-instruments-discovery.mjs
           node --test scripts/tests/showcase-directory.test.mjs
       - name: Retain tested release and helper licences
+        id: retention
         shell: bash
         env:
           SPACES_STUDIO_REQUIRED: '1'
@@ -110,6 +139,7 @@ jobs:
           export CHROME_PATH="$(command -v google-chrome)"
           node scripts/retain-tested-pages.mjs
       - name: Verify final composed workspaces and retained editors
+        if: steps.retention.outputs.superseded != 'true'
         env:
           WORKSPACE_EVIDENCE: workspace-evidence
         run: |
@@ -118,6 +148,7 @@ jobs:
           node scripts/tests/workspace-composition-browser.mjs
           node scripts/tests/workspace-docking-browser.mjs
       - name: Build and verify Aurekai Journal articles
+        if: steps.retention.outputs.superseded != 'true'
         run: |
           sh scripts/render-editorial.sh
           sh scripts/render-editorial.sh --check
@@ -125,6 +156,7 @@ jobs:
           test "$(grep -c '<item>' site/blog/feed.xml)" -eq "$(grep -l '^status: edited-public$' editorial/posts/*.md | wc -l)"
           grep -q "All articles / $(grep -l '^status: edited-public$' editorial/posts/*.md | wc -l)" site/blog/index.html
       - name: Browser-check Fieldwork stories and cross-site search
+        if: steps.retention.outputs.superseded != 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -215,15 +247,19 @@ jobs:
           } finally { await browser.close(); }
           NODE
       - name: Setup Pages
+        if: steps.retention.outputs.superseded != 'true'
         uses: actions/configure-pages@v5
       - name: Upload artifact
+        if: steps.retention.outputs.superseded != 'true'
         uses: actions/upload-pages-artifact@v3
         with:
           path: site
       - name: Deploy to GitHub Pages
+        if: steps.retention.outputs.superseded != 'true'
         id: deployment
         uses: actions/deploy-pages@v4
       - name: Verify the actual public studio
+        if: steps.retention.outputs.superseded != 'true'
         env:
           SPACES_ORIGIN: https://nickgonzales76017.github.io
           SPACES_EVIDENCE: spaces-live-evidence
@@ -233,6 +269,7 @@ jobs:
           export CHROME_PATH="$(command -v google-chrome)"
           node scripts/tests/spaces-live-browser.mjs
       - name: Verify the public composed workflows
+        if: steps.retention.outputs.superseded != 'true'
         env:
           WORKSPACE_ORIGIN: https://nickgonzales76017.github.io
           WORKSPACE_EVIDENCE: workspace-live-evidence
@@ -242,6 +279,7 @@ jobs:
           node scripts/tests/workspace-composition-browser.mjs
           node scripts/tests/workspace-docking-browser.mjs
       - name: Verify actual public instruments and downloaded results
+        if: steps.retention.outputs.superseded != 'true'
         env:
           INSTRUMENT_ORIGIN: https://nickgonzales76017.github.io/bonfyre/instruments/
           INSTRUMENT_EVIDENCE: instrument-live-evidence

@@ -94,6 +94,13 @@ workflow = (ROOT / ".github/workflows/pages.yml").read_text(encoding="utf-8")
 check("name:'Application examples',exact:true" in workflow,
       "Browser validation still expects the old Studios filter name")
 check("scripts/tests/public-wayfinding.py" in workflow, "Pages publication lacks navigation test")
+check("needs.current.outputs.latest" in workflow and "steps.retention.outputs.superseded" in workflow,
+      "Outdated Pages build could publish stale public copy")
+check("github.actor != 'github-actions[bot]'" in workflow,
+      "Generated release commits may recursively restart the expensive pipeline")
+retention = (ROOT / "scripts/retain-tested-pages.mjs").read_text(encoding="utf-8")
+check("PAGES_RETENTION_SUPERSEDED" in retention and "superseded=true" in retention,
+      "Superseded builds must stop before publication instead of retrying indefinitely")
 renderer = (ROOT / "scripts/render-editorial.sh").read_text(encoding="utf-8")
 check("Discuss a project ↗" in renderer and "Journal homepage navigation is missing" in renderer,
       "Generated Journal navigation isn't tied to public navigation")

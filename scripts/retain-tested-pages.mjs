@@ -1,6 +1,6 @@
 // Retain the tested Pages projection without overwriting concurrent source work.
 import {spawnSync} from 'node:child_process';
-import {existsSync} from 'node:fs';
+import {existsSync, appendFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 
@@ -108,6 +108,15 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     run(['scripts/prepare-instruments-discovery.mjs']);
     run(['--test', 'scripts/tests/showcase-directory.test.mjs']);
   };
-  const result = retainRelease({cwd, paths: ['site/spaces', 'site/instruments', 'site/index.html', 'vendor/spaces-helpers-20261015'], verify, reconcileGeneratedPaths: ['site/index.html']});
-  console.log('PAGES_RETENTION_PASS\t' + result.head + '\tattempts\t' + result.attempts + '\trecovered\t' + result.recovered);
+  try {
+    const result = retainRelease({cwd, paths: ['site/spaces', 'site/instruments', 'site/index.html', 'vendor/spaces-helpers-20261015'], verify, reconcileGeneratedPaths: ['site/index.html']});
+    console.log('PAGES_RETENTION_PASS\t' + result.head + '\tattempts\t' + result.attempts + '\trecovered\t' + result.recovered);
+  } catch (error) {
+    // An obsolete build must not publish an older site or block the next
+    // source revision. This is not approval to resolve a real generated-file
+    // conflict: those remain errors and preserve every upstream commit.
+    if (error?.message !== 'Concurrent source changes exhausted the bounded retention attempts.' || !process.env.GITHUB_OUTPUT) throw error;
+    appendFileSync(process.env.GITHUB_OUTPUT, 'superseded=true\n');
+    console.log('PAGES_RETENTION_SUPERSEDED\tNewer source work is queued; no artifact will be published from this run.');
+  }
 }
