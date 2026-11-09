@@ -781,7 +781,7 @@ buttons = ''.join('<button type="button" class="journal-filter'+(' active' if i 
     for i,x in enumerate(categories))
 index = index[:fstart] + '<div class="journal-filters" role="group" aria-label="Filter articles">' + buttons + index[fend:]
 # The filter helper refers to data attributes that have been built on every card.
-assert index.count(' data-article data-category=') == len(posts)
+assert index.count(' data-article data-format=') == len(posts)
 if '<nav aria-label="Site navigation">' not in index:
     raise ValueError("Journal homepage navigation is missing")
 index = re.sub(r'<nav aria-label="Site navigation">[\s\S]*?</nav>', '<nav aria-label="Site navigation"><a href="../">Home</a><a href="../explore.html">Businesses</a><a href="../discover/">Applications</a><a href="../blog/">Journal</a><a href="../series/">Four series</a><a href="../docs.html">Technology</a><a href="https://aurekai-work-samples.pages.dev/#ask">Discuss a project ↗</a></nav>', index, count=1)
