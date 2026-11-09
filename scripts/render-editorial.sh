@@ -705,31 +705,72 @@ placeholder="e.g. publishing, rights, agents, archives…">
 </body></html>'''
 
 
-def card(p):
+def card(p, number):
+    """Editorial card: one clear headline and either credited photography or
+    a typographic plate formed from a real chapter title. No synthetic cover."""
     fmt, tone, media = p["art"]
     search = ' '.join([p["title"], p["description"], p["topics"], p["category"]]).lower()
-    art = ('<img src="'+esc(media_url(media,"../"))+'" alt="" width="720" height="480" loading="lazy">' if media else
-       '<span class="ed-card-feature">'+esc(p["title"])+'</span>')
-    outline = [line[3:].strip() for line in p["body"].splitlines() if line.startswith("## ")][:3]
-    outline_preview = ('<div class="journal-card-outline" aria-hidden="true"><strong>Inside the essay</strong>'+''.join('<span>'+esc(h)+'</span>' for h in outline)+'</div>') if outline else ""
-    return f'''<article class="journal-card ed-card card-{tone}" data-article data-category="{esc(p["category"])}" data-search="{esc(search)}">
-<a class="journal-card-link" href="./{p["slug"]}/"><div class="journal-card-top"><span class="eyebrow">{esc(p["category"])}</span><span class="ed-card-kind">{esc(fmt.replace("-"," "))}</span></div>
-<div class="ed-card-cover">{art}</div><h3>{esc(p["title"])}</h3><p>{esc(p["description"])}</p>{outline_preview}
-<div class="journal-card-bottom"><span>{esc(p["published"])}</span><span>{'Read / listen ↗' if p.get('audio_file') and p.get('audio_voice') == 'af_sarah' else 'Read article ↗'}</span></div></a></article>'''
+    chapters = [line[3:].strip() for line in p["body"].splitlines() if line.startswith("## ")]
+    chapter = chapters[0] if chapters else p["category"]
+    photo = bool(media)
+    art = ('<img src="'+esc(media_url(media,"../"))+'" alt="" width="900" height="600" loading="lazy" decoding="async">' if photo else
+        '<strong class="ed-card-feature">'+esc(chapter)+'</strong>')
+    outline = chapters[:3]
+    outline_preview = ('<div class="journal-card-outline" aria-hidden="true"><strong>In this essay</strong>'+
+        ''.join('<span>'+esc(h)+'</span>' for h in outline)+'</div>') if outline else ""
+    reading = max(2, (len(p["body"].split()) + 209) // 210)
+    feature = ' ed-card--lead' if number == 1 else ''
+    return f'''<article class="journal-card ed-card card-{tone}{feature}" data-article data-format="{esc(fmt)}" data-category="{esc(p["category"])}" data-search="{esc(search)}">
+<a class="journal-card-link" href="./{p["slug"]}/">
+<div class="ed-card-cover" data-cover-kind="{'image' if photo else 'type'}" aria-hidden="true">
+<div class="ed-card-cover-top"><span>Aurekai / Journal</span><span>{number:02d} / {len(posts):02d}</span></div>
+<div class="ed-card-cover-art">{art}</div><div class="ed-card-cover-bottom"><span>{esc(fmt.replace("-"," "))}</span><span>{esc(p["category"])}</span></div></div>
+<div class="ed-card-content"><div class="journal-card-top"><span class="eyebrow">{esc(p["category"])}</span><span class="ed-card-kind">{reading} min read</span></div>
+<h3>{esc(p["title"])}</h3><p>{esc(p["description"])}</p>{outline_preview}
+<div class="journal-card-bottom"><time datetime="{esc(p["published"])}">{esc(p["published"])}</time><span>{'Read / listen ↗' if p.get('audio_file') and p.get('audio_voice') == 'af_sarah' else 'Read article ↗'}</span></div></div></a></article>'''
+
 
 index_file = TARGET / "index.html"
 index = index_file.read_text(encoding="utf-8")
 # Preserve the existing journal design and its accessible client-side filter.
-start = index.find('<div class="journal-grid">')
+grid_start = re.search(r'<div class="journal-grid"(?: data-journal-grid)?>', index)
+start = grid_start.start() if grid_start else -1
 end = index.find('<p id="journal-empty"', start)
 if start < 0 or end < 0:
     raise ValueError("Blog index does not have expected card region")
-index = index[:start] + '<div class="journal-grid">' + '\n'.join(map(card, posts)) + '</div>\n' + index[end:]
+index = index[:start] + '<div class="journal-grid" data-journal-grid>' + '\n'.join(card(p,i) for i,p in enumerate(posts,1)) + '</div>\n' + index[end:]
 if '<a href="./connections/">' not in index:
     index = index.replace('<a href="#articles">Browse the article index ↓</a>',
         '<a href="./connections/">Browse the Reading Guide ↗</a><a href="#articles">Browse the article index ↓</a>')
 index = re.sub(r'All articles / \d+', 'All articles / ' + str(len(posts)), index)
-index = re.sub(r'Showing \d+ articles', 'Showing ' + str(len(posts)) + ' articles', index)
+index = re.sub(r'Showing \d+(?: of \d+)? articles', 'Showing ' + str(len(posts)) + ' of ' + str(len(posts)) + ' articles', index)
+# Native readable cards remain links without scripting; alternate list view is optional.
+if 'data-journal-view="list"' not in index:
+    count_block = re.search(r'<p class="journal-count" id="journal-result-count" aria-live="polite">[^<]*</p>', index)
+    if not count_block:
+        raise ValueError("Journal result count missing")
+    switcher = ( '<div class="journal-results-bar">' + count_block.group(0)
+        + '<div class="journal-view-switch" role="group" aria-label="Article layout">'
+        + '<button type="button" data-journal-view="grid" aria-pressed="true" class="is-active">Grid view</button>'
+        + '<button type="button" data-journal-view="list" aria-pressed="false">List view</button>'
+        + '</div></div>')
+    index = index[:count_block.start()] + switcher + index[count_block.end():]
+# Preserve list-view controls across both render and deterministic --check.
+if 'const layout=document.querySelector("[data-journal-grid]")' not in index:
+    marker = 'search.addEventListener("input",apply);})();</script>'
+    control = ('search.addEventListener("input",apply);'
+       'const layout=document.querySelector("[data-journal-grid]");'
+       'const viewButtons=[...document.querySelectorAll("[data-journal-view]")];'
+       'for(const view of viewButtons){view.addEventListener("click",()=>{'
+       'const list=view.dataset.journalView==="list";'
+       'layout.classList.toggle("is-list",list);'
+       'for(const button of viewButtons){const selected=button===view;'
+       'button.classList.toggle("is-active",selected);'
+       'button.setAttribute("aria-pressed",String(selected));}'
+       '});}apply();})();</script>')
+    if marker not in index:
+        raise ValueError("Journal view script marker missing")
+    index = index.replace(marker, control, 1)
 fstart = index.find('<div class="journal-filters"')
 fend = index.find('</div><label class="journal-search-label"', fstart)
 if fstart < 0 or fend < 0:
@@ -842,6 +883,12 @@ if CHECK:
         if chapters and not 'class="ed-chapter-lead"' in article:
             raise AssertionError(f"Missing styled chapter leads: {p['slug']}")
     index=(TARGET/"index.html").read_text(encoding="utf-8")
+    if (index.count('class="ed-card-cover"') != len(posts) or
+        index.count('class="ed-card-content"') != len(posts) or
+        index.count('data-cover-kind=') != len(posts) or
+        index.count('class="ed-card-feature"') > len(posts) or
+        'data-journal-view="list"' not in index or 'data-journal-grid' not in index):
+        raise AssertionError("Missing journal card composition or browse controls")
     if index.count('class="ed-card-cover"')!=len(posts):
         raise AssertionError("Directory does not include all article editions")
     if 'href="./article-editions.css"' not in index or 'article-garden' in index:

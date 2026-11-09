@@ -175,6 +175,43 @@ jobs:
           const expectedArticles=readFileSync('site/discover/article-index.tsv','utf8').trimEnd().split('\n').length-1;
           page.on('pageerror',e=>errors.push(e.message));
           try {
+            // Test the generated Journal, not the stale checked-in snapshot.
+            for(const [width,height,columns] of [[1440,900,3],[980,850,2],[390,844,1]]){
+              await page.setViewportSize({width,height});
+              await page.goto('http://127.0.0.1:8765/blog/',{waitUntil:'domcontentloaded'});
+              await page.waitForFunction(n=>document.querySelectorAll('[data-article]').length===n,expectedArticles);
+              const geometry=await page.evaluate(()=>{
+                const grid=document.querySelector('[data-journal-grid]');
+                const items=[...grid.querySelectorAll('[data-article]')];
+                const bounds=items.map(x=>x.getBoundingClientRect());
+                return {
+                  tracks:getComputedStyle(grid).gridTemplateColumns.split(' ').length,
+                  overflow:document.documentElement.scrollWidth-window.innerWidth,
+                  outside:bounds.filter(b=>b.width<160||b.left<-1||b.right>window.innerWidth+1).length,
+                  empty:items.filter(x=>!x.querySelector('.ed-card-content h3')||!x.querySelector('.ed-card-cover')).length
+                };
+              });
+              assert.equal(geometry.tracks,columns,'Journal grid columns '+width);
+              assert.equal(geometry.outside,0,'Cards outside viewport '+width);
+              assert.equal(geometry.empty,0,'Incomplete cards '+width);
+              assert.ok(geometry.overflow<=2,'Horizontal overflow at '+width+': '+geometry.overflow);
+              await page.getByRole('button',{name:'List view'}).click();
+              assert.equal(await page.locator('[data-journal-grid].is-list').count(),1);
+              assert.equal(await page.locator('[data-journal-view="list"]').getAttribute('aria-pressed'),'true');
+              await page.getByRole('button',{name:'Grid view'}).click();
+              assert.equal(await page.locator('[data-journal-grid].is-list').count(),0);
+            }
+            await page.getByRole('button',{name:'List view'}).click();
+            await page.locator('#journal-search').fill('council');
+            const matched=await page.locator('[data-article]:visible').count();
+            assert.ok(matched>0 && matched<expectedArticles,'Search narrows the catalogue');
+            assert.match(await page.locator('#journal-result-count').innerText(),new RegExp('Showing '+matched+' of '+expectedArticles));
+            await page.locator('#journal-search').fill('');
+            await page.locator('[data-filter="Business"]').click();
+            const visible=await page.locator('[data-article]:visible').count();
+            assert.ok(visible>0 && visible<expectedArticles);
+            assert.equal(await page.locator('[data-article]:visible:not([data-category="Business"])').count(),0);
+            assert.equal(await page.locator('[data-journal-grid].is-list').count(),1,'Layout persists through filter');
             await page.goto('http://127.0.0.1:8765/fieldwork/',{waitUntil:'networkidle'});
             assert.equal(await page.locator('h1').count(),1);
             assert.equal(await page.locator('.fw-chapter').count(),5);

@@ -82,6 +82,23 @@ jobs:
           grep -q 'itemscope itemtype="https://schema.org/BlogPosting"' site/blog/the-machine-told-me-so/index.html
           grep -q 'og:image' site/blog/the-machine-told-me-so/index.html
           grep -q 'journal-card-outline' site/blog/index.html
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const html=readFileSync('site/blog/index.html','utf8');
+          const n=readFileSync('site/blog/post-index.tsv','utf8').trimEnd().split('\n').length-1;
+          for(const [needle,count] of [
+            ['class="journal-card ed-card ',n],
+            ['class="ed-card-cover"',n],
+            ['class="ed-card-content"',n],
+            ['data-cover-kind=',n],
+          ]) assert.equal(html.split(needle).length-1,count,needle);
+          assert.match(html,/data-journal-view="grid"/);
+          assert.match(html,/data-journal-view="list"/);
+          assert.match(html,/data-journal-grid/);
+          assert.match(html,/const layout=document.querySelector/);
+          assert.match(html,/ ed-card--lead"/); // leading story assigned in source
+          NODE
           test "$(grep -c 'class="essay-chapter ' site/series/index.html)" -eq 4
       - name: Verify article search and reading readiness
         run: python3 scripts/tests/editorial-search-readiness.py
