@@ -1,4 +1,4 @@
-/* Editorial interactions: real browser narration, accessible outlines, and sourced reading. */
+/* Aurekai Journal: article outlines, source notes, reading progress and editorial navigation. */
 .reader-toolbar{position:relative;z-index:9;border-bottom:1px solid #c3c8ba;background:#f0efe5}
 .reader-toolbar .shell{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:center;padding-top:15px;padding-bottom:15px}
 .reader-outline-menu{position:relative;align-self:start}
@@ -8,20 +8,6 @@
 .reader-outline-menu:hover .reader-outline-links,.reader-outline-menu:focus-within .reader-outline-links,.reader-outline-menu[data-open="true"] .reader-outline-links{display:flex;flex-direction:column}
 .reader-outline-links a{font:.84rem/1.5 system-ui,sans-serif;color:#28493a;text-decoration:none;padding:12px 14px;border-bottom:1px solid #e0e5d8}
 .reader-outline-links a:last-child{border-bottom:0}.reader-outline-links a:hover,.reader-outline-links a:focus-visible{background:#e3ebde;text-decoration:underline}
-.narration-widget{min-width:0}.narration-track{display:flex;gap:17px;align-items:center}
-.narration-copy{display:flex;gap:2px;flex-direction:column;font:.7rem/1.55 system-ui,sans-serif;color:#5a685a}
-.narration-copy strong{font-size:.82rem;color:#1d4034}.narration-wave{height:33px;display:flex;align-items:center;gap:2px;min-width:120px;max-width:145px}
-.narration-wave i{display:block;height:var(--bar);width:3px;min-height:4px;border-radius:2px;background:#b07b5c;opacity:.45;transform-origin:center}
-.narration-widget[data-state="playing"] .narration-wave i{opacity:.9;animation:speech-activity .72s ease-in-out infinite alternate;animation-delay:-.1s}
-.narration-widget[data-state="paused"] .narration-wave i{opacity:.55}
-@keyframes speech-activity{from{transform:scaleY(.42)}to{transform:scaleY(1.15)}}
-.narration-controls{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-top:9px}
-.narration-controls button,.narration-controls select{color:#234638;background:#fffdf7;border:1px solid #aab8a8;border-radius:0;padding:7px 9px;font:.73rem/1.4 system-ui,sans-serif;min-height:32px}
-.narration-controls button{cursor:pointer}.narration-controls button:disabled{opacity:.45;cursor:default}
-.narration-controls button:focus-visible,.narration-controls select:focus-visible{outline:3px solid #a9694a;outline-offset:2px}
-.narration-controls label{font:.72rem system-ui,sans-serif;color:#435c4e;display:inline-flex;align-items:center;gap:5px}
-.narration-disclosure{font:.68rem/1.5 system-ui,sans-serif;color:#607163;margin:7px 0 0;max-width:590px}
-.narration-reading{border-left:3px solid #ac7957;padding-left:13px;margin-left:-16px!important}
 .journal-author-row{display:flex;align-items:center;gap:13px;margin:27px 0 0;padding:19px 0 0;border-top:1px solid #8ba597}
 .journal-author-mark{display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;background:#e6be91;color:#224336;font:500 1.7rem/1 Georgia,serif}
 .journal-author-row p{margin:0;font:.78rem/1.5 system-ui,sans-serif;color:#dce8d9}
@@ -42,9 +28,9 @@
 .source-backlinks{margin-left:10px;white-space:nowrap}.source-backlinks a{margin-right:4px}
 .journal-primary-source{font:.82rem/1.6 system-ui,sans-serif;background:#e6eee2;padding:15px 18px}
 .journal-reading-meta{font:.77rem/1.65 system-ui,sans-serif;color:#506458;margin:12px 0 24px}
-@media(max-width:780px){.reader-toolbar .shell{grid-template-columns:1fr}.reader-outline-menu{order:-1}.reader-outline-links{left:0;right:auto}.narration-wave{min-width:80px}.narration-controls{margin-top:12px}}
+@media(max-width:780px){.reader-toolbar .shell{grid-template-columns:1fr}.reader-outline-menu{order:-1}.reader-outline-links{left:0;right:auto}}
 @media(hover:none){.journal-card-outline{max-height:none;opacity:1;padding:6px 0}.reader-outline-links{width:min(360px,88vw)}}
-@media(prefers-reduced-motion:reduce){.narration-widget[data-state="playing"] .narration-wave i{animation:none;opacity:1}.journal-card-outline{transition:none}}
+@media(prefers-reduced-motion:reduce){.journal-card-outline{transition:none}}
 /* Integrate the reader controls into the later editorial-editions layout. */
 .ed-journal .journal-author-row{border-top:1px solid #b6c3b7;padding-top:15px;margin:21px 0 0}
 .ed-journal .journal-author-row p{color:#375648!important}
@@ -56,13 +42,6 @@
 .ed-reading .journal-sources li{font-family:system-ui,sans-serif}
 .ed-card:hover .journal-card-outline,.ed-card:focus-within .journal-card-outline{max-height:190px;opacity:1}
 
-.narration-widget[data-state="playing"] .narration-wave i:nth-child(3n){animation-delay:-.31s}
-.narration-widget[data-state="playing"] .narration-wave i:nth-child(4n){animation-delay:-.49s}
-.narration-widget[data-state="playing"] .narration-wave i:nth-child(5n){animation-delay:-.68s}
-.narration-progress{display:block;margin-top:12px;width:min(100%,530px);height:5px;appearance:none;border:0;background:#d3dfd1;color:#a87555}
-.narration-progress::-webkit-progress-bar{background:#d3dfd1}
-.narration-progress::-webkit-progress-value{background:#a87555}
-.narration-progress::-moz-progress-bar{background:#a87555}
 
 /* Research-friendly passage links and citation previews: readable without JavaScript. */
 .reader-scroll-track{position:fixed;top:0;left:0;right:0;height:3px;z-index:70;pointer-events:none;background:transparent}
