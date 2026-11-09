@@ -1,5 +1,7 @@
 # Aurekai / Bonfÿre — Business Systems & Integration Delivery
 
+**Software runs every business. Aurekai builds the connected systems that make one worth remembering.** The client retains its name, customers and operating authority.
+
 **Nick Gonzales | Dallas, TX | Remote | English / Spanish**
 
 I develop software that turns existing business systems, documents, APIs and human decisions into reliable operations. I work across PHP/WordPress, Node.js/TypeScript, Python, SQL, native C and AI tooling. The useful deliverable is not a chatbot or a new dashboard for its own sake: it is the customer's existing job completed, checked, and handed back to the system that owns it.

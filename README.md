@@ -4,7 +4,7 @@
 <h1 align="center">Bonfÿre</h1>
 
 <p align="center">
-  <strong>The native software behind Aurekai’s businesses, applications and public network.</strong>
+  <strong>The native software behind Aurekai’s businesses, applications and public network.</strong><br><small>Built on software. Driven by Aurekai.</small>
 </p>
 
 <p align="center">

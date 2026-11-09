@@ -1,6 +1,8 @@
-# Aurekai — business, public platform and retained distribution lineage
+# Aurekai — the business behind memorable software experiences
 
-**Aurekai is the digital operating business and public network. Bonfÿre is the native institutional engine underneath it.** They are not two names for the same CLI.
+**Built on software. Driven by Aurekai.**
+
+Aurekai is the operating business and public network. Bonfÿre is its native institutional engine—not a second name for the same company or CLI.
 
 AI agents can produce software faster than conventional planning, handoffs, approvals and integration processes can absorb it. Aurekai's operating model invests engineering time, AI computation, reusable software, institutional knowledge and distribution into digital assets, applications and opportunities. Bonfÿre makes the underlying work **composable, authorized, testable and reusable**. Each project should strengthen the capability base for the next.
 

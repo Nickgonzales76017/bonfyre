@@ -1,5 +1,7 @@
 # Aurekai and Bonfÿre
 
+**Built on software. Driven by Aurekai.** The business develops distinctive digital operations; Bonfÿre supplies the shared native software. Each customer, creator, brand or partner retains its own identity and authority.
+
 Aurekai is an operating business that builds, improves and runs digital products, services and communities. Bonfÿre is the shared software infrastructure we use to do it.
 
 Aurekai can work with a local shop, a publisher, a property or equipment supplier, a creator and a software business. Those experiences may have different names, customers and commercial relationships. Underneath, they can share identity, information systems, applications, software development, payments, models and computing resources.
