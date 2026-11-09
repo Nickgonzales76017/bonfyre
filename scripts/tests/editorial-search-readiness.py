@@ -106,7 +106,9 @@ def validate():
         check("journal-sources" in markup, f"Missing references section: {slug}")
         check('src="../reader.js"' in markup, f"Missing reader script: {slug}")
         check('href="../reader.css"' in markup, f"Missing reader stylesheet: {slug}")
-        check('href="../about/"' in markup, f"Missing About/author link: {slug}")
+        check('href="../authors/aurekai-editorial/"' in markup, f"Missing source-backed author profile: {slug}")
+        check(article.get("author",{}).get("@id") == EXPECTED+"authors/aurekai-editorial/#identity",
+              f"Article author is not bound to the published identity: {slug}")
         check(doc.text_nodes > 25, f"Article rendered without readable prose: {slug}")
     sitemaps = [SITE / "sitemap.xml", BLOG / "sitemap.xml"]
     for path in sitemaps:
@@ -117,6 +119,7 @@ def validate():
     check((BLOG / "reader.js").is_file(), "Narration script is missing")
     check((BLOG / "reader.css").is_file(), "Reader styles are missing")
     check((BLOG / "about" / "index.html").is_file(), "Editorial attribution page is missing")
+    check((BLOG / "authors" / "aurekai-editorial" / "index.html").is_file(), "Credited author profile is missing")
     print(f"JOURNAL_SEARCH_READINESS_PASS {len(slugset)} crawlable HTML essays, structured data, footnotes, narration, bylines, and two sitemaps")
     print("This checks public-build readiness only; Google indexing requires Search Console verification.")
 
