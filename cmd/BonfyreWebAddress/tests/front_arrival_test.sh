@@ -58,8 +58,8 @@ for territory in ('live','life','shop','work'):
     check(page.count('<h1')==1,f'{territory}: exactly one primary heading')
     check('<h1 class="af-brand-title" id="af-brand-title">' in page,f'{territory}: native brand is the document H1')
     check('<header class="hero">' not in page,f'{territory}: no redundant generic lead')
-    check(page.index('data-brand-masthead') < page.index('data-front-arrival'),f'{territory}: brand precedes material doors')
-    check(page.index('href="/assets/front-brand.css"') < page.index('</head>'),f'{territory}: CSS loads in document head')
+    check(0<=page.find('data-brand-masthead')<page.find('data-front-arrival'),f'{territory}: brand precedes material doors')
+    check(0<=page.find('href="/assets/front-brand.css"')<page.find('</head>'),f'{territory}: CSS loads in document head')
 
     check(f'data-brand-territory="{territory}"' in page,f'{territory}: exact host brand')
     check('<title>'+brand[territory][0]+'</title>' in page,f'{territory}: source-owned title')
@@ -98,6 +98,10 @@ for territory in ('live','life','shop','work'):
     if m: ledes.add(m.group(1))
 check(len(ledes)==4,'territory-specific ledes')
 if problems:
+    for territory in ('live','life','shop','work'):
+        page=(root/f'{territory}.html').read_text()
+        print(f'  {territory}: bytes={len(page)} h1={page.count("<h1")} brand={page.count("data-brand-masthead")} css={page.count("front-brand.css")} head={page.find("</head>")} body={page.find("<body")}',file=sys.stderr)
+        print('  head sample:',page[:350].replace('\n',' '),file=sys.stderr)
     print('front arrival: FAIL',file=sys.stderr)
     for p in problems: print('  -',p,file=sys.stderr)
     raise SystemExit(1)
