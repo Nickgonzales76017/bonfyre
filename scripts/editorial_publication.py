@@ -229,8 +229,8 @@ def build_native_draft(root, posts, authors, relations, check=False):
                      "Originally cited source: "+p["source_url"],source_ref,digest,
                      "View original source",p["source_url"])
         if outgoing[slug]:
-            lines = ["- ["+article_lookup[target]["title"]+"]("+PUBLIC_BASE+"blog/"+target+"/"): "+
-                     relation+" — "+reason for _,relation,target,reason in outgoing[slug]]
+            lines = [f"- [{article_lookup[target]['title']}]({PUBLIC_BASE}blog/{target}/): {relation} — {reason}"
+                     for _,relation,target,reason in outgoing[slug]]
             fragment(route,"post:"+slug+":related",4,"editorial-related", "\n".join(lines),
                      "editorial/reading-bridges.tsv",
                      sha256(Path(relations).read_bytes()).hexdigest())
