@@ -38,7 +38,7 @@ case "$answer" in
     "200 text/css"*) cmp -s "$tmp/native-brand.css" "$root/site/matrix/front-brand.css" || fail 'brand CSS does not equal source-owned bytes' ;;
     *) fail "native shared brand asset returned $answer" ;;
 esac
-brand_css_version=$(grep -oE 'front-brand\\.css\\?v=[0-9a-f]{16}' "$tmp/work.html" | head -1 | sed 's/.*=//')
+brand_css_version=$(grep -oE 'front-brand\.css\?v=[0-9a-f]{16}' "$tmp/work.html" | head -1 | sed 's/.*=//')
 [ -n "$brand_css_version" ] || fail 'no digest-versioned brand stylesheet in Work HTML'
 versioned_answer=$(curl -sS -o "$tmp/brand-versioned.css" -w '%{http_code} %{content_type}' -H 'Host: aurekai.work' "$base/assets/front-brand.css?v=$brand_css_version")
 case "$versioned_answer" in
