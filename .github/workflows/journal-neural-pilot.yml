@@ -4,6 +4,15 @@ on:
     branches: [main]
     paths: ['.github/workflows/journal-neural-pilot.yml']
   workflow_dispatch:
+    inputs:
+      promote_reviewed_audio:
+        description: 'Publish only after the audition recordings have been listened to and approved'
+        type: boolean
+        required: true
+        default: false
+concurrency:
+  group: aurekai-journal-sarah-audio
+  cancel-in-progress: true
 permissions:
   contents: write
   actions: write
@@ -202,7 +211,8 @@ jobs:
           sh scripts/render-editorial.sh --check
           python3 scripts/tests/editorial-search-readiness.py
           test -s editorial/audio/qa/pace-metrics.json
-      - name: Retain complete audio and provenance for human review
+      - name: Retain audition and quality measurements even when quality gate rejects audio
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: aurekai-neural-audio-pilot
@@ -214,7 +224,8 @@ jobs:
             site/blog/the-machine-told-me-so/edition.mp3
             site/blog/who-keeps-the-internet-alive/edition.mp3
             site/blog/nobody-called-the-pizza-shops-slop/edition.mp3
-      - name: Promote provisional source-bound editions
+      - name: Promote only after explicit recorded-audio listening approval
+        if: github.event_name == 'workflow_dispatch' && inputs.promote_reviewed_audio
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
