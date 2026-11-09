@@ -504,7 +504,7 @@ def article_page(p):
     if len(related) < 3:
         related.extend(q for q in posts if q["slug"] != slug and q not in related)
     related = related[:3]
-    recommendations = ''.join('<a class="ed-related-item" href="../'+q["slug"]+'/"><span>'+esc(q["category"])+'</span><strong>'+esc(q["title"])+'</strong><small>Read essay ↗</small></a>' for q in related)
+    recommendations = ''.join('<a class="ed-related-item" href="../'+q["slug"]+'/"><span>'+esc(q["category"])+'</span><strong>'+esc(q["title"])+'</strong><small>Read article ↗</small></a>' for q in related)
     canonical = BASE_URL+slug+"/"
     topic_labels = ''.join('<span class="journal-topic">'+esc(t.strip())+'</span>' for t in p["topics"].split(",") if t.strip())
     cover_visual = media_figure(p, "../../") if media else editorial_detail(p)
@@ -567,7 +567,7 @@ def article_page(p):
 </head><body class="ed-journal format-{fmt} tone-{tone} {'ed-with-media' if media else 'ed-type-led'}" style="{colorvars}">
 <a class="skip" href="#main">Skip to article</a>
 <header class="top"><div class="shell"><a class="brand" href="../../"><span class="mark">A</span> AUREKAI <small>/ JOURNAL</small></a>
-<nav aria-label="Site navigation"><a href="../../">Home</a><a href="../../discover/">Explore</a><a href="../">Journal</a><a href="../../fieldwork/">Fieldwork</a><a href="../../series/">Series</a><a href="../../docs.html">Bonfÿre</a></nav></div></header>
+<nav aria-label="Site navigation"><a href="../../">Home</a><a href="../../explore.html">Businesses</a><a href="../../discover/">Applications</a><a href="../../blog/">Journal</a><a href="../../series/">Four series</a><a href="../../docs.html">Technology</a><a href="https://aurekai-work-samples.pages.dev/#ask">Discuss a project ↗</a></nav></div></header>
 <main id="main">
 <section class="ed-opening" aria-labelledby="article-title">
 <div class="ed-opening-grid">
@@ -701,7 +701,7 @@ def connections_atlas_page():
 <script src="../connections.js" defer></script></head>
 <body class="atlas-page"><a class="skip" href="#atlas-main">Skip to articles</a>
 <header class="top"><div class="shell"><a class="brand" href="../../"><span class="mark">A</span> AUREKAI <small>/ JOURNAL</small></a>
-<nav aria-label="Site navigation"><a href="../../">Home</a><a href="../">Journal</a><a href="../../series/">Four series</a><a href="../../discover/">Explore applications</a></nav></div></header>
+<nav aria-label="Site navigation"><a href="../../">Home</a><a href="../../explore.html">Businesses</a><a href="../../discover/">Applications</a><a href="../../blog/">Journal</a><a href="../../series/">Four series</a><a href="../../docs.html">Technology</a><a href="https://aurekai-work-samples.pages.dev/#ask">Discuss a project ↗</a></nav></div></header>
 <main id="atlas-main"><section class="atlas-hero"><div class="shell atlas-hero-inner">
 <div><span class="atlas-kicker">The Journal / Reading Guide</span>
 <h1>Find your next read.<br><em>Start with a subject.</em></h1>
@@ -770,6 +770,9 @@ buttons = ''.join('<button type="button" class="journal-filter'+(' active' if i 
 index = index[:fstart] + '<div class="journal-filters" role="group" aria-label="Filter articles">' + buttons + index[fend:]
 # The filter helper refers to data attributes that have been built on every card.
 assert index.count(' data-article data-category=') == len(posts)
+if '<nav aria-label="Site navigation">' not in index:
+    raise ValueError("Journal homepage navigation is missing")
+index = re.sub(r'<nav aria-label="Site navigation">[\\s\\S]*?</nav>', '<nav aria-label="Site navigation"><a href="../">Home</a><a href="../explore.html">Businesses</a><a href="../discover/">Applications</a><a href="../blog/">Journal</a><a href="../series/">Four series</a><a href="../docs.html">Technology</a><a href="https://aurekai-work-samples.pages.dev/#ask">Discuss a project ↗</a></nav>', index, count=1)
 write("index.html", index)
 write("connections/index.html", connections_atlas_page())
 

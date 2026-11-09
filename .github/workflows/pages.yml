@@ -26,6 +26,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Check public navigation and calls to action
+        run: python3 scripts/tests/public-wayfinding.py
       - name: Check application directory and retained release
         run: |
           node --test scripts/tests/showcase-directory.test.mjs scripts/tests/retain-tested-pages.test.mjs scripts/tests/component-contracts.test.mjs scripts/tests/workspace-composition.test.mjs scripts/tests/instruments-core.test.mjs
@@ -165,7 +167,7 @@ jobs:
             await page.getByRole('button',{name:'Articles',exact:true}).click();
             assert.equal(await page.locator('[data-kind="article"]:visible').count(),expectedArticles);
             await page.locator('#discover-search').fill('podcast');
-            await page.getByRole('button',{name:'Studios',exact:true}).click();
+            await page.getByRole('button',{name:'Application examples',exact:true}).click();
             assert.ok((await page.locator('[data-kind="studio"]:visible').count())>=1);
             await page.goto('http://127.0.0.1:8765/blog/why-base-rates-change-camera-matching-claims/',{waitUntil:'domcontentloaded'});
             assert.equal(await page.locator('a[href="../../fieldwork/"]').count(),1);
