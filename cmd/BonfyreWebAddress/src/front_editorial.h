@@ -23,6 +23,7 @@ static void front_editorial_icon_style(void) {
 #include "front_community.h"
 #include "front_community.h"
 #include "front_arrival.h"
+#include "front_brand.h"
 
 #ifndef FRONT_SKIP_LIVE
 #include "front_live.h"
@@ -48,6 +49,7 @@ static int page_front_editorial(sqlite3 *db, PageProjectionRead *projection, con
     (void)db; (void)projection; (void)material; (void)ctx;
     int shown=0;
     front_editorial_icon_style();
+    front_brand_emit(territory); /* brand-owned frame; the existing editorial lead retains its sources */
 #ifndef FRONT_SKIP_LIVE
     if (!strcmp(territory, "live")) shown=front_editorial_live(db, projection, doc, material, ctx);
 #endif
