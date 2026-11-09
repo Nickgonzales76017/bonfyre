@@ -1,6 +1,6 @@
 CC      ?= cc
 CFLAGS  ?= -O2 -Wall -Wextra -std=c11 -ffunction-sections -fdata-sections -I../../lib/libbonfyre/include -I../../engine/core/include
-LDFLAGS ?= ../../lib/libbonfyre/libbonfyre.a -lsqlite3
+LDFLAGS ?= ../../lib/libbonfyre/libbonfyre.a -lsqlite3 -lm
 TARGET   = bonfyre-auth
 # Mach-O and ELF use different section-garbage-collection linker flags.
 DEAD_STRIP := -Wl,--gc-sections
