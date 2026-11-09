@@ -45,3 +45,7 @@ The repository controls its own Pages and Work Samples authored sources; the sou
 ## Verified social-preview asset and four-apex scope
 
 Corporate home, product guide and application discovery use the existing product-workspace screenshot `site/spaces/shots/studio-product.png` for social previews. This is a real Aurekai application surface, not fictitious client art. Published production showcases on the four exact Aurekai apex hosts use different headings and descriptions. The native source is not a live deployment; independently hosted customer sites do not inherit Aurekai branding.
+
+## Public brand landing
+
+The canonical public company narrative is [About Aurekai](https://nickgonzales76017.github.io/bonfyre/about/). It ties the brand promise to genuine Work Samples, the Bonfÿre technology role and the four destination links; the awareness campaign line is presented as ambition rather than existing market-leading customer evidence.

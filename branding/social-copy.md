@@ -51,3 +51,7 @@ Software is the business behind every brand. On Aurekai we share working product
 12. Built on software. Driven by Aurekai.
 
 Avoid turning these into implied claims of existing high-profile customers or specific outcomes. Each campaign should be paired with a genuine application, demonstration, product or project appropriate to its context.
+
+## Destination for profiles and campaign links
+
+Use [About Aurekai](https://nickgonzales76017.github.io/bonfyre/about/) when a social platform offers one company-story link; use [Work Samples](https://aurekai-work-samples.pages.dev/) for portfolios and product proof. These are prepared destinations, not evidence the external account has been changed.

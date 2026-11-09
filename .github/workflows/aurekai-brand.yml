@@ -5,6 +5,7 @@ on:
     paths:
       - 'branding/**'
       - 'site/index.html'
+      - 'site/about/**'
       - 'site/explore.html'
       - 'site/discover/index.html'
       - 'site/market.html'
@@ -26,6 +27,7 @@ on:
     paths:
       - 'branding/**'
       - 'site/index.html'
+      - 'site/about/**'
       - 'site/explore.html'
       - 'site/discover/index.html'
       - 'site/market.html'

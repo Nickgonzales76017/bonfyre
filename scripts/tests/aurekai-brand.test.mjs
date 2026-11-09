@@ -69,6 +69,22 @@ test('GitHub, model and distribution documents distinguish business and native e
  assert.match(src('branding/README.md'),/not evidence that named market leaders already use Aurekai/);
  assert.match(src('branding/README.md'),/Do not project this copy onto customer-managed/);
 });
+test('public company landing connects product proof, engine role and all four destinations',()=>{
+ const page=src('site/about/index.html');
+ assert.match(page,/<title>About Aurekai/);
+ assert.match(page,/Built on software.<br><em>Driven by Aurekai.<\/em>/);
+ assert.match(page,/Bonfÿre is the native engine/);
+ assert.match(page,/studio-product\.png/);
+ for(const host of ['aurekai.work','aurekai.life','aurekai.live','aurekai.shop'])
+   assert.ok(page.includes('https://'+host+'/'),host+' link missing');
+ for(const channel of Object.values(AUREKAI_VOICE.channels))
+   assert.ok(page.includes(channel.title),channel.title+' not mapped');
+ assert.match(page,/not a claim that particular famous businesses/i);
+ assert.ok(src('site/index.html').includes('href="about/"'));
+ assert.ok(src('site/explore.html').includes('href="about/"'));
+ assert.ok(src('site/discover/index.html').includes('href="../about/"'));
+});
+
 test('native production-gallery mirrors the four exact apex texts without claiming activation',()=>{
  const c=src('cmd/BonfyreWebAddress/src/production_home.h');
  assert.match(c,/location\.hostname/);
