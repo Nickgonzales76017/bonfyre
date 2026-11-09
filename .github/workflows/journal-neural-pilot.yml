@@ -104,7 +104,7 @@ jobs:
           candidates=[]
           qa=Path('editorial/audio/qa')
           qa.mkdir(parents=True,exist_ok=True)
-          for candidate in (.68,.72,.76):
+          for candidate in (.78,.80,.82):
             audio,rate=tts.create(sample,voice=voice,speed=candidate,
               lang='en-us',trim=True,sentence_pause=.36,
               clause_pause=.14,continuous=True)
@@ -120,12 +120,12 @@ jobs:
             row={'speed':candidate,'file':str(mp3),'sample_words':sample_words,**stats}
             candidates.append(row)
             print('NARRATION_PACE_AUDITION '+json.dumps(row),flush=True)
-          accepted=[r for r in candidates if 128<=r['voiced_wpm']<=156]
+          accepted=[r for r in candidates if 145<=r['voiced_wpm']<=178]
           if not accepted:raise RuntimeError('No natural-pacing candidate; refuse publication')
-          chosen=min(accepted,key=lambda r:abs(r['voiced_wpm']-142))
+          chosen=min(accepted,key=lambda r:abs(r['voiced_wpm']-160))
           selected_speed=chosen['speed']
           (qa/'pace-metrics.json').write_text(json.dumps({
-            'narrator':'Sarah','target_voiced_wpm':142,'candidates':candidates,
+            'narrator':'Sarah','sample_reference_voiced_wpm':160,'full_article_target_voiced_wpm':145,'candidates':candidates,
             'selected':chosen,'review':'objective pace only; full listening review pending'
           },indent=2)+'\n')
           print('NARRATION_PACE_SELECTED '+json.dumps(chosen),flush=True)
@@ -172,7 +172,7 @@ jobs:
               if duration<95 or rms<.003 or peak>=1.2:raise RuntimeError('Audio QA failed '+slug)
               speech_words=len(re.findall(r"\b[\w]+(?:[-'][\w]+)*\b",script))
               pace=measured_pace(pcm,speech_words)
-              if not 125<=pace['voiced_wpm']<=160:
+              if not 137<=pace['voiced_wpm']<=155:
                 raise RuntimeError('Unnatural articulation speed: '+slug+' '+str(pace))
               if pace['silence_fraction']>.35:
                 raise RuntimeError('Excessive stitched silence: '+slug+' '+str(pace))
