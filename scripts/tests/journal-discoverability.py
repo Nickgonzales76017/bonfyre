@@ -46,7 +46,10 @@ for slug in slugs:
     canonicals = [a.get("href") for a in p.links if a.get("rel") == "canonical"]
     assert canonicals == [base + slug + "/"], f"canonical mismatch {slug}"
     assert p.headlines == 1 and p.articles == 1, f"invalid semantic article {slug}: h1={p.headlines}, BlogPosting={p.articles}, headlinks={len(p.links)}"
-    assert p.authors >= 1 and p.widgets == 1 and p.outlines == 1, f"missing editorial tools {slug}"
+    source = Path("editorial/posts") / (slug + ".md")
+    editorial = source.read_text(encoding="utf-8")
+    recording = "audio_voice: af_sarah" in editorial and "audio_file: edition.mp3" in editorial
+    assert p.authors >= 1 and p.widgets == int(recording) and p.outlines == 1, f"incorrect editorial tools for {slug}"
     assert p.meta.get("description") and p.meta.get("og:image"), f"missing searchable metadata {slug}"
     assert p.meta.get("robots","").startswith("index,follow"), f"indexing inhibited {slug}"
     assert p.meta.get("article:published_time") and p.meta.get("article:modified_time"), f"dates missing {slug}"
