@@ -154,7 +154,7 @@ def author_index(authors, posts):
     return '''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Authors and editors — Aurekai Journal</title><meta name="description" content="The credited editorial identities for articles in the Aurekai Journal.">
 <link rel="canonical" href="''' + PUBLIC_BASE + '''blog/authors/">
-<link rel="stylesheet" href="../../../assets/aurekai-field-guide.css">
+<link rel="stylesheet" href="../../assets/aurekai-field-guide.css">
 <link rel="stylesheet" href="../blog.css"><link rel="stylesheet" href="../authors.css"></head><body class="author-page">
 <main id="main" class="shell author-index"><span class="author-kicker">Aurekai Journal / Attribution</span>
 <h1>Authors and editors</h1><p>The Journal credits each article to a declared publication identity. No individual author is inferred from a repository account, writing style or AI-assisted production.</p>

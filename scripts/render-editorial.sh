@@ -8,6 +8,8 @@ from datetime import datetime, timezone
 from xml.sax.saxutils import escape as xml_escape
 
 ROOT = pathlib.Path.cwd()
+sys.path.insert(0, str(ROOT / "scripts"))
+from editorial_publication import load_authors, bind_authorship, public_author_page, author_index, build_native_draft
 SOURCE = ROOT / "editorial" / "posts"
 TARGET = ROOT / "site" / "blog"
 BASE_URL = "https://nickgonzales76017.github.io/bonfyre/blog/"
@@ -218,6 +220,8 @@ if len(posts) < 46:
 if len({p["slug"] for p in posts}) != len(posts):
     raise ValueError("Duplicate public article slug")
 posts.sort(key=lambda p: (p["published"], p["title"].lower()), reverse=True)
+AUTHORS = load_authors(ROOT)
+bind_authorship(posts, AUTHORS)
 ART_DIRECTION = editorial_specs()
 if set(ART_DIRECTION) != {p["slug"] for p in posts}:
     missing = sorted({p["slug"] for p in posts} - set(ART_DIRECTION))
@@ -387,12 +391,13 @@ def narrator(post):
 
 def byline(post):
     series=post.get("series","")
+    author=post["author_profile"]
     label=SERIES_LABELS.get(series,"Aurekai Journal")
     href='../../series/#'+series if series else '../'
+    identity="../authors/"+post["author_id"]+"/"
     return ('<div class="journal-author-row"><span class="journal-author-mark" aria-hidden="true">A</span><div>'
-            '<p class="journal-byline">By <span itemprop="author" itemscope itemtype="https://schema.org/Organization"><a href="../about/" itemprop="url"><span itemprop="name">Aurekai editorial</span></a></span></p>'
+            '<p class="journal-byline">By <span itemprop="author" itemscope itemtype="https://schema.org/'+author["kind"]+'"><a href="'+identity+'" itemprop="url"><span itemprop="name">'+esc(author["name"])+'</span></a></span></p>'
             '<p class="journal-from">From <a href="'+href+'">'+esc(label)+'</a> · <time datetime="'+esc(post["published"])+'" itemprop="datePublished">'+esc(post["published"])+'</time> · Edited public essay</p></div></div>')
-
 
 
 # Human-edited relationships join existing essays. They are not produced by
@@ -466,6 +471,7 @@ if missing_questions:
 
 def article_page(p):
     slug = p["slug"]
+    author = p["author_profile"]
     fmt, tone, media = p["art"]
     dark, cream, accent, ink = PALETTES[tone]
     mins = max(2, (len(p["body"].split()) + 209) // 210)
@@ -521,8 +527,9 @@ def article_page(p):
       "headline":p["title"],"description":p["description"],"inLanguage":"en-US",
       "datePublished":p["published"]+"T12:00:00+00:00",
       "dateModified":modified+"T12:00:00+00:00",
-      "author":{"@type":"Organization","name":"Aurekai editorial",
-        "url":"https://nickgonzales76017.github.io/bonfyre/blog/about/"},
+      "author":{"@type":author["kind"],"@id":author["url"]+"#identity",
+        "name":author["name"],"url":author["url"],
+        "sameAs":[author["website"],author["source"]]},
       "publisher":{"@type":"Organization","name":"Aurekai","url":"https://aurekai.work/"},
       "articleSection":p["category"],
       "keywords":[w.strip() for w in p["topics"].split(",") if w.strip()],
@@ -563,7 +570,7 @@ def article_page(p):
 <link rel="canonical" href="{canonical}"><link rel="alternate" type="application/rss+xml" title="Aurekai Journal" href="../feed.xml">
 <link rel="sitemap" type="application/xml" href="../../sitemap.xml"><script type="application/ld+json">{jsonld}</script><script type="application/ld+json">{breadcrumb_ld}</script>
 <link rel="stylesheet" href="../../assets/aurekai-field-guide.css"><link rel="stylesheet" href="../../assets/aurekai-research.css">
-<link rel="author" href="../about/"><link rel="stylesheet" href="../blog.css"><link rel="stylesheet" href="../article-editions.css"><link rel="stylesheet" href="../reader.css"><script defer src="../reader.js"></script>
+<link rel="author" href="../authors/{p["author_id"]}/"><link rel="stylesheet" href="../blog.css"><link rel="stylesheet" href="../article-editions.css"><link rel="stylesheet" href="../reader.css"><script defer src="../reader.js"></script>
 </head><body class="ed-journal format-{fmt} tone-{tone} {'ed-with-media' if media else 'ed-type-led'}" style="{colorvars}">
 <a class="skip" href="#main">Skip to article</a>
 <header class="top"><div class="shell"><a class="brand" href="../../"><span class="mark">A</span> AUREKAI <small>/ JOURNAL</small></a>
@@ -775,6 +782,12 @@ if '<nav aria-label="Site navigation">' not in index:
 index = re.sub(r'<nav aria-label="Site navigation">[\s\S]*?</nav>', '<nav aria-label="Site navigation"><a href="../">Home</a><a href="../explore.html">Businesses</a><a href="../discover/">Applications</a><a href="../blog/">Journal</a><a href="../series/">Four series</a><a href="../docs.html">Technology</a><a href="https://aurekai-work-samples.pages.dev/#ask">Discuss a project ↗</a></nav>', index, count=1)
 write("index.html", index)
 write("connections/index.html", connections_atlas_page())
+write("authors/index.html", author_index(AUTHORS, posts))
+for author_slug, author_profile in sorted(AUTHORS.items()):
+    authored = [p for p in posts if p["author_id"] == author_slug]
+    write("authors/"+author_slug+"/index.html", public_author_page(author_profile, authored))
+cms_pages, cms_fragments = build_native_draft(ROOT, posts, AUTHORS, EDITORIAL_BRIDGES_PATH, check=CHECK)
+print(f"JOURNAL_NATIVE_DRAFT_READY {cms_pages} pages / {cms_fragments} fragments / review-required")
 
 def pubdate(value):
     return datetime.strptime(value, "%Y-%m-%d").replace(tzinfo=timezone.utc).strftime("%a, %d %b %Y 12:00:00 GMT")
@@ -789,7 +802,7 @@ write("feed.xml", rss)
 article_sitemap_dates = {
     BASE_URL+post["slug"]+"/":post.get("updated",post["published"]) for post in posts
 }
-urls = [BASE_URL, BASE_URL+"about/", BASE_URL+"connections/", "https://nickgonzales76017.github.io/bonfyre/series/"] + list(article_sitemap_dates)
+urls = [BASE_URL, BASE_URL+"about/", BASE_URL+"connections/", BASE_URL+"authors/"] + [author["url"] for author in AUTHORS.values()] + ["https://nickgonzales76017.github.io/bonfyre/series/"] + list(article_sitemap_dates)
 def sitemap_entry(url):
     date = article_sitemap_dates.get(url)
     return "<url><loc>"+xml_escape(url)+"</loc>" + (
