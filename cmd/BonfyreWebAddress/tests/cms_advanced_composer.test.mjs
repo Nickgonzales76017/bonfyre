@@ -17,7 +17,8 @@ beforeAll(async()=>{
  other=await f.login("editor-b@example.test",{signup:false});
  const puppeteer=createRequire(join(root,"tools/creator-ingest/package.json"))("puppeteer");
  browser=await puppeteer.launch({
-  executablePath:"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+  executablePath:process.env.BONFYRE_TEST_CHROME||
+   (process.platform==="darwin"?"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome":puppeteer.executablePath()),
   headless:true,args:["--no-sandbox","--host-resolver-rules=MAP aurekai.life 127.0.0.1"]});
 },45000);
 afterAll(async()=>{await browser?.close();await f?.close();},45000);
