@@ -162,7 +162,7 @@ def author_index(authors, posts):
 <p><a href="../about/">Editorial policies and corrections</a> · <a href="../">All articles</a></p></main></body></html>'''
 
 
-PAGE_FIELDS = ("namespace","route","title","eyebrow","heading","lede","door_page","note","lenses","aperture_subject","aperture_operation","authenticated_pane","machine_view","status")
+PAGE_FIELDS = ("namespace","route","title","eyebrow","heading","lede","door_page","note","media_subject_ref","editorial_kind","author_credit","author_subject_ref","editorial_published_on","editorial_updated_on","lenses","aperture_subject","aperture_operation","authenticated_pane","machine_view","status")
 FRAGMENT_FIELDS = ("namespace","coordinate","page","slot","audience","kind","position","eyebrow","heading","body","label","href","status","variant_key","semantic_tags","projection_contract","source_ref","source_digest","evidence_ref","notes")
 
 
@@ -202,15 +202,23 @@ def build_native_draft(root, posts, authors, relations, check=False):
         outgoing[fields[0]].append(fields)
     pages, fragments = [], []
     manifest=["subject_id\tcanonical_url\tauthor_id\tseries\tcategory\tsource_ref\tsource_sha256\tstatus"]
-    def page(route,title,lede,note):
-        pages.append({"namespace":NAMESPACE,"route":route,"title":title,"eyebrow":"Aurekai Journal",
-                      "heading":title,"lede":lede,"note":note,"lenses":"public","machine_view":"authored",
-                      "status":"draft"})
-    def fragment(route,key,position,kind,body,source_ref,digest,label="",href=""):
-        fragments.append({"namespace":NAMESPACE,"coordinate":"journal:"+key,"page":route,
-                          "slot":"main","audience":"public","kind":kind,"position":position,
-                          "body":body,"label":label,"href":href,"status":"draft",
-                          "source_ref":source_ref,"source_digest":digest})
+    def page(route,title,lede,note,**editorial):
+        row={"namespace":NAMESPACE,"route":route,"title":title,"eyebrow":"Aurekai Journal",
+             "heading":title,"lede":lede,"note":note,"lenses":"public","machine_view":"authored",
+             "status":"draft"}
+        if set(editorial)-set(PAGE_FIELDS):
+            raise ValueError("Unrecognized authored page field")
+        row.update(editorial)
+        pages.append(row)
+    def fragment(route,key,position,kind,body,source_ref,digest,label="",href="",**presentation):
+        row={"namespace":NAMESPACE,"coordinate":"journal:"+key,"page":route,
+             "slot":"main","audience":"public","kind":kind,"position":position,
+             "body":body,"label":label,"href":href,"status":"draft",
+             "source_ref":source_ref,"source_digest":digest}
+        if set(presentation)-set(FRAGMENT_FIELDS):
+            raise ValueError("Unrecognized authored fragment field")
+        row.update(presentation)
+        fragments.append(row)
     for p in sorted(posts,key=lambda x:x["slug"]):
         slug=p["slug"];route="/blog/"+slug+"/"
         source_ref="editorial/posts/"+slug+".md"
@@ -218,7 +226,30 @@ def build_native_draft(root, posts, authors, relations, check=False):
         url=PUBLIC_BASE+route.lstrip("/")
         author=authors[p["author_id"]]
         page(route,p["title"],p["description"],
-             "Article | "+p["published"]+" | "+p["category"]+" | author:"+p["author_id"])
+             "Article | "+p["published"]+" | "+p["category"]+" | author:"+p["author_id"],
+             editorial_kind="article", author_credit=author["name"],
+             author_subject_ref="author:"+p["author_id"],
+             editorial_published_on=p["published"],
+             editorial_updated_on=p.get("updated",p["published"]))
+        # A native article without its editable presentation is not a faithful migration.
+        # Keep the reviewed design as a typed, source-pinned *draft*; never infer a
+        # native renderer, uploaded media, grant or completed publication from it.
+        fmt, tone, media = p["art"]
+        art_ref = "editorial/art-direction.tsv"
+        art_digest = sha256((root/art_ref).read_bytes()).hexdigest()
+        contract = {"schema":"aurekai.journal.edition.v1",
+                    "subject_id":"post:"+slug,"canonical_url":url,
+                    "template":"journal-"+fmt,"format":fmt,"palette":tone,
+                    "cover_kind":"credited-media" if media else "authored-chapters",
+                    "media_key":media or None,"authored_source_ref":source_ref,
+                    "authored_source_sha256":digest,"review_required":True}
+        fragment(route,"post:"+slug+":presentation",0,"editorial-presentation",
+                 json.dumps(contract,sort_keys=True,separators=(",",":")),
+                 art_ref,art_digest, label="Article presentation",
+                 slot="cover",variant_key="journal-"+fmt,
+                 semantic_tags=json.dumps(["editorial",p["category"].lower(),fmt],separators=(",",":")),
+                 projection_contract=json.dumps(contract,sort_keys=True,separators=(",",":")),
+                 notes="Presentation-only draft; no effect, media ownership, or publication claim")
         fragment(route,"post:"+slug+":body",1,"article-body",p["body"],source_ref,digest)
         fragment(route,"post:"+slug+":attribution",2,"article-credit",
                  "By "+author["name"]+" · Published "+p["published"]+
@@ -238,7 +269,9 @@ def build_native_draft(root, posts, authors, relations, check=False):
                                    source_ref,digest,"draft"]))
     for slug, author in sorted(authors.items()):
         route="/blog/authors/"+slug+"/"
-        page(route,author["name"],author["description"],"Credited "+author["kind"]+" profile")
+        page(route,author["name"],author["description"],"Credited "+author["kind"]+" profile",
+             editorial_kind="author-profile",author_credit=author["name"],
+             author_subject_ref="author:"+slug)
         fragment(route,"author:"+slug+":bio",1,"author-biography",author["body"],
                  author["source_path"],author["source_sha256"])
         fragment(route,"author:"+slug+":articles",2,"authored-articles",

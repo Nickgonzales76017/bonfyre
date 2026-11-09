@@ -29,6 +29,12 @@ assert all(row["namespace"]=="aurekai-journal" and row["status"]=="draft" for ro
 assert all(f["page"] in {p["route"] for p in pages} for f in fragments), "Orphaned CMS fragment"
 assert all(f["source_ref"] and f["source_digest"] for f in fragments), "Missing source provenance"
 assert len([f for f in fragments if f["kind"]=="article-body"])==66, "Lost article bodies"
+assert len([f for f in fragments if f["kind"]=="editorial-presentation"])==66, "Lost article design contracts"
+art_path=root/"editorial/art-direction.tsv"
+art_digest=sha256(art_path.read_bytes()).hexdigest()
+art_rows=[line.split("\\t") for line in art_path.read_text(encoding="utf-8").splitlines()[3:] if line.strip() and not line.startswith("#")]
+art_by_slug={row[0]:row[1:] for row in art_rows}
+assert len(art_by_slug)==66 and all(len(v)==3 for v in art_by_slug.values()), "Art assignments drifted"
 assert len([f for f in fragments if f["kind"]=="article-credit"])==66, "Lost author relationships"
 assert all(f["audience"]=="public" for f in fragments), "Accidental private projection"
 
@@ -36,7 +42,7 @@ source_count=0
 identity="https://nickgonzales76017.github.io/bonfyre/blog/authors/aurekai-editorial/"
 for p in pages:
     if "/authors/" in p["route"]:
-        assert p["route"]=="/blog/authors/aurekai-editorial/"
+        assert p["route"]=="/blog/authors/aurekai-editorial/" and p["editorial_kind"]=="author-profile"
         continue
     slug=p["route"].removeprefix("/blog/").strip("/")
     path=root/"editorial/posts"/(slug+".md")
@@ -45,6 +51,20 @@ for p in pages:
     digest=sha256(path.read_bytes()).hexdigest()
     body=next(f for f in fragments if f["coordinate"]=="journal:post:"+slug+":body")
     author=next(f for f in fragments if f["coordinate"]=="journal:post:"+slug+":attribution")
+    design=next(f for f in fragments if f["coordinate"]=="journal:post:"+slug+":presentation")
+    fmt,tone,media=art_by_slug[slug]
+    contract=json.loads(design["projection_contract"])
+    assert contract["schema"]=="aurekai.journal.edition.v1"
+    assert contract["subject_id"]=="post:"+slug and contract["canonical_url"].endswith("/blog/"+slug+"/")
+    assert contract["format"]==fmt and contract["palette"]==tone and contract["media_key"]==(media or None)
+    assert design["status"]=="draft" and design["slot"]=="cover"
+    assert design["source_ref"]=="editorial/art-direction.tsv" and design["source_digest"]==art_digest
+    assert design["variant_key"]=="journal-"+fmt
+    assert contract["authored_source_sha256"]==digest and contract["review_required"] is True
+    assert json.loads(design["semantic_tags"])[-1]==fmt
+    assert p["editorial_kind"]=="article" and p["author_subject_ref"]=="author:aurekai-editorial"
+    assert p["editorial_published_on"] and p["editorial_updated_on"]
+
     assert body["source_ref"]==path.as_posix() and body["source_digest"]==digest, slug
     assert body["body"]==raw.split("\n---\n",1)[1].strip(), "Lost exact article body: "+slug
     assert author["href"]==identity and "Aurekai editorial" in author["body"], "Authorship mismatch: "+slug
@@ -69,5 +89,5 @@ for page in [blog/"authors/index.html",author_page]:
 source_lines=(build/"source-receipts.tsv").read_text(encoding="utf-8").splitlines()
 assert len(source_lines)==68 and all(line.endswith("\tdraft") for line in source_lines[1:])
 
-print(f"EDITORIAL_PUBLICATION_BRIDGE_PASS {source_count} original essays / {len(pages)} native draft pages / {len(fragments)} sourced fragments / 1 real organizational credit")
+print(f"EDITORIAL_PUBLICATION_BRIDGE_PASS {source_count} original essays / {len(pages)} native draft pages / {len(fragments)} sourced fragments / 66 source-pinned design contracts / 1 real organizational credit")
 print("Publication remains held for owner review; source rows do not attest live native CMS admission.")

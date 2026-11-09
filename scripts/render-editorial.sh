@@ -730,15 +730,13 @@ def card(p, number):
 <div class="journal-card-bottom"><time datetime="{esc(p["published"])}">{esc(p["published"])}</time><span>{'Read / listen ↗' if p.get('audio_file') and p.get('audio_voice') == 'af_sarah' else 'Read article ↗'}</span></div></div></a></article>'''
 
 
-index_file = TARGET / "index.html"
-index = index_file.read_text(encoding="utf-8")
-# Preserve the existing journal design and its accessible client-side filter.
-grid_start = re.search(r'<div class="journal-grid"(?: data-journal-grid)?>', index)
-start = grid_start.start() if grid_start else -1
-end = index.find('<p id="journal-empty"', start)
-if start < 0 or end < 0:
-    raise ValueError("Blog index does not have expected card region")
-index = index[:start] + '<div class="journal-grid" data-journal-grid>' + '\n'.join(card(p,i) for i,p in enumerate(posts,1)) + '</div>\n' + index[end:]
+index = (ROOT / "editorial" / "journal-home.html").read_text(encoding="utf-8")
+# The journal home is authored once; generated site/blog/index.html is OUTPUT ONLY.
+# Reading generated HTML back as template quietly retained stale markup between editions.
+card_slot = "<!-- JOURNAL_CARD_GRID -->"
+if index.count(card_slot) != 1:
+    raise ValueError("Journal home requires exactly one article collection slot")
+index = index.replace(card_slot, '<div class="journal-grid" data-journal-grid>' + '\n'.join(card(p,i) for i,p in enumerate(posts,1)) + '</div>')
 if '<a href="./connections/">' not in index:
     index = index.replace('<a href="#articles">Browse the article index ↓</a>',
         '<a href="./connections/">Browse the Reading Guide ↗</a><a href="#articles">Browse the article index ↓</a>')

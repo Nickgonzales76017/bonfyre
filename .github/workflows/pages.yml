@@ -155,6 +155,18 @@ jobs:
           grep -q "All articles / $(grep -l '^status: edited-public$' editorial/posts/*.md | wc -l)" site/blog/index.html
       - name: Verify 66 articles and public author profiles have safe native drafts
         run: python3 scripts/tests/editorial-publication-bridge.py
+      - name: Browser-check all Journal cards, filters and responsive layouts
+        if: steps.retention.outputs.superseded != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/range-static-site.mjs site 8765 >/tmp/aurekai-editorial-http.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          sleep 1
+          export PLAYWRIGHT_MODULE="$PWD/.spaces-tools/node_modules/playwright/index.mjs"
+          export CHROME_PATH="$(command -v google-chrome)"
+          node scripts/tests/editorial-directory-browser.mjs
       - name: Browser-check Fieldwork stories and cross-site search
         if: steps.retention.outputs.superseded != 'true'
         shell: bash

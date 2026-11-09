@@ -7,11 +7,14 @@ on:
       - 'editorial/authors/**'
       - 'scripts/editorial_publication.py'
       - 'scripts/tests/editorial-publication-bridge.py'
+      - 'cmd/BonfyreCMS/content-types/site_page.json'
       - 'site/blog/authors.css'
       - 'editorial/reading-bridges.tsv'
       - 'editorial/art-direction.tsv'
+      - 'editorial/journal-home.html'
       - 'scripts/tests/journal-discoverability.py'
       - 'scripts/tests/editorial-*.py'
+      - 'scripts/tests/editorial-home-source.py'
       - 'site/index.html'
       - 'scripts/render-editorial.sh'
       - 'scripts/retain-tested-pages.mjs'
@@ -32,6 +35,14 @@ on:
       - 'scripts/tests/pages-source-freshness.test.mjs'
       - 'scripts/range-static-site.mjs'
       - 'scripts/tests/range-static-site.test.mjs'
+      - '.github/workflows/journal.yml'
+  pull_request:
+    paths:
+      - 'editorial/**'
+      - 'scripts/render-editorial.sh'
+      - 'scripts/editorial_publication.py'
+      - 'scripts/tests/editorial-*'
+      - 'cmd/BonfyreCMS/content-types/site_page.json'
       - '.github/workflows/journal.yml'
   workflow_dispatch:
 permissions:
@@ -100,6 +111,8 @@ jobs:
           assert.match(html,/ ed-card--lead"/); // leading story assigned in source
           NODE
           test "$(grep -c 'class="essay-chapter ' site/series/index.html)" -eq 4
+      - name: Verify independently authored journal template and stable output
+        run: python3 scripts/tests/editorial-home-source.py
       - name: Verify article search and reading readiness
         run: python3 scripts/tests/editorial-search-readiness.py
       - name: Verify editorial-only rebase preserves the tested release
