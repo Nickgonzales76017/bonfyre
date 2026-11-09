@@ -69,6 +69,7 @@ jobs:
           npm ci --no-audit --no-fund
       - name: Build local native authentication, CMS and WebAddress
         run: |
+          make -C lib/libbonfyre
           make -C cmd/BonfyreAuth bonfyre-auth
           make -C cmd/BonfyreCMS bonfyre-cms
           make -C cmd/BonfyreWebAddress bonfyre-web-address
