@@ -41,3 +41,30 @@ jobs:
         run: node cmd/BonfyreWebAddress/tools/compile_brand_cuts.mjs --check
       - name: Compile C brand edition and verify four-apex art, routes and independent-host refusal
         run: node --test cmd/BonfyreWebAddress/tests/front_brand.test.mjs
+
+  native-http-witness:
+    name: Real WebAddress/CMS four-apex HTTP fixture
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.13
+      - uses: cue-lang/setup-cue@v1.0.0
+      - uses: mlugg/setup-zig@v1
+        with:
+          version: 0.13.0
+      - name: Install native dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsqlite3-dev libcurl4-openssl-dev
+      - name: Prepare verified pinned QR sources
+        run: make -C cmd/BonfyreWebAddress prepare-public-code
+      - name: Compile actual CMS and WebAddress service
+        run: |
+          make -C lib/libbonfyre
+          make -C cmd/BonfyreCMS bonfyre-cms
+          make -C cmd/BonfyreWebAddress bonfyre-web-address
+      - name: Serve all four host roots and verify HTML, CSS and host boundaries
+        run: sh cmd/BonfyreWebAddress/tests/front_arrival_test.sh ./cmd/BonfyreWebAddress/bonfyre-web-address

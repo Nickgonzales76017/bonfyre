@@ -27,7 +27,6 @@ static void front_brand_emit(const char *territory){
     for(size_t i=0;i<sizeof(front_brand_cuts)/sizeof(front_brand_cuts[0]);i++)
         if(!strcmp(front_brand_cuts[i].territory,territory)){selected=&front_brand_cuts[i];break;}
     if(!selected)return;
-    fputs("<link rel=\"stylesheet\" href=\"/assets/front-brand.css\">",stdout);
     fputs("<section class=\"af-brand\" data-brand-masthead data-brand-territory=\"",stdout);
     html(selected->territory);
     fputs("\" aria-labelledby=\"af-brand-title\"><div class=\"af-brand-top\">"
@@ -39,9 +38,9 @@ static void front_brand_emit(const char *territory){
     html(front_brand_signature_second);
     fputs("</span></div><div class=\"af-brand-body\"><div><p class=\"af-brand-category\">",stdout);
     html(selected->category);
-    fputs("</p><h2 class=\"af-brand-title\" id=\"af-brand-title\">",stdout);
+    fputs("</p><h1 class=\"af-brand-title\" id=\"af-brand-title\">",stdout);
     html(selected->headline);
-    fputs("</h2></div><div class=\"af-brand-side\"><p>",stdout);
+    fputs("</h1></div><div class=\"af-brand-side\"><p>",stdout);
     html(selected->description);
     fputs("</p><div class=\"af-brand-links\"><a href=\"",stdout);
     html(selected->action);

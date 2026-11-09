@@ -4262,6 +4262,7 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
           "body[data-character]:is(.route-discover,.route-watch,.route-board) :is(.video,.pin,.tile a):focus-visible{outline:3px solid var(--w-accent);outline-offset:3px}"
           "@media(max-width:700px){body[data-character]:is(.route-discover,.route-watch,.route-board) .wrap>.hero{border-radius:18px;padding:24px 20px}body[data-character]:is(.route-discover,.route-watch,.route-board) .wrap>.hero h1{font-size:clamp(2.6rem,11vw,4rem)}body[data-character]:is(.route-discover,.route-watch,.route-board) .reading-mark{width:44px;height:44px;border-radius:13px}}"
           "</style>",stdout);
+    if (brand_head) fputs("<link rel=\"stylesheet\" href=\"/assets/front-brand.css\">",stdout);
     fputs("</head>",stdout);
     fputs("<body class=\"", stdout); html(doc->character);
     if (doc->route) { fputs(" route-", stdout); html(doc->route[1] ? doc->route + 1 : "front"); }
@@ -4274,6 +4275,10 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
     fputs("><main class=\"wrap\" data-bonfyre-region=\"page-main\" data-bonfyre-continuity=\"page-main\">", stdout);
     page_emit_nav(doc);
     if (doc->world) { fputs("<nav class=\"tabs\" aria-label=\"Ways in\">", stdout); page_emit_world_tabs(db, doc); fputs("</nav>", stdout); }
+    if (brand_head) {
+        /* The four owned apex roots use the canonical composed brand H1 as their opening. */
+        front_brand_emit(brand_head->territory);
+    } else {
     fputs("<header class=\"hero\"><h1>", stdout);
     if (doc->route && (!strcmp(doc->route, "/discover") || !strcmp(doc->route, "/watch") || !strcmp(doc->route, "/board"))) {
         fputs("<span class=\"reading-mark\" aria-hidden=\"true\">", stdout); page_glyph(page_nav_glyph(doc->route)); fputs("</span>", stdout);
@@ -4297,6 +4302,7 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
         fputs(" &middot; <a href=\"", stdout); html(doc->route ? doc->route : "/"); fputs("\">Show all</a></p>", stdout);
     }
     fputs("</header>", stdout);
+    } /* Other routes and independently owned sites retain their existing document hero. */
     page_emit_continuation_style();
     if(!narrowed)page_emit_media_spaces(db,doc->route,doc->raw_query,page_render_host);
     /* A territory's front is edited before it is composed: its own program
