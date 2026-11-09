@@ -14,6 +14,7 @@ on:
       - 'editorial/templates/**'
       - 'editorial/art-direction.tsv'
       - 'scripts/tests/journal-discoverability.py'
+      - 'scripts/tests/journal-browser.mjs'
       - 'scripts/tests/editorial-*.py'
       - 'site/index.html'
       - 'scripts/render-editorial.sh'
@@ -49,7 +50,7 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 6
+    timeout-minutes: 10
     steps:
       - name: Checkout journal source
         uses: actions/checkout@v4
@@ -110,6 +111,18 @@ jobs:
           assert.match(html,/ ed-card--lead"/); // leading story assigned in source
           NODE
           test "$(grep -c 'class="essay-chapter ' site/series/index.html)" -eq 4
+      - name: Browser-check cards, list view, filters, keyboard and mobile layout
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --prefix .journal-tools --ignore-scripts --no-audit --no-fund playwright@1.56.1
+          node scripts/range-static-site.mjs site 8765 >/tmp/aurekai-journal-browser.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          sleep 1
+          export PLAYWRIGHT_MODULE="$PWD/.journal-tools/node_modules/playwright/index.mjs"
+          export CHROME_PATH="$(command -v google-chrome)"
+          node scripts/tests/journal-browser.mjs
       - name: Verify article search and reading readiness
         run: python3 scripts/tests/editorial-search-readiness.py
       - name: Verify editorial-only rebase preserves the tested release
