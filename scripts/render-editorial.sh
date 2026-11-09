@@ -17,77 +17,8 @@ CHECK = "--check" in sys.argv[1:]
 ALLOWED_ICONS = set(re.findall(r'<symbol id="([^"]+)"', (ROOT / "site/assets/product-icons.svg").read_text()))
 CATEGORIES = ["All", "Debates", "Mathematics", "Standards", "Markets", "Science", "Business", "Applications", "Publishing", "Commerce", "Engineering", "Research"]
 
-# The editorial desk chooses the presentation per story. No hash, randomness,
-# generated illustration, placeholder photo, or fabricated magazine issue.
-# Format: slug | opening format | colorway | licensed/owned visual (or none).
-EDITION_SPEC = """
-a-council-agenda-can-be-useful|field-report|forest|research
-a-job-posting-has-more-than-one-job|business-review|olive|
-a-library-of-alexandria-selected-by-demand|archive|ink|library
-a-publisher-deserves-a-home|cover-spread|forest|
-a-union-for-the-internet|broadsheet|brick|printing
-a-wholesale-lot-is-an-equation-not-a-discount|market-ledger|copper|
-ai-lowered-entry-cost-not-customer-service-cost|business-review|ink|
-ai-operating-laboratory-equipment-needs-a-real-safety-boundary|research-note|slate|
-ai-written-code-is-not-the-whole-delivery|system-brief|forest|process
-an-electric-vehicle-can-be-a-mobile-battery-but-availability-is-the-product|field-report|olive|
-auth-md-and-the-agent-registration-problem|dossier|slate|
-coding-a-quickbooks-replacement-does-not-replace-accounting|business-review|copper|
-connecting-an-account-is-not-acting-on-it|dossier|forest|
-creators-need-operating-infrastructure-not-only-better-media-models|culture-feature|brick|
-differential-privacy-is-not-a-substitute-for-data-governance|research-note|slate|
-digital-identity-is-not-a-single-login-box|column|forest|
-duckdb-in-the-browser-changes-who-needs-a-server|system-brief|olive|schema
-frappe-as-an-application-language|dossier|olive|
-from-audio-to-something-people-can-use|culture-feature|ink|radio
-graded-collectibles-are-an-identity-market|market-ledger|brick|
-machine-payments-are-not-machine-purchasing-authority|business-review|slate|
-mcp-a2a-activitypub-and-atproto-are-different-tools|comparative|ink|
-metr-study-and-the-missing-counterfactual|research-note|copper|
-minecraft-built-a-world-what-about-everything-else|manifesto|forest|
-nobody-called-the-pizza-shops-slop|culture-feature|brick|
-productized-service-first-is-not-every-founders-rule|column|copper|
-property-listings-need-rights-not-just-fields|field-report|ink|
-rate-distortion-for-executable-agent-skills|research-note|olive|
-rss-is-still-a-great-source-of-time|broadsheet|forest|
-satellite-models-can-see-change-not-insurance-liability|field-report|slate|
-screenshots-cannot-test-a-distributed-system|system-brief|ink|
-shopifys-ai-memo-needs-an-outcome-metric|business-review|brick|
-sites-are-dead-long-live-the-web|cover-spread|forest|forest
-source-available-is-not-the-same-as-open-source|comparative|olive|
-stable-identifiers-are-equivalence-classes|research-note|ink|
-the-archive-is-not-the-owner|archive|copper|
-the-catalogue-and-the-room|studio-edition|forest|room
-the-clip-is-not-the-whole-work|culture-feature|slate|
-the-deployment-was-green-but-the-site-was-old|system-brief|brick|
-the-internet-has-an-inheritance-problem|archive|forest|
-the-internet-of-bad-ideas|manifesto|copper|
-the-local-archive-that-never-got-uploaded|archive|olive|books
-the-machine-told-me-so|dossier|ink|
-the-math-behind-sharing-software-across-businesses|business-review|olive|
-the-memory-wall-in-local-models|system-brief|slate|
-the-profile-is-bigger-than-the-person|cover-spread|brick|
-the-spreadsheet-that-became-a-business|dossier|forest|calculator
-the-world-is-not-one-embedding|comparative|slate|
-three-brands-one-foundation|studio-edition|olive|
-three-headlines-can-still-be-one-source|broadsheet|brick|
-two-coding-agents-one-worktree|system-brief|copper|
-useful-things-are-already-out-there|field-report|olive|
-vibe-coding-is-not-a-production-method|manifesto|ink|
-we-didnt-run-out-of-ideas|culture-feature|forest|
-websites-should-open-real-applications|studio-edition|forest|product
-what-a-legacy-migration-really-moves|field-report|copper|
-what-happens-when-anyone-can-make-an-app|manifesto|olive|
-when-everyone-agrees-who-is-thinking|column|ink|
-when-reading-becomes-participating|cover-spread|forest|
-when-the-agent-finishes-coding|system-brief|slate|
-who-gets-to-have-sophisticated-software|business-review|copper|
-who-keeps-the-internet-alive|culture-feature|forest|broadcast
-why-ai-needs-an-operating-company|business-review|forest|
-why-base-rates-change-camera-matching-claims|research-note|brick|
-why-does-every-app-want-to-be-everything|comparative|forest|
-why-the-cheapest-token-isnt-the-cheapest-answer|market-ledger|ink|
-"""
+# The editorial desk owns these reviewed content choices outside the renderer.
+EDITION_PATH = ROOT / "editorial" / "art-direction.tsv"
 FORMATS = frozenset(("cover-spread", "archive", "dossier", "field-report", "culture-feature",
     "business-review", "market-ledger", "research-note", "system-brief", "studio-edition",
     "comparative", "manifesto", "broadsheet", "column"))
@@ -133,10 +64,20 @@ MEDIA = {
 
 def editorial_specs():
     result = {}
-    for line in EDITION_SPEC.strip().splitlines():
-        slug, fmt, tone, media = line.strip().split("|")
-        if slug in result or fmt not in FORMATS or tone not in PALETTES or (media and media not in MEDIA):
-            raise ValueError("Invalid article-level art direction: "+slug)
+    lines = EDITION_PATH.read_text(encoding="utf-8").splitlines()
+    if len(lines) < 4 or lines[2] != "slug\tformat\tcolorway\tmedia":
+        raise ValueError("Missing art-direction TSV header")
+    for number, line in enumerate(lines[3:], 4):
+        if not line.strip() or line.startswith("#"):
+            continue
+        fields = [v.strip() for v in line.split("\t")]
+        if len(fields) != 4:
+            raise ValueError(f"Invalid art-direction row {number}")
+        slug, fmt, tone, media = fields
+        if (not re.fullmatch(r'[a-z0-9]+(?:-[a-z0-9]+)*', slug)
+            or slug in result or fmt not in FORMATS or tone not in PALETTES
+            or (media and media not in MEDIA)):
+            raise ValueError(f"Invalid article-level art direction row {number}: {slug}")
         result[slug] = (fmt, tone, media)
     return result
 
@@ -240,21 +181,44 @@ def inline(s):
     s = re.sub(r'(?<!\*)\*([^*]+)\*(?!\*)', r'<em>\1</em>', s)
     return s
 
-def body_html(source):
+CHAPTER_LABELS = {
+    "cover-spread":"Chapter", "archive":"Archive", "dossier":"Dossier",
+    "field-report":"Field note", "culture-feature":"Perspective", "business-review":"Analysis",
+    "market-ledger":"Ledger", "research-note":"Research", "system-brief":"System",
+    "studio-edition":"Studio", "comparative":"Comparison", "manifesto":"Argument",
+    "broadsheet":"Report", "column":"Essay"
+}
+
+def body_html(source, fmt):
+    """Typeset authored sections without inventing quotations, facts or imagery."""
     rendered = []
+    chapter = 0
+    lead = False
     for block in re.split(r'\n[ \t]*\n', source.strip()):
         block = block.strip()
         if not block: continue
         if block.startswith("## "):
             title = block[3:].strip()
-            rendered.append('<h2 id="' + sid(title) + '">' + inline(title) + ' <a href="#'+sid(title)+'" class="section-permalink" aria-label="Permanent link to section: '+esc(title)+'">§</a></h2>')
+            chapter += 1
+            anchor = sid(title)
+            if not anchor: raise ValueError("Empty editorial section")
+            rendered.append(
+                '<div class="ed-chapter-head" data-chapter="'+str(chapter)+'">'
+                '<p class="ed-chapter-index" aria-hidden="true"><span>'+esc(CHAPTER_LABELS[fmt])+'</span><b>'+f"{chapter:02d}"+'</b></p>'
+                '<h2 id="'+anchor+'">'+inline(title)
+                +' <a href="#'+anchor+'" class="section-permalink" aria-label="Permanent link to section: '+esc(title)+'">§</a></h2></div>')
+            lead = True
         elif block.startswith("### "):
             title = block[4:].strip()
-            rendered.append('<h3 id="' + sid(title) + '">' + inline(title) + '</h3>')
+            rendered.append('<h3 id="'+sid(title)+'">'+inline(title)+'</h3>')
+            lead = False
         elif all(x.startswith("- ") for x in block.splitlines()):
-            rendered.append('<ul>' + ''.join('<li>' + inline(x[2:]) + '</li>' for x in block.splitlines()) + '</ul>')
+            rendered.append('<ul>'+''.join('<li>'+inline(x[2:])+'</li>' for x in block.splitlines())+'</ul>')
+            lead = False
         else:
-            rendered.append('<p>' + inline(block.replace("\n", " ")) + '</p>')
+            klass = ' class="ed-chapter-lead"' if lead else ''
+            rendered.append('<p'+klass+'>'+inline(block.replace("\n", " "))+'</p>')
+            lead = False
     return "\n".join(rendered)
 
 def write(relative, content):
@@ -289,11 +253,11 @@ def editorial_argument(post):
             '<ol class="argument-turns">'+steps+'</ol></figure>')
 
 def editorial_body(post):
-    rendered = body_html(post["body"])
+    rendered = body_html(post["body"], post["art"][0])
     visual = editorial_argument(post)
     if not visual:
         return rendered
-    headings = list(re.finditer(r'<h2 id="', rendered))
+    headings = list(re.finditer(r'<div class="ed-chapter-head"', rendered))
     if len(headings) >= 2:
         insert_at = headings[1].start()
     elif headings:
@@ -870,6 +834,13 @@ if CHECK:
             photo_pages+=1
             if MEDIA[media][1] not in markup:
                 raise AssertionError(f"Unattributed source image: {p['slug']}")
+    for p in posts:
+        article=(TARGET/p["slug"]/"index.html").read_text(encoding="utf-8")
+        chapters=sum(1 for line in p["body"].splitlines() if line.startswith("## "))
+        if article.count('class="ed-chapter-head"') != chapters:
+            raise AssertionError(f"Missing authored editorial chapters: {p['slug']}")
+        if chapters and not 'class="ed-chapter-lead"' in article:
+            raise AssertionError(f"Missing styled chapter leads: {p['slug']}")
     index=(TARGET/"index.html").read_text(encoding="utf-8")
     if index.count('class="ed-card-cover"')!=len(posts):
         raise AssertionError("Directory does not include all article editions")

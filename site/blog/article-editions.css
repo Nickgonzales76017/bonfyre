@@ -377,3 +377,45 @@
   .ed-audio.is-docked .ed-audio-speed{font-size:.69rem}
 }
 @media(prefers-reduced-motion:reduce){.ed-audio *{scroll-behavior:auto;transition:none!important}}
+
+/* Chapter-level magazine typography, based on authored manuscript sections. */
+.ed-reading .article-body .ed-chapter-head{margin:clamp(55px,7vw,90px) 0 27px;border-top:1px solid #a9b8a9;padding:22px 0 0}
+.ed-reading .article-body .ed-chapter-head h2{font:500 clamp(2.25rem,3.6vw,3.85rem)/1.12 Georgia,serif;letter-spacing:-.045em;color:var(--ed-ink);padding:0;margin:14px 0 0;border:0;text-wrap:balance}
+.ed-reading .article-body .ed-chapter-index{margin:0;display:flex;align-items:center;justify-content:space-between;gap:20px;font:750 .67rem/1.4 system-ui,sans-serif;color:#80624b;text-transform:uppercase;letter-spacing:.16em}
+.ed-reading .article-body .ed-chapter-index b{font:500 clamp(1.6rem,2.5vw,2.7rem)/1 Georgia,serif;letter-spacing:-.06em;color:var(--ed-dark)}
+.ed-reading .article-body p.ed-chapter-lead{font:400 clamp(1.22rem,1.7vw,1.49rem)/1.7 Georgia,serif;color:var(--ed-ink)}
+.format-cover-spread .ed-reading .ed-chapter-index b{font-size:3rem}
+.format-archive .ed-reading .ed-chapter-head{border-top:3px double #889788;border-left:1px solid #889788;padding-left:25px}
+.format-archive .ed-reading .ed-chapter-head h2,.format-archive .ed-reading p.ed-chapter-lead{font-style:italic}
+.format-dossier .ed-reading .ed-chapter-head{background:#e7e9df;padding:28px;border:1px solid #aab8aa}
+.format-field-report .ed-reading .ed-chapter-head{display:grid;grid-template-columns:120px 1fr;gap:20px;border-top:2px solid #7e9a85}
+.format-field-report .ed-reading .ed-chapter-head h2{margin:0}
+.format-culture-feature .ed-reading .ed-chapter-head{text-align:center;border:0;padding-top:34px}
+.format-culture-feature .ed-reading .ed-chapter-index{justify-content:center;gap:20px}
+.format-culture-feature .ed-reading .ed-chapter-head h2{font-style:italic;font-size:clamp(2.7rem,4.2vw,4.4rem)}
+.format-business-review .ed-reading .ed-chapter-head{border-top:3px solid var(--ed-dark);display:grid;grid-template-columns:115px 1fr;gap:25px}
+.format-business-review .ed-reading .ed-chapter-head h2{margin:0}
+.format-market-ledger .ed-reading .ed-chapter-head{border-top:1px solid var(--ed-dark);border-bottom:1px solid #afc0b2;display:grid;grid-template-columns:125px 1fr;gap:25px;padding-bottom:20px}
+.format-market-ledger .ed-reading .ed-chapter-head h2{margin:0}
+.format-research-note .ed-reading .ed-chapter-head{border-left:4px solid var(--ed-accent);padding-left:23px}
+.format-research-note .ed-reading .ed-chapter-head h2{font-size:clamp(2.2rem,3.3vw,3.4rem)}
+.format-system-brief .ed-reading .ed-chapter-head{border-top:1px solid var(--ed-dark);border-bottom:1px solid #bdcbbf;padding-bottom:20px}
+.format-system-brief .ed-reading .ed-chapter-index span{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.08em}
+.format-studio-edition .ed-reading .ed-chapter-head{background:#e7ebde;border:0;border-left:5px solid var(--ed-dark);padding:30px}
+.format-studio-edition .ed-reading .ed-chapter-head h2{font-style:italic}
+.format-comparative .ed-reading .ed-chapter-head{border-top:2px solid #7d9787;border-bottom:1px solid #b9c8ba;padding-bottom:20px}
+.format-comparative .ed-reading .ed-chapter-index b{border:1px solid #90a996;padding:8px 11px}
+.format-manifesto .ed-reading .ed-chapter-head{background:var(--ed-dark);border:0;padding:clamp(25px,4vw,45px);color:var(--ed-paper)}
+.format-manifesto .ed-reading .ed-chapter-head h2{color:var(--ed-paper);font-size:clamp(2.8rem,4.5vw,5rem)}
+.format-manifesto .ed-reading .ed-chapter-index,.format-manifesto .ed-reading .ed-chapter-index b{color:#edd0af}
+.format-broadsheet .ed-reading .ed-chapter-head{border-top:5px double var(--ed-dark);border-bottom:1px solid #b6c4b7;padding-bottom:20px}
+.format-broadsheet .ed-reading .ed-chapter-head h2{font-size:clamp(2.5rem,4vw,4rem)}
+.format-column .ed-reading .ed-chapter-head{text-align:center;border:0;padding-top:35px}
+.format-column .ed-reading .ed-chapter-index{justify-content:center;gap:20px}
+.format-column .ed-reading .ed-chapter-head h2{font-style:italic}
+@media(max-width:680px){
+ .format-field-report .ed-reading .ed-chapter-head,.format-business-review .ed-reading .ed-chapter-head,.format-market-ledger .ed-reading .ed-chapter-head{grid-template-columns:1fr;gap:10px}
+ .ed-reading .article-body .ed-chapter-head{margin-top:52px}
+ .format-studio-edition .ed-reading .ed-chapter-head,.format-dossier .ed-reading .ed-chapter-head{padding:23px}
+}
+
