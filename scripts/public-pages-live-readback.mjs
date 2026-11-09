@@ -10,6 +10,10 @@ import {setTimeout as sleep} from 'node:timers/promises';
 export const PUBLIC_PAGES = Object.freeze([
   ['index.html', ''],
   ['explore.html', 'explore.html'],
+  ['about/index.html', 'about/'],
+  ['market.html', 'market.html'],
+  ['fieldwork/index.html', 'fieldwork/'],
+  ['matrix/index.html', 'matrix/'],
   ['discover/index.html', 'discover/'],
   ['blog/index.html', 'blog/'],
   ['series/index.html', 'series/'],
