@@ -267,146 +267,6 @@
 @media(max-width:850px){.ed-editor-note{min-height:0}.ed-editor-chapters{gap:0}}
 
 
-/* LISTENING EDITION v2 — article-first, tactile, and usable without a
-   published audio track. A recording gets measured peaks; browser speech
-   gets a deliberately labeled text-derived spoken-passage map. */
-.ed-title-panel .journal-audio-player{margin:6px 0 28px}
-.journal-audio-player{
-  --audio-ink:#223f31;--audio-muted:#6d7e70;--audio-wash:#f9f7ef;--audio-line:#ccd4c6;
-  position:relative;z-index:2;width:100%;max-width:720px;
-  background:var(--audio-wash);color:var(--audio-ink);
-  border:1px solid #b5c1b4;box-shadow:6px 7px 0 rgba(39,81,57,.09);
-  padding:20px 23px 15px;font:400 .84rem/1.4 system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
-}
-.journal-audio-player .journal-audio-topline{
-  display:flex;justify-content:space-between;align-items:center;gap:7px 15px;
-  padding-bottom:13px;border-bottom:1px solid var(--audio-line);
-  color:var(--audio-muted);font-size:.62rem;font-weight:750;letter-spacing:.15em;text-transform:uppercase;
-}
-.journal-audio-kicker{color:#935738}
-.journal-audio-main{display:grid;grid-template-columns:auto minmax(0,1fr);gap:17px;align-items:center;padding:19px 0 7px}
-.journal-audio-play{height:66px;width:66px;min-width:66px;border:0;border-radius:50%;
-  background:#214b38;color:#faf2e5;display:grid;place-items:center;
-  box-shadow:0 0 0 5px #e6ebdf;cursor:pointer;transition:background .15s ease,transform .15s ease}
-.journal-audio-play:hover:not(:disabled){background:#386b4f;transform:scale(1.035)}
-.journal-audio-play:disabled{opacity:.45;cursor:not-allowed}
-.journal-audio-play>span{font-size:1.3rem;line-height:1;transform:translateX(1px)}
-.journal-audio-player[data-state="playing"] .journal-audio-play>span{transform:none}
-.journal-audio-content{min-width:0;width:100%}
-.journal-audio-heading{display:flex;justify-content:space-between;gap:5px 16px;align-items:baseline;flex-wrap:wrap;margin:0 0 8px}
-.journal-audio-heading strong{font:500 clamp(1.15rem,1.6vw,1.45rem)/1.16 Georgia,serif;letter-spacing:-.018em}
-.journal-audio-heading span{font-size:.69rem;color:#687d6c}
-.journal-audio-wave-wrap{position:relative;height:61px;display:block;min-width:0}
-.journal-audio-wave{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:2px;overflow:hidden;pointer-events:none}
-.journal-audio-wave i{display:block;flex:1 1 0;height:var(--level,22px);min-height:7px;max-height:51px;
-  min-width:1px;background:#aab9a8;border-radius:1px;opacity:.8;
-  transition:background .14s linear;pointer-events:none}
-.journal-audio-wave i.is-read{background:#bd805c;opacity:1}
-.journal-audio-wave[data-measured="true"] i{border-radius:3px}
-.journal-audio-wave-wrap input[type="range"]{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:1;
-  background:transparent;cursor:pointer;appearance:none;-webkit-appearance:none;z-index:2}
-.journal-audio-wave-wrap input[type="range"]::-webkit-slider-runnable-track{background:transparent;height:100%}
-.journal-audio-wave-wrap input[type="range"]::-moz-range-track{background:transparent;height:100%;border:0}
-.journal-audio-wave-wrap input[type="range"]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;
-  height:58px;width:2px;border:0;background:#a15a37;box-shadow:0 0 0 1px rgba(249,247,239,.45);border-radius:1px}
-.journal-audio-wave-wrap input[type="range"]::-moz-range-thumb{height:54px;width:2px;background:#a15a37;border:0;border-radius:1px}
-.journal-audio-wave-wrap:focus-within{outline:2px solid #bb7457;outline-offset:3px}
-.journal-audio-wave-wrap input[type="range"]:focus-visible{outline:0}
-.journal-audio-time{display:flex;justify-content:space-between;gap:10px;color:#607568;
-  font:690 .69rem/1.6 system-ui,sans-serif;font-variant-numeric:tabular-nums}
-.journal-audio-actions{display:flex;justify-content:space-between;align-items:center;gap:14px 24px;flex-wrap:wrap;
-  border-top:1px solid var(--audio-line);margin-top:16px;padding-top:13px}
-.journal-audio-navigation{display:flex;align-items:center;gap:3px}
-.journal-audio-navigation button{background:transparent;border:0;min-height:32px;cursor:pointer;color:#28513c;
-  font:.74rem/1.5 system-ui,sans-serif;font-weight:700;display:inline-flex;align-items:center;gap:5px;padding:5px 9px}
-.journal-audio-navigation button:hover{background:#e6eadf}
-.journal-audio-navigation button:disabled{opacity:.35;cursor:not-allowed}
-.journal-audio-rate{display:inline-flex;align-items:center;gap:9px;font-size:.7rem;font-weight:740;color:#5b7260}
-.journal-audio-rate select{border:1px solid #bac9b7;background:white;color:#224435;font-weight:740;
-  border-radius:0;padding:7px 6px;min-height:32px}
-.journal-audio-transcript{font:.75rem/1.5 system-ui,sans-serif;font-weight:770;color:#8a533e;text-underline-offset:4px}
-.journal-audio-disclosure{font:.65rem/1.55 system-ui,sans-serif;color:#687f6f;margin:13px 0 0}
-.journal-audio-progress{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
-.journal-audio-player :is(button,select,a,input):focus-visible{outline:2px solid #a66b4c;outline-offset:3px}
-.journal-audio-player[data-state="playing"] .journal-audio-kicker{color:#2f7654}
-.journal-audio-player[data-state="unavailable"] .journal-audio-wave,
-.journal-audio-player[data-state="unavailable"] .journal-audio-play{opacity:.34}
-.journal-audio-player.is-docked{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);
-  max-width:820px;width:min(93vw,820px);padding:11px 17px 10px;z-index:1000;box-shadow:0 14px 45px #183e30a8;
-  border-color:#afbdab;background:#fbfaf5}
-.journal-audio-player.is-docked .journal-audio-topline,.journal-audio-player.is-docked .journal-audio-disclosure{display:none}
-.journal-audio-player.is-docked .journal-audio-main{padding:0}
-.journal-audio-player.is-docked .journal-audio-play{height:50px;width:50px;min-width:50px;box-shadow:0 0 0 3px #e6ebdf}
-.journal-audio-player.is-docked .journal-audio-wave-wrap{height:41px}
-.journal-audio-player.is-docked .journal-audio-wave{height:41px}
-.journal-audio-player.is-docked .journal-audio-wave i{max-height:36px;transform:scaleY(.68)}
-.journal-audio-player.is-docked .journal-audio-wave-wrap input[type="range"]::-webkit-slider-thumb{height:40px}
-.journal-audio-player.is-docked .journal-audio-heading{margin-bottom:2px}
-.journal-audio-player.is-docked .journal-audio-heading strong{font-size:1.09rem}
-.journal-audio-player.is-docked .journal-audio-actions{margin-top:6px;padding-top:6px}
-.journal-audio-player.is-docked .journal-audio-transcript{display:none}
-.reader-toolbar-label{color:#51695a;font:.73rem/1.4 system-ui,sans-serif;font-weight:680;letter-spacing:.02em}
-.reader-toolbar-label a{color:#2c6b49;text-underline-offset:3px}
-/* On smaller covers the listening edition remains full-width, not hidden
-   behind a tiny utilities dropdown. */
-@media(max-width:1180px){
-  .journal-audio-player{padding:16px 15px 13px}
-  .journal-audio-heading span{font-size:.63rem}
-  .journal-audio-play{width:55px;height:55px;min-width:55px}
-  .journal-audio-main{gap:14px}
-}
-@media(max-width:650px){
-  .ed-title-panel .journal-audio-player{margin:8px 0 27px}
-  .journal-audio-topline{font-size:.59rem}
-  .journal-audio-main{gap:12px}
-  .journal-audio-play{width:53px;height:53px;min-width:53px;box-shadow:0 0 0 3px #e6ebdf}
-  .journal-audio-heading{display:block}
-  .journal-audio-heading strong{display:block;margin-bottom:2px}
-  .journal-audio-heading span{font-size:.62rem;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .journal-audio-wave-wrap{height:48px}
-  .journal-audio-wave i{max-height:39px}
-  .journal-audio-navigation{flex:1}
-  .journal-audio-navigation button{padding:5px 7px}
-  .journal-audio-actions{gap:7px 9px}
-  .journal-audio-transcript{font-size:.67rem}
-  .journal-audio-disclosure{font-size:.63rem}
-  .journal-audio-player.is-docked{bottom:8px;width:calc(100% - 16px);padding:10px 12px}
-  .journal-audio-player.is-docked .journal-audio-heading span{display:none}
-  .journal-audio-player.is-docked .journal-audio-navigation{gap:0}
-  .journal-audio-player.is-docked .journal-audio-navigation span{display:none}
-  .reader-toolbar .shell{padding-block:12px}
-}
-@media(prefers-reduced-motion:reduce){
-  .journal-audio-play,.journal-audio-wave i{transition:none}
-  .journal-audio-play:hover:not(:disabled){transform:none}
-}
-
-/* Follow an argument by ear from any actual section heading; share the
-   approximate passage without manufacturing a publisher recording. */
-.journal-audio-copy{background:transparent;color:#8a533e;border:0;cursor:pointer;
-  font:.74rem/1.4 system-ui,sans-serif;font-weight:750;padding:7px 5px;text-decoration:underline;text-underline-offset:4px}
-.journal-audio-copy:hover{color:#603921}
-.journal-audio-jump{white-space:nowrap;color:#bb8c67!important;font-weight:800;text-decoration:underline!important;text-underline-offset:4px}
-.journal-listen-from{
-  display:inline-flex;align-items:center;gap:6px;float:right;vertical-align:middle;
-  background:#e8ede4;border:1px solid #adbfad;color:#32644a;cursor:pointer;
-  margin:6px 0 6px 18px;padding:9px 11px;
-  font:750 .68rem/1.2 system-ui,sans-serif!important;text-transform:uppercase;letter-spacing:.06em;
-  border-radius:0;letter-spacing:.065em;text-decoration:none;
-}
-.journal-listen-from:hover,.journal-listen-from:focus-visible{background:#d2e1d2;border-color:#789e80}
-.journal-listen-from:focus-visible{outline:2px solid #a66b4c;outline-offset:3px}
-.journal-audio-player.is-docked .journal-audio-copy{font-size:.69rem;white-space:nowrap}
-@media(max-width:650px){
-  .journal-audio-player.is-docked .journal-audio-copy{display:inline-flex;font-size:0;padding:5px}
-  .journal-audio-player.is-docked .journal-audio-copy::before{content:"↗";font-size:1rem;line-height:1}
-}
-.ed-title-panel .ed-title-utility{flex-wrap:wrap}
-@media(max-width:650px){
-  .journal-listen-from{float:none;margin:15px 0 2px;display:flex;width:max-content;max-width:100%}
-  .journal-audio-copy{font-size:.68rem;padding-inline:5px}
-}
-
 /* Source-edited reading bridges expose cross-series relationships, not algorithmically invented agreement. */
 .journal-conversation{margin:58px 0 44px;padding:0;border-top:2px solid var(--ed-accent,#a96649)}
 .journal-conversation-intro{padding:26px 0 21px}
@@ -422,18 +282,6 @@
 .journal-conversation-return{background:#f4f1e8!important}
 @media(max-width:650px){.journal-conversation-grid{grid-template-columns:1fr}.journal-conversation{margin-top:38px}}
 
-/* Reader-selectable voice avoids forcing the lowest-quality local system
-   synthesizer while reviewed studio recordings are being prepared. */
-.journal-audio-voice-choice{display:inline-flex;align-items:center;gap:7px;color:#526c59;
-  font:730 .7rem/1.35 system-ui,sans-serif}
-.journal-audio-voice-choice[hidden]{display:none}
-.journal-audio-voice-choice select{min-height:32px;min-width:85px;max-width:170px;
-  background:#fff;color:#214435;border:1px solid #afbfaa;padding:6px 5px;
-  font:700 .72rem/1.35 system-ui,sans-serif}
-.journal-audio-voice-choice select:focus-visible{outline:2px solid #a46b4d;outline-offset:2px}
-@media(max-width:650px){.journal-audio-voice-choice{font-size:.65rem}
- .journal-audio-voice-choice select{max-width:135px;font-size:.64rem}}
-
 /* A portable ending: share the actual question with its source, never a synthetic quote card. */
 .journal-afterword-actions{display:flex;align-items:center;gap:12px 20px;flex-wrap:wrap;padding-top:18px;margin-top:21px;border-top:1px solid #729381}
 .journal-afterword-actions a,.journal-afterword-actions button{font:750 .73rem/1.5 system-ui,sans-serif;color:#f5cfaf;display:inline-flex;align-items:center;min-height:38px}
@@ -442,11 +290,89 @@
 .journal-afterword-actions button:focus-visible{outline:2px solid #ffcf9d;outline-offset:3px}
 .journal-afterword-actions [role="status"]{font:.69rem/1.5 system-ui,sans-serif;color:#e1cfb6}
 
-/* A recording gets signal-derived peaks only after audio has decoded. A
-   simple progress rail is preferable to fabricated peaks on a decode failure. */
-.journal-audio-player[data-mode="recording"] .journal-audio-wave:not([data-measured="true"]) i{
-  height:4px!important;max-height:4px!important;border-radius:0;background:#859a8a;opacity:.62;
+
+/* RECORDED EDITION — quiet magazine transport for one edited audio file.
+   No voice picker, generated phrase bars, animation gimmicks, or nested cards.
+   Native HTML audio controls remain available before JS enhancement. */
+.ed-title-panel .ed-audio{
+  margin:6px 0 35px;
+  width:100%;
+  min-width:0;
+  max-width:740px;
+  border-top:2px solid var(--ed-ink,#254c37);
+  border-bottom:1px solid #acbbaf;
+  background:transparent;
+  padding:19px 0 14px;
+  color:inherit;
 }
-.journal-audio-player[data-mode="recording"] .journal-audio-wave:not([data-measured="true"]) i.is-read{
-  background:#ba7952;opacity:1;
+.ed-audio-inner{max-width:100%;margin:0}
+.ed-audio-label{display:flex;align-items:center;justify-content:space-between;gap:10px 20px;flex-wrap:wrap;
+  font:750 .64rem/1.5 system-ui,sans-serif;letter-spacing:.13em;text-transform:uppercase;color:#637a68}
+.ed-audio-label>span:first-child{color:#966548}
+.ed-title-panel .ed-audio h2{margin:9px 0 16px;font:500 clamp(1.25rem,1.8vw,1.65rem)/1.25 Georgia,serif;
+  letter-spacing:-.02em;color:inherit}
+.ed-audio audio{display:block;width:100%;min-height:48px;margin:14px 0}
+.ed-audio audio:not([controls]){display:none}
+.ed-audio-controls{display:grid;grid-template-columns:48px minmax(0,1fr) auto auto;
+  gap:13px;align-items:center;margin:10px 0 5px}
+.ed-audio-controls[hidden]{display:none!important}
+.ed-audio-play{width:46px;height:46px;border-radius:50%;border:0;cursor:pointer;background:#214b3a;
+  color:#fff9ed;display:grid;place-items:center;line-height:1;font-size:1.06rem}
+.ed-audio-play:hover{background:#366d4c}
+.ed-audio-play span{display:inline-block;transform:translateX(1px)}
+.ed-audio[data-playback="playing"] .ed-audio-play span{transform:none}
+.ed-audio-transport{min-width:0}
+.ed-audio-timeline{height:43px;position:relative;display:flex;align-items:center;min-width:0}
+.ed-audio-timeline::before{content:"";position:absolute;left:0;right:0;top:calc(50% - 1px);height:2px;background:#b8c7b8}
+.ed-audio-timeline::after{content:"";position:absolute;left:0;top:calc(50% - 1px);height:2px;
+  width:var(--played,0%);background:#ad7556;pointer-events:none}
+.ed-audio-wave{display:none;position:absolute;inset:0;align-items:center;justify-content:center;gap:2px;
+  opacity:.75;pointer-events:none}
+.ed-audio-wave.has-signal{display:flex}
+.ed-audio-wave i{background:#a9bba9;flex:1 1 0;min-width:1px;max-height:42px;pointer-events:none}
+.ed-audio-timeline input[type="range"]{position:relative;z-index:3;margin:0;appearance:none;
+  -webkit-appearance:none;cursor:pointer;width:100%;height:100%;background:transparent;outline-offset:2px}
+.ed-audio-timeline input[type="range"]::-webkit-slider-runnable-track{height:100%;background:transparent}
+.ed-audio-timeline input[type="range"]::-moz-range-track{height:100%;background:transparent;border:0}
+.ed-audio-timeline input[type="range"]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;
+  background:#a56d4b;border:2px solid #fff9ed;box-shadow:0 0 0 1px #a56d4b;border-radius:50%;
+  width:13px;height:13px;margin:0}
+.ed-audio-timeline input[type="range"]::-moz-range-thumb{background:#a56d4b;border:2px solid #fff9ed;
+  box-shadow:0 0 0 1px #a56d4b;border-radius:50%;width:13px;height:13px}
+.ed-audio-timeline input[type="range"]:disabled{cursor:wait}
+.ed-audio-clock{display:flex;justify-content:space-between;gap:15px;font:700 .69rem/1.6 system-ui,sans-serif;
+  color:#526d5b;font-variant-numeric:tabular-nums}
+.ed-audio-speed{min-width:42px;border:0;background:transparent;color:#234b36;font:750 .76rem system-ui,sans-serif;
+  padding:8px 5px;cursor:pointer}
+.ed-audio-speed:hover{text-decoration:underline}
+.ed-audio-dismiss{display:none;border:0;background:transparent;font-size:1.5rem;color:#385d44;cursor:pointer}
+.ed-audio-foot{display:flex;align-items:center;flex-wrap:wrap;gap:9px 18px;margin-top:13px;
+  padding-top:12px;border-top:1px solid #c0cbbd;font:.72rem/1.5 system-ui,sans-serif}
+.ed-audio-foot>span{margin-right:auto;color:#506c57}
+.ed-audio-foot a{color:#80573e;text-decoration:underline;text-underline-offset:4px}
+.ed-audio-disclosure{margin:10px 0 0!important;color:#6a7e6b;font:400 .67rem/1.5 system-ui,sans-serif!important}
+.ed-audio :is(button,input,a):focus-visible{outline:2px solid #a97457;outline-offset:4px}
+.ed-audio.is-docked{position:fixed!important;bottom:14px;left:50%;transform:translateX(-50%);width:min(850px,calc(100vw - 24px))!important;
+  max-width:850px!important;z-index:9999;background:#f5f3ea!important;color:#224333!important;
+  padding:12px 20px!important;box-shadow:0 13px 44px rgba(13,39,24,.34);
+  border:1px solid #a8baab!important;margin:0!important}
+.ed-audio.is-docked .ed-audio-label,.ed-audio.is-docked h2,.ed-audio.is-docked .ed-audio-disclosure,
+.ed-audio.is-docked .ed-audio-foot{display:none!important}
+.ed-audio.is-docked .ed-audio-controls{margin:0}
+.ed-audio.is-docked .ed-audio-dismiss{display:block}
+.ed-audio.is-docked .ed-audio-timeline{height:38px}
+.ed-audio.is-docked .ed-audio-play{height:42px;width:42px}
+.ed-title-panel .ed-title-utility{flex-wrap:wrap}
+@media(max-width:650px){
+  .ed-title-panel .ed-audio{margin:3px 0 24px}
+  .ed-audio-controls{grid-template-columns:42px minmax(0,1fr) 40px auto;gap:8px}
+  .ed-audio-play{height:42px;width:42px}
+  .ed-audio-label{font-size:.58rem}
+  .ed-audio-foot{gap:8px 15px;font-size:.68rem}
+  .ed-audio-disclosure{font-size:.63rem!important}
+  .ed-audio.is-docked{bottom:7px;padding:9px 12px!important}
+  .ed-audio.is-docked .ed-audio-controls{grid-template-columns:38px minmax(0,1fr) 33px 25px;gap:6px}
+  .ed-audio.is-docked .ed-audio-play{height:38px;width:38px}
+  .ed-audio.is-docked .ed-audio-speed{font-size:.69rem}
 }
+@media(prefers-reduced-motion:reduce){.ed-audio *{scroll-behavior:auto;transition:none!important}}
