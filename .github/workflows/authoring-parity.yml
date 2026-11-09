@@ -100,8 +100,10 @@ jobs:
         run: bun test --timeout 65000 cmd/BonfyreWebAddress/tests/cms_advanced_composer.test.mjs
       - name: Compile two authoring documents to the same native C HTML preview
         run: node cmd/BonfyreSurfaceScene/tools/export_authoring_previews.mjs
-      - name: Verify native preview compositions in real Chromium at 390, 980 and 1440 pixels
-        run: bun test --timeout 65000 cmd/BonfyreSurfaceScene/tests/authoring-native-browser.test.mjs
+      - name: Compile all 90 actual articles from one native source contract
+        run: node cmd/BonfyreSurfaceScene/tools/render_journal_native.mjs
+      - name: Verify 90 articles and 2 sample scenes across 390, 980 and 1440 pixels
+        run: bun test --timeout 120000 cmd/BonfyreSurfaceScene/tests/authoring-native-browser.test.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
