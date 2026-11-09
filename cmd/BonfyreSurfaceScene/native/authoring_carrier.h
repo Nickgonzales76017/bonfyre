@@ -155,17 +155,17 @@ static int bf_wire_read(FILE *input,BfWireScene *out){
  * approximation, can roundtrip through C without dropping metadata,
  * bindings, editorial tools, or responsive variants.
  */
-static int bf_wire_write_u32(FILE *f,uint32_t n){
+static inline int bf_wire_write_u32(FILE *f,uint32_t n){
  unsigned char b[4]={(unsigned char)n,(unsigned char)(n>>8),
   (unsigned char)(n>>16),(unsigned char)(n>>24)};
  return fwrite(b,1,4,f)==4;
 }
-static int bf_wire_write_str(FILE *f,const char *s){
+static inline int bf_wire_write_str(FILE *f,const char *s){
  if(!s)return 0;
  size_t n=strlen(s);if(n>2097152u)return 0;
  return bf_wire_write_u32(f,(uint32_t)n)&&fwrite(s,1,n,f)==n;
 }
-static int bf_wire_write(FILE *f,const BfWireScene *s){
+static inline int bf_wire_write(FILE *f,const BfWireScene *s){
  if(!f||!s||!s->site||!s->route||s->count>BF_AUTHORING_TREE_MAX)return 0;
  if(fwrite("BFAU2\r\n",1,7,f)!=7||!bf_wire_write_str(f,s->site)||
     !bf_wire_write_str(f,s->route)||!bf_wire_write_u32(f,s->count))return 0;

@@ -2,18 +2,74 @@
 #define BONFYRE_CMS_PAGE_COMPOSER_H
 #include "cms_page_composer_markup.h"
 #include "cms_advanced_composer_markup.h"
+#include "../../BonfyreSurfaceScene/native/authoring_carrier.h"
 /* A browser carrier for the existing namespace-scoped CMS page aggregate. */
 static void cms_composer_reply(int code,const char *type,const char *body) {
     printf("HTTP/1.1 %d %s\r\nContent-Type: %s\r\nCache-Control: private, no-store\r\nVary: Cookie, Authorization\r\nX-Content-Type-Options: nosniff\r\nReferrer-Policy: same-origin\r\nX-Frame-Options: SAMEORIGIN\r\nContent-Length: %zu\r\nConnection: close\r\n\r\n%s",
         code,code==200?"OK":code==403?"Forbidden":code==409?"Conflict":code==503?"Service Unavailable":"Bad Request",type,strlen(body),body);
 }
+/* Account-bound native C preview: an exact typed draft source projection.
+ * No publication, no external assets or provider calls, and no temporary file
+ * copies. The same renderer creates the offline preview and this HTTP view.
+ */
+static int cms_preview_hex(int value){
+ if(value>='0'&&value<='9')return value-'0';
+ if(value>='a'&&value<='f')return value-'a'+10;
+ if(value>='A'&&value<='F')return value-'A'+10;
+ return -1;
+}
+static void cms_composer_native_preview(const char *body,const char *ns){
+ size_t n=body?strlen(body):0;
+ if(n<8||strncmp(body,"BFAU2:",6)||(n-6)%2||n>220000){
+  cms_composer_reply(400,"application/json","{\"error\":\"Provide a complete bounded native authoring carrier.\"}");return;
+ }
+ size_t count=(n-6)/2;
+ unsigned char *bytes=(unsigned char*)malloc(count?count:1);
+ if(!bytes){cms_composer_reply(503,"application/json","{\"error\":\"Preview could not be prepared.\"}");return;}
+ int valid=1;
+ for(size_t i=0;i<count;i++){
+  int hi=cms_preview_hex((unsigned char)body[6+2*i]);
+  int lo=cms_preview_hex((unsigned char)body[7+2*i]);
+  if(hi<0||lo<0){valid=0;break;}
+  bytes[i]=(unsigned char)((hi<<4)|lo);
+ }
+ BfWireScene scene={0};
+ if(valid){
+  FILE *input=fmemopen(bytes,count,"rb");
+  valid=input&&bf_wire_read(input,&scene);
+  if(input)fclose(input);
+ }
+ free(bytes);
+ if(!valid){
+  bf_wire_clear(&scene);
+  cms_composer_reply(400,"application/json","{\"error\":\"Native authoring carrier rejected by C validation.\"}");return;
+ }
+ if(strcmp(scene.site,ns)){
+  bf_wire_clear(&scene);
+  cms_composer_reply(403,"application/json","{\"error\":\"This draft belongs to another account.\"}");return;
+ }
+ char *html=NULL;size_t used=0;
+ FILE *out=open_memstream(&html,&used);
+ valid=out&&bf_wire_render(out,&scene);
+ if(out&&fclose(out))valid=0;
+ bf_wire_clear(&scene);
+ if(!valid||!html||used>1024*1024){
+  free(html);
+  cms_composer_reply(400,"application/json","{\"error\":\"Unsupported editorial elements or oversized native preview.\"}");return;
+ }
+ cms_composer_reply(200,"text/html; charset=utf-8",html);
+ free(html);
+}
 static int serve_cms_composer(const char *method,const char *target,const char *query,const char *body,
                              const char *bearer,const char *auth_db,const char *origin,const char *host) {
     int advanced=!strcmp(target,"/cms/compose/advanced");
     int home=!strcmp(target,"/cms/compose"),page=!strcmp(target,"/cms/compose/page"),listing=!strcmp(target,"/cms/compose/pages");
-    if(!home&&!page&&!listing&&!advanced)return 0;
+    int preview=!strcmp(target,"/cms/compose/preview");
+    if(!home&&!page&&!listing&&!advanced&&!preview)return 0;
     int writing=page&&!strcmp(method,"POST");
-    if((!writing&&strcmp(method,"GET"))||(writing&&(!body||!*body||strlen(body)>220000))) {
+    int posting=(page||preview)&&!strcmp(method,"POST");
+    if((!posting&&strcmp(method,"GET"))||(preview&&!posting)||
+       (posting&&(!body||!*body||strlen(body)>220000))) {
         cms_composer_reply(400,"application/json","{\"error\":\"Use a complete page request within the 220 KB save limit.\"}");return 1;
     }
     char ns[192]={0};
@@ -21,7 +77,7 @@ static int serve_cms_composer(const char *method,const char *target,const char *
        !cms_namespace_for(bearer,auth_db,ns,sizeof(ns))||strlen(ns)>127) {
         cms_composer_reply(403,"application/json","{\"error\":\"This CMS workspace requires a current write grant.\"}");return 1;
     }
-    if(writing) {
+    if(posting) {
         char http[300],https[300];snprintf(http,sizeof(http),"http://%s",host?host:"");snprintf(https,sizeof(https),"https://%s",host?host:"");
         if(!origin||(!*origin)||(strcmp(origin,http)&&strcmp(origin,https))) {
             cms_composer_reply(403,"application/json","{\"error\":\"Save from this workspace origin.\"}");return 1;
@@ -36,6 +92,7 @@ static int serve_cms_composer(const char *method,const char *target,const char *
     }
     if(home){sqlite3_close(db);cms_composer_reply(200,"text/html; charset=utf-8",cms_page_composer_markup);return 1;}
     if(advanced){sqlite3_close(db);cms_composer_reply(200,"text/html; charset=utf-8",cms_advanced_composer_markup);return 1;}
+    if(preview){sqlite3_close(db);cms_composer_native_preview(body,ns);return 1;}
     if(listing){
         sqlite3_stmt *st=NULL;const char *result=NULL;
         if(sqlite3_prepare_v2(db,"SELECT json_object('pages',json_group_array(json_object('route',route,'title',title)),'has_more',(SELECT count(*)>512 FROM site_page WHERE namespace=?1)) FROM (SELECT route,title FROM site_page WHERE namespace=?1 ORDER BY route LIMIT 512)",-1,&st,NULL)==SQLITE_OK){
