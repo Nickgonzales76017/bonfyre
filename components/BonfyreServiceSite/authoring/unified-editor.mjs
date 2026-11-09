@@ -180,10 +180,13 @@ export async function mountAurekaiAuthoring(root,{initial,loaders=deps,onReview,
   },destroy:()=>reactRoot.unmount()};
  }
  async function openArticle(){
-  const [Core,Header,List,Quote,Table]=await loaders.editorjs();
   const snapshot=session.snapshot();
-  const articles=all(snapshot).filter(n=>["profile-story","profile-section","service:prose"].includes(n.kind));
+  const articles=all(snapshot).filter(n=>["profile-story","profile-section","service:prose"].includes(n.kind)&&
+   n.props.metadata?.format!=="markdown");
+  if(!articles.length&&all(snapshot).some(n=>n.props.metadata?.format==="markdown"))
+   return openMarkdown();
   if(!articles.length)throw Error("Create a story or prose block in Design/Structure before editing its article");
+  const [Core,Header,List,Quote,Table]=await loaders.editorjs();
   selected=articles.some(n=>n.id===selected)?selected:articles[0].id;
   const picker=element("select","authoring-article-selector");
   for(const item of articles){const opt=element("option","",item.props.heading||item.id);

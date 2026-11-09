@@ -37,3 +37,8 @@ body.authoring-page{margin:0;background:#eeeee7;color:#1b382d;font:15px/1.5 syst
 .authoring-preview-close{padding:9px 16px;border-radius:8px;border:1px solid #b6c6b9;background:#f1efe6;color:#1e4032;min-height:42px;cursor:pointer;font-weight:650}
 .authoring-preview-frame{display:block;width:100%;height:calc(100% - 76px);min-height:350px;border:0;background:white}
 @media(max-width:760px){.authoring-preview-top{padding:10px}.authoring-native-preview{height:94vh}.authoring-preview-frame{height:calc(100% - 115px)}}
+
+.authoring-source-label{display:block;font:700 12px system-ui;text-transform:uppercase;letter-spacing:.09em;margin:18px 25px 0;color:#52685a}
+.authoring-markdown-source{display:block;width:calc(100% - 50px);min-height:min(72vh,900px);margin:10px auto 28px;padding:clamp(15px,2.4vw,32px);background:#fbfcf9;color:#1b3026;border:1px solid #9cae9e;border-radius:9px;resize:vertical;font:14px/1.68 ui-monospace,SFMono-Regular,Consolas,monospace;tab-size:2;white-space:pre;overflow:auto}
+.authoring-markdown-source:focus-visible{outline:3px solid #a95b30;outline-offset:2px}
+@media(max-width:760px){.authoring-markdown-source{width:calc(100% - 16px);min-height:70vh}}

@@ -95,3 +95,45 @@ test("Editor.js save serializes the actual text even without an upstream onChang
   await api.destroy();
  }finally{globalThis.document=previous;}
 });
+
+test("Markdown source mode preserves frontmatter and creates a separate reviewed draft digest",async()=>{
+ const previous=globalThis.document;
+ globalThis.document={createElement:tag=>new Node(tag)};
+ const {createHash}=await import("node:crypto");
+ const original="---\nslug: source-story\ntitle: Full source\n---\n\n## Evidence\n\nBefore.";
+ const sha=createHash("sha256").update(original).digest("hex");
+ const doc=applyAuthoringEdit(newAuthoringTree("account-story"),{type:"insert",
+  block:{id:"source-story",kind:"profile-story",props:{body:original,heading:"Source",
+   metadata:{format:"markdown",frontmatter:true},source_digest:sha},
+   responsive:{phone:{layout:"stack"}},children:[]}});
+ const root=new Node("root");
+ try{
+  const desk=await mountAurekaiAuthoring(root,{
+   initial:doc,onSaveDraft:async()=>({committed:true}),onReview:async()=>{},
+   loaders:{grapesjs:async()=>({init(){return {
+    loadProjectData(){},on(){},destroy(){}
+   };}})}
+  });
+  await new Promise(resolve=>setImmediate(resolve));
+  await desk.switchMode("markdown");
+  assert.equal(desk.mode(),"markdown");
+  const visit=node=>{
+   if(node.tag==="textarea")return node;
+   for(const child of node.children){const found=visit(child);if(found)return found;}
+   return null;
+  };
+  const textarea=visit(root);
+  assert.ok(textarea);
+  assert.equal(textarea.value,original);
+  textarea.value=original.replace("Before.","After.");
+  textarea.handlers.input();
+  await desk.switchMode("grapesjs");
+  const changed=desk.session.snapshot().blocks[0];
+  assert.ok(changed.props.body.endsWith("After."));
+  assert.equal(changed.props.source_digest,sha,"original lineage SHA retained");
+  assert.equal(changed.props.metadata.changed_from_original,true);
+  assert.equal(changed.props.metadata.draft_sha256,
+   createHash("sha256").update(changed.props.body).digest("hex"));
+  await desk.destroy();
+ }finally{globalThis.document=previous;}
+});

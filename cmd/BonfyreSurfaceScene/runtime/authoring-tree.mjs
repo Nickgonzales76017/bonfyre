@@ -241,6 +241,8 @@ export function fromGrapesProject(data,site_id,page="/"){
 // text changes from erasing layouts, responsive variants, sources or media.
 export function toEditorBlocks(node){
  if(!node||!validTypes.has(node.kind))fail("unknown article target");
+ if(node.props.metadata?.format==="markdown")
+  fail("Markdown source must be edited in source mode, not flattened to Editor.js");
  if(Array.isArray(node.props.editorial))return {time:0,blocks:clone(node.props.editorial),version:"2"};
  const body=node.props.body||"";
  return {time:0,blocks:body.split(/\n\n+/).filter(Boolean).map((text,i)=>({
@@ -255,6 +257,8 @@ function editorialPreview(value){
  return "";
 }
 export function applyEditorBlocks(doc,nodeId,data){
+ if(find(validateAuthoringTree(doc),nodeId)?.node?.props.metadata?.format==="markdown")
+  fail("Markdown source cannot be replaced by Editor.js block data");
  if(!Array.isArray(data?.blocks))fail("invalid editorial blocks");
  const blocks=validateEditorial(data.blocks).map(x=>clone(x));
  const preview=blocks.map(b=>editorialPreview(b.data)).filter(Boolean).join("\n\n");

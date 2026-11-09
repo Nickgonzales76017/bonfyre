@@ -152,6 +152,23 @@ export async function openNativeAuthoring({fetcher=fetch,route="/"}={}){
  return {base,tree:treeFromNativeSnapshot(base)};
 }
 export async function saveNativeAuthoring({fetcher=fetch,base,tree,pageDraft}){
+ // The original source identity stays immutable. A derived draft must carry
+ // its independently recomputed digest; otherwise a visual editor could
+ // silently rewrite Markdown while retaining a false source proof.
+ const checkMarkdown=async nodes=>{
+  for(const node of nodes){
+   if(node.props.metadata?.format==="markdown"){
+    if(!globalThis.crypto?.subtle)fail("SHA-256 verification unavailable");
+    const bytes=new TextEncoder().encode(node.props.body||"");
+    const hash=await globalThis.crypto.subtle.digest("SHA-256",bytes);
+    const digest=[...new Uint8Array(hash)].map(b=>b.toString(16).padStart(2,"0")).join("");
+    if(digest!==node.props.source_digest&&digest!==node.props.metadata.draft_sha256)
+     fail("Markdown source changed outside reviewed source editor");
+   }
+   await checkMarkdown(node.children);
+  }
+ };
+ await checkMarkdown(tree.blocks);
  const payload=toNativePageWrite(base,tree,{pageDraft});
  const result=await request(fetcher,"/cms/compose/page",{method:"POST",
   headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
