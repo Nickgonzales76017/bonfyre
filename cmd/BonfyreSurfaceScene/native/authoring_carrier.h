@@ -238,9 +238,41 @@ static int bf_md_safe_url(const char *s,size_t n){
  if(value[0]=='/'&&value[1]=='/')return 0;
  return !strchr(value,':')&&!strstr(value,"//");
 }
+/* Build navigation from the same MD4C HTML that supplies the article. A
+ * heading becomes a link only when the parser actually emitted an H2, so
+ * source text inside fenced code cannot invent TOC entries.
+ */
+static int bf_md_navigation(FILE *out,const char *html,size_t n){
+ const char *p=html,*end=html+n;
+ unsigned count=0;
+ while(p<end){
+  if(end-p<4||memcmp(p,"<h2>",4)){p++;continue;}
+  const char *head=p+4,*close=NULL;
+  for(const char *q=head;q+5<=end;q++)if(!memcmp(q,"</h2>",5)){close=q;break;}
+  if(!close)return 0;
+  if(++count>96)return 0;
+  if(count==1)fputs("<nav class=\"bf-article-toc\" aria-label=\"Article chapters\"><p>Inside this investigation</p><ol>",out);
+  fprintf(out,"<li><a href=\"#chapter-%02u\"><span>%02u</span><span>",count,count);
+  int markup=0;
+  for(const char *q=head;q<close;q++){
+   if(*q=='<'){markup=1;continue;}
+   if(*q=='>'&&markup){markup=0;continue;}
+   if(!markup)fputc(*q,out);
+  }
+  fputs("</span></a></li>",out);
+  p=close+5;
+ }
+ if(count)fputs("</ol></nav>",out);
+ return !ferror(out);
+}
 static int bf_md_verified_markup(FILE *out,const char *html,size_t n){
  const char *end=html+n;
+ unsigned headings=0;
  for(const char *p=html;p<end;){
+  if(end-p>=4&&!memcmp(p,"<h2>",4)){
+   if(++headings>96)return 0;
+   fprintf(out,"<h2 id=\"chapter-%02u\">",headings);p+=4;continue;
+  }
   if(end-p>=4&&!strncmp(p,"<img",4)){
    const char *close=memchr(p,'>',(size_t)(end-p));
    if(!close||close-p>4096)return 0;
@@ -271,6 +303,9 @@ static int bf_render_markdown(FILE *out,const char *original,int frontmatter){
  const unsigned flags=MD_FLAG_NOHTML|MD_FLAG_TABLES|MD_FLAG_STRIKETHROUGH|MD_FLAG_TASKLISTS;
  int status=md_html(body,(MD_SIZE)strlen(body),bf_md_output,&sink,flags,0);
  if(status||sink.failed){free(sink.bytes);return 0;}
+ if(!bf_md_navigation(out,sink.bytes?sink.bytes:"",sink.used)){
+  free(sink.bytes);return 0;
+ }
  fputs("<div class=\"bf-markdown\">",out);
  int safe=bf_md_verified_markup(out,sink.bytes?sink.bytes:"",sink.used);
  fputs("</div>",out);free(sink.bytes);
@@ -619,6 +654,15 @@ static int bf_wire_render(FILE *f,const BfWireScene *s){
  ".bf-chapter-cover strong{display:block;margin:18px 0 5px;font:500 clamp(23px,3vw,49px)/1.16 Georgia,serif;letter-spacing:-.02em}"
  ".bf-cover-source{font:600 12px/1.6 system-ui;letter-spacing:.06em;padding:60px 20px;background:transparent;border:1px solid currentColor;margin-top:24px}"
  "@media(max-width:680px){.bf-block[data-edition-format]{padding:22px}.bf-cover-source{padding:32px 15px}}"
+ ".bf-article-toc{border:1px solid #b9c6bd;padding:clamp(18px,2.8vw,33px);margin:34px auto 45px;max-width:830px;background:#f2f4ee;color:#203b31}"
+ ".bf-article-toc>p{font:800 11px system-ui;letter-spacing:.16em;text-transform:uppercase;margin:0 0 18px}"
+ ".bf-article-toc ol{margin:0;padding:0;list-style:none;columns:2;column-gap:35px}"
+ ".bf-article-toc li{break-inside:avoid;margin:0;padding:0;border-top:1px solid #d0dbd3}"
+ ".bf-article-toc a{display:flex;gap:18px;padding:13px 0;color:inherit;font:500 15px/1.3 Georgia,serif;text-decoration:none}"
+ ".bf-article-toc a:hover,.bf-article-toc a:focus-visible{text-decoration:underline;text-underline-offset:4px}"
+ ".bf-article-toc a span:first-child{font:800 11px system-ui;color:#657e6c;padding-top:3px}"
+ "html{scroll-behavior:smooth}.bf-markdown h2[id]{scroll-margin-top:28px}"
+ "@media(max-width:680px){.bf-article-toc ol{columns:1}.bf-article-toc{padding:18px}}"
  ".bf-markdown{font:1.13rem/1.78 Georgia,serif;max-width:77ch;margin:auto}"
  ".bf-markdown h2{font:600 clamp(29px,3vw,42px)/1.18 Georgia,serif;margin:1.7em 0 .6em}"
  ".bf-markdown h3{font:600 1.45rem/1.3 Georgia,serif;margin:1.3em 0 .5em}"
