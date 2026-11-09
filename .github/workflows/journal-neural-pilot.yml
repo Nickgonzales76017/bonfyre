@@ -95,7 +95,7 @@ jobs:
           candidates=[]
           qa=Path('editorial/audio/qa')
           qa.mkdir(parents=True,exist_ok=True)
-          for candidate in (.80,.85,.90):
+          for candidate in (.68,.72,.76):
             audio,rate=tts.create(sample,voice=voice,speed=candidate,
               lang='en-us',trim=True,sentence_pause=.36,
               clause_pause=.14,continuous=True)
