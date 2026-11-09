@@ -10,6 +10,16 @@ const fail=s=>{throw new Error("native authoring: "+s);};
 const clone=x=>structuredClone(x);
 const digestOK=s=>typeof s==="string"&&/^[a-f0-9]{64}$/.test(s);
 const authoringKind=s=>typeof s==="string"&&(/^profile-(?:hero|section|card|story|quote|metric|action)$/.test(s)||/^service:[a-z][a-z-]*$/.test(s));
+// Explicit extension fields which do not have dedicated site_fragment columns.
+// These remain typed source data, never renderable HTML or CSS shortcuts.
+const retainedProps=["alt","caption","asset_ref","metadata","bindings"];
+const extras=props=>Object.fromEntries(retainedProps.filter(k=>own(props,k)).map(k=>[k,clone(props[k])]));
+const loadedExtras=value=>{
+ if(value===undefined)return {};
+ if(!value||typeof value!=="object"||Array.isArray(value)||
+    Object.keys(value).some(k=>!retainedProps.includes(k)))fail("unsupported retained authoring property");
+ return clone(value);
+};
 function snapshot(base){
  if(!base||base.schema!=="bonfyre.page-snapshot.v1"||!digestOK(base.digest)||
   !base.snapshot||typeof base.snapshot.namespace!=="string"||
@@ -48,6 +58,7 @@ export function treeFromNativeSnapshot(base){
   const props={heading:row.heading||"",body:row.body||"",eyebrow:row.eyebrow||"",
    label:row.label||"",href:row.href||"",variant:row.variant_key||"paper",
    source_ref:row.source_ref||"",source_digest:row.source_digest||"",
+   ...loadedExtras(t.props),
    ...(row.status==="published"?{readOnly:true}:{}),
    ...(own(t,"editorial")?{editorial:t.editorial}:{})};
   const node={id:row.coordinate,kind:row.kind,props,responsive:t.responsive||{},children:[]};
@@ -71,8 +82,10 @@ function authoredRow(value,stored,route){
  const {node,parent,position}=value;
  const old=stored?clean(stored):{};
  const baseTags=stored?tags(stored):{};
+ const extra=extras(node.props);
  const meta={...baseTags,authoring_v1:{version:1,parent,
   responsive:clone(node.responsive),
+  ...(Object.keys(extra).length?{props:extra}:{}),
   ...(own(node.props,"editorial")?{editorial:clone(node.props.editorial)}:{})}};
  return {...old,coordinate:node.id,page:route,slot:"showcase",
   audience:stored?.audience||"public",kind:node.kind,position,
@@ -104,6 +117,7 @@ export function toNativePageWrite(base,doc,{pageDraft}={}){
   const before=tags(original).authoring_v1;
   if(before&&JSON.stringify(before.responsive??{})!==JSON.stringify(target.node.responsive)||
      before&&JSON.stringify(before.editorial??null)!==JSON.stringify(target.node.props.editorial??null)||
+     before&&JSON.stringify(before.props??{})!==JSON.stringify(extras(target.node.props))||
      before&&(before.parent??null)!==(target.parent??null))
     fail("published composition must be forked");
  }
@@ -144,12 +158,19 @@ export async function saveNativeAuthoring({fetcher=fetch,base,tree,pageDraft}){
  if(result.committed!==true)fail("no native commit receipt");
  const reopened=await openNativeAuthoring({fetcher,route:tree.page});
  const input=rowsOf(tree),output=rowsOf(reopened.tree);
- if(input.length!==output.length||input.some((a,i)=>
-  a.node.id!==output[i].node.id||a.node.kind!==output[i].node.kind||
-  a.parent!==output[i].parent||
-  JSON.stringify(a.node.responsive)!==JSON.stringify(output[i].node.responsive)||
-  (a.node.props.body||"")!==(output[i].node.props.body||"")||
-  JSON.stringify(a.node.props.editorial||null)!==JSON.stringify(output[i].node.props.editorial||null)))
+ if(input.length!==output.length||input.some((a,i)=>{
+  const b=output[i];
+  if(a.node.id!==b.node.id||a.node.kind!==b.node.kind||
+     a.parent!==b.parent||
+     JSON.stringify(a.node.responsive)!==JSON.stringify(b.node.responsive))return true;
+  // Verify every supplied property, not merely the body. Omission must not
+  // turn a partial 200 response into a false claim of committed parity.
+  for(const [key,value] of Object.entries(a.node.props)){
+   if(key==="readOnly")continue;
+   if(JSON.stringify(value)!==JSON.stringify(b.node.props[key]))return true;
+  }
+  return false;
+ }))
   fail("committed readback is not the edited tree");
  return {committed:true,revision:reopened.base.digest,base:reopened.base,tree:reopened.tree};
 }

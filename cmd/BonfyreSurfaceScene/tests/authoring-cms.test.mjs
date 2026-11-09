@@ -94,3 +94,51 @@ test("CMS refuses false successful save when post-commit readback lost an author
   {ok:true,json:async()=>structuredClone(b)};
  await assert.rejects(saveNativeAuthoring({fetcher,base:b,tree:doc}),/readback/);
 });
+
+test("native CMS roundtrip preserves media credits and structured source bindings without flattening",()=>{
+ const b=base(),doc=story();
+ const authored=doc.blocks[0].children[0];
+ authored.props.alt="Archival reading room";
+ authored.props.caption="Source photograph, public domain";
+ authored.props.asset_ref="media:reading-room";
+ authored.props.metadata={credit:"Library of Congress",language:"en"};
+ authored.props.bindings={source:"source:research:1",authority:"review-required"};
+ const write=toNativePageWrite(b,doc);
+ const row=write.fragments.find(f=>f.coordinate==="first-story");
+ assert.deepEqual(row.semantic_tags.authoring_v1.props,{
+  alt:"Archival reading room",caption:"Source photograph, public domain",
+  asset_ref:"media:reading-room",
+  metadata:{credit:"Library of Congress",language:"en"},
+  bindings:{source:"source:research:1",authority:"review-required"}
+ });
+ const reopened=treeFromNativeSnapshot({...b,id:12,
+  snapshot:{...b.snapshot,page:{id:12,route:"/stories",status:"draft"},fragments:write.fragments}});
+ assert.deepEqual(reopened.blocks[0].children[0].props.alt,authored.props.alt);
+ assert.deepEqual(reopened.blocks[0].children[0].props.caption,authored.props.caption);
+ assert.deepEqual(reopened.blocks[0].children[0].props.asset_ref,authored.props.asset_ref);
+ assert.deepEqual(reopened.blocks[0].children[0].props.metadata,authored.props.metadata);
+ assert.deepEqual(reopened.blocks[0].children[0].props.bindings,authored.props.bindings);
+});
+
+test("CMS commit readback rejects content loss in heading, media and source bindings",async()=>{
+ const b=base(),doc=story();
+ doc.blocks[0].children[0].props.alt="Reviewed source";
+ doc.blocks[0].children[0].props.metadata={review:"owner-required"};
+ let saved;
+ const fetcher=async(path,options)=>{
+  if(options?.method==="POST"){
+   saved=JSON.parse(options.body);
+   return {ok:true,json:async()=>({committed:true})};
+  }
+  if(!saved)return {ok:true,json:async()=>structuredClone(b)};
+  const altered=structuredClone(saved.fragments);
+  altered.find(x=>x.coordinate==="first-story").heading="Wrong title";
+  altered.find(x=>x.coordinate==="first-story").semantic_tags.authoring_v1.props.alt="Another source";
+  return {ok:true,json:async()=>({
+   schema:b.schema,id:12,digest:"b".repeat(64),
+   snapshot:{namespace:"person-test-work",route:"/stories",
+    page:{id:12,route:"/stories",status:"draft"},fragments:altered}
+  })};
+ };
+ await assert.rejects(saveNativeAuthoring({fetcher,base:b,tree:doc}),/readback/);
+});
