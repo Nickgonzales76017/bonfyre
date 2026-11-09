@@ -54,3 +54,44 @@ test("pending canvas edits become undoable before mode switching and redo restor
   await api.destroy();
  }finally{globalThis.document=oldDocument;}
 });
+
+test("Editor.js save serializes the actual text even without an upstream onChange signal",async()=>{
+ const previous=globalThis.document;
+ globalThis.document={createElement:tag=>new Node(tag)};
+ const root=new Node("root"),editors=[];let committed;
+ class StubArticle{
+  constructor({data}){this.data=structuredClone(data);this.isReady=Promise.resolve();editors.push(this);}
+  async save(){return structuredClone({blocks:this.data.blocks});}
+  destroy(){}
+ }
+ const grapes={init(){
+  return {loadProjectData(){},on(){},destroy(){},getProjectData(){throw Error("unchanged");}};
+ }};
+ try{
+  const initial=applyAuthoringEdit(newAuthoringTree("person-editor"),{type:"insert",
+   block:{id:"story",kind:"profile-story",props:{heading:"A story",body:"Original text"},
+    responsive:{desktop:{layout:"stack"}},children:[]}
+  });
+  const api=await mountAurekaiAuthoring(root,{
+   initial,
+   loaders:{grapesjs:async()=>grapes,
+    editorjs:async()=>[{default:StubArticle},{default:class{}},{default:class{}},
+     {default:class{}},{default:class{}}]},
+   onReview:async()=>{},
+   onSaveDraft:async draft=>{committed=draft;return {committed:true};}
+  });
+  await new Promise(resolve=>setImmediate(resolve));
+  await api.switchMode("editorjs");
+  assert.equal(api.mode(),"editorjs");
+  const editor=editors.at(-1);
+  editor.data.blocks[0].data.text="Actual edited document";
+  // A browser may edit a contenteditable before Editor.js broadcasts onChange.
+  await api.save();
+  assert.equal(committed.blocks[0].props.body,"Actual edited document");
+  assert.equal(committed.blocks[0].props.editorial[0].data.text,"Actual edited document");
+  const history=api.session.canUndo();
+  await api.save();
+  assert.equal(api.session.canUndo(),history,"second unchanged save adds no history");
+  await api.destroy();
+ }finally{globalThis.document=previous;}
+});
