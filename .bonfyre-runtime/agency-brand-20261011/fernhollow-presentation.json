@@ -1,0 +1,30 @@
+{
+  "hero_mode": "quiet-title",
+  "navigation_mode": "minimal",
+  "density": "airy",
+  "typography_mode": "optical-serif",
+  "card_mode": "borderless",
+  "layout_tokens": {
+    "ground": "#fbfbf9",
+    "ink": "#1c1c1a",
+    "display": "#111110",
+    "accent": "#8a7f6e",
+    "muted": "#8d8880",
+    "rule": "rgba(0,0,0,.08)",
+    "panel": "#ffffff",
+    "face_display": "'Fraunces',Georgia,serif",
+    "face_body": "'Karla',system-ui,sans-serif",
+    "face_mono": "'DM Mono',ui-monospace,Menlo,monospace",
+    "display_weight": "400",
+    "display_transform": "none",
+    "display_tracking": "-.012em",
+    "display_leading": "1.04",
+    "display_size": "clamp(2.4rem,6vw,4.6rem)",
+    "radius": "2px",
+    "card_border": "none",
+    "card_shadow": "none",
+    "gap": "24px",
+    "measure": "58ch",
+    "font_href": "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Karla:wght@400;500&display=swap"
+  }
+}

@@ -1,0 +1,264 @@
+{
+  "schema": "service-site.documents.v1",
+  "title": "Composing Webb telescope images",
+  "synthetic": false,
+  "documents": [
+    {
+      "id": "recording",
+      "title": "Composing Webb telescope images",
+      "text": "How does this become this?\n\nHi, I'm Joseph D. Preswell.\n\nAnd I'm Elisa Pagon.\n\nAnd we're science visual developers at the Space Telescope Science Institute, the Mission and Science Operations Center for NASA's James Webb Space Telescope.\n\nOur job is essentially to take the raw images from Webb and extract and highlight the meaningful information by producing color images from the black and white data we receive.\n\nSo why do we do this?\n\nBy composing color images from the data, we can see details that we wouldn't be able to see otherwise.\n\nAs science visual developers, this is what we specialize in and do every day.\n\nBut it's something that you can do too.\n\nA great thing about the Webb Space Telescope is that its observations are available through the Institute's Data Archive called MAST.\n\nYou can search for the data, down the raw images from Webb, and try composing color images yourself.\n\nIn this series, we're going to break down the basics of how and why we take Webb's images from this to this.\n\nSo follow along with us here and visit webtelescope.org to dive deeper into the process of how Webb's full-color images are made.\n\nYou're looking at an image of thousands upon thousands of galaxies, billions of years old.\n\nThis is what Webb images look like before image specialists process them to reveal their contents.\n\nScientists like Webb are designed with science in mind, and science goals are what drive Webb's observations.\n\nBut to our great fortune, this instrument of science also captures the stunning beauty of the cosmos.\n\nBefore I start working on a web image, the data have already gone through a lot.\n\nScientists had to successfully propose to observe the target, which includes a lot of detail, like which filters Webb should use on its cameras.\n\nThe data then went through a calibration system, developed primarily by scientists and engineers at STSCI, which corrects instrumental effects and extracts useful and accurate information.\n\nIn order to begin composing color images from this data, we start by downloading the image files from our archive called MAST.\n\nAnyone, including you, can search for and download the files by using the target's name or coordinates on the sky.\n\nWhen we first open these images, they may appear black, but they actually contain a huge amount of information.\n\nWebb's detectors are so sensitive that they capture more light than our eyes where screens can process.\n\nSo we need to use certain techniques to bring out the faintest details and make them visible to our eyes while preserving the brightest details.\n\nStretching and compression are one of the ways that we do this.\n\nThese techniques ensure we highlight the bulk of what was captured in the image.\n\nWe then refine each piece of data by removing any artifacts or anomalies that might be hiding what's there.\n\nDownloading and working with the raw data in this way is exciting.\n\nIt's kind of like getting a box of puzzle pieces without the picture on the box.\n\nThis is only the beginning of the process.\n\nStay tuned for the next video in this series where we'll dive deeper into the journey of composing color images from web data.\n\nWhile color images of space are incredibly gorgeous to look at, there are so many reasons behind our efforts to visualize web data in color.\n\nThere are many wavelengths of light around us every day that we can actually see.\n\nThe web space telescope sees infrared light, which is a type of light that's invisible to our eyes.\n\nIf you wore sophisticated infrared goggles and flew through space, you'd see the universe similar to how web does.\n\nBut since our eyes can't naturally see an infrared, to see what web sees, we need to translate the light into visible color.\n\nWeb captures multiple images using different filters that detect specific elements or molecules.\n\nThen we combine those images to make a composite, assigning different colors to individual images based on the wavelength of light they detect.\n\nJust like you would translate a language you don't understand into one that you do, assigning colors this way helps us process the information in a way our eyes can understand.\n\nThe words are always there, but now we can understand what they're saying.\n\nAfter translating the infrared data to visible color, it's time to consider the aesthetics.\n\nWe use principles of photography to emphasize certain details and ensure that the image is visually engaging while we work with scientists to ensure we're maintaining the integrity of the original data.\n\nComposition is also a big part of this process.\n\nSometimes this just means rotating an image to draw the eye to important info, and sometimes this means cropping images to create a more balanced look.\n\nThere's no up in space, so our team gets to essentially decide what up looks like for each image we release.\n\nComposing color images from web's infrared data is a really unique combination of science and art.\n\nSimilar to composing a symphony, we're carefully balancing each note or each color in scientific detail to create a harmonious, scientifically meaningful, and visually stunning view of the universe.\n\nWeb has two main cameras, nearcam, a near infrared camera, and mirrory, the mid infrared instrument.\n\nNearcam captures shorter wavelengths of infrared light while mirrory captures longer wavelengths.\n\nNearcam has 29 filters while mirrory has 9 filters.\n\nThere are a large number of filter combinations that can appear in a web image.\n\nWe assign colors in chromatic order, blue, green, red, from shortest to longest wavelengths for both of web's cameras.\n\nWe then carefully review what each image contains and decide which filters to keep in the final composite image based on the data quality, science, and overall look.\n\nWe'll create images from each camera, but we'll often have the opportunity to combine images from both cameras, which can produce stunning results.\n\nSo there you have it, a brief overview of composing color images from web space telescope data.\n\nDon't forget, this is all something you can try yourself.\n\nYou can download raw images from web right now and try your hand at a signing color.\n\nThis series took us through the highlights, and you can learn more about the actual tools you'll need and the whole process for the resources and info on webtelescope.org.\n\nThanks for joining us on this colorful journey!",
+      "media": {
+        "file": "media/recording.mp4",
+        "sha256": "dfe81327e985031a6f24b4ad4c4b150d9744c86b7a4fc43f9ca15cd3a64fecb9",
+        "content_type": "video/mp4",
+        "duration_ms": 360404,
+        "transcript_sha256": "1be7710659d33b04d22eaec1c1431835fc0e5939a365613076b7efe863512c8c",
+        "review": "unreviewed",
+        "segments": [
+          {
+            "start_ms": 0,
+            "end_ms": 7000
+          },
+          {
+            "start_ms": 7000,
+            "end_ms": 9000
+          },
+          {
+            "start_ms": 9000,
+            "end_ms": 11000
+          },
+          {
+            "start_ms": 11000,
+            "end_ms": 19440
+          },
+          {
+            "start_ms": 19440,
+            "end_ms": 29280
+          },
+          {
+            "start_ms": 29280,
+            "end_ms": 30920
+          },
+          {
+            "start_ms": 30920,
+            "end_ms": 35560
+          },
+          {
+            "start_ms": 35560,
+            "end_ms": 39280
+          },
+          {
+            "start_ms": 39280,
+            "end_ms": 41160
+          },
+          {
+            "start_ms": 41160,
+            "end_ms": 47560
+          },
+          {
+            "start_ms": 47560,
+            "end_ms": 52640
+          },
+          {
+            "start_ms": 52640,
+            "end_ms": 61240
+          },
+          {
+            "start_ms": 61240,
+            "end_ms": 72080
+          },
+          {
+            "start_ms": 72080,
+            "end_ms": 77680
+          },
+          {
+            "start_ms": 77680,
+            "end_ms": 83200
+          },
+          {
+            "start_ms": 83200,
+            "end_ms": 88640
+          },
+          {
+            "start_ms": 88640,
+            "end_ms": 94160
+          },
+          {
+            "start_ms": 94160,
+            "end_ms": 98560
+          },
+          {
+            "start_ms": 98560,
+            "end_ms": 106680
+          },
+          {
+            "start_ms": 106680,
+            "end_ms": 116920
+          },
+          {
+            "start_ms": 116920,
+            "end_ms": 123760
+          },
+          {
+            "start_ms": 123760,
+            "end_ms": 130560
+          },
+          {
+            "start_ms": 130560,
+            "end_ms": 136640
+          },
+          {
+            "start_ms": 136640,
+            "end_ms": 142360
+          },
+          {
+            "start_ms": 142360,
+            "end_ms": 148880
+          },
+          {
+            "start_ms": 148880,
+            "end_ms": 152160
+          },
+          {
+            "start_ms": 152160,
+            "end_ms": 156100
+          },
+          {
+            "start_ms": 156100,
+            "end_ms": 162120
+          },
+          {
+            "start_ms": 162120,
+            "end_ms": 164800
+          },
+          {
+            "start_ms": 164800,
+            "end_ms": 169280
+          },
+          {
+            "start_ms": 169280,
+            "end_ms": 171440
+          },
+          {
+            "start_ms": 171440,
+            "end_ms": 178520
+          },
+          {
+            "start_ms": 178520,
+            "end_ms": 189880
+          },
+          {
+            "start_ms": 189880,
+            "end_ms": 194480
+          },
+          {
+            "start_ms": 194480,
+            "end_ms": 199040
+          },
+          {
+            "start_ms": 199040,
+            "end_ms": 205440
+          },
+          {
+            "start_ms": 205440,
+            "end_ms": 211560
+          },
+          {
+            "start_ms": 211560,
+            "end_ms": 216600
+          },
+          {
+            "start_ms": 216600,
+            "end_ms": 224360
+          },
+          {
+            "start_ms": 224360,
+            "end_ms": 233640
+          },
+          {
+            "start_ms": 233640,
+            "end_ms": 236880
+          },
+          {
+            "start_ms": 236880,
+            "end_ms": 242080
+          },
+          {
+            "start_ms": 242080,
+            "end_ms": 252960
+          },
+          {
+            "start_ms": 252960,
+            "end_ms": 255000
+          },
+          {
+            "start_ms": 255000,
+            "end_ms": 262360
+          },
+          {
+            "start_ms": 262360,
+            "end_ms": 268760
+          },
+          {
+            "start_ms": 268760,
+            "end_ms": 273600
+          },
+          {
+            "start_ms": 273600,
+            "end_ms": 284000
+          },
+          {
+            "start_ms": 285000,
+            "end_ms": 294600
+          },
+          {
+            "start_ms": 294600,
+            "end_ms": 299200
+          },
+          {
+            "start_ms": 299200,
+            "end_ms": 302400
+          },
+          {
+            "start_ms": 302400,
+            "end_ms": 306600
+          },
+          {
+            "start_ms": 306600,
+            "end_ms": 313600
+          },
+          {
+            "start_ms": 313600,
+            "end_ms": 322000
+          },
+          {
+            "start_ms": 322000,
+            "end_ms": 330200
+          },
+          {
+            "start_ms": 330200,
+            "end_ms": 335200
+          },
+          {
+            "start_ms": 335200,
+            "end_ms": 338040
+          },
+          {
+            "start_ms": 338040,
+            "end_ms": 342840
+          },
+          {
+            "start_ms": 342840,
+            "end_ms": 351360
+          },
+          {
+            "start_ms": 351360,
+            "end_ms": 353280
+          }
+        ],
+        "source_url": "https://science.nasa.gov/asset/webb/composing-webb-telescope-images/",
+        "credit": "NASA, ESA, CSA and the Space Telescope Science Institute · Joseph DePasquale and Alyssa Pagan"
+      }
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "sourceSystem": "BonfyreTranscribe",
+  "exportedAt": "2026-10-12T01:14:38Z",
+  "status": "transcribed",
+  "jobSlug": "recording",
+  "splitSpeech": false,
+  "denoised": true,
+  "segments": 95,
+  "segmentsFiltered": 0,
+  "segmentsHallucinated": 14,
+  "chunkCount": 0,
+  "avgQuality": 0.8070,
+  "rtf": 0.0548,
+  "transcriptPath": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/webb-recording-20261011/.recording-import-Noq2Yo/.transcription/transcript.txt",
+  "transcriptJsonPath": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/webb-recording-20261011/.recording-import-Noq2Yo/.transcription/transcript.json",
+  "transcriptSrtPath": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/webb-recording-20261011/.recording-import-Noq2Yo/.transcription/transcript.srt",
+  "transcriptVttPath": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/webb-recording-20261011/.recording-import-Noq2Yo/.transcription/transcript.vtt",
+  "metaPath": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/webb-recording-20261011/.recording-import-Noq2Yo/.transcription/meta.json"
+}

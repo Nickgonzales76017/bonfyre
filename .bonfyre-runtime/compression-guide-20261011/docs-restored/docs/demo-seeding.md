@@ -1,0 +1,283 @@
+# Demo Seeding
+
+Bonfyre demo apps should graduate from one-off showcase records to larger reference corpora that make:
+
+- search feel real
+- memory surfaces feel useful
+- clustering and compression become visible
+- orchestration value obvious from outcomes, not claims
+
+## Rules
+
+- Keep raw copyrighted source material out of the repo unless you have rights.
+- Prefer storing derived demo artifacts and compact record summaries over raw media.
+- For YouTube or famous-podcast inspired demos, use:
+  - public-domain or Creative Commons source where available
+  - permissioned material
+  - or abstracted/derived reference records instead of reposting raw transcripts/audio
+
+YouTube’s official help says reuse depends on permission or the applicable license, and CC BY videos are a special case rather than a blanket rule:
+
+- License types on YouTube: https://support.google.com/youtube/answer/2797468/creative-commons
+- YouTube Terms: https://www.youtube.com/t/terms
+
+## Target
+
+Aim for `100` compact reference records per flagship demo family.
+
+That does **not** mean hosting 100 raw podcast episodes or 100 full town-hall videos in the repo.
+
+It means hosting 100 normalized reference records that preserve the behavior we want to show:
+
+- topic clustering
+- cross-record search
+- timeline reuse
+- artifact fanout
+- orchestration-driven branching
+
+## Generator
+
+Use:
+
+```bash
+node scripts/generate_demo_seed_sets.mjs path/to/manifest.json
+```
+
+The generator writes `demo-items.json` files for each app from a compact source manifest.
+
+It also passes through provenance fields when they exist:
+
+- `sourceUrl`
+- `sourceLinks`
+- `sourceTitle`
+- `sourceLabel`
+- `sourceCopy`
+- `publisher`
+- `license`
+
+Those fields should point to the public origin page or channel, not to mirrored source media hosted inside the app repo.
+
+## Reviewed-Source Generator
+
+For corpora that need to pass strict provenance, use:
+
+```bash
+node scripts/generate_reference_corpora_from_sources.mjs path/to/reviewed-source-manifest.json
+```
+
+Start from:
+
+```bash
+cp scripts/reviewed_source_manifest.template.json path/to/reviewed-source-manifest.json
+```
+
+That manifest is intentionally source-first:
+
+- one reviewed public origin per record
+- public URL attached up front
+- publisher and license note attached up front
+- no mirrored source audio/video in `site/demos`
+
+This is the path that should replace synthetic placeholder corpora for the flagship apps.
+
+## Public Source Queue
+
+Before a source becomes `approved`, keep it in a review queue:
+
+```bash
+scripts/public_source_queue.sample.json
+```
+
+That queue separates three steps that were previously getting blurred together:
+
+1. find candidate public sources
+2. review provenance, license posture, and fit
+3. promote only approved sources into a reviewed-source manifest
+
+Convert a reviewed queue into a reviewed-source manifest with:
+
+```bash
+node scripts/build_reviewed_manifest_from_queue.mjs path/to/public-source-queue.json path/to/reviewed-source-manifest.json
+```
+
+Only sources with:
+
+- `review_status: "approved"`
+
+are promoted.
+
+To see where the queue is still thin by app, run:
+
+```bash
+node scripts/report_public_source_queue.mjs scripts/public_source_queue.sample.json 10
+```
+
+That reports:
+
+- approved count
+- queued count
+- rejected count
+- gap to the target distinct-source floor
+- missing provenance fields on approved entries
+- app readiness score
+- highest-value queued candidates to review next
+
+To fail a publish step when the reviewed public-source floor is still too weak, run:
+
+```bash
+node scripts/assert_reference_readiness.mjs scripts/public_source_queue.sample.json --target 10 --min-readiness 30
+```
+
+You can scope that gate to flagship apps only:
+
+```bash
+node scripts/assert_reference_readiness.mjs scripts/public_source_queue.sample.json --target 10 --min-readiness 30 --repo pages-town-box --repo pages-podcast-plant --repo pages-oss-cockpit
+```
+
+That gate now also fails when approved sources are too weak to really stress Bonfyre. In other words, a corpus can still fail even if it has some approved links, if those sources are too clean, too low-jargon, too socially simple, or too weakly provenance-backed to prove real-world performance.
+
+## Bonfyre-Native Stress Pass
+
+Before publishing, run the reviewed queue through Bonfyre itself so the corpus review starts exercising the same orchestration surfaces clients will care about later:
+
+```bash
+node scripts/stress_reference_corpora_with_bonfyre.mjs scripts/public_source_queue.sample.json --include-queued
+```
+
+That pass is intentionally Bonfyre-native:
+
+- creates a machine request per reviewed source
+- runs `bonfyre-orchestrate plan`
+- records feedback through `bonfyre-orchestrate feedback`
+- enqueues the workload through `bonfyre-queue`
+- emits a stress report with:
+  - policy source
+  - predicted policy score
+  - predicted information gain
+  - predicted latency and cost
+  - expected outputs
+  - selected binaries and boosters
+
+This is the thinnest way to start building client-facing corpus metrics from Bonfyre's real control plane instead of from side spreadsheets.
+
+It also surfaces a key implementation smell early: if many very different sources collapse to the same state key, output set, and policy path, the stress report will flag low differentiation so we can tighten the planner before pretending the corpus proves much.
+
+The stress report now also emits:
+
+- app-level readiness verdicts
+- app-level readiness targets
+- one next action per app
+- an explicit publish gate outcome
+
+Those readiness targets are intentionally app-aware. For example:
+
+- podcast and release surfaces require more approved public sources and a higher provenance floor
+- civic and operational apps still need strong provenance, but can graduate earlier if Bonfyre proves sharp plan differentiation on real public-origin material
+
+To turn that into a hard Bonfyre-side release gate, run:
+
+```bash
+node scripts/stress_reference_corpora_with_bonfyre.mjs scripts/public_source_queue.sample.json --include-queued --assert-ready --min-verdict technically-strong-but-provenance-thin
+```
+
+For truly client-facing publication, raise the floor further:
+
+```bash
+node scripts/stress_reference_corpora_with_bonfyre.mjs scripts/public_source_queue.sample.json --include-queued --assert-ready --min-verdict ready
+```
+
+## Validator
+
+Before publishing a corpus, run:
+
+```bash
+node scripts/validate_reference_corpora.mjs --strict-provenance --min-count 100 --min-distinct-sources 10
+```
+
+What it catches:
+
+- mirrored audio/video files inside `site/demos`
+- corpora below the target size
+- missing public provenance links
+- local-path provenance masquerading as origin
+- corpora that rely on too few distinct public sources
+- stale staged-demo copy like `seeded` or `demo dataset`
+- excessively repeated record templates that make the corpus feel fake
+
+Use the validator as the release gate:
+
+- synthetic exploration can fail locally
+- public demo publication should not pass until provenance is real
+
+## Sample Reviewed Manifest
+
+For local stress testing, there is a starter manifest at:
+
+```bash
+scripts/reviewed_source_manifest.sample.json
+```
+
+It uses real public-source examples for:
+
+- `pages-town-box`
+- `pages-shift-handoff`
+
+Generate into `/tmp` with:
+
+```bash
+node scripts/generate_reference_corpora_from_sources.mjs scripts/reviewed_source_manifest.sample.json
+```
+
+## Manifest Shape
+
+```json
+{
+  "default_count": 100,
+  "apps": [
+    {
+      "repo": "pages-podcast-plant",
+      "slug": "podcast-plant",
+      "title": "Podcast Plant",
+      "out_path": "/abs/path/to/pages-podcast-plant/site/demos/podcast-plant/demo-items.json",
+      "default_outputs": ["show notes", "clip list", "article draft", "RSS-ready bundle"],
+      "default_tags": ["podcast", "clips", "publish-ready"],
+      "why_it_matters": "A larger seed set makes episode search and repurposing obvious inside the demo.",
+      "search_intro": "Search across many seeded episodes to compare topics, clips, and publish surfaces.",
+      "seeds": [
+        {
+          "file": "City Budget Special",
+          "brief": "Episode covering budget pressure, staffing, and service tradeoffs.",
+          "tags": ["budget", "city", "policy"],
+          "searchSummary": "budget pressure, staffing, service tradeoffs"
+        }
+      ]
+    }
+  ]
+}
+```
+
+## Sourcing Strategy
+
+Use different source modes by demo type:
+
+- `podcast`: permissioned, CC BY, public domain, or derived metadata-only records
+- `town halls`: public-government meetings are strong candidates, but still store normalized records rather than raw repo copies when possible
+- `customer voice` / `sales`: synthetic or permissioned only
+- `legal` / `evidence`: synthetic or sanitized only
+
+## Recommendation
+
+For the next pass, build `100`-record manifests first for:
+
+- `pages-podcast-plant`
+- `pages-town-box`
+- `pages-customer-voice`
+- `pages-oss-cockpit`
+- `pages-memory-atlas`
+
+Those are the apps where larger seeded datasets will most clearly demonstrate:
+
+- search
+- clustering
+- memory
+- orchestration-driven fanout

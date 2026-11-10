@@ -1,0 +1,13 @@
+{
+  "source": "/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/bonfyre-agency-guide.6pGCqO",
+  "sites": [
+    "fernhollow",
+    "tallgrass",
+    "juniper"
+  ],
+  "profiles": [
+    "ghost-bokeh",
+    "ghost-wire",
+    "ghost-broadsheet"
+  ]
+}

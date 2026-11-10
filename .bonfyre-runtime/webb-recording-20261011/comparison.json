@@ -1,0 +1,7 @@
+{
+  "reference_words": 1066,
+  "recognized_words": 1067,
+  "word_edits": 38,
+  "word_error_rate": 0.03564727954971857,
+  "normalization": "lowercase alphanumeric/apostrophe words; VTT timing and music cues excluded"
+}

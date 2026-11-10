@@ -1,0 +1,69 @@
+[SECTION: From Black and White to Full-Color]
+
+Hi, I’m Joseph DePasquale, and I'm Alyssa Pagan, and we're science visuals developers at the Space Telescope Science Institute, the Mission and Science Operations Center for NASA's James Webb Space Telescope.
+
+Our job is essentially to take the raw images from Webb, and extract and highlight the meaningful information by producing color images from the black-and-white data we receive.
+
+So, why do we do this? By composing color images from the data, we can see details that we wouldn't be able to see otherwise. As science visuals developers, this is what we specialize in and do every day, but it's something that you can do too! A great thing about the Webb Space Telescope is that its observations are available through the institute's data archive called MAST.
+
+You can search for the data, download raw images from Webb, and try composing color images yourself.
+
+In this series we're going to break down the basics of how and why we take Webb's images from this to this. So follow along with us here, and visit WebbTelescope.org to dive deeper into the process of how Webb's full-color images are made.
+
+[SECTION: Downloading and Defining]
+
+You're looking at an image of thousands upon thousands of galaxies, billions of years old. This is what Webb images look like before image specialists process them to reveal their contents.
+
+Telescopes like Webb are designed with science in mind, and science goals are what drive Webb's observations. But, to our great fortune, this instrument of science also captures the stunning beauty of the cosmos.
+
+Before I start working on a Webb image, the data have already gone through a lot. Scientists had to successfully propose to observe the target, which includes a lot of detail, like which filters Webb should use on its cameras.
+
+The data then went through a calibration system developed primarily by scientists and engineers at STScI, which corrects instrumental effects and extracts useful and accurate information. In order to begin composing color images from this data, we start by downloading the image files from our archive called MAST.
+
+Anyone, including you, can search for and download the files by using the target's name or coordinates on the sky.
+
+When we first open these images they may appear black, but they actually contain a huge amount of information. Webb's detectors are so sensitive that they capture more light than our eyes or screens can process.
+
+So we need to use certain techniques to bring out the faintest details and make them visible to our eyes while preserving the brightest details.
+
+Stretching and compression are one of the ways that we do this. These techniques ensure we highlight the bulk of what was captured in the image. We then refine each piece of data by removing any artifacts or anomalies that might be hiding what's there.
+
+Downloading and working with the raw data in this way is exciting. It's kind of like getting a box of puzzle pieces without the picture on the box. And this is only the beginning of the process.
+
+Stay tuned for the next video in this series, where we'll dive deeper into the journey of composing color images from Webb data.
+
+[SECTION: Assigning and Refining]
+
+While color images of space are incredibly gorgeous to look at, there are so many reasons behind our efforts to visualize Webb's data in color.
+
+There are many wavelengths of light around us every day that we can’t actually see. The Webb Space Telescope sees infrared light, which is a type of light that's invisible to our eyes.
+
+If you wore sophisticated infrared goggles and flew through space, you'd see the universe similar to how Webb does. But since our eyes can't naturally see in infrared, to see what Webb sees we need to translate the light into visible color.
+
+Webb captures multiple images using different filters that detect specific elements or molecules. Then we combine those images to make a composite, assigning different colors to individual images based on the wavelength of light they detect.
+
+Just like you would translate a language you don't understand into one that you do, assigning colors this way helps us process the information in a way our eyes can understand. The words are always there, but now we can understand what they're saying.
+
+After translating the infrared data to visible color, it's time to consider the aesthetics. We use principles of photography to emphasize certain details and ensure that the image is visually engaging while we work with scientists to ensure we're maintaining the integrity of the original data.
+
+Composition is also a big part of this process. Sometimes this just means rotating an image to draw the eye to important info. And sometimes this means cropping images to create a more balanced look.
+
+There's no “up” in space, so our team gets to essentially decide what “up” looks like for each image we release. Composing color images from Webb's infrared data is a really unique combination of science and art. Similar to composing a symphony, we're carefully balancing each note or each color and scientific detail to create a harmonious, scientifically meaningful and visually stunning view of the universe.
+
+[SECTION: Combining and Finalizing]
+
+Webb has two main cameras. NIRCam, the Near-Infrared Camera, and MIRI, the Mid-Infrared Instrument. NIRCam captures shorter wavelengths of infrared light, while MIRI captures longer wavelengths.
+
+NIRCam has 29 filters, while MIRI has 9 filters. There are a large number of filter combinations that can appear in a Webb image.
+
+We assign colors in chromatic order, blue, green, red, from shortest to longest wavelengths for both of Webb's cameras. We then carefully review what each image contains and decide which filters to keep in the final composite image based on the data quality, science, and overall look.
+
+We'll create images from each camera, but we'll often have the opportunity to combine images from both cameras, which can produce stunning results.
+
+So there you have it. A brief overview of composing color images from Webb Space Telescope data.
+
+Don't forget, this is all something you can try yourself. You can download raw images from Webb right now and try your hand at assigning color.
+
+This series took us through the highlights and you can learn more about the actual tools you'll need and the whole process through the resources and info on WebbTelescope.org.
+
+Thanks for joining us on this colorful journey.

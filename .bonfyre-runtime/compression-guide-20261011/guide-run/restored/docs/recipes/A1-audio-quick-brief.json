@@ -1,0 +1,79 @@
+{
+  "recipe_id": "A1",
+  "name": "Audio Quick Brief",
+  "version": "1.0.0",
+  "description": "Minimal 3-stage pipeline for fast brief generation: VAD → Transcribe → Brief",
+  "hash": "sha256:COMPUTED_ON_INSERT",
+  "created": "2026-04-20T10:00:00Z",
+  
+  "inputs": [
+    {
+      "name": "audio",
+      "type": "file",
+      "pattern": "*.{wav,mp3,m4a}",
+      "description": "Audio file to brief"
+    }
+  ],
+  
+  "outputs": [
+    {
+      "name": "brief",
+      "path": "{out}/brief.md",
+      "description": "Quick brief summary"
+    }
+  ],
+  
+  "stages": [
+    {
+      "id": "s01",
+      "name": "VAD Segmentation",
+      "operator": "BonfyreSpeechLoop",
+      "args": ["--input", "{input}", "--out", "{out}/segments"],
+      "inputs": ["{input}"],
+      "outputs": ["{out}/segments"],
+      "parallel": 1,
+      "depends_on": []
+    },
+    {
+      "id": "s02",
+      "name": "Transcription",
+      "operator": "BonfyreTranscribe",
+      "args": ["--input", "{out}/segments", "--model", "whisper-base", "--out", "{out}/transcript.txt"],
+      "inputs": ["{out}/segments"],
+      "outputs": ["{out}/transcript.txt"],
+      "parallel": 8,
+      "depends_on": ["s01"]
+    },
+    {
+      "id": "s03",
+      "name": "Brief Generation",
+      "operator": "BonfyreBrief",
+      "args": ["--transcript", "{out}/transcript.txt", "--out", "{out}/brief.md"],
+      "inputs": ["{out}/transcript.txt"],
+      "outputs": ["{out}/brief.md"],
+      "parallel": 1,
+      "depends_on": ["s02"]
+    }
+  ],
+  
+  "models": [
+    {
+      "name": "whisper-base",
+      "hash": "sha256:def456...",
+      "size_mb": 142
+    },
+    {
+      "id": "gemma4-brief-fpqx",
+      "family": "gemma-4",
+      "format": "fpqx"
+    }
+  ],
+  
+  "metadata": {
+    "category": "audio-brief",
+    "tags": ["audio", "brief", "quick"],
+    "author": "bonfyre",
+    "complexity": "low",
+    "estimated_time_minutes": 0.5
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "id": "minilm-l3-guide",
+  "name": "paraphrase-MiniLM-L3-v2",
+  "format": "safetensors",
+  "sha256": "cf1e4e2d420c664973037c3c73125d7a8fc69952495093ef8f50596f8943a433",
+  "size_mb": 69.569488,
+  "sources": [
+    {
+      "url": "https://huggingface.co/sentence-transformers/paraphrase-MiniLM-L3-v2/resolve/4ca70771034acceecb2e72475f72050fcdde4ddc/model.safetensors",
+      "scheme": "https"
+    }
+  ]
+}

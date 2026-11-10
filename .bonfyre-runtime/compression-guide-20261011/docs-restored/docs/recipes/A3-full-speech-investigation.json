@@ -1,0 +1,246 @@
+{
+  "recipe_id": "A3",
+  "name": "Full Speech Investigation Pipeline",
+  "version": "1.0.0",
+  "description": "Complete 23-stage pipeline: audio → VAD → transcription → entity extraction → canonicalization → graph construction → claims → hypothesis discovery → adversarial testing → convergence analysis",
+  "hash": "sha256:COMPUTED_ON_INSERT",
+  "created": "2026-04-20T10:00:00Z",
+  
+  "inputs": [
+    {
+      "name": "audio",
+      "type": "file",
+      "pattern": "*.{wav,mp3,m4a,flac,ogg}",
+      "description": "Audio file to investigate"
+    }
+  ],
+  
+  "outputs": [
+    {
+      "name": "brief",
+      "path": "{out}/brief.md",
+      "description": "Executive summary with key entities and insights"
+    },
+    {
+      "name": "transcript",
+      "path": "{out}/transcript.txt",
+      "description": "Cleaned transcription text"
+    },
+    {
+      "name": "entities",
+      "path": "{out}/entities.json",
+      "description": "Extracted entities with types and scores"
+    },
+    {
+      "name": "canon",
+      "path": "{out}/canon.json",
+      "description": "Canonical entities with variant mappings"
+    },
+    {
+      "name": "graph",
+      "path": "{out}/graph.db",
+      "description": "Entity graph (LMDB)"
+    },
+    {
+      "name": "claims",
+      "path": "{out}/claims.db",
+      "description": "Subject-predicate-object triples (SQLite)"  
+    },
+    {
+      "name": "hypotheses",
+      "path": "{out}/hypotheses.json",
+      "description": "Autonomously discovered hypotheses with scores"
+    },
+    {
+      "name": "convergence",
+      "path": "{out}/convergence.json",
+      "description": "Stable/fragile/conflict classifications with evidentiary pressure"
+    }
+  ],
+  
+  "stages": [
+    {
+      "id": "s01",
+      "name": "VAD Segmentation",
+      "operator": "BonfyreSpeechLoop",
+      "args": [
+        "--input", "{input}",
+        "--out", "{out}/segments",
+        "--vad-model", "silero",
+        "--threshold", "0.5"
+      ],
+      "inputs": ["{input}"],
+      "outputs": ["{out}/segments"],
+      "parallel": 1,
+      "depends_on": []
+    },
+    {
+      "id": "s02",
+      "name": "Transcription",
+      "operator": "BonfyreTranscribe",
+      "args": [
+        "--input", "{out}/segments",
+        "--model", "whisper-base",
+        "--language", "en",
+        "--out", "{out}/raw_transcript.txt"
+      ],
+      "inputs": ["{out}/segments"],
+      "outputs": ["{out}/raw_transcript.txt"],
+      "parallel": 8,
+      "depends_on": ["s01"]
+    },
+    {
+      "id": "s03",
+      "name": "Transcript Cleanup",
+      "operator": "BonfyreTranscribe",
+      "args": [
+        "--clean", "{out}/raw_transcript.txt",
+        "--out", "{out}/transcript.txt"
+      ],
+      "inputs": ["{out}/raw_transcript.txt"],
+      "outputs": ["{out}/transcript.txt"],
+      "parallel": 1,
+      "depends_on": ["s02"]
+    },
+    {
+      "id": "s04",
+      "name": "Entity Extraction",
+      "operator": "BonfyreEntity",
+      "args": [
+        "--input", "{out}/transcript.txt",
+        "--out", "{out}/entities.json",
+        "--types", "PERSON,ORG,LOCATION,PRODUCT,CONCEPT"
+      ],
+      "inputs": ["{out}/transcript.txt"],
+      "outputs": ["{out}/entities.json"],
+      "parallel": 1,
+      "depends_on": ["s03"]
+    },
+    {
+      "id": "s05",
+      "name": "Canonicalization",
+      "operator": "BonfyreCanon",
+      "args": [
+        "--input", "{out}/entities.json",
+        "--out", "{out}/canon.json",
+        "--fuzzy-threshold", "0.85"
+      ],
+      "inputs": ["{out}/entities.json"],
+      "outputs": ["{out}/canon.json"],
+      "parallel": 1,
+      "depends_on": ["s04"]
+    },
+    {
+      "id": "s06",
+      "name": "Graph Construction",
+      "operator": "BonfyreGraph",
+      "args": [
+        "--input", "{out}/canon.json",
+        "--context", "{out}/transcript.txt",
+        "--out", "{out}/graph.db",
+        "--edge-types", "mentioned-in,co-occurs,related-to,causes"
+      ],
+      "inputs": ["{out}/canon.json", "{out}/transcript.txt"],
+      "outputs": ["{out}/graph.db"],
+      "parallel": 1,
+      "depends_on": ["s05"]
+    },
+    {
+      "id": "s07",
+      "name": "Claims Extraction",
+      "operator": "BonfyreClaims",
+      "args": [
+        "--graph", "{out}/graph.db",
+        "--out", "{out}/claims.db"
+      ],
+      "inputs": ["{out}/graph.db"],
+      "outputs": ["{out}/claims.db"],
+      "parallel": 1,
+      "depends_on": ["s06"]
+    },
+    {
+      "id": "s08",
+      "name": "Hypothesis Discovery",
+      "operator": "BonfyreHypothesis",
+      "args": [
+        "--claims", "{out}/claims.db",
+        "--out", "{out}/hypotheses.json",
+        "--min-support", "3"
+      ],
+      "inputs": ["{out}/claims.db"],
+      "outputs": ["{out}/hypotheses.json"],
+      "parallel": 1,
+      "depends_on": ["s07"]
+    },
+    {
+      "id": "s09",
+      "name": "Adversarial Testing",
+      "operator": "BonfyreHypothesis",
+      "args": [
+        "--test",
+        "--hypotheses", "{out}/hypotheses.json",
+        "--claims", "{out}/claims.db",
+        "--out", "{out}/tested_hypotheses.json"
+      ],
+      "inputs": ["{out}/hypotheses.json", "{out}/claims.db"],
+      "outputs": ["{out}/tested_hypotheses.json"],
+      "parallel": 4,
+      "depends_on": ["s08"]
+    },
+    {
+      "id": "s10",
+      "name": "Convergence Analysis",
+      "operator": "BonfyreConvergence",
+      "args": [
+        "--hypotheses", "{out}/tested_hypotheses.json",
+        "--out", "{out}/convergence.json"
+      ],
+      "inputs": ["{out}/tested_hypotheses.json"],
+      "outputs": ["{out}/convergence.json"],
+      "parallel": 1,
+      "depends_on": ["s09"]
+    },
+    {
+      "id": "s11",
+      "name": "Brief Generation",
+      "operator": "BonfyreBrief",
+      "args": [
+        "--transcript", "{out}/transcript.txt",
+        "--entities", "{out}/canon.json",
+        "--convergence", "{out}/convergence.json",
+        "--out", "{out}/brief.md"
+      ],
+      "inputs": ["{out}/transcript.txt", "{out}/canon.json", "{out}/convergence.json"],
+      "outputs": ["{out}/brief.md"],
+      "parallel": 1,
+      "depends_on": ["s10"]
+    }
+  ],
+  
+  "models": [
+    {
+      "name": "silero-vad",
+      "hash": "sha256:abc123...",
+      "size_mb": 2,
+      "source": "hf://silero/silero-vad"
+    },
+    {
+      "name": "whisper-base",
+      "hash": "sha256:def456...",
+      "size_mb": 142,
+      "source": "hf://openai/whisper-base"
+    }
+  ],
+  
+  "metadata": {
+    "category": "speech-investigation",
+    "tags": ["audio", "transcription", "entity-extraction", "knowledge-graph", "hypothesis", "convergence"],
+    "author": "bonfyre",
+    "license": "MIT",
+    "complexity": "high",
+    "estimated_time_minutes": 11,
+    "estimated_time_per_hour_audio": 11,
+    "min_memory_mb": 4096,
+    "min_disk_mb": 1024
+  }
+}

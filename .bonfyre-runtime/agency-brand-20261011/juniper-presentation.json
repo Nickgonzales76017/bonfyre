@@ -1,0 +1,30 @@
+{
+  "hero_mode": "masthead",
+  "navigation_mode": "rail",
+  "density": "tight",
+  "typography_mode": "high-contrast-serif",
+  "card_mode": "column-rule",
+  "layout_tokens": {
+    "ground": "#f7f4ec",
+    "ink": "#16150f",
+    "display": "#000000",
+    "accent": "#7a1f14",
+    "muted": "#5d594c",
+    "rule": "rgba(0,0,0,.34)",
+    "panel": "#fffdf7",
+    "face_display": "'Bodoni Moda',Didot,Georgia,serif",
+    "face_body": "'Newsreader',Georgia,'Times New Roman',serif",
+    "face_mono": "'DM Mono',ui-monospace,Menlo,monospace",
+    "display_weight": "700",
+    "display_transform": "none",
+    "display_tracking": "-.018em",
+    "display_leading": "1.0",
+    "display_size": "clamp(2.4rem,6.4vw,4.8rem)",
+    "radius": "0",
+    "card_border": "none",
+    "card_shadow": "none",
+    "gap": "0px",
+    "measure": "38ch",
+    "font_href": "https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,700;6..96,800&family=Newsreader:opsz,wght@6..72,400;6..72,600&display=swap"
+  }
+}

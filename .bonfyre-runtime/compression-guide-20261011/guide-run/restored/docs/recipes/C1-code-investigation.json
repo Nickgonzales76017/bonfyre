@@ -1,0 +1,204 @@
+{
+  "recipe_id": "C1",
+  "name": "Code Repository Investigation",
+  "version": "1.0.0",
+  "description": "Deep codebase analysis: structure, dependencies, quality, security → onboarding guide",
+  "category": "code-analysis",
+  "inputs": [
+    {
+      "name": "repo",
+      "type": "directory",
+      "required": true,
+      "description": "Git repository directory"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "guide",
+      "type": "text/markdown",
+      "path": "{out}/ONBOARDING.md"
+    },
+    {
+      "name": "graph",
+      "type": "application/json",
+      "path": "{out}/dependency-graph.json"
+    }
+  ],
+  "stages": [
+    {
+      "id": "s01",
+      "name": "Repository Scan",
+      "operator": "BonfyreRepoScan",
+      "args": [
+        "--input", "{input}",
+        "--out", "{out}/scan",
+        "--include-git-history"
+      ],
+      "outputs": ["{out}/scan/files.json", "{out}/scan/commits.json"],
+      "description": "Catalog all files and git history"
+    },
+    {
+      "id": "s02",
+      "name": "Language Detection",
+      "operator": "BonfyreDetectLanguages",
+      "args": [
+        "--input", "{out}/scan/files.json",
+        "--out", "{out}/languages.json"
+      ],
+      "depends_on": ["s01"],
+      "outputs": ["{out}/languages.json"],
+      "description": "Detect programming languages and frameworks"
+    },
+    {
+      "id": "s03",
+      "name": "Dependency Analysis",
+      "operator": "BonfyreDepsAnalyze",
+      "args": [
+        "--input", "{input}",
+        "--out", "{out}/dependencies",
+        "--scan-package-files"
+      ],
+      "depends_on": ["s02"],
+      "outputs": ["{out}/dependencies/graph.json"],
+      "description": "Parse package.json, requirements.txt, go.mod, etc"
+    },
+    {
+      "id": "s04",
+      "name": "AST Parsing",
+      "operator": "BonfyreCodeAST",
+      "args": [
+        "--input", "{input}",
+        "--out", "{out}/ast",
+        "--languages", "python,javascript,go,rust"
+      ],
+      "parallel": 4,
+      "depends_on": ["s02"],
+      "outputs": ["{out}/ast/*.json"],
+      "description": "Parse source files into AST"
+    },
+    {
+      "id": "s05",
+      "name": "Symbol Extraction",
+      "operator": "BonfyreExtractSymbols",
+      "args": [
+        "--input", "{out}/ast",
+        "--out", "{out}/symbols.json"
+      ],
+      "depends_on": ["s04"],
+      "outputs": ["{out}/symbols.json"],
+      "description": "Extract functions, classes, imports"
+    },
+    {
+      "id": "s06",
+      "name": "Call Graph Construction",
+      "operator": "BonfyreCallGraph",
+      "args": [
+        "--input", "{out}/symbols.json",
+        "--out", "{out}/callgraph.json"
+      ],
+      "depends_on": ["s05"],
+      "outputs": ["{out}/callgraph.json"],
+      "description": "Build function call graph"
+    },
+    {
+      "id": "s07",
+      "name": "Documentation Extraction",
+      "operator": "BonfyreExtractDocs",
+      "args": [
+        "--input", "{input}",
+        "--out", "{out}/docs",
+        "--formats", "markdown,rst,docstrings"
+      ],
+      "depends_on": ["s01"],
+      "outputs": ["{out}/docs/*.md"]
+    },
+    {
+      "id": "s08",
+      "name": "Test Coverage Analysis",
+      "operator": "BonfyreTestCoverage",
+      "args": [
+        "--input", "{input}",
+        "--out", "{out}/coverage.json"
+      ],
+      "depends_on": ["s02"],
+      "outputs": ["{out}/coverage.json"],
+      "description": "Detect test files and coverage"
+    },
+    {
+      "id": "s09",
+      "name": "Security Scan",
+      "operator": "BonfyreSecurityScan",
+      "args": [
+        "--input", "{input}",
+        "--out", "{out}/security.json",
+        "--check-secrets",
+        "--check-vulnerabilities"
+      ],
+      "depends_on": ["s03"],
+      "outputs": ["{out}/security.json"],
+      "description": "Scan for secrets, known vulnerabilities"
+    },
+    {
+      "id": "s10",
+      "name": "Code Quality Metrics",
+      "operator": "BonfyreQualityMetrics",
+      "args": [
+        "--input", "{out}/ast",
+        "--out", "{out}/quality.json",
+        "--metrics", "complexity,duplication,maintainability"
+      ],
+      "depends_on": ["s04"],
+      "outputs": ["{out}/quality.json"]
+    },
+    {
+      "id": "s11",
+      "name": "Contributor Analysis",
+      "operator": "BonfyreContributors",
+      "args": [
+        "--input", "{out}/scan/commits.json",
+        "--out", "{out}/contributors.json"
+      ],
+      "depends_on": ["s01"],
+      "outputs": ["{out}/contributors.json"],
+      "description": "Analyze commit patterns and contributors"
+    },
+    {
+      "id": "s12",
+      "name": "Knowledge Graph Fusion",
+      "operator": "BonfyreCodeGraph",
+      "args": [
+        "--symbols", "{out}/symbols.json",
+        "--callgraph", "{out}/callgraph.json",
+        "--dependencies", "{out}/dependencies/graph.json",
+        "--out", "{out}/dependency-graph.json"
+      ],
+      "depends_on": ["s05", "s06", "s03"],
+      "outputs": ["{out}/dependency-graph.json"]
+    },
+    {
+      "id": "s13",
+      "name": "Onboarding Guide Generation",
+      "operator": "BonfyreCodeBrief",
+      "args": [
+        "--graph", "{out}/dependency-graph.json",
+        "--languages", "{out}/languages.json",
+        "--docs", "{out}/docs",
+        "--quality", "{out}/quality.json",
+        "--security", "{out}/security.json",
+        "--coverage", "{out}/coverage.json",
+        "--contributors", "{out}/contributors.json",
+        "--out", "{out}/ONBOARDING.md",
+        "--template", "comprehensive"
+      ],
+      "depends_on": ["s12", "s02", "s07", "s10", "s09", "s08", "s11"],
+      "outputs": ["{out}/ONBOARDING.md"],
+      "description": "Generate comprehensive onboarding guide"
+    }
+  ],
+  "metadata": {
+    "estimated_time": "3-10 minutes (depends on repo size)",
+    "tags": ["code", "repository", "analysis", "onboarding"],
+    "author": "bonfyre-core",
+    "license": "MIT"
+  }
+}

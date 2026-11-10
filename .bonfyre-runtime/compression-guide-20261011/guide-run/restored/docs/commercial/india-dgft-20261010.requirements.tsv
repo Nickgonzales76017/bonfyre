@@ -1,0 +1,8 @@
+opportunity_id	kind	requirement_key	owner_ref	state	evidence_ref
+india:8848:dgft-coo-erpnext-mapping-20261010	external	partner_response	gmail:1a12522937dfb5e3	unresolved	gmail:1a12522937dfb5e3
+india:8848:dgft-coo-erpnext-mapping-20261010	material	permitted_dgft_api_specification	DGFT	unresolved	https://www.pib.gov.in/PressReleasePage.aspx?PRID=2307462&lang=1&reg=3
+india:8848:dgft-coo-erpnext-mapping-20261010	material	sanitized_erpnext_export_example	8848Digital	unresolved	gmail:1a12522937dfb5e3
+india:8848:dgft-coo-erpnext-mapping-20261010	authority	accepted_scope_and_payment_terms	8848Digital	unresolved	gmail:1a12522937dfb5e3
+india:8848:dgft-coo-erpnext-mapping-20261010	capability	signed_api_test_readback	Aurekai	unresolved	docs/bonfyre-convergence-global-trade-20261010.md
+india:dgft:exporter-direct-market-20261010	external	named_verified_exporter	Aurekai	unresolved	https://www.pib.gov.in/PressReleasePage.aspx?PRID=2307462&lang=1&reg=3
+india:dgft:exporter-direct-market-20261010	material	approved_api_specification	DGFT	unresolved	https://www.pib.gov.in/PressReleasePage.aspx?PRID=2307462&lang=1&reg=3

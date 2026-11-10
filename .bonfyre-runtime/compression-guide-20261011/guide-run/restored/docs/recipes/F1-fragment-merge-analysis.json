@@ -1,0 +1,141 @@
+{
+  "recipe_id": "F1",
+  "name": "Fragment Merge and Analysis",
+  "version": "1.0.0",
+  "description": "Merge fragment stores from two pipeline runs, diff competing perspectives, and produce a reconciled knowledge summary. Designed to compare e.g. whisper-base vs whisper-large-v3 transcription runs, or two different object detection models over the same footage.",
+  "category": "fragment-analysis",
+  "inputs": [
+    {
+      "name": "store_a",
+      "type": "application/x-sqlite3",
+      "required": true,
+      "description": "Primary fragment store (SQLite .db) — e.g. from a first-pass pipeline run"
+    },
+    {
+      "name": "store_b",
+      "type": "application/x-sqlite3",
+      "required": true,
+      "description": "Secondary fragment store — e.g. from a second model or a different run"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "merged-store",
+      "type": "application/x-sqlite3",
+      "path": "{out}/merged.db",
+      "description": "All fragments from both stores; conflicts flagged, superseded rows marked"
+    },
+    {
+      "name": "diff-report",
+      "type": "application/json",
+      "path": "{out}/diff.json",
+      "description": "Per-kind perspective disagreements with conflict scores"
+    },
+    {
+      "name": "claims-export",
+      "type": "application/json",
+      "path": "{out}/claims.json",
+      "description": "All claim-kind fragments from the merged store, ordered by confidence"
+    },
+    {
+      "name": "stats-report",
+      "type": "application/json",
+      "path": "{out}/stats.json",
+      "description": "Aggregate stats: total, kinds, perspectives, mean confidence, time span"
+    }
+  ],
+  "env": {
+    "BONFYRE_FRAGMENT_BIN": "bonfyre-fragment",
+    "description": "Override to point at a custom bonfyre-fragment binary"
+  },
+  "stages": [
+    {
+      "id": "s01",
+      "name": "Seed Merged Store",
+      "operator": "BonfyreFragment",
+      "args": ["merge", "--dst", "{out}/merged.db", "--src", "{input_a}"],
+      "inputs": ["{input_a}"],
+      "outputs": ["{out}/merged.db"],
+      "description": "Copy all fragments from store_a into the new merged store"
+    },
+    {
+      "id": "s02",
+      "name": "Merge Store B",
+      "operator": "BonfyreFragment",
+      "args": ["merge", "--dst", "{out}/merged.db", "--src", "{input_b}"],
+      "depends_on": ["s01"],
+      "inputs": ["{input_b}"],
+      "outputs": ["{out}/merged.db"],
+      "description": "Merge store_b into merged store; conflict detection runs automatically"
+    },
+    {
+      "id": "s03",
+      "name": "Diff Perspectives",
+      "operator": "BonfyreFragment",
+      "args": ["diff", "--store-a", "{input_a}", "--store-b", "{input_b}", "--format", "json"],
+      "depends_on": ["s01"],
+      "inputs": ["{input_a}", "{input_b}"],
+      "outputs": ["{out}/diff.json"],
+      "description": "Find overlapping fragments with conflicting perspectives across both stores"
+    },
+    {
+      "id": "s04",
+      "name": "Export Claims",
+      "operator": "BonfyreFragment",
+      "args": [
+        "query",
+        "--store", "{out}/merged.db",
+        "--kind", "claim",
+        "--format", "json"
+      ],
+      "depends_on": ["s02"],
+      "outputs": ["{out}/claims.json"],
+      "description": "Export all claim fragments from the merged store, sorted by confidence"
+    },
+    {
+      "id": "s05",
+      "name": "Export Segments",
+      "operator": "BonfyreFragment",
+      "args": [
+        "query",
+        "--store", "{out}/merged.db",
+        "--kind", "segment",
+        "--format", "json"
+      ],
+      "depends_on": ["s02"],
+      "outputs": ["{out}/segments.json"],
+      "description": "Export all transcript segment fragments from the merged store"
+    },
+    {
+      "id": "s06",
+      "name": "Export Detections",
+      "operator": "BonfyreFragment",
+      "args": [
+        "query",
+        "--store", "{out}/merged.db",
+        "--kind", "detection",
+        "--format", "json"
+      ],
+      "depends_on": ["s02"],
+      "outputs": ["{out}/detections.json"],
+      "description": "Export all object detection fragments from the merged store"
+    },
+    {
+      "id": "s07",
+      "name": "Store Stats",
+      "operator": "BonfyreFragment",
+      "args": ["stats", "--store", "{out}/merged.db"],
+      "depends_on": ["s02"],
+      "outputs": ["{out}/stats.json"],
+      "description": "Compute aggregate statistics over the final merged store"
+    }
+  ],
+  "notes": [
+    "s03 (diff) runs against the ORIGINAL stores before merge to surface raw perspective conflicts.",
+    "s04/s05/s06 export queries run against the merged store — they reflect conflict resolution.",
+    "s07 stats captures the final merged state.",
+    "Fragment emission from operators: set BONFYRE_FRAGMENT_STORE=<path.db> before running",
+    "BonfyreTranscribe or BonfyreDetectObjects to auto-emit segment/detection fragments.",
+    "Collect two such stores (e.g. whisper-base.db and whisper-large.db) then run F1 to compare."
+  ]
+}

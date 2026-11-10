@@ -1,0 +1,11 @@
+opportunity_id	kind	requirement_key	owner_ref	state	evidence_ref
+agency:so-design-frontend-20261010	external	human_response	gmail:1a123834d0d5efc3	unresolved	gmail:1a123834d0d5efc3
+agency:so-design-frontend-20261010	authority	accepted_scope_and_terms	gmail:1a123834d0d5efc3	unresolved	gmail:1a123834d0d5efc3
+agency:understack-php-20261010	external	human_response	gmail:1a12383542f985fa	unresolved	gmail:1a12383542f985fa
+agency:understack-php-20261010	authority	accepted_scope_and_terms	gmail:1a12383542f985fa	unresolved	gmail:1a12383542f985fa
+agency:buddydevelopers-automation-20261010	external	human_response	gmail:1a1238364a2d1e7c	unresolved	gmail:1a1238364a2d1e7c
+agency:buddydevelopers-automation-20261010	authority	accepted_scope_and_terms	gmail:1a1238364a2d1e7c	unresolved	gmail:1a1238364a2d1e7c
+agency:dreamers-wordpress-20261010	external	human_response	gmail:1a123861a4678a24	unresolved	gmail:1a123861a4678a24
+agency:dreamers-wordpress-20261010	authority	accepted_scope_and_terms	gmail:1a123861a4678a24	unresolved	gmail:1a123861a4678a24
+agency:north-dallas-gazette-martech-20261010	external	human_response	gmail:1a12389a49039b50	unresolved	gmail:1a12389a49039b50
+agency:north-dallas-gazette-martech-20261010	authority	accepted_scope_and_terms	gmail:1a12389a49039b50	unresolved	gmail:1a12389a49039b50

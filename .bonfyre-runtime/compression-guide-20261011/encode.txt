@@ -1,0 +1,1 @@
+encoded encoder.layer.0.attention.self.query.weight: 147456 weights, 576 blocks, 256 tiles, 3 bits, 0 coefficients at the byte's edge -> .bonfyre-runtime/compression-guide-20261011/query.bqfp

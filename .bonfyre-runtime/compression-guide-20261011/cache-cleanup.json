@@ -1,0 +1,5 @@
+{
+  "removed": "guide-run/cache/minilm-l3-guide.safetensors",
+  "reason": "Disposable public model download removed to recover disk space for browser storage; measurements and pinned source digest retained.",
+  "date": "2026-10-11"
+}

@@ -1,0 +1,30 @@
+{
+  "hero_mode": "headline-stack",
+  "navigation_mode": "rail",
+  "density": "tight",
+  "typography_mode": "condensed-sans",
+  "card_mode": "ruled-row",
+  "layout_tokens": {
+    "ground": "#ffffff",
+    "ink": "#14161a",
+    "display": "#000000",
+    "accent": "#c8102e",
+    "muted": "#5f6873",
+    "rule": "rgba(0,0,0,.15)",
+    "panel": "#f5f6f8",
+    "face_display": "'Archivo','Helvetica Neue',Arial,sans-serif",
+    "face_body": "'Libre Franklin',system-ui,sans-serif",
+    "face_mono": "'DM Mono',ui-monospace,Menlo,monospace",
+    "display_weight": "700",
+    "display_transform": "uppercase",
+    "display_tracking": "-.022em",
+    "display_leading": "1.0",
+    "display_size": "clamp(2rem,5vw,3.6rem)",
+    "radius": "0",
+    "card_border": "1px solid rgba(0,0,0,.15)",
+    "card_shadow": "none",
+    "gap": "10px",
+    "measure": "64ch",
+    "font_href": "https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=Libre+Franklin:wght@400;600&display=swap"
+  }
+}

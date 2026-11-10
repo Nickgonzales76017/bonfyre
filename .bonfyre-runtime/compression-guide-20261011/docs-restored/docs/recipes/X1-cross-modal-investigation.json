@@ -1,0 +1,165 @@
+{
+  "recipe_id": "X1",
+  "name": "Cross-Modal Investigation Suite",
+  "version": "1.0.0",
+  "description": "Comprehensive multi-modal analysis: video → audio + images + code → unified knowledge graph",
+  "category": "cross-modal",
+  "composition_type": "serial",
+  "inputs": [
+    {
+      "name": "video",
+      "type": "video/*",
+      "required": true,
+      "description": "Input video (lecture, presentation, demo)"
+    },
+    {
+      "name": "repo",
+      "type": "directory",
+      "required": false,
+      "description": "Associated code repository"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "unified-graph",
+      "type": "application/json",
+      "path": "{out}/unified-graph.json"
+    },
+    {
+      "name": "investigation-report",
+      "type": "text/markdown",
+      "path": "{out}/INVESTIGATION.md"
+    }
+  ],
+  "stages": [
+    {
+      "id": "s01",
+      "name": "Video Investigation",
+      "operator": "BonfyreRun",
+      "args": [
+        "V1",
+        "--input", "{input}",
+        "--out", "{out}/video-analysis"
+      ],
+      "outputs": ["{out}/video-analysis/graph.json"],
+      "description": "Execute V1 recipe (video → knowledge graph)"
+    },
+    {
+      "id": "s02",
+      "name": "Extract Key Frames",
+      "operator": "BonfyreExtractKeyFrames",
+      "args": [
+        "--input", "{out}/video-analysis/frames",
+        "--out", "{out}/keyframes",
+        "--count", "10",
+        "--criteria", "visual-complexity"
+      ],
+      "depends_on": ["s01"],
+      "outputs": ["{out}/keyframes/*.jpg"]
+    },
+    {
+      "id": "s03",
+      "name": "Analyze Key Frames",
+      "operator": "BonfyreRun",
+      "args": [
+        "I1",
+        "--input", "{out}/keyframes/*.jpg",
+        "--out", "{out}/image-analyses"
+      ],
+      "parallel": 8,
+      "depends_on": ["s02"],
+      "outputs": ["{out}/image-analyses/*/analysis.json"],
+      "description": "Execute I1 recipe on each frame"
+    },
+    {
+      "id": "s04",
+      "name": "Code Repository Analysis",
+      "operator": "BonfyreRun",
+      "args": [
+        "C1",
+        "--input", "{input_repo}",
+        "--out", "{out}/code-analysis"
+      ],
+      "depends_on": [],
+      "outputs": ["{out}/code-analysis/dependency-graph.json"],
+      "description": "Execute C1 recipe (parallel with video)",
+      "skip_if_null": ["input_repo"]
+    },
+    {
+      "id": "s05",
+      "name": "Cross-Reference Video + Code",
+      "operator": "BonfyreCrossReference",
+      "args": [
+        "--video-transcript", "{out}/video-analysis/transcripts",
+        "--code-symbols", "{out}/code-analysis/symbols.json",
+        "--out", "{out}/cross-references.json"
+      ],
+      "depends_on": ["s01", "s04"],
+      "outputs": ["{out}/cross-references.json"],
+      "description": "Match mentioned functions/classes in video to code"
+    },
+    {
+      "id": "s06",
+      "name": "Temporal Code Walkthrough",
+      "operator": "BonfyreCodeWalkthrough",
+      "args": [
+        "--video-timeline", "{out}/video-analysis/timeline/events.json",
+        "--cross-refs", "{out}/cross-references.json",
+        "--code-graph", "{out}/code-analysis/dependency-graph.json",
+        "--out", "{out}/walkthrough.json"
+      ],
+      "depends_on": ["s05"],
+      "outputs": ["{out}/walkthrough.json"],
+      "description": "Align code discussion to video timestamps"
+    },
+    {
+      "id": "s07",
+      "name": "Visual-Textual Entity Fusion",
+      "operator": "BonfyreEntityFusion",
+      "args": [
+        "--video-entities", "{out}/video-analysis/entities/merged.json",
+        "--image-analyses", "{out}/image-analyses",
+        "--out", "{out}/fused-entities.json"
+      ],
+      "depends_on": ["s01", "s03"],
+      "outputs": ["{out}/fused-entities.json"]
+    },
+    {
+      "id": "s08",
+      "name": "Unified Knowledge Graph",
+      "operator": "BonfyreGraphFusion",
+      "args": [
+        "--video-graph", "{out}/video-analysis/graph.json",
+        "--code-graph", "{out}/code-analysis/dependency-graph.json",
+        "--walkthrough", "{out}/walkthrough.json",
+        "--entities", "{out}/fused-entities.json",
+        "--out", "{out}/unified-graph.json"
+      ],
+      "depends_on": ["s06", "s07"],
+      "outputs": ["{out}/unified-graph.json"],
+      "description": "Merge all knowledge graphs with cross-modal links"
+    },
+    {
+      "id": "s09",
+      "name": "Investigation Report",
+      "operator": "BonfyreCrossModalBrief",
+      "args": [
+        "--graph", "{out}/unified-graph.json",
+        "--video-brief", "{out}/video-analysis/brief.md",
+        "--code-guide", "{out}/code-analysis/ONBOARDING.md",
+        "--out", "{out}/INVESTIGATION.md",
+        "--template", "comprehensive"
+      ],
+      "depends_on": ["s08"],
+      "outputs": ["{out}/INVESTIGATION.md"],
+      "description": "Generate unified investigation report"
+    }
+  ],
+  "metadata": {
+    "estimated_time": "30-45 minutes",
+    "tags": ["cross-modal", "video", "code", "images", "investigation"],
+    "author": "bonfyre-core",
+    "license": "MIT",
+    "notes": "Demonstrates recipe composition (V1 ⊕ I1 ⊕ C1) with cross-modal entity fusion"
+  }
+}

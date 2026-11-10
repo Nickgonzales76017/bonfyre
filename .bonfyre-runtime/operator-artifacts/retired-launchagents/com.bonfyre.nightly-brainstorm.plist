@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.bonfyre.nightly-brainstorm</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/zsh</string>
+        <string>/Users/nickgonzales/Documents/Bonfyre/components/NightlyBrainstorm/nightly.sh</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/nickgonzales/Documents/Bonfyre/components/NightlyBrainstorm</string>
+
+    <!-- Run at 2:00 AM every night -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>2</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/Users/nickgonzales/Documents/Bonfyre/components/NightlyBrainstorm/logs/launchd-stdout.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/nickgonzales/Documents/Bonfyre/components/NightlyBrainstorm/logs/launchd-stderr.log</string>
+
+    <key>Nice</key>
+    <integer>10</integer>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+
+    <!-- Don't run if machine is asleep; run on wake if missed -->
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>

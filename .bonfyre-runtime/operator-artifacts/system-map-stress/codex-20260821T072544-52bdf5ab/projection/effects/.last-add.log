@@ -1,0 +1,13 @@
+result=ok
+mission_id=generation10-system-map-stress
+node_id=n-80394-1787297552-generation10.effect
+effect_id=
+status=ready
+attempt=0
+worker_id=
+lease_expires_at_ms=0
+next_attempt_at_ms=0
+event_id=evt-538d58eb5ff102e52f7f51c383ca4923
+receipt_id=rcpt-eaae8542aef7bde473cfd452223c5733
+error_code=
+error_message=

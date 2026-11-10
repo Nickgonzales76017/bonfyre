@@ -1,0 +1,63 @@
+{
+  "name": "S2Vec",
+  "provider": "Google Research",
+  "published": "2026-03-24",
+  "source_url": "https://research.google/blog/mapping-the-modern-world-how-s2vec-learns-the-language-of-our-cities/",
+  "category": "geospatial embeddings",
+  "training": "self-supervised masked autoencoding",
+  "geometry": "S2 Geometry cell partitioning",
+  "input_representation": [
+    "built environment features",
+    "roads",
+    "buildings",
+    "businesses",
+    "infrastructure",
+    "rasterized feature counts over S2 cells"
+  ],
+  "outputs": [
+    "general-purpose geospatial embeddings"
+  ],
+  "tasks": [
+    "population density prediction",
+    "median income prediction",
+    "carbon emissions",
+    "tree cover",
+    "elevation",
+    "urban planning",
+    "socioeconomic modeling",
+    "environmental modeling"
+  ],
+  "noted_strengths": [
+    "zero-shot geographic adaptation for socioeconomic tasks",
+    "multimodal fusion with image-based embeddings"
+  ],
+  "noted_limitations": [
+    "built-environment-only signal weaker for some environmental tasks"
+  ],
+  "related_models": [
+    "SATCLIP",
+    "GEOCLIP",
+    "RS-MaMMUT",
+    "Hex2vec",
+    "GeoVeX"
+  ],
+  "bonfyre_families": [
+    "T_GEOSPATIAL_EMBED",
+    "T_S2_CELL",
+    "T_BUILT_ENVIRONMENT",
+    "T_RASTER_FEATURE",
+    "T_MASKED_AUTOENCODER",
+    "T_EMBED_POOL",
+    "T_MULTIMODAL_FUSION",
+    "T_SOCIOECONOMIC_HEAD",
+    "T_ENVIRONMENTAL_HEAD"
+  ],
+  "capabilities": [
+    "geospatial_embedding",
+    "urban_reasoning",
+    "socioeconomic_prediction",
+    "environmental_prediction",
+    "multimodal_fusion",
+    "earth_ai"
+  ]
+}

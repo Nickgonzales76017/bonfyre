@@ -1,0 +1,45 @@
+ffmpeg version 8.1.1 Copyright (c) 2000-2026 the FFmpeg developers
+  built with Apple clang version 17.0.0 (clang-1700.6.4.2)
+  configuration: --prefix=/opt/homebrew/Cellar/ffmpeg/8.1.1 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags= --enable-ffplay --enable-gpl --enable-libsvtav1 --enable-libopus --enable-libx264 --enable-libmp3lame --enable-libdav1d --enable-libvmaf --enable-libvpx --enable-libx265 --enable-openssl --enable-videotoolbox --enable-audiotoolbox --enable-neon
+  libavutil      60. 26.101 / 60. 26.101
+  libavcodec     62. 28.101 / 62. 28.101
+  libavformat    62. 12.101 / 62. 12.101
+  libavdevice    62.  3.101 / 62.  3.101
+  libavfilter    11. 14.101 / 11. 14.101
+  libswscale      9.  5.101 /  9.  5.101
+  libswresample   6.  3.101 /  6.  3.101
+[in#0 @ 0x13b0045a0] UDTA parsing failed retrying raw
+Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'https://assets.science.nasa.gov/content/dam/science/missions/webb/outreach/migrated/2023/STScI-01H70FA581K8JD844S42M4DWY8.mp4':
+  Metadata:
+    major_brand     : mp42
+    minor_version   : 512
+    compatible_brands: mp42iso2avc1mp41
+    creation_time   : 2023-08-04T13:23:42.000000Z
+    encoder         : HandBrake 1.6.1 2023012200
+  Duration: 00:06:00.40, start: 0.000000, bitrate: 1399 kb/s
+  Stream #0:0[0x1](und): Video: h264 (Main) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 1280x720 [SAR 1:1 DAR 16:9], 1226 kb/s, 29.97 fps, 29.97 tbr, 90k tbn (default)
+    Metadata:
+      creation_time   : 2023-08-04T13:23:42.000000Z
+      handler_name    : VideoHandler
+  Stream #0:1[0x2](eng): Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 163 kb/s (default)
+    Metadata:
+      creation_time   : 2023-08-04T13:23:42.000000Z
+      handler_name    : Stereo
+      name            : Stereo
+Stream mapping:
+  Stream #0:1 -> #0:0 (aac (native) -> pcm_s16le (native))
+Press [q] to stop, [?] for help
+Output #0, wav, to '.bonfyre-runtime/webb-recording-20261011/webb-images.wav':
+  Metadata:
+    major_brand     : mp42
+    minor_version   : 512
+    compatible_brands: mp42iso2avc1mp41
+    ISFT            : Lavf62.12.101
+  Stream #0:0(eng): Audio: pcm_s16le ([1][0][0][0] / 0x0001), 16000 Hz, mono, s16, 256 kb/s (default)
+    Metadata:
+      encoder         : Lavc62.28.101 pcm_s16le
+      creation_time   : 2023-08-04T13:23:42.000000Z
+      handler_name    : Stereo
+      name            : Stereo
+size=    5632KiB time=00:03:07.96 bitrate= 245.5kbits/s speed= 376x elapsed=0:00:00.50    [out#0/wav @ 0x13b00c2a0] video:0KiB audio:11263KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.000676%
+size=   11263KiB time=00:06:00.40 bitrate= 256.0kbits/s speed= 376x elapsed=0:00:00.95    

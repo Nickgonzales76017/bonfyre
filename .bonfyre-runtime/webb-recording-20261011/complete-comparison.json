@@ -1,0 +1,8 @@
+{
+  "reference_words": 1066,
+  "recognized_words": 1068,
+  "word_edits": 39,
+  "word_error_rate": 0.036585365853658534,
+  "normalization": "lowercase alphanumeric/apostrophe words; VTT timing and bracketed music cues excluded",
+  "reference_url": "https://assets.science.nasa.gov/content/dam/science/missions/webb/outreach/migrated/2023/STScI-01H70FA581K8JD844S42M4DWY8.mp4/jcr:content/renditions/Captions.vtt"
+}
