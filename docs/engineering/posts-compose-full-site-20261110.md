@@ -64,9 +64,12 @@ the source.
    reference: same block sequence, same component instances, same text,
    same shell contracts. Fails on drift in either direction.
 
-## Open decisions (Nick)
+## Decided
 
-1. Route shape for composed posts on `nick.aurekai.work`
-   (`/blog/:slug` mirroring Pages, or `/posts/:slug` under the profile?).
-2. Draft-to-published mechanics: which approval/publish path promotes a
-   composed post to the public surface?
+1. Route shape: `/blog/:slug`, mirroring the Pages addresses (Nick,
+   2026-11-10).
+2. Publish mechanics: explicit promote, reusing the CMS conditional
+   update — `entry update <type> <id> '{"status":"published"}' --if-field
+   status --if-value draft` (verified: promotes once, refuses re-promote;
+   no new verb). Related selection for keep-reading stays an explicit
+   caller input until a recommender exists.
