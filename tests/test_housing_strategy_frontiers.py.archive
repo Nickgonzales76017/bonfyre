@@ -1,0 +1,66 @@
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT / "tools"))
+
+import housing_strategy_frontiers as frontiers  # noqa: E402
+
+
+def write_jsonl(path: Path, rows: list[dict]) -> None:
+    path.write_text("".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
+
+
+def test_frontiers_preserve_candidate_and_conditional_boundaries(tmp_path: Path) -> None:
+    write_jsonl(tmp_path / "availability-candidates.jsonl", [
+        {"schema": "bonfyre-housing-direct-candidate.v1", "candidate_id": "direct", "unit_address": "1 Main, Dallas, TX",
+         "plan_name": "Studio special", "exact_unit_rent": 700, "rent_exactness": "unit_exact",
+         "source_inventory_signal": "unit_listed", "source_available_date_text": "NOW", "source_url": "https://x.appfolio.com/listings", "source_observed_at": "2026-08-24T01:00:00Z"},
+        {"schema": "bonfyre-availability-candidate.v1", "candidate_id": "social", "title": "Lease takeover", "asking_price_usd_month": 500,
+         "surface_rental_intent": True, "signal_kinds": ["lease_takeover"], "source_url": "https://social.example/1", "source_observed_at": "2026-08-24T01:00:00Z",
+         "corroboration": {"kind": "detail"}},
+    ])
+    (tmp_path / "effective-costs.json").write_text(json.dumps({"observed_at": "2026-08-24T02:00:00Z", "calculations": [
+        {"listing_id": "milo", "base_rent_monthly_usd": 900, "known_monthly_before_parking_or_pets_usd": 950,
+         "reported_move_in_usd": {"deposit": 100}, "promotion": {"status": "conditional"},
+         "move_in_cash_conditional_usd": {"without_pet": {"total": 50}}, "caveat": "not a quote"},
+    ]}), encoding="utf-8")
+    (tmp_path / "dog-access.json").write_text(json.dumps({"properties": [{"property_id": "milo", "dog_status": "reported", "reported_features": ["dog park", "select-unit yard"], "source_refs": ["https://milo.example"]}]}), encoding="utf-8")
+    (tmp_path / "geographic-value.json").write_text(json.dumps({"shortlists": {"park": [{"subject_id": "direct", "nearest_park_or_open_space": {"geodesic_distance_m": 120}}], "dog": [], "yard_or_direct_exterior_claim": []}}), encoding="utf-8")
+    (tmp_path / "property-identity-graph.json").write_text(json.dumps({"properties": [{"property_key": "zenith", "name": "Zenith", "seed_class": "lease_up_concession", "offer_count": 2, "concession_candidate_count": 1, "shadow_surfaces": {}, "root_url": "https://zenith.example"}]}), encoding="utf-8")
+    (tmp_path / "concession-arbitrage.json").write_text(json.dumps({
+        "property_id": "zenith-a3",
+        "curve": [{"unit_id": "3-3104", "move_in_date": "2026-08-23", "lease_term_months": 14,
+                   "base_rent_monthly_usd": 1408, "quoted_total_monthly_leasing_price_usd": 1513.98}],
+        "economics": [{"unit_id": "3-3104", "full_term_effective_monthly_excluding_variable_charges_usd": 1531.48}],
+    }), encoding="utf-8")
+
+    result = frontiers.derive(tmp_path)
+    by_id = {row["frontier_id"]: row for row in result["frontiers"]}
+    assert by_id["absolute-advertised-cheapest"]["candidates"][0]["id"] == "social:social"
+    assert "policy_not_durably_proven" in by_id["absolute-advertised-cheapest"]["candidates"][0]["source_confidence"]
+    assert by_id["effective-cheapest"]["candidates"][0]["known_monthly_before_parking_or_pets_usd"] == 950
+    assert by_id["concession"]["candidates"][0]["source_confidence"] == "receipted_conditional_promotion"
+    assert by_id["park-access"]["candidates"][0]["availability_boundary"] == frontiers.NO_AVAILABILITY
+    assert by_id["mapped-park-geography"]["candidates"][0]["nearest_park_or_open_space"]["geodesic_distance_m"] == 120
+    assert by_id["lease-up"]["candidates"][0]["label"] == "Zenith"
+    assert by_id["public-quote-curve"]["candidates"][0]["quoted_total_monthly_leasing_price_usd"] == 1513.98
+
+
+def test_pareto_refuses_to_combine_unknown_cost_axes(tmp_path: Path) -> None:
+    write_jsonl(tmp_path / "availability-candidates.jsonl", [
+        {"schema": "bonfyre-housing-direct-candidate.v1", "candidate_id": "direct", "unit_address": "1 Main, Dallas, TX",
+         "exact_unit_rent": 700, "rent_exactness": "unit_exact", "source_url": "https://x.appfolio.com"},
+        {"schema": "bonfyre-availability-candidate.v1", "candidate_id": "social", "title": "Room", "asking_price_usd_month": 500,
+         "surface_rental_intent": True, "signal_kinds": [], "source_url": "https://social.example"},
+    ])
+    for name, value in (("effective-costs.json", {"calculations": []}), ("dog-access.json", {"properties": []}), ("property-identity-graph.json", {"properties": []})):
+        (tmp_path / name).write_text(json.dumps(value), encoding="utf-8")
+    result = frontiers.derive(tmp_path)
+    pareto = next(item for item in result["frontiers"] if item["frontier_id"] == "overall-pareto")
+    assert {row["id"] for row in pareto["candidates"]} == {"direct:direct", "social:social"}
+    assert "blended score" in pareto["selection_basis"]

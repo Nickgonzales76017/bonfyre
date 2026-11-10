@@ -77,6 +77,17 @@ DETAIL_FIXTURE = """<html><body>
 </body></html>
 """
 
+SUBLET_CARD_FIXTURE = """<html><body><div id="random-listings">
+<div class="col-sm-6 col-lg-4 col-xl-3 mb-3"><div class="border rounded-lg">
+  <a href="/property/short-term-dallas/"><div class="price-info"><sup>$</sup>1,900/m 750/w 125/d</div></a>
+  <div class="px-2 py-3 random-listings-rental-div"><a href="/apartments-for-rent/dallas/">Dallas</a>, <a href="/rentals/texas/">Texas</a></div>
+</div></div>
+<div class="col-sm-6 col-lg-4 col-xl-3 mb-3"><div class="border rounded-lg">
+  <a href="/property/not-a-rental/"><div class="price-info"><sup>$</sup>900/d</div></a>
+  <div class="px-2 py-3 random-listings-rental-div">For sale by owner, Dallas</div>
+</div></div>
+</div></body></html>"""
+
 SURFACES = {
     "cl-fixture-search": {
         "role": "search",
@@ -98,6 +109,11 @@ def write_observation(state: Path, twin_id: str, url: str, payload: str) -> dict
         "twin_id": twin_id,
         "source_url": url,
         "observed_at": "2026-08-24T01:00:00Z",
+        "observe_right": "public",
+        "policy_decision": "allow",
+        "fetch_attempted": True,
+        "robots_transport_exit": 0,
+        "robots_http_status": 200,
         "transport_exit": 0,
         "http_status": 200,
         "body_bytes": len(payload.encode("utf-8")),
@@ -170,6 +186,54 @@ def test_search_row_carries_price_geo_and_signals(state: Path) -> None:
     assert set(row["signal_kinds"]) == {"lease_takeover", "immediate_move_in"}
     assert row["source_content_sha256"] == hashlib.sha256(
         SEARCH_FIXTURE.encode("utf-8")).hexdigest()
+
+
+def test_sublet_property_cards_are_normalized_through_the_same_gates(state: Path) -> None:
+    surfaces = dict(SURFACES)
+    surfaces["sublet-fixture-search"] = {
+        "role": "search",
+        "market": "Dallas",
+        "category": "sublets_temporary",
+        "rental_intent": True,
+        "parser": "sublet_card_grid",
+    }
+    (state / "surfaces.json").write_text(json.dumps(surfaces), encoding="utf-8")
+    write_observation(state, "sublet-fixture-search", "https://www.sublet.com/dallas",
+                      SUBLET_CARD_FIXTURE)
+
+    candidates, rejections, _ = run(state)
+    listing = next(row for row in candidates if row["posting_url"].endswith("short-term-dallas/"))
+    assert listing["asking_price_text"] == "$ 1,900/m 750/w 125/d"
+    assert listing["asking_price_usd_month"] == 1900
+    assert listing["location_text"] == "Dallas , Texas"
+    assert listing["source_shape"] == "sublet_card_grid"
+    assert listing["signal_kinds"] == ["short_term_rate"]
+    assert listing["source_content_sha256"] == hashlib.sha256(
+        SUBLET_CARD_FIXTURE.encode("utf-8")).hexdigest()
+    rejection = next(row for row in rejections if row["posting_url"].endswith("not-a-rental/"))
+    assert rejection["rejected_because"].startswith("ownership_transfer_surface:")
+
+
+def test_sublet_property_cards_still_require_current_policy_evidence(state: Path) -> None:
+    surfaces = dict(SURFACES)
+    surfaces["sublet-fixture-search"] = {
+        "role": "search",
+        "market": "Dallas",
+        "category": "sublets_temporary",
+        "rental_intent": True,
+        "parser": "sublet_card_grid",
+    }
+    (state / "surfaces.json").write_text(json.dumps(surfaces), encoding="utf-8")
+    receipt = write_observation(state, "sublet-fixture-search", "https://www.sublet.com/dallas",
+                                SUBLET_CARD_FIXTURE)
+    receipt.pop("robots_http_status")
+    receipt_path = state / "source-receipts.jsonl"
+    rows = [json.loads(line) for line in receipt_path.read_text(encoding="utf-8").splitlines()]
+    rows[-1] = receipt
+    receipt_path.write_text("".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
+    candidates, rejections, _ = run(state)
+    assert not any(row["posting_url"].endswith("short-term-dallas/") for row in candidates)
+    assert not any(row["posting_url"].endswith("not-a-rental/") for row in rejections)
 
 
 def test_corroboration_requires_an_independent_detail_observation(state: Path) -> None:
@@ -245,6 +309,31 @@ def test_policy_exclusion_yields_no_candidates_without_becoming_a_denial(tmp_pat
     (target / "surfaces.json").write_text(json.dumps(SURFACES), encoding="utf-8")
     candidates, _, listings = run(target)
     assert candidates == [] and listings == []
+
+
+def test_legacy_digest_bound_observation_without_policy_evidence_is_not_a_candidate(state: Path) -> None:
+    receipt_path = state / "source-receipts.jsonl"
+    row = json.loads(receipt_path.read_text(encoding="utf-8").splitlines()[0])
+    row.pop("robots_http_status")
+    receipt_path.write_text(json.dumps(row) + "\n", encoding="utf-8")
+    candidates, rejections, listings = run(state)
+    assert candidates == [] and rejections == [] and listings == []
+
+
+def test_unreobserved_candidate_row_is_marked_provenance_unknown(state: Path) -> None:
+    legacy = {
+        "schema": hsc.SCHEMA_CANDIDATE,
+        "candidate_id": "legacy-candidate",
+        "posting_url": "https://example.invalid/legacy",
+    }
+    (state / "availability-candidates.jsonl").write_text(json.dumps(legacy) + "\n", encoding="utf-8")
+    receipt_path = state / "source-receipts.jsonl"
+    row = json.loads(receipt_path.read_text(encoding="utf-8").splitlines()[0])
+    row.pop("robots_http_status")
+    receipt_path.write_text(json.dumps(row) + "\n", encoding="utf-8")
+    candidates, _, _ = run(state)
+    marked = next(row for row in candidates if row["candidate_id"] == "legacy-candidate")
+    assert marked["provenance_status"] == "provenance_unknown"
 
 
 def test_foreign_rows_in_a_shared_durable_output_are_preserved(state: Path) -> None:

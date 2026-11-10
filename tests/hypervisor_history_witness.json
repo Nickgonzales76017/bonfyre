@@ -1,0 +1,28 @@
+{
+  "schema": "bonfyre.hypervisor-native-history-witness.v1",
+  "database_sha256": "ffd4e1ce14d647480d335c2334fbfe54733a054596e9f187addc18e9ae970fdc",
+  "implementation_sha256": {
+    "hypervisor_store": "aedafc9c022e741e692251151f9c9cc2a5819c48018f3275aa8b92d13bf10c6f",
+    "canonical_json": "72ab7d3f9301d1016c7354abcb1c976365728f71dca4bdc8a730eb7cbb9168ea",
+    "witness": "b9468ab7c408c2d15bf8812f4622997b134ae66ccce6d944c7ec25e6b88258c2"
+  },
+  "receipt_chain": {
+    "verified": true,
+    "receipts": 19,
+    "head": "bd3e51bee74f92710256fb11c0b68172dc19032e2f94d1185fb6413db5b7d36b"
+  },
+  "receipt_files_digest": "a1e3f246310767e757b8aa81fb072705f2c8e987ad159e248067beaa8c3ff724",
+  "providers": 17,
+  "capabilities": 80,
+  "summary": {
+    "providers": { "active": 6, "candidate": 5, "quarantined": 1, "retired": 1, "shadow": 4 },
+    "installed_providers": 14,
+    "capabilities": 80,
+    "missions": { "compiled": 50, "retry": 1 },
+    "evaluations": 246,
+    "receipts": 19,
+    "sources": 0
+  },
+  "source_unchanged": true,
+  "disposable_copy_verified": true
+}

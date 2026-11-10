@@ -1,0 +1,83 @@
+"""ARCHIVED: marketplace_circuit.mjs carries the gated operator assertions.
+
+A write-scoped operator lists a capability for sale, an outside agent discovers
+and is correctly refused without payment, the operator opens real work from a
+parcel found through the open projections, a worker claims and completes it,
+the cost is recorded, and every book has to agree afterwards.
+"""
+import json, subprocess
+
+BASE="https://aurekai.life"
+fails, notes = [], []
+def http(path, method="GET", body=None, hdrs=None, t=240):
+    cmd=["curl","-sS","-m",str(t),"-X",method,f"{BASE}{path}","-w","\n__S__%{http_code}"]
+    for k,v in (hdrs or {}).items(): cmd+=["-H",f"{k}: {v}"]
+    if body is not None: cmd+=["-H","Content-Type: application/json","-d",json.dumps(body)]
+    r=subprocess.run(cmd,capture_output=True,text=True).stdout
+    txt,_,st=r.rpartition("\n__S__")
+    try: return int(st), json.loads(txt)
+    except Exception: return (int(st) if st.isdigit() else 0), txt
+def check(n,c,d=""):
+    (notes if c else fails).append(f"{'PASS' if c else 'FAIL'}  {n}"+(f"  — {d}" if d else "")); return c
+
+# Operator with write scope.
+st,lg = http("/login","POST",{"email":"dev.tomas.1788083710906@example.com","password":"Integrations-2026!"})
+TOK = lg["session"]["token"]; H={"Authorization":f"Bearer {TOK}"}
+check("operator holds write scope", lg["session"]["scope"]=="write", lg["session"]["scope"])
+
+print("A  operator lists a new capability for sale")
+st,_ = http("/studio/v1/economy/offer","POST",
+            {"name":"estate-coverage","buy":"0.40","sell":"3.50","source":"fleming"},hdrs=H)
+check("offer accepted", st==200, f"status {st}")
+st,cat = http("/capability")
+cap = {c["name"]:c for c in cat["capabilities"]}.get("estate-coverage",{})
+check("newly listed capability is now priced in the catalogue",
+      cap.get("priced") and abs(cap.get("priceUsd",0)-3.5)<1e-9, f"priceUsd {cap.get('priceUsd')}")
+st,q = http("/mpp/quote?capability=estate-coverage")
+check("quote matches the new listing", abs(float(q.get("amount",0))-3.5)<1e-9, q.get("amount"))
+st,buy = http("/capability/estate-coverage")
+check("newly listed capability now demands payment", st==402,
+      f"status {st} (was not_for_sale before it was priced)")
+
+print("B  operator finds a real parcel through the open projections")
+st,reso = http("/reso/Property?limit=200")
+rows=[r for r in reso.get("value",[]) if r.get("ListingKey") and r.get("TaxAssessedValue")]
+check("projection yields usable parcels", len(rows)>0, f"{len(rows)} with an assessed value")
+target = max(rows, key=lambda r: r.get("TaxAssessedValue") or 0)
+acct = "".join(ch for ch in str(target["ListingKey"]) if ch.isalnum())[:32]
+
+print(f"C  operator opens work on parcel {acct}")
+st,opp = http("/studio/v1/fleming/opportunity","POST",{"account":acct},hdrs=H)
+check("opportunity becomes a durable mission", st==200 and opp.get("mission_id"), opp.get("mission_id"))
+
+print("D  a worker claims and completes it under lease")
+st,cl = http("/studio/v1/work/claim","POST",{"worker":"circuit-worker"},hdrs=H)
+check("claim issues a lease token", st==200 and len(cl.get("claim_token",""))==64, cl.get("status"))
+st,bad = http("/studio/v1/work/complete","POST",
+   {"mission":cl["mission_id"],"node":cl["node_id"],"worker":"circuit-worker","token":"a"*64},hdrs=H)
+check("a wrong lease cannot complete the work", bad.get("result")=="stale_claim" or st!=200,
+      f"status {st} result {bad.get('result') if isinstance(bad,dict) else ''}")
+st,done = http("/studio/v1/work/complete","POST",
+   {"mission":cl["mission_id"],"node":cl["node_id"],"worker":"circuit-worker","token":cl["claim_token"]},hdrs=H)
+check("the lease holder completes it", done.get("status")=="complete", done.get("status"))
+
+print("E  the cost is recorded and the books agree")
+st,m0 = http("/studio/v1/membrane",hdrs=H); before=m0[0]
+st,_ = http("/studio/v1/economy/cost","POST",
+   {"recipe":"fleming-harvest","stage":"underwrite","model":"local","usd":"1.25"},hdrs=H)
+check("cost recorded", st==200)
+st,m1 = http("/studio/v1/membrane",hdrs=H); after=m1[0]
+check("membrane cost_records advanced", after["cost_records"]==before["cost_records"]+1,
+      f"{before['cost_records']} -> {after['cost_records']}")
+check("membrane counts the new service", after["services"]>=before["services"], 
+      f"services {before['services']} -> {after['services']}")
+check("book margin reflects the listing", after["book_margin_usd"]>=3.10,
+      f"margin {after['book_margin_usd']}")
+
+print("F  the work is visible as events")
+st,ev = http("/events?limit=200")
+ids = {e.get("id") for e in ev} if isinstance(ev,list) else set()
+check("the mission just created appears in the event log", opp.get("mission_id") in ids,
+      f"{len(ids)} events scanned")
+
+print("\n".join(notes+fails)); print(f"\n{len(notes)} passed, {len(fails)} FAILED")

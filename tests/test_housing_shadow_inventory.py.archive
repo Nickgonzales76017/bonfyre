@@ -1,0 +1,43 @@
+"""Merge fences for shadow housing verification outputs."""
+
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT / "tools"))
+
+import housing_shadow_inventory as shadow  # noqa: E402
+
+
+def test_shared_current_listings_preserves_other_housing_lanes(tmp_path: Path) -> None:
+    output = tmp_path / "current-listings.jsonl"
+    social = {
+        "schema": "bonfyre-housing-social-observation.v1",
+        "posting_url": "https://example.invalid/social",
+    }
+    explicit_legacy = {
+        "schema": "bonfyre-housing-observation.v1",
+        "listing_id": "vine-2015",
+    }
+    prior_shadow = {
+        "schema": shadow.LISTING_SCHEMA,
+        "candidate_id": "stale-shadow-row",
+    }
+    output.write_text(
+        "".join(json.dumps(row) + "\n" for row in (social, explicit_legacy, prior_shadow)),
+        encoding="utf-8",
+    )
+
+    replacement = {"schema": shadow.LISTING_SCHEMA, "candidate_id": "fresh-shadow-row"}
+    preserved = shadow.merge_jsonl(str(output), [replacement], shadow.LISTING_SCHEMA, "candidate_id")
+    rows = [json.loads(line) for line in output.read_text(encoding="utf-8").splitlines()]
+
+    assert preserved == 2
+    assert social in rows
+    assert explicit_legacy in rows
+    assert replacement in rows
+    assert prior_shadow not in rows

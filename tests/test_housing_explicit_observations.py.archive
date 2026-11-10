@@ -1,0 +1,26 @@
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT / "tools"))
+
+import housing_explicit_observations as explicit  # noqa: E402
+
+
+def test_rehydrates_explicit_rows_without_erasing_other_housing_lanes(tmp_path: Path) -> None:
+    output = tmp_path / "current-listings.jsonl"
+    foreign = {"schema": "bonfyre-housing-shadow-observation.v1", "candidate_id": "milo-a1"}
+    output.write_text(json.dumps(foreign) + "\n", encoding="utf-8")
+    rows = [{"schema": explicit.SCHEMA, "availability_claim": False, **row}
+            for row in explicit.records()]
+    assert explicit.merge_jsonl(output, rows) == 1
+    saved = [json.loads(line) for line in output.read_text(encoding="utf-8").splitlines()]
+    assert foreign in saved
+    assert len([row for row in saved if row["schema"] == explicit.SCHEMA]) == 10
+    assert {row["listing_id"] for row in saved if row["schema"] == explicit.SCHEMA} >= {
+        "vine-2015", "liv-plus-maverick-floorplan", "milo-9680-timberline-a1"
+    }

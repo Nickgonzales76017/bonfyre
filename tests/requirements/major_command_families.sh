@@ -36,17 +36,22 @@ make -C "$root/cmd/BonfyreProject" >/dev/null
 make -C "$root/cmd/BonfyreSpace" >/dev/null
 BONFYRE_STATE_DIR="$runtime" sh "$root/tests/fabric_smoke.sh" >/dev/null
 fabric="$root/programs/bonfyre/bonfyre"
-fixture="$runtime/document-table.csv"
-printf 'name,amount\nalpha,10\nbeta,20\n' >"$fixture"
+# Every input below is material somebody actually has, named by the caller.
+# Rows, a PDF, a tone and a prompt typed into this script used to stand in for
+# them, and the families were certified on those.
+: "${BONFYRE_TEST_CSV:?set BONFYRE_TEST_CSV to a real table}"
+: "${BONFYRE_TEST_PDF:?set BONFYRE_TEST_PDF to a real PDF}"
+: "${BONFYRE_TEST_AUDIO:?set BONFYRE_TEST_AUDIO to a real recording}"
+: "${BONFYRE_TEST_DOCUMENT:?set BONFYRE_TEST_DOCUMENT to a real text document}"
+: "${BONFYRE_TEST_MODEL:?set BONFYRE_TEST_MODEL to a real .safetensors model}"
+fixture="$BONFYRE_TEST_CSV"
 document_uri=$(BONFYRE_STATE_DIR="$runtime/state" "$fabric" artifact ingest "$fixture" text/csv | sed -n 's/^uri=//p')
 BONFYRE_STATE_DIR="$runtime/state" "$fabric" mission create document-table >/dev/null
 BONFYRE_STATE_DIR="$runtime/state" "$fabric" work add document-table normalize command.ingest "$document_uri" >/dev/null
 BONFYRE_STATE_DIR="$runtime/state" "$fabric" work run document-table | grep -q 'node=normalize status=complete output=bonfyre://artifact/'
 
-# A minimal, valid-enough PDF payload exercises the document extraction path;
-# the native intake command extracts its literal text into a governed output.
-pdf="$runtime/document-with-table.pdf"
-printf '%%PDF-1.4\n1 0 obj\n<<>>\nstream\n(Name,Amount)\n(Alpha,10)\nendstream\nendobj\n%%EOF\n' >"$pdf"
+# A real PDF exercises the document extraction path.
+pdf="$BONFYRE_TEST_PDF"
 pdf_uri=$(BONFYRE_STATE_DIR="$runtime/state" "$fabric" artifact ingest "$pdf" application/pdf | sed -n 's/^uri=//p')
 BONFYRE_STATE_DIR="$runtime/state" "$fabric" mission create pdf-extract >/dev/null
 BONFYRE_STATE_DIR="$runtime/state" "$fabric" work add pdf-extract extract command.ingest "$pdf_uri" >/dev/null
@@ -61,15 +66,13 @@ fi
 
 # Exercise the media command through its own contract and real ffmpeg-backed
 # normalization.  The output is a bounded, content-addressed WAV artifact.
-audio="$runtime/tone.wav"
-ffmpeg -v error -f lavfi -i sine=frequency=440:duration=0.05 -ac 1 -ar 8000 "$audio"
+audio="$BONFYRE_TEST_AUDIO"
 audio_uri=$(BONFYRE_STATE_DIR="$runtime/state" "$fabric" artifact ingest "$audio" audio/wav | sed -n 's/^uri=//p')
 BONFYRE_STATE_DIR="$runtime/state" "$fabric" mission create media-normalize >/dev/null
 BONFYRE_STATE_DIR="$runtime/state" "$fabric" work add media-normalize normalize command.mediaprep "$audio_uri" >/dev/null
 BONFYRE_STATE_DIR="$runtime/state" "$fabric" work run media-normalize | grep -q 'node=normalize status=complete output=bonfyre://artifact/'
 
-render_input="$runtime/render-input.txt"
-printf 'Alpha ships the delivery. Beta validates the published artifact.\n' >"$render_input"
+render_input="$BONFYRE_TEST_DOCUMENT"
 render_uri=$(BONFYRE_STATE_DIR="$runtime/state" "$fabric" artifact ingest "$render_input" text/plain | sed -n 's/^uri=//p')
 BONFYRE_STATE_DIR="$runtime/state" "$fabric" mission create render-artifact >/dev/null
 BONFYRE_STATE_DIR="$runtime/state" "$fabric" work add render-artifact render command.render "$render_uri" >/dev/null
@@ -86,7 +89,9 @@ BONFYRE_STATE_DIR="$runtime/state" "$fabric" work add model-inference generate c
 BONFYRE_STATE_DIR="$runtime/state" "$fabric" work run model-inference | grep -q 'node=generate status=complete output=bonfyre://artifact/'
 
 BONFYRE_STATE_DIR="$runtime/state" "$fabric" mission create fpq-quant-prepare >/dev/null
-BONFYRE_STATE_DIR="$runtime/state" "$fabric" work add fpq-quant-prepare roundtrip command.quant "$model_uri" >/dev/null
+# Quantization is measured on a model, not on the prompt the sampler was given.
+quant_uri=$(BONFYRE_STATE_DIR="$runtime/state" "$fabric" artifact ingest "$BONFYRE_TEST_MODEL" application/octet-stream | sed -n 's/^uri=//p')
+BONFYRE_STATE_DIR="$runtime/state" "$fabric" work add fpq-quant-prepare roundtrip command.quant "$quant_uri" >/dev/null
 BONFYRE_STATE_DIR="$runtime/state" "$fabric" work run fpq-quant-prepare | grep -q 'node=roundtrip status=complete output=bonfyre://artifact/'
 
 BONFYRE_STATE_DIR="$runtime/state" "$fabric" mission create embedding-vector >/dev/null
@@ -109,15 +114,11 @@ BONFYRE_STATE_DIR="$runtime/state" "$fabric" mission create meter-ledger >/dev/n
 BONFYRE_STATE_DIR="$runtime/state" "$fabric" work add meter-ledger record command.meter "$render_uri" >/dev/null
 BONFYRE_STATE_DIR="$runtime/state" "$fabric" work run meter-ledger | grep -q 'node=record status=complete output=bonfyre://artifact/'
 
-# command.wire's contract (wire_ingest_v1) ingest-pcaps its input; feed it a
-# synthetic JSON-lines capture (the format bf_wire_ingest_file recognizes via
-# a leading '{') rather than plain text, which it correctly refuses.
-wire_events="$runtime/wire-events.jsonl"
-printf '%s\n%s\n' \
-    '{"src_ip":"10.0.0.10","dst_ip":"10.0.0.20","src_port":5004,"dst_port":5004,"size":1024,"proto":"UDP","hint":"rtp","ts":"2026-08-05T12:00:00Z"}' \
-    '{"src_ip":"10.0.0.20","dst_ip":"10.0.0.10","src_port":443,"dst_port":54000,"size":512,"proto":"TCP","app_proto":"HTTPS","encrypted":true,"ts":"2026-08-05T12:00:01Z"}' \
-    >"$wire_events"
-wire_uri=$(BONFYRE_STATE_DIR="$runtime/state" "$fabric" artifact ingest "$wire_events" application/x-ndjson | sed -n 's/^uri=//p')
+# command.wire's contract (wire_ingest_v1) ingests a packet capture. It is given
+# a real one: BONFYRE_TEST_PCAP names a capture somebody recorded. A list of
+# described flows used to be fed here, and the organ no longer reads those.
+: "${BONFYRE_TEST_PCAP:?set BONFYRE_TEST_PCAP to a real packet capture}"
+wire_uri=$(BONFYRE_STATE_DIR="$runtime/state" "$fabric" artifact ingest "$BONFYRE_TEST_PCAP" application/vnd.tcpdump.pcap | sed -n 's/^uri=//p')
 BONFYRE_STATE_DIR="$runtime/state" "$fabric" mission create transport-wire >/dev/null
 BONFYRE_STATE_DIR="$runtime/state" "$fabric" work add transport-wire doctor command.wire "$wire_uri" >/dev/null
 BONFYRE_STATE_DIR="$runtime/state" "$fabric" work run transport-wire | grep -q 'node=doctor status=complete output=bonfyre://artifact/'

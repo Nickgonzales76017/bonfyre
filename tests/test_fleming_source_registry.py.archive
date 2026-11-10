@@ -1,0 +1,1296 @@
+"""Historical Python guards; native coverage lives in fleming-native.test.mjs.
+
+The happy path is the least interesting thing here. What has to hold is that the
+tool refuses: refuses to fetch before a clean robots preflight, refuses to project
+a receipt that does not carry current policy facts, refuses to project a retained
+body that no longer hashes to its receipt, and refuses a use-restricted source.
+"""
+
+from __future__ import annotations
+
+import copy
+import sqlite3
+import importlib.util
+import json
+import os
+import sys
+
+import pytest
+
+REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PACK = os.path.join(REPO, "packs", "fleming-equity-group")
+MODULE = os.path.join(PACK, "fleming.py")
+
+spec = importlib.util.spec_from_file_location("fleming", MODULE)
+fleming = importlib.util.module_from_spec(spec)
+sys.modules["fleming"] = fleming
+spec.loader.exec_module(fleming)
+
+
+ADMISSIBLE = {
+    "schema": "bonfyre-foreign-observation.v1",
+    "twin_id": "t",
+    "src_id": "src:dallas-tax-parcels",
+    "source_url": "https://example.invalid/q",
+    "observed_at": "2026-08-28T00:00:00Z",
+    "observe_right": "public",
+    "robots_url": "https://example.invalid/robots.txt",
+    "robots_transport_exit": 0,
+    "robots_http_status": 404,
+    "policy_decision": "allow",
+    "fetch_attempted": True,
+    "transport_exit": 0,
+    "http_status": 200,
+    "body_bytes": 2,
+    "content_sha256": "x",
+    "body_path": "b.json",
+    "availability_claim": False,
+    "observation_kind": "source_observed",
+}
+
+
+# ---------------------------------------------------------------- registry
+
+def test_registry_parses_every_enumerated_source():
+    """Parse count must equal the row count in the file, not a number I typed.
+
+    The registry grows as surfaces are discovered; what must never happen is a
+    row in the file that the parser silently drops.
+    """
+    rows = [
+        l for l in open(fleming.REGISTRY_YAFF, encoding="utf-8")
+        if l.startswith("src:")
+    ]
+    reg = fleming.load_registry()
+    assert len(reg.sources) == len(rows)
+    assert len(reg.sources) >= 382, "registry shrank"
+    assert {s.tier for s in reg.sources.values()} == {"T0", "T1", "T2", "T3", "T4"}
+
+
+def test_no_duplicate_source_ids_in_the_registry():
+    ids = [l.split("|")[0].strip() for l in open(fleming.REGISTRY_YAFF, encoding="utf-8")
+           if l.startswith("src:")]
+    dupes = {i for i in ids if ids.count(i) > 1}
+    assert not dupes, f"duplicate rows: {dupes}"
+
+
+def test_every_passport_endpoint_binds_to_an_enumerated_row():
+    """A passport for a source nobody enumerated is a silent orphan."""
+    reg = fleming.load_registry()
+    orphans = set(fleming.load_passport_endpoints()) - set(reg.sources)
+    assert not orphans, f"passports with no registry row: {sorted(orphans)}"
+
+
+def test_resolution_map_binds_only_enumerated_sources(capsys):
+    fleming.load_registry()
+    assert "names unenumerated" not in capsys.readouterr().err
+
+
+def test_enumeration_is_not_an_endpoint():
+    """Enumerating a surface never gives it a URL; only a passport does.
+
+    The bound is deliberately relative, not a magic number: passports are
+    expected to grow as sources are acquired, but the enumerated set must stay
+    far larger, because that gap IS the honest backlog.
+    """
+    reg = fleming.load_registry()
+    passported = fleming.load_passport_endpoints()
+    with_endpoint = [s for s in reg.sources.values() if s.endpoint]
+    assert with_endpoint, "no passport carries an endpoint"
+    assert all(s.endpoint.startswith("https://") for s in with_endpoint)
+    # The invariant is not a ratio. Discovery legitimately closes the gap, so a
+    # fixed fraction would fail as the walker succeeds. What must hold is that
+    # an endpoint exists ONLY because a passport declares it: enumerating a
+    # surface never confers one.
+    for s in reg.sources.values():
+        if s.src_id not in passported:
+            assert s.endpoint is None, f"{s.src_id} has an endpoint with no passport"
+
+
+def test_a_source_with_an_endpoint_has_a_passport_declaring_it():
+    """An endpoint may only enter the registry through sources.yaff."""
+    reg = fleming.load_registry()
+    passported = fleming.load_passport_endpoints()
+    for s in reg.sources.values():
+        if s.endpoint:
+            assert passported.get(s.src_id) == s.endpoint
+
+
+def test_unknown_weights_cover_the_resolution_map():
+    reg = fleming.load_registry()
+    resolved = {u for s in reg.sources.values() for u in s.resolves}
+    assert resolved <= set(reg.unknown_weight)
+
+
+# ---------------------------------------------------------------- admission law
+
+def test_admissible_receipt_admits():
+    assert fleming.admission_failure(ADMISSIBLE) is None
+    assert fleming.is_admissible(ADMISSIBLE)
+
+
+@pytest.mark.parametrize(
+    "field,value,failure",
+    [
+        ("observe_right", "unknown", "missing_public_observe_right"),
+        ("policy_decision", "policy_excluded", "missing_allow_policy_decision"),
+        ("fetch_attempted", False, "missing_fetch_attempt"),
+        ("robots_transport_exit", 56, "robots_preflight_not_successful"),
+        ("robots_http_status", 503, "robots_preflight_not_successful"),
+    ],
+)
+def test_each_missing_policy_fact_refuses(field, value, failure):
+    r = dict(ADMISSIBLE, **{field: value})
+    assert fleming.admission_failure(r) == failure
+
+
+def test_robots_404_is_a_successful_preflight_not_a_deny():
+    assert fleming.admission_failure(dict(ADMISSIBLE, robots_http_status=404)) is None
+    assert fleming.admission_failure(dict(ADMISSIBLE, robots_http_status=200)) is None
+
+
+def test_policy_evidence_copies_only_policy_facts():
+    ev = fleming.policy_evidence(ADMISSIBLE)
+    assert set(ev) == set(fleming.POLICY_EVIDENCE_FIELDS)
+    assert "content_sha256" not in ev
+
+
+# ---------------------------------------------------------------- preflight gate
+
+def test_failed_preflight_never_fetches_the_source_url(monkeypatch):
+    """A source excluded by robots is receipted WITHOUT fetching its source URL."""
+    fetched: list[str] = []
+
+    def fake_curl(url, out_path):
+        fetched.append(url)
+        return (0, 503, b"") if url.endswith("robots.txt") else (0, 200, b"{}")
+
+    monkeypatch.setattr(fleming, "curl", fake_curl)
+    r = fleming.observe("src:x", "https://example.invalid/data", "twin")
+
+    assert fetched == ["https://example.invalid/robots.txt"]
+    assert r["policy_decision"] == "policy_excluded"
+    assert r["fetch_attempted"] is False
+    assert r["observation_kind"] == "policy_excluded"
+    assert fleming.admission_failure(r) == "missing_allow_policy_decision"
+
+
+def test_robots_disallow_excludes_without_fetching(monkeypatch):
+    fetched: list[str] = []
+
+    def fake_curl(url, out_path):
+        fetched.append(url)
+        return 0, 200, b"User-agent: *\nDisallow: /data\n"
+
+    monkeypatch.setattr(fleming, "curl", fake_curl)
+    r = fleming.observe("src:x", "https://example.invalid/data/q", "twin")
+
+    assert fetched == ["https://example.invalid/robots.txt"]
+    assert r["policy_decision"] == "policy_excluded"
+    assert r["fetch_attempted"] is False
+
+
+def test_robots_disallow_on_another_path_still_allows(monkeypatch):
+    def fake_curl(url, out_path):
+        if url.endswith("robots.txt"):
+            return 0, 200, b"User-agent: *\nDisallow: /private\n"
+        return 0, 200, b'{"features": []}'
+
+    monkeypatch.setattr(fleming, "curl", fake_curl)
+    r = fleming.observe("src:x", "https://example.invalid/data/q", "twin")
+    assert r["policy_decision"] == "allow"
+    assert r["fetch_attempted"] is True
+
+
+def test_disallow_for_another_agent_does_not_bind_us(monkeypatch):
+    def fake_curl(url, out_path):
+        if url.endswith("robots.txt"):
+            return 0, 200, b"User-agent: BadBot\nDisallow: /\n"
+        return 0, 200, b'{"features": []}'
+
+    monkeypatch.setattr(fleming, "curl", fake_curl)
+    r = fleming.observe("src:x", "https://example.invalid/data", "twin")
+    assert r["policy_decision"] == "allow"
+
+
+def test_transport_failure_is_a_boundary_response_not_an_observation(monkeypatch):
+    def fake_curl(url, out_path):
+        if url.endswith("robots.txt"):
+            return 0, 404, b""
+        return 56, 0, b""
+
+    monkeypatch.setattr(fleming, "curl", fake_curl)
+    r = fleming.observe("src:x", "https://example.invalid/data", "twin")
+    assert r["observation_kind"] == "boundary_response"
+    assert r["content_sha256"] is None
+    assert r["body_path"] is None
+    assert r["body_bytes"] == 0
+
+
+def test_no_receipt_ever_claims_availability(monkeypatch):
+    def fake_curl(url, out_path):
+        return (0, 404, b"") if url.endswith("robots.txt") else (0, 200, b'{"features": []}')
+
+    monkeypatch.setattr(fleming, "curl", fake_curl)
+    r = fleming.observe("src:x", "https://example.invalid/d", "twin")
+    assert r["availability_claim"] is False
+
+
+# ---------------------------------------------------------------- schema parity
+
+def test_receipt_schema_matches_the_receipts_already_on_disk(monkeypatch):
+    """A new receipt must carry every field the existing on-disk receipts carry."""
+    on_disk = [
+        json.loads(line)
+        for line in open(os.path.join(PACK, "evidence", "source-receipts.jsonl"), encoding="utf-8")
+        if line.strip()
+    ]
+    # The log is append-only and legitimately carries more than one schema
+    # (single observations and harvest receipts). Parity is per schema.
+    on_disk = [r for r in on_disk if r.get("schema") == fleming.RECEIPT_SCHEMA]
+    assert on_disk
+
+    def fake_curl(url, out_path):
+        return (0, 404, b"") if url.endswith("robots.txt") else (0, 200, b'{"features": []}')
+
+    monkeypatch.setattr(fleming, "curl", fake_curl)
+    fresh = fleming.observe("src:x", "https://example.invalid/d", "twin")
+
+    for existing in on_disk:
+        assert set(existing) <= set(fresh), f"dropped: {set(existing) - set(fresh)}"
+        assert existing["schema"] == fresh["schema"]
+
+
+def test_projection_schema_matches_projections_already_on_disk():
+    path = os.path.join(PACK, "evidence", "property-observations-20260827.jsonl")
+    on_disk = [json.loads(l) for l in open(path, encoding="utf-8") if l.strip()]
+    assert on_disk
+
+    receipt = dict(ADMISSIBLE, content_sha256="d" * 64, twin_id="t")
+    payload = {"features": [{"attributes": {"OBJECTID": 1, "GIS_ACCT": "A1", "ST_NAME": "X"}}]}
+    rows = fleming.project_dallas_tax_parcel(receipt, payload)
+
+    assert len(rows) == 1
+    for existing in on_disk:
+        assert set(existing) == set(rows[0]), f"schema drift: {set(existing) ^ set(rows[0])}"
+        assert existing["schema"] == rows[0]["schema"]
+        assert existing["dialect"] == rows[0]["dialect"]
+
+
+def test_projection_carries_the_receipt_digest_it_was_read_from():
+    receipt = dict(ADMISSIBLE, content_sha256="ab" * 32)
+    payload = {"features": [{"attributes": {"GIS_ACCT": "A1"}}]}
+    row = fleming.project_dallas_tax_parcel(receipt, payload)[0]
+    assert row["source_payload_sha256"] == "ab" * 32
+    assert ("ab" * 32)[:16] in row["observation_id"]
+
+
+def test_projection_never_asserts_a_canonical_parcel_id():
+    receipt = dict(ADMISSIBLE, content_sha256="c" * 64)
+    payload = {"features": [{"attributes": {"GIS_ACCT": "A1", "ACCT": "A1"}}]}
+    row = fleming.project_dallas_tax_parcel(receipt, payload)[0]
+    assert row["canonical_parcel_id"] is None
+    assert row["external_parcel_candidate_id"].startswith("external_parcel:")
+    assert "not current title ownership" in row["forbidden_inference"]
+
+
+def test_feature_without_an_account_produces_no_observation():
+    receipt = dict(ADMISSIBLE, content_sha256="c" * 64)
+    payload = {"features": [{"attributes": {"ST_NAME": "X"}}]}
+    assert fleming.project_dallas_tax_parcel(receipt, payload) == []
+
+
+# ---------------------------------------------------------------- ranking
+
+def test_rank_ignores_sources_that_resolve_nothing_open():
+    reg = fleming.load_registry()
+    unknowns = {"canonical_parcel_id"}
+    parcels = reg.sources["src:dallas-tax-parcels"]
+    lidar = reg.sources["src:txgio-lidar"]
+    assert reg.value(parcels, unknowns) > 0
+    assert reg.value(lidar, unknowns) == 0
+
+
+def test_gated_sources_cost_more_than_free_equivalents():
+    reg = fleming.load_registry()
+    free = reg.sources["src:dallas-tax-parcels"]      # T0 GIS
+    gated = reg.sources["src:dcad-parcel-shapefiles"]  # T3 GIS, fee schedule
+    assert free.resolves & gated.resolves
+    assert reg.cost(gated) > reg.cost(free)
+    assert gated.gated and not free.gated
+
+
+def test_parcel_identity_outranks_every_other_unknown():
+    reg = fleming.load_registry()
+    assert reg.unknown_weight["canonical_parcel_id"] == max(reg.unknown_weight.values())
+
+
+def test_open_unknowns_come_from_the_fixture_not_a_constant():
+    unknowns = fleming.open_unknowns()
+    assert unknowns["canonical_parcel_id"] == "UNKNOWN"
+    assert unknowns["route_state"] == "NO_LAWFUL_ROUTE_PROVEN"
+    assert unknowns["evidence_state"] == "MARKETING_CLAIMS_ONLY"
+
+
+# ---------------------------------------------------------------- CLI refusals
+
+def _run(argv):
+    try:
+        return fleming.main(argv)
+    except SystemExit as exc:  # argparse
+        return exc.code
+
+
+def test_observe_refuses_an_unenumerated_source(capsys):
+    assert _run(["observe", "src:not-in-registry"]) == 2
+    assert "not enumerated" in capsys.readouterr().err
+
+
+def test_observe_refuses_a_use_restricted_source(capsys):
+    assert _run(["observe", "src:skip-trace-providers", "--url", "https://example.invalid"]) == 3
+    err = capsys.readouterr().err
+    assert "T4 use-restricted" in err
+    assert "does not imply permitted use" in err
+
+
+def test_observe_refuses_an_enumerated_source_with_no_endpoint(capsys):
+    assert _run(["observe", "src:hud-lihtc-property-db"]) == 2
+    assert "Enumeration is not an endpoint" in capsys.readouterr().err
+
+
+def test_project_refuses_a_receipt_that_is_not_admissible(monkeypatch, capsys):
+    bad = dict(ADMISSIBLE, twin_id="bad", policy_decision="policy_excluded")
+    monkeypatch.setattr(fleming, "load_receipts", lambda: [bad])
+    assert _run(["project", "bad"]) == 3
+    assert "missing_allow_policy_decision" in capsys.readouterr().err
+
+
+def test_project_refuses_a_boundary_response(monkeypatch, capsys):
+    r = dict(ADMISSIBLE, twin_id="b", observation_kind="boundary_response")
+    monkeypatch.setattr(fleming, "load_receipts", lambda: [r])
+    assert _run(["project", "b"]) == 3
+    assert "observation_kind=boundary_response" in capsys.readouterr().err
+
+
+def test_project_refuses_a_body_that_no_longer_hashes_to_its_receipt(tmp_path, monkeypatch, capsys):
+    body = tmp_path / "tampered.json"
+    body.write_text('{"features": []}', encoding="utf-8")
+    r = dict(
+        ADMISSIBLE,
+        twin_id="tampered",
+        content_sha256="0" * 64,
+        body_path=os.path.relpath(str(body), fleming.REPO),
+    )
+    monkeypatch.setattr(fleming, "load_receipts", lambda: [r])
+    assert _run(["project", "tampered"]) == 3
+    assert "no longer hashes to its receipt" in capsys.readouterr().err
+
+
+def test_project_accepts_a_body_that_still_hashes(tmp_path, monkeypatch, capsys):
+    import hashlib
+
+    raw = b'{"features": [{"attributes": {"GIS_ACCT": "A1"}}]}'
+    body = tmp_path / "ok.json"
+    body.write_bytes(raw)
+    r = dict(
+        ADMISSIBLE,
+        twin_id="ok",
+        src_id="src:dallas-tax-parcels",
+        content_sha256=hashlib.sha256(raw).hexdigest(),
+        body_path=os.path.relpath(str(body), fleming.REPO),
+    )
+    monkeypatch.setattr(fleming, "load_receipts", lambda: [r])
+    assert _run(["project", "ok"]) == 0
+    assert "1 projection(s)" in capsys.readouterr().err
+
+
+# ---------------------------------------------------------------- second dialect
+
+def test_arlington_dialect_keys_on_its_own_identity_field():
+    """Arlington keys on TaxParcelId; Dallas keys on GIS_ACCT. Neither is unified."""
+    receipt = dict(ADMISSIBLE, content_sha256="e" * 64)
+    payload = {"features": [{"attributes": {"TaxParcelId": 200004, "TaxParcelAddress": "COLLINS"}}]}
+    row = fleming.project_arlington_tax_parcel(receipt, payload)[0]
+    assert row["external_parcel_candidate_id"] == "external_parcel:arlington-tax-parcel:200004"
+    assert row["dialect"] == "arlington-tax-parcel.v1"
+    assert row["canonical_parcel_id"] is None
+
+
+def test_both_dialects_emit_the_same_schema():
+    receipt = dict(ADMISSIBLE, content_sha256="f" * 64)
+    d = fleming.project_dallas_tax_parcel(receipt, {"features": [{"attributes": {"GIS_ACCT": "A"}}]})[0]
+    a = fleming.project_arlington_tax_parcel(receipt, {"features": [{"attributes": {"TaxParcelId": 1}}]})[0]
+    assert set(d) == set(a)
+    assert d["schema"] == a["schema"] == fleming.PROJECTION_SCHEMA
+    assert d["dialect"] != a["dialect"]
+
+
+def test_arlington_feature_without_a_parcel_id_produces_no_observation():
+    receipt = dict(ADMISSIBLE, content_sha256="f" * 64)
+    for attrs in ({"TaxParcelAddress": "X"}, {"TaxParcelId": None}, {"TaxParcelId": ""}):
+        assert fleming.project_arlington_tax_parcel(receipt, {"features": [{"attributes": attrs}]}) == []
+
+
+def test_arlington_dialect_drops_editing_identity_but_keeps_retirement():
+    receipt = dict(ADMISSIBLE, content_sha256="f" * 64)
+    attrs = {
+        "TaxParcelId": 1, "OBJECTID": 9, "GlobalID": "{x}",
+        "created_user": "someone", "last_edited_user": "someone",
+        "RetiredByRecord": "{r}",
+    }
+    row = fleming.project_arlington_tax_parcel(receipt, {"features": [{"attributes": attrs}]})[0]
+    assert "created_user" not in row["observed"]
+    assert "GlobalID" not in row["observed"]
+    assert row["observed"]["RetiredByRecord"] == "{r}"
+
+
+def test_a_specific_dialect_beats_the_generic_fallback():
+    assert fleming.dialect_for("src:dallas-tax-parcels") == "dallas-tax-parcel.v1"
+    assert fleming.dialect_for("src:arlington-tax-parcel") == "arlington-tax-parcel.v1"
+
+
+def test_unknown_sources_fall_back_to_the_generic_dialect():
+    """The fallback is what makes 383 surfaces harvestable without 383 dialects."""
+    assert fleming.dialect_for("src:dallas-city-owned-property") == "arcgis-generic.v1"
+    assert fleming.dialect_for("src:anything-at-all") == "arcgis-generic.v1"
+
+
+def test_every_dialect_is_reachable_from_some_source_id():
+    reachable = {fleming.dialect_for(s) for s in
+                 ("src:dallas-tax-parcels", "src:arlington-tax-parcel", "src:other")}
+    assert reachable == set(fleming.DIALECTS)
+
+
+def test_generic_dialect_never_claims_a_parcel_binding():
+    receipt = dict(ADMISSIBLE, content_sha256="a" * 64, src_id="src:dallas-city-owned-property")
+    payload = {"features": [{"attributes": {"OBJECTID": 7, "ZONE": "PD-193"}}]}
+    row = fleming.project_arcgis_generic(receipt, payload)[0]
+    assert row["external_parcel_candidate_id"].startswith("external_feature:")
+    assert "external_parcel:" not in row["external_parcel_candidate_id"]
+    assert row["canonical_parcel_id"] is None
+    assert "not a parcel binding" in row["forbidden_inference"]
+    assert row["observed"] == {"ZONE": "PD-193"}
+
+
+def test_generic_dialect_drops_a_feature_with_no_objectid():
+    receipt = dict(ADMISSIBLE, content_sha256="a" * 64)
+    assert fleming.project_arcgis_generic(receipt, {"features": [{"attributes": {"X": 1}}]}) == []
+
+
+def test_dialect_routing_is_registry_backed():
+    reg = fleming.load_registry()
+    for src_id in ("src:dallas-tax-parcels", "src:arlington-tax-parcel"):
+        assert src_id in reg.sources
+        assert fleming.dialect_for(src_id) in fleming.DIALECTS
+
+
+# ---------------------------------------------------------------- live evidence
+
+def test_live_receipts_on_disk_are_admissible_and_hash_to_their_bodies():
+    """Every source_observed receipt must still hash to the body it retained."""
+    import hashlib
+
+    checked = 0
+    for r in fleming.load_receipts():
+        if r.get("observation_kind") != "source_observed":
+            continue
+        assert fleming.admission_failure(r) is None, r["twin_id"]
+        path = os.path.join(fleming.REPO, r["body_path"])
+        if not os.path.exists(path):
+            continue
+        with open(path, "rb") as fh:
+            assert hashlib.sha256(fh.read()).hexdigest() == r["content_sha256"], r["twin_id"]
+        checked += 1
+    assert checked >= 2, "expected live observations from at least two jurisdictions"
+
+
+# ---------------------------------------------------------------- harvest
+
+def test_paged_url_replaces_probe_limits_with_real_paging():
+    base = ("https://h/q?where=1%3D1&outFields=*&resultRecordCount=5&f=json")
+    url = fleming.paged_url(base, 4000, 2000, "OBJECTID")
+    assert "resultRecordCount=2000" in url
+    assert "resultRecordCount=5" not in url
+    assert "resultOffset=4000" in url
+    assert "orderByFields=OBJECTID" in url
+    assert "where=1%3D1" in url and "outFields=*" in url
+
+
+def test_paged_url_does_not_duplicate_paging_params_on_reuse():
+    base = "https://h/q?where=1%3D1&resultOffset=0&orderByFields=X&f=json"
+    url = fleming.paged_url(base, 100, 50, "OBJECTID")
+    assert url.count("resultOffset=") == 1
+    assert url.count("orderByFields=") == 1
+    assert "orderByFields=OBJECTID" in url
+
+
+def test_harvest_refuses_a_layer_that_does_not_declare_pagination(monkeypatch, tmp_path):
+    monkeypatch.setattr(fleming, "layer_metadata",
+                        lambda base: {"maxRecordCount": 2000, "supportsPagination": False, "count": 10})
+    src = fleming.Source("src:x", "GIS", "T1", "", endpoint="https://h/q?f=json")
+    with pytest.raises(RuntimeError, match="supportsPagination"):
+        fleming.harvest(src, "OBJECTID", 0.0, None, str(tmp_path / "s.db"))
+
+
+def test_harvest_uses_the_declared_page_size_not_a_chosen_one(monkeypatch, tmp_path):
+    seen: list[str] = []
+
+    monkeypatch.setattr(fleming, "layer_metadata",
+                        lambda base: {"maxRecordCount": 777, "supportsPagination": True, "count": 777})
+
+    def fake_curl(url, out_path):
+        seen.append(url)
+        body = json.dumps({"features": [{"attributes": {"GIS_ACCT": f"A{len(seen)}"}}]}).encode()
+        if out_path:
+            os.makedirs(os.path.dirname(out_path), exist_ok=True)
+            open(out_path, "wb").write(body)
+        return 0, 200, body
+
+    monkeypatch.setattr(fleming, "curl", fake_curl)
+    src = fleming.Source("src:dallas-tax-parcels", "GIS", "T1", "", endpoint="https://h/q?f=json")
+    r = fleming.harvest(src, "OBJECTID", 0.0, 1, str(tmp_path / "s.db"))
+    assert r["page_size_used"] == 777
+    assert "resultRecordCount=777" in seen[0]
+
+
+def test_harvest_is_resumable_and_does_not_refetch_stored_pages(monkeypatch, tmp_path):
+    calls: list[int] = []
+
+    monkeypatch.setattr(fleming, "layer_metadata",
+                        lambda base: {"maxRecordCount": 10, "supportsPagination": True, "count": 30})
+
+    def fake_curl(url, out_path):
+        off = int(url.split("resultOffset=")[1].split("&")[0])
+        calls.append(off)
+        body = json.dumps({"features": [{"attributes": {"GIS_ACCT": f"A{off}"}}]}).encode()
+        if out_path:
+            os.makedirs(os.path.dirname(out_path), exist_ok=True)
+            open(out_path, "wb").write(body)
+        return 0, 200, body
+
+    monkeypatch.setattr(fleming, "curl", fake_curl)
+    src = fleming.Source("src:dallas-tax-parcels", "GIS", "T1", "", endpoint="https://h/q?f=json")
+    db = str(tmp_path / "s.db")
+
+    fleming.harvest(src, "OBJECTID", 0.0, 2, db)
+    first = list(calls)
+    calls.clear()
+    fleming.harvest(src, "OBJECTID", 0.0, None, db)
+
+    assert first == [0, 10]
+    assert 0 not in calls and 10 not in calls, "resume refetched pages already stored"
+    assert 20 in calls
+
+
+def test_chain_root_is_sha256_over_page_digests_in_offset_order(monkeypatch, tmp_path):
+    monkeypatch.setattr(fleming, "layer_metadata",
+                        lambda base: {"maxRecordCount": 10, "supportsPagination": True, "count": 30})
+
+    def fake_curl(url, out_path):
+        off = int(url.split("resultOffset=")[1].split("&")[0])
+        body = json.dumps({"features": [{"attributes": {"GIS_ACCT": f"A{off}"}}]}).encode()
+        if out_path:
+            os.makedirs(os.path.dirname(out_path), exist_ok=True)
+            open(out_path, "wb").write(body)
+        return 0, 200, body
+
+    monkeypatch.setattr(fleming, "curl", fake_curl)
+    src = fleming.Source("src:dallas-tax-parcels", "GIS", "T1", "", endpoint="https://h/q?f=json")
+    db = str(tmp_path / "s.db")
+    r = fleming.harvest(src, "OBJECTID", 0.0, None, db)
+
+    import hashlib as _h
+    conn = fleming.store_open(db)
+    expected = _h.sha256()
+    for (d,) in conn.execute("SELECT page_sha256 FROM page WHERE src_id=? ORDER BY offset", (src.src_id,)):
+        expected.update(d.encode())
+    conn.close()
+    assert r["page_digest_chain_root"] == expected.hexdigest()
+
+
+def test_every_stored_observation_names_a_page_that_exists(monkeypatch, tmp_path):
+    monkeypatch.setattr(fleming, "layer_metadata",
+                        lambda base: {"maxRecordCount": 10, "supportsPagination": True, "count": 20})
+
+    def fake_curl(url, out_path):
+        off = int(url.split("resultOffset=")[1].split("&")[0])
+        body = json.dumps({"features": [
+            {"attributes": {"GIS_ACCT": f"A{off}"}},
+            {"attributes": {"GIS_ACCT": f"B{off}"}},
+        ]}).encode()
+        if out_path:
+            os.makedirs(os.path.dirname(out_path), exist_ok=True)
+            open(out_path, "wb").write(body)
+        return 0, 200, body
+
+    monkeypatch.setattr(fleming, "curl", fake_curl)
+    src = fleming.Source("src:dallas-tax-parcels", "GIS", "T1", "", endpoint="https://h/q?f=json")
+    db = str(tmp_path / "s.db")
+    fleming.harvest(src, "OBJECTID", 0.0, None, db)
+
+    conn = fleming.store_open(db)
+    orphans = conn.execute(
+        "SELECT COUNT(*) FROM observation o "
+        "WHERE NOT EXISTS (SELECT 1 FROM page p WHERE p.page_sha256 = o.page_sha256)"
+    ).fetchone()[0]
+    stored = conn.execute("SELECT COUNT(*) FROM observation").fetchone()[0]
+    conn.close()
+    assert stored == 4
+    assert orphans == 0, "an observation cannot name a page that was never received"
+
+
+def test_harvest_stops_on_a_transport_failure_without_inventing_rows(monkeypatch, tmp_path):
+    monkeypatch.setattr(fleming, "layer_metadata",
+                        lambda base: {"maxRecordCount": 10, "supportsPagination": True, "count": 100})
+
+    def fake_curl(url, out_path):
+        off = int(url.split("resultOffset=")[1].split("&")[0])
+        if off >= 20:
+            return 56, 0, b""
+        body = json.dumps({"features": [{"attributes": {"GIS_ACCT": f"A{off}"}}]}).encode()
+        if out_path:
+            os.makedirs(os.path.dirname(out_path), exist_ok=True)
+            open(out_path, "wb").write(body)
+        return 0, 200, body
+
+    monkeypatch.setattr(fleming, "curl", fake_curl)
+    src = fleming.Source("src:dallas-tax-parcels", "GIS", "T1", "", endpoint="https://h/q?f=json")
+    r = fleming.harvest(src, "OBJECTID", 0.0, None, str(tmp_path / "s.db"))
+    assert r["pages_this_run"] == 2
+    assert r["observation_kind"] == "harvest_partial"
+    assert r["rows_stored"] == 2
+
+
+def test_harvest_refuses_a_use_restricted_source(capsys):
+    assert _run(["harvest", "src:skip-trace-providers"]) == 3
+    assert "T4 use-restricted" in capsys.readouterr().err
+
+
+def test_harvest_refuses_a_source_with_no_passport_endpoint(capsys):
+    assert _run(["harvest", "src:hud-lihtc-property-db"]) == 2
+    assert "no passport endpoint" in capsys.readouterr().err
+
+
+def test_harvest_receipts_on_disk_keep_their_own_schema_shape():
+    """Harvest receipts share the log with observations but not their shape."""
+    path = os.path.join(PACK, "evidence", "source-receipts.jsonl")
+    harvests = [
+        r for r in (json.loads(l) for l in open(path, encoding="utf-8") if l.strip())
+        if r.get("schema") == fleming.HARVEST_SCHEMA
+    ]
+    if not harvests:
+        pytest.skip("no harvest has run yet")
+    required = {
+        "src_id", "declared_count", "declared_max_record_count",
+        "declared_supports_pagination", "page_size_used", "pages_stored",
+        "rows_stored", "page_digest_chain_root", "rate_limit_seconds",
+        "availability_claim", "observation_kind",
+    }
+    for r in harvests:
+        assert required <= set(r), f"missing: {required - set(r)}"
+        assert r["availability_claim"] is False
+        assert r["page_size_used"] <= r["declared_max_record_count"]
+        # A layer is pageable two ways: by result offset, or -- when it refuses
+        # offsets -- by walking its object-id space. Either is a declared
+        # capability; neither is assumed.
+        mode = r.get("paging_mode", "result_offset")
+        if mode == "result_offset":
+            assert r["declared_supports_pagination"] is True
+        else:
+            assert mode == "object_id_range"
+            assert r.get("declared_oid_field"), "oid paging must name its id field"
+
+
+def test_a_superseded_source_is_tiered_out_of_acquisition():
+    """The redacted TAD mirror must not be reachable by rank or harvest."""
+    reg = fleming.load_registry()
+    open_mirror = reg.sources["src:tad-parcel-view-open"]
+    real = reg.sources["src:tad-parcel-view"]
+    assert open_mirror.tier == "T4", "a superseded redacted feed must be refused, not merely noted"
+    assert real.tier == "T1"
+    assert reg.cost(open_mirror) > reg.cost(real)
+
+
+def test_every_receipt_in_the_log_declares_a_known_schema():
+    """The log is append-only and multi-schema. Every line must still name a
+    schema the tool defines, so an unrecognised writer is caught, not ignored."""
+    known = {fleming.RECEIPT_SCHEMA, fleming.HARVEST_SCHEMA, fleming.ADJACENCY_SCHEMA}
+    path = os.path.join(PACK, "evidence", "source-receipts.jsonl")
+    seen = set()
+    for r in (json.loads(l) for l in open(path, encoding="utf-8") if l.strip()):
+        assert r.get("schema") in known, f"unknown schema: {r.get('schema')}"
+        seen.add(r["schema"])
+    assert seen, "receipt log is empty"
+
+
+def test_no_receipt_of_any_schema_ever_claims_availability():
+    path = os.path.join(PACK, "evidence", "source-receipts.jsonl")
+    for r in (json.loads(l) for l in open(path, encoding="utf-8") if l.strip()):
+        assert r.get("availability_claim") is False, r.get("twin_id")
+
+
+# ---------------------------------------------------------------- reproject
+
+def _seed_store(tmp_path, monkeypatch, src_id="src:dallas-city-owned-property", n=2):
+    monkeypatch.setattr(fleming, "layer_metadata",
+                        lambda base: {"maxRecordCount": 10, "supportsPagination": True, "count": 10 * n})
+
+    def fake_curl(url, out_path):
+        off = int(url.split("resultOffset=")[1].split("&")[0])
+        body = json.dumps({"features": [
+            {"attributes": {"OBJECTID": 1000 + off, "dcad_account_number": f"ACCT{off}"}}
+        ]}).encode()
+        if out_path:
+            os.makedirs(os.path.dirname(out_path), exist_ok=True)
+            open(out_path, "wb").write(body)
+        return 0, 200, body
+
+    monkeypatch.setattr(fleming, "curl", fake_curl)
+    monkeypatch.setattr(fleming, "PAGES", str(tmp_path / "pages"))
+    src = fleming.Source(src_id, "GIS", "T1", "", endpoint="https://h/q?f=json")
+    db = str(tmp_path / "s.db")
+    fleming.harvest(src, "OBJECTID", 0.0, n, db)
+    return src, db
+
+
+def test_harvest_namespaces_candidate_ids_by_source(tmp_path, monkeypatch):
+    """Regression: the synthetic receipt once omitted src_id, so every generic
+    source collided under a single 'unknown' namespace."""
+    src, db = _seed_store(tmp_path, monkeypatch)
+    conn = fleming.store_open(db)
+    ids = [r[0] for r in conn.execute("SELECT candidate_id FROM observation")]
+    conn.close()
+    assert ids
+    assert all(i.startswith("external_feature:dallas-city-owned-property:") for i in ids)
+    assert not any(":unknown:" in i for i in ids)
+
+
+def test_reproject_rebuilds_from_retained_pages_without_network(tmp_path, monkeypatch):
+    src, db = _seed_store(tmp_path, monkeypatch)
+
+    def explode(url, out_path):
+        raise AssertionError("reproject must not touch the network")
+
+    monkeypatch.setattr(fleming, "curl", explode)
+    r = fleming.reproject(src, db)
+    assert r["rows"] == 2
+    assert r["pages"] == 2
+    assert r["pages_missing_body"] == 0
+
+
+def test_reproject_refuses_a_page_that_drifted_on_disk(tmp_path, monkeypatch):
+    src, db = _seed_store(tmp_path, monkeypatch)
+    page = os.path.join(str(tmp_path / "pages"), "dallas-city-owned-property-00000000.json")
+    with open(page, "wb") as fh:
+        fh.write(b'{"features": [{"attributes": {"OBJECTID": 666}}]}')
+    with pytest.raises(RuntimeError, match="no longer hash"):
+        fleming.reproject(src, db)
+
+
+def test_reproject_reports_a_missing_body_rather_than_inventing_rows(tmp_path, monkeypatch):
+    src, db = _seed_store(tmp_path, monkeypatch)
+    os.remove(os.path.join(str(tmp_path / "pages"), "dallas-city-owned-property-00000000.json"))
+    r = fleming.reproject(src, db)
+    assert r["pages_missing_body"] == 1
+    assert r["rows"] == 1
+
+
+# ---------------------------------------------------------------- adjacency
+
+def test_adjacency_requires_a_harvested_seed(tmp_path):
+    src = fleming.Source("src:x", "GIS", "T1", "", endpoint="https://h/q?f=json")
+    with pytest.raises(RuntimeError, match="no harvested observations"):
+        fleming.adjacency(src, src, 150.0, 0.0, None, str(tmp_path / "s.db"))
+
+
+def test_adjacency_receipt_forbids_the_assemblage_inference(tmp_path, monkeypatch):
+    src, db = _seed_store(tmp_path, monkeypatch)
+    monkeypatch.setattr(fleming, "curl", lambda u, o: (0, 500, b""))
+    r = fleming.adjacency(src, src, 150.0, 0.0, 1, db)
+    assert "assemblage" in r["forbidden_inference"]
+    assert r["availability_claim"] is False
+    assert r["pairs_this_run"] == 0
+
+
+# ---------------------------------------------------------------- join / clusters
+
+def test_declared_join_keys_name_sources_that_exist():
+    reg = fleming.load_registry()
+    for src_id in list(fleming.JOIN_KEYS) + list(fleming.PARCEL_KEY):
+        assert src_id in reg.sources
+
+
+def test_join_and_cluster_are_registry_backed_commands():
+    import inspect
+    for fn in (fleming.cmd_join, fleming.cmd_clusters):
+        assert "Registry" in str(inspect.signature(fn))
+
+
+# ---------------------------------------------------------------- unlock semantics
+
+def test_predicates_parse_out_of_capital_yaff():
+    preds = fleming.load_predicates()
+    assert len(preds) >= 6
+    assert all("evaluable" in p for p in preds), "every predicate must state evaluability"
+
+
+def test_a_non_evaluable_predicate_must_name_what_is_missing():
+    """A predicate silently skipped is indistinguishable from one that failed."""
+    for p in fleming.load_predicates():
+        if p["evaluable"] != "YES":
+            assert p.get("missing") or p.get("weakness"), f"{p['programs']} hides its gap"
+
+
+def test_evaluable_predicates_name_their_evidence_source():
+    reg = fleming.load_registry()
+    for p in fleming.load_predicates():
+        if p["evaluable"] == "YES":
+            for src in p.get("evidence", "").replace("join", "").split():
+                if src.startswith("src:"):
+                    assert src in reg.sources
+
+
+def test_unlock_table_carries_no_money_column():
+    """RecursiveValueGraph forbids a value edge becoming a cash amount. The
+    schema is where that is enforced, not the docstring."""
+    lowered = fleming.UNLOCK_SQL.lower()
+    for banned in ("usd", "price", "amount", "cash", "value", "cost", "dollar"):
+        assert banned not in lowered, f"unlock schema exposes a money column: {banned}"
+
+
+def test_capital_yaff_records_the_blocking_input_rather_than_a_modelled_price():
+    text = open(fleming.CAPITAL_YAFF, encoding="utf-8").read()
+    assert "blocking_input parcel_value" in text
+    assert "an unknown price -> zero" in text
+
+
+def test_no_capital_program_claims_an_observed_price():
+    """Every capital program stays a research digest until it is fetched."""
+    text = open(fleming.CAPITAL_YAFF, encoding="utf-8").read()
+    assert "UNOBSERVED_RESEARCH_DIGEST" in text
+    assert text.count("claimed_") > 20, "program figures must stay marked as claims"
+
+
+def test_store_tolerates_concurrent_writers(tmp_path):
+    """Regression: parallel harvests of different sources hit `database is
+    locked` because the default busy timeout is zero and a whole run was lost."""
+    db = str(tmp_path / "s.db")
+    a = fleming.store_open(db)
+    b = fleming.store_open(db)
+    assert a.execute("PRAGMA journal_mode").fetchone()[0].lower() == "wal"
+    assert b.execute("PRAGMA busy_timeout").fetchone()[0] >= 1000
+    a.execute("INSERT INTO page VALUES ('s',0,'d',1,200,'t')")
+    a.commit()
+    b.execute("INSERT INTO page VALUES ('s',1,'d2',1,200,'t')")
+    b.commit()
+    assert a.execute("SELECT COUNT(*) FROM page").fetchone()[0] == 2
+    a.close(); b.close()
+
+
+# ---------------------------------------------------------------- native delegation
+
+def test_analytics_delegate_to_bonfyre_query_not_local_sql():
+    """cmd_clusters must run through the native organ, not a local sqlite loop."""
+    import inspect
+    src = inspect.getsource(fleming.cmd_clusters)
+    assert "native_sql(" in src
+    assert "sqlite3" not in src
+    assert "store_open(" not in src
+
+
+def test_owner_identity_delegates_to_bonfyre_entity():
+    import inspect
+    src = inspect.getsource(fleming.cmd_owners)
+    assert '"bonfyre-entity"' in src
+    assert "native_sql(" in src
+
+
+def test_native_sql_raises_rather_than_falling_back(monkeypatch):
+    """A quiet fallback is how a native organ gets reimplemented one call at a time."""
+    monkeypatch.setattr(fleming, "native", lambda b, a, timeout=900: (1, "", "boom"))
+    with pytest.raises(RuntimeError, match="bonfyre-query failed"):
+        fleming.native_sql("SELECT 1")
+
+
+def test_missing_native_binary_is_reported_not_swallowed(monkeypatch):
+    monkeypatch.setattr(fleming, "NATIVE_BIN", "/nonexistent/bin")
+    code, out, err = fleming.native("bonfyre-query", ["status"])
+    assert code == 127
+    assert out == ""
+
+
+def test_no_archived_python_is_imported():
+    """Archived modules are a reminder to use the native stack, not a library.
+
+    Naming an archived owner in a comment is correct provenance and must stay
+    legal; what must never happen is importing or executing one. The assertion
+    is about imports, not mentions.
+    """
+    src = open(MODULE, encoding="utf-8").read()
+    assert "import housing_" not in src
+    assert "from components" not in src
+    assert "import atomic_forms" not in src
+    for line in src.splitlines():
+        stripped = line.strip()
+        if stripped.startswith(("import ", "from ")):
+            assert ".archive" not in stripped, f"archived module imported: {stripped}"
+        if "exec_module" in stripped or "spec_from_file_location" in stripped:
+            assert ".archive" not in stripped
+
+
+def test_every_archive_reference_names_a_real_archived_owner():
+    """A comment citing an archived owner must cite one that exists on disk."""
+    import re as _re
+    src = open(MODULE, encoding="utf-8").read()
+    for path in set(_re.findall(r"[\w/\.\-]+\.py\.archive", src)):
+        full = os.path.join(fleming.REPO, path)
+        assert os.path.exists(full), f"cites a missing archived owner: {path}"
+
+
+def test_jget_builds_a_duckdb_json_accessor():
+    assert fleming.jget("PROP_CL") == "json_extract_string(observed,'$.PROP_CL')"
+
+
+# ---------------------------------------------------------------- sweep / queue
+
+def test_sweep_enforces_the_robots_preflight():
+    """Regression: cmd_sweep once called harvest() directly and so skipped the
+    preflight cmd_harvest enforces. It acquired a source the admission law had
+    already refused. The gate must live on every path, not the interactive one."""
+    import inspect
+    src = inspect.getsource(fleming.cmd_sweep)
+    assert "observe(" in src
+    assert 'policy_decision' in src
+    assert src.index("observe(") < src.index("harvest(src")
+
+
+def test_sweep_releases_a_lease_on_failure_instead_of_eating_it():
+    import inspect
+    src = inspect.getsource(fleming.cmd_sweep)
+    assert 'queue(["fail"' in src.replace("'", '"') or '"fail"' in src
+    assert "except Exception" in src
+
+
+def test_sweep_never_acks_a_mission_it_did_not_enqueue():
+    """A fixture mission, or another producer's work, is released not acked."""
+    import inspect
+    src = inspect.getsource(fleming.cmd_sweep)
+    i = src.index("if src is None:")
+    j = src.index("claimed += 1", i)
+    assert '"fail"' in src[i:j], "unknown mission must be failed, never acked"
+    assert '"ack"' not in src[i:j]
+
+
+def test_pending_sources_excludes_finished_and_use_restricted(tmp_path, monkeypatch):
+    reg = fleming.load_registry()
+    pend = fleming.pending_sources(reg)
+    ids = {s.src_id for s in pend}
+    assert all(reg.sources[i].endpoint for i in ids), "a pending source must have an endpoint"
+    assert all(reg.sources[i].tier != "T4" for i in ids), "T4 must never be swept"
+    assert "src:dallas-tax-parcels" not in ids, "a fully harvested source stays done"
+
+
+def test_withdrawn_receipts_are_marked_not_deleted():
+    """An improper acquisition is withdrawn in place; the log stays append-only."""
+    path = os.path.join(PACK, "evidence", "source-receipts.jsonl")
+    withdrawn = [r for r in (json.loads(l) for l in open(path, encoding="utf-8") if l.strip())
+                 if r.get("withdrawn")]
+    for r in withdrawn:
+        assert r.get("withdrawn_reason"), "a withdrawal must say why"
+        assert r["observation_kind"] == "withdrawn_improper_acquisition"
+
+
+def test_a_withdrawn_source_has_no_surviving_observations():
+    store = os.path.join(PACK, "evidence", "estate.db")
+    if not os.path.exists(store):
+        pytest.skip("no estate store")
+    path = os.path.join(PACK, "evidence", "source-receipts.jsonl")
+    bad = {r["src_id"] for r in (json.loads(l) for l in open(path, encoding="utf-8") if l.strip())
+           if r.get("withdrawn") and r.get("src_id")}
+    if not bad:
+        pytest.skip("nothing withdrawn")
+    conn = sqlite3.connect(store, timeout=60)
+    for src_id in bad:
+        n = conn.execute("SELECT COUNT(*) FROM observation WHERE src_id=?", (src_id,)).fetchone()[0]
+        assert n == 0, f"{src_id} was withdrawn but {n} observations survive"
+    conn.close()
+
+
+# ---------------------------------------------------------------- discovery
+
+def test_discovery_writes_passports_but_never_harvests():
+    import inspect
+    src = inspect.getsource(fleming.cmd_discover)
+    assert "harvest(" not in src, "discovery must not acquire; acquisition stays ranked and gated"
+    assert "source_passport" in src
+    assert "forbidden_inference" in src
+
+
+def test_discovered_layers_carry_their_declared_paging_capability():
+    import inspect
+    src = inspect.getsource(fleming.discover_arcgis)
+    assert "supportsPagination" in src
+    assert "returnCountOnly" in src
+
+
+# ---------------------------------------------------------------- storage budget
+
+def test_harvest_refuses_to_start_without_headroom(monkeypatch, tmp_path):
+    """Regression: the harvester had no storage budget and filled the volume to
+    100%, killing three workers and leaving the harness unable to open a command
+    output file. Free space is a precondition of acquisition."""
+    monkeypatch.setattr(fleming, "free_bytes", lambda path=None: 1024 ** 3)
+    src = fleming.Source("src:x", "GIS", "T1", "", endpoint="https://h/q?f=json")
+    with pytest.raises(fleming.StorageExhausted, match="below the"):
+        fleming.harvest(src, "OBJECTID", 0.0, None, str(tmp_path / "s.db"))
+
+
+def test_storage_check_passes_with_headroom(monkeypatch):
+    monkeypatch.setattr(fleming, "free_bytes", lambda path=None: 500 * 1024 ** 3)
+    fleming.check_storage("test")
+
+
+def test_harvest_stops_between_pages_when_space_runs_out(monkeypatch, tmp_path):
+    """A run that exhausts the disk must stop on its own terms so the queue can
+    reclaim the mission, rather than taking the machine down with it."""
+    monkeypatch.setattr(fleming, "layer_metadata",
+                        lambda base: {"maxRecordCount": 1, "supportsPagination": True,
+                                      "count": 1000, "oid_field": None})
+    calls = {"n": 0}
+
+    def shrinking(path=None):
+        calls["n"] += 1
+        return 500 * 1024 ** 3 if calls["n"] < 12 else 1024 ** 3
+
+    def fake_curl(url, out_path):
+        body = json.dumps({"features": [{"attributes": {"GIS_ACCT": "A"}}]}).encode()
+        if out_path:
+            os.makedirs(os.path.dirname(out_path), exist_ok=True)
+            open(out_path, "wb").write(body)
+        return 0, 200, body
+
+    monkeypatch.setattr(fleming, "free_bytes", shrinking)
+    monkeypatch.setattr(fleming, "curl", fake_curl)
+    monkeypatch.setattr(fleming, "PAGES", str(tmp_path / "pages"))
+    src = fleming.Source("src:dallas-tax-parcels", "GIS", "T1", "", endpoint="https://h/q?f=json")
+    r = fleming.harvest(src, "OBJECTID", 0.0, None, str(tmp_path / "s.db"))
+    assert r["observation_kind"] == "harvest_partial"
+    assert 0 < r["pages_this_run"] < 1000, "must stop early, not run to completion"
+
+
+# ---------------------------------------------------------------- atomic forms
+
+def test_forms_parse_out_of_capital_yaff():
+    forms = fleming.load_forms()
+    assert len(forms) >= 6
+    for k, spec in forms.items():
+        assert k.startswith("cap:")
+        assert spec["field"], f"{k} declares no fields"
+        assert set(spec) == {"field", "evidence", "authority", "review_gate"}
+
+
+def test_submit_ready_never_returns_a_false_green():
+    """The AtomicForm invariant: exact blockers, never a false green."""
+    forms = fleming.load_forms()
+    for k, spec in forms.items():
+        r = fleming.submit_ready(k, spec, {})
+        assert r["ready"] is False
+        assert r["blockers"]
+        # every declared requirement must appear as its own blocker
+        assert len(r["blockers"]) >= (len(spec["field"]) + len(spec["evidence"])
+                                      + len(spec["authority"]) + len(spec["review_gate"]))
+
+
+def test_a_form_is_ready_only_when_nothing_blocks_it():
+    spec = {"field": ["a"], "evidence": [], "authority": [], "review_gate": []}
+    assert fleming.submit_ready("cap:x", spec, {})["ready"] is False
+    assert fleming.submit_ready("cap:x", spec, {"a": 1})["ready"] is True
+
+
+def test_an_actor_field_never_autofills_without_a_verified_actor():
+    """A field autofills ONLY from a VERIFIED actor. Nothing in this pack has
+    ever asserted one, so every actor field must block and say why."""
+    forms = fleming.load_forms()
+    for k, spec in forms.items():
+        r = fleming.submit_ready(k, spec, {})
+        for f in spec["field"]:
+            if f in fleming.ACTOR_FIELDS:
+                assert any(f"'{f}'" in b and "VERIFIED actor" in b for b in r["blockers"])
+
+
+def test_fleming_is_not_a_verified_actor():
+    assert fleming.actor_is_verified("Fleming Equity Group") is False
+
+
+def test_parcel_autofill_never_fills_an_actor_field():
+    """Parcel fields are bound to a parcel; actor fields are bound to an actor.
+    Observed source rows may fill the first and must never fill the second."""
+    conn = fleming.store_open()
+    row = conn.execute("SELECT acct FROM parcel_flat WHERE acct<>'' LIMIT 1").fetchone()
+    conn.close()
+    if not row:
+        pytest.skip("no parcel_flat")
+    filled = fleming.autofill_parcel(row[0])
+    assert filled.get("parcel_identity") == row[0]
+    assert not (set(filled) & fleming.ACTOR_FIELDS)
+
+
+def test_every_form_field_source_names_a_harvested_source():
+    """A declared autofill source must be a source the registry knows."""
+    reg = fleming.load_registry()
+    text = open(fleming.CAPITAL_YAFF, encoding="utf-8").read()
+    for line in text.splitlines():
+        if line.startswith("form_field_source "):
+            for tok in line.split():
+                if tok.startswith("src:"):
+                    assert tok in reg.sources, f"{tok} is not enumerated"
+
+
+def test_forms_forbid_the_submission_inference():
+    text = open(fleming.CAPITAL_YAFF, encoding="utf-8").read()
+    assert "a submit-ready form -> an application, a submission, an award" in text
+
+
+# ---------------------------------------------------------------- packages
+
+def test_package_separates_observed_from_applicant_facts_from_human_actions():
+    """The useful artifact is everything up to the signature line, with the
+    human-only actions isolated rather than used as a reason to stop early."""
+    conn = fleming.store_open()
+    row = conn.execute(
+        "SELECT acct FROM parcel_flat WHERE city_owned=1 AND prop_cl LIKE '%VACANT%' LIMIT 1"
+    ).fetchone()
+    conn.close()
+    if not row:
+        pytest.skip("no city-owned vacant parcel")
+    parcel = fleming.autofill_parcel(row[0])
+    pkg = fleming.package_land_bank(row[0], parcel, {"known_cost_subtotal_usd": 1,
+                                                     "unknown_line_count": 3})
+    assert set(pkg) >= {"filled", "unfilled", "human_only"}
+    assert len(pkg["filled"]) >= 10, "most of the package must come from observation"
+    assert pkg["human_only"], "human actions must be named, not implied"
+    for k, v in pkg["filled"].items():
+        assert v.get("source"), f"filled field {k} carries no source"
+    for k, why in pkg["unfilled"].items():
+        assert len(why) > 10, f"unfilled field {k} must say what would fill it"
+
+
+def test_package_never_claims_it_is_an_application():
+    conn = fleming.store_open()
+    row = conn.execute("SELECT acct FROM parcel_flat WHERE city_owned=1 LIMIT 1").fetchone()
+    conn.close()
+    if not row:
+        pytest.skip("no parcel")
+    parcel = fleming.autofill_parcel(row[0])
+    pkg = fleming.package_land_bank(row[0], parcel, {})
+    assert not pkg.get("submitted")
+    assert "cap:" in pkg["program"]
+
+
+def test_land_bank_form_does_not_require_an_entity():
+    """src:dallas-land-bank-faq states individuals are eligible. The form must
+    reflect what the program says, not what the other programs happen to want."""
+    forms = fleming.load_forms()
+    lb = forms["cap:dallas-land-bank"]
+    assert "developer_entity" not in lb["field"]
+    assert "developer_entity_registered" not in lb["authority"]
+    text = open(fleming.CAPITAL_YAFF, encoding="utf-8").read()
+    assert "An individual is eligible" in text
+
+
+def test_land_bank_is_the_shortest_path():
+    forms = fleming.load_forms()
+    counts = {k: len(fleming.submit_ready(k, v, {})["blockers"]) for k, v in forms.items()}
+    assert counts["cap:dallas-land-bank"] == min(counts.values())
+
+
+# ---------------------------------------------------------------- multi-market
+
+def test_market_anchors_cover_more_than_one_city():
+    """Anchoring every pro forma on Arlington was a habit, not a reason. TAD
+    covers all of Tarrant and Fort Worth is 2.7x larger."""
+    rows = fleming.market_anchors()
+    assert len(rows) >= 20, "one roll should anchor many markets"
+    cities = {r["city"] for r in rows}
+    assert "026" in cities, "Fort Worth missing"
+    assert "024" in cities, "Arlington missing"
+
+
+def test_implausible_land_medians_are_excluded_not_averaged():
+    """Several TAD cities report a median land value of $1 across hundreds of
+    parcels. That is an exemption artifact, not a price."""
+    rows = fleming.market_anchors()
+    excluded = [r for r in rows if not r["usable_for_underwriting"]]
+    assert excluded, "the credibility guard never fired; check the floor"
+    for r in excluded:
+        assert r["land_median"] < fleming.MIN_CREDIBLE_LAND_MEDIAN
+        assert r["excluded_reason"]
+    for r in rows:
+        if r["usable_for_underwriting"]:
+            assert r["land_median"] >= fleming.MIN_CREDIBLE_LAND_MEDIAN
+
+
+def test_every_market_anchor_states_its_sample_size():
+    for r in fleming.market_anchors():
+        assert r["vacant_n"] >= fleming.MIN_VACANT_OBS
+        assert r["improved_n"] >= fleming.MIN_IMPROVED_OBS
+
+
+def test_a_market_may_have_a_negative_spread():
+    """A market where observed exit does not cover observed land plus build must
+    be representable. Clamping it at zero would hide the only markets worth
+    avoiding."""
+    rows = {r["city"]: r for r in fleming.market_anchors()}
+    build = fleming.observed_benchmarks().get("build_median") or 0
+    spreads = [(r["exit_median"] - r["land_median"] - build)
+               for r in rows.values() if r["usable_for_underwriting"]]
+    assert any(x < 0 for x in spreads), "no negative spread found; guard may be clamping"
+
+
+# ---------------------------------------------------------------- digest
+
+def test_digest_states_its_own_provenance():
+    """A digest that cannot say what it was derived from is a rumour."""
+    path = os.path.join(PACK, "evidence", "fleming-digest.json")
+    if not os.path.exists(path):
+        pytest.skip("no digest built")
+    d = json.load(open(path, encoding="utf-8"))
+    p = d["provenance"]
+    assert p["observations"] > 1_000_000
+    assert p["sources_harvested"] > 50
+    assert p["observations_without_provenance"] == 0
+    assert d["generated_at"]
+
+
+def test_digest_carries_every_market_including_the_excluded_ones():
+    path = os.path.join(PACK, "evidence", "fleming-digest.json")
+    if not os.path.exists(path):
+        pytest.skip("no digest built")
+    d = json.load(open(path, encoding="utf-8"))
+    assert len(d["markets"]) >= 20
+    excluded = [m for m in d["markets"] if not m["usable"]]
+    assert excluded, "excluded markets must still appear, with their reason"
+    for m in excluded:
+        assert m["excluded_reason"]
+        assert m["spread_usd"] is None, "an unusable market must not carry a spread"
+
+
+def test_digest_build_anchor_states_its_own_limit():
+    path = os.path.join(PACK, "evidence", "fleming-digest.json")
+    if not os.path.exists(path):
+        pytest.skip("no digest built")
+    d = json.load(open(path, encoding="utf-8"))
+    assert "Arlington-observed and applied across all markets" in d["build_anchor"]["limit"]
+
+
+def test_digest_refuses_to_pose_as_the_estate():
+    path = os.path.join(PACK, "evidence", "fleming-digest.json")
+    if not os.path.exists(path):
+        pytest.skip("no digest built")
+    d = json.load(open(path, encoding="utf-8"))
+    joined = " ".join(d["forbidden_inference"])
+    # The pack states forbidden inferences in arrow form ("X -> Y" meaning do not
+    # infer Y from X), not as prose negations. Assert the convention it uses.
+    assert "this digest -> the estate" in joined
+    assert "any figure here -> current" in joined
+    assert len(d["forbidden_inference"]) >= 4

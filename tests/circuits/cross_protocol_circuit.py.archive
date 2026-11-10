@@ -1,0 +1,229 @@
+"""ARCHIVED: cross_protocol_circuit.mjs carries the explicit-origin protocol checks.
+
+One semantic Matrix means the same capability must carry the same price through
+every commerce grammar, and the same estate must report the same totals through
+every read path. Divergence here is the failure this whole design exists to
+prevent.
+"""
+import json, subprocess, time
+BASE="https://aurekai.life"; fails, notes = [], []
+def http(p,t=300):
+    r=subprocess.run(["curl","-sS","-m",str(t),f"{BASE}{p}","-w","\n__S__%{http_code}"],
+                     capture_output=True,text=True).stdout
+    txt,_,st=r.rpartition("\n__S__")
+    try: return int(st), json.loads(txt)
+    except Exception: return (int(st) if st.isdigit() else 0), txt
+def check(n,c,d=""):
+    (notes if c else fails).append(f"{'PASS' if c else 'FAIL'}  {n}"+(f"  — {d}" if d else "")); return c
+
+print("A  one price, five commerce grammars")
+_,cat = http("/capability")
+x402 = {c["name"]: c["priceUsd"] for c in cat["capabilities"] if c["priced"]}
+_,ucp = http("/ucp/catalog");  _,acp = http("/acp/products");  _,beckn = http("/beckn/search")
+def prices(doc, path):
+    out={}
+    items = doc.get("products") if path!="beckn" else \
+            doc["message"]["catalog"]["bpp/providers"][0]["items"]
+    for i in items:
+        nm = i.get("id") or i.get("name")
+        pv = i.get("price",{})
+        out[nm]=float(pv.get("value", pv) if isinstance(pv,dict) else pv)
+    return out
+for nm,doc in (("UCP",ucp),("ACP",acp),("Beckn",beckn)):
+    p = prices(doc,"beckn" if nm=="Beckn" else "x")
+    diverged=[k for k in x402 if k in p and abs(p[k]-x402[k])>1e-9]
+    check(f"{nm} prices match the x402 catalogue", not diverged,
+          f"{len(x402)} priced, diverged: {diverged}")
+    bad_quotes=[]
+    for k,v in x402.items():
+        _,q = http(f"/mpp/quote?capability={k}")
+        if not isinstance(q,dict):
+            bad_quotes.append(f"{k}: non-JSON"); continue
+        if abs(float(q.get('amount',0))-v)>1e-9:
+            bad_quotes.append(f"{k}: {q.get('amount')} vs {v}")
+    check(f"MPP quotes match the catalogue ({nm} pass)", not bad_quotes,
+          f"{len(x402)} checked" + (f" bad={bad_quotes}" if bad_quotes else ""))
+
+print("B  the same estate through every read path")
+_,est = http("/studio/v1/fleming/estate")   # session-gated -> expect refusal, not a wrong number
+_,cov = http("/ogc/collections/parcels/items?limit=1")
+_,reso = http("/reso/Property?limit=1")
+check("OGC and RESO both answer over the same source", 
+      cov.get("features_source")=="src:tad-parcel-view" and isinstance(reso.get("value"),list),
+      cov.get("features_source"))
+
+print("C  scale: deep pages over 6.5M receipted rows")
+for n in (100, 900):
+    t0=time.time(); st,d = http(f"/reso/Property?limit={n}", t=600); dt=time.time()-t0
+    got=len(d.get("value",[])) if isinstance(d,dict) else 0
+    check(f"RESO serves {n} rows", st==200 and got==n, f"{got} rows in {dt:.1f}s")
+# Beyond what fits in one page the projection must refuse, not truncate: a cut
+# body under application/json is invalid JSON presented as a success.
+st,d = http("/reso/Property?limit=1000", t=600)
+check("an oversized page refuses instead of truncating",
+      st==413 and isinstance(d,dict) and d.get("error")=="page_too_large",
+      f"status {st}, error {d.get('error') if isinstance(d,dict) else 'non-JSON'}")
+
+print("D  every projection stays spec-shaped under load")
+shapes = {
+ "/ap/actor": lambda d: d.get("type")=="Service" and "@context" in d,
+ "/.well-known/agent.json": lambda d: isinstance(d.get("skills"),list),
+ "/wot/thing": lambda d: d.get("@context","").startswith("https://www.w3.org/2022/wot"),
+ "/epcis/events": lambda d: d.get("type")=="EPCISDocument",
+ "/cap/alerts": lambda d: d.get("version")=="1.2",
+ "/openrtb/bidrequest": lambda d: "imp" in d,
+ "/mismo/subject-property": lambda d: "MESSAGE" in d,
+ "/ogc/conformance": lambda d: any("ogcapi-features" in c for c in d.get("conformsTo",[])),
+}
+bad=[]
+for path,ok in shapes.items():
+    st,d = http(path)
+    if st!=200 or not (isinstance(d,dict) and ok(d)): bad.append(f"{path}({st})")
+check("all protocol documents remain spec-shaped", not bad, f"{len(shapes)-len(bad)}/{len(shapes)} ok"+(f" bad={bad}" if bad else ""))
+
+print("E  honest emptiness is still honest")
+for p in ("/cap/alerts","/epcis/events","/openrtb/bidrequest"):
+    st,d = http(p)
+    check(f"{p} explains its empty collection", bool(d.get("empty_reason")), (d.get("empty_reason") or "")[:48])
+
+print("BOOK vs CATALOGUE — pricing is a fact about the book, delivery about the organs")
+_,cat2 = http("/capability")
+caps = cat2.get("capabilities") or []
+check("the executable catalogue advertises real capabilities", len(caps) > 0, f"{len(caps)} capabilities")
+# One book means the grammars cannot disagree. Assert it per capability rather
+# than in aggregate, so a single divergent entry cannot hide behind a total.
+disagree, unpriced = [], []
+for c in caps:
+    nm = c["name"]
+    _,x = http(f"/capability/{nm}")
+    _,m = http(f"/mpp/quote?capability={nm}")
+    xp = ((x.get("accepts") or [{}])[0].get("extra") or {}).get("priceUsd") if isinstance(x, dict) else None
+    mp = (m.get("price_usd") or m.get("priceUsd")) if isinstance(m, dict) else None
+    if xp and mp:
+        if abs(float(xp) - float(mp)) > 1e-9: disagree.append((nm, xp, mp))
+    elif not xp:
+        unpriced.append(nm)
+check("x402 and MPP quote the same number for every capability", not disagree, str(disagree))
+check("an unpriced capability refuses rather than quoting nothing as free",
+      all("not_for_sale" in json.dumps(http(f"/capability/{n}")[1]) for n in unpriced),
+      f"unpriced: {unpriced}" if unpriced else "all capabilities priced")
+
+
+
+print("MACHINE WEB — the cheap tier, which existed nowhere before")
+_,rb = http("/robots.txt")
+check("robots.txt exists and points at the sitemap",
+      isinstance(rb, str) and "Sitemap: " in rb and "Disallow: /studio/" in rb)
+st,sm = http("/sitemap.xml")
+check("sitemap index enumerates the families", st==200 and "sitemap-notes.xml" in sm)
+st,sn = http("/sitemap-notes.xml")
+# The sitemap is a publication claim: what it lists, the reader path must serve.
+import re as _re
+listed = _re.findall(r"<loc>[^<]*?/(notes/[^<]+)</loc>", sn if isinstance(sn,str) else "")
+bad = [r for r in listed if http("/" + r)[0] != 200]
+check("everything the sitemap claims is actually served to a stranger",
+      not bad, f"{len(listed)} listed, unreachable: {bad}")
+st,fd = http("/feed.xml")
+check("atom feed is well-formed and carries entries",
+      st==200 and "<feed" in fd and "<entry>" in fd)
+# A rel=alternate that lies is worse than no alternate at all.
+import subprocess as _sp
+def _accept(path, mime):
+    r=_sp.run(["curl","-sS","-m","20","-H",f"Accept: {mime}",f"{BASE}{path}"],
+              capture_output=True,text=True).stdout
+    return r
+j = _accept("/room/parcel/04111877", "application/json")
+ld = _accept("/room/parcel/04111877", "application/ld+json")
+h = _accept("/room/parcel/04111877", "text/html")
+check("the advertised JSON alternate really returns JSON", j.lstrip().startswith("{"))
+check("the advertised linked-data alternate really returns JSON-LD",
+      '"@context"' in ld and "schema.org" in ld)
+check("and the same address still serves HTML to a person", h.lstrip().startswith("<!doctype"))
+check("every representation describes the same subject",
+      "04111877" in j and "04111877" in ld and "04111877" in h)
+check("the machine representations state what they are not",
+      "not" in j.lower() and "appraisal" in j.lower())
+# A crawler's refetch should cost headers, not a body.
+tag = _sp.run(["curl","-sSI","-m","20",f"{BASE}/sitemap.xml"],capture_output=True,text=True).stdout
+etag = _re.search(r"(?i)^etag:\s*(\S+)", tag, _re.M)
+check("HEAD is answered with a validator", bool(etag), (etag.group(1) if etag else "no etag"))
+if etag:
+    code = _sp.run(["curl","-sS","-m","20","-o","/dev/null","-w","%{http_code}",
+                    "-H",f"If-None-Match: {etag.group(1)}",f"{BASE}/sitemap.xml"],
+                   capture_output=True,text=True).stdout
+    check("a conditional refetch is answered 304, not a second body", code=="304", code)
+
+
+print("ARTIFACT FAMILY — one subject, many cheap machine contracts")
+PARCEL = "04111877"
+_,mf = http(f"/subjects/parcel/{PARCEL}/manifest.json")
+reps = {r["name"]: r for r in (mf.get("representations") or [])} if isinstance(mf, dict) else {}
+check("a manifest names the family", len(reps) >= 4, str(sorted(reps)))
+missing = []
+for name, r in reps.items():
+    code, _ = http(f"/subjects/parcel/{PARCEL}/{name}")
+    if code != 200:
+        missing.append((name, code))
+check("every representation the manifest names is actually served", not missing, str(missing))
+_,ix = http(f"/subjects/parcel/{PARCEL}/index.json")
+_,gj = http(f"/subjects/parcel/{PARCEL}/map.geojson")
+check("the representations agree on the subject",
+      isinstance(ix, dict) and isinstance(gj, dict)
+      and ix.get("account") == PARCEL == gj.get("properties", {}).get("account"))
+check("absent geometry is null and says why",
+      isinstance(gj, dict) and gj.get("geometry") is None
+      and "not a coordinate" in (gj.get("geometry_absent_because") or ""))
+check("each machine representation carries what it is not",
+      isinstance(ix, dict) and "appraisal" in " ".join(ix.get("not") or []))
+_,sub = http("/sitemap-subjects.xml")
+check("subjects are crawlable at all",
+      isinstance(sub, str) and sub.count("<url>") > 100,
+      f"{sub.count('<url>') if isinstance(sub,str) else 0} subject urls")
+
+
+print("WEBSUB — push, and the checks that make push safe")
+import subprocess as _s, hmac as _h, hashlib as _hash
+TK = "testtoken0000000000000000000001"
+SECRET = b"supersecret"
+def _get(q): return http(f"/websub/{TK}?{q}")
+def _post(payload, sig):
+    argv = ["curl","-sS","-m","30","-o","/dev/null","-w","%{http_code}","-X","POST",
+            f"{BASE}/websub/{TK}","-d",payload.decode()]
+    if sig: argv += ["-H", f"X-Hub-Signature: sha256={sig}"]
+    return _s.run(argv, capture_output=True, text=True).stdout.strip()
+code,_ = http("/websub/unknowntoken000000000000000000")
+check("an unknown callback is refused", code == 404, str(code))
+code,body = _get("hub.mode=subscribe&hub.topic=https%3A%2F%2Fevil.example%2Ff&hub.challenge=zz")
+check("a hub cannot enrol us into a topic we did not choose", code == 404, str(code))
+code,body = _get("hub.mode=subscribe&hub.topic=https%3A%2F%2Faurekai.life%2Ffeed.xml&hub.challenge=zz9")
+check("the right topic is verified by echoing the challenge",
+      code == 200 and "zz9" in str(body), f"{code} {str(body)[:20]}")
+payload = b'{"changed":"circuit"}'
+good = _h.new(SECRET, payload, _hash.sha256).hexdigest()
+bad  = _h.new(b"wrongsecret", payload, _hash.sha256).hexdigest()
+check("an unsigned delivery on a signed subscription is refused", _post(payload, None) == "403")
+check("a forged signature is refused", _post(payload, bad) == "403")
+check("a correct signature is accepted", _post(payload, good) == "204")
+
+
+print("MEMBRANE — the machine world, as institutional state")
+# /membrane is a surface for a person; a machine asking for */* falls through to
+# the descriptor by design, so ask the way a browser asks.
+import subprocess as _sp2
+mb = _sp2.run(["curl","-sS","-m","30","-H","Accept: text/html",f"{BASE}/membrane"],
+              capture_output=True, text=True).stdout
+st = 200 if mb.lstrip().startswith("<!doctype") else 0
+check("the membrane has a surface", st == 200 and "both directions" in str(mb))
+check("it reports outbound readers by purpose",
+      "Machines that read us" in str(mb) and "requests" in str(mb))
+check("it reports inbound sources by what they cost",
+      "Sources we read" in str(mb) and "rung" in str(mb))
+check("it states that a declared identity is not a credential",
+      "not a credential" in str(mb))
+check("it states what a passport is not",
+      "never what its documents assert" in str(mb))
+_,idx = http("/")
+check("the membrane is reachable from the landing surface",
+      isinstance(idx, str) and 'href="/membrane"' in idx)
+
+print("\n".join(notes+fails)); print(f"\n{len(notes)} passed, {len(fails)} FAILED")

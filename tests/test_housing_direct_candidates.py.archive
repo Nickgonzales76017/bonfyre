@@ -1,0 +1,101 @@
+from __future__ import annotations
+
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT / "tools"))
+
+import housing_direct_candidates as direct  # noqa: E402
+
+
+def receipt(body_path: Path, digest: str) -> dict:
+    return {
+        "twin_id": "direct-fixture",
+        "source_url": "https://fixture.appfolio.com/listings/listings",
+        "body_path": str(body_path),
+        "content_sha256": digest,
+        "observed_at": "2026-08-24T00:00:00Z",
+        "observe_right": "public",
+        "policy_decision": "allow",
+        "fetch_attempted": True,
+        "robots_transport_exit": 0,
+        "robots_http_status": 200,
+        "observation_kind": "source_observed",
+    }
+
+
+def test_projects_unit_candidate_only_from_receipted_matching_body(tmp_path: Path) -> None:
+    body = tmp_path / "portal.html"
+    body.write_text('''<div class="js-listing-item"><a href="/listings/detail/12345678-abcd">x</a>
+    <span class="js-listing-title"><a>Fixture home</a></span>
+    <span class="js-listing-blurb-rent">$1,500</span>
+    <span class="js-listing-blurb-bed-bath">3 bd / 2 ba</span>
+    <span class="js-listing-available">NOW</span>
+    <img alt="1 Fixture Lane, Dallas, TX 75201"></div>''', encoding="utf-8")
+    digest = hashlib.sha256(body.read_bytes()).hexdigest()
+    candidates, boundaries = direct.derive_candidates([receipt(body, digest)], REPO_ROOT, {"direct-fixture"})
+    assert not boundaries
+    assert len(candidates) == 1
+    row = candidates[0]
+    assert row["candidate_scope"] == "unit"
+    assert row["exact_unit_rent"] == 1500.0
+    assert row["source_content_sha256"] == digest
+    assert row["source_policy_evidence"] == {
+        "observe_right": "public", "policy_decision": "allow", "fetch_attempted": True,
+        "robots_transport_exit": 0, "robots_http_status": 200,
+    }
+    assert row["availability_claim"] is False
+    assert row["availability_verified"] is False
+    assert row["availability_status"] == "candidate_only"
+
+
+def test_refuses_digest_mismatch_and_preserves_foreign_rows(tmp_path: Path) -> None:
+    body = tmp_path / "portal.html"
+    body.write_text("changed body", encoding="utf-8")
+    candidates, boundaries = direct.derive_candidates([receipt(body, "0" * 64)], REPO_ROOT, {"direct-fixture"})
+    assert not candidates
+    assert boundaries[0]["reason"] == "body_missing_or_digest_mismatch_or_not_observed"
+    output = tmp_path / "availability-candidates.jsonl"
+    foreign = {"schema": "bonfyre-availability-candidate.v1", "candidate_id": "foreign"}
+    output.write_text(json.dumps(foreign) + "\n", encoding="utf-8")
+    assert direct.merge_owned_jsonl(output, []) == 1
+    assert [json.loads(line) for line in output.read_text(encoding="utf-8").splitlines()] == [foreign]
+
+
+def test_marks_unreobserved_owned_rows_provenance_unknown(tmp_path: Path) -> None:
+    output = tmp_path / "availability-candidates.jsonl"
+    legacy = {"schema": direct.SCHEMA, "candidate_id": "legacy-direct"}
+    output.write_text(json.dumps(legacy) + "\n", encoding="utf-8")
+    assert direct.merge_owned_jsonl(output, []) == 1
+    row = json.loads(output.read_text(encoding="utf-8"))
+    assert row["provenance_status"] == "provenance_unknown"
+    assert "current ForeignTwin policy evidence" in row["provenance_unknown_reason"]
+
+
+def test_stale_receipt_does_not_obscure_matching_refresh(tmp_path: Path) -> None:
+    body = tmp_path / "portal.html"
+    body.write_text('''<div class="js-listing-item"><a href="/listings/detail/12345678-abcd">x</a>
+    <span class="js-listing-blurb-rent">$1,500</span></div>''', encoding="utf-8")
+    fresh = receipt(body, hashlib.sha256(body.read_bytes()).hexdigest())
+    stale = receipt(body, "0" * 64)
+    candidates, boundaries = direct.derive_candidates([stale, fresh], REPO_ROOT, {"direct-fixture"})
+    assert len(candidates) == 1
+    assert not boundaries
+
+
+def test_refuses_retained_body_without_current_foreign_twin_policy_evidence(tmp_path: Path) -> None:
+    body = tmp_path / "portal.html"
+    body.write_text('<div class="js-listing-item"><span class="js-listing-blurb-rent">$1,500</span></div>', encoding="utf-8")
+    legacy = receipt(body, hashlib.sha256(body.read_bytes()).hexdigest())
+    del legacy["robots_http_status"]
+    candidates, boundaries = direct.derive_candidates([legacy], REPO_ROOT, {"direct-fixture"})
+    assert candidates == []
+    assert boundaries == [{
+        "twin_id": "direct-fixture",
+        "source_url": "https://fixture.appfolio.com/listings/listings",
+        "reason": "robots_preflight_not_successful",
+    }]

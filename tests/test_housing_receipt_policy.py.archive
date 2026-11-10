@@ -1,0 +1,36 @@
+"""Regression fence for policy-bound housing receipt admission."""
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+import pytest
+
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
+from housing_receipt_policy import admission_failure  # noqa: E402
+
+
+RECEIPT = {
+    "observe_right": "public",
+    "policy_decision": "allow",
+    "fetch_attempted": True,
+    "robots_transport_exit": 0,
+    "robots_http_status": 200,
+}
+
+
+@pytest.mark.parametrize(("change", "expected"), [
+    ({"observe_right": "denied"}, "missing_public_observe_right"),
+    ({"policy_decision": "robots_disallow"}, "missing_allow_policy_decision"),
+    ({"fetch_attempted": False}, "missing_fetch_attempt"),
+    ({"robots_transport_exit": 1}, "robots_preflight_not_successful"),
+    ({"robots_http_status": 500}, "robots_preflight_not_successful"),
+])
+def test_every_foreign_twin_policy_fact_is_required(change: dict, expected: str) -> None:
+    assert admission_failure({**RECEIPT, **change}) == expected
+
+
+def test_successful_404_robots_preflight_is_current_policy_evidence() -> None:
+    assert admission_failure({**RECEIPT, "robots_http_status": 404}) is None

@@ -1,0 +1,85 @@
+"""ARCHIVED: fleming_close_circuit.mjs carries the outside-agent assertions.
+
+Not endpoint-by-endpoint: one workflow that has to hold together across
+discovery, pricing, payment refusal, open projections, cross-reference, work,
+settlement and the event log. Every step asserts on real content, not status.
+"""
+import json, subprocess, sys, time
+
+BASE = "https://aurekai.life"
+fails, notes = [], []
+
+def http(path, method="GET", body=None, hdrs=None, timeout=240):
+    cmd = ["curl","-sS","-m",str(timeout),"-X",method,f"{BASE}{path}",
+           "-w","\n__STATUS__%{http_code}"]
+    for k,v in (hdrs or {}).items(): cmd += ["-H",f"{k}: {v}"]
+    if body is not None:
+        cmd += ["-H","Content-Type: application/json","-d",json.dumps(body)]
+    r = subprocess.run(cmd, capture_output=True, text=True).stdout
+    txt, _, st = r.rpartition("\n__STATUS__")
+    try: return int(st), json.loads(txt)
+    except Exception: return (int(st) if st.isdigit() else 0), txt
+
+def check(name, cond, detail=""):
+    (notes if cond else fails).append(f"{'PASS' if cond else 'FAIL'}  {name}" + (f"  — {detail}" if detail else ""))
+    return cond
+
+print("STEP 1  agent discovers this world (A2A)")
+st, card = http("/.well-known/agent.json")
+check("agent card advertises skills", st==200 and len(card.get("skills",[]))>0,
+      f"{len(card.get('skills',[]))} skills")
+
+print("STEP 2  agent reads the priced catalogue (x402)")
+st, cat = http("/capability")
+caps = {c["name"]: c for c in cat.get("capabilities",[])}
+check("catalogue lists capabilities", st==200 and len(caps)>0, f"{len(caps)} listed")
+priced = [n for n,c in caps.items() if c.get("priced")]
+check("at least one capability is priced", len(priced)>0, f"priced: {priced}")
+
+print("STEP 3  agent asks for a quote (MPP) and compares to the catalogue")
+if priced:
+    name = priced[0]
+    st, q = http(f"/mpp/quote?capability={name}")
+    same = abs(float(q.get("amount",-1)) - float(caps[name]["priceUsd"])) < 1e-9
+    check("MPP quote equals the catalogue price", st==200 and same,
+          f"{name}: quote {q.get('amount')} vs catalogue {caps[name]['priceUsd']}")
+
+print("STEP 4  agent attempts to buy without paying")
+if priced:
+    st, resp = http(f"/capability/{priced[0]}")
+    accepts = (resp or {}).get("accepts",[{}])[0] if isinstance(resp,dict) else {}
+    check("unpaid request is 402 with x402 requirements", st==402 and accepts.get("scheme")=="exact",
+          f"status {st}, scheme {accepts.get('scheme')}, network {accepts.get('network')}")
+    st2, resp2 = http(f"/capability/{priced[0]}", hdrs={"X-PAYMENT":"eyJmYWtlIjoxfQ=="})
+    check("unverified payment does not deliver goods", st2==402,
+          f"status {st2}, error {resp2.get('error') if isinstance(resp2,dict) else ''}")
+
+print("STEP 5  agent falls back to open projections and cross-references them")
+st, reso = http("/reso/Property?limit=25")
+rows = reso.get("value",[]) if isinstance(reso,dict) else []
+check("RESO returns property records", st==200 and len(rows)>0, f"{len(rows)} rows")
+st, ogc = http("/ogc/collections/parcels/items?limit=25")
+check("OGC returns a FeatureCollection", st==200 and ogc.get("type")=="FeatureCollection")
+# The two projections must describe the SAME underlying parcels.
+reso_keys = {r.get("ListingKey") for r in rows if r.get("ListingKey")}
+ogc_rows = ogc.get("properties_rows",[]) if isinstance(ogc,dict) else []
+ogc_keys = {r.get("account") for r in ogc_rows if isinstance(r,dict)}
+overlap = reso_keys & ogc_keys
+check("RESO and OGC describe the same parcels", len(overlap)>0,
+      f"{len(overlap)} of {len(reso_keys)} keys shared")
+
+print("STEP 6  the projections agree with the estate itself")
+if rows:
+    sample = [r for r in rows if r.get("TaxAssessedValue")][:1]
+    if sample:
+        check("assessed value is a real number", isinstance(sample[0]["TaxAssessedValue"], (int,float)),
+              f"{sample[0]['ListingKey']} = {sample[0]['TaxAssessedValue']}")
+
+print("STEP 7  events reflect real work (CloudEvents)")
+st, ev = http("/events?limit=5")
+check("CloudEvents batch is spec-shaped", st==200 and isinstance(ev,list) and ev and
+      ev[0].get("specversion")=="1.0", f"{len(ev) if isinstance(ev,list) else 0} events")
+
+json.dump({"fails":fails,"notes":notes}, open("/tmp/circuit1.json","w"))
+print("\n".join(notes+fails))
+print(f"\n{len(notes)} passed, {len(fails)} FAILED")

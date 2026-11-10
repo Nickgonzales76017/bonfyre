@@ -1,0 +1,8 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"../cmd/BonfyreQueue/bonfyre-queue","binary_env":"BONFYRE_QUEUE_BIN","cases":[
+{"name":"a job is claimed once, a stale token cannot ack it, and the real token completes it","steps":[
+ {"argv":["enqueue","transcribe","in.wav","--db","q.db","--mission","m1"],"env":{"HOME":"${tmp}"},"exit":0,"at":{"result":"ok","status":"ready"}},
+ {"argv":["enqueue","transcribe","in.wav","--db","q.db","--mission","m1","--if-absent"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"argv":["enqueue","transcribe","in.wav","--db","q.db","--mission","m1"],"env":{"HOME":"${tmp}"},"exit":1},
+ {"argv":["depth","--db","q.db"],"env":{"HOME":"${tmp}"},"exit":0,"json":{"family":null,"total":1,"claimable":1,"running":0,"complete":0,"dead_letter":0}},
+ {"program":"sh","argv":["-c","Q=\"$1\"; T=$(\"$Q\" claim-next w1 --db q.db | sed 's/.*\"claim_token\":\"\\([^\"]*\\)\".*/\\1/'); \"$Q\" claim-next w2 --db q.db; \"$Q\" ack m1 job w1 bad --db q.db; \"$Q\" ack m1 job w1 \"$T\" --db q.db","sh","${root}/cmd/BonfyreQueue/bonfyre-queue"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["\"error_code\":\"no_eligible_node\"","\"result\":\"stale_claim\"","\"status\":\"complete\""]},
+ {"argv":["depth","--db","q.db"],"env":{"HOME":"${tmp}"},"exit":0,"json":{"family":null,"total":1,"claimable":0,"running":0,"complete":1,"dead_letter":0}}]}]}
