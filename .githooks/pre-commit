@@ -18,11 +18,19 @@ fi
 
 # 2. Keep the consumable index (MCP / BonfyreFS read it) in sync with the .yaff
 #    sources. If it changed, stage it so the commit carries a fresh index.
+#    The export stamps wall-clock time, so compare without the provenance
+#    line: stamp-only churn restores the committed bytes instead of staging.
 bun "$atlas" export >/dev/null
 index="$repo_root/architecture/atlas.index.json"
+strip_stamp() { sed -E '/^[[:space:]]*"generated_at": "[0-9T:.-]+Z"$/d'; }
 if [ -f "$index" ] && ! git diff --quiet -- "$index" 2>/dev/null; then
-  git add "$index"
-  echo "pre-commit: refreshed architecture/atlas.index.json"
+  if [ "$(git show HEAD:architecture/atlas.index.json 2>/dev/null | strip_stamp | git hash-object --stdin)" = \
+       "$(strip_stamp <"$index" | git hash-object --stdin)" ]; then
+    git checkout --quiet HEAD -- "$index"
+  else
+    git add "$index"
+    echo "pre-commit: refreshed architecture/atlas.index.json"
+  fi
 fi
 
 # 3. The native ratchet: the JS/script estate and installed JS runtimes may only
