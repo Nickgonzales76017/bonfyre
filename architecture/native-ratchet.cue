@@ -10,10 +10,10 @@ package nativeratchet
 budget: {
 	// Authored .mjs in the working tree (tracked or untracked, not ignored,
 	// vendored code excluded).
-	authored_mjs_files: 1485
-	authored_mjs_lines: 166496
+	authored_mjs_files: 1484
+	authored_mjs_lines: 166489
 	// .js/.cjs/.ts/.tsx/.py: retiring .mjs must not move the code sideways.
-	other_script_files: 80
+	other_script_files: 71
 	// .mjs that bun compiles into an executable. Only browser code, tests and
 	// thin edges may stay JS; anything installed as a program is C.
 	bun_compile_sites: 0
@@ -32,7 +32,7 @@ installed: {
 	// at link time (its code alone is ~3.1MB). This budget is raised to its
 	// standalone floor; it drops again only if WebAddress itself shrinks.
 	largest_bin_bytes: 3197392
-	installed_bonfyre_bytes: 11966964
+	installed_bonfyre_bytes: 11827082
 }
 
 #Measure: {
