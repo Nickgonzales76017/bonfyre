@@ -1,8 +1,8 @@
 schema WorkNode
 generation control-1
 authority native-kernel
-absorbs 10-Code/BonfyreControlPlane/work_graph.py
-absorbs 10-Code/BonfyreControlPlane/scheduling.py
+absorbs components/BonfyreControlPlane/work_graph.py
+absorbs components/BonfyreControlPlane/scheduling.py.archive
 note cooling is a property of a work edge, not a second scheduler
 
 field id

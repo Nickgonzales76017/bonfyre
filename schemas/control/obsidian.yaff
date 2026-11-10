@@ -1,0 +1,190 @@
+schema ObsidianVaultBinding
+generation obsidian-1
+authority BonfyreObsidian + calling account boundary
+
+field account
+  type text
+  required true
+  role account-subject-as-named-by-the-caller
+field name
+  type text
+  required true
+  role per-account-vault-name
+field vault_id
+  type text
+  required true
+  role desktop-registry-id-or-local-digest
+field local_path
+  type text
+  required true
+  role real-path-inside-an-allowed-root
+field transport
+  type enum[cli,headless,files]
+  required true
+  role how-reads-writes-and-sync-reach-the-vault
+field sync_mode
+  type enum[bidirectional,pull-only,mirror-remote]
+  required true
+field conflict_strategy
+  type enum[merge,conflict]
+  required true
+field excluded_folders
+  type set[text]
+  role headless-sync-and-snapshot-exclusions
+field device_name
+  type text
+  required true
+field remote_vault
+  type text
+  role remote-vault-id-or-name-given-to-ob
+field config_dir
+  type text
+  required true
+  role obsidian-settings-folder-never-written
+field state
+  type enum[bound,sync-configured,syncing]
+  required true
+
+invariant one-folder-one-account
+  statement a real folder is bound at most once across all accounts, and never inside or around another bound folder
+invariant same-answer-for-foreign-and-absent
+  statement a verb naming a vault another account bound is refused exactly as a vault nobody bound, so names cannot be probed
+invariant allowed-roots
+  statement local_path is the folder's real path after symlinks and must lie inside one of the configured roots
+forbidden_inference a binding -> the account owns, pays for or may share the remote Obsidian vault
+forbidden_inference an account name on a binding -> that the caller authenticated as that account; the calling boundary authenticates
+
+schema ObsidianNoteRef
+generation obsidian-1
+authority BonfyreObsidian
+
+field path
+  type text
+  required true
+  role vault-relative-slash-path
+field sha256
+  type text
+  role bytes-read-or-written
+
+invariant contained
+  statement no empty, dot or dot-dot component, no dot-led component, never the config folder whatever its case; reads resolve inside the vault's real root, writes refuse a symlink anywhere on the path
+forbidden_inference a note path -> the note exists in the app's index; the app may not have rescanned yet
+
+schema ObsidianTaskRef
+generation obsidian-1
+authority BonfyreObsidian
+
+field ref
+  type text
+  required true
+  role path-colon-line
+field status
+  type enum[todo,done,other]
+  required true
+field mark
+  type text
+  required true
+forbidden_inference a task ref -> a stable identity; line numbers move when the note is edited
+
+schema ObsidianGuardDecision
+generation obsidian-1
+authority BonfyreObsidian
+
+field decision
+  type enum[allow,refuse]
+  required true
+field code
+  type enum[clear,transport,desktop-sync-enabled,desktop-sync-reported,headless-other-account,headless-unscoped]
+  required true
+field reason
+  type text
+  required true
+field evidence
+  type text
+
+invariant refuse-when-unclear
+  statement desktop Sync and Headless Sync never run on one device for one vault; the Sync core plugin enabled, a running app reporting Sync, or another headless setup for the folder each refuse
+forbidden_inference allow -> desktop Sync is off for this vault; only this device's settings and running app were read
+
+schema ObsidianSyncRun
+generation obsidian-1
+authority BonfyreObsidian + Obsidian Headless
+
+field run_id
+  type u64
+  required true
+field receipt_id
+  type text
+  required true
+field kind
+  type enum[sync-setup,sync-config,sync-once,sync-start]
+  required true
+field argv
+  type text
+  required true
+  role never-holds-a-secret
+field exit_code
+  type i64
+  required true
+field outcome
+  type enum[ok,failed,timed-out,started]
+  required true
+field log_path
+  type text
+  required true
+forbidden_inference outcome ok -> the remote vault and the folder agree; ob reported success for one pass
+
+schema ObsidianReceipt
+generation obsidian-1
+authority BonfyreObsidian
+
+field receipt_id
+  type text
+  required true
+field verb
+  type text
+  required true
+field binding
+  type text
+  required true
+field target
+  type text
+  required true
+field outcome
+  type enum[ok,refused,failed]
+  required true
+field via
+  type enum[cli,native,headless]
+  required true
+field sha_before
+  type text
+field sha_after
+  type text
+
+invariant no-content
+  statement a receipt holds paths, digests, codes and reasons; never note content and never a credential
+
+schema ObsidianSnapshot
+generation obsidian-1
+authority BonfyreObsidian
+
+field snapshot_id
+  type u64
+  required true
+field files
+  type u64
+  required true
+field manifest_digest
+  type text
+  required true
+  role sha256-over-path-sha-size-lines
+field rehashed
+  type u64
+  required true
+field reused
+  type u64
+  required true
+
+invariant incremental
+  statement a file whose size and mtime match the previous snapshot keeps its recorded sha256; every other file is hashed again
+forbidden_inference equal size and mtime -> equal bytes; a writer that restores mtime would be missed until a full rehash

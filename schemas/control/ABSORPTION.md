@@ -1,7 +1,7 @@
 # Control-plane absorption status
 
 Tracks the 12-step migration from the frozen Python reference
-(`10-Code/BonfyreControlPlane`) into the kernel. The reference remains the
+(`components/BonfyreControlPlane`) into the kernel. The reference remains the
 conformance oracle; the kernel is the authority.
 
 ## Deviation from the original plan
@@ -67,7 +67,7 @@ bf_provider_fold              provider health as a fold; a transient
 bf_provider_parse_reset       recovers "Aug 19th, 2026 10:53 PM" and ISO forms
 bf_provider_is_hard_capacity  matches "usage limit", covering the real Codex
                               string Run 6's matcher missed
-bf_admission_decide           protected floor, per-plane quota, outstanding
+bf_control_admission_decide   protected floor, per-plane quota, outstanding
                               grants subtracted; admit/defer/reject distinguished
 bf_attention_check            cools after repeated unchanged checks, refuses to
                               cool without a reheat condition
@@ -78,10 +78,28 @@ bf_capability_*               the maturity ladder, callable floor, proven floor,
 Verified by `zig build test-control` — 15 checks, 0 failures, against vectors
 generated from the frozen reference.
 
-## Not covered by any native code
+## Additional institutional owners absorbed after the control vectors
 
-`external_events.py` (the occurrence spine) and `actors.py` (typed relationship
-edges with mandatory provenance) have no native equivalent. Until they do, the
-Python reference is still the only implementation of those semantics, and step
-12 cannot proceed. Both are storage-shaped rather than pure-fold-shaped, so they
-need the SQLite layer `engine/core` already links, not just a header.
+These are deliberately separate from the pure control-fold table above: each
+owns either an institutional SQLite relation or a bounded native compilation
+step, and each shares the reference relation rather than creating a parallel
+truth store.
+
+| Former Python boundary | Native owner | Declaration / witness | Archive state |
+|---|---|---|---|
+| CommitmentGraph | `bf_commitment_*` | `schemas/control/commitment.{yaff,cue}` / `engine/core/tests/commitment_test.c` | Compatibility callers remain: ProtocolContract is being migrated. |
+| OccurrenceOrigin | `bf_occurrence_origin_*` | `schemas/control/occurrence-origin.{yaff,cue}` / `engine/core/tests/occurrence_origin_test.c` | ForeignLive remains the last Python caller. |
+| InformationPolicy | `bf_information_policy_*` | `schemas/control/information-policy.cue` / `engine/core/tests/information_policy_test.c` | Projection callers remain. |
+| CommerceChain | `bf_commerce_*` | `schemas/control/commerce.{yaff,cue}` / `engine/core/tests/commerce_test.c` | **Archived**: source and witness point to the native replacement. |
+| ProtocolContract | `bf_protocol_contract_*` | `schemas/control/protocol-contract.{yaff,cue}` / `engine/core/tests/protocol_contract_test.c` | Pattern/library/evidence/work adapters remain. |
+| StandingAddress | `bf_standing_*` | `schemas/control/standing-address.{yaff,cue}` / `engine/core/tests/standing_address_test.c` | SurfacePattern still consumes the compatibility action catalogue. |
+
+## Retirement blockers
+
+OccurrenceSpine and ActorGraph have native SQLite owners now. The remaining
+problem is caller migration, not absence of a native model: ProtocolLibrary and
+its evidence/work/program adapters still construct Python ProtocolContract
+objects; DomainProfile/PublicationProgram/StandingAddress still evaluate the
+compatibility disclosure and surface declarations; and ForeignLive still files
+origins through its reference caller. Those must bind the native APIs before
+the corresponding Python references are archived.

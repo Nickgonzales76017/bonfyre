@@ -1,0 +1,51 @@
+{
+  "schema": "bonfyre-role-program-spec.v1",
+  "cannot_infer": "a role program or assignment -> a distinct Actor kind, authority grant, provider access, institutional role, employment, or completed effect",
+  "roles": [
+    {
+      "role_id": "brand-operator",
+      "label": "Brand Operator",
+      "subject_kinds": ["product_identity", "merchant_offer", "price_observation", "availability_observation", "project"],
+      "relationship_kinds": ["operates", "represents", "contributes_to", "supports"],
+      "search_scopes": ["external-estate:public", "commerce:public-observation"],
+      "lenses": ["brand", "demand", "merchant-offers", "economics"],
+      "work_queues": ["demand-gaps", "launch-candidates", "supplier-issues", "inventory-risk", "customer-complaints"],
+      "capability_programs": ["observe-demand", "compare-products", "source-supplier", "inspect-economics"],
+      "authority_requirements": ["brand:write", "merchant:offer", "budget:approved", "campaign:publish"],
+      "requested_operations": ["ProductOpportunity.create", "DemandProbe.form", "MerchantOffer.create", "Campaign.launch"],
+      "metric_views": ["sell-through", "margin", "return-rate", "conversion", "repeat-purchase", "inventory-days"],
+      "handoff_contracts": ["supplier-review", "campaign-approval", "inventory-replenishment"],
+      "surface_scene": {"focus": "commerce", "presentation": "operator", "workspace": "brand"}
+    },
+    {
+      "role_id": "go-to-market-engineer",
+      "label": "Go-to-Market Engineer",
+      "subject_kinds": ["project", "program_instance", "capability_program", "service_offer"],
+      "relationship_kinds": ["operates", "contributes_to", "supports", "represents"],
+      "search_scopes": ["external-estate:public", "capabilities:public"],
+      "lenses": ["accounts", "technical-requirements", "integration", "usage-evidence"],
+      "work_queues": ["qualification", "prototype", "integration-blockers", "demo-readiness", "handoff"],
+      "capability_programs": ["inspect-capability", "prototype-integration", "instrument-usage"],
+      "authority_requirements": ["organization:write", "deployment:approve", "demo:publish"],
+      "requested_operations": ["Opportunity.qualify", "Integration.prototype", "Deployment.assist", "Project.join"],
+      "metric_views": ["activation", "time-to-value", "conversion", "usage"],
+      "handoff_contracts": ["sales-to-implementation", "implementation-to-success"],
+      "surface_scene": {"focus": "go-to-market", "presentation": "operator", "workspace": "gtm"}
+    },
+    {
+      "role_id": "internet-operator",
+      "label": "Internet Operator",
+      "subject_kinds": ["community_body", "publication_occurrence", "project", "governance_proposal"],
+      "relationship_kinds": ["operates", "moderates", "publishes", "hosts", "supports"],
+      "search_scopes": ["external-estate:public", "communities:public", "publications:public"],
+      "lenses": ["community", "publication", "events", "governance"],
+      "work_queues": ["moderation", "publication", "event-follow-up", "community-requests", "funding"],
+      "capability_programs": ["curate-public-material", "host-local-occurrence", "coordinate-community"],
+      "authority_requirements": ["community:moderate", "publisher:publish", "project:write"],
+      "requested_operations": ["Community.join", "Occurrence.follow", "Project.support", "Community.publish", "Occurrence.host"],
+      "metric_views": ["participation", "retention", "publication-reach", "support"],
+      "handoff_contracts": ["moderation-review", "publication-review", "governance-decision"],
+      "surface_scene": {"focus": "internet", "presentation": "operator", "workspace": "internet"}
+    }
+  ]
+}

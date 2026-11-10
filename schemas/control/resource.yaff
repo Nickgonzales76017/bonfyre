@@ -1,9 +1,9 @@
 schema Resource
 generation control-1
 authority native-kernel
-absorbs 10-Code/BonfyreControlPlane/actors.py
-absorbs 10-Code/BonfyreControlPlane/provider_state.py
-absorbs 10-Code/BonfyreControlPlane/resource_admission.py
+absorbs components/BonfyreControlPlane/actors.py
+absorbs components/BonfyreControlPlane/provider_state.py.archive
+absorbs components/BonfyreControlPlane/resource_admission.py.archive
 note one identity substrate; Actor Relationship Provider Admission are components
 
 field resource_id

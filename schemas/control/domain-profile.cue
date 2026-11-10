@@ -1,0 +1,152 @@
+package control
+
+// DomainProfile is the declared semantic meaning beneath several carrier
+// grammars.  This is source data for generated native descriptors, not a
+// second projection runtime: C owns evaluation and InformationPolicy owns the
+// disclosure decision.
+#DomainAudience: "self" | "household" | "group" | "community" | "public" | "market" | "institution"
+
+#DomainField: {
+	name: string & != ""
+	audiences: [#DomainAudience, ...#DomainAudience]
+	withhold_reason?: string
+}
+
+#CarrierField: {
+	semantic: string & != ""
+	carrier: string & != ""
+}
+
+#CarrierProjection: {
+	carrier: string & != ""
+	standard: string & != ""
+	container?: string
+	fields: [#CarrierField, ...#CarrierField]
+}
+
+#NativeDomainProfile: {
+	name: string & != ""
+	evidence_requirements: [string & != "", ...string]
+	fields: [#DomainField, ...#DomainField]
+	projections: [#CarrierProjection, ...#CarrierProjection]
+}
+
+parcelLiveSurface: "https://aurekai.life"
+parcelLiveRoutes: {
+    ogc: {path:"/ogc/collections/parcels/items", dig:["properties_rows", 0]}
+    reso: {path:"/reso/Property", dig:["value", 0]}
+    mismo: {path:"/mismo/subject-property", dig:["MESSAGE", "DEAL_SETS", "SUBJECT_PROPERTIES", 0]}
+}
+
+// The live parcel profile is one semantic record projected as OGC, RESO and
+// MISMO.  Field vocabulary stays here; carrier routes may not invent aliases.
+nativeDomainProfiles: [
+	{
+		name: "parcel"
+		evidence_requirements: ["assessment_roll_receipt"]
+		fields: [
+			{name:"account", audiences:["public", "market", "institution"]},
+			{name:"address", audiences:["public", "market", "institution"]},
+			{name:"city", audiences:["public", "market", "institution"]},
+			{name:"postal", audiences:["public", "market", "institution"]},
+			{name:"owner", audiences:["public", "market", "institution"]},
+			{name:"year_built", audiences:["public", "market", "institution"]},
+			{name:"living_area", audiences:["public", "market", "institution"]},
+			{name:"lot_sqft", audiences:["public", "market", "institution"]},
+			{name:"land_value", audiences:["public", "market", "institution"]},
+			{name:"total_value", audiences:["public", "market", "institution"]},
+			{name:"beds", audiences:["public", "market", "institution"]},
+			{name:"baths", audiences:["public", "market", "institution"]},
+			{name:"source_id", audiences:["public", "market", "institution"]},
+			{name:"territory", audiences:["public", "market", "institution"]},
+			{name:"owner_mailing_address", audiences:["self", "institution"], withhold_reason:"a mailing address is contactable and is not released with the assessment roll"},
+		]
+		projections: [
+			{carrier:"ogc", standard:"OGC API Features", container:"FeatureCollection", fields:[
+				{semantic:"account", carrier:"account"}, {semantic:"address", carrier:"address"},
+				{semantic:"city", carrier:"city"}, {semantic:"postal", carrier:"postal"},
+				{semantic:"owner", carrier:"owner"}, {semantic:"year_built", carrier:"year_built"},
+				{semantic:"living_area", carrier:"living_area"}, {semantic:"lot_sqft", carrier:"lot_sqft"},
+				{semantic:"land_value", carrier:"land_value"}, {semantic:"total_value", carrier:"total_value"},
+				{semantic:"beds", carrier:"beds"}, {semantic:"baths", carrier:"baths"},
+				{semantic:"source_id", carrier:"source_id"}, {semantic:"territory", carrier:"territory"},
+			]},
+			{carrier:"reso", standard:"RESO Web API", fields:[
+				{semantic:"account", carrier:"ListingKey"}, {semantic:"address", carrier:"UnparsedAddress"},
+				{semantic:"city", carrier:"City"}, {semantic:"postal", carrier:"PostalCode"},
+				{semantic:"owner", carrier:"OwnerName"}, {semantic:"year_built", carrier:"YearBuilt"},
+				{semantic:"beds", carrier:"BedroomsTotal"}, {semantic:"baths", carrier:"BathroomsTotalInteger"},
+				{semantic:"living_area", carrier:"LivingArea"}, {semantic:"lot_sqft", carrier:"LotSizeSquareFeet"},
+				{semantic:"land_value", carrier:"LandValue"}, {semantic:"total_value", carrier:"TaxAssessedValue"},
+			]},
+			{carrier:"mismo", standard:"MISMO 3.4", container:"MESSAGE.DEAL_SETS.SUBJECT_PROPERTIES", fields:[
+				{semantic:"account", carrier:"account"}, {semantic:"address", carrier:"address"},
+				{semantic:"city", carrier:"city"}, {semantic:"postal", carrier:"postal"},
+				{semantic:"year_built", carrier:"year_built"}, {semantic:"living_area", carrier:"living_area"},
+				{semantic:"land_value", carrier:"land_value"}, {semantic:"total_value", carrier:"total_value"},
+			]},
+		]
+	},
+	{
+		name: "live-moment"
+		evidence_requirements: ["media_clock_receipt"]
+		fields: [
+			{name:"occurrence", audiences:["public", "market", "institution"]},
+			{name:"at_ms", audiences:["public", "market", "institution"]},
+			{name:"kind", audiences:["public", "market", "institution"]},
+			{name:"value", audiences:["public", "market", "institution"]},
+			{name:"speaker", audiences:["public", "market", "institution"]},
+			{name:"source", audiences:["public", "market", "institution"]},
+		]
+		projections: [
+			{carrier:"cloudevents", standard:"CloudEvents 1.0", fields:[
+				{semantic:"occurrence", carrier:"subject"}, {semantic:"kind", carrier:"type"},
+				{semantic:"value", carrier:"data"}, {semantic:"at_ms", carrier:"time"},
+				{semantic:"source", carrier:"source"},
+			]},
+			{carrier:"activitypub", standard:"ActivityPub", fields:[
+				{semantic:"occurrence", carrier:"context"}, {semantic:"value", carrier:"content"},
+				{semantic:"speaker", carrier:"attributedTo"}, {semantic:"kind", carrier:"type"},
+			]},
+			{carrier:"atproto", standard:"ATProto", fields:[
+				{semantic:"occurrence", carrier:"subject"}, {semantic:"kind", carrier:"$type"},
+				{semantic:"value", carrier:"text"}, {semantic:"speaker", carrier:"did"},
+				{semantic:"at_ms", carrier:"createdAt"},
+			]},
+			{carrier:"mcp", standard:"MCP", fields:[
+				{semantic:"occurrence", carrier:"resource"}, {semantic:"kind", carrier:"kind"},
+				{semantic:"value", carrier:"value"}, {semantic:"at_ms", carrier:"at_ms"},
+				{semantic:"speaker", carrier:"speaker"}, {semantic:"source", carrier:"source"},
+			]},
+		]
+	},
+	{
+		name: "social-clip"
+		evidence_requirements: ["publication_receipt"]
+		fields: [
+			{name:"subject", audiences:["public", "market", "institution"]},
+			{name:"title", audiences:["public", "market", "institution"]},
+			{name:"body", audiences:["public", "market", "institution"]},
+			{name:"creator", audiences:["public", "market", "institution"]},
+			{name:"url", audiences:["public", "market", "institution"]},
+			{name:"published_at", audiences:["public", "market", "institution"]},
+			{name:"location", audiences:["public", "market", "institution"]},
+		]
+		projections: [
+			{carrier:"activitypub", standard:"ActivityPub", fields:[
+				{semantic:"subject", carrier:"context"}, {semantic:"body", carrier:"content"},
+				{semantic:"creator", carrier:"attributedTo"}, {semantic:"url", carrier:"url"},
+				{semantic:"published_at", carrier:"published"},
+			]},
+			{carrier:"atproto", standard:"ATProto", fields:[
+				{semantic:"subject", carrier:"subject"}, {semantic:"body", carrier:"text"},
+				{semantic:"creator", carrier:"did"}, {semantic:"url", carrier:"uri"},
+				{semantic:"published_at", carrier:"createdAt"},
+			]},
+			{carrier:"shortvideo", standard:"Short video", fields:[
+				{semantic:"title", carrier:"caption"}, {semantic:"url", carrier:"video_url"},
+				{semantic:"creator", carrier:"handle"},
+			]},
+		]
+	},
+]

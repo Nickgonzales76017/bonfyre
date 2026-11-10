@@ -1,0 +1,45 @@
+schema SurfacePresentationCell
+generation surface-presentation-cells-1
+authority SurfaceIR + AddressPlane + InformationPolicy
+
+field grammar
+  type enum[discover,stage,channels,community,board,spatial,listings,inbox,territory,observations,worlds,packs,link,studio,console]
+  role interaction-grammar
+
+field presentation_class
+  type enum[anonymous,personal,member_worker,operator]
+  role presentation-only
+
+field question
+  type text
+  role human-experience-wording
+
+field experience_character
+  type text
+  role human-experience-wording
+
+field visible_sections
+  type set[text]
+  role projection-shape
+
+field preferred_renderers
+  type set[text]
+  role lowering-preference
+
+field allowed_affordance_families
+  type set[text]
+  role offered-family-not-authority
+
+field requires
+  type set[relation,pack,habitat,work_scope,institution,information_policy]
+  role native-closure-input
+
+invariant complete-matrix
+  statement each interaction grammar has exactly one cell for each presentation class
+
+invariant presentation-not-standing
+  statement a cell describes what a resolved closure can look like; it never supplies actor identity, role, audience, entitlement, provider admission, payment, spend or effect authority
+
+forbidden_inference operator cell -> operator authority
+forbidden_inference personal cell -> an actor has a relation, Habitat or Pack closure
+forbidden_inference cell change -> a different candidate truth set without a corresponding native closure

@@ -1,7 +1,7 @@
 schema ProofFrontier
 generation control-1
 authority native-kernel
-absorbs 10-Code/BonfyreControlPlane/proof_frontier.py
+absorbs components/BonfyreControlPlane/proof_frontier.py
 note The anti-amnesia spine. WorkGraph says what work remains; this says what knowledge is settled, and therefore what work is permitted. FPQ is the motivating case: a garbage generation at the top layer kept authorizing an encoder rewrite at the bottom.
 
 truth_plane declared implemented measured proven

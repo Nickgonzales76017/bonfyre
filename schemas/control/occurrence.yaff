@@ -1,7 +1,7 @@
 schema Occurrence
 generation control-1
 authority native-kernel
-absorbs 10-Code/BonfyreControlPlane/external_events.py
+absorbs components/BonfyreControlPlane/external_events.py
 
 field id
   type u64

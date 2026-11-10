@@ -1,0 +1,38 @@
+schema RetentionRecord
+generation control-1
+authority engine/core/src/retention.c
+absorbs components/BonfyreControlPlane/retention_gc.py.archive
+
+field record_id
+  type text
+  role identity
+  required true
+
+field occurrence
+  type text
+  role occurrence-ref
+  required true
+
+field kind
+  type enum
+  values reaction presence chat utterance speaker topic entity place chapter clip_candidate cta claim sponsor_mention commerce
+  required true
+  note kind determines tier; callers may not select a weaker tier
+
+field written_at
+  type timestamp-ms
+  required true
+
+field body
+  type text
+  role material
+  default ""
+
+invariant body-and-history-are-distinct
+  statement collection removes body only after its declared lifetime and all holds end, while retaining a tombstone for institutional history
+
+invariant holds-outrank-clock
+  statement an elapsed lifetime permits consideration only; an active named hold prevents collection
+
+forbidden_inference elapsed lifetime -> permission to remove
+forbidden_inference removed body -> occurrence did not happen

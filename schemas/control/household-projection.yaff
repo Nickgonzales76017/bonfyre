@@ -1,0 +1,51 @@
+schema HouseholdProjection
+generation control-1
+authority native-kernel
+absorbs components/BonfyreControlPlane/semantic_operator.py.archive
+note The durable food and housing flows own writes. The native semantic operator accepts only their decoded, source-bound projection records and lowers a read set without materializing a second household store.
+
+concept FoodOfferProjection
+  field offer_id text identity required
+  field source_file literal household/food/current-offers.jsonl
+  field source_ref text required
+  field canonical_document json required
+
+concept HousingListingProjection
+  field listing_id text identity required
+  field source_file literal household/housing/current-listings.jsonl
+  field source_ref text required
+  field canonical_document json required
+
+concept HousingObservationProjection
+  field candidate_id text identity required
+  field source_file literal household/housing/current-listings.jsonl
+  field source_ref text required
+  field canonical_document json required
+
+decision SemanticOperatorLowering
+  input bounded source-bound addressed projections
+  output read-only SemanticProgram
+  rule reject-ambiguous-identity
+    statement food accepts offer_id only; housing accepts exactly one of listing_id or candidate_id
+  rule reject-missing-source
+    statement no evidence reference or canonical projection body means no addressable record
+  rule never-write
+    statement lowered programs have an empty write set
+
+decision ProjectionProof
+  input source-bound projection observed claim
+  output not_proven verdict
+  rule observation-is-not-proof
+    statement an observed availability, dog, effective-cost, or price field remains not_proven
+
+invariant deterministic-address
+  statement an address derives only from declared domain identity kind and stable identity, never title or price
+
+invariant source-bound-read-closure
+  statement every lowered read has a canonical content digest and nonempty source reference
+
+invariant distinct-units-do-not-merge
+  statement shared property identity with distinct unit identity is coexistence, not a duplicate or a price conflict
+
+forbidden_inference source-bound household projection -> current availability, dog acceptance, effective cost, purchase authority or proof
+forbidden_inference operator admission -> authority for a household action
