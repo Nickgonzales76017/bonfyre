@@ -1,0 +1,43 @@
+#!/usr/bin/env python3
+# Historical reference retained after native receipt-binding cutover.
+import json
+from pathlib import Path
+import tempfile
+
+from protocol_observation_bridge import BindingError, append_once, bind_observation
+
+
+def domain(occurrence_id: str) -> dict:
+    return {
+        "schema": "bonfyre-domain-binding.v1", "occurrence_id": occurrence_id,
+        "owner": "DomainProfile", "state": "profile_bound", "binding_validated": True,
+        "semantic_record_sha256": "a" * 64,
+    }
+
+
+def native(occurrence_id: str) -> dict:
+    return {
+        "schema": "bonfyre-protocol-observation-bridge.v1", "registered": True,
+        "occurrence_id": occurrence_id, "contract": "ogc-api-common-observation",
+        "programs": 3, "scoped": True, "state": "compiled",
+    }
+
+
+with tempfile.TemporaryDirectory() as tmp:
+    root = Path(tmp)
+    evidence, native_path, out = root / "evidence.jsonl", root / "native.json", root / "out.jsonl"
+    evidence.write_text(json.dumps(domain("external:protocol-0304")) + "\n", encoding="utf-8")
+    native_path.write_text(json.dumps(native("external:protocol-0304")), encoding="utf-8")
+    bound = bind_observation("external:protocol-0304", evidence, native_path)
+    assert bound["owner"] == "ProtocolContract"
+    assert bound["state"] == "compiled"
+    assert bound["from_owner"] == "DomainProfile"
+    assert append_once(out, bound) is True
+    assert append_once(out, bound) is False
+
+    native_path.write_text(json.dumps(native("external:protocol-other")), encoding="utf-8")
+    try:
+        bind_observation("external:protocol-0304", evidence, native_path)
+        raise AssertionError("wrong occurrence native receipt was accepted")
+    except BindingError as exc:
+        assert "another occurrence" in str(exc)

@@ -1,0 +1,1 @@
+The first call is free and takes about half an hour. It goes faster if you can tell us what runs today (the hosting panel, the PHP version, the database engine or the record system), roughly how many sites, databases or systems are involved, and whether a recent backup exists. Rough numbers are fine. Nobody needs to give us a password to have this conversation.

@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+"""Retired witness: native owner is compile_experience_map.test.mjs."""
+from __future__ import annotations
+
+import json
+from collections import Counter
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+GEN = ROOT / "generated"
+
+
+def rows(name: str) -> list[dict]:
+    with (GEN / name).open(encoding="utf-8") as handle:
+        return [json.loads(line) for line in handle if line.strip()]
+
+
+def main() -> int:
+    manifest = json.loads((GEN / "manifest.json").read_text(encoding="utf-8"))
+    estate = manifest["typed_application_estate"]
+    programs = rows("typed_application_programs.jsonl")
+    nodes = rows("typed_application_nodes.jsonl")
+    per_program = Counter(node["experience_id"] for node in nodes)
+
+    assert len(programs) == estate["experience_programs"] == manifest["human_chain_count"] == 52
+    assert len(nodes) == estate["application_nodes"] >= 450
+    assert all(per_program[p["experience_id"]] >= 6 for p in programs)
+    assert estate["prose_stage_input_used"] is False
+    assert estate["all_nodes_unselected_until_site_program"] is True
+    assert all(node["selection_state"] == "unselected_declaration" for node in nodes)
+    assert all(node["edges"] == [] for node in nodes)
+    assert all("action family -> authority or effect" in node["cannot_infer"] for node in nodes)
+    print("typed application programs: PASS")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

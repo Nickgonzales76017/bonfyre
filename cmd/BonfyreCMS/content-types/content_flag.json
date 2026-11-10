@@ -1,0 +1,22 @@
+{
+  "name": "content_flag",
+  "displayName": "Content Flag",
+  "description": "One retained observation held back from ordinary projection until its presentation state is resolved. This is an observation state, not a moderation verdict and not a moderation product. Flagged does not mean illegal, false, malicious, or deleted, and not flagged does not mean safe: it means only that this material must not be projected automatically into ordinary human surfaces until somebody has decided how it should appear. The observation, its receipt and its bytes are untouched.",
+  "attributes": {
+    "flag": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "twin": {"type": "string", "required": true},
+    "source": {"type": "string", "required": true},
+    "observed_at": {"type": "string", "required": false},
+    "receipt_ref": {"type": "string", "required": false},
+    "screen": {"type": "string", "required": true},
+    "screen_version": {"type": "string", "required": false},
+    "signal": {"type": "string", "required": true},
+    "matched": {"type": "text", "required": false},
+    "sample_count": {"type": "string", "required": false},
+    "review_state": {"type": "string", "required": true},
+    "reviewed_by": {"type": "string", "required": false},
+    "reviewed_at": {"type": "string", "required": false},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

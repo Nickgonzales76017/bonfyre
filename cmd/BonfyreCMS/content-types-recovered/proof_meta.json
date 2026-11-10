@@ -1,0 +1,120 @@
+{
+  "name": "proof_meta",
+  "displayName": "Proof Meta",
+  "description": "Projected proof metadata artifact with hot runtime, quality, and intake fields.",
+  "attributes": {
+    "job_name": {
+      "type": "string",
+      "required": true
+    },
+    "job_slug": {
+      "type": "string",
+      "required": true
+    },
+    "created_at": {
+      "type": "datetime"
+    },
+    "source_kind": {
+      "type": "string"
+    },
+    "summary_bullets": {
+      "type": "integer"
+    },
+    "audio_wrapper_used": {
+      "type": "boolean"
+    },
+    "whisper_model": {
+      "type": "string"
+    },
+    "language": {
+      "type": "string"
+    },
+    "quality_score": {
+      "type": "integer"
+    },
+    "quality_status": {
+      "type": "string"
+    },
+    "cleanup_changed": {
+      "type": "boolean"
+    },
+    "cleanup_filler_tokens_removed": {
+      "type": "integer"
+    },
+    "cleanup_text_chars": {
+      "type": "integer"
+    },
+    "paragraph_count": {
+      "type": "integer"
+    },
+    "paragraph_text_chars": {
+      "type": "integer"
+    },
+    "intake_package_path": {
+      "type": "string"
+    },
+    "intake_job_id": {
+      "type": "string"
+    },
+    "intake_job_slug": {
+      "type": "string"
+    },
+    "intake_client_name": {
+      "type": "string"
+    },
+    "intake_client_contact": {
+      "type": "string"
+    },
+    "intake_job_title": {
+      "type": "string"
+    },
+    "intake_output_goal": {
+      "type": "string"
+    },
+    "intake_status": {
+      "type": "string"
+    },
+    "intake_created_at": {
+      "type": "datetime"
+    },
+    "intake_file_name": {
+      "type": "string"
+    },
+    "intake_file_type": {
+      "type": "string"
+    },
+    "intake_file_size": {
+      "type": "integer"
+    },
+    "audio_source_path": {
+      "type": "string"
+    },
+    "prepared_audio_path": {
+      "type": "string"
+    },
+    "transcript_path": {
+      "type": "string"
+    },
+    "audio_model_cached": {
+      "type": "boolean"
+    },
+    "rebuild_used_saved_artifacts": {
+      "type": "boolean"
+    },
+    "quality_json": {
+      "type": "json"
+    },
+    "intake_manifest_json": {
+      "type": "json"
+    },
+    "audio_wrapper_json": {
+      "type": "json"
+    },
+    "rebuild_json": {
+      "type": "json"
+    },
+    "tts_json": {
+      "type": "json"
+    }
+  }
+}

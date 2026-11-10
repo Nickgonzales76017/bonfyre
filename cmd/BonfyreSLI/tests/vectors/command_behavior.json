@@ -1,0 +1,122 @@
+{
+  "schema": "bonfyre.command-vectors.v1",
+  "binary": "bonfyre-sli",
+  "binary_env": "BONFYRE_SLI_BIN",
+  "cases": [
+    {
+      "name": "a BQFP model is inspected and applied to input vectors",
+      "steps": [
+        {
+          "program": "sh",
+          "argv": [
+            "-c",
+            "perl mkst.pl 7 > m.safetensors && perl mkst.pl 9 > m2.safetensors"
+          ],
+          "exit": 0
+        },
+        {
+          "program": "${root}/cmd/BonfyreQuant/bonfyre-quant",
+          "argv": [
+            "encode",
+            "m.safetensors",
+            "--out",
+            "a.bqfp",
+            "--tensor",
+            "down_proj"
+          ],
+          "env": {
+            "HOME": "${tmp}"
+          },
+          "exit": 0
+        },
+        {
+          "program": "${root}/cmd/BonfyreQuant/bonfyre-quant",
+          "argv": [
+            "encode",
+            "m2.safetensors",
+            "--out",
+            "b.bqfp",
+            "--tensor",
+            "down_proj"
+          ],
+          "env": {
+            "HOME": "${tmp}"
+          },
+          "exit": 0
+        },
+        {
+          "program": "sh",
+          "argv": [
+            "-c",
+            "perl -e 'print pack(\"VV\",4,256).pack(\"f<*\", map { sin($_) } 1..1024)' > v.bin"
+          ],
+          "exit": 0
+        },
+        {
+          "argv": [
+            "inspect",
+            "--model",
+            "a.bqfp"
+          ],
+          "env": {
+            "HOME": "${tmp}"
+          },
+          "exit": 0,
+          "contains": [
+            "tensors:  1",
+            "model.layers.0.mlp.down_proj.weight"
+          ]
+        },
+        {
+          "argv": [
+            "run",
+            "--in",
+            "v.bin",
+            "--model",
+            "a.bqfp",
+            "--out",
+            "o.bin"
+          ],
+          "env": {
+            "HOME": "${tmp}"
+          },
+          "exit": 0,
+          "contains": [
+            "input:  4 vectors × 256 dim",
+            "output: 4 vectors × 256 dim"
+          ]
+        },
+        {
+          "program": "sh",
+          "argv": [
+            "-c",
+            "test $(wc -c < o.bin) -eq 4104"
+          ],
+          "exit": 0
+        }
+      ],
+      "files": {
+        "mkst.pl": "my ($seed,$n)=@ARGV; $n||=256; srand($seed||7); my @t=(\"model.layers.0.mlp.down_proj.weight\",\"model.layers.0.self_attn.q_proj.weight\"); my %h; my $data=\"\"; my $off=0;\nfor my $name (@t){ my $d=pack(\"f<*\", map { (rand()-0.5)*0.08 } 1..$n*$n); $h{$name}=[$off,$off+length($d)]; $data.=$d; $off+=length($d); }\nmy $j=\"{\".join(\",\", map { \"\\\"$_\\\":{\\\"dtype\\\":\\\"F32\\\",\\\"shape\\\":[$n,$n],\\\"data_offsets\\\":[$h{$_}[0],$h{$_}[1]]}\" } @t).\"}\";\n$j.=\" \" x ((8 - length($j) % 8) % 8); print pack(\"Q<\", length($j)).$j.$data;\n"
+      }
+    },
+    {
+      "name": "a file that is not BQFP is refused",
+      "files": {
+        "x.bqfp": "nope"
+      },
+      "steps": [
+        {
+          "argv": [
+            "inspect",
+            "--model",
+            "x.bqfp"
+          ],
+          "env": {
+            "HOME": "${tmp}"
+          },
+          "exit_nonzero": true
+        }
+      ]
+    }
+  ]
+}

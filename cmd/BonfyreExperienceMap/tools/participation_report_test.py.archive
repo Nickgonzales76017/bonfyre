@@ -1,0 +1,138 @@
+#!/usr/bin/env python3
+import atexit
+import os
+import tempfile
+
+from participation_report import build_profile, evidence_index
+
+
+def row(oid, name, *, human, protocols, roles, support=(), direct=()):
+    return {
+        "id": oid,
+        "name": name,
+        "source_kind": "fixture",
+        "url": "https://example.test/",
+        "human_chains": list(human),
+        "protocol_chains": list(protocols),
+        "reagent_roles": list(roles),
+        "support_chains": list(support),
+        "direct_domains": list(direct),
+    }
+
+
+crossworld = row(
+    "external:x402",
+    "Cross-world paid data mesh",
+    human=("discover", "emergency", "publication", "logistics", "research"),
+    protocols=("mcp", "x402"),
+    roles=("material_source", "action_adapter", "publication_carrier", "external_service_candidate"),
+    support=("commerce", "finance"),
+    direct=("weather", "medicine", "finance", "media"),
+)
+joke = row(
+    "external:joke",
+    "JokeAPI",
+    human=("discover",),
+    protocols=("http-api",),
+    roles=("external_service_candidate",),
+    support=("software-work",),
+)
+
+by_occurrence, transitions = evidence_index([])
+deep = build_profile(crossworld, by_occurrence.get("external:x402", []), transitions.get("external:x402", set()))
+shallow = build_profile(joke, by_occurrence.get("external:joke", []), transitions.get("external:joke", set()))
+
+assert deep["candidate"]["join_power"] > shallow["candidate"]["join_power"]
+assert deep["candidate"]["chain_span"] > shallow["candidate"]["chain_span"]
+assert deep["candidate"]["candidate_planes"]["economic"] is True
+assert shallow["candidate"]["candidate_planes"]["economic"] is False
+assert deep["realized"]["axes"]["discovery"]["depth"] == 1
+assert deep["realized"]["axes"]["observation"]["depth"] == 0
+assert deep["realized"]["braid_depth"] == 0
+
+# Canonical ForeignTwin receipts become observation evidence when the existing
+# twin_id is the ExternalEstate occurrence ID. No parallel provenance schema is
+# required merely to keep the handoff attributable.
+foreign_receipt = {
+    "schema": "bonfyre-foreign-observation.v1",
+    "twin_id": "external:x402",
+    "source_url": "https://example.test/",
+    "observation_kind": "source_observed",
+    "content_sha256": "a" * 64,
+    "_source_path": "/receipts/external-x402.json",
+}
+by_occurrence, transitions = evidence_index([foreign_receipt])
+observed = build_profile(crossworld, by_occurrence["external:x402"], transitions["external:x402"])
+assert observed["realized"]["axes"]["observation"]["depth"] == 3
+assert observed["realized"]["axes"]["observation"]["depth_name"] == "body-observed"
+assert observed["realized"]["braid_depth"] == 1
+assert observed["realized"]["braid_path"] == ["ExternalEstate", "ForeignTwin"]
+
+# Re-observation is deeper than one successful fetch; freshness is not inferred
+# from the first receipt.
+#
+# The body is a real file. It used to be the string "/bodies/external-x402.body"
+# and this test passed, which is the whole reason the rung was worth checking:
+# `source_retained` was awarded for naming a body rather than for holding one,
+# and the witness asserted that behaviour rather than catching it.
+_body = tempfile.NamedTemporaryFile(prefix="bf-retained-", suffix=".body", delete=False)
+_body.write(b"retained bytes\n")
+_body.close()
+atexit.register(lambda: os.path.exists(_body.name) and os.unlink(_body.name))
+retained = dict(foreign_receipt)
+retained["body_path"] = _body.name
+retained["_source_path"] = "/receipts/external-x402-retained.json"
+by_occurrence, transitions = evidence_index([retained])
+held = build_profile(crossworld, by_occurrence["external:x402"], transitions["external:x402"])
+assert held["realized"]["axes"]["observation"]["depth"] == 4
+assert held["realized"]["axes"]["observation"]["depth_name"] == "body-retained"
+
+# And a receipt naming a body that is not there does not reach the rung. This
+# is the demotion the report now performs, asserted rather than assumed.
+absent = dict(retained)
+absent["body_path"] = "/bodies/this-was-pruned.body"
+absent["_source_path"] = "/receipts/external-x402-absent.json"
+by_occurrence, transitions = evidence_index([absent])
+gone = build_profile(crossworld, by_occurrence["external:x402"], transitions["external:x402"])
+assert gone["realized"]["axes"]["observation"]["depth"] == 3, (
+    "a named body that is not on disk still earned the retention rung")
+assert gone["realized"]["axes"]["observation"]["depth_name"] == "body-observed"
+
+by_occurrence, transitions = evidence_index([foreign_receipt, retained])
+repeated = build_profile(crossworld, by_occurrence["external:x402"], transitions["external:x402"])
+assert repeated["realized"]["axes"]["observation"]["depth"] == 5
+assert repeated["realized"]["axes"]["observation"]["depth_name"] == "repeat-observed"
+
+# Owner facts extend the same braid instead of creating a workflow state store.
+bare_domain_claim = {
+    "occurrence_id": "external:x402", "axis": "semantic", "owner": "DomainProfile",
+    "state": "profile_bound", "from_owner": "ForeignTwin", "to_owner": "DomainProfile",
+}
+by_occurrence, transitions = evidence_index([bare_domain_claim])
+assert "external:x402" not in by_occurrence
+
+facts = [
+    foreign_receipt,
+    {
+        "schema": "bonfyre-domain-binding.v1",
+        "occurrence_id": "external:x402",
+        "owner": "DomainProfile",
+        "state": "profile_bound",
+        "binding_validated": True,
+        "semantic_record_sha256": "b" * 64,
+    },
+    {
+        "schema": "bonfyre-protocol-binding.v1", "occurrence_id": "external:x402",
+        "axis": "protocol", "owner": "ProtocolContract", "state": "compiled",
+        "from_owner": "DomainProfile", "to_owner": "ProtocolContract", "binding_validated": True,
+        "contract": "ogc-api-common-observation", "programs": 3,
+        "semantic_record_sha256": "c" * 64, "domain_binding_sha256": "d" * 64,
+        "native_registration_receipt_sha256": "e" * 64,
+    },
+]
+by_occurrence, transitions = evidence_index(facts)
+braided = build_profile(crossworld, by_occurrence["external:x402"], transitions["external:x402"])
+assert braided["realized"]["axes"]["semantic"]["depth"] == 2
+assert braided["realized"]["axes"]["protocol"]["depth"] == 2
+assert braided["realized"]["braid_depth"] == 3
+assert braided["realized"]["braid_path"] == ["ExternalEstate", "ForeignTwin", "DomainProfile", "ProtocolContract"]

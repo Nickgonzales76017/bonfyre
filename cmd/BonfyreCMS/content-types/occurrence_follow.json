@@ -1,0 +1,13 @@
+{
+  "name": "occurrence_follow",
+  "displayName": "Occurrence Follow",
+  "description": "One person's private, reversible local follow of a retained public occurrence. It records neither an external RSVP nor attendance, registration, organizer notice, provider membership, or authority.",
+  "attributes": {
+    "follow_id": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "occurrence_id": {"type": "string", "required": true},
+    "follower": {"type": "string", "required": true},
+    "followed_at": {"type": "string", "required": true},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

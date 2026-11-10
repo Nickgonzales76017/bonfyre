@@ -1,0 +1,4 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-moe","binary_env":"BONFYRE_MOE_BIN","cases":[
+{"name":"known MoE architectures are listed; embed without an MoE checkpoint is refused rather than invented","files":{"q.txt":"fix the checkout page\n"},"steps":[
+ {"argv":["list-archs"],"env":{"HOME":"${tmp}","BONFYRE_ADMISSION_DB":"${tmp}/adm.db"},"exit":0,"contains":["mixtral-8x7b","qwen-moe-2.7b","deepseek-v3"]},
+ {"argv":["embed","--model","${tmp}/nomodel","--text","q.txt","--out","e.json"],"env":{"HOME":"${tmp}","BONFYRE_ADMISSION_DB":"${tmp}/adm.db"},"exit_nonzero":true,"absent":["${tmp}/e.json"]}]}]}

@@ -1,0 +1,18 @@
+{
+  "representation_id": "qwen2.5-coder-0.5b-native-fp16-fpq0/runtime-native-f16/2026-09-11",
+  "model_id": "qwen2.5-coder-0.5b-native-fp16-fpq0",
+  "representation_family": "native-f16-passthrough",
+  "representation_version": "FPQ0-v10-runtime-baseline",
+  "exactness_class": "exact",
+  "measurement_state": "measured",
+  "admission_state": "DEFER",
+  "admission_scope": "generation",
+  "quality_envelope": "Native layer/generation path executed; no task-quality, production, compressed-FPQ, layer/logit parity, or non-passthrough block-consumption envelope exists.",
+  "receipt_ref": "cmd/BonfyreQwenFPQ/results/2026-09-11-qwen-native-fp16-execution.json",
+  "receipt_digest": "sha256:c34d616ac62b4aa72086185799610ba75ac55a17b51cfd117dcdc7cc3828465a",
+  "physical_body_ref": "/Users/nickgonzales/BonfyreModels/fpq/qwen2.5-coder-0.5b-instruct-native-fp16.fpq",
+  "physical_digest": "sha256:73c4894819f399e04ef252c90b61ab04d031a46ce31bfb95d1053b143da3952e",
+  "physical_bytes": 988086334,
+  "supports": ["generation", "partial_decode", "random_access"],
+  "recorded_at": "2026-09-11T00:00:00Z"
+}

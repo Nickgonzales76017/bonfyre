@@ -1,0 +1,17 @@
+✗ atlas invalid: 15 error(s)
+    architecture gamma: every witness is archived; a retired witness cannot support a current claim -- 'proven' is not supported
+    architecture delta: unknown maturity 'legendary'
+    architecture epsilon: missing required field 'canonical_name'
+    architecture epsilon: missing required field 'domain'
+    architecture epsilon: missing required field 'semantic_question'
+    architecture epsilon: witness 'missing/path/witness.json' names a file that does not exist -- a witness that cannot be opened is not one
+    architecture epsilon: no witness can be opened or run today -- 'measured' is not supported
+    view BadView: must expand to >=2 architectures (is a rename, not a view)
+    interaction ghost-link: source 'ghost' is not a registered architecture
+    interaction ghost-link: missing 'destination'
+    phenotype gamma-phen: must name what it produces
+    phenotype ghost-phen: architecture 'ghost' is not registered
+    architecture beta: source_path 'cmd/Nope/missing.c' names a file that does not open -- a claim resting on it rests on nothing
+    architecture epsilon: maturity 'measured' with no witness that opens
+    architecture gamma: maturity 'proven' with no witness that opens
+exit 1

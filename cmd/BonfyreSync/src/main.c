@@ -1,4 +1,12 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 #include <ctype.h>
+#include "bf_lex.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,6 +16,8 @@
 #include <time.h>
 #include <unistd.h>
 #include "bonfyre.h"
+#include "../../../lib/libbonfyre/include/bf_help.h"
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 
 extern char **environ;
 
@@ -71,30 +81,18 @@ static char *read_file(const char *path, long *size_out) {
     return buf;
 }
 
+/* Delegates to the one implementation. This asked strstr whether the text
+ * "key" appeared anywhere, so a manifest whose sourceFile was named jobSlug.txt
+ * answered yes to a key it did not have. */
 static int has_key(const char *json, const char *key) {
-    char needle[256];
-    snprintf(needle, sizeof(needle), "\"%s\"", key);
-    return strstr(json, needle) != NULL;
+    return bf_lex_json_seek(json, key) != NULL;
 }
 
 static int extract_string_value(const char *json, const char *key, char *buffer, size_t size) {
-    char needle[256];
-    snprintf(needle, sizeof(needle), "\"%s\"", key);
-    const char *pos = strstr(json, needle);
-    if (!pos) return 0;
-    pos = strchr(pos + strlen(needle), ':');
-    if (!pos) return 0;
-    pos++;
-    while (*pos && isspace((unsigned char)*pos)) pos++;
-    if (*pos != '"') return 0;
-    pos++;
-    const char *end = strchr(pos, '"');
-    if (!end) return 0;
-    size_t len = (size_t)(end - pos);
-    if (len >= size) len = size - 1;
-    memcpy(buffer, pos, len);
-    buffer[len] = '\0';
-    return 1;
+    /* Delegates to the one implementation. This copy stopped at the first
+     * quote, and truncated silently on overflow rather than reporting that the
+     * value did not fit -- a prefix returned as if it were whole. */
+    return bf_lex_json_string(json, key, buffer, size);
 }
 
 static int command_inspect_intake(const char *path) {
@@ -278,27 +276,7 @@ static int command_pull(const char *remote_url, const char *local_path) {
     return exit_code;
 }
 
-int main(int argc, char **argv) {
-    if (argc < 2) goto usage;
-
-    if (argc >= 3 && strcmp(argv[1], "layer") == 0) {
-        return delegate_layeros_sync(argc, argv);
-    }
-
-    if (argc == 3 && strcmp(argv[1], "inspect-intake") == 0) {
-        return command_inspect_intake(argv[2]);
-    }
-    if (argc == 3 && strcmp(argv[1], "inspect-status") == 0) {
-        return command_inspect_status(argv[2]);
-    }
-    if (argc == 4 && strcmp(argv[1], "push") == 0) {
-        return command_push(argv[2], argv[3]);
-    }
-    if (argc == 4 && strcmp(argv[1], "pull") == 0) {
-        return command_pull(argv[2], argv[3]);
-    }
-
-usage:
+static void usage(void) {
     fprintf(stderr,
             "Usage:\n"
             "  bonfyre-sync inspect-intake <path>\n"
@@ -306,5 +284,43 @@ usage:
             "  bonfyre-sync push <local.json> <remote-url>\n"
             "  bonfyre-sync pull <remote-url> <local.json>\n"
             "  bonfyre-sync layer <artifact_id> [--manifest-only|--include-payload] [--root DIR]\n");
+}
+
+int main(int argc, char **argv) {
+    if (bf_help_requested(argc, argv)) { usage(); return 0; }
+    if (argc < 2) goto usage;
+
+    enum {
+        SY_INSPECT_INTAKE, SY_INSPECT_STATUS, SY_LAYER, SY_PULL, SY_PUSH,
+    };
+    static const BfCommandEntry sync_commands[] = {
+        {"inspect-intake", SY_INSPECT_INTAKE, 0, NULL},
+        {"inspect-status", SY_INSPECT_STATUS, 0, NULL},
+        {"layer", SY_LAYER, 0, NULL},
+        {"pull", SY_PULL, 0, NULL},
+        {"push", SY_PUSH, 0, NULL},
+    };
+    const BfCommandEntry *command = bf_command_lookup(sync_commands,
+        sizeof(sync_commands) / sizeof(sync_commands[0]), argv[1]);
+
+    if (argc >= 3 && command && command->id == SY_LAYER) {
+        return delegate_layeros_sync(argc, argv);
+    }
+
+    if (argc == 3 && command && command->id == SY_INSPECT_INTAKE) {
+        return command_inspect_intake(argv[2]);
+    }
+    if (argc == 3 && command && command->id == SY_INSPECT_STATUS) {
+        return command_inspect_status(argv[2]);
+    }
+    if (argc == 4 && command && command->id == SY_PUSH) {
+        return command_push(argv[2], argv[3]);
+    }
+    if (argc == 4 && command && command->id == SY_PULL) {
+        return command_pull(argv[2], argv[3]);
+    }
+
+usage:
+    usage();
     return 1;
 }

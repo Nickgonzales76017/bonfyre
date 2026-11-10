@@ -1,0 +1,257 @@
+#!/usr/bin/env python3
+"""One effect-free Source Fabric accounting, recursion, feedback and dogfood cycle."""
+import argparse
+import json
+import os
+import shutil
+import subprocess
+import sys
+import time
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+
+def tool(name):
+    return os.path.join(HERE, name)
+
+def exists(path):
+    return bool(path and os.path.exists(path))
+
+def nonempty(path):
+    return exists(path) and os.path.getsize(path) > 0
+
+def json_files(directory):
+    if not directory or not os.path.isdir(directory):
+        return []
+    return [
+        os.path.join(directory, name)
+        for name in sorted(os.listdir(directory))
+        if name.endswith(".json") and os.path.isfile(os.path.join(directory, name))
+    ]
+
+def run(argv):
+    done = subprocess.run(argv, capture_output=True, text=True)
+    lines = [line for line in done.stdout.splitlines() if line.strip()]
+    summary = None
+    if lines:
+        try:
+            summary = json.loads(lines[-1])
+        except json.JSONDecodeError:
+            summary = lines[-1][:500]
+    result = {"ok": done.returncode == 0, "returncode": done.returncode, "summary": summary}
+    if done.stderr.strip():
+        result["stderr"] = done.stderr.strip()[-1000:]
+    if done.returncode:
+        raise RuntimeError("%s failed: %s" % (os.path.basename(argv[0]), result.get("stderr") or summary))
+    return result
+
+def add_inputs(argv, specs):
+    for spec in specs:
+        argv += ["--source-input", spec]
+    return argv
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--input", action="append", required=True, metavar="LABEL=PATH")
+    ap.add_argument("--out-dir", required=True)
+    ap.add_argument("--closure-dir")
+    ap.add_argument("--scoped-frontier-db")
+    ap.add_argument("--scene-db")
+    ap.add_argument("--fact-deltas")
+    ap.add_argument("--cms-db")
+    ap.add_argument("--foreign-root")
+    args = ap.parse_args()
+    os.makedirs(args.out_dir, exist_ok=True)
+
+    source_inputs = list(args.input)
+    for spec in source_inputs:
+        if "=" not in spec:
+            ap.error("--input must be LABEL=PATH")
+        if not os.path.exists(spec.split("=", 1)[1]):
+            ap.error("source inventory does not exist: " + spec)
+
+    outputs = {
+        "recursive": os.path.join(args.out_dir, "recursive-channel-candidates.jsonl"),
+        "manifest": os.path.join(args.out_dir, "source-frontier.json"),
+        "roots": os.path.join(args.out_dir, "source-roots.jsonl"),
+        "channels": os.path.join(args.out_dir, "source-channels.jsonl"),
+        "gaps": os.path.join(args.out_dir, "source-gaps.jsonl"),
+        "forward": os.path.join(args.out_dir, "source-forward.json"),
+        "relationships": os.path.join(args.out_dir, "source-relationship-opportunities.jsonl"),
+        "pressure": os.path.join(args.out_dir, "source-pressure.jsonl"),
+        "pressure_summary": os.path.join(args.out_dir, "source-pressure-summary.json"),
+        "impact": os.path.join(args.out_dir, "source-impact-measurements.jsonl"),
+        "impact_receipts": os.path.join(args.out_dir, "source-impact-receipts.jsonl"),
+        "scene": os.path.join(args.out_dir, "scene-source-receipts.jsonl"),
+        "scene_previous": os.path.join(args.out_dir, "scene-source-receipts.previous.jsonl"),
+        "scene_summary": os.path.join(args.out_dir, "scene-source-summary.json"),
+        "scene_delta": os.path.join(args.out_dir, "scene-source-delta.jsonl"),
+        "root_cochange": os.path.join(args.out_dir, "source-scene-cochange.jsonl"),
+        "legacy_scene_sources": os.path.join(args.out_dir, "scene-legacy-sources.jsonl"),
+        "attention": os.path.join(args.out_dir, "source-attention.jsonl"),
+        "starvation": os.path.join(args.out_dir, "source-starvation.jsonl"),
+        "scene_starvation": os.path.join(args.out_dir, "scene-source-starvation.jsonl"),
+        "cycle": os.path.join(args.out_dir, "source-fabric-cycle.json"),
+    }
+    record = {
+        "schema": "bonfyre.source-fabric-cycle.v3",
+        "started": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "inputs": list(source_inputs),
+        "steps": [],
+        "truth": "effect_free_compilation_and_dependency_measurement_only",
+    }
+
+    def step(name, argv=None, reason=None):
+        if argv is None:
+            record["steps"].append({"step": name, "ok": True, "skipped": True, "reason": reason})
+            return
+        record["steps"].append({"step": name, **run(argv)})
+
+    if exists(args.cms_db) and args.foreign_root and os.path.isdir(args.foreign_root):
+        argv = [
+            sys.executable, tool("compile_recursive_channels.py"),
+            "--cms-db", args.cms_db,
+            "--foreign-root", args.foreign_root,
+            "--out", outputs["recursive"],
+        ]
+        step("recursive-channels", argv)
+        if nonempty(outputs["recursive"]):
+            source_inputs.append("RECURSIVE_RETAINED_DISCOVERY=" + outputs["recursive"])
+    else:
+        step("recursive-channels", reason="CMS DB and retained ForeignTwin root not both present")
+
+    argv = [
+        sys.executable, tool("compile_source_frontier.py"),
+        "--out", outputs["manifest"],
+        "--roots", outputs["roots"],
+        "--channels", outputs["channels"],
+        "--gaps", outputs["gaps"],
+    ]
+    for spec in source_inputs:
+        argv += ["--input", spec]
+    step("frontier", argv)
+
+    closures = json_files(args.closure_dir)
+    if closures:
+        argv = add_inputs([
+            "bun", tool("compile_source_pressure.mjs"),
+            "--roots", outputs["roots"],
+            "--channels", outputs["channels"],
+            "--out", outputs["pressure"],
+            "--receipts", outputs["pressure_summary"],
+        ], source_inputs)
+        for closure in closures:
+            argv += ["--closure", closure]
+        step("pressure", argv)
+    else:
+        step("pressure", reason="no ScopedDemand closure JSON files supplied")
+
+    if exists(args.scoped_frontier_db) and args.fact_deltas and os.path.isdir(args.fact_deltas):
+        argv = add_inputs([
+            "bun", tool("compile_source_change_impact.mjs"),
+            "--frontier-db", args.scoped_frontier_db,
+            "--fact-delta-dir", args.fact_deltas,
+            "--out", outputs["impact"],
+            "--receipts", outputs["impact_receipts"],
+        ], source_inputs)
+        if exists(args.scene_db):
+            argv += ["--scene-db", args.scene_db]
+        step("change-impact", argv)
+    else:
+        step("change-impact", reason="scoped frontier DB and fact-delta directory not both present")
+
+    if exists(args.scoped_frontier_db) and exists(args.scene_db):
+        if nonempty(outputs["scene"]):
+            shutil.copyfile(outputs["scene"], outputs["scene_previous"])
+        step("scene-source-receipts", add_inputs([
+            "bun", tool("compile_scene_source_receipts.mjs"),
+            "--frontier-db", args.scoped_frontier_db,
+            "--scene-db", args.scene_db,
+            "--out", outputs["scene"],
+            "--summary", outputs["scene_summary"],
+        ], source_inputs))
+        if nonempty(outputs["scene_previous"]) and nonempty(outputs["scene"]):
+            step("scene-source-delta", [
+                "bun", tool("compile_scene_source_delta.mjs"),
+                "--before", outputs["scene_previous"],
+                "--after", outputs["scene"],
+                "--out", outputs["scene_delta"],
+                "--root-out", outputs["root_cochange"],
+            ])
+        else:
+            step("scene-source-delta", reason="no prior Scene source receipt snapshot exists yet")
+        if exists(args.cms_db):
+            step("legacy-scene-sources", [
+                "bun", tool("compile_scene_legacy_sources.mjs"),
+                "--scene-receipts", outputs["scene"],
+                "--cms-db", args.cms_db,
+                "--out", outputs["legacy_scene_sources"],
+            ])
+        else:
+            step("legacy-scene-sources", reason="CMS DB not supplied")
+    else:
+        step("scene-source-receipts", reason="scoped frontier DB and scene DB not both present")
+        step("scene-source-delta", reason="Scene source receipts unavailable")
+        step("legacy-scene-sources", reason="Scene source receipts unavailable")
+
+    argv = [
+        "bun", tool("compile_source_forward.mjs"),
+        "--roots", outputs["roots"],
+        "--gaps", outputs["gaps"],
+        "--out", outputs["forward"],
+        "--opportunities", outputs["relationships"],
+    ]
+    if nonempty(outputs["impact"]):
+        argv += ["--demand", outputs["impact"]]
+    step("forward", argv)
+
+    argv = [
+        "bun", tool("compile_source_attention.mjs"),
+        "--roots", outputs["roots"],
+        "--gaps", outputs["gaps"],
+        "--out", outputs["attention"],
+    ]
+    if nonempty(outputs["pressure"]):
+        argv += ["--pressure", outputs["pressure"]]
+    if nonempty(outputs["impact_receipts"]):
+        argv += ["--impact", outputs["impact_receipts"]]
+    step("attention", argv)
+
+    argv = [
+        "bun", tool("compile_source_starvation.mjs"),
+        "--roots", outputs["roots"],
+        "--gaps", outputs["gaps"],
+        "--attention", outputs["attention"],
+        "--out", outputs["starvation"],
+        "--scene-out", outputs["scene_starvation"],
+    ]
+    if nonempty(outputs["pressure"]):
+        argv += ["--pressure", outputs["pressure"]]
+    if nonempty(outputs["impact_receipts"]):
+        argv += ["--impact", outputs["impact_receipts"]]
+    if nonempty(outputs["scene"]):
+        argv += ["--scene-receipts", outputs["scene"]]
+    step("starvation", argv)
+
+    record["finished"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    record["effective_inputs"] = source_inputs
+    record["outputs"] = {key: path for key, path in outputs.items() if key != "cycle" and exists(path)}
+    record["cannot_infer"] = [
+        "recursive channel candidate -> reachable or admitted channel",
+        "SourceRoot -> admitted or active source",
+        "candidate pressure -> contribution",
+        "dependency impact -> visible material changed",
+        "Scene co-change -> source causality",
+        "attention temperature -> permission to fetch or spend",
+        "relationship opportunity -> permission to contact, enroll or transact",
+    ]
+    json.dump(record, open(outputs["cycle"], "w"), indent=2, sort_keys=True)
+    print(json.dumps({
+        "cycle": outputs["cycle"],
+        "steps": [(item["step"], item.get("ok", False), item.get("skipped", False)) for item in record["steps"]],
+        "outputs": len(record["outputs"]),
+        "effective_inputs": len(source_inputs),
+    }, sort_keys=True))
+    return 0
+
+if __name__ == "__main__":
+    sys.exit(main())

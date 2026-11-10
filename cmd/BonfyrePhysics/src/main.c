@@ -39,7 +39,9 @@
 #include <time.h>
 #include <sys/stat.h>
 #include <limits.h>
+#include <errno.h>
 #include <bonfyre.h>
+#include <bf_json.h>
 
 /* ── default paths ───────────────────────────────────────────── */
 static void default_pack_ (char *b, size_t sz) {
@@ -57,7 +59,10 @@ static void default_state_(char *b, size_t sz) {
 static void ensure_dir_(const char *path) {
     char tmp[PATH_MAX]; snprintf(tmp,sizeof(tmp),"%s",path);
     char *p=strrchr(tmp,'/');
-    if(p){*p='\0';}
+    /* A bare file name has no directory to make. mkdir on it made a
+     * directory with the state's own name, and the save then failed. */
+    if(!p) return;
+    *p='\0';
     for(char *q=tmp+1;*q;q++){
         if(*q=='/'){*q='\0';mkdir(tmp,0755);*q='/';}
     }
@@ -104,6 +109,30 @@ static float *load_vecf_(const char *path, uint32_t *out_dim) {
 /* ── vector norm ─────────────────────────────────────────────── */
 static float vec_norm_(const float *v, uint32_t d) {
     float s=0.0f; for(uint32_t i=0;i<d;i++)s+=v[i]*v[i]; return sqrtf(s);
+}
+
+/* ── strict numeric options ──────────────────────────────────
+ * atof/atoi turned "abc", "nan", "-1" and "0" into silent defaults inside
+ * bf_physics_state_alloc, so a run could integrate under parameters nobody
+ * asked for. Refuse instead. */
+static int pos_float_(const char *s, float *out) {
+    char *e; errno=0; float v=strtof(s,&e);
+    if(e==s||*e||errno||!isfinite(v)||v<=0.0f) return -1;
+    *out=v; return 0;
+}
+static int pos_int_(const char *s, int *out) {
+    char *e; errno=0; long v=strtol(s,&e,10);
+    if(e==s||*e||errno||v<=0||v>INT_MAX) return -1;
+    *out=(int)v; return 0;
+}
+static int bad_opt_(const char *cmd, const char *opt, const char *val) {
+    fprintf(stderr,"%s: %s needs a positive finite number, got '%s'\n",cmd,opt,val);
+    return 1;
+}
+static int save_or_fail_(const BfPhysicsState *s, const char *path, const char *cmd) {
+    if(bf_physics_state_save(s,path)==0) return 0;
+    fprintf(stderr,"%s: cannot persist state %s\n",cmd,path);
+    return 1;
 }
 
 /* ── SHA-256 of q for trace event ────────────────────────────── */
@@ -183,7 +212,7 @@ static void usage(void) {
 "            Build ball-tree BVH. Tier-1: 256-bit ternary sketch collision.\n"
 "            Tier-2: KDE gradient for Hamiltonian field computation.\n"
 "\n"
-"  init    <input.vecf> [--sigma 1.0] [--dt 0.01]\n"
+"  init    <input.vecf> | --pack-row <N>  [--sigma 1.0] [--dt 0.01]\n"
 "            [--momentum zero|random|reflog|from <ref>]\n"
 "            Initialise phase-space state. Default: p=0 (at-rest).\n"
 "\n"
@@ -253,7 +282,17 @@ static void usage(void) {
 /* ═══════════════════════════════════════════════════════════════ */
 static int cmd_bvh_(int argc, char **argv,
                     const char *pack_path, const char *bvh_path) {
-    (void)argc;(void)argv;
+    const char *out_path=bvh_path;
+    for(int i=1;i<argc;i++){
+        if(!strcmp(argv[i],"--out")){
+            if(i+1>=argc||!argv[i+1][0]||argv[i+1][0]=='-'){
+                fprintf(stderr,"physics bvh: --out requires a path\n");return 1;
+            }
+            out_path=argv[++i];
+        }else{
+            fprintf(stderr,"physics bvh: unexpected argument %s\n",argv[i]);return 1;
+        }
+    }
     struct stat st;
     if(stat(pack_path,&st)!=0){
         fprintf(stderr,"physics bvh: no pack at %s\n",pack_path);return 1;
@@ -261,13 +300,13 @@ static int cmd_bvh_(int argc, char **argv,
     printf("physics bvh: building BVH\n"
            "  Tier-1: 256-bit ternary sketch (4×u64 POPCOUNT)\n"
            "  Tier-2: KDE gradient for Hamiltonian field\n");
-    if(bf_embed_bvh_build(pack_path,bvh_path)!=0){
+    if(bf_embed_bvh_build(pack_path,out_path)!=0){
         fprintf(stderr,"physics bvh: build failed\n");return 1;
     }
     BfEmbedBVH bvh={0};
-    if(bf_embed_bvh_open(&bvh,bvh_path)==0){
+    if(bf_embed_bvh_open(&bvh,out_path)==0){
         printf("bvh: %u nodes  %llu vecs  dim=%u → %s\n",
-               bvh.n_nodes,(unsigned long long)bvh.n_vecs,bvh.dim,bvh_path);
+               bvh.n_nodes,(unsigned long long)bvh.n_vecs,bvh.dim,out_path);
         bf_embed_bvh_close(&bvh);
     }
     return 0;
@@ -278,24 +317,69 @@ static int cmd_bvh_(int argc, char **argv,
 /* ═══════════════════════════════════════════════════════════════ */
 static int cmd_init_(int argc, char **argv, const char *state_path,
                      const char *pack_path) {
-    if(argc<2){fprintf(stderr,"init: need <input.vecf>\n");return 1;}
-    const char *vecpath=argv[1];
+    const char *vecpath=NULL;
     float sigma=1.0f, dt=0.01f;
     const char *mom_mode="zero";
     const char *mom_from=NULL;
+    long pack_row=-1;
 
-    for(int i=2;i<argc;i++){
-        if(!strcmp(argv[i],"--sigma")   &&i+1<argc) sigma=(float)atof(argv[++i]);
-        if(!strcmp(argv[i],"--dt")      &&i+1<argc) dt   =(float)atof(argv[++i]);
-        if(!strcmp(argv[i],"--momentum")&&i+1<argc){
+    for(int i=1;i<argc;i++){
+        if(!strcmp(argv[i],"--sigma")&&i+1<argc){
+            if(pos_float_(argv[++i],&sigma)) return bad_opt_("init","--sigma",argv[i]);
+        } else if(!strcmp(argv[i],"--dt")&&i+1<argc){
+            if(pos_float_(argv[++i],&dt)) return bad_opt_("init","--dt",argv[i]);
+        } else if(!strcmp(argv[i],"--pack-row")&&i+1<argc){
+            char *e; errno=0; pack_row=strtol(argv[++i],&e,10);
+            if(*e||errno||pack_row<0) return bad_opt_("init","--pack-row",argv[i]);
+        } else if(!strcmp(argv[i],"--momentum")&&i+1<argc){
             mom_mode=argv[++i];
             if(!strcmp(mom_mode,"from")&&i+1<argc) mom_from=argv[++i];
-        }
+        } else if(argv[i][0]!='-'&&!vecpath) vecpath=argv[i];
+        else {fprintf(stderr,"init: unexpected argument %s\n",argv[i]);return 1;}
+    }
+    if(!vecpath==(pack_row<0)){
+        fprintf(stderr,"init: need exactly one of <input.vecf> or --pack-row <N>\n");return 1;
     }
 
     uint32_t dim=0;
-    float *embed=load_vecf_(vecpath,&dim);
-    if(!embed) return 1;
+    float *embed=NULL;
+    if(pack_row>=0){
+        /* Start from an object already in the pack: the coordinate system and
+         * the starting point are the same admitted vectors. */
+        BfEmbedPack rp={0};
+        if(bf_embed_pack_open(&rp,pack_path)!=0){
+            fprintf(stderr,"init: --pack-row needs a pack at %s\n",pack_path);return 1;
+        }
+        if((uint64_t)pack_row>=rp.n){
+            fprintf(stderr,"init: pack row %ld >= %u objects\n",pack_row,rp.n);
+            bf_embed_pack_close(&rp);return 1;
+        }
+        dim=rp.dim; embed=malloc(dim*sizeof(float));
+        if(!embed||bf_embed_pack_vec_at(&rp,(uint32_t)pack_row,embed)!=0){
+            fprintf(stderr,"init: cannot read pack row %ld\n",pack_row);
+            free(embed);bf_embed_pack_close(&rp);return 1;
+        }
+        bf_embed_pack_close(&rp);
+    } else {
+        embed=load_vecf_(vecpath,&dim);
+        if(!embed) return 1;
+    }
+    /* A present pack is the coordinate system: reject incompatible vectors
+     * before any phase-space state is persisted. Missing packs remain optional. */
+    struct stat init_pack_st;
+    if(stat(pack_path,&init_pack_st)==0){
+        BfEmbedPack input_pack={0};
+        if(bf_embed_pack_open(&input_pack,pack_path)!=0){
+            fprintf(stderr,"init: cannot open existing pack %s\n",pack_path);
+            free(embed);return 1;
+        }
+        uint32_t pack_dim=input_pack.dim;
+        bf_embed_pack_close(&input_pack);
+        if(dim!=pack_dim){
+            fprintf(stderr,"init: input dim %u != pack dim %u\n",dim,pack_dim);
+            free(embed);return 1;
+        }
+    }
 
     BfPhysicsState *s=bf_physics_state_alloc(dim,sigma,dt);
     if(!s){free(embed);return 1;}
@@ -365,7 +449,13 @@ static int cmd_kick_(int argc, char **argv, const char *state_path) {
     if(argc<2){fprintf(stderr,"kick: need <impulse.vecf>\n");return 1;}
     float scale=1.0f;
     for(int i=2;i<argc;i++)
-        if(!strcmp(argv[i],"--scale")&&i+1<argc) scale=(float)atof(argv[++i]);
+        if(!strcmp(argv[i],"--scale")&&i+1<argc){
+            /* a kick may oppose the impulse; only non-finite input is refused */
+            char *e; const char *v=argv[++i]; errno=0; scale=strtof(v,&e);
+            if(e==v||*e||errno||!isfinite(scale)){
+                fprintf(stderr,"kick: --scale needs a finite number, got '%s'\n",v);return 1;
+            }
+        }
 
     BfPhysicsState *s=bf_physics_state_load(state_path);
     if(!s){fprintf(stderr,"kick: cannot load state %s\n",state_path);return 1;}
@@ -379,7 +469,7 @@ static int cmd_kick_(int argc, char **argv, const char *state_path) {
     bf_physics_kick(s,imp,scale);
     free(imp);
     float pn1=vec_norm_(s->p,s->dim);
-    bf_physics_state_save(s,state_path);
+    if(save_or_fail_(s,state_path,"kick")){bf_physics_state_free(s);return 1;}
     printf("physics kick: scale=%.4f  ‖p‖ %.4f → %.4f\n",scale,pn0,pn1);
     bf_physics_state_free(s);
     return 0;
@@ -393,7 +483,9 @@ static int cmd_step_(int argc, char **argv,
                      const char *pack_path, const char *bvh_path) {
     int n=1; const char *trace_path=NULL;
     for(int i=1;i<argc;i++){
-        if(!strcmp(argv[i],"--n")    &&i+1<argc) n=atoi(argv[++i]);
+        if(!strcmp(argv[i],"--n")    &&i+1<argc){
+            if(pos_int_(argv[++i],&n)) return bad_opt_("step","--n",argv[i]);
+        }
         if(!strcmp(argv[i],"--trace")&&i+1<argc) trace_path=argv[++i];
     }
 
@@ -403,9 +495,18 @@ static int cmd_step_(int argc, char **argv,
     if(open_pack_bvh_(pack_path,bvh_path,&pack,&bvh)!=0){
         bf_physics_state_free(s);return 1;
     }
+    if(s->dim!=pack.dim){
+        fprintf(stderr,"step: state dim %u != pack dim %u\n",s->dim,pack.dim);
+        bf_embed_bvh_close(&bvh);bf_embed_pack_close(&pack);
+        bf_physics_state_free(s);return 1;
+    }
 
     BfEntropyTrace *tr=NULL;
-    if(trace_path) tr=bf_trace_open(trace_path,1);
+    if(trace_path&&!(tr=bf_trace_open(trace_path,1))){
+        fprintf(stderr,"step: cannot open trace %s\n",trace_path);
+        bf_embed_bvh_close(&bvh);bf_embed_pack_close(&pack);
+        bf_physics_state_free(s);return 1;
+    }
     BfEntropyAccum ea;
     float H0=bf_physics_hamiltonian(s,&bvh,&pack);
     bf_entropy_init(&ea,H0);
@@ -436,10 +537,10 @@ static int cmd_step_(int argc, char **argv,
                    "    try: bonfyre-physics mount <model_hex>\n");
 
     if(tr) bf_trace_close(tr);
-    bf_physics_state_save(s,state_path);
+    int persist=save_or_fail_(s,state_path,"step");
     bf_physics_state_free(s);
     bf_embed_bvh_close(&bvh);bf_embed_pack_close(&pack);
-    return gap?1:0;
+    return (gap||persist)?1:0;
 }
 
 /* ═══════════════════════════════════════════════════════════════ */
@@ -458,8 +559,9 @@ static int cmd_run_(int argc, char **argv,
     int gap_actions=0;
 
     for(int i=1;i<argc;i++){
-        if(!strcmp(argv[i],"--steps")   &&i+1<argc) max_steps=atoi(argv[++i]);
-        if(!strcmp(argv[i],"--max-steps")&&i+1<argc) max_steps=atoi(argv[++i]);
+        if((!strcmp(argv[i],"--steps")||!strcmp(argv[i],"--max-steps"))&&i+1<argc){
+            if(pos_int_(argv[++i],&max_steps)) return bad_opt_("run","--steps",argv[i]);
+        }
         if(!strcmp(argv[i],"--trace")   &&i+1<argc) trace_path=argv[++i];
         if(!strcmp(argv[i],"--on-gap")  &&i+1<argc){
             const char *act=argv[++i];
@@ -476,9 +578,18 @@ static int cmd_run_(int argc, char **argv,
     if(open_pack_bvh_(pack_path,bvh_path,&pack,&bvh)!=0){
         bf_physics_state_free(s);return 1;
     }
+    if(s->dim!=pack.dim){
+        fprintf(stderr,"run: state dim %u != pack dim %u\n",s->dim,pack.dim);
+        bf_embed_bvh_close(&bvh);bf_embed_pack_close(&pack);
+        bf_physics_state_free(s);return 1;
+    }
 
     BfEntropyTrace *tr=NULL;
-    if(trace_path) tr=bf_trace_open(trace_path,0);
+    if(trace_path&&!(tr=bf_trace_open(trace_path,0))){
+        fprintf(stderr,"run: cannot open trace %s\n",trace_path);
+        bf_embed_bvh_close(&bvh);bf_embed_pack_close(&pack);
+        bf_physics_state_free(s);return 1;
+    }
     BfEntropyAccum ea;
     float H0=bf_physics_hamiltonian(s,&bvh,&pack);
     bf_entropy_init(&ea,H0);
@@ -562,10 +673,10 @@ done:;
                trace_path,(unsigned long long)(tr?tr->events:0));
 
     if(tr) bf_trace_close(tr);
-    bf_physics_state_save(s,state_path);
+    int persist=save_or_fail_(s,state_path,"run");
     bf_physics_state_free(s);
     bf_embed_bvh_close(&bvh);bf_embed_pack_close(&pack);
-    return (final_rc<0)?1:0;
+    return (final_rc<0||persist)?1:0;
 }
 
 /* ═══════════════════════════════════════════════════════════════ */
@@ -576,12 +687,19 @@ static int cmd_collide_(int argc, char **argv,
                          const char *pack_path, const char *bvh_path) {
     int k=32;
     for(int i=1;i<argc;i++)
-        if(!strcmp(argv[i],"--k")&&i+1<argc) k=atoi(argv[++i]);
+        if(!strcmp(argv[i],"--k")&&i+1<argc){
+            if(pos_int_(argv[++i],&k)) return bad_opt_(argv[0],"--k",argv[i]);
+        }
 
     BfPhysicsState *s=bf_physics_state_load(state_path);
     if(!s){fprintf(stderr,"collide: cannot load state\n");return 1;}
     BfEmbedPack pack={0}; BfEmbedBVH bvh={0};
     if(open_pack_bvh_(pack_path,bvh_path,&pack,&bvh)!=0){
+        bf_physics_state_free(s);return 1;
+    }
+    if(s->dim!=pack.dim){
+        fprintf(stderr,"collide: state dim %u != pack dim %u\n",s->dim,pack.dim);
+        bf_embed_bvh_close(&bvh);bf_embed_pack_close(&pack);
         bf_physics_state_free(s);return 1;
     }
 
@@ -613,7 +731,9 @@ static int cmd_nearest_(int argc, char **argv,
                          const char *state_path, const char *pack_path) {
     int k=10;
     for(int i=1;i<argc;i++)
-        if(!strcmp(argv[i],"--k")&&i+1<argc) k=atoi(argv[++i]);
+        if(!strcmp(argv[i],"--k")&&i+1<argc){
+            if(pos_int_(argv[++i],&k)) return bad_opt_(argv[0],"--k",argv[i]);
+        }
 
     BfPhysicsState *s=bf_physics_state_load(state_path);
     if(!s){fprintf(stderr,"nearest: cannot load state\n");return 1;}
@@ -659,6 +779,11 @@ static int cmd_energy_(int argc, char **argv,
 
     BfEmbedPack pack={0}; BfEmbedBVH bvh={0};
     int has_bvh=(open_pack_bvh_(pack_path,bvh_path,&pack,&bvh)==0);
+    if(has_bvh&&s->dim!=pack.dim){
+        fprintf(stderr,"energy: state dim %u != pack dim %u\n",s->dim,pack.dim);
+        bf_embed_bvh_close(&bvh);bf_embed_pack_close(&pack);
+        bf_physics_state_free(s);return 1;
+    }
 
     float pn2=vec_norm_(s->p,s->dim); pn2*=pn2;
     float ke=0.5f*pn2;
@@ -820,9 +945,9 @@ static int cmd_rebase_(int argc, char **argv,
     if(transport_p) printf("  momentum transport: parallel (flat manifold identity)\n");
     if(preserve_e)  printf("  energy: preserved (KE unchanged)\n");
 
-    bf_physics_state_save(s,state_path);
+    int persist=save_or_fail_(s,state_path,"rebase");
     bf_physics_state_free(s);
-    return 0;
+    return persist;
 }
 
 /* ═══════════════════════════════════════════════════════════════ */
@@ -846,9 +971,14 @@ static int cmd_compare_(int argc, char **argv,
            "──────────────────────────","────────",
            "──────────","──────────","──────────","──────────");
 
+    int refused=0;
     for(int i=0;i<np;i++){
         BfPhysicsState *s=bf_physics_state_load(paths[i]);
-        if(!s){printf("%-26s  (load error)\n",paths[i]);continue;}
+        if(!s){fprintf(stderr,"compare: cannot load %s\n",paths[i]);refused=1;continue;}
+        if(has_bvh&&s->dim!=pack.dim){
+            fprintf(stderr,"compare: %s state dim %u != pack dim %u\n",paths[i],s->dim,pack.dim);
+            bf_physics_state_free(s);refused=1;continue;
+        }
         float H=has_bvh?bf_physics_hamiltonian(s,&bvh,&pack):
                         0.5f*vec_norm_(s->p,s->dim)*vec_norm_(s->p,s->dim);
         float ke=0.5f*vec_norm_(s->p,s->dim)*vec_norm_(s->p,s->dim);
@@ -859,13 +989,28 @@ static int cmd_compare_(int argc, char **argv,
         bf_physics_state_free(s);
     }
     if(has_bvh){bf_embed_bvh_close(&bvh);bf_embed_pack_close(&pack);}
-    return 0;
+    return refused;
 }
 
 /* ═══════════════════════════════════════════════════════════════ */
 /* trace                                                            */
 /* ═══════════════════════════════════════════════════════════════ */
 typedef struct{int n;} ReplayCx;
+/* An event is one JSON object per line carrying numeric step and H; a trace
+ * with anything else is refused whole rather than summarised around. */
+static int valid_cb_(const char *line, void *ctx){
+    int *n=ctx; (*n)++;
+    char err[64];
+    bf_json_doc_t *d=bf_json_parse_str(line,err,sizeof err);
+    const bf_json_node_t *r=d?bf_json_root(d):NULL;
+    if(r&&r->type!=BF_JSON_OBJECT) r=NULL;
+    const bf_json_node_t *st=r?bf_json_obj_get(d,r,"step"):NULL;
+    const bf_json_node_t *h=r?bf_json_obj_get(d,r,"H"):NULL;
+    int ok=st&&h&&st->type==BF_JSON_INT&&
+           (h->type==BF_JSON_INT||h->type==BF_JSON_DOUBLE);
+    if(d) bf_json_free(d);
+    return ok?0:*n;
+}
 static int replay_cb_(const char *line, void *ctx){
     ReplayCx *r=ctx; r->n++;
     printf("  %s",line);
@@ -883,6 +1028,10 @@ static int cmd_trace_(int argc, char **argv, const char *state_path) {
         if(!strcmp(argv[i],"--branch-at")&&i+1<argc) bat=argv[++i];
     }
     if(!do_sum&&!do_ent&&!do_rep&&!bat) do_sum=1;
+    int nl=0, vr=bf_trace_iterate(tf,valid_cb_,&nl);
+    if(vr<0){fprintf(stderr,"trace: cannot open %s\n",tf);return 1;}
+    if(vr>0){fprintf(stderr,"trace: malformed event %d in %s\n",vr,tf);return 1;}
+    if(nl==0){fprintf(stderr,"trace: no events in %s\n",tf);return 1;}
 
     if(do_sum||do_ent) bf_trace_summary(tf,stdout);
     if(do_rep){

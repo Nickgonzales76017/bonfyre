@@ -1,0 +1,147 @@
+#!/usr/bin/env python3
+"""ARCHIVED: plan_fragment_migration.mjs compiles draft-only migration records."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import re
+from collections import Counter
+from pathlib import Path
+from typing import Any
+
+SAFE = re.compile(r"[^A-Za-z0-9._:-]+")
+
+
+def atom(value: str, limit: int = 96) -> str:
+    value = SAFE.sub("-", value.strip()).strip("-")
+    return (value or "fragment")[:limit]
+
+
+def digest(*parts: str) -> str:
+    h = hashlib.sha256()
+    for part in parts:
+        h.update(part.encode("utf-8", "replace"))
+        h.update(b"\0")
+    return h.hexdigest()
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("literal_manifest")
+    ap.add_argument("source_map")
+    ap.add_argument("output")
+    ap.add_argument("--evidence-ref", default="")
+    args = ap.parse_args()
+
+    manifest = json.loads(Path(args.literal_manifest).read_text())
+    source_map = json.loads(Path(args.source_map).read_text())
+    mappings: dict[str, dict[str, Any]] = source_map.get("mappings") or {}
+    review_required = set(source_map.get("review_required") or [])
+
+    drafts: list[dict[str, Any]] = []
+    review: list[dict[str, Any]] = []
+    eq_counts: Counter[str] = Counter()
+
+    for candidate in manifest.get("candidates") or []:
+        nodes = candidate.get("text_nodes") or []
+        if not nodes:
+            continue
+        fn = candidate.get("function") or "global"
+        mapping = mappings.get(fn)
+
+        if not mapping or fn in review_required:
+            for index, text in enumerate(nodes):
+                review.append({
+                    "function": fn,
+                    "text": text,
+                    "node_index": index,
+                    "source_ref": candidate.get("source_ref"),
+                    "source_digest": candidate.get("source_digest"),
+                    "reason": "function requires exact page/slot/audience review",
+                })
+            continue
+
+        page = atom(str(mapping["page"]))
+        audience = atom(str(mapping["audience"]))
+        slot = atom(str(mapping.get("slot") or "legacy-copy"))
+
+        for index, text in enumerate(nodes):
+            normalized = " ".join(str(text).split())
+            if not normalized:
+                continue
+            equivalence = digest("surface-copy", normalized.casefold())
+            eq_counts[equivalence] += 1
+            source_ref = f"{candidate.get('source_ref')}:text:{index}"
+            source_digest = digest(str(candidate.get("source_digest") or ""), normalized)
+            coordinate = ".".join([
+                page, slot, audience, "legacy",
+                atom(str(candidate.get("candidate_id") or "candidate"), 32),
+                str(index),
+            ])
+            drafts.append({
+                "coordinate": coordinate,
+                "page": page,
+                "slot": slot,
+                "audience": audience,
+                "kind": "copy",
+                "position": int(candidate.get("line") or 0) * 10 + index,
+                "body": normalized,
+                "status": "draft",
+                "variant_key": "legacy-compiled",
+                "semantic_tags": [
+                    "migration",
+                    "compiled-literal",
+                    f"function:{fn}",
+                    f"role:{candidate.get('role')}",
+                    f"equivalence:{equivalence[:16]}",
+                ],
+                "projection_contract": {
+                    "carriers": ["html", "htmx"],
+                    "fallback": "compiled",
+                },
+                "source_ref": source_ref,
+                "source_digest": source_digest,
+                "evidence_ref": args.evidence_ref or None,
+                "notes": (
+                    "migration candidate only; compiled fallback remains authoritative "
+                    "until exact projection and publication witnesses pass"
+                ),
+            })
+
+    duplicate_groups = sum(1 for count in eq_counts.values() if count > 1)
+    duplicate_occurrences = sum(count for count in eq_counts.values() if count > 1)
+
+    payload = {
+        "schema_version": "bonfyre.surface.fragment-migration-plan.v1",
+        "source_manifest": str(Path(args.literal_manifest).resolve()),
+        "source_manifest_sha256": digest(Path(args.literal_manifest).read_text()),
+        "source_map": str(Path(args.source_map).resolve()),
+        "draft_count": len(drafts),
+        "review_count": len(review),
+        "equivalence_groups": len(eq_counts),
+        "duplicate_equivalence_groups": duplicate_groups,
+        "duplicate_occurrences": duplicate_occurrences,
+        "drafts": drafts,
+        "review": review,
+        "promotion_law": [
+            "draft admission is not publication",
+            "compiled fallback remains until exact SurfaceIR projection passes",
+            "ANN/equivalence may propose reuse but cannot satisfy an exact coordinate",
+            "removing a compiled fallback requires a separate verified source patch",
+        ],
+    }
+    Path(args.output).write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+    print(json.dumps({
+        "draft_count": payload["draft_count"],
+        "review_count": payload["review_count"],
+        "equivalence_groups": payload["equivalence_groups"],
+        "duplicate_equivalence_groups": duplicate_groups,
+        "duplicate_occurrences": duplicate_occurrences,
+    }, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

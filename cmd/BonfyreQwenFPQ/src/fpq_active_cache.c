@@ -1,8 +1,17 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * fpq_active_cache.c — Active packed weight cache implementation
  */
 #include "fpq_active_cache.h"
 #include "fpq_kernels_neon.h"
+#include <bonfyre.h>
+#include <bf_jsonw.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -126,6 +135,78 @@ static void ensure_parent_dir(const char *dir) {
     mkdir(dir, 0755);
 }
 
+static void fpq_active_digest_bytes(const void *data, size_t bytes, char out[65]) {
+    static const uint8_t empty = 0;
+    const uint8_t *p = data ? (const uint8_t *)data : &empty;
+    bf_sha256_hex(p, bytes, out);
+}
+
+static void fpq_active_payload_digest(fpq_active_entry_t *entry) {
+    char u_hash[65], vt_hash[65], us_hash[65], vts_hash[65];
+    char gu_hash[65], gv_hash[65], gm_hash[65];
+    char factor_descriptor[768], exception_descriptor[512], payload_descriptor[256];
+    float ghost_meta[3] = {0.0f, 0.0f, 0.0f};
+    size_t rank, u_count, vt_count;
+
+    if (!entry || !entry->ready || entry->lr_rank == 0 ||
+        !entry->active_u_q || !entry->active_vt_q ||
+        !entry->active_u_scales || !entry->active_vt_scales) {
+        if (entry) {
+            entry->factor_sha256[0] = '\0';
+            entry->exception_sha256[0] = '\0';
+            entry->payload_sha256[0] = '\0';
+        }
+        return;
+    }
+
+    rank = (size_t)entry->lr_rank;
+    u_count = rank * (size_t)entry->rows;
+    vt_count = rank * (size_t)entry->cols;
+    fpq_active_digest_bytes(entry->active_u_q, u_count, u_hash);
+    fpq_active_digest_bytes(entry->active_vt_q, vt_count, vt_hash);
+    fpq_active_digest_bytes(entry->active_u_scales, rank * sizeof(float), us_hash);
+    fpq_active_digest_bytes(entry->active_vt_scales, rank * sizeof(float), vts_hash);
+
+    snprintf(factor_descriptor, sizeof(factor_descriptor),
+             "fpq-active-factor-v1|rows=%u|cols=%u|rank=%u|u=%s|vt=%s|us=%s|vts=%s",
+             entry->rows, entry->cols, (unsigned)entry->lr_rank,
+             u_hash, vt_hash, us_hash, vts_hash);
+    bf_sha256_hex((const uint8_t *)factor_descriptor, strlen(factor_descriptor),
+                  entry->factor_sha256);
+
+    if (entry->has_ghost && (!entry->ghost_u_q || !entry->ghost_v_q)) {
+        entry->exception_sha256[0] = '\0';
+        entry->payload_sha256[0] = '\0';
+        return;
+    }
+
+    if (entry->has_ghost) {
+        ghost_meta[0] = entry->ghost_sigma;
+        ghost_meta[1] = entry->ghost_u_scale;
+        ghost_meta[2] = entry->ghost_v_scale;
+        fpq_active_digest_bytes(entry->ghost_u_q, (size_t)entry->rows, gu_hash);
+        fpq_active_digest_bytes(entry->ghost_v_q, (size_t)entry->cols, gv_hash);
+        fpq_active_digest_bytes(ghost_meta, sizeof(ghost_meta), gm_hash);
+    } else {
+        fpq_active_digest_bytes(NULL, 0, gu_hash);
+        fpq_active_digest_bytes(NULL, 0, gv_hash);
+        fpq_active_digest_bytes(NULL, 0, gm_hash);
+    }
+
+    snprintf(exception_descriptor, sizeof(exception_descriptor),
+             "fpq-active-exception-v1|rows=%u|cols=%u|ghost=%u|gu=%s|gv=%s|gm=%s",
+             entry->rows, entry->cols, (unsigned)entry->has_ghost,
+             gu_hash, gv_hash, gm_hash);
+    bf_sha256_hex((const uint8_t *)exception_descriptor, strlen(exception_descriptor),
+                  entry->exception_sha256);
+    snprintf(payload_descriptor, sizeof(payload_descriptor),
+             "fpq-active-payload-v2|factor=%s|exception=%s",
+             entry->factor_sha256, entry->exception_sha256);
+    bf_sha256_hex((const uint8_t *)payload_descriptor, strlen(payload_descriptor),
+                  entry->payload_sha256);
+}
+
+
 
 static int fpq_active_finalize_lr_payload(fpq_active_entry_t *entry,
                                           uint16_t lr_rank,
@@ -169,6 +250,13 @@ static int fpq_active_finalize_lr_payload(fpq_active_entry_t *entry,
     if (quant_mode && quant_mode[0]) {
         snprintf(entry->quant_mode, sizeof(entry->quant_mode), "%s", quant_mode);
     }
+    if (entry->ready) {
+        fpq_active_payload_digest(entry);
+    } else {
+        entry->factor_sha256[0] = '\0';
+        entry->exception_sha256[0] = '\0';
+        entry->payload_sha256[0] = '\0';
+    }
 
     return entry->ready ? 0 : -1;
 }
@@ -191,6 +279,9 @@ static void clear_materialized_buffers(fpq_active_entry_t *e) {
     e->scales_size = 0;
     e->total_bytes = 0;
     e->payload_bytes = 0;
+    e->factor_sha256[0] = '\0';
+    e->exception_sha256[0] = '\0';
+    e->payload_sha256[0] = '\0';
     e->data = NULL;
     e->ready = 0;
     e->materialized_from_artifact = 0;
@@ -423,6 +514,191 @@ void fpq_active_cache_free(fpq_active_cache_t *cache) {
     free(cache);
 }
 
+void fpq_active_cache_density(fpq_active_cache_t *cache, fpq_active_density_t *out) {
+    if (!out) return;
+    memset(out, 0, sizeof(*out));
+    if (!cache) return;
+
+    pthread_mutex_lock(&cache->mu);
+    for (size_t i = 0; i < cache->n_entries; i++) {
+        const fpq_active_entry_t *entry = &cache->entries[i];
+        int factor_duplicate = 0;
+        int payload_duplicate = 0;
+        size_t factor_bytes = 0;
+        if (!entry->ready || entry->payload_bytes == 0 ||
+            entry->factor_sha256[0] == '\0' ||
+            entry->payload_sha256[0] == '\0') {
+            continue;
+        }
+
+        out->ready_entries++;
+        out->resident_payload_bytes += entry->payload_bytes;
+        factor_bytes = entry->qweight_size +
+                       (size_t)entry->lr_rank * 2u * sizeof(float);
+        out->resident_factor_bytes += factor_bytes;
+        for (size_t j = 0; j < i; j++) {
+            const fpq_active_entry_t *prior = &cache->entries[j];
+            if (!prior->ready || prior->payload_bytes == 0 ||
+                prior->factor_sha256[0] == '\0' ||
+                prior->payload_sha256[0] == '\0') {
+                continue;
+            }
+            if (strcmp(prior->factor_sha256, entry->factor_sha256) == 0)
+                factor_duplicate = 1;
+            if (prior->payload_bytes == entry->payload_bytes &&
+                strcmp(prior->payload_sha256, entry->payload_sha256) == 0)
+                payload_duplicate = 1;
+        }
+
+        if (factor_duplicate) {
+            out->duplicate_factors++;
+            out->duplicate_factor_bytes += factor_bytes;
+        } else {
+            out->unique_factors++;
+            out->unique_factor_bytes += factor_bytes;
+        }
+        if (payload_duplicate) {
+            out->duplicate_payloads++;
+            out->duplicate_payload_bytes += entry->payload_bytes;
+        } else {
+            out->unique_payloads++;
+            out->unique_payload_bytes += entry->payload_bytes;
+        }
+    }
+    pthread_mutex_unlock(&cache->mu);
+}
+
+int fpq_active_cache_write_passports(fpq_active_cache_t *cache,
+                                     const char *jsonl_path) {
+    char tmp_path[PATH_MAX];
+    FILE *fp = NULL;
+    int count = 0;
+    int failed = 0;
+
+    if (!cache || !jsonl_path || !jsonl_path[0]) return -1;
+    if (snprintf(tmp_path, sizeof(tmp_path), "%s.tmp.%ld",
+                 jsonl_path, (long)getpid()) >= (int)sizeof(tmp_path)) {
+        return -1;
+    }
+    fp = fopen(tmp_path, "w");
+    if (!fp) return -1;
+
+    pthread_mutex_lock(&cache->mu);
+    for (size_t i = 0; i < cache->n_entries; i++) {
+        const fpq_active_entry_t *entry = &cache->entries[i];
+        char subject_descriptor[4096];
+        char binding_descriptor[4096];
+        char subject_hash[65], binding_hash[65];
+        char identity[256], basis[80], binding[80], exception[80];
+        char physical_digest[80], physical_body_ref[128];
+        char lift_ref[1200], version[32];
+        bf_jsonw w;
+
+        if (!entry->ready || entry->lr_rank == 0 || entry->payload_bytes == 0 ||
+            !entry->tensor_name || !entry->cache_key ||
+            entry->factor_sha256[0] == '\0' ||
+            entry->exception_sha256[0] == '\0' ||
+            entry->payload_sha256[0] == '\0') {
+            continue;
+        }
+
+        if (snprintf(subject_descriptor, sizeof(subject_descriptor),
+                     "fpq-active-subject-v1|key=%s|tensor=%s|rows=%u|cols=%u",
+                     entry->cache_key, entry->tensor_name,
+                     entry->rows, entry->cols) >= (int)sizeof(subject_descriptor)) {
+            failed = 1;
+            break;
+        }
+        bf_sha256_hex((const uint8_t *)subject_descriptor,
+                      strlen(subject_descriptor), subject_hash);
+
+        if (snprintf(binding_descriptor, sizeof(binding_descriptor),
+                     "fpq-active-binding-v1|subject=%s|tensor=%s|factor=%s",
+                     subject_hash, entry->tensor_name,
+                     entry->factor_sha256) >= (int)sizeof(binding_descriptor)) {
+            failed = 1;
+            break;
+        }
+        bf_sha256_hex((const uint8_t *)binding_descriptor,
+                      strlen(binding_descriptor), binding_hash);
+
+        snprintf(identity, sizeof(identity),
+                 "fpq-active-tensor:%s:%s", subject_hash, binding_hash);
+        snprintf(basis, sizeof(basis), "sha256:%s", entry->factor_sha256);
+        snprintf(binding, sizeof(binding), "sha256:%s", binding_hash);
+        if (entry->has_ghost)
+            snprintf(exception, sizeof(exception), "sha256:%s", entry->exception_sha256);
+        else
+            exception[0] = '\0';
+        snprintf(physical_digest, sizeof(physical_digest),
+                 "sha256:%s", entry->payload_sha256);
+        snprintf(physical_body_ref, sizeof(physical_body_ref),
+                 "memory:fpq-active:%s", entry->payload_sha256);
+        if (snprintf(lift_ref, sizeof(lift_ref),
+                     "fpq-active-source:%s", entry->cache_key) >= (int)sizeof(lift_ref)) {
+            failed = 1;
+            break;
+        }
+        snprintf(version, sizeof(version), "%u", entry->format_version);
+
+        bf_jsonw_init(&w, 0);
+        bf_jsonw_obj(&w);
+        bf_jsonw_key(&w, "identity"); bf_jsonw_str(&w, identity);
+        bf_jsonw_key(&w, "subject_family"); bf_jsonw_str(&w, "fpq-active-tensor");
+        bf_jsonw_key(&w, "semantic_digest");
+        {
+            char semantic_digest[80];
+            snprintf(semantic_digest, sizeof(semantic_digest), "sha256:%s", subject_hash);
+            bf_jsonw_str(&w, semantic_digest);
+        }
+        bf_jsonw_key(&w, "representation_family"); bf_jsonw_str(&w, "fpq-active-low-rank");
+        bf_jsonw_key(&w, "representation_version"); bf_jsonw_str(&w, version);
+        bf_jsonw_key(&w, "exactness_class"); bf_jsonw_str(&w, "exact");
+        bf_jsonw_key(&w, "quality_loss_budget"); bf_jsonw_num(&w, 0.0);
+        bf_jsonw_key(&w, "measurement_state"); bf_jsonw_str(&w, "measured");
+        bf_jsonw_key(&w, "shared_basis"); bf_jsonw_str(&w, basis);
+        bf_jsonw_key(&w, "binding_digest"); bf_jsonw_str(&w, binding);
+        bf_jsonw_key(&w, "exception_digest"); bf_jsonw_str(&w, exception);
+        bf_jsonw_key(&w, "physical_body_ref"); bf_jsonw_str(&w, physical_body_ref);
+        bf_jsonw_key(&w, "physical_digest"); bf_jsonw_str(&w, physical_digest);
+        bf_jsonw_key(&w, "supports");
+        bf_jsonw_arr(&w);
+        bf_jsonw_str(&w, "matvec");
+        bf_jsonw_str(&w, "row_decode");
+        bf_jsonw_str(&w, "direct_execution");
+        bf_jsonw_arr_end(&w);
+        bf_jsonw_key(&w, "lift_ref"); bf_jsonw_str(&w, lift_ref);
+        bf_jsonw_key(&w, "bytes"); bf_jsonw_int(&w, (int64_t)entry->payload_bytes);
+        bf_jsonw_obj_end(&w);
+
+        if (w.oom || !w.buf ||
+            fwrite(w.buf, 1, w.len, fp) != w.len ||
+            fputc('\n', fp) == EOF) {
+            bf_jsonw_free(&w);
+            failed = 1;
+            break;
+        }
+        bf_jsonw_free(&w);
+        count++;
+    }
+    pthread_mutex_unlock(&cache->mu);
+
+    if (!failed && count > 0 && fflush(fp) == 0) {
+        int fd = fileno(fp);
+        if (fd < 0 || fsync(fd) != 0) failed = 1;
+    } else {
+        failed = 1;
+    }
+    if (fclose(fp) != 0) failed = 1;
+
+    if (failed || rename(tmp_path, jsonl_path) != 0) {
+        unlink(tmp_path);
+        return -1;
+    }
+    return count;
+}
+
+
 void fpq_active_cache_key(const char *pack_path,
                           const char *tensor_name,
                           uint32_t rows,
@@ -519,15 +795,17 @@ fpq_active_entry_t *fpq_active_cache_get(fpq_active_cache_t *cache,
     if (persist_enabled() && access(cpath, F_OK) == 0) {
         entry.loaded = 1;
         entry.total_bytes = 0;
-        fpq_active_entry_t *new_entries = (fpq_active_entry_t *)realloc(
-            cache->entries, (cache->n_entries + 1) * sizeof(fpq_active_entry_t));
-        if (!new_entries) {
+        if (cache->n_entries >= cache->entries_capacity) {
             free(entry.tensor_name); free(entry.cache_key); free(entry.cache_file);
             pthread_mutex_unlock(&cache->mu);
             return NULL;
         }
-        cache->entries = new_entries;
         cache->entries[cache->n_entries] = entry;
+        if (pthread_mutex_init(&cache->entries[cache->n_entries].materialize_mu, NULL) == 0) {
+            cache->entries[cache->n_entries].materialize_mu_inited = 1;
+        } else {
+            cache->entries[cache->n_entries].materialize_mu_inited = 0;
+        }
         cache->n_entries++;
         if (load_v9_artifact(&cache->entries[cache->n_entries - 1]) != 0) {
             cache->entries[cache->n_entries - 1].ready = 0;

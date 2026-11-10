@@ -1,0 +1,6 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-mfa-dict","binary_env":"BONFYRE_MFA_DICT_BIN","cases":[
+{"name":"one dictionary entry per distinct word of a transcript","files":{"t.txt":"We need to fix the checkout page by Friday. Customers cannot pay.\n"},"steps":[
+ {"argv":["--transcript","t.txt","--out","dict.txt"],"env":{"HOME":"${tmp}","BONFYRE_FRAGMENT_STORE":"${tmp}/frag.db","BONFYRE_VOCAB_DB":"${tmp}/vocab.bfvocab"},"exit":0,"contains":["Wrote 12 entries to dict.txt"]},
+ {"program":"grep","argv":["-c","","dict.txt"],"stdout":"12\n"},
+ {"program":"cat","argv":["dict.txt"],"contains":["CHECKOUT ","FRIDAY "]}]},
+{"name":"dry-run writes nothing","files":{"t.txt":"hello world\n"},"steps":[{"argv":["--transcript","t.txt","--out","dict.txt","--dry-run"],"env":{"HOME":"${tmp}","BONFYRE_FRAGMENT_STORE":"${tmp}/frag.db","BONFYRE_VOCAB_DB":"${tmp}/vocab.bfvocab"},"exit":0,"absent":["${tmp}/dict.txt"]}]}]}

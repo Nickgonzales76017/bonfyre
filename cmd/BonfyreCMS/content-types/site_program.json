@@ -1,0 +1,16 @@
+{
+  "name": "site_program",
+  "displayName": "Site Program",
+  "description": "The executable composition plan for one SitePresentation. It joins declared human ExperiencePrograms, typed application bindings, portable renderer preferences, reagent collections and capability programs. Subject, territory and Ghost profile remain owned by SitePresentation so this row cannot duplicate or drift semantic identity or art direction.",
+  "attributes": {
+    "program_id": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "site_id": {"type": "string", "required": true},
+    "experience_programs": {"type": "json", "required": true},
+    "application_bindings": {"type": "json", "required": true},
+    "renderer_preferences": {"type": "json", "required": true},
+    "source_collections": {"type": "json", "required": true},
+    "capability_programs": {"type": "json", "required": true},
+    "actor_presentations": {"type": "json", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

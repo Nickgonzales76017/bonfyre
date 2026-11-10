@@ -1,0 +1,25 @@
+{
+  "operator": "PROVE",
+  "program": {
+    "program_id": "household.prove.942cc2f857ce05fe",
+    "operator": "PROVE",
+    "digest": "5653f386977918a7ce44fbfe209ef66e802fb3f6cf5e132ff7511cbfa85d56d2",
+    "reads": [
+      "household:housing:listing:milo-a"
+    ],
+    "admitted": true,
+    "hard_failures": []
+  },
+  "address": "household:housing:listing:milo-a",
+  "claim": "availability",
+  "proof_state": "not_proven",
+  "observed_fields": [
+    "availability_status"
+  ],
+  "source_refs": [
+    "housing/receipts#milo",
+    "https://example.test/milo"
+  ],
+  "reason": "A source-bound projection can establish record identity and preserve an observation, but it does not independently prove current availability, eligibility, pet acceptance, or cost."
+}
+exit 0

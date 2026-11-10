@@ -1,0 +1,1 @@
+{"authorization":"Bearer fixture-token","body":{"id":"@ID@","jsonrpc":"2.0","method":"tools/call","params":{"arguments":{"mission_id":"m1","model_family":"Fam","privacy_class":"internal","token_count":42},"name":"r7_phenotype_compile"}},"content-type":"application/json","mcp-protocol-version":"2025-06-18","request":"POST /mcp"}

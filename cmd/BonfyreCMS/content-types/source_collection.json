@@ -1,0 +1,13 @@
+{
+  "name": "source_collection",
+  "displayName": "Source Collection",
+  "description": "A scoped editorial/reagent selection over observed external sources. It feeds a typed material compiler and is never public content, a provider, or a capability by itself.",
+  "attributes": {
+    "collection_id": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "subject_address": {"type": "string", "required": true},
+    "source_selector": {"type": "json", "required": true},
+    "material_kind": {"type": "json", "required": true},
+    "refresh_policy": {"type": "string", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

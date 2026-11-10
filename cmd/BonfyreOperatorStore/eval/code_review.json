@@ -1,0 +1,61 @@
+{
+ "schema": "bonfyre.operator_store.quality_eval_set.v1",
+ "class": "code_review",
+ "threshold": 0.75,
+ "scorer": "the first integer in the answer must equal the expected line number (0 = no bug)",
+ "generation": {
+  "temperature": 0,
+  "seed": 7,
+  "max_tokens": 16
+ },
+ "items": [
+  {
+   "id": "cr-route-base",
+   "source": "cmd/BonfyreOperatorStore/src/main.c route_base (bug injected: strchr)",
+   "prompt": "Review the numbered C code. Answer with the line number of the one line that contains a bug, or 0 if the code has no bug. Answer with the number only.\n\n1: /* Return the file name after the last slash. */\n2: static const char *route_base(const char *path)\n3: {\n4:     const char *slash = path ? strchr(path, '/') : NULL;\n5:     return slash ? slash + 1 : (path ? path : \"\");\n6: }",
+   "expected": "4"
+  },
+  {
+   "id": "cr-argv-bound",
+   "source": "cmd/BonfyreOperatorStore/src/main.c route_request (bug injected: loop bound)",
+   "prompt": "Review the numbered C code. Answer with the line number of the one line that contains a bug, or 0 if the code has no bug. Answer with the number only.\n\n1: /* Options come in --key value pairs after argv[1]. */\n2: static int parse_pairs(int argc, char **argv)\n3: {\n4:     int pairs = 0;\n5:     for (int i = 2; i <= argc; i += 2) {\n6:         const char *key = argv[i], *value = argv[i + 1];\n7:         if (!key[0] || !value[0]) return -1;\n8:         pairs++;\n9:     }\n10:     return pairs;\n11: }",
+   "expected": "5"
+  },
+  {
+   "id": "cr-verdict-swap",
+   "source": "cmd/BonfyreOperatorStore/src/main.c route_quality (bug injected: verdicts swapped)",
+   "prompt": "Review the numbered C code. Answer with the line number of the one line that contains a bug, or 0 if the code has no bug. Answer with the number only.\n\n1: /* failed counts vetoes; passed counts witnessed passes. One failure vetoes. */\n2: static const char *verdict_of(long passed, long failed)\n3: {\n4:     const char *verdict = \"quality_unmeasured\";\n5:     if (failed > 0) verdict = \"quality_passed\";\n6:     else if (passed > 0) verdict = \"quality_failed\";\n7:     return verdict;\n8: }",
+   "expected": "5"
+  },
+  {
+   "id": "cr-symlink-or",
+   "source": "cmd/BonfyreOperatorStore/src/main.c safe_database_path (bug injected: || for &&)",
+   "prompt": "Review the numbered C code. Answer with the line number of the one line that contains a bug, or 0 if the code has no bug. Answer with the number only.\n\n1: /* Accept an existing path only if it is a regular file and not a symlink. */\n2: static int regular_not_link(const char *path)\n3: {\n4:     struct stat entry;\n5:     if (lstat(path, &entry) != 0) return 0;\n6:     return S_ISREG(entry.st_mode) || !S_ISLNK(entry.st_mode);\n7: }",
+   "expected": "6"
+  },
+  {
+   "id": "cr-double-free",
+   "source": "cmd/BonfyreOperatorStore/src/main.c route_input_load (bug injected: double free)",
+   "prompt": "Review the numbered C code. Answer with the line number of the one line that contains a bug, or 0 if the code has no bug. Answer with the number only.\n\n1: /* Read a whole file into a new buffer; NULL on short read. */\n2: static char *read_all(FILE *in, size_t size)\n3: {\n4:     char *text = malloc(size + 1);\n5:     size_t got = text ? fread(text, 1, size, in) : 0;\n6:     if (!text || got != size) { free(text); free(text); return NULL; }\n7:     text[got] = '\\0';\n8:     return text;\n9: }",
+   "expected": "6"
+  },
+  {
+   "id": "cr-hex-range",
+   "source": "cmd/BonfyreOperatorStore/src/main.c quality_hex64 (bug injected: wrong digit range)",
+   "prompt": "Review the numbered C code. Answer with the line number of the one line that contains a bug, or 0 if the code has no bug. Answer with the number only.\n\n1: /* True when s is exactly 64 lower-case hexadecimal digits. */\n2: static int hex64(const char *s)\n3: {\n4:     if (!s || strlen(s) != 64) return 0;\n5:     for (const char *p = s; *p; p++)\n6:         if (!((*p >= '0' && *p <= '9') || (*p >= 'a' && *p <= 'z'))) return 0;\n7:     return 1;\n8: }",
+   "expected": "6"
+  },
+  {
+   "id": "cr-clean-json-int",
+   "source": "cmd/BonfyreOperatorStore/src/main.c route_json_has (unchanged)",
+   "prompt": "Review the numbered C code. Answer with the line number of the one line that contains a bug, or 0 if the code has no bug. Answer with the number only.\n\n1: /* Count members of a NUL-terminated list that equal name. */\n2: static int count_named(const char **list, const char *name)\n3: {\n4:     int found = 0;\n5:     for (size_t i = 0; list && list[i]; i++)\n6:         if (!strcmp(list[i], name)) found++;\n7:     return found;\n8: }",
+   "expected": "0"
+  },
+  {
+   "id": "cr-clean-base",
+   "source": "cmd/BonfyreOperatorStore/src/main.c route_base (unchanged)",
+   "prompt": "Review the numbered C code. Answer with the line number of the one line that contains a bug, or 0 if the code has no bug. Answer with the number only.\n\n1: /* Return the file name after the last slash. */\n2: static const char *route_base(const char *path)\n3: {\n4:     const char *slash = path ? strrchr(path, '/') : NULL;\n5:     return slash ? slash + 1 : (path ? path : \"\");\n6: }",
+   "expected": "0"
+  }
+ ]
+}

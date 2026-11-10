@@ -1,0 +1,25 @@
+UNAPPLIED CANONICAL ATLAS UPDATE
+Destination: architecture/surface/surface.yaff, existing architecture pack-graph
+Reason held: architecture/ is outside the connected low-risk patch roots.
+Do not treat this proposal as a canonical declaration or completed portfolio program.
+
+Suggested additions within the existing pack-graph block:
+  source_path cmd/BonfyreWebAddress/src/pack_resolution.h
+  source_path cmd/BonfyreWebAddress/src/pack_setup.h
+  source_path cmd/BonfyreCMS/src/pack_lifecycle.h
+  source_path cmd/BonfyreCMS/tests/pack_lifecycle_test.mjs
+  source_path cmd/BonfyreWebAddress/tests/pack_setup_test.mjs
+  source_path cmd/BonfyreCMS/tests/program_continuation_test.c
+  invariant reviewed installation uses the existing CMS rows and same-database relational revision/pin metadata; a transaction commits the root, pins and revision together
+  invariant native setup derives personal identity from the session and rechecks exact institution administration before mutation; installation grants no authority
+  invariant installed dependency versions survive head advancement; changed selected definitions invalidate the former closure; unrelated definitions do not invalidate it
+  invariant a private installed closure cannot be read by a guessed public actor query or advertised by the old public head-based emitter
+  witness cmd/BonfyreCMS/tests/pack_lifecycle_test.mjs passes 28 named checks against isolated native CMS stores, including injected failure, competing reviewers and ordering-sensitive fingerprints
+  witness cmd/BonfyreWebAddress/tests/pack_setup_test.mjs passes 41 HTTP checks through native Auth, CMS and WebAddress, with personal adoption, recipient isolation, exact institution grants, source conflicts and revoked access
+  witness cmd/BonfyreCMS/tests/program_continuation_test.c preserves public legacy advertisements while excluding private pinned activations
+  forbidden_inference installed or active behavior references -> a provisioned product backend, public customer site, hydrated resource, domain operation or end-to-end user outcome
+  known_gap personal and already-authorized institution setup are implemented; household/community membership and institution creation remain separate unfinished owners
+  known_gap the new native setup HTML has HTTP verification but no fresh browser or phone certification; the browser-test creation was blocked and not executed
+  known_gap private installed closures feed the explicit scoped WebAddress reader; general World/SitePresentation/ResourceWeather and private forwarding adoption are still incomplete
+
+Add an interaction through the canonical atlas owner for CMS transactional installation -> session-scoped WebAddress PackGraph resolution, preserving subject, scope, exact dependency versions and current review fingerprint; explicitly drop publication, provider and execution authority. Export/validate through that owner after authorized application. Keep the existing measured witnesses and unrelated known gaps intact.

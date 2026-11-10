@@ -1,0 +1,7 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-surface","binary_env":"BONFYRE_SURFACE_BIN","cases":[
+{"name":"a client surface with every required key validates, lists and shows","files":{"clients/acme/client_surface.yaml":"adapter: acme-portal\ntype: web\nreads: [cms]\nemits: [page]\nrequires: [auth]\ndoes_not_own: [payments]\n","partial.yaml":"adapter: x\ntype: web\n"},"steps":[
+ {"argv":["validate","clients/acme/client_surface.yaml"],"env":{"HOME":"${tmp}"},"exit":0,"at":{"valid":true}},
+ {"argv":["validate","partial.yaml"],"env":{"HOME":"${tmp}"},"exit":1,"at":{"valid":false}},
+ {"argv":["list"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["acme-portal  web"]},
+ {"argv":["show","acme"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["does_not_own: [payments]"]},
+ {"argv":["show","nobody"],"env":{"HOME":"${tmp}"},"exit":1}]}]}

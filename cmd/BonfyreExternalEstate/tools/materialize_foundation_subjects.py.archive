@@ -1,0 +1,179 @@
+#!/usr/bin/env python3
+"""Materialize the four public Aurekai territory subjects from SourceFrontier.
+
+Publisher SubjectFabric bundles already answer an addressed publisher.  The
+territory apexes are different: their public reader closure is the admitted
+estate itself, constrained later by published SourceCollections and the page
+program.  Keeping that closure in SubjectFabric removes the last request-time
+global frontier scan without inventing a new semantic owner.
+
+The compiler copies its input database to a staged output, replaces only the
+requested ``institution:aurekai:<territory>`` derived rows, verifies SQLite
+integrity, and atomically activates the resulting index.  It never mutates
+SourceFrontier, CMS, retained material, authority, or public delivery.
+"""
+
+import argparse
+import hashlib
+import json
+import os
+import sqlite3
+import sys
+import tempfile
+import time
+
+
+DEFAULT_TERRITORIES = ("life", "live", "shop", "work")
+
+
+def canon(value):
+    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
+def digest(value):
+    return hashlib.sha256(canon(value).encode("utf-8")).hexdigest()
+
+
+def tables(db):
+    return {row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+
+
+def source_rows(frontier):
+    rows = []
+    seen = set()
+    sql = (
+        "SELECT census_source,root_id,channel_id,material,protocol,state,"
+        "COALESCE(last_contributed,''),COALESCE(contributions,0),COALESCE(first_seen,'') "
+        "FROM channel WHERE state IN ('admitted','active') AND COALESCE(census_source,'')<>'' "
+        "ORDER BY census_source,channel_id"
+    )
+    for source, root_id, channel_id, material, protocol, state, last, contributions, first in frontier.execute(sql):
+        source = str(source or "")
+        if not source or source in seen:
+            continue
+        seen.add(source)
+        rows.append({
+            "source": source, "root_id": str(root_id or ""), "channel_id": str(channel_id or ""),
+            "material": str(material or ""), "protocol": str(protocol or ""), "state": str(state or ""),
+            "last_contributed": str(last or ""), "contributions": int(contributions or 0),
+            "first_seen": str(first or ""),
+        })
+    return rows
+
+
+def delete_subject_rows(db, existing_tables, subject):
+    # Every one of these tables is a derived projection of the foundation
+    # subject.  Unknown/future tables are deliberately untouched.
+    for table in (
+        "subject_route_item", "subject_route_region", "subject_route_reader",
+        "subject_route_phase", "subject_route", "subject_material_member", "subject_material", "subject_query",
+        "subject_scene", "subject_action", "subject_dependency", "subject_root",
+        "subject_candidate", "subject_reader", "subject_bundle",
+    ):
+        if table in existing_tables:
+            db.execute("DELETE FROM %s WHERE subject=? AND scope='public'" % table, (subject,))
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--fabric-db", required=True, help="existing SubjectFabric index")
+    ap.add_argument("--frontier-db", required=True, help="admitted SourceFrontier index")
+    ap.add_argument("--out", required=True, help="atomically written SubjectFabric output")
+    ap.add_argument("--territory", action="append", choices=DEFAULT_TERRITORIES)
+    ap.add_argument("--manifest")
+    args = ap.parse_args()
+
+    territories = args.territory or list(DEFAULT_TERRITORIES)
+    if not os.path.isfile(args.fabric_db):
+        raise RuntimeError("SubjectFabric input does not exist: %s" % args.fabric_db)
+    if not os.path.isfile(args.frontier_db):
+        raise RuntimeError("SourceFrontier input does not exist: %s" % args.frontier_db)
+
+    frontier = sqlite3.connect("file:%s?mode=ro" % os.path.abspath(args.frontier_db), uri=True)
+    if "channel" not in tables(frontier):
+        raise RuntimeError("SourceFrontier has no channel table")
+    readers = source_rows(frontier)
+    frontier.close()
+    if not readers:
+        raise RuntimeError("SourceFrontier has no admitted census sources")
+
+    destination = os.path.abspath(args.out)
+    directory = os.path.dirname(destination)
+    os.makedirs(directory, exist_ok=True)
+    fd, staged = tempfile.mkstemp(prefix=".foundation-subject-", suffix=".db", dir=directory)
+    os.close(fd)
+    try:
+        source = sqlite3.connect("file:%s?mode=ro" % os.path.abspath(args.fabric_db), uri=True)
+        db = sqlite3.connect(staged)
+        source.backup(db)
+        source.close()
+        required = {"subject_bundle", "subject_reader"}
+        existing = tables(db)
+        missing = sorted(required - existing)
+        if missing:
+            raise RuntimeError("SubjectFabric missing required tables: %s" % ", ".join(missing))
+
+        compiled_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        reader_digest = digest(readers)
+        db.execute("BEGIN IMMEDIATE")
+        for territory in territories:
+            subject = "institution:aurekai:%s" % territory
+            delete_subject_rows(db, existing, subject)
+            core = {
+                "schema": "bonfyre.foundation-subject-fabric.v1",
+                "subject": subject,
+                "scope": "public",
+                "basis": "source_frontier_admitted_estate_closure",
+                "reader_digest": reader_digest,
+                "reader_count": len(readers),
+                "territory": territory,
+            }
+            bundle_digest = digest(core)
+            db.execute(
+                "INSERT INTO subject_bundle("
+                "subject,scope,bundle_digest,closure_digest,scene_digest,compiled_at,counts_json,payload_json"
+                ") VALUES(?,?,?,?,?,?,?,?)",
+                (subject, "public", bundle_digest, reader_digest, "", compiled_at,
+                 canon({"readers": len(readers), "source_roots": len({r["root_id"] for r in readers})}),
+                 canon(core)),
+            )
+            db.executemany(
+                "INSERT INTO subject_reader("
+                "subject,scope,census_source,root_id,channel_id,material,protocol,state,"
+                "last_contributed,contributions,first_seen"
+                ") VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+                [(subject, "public", row["source"], row["root_id"], row["channel_id"],
+                  row["material"], row["protocol"], row["state"], row["last_contributed"],
+                  row["contributions"], row["first_seen"]) for row in readers],
+            )
+        db.commit()
+        check = db.execute("PRAGMA integrity_check").fetchone()
+        if not check or check[0] != "ok":
+            raise RuntimeError("foundation SubjectFabric integrity check failed")
+        db.close()
+        os.replace(staged, destination)
+    finally:
+        if os.path.exists(staged):
+            os.unlink(staged)
+
+    summary = {
+        "schema": "bonfyre.foundation-subject-fabric.v1",
+        "out": destination,
+        "territories": territories,
+        "admitted_sources": len(readers),
+        "reader_digest": reader_digest,
+        "truth": "derived_public_reader_closure_over_admitted_source_frontier",
+        "cannot_infer": [
+            "admitted source -> current source body or freshness",
+            "foundation reader membership -> route visibility, ranking, endorsement or truth",
+            "derived public closure -> authority, payment, private access or external effect",
+        ],
+    }
+    if args.manifest:
+        with open(args.manifest, "w") as out:
+            json.dump(summary, out, indent=2, sort_keys=True)
+    print(json.dumps(summary, sort_keys=True))
+
+
+if __name__ == "__main__":
+    sys.exit(main())

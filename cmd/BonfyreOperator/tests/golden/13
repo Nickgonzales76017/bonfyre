@@ -1,0 +1,22 @@
+{
+  "operator": "WHY",
+  "program": {
+    "program_id": "household.why.6c6f42f1e20e27fa",
+    "operator": "WHY",
+    "digest": "d05edf006bb0452124bda1df9310455f929658f131d6c1c0fec42519f4048a48",
+    "reads": [
+      "household:food:offer:beans"
+    ],
+    "admitted": true,
+    "hard_failures": []
+  },
+  "address": "household:food:offer:beans",
+  "source_file": "household/food/current-offers.jsonl",
+  "source_refs": [
+    "https://example.test/beans"
+  ],
+  "content_sha256": "e506d6813a05e30149ef8d3b3d1db2a480f6ad601ec86cc795c1b274ecbea9c4",
+  "evidence_state": "source_bound_observation",
+  "notes": ""
+}
+exit 0

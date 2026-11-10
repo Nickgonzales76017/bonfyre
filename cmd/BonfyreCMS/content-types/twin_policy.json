@@ -1,0 +1,10 @@
+{
+  "name": "twin_policy",
+  "displayName": "Foreign Twin Policy",
+  "description": "Authored classification assertion for a ForeignTwin subject. The classification selects applicable object grammar but is not itself verification of what the foreign subject is.",
+  "attributes": {
+    "twin_subject": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "twin_kind": {"type": "string", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

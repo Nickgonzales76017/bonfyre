@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include "wire.h"
 
 #include <arpa/inet.h>
@@ -65,52 +72,6 @@ static int env_truthy(const char *name) {
     const char *v = getenv(name);
     if (!v || !v[0]) return 0;
     return strcmp(v, "1") == 0 || strcmp(v, "true") == 0 || strcmp(v, "TRUE") == 0 || strcmp(v, "yes") == 0;
-}
-
-static int json_find_key(const char *json, const char *key, const char **out) {
-    char needle[128];
-    const char *p;
-    snprintf(needle, sizeof(needle), "\"%s\"", key);
-    p = strstr(json, needle);
-    if (!p) return 1;
-    p = strchr(p + strlen(needle), ':');
-    if (!p) return 1;
-    p++;
-    while (*p == ' ' || *p == '\t') p++;
-    *out = p;
-    return 0;
-}
-
-static int json_extract_str(const char *json, const char *key, char *out, size_t out_sz) {
-    const char *p;
-    size_t w = 0;
-    if (!out || out_sz == 0) return 1;
-    out[0] = '\0';
-    if (json_find_key(json, key, &p) != 0) return 1;
-    if (*p != '"') return 1;
-    p++;
-    while (*p && *p != '"' && w < out_sz - 1) {
-        if (*p == '\\' && p[1]) {
-            p++;
-            if (*p == 'n') out[w++] = '\n';
-            else if (*p == 'r') out[w++] = '\r';
-            else if (*p == 't') out[w++] = '\t';
-            else out[w++] = *p;
-            p++;
-            continue;
-        }
-        out[w++] = *p++;
-    }
-    out[w] = '\0';
-    return out[0] ? 0 : 1;
-}
-
-static int json_extract_int(const char *json, const char *key, int *out) {
-    const char *p;
-    if (!out) return 1;
-    if (json_find_key(json, key, &p) != 0) return 1;
-    *out = atoi(p);
-    return 0;
 }
 
 static void json_escape_print(const char *s) {
@@ -843,6 +804,10 @@ static int upsert_packet_observation(const char *root, sqlite3 *db, const char *
     if (load_flow(db, capture_id, obs->flow_id, &flow) != 0) {
         memset(&flow, 0, sizeof(flow));
         memcpy(&flow, obs, sizeof(flow));
+        /* The observation carries its own packet's length; the counters below
+         * add it. Copying it in as well counted every flow's first packet twice. */
+        flow.packets = 0;
+        flow.bytes = 0;
     } else {
         if (!flow.src_ip[0]) snprintf(flow.src_ip, sizeof(flow.src_ip), "%s", obs->src_ip);
         if (!flow.dst_ip[0]) snprintf(flow.dst_ip, sizeof(flow.dst_ip), "%s", obs->dst_ip);
@@ -876,63 +841,6 @@ static int upsert_packet_observation(const char *root, sqlite3 *db, const char *
     return save_flow(db, capture_id, &flow);
 }
 
-static int parse_synthetic_line(const char *line, BfWireFlow *flow, uint8_t *payload, size_t *payload_len) {
-    char tmp[1024];
-    int size = 0, sport = 0, dport = 0;
-    memset(flow, 0, sizeof(*flow));
-    *payload_len = 0;
-    json_extract_str(line, "src_ip", flow->src_ip, sizeof(flow->src_ip));
-    json_extract_str(line, "dst_ip", flow->dst_ip, sizeof(flow->dst_ip));
-    json_extract_int(line, "src_port", &sport);
-    json_extract_int(line, "dst_port", &dport);
-    json_extract_int(line, "size", &size);
-    flow->src_port = sport;
-    flow->dst_port = dport;
-    flow->bytes = size > 0 ? size : 0;
-    json_extract_str(line, "proto", flow->l4_proto, sizeof(flow->l4_proto));
-    if (!flow->l4_proto[0]) snprintf(flow->l4_proto, sizeof(flow->l4_proto), "UDP");
-    json_extract_str(line, "app_proto", flow->app_proto, sizeof(flow->app_proto));
-    json_extract_str(line, "domain", flow->domain, sizeof(flow->domain));
-    json_extract_str(line, "dns_name", flow->dns_name, sizeof(flow->dns_name));
-    json_extract_str(line, "sni", flow->sni, sizeof(flow->sni));
-    json_extract_str(line, "process_name", flow->process_name, sizeof(flow->process_name));
-    json_extract_str(line, "ts", flow->first_ts, sizeof(flow->first_ts));
-    snprintf(flow->last_ts, sizeof(flow->last_ts), "%s", flow->first_ts);
-    if (strstr(line, "\"encrypted\":true")) flow->encrypted = 1;
-    if (json_extract_str(line, "payload_ascii", tmp, sizeof(tmp)) == 0) {
-        *payload_len = strlen(tmp);
-        memcpy(payload, tmp, *payload_len);
-    }
-    if (json_extract_str(line, "hint", tmp, sizeof(tmp)) == 0) {
-        if (contains_ci(tmp, "rtp")) { snprintf(flow->app_proto, sizeof(flow->app_proto), "RTP"); flow->probable_media = 1; snprintf(flow->media_kind, sizeof(flow->media_kind), "rtp"); }
-        if (contains_ci(tmp, "sip")) { snprintf(flow->app_proto, sizeof(flow->app_proto), "SIP"); flow->probable_control = 1; }
-        if (contains_ci(tmp, "hls")) { flow->hls_manifest = 1; flow->probable_media = 1; snprintf(flow->media_kind, sizeof(flow->media_kind), "hls_manifest"); }
-        if (contains_ci(tmp, "dash")) { flow->dash_manifest = 1; flow->probable_media = 1; snprintf(flow->media_kind, sizeof(flow->media_kind), "dash_manifest"); }
-        if (contains_ci(tmp, "webrtc") || contains_ci(tmp, "stun") || contains_ci(tmp, "turn") || contains_ci(tmp, "ice")) { snprintf(flow->app_proto, sizeof(flow->app_proto), "STUN"); flow->probable_control = 1; }
-    }
-    return 0;
-}
-
-static int ingest_synthetic_stream(FILE *in, const char *root, BfWireCapture *capture, int payload_requested) {
-    sqlite3 *db = NULL;
-    char db_path[PATH_MAX];
-    char line[4096];
-    if (open_wire_db(root, &db, db_path, sizeof(db_path)) != 0) return 1;
-    sqlite3_exec(db, "BEGIN", NULL, NULL, NULL);
-    while (fgets(line, sizeof(line), in) != NULL) {
-        BfWireFlow flow;
-        uint8_t payload[1024];
-        size_t payload_len = 0;
-        parse_synthetic_line(line, &flow, payload, &payload_len);
-        upsert_packet_observation(root, db, capture->capture_id, &flow, payload, payload_len, payload_requested);
-        capture->packet_count += 1;
-        capture->byte_count += flow.bytes;
-    }
-    sqlite3_exec(db, "COMMIT", NULL, NULL, NULL);
-    sqlite3_close(db);
-    return 0;
-}
-
 static int parse_dns_qname(const uint8_t *payload, size_t len, char *out, size_t out_sz) {
     size_t pos = 12, w = 0;
     if (len < 13) return 1;
@@ -955,8 +863,12 @@ static int ingest_pcap_stream(FILE *fp, const char *root, BfWireCapture *capture
     char db_path[PATH_MAX];
     int swapped = 0;
     if (fread(&gh, 1, sizeof(gh), fp) != sizeof(gh)) return 1;
-    if (gh.magic == 0xd4c3b2a1u) swapped = 0;
-    else if (gh.magic == 0xa1b2c3d4u) swapped = 1;
+    /* The magic reads as written when the file has this machine's byte order,
+     * and reversed when it has the other. These two tests were the wrong way
+     * round, so every length in a real capture was byte-swapped and no packet
+     * was ever read from one. */
+    if (gh.magic == 0xa1b2c3d4u) swapped = 0;
+    else if (gh.magic == 0xd4c3b2a1u) swapped = 1;
     else return 1;
     if (open_wire_db(root, &db, db_path, sizeof(db_path)) != 0) return 1;
     sqlite3_exec(db, "BEGIN", NULL, NULL, NULL);
@@ -1037,28 +949,22 @@ static int ingest_pcap_stream(FILE *fp, const char *root, BfWireCapture *capture
     return 0;
 }
 
+/* A capture is packets somebody recorded. A file or stream that is not a pcap
+ * is refused; a list of described flows is not a capture of them. */
 int bf_wire_ingest_file(const char *root, BfWireCapture *capture, const char *path, int payload_requested) {
     FILE *fp;
-    char start[4] = {0};
+    int rc;
     if (!path || !capture) return 1;
     fp = fopen(path, "rb");
     if (!fp) return 1;
-    if (fread(start, 1, 3, fp) < 1) { fclose(fp); return 1; }
-    rewind(fp);
-    if (start[0] == '{') {
-        int rc = ingest_synthetic_stream(fp, root, capture, payload_requested);
-        fclose(fp);
-        return rc;
-    }
-    {
-        int rc = ingest_pcap_stream(fp, root, capture, payload_requested);
-        fclose(fp);
-        return rc;
-    }
+    rc = ingest_pcap_stream(fp, root, capture, payload_requested);
+    fclose(fp);
+    return rc;
 }
 
 int bf_wire_ingest_stream(FILE *in, const char *root, BfWireCapture *capture, int payload_requested) {
-    return ingest_synthetic_stream(in, root, capture, payload_requested);
+    if (!in || !capture) return 1;
+    return ingest_pcap_stream(in, root, capture, payload_requested);
 }
 
 static int foreach_flow(const char *root, const char *capture_id, int (*cb)(sqlite3_stmt *, void *), void *ctx) {
@@ -1733,8 +1639,8 @@ int bf_wire_doctor_json(const char *root) {
     snprintf(reports_dir, sizeof(reports_dir), "%s/wire/reports", root);
     printf("{\"surface\":\"wire\",\"root\":");
     json_escape_print(root);
-    printf(",\"permissions\":{\"live_capture\":\"packet-capture/BPF or libpcap privileges may be required\",\"offline_ingest\":\"read access to authorized pcap or synthetic event files\"}");
-    printf(",\"backends\":{\"synthetic_ingest\":true,\"pcap_ingest\":true,\"live_interface_adapter\":%s}", have_tcpdump ? "\"external_tcpdump_or_bpf\"" : "\"not_detected\"");
+    printf(",\"permissions\":{\"live_capture\":\"packet-capture/BPF or libpcap privileges may be required\",\"offline_ingest\":\"read access to an authorized pcap file\"}");
+    printf(",\"backends\":{\"pcap_ingest\":true,\"live_interface_adapter\":%s}", have_tcpdump ? "\"tcpdump\"" : "\"not_detected\"");
     printf(",\"paths\":{\"db\":"); json_escape_print(db_path);
     printf(",\"raw_dir\":"); json_escape_print(raw_dir);
     printf(",\"reports_dir\":"); json_escape_print(reports_dir);

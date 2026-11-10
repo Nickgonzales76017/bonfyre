@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * qwen_runtime.c — Qwen inference runtime core
  */
@@ -18,6 +25,7 @@
 #include <time.h>
 #include <ctype.h>
 #include <inttypes.h>
+#include <limits.h>  /* PATH_MAX */
 
 typedef struct {
     FILE *fp;
@@ -1079,6 +1087,7 @@ static void qwen_emit_run_manifest(qwen_runtime_t *rt,
     char output_hash[65] = {0}, raw_output_hash[65] = {0};
     const char *raw_output_path = lineage ? lineage->raw_path : getenv("BONFYRE_QWEN_RAW_OUTPUT_PATH");
     char created_at[32];
+    fpq_active_density_t active_density = {0};
 
     if (!manifest_path || !manifest_path[0] || !rt) return;
     if (bf_ensure_parent_dir(manifest_path) != 0) return;
@@ -1091,6 +1100,7 @@ static void qwen_emit_run_manifest(qwen_runtime_t *rt,
     if (rt->tokenizer_path) (void)bf_sha256_file(rt->tokenizer_path, tokenizer_hash);
     if (out_path) (void)bf_sha256_file(out_path, output_hash);
     if (raw_output_path && raw_output_path[0]) (void)bf_sha256_file(raw_output_path, raw_output_hash);
+    fpq_active_cache_density(rt->active_cache, &active_density);
 
     fprintf(fp,
             "{\n"
@@ -1128,6 +1138,17 @@ static void qwen_emit_run_manifest(qwen_runtime_t *rt,
             "  \"active_cache_hits\": %zu,\n"
             "  \"active_cache_misses\": %zu,\n"
             "  \"active_cache_writes\": %zu,\n"
+            "  \"active_cache_ready_entries\": %zu,\n"
+            "  \"active_cache_unique_factors\": %zu,\n"
+            "  \"active_cache_duplicate_factors\": %zu,\n"
+            "  \"active_cache_resident_factor_bytes\": %zu,\n"
+            "  \"active_cache_unique_factor_bytes\": %zu,\n"
+            "  \"active_cache_duplicate_factor_bytes\": %zu,\n"
+            "  \"active_cache_unique_payloads\": %zu,\n"
+            "  \"active_cache_duplicate_payloads\": %zu,\n"
+            "  \"active_cache_resident_payload_bytes\": %zu,\n"
+            "  \"active_cache_unique_payload_bytes\": %zu,\n"
+            "  \"active_cache_duplicate_payload_bytes\": %zu,\n"
             "  \"registry_model\": %s,\n"
             "  \"registry_tokenizer\": %s\n"
             "}\n",
@@ -1163,6 +1184,17 @@ static void qwen_emit_run_manifest(qwen_runtime_t *rt,
             rt && rt->active_cache ? rt->active_cache->hits : 0,
             rt && rt->active_cache ? rt->active_cache->misses : 0,
             rt && rt->active_cache ? rt->active_cache->writes : 0,
+            active_density.ready_entries,
+            active_density.unique_factors,
+            active_density.duplicate_factors,
+            active_density.resident_factor_bytes,
+            active_density.unique_factor_bytes,
+            active_density.duplicate_factor_bytes,
+            active_density.unique_payloads,
+            active_density.duplicate_payloads,
+            active_density.resident_payload_bytes,
+            active_density.unique_payload_bytes,
+            active_density.duplicate_payload_bytes,
             (model_show && model_show[0] == '{') ? model_show : "null",
             (tokenizer_show && tokenizer_show[0] == '{') ? tokenizer_show : "null");
     fclose(fp);

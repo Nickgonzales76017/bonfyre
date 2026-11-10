@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * BonfyreRepurpose — Transform brief artifacts into social media formats
  *
@@ -23,6 +30,7 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <bonfyre.h>
+#include "../../../lib/libbonfyre/include/bf_help.h"
 
 /* ── Utilities ────────────────────────────────────────────────────── */
 
@@ -133,6 +141,30 @@ static void trim_bullet(char *dst, const char *src) {
     dst[len] = '\0';
 }
 
+/* Brief bullets can wrap across caption lines. Preserve the whole bullet;
+ * a physical line is not a separate takeaway. Reject overflow visibly. */
+static int collect_item(char items[MAX_ITEMS][MAX_LINE], int *count,
+                        const char *line) {
+    const char *p = line;
+    while (*p == ' ' || *p == '\t') p++;
+    int bullet = (p[0] == '-' || p[0] == '*') && p[1] == ' ';
+    char item[MAX_LINE];
+    trim_bullet(item, p);
+    if (!strcmp(item, "No action items detected") ||
+        !strcmp(item, "No deep insights extracted")) return 0;
+    if (bullet || *count == 0) {
+        if (*count >= MAX_ITEMS) return 1;
+        strcpy(items[(*count)++], item);
+    } else {
+        char *previous = items[*count - 1];
+        size_t n = strlen(previous), extra = strlen(item);
+        if (n + extra + 2 > MAX_LINE) return 1;
+        previous[n] = ' ';
+        memcpy(previous + n + 1, item, extra + 1);
+    }
+    return 0;
+}
+
 static int parse_brief(const char *path, Brief *b) {
     FILE *fp = fopen(path, "r");
     if (!fp) { fprintf(stderr, "error: cannot open %s\n", path); return 1; }
@@ -143,6 +175,11 @@ static int parse_brief(const char *path, Brief *b) {
     char line[MAX_LINE];
 
     while (fgets(line, sizeof(line), fp)) {
+        if (!strchr(line, '\n') && !feof(fp)) {
+            fprintf(stderr, "error: brief line exceeds supported length\n");
+            fclose(fp);
+            return 1;
+        }
         /* Detect sections */
         if (strncmp(line, "# ", 2) == 0 && section == SEC_NONE) {
             char *start = line + 2;
@@ -170,21 +207,24 @@ static int parse_brief(const char *path, Brief *b) {
         if (blank) continue;
 
         /* Collect items */
+        int overflow = 0;
         switch (section) {
             case SEC_SUMMARY:
-                if (b->summary_count < MAX_ITEMS)
-                    trim_bullet(b->summary[b->summary_count++], line);
+                overflow = collect_item(b->summary, &b->summary_count, line);
                 break;
             case SEC_ACTIONS:
-                if (b->action_count < MAX_ITEMS)
-                    trim_bullet(b->actions[b->action_count++], line);
+                overflow = collect_item(b->actions, &b->action_count, line);
                 break;
             case SEC_DEEP:
-                if (b->deep_count < MAX_ITEMS)
-                    trim_bullet(b->deep[b->deep_count++], line);
+                overflow = collect_item(b->deep, &b->deep_count, line);
                 break;
             default:
                 break;
+        }
+        if (overflow) {
+            fprintf(stderr, "error: brief section exceeds supported length\n");
+            fclose(fp);
+            return 1;
         }
     }
 
@@ -384,21 +424,7 @@ static int emit_youtube_desc(const Brief *b, const char *out_dir) {
     }
     fprintf(fp, "\n");
 
-    /* Chapters — estimate times by distributing evenly */
-    fprintf(fp, "## Chapters\n\n");
-    fprintf(fp, "0:00 Intro\n");
-    for (int i = 0; i < limit && i < 5; i++) {
-        char title[60];
-        strncpy(title, b->summary[i], 55);
-        title[55] = '\0';
-        cap_first(title);
-        char *dot = strchr(title, '.');
-        if (dot && (dot - title) < 50) *(dot + 1) = '\0';
-        /* Estimate chapter time — distribute evenly across ~10min video */
-        int est_sec = (i + 1) * 120; /* ~2min per chapter */
-        fprintf(fp, "%d:%02d %s\n", est_sec / 60, est_sec % 60, title);
-    }
-    fprintf(fp, "\n");
+    /* This input has no timecodes. Chapters require source-aligned timing. */
 
     /* Key takeaways for SEO */
     if (b->action_count > 0) {
@@ -515,7 +541,7 @@ static void print_usage(void) {
         "  tweet-thread   Twitter/X thread (5-7 tweets)\n"
         "  linkedin       LinkedIn post (hook → insight → CTA)\n"
         "  carousel       Instagram/LinkedIn carousel slides\n"
-        "  youtube-desc   YouTube description + chapters + SEO\n"
+        "  youtube-desc   YouTube description (no inferred chapter times)\n"
         "  newsletter     Email newsletter edition\n"
         "  all            Generate all formats\n\n"
         "Example:\n"
@@ -523,6 +549,7 @@ static void print_usage(void) {
 }
 
 int main(int argc, char **argv) {
+    if (bf_help_requested(argc, argv)) { print_usage(); return 0; }
     if (argc < 4) {
         print_usage();
         return 1;

@@ -37,6 +37,9 @@ try {
   const losslessBytes = (await stat(lossless)).size;
   assert.ok(compressedBytes < losslessBytes, `compressed=${compressedBytes} lossless=${losslessBytes}`);
   assert.ok(compressedBytes < values.byteLength, `compressed=${compressedBytes} raw=${values.byteLength}`);
+  const inspected = await run(binary, ['inspect', compressed], { cwd: repo });
+  assert.match(inspected.stderr, /Format:\s+FPQ0/);
+  assert.match(inspected.stderr, /STRUCTURALLY_READABLE_ONLY/);
   console.log(`native FPQ compression passed: ${compressedBytes} < ${losslessBytes} bytes`);
 } finally {
   await rm(temp, { recursive: true, force: true });

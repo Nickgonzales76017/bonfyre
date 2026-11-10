@@ -1,0 +1,14 @@
+{
+  "name": "compute_site",
+  "displayName": "Compute Site",
+  "description": "A place work may actually run, and the widest class of data it is cleared to see. Placement is asked per backend because the answer differs per backend: the machine holding the data may run only the reference implementation, and the machine holding the reducers may not be cleared to receive the input. A site row is a declaration by this estate about a machine, never a discovery about one -- a site that is unreachable is still declared, and a site absent from this table places nothing, which is why a missing declaration reads as 'no backend may run' rather than as 'run it anywhere'. holds_live_data says the site carries state that an outage would lose; max_data_scope is the widest data class it may receive, and a job whose scope exceeds it is not placed there however idle it is.",
+  "attributes": {
+    "site": { "type": "string", "required": true },
+    "cores": { "type": "number", "required": true },
+    "backends": { "type": "string", "required": true },
+    "holds_live_data": { "type": "boolean", "required": true },
+    "max_data_scope": { "type": "string", "required": true },
+    "reach_seconds": { "type": "string", "required": false },
+    "note": { "type": "string", "required": false }
+  }
+}

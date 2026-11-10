@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * BonfyreDetectObjects — Object detection operator for V1/I1 pipelines
  *
@@ -6,10 +13,12 @@
  * Accepts a directory of frames (jpg/png) or a single image and writes
  * per-image detection JSON plus a merged objects.json summary.
  *
- * Strategy (three tiers, first available wins):
- *   1. BONFYRE_YOLO_BINARY env → delegate to yolo CLI wrapper
- *   2. Python + ultralytics installed → run inline inference script
- *   3. Heuristic fallback → write stub detections + "requires_model" flag
+ * A detector is a program that reads one image and writes that image's
+ * detections. The first of these that exists is the one that runs:
+ *   1. the program BONFYRE_YOLO_BINARY names
+ *   2. bonfyre-detect-vision beside this binary, in ~/.bonfyre/bin, or on PATH
+ * With no detector there is nothing to report, and the organ says so and
+ * writes nothing. It never stands a frame in for one it could not read.
  *
  * Output schema (per image):
  *   {
@@ -32,15 +41,20 @@
  *
  * Usage:
  *   bonfyre-detect-objects --input <dir|image> --out <dir>
- *     [--model NAME] [--confidence 0.5] [--batch N]
+ *     [--model NAME] [--confidence 0.5]
  */
 
 #include <dirent.h>
+#include "../../../lib/libbonfyre/include/bf_help.h"
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+/* strcasecmp is POSIX and lives here, not in <string.h>. Under -std=c11 it is
+ * not declared, and the call compiled as an implicit declaration until -Werror
+ * turned that into the error that kept this organ out of every build. */
+#include <strings.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <time.h>
@@ -66,7 +80,8 @@ typedef struct {
     char file[MAX_PATH];
     Detection dets[128];
     int ndet;
-    int is_stub;         /* 1 = real model not available */
+    int detected;        /* 1 = a detector ran on this frame and its output was read */
+    char model[128];     /* the model the detector says it used */
 } FrameResult;
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -96,6 +111,21 @@ static int is_image(const char *name) {
             strcasecmp(ext, ".webp") == 0);
 }
 
+/* A file handed over on its own is judged by its first bytes, since a stored
+ * artifact need not carry the name it arrived with. */
+static int is_image_content(const char *path) {
+    unsigned char head[12];
+    FILE *file = fopen(path, "rb");
+    size_t got;
+    if (!file) return 0;
+    got = fread(head, 1, sizeof(head), file);
+    fclose(file);
+    if (got >= 3 && head[0] == 0xff && head[1] == 0xd8 && head[2] == 0xff) return 1;
+    if (got >= 8 && !memcmp(head, "\x89PNG\r\n\x1a\n", 8)) return 1;
+    if (got >= 12 && !memcmp(head, "RIFF", 4) && !memcmp(head + 8, "WEBP", 4)) return 1;
+    return 0;
+}
+
 static int cmp_str(const void *a, const void *b) {
     return strcmp(*(const char **)a, *(const char **)b);
 }
@@ -109,7 +139,7 @@ static int collect_images(const char *input, char **paths, int max_paths) {
     }
 
     if (S_ISREG(st.st_mode)) {
-        if (!is_image(input)) {
+        if (!is_image(input) && !is_image_content(input)) {
             fprintf(stderr, "error: %s is not a supported image format\n", input);
             return -1;
         }
@@ -147,37 +177,6 @@ static int collect_images(const char *input, char **paths, int max_paths) {
  * JSON output helpers
  * ═══════════════════════════════════════════════════════════════════ */
 
-static void write_detection_json(const char *out_dir, const FrameResult *fr,
-                                 const char *model) {
-    /* Derive output filename from source basename */
-    const char *base = strrchr(fr->file, '/');
-    base = base ? base + 1 : fr->file;
-
-    char out_path[MAX_PATH];
-    snprintf(out_path, sizeof(out_path), "%s/%s.json", out_dir, base);
-
-    FILE *fp = fopen(out_path, "w");
-    if (!fp) return;
-
-    fprintf(fp, "{\n");
-    fprintf(fp, "  \"source\": \"%s\",\n", fr->file);
-    fprintf(fp, "  \"model\": \"%s\",\n", model);
-    if (fr->is_stub)
-        fprintf(fp, "  \"requires_model\": true,\n");
-    fprintf(fp, "  \"detections\": [\n");
-
-    for (int i = 0; i < fr->ndet; i++) {
-        const Detection *d = &fr->dets[i];
-        fprintf(fp, "    {\"label\": \"%s\", \"confidence\": %.3f, "
-                    "\"bbox\": {\"x\": %.3f, \"y\": %.3f, \"w\": %.3f, \"h\": %.3f}}%s\n",
-                d->label, d->confidence, d->x, d->y, d->w, d->h,
-                (i < fr->ndet - 1) ? "," : "");
-    }
-
-    fprintf(fp, "  ]\n}\n");
-    fclose(fp);
-}
-
 static void write_merged_json(const char *out_path, const char *src_dir,
                               const char *model,
                               FrameResult *frames, int nframes) {
@@ -197,9 +196,8 @@ static void write_merged_json(const char *out_path, const char *src_dir,
         }
     }
 
-    int any_stub = 0;
-    for (int i = 0; i < nframes; i++)
-        if (frames[i].is_stub) { any_stub = 1; break; }
+    int detected = 0;
+    for (int i = 0; i < nframes; i++) detected += frames[i].detected;
 
     FILE *fp = fopen(out_path, "w");
     if (!fp) { perror(out_path); return; }
@@ -207,29 +205,31 @@ static void write_merged_json(const char *out_path, const char *src_dir,
     fprintf(fp, "{\n");
     fprintf(fp, "  \"source_dir\": \"%s\",\n", src_dir);
     fprintf(fp, "  \"model\": \"%s\",\n", model);
-    if (any_stub) fprintf(fp, "  \"requires_model\": true,\n");
-    fprintf(fp, "  \"frame_count\": %d,\n", nframes);
+    fprintf(fp, "  \"frame_count\": %d,\n", detected);
+    fprintf(fp, "  \"frames_not_detected\": %d,\n", nframes - detected);
     fprintf(fp, "  \"unique_labels\": [");
     for (int i = 0; i < nlabels; i++)
         fprintf(fp, "\"%s\"%s", labels[i], (i < nlabels - 1) ? ", " : "");
     fprintf(fp, "],\n");
 
     fprintf(fp, "  \"frames\": [\n");
+    int emitted = 0;
     for (int i = 0; i < nframes; i++) {
         FrameResult *fr = &frames[i];
+        if (!fr->detected) continue;
         const char *base = strrchr(fr->file, '/');
         base = base ? base + 1 : fr->file;
 
-        fprintf(fp, "    {\"file\": \"%s\", \"detections\": [", base);
+        fprintf(fp, "%s    {\"file\": \"%s\", \"detections\": [", emitted++ ? ",\n" : "", base);
         for (int j = 0; j < fr->ndet; j++) {
             Detection *d = &fr->dets[j];
             fprintf(fp, "{\"label\": \"%s\", \"confidence\": %.3f}%s",
                     d->label, d->confidence,
                     (j < fr->ndet - 1) ? ", " : "");
         }
-        fprintf(fp, "]}%s\n", (i < nframes - 1) ? "," : "");
+        fprintf(fp, "]}");
     }
-    fprintf(fp, "  ]\n}\n");
+    fprintf(fp, "%s  ]\n}\n", emitted ? "\n" : "");
     fclose(fp);
 }
 
@@ -237,24 +237,47 @@ static void write_merged_json(const char *out_path, const char *src_dir,
  * Detection tiers
  * ═══════════════════════════════════════════════════════════════════ */
 
-/* Tier 1: External YOLO binary (BONFYRE_YOLO_BINARY env) */
-static int detect_via_yolo_binary(const char *image_path, const char *out_json,
-                                  const char *model, float confidence) {
-    const char *yolo_bin = getenv("BONFYRE_YOLO_BINARY");
-    if (!yolo_bin || !yolo_bin[0]) return -1;
-    if (access(yolo_bin, X_OK) != 0) return -1;
+/* Which detector runs. Returns NULL when there is none. */
+static const char *resolve_detector(const char *self, char *buf, size_t n) {
+    const char *named = getenv("BONFYRE_YOLO_BINARY");
+    if (named && named[0]) return access(named, X_OK) == 0 ? named : NULL;
 
+    const char *slash = self ? strrchr(self, '/') : NULL;
+    if (slash) {
+        snprintf(buf, n, "%.*s/bonfyre-detect-vision", (int)(slash - self), self);
+        if (access(buf, X_OK) == 0) return buf;
+    }
+    const char *home = getenv("HOME");
+    if (home) {
+        snprintf(buf, n, "%s/.bonfyre/bin/bonfyre-detect-vision", home);
+        if (access(buf, X_OK) == 0) return buf;
+    }
+    const char *path = getenv("PATH");
+    while (path && *path) {
+        const char *end = strchr(path, ':');
+        size_t len = end ? (size_t)(end - path) : strlen(path);
+        if (len > 0 && len < n - 32) {
+            snprintf(buf, n, "%.*s/bonfyre-detect-vision", (int)len, path);
+            if (access(buf, X_OK) == 0) return buf;
+        }
+        path = end ? end + 1 : NULL;
+    }
+    return NULL;
+}
+
+static int run_detector(const char *detector, const char *image_path,
+                        const char *out_json, const char *model, float confidence) {
     char conf_str[16];
     snprintf(conf_str, sizeof(conf_str), "%.2f", confidence);
 
-    char *argv[] = {
-        (char *)yolo_bin,
-        "--image",      (char *)image_path,
-        "--out",        (char *)out_json,
-        "--model",      (char *)model,
-        "--confidence", conf_str,
-        NULL
-    };
+    char *argv[10];
+    int n = 0;
+    argv[n++] = (char *)detector;
+    argv[n++] = "--image";      argv[n++] = (char *)image_path;
+    argv[n++] = "--out";        argv[n++] = (char *)out_json;
+    if (model) { argv[n++] = "--model"; argv[n++] = (char *)model; }
+    argv[n++] = "--confidence"; argv[n++] = conf_str;
+    argv[n] = NULL;
 
     pid_t pid = fork();
     if (pid < 0) return -1;
@@ -265,82 +288,100 @@ static int detect_via_yolo_binary(const char *image_path, const char *out_json,
     return (WIFEXITED(status) && WEXITSTATUS(status) == 0) ? 0 : -1;
 }
 
-/* Tier 2: Python + ultralytics */
-static int detect_via_python(const char *image_path, FrameResult *out,
-                              const char *model, float confidence) {
-    /* Check Python availability */
-    if (access("/usr/bin/python3", X_OK) != 0 &&
-        access("/opt/homebrew/bin/python3", X_OK) != 0 &&
-        access("/usr/local/bin/python3", X_OK) != 0 &&
-        system("python3 -c 'import ultralytics' 2>/dev/null") != 0) {
-        return -1;
-    }
-
-    /* Build inline Python script */
-    char tmpout[MAX_PATH];
-    snprintf(tmpout, sizeof(tmpout), "/tmp/bonfyre_yolo_%d.json", (int)getpid());
-
-    char script[4096];
-    snprintf(script, sizeof(script),
-        "python3 -c \""
-        "from ultralytics import YOLO; import json, sys\n"
-        "m = YOLO('%s')\n"
-        "r = m('%s', conf=%.2f, verbose=False)[0]\n"
-        "dets = []\n"
-        "for b in r.boxes:\n"
-        "    xywhn = b.xywhn[0].tolist()\n"
-        "    dets.append({'label': r.names[int(b.cls)], "
-                         "'confidence': float(b.conf), "
-                         "'bbox': {'x': xywhn[0], 'y': xywhn[1], "
-                                  "'w': xywhn[2], 'h': xywhn[3]}})\n"
-        "json.dump({'detections': dets}, open('%s', 'w'))\n"
-        "\" 2>/dev/null",
-        model, image_path, confidence, tmpout);
-
-    if (system(script) != 0) return -1;
-
-    /* Parse the output JSON */
-    FILE *fp = fopen(tmpout, "r");
-    if (!fp) return -1;
-
-    char buf[65536];
-    size_t n = fread(buf, 1, sizeof(buf) - 1, fp);
-    fclose(fp);
-    unlink(tmpout);
-    buf[n] = '\0';
-
-    /* Simple JSON parse: find each "label" + "confidence" pair */
-    const char *p = buf;
-    while ((p = strstr(p, "\"label\":")) != NULL) {
-        p += 9;
-        while (*p == ' ' || *p == '"') p++;
-        Detection d = {0};
-        int li = 0;
-        while (*p && *p != '"' && li < 63) d.label[li++] = *p++;
-        d.label[li] = '\0';
-
-        const char *cp = strstr(p, "\"confidence\":");
-        if (cp) d.confidence = (float)atof(cp + 13);
-
-        if (out->ndet < 128) out->dets[out->ndet++] = d;
-    }
-
-    return 0;
+/* The number after "key": inside [from, to). */
+static int field_number(const char *from, const char *to, const char *key, float *out) {
+    char needle[32];
+    snprintf(needle, sizeof(needle), "\"%s\"", key);
+    const char *at = strstr(from, needle);
+    if (!at || at >= to) return 0;
+    at = strchr(at + strlen(needle), ':');
+    if (!at || at >= to) return 0;
+    char *end = NULL;
+    double v = strtod(at + 1, &end);
+    if (end == at + 1) return 0;
+    *out = (float)v;
+    return 1;
 }
 
-/* Tier 3: Stub (no model available) */
-static void detect_stub(FrameResult *out) {
-    /* Write a clear placeholder so downstream stages know model is absent */
-    out->is_stub = 1;
-    out->ndet = 0;
+/* The string after "key": starting at from; returns where it ended. */
+static const char *field_string(const char *from, const char *key, char *out, size_t n) {
+    char needle[32];
+    snprintf(needle, sizeof(needle), "\"%s\"", key);
+    const char *at = strstr(from, needle);
+    if (!at) return NULL;
+    at = strchr(at + strlen(needle), ':');
+    if (!at) return NULL;
+    at = strchr(at, '"');
+    if (!at) return NULL;
+    at++;
+    size_t used = 0;
+    while (*at && *at != '"') {
+        if (*at == '\\' && at[1]) at++;
+        if (used + 1 < n) out[used++] = *at;
+        at++;
+    }
+    out[used] = '\0';
+    return *at == '"' ? at + 1 : NULL;
+}
+
+/* Read what the detector wrote for one frame. A file that is absent or has no
+ * detections list was not a detection run, whatever the exit status said. */
+static int load_detections(const char *json_path, FrameResult *fr) {
+    FILE *fp = fopen(json_path, "rb");
+    if (!fp) return -1;
+    fseek(fp, 0, SEEK_END);
+    long size = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    if (size <= 0 || size > 8 * 1024 * 1024) { fclose(fp); return -1; }
+    char *doc = malloc((size_t)size + 1);
+    if (!doc) { fclose(fp); return -1; }
+    size_t got = fread(doc, 1, (size_t)size, fp);
+    fclose(fp);
+    doc[got] = '\0';
+
+    const char *list = strstr(doc, "\"detections\"");
+    if (!list) { free(doc); return -1; }
+    if (!field_string(doc, "model", fr->model, sizeof(fr->model)) || !fr->model[0]) {
+        free(doc); return -1;
+    }
+
+    const char *at = list;
+    fr->ndet = 0;
+    while (fr->ndet < (int)(sizeof(fr->dets) / sizeof(fr->dets[0]))) {
+        Detection d;
+        memset(&d, 0, sizeof(d));
+        const char *after = field_string(at, "label", d.label, sizeof(d.label));
+        if (!after) break;
+        const char *close = strstr(after, "}}");
+        const char *next = strstr(after, "\"label\"");
+        const char *to = close ? close : (next ? next : doc + got);
+        if (next && next < to) to = next;
+        if (!field_number(after, to, "confidence", &d.confidence)) { free(doc); return -1; }
+        field_number(after, to, "x", &d.x);
+        field_number(after, to, "y", &d.y);
+        field_number(after, to, "w", &d.w);
+        field_number(after, to, "h", &d.h);
+        fr->dets[fr->ndet++] = d;
+        at = to;
+    }
+    free(doc);
+    fr->detected = 1;
+    return 0;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
  * Main detection loop
  * ═══════════════════════════════════════════════════════════════════ */
 
-static int run_detection(const char *input, const char *out_dir,
-                         const char *model, float confidence, int batch) {
+static int run_detection(const char *self, const char *input, const char *out_dir,
+                         const char *model, float confidence) {
+    char detector_buf[MAX_PATH];
+    const char *detector = resolve_detector(self, detector_buf, sizeof(detector_buf));
+    if (!detector) {
+        fprintf(stderr, "error: no detector. Set BONFYRE_YOLO_BINARY to one, or install "
+                        "bonfyre-detect-vision. Nothing was written.\n");
+        return 1;
+    }
     if (ensure_dir(out_dir) != 0) {
         fprintf(stderr, "error: cannot create %s\n", out_dir);
         return 1;
@@ -357,60 +398,55 @@ static int run_detection(const char *input, const char *out_dir,
 
     printf("BonfyreDetectObjects\n");
     printf("  Input:  %s (%d image%s)\n", input, nframes, nframes == 1 ? "" : "s");
-    printf("  Model:  %s (confidence ≥ %.2f)\n", model, confidence);
+    printf("  Detector: %s (confidence ≥ %.2f)\n", detector, confidence);
     printf("  Output: %s\n", out_dir);
 
     /* Allocate results */
     FrameResult *results = calloc(nframes, sizeof(FrameResult));
     if (!results) { perror("calloc"); return 1; }
 
-    int success = 0, stubs = 0;
-    (void)batch;  /* parallel batch TODO: use fork pool */
+    int success = 0, failed = 0;
+    const char *used_model = NULL;
 
     for (int i = 0; i < nframes; i++) {
         FrameResult *fr = &results[i];
         strncpy(fr->file, paths[i], sizeof(fr->file) - 1);
 
-        /* Try tier 1 (external binary) — writes its own JSON, we just
-         * record 0 detections in memory and rely on merged JSON */
-        char tier1_out[MAX_PATH];
+        char frame_out[MAX_PATH];
         const char *base = strrchr(paths[i], '/');
         base = base ? base + 1 : paths[i];
-        snprintf(tier1_out, sizeof(tier1_out), "%s/%s.json", out_dir, base);
+        snprintf(frame_out, sizeof(frame_out), "%s/%s.json", out_dir, base);
+        /* A file left from an earlier run is not this run's detection. */
+        unlink(frame_out);
 
-        if (detect_via_yolo_binary(paths[i], tier1_out, model, confidence) == 0) {
+        if (run_detector(detector, paths[i], frame_out, model, confidence) == 0 &&
+            load_detections(frame_out, fr) == 0) {
             if ((i % 50) == 0 || i == nframes - 1)
-                printf("  [%4d/%4d] %s (yolo-binary)\n", i + 1, nframes, base);
+                printf("  [%4d/%4d] %s (%d found)\n", i + 1, nframes, base, fr->ndet);
+            if (!used_model) used_model = fr->model;
             success++;
             continue;
         }
-
-        /* Tier 2: Python + ultralytics */
-        if (detect_via_python(paths[i], fr, model, confidence) == 0) {
-            if ((i % 50) == 0 || i == nframes - 1)
-                printf("  [%4d/%4d] %s (%d detections)\n",
-                       i + 1, nframes, base, fr->ndet);
-            write_detection_json(out_dir, fr, model);
-            success++;
-            continue;
-        }
-
-        /* Tier 3: Stub */
-        detect_stub(fr);
-        write_detection_json(out_dir, fr, model);
-        stubs++;
+        fprintf(stderr, "  not detected: %s\n", base);
+        failed++;
     }
 
-    /* Write merged objects.json */
     char merged_path[MAX_PATH];
     snprintf(merged_path, sizeof(merged_path), "%s/objects.json", out_dir);
-    write_merged_json(merged_path, input, model, results, nframes);
+    if (success == 0) {
+        unlink(merged_path);
+        fprintf(stderr, "error: the detector read none of %d frames. No summary was written.\n", nframes);
+        for (int i = 0; i < nframes; i++) free(paths[i]);
+        free(results);
+        return 1;
+    }
+    write_merged_json(merged_path, input, used_model, results, nframes);
 
-    printf("  ✓ %d frames processed", nframes);
-    if (stubs > 0)
-        printf(" (%d stubs — model '%s' not installed)", stubs, model);
+    printf("  ✓ %d of %d frames detected", success, nframes);
+    if (failed > 0) printf(" (%d not detected)", failed);
     printf("\n");
     printf("  ✓ Merged: %s\n", merged_path);
+    model = used_model;
 
     /* ── Fragment emission (opt-in via BONFYRE_FRAGMENT_STORE env) ── */
     const char *frag_store_path = getenv("BONFYRE_FRAGMENT_STORE");
@@ -439,18 +475,6 @@ static int run_detection(const char *input, const char *out_dir,
                                        frag_id);
                     emitted++;
                 }
-                if (fr->is_stub) {
-                    /* emit a single stub annotation so the store records
-                     * that this frame was processed without a live model */
-                    snprintf(payload, sizeof(payload),
-                        "{\"frame\":\"%s\",\"requires_model\":true}", fname);
-                    bf_fragment_create(fstore, BFK_ANNOTATION,
-                                       model, 0.0f,
-                                       -1, -1,
-                                       payload, NULL, 0,
-                                       frag_id);
-                    emitted++;
-                }
             }
             bf_fragment_store_close(fstore);
             fprintf(stderr, "[fragment] emitted %d detection fragments → %s\n",
@@ -462,7 +486,7 @@ static int run_detection(const char *input, const char *out_dir,
 
     for (int i = 0; i < nframes; i++) free(paths[i]);
     free(results);
-    return (success > 0 || stubs == nframes) ? 0 : 1;
+    return failed == 0 ? 0 : 1;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -471,29 +495,28 @@ static int run_detection(const char *input, const char *out_dir,
 
 static void print_usage(void) {
     fprintf(stderr,
-        "bonfyre-detect-objects — Object detection (YOLOv8 / fallback)\n\n"
+        "bonfyre-detect-objects — what a detector finds in each image\n\n"
         "Usage:\n"
         "  bonfyre-detect-objects --input <dir|image> --out <dir>\n"
-        "    [--model NAME]       Model name (default: yolo-v8)\n"
-        "    [--confidence FLOAT] Min confidence (default: 0.5)\n"
-        "    [--batch N]          Parallel batch size (default: 4)\n\n"
+        "    [--model NAME]       Model passed to the detector (default: its own)\n"
+        "    [--confidence FLOAT] Min confidence (default: 0.5)\n\n"
         "Output:\n"
         "  <out>/<frame>.jpg.json  Per-frame detections\n"
         "  <out>/objects.json      Merged detections + unique labels\n\n"
-        "Model resolving (first available):\n"
-        "  1. BONFYRE_YOLO_BINARY env → external CLI\n"
-        "  2. python3 + ultralytics installed\n"
-        "  3. Stub (requires_model: true) — downstream can filter\n");
+        "Detector (first that exists):\n"
+        "  1. the program BONFYRE_YOLO_BINARY names\n"
+        "  2. bonfyre-detect-vision beside this binary, in ~/.bonfyre/bin, or on PATH\n"
+        "With no detector, or when no frame could be read, nothing is written.\n");
 }
 
 int main(int argc, char **argv) {
+    if (bf_help_requested(argc, argv)) { print_usage(); return 0; }
     if (argc < 2) { print_usage(); return 1; }
 
     const char *input      = NULL;
     const char *out_dir    = NULL;
-    const char *model      = "yolo-v8";
+    const char *model      = NULL;
     float       confidence = 0.5f;
-    int         batch      = 4;
 
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--input") == 0 && i + 1 < argc)
@@ -505,7 +528,7 @@ int main(int argc, char **argv) {
         else if (strcmp(argv[i], "--confidence") == 0 && i + 1 < argc)
             confidence = (float)atof(argv[++i]);
         else if (strcmp(argv[i], "--batch") == 0 && i + 1 < argc)
-            batch = atoi(argv[++i]);
+            i++;  /* accepted and unused: frames are detected one at a time */
         else if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
             print_usage(); return 0;
         }
@@ -517,5 +540,5 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    return run_detection(input, out_dir, model, confidence, batch);
+    return run_detection(argv[0], input, out_dir, model, confidence);
 }

@@ -1,0 +1,118 @@
+package experiencemap
+
+// Compatibility classification law for the public ExperienceMap compiler.
+// Candidate classification never admits a source or selects an executable app.
+experienceClassification: {
+  domain_to_chains: {
+    advertising: "audience-growth enterprise-gtm", agents: "ai-work software-work"
+    agriculture: "agriculture resource-market", aircraft: "mobility mission"
+    animals: "care household", art: "discover publication creator-publish"
+    buildings: "property project", community: "community relationship"
+    computers: "software-work ai-work", construction: "project property"
+    education: "learning knowledge", emergencies: "emergency civic"
+    energy: "energy utility", factories: "manufacturing project"
+    family: "household care", farms: "agriculture resource-market"
+    fashion: "commerce publication", film: "watch media-production"
+    finance: "finance investing", food: "food commerce"
+    forests: "place resource-market", government: "civic professional"
+    hospitality: "trip place", household: "household care"
+    housing: "housing property", instruments: "listen creator-publish"
+    insurance: "insurance finance", labor: "professional hiring"
+    land: "property place", law: "civic knowledge service-case"
+    logistics: "logistics commerce", machines: "manufacturing vehicle"
+    manufacturing: "manufacturing logistics", media: "watch publication"
+    medicine: "healthcare research", mines: "resource-market manufacturing"
+    models: "ai-work research", music: "listen live-event"
+    "natural-resources": "resource-market place", oceans: "mission trip"
+    people: "relationship community", plants: "household place"
+    publishing: "publication creator-publish", rail: "mobility logistics"
+    religion: "community relationship", repair: "vehicle service-case"
+    research: "research knowledge", retail: "commerce enterprise-gtm"
+    roads: "mobility logistics", robots: "ai-work manufacturing"
+    science: "science research", ships: "mission logistics"
+    spacecraft: "mission science", sports: "sports live-event"
+    telecommunications: "collaboration software-work", trade: "resource-market commerce"
+    transport: "mobility logistics", travel: "trip place"
+    utilities: "utility service-case", vehicles: "vehicle mobility"
+    waste: "utility resource-market", water: "utility place", weather: "place trip emergency"
+  }
+  source_kind_support: {
+    public_api: ["software-work"], mcp: ["ai-work", "software-work"]
+    rss: ["publication", "discover"], machine_protocol: ["software-work"]
+    x402: ["commerce", "finance"], x402_spec: ["commerce", "finance"]
+  }
+  source_kind_protocol: {
+    x402: "x402", x402_spec: "x402", mcp: "mcp", rss: "rss-atom", public_api: "http-api"
+  }
+  ghost_category: {
+    Blog: {family: "editorial", mix: "vertical board thread", chains: "publication community discover knowledge"}
+    Magazine: {family: "magazine", mix: "vertical board thread market", chains: "publication discover watch listen commerce community"}
+    News: {family: "newsroom", mix: "vertical thread board inspector", chains: "publication discover community live-event"}
+    Newsletter: {family: "letter", mix: "vertical board", chains: "publication professional community knowledge"}
+    Podcast: {family: "audio", mix: "stage vertical thread", chains: "listen watch community publication"}
+    Photography: {family: "gallery", mix: "board vertical spatial", chains: "discover watch place publication"}
+    Portfolio: {family: "portfolio", mix: "board vertical inspector", chains: "professional creator-publish watch publication"}
+    Docs: {family: "docs", mix: "inspector work thread", chains: "knowledge learning support software-work"}
+  }
+  observed_partner_names: ["langchain", "temporal", "dagster", "duckdb", "helm", "terraform", "vscode", "mcp", "wandb", "Qlib", "vectorbt", "ArcticDB", "QuantLib", "Formance", "TigerBeetle", "Hyperswitch", "Interledger", "Mojaloop", "Riskfolio-Lib"]
+  app_hints: [
+    {term: "transcrib", chains: "watch listen media-production"}, {term: "audio", chains: "listen media-production"},
+    {term: "video", chains: "watch media-production"}, {term: "clip", chains: "watch creator-publish"},
+    {term: "frame", chains: "watch media-production"}, {term: "scene", chains: "watch media-production"},
+    {term: "media", chains: "watch listen media-production"}, {term: "narrat", chains: "publication creator-publish"},
+    {term: "paragraph", chains: "publication knowledge"}, {term: "cms", chains: "publication creator-publish"},
+    {term: "publish", chains: "publication creator-publish"}, {term: "distribut", chains: "publication creator-publish"},
+    {term: "repurpose", chains: "publication creator-publish"}, {term: "finance", chains: "finance commerce"},
+    {term: "pay", chains: "finance commerce"}, {term: "ledger", chains: "finance commerce"},
+    {term: "econom", chains: "finance commerce"}, {term: "offer", chains: "commerce enterprise-gtm"},
+    {term: "outreach", chains: "enterprise-gtm professional"}, {term: "project", chains: "project professional"},
+    {term: "workflow", chains: "project software-work"}, {term: "queue", chains: "project software-work"},
+    {term: "pipeline", chains: "project software-work"}, {term: "control", chains: "project software-work"},
+    {term: "operator", chains: "project software-work"}, {term: "auth", chains: "identity-access"},
+    {term: "admission", chains: "identity-access"}, {term: "gate", chains: "identity-access"},
+    {term: "capability", chains: "ai-work software-work"}, {term: "provider", chains: "ai-work software-work"},
+    {term: "embed", chains: "discover research ai-work"}, {term: "vec", chains: "discover research ai-work"},
+    {term: "index", chains: "discover knowledge"}, {term: "query", chains: "discover research"},
+    {term: "search", chains: "discover research"}, {term: "tag", chains: "discover ai-work"},
+    {term: "entity", chains: "knowledge discover"}, {term: "graph", chains: "knowledge research"},
+    {term: "model", chains: "ai-work"}, {term: "infer", chains: "ai-work"},
+    {term: "gen", chains: "ai-work"}, {term: "fpq", chains: "ai-work"},
+    {term: "quant", chains: "ai-work investing"}, {term: "reason", chains: "ai-work research"},
+    {term: "moe", chains: "ai-work"}, {term: "physics", chains: "science research"},
+    {term: "space", chains: "mission science"}, {term: "leapfrog", chains: "science research"},
+    {term: "upper90", chains: "property enterprise-gtm"}, {term: "frappe", chains: "professional project enterprise-gtm"},
+    {term: "webaddress", chains: "discover publication identity-access"}, {term: "surface", chains: "discover publication"},
+    {term: "render", chains: "publication watch"}, {term: "externalestate", chains: "discover research"},
+    {term: "watch", chains: "software-work"},
+  ]
+  presentation: {
+    discover: ["mixed-stream", "lead-relief-context"], listen: ["persistent-audio", "sequence", "editorial"]
+    watch: ["theatre", "chaptered", "transcript-adjacent"], community: ["topic-world", "threaded", "social-body"]
+    professional: ["identity-deep", "activity", "relationship"], dating: ["focused-object", "mode-context"]
+    mobility: ["map-route-status"], trip: ["itinerary", "place-rich"], property: ["map-dossier-workspace"]
+    learning: ["path", "lesson", "assessment"], commerce: ["editorial-detail-checkout"]
+    "live-event": ["stage", "timeline", "place"], place: ["map", "editorial-local"]
+    project: ["workspace", "board", "timeline"], collaboration: ["thread", "canvas", "list"]
+    knowledge: ["document", "graph", "reference"], "enterprise-gtm": ["record", "pipeline", "communication"]
+    finance: ["ledger", "obligation", "timeline"], publication: ["editorial", "sequence", "long-form"]
+  }
+  slug_root: {
+    listen: "/listen", watch: "/watch", community: "/community", discover: "/discover"
+    "live-event": "/events", place: "/places", property: "/property", learning: "/learn"
+    commerce: "/products", professional: "/people", project: "/projects", knowledge: "/knowledge"
+    "enterprise-gtm": "/accounts", "service-case": "/cases", publication: "/posts", trip: "/trips"
+    housing: "/housing", food: "/food", hiring: "/jobs", support: "/support"
+  }
+  external_name_hints: [
+    {terms: ["spotify", "musicbrainz", "bandcamp", "soundcloud"], chain: "listen"},
+    {terms: ["youtube", "vimeo", "twitch", "peertube", "video"], chain: "watch"},
+    {terms: ["reddit", "lemmy", "discord", "forum", "community"], chain: "community"},
+    {terms: ["eventbrite", "mobilizon", "ticket"], chain: "live-event"},
+    {terms: ["openstreetmap", "mapbox", "geocod", "places"], chain: "place"},
+    {terms: ["ebay", "etsy", "shopify", "commerce", "marketplace"], chain: "commerce"},
+  ]
+  expected_ghost_references: 238
+  expected_interaction_provenance: {frappe: 9, donor: 19}
+  declared_shipped_partner_repos: 41
+  cannot_infer: ["candidate classification -> owner admission", "reference lattice -> selected renderer", "application name -> authority or effect"]
+}

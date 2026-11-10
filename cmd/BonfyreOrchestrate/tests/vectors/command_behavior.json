@@ -1,0 +1,5 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-orchestrate","binary_env":"BONFYRE_ORCHESTRATE_BIN","cases":[
+{"name":"without an endpoint status says nothing can run, and an audio brief request is planned heuristically","files":{"req.json":"{\"input_type\":\"audio\",\"objective\":\"brief\",\"latency_class\":\"batch\",\"artifact_path\":\"talk.wav\"}"},"steps":[
+ {"argv":["status"],"env":{"HOME":"${tmp}","BONFYRE_ORCHESTRATE_ENDPOINT":"","BONFYRE_ORCHESTRATE_POLICY_DB":"${tmp}/op.db","BONFYRE_ORCHESTRATE_MODEL":""},"exit":4,"at":{"status":"no_endpoint","endpoint_configured":false}},
+ {"argv":["plan","req.json"],"env":{"HOME":"${tmp}","BONFYRE_ORCHESTRATE_ENDPOINT":"","BONFYRE_ORCHESTRATE_POLICY_DB":"${tmp}/op.db","BONFYRE_ORCHESTRATE_MODEL":""},"exit":0,"at":{"mode":"heuristic","input_type":"audio","selected_binaries":["bonfyre-ingest","bonfyre-media-prep","bonfyre-transcribe","bonfyre-transcript-clean","bonfyre-paragraph","bonfyre-brief"]}},
+ {"argv":["plan","nope.json"],"env":{"HOME":"${tmp}","BONFYRE_ORCHESTRATE_ENDPOINT":"","BONFYRE_ORCHESTRATE_POLICY_DB":"${tmp}/op.db","BONFYRE_ORCHESTRATE_MODEL":""},"exit":1}]}]}

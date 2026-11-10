@@ -1,0 +1,110 @@
+exit 0
+{
+ "schema": "bonfyre.books.v3",
+ "lines": 3,
+ "by_learned": 0,
+ "suggested_by_model": 0,
+ "to_review": 3,
+ "amounts_unread": 2,
+ "learned": null,
+ "model": null,
+ "model_artifact_sha256": null,
+ "model_error": "the local model at http://127.0.0.1:9 is not answering (Unable to connect. Is the computer able to access the url?). Start it with: bonfyre-moe serve --port 7000   (see: bonfyre model local)",
+ "seconds": T,
+ "booked_by_account": [],
+ "totals": [],
+ "totals_unavailable": "the file has no amounts, so there are line counts by account and no money totals",
+ "transactions": [
+  {
+   "line": 2,
+   "date": "",
+   "description": "Rent",
+   "amount_cents": null,
+   "amount": null,
+   "amount_text": "1.005",
+   "amount_known": false,
+   "amount_unread": true,
+   "account": "",
+   "suggested": "none",
+   "confidence": null,
+   "decided_by": "none",
+   "review": true,
+   "review_reason": "amount not read",
+   "source": {
+    "sha256": "65917669ff690a068750a7c07e8f6f42d23051033a96c3599a0e30824fe5e5db",
+    "sheet": "Data",
+    "row": 2,
+    "cells": {
+     "description": "A2",
+     "amount": "B2"
+    },
+    "hidden": false
+   }
+  },
+  {
+   "line": 3,
+   "date": "",
+   "description": "Big",
+   "amount_cents": 9007199254740990,
+   "amount": 90071992547409.9,
+   "amount_text": "90071992547409.9",
+   "amount_known": true,
+   "amount_unread": false,
+   "account": "",
+   "suggested": "none",
+   "confidence": null,
+   "decided_by": "none",
+   "review": true,
+   "source": {
+    "sha256": "65917669ff690a068750a7c07e8f6f42d23051033a96c3599a0e30824fe5e5db",
+    "sheet": "Data",
+    "row": 3,
+    "cells": {
+     "description": "A3",
+     "amount": "B3"
+    },
+    "hidden": false
+   }
+  },
+  {
+   "line": 4,
+   "date": "",
+   "description": "Bool",
+   "amount_cents": null,
+   "amount": null,
+   "amount_text": "true",
+   "amount_known": false,
+   "amount_unread": true,
+   "account": "",
+   "suggested": "none",
+   "confidence": null,
+   "decided_by": "none",
+   "review": true,
+   "review_reason": "amount not read",
+   "source": {
+    "sha256": "65917669ff690a068750a7c07e8f6f42d23051033a96c3599a0e30824fe5e5db",
+    "sheet": "Data",
+    "row": 4,
+    "cells": {
+     "description": "A4",
+     "amount": "B4"
+    },
+    "hidden": false
+   }
+  }
+ ],
+ "receipts": [
+  null,
+  null,
+  null
+ ],
+ "cannot_infer": "a booked line -> a reviewed ledger; the client or their bookkeeper still owns the books, and a line sent to review is not booked",
+ "source_workbook": {
+  "filename": "FIX/xlsx/hiddensheet.xlsx",
+  "sha256": "65917669ff690a068750a7c07e8f6f42d23051033a96c3599a0e30824fe5e5db",
+  "sheet": "Data",
+  "range": "A1:B4",
+  "header_row": 1,
+  "hidden_sheet": true
+ }
+}

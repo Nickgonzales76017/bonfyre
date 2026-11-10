@@ -1,0 +1,55 @@
+{
+  "name": "outbound_message",
+  "displayName": "outbound_message",
+  "description": "Something composed for somebody and held. This estate has no transport and none of this record's states claims one: reachability stops before anything leaves, so a message here is written, withheld, handed to a person, or abandoned, and never sent, delivered, or known to its recipient.",
+  "attributes": {
+    "message_id": {
+      "type": "string",
+      "required": true,
+      "uniqueWithinNamespace": true
+    },
+    "about": {
+      "type": "string",
+      "required": true
+    },
+    "recipient": {
+      "type": "string",
+      "required": true
+    },
+    "subject_line": {
+      "type": "string",
+      "required": true
+    },
+    "body": {
+      "type": "text",
+      "required": true
+    },
+    "state": {
+      "type": "string",
+      "required": true
+    },
+    "composed_by": {
+      "type": "string",
+      "required": true
+    },
+    "composed_at": {
+      "type": "string",
+      "required": true
+    },
+    "would_be_sent_by": {
+      "type": "string",
+      "required": true
+    },
+    "state_reason": {
+      "type": "text"
+    },
+    "cannot_infer": {
+      "type": "text",
+      "required": true
+    },
+    "status": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

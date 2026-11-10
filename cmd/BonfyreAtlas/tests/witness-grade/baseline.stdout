@@ -1,0 +1,10 @@
+12 architectures claim measured or proven
+
+  graded       0   a fact it reads was changed and it went red
+  exercised    5   it is in the regression, but has never been shown to fail
+  runnable     4   a file exists; nothing runs it here
+  named        3   a witness is described in prose only
+
+
+  cannot infer: a graded witness -> a correct architecture; mutation shows the witness reacts to the state it reads
+  (no --mutation receipt given, so nothing could be graded)

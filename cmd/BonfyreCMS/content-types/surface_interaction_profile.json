@@ -1,0 +1,22 @@
+{
+  "name": "surface_interaction_profile",
+  "displayName": "Surface Interaction Profile",
+  "description": "Presentation-only interaction behavior selected for an addressed site or World. It may choose lens ordering, semantic-zoom labels, peek/expand/focus posture, context-rail and command-aperture behavior, transition/motion policy and desktop/mobile interaction posture. It reads no semantic owner and grants no identity, visibility, authority, availability, price, proof, commitment or effect.",
+  "attributes": {
+    "profile_id": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "site_id": {"type": "string", "required": false},
+    "world": {"type": "string", "required": false},
+    "default_lens": {"type": "string", "required": false},
+    "lens_order": {"type": "json", "required": true},
+    "semantic_zoom": {"type": "json", "required": true},
+    "interaction_depths": {"type": "json", "required": true},
+    "context_rail": {"type": "json", "required": true},
+    "relation_halo": {"type": "json", "required": true},
+    "command_aperture": {"type": "json", "required": true},
+    "transition_policy": {"type": "json", "required": true},
+    "mobile_posture": {"type": "json", "required": true},
+    "desktop_posture": {"type": "json", "required": true},
+    "live_update_policy": {"type": "json", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

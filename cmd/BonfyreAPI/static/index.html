@@ -87,7 +87,7 @@
         </thead>
         <tbody id="recent-jobs"></tbody>
       </table>
-      <p class="empty-state" id="no-jobs">No jobs yet. Upload an audio file to get started.</p>
+      <p class="empty-state" id="no-jobs">No admitted jobs are visible for this API key. Reviewed native work is owned by the account WorkGraph.</p>
     </div>
   </div>
 </section>
@@ -100,13 +100,13 @@
 
   <div class="card-row">
     <div class="card wide">
-      <h2>Upload & Process</h2>
+      <h2>Account-owned file preparation</h2>
       <div class="upload-zone" id="upload-zone">
         <input type="file" id="file-input" accept="audio/*,.mp3,.wav,.m4a,.ogg,.flac" hidden>
-        <div class="upload-content" onclick="document.getElementById('file-input').click()">
+        <div class="upload-content">
           <span class="upload-icon">📁</span>
-          <p>Click to upload or drag & drop</p>
-          <p class="upload-hint">MP3, WAV, M4A, OGG, FLAC — up to 4MB</p>
+          <p>Select a file to prepare an account import</p>
+          <p class="upload-hint">Actual staging requires your authenticated account workspace and an installed app. No unreviewed job is sent.</p>
         </div>
       </div>
       <div id="upload-status" class="upload-status hidden"></div>

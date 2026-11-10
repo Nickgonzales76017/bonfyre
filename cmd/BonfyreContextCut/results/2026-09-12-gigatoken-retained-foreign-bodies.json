@@ -1,0 +1,21 @@
+{
+  "schema": "bonfyre-gigatoken-retained-body-measurement.v1",
+  "classification": "MEASURED_TOKENIZATION_ONLY",
+  "implementation": "GigaToken pinned upstream source temporary bootstrap runtime",
+  "tokenizer": "Qwen/Qwen2.5-Coder-0.5B-Instruct tokenizer.json",
+  "tokenizer_sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+  "cohort": "nine independently receipted retained ForeignTwin bodies from the existing ExperienceMap estate",
+  "bodies": 9,
+  "input_bytes": 3023874,
+  "tokens": 935586,
+  "elapsed_ns": 41081417,
+  "throughput_bytes_per_second": 73606857.32919095,
+  "establishes": [
+    "The actual GigaToken implementation tokenized the stated retained ForeignTwin cohort with the stated Qwen tokenizer passport.",
+    "The body/token totals and elapsed time for this exact local cohort."
+  ],
+  "does_not_establish": [
+    "Purpose-specific context quality, evidence sufficiency, model-generation quality, prepared-prefix reuse, BitNet throughput or quality, traffic capacity, user capacity, or Internet-scale throughput.",
+    "Any claim contained by a retained ForeignTwin body."
+  ]
+}

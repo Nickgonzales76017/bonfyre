@@ -1,0 +1,4 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-proxy","binary_env":"BONFYRE_PROXY_BIN","cases":[
+{"name":"the loopback shim reports health and lists its models (chat completion not exercised)","steps":[
+ {"argv":["status"],"env":{"HOME":"${tmp}"},"exit":0,"at":{"status":"available"}},
+ {"program":"sh","argv":["-c","P=$((20000 + $$ % 20000)); \"$1\" serve --port $P --brief-bin \"$2\" > px.log 2>&1 & p=$!; sleep 1; curl -s --max-time 5 http://127.0.0.1:$P/health; echo; curl -s --max-time 5 http://127.0.0.1:$P/v1/models; kill $p","sh","${organ}/bonfyre-proxy","${root}/cmd/BonfyreBrief/bonfyre-brief"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["\"status\":\"ok\"","\"brief_available\":true","\"id\":\"bonfyre-brief\""]}]}]}

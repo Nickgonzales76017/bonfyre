@@ -1,0 +1,15 @@
+{
+  "name": "team_need",
+  "displayName": "Team Need",
+  "description": "A role a project still needs a person for. A need is what a project says it lacks; it is never an offer of employment, never a contract, and never a claim that anyone has been engaged or will be paid.",
+  "attributes": {
+    "need_id": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "project_id": { "type": "string", "required": true },
+    "role": { "type": "string", "required": true },
+    "wanted": { "type": "string", "required": true },
+    "filled": { "type": "string", "required": true },
+    "derived_from": { "type": "string", "required": true },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

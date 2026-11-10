@@ -1,0 +1,1 @@
+{"authorization":"Bearer fixture-token","body":{"id":"@ID@","jsonrpc":"2.0","method":"tools/call","params":{"arguments":{"decision_id":"decision","latency_ms":1.5,"receipt_digest":"sha","state":"failed"},"name":"canary_outcome_record"}},"content-type":"application/json","mcp-protocol-version":"2025-06-18","request":"POST /mcp"}

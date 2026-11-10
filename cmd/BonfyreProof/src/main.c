@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include "bf_lex.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,6 +8,8 @@
 #include <time.h>
 #include <unistd.h>
 #include <bonfyre.h>
+#include "../../../lib/libbonfyre/include/bf_help.h"
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 
 #define MAX_TEXT 16384
 #define MAX_PATH 2048
@@ -22,35 +25,18 @@ static char *read_file(const char *path, long *size_out) {
 }
 
 static int extract_string_value(const char *json, const char *key, char *buffer, size_t size) {
-    char needle[256];
-    snprintf(needle, sizeof(needle), "\"%s\"", key);
-    const char *pos = strstr(json, needle);
-    if (!pos) return 0;
-    pos = strchr(pos + strlen(needle), ':');
-    if (!pos) return 0;
-    pos++;
-    while (*pos && isspace((unsigned char)*pos)) pos++;
-    if (*pos != '"') return 0;
-    pos++;
-    const char *end = strchr(pos, '"');
-    if (!end) return 0;
-    size_t len = (size_t)(end - pos);
-    if (len >= size) len = size - 1;
-    memcpy(buffer, pos, len);
-    buffer[len] = '\0';
-    return 1;
+    /* Delegates to the one implementation. This copy stopped at the first
+     * quote, and truncated silently on overflow rather than reporting that the
+     * value did not fit -- a prefix returned as if it were whole. */
+    return bf_lex_json_string(json, key, buffer, size);
 }
 
 static int extract_int_value(const char *json, const char *key, int *value) {
-    char needle[256];
-    snprintf(needle, sizeof(needle), "\"%s\"", key);
-    const char *pos = strstr(json, needle);
-    if (!pos) return 0;
-    pos = strchr(pos + strlen(needle), ':');
-    if (!pos) return 0;
-    pos++;
-    while (*pos && isspace((unsigned char)*pos)) pos++;
-    *value = atoi(pos);
+    /* Delegates to the one implementation, which refuses a string where a
+     * number was asked for instead of running atoi over a quote. */
+    char scalar[64];
+    if (!bf_lex_json_scalar(json, key, scalar, sizeof(scalar))) return 0;
+    *value = atoi(scalar);
     return 1;
 }
 
@@ -75,18 +61,13 @@ static int copy_file(const char *src, const char *dst) {
 
 static int command_inspect(const char *proof_dir) {
     char summary_path[MAX_PATH];
-    char review_path[MAX_PATH];
     path_join(summary_path, sizeof(summary_path), proof_dir, "proof-summary.json");
-    path_join(review_path, sizeof(review_path), proof_dir, "proof-review.json");
 
     long summary_size = 0;
-    long review_size = 0;
     char *summary = read_file(summary_path, &summary_size);
-    char *review = read_file(review_path, &review_size);
-    if (!summary || !review) {
+    if (!summary) {
         fprintf(stderr, "Missing proof artifact.\n");
         free(summary);
-        free(review);
         return 1;
     }
 
@@ -94,12 +75,10 @@ static int command_inspect(const char *proof_dir) {
     char proof_label[256] = "";
     char recommendation[128] = "";
     int quality_score = 0;
-    int review_score = 0;
     extract_string_value(summary, "proof_slug", proof_slug, sizeof(proof_slug));
     extract_string_value(summary, "proof_label", proof_label, sizeof(proof_label));
     extract_int_value(summary, "score", &quality_score);
-    extract_string_value(review, "recommendation", recommendation, sizeof(recommendation));
-    extract_int_value(review, "review_score", &review_score);
+    extract_string_value(summary, "recommendation", recommendation, sizeof(recommendation));
 
     printf("{\n");
     printf("  \"kind\": \"proof\",\n");
@@ -107,35 +86,28 @@ static int command_inspect(const char *proof_dir) {
     printf("  \"proofSlug\": \"%s\",\n", proof_slug);
     printf("  \"proofLabel\": \"%s\",\n", proof_label);
     printf("  \"qualityScore\": %d,\n", quality_score);
-    printf("  \"reviewScore\": %d,\n", review_score);
     printf("  \"recommendation\": \"%s\"\n", recommendation);
     printf("}\n");
 
     free(summary);
-    free(review);
     return 0;
 }
 
 static int command_bundle(const char *proof_dir, const char *output_dir) {
     char summary_path[MAX_PATH];
-    char review_path[MAX_PATH];
     char deliverable_path[MAX_PATH];
     char transcript_path[MAX_PATH];
     char bundle_json_path[MAX_PATH];
     char bundle_md_path[MAX_PATH];
     path_join(summary_path, sizeof(summary_path), proof_dir, "proof-summary.json");
-    path_join(review_path, sizeof(review_path), proof_dir, "proof-review.json");
     path_join(deliverable_path, sizeof(deliverable_path), proof_dir, "deliverable.md");
     path_join(transcript_path, sizeof(transcript_path), proof_dir, "transcript.txt");
 
     long summary_size = 0;
-    long review_size = 0;
     char *summary = read_file(summary_path, &summary_size);
-    char *review = read_file(review_path, &review_size);
-    if (!summary || !review) {
+    if (!summary) {
         fprintf(stderr, "Missing proof artifact.\n");
         free(summary);
-        free(review);
         return 1;
     }
 
@@ -144,18 +116,15 @@ static int command_bundle(const char *proof_dir, const char *output_dir) {
     char recommendation[128] = "";
     char quality_status[128] = "";
     int quality_score = 0;
-    int review_score = 0;
     extract_string_value(summary, "proof_slug", proof_slug, sizeof(proof_slug));
     extract_string_value(summary, "proof_label", proof_label, sizeof(proof_label));
     extract_int_value(summary, "score", &quality_score);
     extract_string_value(summary, "status", quality_status, sizeof(quality_status));
-    extract_string_value(review, "recommendation", recommendation, sizeof(recommendation));
-    extract_int_value(review, "review_score", &review_score);
+    extract_string_value(summary, "recommendation", recommendation, sizeof(recommendation));
 
     if (ensure_dir(output_dir) != 0) {
         fprintf(stderr, "Failed to create output dir.\n");
         free(summary);
-        free(review);
         return 1;
     }
 
@@ -169,7 +138,6 @@ static int command_bundle(const char *proof_dir, const char *output_dir) {
     if (copy_file(deliverable_path, copied_deliverable) != 0 || copy_file(transcript_path, copied_transcript) != 0) {
         fprintf(stderr, "Failed to copy proof files.\n");
         free(summary);
-        free(review);
         return 1;
     }
 
@@ -179,7 +147,6 @@ static int command_bundle(const char *proof_dir, const char *output_dir) {
     FILE *json_fp = fopen(bundle_json_path, "w");
     if (!json_fp) {
         free(summary);
-        free(review);
         return 1;
     }
     fprintf(json_fp,
@@ -191,29 +158,27 @@ static int command_bundle(const char *proof_dir, const char *output_dir) {
             "  \"proofDir\": \"%s\",\n"
             "  \"qualityScore\": %d,\n"
             "  \"qualityStatus\": \"%s\",\n"
-            "  \"reviewScore\": %d,\n"
             "  \"recommendation\": \"%s\",\n"
             "  \"deliverablePath\": \"%s\",\n"
             "  \"transcriptPath\": \"%s\"\n"
             "}\n",
             timestamp, proof_slug, proof_label, proof_dir, quality_score, quality_status,
-            review_score, recommendation, copied_deliverable, copied_transcript);
+            recommendation, copied_deliverable, copied_transcript);
     fclose(json_fp);
 
     FILE *md_fp = fopen(bundle_md_path, "w");
     if (!md_fp) {
         free(summary);
-        free(review);
         return 1;
     }
     fprintf(md_fp,
             "# %s\n\n"
             "- proof slug: `%s`\n"
             "- quality: `%s (%d)`\n"
-            "- review: `%s (%d)`\n"
+            "- recommendation: `%s` (computed; nobody reviewed this)\n"
             "- deliverable: `%s`\n"
             "- transcript: `%s`\n",
-            proof_label, proof_slug, quality_status, quality_score, recommendation, review_score,
+            proof_label, proof_slug, quality_status, quality_score, recommendation,
             copied_deliverable, copied_transcript);
     fclose(md_fp);
 
@@ -221,29 +186,52 @@ static int command_bundle(const char *proof_dir, const char *output_dir) {
     printf("Bundle MD: %s\n", bundle_md_path);
 
     free(summary);
-    free(review);
     return 0;
 }
 
-/* ── score command: compute quality metrics from a brief + transcript ── */
+/* ── score command: check a brief against the source it was made from ──
+ *
+ * A proof of a brief is a comparison with its source. Two things are measured:
+ * how many of the brief's statements are made of words the source contains,
+ * and how many are whole statements rather than pieces of one. Nothing is
+ * scored without the source, and nobody is said to have reviewed anything.
+ */
+static void lower_copy(char *dst, const char *src, size_t n) {
+    size_t i = 0;
+    for (; src[i] && i + 1 < n; i++) dst[i] = (char)tolower((unsigned char)src[i]);
+    dst[i] = '\0';
+}
+
+/* Share of a statement's content words (four letters or more) found in the
+ * lowercased source. Returns -1 when the statement has fewer than three. */
+static double statement_grounding(const char *statement, const char *source_lower) {
+    int words = 0, found = 0;
+    const char *p = statement;
+    while (*p) {
+        while (*p && !isalnum((unsigned char)*p)) p++;
+        char word[64];
+        size_t n = 0;
+        while (*p && (isalnum((unsigned char)*p) || *p == '\'' || *p == '-')) {
+            if (n + 1 < sizeof(word)) word[n++] = (char)tolower((unsigned char)*p);
+            p++;
+        }
+        word[n] = '\0';
+        if (n < 4) continue;
+        words++;
+        if (strstr(source_lower, word)) found++;
+    }
+    return words < 3 ? -1.0 : (double)found / (double)words;
+}
+
 static int command_score(const char *brief_dir, const char *output_dir) {
     char brief_path[MAX_PATH];
-    char transcript_path[MAX_PATH];
+    char meta_path[MAX_PATH];
+    char transcript_path[MAX_PATH] = "";
     char summary_path[MAX_PATH];
-    char review_path[MAX_PATH];
     char deliverable_path[MAX_PATH];
     char transcript_out[MAX_PATH];
 
-    /* Find brief.md and the transcript it references */
     path_join(brief_path, sizeof(brief_path), brief_dir, "brief.md");
-    path_join(deliverable_path, sizeof(deliverable_path), brief_dir, "brief.md");
-
-    /* Look for transcript in parent dir or sibling */
-    snprintf(transcript_path, sizeof(transcript_path), "%s/../normalized.txt", brief_dir);
-    if (access(transcript_path, F_OK) != 0) {
-        snprintf(transcript_path, sizeof(transcript_path), "%s/transcript.txt", brief_dir);
-    }
-
     long brief_size = 0;
     char *brief = read_file(brief_path, &brief_size);
     if (!brief) {
@@ -251,180 +239,121 @@ static int command_score(const char *brief_dir, const char *output_dir) {
         return 1;
     }
 
+    /* The source is the one the brief says it was made from, else the
+     * pipeline's normalized text, else a transcript beside the brief. */
+    path_join(meta_path, sizeof(meta_path), brief_dir, "brief-meta.json");
+    long meta_size = 0;
+    char *meta = read_file(meta_path, &meta_size);
+    if (meta) {
+        extract_string_value(meta, "transcript_path", transcript_path, sizeof(transcript_path));
+        free(meta);
+    }
+    if (!transcript_path[0] || access(transcript_path, R_OK) != 0)
+        snprintf(transcript_path, sizeof(transcript_path), "%s/../normalized.txt", brief_dir);
+    if (access(transcript_path, R_OK) != 0)
+        snprintf(transcript_path, sizeof(transcript_path), "%s/transcript.txt", brief_dir);
+
     long trans_size = 0;
     char *transcript = read_file(transcript_path, &trans_size);
-    /* Transcript is optional for scoring */
+    if (!transcript || trans_size == 0) {
+        fprintf(stderr, "No source for %s: a brief cannot be proved against nothing. "
+                        "Nothing was scored.\n", brief_path);
+        free(brief); free(transcript);
+        return 1;
+    }
+    char *source_lower = malloc((size_t)trans_size + 1);
+    if (!source_lower || ensure_dir(output_dir) != 0) {
+        free(brief); free(transcript); free(source_lower);
+        return 1;
+    }
+    lower_copy(source_lower, transcript, (size_t)trans_size + 1);
 
-    if (ensure_dir(output_dir) != 0) {
+    /* A statement is a bullet, or a line of prose, outside the copied
+     * transcript section. Headings are not statements. */
+    int statements = 0, grounded = 0, fragments = 0, word_count = 0;
+    double grounding_sum = 0.0;
+    int in_transcript_section = 0;
+    char *copy = strdup(brief);
+    if (!copy) { free(brief); free(transcript); free(source_lower); return 1; }
+    for (char *line = copy, *next = NULL; line; line = next) {
+        next = strchr(line, '\n');
+        if (next) *next++ = '\0';
+        char *t = line;
+        while (*t == ' ' || *t == '\t') t++;
+        if (*t == '#') { in_transcript_section = (strstr(t, "Transcript") != NULL); continue; }
+        if (in_transcript_section) continue;
+        if (t[0] == '-' || t[0] == '*') { t++; while (*t == ' ') t++; }
+        if (strncmp(t, "[ ]", 3) == 0 || strncmp(t, "[x]", 3) == 0) { t += 3; while (*t == ' ') t++; }
+        size_t len = strlen(t);
+        while (len > 0 && (t[len - 1] == ' ' || t[len - 1] == '\r')) t[--len] = '\0';
+        if (len == 0) continue;
+        for (const char *w = t; *w; w++) if (*w == ' ') word_count++;
+        word_count++;
+        double g = statement_grounding(t, source_lower);
+        if (g < 0.0) continue;
+        statements++;
+        grounding_sum += g;
+        if (g >= 0.8) grounded++;
+        char last = t[len - 1];
+        int whole = (last == '.' || last == '!' || last == '?' || last == ':' || last == ')' || last == '"' || last == '`')
+                    && !islower((unsigned char)t[0]);
+        if (!whole) fragments++;
+    }
+    free(copy);
+    free(source_lower);
+    if (statements == 0) {
+        fprintf(stderr, "%s makes no statement long enough to check. Nothing was scored.\n", brief_path);
         free(brief); free(transcript);
         return 1;
     }
 
-    /* Compute quality metrics from the brief */
-    int word_count = 0;
-    int sentence_count = 0;
-    int filler_count = 0;
-    int has_summary = (strstr(brief, "## Summary") != NULL) ? 1 : 0;
-    int has_action = (strstr(brief, "## Action Items") != NULL) ? 1 : 0;
-    int has_transcript = (strstr(brief, "## Transcript") != NULL) ? 1 : 0;
+    double grounded_fraction = (double)grounded / (double)statements;
+    double fragment_fraction = (double)fragments / (double)statements;
+    int score = (int)(100.0 * grounded_fraction * (1.0 - fragment_fraction) + 0.5);
+    const char *status = (grounded_fraction >= 0.9 && fragment_fraction <= 0.2) ? "pass"
+                       : (grounded_fraction >= 0.7 && fragment_fraction <= 0.5) ? "marginal" : "fail";
+    const char *recommendation = !strcmp(status, "pass") ? "approve" : !strcmp(status, "marginal") ? "review" : "reject";
 
-    for (const char *p = brief; *p; p++) {
-        if (*p == ' ' || *p == '\n') word_count++;
-        if (*p == '.' || *p == '!' || *p == '?') sentence_count++;
-    }
-
-    /* Count filler patterns */
-    const char *fillers[] = {"like,", "you know", "kind of", "sort of", "I mean", "basically", NULL};
-    for (int i = 0; fillers[i]; i++) {
-        const char *p = brief;
-        while ((p = strstr(p, fillers[i])) != NULL) {
-            filler_count++;
-            p += strlen(fillers[i]);
-        }
-    }
-
-    /* ── Multi-dimensional quality rubric ──
-     *
-     * Dimension 1 — Structure (0-25):  section presence + balance
-     * Dimension 2 — Density (0-25):    information density (unique/total words)
-     * Dimension 3 — Clarity (0-25):    filler ratio, sentence length variance
-     * Dimension 4 — Coverage (0-25):   word count relative to expected
-     *
-     * Total: 0-100
-     */
-
-    /* Dimension 1: Structure */
-    int structure_score = 0;
-    if (has_summary) structure_score += 8;
-    if (has_action) structure_score += 8;
-    if (has_transcript) structure_score += 4;
-    /* Bonus for balanced sections (not just headers with empty content) */
-    if (has_summary && word_count > 100) structure_score += 3;
-    if (has_action && sentence_count > 3) structure_score += 2;
-    if (structure_score > 25) structure_score = 25;
-
-    /* Dimension 2: Density — unique words / total words */
-    int unique_words = 0;
-    {
-        /* Simple unique word count via hash set */
-        #define HASH_BUCKETS 2048
-        unsigned int seen[HASH_BUCKETS];
-        memset(seen, 0, sizeof(seen));
-        const char *wp = brief;
-        while (*wp) {
-            while (*wp && !isalpha((unsigned char)*wp)) wp++;
-            if (!*wp) break;
-            const char *wstart = wp;
-            while (*wp && isalpha((unsigned char)*wp)) wp++;
-            size_t wlen = (size_t)(wp - wstart);
-            if (wlen < 2) continue;
-            /* FNV-1a hash */
-            unsigned int h = 2166136261u;
-            for (size_t i = 0; i < wlen; i++) {
-                h ^= (unsigned int)(unsigned char)tolower((unsigned char)wstart[i]);
-                h *= 16777619u;
-            }
-            unsigned int bucket = h % HASH_BUCKETS;
-            if (seen[bucket] != h) { seen[bucket] = h; unique_words++; }
-        }
-    }
-    double density = word_count > 0 ? (double)unique_words / (double)word_count : 0;
-    int density_score = (int)(density * 50.0); /* 0.5 ratio → 25 */
-    if (density_score > 25) density_score = 25;
-
-    /* Dimension 3: Clarity — penalize fillers, reward clean prose */
-    int clarity_score = 20; /* start optimistic */
-    double filler_ratio = word_count > 0 ? (double)filler_count / (double)word_count : 0;
-    if (filler_ratio > 0.05) clarity_score -= 10;
-    else if (filler_ratio > 0.02) clarity_score -= 5;
-    else if (filler_ratio < 0.005) clarity_score += 5; /* very clean */
-    /* Penalize very short sentences (likely fragments) */
-    double avg_sent_len = sentence_count > 0 ? (double)word_count / (double)sentence_count : 0;
-    if (avg_sent_len < 5) clarity_score -= 5;
-    if (avg_sent_len > 8 && avg_sent_len < 30) clarity_score += 3; /* good range */
-    if (clarity_score < 0) clarity_score = 0;
-    if (clarity_score > 25) clarity_score = 25;
-
-    /* Dimension 4: Coverage — enough content to be useful */
-    int coverage_score = 0;
-    if (word_count > 50) coverage_score += 5;
-    if (word_count > 200) coverage_score += 5;
-    if (word_count > 500) coverage_score += 5;
-    if (word_count > 1000) coverage_score += 5;
-    if (sentence_count > 5) coverage_score += 3;
-    if (sentence_count > 20) coverage_score += 2;
-    if (coverage_score > 25) coverage_score = 25;
-
-    int score = structure_score + density_score + clarity_score + coverage_score;
-    if (score > 100) score = 100;
-    if (score < 0) score = 0;
-
-    int review_score = score >= 80 ? 90 : score >= 50 ? 70 : 40;
-    const char *status = score >= 80 ? "pass" : score >= 50 ? "marginal" : "fail";
-    const char *recommendation = score >= 80 ? "approve" : score >= 50 ? "review" : "reject";
-
-    /* Generate slug from brief dir name */
     const char *slug = strrchr(brief_dir, '/');
     slug = slug ? slug + 1 : brief_dir;
-
     char timestamp[32];
     iso_timestamp(timestamp, sizeof(timestamp));
 
-    /* Write proof-summary.json */
     path_join(summary_path, sizeof(summary_path), output_dir, "proof-summary.json");
     FILE *sfp = fopen(summary_path, "w");
     if (!sfp) { free(brief); free(transcript); return 1; }
     fprintf(sfp,
             "{\n"
             "  \"proof_slug\": \"%s\",\n"
-            "  \"proof_label\": \"Quality proof for %s\",\n"
+            "  \"proof_label\": \"Brief checked against its source: %s\",\n"
             "  \"score\": %d,\n"
             "  \"status\": \"%s\",\n"
-            "  \"dimensions\": {\"structure\": %d, \"density\": %d, \"clarity\": %d, \"coverage\": %d},\n"
+            "  \"recommendation\": \"%s\",\n"
+            "  \"basis\": \"share of statements whose words the source contains, times share that are whole statements; no person or model reviewed this\",\n"
+            "  \"source_path\": \"%s\",\n"
+            "  \"statements\": %d,\n"
+            "  \"grounded_statements\": %d,\n"
+            "  \"fragment_statements\": %d,\n"
+            "  \"mean_grounding\": %.3f,\n"
             "  \"word_count\": %d,\n"
-            "  \"unique_words\": %d,\n"
-            "  \"sentence_count\": %d,\n"
-            "  \"filler_count\": %d,\n"
             "  \"scored_at\": \"%s\"\n"
             "}\n",
-            slug, slug, score, status,
-            structure_score, density_score, clarity_score, coverage_score,
-            word_count, unique_words, sentence_count, filler_count, timestamp);
+            slug, slug, score, status, recommendation, transcript_path,
+            statements, grounded, fragments, grounding_sum / (double)statements,
+            word_count, timestamp);
     fclose(sfp);
 
-    /* Write proof-review.json */
-    path_join(review_path, sizeof(review_path), output_dir, "proof-review.json");
-    FILE *rfp = fopen(review_path, "w");
-    if (!rfp) { free(brief); free(transcript); return 1; }
-    fprintf(rfp,
-            "{\n"
-            "  \"review_score\": %d,\n"
-            "  \"recommendation\": \"%s\",\n"
-            "  \"reviewed_at\": \"%s\"\n"
-            "}\n",
-            review_score, recommendation, timestamp);
-    fclose(rfp);
-
-    /* Copy deliverable.md and transcript.txt into output */
     path_join(deliverable_path, sizeof(deliverable_path), output_dir, "deliverable.md");
-    copy_file(brief_path, deliverable_path);
-
     path_join(transcript_out, sizeof(transcript_out), output_dir, "transcript.txt");
-    if (transcript) {
-        if (copy_file(transcript_path, transcript_out) != 0) {
-            free(brief);
-            free(transcript);
-            return 1;
-        }
-    } else if (copy_file(brief_path, transcript_out) != 0) {
-        free(brief);
+    if (copy_file(brief_path, deliverable_path) != 0 || copy_file(transcript_path, transcript_out) != 0) {
+        free(brief); free(transcript);
         return 1;
     }
 
     printf("Score: %d/100 (%s)\n", score, status);
+    printf("Statements: %d, grounded in source: %d, fragments: %d\n", statements, grounded, fragments);
     printf("Recommendation: %s\n", recommendation);
     printf("Summary: %s\n", summary_path);
-    printf("Review: %s\n", review_path);
 
     free(brief);
     free(transcript);
@@ -545,29 +474,46 @@ static int command_audit_features(const char *proof_dir, const char *features_js
     return 0;
 }
 
-int main(int argc, char **argv) {
-    if (argc < 3) {
-        fprintf(stderr,
+static void usage(void) {
+    fprintf(stderr,
                 "Usage:\n"
                 "  bonfyre-proof full <brief-dir> <output-dir>\n"
                 "  bonfyre-proof score <brief-dir> <output-dir>\n"
                 "  bonfyre-proof bundle <proof-dir> <output-dir>\n"
                 "  bonfyre-proof audit-features <proof-dir> <features.json> [out.json]\n");
+}
+
+int main(int argc, char **argv) {
+    if (bf_help_requested(argc, argv)) { usage(); return 0; }
+    if (argc < 3) {
+        usage();
         return 1;
     }
-    if (strcmp(argv[1], "full") == 0 && argc == 4) {
+    enum {
+        PF_AUDIT_FEATURES, PF_BUNDLE, PF_FULL, PF_INSPECT, PF_SCORE,
+    };
+    static const BfCommandEntry proof_commands[] = {
+        {"audit-features", PF_AUDIT_FEATURES, 0, NULL},
+        {"bundle", PF_BUNDLE, 0, NULL},
+        {"full", PF_FULL, 0, NULL},
+        {"inspect", PF_INSPECT, 0, NULL},
+        {"score", PF_SCORE, 0, NULL},
+    };
+    const BfCommandEntry *command = bf_command_lookup(proof_commands,
+        sizeof(proof_commands) / sizeof(proof_commands[0]), argv[1]);
+    if (command && command->id == PF_FULL && argc == 4) {
         return command_full(argv[2], argv[3]);
     }
-    if (strcmp(argv[1], "score") == 0 && argc == 4) {
+    if (command && command->id == PF_SCORE && argc == 4) {
         return command_score(argv[2], argv[3]);
     }
-    if (strcmp(argv[1], "inspect") == 0 && argc == 3) {
+    if (command && command->id == PF_INSPECT && argc == 3) {
         return command_inspect(argv[2]);
     }
-    if (strcmp(argv[1], "bundle") == 0 && argc == 4) {
+    if (command && command->id == PF_BUNDLE && argc == 4) {
         return command_bundle(argv[2], argv[3]);
     }
-    if (strcmp(argv[1], "audit-features") == 0 && (argc == 4 || argc == 5)) {
+    if (command && command->id == PF_AUDIT_FEATURES && (argc == 4 || argc == 5)) {
         return command_audit_features(argv[2], argv[3], argc == 5 ? argv[4] : NULL);
     }
     fprintf(stderr, "Invalid command.\n");

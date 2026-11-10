@@ -1,0 +1,2 @@
+the local model at http://127.0.0.1:9 is not answering (Unable to connect. Is the computer able to access the url?). Start it with: bonfyre-moe serve --port 7000   (see: bonfyre model local)
+exit 2

@@ -1,0 +1,763 @@
+#!/usr/bin/env python3
+# Archived after Bun subject-route projection cutover.
+"""Compile request-ready subject/route material from already-normalized census items.
+
+This is the second offline stage of Subject Fabric.  It does not parse retained
+bodies and it does not discover sources.  It joins:
+
+  subject_reader (ScopedDemand/SourceFrontier closure)
+  + published SourceCollections / Scene binding queries
+  + WebAddress census-items (canonical normalized PageItem stream)
+  + surface/page route grammars
+
+into exact request-ready route material.
+
+SourceCollection exact refs win.  Legacy PageProgram families are used only as
+an explicitly-labelled compatibility fallback when no Scene/SourceCollection
+projection exists for a route.  The runtime never has to re-run that family
+selection once a subject_route row exists.
+"""
+
+import argparse
+import hashlib
+import json
+import os
+import sqlite3
+import sys
+import time
+from collections import defaultdict
+
+
+def canon(value):
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+
+def digest(value):
+    return hashlib.sha256(canon(value).encode("utf-8")).hexdigest()
+
+
+def file_digest(path):
+    """Digest an exact compiler input without assigning it semantic identity."""
+    hasher = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for block in iter(lambda: fh.read(1024 * 1024), b""):
+            hasher.update(block)
+    return hasher.hexdigest()
+
+
+def query_snapshot(db, query, params=()):
+    """Return the ordered values an input query actually makes available."""
+    return [list(row) for row in db.execute(query, params)]
+
+
+PROJECTION_TABLES = (
+    "subject_material_body", "subject_material_member", "subject_material",
+    "subject_route", "subject_route_phase",
+    "subject_route_reader", "subject_route_region", "subject_route_item",
+)
+
+
+def projection_output_snapshot(db):
+    """Digest every committed projection row in stable primary-key order."""
+    out = {}
+    for name in PROJECTION_TABLES:
+        columns = db.execute("PRAGMA table_info(%s)" % name).fetchall()
+        if not columns:
+            raise ValueError("missing projection table: %s" % name)
+        keys = [row[1] for row in sorted(columns, key=lambda row: row[5]) if row[5]]
+        if name == "subject_material":
+            keys = ["subject", "scope", "source", "item_key", "material"]
+        if not keys:
+            raise ValueError("projection table has no primary key: %s" % name)
+        hasher = hashlib.sha256()
+        count = 0
+        for row in db.execute("SELECT * FROM %s ORDER BY %s" % (name, ",".join(keys))):
+            hasher.update(canon(list(row)).encode("utf-8"))
+            hasher.update(b"\n")
+            count += 1
+        out[name] = {"rows": count, "sha256": hasher.hexdigest()}
+    return out
+
+
+def projection_input_snapshot(fabric, cms, args):
+    """Describe the bounded inputs read by this compiler.
+
+    This is build lineage, not a claim that matching bytes imply matching
+    subject meaning, source truth, rights, or current provider availability.
+    """
+    fabric_snapshot = {
+        "subject_bundle": query_snapshot(
+            fabric, "SELECT subject,scope,bundle_digest FROM subject_bundle ORDER BY subject,scope"
+        ),
+        "subject_reader": query_snapshot(
+            fabric,
+            "SELECT subject,scope,census_source,root_id,channel_id,protocol,state "
+            "FROM subject_reader WHERE state IN ('admitted','active') "
+            "ORDER BY subject,scope,census_source,channel_id",
+        ),
+    }
+    if table_exists(fabric, "subject_scene"):
+        fabric_snapshot["subject_scene"] = query_snapshot(
+            fabric, "SELECT scene_key,subject,scope FROM subject_scene ORDER BY scene_key"
+        )
+    if table_exists(fabric, "subject_query"):
+        fabric_snapshot["subject_query"] = query_snapshot(
+            fabric, "SELECT scene_key,ordinal,query_json FROM subject_query ORDER BY scene_key,ordinal"
+        )
+
+    cms_snapshot = []
+    if table_exists(cms, "source_collection"):
+        subjects = {str(row[0]) for row in fabric_snapshot["subject_bundle"]}
+        if any(subject.startswith("institution:aurekai:") for subject in subjects):
+            subjects.add("estate:aurekai")
+        cms_snapshot = query_snapshot(
+            cms,
+            "SELECT collection_id,subject_address,source_selector,material_kind,refresh_policy "
+            "FROM source_collection WHERE status='published' ORDER BY id",
+        )
+        cms_snapshot = [row for row in cms_snapshot if row[1] in subjects]
+    site_presentations = []
+    if table_exists(cms, "site_presentation"):
+        try:
+            for subject, _, _ in fabric_snapshot["subject_bundle"]:
+                site_presentations.extend(query_snapshot(
+                    cms,
+                    "SELECT subject_address,territory FROM site_presentation "
+                    "WHERE subject_address=? AND status='published' "
+                    "AND COALESCE(territory,'')<>'' ORDER BY territory",
+                    (subject,),
+                ))
+        except sqlite3.Error:
+            # Older CMS fixtures may carry a SitePresentation table without
+            # the territory field used by this compiler.
+            pass
+    return {
+        "source_coordinates": {
+            "cms_db": os.path.realpath(args.cms_db),
+            "items": os.path.realpath(args.items),
+            "page_composition": os.path.realpath(args.page_composition),
+            "surface_programs": os.path.realpath(args.surface_programs),
+        },
+        "items_sha256": file_digest(args.items),
+        "page_composition_sha256": file_digest(args.page_composition),
+        "surface_programs_sha256": file_digest(args.surface_programs),
+        "fabric": fabric_snapshot,
+        "published_source_collections": cms_snapshot,
+        "published_site_presentations": site_presentations,
+    }
+
+
+def atomic_json(path, value):
+    """Never leave a half-written manifest that points at a complete cut."""
+    directory = os.path.dirname(os.path.abspath(path))
+    temporary = os.path.join(directory, ".%s.%d.tmp" % (os.path.basename(path), os.getpid()))
+    try:
+        with open(temporary, "w") as fh:
+            json.dump(value, fh, indent=2, sort_keys=True)
+            fh.write("\n")
+        os.replace(temporary, path)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+
+
+def parsed(value, fallback):
+    if isinstance(value, (dict, list)):
+        return value
+    try:
+        return json.loads(value)
+    except (TypeError, json.JSONDecodeError):
+        return fallback
+
+
+def table_exists(db, name):
+    return bool(db.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (name,)
+    ).fetchone())
+
+
+def load_json(path):
+    with open(path) as fh:
+        return json.load(fh)
+
+
+def load_items(path):
+    rows = []
+    with open(path) as fh:
+        for line_no, line in enumerate(fh, 1):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError as exc:
+                raise ValueError("%s:%d: %s" % (path, line_no, exc))
+            source = str(row.get("source") or "")
+            key = str(row.get("key") or "")
+            if not source or not key:
+                continue
+            row["_material"] = {
+                "story": "publication",
+                "publication": "publication",
+                "video": "video",
+                "photo": "photo",
+                "audio": "audio",
+                "post": "post",
+                "event": "event",
+                "place": "place",
+            }.get(str(row.get("kind") or "").lower(), "publication")
+            rows.append(row)
+    return rows
+
+
+def cms_collections(db):
+    if not table_exists(db, "source_collection"):
+        return {}
+    out = {}
+    for row in db.execute(
+        "SELECT collection_id,subject_address,source_selector,material_kind,refresh_policy "
+        "FROM source_collection WHERE status='published' ORDER BY id"
+    ):
+        selector = parsed(row[2], {})
+        out[str(row[0])] = {
+            "collection_id": str(row[0]),
+            "subject": str(row[1] or ""),
+            "domains": [str(x) for x in selector.get("domains", []) if str(x)],
+            "sources": [str(x) for x in selector.get("source_refs", []) if str(x)],
+            "grouping": str(selector.get("grouping") or ""),
+            "value": str(selector.get("value") or ""),
+            "material_kind": [str(x) for x in parsed(row[3], []) if str(x)],
+            "refresh_policy": str(row[4] or ""),
+        }
+    return out
+
+
+def scene_collection_routes(db):
+    """(subject, route-lens) -> exact collection ids named by compiled Scene queries."""
+    out = defaultdict(set)
+    if not table_exists(db, "subject_query"):
+        return out
+    subject_scope = {}
+    if table_exists(db, "subject_scene"):
+        for scene_key, subject, scope in db.execute(
+            "SELECT scene_key,subject,scope FROM subject_scene"
+        ):
+            subject_scope[str(scene_key)] = (str(subject), str(scope))
+    for scene_key, query_json in db.execute(
+        "SELECT scene_key,query_json FROM subject_query ORDER BY ordinal"
+    ):
+        subject, scope = subject_scope.get(str(scene_key), ("", "public"))
+        if not subject or scope != "public":
+            continue
+        query = parsed(query_json, {})
+        collection = str(query.get("source_collection") or "")
+        if not collection:
+            continue
+        lens = str(query.get("application_kind") or "")
+        if lens:
+            out[(subject, lens)].add(collection)
+        out[(subject, "*")].add(collection)
+    return out
+
+
+def subject_territories(db, subject):
+    territories = set()
+    prefix = "institution:aurekai:"
+    if subject.startswith(prefix):
+        suffix = subject[len(prefix):]
+        if suffix in {"life", "live", "shop", "work"}:
+            territories.add(suffix)
+    if table_exists(db, "site_presentation"):
+        try:
+            for (territory,) in db.execute(
+                "SELECT DISTINCT territory FROM site_presentation "
+                "WHERE subject_address=? AND status='published' AND COALESCE(territory,'')<>''",
+                (subject,),
+            ):
+                if territory:
+                    territories.add(str(territory))
+        except sqlite3.Error:
+            pass
+    return territories
+
+
+def route_lens(route, surface_programs):
+    for program in surface_programs.get("programs", []):
+        if str(program.get("route") or "") == route:
+            return str(program.get("program") or route.strip("/") or "front")
+    return route.strip("/") or "front"
+
+
+def route_materials(program, region_by_role):
+    materials = []
+    for role in program.get("regions", []):
+        region = region_by_role.get(str(role))
+        if region and region.get("material"):
+            materials.append(str(region["material"]))
+    return sorted(set(materials))
+
+
+def collection_carries_material(collection, accepted_materials):
+    aliases = {
+        "story": "publication", "article": "publication", "image": "photo",
+        "recording": "audio", "film": "video",
+    }
+    value = aliases.get(collection["value"].lower(), collection["value"].lower())
+    return value in {str(x).lower() for x in accepted_materials}
+
+
+def candidate_collections(subject, lens, route, collections, scene_refs,
+                          legacy_families, accepted_materials):
+    ids = set(scene_refs.get((subject, lens), set()))
+    domain_names = {lens, route.strip("/")}
+    if route == "/":
+        domain_names.add("front")
+    for cid, collection in collections.items():
+        if collection["subject"] != subject:
+            # Public territory subjects are a presentation of the estate, not
+            # new owners of every source.  An estate collection with explicit
+            # source refs may be forwarded into that presentation only when
+            # its declared family/carry contract matches this exact route.
+            # This is still a bounded collection closure; it is not the old
+            # request-time "scan every admitted source in a family" fallback.
+            if not (subject.startswith("institution:aurekai:") and
+                    collection["subject"] == "estate:aurekai"):
+                continue
+            if collection["grouping"] == "family" and collection["value"] in legacy_families:
+                ids.add(cid)
+            elif collection["grouping"] == "carries" and collection_carries_material(collection, accepted_materials):
+                ids.add(cid)
+            continue
+        if set(collection["domains"]) & domain_names:
+            ids.add(cid)
+    return [collections[cid] for cid in sorted(ids) if cid in collections]
+
+
+def collection_material_accepts(collections, material):
+    if not collections:
+        return True
+    # CMS contracts conventionally use snake_case (publication_occurrence),
+    # while source declarations and older native fixtures use CamelCase
+    # (PublicationOccurrence).  They name the same semantic type.  Compare a
+    # canonical token here so an exact SourceCollection cannot silently become
+    # an authoritative empty route merely because its spelling crossed a
+    # compiler boundary.
+    token = lambda value: "".join(ch for ch in str(value).lower() if ch.isalnum())
+    names = {token(name) for c in collections for name in c["material_kind"]}
+    if not names:
+        return True
+    aliases = {
+        "publication": {"publicationoccurrence", "publication", "article", "story"},
+        "video": {"mediaprogram", "video", "publicationoccurrence"},
+        "photo": {"mediaasset", "photo", "image", "publicationoccurrence"},
+        "audio": {"recording", "audio", "mediaprogram", "publicationoccurrence"},
+        "event": {"event", "eventoccurrence"},
+        "post": {"communitypost", "post"},
+        "place": {"place", "spatialobservation", "publicationoccurrence"},
+        "mix": {"publicationoccurrence", "publication", "mediaasset", "mediaprogram", "recording"},
+    }
+    return bool(names & aliases.get(material, {material}))
+
+
+def item_sort_key(item, material):
+    at = int(item.get("at") or 0)
+    if material == "event":
+        return (at <= 0, at if at > 0 else 2**62, str(item.get("source") or ""), str(item.get("key") or ""))
+    return (at <= 0, -at if at > 0 else 0, str(item.get("source") or ""), str(item.get("key") or ""))
+
+
+def normalized_item(row, material=None):
+    material = material or row["_material"]
+    return {
+        "source": str(row.get("source") or ""),
+        "key": str(row.get("key") or ""),
+        "material": material,
+        "family": str(row.get("family") or ""),
+        "title": str(row.get("title") or ""),
+        "byline": str(row.get("by") or ""),
+        "publisher": str(row.get("publisher") or ""),
+        "href": str(row.get("href") or ""),
+        "group_name": str(row.get("group") or ""),
+        "image": str(row.get("image") or ""),
+        "asset": str(row.get("asset") or ""),
+        "poster": str(row.get("poster") or ""),
+        "body": str(row.get("body") or ""),
+        "ident": str(row.get("ident") or ""),
+        "about": str(row.get("about") or ""),
+        "rights": str(row.get("rights") or ""),
+        "rights_href": str(row.get("rights_href") or ""),
+        "origin": str(row.get("origin") or ""),
+        "origin_href": str(row.get("origin_href") or ""),
+        "people": str(row.get("people") or ""),
+        "where_text": str(row.get("where") or ""),
+        "transcript_href": str(row.get("transcript_href") or ""),
+        "chapters_href": str(row.get("chapters_href") or ""),
+        "talk_href": str(row.get("talk_href") or ""),
+        "at": int(row.get("at") or 0),
+        "duration_ms": int(row.get("duration_ms") or 0),
+        "placed": 1 if row.get("placed") else 0,
+        "lon": float(row.get("lon") or 0.0),
+        "lat": float(row.get("lat") or 0.0),
+    }
+
+
+SCHEMA = """
+DROP TABLE IF EXISTS subject_material_body;
+DROP TABLE IF EXISTS subject_material_member;
+DROP TABLE IF EXISTS subject_route;
+DROP TABLE IF EXISTS subject_route_phase;
+DROP TABLE IF EXISTS subject_route_reader;
+DROP TABLE IF EXISTS subject_route_region;
+DROP TABLE IF EXISTS subject_route_item;
+DROP TABLE IF EXISTS subject_projection_build;
+
+CREATE TABLE subject_projection_build(
+  build_id INTEGER PRIMARY KEY CHECK(build_id=1),
+  compiled_at TEXT NOT NULL, compiler_sha256 TEXT NOT NULL,
+  input_digest TEXT NOT NULL, projection_digest TEXT NOT NULL,
+  manifest_json TEXT NOT NULL
+);
+
+CREATE TABLE subject_material_body(
+  source TEXT NOT NULL, item_key TEXT NOT NULL,
+  material TEXT NOT NULL, family TEXT NOT NULL DEFAULT '', title TEXT NOT NULL DEFAULT '',
+  byline TEXT NOT NULL DEFAULT '', publisher TEXT NOT NULL DEFAULT '', href TEXT NOT NULL DEFAULT '',
+  group_name TEXT NOT NULL DEFAULT '', image TEXT NOT NULL DEFAULT '', asset TEXT NOT NULL DEFAULT '',
+  poster TEXT NOT NULL DEFAULT '', body TEXT NOT NULL DEFAULT '', ident TEXT NOT NULL DEFAULT '',
+  about TEXT NOT NULL DEFAULT '', rights TEXT NOT NULL DEFAULT '', rights_href TEXT NOT NULL DEFAULT '',
+  origin TEXT NOT NULL DEFAULT '', origin_href TEXT NOT NULL DEFAULT '', people TEXT NOT NULL DEFAULT '',
+  where_text TEXT NOT NULL DEFAULT '', transcript_href TEXT NOT NULL DEFAULT '',
+  chapters_href TEXT NOT NULL DEFAULT '', talk_href TEXT NOT NULL DEFAULT '',
+  at INTEGER NOT NULL DEFAULT 0, duration_ms INTEGER NOT NULL DEFAULT 0, placed INTEGER NOT NULL DEFAULT 0,
+  lon REAL NOT NULL DEFAULT 0, lat REAL NOT NULL DEFAULT 0,
+  PRIMARY KEY(source,item_key,material)
+);
+
+CREATE TABLE subject_material_member(
+  subject TEXT NOT NULL, scope TEXT NOT NULL, source TEXT NOT NULL,
+  item_key TEXT NOT NULL, material TEXT NOT NULL,
+  PRIMARY KEY(subject,scope,source,item_key,material)
+);
+
+CREATE VIEW subject_material AS
+SELECT x.subject,x.scope,b.source,b.item_key,b.material,b.family,b.title,b.byline,b.publisher,
+       b.href,b.group_name,b.image,b.asset,b.poster,b.body,b.ident,b.about,b.rights,b.rights_href,
+       b.origin,b.origin_href,b.people,b.where_text,b.transcript_href,b.chapters_href,b.talk_href,
+       b.at,b.duration_ms,b.placed,b.lon,b.lat
+FROM subject_material_member x JOIN subject_material_body b
+  ON b.source=x.source AND b.item_key=x.item_key AND b.material=x.material;
+
+CREATE TABLE subject_route(
+  subject TEXT NOT NULL, scope TEXT NOT NULL, route TEXT NOT NULL,
+  lens TEXT NOT NULL, renderer TEXT NOT NULL DEFAULT '', basis TEXT NOT NULL,
+  territory TEXT NOT NULL DEFAULT '', title TEXT NOT NULL DEFAULT '',
+  lede TEXT NOT NULL DEFAULT '', character TEXT NOT NULL DEFAULT '',
+  cannot_infer TEXT NOT NULL DEFAULT '', sections_json TEXT NOT NULL DEFAULT '[]',
+  collections_json TEXT NOT NULL, families_json TEXT NOT NULL,
+  materials_json TEXT NOT NULL, regions_json TEXT NOT NULL,
+  reader_count INTEGER NOT NULL, item_count INTEGER NOT NULL,
+  route_digest TEXT NOT NULL, compiled_at TEXT NOT NULL,
+  PRIMARY KEY(subject,scope,route)
+);
+
+CREATE TABLE subject_route_phase(
+  subject TEXT NOT NULL, scope TEXT NOT NULL, route TEXT NOT NULL,
+  territory TEXT NOT NULL, from_hour INTEGER NOT NULL,
+  title TEXT NOT NULL DEFAULT '', lede TEXT NOT NULL DEFAULT '',
+  sections_json TEXT NOT NULL DEFAULT '[]',
+  PRIMARY KEY(subject,scope,route,from_hour)
+);
+
+CREATE TABLE subject_route_reader(
+  subject TEXT NOT NULL, scope TEXT NOT NULL, route TEXT NOT NULL,
+  source TEXT NOT NULL, root_id TEXT NOT NULL DEFAULT '', channel_id TEXT NOT NULL DEFAULT '',
+  protocol TEXT NOT NULL DEFAULT '', basis TEXT NOT NULL,
+  PRIMARY KEY(subject,scope,route,source,channel_id)
+);
+
+CREATE TABLE subject_route_region(
+  subject TEXT NOT NULL, scope TEXT NOT NULL, route TEXT NOT NULL, ordinal INTEGER NOT NULL,
+  role TEXT NOT NULL, material TEXT NOT NULL, topology TEXT NOT NULL DEFAULT '',
+  language TEXT NOT NULL DEFAULT '', min_items INTEGER NOT NULL, max_items INTEGER NOT NULL,
+  PRIMARY KEY(subject,scope,route,ordinal)
+);
+
+CREATE TABLE subject_route_item(
+  subject TEXT NOT NULL, scope TEXT NOT NULL, route TEXT NOT NULL, ordinal INTEGER NOT NULL,
+  source TEXT NOT NULL, item_key TEXT NOT NULL, material TEXT NOT NULL,
+  PRIMARY KEY(subject,scope,route,source,item_key,material)
+);
+
+CREATE INDEX subject_material_member_kind ON subject_material_member(subject,scope,material);
+CREATE INDEX subject_material_body_time ON subject_material_body(material,at);
+CREATE INDEX subject_route_reader_lookup ON subject_route_reader(subject,scope,route,source);
+CREATE INDEX subject_route_item_lookup ON subject_route_item(subject,scope,route,material,ordinal);
+"""
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--fabric-db", required=True)
+    ap.add_argument("--cms-db", required=True)
+    ap.add_argument("--items", required=True)
+    ap.add_argument("--page-composition", required=True)
+    ap.add_argument("--surface-programs", required=True)
+    ap.add_argument("--manifest")
+    args = ap.parse_args()
+
+    items = load_items(args.items)
+    page = load_json(args.page_composition)
+    surface = load_json(args.surface_programs)
+    programs = list(page.get("programs", []))
+    region_by_role = {str(r.get("role")): r for r in page.get("regions", [])}
+
+    fabric = sqlite3.connect(args.fabric_db)
+    cms = sqlite3.connect("file:%s?mode=ro" % args.cms_db, uri=True)
+    if not table_exists(fabric, "subject_bundle") or not table_exists(fabric, "subject_reader"):
+        raise RuntimeError("subject fabric must be compiled before subject projection")
+
+    # sqlite3.executescript commits an already-open transaction before it
+    # runs.  Begin inside the script so the schema reset and every replacement
+    # route stay in one transaction until the complete cut is ready.
+    old_material = fabric.execute(
+        "SELECT type FROM sqlite_master WHERE name='subject_material'"
+    ).fetchone()
+    drop_material = (
+        "DROP VIEW subject_material;\n" if old_material and old_material[0] == "view"
+        else "DROP TABLE subject_material;\n" if old_material else ""
+    )
+    fabric.executescript("BEGIN IMMEDIATE;\n" + drop_material + SCHEMA)
+    cms.execute("BEGIN")
+    input_snapshot = projection_input_snapshot(fabric, cms, args)
+    input_digest = digest(input_snapshot)
+    collections = cms_collections(cms)
+    scene_refs = scene_collection_routes(fabric)
+
+    readers = defaultdict(list)
+    for row in fabric.execute(
+        "SELECT subject,scope,census_source,root_id,channel_id,protocol,state "
+        "FROM subject_reader WHERE state IN ('admitted','active')"
+    ):
+        readers[(str(row[0]), str(row[1]))].append({
+            "source": str(row[2]), "root_id": str(row[3]), "channel_id": str(row[4]),
+            "protocol": str(row[5]), "state": str(row[6]),
+        })
+    items_by_source = defaultdict(list)
+    normalized_by_source = defaultdict(list)
+    payloads_by_coordinate = {}
+    for item in items:
+        source = str(item["source"])
+        items_by_source[source].append(item)
+        normalized_rows = [normalized_item(item)]
+        if item.get("placed"):
+            normalized_rows.append(normalized_item(item, "place"))
+        for normalized in normalized_rows:
+            coordinate = (normalized["source"], normalized["key"], normalized["material"])
+            previous = payloads_by_coordinate.get(coordinate)
+            if previous is not None:
+                if previous != normalized:
+                    raise ValueError("conflicting normalized item at %r" % (coordinate,))
+                continue
+            payloads_by_coordinate[coordinate] = normalized
+            normalized_by_source[source].append(normalized)
+
+    surface_renderer = {
+        str(p.get("route") or ""): str(p.get("renderer") or "")
+        for p in surface.get("programs", [])
+    }
+
+    compiled_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    totals = defaultdict(int)
+    basis_counts = defaultdict(int)
+    stored_bodies = set()
+
+    for subject, scope in fabric.execute(
+        "SELECT subject,scope FROM subject_bundle ORDER BY subject,scope"
+    ).fetchall():
+        subject, scope = str(subject), str(scope)
+        territories = subject_territories(cms, subject)
+        subject_readers = readers.get((subject, scope), [])
+        allowed = {r["source"] for r in subject_readers}
+        for source in sorted(allowed):
+            for item in normalized_by_source.get(source, []):
+                coordinate = (item["source"], item["key"], item["material"])
+                if coordinate not in stored_bodies:
+                    body_values = (
+                        item["source"], item["key"], item["material"], item["family"],
+                        item["title"], item["byline"], item["publisher"], item["href"],
+                        item["group_name"], item["image"], item["asset"], item["poster"],
+                        item["body"], item["ident"], item["about"], item["rights"],
+                        item["rights_href"], item["origin"], item["origin_href"], item["people"],
+                        item["where_text"], item["transcript_href"], item["chapters_href"],
+                        item["talk_href"], item["at"], item["duration_ms"], item["placed"],
+                        item["lon"], item["lat"],
+                    )
+                    fabric.execute(
+                        "INSERT INTO subject_material_body VALUES(%s)" % ",".join("?" for _ in body_values),
+                        body_values,
+                    )
+                    stored_bodies.add(coordinate)
+                    totals["subject_material_body"] += 1
+                fabric.execute(
+                    "INSERT INTO subject_material_member VALUES(?,?,?,?,?)",
+                    (subject, scope, item["source"], item["key"], item["material"]),
+                )
+                totals["subject_material"] += 1
+
+        for program in programs:
+            program_territory = str(program.get("territory") or "any")
+            if program_territory != "any" and program_territory not in territories:
+                continue
+            route = str(program.get("route") or "")
+            if not route:
+                continue
+            lens = route_lens(route, surface)
+            legacy_families = [str(x) for x in program.get("families", []) if str(x)]
+            accepted_materials = route_materials(program, region_by_role)
+            exact = candidate_collections(subject, lens, route, collections, scene_refs,
+                                          legacy_families, accepted_materials)
+            exact_sources = {s for c in exact for s in c["sources"] if s in allowed}
+            if exact:
+                selected_sources = exact_sources
+                basis = ("estate_source_collection_exact"
+                         if any(c["subject"] == "estate:aurekai" for c in exact)
+                         else "scene_source_collection_exact")
+            else:
+                selected_sources = {
+                    source for source in allowed
+                    if any(str(x.get("family") or "") in legacy_families for x in items_by_source.get(source, []))
+                }
+                basis = "legacy_page_program_family_precompiled"
+            basis_counts[basis] += 1
+
+            selected_readers = [r for r in subject_readers if r["source"] in selected_sources]
+            for reader in selected_readers:
+                fabric.execute(
+                    "INSERT OR IGNORE INTO subject_route_reader VALUES(?,?,?,?,?,?,?,?)",
+                    (subject, scope, route, reader["source"], reader["root_id"], reader["channel_id"],
+                     reader["protocol"], basis)
+                )
+
+            region_rows = []
+            for index, role in enumerate(program.get("regions", [])):
+                region = region_by_role.get(str(role))
+                if not region:
+                    continue
+                region_row = {
+                    "role": str(region.get("role") or ""),
+                    "material": str(region.get("material") or ""),
+                    "topology": str(region.get("topology") or ""),
+                    "language": str(region.get("language") or ""),
+                    "min_items": int(region.get("min_items") or 0),
+                    "max_items": int(region.get("max_items") or 0),
+                }
+                region_rows.append(region_row)
+                fabric.execute(
+                    "INSERT INTO subject_route_region VALUES(?,?,?,?,?,?,?,?,?,?)",
+                    (subject, scope, route, index, region_row["role"], region_row["material"],
+                     region_row["topology"], region_row["language"], region_row["min_items"],
+                     region_row["max_items"])
+                )
+
+            route_items = []
+            for source in sorted(selected_sources):
+                for raw in items_by_source.get(source, []):
+                    material = raw["_material"]
+                    if "mix" not in accepted_materials and material not in accepted_materials:
+                        if not (raw.get("placed") and "place" in accepted_materials):
+                            continue
+                    if exact and not collection_material_accepts(exact, material):
+                        continue
+                    if material in accepted_materials or "mix" in accepted_materials:
+                        route_items.append(normalized_item(raw))
+                    if raw.get("placed") and "place" in accepted_materials:
+                        route_items.append(normalized_item(raw, "place"))
+
+            # Stable request-ready ordering.  The renderer may still consume only
+            # the region cap, but membership and normalization are already done.
+            route_items.sort(key=lambda x: item_sort_key(x, x["material"]))
+            route_digest = digest({
+                "subject": subject, "scope": scope, "route": route,
+                "lens": lens, "renderer": surface_renderer.get(route, ""),
+                "basis": basis, "program": program,
+                "collections": exact,
+                "readers": selected_readers,
+                # The request renderer consumes the normalized item fields, not
+                # merely its membership coordinate.  A title, rights, link or
+                # body change must therefore invalidate this route cut even
+                # when the same source/key remains selected.
+                "items": route_items,
+                "regions": region_rows,
+            })
+            # This projection intentionally carries the complete page-program
+            # contract with the selected material.  Positional INSERTs made the
+            # offline compiler silently depend on an older fourteen-column
+            # subject_route shape after the route acquired territory, editorial
+            # copy, sections and its own boundary.  Name every column so a
+            # future route field cannot turn a full-estate compilation into a
+            # stale-schema failure (or, worse, shuffle values across columns).
+            fabric.execute(
+                "INSERT INTO subject_route("
+                "subject,scope,route,lens,renderer,basis,territory,title,lede,character,"
+                "cannot_infer,sections_json,collections_json,families_json,materials_json,"
+                "regions_json,reader_count,item_count,route_digest,compiled_at"
+                ") VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                (subject, scope, route, lens, surface_renderer.get(route, ""), basis,
+                 str(program.get("territory") or "any"), str(program.get("title") or ""),
+                 str(program.get("lede") or ""), str(program.get("character") or ""),
+                 str(program.get("cannot_infer") or ""),
+                 canon([str(x) for x in program.get("sections", []) if str(x)]),
+                 canon([c["collection_id"] for c in exact]), canon(legacy_families),
+                 canon(accepted_materials), canon(region_rows), len(selected_readers),
+                 len(route_items), route_digest, compiled_at)
+            )
+            for ordinal, item in enumerate(route_items):
+                fabric.execute(
+                    "INSERT OR IGNORE INTO subject_route_item VALUES(?,?,?,?,?,?,?)",
+                    (subject, scope, route, ordinal, item["source"], item["key"], item["material"])
+                )
+            totals["routes"] += 1
+            totals["route_readers"] += len(selected_readers)
+            totals["route_items"] += len(route_items)
+
+    output_snapshot = projection_output_snapshot(fabric)
+    summary = {
+        "schema": "bonfyre.subject-projection-precompute.v4",
+        "compiled_at": compiled_at,
+        "compiler_sha256": file_digest(__file__),
+        "input_digest": input_digest,
+        "input_snapshot": input_snapshot,
+        "projection_digest": digest(output_snapshot),
+        "projection_tables": output_snapshot,
+        "totals": dict(totals),
+        "basis_counts": dict(basis_counts),
+        "truth": "request_ready_projection_over_already_admitted_normalized_material",
+        "cannot_infer": [
+            "route membership -> truth or endorsement",
+            "normalized retained item -> current external state",
+            "SourceCollection membership -> rights, authority or provider availability",
+            "precomputed action or region -> authorized effect",
+        ],
+    }
+    fabric.execute(
+        "INSERT INTO subject_projection_build VALUES(1,?,?,?,?,?)",
+        (compiled_at, summary["compiler_sha256"], input_digest,
+         summary["projection_digest"], canon(summary)),
+    )
+    fabric.commit()
+    cms.close()
+    fabric.close()
+    if args.manifest:
+        atomic_json(args.manifest, summary)
+    # The full frontier stays in the committed build row and optional manifest.
+    # Automation needs only the bounded outcome, not thousands of input rows in
+    # its own run record.
+    print(json.dumps({
+        key: value for key, value in summary.items()
+        if key not in {"input_snapshot", "projection_tables"}
+    }, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

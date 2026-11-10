@@ -1,0 +1,570 @@
+{
+ "kind": "BfSchemaGraph",
+ "app": "erpnext",
+ "version": "",
+ "extracted_from": {
+  "path": "~/.bonfyre/frappe-packs/erpnext/schema-ir.json",
+  "sha256": "7369a2f275833d34a663d3d51e5165ee97ad9316f62b6a2c454fdf5721a76e5c",
+  "owner": "BonfyreFrappeCompiler phase 12",
+  "doctypes": 1
+ },
+ "schema": {
+  "app": "erpnext",
+  "doctypes": [
+   {
+    "name": "Customer",
+    "module": "Selling",
+    "controller": "",
+    "fields": [
+     {
+      "name": "basic_info",
+      "label": "",
+      "type": 35,
+      "required": false,
+      "options": "fa fa-user"
+     },
+     {
+      "name": "naming_series",
+      "label": "Series",
+      "type": 12,
+      "required": false,
+      "options": "CUST-.YYYY.-"
+     },
+     {
+      "name": "salutation",
+      "label": "Salutation",
+      "type": 13,
+      "required": false,
+      "options": "Salutation"
+     },
+     {
+      "name": "customer_name",
+      "label": "Customer Name",
+      "type": 21,
+      "required": true,
+      "options": ""
+     },
+     {
+      "name": "gender",
+      "label": "Gender",
+      "type": 13,
+      "required": false,
+      "options": "Gender"
+     },
+     {
+      "name": "customer_type",
+      "label": "Customer Type",
+      "type": 12,
+      "required": true,
+      "options": "Company\nIndividual\nPartnership"
+     },
+     {
+      "name": "default_bank_account",
+      "label": "Default Company Bank Account",
+      "type": 13,
+      "required": false,
+      "options": "Bank Account"
+     },
+     {
+      "name": "lead_name",
+      "label": "From Lead",
+      "type": 13,
+      "required": false,
+      "options": "Lead"
+     },
+     {
+      "name": "image",
+      "label": "Image",
+      "type": 18,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "column_break0",
+      "label": "",
+      "type": 26,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "account_manager",
+      "label": "Account Manager",
+      "type": 13,
+      "required": false,
+      "options": "User"
+     },
+     {
+      "name": "customer_group",
+      "label": "Customer Group",
+      "type": 13,
+      "required": false,
+      "options": "Customer Group"
+     },
+     {
+      "name": "territory",
+      "label": "Territory",
+      "type": 13,
+      "required": false,
+      "options": "Territory"
+     },
+     {
+      "name": "tax_id",
+      "label": "Tax ID",
+      "type": 21,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "tax_category",
+      "label": "Tax Category",
+      "type": 13,
+      "required": false,
+      "options": "Tax Category"
+     },
+     {
+      "name": "disabled",
+      "label": "Disabled",
+      "type": 19,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "is_internal_customer",
+      "label": "Is Internal Customer",
+      "type": 19,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "represents_company",
+      "label": "Represents Company",
+      "type": 13,
+      "required": false,
+      "options": "Company"
+     },
+     {
+      "name": "companies",
+      "label": "Allowed To Transact With",
+      "type": 15,
+      "required": false,
+      "options": "Allowed To Transact With"
+     },
+     {
+      "name": "default_currency",
+      "label": "Billing Currency",
+      "type": 13,
+      "required": false,
+      "options": "Currency"
+     },
+     {
+      "name": "default_price_list",
+      "label": "Default Price List",
+      "type": 13,
+      "required": false,
+      "options": "Price List"
+     },
+     {
+      "name": "column_break_14",
+      "label": "",
+      "type": 26,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "language",
+      "label": "Print Language",
+      "type": 13,
+      "required": false,
+      "options": "Language"
+     },
+     {
+      "name": "address_contacts",
+      "label": "Address and Contact",
+      "type": 35,
+      "required": false,
+      "options": "fa fa-map-marker"
+     },
+     {
+      "name": "address_html",
+      "label": "Address HTML",
+      "type": 11,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "website",
+      "label": "Website",
+      "type": 21,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "column_break1",
+      "label": "",
+      "type": 26,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "contact_html",
+      "label": "Contact HTML",
+      "type": 11,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "primary_address_and_contact_detail",
+      "label": "Primary Address and Contact",
+      "type": 35,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "customer_primary_contact",
+      "label": "Customer Primary Contact",
+      "type": 13,
+      "required": false,
+      "options": "Contact"
+     },
+     {
+      "name": "mobile_no",
+      "label": "Mobile No",
+      "type": 34,
+      "required": false,
+      "options": "Mobile"
+     },
+     {
+      "name": "email_id",
+      "label": "Email Id",
+      "type": 34,
+      "required": false,
+      "options": "Email"
+     },
+     {
+      "name": "column_break_26",
+      "label": "",
+      "type": 26,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "customer_primary_address",
+      "label": "Customer Primary Address",
+      "type": 13,
+      "required": false,
+      "options": "Address"
+     },
+     {
+      "name": "primary_address",
+      "label": "Primary Address",
+      "type": 8,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "default_receivable_accounts",
+      "label": "Default Accounts",
+      "type": 35,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "accounts",
+      "label": "Accounts",
+      "type": 15,
+      "required": false,
+      "options": "Party Account"
+     },
+     {
+      "name": "credit_limit_section",
+      "label": "Credit Limit and Payment Terms",
+      "type": 35,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "payment_terms",
+      "label": "Default Payment Terms Template",
+      "type": 13,
+      "required": false,
+      "options": "Payment Terms Template"
+     },
+     {
+      "name": "more_info",
+      "label": "More Information",
+      "type": 35,
+      "required": false,
+      "options": "fa fa-file-text"
+     },
+     {
+      "name": "customer_details",
+      "label": "Customer Details",
+      "type": 8,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "column_break_45",
+      "label": "",
+      "type": 26,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "market_segment",
+      "label": "Market Segment",
+      "type": 13,
+      "required": false,
+      "options": "Market Segment"
+     },
+     {
+      "name": "industry",
+      "label": "Industry",
+      "type": 13,
+      "required": false,
+      "options": "Industry Type"
+     },
+     {
+      "name": "is_frozen",
+      "label": "Is Frozen",
+      "type": 19,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "loyalty_program",
+      "label": "Loyalty Program",
+      "type": 13,
+      "required": false,
+      "options": "Loyalty Program"
+     },
+     {
+      "name": "loyalty_program_tier",
+      "label": "Loyalty Program Tier",
+      "type": 21,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "default_sales_partner",
+      "label": "Sales Partner",
+      "type": 13,
+      "required": false,
+      "options": "Sales Partner"
+     },
+     {
+      "name": "default_commission_rate",
+      "label": "Commission Rate",
+      "type": 3,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "sales_team_section",
+      "label": "",
+      "type": 35,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "sales_team",
+      "label": "Sales Team",
+      "type": 15,
+      "required": false,
+      "options": "Sales Team"
+     },
+     {
+      "name": "customer_pos_id",
+      "label": "Customer POS id",
+      "type": 21,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "credit_limits",
+      "label": "Credit Limit",
+      "type": 15,
+      "required": false,
+      "options": "Customer Credit Limit"
+     },
+     {
+      "name": "so_required",
+      "label": "Allow Sales Invoice Creation Without Sales Order",
+      "type": 19,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "dn_required",
+      "label": "Allow Sales Invoice Creation Without Delivery Note",
+      "type": 19,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "tax_withholding_category",
+      "label": "Tax Withholding Category",
+      "type": 13,
+      "required": false,
+      "options": "Tax Withholding Category"
+     },
+     {
+      "name": "opportunity_name",
+      "label": "From Opportunity",
+      "type": 13,
+      "required": false,
+      "options": "Opportunity"
+     },
+     {
+      "name": "contact_and_address_tab",
+      "label": "Address & Contact",
+      "type": 38,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "defaults_tab",
+      "label": "Defaults",
+      "type": 35,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "settings_tab",
+      "label": "Settings",
+      "type": 38,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "sales_team_tab",
+      "label": "Sales Team",
+      "type": 38,
+      "required": false,
+      "options": "fa fa-group"
+     },
+     {
+      "name": "column_break_66",
+      "label": "",
+      "type": 26,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "column_break_21",
+      "label": "",
+      "type": 26,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "dashboard_tab",
+      "label": "Dashboard",
+      "type": 38,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "column_break_53",
+      "label": "",
+      "type": 26,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "loyalty_points_tab",
+      "label": "Loyalty Points",
+      "type": 35,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "taxation_section",
+      "label": "",
+      "type": 35,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "accounting_tab",
+      "label": "Accounting",
+      "type": 38,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "tax_tab",
+      "label": "Tax",
+      "type": 38,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "internal_customer_section",
+      "label": "Internal Customer",
+      "type": 35,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "column_break_70",
+      "label": "",
+      "type": 26,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "column_break_54",
+      "label": "",
+      "type": 26,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "portal_users_tab",
+      "label": "Portal Users",
+      "type": 38,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "portal_users",
+      "label": "Customer Portal Users",
+      "type": 15,
+      "required": false,
+      "options": "Portal User"
+     },
+     {
+      "name": "column_break_nwor",
+      "label": "",
+      "type": 26,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "prospect_name",
+      "label": "From Prospect",
+      "type": 13,
+      "required": false,
+      "options": "Prospect"
+     },
+     {
+      "name": "first_name",
+      "label": "First Name",
+      "type": 34,
+      "required": false,
+      "options": ""
+     },
+     {
+      "name": "last_name",
+      "label": "Last Name",
+      "type": 34,
+      "required": false,
+      "options": ""
+     }
+    ],
+    "relations": []
+   }
+  ]
+ }
+}

@@ -29,8 +29,8 @@ float fpq_i8_f32_dot_neon(const int8_t *w, const float *x, size_t n) {
     return acc;
 }
 
-void fpq_i8_f32_gemv_neon(const int8_t *W, const float *scales,
-                          const float *x, float *y,
+void fpq_i8_f32_gemv_neon(const int8_t *restrict W, const float *restrict scales,
+                          const float *restrict x, float *restrict y,
                           size_t rows, size_t cols) {
     for (size_t r = 0; r < rows; r++) {
         float scale = scales[r];
@@ -39,7 +39,7 @@ void fpq_i8_f32_gemv_neon(const int8_t *W, const float *scales,
     }
 }
 
-void fpq_i8_f32_axpy_neon(const int8_t *w, float coeff, float *y, size_t n) {
+void fpq_i8_f32_axpy_neon(const int8_t *restrict w, float coeff, float *restrict y, size_t n) {
     float32x4_t vc = vdupq_n_f32(coeff);
     size_t i = 0;
     for (; i + 16 <= n; i += 16) {
@@ -66,7 +66,7 @@ void fpq_i8_f32_axpy_neon(const int8_t *w, float coeff, float *y, size_t n) {
     for (; i < n; i++) y[i] += (float)w[i] * coeff;
 }
 
-void fpq_residual_merge_neon(float *out, const float *residuals, size_t n) {
+void fpq_residual_merge_neon(float *restrict out, const float *restrict residuals, size_t n) {
     size_t i = 0;
     for (; i + 4 <= n; i += 4) {
         float32x4_t o = vld1q_f32(out + i);
@@ -76,7 +76,7 @@ void fpq_residual_merge_neon(float *out, const float *residuals, size_t n) {
     for (; i < n; i++) out[i] += residuals[i];
 }
 
-void fpq_rmsnorm_neon(float *out, const float *x, const float *w,
+void fpq_rmsnorm_neon(float *restrict out, const float *restrict x, const float *restrict w,
                       size_t n, float eps) {
     float32x4_t ss = vdupq_n_f32(0.f);
     size_t i = 0;
@@ -101,7 +101,7 @@ void fpq_rmsnorm_neon(float *out, const float *x, const float *w,
     for (; i < n; i++) out[i] = w[i] * (scale * x[i]);
 }
 
-void fpq_silu_mul_neon(float *gate, const float *up, size_t n) {
+void fpq_silu_mul_neon(float *restrict gate, const float *restrict up, size_t n) {
     size_t i = 0;
     float32x4_t one = vdupq_n_f32(1.0f);
 
@@ -159,8 +159,8 @@ float fpq_i8_f32_dot_neon(const int8_t *w, const float *x, size_t n) {
     return acc;
 }
 
-void fpq_i8_f32_gemv_neon(const int8_t *W, const float *scales,
-                          const float *x, float *y,
+void fpq_i8_f32_gemv_neon(const int8_t *restrict W, const float *restrict scales,
+                          const float *restrict x, float *restrict y,
                           size_t rows, size_t cols) {
     for (size_t r = 0; r < rows; r++) {
         float dot = fpq_i8_f32_dot_neon(W + r * cols, x, cols);
@@ -168,15 +168,15 @@ void fpq_i8_f32_gemv_neon(const int8_t *W, const float *scales,
     }
 }
 
-void fpq_i8_f32_axpy_neon(const int8_t *w, float coeff, float *y, size_t n) {
+void fpq_i8_f32_axpy_neon(const int8_t *restrict w, float coeff, float *restrict y, size_t n) {
     for (size_t i = 0; i < n; i++) y[i] += (float)w[i] * coeff;
 }
 
-void fpq_residual_merge_neon(float *out, const float *residuals, size_t n) {
+void fpq_residual_merge_neon(float *restrict out, const float *restrict residuals, size_t n) {
     for (size_t i = 0; i < n; i++) out[i] += residuals[i];
 }
 
-void fpq_rmsnorm_neon(float *out, const float *x, const float *w,
+void fpq_rmsnorm_neon(float *restrict out, const float *restrict x, const float *restrict w,
                       size_t n, float eps) {
     float sum = 0.f;
     for (size_t i = 0; i < n; i++) sum += x[i] * x[i];
@@ -184,7 +184,7 @@ void fpq_rmsnorm_neon(float *out, const float *x, const float *w,
     for (size_t i = 0; i < n; i++) out[i] = w[i] * (scale * x[i]);
 }
 
-void fpq_silu_mul_neon(float *gate, const float *up, size_t n) {
+void fpq_silu_mul_neon(float *restrict gate, const float *restrict up, size_t n) {
     for (size_t i = 0; i < n; i++) {
         float g = gate[i];
         float sig = 1.0f / (1.0f + expf(-g));

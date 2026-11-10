@@ -1,0 +1,10 @@
+{
+  "layers": [
+    {"id":"layer0","role":"ground"},
+    {"id":"layer1","role":"structure"},
+    {"id":"layer2","role":"execution"},
+    {"id":"layer4","role":"intelligence"},
+    {"id":"layer5","role":"surface"},
+    {"id":"layer6","role":"meta"}
+  ]
+}

@@ -1,0 +1,2 @@
+usage: bun architecture/atlas-query.mjs <summary|get|search|cannot_infer|expand|loss> [arg]
+exit 2

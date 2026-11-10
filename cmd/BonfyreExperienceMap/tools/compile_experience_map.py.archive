@@ -1,0 +1,719 @@
+#!/usr/bin/env python3
+"""Retired compiler: native owner is compile_experience_map.mjs.
+
+Python is generation-only here.  Runtime consumers read the emitted JSONL/TSV;
+no semantic decision depends on importing this module.
+"""
+
+from __future__ import annotations
+
+import argparse
+import csv
+import hashlib
+import json
+import re
+from collections import Counter
+from pathlib import Path
+
+
+HERE = Path(__file__).resolve()
+CMD = HERE.parents[1]
+ROOT = HERE.parents[3]
+DATA = CMD / "data"
+OUT = CMD / "generated"
+
+EXTERNAL = ROOT / "estate/generated/external-estate-v4/observed-external-estate.jsonl"
+EXTERNAL_MANIFEST = ROOT / "estate/generated/external-estate-v4/manifest.json"
+GHOST = ROOT / "cmd/BonfyreCMS/data/ghost-marketplace-2026-09-06.tsv"
+INTERACTION_REFERENCES = DATA / "interaction_references.tsv"
+TYPED_APPLICATION_PROGRAMS = DATA / "typed_application_programs.tsv"
+
+
+class BuildError(RuntimeError):
+    pass
+
+
+DOMAIN_TO_CHAINS = {
+    "advertising": "audience-growth enterprise-gtm", "agents": "ai-work software-work",
+    "agriculture": "agriculture resource-market", "aircraft": "mobility mission",
+    "animals": "care household", "art": "discover publication creator-publish",
+    "buildings": "property project", "community": "community relationship",
+    "computers": "software-work ai-work", "construction": "project property",
+    "education": "learning knowledge", "emergencies": "emergency civic",
+    "energy": "energy utility", "factories": "manufacturing project",
+    "family": "household care", "farms": "agriculture resource-market",
+    "fashion": "commerce publication", "film": "watch media-production",
+    "finance": "finance investing", "food": "food commerce",
+    "forests": "place resource-market", "government": "civic professional",
+    "hospitality": "trip place", "household": "household care",
+    "housing": "housing property", "instruments": "listen creator-publish",
+    "insurance": "insurance finance", "labor": "professional hiring",
+    "land": "property place", "law": "civic knowledge service-case",
+    "logistics": "logistics commerce", "machines": "manufacturing vehicle",
+    "manufacturing": "manufacturing logistics", "media": "watch publication",
+    "medicine": "healthcare research", "mines": "resource-market manufacturing",
+    "models": "ai-work research", "music": "listen live-event",
+    "natural-resources": "resource-market place", "oceans": "mission trip",
+    "people": "relationship community", "plants": "household place",
+    "publishing": "publication creator-publish", "rail": "mobility logistics",
+    "religion": "community relationship", "repair": "vehicle service-case",
+    "research": "research knowledge", "retail": "commerce enterprise-gtm",
+    "roads": "mobility logistics", "robots": "ai-work manufacturing",
+    "science": "science research", "ships": "mission logistics",
+    "spacecraft": "mission science", "sports": "sports live-event",
+    "telecommunications": "collaboration software-work", "trade": "resource-market commerce",
+    "transport": "mobility logistics", "travel": "trip place",
+    "utilities": "utility service-case", "vehicles": "vehicle mobility",
+    "waste": "utility resource-market", "water": "utility place", "weather": "place trip emergency",
+}
+
+SOURCE_KIND_SUPPORT = {
+    "public_api": ["software-work"], "mcp": ["ai-work", "software-work"],
+    "rss": ["publication", "discover"], "machine_protocol": ["software-work"],
+    "x402": ["commerce", "finance"], "x402_spec": ["commerce", "finance"],
+}
+
+GHOST_CATEGORY = {
+    "Blog": ("editorial", "vertical board thread", "publication community discover knowledge"),
+    "Magazine": ("magazine", "vertical board thread market", "publication discover watch listen commerce community"),
+    "News": ("newsroom", "vertical thread board inspector", "publication discover community live-event"),
+    "Newsletter": ("letter", "vertical board", "publication professional community knowledge"),
+    "Podcast": ("audio", "stage vertical thread", "listen watch community publication"),
+    "Photography": ("gallery", "board vertical spatial", "discover watch place publication"),
+    "Portfolio": ("portfolio", "board vertical inspector", "professional creator-publish watch publication"),
+    "Docs": ("docs", "inspector work thread", "knowledge learning support software-work"),
+}
+
+PARTNER_NAMES_OBSERVED = [
+    "langchain", "temporal", "dagster", "duckdb", "helm", "terraform", "vscode", "mcp", "wandb",
+    "Qlib", "vectorbt", "ArcticDB", "QuantLib", "Formance", "TigerBeetle", "Hyperswitch",
+    "Interledger", "Mojaloop", "Riskfolio-Lib",
+]
+
+APP_HINTS = [
+    ("transcrib", "watch listen media-production"), ("audio", "listen media-production"),
+    ("video", "watch media-production"), ("clip", "watch creator-publish"),
+    ("frame", "watch media-production"), ("scene", "watch media-production"),
+    ("media", "watch listen media-production"), ("narrat", "publication creator-publish"),
+    ("paragraph", "publication knowledge"), ("cms", "publication creator-publish"),
+    ("publish", "publication creator-publish"), ("distribut", "publication creator-publish"),
+    ("repurpose", "publication creator-publish"), ("finance", "finance commerce"),
+    ("pay", "finance commerce"), ("ledger", "finance commerce"), ("econom", "finance commerce"),
+    ("offer", "commerce enterprise-gtm"), ("outreach", "enterprise-gtm professional"),
+    ("project", "project professional"), ("workflow", "project software-work"),
+    ("queue", "project software-work"), ("pipeline", "project software-work"),
+    ("control", "project software-work"), ("operator", "project software-work"),
+    ("auth", "identity-access"), ("admission", "identity-access"), ("gate", "identity-access"),
+    ("capability", "ai-work software-work"), ("provider", "ai-work software-work"),
+    ("embed", "discover research ai-work"), ("vec", "discover research ai-work"),
+    ("index", "discover knowledge"), ("query", "discover research"), ("search", "discover research"),
+    ("tag", "discover ai-work"), ("entity", "knowledge discover"), ("graph", "knowledge research"),
+    ("model", "ai-work"), ("infer", "ai-work"), ("gen", "ai-work"), ("fpq", "ai-work"),
+    ("quant", "ai-work investing"), ("reason", "ai-work research"), ("moe", "ai-work"),
+    ("physics", "science research"), ("space", "mission science"), ("leapfrog", "science research"),
+    ("upper90", "property enterprise-gtm"), ("frappe", "professional project enterprise-gtm"),
+    ("webaddress", "discover publication identity-access"), ("surface", "discover publication"),
+    ("render", "publication watch"), ("externalestate", "discover research"),
+    ("watch", "software-work"),  # BonfyreWatch is filesystem/process watching, not media Watch.
+]
+
+PRESENTATION = {
+    "discover": ["mixed-stream", "lead-relief-context"], "listen": ["persistent-audio", "sequence", "editorial"],
+    "watch": ["theatre", "chaptered", "transcript-adjacent"], "community": ["topic-world", "threaded", "social-body"],
+    "professional": ["identity-deep", "activity", "relationship"], "dating": ["focused-object", "mode-context"],
+    "mobility": ["map-route-status"], "trip": ["itinerary", "place-rich"], "property": ["map-dossier-workspace"],
+    "learning": ["path", "lesson", "assessment"], "commerce": ["editorial-detail-checkout"],
+    "live-event": ["stage", "timeline", "place"], "place": ["map", "editorial-local"],
+    "project": ["workspace", "board", "timeline"], "collaboration": ["thread", "canvas", "list"],
+    "knowledge": ["document", "graph", "reference"], "enterprise-gtm": ["record", "pipeline", "communication"],
+    "finance": ["ledger", "obligation", "timeline"], "publication": ["editorial", "sequence", "long-form"],
+}
+
+SLUG_ROOT = {
+    "listen": "/listen", "watch": "/watch", "community": "/community", "discover": "/discover",
+    "live-event": "/events", "place": "/places", "property": "/property", "learning": "/learn",
+    "commerce": "/products", "professional": "/people", "project": "/projects", "knowledge": "/knowledge",
+    "enterprise-gtm": "/accounts", "service-case": "/cases", "publication": "/posts", "trip": "/trips",
+    "housing": "/housing", "food": "/food", "hiring": "/jobs", "support": "/support",
+}
+
+STAGE_LAW = json.loads((CMD / "tools/stage-law.generated.json").read_text(encoding="utf-8"))
+AFFORDANCE_STAGE_HINTS = STAGE_LAW["affordance_stage_hints"]
+ROLE_STAGE_HINTS = STAGE_LAW["role_stage_hints"]
+
+
+def words(value: str) -> list[str]:
+    return [x for x in value.split() if x]
+
+
+def uniq(values) -> list[str]:
+    return list(dict.fromkeys(x for x in values if x))
+
+
+def slug(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-") or "item"
+
+
+def read_tsv(path: Path) -> list[dict[str, str]]:
+    with path.open(newline="", encoding="utf-8") as fh:
+        return list(csv.DictReader(fh, delimiter="\t"))
+
+
+def interaction_references(chain_defs):
+    """Read all reusable interaction evidence, independent of the tiny market list.
+
+    This is intentionally a declaration table rather than a name/hash classifier.
+    A donor or Frappe estate can evidence a human interaction grammar, but remains
+    reference-only until a SiteProgram selects it with lawful typed material.
+    """
+    rows = read_tsv(INTERACTION_REFERENCES)
+    seen = set()
+    out = []
+    for row in rows:
+        ident = row.get("id", "")
+        if not ident or ident in seen:
+            raise BuildError(f"interaction reference has missing/duplicate id {ident!r}")
+        seen.add(ident)
+        provenance = row.get("provenance", "")
+        if provenance not in {"donor", "frappe"}:
+            raise BuildError(f"interaction reference {ident} has invalid provenance {provenance!r}")
+        chains = words(row.get("chain_ids", ""))
+        missing = [cid for cid in chains if cid not in chain_defs]
+        if missing or not chains:
+            raise BuildError(f"interaction reference {ident} has invalid chain ids {missing}")
+        required = ("name", "interaction_grammar", "application_kinds", "affordances", "status", "source_ref")
+        if any(not row.get(key, "").strip() for key in required):
+            raise BuildError(f"interaction reference {ident} is incomplete")
+        if row["status"] != "declared_reference":
+            raise BuildError(f"interaction reference {ident} cannot claim runtime selection")
+        item = dict(row)
+        item["chain_ids"] = chains
+        item["application_kinds"] = words(row["application_kinds"])
+        item["affordances"] = words(row["affordances"])
+        out.append(item)
+    expected = {"frappe": 9, "donor": 19}
+    actual = Counter(row["provenance"] for row in out)
+    if dict(actual) != expected:
+        raise BuildError(f"interaction reference estate incomplete: expected {expected}, got {dict(actual)}")
+    return out
+
+
+def typed_application_programs(chain_defs):
+    """Load the executable vocabulary for every ExperienceProgram.
+
+    The legacy prose `stages` column is deliberately not read here.  This
+    declaration says which typed applications may be composed, what they need,
+    their human action families, renderer physics, and honest empty/refusal
+    outcomes.  It does not fabricate graph edges, provider admission, or an
+    effect when no owner has supplied exact consumes/produces compatibility.
+    """
+    rows = read_tsv(TYPED_APPLICATION_PROGRAMS)
+    seen = set()
+    result = []
+    allowed_actions = set(AFFORDANCE_STAGE_HINTS)
+    for row in rows:
+        cid = row.get("experience_id", "")
+        if cid not in chain_defs or cid in seen:
+            raise BuildError(f"typed application program has invalid/duplicate experience {cid!r}")
+        seen.add(cid)
+        apps = words(row.get("applications", ""))
+        roles = words(row.get("material_roles", ""))
+        actions = words(row.get("action_families", ""))
+        renderers = words(row.get("renderer_families", ""))
+        if len(apps) < 6 or len(apps) != len(set(apps)):
+            raise BuildError(f"typed application program {cid} needs six distinct application kinds")
+        if not roles or not renderers or any(action not in allowed_actions for action in actions):
+            raise BuildError(f"typed application program {cid} has invalid roles/actions/renderers")
+        if not row.get("empty_projection", "").strip() or not row.get("refused_projection", "").strip():
+            raise BuildError(f"typed application program {cid} has no honest empty/refusal state")
+        item = dict(row)
+        item["applications"] = apps
+        item["material_roles"] = roles
+        item["action_families"] = actions
+        item["renderer_families"] = renderers
+        result.append(item)
+    if seen != set(chain_defs):
+        raise BuildError(f"typed application program coverage mismatch: missing={sorted(set(chain_defs)-seen)}")
+    return result
+
+
+def typed_application_nodes(programs):
+    nodes = []
+    for program in programs:
+        for application in program["applications"]:
+            nodes.append({
+                "schema": "bonfyre.typed-application-node.v1",
+                "node_id": f"{program['experience_id']}:{slug(application)}",
+                "experience_id": program["experience_id"], "application_kind": application,
+                "consumes": list(program["material_roles"]),
+                "produces": ["SurfaceIR"],
+                "action_families": list(program["action_families"]),
+                "renderer_requirements": list(program["renderer_families"]),
+                "empty_projection": program["empty_projection"],
+                "refused_projection": program["refused_projection"],
+                "selection_state": "unselected_declaration",
+                "edges": [],
+                "cannot_infer": [
+                    "typed application -> admitted material",
+                    "typed application -> selected renderer",
+                    "action family -> authority or effect",
+                    "same program -> executable transition",
+                ],
+            })
+    return nodes
+
+
+def chain_sets(chain_rows):
+    out = {}
+    for row in chain_rows:
+        stages = row["stages"].split("|")
+        if not 5 <= len(stages) <= 20:
+            raise BuildError(f"human chain {row['id']} has {len(stages)} stages")
+        row = dict(row)
+        row["territories"] = words(row["territories"])
+        row["entry_intents"] = words(row["entry_intents"])
+        row["stages"] = stages
+        out[row["id"]] = row
+    return out
+
+
+def protocol_sets(rows, chains):
+    out = {}
+    for row in rows:
+        stages = row["stages"].split("|")
+        if not 5 <= len(stages) <= 20:
+            raise BuildError(f"protocol {row['id']} has {len(stages)} stages")
+        human = words(row["human_chains"])
+        missing = [x for x in human if x not in chains]
+        if missing:
+            raise BuildError(f"protocol {row['id']} references missing chains {missing}")
+        item = dict(row)
+        item["match_terms"] = row["match_terms"].split("|")
+        item["human_chains"] = human
+        item["stages"] = stages
+        out[row["id"]] = item
+    return out
+
+
+def homes(rows, chains):
+    out = {}
+    for row in rows:
+        sections = []
+        for raw in row["sections"].split("|"):
+            chain, role = raw.split(":", 1)
+            if chain not in chains:
+                raise BuildError(f"home {row['id']} references missing chain {chain}")
+            sections.append({"chain": chain, "role": role})
+        if len(sections) < 10:
+            raise BuildError(f"home {row['id']} is too shallow: {len(sections)} sections")
+        out[row["id"]] = {"id": row["id"], "audience": row["audience"],
+                          "territory_or_subject": row["territory_or_subject"], "sections": sections}
+    return out
+
+
+def home_refs(chain_ids, home_defs) -> list[str]:
+    wanted = set(chain_ids)
+    return [hid for hid, h in home_defs.items() if any(s["chain"] in wanted for s in h["sections"])]
+
+
+def territories(chain_ids, chain_defs) -> list[str]:
+    return sorted({t for cid in chain_ids for t in chain_defs[cid]["territories"]})
+
+
+def presentation(chain_ids) -> list[str]:
+    return uniq(mode for cid in chain_ids for mode in PRESENTATION.get(cid, [f"deep-{cid}"]))
+
+
+def slug_roots(chain_ids) -> list[str]:
+    return uniq(SLUG_ROOT.get(cid, f"/{cid}") for cid in chain_ids)
+
+def stage_bindings(chain_ids, chain_defs, hints) -> dict[str, list[str]]:
+    expanded = []
+    for hint in hints:
+        expanded.extend(words(AFFORDANCE_STAGE_HINTS.get(hint, "")))
+        expanded.extend(words(ROLE_STAGE_HINTS.get(hint, "")))
+        expanded.append(hint.lower())
+    terms = set(expanded)
+    out = {}
+    for cid in chain_ids:
+        stages = chain_defs[cid]["stages"]
+        chosen = []
+        for stage in stages:
+            parts = {x for x in re.split(r"[^a-z0-9]+", stage.lower()) if x}
+            if parts.intersection(terms) or any(term in stage.lower() for term in terms if len(term) >= 4):
+                chosen.append(stage)
+        # A chain label is a discovery hypothesis, not permission to attach a
+        # source to the first prose stage.  The old `stages[:1]` fallback made
+        # a lexical miss appear as an executable edge.  Keep the reference on
+        # the candidate record, but emit no stage edge until a typed compiler
+        # can establish consumes/produces compatibility.
+        if chosen:
+            out[cid] = chosen[:STAGE_LAW["max_stage_bindings_per_chain"]]
+    return out
+
+
+def presentation_stage_bindings(chain_ids, chain_defs) -> dict[str, list[str]]:
+    terms = set(words(STAGE_LAW["presentation_terms"]))
+    out = {}
+    for cid in chain_ids:
+        stages = chain_defs[cid]["stages"]
+        chosen = [s for s in stages if any(t in s.lower() for t in terms)]
+        if chosen:
+            out[cid] = chosen[:STAGE_LAW["max_stage_bindings_per_chain"]]
+    return out
+
+
+def app_stage_hints(name: str) -> list[str]:
+    lower = name.lower()
+    hints = []
+    for affordance, terms in AFFORDANCE_STAGE_HINTS.items():
+        if any(term in lower for term in words(terms)):
+            hints.append(affordance)
+    for override in STAGE_LAW["app_name_overrides"]:
+        if any(x in lower for x in override["terms"]):
+            hints.extend(override["affordances"])
+    return uniq(hints or [STAGE_LAW["app_fallback_affordance"]])
+
+
+def name_chains(name: str, default="software-work") -> list[str]:
+    lower = name.lower()
+    found = []
+    for term, mapped in APP_HINTS:
+        if term in lower:
+            found.extend(words(mapped))
+    return uniq(found) or [default]
+
+
+def external_chains(row, chain_defs):
+    projection = row.get("projection") or {}
+    domains = projection.get("direct_domains") or projection.get("topic_domains") or []
+    unknown = [d for d in domains if d not in DOMAIN_TO_CHAINS]
+    if unknown:
+        raise BuildError(f"{row.get('id')} has unmapped direct domains {unknown}")
+    human = uniq(cid for domain in domains for cid in words(DOMAIN_TO_CHAINS[domain]))
+    lower = f"{row.get('observed_name','')} {row.get('section','')}".lower()
+    if "spotify" in lower or "musicbrainz" in lower or "bandcamp" in lower or "soundcloud" in lower:
+        human = uniq(["listen"] + human)
+    if any(x in lower for x in ("youtube", "vimeo", "twitch", "peertube", "video")):
+        human = uniq(["watch"] + human)
+    if any(x in lower for x in ("reddit", "lemmy", "discord", "forum", "community")):
+        human = uniq(["community"] + human)
+    if any(x in lower for x in ("eventbrite", "mobilizon", "ticket")):
+        human = uniq(["live-event"] + human)
+    if any(x in lower for x in ("openstreetmap", "mapbox", "geocod", "places")):
+        human = uniq(["place"] + human)
+    if any(x in lower for x in ("ebay", "etsy", "shopify", "commerce", "marketplace")):
+        human = uniq(["commerce"] + human)
+    if not human:
+        human = ["discover"]
+    missing = [x for x in human if x not in chain_defs]
+    if missing:
+        raise BuildError(f"{row.get('id')} resolved unknown chains {missing}")
+    return human
+
+
+def protocol_refs(row, protocol_defs):
+    source_kind = row.get("source_kind", "")
+    text = " ".join(str(row.get(k, "")) for k in ("observed_name", "primary_url", "raw_source_text", "section")).lower()
+    refs = []
+    direct = {"x402": "x402", "x402_spec": "x402", "mcp": "mcp", "rss": "rss-atom", "public_api": "http-api"}
+    if source_kind in direct:
+        refs.append(direct[source_kind])
+    for pid, spec in protocol_defs.items():
+        if pid in {"machine-generic", "http-api"}:
+            continue
+        if any(term.lower() in text for term in spec["match_terms"]):
+            refs.append(pid)
+    if source_kind == "machine_protocol" and not refs:
+        refs.append("machine-generic")
+    if source_kind not in SOURCE_KIND_SUPPORT:
+        raise BuildError(f"{row.get('id')} has unknown source kind {source_kind!r}")
+    return uniq(refs)
+
+
+def bind_external(rows, chain_defs, protocol_defs, home_defs):
+    result = []
+    for row in rows:
+        human = external_chains(row, chain_defs)
+        projection = row.get("projection") or {}
+        support = SOURCE_KIND_SUPPORT[row["source_kind"]]
+        result.append({
+            "record_kind": "external", "id": row["id"], "name": row.get("observed_name", ""),
+            "source_kind": row["source_kind"], "url": row.get("primary_url", ""),
+            "truth_level": row.get("truth_level", "observed_candidate"), "human_chains": human,
+            "support_chains": support, "protocol_chains": protocol_refs(row, protocol_defs),
+            "territories": territories(human, chain_defs), "home_blueprints": home_refs(human, home_defs),
+            "presentation_modes": presentation(human), "slug_roots": slug_roots(human),
+            "reagent_roles": projection.get("estate_roles", []),
+            "direct_domains": projection.get("direct_domains", []), "candidate_worlds": projection.get("candidate_worlds", []),
+            "cannot_infer": ["binding -> source admission", "home eligibility -> publication", "protocol fit -> authority or effect"],
+        })
+    return result
+
+
+def bind_ghost(chain_defs, home_defs):
+    rows = read_tsv(GHOST)
+    out = []
+    for row in rows:
+        categories = [x.strip() for x in re.split(r"[,;/]", row["categories"]) if x.strip()]
+        unknown = [x for x in categories if x not in GHOST_CATEGORY]
+        if unknown:
+            raise BuildError(f"Ghost {row['name']} has unknown categories {unknown}")
+        chains = uniq(cid for cat in categories for cid in words(GHOST_CATEGORY[cat][2]))
+        families = uniq(GHOST_CATEGORY[cat][0] for cat in categories)
+        mixes = uniq(GHOST_CATEGORY[cat][1] for cat in categories)
+        out.append({"record_kind": "ghost", "id": f"ghost:{slug(row['name'])}", "name": row["name"],
+                    "categories": categories, "presentation_families": families, "renderer_mixes": mixes,
+                    "human_chains": chains, "protocol_chains": [], "territories": territories(chains, chain_defs),
+                    "home_blueprints": home_refs(chains, home_defs), "presentation_modes": [f"ghost:{x}" for x in families],
+                    "slug_roots": slug_roots(chains), "source_ref": str(GHOST.relative_to(ROOT)),
+                    "cannot_infer": ["reference theme -> copied Ghost code", "presentation fit -> semantic ownership"]})
+    return out
+
+
+def app_record(kind, name, chains, chain_defs, home_defs, source_ref, *, reference_only=False,
+               interaction_evidence=None):
+    chains = uniq(chains)
+    result = {"record_kind": kind, "id": f"{kind}:{slug(name)}", "name": name, "human_chains": chains,
+            "protocol_chains": [], "territories": territories(chains, chain_defs),
+            "home_blueprints": home_refs(chains, home_defs), "presentation_modes": presentation(chains),
+            "slug_roots": slug_roots(chains), "source_ref": source_ref,
+            "cannot_infer": ["available app/tool -> semantic owner for every matching chain", "reference -> authority"]}
+    if reference_only:
+        result["reference_only"] = True
+        result["cannot_infer"].append("interaction reference -> selected renderer or executable stage")
+    if interaction_evidence:
+        result["interaction_evidence"] = interaction_evidence
+    return result
+
+
+def bind_apps(chain_defs, home_defs, leaders, protocol_defs, interaction_rows):
+    out = []
+    for path in sorted((ROOT / "cmd").iterdir()):
+        if path.is_dir():
+            out.append(app_record("command", path.name, name_chains(path.name), chain_defs, home_defs, str(path.relative_to(ROOT))))
+    for path in sorted((ROOT / "components").iterdir()):
+        if path.is_dir() and not path.name.startswith("."):
+            out.append(app_record("component", path.name, name_chains(path.name), chain_defs, home_defs, str(path.relative_to(ROOT))))
+    for path in sorted((ROOT / "cmd/BonfyreCMS/content-types").glob("*.json")):
+        out.append(app_record("cms_type", path.stem, name_chains(path.stem, "knowledge"), chain_defs, home_defs, str(path.relative_to(ROOT))))
+    for path in sorted((ROOT / "site/matrix/surfaces").glob("*.json")):
+        out.append(app_record("surface", path.stem, name_chains(path.stem, "discover"), chain_defs, home_defs, str(path.relative_to(ROOT))))
+    for row in interaction_rows:
+        kind = "frappe_app" if row["provenance"] == "frappe" else "donor_reference"
+        out.append(app_record(
+            kind, row["name"], row["chain_ids"], chain_defs, home_defs, row["source_ref"],
+            reference_only=True,
+            interaction_evidence={
+                "reference_id": row["id"], "provenance": row["provenance"],
+                "grammar": row["interaction_grammar"], "application_kinds": row["application_kinds"],
+                "affordances": row["affordances"], "status": row["status"],
+            }))
+    for name in PARTNER_NAMES_OBSERVED:
+        out.append(app_record("partner_observed", name, name_chains(name, "software-work"), chain_defs, home_defs, "packs/aurekai/session-reuse-census.yaff"))
+    for row in leaders:
+        out.append(app_record("market_reference", row["id"], words(row["chain_ids"]), chain_defs, home_defs,
+                              row["source_url"], reference_only=True,
+                              interaction_evidence={"reference_id": row["id"], "provenance": "market",
+                                                    "grammar": row["persistent_mechanics"],
+                                                    "application_kinds": [], "affordances": [],
+                                                    "status": "declared_reference"}))
+    for pid, proto in protocol_defs.items():
+        out.append(app_record("protocol_reference", pid, proto["human_chains"], chain_defs, home_defs, "data/protocol_chains.tsv"))
+    return out
+
+
+def reference_lattice(chain_defs, interaction_rows, leaders, ghost_rows):
+    """Materialize all reference planes without using any as a selection boundary.
+
+    Market references remain one source of evidence, while donor/Frappe rows are
+    explicit interaction grammar evidence and Ghost remains art-direction-only
+    candidate evidence.  None of these rows is an application, provider, or
+    executable stage.
+    """
+    evidence = []
+    for row in interaction_rows:
+        evidence.append({
+            "record_kind": "interaction_reference", "id": f"{row['provenance']}:{row['id']}",
+            "name": row["name"], "provenance": row["provenance"], "human_chains": row["chain_ids"],
+            "interaction_grammar": row["interaction_grammar"], "application_kinds": row["application_kinds"],
+            "affordances": row["affordances"], "selection_state": "reference_only",
+            "source_ref": row["source_ref"],
+            "cannot_infer": ["reference -> selected renderer", "reference -> executable application", "reference -> authority"],
+        })
+    for row in leaders:
+        evidence.append({
+            "record_kind": "market_interaction_reference", "id": f"market:{row['id']}", "name": row["id"],
+            "provenance": "market", "human_chains": words(row["chain_ids"]),
+            "interaction_grammar": row["persistent_mechanics"], "application_kinds": [], "affordances": [],
+            "selection_state": "reference_only", "source_ref": row["source_url"],
+            "cannot_infer": ["market reference -> copied product", "market reference -> selected renderer", "reference -> authority"],
+        })
+    for row in ghost_rows:
+        evidence.append({
+            "record_kind": "ghost_art_direction_candidate", "id": row["id"], "name": row["name"],
+            "provenance": "ghost", "human_chains": row["human_chains"],
+            "interaction_grammar": "art-direction-candidate", "application_kinds": [], "affordances": [],
+            "selection_state": "unobserved_candidate", "source_ref": row["source_ref"],
+            "cannot_infer": ["unique generated vector -> observed structural profile", "art direction -> interaction grammar", "candidate -> selected profile"],
+        })
+    by_chain = {cid: [] for cid in chain_defs}
+    for row in evidence:
+        for cid in row["human_chains"]:
+            by_chain[cid].append(row)
+    lattice = []
+    for cid in chain_defs:
+        rows = by_chain[cid]
+        provenance = Counter(row["provenance"] for row in rows)
+        lattice.append({
+            "chain_id": cid, "evidence_ids": [row["id"] for row in rows],
+            "reference_count": len(rows), "provenance_counts": dict(sorted(provenance.items())),
+            "interaction_reference_count": sum(row["provenance"] in {"donor", "frappe", "market"} for row in rows),
+            "ghost_art_direction_candidate_count": provenance["ghost"],
+            "selection_state": "evidence_only",
+            "cannot_infer": ["reference coverage -> renderer selection", "reference coverage -> runtime material", "reference coverage -> executable edge"],
+        })
+    return evidence, lattice
+
+
+def read_external():
+    rows = []
+    with EXTERNAL.open(encoding="utf-8") as fh:
+        for line in fh:
+            if line.strip():
+                rows.append(json.loads(line))
+    manifest = json.loads(EXTERNAL_MANIFEST.read_text())
+    expected = manifest["counts"]["external_occurrences"]
+    if len(rows) != expected:
+        raise BuildError(f"ExternalEstate manifest says {expected}, read {len(rows)}")
+    return rows, manifest
+
+
+def canonical_digest(groups) -> str:
+    h = hashlib.sha256()
+    for name, rows in groups:
+        h.update(name.encode())
+        h.update(b"\n")
+        for row in rows:
+            h.update(json.dumps(row, sort_keys=True, separators=(",", ":")).encode())
+            h.update(b"\n")
+    return h.hexdigest()
+
+
+def write_jsonl(path, rows):
+    with path.open("w", encoding="utf-8") as fh:
+        for row in rows:
+            fh.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
+
+
+def build(write=False):
+    chain_defs = chain_sets(read_tsv(DATA / "experience_chains.tsv"))
+    protocol_defs = protocol_sets(read_tsv(DATA / "protocol_chains.tsv"), chain_defs)
+    home_defs = homes(read_tsv(DATA / "home_blueprints.tsv"), chain_defs)
+    interaction_rows = interaction_references(chain_defs)
+    typed_programs = typed_application_programs(chain_defs)
+    application_nodes = typed_application_nodes(typed_programs)
+    leaders = read_tsv(DATA / "market_leaders.tsv")
+    for row in leaders:
+        missing = [x for x in words(row["chain_ids"]) if x not in chain_defs]
+        if missing:
+            raise BuildError(f"leader {row['id']} references missing chains {missing}")
+    urls = read_tsv(DATA / "url_grammars.tsv")
+    external_rows, external_manifest = read_external()
+    external = bind_external(external_rows, chain_defs, protocol_defs, home_defs)
+    ghost = bind_ghost(chain_defs, home_defs)
+    apps = bind_apps(chain_defs, home_defs, leaders, protocol_defs, interaction_rows)
+    interaction_evidence, chain_lattice = reference_lattice(chain_defs, interaction_rows, leaders, ghost)
+
+    if len(ghost) != 238:
+        raise BuildError(f"expected 238 Ghost references, got {len(ghost)}")
+    if any(not row["human_chains"] for row in external + ghost + apps):
+        raise BuildError("unmapped record exists")
+
+    chain_rows = list(chain_defs.values())
+    proto_rows = list(protocol_defs.values())
+    home_rows = list(home_defs.values())
+    groups = [("chains", chain_rows), ("typed-application-programs", typed_programs),
+              ("typed-application-nodes", application_nodes), ("protocols", proto_rows), ("interaction-references", interaction_rows),
+              ("leaders", leaders), ("homes", home_rows), ("urls", urls), ("external", external),
+              ("ghost", ghost), ("apps", apps), ("interaction-evidence", interaction_evidence),
+              ("chain-lattice", chain_lattice)]
+    digest = canonical_digest(groups)
+    kind_counts = Counter(row["record_kind"] for row in external + ghost + apps)
+    protocol_bound = sum(bool(row["protocol_chains"]) for row in external)
+    source_kind_counts = Counter(row["source_kind"] for row in external)
+    manifest = {
+        "schema": "bonfyre.experience-map.v1", "truth_level": "compiled_projection",
+        "build_digest": digest, "human_chain_count": len(chain_rows), "protocol_chain_count": len(proto_rows),
+        "market_leader_count": len(leaders), "home_blueprint_count": len(home_rows), "url_grammar_count": len(urls),
+        "external_occurrences": len(external), "external_mapped": len(external), "ghost_references": len(ghost),
+        "ghost_mapped": len(ghost), "app_reference_records": len(apps), "record_kind_counts": dict(sorted(kind_counts.items())),
+        "source_kind_counts": dict(sorted(source_kind_counts.items())), "external_with_protocol_chain": protocol_bound,
+        "external_manifest_digest": external_manifest["input"].get("master_sha256", ""),
+        "interaction_reference_lattice": {
+            "total_evidence": len(interaction_evidence),
+            "market_references": len(leaders),
+            "donor_interaction_references": sum(row["provenance"] == "donor" for row in interaction_rows),
+            "frappe_interaction_references": sum(row["provenance"] == "frappe" for row in interaction_rows),
+            "ghost_art_direction_candidates": len(ghost),
+            "chains_with_interaction_reference": sum(row["interaction_reference_count"] > 0 for row in chain_lattice),
+            "chains_with_any_reference_evidence": sum(row["reference_count"] > 0 for row in chain_lattice),
+            "market_reference_is_not_selection_boundary": True,
+            "all_references_are_evidence_only": True,
+        },
+        "typed_application_estate": {
+            "experience_programs": len(typed_programs),
+            "application_nodes": len(application_nodes),
+            "minimum_nodes_per_program": min(len(row["applications"]) for row in typed_programs),
+            "all_nodes_unselected_until_site_program": True,
+            "prose_stage_input_used": False,
+        },
+        "coverage": {"external": True, "ghost": True, "local_commands_components": True,
+                     "cms_types": True, "surface_descriptors": True, "frappe_apps": True,
+                     "donor_references": True, "frappe_interaction_grammars": True,
+                     "reference_lattice": True, "protocol_occurrences": protocol_bound == len(external),
+                     "partner_shipped_repo_names": False},
+        "partner_inventory": {"declared_shipped_repos": 41, "names_provable_in_checkout": len(PARTNER_NAMES_OBSERVED),
+                              "note": "session-reuse-census proves 41 shipped repos but does not enumerate all 41 names inside this project root"},
+        "cannot_infer": ["experience binding -> provider admission", "home blueprint -> current publication",
+                         "reference market leader -> copied ontology or code", "chain fit -> authority to execute"],
+    }
+
+    if write:
+        OUT.mkdir(parents=True, exist_ok=True)
+        for filename, rows in (("chains.jsonl", chain_rows), ("protocols.jsonl", proto_rows), ("leaders.jsonl", leaders),
+                               ("home_blueprints.jsonl", home_rows), ("url_grammars.jsonl", urls),
+                               ("external_bindings.jsonl", external), ("ghost_bindings.jsonl", ghost),
+                               ("app_bindings.jsonl", apps), ("typed_application_programs.jsonl", typed_programs),
+                               ("typed_application_nodes.jsonl", application_nodes), ("interaction_evidence.jsonl", interaction_evidence),
+                               ("chain_reference_lattice.jsonl", chain_lattice)):
+            write_jsonl(OUT / filename, rows)
+        with (OUT / "all_bindings.tsv").open("w", encoding="utf-8", newline="") as fh:
+            writer = csv.writer(fh, delimiter="\t", lineterminator="\n")
+            writer.writerow(["record_kind", "id", "name", "human_chains", "protocol_chains", "territories", "home_blueprints", "source"])
+            for row in external + ghost + apps:
+                writer.writerow([row["record_kind"], row["id"], row["name"], " ".join(row["human_chains"]),
+                                 " ".join(row.get("protocol_chains", [])), " ".join(row["territories"]),
+                                 " ".join(row["home_blueprints"]), row.get("url") or row.get("source_ref", "")])
+        (OUT / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return manifest
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--write", action="store_true")
+    parser.add_argument("--check", action="store_true")
+    args = parser.parse_args()
+    manifest = build(write=args.write)
+    if args.check:
+        path = OUT / "manifest.json"
+        if not path.exists():
+            raise BuildError("generated manifest is absent; run --write")
+        current = json.loads(path.read_text())
+        if current.get("build_digest") != manifest["build_digest"]:
+            raise BuildError("generated experience map is stale; run --write")
+    print(json.dumps(manifest, sort_keys=True))
+
+
+if __name__ == "__main__":
+    main()

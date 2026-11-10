@@ -1,0 +1,17 @@
+{
+  "name": "governance_decision",
+  "displayName": "Governance Decision",
+  "description": "What a community concluded about a proposal, and on what evidence. A decision is what a group settled; it is not evidence that anything was carried out, and the receipt reference it carries is a digest of something presented rather than proof that value moved.",
+  "attributes": {
+    "decision_id": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "proposal_id": { "type": "string", "required": true },
+    "outcome": { "type": "string", "required": true },
+    "decided_by": { "type": "string", "required": true },
+    "backing": { "type": "string", "required": true },
+    "evidence_ref": { "type": "string" },
+    "receipt_ref": { "type": "string" },
+    "decided_at": { "type": "string", "required": true },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

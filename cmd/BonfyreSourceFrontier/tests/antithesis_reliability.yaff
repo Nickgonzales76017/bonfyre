@@ -1,0 +1,58 @@
+pack antithesis-reliability-lab
+generation external-github-20261106
+source_plane source-frontier
+item_kind external-repository-cohort
+source_ref github:org:antithesishq:2026-11-06
+note GitHub connector verified 64 public repositories; six are separately ForeignTwin observed with receipts in the cohort. All 64 are review candidates only, not installed capabilities, connected accounts, licence grants or run receipts. Anta core MIT license does not license the separate Antithesis branded theme for commercial use. No tests have been run on the Antithesis platform.
+
+work browser_and_terminal_properties
+  target_plane BonfyreWebAddress
+  priority 9.6
+  reason Investigate Bombadil/Bombadil Zoo for reusable generated property tests across four-apex profiles, Connection Studio, Source Library and Stitch. Require real data provenance, login isolation, no unauthorized forms and no invented results; isolate browser fixtures before cross-account use.
+  source https://github.com/antithesishq/bombadil
+  source https://github.com/antithesishq/bombadil-zoo
+
+work native_reliability_properties
+  target_plane WorkGraph
+  priority 9.4
+  reason Derive Always and Sometimes assertions for no duplicate effect after retry, ActorClosure and PackGraph admission, pinned EvidenceGraph receipts and release recovery; determine suitable C/Zig integration before dependency or runtime change.
+  source https://github.com/antithesishq/antithesis-sdk-cpp
+  source https://github.com/antithesishq/antithesis-sdk-rust
+  source https://github.com/antithesishq/glitch-grid
+
+work database_workloads
+  target_plane BonfyreWarehouse
+  priority 9.2
+  reason Use SQLancer and transactional workload patterns on disposable SQLite and Postgres databases for crash consistency, CAS snapshot heads, no false generation, warehouse integrity, and legal query results. Physical Parquet proof remains distinct from metadata proof.
+  source https://github.com/antithesishq/sqlancer
+  source https://github.com/antithesishq/postgres-workload
+  source https://github.com/antithesishq/sqlite
+
+work distributed_failure_cases
+  target_plane WorkGraph
+  priority 9.1
+  reason Derive rollback and fault cases for QUIC/MOQ, Cloudflare R2/S3, message queues, source fanout and stage verify activate. Require reproducible receipts; example systems alone are not runtime pass evidence.
+  source https://github.com/antithesishq/S3-Compatible-Workload
+  source https://github.com/antithesishq/examples
+  source https://github.com/antithesishq/workloads-for-message-queues
+
+work connection_studio_antithesis_instrument
+  target_plane ConnectionStudio
+  priority 8.8
+  reason Treat Snouty as candidate instrument. Expose safe environment doctor and exact run readback separately from launch, cancel, debug or shell execution. Sealed tenant credentials, installed destination, scoped Act or review authority and WorkGraph executor required. No silent login, install or run.
+  source https://github.com/antithesishq/snouty
+  source https://github.com/antithesishq/antithesis-trigger-action
+  source https://github.com/antithesishq/antithesis-skills
+
+work triage_to_evidencegraph
+  target_plane EvidenceGraph
+  priority 8.7
+  reason Pin GitHub commit, Antithesis run id, assertion, reproduction branch and receipt digest before forming a review queue finding and a workboard continuation. Triage action is an upstream prototype; do not treat generated patches as authorized.
+  source https://github.com/antithesishq/antithesis-triage-action
+  source https://github.com/antithesishq/snouty
+
+work anta_rights_and_design
+  target_plane BonfyreSurfaceScene
+  priority 7.6
+  reason Consider Anta typed primitives and non-branded MIT core only after license and compatibility review; never copy the separate commercially restricted Antithesis theme without permission.
+  source https://github.com/antithesishq/anta

@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * BonfyreClips — Clip Discovery Engine
  *
@@ -24,7 +31,10 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <unistd.h>
 #include <bonfyre.h>
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+#include "../../../lib/libbonfyre/include/bf_help.h"
 
 /* ── Utilities ────────────────────────────────────────────────────── */
 
@@ -478,6 +488,11 @@ static void print_usage(void) {
     fprintf(stderr,
         "bonfyre-clips — clip discovery engine\n\n"
         "Usage:\n"
+        "  bonfyre-clips export     <plan-json> <new-out-dir>\n"
+        "  bonfyre-clips cut        --source FILE --start SEC --end SEC --out NEW_DIR\n"
+        "  bonfyre-clips harvest    --source VIDEO --captions TRANSCRIPT.srt --out NEW_DIR\n"
+        "                            --title TEXT --credit TEXT [--top 1..5] [--min-duration S]\n"
+        "                            --title TEXT --credit TEXT [--captions FILE.srt] [--source-ref URL] [--font FILE]\n"
         "  bonfyre-clips discover   <whisper-json> <out-dir> [--top N] [--min-dur S] [--max-dur S]\n"
         "  bonfyre-clips timestamps <whisper-json> <out-dir> [--top N] [--min-dur S] [--max-dur S]\n"
         "  bonfyre-clips all        <whisper-json> <out-dir> [--top N] [--min-dur S] [--max-dur S]\n\n"
@@ -485,6 +500,34 @@ static void print_usage(void) {
 }
 
 int main(int argc, char **argv) {
+    if (bf_help_requested(argc, argv)) { print_usage(); return 0; }
+    enum {
+        CL_CUT, CL_EXPORT, CL_HARVEST,
+    };
+    static const BfCommandEntry clip_commands[] = {
+        {"cut", CL_CUT, 0, NULL},
+        {"export", CL_EXPORT, 0, NULL},
+        {"harvest", CL_HARVEST, 0, NULL},
+    };
+    const BfCommandEntry *command = argc < 2 ? NULL : bf_command_lookup(clip_commands,
+        sizeof(clip_commands) / sizeof(clip_commands[0]), argv[1]);
+    if(command && (command->id == CL_EXPORT || command->id == CL_CUT || command->id == CL_HARVEST)){
+        int is_cut = command->id == CL_CUT, is_harvest = command->id == CL_HARVEST;
+        const char *home=getenv("HOME"),*script=getenv(is_harvest?"BONFYRE_CLIP_HARVEST":is_cut?"BONFYRE_CLIP_CUT":"BONFYRE_CLIP_EXPORT"),*runtime=getenv("BONFYRE_BUN_BINARY");
+        char script_path[PATH_MAX],runtime_path[PATH_MAX];
+        if((!is_cut&&!is_harvest&&argc!=4)||(is_cut&&(argc<14||argc>60))||
+           (is_harvest&&(argc<12||argc>60))||!home){print_usage();return 2;}
+        if(!script||!*script){int n=snprintf(script_path,sizeof(script_path),"%s/.bonfyre/lib/clips/%s",home,is_harvest?"harvest_clips.mjs":is_cut?"cut_clip.mjs":"export_clip.mjs");if(n<0||(size_t)n>=sizeof(script_path))return 2;script=script_path;}
+        if(!runtime||!*runtime){int n=snprintf(runtime_path,sizeof(runtime_path),"%s/.bun/bin/bun",home);if(n<0||(size_t)n>=sizeof(runtime_path))return 2;runtime=runtime_path;}
+        if(access(script,R_OK)||access(runtime,X_OK)){fputs("clip exporter or runtime not installed\n",stderr);return 2;}
+        if(is_cut || is_harvest){
+            char *child[66] = {(char*)runtime,(char*)"--no-env-file",(char*)"--no-install",(char*)script};
+            for(int i=2;i<argc;i++)child[i+2]=argv[i];
+            child[argc+2]=NULL;
+            execv(runtime,child);
+        }else execl(runtime,runtime,"--no-env-file","--no-install",script,argv[2],argv[3],(char*)NULL);
+        perror("clip exporter");return 2;
+    }
     if (argc < 4) { print_usage(); return 1; }
 
     const char *mode = argv[1];

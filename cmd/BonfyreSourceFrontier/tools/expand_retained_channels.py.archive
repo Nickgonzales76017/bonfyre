@@ -1,0 +1,176 @@
+#!/usr/bin/env python3
+# Archived after Bun retained-channel compiler cutover.
+"""Channels this estate can already see, inside bodies it already retained.
+
+No request is made here.  For every published census row the ForeignTwin
+estate has a retained body for, this reads that body and records the machine
+channels it explicitly links:
+
+  rss  atom  json_feed  ics  websub_hub  activitypub  openapi  json_api
+  mcp  a2a  beckn  x402  sitemap  oai_pmh  socrata  ckan  arcgis  gbfs  gtfs
+
+Every discovery starts at state SHADOW with truth_level observed_link_candidate
+and carries where it came from: the census source, its twin, the address the
+body was read from and that body's digest.  A link is not a source: it has not
+been asked for, robots have not been checked for it, nothing was admitted.
+
+Anything on this estate's own hosts is refused before it is written, so the
+compiled view of the world cannot re-enter the fabric as a discovery.
+
+  expand_retained_channels.py --cms CMS.db --foreign ROOT --out channels.jsonl
+      [--self-hosts aurekai.work,aurekai.life] [--max-bytes 4000000]
+"""
+import argparse, hashlib, json, os, re, sqlite3, sys, urllib.parse
+
+LINK_TAG = re.compile(rb"<(?:link|atom:link)\b[^>]*>", re.I)
+ANCHOR = re.compile(rb'<a\b[^>]+href=["\']([^"\']+\.ics(?:\?[^"\']*)?)["\']', re.I)
+ATTR = re.compile(rb'(\w[\w:-]*)\s*=\s*["\']([^"\']*)["\']')
+JSON_URL = re.compile(r'"(https?://[^"\s]{6,400})"')
+
+TYPE_FAMILY = [
+    ("application/rss+xml", "rss"),
+    ("application/atom+xml", "atom"),
+    ("application/feed+json", "json_feed"),
+    ("application/json+feed", "json_feed"),
+    ("text/calendar", "ics"),
+    ("application/activity+json", "activitypub"),
+    ("application/ld+json", "json_ld"),
+    ("application/opensearchdescription+xml", "opensearch"),
+]
+
+URL_FAMILY = [
+    (r"\.ics(\?|$)", "ics"),
+    (r"/\.well-known/openapi\.json|openapi\.json|swagger\.json|/v3/api-docs", "openapi"),
+    (r"/\.well-known/(mcp|mcp\.json)", "mcp"),
+    (r"/\.well-known/agent(-card)?\.json", "a2a"),
+    (r"/\.well-known/api-catalog", "api_catalog"),
+    (r"/\.well-known/gbfs\.json|/gbfs/", "gbfs"),
+    (r"sitemap[^/]*\.xml", "sitemap"),
+    (r"/api/views/[a-z0-9]{4}-[a-z0-9]{4}|/resource/[a-z0-9]{4}-[a-z0-9]{4}", "socrata"),
+    (r"/api/3/action/package_search|/api/3/action/package_list", "ckan"),
+    (r"/arcgis/rest/services|/FeatureServer|/MapServer", "arcgis"),
+    (r"/oai-pmh|verb=ListRecords", "oai_pmh"),
+    (r"gtfs.*\.zip|/gtfs-rt/|tripupdates|vehiclepositions", "gtfs"),
+    (r"/beckn|/bap/|/bpp/", "beckn"),
+    (r"x402", "x402"),
+    (r"/graphql", "graphql"),
+]
+
+MATERIAL = {"ics": "event", "socrata": "dataset", "ckan": "dataset", "arcgis": "dataset",
+            "gbfs": "mobility", "gtfs": "mobility", "oai_pmh": "research",
+            "rss": "publication", "atom": "publication", "json_feed": "publication"}
+
+
+def family_for(url, declared_type=""):
+    low = (declared_type or "").lower()
+    for token, family in TYPE_FAMILY:
+        if token in low:
+            return family
+    low = url.lower()
+    for pattern, family in URL_FAMILY:
+        if re.search(pattern, low):
+            return family
+    return ""
+
+
+def body_path(receipt_path):
+    try:
+        lines = [l for l in open(receipt_path, encoding="utf-8", errors="replace").read().splitlines() if l.startswith("{")]
+    except OSError:
+        return None, {}
+    if not lines:
+        return None, {}
+    try:
+        last = json.loads(lines[-1])
+    except ValueError:
+        return None, {}
+    return last.get("body_path"), last
+
+
+def discoveries(body, base, source, twin, digest):
+    found = {}
+
+    def add(href, family, why):
+        if not href:
+            return
+        url = urllib.parse.urljoin(base, href.strip())
+        if not url.startswith(("http://", "https://")):
+            return
+        family = family or family_for(url)
+        if not family:
+            return
+        found.setdefault(url, {
+            "address": url, "protocol": family, "state": "shadow",
+            "truth_level": "observed_link_candidate",
+            "discovered_from": "%s via %s (%s)" % (source, twin, why),
+            "body_sha256": digest,
+        })
+        if MATERIAL.get(family):
+            found[url]["material"] = MATERIAL[family]
+
+    for tag in LINK_TAG.findall(body):
+        attrs = {k.decode("ascii", "replace").lower(): v.decode("utf-8", "replace") for k, v in ATTR.findall(tag)}
+        href = attrs.get("href")
+        rel = (attrs.get("rel") or "").lower()
+        if not href:
+            continue
+        if rel == "hub":
+            add(href, "websub_hub", "declared hub")
+        elif rel in ("alternate", "self", "service-desc", "describedby", "related", "enclosure"):
+            add(href, family_for(href, attrs.get("type", "")), "rel=%s" % rel)
+        else:
+            add(href, family_for(href, attrs.get("type", "")), "link tag")
+    for href in ANCHOR.findall(body):
+        add(href.decode("utf-8", "replace"), "ics", "calendar link")
+    if body[:1] in (b"{", b"["):
+        text = body[:2_000_000].decode("utf-8", "replace")
+        for url in JSON_URL.findall(text):
+            family = family_for(url)
+            if family:
+                add(url, family, "named in the retained JSON")
+    return list(found.values())
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--cms", required=True)
+    ap.add_argument("--foreign", required=True)
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--self-hosts", default="aurekai.work,aurekai.life,bonfyre.local")
+    ap.add_argument("--max-bytes", type=int, default=4_000_000)
+    args = ap.parse_args()
+    mine = {h.strip().lower() for h in args.self_hosts.split(",") if h.strip()}
+    con = sqlite3.connect("file:%s?mode=ro" % args.cms, uri=True)
+    rows = con.execute("SELECT source, COALESCE(twin,''), COALESCE(url,'') FROM internet_source WHERE status='published' AND COALESCE(twin,'')<>''").fetchall()
+    con.close()
+    written, read, refused_self, families = 0, 0, 0, {}
+    with open(args.out, "w") as out:
+        for source, twin, url in rows:
+            receipt = os.path.join(args.foreign, "receipts", twin + ".json")
+            if not os.path.exists(receipt):
+                continue
+            path, _ = body_path(receipt)
+            if not path or not os.path.exists(path):
+                continue
+            with open(path, "rb") as f:
+                body = f.read(args.max_bytes)
+            if not body:
+                continue
+            read += 1
+            digest = hashlib.sha256(body).hexdigest()
+            for row in discoveries(body, url or ("https://" + twin), source, twin, digest):
+                host = urllib.parse.urlparse(row["address"]).netloc.lower()
+                host = host[4:] if host.startswith("www.") else host
+                if host in mine or any(host.endswith("." + m) for m in mine):
+                    refused_self += 1        # our own compiled view is not a discovery
+                    continue
+                out.write(json.dumps(row) + "\n")
+                families[row["protocol"]] = families.get(row["protocol"], 0) + 1
+                written += 1
+    print(json.dumps({"bodies_read": read, "links": written, "refused_self_lineage": refused_self,
+                      "by_family": dict(sorted(families.items(), key=lambda kv: -kv[1]))}))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

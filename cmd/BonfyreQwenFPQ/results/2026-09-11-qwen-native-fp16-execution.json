@@ -1,0 +1,41 @@
+{
+  "schema": "bonfyre.qwen_fpq_execution_receipt.v1",
+  "classification": "MEASURED_NATIVE_RUNTIME_BASELINE",
+  "observed_at": "2026-09-11",
+  "model": {
+    "artifact": "/Users/nickgonzales/BonfyreModels/fpq/qwen2.5-coder-0.5b-instruct-native-fp16.fpq",
+    "format": "FPQ0 version 10",
+    "tensors": 290,
+    "weights": 494032768,
+    "runtime_representation": "native-fp16",
+    "runtime_tensor_modes": "0 native-matvec; 290 passthrough"
+  },
+  "runtime": {
+    "backend": "cpu_neon",
+    "layers": 24,
+    "kv_cache_bytes": 805306368,
+    "prompt_tokens": 13,
+    "generated_tokens": 4,
+    "return_code": 0
+  },
+  "measurements": {
+    "model_load_seconds": 6.05244,
+    "prefill_seconds": 51.088569,
+    "first_token_seconds": 51.090201,
+    "wall_generate_seconds": 54.598881,
+    "tokens_per_second_excluding_load": 0.073262,
+    "mlp_seconds": 40.654446,
+    "qkv_seconds": 0.229905,
+    "attention_seconds": 0.018518,
+    "lm_head_seconds": 0.164475
+  },
+  "verdict": "NATIVE_QWEN_LAYER_AND_GENERATION_PATH_PROVEN_NOT_COMPRESSED_FPQ_EXECUTION",
+  "does_not_establish": [
+    "native FPQ block consumption",
+    "block-local FPQ decode or fused FPQ matvec",
+    "FPQ layer/logit/generation parity",
+    "speedup, reduced model residency, or capacity from FPQ",
+    "task-quality or production eligibility"
+  ],
+  "next_gate": "A non-passthrough FPQ representation must execute through the same runtime and meet declared layer, logit and generation preservation envelopes before ResourceAdmission may choose it."
+}

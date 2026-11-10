@@ -1,0 +1,1 @@
+{"cpanelresult":{"apiversion":2,"data":[{"userlist":[{"db":"alphab_wp","user":"alphab_wp"}],"sizemeg":"41.20","db":"alphab_wp","size":"43201331","usercount":1},{"userlist":[],"sizemeg":"0.00","db":"alphab_orders","size":"0","usercount":0}],"event":{"result":1},"func":"listdbs","module":"MysqlFE"}}

@@ -1,0 +1,79 @@
+{
+ "schema": "bonfyre.command-vectors.v1",
+ "binary": "bonfyre-finance",
+ "binary_env": "BONFYRE_FINANCE_BIN",
+ "replaces": [
+  "tests/relationship_states.test.mjs"
+ ],
+ "cases": [
+  {
+   "name": "only satisfied requirements close and automated acknowledgments never count as a human reply",
+   "files": {
+    "opportunities.tsv": "id\tsource_kind\tsource_ref\tsource_digest\tobserved_at\ttitle\tdesired_state\tcompensation_cents\tcurrency\tdeadline\tcontact_boundary\texpected_compute_cents\texpected_external_cents\thuman_minutes\treuse_points\trisk_points\nservice:review\tclassified\thttps://example.test/service:review\t3cf4fb7d7ea8181e0dafb591d7c7aeac46ebba2dfb5dd6cb50581efe7b99910c\t2026-10-09T12:00:00Z\tSource review only\tNo commercial agreement\t-\tUSD\t-\tbuyer_reply_route\t0\t0\t0\t0\t0\nservice:auto\tclassified\thttps://example.test/service:auto\tdef84bf5b648221ab074e83c6a910e320410b41b65d9403e6e05cdfac3a5f922\t2026-10-09T12:00:00Z\tSource review only\tNo commercial agreement\t-\tUSD\t-\tbuyer_reply_route\t0\t0\t0\t0\t0\n",
+    "requirements.tsv": "opportunity_id\tkind\trequirement_key\towner_ref\tstate\tevidence_ref\nservice:review\tmaterial\tcost_basis_confirmed\tfinance:cost\tsatisfied\treceipt:cost-basis\nservice:review\texternal\tsupplier_delivery_conditions\tvendor:supplier\tavailable\treceipt:conditional-quote\nservice:review\tauthority\tbuyer_authorized\tbuyer:approval\tblocked\t-\n"
+   },
+   "steps": [
+    {
+     "argv": [
+      "--db",
+      "${tmp}/finance.db",
+      "opportunity",
+      "import",
+      "--file",
+      "${tmp}/opportunities.tsv"
+     ],
+     "exit": 0,
+     "contains": [
+      "imported\t2"
+     ]
+    },
+    {
+     "argv": [
+      "--db",
+      "${tmp}/finance.db",
+      "opportunity",
+      "requirements-import",
+      "--file",
+      "${tmp}/requirements.tsv"
+     ],
+     "exit": 0,
+     "contains": [
+      "requirements_imported\t3"
+     ]
+    },
+    {
+     "program": "sqlite3",
+     "argv": [
+      "${tmp}/outreach.db",
+      "CREATE TABLE sends(offer_name TEXT NOT NULL,reply_type TEXT,sent_at TEXT,replied_at TEXT);INSERT INTO sends VALUES('service:review','neutral','2026-10-09T12:00:00Z','2026-10-09T13:00:00Z');INSERT INTO sends VALUES('service:review','automated','2026-10-09T12:01:00Z','2026-10-09T14:00:00Z');INSERT INTO sends VALUES('service:auto','automated','2026-10-09T12:02:00Z','2026-10-09T15:00:00Z');"
+     ],
+     "exit": 0
+    },
+    {
+     "argv": [
+      "--db",
+      "${tmp}/finance.db",
+      "relationships",
+      "--outreach-db",
+      "${tmp}/outreach.db"
+     ],
+     "exit": 0,
+     "at": {
+      "relationships.?id=service:review.requirements": {
+       "open": 2,
+       "closed": 1
+      },
+      "relationships.?id=service:review.cost_basis_evidenced": true,
+      "relationships.?id=service:review.replies_classified": 1,
+      "relationships.?id=service:review.last_reply": "neutral",
+      "relationships.?id=service:review.furthest": "replied",
+      "relationships.?id=service:auto.replies_classified": 0,
+      "relationships.?id=service:auto.last_reply": null,
+      "relationships.?id=service:auto.furthest": "sent",
+      "totals.paid": 0
+     }
+    }
+   ]
+  }
+ ]
+}

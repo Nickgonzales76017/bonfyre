@@ -1,0 +1,81 @@
+#!/usr/bin/env python3
+"""Discover typed Channel candidates only from already-retained first-party bodies."""
+import argparse,hashlib,json,os,re,sqlite3,sys,urllib.parse
+import compile_source_frontier as frontier
+KINDS=[('RSS',re.compile(r'application/rss\+xml',re.I)),('ATOM',re.compile(r'application/atom\+xml',re.I)),('RDF',re.compile(r'application/rdf\+xml|/feed/rdf|rdf\.xml',re.I)),('JSON_FEED',re.compile(r'application/feed\+json',re.I)),('ICS',re.compile(r'text/calendar|\.ics(?:[?"\']|$)',re.I)),('WEBSUB',re.compile(r'rel=["\']?hub|websub',re.I)),('ACTIVITYPUB',re.compile(r'application/activity\+json|activitypub',re.I)),('OPENAPI',re.compile(r'openapi|swagger',re.I)),('MCP',re.compile(r'(?:^|[/._-])mcp(?:[/._?-]|$)',re.I)),('A2A',re.compile(r'(?:^|[/._-])a2a(?:[/._?-]|$)',re.I)),('BECKN',re.compile(r'beckn',re.I)),('X402',re.compile(r'x402',re.I))]
+ATTR=re.compile(r'([A-Za-z_:][-A-Za-z0-9_:.]*)\s*=\s*(["\'])(.*?)\2',re.S);TAG=re.compile(r'<(?:link|a|outline)\b[^>]*>',re.I)
+WP_EVIDENCE=re.compile(r'(?:wp-content/|wp-includes/|rel=["\']https://api\.w\.org/["\']|/wp-json(?:/|["\']))',re.I)
+WP_ARCHIVE=re.compile(r'/(?:category|tag|author)/[^?#"\']+/?$',re.I)
+SITEMAP_LOC=re.compile(r'<loc>\s*(https?://[^<\s]+)\s*</loc>',re.I)
+def attrs(tag):return {k.lower():v.strip() for k,_,v in ATTR.findall(tag)}
+def classify(tag,url):
+ text=tag+' '+url
+ for family,rx in KINDS:
+  if rx.search(text):return family
+ if '/api/' in url.lower() or url.lower().endswith(('.json','.geojson')):return 'JSON_API'
+ if 'sitemap' in url.lower():return 'SITEMAP'
+ return None
+def source_rows(db):
+ if not db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='internet_source'").fetchone():return []
+ return db.execute("SELECT source,twin,url,COALESCE(family,'') FROM internet_source WHERE status='published' AND COALESCE(twin,'')<>'' AND COALESCE(url,'')<>'' ORDER BY id").fetchall()
+def main():
+ p=argparse.ArgumentParser();p.add_argument('--cms-db',required=True);p.add_argument('--foreign-root',required=True);p.add_argument('--out',required=True);p.add_argument('--known');p.add_argument('--max-body',type=int,default=2000000);a=p.parse_args()
+ db=sqlite3.connect('file:%s?mode=ro'%a.cms_db,uri=True);sources=list(source_rows(db));db.close();known=set()
+ if a.known:
+  for row in frontier.load_rows(a.known):
+   if isinstance(row,dict):
+    u=frontier.channel_url(row)
+    if u:
+     try:known.add(frontier.canonical_url(u))
+     except Exception:pass
+ for _,_,u,_ in sources:
+  try:known.add(frontier.canonical_url(str(u)))
+  except Exception:pass
+ found={};bodies=0
+ for source,twin,base,family in sources:
+  path=os.path.join(a.foreign_root,'bodies',str(twin)+'.body')
+  if not os.path.isfile(path):continue
+  bodies+=1;raw=open(path,'rb').read(a.max_body);text=raw.decode('utf-8','replace');digest=hashlib.sha256(raw).hexdigest()
+  for tag in TAG.findall(text):
+   at=attrs(tag);href=at.get('href') or at.get('xmlurl')
+   if not href:continue
+   url=urllib.parse.urljoin(str(base),href.replace('&amp;','&'))
+   if not url.startswith(('https://','http://')):continue
+   try:url=frontier.canonical_url(url)
+   except Exception:continue
+   channel=classify(tag,url)
+   if not channel and at.get('xmlurl'):channel='ATOM' if str(at.get('type','')).lower()=='atom' else 'RSS'
+   if not channel:continue
+   key=(url,channel);row=found.setdefault(key,{'url':url,'channel_family':channel,'state':'SHADOW','source_kind':'recursive_channel_candidate','capabilities':['observe'],'discovered_from':[],'already_known':url in known,'truth_level':'observed_link_candidate'})
+   row['discovered_from'].append({'source':str(source),'twin':str(twin),'base_url':str(base),'family':str(family),'body_sha256':digest})
+  provenance={'source':str(source),'twin':str(twin),'base_url':str(base),'family':str(family),'body_sha256':digest}
+  if '<sitemapindex' in text.lower():
+   for loc in SITEMAP_LOC.findall(text):
+    if 'sitemap' not in loc.lower():continue
+    try:u=frontier.canonical_url(loc.replace('&amp;','&'))
+    except Exception:continue
+    key=(u,'SITEMAP');row=found.setdefault(key,{'url':u,'channel_family':'SITEMAP','state':'SHADOW','source_kind':'recursive_channel_candidate','capabilities':['observe'],'discovered_from':[],'already_known':u in known,'truth_level':'observed_xml_index_candidate'});row['discovered_from'].append(provenance)
+  if WP_EVIDENCE.search(text):
+   bp=urllib.parse.urlsplit(str(base));origin=urllib.parse.urlunsplit(((bp.scheme or 'https').lower(),bp.netloc,'/','',''))
+   routes=[('feed/','RSS','site_feed'),('feed/atom/','ATOM','site_atom_feed'),('feed/rdf/','RDF','site_rdf_feed'),('comments/feed/','RSS','comments_feed'),('wp-json/','JSON_API','rest_index'),('wp-json/wp/v2/posts','JSON_API','posts_collection'),('wp-json/wp/v2/pages','JSON_API','pages_collection'),('wp-json/wp/v2/categories','JSON_API','categories_collection'),('wp-json/wp/v2/tags','JSON_API','tags_collection'),('wp-json/wp/v2/media','JSON_API','media_collection'),('wp-sitemap.xml','SITEMAP','sitemap_index')]
+   for suffix,channel,role in routes:
+    try:u=frontier.canonical_url(urllib.parse.urljoin(origin,suffix))
+    except Exception:continue
+    key=(u,channel);row=found.setdefault(key,{'url':u,'channel_family':channel,'state':'SHADOW','source_kind':'wordpress_channel_candidate','capabilities':['observe'],'discovered_from':[],'already_known':u in known,'truth_level':'protocol_derived_candidate','channel_role':role});row['discovered_from'].append(provenance)
+   for tag in TAG.findall(text):
+    at=attrs(tag);href=at.get('href')
+    if not href:continue
+    try:u=frontier.canonical_url(urllib.parse.urljoin(str(base),href.replace('&amp;','&')))
+    except Exception:continue
+    up=urllib.parse.urlsplit(u)
+    if up.netloc.lower()!=bp.netloc.lower() or not WP_ARCHIVE.search(up.path):continue
+    try:f=frontier.canonical_url(u.rstrip('/')+'/feed/')
+    except Exception:continue
+    key=(f,'RSS');row=found.setdefault(key,{'url':f,'channel_family':'RSS','state':'SHADOW','source_kind':'wordpress_archive_feed_candidate','capabilities':['observe'],'discovered_from':[],'already_known':f in known,'truth_level':'protocol_derived_candidate','parent_archive':u});row['discovered_from'].append(provenance)
+ with open(a.out,'w') as out:
+  for row in sorted(found.values(),key=lambda r:(r['url'],r['channel_family'])):
+   row['cannot_infer']=['observed link -> reachable channel','channel candidate -> admission or current content','same root -> same semantic owner','protocol-shaped URL -> capability, authority or permission'];out.write(json.dumps(row,sort_keys=True,separators=(',',':'))+'\n')
+ counts={}
+ for row in found.values():counts[row['channel_family']]=counts.get(row['channel_family'],0)+1
+ print(json.dumps({'schema':'bonfyre.recursive-channel-candidates.v1','retained_bodies_read':bodies,'candidates':len(found),'already_known':sum(r['already_known'] for r in found.values()),'families':dict(sorted(counts.items())),'truth':'observed_link_candidates_only'},sort_keys=True));return 0
+if __name__=='__main__':sys.exit(main())

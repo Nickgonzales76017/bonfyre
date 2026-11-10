@@ -1,0 +1,151 @@
+#!/usr/bin/env python3
+"""Project source demand/impact into BonfyreAttention temperatures.
+
+This is scheduling policy, not semantic ranking.  Inputs remain separately
+typed: candidate pressure, reverse-dependency impact, and open SourceGaps.
+Thresholds are explicit CLI policy so changing them cannot rewrite source truth.
+"""
+
+import argparse
+import json
+import sys
+from collections import defaultdict
+
+import compile_source_frontier as frontier
+
+
+def rows(path):
+    return frontier.load_rows(path) if path else []
+
+
+def index_by_root(path):
+    out = {}
+    for row in rows(path):
+        if isinstance(row, dict) and row.get("root_id"):
+            out[str(row["root_id"])] = row
+    return out
+
+
+def impact_index(path):
+    out = defaultdict(lambda: {"affected_closures": 0, "affected_scenes": 0, "subject_reuse": 0, "scene_reuse": 0})
+    for row in rows(path):
+        if not isinstance(row, dict) or not row.get("root_id"):
+            continue
+        dest = out[str(row["root_id"])]
+        for field in tuple(dest):
+            value = row.get(field)
+            if isinstance(value, (int, float)):
+                dest[field] = max(dest[field], value)
+    return out
+
+
+def gap_index(path):
+    out = defaultdict(list)
+    for row in rows(path):
+        if isinstance(row, dict) and row.get("root_id"):
+            out[str(row["root_id"])].append(row)
+    return out
+
+
+def temperature(root_id, pressure, impact, gaps, args):
+    candidate_closures = int(pressure.get("candidate_closure_reuse") or 0)
+    candidate_occurrences = int(pressure.get("candidate_occurrences") or 0)
+    affected_closures = int(impact.get("affected_closures") or impact.get("subject_reuse") or 0)
+    affected_scenes = int(impact.get("affected_scenes") or impact.get("scene_reuse") or 0)
+
+    if affected_closures >= args.hot_impact_closures or affected_scenes >= args.hot_impact_scenes:
+        return "hot", "measured_reverse_dependency_impact"
+    if candidate_closures >= args.hot_pressure_closures or candidate_occurrences >= args.hot_pressure_occurrences:
+        return "hot", "repeated_scoped_candidate_pressure"
+    if affected_closures or affected_scenes:
+        return "warm", "measured_reverse_dependency_impact"
+    if candidate_closures or candidate_occurrences:
+        return "warm", "scoped_candidate_pressure"
+    if gaps:
+        return "cool", "open_gap_waiting_for_demand_or_resolution"
+    return "cold", "no_current_pressure_impact_or_gap"
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--roots", required=True)
+    ap.add_argument("--gaps", required=True)
+    ap.add_argument("--pressure")
+    ap.add_argument("--impact")
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--hot-pressure-closures", type=int, default=8)
+    ap.add_argument("--hot-pressure-occurrences", type=int, default=32)
+    ap.add_argument("--hot-impact-closures", type=int, default=4)
+    ap.add_argument("--hot-impact-scenes", type=int, default=4)
+    args = ap.parse_args()
+
+    roots = index_by_root(args.roots)
+    pressure = index_by_root(args.pressure)
+    impact = impact_index(args.impact)
+    gaps = gap_index(args.gaps)
+
+    plans = []
+    counts = defaultdict(int)
+    for root_id, root in roots.items():
+        p = pressure.get(root_id, {})
+        i = impact.get(root_id, {})
+        gs = gaps.get(root_id, [])
+        level, basis = temperature(root_id, p, i, gs, args)
+        counts[level] += 1
+        signal = "" if level == "cold" else "source-change:%s" % root_id
+        if level == "cool":
+            signal = "source-demand:%s" % root_id
+        plans.append({
+            "schema": "bonfyre.source-attention-plan.v1",
+            "watch_id": "source-root:%s" % root_id,
+            "subject": "SourceRoot:%s" % root_id,
+            "root_id": root_id,
+            "root_address": root.get("address") or root.get("root_address"),
+            "temperature": level,
+            "reheat_on": signal,
+            "basis": basis,
+            "evidence": {
+                "candidate_closure_reuse": int(p.get("candidate_closure_reuse") or 0),
+                "candidate_occurrences": int(p.get("candidate_occurrences") or 0),
+                "affected_closures": int(i.get("affected_closures") or i.get("subject_reuse") or 0),
+                "affected_scenes": int(i.get("affected_scenes") or i.get("scene_reuse") or 0),
+                "open_gaps": len(gs),
+                "gap_kinds": sorted({str(g.get("kind")) for g in gs if g.get("kind")}),
+            },
+            "policy": {
+                "hot_pressure_closures": args.hot_pressure_closures,
+                "hot_pressure_occurrences": args.hot_pressure_occurrences,
+                "hot_impact_closures": args.hot_impact_closures,
+                "hot_impact_scenes": args.hot_impact_scenes,
+            },
+            "truth": "attention_projection_only_not_admission_fetch_authority_or_value",
+            "cannot_infer": [
+                "hot attention -> poll immediately",
+                "candidate pressure -> source contribution",
+                "reverse dependency impact -> visible material changed",
+                "attention temperature -> semantic rank, authority, rights or economic value",
+            ],
+        })
+
+    order = {"hot": 0, "warm": 1, "cool": 2, "cold": 3}
+    plans.sort(key=lambda row: (
+        order[row["temperature"]],
+        -row["evidence"]["affected_closures"],
+        -row["evidence"]["candidate_closure_reuse"],
+        row["root_id"],
+    ))
+    with open(args.out, "w") as out:
+        for row in plans:
+            out.write(json.dumps(row, sort_keys=True, separators=(",", ":")) + "\n")
+
+    print(json.dumps({
+        "schema": "bonfyre.source-attention-plan-summary.v1",
+        "roots": len(plans),
+        "temperatures": dict(sorted(counts.items())),
+        "truth": "attention_projection_only_not_admission_fetch_authority_or_value",
+    }, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

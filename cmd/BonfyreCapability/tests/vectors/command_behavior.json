@@ -1,0 +1,7 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-capability","binary_env":"BONFYRE_CAPABILITY_BIN","cases":[
+{"name":"a fresh registry answers show, search and match from its seeded capabilities","steps":[
+ {"argv":["status"],"env":{"HOME":"${tmp}","BONFYRE_CAPABILITY_DB":"${tmp}/cap.db"},"exit":0,"contains":["capabilities: "]},
+ {"argv":["show","transcribe"],"env":{"HOME":"${tmp}","BONFYRE_CAPABILITY_DB":"${tmp}/cap.db"},"exit":0,"contains":["binary        : bonfyre-transcribe","stage         : ingest"]},
+ {"argv":["search","pack"],"env":{"HOME":"${tmp}","BONFYRE_CAPABILITY_DB":"${tmp}/cap.db"},"exit":0,"contains":["bonfyre-pack"]},
+ {"argv":["match","transcribe an audio recording"],"env":{"HOME":"${tmp}","BONFYRE_CAPABILITY_DB":"${tmp}/cap.db"},"exit":0,"contains":["[metric: word overlap]","transcribe      bonfyre-transcribe"]}]},
+{"name":"an unknown capability is not found","steps":[{"argv":["show","nope"],"env":{"HOME":"${tmp}","BONFYRE_CAPABILITY_DB":"${tmp}/cap.db"},"exit":1}]}]}

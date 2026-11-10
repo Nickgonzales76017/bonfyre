@@ -1,0 +1,579 @@
+#!/usr/bin/env python3
+"""Compile the Ghost marketplace census into Bonfÿre presentation-reference JSONL.
+
+This is a presentation conversion, not a theme-code importer. The compiler keeps
+Ghost marketplace identity/provenance and records a bounded *reference-candidate*
+vector. It does not claim that marketplace metadata or a name-derived vector is a
+complete observed page profile.
+It never imports Handlebars, Ghost data models, paid assets, CSS or JavaScript.
+
+The checked-in TSV is the current 2026-09-06 marketplace snapshot. A later
+snapshot can be substituted without changing the native surface engine.
+"""
+
+from __future__ import annotations
+
+import argparse
+import csv
+import hashlib
+import json
+import re
+import unicodedata
+from html.parser import HTMLParser
+from pathlib import Path
+from urllib.parse import urljoin, urlparse
+from urllib.request import Request, urlopen
+
+ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_CENSUS = ROOT / "data" / "ghost-marketplace-2026-09-06.tsv"
+
+ACCEPTANCE = (
+    "responsive at chip/card/section/page/workspace extents; keyboard reachable; "
+    "valid semantic HTML; alt/fallback policy for media; readable empty/refused/failed "
+    "states; navigation remains linked; typography, hierarchy, balance, contrast and "
+    "negative space remain coherent; template changes presentation only; Authority "
+    "still gates every effect at its owner"
+)
+
+CANNOT_INFER = (
+    "a Ghost marketplace reference -> Ghost code, paid assets, Handlebars, Ghost "
+    "ontology or a Ghost backend is installed; visual resemblance -> identical source "
+    "implementation; a presentation template -> a semantic owner, a subject, a pack, "
+    "an institution, authority, publication state or permission to act"
+)
+
+FINGERPRINT_CANNOT_INFER = (
+    "a DesignFingerprint -> copied Ghost theme code, CSS, JavaScript, paid asset, "
+    "Ghost ontology or an installed Ghost backend; a visual vector -> a semantic "
+    "claim, subject identity, source admission, audience entitlement, authority or "
+    "permission to act"
+)
+
+OBSERVATION_CANNOT_INFER = (
+    "a public-page anatomy observation -> copied markup, CSS, JavaScript, image, "
+    "Ghost runtime, a selected profile, semantic truth, source admission, audience "
+    "entitlement, authority or permission to act"
+)
+
+PROFILES = {
+    "Blog": {
+        "family": "editorial",
+        "renderer_mix": "vertical board thread",
+        "territory": "life live",
+        "densities": ["airy", "standard"],
+        "heroes": ["lead", "split", "quiet"],
+        "navs": ["header", "minimal"],
+        "media": ["editorial", "cover", "restrained"],
+        "types": ["mixed", "serif", "sans"],
+        "cards": ["borderless", "ruled", "soft"],
+        "chrome": ["quiet", "editorial"],
+        "roles": ["title", "summary", "media", "author", "time", "href"],
+    },
+    "Magazine": {
+        "family": "magazine",
+        "renderer_mix": "vertical board thread market",
+        "territory": "live life shop",
+        "densities": ["compact", "standard"],
+        "heroes": ["lead-grid", "cover", "split"],
+        "navs": ["header", "rail"],
+        "media": ["cover", "editorial", "masonry"],
+        "types": ["mixed", "serif-sans", "sans"],
+        "cards": ["tiled", "ruled", "borderless"],
+        "chrome": ["editorial", "dense"],
+        "roles": ["title", "dek", "media", "author", "time", "metric", "href"],
+    },
+    "News": {
+        "family": "newsroom",
+        "renderer_mix": "vertical thread board inspector",
+        "territory": "live work",
+        "densities": ["compact", "dense"],
+        "heroes": ["headline", "lead-grid", "ticker"],
+        "navs": ["rail", "header"],
+        "media": ["restrained", "cover"],
+        "types": ["serif-sans", "mixed"],
+        "cards": ["ruled", "borderless"],
+        "chrome": ["dense", "editorial"],
+        "roles": ["title", "dek", "media", "source", "time", "status", "href"],
+    },
+    "Newsletter": {
+        "family": "letter",
+        "renderer_mix": "vertical board",
+        "territory": "life work",
+        "densities": ["airy", "standard"],
+        "heroes": ["letter", "quiet", "lead"],
+        "navs": ["minimal", "header"],
+        "media": ["restrained", "editorial"],
+        "types": ["serif", "mixed"],
+        "cards": ["borderless", "ruled"],
+        "chrome": ["quiet", "editorial"],
+        "roles": ["title", "summary", "author", "time", "media", "href"],
+    },
+    "Podcast": {
+        "family": "audio",
+        "renderer_mix": "stage vertical thread",
+        "territory": "live life",
+        "densities": ["standard", "airy"],
+        "heroes": ["stage", "split"],
+        "navs": ["header", "minimal"],
+        "media": ["square", "cover"],
+        "types": ["sans", "mixed"],
+        "cards": ["outlined", "soft"],
+        "chrome": ["quiet", "editorial"],
+        "roles": ["title", "show", "media", "duration", "time", "href"],
+    },
+    "Photography": {
+        "family": "gallery",
+        "renderer_mix": "board vertical spatial",
+        "territory": "live life",
+        "densities": ["airy", "standard"],
+        "heroes": ["media", "gallery"],
+        "navs": ["minimal", "header"],
+        "media": ["masonry", "full-bleed", "contain"],
+        "types": ["sans", "mixed"],
+        "cards": ["borderless", "soft"],
+        "chrome": ["quiet", "minimal"],
+        "roles": ["title", "media", "author", "place", "time", "href"],
+    },
+    "Portfolio": {
+        "family": "portfolio",
+        "renderer_mix": "board vertical inspector",
+        "territory": "life live work",
+        "densities": ["airy", "standard"],
+        "heroes": ["split", "media", "quiet"],
+        "navs": ["minimal", "header"],
+        "media": ["masonry", "contain", "cover"],
+        "types": ["sans", "mixed", "serif"],
+        "cards": ["borderless", "outlined"],
+        "chrome": ["quiet", "minimal"],
+        "roles": ["title", "summary", "media", "role", "time", "href"],
+    },
+    "Docs": {
+        "family": "docs",
+        "renderer_mix": "inspector work thread",
+        "territory": "work",
+        "densities": ["compact", "dense"],
+        "heroes": ["index", "quiet"],
+        "navs": ["sidebar", "rail"],
+        "media": ["contain", "restrained"],
+        "types": ["sans-mono", "sans"],
+        "cards": ["outlined", "ruled"],
+        "chrome": ["dense", "operator"],
+        "roles": ["title", "summary", "section", "status", "time", "href"],
+    },
+}
+
+WIDTHS = ["68rem", "76rem", "84rem", "96rem", "112rem", "1240px"]
+GRID_MINS = ["13rem", "15rem", "17rem", "19rem", "22rem"]
+GAPS = [".7rem", ".9rem", "1.1rem", "1.35rem", "1.6rem"]
+RADII = ["0px", "3px", "6px", "10px", "16px"]
+RATIOS = ["16/9", "4/3", "3/2", "1/1", "2/3"]
+SECTION_SPACES = ["2rem", "2.5rem", "3rem", "3.75rem", "4.5rem"]
+ACCENTS = ["institution", "monochrome", "high-contrast", "muted"]
+
+FONTSETS = {
+    "newsreader": {
+        "display": "'Newsreader',Georgia,serif",
+        "body": "'DM Sans',system-ui,sans-serif",
+        "mono": "'DM Mono',ui-monospace,monospace",
+        "href": "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Newsreader:wght@400;600&display=swap",
+    },
+    "instrument": {
+        "display": "'Instrument Serif',Georgia,serif",
+        "body": "'DM Sans',system-ui,sans-serif",
+        "mono": "'DM Mono',ui-monospace,monospace",
+        "href": "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap",
+    },
+    "plex": {
+        "display": "'IBM Plex Serif',Georgia,serif",
+        "body": "'IBM Plex Sans',system-ui,sans-serif",
+        "mono": "'IBM Plex Mono',ui-monospace,monospace",
+        "href": "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@400;600&display=swap",
+    },
+    "space": {
+        "display": "'Space Grotesk',system-ui,sans-serif",
+        "body": "'DM Sans',system-ui,sans-serif",
+        "mono": "'DM Mono',ui-monospace,monospace",
+        "href": "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap",
+    },
+    "gallery": {
+        "display": "'Cormorant Garamond',Georgia,serif",
+        "body": "Manrope,system-ui,sans-serif",
+        "mono": "'DM Mono',ui-monospace,monospace",
+        "href": "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap",
+    },
+}
+
+CATEGORY_FONTSETS = {
+    "Blog": ["newsreader", "instrument", "space"],
+    "Magazine": ["newsreader", "plex", "space"],
+    "News": ["newsreader", "plex"],
+    "Newsletter": ["instrument", "newsreader", "plex"],
+    "Podcast": ["space", "plex"],
+    "Photography": ["gallery", "space"],
+    "Portfolio": ["gallery", "space", "instrument"],
+    "Docs": ["plex", "space"],
+}
+
+VISUAL_BASES = {
+    "editorial": dict(ground="#f7f4ec", ink="#171714", display="#0c0c0a", muted="#6f6a61", panel="#fffdf8", hue=18, sat=72, light=46),
+    "magazine": dict(ground="#f1eee6", ink="#151515", display="#080808", muted="#69655d", panel="#faf8f2", hue=352, sat=72, light=48),
+    "newsroom": dict(ground="#fbfaf6", ink="#131820", display="#080d14", muted="#5f6872", panel="#ffffff", hue=218, sat=78, light=45),
+    "letter": dict(ground="#fbf8f0", ink="#24201b", display="#14110e", muted="#786f64", panel="#fffdf8", hue=31, sat=66, light=43),
+    "audio": dict(ground="#111015", ink="#f0ecf3", display="#ffffff", muted="#a49aaa", panel="#19171f", hue=284, sat=68, light=62),
+    "gallery": dict(ground="#faf9f6", ink="#1b1a18", display="#0d0c0b", muted="#7a766f", panel="#ffffff", hue=152, sat=47, light=40),
+    "portfolio": dict(ground="#f6f6f3", ink="#171918", display="#0a0c0b", muted="#6f7470", panel="#ffffff", hue=166, sat=55, light=36),
+    "docs": dict(ground="#f8fafc", ink="#1f2933", display="#101820", muted="#667584", panel="#ffffff", hue=211, sat=72, light=43),
+}
+
+DRESS_ROLES = {
+    "ground", "ink", "display", "accent", "muted", "rule", "panel",
+    "face_display", "face_body", "face_mono", "display_size",
+    "display_weight", "display_transform", "display_tracking",
+    "display_leading", "radius", "card_border", "card_shadow", "gap", "measure",
+}
+
+
+def visual_tokens(name: str, category: str, profile: dict, seed: list[int],
+                  card_mode: str) -> dict:
+    """Compile the closed role vocabulary consumed by K.dress.
+
+    Extra geometry stays in the token object for future renderers, but every
+    role the current dresser understands is emitted explicitly. The accent uses
+    a narrow family-local hue variation keyed by the full reference identity;
+    this gives each template a stable fingerprint without turning the palette
+    into arbitrary hash colours.
+    """
+    base = VISUAL_BASES[profile["family"]]
+    fonts = FONTSETS[choose(CATEGORY_FONTSETS[category], seed[9])]
+    digest = hashlib.sha256(name.encode("utf-8")).hexdigest()
+    unit = int(digest[:8], 16) / 0xFFFFFFFF
+    hue = (base["hue"] + (unit - 0.5) * 24.0) % 360.0
+    accent = f"hsl({hue:.4f}deg {base['sat']}% {base['light']}%)"
+    rule = "rgba(255,255,255,.15)" if profile["family"] == "audio" else "rgba(16,24,20,.14)"
+    display_size = f"clamp(2.2rem,{4.8 + (seed[6] % 9) * .35:.2f}vw,{4.2 + (seed[7] % 8) * .35:.2f}rem)"
+    shadow = "none" if card_mode in ("borderless", "ruled") else "0 12px 34px rgba(0,0,0,.09)"
+    border = "0" if card_mode == "borderless" else "1px solid var(--w-rule)"
+    return {
+        "ground": base["ground"], "ink": base["ink"], "display": base["display"],
+        "accent": accent, "muted": base["muted"], "rule": rule, "panel": base["panel"],
+        "face_display": fonts["display"], "face_body": fonts["body"], "face_mono": fonts["mono"],
+        "display_size": display_size, "display_weight": str([400, 500, 600, 700][seed[8] % 4]),
+        "display_transform": "uppercase" if profile["family"] == "newsroom" and seed[5] % 3 == 0 else "none",
+        "display_tracking": choose(["-.065em", "-.045em", "-.025em", "-.01em"], seed[4]),
+        "display_leading": choose([".88", ".94", "1", "1.06"], seed[3]),
+        "radius": choose(RADII, seed[3]), "card_border": border, "card_shadow": shadow,
+        "gap": choose(GAPS, seed[2]), "measure": choose(["48ch", "56ch", "64ch", "72ch"], seed[1]),
+        "font_href": fonts["href"],
+        "content_max": choose(WIDTHS, seed[0]), "grid_min": choose(GRID_MINS, seed[1]),
+        "media_ratio": choose(RATIOS, seed[4]), "section_space": choose(SECTION_SPACES, seed[5]),
+        "headline_scale": round(1.0 + (seed[6] % 8) * 0.05, 2),
+        "body_leading": round(1.42 + (seed[7] % 6) * 0.05, 2),
+        "accent_policy": choose(ACCENTS, seed[8]),
+        "variation_seed": digest[:16],
+    }
+
+
+def slugify(text: str) -> str:
+    value = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode()
+    value = re.sub(r"[^a-zA-Z0-9]+", "-", value).strip("-").lower()
+    return value or "unnamed"
+
+
+def stable_indexes(name: str, count: int = 12) -> list[int]:
+    raw = hashlib.sha256(name.encode("utf-8")).digest()
+    return [raw[i] for i in range(count)]
+
+
+def choose(values: list[str], seed: int) -> str:
+    return values[seed % len(values)]
+
+
+def primary_category(categories: list[str]) -> str:
+    # Mixed Source is intentionally magazine-first for layout, while its full
+    # category closure remains recorded on the template.
+    for key in ("Magazine", "News", "Newsletter", "Podcast", "Photography",
+                "Portfolio", "Docs", "Blog"):
+        if key in categories:
+            return key
+    return "Blog"
+
+
+def compile_row(name: str, category_text: str) -> dict:
+    categories = [x.strip() for x in category_text.split(",") if x.strip()]
+    category = primary_category(categories)
+    profile = PROFILES[category]
+    seed = stable_indexes(name)
+    slug = slugify(name)
+    density = choose(profile["densities"], seed[9])
+    hero_mode = choose(profile["heroes"], seed[10])
+    navigation_mode = choose(profile["navs"], seed[11])
+    media_mode = choose(profile["media"], seed[0] + seed[5])
+    typography_mode = choose(profile["types"], seed[1] + seed[6])
+    card_mode = choose(profile["cards"], seed[2] + seed[7])
+    chrome_mode = choose(profile["chrome"], seed[3] + seed[8])
+    tokens = visual_tokens(name, category, profile, seed, card_mode)
+
+    return {
+        "template": f"ghost-{slug}",
+        "reference_source": "ghost-marketplace@2026-09-06",
+        "reference_name": name,
+        "reference_url": f"https://ghost.org/themes/{slug}/",
+        "reference_author": "",
+        "reference_categories": ",".join(categories),
+        "reference_price": "",
+        "family": profile["family"],
+        "renderer_mix": profile["renderer_mix"],
+        "density": density,
+        "hero_mode": hero_mode,
+        "navigation_mode": navigation_mode,
+        "media_mode": media_mode,
+        "typography_mode": typography_mode,
+        "card_mode": card_mode,
+        "chrome_mode": chrome_mode,
+        "territory_affinity": profile["territory"],
+        "semantic_roles": {
+            "accepts": profile["roles"],
+            "required": ["title"],
+            "optional": [x for x in profile["roles"] if x != "title"],
+        },
+        "layout_tokens": tokens,
+        "acceptance_contract": ACCEPTANCE,
+        "cannot_infer": CANNOT_INFER,
+        # Marketplace identity/category is enough to queue a study. It is not
+        # enough to select a production site profile. A selected profile needs
+        # observed masthead, section sequence, media geometry, interaction,
+        # responsive and slot-contract evidence.
+        "status": "reference_candidate",
+    }
+
+
+def fingerprint_row(template: dict) -> dict:
+    """Extract the renderer-selectable visual vector from one authored template.
+
+    The template remains the presentation contract.  This separate, immutable
+    fingerprint is deliberately smaller: it is the evidence a selector may use
+    to compare visual languages without reading a donor implementation or
+    accidentally treating style as semantic truth.
+    """
+    tokens = template["layout_tokens"]
+    vector_keys = (
+        "ground", "ink", "display", "accent", "muted", "rule", "panel",
+        "face_display", "face_body", "face_mono", "display_size",
+        "display_weight", "display_transform", "display_tracking",
+        "display_leading", "radius", "card_border", "card_shadow", "gap",
+        "measure", "content_max", "grid_min", "media_ratio", "section_space",
+        "headline_scale", "body_leading", "accent_policy", "variation_seed",
+    )
+    vector = {key: tokens[key] for key in vector_keys}
+    return {
+        "fingerprint_id": f"ghost:{template['template']}",
+        "template": template["template"],
+        "reference_source": template["reference_source"],
+        "reference_name": template["reference_name"],
+        "family": template["family"],
+        "renderer_affinity": template["renderer_mix"],
+        "density": template["density"],
+        "visual_vector": vector,
+        "acceptance_contract": template["acceptance_contract"],
+        "cannot_infer": FINGERPRINT_CANNOT_INFER,
+        "status": "reference_candidate",
+    }
+
+
+def read_census(path: Path) -> list[tuple[str, str]]:
+    with path.open(newline="", encoding="utf-8") as fh:
+        reader = csv.DictReader(fh, delimiter="\t")
+        rows = [(r["name"].strip(), r["categories"].strip()) for r in reader]
+    if not rows:
+        raise SystemExit(f"no theme rows in {path}")
+    names = [name for name, _ in rows]
+    if len(names) != len(set(names)):
+        raise SystemExit("duplicate marketplace theme names in census")
+    return rows
+
+
+class PublicAnatomy(HTMLParser):
+    """Measure public structure without retaining any page body or donor code."""
+
+    INTERESTING = {"header", "nav", "main", "section", "article", "h1", "h2",
+                  "h3", "img", "form", "button", "a", "footer"}
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.counts = {tag: 0 for tag in self.INTERESTING}
+        self.sequence: list[str] = []
+        self.header_depth = 0
+        self.header_links = 0
+        self.first_article_at: int | None = None
+        self.first_h1_at: int | None = None
+        self.images_before_article = 0
+        self.image_ratios: dict[str, int] = {}
+        self.stylesheets: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        attrs_map = dict(attrs)
+        if tag in self.INTERESTING:
+            self.counts[tag] += 1
+            if len(self.sequence) < 96:
+                self.sequence.append(tag)
+        if tag == "header":
+            self.header_depth += 1
+        if tag == "a" and self.header_depth:
+            self.header_links += 1
+        if tag == "h1" and self.first_h1_at is None:
+            self.first_h1_at = len(self.sequence)
+        if tag == "article" and self.first_article_at is None:
+            self.first_article_at = len(self.sequence)
+        if tag == "img":
+            if self.first_article_at is None:
+                self.images_before_article += 1
+            width, height = attrs_map.get("width"), attrs_map.get("height")
+            if width and height and width.isdigit() and height.isdigit() and int(height):
+                ratio = round(int(width) / int(height), 2)
+                self.image_ratios[str(ratio)] = self.image_ratios.get(str(ratio), 0) + 1
+        if tag == "link" and (attrs_map.get("rel") or "").lower() == "stylesheet" and attrs_map.get("href"):
+            self.stylesheets.append(attrs_map["href"])
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag == "header" and self.header_depth:
+            self.header_depth -= 1
+
+
+def fetch_public(url: str) -> tuple[bytes, str]:
+    """Fetch one public representation; callers retain only digestable measurements."""
+    parsed = urlparse(url)
+    if parsed.scheme != "https" or not parsed.netloc:
+        raise SystemExit("observation URL must be an absolute https URL")
+    request = Request(url, headers={"User-Agent": "Bonfyre-DesignObservation/1.0", "Accept": "text/html,application/xhtml+xml"})
+    with urlopen(request, timeout=20) as response:  # nosec B310: https is enforced above
+        body = response.read(2_000_000)
+        if len(body) >= 2_000_000:
+            raise SystemExit("observation body exceeds 2 MB bound")
+        content_type = response.headers.get_content_type()
+    if content_type not in ("text/html", "application/xhtml+xml"):
+        raise SystemExit(f"observation did not return HTML: {content_type}")
+    return body, response.geturl()
+
+
+def observe_public_page(label: str, url: str) -> dict:
+    """Return a closed observation vector, never the page or its implementation."""
+    body, final_url = fetch_public(url)
+    parser = PublicAnatomy()
+    parser.feed(body.decode("utf-8", "replace"))
+    stylesheet_digests = []
+    for href in parser.stylesheets[:12]:
+        asset_url = urljoin(final_url, href)
+        asset = urlparse(asset_url)
+        if asset.scheme != "https" or asset.netloc != urlparse(final_url).netloc:
+            continue
+        try:
+            request = Request(asset_url, headers={"User-Agent": "Bonfyre-DesignObservation/1.0", "Accept": "text/css"})
+            with urlopen(request, timeout=12) as response:  # nosec B310: https and same-origin above
+                css = response.read(1_000_000)
+            stylesheet_digests.append(hashlib.sha256(css).hexdigest())
+        except OSError:
+            # A missing stylesheet is evidence of an incomplete observation, not
+            # a reason to invent responsive behavior from its filename.
+            continue
+    css_digest = hashlib.sha256("".join(stylesheet_digests).encode()).hexdigest() if stylesheet_digests else ""
+    vector = {
+        "measurement_kind": "public_page_anatomy.v1",
+        "html_sha256": hashlib.sha256(body).hexdigest(),
+        "stylesheet_sha256": css_digest,
+        "stylesheet_count_observed": len(stylesheet_digests),
+        "landmark_counts": parser.counts,
+        "masthead": {"headers": parser.counts["header"], "navs": parser.counts["nav"], "links_in_header": parser.header_links},
+        "hero": {"h1_before_first_article": parser.first_h1_at is not None and (parser.first_article_at is None or parser.first_h1_at < parser.first_article_at), "images_before_first_article": parser.images_before_article},
+        "editorial_sequence": parser.sequence,
+        "media_geometry": {"images": parser.counts["img"], "declared_aspect_ratios": parser.image_ratios},
+        "interaction_posture": {"links": parser.counts["a"], "forms": parser.counts["form"], "buttons": parser.counts["button"]},
+        "typed_slots": {key: parser.counts[key] for key in ("h1", "h2", "h3", "article", "section")},
+    }
+    identity = hashlib.sha256((label + "\n" + final_url).encode()).hexdigest()[:24]
+    return {
+        "fingerprint_id": f"ghost-observed:{identity}",
+        "template": label,
+        "reference_source": "public-ghost-observation",
+        "reference_name": label,
+        "reference_url": final_url,
+        "family": "observed-reference",
+        "renderer_affinity": "unselected",
+        "density": "observed",
+        "visual_vector": vector,
+        "acceptance_contract": ACCEPTANCE,
+        "cannot_infer": OBSERVATION_CANNOT_INFER,
+        "status": "observed_reference",
+    }
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--census", type=Path, default=DEFAULT_CENSUS)
+    ap.add_argument("--out", type=Path)
+    ap.add_argument("--fingerprints-out", type=Path,
+                    help="write one closed DesignFingerprint JSON object per template")
+    ap.add_argument("--observe", action="append", default=[], metavar="LABEL=HTTPS_URL",
+                    help="measure one public Ghost page into an observed reference; retain no donor bytes")
+    ap.add_argument("--observations-out", type=Path,
+                    help="write observed public-page anatomy fingerprints (requires --observe)")
+    ap.add_argument("--expect", type=int, default=238)
+    args = ap.parse_args()
+
+    census = read_census(args.census)
+    if args.expect and len(census) != args.expect:
+        raise SystemExit(f"expected {args.expect} themes, found {len(census)}")
+
+    docs = [compile_row(name, cats) for name, cats in census]
+    fingerprints = {}
+    for doc in docs:
+        tok = doc["layout_tokens"]
+        missing = DRESS_ROLES - set(tok)
+        if missing:
+            raise SystemExit(f"{doc['template']} missing dresser roles: {sorted(missing)}")
+        if not tok.get("font_href", "").startswith("https://fonts.googleapis.com/"):
+            raise SystemExit(f"{doc['template']} has no loadable font declaration")
+        fingerprint = (tok["ground"], tok["accent"], tok["face_display"])
+        if fingerprint in fingerprints:
+            raise SystemExit(
+                f"duplicate visual fingerprint: {doc['template']} and {fingerprints[fingerprint]}")
+        fingerprints[fingerprint] = doc["template"]
+
+    fingerprint_docs = [fingerprint_row(doc) for doc in docs]
+    ids = [doc["fingerprint_id"] for doc in fingerprint_docs]
+    if len(ids) != len(set(ids)):
+        raise SystemExit("duplicate DesignFingerprint identity")
+    vectors = [json.dumps(doc["visual_vector"], sort_keys=True, separators=(",", ":"))
+               for doc in fingerprint_docs]
+    if len(vectors) != len(set(vectors)):
+        raise SystemExit("duplicate closed DesignFingerprint visual vector")
+
+    payload = "".join(json.dumps(doc, separators=(",", ":"), ensure_ascii=False) + "\n"
+                      for doc in docs)
+    if args.out:
+        args.out.parent.mkdir(parents=True, exist_ok=True)
+        args.out.write_text(payload, encoding="utf-8")
+    else:
+        print(payload, end="")
+    if args.fingerprints_out:
+        args.fingerprints_out.parent.mkdir(parents=True, exist_ok=True)
+        args.fingerprints_out.write_text(
+            "".join(json.dumps(doc, separators=(",", ":"), ensure_ascii=False) + "\n"
+                      for doc in fingerprint_docs), encoding="utf-8")
+    if args.observations_out:
+        observations = []
+        for spec in args.observe:
+            label, marker, url = spec.partition("=")
+            if not marker or not label or not url:
+                raise SystemExit("--observe requires LABEL=HTTPS_URL")
+            observations.append(observe_public_page(label, url))
+        if not observations:
+            raise SystemExit("--observations-out requires at least one --observe")
+        args.observations_out.parent.mkdir(parents=True, exist_ok=True)
+        args.observations_out.write_text(
+            "".join(json.dumps(doc, separators=(",", ":"), ensure_ascii=False) + "\n"
+                    for doc in observations), encoding="utf-8")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

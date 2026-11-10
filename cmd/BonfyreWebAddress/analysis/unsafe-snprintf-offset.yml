@@ -1,0 +1,6 @@
+id: web-address-unsafe-snprintf-offset
+language: C
+severity: warning
+message: snprintf returns required length, not bytes stored; a truncated write can move the offset beyond the buffer
+rule:
+  pattern: $W += (size_t)snprintf($BUF + $W, $$$ARGS)

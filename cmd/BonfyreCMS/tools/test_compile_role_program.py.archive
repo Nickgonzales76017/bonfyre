@@ -1,0 +1,49 @@
+#!/usr/bin/env python3
+"""Role programs compose shared substrate without producing authority."""
+from __future__ import annotations
+
+import importlib.util
+import json
+import subprocess
+import tempfile
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[3]
+role_spec = json.loads((ROOT / "schemas/control/role-program-specs.json").read_text())
+foundry_spec = json.loads((ROOT / "schemas/control/foundry-behavior-specs.json").read_text())
+role_tool = ROOT / "cmd/BonfyreCMS/tools/compile_role_program.py"
+foundry_tool = ROOT / "cmd/BonfyreCMS/tools/compile_foundry_behavior.py"
+
+def load(path: Path, name: str):
+    spec = importlib.util.spec_from_file_location(name, path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+roles = load(role_tool, "role_program")
+foundry = load(foundry_tool, "foundry_behavior")
+result = roles.compile_roles(role_spec, foundry.compile_spec(foundry_spec))
+programs = {row["role_id"]: row for row in result["programs"]}
+assert set(programs) == {"brand-operator", "go-to-market-engineer", "internet-operator"}
+assert programs["brand-operator"]["exact_operations"] == []
+assert set(programs["internet-operator"]["exact_operations"]) == {"Community.join", "Occurrence.follow", "Project.support"}
+assert {"Community.publish", "Occurrence.host"} <= set(programs["internet-operator"]["unresolved_operations"])
+assert "community:moderate" in programs["internet-operator"]["authority_requirements"]
+assert "effect authority" in result["cannot_infer"]
+assert all("authority" not in row for row in programs["brand-operator"]["surface_scene"].values())
+cms = ROOT / "cmd/BonfyreCMS/bonfyre-cms"
+if cms.exists():
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        schemas = root / "schemas"
+        schemas.mkdir()
+        for name in ("role_program.json",):
+            (schemas / name).write_text((ROOT / "cmd/BonfyreCMS/content-types" / name).read_text())
+        db = root / "roles.db"
+        subprocess.run([cms, "schema", "migrate", "--db", str(db), "--schemas", str(schemas)], check=True, stdout=subprocess.DEVNULL)
+        for program in result["programs"]:
+            subprocess.run([cms, "entry", "create", "role_program", json.dumps(program), "--ns", "root", "--db", str(db), "--schemas", str(schemas)], check=True, stdout=subprocess.DEVNULL)
+        rows = subprocess.check_output(["sqlite3", str(db), "SELECT count(*) FROM role_program WHERE status='published'"], text=True).strip()
+        assert rows == "3"
+print("role program compiler: PASS")

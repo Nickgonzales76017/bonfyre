@@ -1,0 +1,7 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-space","binary_env":"BONFYRE_SPACE_BIN","cases":[
+{"name":"a value put in a space is read back exactly; an absent key is a refusal, not an answer","steps":[
+ {"argv":["open","job1"],"env":{"HOME":"${tmp}","BONFYRE_SPACE_DB":"${tmp}/s.db"},"exit":0},
+ {"argv":["put","job1","k1","hello"],"env":{"HOME":"${tmp}","BONFYRE_SPACE_DB":"${tmp}/s.db"},"exit":0,"contains":["written: job1/k1 (5 bytes)"]},
+ {"argv":["get","job1","k1"],"env":{"HOME":"${tmp}","BONFYRE_SPACE_DB":"${tmp}/s.db"},"exit":0,"stdout":"hello\n"},
+ {"argv":["get","job1","nope"],"env":{"HOME":"${tmp}","BONFYRE_SPACE_DB":"${tmp}/s.db"},"exit":1,"stdout":""},
+ {"argv":["stats","job1"],"env":{"HOME":"${tmp}","BONFYRE_SPACE_DB":"${tmp}/s.db"},"exit":0,"contains":["keys      : 1","size      : 5 bytes"]}]}]}

@@ -1,0 +1,84 @@
+{
+  "name": "intake_package",
+  "displayName": "Intake Package",
+  "description": "Hot/cold projection of a portable intake package with promoted routing fields and compact JSON sidecars.",
+  "attributes": {
+    "schema_version": {
+      "type": "integer",
+      "required": true
+    },
+    "exported_at": {
+      "type": "datetime"
+    },
+    "manifest_job_id": {
+      "type": "string",
+      "required": true
+    },
+    "manifest_job_slug": {
+      "type": "string",
+      "required": true
+    },
+    "manifest_client_name": {
+      "type": "string"
+    },
+    "manifest_client_contact": {
+      "type": "string"
+    },
+    "manifest_job_title": {
+      "type": "string",
+      "required": true
+    },
+    "manifest_output_goal": {
+      "type": "string",
+      "required": true
+    },
+    "manifest_context_notes": {
+      "type": "text"
+    },
+    "manifest_status": {
+      "type": "string"
+    },
+    "manifest_created_at": {
+      "type": "datetime",
+      "required": true
+    },
+    "manifest_file_name": {
+      "type": "string"
+    },
+    "manifest_file_type": {
+      "type": "string"
+    },
+    "manifest_file_size": {
+      "type": "integer"
+    },
+    "source_file_name": {
+      "type": "string",
+      "required": true
+    },
+    "source_file_type": {
+      "type": "string"
+    },
+    "source_file_kind": {
+      "type": "enumeration",
+      "enum": [
+        "audio_file",
+        "transcript_file"
+      ]
+    },
+    "source_file_size": {
+      "type": "integer"
+    },
+    "source_file_payload_chars": {
+      "type": "integer"
+    },
+    "source_file_payload_sha1": {
+      "type": "string"
+    },
+    "manifest_json": {
+      "type": "json"
+    },
+    "source_file_json": {
+      "type": "json"
+    }
+  }
+}

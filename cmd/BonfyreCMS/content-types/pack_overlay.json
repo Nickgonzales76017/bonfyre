@@ -1,0 +1,39 @@
+{
+  "name": "pack_overlay",
+  "displayName": "Pack Overlay",
+  "description": "A sparse specialization of a parent pack, restricted to a closed list of verbs: hide, add, specialize, present, tighten, default. There is deliberately no verb for granting authority, widening disclosure, rewriting identity, dropping evidence, or promoting an observation to a fact.",
+  "attributes": {
+    "overlay": {
+      "type": "string",
+      "required": true
+    },
+    "overrides": {
+      "type": "string",
+      "required": true
+    },
+    "layer": {
+      "type": "string",
+      "required": true
+    },
+    "verb": {
+      "type": "string",
+      "required": true
+    },
+    "target": {
+      "type": "string",
+      "required": true
+    },
+    "value": {
+      "type": "string",
+      "required": false
+    },
+    "why": {
+      "type": "string",
+      "required": true
+    },
+    "status": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

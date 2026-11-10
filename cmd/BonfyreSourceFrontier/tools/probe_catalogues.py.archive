@@ -1,0 +1,276 @@
+#!/usr/bin/env python3
+"""Ask a host whether it keeps a catalogue, at the addresses catalogues live at.
+
+This estate reads feeds and calendars well and had never once read an open-data
+catalogue, which is the material every program needs: parcels, permits,
+inspections, crashes, facilities, procurement.  One portal answers with a
+thousand datasets where a newsroom feed answers with twenty articles, so the
+gap was not small.
+
+Nothing here is a new reader.  The page organ already reads arbitrary JSON by
+dotpath -- an extract path to an array, and the fields inside each row that are
+its title, its note and its link -- so a DCAT, CKAN, Socrata or ArcGIS
+catalogue is readable today.  What was missing was asking.
+
+The addresses are derived from protocol convention rather than observed in
+anyone's markup, so a candidate here is protocol_derived_candidate and nothing
+stronger.  Each one is asked through the ordinary observer, so robots.txt
+decides, and a host that says no is recorded as having said no.
+
+  Historical Python oracle; live command is probe_catalogues.mjs.
+"""
+import argparse, concurrent.futures, hashlib, json, os, re, subprocess, sys, tempfile, threading, urllib.parse
+
+# Where a thing lives, and how to read what it answers with.
+#
+#   json        the page organ's JSON regime: a dotpath to an array, then the
+#               fields inside each row that are its title, note and link
+#   rss         the regime it already uses for feeds
+#   capability  an interface, not material: recorded as a channel so the
+#               capability side can see it, never read as something to show
+#
+# Every address here is a convention, not an observation, so anything found is
+# protocol_derived_candidate and the host still decides through robots.
+CONVENTIONS = [
+    # Open data catalogues: one answer is a thousand datasets.
+    {"name": "dcat", "path": "/data.json", "reads": "json",
+     "extract": "dataset", "title": "title", "meta": "description", "link": "landingPage"},
+    {"name": "dcat-catalog", "path": "/catalog/data.json", "reads": "json",
+     "extract": "dataset", "title": "title", "meta": "description", "link": "landingPage"},
+    {"name": "ckan", "path": "/api/3/action/current_package_list_with_resources?limit=50", "reads": "json",
+     "extract": "result", "title": "title", "meta": "notes", "link": "url"},
+    {"name": "ckan-search", "path": "/api/3/action/package_search?rows=50", "reads": "json",
+     "extract": "result.results", "title": "title", "meta": "notes", "link": "url"},
+    {"name": "socrata", "path": "/api/views.json?limit=50", "reads": "json",
+     "extract": "", "title": "name", "meta": "description", "link": "id"},
+    {"name": "arcgis", "path": "/arcgis/rest/services?f=json", "reads": "json",
+     "extract": "services", "title": "name", "meta": "type", "link": "url"},
+    {"name": "arcgis-hub", "path": "/api/v3/datasets", "reads": "json",
+     "extract": "data", "title": "id", "meta": "type", "link": "id"},
+    # Feeds at the addresses feeds are kept at. Most of this estate's roots
+    # have no admitted channel because nobody asked here.
+    {"name": "feed", "path": "/feed", "reads": "rss"},
+    {"name": "feed-xml", "path": "/feed.xml", "reads": "rss"},
+    {"name": "rss-xml", "path": "/rss.xml", "reads": "rss"},
+    {"name": "atom-xml", "path": "/atom.xml", "reads": "rss"},
+    {"name": "index-xml", "path": "/index.xml", "reads": "rss"},
+    {"name": "rss-feed", "path": "/rss", "reads": "rss"},
+    {"name": "blog-feed", "path": "/blog/feed", "reads": "rss"},
+    {"name": "news-feed", "path": "/news/feed", "reads": "rss"},
+    # JSON Feed says what it is in its own body.
+    {"name": "json-feed", "path": "/feed.json", "reads": "json",
+     "extract": "items", "title": "title", "meta": "summary", "link": "url"},
+    # Interfaces. Recorded so the capability side can see what a host offers;
+    # never read as material, because an interface is not something to show.
+    {"name": "openapi", "path": "/openapi.json", "reads": "capability"},
+    {"name": "openapi-v3", "path": "/v3/api-docs", "reads": "capability"},
+    {"name": "swagger", "path": "/swagger.json", "reads": "capability"},
+    {"name": "openapi-wellknown", "path": "/.well-known/openapi.json", "reads": "capability"},
+    {"name": "nodeinfo", "path": "/.well-known/nodeinfo", "reads": "capability"},
+]
+
+
+def host_of(address):
+    try:
+        host = (urllib.parse.urlparse(address).hostname or "").lower().strip(".")
+    except ValueError:
+        return ""
+    return host[4:] if host.startswith("www.") else host
+
+
+def source_id(host, kind):
+    flat = re.sub(r"[^a-z0-9]+", "-", host.lower()).strip("-")[:40]
+    return "%s-%s-%s" % (kind, flat, hashlib.sha256(host.encode()).hexdigest()[:6])
+
+
+FEEDISH = re.compile(r"<(rss|feed|rdf:RDF)\b", re.I)
+FEED_ITEM = re.compile(r"<(item|entry)\b", re.I)
+
+
+def rows_at(doc, extract):
+    """The array a convention says the rows live in, or the document itself."""
+    node = doc
+    if extract:
+        for step in extract.split("."):
+            if not isinstance(node, dict) or step not in node:
+                return None
+            node = node[step]
+    return node if isinstance(node, list) else None
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--hosts", required=True, help="one host or address per line")
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--census", default="", help="census rows for what answered")
+    ap.add_argument("--project", default=os.path.expanduser(
+        "~/Developer/Bonfyre/components/BonfyreProject/bonfyre-project"))
+    ap.add_argument("--limit", type=int, default=400)
+    ap.add_argument("--workers", type=int, default=8,
+                    help="hosts asked at once; never two questions to one host at a time")
+    ap.add_argument("--min-rows", type=int, default=5,
+                    help="a catalogue with almost nothing in it is not worth an address")
+    args = ap.parse_args()
+
+    hosts, seen = [], set()
+    for line in open(args.hosts):
+        host = host_of(line.strip()) if "://" in line else line.strip().lower().strip(".")
+        if host.startswith("www."):
+            host = host[4:]
+        if not host or host in seen or not re.match(r"^[a-z0-9.-]+\.[a-z]{2,}$", host):
+            continue
+        seen.add(host)
+        hosts.append(host)
+        if len(hosts) >= args.limit:
+            break
+
+    lock = threading.Lock()
+    found, census = [], []
+    tally = {"no_answer": 0, "unusable": 0, "robots_denied": 0}
+
+    def ask(host, convention):
+        """One question to one host, through the observer that honours robots."""
+        address = "https://%s%s" % (host, convention["path"])
+        handle = tempfile.NamedTemporaryFile(delete=False, suffix=".body")
+        handle.close()
+        receipt = handle.name + ".receipt"
+        text = ""
+        try:
+            done = subprocess.run(
+                [args.project, "foreign", "observe", source_id(host, convention["name"]),
+                 address, "--observe-right", "public", "--body", handle.name, "--receipt", receipt],
+                capture_output=True, text=True, timeout=60)
+            try:
+                with open(handle.name, "r", errors="replace") as f:
+                    text = f.read(600000)
+            except OSError:
+                text = ""
+            said = (done.stdout or "") + (done.stderr or "")
+        except Exception:
+            said = ""
+        finally:
+            for path in (handle.name, receipt):
+                if os.path.exists(path):
+                    os.unlink(path)
+        return address, text, said
+
+    def carried(host, convention):
+        """What this convention found here, or nothing."""
+        address, text, said = ask(host, convention)
+        if not text.strip():
+            with lock:
+                tally["robots_denied" if "robots" in said.lower() else "no_answer"] += 1
+            return None
+        ident = source_id(host, convention["name"])
+        seen_rows = 0
+        if convention["reads"] == "rss":
+            if not FEEDISH.search(text[:4000]):
+                with lock:
+                    tally["unusable"] += 1
+                return None
+            seen_rows = len(FEED_ITEM.findall(text))
+            if seen_rows < args.min_rows:
+                with lock:
+                    tally["unusable"] += 1
+                return None
+            reading = {"extract": "rss:item", "title_field": "title",
+                       "meta_field": "", "link_field": "link", "family": "news",
+                       "kind": "text", "cadence": 1800}
+        else:
+            try:
+                doc = json.loads(text)
+            except Exception:
+                with lock:
+                    tally["unusable"] += 1
+                return None
+            if convention["reads"] == "capability":
+                # An interface says what it is; nothing here is material.
+                if not isinstance(doc, dict) or not (
+                        doc.get("openapi") or doc.get("swagger") or doc.get("links") or doc.get("paths")):
+                    with lock:
+                        tally["unusable"] += 1
+                    return None
+                reading = None
+            else:
+                rows = rows_at(doc, convention["extract"])
+                if rows is None or len(rows) < args.min_rows:
+                    with lock:
+                        tally["unusable"] += 1
+                    return None
+                sample = next((r for r in rows if isinstance(r, dict)), None)
+                if not sample or not sample.get(convention["title"]):
+                    with lock:
+                        tally["unusable"] += 1
+                    return None
+                seen_rows = len(rows)
+                reading = {"extract": convention["extract"] or "", "title_field": convention["title"],
+                           "meta_field": convention.get("meta", ""), "link_field": convention.get("link", ""),
+                           "family": "datasets", "kind": "text", "cadence": 86400}
+
+        channel = {"root": host, "address": address, "protocol": convention["name"],
+                   "title": "%s at %s" % (convention["name"], host),
+                   "truth_level": "protocol_derived_candidate",
+                   "discovered_from": "asked at the address a %s is conventionally kept at"
+                                      % convention["name"]}
+        row = None
+        if reading:
+            row = {"family": reading["family"], "source": ident,
+                   "label": "%s %s" % (host, reading["family"]),
+                   "says": "what %s publishes at its %s" % (host, convention["name"]),
+                   "note": "%s, read from the address the host answers at" % convention["name"],
+                   "url": address, "twin": ident, "tier": "WARM", "kind": reading["kind"],
+                   "cadence_seconds": reading["cadence"], "status": "published",
+                   # The census applier writes every key of "reading" straight
+                   # onto the source row, so the whole regime belongs in there.
+                   "reading": {"extract": reading["extract"],
+                               "title_field": reading["title_field"],
+                               "meta_field": reading["meta_field"],
+                               "link_field": reading["link_field"]},
+                   "publisher_ident": "", "publisher_name": host,
+                   "compiled_by": "convention-probe", "rows_seen": seen_rows}
+        return channel, row
+
+    def sweep(host):
+        """Each host is asked for one catalogue, one feed and one interface.
+        Past the first answer in a category the rest are the same estate said
+        twice, so it stops rather than asking again."""
+        for category in ("json", "rss", "capability"):
+            for convention in CONVENTIONS:
+                if convention["reads"] != category:
+                    continue
+                got = carried(host, convention)
+                if got:
+                    channel, row = got
+                    with lock:
+                        found.append(channel)
+                        if row:
+                            census.append(row)
+                    break
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as pool:
+        list(pool.map(sweep, hosts))
+
+    with open(args.out, "w") as out:
+        for row in found:
+            out.write(json.dumps(row) + "\n")
+    if args.census:
+        with open(args.census, "w") as out:
+            json.dump(census, out, indent=1)
+
+    print(json.dumps({
+        "hosts_asked": len(hosts), "answered": len(found),
+        "readable_sources": len(census),
+        "by_protocol": {p: sum(1 for f in found if f["protocol"] == p)
+                        for p in sorted({f["protocol"] for f in found})},
+        "did_not_answer": tally["no_answer"], "answered_with_nothing_usable": tally["unusable"],
+        "robots_denied": tally["robots_denied"],
+        "rows_listed": sum(c["rows_seen"] for c in census),
+        "cannot_infer": "a catalogue answering here is a host publishing a list of datasets; it is "
+                        "not permission to use them, not a claim about what any dataset contains, "
+                        "and not a relationship with the publisher",
+    }))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

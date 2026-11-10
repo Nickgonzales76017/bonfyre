@@ -1,0 +1,10 @@
+#!/usr/bin/env python3
+# Historical witness; public_carrier_collector.test.mjs supersedes it.
+import importlib.util
+from pathlib import Path
+ROOT=Path(__file__).resolve().parents[3];s=importlib.util.spec_from_file_location("e",ROOT/"cmd/BonfyreExternalEstate/tools/collect_jsonld_event.py");m=importlib.util.module_from_spec(s);s.loader.exec_module(m)
+p=m.event_from_html('<script type="application/ld+json">{"@type":"Event","name":"Meet","url":"https://events.test/m","startDate":"2026-10-01"}</script>','https://events.test/m');assert p["title"]=="Meet"
+try:m.event_from_html('<html></html>','https://events.test/m')
+except m.Refusal:pass
+else:raise AssertionError("missing event admitted")
+print("jsonld event collector: PASS")

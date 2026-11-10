@@ -1,0 +1,12 @@
+{
+  "name": "training_program_draft",
+  "displayName": "Training Program Draft",
+  "description": "A studio library routine with optimistic revision checks and native edit history.",
+  "attributes": {
+    "draft_key": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "revision": {"type": "integer", "required": true},
+    "routine": {"type": "json", "required": true},
+    "content_sha": {"type": "string", "required": true},
+    "editor_actor": {"type": "string", "required": true}
+  }
+}

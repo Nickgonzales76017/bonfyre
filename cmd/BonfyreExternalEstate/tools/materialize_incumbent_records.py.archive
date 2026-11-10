@@ -1,0 +1,37 @@
+#!/usr/bin/env python3
+"""Historical Python materializer; materialize_incumbent_records.mjs owns this path.
+
+Inputs are provider-normalized receipts. No fetch happens here and records
+whose authority is private (membership, roles, payments, SIS enrollment) are
+deliberately not accepted.
+"""
+import argparse, hashlib, json
+from pathlib import Path
+class Refusal(ValueError): pass
+def ident(prefix,*parts):return prefix+"-"+hashlib.sha256("\x1f".join(map(str,parts)).encode()).hexdigest()[:24]
+def common(e):
+ if any(not e.get(k) for k in ("provider","source_ref","receipt_ref","observed_at","payload")):raise Refusal("provider, source receipt, observation time, and payload required")
+ p=e["payload"]
+ if not isinstance(p,dict) or not p.get("id") or not p.get("title") or not str(p.get("url","")).startswith("https://"):raise Refusal("payload needs exact id, title, HTTPS URL")
+ return p
+def materialize(e):
+ p=common(e); kind=e.get("kind",""); source,receipt,at=e["source_ref"],e["receipt_ref"],e["observed_at"]
+ boundary="a retained public provider record does not establish private membership, role, payment, enrollment, property right, authority, or effect"
+ if kind=="github_repository":
+  pid=ident("project",e["provider"],p["id"]);return [{"type":"project","namespace":"root","body":{"project_id":pid,"subject_ref":"external:github:"+str(p["id"]),"title":p["title"],"pitch":p.get("description","") or "Public repository observed from GitHub.","stage":"observed","goal_stated":"","recurring_stated":"","operating_stated":"","currency":"","opened_at":p.get("created_at") or at,"cannot_infer":boundary,"status":"published"}}]
+ if kind in ("reddit_community","discord_server"):
+  cid=ident("community",e["provider"],p["id"]);return [{"type":"community_body","namespace":"root","body":{"community":cid,"subject_address":"external:%s:%s"%(e["provider"],p["id"]),"title":p["title"],"description":p.get("description","") or "","visibility":"public_observed","governance_scope":"","moderation_policy":"","created_by_subject":"","cannot_infer":boundary,"status":"published"}}]
+ if kind in ("meetup_event","eventbrite_event"):
+  oid=ident("occurrence",e["provider"],p["id"]);return [{"type":"publication_occurrence","namespace":"root","body":{"occurrence_id":oid,"source_twin":source,"source_ref":source,"canonical_href":p["url"],"title":p["title"],"summary":p.get("description","") or "","published_at":p.get("starts_at","") or "","observed_at":at,"receipt_ref":receipt,"rights_basis":"public_observation","retention":"metadata","visibility":"public","assertion_state":"observed","cannot_infer":boundary,"status":"published"}}]
+ if kind=="211_household_opportunity":
+  if e["provider"]!="211" or not isinstance(p.get("functions"),str) or not p["functions"].strip():raise Refusal("211 public service classification required for household opportunity")
+  rid=ident("resource",e["provider"],p["id"]);oid=ident("opportunity",e["provider"],p["id"]);return [{"type":"household_opportunity","namespace":"root","body":{"opportunity_id":oid,"resource_ref":rid,"title":p["title"],"description":p.get("description","") or "","canonical_href":p["url"],"service_kinds":p["functions"],"source_ref":source,"receipt_ref":receipt,"observed_at":at,"cannot_infer":"a public service classification identifies an observed opportunity only; it does not establish household eligibility, application, enrollment, provider notice, service delivery, authority, or a private relationship","status":"published"}}]
+ if kind in ("211_resource","clever_institution","property_record","nextdoor_place","patreon_creator"):
+  rid=ident("resource",e["provider"],p["id"]);return [{"type":"external_resource","namespace":"root","body":{"ext_id":rid,"name":p["title"],"url":p["url"],"says":p.get("description","") or "","estate":e["provider"],"grouping":kind,"functions":p.get("functions","") or "","related":source,"cannot_infer":boundary,"status":"published"}}]
+ raise Refusal("unsupported incumbent record kind")
+def main():
+ a=argparse.ArgumentParser();a.add_argument("--input",type=Path,required=True);a.add_argument("--out",type=Path,required=True);x=a.parse_args()
+ try:rows=materialize(json.loads(x.input.read_text()))
+ except (OSError,ValueError,TypeError) as e:print("incumbent materializer: %s"%e);return 2
+ x.out.write_text("".join(json.dumps(r,sort_keys=True)+"\n" for r in rows));print(json.dumps({"rows":len(rows),"truth":"retained public record only"}));return 0
+if __name__=="__main__":raise SystemExit(main())

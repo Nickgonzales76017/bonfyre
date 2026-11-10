@@ -1,0 +1,6 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"build/bonfyre-family","binary_env":"BONFYRE_FAMILY_BIN","cases":[
+{"name":"families are read from a catalog synced from this repository","steps":[
+ {"program":"${root}/cmd/BonfyreCapability/bonfyre-capability","argv":["index"],"env":{"HOME":"${tmp}","BONFYRE_CATALOG_DB":"${tmp}/cat.db","BONFYRE_REPO_ROOT":"${root}","BONFYRE_CAPABILITY_DB":"${tmp}/cap.db"},"exit":0},
+ {"argv":["show","T_CASEOPS"],"env":{"HOME":"${tmp}","BONFYRE_CATALOG_DB":"${tmp}/cat.db","BONFYRE_REPO_ROOT":"${root}","BONFYRE_CAPABILITY_DB":"${tmp}/cap.db"},"exit":0,"contains":["kind        conceptual_family","commands    clean, paragraph, canon, hash, compress"]},
+ {"argv":["list","recur","--compact"],"env":{"HOME":"${tmp}","BONFYRE_CATALOG_DB":"${tmp}/cat.db","BONFYRE_REPO_ROOT":"${root}","BONFYRE_CAPABILITY_DB":"${tmp}/cap.db"},"exit":0,"contains":["T_RECUR_EARLY"]},
+ {"argv":["show","T_NOPE"],"env":{"HOME":"${tmp}","BONFYRE_CATALOG_DB":"${tmp}/cat.db","BONFYRE_REPO_ROOT":"${root}","BONFYRE_CAPABILITY_DB":"${tmp}/cap.db"},"exit":1}]}]}

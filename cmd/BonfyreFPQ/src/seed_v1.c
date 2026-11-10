@@ -1,3 +1,9 @@
+/* M_PI is not in ISO C11; glibc gates it behind a feature macro while
+   macOS exposes it from <math.h> unconditionally. */
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 /*
  * seed.c — The Lambda Core: Seed Combinator Discovery & Expansion
  *

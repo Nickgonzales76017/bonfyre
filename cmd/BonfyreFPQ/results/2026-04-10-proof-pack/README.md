@@ -23,7 +23,7 @@ Two additional files are partial/aborted exploratory runs and should not be trea
 ### 1. Native Whisper roundtrip
 
 ```bash
-cd /Users/nickgonzales/Documents/Bonfyre/10-Code/BonfyreFPQ
+cd /Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreFPQ
 ./bonfyre-fpq roundtrip-v8 /Users/nickgonzales/.local/share/whisper/ggml-base.en.bin --limit 2 --bits 3 \
   2>&1 | tee results/2026-04-10-proof-pack/whisper_base_roundtrip_v8_bits3_limit2.txt
 ```
@@ -31,7 +31,7 @@ cd /Users/nickgonzales/Documents/Bonfyre/10-Code/BonfyreFPQ
 ### 2. Qwen perplexity, `v8`
 
 ```bash
-cd /Users/nickgonzales/Documents/Bonfyre/10-Code/BonfyreFPQ
+cd /Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreFPQ
 PYTHONUNBUFFERED=1 python3 -u perplexity_benchmark.py \
   --model Qwen/Qwen2.5-0.5B \
   --bits 3 \
@@ -46,7 +46,7 @@ PYTHONUNBUFFERED=1 python3 -u perplexity_benchmark.py \
 ### 3. Qwen perplexity, `v4`
 
 ```bash
-cd /Users/nickgonzales/Documents/Bonfyre/10-Code/BonfyreFPQ
+cd /Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreFPQ
 PYTHONUNBUFFERED=1 python3 -u perplexity_benchmark.py \
   --model Qwen/Qwen2.5-0.5B \
   --bits 3 \
@@ -62,7 +62,7 @@ PYTHONUNBUFFERED=1 python3 -u perplexity_benchmark.py \
 ### 4. Qwen perplexity, `HQQ`
 
 ```bash
-cd /Users/nickgonzales/Documents/Bonfyre/10-Code/BonfyreFPQ
+cd /Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreFPQ
 PYTHONUNBUFFERED=1 python3 -u results/2026-04-10-proof-pack/hqq_qwen_benchmark.py \
   --model Qwen/Qwen2.5-0.5B \
   --bits 3 \

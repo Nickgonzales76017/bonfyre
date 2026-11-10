@@ -1,0 +1,4 @@
+FixtureView expands to 2:
+    alpha                            AlphaRedefined                     [implemented]
+    beta                             Beta                               [implemented]
+exit 0

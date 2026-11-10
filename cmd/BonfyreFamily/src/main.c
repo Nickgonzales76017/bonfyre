@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * bonfyre-family - conceptual family browser for Bonfyre.
  *
@@ -24,9 +31,11 @@
 #include <unistd.h>
 #include <sqlite3.h>
 #include <bonfyre.h>
+#include <bf_command_lookup.h>
 
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
+#include "bf_lex.h"
 #endif
 
 #define MAX_PATH_LEN    4096
@@ -741,24 +750,11 @@ static int print_catalog_models_for_family(const char *index_path, const char *f
     return shown;
 }
 
+/* Delegates to the one implementation. Nineteen copies of this shape existed
+ * with sixteen different opinions about escaping.
+ */
 static void json_escape(FILE *out, const char *s) {
-    fputc('"', out);
-    for (; *s; s++) {
-        unsigned char ch = (unsigned char)*s;
-        switch (ch) {
-            case '"': fputs("\\\"", out); break;
-            case '\\': fputs("\\\\", out); break;
-            case '\b': fputs("\\b", out); break;
-            case '\f': fputs("\\f", out); break;
-            case '\n': fputs("\\n", out); break;
-            case '\r': fputs("\\r", out); break;
-            case '\t': fputs("\\t", out); break;
-            default:
-                if (ch < 0x20) fprintf(out, "\\u%04x", ch);
-                else fputc((int)ch, out);
-        }
-    }
-    fputc('"', out);
+    bf_lex_json_emit(out, s);
 }
 
 static const FamilyHint *find_hint(const char *id) {
@@ -1061,8 +1057,30 @@ static void print_family_record(const FamilySummary *fam, const char *index_path
     printf("related     %s\n", hint ? hint->related : "same-category neighbors");
 }
 
+#define FAMILY_COMMANDS(X) \
+    X("--help", FM_HELP_LONG) \
+    X("-h", FM_HELP_SHORT) \
+    X("explain", FM_EXPLAIN) \
+    X("help", FM_HELP) \
+    X("list", FM_LIST) \
+    X("related", FM_RELATED) \
+    X("show", FM_SHOW) \
+    X("where", FM_WHERE)
+
+enum FamilyCommand {
+#define FAMILY_ENUM(name, command_id) command_id,
+    FAMILY_COMMANDS(FAMILY_ENUM)
+#undef FAMILY_ENUM
+};
+
+static const BfCommandEntry family_commands[] = {
+#define FAMILY_ENTRY(name, command_id) {name, command_id, 0, NULL},
+    FAMILY_COMMANDS(FAMILY_ENTRY)
+#undef FAMILY_ENTRY
+};
+
 static int cmd_show_like(const FamilySummary *items, int count, const char *id,
-                         const char *index_path, const char *mode) {
+                         const char *index_path, enum FamilyCommand mode) {
     const FamilySummary *fam = find_family(items, count, id);
     if (!fam) {
         fprintf(stderr, "bonfyre-family: unknown family '%s'\n", id);
@@ -1070,12 +1088,12 @@ static int cmd_show_like(const FamilySummary *items, int count, const char *id,
         return 1;
     }
 
-    if (strcmp(mode, "show") == 0) {
+    if (mode == FM_SHOW) {
         print_family_record(fam, index_path);
         return 0;
     }
 
-    if (strcmp(mode, "explain") == 0) {
+    if (mode == FM_EXPLAIN) {
         const FamilyHint *hint = find_hint(fam->id);
         printf("family      %s\n", fam->id);
         printf("category    %s\n", fam->category_name);
@@ -1084,7 +1102,7 @@ static int cmd_show_like(const FamilySummary *items, int count, const char *id,
         return 0;
     }
 
-    if (strcmp(mode, "related") == 0) {
+    if (mode == FM_RELATED) {
         printf("family      %s\n", fam->id);
         printf("category    %s\n", fam->category_name);
         printf("related     %s\n", find_hint(fam->id) ? find_hint(fam->id)->related : "same-category neighbors");
@@ -1099,7 +1117,7 @@ static int cmd_show_like(const FamilySummary *items, int count, const char *id,
         return 0;
     }
 
-    if (strcmp(mode, "where") == 0) {
+    if (mode == FM_WHERE) {
         const FamilyHint *hint = find_hint(fam->id);
         printf("family      %s\n", fam->id);
         printf("attach_to   %s\n", hint ? hint->attach_to : default_attach_for_category(fam->category_key));
@@ -1119,7 +1137,25 @@ int main(int argc, char *argv[]) {
     FamilySummary items[MAX_FAMILIES];
     ListOptions opts;
     char index_path[MAX_PATH_LEN];
+    const BfCommandEntry *command;
     int count;
+
+    if (argc < 2) { print_help(); return 0; }
+    command = bf_command_lookup(family_commands,
+                                sizeof(family_commands) / sizeof(family_commands[0]), argv[1]);
+    if (!command) {
+        fprintf(stderr, "bonfyre-family: unknown command '%s'\n", argv[1]);
+        fprintf(stderr, "Run 'bonfyre family help' for usage.\n");
+        return 1;
+    }
+    if (command->id == FM_HELP || command->id == FM_HELP_LONG || command->id == FM_HELP_SHORT) {
+        print_help();
+        return 0;
+    }
+    if (command->id != FM_LIST && argc < 3) {
+        fprintf(stderr, "bonfyre-family: %s requires a family id\n", argv[1]);
+        return 1;
+    }
 
     bf_catalog_default_db_path(index_path, sizeof(index_path));
 
@@ -1129,12 +1165,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    if (argc < 2 || strcmp(argv[1], "help") == 0 || strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0) {
-        print_help();
-        return 0;
-    }
-
-    if (strcmp(argv[1], "list") == 0) {
+    if (command->id == FM_LIST) {
         opts = parse_list_options(argc, argv);
         if (opts.json) cmd_list_json(items, count, opts.query[0] ? opts.query : NULL, index_path);
         else if (opts.compact) cmd_list_compact(items, count, opts.query[0] ? opts.query : NULL);
@@ -1142,18 +1173,13 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    if ((strcmp(argv[1], "show") == 0 || strcmp(argv[1], "explain") == 0
-         || strcmp(argv[1], "related") == 0 || strcmp(argv[1], "where") == 0) && argc < 3) {
-        fprintf(stderr, "bonfyre-family: %s requires a family id\n", argv[1]);
-        return 1;
+    switch (command->id) {
+        case FM_SHOW:
+        case FM_EXPLAIN:
+        case FM_RELATED:
+        case FM_WHERE:
+            return cmd_show_like(items, count, argv[2], index_path,
+                                 (enum FamilyCommand)command->id);
+        default: return 1;
     }
-
-    if (strcmp(argv[1], "show") == 0) return cmd_show_like(items, count, argv[2], index_path, "show");
-    if (strcmp(argv[1], "explain") == 0) return cmd_show_like(items, count, argv[2], index_path, "explain");
-    if (strcmp(argv[1], "related") == 0) return cmd_show_like(items, count, argv[2], index_path, "related");
-    if (strcmp(argv[1], "where") == 0) return cmd_show_like(items, count, argv[2], index_path, "where");
-
-    fprintf(stderr, "bonfyre-family: unknown command '%s'\n", argv[1]);
-    fprintf(stderr, "Run 'bonfyre family help' for usage.\n");
-    return 1;
 }

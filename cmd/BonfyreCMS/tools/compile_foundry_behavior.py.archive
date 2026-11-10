@@ -1,0 +1,177 @@
+#!/usr/bin/env python3
+"""Compile Foundry behavior families into exact ObjectContract rows.
+
+The compiler is deliberately a build-time expansion.  Surface and Address
+continue to query `applies_to_kind = current_subject_kind`; no family, facet,
+or alias inference reaches request time.  A behavior is emitted only when its
+spec names a verified native owner and the exact owner-context lowering it
+needs.  Everything else is retained in the report as projection work or an
+unresolved closure, rather than becoming a decorative button.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import sys
+from pathlib import Path
+
+SCHEMA = "bonfyre-foundry-behavior-spec.v1"
+IDENT = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
+OWNER_VALUES = {"subject", "subject_identifier"}
+MODES = {"DECLARE", "PROPOSE", "ATTACH", "DERIVE", "INVOKE"}
+EXPECTED_FOUNDRIES = {
+    "person", "household", "school", "program", "community", "project", "property",
+    "creator", "business", "event", "learning_opportunity", "tutor", "library", "club",
+}
+
+
+class SpecError(ValueError):
+    pass
+
+
+def text_list(value: object, field: str) -> str:
+    if not isinstance(value, list) or not all(isinstance(item, str) and item for item in value):
+        raise SpecError(f"{field} must be a list of nonempty strings")
+    return ",".join(value)
+
+
+def exact_contract(target: str, behavior: dict[str, object]) -> dict[str, str]:
+    operation = behavior.get("operation")
+    mode = behavior.get("birth_mode")
+    owner_path = behavior.get("owner_path")
+    owner_param = behavior.get("owner_subject_param")
+    owner_value = behavior.get("owner_subject_value")
+    return_template = behavior.get("return_template", "")
+    if not isinstance(target, str) or not IDENT.fullmatch(target):
+        raise SpecError(f"invalid exact target kind: {target!r}")
+    if not isinstance(operation, str) or "." not in operation:
+        raise SpecError(f"{target}: behavior needs a qualified operation")
+    if mode not in MODES:
+        raise SpecError(f"{operation}: unknown birth mode {mode!r}")
+    if not isinstance(owner_path, str) or not owner_path.startswith("/") or owner_path.startswith("//"):
+        raise SpecError(f"{operation}: verified owner_path must be a local absolute path")
+    if not isinstance(owner_param, str) or not IDENT.fullmatch(owner_param):
+        raise SpecError(f"{operation}: owner_subject_param must be an identifier")
+    if owner_value not in OWNER_VALUES:
+        raise SpecError(f"{operation}: owner_subject_value must be one of {sorted(OWNER_VALUES)}")
+    if not isinstance(return_template, str):
+        raise SpecError(f"{operation}: return_template must be a string")
+    if return_template:
+        if not return_template.startswith("/") or return_template.startswith("//"):
+            raise SpecError(f"{operation}: return_template must be a local path")
+        if owner_value == "subject_identifier" and "{subject_identifier}" not in return_template:
+            raise SpecError(f"{operation}: return_template must preserve the subject identifier")
+    required = ("object_name", "collection_lens", "action_label", "owner_note", "cannot_infer")
+    if any(not isinstance(behavior.get(field), str) or not behavior[field] for field in required):
+        raise SpecError(f"{operation}: missing required behavior contract text")
+    if mode != "INVOKE":
+        raise SpecError(f"{operation}: external owner lowering must be INVOKE")
+    return {
+        "object_name": str(behavior["object_name"]),
+        "applies_to_kind": target,
+        "applies_to_capability": "",
+        "birth_operation": operation,
+        "birth_mode": mode,
+        "requires_authority": str(behavior.get("authority_requirement", "")),
+        "initial_state": "",
+        "identity_allocation": "none",
+        "body_content_type": "",
+        "collection_lens": str(behavior["collection_lens"]),
+        "slug_field": "",
+        "closed_fields": text_list(behavior.get("closed_fields", []), f"{operation}.closed_fields"),
+        "human_fields": text_list(behavior.get("human_fields", []), f"{operation}.human_fields"),
+        "owner_note": str(behavior["owner_note"]),
+        "submit_to": owner_path,
+        "submit_method": "POST",
+        "owner_subject_param": owner_param,
+        "owner_subject_value": str(owner_value),
+        "return_template": return_template,
+        "action_label": str(behavior["action_label"]),
+        "status": "published",
+    }
+
+
+def compile_spec(spec: dict[str, object]) -> dict[str, object]:
+    if spec.get("schema") != SCHEMA:
+        raise SpecError(f"expected schema {SCHEMA!r}")
+    families = spec.get("families")
+    if not isinstance(families, list):
+        raise SpecError("families must be a list")
+    foundry_rows = spec.get("foundries")
+    if not isinstance(foundry_rows, list):
+        raise SpecError("foundries must be a list")
+    foundries: list[dict[str, object]] = []
+    names: set[str] = set()
+    for row in foundry_rows:
+        if not isinstance(row, dict):
+            raise SpecError("foundry must be an object")
+        name, roots, posture = row.get("foundry"), row.get("roots"), row.get("closure_posture")
+        if not isinstance(name, str) or name not in EXPECTED_FOUNDRIES:
+            raise SpecError(f"unknown foundry {name!r}")
+        if name in names:
+            raise SpecError(f"duplicate foundry {name}")
+        if (not isinstance(roots, list) or not roots or
+                not all(isinstance(root, str) and root for root in roots) or
+                posture not in {"owner_ready", "materialization_needed", "projection", "composition"}):
+            raise SpecError(f"{name}: roots and closure_posture are required")
+        names.add(name)
+        foundries.append({"foundry": name, "roots": roots, "facets": row.get("facets", []),
+                          "closure_posture": posture, "reason": str(row.get("reason", ""))})
+    if names != EXPECTED_FOUNDRIES:
+        raise SpecError("foundries must declare all fourteen canonical Foundries")
+    contracts: list[dict[str, str]] = []
+    unresolved: list[dict[str, str]] = []
+    projections: list[dict[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for family in families:
+        if not isinstance(family, dict):
+            raise SpecError("family must be an object")
+        name = family.get("family")
+        targets = family.get("targets")
+        behaviors = family.get("behaviors")
+        if not isinstance(name, str) or not name or not isinstance(targets, list) or not isinstance(behaviors, list):
+            raise SpecError("family needs family, targets, and behaviors")
+        for behavior in behaviors:
+            if not isinstance(behavior, dict) or not isinstance(behavior.get("operation"), str):
+                raise SpecError(f"{name}: every behavior needs an operation")
+            status = behavior.get("status")
+            if status == "verified":
+                for target in targets:
+                    contract = exact_contract(target, behavior)
+                    key = (contract["applies_to_kind"], contract["birth_operation"])
+                    if key in seen:
+                        raise SpecError(f"duplicate exact contract: {key[0]} -> {key[1]}")
+                    seen.add(key)
+                    contracts.append(contract)
+            elif status in {"unresolved", "projection"}:
+                record = {"family": name, "operation": behavior["operation"],
+                          "reason": str(behavior.get("reason", "reason not stated"))}
+                (unresolved if status == "unresolved" else projections).append(record)
+            else:
+                raise SpecError(f"{name}.{behavior['operation']}: status must be verified, unresolved, or projection")
+    contracts.sort(key=lambda row: (row["applies_to_kind"], row["birth_operation"]))
+    foundries.sort(key=lambda row: str(row["foundry"]))
+    return {"schema": "bonfyre-foundry-behavior-catalog.v1", "foundries": foundries, "contracts": contracts,
+            "unresolved": unresolved, "projections": projections,
+            "cannot_infer": "a behavior family is compile-time authoring only; it neither creates runtime inheritance nor proves an owner completed an effect"}
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--spec", type=Path, required=True)
+    parser.add_argument("--out", type=Path, required=True)
+    args = parser.parse_args()
+    try:
+        result = compile_spec(json.loads(args.spec.read_text()))
+    except (OSError, json.JSONDecodeError, SpecError) as exc:
+        print(f"foundry behavior compiler: {exc}", file=sys.stderr)
+        return 2
+    args.out.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
+    print(json.dumps({"foundries": len(result["foundries"]), "contracts": len(result["contracts"]), "unresolved": len(result["unresolved"]),
+                      "projections": len(result["projections"]), "schema": result["schema"]}))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

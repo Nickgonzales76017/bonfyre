@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * BonfyreCanon — structure-aware canonicalization via Tree-sitter.
  *
@@ -23,7 +30,11 @@
 #include <unistd.h>
 #include <tree_sitter/api.h>
 #include <bonfyre.h>
+#include "c_literals.h"
 
+#include "bf_lex.h"
+#include "../../../lib/libbonfyre/include/bf_help.h"
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 /* ── external parsers (linked at build time) ─────────────────── */
 extern const TSLanguage *tree_sitter_json(void);
 
@@ -71,19 +82,13 @@ static const TSLanguage *get_language(LangType lang) {
 
 /* ── AST walk → JSON ─────────────────────────────────────────── */
 
+/* Delegates to the one implementation. This form escapes a counted run
+ * without quoting it, because the canon writer builds its own string. */
 static void escape_json_string(FILE *out, const char *src, size_t len) {
-    for (size_t i = 0; i < len; i++) {
-        switch (src[i]) {
-            case '"':  fputs("\\\"", out); break;
-            case '\\': fputs("\\\\", out); break;
-            case '\n': fputs("\\n", out); break;
-            case '\r': fputs("\\r", out); break;
-            case '\t': fputs("\\t", out); break;
-            default:
-                if ((unsigned char)src[i] < 0x20) fprintf(out, "\\u%04x", src[i]);
-                else fputc(src[i], out);
-        }
-    }
+    char *escaped = bf_lex_json_escape_alloc(src, len);
+    if (!escaped) return;
+    fputs(escaped, out);
+    free(escaped);
 }
 
 static void walk_node_json(FILE *out, TSNode node, const char *source,
@@ -331,11 +336,19 @@ static void print_usage(void) {
         "  bonfyre-canon hash <file> [output-dir]\n"
         "  bonfyre-canon diff <file1> <file2> [output-dir]\n"
         "  bonfyre-canon normalize <file> <output-file>\n"
+        "  bonfyre-canon literals <c-file> [output-dir]\n"
         "  bonfyre-canon status\n");
 }
 
 int main(int argc, char **argv) {
-    if (argc >= 2 && strcmp(argv[1], "status") == 0) {
+    if (bf_help_requested(argc, argv)) { print_usage(); return 0; }
+    enum { CN_STATUS };
+    static const BfCommandEntry canon_commands[] = {
+        {"status", CN_STATUS, 0, NULL},
+    };
+    const BfCommandEntry *command = argc < 2 ? NULL : bf_command_lookup(canon_commands,
+        sizeof(canon_commands) / sizeof(canon_commands[0]), argv[1]);
+    if (command && command->id == CN_STATUS) {
         printf("{\"binary\":\"bonfyre-canon\",\"status\":\"ok\",\"version\":\"1.0.0\"}\n");
         return 0;
     }
@@ -355,6 +368,8 @@ int main(int argc, char **argv) {
     } else if (strcmp(cmd, "normalize") == 0) {
         if (argc < 4) { print_usage(); return 1; }
         return cmd_normalize(file1, argv[3]);
+    } else if (strcmp(cmd, "literals") == 0) {
+        return bf_canon_c_literals(file1, (argc > 3) ? argv[3] : "output");
     }
 
     print_usage();

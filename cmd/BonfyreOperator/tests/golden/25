@@ -1,0 +1,100 @@
+{
+  "operator": "DIFF",
+  "program": {
+    "program_id": "household.diff.7109a19c3decf68a",
+    "operator": "DIFF",
+    "digest": "9164b19cdfde8f1333525ed1f141ec21fd1ce3d9c8fd420ebf1dcdfe38dd49d9",
+    "reads": [
+      "household:food:offer:beans",
+      "household:housing:listing:milo-a"
+    ],
+    "admitted": true,
+    "hard_failures": []
+  },
+  "left": "household:food:offer:beans",
+  "right": "household:housing:listing:milo-a",
+  "changes": [
+    {
+      "path": "$.advertised_base_rent_monthly_usd",
+      "left": null,
+      "right": 925
+    },
+    {
+      "path": "$.availability_status",
+      "left": null,
+      "right": "reported_available_now"
+    },
+    {
+      "path": "$.cash_price_usd",
+      "left": "1.79",
+      "right": null
+    },
+    {
+      "path": "$.dogs_stated_ok",
+      "left": null,
+      "right": true
+    },
+    {
+      "path": "$.evidence_ref",
+      "left": null,
+      "right": "housing/receipts#milo"
+    },
+    {
+      "path": "$.in_stock",
+      "left": true,
+      "right": null
+    },
+    {
+      "path": "$.listing_id",
+      "left": null,
+      "right": "milo-a"
+    },
+    {
+      "path": "$.merchant",
+      "left": "Target",
+      "right": null
+    },
+    {
+      "path": "$.offer_id",
+      "left": "beans",
+      "right": null
+    },
+    {
+      "path": "$.price",
+      "left": 1.5,
+      "right": null
+    },
+    {
+      "path": "$.property_id",
+      "left": null,
+      "right": "property:milo"
+    },
+    {
+      "path": "$.source_refs",
+      "left": null,
+      "right": [
+        "https://example.test/milo"
+      ]
+    },
+    {
+      "path": "$.source_url",
+      "left": "https://example.test/beans",
+      "right": null
+    },
+    {
+      "path": "$.tags",
+      "left": [
+        "a",
+        null,
+        2
+      ],
+      "right": null
+    },
+    {
+      "path": "$.unit_identity",
+      "left": null,
+      "right": "floorplan:A"
+    }
+  ]
+}
+exit 0

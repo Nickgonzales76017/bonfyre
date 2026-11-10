@@ -1,0 +1,10 @@
+#!/bin/sh
+# Retired 2026-09-09. This tested the first native TargetObligation sketch,
+# which persisted caller-written `actual_state` values. The live inverse
+# witness now evaluates native CommitmentGraph, AuthorityGraph,
+# ResourceReservation, CommerceChain, InformationPolicy, EvidenceGraph and
+# ForeignTwin owners directly; see live_inverse_test.c.
+#
+# Kept as lineage only. It is deliberately not executable: accepting an
+# `observe --actual discharged` write would recreate the shadow-state path the
+# native compiler removed.

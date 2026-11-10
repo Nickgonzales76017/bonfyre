@@ -1,0 +1,7 @@
+{
+  "recipe_id": "../outside",
+  "name": "Rejected source path",
+  "stages": [
+    {"id": "stage", "operator": "BonfyreHash", "args": ["file", "{input}"]}
+  ]
+}

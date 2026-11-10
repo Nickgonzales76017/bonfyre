@@ -1,0 +1,1 @@
+200	-	{"jsonrpc":"2.0","id":"@ID@","result":{"isError":false,"structuredContent":{"n":1.5e-7,"big":12345678901234567890,"u":"é😀","esc":"\u0001\u001f\"\\/","idx":{"b":1,"2":2,"1":0,"a":[]},"neg":-0.0,"e":1e21,"f":0.1,"g":123456789.123,"h":5e-324,"emptyo":{},"dup":1,"dup":2,"t":true,"z":null}}}

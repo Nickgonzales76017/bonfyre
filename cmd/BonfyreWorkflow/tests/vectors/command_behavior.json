@@ -1,0 +1,6 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"build/bonfyre-workflow","binary_env":"BONFYRE_WORKFLOW_BIN","cases":[
+{"name":"workflow profiles in this repository are listed and their steps resolved from a catalog synced from it","steps":[
+ {"program":"${root}/cmd/BonfyreCapability/bonfyre-capability","argv":["index"],"env":{"HOME":"${tmp}","BONFYRE_CATALOG_DB":"${tmp}/cat.db","BONFYRE_REPO_ROOT":"${root}","BONFYRE_CAPABILITY_DB":"${tmp}/cap.db","BONFYRE_WORKFLOW_DIR":"${root}/docs/recipes"},"exit":0},
+ {"argv":["list","--compact"],"env":{"HOME":"${tmp}","BONFYRE_CATALOG_DB":"${tmp}/cat.db","BONFYRE_REPO_ROOT":"${root}","BONFYRE_CAPABILITY_DB":"${tmp}/cap.db","BONFYRE_WORKFLOW_DIR":"${root}/docs/recipes"},"exit":0,"contains":["A3  Full Speech Investigation Pipeline  [11 steps]","V1  Video Investigation Pipeline"]},
+ {"argv":["steps","A3"],"env":{"HOME":"${tmp}","BONFYRE_CATALOG_DB":"${tmp}/cat.db","BONFYRE_REPO_ROOT":"${root}","BONFYRE_CAPABILITY_DB":"${tmp}/cap.db","BONFYRE_WORKFLOW_DIR":"${root}/docs/recipes"},"exit":0,"contains":["s11  Brief Generation               BonfyreBrief"]},
+ {"argv":["show","ZZ"],"env":{"HOME":"${tmp}","BONFYRE_CATALOG_DB":"${tmp}/cat.db","BONFYRE_REPO_ROOT":"${root}","BONFYRE_CAPABILITY_DB":"${tmp}/cap.db","BONFYRE_WORKFLOW_DIR":"${root}/docs/recipes"},"exit":1}]}]}

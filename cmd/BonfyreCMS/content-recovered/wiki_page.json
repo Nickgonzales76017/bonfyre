@@ -1,0 +1,44 @@
+[
+  {
+    "id": 1,
+    "namespace": "aurekai",
+    "created_at": "2026-08-13T04:43:12Z",
+    "updated_at": "2026-08-13T04:43:12Z",
+    "published_at": null,
+    "status": "draft",
+    "title": "Bernstein: Identity Continuity Case Study",
+    "route": "research/bernstein-identity-continuity",
+    "content": "# Research episode: Bernstein #3616 / #3695 / #3699\n\nFilesystem stand-in for the Drive vault the Aurekai institution vision\ndescribes u2014 see [`content/README.md`](../../README.md) for why, and what\nthis stands in for.\n\n## What this is\n\nReal source material for the `bernstein-identity-continuity` content genome\n(`capital.db`, table `content_genomes`), held pending PR #3695 merge. Nothing\nin this directory is published content u2014 it's the evidence packet a future\narticle/video/wiki page gets written from.\n\n## Contents\n\n- `notes/genome.json` u2014 full export of the `content_genomes` row: thesis,\n  supporting claims, evidence packet, primitive refs, quotable facts, and\n  the release/privacy/attribution constraints that gate publication.\n- `receipts/maintainer-review-verbatim.md` u2014 chernistry's actual PR review,\n  verbatim, both comments. Primary evidence for the genome's central claim.\n\n## What's deliberately not here\n\nNo screenshots, terminal recordings, raw video, or clips u2014 none exist yet.\nPer the no-fabrication discipline this whole system runs on, empty\nplaceholder directories for content that doesn't exist yet aren't created\nhere; they get added when the real artifacts do.\n\n## Status\n\nHeld. See `notes/genome.json` u2192 `publish_gate`. Do not write or publish an\narticle/video from this material before PR #3695 merges.\n\n\n---\n\nSource: https://github.com/sipyourdrink-ltd/bernstein/pull/3695#issuecomment-5265754134\nAuthor: chernistry (COLLABORATOR)\nPosted: 2026-08-12T10:54:47Z\n\n---\n\nReviewed properly - this is good work, and the part I care most about is right: `verify_run_artifacts()` recomputes the address instead of reading it back from the payload. That is the difference between an identity and a stored field, and it is the thing most implementations of this get wrong.\n\nI checked the address for stability rather than taking the description on trust. Windows separators, `./` and `//` and `../` in the URI, dict ordering, and untracked SARIF fields all behave - same input, same address, no leakage. Two cases did not, and since they were a few lines each I fixed them on your branch rather than sending them back:\n\n| Case | Was | Now |\n|---|---|---|\n| Snippet with CRLF vs LF | different address | same |\n| Unicode NFD vs NFC in the snippet | different address | same |\n\nBoth are the same class of bug - the same text arriving in a different normal form. A SARIF file produced on Windows and one produced on Linux describing the identical finding were getting different identities, which defeats the point of content addressing across machines.\n\nPushed as `154c3b04d`, plus `19a092a7f` with 10 tests / 30 cases covering those two properties so they cannot regress, and a docstring noting why this path repairs normal form where `core/tasks/artifacts.py` rejects it. `c56a48b57` merges current `main` - your base predated #3684, which is why `ruff check .` was red on five files you never touched.\n\nTwo things you should know, neither of which is on you:\n\n**Semgrep is red for an infrastructure reason.** It failed at `git clone` with `server certificate verification failed`. I ran the exact CI invocation locally against `.semgrep.yml`: 0 findings across 1861 files. A rerun is queued; ignore that one.\n\n**`main` already has a second finding addresser**, `_canonical_finding_bytes` in `core/tasks/artifacts.py`, landed by #3659 while you were working. Yours is the better implementation - the incumbent does `str(raw.get(field, \"\"))` on every field, so a result missing everything canonicalises to an all-empty preimage and returns a stable address for nothing, which is exactly what #3616 asked us not to do. Reconciling the two is our problem, not yours; I have filed it as #3699 and it explicitly waits for this PR to land first.\n\nSo: nothing blocking from me. Flip it out of draft whenever you are ready and I will merge once the checks settle - the draft flag is yours to control, which is why I have not touched it.\n\n---\n\nFollow-up comment, same thread, 2026-08-12T11:28:44Z:\n\nTiming note: I am out of review capacity this week. Whenever you take this out of draft, expect my first pass Friday at the earliest, more likely Sunday.\n\nNo rush on your side u2014 #3699 is explicitly blocked on this one and will wait.\n",
+    "published": 0,
+    "allow_guest": 0,
+    "meta_description": "Held pending PR #3695 merge. Do not publish before merge -- see content_genomes.publish_gate in capital.db."
+  },
+  {
+    "id": 2,
+    "namespace": "aurekai",
+    "created_at": "2026-08-13T05:18:07Z",
+    "updated_at": "2026-08-13T05:18:07Z",
+    "published_at": null,
+    "status": "draft",
+    "title": "AgentGuard: Dependency Closure Case Study",
+    "route": "research/agentguard-dependency-closure",
+    "content": "# A single scoped contribution can turn out to be blocked by a chain of smaller problems the maintainer didn't ask for -- and closing that chain, not the original patch, becomes the actual work.\n\n**Status:** draft -- Wait until at least one of #214/#216/#217/#218 merges, or #213 moves off draft -- currently mid-review, story isn't resolved yet.\n\n## Supporting claims\n\n- adapter PR #213 was the original ask; maintainer held merge until 4 named blockers were resolved: bounded trace parsing (#203), export redaction (#200), portable evidence paths (#204), hidden CI evidence (#208)\n- each blocker became its own PR (#214/#216/#217/#218), verified independently before being linked back as dependency-removal for #213\n- a combined tree applying all five branches together was checked conflict-free and passing the full suite before claiming any dependency resolved\n\n## Evidence packet\n\n- PR #214: 1402 unit tests passing after the 2026-08-12 fix, on rebased main\n- combined verification across #213/#214/#216/#217/#218 previously reported 1,305 tests passing (per capitalgym STATE.md, round history)\n\n## People and projects\n\n- richinmrudul (maintainer): reviews statically on fork PRs (credentials withheld), requested changes on #214 same night, resolved\n- #213 verifier adapter, draft, blocked on upstream #197\n\n## Bonfyre primitives\n\nCapabilityClosureGraph, WorkGraph, ExternalBoundary, ProviderGraph, AuthorityGraph\n\n\n## Nontechnical framing\n\n\"sometimes the favor you were asked for turns out to have four smaller favors hiding inside it\"\n",
+    "published": 0,
+    "allow_guest": 0,
+    "meta_description": "Draft -- story unresolved, 5 PRs still open (#213/#214/#216/#217/#218)."
+  },
+  {
+    "id": 3,
+    "namespace": "aurekai",
+    "created_at": "2026-08-13T05:18:07Z",
+    "updated_at": "2026-08-13T05:18:07Z",
+    "published_at": null,
+    "status": "draft",
+    "title": "HQQ/WikiText-2: Claim Invalidation Case Study",
+    "route": "research/hqq-claim-invalidation",
+    "content": "# A research system needs the ability to invalidate its own published claims when new evidence contradicts them -- not just to publish new results.\n\n**Status:** draft -- No blocker -- this episode is already resolved (correction published, PR #1 merged on bonfyre-fpq-benchmark). Ready to move from draft to ready when article is actually written.\n\n## Supporting claims\n\n- the old FPQ-v8/HQQ 994-token comparison was retired from active evidence, not defended, after a full WikiText-2 pass and a failed v9 integrity check\n- full-split evidence: 299,078-token shared stream, 299,077 scored next tokens; FP32 PPL 13.8911; HQQ 3-bit/group-64/axis-1 PPL 29.2934 (+110.88%)\n- a native-v9 reconstruction attempt was terminated after its first reconstructed tensor reported cosine 1.000515 -- mathematically invalid, so the pack now publishes no full-split FPQ/v9 quality claim rather than a wrong one\n\n## Evidence packet\n\n- checksummed FP32 and HQQ JSON receipts; verifier asserts identical token digests and loss counts\n- https://github.com/Nickgonzales76017/bonfyre-fpq-benchmark/pull/1 merged commit be01491afc53aaa2bf0b27b4a6f297b5205d8387\n\n## People and projects\n\n- bonfyre-fpq-benchmark (own repo)\n- directory PRs #61 and #10 where the old number was originally published\n\n## Bonfyre primitives\n\nEvidenceGraph, TemporalEvidenceGraph, Proof, Canon, Time, Memory\n\n\n## Nontechnical framing\n\nclaim lifecycle as a general research-integrity idea, not FPQ-specific\n",
+    "published": 0,
+    "allow_guest": 0,
+    "meta_description": "Draft, but underlying story is resolved -- correction already published (PR #1 merged on bonfyre-fpq-benchmark)."
+  }
+]

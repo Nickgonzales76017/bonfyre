@@ -1,0 +1,8 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-flashqla","binary_env":"BONFYRE_FLASHQLA_BIN","cases":[
+{"name":"the tiled backend matches the reference and a corrupted output is caught","steps":[
+ {"argv":["gen","--B","1","--T","128","--H","2","--K","16","--V","16","--out","t.bfgla","--seed","5"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"argv":["run","--in","t.bfgla","--out","ref.bfgdn","--backend","ref"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"argv":["run","--in","t.bfgla","--out","tile.bfgdn","--backend","tile"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"argv":["verify","--ref","ref.bfgdn","--test","tile.bfgdn"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["ok: max_abs_err < 1e-4"]},
+ {"program":"sh","argv":["-c","cp ref.bfgdn bad.bfgdn && printf '\\177\\177\\177\\177' | dd of=bad.bfgdn bs=1 seek=200 conv=notrunc 2>/dev/null"],"exit":0},
+ {"argv":["verify","--ref","ref.bfgdn","--test","bad.bfgdn"],"env":{"HOME":"${tmp}"},"exit":1,"contains":["FAIL: max_abs_err >= 1e-4"]}]}]}

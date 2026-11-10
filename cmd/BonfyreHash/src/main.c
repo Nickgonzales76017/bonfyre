@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * BonfyreHash — content-addressing + Merkle DAG hashing engine.
  *
@@ -24,6 +31,9 @@
 #include <sys/stat.h>
 #include <time.h>
 #include "bonfyre.h"
+#include "sqlite_cut.h"
+#include "../../../lib/libbonfyre/include/bf_help.h"
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 
 #define MAX_LINE 65536
 #define MAX_CHILDREN 256
@@ -42,19 +52,10 @@ static void sha256_hex(const unsigned char hash[32], char hex[65]) { bf_sha256_d
 /* ---------- commands ---------- */
 
 static int cmd_file(const char *path) {
-    FILE *fp = fopen(path, "rb");
-    if (!fp) { fprintf(stderr, "Cannot open: %s\n", path); return 1; }
-    SHA256_CTX ctx;
-    sha256_init(&ctx);
-    unsigned char buf[8192];
-    size_t n;
-    while ((n = fread(buf, 1, sizeof(buf), fp)) > 0)
-        sha256_update(&ctx, buf, n);
-    fclose(fp);
-    unsigned char h[32];
-    sha256_final(&ctx, h);
     char hex[65];
-    sha256_hex(h, hex);
+    if (bf_sha256_file(path, hex) != 0) {
+        fprintf(stderr, "Cannot hash %s: %s\n", path, strerror(errno)); return 1;
+    }
     printf("%s  %s\n", hex, path);
     return 0;
 }
@@ -137,18 +138,10 @@ static int cmd_dedup(const char *dir) {
             entries = tmp;
         }
 
-        FILE *fp = fopen(path, "rb");
-        if (!fp) continue;
-        SHA256_CTX ctx;
-        sha256_init(&ctx);
-        unsigned char buf[8192];
-        size_t n;
-        while ((n = fread(buf, 1, sizeof(buf), fp)) > 0)
-            sha256_update(&ctx, buf, n);
-        fclose(fp);
-        unsigned char h[32];
-        sha256_final(&ctx, h);
-        sha256_hex(h, entries[count].hash);
+        if (bf_sha256_file(path, entries[count].hash) != 0) {
+            fprintf(stderr, "Cannot hash %s: %s\n", path, strerror(errno));
+            free(entries); closedir(d); return 1;
+        }
         snprintf(entries[count].path, PATH_MAX, "%s", path);
         entries[count].size = (unsigned long)st.st_size;
         count++;
@@ -174,7 +167,7 @@ static int cmd_dedup(const char *dir) {
     return 0;
 }
 
-/* ---------- #10: Inline Merkle (replaces system() + Python) ---------- */
+/* ---------- #10: Inline Merkle (replaces process-spawn hashing) ---------- */
 
 /* Extract quoted string values matching "content_hash" from artifact.json */
 static int extract_content_hashes(const char *json, char hashes[][65], int max_hashes) {
@@ -242,6 +235,7 @@ static int cmd_merkle(const char *artifact_path, int verify_only) {
     }
 
     char *root_hash = hashes[0];
+    int rc = 0;
 
     if (verify_only) {
         /* Check if existing root_hash matches */
@@ -251,8 +245,10 @@ static int cmd_merkle(const char *artifact_path, int verify_only) {
             while (*rh && (*rh == ' ' || *rh == ':' || *rh == '\t' || *rh == '"')) rh++;
             if (strncmp(rh, root_hash, 64) == 0)
                 printf("VERIFIED: root_hash matches (%s)\n", root_hash);
-            else
+            else {
                 printf("MISMATCH: computed=%s\n", root_hash);
+                rc = 1;
+            }
         } else {
             printf("No root_hash field found; computed=%s\n", root_hash);
         }
@@ -262,7 +258,7 @@ static int cmd_merkle(const char *artifact_path, int verify_only) {
 
     free(hashes);
     free(json);
-    return 0;
+    return rc;
 }
 
 static char *read_text_file(const char *path, long *sz_out) {
@@ -397,31 +393,11 @@ static int cmd_feature(const char *manifest_path) {
 
 /* ---------- main ---------- */
 
-int main(int argc, char *argv[]) {
-    if (argc < 2) goto usage;
-
-    if (strcmp(argv[1], "file") == 0 && argc >= 3)
-        return cmd_file(argv[2]);
-
-    if (strcmp(argv[1], "node") == 0 && argc >= 6)
-        return cmd_node(argv[2], argv[3], argv[4], argv[5]);
-
-    if (strcmp(argv[1], "merkle") == 0 && argc >= 3)
-        return cmd_merkle(argv[2], 0);
-
-    if (strcmp(argv[1], "verify") == 0 && argc >= 3)
-        return cmd_merkle(argv[2], 1);
-
-    if (strcmp(argv[1], "dedup") == 0 && argc >= 3)
-        return cmd_dedup(argv[2]);
-
-    if (strcmp(argv[1], "feature") == 0 && argc >= 3)
-        return cmd_feature(argv[2]);
-
-usage:
+static void usage(void) {
     fprintf(stderr,
         "BonfyreHash — content-addressing engine\n\n"
         "Usage:\n"
+        "  bonfyre-hash sqlite-table <db> <table>                typed read-only table cut\n"
         "  bonfyre-hash file <path>                              SHA-256 of file\n"
         "  bonfyre-hash node <op> <ver> <params_json> <h1,h2>    operator node hash\n"
         "  bonfyre-hash merkle <artifact.json>                    compute/update root_hash\n"
@@ -429,5 +405,50 @@ usage:
         "  bonfyre-hash dedup <dir>                               find duplicate files\n"
         "  bonfyre-hash feature <features.json>                   stable SAE feature hash URI\n"
     );
+}
+
+int main(int argc, char *argv[]) {
+    if (bf_help_requested(argc, argv)) { usage(); return 0; }
+    if (argc < 2) goto usage;
+
+    enum {
+        HC_DEDUP, HC_FEATURE, HC_FILE, HC_MERKLE, HC_NODE, HC_SQLITE_TABLE, HC_VERIFY,
+    };
+    static const BfCommandEntry hash_commands[] = {
+        {"dedup", HC_DEDUP, 0, NULL},
+        {"feature", HC_FEATURE, 0, NULL},
+        {"file", HC_FILE, 0, NULL},
+        {"merkle", HC_MERKLE, 0, NULL},
+        {"node", HC_NODE, 0, NULL},
+        {"sqlite-table", HC_SQLITE_TABLE, 0, NULL},
+        {"verify", HC_VERIFY, 0, NULL},
+    };
+    const BfCommandEntry *command = bf_command_lookup(hash_commands,
+        sizeof(hash_commands) / sizeof(hash_commands[0]), argv[1]);
+    if (!command) goto usage;
+
+    if (command->id == HC_SQLITE_TABLE)
+        return argc == 4 ? bf_hash_sqlite_table(argv[2], argv[3]) : 2;
+
+    if (command->id == HC_FILE && argc >= 3)
+        return cmd_file(argv[2]);
+
+    if (command->id == HC_NODE && argc >= 6)
+        return cmd_node(argv[2], argv[3], argv[4], argv[5]);
+
+    if (command->id == HC_MERKLE && argc >= 3)
+        return cmd_merkle(argv[2], 0);
+
+    if (command->id == HC_VERIFY && argc >= 3)
+        return cmd_merkle(argv[2], 1);
+
+    if (command->id == HC_DEDUP && argc >= 3)
+        return cmd_dedup(argv[2]);
+
+    if (command->id == HC_FEATURE && argc >= 3)
+        return cmd_feature(argv[2]);
+
+usage:
+    usage();
     return 1;
 }

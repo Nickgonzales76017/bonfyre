@@ -1,0 +1,2 @@
+the local model at http://example.com:7000 is not answering (the GGUF owner must be on loopback). Start it with: bonfyre-moe serve --port 7000   (see: bonfyre model local)
+exit 2

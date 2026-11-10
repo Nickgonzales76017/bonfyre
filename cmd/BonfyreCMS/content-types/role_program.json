@@ -1,0 +1,23 @@
+{
+  "name": "role_program",
+  "displayName": "Role Program",
+  "description": "A compiled operating posture over shared Actors, relationships, subjects, capability programs and surfaces. It selects lawful lenses and exact operations but grants no authority, provider access, institutional role, identity, employment, or effect.",
+  "attributes": {
+    "role_id": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "label": {"type": "string", "required": true},
+    "subject_kinds": {"type": "json", "required": true},
+    "relationship_kinds": {"type": "json", "required": true},
+    "search_scopes": {"type": "json", "required": true},
+    "lenses": {"type": "json", "required": true},
+    "work_queues": {"type": "json", "required": true},
+    "capability_programs": {"type": "json", "required": true},
+    "authority_requirements": {"type": "json", "required": true},
+    "exact_operations": {"type": "json", "required": true},
+    "unresolved_operations": {"type": "json", "required": true},
+    "metric_views": {"type": "json", "required": true},
+    "handoff_contracts": {"type": "json", "required": true},
+    "surface_scene": {"type": "json", "required": true},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "site_door",
+  "displayName": "Site Door",
+  "description": "One authored navigation or action-adjacent door projected into a page. Publication is owned by CMS status; the ways payload is data rendered by WebAddress and cannot introduce executable markup.",
+  "attributes": {
+    "page": {"type": "string", "required": true},
+    "position": {"type": "integer", "required": true},
+    "eyebrow": {"type": "string", "required": true},
+    "heading": {"type": "string", "required": true},
+    "body": {"type": "text", "required": true},
+    "ways": {"type": "json", "required": false},
+    "status": {"type": "string", "required": true}
+  }
+}

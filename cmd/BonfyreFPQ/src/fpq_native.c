@@ -149,6 +149,38 @@ typedef struct __attribute__((packed)) {
     uint64_t tensor_table_offset;
 } fpq_native_file_header_t;
 
+int fpq_native_inspect(const char *path, fpq_native_inspection_t *out) {
+    FILE *fp = NULL;
+    fpq_native_file_header_t header;
+    uint64_t weights = 0, stored = 0;
+    long end;
+    if (!path || !out || !(fp = fopen(path, "rb"))) return -1;
+    if (fread(&header, sizeof(header), 1, fp) != 1 ||
+        header.magic != FPQ_NATIVE_MAGIC || header.version > FPQ_NATIVE_VERSION ||
+        header.n_tensors == 0 || header.tensor_table_offset != sizeof(header)) goto fail;
+    for (uint32_t index = 0; index < header.n_tensors; index++) {
+        fpq_native_tensor_header_t tensor;
+        if (fread(&tensor, sizeof(tensor), 1, fp) != 1 ||
+            tensor.name_len == 0 || tensor.rows == 0 || tensor.cols == 0 ||
+            tensor.rows > UINT64_MAX / tensor.cols ||
+            weights > UINT64_MAX - (uint64_t)tensor.rows * tensor.cols ||
+            tensor.data_size > UINT64_MAX - stored ||
+            fseek(fp, tensor.name_len, SEEK_CUR) != 0) goto fail;
+        weights += (uint64_t)tensor.rows * tensor.cols;
+        stored += tensor.data_size;
+    }
+    if (fseek(fp, 0, SEEK_END) != 0 || (end = ftell(fp)) < 0 || stored > (uint64_t)end) goto fail;
+    out->version = header.version;
+    out->tensor_count = header.n_tensors;
+    out->weight_count = weights;
+    out->stored_bytes = (uint64_t)end;
+    fclose(fp);
+    return 0;
+fail:
+    fclose(fp);
+    return -1;
+}
+
 int fpq_native_write(const char *path, const fpq_raw_tensor_t *tensors,
                      size_t n_tensors) {
     FILE *fp = fopen(path, "wb");

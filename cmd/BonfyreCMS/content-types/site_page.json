@@ -1,0 +1,20 @@
+{
+  "name": "site_page",
+  "displayName": "Site Page",
+  "description": "Authored page composition for a governed WebAddress route. Copy and arrangement live here; live lenses and action apertures remain owned by their native organs. A published authored page may replace its compiled human fallback but never displaces a declared machine contract.",
+  "attributes": {
+    "route": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "title": {"type": "string", "required": true},
+    "eyebrow": {"type": "string", "required": false},
+    "heading": {"type": "string", "required": true},
+    "lede": {"type": "text", "required": false},
+    "door_page": {"type": "string", "required": false},
+    "note": {"type": "text", "required": false},
+    "lenses": {"type": "string", "required": false},
+    "aperture_subject": {"type": "string", "required": false},
+    "aperture_operation": {"type": "string", "required": false},
+    "authenticated_pane": {"type": "string", "required": false},
+    "machine_view": {"type": "string", "required": false, "default": "authored"},
+    "status": {"type": "string", "required": true}
+  }
+}

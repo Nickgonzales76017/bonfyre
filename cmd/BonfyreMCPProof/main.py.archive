@@ -1,0 +1,305 @@
+#!/usr/bin/env python3
+"""Archived Python proof; the supported owner is src/main.c."""
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+
+def owner(argv: list[str], env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(argv, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                          timeout=30, check=False, env=env)
+
+
+def managed(name: str) -> str:
+    return str(Path.home() / ".bonfyre" / "bin" / name)
+
+
+def contains_scalar(value, needle: str) -> bool:
+    if isinstance(value, dict):
+        return any(contains_scalar(k, needle) or contains_scalar(v, needle) for k, v in value.items())
+    if isinstance(value, list):
+        return any(contains_scalar(v, needle) for v in value)
+    if value is None:
+        return False
+    return str(value) == needle
+
+
+def cms_entry_from_owner(cms: dict[str, object], receipt: dict[str, object], control_home: Path):
+    """Read generation content only through BonfyreCMS.
+
+    The CMS has its own migration and WAL semantics.  A proof consumer opening
+    its SQLite file duplicates that owner and has already produced misleading
+    I/O failures.  Older generation receipts did not persist the CMS locator,
+    so their exact external-id is used only to locate a row through the owner;
+    the diagnostic below distinguishes that recovery from a persisted map.
+    """
+    database = str(cms.get("database") or control_home / "cms.db")
+    schemas = str(cms.get("schemas") or control_home / "content-types")
+    namespace = str(cms.get("namespace") or "bonfyre-generation")
+    entry_id = cms.get("entry_id")
+    expected = str(receipt.get("output_sha256") or "")
+    model = str(receipt.get("model") or "")
+    external_id = str(cms.get("external_id") or f"{model}:{expected}")
+    common = ["--ns", namespace, "--db", database, "--schemas", schemas]
+
+    if entry_id is not None:
+        result = owner([managed("bonfyre-cms"), "entry", "get", "cms_generation",
+                        str(entry_id), *common])
+        if result.returncode != 0:
+            raise RuntimeError(result.stderr.strip() or "BonfyreCMS entry get failed")
+        document = json.loads(result.stdout)
+        return document.get("data"), {
+            "database": database,
+            "schemas": schemas,
+            "namespace": namespace,
+            "entry_id": entry_id,
+            "external_id": external_id,
+            "locator": "persisted_entry_id",
+        }
+
+    # This is deliberately a bounded compatibility bridge for v1 receipts,
+    # not a substitute for a future persisted control-plane manifest.
+    result = owner([managed("bonfyre-cms"), "entry", "list", "cms_generation",
+                    "--limit", "100", *common])
+    if result.returncode != 0:
+        raise RuntimeError(result.stderr.strip() or "BonfyreCMS entry list failed")
+    document = json.loads(result.stdout)
+    for candidate in document.get("data", []):
+        attrs = candidate.get("attributes") or {}
+        if attrs.get("external_id") == external_id:
+            return candidate, {
+                "database": database,
+                "schemas": schemas,
+                "namespace": namespace,
+                "entry_id": candidate.get("id"),
+                "external_id": external_id,
+                "locator": "reconstructed_by_unique_external_id",
+            }
+    return None, {
+        "database": database,
+        "schemas": schemas,
+        "namespace": namespace,
+        "entry_id": None,
+        "external_id": external_id,
+        "locator": "reconstructed_by_unique_external_id",
+    }
+
+
+def main() -> int:
+    if len(sys.argv) != 3 or sys.argv[1] != "generation":
+        print("usage: bonfyre-mcp-proof generation <control-plane-receipt.json>", file=sys.stderr)
+        return 2
+
+    receipt_path = Path(sys.argv[2]).expanduser().resolve()
+    try:
+        receipt = json.loads(receipt_path.read_text())
+    except Exception as exc:
+        print(json.dumps({"schema": "bonfyre-mcp-generation-proof.v1", "passed": False,
+                          "error": f"receipt_unreadable:{exc}"}, separators=(",", ":")))
+        return 1
+
+    cp = receipt.get("control_plane", receipt)
+    graph = cp.get("artifact_graph") or {}
+    cms = cp.get("cms_lambda_tensor") or {}
+    flow = cp.get("workgraph") or {}
+    actors = cp.get("actor_graph") or {}
+    control_plane_manifest_persisted = isinstance(receipt.get("control_plane"), dict)
+    receipt_id = str(receipt.get("receipt_id") or "")
+    control_home = receipt_path.parent.parent
+    repo_root = Path(__file__).resolve().parents[2]
+
+    # Current generation receipts persist the generation facts but omit the
+    # richer control_plane object returned by the MCP response. Recover only
+    # deterministic conventions and flag the omission below; never pretend the
+    # reconstructed map was carried by the receipt itself.
+    if not graph and receipt_id:
+        graph = {
+            "database": str(control_home / "generation-graph.db"),
+            "operator": f"moe.generate-{receipt_id}",
+            "output_atom": f"generation-output-{receipt_id}",
+            "prompt_atom": f"generation-prompt-{receipt_id}",
+        }
+    if not flow and receipt_id:
+        flow = {
+            "database": str(control_home / "workgraphs.db"),
+            "definition": str(control_home / "workgraphs" / f"{receipt_id}.json"),
+            "flow_id": f"generation-{receipt_id}",
+        }
+    if not actors:
+        actors = {"database": str(repo_root / "discipl.db")}
+    checks: dict[str, object] = {}
+    failures: list[str] = []
+    verified: list[str] = []
+
+    def check(name: str, value: bool, detail=None) -> None:
+        checks[name] = {"passed": bool(value), "detail": detail}
+        if not value:
+            failures.append(name)
+
+    check("receipt_schema", receipt.get("schema_version") in {
+              "bonfyre.moe.generation.receipt.v1", "bonfyre.moe.control-plane.receipt.v1"},
+          {"generation": receipt.get("schema_version"), "control_plane": cp.get("schema_version")})
+    check("receipt_status", receipt.get("status") == "passed", receipt.get("status"))
+    checks["control_plane_manifest_persisted"] = {
+        "passed": control_plane_manifest_persisted,
+        "detail": ({"state": "persisted"} if control_plane_manifest_persisted else {
+            "state": "reconstructed_from_declared_local_conventions",
+            "basis": {
+                "artifact_graph": f"generation-{receipt_id} atoms/operator in control-home generation-graph.db",
+                "workgraph": f"generation-{receipt_id} definition in control-home workgraphs",
+                "cms": "model:output_sha256 unique external_id in bonfyre-generation namespace",
+                "actor_graph": "repo-root DisCIPL actor graph convention",
+            },
+        }),
+    }
+    # A v1 receipt can still be audited via deterministic owner conventions,
+    # but it cannot pass the stronger durability claim introduced here.  Do not
+    # let a green aggregate hide the fact that the MCP response once knew more
+    # provenance than the file it left behind.
+    if not control_plane_manifest_persisted:
+        failures.append("control_plane_manifest_persisted")
+    if checks["receipt_schema"]["passed"] and checks["receipt_status"]["passed"]:
+        verified.append("MCPControlReceipt")
+
+    # CMS/LambdaTensor projection.  The native owner supplies both the stored
+    # generation body and its declared digest; this proof hashes the actual
+    # body again.  Do not read its WAL-backed database behind its back.
+    cms_entry = None
+    cms_locator = None
+    try:
+        cms_entry, cms_locator = cms_entry_from_owner(cms, receipt, control_home)
+    except Exception as exc:
+        checks["cms_owner"] = {"passed": False, "detail": str(exc)}
+        failures.append("cms_owner")
+    if isinstance(cms_entry, dict):
+        attrs = cms_entry.get("attributes") or {}
+        expected = str(receipt.get("output_sha256") or "")
+        stored_output = attrs.get("output")
+        declared = attrs.get("output_sha256")
+        actual = (hashlib.sha256(stored_output.encode("utf-8")).hexdigest()
+                  if isinstance(stored_output, str) else None)
+        check("cms_entry", True, {
+            "id": cms_entry.get("id"),
+            "namespace": attrs.get("namespace"),
+            "status": attrs.get("status"),
+            "owner_visible_fields": sorted(attrs),
+            "locator": cms_locator,
+        })
+        check("cms_output_content_hash", bool(expected) and actual == expected,
+              {"expected": expected, "actual": actual})
+        check("cms_declared_output_hash", bool(expected) and declared == expected,
+              {"expected": expected, "declared": declared})
+        check("cms_schema_contract", all(key in attrs for key in (
+              "output", "output_sha256", "external_id", "source_schema_version")),
+              {"owner_visible_fields": sorted(attrs)})
+        if all(checks[k]["passed"] for k in (
+                "cms_entry", "cms_output_content_hash", "cms_declared_output_hash", "cms_schema_contract")):
+            verified.append("CMSLambdaTensor")
+    elif "cms_owner" not in checks:
+        check("cms_entry", False, cms_locator)
+
+    # ArtifactGraph proves the generation output is content-addressed and that
+    # a named generation operator produced that exact atom from retained inputs.
+    graph_db = Path(str(graph.get("database", ""))).expanduser()
+    expected = receipt.get("output_sha256") or cms.get("external_id", "").rsplit(":", 1)[-1]
+    graph_doc = None
+    try:
+        # `lineage` is intentionally a terse human traversal and omits the
+        # atom's digest.  Ask the graph owner to export its canonical artifact
+        # projection to an ephemeral file, then verify the selected atom and
+        # operator from that owner-produced document.
+        with tempfile.TemporaryDirectory(prefix="bonfyre-mcp-proof-") as tmp:
+            artifact = Path(tmp) / "artifact.json"
+            cp_graph = owner([managed("bonfyre-graph"), "export", str(graph_db),
+                              "--out", str(artifact)])
+            if cp_graph.returncode == 0:
+                graph_doc = json.loads(artifact.read_text())
+            else:
+                check("artifact_graph_owner", False, cp_graph.stderr.strip())
+    except Exception as exc:
+        check("artifact_graph_owner", False, str(exc))
+    if graph_doc is not None:
+        output_atom = next((atom for atom in graph_doc.get("atoms", [])
+                            if atom.get("atom_id") == graph.get("output_atom")), None)
+        operator = next((op for op in graph_doc.get("operators", [])
+                         if op.get("operator_id") == graph.get("operator")), None)
+        check("artifact_output_atom", output_atom is not None, graph.get("output_atom"))
+        check("artifact_output_hash", bool(expected) and isinstance(output_atom, dict)
+              and output_atom.get("content_hash") == expected,
+              {"expected": expected, "actual": output_atom.get("content_hash") if isinstance(output_atom, dict) else None})
+        check("artifact_operator", isinstance(operator, dict)
+              and operator.get("output") == graph.get("output_atom"),
+              {"operator": graph.get("operator"), "output": operator.get("output") if isinstance(operator, dict) else None})
+        if all(checks[k]["passed"] for k in ("artifact_output_atom", "artifact_output_hash", "artifact_operator")):
+            verified.append("ArtifactGraph")
+
+    # WorkGraph here is a BonfyreFlow projection: defined is intentionally not
+    # treated as executed. Verify both the DB row and its persisted definition.
+    flow_db = Path(str(flow.get("database", ""))).expanduser()
+    try:
+        flow_env = os.environ.copy()
+        flow_env["BONFYRE_FLOW_DB"] = str(flow_db)
+        cp_flow = owner([managed("bonfyre-flow"), "export", str(flow.get("flow_id", ""))], flow_env)
+        db_doc = json.loads(cp_flow.stdout) if cp_flow.returncode == 0 and cp_flow.stdout.strip() else None
+        check("flow_record", isinstance(db_doc, dict) and db_doc.get("id") == flow.get("flow_id"),
+              {"owner_exit": cp_flow.returncode, "flow_id": flow.get("flow_id")})
+        definition_path = Path(str(flow.get("definition", ""))).expanduser()
+        disk_doc = json.loads(definition_path.read_text())
+        check("flow_definition", db_doc == disk_doc and disk_doc.get("id") == flow.get("flow_id"),
+              str(definition_path))
+    except Exception as exc:
+        check("flow_owner", False, str(exc))
+    if all(checks.get(k, {}).get("passed") for k in ("flow_record", "flow_definition")):
+        verified.append("WorkGraphFlow")
+
+    # DisCIPL contract presence proves the projection has a declared family
+    # transition. It does not prove the contract was enacted for this output.
+    actor_db = Path(str(actors.get("database", ""))).expanduser()
+    try:
+        actor_root = actor_db.parent
+        cp_discipl = owner([managed("bonfyre-discipl"), "contracts", "list",
+                            "--family", "T_MOE_ROUTER", "--root", str(actor_root)])
+        if cp_discipl.returncode != 0:
+            check("discipl_owner", False, cp_discipl.stderr.strip())
+        else:
+            doc = json.loads(cp_discipl.stdout)
+            match = next((c for c in doc.get("contracts", [])
+                          if c.get("src_family") == "T_MOE_ROUTER"
+                          and c.get("dst_family") == "T_MOE_EXPERT"), None)
+            check("discipl_contract", match is not None, match or {"count": doc.get("count", 0)})
+    except Exception as exc:
+        check("discipl_owner", False, str(exc))
+    if checks.get("discipl_contract", {}).get("passed"):
+        verified.append("DisCIPLActorGraph")
+
+    passed = not failures
+    out = {
+        "schema": "bonfyre-mcp-generation-proof.v1",
+        "receipt_path": str(receipt_path),
+        "receipt_id": receipt.get("receipt_id"),
+        "passed": passed,
+        "verified_owners": verified,
+        "verified_owner_count": len(verified),
+        "checks": checks,
+        "failures": failures,
+        "truth": "control_plane_projections_verified_independently_from_the_mcp_success_response",
+        "cannot_infer": [
+            "a recorded projection -> semantic correctness of generated text",
+            "a defined flow -> an executed flow",
+            "a DisCIPL contract -> enactment or authority",
+            "a CMS row -> publication",
+            "an ArtifactGraph atom -> an external effect"
+        ]
+    }
+    print(json.dumps(out, separators=(",", ":"), sort_keys=True))
+    return 0 if passed else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

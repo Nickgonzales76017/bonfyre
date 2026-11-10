@@ -1,0 +1,16 @@
+{
+  "name": "institution_connection",
+  "displayName": "Institution Connection",
+  "description": "A relationship one household has established with one institution, and the single plane it opens. A connection is granted by the institution to that household: it makes a plane readable for them alone, never for this estate, never for other households, and never for anyone reading the institution's public page. Establishing it is not a claim the institution agreed; it is a claim the household says it holds, recorded with who said so and when, and it is revocable by the household at any time.",
+  "attributes": {
+    "connection_id": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "household_id": { "type": "string", "required": true },
+    "institution": { "type": "string", "required": true },
+    "plane": { "type": "string", "required": true },
+    "established_by": { "type": "string", "required": true },
+    "established_at": { "type": "string", "required": true },
+    "state": { "type": "string", "required": true },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

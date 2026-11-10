@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -5,6 +12,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 
 static void resolve_executable_sibling(char *buffer, size_t size, const char *argv0, const char *sibling_dir, const char *binary_name) {
     if (argv0 && argv0[0] == '/') snprintf(buffer, size, "%s", argv0);
@@ -70,9 +78,21 @@ int main(int argc, char **argv) {
     const char *index_bin = default_binary("BONFYRE_INDEX_BINARY", argv[0], index_resolved, sizeof(index_resolved), "BonfyreIndex", "bonfyre-index", "../BonfyreIndex/bonfyre-index");
     const char *stitch_bin = default_binary("BONFYRE_STITCH_BINARY", argv[0], stitch_resolved, sizeof(stitch_resolved), "BonfyreStitch", "bonfyre-stitch", "../BonfyreStitch/bonfyre-stitch");
 
-    if (strcmp(argv[1], "cms") == 0 || strcmp(argv[1], "index") == 0 || strcmp(argv[1], "stitch") == 0) {
+    enum {
+        PR_CMS, PR_INDEX, PR_REFRESH, PR_STITCH,
+    };
+    static const BfCommandEntry project_commands[] = {
+        {"cms", PR_CMS, 0, NULL},
+        {"index", PR_INDEX, 0, NULL},
+        {"refresh", PR_REFRESH, 0, NULL},
+        {"stitch", PR_STITCH, 0, NULL},
+    };
+    const BfCommandEntry *command = bf_command_lookup(project_commands,
+        sizeof(project_commands) / sizeof(project_commands[0]), argv[1]);
+
+    if (command && (command->id == PR_CMS || command->id == PR_INDEX || command->id == PR_STITCH)) {
         if (argc < 3) return 1;
-        const char *target = strcmp(argv[1], "cms") == 0 ? cms_bin : (strcmp(argv[1], "index") == 0 ? index_bin : stitch_bin);
+        const char *target = command->id == PR_CMS ? cms_bin : (command->id == PR_INDEX ? index_bin : stitch_bin);
         char **child = calloc((size_t)argc, sizeof(char *));
         if (!child) return 1;
         child[0] = (char *)target;
@@ -82,7 +102,7 @@ int main(int argc, char **argv) {
         return rc;
     }
 
-    if (strcmp(argv[1], "refresh") == 0) {
+    if (command && command->id == PR_REFRESH) {
         if (argc < 3) {
             print_usage();
             return 1;

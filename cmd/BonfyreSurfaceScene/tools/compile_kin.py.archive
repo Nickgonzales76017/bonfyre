@@ -1,0 +1,123 @@
+#!/usr/bin/env python3
+"""Historical parity oracle: item kin compiled from the estate chart.
+
+The spatial neighbourhood can only connect what states where it is -- about a
+hundred things out of seven thousand.  Everything else is connected by what it
+is about, and the latent atlas already places every census item in a dense
+chart.  Nothing read that chart: a page could not say "more like this" without
+re-deriving it per request, so it never said it at all.
+
+This feeds the chart's coordinates to the kin kernel in tiles and stores the
+nearest few for each item beside the item archive, so a page reads kin instead
+of computing it.
+
+The compute is an acceleration boundary.  A score between two items is a
+statement about two coordinates computed from words: not a shared subject, not
+a citation, not an endorsement, and not a reason to read one because you read
+the other.  The receipt says which backend actually ran.
+
+  compile_kin.py --atlas atlas.db --db items.db [--chart words-256]
+      [--kernel .../kin-compute-vgpu.mjs] [--k 8] [--tile 1024] [--min 0.85]
+
+The floor is high on purpose.  Measured against this estate's own chart, a
+score below about 0.85 pairs a story about a crocodile with one about a
+telephone: the chart is a hash of the words, and at that distance it is noise.
+Above it, and across two different publishers, it finds the same story told
+twice -- which is a fact about two texts and worth showing, where a vague
+resemblance is not.
+"""
+import argparse, json, os, sqlite3, struct, subprocess, sys, tempfile, time
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--atlas", required=True)
+    ap.add_argument("--db", required=True)
+    ap.add_argument("--chart", default="words-256")
+    ap.add_argument("--kernel", default=os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                     "..", "runtime", "kin-compute-vgpu.mjs"))
+    ap.add_argument("--k", type=int, default=8)
+    ap.add_argument("--tile", type=int, default=1024)
+    ap.add_argument("--min", type=float, default=0.85)
+    ap.add_argument("--backend", default="auto")
+    ap.add_argument("--limit", type=int, default=20000)
+    ap.add_argument("--node", default="node")
+    args = ap.parse_args()
+
+    atlas = sqlite3.connect(args.atlas)
+    dims = atlas.execute("SELECT dims FROM chart WHERE chart_id=?", (args.chart,)).fetchone()
+    if not dims:
+        print(json.dumps({"skipped": "no such chart", "chart": args.chart}))
+        return 0
+    dims = int(dims[0])
+    rows = atlas.execute("SELECT address, coordinate FROM projection WHERE chart_id=?"
+                         " ORDER BY updated_at DESC LIMIT ?", (args.chart, args.limit)).fetchall()
+    atlas.close()
+    if len(rows) < 2:
+        print(json.dumps({"items": len(rows), "skipped": "fewer than two placed items"}))
+        return 0
+
+    work = tempfile.mkdtemp(prefix="bonfyre-kin-")
+    keys, vectors_path = [], os.path.join(work, "vectors.f32")
+    try:
+        with open(vectors_path, "wb") as out:
+            for address, blob in rows:
+                if len(blob) < dims * 4:
+                    continue
+                keys.append(address)
+                out.write(blob[:dims * 4])
+        keys_path = os.path.join(work, "keys.json")
+        json.dump(keys, open(keys_path, "w"))
+
+        started = time.time()
+        done = subprocess.run([args.node, os.path.abspath(args.kernel),
+                               "--vectors", vectors_path, "--keys", keys_path,
+                               "--dims", str(dims), "--k", str(args.k), "--tile", str(args.tile),
+                               "--min", str(args.min), "--backend", args.backend],
+                              capture_output=True, text=True, timeout=7200)
+        if done.returncode != 0:
+            sys.stderr.write(done.stderr[-600:])
+            return 2
+        answer = json.loads(done.stdout.strip().splitlines()[-1])
+        receipt, near = answer["receipt"], answer.get("nearest", [])
+
+        con = sqlite3.connect(args.db)
+        con.execute("PRAGMA journal_mode=DELETE")
+        con.execute("CREATE TABLE IF NOT EXISTS kin(address TEXT NOT NULL, kin_address TEXT NOT NULL,"
+                    " chart TEXT NOT NULL, score REAL NOT NULL, rank INTEGER NOT NULL, computed TEXT NOT NULL,"
+                    " PRIMARY KEY(address, kin_address))")
+        con.execute("CREATE INDEX IF NOT EXISTS kin_by_address ON kin(address, rank)")
+        stamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        kept = 0
+        con.execute("BEGIN")
+        con.execute("DELETE FROM kin WHERE chart=?", (args.chart,))
+        for row in near:
+            for rank, one in enumerate(row.get("near", [])):
+                con.execute("INSERT OR REPLACE INTO kin(address, kin_address, chart, score, rank, computed)"
+                            " VALUES(?,?,?,?,?,?)",
+                            (row["key"], one["key"], args.chart, one["score"], rank, stamp))
+                kept += 1
+        con.commit()
+        con.close()
+
+        print(json.dumps({"items": len(keys), "chart": args.chart, "dims": dims,
+                          "with_kin": len(near), "pairs_kept": kept,
+                          "backend": receipt.get("actual_backend"), "tiles": receipt.get("tiles"),
+                          "pairs": receipt.get("pairs"), "kernel_ms": receipt.get("elapsed_ms"),
+                          "seconds": round(time.time() - started, 1), "floor": args.min,
+                          "cannot_infer": receipt.get("cannot_infer")}))
+    finally:
+        for name in ("vectors.f32", "keys.json"):
+            try:
+                os.unlink(os.path.join(work, name))
+            except OSError:
+                pass
+        try:
+            os.rmdir(work)
+        except OSError:
+            pass
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

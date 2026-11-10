@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+"""List finite admitted-source ledger coordinates for a static estate.
+
+SourceDepth is already a public WebAddress program. A static object store
+cannot answer its query coordinates dynamically, so this compiler makes the
+proved admitted frontier addressable without inventing source material or
+silently publishing the much larger candidate census.
+"""
+import argparse
+import hashlib
+import sqlite3
+from pathlib import Path
+from urllib.parse import quote
+
+KEYS = ("channel", "root", "family", "roots", "way", "publishes", "standing", "q", "from")
+# APFS and R2 can retain a long object key, but a materialization also passes
+# through filesystem names.  A public semantic coordinate must never become a
+# carrier constraint.  Keep short coordinates inspectable and lower only an
+# oversized canonical query to a content-addressed leaf.
+MAX_MATERIAL_LEAF = 180
+
+
+def encoded(value):
+    return quote(value, safe="-_.!~*'()")  # JavaScript encodeURIComponent's safe set.
+
+
+def coordinate(**values):
+    parts = [(key, str(values[key])) for key in KEYS if values.get(key)]
+    query = "&".join(f"{key}={encoded(value)}" for key, value in parts)
+    direct = f"channels/__q/{query}.html"
+    key = direct if len(direct) <= MAX_MATERIAL_LEAF else \
+        f"channels/__q/h/{hashlib.sha256(query.encode('ascii')).hexdigest()}.html"
+    return f"/channels?{query}", key
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--frontier", required=True, help="frontier.db to read without mutation")
+    parser.add_argument("--page-size", type=int, default=40)
+    args = parser.parse_args()
+    if args.page_size < 1:
+        parser.error("--page-size must be positive")
+    frontier = Path(args.frontier)
+    if not frontier.is_file():
+        parser.error("--frontier must be an existing frontier.db")
+    with sqlite3.connect(f"file:{frontier}?mode=ro", uri=True) as db:
+        rows = list(db.execute(
+            "SELECT exact_address FROM channel "
+            "WHERE state IN ('admitted','active') AND COALESCE(census_source,'')<>'' "
+            "ORDER BY exact_address"))
+    seen = set()
+    def emit(pair):
+        path, key = pair
+        if key not in seen:
+            seen.add(key)
+            print(f"{path}\t{key}")
+    # The bounded admitted slice is the walkable index into every published
+    # source profile. It deliberately excludes the candidate census.
+    for offset in range(0, len(rows), args.page_size):
+        values = {"standing": "admitted"}
+        if offset:
+            values["from"] = str(offset)
+        emit(coordinate(**values))
+    for (address,) in rows:
+        emit(coordinate(channel=address))
+
+
+if __name__ == "__main__":
+    main()

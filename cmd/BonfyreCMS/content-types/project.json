@@ -1,0 +1,19 @@
+{
+  "name": "project",
+  "displayName": "Project",
+  "description": "One thing a community is trying to bring into being, with every facet it needs at once: what is being built, what it would cost to run, what is still needed in people and in money, what has been decided, and what it becomes afterwards. A project is not a campaign that ends when a target is reached; the target is a stage in a life that continues as a living publication. Nothing recorded here is money held, promised, owed, or authorized to spend.",
+  "attributes": {
+    "project_id": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "subject_ref": { "type": "string", "required": true },
+    "title": { "type": "string", "required": true },
+    "pitch": { "type": "text", "required": true },
+    "stage": { "type": "string", "required": true },
+    "goal_stated": { "type": "string" },
+    "recurring_stated": { "type": "string" },
+    "operating_stated": { "type": "string" },
+    "currency": { "type": "string" },
+    "opened_at": { "type": "string", "required": true },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

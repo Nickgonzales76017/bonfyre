@@ -1,0 +1,2 @@
+bonfyre books needs --transactions FILE and --learned FILE or --chart FILE (see bonfyre books --help)
+exit 2

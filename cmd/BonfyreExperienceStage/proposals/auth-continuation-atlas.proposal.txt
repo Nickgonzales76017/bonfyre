@@ -1,0 +1,10 @@
+# UNAPPLIED: the architecture root is outside the current MCP patch scope.
+# Add these fields to the existing web-address-edge entry; do not make a new registry.
+  source_path cmd/BonfyreWebAddress/src/auth_continuation.h
+  source_path cmd/BonfyreWebAddress/tests/auth_continuation_fixture.mjs
+  source_path cmd/BonfyreWebAddress/tests/auth_continuation_test.c
+  source_path cmd/BonfyreWebAddress/tests/auth_continuation_test.mjs
+  source_path cmd/BonfyreWebAddress/tests/auth_continuation_browser.mjs
+  invariant signup and login retain one validated return address across native forms and CMS-authored action fragments; registration creates no session, institutional grant or automatic adoption
+  witness 2026-10-15 auth_continuation_test.mjs passes 40 native owner checks and auth_continuation_browser.mjs passes 33 fresh Chrome checks against an isolated local HTTPS carrier, including three account contexts, script-disabled fallback, CMS-authored phone forms and independent native saved records
+  forbidden_inference a tested authentication continuation or private saved item -> public deployment, configured household or organization workflow, installed behavior pack, editor account synchronization or new external authority

@@ -1,0 +1,12 @@
+delta requires 2 positional arguments
+Bonfyre v5 recursive substrate control.
+Usage: bonfyre-recursive [--version | --help] <command> [arguments]
+Commands:
+  status | replay | tokenizers | native-smoke
+  ingest PATH [--kind KIND] [--classification CLASS] [--schema SCHEMA]
+  tokenize ARTIFACT_ID [--tokenizer TOKENIZER]
+  delta SOURCE_TOKEN_ARTIFACT_ID TARGET_TOKEN_ARTIFACT_ID
+  dependency SOURCE_KIND SOURCE_ID TARGET_KIND TARGET_ID EDGE_KIND
+  closure ROOT_KIND ROOT_ID [--depth N]
+  mission-bootstrap MISSION_JSON SPEC_PATH [--context PATH] [--tokenizer TOKENIZER]
+  mission-finalize MISSION_JSON [--source-bfp-root ROOT] [--target-bfp-root ROOT] [--changed-section SECTION]...

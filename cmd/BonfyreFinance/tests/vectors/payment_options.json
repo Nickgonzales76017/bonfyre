@@ -1,0 +1,89 @@
+{
+ "schema": "bonfyre.command-vectors.v1",
+ "binary": "bonfyre-finance",
+ "binary_env": "BONFYRE_FINANCE_BIN",
+ "replaces": [
+  "tests/payment_options.test.mjs"
+ ],
+ "cases": [
+  {
+   "name": "native finance command runs actual supplier-price comparison without opening its ledger",
+   "steps": [
+    {
+     "argv": [
+      "--db",
+      "${tmp}/must-not-exist.db",
+      "payment-options",
+      "--root",
+      "${root}",
+      "--input",
+      "${root}/packs/aurekai-work-samples/twc-quantlib-input-20261009.json",
+      "--output",
+      "${tmp}/payment comparison.json"
+     ],
+     "exit": 0,
+     "at": {
+      "provider": "QuantLib",
+      "input_ref": "opportunity:twc-website-rfp"
+     },
+     "len": {
+      "results": 4
+     },
+     "json_file": "${tmp}/payment comparison.json",
+     "absent": [
+      "${tmp}/must-not-exist.db"
+     ]
+    },
+    {
+     "argv": [
+      "--db",
+      "${tmp}/must-not-exist.db",
+      "payment-options",
+      "--root",
+      "${root}",
+      "--input",
+      "${root}/packs/aurekai-work-samples/twc-quantlib-input-20261009.json",
+      "--output",
+      "${tmp}/payment comparison.json"
+     ],
+     "exit_nonzero": true
+    },
+    {
+     "argv": [
+      "--db",
+      "${tmp}/must-not-exist.db",
+      "payment-options",
+      "--root",
+      "${root}"
+     ],
+     "exit": 2
+    },
+    {
+     "argv": [
+      "--db",
+      "${tmp}/must-not-exist.db",
+      "payment-options",
+      "--root",
+      "${root}",
+      "--input",
+      "${root}/packs/aurekai-work-samples/twc-quantlib-input-20261009.json",
+      "--unknown",
+      "x"
+     ],
+     "exit": 2
+    },
+    {
+     "argv": [
+      "--db",
+      "${tmp}/must-not-exist.db",
+      "--help"
+     ],
+     "exit": 0,
+     "absent": [
+      "${tmp}/must-not-exist.db"
+     ]
+    }
+   ]
+  }
+ ]
+}

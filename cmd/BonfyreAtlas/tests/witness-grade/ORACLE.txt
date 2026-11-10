@@ -1,0 +1,32 @@
+The six reports were captured on 2026-10-23 from the existing JavaScript
+checker before retirement. The stale-index report duplicates the mutation
+report; the native check must ignore a poisoned index and parse YAFF.
+
+Checker SHA-256:
+6dc816de3ad9ffd6672f1c9988ed6d9bee50649f27b5bb016cf5fa64f74611e4
+Previous JavaScript test SHA-256:
+3ea6d2c4eea15c0ef08dced91c00ade086fd6d92562304be872f1962ba8ca24b
+
+The checker imported a retired index loader. Capture copied the checker into
+a temporary fixture and supplied only that loader as a JSON reader over the
+same fixture exported by BonfyreAtlas. Classification and report code were
+unchanged. The fixture is retained in ../witness-grade.sh. No replacement
+registry or JavaScript runtime is required to run the native tests.
+
+Intentional corrections:
+
+1. The exercised tier still means membership in the discovered shell suites.
+   Its report note now says execution is not evidenced. Filesystem discovery
+   never runs a suite and cannot prove a passing regression. The test changes
+   only that sentence when comparing the native reports to these captures.
+2. CLI usage names bonfyre-atlas witness-grade. Unknown options and a missing
+   mutation argument still exit 2.
+3. Non-array noticed_by values invalidate the receipt instead of treating
+   strings as character sequences. Mutation evidence is supplied by the
+   caller; this command does not authenticate it or reproduce the mutation.
+
+Coverage: exact, _test and _e2e labels; duplicate labels; multiple witnesses
+with the first existing path retained; excluded archived witnesses;
+recursive root tests but immediate command tests; symlink files and command
+directories excluded from discovery; missing and malformed receipts;
+invalid entries; unchanged measured/proven totals; missing CLI arguments.

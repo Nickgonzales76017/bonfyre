@@ -1,0 +1,6 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"build/bonfyre-detect-objects","binary_env":"BONFYRE_DETECT_OBJECTS_BIN","cases":[
+{"name":"every frame is read by the local detector and a synthetic test pattern yields no invented objects","steps":[{"program":"ffmpeg","argv":["-loglevel","error","-f","lavfi","-i","testsrc=duration=3:size=160x120:rate=5","-pix_fmt","yuv420p","v.mp4"],"exit":0},
+ {"program":"${root}/cmd/BonfyreFrameExtract/bonfyre-frame-extract","argv":["--input","v.mp4","--out","fr","--fps","1"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"argv":["--input","fr","--out","det"],"env":{"HOME":"${tmp}","BONFYRE_YOLO_BINARY":"${organ}/build/bonfyre-detect-vision"},"exit":0,"present":["${tmp}/det/objects.json","${tmp}/det/frame-000001.jpg.json"]},
+ {"program":"cat","argv":["det/objects.json"],"at":{"frame_count":3,"frames_not_detected":0,"unique_labels":[]}}]},
+{"name":"with no readable frame nothing is written","files":{"fr/x.jpg":"not an image"},"steps":[{"argv":["--input","fr","--out","det"],"env":{"HOME":"${tmp}","BONFYRE_YOLO_BINARY":"${organ}/build/bonfyre-detect-vision"},"exit_nonzero":true,"absent":["${tmp}/det/objects.json"]}]}]}

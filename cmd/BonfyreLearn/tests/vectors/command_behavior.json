@@ -1,0 +1,8 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-learn","binary_env":"BONFYRE_LEARN_BIN","cases":[
+{"name":"a run of low scores lowers the stage gate by one step","steps":[
+ {"program":"sh","argv":["-c","for i in 1 2 3 4 5 6; do \"$1\" feedback r$i 0.4 --stage summarize bad || exit 1; done","sh","${organ}/bonfyre-learn"],"env":{"HOME":"${tmp}","BONFYRE_LEARN_DB":"${tmp}/l.db"},"exit":0},
+ {"argv":["tune","summarize"],"env":{"HOME":"${tmp}","BONFYRE_LEARN_DB":"${tmp}/l.db"},"exit":0,"contains":["samples=6 avg=0.400 threshold 0.750→0.700"]},
+ {"argv":["export"],"env":{"HOME":"${tmp}","BONFYRE_LEARN_DB":"${tmp}/l.db"},"exit":0,"contains":["{\"stage\":\"summarize\",\"quality\":0.700"]}]},
+{"name":"an unregistered stage and an out-of-range score are refused","steps":[
+ {"argv":["feedback","r1","0.5","--stage","nope"],"env":{"HOME":"${tmp}","BONFYRE_LEARN_DB":"${tmp}/l.db"},"exit":1},
+ {"argv":["feedback","r1","1.7","--stage","summarize"],"env":{"HOME":"${tmp}","BONFYRE_LEARN_DB":"${tmp}/l.db"},"exit":2}]}]}

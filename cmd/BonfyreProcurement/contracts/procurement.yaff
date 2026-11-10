@@ -1,0 +1,56 @@
+pack bonfyre-procurement
+generation 2026-10-23
+authority pure-native-procurement-derivation
+invariant workspace-remains-record-revision-and-account-authority-owner
+invariant no-command-in-this-pack-contacts-a-supplier-or-performs-a-commercial-effect
+invariant unknown-money-remains-unknown
+invariant product-identity-is-source-url-product-id-variant-id
+
+record SupplierRequest
+  prefix procurement-rfq:
+  state prepared
+  source purchase-list-id purchase-list-revision purchase-list-sha256
+  cannot_infer supplier-contact quotation reservation approval order payment shipment
+
+record SupplierQuoteObservation
+  prefix procurement-quote:
+  state observed
+  source rfq-id rfq-digest source-ref
+  optional supplier-quote-id quoted-at valid-until freight-cents tax-cents other-fees-cents
+  cannot_infer supplier-acceptance reservation approval order payment settlement fulfillment shipment
+
+record QuoteComparison
+  prefix procurement-comparison:
+  source rfq-id rfq-digest quote-id quote-digest
+  state current partial unpriced mixed_currency stale
+  cannot_infer quote-acceptance approval allocation reservation commitment order payment settlement shipment
+
+record AllocationPlan
+  prefix procurement-allocation:
+  state prepared
+  source comparison-digest rfq-id rfq-digest recheck-digest
+  policy lowest-known-merchandise
+  fees-attribution unallocated
+  commerce-chain unmaterialized
+  approval-required true
+  cannot_infer commerce-product listing inventory availability offer quote cart quote-acceptance approval reservation commitment purchase-order payment settlement fulfillment delivery satisfaction ownership
+
+action prepare-rfq
+  consumes service-site.room-purchase-list.v1
+  produces SupplierRequest
+  effect none
+
+action observe-quote
+  consumes SupplierRequest supplier-quote-observation-envelope
+  produces SupplierQuoteObservation
+  effect none
+
+action compare-quotes
+  consumes SupplierRequest SupplierQuoteObservation
+  produces QuoteComparison
+  effect none
+
+action prepare-allocation
+  consumes SupplierRequest SupplierQuoteObservation QuoteComparison
+  produces AllocationPlan
+  effect none

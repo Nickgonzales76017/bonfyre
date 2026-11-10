@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * qwen_serve.c — Resident service for Qwen inference
  */
@@ -153,6 +160,77 @@ void qwen_response_free(qwen_response_t *resp) {
     free(resp->text);
     free(resp->meta_json);
     free(resp->error);
+}
+
+static void qwen_meta_escape(const char *src, char *dst, size_t cap) {
+    size_t off = 0;
+    if (!dst || cap == 0) return;
+    dst[0] = '\0';
+    if (!src) return;
+    for (size_t i = 0; src[i] && off + 2 < cap; i++) {
+        unsigned char c = (unsigned char)src[i];
+        if (c == '"' || c == '\\') {
+            dst[off++] = '\\';
+            dst[off++] = (char)c;
+        } else if (c == '\n') {
+            dst[off++] = '\\'; dst[off++] = 'n';
+        } else if (c == '\r') {
+            dst[off++] = '\\'; dst[off++] = 'r';
+        } else if (c == '\t') {
+            dst[off++] = '\\'; dst[off++] = 't';
+        } else if (c >= 0x20) {
+            dst[off++] = (char)c;
+        }
+    }
+    dst[off] = '\0';
+}
+
+static char *qwen_representation_evidence_json(qwen_runtime_t *rt) {
+    static char cached_pack[4096] = {0};
+    static char cached_sha[65] = {0};
+    fpq_active_density_t density = {0};
+    char model_id[512], representation[96];
+    char *json;
+
+    if (!rt) return NULL;
+    if (rt->pack_path && rt->pack_path[0] &&
+        (strcmp(cached_pack, rt->pack_path) != 0 || cached_sha[0] == '\0')) {
+        cached_sha[0] = '\0';
+        if (bf_sha256_file(rt->pack_path, cached_sha) == 0)
+            snprintf(cached_pack, sizeof(cached_pack), "%s", rt->pack_path);
+        else
+            cached_pack[0] = '\0';
+    }
+    qwen_meta_escape(rt->model_id ? rt->model_id : "", model_id, sizeof(model_id));
+    qwen_meta_escape(rt->representation, representation, sizeof(representation));
+    fpq_active_cache_density(rt->active_cache, &density);
+
+    json = (char *)calloc(2048, 1);
+    if (!json) return NULL;
+    snprintf(json, 2048,
+        "{\"schema_version\":\"bonfyre.qwen.representation_evidence.v1\","
+        "\"model_id\":\"%s\",\"model_hash\":\"%s\","
+        "\"representation\":\"%s\",\"finite_model_state\":true,"
+        "\"active_cache_ready_entries\":%zu,"
+        "\"active_cache_unique_factors\":%zu,"
+        "\"active_cache_duplicate_factors\":%zu,"
+        "\"active_cache_resident_factor_bytes\":%zu,"
+        "\"active_cache_unique_factor_bytes\":%zu,"
+        "\"active_cache_duplicate_factor_bytes\":%zu,"
+        "\"active_cache_unique_payloads\":%zu,"
+        "\"active_cache_duplicate_payloads\":%zu,"
+        "\"active_cache_resident_payload_bytes\":%zu,"
+        "\"active_cache_unique_payload_bytes\":%zu,"
+        "\"active_cache_duplicate_payload_bytes\":%zu}",
+        model_id, cached_sha, representation,
+        density.ready_entries,
+        density.unique_factors, density.duplicate_factors,
+        density.resident_factor_bytes, density.unique_factor_bytes,
+        density.duplicate_factor_bytes,
+        density.unique_payloads, density.duplicate_payloads,
+        density.resident_payload_bytes, density.unique_payload_bytes,
+        density.duplicate_payload_bytes);
+    return json;
 }
 
 static char *qwen_response_to_json(const qwen_response_t *resp) {
@@ -353,6 +431,7 @@ static int qwen_handle_request(qwen_runtime_t *rt,
             resp->text = ctx.text;
             resp->tokens_generated = ctx.token_count;
             resp->token_streams_opened = ctx.quic_stream_count;
+            if (r == 0) resp->meta_json = qwen_representation_evidence_json(rt);
             if (r != 0) resp->error = strdup("Generation failed");
             return r;
         }
@@ -387,6 +466,7 @@ static int qwen_handle_request(qwen_runtime_t *rt,
             resp->text = ctx.text;
             resp->tokens_generated = ctx.token_count;
             resp->token_streams_opened = ctx.quic_stream_count;
+            if (r == 0) resp->meta_json = qwen_representation_evidence_json(rt);
             if (r != 0) resp->error = strdup("File generation failed");
             return r;
         }

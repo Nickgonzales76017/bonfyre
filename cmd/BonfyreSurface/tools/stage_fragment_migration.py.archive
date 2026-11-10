@@ -1,0 +1,151 @@
+#!/usr/bin/env python3
+"""ARCHIVED: stage_fragment_migration.mjs admits drafts in one CMS transaction."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import subprocess
+from pathlib import Path
+from typing import Any
+
+SAFE_IDENT = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,191}$")
+
+
+def binary(env_name: str, managed_name: str) -> str:
+    explicit = os.environ.get(env_name)
+    if explicit:
+        return explicit
+    managed = Path.home() / ".bonfyre" / "bin" / managed_name
+    if managed.exists():
+        return str(managed)
+    return managed_name
+
+
+def run(argv: list[str], timeout: int = 120) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(argv, text=True, capture_output=True, timeout=timeout, check=False)
+
+
+def existing_coordinates(query_bin: str, db_path: str, namespace: str) -> set[str]:
+    escaped_db = db_path.replace("'", "''")
+    escaped_ns = namespace.replace("'", "''")
+    sql = (
+        "INSTALL sqlite; LOAD sqlite; "
+        f"ATTACH '{escaped_db}' AS cms (TYPE sqlite, READ_ONLY); "
+        "SELECT coalesce(string_agg(coordinate, chr(10)), '') AS coordinates "
+        f"FROM cms.site_fragment WHERE namespace='{escaped_ns}'"
+    )
+    result = run([query_bin, "sql", ":memory:", sql])
+    if result.returncode != 0:
+        message = (result.stderr or "") + (result.stdout or "")
+        if "site_fragment" in message and ("does not exist" in message or "not found" in message):
+            return set()
+        raise RuntimeError(f"BonfyreQuery failed: {message.strip()}")
+    payload = json.loads(result.stdout or "[]")
+    if not payload or not isinstance(payload[0], dict):
+        return set()
+    joined = str(payload[0].get("coordinates") or "")
+    return {value for value in joined.splitlines() if value}
+
+
+def apply_schema(cms_bin: str, db_path: str, schema_path: str) -> None:
+    result = run([cms_bin, "schema", "apply", schema_path, "--db", db_path])
+    if result.returncode != 0:
+        raise RuntimeError(f"BonfyreCMS schema apply failed: {(result.stderr or result.stdout).strip()}")
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("plan")
+    ap.add_argument("--db", required=True)
+    ap.add_argument("--schemas", required=True)
+    ap.add_argument("--namespace", default="aurekai")
+    ap.add_argument("--apply", action="store_true")
+    ap.add_argument("--limit", type=int, default=0)
+    args = ap.parse_args()
+
+    if not SAFE_IDENT.fullmatch(args.namespace):
+        raise SystemExit("namespace must be a short Bonfyre identifier")
+
+    plan = json.loads(Path(args.plan).read_text())
+    drafts: list[dict[str, Any]] = list(plan.get("drafts") or [])
+    if args.limit > 0:
+        drafts = drafts[: args.limit]
+
+    cms_bin = binary("BONFYRE_CMS_BINARY", "bonfyre-cms")
+    query_bin = binary("BONFYRE_QUERY_BINARY", "bonfyre-query")
+    schema_path = str(Path(args.schemas) / "site_fragment.json")
+
+    if not args.apply:
+        print(json.dumps({
+            "schema_version": "bonfyre.surface.fragment-stage-preview.v1",
+            "apply": False,
+            "candidate_count": len(drafts),
+            "namespace": args.namespace,
+            "db": args.db,
+            "write_owner": "BonfyreCMS",
+            "read_owner": "BonfyreQuery",
+        }, sort_keys=True))
+        return 0
+
+    apply_schema(cms_bin, args.db, schema_path)
+    existing = existing_coordinates(query_bin, args.db, args.namespace)
+    created = 0
+    skipped = 0
+    failed: list[dict[str, str]] = []
+
+    for draft in drafts:
+        coordinate = str(draft.get("coordinate") or "")
+        if not SAFE_IDENT.fullmatch(coordinate):
+            failed.append({"coordinate": coordinate, "error": "invalid coordinate"})
+            continue
+        if coordinate in existing:
+            skipped += 1
+            continue
+
+        attributes = dict(draft)
+        # Migration is create-only and draft-only. Publication is a separate
+        # lifecycle effect after exact SurfaceIR and carrier witnesses pass.
+        attributes["status"] = "draft"
+        result = run([
+            cms_bin, "entry", "create", "site_fragment",
+            json.dumps(attributes, separators=(",", ":"), sort_keys=True),
+            "--ns", args.namespace,
+            "--db", args.db,
+            "--schemas", args.schemas,
+        ])
+        if result.returncode == 0:
+            created += 1
+            existing.add(coordinate)
+        else:
+            failed.append({
+                "coordinate": coordinate,
+                "error": ((result.stderr or "") + (result.stdout or "")).strip()[:1200],
+            })
+
+    payload = {
+        "schema_version": "bonfyre.surface.fragment-stage-result.v1",
+        "apply": True,
+        "requested": len(drafts),
+        "created": created,
+        "skipped_existing": skipped,
+        "failed_count": len(failed),
+        "failed": failed,
+        "namespace": args.namespace,
+        "db": args.db,
+        "write_owner": "BonfyreCMS",
+        "read_owner": "BonfyreQuery",
+        "publication_effect": False,
+        "forbidden_inference": (
+            "draft admission is not publication; an existing coordinate is not "
+            "overwritten because authored state may have diverged from its compiled source"
+        ),
+    }
+    print(json.dumps(payload, sort_keys=True))
+    return 1 if failed else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

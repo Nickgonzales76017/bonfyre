@@ -1,0 +1,135 @@
+package participation
+
+#Mode: {
+	name: string & != ""
+	bonus: int
+	require_role_class?: string
+	forbid_role_class?: string
+	require_candidate_plane?: string
+	join_power_min?: int
+	or_source_kind?: string
+	or_protocol?: string
+	or_role_class?: string
+}
+
+#NextRule: {
+	name: string & != ""
+	candidate_plane: string & != ""
+	test_axis: string & != ""
+	require_unknown?: bool
+	depth_lt?: int
+	owner: string & != ""
+	action: string & != ""
+	why: string & != ""
+}
+
+activationContract: {
+	modes: [
+		{
+			name: "cross_world_service"
+			bonus: 12
+			require_role_class: "service"
+			join_power_min: 3
+		},
+		{name: "effect_adapter", bonus: 6, require_role_class: "action"},
+		{
+			name: "publication_roundtrip"
+			bonus: 0
+			require_role_class: "carrier"
+			require_candidate_plane: "round_trip"
+		},
+		{
+			name: "paid_machine_market"
+			bonus: 5
+			require_candidate_plane: "economic"
+			or_source_kind: "x402"
+			or_protocol: "x402"
+		},
+		{
+			name: "semantic_interchange"
+			bonus: 8
+			or_source_kind: "machine_protocol"
+			or_role_class: "standard"
+		},
+		{name: "toolchain", bonus: 0, require_role_class: "compiler"},
+		{name: "verification_bridge", bonus: 0, require_role_class: "verification"},
+		{
+			name: "sensor_material"
+			bonus: 0
+			require_role_class: "material"
+			forbid_role_class: "service"
+		},
+	]
+	default_mode: "general_candidate"
+
+	next_rules: [
+		{
+			name: "observe_exact_candidate"
+			candidate_plane: "observation", test_axis: "observation", require_unknown: true
+			owner: "ForeignTwin", action: "observe_exact_candidate"
+			why: "establish policy/transport/body evidence before deeper admission"
+		},
+		{
+			name: "resolve_observation_boundary"
+			candidate_plane: "observation", test_axis: "observation", depth_lt: 3
+			owner: "ForeignTwin", action: "resolve_observation_boundary"
+			why: "policy or transport was measured but no source body was observed"
+		},
+		{
+			name: "retain_exact_observation"
+			candidate_plane: "semantic", test_axis: "observation", depth_lt: 4
+			owner: "ForeignTwin", action: "retain_exact_observation"
+			why: "semantic binding must read retained bytes that still hash to their receipt"
+		},
+		{
+			name: "bind_semantic_profile"
+			candidate_plane: "semantic", test_axis: "semantic", require_unknown: true
+			owner: "DomainProfile", action: "bind_semantic_profile"
+			why: "turn candidate domain material into shared domain meaning"
+		},
+		{
+			name: "bind_or_enact_protocol"
+			candidate_plane: "protocol", test_axis: "protocol", require_unknown: true
+			owner: "ProtocolContract", action: "bind_or_enact_protocol"
+			why: "carrier fit is not yet a lawful interaction"
+		},
+		{
+			name: "qualify_candidate_resource"
+			candidate_plane: "capability", test_axis: "capability", require_unknown: true
+			owner: "ResourceActivationGraph", action: "qualify_candidate_resource"
+			why: "candidate capability must become qualified, eligible, authorized and activated"
+		},
+		{
+			name: "establish_quote_or_service_book_entry"
+			candidate_plane: "economic", test_axis: "economic", require_unknown: true
+			owner: "Finance", action: "establish_quote_or_service_book_entry"
+			why: "economic vocabulary is not a quote, commitment, payment or settlement"
+		},
+		{
+			name: "close_projection_round_trip"
+			candidate_plane: "round_trip", test_axis: "round_trip", require_unknown: true
+			owner: "RoundTripTwin", action: "close_projection_round_trip"
+			why: "a projection is not verified until independently observed"
+		},
+	]
+
+	default_next: {
+		owner: "Opportunity"
+		action: "inspect_blockers_and_joins"
+		why: "all candidate participation axes with known potential already have owner evidence"
+	}
+
+	score: {
+		investigation_join_power_weight: 12
+		investigation_chain_span_cap: 12
+		investigation_candidate_plane_weight: 2
+		investigation_unknown_axis_weight: 1
+		investigation_braid_depth_weight: -5
+		investigation_branch_weight: -4
+		investigation_rejoin_weight: -4
+		investigation_braid_excess_weight: -2
+		activation_join_power_weight: 4
+		activation_chain_span_cap: 10
+		activation_braid_depth_weight: -8
+	}
+}

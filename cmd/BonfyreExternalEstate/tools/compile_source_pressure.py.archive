@@ -1,0 +1,215 @@
+#!/usr/bin/env python3
+"""Compile repeated ScopedDemand candidate cuts into non-authoritative source pressure.
+
+Pressure is not contribution, value, admission or authority. It answers only:
+which SourceRoots repeatedly survive coarse forwarding for currently compiled
+subject/scope closures, and which unresolved demands recur around them?
+
+That signal is safe to feed to attention/ResourceWeather scheduling while exact
+owners, lowerers, rights and effect gates continue to decide reality.
+"""
+
+import argparse
+import hashlib
+import json
+import os
+import sys
+from collections import defaultdict
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+import compile_source_frontier as frontier  # noqa: E402
+
+
+IDENTITY_KEYS = ("id", "identity", "ext_id", "passport", "source")
+REF_KEYS = ("source_ref", "publisher_ident", "qid")
+
+
+def values(row, keys):
+    out = []
+    for key in keys:
+        value = row.get(key)
+        if isinstance(value, str) and value.strip():
+            out.append(value.strip())
+    return out
+
+
+def source_index(specs):
+    by_identity = defaultdict(set)
+    roots = {}
+    for spec in specs:
+        if "=" not in spec:
+            raise ValueError("--source-input must be LABEL=PATH")
+        label, path = spec.split("=", 1)
+        for ordinal, row in enumerate(frontier.load_rows(path), 1):
+            if not isinstance(row, dict):
+                continue
+            url = frontier.channel_url(row)
+            url = frontier.canonical_url(url) if url else None
+            root_address = frontier.root_address(row, url)
+            root_id = "root-" + hashlib.sha256(root_address.encode()).hexdigest()[:20]
+            root = roots.setdefault(root_id, {
+                "root_id": root_id,
+                "root_address": root_address,
+                "provenance": set(),
+                "states": set(),
+                "families": set(),
+            })
+            root["provenance"].add(label)
+            root["states"].add(frontier.state_of(row))
+            root["families"].add(frontier.family_of(row, url))
+            for identity in values(row, IDENTITY_KEYS + REF_KEYS):
+                by_identity[identity].add(root_id)
+            # AddressPlane external occurrence identities normally preserve this form.
+            ext = row.get("source_ref")
+            if isinstance(ext, str) and ext.upper().startswith("EXT-"):
+                by_identity["external:" + ext.lower()].add(root_id)
+            if isinstance(row.get("ext_id"), str):
+                by_identity[row["ext_id"]].add(root_id)
+    return by_identity, roots
+
+
+def load_closures(path):
+    rows = frontier.load_rows(path)
+    if len(rows) == 1 and isinstance(rows[0], dict):
+        row = rows[0]
+        if str(row.get("schema", "")).startswith("bonfyre-scoped-demand-closure.v"):
+            return [row]
+    return [row for row in rows if isinstance(row, dict)]
+
+
+def candidate_occurrences(closure):
+    for demand in closure.get("pack_demands") or []:
+        if not isinstance(demand, dict):
+            continue
+        demand_id = demand.get("identity") or ""
+        for group in demand.get("candidate_groups") or []:
+            if not isinstance(group, dict):
+                continue
+            source = group.get("source") or ""
+            for candidate in group.get("candidates") or []:
+                if isinstance(candidate, dict) and candidate.get("identity"):
+                    yield {
+                        "identity": candidate["identity"],
+                        "basis": "pack_demand",
+                        "demand_id": demand_id,
+                        "source": source,
+                    }
+    for world in closure.get("world_demands") or []:
+        if not isinstance(world, dict):
+            continue
+        world_id = world.get("identity") or ""
+        for dependency in world.get("dependencies") or []:
+            if not isinstance(dependency, dict):
+                continue
+            dep = dependency.get("dependency") or ""
+            for candidate in dependency.get("candidates") or []:
+                if isinstance(candidate, dict) and candidate.get("identity"):
+                    yield {
+                        "identity": candidate["identity"],
+                        "basis": "world_demand",
+                        "demand_id": world_id,
+                        "source": dep,
+                    }
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--source-input", action="append", required=True, metavar="LABEL=PATH")
+    ap.add_argument("--closure", action="append", required=True)
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--receipts")
+    args = ap.parse_args()
+
+    by_identity, roots = source_index(args.source_input)
+    pressure = defaultdict(lambda: {
+        "subjects": set(), "scopes": set(), "closures": set(),
+        "demand_ids": set(), "candidate_identities": set(),
+        "candidate_occurrences": 0, "pack_occurrences": 0,
+        "world_occurrences": 0, "ambiguous_identity_matches": 0,
+    })
+    unmapped = defaultdict(int)
+    closure_count = 0
+
+    for path in args.closure:
+        for closure in load_closures(path):
+            closure_count += 1
+            subject = str(closure.get("subject") or "")
+            scope = str(closure.get("scope") or "")
+            closure_key = "%s|%s" % (subject, scope)
+            for occurrence in candidate_occurrences(closure):
+                identity = str(occurrence["identity"])
+                matched = by_identity.get(identity, set())
+                if not matched:
+                    unmapped[identity] += 1
+                    continue
+                for root_id in matched:
+                    row = pressure[root_id]
+                    row["subjects"].add(subject)
+                    row["scopes"].add(scope)
+                    row["closures"].add(closure_key)
+                    row["demand_ids"].add(str(occurrence["demand_id"]))
+                    row["candidate_identities"].add(identity)
+                    row["candidate_occurrences"] += 1
+                    row["pack_occurrences"] += occurrence["basis"] == "pack_demand"
+                    row["world_occurrences"] += occurrence["basis"] == "world_demand"
+                    row["ambiguous_identity_matches"] += len(matched) > 1
+
+    rows = []
+    for root_id, measured in pressure.items():
+        root = roots[root_id]
+        rows.append({
+            "schema": "bonfyre.source-pressure.v1",
+            "root_id": root_id,
+            "root_address": root["root_address"],
+            "candidate_subject_reuse": len(measured["subjects"]),
+            "candidate_scope_reuse": len(measured["scopes"]),
+            "candidate_closure_reuse": len(measured["closures"]),
+            "candidate_demand_reuse": len(measured["demand_ids"]),
+            "candidate_occurrences": measured["candidate_occurrences"],
+            "pack_candidate_occurrences": measured["pack_occurrences"],
+            "world_candidate_occurrences": measured["world_occurrences"],
+            "distinct_candidate_identities": len(measured["candidate_identities"]),
+            "ambiguous_identity_matches": measured["ambiguous_identity_matches"],
+            "provenance": sorted(root["provenance"]),
+            "states": sorted(root["states"]),
+            "channel_families": sorted(root["families"]),
+            "truth": "candidate_pressure_only_exact_owner_recheck_required",
+            "cannot_infer": [
+                "candidate pressure -> source contribution",
+                "candidate pressure -> admission, availability or freshness",
+                "candidate pressure -> authority, rights or permission",
+                "candidate pressure -> closure dividend or economic value",
+            ],
+        })
+
+    rows.sort(key=lambda row: (
+        -row["candidate_closure_reuse"],
+        -row["candidate_demand_reuse"],
+        -row["candidate_occurrences"],
+        row["root_id"],
+    ))
+    with open(args.out, "w") as out:
+        for row in rows:
+            out.write(json.dumps(row, sort_keys=True, separators=(",", ":")) + "\n")
+
+    summary = {
+        "schema": "bonfyre.source-pressure-summary.v1",
+        "closures_read": closure_count,
+        "roots_under_pressure": len(rows),
+        "candidate_occurrences_mapped": sum(x["candidate_occurrences"] for x in rows),
+        "unmapped_candidate_identities": len(unmapped),
+        "unmapped_candidate_occurrences": sum(unmapped.values()),
+        "truth": "candidate_pressure_only_exact_owner_recheck_required",
+    }
+    if args.receipts:
+        json.dump({
+            **summary,
+            "unmapped": dict(sorted(unmapped.items())),
+        }, open(args.receipts, "w"), indent=2, sort_keys=True)
+    print(json.dumps(summary, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

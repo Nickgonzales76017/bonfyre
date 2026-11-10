@@ -453,10 +453,9 @@ fpq_tensor_t *fpq_encode_tensor_v4(const float *weights, size_t rows, size_t col
     tensor->chaos_r_idx = (uint8_t *)calloc(n_blocks, sizeof(uint8_t));
     tensor->sbb_scale_delta = NULL;
 
-    /* If SBB active, allocate delta array */
+    /* SBB is an encode-time shared basis; v4 still stores the full scale. */
     if (sbb && sbb_tensor_idx >= 0 && (size_t)sbb_tensor_idx < sbb->n_tensors) {
         tensor->sbb_group_id = sbb_tensor_idx;
-        tensor->sbb_scale_delta = (float *)calloc(n_blocks, sizeof(float));
     }
 
     /* Pre-allocate centroids/boundaries for chaos codebook */
@@ -483,8 +482,6 @@ fpq_tensor_t *fpq_encode_tensor_v4(const float *weights, size_t rows, size_t col
             /* SBB: use shared scale + delta */
             rms = sbb->shared_scales[b] *
                   sbb->scale_deltas[tensor->sbb_group_id][b];
-            tensor->sbb_scale_delta[b] =
-                sbb->scale_deltas[tensor->sbb_group_id][b];
         } else {
             rms = 0.0f;
             for (size_t i = 0; i < padded; i++) rms += buf[i] * buf[i];
@@ -575,11 +572,6 @@ fpq_tensor_t *fpq_encode_tensor_v4(const float *weights, size_t rows, size_t col
     size_t ghost_bits = 0;
     if (tensor->ghost) {
         ghost_bits = (rows + cols) * 8;  /* 8-bit quantized u,v vectors */
-    }
-    size_t sbb_bits = 0;
-    if (tensor->sbb_scale_delta) {
-        /* Only 8-bit delta instead of 32-bit scale */
-        sbb_bits = 0;  /* savings counted elsewhere */
     }
     tensor->total_bits = n_blocks * (32 + 8 + padded * (size_t)cbits +
                                       FPQ_QJL_PROJECTIONS + 32) + ghost_bits;
@@ -770,8 +762,9 @@ fpq_tensor_t *fpq_encode_tensor_v5(const float *weights, size_t rows, size_t col
     tensor->sbb_scale_delta = NULL;
 
     if (sbb && sbb_tensor_idx >= 0 && (size_t)sbb_tensor_idx < sbb->n_tensors) {
+        /* v5 consumes the shared basis while encoding, then retains only the
+         * expanded coord_scales that its decoder actually reads. */
         tensor->sbb_group_id = sbb_tensor_idx;
-        tensor->sbb_scale_delta = (float *)calloc(n_blocks, sizeof(float));
     }
 
     float *chaos_centroids = (float *)malloc(n_levels * sizeof(float));
@@ -807,8 +800,6 @@ fpq_tensor_t *fpq_encode_tensor_v5(const float *weights, size_t rows, size_t col
         if (sbb && tensor->sbb_group_id >= 0) {
             rms = sbb->shared_scales[b] *
                   sbb->scale_deltas[tensor->sbb_group_id][b];
-            tensor->sbb_scale_delta[b] =
-                sbb->scale_deltas[tensor->sbb_group_id][b];
         } else {
             rms = 0.0f;
             for (size_t i = 0; i < padded; i++)
@@ -2340,12 +2331,13 @@ fpq_tensor_t *fpq_encode_tensor_v7(const float *weights, size_t rows, size_t col
         "  Mode: v7 Holographic Lattice@%d (E8+Warp+RVQ+Trellis+QJL+Ghost)\n"
         "    %zu blocks, %zu groups/block\n"
         "    E8-only RMSE: %.6f\n"
-        "    +RVQ RMSE:    %.6f (%.1f%% reduction)\n"
+        "    +RVQ RMSE:    %.6f (%.1f%% %s)\n"
         "    +Trellis RMSE: %.6f\n"
         "    bpw: %.2f\n",
         coord_bits, n_blocks, (size_t)V7_E8_GROUPS,
         pre_rmse, post_rmse,
-        (pre_rmse > 0) ? (1.0f - post_rmse / pre_rmse) * 100.0f : 0.0f,
+        (pre_rmse > 0) ? fabsf((1.0f - post_rmse / pre_rmse) * 100.0f) : 0.0f,
+        (post_rmse <= pre_rmse) ? "reduction" : "WORSE -- the correction increased the error",
         trellis_rmse, bpw);
 
     /* Cleanup */
@@ -3237,24 +3229,6 @@ fpq_tensor_t *fpq_encode_tensor_v8(const float *weights, size_t rows, size_t col
         free(orig_fwht);
     });
 
-    /* Compute RVQ MSE diagnostics (serial — reads only) */
-    for (size_t b = 0; b < n_blocks; b++) {
-        float b_wnorm = warp_norms[b];
-        for (int p = 0; p < V8_E8_PAIRS; p++) {
-            size_t ridx = (b * V8_E8_PAIRS + (size_t)p) * V8_TILE_DIM;
-            size_t pair_base = (size_t)p * V8_TILE_DIM;
-            for (int d = 0; d < V8_TILE_DIM; d++) {
-                float r = all_pair_residuals[ridx + d];
-                pre_rvq_mse += (double)(r * r);
-                float scaled_orig = fwht_warped[b][pair_base + d] /
-                                    b_wnorm * lattice_scale;
-                float post_err = scaled_orig -
-                    (e8_points[b][pair_base + d] +
-                     tiles[tile_indices[b][p] * V8_TILE_DIM + d]);
-                post_rvq_mse += (double)(post_err * post_err);
-            }
-        }
-    }
 #else
     /* OpenMP parallel Phase 4: each block is independent.
      * Use unseeded tile search (same as Apple path) — same quality,
@@ -3337,10 +3311,35 @@ fpq_tensor_t *fpq_encode_tensor_v8(const float *weights, size_t rows, size_t col
 #endif
 
     /* ── Compute RVQ MSE (serial — safe after parallel Phase 4) ── */
+    /*
+     * Both halves of this measurement were wrong, and each hid the other.
+     *
+     * There were two of these passes: one inside the Apple branch and this one
+     * after it, both adding into the same pre_rvq_mse and post_rvq_mse while the
+     * denominator counted a single pass. On Apple the residual energy was
+     * therefore summed twice and divided once, inflating the reported pre RMSE
+     * by sqrt(2).
+     *
+     * The larger error is the line that used to stand here:
+     *
+     *     float lattice_scale = wnorm / (float)padded;
+     *
+     * which shadows the encoder's actual lattice scale (8 * coord_bits, 24.0 at
+     * three bits) with an unrelated quantity three orders of magnitude smaller.
+     * scaled_orig then came out near zero while e8_points held ~25, so post_err
+     * was essentially minus the lattice point, and the post RMSE was ~24 against
+     * a pre RMSE of 0.38 -- printed as a "-6241% reduction", a number with no
+     * meaning that nonetheless sat beside a genuine 0.9998 cosine and did not
+     * stop anything.
+     *
+     * The proof that it was the measurement and not the codec: with
+     * BONFYRE_FPQ_DISABLE_RVQ=1 every tile is the zeroed tile 0, so post_err is
+     * identically the residual and the two RMSEs must be equal. They differed by
+     * 63x, which is arithmetic, not quantization.
+     */
     for (size_t b = 0; b < n_blocks; b++) {
         size_t offset = b * padded;
         float wnorm = warp_norms[b];
-        float lattice_scale = wnorm / (float)padded;
         for (int p = 0; p < V8_E8_PAIRS; p++) {
             size_t ridx = b * V8_E8_PAIRS * V8_TILE_DIM + (size_t)p * V8_TILE_DIM;
             const float *pair_res = all_pair_residuals + ridx;
@@ -3434,13 +3433,14 @@ fpq_tensor_t *fpq_encode_tensor_v8(const float *weights, size_t rows, size_t col
         "    E8 greedy RMSE:  %.6f\n"
         "    E8 Viterbi RMSE: %.6f (%.1f%% improvement)\n"
         "    RVQ pre  RMSE:   %.6f\n"
-        "    RVQ post RMSE:   %.6f (%.1f%% reduction)\n"
+        "    RVQ post RMSE:   %.6f (%.1f%% %s)\n"
         "    bpw: %.2f\n",
         coord_bits, n_blocks, effective_k,
         greedy_rmse, viterbi_rmse,
         (greedy_rmse > 0) ? (1.0f - viterbi_rmse / greedy_rmse) * 100.0f : 0.0f,
         pre_rmse, post_rmse,
-        (pre_rmse > 0) ? (1.0f - post_rmse / pre_rmse) * 100.0f : 0.0f,
+        (pre_rmse > 0) ? fabsf((1.0f - post_rmse / pre_rmse) * 100.0f) : 0.0f,
+        (post_rmse <= pre_rmse) ? "reduction" : "WORSE -- the correction increased the error",
         bpw);
 
     /* Cleanup */

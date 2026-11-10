@@ -1,0 +1,287 @@
+#!/usr/bin/env python3
+"""Losslessly compile heterogeneous source inventories into one Source Frontier.
+
+This is accounting and gap planning, not admission.  It keeps these cardinalities
+separate instead of calling all of them "sources":
+
+  input occurrence -> SourceRoot -> ChannelFamily -> exact Channel -> SourceGap
+
+The same root may expose many exact channels.  Recursively implied/virtual
+channels count only when an input explicitly declares them.  Exact owners,
+ForeignTwin, rights, credentials and capability/effect gates remain authoritative.
+"""
+
+import argparse
+import hashlib
+import json
+import os
+import re
+import sys
+import urllib.parse
+from collections import Counter
+
+
+STRUCTURED = {
+    "RSS", "ATOM", "RDF", "JSON_FEED", "SITEMAP", "OPML", "XML_DOCUMENT",
+    "ICS", "GTFS", "GTFS_RT", "GBFS", "SPARQL",
+    "JSON_API", "GRAPHQL", "OPENAPI", "ARCGIS_LAYER", "SOCRATA_DATASET",
+    "OGC_COLLECTION", "STAC_CATALOG", "WARC_INDEX", "MEDIA_COLLECTION",
+    "WEBHOOK", "WEBSUB", "ACTIVITYPUB", "MCP", "A2A", "BECKN", "X402",
+}
+ACTIVE = {"ACTIVE", "HOT", "WARM", "LIVE"}
+ADMITTED = ACTIVE | {"ADMITTED", "OBSERVED", "PUBLISHED"}
+REFUSED = {"REFUSED", "BLOCKED", "DENIED", "REJECTED", "POLICY_EXCLUDED"}
+
+
+def token(value):
+    return re.sub(r"[^a-z0-9]+", "-", str(value or "").lower()).strip("-")
+
+
+def nested(row, dotted):
+    cur = row
+    for key in dotted.split("."):
+        if not isinstance(cur, dict) or key not in cur:
+            return None
+        cur = cur[key]
+    return cur
+
+
+def first(row, names):
+    for name in names:
+        value = nested(row, name) if "." in name else row.get(name)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return None
+
+
+def load_rows(path):
+    text = open(path, encoding="utf-8", errors="replace").read().strip()
+    if not text:
+        return []
+    try:
+        value = json.loads(text)
+    except json.JSONDecodeError:
+        return [json.loads(line) for line in text.splitlines() if line.strip()]
+    if isinstance(value, list):
+        return value
+    if isinstance(value, dict):
+        for key in ("rows", "items", "data", "sources", "entries", "candidates"):
+            if isinstance(value.get(key), list):
+                return value[key]
+        return [value]
+    return []
+
+
+def channel_url(row):
+    value = first(row, (
+        "primary_url", "url", "feed", "href", "endpoint", "source_url",
+        "base_url", "address", "carrier.route", "route", "target", "uri",
+    ))
+    return value if value and value.startswith(("http://", "https://")) else None
+
+
+def canonical_url(url):
+    p = urllib.parse.urlsplit(url)
+    scheme = (p.scheme or "https").lower()
+    host = (p.hostname or "").lower().rstrip(".")
+    if host.startswith("www."):
+        host = host[4:]
+    netloc = host
+    if p.port and not ((scheme == "http" and p.port == 80) or (scheme == "https" and p.port == 443)):
+        netloc += ":%d" % p.port
+    path = re.sub(r"/{2,}", "/", p.path or "/")
+    query = []
+    for key, value in urllib.parse.parse_qsl(p.query, keep_blank_values=True):
+        if key.lower().startswith("utm_") or key.lower() in {"fbclid", "gclid"}:
+            continue
+        query.append((key, value))
+    return urllib.parse.urlunsplit((scheme, netloc, path, urllib.parse.urlencode(sorted(query)), ""))
+
+
+def root_address(row, url):
+    explicit = first(row, ("source_root", "root", "origin"))
+    if explicit and explicit.startswith(("http://", "https://")):
+        return canonical_url(explicit)
+    if url:
+        p = urllib.parse.urlsplit(url)
+        host = (p.hostname or "").lower()
+        if host.startswith("www."):
+            host = host[4:]
+        return "%s://%s/" % ((p.scheme or "https").lower(), host)
+    identity = first(row, (
+        "publisher_ident", "source", "source_ref", "ext_id", "passport", "id",
+        "observed_name", "name",
+    )) or "unknown"
+    return "urn:bonfyre:source:%s" % token(identity)
+
+
+def declared_terms(row):
+    out = []
+    for key in ("terms", "capabilities", "roles", "access", "topology", "domains", "functions"):
+        value = row.get(key)
+        if isinstance(value, list):
+            out.extend(str(x) for x in value)
+        elif isinstance(value, str):
+            out.extend(re.split(r"[,;\s]+", value))
+    projection = row.get("projection")
+    if isinstance(projection, dict):
+        for key in (
+            "candidate_affordances", "candidate_domains", "candidate_worlds",
+            "carrier_default_domains", "direct_domains", "estate_roles",
+            "interaction_fits", "topic_domains", "world_phases",
+        ):
+            value = projection.get(key)
+            if isinstance(value, list):
+                out.extend(str(x) for x in value)
+        if projection.get("carrier_candidate"):
+            out.append(str(projection["carrier_candidate"]))
+    return [x for x in out if x]
+
+
+def family_of(row, url):
+    declared = first(row, ("channel_family", "phenotype", "acquisition", "source_kind", "kind", "access"))
+    hay = " ".join(declared_terms(row) + ([declared] if declared else []) + ([url] if url else [])).lower()
+    rules = [
+        ("GTFS_RT", ("gtfs-rt", "gtfs_rt", "tripupdates", "vehiclepositions")),
+        ("GTFS", ("gtfs",)), ("GBFS", ("gbfs",)),
+        ("JSON_FEED", ("jsonfeed", "json_feed", "feed.json")),
+        ("ATOM", ("atom", "atom.xml", "application/atom+xml")),
+        ("RDF", ("application/rdf+xml", "/feed/rdf", "rdf.xml")),
+        ("RSS", ("rss", ".rss", "rss.xml", "/feed/", "application/rss+xml")),
+        ("OPML", ("opml", ".opml")),
+        ("SITEMAP", ("sitemap", "wp-sitemap")),
+        ("XML_DOCUMENT", ("application/xml", "text/xml", "xml_document")),
+        ("ICS", (".ics", "ical", "calendar")), ("SPARQL", ("sparql",)),
+        ("GRAPHQL", ("graphql",)), ("OPENAPI", ("openapi", "swagger")),
+        ("SOCRATA_DATASET", ("socrata", "soda")), ("ARCGIS_LAYER", ("featureserver", "mapserver", "arcgis")),
+        ("STAC_CATALOG", ("stac",)), ("OGC_COLLECTION", ("ogc", "wfs", "wms")),
+        ("WARC_INDEX", ("warc", "cdx")), ("WEBSUB", ("websub",)),
+        ("ACTIVITYPUB", ("activitypub",)), ("WEBHOOK", ("webhook",)),
+        ("MCP", ("mcp",)), ("A2A", ("a2a",)), ("BECKN", ("beckn",)),
+        ("X402", ("x402",)), ("JSON_API", ("public_api", "json_api", "json-api", "/api/", " api ")),
+    ]
+    for family, needles in rules:
+        if any(n in hay for n in needles):
+            return family
+    if url and urllib.parse.urlsplit(url).path.lower().endswith((".json", ".geojson")):
+        return "JSON_API"
+    return "HTML" if url else "DESCRIPTOR"
+
+
+def state_of(row):
+    raw = first(row, ("state", "admission", "truth_level", "status", "review_state", "policy_decision")) or "CANDIDATE"
+    value = token(raw).replace("-", "_").upper()
+    return "OBSERVED" if value == "ALLOW" else "REFUSED" if value in REFUSED else value
+
+
+def rights_of(row):
+    reuse = row.get("reuse")
+    if isinstance(reuse, dict):
+        if reuse.get("unknown"):
+            return "UNKNOWN"
+        if reuse.get("allows"):
+            return "DECLARED"
+    return "DECLARED" if first(row, ("licence", "license", "rights", "terms_url")) else "UNKNOWN"
+
+
+def credentials_of(row):
+    value = first(row, ("credential_state", "credentials", "auth_state"))
+    if value:
+        return token(value).upper().replace("-", "_")
+    hay = " ".join(declared_terms(row)).lower()
+    return "REQUIRED_UNKNOWN" if any(x in hay for x in ("oauth", "api-key", "apikey", "credential", "auth:")) else "NOT_DECLARED"
+
+
+def economics_of(row):
+    values = []
+    for key in ("economic_interface", "economic_interfaces", "commercial", "relationship"):
+        value = row.get(key)
+        values.extend(value if isinstance(value, list) else re.split(r"[,;]", value) if isinstance(value, str) else [])
+    return sorted({token(x).upper().replace("-", "_") for x in values if str(x).strip()})
+
+
+def gaps_for(root):
+    gaps = []
+    def add(kind, routes, reason):
+        gaps.append({
+            "gap_id": "gap-" + hashlib.sha256((root["root_id"] + "\0" + kind).encode()).hexdigest()[:16],
+            "root_id": root["root_id"], "kind": kind, "state": "OPEN",
+            "resolution_classes": routes, "reason": reason,
+            "channel_ids": root["channel_ids"], "provenance": root["provenance"],
+        })
+    if root["admitted_channels"] == 0:
+        add("OBSERVATION", ["PUBLIC_BACKFILL", "DISCOVER"], "no exact channel is admitted/observed")
+    if not any(x in STRUCTURED for x in root["channel_families"]):
+        add("STRUCTURED_CHANNEL", ["DISCOVER", "OUTREACH", "PARTNER"], "no structured channel is materialized")
+    if "UNKNOWN" in root["rights_states"]:
+        add("RIGHTS", ["PUBLIC_BACKFILL", "HUMAN_VERIFY", "PARTNER"], "reuse posture remains unknown")
+    if any(x.startswith("REQUIRED") for x in root["credential_states"]):
+        add("CREDENTIAL", ["CREDENTIAL", "PARTNER"], "an access route needs credentials without evidenced readiness")
+    if not root["publisher_identities"]:
+        add("IDENTITY", ["PUBLIC_BACKFILL", "DISCOVER", "HUMAN_VERIFY"], "no canonical publisher/source identity is attached")
+    if root["transaction_like"] and not root["economic_interfaces"]:
+        add("ECONOMIC_INTERFACE", ["AFFILIATE", "PARTNER", "OUTREACH"], "action-capable source has no commercial-relationship posture")
+    return gaps
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--input", action="append", required=True, metavar="LABEL=PATH")
+    ap.add_argument("--out", required=True); ap.add_argument("--roots"); ap.add_argument("--channels"); ap.add_argument("--gaps")
+    args = ap.parse_args()
+    occurrences = []
+    for spec in args.input:
+        if "=" not in spec:
+            ap.error("--input must be LABEL=PATH")
+        label, path = spec.split("=", 1)
+        occurrences.extend((label, path, n, row) for n, row in enumerate(load_rows(path), 1) if isinstance(row, dict))
+
+    roots, channels, provenance = {}, {}, Counter(); declared_virtual = 0
+    for label, path, ordinal, row in occurrences:
+        provenance[label] += 1
+        url = channel_url(row); url = canonical_url(url) if url else None
+        root_addr = root_address(row, url); root_id = "root-" + hashlib.sha256(root_addr.encode()).hexdigest()[:20]
+        family, state = family_of(row, url), state_of(row)
+        basis = url or "%s#%s" % (root_addr, first(row, ("source", "source_ref", "ext_id", "passport", "id", "observed_name", "name")) or ordinal)
+        channel_id = "channel-" + hashlib.sha256(basis.encode()).hexdigest()[:20]
+        channel = channels.setdefault(channel_id, {"channel_id": channel_id, "root_id": root_id, "address": url, "family": family, "states": set(), "provenance": set(), "capabilities": set()})
+        channel["states"].add(state); channel["provenance"].add("%s:%s:%d" % (label, os.path.basename(path), ordinal)); channel["capabilities"].update(token(x) for x in declared_terms(row))
+        virtual = row.get("virtual_channel_count")
+        if isinstance(virtual, int) and virtual > 0:
+            declared_virtual += virtual
+        root = roots.setdefault(root_id, {"root_id": root_id, "address": root_addr, "channel_ids": set(), "channel_families": set(), "states": set(), "provenance": set(), "publisher_identities": set(), "rights_states": set(), "credential_states": set(), "economic_interfaces": set(), "transaction_like": False})
+        root["channel_ids"].add(channel_id); root["channel_families"].add(family); root["states"].add(state); root["provenance"].add(label)
+        ident = first(row, ("publisher_ident", "publisher_id", "qid", "source_identity", "institution"))
+        if ident: root["publisher_identities"].add(ident)
+        root["rights_states"].add(rights_of(row)); root["credential_states"].add(credentials_of(row)); root["economic_interfaces"].update(economics_of(row))
+        root["transaction_like"] |= any(x in " ".join(declared_terms(row)).lower() for x in ("buy", "book", "reserve", "quote", "pay", "order", "ticket", "hold", "checkout"))
+
+    channel_rows = []
+    for row in channels.values():
+        for key in ("states", "provenance", "capabilities"): row[key] = sorted(row[key])
+        channel_rows.append(row)
+    channel_rows.sort(key=lambda x: (x["root_id"], x["family"], x["channel_id"]))
+    root_rows, gaps = [], []
+    for raw in roots.values():
+        row = dict(raw)
+        for key in ("channel_ids", "channel_families", "states", "provenance", "publisher_identities", "rights_states", "credential_states", "economic_interfaces"): row[key] = sorted(row[key])
+        states = [channels[x]["states"] for x in row["channel_ids"]]
+        row["channels"] = len(row["channel_ids"]); row["admitted_channels"] = sum(any(s in ADMITTED for s in xs) for xs in states); row["active_channels"] = sum(any(s in ACTIVE for s in xs) for xs in states)
+        root_rows.append(row); gaps.extend(gaps_for(row))
+    root_rows.sort(key=lambda x: x["root_id"]); gaps.sort(key=lambda x: (x["kind"], x["root_id"]))
+    families = Counter(x["family"] for x in channel_rows)
+    cardinality = {
+        "input_occurrences": len(occurrences), "source_roots": len(root_rows), "channel_families": len(families), "channels": len(channel_rows),
+        "eligible_channels": sum(not all(s in REFUSED for s in x["states"]) for x in channel_rows), "admitted_channels": sum(any(s in ADMITTED for s in x["states"]) for x in channel_rows),
+        "active_channels": sum(any(s in ACTIVE for s in x["states"]) for x in channel_rows), "declared_virtual_channels": declared_virtual, "open_gaps": len(gaps),
+    }
+    manifest = {"schema": "bonfyre.source-frontier.v1", "truth_level": "compiled_accounting_not_admission", "cardinality": cardinality, "channel_family_counts": dict(sorted(families.items())), "gap_counts": dict(sorted(Counter(x["kind"] for x in gaps).items())), "provenance_occurrences": dict(sorted(provenance.items())), "cannot_infer": ["a SourceRoot -> an admitted or active Channel", "a ChannelFamily -> a materialized endpoint", "a declared virtual-channel count -> observed or retained material", "an open SourceGap -> permission to contact, purchase, combine or act"]}
+    json.dump(manifest, open(args.out, "w"), indent=2, sort_keys=True)
+    for path, rows in ((args.roots, root_rows), (args.channels, channel_rows), (args.gaps, gaps)):
+        if path:
+            with open(path, "w") as out:
+                for row in rows: out.write(json.dumps(row, sort_keys=True, separators=(",", ":")) + "\n")
+    print(json.dumps(cardinality, sort_keys=True)); return 0
+
+
+if __name__ == "__main__": sys.exit(main())

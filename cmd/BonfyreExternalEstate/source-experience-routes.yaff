@@ -1,0 +1,54 @@
+pack source-experience-routing
+generation 2026-10-15
+authority authored-routing-candidates-not-grants
+invariant source-family-and-record-kind-are-typed-owner-fields-not-title-keywords
+invariant a-route-is-a-review-handoff-not-source-truth-license-publication-or-effect
+invariant a-matched-destination-without-native-capability-and-institution-grant-is-held
+
+route civic-agenda-review
+  record publication_occurrence
+  semantic civic-meeting
+  destination dallas-civic-media
+  capability BonfyreCMS,BonfyreProject,BonfyreQueue
+  institution bonfyre-civic
+  priority 100
+
+route civic-video-review
+  record publication_occurrence
+  semantic civic-meeting-video
+  destination dallas-civic-media
+  capability BonfyreCMS,BonfyreProject,BonfyreQueue
+  institution bonfyre-civic
+  priority 100
+
+route civic-research
+  record publication_occurrence
+  semantic civic-meeting
+  destination research-knowledge-operations
+  capability BonfyreCMS,BonfyreQueue
+  institution bonfyre-research
+  priority 80
+
+route civic-video-research
+  record publication_occurrence
+  semantic civic-meeting-video
+  destination research-knowledge-operations
+  capability BonfyreCMS,BonfyreQueue
+  institution bonfyre-research
+  priority 80
+
+route civic-town-operations
+  record publication_occurrence
+  semantic civic-meeting
+  destination civic-operations
+  capability BonfyreCMS,BonfyreQueue
+  institution bonfyre-civic
+  priority 60
+
+route household-service-review
+  record household_opportunity
+  semantic household-opportunity
+  destination community-funding-vouchers
+  capability BonfyreCMS,BonfyreQueue
+  institution bonfyre-community
+  priority 100

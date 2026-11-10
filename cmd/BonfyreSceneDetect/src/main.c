@@ -1,3 +1,19 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+/* The POSIX pin above hides BSD interfaces on Darwin -- strcasecmp, ru_maxrss,
+ * MSG_DONTWAIT, INADDR_LOOPBACK -- so this file did not compile on the macOS
+ * control plane at all. _DARWIN_C_SOURCE restores them without loosening the
+ * POSIX baseline the Linux deploy host needs. */
+#ifdef __APPLE__
+#ifndef _DARWIN_C_SOURCE
+#define _DARWIN_C_SOURCE 1
+#endif
+#endif
+
 /*
  * bonfyre-scene-detect
  *
@@ -18,6 +34,7 @@
 #include <time.h>
 #include <unistd.h>
 #include "bonfyre.h"
+#include "../../../lib/libbonfyre/include/bf_help.h"
 
 #define MAX_FRAMES 100000
 
@@ -375,6 +392,7 @@ static void usage(void) {
 }
 
 int main(int argc, char **argv) {
+    if (bf_help_requested(argc, argv)) { usage(); return 0; }
     const char *input_dir = NULL;
     const char *out_dir = NULL;
     double threshold = 0.30;

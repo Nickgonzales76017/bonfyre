@@ -1,0 +1,15 @@
+#!/usr/bin/env python3
+# Historical witness; public_carrier_collector.test.mjs supersedes it.
+import importlib.util, json, tempfile
+from pathlib import Path
+ROOT=Path(__file__).resolve().parents[3]
+s=importlib.util.spec_from_file_location("c",ROOT/"cmd/BonfyreExternalEstate/tools/collect_211_resource.py");m=importlib.util.module_from_spec(s);s.loader.exec_module(m)
+with tempfile.TemporaryDirectory() as temp:
+ root=Path(temp); project=root/"observer"; project.write_text("#!/bin/sh\nset -eu\n[ \"$1\" = foreign ] && [ \"$2\" = observe ] && [ \"$5\" = --observe-right ] && [ \"$6\" = public ]\nwhile [ \"$#\" -gt 0 ]; do case \"$1\" in --body) body=$2; shift 2 ;; --receipt) receipt=$2; shift 2 ;; *) shift ;; esac; done\nprintf '%s\\n' '{\"id\":\"food\",\"name\":\"Food\",\"url\":\"https://211.test/food\",\"services\":[\"food\"]}' > \"$body\"\nprintf '{}' > \"$receipt\"\n"); project.chmod(0o755)
+ out=root/"record.json"
+ import sys
+ old=sys.argv; sys.argv=["collect","--url","https://211.test/food","--source-ref","source:211","--project",str(project),"--foreign-root",str(root/"foreign"),"--observed-at","2026-09-28T00:00:00Z","--out",str(out)]
+ try: assert m.main()==0
+ finally: sys.argv=old
+ assert json.loads(out.read_text())["kind"]=="211_resource"
+print("211 resource collector: PASS")

@@ -1,0 +1,48 @@
+{
+  "name": "service_lead",
+  "displayName": "Service Site Request",
+  "description": "One request a visitor sent through a service site's form: which site and form, when the site received it, and the fields the visitor typed. It is what somebody typed into a public form; it is not a verified identity, a qualified prospect, consent to anything beyond being answered, or an instruction to act. The brief and facts are what the business's own records said about the request when it arrived; they are read from public records and establish nothing about the person who wrote in.",
+  "attributes": {
+    "lead_key": {
+      "type": "string",
+      "required": true,
+      "uniqueWithinNamespace": true
+    },
+    "site_id": {
+      "type": "string",
+      "required": true
+    },
+    "form": {
+      "type": "string",
+      "required": true
+    },
+    "page": {
+      "type": "string",
+      "required": false
+    },
+    "received_at": {
+      "type": "string",
+      "required": true
+    },
+    "fields_json": {
+      "type": "text",
+      "required": true
+    },
+    "brief": {
+      "type": "text",
+      "required": false
+    },
+    "facts_json": {
+      "type": "text",
+      "required": false
+    },
+    "handled": {
+      "type": "string",
+      "required": true
+    },
+    "note": {
+      "type": "string",
+      "required": false
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "name": "world",
+  "displayName": "World",
+  "description": "A temporary publication over one live subject. Not a card and not an app: a thing with enough public relationships becomes, for as long as it matters, a world with its own visual character — and then descends into the interaction grammars the estate already has. An earthquake is an atlas, an underground night is a flyer wall, a tag is a scrapbook. Same substrate, radically different presentation, no new application.",
+  "attributes": {
+    "world": {"type": "string", "required": true},
+    "title": {"type": "string", "required": true},
+    "character": {"type": "string", "required": true},
+    "template": {"type": "string", "required": false},
+    "lede": {"type": "string", "required": true},
+    "subject": {"type": "string", "required": false},
+    "sources": {"type": "string", "required": true},
+    "filter": {"type": "string", "required": false},
+    "grammars": {"type": "string", "required": false},
+    "cannot_infer": {"type": "string", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

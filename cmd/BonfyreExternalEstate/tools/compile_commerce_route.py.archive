@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+"""Plan a commerce observation route without contacting providers.
+
+The caller names only providers/phenotypes already available in its credential
+and source frontier. Planning preserves cache/authority boundaries; execution
+belongs to the named provider adapter and ForeignTwin.
+"""
+import argparse, json
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[3]
+
+
+class Refusal(ValueError): pass
+
+
+def index(spec):
+    return {x["id"]: x for key in ("phenotypes", "providers") for x in spec.get(key, [])}
+
+
+def plan(spec, policy, request):
+    intent = request.get("intent", "")
+    rule = next((r for r in policy.get("routes", []) if r["intent"] == intent), None)
+    if not rule: raise Refusal("unknown commerce observation intent")
+    allowed = set(request.get("available", []))
+    entries = index(spec); choices = []
+    for provider in rule["prefer"]:
+        declared = entries.get(provider)
+        if not declared or not set(rule["requires"]).issubset(set(declared.get("capabilities", []))): continue
+        credential = declared.get("credential") or (declared.get("discovery") or {}).get("credential", "")
+        state = "ready" if provider in allowed else ("waiting_credential" if credential else "waiting_source_frontier")
+        choices.append({"provider": provider, "state": state, "requires": rule["requires"], "credential": credential})
+    if not choices: raise Refusal("no declared provider satisfies the required capability")
+    return {"intent": intent, "choices": choices, "selected": next((c for c in choices if c["state"] == "ready"), None),
+            "cannot_infer": "a route plan is not permission to contact a provider, a fresh observation, a product match, or a commercial effect"}
+
+
+def main():
+    ap = argparse.ArgumentParser(); ap.add_argument("--request", type=Path, required=True); ap.add_argument("--out", type=Path, required=True)
+    ap.add_argument("--providers", type=Path, default=ROOT / "schemas/control/commerce-observation-providers.json")
+    ap.add_argument("--routing", type=Path, default=ROOT / "schemas/control/commerce-observation-routing.json"); args = ap.parse_args()
+    try: result = plan(json.loads(args.providers.read_text()), json.loads(args.routing.read_text()), json.loads(args.request.read_text()))
+    except (OSError, ValueError, KeyError, TypeError) as err: print("commerce route compiler: %s" % err); return 2
+    args.out.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n"); print(json.dumps({"intent": result["intent"], "ready": bool(result["selected"])})); return 0
+
+
+if __name__ == "__main__": raise SystemExit(main())

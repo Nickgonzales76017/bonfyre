@@ -1,0 +1,31 @@
+#!/usr/bin/env python3
+"""Historical Python adapter; the Bun normalizer owns this path.
+
+Credentialed fetches remain in ProviderFrontier. This adapter accepts only the
+response it retained and deliberately discards enrollment, tenant, member,
+payment, and account fields before materialization.
+"""
+import argparse,json
+from pathlib import Path
+class Refusal(ValueError):pass
+def _base(provider,kind,source,receipt,at,p):
+ if not p.get("id") or not p.get("title") or not str(p.get("url","")).startswith("https://"):raise Refusal("normalized record needs exact id, title, HTTPS URL")
+ return {"provider":provider,"kind":kind,"source_ref":source,"receipt_ref":receipt,"observed_at":at,"payload":p}
+def normalize(provider,doc,source,receipt,at):
+ if provider=="211":
+  x=(doc.get("resource") or doc.get("data") or doc);return _base(provider,"211_resource",source,receipt,at,{"id":str(x.get("id") or x.get("resource_id") or ""),"title":x.get("name") or x.get("title") or "","url":x.get("url") or x.get("website") or "","description":x.get("description") or "","functions":",".join(x.get("services") or []) if isinstance(x.get("services"),list) else ""})
+ if provider=="clever":
+  x=(doc.get("data") or doc);x=x[0] if isinstance(x,list) and x else x;return _base(provider,"clever_institution",source,receipt,at,{"id":str(x.get("id") or ""),"title":x.get("name") or "","url":x.get("url") or x.get("website") or "","description":"Public institution record."})
+ if provider=="buildium":
+  x=(doc.get("data") or doc);return _base(provider,"property_record",source,receipt,at,{"id":str(x.get("Id") or x.get("id") or ""),"title":x.get("Name") or x.get("name") or "","url":x.get("PublicUrl") or x.get("url") or "","description":"Public property record."})
+ if provider=="nextdoor":
+  x=doc;return _base(provider,"nextdoor_place",source,receipt,at,{"id":str(x.get("id") or x.get("@id") or ""),"title":x.get("name") or x.get("title") or "","url":x.get("url") or "","description":x.get("description") or ""})
+ if provider=="patreon":
+  x=(doc.get("data") or doc);x=x[0] if isinstance(x,list) and x else x;return _base(provider,"patreon_creator",source,receipt,at,{"id":str(x.get("id") or ""),"title":(x.get("attributes") or {}).get("full_name") or x.get("name") or "","url":(x.get("attributes") or {}).get("url") or x.get("url") or "","description":"Public creator profile; support/payment fields excluded."})
+ raise Refusal("unsupported provider")
+def main():
+ p=argparse.ArgumentParser();p.add_argument("--provider",choices=("211","clever","buildium","nextdoor","patreon"),required=True);p.add_argument("--input",type=Path,required=True);p.add_argument("--source-ref",required=True);p.add_argument("--receipt-ref",required=True);p.add_argument("--observed-at",required=True);p.add_argument("--out",type=Path,required=True);a=p.parse_args()
+ try:r=normalize(a.provider,json.loads(a.input.read_text()),a.source_ref,a.receipt_ref,a.observed_at)
+ except (OSError,ValueError,TypeError) as e:print("incumbent provider normalizer: %s"%e);return 2
+ a.out.write_text(json.dumps(r,sort_keys=True)+"\n");print(json.dumps({"kind":r["kind"],"private_fields":"excluded"}));return 0
+if __name__=="__main__":raise SystemExit(main())

@@ -1,8 +1,9 @@
 /*
  * fpq.h — Functional Polar Quantization v2
  *
- * The "Final Boss": we do not store weights. We store a seed program that,
- * through recursive polar expansion, unfolds into the model's intelligence.
+ * Dense weights are source/lift material, not the only useful runtime form.
+ * FPQ factors them into shared tensor structure, executable seed programs and
+ * explicit correction state, while model identity remains outside the codec.
  *
  * v2 — Lambda-Polar Morphism (Φ: L → G):
  *
@@ -203,6 +204,9 @@ fpq_seed_t *fpq_seed_discover(const float *target_angles, size_t n,
 fpq_node_t *fpq_node_alloc(fpq_op_t op);
 void         fpq_seed_free(fpq_seed_t *seed);
 fpq_seed_t  *fpq_seed_clone(const fpq_seed_t *src);
+int          fpq_seed_equal(const fpq_seed_t *a, const fpq_seed_t *b);
+uint64_t     fpq_seed_hash(const fpq_seed_t *seed);
+size_t       fpq_seed_program_bytes(const fpq_seed_t *seed);
 void         fpq_node_free(fpq_node_t *node);
 size_t       fpq_node_count(const fpq_node_t *node);
 
@@ -254,7 +258,8 @@ void fpq_qjl_free(fpq_qjl_t *qjl);
 /* ── Full FPQ Codec ── */
 
 /*
- * A compressed tensor: seed + QJL + metadata. This IS the model.
+ * A factored tensor representation: shared/base structure, block programs,
+ * quantized coordinates and explicit correction state. It is not model identity.
  */
 typedef struct {
     char       name[128];         /* tensor name (e.g., "model.layers.0.self_attn.q_proj.weight") */
@@ -282,7 +287,7 @@ typedef struct {
     uint8_t    *chaos_r_idx;       /* per-block chaotic codebook parameter index */
     fpq_ghost_t *ghost;            /* rank-1 error correction (NULL if disabled) */
     int          sbb_group_id;     /* SBB group index (-1 = not grouped) */
-    float       *sbb_scale_delta;  /* per-block delta from shared SBB profile */
+    float       *sbb_scale_delta;  /* legacy auxiliary payload; v6+ layouts repurpose it */
 
     /* v5 — Probabilistic Inference Decompression */
     float        pid_alpha;        /* causal prediction coefficient [0..1] */
@@ -322,8 +327,13 @@ void fpq_tensor_free(fpq_tensor_t *tensor);
 /* ── Serialization (the "model file" is just seeds) ── */
 
 /*
- * File format: FPQ!<version><n_tensors>[tensor_header + seed_bytes + qjl_bytes]*
- * The entire "model" is seed programs + 1-bit corrections.
+ * FPQ! v4 flag 1 stores exact seed dictionaries, block distortion and QJL.
+ * Read compatibility: v1-v3 and interim v4 flag 0 (per-block seed bodies).
+ * Coordinate/auxiliary representations use FPQ0 and are refused here.
+ * Save publishes atomically after checking writes; failure preserves the
+ * previous destination. Load refuses partial/extra data and clears n_tensors
+ * on failure. Trees are limited to depth 128 / 1,048,576 nodes; cumulative
+ * allocations during one load are limited to 1 GiB, including block clones.
  */
 
 int fpq_save(const char *path, fpq_tensor_t **tensors, size_t n_tensors);
@@ -373,6 +383,16 @@ int fpq_gguf_write_v9(const char *input_path, const char *output_path,
 #define FPQ_NATIVE_MAGIC    0x46505130  /* "FPQ0" */
 #define FPQ_NATIVE_VERSION  10
 
+/* Header-only inspection is deliberately distinct from reconstruction or
+ * generation: it verifies that an FPQ0 artifact is structurally readable
+ * without claiming execution parity or allocating its full tensor estate. */
+typedef struct {
+    uint32_t version;
+    uint32_t tensor_count;
+    uint64_t weight_count;
+    uint64_t stored_bytes;
+} fpq_native_inspection_t;
+
 /*
  * Write native .fpq format — compact binary storage per tensor.
  * Input: already-processed fp32 data (post algebra-compress).
@@ -386,6 +406,9 @@ int fpq_native_write(const char *path, const fpq_raw_tensor_t *tensors,
  * Returns allocated tensor array (caller frees with fpq_raw_tensor_free).
  */
 fpq_raw_tensor_t *fpq_native_read(const char *path, size_t *n_tensors);
+
+/* Read and validate the FPQ0 header/table only. Returns 0 on success. */
+int fpq_native_inspect(const char *path, fpq_native_inspection_t *out);
 
 /*
  * Write native .fpq format from v9-encoded tensors (pre-compressed).
@@ -471,11 +494,12 @@ void fpq_memo_reset(void);
  *
  * Cross-tensor shared basis for Q/K/V/O weights in same transformer layer.
  * Compute a shared RMS scale profile across the attention group.
- * Store the global profile once + per-tensor deltas (tiny corrections).
+ * v4 reuses that basis while encoding compatible tensors. Its persisted tensor
+ * body still carries the reconstructed full per-block scale, so v4 does not
+ * claim stored-byte savings from SBB.
  *
  * Insight: Q/K/V weights in the same layer operate on the same subspace.
  * Their FWHT-domain RMS profiles are highly correlated (>0.95 typically).
- * Sharing the profile saves ~0.12 bpw per tensor in the group.
  */
 
 /* Layer group for SBB: up to 6 tensors (Q, K, V, O, ffn_gate, ffn_up) */
@@ -532,14 +556,14 @@ uint8_t fpq_chaos_find_best_r(const float *normalized_coords, size_t n,
 
 /* ── Optimization C: Error-Correcting Ghost Head ──
  *
- * Per-layer rank-1 correction that "counter-rotates" the cumulative
- * quantization error in the residual stream.
+ * Per-tensor rank-1 correction for structured quantization error. This is
+ * exception state attached to one tensor, not a cross-tensor shared basis.
  *
  * After COORD quantization, the residual error has systematic structure
  * (not i.i.d. noise). A rank-1 SVD approximation u*v^T captures
  * the dominant error mode. This correction is applied at decode time.
  *
- * Cost: 2×hidden_dim floats per layer (at 8-bit = ~0.06 bpw for large tensors).
+ * Cost depends on this tensor's rows + cols.
  * Benefit: corrects the dominant error mode that QJL misses.
  */
 

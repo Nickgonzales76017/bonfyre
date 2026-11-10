@@ -1,0 +1,194 @@
+#!/usr/bin/env python3
+# Archived after Bun publisher-lattice compiler cutover.
+"""One publisher is not one source: it is a lattice of channels it already publishes.
+
+A WordPress newspaper, a Ghost magazine, a Drupal city site or a Squarespace
+venue has already done a great deal of organizing — categories, tags, authors,
+sections, sitemaps, a REST interface — and each of those is addressable.  This
+reads what the estate has already retained for a root and writes the channels
+that root's own publishing grammar implies.
+
+Three truth levels are kept apart, because they are not the same claim:
+
+  observed_link_candidate        a <link> this estate actually saw in the body
+  observed_index_candidate       an address listed inside a retained sitemap
+  protocol_derived_candidate     a convention of the grammar the body proves
+                                 the root runs (WordPress says /feed/ exists;
+                                 it does not prove that it answers)
+
+All three enter the ledger as SHADOW.  Nothing here is fetched, admitted or
+shown: qualifying a shadow channel is the next step's work, and only the census
+admits.
+
+  expand_publisher_lattice.py --cms CMS.db --foreign ROOT --out channels.jsonl
+      [--self-hosts aurekai.work,aurekai.life] [--per-root 40]
+"""
+import argparse, hashlib, json, os, re, sqlite3, sys, urllib.parse
+
+GENERATOR = re.compile(rb'<meta[^>]+name=["\']generator["\'][^>]+content=["\']([^"\']+)', re.I)
+LINK_TAG = re.compile(rb"<link\b[^>]*>", re.I)
+ATTR = re.compile(rb'(\w[\w:-]*)\s*=\s*["\']([^"\']*)["\']')
+HREF = re.compile(rb'href=["\']([^"\']+)["\']', re.I)
+
+# What each publishing grammar publishes by convention, once its own body has
+# proved which grammar it is.
+LATTICE = {
+    "wordpress": [
+        ("/feed/", "rss", "publication"),
+        ("/feed/atom/", "atom", "publication"),
+        ("/comments/feed/", "rss", "conversation"),
+        ("/wp-json/wp/v2/posts", "wp_json", "publication"),
+        ("/wp-json/wp/v2/pages", "wp_json", "reference"),
+        ("/wp-json/wp/v2/categories", "wp_json", "taxonomy"),
+        ("/wp-json/wp/v2/media", "wp_json", "photo"),
+        ("/wp-sitemap.xml", "sitemap", "index"),
+        ("/events/feed/", "rss", "event"),
+    ],
+    "ghost": [
+        ("/rss/", "rss", "publication"),
+        ("/sitemap.xml", "sitemap", "index"),
+    ],
+    "drupal": [
+        ("/rss.xml", "rss", "publication"),
+        ("/sitemap.xml", "sitemap", "index"),
+        ("/calendar/ical", "ics", "event"),
+    ],
+    "squarespace": [
+        ("?format=rss", "rss", "publication"),
+        ("/sitemap.xml", "sitemap", "index"),
+    ],
+    "civicplus": [
+        ("/RSSFeed.aspx?ModID=1&CID=All-newsflash.xml", "rss", "publication"),
+        ("/RSSFeed.aspx?ModID=58&CID=All-calendar.xml", "rss", "event"),
+        ("/common/modules/iCalendar/iCalendar.aspx?feed=calendar", "ics", "event"),
+    ],
+    "blogger": [("/feeds/posts/default", "atom", "publication")],
+    "substack": [("/feed", "rss", "publication")],
+    "discourse": [("/latest.rss", "rss", "conversation"), ("/sitemap.xml", "sitemap", "index")],
+}
+
+# How a body says which grammar it is.  A guess is not allowed: each marker is
+# something the publisher itself wrote.
+MARKERS = [
+    (rb"wp-content|wp-includes|wordpress", "wordpress"),
+    (rb"ghost(\.io)?[^a-z]|content=\"Ghost", "ghost"),
+    (rb"drupal-?settings|/sites/default/files", "drupal"),
+    (rb"squarespace", "squarespace"),
+    (rb"civicplus|CivicPlus|/common/modules/", "civicplus"),
+    (rb"blogger\.com|blogspot", "blogger"),
+    (rb"substackcdn|substack\.com", "substack"),
+    (rb"discourse", "discourse"),
+]
+
+FEED_TYPES = {"application/rss+xml": "rss", "application/atom+xml": "atom",
+              "application/rdf+xml": "rdf", "application/feed+json": "json_feed",
+              "application/json+feed": "json_feed", "text/calendar": "ics"}
+
+ARCHIVE = re.compile(rb'href=["\'](https?://[^"\']*/(?:category|tag|author|topic|section)/[a-z0-9][a-z0-9\-/]{1,60}/?)["\']', re.I)
+
+
+def body_of(foreign, twin, cap=3_000_000):
+    receipt = os.path.join(foreign, "receipts", twin + ".json")
+    if not os.path.exists(receipt):
+        return b""
+    lines = [l for l in open(receipt, encoding="utf-8", errors="replace").read().splitlines() if l.startswith("{")]
+    if not lines:
+        return b""
+    try:
+        path = json.loads(lines[-1]).get("body_path")
+    except ValueError:
+        return b""
+    for candidate in (path, (path or "") + ".gz"):
+        if candidate and os.path.exists(candidate):
+            if candidate.endswith(".gz"):
+                import gzip
+                with gzip.open(candidate, "rb") as f:
+                    return f.read(cap)
+            with open(candidate, "rb") as f:
+                return f.read(cap)
+    return b""
+
+
+def grammar_of(body):
+    generator = GENERATOR.search(body)
+    hay = (generator.group(1) if generator else b"") + body[:400_000]
+    for pattern, name in MARKERS:
+        if re.search(pattern, hay, re.I):
+            return name
+    return None
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--cms", required=True)
+    ap.add_argument("--foreign", required=True)
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--self-hosts", default="aurekai.work,aurekai.life")
+    ap.add_argument("--per-root", type=int, default=40)
+    args = ap.parse_args()
+    mine = {h.strip().lower() for h in args.self_hosts.split(",") if h.strip()}
+    con = sqlite3.connect("file:%s?mode=ro" % args.cms, uri=True)
+    rows = con.execute("SELECT source, COALESCE(twin,''), COALESCE(url,'') FROM internet_source"
+                       " WHERE status='published' AND COALESCE(twin,'')<>'' AND url LIKE 'http%'").fetchall()
+    con.close()
+
+    written, grammars, roots = 0, {}, 0
+    with open(args.out, "w") as out:
+        for source, twin, url in rows:
+            body = body_of(args.foreign, twin)
+            if not body:
+                continue
+            base = "%s://%s/" % (urllib.parse.urlparse(url).scheme or "https", urllib.parse.urlparse(url).netloc)
+            host = urllib.parse.urlparse(base).netloc.lower()
+            host = host[4:] if host.startswith("www.") else host
+            if host in mine:
+                continue
+            roots += 1
+            here = 0
+            seen = set()
+
+            def emit(address, protocol, material, truth, why):
+                nonlocal here, written
+                if here >= args.per_root or not address.startswith(("http://", "https://")) or address in seen:
+                    return
+                seen.add(address)
+                row = {"address": address, "protocol": protocol, "state": "shadow", "truth_level": truth,
+                       "discovered_from": "%s: %s" % (source, why)}
+                if material:
+                    row["material"] = material
+                out.write(json.dumps(row) + "\n")
+                here += 1
+                written += 1
+
+            # 1. what the body itself links
+            for tag in LINK_TAG.findall(body):
+                attrs = {k.decode("ascii", "replace").lower(): v.decode("utf-8", "replace") for k, v in ATTR.findall(tag)}
+                kind = FEED_TYPES.get((attrs.get("type") or "").lower())
+                if kind and attrs.get("href"):
+                    emit(urllib.parse.urljoin(base, attrs["href"]), kind,
+                         "event" if kind == "ics" else "publication", "observed_link_candidate", "linked in its own head")
+
+            # 2. what its publishing grammar implies
+            grammar = grammar_of(body)
+            if grammar:
+                grammars[grammar] = grammars.get(grammar, 0) + 1
+                for path, protocol, material in LATTICE.get(grammar, []):
+                    emit(urllib.parse.urljoin(base, path), protocol, material,
+                         "protocol_derived_candidate", "this root publishes with %s, which addresses %s" % (grammar, path))
+
+            # 3. the editorial archives it links, each of which a feed follows
+            if grammar in ("wordpress", "ghost", "drupal"):
+                for found in ARCHIVE.findall(body)[: args.per_root]:
+                    archive = found.decode("utf-8", "replace").rstrip("/")
+                    if urllib.parse.urlparse(archive).netloc.lower().replace("www.", "") != host:
+                        continue
+                    emit(archive + "/feed/", "rss", "publication", "protocol_derived_candidate",
+                         "an editorial archive this root links, whose feed its grammar addresses")
+
+    print(json.dumps({"roots_read": roots, "channels": written, "grammars": grammars,
+                      "cannot_infer": "a grammar's convention is not an endpoint that answers, and a shadow channel is not a source"}))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

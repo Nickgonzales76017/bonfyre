@@ -1,0 +1,16 @@
+{
+  "state": "failed",
+  "first": {
+    "receipt": {
+      "state": "passed"
+    }
+  },
+  "second": {
+    "receipt": {
+      "state": "failed"
+    }
+  },
+  "parity": {
+    "equal": true
+  }
+}

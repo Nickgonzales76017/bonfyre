@@ -1,0 +1,47 @@
+{
+  "name": "pack_artifact",
+  "displayName": "Pack Artifact",
+  "description": "The identity of an addressed behaviour, separate from any version of it. A pack is not a subject, an institution, an internet cut or a surface; keeping it a fifth thing is what lets a community fork behaviour without forking Bonfyre, and stops behaviour from becoming a second identity that could grant itself authority.",
+  "attributes": {
+    "pack": {
+      "type": "string",
+      "required": true
+    },
+    "canonical_name": {
+      "type": "string",
+      "required": true
+    },
+    "publisher": {
+      "type": "string",
+      "required": true
+    },
+    "layer": {
+      "type": "string",
+      "required": true
+    },
+    "kind": {
+      "type": "string",
+      "required": true
+    },
+    "purpose": {
+      "type": "string",
+      "required": true
+    },
+    "forks_from": {
+      "type": "string",
+      "required": false
+    },
+    "governed_by": {
+      "type": "string",
+      "required": true
+    },
+    "cannot_infer": {
+      "type": "string",
+      "required": true
+    },
+    "status": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

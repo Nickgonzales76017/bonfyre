@@ -1,0 +1,17 @@
+{
+  "name": "community_body",
+  "displayName": "Community Body",
+  "description": "A human social body around one addressed subject. Federation, protocol topology and source reachability are projections around the body, not the body itself.",
+  "attributes": {
+    "community": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "subject_address": {"type": "string", "required": true},
+    "title": {"type": "string", "required": true},
+    "description": {"type": "text", "required": false},
+    "visibility": {"type": "string", "required": true},
+    "governance_scope": {"type": "string", "required": false},
+    "moderation_policy": {"type": "string", "required": false},
+    "created_by_subject": {"type": "string", "required": false},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

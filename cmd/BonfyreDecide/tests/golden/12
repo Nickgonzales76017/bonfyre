@@ -1,0 +1,85 @@
+exit 0
+{
+ "schema": "bonfyre.books.v3",
+ "lines": 2,
+ "by_learned": 0,
+ "suggested_by_model": 0,
+ "to_review": 2,
+ "amounts_unread": 1,
+ "learned": null,
+ "model": null,
+ "model_artifact_sha256": null,
+ "model_error": "the local model at http://127.0.0.1:9 is not answering (Unable to connect. Is the computer able to access the url?). Start it with: bonfyre-moe serve --port 7000   (see: bonfyre model local)",
+ "seconds": T,
+ "booked_by_account": [],
+ "totals": [],
+ "totals_unavailable": "the file has no amounts, so there are line counts by account and no money totals",
+ "transactions": [
+  {
+   "line": 2,
+   "date": "2026-10-01",
+   "description": "=not a formula",
+   "amount_cents": -1250,
+   "amount": -12.5,
+   "amount_text": "-12.5",
+   "amount_known": true,
+   "amount_unread": false,
+   "account": "",
+   "suggested": "none",
+   "confidence": null,
+   "decided_by": "none",
+   "review": true,
+   "source": {
+    "sha256": "7688c7a6ae5909bb5a847768331ae47e4c39f66926fbeea284f7d3309858ca91",
+    "sheet": "Bank",
+    "row": 4,
+    "cells": {
+     "date": "B4",
+     "description": "C4",
+     "amount": "D4"
+    },
+    "hidden": false
+   }
+  },
+  {
+   "line": 3,
+   "date": "2026-10-02",
+   "description": "Refund",
+   "amount_cents": null,
+   "amount": null,
+   "amount_text": "pending",
+   "amount_known": false,
+   "amount_unread": true,
+   "account": "",
+   "suggested": "none",
+   "confidence": null,
+   "decided_by": "none",
+   "review": true,
+   "review_reason": "amount not read",
+   "source": {
+    "sha256": "7688c7a6ae5909bb5a847768331ae47e4c39f66926fbeea284f7d3309858ca91",
+    "sheet": "Bank",
+    "row": 6,
+    "cells": {
+     "date": "B6",
+     "description": "C6",
+     "amount": "D6"
+    },
+    "hidden": true
+   }
+  }
+ ],
+ "receipts": [
+  null,
+  null
+ ],
+ "cannot_infer": "a booked line -> a reviewed ledger; the client or their bookkeeper still owns the books, and a line sent to review is not booked",
+ "source_workbook": {
+  "filename": "FIX/xlsx/coords.xlsx",
+  "sha256": "7688c7a6ae5909bb5a847768331ae47e4c39f66926fbeea284f7d3309858ca91",
+  "sheet": "Bank",
+  "range": "A1:D6",
+  "header_row": 3,
+  "hidden_sheet": false
+ }
+}

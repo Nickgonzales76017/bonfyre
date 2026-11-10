@@ -1,0 +1,8 @@
+id: web-address-seeded-snprintf-offset
+language: C
+severity: warning
+message: an unchecked snprintf result seeds an offset; inspect later appends before treating it as bytes stored
+rule:
+  any:
+    - pattern: $W = (size_t)snprintf($BUF, $$$ARGS)
+    - pattern: $W = snprintf($BUF, $$$ARGS)

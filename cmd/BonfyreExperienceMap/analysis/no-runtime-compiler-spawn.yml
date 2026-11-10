@@ -1,0 +1,9 @@
+id: experience-map-no-runtime-compiler-spawn
+language: JavaScript
+severity: error
+message: compiled CUE policy belongs at build/test time, not on the observation or audit hot path
+rule:
+  any:
+    - pattern: Bun.spawnSync($ARGS)
+    - pattern: spawnSync($ARGS)
+    - pattern: execSync($ARGS)

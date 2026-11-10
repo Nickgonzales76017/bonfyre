@@ -1,0 +1,18 @@
+#!/usr/bin/env python3
+"""Historical Python adapter; collect_public_carrier.mjs owns this path."""
+import argparse,json,os,subprocess
+from pathlib import Path
+class Refusal(ValueError):pass
+def normalize(doc,source,receipt,at):
+ if not isinstance(doc,dict) or not doc.get("id") or not doc.get("name") or not doc.get("instant_invite"):raise Refusal("public Discord widget lacks id, name, or public invite")
+ return {"provider":"discord","kind":"discord_server","source_ref":source,"receipt_ref":receipt,"observed_at":at,"payload":{"id":str(doc["id"]),"title":doc["name"],"url":doc["instant_invite"],"description":"Public Discord widget observed."}}
+def main():
+ p=argparse.ArgumentParser();p.add_argument("--guild-id",required=True);p.add_argument("--source-ref",required=True);p.add_argument("--project",required=True);p.add_argument("--foreign-root",type=Path,required=True);p.add_argument("--observed-at",required=True);p.add_argument("--out",type=Path,required=True);a=p.parse_args()
+ if not a.guild_id.isdigit():print("discord collector: guild id must be numeric");return 2
+ (a.foreign_root/"bodies").mkdir(parents=True,exist_ok=True);(a.foreign_root/"receipts").mkdir(parents=True,exist_ok=True);ident="discord-"+a.guild_id;body=str(a.foreign_root/"bodies"/(ident+".body"));receipt=str(a.foreign_root/"receipts"/(ident+".json"));url="https://discord.com/api/guilds/"+a.guild_id+"/widget.json"
+ run=subprocess.run([a.project,"foreign","observe",ident,url,"--observe-right","public","--body",body,"--receipt",receipt],capture_output=True,text=True)
+ if run.returncode or not os.path.exists(body):print("discord collector: public widget unavailable or unretained");return 2
+ try:row=normalize(json.loads(Path(body).read_text()),a.source_ref,"foreign:"+ident,a.observed_at)
+ except (OSError,ValueError) as e:print("discord collector: %s"%e);return 2
+ a.out.write_text(json.dumps(row,sort_keys=True)+"\n");print(json.dumps({"kind":"discord_server","receipt_ref":row["receipt_ref"]}));return 0
+if __name__=="__main__":raise SystemExit(main())

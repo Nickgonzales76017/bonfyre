@@ -1,0 +1,16 @@
+{
+  "name": "training_studio_presentation",
+  "displayName": "Training Studio Presentation",
+  "description": "A studio identity and its selected native presentation template. It grants no program or member-data access.",
+  "attributes": {
+    "studio_key": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "revision": {"type": "integer", "required": true},
+    "brand_name": {"type": "string", "required": true},
+    "template_key": {"type": "string", "required": true},
+    "template_sha": {"type": "string", "required": true},
+    "logo": {"type": "json"},
+    "icon": {"type": "json"},
+    "content_sha": {"type": "string", "required": true},
+    "editor_actor": {"type": "string", "required": true}
+  }
+}

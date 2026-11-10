@@ -1,0 +1,311 @@
+{
+  "observed_with": "firecrawl v2 scrape, branding format, 2026-10-18",
+  "publications": [
+    {
+      "host": "speeed.co",
+      "url": "https://speeed.co/",
+      "observed": "2026-10-18",
+      "colors": {
+        "primary": "#3AF774",
+        "secondary": "#FF0000",
+        "accent": "#F44336",
+        "background": "#FFFFFF",
+        "textPrimary": "#000000",
+        "link": "#F44336"
+      },
+      "fonts": [
+        {
+          "family": "Chivo",
+          "role": "body"
+        },
+        {
+          "family": "Chivo Mono",
+          "role": "monospace"
+        }
+      ],
+      "scheme": "light",
+      "personality": {
+        "tone": "bold",
+        "energy": "high"
+      },
+      "highlight": "a men's magazine run as a channel: watch, shop, lookbook, book club and members, each issue-like drop with hosts on the cover"
+    },
+    {
+      "host": "crooked.com",
+      "url": "https://www.crooked.com/",
+      "observed": "2026-10-18",
+      "colors": {
+        "primary": "#F9CF00",
+        "secondary": "#018F8E",
+        "accent": "#005CCF",
+        "background": "#FFFFFF",
+        "textPrimary": "#202124",
+        "link": "#005CCF"
+      },
+      "fonts": [
+        {
+          "family": "GT America",
+          "role": "body"
+        },
+        {
+          "family": "Roc-Grotesk-Wide",
+          "role": "heading"
+        },
+        {
+          "family": "Times New Roman",
+          "role": "body"
+        }
+      ],
+      "scheme": "light",
+      "personality": {
+        "tone": "bold",
+        "energy": "high"
+      },
+      "highlight": "a network of named shows with hosts' names as the headline, a nightly newsletter, events with lineups, shop and membership"
+    },
+    {
+      "host": "donutmedia.com",
+      "url": "https://www.donutmedia.com/",
+      "observed": "2026-10-18",
+      "colors": {
+        "primary": "#FFD515",
+        "secondary": "#1990C6",
+        "accent": "#FFE6E6",
+        "background": "#FFFFFF",
+        "textPrimary": "#000000",
+        "link": "#FFE6E6"
+      },
+      "fonts": [
+        {
+          "family": "Instrument Sans",
+          "role": "body"
+        },
+        {
+          "family": "Host Grotesk",
+          "role": "body"
+        }
+      ],
+      "scheme": "light",
+      "personality": {
+        "tone": "playful",
+        "energy": "high"
+      },
+      "highlight": "shows with recurring formats on video and merch that comes out of the shows"
+    },
+    {
+      "host": "vox.com",
+      "url": "https://www.vox.com/",
+      "observed": "2026-10-18",
+      "colors": {
+        "primary": "#FFF200",
+        "secondary": "#FF0000",
+        "accent": "#EE0033",
+        "background": "#FFFFFF",
+        "textPrimary": "#131313",
+        "link": "#EE0033"
+      },
+      "fonts": [
+        {
+          "family": "Balto",
+          "role": "body"
+        }
+      ],
+      "scheme": "light",
+      "personality": {
+        "tone": "modern",
+        "energy": "high"
+      },
+      "highlight": "explainers under named series kickers, a numbered editor's list, listen and watch marks on stories, a daily puzzle"
+    },
+    {
+      "host": "theringer.com",
+      "url": "https://www.theringer.com/",
+      "observed": "2026-10-18",
+      "colors": {
+        "primary": "#00B112",
+        "secondary": "#FF2B19",
+        "accent": "#FF891B",
+        "background": "#FFFFFF",
+        "textPrimary": "#000000",
+        "link": "#FF891B"
+      },
+      "fonts": [
+        {
+          "family": "GT America",
+          "role": "body"
+        }
+      ],
+      "scheme": "light",
+      "personality": {
+        "tone": "bold",
+        "energy": "low"
+      },
+      "highlight": "show and franchise pills across the top, one big lead with a cut-out photo on a colour field, videos and podcasts as first-class doors"
+    },
+    {
+      "host": "defector.com",
+      "url": "https://www.defector.com/",
+      "observed": "2026-10-18",
+      "colors": {
+        "primary": "#CA3000",
+        "secondary": "#D8EBD5",
+        "accent": "#F3ECE2",
+        "background": "#F3ECE2",
+        "textPrimary": "#000000",
+        "link": "#F3ECE2"
+      },
+      "fonts": [
+        {
+          "family": "Dm-Mono",
+          "role": "monospace"
+        },
+        {
+          "family": "Neue-Haas-Grotesk-Display",
+          "role": "display"
+        },
+        {
+          "family": "Degular-Variable",
+          "role": "unknown"
+        }
+      ],
+      "scheme": "light",
+      "personality": {
+        "tone": "playful",
+        "energy": "medium"
+      },
+      "highlight": "bylines with dates and comment counts on everything, a writers' side column of short posts, three plain beats"
+    },
+    {
+      "host": "highsnobiety.com",
+      "url": "https://www.highsnobiety.com/",
+      "observed": "2026-10-18",
+      "colors": {
+        "primary": "#000000",
+        "secondary": "#03B639",
+        "accent": "#D50000",
+        "background": "#F0F0F0",
+        "textPrimary": "#000000",
+        "link": "#D50000"
+      },
+      "fonts": [
+        {
+          "family": "HS Sans",
+          "role": "body"
+        }
+      ],
+      "scheme": "light",
+      "personality": {
+        "tone": "modern",
+        "energy": "high"
+      },
+      "highlight": "shopping, style and sneakers with a drop calendar and brand collaborations"
+    },
+    {
+      "host": "puck.news",
+      "url": "https://www.puck.news/",
+      "observed": "2026-10-18",
+      "colors": {
+        "primary": "#D40000",
+        "secondary": "#520606",
+        "accent": "#BA0202",
+        "background": "#FFFFFF",
+        "textPrimary": "#000000",
+        "link": "#BA0202"
+      },
+      "fonts": [
+        {
+          "family": "Inter",
+          "role": "body"
+        },
+        {
+          "family": "Puck Serif Display",
+          "role": "heading"
+        }
+      ],
+      "scheme": "light",
+      "personality": {
+        "tone": "bold",
+        "energy": "high"
+      },
+      "highlight": "beats drawn as icons, each led by its columnist's face, a red field lead with a duotone photograph"
+    },
+    {
+      "host": "hodinkee.com",
+      "url": "https://www.hodinkee.com/",
+      "observed": "2026-10-18",
+      "colors": {
+        "primary": "#000000",
+        "accent": "#000000",
+        "background": "#FFFFFF",
+        "textPrimary": "#464848",
+        "link": "#000000"
+      },
+      "fonts": [
+        {
+          "family": "Proxima Nova",
+          "role": "body"
+        },
+        {
+          "family": "Ivar Headline",
+          "role": "body"
+        }
+      ],
+      "scheme": "light",
+      "personality": {
+        "tone": "professional",
+        "energy": "low"
+      },
+      "highlight": "one obsession in depth, a named show and a printed volume"
+    },
+    {
+      "host": "eater.com",
+      "url": "https://www.eater.com/",
+      "observed": "2026-10-18",
+      "colors": {
+        "primary": "#13383D",
+        "secondary": "#5200FF",
+        "accent": "#E60000",
+        "background": "#FFFFFF",
+        "textPrimary": "#131313",
+        "link": "#E60000"
+      },
+      "fonts": [
+        {
+          "family": "Degular",
+          "role": "heading"
+        }
+      ],
+      "scheme": "light",
+      "personality": {
+        "tone": "modern",
+        "energy": "medium"
+      },
+      "highlight": "dining out, at home and travel, with maps and guides people save"
+    },
+    {
+      "host": "airmail.news",
+      "url": "https://www.airmail.news/",
+      "observed": "2026-10-18",
+      "colors": {
+        "primary": "#E02028",
+        "secondary": "#262635",
+        "accent": "#8CA0B9",
+        "background": "#FAF6F0",
+        "textPrimary": "#262635",
+        "link": "#8CA0B9"
+      },
+      "fonts": [
+        {
+          "family": "Adobe-Caslon-Pro",
+          "role": "body"
+        }
+      ],
+      "scheme": "light",
+      "personality": {
+        "tone": "professional",
+        "energy": "medium"
+      },
+      "highlight": "a weekly issue with an archive, culture, style and a shop beside the writing"
+    }
+  ]
+}

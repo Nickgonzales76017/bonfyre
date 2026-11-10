@@ -1,0 +1,40 @@
+{
+  "name": "assent_signature",
+  "displayName": "assent_signature",
+  "description": "One person's recorded assent to one exact digest. It is bound to the bytes, so it reports as broken the moment they hash differently. It is not a legal signature, not notarised, not identity verification, and not evidence the signer read what they assented to.",
+  "attributes": {
+    "signature_id": {
+      "type": "string",
+      "required": true,
+      "uniqueWithinNamespace": true
+    },
+    "about": {
+      "type": "string",
+      "required": true
+    },
+    "digest": {
+      "type": "string",
+      "required": true
+    },
+    "assented_by": {
+      "type": "string",
+      "required": true
+    },
+    "assented_at": {
+      "type": "string",
+      "required": true
+    },
+    "statement": {
+      "type": "text",
+      "required": true
+    },
+    "cannot_infer": {
+      "type": "text",
+      "required": true
+    },
+    "status": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

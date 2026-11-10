@@ -1,0 +1,29 @@
+{
+  "name": "presentation_template",
+  "displayName": "Presentation Template",
+  "description": "A presentation-only composition profile over SurfaceIR. It may choose renderer mix, layout density, typography/media/navigation/card/hero policy and responsive tokens, but it reads no semantic owner, grants no authority and owns no subject state. reference_* fields record where a visual language was studied; provenance is not an implementation dependency or a claim that third-party theme code is installed.",
+  "attributes": {
+    "template": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "reference_source": {"type": "string", "required": true},
+    "reference_name": {"type": "string", "required": true},
+    "reference_url": {"type": "string", "required": true},
+    "reference_author": {"type": "string", "required": false},
+    "reference_categories": {"type": "string", "required": true},
+    "reference_price": {"type": "string", "required": false},
+    "family": {"type": "string", "required": true},
+    "renderer_mix": {"type": "string", "required": true},
+    "density": {"type": "string", "required": true},
+    "hero_mode": {"type": "string", "required": true},
+    "navigation_mode": {"type": "string", "required": true},
+    "media_mode": {"type": "string", "required": true},
+    "typography_mode": {"type": "string", "required": true},
+    "card_mode": {"type": "string", "required": true},
+    "chrome_mode": {"type": "string", "required": true},
+    "territory_affinity": {"type": "string", "required": false},
+    "semantic_roles": {"type": "json", "required": true},
+    "layout_tokens": {"type": "json", "required": true},
+    "acceptance_contract": {"type": "text", "required": true},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

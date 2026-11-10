@@ -1,0 +1,31 @@
+{
+  "name": "pack_dependency",
+  "displayName": "Pack Dependency",
+  "description": "A pack refers to shared bases rather than containing copies of them. Five community packs over one motorcycle base are one base and five tiny overlays, not five expanded applications.",
+  "attributes": {
+    "pack": {
+      "type": "string",
+      "required": true
+    },
+    "depends_on": {
+      "type": "string",
+      "required": true
+    },
+    "pinned_version": {
+      "type": "string",
+      "required": false
+    },
+    "channel": {
+      "type": "string",
+      "required": false
+    },
+    "why": {
+      "type": "string",
+      "required": true
+    },
+    "status": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "music_work",
+  "displayName": "Music Work",
+  "description": "Canonical identity for an authored musical composition. A Work is not a recording, master, release, offer, performance, credit or right; those remain separate addressed subjects and relations.",
+  "attributes": {
+    "work_id": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "title": {"type": "string", "required": true},
+    "alternate_titles": {"type": "json", "required": false},
+    "iswc": {"type": "string", "required": false},
+    "language": {"type": "string", "required": false},
+    "composition_type": {"type": "string", "required": false},
+    "evidence_refs": {"type": "json", "required": false},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

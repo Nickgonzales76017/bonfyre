@@ -22,6 +22,8 @@
  */
 
 #include <stdio.h>
+#include "../../../lib/libbonfyre/include/bf_help.h"
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -81,6 +83,7 @@ static const int NTIERS=4;
 static sqlite3 *open_db(void){
     char path[4096];db_path(path,sizeof(path));ensure_dir(path);
     sqlite3 *db=NULL;
+    /* Fast tier, by decision: latency observations; losing the last commits to a power cut costs a re-run. */
     if(bf_sqlite3_open(path,&db)!=SQLITE_OK){fprintf(stderr,"db error\n");exit(1);}
     char *err=NULL;sqlite3_exec(db,SCHEMA,NULL,NULL,&err);
     if(err){fprintf(stderr,"%s\n",err);sqlite3_free(err);exit(1);}
@@ -290,8 +293,15 @@ static void cmd_help(void){
 }
 
 int main(int argc,char **argv){
-    if(argc<2||strcmp(argv[1],"help")==0||strcmp(argv[1],"--help")==0){cmd_help();return 0;}
-    if(strcmp(argv[1],"layer")==0 && argc>=3){
+    if (bf_help_requested(argc, argv)) { cmd_help(); return 0; }
+    if(argc<2){cmd_help();return 0;}
+    enum { TR_LAYER };
+    static const BfCommandEntry tier_commands[] = {
+        {"layer", TR_LAYER, 0, NULL},
+    };
+    const BfCommandEntry *command = bf_command_lookup(tier_commands,
+        sizeof(tier_commands) / sizeof(tier_commands[0]), argv[1]);
+    if(command && command->id == TR_LAYER && argc>=3){
         const char *root = NULL;
         char *json = NULL, *out = NULL;
         for(int i=1;i<argc-1;i++) if(strcmp(argv[i],"--root")==0){ root=argv[i+1]; break; }

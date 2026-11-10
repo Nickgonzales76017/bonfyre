@@ -1,0 +1,7 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-tag","binary_env":"BONFYRE_TAG_BIN","cases":[
+{"name":"tag trains a small model and predicts the right label","files":{"tr.txt":"__label__billing invoice payment card charge refund\n__label__billing pay the invoice by card\n__label__billing refund my charge\n__label__web website page broken checkout\n__label__web fix the website page\n__label__web the checkout page is down\n","q.txt":"please refund the charge on my card\n"},"steps":[
+ {"argv":["train","tr.txt","m.bin"],"env":{"HOME":"${tmp}"},"exit":0,"present":["${tmp}/m.bin"]},
+ {"argv":["predict","m.bin","q.txt","out","--top","1"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"program":"cat","argv":["out/tags.json"],"at":{"type":"text-tags","count":1,"predictions.0.tags.0.tag":"billing"}}]},
+{"name":"detect-lang without the language model refuses rather than guessing","files":{"q.txt":"hello there\n"},"steps":[{"argv":["detect-lang","q.txt","out"],"env":{"HOME":"${tmp}"},"exit_nonzero":true,"absent":["${tmp}/out"]}]},
+{"name":"status answers","steps":[{"argv":["status"],"env":{"HOME":"${tmp}"},"exit":0,"at":{"binary":"bonfyre-tag","status":"ok"}}]}]}

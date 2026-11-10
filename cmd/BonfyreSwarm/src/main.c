@@ -1,24 +1,43 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+/* The POSIX pin above hides BSD interfaces on Darwin -- strcasecmp, ru_maxrss,
+ * MSG_DONTWAIT, INADDR_LOOPBACK -- so this file did not compile on the macOS
+ * control plane at all. _DARWIN_C_SOURCE restores them without loosening the
+ * POSIX baseline the Linux deploy host needs. */
+#ifdef __APPLE__
+#ifndef _DARWIN_C_SOURCE
+#define _DARWIN_C_SOURCE 1
+#endif
+#endif
+
 /*
  * BonfyreSwarm — P2P artifact distribution via BitTorrent v2 protocol
  *
  * Architecture:
  *   BonfyreHash SHA-256 → torrent piece hashes (zero conversion)
  *   BonfyreIndex SQLite → local DHT / peer tracker
- *   BonfyreGate         → swarm credential (license token = peer auth)
+ *   BonfyreGate         → caller-owned authority; transport does not grant it
  *   BonfyreMeter        → metered P2P (track bytes seeded per peer)
  *
- * Wire protocol: BitTorrent v2 (BEP 52) with SHA-256 piece tree.
- * Piece size: 256KB (matches BonfyreCompress block alignment).
+ * Legacy carrier: BitTorrent-style block requests, loopback only. Full BEP 52
+ * interoperability and account authorization are not established by it.
+ * Scoped carrier: bounded MessagePack challenge and exact-content transfer;
+ * see scoped_transfer.h. Account/output owners admit its inputs before use.
  *
  * Subcommands:
  *   seed   <dir>       — seed all artifacts in directory
- *   leech  <info-hash> — download artifact by info hash
+ *   scoped-seed / scoped-fetch — one admitted output, one recipient, one use
+ *   transfer-capabilities — machine-readable supported transfer boundary
  *   peers              — list known peers from index
  *   status             — show swarm statistics
  *
  * Usage:
- *   bonfyre-swarm seed ./output --port 6881 --gate-key <KEY>
- *   bonfyre-swarm leech <hash> --out ./download
+ *   bonfyre-swarm seed ./public-local-artifacts --port 6881
+ *   bonfyre-swarm transfer-capabilities
  *   bonfyre-swarm peers --index ~/.local/share/bonfyre/index.db
  */
 
@@ -40,6 +59,7 @@
 #include <unistd.h>
 #include <sqlite3.h>
 #include "bonfyre.h"
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 
 #ifdef BF_HAS_FOUNTAIN
 #include <bf_fountain.h>
@@ -169,7 +189,6 @@ typedef struct {
     swarm_peer_t      peers[MAX_PEERS];
     int               peer_count;
     sqlite3          *index_db;       /* BonfyreIndex SQLite */
-    char              gate_key[256];  /* Gate license token */
     uint8_t           self_peer_id[PEER_ID_LEN];
     int               listen_fd;
     uint16_t          port;
@@ -434,23 +453,6 @@ static int bt_handshake_recv(int fd, uint8_t out_info_hash[20],
     return 0;
 }
 
-/* ── Gate auth extension (Bonfyre-specific) ──────────────────── */
-
-static int send_gate_auth(int fd, const char *gate_key) {
-    size_t klen = strlen(gate_key);
-    if (klen > 255) klen = 255;
-    uint8_t msg[4 + 2 + 256];
-    uint32_t len = (uint32_t)(2 + klen);
-    msg[0] = (uint8_t)(len >> 24);
-    msg[1] = (uint8_t)(len >> 16);
-    msg[2] = (uint8_t)(len >> 8);
-    msg[3] = (uint8_t)(len);
-    msg[4] = BF_EXT_GATE_AUTH;
-    msg[5] = (uint8_t)klen;
-    memcpy(msg + 6, gate_key, klen);
-    return (int)send(fd, msg, 4 + 2 + klen, 0);
-}
-
 /* ── Listener ────────────────────────────────────────────────── */
 
 static int start_listener(swarm_state_t *state) {
@@ -463,7 +465,7 @@ static int start_listener(swarm_state_t *state) {
     struct sockaddr_in addr = {
         .sin_family = AF_INET,
         .sin_port = htons(state->port),
-        .sin_addr.s_addr = INADDR_ANY
+        .sin_addr.s_addr = htonl(INADDR_LOOPBACK)
     };
 
     if (bind(state->listen_fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
@@ -519,11 +521,6 @@ static int accept_peer(swarm_state_t *state) {
         bt_handshake_send(fd, state->artifacts[0].sha256, state->self_peer_id);
     }
 
-    /* Gate auth: require license token */
-    if (state->gate_key[0]) {
-        send_gate_auth(fd, state->gate_key);
-    }
-
     /* Peer messages (BT_REQUEST etc.) are handled without blocking the
      * accept loop. */
     fcntl(fd, F_SETFL, fcntl(fd, F_GETFL, 0) | O_NONBLOCK);
@@ -557,7 +554,7 @@ static int accept_peer(swarm_state_t *state) {
         sqlite3_bind_int(stmt, 3, peer_port);
         sqlite3_bind_text(stmt, 4,
             state->artifact_count > 0 ? state->artifacts[0].sha256_hex : "", -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 5, state->gate_key[0] ? state->gate_key : "", -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 5, "", -1, SQLITE_STATIC);
         sqlite3_step(stmt);
         sqlite3_finalize(stmt);
     }
@@ -752,9 +749,13 @@ static void sig_handler(int sig) { (void)sig; g_running = 0; }
 
 static int command_seed(const char *dir, uint16_t port, const char *gate_key,
                          const char *index_path) {
-    swarm_state_t state = {0};
+    if (gate_key) {
+        fprintf(stderr, "seed: --gate-key is unsupported; use scoped-seed after account/output admission\n");
+        return 77;
+    }
+    /* This bounded legacy catalogue exceeds the default Linux stack limit. */
+    static swarm_state_t state;
     state.port = port;
-    if (gate_key) strncpy(state.gate_key, gate_key, sizeof(state.gate_key) - 1);
 
     /* Generate peer ID: -BF2600-<random> */
     memcpy(state.self_peer_id, "-BF2600-", 8);
@@ -824,7 +825,8 @@ static int command_seed(const char *dir, uint16_t port, const char *gate_key,
         accept_peer(&state);
         service_peer_requests(&state);
 
-        usleep(10000); /* 10ms */
+        struct timespec delay = { .tv_sec = 0, .tv_nsec = 10000000 };
+        nanosleep(&delay, NULL);
     }
 
     /* Print stats */
@@ -934,6 +936,128 @@ static int command_status(const char *db_path) {
     return 0;
 }
 
+/* ── fetch: the other end of the wire ────────────────────────── */
+
+static int swarm_read_exact(int fd, uint8_t *buffer, size_t length) {
+    size_t have = 0;
+    while (have < length) {
+        ssize_t got = recv(fd, buffer + have, length - have, 0);
+        if (got <= 0) return -1;
+        have += (size_t)got;
+    }
+    return 0;
+}
+
+static int swarm_write_exact(int fd, const uint8_t *buffer, size_t length) {
+    size_t sent = 0;
+    while (sent < length) {
+        ssize_t put = send(fd, buffer + sent, length - sent, 0);
+        if (put <= 0) return -1;
+        sent += (size_t)put;
+    }
+    return 0;
+}
+
+static void swarm_put_u32(uint8_t *out, uint32_t value) {
+    out[0] = (uint8_t)(value >> 24); out[1] = (uint8_t)(value >> 16);
+    out[2] = (uint8_t)(value >> 8);  out[3] = (uint8_t)value;
+}
+
+static uint32_t swarm_get_u32(const uint8_t *in) {
+    return ((uint32_t)in[0] << 24) | ((uint32_t)in[1] << 16) | ((uint32_t)in[2] << 8) | (uint32_t)in[3];
+}
+
+/* A peer that asks a seeder for one block and writes what it was sent. It
+ * speaks the same handshake and request the seeder answers, so a seeding
+ * estate can be read by another one without anything else in between. The
+ * block is written only when the seeder returned exactly the piece, offset
+ * and length that were asked for. */
+static int command_fetch(const char *host, uint16_t port, uint32_t piece, uint32_t offset,
+                         uint32_t length, const char *out_path, const char *peer_label) {
+    struct sockaddr_in address;
+    uint8_t handshake[68], reply[68], request[17], header[13];
+    uint8_t *block = NULL;
+    int fd, rc = 1;
+
+    if (length == 0 || length > (1u << 24)) {
+        fprintf(stderr, "fetch: --length must be between 1 and 16777216\n");
+        return 2;
+    }
+    memset(&address, 0, sizeof(address));
+    address.sin_family = AF_INET;
+    address.sin_port = htons(port);
+    if (inet_pton(AF_INET, host, &address.sin_addr) != 1) {
+        fprintf(stderr, "fetch: %s is not an IPv4 address\n", host);
+        return 2;
+    }
+    fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (fd < 0 || connect(fd, (struct sockaddr *)&address, sizeof(address)) != 0) {
+        fprintf(stderr, "fetch: cannot reach %s:%u\n", host, (unsigned)port);
+        if (fd >= 0) close(fd);
+        return 1;
+    }
+
+    memset(handshake, 0, sizeof(handshake));
+    handshake[0] = 19;
+    memcpy(handshake + 1, "BitTorrent protocol", 19);
+    memset(handshake + 48, '0', 20);
+    memcpy(handshake + 48, "-BFFETCH", 8);
+    if (peer_label && *peer_label) {
+        size_t label = strlen(peer_label);
+        if (label > 12) label = 12;
+        memcpy(handshake + 56, peer_label, label);
+    }
+    if (swarm_write_exact(fd, handshake, sizeof(handshake)) != 0 ||
+        swarm_read_exact(fd, reply, sizeof(reply)) != 0 ||
+        reply[0] != 19 || memcmp(reply + 1, "BitTorrent protocol", 19) != 0) {
+        fprintf(stderr, "fetch: the peer did not complete the handshake\n");
+        goto done;
+    }
+
+    swarm_put_u32(request, 13);
+    request[4] = 6;
+    swarm_put_u32(request + 5, piece);
+    swarm_put_u32(request + 9, offset);
+    swarm_put_u32(request + 13, length);
+    if (swarm_write_exact(fd, request, sizeof(request)) != 0 ||
+        swarm_read_exact(fd, header, sizeof(header)) != 0) {
+        fprintf(stderr, "fetch: the peer sent no piece\n");
+        goto done;
+    }
+    {
+        uint32_t message_length = swarm_get_u32(header);
+        uint32_t got_piece = swarm_get_u32(header + 5), got_offset = swarm_get_u32(header + 9);
+        uint32_t data_length = message_length >= 9 ? message_length - 9 : 0;
+        FILE *out;
+
+        if (header[4] != 7 || got_piece != piece || got_offset != offset || data_length != length) {
+            fprintf(stderr, "fetch: asked for piece %u offset %u length %u, was sent message %u piece %u offset %u length %u\n",
+                    piece, offset, length, (unsigned)header[4], got_piece, got_offset, data_length);
+            goto done;
+        }
+        block = malloc(data_length);
+        if (!block || swarm_read_exact(fd, block, data_length) != 0) {
+            fprintf(stderr, "fetch: the piece stopped before its stated length\n");
+            goto done;
+        }
+        out = fopen(out_path, "wb");
+        if (!out || fwrite(block, 1, data_length, out) != data_length || fclose(out) != 0) {
+            fprintf(stderr, "fetch: cannot write %s\n", out_path);
+            remove(out_path);
+            goto done;
+        }
+        printf("{\"kind\":\"swarm-fetch\",\"peer\":\"%s:%u\",\"piece\":%u,\"offset\":%u,\"bytes\":%u,\"out\":\"%s\"}\n",
+               host, (unsigned)port, piece, offset, data_length, out_path);
+        rc = 0;
+    }
+done:
+    free(block);
+    close(fd);
+    return rc;
+}
+
+#include "scoped_transfer.h"
+
 /* ── main ────────────────────────────────────────────────────── */
 
 int main(int argc, char **argv) {
@@ -941,7 +1065,32 @@ int main(int argc, char **argv) {
 
     if (argc < 2) goto usage;
 
-    if (strcmp(argv[1], "seed") == 0 && argc >= 3) {
+    enum {
+        SC_FETCH, SC_PEERS, SC_SCOPED_FETCH, SC_SCOPED_SEED, SC_SEED, SC_STATUS, SC_TRANSFER_CAPABILITIES,
+    };
+    static const BfCommandEntry swarm_commands[] = {
+        {"fetch", SC_FETCH, 0, NULL},
+        {"peers", SC_PEERS, 0, NULL},
+        {"scoped-fetch", SC_SCOPED_FETCH, 0, NULL},
+        {"scoped-seed", SC_SCOPED_SEED, 0, NULL},
+        {"seed", SC_SEED, 0, NULL},
+        {"status", SC_STATUS, 0, NULL},
+        {"transfer-capabilities", SC_TRANSFER_CAPABILITIES, 0, NULL},
+    };
+    const BfCommandEntry *command = bf_command_lookup(swarm_commands,
+        sizeof(swarm_commands) / sizeof(swarm_commands[0]), argv[1]);
+    if (!command) goto usage;
+
+    if (command->id == SC_TRANSFER_CAPABILITIES)
+        return argc == 2 ? st_capabilities() : ST_USAGE;
+    if (command->id == SC_SCOPED_SEED) return st_command(argc, argv, 1);
+    if (command->id == SC_SCOPED_FETCH) return st_command(argc, argv, 0);
+
+    if (command->id == SC_SEED && argc >= 3) {
+        for (int i = 3; i < argc; ++i) if (strcmp(argv[i], "--gate-key") == 0) {
+            fprintf(stderr, "seed: --gate-key is unsupported; use scoped-seed after account/output admission\n");
+            return 77;
+        }
         const char *dir = argv[2];
         uint16_t port = 6881;
         const char *gate_key = NULL;
@@ -954,7 +1103,7 @@ int main(int argc, char **argv) {
         return command_seed(dir, port, gate_key, index_path);
     }
 
-    if (strcmp(argv[1], "peers") == 0) {
+    if (command->id == SC_PEERS) {
         const char *db = NULL;
         for (int i = 2; i < argc - 1; i++) {
             if (strcmp(argv[i], "--index") == 0) db = argv[++i];
@@ -962,7 +1111,7 @@ int main(int argc, char **argv) {
         return command_peers(db);
     }
 
-    if (strcmp(argv[1], "status") == 0) {
+    if (command->id == SC_STATUS) {
         const char *db = NULL;
         for (int i = 2; i < argc - 1; i++) {
             if (strcmp(argv[i], "--index") == 0) db = argv[++i];
@@ -970,12 +1119,39 @@ int main(int argc, char **argv) {
         return command_status(db);
     }
 
+    if (command->id == SC_FETCH) {
+        const char *host = "127.0.0.1", *out = NULL, *label = NULL;
+        uint16_t port = 6881;
+        uint32_t piece = 0, offset = 0, length = 0;
+        for (int i = 2; i < argc - 1; i++) {
+            if (strcmp(argv[i], "--host") == 0) host = argv[++i];
+            else if (strcmp(argv[i], "--port") == 0) port = (uint16_t)atoi(argv[++i]);
+            else if (strcmp(argv[i], "--piece") == 0) piece = (uint32_t)strtoul(argv[++i], NULL, 10);
+            else if (strcmp(argv[i], "--offset") == 0) offset = (uint32_t)strtoul(argv[++i], NULL, 10);
+            else if (strcmp(argv[i], "--length") == 0) length = (uint32_t)strtoul(argv[++i], NULL, 10);
+            else if (strcmp(argv[i], "--out") == 0) out = argv[++i];
+            else if (strcmp(argv[i], "--peer") == 0) label = argv[++i];
+        }
+        if (!out) { fprintf(stderr, "fetch: --out FILE is required\n"); return 2; }
+        return command_fetch(host, port, piece, offset, length, out, label);
+    }
+
 usage:
     fprintf(stderr,
         "BonfyreSwarm — P2P artifact distribution\n\n"
         "Usage:\n"
-        "  bonfyre-swarm seed <dir> [--port N] [--gate-key KEY] [--index DB]\n"
+        "  bonfyre-swarm seed <dir> [--port N] [--index DB] (legacy loopback only)\n"
+        "  bonfyre-swarm fetch --port N --length BYTES --out FILE [--host ADDR] [--piece N] [--offset N] [--peer LABEL]\n"
         "  bonfyre-swarm peers [--index DB]\n"
-        "  bonfyre-swarm status [--index DB]\n");
+        "  bonfyre-swarm status [--index DB]\n"
+        "  bonfyre-swarm transfer-capabilities\n"
+        "  bonfyre-swarm scoped-seed --artifact FILE --port N --index DB <grant>\n"
+        "  bonfyre-swarm scoped-fetch --out FILE --port N --index DB <grant>\n"
+        "Grant (admitted by the account/output owner before invocation):\n"
+        "  --scope HASH64 --recipient HASH64 --sha256 HASH64 --size BYTES\n"
+        "  --transfer-id HEX32 --key-file FILE --expires UNIX_SECONDS\n"
+        "Scoped transfer: loopback only, <=64 MiB, <=300 seconds, one use.\n"
+        "Key file: raw 32 bytes, current owner, mode 0600 or 0400.\n"
+        "Scoped stdout: one MessagePack [1, ok, receipt] packet.\n");
     return 1;
 }

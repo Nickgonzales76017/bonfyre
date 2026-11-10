@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * bonfyre-space — shared memory substrate.
  *
@@ -22,6 +29,8 @@
  */
 
 #include <stdio.h>
+#include "../../../lib/libbonfyre/include/bf_help.h"
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -79,7 +88,8 @@ static const char *SCHEMA=
 static sqlite3 *open_db(void){
     char path[4096];db_path(path,sizeof(path));ensure_parent_dir(path);
     sqlite3 *db=NULL;
-    if(bf_sqlite3_open(path,&db)!=SQLITE_OK){
+    /* Durable tier -- shared memory entries and attachments: what people put there. */
+    if (bf_sqlite3_open_tier(path, &db, BF_SQLITE_DURABLE) != SQLITE_OK){
         fprintf(stderr,"db error: %s (%s)\n", path, db ? sqlite3_errmsg(db) : "open failed");
         if (db) sqlite3_close(db);
         exit(1);
@@ -145,16 +155,19 @@ static void cmd_put(sqlite3 *db,const char *space,const char *key,const char *va
     printf("written: %s/%s (%zu bytes)\n",space,key,strlen(val));
 }
 
-static void cmd_get(sqlite3 *db,const char *space,const char *key){
+/* A missing key exits 1: callers that read a value cannot otherwise tell an
+ * absent key from an empty one. */
+static int cmd_get(sqlite3 *db,const char *space,const char *key){
     sqlite3_stmt *st=NULL;
     sqlite3_prepare_v2(db,"SELECT value FROM entries WHERE space=? AND key=?",-1,&st,NULL);
     sqlite3_bind_text(st,1,space,-1,SQLITE_STATIC);
     sqlite3_bind_text(st,2,key,-1,SQLITE_STATIC);
     if(sqlite3_step(st)!=SQLITE_ROW){
-        fprintf(stderr,"not found: %s/%s\n",space,key);sqlite3_finalize(st);return;
+        fprintf(stderr,"not found: %s/%s\n",space,key);sqlite3_finalize(st);return 1;
     }
     printf("%s\n",(const char*)sqlite3_column_text(st,0));
     sqlite3_finalize(st);
+    return 0;
 }
 
 static void cmd_list(sqlite3 *db,const char *space){
@@ -287,8 +300,15 @@ static int cmd_fixture(const char *path) {
 }
 
 int main(int argc,char **argv){
-    if(argc<2||strcmp(argv[1],"help")==0||strcmp(argv[1],"--help")==0){cmd_help();return 0;}
-    if (strcmp(argv[1], "fixture") == 0) {
+    if (bf_help_requested(argc, argv)) { cmd_help(); return 0; }
+    if(argc<2){cmd_help();return 0;}
+    enum { SP_FIXTURE };
+    static const BfCommandEntry space_commands[] = {
+        {"fixture", SP_FIXTURE, 0, NULL},
+    };
+    const BfCommandEntry *command = bf_command_lookup(space_commands,
+        sizeof(space_commands) / sizeof(space_commands[0]), argv[1]);
+    if (command && command->id == SP_FIXTURE) {
         if (argc != 3) { fprintf(stderr, "usage: bonfyre-space fixture <db>\n"); return 1; }
         return cmd_fixture(argv[2]);
     }
@@ -303,7 +323,7 @@ int main(int argc,char **argv){
         else cmd_put(db,argv[2],argv[3],argv[4]);
     } else if(strcmp(cmd,"get")==0){
         if(argc<4){fprintf(stderr,"usage: bonfyre-space get <space> <key>\n");rc=1;}
-        else cmd_get(db,argv[2],argv[3]);
+        else rc=cmd_get(db,argv[2],argv[3]);
     } else if(strcmp(cmd,"list")==0){
         cmd_list(db,argc>2?argv[2]:NULL);
     } else if(strcmp(cmd,"stats")==0){

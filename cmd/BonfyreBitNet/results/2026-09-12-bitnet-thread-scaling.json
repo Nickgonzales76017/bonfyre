@@ -1,0 +1,48 @@
+{
+  "schema": "bonfyre.bitnet_execution_measurement.v1",
+  "classification": "MEASURED_EXECUTION_PHENOTYPE_ARM",
+  "observed_at": "2026-09-12",
+  "why": "The ranker's known_gap recorded that full-frontier latency, throughput and capacity were unmeasured, and that the official ARM build was believed unusable. The release build embeds correctly on this host; what was missing was a measurement, not a port.",
+  "host": {
+    "platform": "darwin arm64",
+    "cores": "8 logical, 4 performance",
+    "runtime_flags": "-ngl 0 -dev none --no-op-offload --pooling last --attention causal --embd-normalize 2"
+  },
+  "model": {
+    "repository": "microsoft/bitnet-embedding-0.6b",
+    "body": "bitnet-embeddings-0.6b-bf16-i2_s.gguf",
+    "sha256": "c89c64f05a2d3f83565250a6762640197fc624df866d4a1bd5853f811219af17",
+    "dimensions": 1024
+  },
+  "full_frontier": {
+    "population": 4891,
+    "required_coordinate": "domain:weather",
+    "survivors": 92,
+    "threads": 1,
+    "elapsed_seconds": 164.71,
+    "seconds_per_candidate": 1.79,
+    "floats_returned": 94208
+  },
+  "thread_scaling": {
+    "subset_candidates": 24,
+    "measurements": [
+      {"threads": 1, "elapsed_seconds": 38.3, "seconds_per_candidate": 1.596},
+      {"threads": 4, "elapsed_seconds": 15.4, "seconds_per_candidate": 0.641},
+      {"threads": 8, "elapsed_seconds": 17.7, "seconds_per_candidate": 0.736}
+    ],
+    "finding": "Four threads is 2.49x faster than one. Eight is slower than four: the host has four performance cores and oversubscribing them costs more than it buys. The organ had -t 1 compiled in, which is the safe number to write before measuring and the wrong one to keep after.",
+    "applied": "BITNET_DEFAULT_THREADS is now 4 and --threads overrides it, because the next host will have a different answer."
+  },
+  "projected_full_estate": {
+    "candidates": 4891,
+    "at_1_thread_seconds": 8073,
+    "at_4_threads_seconds": 3135,
+    "note": "A projection from measured per-candidate cost, not a run. Batch size, model reload per batch and prompt-size limits are not accounted for."
+  },
+  "does_not_establish": [
+    "ModelRepresentationPassport ADMIT: latency and throughput are measured, ranking quality is not",
+    "that a faster embedding is a better ranking",
+    "top-k recall, preservation envelope, or concurrent capacity",
+    "that this host's optimum transfers to any other execution phenotype"
+  ]
+}

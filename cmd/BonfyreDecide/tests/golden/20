@@ -1,0 +1,2 @@
+both a signed amount (Amount) and debit/credit columns are present; name the one to use with --columns
+exit 2

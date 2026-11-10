@@ -1,0 +1,27 @@
+{
+  "schema_version": "bonfyre.app-lineages.contract.v1",
+  "source": "architecture/apps/app-lineages.contract.yaff",
+  "count": 2,
+  "lineages": [
+    {
+      "lineage": "alpha",
+      "flow_stage": "platform",
+      "representative_doctype": "Sales Order",
+      "company_flow_after": "",
+      "app_dir": "app",
+      "owns": "",
+      "consumes": "Input|State",
+      "publishes": "Output",
+      "dialect": "frappe"
+    },
+    {
+      "lineage": "second",
+      "flow_stage": "customer",
+      "representative_doctype": "Quoted Doc",
+      "company_flow_after": "alpha",
+      "app_dir": "two",
+      "publishes": "Name\"Quoted"
+    }
+  ],
+  "forbidden_inference": "a declared lineage is not a running application, and a dialect records where a grammar was first extracted from rather than what serves it"
+}

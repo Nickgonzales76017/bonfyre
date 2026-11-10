@@ -1,0 +1,15 @@
+{
+  "name": "community_reaction",
+  "displayName": "Community Reaction",
+  "description": "A bounded human reaction relation on a community post. It records the relation the owner accepted; a button press or local optimistic state is not itself a reaction.",
+  "attributes": {
+    "reaction": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "post": {"type": "string", "required": true},
+    "actor_subject": {"type": "string", "required": true},
+    "kind": {"type": "string", "required": true},
+    "state": {"type": "string", "required": true},
+    "created_at": {"type": "string", "required": true},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

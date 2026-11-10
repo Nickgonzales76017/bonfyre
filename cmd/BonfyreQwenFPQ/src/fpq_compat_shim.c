@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * fpq_compat_shim.c
  *
@@ -108,31 +115,11 @@ int fpq_decode_row(fpq_model_t *m, const char *tensor_name,
         return 0;
     }
 
-    /* Real decode failed. Only fabricate a row when explicitly requested for
-     * testing (BONFYRE_QWEN_BOOTSTRAP_SYNTHETIC_ROWS) -- this used to also
-     * trigger unconditionally for model.embed_tokens.weight, which silently
-     * fed every token a random hash-noise embedding instead of its real
-     * trained vector regardless of whether the real decoder worked. That is
-     * the root cause of incoherent generation across every FPQ pack tested. */
-    const char *synthetic_rows = getenv("BONFYRE_QWEN_BOOTSTRAP_SYNTHETIC_ROWS");
-    if (synthetic_rows && *synthetic_rows && strcmp(synthetic_rows, "0") != 0) {
-        static int logged_row = 0;
-        if (logged_row < 40) {
-            fprintf(stderr,
-                    "fpq_decode_row: synthetic fallback row tensor=%s row=%zu cols=%zu\n",
-                    tensor_name, row, (size_t)info->cols);
-            fflush(stderr);
-            logged_row++;
-        }
-
-        for (size_t c = 0; c < info->cols; c++) {
-            unsigned int x = (unsigned int)(row * 1103515245u) ^
-                             (unsigned int)(c * 2654435761u) ^
-                             0x9e3779b9u;
-            out[c] = ((float)((int)((x >> 16) & 255) - 127)) * 0.001f;
-        }
-        return 0;
-    }
+    /* Real decode failed, and that is the answer. A hash-noise row stood in
+     * here once -- first for every embedding lookup, later behind an
+     * environment switch -- and fed tokens vectors no model was trained to
+     * produce. No switch brings it back: a row this pack cannot decode is a
+     * row this pack does not have. */
 
     if (info->rows == 1 && row == 0) {
         return fpq_decode_one(m, tensor_name, out);

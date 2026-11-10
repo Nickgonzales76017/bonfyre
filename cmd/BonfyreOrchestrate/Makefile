@@ -1,5 +1,6 @@
 CC ?= cc
 CFLAGS ?= -Os -Wall -Wextra -std=c11 -ffunction-sections -fdata-sections
+CFLAGS += -I../BonfyreLex/src
 LOCAL_CFLAGS = -I../../lib/libbonfyre/include
 LDFLAGS = -L../../lib/libbonfyre -lbonfyre -lsqlite3
 

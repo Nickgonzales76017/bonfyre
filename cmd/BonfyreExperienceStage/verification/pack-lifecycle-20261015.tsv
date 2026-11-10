@@ -1,0 +1,23 @@
+schema	bonfyre.pack.lifecycle.checkpoint.v1
+scope	isolated native stores; fictional public configurations; existing native account and content owners
+implementation	checked-out source and binaries; not installed into the managed or public runtime
+native_lifecycle	PASS	28 named checks
+http_lifecycle	PASS	41 named checks; not browser interaction tests
+public_forwarding_isolation	PASS	public legacy activation retained; private installed locks excluded
+auth_continuation_regression	PASS	40 named checks
+saved_item_regression	PASS
+external_account_regression	PASS
+cms_dispatch_regression	PASS	2 tests; 18 assertions
+new_browser_lifecycle	NOT_EXECUTED	new test file was blocked by the tool safety check and does not exist in the checkout
+public_deployment	NOT_PERFORMED
+managed_install	NOT_PERFORMED
+full_product_provisioning	NOT_IMPLEMENTED
+canonical_atlas_update	UNAPPLIED	proposal retained under the portfolio owner
+receipt	40038035-0f19-4316-b742-3c48dfa6f789	three owner builds; lifecycle, HTTP and public-isolation tests
+receipt	7424bde1-f671-4602-b06d-28cfbccec500	auth-continuation, saved-item and external-account regressions
+receipt	a8589fd1-1693-4cd5-a170-357746fb66c7	final CMS warnings-as-errors build; lifecycle and command-dispatch checks
+receipt	8665d8e6-0868-4b01-a803-ca05684b26cb	selected source/binary hashes; scoped Git whitespace check; direct new-file whitespace check
+binary	cmd/BonfyreCMS/bonfyre-cms	0679cfefb95ebe1569a17d534baaaba430055c8f9f12338aafdca0b8c25d5258
+binary	cmd/BonfyreWebAddress/bonfyre-web-address	8feedb0ac13aa6174ca66d9bce24c8daf50560cf6c7d83b8840d27f8e3b50ed0
+binary	cmd/BonfyreExternalEstate/bonfyre-external-estate	146407689b5f38614f5dea43dc3504fcfcda22b0ccb5f3e625f712ea5dff1789
+limits	no new product-specific backend bindings; no first-class household/org creation; no private lock-aware general forwarding; no new visual certification

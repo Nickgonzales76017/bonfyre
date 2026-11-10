@@ -1,0 +1,27 @@
+subject_kind	territories	host_pattern	paths
+creator	live life shop work	{creator}.aurekai.{territory}	/|/listen|/listen/{release}|/listen/{release}/{track}|/watch|/watch/{program}|/watch/{program}/{chapter}|/tour|/tour/{city}|/community|/posts/{slug}|/collections/{slug}
+musician	live life shop work	{artist}.aurekai.{territory}	/|/listen|/listen/{release}|/listen/{release}/{track}|/watch|/watch/{show}|/tour|/tour/{city}/{venue}|/community|/tickets/{event}|/merch/{product}|/press/{slug}|/work/tour/{tour}
+video-creator	live life shop work	{creator}.aurekai.{territory}	/|/watch|/watch/{series}|/watch/{series}/{episode}|/shorts/{clip}|/live/{event}|/community|/collections/{slug}|/shop/{product}|/work/productions/{project}
+person	life live work	{person}.aurekai.{territory}	/|/about|/posts|/collections|/community|/events|/work|/learning|/places
+company	work live shop life	{company}.aurekai.{territory}	/|/people|/posts|/products|/services|/jobs|/events|/newsletters|/locations|/community|/support|/work|/analytics
+merchant	shop live life work	{merchant}.aurekai.{territory}	/|/products/{product}|/collections/{collection}|/services/{service}|/orders/{order}|/support|/community|/locations|/work/operations
+venue	live life shop work	{venue}.aurekai.{territory}	/|/tonight|/events/{event}|/calendar|/watch|/listen|/community|/tickets/{event}|/place|/work/bookings|/work/production
+place	life live shop work	{place}.aurekai.{territory}	/|/now|/map|/events|/community|/food|/watch|/listen|/shops|/services|/work
+city	life live shop work	{city}.aurekai.{territory}	/|/today|/tonight|/music|/video|/events|/community/{topic}|/places|/food|/housing|/property|/jobs|/markets|/routes
+neighborhood	life live shop	{neighborhood}.aurekai.{territory}	/|/today|/tonight|/community|/places|/food|/events|/music|/shops|/housing|/property|/map
+community	life live work	{community}.aurekai.{territory}	/|/threads/{thread}|/people|/events|/collections|/watch|/listen|/places|/about|/moderation
+topic	life live work shop	aurekai.{territory}	/topics/{topic}|/community/{topic}|/discover/{topic}|/topics/{topic}/people|/topics/{topic}/events|/topics/{topic}/watch|/topics/{topic}/listen|/topics/{topic}/places|/topics/{topic}/collections
+event	live life shop work	{host}.aurekai.{territory}	/events/{event}|/events/{event}/watch|/events/{event}/listen|/events/{event}/community|/events/{event}/tickets|/events/{event}/place|/events/{event}/schedule|/events/{event}/work
+release	live shop life	{artist}.aurekai.{territory}	/listen/{release}|/listen/{release}/{track}|/releases/{release}|/releases/{release}/credits|/releases/{release}/community|/releases/{release}/buy
+program	live life shop	{creator}.aurekai.{territory}	/watch/{program}|/watch/{program}/{chapter}|/watch/{program}/transcript|/watch/{program}/community|/watch/{program}/clips|/watch/{program}/related
+property	life work shop	{place}.aurekai.{territory}	/property/{property}|/property/{property}/records|/property/{property}/comps|/property/{property}/finance|/property/{property}/documents|/property/{property}/community|/property/{property}/work
+course	life work	{institution}.aurekai.{territory}	/learn/{course}|/learn/{course}/modules/{module}|/learn/{course}/watch/{lesson}|/learn/{course}/discussion|/learn/{course}/assignments|/learn/{course}/grades|/learn/{course}/credential
+job	work life	{company}.aurekai.{territory}	/jobs/{job}|/jobs/{job}/people|/jobs/{job}/apply|/jobs/{job}/community|/jobs/{job}/learning
+service	work shop life	{provider}.aurekai.{territory}	/services/{service}|/services/{service}/availability|/services/{service}/quote|/services/{service}/book|/services/{service}/support|/services/{service}/community
+product	shop live life	{merchant}.aurekai.{territory}	/products/{product}|/products/{product}/watch|/products/{product}/community|/products/{product}/support|/products/{product}/buy|/products/{product}/owners
+project	work	{institution}.aurekai.work	/projects/{project}|/projects/{project}/issues|/projects/{project}/roadmap|/projects/{project}/channels|/projects/{project}/docs|/projects/{project}/approvals|/projects/{project}/activity
+account	work	{institution}.aurekai.work	/accounts/{account}|/accounts/{account}/people|/accounts/{account}/opportunities|/accounts/{account}/activity|/accounts/{account}/quotes|/accounts/{account}/support|/accounts/{account}/analytics
+case	work	{institution}.aurekai.work	/cases/{case}|/cases/{case}/conversation|/cases/{case}/knowledge|/cases/{case}/work|/cases/{case}/evidence|/cases/{case}/receipt
+trip	life live shop	{person}.aurekai.{territory}	/trips/{trip}|/trips/{trip}/stay|/trips/{trip}/events|/trips/{trip}/services|/trips/{trip}/food|/trips/{trip}/routes|/trips/{trip}/community
+collection	life live shop	{owner}.aurekai.{territory}	/collections/{collection}|/collections/{collection}/watch|/collections/{collection}/listen|/collections/{collection}/places|/collections/{collection}/products|/collections/{collection}/community
+institution	work life live shop	{institution}.aurekai.{territory}	/|/people|/community|/worlds|/services|/events|/work|/shop|/live|/life|/knowledge|/analytics

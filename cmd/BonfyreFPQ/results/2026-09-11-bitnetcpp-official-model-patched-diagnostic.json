@@ -1,0 +1,58 @@
+{
+  "schema": "bonfyre.bitnetcpp_execution_receipt.v1",
+  "classification": "MEASURED_PATCHED_DIAGNOSTIC_EXECUTION",
+  "observed_at": "2026-09-11",
+  "upstream": {
+    "repository": "https://github.com/microsoft/BitNet",
+    "commit": "0b341e582afbf9e1011f24744b554c96a3477eb5",
+    "model_repository": "microsoft/BitNet-b1.58-2B-4T-gguf",
+    "model_file": "ggml-model-i2_s.gguf",
+    "model_bytes": 1187790848
+  },
+  "host": {
+    "os": "Darwin arm64",
+    "device": "Apple M3",
+    "execution_binary": "llama-simple",
+    "device_layers": 0
+  },
+  "build_lineage": {
+    "unmodified_upstream_result": "ARM build refused before execution: unresolved BitNet kernel symbols",
+    "diagnostic_patches": [
+      "attach upstream BitNet LUT and quantization sources to the ggml build",
+      "declare src1_cont in the I2_S CPU fast path",
+      "disable unrelated server/UI products and build the native CLI"
+    ],
+    "production_status": "not a production integration; upstream unmodified build remains refused on this host"
+  },
+  "model_load": {
+    "architecture": "bitnet-b1.58",
+    "tensor_count": 332,
+    "i2_s_tensor_count": 210,
+    "reported_bits_per_weight": 3.91,
+    "mapped_model_mib": 1124.81
+  },
+  "workload": {
+    "prompt": "Reply with exactly: BitNet native execution measured.",
+    "requested_tokens": 8,
+    "observed_completion": "!!!!!!!!"
+  },
+  "measurements": {
+    "load_seconds": 7.33898,
+    "prompt_tokens": 11,
+    "prompt_tokens_per_second": 1.75,
+    "generated_tokens": 7,
+    "generated_tokens_per_second": 1.70,
+    "total_seconds": 11.46045,
+    "max_resident_bytes": 1254719488,
+    "graphs_reused": 6
+  },
+  "verdict": "MODEL_EXECUTION_PROVEN_QUALITY_UNSUITABLE_FOR_SEMANTIC_RANKING",
+  "does_not_establish": [
+    "an unmodified upstream BitNet.cpp ARM execution witness",
+    "BitNet embedding quality or a LatentSpacePassport",
+    "BitNet reranker quality, top-k recall, or false-prune envelope",
+    "production ResourceAdmission eligibility",
+    "user-scale, traffic-scale, concurrent-session, or Internet-scale capacity"
+  ],
+  "observed_failure": "The loader warned that a missing pre-tokenizer would degrade generation quality, and the completion failed the exact-output instruction. The runtime must remain rejected for semantic routing until a compatible tokenizer/model path and ranking preservation envelope pass."
+}

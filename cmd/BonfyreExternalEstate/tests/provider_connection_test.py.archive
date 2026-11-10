@@ -1,0 +1,17 @@
+#!/usr/bin/env python3
+# Historical witness; coordination_family.test.mjs supersedes it.
+import importlib.util
+from pathlib import Path
+ROOT=Path(__file__).resolve().parents[3];s=importlib.util.spec_from_file_location("p",ROOT/"cmd/BonfyreExternalEstate/tools/compile_provider_connection.py");m=importlib.util.module_from_spec(s);s.loader.exec_module(m)
+carrier={"carrier_id":"carrier:github:org/repo","provider":"github"}; base={"subject_ref":"project:repo","carrier":carrier,"at":"2026-09-28T00:00:00Z"}
+assert m.compile({**base,"phase":"observe"})["body"]["state"]=="observed"
+proof={"state":"bridge_control_verified","receipt_ref":"receipt:proof"}
+assert m.compile({**base,"phase":"verify","proof":proof})["body"]["state"]=="verified"
+row=m.compile({**base,"phase":"connect","proof":proof,"grant":{"receipt_ref":"receipt:grant","capabilities":["read.public"]}})["body"]
+assert row["state"]=="connected" and row["granted_capabilities"]==["read.public"]
+for phase in ("verify","connect"):
+ try:m.compile({**base,"phase":phase})
+ except m.Refusal:pass
+ else:raise AssertionError("missing proof reached connection")
+assert m.compile({**base,"phase":"revoke"})["body"]["state"]=="revoked"
+print("provider connection: PASS")

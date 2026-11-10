@@ -1,0 +1,14 @@
+{
+  "name": "execution_profile",
+  "displayName": "Execution Profile",
+  "description": "One backend the pure-execution tier may hand a closure job to, and what this estate declares about it. A backend here is a compiler target and never an owner: it holds no truth, no identity, no authority, no money, and it cannot perform an effect. The row records what the estate declares -- the kind of reducer it is, whether it is pure, whether it is supposed to be available -- and is deliberately separate from whether the binary is on PATH in this process, because a declared availability is a claim about the estate and presence is a fact about one run. Keeping them apart is what stops a vendored but unbuilt runtime from being mistaken for a running one. The native pure-job.mjs reads execution_profile rows from the CMS and refuses to dispatch when none are readable, which reads as 'the backends are missing' when what is missing is their declaration.",
+  "attributes": {
+    "backend": { "type": "string", "required": true },
+    "kind": { "type": "string", "required": true },
+    "purity": { "type": "string", "required": true },
+    "availability": { "type": "string", "required": true },
+    "version": { "type": "string", "required": false },
+    "cost_metric": { "type": "string", "required": false },
+    "note": { "type": "string", "required": false }
+  }
+}

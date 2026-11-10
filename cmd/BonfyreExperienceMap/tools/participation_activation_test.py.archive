@@ -1,0 +1,134 @@
+#!/usr/bin/env python3
+import json
+from pathlib import Path
+
+from participation_activation import next_activation, protocol_derivation_witness
+
+
+tmp = Path(__file__).with_name(".protocol-derivation-witness-test")
+bridge = tmp.with_suffix(".c")
+tmp.write_text(json.dumps({
+    "schema": "bonfyre-protocol-derivation-bridge.v1",
+    "registered": True,
+    "contract": "quote-accept-fixture",
+    "enactments": 2,
+    "programs": 8,
+    "scoped": True,
+    "targeted_invalidation": True,
+    "atomic": True,
+}), encoding="utf-8")
+bridge.write_text("/* independently compiled bridge witness target */\n", encoding="utf-8")
+assert protocol_derivation_witness(tmp, bridge) is True
+tmp.write_text("{\"schema\":\"bonfyre-protocol-derivation-bridge.v1\",\"registered\":true}", encoding="utf-8")
+assert protocol_derivation_witness(tmp, bridge) is False
+tmp.unlink()
+bridge.unlink()
+
+
+def profile(observation):
+    def unknown():
+        return {"status": "unknown", "depth": 0, "depth_name": "unknown"}
+
+    return {
+        "candidate": {
+            "candidate_planes": {
+                "discovery": True,
+                "observation": True,
+                "semantic": True,
+                "protocol": True,
+                "capability": True,
+                "economic": True,
+                "round_trip": True,
+            }
+        },
+        "realized": {
+            "axes": {
+                "discovery": {"status": "measured", "depth": 1},
+                "observation": observation,
+                "semantic": unknown(),
+                "protocol": unknown(),
+                "capability": unknown(),
+                "economic": unknown(),
+                "round_trip": unknown(),
+            }
+        },
+    }
+
+
+nxt = next_activation(profile({"status": "unknown", "depth": 0}))
+assert nxt["owner"] == "ForeignTwin" and nxt["action"] == "observe_exact_candidate"
+
+nxt = next_activation(profile({"status": "measured", "depth": 1, "depth_name": "policy-preflighted"}))
+assert nxt["owner"] == "ForeignTwin" and nxt["action"] == "resolve_observation_boundary"
+
+nxt = next_activation(profile({"status": "measured", "depth": 2, "depth_name": "transport-observed"}))
+assert nxt["owner"] == "ForeignTwin" and nxt["action"] == "resolve_observation_boundary"
+
+nxt = next_activation(profile({"status": "measured", "depth": 3, "depth_name": "body-observed"}))
+assert nxt["owner"] == "ForeignTwin" and nxt["action"] == "retain_exact_observation"
+
+nxt = next_activation(profile({"status": "measured", "depth": 4, "depth_name": "body-retained"}))
+assert nxt["owner"] == "DomainProfile" and nxt["action"] == "bind_semantic_profile"
+
+from participation_activation import disturbance_acceptance
+
+
+def event(number, owner, kind, parent=None, verdict=None):
+    row = {
+        "schema": "bonfyre.disturbance-event.v1",
+        "disturbance_id": "storm:fixture",
+        "event_id": f"e{number:02d}",
+        "owner": owner,
+        "kind": kind,
+        "subject": "festival:fixture",
+        "causal_parents": [] if parent is None else [f"e{parent:02d}"],
+        "evidence_ref": f"receipt:fixture:{number:02d}",
+    }
+    if verdict:
+        row["verdict"] = verdict
+    return row
+
+
+emergent = [
+    event(1, "ForeignTwinGraph", "disturbance_observed"),
+    event(2, "DomainProfile", "interpreted", 1),
+    event(3, "SemanticDerivationGraph", "assumption_retracted", 2),
+    event(4, "EvidenceGraph", "evidence_changed", 3),
+    event(5, "BlockerGraph", "blocker_opened", 4),
+    event(6, "UnlockGraph", "join_admitted", 5),
+    event(7, "ActorGraph", "human_decision", 6),
+    event(8, "WorkGraph", "work_opened", 7),
+    event(9, "CommitmentGraph", "commitment_opened", 8),
+    event(10, "MoneyGraph", "quoted", 9),
+    event(11, "PublicationProgram", "publication_projected", 10),
+    event(12, "RoundTripTwin", "roundtrip_checked", 11, verdict="drifted"),
+    event(13, "WorkGraph", "correction_opened", 12),
+    event(14, "CommitmentGraph", "commitment_compensated", 13),
+    event(15, "MoneyGraph", "settled", 14),
+    event(16, "BlockerGraph", "blocker_resolved", 15),
+]
+accepted = disturbance_acceptance(emergent)
+assert accepted["accepted"] is True, accepted["failures"]
+assert accepted["metrics"]["max_owner_braid_depth"] >= 8
+assert accepted["metrics"]["round_trip"] == {"drifted": 1}
+
+scripted = [
+    {
+        "schema": "bonfyre.disturbance-event.v1",
+        "disturbance_id": "storm:scripted",
+        "event_id": f"step-{number}",
+        "owner": "WorkGraph",
+        "kind": "scripted_step",
+        "subject": "festival:fixture",
+        "causal_parents": [],
+        "step": number,
+    }
+    for number in range(1, 48)
+]
+rejected = disturbance_acceptance(scripted)
+assert rejected["accepted"] is False
+assert any("owner evidence" in failure for failure in rejected["failures"])
+assert any("one root disturbance" in failure for failure in rejected["failures"])
+
+nxt = next_activation(profile({"status": "measured", "depth": 5, "depth_name": "repeat-observed"}))
+assert nxt["owner"] == "DomainProfile" and nxt["action"] == "bind_semantic_profile"

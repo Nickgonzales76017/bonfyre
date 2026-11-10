@@ -1,0 +1,15 @@
+{
+  "name": "role_assignment",
+  "displayName": "Role Assignment",
+  "description": "One Actor's stated operating posture in one explicit subject scope. It is not a new Actor kind and confers no authority, provider access, institutional role, employment relationship, or permission to perform an effect.",
+  "attributes": {
+    "assignment_id": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "actor_subject": {"type": "string", "required": true},
+    "role_program": {"type": "string", "required": true},
+    "context_scope": {"type": "string", "required": true},
+    "state": {"type": "string", "required": true},
+    "assumed_at": {"type": "string", "required": true},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

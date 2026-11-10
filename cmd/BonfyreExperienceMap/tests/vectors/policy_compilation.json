@@ -1,0 +1,154 @@
+{
+ "schema": "bonfyre.command-vectors.v1",
+ "binary": "bonfyre-experience-map",
+ "binary_env": "BONFYRE_EXPERIENCE_TEST_BINARY",
+ "replaces": [
+  "tests/policy_compilation.test.mjs"
+ ],
+ "cases": [
+  {
+   "name": "activation-law runtime policy is exactly compiled from CUE",
+   "steps": [
+    {
+     "program": "cue",
+     "argv": [
+      "export",
+      "${organ}/tools/activation-law.cue",
+      "-e",
+      "activationLaw",
+      "--out",
+      "json"
+     ],
+     "exit": 0,
+     "stdout_file": "${organ}/tools/activation-law.generated.json"
+    }
+   ]
+  },
+  {
+   "name": "domain-observation runtime policy is exactly compiled from CUE",
+   "steps": [
+    {
+     "program": "cue",
+     "argv": [
+      "export",
+      "${organ}/tools/domain-observation.cue",
+      "-e",
+      "domainObservation",
+      "--out",
+      "json"
+     ],
+     "exit": 0,
+     "stdout_file": "${organ}/tools/domain-observation.generated.json"
+    }
+   ]
+  },
+  {
+   "name": "experience-audit runtime policy is exactly compiled from CUE",
+   "steps": [
+    {
+     "program": "cue",
+     "argv": [
+      "export",
+      "${organ}/tools/experience-audit.cue",
+      "-e",
+      "experienceAudit",
+      "--out",
+      "json"
+     ],
+     "exit": 0,
+     "stdout_file": "${organ}/tools/experience-audit.generated.json"
+    }
+   ]
+  },
+  {
+   "name": "experience-classification runtime policy is exactly compiled from CUE",
+   "steps": [
+    {
+     "program": "cue",
+     "argv": [
+      "export",
+      "${organ}/tools/experience-classification.cue",
+      "-e",
+      "experienceClassification",
+      "--out",
+      "json"
+     ],
+     "exit": 0,
+     "stdout_file": "${organ}/tools/experience-classification.generated.json"
+    }
+   ]
+  },
+  {
+   "name": "experience-materiality runtime policy is exactly compiled from CUE",
+   "steps": [
+    {
+     "program": "cue",
+     "argv": [
+      "export",
+      "${organ}/tools/experience-materiality.cue",
+      "-e",
+      "experienceMateriality",
+      "--out",
+      "json"
+     ],
+     "exit": 0,
+     "stdout_file": "${organ}/tools/experience-materiality.generated.json"
+    }
+   ]
+  },
+  {
+   "name": "participation-law runtime policy is exactly compiled from CUE",
+   "steps": [
+    {
+     "program": "cue",
+     "argv": [
+      "export",
+      "${organ}/tools/participation-law.cue",
+      "-e",
+      "participationLaw",
+      "--out",
+      "json"
+     ],
+     "exit": 0,
+     "stdout_file": "${organ}/tools/participation-law.generated.json"
+    }
+   ]
+  },
+  {
+   "name": "protocol-observation runtime policy is exactly compiled from CUE",
+   "steps": [
+    {
+     "program": "cue",
+     "argv": [
+      "export",
+      "${organ}/tools/protocol-observation.cue",
+      "-e",
+      "protocolObservation",
+      "--out",
+      "json"
+     ],
+     "exit": 0,
+     "stdout_file": "${organ}/tools/protocol-observation.generated.json"
+    }
+   ]
+  },
+  {
+   "name": "stage-law runtime policy is exactly compiled from CUE",
+   "steps": [
+    {
+     "program": "cue",
+     "argv": [
+      "export",
+      "${organ}/tools/stage-law.cue",
+      "-e",
+      "stageLaw",
+      "--out",
+      "json"
+     ],
+     "exit": 0,
+     "stdout_file": "${organ}/tools/stage-law.generated.json"
+    }
+   ]
+  }
+ ]
+}

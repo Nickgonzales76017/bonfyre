@@ -1,0 +1,19 @@
+{
+  "name": "physical_carrier",
+  "displayName": "Physical Carrier",
+  "description": "A scoped physical/mobile projection recipe. It references one governed HTTPS AddressPlane coordinate; it never stores canonical object state or creates a payment, identity, device, or effect right.",
+  "attributes": {
+    "title": {"type": "string", "required": true},
+    "subject_address": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "carrier": {"type": "string", "required": true},
+    "payload_profile": {"type": "string", "required": true},
+    "purpose": {"type": "string", "required": true},
+    "temporal_policy": {"type": "string", "required": true},
+    "audience": {"type": "string", "required": true},
+    "authority_boundary": {"type": "string", "required": true},
+    "proximity_policy": {"type": "string", "required": true},
+    "security_policy": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true},
+    "notes": {"type": "text", "required": false}
+  }
+}

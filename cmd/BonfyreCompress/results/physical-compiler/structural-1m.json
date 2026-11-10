@@ -1,0 +1,13 @@
+{
+  "cohort": "synthetic_structural",
+  "records": 1000000,
+  "compiled_handles": 1000000,
+  "operations_per_passport": 1,
+  "elapsed_ns": 2613850000,
+  "sqlite_bytes": 403054592,
+  "bytes_per_passport": 403.054592,
+  "scope": "physical registry only; not traffic or adoption capacity",
+  "command": "cmd/BonfyreCompress/bonfyre-compress benchmark-structural --records 1000000",
+  "executed_on": "2026-09-11",
+  "status": "measured"
+}

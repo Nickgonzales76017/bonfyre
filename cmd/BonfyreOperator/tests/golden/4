@@ -1,0 +1,75 @@
+{
+  "operator": "SELECT",
+  "program": {
+    "program_id": "household.select.e749d3c9fa664722",
+    "operator": "SELECT",
+    "digest": "ab8530943ebb426c5f6dc1d39001e8d2f36fd6bbcdb0c1088b4cb0e94dd1158d",
+    "reads": [
+      "household:housing:listing:MILO-b",
+      "household:housing:listing:milo-a",
+      "household:housing:listing:milo-a1"
+    ],
+    "admitted": true,
+    "hard_failures": []
+  },
+  "count": 3,
+  "records": [
+    {
+      "address": "household:housing:listing:milo-a",
+      "kind": "housing.listing",
+      "content_sha256": "4339ca4fdb1073222407639552d6d4a54b8108b3da50b812d29cf6baa0c9db57",
+      "source_file": "household/housing/current-listings.jsonl",
+      "source_refs": [
+        "housing/receipts#milo",
+        "https://example.test/milo"
+      ],
+      "record": {
+        "listing_id": "milo-a",
+        "property_id": "property:milo",
+        "unit_identity": "floorplan:A",
+        "advertised_base_rent_monthly_usd": 925,
+        "availability_status": "reported_available_now",
+        "source_refs": [
+          "https://example.test/milo"
+        ],
+        "evidence_ref": "housing/receipts#milo",
+        "dogs_stated_ok": true
+      }
+    },
+    {
+      "address": "household:housing:listing:milo-a1",
+      "kind": "housing.listing",
+      "content_sha256": "1f9f9aafb349d6b768c304e6fddda366feaa56d6d65d905566a7d037dbbd2912",
+      "source_file": "household/housing/current-listings.jsonl",
+      "source_refs": [
+        "housing/receipts#milo",
+        "https://example.test/milo"
+      ],
+      "record": {
+        "listing_id": "milo-a1",
+        "property_id": "property:milo",
+        "unit_identity": "floorplan:A1",
+        "advertised_base_rent_monthly_usd": 975.5,
+        "availability_status": "reported_available_now",
+        "source_refs": [
+          "https://example.test/milo"
+        ],
+        "evidence_ref": "housing/receipts#milo",
+        "pet_status": null
+      }
+    },
+    {
+      "address": "household:housing:listing:MILO-b",
+      "kind": "housing.listing",
+      "content_sha256": "6fc1742b11825d5ceb4305ea7d2b95e3788ae9e4a89c0db1130998d6a2a6dd0e",
+      "source_file": "household/housing/current-listings.jsonl",
+      "source_refs": [],
+      "record": {
+        "listing_id": "MILO-b",
+        "property_id": "property:milo",
+        "advertised_base_rent_monthly_usd": -0.000001
+      }
+    }
+  ]
+}
+exit 0

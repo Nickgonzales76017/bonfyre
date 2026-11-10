@@ -1,0 +1,15 @@
+WORKSPACE_ADOPTION_PASS	13
+release	8552281c1ac7aa0b0fc53ae7e92bce49770c823c445f1623ffbe96a249fe8d96
+PASS	source confirmation alone cannot change destination drafts
+PASS	a conflicting destination draft is not selected implicitly
+PASS	new source drafts are offered with their exact identities
+PASS	the selected source plan retains every fixture and source coordinate
+PASS	a source submission receipt does not mark the recipient draft as sent
+PASS	an unselected destination conflict stays unchanged
+PASS	explicitly selected model files retain their bytes and file identity
+PASS	source browser records and their revisions were not modified
+PASS	identical adopted work is recognized instead of duplicated
+PASS	a stale adoption review cannot overwrite a concurrent member
+PASS	an explicitly re-reviewed conflict can be adopted into that destination
+PASS	successful replacement still preserves original source work
+PASS	the two-origin consent and adoption journey has no script exceptions

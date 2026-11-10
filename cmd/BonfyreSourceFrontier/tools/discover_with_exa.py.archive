@@ -1,0 +1,226 @@
+#!/usr/bin/env python3
+"""Ask a search engine built to be asked.
+
+Discovery has two directions. One is to ask publishers this estate already
+knows about what else they publish -- bounded by how many it knows. The other
+is to ask the open web for channels directly, which needs a search engine that
+permits being queried. Scraping one that forbids it is out; Exa exists to be
+called, and this calls it.
+
+What comes back is an address and nothing more. It enters the ledger as a
+listing at the truth level the search actually supports -- a search engine said
+this address exists and looks like a channel -- and has to answer for itself
+later like every other listing. Nothing here fetches what it finds.
+
+The estate's own governance binds this run: reads must be enabled, the number
+of queries is capped, and the run stops at the cap rather than spending past
+it. Writes are never performed, whatever the environment allows.
+
+  Historical Python oracle; live command is discover_with_exa.mjs.
+"""
+import argparse, json, os, re, sys, time, urllib.error, urllib.parse, urllib.request
+
+ENDPOINT = "https://api.exa.ai/search"
+
+
+class PaymentRequired(Exception):
+    """The provider answered that this estate must pay to go on."""
+
+# What the estate is short of, said the way a person would ask for it.
+#
+# A territory composes from the family it asks for, so a family this estate has
+# never read leaves that territory honestly empty: .work asks for
+# vulnerabilities and .shop for gaming, and neither had ever been looked for.
+# Discovery is where that is fixed -- by going and finding real publishers of
+# that material, not by pointing a territory at material it does not describe.
+SUBJECTS_BY_FAMILY = {
+    "vulnerabilities": [
+        "security advisories RSS feed", "vulnerability disclosure RSS feed",
+        "CVE announcements RSS feed", "product security bulletin RSS feed",
+        "incident response advisory feed", "national cyber security centre advisories RSS",
+        "open source security advisory feed", "exploit disclosure mailing list RSS",
+        "vendor patch notes security RSS feed", "threat intelligence blog RSS feed",
+    ],
+    "gaming": [
+        "video game news RSS feed", "indie game release RSS feed",
+        "game developer blog RSS feed", "game studio patch notes RSS feed",
+        "tabletop game publisher news feed", "games press release RSS feed",
+        "esports tournament schedule calendar feed", "game preservation archive RSS feed",
+        "game soundtrack release feed", "games criticism RSS feed",
+    ],
+}
+
+SUBJECTS = [
+    "city government news RSS feed", "county government RSS feed",
+    "public library events calendar ics", "university news RSS feed",
+    "museum exhibitions RSS feed", "symphony orchestra concert calendar feed",
+    "theatre season calendar ics feed", "public radio station podcast RSS feed",
+    "local newspaper RSS feed", "neighbourhood association newsletter feed",
+    "school district news RSS feed", "parks and recreation events feed",
+    "botanical garden events calendar", "science museum podcast feed",
+    "historical society newsletter RSS", "community radio podcast feed",
+    "city council meeting agenda calendar feed", "public health department RSS feed",
+    "transit authority service alerts RSS", "state agency newsroom RSS feed",
+    "art gallery exhibition calendar feed", "independent bookstore events calendar",
+    "live music venue calendar feed", "farmers market events calendar",
+    "observatory public programs calendar", "zoo events calendar feed",
+]
+# Where the estate actually looks, and the wider world it also reads.
+PLACES = ["Fort Worth Texas", "Dallas Texas", "Tarrant County Texas",
+          "Denton Texas", "Arlington Texas", "Plano Texas", "", ""]
+
+FEEDISH = re.compile(r"(rss|atom|feed|\.ics|\.xml|podcast)", re.I)
+NOT_A_FEED = re.compile(r"(\.jpg|\.png|\.pdf|\.zip|/login|/signin|facebook\.com|twitter\.com|x\.com/)", re.I)
+
+
+def host_of(address):
+    try:
+        host = (urllib.parse.urlparse(address).hostname or "").lower().strip(".")
+    except ValueError:
+        return ""
+    if not host or not re.match(r"^[a-z0-9.-]+\.[a-z]{2,}$", host):
+        return ""
+    return host[4:] if host.startswith("www.") else host
+
+
+def search(key, query, want, kind):
+    body = json.dumps({"query": query, "numResults": want, "type": kind}).encode()
+    request = urllib.request.Request(ENDPOINT, data=body, method="POST")
+    request.add_header("x-api-key", key)
+    request.add_header("Content-Type", "application/json")
+    try:
+        with urllib.request.urlopen(request, timeout=60) as answer:
+            return json.loads(answer.read().decode("utf-8", "replace")).get("results", [])
+    except urllib.error.HTTPError as problem:
+        # A provider that wants paying is not a provider that found nothing.
+        # Reported as itself, a 402 is a funding decision for a person to make;
+        # swallowed, it is a discovery run that quietly stops working.
+        if problem.code == 402:
+            raise PaymentRequired(problem.read().decode("utf-8", "replace")[:400])
+        sys.stderr.write("  refused %s\n" % problem.code)
+        return []
+    except Exception as problem:
+        sys.stderr.write("  %s\n" % str(problem)[:80])
+        return []
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--family", default="",
+                    help="ask for a family this estate is short of rather than its usual ground")
+    ap.add_argument("--subjects", default="",
+                    help="ask for exactly these things, one per line or separated by ';' -- what a "
+                         "running program says it needs, rather than a standing list")
+    ap.add_argument("--queries", type=int, default=120)
+    ap.add_argument("--per-query", type=int, default=50)
+    ap.add_argument("--pause", type=float, default=0.4)
+    args = ap.parse_args()
+
+    if os.environ.get("BONFYRE_EXTERNAL_READS_ENABLED", "0") != "1":
+        print(json.dumps({"asked": 0, "why": "this estate's governance has external reads switched off"}))
+        return 0
+    key = os.environ.get("EXAAI_API_KEY", "")
+    if not key:
+        print(json.dumps({"asked": 0, "why": "no Exa credential in this environment"}))
+        return 0
+
+    # The estate caps how much one run may go and get; the run stops there.
+    ceiling = int(os.environ.get("BONFYRE_RESOURCE_MAX_CRAWL_PAGES_PER_RUN", "5000"))
+    wanted = min(args.queries, max(1, ceiling // max(1, args.per_query)))
+
+    # A family this estate is short of is asked for on its own terms: these
+    # publishers are not local to anywhere, so pairing them with a place would
+    # ask the wrong question and return nothing.
+    if args.subjects:
+        # A program states what it needs; that statement is the query. Pairing
+        # it with a place would ask a narrower question than the program asked.
+        subjects = [x.strip() for x in re.split(r"[\n;]", args.subjects) if x.strip()]
+        places = [""]
+    else:
+        subjects = SUBJECTS_BY_FAMILY.get(args.family, SUBJECTS)
+        places = [""] if args.family in SUBJECTS_BY_FAMILY else PLACES
+
+    seen, rows, asked = set(), [], 0
+    for subject in subjects:
+        for place in places:
+            if asked >= wanted:
+                break
+            query = (subject + " " + place).strip()
+            asked += 1
+            found = 0
+            try:
+                results = search(key, query, args.per_query, "keyword")
+            except PaymentRequired as owed:
+                print(json.dumps({
+                    "queries_asked": asked, "addresses_listed": len(rows),
+                    "provider_state": "payment_required",
+                    "provider_said": str(owed)[:300],
+                    "needs": "this estate's Exa credit is spent; discovery stops here rather than "
+                             "reporting an empty result as though nothing existed to find",
+                    "cannot_infer": "a provider asking to be paid is not this estate agreeing to pay, "
+                                    "and nothing here authorizes a payment",
+                }))
+                with open(args.out, "w") as out:
+                    for row in rows:
+                        out.write(json.dumps(row) + "\n")
+                return 0
+            for result in results:
+                address = (result.get("url") or "").strip()
+                if not address.lower().startswith(("http://", "https://")):
+                    continue
+                if NOT_A_FEED.search(address):
+                    continue
+                host = host_of(address)
+                if not host:
+                    continue
+                title = (result.get("title") or "")[:160]
+
+                if FEEDISH.search(address):
+                    # The address itself looks like a channel.
+                    if address in seen:
+                        continue
+                    seen.add(address)
+                    rows.append({
+                        "root": host, "address": address,
+                        "protocol": "ics" if address.lower().endswith(".ics") else "rss",
+                        "title": title, "truth_level": "observed_index_candidate",
+                        "discovered_from": "a search for %s returned this address" % json.dumps(query),
+                    })
+                    found += 1
+                    continue
+
+                # Otherwise it is a publisher, which is worth more than one
+                # address: asking a publisher what it declares finds its
+                # channels at roughly one in five, where guessing at addresses
+                # finds them at one in fifty.  Its front door is listed, and
+                # the sweep asks it later.
+                door = "https://%s/" % host
+                if door in seen:
+                    continue
+                seen.add(door)
+                rows.append({
+                    "root": host, "address": door, "protocol": "unknown",
+                    "title": title, "truth_level": "listed",
+                    "discovered_from": "a search for %s returned this publisher" % json.dumps(query),
+                })
+                found += 1
+            sys.stderr.write("%-58s %d\n" % (query[:58], found))
+            time.sleep(args.pause)
+        if asked >= wanted:
+            break
+
+    with open(args.out, "w") as out:
+        for row in rows:
+            out.write(json.dumps(row) + "\n")
+    print(json.dumps({
+        "queries_asked": asked, "addresses_listed": len(rows),
+        "publishers": len({r["root"] for r in rows}),
+        "cannot_infer": "a search result is an address a search engine returned; it is not a channel this "
+                        "estate reads, not a claim that it answers, and not an endorsement of what it carries",
+    }))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

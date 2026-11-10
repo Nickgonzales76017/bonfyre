@@ -1,0 +1,48 @@
+{
+  "name": "estate_version",
+  "displayName": "estate_version",
+  "description": "A snapshot of every file under one namespace at one moment, by digest. A snapshot is a reading of what was there: it is not a backup, not a restore point, and cannot be merged with another, because merging derived material this estate cannot rebuild would produce a tree with no provenance.",
+  "attributes": {
+    "version_id": {
+      "type": "string",
+      "required": true,
+      "uniqueWithinNamespace": true
+    },
+    "namespace_root": {
+      "type": "string",
+      "required": true
+    },
+    "label": {
+      "type": "string",
+      "required": true
+    },
+    "tree_digest": {
+      "type": "string",
+      "required": true
+    },
+    "file_count": {
+      "type": "string",
+      "required": true
+    },
+    "total_bytes": {
+      "type": "string",
+      "required": true
+    },
+    "taken_by": {
+      "type": "string",
+      "required": true
+    },
+    "taken_at": {
+      "type": "string",
+      "required": true
+    },
+    "cannot_infer": {
+      "type": "text",
+      "required": true
+    },
+    "status": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

@@ -1,0 +1,609 @@
+#!/usr/bin/env python3
+"""Retired participation compiler; native owner is participation_report.mjs.
+
+Candidate structure says where an occurrence could participate. Realized depth comes
+only from occurrence-keyed facts emitted by the native owner that performed the act.
+Missing evidence is unknown, never false.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+from collections import Counter, defaultdict
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+GEN = ROOT / "generated"
+
+AXES = ("discovery", "observation", "semantic", "protocol", "capability", "economic", "round_trip")
+GENERIC_HUMAN = {"discover"}
+GENERIC_PROTOCOL = {"machine-generic"}
+
+CAPABILITY_ROLES = {
+    "action_adapter", "authoring_adapter", "compiler_toolchain",
+    "external_service_candidate", "verification_tool", "media_service",
+}
+ROUNDTRIP_ROLES = {"action_adapter", "authoring_adapter", "publication_carrier", "verification_tool"}
+ECONOMIC_TERMS = {
+    "commerce", "finance", "investing", "trade", "x402", "web-payment",
+    "interledger", "iso20022", "payment-insurance-interchange", "agent-commerce",
+}
+ROLE_CLASSES = {
+    "material": {"material_source", "media_service"},
+    "action": {"action_adapter", "authoring_adapter"},
+    "interaction_reference": {"interaction_reference"},
+    "design_reference": {"design_reference"},
+    "compiler": {"compiler_toolchain"},
+    "carrier": {"transport_carrier", "publication_carrier"},
+    "verification": {"verification_tool"},
+    "service": {"external_service_candidate"},
+    "standard": {"reference_standard"},
+}
+
+JOIN_FAMILIES = {
+    "economic": {
+        "commerce", "finance", "investing", "enterprise-gtm", "resource-market", "insurance",
+    },
+    "physical": {
+        "agriculture", "energy", "food", "housing", "logistics", "manufacturing", "mobility",
+        "place", "property", "trip", "utility", "vehicle",
+    },
+    "social": {
+        "care", "community", "dating", "hiring", "household", "professional", "relationship",
+    },
+    "knowledge_compute": {
+        "ai-work", "knowledge", "learning", "research", "science", "software-work",
+    },
+    "media_attention": {
+        "audience-growth", "creator-publish", "listen", "live-event", "media-production",
+        "publication", "sports", "watch",
+    },
+    "civic_regulated": {
+        "civic", "emergency", "grant-funding", "healthcare", "identity-access", "service-case",
+    },
+    "coordination": {
+        "collaboration", "mission", "project", "support",
+    },
+}
+
+AXIS_LADDERS = {
+    "discovery": {
+        "indexed": (1, "indexed"),
+        "routable": (2, "owner-routable"),
+        "maintained": (3, "maintained"),
+    },
+    "observation": {
+        "policy_excluded": (1, "policy-preflighted"),
+        "policy_indeterminate": (1, "policy-preflighted"),
+        "boundary_response": (2, "transport-observed"),
+        "source_observed": (3, "body-observed"),
+        "source_retained": (4, "body-retained"),
+        "repeat_observed": (5, "repeat-observed"),
+    },
+    "semantic": {
+        "interpreted": (1, "interpreted"),
+        "profile_bound": (2, "profile-bound"),
+        "carrier_conformant": (3, "carrier-conformant"),
+    },
+    "protocol": {
+        "contract_bound": (1, "contract-bound"),
+        "compiled": (2, "compiled"),
+        "enacted": (3, "enacted"),
+        "obligations_closed": (4, "obligations-closed"),
+    },
+    "capability": {
+        "qualified": (1, "qualified"),
+        "eligible": (2, "eligible"),
+        "authorized": (3, "authorized"),
+        "activated": (4, "activated"),
+    },
+    "economic": {
+        "quoted": (1, "quoted"),
+        "committed": (2, "committed"),
+        "paid": (3, "paid"),
+        "settled": (4, "settled"),
+        "reconciled": (5, "reconciled"),
+    },
+    "round_trip": {
+        "projected": (1, "projected"),
+        "observed": (2, "independently-observed"),
+        "faithful": (3, "closed-faithful"),
+        "drifted": (3, "closed-drifted"),
+        "unreachable": (3, "closed-unreachable"),
+    },
+}
+
+
+def load_jsonl(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+    paths = sorted(path.rglob("*.json*")) if path.is_dir() else [path]
+    rows = []
+    for item in paths:
+        with item.open(encoding="utf-8") as handle:
+            for line in handle:
+                if not line.strip():
+                    continue
+                row = json.loads(line)
+                if isinstance(row, dict):
+                    row.setdefault("_source_path", str(item))
+                    rows.append(row)
+    return rows
+
+
+def classes_for(roles: set[str]) -> set[str]:
+    return {name for name, members in ROLE_CLASSES.items() if roles.intersection(members)}
+
+
+def join_families(chains: set[str]) -> tuple[list[str], list[str]]:
+    families = []
+    covered = set()
+    for name, members in JOIN_FAMILIES.items():
+        if chains.intersection(members):
+            families.append(name)
+            covered.update(chains.intersection(members))
+    residual = sorted(chains - covered)
+    if residual:
+        families.append("other")
+    return sorted(families), residual
+
+
+def candidate_profile(row: dict) -> dict:
+    roles = set(row.get("reagent_roles") or [])
+    role_classes = classes_for(roles)
+    human = set(row.get("human_chains") or []) - GENERIC_HUMAN
+    protocols = set(row.get("protocol_chains") or []) - GENERIC_PROTOCOL
+    direct = set(row.get("direct_domains") or [])
+    support = set(row.get("support_chains") or [])
+    chains = human | support
+    economic_terms = direct | chains | protocols
+    families, residual = join_families(chains)
+
+    planes = {
+        "discovery": True,
+        "observation": bool(row.get("url")),
+        "semantic": bool(direct),
+        "protocol": bool(protocols),
+        "capability": bool(roles.intersection(CAPABILITY_ROLES)),
+        "economic": bool(economic_terms.intersection(ECONOMIC_TERMS)),
+        "round_trip": bool(
+            roles.intersection(ROUNDTRIP_ROLES)
+            or human.intersection({"creator-publish", "publication"})
+            or protocols.intersection({"activitypub", "atproto", "nostr", "webmention", "websub"})
+        ),
+    }
+    return {
+        "candidate_planes": planes,
+        "candidate_plane_count": sum(1 for value in planes.values() if value),
+        "chain_span": len(chains),
+        "join_families": families,
+        "join_power": len(families),
+        "residual_chains": residual,
+        "role_classes": sorted(role_classes),
+        "protocol_carriers": sorted(protocols),
+        "direct_domains": sorted(direct),
+        "support_chains": sorted(support),
+        "human_chains": sorted(human),
+    }
+
+
+def normalize_fact(raw: dict) -> dict | None:
+    if raw.get("schema") == "bonfyre-domain-binding.v1":
+        if raw.get("binding_validated") is not True:
+            return None
+        if raw.get("owner") != "DomainProfile" or raw.get("state") != "profile_bound":
+            return None
+        return {
+            "occurrence_id": raw.get("occurrence_id"),
+            "axis": "semantic",
+            "owner": "DomainProfile",
+            "state": "profile_bound",
+            "receipt": raw,
+            "from_owner": "ForeignTwin",
+            "to_owner": "DomainProfile",
+        }
+    if raw.get("schema") == "bonfyre-protocol-binding.v1":
+        if raw.get("binding_validated") is not True:
+            return None
+        if raw.get("owner") != "ProtocolContract" or raw.get("state") != "compiled":
+            return None
+        if raw.get("from_owner") != "DomainProfile" or raw.get("to_owner") != "ProtocolContract":
+            return None
+        required_hashes = ("semantic_record_sha256", "domain_binding_sha256", "native_registration_receipt_sha256")
+        if any(not isinstance(raw.get(field), str) or len(raw[field]) != 64 for field in required_hashes):
+            return None
+        # Structural rigor without the specimen. This required the contract to
+        # be literally "ogc-api-common-observation" with exactly three
+        # programs, which meant one occurrence in the estate could ever reach
+        # `compiled` and every other compiled contract was silently discarded
+        # as unrecognised. What actually has to hold is that a contract is
+        # named and that its native owner registered a positive number of
+        # programs for it; the three digests above already bind it to a domain
+        # binding and to a real registration receipt.
+        contract = raw.get("contract")
+        programs = raw.get("programs")
+        if not isinstance(contract, str) or not contract:
+            return None
+        if not isinstance(programs, int) or programs < 1:
+            return None
+        return {
+            "occurrence_id": raw.get("occurrence_id"),
+            "axis": "protocol",
+            "owner": "ProtocolContract",
+            "state": "compiled",
+            "receipt": raw,
+            "from_owner": "DomainProfile",
+            "to_owner": "ProtocolContract",
+        }
+    if raw.get("schema") == "bonfyre-foreign-observation.v1":
+        oid = raw.get("twin_id")
+        if not isinstance(oid, str) or not oid.startswith("external:"):
+            return None
+        state = raw.get("observation_kind") or raw.get("policy_decision") or "receipted"
+        if state == "source_retained":
+            # Most rows arrive with this rung already set by the writer at fetch
+            # time, so checking only the derived promotion below caught 3 of
+            # them. The rung is verified wherever it came from.
+            state = "source_observed"
+        if state == "source_observed" and raw.get("body_path"):
+            # `source_retained` is the highest rung on the observation axis and
+            # it was awarded for the presence of a `body_path` *field*. A string
+            # in a JSON row is not a retained body. 451 occurrences held this
+            # rung on bytes that are no longer on this disk, and the estate had
+            # no way to notice because it was reading its own claim back.
+            #
+            # Retention is checked against the filesystem. When the bytes are
+            # gone the rung falls to `source_observed`, which stays true -- the
+            # source was reached and answered -- and the claim that we still
+            # hold what it said does not. Demotion is the conservative
+            # direction: on a host where the bodies live elsewhere this reports
+            # less than happened, never more.
+            body = raw.get("body_path")
+            try:
+                retained = os.path.isfile(body) and os.path.getsize(body) > 0
+            except OSError:
+                retained = False
+            if retained:
+                state = "source_retained"
+        return {
+            "occurrence_id": oid,
+            "axis": "observation",
+            "owner": "ForeignTwin",
+            "state": state,
+            "receipt": raw.get("_source_path") or raw.get("content_sha256"),
+            "from_owner": "ExternalEstate",
+            "to_owner": "ForeignTwin",
+        }
+    if raw.get("schema") == "bonfyre-protocol-enactment.v1":
+        # The native ProtocolContract owner's own record of an enactment and its
+        # closure. It is held to the same bar as every other owner: an axis it
+        # declares, a state that is a rung of that axis, and the digest of what
+        # it read and what it produced. The `authorized` row this owner can also
+        # emit carries no digests and is therefore refused here, which is the
+        # conservative outcome and the intended one -- a capability rung should
+        # not become reachable as a side effect of enacting a read.
+        axis = raw.get("axis")
+        state = raw.get("state")
+        if axis not in AXIS_LADDERS or state not in AXIS_LADDERS.get(axis, {}):
+            return None
+        oid = raw.get("occurrence_id")
+        if not isinstance(oid, str) or not oid.startswith("external:"):
+            return None
+        for field in ("basis_sha256", "evidence_sha256"):
+            value = raw.get(field)
+            if not isinstance(value, str) or len(value) != 64:
+                return None
+            if any(c not in "0123456789abcdef" for c in value):
+                return None
+        if not isinstance(raw.get("contract"), str) or not raw["contract"]:
+            return None
+        return {
+            "occurrence_id": oid,
+            "axis": axis,
+            "owner": raw.get("owner") or "ProtocolContract",
+            "state": state,
+            "receipt": raw.get("evidence_sha256"),
+            "from_owner": raw.get("from_owner"),
+            "to_owner": raw.get("to_owner"),
+        }
+    if raw.get("schema") == "bonfyre-owner-participation.v1":
+        # How every other native owner reports. The check is the point: an axis
+        # it declares, a state that is actually a rung of that axis, and the
+        # digest of what it read and what it produced. Without this the report
+        # counted any document that happened to carry the four field names,
+        # which is the laundering the atlas's first law forbids -- an owner
+        # could have written itself to `settled` with no money involved.
+        axis = raw.get("axis")
+        state = raw.get("state")
+        if axis not in AXIS_LADDERS or state not in AXIS_LADDERS.get(axis, {}):
+            return None
+        oid = raw.get("occurrence_id")
+        if not isinstance(oid, str) or not oid.startswith("external:"):
+            return None
+        for field in ("basis_sha256", "evidence_sha256"):
+            value = raw.get(field)
+            if not isinstance(value, str) or len(value) != 64:
+                return None
+            if any(c not in "0123456789abcdef" for c in value):
+                return None
+        for field in ("owner", "from_owner", "to_owner", "produced_by"):
+            if not isinstance(raw.get(field), str) or not raw[field]:
+                return None
+        return {
+            "occurrence_id": oid,
+            "axis": axis,
+            "owner": raw["owner"],
+            "state": state,
+            "receipt": raw.get("evidence_sha256"),
+            "from_owner": raw["from_owner"],
+            "to_owner": raw["to_owner"],
+        }
+    if raw.get("axis") == "semantic" and raw.get("owner") == "DomainProfile":
+        return None
+    # An unrecognized document is not evidence. This used to `return raw`, which
+    # meant any row carrying an axis, an owner and a state was counted at face
+    # value -- no schema, no digests, nothing to check it against. Missing
+    # evidence is unknown; unverifiable evidence is refused.
+    return None
+
+
+def evidence_index(rows: list[dict]) -> tuple[dict[str, list[dict]], dict[str, set[tuple[str, str]]]]:
+    by_occurrence: dict[str, list[dict]] = defaultdict(list)
+    transitions: dict[str, set[tuple[str, str]]] = defaultdict(set)
+    for raw in rows:
+        fact = normalize_fact(raw)
+        if fact is None:
+            continue
+        oid = fact.get("occurrence_id")
+        axis = fact.get("axis")
+        owner = fact.get("owner")
+        state = fact.get("state")
+        if not oid or axis not in AXES or not owner or not state:
+            continue
+        by_occurrence[oid].append(fact)
+        source = fact.get("from_owner")
+        target = fact.get("to_owner")
+        if source and target and source != target:
+            transitions[oid].add((source, target))
+    return by_occurrence, transitions
+
+
+def state_depth(axis: str, facts: list[dict]) -> tuple[int, str]:
+    if not facts:
+        return 0, "unknown"
+    ladder = AXIS_LADDERS.get(axis, {})
+    recognized = [ladder[f["state"]] for f in facts if f.get("state") in ladder]
+    if axis == "observation":
+        observed = sum(1 for f in facts if f.get("state") in {"source_observed", "source_retained"})
+        if observed >= 2:
+            recognized.append(ladder["repeat_observed"])
+    if recognized:
+        return max(recognized, key=lambda item: item[0])
+    return 1, "owner-fact"
+
+
+def braid_shape(transitions: set[tuple[str, str]]) -> dict:
+    """Branching and rejoining, not depth.
+
+    A straight line of eight owners is not denser than six branches that rejoin
+    on one occurrence -- the second is the braid, and the longest path scores it
+    lower. Depth alone therefore rewards pipelines and penalises exactly the
+    shape this estate is trying to grow, so it is reported beside these rather
+    than as the measure.
+
+    A branch point is an owner that hands off to more than one other owner; a
+    rejoin point is an owner that more than one owner hands off to. Both are
+    counted over a single occurrence, because a braid is a property of one
+    observed thing and not of the estate in aggregate.
+
+    This is a diagnostic projection over supplied evidence. It measures what
+    owners left occurrence-keyed receipts, never whether any of them was right.
+    """
+    out_degree: dict[str, set[str]] = defaultdict(set)
+    in_degree: dict[str, set[str]] = defaultdict(set)
+    for source, target in transitions:
+        out_degree[source].add(target)
+        in_degree[target].add(source)
+    branch_points = sorted(o for o, t in out_degree.items() if len(t) > 1)
+    rejoin_points = sorted(o for o, t in in_degree.items() if len(t) > 1)
+    depth, path = longest_owner_path(transitions)
+    owners = set(out_degree) | set(in_degree)
+    return {
+        "distinct_owners": len(owners),
+        "owner_transitions": len(transitions),
+        "longest_owner_path": depth,
+        "branch_points": branch_points,
+        "rejoin_points": rejoin_points,
+        # Transitions beyond a bare spanning line: how much of the shape is
+        # braid rather than chain. Zero for any pipeline of any length.
+        "braid_excess": max(0, len(transitions) - max(0, len(owners) - 1)),
+        "truth": "diagnostic_projection_over_supplied_evidence_not_a_claim_any_owner_was_right",
+    }
+
+
+def longest_owner_path(transitions: set[tuple[str, str]]) -> tuple[int, list[str]]:
+    graph: dict[str, set[str]] = defaultdict(set)
+    for source, target in transitions:
+        graph[source].add(target)
+
+    best: list[str] = ["ExternalEstate"]
+
+    def walk(node: str, path: list[str]) -> None:
+        nonlocal best
+        if len(path) > len(best):
+            best = path[:]
+        for target in sorted(graph.get(node, ())):
+            if target not in path:
+                walk(target, path + [target])
+
+    walk("ExternalEstate", ["ExternalEstate"])
+    return max(0, len(best) - 1), best
+
+
+def realized_profile(oid: str, facts: list[dict], transitions: set[tuple[str, str]]) -> dict:
+    by_axis: dict[str, list[dict]] = defaultdict(list)
+    for fact in facts:
+        by_axis[fact["axis"]].append(fact)
+
+    axes: dict[str, dict] = {
+        "discovery": {
+            "status": "measured", "state": "indexed", "depth": 1,
+            "depth_name": "indexed", "owner": "ExternalEstate", "evidence": oid,
+        }
+    }
+    owners = {"ExternalEstate"}
+    for axis in AXES[1:]:
+        measured = by_axis.get(axis, [])
+        if not measured:
+            axes[axis] = {
+                "status": "unknown", "depth": 0, "depth_name": "unknown",
+                "reason": "no occurrence-keyed owner evidence supplied",
+            }
+            continue
+        depth, depth_name = state_depth(axis, measured)
+        for fact in measured:
+            owners.add(fact["owner"])
+        axes[axis] = {
+            "status": "measured",
+            "depth": depth,
+            "depth_name": depth_name,
+            "facts": [
+                {
+                    "owner": fact["owner"],
+                    "state": fact["state"],
+                    **({"receipt": fact["receipt"]} if fact.get("receipt") else {}),
+                }
+                for fact in measured
+            ],
+        }
+
+    braid_depth, braid_path = longest_owner_path(transitions)
+    return {
+        "axes": axes,
+        "braid_shape": braid_shape(transitions),
+        "distinct_owners": sorted(owners),
+        "distinct_owner_count": len(owners),
+        "known_owner_transitions": len(transitions),
+        "transition_pairs": [list(pair) for pair in sorted(transitions)],
+        "braid_depth": braid_depth,
+        "braid_path": braid_path,
+        "measurement_complete": all(axes[axis]["status"] == "measured" for axis in AXES),
+    }
+
+
+def build_profile(row: dict, facts: list[dict], transitions: set[tuple[str, str]]) -> dict:
+    candidate = candidate_profile(row)
+    realized = realized_profile(row["id"], facts, transitions)
+    unknown_axes = [axis for axis in AXES if realized["axes"][axis]["status"] == "unknown"]
+    investigation_priority = (
+        candidate["join_power"] * 12
+        + min(candidate["chain_span"], 12)
+        + candidate["candidate_plane_count"] * 2
+        + len(unknown_axes)
+        - realized["braid_depth"] * 5
+        # Branching and rejoining are what the estate is short of, so a braided
+        # occurrence drops out of the investigation queue faster than a chain of
+        # the same depth.
+        - len(realized["braid_shape"]["branch_points"]) * 4
+        - len(realized["braid_shape"]["rejoin_points"]) * 4
+        - realized["braid_shape"]["braid_excess"] * 2
+    )
+    return {
+        "schema": "bonfyre.external-participation-profile.v2",
+        "truth_level": "compiled_diagnostic_projection",
+        "id": row.get("id"),
+        "name": row.get("name"),
+        "source_kind": row.get("source_kind"),
+        "url": row.get("url"),
+        "candidate": candidate,
+        "realized": realized,
+        "unknown_axes": unknown_axes,
+        "investigation_priority": investigation_priority,
+        "cannot_infer": [
+            "candidate plane -> realized participation",
+            "protocol carrier fit -> ProtocolContract enactment",
+            "capability-shaped reagent -> admitted provider or callable capability",
+            "economic vocabulary -> quote, payment or settlement",
+            "latent join power -> permission or semantic compatibility",
+            "missing owner evidence -> non-participation",
+        ],
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--write", action="store_true")
+    parser.add_argument("--evidence", type=Path, default=GEN / "participation_evidence.jsonl")
+    parser.add_argument("--frontier-limit", type=int, default=100)
+    args = parser.parse_args()
+
+    external = load_jsonl(GEN / "external_bindings.jsonl")
+    evidence = load_jsonl(args.evidence)
+    by_occurrence, transitions = evidence_index(evidence)
+    profiles = [
+        build_profile(row, by_occurrence.get(row["id"], []), transitions.get(row["id"], set()))
+        for row in external
+    ]
+
+    candidate_axes = Counter()
+    measured_axes = Counter()
+    join_power = Counter()
+    braid_depth = Counter()
+    for profile in profiles:
+        for axis, value in profile["candidate"]["candidate_planes"].items():
+            if value:
+                candidate_axes[axis] += 1
+        for axis, value in profile["realized"]["axes"].items():
+            if value["status"] == "measured":
+                measured_axes[axis] += 1
+        join_power[profile["candidate"]["join_power"]] += 1
+        braid_depth[profile["realized"]["braid_depth"]] += 1
+
+    frontier = sorted(
+        profiles,
+        key=lambda p: (
+            -p["investigation_priority"],
+            -p["candidate"]["join_power"],
+            -p["candidate"]["chain_span"],
+            p["id"],
+        ),
+    )[: max(1, args.frontier_limit)]
+
+    manifest = {
+        "schema": "bonfyre.external-participation-manifest.v2",
+        "truth_level": "compiled_diagnostic_projection",
+        "total_occurrences": len(profiles),
+        "owner_evidence_rows": len(evidence),
+        "candidate_axis_counts": dict(candidate_axes),
+        "measured_axis_counts": dict(measured_axes),
+        "join_power_distribution": {str(k): v for k, v in sorted(join_power.items())},
+        "braid_depth_distribution": {str(k): v for k, v in sorted(braid_depth.items())},
+        "frontier_limit": len(frontier),
+        "cannot_infer": [
+            "unknown realized depth -> zero realized depth",
+            "high investigation priority -> source admission, authority or value",
+            "latent join power -> semantic compatibility or permission to join data",
+        ],
+    }
+
+    if args.write:
+        (GEN / "participation_manifest.json").write_text(
+            json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        with (GEN / "participation_profiles.jsonl").open("w", encoding="utf-8") as handle:
+            for profile in profiles:
+                handle.write(json.dumps(profile, ensure_ascii=False, sort_keys=True) + "\n")
+        with (GEN / "participation_frontier.jsonl").open("w", encoding="utf-8") as handle:
+            for profile in frontier:
+                handle.write(json.dumps(profile, ensure_ascii=False, sort_keys=True) + "\n")
+
+    print(json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

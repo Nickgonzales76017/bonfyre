@@ -1,0 +1,160 @@
+# name	service	script	env	argv (shell words)
+sp-version	spines	-	-	--version
+sp-noargs	spines	-	-	
+sp-unknown	spines	-	-	bogus
+sp-status	spines	ok.txt	-	status
+sp-numbers	spines	numbers.txt	-	verify
+sp-flux	spines	ok.txt	-	flux s kindx id UPSERT '{"a":[1,2.50,{"b":null}],"0":true}'
+sp-flux-badjson	spines	-	-	flux s kindx id UPSERT '{'
+sp-closure	spines	ok.txt	-	closure mission x
+sp-closure-depth	spines	ok.txt	-	closure mission x --depth 3
+sp-closure-eq	spines	ok.txt	-	closure mission x --depth=-4
+sp-closure-float	spines	-	-	closure mission x --depth 3.5
+sp-closure-missing	spines	-	-	closure mission x --depth
+sp-closure-ambig	spines	-	-	closure mission x --depth -1
+sp-closure-short	spines	-	-	closure mission x -d 3
+sp-closure-dash	spines	-	-	closure mission -- -x
+sp-saturate	spines	ok.txt	-	saturate 'add(1,2)' --iterations 5 --terms 99
+sp-authority	spines	ok.txt	-	authority PURE
+sp-authority-res	spines	ok.txt	-	authority PURE --actor me --resource r:1
+sp-phenotype	spines	ok.txt	-	phenotype Fam --mission-id m1 --tokens 42
+sp-place	spines	ok.txt	-	place --local-only --gpu --bytes 10 --effect PURE
+sp-place-plain	spines	ok.txt	-	place
+sp-place-boolval	spines	-	-	place --gpu=1
+sp-status-unknown	spines	-	-	status --unknown
+sp-status-extra	spines	-	-	status extra
+sp-r5	spines	r5.txt	-	r5-smoke
+sp-r5-fail	spines	r5-fail.txt	-	r5-smoke
+sp-r6	spines	r6.txt	-	r6-smoke
+sp-r6-sparse	spines	r6-sparse.txt	-	r6-smoke
+sp-r7	spines	r7.txt	-	r7-smoke
+sp-r7-blocked	spines	r7-blocked.txt	-	r7-smoke
+sp-r7-nostate	spines	r7-nostate.txt	-	r7-smoke
+sp-full	spines	full.txt	-	full-smoke
+sp-http500	spines	http500.txt	-	status
+sp-wrongid	spines	wrong-id.txt	-	status
+sp-iserror	spines	is-error.txt	-	status
+sp-iserror-noreason	spines	is-error-noreason.txt	-	status
+sp-content-json	spines	content-json.txt	-	status
+sp-content-plain	spines	content-plain.txt	-	status
+sp-bare	spines	bare-result.txt	-	status
+sp-null	spines	null-structured.txt	-	status
+sp-rpcerror	spines	rpc-error.txt	-	status
+sp-arrayresult	spines	array-result.txt	-	status
+sp-oversized	spines	cl-oversized-owned.txt	-	status
+sp-empty	spines	empty-body.txt	-	status
+sp-notoken	spines	-	BONFYRE_MCP_TOKEN_FILE=/nonexistent/token	status
+sp-emptytoken	spines	-	BONFYRE_MCP_TOKEN_FILE=@EMPTY@	status
+sp-remote-http	spines	-	BONFYRE_SPINES_URL=http://remote.example	status
+sp-creds	spines	-	BONFYRE_SPINES_URL=https://u:p@remote.example	status
+sp-badurl	spines	-	BONFYRE_SPINES_URL=nope	status
+sp-refused	spines	-	BONFYRE_SPINES_URL=http://127.0.0.1:1/	status
+sp-trailing-slash	spines	ok.txt	SLASH=1	status
+v6-version	v6	-	-	version
+v6-dashversion	v6	-	-	--version
+v6-usage	v6	-	-	bogus
+v6-two	v6	-	-	status extra
+v6-status	v6	ok.txt	-	status
+v6-history	v6	numbers.txt	-	history
+v6-verify-false	v6	unverified.txt	-	verify
+v6-verify-true	v6	verified.txt	-	verify
+v6-remote	v6	-	BONFYRE_V6_URL=https://v6.example	status
+v6-http500	v6	http500.txt	-	outcomes
+v6-notoken	v6	-	BONFYRE_MCP_TOKEN_FILE=/nonexistent/token	status
+ca-version	canary	-	-	--version
+ca-help	canary	-	-	--help
+ca-help-late	canary	-	-	route m c -h
+ca-noargs	canary	-	-	
+ca-status	canary	ok.txt	-	status
+ca-certificates	canary	ok.txt	-	certificates
+ca-verify	canary	ok.txt	-	verify
+ca-policies	canary	numbers.txt	-	policies
+ca-fixtures	canary	ok.txt	-	fixtures run
+ca-fixtures-opts	canary	ok.txt	-	fixtures run --providers rtk cavekit --max-agent-turns 9
+ca-fixtures-zero	canary	ok.txt	-	fixtures run --max-agent-turns -3
+ca-certverify	canary	ok.txt	-	certificate verify rtk context.tool_compression
+ca-upsert	canary	ok.txt	-	policy upsert capability rtk fallback
+ca-upsert-opts	canary	ok.txt	-	policy upsert cap rtk fb --percentage 7 --effect-class PURE --effect-class CANDIDATE_WRITE --enable
+ca-state	canary	ok.txt	-	policy state policy-1 suspended
+ca-route	canary	ok.txt	-	route mission capability
+ca-route-opts	canary	ok.txt	-	route mission capability --effect-class READ_ONLY --task-id task --fallback-provider safe
+ca-route-emptytask	canary	ok.txt	-	route mission capability --task-id ''
+ca-outcome	canary	ok.txt	-	outcome decision passed
+ca-outcome-opts	canary	ok.txt	-	outcome decision failed --latency-ms 1.5 --receipt-digest sha
+ca-outcome-hex	canary	ok.txt	-	outcome decision failed --latency-ms 0x10
+ca-decisions	canary	ok.txt	-	decisions
+ca-outcomes-limit	canary	ok.txt	-	outcomes --limit 5
+ca-e-providers-none	canary	-	-	fixtures run --providers
+ca-e-providers-bad	canary	-	-	fixtures run --providers unknown
+ca-e-percentage	canary	-	-	policy upsert cap p fallback --percentage 26
+ca-e-effect	canary	-	-	policy upsert cap p fallback --effect-class DANGEROUS
+ca-e-route-effect	canary	-	-	route mission capability --effect-class INVALID
+ca-e-outcome-state	canary	-	-	outcome decision unknown
+ca-e-latency	canary	-	-	outcome decision passed --latency-ms not-a-number
+ca-e-limit	canary	-	-	decisions --limit 1001
+ca-e-limit-int	canary	-	-	decisions --limit 1.5
+ca-e-limit-huge	canary	-	-	decisions --limit 99999999999999999
+ca-e-state	canary	-	-	policy state id wrong
+ca-e-certverify	canary	-	-	certificate verify rtk
+ca-e-policy	canary	-	-	policy
+ca-e-unknown	canary	-	-	unknown
+ca-e-extra	canary	-	-	status extra
+ca-e-opt	canary	-	-	decisions --nope 1
+ca-e-optval	canary	-	-	decisions --limit
+ca-iserror	canary	is-error.txt	-	status
+ca-wrongid	canary	wrong-id.txt	-	status
+ca-302	canary	http302.txt	-	status
+ca-oversized	canary	cl-oversized.txt	-	status
+ca-empty	canary	empty-body.txt	-	status
+ca-nullsc	canary	null-structured.txt	-	status
+ca-bare	canary	bare-result.txt	-	status
+ca-remote	canary	-	BONFYRE_CANARY_URL=http://remote.example	status
+ca-creds	canary	-	BONFYRE_CANARY_URL=https://secret@remote.example	status
+ca-path	canary	-	BONFYRE_CANARY_URL=http://127.0.0.1:3056/x	status
+ca-badurl	canary	-	BONFYRE_CANARY_URL=	status
+ca-notoken	canary	-	BONFYRE_MCP_TOKEN_FILE=/nonexistent/token	status
+ca-refused	canary	-	BONFYRE_CANARY_URL=http://127.0.0.1:1	status
+re-version	recursive	-	-	--version
+re-version-extra	recursive	-	-	--version extra
+re-help	recursive	-	-	--help
+re-noargs	recursive	-	-	
+re-status	recursive	ok.txt	-	status
+re-replay	recursive	numbers.txt	-	replay
+re-tokenizers	recursive	ok.txt	-	tokenizers
+re-ingest	recursive	ok.txt	-	ingest /tmp/a
+re-ingest-opts	recursive	ok.txt	-	ingest /tmp/file --kind schema --classification private --schema named
+re-tokenize	recursive	ok.txt	-	tokenize artifact --tokenizer byte-v1
+re-delta	recursive	ok.txt	-	delta from to
+re-dependency	recursive	ok.txt	-	dependency artifact a token b uses
+re-closure	recursive	ok.txt	-	closure mission m
+re-closure-depth	recursive	ok.txt	-	closure artifact a --depth 8
+re-bootstrap	recursive	ok.txt	-	mission-bootstrap @F@/mission.json /tmp/spec --context /tmp/context --tokenizer byte-v1
+re-finalize	recursive	ok.txt	-	mission-finalize @F@/mission.json --source-bfp-root old --target-bfp-root next --changed-section proof --changed-section ir
+re-finalize-plain	recursive	ok.txt	-	mission-finalize @F@/mission.json
+re-e-array	recursive	-	-	mission-bootstrap @F@/mission-array.json /tmp/spec
+re-e-badjson	recursive	-	-	mission-bootstrap @F@/mission-bad.json /tmp/spec
+re-e-missing	recursive	-	-	mission-bootstrap @F@/absent.json /tmp/spec
+re-e-dir	recursive	-	-	mission-bootstrap @F@ /tmp/spec
+re-e-unknown	recursive	-	-	unknown
+re-e-extra	recursive	-	-	status extra
+re-e-ingest	recursive	-	-	ingest
+re-e-opt	recursive	-	-	ingest a --nope
+re-e-optval	recursive	-	-	tokenize a --tokenizer
+re-e-delta	recursive	-	-	delta only
+re-e-depth	recursive	-	-	closure kind id --depth abc
+re-e-depth65	recursive	-	-	closure kind id --depth 65
+re-e-dependency	recursive	-	-	dependency a b
+re-e-finalize	recursive	-	-	mission-finalize
+re-e-smoke	recursive	-	-	native-smoke extra
+re-smoke-fail	recursive	rsmoke-fail.txt	-	native-smoke
+re-smoke-pass	recursive	rsmoke-pass.txt	-	native-smoke
+re-smoke-noid	recursive	rsmoke-noid.txt	-	native-smoke
+re-smoke-badreplay	recursive	rsmoke-badreplay.txt	-	native-smoke
+re-iserror	recursive	is-error.txt	-	status
+re-wrongid	recursive	wrong-id.txt	-	status
+re-oversized	recursive	cl-oversized.txt	-	status
+re-remote	recursive	-	BONFYRE_RECURSIVE_URL=http://remote.example	status
+re-creds	recursive	-	BONFYRE_RECURSIVE_URL=https://secret@remote.example	status
+re-notoken	recursive	-	BONFYRE_MCP_TOKEN_FILE=/nonexistent/token	status
+re-emptytoken	recursive	-	BONFYRE_MCP_TOKEN_FILE=@EMPTY@	status
+re-refused	recursive	-	BONFYRE_RECURSIVE_URL=http://[::1]:1	status

@@ -1,0 +1,6 @@
+id: web-address-uncast-snprintf-offset
+language: C
+severity: warning
+message: an unchecked snprintf result is added to an offset; inspect truncation and negative-result paths before reuse
+rule:
+  pattern: $W += snprintf($BUF + $W, $$$ARGS)

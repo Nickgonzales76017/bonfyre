@@ -1,0 +1,34 @@
+#!/usr/bin/env python3
+"""Historical Python adapter; collect_public_carrier.mjs owns this path."""
+import argparse, hashlib, importlib.util, json, os, subprocess
+from pathlib import Path
+_normalizer_spec = importlib.util.spec_from_file_location("incumbent_provider_normalizer", Path(__file__).with_name("normalize_incumbent_provider_records.py"))
+assert _normalizer_spec and _normalizer_spec.loader
+_normalizer = importlib.util.module_from_spec(_normalizer_spec)
+_normalizer_spec.loader.exec_module(_normalizer)
+normalize = _normalizer.normalize
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--url", required=True); parser.add_argument("--source-ref", required=True)
+    parser.add_argument("--project", required=True); parser.add_argument("--foreign-root", type=Path, required=True)
+    parser.add_argument("--observed-at", required=True); parser.add_argument("--out", type=Path, required=True)
+    args = parser.parse_args()
+    if not args.url.startswith("https://"):
+        print("211 collector: public HTTPS resource URL required"); return 2
+    ident = "211-resource-" + hashlib.sha256(args.url.encode()).hexdigest()[:24]
+    (args.foreign_root / "bodies").mkdir(parents=True, exist_ok=True)
+    (args.foreign_root / "receipts").mkdir(parents=True, exist_ok=True)
+    body = args.foreign_root / "bodies" / (ident + ".body")
+    receipt = args.foreign_root / "receipts" / (ident + ".json")
+    run = subprocess.run([args.project, "foreign", "observe", ident, args.url, "--observe-right", "public", "--body", str(body), "--receipt", str(receipt)], capture_output=True, text=True)
+    if run.returncode or not os.path.exists(body):
+        print("211 collector: observer did not retain public resource"); return 2
+    try: record = normalize("211", json.loads(body.read_text()), args.source_ref, "foreign:" + ident, args.observed_at)
+    except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
+        print(f"211 collector: {exc}"); return 2
+    args.out.write_text(json.dumps(record, sort_keys=True) + "\n")
+    print(json.dumps({"kind": record["kind"], "receipt_ref": record["receipt_ref"]}))
+    return 0
+
+if __name__ == "__main__": raise SystemExit(main())

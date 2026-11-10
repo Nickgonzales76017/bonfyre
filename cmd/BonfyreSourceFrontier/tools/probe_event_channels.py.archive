@@ -1,0 +1,200 @@
+#!/usr/bin/env python3
+# Archived after Bun calendar probe and canonical-body cutover.
+"""Calendars organizations already publish, found by asking the addresses their
+platforms use.
+
+An event is not a story about an event.  Where an organization publishes its
+own calendar in iCalendar, that calendar is the organizer's statement of what
+happens and when, and it can be read directly.  This asks each known host for
+the conventional calendar addresses of the platforms these organizations
+actually run -- Localist, CivicPlus, The Events Calendar, Drupal, Trumba --
+through the ForeignTwin observer, so robots rules and receipts govern every
+request.
+
+A calendar is admitted only if it parses, holds at least three events and at
+least one of them has not happened yet.  Everything else is written to the
+evidence file with the reason.  Hosts come from the census, from the source
+ledger's identified roots, or from a file.
+
+  probe_event_channels.py --project BIN --foreign ROOT --out rows.json
+      [--channels channels.jsonl] [--cms CMS.db] [--frontier frontier.db]
+      [--hosts hosts.txt] [--evidence evidence.jsonl] [--limit 200]
+"""
+import argparse, hashlib, json, os, re, sqlite3, subprocess, sys, time, urllib.parse
+
+PATHS = [
+    ("/calendar.ics", "Localist"),
+    ("/events.ics", "Localist"),
+    ("/calendar/ical", "Drupal"),
+    ("/events/feed/ical", "Drupal"),
+    ("/events/?ical=1", "The Events Calendar"),
+    ("/?post_type=tribe_events&ical=1", "The Events Calendar"),
+    ("/common/modules/iCalendar/iCalendar.aspx?feed=calendar", "CivicPlus"),
+    ("/RSSFeed.aspx?ModID=58&CID=All-calendar.xml", "CivicPlus"),
+    ("/events/upcoming.ics", "LibraryMarket"),
+    ("/calendar/export/ics", "Trumba"),
+]
+
+VEVENT = re.compile(r"BEGIN:VEVENT(.*?)END:VEVENT", re.S)
+DTSTART = re.compile(r"^DTSTART[^:\r\n]*:([0-9TZ]+)", re.M)
+SUMMARY = re.compile(r"^SUMMARY[^:\r\n]*:(.+)$", re.M)
+
+
+def observe(project, foreign, twin, url, timeout=90, keep_body=False):
+    receipts, bodies = os.path.join(foreign, "receipts"), os.path.join(foreign, "bodies")
+    os.makedirs(receipts, exist_ok=True)
+    os.makedirs(bodies, exist_ok=True)
+    receipt, body = os.path.join(receipts, twin + ".json"), os.path.join(bodies, twin + ".body")
+    try:
+        subprocess.run([project, "foreign", "observe", twin, url, "--receipt", receipt, "--body", body, "--observe-right", "public"],
+                       capture_output=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        return {"policy_decision": "timeout"}, ""
+    last = {}
+    if os.path.exists(receipt):
+        lines = [l for l in open(receipt, encoding="utf-8", errors="replace").read().splitlines() if l.startswith("{")]
+        if lines:
+            try:
+                last = json.loads(lines[-1])
+            except ValueError:
+                last = {}
+    text = ""
+    if os.path.exists(body) and 200 <= int(last.get("http_status") or 0) < 300:
+        with open(body, "rb") as f:
+            text = f.read(8_000_000).decode("utf-8", "replace")
+    if not keep_body:
+        # A probe is a question, not material: the receipt is the evidence and
+        # the body is not kept, so asking many hosts costs no disk.
+        try:
+            os.unlink(body)
+        except OSError:
+            pass
+    return last, text
+
+
+def judge(text):
+    """What the calendar itself says, before anything is admitted."""
+    if "BEGIN:VCALENDAR" not in text:
+        return None, "not an iCalendar document"
+    events = VEVENT.findall(text)
+    if len(events) < 3:
+        return None, "fewer than three events"
+    now = time.strftime("%Y%m%d", time.gmtime())
+    future, titled, latest = 0, 0, ""
+    for block in events:
+        start = DTSTART.search(block)
+        title = SUMMARY.search(block)
+        if title and title.group(1).strip():
+            titled += 1
+        if start:
+            stamp = start.group(1)[:8]
+            latest = max(latest, stamp)
+            if stamp >= now:
+                future += 1
+    if not future:
+        return None, "nothing upcoming (latest %s)" % (latest or "unknown")
+    if titled < len(events) // 2:
+        return None, "most events have no title"
+    return {"events": len(events), "upcoming": future, "latest": latest}, None
+
+
+def hosts_from_cms(path):
+    con = sqlite3.connect("file:%s?mode=ro" % path, uri=True)
+    rows = con.execute("SELECT COALESCE(url,''), COALESCE(publisher_name,''), COALESCE(publisher_ident,'') FROM internet_source WHERE status='published' AND url LIKE 'http%'").fetchall()
+    con.close()
+    for url, name, ident in rows:
+        host = urllib.parse.urlparse(url).netloc
+        if host:
+            yield host, name, ident
+
+
+def hosts_from_frontier(path):
+    con = sqlite3.connect("file:%s?mode=ro" % path, uri=True)
+    try:
+        rows = con.execute("SELECT host, COALESCE(name,''), COALESCE(identity,'') FROM root WHERE COALESCE(identity,'')<>''").fetchall()
+    except sqlite3.OperationalError:
+        rows = []
+    con.close()
+    for host, name, ident in rows:
+        yield host, name, ident
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--project", required=True)
+    ap.add_argument("--foreign", required=True)
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--channels")
+    ap.add_argument("--cms")
+    ap.add_argument("--frontier")
+    ap.add_argument("--hosts")
+    ap.add_argument("--evidence", default=os.devnull)
+    ap.add_argument("--limit", type=int, default=200)
+    args = ap.parse_args()
+
+    # Named hosts are asked first: they were chosen because someone knows those
+    # organizations publish calendars, and a run's budget should not be spent
+    # on every census host before reaching them.
+    seen, hosts = set(), []
+    if args.hosts and os.path.exists(args.hosts):
+        for line in open(args.hosts):
+            parts = [p.strip() for p in line.strip().split("|")]
+            if parts and parts[0] and parts[0] not in seen:
+                seen.add(parts[0])
+                hosts.append((parts[0], parts[1] if len(parts) > 1 else "", parts[2] if len(parts) > 2 else ""))
+    for source in (hosts_from_cms(args.cms) if args.cms and os.path.exists(args.cms) else []):
+        if source[0] not in seen:
+            seen.add(source[0]); hosts.append(source)
+    for source in (hosts_from_frontier(args.frontier) if args.frontier and os.path.exists(args.frontier) else []):
+        if source[0] not in seen:
+            seen.add(source[0]); hosts.append(source)
+    hosts = hosts[: args.limit]
+
+    rows, admitted = [], 0
+    with open(args.evidence, "a") as evidence, open(args.channels or os.devnull, "w") as channels:
+        for host, name, ident in hosts:
+            for path, platform in PATHS:
+                url = "https://%s%s" % (host, path)
+                twin = "calendar-" + hashlib.sha256(url.encode()).hexdigest()[:16]
+                receipt, text = observe(args.project, args.foreign, twin, url)
+                record = {"host": host, "url": url, "platform": platform,
+                          "http_status": receipt.get("http_status"), "policy": receipt.get("policy_decision")}
+                if receipt.get("policy_decision") not in (None, "allow"):
+                    evidence.write(json.dumps(record) + "\n")
+                    break                                   # robots refused this host; ask it nothing else
+                if not text:
+                    evidence.write(json.dumps(record) + "\n")
+                    time.sleep(0.2)
+                    continue
+                reading, refused = judge(text)
+                record.update({"refused": refused} if refused else reading)
+                evidence.write(json.dumps(record) + "\n")
+                if refused:
+                    time.sleep(0.2)
+                    continue
+                source_id = "events-" + re.sub(r"[^a-z0-9]+", "-", host.lower()).strip("-")[:48]
+                rows.append({
+                    "family": "events", "source": source_id,
+                    "label": (name or host) + " events",
+                    "says": "what %s says is happening" % (name or host),
+                    "note": "%s, read from the calendar it publishes" % (name or host),
+                    "url": url, "twin": source_id, "tier": "WARM", "kind": "event",
+                    "cadence_seconds": 21600, "status": "published",
+                    "reading": {"extract": "ics:vevent"},
+                    "publisher_ident": ident, "publisher_name": name,
+                    "compiled_by": "event-channel-prober",
+                })
+                channels.write(json.dumps({"address": url, "name": name or host, "identity": ident,
+                                           "protocol": "ics", "material": "event", "state": "eligible",
+                                           "census_source": source_id, "kind": platform,
+                                           "discovered_from": "%s calendar convention" % platform}) + "\n")
+                admitted += 1
+                break                                       # one calendar per organization is enough
+            time.sleep(0.2)
+    json.dump(rows, open(args.out, "w"), indent=1)
+    print(json.dumps({"hosts": len(hosts), "calendars": admitted}))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,42 @@
+#!/usr/bin/env python3
+"""The commerce closure is intentionally pure: no provider calls in a test."""
+import importlib.util, json
+from pathlib import Path
+
+ROOT=Path(__file__).resolve().parents[3]
+def load(name, rel):
+    spec=importlib.util.spec_from_file_location(name, ROOT/rel); module=importlib.util.module_from_spec(spec); spec.loader.exec_module(module); return module
+commerce=load("commerce", "cmd/BonfyreExternalEstate/tools/compile_commerce_observations.py")
+route=load("route", "cmd/BonfyreExternalEstate/tools/compile_commerce_route.py")
+expand=load("expand", "cmd/BonfyreExternalEstate/tools/compile_commerce_expansion.py")
+probe=load("probe", "cmd/BonfyreSourceFrontier/tools/probe_storefronts.py")
+providers=json.loads((ROOT/"schemas/control/commerce-observation-providers.json").read_text())
+policy=json.loads((ROOT/"schemas/control/commerce-observation-routing.json").read_text())
+
+woo={"phenotype":"woocommerce-store-api","source_ref":"source:woo","receipt_ref":"receipt:woo","observed_at":"2026-09-28T00:00:00Z","merchant":"tool-shop","payload":[{"id":7,"name":"Driver","permalink":"https://tool.test/p/driver","sku":"D7","is_in_stock":True,"prices":{"price":"1299","currency_code":"USD","currency_minor_unit":2}}]}
+rows=commerce.compile_envelope(providers,woo); assert [r["type"] for r in rows]==["product_identity","merchant_offer","price_observation","availability_observation"]
+assert rows[2]["body"]["product_id"]==rows[0]["body"]["product_id"] and rows[2]["body"]["amount"]=="12.99"
+found=commerce.classify_probe(providers,{"root":"tool.test","responses":{"/wp-json/wc/store/v1/products":woo["payload"]}})
+assert found[0]["phenotype"]=="woocommerce-store-api" and probe.frontier_rows("tool.test", {"/wp-json/wc/store/v1/products":woo["payload"]})[0]["state"]=="eligible"
+
+shop={"phenotype":"shopify-ajax","source_ref":"source:shop","receipt_ref":"receipt:shop","observed_at":"2026-09-28T00:00:00Z","merchant":"maker-shop","payload":{"id":9,"title":"Kit","url":"/products/kit.js","vendor":"Maker","variants":[{"id":1,"price":2500,"available":False,"sku":"K1","barcode":"123"}]}}
+rows=commerce.compile_envelope(providers,shop); assert rows[0]["body"]["gtin"]=="123" and rows[2]["body"]["amount"]=="25.00"
+suggest={"resources":{"results":{"products":[{"url":"/products/kit","handle":"kit"}]}}}
+assert commerce.classify_probe(providers,{"root":"maker.test","responses":{"/search/suggest.json":suggest}})[0]["phenotype"]=="shopify-ajax"
+
+ebay={"provider":"ebay-browse","source_ref":"source:ebay","receipt_ref":"receipt:ebay","observed_at":"2026-09-28T00:00:00Z","merchant":"ebay","payload":{"itemSummaries":[{"itemId":"v1|42","title":"Used Driver","itemWebUrl":"https://www.ebay.test/itm/42","price":{"value":"12.50","currency":"USD"},"availabilityStatus":"IN_STOCK","condition":"Used","gtin":"000123"}]}}
+rows=commerce.compile_envelope(providers,ebay); assert rows[0]["body"]["gtin"]=="000123" and rows[-1]["body"]["state"]=="in_stock"
+
+keepa={"provider":"keepa","source_ref":"source:keepa","receipt_ref":"receipt:keepa","observed_at":"2026-09-28T00:00:00Z","merchant":"amazon","payload":{"asin":"B0001","title":"Router","history":[{"observed_at":"2026-09-01T00:00:00Z","amount":"399.00","currency":"USD"}],"offers":[{"id":"seller-1","href":"https://amazon.test/dp/B0001","seller":"Seller","amount":"401.25","currency":"USD","available":True}]}}
+rows=commerce.compile_envelope(providers,keepa); assert [r["body"].get("kind") for r in rows if r["type"]=="price_observation"]==["historical","current"]
+
+open_prices={"provider":"open-prices","source_ref":"source:open-prices","receipt_ref":"receipt:open-prices","observed_at":"2026-09-28T00:00:00Z","merchant":"open-prices","payload":{"items":[{"product_code":"3017620422003","product_name":"Spread","price":3.5,"currency":"EUR","location":{"osm_name":"Food Store"}}]}}
+rows=commerce.compile_envelope(providers,open_prices); assert [r["type"] for r in rows]==["product_identity","price_observation"] and rows[1]["body"]["offer_id"]==""
+
+sources, aliases=expand.expand(commerce.compile_envelope(providers,woo)); assert sources[0]["state"]=="shadow" and any(a["kind"]=="sku" for a in aliases)
+plan=route.plan(providers, policy, {"intent":"price.history","available":["keepa"]}); assert plan["selected"]["provider"]=="keepa"
+plan=route.plan(providers, policy, {"intent":"merchant.discover","available":[]}); assert not plan["selected"] and plan["choices"][0]["state"]=="waiting_credential"
+try: commerce.compile_envelope(providers,{**woo,"phenotype":"magento-catalog-graphql"})
+except commerce.Refusal: pass
+else: raise AssertionError("unimplemented phenotype materialized")
+print("commerce observation compiler: PASS")

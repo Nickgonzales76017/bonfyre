@@ -1,0 +1,21 @@
+#!/usr/bin/env python3
+"""Historical Python adapter; collect_public_carrier.mjs owns this path."""
+import argparse,json,os,subprocess
+from pathlib import Path
+class Refusal(ValueError):pass
+def normalize(doc,source,receipt,at):
+ children=(((doc or {}).get("data") or {}).get("children") or [])
+ first=children[0].get("data",{}) if children and isinstance(children[0],dict) else {}
+ name=first.get("subreddit") or first.get("display_name"); url=first.get("subreddit_url") or ("https://www.reddit.com/r/"+name+"/" if name else "")
+ if not name or not url.startswith("https://"):raise Refusal("public subreddit listing has no community identity")
+ return {"provider":"reddit","kind":"reddit_community","source_ref":source,"receipt_ref":receipt,"observed_at":at,"payload":{"id":"r/"+name,"title":"r/"+name,"url":url,"description":first.get("subreddit_name_prefixed","")}}
+def main():
+ p=argparse.ArgumentParser();p.add_argument("--subreddit",required=True);p.add_argument("--source-ref",required=True);p.add_argument("--project",required=True);p.add_argument("--foreign-root",type=Path,required=True);p.add_argument("--observed-at",required=True);p.add_argument("--out",type=Path,required=True);a=p.parse_args();name=a.subreddit.removeprefix("r/").strip()
+ if not name.replace("_","").replace("-","").isalnum():print("reddit collector: invalid subreddit");return 2
+ (a.foreign_root/"bodies").mkdir(parents=True,exist_ok=True);(a.foreign_root/"receipts").mkdir(parents=True,exist_ok=True);ident="reddit-"+name.lower();body=str(a.foreign_root/"bodies"/(ident+".body"));receipt=str(a.foreign_root/"receipts"/(ident+".json"));url="https://www.reddit.com/r/"+name+"/.json?limit=1"
+ run=subprocess.run([a.project,"foreign","observe",ident,url,"--observe-right","public","--body",body,"--receipt",receipt],capture_output=True,text=True)
+ if run.returncode or not os.path.exists(body):print("reddit collector: observer did not retain public listing");return 2
+ try:row=normalize(json.loads(Path(body).read_text()),a.source_ref,"foreign:"+ident,a.observed_at)
+ except (OSError,ValueError) as e:print("reddit collector: %s"%e);return 2
+ a.out.write_text(json.dumps(row,sort_keys=True)+"\n");print(json.dumps({"kind":"reddit_community","receipt_ref":row["receipt_ref"]}));return 0
+if __name__=="__main__":raise SystemExit(main())

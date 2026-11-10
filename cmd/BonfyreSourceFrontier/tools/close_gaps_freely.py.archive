@@ -1,0 +1,203 @@
+#!/usr/bin/env python3
+# Archived after Bun free-gap compiler cutover.
+"""Close what can be closed for nothing, before anyone is asked for anything.
+
+Two gaps in the source ledger have free public answers:
+
+  IDENTITY     a publisher this estate reads has no identity.  Wikidata knows
+               which organization owns a domain: an item whose official website
+               (P856) is that host answers it, and the answer carries the
+               statement it came from.
+  STRUCTURED   a root admitted only as a page has no machine channel.  An
+               official website's own head links its feeds and its calendar,
+               and those links are recorded as shadow channels for the census
+               to consider.
+
+Both go through QLever's Wikidata endpoint and the ForeignTwin observer, so
+robots rules, the estate's contact user agent and receipts govern every
+request.  Nothing here is admitted: an identity is written onto the ledger's
+root (which is this estate's own bookkeeping), and a discovered channel starts
+as SHADOW.  No page shows any of it until the census admits it.
+
+  close_gaps_freely.py --db frontier.db --frontier BIN --project BIN --foreign ROOT
+      [--limit 60] [--channels channels.jsonl] [--evidence evidence.jsonl]
+"""
+import argparse, hashlib, json, os, re, sqlite3, subprocess, sys, time, urllib.parse
+
+QLEVER = "https://qlever.dev/api/wikidata?query="
+
+# Which organization says this host is its own official website.  Asking by
+# host is what makes the answer free: no name matching, no guessing.
+IDENTITY_QUERY = """
+PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?item (SAMPLE(?label) AS ?name) (SAMPLE(?site) AS ?website) WHERE {
+  ?item wdt:P856 ?site ; rdfs:label ?label .
+  FILTER(LANG(?label) = "en")
+  VALUES ?site { %s }
+} GROUP BY ?item LIMIT 200
+"""
+
+LINK_TAG = re.compile(rb"<link\b[^>]*>", re.I)
+ATTR = re.compile(rb'(\w[\w:-]*)\s*=\s*["\']([^"\']*)["\']')
+FEED_TYPES = {"application/rss+xml": "rss", "application/atom+xml": "atom",
+              "application/feed+json": "json_feed", "text/calendar": "ics"}
+
+
+def observe(project, foreign, twin, url, timeout=90, keep_body=False):
+    receipts, bodies = os.path.join(foreign, "receipts"), os.path.join(foreign, "bodies")
+    os.makedirs(receipts, exist_ok=True)
+    os.makedirs(bodies, exist_ok=True)
+    receipt, body = os.path.join(receipts, twin + ".json"), os.path.join(bodies, twin + ".body")
+    try:
+        subprocess.run([project, "foreign", "observe", twin, url, "--receipt", receipt, "--body", body, "--observe-right", "public"],
+                       capture_output=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        return {"policy_decision": "timeout"}, b""
+    last = {}
+    if os.path.exists(receipt):
+        lines = [l for l in open(receipt, encoding="utf-8", errors="replace").read().splitlines() if l.startswith("{")]
+        if lines:
+            try:
+                last = json.loads(lines[-1])
+            except ValueError:
+                last = {}
+    data = b""
+    if os.path.exists(body) and 200 <= int(last.get("http_status") or 0) < 300:
+        with open(body, "rb") as f:
+            data = f.read(3_000_000)
+    if not keep_body:
+        try:
+            os.unlink(body)
+        except OSError:
+            pass
+    return last, data
+
+
+def roots_without_identity(db, limit):
+    con = sqlite3.connect("file:%s?mode=ro" % db, uri=True)
+    rows = con.execute(
+        "SELECT r.root_id, r.host, COALESCE(r.name,'') FROM root r"
+        " JOIN gap g ON g.root_id=r.root_id AND g.kind='IDENTITY' AND g.status='open'"
+        " ORDER BY (SELECT COALESCE(SUM(c.contributions),0) FROM channel c WHERE c.root_id=r.root_id) DESC,"
+        " (SELECT COUNT(*) FROM channel c2 WHERE c2.root_id=r.root_id) DESC LIMIT ?", (limit,)).fetchall()
+    con.close()
+    return rows
+
+
+def roots_without_machine_channel(db, limit):
+    con = sqlite3.connect("file:%s?mode=ro" % db, uri=True)
+    rows = con.execute(
+        "SELECT r.root_id, r.host, COALESCE(r.name,'') FROM root r"
+        " JOIN gap g ON g.root_id=r.root_id AND g.kind='STRUCTURED_CHANNEL' AND g.status='open'"
+        " ORDER BY (SELECT COALESCE(SUM(c.contributions),0) FROM channel c WHERE c.root_id=r.root_id) DESC LIMIT ?", (limit,)).fetchall()
+    con.close()
+    return rows
+
+
+def ask_wikidata(project, foreign, hosts, evidence):
+    """One question for many hosts: who says this domain is theirs?"""
+    values = " ".join('<https://%s/> <http://%s/> <https://%s> <http://%s>' % (h, h, h, h) for h in hosts)
+    query = IDENTITY_QUERY % values
+    url = QLEVER + urllib.parse.quote(query, safe="")
+    twin = "gapclose-" + hashlib.sha256(url.encode()).hexdigest()[:16]
+    receipt, body = observe(project, foreign, twin, url, timeout=120)
+    evidence.write(json.dumps({"asked": "wikidata official website", "hosts": len(hosts),
+                               "http_status": receipt.get("http_status"), "policy": receipt.get("policy_decision")}) + "\n")
+    found = {}
+    if not body:
+        return found
+    try:
+        doc = json.loads(body.decode("utf-8", "replace"))
+    except ValueError:
+        return found
+    for binding in (doc.get("results") or {}).get("bindings", []):
+        item = (binding.get("item") or {}).get("value", "")
+        name = (binding.get("name") or {}).get("value", "")
+        site = (binding.get("website") or {}).get("value", "")
+        qid = item.rsplit("/", 1)[-1]
+        host = urllib.parse.urlparse(site).netloc.lower()
+        host = host[4:] if host.startswith("www.") else host
+        if qid.startswith("Q") and host:
+            found.setdefault(host, (qid, name, site))
+    return found
+
+
+def machine_channels(body, base):
+    """The feeds and calendars a page links in its own head."""
+    out = []
+    for tag in LINK_TAG.findall(body):
+        attrs = {k.decode("ascii", "replace").lower(): v.decode("utf-8", "replace") for k, v in ATTR.findall(tag)}
+        kind = FEED_TYPES.get((attrs.get("type") or "").lower())
+        href = attrs.get("href")
+        if kind and href:
+            out.append((urllib.parse.urljoin(base, href), kind, attrs.get("title", "")[:200]))
+    return out
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--db", required=True)
+    ap.add_argument("--frontier", required=True)
+    ap.add_argument("--project", required=True)
+    ap.add_argument("--foreign", required=True)
+    ap.add_argument("--limit", type=int, default=60)
+    ap.add_argument("--channels", default=None)
+    ap.add_argument("--evidence", default=os.devnull)
+    args = ap.parse_args()
+    channels_path = args.channels or os.path.join(os.path.dirname(os.path.abspath(args.db)), "free-channels.jsonl")
+    named, discovered = 0, 0
+
+    with open(args.evidence, "a") as evidence:
+        # 1. Who owns this domain, according to the public record?
+        rows = roots_without_identity(args.db, args.limit)
+        answers = {}
+        for start in range(0, len(rows), 40):
+            batch = [r[1] for r in rows[start:start + 40]]
+            answers.update(ask_wikidata(args.project, args.foreign, batch, evidence))
+            time.sleep(0.5)
+        if answers:
+            listing = os.path.join(os.path.dirname(channels_path), "free-identities.jsonl")
+            with open(listing, "w") as out:
+                for root_id, host, name in rows:
+                    if host in answers:
+                        qid, label, site = answers[host]
+                        # The root is named by writing one channel that carries the
+                        # identity; the ledger's import is the only writer.
+                        out.write(json.dumps({"address": "https://%s/" % host, "identity": qid,
+                                              "name": label or name, "state": "candidate",
+                                              "discovered_from": "wikidata says %s is the official website of %s" % (site, qid)}) + "\n")
+                        named += 1
+            if named:
+                subprocess.run([args.frontier, "import", "--db", args.db, "--label", "FREE_BACKFILL", "--jsonl", listing],
+                               capture_output=True, text=True)
+
+        # 2. What machine channels does an admitted page already link?
+        with open(channels_path, "w") as out:
+            for root_id, host, name in roots_without_machine_channel(args.db, args.limit):
+                url = "https://%s/" % host
+                twin = "gapchan-" + hashlib.sha256(url.encode()).hexdigest()[:16]
+                receipt, body = observe(args.project, args.foreign, twin, url)
+                record = {"host": host, "http_status": receipt.get("http_status"), "policy": receipt.get("policy_decision")}
+                links = machine_channels(body, url) if body else []
+                record["machine_channels"] = len(links)
+                evidence.write(json.dumps(record) + "\n")
+                for address, kind, title in links[:6]:
+                    out.write(json.dumps({"address": address, "protocol": kind, "title": title,
+                                          "state": "shadow", "truth_level": "observed_link_candidate",
+                                          "material": {"ics": "event"}.get(kind, "publication"),
+                                          "discovered_from": "linked in the head of %s" % url}) + "\n")
+                    discovered += 1
+                time.sleep(0.3)
+        if discovered:
+            subprocess.run([args.frontier, "import", "--db", args.db, "--label", "FREE_BACKFILL", "--jsonl", channels_path],
+                           capture_output=True, text=True)
+
+    print(json.dumps({"identities_closed": named, "machine_channels_found": discovered,
+                      "cannot_infer": "a named root and a shadow channel are bookkeeping, not admission; no page shows either until the census admits it"}))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
@@ -9,6 +16,8 @@
 #include <time.h>
 #include <unistd.h>
 #include <bonfyre.h>
+#include "../../../lib/libbonfyre/include/bf_help.h"
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 
 static int ensure_dir(const char *path) { return bf_ensure_dir(path); }
 static void path_join(char *buffer, size_t size, const char *left, const char *right) {
@@ -89,6 +98,7 @@ static void print_usage(void) {
 }
 
 int main(int argc, char **argv) {
+    if (bf_help_requested(argc, argv)) { print_usage(); return 0; }
     if (argc < 2) {
         print_usage();
         return 1;
@@ -101,7 +111,15 @@ int main(int argc, char **argv) {
     const char *narrate_bin = default_binary("BONFYRE_NARRATE_BINARY", argv[0], narrate_resolved, sizeof(narrate_resolved), "BonfyreNarrate", "bonfyre-narrate", "../BonfyreNarrate/bonfyre-narrate");
     const char *pack_bin = default_binary("BONFYRE_PACK_BINARY", argv[0], pack_resolved, sizeof(pack_resolved), "BonfyrePack", "bonfyre-pack", "../BonfyrePack/bonfyre-pack");
 
-    if (strcmp(argv[1], "package") == 0) {
+    enum { RD_ARTIFACT, RD_PACKAGE };
+    static const BfCommandEntry render_commands[] = {
+        {"artifact", RD_ARTIFACT, 0, NULL},
+        {"package", RD_PACKAGE, 0, NULL},
+    };
+    const BfCommandEntry *command = bf_command_lookup(render_commands,
+        sizeof(render_commands) / sizeof(render_commands[0]), argv[1]);
+
+    if (command && command->id == RD_PACKAGE) {
         if (argc != 5) {
             print_usage();
             return 1;
@@ -117,7 +135,7 @@ int main(int argc, char **argv) {
         return run_command(pack_argv);
     }
 
-    if (strcmp(argv[1], "artifact") == 0) {
+    if (command && command->id == RD_ARTIFACT) {
         if (argc < 4) {
             print_usage();
             return 1;

@@ -1,0 +1,98 @@
+{
+  "distilled_from": "cmd/BonfyreCMS/data/publication-observations-20261018.json",
+  "rule": "One house per territory. A front is one publication: a signature colour used loudly as a field, a plain paper for reading, a night band for pictures, one display face and one reading face. Bands rotate field, paper, paper, night in that order down the page instead of each band drawing its own palette.",
+  "houses": [
+    {
+      "template": "house-live",
+      "territory_affinity": "live",
+      "reference_name": "Distilled from Crooked Media, The Ringer and Donut",
+      "reference_url": "https://crooked.com/ https://www.theringer.com/ https://donutmedia.com/",
+      "renderer_mix": "shows lineup stage", "density": "loud", "hero_mode": "masthead",
+      "navigation_mode": "header", "media_mode": "full-bleed", "typography_mode": "display-grotesque",
+      "card_mode": "borderless", "chrome_mode": "loud",
+      "says": "Shows and the people who host them lead. A cobalt field with a yellow highlight, wide uppercase display, pictures in full colour.",
+      "layout_tokens": {
+        "ground": "#ffffff", "ink": "#16161d", "display": "#0b0b12", "accent": "#1f3bff",
+        "muted": "#5d5f6b", "rule": "rgba(11,11,18,.16)", "panel": "#f2f3f7",
+        "field": "#1f3bff", "field_ink": "#ffffff", "field_accent": "#ffd400",
+        "night": "#0b0b12", "night_ink": "#f4f4f8", "night_accent": "#ffd400",
+        "face_display": "\"Unbounded\",\"Arial Black\",sans-serif",
+        "face_body": "\"Inter Tight\",system-ui,sans-serif",
+        "face_mono": "\"DM Mono\",ui-monospace,monospace",
+        "display_size": "clamp(2.6rem,7.4vw,6.2rem)", "display_weight": "800",
+        "display_transform": "uppercase", "display_tracking": "-.035em", "display_leading": ".92",
+        "radius": "14px", "measure": "60ch", "media": "full", "crop": "wide",
+        "font_href": "https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Inter+Tight:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap"
+      }
+    },
+    {
+      "template": "house-shop",
+      "territory_affinity": "shop",
+      "reference_name": "Distilled from Speeed, Highsnobiety and Donut",
+      "reference_url": "https://speeed.co/ https://www.highsnobiety.com/ https://donutmedia.com/",
+      "renderer_mix": "lookbook drops market", "density": "airy", "hero_mode": "lead",
+      "navigation_mode": "header", "media_mode": "lookbook", "typography_mode": "condensed-sans",
+      "card_mode": "borderless", "chrome_mode": "quiet",
+      "says": "A lookbook, not a price list: tall pictures, prices in mono, an oxblood field with an acid green mark, warm paper.",
+      "layout_tokens": {
+        "ground": "#f4f1ea", "ink": "#1b1714", "display": "#120f0d", "accent": "#5a1414",
+        "muted": "#7b726a", "rule": "rgba(18,15,13,.16)", "panel": "#ebe6dc",
+        "field": "#5a1414", "field_ink": "#f4efe6", "field_accent": "#3af774",
+        "night": "#120f0d", "night_ink": "#f4efe6", "night_accent": "#3af774",
+        "face_display": "\"Chivo\",\"Arial Narrow\",sans-serif",
+        "face_body": "\"Chivo\",system-ui,sans-serif",
+        "face_mono": "\"Chivo Mono\",ui-monospace,monospace",
+        "display_size": "clamp(2.8rem,8vw,6.8rem)", "display_weight": "900",
+        "display_transform": "uppercase", "display_tracking": "-.02em", "display_leading": ".9",
+        "radius": "0px", "measure": "56ch", "media": "full", "crop": "portrait",
+        "font_href": "https://fonts.googleapis.com/css2?family=Chivo:wght@400;500;700;900&family=Chivo+Mono:wght@400;500&display=swap"
+      }
+    },
+    {
+      "template": "house-life",
+      "territory_affinity": "life",
+      "reference_name": "Distilled from Vox, Eater and Air Mail",
+      "reference_url": "https://www.vox.com/ https://www.eater.com/ https://airmail.news/",
+      "renderer_mix": "explainers guides issue", "density": "standard", "hero_mode": "masthead",
+      "navigation_mode": "header", "media_mode": "editorial", "typography_mode": "high-contrast-serif",
+      "card_mode": "ruled-row", "chrome_mode": "quiet",
+      "says": "Explained and useful: a saffron field, a soft high-contrast serif for headlines, tomato for the one loud thing, cream paper, deep green at night.",
+      "layout_tokens": {
+        "ground": "#fbf6ec", "ink": "#1d1a16", "display": "#14110e", "accent": "#e2432a",
+        "muted": "#7a7064", "rule": "rgba(20,17,14,.15)", "panel": "#f3ecdd",
+        "field": "#ffc83d", "field_ink": "#14110e", "field_accent": "#e2432a",
+        "night": "#12302b", "night_ink": "#f6f0e2", "night_accent": "#ffc83d",
+        "face_display": "\"Fraunces\",Georgia,serif",
+        "face_body": "\"Inter\",system-ui,sans-serif",
+        "face_mono": "\"DM Mono\",ui-monospace,monospace",
+        "display_size": "clamp(2.6rem,6.8vw,5.6rem)", "display_weight": "600",
+        "display_transform": "none", "display_tracking": "-.03em", "display_leading": ".98",
+        "radius": "6px", "measure": "62ch", "media": "full", "crop": "wide",
+        "font_href": "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap"
+      }
+    },
+    {
+      "template": "house-work",
+      "territory_affinity": "work",
+      "reference_name": "Distilled from Puck, Defector and Air Mail",
+      "reference_url": "https://puck.news/ https://defector.com/ https://airmail.news/",
+      "renderer_mix": "beats bylines dossier", "density": "tight", "hero_mode": "lead",
+      "navigation_mode": "header", "media_mode": "duotone", "typography_mode": "optical-serif",
+      "card_mode": "column-rule", "chrome_mode": "quiet",
+      "says": "Insiders by beat: a brick field with duotone photographs, a light display serif, bylines and dates in mono on everything, newsprint paper.",
+      "layout_tokens": {
+        "ground": "#f3ece2", "ink": "#1c1a18", "display": "#121110", "accent": "#b3261e",
+        "muted": "#6f675d", "rule": "rgba(18,17,16,.18)", "panel": "#ebe2d4",
+        "field": "#b3261e", "field_ink": "#fff6ee", "field_accent": "#ffd9c2",
+        "night": "#1d1d2b", "night_ink": "#efe9df", "night_accent": "#f08a6c",
+        "face_display": "\"Libre Caslon Display\",Georgia,serif",
+        "face_body": "\"Inter\",system-ui,sans-serif",
+        "face_mono": "\"DM Mono\",ui-monospace,monospace",
+        "display_size": "clamp(2.6rem,6.6vw,5.4rem)", "display_weight": "400",
+        "display_transform": "none", "display_tracking": "-.01em", "display_leading": "1",
+        "radius": "0px", "measure": "64ch", "media": "duotone", "crop": "wide",
+        "font_href": "https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Inter:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap"
+      }
+    }
+  ]
+}

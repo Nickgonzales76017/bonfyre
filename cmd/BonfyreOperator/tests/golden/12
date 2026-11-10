@@ -1,0 +1,14 @@
+{
+  "operator": "SELECT",
+  "program": {
+    "program_id": "household.select.4f53cda18c2baa0c",
+    "operator": "SELECT",
+    "digest": "de2f9d700e63fb7b6c91d0695ff26672e0d579a68de7fd5c7f0b74383b022bb5",
+    "reads": [],
+    "admitted": true,
+    "hard_failures": []
+  },
+  "count": 0,
+  "records": []
+}
+exit 0

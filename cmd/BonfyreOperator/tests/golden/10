@@ -1,0 +1,2 @@
+bonfyre-operator: predicate must be field=value: bad
+exit 2

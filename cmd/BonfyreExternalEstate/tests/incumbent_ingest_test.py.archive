@@ -1,0 +1,8 @@
+#!/usr/bin/env python3
+"""Historical witness; incumbent_materialization.test.mjs supersedes it."""
+import importlib.util
+from pathlib import Path
+ROOT=Path(__file__).resolve().parents[3];s=importlib.util.spec_from_file_location("i",ROOT/"cmd/BonfyreExternalEstate/tools/ingest_incumbent_record.py");m=importlib.util.module_from_spec(s);s.loader.exec_module(m)
+rows=m.load_materializer().materialize({"provider":"github","kind":"github_repository","source_ref":"s","receipt_ref":"r","observed_at":"2026-09-28T00:00:00Z","payload":{"id":"1","title":"o/r","url":"https://github.test/o/r"}})
+assert rows[0]["type"]=="project" and rows[0]["body"]["stage"]=="observed"
+print("incumbent ingest selection: PASS")

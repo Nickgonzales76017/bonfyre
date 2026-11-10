@@ -1,0 +1,288 @@
+[
+    {
+        "name": "parcel",
+        "evidence_requirements": [
+            "assessment_roll_receipt"
+        ],
+        "fields": [
+            {
+                "name": "account",
+                "audiences": [
+                    "public",
+                    "market",
+                    "institution"
+                ]
+            },
+            {
+                "name": "address",
+                "audiences": [
+                    "public",
+                    "market",
+                    "institution"
+                ]
+            },
+            {
+                "name": "city",
+                "audiences": [
+                    "public",
+                    "market",
+                    "institution"
+                ]
+            },
+            {
+                "name": "postal",
+                "audiences": [
+                    "public",
+                    "market",
+                    "institution"
+                ]
+            },
+            {
+                "name": "owner",
+                "audiences": [
+                    "public",
+                    "market",
+                    "institution"
+                ]
+            },
+            {
+                "name": "year_built",
+                "audiences": [
+                    "public",
+                    "market",
+                    "institution"
+                ]
+            },
+            {
+                "name": "living_area",
+                "audiences": [
+                    "public",
+                    "market",
+                    "institution"
+                ]
+            },
+            {
+                "name": "lot_sqft",
+                "audiences": [
+                    "public",
+                    "market",
+                    "institution"
+                ]
+            },
+            {
+                "name": "land_value",
+                "audiences": [
+                    "public",
+                    "market",
+                    "institution"
+                ]
+            },
+            {
+                "name": "total_value",
+                "audiences": [
+                    "public",
+                    "market",
+                    "institution"
+                ]
+            },
+            {
+                "name": "beds",
+                "audiences": [
+                    "public",
+                    "market",
+                    "institution"
+                ]
+            },
+            {
+                "name": "baths",
+                "audiences": [
+                    "public",
+                    "market",
+                    "institution"
+                ]
+            },
+            {
+                "name": "source_id",
+                "audiences": [
+                    "public",
+                    "market",
+                    "institution"
+                ]
+            },
+            {
+                "name": "territory",
+                "audiences": [
+                    "public",
+                    "market",
+                    "institution"
+                ]
+            },
+            {
+                "name": "owner_mailing_address",
+                "audiences": [
+                    "self",
+                    "institution"
+                ],
+                "withhold_reason": "a mailing address is contactable and is not released with the assessment roll"
+            }
+        ],
+        "projections": [
+            {
+                "carrier": "ogc",
+                "standard": "OGC API Features",
+                "container": "FeatureCollection",
+                "fields": [
+                    {
+                        "semantic": "account",
+                        "carrier": "account"
+                    },
+                    {
+                        "semantic": "address",
+                        "carrier": "address"
+                    },
+                    {
+                        "semantic": "city",
+                        "carrier": "city"
+                    },
+                    {
+                        "semantic": "postal",
+                        "carrier": "postal"
+                    },
+                    {
+                        "semantic": "owner",
+                        "carrier": "owner"
+                    },
+                    {
+                        "semantic": "year_built",
+                        "carrier": "year_built"
+                    },
+                    {
+                        "semantic": "living_area",
+                        "carrier": "living_area"
+                    },
+                    {
+                        "semantic": "lot_sqft",
+                        "carrier": "lot_sqft"
+                    },
+                    {
+                        "semantic": "land_value",
+                        "carrier": "land_value"
+                    },
+                    {
+                        "semantic": "total_value",
+                        "carrier": "total_value"
+                    },
+                    {
+                        "semantic": "beds",
+                        "carrier": "beds"
+                    },
+                    {
+                        "semantic": "baths",
+                        "carrier": "baths"
+                    },
+                    {
+                        "semantic": "source_id",
+                        "carrier": "source_id"
+                    },
+                    {
+                        "semantic": "territory",
+                        "carrier": "territory"
+                    }
+                ]
+            },
+            {
+                "carrier": "reso",
+                "standard": "RESO Web API",
+                "fields": [
+                    {
+                        "semantic": "account",
+                        "carrier": "ListingKey"
+                    },
+                    {
+                        "semantic": "address",
+                        "carrier": "UnparsedAddress"
+                    },
+                    {
+                        "semantic": "city",
+                        "carrier": "City"
+                    },
+                    {
+                        "semantic": "postal",
+                        "carrier": "PostalCode"
+                    },
+                    {
+                        "semantic": "owner",
+                        "carrier": "OwnerName"
+                    },
+                    {
+                        "semantic": "year_built",
+                        "carrier": "YearBuilt"
+                    },
+                    {
+                        "semantic": "beds",
+                        "carrier": "BedroomsTotal"
+                    },
+                    {
+                        "semantic": "baths",
+                        "carrier": "BathroomsTotalInteger"
+                    },
+                    {
+                        "semantic": "living_area",
+                        "carrier": "LivingArea"
+                    },
+                    {
+                        "semantic": "lot_sqft",
+                        "carrier": "LotSizeSquareFeet"
+                    },
+                    {
+                        "semantic": "land_value",
+                        "carrier": "LandValue"
+                    },
+                    {
+                        "semantic": "total_value",
+                        "carrier": "TaxAssessedValue"
+                    }
+                ]
+            },
+            {
+                "carrier": "mismo",
+                "standard": "MISMO 3.4",
+                "container": "MESSAGE.DEAL_SETS.SUBJECT_PROPERTIES",
+                "fields": [
+                    {
+                        "semantic": "account",
+                        "carrier": "account"
+                    },
+                    {
+                        "semantic": "address",
+                        "carrier": "address"
+                    },
+                    {
+                        "semantic": "city",
+                        "carrier": "city"
+                    },
+                    {
+                        "semantic": "postal",
+                        "carrier": "postal"
+                    },
+                    {
+                        "semantic": "year_built",
+                        "carrier": "year_built"
+                    },
+                    {
+                        "semantic": "living_area",
+                        "carrier": "living_area"
+                    },
+                    {
+                        "semantic": "land_value",
+                        "carrier": "land_value"
+                    },
+                    {
+                        "semantic": "total_value",
+                        "carrier": "total_value"
+                    }
+                ]
+            }
+        ]
+    }
+]

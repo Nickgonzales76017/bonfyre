@@ -1,0 +1,102 @@
+#!/usr/bin/env python3
+import hashlib
+import json
+from pathlib import Path
+import tempfile
+
+from domain_observation_bridge import (
+    BindingError,
+    append_once,
+    bind_observation,
+)
+
+
+HTML = """<html><head>
+<title>OGC API Common</title>
+<meta name="description" content="Shared API building blocks">
+<meta property="og:site_name" content="Open Geospatial Consortium">
+<meta property="og:url" content="https://example.test/ogc-common">
+<meta property="og:updated_time" content="2026-04-30T02:27:55+00:00">
+</head><body>standard</body></html>"""
+
+
+def digest(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def fixture(root: Path):
+    body = root / "body.html"
+    body.write_text(HTML, encoding="utf-8")
+    receipts = root / "evidence.jsonl"
+    observation = {
+        "schema": "bonfyre-foreign-observation.v1",
+        "twin_id": "external:protocol-test",
+        "source_url": "https://example.test/ogc-common",
+        "observation_kind": "source_observed",
+        "http_status": 200,
+        "body_path": str(body),
+        "content_sha256": digest(body),
+    }
+    receipts.write_text(json.dumps(observation) + "\n", encoding="utf-8")
+
+    ingest = root / "ingest"
+    ingest.mkdir()
+    normalized = ingest / "normalized.txt"
+    normalized.write_text(HTML, encoding="utf-8")
+    manifest = {
+        "status": "ready",
+        "source_content_hash": digest(body),
+        "normalized_path": "normalized.txt",
+        "normalized_content_hash": digest(normalized),
+    }
+    (ingest / "intake-manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    return body, receipts, ingest
+
+
+with tempfile.TemporaryDirectory() as tmp:
+    root = Path(tmp)
+    body, receipts, ingest = fixture(root)
+    bound = bind_observation("external:protocol-test", receipts, ingest)
+    assert bound["binding_validated"] is True
+    assert bound["owner"] == "DomainProfile"
+    assert bound["from_owner"] == "ForeignTwin"
+    assert bound["state"] == "profile_bound"
+    assert bound["semantic_fields"] == ["authority", "description", "name", "source_url", "updated_at"]
+
+    output = root / "out.jsonl"
+    assert append_once(output, bound) is True
+    assert append_once(output, bound) is False
+    assert len(output.read_text(encoding="utf-8").splitlines()) == 1
+
+with tempfile.TemporaryDirectory() as tmp:
+    root = Path(tmp)
+    body, receipts, ingest = fixture(root)
+    body.write_text(HTML + "tamper", encoding="utf-8")
+    try:
+        bind_observation("external:protocol-test", receipts, ingest)
+        raise AssertionError("tampered ForeignTwin body was accepted")
+    except BindingError as exc:
+        assert "ForeignTwin receipt" in str(exc)
+
+with tempfile.TemporaryDirectory() as tmp:
+    root = Path(tmp)
+    _, receipts, ingest = fixture(root)
+    manifest_path = ingest / "intake-manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["source_content_hash"] = "0" * 64
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    try:
+        bind_observation("external:protocol-test", receipts, ingest)
+        raise AssertionError("stale ingest source lineage was accepted")
+    except BindingError as exc:
+        assert "ingest source hash" in str(exc)
+
+with tempfile.TemporaryDirectory() as tmp:
+    root = Path(tmp)
+    _, receipts, ingest = fixture(root)
+    (ingest / "normalized.txt").write_text(HTML + "tamper", encoding="utf-8")
+    try:
+        bind_observation("external:protocol-test", receipts, ingest)
+        raise AssertionError("tampered normalized artifact was accepted")
+    except BindingError as exc:
+        assert "normalized artifact" in str(exc)

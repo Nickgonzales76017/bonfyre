@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * BonfyreGate — license enforcement + access control.
  *
@@ -18,15 +25,19 @@
  * Entitlements control: max_artifacts, max_bytes, allowed_ops, rate_limit/hr
  */
 #include <errno.h>
+#include "bf_lex.h"
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>   /* strncasecmp: an entitlement is not case */
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
 #include <bonfyre.h>
+#include "../../../lib/libbonfyre/include/bf_help.h"
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 
 #define VERSION "1.0.0"
 
@@ -129,15 +140,12 @@ static char *read_file_full(const char *path) {
 }
 
 static int json_str(const char *json, const char *key, char *out, size_t sz) {
-    char needle[256]; snprintf(needle, sizeof(needle), "\"%s\"", key);
-    const char *p = strstr(json, needle);
-    if (!p) return 0;
-    p += strlen(needle);
-    while (*p && (*p == ' ' || *p == ':' || *p == '\t')) p++;
-    if (*p != '"') return 0; p++;
-    size_t i = 0;
-    while (*p && *p != '"' && i < sz - 1) out[i++] = *p++;
-    out[i] = '\0'; return 1;
+    /* Delegates to the one implementation. This copy searched for "key" rather
+     * than "key": so it matched inside values, and stopped at the first quote
+     * so an escaped one truncated the result -- the bug that silently broke
+     * conditional re-observation elsewhere. Six binaries carried it; a seventh
+     * had been fixed locally and the fix never reached the others. */
+    return bf_lex_json_string(json, key, out, sz);
 }
 
 static int cmd_check(const char *key_path) {
@@ -150,7 +158,7 @@ static int cmd_check(const char *key_path) {
     json_str(json, "org", org, sizeof(org));
     json_str(json, "expires_at", expires, sizeof(expires));
     json_str(json, "status", status, sizeof(status));
-    json_str(json, "allowed_ops", ops, sizeof(ops));
+    json_str(json, "entitlements.allowed_ops", ops, sizeof(ops));
 
     /* Check expiration */
     char now[64]; iso_timestamp(now, sizeof(now));
@@ -168,6 +176,48 @@ static int cmd_check(const char *key_path) {
     return (expired || revoked) ? 2 : 0;
 }
 
+/* Is this operation one of the entitled ones?
+ *
+ * This was `strstr(ops, operation)`, which is a substring test against the
+ * whole comma-joined list, and it failed in both directions at once.
+ *
+ * It failed open: on a free key entitled to "Ingest,Brief,Proof", the operation
+ * "e" is allowed, and so is "In", "rie", "f,Proof" and the entire list passed
+ * as a single operation name. Any fragment of any entitlement is an
+ * entitlement, which is not a check, it is a coincidence.
+ *
+ * It failed closed: the entitlement vocabulary is capitalised ("Ingest") and
+ * the capability registry the estate actually indexes is lowercase ("ingest"),
+ * so every one of the 103 indexed capabilities was denied on free and pro keys.
+ * Only enterprise worked, and only because its allowed_ops is "*" and never
+ * reaches this comparison -- which is why the tier anyone would test with was
+ * the one tier that could not expose the bug.
+ *
+ * An entitlement is an element of a comma-separated list, matched whole and
+ * without regard to case. Surrounding spaces are ignored because a list is
+ * written by a person. */
+/* allowed_ops is a field of the entitlements object, not of the key, and is
+ * addressed as such. Reading it as a top-level key found it anyway while the
+ * shared reader searched flat; when that reader learned about depth, this went
+ * silently empty and `check` printed a blank Ops line that nothing noticed. A
+ * blank entitlement list denies everything, so the gate failed closed, which is
+ * the safe direction and still wrong. */
+static int op_entitled(const char *ops, const char *operation) {
+    size_t want = operation ? strlen(operation) : 0;
+    if (!ops || !want) return 0;
+    for (const char *p = ops; *p; ) {
+        const char *comma = strchr(p, ',');
+        size_t len = comma ? (size_t)(comma - p) : strlen(p);
+        const char *start = p;
+        while (len && (*start == ' ' || *start == '\t')) { start++; len--; }
+        while (len && (start[len-1] == ' ' || start[len-1] == '\t')) len--;
+        if (len == want && !strncasecmp(start, operation, want)) return 1;
+        if (!comma) break;
+        p = comma + 1;
+    }
+    return 0;
+}
+
 static int cmd_guard(const char *key_path, const char *operation) {
     char *json = read_file_full(key_path);
     if (!json) { fprintf(stderr, "DENIED: cannot read key\n"); return 1; }
@@ -175,7 +225,7 @@ static int cmd_guard(const char *key_path, const char *operation) {
     char status[32], expires[64], ops[1024];
     json_str(json, "status", status, sizeof(status));
     json_str(json, "expires_at", expires, sizeof(expires));
-    json_str(json, "allowed_ops", ops, sizeof(ops));
+    json_str(json, "entitlements.allowed_ops", ops, sizeof(ops));
 
     char now[64]; iso_timestamp(now, sizeof(now));
 
@@ -185,7 +235,7 @@ static int cmd_guard(const char *key_path, const char *operation) {
     if (strcmp(now, expires) > 0) {
         fprintf(stderr, "DENIED: key expired\n"); free(json); return 1;
     }
-    if (strcmp(ops, "*") != 0 && !strstr(ops, operation)) {
+    if (strcmp(ops, "*") != 0 && !op_entitled(ops, operation)) {
         fprintf(stderr, "DENIED: operation '%s' not in entitlements\n", operation);
         free(json); return 1;
     }
@@ -197,8 +247,33 @@ static int cmd_guard(const char *key_path, const char *operation) {
 
 /* ---------- main ---------- */
 
+static void usage(void) {
+    fprintf(stderr,
+        "BonfyreGate — license enforcement\n\n"
+        "Usage:\n"
+        "  bonfyre-gate issue --tier free|pro|enterprise [--org NAME] [--out F]\n"
+        "  bonfyre-gate check <key.json>\n"
+        "  bonfyre-gate guard <key.json> --op OPERATION\n"
+        "  bonfyre-gate layer <artifact_id> [--root DIR]\n"
+        "  bonfyre-gate layer-op <operation> <artifact_id> [--root DIR]\n"
+    );
+}
+
 int main(int argc, char *argv[]) {
-    if (argc >= 3 && strcmp(argv[1], "layer") == 0) {
+    if (bf_help_requested(argc, argv)) { usage(); return 0; }
+    enum {
+        GT_CHECK, GT_GUARD, GT_ISSUE, GT_LAYER, GT_LAYER_OP,
+    };
+    static const BfCommandEntry gate_commands[] = {
+        {"check", GT_CHECK, 0, NULL},
+        {"guard", GT_GUARD, 0, NULL},
+        {"issue", GT_ISSUE, 0, NULL},
+        {"layer", GT_LAYER, 0, NULL},
+        {"layer-op", GT_LAYER_OP, 0, NULL},
+    };
+    const BfCommandEntry *command = argc < 2 ? NULL : bf_command_lookup(gate_commands,
+        sizeof(gate_commands) / sizeof(gate_commands[0]), argv[1]);
+    if (argc >= 3 && command && command->id == GT_LAYER) {
         const char *root = NULL;
         char *json = NULL, *out = NULL;
         for (int i=1;i<argc-1;i++) if (strcmp(argv[i],"--root")==0) { root = argv[i+1]; break; }
@@ -209,7 +284,7 @@ int main(int argc, char *argv[]) {
         free(json);
         return 0;
     }
-    if (argc >= 4 && strcmp(argv[1], "layer-op") == 0) {
+    if (argc >= 4 && command && command->id == GT_LAYER_OP) {
         const char *root = NULL;
         char *json = NULL, *out = NULL;
         for (int i=1;i<argc-1;i++) if (strcmp(argv[i],"--root")==0) { root = argv[i+1]; break; }
@@ -221,7 +296,7 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    if (argc >= 2 && strcmp(argv[1], "issue") == 0) {
+    if (argc >= 2 && command && command->id == GT_ISSUE) {
         const char *tier = "free", *org = "default", *out = "key.json";
         for (int i = 2; i < argc - 1; i++) {
             if (strcmp(argv[i], "--tier") == 0) tier = argv[i+1];
@@ -230,9 +305,9 @@ int main(int argc, char *argv[]) {
         }
         return cmd_issue(tier, org, out);
     }
-    if (argc >= 3 && strcmp(argv[1], "check") == 0)
+    if (argc >= 3 && command && command->id == GT_CHECK)
         return cmd_check(argv[2]);
-    if (argc >= 3 && strcmp(argv[1], "guard") == 0) {
+    if (argc >= 3 && command && command->id == GT_GUARD) {
         const char *op = NULL;
         for (int i = 3; i < argc - 1; i++)
             if (strcmp(argv[i], "--op") == 0) op = argv[i+1];
@@ -240,14 +315,6 @@ int main(int argc, char *argv[]) {
         return cmd_guard(argv[2], op);
     }
 
-    fprintf(stderr,
-        "BonfyreGate — license enforcement\n\n"
-        "Usage:\n"
-        "  bonfyre-gate issue --tier free|pro|enterprise [--org NAME] [--out F]\n"
-        "  bonfyre-gate check <key.json>\n"
-        "  bonfyre-gate guard <key.json> --op OPERATION\n"
-        "  bonfyre-gate layer <artifact_id> [--root DIR]\n"
-        "  bonfyre-gate layer-op <operation> <artifact_id> [--root DIR]\n"
-    );
+    usage();
     return 1;
 }

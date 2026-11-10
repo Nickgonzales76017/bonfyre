@@ -1,0 +1,11 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre","binary_env":"BONFYRE_CLI_BIN","cases":[
+{"name":"status (command.status) answers bare, with --json, and per command","steps":[
+ {"argv":["status"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["bonfyre status","commands: "]},
+ {"argv":["status","--json"],"env":{"HOME":"${tmp}"},"exit":0,"excludes":["there is no command"]},
+ {"argv":["status","commands","--json"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["\"command\":\"cms\""]}]},
+{"name":"self (command.self) answers its ontology and refuses no subcommand","steps":[
+ {"argv":["self","ontology"],"env":{"HOME":"${tmp}"},"exit":0,"json":{"surface":"self","subjects":["aliases","registry-projections","repair-plans"]}},
+ {"argv":["self"],"env":{"HOME":"${tmp}"},"exit":2}]},
+{"name":"precision (command.precision) answers its routing ontology and refuses no subcommand","steps":[
+ {"argv":["precision","ontology"],"env":{"HOME":"${tmp}"},"exit":0,"at":{"surface":"precision"},"has":{"heuristics.*.route":"fpq"}},
+ {"argv":["precision"],"env":{"HOME":"${tmp}"},"exit":2}]}]}

@@ -1,0 +1,18 @@
+{
+  "name": "territory_presentation",
+  "displayName": "Territory Presentation",
+  "description": "What one territory's front door is, as authored state rather than compiled copy. Four hosts answering four different questions were four strings in one page, so the doors were the same door wearing four sentences. A row here decides the question, the voice, the design language and — the part that actually makes a door different — which sections that territory leads with and which it does not show at all. It grants nothing and reads no subject: a front door is a projection, and ordering it differently is not authority over anything behind it.",
+  "attributes": {
+    "territory": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "question": {"type": "string", "required": true},
+    "eyebrow": {"type": "string", "required": true},
+    "head": {"type": "string", "required": true},
+    "lede": {"type": "text", "required": true},
+    "character": {"type": "string", "required": true},
+    "template": {"type": "string", "required": false},
+    "sections": {"type": "string", "required": true},
+    "lead_source_kinds": {"type": "string", "required": false},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

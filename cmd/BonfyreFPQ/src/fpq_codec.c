@@ -1,3 +1,9 @@
+/* M_PI is not in ISO C11; glibc gates it behind a feature macro while
+   macOS exposes it from <math.h> unconditionally. */
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 /*
  * fpq_codec.c — FPQ v3 Encode/Decode Pipeline
  *
@@ -779,7 +785,9 @@ fpq_tensor_t *fpq_encode_tensor(const float *weights, size_t rows, size_t cols,
         fpq_seed_t *cached = memo_lookup(delta, target_dim, d_mean, d_std);
 
         if (cached && cached->distortion < tolerance * 3.0f) {
-            /* Cache HIT — reuse proven pattern */
+            /* Cache HIT reuses discovery work. memo_lookup returns a clone:
+             * this is NOT physical program sharing and must not be reported
+             * as storage deduplication. */
             delta_seed = cached;
             memo_hits++;
         } else {
@@ -966,11 +974,49 @@ void fpq_tensor_free(fpq_tensor_t *tensor) {
     free(tensor->coord_scales);
     free(tensor->coord_quants);
     free(tensor->coord_residual_norms);
+    free(tensor->chaos_r_idx);
+    free(tensor->sbb_scale_delta);
+    fpq_ghost_free(tensor->ghost);
     fpq_seed_free(tensor->base_seed);
     free(tensor);
 }
 
 /* ── Compression stats ── */
+
+static void fpq_seed_density(const fpq_tensor_t *tensor,
+                             size_t *unique_programs,
+                             size_t *exact_repeats,
+                             size_t *unique_nodes,
+                             size_t *program_bytes) {
+    *unique_programs = 0;
+    *exact_repeats = 0;
+    *unique_nodes = 0;
+    *program_bytes = 0;
+    if (!tensor || !tensor->seeds) return;
+
+    for (size_t i = 0; i < tensor->n_blocks; i++) {
+        const fpq_seed_t *seed = tensor->seeds[i];
+        if (!seed) continue;
+        const uint64_t hash = fpq_seed_hash(seed);
+        int seen = 0;
+        for (size_t j = 0; j < i; j++) {
+            const fpq_seed_t *prior = tensor->seeds[j];
+            if (!prior) continue;
+            if (fpq_seed_hash(prior) == hash && fpq_seed_equal(prior, seed)) {
+                seen = 1;
+                break;
+            }
+        }
+        if (seen) {
+            (*exact_repeats)++;
+        } else {
+            (*unique_programs)++;
+            *unique_nodes += seed->tree_size;
+            *program_bytes += fpq_seed_program_bytes(seed);
+        }
+    }
+}
+
 
 float fpq_bits_per_weight(const fpq_tensor_t *tensor) {
     size_t total_weights = tensor->original_rows * tensor->original_cols;
@@ -984,6 +1030,11 @@ void fpq_report(const fpq_tensor_t *tensor) {
     float original_mb = (float)(total * sizeof(float)) / (1024.0f * 1024.0f);
     float compressed_mb = (float)(tensor->total_bits / 8) / (1024.0f * 1024.0f);
     size_t base_nodes = tensor->base_seed ? tensor->base_seed->tree_size : 0;
+    size_t unique_programs = 0, exact_repeats = 0, unique_nodes = 0;
+    size_t unique_program_bytes = 0;
+    fpq_seed_density(tensor, &unique_programs, &exact_repeats,
+                     &unique_nodes, &unique_program_bytes);
+    const size_t base_program_bytes = fpq_seed_program_bytes(tensor->base_seed);
 
     const char *mode_str;
     if (tensor->mode == FPQ_MODE_COORD) {
@@ -1021,15 +1072,24 @@ void fpq_report(const fpq_tensor_t *tensor) {
     } else {
         fprintf(stderr,
             "  Base seed:       %zu nodes (shared DAG)\n"
-            "  Seed nodes:      %zu total (%.1f avg/block)\n"
+            "  Seed nodes:      %zu logical instances (%.1f avg/block)\n"
+            "  Seed programs:   %zu exact unique / %zu blocks; %zu exact repeats\n"
+            "  Unique seed body:%zu nodes, %zu native bytes + %zu base bytes\n"
             "  Bits/weight:     %.2f (fp32=32, q4_0=4.5, TQ=3.5)\n"
             "  Original:        %.2f MB\n"
             "  Compressed:      %.2f MB\n"
             "  Ratio:           %.1fx\n"
-            "  Avg distortion:  %.6f MSE\n",
+            "  Avg distortion:  %.6f MSE\n"
+            "  Density note:    FPQ! v4 factors exact program bodies; per-block evidence remains separate. Native bytes above describe memory, not stored file size.\n",
             base_nodes,
             tensor->total_seed_nodes,
             (float)tensor->total_seed_nodes / (float)tensor->n_blocks,
+            unique_programs,
+            tensor->n_blocks,
+            exact_repeats,
+            unique_nodes,
+            unique_program_bytes,
+            base_program_bytes,
             bpw, original_mb, compressed_mb,
             original_mb > 0 ? original_mb / compressed_mb : 0.0f,
             tensor->avg_distortion);

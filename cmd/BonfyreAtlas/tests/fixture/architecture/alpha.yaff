@@ -1,0 +1,52 @@
+atlas fixture-alpha
+# A comment line, and a blank line follow.
+
+architecture alpha
+  canonical_name Alpha
+  family substrate
+  domain Fixture / Core
+  layer core
+  semantic_question What does alpha own?
+  maturity measured
+  owns FactA
+  publishes FactB
+  consumes FactC
+  source_path architecture/alpha.yaff
+  witness architecture/alpha.yaff proves itself
+  witness a prose witness with no path
+  cannot_infer alpha -> anything at all
+  invariant alpha holds
+  internal_calculus x = y
+  mystery_key never read
+  interacts alpha-to-beta
+
+architecture beta
+  canonical_name Beta
+  family apps
+  domain Fixture / Edge
+  semantic_question Does beta consume?
+  maturity implemented
+  consumes FactA
+  owns FactC
+  subscribes FactD
+  source_path cmd/Nope/missing.c
+  known_gap the source moved to a native owner
+
+view FixtureView
+  expands_to alpha
+  expands_to beta
+
+view BadView
+  expands_to alpha
+
+interaction alpha-to-beta
+  source alpha
+  destination beta
+  relation feeds
+  preserves the fact
+  drops nothing
+
+interaction beta-to-alpha
+  source beta
+  destination alpha
+  relation returns

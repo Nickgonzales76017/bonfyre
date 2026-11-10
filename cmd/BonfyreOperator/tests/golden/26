@@ -1,0 +1,29 @@
+{
+  "operator": "COMPARE",
+  "program": {
+    "program_id": "household.compare.2175eb3c3492c0b6",
+    "operator": "COMPARE",
+    "digest": "a6df184d74a51d9a32b0de15ee09d9d1f5318ad39957b3b96bf1647cfcb3c01a",
+    "reads": [
+      "household:food:offer:Rice-2",
+      "household:food:offer:rice_1"
+    ],
+    "admitted": true,
+    "hard_failures": []
+  },
+  "left": "household:food:offer:Rice-2",
+  "right": "household:food:offer:rice_1",
+  "same_kind": true,
+  "equal_fields": [
+    "cash_price_usd",
+    "merchant"
+  ],
+  "different_fields": [
+    "nested",
+    "notes",
+    "offer_id",
+    "source_refs"
+  ],
+  "numeric_deltas": []
+}
+exit 0

@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * BonfyreEmit — multi-format output engine.
  *
@@ -23,6 +30,8 @@
 #include <time.h>
 #include <unistd.h>
 #include <bonfyre.h>
+#include "../../../lib/libbonfyre/include/bf_help.h"
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 
 static int ensure_dir(const char *path) { return bf_ensure_dir(path); }
 static void iso_timestamp(char *buf, size_t sz) { bf_iso_timestamp(buf, sz); }
@@ -179,12 +188,36 @@ static void write_emission_manifest(const char *outdir, const char **formats, in
 
 /* ---------- main ---------- */
 
+static void usage(void) {
+    fprintf(stderr,
+            "BonfyreEmit — multi-format output engine\n\n"
+            "Usage:\n"
+            "  bonfyre-emit <artifact-dir> --format html|pdf|epub|rss|txt|bundle [--out FILE]\n"
+            "  bonfyre-emit layer-manifest <artifact_id> [--format json] [--root DIR]\n"
+            "  bonfyre-emit layer-report <artifact_id> [--format md] [--root DIR]\n"
+            "  bonfyre-emit layer-graph <artifact_id> [--format dot] [--root DIR]\n"
+            "  bonfyre-emit layer-cookbook --family T_* [--root DIR]\n"
+        );
+}
+
 int main(int argc, char *argv[]) {
+    if (bf_help_requested(argc, argv)) { usage(); return 0; }
+    enum {
+        EM_LAYER_COOKBOOK, EM_LAYER_GRAPH, EM_LAYER_MANIFEST, EM_LAYER_REPORT,
+    };
+    static const BfCommandEntry emit_commands[] = {
+        {"layer-cookbook", EM_LAYER_COOKBOOK, 0, NULL},
+        {"layer-graph", EM_LAYER_GRAPH, 0, NULL},
+        {"layer-manifest", EM_LAYER_MANIFEST, 0, NULL},
+        {"layer-report", EM_LAYER_REPORT, 0, NULL},
+    };
     if (argc >= 2) {
-        if (strcmp(argv[1], "layer-manifest") == 0) return delegate_layeros_emit(argc, argv, "layer-manifest");
-        if (strcmp(argv[1], "layer-report") == 0) return delegate_layeros_emit(argc, argv, "layer-report");
-        if (strcmp(argv[1], "layer-graph") == 0) return delegate_layeros_emit(argc, argv, "layer-graph");
-        if (strcmp(argv[1], "layer-cookbook") == 0) return delegate_layeros_emit(argc, argv, "layer-cookbook");
+        const BfCommandEntry *command = bf_command_lookup(emit_commands,
+            sizeof(emit_commands) / sizeof(emit_commands[0]), argv[1]);
+        if (command && command->id == EM_LAYER_MANIFEST) return delegate_layeros_emit(argc, argv, "layer-manifest");
+        if (command && command->id == EM_LAYER_REPORT) return delegate_layeros_emit(argc, argv, "layer-report");
+        if (command && command->id == EM_LAYER_GRAPH) return delegate_layeros_emit(argc, argv, "layer-graph");
+        if (command && command->id == EM_LAYER_COOKBOOK) return delegate_layeros_emit(argc, argv, "layer-cookbook");
     }
 
     const char *art_dir = NULL;
@@ -198,15 +231,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (!art_dir || !format) {
-        fprintf(stderr,
-            "BonfyreEmit — multi-format output engine\n\n"
-            "Usage:\n"
-            "  bonfyre-emit <artifact-dir> --format html|pdf|epub|rss|txt|bundle [--out FILE]\n"
-            "  bonfyre-emit layer-manifest <artifact_id> [--format json] [--root DIR]\n"
-            "  bonfyre-emit layer-report <artifact_id> [--format md] [--root DIR]\n"
-            "  bonfyre-emit layer-graph <artifact_id> [--format dot] [--root DIR]\n"
-            "  bonfyre-emit layer-cookbook --family T_* [--root DIR]\n"
-        );
+        usage();
         return 1;
     }
 

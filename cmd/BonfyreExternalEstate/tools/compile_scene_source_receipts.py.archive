@@ -1,0 +1,170 @@
+#!/usr/bin/env python3
+"""Emit dependency-grounded source receipts for persisted SurfaceScenes.
+
+This does not claim a source was visibly rendered.  It records the exact source
+dependencies present in the ScopedFrontier closure for the same subject/scope,
+plus the Scene's lenses and action apertures.  That creates a reproducible seam
+for later render-level contribution accounting without laundering candidate
+dependencies into visible material.
+"""
+
+import argparse
+import json
+import sqlite3
+import sys
+
+import compile_source_change_impact as impact
+
+
+def json_value(value, fallback):
+    if value is None:
+        return fallback
+    if isinstance(value, (dict, list)):
+        return value
+    try:
+        return json.loads(value)
+    except (TypeError, json.JSONDecodeError):
+        return fallback
+
+
+def scene_rows(db):
+    present = db.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='surface_scene'"
+    ).fetchone()
+    if not present:
+        return []
+    return db.execute(
+        "SELECT scene_key,subject_address,actor_scope,site_id,world,"
+        "lenses,operations,dependencies,source_digest "
+        "FROM surface_scene WHERE status='published' ORDER BY scene_key"
+    ).fetchall()
+
+
+def closure_dependencies(db, subject, scope):
+    try:
+        return db.execute(
+            "SELECT DISTINCT dependency_ref,basis FROM closure_dependency "
+            "WHERE subject=? AND scope=? ORDER BY dependency_ref,basis",
+            (subject, scope),
+        ).fetchall()
+    except sqlite3.Error:
+        return []
+
+
+def action_apertures(operations):
+    value = json_value(operations, {})
+    apertures = value.get("apertures") if isinstance(value, dict) else []
+    if not isinstance(apertures, list):
+        return []
+    return sorted({str(x) for x in apertures if isinstance(x, (str, int, float)) and str(x)})
+
+
+def lens_values(lenses):
+    value = json_value(lenses, [])
+    if not isinstance(value, list):
+        return []
+    return sorted({str(x) for x in value if isinstance(x, (str, int, float)) and str(x)})
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--source-input", action="append", required=True, metavar="LABEL=PATH")
+    ap.add_argument("--frontier-db", required=True)
+    ap.add_argument("--scene-db", required=True)
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--summary")
+    args = ap.parse_args()
+
+    roots = impact.source_roots(args.source_input)
+    frontier_db = sqlite3.connect("file:%s?mode=ro" % args.frontier_db, uri=True)
+    scene_db = sqlite3.connect("file:%s?mode=ro" % args.scene_db, uri=True)
+
+    receipts = []
+    root_scene_counts = {}
+    scenes_without_source_dependency = 0
+    unresolved_foreign_topics = 0
+
+    for scene in scene_rows(scene_db):
+        scene_key, subject, scope, site_id, world, lenses, operations, dependencies, digest = scene
+        source_roots = {}
+        foreign_dependencies = []
+        candidate_dependencies = []
+        other_dependencies = []
+        for ref, basis in closure_dependencies(frontier_db, str(subject), str(scope)):
+            ref, basis = str(ref), str(basis)
+            if ref.startswith("ForeignTwin:"):
+                topic = ref[len("ForeignTwin:"):]
+                root = impact.root_for_topic(roots, topic)
+                foreign_dependencies.append({"ref": ref, "basis": basis})
+                if root:
+                    source_roots[root["root_id"]] = {
+                        "root_id": root["root_id"],
+                        "root_address": root["root_address"],
+                        "provenance": sorted(root["provenance"]),
+                    }
+                else:
+                    unresolved_foreign_topics += 1
+            elif basis == "external_candidate" or ref.startswith("external:"):
+                candidate_dependencies.append({"ref": ref, "basis": basis})
+            else:
+                other_dependencies.append({"ref": ref, "basis": basis})
+
+        if not source_roots:
+            scenes_without_source_dependency += 1
+        for root_id in source_roots:
+            root_scene_counts[root_id] = root_scene_counts.get(root_id, 0) + 1
+
+        receipt = {
+            "schema": "bonfyre.scene-source-receipt.v1",
+            "scene_key": str(scene_key),
+            "subject_address": str(subject),
+            "actor_scope": str(scope),
+            "site_id": str(site_id or ""),
+            "world": str(world or ""),
+            "surface_scene_digest": str(digest or ""),
+            "source_roots": sorted(source_roots.values(), key=lambda row: row["root_id"]),
+            "foreign_twin_dependencies": foreign_dependencies,
+            "external_candidate_dependencies": candidate_dependencies,
+            "other_dependency_count": len(other_dependencies),
+            "lenses": lens_values(lenses),
+            "action_apertures": action_apertures(operations),
+            "cms_dependencies": json_value(dependencies, []),
+            "truth": "scene_dependency_receipt_not_render_visibility_or_source_authority",
+            "cannot_infer": [
+                "source dependency -> source material was visible",
+                "candidate dependency -> exact owner accepted the candidate",
+                "action aperture -> source enabled or authorized the action",
+                "scene dependency -> source authority, rights, price, availability or effect",
+            ],
+        }
+        receipts.append(receipt)
+
+    frontier_db.close()
+    scene_db.close()
+    receipts.sort(key=lambda row: row["scene_key"])
+    with open(args.out, "w") as out:
+        for row in receipts:
+            out.write(json.dumps(row, sort_keys=True, separators=(",", ":")) + "\n")
+
+    summary = {
+        "schema": "bonfyre.scene-source-receipt-summary.v1",
+        "scenes": len(receipts),
+        "scenes_with_source_dependencies": len(receipts) - scenes_without_source_dependency,
+        "scenes_without_source_dependencies": scenes_without_source_dependency,
+        "distinct_source_roots": len(root_scene_counts),
+        "source_root_scene_edges": sum(root_scene_counts.values()),
+        "unresolved_foreign_topics": unresolved_foreign_topics,
+        "max_scene_reuse": max(root_scene_counts.values()) if root_scene_counts else 0,
+        "truth": "scene_dependency_receipt_not_render_visibility_or_source_authority",
+    }
+    if args.summary:
+        json.dump({
+            **summary,
+            "root_scene_counts": dict(sorted(root_scene_counts.items())),
+        }, open(args.summary, "w"), indent=2, sort_keys=True)
+    print(json.dumps(summary, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

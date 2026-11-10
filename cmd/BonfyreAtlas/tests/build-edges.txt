@@ -1,0 +1,12 @@
+build edges: 6 families exist under both cmd/ and components/; 6 have a main.c in each
+  BonfyreAlpha               built from cmd/BonfyreAlpha/src/main.c                  installed: cmd build                      atlas names the built source
+  BonfyreBravo               built from components/BonfyreBravo/src/main.c           installed: older than its source          atlas names a source the build does not use
+  BonfyreCMS                 built from cmd/BonfyreCMS/src/main.c                    installed: components build               atlas names the built source
+  BonfyreDelta               built from cmd/BonfyreDelta/src/main.c                  installed: not installed                  atlas no entry
+  BonfyreEcho                built from cmd/BonfyreEcho/src/main.c                   installed: another build of this source   atlas names the built source
+  BonfyreEmpty               built from cmd/BonfyreEmpty/include/only.h              installed: not installed                  atlas names the built source
+  1 Atlas entries name a source the build does not use
+  1 installed binaries are older than the source they are built from
+  cannot infer: a components/ twin -> a redundant copy (several carry operations the cmd/ program lacks)
+  cannot infer: an installed binary matching the cmd build -> the components program is unused (callers may name it directly)
+  cannot infer: a matching hash -> the same behaviour as a rebuild from changed source

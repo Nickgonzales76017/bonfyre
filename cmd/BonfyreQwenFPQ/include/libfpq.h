@@ -95,6 +95,9 @@ fpq_model_t *fpq_open_with_tied_embedding(const char *path,
 int fpq_matmul(fpq_model_t *m, const char *tensor_name,
                const float *x, float *y);
 
+/* Group several tensor matvecs over one input activation. "shared" describes
+ * the call/input path; tensor representation bodies remain independently owned
+ * unless exact active-cache body identity is separately proven. */
 int fpq_matmul_shared(fpq_model_t *m,
                       size_t n_tensors,
                       const char *const *tensor_names,

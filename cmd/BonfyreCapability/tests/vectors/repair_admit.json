@@ -1,0 +1,25 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-capability","binary_env":"BONFYRE_CAPABILITY_BIN","cases":[
+{"name":"a repair whose vector fails before and passes after is admitted once and shown","files":{"v.json":"{\"schema\":\"bonfyre.command-vectors.v1\",\"binary\":\"toy\",\"binary_env\":\"TOY_BIN\",\"cases\":[{\"name\":\"toy refuses nothing\",\"steps\":[{\"argv\":[],\"exit\":0}]}]}"},"steps":[
+ {"program":"sh","argv":["-c","printf '#!/bin/sh\\nexit 1\\n' > old && printf '#!/bin/sh\\nexit 0\\n' > new && chmod +x old new"],"exit":0},
+ {"program":"sh","argv":["-c","'${root}/tests/vectors/bonfyre-vectors' --replay-repair toy.fix --case 'toy refuses nothing / step 1' --before old --after new --before-source fixture --runs 2 v.json > r.json"],"exit":0},
+ {"program":"sh","argv":["-c","cat r.json"],"exit":0,"at":{"verdict":"replayed","runs":2,"before.every_run_fails_case":true,"before.signatures_identical":true,"after.every_run_passes":true,"after.failing_checks":[],"reasons":[]},"len":{"before.failing_checks":1}},
+ {"argv":["repair-admit","r.json","--claim","toy now exits 0"],"env":{"HOME":"${tmp}","BONFYRE_CAPABILITY_DB":"${tmp}/c.db"},"exit":0,"json":{"id":"toy.fix","admitted":true,"installed_matches":false}},
+ {"argv":["repair-admit","r.json","--claim","toy now exits 0"],"env":{"HOME":"${tmp}","BONFYRE_CAPABILITY_DB":"${tmp}/c.db"},"exit":0,"json":{"id":"toy.fix","admitted":false,"already":true}},
+ {"argv":["repair-admit","r.json","--claim","a different claim"],"env":{"HOME":"${tmp}","BONFYRE_CAPABILITY_DB":"${tmp}/c.db"},"exit":1,"stderr":"bonfyre-capability repair-admit: refused: a different record already holds this id\n"},
+ {"argv":["repair-show","toy.fix"],"env":{"HOME":"${tmp}","BONFYRE_CAPABILITY_DB":"${tmp}/c.db"},"exit":0,"at":{"claim":"toy now exits 0","case":"toy refuses nothing / step 1","runs":2,"before_source":"fixture","installed_sha256":null,"installed_matches":false}},
+ {"argv":["repairs"],"env":{"HOME":"${tmp}","BONFYRE_CAPABILITY_DB":"${tmp}/c.db"},"exit":0,"at":{"0.id":"toy.fix"},"has":{"0.after_binary":"/new"}},
+ {"argv":["repair-show","nope"],"env":{"HOME":"${tmp}","BONFYRE_CAPABILITY_DB":"${tmp}/c.db"},"exit":1,"stdout":""}]},
+{"name":"a replay that does not separate the binaries, a missing claim and changed bytes are refused","files":{"v.json":"{\"schema\":\"bonfyre.command-vectors.v1\",\"binary\":\"toy\",\"binary_env\":\"TOY_BIN\",\"cases\":[{\"name\":\"toy refuses nothing\",\"steps\":[{\"argv\":[],\"exit\":0}]}]}"},"steps":[
+ {"program":"sh","argv":["-c","printf '#!/bin/sh\\nexit 1\\n' > old && printf '#!/bin/sh\\nexit 0\\n' > new && chmod +x old new"],"exit":0},
+ {"program":"sh","argv":["-c","'${root}/tests/vectors/bonfyre-vectors' --replay-repair toy.bad --case 'toy refuses nothing' --before new --after old v.json > swapped.json"],"exit":1},
+ {"program":"sh","argv":["-c","cat swapped.json"],"exit":0,"at":{"verdict":"not-replayed","reasons":["a before run did not fail the named case","an after run did not pass the whole file"]}},
+ {"argv":["repair-admit","swapped.json","--claim","x"],"env":{"HOME":"${tmp}","BONFYRE_CAPABILITY_DB":"${tmp}/c.db"},"exit":1,"stderr":"bonfyre-capability repair-admit: refused: the replay did not replay\n"},
+ {"program":"sh","argv":["-c","'${root}/tests/vectors/bonfyre-vectors' --replay-repair toy.same --case 'toy refuses nothing' --before new --after new v.json"],"exit":1,"at":{"reasons":["a before run did not fail the named case","before and after are the same bytes"]}},
+ {"program":"sh","argv":["-c","'${root}/tests/vectors/bonfyre-vectors' --replay-repair toy.other --case 'no such case' --before old --after new v.json"],"exit":1,"at":{"reasons":["a before run did not fail the named case"]}},
+ {"program":"sh","argv":["-c","'${root}/tests/vectors/bonfyre-vectors' --replay-repair toy.fix --case 'toy refuses nothing' --before old --after new v.json > r.json"],"exit":0},
+ {"argv":["repair-admit","r.json"],"env":{"HOME":"${tmp}","BONFYRE_CAPABILITY_DB":"${tmp}/c.db"},"exit":1,"stderr":"bonfyre-capability repair-admit: refused: --claim names what was repaired\n"},
+ {"program":"sh","argv":["-c","printf '#!/bin/sh\\nexit 0 # rebuilt\\n' > new"],"exit":0},
+ {"argv":["repair-admit","r.json","--claim","toy now exits 0"],"env":{"HOME":"${tmp}","BONFYRE_CAPABILITY_DB":"${tmp}/c.db"},"exit":1,"stderr":"bonfyre-capability repair-admit: refused: the after binary changed since the replay\n"},
+ {"program":"sh","argv":["-c","printf ' ' >> v.json"],"exit":0},
+ {"argv":["repair-admit","r.json","--claim","toy now exits 0"],"env":{"HOME":"${tmp}","BONFYRE_CAPABILITY_DB":"${tmp}/c.db"},"exit":1,"stderr":"bonfyre-capability repair-admit: refused: the vector file changed since the replay\n"},
+ {"argv":["repairs"],"env":{"HOME":"${tmp}","BONFYRE_CAPABILITY_DB":"${tmp}/c.db"},"exit":0,"json":[]}]}]}

@@ -1,0 +1,145 @@
+{
+ "schema": "bonfyre.operator_store.quality_eval_set.v1",
+ "class": "workflow",
+ "threshold": 0.75,
+ "scorer": "two chained stages; stage 1 must return JSON whose five keys equal the expected values exactly, stage 2 receives the model's own stage-1 JSON and must name the expected gate; an item passes only if both stages pass",
+ "generation": {
+  "temperature": 0,
+  "seed": 7,
+  "max_tokens": 96
+ },
+ "items": [
+  {
+   "id": "wf-none",
+   "source": "cmd/BonfyreOperatorStore/src/main.c route_goal gates over an operator goals/runs/actions row",
+   "stages": [
+    {
+     "prompt": "Read this queue row and return only a JSON object with the keys state (string), attempts (integer), open_runs (integer), uncertain_actions (integer) and retry_at (integer). No explanation.\n\nRow: goal 7f3a is queued; it has been attempted 2 times; 0 runs are open; 0 actions are uncertain; retry_at is 1799999000.",
+     "kind": "json",
+     "expected": {
+      "state": "queued",
+      "attempts": 2,
+      "open_runs": 0,
+      "uncertain_actions": 0,
+      "retry_at": 1799999000
+     }
+    },
+    {
+     "prompt": "Gates are checked in this order and the first that matches applies: goal_not_schedulable (state is not queued or retry), uncertain_effect_requires_reconciliation (uncertain_actions > 0), open_run_requires_reconciliation (open_runs > 0), attempts_exhausted (attempts >= max_goal_attempts), not_due (retry_at > now). If none matches, answer none.\nmax_goal_attempts=6, now=1800000000.\nGoal: {stage1}\n\nWhich gate applies? Answer with the gate name or none only.",
+     "kind": "exact",
+     "expected": "none"
+    }
+   ]
+  },
+  {
+   "id": "wf-blocked",
+   "source": "cmd/BonfyreOperatorStore/src/main.c route_goal gates over an operator goals/runs/actions row",
+   "stages": [
+    {
+     "prompt": "Read this queue row and return only a JSON object with the keys state (string), attempts (integer), open_runs (integer), uncertain_actions (integer) and retry_at (integer). No explanation.\n\nRow: goal 11c0 is blocked; it has been attempted 1 time; 0 runs are open; 0 actions are uncertain; retry_at is 0.",
+     "kind": "json",
+     "expected": {
+      "state": "blocked",
+      "attempts": 1,
+      "open_runs": 0,
+      "uncertain_actions": 0,
+      "retry_at": 0
+     }
+    },
+    {
+     "prompt": "Gates are checked in this order and the first that matches applies: goal_not_schedulable (state is not queued or retry), uncertain_effect_requires_reconciliation (uncertain_actions > 0), open_run_requires_reconciliation (open_runs > 0), attempts_exhausted (attempts >= max_goal_attempts), not_due (retry_at > now). If none matches, answer none.\nmax_goal_attempts=6, now=1800000000.\nGoal: {stage1}\n\nWhich gate applies? Answer with the gate name or none only.",
+     "kind": "exact",
+     "expected": "goal_not_schedulable"
+    }
+   ]
+  },
+  {
+   "id": "wf-open-run",
+   "source": "cmd/BonfyreOperatorStore/src/main.c route_goal gates over an operator goals/runs/actions row",
+   "stages": [
+    {
+     "prompt": "Read this queue row and return only a JSON object with the keys state (string), attempts (integer), open_runs (integer), uncertain_actions (integer) and retry_at (integer). No explanation.\n\nRow: goal 52e9 is queued; it has been attempted 3 times; 1 run is open; 0 actions are uncertain; retry_at is 0.",
+     "kind": "json",
+     "expected": {
+      "state": "queued",
+      "attempts": 3,
+      "open_runs": 1,
+      "uncertain_actions": 0,
+      "retry_at": 0
+     }
+    },
+    {
+     "prompt": "Gates are checked in this order and the first that matches applies: goal_not_schedulable (state is not queued or retry), uncertain_effect_requires_reconciliation (uncertain_actions > 0), open_run_requires_reconciliation (open_runs > 0), attempts_exhausted (attempts >= max_goal_attempts), not_due (retry_at > now). If none matches, answer none.\nmax_goal_attempts=6, now=1800000000.\nGoal: {stage1}\n\nWhich gate applies? Answer with the gate name or none only.",
+     "kind": "exact",
+     "expected": "open_run_requires_reconciliation"
+    }
+   ]
+  },
+  {
+   "id": "wf-exhausted",
+   "source": "cmd/BonfyreOperatorStore/src/main.c route_goal gates over an operator goals/runs/actions row",
+   "stages": [
+    {
+     "prompt": "Read this queue row and return only a JSON object with the keys state (string), attempts (integer), open_runs (integer), uncertain_actions (integer) and retry_at (integer). No explanation.\n\nRow: goal 9d41 is in retry; it has been attempted 6 times; 0 runs are open; 0 actions are uncertain; retry_at is 1799990000.",
+     "kind": "json",
+     "expected": {
+      "state": "retry",
+      "attempts": 6,
+      "open_runs": 0,
+      "uncertain_actions": 0,
+      "retry_at": 1799990000
+     }
+    },
+    {
+     "prompt": "Gates are checked in this order and the first that matches applies: goal_not_schedulable (state is not queued or retry), uncertain_effect_requires_reconciliation (uncertain_actions > 0), open_run_requires_reconciliation (open_runs > 0), attempts_exhausted (attempts >= max_goal_attempts), not_due (retry_at > now). If none matches, answer none.\nmax_goal_attempts=6, now=1800000000.\nGoal: {stage1}\n\nWhich gate applies? Answer with the gate name or none only.",
+     "kind": "exact",
+     "expected": "attempts_exhausted"
+    }
+   ]
+  },
+  {
+   "id": "wf-uncertain-first",
+   "source": "cmd/BonfyreOperatorStore/src/main.c route_goal gates over an operator goals/runs/actions row",
+   "stages": [
+    {
+     "prompt": "Read this queue row and return only a JSON object with the keys state (string), attempts (integer), open_runs (integer), uncertain_actions (integer) and retry_at (integer). No explanation.\n\nRow: goal a0b2 is queued; it has been attempted 1 time; 1 run is open; 2 actions are uncertain; retry_at is 0.",
+     "kind": "json",
+     "expected": {
+      "state": "queued",
+      "attempts": 1,
+      "open_runs": 1,
+      "uncertain_actions": 2,
+      "retry_at": 0
+     }
+    },
+    {
+     "prompt": "Gates are checked in this order and the first that matches applies: goal_not_schedulable (state is not queued or retry), uncertain_effect_requires_reconciliation (uncertain_actions > 0), open_run_requires_reconciliation (open_runs > 0), attempts_exhausted (attempts >= max_goal_attempts), not_due (retry_at > now). If none matches, answer none.\nmax_goal_attempts=6, now=1800000000.\nGoal: {stage1}\n\nWhich gate applies? Answer with the gate name or none only.",
+     "kind": "exact",
+     "expected": "uncertain_effect_requires_reconciliation"
+    }
+   ]
+  },
+  {
+   "id": "wf-not-due",
+   "source": "cmd/BonfyreOperatorStore/src/main.c route_goal gates over an operator goals/runs/actions row",
+   "stages": [
+    {
+     "prompt": "Read this queue row and return only a JSON object with the keys state (string), attempts (integer), open_runs (integer), uncertain_actions (integer) and retry_at (integer). No explanation.\n\nRow: goal c3d4 is queued; it has been attempted 1 time; 0 runs are open; 0 actions are uncertain; retry_at is 1800000900.",
+     "kind": "json",
+     "expected": {
+      "state": "queued",
+      "attempts": 1,
+      "open_runs": 0,
+      "uncertain_actions": 0,
+      "retry_at": 1800000900
+     }
+    },
+    {
+     "prompt": "Gates are checked in this order and the first that matches applies: goal_not_schedulable (state is not queued or retry), uncertain_effect_requires_reconciliation (uncertain_actions > 0), open_run_requires_reconciliation (open_runs > 0), attempts_exhausted (attempts >= max_goal_attempts), not_due (retry_at > now). If none matches, answer none.\nmax_goal_attempts=6, now=1800000000.\nGoal: {stage1}\n\nWhich gate applies? Answer with the gate name or none only.",
+     "kind": "exact",
+     "expected": "not_due"
+    }
+   ]
+  }
+ ]
+}

@@ -1,7 +1,16 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 #include <dirent.h>
+#include "../../../lib/libbonfyre/include/bf_help.h"
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
+#include <math.h>
 #include <signal.h>
 #include <sqlite3.h>
 #include <stdio.h>
@@ -14,6 +23,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <bonfyre.h>
+#include <bf_command_lookup.h>
 
 #define MAX_RUNTIME_TOKEN 64
 
@@ -49,12 +59,50 @@ static void resolve_executable_sibling(char *buffer, size_t size, const char *ar
     last = strrchr(buffer, '/');
     if (!last) { buffer[0] = '\0'; return; }
     *last = '\0';
-    snprintf(buffer, size, "%s/%s/%s", buffer, sibling_dir, binary_name);
+    char parent[PATH_MAX];
+    snprintf(parent, sizeof(parent), "%s", buffer);
+    snprintf(buffer, size, "%s/%s/%s", parent, sibling_dir, binary_name);
 }
 
 static const char *default_binary(const char *env_name, const char *argv0, char *resolved, size_t resolved_size, const char *dir, const char *name, const char *fallback) {
     const char *env = getenv(env_name);
     if (env && env[0] != '\0') return env;
+    /* Started by bare name, this process was found on PATH; find it the same
+     * way. Without this the sibling checks below ran against the caller's
+     * working directory, and doctor reported every installed organ missing
+     * from anywhere but a source checkout. */
+    static char self_path[PATH_MAX];
+    if (argv0 && !strchr(argv0, '/')) {
+        const char *path = getenv("PATH");
+        char *copy = path ? strdup(path) : NULL;
+        self_path[0] = '\0';
+        for (char *tok = copy ? strtok(copy, ":") : NULL; tok; tok = strtok(NULL, ":")) {
+            char cand[PATH_MAX];
+            snprintf(cand, sizeof(cand), "%s/%s", tok, argv0);
+            if (tok[0] == '/' && access(cand, X_OK) == 0) { snprintf(self_path, sizeof(self_path), "%s", cand); break; }
+        }
+        free(copy);
+        if (self_path[0]) argv0 = self_path;
+    }
+    /* Installed deployments place all managed bonfyre-* binaries beside
+     * bonfyre-runtime. Resolve that layout before checkout-relative paths so
+     * the same binary can doctor both an installed estate and a source tree. */
+    if (argv0 && argv0[0] == '/') {
+        char installed[PATH_MAX];
+        snprintf(installed, sizeof(installed), "%s", argv0);
+        char *last = strrchr(installed, '/');
+        if (last) {
+            last[1] = '\0';
+            size_t used = strlen(installed), need = strlen(name);
+            if (used + need + 1 <= sizeof(installed)) {
+                memcpy(installed + used, name, need + 1);
+                if (access(installed, X_OK) == 0) {
+                    snprintf(resolved, resolved_size, "%s", installed);
+                    return resolved;
+                }
+            }
+        }
+    }
     /* Try top-level sibling path: ../SiblingDir/binary */
     resolve_executable_sibling(resolved, resolved_size, argv0, dir, name);
     if (resolved[0] != '\0' && access(resolved, X_OK) == 0) return resolved;
@@ -238,9 +286,16 @@ static int is_safe_cmd_token(const char *s) {
     return 1;
 }
 
+/* Whether the last open_catalog call refreshed the catalog from a source tree. */
+static int g_catalog_refreshed = 0;
+
 static int open_catalog(sqlite3 **db_out, char *path, size_t path_sz) {
     bf_catalog_default_db_path(path, path_sz);
-    if (bf_catalog_sync_default(path) != 0) return 0;
+    /* The catalog is refreshed from a source tree when the caller stands in
+     * one. Away from a tree there is nothing to refresh from, which is not
+     * the same as having no catalog: one that exists is still read. */
+    g_catalog_refreshed = (bf_catalog_sync_default(path) == 0);
+    if (!g_catalog_refreshed && access(path, R_OK) != 0) return 0;
     if (bf_sqlite3_open_ro(path, db_out) != SQLITE_OK) {
         sqlite3_close(*db_out);
         *db_out = NULL;
@@ -681,9 +736,10 @@ static int cmd_doctor(int as_json, int preflight_on, int preflight_is_strict, co
         printf("preflight: enabled=%s strict=%s\n",
                preflight_on ? "true" : "false",
                preflight_is_strict ? "true" : "false");
-        printf("catalog:   %s%s\n",
+        printf("catalog:   %s%s%s\n",
                catalog_ok ? "OK  " : "FAIL",
-               catalog_ok ? catalog_path : "");
+               catalog_ok ? catalog_path : "",
+               (catalog_ok && !g_catalog_refreshed) ? "  (as last refreshed; not inside a source tree)" : "");
         if (catalog_ok) {
             printf("surfaces:  workflow=%d family=%d capability=%d model=%d layer=%d recipe=%d\n",
                    workflow_count, family_count, capability_count, model_count, layer_count, recipe_count);
@@ -718,7 +774,8 @@ static int cmd_doctor(int as_json, int preflight_on, int preflight_is_strict, co
         printf("\n  ],\n  \"summary\":{\"ready\":%zu,\"total\":%zu}\n}\n", ready, bins_len);
     } else {
         printf("summary: %zu/%zu binaries resolvable\n", ready, bins_len);
-        if (!catalog_ok || ready != bins_len) {
+        if (!catalog_ok) printf("hint: no catalog; run once from inside a source tree to build it\n");
+        if (ready != bins_len) {
             printf("hint: install missing binaries or set BONFYRE_*_BINARY overrides\n");
             if (catalog) sqlite3_close(catalog);
             return 2;
@@ -752,10 +809,14 @@ static void print_usage(void) {
             "  bonfyre-runtime loop <N> <binary> [args...]\n"
             "  bonfyre-runtime parallel [-- cmd args...]...\n"
             "  bonfyre-runtime pipeline [-- cmd args...]...\n"
+            "  bonfyre-runtime branch --actions FILE --rank CMD [--commit CMD] [--boot MACRO]\n"
+            "                         [--depth N] [--width N] [--decisions N] [--stop-score X]\n"
+            "                         [--log FILE] [--trace FILE] -- guest [args...]\n"
             "  bonfyre-runtime gen <gen args...>\n"
             "  bonfyre-runtime swarm <swarm args...>\n"
             "  bonfyre-runtime control <control args...>\n"
             "  bonfyre-runtime recipe <recipe args...>\n"
+            "  bonfyre-runtime representation doctor|status|verify|apply [--estate DIR --kind DATABASE.TABLE]\n"
             "  bonfyre-runtime model <model args...>\n"
             "  bonfyre-runtime stitch <stitch args...>\n"
             "  bonfyre-runtime proxy <proxy args...>\n"
@@ -780,6 +841,15 @@ static void print_usage(void) {
             "            stage N is streamed directly into stdin of stage N+1.\n"
             "            Eliminates bonfyre-space round-trip I/O for intermediate data.\n"
             "            All stages run concurrently; waits for the final stage.\n"
+            "  branch:   holds one live guest that speaks lines on a pipe. Each decision\n"
+            "            asks the guest to run candidate action sequences in forks of\n"
+            "            itself, ranks where they land, and commits one step; branches\n"
+            "            are candidate state and only the committed log is Actual.\n"
+            "            Guest contract: 'm <macro>' replies one JSON line; 'b <n>' plus\n"
+            "            n macro lines replies n JSON lines carrying \"i\":<1..n>, then a\n"
+            "            line containing \"done\". --actions is name<TAB>macro per line.\n"
+            "            --rank reads ./candidates.jsonl and ./state.json and prints one\n"
+            "            score per candidate, as \"v\":<number> or one number per line.\n"
             "  gen/swarm/control/recipe/model/stitch/proxy/sli: pass-through wrappers so\n"
             "            runtime can orchestrate broad cmd-tree capabilities from one entry point.\n"
             "  run-recipe: canonical bridge to bonfyre-run recipe execution semantics.\n"
@@ -790,6 +860,105 @@ static void print_usage(void) {
 static void print_usage(void);
 static int  cmd_parallel(int argc, char **argv);
 static int  cmd_pipeline(int argc, char **argv);
+static int  cmd_branch(int argc, char **argv);
+
+typedef struct {
+    const char *label, *environment, *directory, *binary, *fallback;
+} RuntimeBinaryDef;
+
+#define RUNTIME_BINARIES(X) \
+    X(QUEUE, "queue", "BONFYRE_QUEUE_BINARY", "BonfyreQueue", "bonfyre-queue", "../BonfyreQueue/bonfyre-queue") \
+    X(PIPELINE, "pipeline", "BONFYRE_PIPELINE_BINARY", "BonfyrePipeline", "bonfyre-pipeline", "../BonfyrePipeline/bonfyre-pipeline") \
+    X(LEDGER, "ledger", "BONFYRE_LEDGER_BINARY", "BonfyreLedger", "bonfyre-ledger", "../BonfyreLedger/bonfyre-ledger") \
+    X(GEN, "gen", "BONFYRE_GEN_BINARY", "BonfyreGen", "bonfyre-gen", "../BonfyreGen/bonfyre-gen") \
+    X(SWARM, "swarm", "BONFYRE_SWARM_BINARY", "BonfyreSwarm", "bonfyre-swarm", "../BonfyreSwarm/bonfyre-swarm") \
+    X(CONTROL, "control", "BONFYRE_CONTROL_BINARY", "BonfyreControl", "bonfyre-control", "../BonfyreControl/bonfyre-control") \
+    X(MOQ, "moq", "BONFYRE_MOQ_BINARY", "BonfyreMoQ", "bonfyre-moq", "../BonfyreMoQ/bonfyre-moq") \
+    X(RUN, "run", "BONFYRE_RUN_BINARY", "BonfyreRun", "bonfyre-run", "../BonfyreRun/bonfyre-run") \
+    X(RECIPE, "recipe", "BONFYRE_RECIPE_BINARY", "BonfyreRecipe", "bonfyre-recipe", "../BonfyreRecipe/bonfyre-recipe") \
+    X(MODEL, "model", "BONFYRE_MODEL_BINARY", "BonfyreModel", "bonfyre-model", "../BonfyreModel/bonfyre-model") \
+    X(STITCH, "stitch", "BONFYRE_STITCH_BINARY", "BonfyreStitch", "bonfyre-stitch", "../BonfyreStitch/bonfyre-stitch") \
+    X(PROXY, "proxy", "BONFYRE_PROXY_BINARY", "BonfyreProxy", "bonfyre-proxy", "../BonfyreProxy/bonfyre-proxy") \
+    X(REPRESENTATION, "representation", "BONFYRE_REPRESENTATION_BINARY", "BonfyreRuntime", "bonfyre-representation", "bonfyre-representation") \
+    X(SLI, "sli", "BONFYRE_SLI_BINARY", "BonfyreSLI", "bonfyre-sli", "../BonfyreSLI/bonfyre-sli") \
+    X(ORCHESTRATE, "orchestrate", "BONFYRE_ORCHESTRATE_BINARY", "BonfyreOrchestrate", "bonfyre-orchestrate", "../BonfyreOrchestrate/bonfyre-orchestrate") \
+    X(PROJECT, "project", "BONFYRE_PROJECT_BINARY", "BonfyreProject", "bonfyre-project", "../BonfyreProject/bonfyre-project") \
+    X(FLOW, "flow", "BONFYRE_FLOW_BINARY", "BonfyreFlow", "bonfyre-flow", "../BonfyreFlow/bonfyre-flow")
+
+enum {
+#define RB_ENUM(id, label, env, dir, bin, fallback) RB_##id,
+    RUNTIME_BINARIES(RB_ENUM)
+#undef RB_ENUM
+    RB_COUNT
+};
+static const RuntimeBinaryDef runtime_binary_defs[] = {
+#define RB_DEF(id, label, env, dir, bin, fallback) {label, env, dir, bin, fallback},
+    RUNTIME_BINARIES(RB_DEF)
+#undef RB_DEF
+};
+typedef struct {
+    const char *argv0;
+    char resolved[RB_COUNT][PATH_MAX];
+    const char *path[RB_COUNT];
+} RuntimeBinaryCache;
+
+static const char *runtime_binary_get(RuntimeBinaryCache *cache, int id) {
+    const RuntimeBinaryDef *def = &runtime_binary_defs[id];
+    if (!cache->path[id])
+        cache->path[id] = default_binary(def->environment, cache->argv0,
+            cache->resolved[id], sizeof(cache->resolved[id]), def->directory,
+            def->binary, def->fallback);
+    return cache->path[id];
+}
+
+enum {
+    RC_AUTOWIRE = RB_COUNT, RC_BRANCH, RC_CAPABILITIES, RC_CONFERENCE, RC_DOCTOR,
+    RC_HELP, RC_HELP_ALIAS,
+    RC_LOOP, RC_PARALLEL, RC_PIPELINE, RC_PROXY, RC_RUN, RC_RUN_LEDGER,
+    RC_RUN_RECIPE, RC_SERVICE
+};
+enum { RC_SPECIAL, RC_DELEGATE };
+static const BfCommandEntry runtime_commands[] = {
+    {"--help", RC_HELP, RC_SPECIAL, NULL},
+    {"autowire", RC_AUTOWIRE, RC_SPECIAL, NULL},
+    {"branch", RC_BRANCH, RC_SPECIAL, NULL},
+    {"capabilities", RC_CAPABILITIES, RC_SPECIAL, NULL},
+    {"conference", RC_CONFERENCE, RC_SPECIAL, NULL},
+    {"control", RB_CONTROL, RC_DELEGATE, NULL},
+    {"doctor", RC_DOCTOR, RC_SPECIAL, NULL},
+    {"flow", RB_FLOW, RC_DELEGATE, NULL},
+    {"gen", RB_GEN, RC_DELEGATE, NULL},
+    {"help", RC_HELP_ALIAS, RC_SPECIAL, NULL},
+    {"ledger", RB_LEDGER, RC_DELEGATE, NULL},
+    {"loop", RC_LOOP, RC_SPECIAL, NULL},
+    {"model", RB_MODEL, RC_DELEGATE, NULL},
+    {"orchestrate", RB_ORCHESTRATE, RC_DELEGATE, NULL},
+    {"parallel", RC_PARALLEL, RC_SPECIAL, NULL},
+    {"pipeline", RC_PIPELINE, RC_SPECIAL, NULL},
+    {"project", RB_PROJECT, RC_DELEGATE, NULL},
+    {"proxy", RC_PROXY, RC_SPECIAL, NULL},
+    {"queue", RB_QUEUE, RC_DELEGATE, NULL},
+    {"recipe", RB_RECIPE, RC_DELEGATE, NULL},
+    {"representation", RB_REPRESENTATION, RC_DELEGATE, NULL},
+    {"run", RC_RUN, RC_SPECIAL, NULL},
+    {"run-ledger", RC_RUN_LEDGER, RC_SPECIAL, NULL},
+    {"run-recipe", RC_RUN_RECIPE, RC_SPECIAL, NULL},
+    {"service", RC_SERVICE, RC_SPECIAL, NULL},
+    {"sli", RB_SLI, RC_DELEGATE, NULL},
+    {"stitch", RB_STITCH, RC_DELEGATE, NULL},
+    {"swarm", RB_SWARM, RC_DELEGATE, NULL},
+};
+
+static int runtime_delegate(const char *binary, int argc, char **argv) {
+    if (argc < 3) return 1;
+    char **child = calloc((size_t)argc, sizeof(*child));
+    if (!child) return 1;
+    child[0] = (char *)binary;
+    for (int i = 2; i < argc; i++) child[i - 1] = argv[i];
+    int rc = run_command(child);
+    free(child);
+    return rc;
+}
 
 int main(int argc, char **argv) {
     if (argc < 2) {
@@ -797,137 +966,61 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    char queue_resolved[PATH_MAX];
-    char pipeline_resolved[PATH_MAX];
-    char ledger_resolved[PATH_MAX];
-    char gen_resolved[PATH_MAX];
-    char swarm_resolved[PATH_MAX];
-    char control_resolved[PATH_MAX];
-    char moq_resolved[PATH_MAX];
-    char run_resolved[PATH_MAX];
-    char recipe_resolved[PATH_MAX];
-    char model_resolved[PATH_MAX];
-    char stitch_resolved[PATH_MAX];
-    char proxy_resolved[PATH_MAX];
-    char sli_resolved[PATH_MAX];
-    char orchestrate_resolved[PATH_MAX];
-    char project_resolved[PATH_MAX];
-    char flow_resolved[PATH_MAX];
-    const char *queue_bin = default_binary("BONFYRE_QUEUE_BINARY", argv[0], queue_resolved, sizeof(queue_resolved), "BonfyreQueue", "bonfyre-queue", "../BonfyreQueue/bonfyre-queue");
-    const char *pipeline_bin = default_binary("BONFYRE_PIPELINE_BINARY", argv[0], pipeline_resolved, sizeof(pipeline_resolved), "BonfyrePipeline", "bonfyre-pipeline", "../BonfyrePipeline/bonfyre-pipeline");
-    const char *ledger_bin = default_binary("BONFYRE_LEDGER_BINARY", argv[0], ledger_resolved, sizeof(ledger_resolved), "BonfyreLedger", "bonfyre-ledger", "../BonfyreLedger/bonfyre-ledger");
-    const char *gen_bin = default_binary("BONFYRE_GEN_BINARY", argv[0], gen_resolved, sizeof(gen_resolved), "BonfyreGen", "bonfyre-gen", "../BonfyreGen/bonfyre-gen");
-    const char *swarm_bin = default_binary("BONFYRE_SWARM_BINARY", argv[0], swarm_resolved, sizeof(swarm_resolved), "BonfyreSwarm", "bonfyre-swarm", "../BonfyreSwarm/bonfyre-swarm");
-    const char *control_bin = default_binary("BONFYRE_CONTROL_BINARY", argv[0], control_resolved, sizeof(control_resolved), "BonfyreControl", "bonfyre-control", "../BonfyreControl/bonfyre-control");
-    const char *moq_bin = default_binary("BONFYRE_MOQ_BINARY", argv[0], moq_resolved, sizeof(moq_resolved), "BonfyreMoQ", "bonfyre-moq", "../BonfyreMoQ/bonfyre-moq");
-    const char *run_bin = default_binary("BONFYRE_RUN_BINARY", argv[0], run_resolved, sizeof(run_resolved), "BonfyreRun", "bonfyre-run", "../BonfyreRun/bonfyre-run");
-    const char *recipe_bin = default_binary("BONFYRE_RECIPE_BINARY", argv[0], recipe_resolved, sizeof(recipe_resolved), "BonfyreRecipe", "bonfyre-recipe", "../BonfyreRecipe/bonfyre-recipe");
-    const char *model_bin = default_binary("BONFYRE_MODEL_BINARY", argv[0], model_resolved, sizeof(model_resolved), "BonfyreModel", "bonfyre-model", "../BonfyreModel/bonfyre-model");
-    const char *stitch_bin = default_binary("BONFYRE_STITCH_BINARY", argv[0], stitch_resolved, sizeof(stitch_resolved), "BonfyreStitch", "bonfyre-stitch", "../BonfyreStitch/bonfyre-stitch");
-    const char *proxy_bin = default_binary("BONFYRE_PROXY_BINARY", argv[0], proxy_resolved, sizeof(proxy_resolved), "BonfyreProxy", "bonfyre-proxy", "../BonfyreProxy/bonfyre-proxy");
-    const char *sli_bin = default_binary("BONFYRE_SLI_BINARY", argv[0], sli_resolved, sizeof(sli_resolved), "BonfyreSLI", "bonfyre-sli", "../BonfyreSLI/bonfyre-sli");
-    const char *orchestrate_bin = default_binary("BONFYRE_ORCHESTRATE_BINARY", argv[0], orchestrate_resolved, sizeof(orchestrate_resolved), "BonfyreOrchestrate", "bonfyre-orchestrate", "../BonfyreOrchestrate/bonfyre-orchestrate");
-    const char *project_bin = default_binary("BONFYRE_PROJECT_BINARY", argv[0], project_resolved, sizeof(project_resolved), "BonfyreProject", "bonfyre-project", "../BonfyreProject/bonfyre-project");
-    const char *flow_bin = default_binary("BONFYRE_FLOW_BINARY", argv[0], flow_resolved, sizeof(flow_resolved), "BonfyreFlow", "bonfyre-flow", "../BonfyreFlow/bonfyre-flow");
-    const BinarySpec runtime_bins[] = {
-        {"queue", queue_bin},
-        {"pipeline", pipeline_bin},
-        {"ledger", ledger_bin},
-        {"gen", gen_bin},
-        {"swarm", swarm_bin},
-        {"control", control_bin},
-        {"moq", moq_bin},
-        {"run", run_bin},
-        {"recipe", recipe_bin},
-        {"model", model_bin},
-        {"stitch", stitch_bin},
-        {"proxy", proxy_bin},
-        {"sli", sli_bin},
-        {"orchestrate", orchestrate_bin},
-        {"project", project_bin},
-        {"flow", flow_bin}
-    };
+    RuntimeBinaryCache binary_cache = {.argv0 = argv[0]};
+    const BfCommandEntry *command = bf_command_lookup(runtime_commands,
+        sizeof(runtime_commands) / sizeof(runtime_commands[0]), argv[1]);
+#define RUNTIME_IS(value) (command && command->id == (value))
+#define queue_bin runtime_binary_get(&binary_cache, RB_QUEUE)
+#define pipeline_bin runtime_binary_get(&binary_cache, RB_PIPELINE)
+#define ledger_bin runtime_binary_get(&binary_cache, RB_LEDGER)
+#define gen_bin runtime_binary_get(&binary_cache, RB_GEN)
+#define swarm_bin runtime_binary_get(&binary_cache, RB_SWARM)
+#define control_bin runtime_binary_get(&binary_cache, RB_CONTROL)
+#define moq_bin runtime_binary_get(&binary_cache, RB_MOQ)
+#define run_bin runtime_binary_get(&binary_cache, RB_RUN)
+#define recipe_bin runtime_binary_get(&binary_cache, RB_RECIPE)
+#define model_bin runtime_binary_get(&binary_cache, RB_MODEL)
+#define stitch_bin runtime_binary_get(&binary_cache, RB_STITCH)
+#define proxy_bin runtime_binary_get(&binary_cache, RB_PROXY)
+#define sli_bin runtime_binary_get(&binary_cache, RB_SLI)
+#define orchestrate_bin runtime_binary_get(&binary_cache, RB_ORCHESTRATE)
+#define project_bin runtime_binary_get(&binary_cache, RB_PROJECT)
+#define flow_bin runtime_binary_get(&binary_cache, RB_FLOW)
 
-    if (strcmp(argv[1], "capabilities") == 0) {
+    if (RUNTIME_IS(RC_HELP) || RUNTIME_IS(RC_HELP_ALIAS)) {
+        print_usage();
+        return 0;
+    }
+
+    if (RUNTIME_IS(RC_CAPABILITIES)) {
         return cmd_capabilities(argv[0]);
     }
 
-    if (strcmp(argv[1], "doctor") == 0) {
+    if (command && command->mode == RC_DELEGATE)
+        return runtime_delegate(runtime_binary_get(&binary_cache, command->id), argc, argv);
+
+    if (RUNTIME_IS(RC_DOCTOR)) {
+        if (bf_help_requested(argc - 1, argv + 1)) {
+            puts("bonfyre doctor -- check what is installed and working\n\n"
+                 "  bonfyre doctor           which binaries, registries and catalogues answer\n"
+                 "  bonfyre doctor --json    the same, for scripts\n\n"
+                 "It reads and reports; it changes nothing.");
+            return 0;
+        }
         int as_json = (argc >= 3 && strcmp(argv[2], "--json") == 0);
+        BinarySpec runtime_bins[RB_COUNT];
+        for (size_t i = 0; i < RB_COUNT; i++) {
+            runtime_bins[i].name = runtime_binary_defs[i].label;
+            runtime_bins[i].path = runtime_binary_get(&binary_cache, (int)i);
+        }
         return cmd_doctor(as_json,
                           preflight_enabled(),
                           preflight_strict(),
                           runtime_bins,
-                          sizeof(runtime_bins) / sizeof(runtime_bins[0]));
+                          RB_COUNT);
     }
 
-    if (strcmp(argv[1], "gen") == 0) {
-        if (argc < 3) return 1;
-        char **child = calloc((size_t)argc, sizeof(char *));
-        if (!child) return 1;
-        child[0] = (char *)gen_bin;
-        for (int i = 2; i < argc; i++) child[i - 1] = argv[i];
-        int rc = run_command(child);
-        free(child);
-        return rc;
-    }
-
-    if (strcmp(argv[1], "swarm") == 0) {
-        if (argc < 3) return 1;
-        char **child = calloc((size_t)argc, sizeof(char *));
-        if (!child) return 1;
-        child[0] = (char *)swarm_bin;
-        for (int i = 2; i < argc; i++) child[i - 1] = argv[i];
-        int rc = run_command(child);
-        free(child);
-        return rc;
-    }
-
-    if (strcmp(argv[1], "control") == 0) {
-        if (argc < 3) return 1;
-        char **child = calloc((size_t)argc, sizeof(char *));
-        if (!child) return 1;
-        child[0] = (char *)control_bin;
-        for (int i = 2; i < argc; i++) child[i - 1] = argv[i];
-        int rc = run_command(child);
-        free(child);
-        return rc;
-    }
-
-    if (strcmp(argv[1], "recipe") == 0) {
-        if (argc < 3) return 1;
-        char **child = calloc((size_t)argc, sizeof(char *));
-        if (!child) return 1;
-        child[0] = (char *)recipe_bin;
-        for (int i = 2; i < argc; i++) child[i - 1] = argv[i];
-        int rc = run_command(child);
-        free(child);
-        return rc;
-    }
-
-    if (strcmp(argv[1], "model") == 0) {
-        if (argc < 3) return 1;
-        char **child = calloc((size_t)argc, sizeof(char *));
-        if (!child) return 1;
-        child[0] = (char *)model_bin;
-        for (int i = 2; i < argc; i++) child[i - 1] = argv[i];
-        int rc = run_command(child);
-        free(child);
-        return rc;
-    }
-
-    if (strcmp(argv[1], "stitch") == 0) {
-        if (argc < 3) return 1;
-        char **child = calloc((size_t)argc, sizeof(char *));
-        if (!child) return 1;
-        child[0] = (char *)stitch_bin;
-        for (int i = 2; i < argc; i++) child[i - 1] = argv[i];
-        int rc = run_command(child);
-        free(child);
-        return rc;
-    }
-
-    if (strcmp(argv[1], "proxy") == 0) {
+    if (RUNTIME_IS(RC_PROXY)) {
         char **child = calloc((size_t)argc + 1, sizeof(char *));
         if (!child) return 1;
         int c = 0;
@@ -944,51 +1037,7 @@ int main(int argc, char **argv) {
         return rc;
     }
 
-    if (strcmp(argv[1], "sli") == 0) {
-        if (argc < 3) return 1;
-        char **child = calloc((size_t)argc, sizeof(char *));
-        if (!child) return 1;
-        child[0] = (char *)sli_bin;
-        for (int i = 2; i < argc; i++) child[i - 1] = argv[i];
-        int rc = run_command(child);
-        free(child);
-        return rc;
-    }
-
-    if (strcmp(argv[1], "orchestrate") == 0) {
-        if (argc < 3) return 1;
-        char **child = calloc((size_t)argc, sizeof(char *));
-        if (!child) return 1;
-        child[0] = (char *)orchestrate_bin;
-        for (int i = 2; i < argc; i++) child[i - 1] = argv[i];
-        int rc = run_command(child);
-        free(child);
-        return rc;
-    }
-
-    if (strcmp(argv[1], "project") == 0) {
-        if (argc < 3) return 1;
-        char **child = calloc((size_t)argc, sizeof(char *));
-        if (!child) return 1;
-        child[0] = (char *)project_bin;
-        for (int i = 2; i < argc; i++) child[i - 1] = argv[i];
-        int rc = run_command(child);
-        free(child);
-        return rc;
-    }
-
-    if (strcmp(argv[1], "flow") == 0) {
-        if (argc < 3) return 1;
-        char **child = calloc((size_t)argc, sizeof(char *));
-        if (!child) return 1;
-        child[0] = (char *)flow_bin;
-        for (int i = 2; i < argc; i++) child[i - 1] = argv[i];
-        int rc = run_command(child);
-        free(child);
-        return rc;
-    }
-
-    if (strcmp(argv[1], "run-recipe") == 0) {
+    if (RUNTIME_IS(RC_RUN_RECIPE)) {
         if (argc < 4) {
             fprintf(stderr, "usage: bonfyre-runtime run-recipe <code> <input> [bonfyre-run args...]\n");
             return 1;
@@ -1025,7 +1074,7 @@ int main(int argc, char **argv) {
         return rc;
     }
 
-    if (strcmp(argv[1], "service") == 0) {
+    if (RUNTIME_IS(RC_SERVICE)) {
         if (argc < 3) {
             fprintf(stderr, "usage: bonfyre-runtime service <proxy|moq|swarm-worker> [args...]\n");
             return 1;
@@ -1070,7 +1119,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    if (strcmp(argv[1], "conference") == 0) {
+    if (RUNTIME_IS(RC_CONFERENCE)) {
         char **child = calloc((size_t)argc + 2, sizeof(char *));
         if (!child) return 1;
         int c = 0;
@@ -1088,7 +1137,7 @@ int main(int argc, char **argv) {
         return rc;
     }
 
-    if (strcmp(argv[1], "autowire") == 0) {
+    if (RUNTIME_IS(RC_AUTOWIRE)) {
         if (argc < 3) {
             fprintf(stderr, "usage: bonfyre-runtime autowire <input> --intent <text> --out <dir> [--mode local|swarm] [--nodes N]\n");
             return 1;
@@ -1105,7 +1154,15 @@ int main(int argc, char **argv) {
             else if (strcmp(argv[i], "--nodes") == 0 && i + 1 < argc) nodes = argv[++i];
         }
         if (!intent || !out_dir) {
-            fprintf(stderr, "autowire requires --intent and --out\n");
+            /* Name the shape, not just the missing flags. Both flags present
+             * and still refused means the positional input was eaten as a flag
+             * value, and "requires --intent and --out" sends the caller looking
+             * at the two things they already passed. */
+            fprintf(stderr, "autowire requires an input artifact before the flags:\n"
+                            "  bonfyre-runtime autowire <input> --intent <text> --out <dir>\n"
+                            "  got input=%s intent=%s out=%s\n",
+                    input ? input : "(none)", intent ? intent : "(none)",
+                    out_dir ? out_dir : "(none)");
             return 1;
         }
 
@@ -1241,34 +1298,12 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    if (strcmp(argv[1], "queue") == 0) {
-        if (argc < 3) return 1;
-        char **child = calloc((size_t)argc, sizeof(char *));
-        if (!child) return 1;
-        child[0] = (char *)queue_bin;
-        for (int i = 2; i < argc; i++) child[i - 1] = argv[i];
-        int rc = run_command(child);
-        free(child);
-        return rc;
-    }
-
-    if (strcmp(argv[1], "ledger") == 0) {
-        if (argc < 3) return 1;
-        char **child = calloc((size_t)argc, sizeof(char *));
-        if (!child) return 1;
-        child[0] = (char *)ledger_bin;
-        for (int i = 2; i < argc; i++) child[i - 1] = argv[i];
-        int rc = run_command(child);
-        free(child);
-        return rc;
-    }
-
-    if (strcmp(argv[1], "run") == 0 || strcmp(argv[1], "run-ledger") == 0) {
+    if (RUNTIME_IS(RC_RUN) || RUNTIME_IS(RC_RUN_LEDGER)) {
         if (argc < 3) {
             print_usage();
             return 1;
         }
-        const int with_ledger = (strcmp(argv[1], "run-ledger") == 0);
+        const int with_ledger = RUNTIME_IS(RC_RUN_LEDGER);
         const char *input = argv[2];
         const char *recipe_hint = find_flag_value(argc - 3, argv + 3, "--recipe");
         const char *out_dir = NULL;
@@ -1312,7 +1347,7 @@ int main(int argc, char **argv) {
         return run_command_to_file(ledger_argv, ledger_json);
     }
 
-    if (strcmp(argv[1], "loop") == 0) {
+    if (RUNTIME_IS(RC_LOOP)) {
         if (argc < 4) {
             fprintf(stderr, "usage: bonfyre-runtime loop <N> <binary> [args...]\n");
             return 1;
@@ -1413,11 +1448,15 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    if (strcmp(argv[1], "parallel") == 0) {
+    if (RUNTIME_IS(RC_BRANCH)) {
+        return cmd_branch(argc - 2, argv + 2);
+    }
+
+    if (RUNTIME_IS(RC_PARALLEL)) {
         return cmd_parallel(argc - 2, argv + 2);
     }
 
-    if (strcmp(argv[1], "pipeline") == 0) {
+    if (RUNTIME_IS(RC_PIPELINE)) {
         return cmd_pipeline(argc - 2, argv + 2);
     }
 
@@ -1429,6 +1468,23 @@ int main(int argc, char **argv) {
     print_usage();
     return 1;
 }
+#undef queue_bin
+#undef pipeline_bin
+#undef ledger_bin
+#undef gen_bin
+#undef swarm_bin
+#undef control_bin
+#undef moq_bin
+#undef run_bin
+#undef recipe_bin
+#undef model_bin
+#undef stitch_bin
+#undef proxy_bin
+#undef sli_bin
+#undef orchestrate_bin
+#undef project_bin
+#undef flow_bin
+#undef RUNTIME_IS
 
 /* ================================================================
  * parallel subcommand
@@ -1503,7 +1559,10 @@ static int cmd_parallel(int argc, char **argv) {
             return 1;
         }
         if (pid == 0) {
-            execv(cargv[0], cargv);
+            /* A bare name is looked up on PATH, as the help's "-- cmd args"
+             * promises and as every other launcher here does. */
+            if (strchr(cargv[0], '/')) execv(cargv[0], cargv);
+            else execvp(cargv[0], cargv);
             perror(cargv[0]);
             _exit(127);
         }
@@ -1618,7 +1677,10 @@ static int cmd_pipeline(int argc, char **argv) {
                 close(pipes[k][1]);
             }
 
-            execv(cargv[0], cargv);
+            /* A bare name is looked up on PATH, as the help's "-- cmd args"
+             * promises and as every other launcher here does. */
+            if (strchr(cargv[0], '/')) execv(cargv[0], cargv);
+            else execvp(cargv[0], cargv);
             perror(cargv[0]);
             _exit(127);
         }
@@ -1646,4 +1708,293 @@ static int cmd_pipeline(int argc, char **argv) {
         }
     }
     return overall;
+}
+
+/* ── branch: one live guest, ranked forks, one committed step ────────────── */
+
+#define BRANCH_MAX_ACTIONS 32
+#define BRANCH_MAX_DEPTH 6
+#define BRANCH_MAX_WIDTH 64
+#define BRANCH_LINE 2048
+
+typedef struct { char name[16]; char macro[256]; } BranchAction;
+typedef struct { int len; unsigned char act[BRANCH_MAX_DEPTH]; } BranchSeq;
+
+static int branch_read_line(FILE *in, char *buf, size_t cap) {
+    if (!fgets(buf, (int)cap, in)) return 0;
+    buf[strcspn(buf, "\r\n")] = '\0';
+    return 1;
+}
+
+static void branch_macro(const BranchAction *actions, const BranchSeq *seq, char *out, size_t cap) {
+    size_t used = 0;
+    out[0] = '\0';
+    for (int i = 0; i < seq->len; i++) {
+        int n = snprintf(out + used, cap - used, "%s%s", i ? ";" : "", actions[seq->act[i]].macro);
+        if (n < 0 || (size_t)n >= cap - used) break;
+        used += (size_t)n;
+    }
+}
+
+static int branch_write_line(const char *path, const char *text) {
+    FILE *f = fopen(path, "w");
+    if (!f) return -1;
+    fputs(text, f);
+    fputc('\n', f);
+    int failed = ferror(f);
+    return fclose(f) != 0 || failed ? -1 : 0;
+}
+
+/* A macro is one line to the guest and one command per line in the log. */
+static int branch_log_macro(FILE *log, const char *macro) {
+    if (!log) return 0;
+    for (const char *p = macro; *p; p++) fputc(*p == ';' ? '\n' : *p, log);
+    fputc('\n', log);
+    return fflush(log) != 0 || ferror(log) ? -1 : 0;
+}
+
+/* Scores are every "v":<number> in the ranker's output, in candidate order.
+ * A ranker that prints bare numbers, one per line, is read the same way. */
+static int branch_rank(const char *cmd, double *scores, int want) {
+    FILE *p = popen(cmd, "r");
+    if (!p) return -1;
+    char *text = NULL, chunk[4096];
+    size_t len = 0, cap = 0, got;
+    while ((got = fread(chunk, 1, sizeof(chunk), p)) > 0) {
+        if (len + got + 1 > cap) {
+            cap = (len + got + 1) * 2;
+            char *grown = realloc(text, cap);
+            if (!grown) { free(text); pclose(p); return -1; }
+            text = grown;
+        }
+        memcpy(text + len, chunk, got);
+        len += got;
+    }
+    /* A ranker that failed has no opinion; its error text is not a score. */
+    if (pclose(p) != 0) { free(text); return -1; }
+    if (!text) return 0;
+    text[len] = '\0';
+
+    int n = 0, keyed = strstr(text, "\"v\"") != NULL;
+    const char *at = text;
+    /* Consume every score: a prefix of an oversized reply is not a result.
+     * Query's installed JSON carrier may quote numeric values. Accept that
+     * representation, not arbitrary text which happens to contain digits. */
+    while (*at) {
+        char *end;
+        if (keyed) {
+            at = strstr(at, "\"v\"");
+            if (!at) break;
+            at += 3;
+            while (isspace((unsigned char)*at)) at++;
+            if (*at++ != ':') { n = -1; break; }
+        }
+        while (isspace((unsigned char)*at)) at++;
+        if (!*at && !keyed) break;
+        int quoted = keyed && *at == '"';
+        if (quoted) at++;
+        errno = 0;
+        double value = strtod(at, &end);
+        if (end == at || errno == ERANGE || !isfinite(value) || n >= want) {
+            n = -1; break;
+        }
+        if (quoted) {
+            if (*end != '"') { n = -1; break; }
+            end++;
+        }
+        if (*end && !isspace((unsigned char)*end) &&
+            !(keyed && (*end == ',' || *end == '}' || *end == ']'))) {
+            n = -1; break;
+        }
+        scores[n++] = value;
+        at = end;
+    }
+    free(text);
+    return n;
+}
+
+static int cmd_branch(int argc, char **argv) {
+    const char *actions_path = NULL, *rank_cmd = NULL, *commit_cmd = NULL;
+    const char *boot = "", *log_path = NULL, *trace_path = NULL;
+    int depth = 3, width = 8, decisions = 100, split = -1;
+    double stop_score = 1e300;
+
+    for (int i = 0; i < argc; i++) {
+        if (strcmp(argv[i], "--") == 0) { split = i; break; }
+        if (i + 1 >= argc) break;
+        if (strcmp(argv[i], "--actions") == 0) actions_path = argv[++i];
+        else if (strcmp(argv[i], "--rank") == 0) rank_cmd = argv[++i];
+        else if (strcmp(argv[i], "--commit") == 0) commit_cmd = argv[++i];
+        else if (strcmp(argv[i], "--boot") == 0) boot = argv[++i];
+        else if (strcmp(argv[i], "--log") == 0) log_path = argv[++i];
+        else if (strcmp(argv[i], "--trace") == 0) trace_path = argv[++i];
+        else if (strcmp(argv[i], "--depth") == 0) depth = atoi(argv[++i]);
+        else if (strcmp(argv[i], "--width") == 0) width = atoi(argv[++i]);
+        else if (strcmp(argv[i], "--decisions") == 0) decisions = atoi(argv[++i]);
+        else if (strcmp(argv[i], "--stop-score") == 0) stop_score = atof(argv[++i]);
+    }
+    if (split < 0 || split + 1 >= argc || !actions_path || !rank_cmd) {
+        fprintf(stderr, "usage: bonfyre-runtime branch --actions FILE --rank CMD [--commit CMD] [--boot MACRO]\n"
+                        "       [--depth N] [--width N] [--decisions N] [--stop-score X] [--log FILE] [--trace FILE] -- guest [args...]\n");
+        return 2;
+    }
+    if (depth < 1) depth = 1;
+    if (depth > BRANCH_MAX_DEPTH) depth = BRANCH_MAX_DEPTH;
+    if (width < 1) width = 1;
+    if (width > BRANCH_MAX_WIDTH) width = BRANCH_MAX_WIDTH;
+
+    BranchAction actions[BRANCH_MAX_ACTIONS];
+    int nactions = 0;
+    FILE *af = fopen(actions_path, "r");
+    char line[BRANCH_LINE];
+    if (!af) { fprintf(stderr, "bonfyre-runtime branch: cannot read %s\n", actions_path); return 2; }
+    while (nactions < BRANCH_MAX_ACTIONS && branch_read_line(af, line, sizeof(line))) {
+        char *tab = strchr(line, '\t');
+        if (!tab || tab == line) continue;
+        *tab = '\0';
+        snprintf(actions[nactions].name, sizeof(actions[nactions].name), "%s", line);
+        snprintf(actions[nactions].macro, sizeof(actions[nactions].macro), "%s", tab + 1);
+        nactions++;
+    }
+    fclose(af);
+    if (nactions == 0) { fprintf(stderr, "bonfyre-runtime branch: no actions in %s\n", actions_path); return 2; }
+
+    int to_guest[2], from_guest[2];
+    if (pipe(to_guest) != 0 || pipe(from_guest) != 0) return 1;
+    pid_t pid = fork();
+    if (pid < 0) return 1;
+    if (pid == 0) {
+        dup2(to_guest[0], STDIN_FILENO);
+        dup2(from_guest[1], STDOUT_FILENO);
+        close(to_guest[0]); close(to_guest[1]); close(from_guest[0]); close(from_guest[1]);
+        execvp(argv[split + 1], argv + split + 1);
+        _exit(127);
+    }
+    close(to_guest[0]);
+    close(from_guest[1]);
+    signal(SIGPIPE, SIG_IGN);
+    FILE *gin = fdopen(to_guest[1], "w"), *gout = fdopen(from_guest[0], "r");
+
+    int cap = width * nactions, done = 0;
+    BranchSeq *cand = malloc((size_t)cap * sizeof(*cand));
+    char *replies = malloc((size_t)cap * BRANCH_LINE);
+    double *scores = malloc((size_t)cap * sizeof(*scores));
+    char *taken = malloc((size_t)cap);
+    FILE *log = log_path ? fopen(log_path, "w") : NULL;
+    FILE *trace = trace_path ? fopen(trace_path, "w") : NULL;
+    const char *stopped = "decisions";
+    char state[BRANCH_LINE] = "{}", macro[BRANCH_LINE];
+    long forks = 0;
+    double best_score = 0.0;
+    struct timespec began, ended;
+    clock_gettime(CLOCK_MONOTONIC, &began);
+
+    if (!gin || !gout || !cand || !replies || !scores || !taken ||
+        (log_path && !log) || (trace_path && !trace)) { stopped = "setup"; goto finish; }
+
+    fprintf(gin, "m %s\n", boot);
+    fflush(gin);
+    if (!branch_read_line(gout, state, sizeof(state))) { stopped = "guest_closed"; goto finish; }
+    if (boot[0] && branch_log_macro(log, boot) != 0) { stopped = "log"; goto finish; }
+    if (branch_write_line("state.json", state) != 0) { stopped = "workdir"; goto finish; }
+    if (commit_cmd && system(commit_cmd) != 0) { stopped = "commit"; goto finish; }
+
+    for (; done < decisions; done++) {
+        BranchSeq beam[BRANCH_MAX_WIDTH], best;
+        int nbeam = 1, have_best = 0;
+        beam[0].len = 0;
+        best.len = 0;
+        best_score = 0.0;
+
+        for (int level = 0; level < depth; level++) {
+            int n = 0;
+            for (int b = 0; b < nbeam; b++) {
+                for (int a = 0; a < nactions; a++) {
+                    cand[n] = beam[b];
+                    cand[n].act[cand[n].len++] = (unsigned char)a;
+                    n++;
+                }
+            }
+            fprintf(gin, "b %d\n", n);
+            for (int k = 0; k < n; k++) {
+                branch_macro(actions, &cand[k], macro, sizeof(macro));
+                fprintf(gin, "%s\n", macro);
+                replies[(size_t)k * BRANCH_LINE] = '\0';
+            }
+            fflush(gin);
+            for (;;) {
+                if (!branch_read_line(gout, line, sizeof(line))) { stopped = "guest_closed"; goto finish; }
+                const char *tag = strstr(line, "\"i\":");
+                if (!tag) { if (strstr(line, "\"done\"")) break; continue; }
+                int k = atoi(tag + 4);
+                if (k >= 1 && k <= n) snprintf(replies + (size_t)(k - 1) * BRANCH_LINE, BRANCH_LINE, "%s", line);
+            }
+            forks += n;
+
+            FILE *cf = fopen("candidates.jsonl", "w");
+            if (!cf) { stopped = "workdir"; goto finish; }
+            for (int k = 0; k < n; k++) {
+                const char *reply = replies + (size_t)k * BRANCH_LINE;
+                fprintf(cf, "%s\n", reply[0] ? reply : "{}");
+            }
+            if (fclose(cf) != 0) { stopped = "workdir"; goto finish; }
+            int got = branch_rank(rank_cmd, scores, n);
+            if (got != n) {
+                fprintf(stderr, "bonfyre-runtime branch: ranker gave %d scores for %d candidates\n", got, n);
+                stopped = "ranker";
+                goto finish;
+            }
+
+            memset(taken, 0, (size_t)n);
+            nbeam = 0;
+            while (nbeam < width && nbeam < n) {
+                int top = -1;
+                for (int k = 0; k < n; k++)
+                    if (!taken[k] && (top < 0 || scores[k] > scores[top])) top = k;
+                taken[top] = 1;
+                if (nbeam == 0 && (!have_best || scores[top] > best_score)) {
+                    best = cand[top];
+                    best_score = scores[top];
+                    have_best = 1;
+                }
+                beam[nbeam++] = cand[top];
+            }
+        }
+
+        /* A branch that reaches the stop score is committed whole: the guest
+         * is deterministic, so the committed log lands where the fork did. */
+        int commit_len = best_score >= stop_score ? best.len : 1;
+        for (int j = 0; j < commit_len; j++) {
+            const char *step = actions[best.act[j]].macro;
+            fprintf(gin, "m %s\n", step);
+            fflush(gin);
+            if (!branch_read_line(gout, state, sizeof(state))) { stopped = "guest_closed"; goto finish; }
+            if (branch_log_macro(log, step) != 0) { stopped = "log"; goto finish; }
+        }
+        if (branch_write_line("state.json", state) != 0) { stopped = "workdir"; goto finish; }
+        if (trace) {
+            fprintf(trace, "{\"decision\":%d,\"action\":\"%s\",\"plan\":\"", done + 1, actions[best.act[0]].name);
+            for (int j = 0; j < best.len; j++) fprintf(trace, "%s%s", j ? " " : "", actions[best.act[j]].name);
+            fprintf(trace, "\",\"score\":%.1f,\"state\":%s}\n", best_score, state);
+            if (fflush(trace) != 0 || ferror(trace)) { stopped = "trace"; goto finish; }
+        }
+        /* The guest may already have moved. Keep its log and report failure;
+         * neither retry nor rollback of an external callback is inferred. */
+        if (commit_cmd && system(commit_cmd) != 0) { stopped = "commit"; goto finish; }
+        if (best_score >= stop_score) { stopped = "score"; done++; break; }
+    }
+
+finish:
+    if (gin) { fprintf(gin, "q\n"); fclose(gin); }
+    if (gout) fclose(gout);
+    waitpid(pid, NULL, 0);
+    if (log) fclose(log);
+    if (trace) fclose(trace);
+    clock_gettime(CLOCK_MONOTONIC, &ended);
+    double seconds = (double)(ended.tv_sec - began.tv_sec) + (double)(ended.tv_nsec - began.tv_nsec) / 1e9;
+    printf("{\"generator\":\"bonfyre-runtime branch\",\"decisions\":%d,\"forks\":%ld,\"seconds\":%.1f,"
+           "\"forks_per_second\":%.0f,\"stopped\":\"%s\",\"best_score\":%.1f,\"state\":%s}\n",
+           done, forks, seconds, seconds > 0 ? (double)forks / seconds : 0.0, stopped, best_score, state);
+    free(cand); free(replies); free(scores); free(taken);
+    return strcmp(stopped, "score") == 0 || strcmp(stopped, "decisions") == 0 ? 0 : 1;
 }

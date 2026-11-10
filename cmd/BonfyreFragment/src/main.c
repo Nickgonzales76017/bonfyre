@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * BonfyreFragment — Fragment system CLI
  *
@@ -28,6 +35,7 @@
 #include <string.h>
 
 #include "../../../lib/libfragment/include/fragment.h"
+#include "../../../lib/libbonfyre/include/bf_help.h"
 
 #define MAX_PATH   4096
 #define MAX_PARENTS 8
@@ -100,6 +108,16 @@ static int cmd_create(int argc, char **argv) {
 
     if (!store_path || !kind || !persp) {
         fprintf(stderr, "create: --store --kind --persp required\n");
+        return 1;
+    }
+    /* A confidence is a probability; 1.5 or -0.2 is a typing error, not a
+     * stronger or weaker claim, and must not be stored as one. */
+    if (!(conf >= 0.0f && conf <= 1.0f)) {
+        fprintf(stderr, "create: --conf must be within [0,1]\n");
+        return 1;
+    }
+    if (start_ms >= 0 && end_ms >= 0 && end_ms < start_ms) {
+        fprintf(stderr, "create: --end-ms precedes --start-ms\n");
         return 1;
     }
 
@@ -514,6 +532,7 @@ static void print_usage(void) {
 }
 
 int main(int argc, char **argv) {
+    if (bf_help_requested(argc, argv)) { print_usage(); return 0; }
     if (argc < 2) { print_usage(); return 1; }
 
     const char *cmd = argv[1];

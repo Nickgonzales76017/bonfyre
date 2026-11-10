@@ -1,0 +1,369 @@
+#!/usr/bin/env python3
+"""Turn candidate channels into sources the pages actually read, or say why not.
+
+The ledger fills with candidates: links a body carried, conventions a
+publishing grammar implies, members a catalogue declared.  A candidate is not a
+source.  This asks each one, through the ForeignTwin observer so robots rules
+and receipts govern the request, and admits only what answers:
+
+  a feed must parse, carry at least three items, have a title on most of them,
+  have published something inside the freshness window, and be in English (the
+  language this estate reads); a calendar must hold at least three events with
+  one still to come.
+
+What is admitted becomes a census row with its family and reading contract, and
+the ledger records the new state.  What is refused keeps its channel with the
+reason, so the same address is not asked again next week for the same answer.
+
+Every run is bounded: --limit channels, one question each, spaced.
+
+  Historical Python oracle; live command is qualify_channels.mjs.
+      --out rows.json [--limit 40] [--evidence evidence.jsonl] [--freshness-days 120]
+"""
+import argparse
+import html as html_module
+import urllib.parse, hashlib, json, os, re, sqlite3, subprocess, sys, threading, time, urllib.parse
+from concurrent.futures import ThreadPoolExecutor
+
+ITEM = re.compile(r"<(item|entry)\b", re.I)
+TITLE = re.compile(r"<title[^>]*>(.*?)</title>", re.I | re.S)
+LANGUAGE = re.compile(r"<language[^>]*>([^<]+)</language>|xml:lang=[\"']([^\"']+)[\"']", re.I)
+DATE = re.compile(r"<(pubDate|published|updated|dc:date)[^>]*>([^<]+)<", re.I)
+VEVENT = re.compile(r"BEGIN:VEVENT", re.I)
+DTSTART = re.compile(r"^DTSTART[^:\r\n]*:([0-9TZ]+)", re.M)
+
+# What a channel's material means for the family a census row is filed under.
+# A feed's family is taken from what this estate already files that publisher
+# under; the material only decides when nothing is known, and a publisher this
+# estate has never filed is "news" rather than anything local.
+FAMILY = {"event": "events", "publication": "news", "conversation": "forums",
+          "photo": "images", "taxonomy": None, "index": None, "reference": None}
+
+# A feed the publisher itself calls a comment thread on one article is not an
+# editorial channel: WordPress links one from every post it serves.
+COMMENTS = re.compile(r"<title[^>]*>\s*(?:<!\[CDATA\[)?\s*Comments on[: ]", re.I)
+
+
+def observe(project, foreign, twin, url, timeout=60):
+    receipts, bodies = os.path.join(foreign, "receipts"), os.path.join(foreign, "bodies")
+    os.makedirs(receipts, exist_ok=True)
+    os.makedirs(bodies, exist_ok=True)
+    receipt, body = os.path.join(receipts, twin + ".json"), os.path.join(bodies, twin + ".body")
+    try:
+        subprocess.run([project, "foreign", "observe", twin, url, "--receipt", receipt, "--body", body, "--observe-right", "public"],
+                       capture_output=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        return {"policy_decision": "timeout"}, ""
+    last = {}
+    if os.path.exists(receipt):
+        lines = [l for l in open(receipt, encoding="utf-8", errors="replace").read().splitlines() if l.startswith("{")]
+        if lines:
+            try:
+                last = json.loads(lines[-1])
+            except ValueError:
+                last = {}
+    text = ""
+    if os.path.exists(body) and 200 <= int(last.get("http_status") or 0) < 300:
+        with open(body, "rb") as f:
+            text = f.read(4_000_000).decode("utf-8", "replace")
+    try:
+        os.unlink(body)                    # a question, not material: the receipt is the evidence
+    except OSError:
+        pass
+    return last, text
+
+
+
+# A page that is not a feed but says where its feeds are is a discovery, not a
+# refusal.  Publishers have declared this in their own markup since 2002; the
+# estate was asking thousands of addresses, being told exactly where to look,
+# and throwing the answer away.
+FEED_LINK = re.compile(
+    r"""<link\b[^>]*?rel=["']?alternate["']?[^>]*?>""", re.I)
+FEED_TYPE = re.compile(r"""type=["']?(application/(?:rss\+xml|atom\+xml|feed\+json|json))""", re.I)
+FEED_HREF = re.compile(r"""href=["']([^"']+)["']""", re.I)
+FEED_TITLE = re.compile(r"""title=["']([^"']*)["']""", re.I)
+
+
+def feeds_a_page_declares(text, page_url):
+    """Every feed this page names in its own head, as absolute addresses."""
+    if not text or "<link" not in text.lower():
+        return []
+    found, seen = [], set()
+    for tag in FEED_LINK.findall(text[:400000]):
+        kind = FEED_TYPE.search(tag)
+        href = FEED_HREF.search(tag)
+        if not kind or not href:
+            continue
+        address = urllib.parse.urljoin(page_url, html_module.unescape(href.group(1).strip()))
+        if not address.lower().startswith(("http://", "https://")) or address in seen:
+            continue
+        seen.add(address)
+        title = FEED_TITLE.search(tag)
+        found.append({
+            "address": address,
+            "protocol": "json_feed" if "json" in kind.group(1).lower() else "rss",
+            "title": html_module.unescape(title.group(1)).strip() if title else "",
+        })
+    return found
+
+
+def judge_feed(text, freshness_days):
+    if not text.strip():
+        return None, "answered nothing"
+    if text.lstrip()[:1] not in ("<", "{"):
+        return None, "not a feed document"
+    if COMMENTS.search(text):
+        return None, "a comment thread on one article, not a channel"
+    items = ITEM.findall(text)
+    if len(items) < 3:
+        return None, "fewer than three items"
+    titles = TITLE.findall(text)
+    if len(titles) < 3:
+        return None, "most items have no title"
+    language = LANGUAGE.search(text)
+    tongue = (language.group(1) or language.group(2) or "").strip().lower() if language else ""
+    if tongue and not tongue.startswith("en"):
+        return None, "published in %s" % tongue
+    if not tongue:
+        # A feed that states no language still shows one.  This estate reads
+        # English, so it looks for English rather than assuming it: the words
+        # that carry an English sentence are the evidence.
+        words = re.findall(r"[A-Za-z']+", " ".join(
+            re.sub(r"<!\[CDATA\[|\]\]>", " ", t) for t in titles[:25]).lower())
+        english = {"the", "and", "of", "to", "in", "for", "on", "with", "is", "are", "at",
+                   "from", "after", "over", "how", "why", "new", "says", "as", "by", "a"}
+        hits = sum(1 for w in words if w in english)
+        if len(words) >= 12 and hits < 3:
+            return None, "states no language and its words do not read as English"
+    newest = ""
+    for _, when in DATE.findall(text)[:40]:
+        newest = max(newest, when.strip())
+    if newest:
+        # A feed whose newest date cannot be read is not refused for that alone.
+        try:
+            from email.utils import parsedate_to_datetime
+            at = parsedate_to_datetime(newest)
+            age = (time.time() - at.timestamp()) / 86400
+            if age > freshness_days:
+                return None, "nothing published in %d days" % int(age)
+        except Exception:
+            pass
+    channel_title = ""
+    for candidate in titles[:1]:
+        channel_title = re.sub(r"<!\[CDATA\[|\]\]>|\s+", " ", candidate).strip()[:120]
+    return {"items": len(items), "language": tongue or "unstated", "channel_title": channel_title}, None
+
+
+def judge_calendar(text):
+    events = VEVENT.findall(text)
+    if len(events) < 3:
+        return None, "fewer than three events"
+    today = time.strftime("%Y%m%d", time.gmtime())
+    upcoming = [s for s in DTSTART.findall(text) if s[:8] >= today]
+    if not upcoming:
+        return None, "nothing upcoming"
+    return {"events": len(events), "upcoming": len(upcoming)}, None
+
+
+def source_id(url, protocol):
+    host = urllib.parse.urlparse(url).netloc.lower().replace("www.", "")
+    stem = re.sub(r"[^a-z0-9]+", "-", host).strip("-")[:40]
+    return "%s-%s-%s" % (protocol, stem, hashlib.sha256(url.encode()).hexdigest()[:6])
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--db", required=True)
+    ap.add_argument("--frontier", required=True)
+    ap.add_argument("--project", required=True)
+    ap.add_argument("--foreign", required=True)
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--limit", type=int, default=40)
+    ap.add_argument("--workers", type=int, default=6, help="questions asked at once, never two to one host")
+    ap.add_argument("--freshness-days", type=int, default=120)
+    ap.add_argument("--cms", help="the census, so a channel joins the family its publisher is already filed under")
+    ap.add_argument("--evidence", default=os.devnull)
+    ap.add_argument("--only-label", default="",
+                    help="ask only the channels imported under this label, so material this "
+                         "estate deliberately went looking for is not stuck behind a hundred "
+                         "thousand older candidates in a first-seen queue")
+    ap.add_argument("--channel-id-file", default="",
+                    help="ask exactly these SourceFrontier channel ids. This is the WorkGraph "
+                         "execution seam: selection/lease lives in WorkGraph while this program "
+                         "keeps ownership of observation, parsing, admission and refusal.")
+    ap.add_argument("--discovered", default="",
+                    help="where to write the feeds that refused pages themselves declared")
+    args = ap.parse_args()
+
+    # What this estate already files each publisher under, so a qualified
+    # channel joins its publisher's family instead of inventing one.
+    known_family = {}
+    if args.cms and os.path.exists(args.cms):
+        census = sqlite3.connect("file:%s?mode=ro" % args.cms, uri=True)
+        for url, family in census.execute("SELECT COALESCE(url,''), COALESCE(family,'') FROM internet_source WHERE status='published' AND url LIKE 'http%'"):
+            host = urllib.parse.urlparse(url).netloc.lower().replace("www.", "")
+            if host and family:
+                known_family.setdefault(host, family)
+        census.close()
+
+    con = sqlite3.connect("file:%s?mode=ro" % args.db, uri=True)
+    exact_ids = []
+    if args.channel_id_file:
+        with open(args.channel_id_file) as selected:
+            exact_ids = [line.strip() for line in selected if line.strip()]
+        # WorkGraph slices are deliberately bounded.  Refuse an accidental huge
+        # selector rather than constructing an unbounded SQL statement.
+        if len(exact_ids) > 900:
+            raise SystemExit("--channel-id-file may contain at most 900 ids per qualifier pass")
+
+    base_sql = (
+        "SELECT c.channel_id, c.exact_address, c.protocol, COALESCE(NULLIF(c.material,''),'publication'),"
+        " COALESCE(NULLIF(c.title,''), r.name, r.host), r.host, COALESCE(NULLIF(c.identity,''), r.identity, '')"
+        " FROM channel c JOIN root r ON r.root_id=c.root_id"
+        " WHERE c.state IN ('shadow','candidate') AND COALESCE(c.refusal,'')=''"
+        # Maximalist: every address the ledger holds that nothing has refused
+        # yet gets asked. The protocol a listing claimed is a guess made before
+        # anyone read the endpoint; what an address actually is, is decided from
+        # what it sent back. Protocol families with their own compiler stay out
+        # of this feed/calendar qualifier.
+        "   AND c.protocol NOT IN ('mcp','x402','graphql','openapi','soap')"
+    )
+    params = []
+    if exact_ids:
+        base_sql += " AND c.channel_id IN (%s)" % ",".join("?" for _ in exact_ids)
+        params.extend(exact_ids)
+    if args.only_label:
+        base_sql += " AND EXISTS (SELECT 1 FROM channel_origin o WHERE o.channel_id=c.channel_id AND o.label=?)"
+        params.append(args.only_label)
+    if exact_ids:
+        # WorkGraph has already chosen and leased this slice. Preserve that
+        # order in memory after the read instead of re-applying the old FIFO.
+        base_sql += " LIMIT ?"
+        params.append(len(exact_ids))
+    else:
+        base_sql += " ORDER BY (c.truth_level='observed_link_candidate') DESC, c.first_seen LIMIT ?"
+        params.append(args.limit)
+    candidates = con.execute(base_sql, params).fetchall()
+    con.close()
+    if exact_ids:
+        rank = {channel_id: index for index, channel_id in enumerate(exact_ids)}
+        candidates.sort(key=lambda row: rank.get(row[0], len(rank)))
+
+    rows, states, admitted, refused = [], [], 0, 0
+    discovered, discovered_seen = [], set()
+    per_host = {}
+    for candidate in candidates:
+        per_host.setdefault(candidate[5], []).append(candidate)
+
+    def ask_host(queue):
+        """One worker takes one publisher's whole queue, so questions are
+        spread across publishers rather than aimed at one of them."""
+        out = []
+        for channel_id, address, protocol, material, name, host, identity in queue:
+            twin = "qualify-" + hashlib.sha256(address.encode()).hexdigest()[:16]
+            receipt, text = observe(args.project, args.foreign, twin, address)
+            out.append((address, protocol, material, name, host, identity, receipt, text))
+            time.sleep(0.4)                     # a publisher is asked slowly
+        return out
+
+    answers = []
+    with ThreadPoolExecutor(max_workers=max(1, args.workers)) as pool:
+        for got in pool.map(ask_host, per_host.values()):
+            answers.extend(got)
+
+    with open(args.evidence, "a") as evidence:
+        for address, protocol, material, name, host, identity, receipt, text in answers:
+            record = {"address": address, "protocol": protocol, "http_status": receipt.get("http_status"),
+                      "policy": receipt.get("policy_decision")}
+            if receipt.get("policy_decision") not in (None, "allow"):
+                why = "robots or observe policy: %s" % receipt.get("policy_decision")
+                states.append({"address": address, "state": "candidate", "refusal": why})
+                record["refused"] = why
+                evidence.write(json.dumps(record) + "\n")
+                refused += 1
+                continue
+            # What an address is, is what it answered with.  A listing that
+            # said "rss" and returns a calendar is a calendar; one whose
+            # protocol was never known is whatever it turns out to be.
+            head = (text or "")[:4000].lstrip()
+            looks_like_calendar = head[:15].upper().startswith("BEGIN:VCALENDAR")
+            reads_as = "ics" if (protocol == "ics" or looks_like_calendar) else "feed"
+            reading, why = (judge_calendar(text) if reads_as == "ics"
+                            else judge_feed(text, args.freshness_days))
+            if why:
+                # Before writing it off: a page that is not itself a channel
+                # very often says, in its own head, exactly where its channels
+                # are.  Those addresses are worth more than this refusal.
+                declared = feeds_a_page_declares(text, address)
+                for feed in declared:
+                    if feed["address"] not in discovered_seen:
+                        discovered_seen.add(feed["address"])
+                        discovered.append({
+                            "root": host, "address": feed["address"], "protocol": feed["protocol"],
+                            "title": feed["title"], "material": material,
+                            "truth_level": "observed_link_candidate",
+                            "discovered_from": "declared by %s in its own markup" % address,
+                        })
+                if declared:
+                    why = "%s; it declares %d channel%s of its own" % (
+                        why, len(declared), "" if len(declared) == 1 else "s")
+                    record["declares"] = [f["address"] for f in declared]
+                states.append({"address": address, "state": "candidate", "refusal": why})
+                record["refused"] = why
+                evidence.write(json.dumps(record) + "\n")
+                refused += 1
+                continue
+            family = known_family.get(host) or FAMILY.get(material) or ("events" if reads_as == "ics" else "news")
+            # What the channel calls itself is a better name than the root's.
+            name = reading.get("channel_title") or (name if not name.startswith("http") else host)
+            ident = source_id(address, "events" if reads_as == "ics" else "feed")
+            rows.append({
+                "family": family, "source": ident, "label": (name or host)[:120],
+                "says": "what %s publishes" % (name or host),
+                "note": "%s, read from the channel it publishes" % (name or host),
+                # A feed is asked for at the rhythm it publishes at: a news
+                # channel every half hour, a calendar every six.  The scheduler
+                # multiplies this by the source's standing, so an admitted feed
+                # is read within hours rather than days.
+                "url": address, "twin": ident, "tier": "WARM", "kind": "event" if reads_as == "ics" else "text",
+                "cadence_seconds": 21600 if reads_as == "ics" else 1800, "status": "published",
+                "reading": {"extract": "ics:vevent" if reads_as == "ics" else "rss:item"},
+                "publisher_ident": identity, "publisher_name": name if name != host else "",
+                "compiled_by": "channel-qualifier",
+            })
+            states.append({"address": address, "state": "eligible", "census_source": ident,
+                           "material": material, "title": name})
+            record.update(reading)
+            record["admitted"] = ident
+            evidence.write(json.dumps(record) + "\n")
+            admitted += 1
+
+    json.dump(rows, open(args.out, "w"), indent=1)
+    if states:
+        listing = os.path.join(os.path.dirname(os.path.abspath(args.out)), "qualified-states.jsonl")
+        with open(listing, "w") as out:
+            for state in states:
+                out.write(json.dumps(state) + "\n")
+        subprocess.run([args.frontier, "import", "--db", args.db, "--label", "CHANNEL_QUALIFIER", "--jsonl", listing],
+                       capture_output=True, text=True)
+    # What the refused pages told us about themselves, written where the
+    # ledger can take it in: these are listings, not admissions -- each one
+    # still has to answer for itself before any page reads it.
+    if discovered and args.discovered:
+        with open(args.discovered, "w") as out:
+            for channel in discovered:
+                out.write(json.dumps(channel) + "\n")
+        subprocess.run([args.frontier, "import", "--db", args.db,
+                        "--label", "DECLARED_BY_PUBLISHER", "--jsonl", args.discovered],
+                       capture_output=True, text=True)
+    print(json.dumps({"asked": len(candidates), "publishers": len(per_host), "admitted": admitted, "refused": refused,
+                      "selected_by_workgraph": len(exact_ids),
+                      "declared_channels_found": len(discovered),
+                      "cannot_infer": "an admitted channel is one that answered and parsed, never one whose content was judged true; "
+                                      "a declared channel is an address a publisher named, never one this estate has read"}))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

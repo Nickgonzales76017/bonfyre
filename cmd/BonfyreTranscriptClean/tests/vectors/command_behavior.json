@@ -1,0 +1,6 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-transcript-clean","binary_env":"BONFYRE_TRANSCRIPT_CLEAN_BIN","cases":[
+{"name":"clean removes fillers and a repeated word and reports counts","files":{"t.txt":"Speaker 1: Um, so we, we need to fix the the website by Friday.\nSpeaker 2: Okay. The checkout page is broken and customers cannot pay.\nSpeaker 1: Right, uh, and we should also update the pricing page.\n"},"steps":[
+ {"argv":["--transcript","t.txt","--out","c.txt","--status-out","s.json"],"env":{"HOME":"${tmp}"},"exit":0,"present":["${tmp}/c.txt","${tmp}/s.json"]},
+ {"program":"cat","argv":["s.json"],"at":{"status":"completed","changed":true,"fillerTokensRemoved":2,"repeatedWordsRemoved":1}},
+ {"program":"cat","argv":["c.txt"],"contains":["fix the website by Friday","Right, and we should"],"excludes":["the the"," uh,"]}]},
+{"name":"clean dry-run writes nothing","files":{"t.txt":"Speaker 1: Um, so we, we need to fix the the website by Friday.\nSpeaker 2: Okay. The checkout page is broken and customers cannot pay.\nSpeaker 1: Right, uh, and we should also update the pricing page.\n"},"steps":[{"argv":["--transcript","t.txt","--out","c.txt","--dry-run"],"env":{"HOME":"${tmp}"},"exit":0,"absent":["${tmp}/c.txt"]}]}]}

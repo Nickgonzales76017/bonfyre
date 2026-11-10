@@ -1,0 +1,14 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-pay","binary_env":"BONFYRE_PAY_BIN","cases":[
+{"name":"a credit lowers nothing due and shows in the balance","steps":[
+ {"argv":["--db","p.db","credit","--user-id","7","--amount","500","--reason","goodwill"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["Credit $5.00 applied to user #7"]},
+ {"argv":["--db","p.db","balance","--user-id","7"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["Total credits:  $5.00","Balance due:    $0.00"]}]},
+{"name":"malformed ids and non-positive amounts are refused, not coerced","steps":[
+ {"argv":["--db","p.db","credit","--user-id","u1","--amount","500","--reason","x"],"env":{"HOME":"${tmp}"},"exit":1},
+ {"argv":["--db","p.db","credit","--user-id","7","--amount","-50","--reason","x"],"env":{"HOME":"${tmp}"},"exit":1},
+ {"argv":["--db","p.db","balance","--user-id","abc"],"env":{"HOME":"${tmp}"},"exit":1},
+ {"argv":["--db","p.db","pay","--invoice-id","1","--amount","0","--method","card"],"env":{"HOME":"${tmp}"},"exit":1},
+ {"argv":["--db","p.db","status"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["Credits:      $0.00"]}]},
+{"name":"paying an unknown invoice is refused","steps":[{"argv":["--db","p.db","pay","--invoice-id","999","--amount","100","--method","card"],"env":{"HOME":"${tmp}"},"exit":1}]},
+{"name":"no invoice is written from unpriced usage","steps":[
+ {"program":"${root}/cmd/BonfyreMeter/bonfyre-meter","argv":["record","--key","k1","--op","Brief","--receipt","r1","--attempt-ref","a1","--realization-ref","z1","--at","2026-10-01T00:00:00Z","--bytes","100","--db","m.db"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"argv":["--db","p.db","invoice","--user-id","7","--api-key","k1","--meter-db","m.db","--period","2026-10"],"env":{"HOME":"${tmp}"},"exit":2}]}]}

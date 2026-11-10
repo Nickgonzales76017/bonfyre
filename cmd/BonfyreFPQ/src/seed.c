@@ -1,3 +1,9 @@
+/* M_PI is not in ISO C11; glibc gates it behind a feature macro while
+   macOS exposes it from <math.h> unconditionally. */
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 /*
  * seed.c — The Lambda Core v2: Seed Combinator Discovery & Expansion
  *
@@ -49,6 +55,63 @@ size_t fpq_node_count(const fpq_node_t *node) {
     if (!node) return 0;
     return 1 + fpq_node_count(node->left) + fpq_node_count(node->right);
 }
+
+static int node_equal(const fpq_node_t *a, const fpq_node_t *b) {
+    if (a == b) return 1;
+    if (!a || !b) return 0;
+    if (a->op != b->op || a->iparam != b->iparam) return 0;
+    if (memcmp(a->param, b->param, sizeof(a->param)) != 0) return 0;
+    return node_equal(a->left, b->left) && node_equal(a->right, b->right);
+}
+
+int fpq_seed_equal(const fpq_seed_t *a, const fpq_seed_t *b) {
+    if (a == b) return 1;
+    if (!a || !b) return 0;
+    if (a->target_dim != b->target_dim) return 0;
+    /*
+     * Distortion is target-specific evidence, not program identity. Two seeds
+     * are structurally identical when the executable combinator tree and its
+     * target dimension are byte-exactly identical.
+     */
+    return node_equal(a->root, b->root);
+}
+
+static uint64_t fnv1a_bytes(uint64_t h, const void *data, size_t n) {
+    const unsigned char *p = (const unsigned char *)data;
+    for (size_t i = 0; i < n; i++) {
+        h ^= (uint64_t)p[i];
+        h *= 1099511628211ULL;
+    }
+    return h;
+}
+
+static uint64_t node_hash(uint64_t h, const fpq_node_t *node) {
+    const uint8_t present = node ? 1u : 0u;
+    h = fnv1a_bytes(h, &present, sizeof(present));
+    if (!node) return h;
+    h = fnv1a_bytes(h, &node->op, sizeof(node->op));
+    h = fnv1a_bytes(h, node->param, sizeof(node->param));
+    h = fnv1a_bytes(h, &node->iparam, sizeof(node->iparam));
+    h = node_hash(h, node->left);
+    return node_hash(h, node->right);
+}
+
+uint64_t fpq_seed_hash(const fpq_seed_t *seed) {
+    uint64_t h = 1469598103934665603ULL;
+    if (!seed) return h;
+    h = fnv1a_bytes(h, &seed->target_dim, sizeof(seed->target_dim));
+    return node_hash(h, seed->root);
+}
+
+size_t fpq_seed_program_bytes(const fpq_seed_t *seed) {
+    if (!seed) return 0;
+    /*
+     * In-memory description cost for the current native representation.
+     * This is not serialized FPQ size and not an entropy claim.
+     */
+    return sizeof(*seed) + fpq_node_count(seed->root) * sizeof(fpq_node_t);
+}
+
 
 static fpq_node_t *node_clone(const fpq_node_t *src) {
     if (!src) return NULL;

@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * BonfyreModel — model dependency manager for bonfyre pipelines.
  *
@@ -8,23 +15,16 @@
  * DB path: ~/.local/share/bonfyre/models.db  (override: $BONFYRE_MODEL_DB)
  * Cache:   ~/.cache/bonfyre/models/           (override: $BONFYRE_MODEL_CACHE)
  *
- * Commands:
- *   bonfyre-model list                    — list registered models
- *   bonfyre-model show <id>               — print full model record
- *   bonfyre-model pull <id>               — ensure model is present in cache
- *   bonfyre-model pull --recipe <code>    — pull all models required by a recipe
- *   bonfyre-model add <file.json>         — register a model manifest from file
- *   bonfyre-model verify <id>             — re-check SHA-256 of cached file
- *   bonfyre-model path <id>               — print absolute cache path (for scripts)
- *   bonfyre-model rm <id>                 — remove from registry (does not delete cache)
- *   bonfyre-model rm --purge <id>         — remove from registry AND delete cache file
- *   bonfyre-model search <query>          — full-text search over names + descriptions
- *   bonfyre-model sources <id>            — list configured pull sources for a model
- *   bonfyre-model source add <id> <url>   — add a pull source URL for a model
- *   bonfyre-model source rm <id> <url>    — remove a pull source URL
- *   bonfyre-model ls-cache               — list cached files with sizes
- *   bonfyre-model status                  — registry + cache stats
- *   bonfyre-model help                    — this message
+ * Product lifecycle:
+ *   bonfyre model setup <manifest.json>    — register, materialize, verify, report readiness
+ *   bonfyre model fetch <id>               — materialize and verify an existing model
+ *   bonfyre model prove <id> <run.json>    — bind measured runtime evidence
+ *   bonfyre model representations <id>     — inspect measured representations/admission
+ *   bonfyre model local [--json]           — inspect machine residency/readiness
+ *   bonfyre model list | show | status     — inspect registry state
+ *
+ * Registry/source maintenance and compatibility verbs remain behind
+ * 'bonfyre model help --all'; they are not the everyday product front.
  *
  * Source URL schemes (evaluated in priority order per model):
  *   swarm://  — bonfyre-swarm local peer (fastest, $0)
@@ -40,6 +40,8 @@
  */
 
 #include <errno.h>
+#include "../../../lib/libbonfyre/include/bf_help.h"
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 #include <dirent.h>
 #include <limits.h>
 #include <stdint.h>
@@ -53,7 +55,11 @@
 
 #include <sqlite3.h>
 #include <bonfyre.h>
+#include <bf_admission.h>
+#include <ftw.h>
+#include <math.h>
 
+#include "bf_lex.h"
 #define VERSION        "1.1.0"
 #define MAX_JSON       131072   /* 128 KB max manifest */
 #define HASH_HEX       65
@@ -65,19 +71,14 @@
 /* ====================================================================
  * Tiny JSON helpers (emit only — no parser needed for built-ins)
  * ==================================================================== */
+/* Delegates to the one implementation. Nineteen copies of this shape existed
+ * with sixteen different opinions about escaping.
+ * This copy was one of the four defects: it reserved four bytes for an escape that needs six, then advanced its write
+ * cursor by the six snprintf reported and wrote the terminator past the end of
+ * the caller's buffer.
+ */
 static void json_escape(const char *s, char *out, size_t cap) {
-    size_t j = 0;
-    for(size_t i = 0; s[i] && j+4 < cap; i++) {
-        unsigned char ch = (unsigned char)s[i];
-        if(ch == '"')      { out[j++]='\\'; out[j++]='"'; }
-        else if(ch == '\\') { out[j++]='\\'; out[j++]='\\'; }
-        else if(ch == '\n') { out[j++]='\\'; out[j++]='n'; }
-        else if(ch == '\r') { out[j++]='\\'; out[j++]='r'; }
-        else if(ch == '\t') { out[j++]='\\'; out[j++]='t'; }
-        else if(ch < 0x20)  { j += (size_t)snprintf(out+j, cap-j, "\\u%04x", ch); }
-        else                 out[j++] = (char)ch;
-    }
-    out[j] = '\0';
+    bf_lex_json_escape(s, out, cap);
 }
 
 /* ====================================================================
@@ -119,6 +120,7 @@ static sqlite3 *db_open(const char *path) {
     if(sl) { *sl='\0'; mkdirs(parent); }
 
     sqlite3 *db = NULL;
+    /* Fast tier, by decision: a dependency index; losing the last commits to a power cut costs a re-run. */
     if(bf_sqlite3_open(path, &db) != SQLITE_OK) {
         fprintf(stderr, "error: cannot open model DB at %s: %s\n",
                 path, sqlite3_errmsg(db));
@@ -156,6 +158,31 @@ static sqlite3 *db_open(const char *path) {
         "  role        TEXT,"                 /* transcribe | embed | infer | score */
         "  PRIMARY KEY(recipe_code, model_id)"
         ");"
+        /* A model identity can have several simultaneously valid physical
+         * representations.  This table records the owner-backed passport and
+         * its measured admission boundary; FPQ, native F16, BitNet, and a
+         * future block layout must never overwrite model identity or each
+         * other. */
+        "CREATE TABLE IF NOT EXISTS model_representation_passport ("
+        "  representation_id TEXT PRIMARY KEY,"
+        "  model_id TEXT NOT NULL REFERENCES models(id) ON DELETE CASCADE,"
+        "  representation_family TEXT NOT NULL,"
+        "  representation_version TEXT NOT NULL,"
+        "  exactness_class TEXT NOT NULL CHECK(exactness_class IN('exact','latent')),"
+        "  measurement_state TEXT NOT NULL CHECK(measurement_state IN('measured','declared')),"
+        "  admission_state TEXT NOT NULL CHECK(admission_state IN('ADMIT','DEFER','REJECT')),"
+        "  admission_scope TEXT NOT NULL CHECK(admission_scope IN('diagnostic','embedding','rerank','generation')),"
+        "  quality_envelope TEXT NOT NULL,"
+        "  receipt_ref TEXT NOT NULL,"
+        "  receipt_digest TEXT NOT NULL,"
+        "  physical_body_ref TEXT NOT NULL,"
+        "  physical_digest TEXT NOT NULL,"
+        "  physical_bytes INTEGER NOT NULL CHECK(physical_bytes>=0),"
+        "  supports_json TEXT NOT NULL,"
+        "  recorded_at TEXT NOT NULL"
+        ");"
+        "CREATE INDEX IF NOT EXISTS model_representation_by_model"
+        " ON model_representation_passport(model_id,admission_scope,admission_state);"
         "CREATE VIRTUAL TABLE IF NOT EXISTS models_fts USING fts5("
         "  id, name, description,"
         "  content=models, content_rowid=rowid"
@@ -525,8 +552,8 @@ static void seed_builtins(sqlite3 *db) {
 /* Returns 1 if model file is already in cache and hash matches */
 static int cache_hit(const char *model_id, const char *expected_sha256,
                      const char *cache_dir, char *hit_path, size_t hp_len) {
-    /* Try <cache_dir>/<id>.gguf, <id>.bin, <id>.onnx, <id> */
-    static const char *exts[] = { "gguf", "bin", "onnx", "safetensors", "", NULL };
+    /* Try every standing model body extension before the extensionless fallback. */
+    static const char *exts[] = { "gguf", "bin", "onnx", "safetensors", "fpq0", "fpq", "", NULL };
     for(int i = 0; exts[i]; i++) {
         char path[PATH_MAX];
         if(exts[i][0])
@@ -564,7 +591,7 @@ static int pull_model(sqlite3 *db, const char *model_id,
     int rc = sqlite3_step(st);
     if(rc != SQLITE_ROW) {
         fprintf(stderr, "error: model '%s' not in registry. "
-                "Run: bonfyre-model add <manifest.json>\n", model_id);
+                "Run: bonfyre model setup <manifest.json>\n", model_id);
         sqlite3_finalize(st); return 1;
     }
     char name[256], format[32], sha256[65];
@@ -619,8 +646,9 @@ static int pull_model(sqlite3 *db, const char *model_id,
 
     if(!pulled) {
         fprintf(stderr,"error: all sources failed for '%s'.\n"
-                "  Add a source: bonfyre-model source add %s <url>\n",
-                model_id, model_id);
+                "  Update its Model manifest with a working source, then rerun setup or fetch.\n"
+                "  Advanced source maintenance: bonfyre model help --all\n",
+                model_id);
         return 1;
     }
 
@@ -660,13 +688,36 @@ static int pull_model(sqlite3 *db, const char *model_id,
 
 static void cmd_help(void) {
     printf(
+        "bonfyre model — make a local model usable without learning the internals\n\n"
+        "START HERE\n"
+        "  setup <manifest.json>       register, fetch, verify, then show representation readiness\n"
+        "  fetch <id>                  materialize and verify a model already in the registry\n"
+        "  prove <id> <run.json>       prove a representation from a successful Qwen run receipt\n"
+        "  local [--json]              what is on this machine, loaded, or able to load\n"
+        "  list                        models already known to Bonfyre\n\n"
+        "INSPECT\n"
+        "  show <id>                   identity, sources, uses and cached body\n"
+        "  representations <id>        measured representations and admission state\n"
+        "  status                      registry and cache summary\n"
+        "  verify <id>                 re-check the cached body by SHA-256\n\n"
+        "Use 'bonfyre model help --all' for registry, source, representation-owner and maintenance verbs.\n"
+        "FPQ compression internals stay under 'bonfyre fpq' and are not part of this everyday front.\n"
+    );
+}
+
+static void cmd_help_all(void) {
+    printf(
         "bonfyre-model %s — AI model dependency manager\n\n"
         "COMMANDS\n"
         "  list                       list registered models\n"
         "  show <id>                  print full model record\n"
-        "  pull <id>                  ensure model is in local cache\n"
+        "  pull <id>                  compatibility alias for fetch\n"
         "  pull --recipe <code>       pull all models required by a recipe\n"
         "  add <manifest.json>        register a model from JSON manifest\n"
+        "  evidence <id> <run.json>   compatibility alias for prove\n"
+        "  representation-record <passport.json> record one measured/deferred/rejected representation passport\n"
+        "  representations <model-id> list representation passports and admission state\n"
+        "  representation-gate <id> --scope S exact representation readiness check before ResourceAdmission\n"
         "  verify <id>                re-check SHA-256 of cached file\n"
         "  path <id>                  print absolute cache path\n"
         "  rm <id>                    remove from registry\n"
@@ -677,9 +728,9 @@ static void cmd_help(void) {
         "  source rm <id> <url>       remove a pull source URL\n"
         "  ls-cache                   list cached files with sizes\n"
         "  status                     registry + cache stats\n"
+        "  local [--json]             models on this machine, memory, and which can load now\n"
         "  family [<family>]          list models by transform family (e.g. T04, T15, T16)\n"
         "  route <corpus_stats.json>  select best transform family for given corpus stats\n"
-        "  push <id> --repo <hf/repo> upload FPQ artifact to HuggingFace\n"
         "  help                       this message\n\n"
         "SOURCE SCHEMES (evaluated in priority order)\n"
         "  swarm://hash               bonfyre-swarm local peer\n"
@@ -695,118 +746,174 @@ static void cmd_help(void) {
         "  bonfyre-model list\n"
         "  bonfyre-model pull whisper-large-v3\n"
         "  bonfyre-model pull --recipe A3\n"
-        "  bonfyre-model source add whisper-large-v3 file:///data/models/whisper.gguf\n"
-        "  bonfyre-model push bonfyre-topic-mapper-v1 --repo bonfyre-oss/topic-mapper-v1\n",
+        "  bonfyre-model source add whisper-large-v3 file:///data/models/whisper.gguf\n",
         VERSION
     );
 }
 
-/* ====================================================================
- * cmd_push — upload FPQ-compressed model to HuggingFace Hub
- *
- * Requires: HF_TOKEN env var (huggingface.co user access token)
- * Strategy: huggingface-cli upload if available, else curl PUT fallback.
- * After success, adds hf://<repo>/model.fpq as a source URL in models.db
- * so the artifact is immediately pullable on other machines.
- * ==================================================================== */
-static int cmd_push(sqlite3 *db, const char *model_id, const char *repo) {
-    const char *token = getenv("HF_TOKEN");
-    if (!token || !token[0]) {
-        fprintf(stderr, "error: HF_TOKEN environment variable required\n"
-                        "       export HF_TOKEN=hf_...\n");
-        return 1;
+/* Raw model benchmark receipts have incompatible schemas.  The ModelCatalog
+ * accepts only this normalized passport: it records a receipt digest and an
+ * explicit ADMIT/DEFER/REJECT boundary so a diagnostic BitNet or passthrough
+ * FPQ run cannot silently become a general inference provider. */
+static int cmd_representation_record(sqlite3 *db, const char *json_path) {
+    FILE *f = fopen(json_path, "r");
+    char body[MAX_JSON]; size_t n; sqlite3_stmt *st = NULL; int ok = 0;
+    const char *verify =
+        "SELECT json_valid(?1)"
+        " AND (SELECT count(*) FROM json_each(?1) WHERE key NOT IN("
+        "'representation_id','model_id','representation_family','representation_version',"
+        "'exactness_class','measurement_state','admission_state','admission_scope',"
+        "'quality_envelope','receipt_ref','receipt_digest','physical_body_ref',"
+        "'physical_digest','physical_bytes','supports','recorded_at'))=0"
+        " AND json_type(?1,'$.supports')='array'"
+        " AND json_type(?1,'$.physical_bytes') IN ('integer','real')"
+        " AND json_type(?1,'$.representation_id')='text'"
+        " AND json_type(?1,'$.model_id')='text'"
+        " AND json_type(?1,'$.representation_family')='text'"
+        " AND json_type(?1,'$.representation_version')='text'"
+        " AND json_type(?1,'$.exactness_class')='text'"
+        " AND json_type(?1,'$.measurement_state')='text'"
+        " AND json_type(?1,'$.admission_state')='text'"
+        " AND json_type(?1,'$.admission_scope')='text'"
+        " AND json_type(?1,'$.quality_envelope')='text'"
+        " AND json_type(?1,'$.receipt_ref')='text'"
+        " AND json_type(?1,'$.receipt_digest')='text'"
+        " AND json_type(?1,'$.physical_body_ref')='text'"
+        " AND json_type(?1,'$.physical_digest')='text'"
+        " AND json_type(?1,'$.recorded_at')='text'";
+    const char *insert =
+        "INSERT INTO model_representation_passport("
+        "representation_id,model_id,representation_family,representation_version,exactness_class,"
+        "measurement_state,admission_state,admission_scope,quality_envelope,receipt_ref,receipt_digest,"
+        "physical_body_ref,physical_digest,physical_bytes,supports_json,recorded_at)"
+        " SELECT json_extract(?1,'$.representation_id'),json_extract(?1,'$.model_id'),"
+        "json_extract(?1,'$.representation_family'),json_extract(?1,'$.representation_version'),"
+        "json_extract(?1,'$.exactness_class'),json_extract(?1,'$.measurement_state'),"
+        "json_extract(?1,'$.admission_state'),json_extract(?1,'$.admission_scope'),"
+        "json_extract(?1,'$.quality_envelope'),json_extract(?1,'$.receipt_ref'),"
+        "json_extract(?1,'$.receipt_digest'),json_extract(?1,'$.physical_body_ref'),"
+        "json_extract(?1,'$.physical_digest'),json_extract(?1,'$.physical_bytes'),"
+        "json_extract(?1,'$.supports'),json_extract(?1,'$.recorded_at')"
+        " WHERE json_extract(?1,'$.representation_id')<>''"
+        " AND json_extract(?1,'$.model_id')<>''"
+        " AND json_extract(?1,'$.quality_envelope')<>''"
+        " AND json_extract(?1,'$.receipt_digest')<>''"
+        " AND json_extract(?1,'$.physical_digest')<>''"
+        " ON CONFLICT(representation_id) DO UPDATE SET"
+        " model_id=excluded.model_id,representation_family=excluded.representation_family,"
+        " representation_version=excluded.representation_version,exactness_class=excluded.exactness_class,"
+        " measurement_state=excluded.measurement_state,admission_state=excluded.admission_state,"
+        " admission_scope=excluded.admission_scope,quality_envelope=excluded.quality_envelope,"
+        " receipt_ref=excluded.receipt_ref,receipt_digest=excluded.receipt_digest,"
+        " physical_body_ref=excluded.physical_body_ref,physical_digest=excluded.physical_digest,"
+        " physical_bytes=excluded.physical_bytes,supports_json=excluded.supports_json,recorded_at=excluded.recorded_at";
+    if (!f) { perror(json_path); return 1; }
+    n = fread(body, 1, sizeof(body) - 1, f); fclose(f); body[n] = '\0';
+    if (n == 0 || n == sizeof(body) - 1) { fprintf(stderr, "representation-record: invalid input size\n"); return 1; }
+    if (sqlite3_prepare_v2(db, verify, -1, &st, NULL) != SQLITE_OK) return 1;
+    sqlite3_bind_text(st, 1, body, (int)n, SQLITE_TRANSIENT);
+    ok = sqlite3_step(st) == SQLITE_ROW && sqlite3_column_int(st, 0);
+    sqlite3_finalize(st); st = NULL;
+    if (!ok) { fprintf(stderr, "representation-record: incomplete or unknown passport field\n"); return 1; }
+    /* A passport is only as exact as its receipt. The digest it names must be
+     * the digest of the receipt it points at, read now; a passport whose
+     * receipt is missing or has changed is refused, not recorded on trust. */
+    {
+        char ref[PATH_MAX] = "", want[80] = "", path[PATH_MAX], root[PATH_MAX], got[65];
+        const char *home = getenv("HOME") ? getenv("HOME") : ".", *expect;
+        struct stat sb;
+        if (sqlite3_prepare_v2(db, "SELECT json_extract(?1,'$.receipt_ref'), json_extract(?1,'$.receipt_digest')",
+                               -1, &st, NULL) != SQLITE_OK) return 1;
+        sqlite3_bind_text(st, 1, body, (int)n, SQLITE_TRANSIENT);
+        if (sqlite3_step(st) == SQLITE_ROW) {
+            snprintf(ref, sizeof ref, "%s", sqlite3_column_text(st, 0) ? (const char *)sqlite3_column_text(st, 0) : "");
+            snprintf(want, sizeof want, "%s", sqlite3_column_text(st, 1) ? (const char *)sqlite3_column_text(st, 1) : "");
+        }
+        sqlite3_finalize(st); st = NULL;
+        expect = strncmp(want, "sha256:", 7) ? want : want + 7;
+        if (!strncmp(ref, "~/", 2)) snprintf(path, sizeof path, "%s/%s", home, ref + 2);
+        else snprintf(path, sizeof path, "%s", ref);
+        if (ref[0] != '/' && ref[0] != '~' && stat(path, &sb) != 0 && bf_catalog_find_repo_root(root, sizeof root))
+            snprintf(path, sizeof path, "%s/%s", root, ref);
+        if (!ref[0] || bf_sha256_file(path, got) != 0) {
+            fprintf(stderr, "representation-record: receipt %s is not readable here\n", ref[0] ? ref : "(none)"); return 1;
+        }
+        if (strcmp(got, expect)) {
+            fprintf(stderr, "representation-record: receipt %s has digest %s, passport names %s\n", ref, got, want); return 1;
+        }
     }
-
-    /* 1. Look up fpq_sha256 → derive local .fpq cache path */
-    char fpq_hash[HASH_HEX] = {0};
-    sqlite3_stmt *st;
-    sqlite3_prepare_v2(db,
-        "SELECT fpq_sha256 FROM models WHERE id=?", -1, &st, NULL);
-    sqlite3_bind_text(st, 1, model_id, -1, SQLITE_STATIC);
-    if (sqlite3_step(st) == SQLITE_ROW && sqlite3_column_text(st, 0))
-        strncpy(fpq_hash, (const char *)sqlite3_column_text(st, 0), sizeof(fpq_hash)-1);
+    if (sqlite3_prepare_v2(db, insert, -1, &st, NULL) != SQLITE_OK) return 1;
+    sqlite3_bind_text(st, 1, body, (int)n, SQLITE_TRANSIENT);
+    ok = sqlite3_step(st) == SQLITE_DONE && sqlite3_changes(db) == 1;
     sqlite3_finalize(st);
-
-    if (!fpq_hash[0]) {
-        fprintf(stderr, "error: no fpq_sha256 for model '%s'\n"
-                        "       run: bonfyre-quant compress <model> <out.fpq>\n"
-                        "       then: bonfyre-model add <artifact.json>\n",
-                model_id);
-        return 1;
-    }
-
-    char cache_dir[PATH_MAX];
-    get_cache_dir(cache_dir, sizeof(cache_dir));
-
-    char fpq_path[PATH_MAX];
-    snprintf(fpq_path, sizeof(fpq_path), "%s/%s.fpq", cache_dir, fpq_hash);
-
-    struct stat st2;
-    if (stat(fpq_path, &st2) != 0) {
-        fprintf(stderr, "error: .fpq not in cache at %s\n"
-                        "       run: bonfyre-model pull %s\n",
-                fpq_path, model_id);
-        return 1;
-    }
-
-    /* 2. Build artifact.json path (same stem, .json) */
-    char artifact_path[PATH_MAX];
-    snprintf(artifact_path, sizeof(artifact_path), "%s/%s.json", cache_dir, fpq_hash);
-
-    /* 3. Upload model.fpq — try huggingface-cli first, fall back to curl */
-    printf("Pushing %s → hf://%s ...\n", model_id, repo);
-    char cmd[8192];
-
-    /* huggingface-cli upload <repo> <local_path> <path_in_repo> */
-    snprintf(cmd, sizeof(cmd),
-        "huggingface-cli upload '%s' '%s' model.fpq --token '%s' --repo-type model 2>&1",
-        repo, fpq_path, token);
-    int rc = system(cmd);
-
-    if (rc != 0) {
-        /* Curl fallback — HF Hub LFS upload API */
-        fprintf(stderr, "[push] huggingface-cli failed (rc=%d), trying curl...\n", rc);
-        snprintf(cmd, sizeof(cmd),
-            "curl -s --fail -X PUT "
-            "  'https://huggingface.co/api/models/%s/upload/main/model.fpq' "
-            "  -H 'Authorization: Bearer %s' "
-            "  -H 'Content-Type: application/octet-stream' "
-            "  --data-binary '@%s' 2>&1",
-            repo, token, fpq_path);
-        rc = system(cmd);
-    }
-
-    if (rc != 0) {
-        fprintf(stderr, "error: push failed — check HF_TOKEN and repo permissions\n");
-        return 1;
-    }
-
-    /* 4. Upload artifact.json as model card metadata (best-effort) */
-    if (stat(artifact_path, &st2) == 0) {
-        snprintf(cmd, sizeof(cmd),
-            "curl -s -X PUT "
-            "  'https://huggingface.co/api/models/%s/upload/main/artifact.json' "
-            "  -H 'Authorization: Bearer %s' "
-            "  -H 'Content-Type: application/json' "
-            "  --data-binary '@%s' 2>&1",
-            repo, token, artifact_path);
-        system(cmd); /* non-fatal */
-    }
-
-    /* 5. Register hf://<repo>/model.fpq as pull source in models.db */
-    char hf_url[512];
-    snprintf(hf_url, sizeof(hf_url), "hf://%s/model.fpq", repo);
-    sqlite3_prepare_v2(db,
-        "INSERT OR IGNORE INTO sources(model_id, url, priority) VALUES(?,?,0)",
-        -1, &st, NULL);
-    sqlite3_bind_text(st, 1, model_id, -1, SQLITE_STATIC);
-    sqlite3_bind_text(st, 2, hf_url,   -1, SQLITE_STATIC);
-    sqlite3_step(st); sqlite3_finalize(st);
+    if (!ok) { fprintf(stderr, "representation-record: model absent or passport invalid\n"); return 1; }
     sync_catalog_after_model_change();
-
-    printf("Pushed: hf://%s/model.fpq\n", repo);
-    printf("  source registered — pull later with: bonfyre-model pull %s\n", model_id);
+    puts("{\"representation_passport\":\"recorded\",\"truth\":\"model_identity_and_resource_admission_remain_exact\"}");
     return 0;
+}
+
+static int cmd_representations(sqlite3 *db, const char *model_id) {
+    sqlite3_stmt *st = NULL; int first = 1;
+    char escaped[2048];
+    if (sqlite3_prepare_v2(db,
+        "SELECT representation_id,representation_family,representation_version,exactness_class,measurement_state,admission_state,admission_scope,receipt_ref FROM model_representation_passport WHERE model_id=? ORDER BY representation_id",
+        -1, &st, NULL) != SQLITE_OK) return 1;
+    sqlite3_bind_text(st, 1, model_id, -1, SQLITE_TRANSIENT);
+    json_escape(model_id, escaped, sizeof(escaped));
+    printf("{\"model_id\":\"%s\",\"representations\":[", escaped);
+    while (sqlite3_step(st) == SQLITE_ROW) {
+        char id[1024], family[1024], version[1024], exact[128], measurement[128], admission[128], scope[128], receipt[2048];
+        const unsigned char *cols[8];
+        for (int i = 0; i < 8; i++) cols[i] = sqlite3_column_text(st, i);
+        json_escape((const char *)(cols[0] ? cols[0] : (const unsigned char *)""), id, sizeof(id));
+        json_escape((const char *)(cols[1] ? cols[1] : (const unsigned char *)""), family, sizeof(family));
+        json_escape((const char *)(cols[2] ? cols[2] : (const unsigned char *)""), version, sizeof(version));
+        json_escape((const char *)(cols[3] ? cols[3] : (const unsigned char *)""), exact, sizeof(exact));
+        json_escape((const char *)(cols[4] ? cols[4] : (const unsigned char *)""), measurement, sizeof(measurement));
+        json_escape((const char *)(cols[5] ? cols[5] : (const unsigned char *)""), admission, sizeof(admission));
+        json_escape((const char *)(cols[6] ? cols[6] : (const unsigned char *)""), scope, sizeof(scope));
+        json_escape((const char *)(cols[7] ? cols[7] : (const unsigned char *)""), receipt, sizeof(receipt));
+        if (!first) putchar(','); first = 0;
+        printf("{\"representation_id\":\"%s\",\"family\":\"%s\",\"version\":\"%s\",\"exactness\":\"%s\",\"measurement\":\"%s\",\"admission\":\"%s\",\"scope\":\"%s\",\"receipt_ref\":\"%s\"}", id, family, version, exact, measurement, admission, scope, receipt);
+    }
+    puts("],\"truth\":\"representation_is_not_model_identity_or_authority\"}");
+    sqlite3_finalize(st);
+    return 0;
+}
+
+/* ModelCatalog owns preservation/readiness; ResourceAdmission owns current
+ * bytes, location and quota. Keeping this check before the resource request
+ * prevents a physically cheap but unmeasured representation from becoming a
+ * computation simply because it fits in memory. */
+static int cmd_representation_gate(sqlite3 *db, const char *representation_id,
+                                   const char *scope) {
+    sqlite3_stmt *st = NULL;
+    char state[16] = "ABSENT", measurement[16] = "ABSENT", stored_scope[32] = "";
+    const char *decision = "REJECT";
+    if (!representation_id || !*representation_id || !scope || !*scope) return 1;
+    if (sqlite3_prepare_v2(db,
+        "SELECT admission_state,measurement_state,admission_scope FROM model_representation_passport WHERE representation_id=?",
+        -1, &st, NULL) != SQLITE_OK) return 1;
+    sqlite3_bind_text(st, 1, representation_id, -1, SQLITE_TRANSIENT);
+    if (sqlite3_step(st) == SQLITE_ROW) {
+        const char *db_state = (const char *)sqlite3_column_text(st, 0);
+        const char *db_measurement = (const char *)sqlite3_column_text(st, 1);
+        const char *db_scope = (const char *)sqlite3_column_text(st, 2);
+        snprintf(state, sizeof(state), "%s", db_state ? db_state : "ABSENT");
+        snprintf(measurement, sizeof(measurement), "%s", db_measurement ? db_measurement : "ABSENT");
+        snprintf(stored_scope, sizeof(stored_scope), "%s", db_scope ? db_scope : "");
+        if (db_state && db_measurement && db_scope && !strcmp(scope, stored_scope)) {
+            if (!strcmp(state, "ADMIT") && !strcmp(measurement, "measured")) decision = "ADMIT";
+            else if (!strcmp(state, "DEFER")) decision = "DEFER";
+        }
+    }
+    sqlite3_finalize(st);
+    char eid[2048], escope[256], estate[64], emeasurement[64];
+    json_escape(representation_id, eid, sizeof(eid)); json_escape(scope, escope, sizeof(escope));
+    json_escape(state, estate, sizeof(estate));
+    json_escape(measurement, emeasurement, sizeof(emeasurement));
+    printf("{\"representation_id\":\"%s\",\"scope\":\"%s\",\"owner_state\":\"%s\",\"measurement\":\"%s\",\"decision\":\"%s\",\"truth\":\"model_gate_only_resource_and_effect_admission_remain_separate\"}\n", eid, escope, estate, emeasurement, decision);
+    return !strcmp(decision, "REJECT") ? 1 : 0;
 }
 
 static int cmd_list(sqlite3 *db) {
@@ -1075,6 +1182,48 @@ static int cmd_pull_recipe(sqlite3 *db, const char *recipe_code) {
     return errors ? 1 : 0;
 }
 
+/* Bytes under a cache hit: a file's size, or every regular file below a
+ * model directory (an ONNX graph beside its vocabulary). */
+static int64_t path_bytes_total;
+static int path_bytes_visit(const char *p, const struct stat *sb, int type, struct FTW *ftw) {
+    (void)p; (void)ftw;
+    if (type == FTW_F) path_bytes_total += (int64_t)sb->st_size;
+    return 0;
+}
+static int64_t path_bytes(const char *path) {
+    struct stat sb;
+    if (stat(path, &sb) != 0) return 0;
+    if (!S_ISDIR(sb.st_mode)) return (int64_t)sb.st_size;
+    path_bytes_total = 0;
+    nftw(path, path_bytes_visit, 16, FTW_PHYS);
+    return path_bytes_total;
+}
+
+/* After the digest matches, the size the registry advertises is the size of
+ * the bytes just hashed. Only a verified body corrects the row. */
+static int record_measured_size(sqlite3 *db, const char *model_id, const char *hit) {
+    sqlite3_stmt *st = NULL;
+    double measured = (double)path_bytes(hit) / 1048576.0, recorded = 0;
+    if (sqlite3_prepare_v2(db, "SELECT size_mb FROM models WHERE id=?", -1, &st, NULL) != SQLITE_OK) return 1;
+    sqlite3_bind_text(st, 1, model_id, -1, SQLITE_STATIC);
+    if (sqlite3_step(st) == SQLITE_ROW) recorded = sqlite3_column_double(st, 0);
+    sqlite3_finalize(st);
+    if (fabs(recorded - measured) < 0.0005) return 0;
+    if (sqlite3_prepare_v2(db, "UPDATE models SET size_mb=? WHERE id=?", -1, &st, NULL) != SQLITE_OK) {
+        fprintf(stderr, "error: cannot store size: %s\n", sqlite3_errmsg(db)); return 1;
+    }
+    sqlite3_bind_double(st, 1, measured);
+    sqlite3_bind_text(st, 2, model_id, -1, SQLITE_STATIC);
+    int done = sqlite3_step(st);
+    sqlite3_finalize(st);
+    if (done != SQLITE_DONE || sqlite3_changes(db) != 1) {
+        fprintf(stderr, "error: cannot store size: %s\n", sqlite3_errmsg(db)); return 1;
+    }
+    printf("  size     %.3f MB recorded -> %.3f MB measured\n", recorded, measured);
+    sync_catalog_after_model_change();
+    return 0;
+}
+
 static int cmd_verify(sqlite3 *db, const char *model_id) {
     sqlite3_stmt *st;
     sqlite3_prepare_v2(db,
@@ -1085,14 +1234,15 @@ static int cmd_verify(sqlite3 *db, const char *model_id) {
         sqlite3_finalize(st); return 1;
     }
     char sha256[65], format[32];
-    snprintf(sha256, sizeof(sha256), "%s", (const char*)sqlite3_column_text(st,0));
+    const char *stored_hash = (const char*)sqlite3_column_text(st,0);
+    snprintf(sha256, sizeof(sha256), "%s", stored_hash && *stored_hash ? stored_hash : "pending");
     snprintf(format, sizeof(format), "%s", (const char*)sqlite3_column_text(st,1));
     sqlite3_finalize(st);
 
     char cache_dir[PATH_MAX]; get_cache_dir(cache_dir, sizeof(cache_dir));
     char hit[PATH_MAX];
     if(!cache_hit(model_id, NULL, cache_dir, hit, sizeof(hit))) {
-        fprintf(stderr,"error: '%s' not in cache. Run: bonfyre-model pull %s\n",
+        fprintf(stderr,"error: '%s' not in cache. Run: bonfyre model fetch %s\n",
                 model_id, model_id);
         return 1;
     }
@@ -1103,13 +1253,19 @@ static int cmd_verify(sqlite3 *db, const char *model_id) {
         if(bf_sha256_file(hit, actual)!=0) {
             fprintf(stderr,"error: cannot hash file %s\n", hit); return 1;
         }
-        sqlite3_prepare_v2(db,
-            "UPDATE models SET sha256=? WHERE id=?", -1, &st, NULL);
+        if (sqlite3_prepare_v2(db,
+            "UPDATE models SET sha256=? WHERE id=?", -1, &st, NULL) != SQLITE_OK) {
+            fprintf(stderr,"error: cannot store hash: %s\n", sqlite3_errmsg(db)); return 1;
+        }
         sqlite3_bind_text(st,1,actual,-1,SQLITE_STATIC);
         sqlite3_bind_text(st,2,model_id,-1,SQLITE_STATIC);
-        sqlite3_step(st); sqlite3_finalize(st);
+        int stored = sqlite3_step(st);
+        sqlite3_finalize(st);
+        if (stored != SQLITE_DONE || sqlite3_changes(db) != 1) {
+            fprintf(stderr,"error: cannot store hash: %s\n", sqlite3_errmsg(db)); return 1;
+        }
         printf("  stored   %s  %s\n", actual, hit);
-        return 0;
+        return record_measured_size(db, model_id, hit);
     }
 
     printf("  verifying  %s  ...\n", hit); fflush(stdout);
@@ -1119,7 +1275,7 @@ static int cmd_verify(sqlite3 *db, const char *model_id) {
     }
     if(strcmp(actual, sha256)==0) {
         printf("  ✓ ok      %s\n", sha256);
-        return 0;
+        return record_measured_size(db, model_id, hit);
     }
     fprintf(stderr,"  ✗ FAIL    expected: %s\n               got:      %s\n",
             sha256, actual);
@@ -1143,7 +1299,7 @@ static int cmd_path(sqlite3 *db, const char *model_id) {
         printf("%s\n", hit);
         return 0;
     }
-    fprintf(stderr,"error: '%s' not in cache. Run: bonfyre-model pull %s\n",
+    fprintf(stderr,"error: '%s' not in cache. Run: bonfyre model fetch %s\n",
             model_id, model_id);
     return 1;
 }
@@ -1323,27 +1479,44 @@ static int cmd_source_rm(sqlite3 *db, const char *model_id, const char *url) {
 static int cmd_add(sqlite3 *db, const char *json_path) {
     FILE *f = fopen(json_path, "r");
     if(!f) { perror(json_path); return 1; }
-    char buf[MAX_JSON]; size_t n = fread(buf,1,sizeof(buf)-1,f); fclose(f);
+    char buf[MAX_JSON]; size_t n = fread(buf,1,sizeof(buf)-1,f);
+    int extra = fgetc(f), read_error = ferror(f); fclose(f);
+    if (extra != EOF || read_error || memchr(buf, 0, n)) {
+        fprintf(stderr,"error: manifest is oversized or unreadable\n"); return 1;
+    }
     buf[n]='\0';
+    /* SQLite versions may truncate decoded U+0000 before reporting its length. */
+    if (strstr(buf, "\\u0000")) {
+        fprintf(stderr,"error: manifest contains an unsupported NUL escape\n"); return 1;
+    }
 
-    /* Minimal JSON field extraction — handles both quoted strings and bare numbers */
+    sqlite3_stmt *json = NULL;
+    if (sqlite3_prepare_v2(db, "SELECT json_valid(?1)", -1, &json, NULL) != SQLITE_OK)
+        return 1;
+    sqlite3_bind_text(json, 1, buf, -1, SQLITE_STATIC);
+    int valid = sqlite3_step(json) == SQLITE_ROW && sqlite3_column_int(json, 0);
+    sqlite3_finalize(json);
+    if (!valid) { fprintf(stderr, "error: invalid manifest JSON\n"); return 1; }
+    if (sqlite3_prepare_v2(db, "SELECT json_type(?1,?2),json_extract(?1,?2)", -1, &json, NULL) != SQLITE_OK)
+        return 1;
     #define JFIELD(key, dest, dsz) do { \
-        const char *_p = strstr(buf,"\"" key "\""); \
-        dest[0]='\0'; \
-        if(_p) { \
-            _p = strchr(_p,':'); if(_p) { \
-                _p++; while(*_p==' '||*_p=='\t') _p++; \
-                if(*_p=='"') { _p++; size_t _i=0; \
-                    while(*_p&&*_p!='"'&&_i<(dsz)-1) dest[_i++]=*_p++; \
-                    dest[_i]='\0'; \
-                } else if(*_p!='\0'&&*_p!='n'&&*_p!=']'&&*_p!='}') { \
-                    size_t _i=0; \
-                    while(*_p&&*_p!=','&&*_p!='}'&&*_p!=']'&&*_p!='\n'&&_i<(dsz)-1) dest[_i++]=*_p++; \
-                    while(_i>0&&(dest[_i-1]==' '||dest[_i-1]=='\t'||dest[_i-1]=='\r')) _i--; \
-                    dest[_i]='\0'; } \
+        sqlite3_reset(json); \
+        sqlite3_bind_text(json, 1, buf, -1, SQLITE_STATIC); \
+        sqlite3_bind_text(json, 2, "$." key, -1, SQLITE_STATIC); \
+        dest[0] = '\0'; \
+        if (sqlite3_step(json) != SQLITE_ROW) { sqlite3_finalize(json); return 1; } \
+        const char *_type = (const char *)sqlite3_column_text(json, 0); \
+        const char *_value = (const char *)sqlite3_column_text(json, 1); \
+        if (_type && strcmp(_type,"null")) { \
+            if ((strcmp(_type,"text") && strcmp(_type,"integer") && strcmp(_type,"real")) || \
+                !_value || sqlite3_column_bytes(json, 1) >= (int)(dsz) || \
+                strlen(_value) != (size_t)sqlite3_column_bytes(json, 1)) { \
+                fprintf(stderr,"error: invalid or oversized manifest field %s\n",key); \
+                sqlite3_finalize(json); return 1; \
             } \
+            strcpy(dest, _value); \
         } \
-    } while(0)
+    } while (0)
 
     char id[128], name[256], desc[512], fmt[32], sha256[65], size_s[32],
          fpq_sha[65], fpq_sz[32], tf[32], geom[64], geom_cond[256],
@@ -1362,6 +1535,7 @@ static int cmd_add(sqlite3 *db, const char *json_path) {
     JFIELD("layer_frag_spec",     lf_spec,   sizeof(lf_spec));
     JFIELD("mean_f1",             mean_f1_s, sizeof(mean_f1_s));
     #undef JFIELD
+    sqlite3_finalize(json);
 
     if(!id[0] || !name[0] || !fmt[0]) {
         fprintf(stderr,"error: manifest must have id, name, format fields\n");
@@ -1372,11 +1546,45 @@ static int cmd_add(sqlite3 *db, const char *json_path) {
     double fpq_size = fpq_sz[0]  ? atof(fpq_sz)  : 0.0;
     double mean_f1  = mean_f1_s[0] ? atof(mean_f1_s) : 0.0;
 
+    /* Accept URL strings and source objects; validate before changing either table. */
+    char urls[64][1024]; int source_count = 0;
+    sqlite3_prepare_v2(db, "SELECT json_type(?1,'$'),json_type(?1,'$.sources')", -1, &json, NULL);
+    sqlite3_bind_text(json, 1, buf, -1, SQLITE_STATIC);
+    sqlite3_step(json);
+    const char *root_type = (const char *)sqlite3_column_text(json, 0);
+    const char *source_type = (const char *)sqlite3_column_text(json, 1);
+    valid = root_type && !strcmp(root_type,"object") && (!source_type || !strcmp(source_type,"array"));
+    sqlite3_finalize(json);
+    if (!valid) { fprintf(stderr,"error: manifest sources must be an array\n"); return 1; }
+    sqlite3_prepare_v2(db,
+        "SELECT CASE WHEN type='text' THEN atom WHEN type='object' AND json_type(value,'$.url')='text' "
+        "THEN json_extract(value,'$.url') END FROM json_each(?1,'$.sources')", -1, &json, NULL);
+    sqlite3_bind_text(json, 1, buf, -1, SQLITE_STATIC);
+    int source_rc;
+    while ((source_rc = sqlite3_step(json)) == SQLITE_ROW) {
+        const char *url = (const char *)sqlite3_column_text(json, 0);
+        int bytes = sqlite3_column_bytes(json, 0);
+        if (!url || !*url || bytes >= 1024 || strlen(url) != (size_t)bytes || source_count >= 64) {
+            sqlite3_finalize(json);
+            fprintf(stderr,"error: invalid manifest source\n"); return 1;
+        }
+        strcpy(urls[source_count++], url);
+    }
+    sqlite3_finalize(json);
+    if (source_rc != SQLITE_DONE) return 1;
+    if (sqlite3_exec(db, "BEGIN IMMEDIATE", NULL, NULL, NULL) != SQLITE_OK) return 1;
+
     sqlite3_stmt *st;
     sqlite3_prepare_v2(db,
-        "INSERT OR REPLACE INTO models(id,name,description,format,sha256,size_mb,"
+        "INSERT INTO models(id,name,description,format,sha256,size_mb,"
         "fpq_sha256,fpq_size_mb,transform_family,geometry,geometry_condition,"
-        "layer_frag_spec,mean_f1,added_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        "layer_frag_spec,mean_f1,added_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+        " ON CONFLICT(id) DO UPDATE SET name=excluded.name,description=excluded.description,"
+        "format=excluded.format,sha256=excluded.sha256,size_mb=excluded.size_mb,"
+        "fpq_sha256=excluded.fpq_sha256,fpq_size_mb=excluded.fpq_size_mb,"
+        "transform_family=excluded.transform_family,geometry=excluded.geometry,"
+        "geometry_condition=excluded.geometry_condition,layer_frag_spec=excluded.layer_frag_spec,"
+        "mean_f1=excluded.mean_f1,added_at=excluded.added_at",
         -1, &st, NULL);
     sqlite3_bind_text(st,1,id,-1,SQLITE_STATIC);
     sqlite3_bind_text(st,2,name,-1,SQLITE_STATIC);
@@ -1399,37 +1607,21 @@ static int cmd_add(sqlite3 *db, const char *json_path) {
     int rc = sqlite3_step(st); sqlite3_finalize(st);
     if(rc != SQLITE_DONE){
         fprintf(stderr,"bonfyre-model: db insert failed: %s\n", sqlite3_errmsg(db));
-        return 1;
+        goto manifest_rollback;
     }
 
-    /* Parse and insert sources array: "sources": ["url1","url2"] */
-    const char *src_start = strstr(buf,"\"sources\"");
-    if(src_start) {
-        src_start = strchr(src_start,'[');
-        int pri=0;
-        while(src_start && *src_start) {
-            src_start = strchr(src_start,'"');
-            if(!src_start) break;
-            src_start++;
-            const char *end = strchr(src_start,'"');
-            if(!end) break;
-            char url[1024];
-            snprintf(url, sizeof(url), "%.*s", (int)(end-src_start), src_start);
-            src_start = end+1;
-            if(url[0]) {
-                sqlite3_prepare_v2(db,
-                    "INSERT OR IGNORE INTO sources(model_id,url,priority) VALUES(?,?,?)",
-                    -1, &st, NULL);
-                sqlite3_bind_text(st,1,id,-1,SQLITE_STATIC);
-                sqlite3_bind_text(st,2,url,-1,SQLITE_STATIC);
-                sqlite3_bind_int(st,3,pri++);
-                sqlite3_step(st); sqlite3_finalize(st);
-            }
-            /* stop at ] */
-            const char *cl = strchr(src_start,']');
-            const char *nx = strchr(src_start,'"');
-            if(!nx || (cl && cl<nx)) break;
-        }
+    sqlite3_prepare_v2(db, "DELETE FROM sources WHERE model_id=?", -1, &st, NULL);
+    sqlite3_bind_text(st, 1, id, -1, SQLITE_STATIC);
+    rc = sqlite3_step(st); sqlite3_finalize(st);
+    if (rc != SQLITE_DONE) goto manifest_rollback;
+    for (int i = 0; i < source_count; i++) {
+        sqlite3_prepare_v2(db,
+            "INSERT OR IGNORE INTO sources(model_id,url,priority) VALUES(?,?,?)", -1, &st, NULL);
+        sqlite3_bind_text(st, 1, id, -1, SQLITE_STATIC);
+        sqlite3_bind_text(st, 2, urls[i], -1, SQLITE_STATIC);
+        sqlite3_bind_int(st, 3, i);
+        rc = sqlite3_step(st); sqlite3_finalize(st);
+        if (rc != SQLITE_DONE) goto manifest_rollback;
     }
 
     /* FTS update */
@@ -1438,12 +1630,381 @@ static int cmd_add(sqlite3 *db, const char *json_path) {
         " SELECT rowid,id,name,description FROM models WHERE id=?",
         -1, &st, NULL);
     sqlite3_bind_text(st,1,id,-1,SQLITE_STATIC);
-    sqlite3_step(st); sqlite3_finalize(st);
+    rc = sqlite3_step(st); sqlite3_finalize(st);
+    if (rc != SQLITE_DONE || sqlite3_exec(db, "COMMIT", NULL, NULL, NULL) != SQLITE_OK) goto manifest_rollback;
     sync_catalog_after_model_change();
 
     printf("  registered: %s  (%s)\n", id, name);
     return 0;
+manifest_rollback:
+    sqlite3_exec(db, "ROLLBACK", NULL, NULL, NULL);
+    fprintf(stderr,"error: manifest registration failed: %s\n",sqlite3_errmsg(db));
+    return 1;
 }
+
+static int manifest_model_id(sqlite3 *db, const char *json_path,
+                             char *out, size_t out_sz) {
+    FILE *f = fopen(json_path, "r");
+    if (!f) return 1;
+    char buf[MAX_JSON];
+    size_t n = fread(buf, 1, sizeof(buf) - 1, f);
+    int extra = fgetc(f), read_error = ferror(f);
+    fclose(f);
+    if (extra != EOF || read_error || n == 0 || memchr(buf, 0, n)) return 1;
+    buf[n] = '\0';
+
+    sqlite3_stmt *st = NULL;
+    if (sqlite3_prepare_v2(db,
+        "SELECT json_extract(?1,'$.id') WHERE json_valid(?1)",
+        -1, &st, NULL) != SQLITE_OK) return 1;
+    sqlite3_bind_text(st, 1, buf, (int)n, SQLITE_TRANSIENT);
+    int ok = sqlite3_step(st) == SQLITE_ROW;
+    const char *id = ok ? (const char *)sqlite3_column_text(st, 0) : NULL;
+    int bytes = ok ? sqlite3_column_bytes(st, 0) : 0;
+    if (!id || bytes <= 0 || (size_t)bytes >= out_sz ||
+        strlen(id) != (size_t)bytes) {
+        sqlite3_finalize(st);
+        return 1;
+    }
+    memcpy(out, id, (size_t)bytes + 1);
+    sqlite3_finalize(st);
+    return 0;
+}
+
+static int cmd_setup(sqlite3 *db, const char *json_path) {
+    char model_id[128];
+    sqlite3_stmt *st = NULL;
+    int measured = 0, admitted = 0;
+
+    if (manifest_model_id(db, json_path, model_id, sizeof(model_id)) != 0) {
+        fprintf(stderr, "setup: manifest must contain one bounded model id\n");
+        return 1;
+    }
+    printf("Setting up %s\n", model_id);
+    if (cmd_add(db, json_path) != 0) return 1;
+    if (cmd_pull(db, model_id) != 0) {
+        fprintf(stderr, "setup: model is registered but its body is not ready\n");
+        return 1;
+    }
+    if (cmd_verify(db, model_id) != 0) return 1;
+
+    if (sqlite3_prepare_v2(db,
+        "SELECT COALESCE(SUM(measurement_state='measured'),0), "
+        "COALESCE(SUM(measurement_state='measured' AND admission_state='ADMIT'),0) "
+        "FROM model_representation_passport WHERE model_id=?",
+        -1, &st, NULL) == SQLITE_OK) {
+        sqlite3_bind_text(st, 1, model_id, -1, SQLITE_STATIC);
+        if (sqlite3_step(st) == SQLITE_ROW) {
+            measured = sqlite3_column_int(st, 0);
+            admitted = sqlite3_column_int(st, 1);
+        }
+    }
+    if (st) sqlite3_finalize(st);
+
+    printf("  body: ready and verified\n");
+    printf("  representation: %s (%d measured, %d admitted)\n",
+           measured ? "evidence recorded" : "unmeasured", measured, admitted);
+    if (!measured)
+        printf("  next: after a successful Qwen run, 'bonfyre model prove %s <run.json>'\n", model_id);
+    return 0;
+}
+
+static int cmd_evidence(sqlite3 *db, const char *model_id, const char *receipt_path) {
+    FILE *f = fopen(receipt_path, "r");
+    char receipt[MAX_JSON];
+    size_t n;
+    sqlite3_stmt *st = NULL;
+    char representation[64] = {0}, created_at[64] = {0}, receipt_model_hash[65] = {0};
+    char stored_hash[65] = {0}, format[32] = {0}, transform_family[96] = {0};
+    char cache_dir[PATH_MAX], body_path[PATH_MAX];
+    char receipt_hash[65], representation_id[512], family[128], version[128];
+    char receipt_digest[80], physical_digest[80];
+    struct stat sb;
+    const char *exactness;
+    const char *quality =
+        "Successful BonfyreQwenFPQ generation run with finite model state. "
+        "Establishes that this registered model body and runtime representation executed for generation. "
+        "Does not establish layer/logit/task parity, quality, speedup, production eligibility, or ResourceAdmission.";
+    const char *probe =
+        "SELECT json_extract(?1,'$.representation'),"
+        "json_extract(?1,'$.created_at'),json_extract(?1,'$.model_hash') "
+        "WHERE json_valid(?1)"
+        " AND json_extract(?1,'$.kind')='qwen_generation'"
+        " AND json_extract(?1,'$.recipe_id')='bonfyre-qwen-fpq'"
+        " AND json_extract(?1,'$.status')='ok'"
+        " AND json_extract(?1,'$.finite_model_state')=1"
+        " AND COALESCE(json_extract(?1,'$.generated_tokens'),0)>0"
+        " AND json_extract(?1,'$.model_id')=?2"
+        " AND json_type(?1,'$.representation')='text'"
+        " AND json_type(?1,'$.created_at')='text'"
+        " AND json_type(?1,'$.model_hash')='text'";
+
+    const char *insert =
+        "INSERT INTO model_representation_passport("
+        "representation_id,model_id,representation_family,representation_version,exactness_class,"
+        "measurement_state,admission_state,admission_scope,quality_envelope,receipt_ref,receipt_digest,"
+        "physical_body_ref,physical_digest,physical_bytes,supports_json,recorded_at)"
+        " VALUES(?1,?2,?3,?4,?5,'measured','DEFER','generation',?6,?7,?8,?9,?10,?11,'[\"generation\"]',?12)"
+        " ON CONFLICT(representation_id) DO UPDATE SET"
+        " representation_family=excluded.representation_family,"
+        " representation_version=excluded.representation_version,"
+        " exactness_class=excluded.exactness_class,"
+        " measurement_state='measured',admission_state='DEFER',admission_scope='generation',"
+        " quality_envelope=excluded.quality_envelope,receipt_ref=excluded.receipt_ref,"
+        " receipt_digest=excluded.receipt_digest,physical_body_ref=excluded.physical_body_ref,"
+        " physical_digest=excluded.physical_digest,physical_bytes=excluded.physical_bytes,"
+        " supports_json=excluded.supports_json,recorded_at=excluded.recorded_at";
+
+    if (!f) { perror(receipt_path); return 1; }
+    n = fread(receipt, 1, sizeof(receipt) - 1, f);
+    int extra = fgetc(f), read_error = ferror(f);
+    fclose(f);
+    if (extra != EOF || read_error || n == 0 || memchr(receipt, 0, n)) {
+        fprintf(stderr, "evidence: invalid or oversized run manifest\n");
+        return 1;
+    }
+    receipt[n] = '\0';
+
+    if (sqlite3_prepare_v2(db, probe, -1, &st, NULL) != SQLITE_OK) return 1;
+    sqlite3_bind_text(st, 1, receipt, (int)n, SQLITE_TRANSIENT);
+    sqlite3_bind_text(st, 2, model_id, -1, SQLITE_STATIC);
+    if (sqlite3_step(st) != SQLITE_ROW) {
+        sqlite3_finalize(st);
+        fprintf(stderr, "evidence: unsupported, unsuccessful, non-finite, or differently-bound run manifest\n");
+        return 1;
+    }
+    const unsigned char *r0 = sqlite3_column_text(st, 0);
+    const unsigned char *r1 = sqlite3_column_text(st, 1);
+    const unsigned char *r2 = sqlite3_column_text(st, 2);
+    snprintf(representation, sizeof(representation), "%s", r0 ? (const char *)r0 : "");
+    snprintf(created_at, sizeof(created_at), "%s", r1 ? (const char *)r1 : "");
+    snprintf(receipt_model_hash, sizeof(receipt_model_hash), "%s", r2 ? (const char *)r2 : "");
+    sqlite3_finalize(st); st = NULL;
+    if (!representation[0] || !created_at[0] || strlen(receipt_model_hash) != 64) return 1;
+
+    if (sqlite3_prepare_v2(db,
+        "SELECT sha256,format,COALESCE(transform_family,'') FROM models WHERE id=?",
+        -1, &st, NULL) != SQLITE_OK) return 1;
+    sqlite3_bind_text(st, 1, model_id, -1, SQLITE_STATIC);
+    if (sqlite3_step(st) != SQLITE_ROW) {
+        sqlite3_finalize(st);
+        fprintf(stderr, "evidence: model is not registered\n");
+        return 1;
+    }
+    const unsigned char *m0 = sqlite3_column_text(st, 0);
+    const unsigned char *m1 = sqlite3_column_text(st, 1);
+    const unsigned char *m2 = sqlite3_column_text(st, 2);
+    snprintf(stored_hash, sizeof(stored_hash), "%s", m0 ? (const char *)m0 : "");
+    snprintf(format, sizeof(format), "%s", m1 ? (const char *)m1 : "");
+    snprintf(transform_family, sizeof(transform_family), "%s", m2 ? (const char *)m2 : "");
+    sqlite3_finalize(st); st = NULL;
+    (void)format;
+    if (strlen(stored_hash) != 64 || strcmp(stored_hash, receipt_model_hash) != 0) {
+        fprintf(stderr, "evidence: run manifest model hash does not match registered model body\n");
+        return 1;
+    }
+
+    get_cache_dir(cache_dir, sizeof(cache_dir));
+    if (!cache_hit(model_id, stored_hash, cache_dir, body_path, sizeof(body_path)) ||
+        stat(body_path, &sb) != 0 || !S_ISREG(sb.st_mode)) {
+        fprintf(stderr, "evidence: verified registered model body is not resident\n");
+        return 1;
+    }
+    if (bf_sha256_file(receipt_path, receipt_hash) != 0) return 1;
+
+    exactness = (!strcmp(representation, "native-fp16") ||
+                 !strcmp(representation, "native-f16")) ? "exact" : "latent";
+    snprintf(family, sizeof(family), "qwen-runtime:%s", representation);
+    snprintf(version, sizeof(version), "%s",
+             transform_family[0] ? transform_family : "qwen-generation-manifest-v1");
+    snprintf(representation_id, sizeof(representation_id), "%s/%s/%.16s",
+             model_id, representation, receipt_hash);
+    snprintf(receipt_digest, sizeof(receipt_digest), "sha256:%s", receipt_hash);
+    snprintf(physical_digest, sizeof(physical_digest), "sha256:%s", stored_hash);
+
+    if (sqlite3_prepare_v2(db, insert, -1, &st, NULL) != SQLITE_OK) return 1;
+    sqlite3_bind_text(st, 1, representation_id, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(st, 2, model_id, -1, SQLITE_STATIC);
+    sqlite3_bind_text(st, 3, family, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(st, 4, version, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(st, 5, exactness, -1, SQLITE_STATIC);
+    sqlite3_bind_text(st, 6, quality, -1, SQLITE_STATIC);
+    sqlite3_bind_text(st, 7, receipt_path, -1, SQLITE_STATIC);
+    sqlite3_bind_text(st, 8, receipt_digest, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(st, 9, body_path, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(st, 10, physical_digest, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int64(st, 11, (sqlite3_int64)sb.st_size);
+    sqlite3_bind_text(st, 12, created_at, -1, SQLITE_TRANSIENT);
+    int ok = sqlite3_step(st) == SQLITE_DONE;
+    sqlite3_finalize(st);
+    if (!ok) {
+        fprintf(stderr, "evidence: could not record representation passport\n");
+        return 1;
+    }
+
+    char escaped[1024];
+    json_escape(representation_id, escaped, sizeof(escaped));
+    printf("{\"representation_passport\":\"recorded\","
+           "\"representation_id\":\"%s\","
+           "\"measurement\":\"measured\","
+           "\"admission\":\"DEFER\","
+           "\"scope\":\"generation\"}\n", escaped);
+    return 0;
+}
+
+static int cmd_quic_evidence(sqlite3 *db, const char *model_id, const char *receipt_path) {
+    FILE *f = fopen(receipt_path, "r");
+    char receipt[MAX_JSON];
+    size_t n;
+    sqlite3_stmt *st = NULL;
+    char representation[64] = {0}, receipt_model_hash[65] = {0};
+    char stored_hash[65] = {0}, transform_family[96] = {0};
+    char cache_dir[PATH_MAX], body_path[PATH_MAX];
+    char receipt_hash[65], representation_id[512], family[128], version[128];
+    char receipt_digest[80], physical_digest[80];
+    struct stat sb;
+    const char *exactness;
+    const char *quality =
+        "Successful BonfyreQwenFPQ QUIC generation with finite model state and owner-generated representation evidence. "
+        "The receipt retains factor/payload density measurements. This does not establish layer/logit/task parity, "
+        "quality, speedup, production eligibility, or ResourceAdmission.";
+    const char *probe =
+        "WITH r(v) AS (SELECT json_extract(?1,'$.last_response') "
+        "WHERE json_valid(?1) "
+        "AND json_extract(?1,'$.schema_version')='bonfyre.qwen_fpq_quic_client_result.v1' "
+        "AND json_extract(?1,'$.got_any')=1) "
+        "SELECT json_extract(v,'$.meta.representation'),json_extract(v,'$.meta.model_hash') "
+        "FROM r WHERE json_valid(v) "
+        "AND json_extract(v,'$.success')=1 "
+        "AND COALESCE(json_extract(v,'$.tokens_generated'),0)>0 "
+        "AND json_extract(v,'$.meta.schema_version')='bonfyre.qwen.representation_evidence.v1' "
+        "AND json_extract(v,'$.meta.finite_model_state')=1 "
+        "AND json_extract(v,'$.meta.model_id')=?2 "
+        "AND json_type(v,'$.meta.representation')='text' "
+        "AND json_type(v,'$.meta.model_hash')='text'";
+    const char *insert =
+        "INSERT INTO model_representation_passport("
+        "representation_id,model_id,representation_family,representation_version,exactness_class,"
+        "measurement_state,admission_state,admission_scope,quality_envelope,receipt_ref,receipt_digest,"
+        "physical_body_ref,physical_digest,physical_bytes,supports_json,recorded_at)"
+        " VALUES(?1,?2,?3,?4,?5,'measured','DEFER','generation',?6,?7,?8,?9,?10,?11,'[\"generation\"]',"
+        "strftime('%Y-%m-%dT%H:%M:%fZ','now'))"
+        " ON CONFLICT(representation_id) DO UPDATE SET"
+        " representation_family=excluded.representation_family,"
+        " representation_version=excluded.representation_version,"
+        " exactness_class=excluded.exactness_class,"
+        " measurement_state='measured',admission_state='DEFER',admission_scope='generation',"
+        " quality_envelope=excluded.quality_envelope,receipt_ref=excluded.receipt_ref,"
+        " receipt_digest=excluded.receipt_digest,physical_body_ref=excluded.physical_body_ref,"
+        " physical_digest=excluded.physical_digest,physical_bytes=excluded.physical_bytes,"
+        " supports_json=excluded.supports_json,recorded_at=excluded.recorded_at";
+
+    if (!f) { perror(receipt_path); return 1; }
+    n = fread(receipt, 1, sizeof(receipt) - 1, f);
+    int extra = fgetc(f), read_error = ferror(f);
+    fclose(f);
+    if (extra != EOF || read_error || n == 0 || memchr(receipt, 0, n)) {
+        fprintf(stderr, "evidence: invalid or oversized QUIC client receipt\n");
+        return 1;
+    }
+    receipt[n] = '\0';
+
+    if (sqlite3_prepare_v2(db, probe, -1, &st, NULL) != SQLITE_OK) return 1;
+    sqlite3_bind_text(st, 1, receipt, (int)n, SQLITE_TRANSIENT);
+    sqlite3_bind_text(st, 2, model_id, -1, SQLITE_STATIC);
+    if (sqlite3_step(st) != SQLITE_ROW) {
+        sqlite3_finalize(st);
+        fprintf(stderr, "evidence: invalid, unsuccessful, non-finite, or differently-bound QUIC receipt\n");
+        return 1;
+    }
+    const unsigned char *r0 = sqlite3_column_text(st, 0);
+    const unsigned char *r1 = sqlite3_column_text(st, 1);
+    snprintf(representation, sizeof(representation), "%s", r0 ? (const char *)r0 : "");
+    snprintf(receipt_model_hash, sizeof(receipt_model_hash), "%s", r1 ? (const char *)r1 : "");
+    sqlite3_finalize(st); st = NULL;
+    if (!representation[0] || strlen(receipt_model_hash) != 64) return 1;
+
+    if (sqlite3_prepare_v2(db,
+        "SELECT sha256,COALESCE(transform_family,'') FROM models WHERE id=?",
+        -1, &st, NULL) != SQLITE_OK) return 1;
+    sqlite3_bind_text(st, 1, model_id, -1, SQLITE_STATIC);
+    if (sqlite3_step(st) != SQLITE_ROW) {
+        sqlite3_finalize(st);
+        fprintf(stderr, "evidence: model is not registered\n");
+        return 1;
+    }
+    const unsigned char *m0 = sqlite3_column_text(st, 0);
+    const unsigned char *m1 = sqlite3_column_text(st, 1);
+    snprintf(stored_hash, sizeof(stored_hash), "%s", m0 ? (const char *)m0 : "");
+    snprintf(transform_family, sizeof(transform_family), "%s", m1 ? (const char *)m1 : "");
+    sqlite3_finalize(st); st = NULL;
+    if (strlen(stored_hash) != 64 || strcmp(stored_hash, receipt_model_hash) != 0) {
+        fprintf(stderr, "evidence: QUIC model hash does not match registered model body\n");
+        return 1;
+    }
+
+    get_cache_dir(cache_dir, sizeof(cache_dir));
+    if (!cache_hit(model_id, stored_hash, cache_dir, body_path, sizeof(body_path)) ||
+        stat(body_path, &sb) != 0 || !S_ISREG(sb.st_mode)) {
+        fprintf(stderr, "evidence: verified registered model body is not resident\n");
+        return 1;
+    }
+    if (bf_sha256_file(receipt_path, receipt_hash) != 0) return 1;
+
+    exactness = (!strcmp(representation, "native-fp16") ||
+                 !strcmp(representation, "native-f16")) ? "exact" : "latent";
+    snprintf(family, sizeof(family), "qwen-runtime:%s", representation);
+    snprintf(version, sizeof(version), "%s",
+             transform_family[0] ? transform_family : "qwen-quic-evidence-v1");
+    snprintf(representation_id, sizeof(representation_id), "%s/%s/%.16s",
+             model_id, representation, receipt_hash);
+    snprintf(receipt_digest, sizeof(receipt_digest), "sha256:%s", receipt_hash);
+    snprintf(physical_digest, sizeof(physical_digest), "sha256:%s", stored_hash);
+
+    if (sqlite3_prepare_v2(db, insert, -1, &st, NULL) != SQLITE_OK) return 1;
+    sqlite3_bind_text(st, 1, representation_id, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(st, 2, model_id, -1, SQLITE_STATIC);
+    sqlite3_bind_text(st, 3, family, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(st, 4, version, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(st, 5, exactness, -1, SQLITE_STATIC);
+    sqlite3_bind_text(st, 6, quality, -1, SQLITE_STATIC);
+    sqlite3_bind_text(st, 7, receipt_path, -1, SQLITE_STATIC);
+    sqlite3_bind_text(st, 8, receipt_digest, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(st, 9, body_path, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(st, 10, physical_digest, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int64(st, 11, (sqlite3_int64)sb.st_size);
+    int ok = sqlite3_step(st) == SQLITE_DONE;
+    sqlite3_finalize(st);
+    if (!ok) {
+        fprintf(stderr, "evidence: could not record QUIC representation passport\n");
+        return 1;
+    }
+
+    char escaped[1024];
+    json_escape(representation_id, escaped, sizeof(escaped));
+    printf("{\"representation_passport\":\"recorded\","
+           "\"representation_id\":\"%s\","
+           "\"measurement\":\"measured\","
+           "\"admission\":\"DEFER\","
+           "\"scope\":\"generation\","
+           "\"carrier\":\"quic-client\"}\n", escaped);
+    return 0;
+}
+
+static int cmd_evidence_product(sqlite3 *db, const char *model_id, const char *receipt_path) {
+    FILE *f = fopen(receipt_path, "r");
+    char head[2048];
+    size_t n;
+    if (!f) { perror(receipt_path); return 1; }
+    n = fread(head, 1, sizeof(head) - 1, f);
+    fclose(f);
+    head[n] = '\0';
+    if (strstr(head, "\"schema_version\"") &&
+        strstr(head, "bonfyre.qwen_fpq_quic_client_result.v1"))
+        return cmd_quic_evidence(db, model_id, receipt_path);
+    return cmd_evidence(db, model_id, receipt_path);
+}
+
 
 static int cmd_ls_cache(void) {
     char cache_dir[PATH_MAX]; get_cache_dir(cache_dir, sizeof(cache_dir));
@@ -2003,6 +2564,127 @@ static int cmd_route(sqlite3 *db, const char *stats_path,
     return 0;
 }
 
+/* ── local: the models on this machine and whether each can load now ──
+ *
+ * The registry above knows what Bonfyre can pull; it did not know the five
+ * GGUFs already in ~/BonfyreModels, nor that loading the 6 GiB one while the
+ * 5.5 GiB one sat resident is what used to hang this Mac. Each row here is
+ * judged against the same memory ledger the loaders ask before they load. */
+#define LOCAL_MAX 64
+typedef struct { char path[PATH_MAX]; int64_t bytes; } LocalModel;
+static LocalModel local_models[LOCAL_MAX];
+static int local_count;
+
+static int local_visit(const char *path, const struct stat *st, int type, struct FTW *ftw) {
+    size_t n = strlen(path);
+    (void)ftw;
+    if (type == FTW_F && n > 5 && strcmp(path + n - 5, ".gguf") == 0 && st->st_size > (64 << 20) &&
+        local_count < LOCAL_MAX) {
+        snprintf(local_models[local_count].path, PATH_MAX, "%s", path);
+        local_models[local_count++].bytes = (int64_t)st->st_size;
+    }
+    return 0;
+}
+
+/* The price bonfyre-moe serve asks the ledger for: the GGUF's own shape, a
+ * q8_0 KV cache, and at least 4096 tokens of context. Falls back to the old
+ * flat shape for a file whose header cannot be read. */
+static int64_t local_need(const char *path, int64_t bytes, BfModelShape *shape) {
+    if (bf_admission_model_shape(path, 1.0625, shape) == 0) return bf_admission_model_bytes(shape, 4096);
+    memset(shape, 0, sizeof *shape);
+    return bytes + ((int64_t)320 << 20) + (int64_t)4096 * (192 << 10);
+}
+
+static int local_by_size(const void *a, const void *b) {
+    int64_t x = ((const LocalModel *)a)->bytes, y = ((const LocalModel *)b)->bytes;
+    return x < y ? 1 : x > y ? -1 : 0;
+}
+
+static int cmd_local(int json) {
+    char root[PATH_MAX], ledger[PATH_MAX];
+    const char *home = getenv("HOME") ? getenv("HOME") : ".";
+    const char *root_env = getenv("BONFYRE_MODEL_ROOT"), *ledger_env = getenv("BONFYRE_ADMISSION_DB");
+    BfAdmissionPolicy policy;
+    sqlite3 *grants = NULL;
+    sqlite3_stmt *st = NULL;
+    /* committed: claimed by a load in progress. resident: already loaded, and
+     * so already missing from available. */
+    int64_t available = bf_admission_memory_available(), committed = 0, resident = 0, spendable;
+    struct stat probe;
+    snprintf(root, sizeof root, "%s", root_env ? root_env : "");
+    if (!root_env) snprintf(root, sizeof root, "%s/BonfyreModels", home);
+    snprintf(ledger, sizeof ledger, "%s", ledger_env ? ledger_env : "");
+    if (!ledger_env) snprintf(ledger, sizeof ledger, "%s/.bonfyre/admission.db", home);
+    bf_admission_policy_memory(&policy);
+    local_count = 0;
+    nftw(root, local_visit, 16, FTW_PHYS);
+    /* Strongest first, the order bonfyre-moe serve tries them in. */
+    qsort(local_models, (size_t)local_count, sizeof local_models[0], local_by_size);
+    if (stat(ledger, &probe) == 0 && sqlite3_open_v2(ledger, &grants, SQLITE_OPEN_READONLY, NULL) == SQLITE_OK &&
+        sqlite3_prepare_v2(grants, "SELECT COALESCE(SUM(CASE WHEN kind NOT LIKE '%:settled' THEN estimated_bytes END),0), "
+                                   "COALESCE(SUM(CASE WHEN kind LIKE '%:settled' THEN estimated_bytes END),0) FROM resource_grants "
+                                   "WHERE volume='memory' AND released_at IS NULL", -1, &st, NULL) == SQLITE_OK &&
+        sqlite3_step(st) == SQLITE_ROW)
+        committed = sqlite3_column_int64(st, 0), resident = sqlite3_column_int64(st, 1);
+    if (st) sqlite3_finalize(st);
+    st = NULL;
+    spendable = available - policy.protected_floor_bytes - committed;
+    if (spendable < 0) spendable = 0;
+
+    if (json) printf("{\"schema\":\"bonfyre.model.local.v1\",\"root\":\"%s\",\"memory_available_bytes\":%lld,"
+                     "\"memory_floor_bytes\":%lld,\"memory_committed_bytes\":%lld,\"memory_resident_bytes\":%lld,\"memory_spendable_bytes\":%lld,\"models\":[",
+                     root, (long long)available, (long long)policy.protected_floor_bytes, (long long)committed, (long long)resident,
+                     (long long)spendable);
+    else {
+        printf("Models on this machine (%s)\n\n", root);
+        printf("  Memory: %.1f GiB available, %.1f GiB kept for the system, %.1f GiB held by loaded models",
+               available / 1073741824.0, policy.protected_floor_bytes / 1073741824.0, resident / 1073741824.0);
+        if (committed) printf(", %.1f GiB claimed by loads in progress", committed / 1073741824.0);
+        printf("\n\n");
+    }
+    int answerer = -1;
+    for (int i = 0; i < local_count; i++) {
+        const char *name = strrchr(local_models[i].path, '/') ? strrchr(local_models[i].path, '/') + 1 : local_models[i].path;
+        BfModelShape shape;
+        int64_t need = local_need(local_models[i].path, local_models[i].bytes, &shape);
+        int64_t context = shape.layers ? bf_admission_model_context(&shape, spendable, 4096, 16384) : 0;
+        int chat = shape.layers ? shape.chat : 1;
+        char holder[128] = "";
+        if (grants && sqlite3_prepare_v2(grants, "SELECT plane FROM resource_grants WHERE volume='memory' AND "
+                                                 "released_at IS NULL AND detail=? LIMIT 1", -1, &st, NULL) == SQLITE_OK) {
+            sqlite3_bind_text(st, 1, local_models[i].path, -1, SQLITE_STATIC);
+            if (sqlite3_step(st) == SQLITE_ROW) snprintf(holder, sizeof holder, "%s", (const char *)sqlite3_column_text(st, 0));
+            sqlite3_finalize(st);
+            st = NULL;
+        }
+        const char *state = holder[0] ? "loaded" : need <= spendable ? "fits" : "waits";
+        if (chat && answerer < 0 && (holder[0] || need <= spendable)) answerer = i;
+        if (json) printf("%s{\"path\":\"%s\",\"bytes\":%lld,\"needs_bytes\":%lld,\"state\":\"%s\",\"held_by\":\"%s\","
+                         "\"chat\":%s,\"context_now\":%lld,\"answers_now\":%s}",
+                         i ? "," : "", local_models[i].path, (long long)local_models[i].bytes, (long long)need, state, holder,
+                         chat ? "true" : "false", (long long)context, answerer == i ? "true" : "false");
+        else if (holder[0]) printf("  loaded   %-44s %5.1f GiB  held by %s\n", name, need / 1073741824.0, holder);
+        else if (!chat) printf("  %-8s %-44s %5.1f GiB  embeddings only, not a chat model\n", state, name, need / 1073741824.0);
+        else if (need <= spendable) printf("  fits     %-44s %5.1f GiB  can load now, with up to %lldk context\n", name,
+                                           need / 1073741824.0, (long long)(context / 1024));
+        else printf("  waits    %-44s %5.1f GiB  needs %.1f GiB more free first\n", name, need / 1073741824.0,
+                    (need - spendable) / 1073741824.0);
+    }
+    if (json) puts("]}");
+    else if (local_count && answerer >= 0)
+        printf("\n  Asked now, the local model answers with %s: the strongest that fits.\n"
+               "  When more memory frees, a stronger one takes over between requests.\n",
+               strrchr(local_models[answerer].path, '/') ? strrchr(local_models[answerer].path, '/') + 1 : local_models[answerer].path);
+    else if (local_count)
+        printf("\n  Asked now, the local model would wait: none of these fits until memory frees.\n");
+    if (json) {}
+    else if (!local_count) printf("  No .gguf models under %s. Set BONFYRE_MODEL_ROOT to look elsewhere.\n", root);
+    else printf("\n  A model that waits is refused with the reason instead of loading into swap.\n"
+                "  Loaded models unload after a quiet spell; see bonfyre-moe --help (Residency).\n");
+    if (grants) sqlite3_close(grants);
+    return 0;
+}
+
 static int cmd_status(sqlite3 *db) {
     char db_path[PATH_MAX]; get_db_path(db_path, sizeof(db_path));
     char cache_dir[PATH_MAX]; get_cache_dir(cache_dir, sizeof(cache_dir));
@@ -2018,14 +2700,18 @@ static int cmd_status(sqlite3 *db) {
     sqlite3_prepare_v2(db,"SELECT COUNT(*) FROM recipe_models",-1,&st,NULL);
     sqlite3_step(st); int nrec   = sqlite3_column_int(st,0); sqlite3_finalize(st);
 
-    /* Count cached files */
+    /* Count cached files. The figure is the bytes actually on disk, not the
+     * registry's size_mb: a builtin row said 274 MB for a nomic body whose
+     * cached file is 84,106,624 bytes, and status reported the row. */
     int ncached=0; double total_mb=0;
     char cache_dir2[PATH_MAX]; get_cache_dir(cache_dir2, sizeof(cache_dir2));
-    sqlite3_prepare_v2(db,"SELECT id,format,size_mb FROM models",-1,&st,NULL);
+    sqlite3_prepare_v2(db,"SELECT id FROM models",-1,&st,NULL);
     while(sqlite3_step(st)==SQLITE_ROW) {
         const char *id  = (const char*)sqlite3_column_text(st,0);
-        double sz = sqlite3_column_double(st,2);
-        if(cache_hit(id,NULL,cache_dir2,NULL,0)) { ncached++; total_mb+=sz; }
+        char hit[PATH_MAX];
+        if(cache_hit(id,NULL,cache_dir2,hit,sizeof(hit))) {
+            ncached++; total_mb += (double)path_bytes(hit) / 1048576.0;
+        }
     }
     sqlite3_finalize(st);
 
@@ -2054,7 +2740,17 @@ static int cmd_status(sqlite3 *db) {
  * main
  * ==================================================================== */
 int main(int argc, char **argv) {
-    if(argc < 2 || strcmp(argv[1],"help")==0 || strcmp(argv[1],"--help")==0) {
+    enum { MD_HELP };
+    static const BfCommandEntry model_help_command[] = {
+        {"help", MD_HELP, 0, NULL},
+    };
+    const BfCommandEntry *help_command = argc < 2 ? NULL : bf_command_lookup(model_help_command,
+        sizeof(model_help_command) / sizeof(model_help_command[0]), argv[1]);
+    if (argc >= 3 && help_command && help_command->id == MD_HELP && strcmp(argv[2],"--all")==0) {
+        cmd_help_all(); return 0;
+    }
+    if (bf_help_requested(argc, argv)) { cmd_help(); return 0; }
+    if(argc < 2) {
         cmd_help(); return 0;
     }
 
@@ -2075,6 +2771,11 @@ int main(int argc, char **argv) {
         if(argc < 3) { fprintf(stderr,"usage: bonfyre-model show <id>\n"); ret=1; }
         else ret = cmd_show(db, argv[2]);
 
+    } else if(strcmp(cmd,"fetch")==0) {
+        if(argc < 3 || strcmp(argv[2],"--recipe")==0) {
+            fprintf(stderr,"usage: bonfyre-model fetch <id>\n"); ret=1;
+        } else ret = cmd_pull(db, argv[2]);
+
     } else if(strcmp(cmd,"pull")==0) {
         if(argc < 3) {
             fprintf(stderr,"usage: bonfyre-model pull <id> | --recipe <code>\n"); ret=1;
@@ -2085,9 +2786,31 @@ int main(int argc, char **argv) {
             ret = cmd_pull(db, argv[2]);
         }
 
+    } else if(strcmp(cmd,"setup")==0) {
+        if(argc < 3) { fprintf(stderr,"usage: bonfyre-model setup <manifest.json>\n"); ret=1; }
+        else ret = cmd_setup(db, argv[2]);
+
+    } else if(strcmp(cmd,"prove")==0 || strcmp(cmd,"evidence")==0) {
+        if(argc < 4) { fprintf(stderr,"usage: bonfyre-model prove <model-id> <run-manifest.json>\n"); ret=1; }
+        else ret = cmd_evidence_product(db, argv[2], argv[3]);
+
     } else if(strcmp(cmd,"add")==0) {
         if(argc < 3) { fprintf(stderr,"usage: bonfyre-model add <manifest.json>\n"); ret=1; }
         else ret = cmd_add(db, argv[2]);
+
+    } else if(strcmp(cmd,"representation-record")==0) {
+        if(argc < 3) { fprintf(stderr,"usage: bonfyre-model representation-record <passport.json>\n"); ret=1; }
+        else ret = cmd_representation_record(db, argv[2]);
+
+    } else if(strcmp(cmd,"representations")==0) {
+        if(argc < 3) { fprintf(stderr,"usage: bonfyre-model representations <model-id>\n"); ret=1; }
+        else ret = cmd_representations(db, argv[2]);
+
+    } else if(strcmp(cmd,"representation-gate")==0) {
+        const char *scope = NULL;
+        for (int i = 3; i + 1 < argc; i++) if (!strcmp(argv[i], "--scope")) scope = argv[i + 1];
+        if(argc < 3 || !scope) { fprintf(stderr,"usage: bonfyre-model representation-gate <id> --scope diagnostic|embedding|rerank|generation\n"); ret=1; }
+        else ret = cmd_representation_gate(db, argv[2], scope);
 
     } else if(strcmp(cmd,"verify")==0) {
         if(argc < 3) { fprintf(stderr,"usage: bonfyre-model verify <id>\n"); ret=1; }
@@ -2149,17 +2872,8 @@ int main(int argc, char **argv) {
     } else if(strcmp(cmd,"status")==0) {
         ret = cmd_status(db);
 
-    } else if(strcmp(cmd,"push")==0) {
-        const char *push_id = NULL, *push_repo = NULL;
-        for(int i = 2; i < argc; i++) {
-            if(strcmp(argv[i],"--repo")==0 && i+1<argc) push_repo = argv[++i];
-            else push_id = argv[i];
-        }
-        if(!push_id || !push_repo) {
-            fprintf(stderr,"usage: bonfyre-model push <id> --repo <hf-org/name>\n"); ret=1;
-        } else {
-            ret = cmd_push(db, push_id, push_repo);
-        }
+    } else if(strcmp(cmd,"local")==0) {
+        ret = cmd_local(argc > 2 && strcmp(argv[2],"--json")==0);
 
     } else if(strcmp(cmd,"version")==0 || strcmp(cmd,"--version")==0) {
         printf("bonfyre-model %s\n", VERSION);

@@ -1,0 +1,1 @@
+{"authorization":"Bearer fixture-token","body":{"id":"@ID@","jsonrpc":"2.0","method":"tools/call","params":{"arguments":{"data_bytes":0,"effect_class":"CANDIDATE_WRITE","privacy_class":"internal","remote_allowed":true,"requires_gpu":false},"name":"r7_placement_compile"}},"content-type":"application/json","mcp-protocol-version":"2025-06-18","request":"POST /mcp"}

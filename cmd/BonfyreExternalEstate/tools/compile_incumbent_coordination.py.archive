@@ -1,0 +1,20 @@
+#!/usr/bin/env python3
+"""Historical Python compiler; compile_coordination_family.mjs supersedes it."""
+import argparse, json
+from pathlib import Path
+ROOT=Path(__file__).resolve().parents[3]
+class Refusal(ValueError): pass
+def compile(spec):
+    seen=set(); out=[]
+    for item in spec.get("phenotypes",[]):
+        ident=item.get("id","")
+        if not ident or ident in seen or not item.get("roots") or not item.get("public") or not item.get("authority"): raise Refusal("each phenotype needs unique id, roots, public carriers, authority")
+        seen.add(ident)
+        out.append({"phenotype":ident,"subject_roots":item["roots"],"public_carriers":item["public"],"authority_bridge":item["authority"],"bridge_state":item.get("bridge","deferred"),"cannot_infer":"carrier participation does not grant authority or merge provider account identity into a Bonfyre subject"})
+    return out
+def main():
+    ap=argparse.ArgumentParser();ap.add_argument("--spec",type=Path,default=ROOT/"schemas/control/incumbent-coordination-phenotypes.json");ap.add_argument("--out",type=Path,required=True);a=ap.parse_args()
+    try: rows=compile(json.loads(a.spec.read_text()))
+    except (OSError,ValueError,TypeError) as e: print("incumbent coordination compiler: %s"%e);return 2
+    a.out.write_text("".join(json.dumps(r,sort_keys=True)+"\n" for r in rows));print(json.dumps({"phenotypes":len(rows),"cannot_infer":"a platform map is not an authority bridge"}));return 0
+if __name__=="__main__":raise SystemExit(main())

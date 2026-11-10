@@ -59,4 +59,12 @@ char *extract_bindings(const char *json);
    Caller frees. */
 char *extract_generator(const char *json);
 
+/* Derive tensor cells from bindings for members that have none.
+ * content_type may be a type name or "all". Returns members repaired. */
+int bf_cms_backfill_cells(sqlite3 *db, const char *content_type);
+
+/* Remove tensor cells no membership claims. The inverse of the backfill;
+ * both run before an index build so cells and membership agree. */
+int bf_cms_prune_orphan_cells(sqlite3 *db, const char *content_type);
+
 #endif /* CANONICAL_H */

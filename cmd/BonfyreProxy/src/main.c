@@ -40,6 +40,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include "bf_lex.h"
+#include "../../../lib/libbonfyre/include/bf_help.h"
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 #define VERSION       "1.0.0"
 #define MAX_BODY      (50*1024*1024)  /* 50MB — audio files can be large */
 #define MAX_PATH_LEN  2048
@@ -394,30 +397,11 @@ static int run_binary(const char *bin, char *const argv[], char *out, size_t out
 
 /* ── Escape JSON string ──────────────────────────────────────────── */
 
+/* Delegates to the one implementation. Nineteen copies of this shape existed
+ * with sixteen different opinions about escaping.
+ */
 static char *json_escape(const char *s, size_t len) {
-    /* Worst case: every char becomes \uXXXX (6 bytes) */
-    char *out = malloc(len * 6 + 1);
-    if (!out) return NULL;
-    size_t j = 0;
-    for (size_t i = 0; i < len; i++) {
-        unsigned char c = (unsigned char)s[i];
-        switch (c) {
-            case '"':  out[j++] = '\\'; out[j++] = '"'; break;
-            case '\\': out[j++] = '\\'; out[j++] = '\\'; break;
-            case '\n': out[j++] = '\\'; out[j++] = 'n'; break;
-            case '\r': out[j++] = '\\'; out[j++] = 'r'; break;
-            case '\t': out[j++] = '\\'; out[j++] = 't'; break;
-            default:
-                if (c < 0x20) {
-                    j += (size_t)sprintf(out + j, "\\u%04x", c);
-                } else {
-                    out[j++] = (char)c;
-                }
-                break;
-        }
-    }
-    out[j] = '\0';
-    return out;
+    return bf_lex_json_escape_alloc(s, len);
 }
 
 /* ── GET /v1/models ──────────────────────────────────────────────── */
@@ -922,9 +906,8 @@ static int cmd_serve(int argc, char **argv) {
 
 /* ── Main ────────────────────────────────────────────────────────── */
 
-int main(int argc, char **argv) {
-    if (argc < 2) {
-        fprintf(stderr,
+static void usage(void) {
+    fprintf(stderr,
             "bonfyre-proxy — OpenAI-compatible API shim\n\n"
             "Usage:\n"
             "  bonfyre-proxy serve [--port 8787] [--hcp-bin PATH]\n"
@@ -935,11 +918,24 @@ int main(int argc, char **argv) {
             "  GET  /v1/models                  List available models\n"
             "  GET  /health                     Health check\n\n"
             "Set OPENAI_API_BASE=http://localhost:8787 for drop-in OpenAI replacement.\n");
+}
+
+int main(int argc, char **argv) {
+    if (bf_help_requested(argc, argv)) { usage(); return 0; }
+    if (argc < 2) {
+        usage();
         return 1;
     }
 
-    if (strcmp(argv[1], "status") == 0) return cmd_status();
-    if (strcmp(argv[1], "serve") == 0) return cmd_serve(argc - 2, argv + 2);
+    enum { PX_SERVE, PX_STATUS };
+    static const BfCommandEntry proxy_commands[] = {
+        {"serve", PX_SERVE, 0, NULL},
+        {"status", PX_STATUS, 0, NULL},
+    };
+    const BfCommandEntry *command = bf_command_lookup(proxy_commands,
+        sizeof(proxy_commands) / sizeof(proxy_commands[0]), argv[1]);
+    if (command && command->id == PX_STATUS) return cmd_status();
+    if (command && command->id == PX_SERVE) return cmd_serve(argc - 2, argv + 2);
 
     fprintf(stderr, "Unknown command: %s\n", argv[1]);
     return 1;

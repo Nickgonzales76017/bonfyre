@@ -1,0 +1,3 @@
+200	-	{"jsonrpc":"2.0","id":"@ID@","result":{"isError":false,"structuredContent":{"artifact_id":"a"}}}
+200	-	{"jsonrpc":"2.0","id":"@ID@","result":{"isError":false,"structuredContent":{}}}
+200	-	{"jsonrpc":"2.0","id":"@ID@","result":{"isError":false,"structuredContent":{"verified":"yes"}}}

@@ -1,0 +1,25 @@
+{
+  "schema": "bonfyre-decision-scale-assessment.v1",
+  "observed_on": "2026-10-01",
+  "scope": "local estate snapshot and implemented Source Fabric integration, not a Clef throughput or accuracy benchmark",
+  "frontier_db": "/Users/nickgonzales/.bonfyre/estate-local/frontier.db",
+  "frontier_query": "SELECT state, COUNT(*) FROM channel GROUP BY state",
+  "channel_counts": {
+    "admitted": 2364,
+    "candidate": 107344,
+    "eligible": 61,
+    "waiting_credential": 1
+  },
+  "archive_db": "/Users/nickgonzales/.bonfyre/estate-local/items.db",
+  "archive_query": "SELECT COUNT(*) FROM item",
+  "retained_items": 69746,
+  "decision_program_scope": "admitted or active channels with a census source only",
+  "questions_per_channel": 3,
+  "maximum_channels_per_request": 21,
+  "minimum_requests_to_cover_2364_admitted_channels_per_model": 113,
+  "existing_downstream_operations_replaced": 0,
+  "existing_downstream_operations_skipped": 0,
+  "measured_review_minutes_saved": null,
+  "measured_quality_delta": null,
+  "result": "remove Clef and Clef-flash from the recurring Source Fabric cycle; retain the standalone bounded diagnostic harness only for a future labeled, costed evaluation"
+}

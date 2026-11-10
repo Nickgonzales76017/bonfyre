@@ -1,0 +1,90 @@
+#!/usr/bin/env python3
+"""Audit ExperienceMap specificity instead of accepting fallback coverage."""
+from __future__ import annotations
+
+import json
+from collections import Counter
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+GEN = ROOT / "generated"
+GENERIC_PROTOCOL = {"machine-generic"}
+GENERIC_HUMAN = {"discover"}
+
+
+def load_jsonl(name: str) -> list[dict]:
+    result = []
+    with (GEN / name).open(encoding="utf-8") as handle:
+        for line in handle:
+            if line.strip():
+                result.append(json.loads(line))
+    return result
+
+
+def main() -> int:
+    external = load_jsonl("external_bindings.jsonl")
+    ghosts = load_jsonl("ghost_bindings.jsonl")
+    apps = load_jsonl("app_bindings.jsonl")
+
+    protocol_specific = []
+    protocol_generic_only = []
+    human_generic_only = []
+    missing_human = []
+    missing_protocol = []
+    missing_home = []
+    missing_territory = []
+
+    for row in external:
+        p = set(row.get("protocol_chains") or [])
+        h = set(row.get("human_chains") or [])
+        if not p:
+            missing_protocol.append(row)
+        elif p <= GENERIC_PROTOCOL:
+            protocol_generic_only.append(row)
+        else:
+            protocol_specific.append(row)
+        if not h:
+            missing_human.append(row)
+        elif h <= GENERIC_HUMAN:
+            human_generic_only.append(row)
+        if not row.get("home_blueprints"):
+            missing_home.append(row)
+        if not row.get("territories"):
+            missing_territory.append(row)
+
+    protocol_counts = Counter(x for row in external for x in row.get("protocol_chains", []))
+    human_counts = Counter(x for row in external for x in row.get("human_chains", []))
+    home_counts = Counter(x for row in external for x in row.get("home_blueprints", []))
+    kind_counts = Counter(row.get("source_kind", "") for row in protocol_generic_only)
+
+    report = {
+        "schema": "bonfyre.experience-map-specificity.v1",
+        "external_total": len(external),
+        "external_specific_protocol": len(protocol_specific),
+        "external_machine_generic_only": len(protocol_generic_only),
+        "machine_generic_only_by_source_kind": dict(sorted(kind_counts.items())),
+        "external_without_protocol": len(missing_protocol),
+        "external_discover_only": len(human_generic_only),
+        "external_without_human_chain": len(missing_human),
+        "external_without_home_blueprint": len(missing_home),
+        "external_without_territory": len(missing_territory),
+        "ghost_total": len(ghosts),
+        "ghost_without_human_chain": sum(not row.get("human_chains") for row in ghosts),
+        "app_reference_total": len(apps),
+        "app_reference_without_human_chain": sum(not row.get("human_chains") for row in apps),
+        "protocol_binding_counts": dict(protocol_counts.most_common()),
+        "human_binding_counts": dict(human_counts.most_common()),
+        "home_binding_counts": dict(home_counts.most_common()),
+        "generic_protocol_examples": [
+            {"id": r.get("id"), "name": r.get("name"), "source_kind": r.get("source_kind")}
+            for r in protocol_generic_only[:50]
+        ],
+        "discover_only_examples": [
+            {"id": r.get("id"), "name": r.get("name"), "source_kind": r.get("source_kind")}
+            for r in human_generic_only[:50]
+        ]}
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 1 if missing_human or missing_protocol or missing_home or missing_territory else 0
+
+if __name__ == "__main__":
+    raise SystemExit(main())

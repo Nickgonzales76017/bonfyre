@@ -43,6 +43,7 @@
 #include <unistd.h>
 #include <sqlite3.h>
 #include <bonfyre.h>
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 
 #define VERSION     "1.0.0"
 #define DB_ENV      "BONFYRE_CONTROL_DB"
@@ -158,8 +159,10 @@ static sqlite3 *open_db(void) {
     char path[4096]; db_path(path, sizeof(path));
     ensure_dir(path);
     sqlite3 *db = NULL;
-    if (bf_sqlite3_open(path, &db) != SQLITE_OK) {
-        fprintf(stderr, "bonfyre-control: cannot open db: %s\n", sqlite3_errmsg(db));
+    /* Durable tier -- decisions and policies: what was decided and under which rule. */
+    int rc = bf_sqlite3_open_tier(path, &db, BF_SQLITE_DURABLE);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "bonfyre-control: durable database open refused (SQLite %d)\n", rc);
         exit(1);
     }
     char *err = NULL;
@@ -239,9 +242,11 @@ static void cmd_policy_rm(sqlite3 *db, const char *id) {
     else fprintf(stderr, "policy not found: %s\n", id);
 }
 
-static void cmd_policy_add(sqlite3 *db, const char *file) {
+/* Returns 0 when the policy was stored; a refused policy is a failure, not a
+ * silent success. */
+static int cmd_policy_add(sqlite3 *db, const char *file) {
     FILE *f = fopen(file, "r");
-    if (!f) { perror(file); return; }
+    if (!f) { perror(file); return 1; }
     char *buf = malloc(MAX_JSON);
     size_t n = fread(buf, 1, MAX_JSON - 1, f); fclose(f);
     buf[n] = '\0';
@@ -275,13 +280,13 @@ static void cmd_policy_add(sqlite3 *db, const char *file) {
         }
     }
     if (!pol_id[0]) {
-        fprintf(stderr,"policy JSON must have \"id\" field\n"); free(buf); return;
+        fprintf(stderr,"policy JSON must have \"id\" field\n"); free(buf); return 1;
     }
     if (!name[0])   snprintf(name,  sizeof(name),   "%s", pol_id);
     if (!kind[0] || (strcmp(kind,"cost")&&strcmp(kind,"latency")&&
                      strcmp(kind,"route")&&strcmp(kind,"compete"))) {
         fprintf(stderr,"policy \"kind\" must be: cost | latency | route | compete\n");
-        free(buf); return;
+        free(buf); return 1;
     }
     time_t now = time(NULL);
     sqlite3_stmt *st = NULL;
@@ -301,6 +306,7 @@ static void cmd_policy_add(sqlite3 *db, const char *file) {
     else
         fprintf(stderr,"policy add failed: %s\n", sqlite3_errmsg(db));
     free(buf);
+    return r == SQLITE_DONE ? 0 : 1;
 }
 
 /*
@@ -342,7 +348,9 @@ static void cmd_policy_add(sqlite3 *db, const char *file) {
  *
  * Status codes emitted:
  *   CLEAR_WITH_FEATURES — dict present, features checked, no danger
- *   CLEAR_NO_FEATURES   — dict present but artifact has no feature manifest
+ *   NOT_GATED_NO_FEATURES   — dict present but artifact has no feature manifest;
+ *                             nothing was examined, so nothing was cleared
+ *   NOT_GATED_NO_DICTIONARY — no dictionary to examine with
  *   BRANCH_DANGER       — danger feature threshold exceeded (exits 2)
  *   ERROR               — execution failure
  *
@@ -363,7 +371,7 @@ static void cmd_sae_gate(sqlite3 *db, const char *artifact,
                  "%s/.local/share/bonfyre/sae/default.bfsae", home);
     }
     if (access(dict_path, R_OK) != 0) {
-        printf("sae-gate: no dict at %s -- CLEAR_NO_FEATURES\n", dict_path);
+        printf("sae-gate: no dictionary at %s -- NOT_GATED_NO_DICTIONARY\n", dict_path);
         /* log decision */
         time_t now = time(NULL); sqlite3_stmt *st = NULL;
         sqlite3_prepare_v2(db,
@@ -371,7 +379,7 @@ static void cmd_sae_gate(sqlite3 *db, const char *artifact,
             " VALUES(?,?,?,?,?,?)", -1, &st, NULL);
         sqlite3_bind_text  (st,1, artifact, -1, SQLITE_STATIC);
         sqlite3_bind_text  (st,2, "probe/sae-gate", -1, SQLITE_STATIC);
-        sqlite3_bind_text  (st,3, "CLEAR_NO_FEATURES", -1, SQLITE_STATIC);
+        sqlite3_bind_text  (st,3, "NOT_GATED_NO_DICTIONARY", -1, SQLITE_STATIC);
         sqlite3_bind_text  (st,4, "no-dict", -1, SQLITE_STATIC);
         sqlite3_bind_double(st,5, alpha);
         sqlite3_bind_int64 (st,6, (sqlite3_int64)now);
@@ -385,7 +393,7 @@ static void cmd_sae_gate(sqlite3 *db, const char *artifact,
 
     int ecode = GATE_ERROR;
     if (!has_features) {
-        /* No feature manifest — log CLEAR_NO_FEATURES, skip subprocess */
+        /* No feature manifest — nothing to examine; say so rather than clear it */
         ecode = GATE_CLEAR_NO_FEATURES;
     } else {
         /* Spawn bonfyre-sae gate via fork/execvp — no shell quoting issues */
@@ -416,7 +424,7 @@ static void cmd_sae_gate(sqlite3 *db, const char *artifact,
 
     const char *decision_str =
         ecode == GATE_CLEAR_WITH_FEATURES ? "CLEAR_WITH_FEATURES" :
-        ecode == GATE_CLEAR_NO_FEATURES   ? "CLEAR_NO_FEATURES"   :
+        ecode == GATE_CLEAR_NO_FEATURES   ? "NOT_GATED_NO_FEATURES" :
         ecode == GATE_BRANCH_DANGER       ? "BRANCH_DANGER"       : "ERROR";
 
     {
@@ -1152,7 +1160,7 @@ static void cmd_help(void) {
 "  entropy-check <artifact> [threshold]  fast entropy pre-flight (<10ms); exits 2 if low\n"
 "  sae-gate <artifact> [--dict D] [--alpha A]\n"
 "                              SAE feature gate: exits 2 on danger feature > alpha\n"
-"                              set BONFYRE_SAE_DICT to activate; degrades to CLEAR if absent\n"
+"                              set BONFYRE_SAE_DICT to activate; with none it reports NOT_GATED_NO_DICTIONARY and gates nothing\n"
 "  agp export <artifact> [out] export AGP-formatted signed decision log\n"
 "  inspect <run-id>            show full control trace for a pipeline run\n"
 "  history                     last 20 control decisions\n"
@@ -1178,7 +1186,14 @@ static void cmd_help(void) {
 
 int main(int argc, char **argv) {
     srand((unsigned)time(NULL));
-    if (argc < 2 || strcmp(argv[1],"help")==0 || strcmp(argv[1],"--help")==0) {
+    enum { CT_HELP };
+    static const BfCommandEntry control_help_command[] = {
+        {"--help", CT_HELP, 0, NULL},
+        {"help", CT_HELP, 0, NULL},
+    };
+    const BfCommandEntry *help_command = argc < 2 ? NULL : bf_command_lookup(control_help_command,
+        sizeof(control_help_command) / sizeof(control_help_command[0]), argv[1]);
+    if (argc < 2 || (help_command && help_command->id == CT_HELP)) {
         cmd_help(); return 0;
     }
     sqlite3 *db = open_db();
@@ -1239,7 +1254,7 @@ int main(int argc, char **argv) {
             else cmd_policy_show(db, argv[3]);
         } else if (strcmp(argv[2],"add")==0) {
             if (argc < 4) { fprintf(stderr,"usage: bonfyre-control policy add <file.json>\n"); rc=1; }
-            else cmd_policy_add(db, argv[3]);
+            else rc = cmd_policy_add(db, argv[3]);
         } else if (strcmp(argv[2],"rm")==0) {
             if (argc < 4) { fprintf(stderr,"usage: bonfyre-control policy rm <id>\n"); rc=1; }
             else cmd_policy_rm(db, argv[3]);

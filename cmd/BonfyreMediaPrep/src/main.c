@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 #include <errno.h>
 #include <limits.h>
 #include <math.h>
@@ -8,6 +15,8 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <bonfyre.h>
+#include "../../../lib/libbonfyre/include/bf_help.h"
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 
 #define MAX_SILENCES 2048
 
@@ -435,12 +444,26 @@ static int command_split_speech(int argc, char **argv) {
 }
 
 int main(int argc, char **argv) {
+    if (bf_help_requested(argc, argv)) { print_usage(); return 0; }
     if (argc < 3) {
         print_usage();
         return 1;
     }
 
-    if (strcmp(argv[1], "inspect") == 0) {
+    enum {
+        MP_CHUNK, MP_DENOISE, MP_INSPECT, MP_NORMALIZE, MP_SPLIT_SPEECH,
+    };
+    static const BfCommandEntry mediaprep_commands[] = {
+        {"chunk", MP_CHUNK, 0, NULL},
+        {"denoise", MP_DENOISE, 0, NULL},
+        {"inspect", MP_INSPECT, 0, NULL},
+        {"normalize", MP_NORMALIZE, 0, NULL},
+        {"split-speech", MP_SPLIT_SPEECH, 0, NULL},
+    };
+    const BfCommandEntry *command = bf_command_lookup(mediaprep_commands,
+        sizeof(mediaprep_commands) / sizeof(mediaprep_commands[0]), argv[1]);
+
+    if (command && command->id == MP_INSPECT) {
         if (argc != 3) {
             print_usage();
             return 1;
@@ -448,7 +471,7 @@ int main(int argc, char **argv) {
         return command_inspect(argv[2]);
     }
 
-    if (strcmp(argv[1], "normalize") == 0) {
+    if (command && command->id == MP_NORMALIZE) {
         if (argc < 4) {
             print_usage();
             return 1;
@@ -456,7 +479,7 @@ int main(int argc, char **argv) {
         return command_normalize(argc, argv);
     }
 
-    if (strcmp(argv[1], "chunk") == 0) {
+    if (command && command->id == MP_CHUNK) {
         if (argc < 4) {
             print_usage();
             return 1;
@@ -464,7 +487,7 @@ int main(int argc, char **argv) {
         return command_chunk(argc, argv);
     }
 
-    if (strcmp(argv[1], "denoise") == 0) {
+    if (command && command->id == MP_DENOISE) {
         if (argc != 4) {
             print_usage();
             return 1;
@@ -472,7 +495,7 @@ int main(int argc, char **argv) {
         return command_denoise(argc, argv);
     }
 
-    if (strcmp(argv[1], "split-speech") == 0) {
+    if (command && command->id == MP_SPLIT_SPEECH) {
         if (argc < 4) {
             print_usage();
             return 1;

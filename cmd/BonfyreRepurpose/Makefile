@@ -7,10 +7,14 @@ SRC = src/main.c
 
 all: $(TARGET)
 
+test: $(TARGET)
+	$(MAKE) -C ../BonfyreBrief
+	sh tests/transcript_handoff_test.sh
+
 $(TARGET): $(SRC)
 	$(CC) $(CFLAGS) $(LOCAL_CFLAGS) -o $(TARGET) $(SRC) $(LDFLAGS)
 
 clean:
 	rm -f $(TARGET)
 
-.PHONY: all clean
+.PHONY: all test clean

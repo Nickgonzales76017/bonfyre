@@ -1,0 +1,6 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-brief","binary_env":"BONFYRE_BRIEF_BIN","cases":[
+{"name":"brief extracts summary and action items from a real transcript","files":{"t.txt":"Speaker 1: Um, so we, we need to fix the the website by Friday.\nSpeaker 2: Okay. The checkout page is broken and customers cannot pay.\nSpeaker 1: Right, uh, and we should also update the pricing page.\n"},"steps":[
+ {"argv":["t.txt","out","--title","Demo"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["Brief: out/brief.md","Artifact: out/artifact.json"],"present":["${tmp}/out/brief.md","${tmp}/out/brief-meta.json","${tmp}/out/artifact.json"]},
+ {"program":"cat","argv":["out/brief.md"],"contains":["# Demo","## Action Items","update the pricing page","## Transcript"]},
+ {"program":"cat","argv":["out/brief-meta.json"],"at":{"source_system":"BonfyreBrief","sentence_count":4}}]},
+{"name":"brief refuses a missing transcript","steps":[{"argv":["missing.txt","out"],"env":{"HOME":"${tmp}"},"exit_nonzero":true,"absent":["${tmp}/out/brief.md"]}]}]}

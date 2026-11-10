@@ -1,0 +1,41 @@
+{
+  "schema": "bonfyre-lowering-workers-real-external-estate.v1",
+  "observed_at": "2026-09-12",
+  "classification": "MEASURED_NATIVE_OWNER_TO_LOWERER_HANDOFF",
+  "inputs": {
+    "external_estate_jsonl_sha256": "14a2c8057e0f3e13ed36d788385d5b85625be82ebc0bbc1f5f732459e11bb6e6",
+    "experience_bindings_sha256": "7a9bf7e80e9e7c9f2bd6d2c6aa1b1ae1b355f4e25dc95ddaacac4708d8a175d4",
+    "stage_bindings_sha256": "99a4a302a6fae43682b8910210380e9f558bceed8bc1163001927729bee673ec",
+    "chains_sha256": "f02e7b30cf25b3290ed0940fc35ce86e393d6798e4052272a297b8b53491e573"
+  },
+  "population": {
+    "external_occurrences": 4891,
+    "external_occurrence_advertisements": 4891,
+    "presentation_cells": 60,
+    "experience_bindings": 4891
+  },
+  "handoff": {
+    "identity": "external:ext-02596",
+    "candidate_kind": "external_occurrence",
+    "owner_ref": "ExternalEstate:external:ext-02596",
+    "declared_lowerer": "MaterialCompiler:external",
+    "worker_seen": 1,
+    "worker_handled": 1,
+    "worker_deferred_or_failed": 0
+  },
+  "output": {
+    "schema": "bonfyre-foreign-observation-demand.v1",
+    "topic": "https://www.weather.gov/documentation/services-web-api",
+    "state": "queued",
+    "attempts": 0,
+    "demand_sha256": "8ff30f4cecb138697d2331f0e5e7717eb52c34fb140a4bf9718325b60f80ae07"
+  },
+  "establishes": [
+    "The real 4,891-source ExternalEstate compiles an equal population of typed external-occurrence advertisements.",
+    "The declared MaterialCompiler:external lane rechecks the current ExternalEstate owner and compiles one durable ForeignTwin observation demand for the addressed occurrence."
+  ],
+  "does_not_establish": [
+    "A network fetch, ForeignTwin observation, source admission, evidence, proof, provider availability, authorization, carrier selection, or external effect.",
+    "BitNet ranking quality or throughput, GigaToken context quality, traffic capacity, user capacity, or Internet-scale polling capacity."
+  ]
+}

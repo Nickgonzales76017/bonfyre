@@ -1,0 +1,42 @@
+{
+  "operator": "RECONCILE",
+  "program": {
+    "program_id": "household.reconcile.733cf4c2382ff585",
+    "operator": "RECONCILE",
+    "digest": "a7307fc793582d6ff711a58f71348179e840e5fe615fd37beb3a631bd0730843",
+    "reads": [
+      "household:housing:listing:milo-a",
+      "household:housing:observation:cand-9"
+    ],
+    "admitted": true,
+    "hard_failures": []
+  },
+  "left": "household:housing:listing:milo-a",
+  "right": "household:housing:observation:cand-9",
+  "disposition": "no_canonical_join",
+  "merge_prohibited": true,
+  "reason": "No supported identity relation permits merging these source-bound records.",
+  "comparison": {
+    "operator": "COMPARE",
+    "program": {
+      "program_id": "household.compare.733cf4c2382ff585",
+      "operator": "COMPARE",
+      "digest": "c4ebe0a6e7de1189dc8d539ad10662f69358b62400468527eff12cfd337c982a",
+      "reads": [
+        "household:housing:listing:milo-a",
+        "household:housing:observation:cand-9"
+      ],
+      "admitted": true,
+      "hard_failures": []
+    },
+    "left": "household:housing:listing:milo-a",
+    "right": "household:housing:observation:cand-9",
+    "same_kind": false,
+    "equal_fields": [],
+    "different_fields": [
+      "property_id"
+    ],
+    "numeric_deltas": []
+  }
+}
+exit 0

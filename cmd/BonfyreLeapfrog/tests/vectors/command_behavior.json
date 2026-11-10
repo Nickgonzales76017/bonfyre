@@ -1,0 +1,3 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-leapfrog","binary_env":"BONFYRE_LEAPFROG_BIN","cases":[
+{"name":"the leapfrog integrator conserves energy and reverses to its start","steps":[{"program":"sh","argv":["-c","mkdir -p rd && for i in $(seq 1 40); do echo \"Document $i about checkout pages, pricing and Friday deadlines number $i.\" > rd/d$i.txt; done"],"exit":0},{"program":"${root}/cmd/BonfyreViolence/bonfyre-violence","argv":["--data","rd","--pack","p.bfpk","--bvh","p.bfvh"],"env":{"HOME":"${tmp}"}},
+ {"argv":["--data","rd","--pack","p.bfpk","--bvh","p.bfvh"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["── Reversibility ──","should match ‖p_0‖ = 0.300000"]}]}]}

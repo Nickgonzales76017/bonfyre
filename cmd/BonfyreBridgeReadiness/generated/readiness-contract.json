@@ -1,0 +1,43 @@
+{
+    "schema": "bonfyre.bridge-readiness.v2",
+    "domain_binding": {
+        "schema": "bonfyre-domain-binding.v1",
+        "axis": "semantic",
+        "owner": "DomainProfile",
+        "from_owner": "ForeignTwin",
+        "to_owner": "DomainProfile",
+        "state": "profile_bound",
+        "require_binding_validated": true,
+        "required_hash_fields": [
+            "foreign_receipt_sha256",
+            "ingest_manifest_sha256",
+            "normalized_content_sha256",
+            "semantic_record_sha256",
+            "source_content_sha256"
+        ]
+    },
+    "protocol_binding": {
+        "schema": "bonfyre-protocol-binding.v1",
+        "axis": "protocol",
+        "owner": "ProtocolContract",
+        "from_owner": "DomainProfile",
+        "to_owner": "ProtocolContract",
+        "state": "compiled",
+        "require_binding_validated": true,
+        "minimum_programs": 1,
+        "required_hash_fields": [
+            "domain_binding_sha256",
+            "native_registration_receipt_sha256",
+            "semantic_record_sha256"
+        ]
+    },
+    "derivation_witness": {
+        "schema": "bonfyre-protocol-derivation-bridge.v1",
+        "require_registered": true,
+        "require_scoped": true,
+        "require_targeted_invalidation": true,
+        "require_atomic": true,
+        "minimum_enactments": 2,
+        "minimum_programs": 2
+    }
+}

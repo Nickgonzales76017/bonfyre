@@ -1,0 +1,4 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-tone","binary_env":"BONFYRE_TONE_BIN","cases":[
+{"name":"voice features are measured from a real recording","steps":[{"program":"say","argv":["-o","s.aiff","We need to fix the checkout page by Friday. Customers cannot pay."],"exit":0},{"program":"ffmpeg","argv":["-loglevel","error","-i","s.aiff","-ar","16000","-ac","1","s.wav"],"exit":0},
+ {"argv":["extract","s.wav","tone"],"env":{"HOME":"${tmp}","BONFYRE_OPENSMILE_BINARY":"","BONFYRE_OPENSMILE_CONFIG":""},"exit":0,"present":["${tmp}/tone/tone.json"]}]},
+{"name":"a file that is not PCM WAV is refused","files":{"x.wav":"not audio"},"steps":[{"argv":["extract","x.wav","tone"],"env":{"HOME":"${tmp}","BONFYRE_OPENSMILE_BINARY":""},"exit_nonzero":true}]}]}

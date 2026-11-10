@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * BonfyreQuery — local analytics engine over artifacts via DuckDB.
  *
@@ -21,6 +28,8 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <bonfyre.h>
+#include "../../../lib/libbonfyre/include/bf_help.h"
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 
 /* ── helpers ─────────────────────────────────────────────────── */
 
@@ -36,6 +45,61 @@ static int run_cmd(const char *const argv[]) {
     if (pid < 0) { perror("fork"); return -1; }
     if (pid == 0) { execvp(argv[0], (char *const *)argv); _exit(127); }
     int st; waitpid(pid, &st, 0);
+    return WIFEXITED(st) ? WEXITSTATUS(st) : -1;
+}
+
+/* Run a row-producing command and pass its JSON through, of any size.
+ *
+ * The DuckDB shell prints "[{]" for a query that returns no rows, which is not
+ * JSON, so every caller that parsed the answer failed exactly when the answer
+ * was "nothing". No rows is written as "[]"; anything else is passed on
+ * untouched as it arrives.
+ */
+static int write_all(const char *buf, size_t n) {
+    while (n > 0) {
+        ssize_t w = write(STDOUT_FILENO, buf, n);
+        if (w < 0) { if (errno == EINTR) continue; return -1; }
+        buf += w; n -= (size_t)w;
+    }
+    return 0;
+}
+
+static int run_json_rows(const char *const argv[]) {
+    int pipefd[2];
+    if (pipe(pipefd) < 0) { perror("pipe"); return -1; }
+    fflush(stdout);
+    pid_t pid = fork();
+    if (pid < 0) { perror("fork"); close(pipefd[0]); close(pipefd[1]); return -1; }
+    if (pid == 0) {
+        close(pipefd[0]);
+        dup2(pipefd[1], STDOUT_FILENO);
+        close(pipefd[1]);
+        execvp(argv[0], (char *const *)argv);
+        _exit(127);
+    }
+    close(pipefd[1]);
+    char head[8]; size_t have = 0; int passing = 0, failed = 0;
+    char buf[65536]; ssize_t rd;
+    while ((rd = read(pipefd[0], buf, sizeof(buf))) != 0) {
+        if (rd < 0) { if (errno == EINTR) continue; failed = 1; break; }
+        size_t off = 0;
+        if (!passing) {
+            while (have < sizeof(head) && off < (size_t)rd) head[have++] = buf[off++];
+            if (have < sizeof(head)) continue;        /* still too short to tell */
+            passing = 1;
+            if (write_all(head, have) != 0) { failed = 1; break; }
+        }
+        if (off < (size_t)rd && write_all(buf + off, (size_t)rd - off) != 0) { failed = 1; break; }
+    }
+    close(pipefd[0]);
+    if (!passing && !failed) {
+        size_t n = have;
+        while (n > 0 && (head[n - 1] == '\n' || head[n - 1] == '\r')) n--;
+        if (n == 3 && memcmp(head, "[{]", 3) == 0) failed = write_all("[]\n", 3) != 0;
+        else if (have > 0) failed = write_all(head, have) != 0;
+    }
+    int st; waitpid(pid, &st, 0);
+    if (failed) return -1;
     return WIFEXITED(st) ? WEXITSTATUS(st) : -1;
 }
 
@@ -133,9 +197,30 @@ static int find_json_files(const char *dir, char files[][MAX_PATH_LEN], int max)
     return count;
 }
 
+/* BonfyreQuery is a front end over DuckDB: every analytic command below runs by
+ * exec'ing `duckdb`. When that binary is absent execvp fails in the child, which
+ * _exit(127)s, and the parent is left holding empty output -- which previously
+ * read as an empty result set rather than a missing dependency. The organ then
+ * advertised itself reachable while being unable to answer a single query.
+ * Probe once and fail closed, naming what is missing. */
+static int duckdb_present(void) {
+    const char *probe[] = { "duckdb", "--version", NULL };
+    char buf[128] = {0};
+    return run_cmd_capture(probe, buf, sizeof(buf)) == 0 && buf[0] != '\0';
+}
+
+static int require_duckdb(void) {
+    if (duckdb_present()) return 1;
+    fprintf(stderr, "bonfyre-query: DuckDB backend not found on PATH. "
+                    "This organ executes every query through the duckdb CLI; "
+                    "install it before calling this command.\n");
+    return 0;
+}
+
 /* ── commands ───────────────────────────────────────────────── */
 
 static int cmd_scan(const char *dir, const char *db_path) {
+    if (!require_duckdb()) return 3;
     fprintf(stderr, "[query] Scanning %s for JSON artifacts...\n", dir);
 
     static char files[MAX_FILES][MAX_PATH_LEN];
@@ -174,21 +259,49 @@ static int cmd_scan(const char *dir, const char *db_path) {
 }
 
 static int cmd_sql(const char *db_path, const char *query) {
+    if (!require_duckdb()) return 3;
     fprintf(stderr, "[query] Running SQL on %s\n", db_path);
     const char *argv[] = { "duckdb", "-json", db_path, query, NULL };
-    return run_cmd(argv);
+    return run_json_rows(argv);
+}
+
+/* Does the imported table actually carry this column?
+ *
+ * scan() imports with read_json_auto(union_by_name=true), so the column set is
+ * whatever keys the artifact.json files happen to have -- it is not fixed. A
+ * stats query that hardcodes a column name fails with a DuckDB binder error on
+ * any corpus lacking it, which is how `stats` came to be unusable on a store
+ * that `scan` had just populated successfully with 594 rows.
+ */
+static int has_column(const char *db_path, const char *column) {
+    char q[512];
+    snprintf(q, sizeof(q),
+        "SELECT count(*) FROM information_schema.columns "
+        "WHERE table_name='artifacts' AND column_name='%s';", column);
+    char buf[128] = {0};
+    const char *argv[] = { "duckdb", "-noheader", "-list", db_path, q, NULL };
+    if (run_cmd_capture(argv, buf, sizeof(buf)) != 0) return 0;
+    return atoi(buf) > 0;
 }
 
 static int cmd_stats(const char *db_path, const char *out_dir) {
     ensure_dir(out_dir);
 
-    const char *stats_sql =
-        "SELECT "
-        "  count(*) as total_artifacts, "
-        "  count(DISTINCT type) as unique_types, "
-        "  count(DISTINCT filename) as source_files, "
-        "  list(DISTINCT type) as types "
-        "FROM artifacts;";
+    /* filename is always present: scan passes filename=true. type is not. */
+    const int have_type = has_column(db_path, "type");
+    const char *stats_sql = have_type
+        ? "SELECT "
+          "  count(*) as total_artifacts, "
+          "  count(DISTINCT type) as unique_types, "
+          "  count(DISTINCT filename) as source_files, "
+          "  list(DISTINCT type) as types "
+          "FROM artifacts;"
+        : "SELECT "
+          "  count(*) as total_artifacts, "
+          "  NULL as unique_types, "
+          "  count(DISTINCT filename) as source_files, "
+          "  NULL as types "
+          "FROM artifacts;";
 
     char result[16384];
     const char *argv[] = { "duckdb", "-json", db_path, stats_sql, NULL };
@@ -241,9 +354,26 @@ static void print_usage(void) {
 }
 
 int main(int argc, char **argv) {
-    if (argc >= 2 && strcmp(argv[1], "status") == 0) {
-        printf("{\"binary\":\"bonfyre-query\",\"status\":\"ok\",\"version\":\"1.0.0\"}\n");
-        return 0;
+    if (bf_help_requested(argc, argv)) { print_usage(); return 0; }
+    if (argc < 2) {
+        fprintf(stderr, "usage: bonfyre-query <status|sql|scan|layers|bridges|...>\n");
+        return 2;
+    }
+    enum { QR_STATUS };
+    static const BfCommandEntry query_commands[] = {
+        {"status", QR_STATUS, 0, NULL},
+    };
+    const BfCommandEntry *command = bf_command_lookup(query_commands,
+        sizeof(query_commands) / sizeof(query_commands[0]), argv[1]);
+    if (command && command->id == QR_STATUS) {
+        /* Report the backend honestly: a hardcoded "ok" told the operator
+         * surface this capability was reachable even with no DuckDB installed. */
+        int ok = duckdb_present();
+        printf("{\"binary\":\"bonfyre-query\",\"status\":\"%s\","
+               "\"backend\":\"duckdb\",\"backend_present\":%s,"
+               "\"version\":\"1.0.0\"}\n",
+               ok ? "ok" : "degraded", ok ? "true" : "false");
+        return ok ? 0 : 1;
     }
 
     const char *cmd = argv[1];

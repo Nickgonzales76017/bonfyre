@@ -1,0 +1,62 @@
+{
+ "schema": "bonfyre.operator_store.quality_eval_set.v1",
+ "class": "short_analysis",
+ "threshold": 0.75,
+ "scorer": "normalized exact match (trim, lower-case, strip quotes, backticks and one trailing period); kind=set compares comma-separated members",
+ "generation": {
+  "temperature": 0,
+  "seed": 7,
+  "max_tokens": 48
+ },
+ "items": [
+  {
+   "id": "sa-tier-order",
+   "source": "schemas/control/operator-store.cue",
+   "prompt": "Context: tiers: [\"native_owner\", \"local_model\", \"agent_relay\", \"paid_provider\", \"hold\"] // cheapest first\n\nQuestion: Which tier is listed immediately after local_model? Answer with the tier name only.",
+   "expected": "agent_relay"
+  },
+  {
+   "id": "sa-ratchet-budget",
+   "source": "architecture/native-ratchet.cue",
+   "prompt": "Context:\nbudget: {\n\tauthored_mjs_files: 1648\n\tauthored_mjs_lines: 166589\n\tother_script_files: 335\n\tbun_compile_sites: 0\n}\n\nQuestion: What is the value of other_script_files? Answer with the number only.",
+   "expected": "335"
+  },
+  {
+   "id": "sa-smallest-checkpoint",
+   "source": "cmd/BonfyreMoE/src/residency.c (GET /bonfyre/residency candidates)",
+   "prompt": "Context: candidates: [{\"model\":\"Clef-Flash-Q4_K_M.gguf\",\"min_bytes\":7347329088},{\"model\":\"Qwen1.5-MoE-A2.7B-Chat-Q2_K.gguf\",\"min_bytes\":6696256832},{\"model\":\"Qwen2.5-Coder-7B-Instruct-IQ3_XS.gguf\",\"min_bytes\":3849573152},{\"model\":\"Qwen2.5-Coder-3B-Instruct-Q4_K_M.gguf\",\"min_bytes\":2388393216}]\n\nQuestion: Which model has the smallest min_bytes? Answer with the model file name only.",
+   "expected": "Qwen2.5-Coder-3B-Instruct-Q4_K_M.gguf"
+  },
+  {
+   "id": "sa-spendable",
+   "source": "cmd/BonfyreAdmission (bonfyre-admission memory)",
+   "prompt": "Context: {\"volume\":\"memory\",\"available_bytes\":4000000000,\"protected_floor_bytes\":1500000000}\n\nQuestion: Spendable memory is available_bytes minus protected_floor_bytes. How many bytes are spendable? Answer with the integer only.",
+   "expected": "2500000000"
+  },
+  {
+   "id": "sa-stop-paid",
+   "source": "~/.bonfyre/operator/STOP (reason text)",
+   "prompt": "Context: \"User explicitly prohibits global resume or exhausted paid model dispatch. Hold autonomous admission pending provider-health quarantine and controlled reconciliation.\"\n\nQuestion: Does this text allow paid model dispatch? Answer yes or no.",
+   "expected": "no"
+  },
+  {
+   "id": "sa-archivable-states",
+   "source": "schemas/control/operator-store.cue (archival.accepts_states)",
+   "kind": "set",
+   "prompt": "Context: archival accepts_states: [\"queued\", \"retry\", \"blocked\"]; it refuses recurring goals and goals with an open run.\n\nQuestion: Of the states queued, running, blocked and resolved, which may be archived? Answer with the state names separated by commas.",
+   "expected": "queued,blocked"
+  },
+  {
+   "id": "sa-gate",
+   "source": "cmd/BonfyreOperatorStore/src/main.c (route gates)",
+   "prompt": "Context: Gates are checked in this order and the first that matches applies: goal_not_schedulable (state is not queued or retry), uncertain_effect_requires_reconciliation (an action is uncertain), open_run_requires_reconciliation (a run is open), attempts_exhausted (attempts >= max_goal_attempts), not_due (retry_at is in the future).\nGoal: state=queued, attempts=6, max_goal_attempts=6, no uncertain actions, no open runs, retry_at=0.\n\nQuestion: Which gate applies? Answer with the gate name only.",
+   "expected": "attempts_exhausted"
+  },
+  {
+   "id": "sa-validate",
+   "source": "CLAUDE.md (Hygiene)",
+   "prompt": "Context: \"Run `bun architecture/atlas.mjs validate` and the control-plane tests (`bun test components/BonfyreControlPlane/tests`) before committing changes that touch either.\"\n\nQuestion: Which atlas.mjs subcommand must be run before committing? Answer with one word.",
+   "expected": "validate"
+  }
+ ]
+}

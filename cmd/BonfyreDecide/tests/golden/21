@@ -1,0 +1,2 @@
+Mapped transaction columns contain merged cells. Unmerge them before import.
+exit 2

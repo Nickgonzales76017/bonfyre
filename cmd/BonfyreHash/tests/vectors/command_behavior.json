@@ -1,0 +1,9 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-hash","binary_env":"BONFYRE_HASH_BIN","cases":[
+{"name":"file answers the SHA-256 of the bytes","files":{"h.txt":"hello\n"},"steps":[{"argv":["file","h.txt"],"env":{"HOME":"${tmp}"},"exit":0,"stdout":"5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03  h.txt\n"}]},
+{"name":"dedup finds byte-identical files","files":{"d/a.txt":"hello\n","d/b.txt":"hello\n","d/c.txt":"other\n"},"steps":[{"argv":["dedup","d"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["1 duplicate pairs, 6 bytes reclaimable."],"excludes":["c.txt"]}]},
+{"name":"node hash is deterministic","steps":[{"argv":["node","Op","1","{}","aa,bb"],"env":{"HOME":"${tmp}"},"exit":0,"stdout":"e2df3fbd7d03fbd7fcb28e78e2bb2ed206e2f1ffa539b1af7939c31811653c59\n"}]},
+{"name":"verify accepts a matching root and refuses a mismatched one","files":{"good.json":"{\"root_hash\":\"5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03\",\"atoms\":[{\"content_hash\":\"5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03\"}]}","bad.json":"{\"root_hash\":\"0000000000000000000000000000000000000000000000000000000000000000\",\"atoms\":[{\"content_hash\":\"5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03\"}]}"},"steps":[
+ {"argv":["merkle","good.json"],"env":{"HOME":"${tmp}"},"exit":0,"stdout":"5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03\n"},
+ {"argv":["verify","good.json"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["VERIFIED"]},
+ {"argv":["verify","bad.json"],"env":{"HOME":"${tmp}"},"exit":1,"contains":["MISMATCH"]}]},
+{"name":"merkle refuses an artifact with no content hashes","files":{"a.json":"{\"atoms\":[]}"},"steps":[{"argv":["merkle","a.json"],"env":{"HOME":"${tmp}"},"exit_nonzero":true}]}]}

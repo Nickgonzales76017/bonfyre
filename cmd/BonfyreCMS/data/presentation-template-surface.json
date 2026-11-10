@@ -1,0 +1,18 @@
+{
+  "pattern": "presentation-templates",
+  "reads_type": "presentation_template",
+  "record_namespace": "aurekai",
+  "selector_field": "template",
+  "order_by": "template",
+  "item_fields": "template,reference_source,reference_name,reference_url,reference_categories,family,renderer_mix,density,hero_mode,navigation_mode,media_mode,typography_mode,card_mode,chrome_mode,territory_affinity,semantic_roles,layout_tokens,acceptance_contract,cannot_infer",
+  "shape": "record",
+  "effect_class": "QUERY",
+  "requires_authority": "",
+  "visible_when": "",
+  "status_filter": "published",
+  "time_field": "",
+  "time_mode": "any",
+  "title": "Presentation template",
+  "caption": "Presentation-only SurfaceIR composition profile; reads no semantic owner beyond this authored template row and grants no authority.",
+  "status": "published"
+}

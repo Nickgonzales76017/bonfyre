@@ -1,0 +1,4 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-gen","binary_env":"BONFYRE_GEN_BIN","cases":[
+{"name":"a description becomes recipe YAML with a matched stage","steps":[
+ {"argv":["transcribe audio extract action items"],"env":{"HOME":"${tmp}","BONFYRE_CATALOG_DB":"${tmp}/cat.db","BONFYRE_REPO_ROOT":"${root}","BONFYRE_CAPABILITY_DB":"${tmp}/cap.db"},"exit":0,"contains":["recipe:","binary: bonfyre-transcribe","generator: bonfyre-gen"]}]},
+{"name":"the description can come from stdin","steps":[{"argv":["-"],"stdin":"transcribe audio\n","env":{"HOME":"${tmp}","BONFYRE_CATALOG_DB":"${tmp}/cat.db","BONFYRE_REPO_ROOT":"${root}","BONFYRE_CAPABILITY_DB":"${tmp}/cap.db"},"exit":0,"contains":["bonfyre-transcribe"]}]}]}

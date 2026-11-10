@@ -116,22 +116,23 @@ async function api(path, opts = {}) {
 async function refreshDashboard() {
   const data = await api('/api/status');
   if (data.error) return;
-  setText('stat-jobs', data.total_jobs || 0);
-  setText('stat-completed', data.completed_jobs || 0);
-  setText('stat-uploads', data.total_uploads || 0);
-  setText('stat-binaries', data.available_binaries || 0);
+  setText('stat-jobs', data.jobs?.total ?? 0);
+  setText('stat-completed', data.jobs?.completed ?? 0);
+  setText('stat-uploads', data.uploads?.total ?? 0);
+  setText('stat-binaries', '—');
 
-  const jobs = await api('/api/jobs');
+  const result = await api('/api/jobs');
+  const jobs = Array.isArray(result.data) ? result.data : [];
   const tbody = document.getElementById('recent-jobs');
   if (!tbody) return;
   if (!jobs || !jobs.length) {
-    tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No jobs yet — upload a file to start</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No admitted account jobs. Review and queue admission happen in your account workspace.</td></tr>';
     return;
   }
   tbody.innerHTML = jobs.slice(0, 10).map(j => `
     <tr>
       <td>${esc(j.id)}</td>
-      <td>${esc(j.binary || j.command || '—')}</td>
+      <td>${esc(j.type || '—')}</td>
       <td>${esc(j.status || 'unknown')}</td>
       <td>${timeAgo(j.created_at)}</td>
       <td><button class="btn btn-sm" onclick="viewJob(${j.id})">View</button></td>
@@ -140,9 +141,10 @@ async function refreshDashboard() {
 }
 
 async function viewJob(id) {
-  const j = await api('/api/jobs/' + id);
-  if (j.error) return alert('Job not found');
-  alert(`Job #${j.id}\nBinary: ${j.binary || j.command}\nStatus: ${j.status}\nOutput:\n${j.output || '(none)'}`);
+  const response = await api('/api/jobs/' + id);
+  const j = response.data;
+  if (!j || response.error) return alert('Job not found in this account');
+  alert(`Job #${j.id}\nType: ${j.type || '—'}\nStatus: ${j.status}\nOutput: ${j.output || '(none)'}`);
 }
 
 // ── Pipeline / Upload ───────────────────────────────────────
@@ -164,35 +166,18 @@ function setupUpload() {
 
 async function uploadFile(file) {
   const status = document.getElementById('upload-status');
-  status.textContent = `Uploading ${file.name}...`;
+  if (!status) return;
   status.className = 'upload-status';
   status.classList.remove('hidden');
-
-  const form = new FormData();
-  form.append('file', file);
-
-  try {
-    const res = await fetch(API + '/api/upload', { method: 'POST', body: form });
-    const data = await res.json();
-    if (data.error) {
-      status.textContent = 'Error: ' + data.error;
-      status.style.background = 'var(--negative)';
-      return;
-    }
-    status.textContent = `Uploaded: ${data.filename || file.name} — Ready for pipeline`;
-    status.style.background = '#3fb95033';
-
-    // Auto-submit job
-    await api('/api/jobs', { method: 'POST', json: { binary: 'bonfyre-ingest', args: ['--file', data.path || data.filename] } });
-    refreshJobs();
-  } catch (e) {
-    status.textContent = 'Upload failed: ' + e.message;
-    status.style.background = 'var(--negative)';
-  }
+  // A public static page has no current ActorClosure or PackGraph
+  // destination. It cannot submit an owned upload or a review mission.
+  status.textContent = `Selected ${file.name}. Import this file from your authenticated Aurekai account workspace to stage it under an installed app. Processing requires a separate reviewed native WorkGraph mission.`;
+  status.style.background = '';
 }
 
 async function refreshJobs() {
-  const jobs = await api('/api/jobs');
+  const result = await api('/api/jobs');
+  const jobs = Array.isArray(result.data) ? result.data : [];
   const tbody = document.getElementById('all-jobs');
   if (!tbody) return;
   if (!jobs || !jobs.length) {

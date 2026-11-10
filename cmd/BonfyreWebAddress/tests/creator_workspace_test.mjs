@@ -1,0 +1,74 @@
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+import {execFileSync} from 'node:child_process';
+import {readFileSync,writeFileSync,mkdirSync,existsSync} from 'node:fs';
+import {join} from 'node:path';
+import {workspaceFixture,root} from './workspace_fixture.mjs';
+import {portfolio,projectSetups,projectCreatorWorkspaceSetup,publishSetups} from '../../../scripts/publish_experience_setups.mjs';
+import {materializeCreatorWorkspace} from '../../../scripts/materialize_creator_workspace.mjs';
+import {digest,prepareRecord,restoreRecord} from '../../../integrations/browser/workspace-value.mjs';
+import {encode,decode} from '../../../integrations/browser/workspace-msgpack.mjs';
+import {decodeWav} from '../../../components/BonfyreServiceSite/creator-import.mjs';
+const free=Number(execFileSync('memory_pressure',['-Q'],{encoding:'utf8'}).match(/free percentage: (\d+)%/)?.[1]);
+if(!(free>=18))throw Error('Browser verification requires available memory. No model is started.');
+const f=await workspaceFixture(),checks=[],errors=[],failures=[];let browser,page;
+const check=(name,value)=>{assert.ok(value,name);checks.push(name);console.log('PASS '+name);};
+const output=join(root,'cmd/BonfyreExperienceStage/verification/creator-workspace-20261015');mkdirSync(output,{recursive:true});
+const puppeteer=createRequire(join(root,'tools/creator-ingest/package.json'))('puppeteer');
+async function member(user){const context=await browser.createBrowserContext(),p=await context.newPage();p.setDefaultTimeout(30000);await p.setViewport({width:1440,height:1050});const [name,...v]=user.cookie.split('=');await p.setCookie({name,value:v.join('='),url:f.base,httpOnly:true,sameSite:'Lax'});p.on('dialog',d=>d.type()==='beforeunload'?d.accept():d.dismiss());p.on('pageerror',e=>errors.push(e.message));p.on('response',r=>{if(r.status()>=400)failures.push(r.status()+' '+new URL(r.url()).pathname);});return p;}
+async function ready(p){await p.waitForSelector('[data-audio="workspace"][data-ready="true"][data-busy="false"]');}
+const record=async binding=>(await f.store(binding).readLocal('draft:creator:')).find(row=>row.key.endsWith(':imports'));
+async function title(p,text){await p.click('[data-audio-view="export"]');const input=await p.$('[data-audio="title"]');await input.click({clickCount:3});await input.type(text);await p.click('[data-audio="save"]');await p.waitForFunction(()=>document.querySelector('[data-audio="status"]').textContent==='Session saved with its recordings and edits.');}
+try{
+ const release=await materializeCreatorWorkspace();
+ const rows=portfolio(readFileSync(join(root,'cmd/BonfyreExperienceStage/experience-maturities.yaff'),'utf8'));
+ const params={records:[...projectSetups(rows,[5]),...projectCreatorWorkspaceSetup(release.id)],binary:f.cms,db:f.db,schemas:join(f.home,'schemas'),apply:true};
+ publishSetups(params);check('creator publication is idempotent',publishSetups(params).created===0);
+ const binding=await f.install('experience.native-creator-studio.workspace','institution:workspace-team');
+ check('installation binds the audio family to the selected organization',f.sql.query('SELECT family FROM _application_workspace WHERE binding_id=?').get(binding.id).family==='creator-audio');
+ browser=await puppeteer.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,protocolTimeout:20000,userDataDir:join(f.home,'creator-test-browser'),args:['--no-sandbox','--disable-dev-shm-usage']});process.once('SIGTERM',()=>{browser?.process()?.kill('SIGTERM');process.exit(143);});page=await member(f.owner);
+ await page.goto(f.base+'/apps?context=institution:workspace-team');await page.click('a[data-work-editor][href="'+binding.path+'"]');await ready(page);await page.click('[data-audio-view="timeline"]');
+ check('audio opens from the ordinary destination entrance with its original editor',new URL(page.url()).pathname===binding.path);
+ check('the original arrangement editor opens with its waveform timeline',await page.$('[data-audio="tracks"]')!==null&&await page.$$eval('[data-audio="source-list"] article',items=>items.length===3));
+ await page.click('[data-audio="play"]');await page.waitForFunction(()=>document.querySelector('[data-audio="workspace"]').dataset.playing==='true');await page.click('[data-audio="stop"]');
+ check('native hosting preserves real audio playback and stop',await page.$eval('[data-audio="workspace"]',el=>el.dataset.playing==='false'));
+ await title(page,'Shared recording arrangement');const saved=await record(binding);assert.ok(saved);
+ check('saving retains all original WAV sources as native binary references',saved.value.files.length===3&&saved.value.files.every(file=>file.bytes instanceof ArrayBuffer)&&f.sql.query('SELECT count(*) n FROM _workspace_blob WHERE complete=1').get().n===3);
+ for(const source of saved.value.files)assert.equal(await digest(source.bytes),source.sha256);
+ check('every restored recording matches its original source digest',saved.value.files.every(file=>decodeWav(file.bytes).frames>0));
+ const hash=await page.$eval('[data-audio="workspace"]',el=>el.dataset.mixSha256),second=await member(f.writer);
+ await f.store(binding).saveLocal(saved.key+'-not-the-session',{title:'Wrong sibling',files:[],clips:[],permission:'unreviewed'},0);
+ await second.goto(f.base+'/apps?context=institution:workspace-team');await second.click('a[data-work-saved][href="/apps/'+binding.id+'/_work"]');await second.waitForSelector('[data-work-continue]');
+ check('audio continuation selects the exact session and excludes similarly prefixed records',await second.$$eval('[data-saved-work]',nodes=>nodes.length===1&&nodes[0].textContent.includes('Shared recording arrangement')));
+ await second.click('[data-work-continue]');await ready(second);
+ check('saved audio continuation opens the original timeline view',new URL(second.url()).searchParams.get('view')==='timeline');
+ check('a second authorized member reopens the exact arrangement and mix',await second.$eval('[data-audio="workspace"]',el=>el.dataset.mixSha256)===hash&&(await record(binding)).revision===saved.revision);
+ await title(second,'Member changed the arrangement');
+ await page.$eval('[data-audio="title"]',el=>{el.value='Stale overwrite';el.dispatchEvent(new Event('input',{bubbles:true}));});await page.click('[data-audio="save"]');
+ await page.waitForFunction(()=>document.querySelector('[data-audio="status"]').textContent.includes('another tab'));
+ check('a stale browser cannot overwrite another member’s session',(await record(binding)).value.title==='Member changed the arrangement');
+ await page.reload();await ready(page);check('reloading recovers the member’s native saved revision',await page.$eval('[data-audio="title"]',el=>el.value==='Member changed the arrangement'));
+ await page.click('[data-audio-view="export"]');const cdp=await page.createCDPSession();await cdp.send('Browser.setDownloadBehavior',{behavior:'allow',browserContextId:page.browserContext().id,downloadPath:f.home});await page.click('[data-audio="download"]');
+ const file=join(f.home,'aurekai-audio-session.wav');for(let i=0;i<100&&!existsSync(file);i++)await new Promise(r=>setTimeout(r,100));assert.ok(existsSync(file));const wav=readFileSync(file),decoded=decodeWav(wav.buffer.slice(wav.byteOffset,wav.byteOffset+wav.length));
+ check('the existing output action produces an actual playable WAV',decoded.channels===2&&decoded.frames>0);await cdp.detach();
+ await page.screenshot({path:join(output,'shared-audio-desktop.png'),fullPage:true});await page.setViewport({width:390,height:844});
+ check('the shared audio editor remains within a phone viewport',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.screenshot({path:join(output,'shared-audio-mobile.png'),fullPage:true});
+ check('a native audio save never creates the browser-local draft database',await page.evaluate(async()=>!(await indexedDB.databases()).some(db=>db.name==='aurekai-browser-workbench-v1')));
+ const personal=await f.install('experience.native-creator-studio.workspace','self');check('personal audio work does not inherit organization recordings',(await f.store(personal).readLocal()).length===0);
+ await assert.rejects(()=>f.store(binding,f.reader).saveLocal(saved.key,saved.value,saved.revision),/access|Sign in/);check('read-only organization members cannot save an audio session',(await record(binding)).value.title==='Member changed the arrangement');
+ const payload=decode(await prepareRecord({bytes:new Uint8Array([1,2,3]).buffer,file:new File(['abc'],'same.bin')}).encodeWith(async blob=>digest(await blob.arrayBuffer())));
+ check('audio buffers use an explicit binary profile while file values retain their type',payload[0]===3&&payload[2][0][6]===1&&payload[2][1][6]===0);
+ await assert.rejects(()=>restoreRecord(encode([3,{bytes:null},[[['bytes'],'a'.repeat(64),1,'',null,null,9]]]),async()=>new Blob(['a'])),/binary value type/);check('unknown binary restoration types are refused',true);
+ const adoption=await import('../../../integrations/browser/workspace-adoption.mjs'),adopted=adoption.adoptionValue(saved);
+ check('audio adoption preserves sources while requiring a new recording-permission review',adopted.permission==='unreviewed'&&adopted.files===saved.value.files&&adopted.clips===saved.value.clips);
+ const home=await f.install('experience.native-creator-studio.workspace','household:workspace-home');
+ await page.setViewport({width:1440,height:1050});await page.goto(f.base+'/households/access?household=workspace-home');
+ await page.type('input[name="email"]','workspace-writer@example.test');await Promise.all([page.waitForNavigation(),page.click('form[method="get"] button')]);await page.select('select[name="role"]','write');
+ await Promise.all([page.waitForNavigation(),page.click('[data-household-access-form] button')]);
+ const admitted=await f.raw(home.path,f.writer);check('the real steward form admits a household member into its audio editor',admitted.status===200);
+ await page.select('select[name="role"]','none');await Promise.all([page.waitForNavigation(),page.click('[data-household-access-form] button')]);
+ check('the real access form revokes that member without deleting the workspace',(await f.raw(home.path,f.writer)).status===403&&(await f.raw(home.path)).status===200);
+ check('the browser journey raised no application errors',errors.length===0);
+ writeFileSync(join(output,'RESULTS.tsv'),'web\t'+f.fingerprint+'\nrelease\t'+release.id+'\nCREATOR_WORKSPACE_PASS\t'+checks.length+'\n'+checks.map(s=>'PASS\t'+s).join('\n')+'\n');console.log('CREATOR_WORKSPACE_PASS\t'+checks.length+'\nrelease\t'+release.id);
+}catch(error){console.error('browser errors',errors,'failed requests',failures);if(page){writeFileSync(join(output,'failure.html'),await page.content());await page.screenshot({path:join(output,'failure.png'),fullPage:true}).catch(()=>{});}throw error;}
+finally{await browser?.close();await f.close();}

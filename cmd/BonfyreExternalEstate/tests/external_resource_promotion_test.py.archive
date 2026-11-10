@@ -1,0 +1,13 @@
+#!/usr/bin/env python3
+# Historical witness; incumbent_materialization.test.mjs supersedes it.
+import importlib.util
+from pathlib import Path
+ROOT=Path(__file__).resolve().parents[3]
+s=importlib.util.spec_from_file_location("p",ROOT/"cmd/BonfyreExternalEstate/tools/promote_external_resource.py");m=importlib.util.module_from_spec(s);s.loader.exec_module(m)
+record={"provider":"211","kind":"211_resource","source_ref":"source:211","receipt_ref":"foreign:211","observed_at":"2026-09-28T00:00:00Z","payload":{"id":"food","title":"Food","url":"https://211.test/food","functions":"food"}}
+assert m.promote(record)["kind"]=="211_household_opportunity"
+for bad in ({**record,"provider":"clever"},{**record,"payload":{**record["payload"],"functions":""}}):
+ try:m.promote(bad)
+ except m.Refusal:pass
+ else:raise AssertionError("insufficient public evidence promoted")
+print("external resource promotion: PASS")

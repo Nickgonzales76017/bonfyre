@@ -1,0 +1,129 @@
+# UNAPPLIED PROPOSAL: ServiceSite path is outside the current MCP patch scope.
+# These new modules still need client/server integration and tests in their existing owner.
+# This file is not a delivered workflow or permission to bypass the patch gate.
+diff --git a/components/BonfyreServiceSite/training-sharing.mjs b/components/BonfyreServiceSite/training-sharing.mjs
+new file mode 100644
+--- /dev/null
++++ b/components/BonfyreServiceSite/training-sharing.mjs
+@@ -0,0 +1,60 @@
++// Release coordinates only. This module owns no accounts, grants or saved work.
++const uuid=/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
++const studioPattern=/^[a-z0-9-]{1,64}$/;
++const fields=['share_kind','share_studio','share_program','share_version'];
++const esc=value=>String(value??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
++export function shareReference({kind,studio,key,version}={}){
++  if(!['routine','plan'].includes(kind)||typeof studio!=='string'||!studioPattern.test(studio)||typeof key!=='string'||!uuid.test(key)||!Number.isSafeInteger(version)||version<1||version>100)throw Error('This program link is invalid.');
++  return {kind,studio,key,version};
++}
++export function sharedProgramPath(reference){
++  const r=shareReference(reference);return `/programs/${r.studio}/${r.kind}/${r.key}/${r.version}`;
++}
++export function parseSharedProgramPath(path){
++  const match=typeof path==='string'&&path.match(/^\/programs\/([a-z0-9-]+)\/(routine|plan)\/([a-f0-9-]+)\/([1-9][0-9]*)$/);
++  if(!match)throw Error('This program link is invalid.');
++  return shareReference({studio:match[1],kind:match[2],key:match[3],version:Number(match[4])});
++}
++export function sharedAdoptionPath(reference){
++  const r=shareReference(reference),query=new URLSearchParams();
++  [r.kind,r.studio,r.key,String(r.version)].forEach((value,index)=>query.set(fields[index],value));
++  return '/?'+query.toString()+'#programs';
++}
++export function parseSharedAdoption(search){
++  const query=new URLSearchParams(search);
++  if(!fields.some(key=>query.has(key)))return null;
++  if(fields.some(key=>query.getAll(key).length!==1)||! /^[1-9][0-9]*$/.test(query.get('share_version')??''))throw Error('This program link is invalid.');
++  return shareReference({kind:query.get(fields[0]),studio:query.get(fields[1]),key:query.get(fields[2]),version:Number(query.get(fields[3]))});
++}
++export function clearSharedAdoption(url){
++  const next=new URL(url);for(const field of fields)next.searchParams.delete(field);return next.pathname+next.search+next.hash;
++}
++export function sourceSharePath(source,kind='routine'){
++  try{return sharedProgramPath({kind,studio:source?.creator,key:source?.program,version:Number(source?.version)});}catch{return '';}
++}
++export function shareLink(source,kind='routine'){
++  const path=sourceSharePath(source,kind);
++  return path?`<a class="text-button" data-program-share href="${esc(path)}" target="_blank" rel="noopener">Open ${kind==='plan'?'plan':'program'} link</a>`:'';
++}
++// Only the current public catalogue can offer a new adoption. Existing member
++// copies remain independently usable after an update or withdrawal.
++export function resolveSharedProgram(reference,catalogue){
++  const r=shareReference(reference);
++  if(!catalogue?.available||catalogue.fresh!==true)return {state:'unavailable',reference:r};
++  const rows=r.kind==='plan'?catalogue.plans:catalogue.programs;
++  if(!Array.isArray(rows))throw Error('The published program catalogue is invalid.');
++  const row=rows.find(item=>item.key===r.key);
++  if(!row)return {state:'missing',reference:r};
++  const value=r.kind==='plan'?row.plan:row.routine,source=value?.source;
++  const expected=`studio:${r.studio}:${r.kind==='plan'?'plan:':''}${r.key}:v${row.version}`;
++  if(!Number.isSafeInteger(row.version)||row.version<1||row.version>100||source?.creator!==r.studio||source.program!==r.key||source.version!==String(row.version)||value.id!==expected)throw Error('The published program identity changed.');
++  if(row.version!==r.version)return {state:'replaced',reference:r,current:shareReference({...r,version:row.version})};
++  return {state:'ready',reference:r,release:row,value};
++}
++export function sharedProgramNotice(result){
++  if(!result)return '';
++  const r=result.reference;
++  if(result.state==='ready')return `<section class="panel" data-shared-program><p class="eyebrow">Shared ${r.kind==='plan'?'plan':'program'} · Version ${r.version}</p><h2>${esc(result.value.name)}</h2><p>Review this published version before adding it. Your existing training stays in place.</p></section>`;
++  const message=result.state==='replaced'?'This link names a different published version.':result.state==='missing'?'This program is no longer offered at this address.':'Reconnect to check this published program. Your saved training is still available.';
++  return `<section class="panel" data-shared-program role="status"><h2>Program unavailable</h2><p>${message}</p>${result.current?`<a class="button" href="${esc(sharedProgramPath(result.current))}">Review the current version</a>`:''}</section>`;
++}
+diff --git a/components/BonfyreServiceSite/training-share-page.mjs b/components/BonfyreServiceSite/training-share-page.mjs
+new file mode 100644
+--- /dev/null
++++ b/components/BonfyreServiceSite/training-share-page.mjs
+@@ -0,0 +1,33 @@
++import {parseSharedProgramPath,resolveSharedProgram,sharedProgramPath,sharedAdoptionPath} from './training-sharing.mjs';
++import {planOutline} from './training-plan-view.mjs';
++const esc=value=>String(value??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
++const num=value=>Number.isFinite(value)?String(value):'—';
++function routineOutline(routine){
++  return `<ol class="shared-exercises">${routine.exercises.map(exercise=>`<li><h3>${esc(exercise.name)}</h3><p>${exercise.sets.length} sets · ${num(exercise.restSeconds)} seconds rest</p><table><caption class="visually-hidden">${esc(exercise.name)} targets</caption><thead><tr><th>Set</th><th>Type</th><th>Target</th></tr></thead><tbody>${exercise.sets.map((set,index)=>`<tr><td>${index+1}</td><td>${esc(set.type)}</td><td>${exercise.kind==='timed'||exercise.kind==='cardio'?`${num(set.seconds)} seconds${exercise.kind==='cardio'?' / '+num(set.distanceM)+' m':''}`:`${num(set.loadKg)} kg × ${num(set.reps)}`}</td></tr>`).join('')}</tbody></table></li>`).join('')}</ol>`;
++}
++const style=`.shared-release{max-width:1040px;margin:auto;padding:24px clamp(18px,5vw,56px) 64px}.shared-release nav{display:flex;justify-content:space-between;gap:18px;margin-bottom:44px}.shared-release h1{font-size:clamp(32px,6vw,58px);line-height:1.08;margin:12px 0 20px}.shared-release .release-description{max-width:760px;white-space:pre-wrap}.release-actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:24px 0}.shared-exercises{list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:20px}.shared-exercises>li{padding:20px;border:1px solid var(--line, #d5d5d0);border-radius:14px;min-width:0}.shared-exercises table{width:100%;border-collapse:collapse;text-align:left}.shared-exercises th,.shared-exercises td{padding:8px 4px;border-bottom:1px solid var(--line,#d5d5d0)}.release-link{width:100%;max-width:760px;margin:8px 0 24px;font-size:16px;min-height:44px}.shared-release button,.shared-release .button,.shared-release a{min-height:44px}.shared-release .plan-weeks{overflow-x:auto}.visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}@media(prefers-reduced-motion:reduce){.shared-release *{animation:none!important;transition:none!important}}`;
++export function trainingSharePage(path,material,{publishing,plans}={}){
++  let reference;
++  try{reference=parseSharedProgramPath(path);}catch{return page('Program link unavailable','Check the complete program address.',404);}
++  const studio=material.creators.find(c=>c.id===reference.studio);
++  if(!studio)return page('Program link unavailable','This studio does not offer that program here.',404);
++  const owner=reference.kind==='plan'?plans:publishing;
++  if(!owner)return page('Program service unavailable','Your saved training remains on your device. Try this link again when the studio is available.',503,studio);
++  try{
++    const rows=owner.list(studio.id,{publicOnly:true});
++    const result=resolveSharedProgram(reference,{available:true,fresh:true,programs:reference.kind==='routine'?rows:[],plans:reference.kind==='plan'?rows:[]});
++    if(result.state==='missing')return page('Program no longer offered','The studio has withdrawn this program or the address is unavailable. Copies already in your training are unchanged.',404,studio);
++    if(result.state==='replaced')return page('A different version is available',`This link names version ${reference.version}. Review version ${result.current.version} separately.`,409,studio,`<a class="button" href="${esc(sharedProgramPath(result.current))}">Review the current version</a>`);
++    const title=result.value.name,description=reference.kind==='plan'?result.value.description:result.release.description;
++    const outline=reference.kind==='plan'?planOutline(result.value):routineOutline(result.value);
++    const content=`<p class="eyebrow">${reference.kind==='plan'?'Training plan':'Training program'} · Version ${reference.version}</p><h1>${esc(title)}</h1><p class="release-description">${esc(description)}</p><div class="release-actions"><a class="button" data-continue-training href="${esc(sharedAdoptionPath(reference))}">Review in my training</a><button type="button" class="secondary" data-copy-program>Copy link</button><button type="button" class="secondary" data-share-program hidden>Share</button></div><p data-share-status role="status"></p><label class="visually-hidden" for="release-link">Program address</label><input class="release-link" id="release-link" readonly hidden><p class="muted">Adding a program keeps an independent copy on your device. This link contains no workout history.</p><section aria-label="Published program contents">${outline}</section>`;
++    return {status:200,html:document(title,content,studio,true)};
++  }catch{return page('Program service unavailable','The published program could not be checked. Your existing training is unchanged.',503,studio);}
++}
++function page(title,message,status,studio,action=''){
++  return {status,html:document(title,`<h1>${esc(title)}</h1><p>${esc(message)}</p><div class="release-actions">${action}<a href="/#programs">Open my training</a></div>`,studio,false)};
++}
++function document(title,content,studio,interactive){
++  const name=studio?.settings.brand.name??'Training';
++  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>${esc(title)} · ${esc(name)}</title><link rel="stylesheet" href="/training.css"><style>${style}</style></head><body><main class="shared-release"><nav aria-label="Training"><a href="/#programs">${esc(name)}</a><a href="/">My training</a></nav>${content}</main>${interactive?'<script type="module" src="/training-share-client.mjs"></script>':''}</body></html>`;
++}
+diff --git a/components/BonfyreServiceSite/training-share-client.mjs b/components/BonfyreServiceSite/training-share-client.mjs
+new file mode 100644
+--- /dev/null
++++ b/components/BonfyreServiceSite/training-share-client.mjs
+@@ -0,0 +1,18 @@
++// Share only the public release address, never the member's URL or store.
++const address=location.origin+location.pathname;
++const status=document.querySelector('[data-share-status]');
++const field=document.getElementById('release-link');
++const show=message=>{status.textContent=message;};
++const reveal=()=>{field.value=address;field.hidden=false;field.focus();field.select();};
++document.querySelector('[data-copy-program]').addEventListener('click',async()=>{
++  try{await navigator.clipboard.writeText(address);show('Program link copied.');}
++  catch{reveal();show('Copy the program address below.');}
++});
++const share=document.querySelector('[data-share-program]');
++if(typeof navigator.share==='function'){
++  share.hidden=false;
++  share.addEventListener('click',async()=>{
++    try{await navigator.share({title:document.title,url:address});show('Program link shared.');}
++    catch(error){if(error.name==='AbortError')show('Sharing cancelled.');else{reveal();show('Sharing is unavailable. Copy the program address below.');}}
++  });
++}

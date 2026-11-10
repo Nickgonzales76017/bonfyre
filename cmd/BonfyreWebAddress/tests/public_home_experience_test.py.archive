@@ -1,0 +1,21 @@
+"""Historical witness superseded by surface-home and public-home-search-witness."""
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("../../site/matrix/surfaces/home.html")
+html = path.read_text(encoding="utf-8")
+
+required = (
+    "<!--BF_RESOLVED_IDENTITY-->",
+    'action="/_surface/intake"',
+    "Prepare route",
+    "a distinct way into the same fabric",
+)
+missing = [needle for needle in required if needle not in html]
+if missing:
+    raise SystemExit(f"public-home-experience FAIL missing={missing!r}")
+if "/external-estate/" in html or 'id="estate-try"' in html:
+    raise SystemExit("public-home-experience FAIL client-owned external-estate projection returned")
+if "localStorage.getItem('bonfyre_token')" in html:
+    raise SystemExit("public-home-experience FAIL legacy localStorage auth returned")
+print("public-home-experience PASS — native intake boundary without a client-owned estate")

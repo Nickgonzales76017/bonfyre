@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * bonfyre-layer — Layer-aware ONNX model inspection and extraction (C port)
  *
@@ -419,6 +426,7 @@ static sqlite3 *open_layer_db(const char *root, char *path_buf, size_t path_buf_
         *slash = '\0';
         bf_ensure_dir(dir);
     }
+    /* Fast tier, by decision: an inspection cache; losing the last commits to a power cut costs a re-run. */
     if (bf_sqlite3_open(path_buf, &db) != SQLITE_OK) {
         sqlite3_close(db);
         return NULL;
@@ -1334,9 +1342,8 @@ static int cmd_pull_layer(const char *model_path, const char *range_str,
     printf("  nodes:    %zu\n", end - start);
     printf("  params:   %zu\n", n_params);
     printf("  onnx:     %s\n", onnx_path);
-    printf("  artifact: %s\n\n", artifact_path);
-    printf("  Next: python3 scripts/finalize_artifact.py %s\n", out_dir);
-    printf("        bonfyre-model add %s\n", artifact_path);
+    printf("  artifact: %s\n", artifact_path);
+    printf("  registered: layer registry + shared catalog\n");
 
     bf_graph_free(&g);
     return 0;
@@ -1457,9 +1464,8 @@ static int cmd_pack_transform(const char *name, char **parts, int n_parts,
     printf("  params:   %zu\n", total_params);
     printf("  sha256:   %.16s…\n", sha);
     printf("  onnx:     %s\n", onnx_path);
-    printf("  artifact: %s\n\n", artifact_path);
-    printf("  Next: python3 scripts/finalize_artifact.py %s\n", out_dir);
-    printf("        bonfyre-model add %s\n", artifact_path);
+    printf("  artifact: %s\n", artifact_path);
+    printf("  registered: layer registry + shared catalog\n");
     return 0;
 }
 

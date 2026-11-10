@@ -1,0 +1,8 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-discipl","binary_env":"BONFYRE_DISCIPL_BIN","cases":[
+{"name":"a four-hop contracted path is found at depth 6 and honestly absent at depth 2","steps":[
+ {"argv":["init","--root","dr"],"env":{"HOME":"${tmp}","BONFYRE_REPO_ROOT":"${root}"},"exit":0,"json":{"status":"ok","root":"dr"}},
+ {"argv":["contracts","import","--root","dr"],"env":{"HOME":"${tmp}","BONFYRE_REPO_ROOT":"${root}"},"exit":0},
+ {"argv":["seed-commands","--root","dr"],"env":{"HOME":"${tmp}","BONFYRE_REPO_ROOT":"${root}"},"exit":0},
+ {"argv":["propose","--from","T_WORKFLOW_STAGE","--to","T_VALUE_CAPTURE","--depth","6","--root","dr"],"env":{"HOME":"${tmp}","BONFYRE_REPO_ROOT":"${root}"},"exit":0,"at":{"candidate_chains.0.hops":4,"candidate_chains.0.families":["T_WORKFLOW_STAGE","T_QUEUE_JOB","T_EXECUTION","T_LEDGER_EVENT","T_VALUE_CAPTURE"]}},
+ {"argv":["propose","--from","T_WORKFLOW_STAGE","--to","T_VALUE_CAPTURE","--depth","2","--root","dr"],"env":{"HOME":"${tmp}","BONFYRE_REPO_ROOT":"${root}"},"exit":0,"at":{"max_depth":2,"candidate_chains":[]}},
+ {"argv":["contracts","unknown","--root","dr"],"env":{"HOME":"${tmp}","BONFYRE_REPO_ROOT":"${root}"},"exit_nonzero":true}]}]}

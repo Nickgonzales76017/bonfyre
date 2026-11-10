@@ -1,0 +1,65 @@
+#!/usr/bin/env python3
+"""Retired witness; native owner is public_command_contract.mjs.
+
+The managed bin directory and cmd/ tree are implementation inventories. They may
+contain internal organs, compatibility helpers, experiments and backups. None of
+those facts changes the public command surface. This witness fails only when the
+declared public contract itself drifts or when the command smoke census has lost
+one of those identities; extra executable rows are reported as auxiliary state.
+"""
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[3]
+CONTRACT = ROOT / "cmd" / "public-command-contract.json"
+SMOKE = ROOT / "cmd" / "command_smoke.json"
+
+
+def main() -> int:
+    contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
+    names = contract.get("commands", [])
+    expected = contract.get("count")
+
+    if contract.get("schema") != "bonfyre.public-command-contract.v1":
+        raise SystemExit("public command contract: unknown schema")
+    if expected != 91 or len(names) != 91:
+        raise SystemExit(
+            f"public command contract: expected immutable count 91; header={expected} rows={len(names)}"
+        )
+    if len(set(names)) != 91:
+        raise SystemExit("public command contract: duplicate identity")
+    if names != sorted(names):
+        raise SystemExit("public command contract: identities are not canonical/sorted")
+
+    public = set(names)
+    missing_source = [name for name in names if not (ROOT / "cmd" / name).is_dir()]
+    if missing_source:
+        raise SystemExit("public command contract: source family missing: " + ", ".join(missing_source))
+
+    smoke = json.loads(SMOKE.read_text(encoding="utf-8"))
+    rows = smoke.get("results", [])
+    seen = [row.get("command") for row in rows if row.get("command")]
+    seen_set = set(seen)
+    missing_census = [name for name in names if name not in seen_set]
+    if missing_census:
+        raise SystemExit("public command contract: absent from smoke census: " + ", ".join(missing_census))
+
+    public_live = sum(1 for row in rows if row.get("command") in public and row.get("responds"))
+    auxiliary = sorted(name for name in seen_set if name not in public)
+    cmd_dirs = sorted(
+        p.name for p in (ROOT / "cmd").iterdir()
+        if p.is_dir() and p.name.startswith("Bonfyre") and p.name not in public
+    )
+
+    print(
+        "public command contract: PASS "
+        f"public=91 live={public_live} "
+        f"auxiliary_census={len(auxiliary)} implementation_only_dirs={len(cmd_dirs)}"
+    )
+    if auxiliary:
+        print("  auxiliary smoke rows: " + ", ".join(auxiliary))
+    if cmd_dirs:
+        print("  implementation-only dirs: " + ", ".join(cmd_dirs))

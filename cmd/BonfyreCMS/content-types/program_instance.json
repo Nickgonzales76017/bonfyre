@@ -1,0 +1,40 @@
+{
+  "name": "program_instance",
+  "displayName": "Program Instance",
+  "description": "One subject actually running one program template. It exists only when a real institution or person uses the program, and it owns nothing itself: the material, work, evidence and funding stay with the owners that already hold them. An instance is not authority to act, not a funded award, and not a claim that the owning subject has any relationship with any funder.",
+  "attributes": {
+    "instance_id": {
+      "type": "string",
+      "required": true,
+      "uniqueWithinNamespace": true
+    },
+    "template_id": {
+      "type": "string",
+      "required": true
+    },
+    "owner_subject": {
+      "type": "string",
+      "required": true
+    },
+    "site_id": {
+      "type": "string",
+      "required": true
+    },
+    "archetype": {
+      "type": "string",
+      "required": true
+    },
+    "opened_at": {
+      "type": "string",
+      "required": true
+    },
+    "cannot_infer": {
+      "type": "text",
+      "required": true
+    },
+    "status": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

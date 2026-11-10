@@ -1,0 +1,64 @@
+{
+  "schema": "bonfyre-bitnet-addressplane-handoff-receipt.v1",
+  "recorded_on": "2026-09-12",
+  "model": {
+    "representation_id": "microsoft-bitnet-embedding-0.6b-i2s/official-cpp-patched/2026-09-12",
+    "model_body_sha256": "c89c64f05a2d3f83565250a6762640197fc624df866d4a1bd5853f811219af17",
+    "dimensions": 1024,
+    "execution": "official Microsoft BitNet embedding server, CPU diagnostic build"
+  },
+  "addressplane": {
+    "population": "108 emitted ProtocolCommons protocol_chain CandidateAdvertisements",
+    "request": ["candidate_kind:protocol_chain", "protocol:x402"],
+    "survivors": 1,
+    "survivor": {
+      "identity": "protocol:x402",
+      "owner_ref": "ProtocolCommons:x402",
+      "exact_verifier": "ProtocolContract:conformance",
+      "lowerer_ref": "ProtocolCompiler:late_carrier"
+    },
+    "truth": "eligible_for_further_consideration"
+  },
+  "bitnet": {
+    "run_id": "bitnet:1789252820",
+    "gate_state": "ADMIT",
+    "score": 0.13440318,
+    "full_frontier_retained": true,
+    "initial_slice": {"offset": 0, "count": 1},
+    "truth": "learned_reordering_only"
+  },
+  "lowering": {
+    "handoff_schema": "bonfyre-lowering-handoff.v1",
+    "handoff_truth": "dependency_cut_only",
+    "consumer": "BonfyreLoweringWorkers ProtocolCompiler:late_carrier",
+    "derived_artifact": {
+      "identity": "protocol:x402",
+      "program_digest": "sha256:2a1e412e3fefe4f07c7e2b467de382289e511365b00b5bcab6eb1b2c3aed0e1c",
+      "protocol_id": "x402",
+      "declared_stage_count": 12
+    },
+    "truth": "compiled_program_only_no_carrier_enactment_authority_commitment_payment_or_effect"
+  },
+  "resource_admission": {
+    "plane": "model-bitnet-candidate-reorder",
+    "volume": "local-diagnostic",
+    "estimated_bytes": 805306368,
+    "decision": "ADMIT",
+    "unreleased_grants_after_run": 0,
+    "truth": "ephemeral_physical_grant_only"
+  },
+  "frontier_reuse": {
+    "expansion_schema": "bonfyre-bitnet-frontier-expansion.v1",
+    "model_rerun": false,
+    "offset": 0,
+    "written": 1,
+    "persisted_envelopes": 1,
+    "truth": "next_bounded_attempt_slice_only"
+  },
+  "limitations": [
+    "The ADMIT row was an isolated /tmp copy used to exercise the already-gated lowerer handoff. It is not a production ModelCatalog admission.",
+    "The production representation remains DEFER/shadow-only because its exact body passport and a ranking preservation envelope have not been admitted.",
+    "A full 108-survivor CPU run was attempted but the diagnostic server materialized one embedding task per descriptor and the orchestration client was cancelled before persistence. This receipt does not claim a 108-item quality, latency, throughput, or capacity result.",
+    "ProtocolContract rechecked only the declared x402 chain and emitted a disposable compilation artifact. No external carrier or EffectKernel was invoked."
+  ]
+}

@@ -1,0 +1,605 @@
+{
+ "schema": "bonfyre.command-vectors.v1",
+ "binary": "bonfyre-experience-map",
+ "binary_env": "BONFYRE_EXPERIENCE_TEST_BINARY",
+ "replaces": [
+  "tests/native_definition.test.mjs"
+ ],
+ "cases": [
+  {
+   "name": "every compiled definition and local/reference record resolves to its own exact record",
+   "steps": [
+    {
+     "for_each_jsonl": "${organ}/generated/chains.jsonl",
+     "argv": [
+      "chain-def",
+      "${item.id}"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${organ}/generated"
+     },
+     "exit": 0,
+     "json": "${item}"
+    },
+    {
+     "for_each_jsonl": "${organ}/generated/protocols.jsonl",
+     "argv": [
+      "protocol-def",
+      "${item.id}"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${organ}/generated"
+     },
+     "exit": 0,
+     "json": "${item}"
+    },
+    {
+     "for_each_jsonl": "${organ}/generated/home_blueprints.jsonl",
+     "argv": [
+      "home-def",
+      "${item.id}"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${organ}/generated"
+     },
+     "exit": 0,
+     "json": "${item}"
+    },
+    {
+     "for_each_jsonl": "${organ}/generated/app_bindings.jsonl",
+     "argv": [
+      "record-def",
+      "${item.id}"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${organ}/generated"
+     },
+     "exit": 0,
+     "json": "${item}"
+    }
+   ]
+  },
+  {
+   "name": "nested IDs, mentions, case changes and prefixes cannot select a definition",
+   "steps": [
+    {
+     "write": {
+      "chains.jsonl": "{\"id\":\"wrong\",\"stages\":[\"community\"],\"description\":\"community\",\"nested\":{\"id\":\"community\"}}\n{\"stages\":[\"entry\"],\"id\":\"community\"}\n{\"id\":\"community-extra\"}"
+     },
+     "argv": [
+      "chain-def",
+      "community"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 0,
+     "at": {
+      "id": "community"
+     }
+    },
+    {
+     "argv": [
+      "chain-def",
+      "comm"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 1,
+     "stdout": ""
+    },
+    {
+     "argv": [
+      "chain-def",
+      "Community"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 1,
+     "stdout": ""
+    },
+    {
+     "argv": [
+      "chain-def",
+      "entry"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 1,
+     "stdout": ""
+    },
+    {
+     "argv": [
+      "chain-def",
+      "missing"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 1,
+     "stdout": ""
+    },
+    {
+     "argv": [
+      "chain-def",
+      ""
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 2
+    },
+    {
+     "write": {
+      "protocols.jsonl": "{\"id\":\"wrong\",\"stages\":[\"community\"],\"description\":\"community\",\"nested\":{\"id\":\"community\"}}\n{\"stages\":[\"entry\"],\"id\":\"community\"}\n{\"id\":\"community-extra\"}"
+     },
+     "argv": [
+      "protocol-def",
+      "community"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 0,
+     "at": {
+      "id": "community"
+     }
+    },
+    {
+     "argv": [
+      "protocol-def",
+      "comm"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 1,
+     "stdout": ""
+    },
+    {
+     "argv": [
+      "protocol-def",
+      "Community"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 1,
+     "stdout": ""
+    },
+    {
+     "argv": [
+      "protocol-def",
+      "entry"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 1,
+     "stdout": ""
+    },
+    {
+     "argv": [
+      "protocol-def",
+      "missing"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 1,
+     "stdout": ""
+    },
+    {
+     "argv": [
+      "protocol-def",
+      ""
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 2
+    },
+    {
+     "write": {
+      "home_blueprints.jsonl": "{\"id\":\"wrong\",\"stages\":[\"community\"],\"description\":\"community\",\"nested\":{\"id\":\"community\"}}\n{\"stages\":[\"entry\"],\"id\":\"community\"}\n{\"id\":\"community-extra\"}"
+     },
+     "argv": [
+      "home-def",
+      "community"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 0,
+     "at": {
+      "id": "community"
+     }
+    },
+    {
+     "argv": [
+      "home-def",
+      "comm"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 1,
+     "stdout": ""
+    },
+    {
+     "argv": [
+      "home-def",
+      "Community"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 1,
+     "stdout": ""
+    },
+    {
+     "argv": [
+      "home-def",
+      "entry"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 1,
+     "stdout": ""
+    },
+    {
+     "argv": [
+      "home-def",
+      "missing"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 1,
+     "stdout": ""
+    },
+    {
+     "argv": [
+      "home-def",
+      ""
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 2
+    },
+    {
+     "write": {
+      "app_bindings.jsonl": "{\"id\":\"wrong\",\"stages\":[\"community\"],\"description\":\"community\",\"nested\":{\"id\":\"community\"}}\n{\"stages\":[\"entry\"],\"id\":\"community\"}\n{\"id\":\"community-extra\"}"
+     },
+     "argv": [
+      "record-def",
+      "community"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 0,
+     "at": {
+      "id": "community"
+     }
+    },
+    {
+     "argv": [
+      "record-def",
+      "comm"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 1,
+     "stdout": ""
+    },
+    {
+     "argv": [
+      "record-def",
+      "Community"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 1,
+     "stdout": ""
+    },
+    {
+     "argv": [
+      "record-def",
+      "entry"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 1,
+     "stdout": ""
+    },
+    {
+     "argv": [
+      "record-def",
+      "missing"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 1,
+     "stdout": ""
+    },
+    {
+     "argv": [
+      "record-def",
+      ""
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 2
+    }
+   ]
+  },
+  {
+   "name": "the JSON reader handles escaped IDs without changing the returned source record",
+   "steps": [
+    {
+     "write": {
+      "chains.jsonl": "{\"nested\":{\"id\":\"wrong\"},\"id\":\"comm\\u0075nity\",\"description\":\"escaped \\\"id\\\" text\"}"
+     },
+     "argv": [
+      "chain-def",
+      "community"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 0,
+     "stdout": "{\"nested\":{\"id\":\"wrong\"},\"id\":\"comm\\u0075nity\",\"description\":\"escaped \\\"id\\\" text\"}\n"
+    },
+    {
+     "write": {
+      "chains.jsonl": "{\"id\":\"community\",\"description\":\"literal \\\\u0000\"}"
+     },
+     "argv": [
+      "chain-def",
+      "community"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "stdout": "{\"id\":\"community\",\"description\":\"literal \\\\u0000\"}\n"
+    }
+   ]
+  },
+  {
+   "name": "ambiguous or damaged definition files fail before emitting a successful-looking record",
+   "steps": [
+    {
+     "write": {
+      "chains.jsonl": "{\"id\":\"community\"}\n{\"id\":\"community\"}\n"
+     },
+     "argv": [
+      "chain-def",
+      "community"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 2,
+     "stdout": ""
+    },
+    {
+     "write": {
+      "chains.jsonl": "{\"id\":\"community\"}\n{\"id\":\"broken\""
+     },
+     "argv": [
+      "chain-def",
+      "community"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 2,
+     "stdout": ""
+    },
+    {
+     "write": {
+      "chains.jsonl": "{\"id\":\"community\",\"id\":\"different\"}\n"
+     },
+     "argv": [
+      "chain-def",
+      "community"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 2,
+     "stdout": ""
+    },
+    {
+     "write": {
+      "chains.jsonl": "{\"id\":23}\n"
+     },
+     "argv": [
+      "chain-def",
+      "community"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 2,
+     "stdout": ""
+    },
+    {
+     "write": {
+      "chains.jsonl": "{\"nested\":{\"id\":\"community\"}}\n"
+     },
+     "argv": [
+      "chain-def",
+      "community"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 2,
+     "stdout": ""
+    },
+    {
+     "write": {
+      "chains.jsonl": "{\"id\":\"\"}\n"
+     },
+     "argv": [
+      "chain-def",
+      "community"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 2,
+     "stdout": ""
+    },
+    {
+     "write": {
+      "chains.jsonl": "{\"id\":\"community\\u0000tail\"}\n"
+     },
+     "argv": [
+      "chain-def",
+      "community"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 2,
+     "stdout": ""
+    },
+    {
+     "write": {
+      "chains.jsonl": "{\"id\":\"community\"}\n\u0000"
+     },
+     "argv": [
+      "chain-def",
+      "community"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 2,
+     "stdout": ""
+    },
+    {
+     "write": {
+      "chains.jsonl": {
+       "prefix": "{\"id\":\"community\",\"description\":\"",
+       "repeat": "x",
+       "count": 1048576,
+       "suffix": "\"}"
+      }
+     },
+     "argv": [
+      "chain-def",
+      "community"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 2,
+     "stdout": ""
+    },
+    {
+     "argv": [
+      "home-def",
+      "missing"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 2
+    }
+   ]
+  },
+  {
+   "name": "protocol and home binding queries use the same exact definition identity",
+   "files": {
+    "protocols.jsonl": "{\"id\":\"nostr\",\"note\":\"websocket\"}\n{\"id\":\"websocket\"}\n",
+    "home_blueprints.jsonl": "{\"id\":\"other\",\"note\":\"public\"}\n{\"id\":\"public\"}\n",
+    "all_bindings.tsv": "record_kind\tid\tname\tchains\tprotocols\tterritories\thome_blueprints\tsource\nkind\tone\tRecord\tcommunity\twebsocket\twork\tpublic\tfixture\n"
+   },
+   "steps": [
+    {
+     "argv": [
+      "protocol",
+      "websocket"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 0,
+     "first_line": true,
+     "at": {
+      "id": "websocket"
+     }
+    },
+    {
+     "argv": [
+      "protocol",
+      "web"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "stdout": ""
+    },
+    {
+     "argv": [
+      "home",
+      "public"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 0,
+     "first_line": true,
+     "at": {
+      "id": "public"
+     }
+    },
+    {
+     "argv": [
+      "home",
+      "pub"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "stdout": ""
+    }
+   ]
+  },
+  {
+   "name": "url-def retains its documented term-search behavior",
+   "files": {
+    "url_grammars.jsonl": "{\"subject_kind\":\"creator\",\"host_pattern\":\"{creator}.example\"}\n"
+   },
+   "steps": [
+    {
+     "argv": [
+      "url-def",
+      "example"
+     ],
+     "env": {
+      "BONFYRE_EXPERIENCE_MAP_ROOT": "${tmp}"
+     },
+     "exit": 0,
+     "at": {
+      "subject_kind": "creator"
+     }
+    }
+   ]
+  }
+ ]
+}

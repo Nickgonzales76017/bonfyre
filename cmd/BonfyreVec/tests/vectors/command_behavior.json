@@ -1,0 +1,12 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-vec","binary_env":"BONFYRE_VEC_BIN","cases":[
+{"name":"exact cosine search ranks the nearest vectors first","files":{"e.json":"[{\"id\":\"a\",\"embedding\":[1,0,0]},{\"id\":\"b\",\"embedding\":[0,1,0]},{\"id\":\"c\",\"embedding\":[0.9,0.1,0]}]","q.json":"{\"embedding\":[1,0,0]}"},"steps":[
+ {"argv":["init","v.db","--dims","3"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"argv":["insert","v.db","e.json"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["3 vectors inserted"]},
+ {"argv":["count","v.db"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["artifacts: 3, vectors: 3"]},
+ {"argv":["search","v.db","q.json","--top","2","--exact"],"env":{"HOME":"${tmp}"},"exit":0,"at":{"top_k":2,"scanned":3,"mode":"exact-simd"},"len":{"results":2}},
+ {"argv":["compare","v.db","a","c"],"env":{"HOME":"${tmp}"},"exit":0,"json":{"id1":"a","id2":"c","cosine_similarity":0.99388373,"distance":0.00611627,"dims":3}},
+ {"argv":["delete","v.db","b"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"argv":["count","v.db"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["vectors: 2"]}]},
+{"name":"a vector of the wrong width is refused","files":{"e.json":"[{\"id\":\"x\",\"embedding\":[1,0]}]"},"steps":[
+ {"argv":["init","v.db","--dims","3"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"argv":["insert","v.db","e.json"],"env":{"HOME":"${tmp}"},"exit_nonzero":true}]}]}

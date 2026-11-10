@@ -1,4 +1,14 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 #include <ctype.h>
+#include "../../../lib/libbonfyre/include/bf_help.h"
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+#include "bf_lex.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,6 +16,7 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
+#include <sqlite3.h>
 
 #ifdef BF_HAS_QUIC
 #include <bf_quic.h>
@@ -41,35 +52,18 @@ static char *read_file(const char *path, long *size_out) {
 }
 
 static int extract_string_value(const char *json, const char *key, char *buffer, size_t size) {
-    char needle[256];
-    snprintf(needle, sizeof(needle), "\"%s\"", key);
-    const char *pos = strstr(json, needle);
-    if (!pos) return 0;
-    pos = strchr(pos + strlen(needle), ':');
-    if (!pos) return 0;
-    pos++;
-    while (*pos && isspace((unsigned char)*pos)) pos++;
-    if (*pos != '"') return 0;
-    pos++;
-    const char *end = strchr(pos, '"');
-    if (!end) return 0;
-    size_t len = (size_t)(end - pos);
-    if (len >= size) len = size - 1;
-    memcpy(buffer, pos, len);
-    buffer[len] = '\0';
-    return 1;
+    /* Delegates to the one implementation. This copy stopped at the first
+     * quote, and truncated silently on overflow rather than reporting that the
+     * value did not fit -- a prefix returned as if it were whole. */
+    return bf_lex_json_string(json, key, buffer, size);
 }
 
 static int extract_int_value(const char *json, const char *key, int *value) {
-    char needle[256];
-    snprintf(needle, sizeof(needle), "\"%s\"", key);
-    const char *pos = strstr(json, needle);
-    if (!pos) return 0;
-    pos = strchr(pos + strlen(needle), ':');
-    if (!pos) return 0;
-    pos++;
-    while (*pos && isspace((unsigned char)*pos)) pos++;
-    *value = atoi(pos);
+    /* Delegates to the one implementation, which refuses a string where a
+     * number was asked for instead of running atoi over a quote. */
+    char scalar[64];
+    if (!bf_lex_json_scalar(json, key, scalar, sizeof(scalar))) return 0;
+    *value = atoi(scalar);
     return 1;
 }
 
@@ -81,12 +75,13 @@ static int command_offers(const char *offers_path) {
         return 1;
     }
 
+    /* BonfyreOffer writes offerName; older generated lists wrote offer_name.
+     * Counting only the old key reported every current offer list as empty. */
     int count = 0;
-    const char *cursor = json;
-    while ((cursor = strstr(cursor, "\"offer_name\"")) != NULL) {
-        count++;
-        cursor += 12;
-    }
+    static const char *keys[] = { "\"offer_name\"", "\"offerName\"" };
+    for (size_t k = 0; k < sizeof keys / sizeof *keys; k++)
+        for (const char *cursor = json; (cursor = strstr(cursor, keys[k])) != NULL; cursor += strlen(keys[k]))
+            count++;
     printf("{\"kind\":\"offers\",\"path\":\"%s\",\"offerCount\":%d}\n", offers_path, count);
     free(json);
     return 0;
@@ -113,6 +108,39 @@ static int command_snapshot(const char *snapshot_path) {
     return 0;
 }
 
+/* The messages this estate has composed are records in its content store,
+ * each with the state it is in: withheld, handed to a person, abandoned.
+ * This reads them and counts them by state. It sends nothing and changes
+ * nothing; a message handed to a person is that person's to send. */
+static int command_messages(const char *store_path) {
+    sqlite3 *store = NULL;
+    sqlite3_stmt *rows = NULL;
+    long total = 0;
+    int first = 1;
+    if (sqlite3_open_v2(store_path, &store, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK ||
+        sqlite3_prepare_v2(store, "SELECT COALESCE(state,''), COUNT(*) FROM outbound_message "
+                                  "GROUP BY 1 ORDER BY 1", -1, &rows, NULL) != SQLITE_OK) {
+        fprintf(stderr, "No readable outbound_message records in %s\n", store_path);
+        if (rows) sqlite3_finalize(rows);
+        if (store) sqlite3_close(store);
+        return 1;
+    }
+    printf("{\"kind\":\"outbound-messages\",\"by_state\":{");
+    while (sqlite3_step(rows) == SQLITE_ROW) {
+        const char *state = (const char *)sqlite3_column_text(rows, 0);
+        long count = (long)sqlite3_column_int64(rows, 1);
+        printf("%s\"", first ? "" : ",");
+        for (const char *c = state; *c; c++) if (*c != '"' && *c != '\\' && (unsigned char)*c >= 0x20) putchar(*c);
+        printf("\":%ld", count);
+        total += count;
+        first = 0;
+    }
+    printf("},\"total\":%ld,\"dispatched_by_this_command\":0}\n", total);
+    sqlite3_finalize(rows);
+    sqlite3_close(store);
+    return total > 0 ? 0 : 2;
+}
+
 static int command_message(const char *offers_path, const char *offer_name, const char *channel) {
     long size = 0;
     char *json = read_file(offers_path, &size);
@@ -128,16 +156,37 @@ static int command_message(const char *offers_path, const char *offer_name, cons
         return 1;
     }
 
-    char buyer_segment[256] = "";
-    const char *segment_pos = strstr(match, "\"buyer_segment\"");
-    if (segment_pos) {
-        extract_string_value(segment_pos, "buyer_segment", buyer_segment, sizeof(buyer_segment));
+    /* A message says what the offer says. An offer that has not been quoted
+     * has no promise, price or turnaround to state, and its own record marks
+     * it not sendable; composing a pitch for it would put words in it. */
+    char sendable[16] = "", state[64] = "";
+    char promise[2048] = "", price[128] = "", turnaround[256] = "";
+    /* Read from the start of the object that holds the name, so a list of
+     * offers is answered from the one that was asked for. */
+    const char *scope = match;
+    while (scope > json && *scope != '{') scope--;
+    bf_lex_json_scalar(scope, "sendable", sendable, sizeof(sendable));
+    extract_string_value(scope, "commercialState", state, sizeof(state));
+    if (strcmp(sendable, "true") != 0) {
+        fprintf(stderr, "Offer is not sendable (%s): %s\n",
+                state[0] ? state : "no commercial state recorded", offer_name);
+        free(json);
+        return 2;
     }
+    if (!extract_string_value(scope, "promise", promise, sizeof(promise)) || !promise[0]) {
+        fprintf(stderr, "Offer states no promise, so there is nothing to say: %s\n", offer_name);
+        free(json);
+        return 2;
+    }
+    extract_string_value(scope, "price", price, sizeof(price));
+    extract_string_value(scope, "turnaround", turnaround, sizeof(turnaround));
 
     printf("Channel: %s\n", channel);
     printf("Offer: %s\n", offer_name);
-    printf("Message: I have a proof-backed local-first offer for %s. If you have one messy recording, I can turn it into a transcript, summary, and next steps quickly.\n",
-           buyer_segment[0] ? buyer_segment : "operators");
+    printf("Message: %s", promise);
+    if (price[0]) printf(" Price: %s.", price);
+    if (turnaround[0]) printf(" Turnaround: %s.", turnaround);
+    printf("\n");
     free(json);
     return 0;
 }
@@ -214,17 +263,46 @@ static int command_send(const char *payload_path, int target_count, char **targe
     return fail > 0 ? 1 : 0;
 }
 
+static void usage(void) {
+    fprintf(stderr,
+            "Usage:\n"
+            "  bonfyre-distribute offers <_generated-offers.json>\n"
+            "  bonfyre-distribute snapshot <_distribution-pipeline-snapshot.json>\n"
+            "  bonfyre-distribute message <_generated-offers.json> <offer-name> <channel>\n" "  bonfyre-distribute messages <content-store.db>   count composed messages by state; sends nothing\n"
+            "  bonfyre-distribute send <payload.json> --webhook <URL> [--webhook <URL> ...]\n"
+#ifdef BF_HAS_QUIC
+            "  bonfyre-distribute quic-send <dir> --host <HOST> --port <PORT>\n"
+            "      Send all artifacts in <dir> over QUIC with family-multiplexed streams.\n"
+            "      Surface-layer artifacts are prioritized. 0-RTT on reconnect.\n"
+#endif
+            );
+}
+
 int main(int argc, char **argv) {
-    if (argc >= 3 && strcmp(argv[1], "offers") == 0) {
+    if (bf_help_requested(argc, argv)) { usage(); return 0; }
+    enum {
+        DS_MESSAGE, DS_MESSAGES, DS_OFFERS, DS_QUIC_SEND, DS_SEND, DS_SNAPSHOT,
+    };
+    static const BfCommandEntry distribute_commands[] = {
+        {"message", DS_MESSAGE, 0, NULL},
+        {"messages", DS_MESSAGES, 0, NULL},
+        {"offers", DS_OFFERS, 0, NULL},
+        {"quic-send", DS_QUIC_SEND, 0, NULL},
+        {"send", DS_SEND, 0, NULL},
+        {"snapshot", DS_SNAPSHOT, 0, NULL},
+    };
+    const BfCommandEntry *command = argc < 2 ? NULL : bf_command_lookup(distribute_commands,
+        sizeof(distribute_commands) / sizeof(distribute_commands[0]), argv[1]);
+    if (argc >= 3 && command && command->id == DS_OFFERS) {
         return command_offers(argv[2]);
     }
-    if (argc >= 3 && strcmp(argv[1], "snapshot") == 0) {
+    if (argc >= 3 && command && command->id == DS_SNAPSHOT) {
         return command_snapshot(argv[2]);
     }
-    if (argc >= 5 && strcmp(argv[1], "message") == 0) {
+    if (argc >= 3 && command && command->id == DS_MESSAGES) { return command_messages(argv[2]); } if (argc >= 5 && command && command->id == DS_MESSAGE) {
         return command_message(argv[2], argv[3], argv[4]);
     }
-    if (argc >= 3 && strcmp(argv[1], "send") == 0) {
+    if (argc >= 3 && command && command->id == DS_SEND) {
         const char *payload = argv[2];
         char *webhooks[MAX_TARGETS];
         int wh_count = 0;
@@ -236,7 +314,7 @@ int main(int argc, char **argv) {
         return command_send(payload, wh_count, webhooks);
     }
 #ifdef BF_HAS_QUIC
-    if (argc >= 3 && strcmp(argv[1], "quic-send") == 0) {
+    if (argc >= 3 && command && command->id == DS_QUIC_SEND) {
         const char *dir = argv[2];
         const char *host = "127.0.0.1";
         uint16_t port = 4443;
@@ -247,18 +325,7 @@ int main(int argc, char **argv) {
         return command_quic_send(dir, host, port);
     }
 #endif
-    fprintf(stderr,
-            "Usage:\n"
-            "  bonfyre-distribute offers <_generated-offers.json>\n"
-            "  bonfyre-distribute snapshot <_distribution-pipeline-snapshot.json>\n"
-            "  bonfyre-distribute message <_generated-offers.json> <offer-name> <channel>\n"
-            "  bonfyre-distribute send <payload.json> --webhook <URL> [--webhook <URL> ...]\n"
-#ifdef BF_HAS_QUIC
-            "  bonfyre-distribute quic-send <dir> --host <HOST> --port <PORT>\n"
-            "      Send all artifacts in <dir> over QUIC with family-multiplexed streams.\n"
-            "      Surface-layer artifacts are prioritized. 0-RTT on reconnect.\n"
-#endif
-            );
+    usage();
     return 1;
 }
 

@@ -1,0 +1,20 @@
+{
+  "name": "destination_release",
+  "displayName": "Destination Release",
+  "description": "One destination's standing for one source's material, in the lifecycle declared by schemas/control/destination-release.cue. Readiness and delivery are different facts and this record keeps them apart: a state is a delivery only when the compiled lifecycle says that state delivers, and only a receipt naming what was materialized puts it there. A row here is never a reuse licence, never the destination agreeing the material is correct, and never authority to publish anything to anyone.",
+  "attributes": {
+    "release_id": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "source_ref": { "type": "string", "required": true },
+    "destination": { "type": "string", "required": true },
+    "state": { "type": "string", "required": true },
+    "generation": { "type": "string", "required": true },
+    "blocked_binding": { "type": "string" },
+    "receipt_ref": { "type": "string" },
+    "materialized_count": { "type": "string" },
+    "admitted_by": { "type": "string" },
+    "state_changed_at": { "type": "string", "required": true },
+    "reason": { "type": "text" },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

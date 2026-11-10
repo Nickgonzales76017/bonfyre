@@ -1,0 +1,4 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-ledger","binary_env":"BONFYRE_LEDGER_BIN","cases":[
+{"name":"assess-json values a real family and refuses to invent a cost","files":{"t.csv":"name,qty\nwidget,3\ngadget,5\n"},"steps":[{"program":"${root}/cmd/BonfyreIngest/bonfyre-ingest","argv":["t.csv","fam/x"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"argv":["assess-json","fam/x/artifact.json"],"env":{"HOME":"${tmp}","BONFYRE_ECONOMY_DB":"${tmp}/economy.db"},"exit":0,"at":{"family_id":"ingest-7824def8331cbe1edb56ea44c0724203ff4247d1af1880e2268055a3ad7792b4","atoms":1,"operators":1,"cost_basis":"none","replacement_cost_usd":null,"portfolio_value_usd":null}}]},
+{"name":"assess refuses a missing artifact","steps":[{"argv":["assess-json","nope.json"],"env":{"HOME":"${tmp}"},"exit_nonzero":true}]}]}

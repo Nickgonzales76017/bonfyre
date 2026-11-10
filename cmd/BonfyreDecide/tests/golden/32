@@ -1,0 +1,19 @@
+exit 0
+# Target: the last 36500 days
+
+2 items about Target Corporation, the US retail chain; 2 set aside because "Target" meant something else there; 4 matched the name.
+
+## Act on
+
+- **Answer:** Archery target practice opens downtown (Local, 2026-09-22) [Open](https://e.test/3)
+
+## News
+
+- Shoppers love Target's new store layout (null, 2026-09-22; neutral)
+
+## Set aside: "Target" meant something else
+
+- Target recalls 2M kettles over burn risk (AP)
+-  (Court News)
+
+Read on this machine by fixture-model-Q4. Each judgement has a receipt in the JSON report (--out report.json).

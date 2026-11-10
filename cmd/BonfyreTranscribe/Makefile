@@ -6,9 +6,21 @@ OPENSSL_CFLAGS := $(shell pkg-config --cflags openssl  2>/dev/null || echo "-I/o
 OPENSSL_LIBS   := $(shell pkg-config --libs   openssl  2>/dev/null || echo "-L/opt/homebrew/opt/openssl@3/lib -lssl -lcrypto")
 SQLITE_CFLAGS  := $(shell pkg-config --cflags sqlite3  2>/dev/null || echo "")
 SQLITE_LIBS    := $(shell pkg-config --libs   sqlite3  2>/dev/null || echo "-L/opt/homebrew/opt/sqlite/lib -lsqlite3")
-WHISPER_INC    := $(shell pkg-config --cflags whisper  2>/dev/null || echo "-I/opt/homebrew/include")
-WHISPER_LIBS   := $(shell pkg-config --libs   whisper  2>/dev/null || echo "-L/opt/homebrew/lib -lwhisper -lggml")
-GGML_CFLAGS    := $(shell pkg-config --cflags ggml 2>/dev/null || echo "-I/opt/homebrew/include")
+# pkg-config, then a vendored tree, then Homebrew. Without the middle branch the
+# Linux host had no way to find whisper even with it checked out under vendor/.
+BONFYRE_VENDOR ?= /opt/bonfyre/vendor
+WHISPER_DIR    := $(BONFYRE_VENDOR)/whisper.cpp
+WHISPER_INC    := $(shell pkg-config --cflags whisper 2>/dev/null || \
+                    (test -f $(WHISPER_DIR)/include/whisper.h && \
+                     echo "-I$(WHISPER_DIR)/include -I$(WHISPER_DIR)/ggml/include") || \
+                    echo "-I/opt/homebrew/include")
+WHISPER_LIBS   := $(shell pkg-config --libs whisper 2>/dev/null || \
+                    (test -d $(WHISPER_DIR)/build/bin && \
+                     echo "-L$(WHISPER_DIR)/build/bin -Wl,-rpath,$(WHISPER_DIR)/build/bin -lwhisper -lggml") || \
+                    echo "-L/opt/homebrew/lib -lwhisper -lggml")
+GGML_CFLAGS    := $(shell pkg-config --cflags ggml 2>/dev/null || \
+                    (test -d $(WHISPER_DIR)/ggml/include && echo "-I$(WHISPER_DIR)/ggml/include") || \
+                    echo "-I/opt/homebrew/include")
 GGML_LIBS      := $(shell pkg-config --libs ggml 2>/dev/null || echo "-L/opt/homebrew/lib -lggml")
 LOCAL_CFLAGS = -I../../lib/libbonfyre/include \
                -I$(FRAGMENT_INC) \
@@ -22,6 +34,12 @@ SRC = src/main.c
 
 all: $(FRAGMENT_LIB)/libfragment.a $(TARGET)
 
+MANAGED_PREFIX ?= $(HOME)/.bonfyre
+install: all
+	install -d "$(MANAGED_PREFIX)/bin"
+	install -m 755 $(TARGET) "$(MANAGED_PREFIX)/bin/.bonfyre-transcribe.next"
+	mv -f "$(MANAGED_PREFIX)/bin/.bonfyre-transcribe.next" "$(MANAGED_PREFIX)/bin/bonfyre-transcribe"
+
 $(TARGET): $(SRC)
 	$(CC) $(CFLAGS) $(LOCAL_CFLAGS) -o $(TARGET) $(SRC) $(LDFLAGS)
 
@@ -31,4 +49,4 @@ $(FRAGMENT_LIB)/libfragment.a:
 clean:
 	rm -f $(TARGET)
 
-.PHONY: all clean
+.PHONY: all clean install

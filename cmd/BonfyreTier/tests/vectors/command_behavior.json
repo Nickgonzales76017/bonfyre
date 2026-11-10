@@ -1,0 +1,8 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-tier","binary_env":"BONFYRE_TIER_BIN","cases":[
+{"name":"a latency above the assigned tier is recorded as an SLA violation","steps":[
+ {"argv":["set","rec1","s1","fast"],"env":{"HOME":"${tmp}","BONFYRE_TIER_DB":"${tmp}/t.db"},"exit":0,"contains":["tier=fast"]},
+ {"argv":["route","rec1","s1"],"env":{"HOME":"${tmp}","BONFYRE_TIER_DB":"${tmp}/t.db"},"exit":0,"contains":["tier=fast (max=100ms)"]},
+ {"argv":["record","rec1","s1","50"],"env":{"HOME":"${tmp}","BONFYRE_TIER_DB":"${tmp}/t.db"},"exit":0,"excludes":["VIOLATION"]},
+ {"argv":["record","rec1","s1","250"],"env":{"HOME":"${tmp}","BONFYRE_TIER_DB":"${tmp}/t.db"},"exit":0,"contains":["[SLA VIOLATION]"]},
+ {"argv":["violations","rec1"],"env":{"HOME":"${tmp}","BONFYRE_TIER_DB":"${tmp}/t.db"},"exit":0,"contains":["250"],"excludes":[" 50 "]}]},
+{"name":"list shows the four built-in tiers","steps":[{"argv":["list"],"env":{"HOME":"${tmp}","BONFYRE_TIER_DB":"${tmp}/t.db"},"exit":0,"contains":["instant","fast","batch","deep"]}]}]}

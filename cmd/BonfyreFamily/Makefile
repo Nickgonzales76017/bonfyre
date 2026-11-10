@@ -1,5 +1,6 @@
 CC := cc
 CFLAGS := -O2 -Wall -Wextra -std=c11 -I../../lib/libbonfyre/include
+CFLAGS += -I../BonfyreLex/src
 LDFLAGS := -L../../lib/libbonfyre -lbonfyre -lsqlite3
 
 SRC := src/main.c
@@ -10,7 +11,7 @@ BIN := bonfyre-family
 
 all: $(BUILD)/$(BIN)
 
-$(BUILD)/$(BIN): $(SRC) | $(BUILD)
+$(BUILD)/$(BIN): $(SRC) ../../lib/libbonfyre/include/bf_command_lookup.h | $(BUILD)
 	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
 
 $(BUILD):

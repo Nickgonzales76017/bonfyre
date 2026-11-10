@@ -1,0 +1,136 @@
+#!/usr/bin/env python3
+"""Find feeds the open web already published, by asking an index of it.
+
+Discovery so far has been: ask a publisher this estate already knows about.
+That is bounded by how many publishers it knows. The other direction is to ask
+an index of the web for addresses that look like channels and learn about the
+publishers from them -- the same operators a person would type into a search
+box, run against a dataset that exists to be queried.
+
+Common Crawl publishes that index, and asking it costs nobody a page view: it
+is a record of a crawl that already happened, not a crawl of anyone's site. No
+search engine is scraped, no robots file is worked around, and nothing here
+fetches the addresses it finds -- they enter the ledger as listings, and have
+to answer for themselves later like every other listing.
+
+  dork_common_crawl.py --out channels.jsonl [--per-dork 400] [--collection CC-MAIN-2026-34]
+"""
+import argparse, json, re, sys, time, urllib.error, urllib.parse, urllib.request
+
+AGENT = "BonfyreSourceFrontier/1.0 (source census; aurekai.life)"
+
+# Each dork is a domain shape the index can answer quickly, and the substring
+# that makes an address look like a channel rather than a page.
+DORKS = [
+    ("*.gov/*", ("rss", "feed", "atom")),
+    ("*.us/*", ("rss", "feed", "ics")),
+    ("*.edu/*", ("rss", "feed", "atom")),
+    ("*.org/*", ("feed.xml", "rss.xml", "atom.xml")),
+    ("*.museum/*", ("rss", "feed")),
+    ("*.k12.tx.us/*", ("rss", "feed")),
+    ("*.tx.us/*", ("rss", "feed", "ics", "calendar")),
+    ("*.ca.gov/*", ("rss", "feed")),
+    ("*.ny.us/*", ("rss", "feed")),
+    ("*.lib.tx.us/*", ("rss", "feed")),
+]
+
+# What an address has to look like before it is worth listing at all.
+FEEDISH = re.compile(r"(rss|atom|feed|\.ics|\.xml|podcast)", re.I)
+NOT_A_FEED = re.compile(r"(\.jpg|\.png|\.gif|\.pdf|\.css|\.js|/wp-admin/|/login|\.zip)", re.I)
+
+
+def ask(url, timeout=120):
+    request = urllib.request.Request(url, headers={"User-Agent": AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as answer:
+            return answer.status, answer.read().decode("utf-8", "replace")
+    except urllib.error.HTTPError as problem:
+        return problem.code, ""
+    except Exception:
+        return 0, ""
+
+
+def host_of(address):
+    try:
+        host = (urllib.parse.urlparse(address).hostname or "").lower().strip(".")
+    except ValueError:
+        return ""
+    if not host or not re.match(r"^[a-z0-9.-]+\.[a-z]{2,}$", host):
+        return ""
+    return host[4:] if host.startswith("www.") else host
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--collection", default="")
+    ap.add_argument("--per-dork", type=int, default=400)
+    ap.add_argument("--pause", type=float, default=1.5)
+    args = ap.parse_args()
+
+    collection = args.collection
+    if not collection:
+        status, said = ask("https://index.commoncrawl.org/collinfo.json", timeout=60)
+        if status != 200:
+            print(json.dumps({"asked": 0, "why": "the index did not say what collections it has"}))
+            return 1
+        collection = json.loads(said)[0]["id"]
+
+    seen, rows, asked = set(), [], 0
+    for domain, wants in DORKS:
+        for want in wants:
+            asked += 1
+            query = ("https://index.commoncrawl.org/%s-index?url=%s&output=json&limit=%d"
+                     % (collection, urllib.parse.quote(domain + want + "*", safe=""), args.per_dork))
+            status, said = ask(query)
+            found = 0
+            if status == 200:
+                for line in said.splitlines():
+                    line = line.strip()
+                    if not line.startswith("{"):
+                        continue
+                    try:
+                        row = json.loads(line)
+                    except ValueError:
+                        continue
+                    address = row.get("url", "")
+                    if not address.lower().startswith(("http://", "https://")):
+                        continue
+                    if NOT_A_FEED.search(address) or not FEEDISH.search(address):
+                        continue
+                    if str(row.get("status", "")) not in ("200", "301", "302"):
+                        continue
+                    if address in seen:
+                        continue
+                    host = host_of(address)
+                    if not host:
+                        continue
+                    seen.add(address)
+                    rows.append({
+                        "root": host,
+                        "address": address,
+                        "protocol": "ics" if address.lower().endswith(".ics") else "rss",
+                        "title": "",
+                        "truth_level": "observed_index_candidate",
+                        "discovered_from": "listed in the %s web index as %s"
+                                           % (collection, row.get("mime-detected", "a document")),
+                    })
+                    found += 1
+            sys.stderr.write("%-22s %-10s %s%d\n" % (domain, want,
+                             "" if status == 200 else "(%s) " % status, found))
+            time.sleep(args.pause)
+
+    with open(args.out, "w") as out:
+        for row in rows:
+            out.write(json.dumps(row) + "\n")
+    print(json.dumps({
+        "dorks_asked": asked, "collection": collection,
+        "addresses_listed": len(rows), "publishers": len({r["root"] for r in rows}),
+        "cannot_infer": "an address found in a web index is an address, not a channel this estate reads; "
+                        "the index says a crawler once saw it, never that it answers now",
+    }))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

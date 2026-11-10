@@ -1,0 +1,1 @@
+{"cpanelresult":{"apiversion":2,"func":"listpops","data":[{"email":"shop@beta-florist.example","login":"shop@beta-florist.example","suspended_incoming":0,"suspended_login":0},{"email":"betaf","login":"Main Account","suspended_incoming":0,"suspended_login":0}],"event":{"result":1},"module":"Email"}}

@@ -1,0 +1,108 @@
+{
+  "schema_version": "bonfyre.surface.source-map.v1",
+  "source_family": "BonfyreWebAddress",
+  "selection_law": "these mappings seed drafts only; they do not publish or override Matrix resolution",
+  "mappings": {
+    "serve_protocols": {
+      "page": "protocols",
+      "audience": "public",
+      "slot": "legacy-copy"
+    },
+    "serve_a2a": {
+      "page": "a2a",
+      "audience": "public",
+      "slot": "legacy-copy"
+    },
+    "serve_capability": {
+      "page": "capability",
+      "audience": "market",
+      "slot": "legacy-copy"
+    },
+    "serve_property_flow": {
+      "page": "property",
+      "audience": "public",
+      "slot": "legacy-copy"
+    },
+    "serve_market_flow": {
+      "page": "market",
+      "audience": "market",
+      "slot": "legacy-copy"
+    },
+    "serve_sources_flow": {
+      "page": "sources",
+      "audience": "public",
+      "slot": "legacy-copy"
+    },
+    "serve_agents_flow": {
+      "page": "agents",
+      "audience": "public",
+      "slot": "legacy-copy"
+    },
+    "serve_flow": {
+      "page": "flow",
+      "audience": "public",
+      "slot": "legacy-copy"
+    },
+    "serve_membrane": {
+      "page": "membrane",
+      "audience": "institution",
+      "slot": "legacy-copy"
+    },
+    "serve_surfaceir": {
+      "page": "surfaces",
+      "audience": "public",
+      "slot": "legacy-copy"
+    },
+    "serve_desk": {
+      "page": "studio",
+      "audience": "institution",
+      "slot": "desk-copy"
+    },
+    "serve_compose": {
+      "page": "make",
+      "audience": "institution",
+      "slot": "compose-copy"
+    },
+    "serve_auth": {
+      "page": "account",
+      "audience": "self",
+      "slot": "auth-copy"
+    },
+    "serve_superuser_control": {
+      "page": "studio-admin",
+      "audience": "institution",
+      "slot": "admin-copy"
+    },
+    "serve_private_foreign_surface": {
+      "page": "foreign",
+      "audience": "institution",
+      "slot": "private-copy"
+    },
+    "serve_private_studio_surface": {
+      "page": "studio",
+      "audience": "institution",
+      "slot": "private-copy"
+    },
+    "serve_vertical_private": {
+      "page": "private-estate",
+      "audience": "institution",
+      "slot": "vertical-copy"
+    },
+    "serve_aperture_fragment": {
+      "page": "intake",
+      "audience": "public",
+      "slot": "intake-result"
+    }
+  },
+  "review_required": [
+    "serve_internet_observatory",
+    "serve_room",
+    "serve_subject",
+    "serve_studio",
+    "serve_cms_partials",
+    "serve_cms_route",
+    "serve_machine_web",
+    "serve_surface"
+  ],
+  "forbidden_inference": "a function-to-page draft mapping is not a Matrix address resolution, publication decision, or proof that every text node belongs in CMS"
+}

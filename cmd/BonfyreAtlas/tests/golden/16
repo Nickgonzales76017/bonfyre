@@ -1,0 +1,15 @@
+wiring: 2 wired architectures, 2 interactions
+feedback loops closed: 1 | one-way flows: 0
+  loop: alpha -> beta ->
+pure sources (emit, nothing returns): none
+pure sinks (dead ends): none
+highest-value loops to close (by destination influence):
+
+-- WiringSpec fact flow: 2 organs, 4 facts --
+orphan consumers (organ expects a fact NOBODY provides -- wire these):
+  FactD <- expected by beta
+orphan producers (published, nobody consumes -- terminal surface or unwired):
+  FactC -> from beta
+  FactE -> from gamma
+fact feedback loops (closed producer/consumer cycles):
+exit 0

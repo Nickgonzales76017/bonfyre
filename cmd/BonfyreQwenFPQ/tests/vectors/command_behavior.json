@@ -1,0 +1,5 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-qwen-fpq","binary_env":"BONFYRE_QWEN_FPQ_BIN","cases":[
+{"name":"the Qwen tokenizer encodes and decodes a sentence exactly (tokenizer copied read-only into the case)","steps":[
+ {"program":"cp","argv":["${home}/.bonfyre/representations/tokenizers/qwen2.5-0.5b-instruct/tokenizer.json","${tmp}/tokenizer.json"],"exit":0},
+ {"argv":["tokenizer-test","--tokenizer","tokenizer.json","--text","Fix the checkout page by Friday."],"env":{"HOME":"${tmp}"},"exit":0,"contains":["id=27264 piece=\"Ġcheckout\"","decoded_text=\"Fix the checkout page by Friday.\"","roundtrip_ok=1"]}]},
+{"name":"tokenizer-test without a tokenizer is refused","steps":[{"argv":["tokenizer-test","--text","x"],"env":{"HOME":"${tmp}"},"exit":1}]}]}

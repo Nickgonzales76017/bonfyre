@@ -1,0 +1,11 @@
+audit: 2 wired organs, 4 facts, feedback core 0 organs
+  [ ok] P0/P7 python-only authority: -
+  [ ok] P1 non-differential recompute: -
+  [  1] P3/P5 surface islands: beta
+  [  1] orphan consumers (nobody provides): FactD
+  [  2] orphan producers (nobody consumes): FactC, FactE
+  [ ok] duplicate ownership: -
+  [ ok] P6 proof gaps (measured w/o witness): -
+  [  1] only-produce organs: gamma
+  [ ok] only-consume organs: -
+exit 0

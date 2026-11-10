@@ -1,0 +1,55 @@
+#!/bin/sh
+set -eu
+root=$(CDPATH= cd -- "$(dirname -- "$0")/../../.." && pwd)
+tool="$root/cmd/BonfyreSourceFrontier/tools/compile_channel_hierarchy.py"
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/bonfyre-channel-hierarchy.XXXXXX")
+trap 'rm -rf "$tmp"' EXIT INT TERM
+db="$tmp/frontier.db"
+
+python3 - "$db" <<'PY'
+import sqlite3,sys
+db=sqlite3.connect(sys.argv[1])
+db.executescript("""
+CREATE TABLE root(root_id TEXT PRIMARY KEY,host TEXT,name TEXT,identity TEXT,kind TEXT,robots TEXT,economic TEXT,first_seen TEXT,last_seen TEXT);
+CREATE TABLE root_origin(root_id TEXT,label TEXT,listings INTEGER DEFAULT 0,PRIMARY KEY(root_id,label));
+CREATE TABLE family(family_id TEXT PRIMARY KEY,root_id TEXT,protocol TEXT,endpoint TEXT,discovered_from TEXT,first_seen TEXT);
+CREATE TABLE channel(channel_id TEXT PRIMARY KEY,family_id TEXT,root_id TEXT,address TEXT,exact_address TEXT,title TEXT,material TEXT,protocol TEXT,state TEXT,truth_level TEXT,refusal TEXT,virtual INTEGER,census_source TEXT,credential TEXT,rights TEXT,cadence TEXT,discovered_from TEXT,body_sha256 TEXT,identity TEXT,first_seen TEXT,last_seen TEXT,last_contributed TEXT,contributions INTEGER);
+CREATE TABLE channel_origin(channel_id TEXT,label TEXT,PRIMARY KEY(channel_id,label));
+CREATE TABLE channel_census(channel_id TEXT,census_source TEXT,material TEXT,PRIMARY KEY(channel_id,census_source));
+""")
+db.execute("INSERT INTO root VALUES(?,?,?,?,?,?,?,?,?)",("r1","publisher.test","Publisher","Q1","publisher","allow","","2026","2026"))
+db.executemany("INSERT INTO root_origin VALUES(?,?,?)",[("r1","ESTATE",4),("r1","CATALOGUE",2)])
+db.executemany("INSERT INTO family VALUES(?,?,?,?,?,?)",[
+ ("f-rss","r1","rss","","homepage","2026"),("f-ics","r1","ics","","calendar-link","2026")])
+channels=[
+ ("c1","f-rss","r1","https://publisher.test/feed","https://publisher.test/feed","Main","publication","rss","active","observed","",0,"reader-news","","CC BY","30m","homepage","","Q1","2026","2026","2026-09-17",12),
+ ("c2","f-rss","r1","https://publisher.test/category/music/feed","https://publisher.test/category/music/feed","Music","publication","rss","admitted","protocol_derived","",0,"reader-music","","","30m","category:music","","Q1","2026","2026","",0),
+ ("c3","f-ics","r1","https://publisher.test/events.ics","https://publisher.test/events.ics","Events","event","ics","active","observed","",0,"reader-events","","","15m","calendar-link","","Q1","2026","2026","2026-09-17",5),
+ ("c4","f-rss","r1","https://publisher.test/archive/virtual","https://publisher.test/archive/virtual","Archive member","publication","rss","active","catalogue_member","",1,"","","","","catalogue","","Q1","2026","2026","",0),
+]
+db.executemany("INSERT INTO channel VALUES("+",".join("?" for _ in range(23))+")",channels)
+db.executemany("INSERT INTO channel_origin VALUES(?,?)",[("c1","ESTATE"),("c2","DISCOVERY"),("c3","ESTATE"),("c4","CATALOGUE")])
+db.executemany("INSERT INTO channel_census VALUES(?,?,?)",[("c1","reader-news","publication"),("c1","reader-news-alt","publication"),("c3","reader-events","event")])
+db.commit()
+PY
+
+python3 "$tool" --db "$db" --roots 10 --channels 2 >"$tmp/out.json"
+python3 - "$tmp/out.json" <<'PY'
+import json,sys
+doc=json.load(open(sys.argv[1]))
+assert doc["schema"]=="bonfyre-source-hierarchy.v1"
+assert doc["root_count"]==1
+r=doc["roots"][0]
+assert r["channel_count"]==4 and r["family_count"]==2
+assert {o["label"] for o in r["origins"]}=={"ESTATE","CATALOGUE"}
+families={f["protocol"]:f for f in r["families"]}
+assert families["rss"]["channel_count"]==3
+assert families["rss"]["visible_channels"]==2, families["rss"]
+assert families["rss"]["channel_count"]>families["rss"]["visible_channels"]
+c=next(x for x in families["rss"]["channels"] if x["channel_id"]=="c1")
+assert {x["source"] for x in c["readers"]}=={"reader-news","reader-news-alt"}
+assert c["contributions"]==12 and "ESTATE" in c["origins"]
+assert families["ics"]["channels"][0]["material"]=="event"
+assert "not endorsement" in doc["cannot_infer"]
+print("channel hierarchy: PASS")
+PY

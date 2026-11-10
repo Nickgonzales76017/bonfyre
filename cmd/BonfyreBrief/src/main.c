@@ -1,3 +1,19 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+/* The POSIX pin above hides BSD interfaces on Darwin -- strcasecmp, ru_maxrss,
+ * MSG_DONTWAIT, INADDR_LOOPBACK -- so this file did not compile on the macOS
+ * control plane at all. _DARWIN_C_SOURCE restores them without loosening the
+ * POSIX baseline the Linux deploy host needs. */
+#ifdef __APPLE__
+#ifndef _DARWIN_C_SOURCE
+#define _DARWIN_C_SOURCE 1
+#endif
+#endif
+
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
@@ -8,6 +24,8 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <bonfyre.h>
+#include "../../../lib/libbonfyre/include/bf_help.h"
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 
 #define MAX_SENTENCES 1024
 #define MAX_LINE 8192
@@ -45,8 +63,15 @@ static char *trim_copy(const char *src) {
     while (len > 0 && isspace((unsigned char)src[len - 1])) len--;
     char *out = malloc(len + 1);
     if (!out) return NULL;
-    memcpy(out, src, len);
-    out[len] = '\0';
+    size_t used = 0;
+    for (size_t i = 0; i < len; i++) {
+        if (isspace((unsigned char)src[i])) {
+            if (used && out[used - 1] != ' ') out[used++] = ' ';
+        } else {
+            out[used++] = src[i];
+        }
+    }
+    out[used] = '\0';
     return out;
 }
 
@@ -400,14 +425,34 @@ static int split_sentences(const char *text, Sentence *sentences, int max_senten
     int count = 0;
     const char *start = text;
     for (const char *p = text; ; p++) {
-        if (*p == '.' || *p == '!' || *p == '?' || *p == '\0') {
-            size_t len = (size_t)(p - start + (*p ? 1 : 0));
+        /* A sentence ends at terminal punctuation followed by space or the end
+         * of the text, or at a blank line. A full stop inside a file name or a
+         * version number ends nothing, and a line break inside a wrapped
+         * sentence is only a space; treating either as an ending cut briefs
+         * into pieces of sentences. */
+        int terminal = (*p == '.' || *p == '!' || *p == '?') &&
+                       (p[1] == '\0' || p[1] == ' ' || p[1] == '\n' || p[1] == '\r' || p[1] == '\t' ||
+                        p[1] == '"' || p[1] == ')');
+        int blank_line = (*p == '\n' && (p[1] == '\n' || (p[1] == '\r' && p[2] == '\n')));
+        if (terminal || blank_line || *p == '\0') {
+            size_t len = (size_t)(p - start + (terminal ? 1 : 0));
             if (len > 1) {
                 char buffer[MAX_LINE];
                 if (len >= sizeof(buffer)) len = sizeof(buffer) - 1;
-                memcpy(buffer, start, len);
-                buffer[len] = '\0';
-                char *trimmed = trim_copy(buffer);
+                size_t used = 0;
+                int in_space = 1;
+                for (size_t i = 0; i < len; i++) {
+                    char c = start[i];
+                    if (c == '\n' || c == '\r' || c == '\t') c = ' ';
+                    if (c == ' ') { if (in_space) continue; in_space = 1; }
+                    else in_space = 0;
+                    buffer[used++] = c;
+                }
+                buffer[used] = '\0';
+                /* a list marker or heading mark is layout, not part of the sentence */
+                char *body = buffer;
+                while (*body == '-' || *body == '*' || *body == '#' || *body == ' ') body++;
+                char *trimmed = trim_copy(body);
                 if (trimmed && trimmed[0] != '\0' && count < max_sentences) {
                     sentences[count].text = trimmed;
                     sentences[count].score = 0; /* scored after IDF built */
@@ -582,9 +627,28 @@ static void write_brief(const char *path, const char *title, Sentence *sentences
     fclose(out);
 }
 
+static void usage(void) {
+    fprintf(stderr, "Usage: bonfyre-brief <transcript-file> <output-dir> [--title TITLE]\n"
+                    "       bonfyre-brief cited --type ID ...   (receipt-bound migration brief; see src/cited.c)\n"
+                    "       bonfyre-brief inventory --subject S --scope SC --out FILE ...   (draft hosting inventory from intake and exported listings; see src/inventory.c)\n");
+}
+
+int brief_cited_main(int argc, char **argv);
+int brief_inventory_main(int argc, char **argv);
+
 int main(int argc, char **argv) {
+    enum { BF_CITED, BF_INVENTORY };
+    static const BfCommandEntry brief_commands[] = {
+        {"cited", BF_CITED, 0, NULL},
+        {"inventory", BF_INVENTORY, 0, NULL},
+    };
+    const BfCommandEntry *command = argc <= 1 ? NULL : bf_command_lookup(brief_commands,
+        sizeof(brief_commands) / sizeof(brief_commands[0]), argv[1]);
+    if (argc > 1 && command && command->id == BF_CITED) return brief_cited_main(argc, argv);
+    if (argc > 1 && command && command->id == BF_INVENTORY) return brief_inventory_main(argc, argv);
+    if (bf_help_requested(argc, argv)) { usage(); return 0; }
     if (argc < 3) {
-        fprintf(stderr, "Usage: bonfyre-brief <transcript-file> <output-dir> [--title TITLE]\n");
+        usage();
         return 1;
     }
 

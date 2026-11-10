@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 #include <dirent.h>
 #include <limits.h>
 #include <stdio.h>
@@ -5,6 +12,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
@@ -194,9 +202,17 @@ static int cmd_validate(const char *path) {
 }
 
 int main(int argc, char **argv) {
-    if (argc >= 2 && strcmp(argv[1], "list") == 0) return cmd_list();
-    if (argc >= 3 && strcmp(argv[1], "show") == 0) return cmd_show(argv[2]);
-    if (argc >= 3 && strcmp(argv[1], "validate") == 0) return cmd_validate(argv[2]);
+    enum { SU_LIST, SU_SHOW, SU_VALIDATE };
+    static const BfCommandEntry surface_commands[] = {
+        {"list", SU_LIST, 0, NULL},
+        {"show", SU_SHOW, 0, NULL},
+        {"validate", SU_VALIDATE, 0, NULL},
+    };
+    const BfCommandEntry *command = argc < 2 ? NULL : bf_command_lookup(surface_commands,
+        sizeof(surface_commands) / sizeof(surface_commands[0]), argv[1]);
+    if (argc >= 2 && command && command->id == SU_LIST) return cmd_list();
+    if (argc >= 3 && command && command->id == SU_SHOW) return cmd_show(argv[2]);
+    if (argc >= 3 && command && command->id == SU_VALIDATE) return cmd_validate(argv[2]);
     fprintf(stderr,
             "BonfyreSurface — optional client surface registry\n\n"
             "Usage:\n"

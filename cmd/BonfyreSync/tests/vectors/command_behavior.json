@@ -1,0 +1,5 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-sync","binary_env":"BONFYRE_SYNC_BIN","cases":[
+{"name":"a real ingest manifest is a valid intake package","files":{"t.csv":"name,qty\nwidget,3\ngadget,5\n"},"steps":[
+ {"program":"${root}/cmd/BonfyreIngest/bonfyre-ingest","argv":["t.csv","iout"],"env":{"HOME":"${tmp}"},"exit":0},
+ {"argv":["inspect-intake","iout/intake-manifest.json"],"env":{"HOME":"${tmp}"},"exit":0,"at":{"valid":true,"format":"bonfyre-intake-v1","fileName":"t.csv","contentHash":"7824def8331cbe1edb56ea44c0724203ff4247d1af1880e2268055a3ad7792b4","status":"ready"}}]},
+{"name":"a manifest missing required keys is invalid","files":{"m.json":"{\"status\":\"ready\"}"},"steps":[{"argv":["inspect-intake","m.json"],"env":{"HOME":"${tmp}"},"exit":1,"at":{"valid":false}}]}]}

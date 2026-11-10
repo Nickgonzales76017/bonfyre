@@ -1,0 +1,10 @@
+3 field keys are stored and never read (5 authored lines):
+  mystery_key                         2  alpha.yaff, gamma.yaff
+  architecture                        2  gamma.yaff
+  meaning                             1  gamma.yaff
+
+1 duplicate block IDs currently resolve by last definition:
+  architecture alpha: duplicate id
+
+Each undeclared field needs a reader or a rename; duplicate identities need authored reconciliation. No inference is made for them.
+exit 0

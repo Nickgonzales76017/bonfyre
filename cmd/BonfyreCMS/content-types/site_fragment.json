@@ -1,0 +1,26 @@
+{
+  "name": "site_fragment",
+  "displayName": "Site Fragment",
+  "description": "One authored, addressable HTMX projection fragment. Exact page/slot/audience routing stays relational; tensor/ANN state may rank variants and related fragments but never overrides an exact coordinate. Saving is not publication: only status=published is eligible for public projection.",
+  "attributes": {
+    "coordinate": {"type": "uid", "required": true, "uniqueWithinNamespace": true},
+    "page": {"type": "string", "required": true},
+    "slot": {"type": "string", "required": true},
+    "audience": {"type": "string", "required": true},
+    "kind": {"type": "string", "required": true},
+    "position": {"type": "integer", "required": true},
+    "eyebrow": {"type": "string", "required": false},
+    "heading": {"type": "string", "required": false},
+    "body": {"type": "text", "required": false},
+    "label": {"type": "string", "required": false},
+    "href": {"type": "string", "required": false},
+    "status": {"type": "string", "required": true},
+    "variant_key": {"type": "string", "required": false},
+    "semantic_tags": {"type": "json", "required": false},
+    "projection_contract": {"type": "json", "required": false},
+    "source_ref": {"type": "string", "required": false},
+    "source_digest": {"type": "string", "required": false},
+    "evidence_ref": {"type": "string", "required": false},
+    "notes": {"type": "text", "required": false}
+  }
+}

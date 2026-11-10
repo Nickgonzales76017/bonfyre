@@ -1,0 +1,7 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-reason","binary_env":"BONFYRE_REASON_BIN","cases":[
+{"name":"branches that were not run have no answer and nothing can be compared or committed","steps":[
+ {"argv":["start","--prompt","Should we fix checkout first?","--session","s1"],"env":{"HOME":"${tmp}","BONFYRE_REASON_ENDPOINT":"","BONFYRE_REASON_DIR":"${tmp}/reason"},"exit":0,"contains":["prompt_sha256: d73fd0fd32c78fc7f861098bb43d2c8f9b2baba77966a48b017e56e55001696a"]},
+ {"argv":["branch","--modes","cautious,creative","--session","s1"],"env":{"HOME":"${tmp}","BONFYRE_REASON_ENDPOINT":"","BONFYRE_REASON_DIR":"${tmp}/reason"},"exit":0,"contains":["branch cautious: temperature 0.00, not yet run"]},
+ {"argv":["status","--session","s1"],"env":{"HOME":"${tmp}","BONFYRE_REASON_ENDPOINT":"","BONFYRE_REASON_DIR":"${tmp}/reason"},"exit":0,"contains":["branch creative: not run","answer: none committed"]},
+ {"argv":["diff","cautious","creative","--session","s1"],"env":{"HOME":"${tmp}","BONFYRE_REASON_ENDPOINT":"","BONFYRE_REASON_DIR":"${tmp}/reason"},"exit":1},
+ {"argv":["commit","cautious","--session","s1"],"env":{"HOME":"${tmp}","BONFYRE_REASON_ENDPOINT":"","BONFYRE_REASON_DIR":"${tmp}/reason"},"exit":1}]}]}

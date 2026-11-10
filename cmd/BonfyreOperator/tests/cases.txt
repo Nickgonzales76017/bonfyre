@@ -1,0 +1,33 @@
+route
+select
+select --kind food.offer
+select --prefix household:housing --where property_id=property:milo
+select --where cash_price_usd=2.1
+select --where in_stock=TRUE
+select --where cash_price_usd=null
+select --where tags=a,,2
+select --where nested=[object Object]
+select --where bad
+select --where a.b=1
+select --kind nothing --where bad
+why household:food:offer:beans
+why household:food:offer:Rice-2 --field nested
+why household:food:offer:rice_1 --field notes
+why household:food:offer:beans --field missing
+why household:food:offer:nope
+project household:food:offer:Rice-2 --field nested --field 10 --field merchant --field 2 --field 10
+project household:food:offer:beans
+prove household:housing:listing:milo-a --claim availability
+prove household:housing:listing:milo-a1 --claim dog_access
+prove household:food:offer:apple --claim price
+prove household:food:offer:apple --claim nope
+diff household:food:offer:Rice-2 household:food:offer:rice_1
+diff household:food:offer:beans household:housing:listing:milo-a
+compare household:food:offer:Rice-2 household:food:offer:rice_1
+compare household:housing:listing:milo-a household:housing:listing:milo-a1
+reconcile household:housing:listing:milo-a household:housing:listing:milo-a1
+reconcile household:housing:listing:milo-a household:housing:listing:milo-a
+reconcile household:housing:listing:milo-a household:housing:listing:MILO-b
+reconcile household:housing:listing:milo-a household:housing:observation:cand-9
+diff household:food:offer:beans
+frobnicate

@@ -1,0 +1,10 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-sae","binary_env":"BONFYRE_SAE_BIN","cases":[
+{"name":"a dictionary fit to recorded activations reconstructs held-out vectors and hashes features stably","steps":[
+ {"program":"sh","argv":["-c","perl -e 'srand(3); print pack(\"f<*\", map { my $i=$_; map { sin($i*0.1*($_+1)) + (rand()-0.5)*0.05 } 0..31 } 0..499)' > acts.f32; perl -e 'print pack(\"f<*\", map { sin(7*0.1*($_+1)) } 0..31)' > r.bin"],"exit":0},
+ {"argv":["train","--activations","acts.f32","--dim","32","--features","64","--layer","3","--family","qwen","--out","d.bfsae"],"env":{"HOME":"${tmp}","BONFYRE_SAE_DB":"${tmp}/sae.db"},"exit":0,"at":{"kind":"sae-train","vectors":500,"trained_on":450,"held_out":50,"features":64}},
+ {"argv":["inspect","d.bfsae"],"env":{"HOME":"${tmp}","BONFYRE_SAE_DB":"${tmp}/sae.db"},"exit":0,"contains":["hidden_dim     : 32","feature_count  : 64"]},
+ {"argv":["activate","d.bfsae","r.bin","--top-k","4","--out","f.json"],"env":{"HOME":"${tmp}","BONFYRE_SAE_DB":"${tmp}/sae.db"},"exit":0,"present":["${tmp}/f.json"]},
+ {"program":"cat","argv":["f.json"],"at":{"artifact_type":"sae-feature-manifest","top_k":4,"layer":3},"len":{"features":4}},
+ {"argv":["gate","d.bfsae","f.json"],"env":{"HOME":"${tmp}","BONFYRE_SAE_DB":"${tmp}/sae.db"},"exit":0,"contains":["clear"]},
+ {"program":"sh","argv":["-c","a=$(\"$1\" hash d.bfsae r.bin --top-k 4); b=$(\"$1\" hash d.bfsae r.bin --top-k 4); [ \"$a\" = \"$b\" ] && echo \"$a\"","sh","${organ}/bonfyre-sae"],"env":{"HOME":"${tmp}","BONFYRE_SAE_DB":"${tmp}/sae.db"},"exit":0,"contains":["bfh:feature:qwen:l3:"]}]},
+{"name":"a residual of the wrong width is refused","files":{"r.bin":"abc"},"steps":[{"argv":["inspect","missing.bfsae"],"env":{"HOME":"${tmp}","BONFYRE_SAE_DB":"${tmp}/sae.db"},"exit_nonzero":true}]}]}

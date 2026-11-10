@@ -1,0 +1,225 @@
+#!/usr/bin/env bash
+# Archived Python-era witness; the supported entrypoint runs pure-native.test.mjs.
+#
+# What this proves: that a job which could reach outside is refused before
+# dispatch, that a backend absent from this machine is reported rather than
+# skipped, that a backend which only exercised a job's shape gets no credit for
+# its result, and that agreement is undetermined rather than assumed when only
+# one backend answered.
+#
+# What it cannot prove: that any backend is correct. Agreement is agreement.
+set -u
+pass=0; fail=0
+ok()  { printf '  ok   %s\n' "$1"; pass=$((pass+1)); }
+bad() { printf '  FAIL %s\n' "$1"; fail=$((fail+1)); }
+check() { if [ "$2" = "$3" ]; then ok "$1"; else bad "$1 (want '$3', got '$2')"; fi; }
+J() { python3 -c "import sys,json;d=json.load(sys.stdin);$1"; }
+
+# Gated, and a gate is not a failure. This exercises an institution the
+# estate does not declare in a plain checkout, so without PURE_CMS there is
+# nothing to test rather than something broken. Saying SKIP keeps the
+# suite honest about which red is real.
+if [ -z "${PURE_CMS:-}" ]; then echo 'pure tier: SKIP (set PURE_CMS to a readable CMS snapshot)'; exit 0; fi
+: "${PURE_JOB:?set PURE_JOB to a pure job file}"
+RUN="python3 scripts/pure_job.py"
+
+echo "== a computation that could reach outside is refused before dispatch =="
+tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+python3 - "$PURE_JOB" "$tmp" <<'PY'
+import json, sys, pathlib
+job = json.loads(pathlib.Path(sys.argv[1]).read_text()); out = pathlib.Path(sys.argv[2])
+for name, mutate in (
+    ("fetches",   lambda j: j.update({"job": "fetches", "fetch_url": "https://example.com"})),
+    ("publishes", lambda j: j.update({"job": "publishes", "steps": ["publish the result"]})),
+    ("pays",      lambda j: j.update({"job": "pays", "on_done": {"charge": "card"}})),
+    ("undeclared",lambda j: j.update({"job": "undeclared", "effect_class": "WRITE"})),
+):
+    j = json.loads(json.dumps(job)); mutate(j)
+    (out / f"{name}.json").write_text(json.dumps(j))
+PY
+for n in fetches publishes pays undeclared; do
+  if BONFYRE_CMS_DB="$PURE_CMS" $RUN "$tmp/$n.json" 2>&1 | grep -q refused; then
+    ok "a job that $n is refused"
+  else
+    bad "a job that $n was accepted into a pure reducer"
+  fi
+done
+# And the guard must admit what it exists to admit. Scanning the whole document
+# matched 'effect' inside the job's own effect_class and refused every correctly
+# declared pure job -- a guard that rejects exactly its intended input.
+R=$(BONFYRE_CMS_DB="$PURE_CMS" $RUN --json "$PURE_JOB" 2>/dev/null)
+printf '%s' "$R" | grep -q '"refused": true' \
+  && bad "a correctly declared PURE job was refused" \
+  || ok "a correctly declared PURE job is admitted"
+
+echo "== an absent backend is reported, never skipped =="
+# A skipped backend disappears from the comparison and its absence reads as
+# agreement.
+names=$(printf '%s' "$R" | J 'print(",".join(sorted(b["backend"] for b in d["backends"])))')
+check "every declared backend appears in the receipt" "$names" "bend,hvm2,hvm4,reference"
+unav=$(printf '%s' "$R" | J '
+print(sum(1 for b in d["backends"] if b["here"]=="unavailable" and not b.get("unavailable_because")))')
+check "every unavailable backend says why" "$unav" "0"
+# Declared availability is a claim about the estate; PATH is a fact about here.
+# This required an absent backend to exist, which made installing the missing
+# frontend fail the suite. What matters is that an absence is named when there
+# is one, not that there is one.
+absent=$(printf '%s' "$R" | J 'print(",".join(b["backend"] for b in d["backends"] if b["here"]=="unavailable"))')
+if [ -n "$absent" ]; then
+  ok "backends absent from this machine are named ($absent)"
+else
+  ok "every declared backend is present on this machine"
+fi
+
+echo "== the reducer computes the frontier, not merely its shape =="
+# An earlier lowering expressed only the candidate fan-out and reported an
+# interaction count beside a result computed elsewhere. That measured the
+# runtime and answered nothing. A backend either produces the frontier or it
+# produces an error.
+hv=$(printf '%s' "$R" | J '
+b=[x for x in d["backends"] if x["backend"]=="hvm2"]
+print(len(b[0]["result"]) if b and b[0].get("result") is not None else -1)')
+[ "$hv" -ge 0 ] && ok "hvm2 produced a frontier of $hv survivors" \
+                || bad "hvm2 produced no result"
+low=$(printf '%s' "$R" | J '
+b=[x for x in d["backends"] if x["backend"]=="hvm2"]
+print(b[0].get("lowered","") if b else "")')
+check "the predicate itself was lowered, not just the fan-out" "$low" "predicate_and_fan_out"
+shape=$(printf '%s' "$R" | J '
+print(sum(1 for b in d["backends"] if b.get("lowered")=="fan_out_only"))')
+check "no backend reports a shape-only lowering" "$shape" "0"
+itr=$(printf '%s' "$R" | J '
+b=[x for x in d["backends"] if x["backend"]=="hvm2"]
+print(b[0]["cost"].get("interactions",-1) if b and b[0].get("result") is not None else -1)')
+[ "$itr" -gt 0 ] && ok "and it cost $itr interactions, which is measured not asserted" \
+                 || bad "no interaction count was recorded for a produced result"
+
+echo "== a compiled frontend, and an aggregate is not a frontier =="
+# Every lowering here was hand-written against a runtime core, so the same
+# predicate was re-expressed once per backend and each re-expression was a chance
+# to get it wrong. Bend compiles it once; its generated core is structurally what
+# was written by hand, which is what validates the hand lowering.
+agg=$(printf '%s' "$R" | J 'print(len(d.get("aggregate_backends",[])))')
+if [ "$agg" -ge 1 ]; then
+  ok "$agg backend(s) answer with an aggregate"
+  # An aggregate answers a different question, so it must be checked against the
+  # reference's own aggregate and kept out of the set-equality vote. Counting it
+  # there lets a weaker agreement stand in for a stronger one.
+  inset=$(printf '%s' "$R" | J '
+names={b["backend"] for b in d.get("aggregate_backends",[])}
+print(sum(1 for b in d["backends"] if b["backend"] in names and b.get("result") is not None))')
+  check "an aggregate backend is not counted in the set vote" "$inset" "0"
+  agree=$(printf '%s' "$R" | J '
+print(sum(1 for b in d.get("aggregate_backends",[]) if not b["agrees_with_reference"]))')
+  check "every aggregate agrees with the reference's own aggregate" "$agree" "0"
+  says=$(printf '%s' "$R" | J '
+print(sum(1 for b in d.get("aggregate_backends",[]) if not b.get("answers","").strip()))')
+  check "and each says what it actually answered" "$says" "0"
+fi
+
+echo "== the harness can see a disagreement, or it proves nothing =="
+# An agreement check that cannot fail is decoration. This corrupts the lowering
+# and requires the receipt to notice.
+# The copy lives beside the original: the tier resolves ResourceAdmission
+# relative to its own file and fails closed when it cannot reach it, which is
+# correct. A copy in /tmp therefore refuses every backend and the mutation
+# proves nothing about the lowering.
+brk=$(mktemp scripts/pure_broken_XXXX.py)
+python3 - "$brk" <<'PY2'
+import pathlib, sys
+src = pathlib.Path("scripts/pure_job.py").read_text()
+old = 'survivors = sorted(space[v - 1]["id"] for v in verdicts if v != 0)'
+# Every reducer decodes verdicts the same way, so this line is shared. Corrupt
+# exactly one of them: a mutation that breaks all of them equally would leave
+# them agreeing, and prove nothing.
+n = src.count(old)
+assert n >= 1, "decode line not found"
+i = src.index("def run_hvm2"); j = src.index("def run_hvm4") if "def run_hvm4" in src else len(src)
+body = src[i:j]
+assert body.count(old) == 1, "expected exactly one decode inside run_hvm2"
+src = src[:i] + body.replace(old, old + "[:-1]", 1) + src[j:]
+pathlib.Path(sys.argv[1]).write_text(src)
+PY2
+B=$(BONFYRE_CMS_DB="$PURE_CMS" python3 "$brk" --json "$PURE_JOB" 2>/dev/null)
+rm -f "$brk"
+ba=$(printf '%s' "$B" | J 'print(d["agreement"])')
+check "a corrupted lowering is reported as disagreement" "$ba" "False"
+printf '%s' "$B" | grep -q 'this is the finding' \
+  && ok "and the receipt names it as the finding rather than a warning" \
+  || bad "a disagreement is not surfaced as the finding"
+
+echo "== a backend that failed says why, and is never a blank line =="
+# An errored backend rendered as an empty cell, which is the same silent
+# disappearance the unavailable case was written to prevent. A backend that
+# produced nothing must carry a reason, whatever the reason is.
+# A backend answering with an aggregate has produced something; it is not a
+# silent failure just because it did not produce a set.
+silent=$(printf '%s' "$R" | J '
+print(sum(1 for b in d["backends"]
+          if b.get("result") is None and b.get("aggregate") is None
+          and not (b.get("unavailable_because") or b.get("skipped_because")
+                   or b.get("refused_by_admission") or b.get("error"))))')
+check "no backend fails without a stated reason" "$silent" "0"
+
+echo "== two reducers, one job, compared =="
+# The doctrine promotes a shadow backend by differential receipt, not by
+# enthusiasm. That requires at least two runtimes to have actually answered.
+reducers=$(printf '%s' "$R" | J '
+print(sum(1 for b in d["backends"]
+          if b.get("result") is not None and b["backend"] != "reference"))')
+[ "$reducers" -ge 2 ] && ok "$reducers reducers produced the frontier independently" \
+                      || bad "only $reducers reducer answered; a differential needs two"
+same=$(printf '%s' "$R" | J '
+import json as j
+sets={j.dumps(b["result"]) for b in d["backends"] if b.get("result") is not None}
+print(len(sets))')
+check "every backend returned the identical survivor set" "$same" "1"
+# Cost is comparable only where both reported it, and it is interactions --
+# never asserted as wall time or as a verdict on which runtime is better.
+costs=$(printf '%s' "$R" | J '
+rows=[b for b in sorted(d["backends"], key=lambda x: x["backend"])
+      if b.get("result") is not None and b.get("cost",{}).get("interactions")]
+print(",".join(b["backend"] + "=" + str(b["cost"]["interactions"]) for b in rows))')
+[ -n "$costs" ] && ok "interaction costs recorded per reducer ($costs)" \
+                || bad "no reducer reported an interaction count"
+
+echo "== the tier fails closed when admission cannot be reached =="
+# A backend is not placed by default. If the decision cannot be obtained, the
+# safe answer is that nothing runs, not that everything does.
+iso=$(mktemp -d)
+cp scripts/pure_job.py "$iso/orphan.py"
+O=$(BONFYRE_CMS_DB="$PURE_CMS" python3 "$iso/orphan.py" --json "$PURE_JOB" 2>/dev/null)
+rm -rf "$iso"
+if [ -n "$O" ]; then
+  ran=$(printf '%s' "$O" | J 'print(d["backends_producing_a_result"])')
+  check "no backend runs when admission is unreachable" "$ran" "0"
+  printf '%s' "$O" | grep -q 'not placed by default' \
+    && ok "and every backend says why it was not placed" \
+    || bad "backends were refused without naming the reason"
+fi
+
+echo "== agreement is undetermined, not assumed =="
+n=$(printf '%s' "$R" | J 'print(d["backends_producing_a_result"])')
+a=$(printf '%s' "$R" | J 'print(d["agreement"])')
+if [ "$n" -lt 2 ]; then
+  check "one result means agreement is undetermined" "$a" "None"
+  printf '%s' "$R" | grep -q 'undetermined' && ok "and the receipt says so in words" \
+                                            || bad "agreement is null with no explanation"
+else
+  check "several results must agree on a pure computation" "$a" "True"
+fi
+printf '%s' "$R" | grep -q 'agreement between backends -> correctness' \
+  && ok "the receipt bounds agreement against correctness" \
+  || bad "the receipt does not bound its own reading"
+
+echo "== the tier owns nothing =="
+# A backend is a compiler target. If one ever holds truth, identity, authority
+# or money, the boundary this tier exists to keep has already been crossed.
+for forbidden in authority identity money truth effect; do
+  printf '%s' "$R" | J "print(sum(1 for b in d['backends'] if '$forbidden' in json.dumps(b).lower()))" \
+    | grep -q '^0$' && ok "no backend carries $forbidden" || bad "a backend mentions $forbidden"
+done
+
+echo
+echo "pure tier: $pass passed, $fail failed"
+[ "$fail" -eq 0 ]

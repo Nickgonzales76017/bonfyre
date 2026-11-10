@@ -58,6 +58,7 @@ typedef struct {
     const char *tokenizer_path;
     const char *prompt_path;
     const char *json_path;
+    const char *passport_path;
     const char *trace_path;
     int max_new_tokens;
     float temperature;
@@ -431,6 +432,7 @@ static int cmd_bench_generate(const qwen_bench_options_t *opts) {
     double exclude_load_tps = 0.0;
     double decode_only_tps = 0.0;
     long trace_bytes = 0;
+    int passport_count = 0;
     fpq_runtime_stats_t runtime_stats = {0};
     char layer_timing_path[PATH_MAX];
     char family_timing_path[PATH_MAX];
@@ -547,6 +549,16 @@ static int cmd_bench_generate(const qwen_bench_options_t *opts) {
         qwen_write_layer_timing_jsonl(layer_timing_path, metrics, rt ? rt->config.n_layers : 0);
         qwen_write_family_timing_json(family_timing_path, metrics);
     }
+    if (opts->passport_path && opts->passport_path[0]) {
+        if (bf_ensure_parent_dir(opts->passport_path) != 0) goto cleanup;
+        passport_count = fpq_active_cache_write_passports(
+            rt ? rt->active_cache : NULL, opts->passport_path);
+        if (passport_count <= 0) {
+            fprintf(stderr,
+                    "bench-generate: requested passports but no ready factorized active representation was emitted\n");
+            goto cleanup;
+        }
+    }
     if (bf_ensure_parent_dir(opts->json_path) != 0) goto cleanup;
     {
         FILE *fp = fopen(opts->json_path, "w");
@@ -628,6 +640,12 @@ static int cmd_bench_generate(const qwen_bench_options_t *opts) {
         print_escaped_text(fp, layer_timing_path);
         fprintf(fp, ",\n  \"family_timing_path\": ");
         print_escaped_text(fp, family_timing_path);
+        fprintf(fp, ",\n  \"passport_path\": ");
+        if (opts->passport_path && opts->passport_path[0])
+            print_escaped_text(fp, opts->passport_path);
+        else
+            fputs("null", fp);
+        fprintf(fp, ",\n  \"passport_count\": %d", passport_count);
         fprintf(fp,
                 ",\n  \"bench_repeat_count\": %d,\n"
                 "  \"bench_repeat_success\": %d,\n"
@@ -766,6 +784,7 @@ static void usage(void) {
 
         "Bench-Generate Options:\n"
         "  --json PATH               Benchmark output JSON\n"
+        "  --passports PATH          Write canonical active RepresentationPassport JSONL\n"
         "  --token-trace PATH        Optional per-token latency JSONL\n"
         "  --load-only               Stop after runtime init/warm\n"
         "  --warm-cache              Warm decode-hot tensors before generate\n"
@@ -838,6 +857,36 @@ static int cmd_generate_common(const char *pack, const char *tokenizer_path,
 
     int result = qwen_runtime_generate_file(rt, prompt_path, out_path, NULL, NULL);
 
+    /* BONFYRE_QWEN_KV_OUT names a file to receive the attention keys and
+     * values this run left in the cache: for each layer its keys then its
+     * values, float32, for the tokens actually cached. Nothing is written
+     * when the run failed or cached no token. */
+    const char *kv_out = getenv("BONFYRE_QWEN_KV_OUT");
+    if (result == 0 && kv_out && *kv_out) {
+        const qwen_kv_cache_t *kv = rt->kv_cache;
+        /* The prompt tokens are the ones prefill is known to have written. */ const fpq_run_metrics_t *run_metrics = fpq_run_state_metrics(rt->run_state); int recorded_tokens = run_metrics ? run_metrics->prompt_tokens : 0; if (kv && recorded_tokens > kv->max_seq_len) recorded_tokens = kv->max_seq_len; size_t per_layer = kv ? (size_t)recorded_tokens * (size_t)kv->n_kv_heads * (size_t)kv->head_dim : 0;
+        if (!kv || per_layer == 0) {
+            fprintf(stderr, "kv record: the run cached no tokens, nothing written\n");
+            result = 1;
+        } else {
+            FILE *kv_file = fopen(kv_out, "wb");
+            int wrote = kv_file != NULL;
+            for (int layer = 0; wrote && layer < kv->n_layers; layer++) {
+                wrote = fwrite(kv->k_cache[layer], sizeof(float), per_layer, kv_file) == per_layer &&
+                        fwrite(kv->v_cache[layer], sizeof(float), per_layer, kv_file) == per_layer;
+            }
+            if (kv_file && fclose(kv_file) != 0) wrote = 0;
+            if (!wrote) {
+                fprintf(stderr, "kv record: could not write %s\n", kv_out);
+                remove(kv_out);
+                result = 1;
+            } else {
+                fprintf(stderr, "kv record: %d layers, %d tokens, %d heads, head_dim %d -> %s\n",
+                        kv->n_layers, recorded_tokens, kv->n_kv_heads, kv->head_dim, kv_out);
+            }
+        }
+    }
+
     qwen_runtime_free(rt);
     return result;
 }
@@ -845,10 +894,16 @@ static int cmd_generate_common(const char *pack, const char *tokenizer_path,
 static int cmd_generate_blender(const char *pack, const char *tokenizer_path,
                                 const char *prompt_path, const char *out_path,
                                 int max_tokens, float temp, int greedy) {
-    const char *default_out = "output/ffts-youtube/corpus_v6_4/out/model/qwen_blender_template.py";
-    const char *resolved_out = out_path ? out_path : default_out;
-    return cmd_generate_common(pack, tokenizer_path, prompt_path, resolved_out,
-                              "blender", max_tokens, temp, greedy);
+    (void)pack;
+    (void)tokenizer_path;
+    (void)prompt_path;
+    (void)out_path;
+    (void)max_tokens;
+    (void)temp;
+    (void)greedy;
+    fprintf(stderr,
+            "Blender source generation is retired until a native Blender realization is bound.\n");
+    return 2;
 }
 
 static int cmd_generate_video_script(const char *pack, const char *tokenizer_path,
@@ -1496,6 +1551,7 @@ int main(int argc, char **argv) {
     const char *token_trace_path = getenv("BONFYRE_QWEN_TOKEN_TRACE_PATH");
     const char *golden_out_path = getenv("BONFYRE_QWEN_GOLDEN_JSONL");
     const char *json_path = NULL;
+    const char *passport_path = NULL;
     const char *request_json = NULL;
     const char *text_arg = NULL;
     const char *bind_addr = "0.0.0.0";
@@ -1527,6 +1583,7 @@ int main(int argc, char **argv) {
         else if (strcmp(argv[i], "--manifest") == 0 && i + 1 < argc) manifest_path = argv[++i];
         else if (strcmp(argv[i], "--token-trace") == 0 && i + 1 < argc) token_trace_path = argv[++i];
         else if (strcmp(argv[i], "--json") == 0 && i + 1 < argc) json_path = argv[++i];
+        else if (strcmp(argv[i], "--passports") == 0 && i + 1 < argc) passport_path = argv[++i];
         else if (strcmp(argv[i], "--golden-out") == 0 && i + 1 < argc) golden_out_path = argv[++i];
         else if (strcmp(argv[i], "--request-json") == 0 && i + 1 < argc) request_json = argv[++i];
         else if (strcmp(argv[i], "--text") == 0 && i + 1 < argc) text_arg = argv[++i];
@@ -1636,6 +1693,7 @@ int main(int argc, char **argv) {
             .tokenizer_path = tokenizer,
             .prompt_path = prompt_path,
             .json_path = json_path,
+            .passport_path = passport_path,
             .trace_path = token_trace_path,
             .max_new_tokens = max_new_tokens,
             .temperature = temp,

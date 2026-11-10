@@ -1,0 +1,51 @@
+site_fragment_migration v1
+
+candidate {
+  source_ref required
+  source_digest required
+  source_class required
+  coordinate required
+  page required
+  slot required
+  audience required
+  kind required
+  extracted_text required
+  compiled_fallback required
+}
+
+states discovered classified drafted derived projection_verified published fallback_retired
+
+transition discovered -> classified requires exact_coordinate
+transition classified -> drafted requires cms_receipt
+transition drafted -> derived requires tensor_cells ann_membership
+transition derived -> projection_verified requires htmx_readback fallback_readback
+transition projection_verified -> published requires publication_receipt
+transition published -> fallback_retired requires public_readback source_digest_match
+
+ranking {
+  exact_identity coordinate
+  variants qann
+  related qann
+  reuse equivalence egraph
+  dedupe equivalence egraph
+  forbidden qann_as_coordinate_resolver
+}
+
+rollback {
+  content archive_or_supersede
+  projection compiled_fallback
+  source keep_preimage_until_verified
+}
+
+metrics {
+  literals_discovered
+  atoms_drafted
+  atoms_published
+  fallbacks_retired
+  tensor_coverage
+  ann_coverage
+  qann_self_recall
+  exact_coordinate_collisions
+  stale_source_digests
+  unprojected_published_atoms
+}

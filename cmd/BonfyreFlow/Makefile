@@ -6,7 +6,7 @@ TARGET  = bonfyre-flow
 SRC     = src/main.c
 SYNC_BIN = $(HOME)/.bonfyre/bin/$(TARGET)
 
-all: $(TARGET) install-bin
+all: $(TARGET)
 
 $(TARGET): $(SRC)
 	$(CC) $(CFLAGS) $(LOCAL_CFLAGS) -o $@ $(SRC) $(LDFLAGS)

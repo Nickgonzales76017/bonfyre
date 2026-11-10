@@ -5,12 +5,15 @@ LDFLAGS      = -L../../lib/libbonfyre -lbonfyre -lm
 TARGET       = bonfyre-sli
 SRC          = src/main.c
 
-.PHONY: all clean
+.PHONY: all clean test
 
-all: $(TARGET)
+all: $(TARGET) test
 
 $(TARGET): $(SRC)
 	$(CC) $(CFLAGS) $(LOCAL_CFLAGS) -o $@ $^ $(LDFLAGS)
+
+test: $(TARGET)
+	sh tests/bqfp_corruption_test.sh ./$(TARGET)
 
 clean:
 	rm -f $(TARGET)

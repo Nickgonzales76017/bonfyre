@@ -1,0 +1,28 @@
+release	household-audio-20261015
+deployment	public-native-versioned-release
+package	0049afa318eb159a43d05cdb5bf3eae637de43f09b03fbea926d2a74536e49c4
+pack	experience.native-creator-studio.workspace
+family	creator-audio
+entry	audio/
+cms_sha256	2a3d100d9a25c38b664efe224cc6b861faf085404762be48be9bc0040b9b1f2f
+web_sha256	3756b5db39749ca468fef0b4b5002869bda74c57e3a009366cdc436b47db6926
+HOUSEHOLD_MEMBERSHIP_PASS	25
+CREATOR_WORKSPACE_PASS	20
+CREATOR_ADOPTION_PASS	8
+creator_browser_receipt	59d6e25e-63ef-46d7-88c2-6777c4b1ffe0
+adoption_isolated_receipt	9d57dd2c-502e-45e9-b06f-54dfd3216e65
+adoption_public_source_receipt	4a5e11a8-63f4-48cc-ac0b-86e9503e863e
+native_regression_receipt	87f61a2f-65aa-47d8-a6a0-dbb862f431c6
+native_regression_counts	31 record; 28 lifecycle; 25 household; 32 HTTP; 41 setup
+backup_receipt	3d0d8054-1a69-4bd0-a018-e8d315451b9e
+publication_receipt	a079bb8c-2853-40e6-bcf5-1c67585992c8
+service_reload_receipt	138ef602-4be2-4b06-82fa-7f80eb518007
+public_route_receipt	999810ef-2064-423e-8317-ffab8ca37dd9
+samples_publish_receipt	bf4290c9-6992-4a74-828d-75dc8dc2eb7d
+production_test_accounts	0
+external_commercial_effects	0
+open	training; Brief Studio; ITAD; channel delivery; ordering; merchant publication; RetentionGC integration; atlas registration
+final_samples_publish_receipt	6a9248b6-5fff-4b8a-b4f7-6075818a4ce1
+samples_deployment	37af402d-1f74-40eb-a575-9e0e9a7075d4
+public_readback_receipt	b4fcdeba-59ec-4924-aad8-69484e044400
+public_audio_consent_sha256	d6b555d8b494a06f832e97cdca3315de3deadbb35d2c0772583d2513e1f14e44

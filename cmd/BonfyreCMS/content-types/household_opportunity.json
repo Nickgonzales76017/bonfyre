@@ -1,0 +1,18 @@
+{
+  "name": "household_opportunity",
+  "displayName": "Household Opportunity",
+  "description": "A receipt-bound public service opportunity promoted from an observed 211 resource with explicit public service classifications. It is not evidence that a household is eligible, enrolled, served, notified, or authorized by the provider.",
+  "attributes": {
+    "opportunity_id": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "resource_ref": {"type": "string", "required": true},
+    "title": {"type": "string", "required": true},
+    "description": {"type": "text", "required": false},
+    "canonical_href": {"type": "string", "required": true},
+    "service_kinds": {"type": "string", "required": true},
+    "source_ref": {"type": "string", "required": true},
+    "receipt_ref": {"type": "string", "required": true},
+    "observed_at": {"type": "string", "required": true},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

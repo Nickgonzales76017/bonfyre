@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
@@ -9,6 +16,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <bonfyre.h>
+#include "../../../lib/libbonfyre/include/bf_help.h"
 
 static int ensure_dir(const char *path) { return bf_ensure_dir(path); }
 static void path_join(char *buffer, size_t size, const char *left, const char *right) {
@@ -88,6 +96,7 @@ static void print_usage(void) {
 }
 
 int main(int argc, char **argv) {
+    if (bf_help_requested(argc, argv)) { print_usage(); return 0; }
     if (argc < 3) {
         print_usage();
         return 1;

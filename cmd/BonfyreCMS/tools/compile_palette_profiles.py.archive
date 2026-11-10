@@ -1,0 +1,166 @@
+#!/usr/bin/env python3
+"""Many more presentations for the estate to dress its regions in.
+
+A page here is a walk: every region and every front-page section is dressed in
+a presentation profile chosen for the material it carries.  The estate had 238
+catalogued profiles, and eight families to spread them over, so a long page
+kept meeting the same few looks.
+
+This writes palettes built on an even perceptual scale -- the approach the
+current generation of design systems settled on, lightness stepped evenly in
+OKLCH so a ground, its panel and its rule stay in proportion at any hue -- and
+pairs each with a typographic posture suited to one kind of material.  They are
+this estate's own palettes, generated here.  They are not anyone's published
+design system, they carry no one's name, and they enter at exactly the standing
+the Ghost marketplace rows have: catalogued, never studied.
+
+  compile_palette_profiles.py --out rows.jsonl [--per-family 28]
+"""
+import argparse, json, math, sys
+
+# A posture per material family: what that kind of thing needs from type and
+# rhythm, not what any particular publisher did.
+POSTURES = {
+    "magazine":  dict(face_display="'Instrument Serif',Georgia,serif", weight="500",
+                      size="clamp(2.4rem,5.2vw,4.6rem)", tracking="-.02em", leading="1.02",
+                      radius="2px", gap=".9rem", measure="62ch", transform="none"),
+    "editorial": dict(face_display="'Newsreader',Georgia,serif", weight="600",
+                      size="clamp(2rem,4.2vw,3.4rem)", tracking="-.01em", leading="1.1",
+                      radius="3px", gap=".8rem", measure="66ch", transform="none"),
+    "newsroom":  dict(face_display="'DM Sans',system-ui,sans-serif", weight="700",
+                      size="clamp(1.7rem,3.4vw,2.6rem)", tracking="-.015em", leading="1.08",
+                      radius="2px", gap=".6rem", measure="58ch", transform="none"),
+    "portfolio": dict(face_display="'Archivo Black','Arial Black',sans-serif", weight="400",
+                      size="clamp(2.6rem,6vw,5.2rem)", tracking="-.03em", leading=".98",
+                      radius="0", gap="1.1rem", measure="52ch", transform="uppercase"),
+    "gallery":   dict(face_display="'DM Sans',system-ui,sans-serif", weight="500",
+                      size="clamp(1.5rem,3vw,2.2rem)", tracking=".02em", leading="1.15",
+                      radius="0", gap=".4rem", measure="48ch", transform="none"),
+    "audio":     dict(face_display="'Spline Sans Mono',ui-monospace,monospace", weight="600",
+                      size="clamp(1.6rem,3.2vw,2.4rem)", tracking="-.01em", leading="1.1",
+                      radius="6px", gap=".7rem", measure="54ch", transform="none"),
+    "letter":    dict(face_display="'Newsreader',Georgia,serif", weight="400",
+                      size="clamp(1.6rem,3vw,2.3rem)", tracking="0", leading="1.2",
+                      radius="4px", gap=".9rem", measure="70ch", transform="none"),
+    "docs":      dict(face_display="'DM Mono',ui-monospace,monospace", weight="500",
+                      size="clamp(1.4rem,2.6vw,2rem)", tracking="0", leading="1.25",
+                      radius="4px", gap=".6rem", measure="74ch", transform="none"),
+}
+
+# Hues around the wheel, named plainly for what they are.
+HUES = [("rose", 8), ("cherry", 20), ("ember", 32), ("clay", 46), ("amber", 62),
+        ("wheat", 88), ("olive", 108), ("moss", 132), ("fern", 150), ("sea", 168),
+        ("teal", 192), ("lagoon", 206), ("sky", 224), ("cobalt", 244), ("indigo", 268),
+        ("violet", 292), ("orchid", 304), ("plum", 318), ("magenta", 332), ("crimson", 350),
+        ("slate", 250), ("stone", 70), ("ash", 110), ("ink", 280)]
+
+# How firmly a palette holds the page: the same hue, quieter or louder.
+TEMPERS = [("still", 0.75), ("plain", 1.0), ("loud", 1.35)]
+
+
+def oklch(lightness, chroma, hue):
+    """A colour the browser resolves itself, so no conversion can be wrong here."""
+    return "oklch(%.3f %.3f %g)" % (lightness, chroma, hue)
+
+
+def palette(name, hue, dark, temper=1.0):
+    """A ground, the ink on it, and everything between, stepped evenly."""
+    if dark:
+        ground = oklch(0.17, 0.018, hue)
+        panel = oklch(0.22, 0.024, hue)
+        ink = oklch(0.94, 0.010, hue)
+        display = oklch(0.98, 0.012, hue)
+        muted = oklch(0.68, 0.020, hue)
+        rule = "color-mix(in oklch, %s 26%%, transparent)" % ink
+        accent = oklch(0.78, 0.140 * temper, hue)
+    else:
+        ground = oklch(0.975, 0.008, hue)
+        panel = oklch(0.995, 0.004, hue)
+        ink = oklch(0.22, 0.020, hue)
+        display = oklch(0.16, 0.026, hue)
+        muted = oklch(0.52, 0.026, hue)
+        rule = "color-mix(in oklch, %s 18%%, transparent)" % ink
+        accent = oklch(0.55, 0.170 * temper, hue)
+    return dict(ground=ground, panel=panel, ink=ink, display=display,
+                muted=muted, rule=rule, accent=accent)
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--per-family", type=int, default=144)
+    args = ap.parse_args()
+
+    rows, written = [], 0
+    for family, posture in POSTURES.items():
+        made = 0
+        for dark in (False, True):
+          for temper_name, temper in TEMPERS:
+            for name, hue in HUES:
+                if made >= args.per_family:
+                    break
+                colours = palette(name, hue, dark, temper)
+                template = "estate-%s-%s-%s-%s" % (family, name, temper_name, "dusk" if dark else "day")
+                tokens = dict(colours)
+                tokens.update({
+                    "face_display": posture["face_display"],
+                    "face_body": "'DM Sans',system-ui,-apple-system,sans-serif",
+                    "face_mono": "'DM Mono',ui-monospace,monospace",
+                    "display_size": posture["size"],
+                    "display_weight": posture["weight"],
+                    "display_transform": posture["transform"],
+                    "display_tracking": posture["tracking"],
+                    "display_leading": posture["leading"],
+                    "radius": posture["radius"],
+                    "card_border": "1px solid var(--w-rule)",
+                    "card_shadow": "none",
+                    "gap": posture["gap"],
+                    "measure": posture["measure"],
+                    "content_max": "84rem",
+                    "grid_min": "19rem",
+                })
+                rows.append({
+                    "template": template,
+                    "family": family,
+                    "reference_source": "estate-palette-scale",
+                    "reference_name": "%s %s, %s %s" % (name, family, temper_name, "dusk" if dark else "day"),
+                    # The reference for a palette this estate generated is the
+                    # thing that generated it, not a page on someone's website.
+                    "reference_url": "bonfyre:cmd/BonfyreCMS/tools/compile_palette_profiles.py",
+                    "reference_categories": "palette,%s,%s,%s" % (family, temper_name, "dusk" if dark else "day"),
+                    "reference_author": "this estate",
+                    "renderer_mix": "tokens-only",
+                    "density": "comfortable" if family in ("letter", "docs", "editorial") else "dense",
+                    "hero_mode": "none",
+                    "navigation_mode": "inherited",
+                    "media_mode": {"gallery": "pictures", "audio": "recordings",
+                                   "portfolio": "pictures"}.get(family, "mixed"),
+                    "typography_mode": posture["face_display"].split(",")[0].strip("'"),
+                    "card_mode": "no-cards",
+                    "chrome_mode": "minimal",
+                    "semantic_roles": "region-dressing",
+                    "territory_affinity": "any",
+                    "acceptance_contract": "supplies colour and typographic tokens to a region this estate composes; "
+                                           "it selects no material, orders nothing, and names no publisher",
+                    "cannot_infer": "a catalogued palette is colours and measurements generated here; it is not an "
+                                    "observed design, not a studied profile, not anyone else's work, and says nothing "
+                                    "about the material it happens to dress",
+                    "status": "reference_candidate",
+                    # The field is typed json: it takes the object, and a
+                    # string of JSON lands as nothing at all.
+                    "layout_tokens": tokens,
+                })
+                made += 1
+                written += 1
+
+    with open(args.out, "w") as out:
+        for row in rows:
+            out.write(json.dumps(row) + "\n")
+    print(json.dumps({"profiles": written, "families": len(POSTURES),
+                      "cannot_infer": "a catalogued palette is a set of colours and measurements this estate "
+                                      "generated, never an observed design, a studied profile, or anyone else's work"}))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

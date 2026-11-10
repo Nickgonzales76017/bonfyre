@@ -1,0 +1,40 @@
+{
+  "name": "funding_work_package",
+  "displayName": "Funding Work Package",
+  "description": "One funding stream's distinct scope and cost codes inside a program instance. Several streams may support one real effort; keeping their scopes distinct is what lets this estate tell that apart from the same cost being claimed more than once. A work package is a declared scope. It is never a claim that money was awarded, applied for, billed, paid, booked, or authorized to spend.",
+  "attributes": {
+    "package_id": {
+      "type": "string",
+      "required": true,
+      "uniqueWithinNamespace": true
+    },
+    "instance_id": {
+      "type": "string",
+      "required": true
+    },
+    "funding_program": {
+      "type": "string",
+      "required": true
+    },
+    "scope": {
+      "type": "json",
+      "required": true
+    },
+    "cost_codes": {
+      "type": "json",
+      "required": true
+    },
+    "distinctness_rule": {
+      "type": "string",
+      "required": true
+    },
+    "cannot_infer": {
+      "type": "text",
+      "required": true
+    },
+    "status": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

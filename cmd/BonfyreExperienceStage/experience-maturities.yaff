@@ -1,0 +1,278 @@
+pack bonfyre-experience-maturities
+generation 2026-10-14
+authority operator-authored-program-candidates
+basis source-verified portfolio work from Aurekai Work Samples, native owners and GitHub project foundations
+invariant source-present-does-not-mean-demo-executed
+invariant a-planned-join-does-not-create-authority-evidence-provider-availability-or-money
+invariant system-guides-are-maintenance-surfaces-not-demo-count
+
+
+maturity 01 retail-procurement
+  class existing-tool
+  owner components/BonfyreServiceSite/planner-model.mjs
+  entry https://aurekai-work-samples.pages.dev/red3-planner/
+  depends 17,21
+  stages observe|design|compare|verify|quote|approve|install
+  release_gate supplier_quote_and_installation_authority
+  witness components/BonfyreServiceSite/tests/planner.test.mjs
+
+maturity 02 multi-merchant-catalogue
+  class existing-tool
+  owner components/BonfyreServiceSite/catalogue-model.mjs
+  entry https://aurekai-work-samples.pages.dev/catalogue/
+  depends 21,29
+  stages import|normalize|reconcile|edit|approve|sync|rollback
+  release_gate merchant_adapter_and_receiving_store_ack
+  witness components/BonfyreServiceSite/tests/catalogue-model.test.mjs
+
+maturity 03 shipment-to-books
+  class case-study
+  owner packs/aurekai-work-samples/site/assets/archive-input.csv
+  entry https://aurekai-work-samples.pages.dev/archive/
+  depends 21,27
+  stages intake|classify|match|resolve|cost|account|audit
+  release_gate mixed_media_ingest_and_erpnext_handoff
+  witness -
+
+maturity 04 website-reconstruction
+  class case-study
+  owner packs/aurekai-work-samples/site/content.json
+  entry https://aurekai-work-samples.pages.dev/wix-review/
+  depends 22,26
+  stages observe|reconstruct|measure|simulate|approve|publish|recheck
+  release_gate rea_reconstructed_behavior_and_authorized_publish
+  witness -
+
+maturity 05 native-creator-studio
+  class existing-tool
+  owner components/BonfyreServiceSite/creator-worker.mjs
+  entry https://aurekai-work-samples.pages.dev/audio/
+  depends 22
+  stages import|timeline|mix|compare|rights|approve|release
+  release_gate imported_multitrack_streaming_and_rights_review
+  witness components/BonfyreServiceSite/tests/creator.test.mjs
+
+maturity 06 studio-member-operations
+  class local-app-guide
+  owner components/BonfyreServiceSite/training-workspace.mjs
+  entry https://aurekai-work-samples.pages.dev/training/
+  depends 21,27
+  stages enroll|author|schedule|train|reconcile|approve|account
+  release_gate hosted_role_isolation_and_payment_owner
+  witness components/BonfyreServiceSite/tests/training-requests.test.mjs
+
+maturity 07 research-knowledge-operations
+  class local-app-guide
+  owner components/BonfyreServiceSite/document-workspace.mjs
+  entry https://aurekai-work-samples.pages.dev/documents/
+  depends 21,22
+  stages intake|index|search|annotate|compare|review|handoff
+  release_gate published_safe_research_workbench_with_citations
+  witness components/BonfyreServiceSite/tests/documents.test.mjs
+
+maturity 08 three-business-operations
+  class branded-sites-guide
+  owner components/BonfyreServiceSite/site.mjs
+  entry https://docs.aurekai.work/three-businesses
+  depends 27,29
+  stages site|request|quote|schedule|fulfill|invoice|reconcile
+  release_gate cross_customer_scope_and_booked_delivery
+  witness components/BonfyreServiceSite/tests/service-site.test.mjs
+
+maturity 09 podcast-production-plant
+  class github-foundation
+  owner site/demos/podcast-plant
+  entry https://nickgonzales76017.github.io/pages-podcast-plant/
+  depends 05,22
+  stages import|transcribe|edit|clip|rights|approve|syndicate
+  release_gate rss_publication_with_retained_episode_rights
+  witness -
+
+maturity 10 shift-incident-continuity
+  class github-foundation
+  owner site/demos/shift-handoff
+  entry https://nickgonzales76017.github.io/pages-shift-handoff/
+  depends 22,23
+  stages intake|recognize|assign|claim|acknowledge|resolve|review
+  release_gate multi_actor_native_workgraph_lease_and_incident_state
+  witness -
+
+maturity 11 grant-impact-operations
+  class github-foundation
+  owner site/demos/grant-evidence
+  entry https://nickgonzales76017.github.io/pages-grant-evidence/
+  depends 21,30
+  stages intake|eligibility|budget|assemble|approve|track|report
+  release_gate funder_eligibility_and_approved_finance_receipts
+  witness -
+
+maturity 12 procurement-negotiation
+  class github-foundation
+  owner site/demos/procurement-memory
+  entry https://nickgonzales76017.github.io/pages-procurement-memory/
+  depends 21,29
+  stages intake|compare|negotiate|approve|purchase|receive|renew
+  release_gate verified_vendor_approvals_and_contract_obligation_path
+  witness -
+
+maturity 13 civic-operations
+  class github-foundation
+  owner site/demos/town-box
+  entry https://nickgonzales76017.github.io/pages-town-box/
+  depends 23,30
+  stages intake|identify|discuss|assign|perform|publish|correct
+  release_gate resident_publication_and_official_permission_separation
+  witness -
+
+maturity 14 oral-history-museum
+  class github-foundation
+  owner site/demos/family-history
+  entry https://nickgonzales76017.github.io/pages-museum-exhibit/
+  depends 22,23
+  stages import|rights|curate|narrate|compose|publish|correct
+  release_gate consent_provenance_and_multimodal_timeline
+  witness -
+
+maturity 15 oss-maintainer-release
+  class github-foundation
+  owner site/demos/oss-maintainer
+  entry https://nickgonzales76017.github.io/pages-oss-cockpit/
+  depends 26
+  stages connect|inspect|reproduce|patch|test|review|release
+  release_gate repository_lease_and_pull_request_ci_verification
+  witness -
+
+maturity 16 revenue-customer-intel
+  class github-foundation
+  owner site/demos/customer-voice
+  entry https://nickgonzales76017.github.io/pages-sales-distiller/
+  depends 17,22
+  stages listen|attribute|cluster|qualify|review|propose|collect
+  release_gate accepted_revenue_separated_from_pipeline_and_cash
+  witness -
+
+maturity 17 acquisition-brief-studio
+  class new-program
+  owner cmd/BonfyreEconomy/src/verification_planner.c
+  entry https://brief-studio-upgrade.aurekai-work-samples.pages.dev/brief-studio/
+  depends 21,22
+  stages ingest|configure|compose|compare|verify|approve|deliver
+  release_gate recipient_specific_recoverable_native_projection
+  witness cmd/BonfyreEconomy/tests/verification_planner_test.sh
+
+maturity 18 itad-disposition-exchange
+  class new-program
+  owner cmd/BonfyreExternalEstate
+  entry https://itad-desk-upgrade.aurekai-work-samples.pages.dev/itad-exchange/
+  depends 17,21,29
+  stages source|manifest|inspect|quote|match|collect|settle
+  release_gate buyer_and_seller_agreement_and_custody_receipts
+  witness -
+
+maturity 19 fleming-estate-exit
+  class new-program
+  owner packs/fleming-equity-group
+  entry -
+  depends 17,21,29
+  stages observe|match|underwrite|title|approve|offer|close
+  release_gate title_and_signing_authority_and_escrow_confirmation
+  witness packs/fleming-equity-group/fleming-native.test.mjs
+
+maturity 20 upper90-event-opportunity
+  class new-program
+  owner packs/upper90
+  entry -
+  depends 17,21,22
+  stages detect|geocode|qualify|verify|budget|approve|deliver
+  release_gate client_acceptance_not_source_assertion
+  witness -
+
+maturity 21 verification-network
+  class new-program
+  owner cmd/BonfyreEconomy/src/verification_planner.c
+  entry -
+  depends -
+  stages need|source|quote|optimize|approve|dispatch|reconcile
+  release_gate native_provider_quote_and_effect_kernel_dispatch
+  witness cmd/BonfyreEconomy/tests/verification_planner_test.sh
+
+maturity 22 foreign-twin-import-clip
+  class new-program
+  owner cmd/BonfyreClips
+  entry -
+  depends -
+  stages discover|observe|admit|index|scrub|clip|project
+  release_gate source_rights_native_media_stream_and_sink_admission
+  witness cmd/BonfyreClips/tests/export_clip.test.mjs
+
+maturity 23 dallas-civic-media
+  class new-program
+  owner cmd/BonfyreProject/tools/civic_sync.mjs
+  entry -
+  depends 22
+  stages discover|observe|join|play|annotate|assign|publish
+  release_gate video_alignment_exact_join_and_source_release
+  witness cmd/BonfyreProject/tests/civic_sync.test.mjs
+
+maturity 24 sear-resource-operator
+  class new-program
+  owner cmd/BonfyreResourceWeatherDelta
+  entry -
+  depends 21,29
+  stages observe|allocate|simulate|disrupt|reroute|authorize|measure
+  release_gate real_provider_capacity_boundaries_vs_synthetic_supply
+  witness -
+
+maturity 25 mhs-instrument-operator
+  class new-program
+  owner cmd/BonfyreQueue
+  entry -
+  depends 21
+  stages discover|qualify|reserve|simulate|interlock|approve|execute
+  release_gate real_instrument_driver_lab_permission_and_interlocks
+  witness -
+
+maturity 26 rea-software-twin-foundry
+  class new-program
+  owner cmd/BonfyreExperienceConvergence
+  entry -
+  depends 22
+  stages observe|infer|compile|sandbox|compare|repair|release
+  release_gate measured_behavioral_parity_not_reskinned_pages
+  witness -
+
+maturity 27 frappe-enterprise-workbench
+  class new-program
+  owner cmd/BonfyreFrappeCompiler/src/main.c
+  entry -
+  depends 21,29
+  stages opportunity|quote|procure|inventory|fulfill|invoice|collect
+  release_gate executed_controller_semantics_and_authenticated_tenants
+  witness cmd/BonfyreFrappeCompiler/tests/native_schema_ingest_smoke.sh
+
+maturity 28 institution-process-twin
+  class new-program
+  owner components/BonfyreDecision
+  entry -
+  depends 26,27
+  stages ingest|reconstruct|discover|simulate|approve|intervene|measure
+  release_gate ocel_process_parity_human_authority_and_replay_proof
+  witness -
+
+maturity 29 protocol-commerce-exchange
+  class new-program
+  owner cmd/BonfyreCommerce
+  entry -
+  depends 21
+  stages discover|match|quote|assent|authorize|deliver|settle
+  release_gate observed_protocol_settlement_verified_provider_effect
+  witness -
+
+maturity 30 community-funding-vouchers
+  class new-program
+  owner cmd/BonfyreQueue
+  entry -
+  depends 21,29
+  stages propose|govern|price|commit|authorize|deliver|appeal
+  release_gate governance_grant_payment_and_redemption_effect_receipts
+  witness -

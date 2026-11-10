@@ -1,0 +1,48 @@
+site_fragment_projection v1
+
+request host path page slot audience accept
+
+resolve {
+  matrix first
+  exact_site_fragment second
+  semantic_candidates optional
+  compiled_fallback last
+}
+
+exact_site_fragment {
+  where namespace = closure.namespace
+  where page = request.page
+  where slot = request.slot
+  where audience = closure.audience
+  where status = published
+  order position id
+}
+
+semantic_candidates {
+  owner LambdaTensor BonfyreIndex
+  use variant_selection related_content reuse dedupe
+  require exact_fragment_identity_before_rank true
+  never_publish_candidate_implicitly true
+}
+
+render {
+  html escaped_fields
+  htmx same_fragment_body
+  json typed_projection
+  mcp typed_projection
+  a2a typed_projection
+  social metadata_projection
+}
+
+cache {
+  cache_authored_success true
+  cache_degraded_fallback false
+  invalidate cms_delta matrix_delta publication_delta
+}
+
+cannot_infer {
+  cache_hit => current_authority
+  semantic_similarity => publication
+  html_render => machine_contract
+  fallback => authored_state
+}

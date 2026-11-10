@@ -1,0 +1,35 @@
+{
+  "schema": "bonfyre-scale-frontier-public-read.v1",
+  "observed_at": "2026-09-11T15:40:35Z",
+  "classification": "MEASURED_CLIENT_TO_PUBLIC_EDGE",
+  "target": "https://aurekai.live/",
+  "request": {
+    "method": "GET",
+    "path": "/",
+    "request_count": 80,
+    "concurrency": 4,
+    "timeout_seconds": 15,
+    "body_bytes": 25163
+  },
+  "result": {
+    "complete_requests": 80,
+    "failed_requests": 0,
+    "elapsed_seconds": 6.427,
+    "requests_per_second": 12.45,
+    "p50_ms": 286,
+    "p95_ms": 396,
+    "p99_ms": 446,
+    "max_ms": 446,
+    "transfer_rate_kib_per_second": 308.79,
+    "tls": "TLSv1.2 ECDHE-ECDSA-CHACHA20-POLY1305"
+  },
+  "establishes": [
+    "This client reached the currently deployed public Live root eighty times without an HTTP request failure at the stated bounded concurrency.",
+    "The observed client-to-edge latency distribution for this exact request cohort."
+  ],
+  "does_not_establish": [
+    "Origin capacity, CDN hit ratio, cache behavior, CPU saturation, database capacity, write capacity, concurrent-user capacity, MAU, or global traffic capacity.",
+    "BitNet inference throughput, FPQ generation quality, model-serving capacity, or any private/effect-path performance.",
+    "A load-test authorization beyond this deliberately bounded public-read cohort."
+  ]
+}

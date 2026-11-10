@@ -9,6 +9,7 @@
 #include <strings.h>
 #include <sys/stat.h>
 #include <bonfyre.h>
+#include "../../../lib/libbonfyre/include/bf_help.h"
 
 typedef struct {
     int filler_tokens_removed;
@@ -543,6 +544,7 @@ static void usage(void) {
 }
 
 int main(int argc, char **argv) {
+    if (bf_help_requested(argc, argv)) { usage(); return 0; }
     const char *transcript_path = NULL;
     const char *out_path = NULL;
     const char *status_path = NULL;

@@ -1,0 +1,87 @@
+{
+  "app_reference_records": 575,
+  "atlas_declaration_digest": "78992589280639e20846e6a86aa0e86927a20e375dc860ae1d99d3914b2c5591",
+  "build_digest": "05b87666058245e5bc805231da1f987d0617d278249b60f58d073022ff245c0d",
+  "cannot_infer": [
+    "experience binding -> provider admission",
+    "home blueprint -> current publication",
+    "reference market leader -> copied ontology or code",
+    "chain fit -> authority to execute"
+  ],
+  "coverage": {
+    "cms_types": true,
+    "donor_references": true,
+    "external": true,
+    "frappe_apps": true,
+    "frappe_interaction_grammars": true,
+    "ghost": true,
+    "local_commands_components": true,
+    "partner_shipped_repo_names": false,
+    "protocol_occurrences": true,
+    "reference_lattice": true,
+    "surface_descriptors": true
+  },
+  "external_manifest_digest": "6f9fe4b58ab5c552e66bbc5e5c92d115270b33234dd4508accb596287832eb98",
+  "external_mapped": 4891,
+  "external_occurrences": 4891,
+  "external_with_protocol_chain": 4891,
+  "ghost_mapped": 238,
+  "ghost_references": 238,
+  "home_blueprint_count": 17,
+  "human_chain_count": 52,
+  "interaction_reference_lattice": {
+    "all_references_are_evidence_only": true,
+    "chains_with_any_reference_evidence": 52,
+    "chains_with_interaction_reference": 52,
+    "donor_interaction_references": 19,
+    "frappe_interaction_references": 9,
+    "ghost_art_direction_candidates": 238,
+    "market_reference_is_not_selection_boundary": true,
+    "market_references": 20,
+    "total_evidence": 286
+  },
+  "market_leader_count": 20,
+  "owner_graph": {
+    "interactions": 467,
+    "owners": 517
+  },
+  "owner_graph_digest": "b46e3f657af71608df20cce38db87d07f5a40982f6a81a9934e08b035f95a5c2",
+  "partner_inventory": {
+    "declared_shipped_repos": 41,
+    "names_provable_in_checkout": 19,
+    "note": "session-reuse-census proves 41 shipped repos but does not enumerate all 41 names inside this project root"
+  },
+  "protocol_chain_count": 108,
+  "record_kind_counts": {
+    "architecture": 6,
+    "cms_type": 104,
+    "command": 178,
+    "component": 92,
+    "donor_reference": 19,
+    "external": 4891,
+    "frappe_app": 9,
+    "ghost": 238,
+    "market_reference": 20,
+    "partner_observed": 19,
+    "protocol_reference": 108,
+    "surface": 20
+  },
+  "schema": "bonfyre.experience-map.v1",
+  "source_kind_counts": {
+    "machine_protocol": 739,
+    "mcp": 1337,
+    "public_api": 1756,
+    "rss": 841,
+    "x402": 211,
+    "x402_spec": 7
+  },
+  "truth_level": "compiled_projection",
+  "typed_application_estate": {
+    "all_nodes_unselected_until_site_program": true,
+    "application_nodes": 488,
+    "experience_programs": 52,
+    "minimum_nodes_per_program": 6,
+    "prose_stage_input_used": false
+  },
+  "url_grammar_count": 26
+}

@@ -1,0 +1,20 @@
+{
+  "name": "media_program",
+  "displayName": "Media Program",
+  "description": "Presentation manifest that binds an addressed subject to playable audio/video material, chapters, transcript/captions and semantic-time tracks. It is a representation contract, not the identity of the Work/Recording/Release and not playback state.",
+  "attributes": {
+    "program_id": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "subject_ref": {"type": "string", "required": true},
+    "media_kind": {"type": "string", "required": true},
+    "asset_ref": {"type": "string", "required": true},
+    "duration_ms": {"type": "integer", "required": false},
+    "poster_asset_ref": {"type": "string", "required": false},
+    "transcript_ref": {"type": "string", "required": false},
+    "chapters": {"type": "json", "required": false},
+    "captions": {"type": "json", "required": false},
+    "semantic_track_ref": {"type": "string", "required": false},
+    "publication_state": {"type": "string", "required": true},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

@@ -1,0 +1,7 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-auth","binary_env":"BONFYRE_AUTH_BIN","cases":[
+{"name":"signup, wrong password, login, scoped authorization and logout","steps":[
+ {"argv":["--db","a.db","signup","--email","bob@example.test","--name","Bob","--password","correct horse battery"],"env":{"HOME":"${tmp}"},"exit":0,"at":{"created":true,"user.id":1,"user.email":"bob@example.test","user.tier":"free"}},
+ {"argv":["--db","a.db","signup","--email","bob@example.test","--name","Bob","--password","other"],"env":{"HOME":"${tmp}"},"exit":1},
+ {"argv":["--db","a.db","login","--email","bob@example.test","--password","wrong"],"env":{"HOME":"${tmp}"},"exit":1,"excludes":["token"]},
+ {"program":"sh","argv":["-c","A=\"$1\"; T=$(\"$A\" --db a.db login --email bob@example.test --password 'correct horse battery' | sed 's/.*\"token\":\"\\([^\"]*\\)\".*/\\1/'); \"$A\" --db a.db authorize --token \"$T\" --scope self && ! \"$A\" --db a.db authorize --token \"$T\" --scope admin && \"$A\" --db a.db logout --token \"$T\" && ! \"$A\" --db a.db verify --token \"$T\"","sh","${organ}/bonfyre-auth"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["{\"authorized\":true,\"scope\":\"self\"}","{\"authorized\":false,\"scope\":\"admin\"}","{\"logged_out\":true}","{\"valid\":false"]}]},
+{"name":"an unknown token is not a session","steps":[{"argv":["--db","a.db","verify","--token","bogus"],"env":{"HOME":"${tmp}"},"exit":1,"json":{"valid":false,"error":"session not found"}}]}]}

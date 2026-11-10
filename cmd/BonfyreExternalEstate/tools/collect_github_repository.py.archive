@@ -1,0 +1,23 @@
+#!/usr/bin/env python3
+"""Historical Python adapter; collect_public_carrier.mjs owns this path.
+
+This is deliberately one exact public adapter, not a generic GitHub scraper.
+Private repositories and token-bearing calls are outside its boundary.
+"""
+import argparse,json,os,subprocess
+from pathlib import Path
+class Refusal(ValueError):pass
+def normalize(doc,source,receipt,observed_at):
+ if not isinstance(doc,dict) or not doc.get("id") or not doc.get("full_name") or not doc.get("html_url"):raise Refusal("public GitHub repository response missing id, full_name, or html_url")
+ return {"provider":"github","kind":"github_repository","source_ref":source,"receipt_ref":receipt,"observed_at":observed_at,"payload":{"id":str(doc["id"]),"title":doc["full_name"],"url":doc["html_url"],"description":doc.get("description") or "","created_at":doc.get("created_at") or ""}}
+def main():
+ a=argparse.ArgumentParser();a.add_argument("--repository",required=True,help="OWNER/REPO");a.add_argument("--source-ref",required=True);a.add_argument("--project",required=True);a.add_argument("--out",type=Path,required=True);a.add_argument("--foreign-root",type=Path,required=True);a.add_argument("--observed-at",required=True);x=a.parse_args()
+ if "/" not in x.repository or x.repository.count("/")!=1:print("github collector: repository must be OWNER/REPO");return 2
+ url="https://api.github.com/repos/"+x.repository; safe=x.repository.replace("/","-");body_dir=x.foreign_root/"bodies";receipt_dir=x.foreign_root/"receipts";body_dir.mkdir(parents=True,exist_ok=True);receipt_dir.mkdir(parents=True,exist_ok=True)
+ body=str(body_dir/("github-"+safe+".body"));receipt=str(receipt_dir/("github-"+safe+".json"))
+ run=subprocess.run([x.project,"foreign","observe","github-"+safe,url,"--observe-right","public","--body",body,"--receipt",receipt],capture_output=True,text=True)
+ if run.returncode or not os.path.exists(body):print("github collector: observer did not retain a public response");return 2
+ try:doc=json.loads(Path(body).read_text()); envelope=normalize(doc,x.source_ref,"foreign:github-"+safe,x.observed_at)
+ except (OSError,ValueError) as e:print("github collector: %s"%e);return 2
+ x.out.write_text(json.dumps(envelope,sort_keys=True)+"\n");print(json.dumps({"kind":"github_repository","receipt_ref":envelope["receipt_ref"],"truth":"one retained public repository response"}));return 0
+if __name__=="__main__":raise SystemExit(main())

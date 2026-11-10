@@ -1,0 +1,11 @@
+{
+  "name": "representation_profile",
+  "displayName": "Representation Profile",
+  "description": "One learned or exact representation the admission compiler may spend an axis budget on, and the envelope actually measured for it. A representation with no measured envelope is not admitted however promising it looks, because a budget that bends is a suggestion: when nothing satisfies the budget the work runs exact and the closest miss is named rather than quietly used. The row states what was measured, never what is hoped -- recall and latency here are facts about a past measurement on a stated axis, and they carry no claim about the next query.",
+  "attributes": {
+    "representation": { "type": "string", "required": true },
+    "axis": { "type": "string", "required": true },
+    "availability": { "type": "string", "required": true },
+    "note": { "type": "string", "required": false }
+  }
+}

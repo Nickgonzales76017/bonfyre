@@ -1,0 +1,8 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"build/bonfyre-fragment","binary_env":"BONFYRE_FRAGMENT_BIN","cases":[
+{"name":"a created fragment is content-addressed and queryable","steps":[
+ {"argv":["create","--store","f.db","--kind","note","--persp","a","--conf","0.9","--payload","{\"x\":1}"],"env":{"HOME":"${tmp}"},"exit":0,"stdout":"sha256:3f286bfa26fc4681129d54f7b19d2d328de46d7eef886990f96b5a826cf778b4\n"},
+ {"argv":["query","--store","f.db","--format","json"],"env":{"HOME":"${tmp}"},"exit":0,"at":{"0.kind":"note","0.perspective":"a","0.id":"sha256:3f286bfa26fc4681129d54f7b19d2d328de46d7eef886990f96b5a826cf778b4"},"len":{"":1}},
+ {"argv":["stats","--store","f.db"],"env":{"HOME":"${tmp}"},"exit":0,"contains":["total_fragments:     1"]}]},
+{"name":"confidence outside [0,1] and a reversed time span are refused","steps":[
+ {"argv":["create","--store","f.db","--kind","note","--persp","a","--conf","1.5"],"env":{"HOME":"${tmp}"},"exit":1},
+ {"argv":["create","--store","f.db","--kind","note","--persp","a","--conf","0.5","--start-ms","10","--end-ms","5"],"env":{"HOME":"${tmp}"},"exit":1}]}]}

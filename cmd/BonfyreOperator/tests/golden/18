@@ -1,0 +1,33 @@
+{
+  "operator": "PROJECT",
+  "program": {
+    "program_id": "household.project.951d6d546ef16563",
+    "operator": "PROJECT",
+    "digest": "81d046d3892fc5e2db82ae1304e04b4c4b8d1e1700656c13108df66d767c4fd3",
+    "reads": [
+      "household:food:offer:Rice-2"
+    ],
+    "admitted": true,
+    "hard_failures": []
+  },
+  "address": "household:food:offer:Rice-2",
+  "projection": {
+    "2": 2,
+    "10": 1,
+    "nested": {
+      "b": {
+        "y": 1,
+        "x": [
+          1,
+          2
+        ]
+      },
+      "a": "éé"
+    },
+    "merchant": "Kroger"
+  },
+  "source_refs": [
+    "https://example.test/rice"
+  ]
+}
+exit 0

@@ -1,0 +1,15 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-compete","binary_env":"BONFYRE_COMPETE_BIN","cases":[
+{"name":"variants of a real competition are scored and one is promoted","files":{"in.txt":"This is a sentence with enough words to score. Another one here.\n"},"steps":[
+ {"argv":["pair","rec1","s1"],"env":{"HOME":"${tmp}","BONFYRE_COMPETE_DB":"${tmp}/c.db"},"exit":0,"contains":["competition created: comp-rec1-s1-"]},
+ {"program":"sqlite3","argv":["${tmp}/c.db","update competitions set id='comp-1'"],"exit":0},
+ {"argv":["add-variant","comp-1","A","{}"],"env":{"HOME":"${tmp}","BONFYRE_COMPETE_DB":"${tmp}/c.db"},"exit":0},
+ {"program":"sqlite3","argv":["${tmp}/c.db","update variants set id='var-A'"],"exit":0},
+ {"argv":["run","comp-1","in.txt"],"env":{"HOME":"${tmp}","BONFYRE_COMPETE_DB":"${tmp}/c.db"},"exit":0,"contains":["variant var-A","score=0.671"]},
+ {"argv":["promote","var-A"],"env":{"HOME":"${tmp}","BONFYRE_COMPETE_DB":"${tmp}/c.db"},"exit":0},
+ {"argv":["score","comp-1"],"env":{"HOME":"${tmp}","BONFYRE_COMPETE_DB":"${tmp}/c.db"},"exit":0,"contains":["var-A","yes     1   0.671"]}]},
+{"name":"unknown competitions and variants are refused","steps":[
+ {"argv":["add-variant","nope","A","{}"],"env":{"HOME":"${tmp}","BONFYRE_COMPETE_DB":"${tmp}/c.db"},"exit":1},
+ {"argv":["run","nope","in.txt"],"env":{"HOME":"${tmp}","BONFYRE_COMPETE_DB":"${tmp}/c.db"},"exit":1},
+ {"argv":["promote","var-zzz"],"env":{"HOME":"${tmp}","BONFYRE_COMPETE_DB":"${tmp}/c.db"},"exit":1},
+ {"argv":["demote","var-zzz"],"env":{"HOME":"${tmp}","BONFYRE_COMPETE_DB":"${tmp}/c.db"},"exit":1},
+ {"program":"sqlite3","argv":["${tmp}/c.db","select count(*) from variants"],"stdout":"0\n"}]}]}

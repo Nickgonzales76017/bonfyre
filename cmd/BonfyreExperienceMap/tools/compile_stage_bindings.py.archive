@@ -1,0 +1,162 @@
+#!/usr/bin/env python3
+"""Add exact human-chain stage participation to every materialized binding."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+from collections import Counter
+from pathlib import Path
+
+import compile_experience_map as base
+
+HERE = Path(__file__).resolve()
+CMD = HERE.parents[1]
+OUT = CMD / "generated"
+
+
+class StageError(RuntimeError):
+    pass
+
+
+def read_jsonl(path: Path):
+    with path.open(encoding="utf-8") as fh:
+        for line in fh:
+            if line.strip():
+                yield json.loads(line)
+
+
+def external_raw():
+    return {row["id"]: row for row in read_jsonl(base.EXTERNAL)}
+
+
+def valid_bindings(record, chain_defs):
+    bindings = record["chain_bindings"]
+    if not set(bindings).issubset(record["human_chains"]):
+        raise StageError(f"{record['id']} has a stage edge outside its candidate experience references")
+    for cid, stages in bindings.items():
+        legal = set(chain_defs[cid]["stages"])
+        if not stages or any(stage not in legal for stage in stages):
+            raise StageError(f"{record['id']} has illegal/empty stages for {cid}: {stages}")
+    return record
+
+
+def build_records():
+    chain_defs = base.chain_sets(base.read_tsv(base.DATA / "experience_chains.tsv"))
+    raw = external_raw()
+    records = []
+
+    for row in read_jsonl(OUT / "external_bindings.jsonl"):
+        src = raw[row["id"]]
+        projection = src.get("projection") or {}
+        hints = base.uniq((projection.get("candidate_affordances") or []) +
+                          (projection.get("estate_roles") or []))
+        records.append(valid_bindings({
+            "record_kind": row["record_kind"],
+            "id": row["id"],
+            "name": row["name"],
+            "human_chains": row["human_chains"],
+            "chain_bindings": base.stage_bindings(row["human_chains"], chain_defs, hints),
+            "basis": {
+                "candidate_affordances": projection.get("candidate_affordances", []),
+                "reagent_roles": projection.get("estate_roles", []),
+                "direct_domains": projection.get("direct_domains", []),
+                "truth_level": src.get("truth_level", "observed_candidate"),
+            },
+            "cannot_infer": ["stage fit -> source admission", "stage fit -> authority", "stage fit -> effect"],
+        }, chain_defs))
+
+    for row in read_jsonl(OUT / "ghost_bindings.jsonl"):
+        records.append(valid_bindings({
+            "record_kind": row["record_kind"],
+            "id": row["id"],
+            "name": row["name"],
+            "human_chains": row["human_chains"],
+            "chain_bindings": base.presentation_stage_bindings(row["human_chains"], chain_defs),
+            "basis": {
+                "categories": row["categories"],
+                "presentation_families": row["presentation_families"],
+                "renderer_mixes": row["renderer_mixes"],
+            },
+            "cannot_infer": ["presentation stage fit -> semantic ownership", "reference -> copied theme code"],
+        }, chain_defs))
+
+    for row in read_jsonl(OUT / "app_bindings.jsonl"):
+        # Donor, Frappe and market rows are interaction evidence.  They are
+        # deliberately portable reference material, not selected renderers or
+        # executable applications.  A lexical name match must not create a
+        # fake ExperienceStage edge before SiteProgram supplies typed inputs.
+        reference_only = bool(row.get("reference_only"))
+        records.append(valid_bindings({
+            "record_kind": row["record_kind"],
+            "id": row["id"],
+            "name": row["name"],
+            "human_chains": row["human_chains"],
+            "chain_bindings": {} if reference_only else base.stage_bindings(
+                row["human_chains"], chain_defs, base.app_stage_hints(row["name"])),
+            "basis": {"source_ref": row.get("source_ref", ""),
+                      "mapping": "declared interaction evidence" if reference_only else "name+declared estate role",
+                      "reference_only": reference_only},
+            "cannot_infer": ["tool stage fit -> semantic ownership", "tool stage fit -> authority",
+                              "interaction reference -> executable stage" if reference_only else ""],
+        }, chain_defs))
+
+    return records, chain_defs
+
+
+def digest(records):
+    h = hashlib.sha256()
+    for row in records:
+        h.update(json.dumps(row, sort_keys=True, separators=(",", ":")).encode())
+        h.update(b"\n")
+    return h.hexdigest()
+
+
+def build(write=False):
+    records, chains = build_records()
+    counts = Counter(row["record_kind"] for row in records)
+    manifest = {
+        "schema": "bonfyre.experience-stage-map.v1",
+        "binding_records": len(records),
+        "records_with_stage_bindings": sum(bool(r["chain_bindings"]) for r in records),
+        "chain_stage_edges": sum(len(stages) for r in records for stages in r["chain_bindings"].values()),
+        "unbound_experience_references": sum(
+            len(set(r["human_chains"]) - set(r["chain_bindings"])) for r in records),
+        "human_chain_count": len(chains),
+        "record_kind_counts": dict(sorted(counts.items())),
+        "digest": digest(records),
+        # The stage map is a projection of the current compiled bindings,
+        # never a historic cardinality badge. App/reference growth must lower
+        # into Stage or fail visibly; a fixed 5,495 count hid that drift.
+        "expected_binding_records": sum(1 for _ in read_jsonl(OUT / "external_bindings.jsonl")) +
+                                    sum(1 for _ in read_jsonl(OUT / "ghost_bindings.jsonl")) +
+                                    sum(1 for _ in read_jsonl(OUT / "app_bindings.jsonl")),
+    }
+    manifest["coverage"] = len(records) == manifest["expected_binding_records"]
+    if not manifest["coverage"]:
+        raise StageError(f"expected {manifest['expected_binding_records']} records, got {len(records)}")
+    if write:
+        with (OUT / "stage_bindings.jsonl").open("w", encoding="utf-8") as fh:
+            for row in records:
+                fh.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
+        (OUT / "stage_manifest.json").write_text(
+            json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return manifest
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--write", action="store_true")
+    parser.add_argument("--check", action="store_true")
+    args = parser.parse_args()
+    manifest = build(write=args.write)
+    if args.check:
+        path = OUT / "stage_manifest.json"
+        if not path.exists() or json.loads(path.read_text()).get("digest") != manifest["digest"]:
+            raise StageError("generated stage map is absent or stale")
+    print(json.dumps(manifest, sort_keys=True))
+
+
+if __name__ == "__main__":
+    main()

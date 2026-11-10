@@ -1,0 +1,261 @@
+#!/usr/bin/env python3
+"""ARCHIVED: ast_literal_candidates.mjs compiles Clang literal candidates."""
+
+from __future__ import annotations
+
+import argparse
+import ast
+import bisect
+import hashlib
+import json
+import re
+from collections import Counter, defaultdict
+from html.parser import HTMLParser
+from pathlib import Path
+from typing import Any, Iterable
+
+WORD_RE = re.compile(r"[A-Za-z][A-Za-z0-9'’_-]*")
+FORMAT_RE = re.compile(r"%(?:[-+ #0]*\d*(?:\.\d+)?[hljztL]*[diuoxXfFeEgGaAcspn%])")
+MEDIA_RE = re.compile(r"^[A-Za-z0-9.+_-]+/[A-Za-z0-9.+_-]+(?:\s*;|$)")
+SQL_RE = re.compile(
+    r"^(?:SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|PRAGMA|ATTACH|DETACH|WITH|"
+    r"REPLACE|BEGIN|COMMIT|ROLLBACK|VACUUM|ANALYZE)\b",
+    re.I,
+)
+MOJIBAKE_MARKERS = ("Ã", "Â", "Å", "â")
+
+
+class TextNodes(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.nodes: list[str] = []
+        self.skip_depth = 0
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        del attrs
+        if tag.lower() in {"style", "script"}:
+            self.skip_depth += 1
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag.lower() in {"style", "script"} and self.skip_depth:
+            self.skip_depth -= 1
+
+    def handle_data(self, data: str) -> None:
+        if self.skip_depth:
+            return
+        text = " ".join(data.split())
+        if text and len(WORD_RE.findall(text)) >= 2:
+            self.nodes.append(text)
+
+
+def json_sequence(text: str) -> Iterable[dict[str, Any]]:
+    dec = json.JSONDecoder()
+    offset = 0
+    size = len(text)
+    while offset < size:
+        while offset < size and text[offset].isspace():
+            offset += 1
+        if offset >= size:
+            break
+        value, offset = dec.raw_decode(text, offset)
+        if isinstance(value, dict):
+            yield value
+
+
+def clang_literal_value(spelling: Any) -> str:
+    if not isinstance(spelling, str):
+        return ""
+    try:
+        value = ast.literal_eval(spelling)
+        return value if isinstance(value, str) else str(value)
+    except (ValueError, SyntaxError):
+        if len(spelling) >= 2 and spelling[0] == spelling[-1] == '"':
+            return spelling[1:-1]
+        return spelling
+
+
+def repair_mojibake(value: str) -> str:
+    """Repair the narrow UTF-8-as-Latin-1 artifact emitted by Clang AST JSON."""
+    if not any(marker in value for marker in MOJIBAKE_MARKERS):
+        return value
+    try:
+        repaired = value.encode("latin-1").decode("utf-8")
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        return value
+    return repaired
+
+
+def source_offset(node: dict[str, Any], side: str = "begin") -> int | None:
+    loc = (node.get("range") or {}).get(side) or {}
+    if "spellingLoc" in loc:
+        loc = loc["spellingLoc"]
+    value = loc.get("offset")
+    return int(value) if isinstance(value, int) else None
+
+
+def source_end(node: dict[str, Any]) -> int | None:
+    loc = (node.get("range") or {}).get("end") or {}
+    if "spellingLoc" in loc:
+        loc = loc["spellingLoc"]
+    off = loc.get("offset")
+    tok = loc.get("tokLen", 0)
+    return int(off) + int(tok) if isinstance(off, int) else None
+
+
+def classify(value: str) -> str:
+    stripped = value.strip()
+    if not stripped:
+        return "empty"
+    if stripped.startswith("HTTP/") or "\\r\\n" in stripped[:160]:
+        return "protocol"
+    if MEDIA_RE.match(stripped):
+        return "protocol"
+    if SQL_RE.match(stripped):
+        return "sql"
+    if stripped.startswith("/") and not any(c.isspace() for c in stripped):
+        return "route"
+    if ("<" in stripped and ">" in stripped) or stripped.startswith("<!"):
+        return "markup"
+    if stripped[:1] in "[{" and ('":' in stripped or '"jsonrpc"' in stripped):
+        return "protocol"
+    if "{" in stripped and "}" in stripped and ":" in stripped:
+        return "style"
+    words = WORD_RE.findall(FORMAT_RE.sub(" ", stripped))
+    alpha = sum(ch.isalpha() for ch in stripped)
+    visible = sum(not ch.isspace() for ch in stripped)
+    if len(words) >= 3 and visible and alpha / visible >= 0.35:
+        return "copy"
+    if FORMAT_RE.search(stripped):
+        return "format"
+    return "control"
+
+
+def text_nodes(value: str, role: str) -> list[str]:
+    if role == "markup":
+        parser = TextNodes()
+        try:
+            parser.feed(value)
+        except Exception:
+            return []
+        return parser.nodes
+    if role == "copy":
+        text = " ".join(FORMAT_RE.sub(" ", value).split())
+        return [text] if text else []
+    return []
+
+
+def line_starts(source: bytes) -> list[int]:
+    starts = [0]
+    for i, byte in enumerate(source):
+        if byte == 10:
+            starts.append(i + 1)
+    return starts
+
+
+def line_col(starts: list[int], offset: int | None) -> tuple[int | None, int | None]:
+    if offset is None:
+        return None, None
+    idx = bisect.bisect_right(starts, offset) - 1
+    return idx + 1, offset - starts[idx] + 1
+
+
+def walk(
+    node: dict[str, Any],
+    function: str,
+    source: bytes,
+    starts: list[int],
+    source_path: str,
+    out: list[dict[str, Any]],
+) -> None:
+    if node.get("kind") == "FunctionDecl" and node.get("name"):
+        function = str(node["name"])
+
+    if node.get("kind") == "StringLiteral":
+        value = repair_mojibake(clang_literal_value(node.get("value")))
+        begin = source_offset(node, "begin")
+        end = source_end(node)
+        line, col = line_col(starts, begin)
+        raw = (
+            source[begin:end]
+            if begin is not None and end is not None and 0 <= begin <= end <= len(source)
+            else b""
+        )
+        digest = hashlib.sha256(raw or value.encode("utf-8", "replace")).hexdigest()
+        role = classify(value)
+        ref = f"source:{source_path}#{function or 'global'}@L{line or 0}:C{col or 0}"
+        candidate_id = hashlib.sha256(f"{ref}:{digest}".encode()).hexdigest()[:24]
+        out.append(
+            {
+                "candidate_id": candidate_id,
+                "function": function or None,
+                "line": line,
+                "column": col,
+                "role": role,
+                "value": value,
+                "text_nodes": text_nodes(value, role),
+                "source_ref": ref,
+                "source_digest": digest,
+            }
+        )
+
+    for child in node.get("inner") or []:
+        if isinstance(child, dict):
+            walk(child, function, source, starts, source_path, out)
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("ast_json")
+    ap.add_argument("source")
+    ap.add_argument("output")
+    args = ap.parse_args()
+
+    source_path = str(Path(args.source).resolve())
+    source = Path(source_path).read_bytes()
+    starts = line_starts(source)
+    sequence = Path(args.ast_json).read_text(encoding="utf-8")
+    candidates: list[dict[str, Any]] = []
+
+    for root in json_sequence(sequence):
+        walk(root, "", source, starts, source_path, candidates)
+
+    roles = Counter(item["role"] for item in candidates)
+    functions: dict[str, int] = defaultdict(int)
+    human_nodes = 0
+    for item in candidates:
+        functions[item["function"] or "global"] += 1
+        human_nodes += len(item["text_nodes"])
+
+    payload = {
+        "schema_version": "bonfyre.surface.literal-candidates.v2",
+        "source": source_path,
+        "source_sha256": hashlib.sha256(source).hexdigest(),
+        "candidate_count": len(candidates),
+        "human_text_node_count": human_nodes,
+        "roles": dict(sorted(roles.items())),
+        "functions": dict(sorted(functions.items())),
+        "candidates": candidates,
+        "forbidden_inference": (
+            "a source literal candidate is not authored CMS state, publication, "
+            "an exact SurfaceIR coordinate, or evidence that a rendered phrase is still wanted"
+        ),
+    }
+    Path(args.output).write_text(
+        json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    print(
+        json.dumps(
+            {
+                key: payload[key]
+                for key in ("schema_version", "candidate_count", "human_text_node_count", "roles")
+            },
+            sort_keys=True,
+            ensure_ascii=False,
+        )
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

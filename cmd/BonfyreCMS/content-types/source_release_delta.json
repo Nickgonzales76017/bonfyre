@@ -1,0 +1,19 @@
+{
+  "name": "source_release_delta",
+  "displayName": "Source Release Delta",
+  "description": "What changed between two of this estate's own observations of one source, typed by what the change bears on rather than by how many bytes moved. A delta is a statement about the fields this estate extracts, never about the source's own intent, and a cosmetic delta is not evidence the source did nothing. Deltas never alter what was observed: the earlier generation and its receipt survive every one of them.",
+  "attributes": {
+    "delta_id": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "source_ref": { "type": "string", "required": true },
+    "from_generation": { "type": "string", "required": true },
+    "to_generation": { "type": "string", "required": true },
+    "consequence": { "type": "string", "required": true },
+    "field": { "type": "string", "required": true },
+    "added": { "type": "string" },
+    "removed": { "type": "string" },
+    "changed": { "type": "string" },
+    "observed_at": { "type": "string", "required": true },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

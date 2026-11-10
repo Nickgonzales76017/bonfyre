@@ -1,0 +1,1 @@
+200	-	{"jsonrpc":"2.0","id":"@ID@","result":{"content":[{"type":"image"},{"type":"text","text":"{\"from\":\"text\"}"}]}}

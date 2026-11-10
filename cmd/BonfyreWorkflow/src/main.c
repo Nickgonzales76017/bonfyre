@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * bonfyre-workflow - workflow profile browser.
  *
@@ -21,9 +28,11 @@
 #include <unistd.h>
 #include <sqlite3.h>
 #include <bonfyre.h>
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
+#include "bf_lex.h"
 #endif
 
 #define MAX_PATH_LEN   4096
@@ -196,24 +205,11 @@ static char *read_file(const char *path, size_t *out_size) {
     return buf;
 }
 
+/* Delegates to the one implementation. Nineteen copies of this shape existed
+ * with sixteen different opinions about escaping.
+ */
 static void json_escape(FILE *out, const char *s) {
-    fputc('"', out);
-    for (; *s; s++) {
-        unsigned char ch = (unsigned char)*s;
-        switch (ch) {
-            case '"': fputs("\\\"", out); break;
-            case '\\': fputs("\\\\", out); break;
-            case '\b': fputs("\\b", out); break;
-            case '\f': fputs("\\f", out); break;
-            case '\n': fputs("\\n", out); break;
-            case '\r': fputs("\\r", out); break;
-            case '\t': fputs("\\t", out); break;
-            default:
-                if (ch < 0x20) fprintf(out, "\\u%04x", ch);
-                else fputc((int)ch, out);
-        }
-    }
-    fputc('"', out);
+    bf_lex_json_emit(out, s);
 }
 
 static int json_extract_string_from_span(const char *start, const char *end,
@@ -1592,7 +1588,23 @@ int main(int argc, char *argv[]) {
     bf_catalog_default_db_path(root, sizeof(root));
 
     count = load_workflows(root, items, MAX_WORKFLOWS);
-    if (argc < 2 || strcmp(argv[1], "list") == 0) {
+
+    enum {
+        WC_HELP, WC_LIST, WC_SHOW, WC_STEP, WC_STEPS,
+    };
+    static const BfCommandEntry workflow_commands[] = {
+        {"--help", WC_HELP, 0, NULL},
+        {"-h", WC_HELP, 0, NULL},
+        {"help", WC_HELP, 0, NULL},
+        {"list", WC_LIST, 0, NULL},
+        {"show", WC_SHOW, 0, NULL},
+        {"step", WC_STEP, 0, NULL},
+        {"steps", WC_STEPS, 0, NULL},
+    };
+    const BfCommandEntry *command = argc < 2 ? NULL : bf_command_lookup(workflow_commands,
+        sizeof(workflow_commands) / sizeof(workflow_commands[0]), argv[1]);
+
+    if (argc < 2 || (command && command->id == WC_LIST)) {
         opts = parse_list_options(argc, argv);
         if (opts.json) cmd_list_json(root, items, count, opts.query[0] ? opts.query : NULL);
         else if (opts.compact) cmd_list_compact(items, count, opts.query[0] ? opts.query : NULL);
@@ -1600,20 +1612,20 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    if (strcmp(argv[1], "help") == 0 || strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0) {
+    if ((command && command->id == WC_HELP)) {
         cmd_help();
         return 0;
     }
 
-    if (strcmp(argv[1], "show") == 0) {
+    if (command && command->id == WC_SHOW) {
         return cmd_show(argc >= 3 ? argv[2] : NULL, root, items, count);
     }
 
-    if (strcmp(argv[1], "steps") == 0) {
+    if (command && command->id == WC_STEPS) {
         return cmd_steps(argc >= 3 ? argv[2] : NULL, items, count);
     }
 
-    if (strcmp(argv[1], "step") == 0) {
+    if (command && command->id == WC_STEP) {
         return cmd_step(argc >= 3 ? argv[2] : NULL,
                         argc >= 4 ? argv[3] : NULL,
                         items, count);

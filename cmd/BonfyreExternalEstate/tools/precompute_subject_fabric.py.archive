@@ -1,0 +1,659 @@
+#!/usr/bin/env python3
+# Archived after Bun subject-fabric precompute cutover.
+"""Precompute dense public subject closures before a browser asks for them.
+
+Joins ScopedDemand -> SourceFrontier -> SurfaceScene -> ScopedFrontier into a
+compact SQLite read model. Rendering limits are deliberately not applied here:
+the whole useful candidate/root/channel closure is retained for projection.
+"""
+
+import argparse
+import hashlib
+import json
+import os
+import sqlite3
+import subprocess
+import sys
+import tempfile
+import time
+from collections import defaultdict
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+import compile_source_pressure as pressure  # noqa: E402
+
+
+def canon(value):
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+
+def digest(value):
+    return hashlib.sha256(canon(value).encode("utf-8")).hexdigest()
+
+
+def parsed(value, fallback):
+    if value is None:
+        return fallback
+    if isinstance(value, (list, dict)):
+        return value
+    try:
+        return json.loads(value)
+    except (TypeError, json.JSONDecodeError):
+        return fallback
+
+
+def table_exists(db, name):
+    return bool(db.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (name,)
+    ).fetchone())
+
+
+def run_json(argv):
+    done = subprocess.run(argv, capture_output=True, text=True, timeout=300)
+    if done.returncode:
+        return None, (done.stderr.strip() or done.stdout.strip())[-800:]
+    for line in reversed(done.stdout.splitlines()):
+        try:
+            return json.loads(line), None
+        except json.JSONDecodeError:
+            pass
+    return None, "command returned no JSON"
+
+
+def subject_contexts(cms, explicit):
+    out = defaultdict(lambda: {"sites": set(), "worlds": set(), "origins": set()})
+    for subject in explicit:
+        if subject:
+            out[subject]["origins"].add("explicit")
+    queries = [
+        ("site_presentation",
+         "SELECT subject_address,COALESCE(site_id,''),'' FROM site_presentation "
+         "WHERE status='published' AND COALESCE(subject_address,'')<>''",
+         "site_presentation"),
+        ("world",
+         "SELECT subject,'',COALESCE(world,'') FROM world "
+         "WHERE status='published' AND COALESCE(subject,'')<>''",
+         "world"),
+        ("world_fragment",
+         "SELECT subject_address,'',COALESCE(world,'') FROM world_fragment "
+         "WHERE status='published' AND COALESCE(subject_address,'')<>''",
+         "world_fragment"),
+    ]
+    for table, sql, origin in queries:
+        if not table_exists(cms, table):
+            continue
+        for subject, site, world in cms.execute(sql):
+            subject = str(subject or "")
+            if not subject:
+                continue
+            if site:
+                out[subject]["sites"].add(str(site))
+            if world:
+                out[subject]["worlds"].add(str(world))
+            out[subject]["origins"].add(origin)
+    return out
+
+
+def closure_for(binary, demand_db, condition_db, subject, scope, limit):
+    argv = [binary, "resolve", "--db", demand_db, "--subject", subject,
+            "--scope", scope, "--limit", str(limit)]
+    if condition_db:
+        argv += ["--condition-db", condition_db]
+    value, error = run_json(argv)
+    if value and str(value.get("schema", "")).startswith("bonfyre-scoped-demand-closure.v"):
+        return value, None
+    return None, error or "ScopedDemand returned wrong schema"
+
+
+SCENE_FIELDS = [
+    "scene_key", "subject_address", "world", "site_id", "actor_scope",
+    "source_digest", "focus", "lenses", "world_material", "fragments", "slots",
+    "bindings", "stages", "renderers", "patterns", "presentation", "operations",
+    "interaction", "runtime_queries", "dependencies",
+]
+
+
+def persisted_scenes(db, subject, scope):
+    if not db or not table_exists(db, "surface_scene"):
+        return []
+    cols = {row[1] for row in db.execute("PRAGMA table_info(surface_scene)")}
+    if not set(SCENE_FIELDS).issubset(cols):
+        return []
+    sql = (
+        "SELECT %s FROM surface_scene WHERE status='published' "
+        "AND subject_address=? AND actor_scope=? ORDER BY scene_key"
+    ) % ",".join(SCENE_FIELDS)
+    list_fields = {
+        "lenses", "fragments", "slots", "bindings", "stages", "renderers",
+        "patterns", "presentation", "dependencies",
+    }
+    rows = []
+    for values in db.execute(sql, (subject, scope)):
+        row = dict(zip(SCENE_FIELDS, values))
+        for key in SCENE_FIELDS[6:]:
+            row[key] = parsed(row[key], [] if key in list_fields else {})
+        rows.append(row)
+    return rows
+
+
+def compiled_scene(binary, cms_db, subject, scope, context):
+    if not binary:
+        return None, None
+    argv = [binary, "compile", "--db", cms_db, "--subject", subject,
+            "--actor-scope", scope]
+    sites, worlds = sorted(context["sites"]), sorted(context["worlds"])
+    if sites:
+        argv += ["--site", sites[0]]
+    if worlds:
+        argv += ["--world", worlds[0]]
+    value, error = run_json(argv)
+    if value and value.get("schema") == "bonfyre-surface-scene.v1":
+        return value, None
+    return None, error
+
+
+def split_actions(value):
+    if isinstance(value, list):
+        return [str(x) for x in value if str(x)]
+    if isinstance(value, str):
+        return [x.strip() for x in value.split(",") if x.strip()]
+    return []
+
+
+def scene_projection(scene):
+    lenses, actions, renderers, applications = set(), set(), set(), set()
+    queries = []
+    dependencies = set(str(x) for x in parsed(scene.get("dependencies"), []) if str(x))
+    lenses.update(str(x) for x in parsed(scene.get("lenses"), []) if str(x))
+    operations = parsed(scene.get("operations"), {})
+    if isinstance(operations, dict):
+        actions.update(str(x) for x in operations.get("apertures", []) if str(x))
+
+    for pattern in parsed(scene.get("patterns"), []):
+        if isinstance(pattern, dict):
+            queries.append({
+                "source": "surface_pattern",
+                "id": str(pattern.get("pattern") or ""),
+                "owner": str(pattern.get("reads_organ") or ""),
+                "reads_type": str(pattern.get("reads_type") or ""),
+                "command": str(pattern.get("organ_command") or ""),
+                "effect_class": str(pattern.get("effect_class") or "QUERY"),
+                "time_field": str(pattern.get("time_field") or ""),
+                "time_mode": str(pattern.get("time_mode") or ""),
+            })
+    for binding in parsed(scene.get("bindings"), []):
+        if not isinstance(binding, dict):
+            continue
+        kind = str(binding.get("application_kind") or "")
+        if kind:
+            applications.add(kind)
+        actions.update(split_actions(binding.get("action_aperture")))
+        queries.append({
+            "source": "application_binding",
+            "id": str(binding.get("binding_id") or ""),
+            "application_kind": kind,
+            "material_query": parsed(binding.get("material_query"), {}),
+            "source_collection": str(binding.get("source_collection") or ""),
+        })
+    for stage in parsed(scene.get("stages"), []):
+        if not isinstance(stage, dict):
+            continue
+        kind = str(stage.get("application_kind") or "")
+        if kind:
+            applications.add(kind)
+        actions.update(split_actions(stage.get("actions")))
+        if stage.get("renderer"):
+            renderers.add(str(stage["renderer"]))
+        for index, query in enumerate(parsed(stage.get("material_queries"), [])):
+            queries.append({
+                "source": "experience_stage",
+                "id": "%s:%d" % (stage.get("stage_id") or "", index),
+                "application_kind": kind,
+                "material_query": query,
+            })
+    for fragment in parsed(scene.get("fragments"), []):
+        if not isinstance(fragment, dict):
+            continue
+        if fragment.get("surface_grammar"):
+            lenses.add(str(fragment["surface_grammar"]))
+        if fragment.get("renderer_family"):
+            renderers.add(str(fragment["renderer_family"]))
+        actions.update(split_actions(fragment.get("action_aperture")))
+    for renderer in parsed(scene.get("renderers"), []):
+        if isinstance(renderer, dict) and renderer.get("renderer"):
+            renderers.add(str(renderer["renderer"]))
+
+    return {
+        "scene_key": str(scene.get("scene_key") or ""),
+        "site_id": str(scene.get("site_id") or ""),
+        "world": str(scene.get("world") or ""),
+        "source_digest": str(scene.get("source_digest") or ""),
+        "lenses": sorted(lenses),
+        "applications": sorted(applications),
+        "renderers": sorted(renderers),
+        "actions": sorted(actions),
+        "queries": queries,
+        "dependencies": sorted(dependencies),
+        "interaction": parsed(scene.get("interaction"), {}),
+        "presentation": parsed(scene.get("presentation"), []),
+    }
+
+
+def candidate_variants(value):
+    value = str(value or "")
+    out = {value}
+    if value.startswith("external:"):
+        out.add(value[len("external:"):])
+    if value.lower().startswith("ext-"):
+        out.add("external:" + value.lower())
+    return [x for x in out if x]
+
+
+def frontier_matches(db, occurrence):
+    if not table_exists(db, "channel") or not table_exists(db, "root"):
+        return []
+    identity = str(occurrence.get("identity") or "")
+    source = str(occurrence.get("source") or "")
+    keys = candidate_variants(identity) + ([source] if source else [])
+    if not keys:
+        return []
+    marks = ",".join("?" for _ in keys)
+    sql = (
+        "SELECT DISTINCT c.channel_id,c.root_id,r.host,r.name,r.identity,"
+        "c.address,c.protocol,c.state,COALESCE(NULLIF(cc.material,''),c.material),c.rights,c.credential,"
+        "COALESCE(NULLIF(cc.census_source,''),c.census_source),c.virtual,"
+        "c.last_contributed,c.contributions,c.first_seen "
+        "FROM channel c JOIN root r ON r.root_id=c.root_id LEFT JOIN channel_census cc ON cc.channel_id=c.channel_id "
+        "WHERE c.identity IN (%s) OR c.census_source IN (%s) OR "
+        "cc.census_source IN (%s) ORDER BY c.root_id,c.channel_id"
+    ) % (marks, marks, marks)
+    try:
+        rows = db.execute(sql, keys + keys + keys).fetchall()
+    except sqlite3.Error:
+        return []
+    names = [
+        "channel_id", "root_id", "host", "root_name", "root_identity", "address",
+        "protocol", "state", "material", "rights", "credential", "census_source",
+        "virtual", "last_contributed", "contributions", "first_seen",
+    ]
+    return [dict(zip(names, row)) for row in rows]
+
+
+def closure_dependencies(db, subject, scope):
+    if not db or not table_exists(db, "closure_dependency"):
+        return []
+    try:
+        return [
+            {"ref": str(ref), "basis": str(basis)}
+            for ref, basis in db.execute(
+                "SELECT DISTINCT dependency_ref,basis FROM closure_dependency "
+                "WHERE subject=? AND scope=? ORDER BY dependency_ref,basis",
+                (subject, scope),
+            )
+        ]
+    except sqlite3.Error:
+        return []
+
+
+def existing_digests(path):
+    if not path or not os.path.exists(path):
+        return {}
+    try:
+        db = sqlite3.connect("file:%s?mode=ro" % path, uri=True)
+        if not table_exists(db, "subject_bundle"):
+            db.close()
+            return {}
+        out = {(str(s), str(sc)): str(d) for s, sc, d in db.execute(
+            "SELECT subject,scope,bundle_digest FROM subject_bundle"
+        )}
+        db.close()
+        return out
+    except sqlite3.Error:
+        return {}
+
+
+SCHEMA = """
+PRAGMA journal_mode=DELETE;
+PRAGMA synchronous=FULL;
+CREATE TABLE meta(key TEXT PRIMARY KEY,value TEXT NOT NULL);
+CREATE TABLE subject_bundle(
+  subject TEXT NOT NULL, scope TEXT NOT NULL, bundle_digest TEXT NOT NULL,
+  closure_digest TEXT NOT NULL, scene_digest TEXT NOT NULL DEFAULT '',
+  compiled_at TEXT NOT NULL, counts_json TEXT NOT NULL, payload_json TEXT NOT NULL,
+  PRIMARY KEY(subject,scope));
+CREATE TABLE subject_candidate(
+  subject TEXT NOT NULL, scope TEXT NOT NULL, identity TEXT NOT NULL,
+  root_id TEXT NOT NULL DEFAULT '', channel_id TEXT NOT NULL DEFAULT '',
+  basis TEXT NOT NULL, demand_id TEXT NOT NULL DEFAULT '', source TEXT NOT NULL DEFAULT '',
+  PRIMARY KEY(subject,scope,identity,root_id,channel_id,basis,demand_id,source));
+CREATE TABLE subject_root(
+  subject TEXT NOT NULL, scope TEXT NOT NULL, root_id TEXT NOT NULL,
+  host TEXT NOT NULL DEFAULT '', name TEXT NOT NULL DEFAULT '', identity TEXT NOT NULL DEFAULT '',
+  channels INTEGER NOT NULL, protocols_json TEXT NOT NULL, states_json TEXT NOT NULL,
+  materials_json TEXT NOT NULL, rights_json TEXT NOT NULL, credentials_json TEXT NOT NULL,
+  PRIMARY KEY(subject,scope,root_id));
+CREATE TABLE subject_reader(
+  subject TEXT NOT NULL, scope TEXT NOT NULL, census_source TEXT NOT NULL,
+  root_id TEXT NOT NULL, channel_id TEXT NOT NULL, material TEXT NOT NULL DEFAULT '',
+  protocol TEXT NOT NULL DEFAULT '', state TEXT NOT NULL DEFAULT '',
+  last_contributed TEXT NOT NULL DEFAULT '', contributions INTEGER NOT NULL DEFAULT 0,
+  first_seen TEXT NOT NULL DEFAULT '',
+  PRIMARY KEY(subject,scope,census_source,channel_id,material));
+CREATE TABLE subject_scene(
+  subject TEXT NOT NULL, scope TEXT NOT NULL, scene_key TEXT NOT NULL,
+  site_id TEXT NOT NULL DEFAULT '', world TEXT NOT NULL DEFAULT '',
+  source_digest TEXT NOT NULL DEFAULT '', lenses_json TEXT NOT NULL,
+  applications_json TEXT NOT NULL, renderers_json TEXT NOT NULL,
+  actions_json TEXT NOT NULL, interaction_json TEXT NOT NULL,
+  presentation_json TEXT NOT NULL, PRIMARY KEY(subject,scope,scene_key));
+CREATE TABLE subject_query(
+  subject TEXT NOT NULL, scope TEXT NOT NULL, scene_key TEXT NOT NULL,
+  ordinal INTEGER NOT NULL, query_json TEXT NOT NULL,
+  PRIMARY KEY(subject,scope,scene_key,ordinal));
+CREATE TABLE subject_action(
+  subject TEXT NOT NULL, scope TEXT NOT NULL, action TEXT NOT NULL,
+  PRIMARY KEY(subject,scope,action));
+CREATE TABLE subject_dependency(
+  subject TEXT NOT NULL, scope TEXT NOT NULL, dependency_ref TEXT NOT NULL,
+  basis TEXT NOT NULL, PRIMARY KEY(subject,scope,dependency_ref,basis));
+CREATE INDEX subject_candidate_root ON subject_candidate(root_id,subject,scope);
+CREATE INDEX subject_candidate_channel ON subject_candidate(channel_id,subject,scope);
+CREATE INDEX subject_reader_material ON subject_reader(subject,scope,material,state);
+CREATE INDEX subject_dependency_reverse ON subject_dependency(dependency_ref,subject,scope);
+CREATE INDEX subject_action_lookup ON subject_action(action,subject,scope);
+"""
+
+
+def build_bundle(subject, scope, context, closure, scenes, frontier_db, scoped_db):
+    candidates = list(pressure.candidate_occurrences(closure))
+    candidate_rows, unmapped = [], []
+    mapped_occurrences = set()
+    roots, readers = {}, {}
+    for occurrence in candidates:
+        matches = frontier_matches(frontier_db, occurrence)
+        occ_key = (
+            str(occurrence.get("identity") or ""),
+            str(occurrence.get("basis") or ""),
+            str(occurrence.get("demand_id") or ""),
+            str(occurrence.get("source") or ""),
+        )
+        if not matches:
+            unmapped.append(occ_key[0])
+            candidate_rows.append({**occurrence, "root_id": "", "channel_id": ""})
+            continue
+        mapped_occurrences.add(occ_key)
+        for match in matches:
+            candidate_rows.append({
+                **occurrence, "root_id": str(match["root_id"]),
+                "channel_id": str(match["channel_id"]),
+            })
+            root = roots.setdefault(str(match["root_id"]), {
+                "root_id": str(match["root_id"]), "host": str(match["host"] or ""),
+                "name": str(match["root_name"] or ""),
+                "identity": str(match["root_identity"] or ""),
+                "channels": set(), "protocols": set(), "states": set(),
+                "materials": set(), "rights": set(), "credentials": set(),
+            })
+            root["channels"].add(str(match["channel_id"]))
+            for key, target in (
+                ("protocol", "protocols"), ("state", "states"), ("material", "materials"),
+                ("rights", "rights"), ("credential", "credentials"),
+            ):
+                if match.get(key):
+                    root[target].add(str(match[key]))
+            reader = str(match.get("census_source") or "")
+            if reader:
+                reader_key = (reader, str(match["channel_id"]), str(match.get("material") or ""))
+                readers[reader_key] = {
+                    "census_source": reader,
+                    "root_id": str(match["root_id"]),
+                    "channel_id": str(match["channel_id"]),
+                    "material": str(match.get("material") or ""),
+                    "protocol": str(match.get("protocol") or ""),
+                    "state": str(match.get("state") or ""),
+                    "last_contributed": str(match.get("last_contributed") or ""),
+                    "contributions": int(match.get("contributions") or 0),
+                    "first_seen": str(match.get("first_seen") or ""),
+                }
+
+    scene_rows = [scene_projection(scene) for scene in scenes]
+    actions = sorted({a for scene in scene_rows for a in scene["actions"]})
+    dependencies = closure_dependencies(scoped_db, subject, scope)
+    dependencies += [
+        {"ref": dep, "basis": "surface_scene"}
+        for scene in scene_rows for dep in scene["dependencies"]
+    ]
+    unique, seen = [], set()
+    for row in dependencies:
+        key = (row["ref"], row["basis"])
+        if key not in seen:
+            seen.add(key)
+            unique.append(row)
+    dependencies = unique
+
+    demands = {
+        "active_packs": closure.get("active_packs") or [],
+        "pack_demands": [
+            {k: row.get(k) for k in ("identity", "pack", "demand_kind", "requirement", "regime", "state")}
+            for row in closure.get("pack_demands") or [] if isinstance(row, dict)
+        ],
+        "world_demands": [
+            {"identity": row.get("identity"), "state": row.get("state"),
+             "dependencies": [d.get("dependency") for d in row.get("dependencies") or [] if isinstance(d, dict)]}
+            for row in closure.get("world_demands") or [] if isinstance(row, dict)
+        ],
+        "counts": closure.get("counts") or {},
+    }
+    compact_roots = [{
+        "root_id": root["root_id"], "host": root["host"], "name": root["name"],
+        "identity": root["identity"], "channels": len(root["channels"]),
+        "protocols": sorted(root["protocols"]), "states": sorted(root["states"]),
+        "materials": sorted(root["materials"]), "rights": sorted(root["rights"]),
+        "credentials": sorted(root["credentials"]),
+    } for root in sorted(roots.values(), key=lambda x: x["root_id"])]
+
+    queries = [q for scene in scene_rows for q in scene["queries"]]
+    counts = {
+        "candidate_occurrences": len(candidates),
+        "candidate_edges": len(candidate_rows),
+        "mapped_candidate_occurrences": len(mapped_occurrences),
+        "unmapped_candidate_occurrences": len(candidates) - len(mapped_occurrences),
+        "source_roots": len(roots),
+        "channels": len({row["channel_id"] for row in candidate_rows if row["channel_id"]}),
+        "readers": len(readers),
+        "protocols": len({p for root in compact_roots for p in root["protocols"]}),
+        "scenes": len(scene_rows),
+        "lenses": len({x for scene in scene_rows for x in scene["lenses"]}),
+        "applications": len({x for scene in scene_rows for x in scene["applications"]}),
+        "renderers": len({x for scene in scene_rows for x in scene["renderers"]}),
+        "material_queries": len(queries),
+        "actions": len(actions),
+        "dependencies": len(dependencies),
+    }
+    closure_digest = digest(closure)
+    scene_digest = digest([scene["source_digest"] for scene in scene_rows])
+    core = {
+        "schema": "bonfyre.subject-fabric.v1", "subject": subject, "scope": scope,
+        "origins": sorted(context["origins"]), "sites": sorted(context["sites"]),
+        "worlds": sorted(context["worlds"]), "closure_digest": closure_digest,
+        "scene_digest": scene_digest, "counts": counts, "demands": demands,
+        "source_roots": compact_roots,
+        "candidate_identities": sorted({
+            str(x.get("identity") or "") for x in candidates if x.get("identity")
+        }),
+        "scene_models": scene_rows, "actions": actions, "dependencies": dependencies,
+        "unmapped_candidate_identities": sorted(set(unmapped)),
+        "truth": "precomputed_subject_closure_exact_owners_remain_authoritative",
+        "cannot_infer": [
+            "candidate membership -> observation, freshness, rights, authority or contribution",
+            "precomputed query plan -> request-time owner answer",
+            "action aperture -> authority or completed effect",
+            "scene membership -> visible rendering",
+            "cached subject closure -> unchanged external reality",
+        ],
+    }
+    return {
+        "core": core, "digest": digest(core), "closure_digest": closure_digest,
+        "scene_digest": scene_digest, "candidates": candidate_rows, "roots": compact_roots,
+        "readers": sorted(readers.values(), key=lambda x: (x["material"], x["root_id"], x["channel_id"], x["census_source"])),
+        "scenes": scene_rows, "actions": actions, "dependencies": dependencies,
+    }
+
+
+def write_db(path, bundles, old):
+    directory = os.path.dirname(os.path.abspath(path))
+    os.makedirs(directory, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(prefix=".subject-fabric-", suffix=".db", dir=directory)
+    os.close(fd)
+    changed = unchanged = 0
+    totals = defaultdict(int)
+    try:
+        db = sqlite3.connect(tmp)
+        db.executescript(SCHEMA)
+        compiled_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        for (subject, scope), bundle in sorted(bundles.items()):
+            if old.get((subject, scope)) == bundle["digest"]:
+                unchanged += 1
+            else:
+                changed += 1
+            counts = bundle["core"]["counts"]
+            for key, value in counts.items():
+                totals[key] += int(value)
+            db.execute(
+                "INSERT INTO subject_bundle VALUES(?,?,?,?,?,?,?,?)",
+                (subject, scope, bundle["digest"], bundle["closure_digest"],
+                 bundle["scene_digest"], compiled_at, canon(counts), canon(bundle["core"])))
+            for row in bundle["candidates"]:
+                db.execute(
+                    "INSERT OR IGNORE INTO subject_candidate VALUES(?,?,?,?,?,?,?,?)",
+                    (subject, scope, str(row.get("identity") or ""), row["root_id"],
+                     row["channel_id"], str(row.get("basis") or ""),
+                     str(row.get("demand_id") or ""), str(row.get("source") or "")))
+            for root in bundle["roots"]:
+                db.execute(
+                    "INSERT INTO subject_root VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+                    (subject, scope, root["root_id"], root["host"], root["name"], root["identity"],
+                     root["channels"], canon(root["protocols"]), canon(root["states"]),
+                     canon(root["materials"]), canon(root["rights"]), canon(root["credentials"])))
+            for reader in bundle["readers"]:
+                db.execute(
+                    "INSERT INTO subject_reader VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+                    (subject, scope, reader["census_source"], reader["root_id"],
+                     reader["channel_id"], reader["material"], reader["protocol"],
+                     reader["state"], reader["last_contributed"], reader["contributions"],
+                     reader["first_seen"]))
+            ordinal = 0
+            for scene in bundle["scenes"]:
+                db.execute(
+                    "INSERT INTO subject_scene VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+                    (subject, scope, scene["scene_key"], scene["site_id"], scene["world"],
+                     scene["source_digest"], canon(scene["lenses"]), canon(scene["applications"]),
+                     canon(scene["renderers"]), canon(scene["actions"]), canon(scene["interaction"]),
+                     canon(scene["presentation"])))
+                for query in scene["queries"]:
+                    db.execute(
+                        "INSERT INTO subject_query VALUES(?,?,?,?,?)",
+                        (subject, scope, scene["scene_key"], ordinal, canon(query)))
+                    ordinal += 1
+            for action in bundle["actions"]:
+                db.execute("INSERT INTO subject_action VALUES(?,?,?)", (subject, scope, action))
+            for dep in bundle["dependencies"]:
+                db.execute(
+                    "INSERT OR IGNORE INTO subject_dependency VALUES(?,?,?,?)",
+                    (subject, scope, dep["ref"], dep["basis"]))
+        db.execute("INSERT INTO meta VALUES('schema','bonfyre.subject-fabric-index.v1')")
+        db.execute("INSERT INTO meta VALUES('compiled_at',?)", (compiled_at,))
+        db.execute("INSERT INTO meta VALUES('subjects',?)", (str(len(bundles)),))
+        db.commit()
+        check = db.execute("PRAGMA integrity_check").fetchone()
+        if not check or check[0] != "ok":
+            raise RuntimeError("subject-fabric integrity check failed")
+        db.close()
+        os.replace(tmp, path)
+        return changed, unchanged, dict(totals)
+    finally:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--cms-db", required=True)
+    ap.add_argument("--demand-db", required=True)
+    ap.add_argument("--frontier-db", required=True)
+    ap.add_argument("--scoped-demand-bin", required=True)
+    ap.add_argument("--surface-scene-bin")
+    ap.add_argument("--scene-db")
+    ap.add_argument("--scoped-frontier-db")
+    ap.add_argument("--condition-db")
+    ap.add_argument("--subject", action="append", default=[])
+    ap.add_argument("--scope", default="public")
+    ap.add_argument("--candidate-limit", type=int, default=4096)
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--manifest")
+    args = ap.parse_args()
+    args.candidate_limit = max(1, min(4096, args.candidate_limit))
+
+    cms = sqlite3.connect("file:%s?mode=ro" % args.cms_db, uri=True)
+    frontier = sqlite3.connect("file:%s?mode=ro" % args.frontier_db, uri=True)
+    scene_path = args.scene_db or args.cms_db
+    scene_db = sqlite3.connect("file:%s?mode=ro" % scene_path, uri=True) if os.path.exists(scene_path) else None
+    scoped = (
+        sqlite3.connect("file:%s?mode=ro" % args.scoped_frontier_db, uri=True)
+        if args.scoped_frontier_db and os.path.exists(args.scoped_frontier_db) else None
+    )
+
+    contexts = subject_contexts(cms, args.subject)
+    bundles, failures = {}, []
+    compiled_scenes = persisted_scene_count = 0
+    for subject, context in sorted(contexts.items()):
+        closure, error = closure_for(
+            args.scoped_demand_bin, args.demand_db, args.condition_db,
+            subject, args.scope, args.candidate_limit)
+        if not closure:
+            failures.append({"subject": subject, "stage": "scoped_demand", "error": error})
+            continue
+        scenes = persisted_scenes(scene_db, subject, args.scope)
+        if scenes:
+            persisted_scene_count += len(scenes)
+        else:
+            scene, scene_error = compiled_scene(
+                args.surface_scene_bin, args.cms_db, subject, args.scope, context)
+            if scene:
+                scenes = [scene]
+                compiled_scenes += 1
+            elif scene_error:
+                failures.append({
+                    "subject": subject, "stage": "surface_scene", "error": scene_error})
+        bundles[(subject, args.scope)] = build_bundle(
+            subject, args.scope, context, closure, scenes, frontier, scoped)
+
+    cms.close()
+    frontier.close()
+    if scene_db:
+        scene_db.close()
+    if scoped:
+        scoped.close()
+
+    old = existing_digests(args.out)
+    changed, unchanged, totals = write_db(args.out, bundles, old)
+    summary = {
+        "schema": "bonfyre.subject-fabric-precompute.v1",
+        "subjects_discovered": len(contexts), "subjects_compiled": len(bundles),
+        "subjects_failed": len({row["subject"] for row in failures}),
+        "bundles_changed": changed, "bundles_unchanged": unchanged,
+        "persisted_scenes": persisted_scene_count,
+        "scenes_compiled_on_demand": compiled_scenes,
+        "totals": totals, "output": args.out,
+        "truth": "precomputed_subject_closure_exact_owners_remain_authoritative",
+        "failures": failures[:100],
+    }
+    if args.manifest:
+        with open(args.manifest, "w") as out:
+            json.dump(summary, out, indent=2, sort_keys=True)
+    print(json.dumps(summary, sort_keys=True))
+    return 0 if bundles else 3
+
+
+if __name__ == "__main__":
+    sys.exit(main())

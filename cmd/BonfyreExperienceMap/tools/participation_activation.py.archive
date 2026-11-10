@@ -1,0 +1,445 @@
+#!/usr/bin/env python3
+"""Retired participation activation compiler; native owner is participation_activation.mjs."""
+
+from __future__ import annotations
+
+import argparse
+import json
+from collections import Counter, defaultdict
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+GEN = ROOT / "generated"
+
+
+def read_jsonl(path: Path) -> list[dict]:
+    with path.open(encoding="utf-8") as handle:
+        return [json.loads(line) for line in handle if line.strip()]
+
+
+def protocol_derivation_witness(path: Path, bridge_source: Path) -> bool:
+    """Accept native registration only from its falsifiable witness receipt.
+
+    The bridge deliberately sits outside ``engine/core``. Looking for a symbol
+    in ProtocolContract was therefore both false-negative and the wrong kind
+    of proof: source text can mention an ABI without ever registering a graph.
+    The C witness proves the scoped, atomic registration against the compiled
+    fabric and leaves this receipt only after it passes.
+    """
+    if not path.is_file() or not bridge_source.is_file():
+        return False
+    try:
+        row = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return False
+    return (
+        row.get("schema") == "bonfyre-protocol-derivation-bridge.v1"
+        and row.get("registered") is True
+        and isinstance(row.get("contract"), str) and bool(row["contract"])
+        and isinstance(row.get("enactments"), int) and row["enactments"] >= 2
+        and isinstance(row.get("programs"), int) and row["programs"] >= 2
+        and row.get("scoped") is True
+        and row.get("targeted_invalidation") is True
+        and row.get("atomic") is True
+    )
+
+
+def leverage_modes(profile: dict) -> list[str]:
+    candidate = profile["candidate"]
+    roles = set(candidate.get("role_classes") or [])
+    protocols = set(candidate.get("protocol_carriers") or [])
+    source_kind = profile.get("source_kind")
+    modes = []
+
+    if "service" in roles and candidate.get("join_power", 0) >= 3:
+        modes.append("cross_world_service")
+    if "action" in roles:
+        modes.append("effect_adapter")
+    if "carrier" in roles and candidate["candidate_planes"].get("round_trip"):
+        modes.append("publication_roundtrip")
+    if candidate["candidate_planes"].get("economic") and (
+        source_kind == "x402" or "x402" in protocols
+    ):
+        modes.append("paid_machine_market")
+    if source_kind == "machine_protocol" or "standard" in roles:
+        modes.append("semantic_interchange")
+    if "compiler" in roles:
+        modes.append("toolchain")
+    if "verification" in roles:
+        modes.append("verification_bridge")
+    if "material" in roles and "service" not in roles:
+        modes.append("sensor_material")
+
+    return modes or ["general_candidate"]
+
+
+def next_activation(profile: dict) -> dict:
+    candidate = profile["candidate"]["candidate_planes"]
+    axes = profile["realized"]["axes"]
+    observation = axes["observation"]
+
+    if observation["status"] == "unknown" and candidate.get("observation"):
+        return {
+            "owner": "ForeignTwin",
+            "action": "observe_exact_candidate",
+            "why": "establish policy/transport/body evidence before deeper admission",
+        }
+    if candidate.get("observation") and observation.get("depth", 0) < 3:
+        return {
+            "owner": "ForeignTwin",
+            "action": "resolve_observation_boundary",
+            "why": "policy or transport was measured but no source body was observed",
+        }
+    if candidate.get("semantic") and observation.get("depth", 0) < 4:
+        return {
+            "owner": "ForeignTwin",
+            "action": "retain_exact_observation",
+            "why": "semantic binding must read retained bytes that still hash to their receipt",
+        }
+    if axes["semantic"]["status"] == "unknown" and candidate.get("semantic"):
+        return {
+            "owner": "DomainProfile",
+            "action": "bind_semantic_profile",
+            "why": "turn candidate domain material into shared domain meaning",
+        }
+    if axes["protocol"]["status"] == "unknown" and candidate.get("protocol"):
+        return {
+            "owner": "ProtocolContract",
+            "action": "bind_or_enact_protocol",
+            "why": "carrier fit is not yet a lawful interaction",
+        }
+    if axes["capability"]["status"] == "unknown" and candidate.get("capability"):
+        return {
+            "owner": "ResourceActivationGraph",
+            "action": "qualify_candidate_resource",
+            "why": "candidate capability must become qualified, eligible, authorized and activated",
+        }
+    if axes["economic"]["status"] == "unknown" and candidate.get("economic"):
+        return {
+            "owner": "Finance",
+            "action": "establish_quote_or_service_book_entry",
+            "why": "economic vocabulary is not a quote, commitment, payment or settlement",
+        }
+    if axes["round_trip"]["status"] == "unknown" and candidate.get("round_trip"):
+        return {
+            "owner": "RoundTripTwin",
+            "action": "close_projection_round_trip",
+            "why": "a projection is not verified until independently observed",
+        }
+    return {
+        "owner": "Opportunity",
+        "action": "inspect_blockers_and_joins",
+        "why": "all candidate participation axes with known potential already have owner evidence",
+    }
+
+
+def activation_score(profile: dict, modes: list[str]) -> int:
+    candidate = profile["candidate"]
+    realized = profile["realized"]
+    mode_bonus = 0
+    if "cross_world_service" in modes:
+        mode_bonus += 12
+    if "semantic_interchange" in modes:
+        mode_bonus += 8
+    if "effect_adapter" in modes:
+        mode_bonus += 6
+    if "paid_machine_market" in modes:
+        mode_bonus += 5
+    return (
+        profile.get("investigation_priority", 0)
+        + mode_bonus
+        + candidate.get("join_power", 0) * 4
+        + min(candidate.get("chain_span", 0), 10)
+        - realized.get("braid_depth", 0) * 8
+    )
+
+
+def disturbance_acceptance(rows: list[dict]) -> dict:
+    """Grade emergent propagation. Step numbers and prose carry no credit."""
+    schema = "bonfyre.disturbance-event.v1"
+    required_owners = {
+        "ForeignTwinGraph", "DomainProfile", "SemanticDerivationGraph", "EvidenceGraph",
+        "BlockerGraph", "UnlockGraph", "WorkGraph", "CommitmentGraph",
+        "PublicationProgram", "RoundTripTwin",
+    }
+    economic_owners = {"MoneyGraph", "FinancialMetabolism", "CommerceChain"}
+    kind_groups = {
+        "blockers_opened": {"blocker_opened"},
+        "blockers_resolved": {"blocker_resolved"},
+        "retractions": {"retracted", "assumption_retracted", "fact_retracted"},
+        "compensations": {"compensated", "commitment_compensated", "reservation_compensated"},
+        "joins_admitted": {"join_admitted", "opportunity_admitted"},
+        "human_decisions": {"human_decision"},
+        "commitments_opened": {"commitment_opened"},
+        "quotes": {"quoted", "quote_changed"},
+        "settlements": {"settled", "reconciled"},
+        "projections": {"projected", "publication_projected", "external_projection_changed"},
+        "corrections": {"correction_opened", "correction_applied"},
+        "improper_erases": {"erased", "commitment_erased", "reservation_erased"},
+    }
+    failures, by_id, disturbance_ids = [], {}, set()
+    for index, row in enumerate(rows, 1):
+        event_id = row.get("event_id")
+        if row.get("schema") != schema:
+            failures.append(f"row {index}: wrong disturbance schema")
+        if not isinstance(event_id, str) or not event_id:
+            failures.append(f"row {index}: missing event_id")
+            continue
+        if event_id in by_id:
+            failures.append(f"duplicate event_id {event_id}")
+        by_id[event_id] = row
+        for field in ("owner", "disturbance_id", "kind", "subject"):
+            if not isinstance(row.get(field), str) or not row[field]:
+                failures.append(f"{event_id}: missing {field}")
+        if isinstance(row.get("disturbance_id"), str) and row["disturbance_id"]:
+            disturbance_ids.add(row["disturbance_id"])
+        if not isinstance(row.get("evidence_ref") or row.get("receipt"), str):
+            failures.append(f"{event_id}: missing owner evidence reference")
+        parents = row.get("causal_parents", [])
+        if not isinstance(parents, list) or any(not isinstance(parent, str) or not parent for parent in parents):
+            failures.append(f"{event_id}: invalid causal_parents")
+
+    if not rows:
+        failures.append("no disturbance trace supplied")
+    if len(disturbance_ids) != 1:
+        failures.append(f"expected one disturbance_id, got {len(disturbance_ids)}")
+
+    roots, children, owner_edges = [], defaultdict(list), set()
+    for event_id, row in by_id.items():
+        parents = row.get("causal_parents", []) if isinstance(row.get("causal_parents", []), list) else []
+        if not parents:
+            roots.append(event_id)
+        for parent in parents:
+            if parent not in by_id:
+                failures.append(f"{event_id}: missing causal parent {parent}")
+                continue
+            children[parent].append(event_id)
+            source, target = by_id[parent].get("owner"), row.get("owner")
+            if source and target and source != target:
+                owner_edges.add((source, target))
+    if len(roots) != 1:
+        failures.append(f"expected one root disturbance, got {len(roots)}")
+
+    visiting, memo_event, memo_owner = set(), {}, {}
+
+    def depth(event_id: str) -> tuple[int, int]:
+        if event_id in memo_event:
+            return memo_event[event_id], memo_owner[event_id]
+        if event_id in visiting:
+            failures.append("causal graph contains a cycle")
+            return 0, 0
+        visiting.add(event_id)
+        parents = by_id[event_id].get("causal_parents", [])
+        best_event, best_owner = 1, 0
+        for parent in parents if isinstance(parents, list) else []:
+            if parent not in by_id:
+                continue
+            parent_event, parent_owner = depth(parent)
+            best_event = max(best_event, parent_event + 1)
+            best_owner = max(
+                best_owner,
+                parent_owner + int(by_id[parent].get("owner") != by_id[event_id].get("owner")),
+            )
+        visiting.remove(event_id)
+        memo_event[event_id], memo_owner[event_id] = best_event, best_owner
+        return best_event, best_owner
+
+    for event_id in by_id:
+        depth(event_id)
+
+    owners = {row.get("owner") for row in rows if row.get("owner")}
+    kinds = Counter(str(row.get("kind", "")) for row in rows)
+    grouped = {name: sum(kinds[kind] for kind in members) for name, members in kind_groups.items()}
+    verdicts = Counter(
+        str(row.get("verdict"))
+        for row in rows
+        if row.get("owner") == "RoundTripTwin" and isinstance(row.get("verdict"), str)
+    )
+    measured = {
+        "trace_events": len(rows),
+        "distinct_owners": len(owners),
+        "owners": sorted(owners),
+        "owner_transition_kinds": len(owner_edges),
+        "owner_transition_pairs": [list(edge) for edge in sorted(owner_edges)],
+        "max_event_depth": max(memo_event.values(), default=0),
+        "max_owner_braid_depth": max(memo_owner.values(), default=0),
+        **grouped,
+        "round_trip": dict(sorted(verdicts.items())),
+        "round_trip_total": sum(verdicts.values()),
+    }
+
+    for owner in sorted(required_owners - owners):
+        failures.append(f"missing required owner {owner}")
+    if not owners.intersection(economic_owners):
+        failures.append("missing economic owner")
+    thresholds = {
+        "distinct_owners": 10, "max_owner_braid_depth": 8,
+        "blockers_opened": 1, "blockers_resolved": 1, "joins_admitted": 1,
+        "human_decisions": 1, "commitments_opened": 1, "quotes": 1,
+        "settlements": 1, "projections": 1, "round_trip_total": 1,
+    }
+    for metric, floor in thresholds.items():
+        if measured.get(metric, 0) < floor:
+            failures.append(f"{metric}={measured.get(metric, 0)} below {floor}")
+    if measured["retractions"] + measured["compensations"] < 1:
+        failures.append("no retraction or compensation")
+    if measured["improper_erases"]:
+        failures.append("history was erased instead of compensated/retracted")
+    if measured["round_trip"].get("drifted", 0) > measured["corrections"]:
+        failures.append("round-trip drift lacks correction work")
+
+    return {
+        "schema": "bonfyre.disturbance-acceptance.v1",
+        "accepted": not failures,
+        "metrics": measured,
+        "failures": failures,
+        "cannot_infer": [
+            "event count -> propagation depth",
+            "sequence/step number -> causality",
+            "owner label -> owner receipt",
+            "completed protocol -> discharged commitment",
+        ],
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--write", action="store_true")
+    parser.add_argument("--limit", type=int, default=250)
+    args = parser.parse_args()
+
+    profiles = read_jsonl(GEN / "participation_profiles.jsonl")
+    rows = []
+    mode_counts = Counter()
+    next_owner_counts = Counter()
+    by_mode = defaultdict(list)
+
+    for profile in profiles:
+        modes = leverage_modes(profile)
+        nxt = next_activation(profile)
+        score = activation_score(profile, modes)
+        row = {
+            "schema": "bonfyre.external-activation-candidate.v1",
+            "id": profile["id"],
+            "name": profile["name"],
+            "source_kind": profile["source_kind"],
+            "url": profile.get("url"),
+            "leverage_modes": modes,
+            "latent_join_power": profile["candidate"]["join_power"],
+            "chain_span": profile["candidate"]["chain_span"],
+            "candidate_plane_count": profile["candidate"]["candidate_plane_count"],
+            "realized_braid_depth": profile["realized"]["braid_depth"],
+            "next_activation": nxt,
+            "activation_score": score,
+            "cannot_infer": [
+                "activation rank -> authority to observe or activate",
+                "leverage mode -> provider admission",
+                "next owner -> guaranteed successful transition",
+            ],
+        }
+        rows.append(row)
+        next_owner_counts[nxt["owner"]] += 1
+        for mode in modes:
+            mode_counts[mode] += 1
+            by_mode[mode].append(row)
+
+    rows.sort(key=lambda row: (-row["activation_score"], row["id"]))
+    selected = rows[: max(1, args.limit)]
+
+    cohort_heads = {}
+    for mode, candidates in sorted(by_mode.items()):
+        candidates.sort(key=lambda row: (-row["activation_score"], row["id"]))
+        cohort_heads[mode] = [
+            {
+                "id": row["id"],
+                "name": row["name"],
+                "score": row["activation_score"],
+                "next_owner": row["next_activation"]["owner"],
+            }
+            for row in candidates[:10]
+        ]
+
+    trace_path = GEN / "disturbance_trace.jsonl"
+    disturbance = disturbance_acceptance(read_jsonl(trace_path) if trace_path.exists() else [])
+    sensor_path = GEN / "disturbance_sensor_receipt.jsonl"
+    sensor_receipts = read_jsonl(sensor_path) if sensor_path.exists() else []
+    sensor_states = Counter(row.get("observation_kind", "unknown") for row in sensor_receipts)
+    disturbance["sensor_boundary"] = {
+        "attempts": len(sensor_receipts),
+        "states": dict(sensor_states),
+        "body_observed": any(row.get("observation_kind") == "source_observed" for row in sensor_receipts),
+        "policy_decisions": dict(Counter(row.get("policy_decision", "unknown") for row in sensor_receipts)),
+        "cannot_infer": ["documented public feed -> lawful observation by this agent"],
+    }
+
+    repo = Path(__file__).resolve().parents[3]
+    domain_file = repo / "components/BonfyreControlPlane/domain_profile.py"
+    program_file = repo / "components/BonfyreControlPlane/protocol_program.py"
+    domain_bridge_file = repo / "cmd/BonfyreExperienceMap/tools/domain_observation_bridge.mjs"
+    domain_bridge_policy_file = repo / "cmd/BonfyreExperienceMap/tools/domain-observation.cue"
+    protocol_bridge_file = repo / "cmd/BonfyreExperienceMap/src/protocol_derivation_bridge.c"
+    protocol_witness_path = GEN / "protocol_derivation_bridge_receipt.json"
+    evidence_path = GEN / "participation_evidence.jsonl"
+    domain_text = domain_file.read_text(encoding="utf-8") if domain_file.exists() else ""
+    program_text = program_file.read_text(encoding="utf-8") if program_file.exists() else ""
+    domain_bridge_text = domain_bridge_file.read_text(encoding="utf-8") if domain_bridge_file.exists() else ""
+    domain_bridge_policy_text = domain_bridge_policy_file.read_text(encoding="utf-8") if domain_bridge_policy_file.exists() else ""
+    evidence_rows = read_jsonl(evidence_path) if evidence_path.exists() else []
+    domain_bindings = [
+        row for row in evidence_rows
+        if row.get("schema") == "bonfyre-domain-binding.v1" and row.get("binding_validated") is True
+    ]
+    bridge_readiness = {
+        "ForeignTwinGraph->DomainProfile": {
+            "semantic_profile_implementation": "class DomainProfile" in domain_text,
+            "handoff_implementation": (
+                "export async function bindObservation" in domain_bridge_text
+                and "domainObservation:" in domain_bridge_policy_text
+            ),
+            "explicit_occurrence_receipt_ingress": bool(domain_bindings),
+            "validated_bindings": len(domain_bindings),
+            "blocked_candidates": next_owner_counts.get("DomainProfile", 0),
+        },
+        "ProtocolContract->SemanticDerivationGraph": {
+            "per_enactment_lowering": "def lower(" in program_text and "def affected_programs" in program_text,
+            "native_graph_registration": protocol_derivation_witness(
+                protocol_witness_path, protocol_bridge_file
+            ),
+        },
+    }
+    disturbance["owner_bridge_readiness"] = bridge_readiness
+    manifest = {
+        "schema": "bonfyre.external-activation-manifest.v1",
+        "truth_level": "compiled_diagnostic_projection",
+        "total_occurrences": len(profiles),
+        "frontier_rows": len(selected),
+        "leverage_mode_counts": dict(mode_counts),
+        "next_owner_counts": dict(next_owner_counts),
+        "cohort_heads": cohort_heads,
+        "disturbance_acceptance": disturbance,
+        "cannot_infer": [
+            "rank -> source admission, authority, budget or value",
+            "cohort membership -> semantic equivalence between members",
+        ],
+    }
+
+    if args.write:
+        (GEN / "participation_activation_manifest.json").write_text(
+            json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        (GEN / "disturbance_acceptance_manifest.json").write_text(
+            json.dumps(disturbance, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        with (GEN / "participation_activation_frontier.jsonl").open("w", encoding="utf-8") as handle:
+            for row in selected:
+                handle.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
+
+    print(json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

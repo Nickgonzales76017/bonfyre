@@ -1,0 +1,5 @@
+200	-	{"jsonrpc":"2.0","id":"@ID@","result":{"isError":false,"structuredContent":{"run_id":"run-1","selected_term":"5","input_term":"add(0,mul(add(2,3),1))"}}}
+200	-	{"jsonrpc":"2.0","id":"@ID@","result":{"isError":false,"structuredContent":{"helix_id":"helix-1"}}}
+200	-	{"jsonrpc":"2.0","id":"@ID@","result":{"isError":false,"structuredContent":{"reduction_id":"red-1","state":"passed"}}}
+200	-	{"jsonrpc":"2.0","id":"@ID@","result":{"isError":false,"structuredContent":{"decision_id":"dec-1","decision":"candidate_only"}}}
+200	-	{"jsonrpc":"2.0","id":"@ID@","result":{"isError":false,"structuredContent":{"crux_id":"crux-1"}}}

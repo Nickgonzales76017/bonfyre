@@ -1,0 +1,18 @@
+{
+  "name": "community_presence",
+  "displayName": "Community Presence",
+  "description": "A voluntarily disclosed, expiring presence of a community member on one community surface. It is neither membership nor authority, and absence of a record says nothing about a person.",
+  "attributes": {
+    "presence": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "community": {"type": "string", "required": true},
+    "actor_subject": {"type": "string", "required": true},
+    "surface": {"type": "string", "required": true},
+    "disclosure": {"type": "string", "required": true},
+    "availability": {"type": "string", "required": true},
+    "attention": {"type": "string", "required": false},
+    "observed_at": {"type": "string", "required": true},
+    "expires_at": {"type": "string", "required": true},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

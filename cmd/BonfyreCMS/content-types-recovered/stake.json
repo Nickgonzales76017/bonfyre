@@ -1,0 +1,40 @@
+{
+  "name": "stake",
+  "displayName": "Stake",
+  "description": "A resident's soft-commitment to a service offer",
+  "attributes": {
+    "user_id": {
+      "type": "string",
+      "required": true
+    },
+    "user_name": {
+      "type": "string"
+    },
+    "unit_number": {
+      "type": "string"
+    },
+    "staked_at": {
+      "type": "datetime",
+      "required": true
+    },
+    "withdrawn_at": {
+      "type": "datetime"
+    },
+    "stake_status": {
+      "type": "enumeration",
+      "required": true,
+      "enum": [
+        "active",
+        "withdrawn",
+        "converted",
+        "expired"
+      ],
+      "default": "active"
+    },
+    "offer": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "service_offer"
+    }
+  }
+}

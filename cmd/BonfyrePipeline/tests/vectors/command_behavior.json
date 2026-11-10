@@ -1,0 +1,4 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-pipeline","binary_env":"BONFYRE_PIPELINE_BIN","cases":[
+{"name":"a table runs gate, ingest, meter, stitch, ledger and compress into one output directory","files":{"t.csv":"name,qty\nwidget,3\n"},"steps":[
+ {"argv":["run","t.csv","--out","po"],"env":{"HOME":"${tmp}"},"exit":0,"present":["${tmp}/po/normalized.txt","${tmp}/po/stitch-manifest.json","${tmp}/po/ledger.jsonl","${tmp}/po/compressed.zst","${tmp}/po/meter.db"]}]},
+{"name":"a missing input is refused","steps":[{"argv":["run","missing.csv","--out","po"],"env":{"HOME":"${tmp}"},"exit_nonzero":true}]}]}

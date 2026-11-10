@@ -1,0 +1,10 @@
+{"schema":"bonfyre.command-vectors.v1","binary":"bonfyre-flow","binary_env":"BONFYRE_FLOW_BIN","cases":[
+{"name":"a flow whose entry is one of its stages is defined, listed and shown","files":{"fl.json":"{\"id\":\"my-flow\",\"name\":\"My Flow\",\"entry\":\"ingest\",\"stages\":[{\"id\":\"ingest\",\"recipe\":\"intake\"},{\"id\":\"brief\",\"recipe\":\"brief\"}],\"edges\":[{\"from\":\"ingest\",\"to\":\"brief\"}]}"},"steps":[
+ {"argv":["define","fl.json"],"env":{"HOME":"${tmp}","BONFYRE_FLOW_DB":"${tmp}/f.db"},"exit":0,"contains":["(id=my-flow entry=ingest)"]},
+ {"argv":["list"],"env":{"HOME":"${tmp}","BONFYRE_FLOW_DB":"${tmp}/f.db"},"exit":0,"contains":["my-flow","ingest"]},
+ {"argv":["show","my-flow"],"env":{"HOME":"${tmp}","BONFYRE_FLOW_DB":"${tmp}/f.db"},"exit":0,"contains":["entry : ingest"]}]},
+{"name":"a flow with no stages, an unknown flow and an unknown run are refused","files":{"bad.json":"{\"id\":\"bad\"}"},"steps":[
+ {"argv":["define","bad.json"],"env":{"HOME":"${tmp}","BONFYRE_FLOW_DB":"${tmp}/f.db"},"exit":1},
+ {"argv":["show","nope"],"env":{"HOME":"${tmp}","BONFYRE_FLOW_DB":"${tmp}/f.db"},"exit":1},
+ {"argv":["run","nope","x"],"env":{"HOME":"${tmp}","BONFYRE_FLOW_DB":"${tmp}/f.db"},"exit":1},
+ {"argv":["list"],"env":{"HOME":"${tmp}","BONFYRE_FLOW_DB":"${tmp}/f.db"},"exit":0,"excludes":["bad"]}]}]}

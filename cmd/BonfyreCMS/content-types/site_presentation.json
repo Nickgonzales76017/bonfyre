@@ -1,0 +1,14 @@
+{
+  "name": "site_presentation",
+  "displayName": "Site Presentation",
+  "description": "The CMS-owned presentation selection for one addressed Aurekai site. It selects an observed Ghost profile and navigation over a semantic subject; it owns no content, source admission, audience, authority, money or effects.",
+  "attributes": {
+    "site_id": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "host": {"type": "string", "required": true},
+    "subject_address": {"type": "string", "required": true},
+    "profile": {"type": "string", "required": true},
+    "territory": {"type": "string", "required": true},
+    "navigation": {"type": "json", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

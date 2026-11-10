@@ -1,0 +1,19 @@
+{
+  "name": "music_release",
+  "displayName": "Music Release",
+  "description": "Publication/grouping identity for recordings presented as one release. Sequence is owned by music_release_track; commerce is owned by offers/listings; rights and credits remain separate relations.",
+  "attributes": {
+    "release_id": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "title": {"type": "string", "required": true},
+    "primary_artist_ref": {"type": "string", "required": true},
+    "release_type": {"type": "string", "required": true},
+    "release_date": {"type": "date", "required": false},
+    "label_ref": {"type": "string", "required": false},
+    "catalog_number": {"type": "string", "required": false},
+    "upc_ean": {"type": "string", "required": false},
+    "artwork_asset_ref": {"type": "string", "required": false},
+    "evidence_refs": {"type": "json", "required": false},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

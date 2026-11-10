@@ -1,0 +1,46 @@
+{
+  "schema": "bonfyre.route_economics.v1",
+  "classification": "MEASURED_ROUTE_ECONOMICS_AND_LIVENESS",
+  "observed_at": "2026-09-13",
+  "correction_to_an_earlier_number": {
+    "reported": "expected avoidance of $5.99 per call on affordance:observe",
+    "actual": "median $0.005",
+    "cause": "the mean was computed over a book containing one $149 source. A mean over a skewed market is a number nobody would ever be quoted, and on a three-seller coordinate it read $49.80 against a $0.40 median.",
+    "fix": "median is reported beside mean, markets of fewer than four sellers are marked thin, and the finance registration takes the median and refuses thin markets outright"
+  },
+  "price_book": {
+    "metered_sources_in_estate": 211,
+    "structured_price_published": 39,
+    "prose_price_not_parsed": 57,
+    "no_published_price": 106,
+    "fetches_required": 0,
+    "note": "read from bodies the sweep already retained"
+  },
+  "spread": {
+    "coordinates_considered": 83,
+    "registered_in_finance": 35,
+    "skipped_thin_or_unpriced": 48,
+    "typical_spread_usd_per_call": 0.005,
+    "best_spread_usd_per_call": 0.01,
+    "jobs_logged": 0,
+    "revenue_usd": 0
+  },
+  "what_this_says_about_the_business": "Routing avoids roughly half a cent per call in a market deep enough to price. Nobody builds anything on undercutting half a cent, so per-call arbitrage is not the asset. The asset is the table itself: 2,344 sources proven readable under a published permission, with digests, across 83 coordinates. Its worth is its freshness.",
+  "liveness": {
+    "sampled": 60,
+    "sampling": "one host per source, drawn from the sources a router would actually pick",
+    "still_answering_identical_digest": 33,
+    "moved_answering_new_content": 15,
+    "gone": 12,
+    "routable_share": 0.80,
+    "content_churn_share": 0.25,
+    "elapsed_since_sweep": "under one day"
+  },
+  "does_not_establish": [
+    "revenue; nobody was charged and nobody paid",
+    "demand; the estate's demand tables are empty and nobody has asked for anything",
+    "that a free source answers a need as well as a metered one",
+    "that the sample characterises the whole table",
+    "that a gone source is dead rather than refusing this agent, this path, or this moment"
+  ]
+}

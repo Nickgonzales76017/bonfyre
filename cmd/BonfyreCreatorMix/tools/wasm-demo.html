@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Creator browser mixer</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#131715;color:#ecf1eb;font:16px/1.55 system-ui,sans-serif}main{max-width:940px;margin:60px auto;padding:0 24px}h1{font-size:clamp(32px,6vw,54px);letter-spacing:-.04em;line-height:1.1;margin:12px 0 20px}.eyebrow{color:#a9c3ae;text-transform:uppercase;font-size:12px;letter-spacing:.14em}.muted{color:#a8b3a9}.panel{border:1px solid #35433a;border-radius:18px;background:#1c231f;padding:24px;margin:28px 0}canvas{display:block;width:100%;height:160px}.track{display:grid;grid-template-columns:80px 1fr 48px;gap:12px;align-items:center;margin:20px 0}input{width:100%;accent-color:#a8d4ad}output{font-variant-numeric:tabular-nums}button{background:#a8d4ad;color:#102416;border:0;padding:12px 22px;border-radius:8px;font:inherit;cursor:pointer;margin:8px 8px 0 0}button:disabled{opacity:.4;cursor:wait}button.secondary{background:#35433a;color:#ecf1eb}footer{font-size:14px;color:#a8b3a9}@media(max-width:500px){main{margin-top:32px;padding:0 16px}.panel{padding:16px}.track{grid-template-columns:65px 1fr 42px;gap:8px}}
+</style>
+<main><div class="eyebrow">Creator / browser audio</div><h1>Make the mix yours.</h1><p class="muted">Balance three generated tones, then play your six-second mix. Changes render in this browser.</p>
+<section class="panel" aria-label="Mix controls">
+<div class="track"><label for="pulse">Pulse</label><input id="pulse" type="range" min="0" max="1" step="0.01" value="0.4"><output for="pulse">0.40</output></div>
+<div class="track"><label for="chime">Chime</label><input id="chime" type="range" min="0" max="1" step="0.01" value="0.5"><output for="chime">0.50</output></div>
+<div class="track"><label for="harmony">Harmony</label><input id="harmony" type="range" min="0" max="1" step="0.01" value="0.5"><output for="harmony">0.50</output></div>
+<canvas aria-label="Mixed stereo waveform"></canvas><button id="play" disabled>Play mix</button><button id="stop" class="secondary" disabled>Stop</button><button id="reset" class="secondary" disabled>Reset levels</button>
+<p id="status" class="muted" role="status">Loading audio…</p></section>
+<footer>48 kHz stereo · Generated audio only. The initial mix is checked against the native render before playback is enabled.</footer></main>
+<script type="module" src="wasm-demo.mjs"></script></html>

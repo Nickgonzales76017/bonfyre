@@ -1,0 +1,199 @@
+#!/usr/bin/env python3
+"""Link retained items to the identities they mention or are, by exact rules.
+
+Reads the census as items (bonfyre-web-address census-items) and writes typed
+relations into the atlas -- never similarity:
+
+  mentions         an item's words name a known place or organization.  The
+                   gazetteer is what the census itself names: Wikidata places
+                   and the organizations whose own voices the estate reads.  A
+                   name of two or more words matches on its own; a single-word
+                   name ("Garland", "Irving", "Mesquite") needs North Texas in
+                   the same words or an item from a local source, because a
+                   single word is also a surname, a tree or a singer.
+  same_subject_as  an Internet Archive film and a Wikidata film are one film
+                   when their titles are the same words and the director
+                   Wikidata names appears in the Archive's credits.
+  happens_at       an event's own place text names a known place.  Only the
+                   place line counts, not the description: a talk about Dallas
+                   held in Denton happens in Denton.  The organizer's own
+                   identity counts too, because a university's calendar entry
+                   with no room named still happens at that university.
+
+Each relation's evidence names the rule and the words that matched.  The
+compiler's previous relations (evidence starting "linker:") are replaced as a
+whole, so a mention no longer found does not linger.
+
+Wikidata's recorded-music material supplies a second exact join.  The source
+already gives each retained audio item its Wikidata entity and encyclopaedia
+page.  We preserve that as `observed_as`, rather than pretending a file is the
+same thing as a composition, recording, release, credit, right, or performer.
+It is deliberately an observation of the source's identification, not a
+similarity result or a MusicBrainz-style canonicalization.
+
+  Historical Python oracle; live command is link_identities.mjs.
+"""
+import argparse, json, re, sqlite3, subprocess, sys, tempfile, os
+
+CONTEXT = re.compile(r"\b(Texas|TX|North Texas|DFW|Dallas[- ]Fort Worth|Metroplex|Tarrant|Collin County|Denton County|Dallas County)\b")
+LOCAL_FAMILIES = {"local-voices", "local-photos", "local-nature", "places", "live-music"}
+STOP_NAMES = {"Texas", "United States", "America", "Downtown", "Uptown", "Main Street"}
+
+
+def norm_title(t):
+    t = re.sub(r"\([^)]*\)", " ", t.lower())
+    t = re.sub(r"^(the|a|an)\s+", "", t.strip())
+    return re.sub(r"[^a-z0-9]+", " ", t).strip()
+
+
+def music_observations(items):
+    """Return only exact source-declared music/Wikidata observations.
+
+    This intentionally has a narrow, independently runnable closure.  A new
+    song identity should not wait behind a whole-estate text-gazetteer pass,
+    and it must not use title similarity to fill a missing identifier.
+    """
+    relations = []
+    for it in items:
+        if it.get("source") != "wikidata-recorded-music" or it.get("kind") != "audio":
+            continue
+        ident = (it.get("ident") or "").strip()
+        href = (it.get("href") or "").strip()
+        if not ident or not re.fullmatch(r"Q[1-9][0-9]*", ident):
+            continue
+        if not re.match(r"https?://(?:[a-z-]+\.)?wikipedia\.org/wiki/", href):
+            continue
+        relations.append({"relate": {
+            "src": "o/%s/%s" % (it["source"], it["key"]),
+            "relation": "observed_as",
+            "dst": "qid:" + ident,
+            "evidence": "linker: Wikidata recorded-music identifies this retained audio as %s; %s" % (ident, href),
+        }})
+    return relations
+
+
+def replace_relations(args, relations, kinds, out):
+    with open(out, "w") as f:
+        for relation in relations:
+            f.write(json.dumps(relation) + "\n")
+    for rel in kinds:
+        subprocess.run([args.atlas, "forget", "--db", args.db, "--relation", rel,
+                        "--evidence-prefix", "linker:"], check=True, capture_output=True)
+    imported = subprocess.run([args.atlas, "import", "--db", args.db, "--jsonl", out],
+                              capture_output=True, text=True)
+    return imported
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--items", required=True); ap.add_argument("--cms", required=True)
+    ap.add_argument("--atlas", required=True); ap.add_argument("--db", required=True)
+    ap.add_argument("--out")
+    ap.add_argument("--only-music-identities", action="store_true",
+                    help="refresh exact Wikidata recorded-music observations without waiting for the broader text linker")
+    args = ap.parse_args()
+    items = [json.loads(l) for l in open(args.items) if l.strip()]
+
+    if args.only_music_identities:
+        out = args.out or tempfile.mktemp(suffix=".jsonl")
+        relations = music_observations(items)
+        imported = replace_relations(args, relations, ("observed_as",), out)
+        if not args.out:
+            os.unlink(out)
+        print(json.dumps({"scope": "exact_wikidata_recorded_music", "items": len(items),
+                          "relations": {"observed_as": len(relations)},
+                          "import": imported.stdout.strip()}))
+        return 0 if imported.returncode == 0 else 1
+
+    gazetteer = {}
+    for it in items:
+        if it["family"] == "places" and it["ident"] and it["title"] not in STOP_NAMES and len(it["title"]) >= 4:
+            gazetteer.setdefault(it["title"], it["ident"])
+    con = sqlite3.connect("file:%s?mode=ro" % args.cms, uri=True)
+    publisher_of = {}
+    try:
+        for source, ident, name in con.execute("SELECT source, COALESCE(publisher_ident,''), COALESCE(publisher_name,'') FROM internet_source WHERE status='published' AND COALESCE(publisher_ident,'')<>''"):
+            publisher_of[source] = ident
+            if name and name not in STOP_NAMES and len(name) >= 4:
+                gazetteer.setdefault(name, ident)
+    except sqlite3.OperationalError:
+        pass
+    names = sorted(gazetteer, key=len, reverse=True)
+    patterns = [(n, gazetteer[n], re.compile(r"(?<![\w-])%s(?![\w-])" % re.escape(n)), len(n.split()) >= 2) for n in names]
+
+    relations = []
+    for it in items:
+        if it["family"] == "places":
+            continue
+        text = "%s %s" % (it["title"], it["body"])
+        address = "o/%s/%s" % (it["source"], it["key"])
+        local = it["family"] in LOCAL_FAMILIES or CONTEXT.search(text) is not None
+        found = set()
+        for name, qid, pattern, multiword in patterns:
+            if qid in found or qid == it.get("ident") or qid == it.get("about") or qid == publisher_of.get(it["source"]):
+                continue
+            if not pattern.search(text):
+                continue
+            if not multiword and not local:
+                continue
+            found.add(qid)
+            rule = "multi-word name" if multiword else ("single-word name with North Texas context" if CONTEXT.search(text) else "single-word name in a local source")
+            relations.append({"relate": {"src": address, "relation": "mentions", "dst": "qid:" + qid, "evidence": "linker: %s '%s'" % (rule, name)}})
+            if len(found) >= 6:
+                break
+
+    # A retained Wikidata recording has an exact source-declared entity.  This
+    # gives a public item its encyclopedia/work trail without inferring that a
+    # particular audio file and the entity are the same kind of music subject.
+    # `observed_as` is the narrow relation the atlas already owns for this:
+    # source assertion, not identity or authorship.
+    relations.extend(music_observations(items))
+
+    # Where an event happens, from the place the organizer stated.
+    for it in items:
+        if it.get("kind") != "event":
+            continue
+        address = "o/%s/%s" % (it["source"], it["key"])
+        where = (it.get("where") or "").strip()
+        placed = False
+        for name, qid, pattern, multiword in patterns:
+            if not where or not pattern.search(where):
+                continue
+            if not multiword and not (CONTEXT.search(where) or it["family"] in LOCAL_FAMILIES):
+                continue
+            relations.append({"relate": {"src": address, "relation": "happens_at", "dst": "qid:" + qid,
+                                         "evidence": "linker: the organizer's own place line names '%s'" % name}})
+            placed = True
+            break
+        if not placed and publisher_of.get(it["source"]):
+            relations.append({"relate": {"src": address, "relation": "happens_at", "dst": "qid:" + publisher_of[it["source"]],
+                                         "evidence": "linker: published by the organization whose calendar it is"}})
+
+    films = {}
+    for it in items:
+        if it["source"] == "wikidata-public-domain-films" and it["ident"]:
+            films.setdefault(norm_title(it["title"]), []).append(it)
+    for it in items:
+        if it["source"] != "archive-feature-films":
+            continue
+        for film in films.get(norm_title(it["title"]), []):
+            director = film["by"].strip()
+            surname = director.split()[-1] if director else ""
+            credits = "%s %s %s" % (it["by"], it["body"], it["title"])
+            if surname and len(surname) >= 3 and re.search(r"(?<![\w-])%s(?![\w-])" % re.escape(surname), credits):
+                relations.append({"relate": {"src": "o/%s/%s" % (it["source"], it["key"]), "relation": "same_subject_as", "dst": "qid:" + film["ident"],
+                                             "evidence": "linker: same title '%s' and director %s in the Archive's credits" % (film["title"], director)}})
+
+    out = args.out or tempfile.mktemp(suffix=".jsonl")
+    imported = replace_relations(args, relations, ("mentions", "same_subject_as", "happens_at", "observed_as"), out)
+    if not args.out:
+        os.unlink(out)
+    counts = {}
+    for r in relations:
+        counts[r["relate"]["relation"]] = counts.get(r["relate"]["relation"], 0) + 1
+    print(json.dumps({"gazetteer": len(gazetteer), "items": len(items), "relations": counts, "import": imported.stdout.strip()}))
+    return 0 if imported.returncode == 0 else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

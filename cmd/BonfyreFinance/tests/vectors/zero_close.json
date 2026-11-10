@@ -1,0 +1,515 @@
+{
+ "schema": "bonfyre.command-vectors.v1",
+ "binary": "bonfyre-finance",
+ "binary_env": "BONFYRE_FINANCE_BIN",
+ "replaces": [
+  "tests/zero_close.test.mjs"
+ ],
+ "cases": [
+  {
+   "name": "economic closure remains idempotent and cannot jump the human line",
+   "files": {
+    "opportunities.tsv": "id\tsource_kind\tsource_ref\tsource_digest\tobserved_at\ttitle\tdesired_state\tcompensation_cents\tcurrency\tdeadline\tcontact_boundary\texpected_compute_cents\texpected_external_cents\thuman_minutes\treuse_points\trisk_points\ngood\tclassified\thttps://example.test/good\t721f92920422345a3cc25621ae42c7c17eeeccebbdaa5a6ba6fd112cb30b3288\t2026-10-05T12:00:00Z\tRepair business website\tDeliver a verified working outcome\t30000\tUSD\t2026-10-10T00:00:00Z\temail\t200\t0\t10\t8\t2\nprep\tclassified\thttps://example.test/prep\t0b01a99ceb073a12b1751ffe319941156f72105c60ac5c9679220d42f430bcb6\t2026-10-05T12:00:00Z\tRepair business website\tDeliver a verified working outcome\t50000\tUSD\t2026-10-10T00:00:00Z\temail\t200\t0\t20\t8\t2\nunpriced\tclassified\thttps://example.test/unpriced\tf93c1fe976d86a26321fd90b0df76b23a1cbce60151f5452f3a8e2c4a7822205\t2026-10-05T12:00:00Z\tRepair business website\tDeliver a verified working outcome\t-\tUSD\t2026-10-10T00:00:00Z\temail\t200\t0\t10\t8\t2\nbad-margin\tclassified\thttps://example.test/bad-margin\t1b98324ec032809d3a87ee593e1349fdefac2ad4377f3ab35c928347d6614a22\t2026-10-05T12:00:00Z\tRepair business website\tDeliver a verified working outcome\t100\tUSD\t2026-10-10T00:00:00Z\temail\t200\t0\t10\t8\t2\nno-cost-basis\tclassified\thttps://example.test/no-cost-basis\t54e0c92e13d8d03f723dd1607fd39089259500a35549a075627e731c7e3c13f9\t2026-10-05T12:00:00Z\tRepair business website\tDeliver a verified working outcome\t30000\tUSD\t2026-10-10T00:00:00Z\temail\t200\t0\t10\t8\t2\n",
+    "requirements.tsv": "opportunity_id\tkind\trequirement_key\towner_ref\tstate\tevidence_ref\ngood\tcapability\tweb-delivery\tcapability:cms\tsatisfied\tcapability://cms\ngood\texternal\tcloud-placement\texternal:cloudflare\tsatisfied\treceipt://cloud\ngood\tauthority\tcustomer-access\tauthority:customer\tunresolved\t-\nprep\tcapability\tweb-delivery\tcapability:cms\tunresolved\t-\nprep\tmaterial\tcost_basis_confirmed\treviewer:cost-analysis\tsatisfied\treceipt://scoped-compute-and-labour\nunpriced\tcapability\tweb-delivery\tcapability:cms\tsatisfied\tcapability://cms\nbad-margin\tcapability\tweb-delivery\tcapability:cms\tsatisfied\tcapability://cms\n",
+    "collision.tsv": "id\tsource_kind\tsource_ref\tsource_digest\tobserved_at\ttitle\tdesired_state\tcompensation_cents\tcurrency\tdeadline\tcontact_boundary\texpected_compute_cents\texpected_external_cents\thuman_minutes\treuse_points\trisk_points\ngood\tclassified\thttps://example.test/good\t721f92920422345a3cc25621ae42c7c17eeeccebbdaa5a6ba6fd112cb30b3288\t2026-10-05T12:00:00Z\tChanged intent\tDeliver a verified working outcome\t30000\tUSD\t2026-10-10T00:00:00Z\temail\t200\t0\t10\t8\t2\nprep\tclassified\thttps://example.test/prep\t0b01a99ceb073a12b1751ffe319941156f72105c60ac5c9679220d42f430bcb6\t2026-10-05T12:00:00Z\tRepair business website\tDeliver a verified working outcome\t50000\tUSD\t2026-10-10T00:00:00Z\temail\t200\t0\t20\t8\t2\nunpriced\tclassified\thttps://example.test/unpriced\tf93c1fe976d86a26321fd90b0df76b23a1cbce60151f5452f3a8e2c4a7822205\t2026-10-05T12:00:00Z\tRepair business website\tDeliver a verified working outcome\t-\tUSD\t2026-10-10T00:00:00Z\temail\t200\t0\t10\t8\t2\nbad-margin\tclassified\thttps://example.test/bad-margin\t1b98324ec032809d3a87ee593e1349fdefac2ad4377f3ab35c928347d6614a22\t2026-10-05T12:00:00Z\tRepair business website\tDeliver a verified working outcome\t100\tUSD\t2026-10-10T00:00:00Z\temail\t200\t0\t10\t8\t2\nno-cost-basis\tclassified\thttps://example.test/no-cost-basis\t54e0c92e13d8d03f723dd1607fd39089259500a35549a075627e731c7e3c13f9\t2026-10-05T12:00:00Z\tRepair business website\tDeliver a verified working outcome\t30000\tUSD\t2026-10-10T00:00:00Z\temail\t200\t0\t10\t8\t2\n"
+   },
+   "steps": [
+    {
+     "argv": [
+      "--db",
+      "${tmp}/finance.db",
+      "opportunity",
+      "import",
+      "--file",
+      "${tmp}/opportunities.tsv"
+     ],
+     "exit": 0,
+     "contains": [
+      "imported\t5"
+     ]
+    },
+    {
+     "argv": [
+      "--db",
+      "${tmp}/finance.db",
+      "opportunity",
+      "import",
+      "--file",
+      "${tmp}/opportunities.tsv"
+     ],
+     "exit": 0,
+     "contains": [
+      "duplicates\t5"
+     ]
+    },
+    {
+     "argv": [
+      "--db",
+      "${tmp}/finance.db",
+      "opportunity",
+      "import",
+      "--file",
+      "${tmp}/collision.tsv"
+     ],
+     "exit_nonzero": true
+    },
+    {
+     "argv": [
+      "--db",
+      "${tmp}/finance.db",
+      "opportunity",
+      "requirements-import",
+      "--file",
+      "${tmp}/requirements.tsv"
+     ],
+     "exit": 0,
+     "contains": [
+      "requirements_imported\t7"
+     ]
+    },
+    {
+     "argv": [
+      "--db",
+      "${tmp}/finance.db",
+      "opportunity",
+      "requirements-import",
+      "--file",
+      "${tmp}/requirements.tsv"
+     ],
+     "exit": 0,
+     "contains": [
+      "requirements_duplicates\t7"
+     ]
+    },
+    {
+     "argv": [
+      "--db",
+      "${tmp}/finance.db",
+      "opportunity",
+      "rank",
+      "--limit",
+      "10"
+     ],
+     "exit": 0,
+     "contains": [
+      "good\t2\tsolvable\t30000",
+      "unpriced\t2\tsolvable\t-",
+      "prep\t1\tspecified\t50000\t200\t49800",
+      "good\t2\tsolvable\t30000\t-\t-",
+      "no-cost-basis\t1\tspecified\t30000\t-\t-"
+     ]
+    },
+    {
+     "argv": [
+      "--db",
+      "${tmp}/finance.db",
+      "opportunity",
+      "attest",
+      "--id",
+      "good",
+      "--kind",
+      "proposal",
+      "--ref",
+      "offer://good/v1"
+     ],
+     "exit": 0,
+     "contains": [
+      "Z3"
+     ]
+    },
+    {
+     "argv": [
+      "--db",
+      "${tmp}/finance.db",
+      "opportunity",
+      "attest",
+      "--id",
+      "prep",
+      "--kind",
+      "authority",
+      "--ref",
+      "operator://approval"
+     ],
+     "exit_nonzero": true
+    },
+    {
+     "argv": [
+      "--db",
+      "${tmp}/finance.db",
+      "opportunity",
+      "attest",
+      "--id",
+      "good",
+      "--kind",
+      "authority",
+      "--ref",
+      "operator://approval"
+     ],
+     "exit": 0,
+     "contains": [
+      "Z4"
+     ]
+    },
+    {
+     "argv": [
+      "--db",
+      "${tmp}/finance.db",
+      "opportunity",
+      "attest",
+      "--id",
+      "good",
+      "--kind",
+      "customer",
+      "--ref",
+      "email://customer-accept"
+     ],
+     "exit": 0,
+     "contains": [
+      "Z5"
+     ]
+    },
+    {
+     "argv": [
+      "--db",
+      "${tmp}/finance.db",
+      "opportunity",
+      "attest",
+      "--id",
+      "good",
+      "--kind",
+      "execution",
+      "--ref",
+      "receipt://execution"
+     ],
+     "exit_nonzero": true
+    },
+    {
+     "argv": [
+      "--db",
+      "${tmp}/finance.db",
+      "opportunity",
+      "requirement-set",
+      "--id",
+      "good",
+      "--kind",
+      "authority",
+      "--key",
+      "customer-access",
+      "--state",
+      "satisfied",
+      "--evidence",
+      "credential://grant"
+     ],
+     "exit": 0
+    },
+    {
+     "argv": [
+      "--db",
+      "${tmp}/finance.db",
+      "opportunity",
+      "attest",
+      "--id",
+      "good",
+      "--kind",
+      "execution",
+      "--ref",
+      "receipt://execution"
+     ],
+     "exit": 0,
+     "contains": [
+      "Z6"
+     ]
+    },
+    {
+     "argv": [
+      "--db",
+      "${tmp}/finance.db",
+      "opportunity",
+      "attest",
+      "--id",
+      "good",
+      "--kind",
+      "verification",
+      "--ref",
+      "browser://verified"
+     ],
+     "exit": 0,
+     "contains": [
+      "Z7"
+     ]
+    },
+    {
+     "argv": [
+      "--db",
+      "${tmp}/finance.db",
+      "opportunity",
+      "attest",
+      "--id",
+      "good",
+      "--kind",
+      "delivery",
+      "--ref",
+      "email://delivered"
+     ],
+     "exit": 0,
+     "contains": [
+      "Z8"
+     ]
+    },
+    {
+     "program": "${organ}/../BonfyreMeter/bonfyre-meter",
+     "argv": [
+      "admit-rate",
+      "--db",
+      "${tmp}/meter.db",
+      "--provider",
+      "local",
+      "--op",
+      "delivery",
+      "--unit",
+      "call",
+      "--amount",
+      "300",
+      "--evidence",
+      "receipt:test:rate",
+      "--effective-at",
+      "2026-10-01T00:00:00Z"
+     ],
+     "exit": 0
+    },
+    {
+     "program": "${organ}/../BonfyreMeter/bonfyre-meter",
+     "argv": [
+      "record",
+      "--db",
+      "${tmp}/meter.db",
+      "--key",
+      "k_good",
+      "--op",
+      "delivery",
+      "--provider",
+      "local",
+      "--receipt",
+      "r:good",
+      "--attempt-ref",
+      "a:good",
+      "--realization-ref",
+      "z:good",
+      "--at",
+      "2026-10-06T12:00:00Z"
+     ],
+     "exit": 0
+    },
+    {
+     "program": "${organ}/../BonfyrePay/bonfyre-pay",
+     "argv": [
+      "--db",
+      "${tmp}/pay.db",
+      "invoice",
+      "--user-id",
+      "1",
+      "--api-key",
+      "k_good",
+      "--meter-db",
+      "${tmp}/meter.db",
+      "--period",
+      "2026-10"
+     ],
+     "exit": 0
+    },
+    {
+     "argv": [
+      "--db",
+      "${tmp}/finance.db",
+      "opportunity",
+      "attest",
+      "--id",
+      "good",
+      "--kind",
+      "payment",
+      "--ref",
+      "payment://settled",
+      "--actual-cost-cents",
+      "350",
+      "--actual-human-minutes",
+      "8",
+      "--actual-revenue-cents",
+      "30000"
+     ],
+     "exit_nonzero": true
+    },
+    {
+     "argv": [
+      "--db",
+      "${tmp}/finance.db",
+      "opportunity",
+      "attest",
+      "--id",
+      "good",
+      "--kind",
+      "payment",
+      "--ref",
+      "payment://settled",
+      "--actual-cost-cents",
+      "350",
+      "--actual-human-minutes",
+      "8",
+      "--actual-revenue-cents",
+      "30000",
+      "--pay-db",
+      "${tmp}/pay.db"
+     ],
+     "exit_nonzero": true
+    },
+    {
+     "program": "${organ}/../BonfyrePay/bonfyre-pay",
+     "argv": [
+      "--db",
+      "${tmp}/pay.db",
+      "pay",
+      "--invoice-id",
+      "1",
+      "--amount",
+      "30000",
+      "--method",
+      "wire",
+      "--reference",
+      "payment://settled"
+     ],
+     "exit": 0
+    },
+    {
+     "argv": [
+      "--db",
+      "${tmp}/finance.db",
+      "opportunity",
+      "attest",
+      "--id",
+      "good",
+      "--kind",
+      "payment",
+      "--ref",
+      "payment://settled",
+      "--actual-cost-cents",
+      "350",
+      "--actual-human-minutes",
+      "8",
+      "--actual-revenue-cents",
+      "99999",
+      "--pay-db",
+      "${tmp}/pay.db"
+     ],
+     "exit_nonzero": true
+    },
+    {
+     "argv": [
+      "--db",
+      "${tmp}/finance.db",
+      "opportunity",
+      "attest",
+      "--id",
+      "good",
+      "--kind",
+      "payment",
+      "--ref",
+      "payment://settled",
+      "--actual-cost-cents",
+      "350",
+      "--actual-human-minutes",
+      "8",
+      "--actual-revenue-cents",
+      "30000",
+      "--pay-db",
+      "${tmp}/pay.db"
+     ],
+     "exit": 0,
+     "contains": [
+      "Z9"
+     ]
+    },
+    {
+     "argv": [
+      "--db",
+      "${tmp}/finance.db",
+      "opportunity",
+      "attest",
+      "--id",
+      "good",
+      "--kind",
+      "retention",
+      "--ref",
+      "profile://retained"
+     ],
+     "exit": 0,
+     "contains": [
+      "Z10"
+     ]
+    },
+    {
+     "argv": [
+      "--db",
+      "${tmp}/finance.db",
+      "opportunity",
+      "stats"
+     ],
+     "exit": 0,
+     "contains": [
+      "10\tretained\t1\t30000\t30000\t350\t8"
+     ]
+    },
+    {
+     "argv": [
+      "--db",
+      "${tmp}/finance.db",
+      "opportunity",
+      "queue-batch",
+      "--out",
+      "${tmp}/queue.tsv",
+      "--limit",
+      "100"
+     ],
+     "exit": 0,
+     "contains": [
+      "human_line\toutreach_not_authorized"
+     ]
+    },
+    {
+     "program": "cat",
+     "argv": [
+      "${tmp}/queue.tsv"
+     ],
+     "exit": 0,
+     "contains": [
+      "finance.zero-close.prepare",
+      "finance://opportunity/prep"
+     ],
+     "excludes": [
+      "good",
+      "bad-margin",
+      "unpriced",
+      "no-cost-basis"
+     ]
+    },
+    {
+     "program": "${home}/.bonfyre/bin/bonfyre-queue",
+     "argv": [
+      "enqueue-batch",
+      "${tmp}/queue.tsv",
+      "--db",
+      "${tmp}/workgraph.db"
+     ],
+     "exit": 0
+    },
+    {
+     "program": "sqlite3",
+     "argv": [
+      "${tmp}/workgraph.db",
+      "SELECT count(*) n FROM workgraph_nodes WHERE operator_id='queue.finance.zero-close.prepare'"
+     ],
+     "exit": 0,
+     "stdout": "1\n"
+    }
+   ]
+  }
+ ]
+}

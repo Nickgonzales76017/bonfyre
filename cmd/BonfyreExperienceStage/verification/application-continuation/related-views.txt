@@ -1,0 +1,28 @@
+RELATED_VIEWS_PASS	26
+release	98806626a5caf78743e0446483f3a4d4ff9338eba3cf29e4a5557d632cbba3f2
+PASS	native context retains the same record owner across distinct installations
+PASS	matching family and record key do not join different subjects
+PASS	saved work exposes both compatible installed views
+PASS	related views preserve the selected title as text
+PASS	personal work is absent from organizational continuation
+PASS	machine projection retains subject, owner coordinate and exact saved revision
+PASS	private continuation has no cross-origin or public-cache grant
+PASS	human and machine views use exactly the same destination links
+PASS	continuation pins receiving release and source body
+PASS	another authorized member continues in the other installed editor
+PASS	inspection and cross-editor continuation create no copied records or files
+PASS	a mismatched saved-body fingerprint is refused
+PASS	a replaced editor release cannot consume a former review
+PASS	unsupported or duplicated selection is refused: &context
+PASS	unsupported or duplicated selection is refused: &revision
+PASS	unsupported or duplicated selection is refused: &release
+PASS	unsupported or duplicated selection is refused: &redirect
+PASS	anonymous selection does not expose a private record
+PASS	another account cannot list related private views
+PASS	read-only context cannot become an effect route
+PASS	a changed source revision invalidates the view review
+PASS	a previously generated receiving link also refuses stale content
+PASS	the new view review follows the same record at its current revision
+PASS	deactivated installations disappear without deleting the work
+PASS	a stale installed dependency closure cannot offer a receiving view
+PASS	revocation closes a previously usable continuation

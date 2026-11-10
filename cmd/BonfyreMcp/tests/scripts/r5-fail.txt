@@ -1,0 +1,3 @@
+200	-	{"jsonrpc":"2.0","id":"@ID@","result":{"isError":false,"structuredContent":{"receipt":{"state":"passed"}}}}
+200	-	{"jsonrpc":"2.0","id":"@ID@","result":{"isError":false,"structuredContent":{"receipt":{"state":"failed"}}}}
+200	-	{"jsonrpc":"2.0","id":"@ID@","result":{"isError":false,"structuredContent":{"equal":true}}}

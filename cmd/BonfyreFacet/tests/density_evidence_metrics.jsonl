@@ -1,0 +1,5 @@
+{"schema":"bonfyre-exact-owner-query-evidence.v1","occurrence_id":"source:a","axis":"capability","state":"queried","owner":"ForeignTwin","query":"admission","truth":"owner_query_observed"}
+{"schema":"bonfyre-representation-use-evidence.v1","occurrence_id":"source:a","axis":"capability","state":"used","representation_id":"bitnet-i2s","truth":"representation_executed_for_declared_operation"}
+{"schema":"bonfyre-representation-use-evidence.v1","occurrence_id":"source:a","axis":"capability","state":"used","representation_id":"bitnet-i2s","truth":"duplicate_use_same_representation"}
+{"schema":"bonfyre-carrier-use-evidence.v1","occurrence_id":"source:a","axis":"protocol","state":"used","carrier_family":"quic","truth":"carrier_observed_in_execution"}
+{"schema":"bonfyre-carrier-use-evidence.v1","occurrence_id":"source:a","axis":"protocol","state":"used","carrier_family":"quic","truth":"duplicate_use_same_family"}

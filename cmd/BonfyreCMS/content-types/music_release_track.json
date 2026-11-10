@@ -1,0 +1,16 @@
+{
+  "name": "music_release_track",
+  "displayName": "Music Release Track",
+  "description": "Ordered placement of one Recording inside one Release. It owns release sequencing only: track position does not create a new Recording, composition, credit, right or playback state.",
+  "attributes": {
+    "release_track_id": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "release_ref": {"type": "string", "required": true},
+    "recording_ref": {"type": "string", "required": true},
+    "disc_number": {"type": "integer", "required": true},
+    "track_number": {"type": "integer", "required": true},
+    "title_override": {"type": "string", "required": false},
+    "explicit": {"type": "boolean", "required": false},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

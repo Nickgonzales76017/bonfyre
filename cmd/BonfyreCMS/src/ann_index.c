@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * BonfyreGraph — Upgrade III: ANN Index over Tensor Bindings
  *
@@ -715,7 +722,20 @@ static void sort_candidates(AnnCandidate *cands, int n_cands) {
     }
 }
 
-static char *format_candidates_json(const AnnCandidate *cands, int n_cands, int k) {
+/* The space a distance was measured in travels with the distance.
+ *
+ * Three code paths emit the same "distance" key: two measure Euclidean distance
+ * between the stored vectors, one measures it between quantised reconstructions.
+ * The same pair of documents therefore has two different distances, both
+ * correct, both called the same thing -- 0.922162 from the approximate path and
+ * 0.425191 from the exact one, agreeing on rank and disagreeing on magnitude.
+ * Rankings survive that. A threshold does not, and nothing in the payload told a
+ * caller which number it was holding. */
+#define ANN_SPACE_EXACT "exact"
+#define ANN_SPACE_QUANT "quantised-reconstruction"
+
+static char *format_candidates_json(const AnnCandidate *cands, int n_cands, int k,
+                                    const char *distance_space) {
     int result_count = n_cands < k ? n_cands : k;
     size_t cap = 2048;
     size_t off = 0;
@@ -736,8 +756,8 @@ static char *format_candidates_json(const AnnCandidate *cands, int n_cands, int 
         }
         if (i > 0) out[off++] = ',';
         off += (size_t)snprintf(out + off, cap - off,
-            "{\"target_id\":%d,\"distance\":%.6f,\"votes\":%d}",
-            cands[i].target_id, cands[i].dist, cands[i].votes);
+            "{\"target_id\":%d,\"distance\":%.6f,\"distance_space\":\"%s\",\"votes\":%d}",
+            cands[i].target_id, cands[i].dist, distance_space, cands[i].votes);
     }
     out[off++] = ']';
     out[off] = '\0';
@@ -822,6 +842,11 @@ static int rerank_quantized_shortlist_exact(sqlite3 *db,
  * ================================================================ */
 
 int ann_build_index(sqlite3 *db, const char *content_type) {
+    /* Repair vectors before indexing them: a member with bindings and no
+     * cells is one the indexer would skip without saying so. */
+    bf_cms_prune_orphan_cells(db, content_type);
+    bf_cms_backfill_cells(db, content_type);
+
     /* Clear existing index */
     {
         sqlite3_stmt *del;
@@ -1070,8 +1095,8 @@ int ann_knn_query(sqlite3 *db, const char *content_type,
         while (off + 128 >= cap) { cap *= 2; out = realloc(out, cap); }
         if (i > 0) out[off++] = ',';
         off += (size_t)snprintf(out + off, cap - off,
-            "{\"target_id\":%d,\"distance\":%.6f,\"votes\":%d}",
-            cands[i].target_id, cands[i].dist, cands[i].votes);
+            "{\"target_id\":%d,\"distance\":%.6f,\"distance_space\":\"%s\",\"votes\":%d}",
+            cands[i].target_id, cands[i].dist, ANN_SPACE_EXACT, cands[i].votes);
     }
 
     out[off++] = ']'; out[off] = '\0';
@@ -1156,7 +1181,7 @@ int ann_knn_query_quantized(sqlite3 *db, const char *content_type,
     {
         int rerank_limit = rerank_quantized_shortlist_exact(db, qvec, qdim, cands, n_cands, k);
         bench_metrics_record_ann_quant(rerank_limit);
-        *out_json = format_candidates_json(cands, rerank_limit, k);
+        *out_json = format_candidates_json(cands, rerank_limit, k, ANN_SPACE_EXACT);
     }
     free(cands);
     return n_cands < k ? n_cands : k;
@@ -1262,8 +1287,8 @@ int ann_knn_by_entry(sqlite3 *db, const char *content_type,
             while (off + 128 >= cap) { cap *= 2; out = realloc(out, cap); }
             if (i > 0) out[off++] = ',';
             off += (size_t)snprintf(out + off, cap - off,
-                "{\"target_id\":%d,\"distance\":%.6f,\"votes\":%d}",
-                cands[i].target_id, cands[i].dist, cands[i].votes);
+                "{\"target_id\":%d,\"distance\":%.6f,\"distance_space\":\"%s\",\"votes\":%d}",
+                cands[i].target_id, cands[i].dist, ANN_SPACE_EXACT, cands[i].votes);
         }
         out[off++] = ']'; out[off] = '\0';
         *out_json = out;
@@ -1352,8 +1377,8 @@ int ann_knn_by_entry(sqlite3 *db, const char *content_type,
         while (off + 128 >= cap) { cap *= 2; out = realloc(out, cap); }
         if (i > 0) out[off++] = ',';
         off += (size_t)snprintf(out + off, cap - off,
-            "{\"target_id\":%d,\"distance\":%.6f,\"votes\":%d}",
-            cands[i].target_id, cands[i].dist, cands[i].votes);
+            "{\"target_id\":%d,\"distance\":%.6f,\"distance_space\":\"%s\",\"votes\":%d}",
+            cands[i].target_id, cands[i].dist, ANN_SPACE_EXACT, cands[i].votes);
     }
     out[off++] = ']'; out[off] = '\0';
     *out_json = out;
@@ -1494,7 +1519,7 @@ int ann_knn_by_entry_quantized(sqlite3 *db, const char *content_type,
     {
         int rerank_limit = rerank_quantized_shortlist_exact(db, qvec, qdim, cands, n_cands, k);
         bench_metrics_record_ann_quant(rerank_limit);
-        *out_json = format_candidates_json(cands, rerank_limit, k);
+        *out_json = format_candidates_json(cands, rerank_limit, k, ANN_SPACE_QUANT);
     }
     free(cands);
     return n_cands < k ? n_cands : k;

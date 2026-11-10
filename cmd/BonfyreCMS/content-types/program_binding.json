@@ -1,0 +1,44 @@
+{
+  "name": "program_binding",
+  "displayName": "Program Binding",
+  "description": "A program instance lowered into one semantic slot of an existing world. It says which of the program's roles that slot carries and, where an application genuinely lowers that material, which application binding does it. A binding without a lowering application is a declared slot that no surface can fill yet, and is published as exactly that rather than as an empty page section.",
+  "attributes": {
+    "binding_id": {
+      "type": "string",
+      "required": true,
+      "uniqueWithinNamespace": true
+    },
+    "instance_id": {
+      "type": "string",
+      "required": true
+    },
+    "site_id": {
+      "type": "string",
+      "required": true
+    },
+    "slot_id": {
+      "type": "string",
+      "required": true
+    },
+    "program_role": {
+      "type": "string",
+      "required": true
+    },
+    "lowered_by": {
+      "type": "string",
+      "required": false
+    },
+    "continuity_key": {
+      "type": "string",
+      "required": false
+    },
+    "cannot_infer": {
+      "type": "text",
+      "required": true
+    },
+    "status": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

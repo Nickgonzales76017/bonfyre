@@ -1,0 +1,11 @@
+{
+  "name": "site_nav",
+  "displayName": "Site Navigation",
+  "description": "Authored institution navigation consumed by human pages and safe speculation candidates. A navigation row names a route; it grants no authority over that route.",
+  "attributes": {
+    "label": {"type": "string", "required": true},
+    "href": {"type": "string", "required": true},
+    "position": {"type": "integer", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}
