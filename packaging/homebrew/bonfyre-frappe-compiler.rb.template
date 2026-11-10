@@ -1,0 +1,28 @@
+# Formula template. @URL@ and @SHA256@ are filled by packaging/homebrew/try-install.sh
+# from a tarball of the four directories the compiler builds from, or by a
+# release from a tagged tarball.
+class BonfyreFrappeCompiler < Formula
+  desc "Compiles Frappe DocType metadata and field conditions into inspectable plans"
+  homepage "https://github.com/Nickgonzales76017/bonfyre"
+  url "@URL@"
+  version "@VERSION@"
+  sha256 "@SHA256@"
+  license "MIT"
+
+  uses_from_macos "sqlite"
+
+  def install
+    cd "cmd/BonfyreFrappeCompiler" do
+      # The tree's default is -Werror against the compiler it was written with.
+      system "make", "compile", "WERROR="
+      system "make", "install", "PREFIX=#{prefix}"
+    end
+  end
+
+  test do
+    out = shell_output("#{bin}/bonfyre-frappe-compiler --eval-condition 'eval:doc.a==1' --doc '{\"a\":\"1\"}'")
+    assert_match "\"result\":true", out
+    out = shell_output("#{bin}/bonfyre-frappe-compiler --eval-condition 'eval:doc.a != doc.b' --doc '{\"a\":[\"x\"],\"b\":[\"x\"]}'")
+    assert_match "\"result\":true", out
+  end
+end

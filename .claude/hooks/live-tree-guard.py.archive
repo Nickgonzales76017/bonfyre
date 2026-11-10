@@ -1,0 +1,73 @@
+#!/usr/bin/env python3
+"""Archived Python hook; superseded by live-tree-guard.mjs and CUE law.
+
+Refuse the destructive commands this project has actually been bitten by.
+
+These are not hypothetical. Each pattern here corresponds to something that
+went wrong, or came close to it, in real sessions:
+
+  * Removing a release tree that a symlink or a running process still points
+    at. `command-plane-current`, `recursive-hypervisor-v6-current` and
+    `current-source-bundle` all resolve into `releases/`, and the address organ
+    runs its binary out of `matrix-edge`.
+  * Force-unmounting the live BonfyreFS FUSE daemon, which sticks and takes
+    fabric.db's readers with it.
+  * `git gc --prune` / `reset --hard` / `checkout .` against a tree whose only
+    copy of 121 archived modules is uncommitted working state.
+  * Writing to a database the address organ is serving read-only.
+
+PreToolUse on Bash. Denies with the reason rather than asking, because the
+point is to make the reason visible, not to add a keystroke.
+"""
+import json
+import re
+import sys
+
+# (pattern, why). Ordered most-specific first; the first match wins.
+RULES: list[tuple[str, str]] = [
+    (r"\bumount\s+(-f|-l)|\bdiskutil\s+unmount\s+force|\bfusermount\s+-u",
+     "Force-unmounting BonfyreFS wedges the mount and takes fabric.db's live "
+     "readers with it. Stop the daemon through its unit instead."),
+    (r"\brm\b[^|;]*/opt/bonfyre/releases/(command-plane-sealed|command-plane-current|"
+     r"matrix-edge|native-current|recursive-hypervisor-v6-1785391843|"
+     r"bonfyre-src-2026-07-21T21-50-30-375Z)",
+     "That release tree is live: a *-current symlink resolves into it, or the "
+     "address organ is running its binary from it. Archive it first and verify "
+     "the archive before the original goes."),
+    (r"\bgit\s+gc\b[^|;]*--prune",
+     "This working tree carries deletions whose only other copy is an untracked "
+     "*.archive file. Pruning unreachable objects is not reversible; confirm "
+     "what is unreachable with `git fsck --unreachable` first."),
+    (r"\bgit\s+(reset\s+--hard|checkout\s+--?\s*\.|clean\s+-[a-z]*f)",
+     "This tree has substantial uncommitted state that is not recoverable from "
+     "the index. Stash or commit before discarding."),
+    (r"\brm\b[^|;]*/var/lib/bonfyre/(state|cms|matrix|auth)",
+     "That is live institutional state being served right now, not a cache."),
+    (r"\bsqlite3\s+\S*(fabric|matrix|auth|finance|operator)\.db[^|;]*\b"
+     r"(INSERT|UPDATE|DELETE|DROP|ALTER)\b",
+     "Write to that store through the organ that owns it. A direct write "
+     "bypasses the receipts and the invariants the organ maintains."),
+]
+
+
+def main() -> int:
+    try:
+        event = json.load(sys.stdin)
+    except Exception:
+        return 0
+    command = (event.get("tool_input") or {}).get("command") or ""
+    for pattern, why in RULES:
+        if re.search(pattern, command, re.IGNORECASE):
+            print(json.dumps({
+                "hookSpecificOutput": {
+                    "hookEventName": "PreToolUse",
+                    "permissionDecision": "deny",
+                    "permissionDecisionReason": why,
+                }
+            }))
+            return 0
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,6 +1,6 @@
 name: Architecture Atlas
 
-# The atlas constitution is code (architecture/atlas.py). This runs it on every
+# The atlas constitution is code (architecture/atlas.mjs). This runs it on every
 # change so a maturity-laundering claim, a view that swallows its children, or an
 # interaction to a non-existent architecture fails the build -- the atlas cannot
 # rot into prose without CI noticing.
@@ -9,10 +9,28 @@ on:
   push:
     paths:
       - "architecture/**"
+      - "components/BonfyreDecision/**"
+      - "scripts/residual-to-work.mjs"
+      - "scripts/residual-work-owners.cue"
+      - "scripts/tests/residual-to-work.test.mjs"
+      - "lib/libbonfyre/src/bf_decision_head.c"
+      - "lib/libbonfyre/include/bf_decision_head.h"
+      - "cmd/BonfyreExternalEstate/decision-program-plane.cue"
+      - "cmd/BonfyreExternalEstate/tools/decision_program_plane.mjs"
+      - "cmd/BonfyreExternalEstate/tests/decision_program_plane.test.mjs"
       - ".github/workflows/architecture-atlas.yml"
   pull_request:
     paths:
       - "architecture/**"
+      - "components/BonfyreDecision/**"
+      - "scripts/residual-to-work.mjs"
+      - "scripts/residual-work-owners.cue"
+      - "scripts/tests/residual-to-work.test.mjs"
+      - "lib/libbonfyre/src/bf_decision_head.c"
+      - "lib/libbonfyre/include/bf_decision_head.h"
+      - "cmd/BonfyreExternalEstate/decision-program-plane.cue"
+      - "cmd/BonfyreExternalEstate/tools/decision_program_plane.mjs"
+      - "cmd/BonfyreExternalEstate/tests/decision_program_plane.test.mjs"
   workflow_dispatch:
 
 jobs:
@@ -21,27 +39,38 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - uses: oven-sh/setup-bun@v2
+
+      - uses: actions/setup-node@v4
         with:
-          python-version: "3.12"
+          node-version: "24"
+
+      - uses: cue-lang/setup-cue@v1.0.0
+        with:
+          version: v0.17.1
 
       - name: Validate the atlas constitution
-        run: python3 architecture/atlas.py validate
+        run: bun architecture/atlas.mjs validate
 
       - name: Report architecture loss (informational)
-        run: python3 architecture/atlas.py loss
+        run: bun architecture/atlas.mjs loss
 
       - name: Honest maturity rollup (informational)
-        run: python3 architecture/atlas.py maturity
+        run: bun architecture/atlas.mjs maturity
 
       - name: Refresh the consumable index
         run: |
-          python3 architecture/atlas.py export
+          bun architecture/atlas.mjs export
           if ! git diff --quiet architecture/atlas.index.json; then
-            echo "::warning::atlas.index.json is stale; run 'python3 architecture/atlas.py export' and commit."
+            echo "::warning::atlas.index.json is stale; run 'bun architecture/atlas.mjs export' and commit."
           fi
 
       - name: Atlas self-tests
         run: |
-          python3 -m pip install --quiet pytest
-          python3 -m pytest architecture/tests/ -q
+          bun test architecture/tests
+
+      - name: Shared typed decision contracts (offline)
+        run: make decision-plane-test
+
+      - name: Native joint decision head memory safety
+        run: make -C components/BonfyreDecision/native sanitize

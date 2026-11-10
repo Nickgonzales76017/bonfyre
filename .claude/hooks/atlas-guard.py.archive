@@ -1,0 +1,57 @@
+#!/usr/bin/env python3
+"""Archived Python hook; superseded by atlas-guard.mjs.
+
+Hold an atlas edit to the atlas's own law, at the moment it is made.
+
+`atlas.py validate` runs in CI and in the pre-commit hook, which means a
+maturity claim written at 10am is caught at 5pm, after the session that wrote it
+has ended and the reasoning behind it is gone. The registry's rules -- no
+maturity laundering, collapse only through a view, state what cannot be inferred
+-- are cheapest to satisfy while the edit is still in hand.
+
+PostToolUse: reads the tool payload on stdin, and if the edit touched an
+architecture .yaff, validates. A failure is returned as a blocking decision so
+the model sees the violation and fixes it in the same turn.
+"""
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parents[2]
+
+
+def main() -> int:
+    try:
+        event = json.load(sys.stdin)
+    except Exception:
+        return 0
+
+    path = (event.get("tool_input") or {}).get("file_path") or ""
+    if not path.endswith(".yaff") or "/architecture/" not in path:
+        return 0
+
+    proc = subprocess.run(
+        [sys.executable, "architecture/atlas.py", "validate"],
+        cwd=REPO, capture_output=True, text=True, timeout=180,
+    )
+    if proc.returncode == 0:
+        # Say what the registry now holds, so the count is visible at the edit
+        # rather than only at commit.
+        print(proc.stdout.strip().splitlines()[-1] if proc.stdout.strip() else "atlas valid")
+        return 0
+
+    detail = (proc.stdout + proc.stderr).strip()[-3000:]
+    print(json.dumps({
+        "decision": "block",
+        "reason": (
+            "The atlas rejects this edit. It is the canonical registry, so an "
+            "invalid entry is not a lint failure to clean up later -- it is a "
+            "false claim about what this system is. Fix it now:\n\n" + detail
+        ),
+    }))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

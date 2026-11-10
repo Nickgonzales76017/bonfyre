@@ -1,0 +1,254 @@
+BONFŸRE ESTATE ↔ CLI DRIFT INVESTIGATION
+============================================================================
+generated: 2026-09-29T00:03:05.124088+00:00
+repo:      /Users/nickgonzales/Developer/Bonfyre
+estate:    /Users/nickgonzales/.bonfyre/estate-local
+
+1. FRONT DOOR
+----------------------------------------------------------------------------
+bonfyre path: /Users/nickgonzales/.local/bin/bonfyre
+estate visible: True
+estate classified Local Extra: True
+estate says unregistered: True
+bonfyre estate --help exit: 0
+direct bonfyre-estate --help exit: 0
+
+bonfyre list estate:
+bonfyre  command surface
+filter    estate
+summary   1 commands  1 ready  0 missing
+next      bonfyre doctor   bonfyre workflow list   bonfyre run history
+
+Local Extras  1/1 ready
+  ready             estate               Discovered local bonfyre-* binary not yet registered in the core route table
+
+Front-door Built-ins  4/4 ready
+  ready             self                 Front-door self-optimization, snapshot, repair, and ontology surface
+  ready             precision            Front-door precision routing and compression planning surface
+  ready             status               Front-door command drift, registry status, and ops snapshot surface
+  ready             doctor               Front-door health, registry, and sync helper surface
+
+Run 'bonfyre <command> --help' for command help, or 'bonfyre list <term>' to filter.
+Built-ins like 'bonfyre self ...' and 'bonfyre precision ...' live inside the bonfyre front door.
+
+2. ESTATE DATABASE FILES
+----------------------------------------------------------------------------
+cms                 105283584 bytes  2026-09-28T17:41:12.633718  /Users/nickgonzales/.bonfyre/estate-local/cms.db
+frontier            110841856 bytes  2026-09-28T18:48:30.064254  /Users/nickgonzales/.bonfyre/estate-local/frontier.db
+items                45326336 bytes  2026-09-28T17:39:32.036510  /Users/nickgonzales/.bonfyre/estate-local/items.db
+subject_fabric      441077760 bytes  2026-09-27T08:29:33.995911  /Users/nickgonzales/.bonfyre/estate-local/subject_fabric.db
+
+3. CMS CENSUS — cms.db / internet_source
+----------------------------------------------------------------------------
+published rows:             2467
+distinct published sources: 2467
+
+family                   kind                sources
+news                     text                   2380
+datasets                 text                     39
+gaming                   text                     15
+vulnerabilities          text                     13
+events                   event                     3
+podcasts                 audio                     3
+commons                  image                     2
+films                    video                     2
+history                  text                      2
+music                    audio                     2
+attention                text                      1
+commerce                 text                      1
+live-music               audio                     1
+local-nature             image                     1
+local-photos             image                     1
+places                   image                     1
+
+4. SOURCE FRONTIER — frontier.db / channel
+----------------------------------------------------------------------------
+state                        channels   census_sources
+admitted                         2364             2364
+candidate                      107344                0
+eligible                           61               61
+waiting_credential                  1                1
+
+5. RETAINED MATERIAL — items.db / item
+----------------------------------------------------------------------------
+retained items:            69535
+distinct retained sources: 2208
+
+family                   kind                  items    sources
+news                     story                 51099       2149
+news                     audio                  9357         47
+news                     photo                  6455        129
+news                     video                   668         17
+podcasts                 audio                   424          2
+datasets                 story                   319          8
+gaming                   story                   292         14
+vulnerabilities          story                   263         13
+news                     event                    63          1
+music                    story                    60          2
+films                    story                    52          2
+attention                story                    45          1
+history                  story                    39          2
+films                    video                    36          2
+music                    audio                    36          2
+places                   story                    36          1
+podcasts                 story                    36          2
+local-nature             photo                    33          1
+commons                  story                    30          1
+local-photos             photo                    29          1
+events                   event                    24          3
+places                   photo                    24          1
+live-music               audio                    22          1
+commons                  photo                    20          2
+commerce                 story                    18          1
+live-music               story                    18          1
+local-nature             story                    18          1
+local-photos             story                    18          1
+gaming                   video                     1          1
+
+6. CLOSURE — frontier → census → retained
+----------------------------------------------------------------------------
+frontier_to_cms:
+  published_cms_reader: 2364
+retained_to_cms:
+  published_cms_reader: 2208
+retained_frontier_to_cms:
+  published_cms_reader: 2117
+
+7. SUBJECT FABRIC
+----------------------------------------------------------------------------
+tables: subject_bundle, subject_material, subject_reader, subject_route, subject_route_item, subject_route_phase, subject_route_reader, subject_route_region
+subject_material             202275
+subject_route                32414
+subject_route_phase          0
+subject_route_reader         29085
+subject_route_region         131362
+subject_route_item           662126
+
+8. REPO TRACE
+----------------------------------------------------------------------------
+[bonfyre-estate]
+  cmd/BonfyreWebAddress/src/main.c:29501: printf("{\"version\":\"bonfyre-estate-v1\",\"hosts\":[");
+  .bonfyre/run8/convergence/deletion-proofs/dcc4c2dc90ab6872836a.json:8: "path": "/Users/nickgonzales/Downloads/bonfyre-estate-payload-audit.sqlite3-wal",
+  .bonfyre/run8/convergence/deletion-proofs/13184fb9c80936ac40d6.json:8: "path": "/Users/nickgonzales/Downloads/bonfyre-estate-payload-audit-v2.sqlite3-shm",
+  .bonfyre/run8/convergence/deletion-proofs/f840e960514f64446732.json:8: "path": "/Users/nickgonzales/Downloads/bonfyre-estate-payload-audit.sqlite3",
+  .bonfyre/run8/convergence/deletion-proofs/4c72c9f651492e0fbd59.json:8: "path": "/Users/nickgonzales/Downloads/bonfyre-estate-payload-audit.log",
+  .bonfyre/run8/convergence/deletion-proofs/b266018b2f5600354328.json:8: "path": "/Users/nickgonzales/Downloads/bonfyre-estate-payload-audit-v2.sqlite3",
+  .bonfyre/run8/convergence/deletion-proofs/3d8fb1a4a06feafab8b3.json:8: "path": "/Users/nickgonzales/Downloads/bonfyre-estate-payload-audit-v2.report.json",
+  .bonfyre/run8/convergence/deletion-proofs/2c380b085daa3f4ecba7.json:8: "path": "/Users/nickgonzales/Downloads/bonfyre-estate-payload-audit-v2.log",
+  .bonfyre/run8/convergence/deletion-proofs/3f470f2ff3a2aa8a9863.json:8: "path": "/Users/nickgonzales/Downloads/bonfyre-estate-payload-audit.sqlite3-shm",
+  .bonfyre/run8/convergence/deletion-proofs/8a153489417dfb589750.json:8: "path": "/Users/nickgonzales/Downloads/bonfyre-estate-payload-audit-v2.sqlite3-wal",
+  .bonfyre-runtime/patch-backups/pagecomposition-surface-runtime-20260922T070804Z/source/cmd/BonfyreWebAddress/src/main.c:24144: printf("{\"version\":\"bonfyre-estate-v1\",\"hosts\":[");
+  .bonfyre-runtime/patch-backups/pagecomposition-surface-runtime-20260922T071231Z/source/cmd/BonfyreWebAddress/src/main.c:24144: printf("{\"version\":\"bonfyre-estate-v1\",\"hosts\":[");
+  .bonfyre-runtime/patch-backups/pagecomposition-surface-runtime-20260922T070332Z/source/cmd/BonfyreWebAddress/src/main.c:24144: printf("{\"version\":\"bonfyre-estate-v1\",\"hosts\":[");
+
+[Local Extras]
+  cmd/BonfyreCLI/src/main.c:48: #define SEC_LOCAL     "Local Extras"
+
+[not yet registered in the core route table]
+  cmd/BonfyreCLI/src/main.c:2097: json_escape(stdout, "Discovered local bonfyre-* binary not yet registered in the core route table");
+  cmd/BonfyreCLI/src/main.c:2367: "Discovered local bonfyre-* binary not yet registered in the core route table");
+
+[estate-local]
+  .bonfyre-spatial-oauth-closeout.json:7: "estate": "/Users/nickgonzales/.bonfyre/estate-local",
+  deploy/launchd/com.bonfyre.public-web-address.plist:8: <string>--db</string><string>/Users/nickgonzales/.bonfyre/estate-local/matrix.db</string>
+  deploy/launchd/com.bonfyre.public-web-address.plist:9: <string>--auth-db</string><string>/Users/nickgonzales/.bonfyre/estate-local/auth.db</string>
+  deploy/launchd/com.bonfyre.public-web-address.plist:18: <key>BONFYRE_CMS_DB</key><string>/Users/nickgonzales/.bonfyre/estate-local/cms.db</string>
+  deploy/launchd/com.bonfyre.public-web-address.plist:19: <key>BONFYRE_SOURCE_FRONTIER_DB</key><string>/Users/nickgonzales/.bonfyre/estate-local/frontier.db</string>
+  deploy/launchd/com.bonfyre.public-web-address.plist:20: <key>BONFYRE_PRICES_DB</key><string>/Users/nickgonzales/.bonfyre/estate-local/prices.db</string>
+  deploy/launchd/com.bonfyre.public-web-address.plist:21: <key>BONFYRE_FINANCE_DB</key><string>/Users/nickgonzales/.bonfyre/estate-local/finance.db</string>
+  deploy/launchd/com.bonfyre.public-web-address.plist:22: <key>BONFYRE_COMMITMENT_DB</key><string>/Users/nickgonzales/.bonfyre/estate-local/commitments.db</string>
+  deploy/launchd/com.bonfyre.public-web-address.plist:23: <key>BONFYRE_FRAPPE_SURFACE_DB</key><string>/Users/nickgonzales/.bonfyre/estate-local/frappe-surfaces.db</string>
+  deploy/launchd/com.bonfyre.public-web-address.plist:24: <key>BONFYRE_FOREIGN_ROOT</key><string>/Users/nickgonzales/.bonfyre/estate-local/foreign</string>
+  scripts/publish_market.py:56: ap.add_argument("--estate", default=os.path.expanduser("~/.bonfyre/estate-local"))
+  scripts/build_semantic_index.sh:22: ESTATE="${BONFYRE_ESTATE:-$HOME/.bonfyre/estate-local}"
+  scripts/publish_estate.sh:21: ESTATE="${BONFYRE_ESTATE:-$HOME/.bonfyre/estate-local}"
+  scripts/address_every_publisher.py:49: ap.add_argument("--estate", default=os.path.expanduser("~/.bonfyre/estate-local"))
+  scripts/project_listings.py:60: ap.add_argument("--estate", default=os.path.expanduser("~/.bonfyre/estate-local"))
+  scripts/probe_continuously.sh:19: ESTATE="${BONFYRE_ESTATE:-$HOME/.bonfyre/estate-local}"
+  scripts/publish_economics.py:207: ap.add_argument("--estate", default=os.path.expanduser("~/.bonfyre/estate-local"))
+  scripts/discover_continuously.sh:10: ESTATE="${BONFYRE_ESTATE:-$HOME/.bonfyre/estate-local}"
+  scripts/bootstrap_funding_frontier.py:326: parser.add_argument("--cms", default=os.path.expanduser("~/.bonfyre/estate-local/cms.db"))
+  scripts/compose_member_worlds.py:381: ap.add_argument("--estate", default=os.path.expanduser("~/.bonfyre/estate-local"))
+
+[BONFYRE_CMS_DB]
+  cmd/BonfyreCMS/tools/install_ghost_marketplace_templates.sh:11: db=${BONFYRE_CMS_DB:-/var/lib/bonfyre/cms/bonfyre_cms.db}
+  cmd/BonfyreCMS/src/main.c:90: * Worse, the deployment declares BONFYRE_CMS_DB and this binary read no
+  cmd/BonfyreCMS/src/main.c:99: *   2. BONFYRE_CMS_DB, the deployment's own declaration
+  cmd/BonfyreCMS/src/main.c:121: * declares alongside BONFYRE_CMS_DB -- was equally unread. A store found next to
+  cmd/BonfyreCMS/src/main.c:159: env = getenv("BONFYRE_CMS_DB");
+  cmd/BonfyreCMS/src/main.c:3612: "[fatal] no CMS store coordinate: pass --db, or set BONFYRE_CMS_DB "
+  cmd/BonfyreWebAddress/tests/surface_pattern_contract_test.sh:92: BONFYRE_CMS_BINARY="$cms" BONFYRE_CMS_DB="$cmsdb" BONFYRE_CMS_SCHEMAS="$schemas" \
+  cmd/BonfyreWebAddress/tests/page_items_test.sh:101: BONFYRE_CMS_BINARY="$cms" BONFYRE_CMS_DB="$cmsdb" BONFYRE_CMS_SCHEMAS="$schemas" \
+  cmd/BonfyreWebAddress/tests/page_saved_test.sh:41: BONFYRE_AUTH_BINARY="$auth" BONFYRE_CMS_BINARY="$cms" BONFYRE_CMS_DB="$cmsdb" BONFYRE_CMS_SCHEMAS="$schemas" \
+  cmd/BonfyreWebAddress/tests/foundry_behavior_owner_test.sh:54: BONFYRE_AUTH_BINARY="$auth" BONFYRE_CMS_DB="$cmsdb" BONFYRE_CMS_SCHEMAS="$schemas" \
+  cmd/BonfyreWebAddress/tests/page_events_test.sh:72: BONFYRE_CMS_DB="$cmsdb" BONFYRE_FOREIGN_ROOT="$tmp/foreign" "$web" census-items >"$tmp/items.jsonl" 2>/dev/null
+  cmd/BonfyreWebAddress/tests/page_events_test.sh:85: BONFYRE_CMS_DB="$cmsdb" BONFYRE_FOREIGN_ROOT="$tmp/foreign" BONFYRE_LOCAL_ZONE="America/Chicago" \
+  cmd/BonfyreWebAddress/tests/site_program_native_test.sh:64: BONFYRE_CMS_BINARY="$cms" BONFYRE_CMS_DB="$cmsdb" BONFYRE_CMS_SCHEMAS="$schemas" BONFYRE_FOREIGN_ROOT="$tmp/foreign" BONFYRE_PUBLIC_PROJECTION_DB="$projection_cache" "$web" serve --db "$matrix" --auth-db "$authdb" --port "$port" --site-root "$root/site/matrix" >"$tmp/server.log" 2>&1 &
+  cmd/BonfyreWebAddress/tests/role_program_owner_test.sh:41: BONFYRE_AUTH_BINARY="$auth" BONFYRE_CMS_DB="$cmsdb" BONFYRE_CMS_SCHEMAS="$schemas" \
+  cmd/BonfyreWebAddress/tests/page_public_commons_test.sh:127: BONFYRE_CMS_DB="$cmsdb" BONFYRE_FOREIGN_ROOT="$tmp/foreign" "$web" census-items >"$tmp/items.jsonl" 2>/dev/null
+  cmd/BonfyreWebAddress/tests/page_public_commons_test.sh:137: BONFYRE_CMS_DB="$cmsdb" BONFYRE_CMS_SCHEMAS="$schemas" BONFYRE_FOREIGN_ROOT="$tmp/foreign" BONFYRE_LATENT_ATLAS_DB="$tmp/atlas.db" \
+  cmd/BonfyreWebAddress/tests/page_programs_test.sh:161: BONFYRE_CMS_BINARY="$cms" BONFYRE_CMS_DB="$cmsdb" BONFYRE_CMS_SCHEMAS="$schemas" \
+  cmd/BonfyreWebAddress/tests/page_kin_test.sh:54: BONFYRE_CMS_DB="$tmp/cms.db" BONFYRE_FOREIGN_ROOT="$tmp/foreign" \
+  cmd/BonfyreWebAddress/tests/page_kin_test.sh:130: BONFYRE_ITEM_ARCHIVE_DB="$tmp/items.db" BONFYRE_CMS_DB="$tmp/cms.db" BONFYRE_FOREIGN_ROOT="$tmp/foreign" \
+  cmd/BonfyreWebAddress/tests/page_channels_test.sh:70: BONFYRE_SOURCE_FRONTIER_DB="$tmp/frontier.db" BONFYRE_CMS_DB="$tmp/cms.db" BONFYRE_FOREIGN_ROOT="$tmp/foreign" \
+
+[BONFYRE_SOURCE_FRONTIER_DB]
+  cmd/BonfyreWebAddress/tests/page_channels_test.sh:70: BONFYRE_SOURCE_FRONTIER_DB="$tmp/frontier.db" BONFYRE_CMS_DB="$tmp/cms.db" BONFYRE_FOREIGN_ROOT="$tmp/foreign" \
+  cmd/BonfyreWebAddress/tests/household_plane_test.sh:63: BONFYRE_AUTH_BINARY="$auth" BONFYRE_CMS_DB="$cdb" BONFYRE_SOURCE_FRONTIER_DB="$fdb" \
+  cmd/BonfyreWebAddress/src/main.c:8110: const char *frontier = getenv("BONFYRE_SOURCE_FRONTIER_DB");
+  cmd/BonfyreWebAddress/src/main.c:8591: const char *frontier = getenv("BONFYRE_SOURCE_FRONTIER_DB");
+  cmd/BonfyreWebAddress/src/main.c:8721: const char *path = getenv("BONFYRE_SOURCE_FRONTIER_DB");
+  cmd/BonfyreWebAddress/src/main.c:9791: const char *frontier = getenv("BONFYRE_SOURCE_FRONTIER_DB");
+  cmd/BonfyreWebAddress/src/main.c:10077: public_projection_fingerprint(fingerprint, getenv("BONFYRE_SOURCE_FRONTIER_DB"),
+  cmd/BonfyreWebAddress/src/main.c:18046: const char *path = getenv("BONFYRE_SOURCE_FRONTIER_DB");
+  cmd/BonfyreWebAddress/src/main.c:22413: const char *fpath = getenv("BONFYRE_SOURCE_FRONTIER_DB");
+  cmd/BonfyreWebAddress/src/main.c:22798: const char *fpath = getenv("BONFYRE_SOURCE_FRONTIER_DB");
+  cmd/BonfyreWebAddress/src/main.c:23480: const char *fpath = getenv("BONFYRE_SOURCE_FRONTIER_DB");
+  cmd/BonfyreWebAddress/src/main.c:23747: const char *fpath = getenv("BONFYRE_SOURCE_FRONTIER_DB");
+  deploy/fly/Dockerfile:61: BONFYRE_SOURCE_FRONTIER_DB=/var/lib/bonfyre/frontier/source_frontier.db \
+  deploy/fly/start-estate.sh:36: for db in "$BONFYRE_CMS_DB" "$BONFYRE_SOURCE_FRONTIER_DB" "$BONFYRE_ITEM_ARCHIVE_DB" "$BONFYRE_PRICES_DB"; do
+  deploy/launchd/com.bonfyre.public-web-address.plist:19: <key>BONFYRE_SOURCE_FRONTIER_DB</key><string>/Users/nickgonzales/.bonfyre/estate-local/frontier.db</string>
+  components/BonfyreProject/tests/discovery_set_test.sh:63: run() { BONFYRE_CMS_DB="$cms" BONFYRE_SOURCE_FRONTIER_DB="$frontier" "$bin" "$@"; }
+  components/BonfyreProject/tests/foreign_release_projection_test.sh:62: BONFYRE_SOURCE_FRONTIER_DB="$frontier" \
+  components/BonfyreProject/tests/foreign_release_projection_test.sh:70: BONFYRE_SOURCE_FRONTIER_DB="$frontier" \
+  components/BonfyreProject/tests/foreign_release_projection_test.sh:79: BONFYRE_SOURCE_FRONTIER_DB="$frontier" \
+  components/BonfyreProject/tests/foreign_release_projection_test.sh:91: BONFYRE_SOURCE_FRONTIER_DB="$frontier" \
+
+[BONFYRE_ITEM_ARCHIVE_DB]
+  cmd/BonfyreWebAddress/tests/page_events_test.sh:82: BONFYRE_ITEM_ARCHIVE_DB="$tmp/items.db" "$web" archive-items --items "$tmp/items.jsonl" >"$tmp/archive.json"
+  cmd/BonfyreWebAddress/tests/page_events_test.sh:86: BONFYRE_LATENT_ATLAS_DB="$tmp/atlas.db" BONFYRE_ITEM_ARCHIVE_DB="$tmp/items.db" \
+  cmd/BonfyreWebAddress/tests/page_kin_test.sh:56: BONFYRE_ITEM_ARCHIVE_DB="$tmp/items.db" "$web" archive-items --items "$tmp/items.jsonl" >/dev/null
+  cmd/BonfyreWebAddress/tests/page_kin_test.sh:130: BONFYRE_ITEM_ARCHIVE_DB="$tmp/items.db" BONFYRE_CMS_DB="$tmp/cms.db" BONFYRE_FOREIGN_ROOT="$tmp/foreign" \
+  cmd/BonfyreWebAddress/src/main.c:8590: const char *archive = getenv("BONFYRE_ITEM_ARCHIVE_DB");
+  cmd/BonfyreWebAddress/src/main.c:9797: const char *archive = getenv("BONFYRE_ITEM_ARCHIVE_DB");
+  cmd/BonfyreWebAddress/src/main.c:9843: if (channel[0]) shown += bf_source_depth_channel(stdout, frontier, channel, route, getenv("BONFYRE_ITEM_ARCHIVE_DB"));
+  cmd/BonfyreWebAddress/src/main.c:10078: getenv("BONFYRE_ITEM_ARCHIVE_DB"), clock);
+  cmd/BonfyreWebAddress/src/main.c:10621: const char *path = getenv("BONFYRE_ITEM_ARCHIVE_DB");
+  cmd/BonfyreWebAddress/src/main.c:30405: if (!archive) { fprintf(stderr, "archive-items: BONFYRE_ITEM_ARCHIVE_DB is not set\n"); if (f && f != stdin) fclose(f); return 2; }
+  deploy/fly/Dockerfile:62: BONFYRE_ITEM_ARCHIVE_DB=/var/lib/bonfyre/archive/items.db \
+  deploy/fly/start-estate.sh:36: for db in "$BONFYRE_CMS_DB" "$BONFYRE_SOURCE_FRONTIER_DB" "$BONFYRE_ITEM_ARCHIVE_DB" "$BONFYRE_PRICES_DB"; do
+  components/BonfyreProject/tests/foreign_release_projection_test.sh:63: BONFYRE_ITEM_ARCHIVE_DB="$items" \
+  components/BonfyreProject/tests/foreign_release_projection_test.sh:71: BONFYRE_ITEM_ARCHIVE_DB="$items" \
+  components/BonfyreProject/tests/foreign_release_projection_test.sh:80: BONFYRE_ITEM_ARCHIVE_DB="$items" \
+  components/BonfyreProject/tests/foreign_release_projection_test.sh:92: BONFYRE_ITEM_ARCHIVE_DB="$items" \
+  components/BonfyreProject/tests/foreign_release_projection_test.sh:98: BONFYRE_ITEM_ARCHIVE_DB="$items" \
+  components/BonfyreProject/tests/destination_release_test.sh:83: BONFYRE_ITEM_ARCHIVE_DB="$items" BONFYRE_PRICES_DB="$prices" \
+  components/BonfyreProject/tests/destination_release_test.sh:188: BONFYRE_ITEM_ARCHIVE_DB="$items" BONFYRE_PRICES_DB="$prices" \
+  components/BonfyreProject/src/main.c:1576: const char *items_path = getenv("BONFYRE_ITEM_ARCHIVE_DB");
+
+[BONFYRE_SUBJECT_FABRIC_DB]
+  cmd/BonfyreWebAddress/tests/page_programs_test.sh:163: BONFYRE_SUBJECT_FABRIC_DB="$fabric" \
+  cmd/BonfyreWebAddress/src/main.c:8592: const char *fabric = getenv("BONFYRE_SUBJECT_FABRIC_DB");
+  cmd/BonfyreWebAddress/src/main.c:8755: const char *path = getenv("BONFYRE_SUBJECT_FABRIC_DB");
+  scripts/publish_estate.sh:82: export BONFYRE_SUBJECT_FABRIC_DB="$ESTATE/subject_fabric.db"
+  .bonfyre-runtime/patch-backups/pagecomposition-surface-runtime-20260922T070804Z/source/cmd/BonfyreWebAddress/src/main.c:8135: const char *path = getenv("BONFYRE_SUBJECT_FABRIC_DB");
+  .bonfyre-runtime/patch-backups/pagecomposition-surface-runtime-20260922T071231Z/source/cmd/BonfyreWebAddress/src/main.c:8135: const char *path = getenv("BONFYRE_SUBJECT_FABRIC_DB");
+  .bonfyre-runtime/patch-backups/pagecomposition-surface-runtime-20260922T070332Z/source/cmd/BonfyreWebAddress/src/main.c:8135: const char *path = getenv("BONFYRE_SUBJECT_FABRIC_DB");
+
+9. OBSERVED DRIFT
+----------------------------------------------------------------------------
+- CLI: `estate` is currently arriving through local executable discovery, not the core route table.
+- Estate census: 2467 distinct published internet_source rows.
+- Frontier: 2364 distinct admitted/active census sources.
+- Retained material: 2208 distinct item sources.
+- No repair is attempted. The report is intended to show exactly where the mature estate truth lives and where the front-door command model diverges.

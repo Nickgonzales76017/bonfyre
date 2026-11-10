@@ -1,0 +1,11 @@
+[Unit]
+Description=Weekly source-fabric work for the Bonfyre estate
+
+[Timer]
+OnCalendar=Sun *-*-* 11:00:00 UTC
+RandomizedDelaySec=1800
+Persistent=true
+Unit=bonfyre-automate-weekly.service
+
+[Install]
+WantedBy=timers.target

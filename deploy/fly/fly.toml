@@ -1,0 +1,48 @@
+# aurekai, on a host that can be replaced without asking anyone's permission.
+#
+# The machine is disposable; the volume is the estate.  A redeploy replaces the
+# image and keeps the state.  If this host ever goes the way of the last one,
+# the same image and a restored volume bring it back somewhere else, and the
+# address does not move, because the address belongs to the app rather than to
+# a machine in someone's data centre.
+app = "aurekai"
+primary_region = "dfw"          # the estate reads Fort Worth and Dallas; it serves from there
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  BONFYRE_LOCAL_ZONE = "America/Chicago"
+  BONFYRE_WEB_ADDRESS_WORKERS = "2"
+
+[[mounts]]
+  source = "bonfyre_state"
+  destination = "/var/lib/bonfyre"
+
+[http_service]
+  internal_port = 8787
+  force_https = true
+  # The estate keeps its own composed pages and its own state on a volume, so
+  # it is one machine and stays one machine: a second would keep a second,
+  # divergent estate.
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 200
+    hard_limit = 400
+
+[checks.serving]
+  type = "http"
+  port = 8787
+  method = "GET"
+  path = "/healthz"
+  interval = "30s"
+  timeout = "5s"
+  grace_period = "20s"
+
+[[vm]]
+  size = "shared-cpu-2x"
+  memory = "2gb"

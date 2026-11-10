@@ -1,0 +1,192 @@
+{
+  "schema": "bonfyre-native-parity-witness.v1.3",
+  "generated_at": "2026-09-29T05:51:23.496297+00:00",
+  "sqlite": {
+    "source": "/Users/nickgonzales/.bonfyre/estate-local/representation-manifold.db",
+    "mode": "stable_temp_snapshot",
+    "wal": false,
+    "attempts": [
+      "live_ro:unable to open database file"
+    ]
+  },
+  "target_roundtrip": {
+    "exact_roundtrip": true,
+    "original_rows": 23836,
+    "law_rows": 118,
+    "exception_rows": 60,
+    "exception_groups": 2,
+    "original_digest": "6a5d811b45e94639ffd9123e3f725fcaf7388819fc2eac8fd34281c47b631f7f",
+    "reconstructed_digest": "6a5d811b45e94639ffd9123e3f725fcaf7388819fc2eac8fd34281c47b631f7f"
+  },
+  "evidence_grades": {
+    "DOCUMENT_OR_HISTORICAL_EVIDENCE": 10,
+    "LOCAL_FILE_WEAK": 41,
+    "SUBSTRATE_CHECKOUT": 8,
+    "NATIVE_SOURCE": 15,
+    "RUNTIME_EXECUTABLE": 10,
+    "INCIDENTAL_OR_DEPENDENCY_TEXT": 17,
+    "UNRESOLVED_PATH_OR_TOKEN": 15,
+    "DECLARATIVE_ARCHITECTURE": 2
+  },
+  "cas_summary": {
+    "body_count": 201,
+    "head_count": 202,
+    "missing_files": 0,
+    "digest_mismatches": 0,
+    "size_mismatches": 0,
+    "heads_without_body": 0,
+    "shared_body_count": 1
+  },
+  "native_store_table_count": 12,
+  "delta_field_grades": {
+    "STRONG": 5,
+    "PARTIAL": 4,
+    "UNMAPPED": 2
+  },
+  "lance": {
+    "datasets": 172,
+    "index_artifacts": 0,
+    "index_bytes": 0,
+    "files": 604,
+    "bytes": 39434164
+  },
+  "graph": {
+    "files": 116,
+    "bytes": 11972185,
+    "extensions": {
+      ".parquet": 116
+    },
+    "sample_paths": [
+      "edges/atlas_projection__address__chart_id.parquet",
+      "edges/atlas_snapshot__snapshot_id__chart_id.parquet",
+      "edges/atlas_snapshot_member__address__snapshot_id.parquet",
+      "edges/auth_external_account_links__id__provider.parquet",
+      "edges/auth_external_account_links__id__user_id.parquet",
+      "edges/auth_sessions__id__user_id.parquet",
+      "edges/auth_users__id__gate_key.parquet",
+      "edges/cms__ann_buckets__id__family_id.parquet",
+      "edges/cms__ann_buckets__id__target_id.parquet",
+      "edges/cms__ann_quantized__id__family_id.parquet",
+      "edges/cms__ann_quantized__id__target_id.parquet",
+      "edges/cms__family_members__target_id__family_id.parquet",
+      "edges/cms__incr_eigen__id__family_id.parquet",
+      "edges/cms__ops__id__actor.parquet",
+      "edges/cms__ops__id__parent.parquet",
+      "edges/cms__ops__id__target.parquet",
+      "edges/cms__ops__id__target_id.parquet",
+      "edges/cms__tensor_cells__id__family_id.parquet",
+      "edges/cms__tensor_cells__id__target_id.parquet",
+      "edges/cms_application_binding__id__binding_id.parquet",
+      "edges/cms_application_binding__id__continuity_key.parquet",
+      "edges/cms_application_binding__id__site_id.parquet",
+      "edges/cms_application_binding__id__slot_id.parquet",
+      "edges/cms_assent_signature__id__signature_id.parquet",
+      "edges/cms_bounty__id__bounty_id.parquet",
+      "edges/cms_bounty__id__project_id.parquet",
+      "edges/cms_design_fingerprint__id__fingerprint_id.parquet",
+      "edges/cms_design_fingerprint__id__reference_source.parquet",
+      "edges/cms_destination_release__id__receipt_ref.parquet",
+      "edges/cms_destination_release__id__release_id.parquet",
+      "edges/cms_destination_release__id__source_ref.parquet",
+      "edges/cms_discovery_candidate__id__candidate_id.parquet",
+      "edges/cms_discovery_candidate__id__set_id.parquet",
+      "edges/cms_discovery_set__id__set_id.parquet",
+      "edges/cms_estate_version__id__version_id.parquet",
+      "edges/cms_funding_work_package__id__instance_id.parquet",
+      "edges/cms_funding_work_package__id__package_id.parquet",
+      "edges/cms_governance_decision__id__decision_id.parquet",
+      "edges/cms_governance_decision__id__evidence_ref.parquet",
+      "edges/cms_governance_decision__id__proposal_id.parquet",
+      "edges/cms_governance_proposal__id__proposal_id.parquet",
+      "edges/cms_governance_proposal__id__subject_ref.parquet",
+      "edges/cms_governance_vote__id__proposal_id.parquet",
+      "edges/cms_governance_vote__id__vote_id.parquet",
+      "edges/cms_internet_source__id__source.parquet",
+      "edges/cms_live_session__id__replay_ref.parquet",
+      "edges/cms_live_session__id__session_id.parquet",
+      "edges/cms_media_program__id__asset_ref.parquet",
+      "edges/cms_media_program__id__program_id.parquet",
+      "edges/cms_media_program__id__subject_ref.parquet",
+      "edges/cms_music_credit__id__actor_ref.parquet",
+      "edges/cms_music_credit__id__credit_id.parquet",
+      "edges/cms_music_credit__id__evidence_ref.parquet",
+      "edges/cms_music_credit__id__subject_ref.parquet",
+      "edges/cms_music_recording__id__master_asset_ref.parquet",
+      "edges/cms_music_recording__id__primary_artist_ref.parquet",
+      "edges/cms_music_recording__id__recording_id.parquet",
+      "edges/cms_music_recording__id__work_ref.parquet",
+      "edges/cms_music_right__id__evidence_ref.parquet",
+      "edges/cms_music_right__id__holder_ref.parquet",
+      "edges/cms_music_right__id__right_id.parquet",
+      "edges/cms_music_right__id__subject_ref.parquet",
+      "edges/cms_music_work__id__work_id.parquet",
+      "edges/cms_outbound_message__id__message_id.parquet",
+      "edges/cms_presentation_template__id__reference_source.parquet",
+      "edges/cms_program_binding__id__binding_id.parquet",
+      "edges/cms_program_binding__id__continuity_key.parquet",
+      "edges/cms_program_binding__id__instance_id.parquet",
+      "edges/cms_program_binding__id__site_id.parquet",
+      "edges/cms_program_binding__id__slot_id.parquet",
+      "edges/cms_program_instance__id__instance_id.parquet",
+      "edges/cms_program_instance__id__owner_subject.parquet",
+      "edges/cms_program_instance__id__site_id.parquet",
+      "edges/cms_program_instance__id__template_id.parquet",
+      "edges/cms_program_requirement__id__instance_id.parquet",
+      "edges/cms_program_requirement__id__requirement_id.parquet",
+      "edges/cms_program_template__id__template_id.parquet",
+      "edges/cms_project__id__project_id.parquet",
+      "edges/cms_project__id__subject_ref.parquet",
+      "edges/cms_project_support__id__project_id.parquet"
+    ]
+  },
+  "iceberg": {
+    "old_tree_exists": true,
+    "new_tree_exists": true,
+    "old_realization_states": [
+      [
+        "superseded",
+        0,
+        202
+      ]
+    ],
+    "new_realization_states": [
+      [
+        "physical",
+        1,
+        202
+      ]
+    ],
+    "overlay_states": [
+      [
+        "iceberg",
+        "superseded_mutable_path",
+        202
+      ],
+      [
+        "iceberg-cas",
+        "physical_zero_copy",
+        202
+      ],
+      [
+        "xtable-delta-hudi",
+        "config_ready",
+        202
+      ]
+    ]
+  },
+  "substrait": {
+    "physical_plan_files": 194,
+    "missing_semantic_kinds": [
+      "subject_fabric.pre-foundation-20260927T1321.subject_bundle",
+      "subject_fabric.pre-foundation-20260927T1321.subject_material",
+      "subject_fabric.pre-foundation-20260927T1321.subject_reader",
+      "subject_fabric.pre-foundation-20260927T1321.subject_route",
+      "subject_fabric.pre-foundation-20260927T1321.subject_route_item",
+      "subject_fabric.pre-foundation-20260927T1321.subject_route_phase",
+      "subject_fabric.pre-foundation-20260927T1321.subject_route_reader",
+      "subject_fabric.pre-foundation-20260927T1321.subject_route_region"
+    ]
+  },
+  "scaffolding_files": 19,
+  "scaffolding_bytes": 67984756
+}

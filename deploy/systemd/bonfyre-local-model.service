@@ -1,0 +1,38 @@
+[Unit]
+# A local generation service that owes nothing to a remote provider.
+#
+# The operator's missions may constrain bounded work to local paths, and until
+# now there was nowhere for that work to go: a provider returning
+# credit_balance_exhausted ended the run. This is the destination.
+#
+# It is deliberately not bonfyre-moe. That organ shells out to llama-cli with
+# `-cnv`, a flag current llama.cpp has renamed, so the wrapper fails against a
+# freshly built backend. Calling llama-server directly removes a version-skew
+# dependency between two moving projects and keeps the model resident instead
+# of reloading 5.6 GB on every call.
+Description=Bonfyre Local Model (llama.cpp, OpenAI-compatible)
+After=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Environment=LLAMA_CACHE=/opt/bonfyre/models/.cache
+ExecStart=/usr/local/bin/llama-server \
+  --model /opt/bonfyre/models/qwen1.5-moe-a2.7b-chat/Qwen1.5-MoE-A2.7B-Chat-Q2_K.gguf \
+  --host 127.0.0.1 --port 8088 \
+  --ctx-size 4096 --threads 2 --parallel 1 \
+  --alias bonfyre-local
+Restart=on-failure
+RestartSec=10
+# Loopback only. This is an internal organ, not a public surface: nothing here
+# authenticates, so it must never be reachable from outside the host.
+IPAddressAllow=localhost
+IPAddressDeny=any
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/bonfyre/models
+
+[Install]
+WantedBy=multi-user.target

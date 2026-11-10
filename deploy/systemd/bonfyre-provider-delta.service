@@ -1,0 +1,19 @@
+[Unit]
+Description=Bonfyre ProviderState embedding completion FactDelta outbox
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=ubuntu
+# ProviderState owns only completion availability.  This publisher writes its
+# durable outbox into the shared FactDelta directory; AddressPlane later makes
+# the dependency cut and ProviderCompiler still rechecks the owner row.
+EnvironmentFile=/etc/bonfyre/address-plane.env
+ExecStart=/bin/sh -ec '/usr/local/bin/bonfyre-provider reconcile-embedding-deltas --db "${BONFYRE_PROVIDER_DB}" && /usr/local/bin/bonfyre-provider emit-embedding-deltas --db "${BONFYRE_PROVIDER_DB}" --dir "${BONFYRE_FACT_DELTAS}"'
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/bonfyre

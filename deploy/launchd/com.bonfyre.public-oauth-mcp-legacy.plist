@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.bonfyre.public-oauth-mcp-legacy</string>
+  <key>ProgramArguments</key><array>
+    <string>/Users/nickgonzales/.bun/bin/bun</string>
+    <string>/Users/nickgonzales/Developer/Bonfyre/integrations/mcp/bonfyre_oauth_gateway.mjs</string>
+  </array>
+  <!-- No public-origin variables: issuer and resource both stay on the apex,
+       https://aurekai.work, which is the identity existing connectors hold. -->
+  <key>EnvironmentVariables</key><dict>
+    <key>BONFYRE_OAUTH_MCP_HOST</key><string>127.0.0.1</string>
+    <key>BONFYRE_OAUTH_MCP_PORT</key><string>8794</string>
+    <key>BONFYRE_AUTH_BINARY</key><string>/Users/nickgonzales/.local/bin/bonfyre-auth</string>
+    <key>BONFYRE_AUTH_DB</key><string>/Users/nickgonzales/.bonfyre/estate-local/auth.db</string>
+    <key>BONFYRE_PROJECT_MCP_URL</key><string>http://127.0.0.1:3051/mcp</string>
+    <key>BONFYRE_PROJECT_MCP_TOKEN_FILE</key><string>/Users/nickgonzales/.bonfyre/mcp/token</string>
+    <key>BONFYRE_CREDENTIALS_BINARY</key><string>/Users/nickgonzales/.bonfyre/bin/bonfyre-credentials</string>
+    <key>BONFYRE_CREDENTIALS_DB</key><string>/Users/nickgonzales/.bonfyre/estate-local/credentials.db</string>
+    <key>BONFYRE_CMS_BINARY</key><string>/Users/nickgonzales/.bonfyre/bin/bonfyre-cms</string>
+    <key>BONFYRE_CMS_DB</key><string>/Users/nickgonzales/.bonfyre/estate-local/cms.db</string>
+    <key>BONFYRE_CMS_SCHEMAS</key><string>/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreCMS/content-types</string>
+    <key>BONFYRE_PROJECT_BINARY</key><string>/Users/nickgonzales/.bonfyre/bin/bonfyre-project</string>
+    <key>BONFYRE_FOREIGN_ROOT</key><string>/Users/nickgonzales/.bonfyre/estate-local/foreign</string>
+    <key>BONFYRE_UPPER90_BINARY</key><string>/Users/nickgonzales/.bonfyre/bin/bonfyre-upper90</string>
+    <key>PATH</key><string>/Users/nickgonzales/.bonfyre/bin:/Users/nickgonzales/.local/bin:/opt/homebrew/bin:/usr/bin:/bin</string>
+  </dict>
+  <key>WorkingDirectory</key><string>/Users/nickgonzales/Developer/Bonfyre/integrations/mcp</string>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>ThrottleInterval</key><integer>5</integer>
+  <key>ProcessType</key><string>Background</string>
+  <key>StandardOutPath</key><string>/Users/nickgonzales/.bonfyre/logs/public-oauth-mcp-legacy.out.log</string>
+  <key>StandardErrorPath</key><string>/Users/nickgonzales/.bonfyre/logs/public-oauth-mcp-legacy.err.log</string>
+</dict></plist>

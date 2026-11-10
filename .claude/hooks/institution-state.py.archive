@@ -1,0 +1,113 @@
+#!/usr/bin/env python3
+"""Archived Python hook; active entrypoint is institution-state.mjs.
+
+Without this, a session begins by rediscovering the same facts: whether the
+surface is up, whether local generation can run, what the desk has open, how
+much disk is left. Those are cheap to read and expensive to assume, and each
+one has been assumed wrongly at least once -- the operator paused itself over
+disk that nobody was watching, and a local fallback was reported runnable on
+the strength of a text-to-speech voice.
+
+SessionStart. Every probe is bounded and degrades to a stated unknown, because
+a hook that hangs is worse than a hook that admits it could not reach something.
+"""
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parents[2]
+SURFACE = "https://aurekai.life"
+
+
+def sh(argv: list[str], timeout: int = 6) -> str:
+    try:
+        # cwd matters: the atlas is invoked by repo-relative path, and a hook
+        # runs from wherever the session happens to be.
+        out = subprocess.run(argv, capture_output=True, text=True,
+                             timeout=timeout, cwd=str(REPO))
+        return out.stdout.strip()
+    except Exception:
+        return ""
+
+
+def probe_surface() -> list[str]:
+    code = sh(["curl", "-sS", "-m", "5", "-o", "/dev/null",
+               "-w", "%{http_code}", f"{SURFACE}/studio/"])
+    if code != "200":
+        return [f"- surface: {SURFACE} did not answer 200 ({code or 'unreachable'})"]
+    html = sh(["curl", "-sS", "-m", "8", "-H", "Accept: text/html", f"{SURFACE}/studio/"], 10)
+    import re
+    queues = re.findall(r"<h3>([^<]*)</h3><span class=\"desk-n\">(\d+)</span>", html)
+    if not queues:
+        return [f"- surface: live, desk did not render its queues"]
+    open_now = ", ".join(f"{n} {t[0].lower() + t[1:]}" for t, n in queues if n != "0")
+    return [f"- desk: {open_now}" if open_now else "- desk: nothing open"]
+
+
+def probe_atlas() -> list[str]:
+    # atlas.py prints for a person; atlas_query.py answers in JSON. This wants
+    # two numbers, so it reads the human form rather than paying for the index.
+    out = sh([sys.executable, "architecture/atlas.py", "summary"], 25)
+    import re
+    head = re.search(r"atlas: (\d+) architectures, (\d+) views, (\d+) interactions", out)
+    mat = re.search(r"maturity: ([^\n]+)", out)
+    if not head:
+        return ["- atlas: summary unavailable; run `python3 architecture/atlas.py validate`"]
+    line = (f"- atlas: {head.group(1)} architectures, {head.group(3)} interactions")
+    if mat:
+        line += f" ({mat.group(1).strip()})"
+    return [line]
+
+
+def probe_disk() -> list[str]:
+    out = sh(["df", "-h", "/System/Volumes/Data"])
+    line = out.splitlines()[-1].split() if out else []
+    if len(line) < 5:
+        return []
+    note = "  <- the operator paused itself over disk once" if line[4].rstrip("%").isdigit() and int(line[4].rstrip("%")) >= 90 else ""
+    return [f"- disk here: {line[3]} free ({line[4]} used){note}"]
+
+
+def main() -> int:
+    # Also runs on PreCompact. Compaction is where this state is most likely to
+    # be lost and least likely to be noticed going: the session keeps working
+    # from a summary in which the disk figure, the open queues and the atlas
+    # counts have quietly become whatever they were when the session opened.
+    try:
+        event = json.load(sys.stdin)
+    except Exception:
+        event = {}
+    hook = event.get("hook_event_name") or "SessionStart"
+
+    lines: list[str] = []
+    lines += probe_atlas()
+    lines += probe_surface()
+    lines += probe_disk()
+
+    dirty = sh(["git", "-C", str(REPO), "status", "--porcelain"], 20)
+    if dirty:
+        yaff = sum(1 for l in dirty.splitlines() if l.endswith(".yaff"))
+        lines.append(
+            f"- working tree: {len(dirty.splitlines())} changed paths"
+            + (f", {yaff} of them atlas entries" if yaff else "")
+        )
+
+    context = (
+        "Aurekai, as it stands right now:\n" + "\n".join(lines) +
+        "\n\nThe atlas is canonical: consult it with `python3 architecture/atlas.py "
+        "get|search|loss` rather than re-deriving the system, and never read "
+        "atlas.index.json into context. Skills are available for the estate, the "
+        "carrier protocols, density work and the desk."
+    )
+    print(json.dumps({
+        "hookSpecificOutput": {
+            "hookEventName": hook,
+            "additionalContext": context,
+        }
+    }))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

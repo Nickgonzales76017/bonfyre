@@ -1,0 +1,14 @@
+kind	path	files	bytes	human_bytes
+runtime_component	/Users/nickgonzales/.bonfyre/representation-runtime/venv	13470	1012553823	965.6MiB
+sidecar_db	/Users/nickgonzales/.bonfyre/estate-local/representation-manifold.db	1	63369216	60.4MiB
+runtime_component	/Users/nickgonzales/.bonfyre/representation-runtime/xtable	1	4462701	4.3MiB
+sidecar_db	/Users/nickgonzales/.bonfyre/estate-local/representation-manifold.db-shm	1	32768	32.0KiB
+shift_script	/Users/nickgonzales/Developer/Bonfyre/scripts/representation_manifold_forge.py	1	29634	28.9KiB
+runtime_component	/Users/nickgonzales/.bonfyre/representation-runtime/live_delta_fabric_v1_8_1.py	1	27764	27.1KiB
+shift_script	/Users/nickgonzales/Developer/Bonfyre/scripts/representation_manifold_zero_copy.py	1	25989	25.4KiB
+runtime_component	/Users/nickgonzales/.bonfyre/representation-runtime/live_delta_fabric.py	1	25149	24.6KiB
+shift_script	/Users/nickgonzales/Developer/Bonfyre/scripts/representation_manifold_shift.py	1	17682	17.3KiB
+shift_script	/Users/nickgonzales/Developer/Bonfyre/scripts/representation_manifold_fabric.py	1	14935	14.6KiB
+runtime_component	/Users/nickgonzales/.bonfyre/representation-runtime/runtime-manifest.json	1	3751	3.7KiB
+sidecar_db	/Users/nickgonzales/.bonfyre/estate-local/representation-manifold.db-wal	1	0	0.0B
+runtime_component	/Users/nickgonzales/.bonfyre/representation-runtime/tmp	0	0	0.0B

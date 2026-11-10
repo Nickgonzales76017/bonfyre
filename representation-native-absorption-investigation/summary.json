@@ -1,0 +1,601 @@
+{
+  "schema": "bonfyre-native-absorption-investigation.v1.2",
+  "generated_at": "2026-09-29T05:39:46.548062+00:00",
+  "atlas_architectures": 380,
+  "atlas_diagnostics": {
+    "top_type": "dict",
+    "top_keys": [
+      "architectures",
+      "edge_classes",
+      "interactions",
+      "phenotypes",
+      "provenance",
+      "views"
+    ],
+    "architectures": 380
+  },
+  "sqlite": {
+    "source": "/Users/nickgonzales/.bonfyre/estate-local/representation-manifold.db",
+    "attempts": [
+      "live_ro: unable to open database file"
+    ],
+    "wal": false,
+    "mode": "stable_temp_snapshot"
+  },
+  "target_law_summary": {
+    "total_rows": 23836,
+    "semantic_kinds": 202,
+    "representation_kinds": 118,
+    "per_semantic_kind_count_distribution": {
+      "118": 202
+    },
+    "is_exact_cartesian": true,
+    "normalized_rows": 178,
+    "row_reduction": 23658,
+    "reduction_pct": 99.2532
+  },
+  "p0_evidence_files": {
+    "representation_cas": 102,
+    "fact_row_delta": 102,
+    "representation_target": 45
+  },
+  "physical_bytes": 114942029,
+  "duplicate_physical_candidates": [
+    {
+      "families": [
+        "iceberg-zero-copy",
+        "iceberg-cas"
+      ],
+      "bytes_total": 4778680,
+      "reason": "two Iceberg catalog trees coexist; determine whether old mutable-path catalog is fully superseded before retirement"
+    }
+  ],
+  "recent_table_stats": {
+    "representation_target": {
+      "rows": 23836,
+      "columns": [
+        {
+          "cid": 0,
+          "name": "semantic_kind",
+          "type": "TEXT",
+          "notnull": 1,
+          "default": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "representation_kind",
+          "type": "TEXT",
+          "notnull": 1,
+          "default": null,
+          "pk": 2
+        },
+        {
+          "cid": 2,
+          "name": "status",
+          "type": "TEXT",
+          "notnull": 1,
+          "default": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "substrate_path",
+          "type": "TEXT",
+          "notnull": 0,
+          "default": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "reason",
+          "type": "TEXT",
+          "notnull": 0,
+          "default": null,
+          "pk": 0
+        }
+      ],
+      "sample": [
+        {
+          "semantic_kind": "actors.actor_edges",
+          "representation_kind": "parquet",
+          "status": "physical",
+          "substrate_path": null,
+          "reason": "Shift-1.2 actualized"
+        },
+        {
+          "semantic_kind": "actors.actor_edges",
+          "representation_kind": "arrow",
+          "status": "executable_on_demand",
+          "substrate_path": null,
+          "reason": "Arrow IPC streamed from canonical Parquet; no resident duplicate bytes"
+        }
+      ]
+    },
+    "row_delta": {
+      "rows": 0,
+      "columns": [
+        {
+          "cid": 0,
+          "name": "id",
+          "type": "TEXT",
+          "notnull": 0,
+          "default": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "fact_delta_id",
+          "type": "TEXT",
+          "notnull": 1,
+          "default": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "semantic_kind",
+          "type": "TEXT",
+          "notnull": 1,
+          "default": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "op",
+          "type": "TEXT",
+          "notnull": 1,
+          "default": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "row_hash",
+          "type": "TEXT",
+          "notnull": 1,
+          "default": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "row_json",
+          "type": "TEXT",
+          "notnull": 1,
+          "default": null,
+          "pk": 0
+        },
+        {
+          "cid": 6,
+          "name": "hlc",
+          "type": "TEXT",
+          "notnull": 1,
+          "default": null,
+          "pk": 0
+        },
+        {
+          "cid": 7,
+          "name": "observed_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "default": null,
+          "pk": 0
+        }
+      ],
+      "sample": []
+    },
+    "physical_realization": {
+      "rows": 2184,
+      "columns": [
+        {
+          "cid": 0,
+          "name": "id",
+          "type": "TEXT",
+          "notnull": 0,
+          "default": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "representation_id",
+          "type": "TEXT",
+          "notnull": 1,
+          "default": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "carrier",
+          "type": "TEXT",
+          "notnull": 1,
+          "default": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "coordinate",
+          "type": "TEXT",
+          "notnull": 1,
+          "default": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "bytes",
+          "type": "INTEGER",
+          "notnull": 0,
+          "default": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "digest",
+          "type": "TEXT",
+          "notnull": 0,
+          "default": null,
+          "pk": 0
+        },
+        {
+          "cid": 6,
+          "name": "temperature",
+          "type": "TEXT",
+          "notnull": 1,
+          "default": null,
+          "pk": 0
+        },
+        {
+          "cid": 7,
+          "name": "available",
+          "type": "INTEGER",
+          "notnull": 1,
+          "default": "1",
+          "pk": 0
+        },
+        {
+          "cid": 8,
+          "name": "checked_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "default": null,
+          "pk": 0
+        }
+      ],
+      "sample": [
+        {
+          "id": "b8f95e16f1a15197386816ee9aac267fd97dea1a6e807b5e8c45a2e1ab634e61",
+          "representation_id": "14478eea704891cfd2d8eed9586703a9f8cc871bf85dccbb5a817e789450f3b4",
+          "carrier": "cas-local",
+          "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/bodies/parquet/sha256/36/366579e3159f50679b4d3a460dc938a902f3d8d82abdb6319db0747fb4350f95.parquet",
+          "bytes": 226,
+          "digest": "366579e3159f50679b4d3a460dc938a902f3d8d82abdb6319db0747fb4350f95",
+          "temperature": "pinned",
+          "available": 1,
+          "checked_at": "2026-09-29T04:20:31.094066+00:00"
+        },
+        {
+          "id": "a7a5b64f24a2a8dd8e176ca5a253f5025b230d405bcb96fdb36468dfcc4b697b",
+          "representation_id": "18d2707c7b6c83a8c33596994d3c03308c49bc286f7d998495f2b4c819e21e08",
+          "carrier": "cas-local",
+          "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/bodies/parquet/sha256/28/2812f246e11673e7b2d4eee0cfffd2d0b1d3fdec4cdea7e9b9c4aed738db6f9b.parquet",
+          "bytes": 230813,
+          "digest": "2812f246e11673e7b2d4eee0cfffd2d0b1d3fdec4cdea7e9b9c4aed738db6f9b",
+          "temperature": "pinned",
+          "available": 1,
+          "checked_at": "2026-09-29T04:20:31.096795+00:00"
+        }
+      ]
+    },
+    "live_sink_cursor": {
+      "rows": 2,
+      "columns": [
+        {
+          "cid": 0,
+          "name": "sink",
+          "type": "TEXT",
+          "notnull": 0,
+          "default": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "last_hlc",
+          "type": "TEXT",
+          "notnull": 0,
+          "default": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "last_fact_delta_id",
+          "type": "TEXT",
+          "notnull": 0,
+          "default": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "default": null,
+          "pk": 0
+        }
+      ],
+      "sample": [
+        {
+          "sink": "paimon-body",
+          "last_hlc": "1790655631404:00000000:43599213ed33",
+          "last_fact_delta_id": "b4035afedef8df451c57a4321317e33ff4441b5615c3fe20b7037331ce180e20",
+          "updated_at": "2026-09-29T04:30:22.259612+00:00"
+        },
+        {
+          "sink": "row-diff",
+          "last_hlc": "1790655631404:00000000:43599213ed33",
+          "last_fact_delta_id": "b4035afedef8df451c57a4321317e33ff4441b5615c3fe20b7037331ce180e20",
+          "updated_at": "2026-09-29T04:30:22.277526+00:00"
+        }
+      ]
+    },
+    "body_object": {
+      "rows": 201,
+      "columns": [
+        {
+          "cid": 0,
+          "name": "digest",
+          "type": "TEXT",
+          "notnull": 0,
+          "default": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "algorithm",
+          "type": "TEXT",
+          "notnull": 1,
+          "default": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "format",
+          "type": "TEXT",
+          "notnull": 1,
+          "default": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "coordinate",
+          "type": "TEXT",
+          "notnull": 1,
+          "default": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "bytes",
+          "type": "INTEGER",
+          "notnull": 1,
+          "default": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "created_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "default": null,
+          "pk": 0
+        }
+      ],
+      "sample": [
+        {
+          "digest": "366579e3159f50679b4d3a460dc938a902f3d8d82abdb6319db0747fb4350f95",
+          "algorithm": "sha256",
+          "format": "parquet",
+          "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/bodies/parquet/sha256/36/366579e3159f50679b4d3a460dc938a902f3d8d82abdb6319db0747fb4350f95.parquet",
+          "bytes": 226,
+          "created_at": "2026-09-29T04:20:31.093885+00:00"
+        },
+        {
+          "digest": "2812f246e11673e7b2d4eee0cfffd2d0b1d3fdec4cdea7e9b9c4aed738db6f9b",
+          "algorithm": "sha256",
+          "format": "parquet",
+          "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/bodies/parquet/sha256/28/2812f246e11673e7b2d4eee0cfffd2d0b1d3fdec4cdea7e9b9c4aed738db6f9b.parquet",
+          "bytes": 230813,
+          "created_at": "2026-09-29T04:20:31.096778+00:00"
+        }
+      ]
+    },
+    "immutable_migration": {
+      "rows": 202,
+      "columns": [
+        {
+          "cid": 0,
+          "name": "representation_id",
+          "type": "TEXT",
+          "notnull": 0,
+          "default": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "old_coordinate",
+          "type": "TEXT",
+          "notnull": 1,
+          "default": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "new_coordinate",
+          "type": "TEXT",
+          "notnull": 1,
+          "default": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "digest",
+          "type": "TEXT",
+          "notnull": 1,
+          "default": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "state",
+          "type": "TEXT",
+          "notnull": 1,
+          "default": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "migrated_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "default": null,
+          "pk": 0
+        }
+      ],
+      "sample": [
+        {
+          "representation_id": "14478eea704891cfd2d8eed9586703a9f8cc871bf85dccbb5a817e789450f3b4",
+          "old_coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/parquet/actors/actor_edges.parquet",
+          "new_coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/bodies/parquet/sha256/36/366579e3159f50679b4d3a460dc938a902f3d8d82abdb6319db0747fb4350f95.parquet",
+          "digest": "366579e3159f50679b4d3a460dc938a902f3d8d82abdb6319db0747fb4350f95",
+          "state": "migrated",
+          "migrated_at": "2026-09-29T04:20:31.094279+00:00"
+        },
+        {
+          "representation_id": "18d2707c7b6c83a8c33596994d3c03308c49bc286f7d998495f2b4c819e21e08",
+          "old_coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/parquet/actors/actor_nodes.parquet",
+          "new_coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/bodies/parquet/sha256/28/2812f246e11673e7b2d4eee0cfffd2d0b1d3fdec4cdea7e9b9c4aed738db6f9b.parquet",
+          "digest": "2812f246e11673e7b2d4eee0cfffd2d0b1d3fdec4cdea7e9b9c4aed738db6f9b",
+          "state": "migrated",
+          "migrated_at": "2026-09-29T04:20:31.096964+00:00"
+        }
+      ]
+    },
+    "fact_delta": {
+      "rows": 202,
+      "columns": [
+        {
+          "cid": 0,
+          "name": "id",
+          "type": "TEXT",
+          "notnull": 0,
+          "default": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "semantic_kind",
+          "type": "TEXT",
+          "notnull": 1,
+          "default": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "old_representation_id",
+          "type": "TEXT",
+          "notnull": 0,
+          "default": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "new_representation_id",
+          "type": "TEXT",
+          "notnull": 1,
+          "default": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "old_digest",
+          "type": "TEXT",
+          "notnull": 0,
+          "default": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "new_digest",
+          "type": "TEXT",
+          "notnull": 1,
+          "default": null,
+          "pk": 0
+        },
+        {
+          "cid": 6,
+          "name": "old_coordinate",
+          "type": "TEXT",
+          "notnull": 0,
+          "default": null,
+          "pk": 0
+        },
+        {
+          "cid": 7,
+          "name": "new_coordinate",
+          "type": "TEXT",
+          "notnull": 1,
+          "default": null,
+          "pk": 0
+        },
+        {
+          "cid": 8,
+          "name": "hlc",
+          "type": "TEXT",
+          "notnull": 1,
+          "default": null,
+          "pk": 0
+        },
+        {
+          "cid": 9,
+          "name": "observed_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "default": null,
+          "pk": 0
+        },
+        {
+          "cid": 10,
+          "name": "reason",
+          "type": "TEXT",
+          "notnull": 1,
+          "default": null,
+          "pk": 0
+        }
+      ],
+      "sample": [
+        {
+          "id": "3865aada68e9ecf5db0a0fbaa0f2d0fa4f2bd400b1359e77902a3f4194e1e6bd",
+          "semantic_kind": "actors.actor_edges",
+          "old_representation_id": null,
+          "new_representation_id": "14478eea704891cfd2d8eed9586703a9f8cc871bf85dccbb5a817e789450f3b4",
+          "old_digest": null,
+          "new_digest": "366579e3159f50679b4d3a460dc938a902f3d8d82abdb6319db0747fb4350f95",
+          "old_coordinate": null,
+          "new_coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/bodies/parquet/sha256/36/366579e3159f50679b4d3a460dc938a902f3d8d82abdb6319db0747fb4350f95.parquet",
+          "hlc": "1790655631094:00000000:43599213ed33",
+          "observed_at": "2026-09-29T04:20:31.094383+00:00",
+          "reason": "genesis immutable body"
+        },
+        {
+          "id": "ae4b3aff9f3ab27e516d138ee6b0b7aa4d1889993bb78b39a558451cb187814f",
+          "semantic_kind": "actors.actor_nodes",
+          "old_representation_id": null,
+          "new_representation_id": "18d2707c7b6c83a8c33596994d3c03308c49bc286f7d998495f2b4c819e21e08",
+          "old_digest": null,
+          "new_digest": "2812f246e11673e7b2d4eee0cfffd2d0b1d3fdec4cdea7e9b9c4aed738db6f9b",
+          "old_coordinate": null,
+          "new_coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/bodies/parquet/sha256/28/2812f246e11673e7b2d4eee0cfffd2d0b1d3fdec4cdea7e9b9c4aed738db6f9b.parquet",
+          "hlc": "1790655631096:00000000:43599213ed33",
+          "observed_at": "2026-09-29T04:20:31.097005+00:00",
+          "reason": "genesis immutable body"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,16 @@
+[Unit]
+Description=Bonfyre standing automation, weekly steps (live sources, inventories, retained channels, catalogues, credential needs)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=ubuntu
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/env bun /opt/bonfyre/native-src/scripts/bonfyre_automate.mjs --weekly
+Nice=15
+IOSchedulingClass=idle
+TimeoutStartSec=28800
+StandardOutput=append:/var/lib/bonfyre/automation/runner.log
+StandardError=append:/var/lib/bonfyre/automation/runner.log

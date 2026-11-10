@@ -1,0 +1,118 @@
+family	kind	priority	physical	targets	evidence_states	reason
+acceleration	cubecl	ACTUALIZE_NOW	0	0	code_or_architecture,proof,substrate	evidence is already on disk/runtime
+acceleration	cuda	ACTUALIZE_NOW	0	0	code_or_architecture,path	evidence is already on disk/runtime
+acceleration	cudf	ACTUALIZE_NOW	0	0	code_or_architecture	evidence is already on disk/runtime
+acceleration	metal	ACTUALIZE_NOW	0	0	code_or_architecture,manifest,path	evidence is already on disk/runtime
+acceleration	rapids	ACTUALIZE_NOW	0	0	code_or_architecture	evidence is already on disk/runtime
+acceleration	vulkan	ACTUALIZE_NOW	0	0	code_or_architecture	evidence is already on disk/runtime
+acceleration	webgpu	ACTUALIZE_NOW	0	0	code_or_architecture	evidence is already on disk/runtime
+acceleration	wgpu	ACTUALIZE_NOW	0	0	code_or_architecture	evidence is already on disk/runtime
+carrier	bonfyrefs	ACTUALIZE_NOW	0	202	code_or_architecture,manifest,path	evidence is already on disk/runtime
+carrier	cas	ACTUALIZE_NOW	0	0	code_or_architecture	evidence is already on disk/runtime
+carrier	fuse	ACTUALIZE_NOW	0	0	code_or_architecture,executable,manifest,path	evidence is already on disk/runtime
+carrier	ipfs	ACTUALIZE_NOW	0	202	code_or_architecture,manifest,path	evidence is already on disk/runtime
+carrier	iroh	ACTUALIZE_NOW	0	202	code_or_architecture	evidence is already on disk/runtime
+carrier	minio	ACTUALIZE_NOW	0	0	code_or_architecture	evidence is already on disk/runtime
+carrier	object_store	ACTUALIZE_NOW	0	0	code_or_architecture,path	evidence is already on disk/runtime
+carrier	opendal	ACTUALIZE_NOW	0	0	code_or_architecture	evidence is already on disk/runtime
+carrier	r2	ACTUALIZE_NOW	0	202	code_or_architecture	evidence is already on disk/runtime
+carrier	s3	ACTUALIZE_NOW	0	0	code_or_architecture,executable,manifest,path	evidence is already on disk/runtime
+catalog	gravitino	ACTUALIZE_NOW	0	202	code_or_architecture	evidence is already on disk/runtime
+catalog	nessie	ACTUALIZE_NOW	0	202	code_or_architecture	evidence is already on disk/runtime
+catalog	polaris	ACTUALIZE_NOW	0	202	code_or_architecture	evidence is already on disk/runtime
+catalog	unity_catalog	ACTUALIZE_NOW	0	0	code_or_architecture,path	evidence is already on disk/runtime
+collaboration_time	automerge	ACTUALIZE_NOW	0	202	code_or_architecture,proof,substrate	evidence is already on disk/runtime
+collaboration_time	crdt	ACTUALIZE_NOW	0	0	code_or_architecture,manifest	evidence is already on disk/runtime
+collaboration_time	event_sourcing	ACTUALIZE_NOW	0	0	code_or_architecture,manifest	evidence is already on disk/runtime
+collaboration_time	hlc	ACTUALIZE_NOW	0	0	code_or_architecture,path	evidence is already on disk/runtime
+collaboration_time	yjs	ACTUALIZE_NOW	0	0	code_or_architecture,manifest,path	evidence is already on disk/runtime
+collaboration_time	yrs	ACTUALIZE_NOW	0	0	code_or_architecture,manifest	evidence is already on disk/runtime
+compiler_proof	cedar	ACTUALIZE_NOW	0	0	code_or_architecture,path	evidence is already on disk/runtime
+compiler_proof	cue	ACTUALIZE_NOW	0	0	brew_formula,code_or_architecture,executable,manifest,path	evidence is already on disk/runtime
+compiler_proof	datalog	ACTUALIZE_NOW	0	0	code_or_architecture	evidence is already on disk/runtime
+compiler_proof	egglog	ACTUALIZE_NOW	0	0	code_or_architecture,manifest,proof,substrate	evidence is already on disk/runtime
+compiler_proof	verus	ACTUALIZE_NOW	0	0	code_or_architecture,proof,substrate	evidence is already on disk/runtime
+compiler_proof	wasmtime	ACTUALIZE_NOW	0	0	brew_formula,code_or_architecture,executable	evidence is already on disk/runtime
+compiler_proof	wit	ACTUALIZE_NOW	0	0	code_or_architecture	evidence is already on disk/runtime
+compiler_proof	yaff	ACTUALIZE_NOW	0	0	code_or_architecture,path,proof,substrate	evidence is already on disk/runtime
+compression	blake3	ACTUALIZE_NOW	0	0	code_or_architecture,path	evidence is already on disk/runtime
+compression	brotli	ACTUALIZE_NOW	0	0	brew_formula,code_or_architecture,executable,path	evidence is already on disk/runtime
+compression	lz4	ACTUALIZE_NOW	0	0	brew_formula,code_or_architecture,executable,manifest,path	evidence is already on disk/runtime
+compression	simdjson	ACTUALIZE_NOW	0	0	brew_formula,code_or_architecture	evidence is already on disk/runtime
+compression	snappy	ACTUALIZE_NOW	0	0	code_or_architecture	evidence is already on disk/runtime
+compression	xxhash	ACTUALIZE_NOW	0	0	code_or_architecture	evidence is already on disk/runtime
+compression	zstd	ACTUALIZE_NOW	0	0	brew_formula,code_or_architecture,executable,manifest,path	evidence is already on disk/runtime
+graph	graphar	ACTUALIZE_NOW	0	202	code_or_architecture	evidence is already on disk/runtime
+graph	kuzu	ACTUALIZE_NOW	0	202	code_or_architecture	evidence is already on disk/runtime
+graph	rdf	ACTUALIZE_NOW	0	0	code_or_architecture,path	evidence is already on disk/runtime
+incremental	arroyo	ACTUALIZE_NOW	0	0	code_or_architecture	evidence is already on disk/runtime
+incremental	feldera	ACTUALIZE_NOW	0	202	code_or_architecture,path,proof,substrate	evidence is already on disk/runtime
+incremental	fluss	ACTUALIZE_NOW	0	202	code_or_architecture	evidence is already on disk/runtime
+incremental	materialize	ACTUALIZE_NOW	0	202	code_or_architecture,manifest,path	evidence is already on disk/runtime
+incremental	risingwave	ACTUALIZE_NOW	0	202	code_or_architecture	evidence is already on disk/runtime
+interchange	adbc	ACTUALIZE_NOW	0	202	code_or_architecture,executable,path	evidence is already on disk/runtime
+interchange	arrow_acero	ACTUALIZE_NOW	0	0	code_or_architecture	evidence is already on disk/runtime
+interchange	arrow_flight	ACTUALIZE_NOW	0	0	code_or_architecture	evidence is already on disk/runtime
+interchange	avro	ACTUALIZE_NOW	0	0	code_or_architecture,path	evidence is already on disk/runtime
+interchange	capnproto	ACTUALIZE_NOW	0	0	code_or_architecture,path	evidence is already on disk/runtime
+interchange	cbor	ACTUALIZE_NOW	0	0	code_or_architecture,path	evidence is already on disk/runtime
+interchange	flatbuffers	ACTUALIZE_NOW	0	0	code_or_architecture,path	evidence is already on disk/runtime
+interchange	msgpack	ACTUALIZE_NOW	0	0	brew_formula,code_or_architecture,manifest,path	evidence is already on disk/runtime
+interchange	orc	ACTUALIZE_NOW	0	0	code_or_architecture,executable,manifest,path	evidence is already on disk/runtime
+interchange	protobuf	ACTUALIZE_NOW	0	0	brew_formula,code_or_architecture,manifest,path	evidence is already on disk/runtime
+interchange	substrait	ACTUALIZE_NOW	0	0	code_or_architecture,path	evidence is already on disk/runtime
+kv	foundationdb	ACTUALIZE_NOW	0	202	code_or_architecture,manifest,path	evidence is already on disk/runtime
+kv	lmdb	ACTUALIZE_NOW	0	202	code_or_architecture,manifest,path	evidence is already on disk/runtime
+kv	redb	ACTUALIZE_NOW	0	0	code_or_architecture,path	evidence is already on disk/runtime
+kv	rocksdb	ACTUALIZE_NOW	0	0	code_or_architecture	evidence is already on disk/runtime
+kv	slatedb	ACTUALIZE_NOW	0	202	code_or_architecture	evidence is already on disk/runtime
+kv	sled	ACTUALIZE_NOW	0	0	code_or_architecture	evidence is already on disk/runtime
+kv	tikv	ACTUALIZE_NOW	0	0	code_or_architecture	evidence is already on disk/runtime
+lakehouse	delta	ACTUALIZE_NOW	0	202	code_or_architecture,executable	evidence is already on disk/runtime
+lakehouse	hudi	ACTUALIZE_NOW	0	202	code_or_architecture	evidence is already on disk/runtime
+lakehouse	iceberg	ACTUALIZE_NOW	0	202	code_or_architecture,path	evidence is already on disk/runtime
+lakehouse	paimon	ACTUALIZE_NOW	0	202	code_or_architecture	evidence is already on disk/runtime
+lakehouse	xtable	ACTUALIZE_NOW	0	202	code_or_architecture	evidence is already on disk/runtime
+log	kafka	ACTUALIZE_NOW	0	0	code_or_architecture,path	evidence is already on disk/runtime
+log	nats_jetstream	ACTUALIZE_NOW	0	0	code_or_architecture	evidence is already on disk/runtime
+log	pulsar	ACTUALIZE_NOW	0	0	code_or_architecture	evidence is already on disk/runtime
+log	redpanda	ACTUALIZE_NOW	0	0	code_or_architecture	evidence is already on disk/runtime
+public_semantics	activitystreams	ACTUALIZE_NOW	0	0	code_or_architecture,path	evidence is already on disk/runtime
+public_semantics	jsonld	ACTUALIZE_NOW	0	0	code_or_architecture,manifest,path	evidence is already on disk/runtime
+query	ballista	ACTUALIZE_NOW	0	0	code_or_architecture	evidence is already on disk/runtime
+query	daft	ACTUALIZE_NOW	0	0	code_or_architecture,path,proof,substrate	evidence is already on disk/runtime
+query	datafusion	ACTUALIZE_NOW	0	202	code_or_architecture,path	evidence is already on disk/runtime
+query	polars	ACTUALIZE_NOW	0	0	code_or_architecture,manifest,path	evidence is already on disk/runtime
+query	velox	ACTUALIZE_NOW	0	0	code_or_architecture	evidence is already on disk/runtime
+retrieval	faiss	ACTUALIZE_NOW	0	0	code_or_architecture,path	evidence is already on disk/runtime
+retrieval	fst	ACTUALIZE_NOW	0	0	code_or_architecture,executable,path	evidence is already on disk/runtime
+retrieval	hnsw	ACTUALIZE_NOW	0	0	code_or_architecture,path	evidence is already on disk/runtime
+retrieval	lance	ACTUALIZE_NOW	0	202	code_or_architecture,manifest,path,proof,substrate	evidence is already on disk/runtime
+retrieval	qdrant	ACTUALIZE_NOW	0	0	code_or_architecture	evidence is already on disk/runtime
+retrieval	roaring	ACTUALIZE_NOW	0	0	code_or_architecture,path	evidence is already on disk/runtime
+retrieval	sqlite_vec	ACTUALIZE_NOW	0	0	code_or_architecture	evidence is already on disk/runtime
+retrieval	tantivy	ACTUALIZE_NOW	0	0	code_or_architecture	evidence is already on disk/runtime
+retrieval	usearch	ACTUALIZE_NOW	0	0	code_or_architecture	evidence is already on disk/runtime
+retrieval	weaviate	ACTUALIZE_NOW	0	0	code_or_architecture,executable,manifest,path	evidence is already on disk/runtime
+tensor_spatial	cog	ACTUALIZE_NOW	0	0	code_or_architecture,path	evidence is already on disk/runtime
+tensor_spatial	gdal	ACTUALIZE_NOW	0	0	code_or_architecture,path	evidence is already on disk/runtime
+tensor_spatial	geoparquet	ACTUALIZE_NOW	0	0	code_or_architecture,path	evidence is already on disk/runtime
+tensor_spatial	hdf5	ACTUALIZE_NOW	0	0	code_or_architecture,path	evidence is already on disk/runtime
+tensor_spatial	netcdf	ACTUALIZE_NOW	0	0	code_or_architecture	evidence is already on disk/runtime
+tensor_spatial	pmtiles	ACTUALIZE_NOW	0	0	code_or_architecture,path	evidence is already on disk/runtime
+tensor_spatial	zarr	ACTUALIZE_NOW	0	202	code_or_architecture,path	evidence is already on disk/runtime
+interchange	arrow	EXTEND	202	202	code_or_architecture,path,physical_artifact	already physical; add richer indexes/metadata/transports instead of stopping
+interchange	parquet	EXTEND	202	202	code_or_architecture,path,physical_artifact	already physical; add richer indexes/metadata/transports instead of stopping
+query	duckdb	EXTEND	202	202	brew_formula,code_or_architecture,executable,manifest,path,physical_artifact	already physical; add richer indexes/metadata/transports instead of stopping
+catalog	lakekeeper	EXPAND_FRONTIER	0	0		new algebra/interop surface not yet represented in Shift 1 target vocabulary
+collaboration_time	xtdb	EXPAND_FRONTIER	0	0		new algebra/interop surface not yet represented in Shift 1 target vocabulary
+compiler_proof	souffle	EXPAND_FRONTIER	0	0		new algebra/interop surface not yet represented in Shift 1 target vocabulary
+compiler_proof	wasmer	EXPAND_FRONTIER	0	0		new algebra/interop surface not yet represented in Shift 1 target vocabulary
+graph	duckpgq	EXPAND_FRONTIER	0	0		new algebra/interop surface not yet represented in Shift 1 target vocabulary
+graph	oxigraph	EXPAND_FRONTIER	0	0		new algebra/interop surface not yet represented in Shift 1 target vocabulary
+kv	fjall	EXPAND_FRONTIER	0	0		new algebra/interop surface not yet represented in Shift 1 target vocabulary
+log	fluvio	EXPAND_FRONTIER	0	0		new algebra/interop surface not yet represented in Shift 1 target vocabulary
+public_semantics	rdf_star	EXPAND_FRONTIER	0	0		new algebra/interop surface not yet represented in Shift 1 target vocabulary
+query	glaredb	EXPAND_FRONTIER	0	0		new algebra/interop surface not yet represented in Shift 1 target vocabulary
+tensor_spatial	flatgeobuf	EXPAND_FRONTIER	0	0		new algebra/interop surface not yet represented in Shift 1 target vocabulary
+tensor_spatial	tiledb	EXPAND_FRONTIER	0	0		new algebra/interop surface not yet represented in Shift 1 target vocabulary

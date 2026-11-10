@@ -1,0 +1,119 @@
+representation_kind	status	substrate_path	reason
+activitystreams	evidence_present	/Users/nickgonzales/Developer/Bonfyre/notes.md	Shift-1.3 expanded representation manifold; no target removed
+adbc	declared_target		Shift-1 maximal representation portfolio
+arrow	executable_on_demand		Arrow IPC streamed from canonical Parquet; no resident duplicate bytes
+arrow_acero	evidence_present	/Users/nickgonzales/Developer/Bonfyre/frontend/app.js	Shift-1.3 expanded representation manifold; no target removed
+arrow_flight	evidence_present	/Users/nickgonzales/Developer/Bonfyre/scripts/representation_manifold_shift.py	Shift-1.3 expanded representation manifold; no target removed
+arroyo	evidence_present	/Users/nickgonzales/Developer/Bonfyre/packs/fleming-equity-group/evidence/fleming-digest.json	Shift-1.3 expanded representation manifold; no target removed
+automerge	lowerer_ready	/Users/nickgonzales/.bonfyre/substrates/v6.1/automerge	Shift-1.2 lowerer available
+avro	evidence_present	/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreFacet/src/main.c	Shift-1.3 expanded representation manifold; no target removed
+ballista	evidence_present	/Users/nickgonzales/Developer/Bonfyre/storage-archaeology-fast/report.json	Shift-1.3 expanded representation manifold; no target removed
+blake3	evidence_present	/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreProvider/src/main.c	Shift-1.3 expanded representation manifold; no target removed
+bonfyrefs	declared_target		Shift-1 maximal representation portfolio
+brotli	evidence_present	brotli	Shift-1.3 expanded representation manifold; no target removed
+capnproto	evidence_present	/Users/nickgonzales/.bonfyre/partner-venv/lib/python3.12/site-packages/pygments/lexers/capnproto.py	Shift-1.3 expanded representation manifold; no target removed
+cas	evidence_present	/Users/nickgonzales/Developer/Bonfyre/demo-pipeline.sh	Shift-1.3 expanded representation manifold; no target removed
+cbor	evidence_present	/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreFacet/src/main.c	Shift-1.3 expanded representation manifold; no target removed
+cedar	evidence_present	/Users/nickgonzales/Developer/Bonfyre/TESTING-ACCESS.md	Shift-1.3 expanded representation manifold; no target removed
+cog	evidence_present	/Users/nickgonzales/Developer/Bonfyre/STATUS.md	Shift-1.3 expanded representation manifold; no target removed
+crdt	evidence_present	/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreCMS/src/ephemeral.c	Shift-1.3 expanded representation manifold; no target removed
+cubecl	evidence_present	/Users/nickgonzales/.bonfyre/substrates/v6.1/cubecl	Shift-1.3 expanded representation manifold; no target removed
+cuda	evidence_present	/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreFlashQLA/src/main.c	Shift-1.3 expanded representation manifold; no target removed
+cudf	evidence_present	/Users/nickgonzales/.bonfyre/partner-venv/lib/python3.12/site-packages/networkx/readwrite/tests/test_graphml.py	Shift-1.3 expanded representation manifold; no target removed
+cue	evidence_present	cue	Shift-1.3 expanded representation manifold; no target removed
+daft	evidence_present	/Users/nickgonzales/.bonfyre/substrates/v6.1/daft	Shift-1.3 expanded representation manifold; no target removed
+datafusion	declared_target		Shift-1 maximal representation portfolio
+datalog	evidence_present	/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreFrappeCompiler/src/main.c	Shift-1.3 expanded representation manifold; no target removed
+delta	metadata_overlay_ready		XTable config ready; shared Parquet, no rewrite
+duckdb	physical		Shift-1.2 actualized
+duckpgq	declared_target	theoretical-perfection frontier expansion	Shift-1.3 expanded representation manifold; no target removed
+egglog	evidence_present	/Users/nickgonzales/.bonfyre/substrates/v6.1/egglog	Shift-1.3 expanded representation manifold; no target removed
+event_sourcing	evidence_present	/Users/nickgonzales/Developer/Bonfyre/build.zig	Shift-1.3 expanded representation manifold; no target removed
+faiss	evidence_present	/Users/nickgonzales/Developer/Bonfyre/generated/projections/estate/transitional-root-absorption.json	Shift-1.3 expanded representation manifold; no target removed
+feldera	lowerer_ready	/Users/nickgonzales/.bonfyre/substrates/v6.1/feldera	Shift-1.2 lowerer available
+fjall	declared_target	theoretical-perfection frontier expansion	Shift-1.3 expanded representation manifold; no target removed
+flatbuffers	evidence_present	/Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8-r2c/20260823T032652Z-27525/evidence/untracked-at-m2.txt	Shift-1.3 expanded representation manifold; no target removed
+flatgeobuf	declared_target	theoretical-perfection frontier expansion	Shift-1.3 expanded representation manifold; no target removed
+flight-sql	declared_target		Shift-1 maximal representation portfolio
+fluss	declared_target		Shift-1 maximal representation portfolio
+fluvio	declared_target	theoretical-perfection frontier expansion	Shift-1.3 expanded representation manifold; no target removed
+foundationdb	declared_target		Shift-1 maximal representation portfolio
+fst	evidence_present	fstyp_msdos	Shift-1.3 expanded representation manifold; no target removed
+fuse	evidence_present	fuser	Shift-1.3 expanded representation manifold; no target removed
+gdal	evidence_present	/Users/nickgonzales/Developer/Bonfyre/packs/fleming-equity-group/evidence/packages/cap-dallas-land-bank-00000178909000000.json	Shift-1.3 expanded representation manifold; no target removed
+geoparquet	evidence_present	/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreFacet/src/main.c	Shift-1.3 expanded representation manifold; no target removed
+glaredb	declared_target	theoretical-perfection frontier expansion	Shift-1.3 expanded representation manifold; no target removed
+graphar	declared_target		Shift-1 maximal representation portfolio
+gravitino	declared_target		Shift-1 maximal representation portfolio
+hdf5	evidence_present	/Users/nickgonzales/Developer/Bonfyre/integrations/frappe-bench/apps/frappe/frappe/tests/data/email_with_image.txt	Shift-1.3 expanded representation manifold; no target removed
+hlc	evidence_present	/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreExperienceMap/generated/ingest_protocol-0304/normalized.txt	Shift-1.3 expanded representation manifold; no target removed
+hnsw	evidence_present	/Users/nickgonzales/Developer/Bonfyre/docs/Speech-Investigation-Integration.md	Shift-1.3 expanded representation manifold; no target removed
+hudi	metadata_overlay_ready		XTable config ready; shared Parquet, no rewrite
+iceberg	physical_zero_copy		Iceberg points at immutable content-addressed Parquet
+ipfs	declared_target		Shift-1 maximal representation portfolio
+iroh	declared_target		Shift-1 maximal representation portfolio
+jsonld	evidence_present	/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreShowcaseEstate/source-constellations.cue	Shift-1.3 expanded representation manifold; no target removed
+kafka	evidence_present	/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreExperienceMap/generated/materiality_manifest.json	Shift-1.3 expanded representation manifold; no target removed
+kuzu	declared_target		Shift-1 maximal representation portfolio
+lakekeeper	declared_target	theoretical-perfection frontier expansion	Shift-1.3 expanded representation manifold; no target removed
+lance	lowerer_ready	/Users/nickgonzales/.bonfyre/substrates/v6.1/lance	Shift-1.2 lowerer available
+lmdb	declared_target		Shift-1 maximal representation portfolio
+lz4	evidence_present	lz4c	Shift-1.3 expanded representation manifold; no target removed
+materialize	declared_target		Shift-1 maximal representation portfolio
+metal	evidence_present	/Users/nickgonzales/Developer/Bonfyre/README.md	Shift-1.3 expanded representation manifold; no target removed
+minio	evidence_present	/Users/nickgonzales/Developer/Bonfyre/integrations/frappe-bench/apps/wiki/wiki/public/js/vendor/pdfjs/pdf.worker.min.js	Shift-1.3 expanded representation manifold; no target removed
+msgpack	evidence_present	msgpack	Shift-1.3 expanded representation manifold; no target removed
+nats_jetstream	evidence_present	/Users/nickgonzales/Developer/Bonfyre/evidence/recovery/opportunity-20260803-v2/history_hits.txt	Shift-1.3 expanded representation manifold; no target removed
+nessie	declared_target		Shift-1 maximal representation portfolio
+netcdf	evidence_present	/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreFacet/src/main.c	Shift-1.3 expanded representation manifold; no target removed
+object_store	evidence_present	/Users/nickgonzales/Developer/Bonfyre/tools/estate/cloud-fabric-lib.ts	Shift-1.3 expanded representation manifold; no target removed
+opendal	carrier_ready	/Users/nickgonzales/Developer/Bonfyre/evidence/proofs/frappe-compiler-company-flow.json	OpenDAL carrier binding over canonical representation estate
+orc	evidence_present	trimforce	Shift-1.3 expanded representation manifold; no target removed
+oxigraph	declared_target	theoretical-perfection frontier expansion	Shift-1.3 expanded representation manifold; no target removed
+paimon	declared_target		Shift-1 maximal representation portfolio
+parquet	physical		Shift-1.2 actualized
+pmtiles	evidence_present	/Users/nickgonzales/Developer/Bonfyre/architecture/surface/client-organs.yaff	Shift-1.3 expanded representation manifold; no target removed
+polaris	declared_target		Shift-1 maximal representation portfolio
+polars	evidence_present	/Users/nickgonzales/Developer/Bonfyre/storage-archaeology-fast/report.json	Shift-1.3 expanded representation manifold; no target removed
+protobuf	evidence_present	protobuf	Shift-1.3 expanded representation manifold; no target removed
+pulsar	evidence_present	/Users/nickgonzales/.bonfyre/partner-venv/lib/python3.12/site-packages/opentelemetry/semconv/_incubating/attributes/messaging_attributes.py	Shift-1.3 expanded representation manifold; no target removed
+qdrant	evidence_present	/Users/nickgonzales/Developer/Bonfyre/.run6/bonfyre-run6-week-autonomous-2026-08-13/source_runs/run5/bonfyre_run5_firecrawl_queries.json	Shift-1.3 expanded representation manifold; no target removed
+r2	declared_target		Shift-1 maximal representation portfolio
+rapids	evidence_present	/Users/nickgonzales/.bonfyre/partner-venv/lib/python3.12/site-packages/narwhals/_dask/group_by.py	Shift-1.3 expanded representation manifold; no target removed
+rdf	evidence_present	/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreExternalEstate/tools/compile_source_frontier.py	Shift-1.3 expanded representation manifold; no target removed
+rdf_star	declared_target	theoretical-perfection frontier expansion	Shift-1.3 expanded representation manifold; no target removed
+redb	evidence_present	/Users/nickgonzales/Developer/Bonfyre/tests/test_fleming_source_registry.py	Shift-1.3 expanded representation manifold; no target removed
+redpanda	evidence_present	/Users/nickgonzales/Developer/Bonfyre/.run6/bonfyre-run6-week-autonomous-2026-08-13/source_runs/run5/bonfyre_run5_firecrawl_queries.json	Shift-1.3 expanded representation manifold; no target removed
+risingwave	declared_target		Shift-1 maximal representation portfolio
+roaring	evidence_present	/Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8-r2c/20260823T032652Z-27525/evidence/untracked-at-m2.txt	Shift-1.3 expanded representation manifold; no target removed
+rocksdb	evidence_present	/Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8/canonical/estate/Bonfyre_Aurekai_CANONICAL_INTEGRATED_V8_1_FULL_LINEAGE_KERNEL_CONVERGENCE_2026-08-20/BONFYRE_AUREKAI_CANONICAL_INTEGRATED_V8_1_COMPLETED_PINNED_REFERENCE_WITNESS_ATLAS.md	Shift-1.3 expanded representation manifold; no target removed
+s3	evidence_present	protoc-gen-upbdefs-35.0.0	Shift-1.3 expanded representation manifold; no target removed
+simdjson	evidence_present	simdjson	Shift-1.3 expanded representation manifold; no target removed
+slatedb	declared_target		Shift-1 maximal representation portfolio
+sled	evidence_present	/Users/nickgonzales/Developer/Bonfyre/integrations/frappe-bench/apps/frappe/frappe/public/js/lib/fullcalendar/locale-all.js	Shift-1.3 expanded representation manifold; no target removed
+snappy	evidence_present	/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreTone/src/main.c	Shift-1.3 expanded representation manifold; no target removed
+souffle	declared_target	theoretical-perfection frontier expansion	Shift-1.3 expanded representation manifold; no target removed
+sqlite_vec	evidence_present	/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreVec/src/main.c	Shift-1.3 expanded representation manifold; no target removed
+substrait	physical	/Users/nickgonzales/Developer/Bonfyre/docs/architecture.md	Substrait scan plan over canonical Parquet
+tantivy	evidence_present	/Users/nickgonzales/Developer/Bonfyre/storage-archaeology-fast/report.json	Shift-1.3 expanded representation manifold; no target removed
+tikv	evidence_present	/Users/nickgonzales/.bonfyre/partner-venv/lib/python3.12/site-packages/litellm/proxy/_experimental/out/_next/static/chunks/1y596evc77z8d.js	Shift-1.3 expanded representation manifold; no target removed
+tiledb	declared_target	theoretical-perfection frontier expansion	Shift-1.3 expanded representation manifold; no target removed
+unity_catalog	evidence_present	/Users/nickgonzales/.bonfyre/partner-venv/lib/python3.12/site-packages/databricks/sdk/__init__.py	Shift-1.3 expanded representation manifold; no target removed
+usearch	evidence_present	/Users/nickgonzales/Developer/Bonfyre/integrations/frappe-bench/apps/frappe/frappe/website/js/website.js	Shift-1.3 expanded representation manifold; no target removed
+velox	evidence_present	/Users/nickgonzales/.bonfyre/partner-venv/lib/python3.12/site-packages/tornado/netutil.py	Shift-1.3 expanded representation manifold; no target removed
+verus	evidence_present	/Users/nickgonzales/.bonfyre/substrates/v6.1/verus	Shift-1.3 expanded representation manifold; no target removed
+vulkan	evidence_present	/Users/nickgonzales/.bonfyre/partner-venv/lib/python3.12/site-packages/sklearn/externals/array_api_compat/torch/_info.py	Shift-1.3 expanded representation manifold; no target removed
+wasmer	declared_target	theoretical-perfection frontier expansion	Shift-1.3 expanded representation manifold; no target removed
+wasmtime	evidence_present	wasmtime	Shift-1.3 expanded representation manifold; no target removed
+weaviate	evidence_present	bonfyre-weaviate-index	Shift-1.3 expanded representation manifold; no target removed
+webgpu	evidence_present	/Users/nickgonzales/Developer/Bonfyre/architecture/surface/client-organs.yaff	Shift-1.3 expanded representation manifold; no target removed
+wgpu	evidence_present	/Users/nickgonzales/.bonfyre/partner-venv/lib/python3.12/site-packages/opentelemetry/semconv/_incubating/attributes/hw_attributes.py	Shift-1.3 expanded representation manifold; no target removed
+wit	evidence_present	/Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8/canonical/estate/Bonfyre_Aurekai_CANONICAL_INTEGRATED_V8_1_FULL_LINEAGE_KERNEL_CONVERGENCE_2026-08-20/BONFYRE_AUREKAI_CANONICAL_INTEGRATED_V8_1_COMPLETED_PINNED_REFERENCE_WITNESS_ATLAS.md	Shift-1.3 expanded representation manifold; no target removed
+xtable	declared_target		Shift-1 maximal representation portfolio
+xtdb	declared_target	theoretical-perfection frontier expansion	Shift-1.3 expanded representation manifold; no target removed
+xxhash	evidence_present	/Users/nickgonzales/Developer/Bonfyre/storage-archaeology-fast/report.json	Shift-1.3 expanded representation manifold; no target removed
+yaff	evidence_present	/Users/nickgonzales/.bonfyre/substrates/v6.1/yaff	Shift-1.3 expanded representation manifold; no target removed
+yjs	evidence_present	/Users/nickgonzales/Developer/Bonfyre/evidence/recovery/opportunity-20260803-v2/history_hits.txt	Shift-1.3 expanded representation manifold; no target removed
+yrs	evidence_present	/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreWebAddress/tests/page_public_commons_test.sh	Shift-1.3 expanded representation manifold; no target removed
+zarr	declared_target		Shift-1 maximal representation portfolio
+zstd	evidence_present	zstd	Shift-1.3 expanded representation manifold; no target removed

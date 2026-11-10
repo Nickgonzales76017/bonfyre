@@ -1,0 +1,46 @@
+[Unit]
+Description=Bonfyre OAuth authority bridge for the project MCP
+After=network-online.target bonfyre-web-address.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+EnvironmentFile=/etc/bonfyre/web-address.env
+Environment=BONFYRE_OAUTH_MCP_HOST=127.0.0.1
+Environment=BONFYRE_OAUTH_MCP_PORT=8791
+# The resource and issuer have independent public identities.  The legacy
+# BONFYRE_OAUTH_PUBLIC_ORIGIN fallback remains understood by the gateway for
+# old local fixtures, but is deliberately not set in production.
+Environment=BONFYRE_MCP_PUBLIC_ORIGIN=https://mcp.aurekai.work
+Environment=BONFYRE_AUTH_PUBLIC_ORIGIN=https://auth.aurekai.work
+# Optional sealed OAuth transaction continuity. This file is deliberately
+# absent until the credential boundary provisions its service key and AES seal
+# key; partial configuration fails closed in the gateway rather than silently
+# returning to process-local authorization codes.
+EnvironmentFile=-/etc/bonfyre/placement-plane.env
+Environment=BONFYRE_PROJECT_MCP_URL=http://127.0.0.1:13051/mcp
+Environment=BONFYRE_UPPER90_BINARY=/usr/local/bin/bonfyre-upper90
+Environment=BONFYRE_UPPER90_DB=/var/lib/bonfyre/upper90.db
+Environment=BONFYRE_CMS_BINARY=/usr/local/bin/bonfyre-cms
+Environment=BONFYRE_CMS_DB=/var/lib/bonfyre/cms/bonfyre_cms.db
+Environment=BONFYRE_CMS_SCHEMAS=/var/lib/bonfyre/cms/content-types
+Environment=BONFYRE_PROJECT_BINARY=/usr/local/bin/bonfyre-project
+Environment=BONFYRE_FOREIGN_ROOT=/var/lib/bonfyre/foreign
+LoadCredential=project-mcp-token:/etc/bonfyre/mcp.token
+Environment=BONFYRE_PROJECT_MCP_TOKEN_FILE=%d/project-mcp-token
+ExecStart=/usr/bin/node /opt/bonfyre/mcp/bonfyre_oauth_gateway.mjs
+Restart=always
+RestartSec=2
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadOnlyPaths=/etc/bonfyre /usr/local/bin
+# BonfyreAuth persists the short-lived session that backs an OAuth access token.
+# Keep the service otherwise read-only; this is its sole mutable authority state.
+ReadWritePaths=/var/lib/bonfyre
+
+[Install]
+WantedBy=multi-user.target

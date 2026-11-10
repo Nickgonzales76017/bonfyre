@@ -1,0 +1,12 @@
+[Unit]
+Description=Bonfyre Matrix Surface Fabric Health Gate
+After=nginx.service bonfyre-web-address.service
+Wants=nginx.service bonfyre-web-address.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/nginx -t
+# This is an internal liveness witness for the native address compiler.  It is
+# deliberately not an authenticated Studio/ops route: a scheduler must never
+# acquire or store a user bearer just to prove the edge is alive.
+ExecStart=/usr/bin/curl --fail --silent --show-error -HHost:\ aurekai.work http://127.0.0.1:8787/healthz

@@ -1,0 +1,16 @@
+[Unit]
+# Renew WebSub leases before they lapse.
+#
+# A lapsed lease is silent: the hub stops delivering and the topic reads as a
+# source with no news. That is the worst failure shape available, because it is
+# indistinguishable from success, so renewal runs on a timer well inside the
+# shortest lease held.
+Description=Bonfyre WebSub lease reconcile
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+Environment=BONFYRE_WEBSUB_DB=/var/lib/bonfyre/state/websub.db
+Environment=BONFYRE_PUBLIC_ORIGIN=https://aurekai.life
+ExecStart=/usr/local/bin/bonfyre-websub reconcile --window 7200

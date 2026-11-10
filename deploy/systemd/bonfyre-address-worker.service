@@ -1,0 +1,19 @@
+[Unit]
+Description=Bonfyre AddressPlane compiler and FactDelta forwarding worker
+After=network-online.target bonfyre-web-address.service bonfyre-websub-drain.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=ubuntu
+# Every path is explicit because these remain separate semantic owners.  The
+# worker compiles only their non-owning advertisement projections; it never
+# writes CMS, targets, provider weather, model state, MCP authority, or effects.
+EnvironmentFile=/etc/bonfyre/address-plane.env
+ExecStart=/usr/local/bin/bonfyre-external-estate address-worker --db ${BONFYRE_ADDRESS_INDEX} --cms-db ${BONFYRE_CMS_DB} --target-db ${BONFYRE_TARGET_DB} --provider-db ${BONFYRE_PROVIDER_DB} --model-db ${BONFYRE_MODEL_DB} --protocols ${BONFYRE_PROTOCOLS_JSONL} --mcp-url ${BONFYRE_MCP_URL} --mcp-token-file ${BONFYRE_MCP_TOKEN_FILE} --delta-dir ${BONFYRE_FACT_DELTAS} --lowerer-dir ${BONFYRE_LOWERER_INBOX} --physical-db ${BONFYRE_PHYSICAL_REGISTRY_DB} --physical-compiler ${BONFYRE_PHYSICAL_COMPILER} --admission-db ${BONFYRE_ADMISSION_DB} --admission-volume ${BONFYRE_PHYSICAL_ADMISSION_VOLUME} --admission-plane ${BONFYRE_PHYSICAL_ADMISSION_PLANE} --owner-contract-image ${BONFYRE_OWNER_CONTRACT_IMAGE} --limit ${BONFYRE_ADDRESS_DELTA_LIMIT}
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/bonfyre

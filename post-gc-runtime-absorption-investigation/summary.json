@@ -1,0 +1,74 @@
+{
+  "schema": "bonfyre-post-gc-runtime-absorption.v2.2.1",
+  "generated_at": "2026-09-29T06:36:05.849871+00:00",
+  "sqlite_investigation": {
+    "source": "/Users/nickgonzales/.bonfyre/estate-local/representation-manifold.db",
+    "mode": "stable_temp_snapshot",
+    "wal_present": false,
+    "shm_present": false,
+    "attempts": [
+      {
+        "mode": "live_read_only",
+        "error": "OperationalError: unable to open database file"
+      }
+    ],
+    "warning": null,
+    "snapshot": "/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/bonfyre-post-gc-sqlite-5nugf6mq/representation-manifold.db",
+    "snapshot_attempt": 1
+  },
+  "representation_law": {
+    "representation_target_type": "view",
+    "legacy_type": null,
+    "representation_law": 118,
+    "representation_override_group": 2,
+    "representation_override_member": 60,
+    "representation_exclusion": 0,
+    "representation_law_receipt": 1,
+    "compatibility_rows": 23836,
+    "compatibility_digest": "6a5d811b45e94639ffd9123e3f725fcaf7388819fc2eac8fd34281c47b631f7f"
+  },
+  "lance": {
+    "realizations": 150,
+    "reconstructable": 150,
+    "available": 0,
+    "paths_still_exist": 0,
+    "resident_bytes": 0
+  },
+  "iceberg": {
+    "old_exists": false,
+    "old_bytes": 0,
+    "cas_exists": true,
+    "cas_bytes": 2398003,
+    "cas_files": 809
+  },
+  "cas": {
+    "bodies": 201,
+    "missing": 0,
+    "digest_mismatches": 0,
+    "size_mismatches": 0
+  },
+  "venv": {
+    "bytes": 1012553823,
+    "human": "965.6MiB",
+    "class_summary": {
+      "MIGRATION_ONLY": {
+        "packages": 8,
+        "bytes": 459811629
+      },
+      "TRANSITIVE_OR_UNSEEN": {
+        "packages": 51,
+        "bytes": 369119544
+      },
+      "PERSISTENT_RUNTIME": {
+        "packages": 3,
+        "bytes": 167126631
+      },
+      "TOOLCHAIN_ONLY": {
+        "packages": 3,
+        "bytes": 16377326
+      }
+    },
+    "runtime_files": 2,
+    "migration_files": 5
+  }
+}

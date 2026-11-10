@@ -1,0 +1,15 @@
+[Unit]
+Description=Bonfyre WebSub dirty-source drain
+After=network-online.target bonfyre-web-address.service
+
+[Service]
+Type=oneshot
+User=ubuntu
+Environment=BONFYRE_WEBSUB_DB=/var/lib/bonfyre/state/websub.db
+Environment=BONFYRE_FOREIGN_ROOT=/var/lib/bonfyre/foreign
+Environment=BONFYRE_BIN_DIR=/usr/local/bin
+Environment=BONFYRE_FACT_DELTAS=/var/lib/bonfyre/fact-deltas
+# This is a bounded worker invocation over durable, coalesced SourceDirty rows.
+# It does not manufacture facts: each row invokes ForeignTwin observation and
+# only the later receipt/evidence path can promote what was read.
+ExecStart=/usr/local/bin/bonfyre-websub drain --limit 16

@@ -1,0 +1,28 @@
+{
+  "schema": "bonfyre-estate-wide-convergence-radar.v3",
+  "generated_at": "2026-09-29T06:42:56.845063+00:00",
+  "sqlite_candidates": 10,
+  "native_absorption_candidates": 126,
+  "generated_files": 1176,
+  "generated_duplicate_groups": 10,
+  "atlas_architectures": 381,
+  "atlas_field_report": {
+    "ran": true,
+    "exit": 0,
+    "stdout_lines": 53,
+    "stderr": ""
+  },
+  "radar_candidates": 147,
+  "priority_counts": {
+    "P0": 3,
+    "P1": 140,
+    "P2": 4
+  },
+  "wave_counts": {
+    "LAW_COMPRESSION": 6,
+    "NATIVE_ABSORPTION": 126,
+    "GENERATED_DEDUP": 10,
+    "GENERATED_PROJECTION": 4,
+    "ATLAS_METADATA_GC": 1
+  }
+}

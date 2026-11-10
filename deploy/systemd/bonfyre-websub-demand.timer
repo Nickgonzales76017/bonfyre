@@ -1,0 +1,10 @@
+[Unit]
+Description=Accept Bonfyre MaterialCompiler observation demands
+
+[Timer]
+OnBootSec=45s
+OnUnitActiveSec=15s
+Unit=bonfyre-websub-demand.service
+
+[Install]
+WantedBy=timers.target

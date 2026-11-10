@@ -1,0 +1,937 @@
+BONFŸRE STORAGE ARCHAEOLOGY — FAST PASS
+================================================================================
+generated: 2026-09-29T01:40:07.449050+00:00
+
+SIGNAL MAP
+--------------------------------------------------------------------------------
+OPERATIONAL
+  sqlite                       PHYSICAL_ON_DISK             evidence=1198
+  duckdb                       PHYSICAL_ON_DISK             evidence=99
+  postgres                     DEPENDENCY_OR_BUILD_WIRING   evidence=304
+  supabase                     DEPENDENCY_OR_BUILD_WIRING   evidence=29
+
+COLUMNAR_LAKE
+  arrow                        ARCHITECTURE_DECLARATION     evidence=208
+  parquet                      PHYSICAL_ON_DISK             evidence=122
+  iceberg                      DEPENDENCY_OR_BUILD_WIRING   evidence=28
+  nessie                       CODE_OR_TEXT_EVIDENCE        evidence=1
+  lance                        ARCHITECTURE_DECLARATION     evidence=165
+  delta_lake                   DEPENDENCY_OR_BUILD_WIRING   evidence=31
+  paimon                       NOT_SEEN                     evidence=0
+  hudi                         NOT_SEEN                     evidence=0
+  zarr                         CODE_OR_TEXT_EVIDENCE        evidence=35
+
+QUERY_INCREMENTAL
+  datafusion                   DEPENDENCY_OR_BUILD_WIRING   evidence=32
+  feldera_dbsp                 ARCHITECTURE_DECLARATION     evidence=807
+  daft                         ARCHITECTURE_DECLARATION     evidence=90
+  polars                       NOT_SEEN                     evidence=0
+  substrait                    CODE_OR_TEXT_EVIDENCE        evidence=16
+
+KV_LSM
+  lmdb                         DEPENDENCY_OR_BUILD_WIRING   evidence=13
+  rocksdb                      CODE_OR_TEXT_EVIDENCE        evidence=6
+  redb                         NOT_SEEN                     evidence=0
+  sled                         CODE_OR_TEXT_EVIDENCE        evidence=1
+  slatedb                      NOT_SEEN                     evidence=0
+
+OBJECT_CAS
+  r2                           CODE_OR_TEXT_EVIDENCE        evidence=166
+  s3_object_store              CODE_OR_TEXT_EVIDENCE        evidence=140
+  cas_merkle                   ARCHITECTURE_DECLARATION     evidence=396
+  ipfs                         CODE_OR_TEXT_EVIDENCE        evidence=105
+  iroh                         ARCHITECTURE_DECLARATION     evidence=37
+
+SEARCH_VECTOR
+  faiss                        CODE_OR_TEXT_EVIDENCE        evidence=11
+  hnsw                         CODE_OR_TEXT_EVIDENCE        evidence=7
+  weaviate                     DEPENDENCY_OR_BUILD_WIRING   evidence=67
+  vectorize                    ARCHITECTURE_DECLARATION     evidence=11
+  tantivy                      NOT_SEEN                     evidence=0
+  roaring                      DEPENDENCY_OR_BUILD_WIRING   evidence=100
+
+LOCAL_FIRST
+  opfs                         CODE_OR_TEXT_EVIDENCE        evidence=1
+  automerge                    ARCHITECTURE_DECLARATION     evidence=99
+  gun                          NOT_SEEN                     evidence=0
+  yjs                          CODE_OR_TEXT_EVIDENCE        evidence=2
+  crdt                         ARCHITECTURE_DECLARATION     evidence=13
+
+TEMPORAL
+  bitemporal                   CODE_OR_TEXT_EVIDENCE        evidence=294
+  hlc                          ARCHITECTURE_DECLARATION     evidence=18
+  event_log                    DEPENDENCY_OR_BUILD_WIRING   evidence=137
+  mvcc                         CODE_OR_TEXT_EVIDENCE        evidence=2
+
+BONFYRE_NATIVE
+  bonfyrefs                    DEPENDENCY_OR_BUILD_WIRING   evidence=94
+  object_fabric                ARCHITECTURE_DECLARATION     evidence=90
+  representation_instance      ARCHITECTURE_DECLARATION     evidence=6
+  body_availability            ARCHITECTURE_DECLARATION     evidence=19
+  materialization_boundary     CODE_OR_TEXT_EVIDENCE        evidence=9
+  artifact_ir                  CODE_OR_TEXT_EVIDENCE        evidence=25
+  delta_ir                     CODE_OR_TEXT_EVIDENCE        evidence=21
+  representation_graph         CODE_OR_TEXT_EVIDENCE        evidence=8
+  validity_frontier            ARCHITECTURE_DECLARATION     evidence=7
+  foreign_twin                 ARCHITECTURE_DECLARATION     evidence=624
+  source_frontier              CODE_OR_TEXT_EVIDENCE        evidence=122
+  subject_fabric               DEPENDENCY_OR_BUILD_WIRING   evidence=21
+  address_plane                CODE_OR_TEXT_EVIDENCE        evidence=272
+
+COMPILER
+  cue                          DEPENDENCY_OR_BUILD_WIRING   evidence=211
+  yaff                         CODE_OR_TEXT_EVIDENCE        evidence=692
+
+COMPRESSION
+  zstd                         DEPENDENCY_OR_BUILD_WIRING   evidence=277
+  lz4                          CODE_OR_TEXT_EVIDENCE        evidence=5
+  brotli                       CODE_OR_TEXT_EVIDENCE        evidence=90
+
+HIGH-VALUE EXAMPLES
+--------------------------------------------------------------------------------
+OPERATIONAL
+[sqlite] PHYSICAL_ON_DISK (1198)
+  /Users/nickgonzales/Developer/Bonfyre/discipl.db [database]
+    100.0 KiB
+  /Users/nickgonzales/Developer/Bonfyre/bonfyre_cms.db [database]
+    1.1 MiB
+  /Users/nickgonzales/Developer/Bonfyre/Makefile:471 [manifest]
+    --exclude='*.sqlite' \
+  /Users/nickgonzales/Developer/Bonfyre/install.sh:172 [code_or_text]
+    check_lib sqlite3 sqlite3.h "brew install sqlite3 / apt install libsqlite3-dev"
+  /Users/nickgonzales/Developer/Bonfyre/STATUS.md:35 [code_or_text]
+    │     Claims     │  (SQLite: memory.db)
+[duckdb] PHYSICAL_ON_DISK (99)
+  /Users/nickgonzales/Developer/Bonfyre/artifacts.duckdb [physical_file]
+    524.0 KiB
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreExperienceMap/tools/compile_experience_map.py:88 [code_or_text]
+    "langchain", "temporal", "dagster", "duckdb", "helm", "terraform", "vscode", "mcp", "wandb",
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreWebAddress/tests/auth_surface_test.sh:494 [code_or_text]
+    # deployed DuckDB SQLite extension and is exercised at the Oracle edge.
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreWebAddress/tests/page_parcel_test.sh:25 [code_or_text]
+    mkdir -p "$tmp/schemas" "$tmp/saved-type" "$tmp/bin" "$tmp/duckdb"
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreQuery/src/main.c:9 [code_or_text]
+    * BonfyreQuery — local analytics engine over artifacts via DuckDB.
+[postgres] DEPENDENCY_OR_BUILD_WIRING (304)
+  /Users/nickgonzales/Developer/Bonfyre/tools/estate/cloud-fabric-lib.ts:1034 [code_or_text]
+    database_target_count: lanes.filter((lane) => lane.lane_kind.includes("postgres") || lane.lane_kind.includes("realtime")).length,
+  /Users/nickgonzales/Developer/Bonfyre/tools/output/cloud-fabric/neon_readiness.json:5 [code_or_text]
+    "db_url_masked": "postgresql://ep-small-glade-awnq6dna.c-12.us-east-1.aws.neon.tech/neondb",
+  /Users/nickgonzales/Developer/Bonfyre/docs/Speech-Investigation-Integration.md:302 [code_or_text]
+    - **Storage**: Distributed SQLite (Turso/LiteFS) or PostgreSQL
+  /Users/nickgonzales/Developer/Bonfyre/packs/upper90/providers.yaff:99 [architecture]
+    provider provider:jrss-postgres-dev
+  /Users/nickgonzales/Developer/Bonfyre/packs/upper90/delegation.yaff:33 [architecture]
+    provider_closure provider:jrss-postgres-dev
+[supabase] DEPENDENCY_OR_BUILD_WIRING (29)
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreProviderFrontier/tools/refresh_providers.py:102 [code_or_text]
+    ("supabase", "data", None, "SUPABASE_ACCESS_TOKEN", "Bearer"),
+  /Users/nickgonzales/Developer/Bonfyre/tools/compile_placement_plane.py:47 [code_or_text]
+    return """-- Generated by tools/compile_placement_plane.py; apply through the Supabase migration path.
+  /Users/nickgonzales/Developer/Bonfyre/tools/estate/cloud-fabric-lib.ts:109 [code_or_text]
+    provider_id: "supabase",
+  /Users/nickgonzales/Developer/Bonfyre/tools/output/cloud-fabric/supabase_readiness.json:2 [code_or_text]
+    "provider_id": "supabase",
+  /Users/nickgonzales/Developer/Bonfyre/evidence/placement-plane/bootstrap-2026-09-23.json:8 [code_or_text]
+    "provider": "supabase",
+
+COLUMNAR_LAKE
+[arrow] ARCHITECTURE_DECLARATION (208)
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreFacet/src/main.c:296 [code_or_text]
+    /* MEASUREMENT_STREAM   */ "SensorThings,WoT,MQTT,OPC UA,Arrow Flight,MOQT",
+  /Users/nickgonzales/Developer/Bonfyre/evidence/recovery/opportunity-20260803-v2/api/oracle_api_opportunities_seeds.json:1 [code_or_text]
+    {"status":"ok","label":"seed_opportunities","items":[{"seed_id":"seed_001","list_number":1,"display_name":"Google Ad Grants","source_category":"nonprofit_ads","source_url":"https://www.google.com/grants/","setup_fit":["public_good_demo","shoutout_demo","cultural_commerce_demo","resource_engine"],"ap
+  /Users/nickgonzales/Developer/Bonfyre/evidence/origins/notebook-era/.obsidian/plugins/templater-obsidian/main.js:15 [code_or_text]
+    `)}catch{console.error("Failed to parse summary section")}}function as(n){if(!n)return"";try{return n.content.nodes[0].getChildNodes()[0].text.trim()}catch{return""}}function ss(n){try{return n.blocks.map(r=>{let i=r.parameterName,o=r.content.getChildNodes()[0].getChildNodes().filter(a=>a instanceof
+  /Users/nickgonzales/Developer/Bonfyre/tests/test_fleming_source_registry.py:1292 [code_or_text]
+    # The pack states forbidden inferences in arrow form ("X -> Y" meaning do not
+  /Users/nickgonzales/Developer/Bonfyre/docs/architecture.md:99 [code_or_text]
+    - Arrow, Feldera, Substrait, SQL, DuckDB, Daft, Lance, and local metadata
+[parquet] PHYSICAL_ON_DISK (122)
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreWebAddress/tests/foreign_twin_test.sh:297 [code_or_text]
+    # Parquet was a file this estate happened to query. A subject could describe its
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreFacet/src/main.c:686 [code_or_text]
+    /* VERSIONED_RECORD     */ "JSON-LD,XML,Parquet",
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreSpatial/tests/spatial_test.sh:601 [code_or_text]
+    "$bin" durable --db "$mdb" --out "$tmp/cold.parquet" > "$tmp/export.json"
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreSpatial/tests/spatial_scale_bench.sh:66 [code_or_text]
+    echo "--- durable tier: hot SQLite against cold Parquet"
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreSpatial/src/main.c:777 [code_or_text]
+    * zstd-compressed Parquet with every field intact. That is the compression law
+[iceberg] DEPENDENCY_OR_BUILD_WIRING (28)
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8-r2c/20260823T032652Z-27525/household/food/bodies/dominos-6977-menu.json:1 [code_or_text]
+    {"Misc":{"Status":0,"StoreID":"6977","BusinessDate":"2026-08-23","StoreAsOfTime":"2026-08-23 14:51:08","LanguageCode":"en","Version":"1.001","ExpiresOn":""},"Categorization":{"Food":{"Categories":[{"Categories":[{"Categories":[],"Code":"BuildYourOwn","Description":"","Products":["S_PIZZA"],"Name":"B
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8-r2c/20260823T032652Z-27525/household/food/bodies/dominos-6901-menu.json:1 [code_or_text]
+    {"Misc":{"Status":0,"StoreID":"6901","BusinessDate":"2026-08-23","StoreAsOfTime":"2026-08-23 14:51:06","LanguageCode":"en","Version":"1.001","ExpiresOn":""},"Categorization":{"Food":{"Categories":[{"Categories":[{"Categories":[],"Code":"BuildYourOwn","Description":"","Products":["S_PIZZA"],"Name":"B
+  /Users/nickgonzales/.bonfyre/substrates/v6.1/_cargo-home/registry/src/index.crates.io-1949cf8c6b5b557f/object_store-0.12.5/src/lib.rs:443 [code_or_text]
+    //! building metadata catalogs, such as [Apache Iceberg] or [Delta Lake], directly on top of object
+  /Users/nickgonzales/.bonfyre/substrates/v6.1/_cargo-home/git/checkouts/feldera-93e069cd0a577fb3/50fb21b/Cargo.toml:27 [manifest]
+    "crates/iceberg",
+  /Users/nickgonzales/.bonfyre/substrates/v6.1/_cargo-home/git/checkouts/feldera-93e069cd0a577fb3/50fb21b/Cargo.lock:4180 [manifest]
+    "feldera-iceberg",
+[nessie] CODE_OR_TEXT_EVIDENCE (1)
+  /Users/nickgonzales/.bonfyre/substrates/v6.1/_cargo-home/registry/src/index.crates.io-1949cf8c6b5b557f/aes-0.8.4/tests/mod.rs:1 [code_or_text]
+    //! Test vectors are from NESSIE:
+[lance] ARCHITECTURE_DECLARATION (165)
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreCompress/tests/physical_compiler_test.sh:12 [code_or_text]
+    {"identity":"occurrence:int8:v1","subject_family":"occurrence","semantic_digest":"sha256:occurrence","representation_family":"int8-vector","representation_version":"1","exactness_class":"latent","quality_loss_budget":1,"measurement_state":"measured","shared_basis":"embedding-basis:v1","binding_diges
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreProviderFrontier/tools/refresh_providers.py:138 [code_or_text]
+    "tract": "inference", "lance": "vector", "daft": "data", "yaff": "compiler",
+  /Users/nickgonzales/Developer/Bonfyre/evidence/origins/notebook-era/08-Transcriptions/Job - Founder Sample - PickFu Assumptions.md:81 [code_or_text]
+    Hi there, I'm Lance Cottrell, your host at Feel the Boot. And today I'm talking to John Lee of Pickfoo. He's got an interesting story and company, but I brought him on in particular because of his interest in testing assumptions in businesses.
+  /Users/nickgonzales/Developer/Bonfyre/evidence/origins/notebook-era/08-Transcriptions/Job - founder-01-pickfu-assumptions-full.md:52 [code_or_text]
+    - What you mentioned is absolutely right, Lance, that it's, we've, I've definitely felt the phase shift between small team, everyone in a room, everyone can work together on the same problems, to sort of a much, not a much larger team.
+  /Users/nickgonzales/Developer/Bonfyre/docs/architecture.md:99 [code_or_text]
+    - Arrow, Feldera, Substrait, SQL, DuckDB, Daft, Lance, and local metadata
+[delta_lake] DEPENDENCY_OR_BUILD_WIRING (31)
+  /Users/nickgonzales/.bonfyre/substrates/v6.1/_cargo-home/registry/src/index.crates.io-1949cf8c6b5b557f/object_store-0.12.5/src/lib.rs:443 [code_or_text]
+    //! building metadata catalogs, such as [Apache Iceberg] or [Delta Lake], directly on top of object
+  /Users/nickgonzales/.bonfyre/substrates/v6.1/_cargo-home/registry/src/index.crates.io-1949cf8c6b5b557f/object_store-0.12.5/src/aws/dynamo.rs:104 [code_or_text]
+    /// It also draws inspiration from the DeltaLake [S3 Multi-Cluster] commit protocol, but
+  /Users/nickgonzales/.bonfyre/substrates/v6.1/_cargo-home/git/checkouts/feldera-93e069cd0a577fb3/50fb21b/Cargo.toml:128 [manifest]
+    deltalake = { git = "https://github.com/feldera/delta-rs.git", rev = "297f2dd146f9947795f8b77f25db8da9daff2ade" }
+  /Users/nickgonzales/.bonfyre/substrates/v6.1/_cargo-home/git/checkouts/feldera-93e069cd0a577fb3/50fb21b/Cargo.lock:4170 [manifest]
+    "deltalake",
+  /Users/nickgonzales/.bonfyre/substrates/v6.1/_cargo-home/git/checkouts/feldera-93e069cd0a577fb3/50fb21b/crates/ir/test/sample_c.sql:18 [code_or_text]
+    --   from the Delta Lake and evaluate all views.
+[zarr] CODE_OR_TEXT_EVIDENCE (35)
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreWebAddress/tests/web_address_test.sh:31 [code_or_text]
+    # RO-Crate/Zarr closure simply becomes able to point all carriers at it.
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreWebAddress/tests/surface_pattern_test.sh:309 [code_or_text]
+    for want in 'application/activity+json' 'agent.json' 'mcp/resources' 'ro-crate' 'zarr' 'rel="lrdd"'; do
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreWebAddress/tests/foreign_twin_test.sh:346 [code_or_text]
+    zn=$($R "$CL --format zarr" 2>/dev/null | python3 -c '
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreWebAddress/tests/auth_surface_test.sh:351 [code_or_text]
+    # compiler used by RO-Crate, Zarr and MCP. It must show owner-plane boundaries,
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreFacet/src/main.c:297 [code_or_text]
+    /* FIELD_COVERAGE       */ "OGC EDR,WCS,STAC,Zarr,GeoParquet",
+
+QUERY_INCREMENTAL
+[datafusion] DEPENDENCY_OR_BUILD_WIRING (32)
+  /Users/nickgonzales/Developer/Bonfyre/.run6/bonfyre-run6-week-autonomous-2026-08-13/source_runs/run5/bonfyre_run5_firecrawl_queries.json:1360 [code_or_text]
+    "query": "arrow datafusion maintainer contributor current issue implementation need",
+  /Users/nickgonzales/Developer/Bonfyre/.run6/bonfyre-run6-week-autonomous-2026-08-13/source_runs/run4/bonfyre_run4_external_target_atlas_2026-08-13.json:2459 [code_or_text]
+    "scope": "Apache Arrow/DataFusion interchange and execution",
+  /Users/nickgonzales/Developer/Bonfyre/.run6/bonfyre-run6-week-autonomous-2026-08-13/source_runs/run3/bonfyre_capital_gym_run3_2026-08-13.sh:3113 [code_or_text]
+    Seed families: execution integrity/provenance/SARIF/agent security; llama.cpp/GGUF/vLLM/SGLang/ONNX Runtime/Hugging Face/Bento; DuckDB/Arrow/DataFusion/libSQL/Turso/Lance; Frappe/ERPNext; workerd/WASM/Wasmtime/Fermyon; FFmpeg/media/document extraction; Restate/Feldera/Automerge/egglog/HVM4-adjacent;
+  /Users/nickgonzales/Developer/Bonfyre/.run6/bonfyre-run6-week-autonomous-2026-08-13/source_runs/run3/bonfyre_codex_run3_external_campaign_2026-08-13.md:145 [code_or_text]
+    Seed families: execution integrity/provenance/SARIF/agent security; llama.cpp/GGUF/vLLM/SGLang/ONNX Runtime/Hugging Face/Bento; DuckDB/Arrow/DataFusion/libSQL/Turso/Lance; Frappe/ERPNext; workerd/WASM/Wasmtime/Fermyon; FFmpeg/media/document extraction; Restate/Feldera/Automerge/egglog/HVM4-adjacent;
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8/canonical/estate/Bonfyre_Aurekai_CANONICAL_INTEGRATED_V8_1_FULL_LINEAGE_KERNEL_CONVERGENCE_2026-08-20/90_REFERENCE/V8_1_WHOLE_MACHINE_OPTIMIZATION_SCAN_2026-08-20.md:352 [code_or_text]
+    Do not add DataFusion merely for fashion. It becomes interesting only if Bonfÿre needs an embedded Rust execution engine that deletes duplicated analytical execution code.
+[feldera_dbsp] ARCHITECTURE_DECLARATION (807)
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreExternalEstate/src/main.c:776 [code_or_text]
+    * lowerers: this is the affected cut handed to SemanticDerivation/Feldera. */
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreProviderFrontier/tools/refresh_providers.py:139 [code_or_text]
+    "automerge": "state", "feldera": "stream", "hydro": "placement", "cubecl": "gpu",
+  /Users/nickgonzales/Developer/Bonfyre/estate/providers.yaff:4 [architecture]
+    provider feldera
+  /Users/nickgonzales/Developer/Bonfyre/tests/fabric_smoke.sh:31 [code_or_text]
+    # 9 declared workspace roots + 2 provider roots (feldera, restate) + 10
+  /Users/nickgonzales/Developer/Bonfyre/tests/requirements/feldera_source_sink_parity.sh:2 [code_or_text]
+    # Proves the Feldera source/sink contract (feldera/readiness_pipeline.sql +
+[daft] ARCHITECTURE_DECLARATION (90)
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreProviderFrontier/tools/refresh_providers.py:138 [code_or_text]
+    "tract": "inference", "lance": "vector", "daft": "data", "yaff": "compiler",
+  /Users/nickgonzales/Developer/Bonfyre/docs/architecture.md:99 [code_or_text]
+    - Arrow, Feldera, Substrait, SQL, DuckDB, Daft, Lance, and local metadata
+  /Users/nickgonzales/Developer/Bonfyre/packs/aurekai/RECONCILIATION.yaff:28 [architecture]
+    what architecture/substrate/foundry.yaff plus ~/.bonfyre/substrates/v6.1/ -- 13 substrates each carrying a PASSING semantic-proof.json witness: tract, burn, cubecl, restate, feldera, lance, daft, egglog, gigatoken, hydro, automerge, verus, yaff
+  /Users/nickgonzales/Developer/Bonfyre/.run6/bonfyre-run6-week-autonomous-2026-08-13/RUN6_WEEK_PACKET.md:150 [code_or_text]
+    - GigaToken/Context Cut, Feldera, Restate, Daft/Lance where actually available;
+  /Users/nickgonzales/Developer/Bonfyre/.run6/bonfyre-run6-week-autonomous-2026-08-13/source_runs/run2/bonfyre_codex_run2_execution_packet_2026-08-13.md:525 [code_or_text]
+    Automerge owns mutable collaborative drafts, not immutable receipts. Verus targets bounded critical invariants. Lance/Daft/Tract/Burn/Hydro/CubeCL/egglog/HVM4 keep their established specialized roles; do not force every workload through every backend.
+[substrait] CODE_OR_TEXT_EVIDENCE (16)
+  /Users/nickgonzales/Developer/Bonfyre/docs/architecture.md:99 [code_or_text]
+    - Arrow, Feldera, Substrait, SQL, DuckDB, Daft, Lance, and local metadata
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8-r2c/20260823T032652Z-27525/canonical/system-map.md:1748 [code_or_text]
+    Physical targets include Feldera/DBSP, hot bitmap/BDD indexes, Arrow/Substrait, DuckDB, Daft, Lance, LocalMetaStore, ForeignTwin cache and bounded BoundaryProgramIR/remote API execution.
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8/canonical/system-map.md:68 [code_or_text]
+    AddressPlane        GigaToken        Funding  ├→ Arrow/Feldera/Substrait/SQL
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8/canonical/estate/Bonfyre_Aurekai_CANONICAL_INTEGRATED_V8_1_FULL_LINEAGE_KERNEL_CONVERGENCE_2026-08-20/README.md:207 [code_or_text]
+    The v2 projection surface includes C ABI, Zig, C++, Rust, Python, TypeScript, WIT/WASI, Bonfÿre IRs, Arrow/Substrait/Feldera/DuckDB/Daft/Lance/SQLite, API/service grammars, MCP/A2A, ActivityPub/MoQ, nine Frappe lineages, boundary/provider/execution/finance/format/surface/evidence/evolution/conforman
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8/canonical/estate/Bonfyre_Aurekai_CANONICAL_INTEGRATED_V8_1_FULL_LINEAGE_KERNEL_CONVERGENCE_2026-08-20/MANIFEST.json:1752 [code_or_text]
+    "path": "04_COMPILERS/GENERATED/contract_projection_v2/financial_event_v2/data/substrait.json",
+
+KV_LSM
+[lmdb] DEPENDENCY_OR_BUILD_WIRING (13)
+  /Users/nickgonzales/Developer/Bonfyre/generated/projections/inventory/runtime-inventory.json:121 [code_or_text]
+    "lib/libbonfyre/bf_lmdb.c",
+  /Users/nickgonzales/Developer/Bonfyre/docs/recipes/A3-full-speech-investigation.json:42 [code_or_text]
+    "description": "Entity graph (LMDB)"
+  /Users/nickgonzales/Developer/Bonfyre/lib/libbonfyre/bf_lmdb.c:2 [code_or_text]
+    * bf_lmdb.c — LMDB zero-copy artifact cache
+  /Users/nickgonzales/Developer/Bonfyre/lib/libbonfyre/Makefile:29 [manifest]
+    bf_lmdb.c \
+  /Users/nickgonzales/Developer/Bonfyre/lib/libbonfyre/include/bf_lmdb.h:2 [code_or_text]
+    * bf_lmdb.h — LMDB zero-copy artifact cache
+[rocksdb] CODE_OR_TEXT_EVIDENCE (6)
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8/canonical/estate/Bonfyre_Aurekai_CANONICAL_INTEGRATED_V8_1_FULL_LINEAGE_KERNEL_CONVERGENCE_2026-08-20/V8_1_METHOD_TOOL_SUBSTRATE_COMPRESSION_NOTES.md:30 [code_or_text]
+    16. **No-convenience-database law** prevents Redis/RocksDB/another graph/vector/KV store from becoming semantic infrastructure without a genuinely new state regime.
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8/canonical/estate/Bonfyre_Aurekai_CANONICAL_INTEGRATED_V8_1_FULL_LINEAGE_KERNEL_CONVERGENCE_2026-08-20/04_COMPILERS/METHOD_SUBSTRATE.contract.yaml:222 [code_or_text]
+    rule: do not add Redis/RocksDB/Kafka/another database merely as a convenience cache
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8/canonical/estate/Bonfyre_Aurekai_CANONICAL_INTEGRATED_V8_1_FULL_LINEAGE_KERNEL_CONVERGENCE_2026-08-20/16_COMPLETE_MACHINE/16_METHOD_TOOL_AND_SUBSTRATE_COMPRESSION.md:515 [code_or_text]
+    > Do not introduce Redis, RocksDB, Kafka, another vector DB, another graph DB, or another KV/database merely because a library makes a local task convenient. A new store must demonstrate an irreducible state regime not already owned above.
+  /Users/nickgonzales/.bonfyre/substrates/v6.1/_cargo-home/git/checkouts/feldera-93e069cd0a577fb3/50fb21b/benchmark/flink-kafka/flink-conf.yaml:81 [code_or_text]
+    state.backend: rocksdb
+  /Users/nickgonzales/.bonfyre/substrates/v6.1/_cargo-home/git/checkouts/feldera-93e069cd0a577fb3/50fb21b/benchmark/flink/flink-conf-rocksdb.yaml:40 [code_or_text]
+    state.backend: rocksdb
+[sled] CODE_OR_TEXT_EVIDENCE (1)
+  /Users/nickgonzales/.bonfyre/agents-runtime/venv/lib/python3.12/site-packages/pip/_vendor/rich/_emoji_codes.py:2142 [code_or_text]
+    "sled": "🛷",
+
+OBJECT_CAS
+[r2] CODE_OR_TEXT_EVIDENCE (166)
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreExternalEstate/tests/subject_fabric_precompute_test.sh:59 [code_or_text]
+    INSERT INTO root VALUES('r2','events.example.net','Events','publisher:events');
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreExternalEstate/tests/subject_projection_precompute_test.sh:28 [code_or_text]
+    INSERT INTO subject_reader VALUES('institution:aurekai:live','public','s2','r2','c2','publication','RSS','admitted','',0,'');
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreSpeechLoop/src/main.c:158 [code_or_text]
+    char r1[PATH_MAX], r2[PATH_MAX], r3[PATH_MAX], r4[PATH_MAX], r5[PATH_MAX];
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreTime/src/main.c:255 [code_or_text]
+    char r1[128]="", r2[128]="", p1[512]="", p2[512]="";
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreProviderFrontier/tools/refresh_providers.py:72 [code_or_text]
+    ("cloudflare-r2", "artifact-store", "/r2/buckets"),
+[s3_object_store] CODE_OR_TEXT_EVIDENCE (140)
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreModel/src/main.c:39 [code_or_text]
+    *   s3://     — S3-compatible object store
+  /Users/nickgonzales/Developer/Bonfyre/tools/estate/cloud-fabric-lib.ts:101 [code_or_text]
+    credential_env_names: ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN", "AWS_PROFILE", "AWS_REGION"],
+  /Users/nickgonzales/Developer/Bonfyre/evidence/proofs/execution-environment-matrix.json:677 [code_or_text]
+    "aws_read": "healthy",
+  /Users/nickgonzales/Developer/Bonfyre/evidence/verification/cli/command-surface.txt:824 [code_or_text]
+    s3://bucket/key            S3-compatible store (requires aws cli)
+  /Users/nickgonzales/Developer/Bonfyre/docs/Speech-Investigation-Integration.md:284 [code_or_text]
+    -d '{"type": "speech_investigation", "input": "s3://bucket/audio.mp3"}'
+[cas_merkle] ARCHITECTURE_DECLARATION (396)
+  /Users/nickgonzales/Developer/Bonfyre/demo-pipeline.sh:39 [code_or_text]
+    step "3/10" "Hash — content-address the source"
+  /Users/nickgonzales/Developer/Bonfyre/bonfyre.workspace.yaff:85 [architecture]
+    authority content-addressed
+  /Users/nickgonzales/Developer/Bonfyre/generated/projections/inventory/runtime-inventory.json:1103 [code_or_text]
+    "tmp/t54-smoke-2/replay-runbook.merkle.txt",
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreMCPProof/main.py:207 [code_or_text]
+    # ArtifactGraph proves the generation output is content-addressed and that
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreFS/README.md:11 [code_or_text]
+    Artifacts are content-addressed: the filename is the SHA-256 of the ingested
+[ipfs] CODE_OR_TEXT_EVIDENCE (105)
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreCompress/tests/physical_compiler_test.sh:14 [code_or_text]
+    {"identity":"occurrence:public-json:v1","subject_family":"occurrence","semantic_digest":"sha256:occurrence","representation_family":"public-json","representation_version":"1","exactness_class":"exact","quality_loss_budget":0,"measurement_state":"declared","shared_basis":"occurrence-spine:v1","bindin
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreCapability/src/main.c:500 [code_or_text]
+    static int print_catalog_related_workflow_steps(const char *cid) {
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreContextCut/README.md:6 [code_or_text]
+    each CID once using the declared GigaToken tokenizer passport, and emits a
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreContextCut/context_cut.py:7 [code_or_text]
+    worker verifies its receipt-bound bodies, tokenizes each distinct CID once
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreContextCut/tests/context_cut_test.sh:47 [code_or_text]
+    assert d['token_cache']=={'identity':'CID×tokenizer-passport','hits':0,'misses':2}
+[iroh] ARCHITECTURE_DECLARATION (37)
+  /Users/nickgonzales/Developer/Bonfyre/evidence/proofs/frappe-compiler-company-flow.json:16 [code_or_text]
+    "organ": "Iroh/QUIC",
+  /Users/nickgonzales/Developer/Bonfyre/evidence/proofs/one-company-stress-gauntlet.json:15 [code_or_text]
+    "organ": "Iroh/QUIC",
+  /Users/nickgonzales/Developer/Bonfyre/packs/habitat/boundary.yaff:36 [architecture]
+    reuses Iroh
+  /Users/nickgonzales/Developer/Bonfyre/packs/aurekai/executed-not-catalogued.yaff:76 [architecture]
+    absent tigerbeetle, formance, feldera, restate, lance, iroh, nix, terraform, pulumi, tree-sitter CLI, simdjson, mlflow, dvc, and every Python quant library (vectorbt, qlib, riskfolio, QuantLib, nautilus_trader, arcticdb, deepeval)
+  /Users/nickgonzales/Developer/Bonfyre/packs/aurekai/rubicon-programs.yaff:46 [architecture]
+    evidence 44 distinct missing methods, including BitNet, CUE, YaFF, Restate, Feldera/DBSP, BLAKE3, Apache Arrow, Tree-sitter, simdjson, Zstd, OpenSSL, Vectorscan, ONNX Runtime, llama.cpp/GGUF, ggml, Cloudflare, Harbor, Hugging Face, Automerge, Iroh, OpenDAL
+
+SEARCH_VECTOR
+[faiss] CODE_OR_TEXT_EVIDENCE (11)
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreCLI/src/main.c:195 [code_or_text]
+    {"vec",               "bonfyre-vec",              "BonfyreVec",             SEC_AI, "Local vector search (FAISS)"},
+  /Users/nickgonzales/Developer/Bonfyre/evidence/verification/cli/command-surface.txt:75 [code_or_text]
+    ready             vec                  Local vector search (FAISS)
+  /Users/nickgonzales/Developer/Bonfyre/components/FaissLocalSearch/README.md:3 [code_or_text]
+    Local embedded-vector search using FAISS or native brute-force fallback.
+  /Users/nickgonzales/Developer/Bonfyre/lib/libbonfyre/bf_embed_index.c:6 [code_or_text]
+    * An Inverted File (IVF) index is the same structure Facebook's FAISS
+  /Users/nickgonzales/Developer/Bonfyre/estate-drift-investigation/estate-drift-report.json:21 [code_or_text]
+    "stdout": "bonfyre  command surface\nsummary   134 commands  134 ready  0 missing\nnext      bonfyre doctor   bonfyre workflow list   bonfyre run history\n\nPipeline  20/20 ready\n  ready             ingest               Universal asset intake\n  ready             mediaprep            Media normalis
+[hnsw] CODE_OR_TEXT_EVIDENCE (7)
+  /Users/nickgonzales/Developer/Bonfyre/docs/Speech-Investigation-Integration.md:40 [code_or_text]
+    BonfyreVec create --embeddings embeddings/*.fpq --index-type hnsw --output vector.db
+  /Users/nickgonzales/Developer/Bonfyre/docs/Speech-Investigation-Architecture.md:753 [code_or_text]
+    --index-type hnsw \
+  /Users/nickgonzales/Developer/Bonfyre/docs/Speech-Investigation-System-Map.md:28 [code_or_text]
+    │   │   ├── BonfyreVec — Vector index (SQLite-vec, HNSW)
+  /Users/nickgonzales/.bonfyre/dev-fabric/worktrees/525b9be6e64c4710b2f82a71/docs/Speech-Investigation-Integration.md:40 [code_or_text]
+    BonfyreVec create --embeddings embeddings/*.fpq --index-type hnsw --output vector.db
+  /Users/nickgonzales/.bonfyre/dev-fabric/worktrees/525b9be6e64c4710b2f82a71/docs/Speech-Investigation-Architecture.md:753 [code_or_text]
+    --index-type hnsw \
+[weaviate] DEPENDENCY_OR_BUILD_WIRING (67)
+  /Users/nickgonzales/Developer/Bonfyre/install.sh:88 [code_or_text]
+    "BonfyreWeaviateIndex|bonfyre-weaviate-index|pipeline"
+  /Users/nickgonzales/Developer/Bonfyre/generated/projections/estate/transitional-root-absorption.json:475 [code_or_text]
+    "components/BonfyreWeaviateIndex/outputs/smoke/weaviate-batch.json"
+  /Users/nickgonzales/Developer/Bonfyre/generated/projections/inventory/runtime-inventory.json:671 [code_or_text]
+    "site/demos/e2e-results/bonfyre-weaviate-index/help.stderr",
+  /Users/nickgonzales/Developer/Bonfyre/cmd/command_smoke.json:642 [code_or_text]
+    "binary": "bonfyre-weaviate-index",
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreAPI/static/app.js:19 [code_or_text]
+    { n: 10, cat: 'content', title: 'Research Corpus Builder', desc: 'Build searchable transcript archives with Weaviate vector indexing.', bins: ['ingest', 'transcribe', 'embed'] },
+[vectorize] ARCHITECTURE_DECLARATION (11)
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreProviderFrontier/tools/refresh_providers.py:70 [code_or_text]
+    ("cloudflare-vectorize", "vector", "/vectorize/v2/indexes"),
+  /Users/nickgonzales/Developer/Bonfyre/architecture/provider/provider-family.yaff:17 [architecture]
+    witness 2026-09-18 a provider refresh asked all 67 entries directly rather than reading any logged status: 12 answered as themselves with credentials this estate holds (cloudflare queues, workflows, pages, workers and kv; turso, render, vercel, github, firecrawl, posthog, sentry), 4 answered and ref
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8-r2c/20260823T032652Z-27525/canonical/system-map.md:11560 [code_or_text]
+    fuse · vectorize · predicate pushdown · standing-view substitution · CSE
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8/canonical/estate/Bonfyre_Aurekai_CANONICAL_INTEGRATED_V8_1_FULL_LINEAGE_KERNEL_CONVERGENCE_2026-08-20/99_SOURCE_PROVENANCE/PREVIOUS_FULL_TEXTBOOK_SOURCE.md:5197 [code_or_text]
+    Ten capability chains repeatedly perform ingest -> canon -> fragment -> embed -> vectorize -> query, with only source adapters and a few policy differences. A candidate factorization extracts the common basis while preserving each chain's public identity, source authority, and specialized exceptions
+  /Users/nickgonzales/.bonfyre/agents-runtime/venv/lib/python3.12/site-packages/pip/_vendor/pygments/lexers/python.py:1185 [code_or_text]
+    'unwrap', 'vander', 'var', 'vdot', 'vectorize', 'view', 'vonmises',
+[roaring] DEPENDENCY_OR_BUILD_WIRING (100)
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8/canonical/estate/Bonfyre_Aurekai_CANONICAL_INTEGRATED_V8_1_FULL_LINEAGE_KERNEL_CONVERGENCE_2026-08-20/MANIFEST.json:1742 [code_or_text]
+    "path": "04_COMPILERS/GENERATED/contract_projection_v2/financial_event_v2/data/roaring-bdd-keyspace.json",
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8/canonical/estate/Bonfyre_Aurekai_CANONICAL_INTEGRATED_V8_1_FULL_LINEAGE_KERNEL_CONVERGENCE_2026-08-20/04_COMPILERS/SCALING_SUBSTRATE.contract.yaml:35 [code_or_text]
+    - CRoaring/Roaring
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8/canonical/estate/Bonfyre_Aurekai_CANONICAL_INTEGRATED_V8_1_FULL_LINEAGE_KERNEL_CONVERGENCE_2026-08-20/04_COMPILERS/PHYSICAL_LAW_SUBSTRATE.contract.yaml:36 [code_or_text]
+    - Roaring indexes
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8/canonical/estate/Bonfyre_Aurekai_CANONICAL_INTEGRATED_V8_1_FULL_LINEAGE_KERNEL_CONVERGENCE_2026-08-20/04_COMPILERS/09_REQUIRED_SCALING_SUBSTRATE.md:14 [code_or_text]
+    | compact executable-closure indexes | make maintained Runtime-Constitution relations cheap to query at large cardinality | `TOOLS/scaling_substrate/hot_index.py` (`SparseBitmap`, `ExecutableClosureIndex`, `BDDManager`) | CRoaring/Roaring, Sylvan BDD/MTBDD/LDD, specialized native C/C++ indexes |
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8/canonical/estate/Bonfyre_Aurekai_CANONICAL_INTEGRATED_V8_1_FULL_LINEAGE_KERNEL_CONVERGENCE_2026-08-20/04_COMPILERS/04_RUNTIME_CONSTITUTION_AND_EXECUTABLE_CLOSURE.md:257 [code_or_text]
+    V8.1 includes `TOOLS/scaling_substrate/hot_index.py` as the executable baseline: a sparse chunked bitmap index plus a reduced ordered BDD manager. Production hosts may accelerate these mechanics with CRoaring/Roaring and Sylvan-style BDD/MTBDD/LDD implementations, but compact indexed closure itself 
+
+LOCAL_FIRST
+[opfs] CODE_OR_TEXT_EVIDENCE (1)
+  /Users/nickgonzales/Developer/Bonfyre/site/matrix/duckdb-browser.mjs:1 [code_or_text]
+    var j=Object.create;var P=Object.defineProperty;var K=Object.getOwnPropertyDescriptor;var V=Object.getOwnPropertyNames;var z=Object.getPrototypeOf,J=Object.prototype.hasOwnProperty;var X=(s,e)=>()=>(e||s((e={exports:{}}).exports,e),e.exports);var $=(s,e,r,t)=>{if(e&&typeof e=="object"||typeof e=="fu
+[automerge] ARCHITECTURE_DECLARATION (99)
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreProviderFrontier/tools/refresh_providers.py:139 [code_or_text]
+    "automerge": "state", "feldera": "stream", "hydro": "placement", "cubecl": "gpu",
+  /Users/nickgonzales/Developer/Bonfyre/packs/habitat/boundary.yaff:35 [architecture]
+    reuses Automerge
+  /Users/nickgonzales/Developer/Bonfyre/packs/aurekai/RECONCILIATION.yaff:28 [architecture]
+    what architecture/substrate/foundry.yaff plus ~/.bonfyre/substrates/v6.1/ -- 13 substrates each carrying a PASSING semantic-proof.json witness: tract, burn, cubecl, restate, feldera, lance, daft, egglog, gigatoken, hydro, automerge, verus, yaff
+  /Users/nickgonzales/Developer/Bonfyre/packs/aurekai/rubicon-programs.yaff:46 [architecture]
+    evidence 44 distinct missing methods, including BitNet, CUE, YaFF, Restate, Feldera/DBSP, BLAKE3, Apache Arrow, Tree-sitter, simdjson, Zstd, OpenSSL, Vectorscan, ONNX Runtime, llama.cpp/GGUF, ggml, Cloudflare, Harbor, Hugging Face, Automerge, Iroh, OpenDAL
+  /Users/nickgonzales/Developer/Bonfyre/.run6/bonfyre-run6-week-autonomous-2026-08-13/source_runs/run2/bonfyre_codex_run2_execution_packet_2026-08-13.md:274 [code_or_text]
+    - Restate/Feldera/Automerge/egglog/HVM4/Gigatoken-adjacent ecosystems only when there is a real issue or collaboration seam.
+[yjs] CODE_OR_TEXT_EVIDENCE (2)
+  /Users/nickgonzales/Developer/Bonfyre/integrations/frappe-bench/apps/drive/README.md:73 [code_or_text]
+    - [**YJS**](https://github.com/yjs/yjs): The Content Free Replicated Data type (CRDT) at the core of the real time collaboration in both the document and annotation system.
+  /Users/nickgonzales/Developer/Bonfyre/integrations/frappe-bench/apps/drive/drive/patches/new_writer.py:61 [code_or_text]
+    frappe.log_error(f"Error processing Yjs content: {e}")
+[crdt] ARCHITECTURE_DECLARATION (13)
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreCMS/src/ephemeral.c:12 [code_or_text]
+    * See: Research - Flagship Papers (Ephemeral CRDT Reconstruction)
+  /Users/nickgonzales/Developer/Bonfyre/integrations/frappe-bench/apps/drive/README.md:73 [code_or_text]
+    - [**YJS**](https://github.com/yjs/yjs): The Content Free Replicated Data type (CRDT) at the core of the real time collaboration in both the document and annotation system.
+  /Users/nickgonzales/Developer/Bonfyre/architecture/substrate/foundry.yaff:64 [architecture]
+    internal_calculus CRDT merge mechanics
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8/canonical/estate/Bonfyre_Aurekai_CANONICAL_INTEGRATED_V8_1_FULL_LINEAGE_KERNEL_CONVERGENCE_2026-08-20/04_COMPILERS/PHYSICAL_LAW_SUBSTRATE.contract.yaml:113 [code_or_text]
+    forbidden_roles: [source-truth, authority-owner, CRDT-owner, WorkGraph-owner, ObjectFabric-owner]
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8/canonical/estate/Bonfyre_Aurekai_CANONICAL_INTEGRATED_V8_1_FULL_LINEAGE_KERNEL_CONVERGENCE_2026-08-20/01_INSTITUTIONALIZE/01_DEEP_03_STATE_REGIMES_CORRECTION_AND_THE_POSSIBLE_ACTUAL_BOUNDARY.md:40 [code_or_text]
+    CRDT convergence only tells us that collaborators reached a common candidate state. It says nothing about whether that state is authorized or true.
+
+TEMPORAL
+[bitemporal] CODE_OR_TEXT_EVIDENCE (294)
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreExternalEstate/src/main.c:408 [code_or_text]
+    static int valid_token(const char *s) { const char *p=s; if(!p||!*p)return 0; for (;*p;p++) if (!((*p>='a'&&*p<='z')||(*p>='0'&&*p<='9')||*p=='_'||*p=='-')) return 0; return 1; }
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreOwnerContract/src/main.c:108 [code_or_text]
+    if(has(r,"incremental_maintenance")||has(r,"change_notification")||has(r,"resume_typestate")||has(r,"effect_time")||has(r,"bitemporal")||has(r,"supersession")||has(r,"expiry"))return"TEMPORAL";
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreWebAddress/src/spatial_frontier.c:9 [code_or_text]
+    * log and the bitemporal cut, and asking it is the whole of the work here;
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreSpatial/tests/spatial_test.sh:14 [code_or_text]
+    # reach this estate until 22:00:45 -- the gap that makes valid time and
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreSpatial/src/main.c:646 [code_or_text]
+    /* The bitemporal cut, written once and shared by every read below.
+[hlc] ARCHITECTURE_DECLARATION (18)
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreExperienceMap/tests/protocol_derivation_bridge_test.c:77 [code_or_text]
+    .hlc = {.physical_ms = 1, .logical = 0, .node = "test"},
+  /Users/nickgonzales/Developer/Bonfyre/packs/fleming-equity-group/evidence/bodies/dallas-dsd-fees-full-20260829T055042Z.json:2697 [code_or_text]
+    ���u������z����V
+  /Users/nickgonzales/Developer/Bonfyre/packs/federation/ring1-semantic-execution.yaff:172 [architecture]
+    claim an earlier search in this pass reported no HLC in current source
+  /Users/nickgonzales/Developer/Bonfyre/integrations/frappe-bench/apps/erpnext/erpnext/patches/v11_0/refactor_naming_series.py:53 [code_or_text]
+    "Sample Collection": "HLC-SC-.YYYY.-",
+  /Users/nickgonzales/Developer/Bonfyre/integrations/frappe-bench/apps/erpnext/erpnext/patches/v11_0/refactor_autoname_naming.py:51 [code_or_text]
+    "Patient Appointment": "HLC-APP-.YYYY.-.#####",
+[event_log] DEPENDENCY_OR_BUILD_WIRING (137)
+  /Users/nickgonzales/Developer/Bonfyre/notes.md:988 [code_or_text]
+    # 12. There is also an append-only reference estate
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreExternalEstate/tools/estate-refresh.sh:39 [code_or_text]
+    # append-only logs and every line is read rather than the newest one: two
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreCMS/Makefile:26 [manifest]
+    all: $(LT_LIB) $(TARGET) site-fragment-test import-jsonl-test fact-delta-test presentation-template-test project-listings-owner-test publish-market-owner-test project-event-sources-test install-bin
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreCMS/src/ephemeral.h:4 [code_or_text]
+    * Append-only operation log as ground truth.
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreWebAddress/tests/page_stage_test.sh:100 [code_or_text]
+    "a non-event source cannot bleed into the Stage program")
+[mvcc] CODE_OR_TEXT_EVIDENCE (2)
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8-r2c/20260823T032652Z-27525/canonical/system-map.md:467 [code_or_text]
+    DecisionSnapshot + semantic-MVCC read closure · ProofFrontier cache
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8-r2c/20260823T032652Z-27525/index/map-index.json:294 [code_or_text]
+    "heading": "Semantic MVCC \u2014 decisions invalidate only on relevant change",
+
+BONFYRE_NATIVE
+[bonfyrefs] DEPENDENCY_OR_BUILD_WIRING (94)
+  /Users/nickgonzales/Developer/Bonfyre/Makefile:58 [manifest]
+    # nothing else: BonfyreFS lost -D_FILE_OFFSET_BITS=64 and FUSE refused to
+  /Users/nickgonzales/Developer/Bonfyre/cmd/command_smoke.json:147 [code_or_text]
+    "command": "BonfyreFS",
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreFS/README.md:1 [code_or_text]
+    # BonfyreFS
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreFS/src/main.c:2 [code_or_text]
+    * BonfyreFS — real macFUSE mount over the fabric's live state.
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreWebAddress/tests/web_address_test.sh:174 [code_or_text]
+    echo "$descriptor" | grep -q '"bonfyrefs":'
+[object_fabric] ARCHITECTURE_DECLARATION (90)
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreWebAddress/tests/web_address_test.sh:34 [code_or_text]
+    --owner ObjectFabric --resource bonfyre://objectfabric/aurekai-life/public-index \
+  /Users/nickgonzales/Developer/Bonfyre/estate/profiles.yaff:63 [architecture]
+    # ObjectFabric representations. This profile is intentionally provider-neutral:
+  /Users/nickgonzales/Developer/Bonfyre/evidence/proofs/frappe-compiler-company-flow.json:12 [code_or_text]
+    "reason": "no local opendal executable or Python binding is installed; ObjectFabric used its registered local zero-copy representation",
+  /Users/nickgonzales/Developer/Bonfyre/evidence/proofs/generation10-system-map-stress.json:17 [code_or_text]
+    "ObjectFabric",
+  /Users/nickgonzales/Developer/Bonfyre/evidence/proofs/one-company-stress-gauntlet.json:11 [code_or_text]
+    "reason": "no local opendal executable or Python binding is installed; ObjectFabric used its registered local zero-copy representation",
+[representation_instance] ARCHITECTURE_DECLARATION (6)
+  /Users/nickgonzales/Developer/Bonfyre/architecture/optimization/compression-law.yaff:28 [architecture]
+    node_types RepresentationInstance
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8-r2c/20260823T032652Z-27525/canonical/system-map.md:480 [code_or_text]
+    Context/PreparedState · RepresentationInstance · ObjectFabric/Arrow/Zstd
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8-r2c/20260823T032652Z-27525/index/map-index.json:674 [code_or_text]
+    "heading": "Quant / FPQ / Zstd apply to the latent estate through `RepresentationInstance`",
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8-r2c/20260823T032652Z-27525/control/implementation-disposition-ledger.json:523 [code_or_text]
+    "unit": "RepresentationInstance"
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8-r2c/20260823T032652Z-27525/control/M2_CODEX_OPERATOR.txt:221 [code_or_text]
+    RepresentationInstance
+[body_availability] ARCHITECTURE_DECLARATION (19)
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreProvider/tests/smoke.sh:45 [code_or_text]
+    # A BodyAvailability entry is a verified physical reuse projection, not a
+  /Users/nickgonzales/Developer/Bonfyre/architecture/optimization/readiness.yaff:9 [architecture]
+    consumes BodyAvailability
+  /Users/nickgonzales/Developer/Bonfyre/architecture/provider/provider-family.yaff:107 [architecture]
+    purpose Wraps ExecutionEnvironmentGraph and RealizationMeasurement with RealizationManifest, PhysicalExecutionFrame, RealizationObservation, ProviderModelUsageObservation, PhysicalDerivationReceipt, ProviderMaterializationReceipt and BodyAvailability identities. Provider receipts may expose token, c
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8-r2c/20260823T032652Z-27525/receipts/codex-20260824T011429-b3376590.json:41 [code_or_text]
+    "A CURRENT BodyAvailability row is not reusable if its materialized file is absent or digest-mismatched.",
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8-r2c/20260823T032652Z-27525/canonical/system-map.md:487 [code_or_text]
+    PhysicalDerivationReceipt · BodyAvailability · ToolchainPassport
+[materialization_boundary] CODE_OR_TEXT_EVIDENCE (9)
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8-r2c/20260823T032652Z-27525/canonical/system-map.md:2017 [code_or_text]
+    ObjectFabric, ResidentResource, ContextCompiler, Model Commons, ProjectionKernel and MaterializationBoundary therefore share placement/residency mechanics while retaining distinct semantic ownership.
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8-r2c/20260823T032652Z-27525/control/implementation-disposition-ledger.json:549 [code_or_text]
+    "unit": "MaterializationBoundary"
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8-r2c/20260823T032652Z-27525/control/M2_CODEX_OPERATOR.txt:223 [code_or_text]
+    MaterializationBoundary
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8-r2c/20260823T032652Z-27525/control/full-system-required-estate.yaml:231 [code_or_text]
+    - RepresentationInstance+ObjectFabric+MaterializationBoundary+BodyAvailability
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8/canonical/system-map.md:106 [code_or_text]
+    - **Compiler fabric:** CUE/YaFF authoring; Source/Catalog/App/Semantic/Capability/Execution/Surface/Artifact/Format/Externalization/Evidence/Context compiler roles sharing Contract Projection Kernel v2, BoundaryCompiler, ProtocolMachine and MaterializationBoundary.
+[artifact_ir] CODE_OR_TEXT_EVIDENCE (25)
+  /Users/nickgonzales/Developer/Bonfyre/.run6/bonfyre-run6-week-autonomous-2026-08-13/source_runs/run2/bonfyre_capital_gym_run2_2026-08-13.sh:1077 [code_or_text]
+    ArtifactIR
+  /Users/nickgonzales/Developer/Bonfyre/.run6/bonfyre-run6-week-autonomous-2026-08-13/source_runs/run5/bonfyre_capital_gym_run5_2026-08-13.sh:1122 [code_or_text]
+    ArtifactIR
+  /Users/nickgonzales/Developer/Bonfyre/.run6/bonfyre-run6-week-autonomous-2026-08-13/source_runs/run4/bonfyre_capital_gym_run4_2026-08-13.sh:1104 [code_or_text]
+    ArtifactIR
+  /Users/nickgonzales/Developer/Bonfyre/.run6/bonfyre-run6-week-autonomous-2026-08-13/source_runs/run3/bonfyre_capital_gym_run3_2026-08-13.sh:1260 [code_or_text]
+    ArtifactIR
+  /Users/nickgonzales/Developer/Bonfyre/.run6/bonfyre-run6-week-autonomous-2026-08-13/source_runs/run1/bonfyre_capital_gym_full_v3.sh:859 [code_or_text]
+    ArtifactIR
+[delta_ir] CODE_OR_TEXT_EVIDENCE (21)
+  /Users/nickgonzales/Developer/Bonfyre/.run6/bonfyre-run6-week-autonomous-2026-08-13/source_runs/run2/bonfyre_capital_gym_run2_2026-08-13.sh:1078 [code_or_text]
+    DeltaIR
+  /Users/nickgonzales/Developer/Bonfyre/.run6/bonfyre-run6-week-autonomous-2026-08-13/source_runs/run5/bonfyre_capital_gym_run5_2026-08-13.sh:1123 [code_or_text]
+    DeltaIR
+  /Users/nickgonzales/Developer/Bonfyre/.run6/bonfyre-run6-week-autonomous-2026-08-13/source_runs/run4/bonfyre_capital_gym_run4_2026-08-13.sh:1105 [code_or_text]
+    DeltaIR
+  /Users/nickgonzales/Developer/Bonfyre/.run6/bonfyre-run6-week-autonomous-2026-08-13/source_runs/run3/bonfyre_capital_gym_run3_2026-08-13.sh:1261 [code_or_text]
+    DeltaIR
+  /Users/nickgonzales/Developer/Bonfyre/.run6/bonfyre-run6-week-autonomous-2026-08-13/source_runs/run1/bonfyre_capital_gym_full_v3.sh:860 [code_or_text]
+    DeltaIR
+[representation_graph] CODE_OR_TEXT_EVIDENCE (8)
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8/canonical/estate/Bonfyre_Aurekai_CANONICAL_INTEGRATED_V8_1_FULL_LINEAGE_KERNEL_CONVERGENCE_2026-08-20/04_COMPILERS/BOARD_OPTIMIZATION.contract.yaml:51 [code_or_text]
+    owner: RepresentationGraph + Execution + .fuse
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8/canonical/estate/Bonfyre_Aurekai_CANONICAL_INTEGRATED_V8_1_FULL_LINEAGE_KERNEL_CONVERGENCE_2026-08-20/90_REFERENCE/V8_1_ZSTD_BITNET_MATURE_SPECIALIZATION_ATLAS.md:7 [code_or_text]
+    | Zstd frame/dictionary/seek/chunk encoding | `RepresentationGraph` + `TypedTransducer` | retained |
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8/canonical/estate/Bonfyre_Aurekai_CANONICAL_INTEGRATED_V8_1_FULL_LINEAGE_KERNEL_CONVERGENCE_2026-08-20/99_SOURCE_PROVENANCE/BONFYRE_AUREKAI_V3_CANONICAL_MASTER_BEFORE_DEEP_REINTEGRATION.md:5647 [code_or_text]
+    RepresentationGraph
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8/canonical/estate/Bonfyre_Aurekai_CANONICAL_INTEGRATED_V8_1_FULL_LINEAGE_KERNEL_CONVERGENCE_2026-08-20/99_SOURCE_PROVENANCE/PRIOR_REFINED_MASTER.md:4323 [code_or_text]
+    RepresentationGraph
+  /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8/canonical/estate/Bonfyre_Aurekai_CANONICAL_INTEGRATED_V8_1_FULL_LINEAGE_KERNEL_CONVERGENCE_2026-08-20/16_COMPLETE_MACHINE/14_ZSTD_BITNET_MATURE_ABSORPTION.md:12 [code_or_text]
+    RepresentationGraph
+[validity_frontier] ARCHITECTURE_DECLARATION (7)
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreLoweringWorkers/tests/lowering_workers_test.sh:33 [code_or_text]
+    # A current MCP closure is also the validity frontier for derived aperture
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreSurfaceMaturity/surface-maturity.cue:18 [architecture]
+    {"surface":"listings","route":"/listings","question":"Which canonical things are being made available, under what terms and validity frontier?","world_bound":true,"owners":["CommerceChain","BonfyreOffer","WorldPublication","CanonicalSubjectAddress"],"runtime_owners":["BonfyreParticipation"],"transit
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreSurfaceMaturity/generated/surface_maturity.h:3 [code_or_text]
+    static const char bf_surface_maturity_json[] = "{\n    \"schema\": \"bonfyre-surface-maturity.v1\",\n    \"primary_join\": \"WorldPublication\",\n    \"address_rule\": \"Every transition preserves the same world address unless the visitor explicitly changes world.\",\n    \"surfaces\": [\n        {\
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreSurfaceMaturity/generated/surface-maturity.json:312 [code_or_text]
+    "question": "Which canonical things are being made available, under what terms and validity frontier?",
+  /Users/nickgonzales/Developer/Bonfyre/architecture/interactions.yaff:130 [architecture]
+    preserves one explicit login-principal-to-canonical-actor binding, current session validity, binding validity frontier and a caller-requested coordinate only when it exactly equals that binding
+[foreign_twin] ARCHITECTURE_DECLARATION (624)
+  /Users/nickgonzales/Developer/Bonfyre/README.md:125 [code_or_text]
+    Profiles connect through ForeignTwin, ProviderGraph, Capability, WorkGraph,
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreScopedDemand/tests/condition_gate_test.sh:13 [code_or_text]
+    {"identity":"external:nightlife","candidate_kind":"external_occurrence","owner_ref":"ExternalEstate:external:nightlife","exact_verifier":"ForeignTwin:admission","lowerer_ref":"MaterialCompiler:external","validity_frontier":"fixture","terms":["source:nightlife-shared"],"dependencies":["ForeignTwin:ht
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreScopedDemand/tests/reheat_test.sh:17 [code_or_text]
+    {"identity":"external:shared","candidate_kind":"external_occurrence","owner_ref":"ExternalEstate:external:shared","exact_verifier":"ForeignTwin:admission","lowerer_ref":"MaterialCompiler:external","validity_frontier":"fixture","terms":["source:nightlife-shared"],"dependencies":["ForeignTwin:$topic"]
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreScopedDemand/tests/scoped_demand_test.sh:20 [code_or_text]
+    ('external:deep','external_occurrence','ExternalEstate:external:deep','ForeignTwin:admission','MaterialCompiler:external','','{}'),
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreScopedDemand/src/main.c:323 [code_or_text]
+    "OR dependency_ref LIKE 'ForeignTwin:%') ORDER BY dependency_ref";
+[source_frontier] CODE_OR_TEXT_EVIDENCE (122)
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreSemanticOptimizer/tests/live_inverse_test.c:55 [code_or_text]
+    BfTargetObligationSpec spec={.target_id="target:storm-closure-742",.target="world:regional-storm/communication-capacity",.semantic_contract="regional-storm-ready",.source_frontier="proof-frontier:storm-742",.preference_policy="resilient"};
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreSemanticOptimizer/src/main.c:73 [code_or_text]
+    static int reconcile(const char *path,const char *id,const char *actor,const char *at){Owners o;BfTargetObligationRecord target;BfTargetPredicateRecord *ps=NULL;size_t n=0,i;char stamp[32];const char *state="OPEN",*detail="predicate_residual";const char *invariant="";int all=1,proof=0,rc;const char 
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreSemanticOperation/src/main.c:13 [code_or_text]
+    static int persist(const char*db,const char*target_id,const char*target,const char*subject,const char*contract,const char*frontier,const char*policy,const char*predicate_id,const char*owner,const char*predicate,const char*expected,const char*evidence,const char*authority,const char*valid_start,const
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreExternalEstate/tools/sync_source_attention.py:4 [code_or_text]
+    import compile_source_frontier as frontier
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreExternalEstate/tools/compile_subject_projection.py:7 [code_or_text]
+    subject_reader (ScopedDemand/SourceFrontier closure)
+[subject_fabric] DEPENDENCY_OR_BUILD_WIRING (21)
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreExternalEstate/Makefile:39 [manifest]
+    ./tests/subject_fabric_precompute_test.sh
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreExternalEstate/tools/compile_subject_projection.py:284 [code_or_text]
+    DROP TABLE IF EXISTS subject_route_item;
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreExternalEstate/tools/materialize_foundation_subjects.py:68 [code_or_text]
+    "subject_route_item", "subject_route_region", "subject_route_reader",
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreExternalEstate/tests/subject_fabric_precompute_test.sh:6 [code_or_text]
+    tool="$root/cmd/BonfyreExternalEstate/tools/precompute_subject_fabric.py"
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreExternalEstate/tests/foundation_subject_projection_test.sh:29 [code_or_text]
+    CREATE TABLE subject_route_item(subject TEXT,scope TEXT,route TEXT);
+[address_plane] CODE_OR_TEXT_EVIDENCE (272)
+  /Users/nickgonzales/Developer/Bonfyre/research/interaction-grammar-market-2026.md:20 [code_or_text]
+    | 8 | TikTok | short-media candidate stream, creator/live | CreatorChannel, MediaProgram, AddressPlane | ChannelSurfaceCompiler |
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreSemanticOptimizer/tests/live_inverse_test.c:73 [code_or_text]
+    /* AddressPlane writes this exact lowerer envelope after a target cut. The
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreContextCut/README.md:3 [code_or_text]
+    `BonfyreContextCut` is the downstream context compiler for an AddressPlane →
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreContextCut/context_cut.py:4 [code_or_text]
+    This is deliberately downstream of AddressPlane and the persisted BitNet
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreLoweringWorkers/src/main.c:97 [code_or_text]
+    * the bounded AddressPlane frontier; ForeignTwin receipts name retained bytes.
+
+COMPILER
+[cue] DEPENDENCY_OR_BUILD_WIRING (211)
+  /Users/nickgonzales/Developer/Bonfyre/notes.md:210 [code_or_text]
+    The existing `ExternalDescriptor` is quite rich. `external-estate.cue` already carries:
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreParticipation/Makefile:14 [manifest]
+    $(CONTRACT_JSON): participation-contract.cue
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreParticipation/generated/activation_contract.h:1 [code_or_text]
+    /* Generated from activation-contract.cue. Do not edit. */
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreParticipation/generated/participation_contract.h:1 [code_or_text]
+    /* Generated from participation-contract.cue. Do not edit. */
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreShowcaseEstate/Makefile:11 [manifest]
+    $(MODEL_JSON): source-constellations.cue
+[yaff] CODE_OR_TEXT_EVIDENCE (692)
+  /Users/nickgonzales/Developer/Bonfyre/QUICKSTART.md:16 [code_or_text]
+    python3 architecture/atlas.py validate
+  /Users/nickgonzales/Developer/Bonfyre/README.md:157 [code_or_text]
+    python3 architecture/atlas.py validate
+  /Users/nickgonzales/Developer/Bonfyre/NIGHTGRID-PERSONAS.md:20 [code_or_text]
+    The lattice is declared in `architecture/institutional/namespaces.yaff`.
+  /Users/nickgonzales/Developer/Bonfyre/AGENTS.md:16 [code_or_text]
+    - **When you build/change an architecture:** update its `architecture/**.yaff`
+  /Users/nickgonzales/Developer/Bonfyre/notes.md:320 [code_or_text]
+    `architecture/surface/surface.yaff` currently describes **222 InternetSource rows**:
+
+COMPRESSION
+[zstd] DEPENDENCY_OR_BUILD_WIRING (277)
+  /Users/nickgonzales/Developer/Bonfyre/Makefile:362 [manifest]
+    if command -v zstd >/dev/null 2>&1; then zstd -q -f "$$tmp_tar" -o $(RUNTIME_PACK_ZST); fi; \
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreCompress/src/main.c:12 [code_or_text]
+    * Trains zstd dictionaries per artifact family type, compresses with
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyrePipeline/src/main.c:21 [code_or_text]
+    * into one binary with zero fork overhead (except Compress which forks zstd).
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreCLI/src/main.c:1015 [code_or_text]
+    if (codec && strcmp(codec, "zstd") == 0 && command_exists("zstd")) {
+  /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreSpatial/tests/spatial_test.sh:602 [code_or_text]
+    [ "$(j 'd["representation"]' < "$tmp/export.json")" = "parquet+zstd" ]
+[lz4] CODE_OR_TEXT_EVIDENCE (5)
+  /Users/nickgonzales/Developer/Bonfyre/lib/libbonfyre/bf_lz4.c:2 [code_or_text]
+    * bf_lz4.c — Self-contained LZ4 block compression
+  /Users/nickgonzales/Developer/Bonfyre/lib/libbonfyre/include/bf_lz4.h:2 [code_or_text]
+    * bf_lz4.h — In-process LZ4 block compression
+  /Users/nickgonzales/.bonfyre/dev-fabric/worktrees/525b9be6e64c4710b2f82a71/lib/libbonfyre/bf_lz4.c:2 [code_or_text]
+    * bf_lz4.c — Self-contained LZ4 block compression
+  /Users/nickgonzales/.bonfyre/dev-fabric/worktrees/525b9be6e64c4710b2f82a71/lib/libbonfyre/include/bf_lz4.h:2 [code_or_text]
+    * bf_lz4.h — In-process LZ4 block compression
+  /Users/nickgonzales/.bonfyre/substrates/v6.1/_cargo-home/registry/src/index.crates.io-1949cf8c6b5b557f/zstd-0.13.3/Readme.md:96 [code_or_text]
+    This implementation is largely inspired by bozaro's [lz4-rs].
+[brotli] CODE_OR_TEXT_EVIDENCE (90)
+  /Users/nickgonzales/Developer/Bonfyre/site/matrix/vendor-pmtiles.min.js:1 [code_or_text]
+    "use strict";var pmtiles=(()=>{var k=Object.defineProperty;var Je=Object.getOwnPropertyDescriptor;var Ye=Object.getOwnPropertyNames;var Qe=Object.prototype.hasOwnProperty;var E=Math.pow;var f=(r,e)=>k(r,"name",{value:e,configurable:!0});var Xe=(r,e)=>{for(var t in e)k(r,t,{get:e[t],enumerable:!0})},
+  /Users/nickgonzales/.bonfyre/agents-runtime/venv/lib/python3.12/site-packages/pip/_vendor/urllib3/response.py:20 [code_or_text]
+    brotli = None
+  /Users/nickgonzales/.bonfyre/agents-runtime/venv/lib/python3.12/site-packages/pip/_vendor/urllib3/util/request.py:68 [code_or_text]
+    Brotli (either the ``brotli`` or ``brotlicffi`` package) and/or
+  /Users/nickgonzales/.bonfyre/agents-runtime/venv/lib/python3.12/site-packages/httpx/_decoders.py:16 [code_or_text]
+    # Brotli support is optional
+  /Users/nickgonzales/.bonfyre/agents-runtime/venv/lib/python3.12/site-packages/httpx/_models.py:887 [code_or_text]
+    This allows us to handle gzip, deflate, brotli, and zstd encoded responses.
+
+DATABASES — SCHEMA ONLY, NO ROW COUNTS
+--------------------------------------------------------------------------------
+repo
+   113.9 MiB /Users/nickgonzales/Developer/Bonfyre/components/BonfyreControlPlane/work_queue.db
+    tables: events, fabric_meta, missions, receipts, schema_migrations, workgraph_attempts, workgraph_compensation_attempts, workgraph_compensations, workgraph_dependencies, workgraph_fanout_groups, workgraph_nodes, workgraph_routable_families, workgraph_transitions, bf_readiness_compensation_backlog, bf_readiness_lease_pressure, bf_readiness_mission
+    52.2 MiB /Users/nickgonzales/Developer/Bonfyre/packs/fleming-equity-group/evidence/estate-lite.db
+    tables: adjacency, harvest, observation, page, parcel_flat, unlock
+    11.2 MiB /Users/nickgonzales/Developer/Bonfyre/packs/fleming-equity-group/evidence/fleming-vec.db
+    tables: artifacts, vec_artifacts, vec_artifacts_chunks, vec_artifacts_info, vec_artifacts_rowids, vec_artifacts_vector_chunks00
+     3.2 MiB /Users/nickgonzales/Developer/Bonfyre/evidence/verification/hf/catalog.workspace.db
+    tables: catalog_edges, catalog_fts, catalog_fts_config, catalog_fts_data, catalog_fts_docsize, catalog_fts_idx, catalog_nodes
+     2.5 MiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8-r2c/20260823T032652Z-27525/state.sqlite3
+    tables: anti_amnesia, body_availability, build_receipts, checkpoints, cost_allocations, economic_measures, environment_surfaces, epochs, estate_items, evidence_occurrences, failure_fingerprints, financial_events, financial_positions, funding_routes, mesh_delivery, mesh_events, mesh_export_state, mesh_quarantine, placements, proof_frontier, provider_bids, provider_state, receipts, runs, runtime_parity, scheduler_history, standing_predicates, target_obligations, usage_attempts, usage_occurrence_details
+     1.6 MiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/queue-vec-verify-1780193673/vec.db
+    tables: artifacts, events, job_dlq, jobs, jobs_fts, jobs_fts_config, jobs_fts_data, jobs_fts_docsize, jobs_fts_idx, vec_artifacts, vec_artifacts_chunks, vec_artifacts_info, vec_artifacts_rowids, vec_artifacts_vector_chunks00, webhook_outbox, webhooks, vec_search
+     1.6 MiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/queue-vec-done-1780193713/vec.db
+    tables: artifacts, events, job_dlq, jobs, jobs_fts, jobs_fts_config, jobs_fts_data, jobs_fts_docsize, jobs_fts_idx, vec_artifacts, vec_artifacts_chunks, vec_artifacts_info, vec_artifacts_rowids, vec_artifacts_vector_chunks00, webhook_outbox, webhooks, vec_search
+     1.6 MiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/queue-vec-final2-1780193764/vec.db
+    tables: artifacts, vec_artifacts, vec_artifacts_chunks, vec_artifacts_info, vec_artifacts_rowids, vec_artifacts_vector_chunks00, vec_search
+     1.6 MiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/queue-vec-fixed-1780193472/vec.db
+    tables: artifacts, vec_artifacts, vec_artifacts_chunks, vec_artifacts_info, vec_artifacts_rowids, vec_artifacts_vector_chunks00, vec_search
+     1.6 MiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/queue-vec-debug-1780193810/vec.db
+    tables: artifacts, vec_artifacts, vec_artifacts_chunks, vec_artifacts_info, vec_artifacts_rowids, vec_artifacts_vector_chunks00, vec_search
+     1.6 MiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/queue-vec-final-1780193537/vec.db
+    tables: artifacts, vec_artifacts, vec_artifacts_chunks, vec_artifacts_info, vec_artifacts_rowids, vec_artifacts_vector_chunks00, vec_search
+     1.6 MiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/queue-vec-1780193368/vec.db
+    tables: artifacts, vec_artifacts, vec_artifacts_chunks, vec_artifacts_info, vec_artifacts_rowids, vec_artifacts_vector_chunks00, vec_search
+     1.6 MiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/queue-vec-1780193335/vec.db
+    tables: artifacts, vec_artifacts, vec_artifacts_chunks, vec_artifacts_info, vec_artifacts_rowids, vec_artifacts_vector_chunks00, vec_search
+     1.6 MiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/queue-vec-homebrew-1780193904/vec.db
+    tables: artifacts, vec_artifacts, vec_artifacts_chunks, vec_artifacts_info, vec_artifacts_rowids, vec_artifacts_vector_chunks00, vec_search
+     1.6 MiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/vec-smoke-768-1780193292/vec.db
+    tables: artifacts, vec_artifacts, vec_artifacts_chunks, vec_artifacts_info, vec_artifacts_rowids, vec_artifacts_vector_chunks00, vec_search
+     1.6 MiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/queue-vec-pin-1780193608/vec.db
+    tables: artifacts, vec_artifacts, vec_artifacts_chunks, vec_artifacts_info, vec_artifacts_rowids, vec_artifacts_vector_chunks00, vec_search
+     1.4 MiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8/state.sqlite3
+    tables: anti_amnesia, epochs, mesh_delivery, mesh_events, mesh_export_state, mesh_quarantine, provider_state, receipts, scheduler_history, work_items
+     1.1 MiB /Users/nickgonzales/Developer/Bonfyre/bonfyre_cms.db
+    tables: _absorbed_constants, _ann_buckets, _ann_projections, _ann_quantized, _compaction_manifests, _content_types, _egraph_meta, _equivalences, _families, _family_members, _hooks, _incr_eigen, _merkle_tree, _meta_families, _meta_members, _ops, _permissions, _reduce_memo, _reduce_profiles, _relations, _sync_state, _synthesis_candidates, _tensor_cells, _tensor_eigen, _tokens, _transfer_log, _transfer_templates, _type_constraints, _vec_bridge, application_binding
+   936.0 KiB /Users/nickgonzales/Developer/Bonfyre/packs/fleming-equity-group/evidence/fleming-work.db
+    tables: events, fabric_meta, missions, receipts, schema_migrations, workgraph_attempts, workgraph_compensation_attempts, workgraph_compensations, workgraph_dependencies, workgraph_fanout_groups, workgraph_nodes, workgraph_transitions, bf_readiness_compensation_backlog, bf_readiness_lease_pressure, bf_readiness_mission
+   848.0 KiB /Users/nickgonzales/Developer/Bonfyre/evidence/verification/hf/layers.workspace.db
+    tables: layers
+   712.0 KiB /Users/nickgonzales/Developer/Bonfyre/components/BonfyreControlPlane/control_plane.db
+    tables: actor_corroborations, actor_edges, actor_nodes, authority_edges, capability_identities, command_laws, commitment_entries, estate_catalog, external_event_log, frontier_layers, known_noncauses, occurrence_projection, placements, provider_bids, provider_observations, resource_candidates, runtime_parity, service_bindings, solved_invariants, watches, work_items, work_planes, work_transitions
+   700.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/patch-backups/activation-authority-finalize-20260922T032646Z/live/control_plane.before.db
+    tables: actor_corroborations, actor_edges, actor_nodes, authority_edges, capability_identities, command_laws, commitment_entries, estate_catalog, external_event_log, frontier_layers, known_noncauses, occurrence_projection, placements, provider_bids, provider_observations, resource_candidates, runtime_parity, solved_invariants, watches, work_items, work_planes, work_transitions
+   544.0 KiB /Users/nickgonzales/Developer/Bonfyre/private/files/bonfyre_erpnext/cms/bonfyre_cms.db
+    tables: _absorbed_constants, _ann_buckets, _ann_projections, _ann_quantized, _compaction_manifests, _content_types, _egraph_meta, _equivalences, _families, _family_members, _hooks, _incr_eigen, _merkle_tree, _meta_families, _meta_members, _ops, _permissions, _reduce_memo, _reduce_profiles, _relations, _sync_state, _synthesis_candidates, _tensor_cells, _tensor_eigen, _tokens, _transfer_log, _transfer_templates, _type_constraints, _vec_bridge, cms_article
+   532.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8-r2c/20260823T032652Z-27525/finance/model-usage.sqlite
+    tables: cost_allocations, economic_measures, financial_events, financial_positions, funding_routes, usage_attempts, usage_occurrence_details, usage_occurrences
+   508.0 KiB /Users/nickgonzales/Developer/Bonfyre/integrations/erpnext_app/private/files/bonfyre_erpnext/cms/bonfyre_cms.db
+    tables: _absorbed_constants, _ann_buckets, _ann_projections, _ann_quantized, _compaction_manifests, _content_types, _egraph_meta, _equivalences, _families, _family_members, _hooks, _incr_eigen, _merkle_tree, _meta_families, _meta_members, _ops, _permissions, _reduce_memo, _reduce_profiles, _relations, _sync_state, _synthesis_candidates, _tensor_cells, _tensor_eigen, _tokens, _transfer_log, _transfer_templates, _type_constraints, _vec_bridge, cms_article
+   464.0 KiB /Users/nickgonzales/Developer/Bonfyre/Aurekai/bonfyre_cms.db
+    tables: _absorbed_constants, _ann_buckets, _ann_projections, _ann_quantized, _compaction_manifests, _content_types, _egraph_meta, _equivalences, _families, _family_members, _hooks, _incr_eigen, _merkle_tree, _meta_families, _meta_members, _ops, _permissions, _reduce_memo, _reduce_profiles, _relations, _sync_state, _synthesis_candidates, _tensor_cells, _tensor_eigen, _tokens, _transfer_log, _transfer_templates, _type_constraints, _vec_bridge, building
+   464.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/system-map-stress/codex-20260821T072544-52bdf5ab/fabric.db
+    tables: application_records, artifact_transforms, artifacts, authority_edges, catalog, catalog_bindings, circuit_receipts, claim_deps, claim_state, composition_nodes, declarations, economic_ledger, effect_operations, effects, events, evidence_relations, execution_metrics, fabric_meta, missions, namespace_objects, operator_contract_bindings, operator_contracts, placements, provenance_edges, provider_bids, receipts, repository_roots, roots, runtime_parity, schema_migrations
+   452.0 KiB /Users/nickgonzales/Developer/Bonfyre/layers.db
+    tables: layers
+   452.0 KiB /Users/nickgonzales/Developer/Bonfyre/bonfyre-zig/bonfyre_cms.db
+    tables: _absorbed_constants, _ann_buckets, _ann_projections, _ann_quantized, _compaction_manifests, _content_types, _egraph_meta, _equivalences, _families, _family_members, _hooks, _incr_eigen, _merkle_tree, _meta_families, _meta_members, _ops, _permissions, _reduce_memo, _reduce_profiles, _relations, _sync_state, _synthesis_candidates, _tensor_cells, _tensor_eigen, _tokens, _transfer_log, _transfer_templates, _type_constraints, _vec_bridge, cms_article
+   452.0 KiB /Users/nickgonzales/Developer/Bonfyre/layeros/state/layers.db
+    tables: layers
+   420.0 KiB /Users/nickgonzales/Developer/Bonfyre/integrations/frappe-bench/sites/bonfyre.localhost/private/files/bonfyre_erpnext/cms/bonfyre_cms.db
+    tables: _absorbed_constants, _ann_buckets, _ann_projections, _ann_quantized, _compaction_manifests, _content_types, _egraph_meta, _equivalences, _families, _family_members, _hooks, _incr_eigen, _merkle_tree, _meta_families, _meta_members, _ops, _permissions, _reduce_memo, _reduce_profiles, _relations, _sync_state, _synthesis_candidates, _tensor_cells, _tensor_eigen, _tokens, _transfer_log, _transfer_templates, _type_constraints, _vec_bridge, cms_article
+   400.0 KiB /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreCMS/bonfyre_cms.db
+    tables: _absorbed_constants, _ann_buckets, _ann_projections, _ann_quantized, _compaction_manifests, _content_types, _egraph_meta, _equivalences, _families, _family_members, _hooks, _incr_eigen, _merkle_tree, _meta_families, _meta_members, _ops, _permissions, _reduce_memo, _reduce_profiles, _relations, _sync_state, _synthesis_candidates, _tensor_cells, _tensor_eigen, _tokens, _transfer_log, _transfer_templates, _type_constraints, _vec_bridge, cms_article
+   392.0 KiB /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreCMS/bonfyre-cms.db
+    tables: _absorbed_constants, _ann_buckets, _ann_projections, _ann_quantized, _compaction_manifests, _content_types, _egraph_meta, _equivalences, _families, _family_members, _hooks, _incr_eigen, _merkle_tree, _meta_families, _meta_members, _ops, _permissions, _reduce_memo, _reduce_profiles, _relations, _sync_state, _synthesis_candidates, _tensor_cells, _tensor_eigen, _tokens, _transfer_log, _transfer_templates, _type_constraints, cms_article, cms_generation
+   344.0 KiB /Users/nickgonzales/Developer/Bonfyre/bonfyre-zig/output/native-market-activation/market.cms.db
+    tables: _absorbed_constants, _ann_buckets, _ann_projections, _ann_quantized, _compaction_manifests, _content_types, _egraph_meta, _equivalences, _families, _family_members, _hooks, _incr_eigen, _merkle_tree, _meta_families, _meta_members, _ops, _permissions, _reduce_memo, _reduce_profiles, _relations, _sync_state, _synthesis_candidates, _tensor_cells, _tensor_eigen, _tokens, _transfer_log, _transfer_templates, _type_constraints, _vec_bridge
+   344.0 KiB /Users/nickgonzales/Developer/Bonfyre/integrations/frappe-bench/apps/bonfyre_cms.db
+    tables: _absorbed_constants, _ann_buckets, _ann_projections, _ann_quantized, _compaction_manifests, _content_types, _egraph_meta, _equivalences, _families, _family_members, _hooks, _incr_eigen, _merkle_tree, _meta_families, _meta_members, _ops, _permissions, _reduce_memo, _reduce_profiles, _relations, _sync_state, _synthesis_candidates, _tensor_cells, _tensor_eigen, _tokens, _transfer_log, _transfer_templates, _type_constraints, _vec_bridge
+   336.0 KiB /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreCLI/bonfyre_cms.db
+    tables: _absorbed_constants, _ann_buckets, _ann_projections, _ann_quantized, _compaction_manifests, _content_types, _egraph_meta, _equivalences, _families, _family_members, _hooks, _incr_eigen, _merkle_tree, _meta_families, _meta_members, _ops, _permissions, _reduce_memo, _reduce_profiles, _relations, _sync_state, _synthesis_candidates, _tensor_cells, _tensor_eigen, _tokens, _transfer_log, _transfer_templates, _type_constraints
+   244.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8-r2c/20260823T032652Z-27525/finance/model-usage-mesh-replay.sqlite
+    tables: cost_allocations, economic_measures, financial_events, financial_positions, funding_routes, usage_occurrence_details, usage_occurrences
+   240.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8-r2c/20260823T032652Z-27525/evidence/m11-whole-institution/gauntlet.db
+    tables: actor_edges, actor_nodes, artifact_transforms, artifacts, claim_deps, claim_state, commitment_entries, commitments, evidence_relations, external_event_log, frappe_lineage_effects, mission_costs, money_edges, namespace_objects, partner_observations, partner_profiles, placements, provenance_edges, provider_bids, runtime_parity, temporal_evidence, value_edges, work_items, work_planes, work_transitions
+   232.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8-r2c/20260823T032652Z-27525/evidence/frappe-real-projection-milo-a1-codex-20260824T015954-2280a6c5/projection.db
+    tables: actor_edges, actor_nodes, artifact_transforms, artifacts, claim_deps, claim_state, commitment_entries, commitments, evidence_relations, external_event_log, frappe_lineage_effects, mission_costs, money_edges, namespace_objects, partner_observations, partner_profiles, placements, provenance_edges, provider_bids, runtime_parity, temporal_evidence, value_edges, work_items, work_planes, work_transitions
+   172.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8/evidence/one-company-gauntlet/codex-20260821T082514-ae84224b-retry1/gauntlet.db
+    tables: actor_edges, actor_nodes, artifacts, commitment_entries, commitments, external_event_log, mission_costs, money_edges, namespace_objects, partner_observations, partner_profiles, placements, provider_bids, runtime_parity, value_edges, work_items, work_planes, work_transitions
+   172.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8/evidence/one-company-gauntlet/codex-20260821T082514-ae84224b/gauntlet.db
+    tables: actor_edges, actor_nodes, artifacts, commitment_entries, commitments, external_event_log, mission_costs, money_edges, namespace_objects, partner_observations, partner_profiles, placements, provider_bids, runtime_parity, value_edges, work_items, work_planes, work_transitions
+   172.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8/evidence/one-company-gauntlet/codex-20260821T082514-ae84224b-retry2/gauntlet.db
+    tables: actor_edges, actor_nodes, artifacts, commitment_entries, commitments, external_event_log, mission_costs, money_edges, namespace_objects, partner_observations, partner_profiles, placements, provider_bids, runtime_parity, value_edges, work_items, work_planes, work_transitions
+   172.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8/evidence/one-company-gauntlet/codex-20260821T082514-ae84224b-retry5/gauntlet.db
+    tables: actor_edges, actor_nodes, artifacts, commitment_entries, commitments, external_event_log, mission_costs, money_edges, namespace_objects, partner_observations, partner_profiles, placements, provider_bids, runtime_parity, value_edges, work_items, work_planes, work_transitions
+   172.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8/evidence/one-company-gauntlet/codex-20260821T082514-ae84224b-retry4/gauntlet.db
+    tables: actor_edges, actor_nodes, artifacts, commitment_entries, commitments, external_event_log, mission_costs, money_edges, namespace_objects, partner_observations, partner_profiles, placements, provider_bids, runtime_parity, value_edges, work_items, work_planes, work_transitions
+   172.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8/evidence/one-company-gauntlet/codex-20260821T082514-ae84224b-retry3/gauntlet.db
+    tables: actor_edges, actor_nodes, artifacts, commitment_entries, commitments, external_event_log, mission_costs, money_edges, namespace_objects, partner_observations, partner_profiles, placements, provider_bids, runtime_parity, value_edges, work_items, work_planes, work_transitions
+   120.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8-r2c/20260823T032652Z-27525/control/continuous-supervisor.sqlite3
+    tables: continuous_assignments, continuous_checkpoints, continuous_github_observations, continuous_provider_weather, continuous_receipts, failure_fingerprints, frontier_layers, known_noncauses, provider_observations, solved_invariants, standing_predicates, target_obligations, work_occurrences
+   108.0 KiB /Users/nickgonzales/Developer/Bonfyre/layeros/state/queue.db
+    tables: api_keys, erpnext_envelopes, events, job_dlq, jobs, jobs_fts, jobs_fts_config, jobs_fts_data, jobs_fts_docsize, jobs_fts_idx, rate_limits, request_log, uploads, webhook_outbox, webhooks
+   108.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre/run8-r2c/20260823T032652Z-27525/evidence/continuous-mesh-quarantine-replay.sqlite3
+    tables: artifact_transforms, claim_deps, claim_state, evidence_relations, mesh_delivery, mesh_events, mesh_export_state, mesh_quarantine, provenance_edges, temporal_evidence
+   100.0 KiB /Users/nickgonzales/Developer/Bonfyre/discipl.db
+    tables: discipl_actors, discipl_chains, discipl_contracts, discipl_loops
+    72.0 KiB /Users/nickgonzales/Developer/Bonfyre/bonfyre-meter.db
+    tables: events
+    68.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/proof-only-1780195329/proof-queue.db
+    tables: events, job_dlq, jobs, jobs_fts, jobs_fts_config, jobs_fts_data, jobs_fts_docsize, jobs_fts_idx, webhook_outbox, webhooks
+    68.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/proof-only-1780195329/brief-queue.db
+    tables: events, job_dlq, jobs, jobs_fts, jobs_fts_config, jobs_fts_data, jobs_fts_docsize, jobs_fts_idx, webhook_outbox, webhooks
+    68.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/queue-vec-final2-1780193764/queue.db
+    tables: events, job_dlq, jobs, jobs_fts, jobs_fts_config, jobs_fts_data, jobs_fts_docsize, jobs_fts_idx, webhook_outbox, webhooks
+    68.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/queue-vec-fixed-1780193472/queue.db
+    tables: events, job_dlq, jobs, jobs_fts, jobs_fts_config, jobs_fts_data, jobs_fts_docsize, jobs_fts_idx, webhook_outbox, webhooks
+    68.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/queue-vec-debug-1780193810/queue.db
+    tables: events, job_dlq, jobs, jobs_fts, jobs_fts_config, jobs_fts_data, jobs_fts_docsize, jobs_fts_idx, webhook_outbox, webhooks
+    68.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/queue-vec-final-1780193537/queue.db
+    tables: events, job_dlq, jobs, jobs_fts, jobs_fts_config, jobs_fts_data, jobs_fts_docsize, jobs_fts_idx, webhook_outbox, webhooks
+    68.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/queue-vec-1780193368/queue.db
+    tables: events, job_dlq, jobs, jobs_fts, jobs_fts_config, jobs_fts_data, jobs_fts_docsize, jobs_fts_idx, webhook_outbox, webhooks
+    68.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/queue-vec-1780193335/queue.db
+    tables: events, job_dlq, jobs, jobs_fts, jobs_fts_config, jobs_fts_data, jobs_fts_docsize, jobs_fts_idx, webhook_outbox, webhooks
+    68.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/emit-graph-1780195877/emit.db
+    tables: events, job_dlq, jobs, jobs_fts, jobs_fts_config, jobs_fts_data, jobs_fts_docsize, jobs_fts_idx, webhook_outbox, webhooks
+    68.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/emit-graph-1780195877/graph.db
+    tables: events, job_dlq, jobs, jobs_fts, jobs_fts_config, jobs_fts_data, jobs_fts_docsize, jobs_fts_idx, webhook_outbox, webhooks
+    68.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/canon-kvcache-1780194595/kvcache/queue.db
+    tables: events, job_dlq, jobs, jobs_fts, jobs_fts_config, jobs_fts_data, jobs_fts_docsize, jobs_fts_idx, webhook_outbox, webhooks
+    68.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/canon-kvcache-1780194595/canon/queue.db
+    tables: events, job_dlq, jobs, jobs_fts, jobs_fts_config, jobs_fts_data, jobs_fts_docsize, jobs_fts_idx, webhook_outbox, webhooks
+    68.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/brief-proof-1780195322/proof-queue.db
+    tables: events, job_dlq, jobs, jobs_fts, jobs_fts_config, jobs_fts_data, jobs_fts_docsize, jobs_fts_idx, webhook_outbox, webhooks
+    68.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/brief-proof-1780195322/brief-queue.db
+    tables: events, job_dlq, jobs, jobs_fts, jobs_fts_config, jobs_fts_data, jobs_fts_docsize, jobs_fts_idx, webhook_outbox, webhooks
+    68.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/query-cms-1780198852/query.db
+    tables: events, job_dlq, jobs, jobs_fts, jobs_fts_config, jobs_fts_data, jobs_fts_docsize, jobs_fts_idx, webhook_outbox, webhooks
+    68.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/query-cms-1780198852/cms.db
+    tables: events, job_dlq, jobs, jobs_fts, jobs_fts_config, jobs_fts_data, jobs_fts_docsize, jobs_fts_idx, webhook_outbox, webhooks
+    68.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/kvcache-final3-1780194864/queue.db
+    tables: events, job_dlq, jobs, jobs_fts, jobs_fts_config, jobs_fts_data, jobs_fts_docsize, jobs_fts_idx, webhook_outbox, webhooks
+    68.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/kvcache-final-1780194705/queue.db
+    tables: events, job_dlq, jobs, jobs_fts, jobs_fts_config, jobs_fts_data, jobs_fts_docsize, jobs_fts_idx, webhook_outbox, webhooks
+    68.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/queue-vec-homebrew-1780193904/queue.db
+    tables: events, job_dlq, jobs, jobs_fts, jobs_fts_config, jobs_fts_data, jobs_fts_docsize, jobs_fts_idx, webhook_outbox, webhooks
+    68.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/queue-vec-verify-1780193673/queue.db
+    tables: events, job_dlq, jobs, jobs_fts, jobs_fts_config, jobs_fts_data, jobs_fts_docsize, jobs_fts_idx, webhook_outbox, webhooks
+    68.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/queue-vec-done-1780193713/queue.db
+    tables: events, job_dlq, jobs, jobs_fts, jobs_fts_config, jobs_fts_data, jobs_fts_docsize, jobs_fts_idx, webhook_outbox, webhooks
+    68.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/queue-vec-pin-1780193608/queue.db
+    tables: events, job_dlq, jobs, jobs_fts, jobs_fts_config, jobs_fts_data, jobs_fts_docsize, jobs_fts_idx, webhook_outbox, webhooks
+    68.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/kvcache-final2-1780194811/queue.db
+    tables: events, job_dlq, jobs, jobs_fts, jobs_fts_config, jobs_fts_data, jobs_fts_docsize, jobs_fts_idx, webhook_outbox, webhooks
+    68.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/kvcache-debug-1780194657/queue.db
+    tables: events, job_dlq, jobs, jobs_fts, jobs_fts_config, jobs_fts_data, jobs_fts_docsize, jobs_fts_idx, webhook_outbox, webhooks
+    68.0 KiB /Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/operator-artifacts/legacy-test-tmp/kvcache-debug2-1780194758/queue.db
+    tables: events, job_dlq, jobs, jobs_fts, jobs_fts_config, jobs_fts_data, jobs_fts_docsize, jobs_fts_idx, webhook_outbox, webhooks
+    64.0 KiB /Users/nickgonzales/Developer/Bonfyre/bonfyre-zig/output/native-market-activation/market.recipes.db
+    tables: models, recipe_fts, recipe_fts_config, recipe_fts_content, recipe_fts_data, recipe_fts_docsize, recipe_fts_idx, recipe_models, recipe_tags, recipes
+    56.0 KiB /Users/nickgonzales/Developer/Bonfyre/integrations/erpnext_app/private/files/bonfyre_erpnext/machine/entity/bonfyre_entity.db
+    tables: entities, entities_fts, entities_fts_config, entities_fts_data, entities_fts_docsize, entities_fts_idx, links, observations
+    56.0 KiB /Users/nickgonzales/Developer/Bonfyre/private/files/bonfyre_erpnext/machine/entity/bonfyre_entity.db
+    tables: entities, entities_fts, entities_fts_config, entities_fts_data, entities_fts_docsize, entities_fts_idx, links, observations
+    52.0 KiB /Users/nickgonzales/Developer/Bonfyre/bonfyre-zig/output/native-market-activation/market.fragments.db
+    tables: fragment_parents, fragments, fragments_fts, fragments_fts_config, fragments_fts_content, fragments_fts_data, fragments_fts_docsize, fragments_fts_idx
+    52.0 KiB /Users/nickgonzales/Developer/Bonfyre/packs/fleming-equity-group/evidence/fleming-entity.db
+    tables: entities, entities_fts, entities_fts_config, entities_fts_data, entities_fts_docsize, entities_fts_idx, links, observations
+
+estate-local
+   420.6 MiB /Users/nickgonzales/.bonfyre/estate-local/subject_fabric.db
+    tables: subject_bundle, subject_material, subject_reader, subject_route, subject_route_item, subject_route_phase, subject_route_reader, subject_route_region
+   221.3 MiB /Users/nickgonzales/.bonfyre/estate-local/subject_fabric.pre-foundation-20260927T1321.db
+    tables: subject_bundle, subject_material, subject_reader, subject_route, subject_route_item, subject_route_phase, subject_route_reader, subject_route_region
+   105.7 MiB /Users/nickgonzales/.bonfyre/estate-local/frontier.db
+    tables: attention, channel, channel_census, channel_origin, contribution, family, gap, inventory, root, root_origin
+   105.6 MiB /Users/nickgonzales/.bonfyre/estate-local/source-generation-20260924T141500Z/frontier.snapshot.db
+    tables: attention, channel, channel_census, channel_origin, contribution, family, gap, inventory, root, root_origin
+   100.4 MiB /Users/nickgonzales/.bonfyre/estate-local/cms.db
+    tables: _absorbed_constants, _ann_buckets, _ann_projections, _ann_quantized, _compaction_manifests, _content_types, _egraph_meta, _equivalences, _families, _family_members, _hooks, _incr_eigen, _merkle_tree, _meta_families, _meta_members, _ops, _permissions, _reduce_memo, _reduce_profiles, _relations, _sync_state, _synthesis_candidates, _tensor_cells, _tensor_eigen, _tokens, _transfer_log, _transfer_templates, _type_constraints, application_binding, assent_signature
+    43.2 MiB /Users/nickgonzales/.bonfyre/estate-local/items.db
+    tables: item, kin, neighbour
+    11.2 MiB /Users/nickgonzales/.bonfyre/estate-local/atlas.db
+    tables: bridge, chart, envelope_hold, label, latent_delta, neighbourhood, projection, relation, snapshot, snapshot_member
+     8.5 MiB /Users/nickgonzales/.bonfyre/estate-local/prices.db
+    tables: observed_price
+     3.0 MiB /Users/nickgonzales/.bonfyre/estate-local/frappe-surfaces.db
+    tables: frappe_field, frappe_program
+     1.9 MiB /Users/nickgonzales/.bonfyre/estate-local/projection.db
+    tables: public_projection, public_projection_dependency
+     1.6 MiB /Users/nickgonzales/.bonfyre/estate-local/actors.db
+    tables: actor_edges, actor_nodes
+     1.3 MiB /Users/nickgonzales/.bonfyre/estate-local/actors-legacy-name-collapsed-20260924T163000Z.db
+    tables: actor_corroborations, actor_edges, actor_nodes
+   888.0 KiB /Users/nickgonzales/.bonfyre/estate-local/matrix.db
+    tables: matrix_address_aliases, matrix_addresses, matrix_closure_contributions, matrix_delegations, matrix_domains, matrix_institutions, matrix_presences, matrix_standing_addresses, matrix_subject_relations, matrix_subjects
+   412.0 KiB /Users/nickgonzales/.bonfyre/estate-local/entity.db
+    tables: entities, entities_fts, entities_fts_config, entities_fts_data, entities_fts_docsize, entities_fts_idx, links, observations
+   112.0 KiB /Users/nickgonzales/.bonfyre/estate-local/meter.db
+    tables: events, rate
+   104.0 KiB /Users/nickgonzales/.bonfyre/estate-local/provider-derivation.db
+    tables: body_availability, provider_embedding_projection, provider_embedding_query, provider_embedding_rank, provider_embedding_run, provider_fact_delta, provider_materializations, provider_observations
+    64.0 KiB /Users/nickgonzales/.bonfyre/estate-local/auth.db
+    tables: actor_closure_bindings, external_account_links, institution_grants, sessions, users
+    52.0 KiB /Users/nickgonzales/.bonfyre/estate-local/commerce.db
+    tables: commerce_progress
+    44.0 KiB /Users/nickgonzales/.bonfyre/estate-local/semantic/vectors.db
+    tables: artifacts, vec_artifacts, vec_artifacts_chunks, vec_artifacts_info, vec_artifacts_rowids, vec_artifacts_vector_chunks00
+    40.0 KiB /Users/nickgonzales/.bonfyre/estate-local/people-generation-20260925T005249Z/projection.db
+    tables: public_projection, public_projection_dependency
+    24.0 KiB /Users/nickgonzales/.bonfyre/estate-local/commitments.db
+    tables: commitment_events, commitments
+       0.0 B /Users/nickgonzales/.bonfyre/estate-local/source-frontier.db
+    tables: 
+       0.0 B /Users/nickgonzales/.bonfyre/estate-local/finance.db
+    tables: 
+
+~/.bonfyre selective
+    21.1 MiB /Users/nickgonzales/.bonfyre/agents-runtime/agent-sessions.sqlite3
+    tables: agent_messages, agent_sessions
+    14.3 MiB /Users/nickgonzales/.bonfyre/dev-fabric/fabric.sqlite3
+    ERROR unable to open database file
+     1.6 MiB /Users/nickgonzales/.bonfyre/model-price-vec.sqlite3
+    tables: artifacts, vec_artifacts, vec_artifacts_chunks, vec_artifacts_info, vec_artifacts_rowids, vec_artifacts_vector_chunks00
+     1.6 MiB /Users/nickgonzales/.bonfyre/partner-commons-vec.sqlite3
+    tables: artifacts, vec_artifacts, vec_artifacts_chunks, vec_artifacts_info, vec_artifacts_rowids, vec_artifacts_vector_chunks00
+     1.4 MiB /Users/nickgonzales/.bonfyre/ingest-dedup.db
+    tables: dedup_cache
+     1.0 MiB /Users/nickgonzales/.bonfyre/recipes.db
+    tables: models, recipe_fts, recipe_fts_config, recipe_fts_content, recipe_fts_data, recipe_fts_docsize, recipe_fts_idx, recipe_models, recipe_tags, recipes
+   868.0 KiB /Users/nickgonzales/.bonfyre/estate-fabric/fabric.db
+    tables: application_records, artifacts, catalog, catalog_bindings, composition_nodes, declarations, economic_ledger, effect_operations, effects, events, execution_metrics, fabric_meta, missions, namespace_objects, operator_contract_bindings, operator_contracts, receipts, repository_roots, roots, schema_migrations, usage_ledger, value_ledger, workgraph_attempts, workgraph_compensation_attempts, workgraph_compensations, workgraph_dependencies, workgraph_fanout_groups, workgraph_nodes, workgraph_transitions, bf_readiness_capability
+   780.0 KiB /Users/nickgonzales/.bonfyre/recursive-substrate-v5/substrate.sqlite3
+    ERROR unable to open database file
+   732.0 KiB /Users/nickgonzales/.bonfyre/partner-commons.sqlite3
+    tables: capability_identities, commitment_entries, external_event_log, frontier_layers, known_noncauses, partner_observations, partner_profiles, solved_invariants
+   460.0 KiB /Users/nickgonzales/.bonfyre/ai-loss-oracle.sqlite3
+    tables: artifact_transforms, candidate_primitives, claim_deps, claim_state, cost_allocations, economic_measures, evidence_relations, failure_fingerprints, financial_events, financial_positions, frontier_layers, funding_routes, known_noncauses, pattern_clusters, pattern_members, provenance_edges, solved_invariants, standing_predicates, target_obligations, temporal_evidence, usage_attempts, usage_occurrence_details, usage_occurrences, work_occurrences
+   348.0 KiB /Users/nickgonzales/.bonfyre/bin/bonfyre_cms.db
+    tables: _absorbed_constants, _ann_buckets, _ann_projections, _ann_quantized, _compaction_manifests, _content_types, _egraph_meta, _equivalences, _families, _family_members, _hooks, _incr_eigen, _merkle_tree, _meta_families, _meta_members, _ops, _permissions, _reduce_memo, _reduce_profiles, _relations, _sync_state, _synthesis_candidates, _tensor_cells, _tensor_eigen, _tokens, _transfer_log, _transfer_templates, _type_constraints, cms_generation
+   280.0 KiB /Users/nickgonzales/.bonfyre/compute-ledger.sqlite3
+    tables: commitments, cost_allocations, economic_measures, financial_events, financial_positions, frontier_layers, funding_routes, known_noncauses, mission_costs, money_edges, solved_invariants, usage_attempts, usage_occurrence_details, usage_occurrences, value_edges
+   276.0 KiB /Users/nickgonzales/.bonfyre/ai-leads.sqlite3
+    tables: artifact_transforms, candidate_primitives, capability_identities, claim_deps, claim_state, commitment_entries, cost_allocations, economic_measures, evidence_relations, external_event_log, failure_fingerprints, financial_events, financial_positions, frontier_layers, funding_routes, known_noncauses, pattern_clusters, pattern_members, provenance_edges, solved_invariants, standing_predicates, target_obligations, temporal_evidence, usage_attempts, usage_occurrence_details, usage_occurrences, work_items, work_occurrences, work_planes, work_transitions
+    20.0 KiB /Users/nickgonzales/.bonfyre/dev-fabric/worktrees/525b9be6e64c4710b2f82a71/10-Code/ServiceArbitrageHub/data/arbitrage.db
+    tables: jobs, services
+    12.0 KiB /Users/nickgonzales/.bonfyre/narrate-phoneme.db
+    tables: phoneme_cache
+    12.0 KiB /Users/nickgonzales/.bonfyre/orchestrate.db
+    tables: orchestration_policy
+    12.0 KiB /Users/nickgonzales/.bonfyre/dev-fabric/worktrees/525b9be6e64c4710b2f82a71/10-Code/AIOverseasLaborPipeline/data/pipeline.db
+    tables: jobs
+    12.0 KiB /Users/nickgonzales/.bonfyre/dev-fabric/worktrees/525b9be6e64c4710b2f82a71/10-Code/QuietDistributionEngine/data/distribution.db
+    tables: sends
+       0.0 B /Users/nickgonzales/.bonfyre/ai-leads-vec.sqlite3
+    tables: 
+       0.0 B /Users/nickgonzales/.bonfyre/matrix.db
+    tables: 
+
+PHYSICAL COLUMNAR / STORAGE FILES
+--------------------------------------------------------------------------------
+repo
+  duckdb           files=2 bytes=2.8 MiB
+  parquet          files=1 bytes=543.5 MiB
+
+estate-local
+  parquet          files=9 bytes=11.1 MiB
+
+~/.bonfyre selective
+  index            files=1 bytes=52.3 KiB
+

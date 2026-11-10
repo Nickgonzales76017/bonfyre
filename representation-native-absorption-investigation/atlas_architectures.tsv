@@ -1,0 +1,381 @@
+canonical_name	family	domain	layer	maturity	semantic_question	purpose	json_path
+ActorGraph	identity	Identity / Institutional Capacity	identity	implemented	Who is this real-world actor, and for which profile is that identity verified?		$.architectures.actor-graph
+ActorPresentationCell	surface	Surface / Presentation algebra	surface/declaration	implemented	How may one interaction grammar present a resolved closure without turning presentation class into a role or authority hierarchy?		$.architectures.actor-presentation-cell
+AddressPlane	forwarding	Forwarding / Eligibility	forwarding	implemented	Of all the state available, what is even eligible to participate in this operation?		$.architectures.address-plane
+AgentSession	execution	Execution / Agentic realization	execution/session	implemented	Which governed session and observable event frontier spans changing provider realizations?		$.architectures.agent-session
+AnalysisUniverse	optimization	Optimization / Measurement identity	governance	architectural	Under what conditions was this set observed, and is another set lawfully comparable to it?		$.architectures.analysis-universe
+ApparatusProvider	provider	Provider / Cyber Range	provider	architectural	What cyber/network/chaos disturbance is being injected, and what fails under it?		$.architectures.apparatus-provider
+ArchitectureClaim	optimization	Optimization / Design lineage	governance	architectural	Where did this architectural claim come from, what evidence stands behind it now, and what would falsify it?		$.architectures.architecture-claim
+ArchitectureFrontier	learning	Learning		measured	Which bridge, if built, would connect the most of this estate to itself -- and which apparent isolation is not isolation at all?		$.architectures.architecture-frontier
+ArtifactGraph	evidence	Evidence / Artifacts	evidence	implemented	What operator transformed this source artifact into that derived one?		$.architectures.artifact-graph
+AssentSignature	fabric	Fabric / Assent bound to exact bytes	contract	measured	Did this person agree to this, and is this still the thing they agreed to?		$.architectures.assent-signature
+AtlasContextProvider	context	Context / Model Context	context	measured	What does one atlas question cost to answer, and can it cost only that?		$.architectures.atlas-context-provider
+AtlasProvenance	context	Context		measured	When this atlas answers, what was it built from, and can that be checked from where it is being read?		$.architectures.atlas-provenance
+AtomicForm	forms	Forms	forms/compile	implemented	Is this form submit-ready, and if not, exactly what blocks it?		$.architectures.atomic-form
+AttentionCoolingGraph	context	Context / Attention	context	implemented	What deserves attention now, and what has cooled until a named signal reheats it?		$.architectures.attention-cooling
+AurekaiContinuityKernel	external	External / Continuity	kernel	measured	What committed state, transitions, lineage and claims does a foreign protocol event become, and may that projection cross the ingress doctrine?		$.architectures.aurekai-continuity-kernel
+AuthorityGraph	institutional	Institutional / Authority	institutional	implemented	Who may do what, to what, for what purpose, under what evidence, until when?		$.architectures.authority-graph
+Automerge	substrate	Reality Foundry	substrate	measured	How do many agents and humans mutate candidate state without contaminating Actual?		$.architectures.automerge
+Bend	substrate	Reality Foundry		measured	Can a pure predicate be written once and compiled, rather than hand-lowered once per runtime?		$.architectures.bend
+BitNetAddressRanker	model	Model / Addressable Candidate Narrowing	model/execution	implemented	Given an AddressPlane survivor frontier and an admitted learned representation, which existing typed handles should be tried first without changing eligibility?		$.architectures.bitnet-address-ranker
+BlockerGraph	opportunity	Opportunity / Institutional Capacity	opportunity	implemented	What is currently preventing this opportunity from being reachable?		$.architectures.blocker-graph
+BloggerPublicationSurface	external	External / Publication	external/surface	implemented	Which source-backed Bonfyre artifact was published to which Blogger URL, under what authority, and with which safe API receipt?		$.architectures.blogger-publication-surface
+BonfyreFS	fabric	Fabric / Namespace	fabric	implemented	What is the universal namespace, and how is any addressable resource resolved and served?		$.architectures.bonfyre-fs
+BonfyreMatrix	institutional	Institution / Factorized participation	institutional	implemented	How can one stable semantic subject lawfully acquire many addresses, presences, disclosures, and institutional relationships without becoming copied applications or a flattened tenant graph?		$.architectures.bonfyre-matrix
+BonfyreSemanticShell	surface	Surface / Operator ABI	surface	implemented	How can a public Bonfyre CLI expression address current state and compose native Powers without creating another command estate or granting authority?		$.architectures.bonfyre-semantic-shell
+Burn	substrate	Reality Foundry	substrate	measured	What is the trainable tensor/model phenotype?		$.architectures.burn
+CanonicalSubjectAddress	surface	Surface / Canonical address	surface	measured	Does this estate answer at the address it tells everyone to use?		$.architectures.canonical-subject-address
+CapabilityClosureGraph	capability	Capability / Execution	capability/execution	implemented	Can this composed chain be bound to real binaries, gated by the frontier, and run?		$.architectures.capability-closure
+CapabilityDiscoveryGap	capability	Capability / Registry	capability	measured	Can this estate discover a capability it has just gained?		$.architectures.capability-discovery-gap
+CapabilityGenome	learning	Learning / Promotion	learning	architectural	What structural change to the graph does this pattern justify, and has it been proven?		$.architectures.capability-genome
+CapabilityLattice	capability	Capability	capability	implemented	What does the system actually have, by estate and law, as real callable binaries?		$.architectures.capability-lattice
+CapitalTransformationNetwork	economic	Economic		measured	Given what this institution holds, which ordered compositions of capital transformations are structurally permitted, and what does it hold at the end of each?		$.architectures.capital-transformation-network
+CARLAProvider	provider	Provider / Vehicle Simulation	provider	architectural	Under what sensors, weather and autonomy mode is a route/vehicle configuration feasible?		$.architectures.carla-provider
+CensusReader	surface	Surface / Contract interpretation	surface	implemented	Who is allowed to decide what a census row means?		$.architectures.census-reader
+CheapCognition	optimization	Optimization / Cognitive control plane	execution	architectural	Is this decision a classification a tiny local model can make inside an exact mask, or does it require an expensive operator?		$.architectures.cheap-cognition
+ClaimFalsifiability	context	Context		measured	Where does this estate report a success it never checked?		$.architectures.claim-falsifiability
+ClaimGraph	evidence	Evidence / Claims	evidence	implemented	What does this claim depend on, assume, and what is its current vs historical proof state?		$.architectures.claim-graph
+ClientOrgans	surface	Surface / Browser capabilities the server cannot reach	presentation	implemented	What can a browser add to a page this estate already composed, without becoming a second compositor or a second source of truth?		$.architectures.client-organs
+CloneGrammarRegistry	surface	Surface / Thirty product vocabularies over one set of cells	contract	measured	Which mature product grammars would make an organ this estate already has legible to a person, and what would actually have to be built for each?		$.architectures.clone-grammar-registry
+CloseConsequence	economic	Economic		measured	What would change if this reconciliation were applied, and what does the system of record actually say is outstanding?		$.architectures.close-consequence
+ClosureAlgebra	capability	Capability		measured	What closes, what blocks, and what would one more commitment unlock -- for any domain that states its own conditions?		$.architectures.closure-algebra
+ClosureLoop	capability	Capability		measured	From an unmet condition to a scored outcome, what does each stage claim and what does it refuse to claim?		$.architectures.closure-loop
+BonfyreAPI	command	Command / API		measured	What does the BonfyreAPI capability organ realize, and by what contract?		$.architectures.cmd-a-p-i
+BonfyreAdmission	command	Command / Admission		declared	What does the BonfyreAdmission capability organ realize, and by what contract?		$.architectures.cmd-admission
+BonfyreAttention	command	Command / Attention		declared	What does the BonfyreAttention capability organ realize, and by what contract?		$.architectures.cmd-attention
+BonfyreAuth	command	Authority / Access		measured	What does the BonfyreAuth capability organ realize, and by what contract?		$.architectures.cmd-auth
+BonfyreBrief	command	Command / Brief		implemented	What does the BonfyreBrief capability organ realize, and by what contract?		$.architectures.cmd-brief
+BonfyreCLI	command	Command / CLI		declared	What does the BonfyreCLI capability organ realize, and by what contract?		$.architectures.cmd-c-l-i
+BonfyreCMS	command	Surface / CMS		implemented	What does the BonfyreCMS capability organ realize, and by what contract?		$.architectures.cmd-c-m-s
+BonfyreCanon	command	Command / Canon		implemented	What does the BonfyreCanon capability organ realize, and by what contract?		$.architectures.cmd-canon
+BonfyreCapability	command	Capability / Inventory		implemented	What does the BonfyreCapability capability organ realize, and by what contract?		$.architectures.cmd-capability
+BonfyreChannel	command	Command / Creator channel		measured	What does the BonfyreChannel capability organ compose, and what does it not make true?		$.architectures.cmd-channel
+BonfyreClips	command	Command / Clips		implemented	What does the BonfyreClips capability organ realize, and by what contract?		$.architectures.cmd-clips
+BonfyreCompete	command	Command / Compete		implemented	What does the BonfyreCompete capability organ realize, and by what contract?		$.architectures.cmd-compete
+BonfyreCompress	command	Model / Compression		implemented	What does the BonfyreCompress capability organ realize, and by what contract?		$.architectures.cmd-compress
+BonfyreControl	command	Command / Control		implemented	What does the BonfyreControl capability organ realize, and by what contract?		$.architectures.cmd-control
+BonfyreDetectObjects	command	Command / DetectObjects		declared	What does the BonfyreDetectObjects capability organ realize, and by what contract?		$.architectures.cmd-detect-objects
+BonfyreDiscipl	command	Capability / Composition		implemented	What does the BonfyreDiscipl capability organ realize, and by what contract?		$.architectures.cmd-discipl
+BonfyreDistribute	command	Command / Distribute		implemented	What does the BonfyreDistribute capability organ realize, and by what contract?		$.architectures.cmd-distribute
+BonfyreDomain	command	Command / Domain		declared	What does the BonfyreDomain capability organ realize, and by what contract?		$.architectures.cmd-domain
+BonfyreEconomy	command	Economic / Economy		implemented	What does the BonfyreEconomy capability organ realize, and by what contract?		$.architectures.cmd-economy
+BonfyreEmbed	command	Model / Embedding		implemented	What does the BonfyreEmbed capability organ realize, and by what contract?		$.architectures.cmd-embed
+BonfyreEmit	command	Execution / Emit		implemented	What does the BonfyreEmit capability organ realize, and by what contract?		$.architectures.cmd-emit
+BonfyreEntity	command	Identity / Entity		measured	What does the BonfyreEntity capability organ realize, and by what contract?		$.architectures.cmd-entity
+BonfyreFPQ	command	Model / FPQ		measured	What does the BonfyreFPQ capability organ realize, and by what contract?		$.architectures.cmd-f-p-q
+BonfyreFPQx	command	Model / FPQ		implemented	What does the BonfyreFPQx capability organ realize, and by what contract?		$.architectures.cmd-f-p-qx
+BonfyreFamily	command	Command / Family		declared	What does the BonfyreFamily capability organ realize, and by what contract?		$.architectures.cmd-family
+BonfyreFinance	command	Economic / Finance		implemented	What does the BonfyreFinance capability organ realize, and by what contract?		$.architectures.cmd-finance
+BonfyreFlashQLA	command	Command / FlashQLA		measured	What does the BonfyreFlashQLA capability organ realize, and by what contract?		$.architectures.cmd-flash-q-l-a
+BonfyreFlow	command	Command / Flow		implemented	What does the BonfyreFlow capability organ realize, and by what contract?		$.architectures.cmd-flow
+BonfyreFragment	command	Command / Fragment		declared	What does the BonfyreFragment capability organ realize, and by what contract?		$.architectures.cmd-fragment
+BonfyreFrameExtract	command	Command / FrameExtract		implemented	What does the BonfyreFrameExtract capability organ realize, and by what contract?		$.architectures.cmd-frame-extract
+BonfyreFrappeCompiler	command	Command / FrappeCompiler		measured	What does the BonfyreFrappeCompiler capability organ realize, and by what contract?		$.architectures.cmd-frappe-compiler
+BonfyreGate	command	Authority / Gate		implemented	What does the BonfyreGate capability organ realize, and by what contract?		$.architectures.cmd-gate
+BonfyreGen	command	Model / Generation		implemented	What does the BonfyreGen capability organ realize, and by what contract?		$.architectures.cmd-gen
+BonfyreGitHubWatch	command	Command / GitHubWatch		declared	What does the BonfyreGitHubWatch capability organ realize, and by what contract?		$.architectures.cmd-git-hub-watch
+BonfyreGraph	command	Identity / Graph		implemented	What does the BonfyreGraph capability organ realize, and by what contract?		$.architectures.cmd-graph
+BonfyreHash	command	Identity / Content		implemented	What does the BonfyreHash capability organ realize, and by what contract?		$.architectures.cmd-hash
+BonfyreIndex	command	Forwarding / Index		implemented	What does the BonfyreIndex capability organ realize, and by what contract?		$.architectures.cmd-index
+BonfyreInfer	command	Model / Inference		implemented	What does the BonfyreInfer capability organ realize, and by what contract?		$.architectures.cmd-infer
+BonfyreIngest	command	Execution / Ingest		implemented	What does the BonfyreIngest capability organ realize, and by what contract?		$.architectures.cmd-ingest
+BonfyreInteractionGrammar	command	Command / Interaction grammar		measured	How can a native command bind a reusable donor-informed interaction grammar without turning the donor into a runtime backend or the binding into authority?		$.architectures.cmd-interaction-grammar
+BonfyreKVCache	command	Model / KV		implemented	What does the BonfyreKVCache capability organ realize, and by what contract?		$.architectures.cmd-k-v-cache
+BonfyreLayer	command	Command / Layer		implemented	What does the BonfyreLayer capability organ realize, and by what contract?		$.architectures.cmd-layer
+BonfyreLeapfrog	command	Command / Leapfrog		implemented	What does the BonfyreLeapfrog capability organ realize, and by what contract?		$.architectures.cmd-leapfrog
+BonfyreLearn	command	Capability / Acquisition		implemented	What does the BonfyreLearn capability organ realize, and by what contract?		$.architectures.cmd-learn
+BonfyreLedger	command	Economic / Ledger		implemented	What does the BonfyreLedger capability organ realize, and by what contract?		$.architectures.cmd-ledger
+BonfyreLifecycle	command	Command / Lifecycle		declared	What does the BonfyreLifecycle capability organ realize, and by what contract?		$.architectures.cmd-lifecycle
+BonfyreMFADict	command	Command / MFADict		implemented	What does the BonfyreMFADict capability organ realize, and by what contract?		$.architectures.cmd-m-f-a-dict
+BonfyreMediaDelivery	command	Command / Media delivery		measured	What does the BonfyreMediaDelivery capability organ lease, and what does it deliberately not deliver?		$.architectures.cmd-media-delivery
+BonfyreMediaPrep	command	Command / MediaPrep		implemented	What does the BonfyreMediaPrep capability organ realize, and by what contract?		$.architectures.cmd-media-prep
+BonfyreMeter	command	Command / Meter		implemented	What does the BonfyreMeter capability organ realize, and by what contract?		$.architectures.cmd-meter
+BonfyreMoE	command	Command / MoE		implemented	What does the BonfyreMoE capability organ realize, and by what contract?		$.architectures.cmd-mo-e
+BonfyreMoQ	command	Command / MoQ		measured	What does the BonfyreMoQ capability organ realize, and by what contract?		$.architectures.cmd-mo-q
+BonfyreModel	command	Command / Model		implemented	What does the BonfyreModel capability organ realize, and by what contract?		$.architectures.cmd-model
+BonfyreNarrate	command	Command / Narrate		implemented	What does the BonfyreNarrate capability organ realize, and by what contract?		$.architectures.cmd-narrate
+BonfyreNet	command	Command / Net		implemented	What does the BonfyreNet capability organ realize, and by what contract?		$.architectures.cmd-net
+BonfyreOffer	command	Command / Offer		implemented	What does the BonfyreOffer capability organ realize, and by what contract?		$.architectures.cmd-offer
+BonfyreOperator	command	Command / Operator		architectural	What does the BonfyreOperator capability organ realize, and by what contract?		$.architectures.cmd-operator
+BonfyreOrchestrate	command	Command / Orchestrate		implemented	What does the BonfyreOrchestrate capability organ realize, and by what contract?		$.architectures.cmd-orchestrate
+BonfyreOutreach	command	Command / Outreach		implemented	What does the BonfyreOutreach capability organ realize, and by what contract?		$.architectures.cmd-outreach
+BonfyrePack	command	Command / Pack		implemented	What does the BonfyrePack capability organ realize, and by what contract?		$.architectures.cmd-pack
+BonfyreParagraph	command	Command / Paragraph		implemented	What does the BonfyreParagraph capability organ realize, and by what contract?		$.architectures.cmd-paragraph
+BonfyrePay	command	Command / Pay		implemented	What does the BonfyrePay capability organ realize, and by what contract?		$.architectures.cmd-pay
+BonfyrePhysics	command	Command / Physics		implemented	What does the BonfyrePhysics capability organ realize, and by what contract?		$.architectures.cmd-physics
+BonfyrePipeline	command	Command / Pipeline		implemented	What does the BonfyrePipeline capability organ realize, and by what contract?		$.architectures.cmd-pipeline
+BonfyreProject	command	Execution / Project		implemented	What does the BonfyreProject capability organ realize, and by what contract?		$.architectures.cmd-project
+BonfyreProof	command	Evidence / Proof		implemented	What does the BonfyreProof capability organ realize, and by what contract?		$.architectures.cmd-proof
+BonfyreProvider	command	Command / Provider		declared	What does the BonfyreProvider capability organ realize, and by what contract?		$.architectures.cmd-provider
+BonfyreProviderFrontier	command	Command / Provider / Context		implemented	What does the provider-rank exact-owner frontier bridge realize, and by what contract?		$.architectures.cmd-provider-frontier
+BonfyreProxy	command	Command / Proxy		implemented	What does the BonfyreProxy capability organ realize, and by what contract?		$.architectures.cmd-proxy
+BonfyreQuant	command	Command / Quant		implemented	What does the BonfyreQuant capability organ realize, and by what contract?		$.architectures.cmd-quant
+BonfyreQuery	command	Command / Query		implemented	What does the BonfyreQuery capability organ realize, and by what contract?		$.architectures.cmd-query
+BonfyreQueue	command	Execution / Queue		implemented	What does the BonfyreQueue capability organ realize, and by what contract?		$.architectures.cmd-queue
+BonfyreQwenFPQ	command	Command / QwenFPQ		measured	What does the BonfyreQwenFPQ capability organ realize, and by what contract?		$.architectures.cmd-qwen-f-p-q
+BonfyreReason	command	Command / Reason		implemented	What does the BonfyreReason capability organ realize, and by what contract?		$.architectures.cmd-reason
+BonfyreRecipe	command	Command / Recipe		declared	What does the BonfyreRecipe capability organ realize, and by what contract?		$.architectures.cmd-recipe
+BonfyreRender	command	Command / Render		implemented	What does the BonfyreRender capability organ realize, and by what contract?		$.architectures.cmd-render
+BonfyreRepurpose	command	Command / Repurpose		implemented	What does the BonfyreRepurpose capability organ realize, and by what contract?		$.architectures.cmd-repurpose
+BonfyreRun	command	Command / Run		declared	What does the BonfyreRun capability organ realize, and by what contract?		$.architectures.cmd-run
+BonfyreRuntime	command	Command / Runtime		implemented	What does the BonfyreRuntime capability organ realize, and by what contract?		$.architectures.cmd-runtime
+BonfyreSAE	command	Command / SAE		implemented	What does the BonfyreSAE capability organ realize, and by what contract?		$.architectures.cmd-s-a-e
+BonfyreSLI	command	Command / SLI		implemented	What does the BonfyreSLI capability organ realize, and by what contract?		$.architectures.cmd-s-l-i
+BonfyreSceneDetect	command	Command / SceneDetect		implemented	What does the BonfyreSceneDetect capability organ realize, and by what contract?		$.architectures.cmd-scene-detect
+BonfyreSegment	command	Command / Segment		implemented	What does the BonfyreSegment capability organ realize, and by what contract?		$.architectures.cmd-segment
+BonfyreSpace	command	Command / Space		implemented	What does the BonfyreSpace capability organ realize, and by what contract?		$.architectures.cmd-space
+BonfyreSpeechLoop	command	Command / SpeechLoop		implemented	What does the BonfyreSpeechLoop capability organ realize, and by what contract?		$.architectures.cmd-speech-loop
+BonfyreStitch	command	Command / Stitch		implemented	What does the BonfyreStitch capability organ realize, and by what contract?		$.architectures.cmd-stitch
+BonfyreSurface	command	Command / Surface		implemented	What does the BonfyreSurface capability organ realize, and by what contract?		$.architectures.cmd-surface
+BonfyreSwarm	command	Command / Swarm		measured	What does the BonfyreSwarm capability organ realize, and by what contract?		$.architectures.cmd-swarm
+BonfyreSync	command	Command / Sync		implemented	What does the BonfyreSync capability organ realize, and by what contract?		$.architectures.cmd-sync
+BonfyreTag	command	Command / Tag		implemented	What does the BonfyreTag capability organ realize, and by what contract?		$.architectures.cmd-tag
+BonfyreTel	command	Command / Tel		implemented	What does the BonfyreTel capability organ realize, and by what contract?		$.architectures.cmd-tel
+BonfyreTier	command	Command / Tier		implemented	What does the BonfyreTier capability organ realize, and by what contract?		$.architectures.cmd-tier
+BonfyreTime	command	Command / Time		implemented	What does the BonfyreTime capability organ realize, and by what contract?		$.architectures.cmd-time
+BonfyreTone	command	Command / Tone		implemented	What does the BonfyreTone capability organ realize, and by what contract?		$.architectures.cmd-tone
+BonfyreTranscribe	command	Command / Transcribe		implemented	What does the BonfyreTranscribe capability organ realize, and by what contract?		$.architectures.cmd-transcribe
+BonfyreTranscriptClean	command	Command / TranscriptClean		implemented	What does the BonfyreTranscriptClean capability organ realize, and by what contract?		$.architectures.cmd-transcript-clean
+BonfyreTranscriptFamily	command	Command / TranscriptFamily		implemented	What does the BonfyreTranscriptFamily capability organ realize, and by what contract?		$.architectures.cmd-transcript-family
+BonfyreUpper90	command	Command / Upper90		declared	What does the BonfyreUpper90 capability organ realize, and by what contract?		$.architectures.cmd-upper90
+BonfyreVec	command	Model / Vector		implemented	What does the BonfyreVec capability organ realize, and by what contract?		$.architectures.cmd-vec
+BonfyreVideoDemux	command	Command / VideoDemux		implemented	What does the BonfyreVideoDemux capability organ realize, and by what contract?		$.architectures.cmd-video-demux
+BonfyreViolence	command	Command / Violence		implemented	What does the BonfyreViolence capability organ realize, and by what contract?		$.architectures.cmd-violence
+BonfyreWatch	command	Command / Watch		measured	What does the BonfyreWatch capability organ realize, and by what contract?		$.architectures.cmd-watch
+BonfyreWeaviateIndex	command	Command / WeaviateIndex		implemented	What does the BonfyreWeaviateIndex capability organ realize, and by what contract?		$.architectures.cmd-weaviate-index
+BonfyreWebAddress	command	Command / WebAddress		declared	What does the BonfyreWebAddress capability organ realize, and by what contract?		$.architectures.cmd-web-address
+BonfyreWire	command	Command / Wire		measured	What does the BonfyreWire capability organ realize, and by what contract?		$.architectures.cmd-wire
+BonfyreWorkflow	command	Command / Workflow		declared	What does the BonfyreWorkflow capability organ realize, and by what contract?		$.architectures.cmd-workflow
+CollapseFront	opportunity	Opportunity / Provenance Structure	opportunity	measured	If this fact is withdrawn, which conclusions lose all support -- and which single facts is a given conclusion load-bearing on?		$.architectures.collapse-front
+CommandLawGraph	capability	Capability / Computational Law	capability	implemented	What computational law does this command preserve, beneath its domain?		$.architectures.command-law
+CommerceChain	commons	Commons / Commerce stages	commons	measured	Which of the fifteen distinct commerce facts has actually been established for this exchange?		$.architectures.commerce-chain
+CommerceObservationProvider	provider	Provider / Commerce observation	materialization	implemented	Which declared commerce carriers can resolve a product, observe an offer, price, or availability, and what exact observation shape may each contribute?		$.architectures.commerce-observation-provider
+CommitmentGraph	economic	Economic / Commitment	economic	measured	Who committed what resource to whom, under what conditions, until when -- and what is still owed after the exchange ended?		$.architectures.commitment-graph
+CommonsKnowledgeReading	external	External / Free Knowledge	external	implemented	How does the estate read Wikimedia's free knowledge (Wikipedia's daily feeds, Commons structured data, Wikidata) through carriers that admit a retention crawler, and carry each thing's identity, place, playable file, author and stated terms into public pages?		$.architectures.commons-knowledge-reading
+CompoundingSlice	surface	Surface / Narrowing	surface	implemented	Can a reader narrow what a surface shows, and does the address say what they narrowed to?		$.architectures.compounding-slice
+CompressionLaw	optimization	Optimization / Governing law	substrate	architectural	What is the smallest state that still supports every lawful operation over this subject, and does the current representation exceed it?		$.architectures.compression-law
+ContentQuarantine	external	External / Presentation state	surface	measured	Should this retained material be projected automatically, and who decided?		$.architectures.content-quarantine
+ContentWriteSurface	surface	Surface / Authoring	surface	implemented	How does something get written into this estate, and does the surface or a shell do it?		$.architectures.content-write-surface
+ContextCutCompiler	context	Context / physical compilation	execution	implemented	Which exactly receipted material bodies from the currently bounded candidate frontier fit this purpose and token budget?		$.architectures.context-cut-compiler
+CoverageVolume	spatial	Spatial / Reach	owner	declared	What can this owner see, reach, serve or carry from where it is?		$.architectures.coverage-volume
+CreatorChannel	surface	Media / Creator channel	surface	measured	How can a creator program compose published media into a channel without making the channel a media, rights, delivery, community, analytics or proof owner?		$.architectures.creator-channel
+CredentialBoundary	institutional	Institutional / Credentials	institutional	implemented	What does each provider require before this estate can read from it, which of those values are set, generated or missing, how is a credential applied to a request and verified, and how is that kept private?		$.architectures.credential-boundary
+CRM	apps	Apps / Relationship	surface	implemented	What is the current relationship, communication and deal state with an actor?		$.architectures.crm
+CubeCL	substrate	Reality Foundry	substrate	measured	When a learned or fused operation warrants it, what is the accelerated generated-kernel phenotype?		$.architectures.cubecl
+Daft	substrate	Reality Foundry	substrate	measured	How are large mixed-data transformations run across these corpora?		$.architectures.daft
+DatasetRegistryCandidates	external	External / Public Commons Compiler	external	implemented	Which datasets does a curated public registry point at, which of their hosts admit a crawler, and how are they addressed as candidates without being read?		$.architectures.dataset-registry-candidates
+DemandBook	economic	Economic / Demand	economic	measured	What is the machine-readable internet asking to be given, and which of it does this estate hold?		$.architectures.demand-book
+DesignFingerprint	surface	Surface / Measured design language	surface	declared	Which closed visual grammar was measured from a reference, without importing that reference as code?		$.architectures.design-fingerprint
+DestinationRelease	external	External / Observed material on its way to a destination	contract	measured	A source is ready for a destination. Has anything actually been delivered to it, and if the source moves, which deliveries stop being current?		$.architectures.destination-release
+DisCIPLCompositionGraph	capability	Capability / Composition	capability/composition	implemented	What typed chain of transforms bridges this source family to this destination family, and at what cost?		$.architectures.discipl-composition
+DiscoverySet	external	External / A working set over observed publishers	contract	measured	Which publishers in the ledger meet a stated set of criteria, and which of those has a person actually accepted?		$.architectures.discovery-set
+DomainControl	external	External reality / DNS authority	boundary	implemented	How can Bonfyre observe and deliberately publish the owned domain records without treating registrar state, a local plan, or a secret as canonical institutional truth?		$.architectures.domain-control
+DomainProfile	commons	Commons / Domain grammar	commons	measured	What do these generic institutional moves mean in this particular domain?		$.architectures.domain-profile
+Drive	apps	Apps / Resource Navigation	surface	implemented	How does a human navigate, share, preview and version any addressable resource?		$.architectures.drive
+EdgeCatalogue	substrate	Substrate / The estate as tables a browser can query	storage	implemented	Can a reader ask this estate a question the file tree cannot answer, without a server answering it?		$.architectures.edge-catalogue
+egglog	substrate	Reality Foundry	substrate	measured	What are the equivalent alternatives to this plan, rewrite, representation, or composition?		$.architectures.egglog
+ERPNext	apps	Apps / Economic Truth	surface	implemented	What value, receipt and stock movement actually occurred (realized, not forecast)?		$.architectures.erpnext
+EstateEdition	surface	Surface / What this estate has to show today	presentation	implemented	If this estate has read sixty-nine thousand things, what does it have to show for it today -- as a publication, not as a feed?		$.architectures.estate-edition
+EstateField	surface	Surface / The whole estate at once	presentation	implemented	What does a hundred and nine thousand addresses actually look like, and how many of them does this estate really read?		$.architectures.estate-field
+EstateIdentityGraph	identity	Identity / What the estate's material names	store	implemented	When this estate's sources keep saying a name, what is the thing, and how does a composed page come to know it?		$.architectures.estate-identity-graph
+EstateVersion	fabric	Fabric / A snapshot of a namespace, by digest	contract	measured	What was under this namespace at that moment, and what changed between two readings of it?		$.architectures.estate-version
+EventMaterial	surface	Surface / Events	surface	implemented	What has an organization said will happen, when does it happen in the hours of the place it happens in, what phase is it in right now, and what can a person do about it?		$.architectures.event-material
+EvidenceBindingGraph	evidence	Evidence	evidence	implemented	Does this candidate artifact actually satisfy this evidence requirement?		$.architectures.evidence-binding
+EvidenceGraph	evidence	Evidence / Claims	evidence	implemented	Does this support, contradict, reproduce, or falsify that claim?		$.architectures.evidence-graph
+ExecutionEnvironmentGraph	execution	Execution / Physical Environment	execution/environment	measured	Which installed machine surfaces are healthy, regenerable, owned, and suitable for this work now?		$.architectures.execution-environment-graph
+ExternalAccountLink	identity	Identity / External Relationship	institutional	implemented	Which public remote accounts has an authenticated Bonfyre person declared as related to them, and what has actually been proven about that relationship?		$.architectures.external-account-link
+ExternalEstateDensity	external	External / Cross-domain Composition	external/descriptor	measured	Which unrelated worlds can lawfully reuse this source's observed semantic outputs and affordances?		$.architectures.external-estate-density
+ExternalEstateIndex	external	External / Catalogue	surface	implemented	What does the outside publish, as distinct from what this estate reads?		$.architectures.external-estate-index
+ExternalWorldClosureProduct	surface	Surface / Public World	surface/public	measured	How does one addressed public World become a coherent human product and a machine resource without assembling two different candidate sets?		$.architectures.external-world-closure-product
+FederationTwin	external	External		measured	Which externally owned networks does this institution hold as subjects, what grammar do they publish themselves in, and what must that grammar not be read to mean?		$.architectures.federation-twin
+Feldera	substrate	Reality Foundry	substrate	implemented	What are the incremental consequences of a change to events, tests, CMS, ledgers, or form readiness?		$.architectures.feldera
+FinancialMetabolism	economic	Economic / Financial Metabolism	economic/finance	implemented	How does observed usage become accrued economics, funding selection and basis-explicit position without becoming booked truth?		$.architectures.financial-metabolism
+FoodCombinationGraph	economic	Economic / Household Food Combination	economic/food	implemented	Which source-bound food offers can be lawfully composed into exact cash, delayed-rebate, points, fulfillment, recipe-lead and travel-aware strategy dimensions?		$.architectures.food-combination-graph
+ForeignAddressIdentity	external	External		measured	When two references differ, are they two resources or one resource written twice?		$.architectures.foreign-address-identity
+ForeignTwinWorkspace	surface	Surface / External Estate	surface	implemented	Which external source contracts can participate in Aurekai, what has each actually reached, and what remains only a proposal?		$.architectures.foreign-link-desk
+ForeignLiveIngest	commons	Commons / Foreign occurrence	commons	architectural	What may this estate actually do with a live occurrence somebody else is hosting?		$.architectures.foreign-live-ingest
+ForeignPublicationCorpus	external	External / Retained Material	external/corpus	implemented	What did the observed world actually say, rather than which sources this estate could have asked?		$.architectures.foreign-publication-corpus
+ForeignTwinGraph.Edges	external	External		measured	What have external networks asserted about each other, on whose word, and which of those assertions has this institution actually admitted?		$.architectures.foreign-relationship-graph
+ForeignTwinGraph	external	External	external	measured	What is the current cached projection of an externally-owned resource, and what rights do we hold over it?		$.architectures.foreign-twin
+FormGraph	forms	Forms	forms	implemented	What is the structure of this human-boundary form, independent of any one submission?		$.architectures.form-graph
+FortificationPlan	opportunity	Opportunity / Institutional Capacity	opportunity	implemented	Which single real-world action most increases robust reachable capacity right now?		$.architectures.fortification-plan
+FoundryBehaviorCompiler	surface	Surface / Subject behavior compilation	compiler	implemented	How can composed product subjects acquire exact native behaviors without runtime inheritance or fourteen duplicated catalogs?		$.architectures.foundry-behavior-compiler
+FPQModeSelectionGraph	model	Model Representation	model/representation	implemented	Which decomposition mode (FWHT / DIRECT / COORD) minimizes error-plus-cost for this block?		$.architectures.fpq-mode-select
+FPQSeedProgramGraph	model	Model Representation	model/representation	implemented	What combinator program reproduces this weight block's angular structure?		$.architectures.fpq-seed
+FPQTransformationGraph	model	Model Representation	model/representation	measured	Can these weights be reconstructed within tolerance from a compact functional representation?		$.architectures.fpq-transform
+FrappeCore	apps	Apps / Platform	surface	implemented	What DocType, form, permission and workflow grammar does a record present?		$.architectures.frappe-core
+FrappeInteractionFingerprint	apps	Apps / Measured interaction grammar	surface	measured	Which generic human interaction grammars does one compiled DocType actually evidence?		$.architectures.frappe-interaction-fingerprint
+FrappeSurfaceProgram	apps	Apps / What a compiled record kind looks like	surface	measured	A DocType was parsed in full. What does a reader actually get shown, and which of its fields will this estate refuse?		$.architectures.frappe-surface-program
+FundingClosure	economic	Economic		measured	What prevents every plausible funding path from closing, and which of those obstacles is actually about money?		$.architectures.funding-closure
+FundingFrontier	economic	Economic		measured	Which combinations of capital routes would close, and what single condition is the most capital waiting on?		$.architectures.funding-frontier
+FundingProspectFrontier	economic	Economic / Funding discovery		measured	Which publicly observable funding opportunities are currently adjacent to programmes the estate is actually running, and what does each observation still not establish?		$.architectures.funding-prospect-frontier
+GateEntitlement	institutional	Institutional / Licensing	institutional	measured	Does this key actually entitle this operation, or does it merely contain its letters?		$.architectures.gate-entitlement
+Generation10SystemMapStress	institutional	Institutional / Whole-machine proof	replay	measured	Can one real effect cross the Generation-10 owner topology and replay without collapsing any owner's semantics?		$.architectures.generation10-system-map-stress
+GenericMachineryLaw	institutional	Institutional		measured	Does a product's name live in the declaration that owns it, or inside the machinery that consumes it?		$.architectures.generic-machinery-law
+GigaToken	substrate	Reality Foundry	substrate	measured	From the giant source, what purpose-specific mission context should be compiled?		$.architectures.gigatoken
+GovernanceGrammar	institutional	Institutional / Governance as verbs a person already knows	contract	implemented	What does a community see when it decides something, and what carries that decision underneath?		$.architectures.governance-grammar
+HashIdentityGraph	identity	Identity	identity	implemented	Are these byte/content objects identical?		$.architectures.hash-identity
+HeldMessage	fabric	Fabric / Something composed for somebody and not sent	contract	measured	What would be said to whom, and who would have to be the one to say it?		$.architectures.held-message
+Helpdesk	apps	Apps / Issue Lifecycle	surface	implemented	What is the state of this requester's problem, and who owns resolving it?		$.architectures.helpdesk
+HouseholdEconomicCircuit	economic	Economic / Cross-domain Household Comparison	economic/household	implemented	Which current, source-bound housing recurring components and food route strategies can be compared without fabricating a residence join, a budget, or accounting truth?		$.architectures.household-economic-circuit
+HousingConcessionArbitrage	economic	Economic / External Housing	economic/housing	implemented	Which public unit-by-move-date-by-lease-term price curves admit a bounded effective-cost projection without turning conditional concessions, variable charges, or policy text into a lease quote?		$.architectures.housing-concession-arbitrage
+HRMS	apps	Apps / Human Capacity	surface	implemented	Who is available, with what qualification and capacity, for what work?		$.architectures.hrms
+HumanCommunityBody	surface	Surface / Human community	surface	implemented	What is the human social body around an addressed community, separately from federation?		$.architectures.human-community-body
+HVM4	substrate	Reality Foundry	substrate	measured	What is the bounded reduction of this selected symbolic or computational structure?		$.architectures.hvm4
+Hydro	substrate	Reality Foundry	substrate	measured	What is the distributed placement/dataflow phenotype for this work?		$.architectures.hydro
+IdentityPage	surface	Surface / Subject	surface/public	implemented	What does the estate keep about one thing, gathered by its identity rather than by who published it?		$.architectures.identity-page
+IncumbentCoordinationPhenotypes	external	External / Institutional carriers	compilation	implemented	Which incumbent platforms carry public material, institutional work, and authority boundaries without becoming the semantic owner of an Aurekai subject?		$.architectures.incumbent-coordination-phenotypes
+IndependentOracle	optimization	Optimization / Independent recomputation	governance	architectural	When two realizations of the same calculation disagree, which one is operative, and what would it take to overturn it?		$.architectures.independent-oracle
+InformationPolicy	commons	Commons / Disclosure	commons	measured	What may this actor be told about this subject, and what must be withheld without denying that the subject exists?		$.architectures.information-policy
+Insights	apps	Apps / Differential Surface	surface	implemented	What is the current derived state, charted for a human, deep-linkable to its objects?		$.architectures.insights
+InstitutionGraph	institutional	Institutional / Structure	institutional	architectural	What is this institution's real structure -- units, roles, resources, authority domains, protocols?		$.architectures.institution-graph
+InstitutionIdentity	identity	Identity / Attestation	institutional	measured	Who says this, and can anyone but us check it?		$.architectures.institution-identity
+InstitutionPlanes	institutional	Institutional / How an institution can be reached, and what each way knows	contract	implemented	A person names their school. Which of its surfaces exist, and what is each one incapable of telling them?		$.architectures.institution-planes
+InstitutionalCostGraph	economic	Economic / Cost	economic	implemented	What does this mission actually cost across compute, model, storage, provider, human, facility?		$.architectures.institutional-cost-graph
+InstitutionalDelegationModel	institutional	Institution / Delegation	institutional	architectural	What exactly does this estate receive from the estate above it, and what does it remain unable to do?		$.architectures.institutional-delegation-model
+InstitutionalMeasurementSurface	commands	Commands		measured	Can an agent operate what this institution measures, or only read about it?		$.architectures.institutional-measurement-surface
+InstitutionalNamespaces	institutional	Institution / AddressPlane namespaces	forwarding	architectural	What is the stable address of this estate, and is that address backed by state today?		$.architectures.institutional-namespaces
+ProductContracts	institutional	Institution / Downstream product	surface	implemented	What can a person in this downstream organization actually see, filter, run and approve, and which existing route or function realizes it?		$.architectures.institutional-product-contracts
+InstitutionalRelationshipTypes	institutional	Institution / Relationship ownership	institutional	architectural	Who owns this relationship, which realization sits under it, and what does a downstream estate actually receive from it?		$.architectures.institutional-relationship-types
+InstitutionalRoot	institutional	Institution / Root topology	institutional	architectural	Which first-class product or estate owns this subject, and does that owner hold it directly or by delegation?		$.architectures.institutional-root
+InstitutionalWorlds	institutional	Institution / Execution world	execution	implemented	In which world does this estate execute, and what happens to an effect intent raised inside it?		$.architectures.institutional-worlds
+InteractionGrammar	surface	Surface / Native interaction grammar	compiler	measured	How can a studied market interaction grammar become reusable native surface composition without importing a donor product's ontology, backend, or data?		$.architectures.interaction-grammar
+InternetCensus	surface	Surface / External world	surface	implemented	What are all the ways the outside world can tell this estate something, and which of them is worth reading again?		$.architectures.internet-census
+InternetCommons	surface	Surface / External world	surface	declared	Where does the outside world live, if not inside this estate?		$.architectures.internet-commons
+InverseCompiler	execution	Execution / Institutional Synthesis	execution/compiler	implemented	Given a TargetObligation, which owner-backed predicates and declared transformation alternatives could lawfully close its residual?		$.architectures.inverse-compiler
+ItemArchive	surface	Surface / Kept Items	surface	implemented	What did this estate read, when did it first read it, and does the address a person was given still answer after its source moved on?		$.architectures.item-archive
+KratosProvider	provider	Provider / Physics Simulation	provider	architectural	What does a high-fidelity multiphysics run predict for this configuration and load?		$.architectures.kratos-provider
+KVTemporalGraph	model	Model Execution	model/execution	implemented	Which KV-cache blocks stay resident, and why, across turns?		$.architectures.kv-temporal
+Lance	substrate	Reality Foundry	substrate	measured	Where is the multimodal/vector body of code, traces, docs, images, transcripts, review artifacts?		$.architectures.lance
+LatentCoordinateAtlas	model	Model / Latent Coordinates	model/latent	implemented	Which typed coordinate charts carry an exact address, which comparisons between them are lawful, what does a group of addresses become when lifted, and which branch of the hierarchy must change when one occurrence changes?		$.architectures.latent-coordinate-atlas
+LatentCoordinateFabric	model	Model / Governed Coordinates	model/latent	implemented	Which replayable learned coordinate is attached to this exact subject, under what passport, comparability and use law?		$.architectures.latent-coordinate-fabric
+ListenProgram	surface	Surface / Music representation	surface	implemented	How is one canonical Recording presented for listening without collapsing the music ontology?		$.architectures.listen-program
+LiveGym	learning	Learning		measured	What can be known right now, what could have been known, and where did the difference come from?		$.architectures.live-gym
+LiveSemanticTrack	commons	Commons / Live semantics	commons	measured	What did this live occurrence actually mean, moment by moment, and which of it deserves to outlive the stream?		$.architectures.live-semantic-track
+LiveSession	fabric	Fabric / Something happening now, or not	contract	measured	Is this session actually going on, and what is left of it afterwards?		$.architectures.live-session
+LMS	apps	Apps / Capability Acquisition	surface	implemented	What capability has an actor acquired, and is it credentialed?		$.architectures.lms
+MachineMembrane	institutional	Institution / Machine-readable exchange	institutional	implemented	How can one canonical state be delivered to thousands of machine consumers, and the machine-readable world be read back, without any carrier becoming a second owner of a fact or any cost scaling with the number of readers?		$.architectures.machine-membrane
+MarketInterfaceClones	surface	Surface / Borrowed interaction	surface	implemented	What does a person who has never seen this estate already know how to do here?		$.architectures.market-interface-clones
+MarketplaceObservation	commons	Commerce / Observed marketplace material	material	implemented	What does observing a marketplace feed entitle this estate to say about an exchange, and what does it not?		$.architectures.marketplace-observation
+BonfyreMCPProof	evidence	Evidence / Cross-owner generation receipt	evidence/proof	measured	Did a returned MCP generation receipt durably name and agree with each claimed institutional projection?		$.architectures.mcp-generation-proof
+MediaDelivery	surface	Media / Delivery lease	surface	measured	How can an authenticated actor obtain a bounded transport lease for an already-selected media representation without collapsing library access, rights, transport, delivery, or watch proof?		$.architectures.media-delivery
+MediaLibrary	surface	Media / Personal and community library ownership	surface	implemented	How do personal Kodi-like media habitats and Jellyfin-like community channels share one MediaProgram representation estate without copying media identity, representation, rights or playback truth?		$.architectures.media-library
+MESProvider	provider	Provider / Serialized Traceability	provider	architectural	What is this serialized component's design, material batch, operations, inspection and disposition?		$.architectures.mes-provider
+MeshRoutingReplay	external	External / Federation	external/proof	measured	Does this envelope's claimed cross-provider routing actually hold in live state, and does replaying it change anything?		$.architectures.mesh-routing-replay
+ModelCommons	model	Model / The model estate as a page	presentation	measured	What models does this estate hold, what came from what, what depends on each, and what would running one cost?		$.architectures.model-commons
+ModelRepresentationGraph	model	Model / Representation	model/representation	architectural	What representation profile is this model in, and what invalidates it?		$.architectures.model-representation-graph
+ModelRepresentationPassportRegistry	model	Model / Representation Admission	model/representation	implemented	Which measured model representation may be forwarded for which operation, and what exact preservation gate remains before resource admission?		$.architectures.model-representation-passport-registry
+ModelTopologyGraph	model	Model / Topology	model/representation	architectural	What is this model's architecture, layers, and tensor namespace?		$.architectures.model-topology-graph
+MoneyGraph	economic	Economic / Money	economic	implemented	What money flows here -- funds, pays, owes, grants, subsidizes, costs, earns?		$.architectures.money-graph
+NativeBuildTruthfulness	substrate	Substrate		measured	Does the build report what it actually built, and does a caller reading its exit status learn the truth?		$.architectures.native-build-truthfulness
+ObjectGrammar	surface	Surface / Institutional grammar	surface	implemented	What kinds of thing may exist here, how does one enter the world, and what must a person actually be asked?		$.architectures.object-grammar
+OccurrenceOrigin	commons	Commons / Occurrence provenance	commons	measured	Did this happen to us, did we derive it, or did we do it?		$.architectures.occurrence-origin
+OccurrenceSpine	execution	Execution / Causal Time	execution	implemented	What actually happened, when, as an ordered causal spine?		$.architectures.occurrence-spine
+OneCompanyStressGauntlet	institutional	Institutional / Cross-organ operating proof	replay	measured	Can one tiny company object cross Powers, Frappe, Model Commons, Format Commons and Partner Commons without collapsing their meanings?		$.architectures.one-company-stress-gauntlet
+OpenCatProvider	provider	Provider / Device IO	provider	architectural	By what serial/ESP32/ROS boundary does a quadruped produce physical state and accept commands?		$.architectures.opencat-provider
+OpenMDAOProvider	provider	Provider / Design Optimization	provider	architectural	What design coordinates optimize a coupled multidisciplinary objective under constraints?		$.architectures.openmdao-provider
+OperatorConsole	surface	Surface / Operated	surface	implemented	Who decides what this host shows, and how dense it is?		$.architectures.operator-console
+OptimizationCascade	optimization	Optimization / Execution discipline	execution	architectural	What is the cheapest operator that is still adequate for this decision, and has every cheaper stage already been tried?		$.architectures.optimization-cascade
+OptimizationProof	optimization	Optimization / Promotion gate	governance	architectural	Is this materialization correct, and is it admissibly represented, and are those two questions being answered separately?		$.architectures.optimization-proof
+OrganDrift	command	Command / Which organ a caller actually gets	runtime	measured	When something reaches for a Bonfyre organ, is it running the organ in this tree?		$.architectures.organ-drift
+PACEProvider	provider	Provider / Policy Doctrine	provider	architectural	Given this event, what tiered rule of engagement, authority and escalation applies?		$.architectures.pace-provider
+PackGraph	surface	Surface / Behaviour	surface	implemented	What behaviour is running here, who published it, and what did it change?		$.architectures.pack-graph
+PageComposition	surface	Surface / Public Page	surface/public	implemented	What does a person see on a subject's page or a main public route, given the kinds of material it actually has?		$.architectures.page-composition
+PageHistory	surface	Surface / What changed	surface/public	implemented	When did the page an item links to answer with different content, as the Internet Archive recorded it?		$.architectures.page-history
+ParcelProjection	surface	Surface / Carrier projection	surface	measured	Do the dialects of one source agree about which rows they are showing?		$.architectures.parcel-projection
+PartnerCommons	external	External / Institutions	external/relationship	implemented	Which external mechanism can realize a bounded Bonfyre capability without taking Bonfyre semantic ownership?		$.architectures.partner-commons
+PatternGraph	learning	Learning / Patterns	learning	implemented	What recurring pattern do these action traces and residuals cluster into?		$.architectures.pattern-graph
+PhysicalAssetGraph	provider	Provider / Physical Asset	provider	implemented	What can this physical asset actually do right now, derived from component health, proof, model and calibration?		$.architectures.physical-asset
+PhysicalDerivation	provider	Provider / Physical Derivation	provider/realization	implemented	What source, toolchain, environment names, bodies and observations physically realized this semantic demand?		$.architectures.physical-derivation
+PlacementGraph	provider	Provider / Placement	provider	implemented	Where does this run or reside, given locality and resource constraints?		$.architectures.placement-graph
+PlacementPlane	provider	Provider / Runtime Placement	provider/realization	implemented	Where may this realization execute, persist, project, and be delivered without changing who semantically owns it?		$.architectures.placement-plane
+PreparedExecutionGraph	model	Model / Execution	model/execution	architectural	Given this representation and hardware, what prepared executable artifact and lease exists?		$.architectures.prepared-execution-graph
+PresentationTemplate	surface	Surface / Design language	surface	implemented	What does this look like, asked separately from what it is and what it reads?		$.architectures.presentation-template
+PreservationBoundary	optimization	Optimization / Protected boundary	governance	architectural	Which layer is this change allowed to alter, and does the layer above it still mean exactly what it meant before?		$.architectures.preservation-boundary
+PriceObservatory	economic	Economic / What things cost, according to whoever published it	store	measured	What does this estate know about the price of anything, and who said so?		$.architectures.price-observatory
+ProfileRunnerLegibility	execution	Execution		measured	When a scheduled profile fails, does the failure say what failed and why, where the scheduler can see it?		$.architectures.profile-runner-legibility
+ProgramFabric	capability	Programs / Institutional capability configuration	configuration	implemented	How does a subject start running a generalized capability without the estate growing another product, another page tree, or another store?		$.architectures.program-fabric
+ProjectPrimitive	institutional	Institutional / One effort, every facet at once	capability	implemented	What does a community need in one place to bring something into being and then keep it running?		$.architectures.project-primitive
+ProofFrontierGraph	evidence	Evidence / Anti-Amnesia	governance/proof	measured	Given what is already settled, may this mutation touch this layer?		$.architectures.proof-frontier
+ProtocolContract	commons	Commons / Interaction	commons	measured	How may several participants interact lawfully over one subject, and what does each still owe the others when the exchange ends?		$.architectures.protocol-contract
+ProtocolDensityLaw	commons	Commons / Protocol	law	architectural	Does this protocol integration add a relation the machine did not have, without taking ownership of a fact something else already owns?		$.architectures.protocol-density-law
+ProtocolFacetCompiler	commons	Commons / Protocol	compiler	measured	Given what this occurrence is, which protocols could lawfully add a relation to it that the machine does not already have?		$.architectures.protocol-facet-compiler
+ProtocolMachine	execution	Execution / Boundary programs	execution/protocol	measured	Which operations are legal now in a durable foreign conversation, and which acknowledgement permits the next one?		$.architectures.protocol-machine
+ProvenanceGraph	evidence	Evidence / Provenance	evidence	implemented	Through what source, observer, actor, runtime, model, provider, transport did this arrive?		$.architectures.provenance-graph
+ProviderGraph	provider	Provider / Resolution	provider	implemented	Which providers can realize this capability, at what multidimensional metric?		$.architectures.provider-graph
+ProviderStateFold	provider	Provider / Resource	provider	implemented	What is a provider's current admissible state, folded from its event history?		$.architectures.provider-state
+PublicEstatePassport	external	External / Public Commons Compiler	external	implemented	What can a public estate do for this machine -- identify, observe, supply material, give reference facts, relate, fingerprint or list -- through what access, under what reuse posture and lawful route, with what credential, and what may it not be read to imply?		$.architectures.public-estate-passport
+PublicObservationAperture	surface	Surface / Public Aperture	surface/public	implemented	Does one public address answer a human and a machine from the same rows, or does it hand the machine the human's page?		$.architectures.public-observation-aperture
+PublicationProgram	commons	Commons / Publication	commons	measured	May this be published there, on whose authority, showing what, and has anybody checked it arrived?		$.architectures.publication-program
+PureExecutionTier	execution	Execution		measured	Which backend should reduce this pure search space, and did the backends agree on what it contains?		$.architectures.pure-execution-tier
+ReadinessState	optimization	Optimization / Readiness	governance	architectural	Can this be executed right now, and if not, exactly which rung of the ladder is missing?		$.architectures.readiness-state
+ReadingRoom	surface	Surface / The archive, asked directly	presentation	implemented	What has this estate actually kept -- asked by the reader, answered on the reader's own device, and read in whichever of the estate's published designs they choose?		$.architectures.reading-room
+RealizationMeasurement	provider	Provider / Realization	provider	implemented	What does each realization of this capability actually spend, measured rather than assumed?		$.architectures.realization-measurement
+ReceiptEnvelope	evidence	Evidence / Receipts	evidence/receipt	implemented	What exact session event frontier occurred, and from which evidence origin and identity dimensions?		$.architectures.receipt-envelope
+RecursiveValueGraph	economic	Economic / Value	economic	implemented	What does this unlock, prefill, strengthen, or make reachable -- without converting to cash?		$.architectures.recursive-value-graph
+ReferenceContract	surface	Surface / Reference integrity	surface	measured	When one authored row names rows in another type, does the name still find anything?		$.architectures.reference-contract
+RegistryFederation	optimization	Optimization / Registry federation	governance	architectural	Where does authoritative reality for this identity live, and can the atlas reference it without importing ownership of it?		$.architectures.registry-federation
+RelationshipGraph	institutional	Institutional / Relationship	institutional	implemented	Where along the discovery-to-adoption trajectory is this real relationship?		$.architectures.relationship-graph
+RemoteMeshTransport	external	External / Federation	external/transport	implemented	Did this coordination envelope arrive as the bytes its producer addressed, and what happens when it did not?		$.architectures.remote-mesh-transport
+RepositoryShape	institutional	Institution / Repository	institutional	implemented	Which physical root owns this class of source, projection, evidence, integration, documentation, or operator state?		$.architectures.repository-shape
+RepresentationMarket	learning	Learning		measured	Which compressed form of this body preserves enough of the candidate set to be worth its bytes?		$.architectures.representation-market
+ResourceActivationGraph	opportunity	Opportunity / Resource	opportunity	implemented	How does a currently-unavailable resource become reachable and usable?		$.architectures.resource-activation
+ResourceAdmissionGraph	provider	Provider / Resource	provider	implemented	May this work be admitted, given resource and provider constraints right now?		$.architectures.resource-admission
+ResourceMetabolism	economic	Economic / Resource	economic	implemented	When does physical maintenance still return more capacity than its scan, proof, and deletion cost?		$.architectures.resource-metabolism
+ResourceReservation	execution	Execution / Resource Admission	execution/resource	implemented	Which bounded temporal capacity is actually held for a subject and purpose?		$.architectures.resource-reservation
+Restate	substrate	Reality Foundry	substrate	measured	How does the trial durably wait hours or days on external reality?		$.architectures.restate
+ResultReceiptBundleGraph	external	External / Attestation	external/attestation	declared	Does this worker submission's portable bundle verify offline, byte for byte?		$.architectures.result-receipt-bundle
+RetainedBodyService	external	External / Retained bytes	surface	measured	When the estate serves bytes it retained, are they the right bytes, and are they the newest?		$.architectures.retained-body-service
+RetentionGC	commons	Commons / Retention	commons	measured	May this record be removed now, and if not, who is keeping it?		$.architectures.retention-gc
+RoleProgramCompiler	identity	Identity / Operating posture	compiler	implemented	How can one Actor assume distinct modern operating responsibilities over shared subjects without becoming a different Actor kind or receiving portable authority?		$.architectures.role-program-compiler
+RoundTripTwin	external	External		measured	Is the representation an outside reader can actually fetch the one this institution meant to publish?		$.architectures.round-trip-twin
+RouteArbitrage	economic	Economic / Routing	economic	measured	For a need this estate can serve from something it reads for nothing, what does the market charge for the same need?		$.architectures.route-arbitrage
+RouteRanker	forwarding	Forwarding / Learned Optimization	forwarding	implemented	Of the eligible survivors, which few are most likely to succeed?		$.architectures.route-ranker
+RunningSystemAttestation	evidence	Evidence / Deployment	evidence/attestation	implemented	Which bytes were sealed, which are deployed, and which are actually executing right now?		$.architectures.running-system-attestation
+RuntimeParityGraph	provider	Provider / Parity	provider	implemented	Do direct, MCP, and HTTP carriers produce the same semantic result?		$.architectures.runtime-parity-graph
+SavedItem	surface	Surface / Personal Relation	surface/public	implemented	What has this person chosen to keep, and what did its source say about it when they kept it?		$.architectures.saved-item
+SceneCompiler	surface	Surface / Scenes	surface	implemented	Given whatever material a subject or route actually holds, which reading rhythms does that material itself argue for, in what order, and what should the page look like as a result?		$.architectures.scene-compiler
+SemanticDerivationGraph	fabric	Fabric / Incremental Derivation	fabric/derivation	implemented	Which exact programs and read closures are affected by this FactDelta?		$.architectures.semantic-derivation
+HouseholdSemanticOperator	forwarding	Forwarding / Semantic Lowering	forwarding	implemented	How can a current household projection be addressed and queried without promoting its source observations or creating a second household store?		$.architectures.semantic-operator
+SERMReductionGraph	evidence	Evidence / Measurement	evidence	implemented	What measurement plan, reduced honestly, produces sufficient evidence for this capability demand?		$.architectures.serm
+ServedAnswer	economic	Economic / Service	economic	measured	Can this estate answer a request, or can it only describe one?		$.architectures.served-answer
+ServiceLifecycleGraph	external	External / Service	external/service	implemented	Where is a provisionable service in its lifecycle, and what may we do with it now?		$.architectures.service-lifecycle
+ShadowInstitutionGraph	institutional	Institutional / Epistemic	institutional	implemented	What do we know about an institution before any relationship or authority is established?		$.architectures.shadow-institution
+SitePresentationComposition	surface	Surface / Site compiler	surface	declared	How does one addressed Aurekai site select a studied visual profile and lower real applications into typed visual slots?		$.architectures.site-presentation-composition
+SLIExecutionGraph	model	Model Execution	model/execution	declared	Does structured-layer inference over the representation match the reference within divergence bounds?		$.architectures.sli-execution
+SocialPresenceGraph	institutional	Institutional / Presence	institutional	implemented	Who is present, on what surface, with what disclosure state, availability, and attention?		$.architectures.social-presence-graph
+SourceFrontier	external	External / Source Accounting	external	implemented	How many sources does this estate actually have, at which level -- publisher, protocol family, exact endpoint -- how much of that is the same thing listed twice, which of them a person has ever seen, and what is missing about each one?		$.architectures.source-frontier
+SourceScheduler	execution	Execution / Reheat	execution	implemented	Of everything this estate is allowed to read, what should it read on this tick, and what does it owe that it has not read yet?		$.architectures.source-scheduler
+SpatialObservation	spatial	Spatial / Observation	owner	measured	Where was this existing subject observed, and by what means was that position arrived at?		$.architectures.spatial-observation
+StandingAddressCompiler	commons	Commons / Opportunity ranking	commons	measured	Which lawful opportunity is most relevant to this actor, in this territory, right now?		$.architectures.standing-address-compiler
+StandingAutomation	execution	Execution / Standing Work	execution	implemented	Which work that was being done by hand now runs on a clock, what does each run record, and what must still wait for a person?		$.architectures.standing-automation
+SubjectIndex	surface	Surface / Compression	surface	implemented	What is this subject, everywhere at once?		$.architectures.subject-index
+SubjectRoomProgram	surface	Surface / What a subject is trying to run, and what it still needs	presentation	implemented	What is this program short of, and what could pay for it, without any of that becoming a claim that it was funded?		$.architectures.subject-room-program
+SubjectRoomPublisher	surface	Surface / A thing on the internet, with an address here	presentation	implemented	What does this estate have of a publisher it reads, at that publisher's own address, before anyone has claimed it?		$.architectures.subject-room-publisher
+SurfaceIR	surface	Surface / Compilation	surface	implemented	What should this actor see and be able to do, compiled from all relevant state?		$.architectures.surface-ir
+SurfaceMotifLearning	surface	Surface / Learning	learning	implemented	Which presentation and adjacency motifs recur, and what better candidates should be proposed?		$.architectures.surface-motif-learning
+SurfacePattern	commons	Commons / Surface grammar	commons	implemented	What does this surface read, at what extent, and what may be done from it?		$.architectures.surface-pattern
+SurfaceRenderer	surface	Surface / Interaction grammar	surface	implemented	What is the human grammar of this surface, separately from what it happens to be reading?		$.architectures.surface-renderer
+TargetObligation	execution	Execution / Persistent Purpose	execution/obligation	implemented	Which semantic objective remains due across carrier failures, waits, and checkpoints?		$.architectures.target-obligation
+TemporalEvidenceGraph	evidence	Evidence / Time	evidence	implemented	Which time is this -- event, publication, observation, retrieval, effective, supersession, correction, expiration?		$.architectures.temporal-evidence-graph
+TerritoryDoor	surface	Surface / Front door	surface	implemented	How does the one public arrival aperture acquire a distinct, lawful territory character without becoming four unrelated applications?		$.architectures.territory-door
+TerritoryLanding	surface	Surface / Arrival	surface	implemented	What does a stranger see, and what makes the rest worth an account?		$.architectures.territory-landing
+TextExtractionRules	commons	Commons / Text	law	measured	Where in this document is that value, and who decided the answer?		$.architectures.text-extraction-rules
+ThePress	surface	Surface / A front page for anything	presentation	implemented	Of everything this estate kept, what is being reported by more than one publisher, what is only being said once, and in whose words?		$.architectures.the-press
+Tract	substrate	Reality Foundry	substrate	measured	What is the lightweight local model execution phenotype?		$.architectures.tract
+TransitionalRootAbsorption	institutional	Institutional / Estate convergence	cutover	measured	Which children of the transitional compatibility root still own capability that no current owner provides?		$.architectures.transitional-root-absorption
+TransportPhenotypeGraph	execution	Execution / Transport	execution/transport	implemented	By which carrier does a hop run, and what does each carrier add?		$.architectures.transport-phenotype
+UnlockGraph	opportunity	Opportunity / Institutional Capacity	opportunity	implemented	What reachable action would unlock institutional capacity that is currently out of reach?		$.architectures.unlock-graph
+VectorBodyAdmission	learning	Learning		measured	Does the store hold the body it was offered, and does it say so when it does not?		$.architectures.vector-body-admission
+VerificationLedger	identity	Identity / Institutional Capacity	identity	measured	Is this actor independently corroborated enough to promote asserted -> verified?		$.architectures.verification-ledger
+Verus	substrate	Reality Foundry	substrate	measured	Which invariants are worth proving, and does the proof hold within bounds?		$.architectures.verus
+WebAddressEdge	forwarding	Web / Address carrier	edge	implemented	How does an ordinary HTTPS host and path enter Bonfyre's address fabric without turning Nginx into semantic or authority machinery?		$.architectures.web-address-edge
+WebLowering	surface	Surface / Physical realisation	surface	implemented	Which part of this interaction does the browser already do, and what is left for script?		$.architectures.web-lowering
+Wiki	apps	Apps / Knowledge	surface	implemented	What does the institution claim to know, with what evidence and freshness?		$.architectures.wiki
+WitnessEnforcement	institutional	Institutional		measured	Is a claimed measurement backed by evidence anyone can open today?		$.architectures.witness-enforcement
+WitnessGrade	context	Context		measured	For each architecture claiming to be measured, how strong is the backing, really?		$.architectures.witness-grade
+WitnessMutation	evidence	Evidence		measured	If a declared fact were wrong, would anything in this institution notice?		$.architectures.witness-mutation
+WorkGraph	execution	Execution	execution	implemented	What durable work exists, with what dependencies and lifecycle?		$.architectures.work-graph
+WorkerRun	execution	Execution / Agentic realization	execution/lifecycle	measured	Which stable logical worker execution spans process death, provider retries and durable continuation?		$.architectures.worker-run
+WorldPublication	surface	Surface / Temporary publication	surface	implemented	When a subject gets enough public relationships to stop being a row, what does it become, and does that cost a new application?		$.architectures.world-publication
+YaFF	substrate	Reality Foundry	substrate	measured	What is the semantic contract for a trial's artifacts, effects, and expected witnesses?		$.architectures.yaff

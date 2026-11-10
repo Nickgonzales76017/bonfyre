@@ -1,0 +1,11 @@
+[Unit]
+Description=Periodically screen retained foreign bodies for presentation boxing
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=15min
+Persistent=true
+Unit=bonfyre-content-screen.service
+
+[Install]
+WantedBy=timers.target

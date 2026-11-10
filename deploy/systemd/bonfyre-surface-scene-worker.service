@@ -1,0 +1,17 @@
+[Unit]
+Description=Bonfyre dependency-scoped SurfaceScene lowerer
+After=bonfyre-address-worker.service bonfyre-public-projection-worker.service
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=ubuntu
+EnvironmentFile=/etc/bonfyre/address-plane.env
+# SurfaceScene consumes only SurfaceIR partitions and rematerializes a derived
+# closure. Actor/authority/availability remain request-time owner checks.
+ExecStart=/usr/local/bin/bonfyre-surface-scene drain --db ${BONFYRE_CMS_DB} --lowerer-dir ${BONFYRE_LOWERER_INBOX} --actor-scope public --limit 256
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/bonfyre

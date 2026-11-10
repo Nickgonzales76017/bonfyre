@@ -1,0 +1,35 @@
+# What the estate's own image is built from.
+#
+# The repository's root .dockerignore is written for a different image and
+# excludes site/ and scripts/, which this one needs: the authored visual
+# character every page is dressed in lives in site/matrix, and the standing
+# automation lives in scripts.  BuildKit reads this file in preference to the
+# root one when building this Dockerfile.
+#
+# Everything heavy and rebuildable stays out, so the context is megabytes
+# rather than the two and a half gigabytes the working tree weighs.
+.git
+.github
+**/node_modules
+**/.venv
+**/__pycache__
+**/*.o
+**/*.a
+**/*.pyc
+pgo-data/
+pages-*/
+architecture/atlas.index.json
+*.archive
+**/*.db
+**/*.db-wal
+**/*.db-shm
+
+# Built binaries: this image builds its own, for its own architecture.
+cmd/*/bonfyre-*
+components/*/bonfyre-*
+
+# The vGPU's vendored runtime is not part of serving pages.
+site/matrix/vgpu/node_modules
+
+# The seed is the one large thing that must travel.
+!deploy/fly/seed/estate.tar.gz

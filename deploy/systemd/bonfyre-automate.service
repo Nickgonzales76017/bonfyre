@@ -1,0 +1,15 @@
+[Unit]
+Description=Bonfyre standing automation (census items, atlas, identities, source ledger, credentials)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=ubuntu
+ExecStart=/usr/bin/env bun /opt/bonfyre/native-src/scripts/bonfyre_automate.mjs $BONFYRE_AUTOMATE_ARGS
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=10800
+StandardOutput=append:/var/lib/bonfyre/automation/runner.log
+StandardError=append:/var/lib/bonfyre/automation/runner.log

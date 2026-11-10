@@ -155,47 +155,18 @@ jobs:
           chmod +x "${{ inputs.process_script }}"
           "${{ inputs.process_script }}"
 
+      - name: Setup Bun for runtime metadata
+        if: steps.detect.outputs.skip != 'true'
+        uses: oven-sh/setup-bun@v2
+
       - name: Emit runtime metadata
         if: steps.detect.outputs.skip != 'true'
         env:
           APP_NAME: ${{ inputs.app_name }}
           CHANGED_COUNT: ${{ steps.detect.outputs.changed_count }}
+          CHANGED_FILES_FILE: /tmp/changed_files.txt
           DEPLOY_PATH: ${{ inputs.deploy_path }}
-        run: |
-          mkdir -p "${DEPLOY_PATH}"
-          python3 <<'PY'
-          import json
-          import os
-          from datetime import datetime, timezone
-          from pathlib import Path
-
-          deploy_path = Path(os.environ["DEPLOY_PATH"])
-          changed_files = Path("/tmp/changed_files.txt").read_text().splitlines()
-
-          job = {
-              "app_name": os.environ["APP_NAME"],
-              "repository": os.environ["GITHUB_REPOSITORY"],
-              "ref": os.environ["GITHUB_REF_NAME"],
-              "sha": os.environ["GITHUB_SHA"],
-              "run_id": os.environ["GITHUB_RUN_ID"],
-              "run_attempt": os.environ["GITHUB_RUN_ATTEMPT"],
-              "changed_count": int(os.environ["CHANGED_COUNT"]),
-              "changed_files": changed_files,
-              "generated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-          }
-
-          summary = {
-              "app_name": job["app_name"],
-              "status": "processed",
-              "changed_count": job["changed_count"],
-              "changed_files": changed_files,
-              "deploy_path": str(deploy_path),
-              "artifact_manifest": str(deploy_path / "artifact.json"),
-          }
-
-          (deploy_path / "job.json").write_text(json.dumps(job, indent=2) + "\n")
-          (deploy_path / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
-          PY
+        run: bun /tmp/bonfyre/scripts/pages-runtime-metadata.mjs
 
       - name: Upload workflow artifacts
         if: steps.detect.outputs.skip != 'true'

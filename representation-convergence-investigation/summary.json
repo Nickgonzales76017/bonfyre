@@ -1,0 +1,102 @@
+{
+  "atlas_architectures": 0,
+  "atlas_families": {},
+  "atlas_maturity": {},
+  "atlas_organs": 138,
+  "estate": "/Users/nickgonzales/.bonfyre/estate-local",
+  "generated_at": "2026-09-29T05:34:41.544657+00:00",
+  "manifold_table_count": 47,
+  "overlap_confirmed": 13,
+  "repo": "/Users/nickgonzales/Developer/Bonfyre",
+  "representation_stats": {
+    "body_object": 201,
+    "byte_economics": 12,
+    "carrier_binding": 202,
+    "derivation_program": 5,
+    "derived_occurrence": 0,
+    "eviction_receipt": 404,
+    "fact_delta": 202,
+    "live_sink_status": 3,
+    "metadata_overlay": 606,
+    "physical_bytes_sum": 123702342,
+    "physical_carrier_counts": {
+      "cas-local": 202,
+      "duckdb-catalog": 202,
+      "execution-program": 404,
+      "iceberg-cas": 202,
+      "local": 275,
+      "query-program": 293
+    },
+    "physical_realization": 2184,
+    "plan_representation": 194,
+    "representation_head": 202,
+    "representation_instance": 2184,
+    "representation_kind_counts": {
+      "arrow": 202,
+      "datafusion": 202,
+      "delta": 202,
+      "duckdb": 202,
+      "graph-edge-parquet": 114,
+      "graph-virtual": 293,
+      "iceberg": 404,
+      "lance": 150,
+      "parquet": 202,
+      "polars": 202,
+      "zarr": 11
+    },
+    "representation_target": 23836,
+    "row_delta": 0,
+    "semantic_kind_count": 202,
+    "target_state_counts": {
+      "carrier_ready": 202,
+      "declared_target": 6666,
+      "deferred_resource_pressure": 52,
+      "evidence_present": 14956,
+      "executable_on_demand": 202,
+      "lowerer_ready": 554,
+      "metadata_overlay_ready": 404,
+      "physical": 598,
+      "physical_zero_copy": 202
+    },
+    "transport_binding": 202
+  },
+  "representation_target_rows": 23836,
+  "representation_tree_bytes": 114942029,
+  "runtime": "/Users/nickgonzales/.bonfyre/representation-runtime",
+  "scaffolding_bytes": 67984516,
+  "scaffolding_files": 16,
+  "schema": "bonfyre-representation-convergence-investigation.v1.1",
+  "semantic_kind_count": 202,
+  "sqlite_investigation": {
+    "stats": {
+      "attempts": [
+        {
+          "error": "OperationalError: unable to open database file",
+          "mode": "live_read_only"
+        }
+      ],
+      "mode": "stable_temp_snapshot",
+      "shm_present": false,
+      "snapshot": "/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/bonfyre-investigation-sqlite-_2nu9dlf/representation-manifold.db",
+      "snapshot_attempt": 1,
+      "source": "/Users/nickgonzales/.bonfyre/estate-local/representation-manifold.db",
+      "wal_present": false,
+      "warning": null
+    },
+    "tables": {
+      "attempts": [
+        {
+          "error": "OperationalError: unable to open database file",
+          "mode": "live_read_only"
+        }
+      ],
+      "mode": "stable_temp_snapshot",
+      "shm_present": false,
+      "snapshot": "/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/bonfyre-investigation-sqlite-lplk22q_/representation-manifold.db",
+      "snapshot_attempt": 1,
+      "source": "/Users/nickgonzales/.bonfyre/estate-local/representation-manifold.db",
+      "wal_present": false,
+      "warning": null
+    }
+  }
+}

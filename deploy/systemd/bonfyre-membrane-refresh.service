@@ -1,0 +1,16 @@
+[Unit]
+# Keep the membrane's picture of the machine world current.
+#
+# Both halves drift on their own: a foreign source changes what it publishes, and
+# our own readership changes as crawlers discover the surfaces that now exist.
+# Neither announces itself, so both are re-measured on a schedule rather than
+# assumed to hold.
+Description=Bonfyre machine membrane refresh
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Environment=BONFYRE_MEMBRANE_DB=/var/lib/bonfyre/state/membrane.db
+ExecStart=/usr/bin/env bun /opt/bonfyre/native-src/scripts/membrane-store.mjs readership /var/log/nginx/access.log
+ExecStart=/usr/bin/env bun /opt/bonfyre/native-src/scripts/membrane-store.mjs refresh aurekai.life dallasculture.org www.dallascityhall.com www.dallasnews.com dartorg.dart.org

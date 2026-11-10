@@ -1,0 +1,35 @@
+# Cloudflare Tunnel carrier for every owned Bonfyre public domain. Run this
+# against the authenticated tunnel selected by deployment; it preserves Host
+# so BonfyreWebAddress, not the tunnel, determines semantic context.
+#
+# Validate: cloudflared tunnel --config deploy/cloudflared/bonfyre-addressplane-ingress.yml ingress validate
+# Run:      cloudflared tunnel --config ... run <authenticated-tunnel-id>
+ingress:
+  # Specific machine-control hosts come before the public wildcard.  They
+  # terminate at the Oracle gateway through this outbound tunnel, never at
+  # the R2 estate Worker.
+  - hostname: mcp.aurekai.work
+    service: http://127.0.0.1:8791
+  - hostname: auth.aurekai.work
+    service: http://127.0.0.1:8791
+  - hostname: aurekai.life
+    service: http://127.0.0.1:28901
+  - hostname: "*.aurekai.life"
+    service: http://127.0.0.1:28901
+  - hostname: aurekai.live
+    service: http://127.0.0.1:28901
+  - hostname: "*.aurekai.live"
+    service: http://127.0.0.1:28901
+  - hostname: aurekai.shop
+    service: http://127.0.0.1:28901
+  - hostname: "*.aurekai.shop"
+    service: http://127.0.0.1:28901
+  - hostname: aurekai.work
+    service: http://127.0.0.1:28901
+  - hostname: "*.aurekai.work"
+    service: http://127.0.0.1:28901
+  - hostname: theleaflounge.store
+    service: http://127.0.0.1:28901
+  - hostname: "*.theleaflounge.store"
+    service: http://127.0.0.1:28901
+  - service: http_status:404

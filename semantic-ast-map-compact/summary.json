@@ -1,0 +1,43 @@
+{
+  "schema": "bonfyre-semantic-ast-map.v3.2.1",
+  "generated_at": "2026-09-29T07:51:58.960804+00:00",
+  "files": 19864,
+  "symbols": 888252,
+  "edges": 2131042,
+  "sql_accesses": 10330,
+  "tables": 1497,
+  "generated_artifacts": 1019,
+  "generated_states": {
+    "CONSUMED_GENERATOR_UNKNOWN": 615,
+    "REBUILDABLE": 26,
+    "UNREFERENCED_GENERATED": 378
+  },
+  "rebuildable_generated": 26,
+  "orphan_generated": 378,
+  "archive_candidates": 466,
+  "strong_archive_native_candidates": 49,
+  "convergence_candidates": 1415,
+  "priority_counts": {
+    "P0": 99,
+    "P1": 1316
+  },
+  "class_counts": {
+    "TABLE_OWNER": 302,
+    "ARCHIVE_NATIVE_PARITY": 49,
+    "DERIVED_OR_EXTERNAL_TABLE": 668,
+    "GENERATED_PROJECTION": 18,
+    "ORPHAN_GENERATED": 378
+  },
+  "parser_counts": {
+    "json": 8743,
+    "make": 215,
+    "yaff": 367,
+    "python": 6928,
+    "c": 472,
+    "cue": 69,
+    "js": 2455
+  },
+  "clang": "/usr/bin/clang",
+  "cue": "/opt/homebrew/bin/cue",
+  "tree_sitter": null
+}

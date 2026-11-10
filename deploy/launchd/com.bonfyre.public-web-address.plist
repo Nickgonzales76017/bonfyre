@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.bonfyre.public-web-address</string>
+  <key>ProgramArguments</key><array>
+    <string>/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreWebAddress/bonfyre-web-address</string>
+    <string>serve</string>
+    <string>--db</string><string>/Users/nickgonzales/.bonfyre/estate-local/matrix.db</string>
+    <string>--auth-db</string><string>/Users/nickgonzales/.bonfyre/estate-local/auth.db</string>
+    <string>--port</string><string>28901</string>
+    <string>--workers</string><string>2</string>
+    <string>--site-root</string><string>/Users/nickgonzales/Developer/Bonfyre/site/matrix</string>
+  </array>
+  <key>WorkingDirectory</key><string>/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreWebAddress</string>
+  <key>EnvironmentVariables</key><dict>
+    <key>BONFYRE_CAPABILITY_INQUIRY_URL</key><string>https://aurekai-work-samples.pages.dev/#ask</string>
+    <key>BONFYRE_AUTH_BINARY</key><string>/Users/nickgonzales/.local/bin/bonfyre-auth</string>
+    <key>BONFYRE_BIN_DIR</key><string>/Users/nickgonzales/.local/bin</string>
+    <key>BONFYRE_CMS_DB</key><string>/Users/nickgonzales/.bonfyre/estate-local/cms.db</string>
+    <key>BONFYRE_SOURCE_FRONTIER_DB</key><string>/Users/nickgonzales/.bonfyre/estate-local/frontier.db</string>
+    <key>BONFYRE_PRICES_DB</key><string>/Users/nickgonzales/.bonfyre/estate-local/prices.db</string>
+    <key>BONFYRE_FINANCE_DB</key><string>/Users/nickgonzales/.bonfyre/estate-local/finance.db</string>
+    <key>BONFYRE_COMMITMENT_DB</key><string>/Users/nickgonzales/.bonfyre/estate-local/commitments.db</string>
+    <key>BONFYRE_FRAPPE_SURFACE_DB</key><string>/Users/nickgonzales/.bonfyre/estate-local/frappe-surfaces.db</string>
+    <key>BONFYRE_FOREIGN_ROOT</key><string>/Users/nickgonzales/.bonfyre/estate-local/foreign</string>
+  </dict>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>ThrottleInterval</key><integer>5</integer>
+  <key>ProcessType</key><string>Background</string>
+  <key>StandardOutPath</key><string>/Users/nickgonzales/.bonfyre/logs/public-web-address.out.log</string>
+  <key>StandardErrorPath</key><string>/Users/nickgonzales/.bonfyre/logs/public-web-address.err.log</string>
+</dict></plist>

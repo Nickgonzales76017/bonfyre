@@ -1,0 +1,12 @@
+[Unit]
+Description=Drain Bonfyre public SurfaceIR projection cuts
+
+[Timer]
+OnBootSec=50s
+OnUnitActiveSec=5s
+RandomizedDelaySec=1s
+Persistent=true
+Unit=bonfyre-public-projection-worker.service
+
+[Install]
+WantedBy=timers.target

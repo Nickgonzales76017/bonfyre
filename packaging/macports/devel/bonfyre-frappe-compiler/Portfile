@@ -1,0 +1,49 @@
+# -*- coding: utf-8; mode: tcl; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- vim:fenc=utf-8:ft=tcl:et:sw=4:ts=4:sts=4
+
+PortSystem          1.0
+PortGroup           github 1.0
+PortGroup           makefile 1.0
+
+# NOT SUBMITTABLE AS WRITTEN. The version below must be a tag that contains
+# the `compile`, `check` and staged `install` targets (added 2026-10-03 and not
+# yet in any tag), and the three checksums must be taken from that tag's
+# tarball. v0.8.0 predates them and will not build with this recipe.
+github.setup        Nickgonzales76017 bonfyre 0.0.0 v
+name                bonfyre-frappe-compiler
+revision            0
+categories          devel textproc
+license             MIT
+maintainers         {@Nickgonzales76017} openmaintainer
+
+description         Compiles Frappe DocType metadata and field conditions into inspectable plans
+long_description    Reads a Frappe application's DocType metadata and compiles its layouts, \
+                    conditional field rules, notifications and dashboard metrics into plans \
+                    that can be inspected, evaluated over a record, and answered from a \
+                    SQLite store opened read only. Every definition is either compiled or \
+                    refused by the name of the donor operation it needs. It does not run \
+                    Frappe, execute controllers or write to a Frappe site.
+
+checksums           rmd160  0000000000000000000000000000000000000000 \
+                    sha256  0000000000000000000000000000000000000000000000000000000000000000 \
+                    size    0
+
+depends_lib         port:sqlite3
+
+# One command of a larger tree; it builds from these four directories only:
+# cmd/BonfyreFrappeCompiler, cmd/BonfyreLex/src, lib/libbonfyre, engine/core/include.
+build.dir           ${worksrcpath}/cmd/BonfyreFrappeCompiler
+build.target        compile
+# The tree's default is -Werror against the compiler it was written with.
+build.args-append   WERROR=
+
+test.run            yes
+test.dir            ${build.dir}
+test.target         check
+
+destroot.dir        ${build.dir}
+destroot.args-append PREFIX=${prefix}
+
+post-destroot {
+    xinstall -d ${destroot}${prefix}/share/doc/${name}
+    xinstall -m 0644 ${worksrcpath}/LICENSE ${destroot}${prefix}/share/doc/${name}/
+}

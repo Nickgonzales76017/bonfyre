@@ -1,0 +1,999 @@
+{
+  "schema": "bonfyre-physical-parity-retirement.v1.4",
+  "generated_at": "2026-09-29T06:04:09.859119+00:00",
+  "sqlite": {
+    "mode": "live_read_only",
+    "source": "/Users/nickgonzales/.bonfyre/estate-local/representation-manifold.db",
+    "wal": false,
+    "attempts": []
+  },
+  "lance": {
+    "available": true,
+    "pairs": 150,
+    "equivalent": 150,
+    "distinct_or_mismatch": 0,
+    "errors": 0,
+    "missing_coordinate": 0,
+    "equivalent_bytes": 30492657
+  },
+  "graph": {
+    "exists": true,
+    "bytes": 11972185,
+    "files": 116,
+    "active_refs": [
+      {
+        "representation_id": "5ea16d8a66b317eabe557c9e599912f0b137e8602b5d01d8701f700bd752508f",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "atlas.projection",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/atlas_projection__address__chart_id.parquet"
+      },
+      {
+        "representation_id": "975d6e3341508bc30b82be371454fc309bff721d800a345574f1abdcda3593ea",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "atlas.snapshot",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/atlas_snapshot__snapshot_id__chart_id.parquet"
+      },
+      {
+        "representation_id": "51928e4df4fc8f8a121e939d552b865cfca14b8e5ece754d9abfea214889b5b2",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "atlas.snapshot_member",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/atlas_snapshot_member__address__snapshot_id.parquet"
+      },
+      {
+        "representation_id": "fe96f5b40224a38eddc829b1ffb28b39d2a4cab8ae65327b463a817712e591a3",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "auth.external_account_links",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/auth_external_account_links__id__provider.parquet"
+      },
+      {
+        "representation_id": "ae5420db75c7477f7919c7693f7723b572e047f4f51758a2f94a1ef1a2907aec",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "auth.external_account_links",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/auth_external_account_links__id__user_id.parquet"
+      },
+      {
+        "representation_id": "0013f35d83f7867e1dd2b0060d35ecc51828cc081b7d8b9ea63d6452e473aa69",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "auth.sessions",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/auth_sessions__id__user_id.parquet"
+      },
+      {
+        "representation_id": "1e658456cb928f039f1cfe75e7cb14d43314c0a4ee2f58cf1ad421fd42b256cb",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "auth.users",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/auth_users__id__gate_key.parquet"
+      },
+      {
+        "representation_id": "e9df0dd08f14dbf8aa0aaa4d2bbc58c43274491e0bc0dab6de91205b523e7d8b",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms._ann_buckets",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms__ann_buckets__id__family_id.parquet"
+      },
+      {
+        "representation_id": "2e2a424e23bfc5b107f3a71efc6ff899084bd2d86e037c31fe331f67773f30ed",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms._ann_buckets",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms__ann_buckets__id__target_id.parquet"
+      },
+      {
+        "representation_id": "999415f7f16b4484a3f85bfb770a75c510df81f1e01f5ddb05cb260bbdb31203",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms._ann_quantized",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms__ann_quantized__id__family_id.parquet"
+      },
+      {
+        "representation_id": "bdf8b12cbe3d9ef6d65222fa2bbb41e57e1d93464def225e8613dbde1422e950",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms._ann_quantized",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms__ann_quantized__id__target_id.parquet"
+      },
+      {
+        "representation_id": "a6e0d0cc2a5b5cad97a32d886dd0b12401e5252f7c48b29a63b7bd19a81fbbe3",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms._family_members",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms__family_members__target_id__family_id.parquet"
+      },
+      {
+        "representation_id": "8e935e9bd9f72bdd76b51873a48471369474cf4b113ae6adb0eddd0d55359c66",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms._incr_eigen",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms__incr_eigen__id__family_id.parquet"
+      },
+      {
+        "representation_id": "6c4f39b1ed0a4b3c443f2d7d67c647703a48e373b16992da48ec8b1f9dfb24c5",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms._ops",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms__ops__id__actor.parquet"
+      },
+      {
+        "representation_id": "6d9acf3290d109fded8e687558e25afc0b6eccdcf5bc75b6d2c6b78560350de8",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms._ops",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms__ops__id__parent.parquet"
+      },
+      {
+        "representation_id": "307253955dde0bfc2505f4cb8f68c467ef368e8eeb839b901d967e2365a7fa3f",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms._ops",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms__ops__id__target.parquet"
+      },
+      {
+        "representation_id": "44606a3dc8bd27ed271ac2db6d2ddd58cb383ef217d7faf0b08b398f0459b707",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms._ops",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms__ops__id__target_id.parquet"
+      },
+      {
+        "representation_id": "157e0239b5b5d81481f96e5bf7e8b93dd0fed0ee8e11778147762816c446c286",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms._tensor_cells",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms__tensor_cells__id__family_id.parquet"
+      },
+      {
+        "representation_id": "d4b80154f580dcef316c55ef53eb02522f3bf20022b62503e57d7a039379b9eb",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms._tensor_cells",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms__tensor_cells__id__target_id.parquet"
+      },
+      {
+        "representation_id": "dd4512bc650d38f0c3a253ef04e988f57663235605efcf631cd58c6d9e56c927",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.application_binding",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_application_binding__id__binding_id.parquet"
+      },
+      {
+        "representation_id": "1c74123f9e1df528f901f12a0050e32492d670a93a465bae91b0153200d9bd2d",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.application_binding",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_application_binding__id__continuity_key.parquet"
+      },
+      {
+        "representation_id": "c4a2cdf4a80c47043711f5ae973446722ec94e168252ccd7f3eaf819bae9211d",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.application_binding",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_application_binding__id__site_id.parquet"
+      },
+      {
+        "representation_id": "a1c216f737e166ce1cf2d75f6dd04c177f86425679d25d96f34e24e4b40cd860",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.application_binding",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_application_binding__id__slot_id.parquet"
+      },
+      {
+        "representation_id": "bc15e0ab2131fbf0e17e72c28292aab1c6519a16b6fd54c2a542122368ebe291",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.assent_signature",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_assent_signature__id__signature_id.parquet"
+      },
+      {
+        "representation_id": "90c7cfc37df37be3ea17d02a1ef15bc7ea6a25e4c6af90cf862d9a0eb5bc6b42",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.bounty",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_bounty__id__bounty_id.parquet"
+      },
+      {
+        "representation_id": "6a13a63def3b70fd46af1561d62af948cabdf342c33f977d413c1acdf81ca09e",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.bounty",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_bounty__id__project_id.parquet"
+      },
+      {
+        "representation_id": "22b63fc227360bbf1fdccf6879ff3246f6c5b0490dfe3dce33dd91a69598e4c6",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.design_fingerprint",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_design_fingerprint__id__fingerprint_id.parquet"
+      },
+      {
+        "representation_id": "40846b1ec6ff67f528dfeaf9f667fc181bacbe2b9d4037faa0c65100813286cb",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.design_fingerprint",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_design_fingerprint__id__reference_source.parquet"
+      },
+      {
+        "representation_id": "5b801423db926b6f83782fddef3c97bfcf2ef19d5d1c27fb07e5e093bb51187b",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.destination_release",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_destination_release__id__receipt_ref.parquet"
+      },
+      {
+        "representation_id": "3c916bbc354bc478a31ec401406711845cb31bea0401faa0d338b0b7ae3faf5d",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.destination_release",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_destination_release__id__release_id.parquet"
+      },
+      {
+        "representation_id": "b9fd8375168a61f1a0d8ea4ddb4d168e5c0039325f1499326fccabc5ce148e0d",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.destination_release",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_destination_release__id__source_ref.parquet"
+      },
+      {
+        "representation_id": "beb296dbaee70398c2c6d457e5e41a0701b611707d9e062b049ab46e01d7e1c5",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.discovery_candidate",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_discovery_candidate__id__candidate_id.parquet"
+      },
+      {
+        "representation_id": "10546c9fe4247397a935f417a80cb07f6dedc74a6a4669a70c3a085a709c553d",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.discovery_candidate",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_discovery_candidate__id__set_id.parquet"
+      },
+      {
+        "representation_id": "78817af628e6b048ebefee8dca6626b497998a70fdab70ca8db3428767971882",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.discovery_set",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_discovery_set__id__set_id.parquet"
+      },
+      {
+        "representation_id": "2348925848361d030679f137d90ea1530eb30d365db5e61c65751d438e46986d",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.estate_version",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_estate_version__id__version_id.parquet"
+      },
+      {
+        "representation_id": "c846deb53e65225816c6a6837590dca7896238ab73b308ed3bae31ec32bb3bfb",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.funding_work_package",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_funding_work_package__id__instance_id.parquet"
+      },
+      {
+        "representation_id": "7d09fd664416c6cf9350bb820158b484e20f0e8104edbfebeaf3c9b5458227a0",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.funding_work_package",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_funding_work_package__id__package_id.parquet"
+      },
+      {
+        "representation_id": "d170ac40cfd3ba47118136f0265733df78cf1b3b8e5ea1ec52723b8189383533",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.governance_decision",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_governance_decision__id__decision_id.parquet"
+      },
+      {
+        "representation_id": "db0dbb66fc8ec0a11fc7c5597e0648dd0d0ac127a37d65ff2e9dbe5bb56dfb4a",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.governance_decision",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_governance_decision__id__evidence_ref.parquet"
+      },
+      {
+        "representation_id": "66c04dcc55edcb9a826b3d25fc826589f9a531498bd53d06fb963c8f2cab4987",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.governance_decision",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_governance_decision__id__proposal_id.parquet"
+      },
+      {
+        "representation_id": "178c691c723d92513cfee694efef9e98daf0dfb463d0c7a782f94b487068cceb",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.governance_proposal",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_governance_proposal__id__proposal_id.parquet"
+      },
+      {
+        "representation_id": "3949d9a8c126cd75c3e1a3349ba5bbd36f315c7ede69df0b76adb1b84eeb3b15",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.governance_proposal",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_governance_proposal__id__subject_ref.parquet"
+      },
+      {
+        "representation_id": "3a7b1cd73aab0e2f1bf1a51478e1998e7bcb39dd47082f7edcaacf2c5bb60aa3",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.governance_vote",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_governance_vote__id__proposal_id.parquet"
+      },
+      {
+        "representation_id": "4f1dd93dee617d561f1efcc1f06d1f95093d53e371cb04fda53597b3244eeb9b",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.governance_vote",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_governance_vote__id__vote_id.parquet"
+      },
+      {
+        "representation_id": "83d04b643b0d3bd2756f88a95eb5728397649ad0de446e79149f9785036770ee",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.internet_source",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_internet_source__id__source.parquet"
+      },
+      {
+        "representation_id": "de971dbc7e9bf11eab8bb0830f338d45401b545be0546a587e552c6ab9f20e90",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.live_session",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_live_session__id__replay_ref.parquet"
+      },
+      {
+        "representation_id": "cbd21cd63de85f5766d98c07ab4cf8fefc8b2211dfa77c7d3ad844b9b597948d",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.live_session",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_live_session__id__session_id.parquet"
+      },
+      {
+        "representation_id": "9730ea855ed946702e4f3f17fc1cefeee744c187cee31a6f88826a513090da77",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.media_program",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_media_program__id__asset_ref.parquet"
+      },
+      {
+        "representation_id": "74a027ff28ad15fa7db106763bc4b6ce65e5ea60957e1a8e4ff2d682c2258139",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.media_program",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_media_program__id__program_id.parquet"
+      },
+      {
+        "representation_id": "10a5238990f89289f2b7a76d7055f876cbc66e8fbd7dfc11c26a543f58cd39b0",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.media_program",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_media_program__id__subject_ref.parquet"
+      },
+      {
+        "representation_id": "60e7d3bed641a68850a1f9de66d189d0ba2d3dc142af44c77eee20cb4866e8f5",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.music_credit",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_music_credit__id__actor_ref.parquet"
+      },
+      {
+        "representation_id": "e22c8bebf923e033913344c7ed8f0a53663a47befe65e09e5686de8501a68b76",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.music_credit",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_music_credit__id__credit_id.parquet"
+      },
+      {
+        "representation_id": "9fa4db2c6b0a55e8258453418dc9d7fe35e0277fc38261458e6db14de87c5141",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.music_credit",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_music_credit__id__evidence_ref.parquet"
+      },
+      {
+        "representation_id": "d0623b6b1664b112162f8841a370428d29ae57694486d38df6181665bea6f56f",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.music_credit",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_music_credit__id__subject_ref.parquet"
+      },
+      {
+        "representation_id": "9b2b651114e9c13dc27ada5dff693ce74a79d63fd9f0f90efc30a3ecf39a8533",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.music_recording",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_music_recording__id__master_asset_ref.parquet"
+      },
+      {
+        "representation_id": "6c927aa6b9a1ac195675857cac33ebb41655933ac5d6e4b352429143c1f0c0fe",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.music_recording",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_music_recording__id__primary_artist_ref.parquet"
+      },
+      {
+        "representation_id": "982344ab970686254d678b0d45a1baf66e522ad9b00122fd12acc084707cf9c2",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.music_recording",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_music_recording__id__recording_id.parquet"
+      },
+      {
+        "representation_id": "456e0d7f996a7373cd989a7a9ea40a4ba4f6557bda90b0613502a14ca5356efe",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.music_recording",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_music_recording__id__work_ref.parquet"
+      },
+      {
+        "representation_id": "00a0d5d20d0167066574c7ddcce20597b9daeae92a760758f65402d0191e4b20",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.music_right",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_music_right__id__evidence_ref.parquet"
+      },
+      {
+        "representation_id": "2beb15070c15afd1fd06819f5481135adb78e35a36396190a4d4aa3d93e2594d",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.music_right",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_music_right__id__holder_ref.parquet"
+      },
+      {
+        "representation_id": "afc4cbc3b8f97ab4bf7e7deba1a717bed886546f02a440f31506e6851bade8fc",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.music_right",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_music_right__id__right_id.parquet"
+      },
+      {
+        "representation_id": "345bd8f799d25a5adec352744481eb38d725f3cff35369c7aa55de5f810f34af",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.music_right",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_music_right__id__subject_ref.parquet"
+      },
+      {
+        "representation_id": "f54b6dda7d2d1d862f4efb1c167e895968cb71d1a54d7ca4658d35910640a49f",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.music_work",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_music_work__id__work_id.parquet"
+      },
+      {
+        "representation_id": "ae7824bed9a99b291dda1e2d0ccaea6bce339f49042285405b34cdf23cd6c0e0",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.outbound_message",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_outbound_message__id__message_id.parquet"
+      },
+      {
+        "representation_id": "e4dc570f0c16817e628e44781c63b9f9e071c2d381ee2ad316ce91e47cec846d",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.presentation_template",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_presentation_template__id__reference_source.parquet"
+      },
+      {
+        "representation_id": "15ec75b67880661e4dff8c46006c4e90fe7ed61fc6117b84740684e0eb4b5ce0",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.program_binding",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_program_binding__id__binding_id.parquet"
+      },
+      {
+        "representation_id": "dc2a2414e37ca5a202762d03a499f80fd3df4560525c92a65879750220fb670e",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.program_binding",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_program_binding__id__continuity_key.parquet"
+      },
+      {
+        "representation_id": "59a69a850636ca8829c8a4f938be2eaa848ec01d44442b5da49fdc8cc71f4048",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.program_binding",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_program_binding__id__instance_id.parquet"
+      },
+      {
+        "representation_id": "9446313fc82cf1ffff55f8619ddec7f9c65539c5a057f264fe36db832181e9e5",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.program_binding",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_program_binding__id__site_id.parquet"
+      },
+      {
+        "representation_id": "51162f581565b0d12f933ec209459aadf630eb6542f025894d134d56a605a5a6",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.program_binding",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_program_binding__id__slot_id.parquet"
+      },
+      {
+        "representation_id": "37aa92893876083cda59267b881a807674211cfdebb3b4a62d7fb53ce2e0eb1d",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.program_instance",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_program_instance__id__instance_id.parquet"
+      },
+      {
+        "representation_id": "3cb757debc6d6492fb891a6563df93c23b58e39ba71fb1a3573975f322e128d9",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.program_instance",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_program_instance__id__owner_subject.parquet"
+      },
+      {
+        "representation_id": "44dd223e248153a9cc83325353f575deb6983240780c9ef8d63e62e1dc43e6e8",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.program_instance",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_program_instance__id__site_id.parquet"
+      },
+      {
+        "representation_id": "7c7d1aff93366baaf610ae57ad4447e8f5f018334d37648256c32cd749979a2e",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.program_instance",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_program_instance__id__template_id.parquet"
+      },
+      {
+        "representation_id": "1e3cfa3968f5306f2c0efd543c7663237660bf724770d1485099d37a0724ba20",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.program_requirement",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_program_requirement__id__instance_id.parquet"
+      },
+      {
+        "representation_id": "e5d58edc2eea3665ba62247ca5fda7add5a1991a7c4852e84b5ac544e7a77bcf",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.program_requirement",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_program_requirement__id__requirement_id.parquet"
+      },
+      {
+        "representation_id": "83202968e993a8e05885ab3b378304794c6c9ec662a737f63d756a2a68c17823",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.program_template",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_program_template__id__template_id.parquet"
+      },
+      {
+        "representation_id": "a81760f47fdd88890e50a859f26eb0613e5e410a0647b17143764e944c1177a5",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.project",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_project__id__project_id.parquet"
+      },
+      {
+        "representation_id": "301c5b1b75d62746fbb20e037ac50e0339bb0d2154132d1a39744293fce479e7",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.project",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_project__id__subject_ref.parquet"
+      },
+      {
+        "representation_id": "33fd63354cc97b62869183db25de3157fc7aee17254abbc8b35864ce426a9d74",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.project_support",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_project_support__id__project_id.parquet"
+      },
+      {
+        "representation_id": "90b61b8a2969a3e6c6369aab4e805861f9925610d498a1134a646b5cf048eef2",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.project_support",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_project_support__id__support_id.parquet"
+      },
+      {
+        "representation_id": "ada4a69cdcd0945dcd6c228da574fcdca1920adef972ccc42dba620e78e42c06",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.publication_occurrence",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_publication_occurrence__id__occurrence_id.parquet"
+      },
+      {
+        "representation_id": "5bbeabdfd80305dfc67e512b2317d9f329b02ec6215dcce8f221fda09590dd92",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.publication_occurrence",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_publication_occurrence__id__receipt_ref.parquet"
+      },
+      {
+        "representation_id": "359f367e268b5f4a377958fa0e02bbd5c7a5d9551102ee7a07c16bea9b8452de",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.publication_occurrence",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_publication_occurrence__id__source_ref.parquet"
+      },
+      {
+        "representation_id": "c43a0db125b8abda4e1c6bebdba1b3b7d61d36bd1129e9ce8c3ed10266e0f14e",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.semantic_slot",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_semantic_slot__id__site_id.parquet"
+      },
+      {
+        "representation_id": "eac3b2751a0579b4877e66f55372882d4ffac0733ea9e6e748feee58fd23b0ca",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.semantic_slot",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_semantic_slot__id__slot_id.parquet"
+      },
+      {
+        "representation_id": "84816aab1e4d90f616d24510c943439f1868aff95dc2a819ff31742d4449aa5f",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.service_offer",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_service_offer__id__offer_id.parquet"
+      },
+      {
+        "representation_id": "86f0084369816483721010aab130bae437ca7a6cac71d5083f96df259d381465",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.service_offer",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_service_offer__id__receipt_ref.parquet"
+      },
+      {
+        "representation_id": "c7fa341a06efb88ce2a949fbcbb595da07dbccefb86917881cb69bba5613c2c6",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.service_offer",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_service_offer__id__source_ref.parquet"
+      },
+      {
+        "representation_id": "6914972fae39273dd8724c94d1dde40b747f5f2ec3a21aba894bd340812628f4",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.site_presentation",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_site_presentation__id__site_id.parquet"
+      },
+      {
+        "representation_id": "b1c323ce9d9434b8ffcf6c8811929105fa7528bfbc4bad091210136d4984c16c",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.site_presentation",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_site_presentation__id__subject_address.parquet"
+      },
+      {
+        "representation_id": "6b668158bc8c79ee636a5d4ecdcb6076f3b1c3812172abb1904b966d3c99832b",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.site_program",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_site_program__id__program_id.parquet"
+      },
+      {
+        "representation_id": "71c1b2b0b7a18a5ed271a37458a8487073eb88080b0c0e4fc7f30fd861783377",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.site_program",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_site_program__id__site_id.parquet"
+      },
+      {
+        "representation_id": "3eb403a404d691d96340a88ff8f19ba64f5bc745428739271f7eceb60b9330b2",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.source_collection",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_source_collection__id__collection_id.parquet"
+      },
+      {
+        "representation_id": "95b2d657d289abf9531c8adfa4a7ef3c5c2541ca428e06f8ba1c1e55b6ed51aa",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.source_collection",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_source_collection__id__subject_address.parquet"
+      },
+      {
+        "representation_id": "2bb87eb43070de3494260c4a9c14ce082aa35d3a1c457d22214f24c10740ed14",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.source_release_delta",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_source_release_delta__id__delta_id.parquet"
+      },
+      {
+        "representation_id": "4b804209115a413749a2bfcd949dc783d9466c5d14b59595262e97dfa04d6430",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.source_release_delta",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_source_release_delta__id__source_ref.parquet"
+      },
+      {
+        "representation_id": "c2b379d24c9eb91c6efafdf583b4a69fd76aea5288470a6a07d3055735a662b7",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.team_need",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_team_need__id__need_id.parquet"
+      },
+      {
+        "representation_id": "27f5aa49719eb3203bde2c35825c7ed7350dbf9060b655c91a0c18685b328415",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.team_need",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_team_need__id__project_id.parquet"
+      },
+      {
+        "representation_id": "2e9702dca5bad645d82b532932c1bdbe4f1139edef4bc9b5a0c26075d0242c4c",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.version_path",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_version_path__id__path_id.parquet"
+      },
+      {
+        "representation_id": "dfbb5503cbae66061d0ff6a528bfe0a12bbe3f696f8cef8263beaae57a2b2199",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.version_path",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_version_path__id__version_id.parquet"
+      },
+      {
+        "representation_id": "fb23ffad38f1cead329ac4cd56e4de499740a306c9e62b03288f5c26e37373c5",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.world",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_world__id__subject.parquet"
+      },
+      {
+        "representation_id": "5426004cacc25698f1ab48cbdca2c48fa5945890dd7fbbf312b762258858b1f9",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.world",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_world__id__world.parquet"
+      },
+      {
+        "representation_id": "9adc9c6c0ddf0dc7573e87c0f5aa58b13990e7cf0587ccb90e67731c4fbdd447",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.world_fragment",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_world_fragment__id__fragment_id.parquet"
+      },
+      {
+        "representation_id": "9736ee372400874f05c0105376dbd6438f5d52937b187e5fb5faffa864f94020",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.world_fragment",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_world_fragment__id__subject_address.parquet"
+      },
+      {
+        "representation_id": "d4963b313647a7241b2b576a721b53ca37f9cf4a4de52f54f97b9bdb2474453b",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "cms.world_fragment",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/cms_world_fragment__id__world.parquet"
+      },
+      {
+        "representation_id": "453428e56075a8bf77558698d65542c1f84a250a030884f4ddd6da3f2d365e9a",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "commitments.commitment_events",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/commitments_commitment_events__actor__commitment_id.parquet"
+      },
+      {
+        "representation_id": "238d6f0ad56ae4d19adb566b6c5b9bf123d28f9f0cfd43d1a9acd1089ecd3a09",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "credentials.audit",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/credentials_audit__actor__provider.parquet"
+      },
+      {
+        "representation_id": "d3f9fe04fc471a3f5878a4ec5cc87f695208f6ba806e982ad5e0d7c2dc590c7a",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "credentials.imported_provider",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/credentials_imported_provider__provider__spec_source.parquet"
+      },
+      {
+        "representation_id": "4ecc2e403daea35b16c6bf78f6c7ed51f8bef87656e2ae61028e44159584c0ea",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "entity.observations",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/entity_observations__id__source.parquet"
+      },
+      {
+        "representation_id": "2dbe8e8461c2145c67137174cd59b0311835828a0257989ddd742175e67d3593",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "frappe-surfaces.frappe_program",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/frappe_surfaces_frappe_program__program_id__child.parquet"
+      },
+      {
+        "representation_id": "ac65816727f217cca3017dd47bd59d7fd1adce610232bc3df370b25de3397a03",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "frontier.channel",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/frontier_channel__channel_id__address.parquet"
+      },
+      {
+        "representation_id": "bd0591b18a417b3a2dbdac946a971d0d705694c03e6b61b9a6e11880fb06912f",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "frontier.channel",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/frontier_channel__channel_id__family_id.parquet"
+      },
+      {
+        "representation_id": "f5bd5033b33341abff6f959ee0be341db77d30f914716e10b422f818010d9519",
+        "kind": "graph-edge-parquet",
+        "schema_ref": "frontier.channel",
+        "state": "physical",
+        "available": 1,
+        "coordinate": "/Users/nickgonzales/.bonfyre/estate-local/representations/graph/edges/frontier_channel__channel_id__root_id.parquet"
+      }
+    ],
+    "text_markers": {},
+    "extensions": {
+      ".parquet": 116
+    },
+    "samples": [],
+    "active_ref_count": 114,
+    "available_ref_count": 114
+  },
+  "iceberg": {
+    "old_bytes": 2380677,
+    "new_bytes": 2398003,
+    "db_refs_old": [
+      {
+        "table": "metadata_overlay",
+        "column": "coordinate",
+        "count": 202
+      },
+      {
+        "table": "physical_realization",
+        "column": "coordinate",
+        "count": 202
+      }
+    ],
+    "db_refs_new": [
+      {
+        "table": "metadata_overlay",
+        "column": "coordinate",
+        "count": 202
+      },
+      {
+        "table": "physical_realization",
+        "column": "coordinate",
+        "count": 202
+      }
+    ],
+    "repo_refs_literal_old": [
+      "scripts/representation_manifold_zero_copy.py"
+    ],
+    "old_states": [
+      [
+        "superseded",
+        0,
+        202
+      ]
+    ],
+    "new_states": [
+      [
+        "physical",
+        1,
+        202
+      ]
+    ],
+    "retirement_candidate": false
+  },
+  "scaffolding_total_bytes": 1080563412,
+  "scaffolding_total_human": "1.0GiB",
+  "readiness_counts": {
+    "evidence_only": 74,
+    "declared": 33,
+    "ready": 7,
+    "physical": 4
+  }
+}

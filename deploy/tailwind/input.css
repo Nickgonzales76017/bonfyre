@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ------------------------------------------------------------------ controls
+ * Every control the estate composes, given a designed resting, hover, focus
+ * and disabled state. The page keeps saying what a thing is; this says how it
+ * looks. Colour comes from the region's own presentation profile, so a control
+ * belongs to whatever profile dressed the region around it.
+ */
+@layer components {
+  .button,
+  .lift,
+  .play-on-page,
+  .see-all,
+  .keep-reading a,
+  .deck button,
+  .pager a,
+  .ledger-find button {
+    @apply inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5
+           text-sm font-medium leading-none no-underline transition
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2;
+    border-color: var(--w-rule, rgb(0 0 0 / 0.18));
+    color: var(--w-ink, inherit);
+    background: color-mix(in oklab, var(--w-panel, transparent) 70%, transparent);
+  }
+  .button:hover,
+  .lift:hover,
+  .play-on-page:hover,
+  .see-all:hover,
+  .keep-reading a:hover,
+  .deck button:hover,
+  .pager a:hover {
+    border-color: var(--w-accent, currentColor);
+    color: var(--w-accent, inherit);
+    background: color-mix(in oklab, var(--w-accent, transparent) 12%, transparent);
+  }
+  .button.primary,
+  .keep-reading a {
+    background: var(--w-accent, #111);
+    border-color: var(--w-accent, #111);
+    color: var(--w-ground, #fff);
+    @apply shadow-sm;
+  }
+  .button.primary:hover,
+  .keep-reading a:hover {
+    filter: brightness(1.08);
+    color: var(--w-ground, #fff);
+  }
+  .keep-reading {
+    @apply flex justify-center py-8;
+  }
+  .keep-reading[data-reading] a {
+    @apply pointer-events-none opacity-60;
+  }
+
+  /* A form the estate shows is a real form: the forms plugin gives every
+     field a sane resting state, and the profile supplies its colour. */
+  .ledger-find {
+    @apply flex flex-wrap items-center gap-2 py-3;
+  }
+  .ledger-find input[type="search"] {
+    @apply rounded-full border px-4 py-1.5 text-sm;
+    border-color: var(--w-rule, rgb(0 0 0 / 0.18));
+    background: var(--w-panel, transparent);
+    color: var(--w-ink, inherit);
+  }
+
+  /* What a page says about where something came from, and what it is not. */
+  .src, .terms, .subj-note {
+    @apply mt-3 text-xs leading-relaxed;
+    color: var(--w-muted, rgb(0 0 0 / 0.55));
+  }
+  .eyebrow, .region-label .kicker, .np-kicker {
+    @apply text-[0.72rem] font-medium uppercase tracking-[0.12em];
+    color: var(--w-muted, inherit);
+  }
+  .by {
+    @apply flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs;
+    color: var(--w-muted, inherit);
+  }
+
+  /* Long reading gets the typographic defaults of the typography plugin,
+     measured to the profile's own measure. */
+  .flow, .item-body, .lede {
+    @apply prose prose-neutral max-w-none;
+  }
+}
