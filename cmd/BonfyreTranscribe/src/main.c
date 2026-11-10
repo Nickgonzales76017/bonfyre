@@ -1,3 +1,10 @@
+/* POSIX/GNU interfaces used below are hidden by glibc under -std=c11 without
+   a feature macro. macOS exposes them regardless, so this class of break is
+   invisible on the dev machine and fatal on the Linux deploy host. */
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include <errno.h>
 #include <ctype.h>
 #include <dirent.h>
@@ -7,7 +14,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <sys/sysctl.h>
+#ifdef __APPLE__
+#include <sys/sysctl.h>   /* sysctlbyname; macOS only */
+#endif
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
@@ -19,6 +28,7 @@
 #include <mach/mach_time.h>
 #endif
 #include "fragment.h"
+#include "../../../lib/libbonfyre/include/bf_help.h"
 
 /* ================================================================
  * Vocabulary Accumulator — information-theoretic learning engine.
@@ -58,6 +68,7 @@
 #define BFVOCAB_MAGIC_LEN   6
 #define BFVOCAB_VERSION     2
 #define BFVOCAB_NAME        "bonfyre_vocab.bfvocab"
+#define VOCAB_PROMPT_LEAD   "Terms used in this recording: "
 #define VOCAB_PROMPT_MAX    200
 #define VOCAB_PROMPT_CHARS  1024
 #define VOCAB_MIN_LEN       3
@@ -392,16 +403,22 @@ static char *vocab_build_prompt(VocabStore *v) {
     size_t plen = 0;
     int n = 0;
 
+    /* The decoder writes in the style of its prompt: a bare run of lowercase
+     * words gets a lowercase, unpunctuated transcript back.  So the terms go
+     * in as one written sentence, capitalised, comma-separated and closed. */
+    plen = (size_t)snprintf(prompt, VOCAB_PROMPT_CHARS, "%s", VOCAB_PROMPT_LEAD);
+
     for (int i = 0; i < v->count && n < VOCAB_PROMPT_MAX &&
              plen < VOCAB_PROMPT_CHARS - 64; i++) {
         if (v->entries[i].freq < hapax_min) continue;
-        if (n > 0) prompt[plen++] = ' ';
         size_t tlen = strlen(v->entries[i].term);
-        if (plen + tlen >= VOCAB_PROMPT_CHARS - 64) break;
+        if (plen + tlen + 2 >= VOCAB_PROMPT_CHARS - 64) break;
+        if (n > 0) { prompt[plen++] = ','; prompt[plen++] = ' '; }
         memcpy(prompt + plen, v->entries[i].term, tlen);
         plen += tlen;
         n++;
     }
+    prompt[plen++] = '.';
     prompt[plen] = '\0';
 
     if (n == 0) { free(prompt); return NULL; }
@@ -1094,11 +1111,15 @@ static int detect_ngram_repetition(struct whisper_context *ctx, int i_segment) {
     return 0;
 }
 
-/* Repetition penalty logits filter callback (Keskar et al. 2019).
- * For each token that appeared in the last 32 positions:
- *   logit = logit / θ   if logit > 0
- *   logit = logit * θ   if logit < 0
- * where θ > 1 (penalty). Breaks decoder repetition loops during beam search. */
+/* Repetition penalty logits filter callback (after Keskar et al. 2019).
+ * A decoder stuck in a loop repeats a whole span, so the penalty falls only
+ * on the token that would continue a span already said: when the last three
+ * tokens occurred earlier in the window, the token that followed them then has
+ *   logit = logit / theta   if logit > 0
+ *   logit = logit * theta   if logit < 0
+ * applied once.  Penalising every recent token instead takes ordinary words
+ * out of ordinary speech ("the", "of", a sentence's last clause), and the
+ * timestamp and end tokens are never text to repeat. */
 static float rep_penalty_theta = 1.15f;
 
 static void repetition_penalty_callback(
@@ -1111,17 +1132,22 @@ static void repetition_penalty_callback(
 {
     (void)state; (void)user_data;
     float theta = rep_penalty_theta;
-    int n_vocab = whisper_n_vocab(ctx);
-    int window = n_tokens < 32 ? n_tokens : 32;
-    for (int i = n_tokens - window; i < n_tokens; i++) {
-        if (i < 0) continue;
-        whisper_token tid = tokens[i].id;
-        if (tid >= 0 && tid < n_vocab) {
-            if (logits[tid] > 0.0f)
-                logits[tid] /= theta;
-            else
-                logits[tid] *= theta;
-        }
+    whisper_token text_end = whisper_token_eot(ctx);
+    whisper_token done[64];
+    int n_done = 0;
+    int start = n_tokens > 64 ? n_tokens - 64 : 0;
+    if (n_tokens < 4) return;
+    for (int j = start + 2; j < n_tokens - 1; j++) {
+        whisper_token next = tokens[j + 1].id;
+        int seen = 0;
+        if (tokens[j].id != tokens[n_tokens - 1].id || tokens[j - 1].id != tokens[n_tokens - 2].id ||
+            tokens[j - 2].id != tokens[n_tokens - 3].id) continue;
+        if (next < 0 || next >= text_end) continue;
+        for (int k = 0; k < n_done; k++) if (done[k] == next) seen = 1;
+        if (seen || n_done == 64) continue;
+        done[n_done++] = next;
+        if (logits[next] > 0.0f) logits[next] /= theta;
+        else logits[next] *= theta;
     }
 }
 
@@ -1211,21 +1237,23 @@ static void resolve_executable_sibling(char *buffer, size_t size, const char *ar
 static const char *default_media_prep_binary(const char *argv0, char *resolved_path, size_t resolved_size) {
     const char *env = getenv("BONFYRE_MEDIA_PREP_BINARY");
     if (env && env[0] != '\0') return env;
+    /* Managed installs place both binaries in the same directory. */
+    if(argv0 && strchr(argv0,'/')){
+        int n=snprintf(resolved_path,resolved_size,"%s",argv0);
+        if(n>=0 && (size_t)n<resolved_size){
+            char *slash=strrchr(resolved_path,'/');
+            if(slash){
+                size_t prefix=(size_t)(slash-resolved_path)+1;
+                n=snprintf(resolved_path+prefix,resolved_size-prefix,"bonfyre-media-prep");
+                if(n>=0 && (size_t)n<resolved_size-prefix && access(resolved_path,X_OK)==0)return resolved_path;
+            }
+        }
+    }
     resolve_executable_sibling(resolved_path, resolved_size, argv0, "BonfyreMediaPrep", "bonfyre-media-prep");
     if (resolved_path[0] != '\0' && access(resolved_path, X_OK) == 0) {
         return resolved_path;
     }
     return "../BonfyreMediaPrep/bonfyre-media-prep";
-}
-
-static const char *default_silero_vad_script(const char *argv0, char *resolved_path, size_t resolved_size) {
-    const char *env = getenv("BONFYRE_SILERO_VAD_CLI");
-    if (env && env[0] != '\0') return env;
-    resolve_executable_sibling(resolved_path, resolved_size, argv0, "SileroVADCLI", "bin/silero_vad_cli.py");
-    if (resolved_path[0] != '\0' && access(resolved_path, F_OK) == 0) {
-        return resolved_path;
-    }
-    return "../SileroVADCLI/bin/silero_vad_cli.py";
 }
 
 static const char *path_basename(const char *path) {
@@ -1243,13 +1271,14 @@ static void print_usage(void) {
             "bonfyre-transcribe — world-class libwhisper transcription engine\n\n"
             "Usage:\n"
             "  bonfyre-transcribe <input-audio> <output-dir> [--model NAME] [--language CODE|auto]\n"
-            "                      [--media-prep-binary PATH]\n"
-            "                      [--silero-vad] [--silero-script PATH]\n"
+"                      [--media-prep-binary PATH]\n"
+"                      [--max-len CHARS] (1..500; split captions on words)\n"
             "                      [--split-speech] [--noise-threshold DB] [--min-silence SEC]\n"
             "                      [--min-speech SEC] [--padding SEC]\n"
             "                      [--greedy] [--beam-size N] [--best-of N]\n"
             "                      [--vocab-db PATH] [--no-vocab]\n"
             "                      [--processors N] [--no-speech-thold N]\n"
+            "                      [--gpu] [--no-gpu] (Metal on by default; --no-gpu for CPU-only)\n"
             "\n"
             "Transcription engine:\n"
             "  Links libwhisper directly. Model loads ONCE. Zero fork+exec.\n"
@@ -1287,9 +1316,13 @@ static int detect_cpu_cores(void) {
 #ifdef __APPLE__
     int ncpu = 0;
     size_t len = sizeof(ncpu);
+#ifdef __APPLE__
     if (sysctlbyname("hw.perflevel0.physicalcpu", &ncpu, &len, NULL, 0) == 0 && ncpu > 0)
+#endif
         return ncpu;  /* performance cores only */
+#ifdef __APPLE__
     if (sysctlbyname("hw.physicalcpu", &ncpu, &len, NULL, 0) == 0 && ncpu > 0)
+#endif
         return ncpu;
 #endif
     long n = sysconf(_SC_NPROCESSORS_ONLN);
@@ -1297,6 +1330,7 @@ static int detect_cpu_cores(void) {
 }
 
 int main(int argc, char **argv) {
+    if (bf_help_requested(argc, argv)) { print_usage(); return 0; }
     if (argc < 3) {
         print_usage();
         return 1;
@@ -1311,19 +1345,18 @@ int main(int argc, char **argv) {
     const char *min_silence = "0.35";
     const char *min_speech = "0.75";
     const char *padding = "0.15";
-    int silero_vad = 0;
     int greedy = 1;
     int beam_size = 1;
     int best_of = 1;
+    int max_len = 0;
     int no_vocab = 0;
     int n_processors = 1;            /* Round 4: multi-processor decode */
     float no_speech_thold = 0.6f;    /* Round 7: configurable filtering */
     const char *vocab_db_override = NULL;
     char resolved_media_prep[PATH_MAX];
-    char resolved_silero_script[PATH_MAX];
     const char *media_prep_binary = default_media_prep_binary(argv[0], resolved_media_prep, sizeof(resolved_media_prep));
-    const char *silero_script = default_silero_vad_script(argv[0], resolved_silero_script, sizeof(resolved_silero_script));
     int threads = detect_cpu_cores();
+    int use_gpu = 1;
 
     for (int i = 3; i < argc; i++) {
         if (strcmp(argv[i], "--model") == 0 && i + 1 < argc) {
@@ -1332,10 +1365,10 @@ int main(int argc, char **argv) {
             language = argv[++i];
         } else if (strcmp(argv[i], "--media-prep-binary") == 0 && i + 1 < argc) {
             media_prep_binary = argv[++i];
-        } else if (strcmp(argv[i], "--silero-vad") == 0) {
-            silero_vad = 1;
-        } else if (strcmp(argv[i], "--silero-script") == 0 && i + 1 < argc) {
-            silero_script = argv[++i];
+        } else if (strcmp(argv[i], "--gpu") == 0) {
+            use_gpu = 1;
+        } else if (strcmp(argv[i], "--no-gpu") == 0) {
+            use_gpu = 0;
         } else if (strcmp(argv[i], "--split-speech") == 0) {
             split_speech = 1;
         } else if (strcmp(argv[i], "--noise-threshold") == 0 && i + 1 < argc) {
@@ -1352,6 +1385,11 @@ int main(int argc, char **argv) {
             beam_size = atoi(argv[++i]); greedy = (beam_size <= 1);
         } else if (strcmp(argv[i], "--best-of") == 0 && i + 1 < argc) {
             best_of = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "--max-len") == 0 && i + 1 < argc) {
+            char *end=NULL;
+            long value=strtol(argv[++i],&end,10);
+            if(!end||*end||value<1||value>500){fprintf(stderr,"--max-len must be 1..500 characters\n");return 1;}
+            max_len=(int)value;
         } else if (strcmp(argv[i], "--vocab-db") == 0 && i + 1 < argc) {
             vocab_db_override = argv[++i];
         } else if (strcmp(argv[i], "--no-vocab") == 0) {
@@ -1478,7 +1516,7 @@ int main(int argc, char **argv) {
      * is disabled when DTW is active (whisper silently disables DTW
      * if flash_attn is on — we want DTW, not flash). */
     struct whisper_context_params cparams = whisper_context_default_params();
-    cparams.use_gpu = true;
+    cparams.use_gpu = use_gpu;
     cparams.flash_attn = false;  /* incompatible with DTW */
     cparams.dtw_token_timestamps = true;
     cparams.dtw_aheads_preset = resolve_dtw_preset(model_path);
@@ -1506,8 +1544,11 @@ int main(int argc, char **argv) {
             size_t new_len = (size_t)(strlen(vocab_prompt) * ratio);
             /* Snap to word boundary */
             while (new_len > 0 && vocab_prompt[new_len] != ' ') new_len--;
-            if (new_len > 0) {
-                vocab_prompt[new_len] = '\0';
+            if (new_len > strlen(VOCAB_PROMPT_LEAD)) {
+                /* Cut at a term boundary and close the sentence again. */
+                if (vocab_prompt[new_len - 1] == ',') new_len--;
+                vocab_prompt[new_len] = '.';
+                vocab_prompt[new_len + 1] = '\0';
                 int final_tok = -whisper_tokenize(wctx, vocab_prompt, NULL, 0);
                 fprintf(stderr, "[vocab] prompt truncated: %d → %d tokens (budget: 112)\n",
                         n_tok, final_tok);
@@ -1532,6 +1573,8 @@ int main(int argc, char **argv) {
      * Combined with DTW, this gives per-token start/end times.
      * thold_pt/thold_ptsum control timestamp token probability filtering. */
     wparams.token_timestamps = true;
+    wparams.max_len          = max_len;
+    wparams.split_on_word    = max_len > 0;
     wparams.thold_pt         = 0.01f;
     wparams.thold_ptsum      = 0.01f;
 
@@ -1594,35 +1637,19 @@ int main(int argc, char **argv) {
             return 1;
         }
 
-        if (silero_vad && access(silero_script, F_OK) == 0) {
-            char *silero_argv[] = {
-                "python3", (char *)silero_script,
-                "--audio", normalized_path,
-                "--out", chunk_dir,
-                "--min-speech", (char *)min_speech,
-                "--padding", (char *)padding,
-                NULL
-            };
-            if (run_process(silero_argv) != 0) {
-                fprintf(stderr, "Silero VAD split failed.\n");
-                whisper_free(wctx);
-                return 1;
-            }
-        } else {
-            char *split_argv[] = {
-                (char *)media_prep_binary,
-                "split-speech", normalized_path, chunk_pattern,
-                "--noise-threshold", (char *)noise_threshold,
-                "--min-silence", (char *)min_silence,
-                "--min-speech", (char *)min_speech,
-                "--padding", (char *)padding,
-                NULL
-            };
-            if (run_process(split_argv) != 0) {
-                fprintf(stderr, "Speech split failed.\n");
-                whisper_free(wctx);
-                return 1;
-            }
+        char *split_argv[] = {
+            (char *)media_prep_binary,
+            "split-speech", normalized_path, chunk_pattern,
+            "--noise-threshold", (char *)noise_threshold,
+            "--min-silence", (char *)min_silence,
+            "--min-speech", (char *)min_speech,
+            "--padding", (char *)padding,
+            NULL
+        };
+        if (run_process(split_argv) != 0) {
+            fprintf(stderr, "Speech split failed.\n");
+            whisper_free(wctx);
+            return 1;
         }
 
         /* Round 3, item 12: Each chunk IS one utterance.
@@ -1827,7 +1854,6 @@ int main(int argc, char **argv) {
             "  \"model_path\": \"%s\",\n"
             "  \"language\": %s,\n"
             "  \"split_speech\": %s,\n"
-            "  \"silero_vad\": %s,\n"
             "  \"denoised\": %s,\n"
             "  \"greedy\": %s,\n"
             "  \"beam_size\": %d,\n"
@@ -1869,7 +1895,6 @@ int main(int argc, char **argv) {
             model_path,
             language_json,
             split_speech ? "true" : "false",
-            silero_vad ? "true" : "false",
             denoised ? "true" : "false",
             greedy ? "true" : "false",
             beam_size,
@@ -1910,7 +1935,6 @@ int main(int argc, char **argv) {
             "  \"status\": \"transcribed\",\n"
             "  \"jobSlug\": \"%s\",\n"
             "  \"splitSpeech\": %s,\n"
-            "  \"sileroVad\": %s,\n"
             "  \"denoised\": %s,\n"
             "  \"segments\": %d,\n"
             "  \"segmentsFiltered\": %d,\n"
@@ -1927,7 +1951,6 @@ int main(int argc, char **argv) {
             timestamp,
             base_name,
             split_speech ? "true" : "false",
-            silero_vad ? "true" : "false",
             denoised ? "true" : "false",
             result.count,
             result.segments_filtered,

@@ -3,6 +3,10 @@
 Choose the shortest path that answers your question. You do not need to build
 the whole estate to understand the machine.
 
+To see finished work before building anything, open the
+[work samples](https://aurekai-work-samples.pages.dev/) or the
+[guides](https://docs.aurekai.work/).
+
 ## Path A — inspect architecture and maturity
 
 This is the safest first path. The Architecture Atlas is the canonical live
@@ -13,12 +17,12 @@ to source or a witness.
 git clone https://github.com/Nickgonzales76017/bonfyre-oss.git
 cd bonfyre-oss
 
-python3 architecture/atlas.py validate
-python3 architecture/atlas.py expand ExecutionView
-python3 architecture/atlas.py expand CapabilityView
-python3 architecture/atlas.py expand EvidenceView
-python3 architecture/atlas.py get work-graph
-python3 architecture/atlas.py loss
+bun architecture/atlas.mjs validate
+bun architecture/atlas.mjs expand ExecutionView
+bun architecture/atlas.mjs expand CapabilityView
+bun architecture/atlas.mjs expand EvidenceView
+bun architecture/atlas.mjs get work-graph
+bun architecture/atlas.mjs loss
 ```
 
 Read maturity literally:
@@ -31,24 +35,26 @@ Read maturity literally:
 
 ## Path B — run the semantic evidence
 
-The Python control plane is frozen as a reference implementation and
-conformance oracle. Running it verifies WorkGraph, capability, authority,
-provider/resource, evidence, Frappe, and replay semantics without pretending it
-is the production runtime.
+The control-plane suite is the conformance oracle. Running it verifies work,
+capability, authority, provider/resource, evidence, and replay semantics
+without pretending it is the production runtime. (The old Python suite it
+replaced is archived; the `.mjs` suite below is the live one.)
 
 ```bash
-cd components/BonfyreControlPlane
-python3 -m pytest tests/ -q
+bun test components/BonfyreControlPlane/tests
 ```
 
 Useful focused checks:
 
 ```bash
-python3 -m pytest tests/test_work_and_events.py -q
-python3 -m pytest tests/test_capability_closure.py -q
-python3 -m pytest tests/test_frappe_native_records.py -q
-python3 -m pytest tests/test_evidence_graphs.py -q
+bun test components/BonfyreControlPlane/tests/obligation-work.test.mjs
+bun test components/BonfyreControlPlane/tests/occurrence-origin.test.mjs
+bun test components/BonfyreControlPlane/tests/protocol-authority.test.mjs
+bun test components/BonfyreControlPlane/tests/protocol-contract.test.mjs
 ```
+
+Where the GPU backend is absent or denied (sandboxes, CI, VMs), the three
+transcription tests need `BONFYRE_TRANSCRIBE_NO_GPU=1` on the same command.
 
 ## Path C — build and inspect native powers
 
@@ -102,10 +108,13 @@ Their DocType grammars are extracted by `BonfyreFrappeCompiler` and witnessed
 against shared Bonfÿre semantics.
 
 ```bash
-python3 components/BonfyreControlPlane/witness_frappe_apps.py
-cd components/BonfyreControlPlane
-python3 -m pytest tests/test_frappe_native_records.py tests/test_app_surface_witnesses.py -q
+bun architecture/atlas.mjs get frappe-core
+ls cmd/BonfyreFrappeCompiler/tests/
 ```
+
+The contract witnesses there (`native_schema_ingest_smoke.sh`,
+`cms_status_roundtrip_test.sh`) run against a built compiler binary passed as
+their argument.
 
 ## Path F — inspect a model/runtime surface
 
@@ -113,8 +122,8 @@ Model Commons is larger than one model or quantizer. Begin by inspecting the
 live Model view and a native command's contract:
 
 ```bash
-python3 architecture/atlas.py expand ModelView
-python3 architecture/atlas.py get fpq-transform
+bun architecture/atlas.mjs expand ModelView
+bun architecture/atlas.mjs get fpq-transform
 make -C cmd/BonfyreFPQ
 ./cmd/BonfyreFPQ/bonfyre-fpq --help
 ```
