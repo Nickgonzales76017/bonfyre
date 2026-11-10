@@ -302,7 +302,7 @@
     "domain": "Command / Distribute",
     "family": "command",
     "layer": "",
-    "maturity": "implemented",
+    "maturity": "measured",
     "publishes": ""
   },
   "BonfyreDisturbanceAudit": {
@@ -324,13 +324,13 @@
     "publishes": "DNSObservation"
   },
   "BonfyreEconomy": {
-    "architecture": "native-command-dispatch",
-    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
-    "domain": "Command / Native Entry",
+    "architecture": "cmd-economy",
+    "description": "What does the BonfyreEconomy capability organ realize, and by what contract?",
+    "domain": "Economic / Economy",
     "family": "command",
     "layer": "",
-    "maturity": "implemented",
-    "publishes": ""
+    "maturity": "measured",
+    "publishes": "Value"
   },
   "BonfyreEmbed": {
     "architecture": "static-semantic-search",
@@ -374,7 +374,7 @@
     "domain": "Command / ExperienceBinding",
     "family": "command",
     "layer": "",
-    "maturity": "declared",
+    "maturity": "implemented",
     "publishes": ""
   },
   "BonfyreExperienceMap": {
@@ -392,7 +392,7 @@
     "domain": "Command / ExperienceStage",
     "family": "command",
     "layer": "",
-    "maturity": "declared",
+    "maturity": "implemented",
     "publishes": ""
   },
   "BonfyreExternalEstate": {
@@ -482,7 +482,7 @@
     "domain": "Command / FragmentMigration",
     "family": "command",
     "layer": "",
-    "maturity": "declared",
+    "maturity": "implemented",
     "publishes": ""
   },
   "BonfyreFrameExtract": {
@@ -626,7 +626,7 @@
     "domain": "Capability / Acquisition",
     "family": "command",
     "layer": "",
-    "maturity": "implemented",
+    "maturity": "measured",
     "publishes": "Capability"
   },
   "BonfyreLedger": {
@@ -878,15 +878,15 @@
     "domain": "Command / Outreach",
     "family": "command",
     "layer": "",
-    "maturity": "implemented",
+    "maturity": "measured",
     "publishes": ""
   },
   "BonfyreOwnerContract": {
-    "architecture": "capability-lattice",
-    "description": "What does the system actually have, by estate and law, as real callable binaries?",
-    "domain": "Capability",
-    "family": "capability",
-    "layer": "capability",
+    "architecture": "cmd-owner-contract",
+    "description": "What does the BonfyreOwnerContract capability organ realize, and by what contract?",
+    "domain": "Command / OwnerContract",
+    "family": "command",
+    "layer": "",
     "maturity": "implemented",
     "publishes": ""
   },
@@ -905,7 +905,7 @@
     "domain": "Command / PackCondition",
     "family": "command",
     "layer": "",
-    "maturity": "declared",
+    "maturity": "implemented",
     "publishes": ""
   },
   "BonfyrePackConditionDelta": {
@@ -932,7 +932,7 @@
     "domain": "Command / Participation",
     "family": "command",
     "layer": "",
-    "maturity": "declared",
+    "maturity": "implemented",
     "publishes": ""
   },
   "BonfyrePay": {
@@ -1076,7 +1076,7 @@
     "domain": "Command / Recall",
     "family": "command",
     "layer": "",
-    "maturity": "declared",
+    "maturity": "implemented",
     "publishes": ""
   },
   "BonfyreRecipe": {
@@ -1265,7 +1265,7 @@
     "domain": "Command / SemanticOperation",
     "family": "command",
     "layer": "",
-    "maturity": "declared",
+    "maturity": "implemented",
     "publishes": ""
   },
   "BonfyreSemanticOptimizer": {
@@ -1373,7 +1373,7 @@
     "domain": "Command / SurfaceMaturity",
     "family": "command",
     "layer": "",
-    "maturity": "declared",
+    "maturity": "implemented",
     "publishes": ""
   },
   "BonfyreSurfaceScene": {
@@ -1418,7 +1418,7 @@
     "domain": "Command / TargetAttention",
     "family": "command",
     "layer": "",
-    "maturity": "declared",
+    "maturity": "implemented",
     "publishes": ""
   },
   "BonfyreTel": {
@@ -1427,7 +1427,7 @@
     "domain": "Command / Tel",
     "family": "command",
     "layer": "",
-    "maturity": "implemented",
+    "maturity": "measured",
     "publishes": ""
   },
   "BonfyreTier": {
@@ -1449,12 +1449,12 @@
     "publishes": ""
   },
   "BonfyreTone": {
-    "architecture": "native-command-dispatch",
-    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
-    "domain": "Command / Native Entry",
+    "architecture": "cmd-tone",
+    "description": "What does the BonfyreTone capability organ realize, and by what contract?",
+    "domain": "Command / Tone",
     "family": "command",
     "layer": "",
-    "maturity": "implemented",
+    "maturity": "measured",
     "publishes": ""
   },
   "BonfyreTranscribe": {
@@ -1598,7 +1598,7 @@
     "domain": "Command / WorldCompiler",
     "family": "command",
     "layer": "",
-    "maturity": "declared",
+    "maturity": "implemented",
     "publishes": ""
   },
   "BonfyreZarrForge": {

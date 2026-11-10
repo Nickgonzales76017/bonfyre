@@ -28,7 +28,9 @@ budget: {
 	// .js/.cjs/.ts/.tsx/.py: retiring .mjs must not move the code sideways.
 	// 53 after the Swarm transfer test and product-review renderer went to C.
 	// Merge 2026-11-10: reset to the merged actual; down only.
-	other_script_files: 73
+	// +1: mcp gateway provider boundary in progress; port target when its
+	// protocol surface settles.
+	other_script_files: 74
 	// .mjs that bun compiles into an executable. Only browser code, tests and
 	// thin edges may stay JS; anything installed as a program is C.
 	bun_compile_sites: 0

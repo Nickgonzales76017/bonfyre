@@ -1,0 +1,2052 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import hashlib
+import hmac
+import json
+import os
+import re
+import shlex
+import sqlite3
+import subprocess
+import tempfile
+import threading
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+import uuid
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from typing import Any
+
+HOST = os.environ.get("BONFYRE_MCP_HOST", "127.0.0.1")
+PORT = int(os.environ.get("BONFYRE_MCP_PORT", "3052"))
+TOKEN_FILE = Path(os.environ.get("BONFYRE_MCP_TOKEN_FILE", "/etc/bonfyre/mcp.token"))
+TOKEN = TOKEN_FILE.read_text().strip() if TOKEN_FILE.exists() else os.environ.get("BONFYRE_MCP_TOKEN", "")
+PROJECT_MCP_URL = os.environ.get("BONFYRE_PROJECT_MCP_URL", "http://127.0.0.1:13051/mcp")
+RUNTIME_URL = os.environ.get("BONFYRE_RUNTIME_URL", "http://127.0.0.1:3045").rstrip("/")
+ROOT = Path(os.environ.get("BONFYRE_ROOT", "/opt/bonfyre"))
+CMD_ROOT = Path(os.environ.get("BONFYRE_CMD_ROOT", "/opt/cmd"))
+DB_PATH = Path(os.environ.get("BONFYRE_MCP_DB", "/var/lib/bonfyre/mcp/mesh.sqlite3"))
+TASK_DIR = Path(os.environ.get("BONFYRE_MCP_TASK_DIR", "/var/lib/bonfyre/mcp/tasks"))
+ORIGINS = {
+    item.strip()
+    for item in os.environ.get(
+        "BONFYRE_MCP_ALLOWED_ORIGINS",
+        "https://chatgpt.com,https://chat.openai.com,http://127.0.0.1,http://localhost",
+    ).split(",")
+    if item.strip()
+}
+
+DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+TASK_DIR.mkdir(parents=True, exist_ok=True)
+
+DB_LOCK = threading.Lock()
+
+
+def db() -> sqlite3.Connection:
+    conn = sqlite3.connect(DB_PATH, timeout=30)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA synchronous=NORMAL")
+    conn.executescript(
+        """
+        CREATE TABLE IF NOT EXISTS calls (
+          id TEXT PRIMARY KEY,
+          ts REAL NOT NULL,
+          trace_id TEXT,
+          tool TEXT NOT NULL,
+          args_json TEXT NOT NULL,
+          state TEXT NOT NULL,
+          duration_ms INTEGER NOT NULL,
+          result_json TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS calls_ts_idx ON calls(ts DESC);
+        CREATE INDEX IF NOT EXISTS calls_tool_idx ON calls(tool, ts DESC);
+
+        CREATE TABLE IF NOT EXISTS deltas (
+          seq INTEGER PRIMARY KEY AUTOINCREMENT,
+          ts REAL NOT NULL,
+          source TEXT NOT NULL,
+          head TEXT,
+          status_hash TEXT,
+          payload_json TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS deltas_ts_idx ON deltas(ts DESC);
+
+        CREATE TABLE IF NOT EXISTS events (
+          seq INTEGER PRIMARY KEY AUTOINCREMENT,
+          ts REAL NOT NULL,
+          kind TEXT NOT NULL,
+          trace_id TEXT,
+          payload_json TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS events_ts_idx ON events(ts DESC);
+
+        CREATE TABLE IF NOT EXISTS tasks (
+          id TEXT PRIMARY KEY,
+          ts REAL NOT NULL,
+          kind TEXT NOT NULL,
+          name TEXT NOT NULL,
+          unit_name TEXT NOT NULL,
+          state TEXT NOT NULL,
+          log_path TEXT NOT NULL
+        );
+        """
+    )
+    return conn
+
+
+def event(kind: str, payload: Any, trace_id: str | None = None) -> int:
+    with DB_LOCK:
+        conn = db()
+        cur = conn.execute(
+            "INSERT INTO events(ts,kind,trace_id,payload_json) VALUES(?,?,?,?)",
+            (time.time(), kind, trace_id, json.dumps(payload, separators=(",", ":"))),
+        )
+        conn.commit()
+        seq = int(cur.lastrowid)
+        conn.close()
+        return seq
+
+
+def record_call(
+    call_id: str,
+    trace_id: str,
+    tool: str,
+    args: dict[str, Any],
+    state: str,
+    duration_ms: int,
+    result: Any,
+) -> None:
+    with DB_LOCK:
+        conn = db()
+        conn.execute(
+            """
+            INSERT OR REPLACE INTO calls
+              (id,ts,trace_id,tool,args_json,state,duration_ms,result_json)
+            VALUES(?,?,?,?,?,?,?,?)
+            """,
+            (
+                call_id,
+                time.time(),
+                trace_id,
+                tool,
+                json.dumps(args, separators=(",", ":")),
+                state,
+                duration_ms,
+                json.dumps(result, separators=(",", ":")),
+            ),
+        )
+        conn.commit()
+        conn.close()
+    event("mcp.call", {"call_id": call_id, "tool": tool, "state": state}, trace_id)
+
+
+def run(
+    argv: list[str],
+    timeout: int = 30,
+    cwd: str | None = None,
+    env: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    started = time.time()
+    try:
+        cp = subprocess.run(
+            argv,
+            cwd=cwd,
+            env=env,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=timeout,
+            check=False,
+        )
+        return {
+            "argv": argv,
+            "exit_code": cp.returncode,
+            "stdout": cp.stdout[-200_000:],
+            "stderr": cp.stderr[-100_000:],
+            "duration_ms": int((time.time() - started) * 1000),
+        }
+    except subprocess.TimeoutExpired as exc:
+        return {
+            "argv": argv,
+            "exit_code": 124,
+            "stdout": (exc.stdout or "")[-200_000:] if isinstance(exc.stdout, str) else "",
+            "stderr": (exc.stderr or "")[-100_000:] if isinstance(exc.stderr, str) else "",
+            "duration_ms": int((time.time() - started) * 1000),
+            "timeout": True,
+        }
+
+
+def http_json(
+    url: str,
+    method: str = "GET",
+    payload: Any | None = None,
+    timeout: int = 30,
+    headers: dict[str, str] | None = None,
+) -> tuple[int, Any]:
+    body = None
+    req_headers = {"Accept": "application/json"}
+    if headers:
+        req_headers.update(headers)
+    if payload is not None:
+        body = json.dumps(payload).encode()
+        req_headers["Content-Type"] = "application/json"
+    req = urllib.request.Request(url, data=body, method=method, headers=req_headers)
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as response:
+            raw = response.read()
+            text = raw.decode("utf-8", errors="replace")
+            try:
+                return response.status, json.loads(text)
+            except json.JSONDecodeError:
+                return response.status, {"text": text}
+    except urllib.error.HTTPError as exc:
+        raw = exc.read().decode("utf-8", errors="replace")
+        try:
+            parsed = json.loads(raw)
+        except json.JSONDecodeError:
+            parsed = {"text": raw}
+        return exc.code, parsed
+    except Exception as exc:
+        return 0, {"error": f"{type(exc).__name__}: {exc}"}
+
+
+def project_mcp(method: str, params: dict[str, Any] | None = None) -> Any:
+    req_id = str(uuid.uuid4())
+    status, result = http_json(
+        PROJECT_MCP_URL,
+        method="POST",
+        payload={
+            "jsonrpc": "2.0",
+            "id": req_id,
+            "method": method,
+            "params": params or {},
+        },
+        timeout=60,
+        headers={
+            "Authorization": f"Bearer {TOKEN}",
+            "Accept": "application/json, text/event-stream",
+            "MCP-Protocol-Version": "2025-06-18",
+        },
+    )
+    if status != 200:
+        raise RuntimeError(f"project MCP HTTP {status}: {result}")
+    if isinstance(result, dict) and result.get("error"):
+        raise RuntimeError(json.dumps(result["error"]))
+    return result.get("result") if isinstance(result, dict) else result
+
+
+def unwrap_mcp_tool_result(value: Any) -> Any:
+    """Normalize an MCP tools/call result into its structured payload."""
+    if not isinstance(value, dict):
+        return value
+
+    structured = value.get("structuredContent")
+    if structured is not None:
+        return structured
+
+    content = value.get("content")
+    if isinstance(content, list):
+        for item in content:
+            if not isinstance(item, dict) or item.get("type") != "text":
+                continue
+            raw = item.get("text")
+            if not isinstance(raw, str):
+                continue
+            try:
+                return json.loads(raw)
+            except json.JSONDecodeError:
+                return {"text": raw}
+
+    return value
+
+
+def text_result(value: Any, is_error: bool = False) -> dict[str, Any]:
+    return {
+        "content": [
+            {
+                "type": "text",
+                "text": json.dumps(value, indent=2, sort_keys=True, default=str),
+            }
+        ],
+        "structuredContent": value,
+        "isError": is_error,
+    }
+
+
+def schema(properties: dict[str, Any], required: list[str] | None = None) -> dict[str, Any]:
+    return {
+        "type": "object",
+        "properties": properties,
+        "required": required or [],
+        "additionalProperties": False,
+    }
+
+
+TOOLS: list[dict[str, Any]] = [
+    {
+        "name": "mesh_status",
+        "description": "Return live local-project, Oracle, runtime, release, MCP database, and timer status.",
+        "inputSchema": schema({}),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True},
+    },
+    {
+        "name": "project_status",
+        "description": "Return the current project branch, HEAD, dirty files, and recent delta metadata from the Mac project node.",
+        "inputSchema": schema({}),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True},
+    },
+    {
+        "name": "project_tree",
+        "description": "List project files under a relative path with bounded depth and count.",
+        "inputSchema": schema(
+            {
+                "path": {"type": "string", "default": "."},
+                "depth": {"type": "integer", "minimum": 1, "maximum": 8, "default": 3},
+                "limit": {"type": "integer", "minimum": 1, "maximum": 5000, "default": 500},
+            }
+        ),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False},
+    },
+    {
+        "name": "project_search",
+        "description": "Search the live local Bonfyre project using ripgrep and return source-aligned matches.",
+        "inputSchema": schema(
+            {
+                "query": {"type": "string"},
+                "path": {"type": "string", "default": "."},
+                "glob": {"type": "string"},
+                "limit": {"type": "integer", "minimum": 1, "maximum": 1000, "default": 200},
+            },
+            ["query"],
+        ),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False},
+    },
+    {
+        "name": "project_read",
+        "description": "Read a bounded line range from a live project file.",
+        "inputSchema": schema(
+            {
+                "path": {"type": "string"},
+                "start_line": {"type": "integer", "minimum": 1, "default": 1},
+                "end_line": {"type": "integer", "minimum": 1, "default": 400},
+            },
+            ["path"],
+        ),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False},
+    },
+    {
+        "name": "project_diff",
+        "description": "Return git status and a bounded working-tree or staged diff from the live project.",
+        "inputSchema": schema(
+            {
+                "path": {"type": "string", "default": "."},
+                "staged": {"type": "boolean", "default": False},
+                "stat_only": {"type": "boolean", "default": False},
+            }
+        ),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False},
+    },
+    {
+        "name": "project_recent_deltas",
+        "description": "Return the latest file-change deltas pushed by the Mac project watcher.",
+        "inputSchema": schema(
+            {"limit": {"type": "integer", "minimum": 1, "maximum": 1000, "default": 100}}
+        ),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False},
+    },
+    {
+        "name": "project_patch_preview",
+        "description": "Check a unified diff against the local project without applying it.",
+        "inputSchema": schema({"patch": {"type": "string"}}, ["patch"]),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False},
+    },
+    {
+        "name": "project_apply_patch",
+        "description": "Apply a previously reviewed unified diff to the local project. Disabled unless the project node write gate and approval token are enabled.",
+        "inputSchema": schema(
+            {
+                "patch": {"type": "string"},
+                "approval_token": {"type": "string"},
+            },
+            ["patch", "approval_token"],
+        ),
+        "annotations": {"readOnlyHint": False, "destructiveHint": True, "idempotentHint": False},
+    },
+    {
+        "name": "project_apply_low_risk_patch",
+        "description": "Apply a bounded low-risk patch under local autonomous path, size, clean-file, and receipt gates.",
+        "inputSchema": schema({"patch": {"type": "string"}}, ["patch"]),
+        "annotations": {"readOnlyHint": False, "destructiveHint": True, "idempotentHint": False},
+    },
+    {
+        "name": "project_revert_receipt",
+        "description": "Revert a previously applied operator patch by receipt ID.",
+        "inputSchema": schema({"receipt_id": {"type": "string"}}, ["receipt_id"]),
+        "annotations": {"readOnlyHint": False, "destructiveHint": True, "idempotentHint": False},
+    },
+    {
+        "name": "project_test_profile",
+        "description": "Run an allowlisted local project verification profile.",
+        "inputSchema": schema(
+            {
+                "profile": {
+                    "type": "string",
+                    "enum": [
+                        "git-diff-check",
+                        "bonfyre-zig-build",
+                        "bonfyre-final",
+                        "cmd-make",
+                        "python-compile",
+                        "shell-syntax",
+                    ],
+                },
+                "target": {"type": "string"},
+                "paths": {"type": "array", "items": {"type": "string"}},
+                "timeout_seconds": {"type": "integer", "minimum": 5, "maximum": 3600},
+            },
+            ["profile"],
+        ),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False},
+    },
+    {
+        "name": "project_commit_receipt",
+        "description": "Commit only files attached to a verified operator patch receipt when local auto-commit is enabled.",
+        "inputSchema": schema(
+            {"receipt_id": {"type": "string"}, "message": {"type": "string"}},
+            ["receipt_id"],
+        ),
+        "annotations": {"readOnlyHint": False, "destructiveHint": True},
+    },
+    {
+        "name": "operator_status",
+        "description": "Return autonomous operator mode, queue, pause state, recent runs, and recent failures.",
+        "inputSchema": schema({}),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False},
+    },
+    {
+        "name": "operator_goal_add",
+        "description": "Add or reprioritize a persistent autonomous operator goal.",
+        "inputSchema": schema(
+            {
+                "title": {"type": "string"},
+                "details": {"type": "string"},
+                "priority": {"type": "integer", "minimum": 1, "maximum": 100},
+                "source": {"type": "string"},
+                "dedupe_key": {"type": "string"},
+                "recurring": {"type": "boolean"},
+                "interval_seconds": {"type": "integer", "minimum": 0},
+            },
+            ["title"],
+        ),
+        "annotations": {"readOnlyHint": False, "destructiveHint": False},
+    },
+
+    {
+        "name": "studio_client_register",
+        "description": "Register a client engagement in the identity graph (old or new). Returns the resolved entity id.",
+        "inputSchema": schema({"slug": {"type": "string"}}, ["slug"]),
+        "annotations": {"readOnlyHint": False, "destructiveHint": False},
+    },
+    {
+        "name": "studio_client_list",
+        "description": "List registered client engagements from the identity graph.",
+        "inputSchema": schema({}),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False},
+    },
+    {
+        "name": "studio_fleming_watch",
+        "description": "Add a tax account to the Fleming watchlist as a durable WorkGraph mission.",
+        "inputSchema": schema({"account": {"type": "string"}}, ["account"]),
+        "annotations": {"readOnlyHint": False, "destructiveHint": False},
+    },
+    {
+        "name": "studio_fleming_query",
+        "description": "Read the Fleming observation estate. named projection: estate | coverage | markets | owners.",
+        "inputSchema": schema({"projection": {"type": "string"}}, ["projection"]),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False},
+    },
+    {
+        "name": "architecture_atlas",
+        "description": (
+            "Query the canonical architecture registry: summary, search, get, cannot-infer, "
+            "expand, loss. The registry is lossless and large; this is the cheap read path, "
+            "so ask it rather than loading atlas.index.json into context."
+        ),
+        "inputSchema": schema(
+            {"op": {"type": "string", "enum": ["summary", "search", "get", "cannot_infer", "expand", "loss"]},
+             "arg": {"type": "string", "description": "query for search, id for get/cannot_infer, view name for expand"}},
+            ["op"],
+        ),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False},
+    },
+    {
+        "name": "model_local_inventory",
+        "description": (
+            "What local generation is actually runnable here: the registered model catalogue, "
+            "whether each model's weights are present on disk, and which native organs can run "
+            "them. Ask this before routing bounded work locally, and when a remote provider is "
+            "exhausted."
+        ),
+        "inputSchema": schema({}),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False},
+    },
+    {
+        "name": "model_local_generate",
+        "description": (
+            "Generate through a native local organ rather than a remote provider. Use when a "
+            "mission constrains work to local paths, or when a provider returns "
+            "credit_balance_exhausted. Refuses with the specific missing weight rather than "
+            "falling back to a remote provider, because a silent fallback would violate the "
+            "routing constraint that sent the work here."
+        ),
+        "inputSchema": schema(
+            {"prompt": {"type": "string"},
+             "organ": {"type": "string", "enum": ["qwen-fpq", "moe"], "description": "default qwen-fpq"},
+             "max_tokens": {"type": "integer"}},
+            ["prompt"],
+        ),
+        "annotations": {"readOnlyHint": False, "destructiveHint": False},
+    },
+    {
+        "name": "estate_query",
+        "description": (
+            "Read-only SQL over the mature receipted estate: 6.5M observations, hot SQLite rows "
+            "shadowing cold Parquet, composed in one view. Tables: observation, page, parcel_flat. "
+            "SELECT and WITH only."
+        ),
+        "inputSchema": schema(
+            {"sql": {"type": "string", "description": "a single SELECT or WITH statement"}},
+            ["sql"],
+        ),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False},
+    },
+    {
+        "name": "finance_book",
+        "description": (
+            "The service book every commerce grammar quotes from: each service, its carrying "
+            "cost, its asking price, its margin, and whether it can actually be sold. An unpriced "
+            "service is not free -- it answers not_for_sale to x402, MPP, UCP, ACP and Beckn alike."
+        ),
+        "inputSchema": schema({}),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False},
+    },
+    {
+        "name": "finance_price_set",
+        "description": (
+            "Price a service in the book. This is the one write that makes a capability sellable "
+            "through every commerce grammar at once, because they all read this book."
+        ),
+        "inputSchema": schema(
+            {"name": {"type": "string"}, "buy_usd": {"type": "number"}, "sell_usd": {"type": "number"}},
+            ["name", "buy_usd", "sell_usd"],
+        ),
+        "annotations": {"readOnlyHint": False, "destructiveHint": False},
+    },
+    {
+        "name": "protocol_fetch",
+        "description": (
+            "Speak one of the live carrier protocols over the same institutional state. "
+            "Carriers: x402, mpp, a2a, cloudevents, ogc, ogc_items, reso, mismo, activitypub, "
+            "activitypub_outbox, webfinger, beckn, ucp, acp, wot, cap, epcis, openrtb. "
+            "A protocol is a projection, never a second owner of the data, so two carriers "
+            "cannot disagree about a price or a parcel. Carriers that answer empty do so with "
+            "a stated reason rather than a sample record."
+        ),
+        "inputSchema": schema(
+            {"carrier": {"type": "string"},
+             "name": {"type": "string", "description": "capability name, for x402 and mpp"}},
+            ["carrier"],
+        ),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False},
+    },
+    {
+        "name": "desk_open_decisions",
+        "description": (
+            "What the institution is holding open right now, computed from the stores that hold "
+            "it: capabilities advertised without a price, notes written but not published, "
+            "offers in the book at zero, and work started but not finished. Each count is "
+            "counted, not inferred from a page size."
+        ),
+        "inputSchema": schema({}),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False},
+    },
+    {
+        "name": "studio_membrane_status",
+        "description": "Read the financial membrane: budget caps, recorded cost, and the service book, together.",
+        "inputSchema": schema({}),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False},
+    },
+    {
+        "name": "studio_membrane_budget_set",
+        "description": "Set a budget cap for a recipe on the financial membrane.",
+        "inputSchema": schema({"recipe": {"type": "string"}, "usd_cap": {"type": "number"}}, ["recipe", "usd_cap"]),
+        "annotations": {"readOnlyHint": False, "destructiveHint": False},
+    },
+
+    {
+        "name": "studio_work_claim",
+        "description": "Claim the next ready WorkGraph mission for a worker. Returns the mission, node and the lease token required to complete it.",
+        "inputSchema": schema({"worker": {"type": "string"}}, ["worker"]),
+        "annotations": {"readOnlyHint": False, "destructiveHint": False},
+    },
+    {
+        "name": "studio_work_complete",
+        "description": "Complete a claimed WorkGraph node. Requires the lease token issued by studio_work_claim; the queue refuses any other holder.",
+        "inputSchema": schema({"mission": {"type": "string"}, "node": {"type": "string"},
+                               "worker": {"type": "string"}, "token": {"type": "string"}},
+                              ["mission", "node", "worker", "token"]),
+        "annotations": {"readOnlyHint": False, "destructiveHint": False},
+    },
+    {
+        "name": "studio_fleming_opportunity",
+        "description": "Open a Fleming opportunity on a tax account as a durable WorkGraph mission.",
+        "inputSchema": schema({"account": {"type": "string"}}, ["account"]),
+        "annotations": {"readOnlyHint": False, "destructiveHint": False},
+    },
+    {
+        "name": "studio_economy_cost_record",
+        "description": "Record what a run actually cost against a recipe on the financial membrane.",
+        "inputSchema": schema({"recipe": {"type": "string"}, "stage": {"type": "string"},
+                               "model": {"type": "string"}, "usd": {"type": "number"}},
+                              ["recipe", "stage", "model", "usd"]),
+        "annotations": {"readOnlyHint": False, "destructiveHint": False},
+    },
+    {
+        "name": "operator_pause",
+        "description": "Pause autonomous operator work through the local kill switch.",
+        "inputSchema": schema({"reason": {"type": "string"}}),
+        "annotations": {"readOnlyHint": False, "destructiveHint": False},
+    },
+    {
+        "name": "operator_resume",
+        "description": "Resume autonomous operator work.",
+        "inputSchema": schema({}),
+        "annotations": {"readOnlyHint": False, "destructiveHint": False},
+    },
+    {
+        "name": "runtime_get",
+        "description": "Read a Bonfyre runtime route from Oracle. Paths are restricted to /health and /api/*.",
+        "inputSchema": schema({"path": {"type": "string"}}, ["path"]),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False},
+    },
+    {
+        "name": "runtime_preview",
+        "description": "Call an allowlisted read-only or preview POST route such as MCP graph preview, runtime parity live-read, or interaction fixtures.",
+        "inputSchema": schema(
+            {
+                "path": {"type": "string"},
+                "body": {"type": "object", "default": {}},
+            },
+            ["path"],
+        ),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False},
+    },
+    {
+        "name": "oracle_service_status",
+        "description": "Inspect allowlisted Bonfyre systemd services and timers with journal tail.",
+        "inputSchema": schema(
+            {
+                "unit": {"type": "string"},
+                "journal_lines": {"type": "integer", "minimum": 0, "maximum": 1000, "default": 120},
+            },
+            ["unit"],
+        ),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False},
+    },
+    {
+        "name": "oracle_command_describe",
+        "description": "Describe a native Bonfyre command family and its Linux executable, file type, links, and help contract.",
+        "inputSchema": schema({"family": {"type": "string"}}, ["family"]),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False},
+    },
+    {
+        "name": "oracle_command_probe",
+        "description": "Run only --version or --help against one native command with a strict timeout.",
+        "inputSchema": schema(
+            {
+                "family": {"type": "string"},
+                "mode": {"type": "string", "enum": ["version", "help"], "default": "version"},
+                "timeout_seconds": {"type": "integer", "minimum": 1, "maximum": 30, "default": 8},
+            },
+            ["family"],
+        ),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False},
+    },
+    {
+        "name": "oracle_profile_run",
+        "description": "Start an allowlisted Phase 94 hypercycle profile and return its real Result and ExecMainStatus.",
+        "inputSchema": schema({"profile": {"type": "string"}}, ["profile"]),
+        "annotations": {"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False},
+    },
+    {
+        "name": "oracle_profile_receipts",
+        "description": "Read recent profile receipts, including failures that Phase 94 previously masked.",
+        "inputSchema": schema(
+            {
+                "profile": {"type": "string"},
+                "state": {"type": "string"},
+                "limit": {"type": "integer", "minimum": 1, "maximum": 2000, "default": 200},
+            }
+        ),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False},
+    },
+    {
+        "name": "oracle_deep_flow",
+        "description": "Run an allowlisted existing MCP/runtime deep-flow script and return its exact exit code and bounded output.",
+        "inputSchema": schema(
+            {
+                "flow": {
+                    "type": "string",
+                    "enum": [
+                        "local_oracle_execution_matrix",
+                        "local_oracle_recursive_interaction",
+                        "mcp_resource_matrix",
+                        "oracle_mcp_capture",
+                        "oracle_auth_money_mcp",
+                        "opportunity_mcp_matrix",
+                        "operator_action_loop",
+                        "power_user_reconcile",
+                        "aggressive_operator_firehose",
+                        "max_compounding_cycle",
+                        "total_recursive_closure",
+                        "model_department_total",
+                        "power_user_model_closure",
+                        "power_user_product_activation",
+                        "power_user_provider_fanout",
+                    ],
+                },
+                "timeout_seconds": {"type": "integer", "minimum": 10, "maximum": 3600, "default": 900},
+            },
+            ["flow"],
+        ),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False},
+    },
+    {
+        "name": "task_start",
+        "description": "Start a long-running allowlisted Oracle profile or deep flow as a transient systemd task and return an explicit handle.",
+        "inputSchema": schema(
+            {
+                "kind": {"type": "string", "enum": ["profile", "flow"]},
+                "name": {"type": "string"},
+            },
+            ["kind", "name"],
+        ),
+        "annotations": {"readOnlyHint": False, "destructiveHint": False},
+    },
+    {
+        "name": "task_status",
+        "description": "Return state, exit status, and journal tail for an explicit long-task handle.",
+        "inputSchema": schema(
+            {
+                "task_id": {"type": "string"},
+                "journal_lines": {"type": "integer", "minimum": 0, "maximum": 2000, "default": 200},
+            },
+            ["task_id"],
+        ),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False},
+    },
+    {
+        "name": "artifact_search",
+        "description": "Search Oracle output artifact paths and optionally grep text content.",
+        "inputSchema": schema(
+            {
+                "name": {"type": "string", "default": ""},
+                "contains": {"type": "string", "default": ""},
+                "limit": {"type": "integer", "minimum": 1, "maximum": 2000, "default": 200},
+            }
+        ),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False},
+    },
+    {
+        "name": "artifact_read",
+        "description": "Read a bounded text range from an Oracle output artifact.",
+        "inputSchema": schema(
+            {
+                "path": {"type": "string"},
+                "max_bytes": {"type": "integer", "minimum": 1, "maximum": 1000000, "default": 200000},
+            },
+            ["path"],
+        ),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False},
+    },
+    {
+        "name": "release_attest",
+        "description": "Verify the sealed current release, 93 Linux ELFs, runtime health, portable custom dependencies, and active timers.",
+        "inputSchema": schema({}),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True},
+    },
+    {
+        "name": "mcp_call_history",
+        "description": "Return recent MCP tool calls with trace IDs, durations, and states.",
+        "inputSchema": schema(
+            {
+                "tool": {"type": "string"},
+                "state": {"type": "string"},
+                "limit": {"type": "integer", "minimum": 1, "maximum": 2000, "default": 200},
+            }
+        ),
+        "annotations": {"readOnlyHint": True, "destructiveHint": False},
+    },
+]
+
+TOOL_MAP = {tool["name"]: tool for tool in TOOLS}
+
+PROFILE_ALLOW = {
+    "skill-promotion",
+    "provider-credit",
+    "provider-market",
+    "lambda-model",
+    "resource-activation",
+    "api-publicgap",
+    "measured-finance",
+    "cloud-placement",
+    "workcell-swarm",
+    "graph-closure",
+    "truth-replay",
+    "media-shoutout",
+    "release-attestation",
+}
+
+FLOW_ALLOW = {
+    "local_oracle_execution_matrix": "live-local-oracle-mcp-execution-matrix.ts",
+    "local_oracle_recursive_interaction": "live-local-oracle-mcp-recursive-interaction-flow.ts",
+    "mcp_resource_matrix": "live-mcp-local-oracle-resource-matrix.ts",
+    "oracle_mcp_capture": "live-oracle-mcp-capture-closure.ts",
+    "oracle_auth_money_mcp": "live-oracle-real-read-auth-money-mcp-deep-flow.ts",
+    "opportunity_mcp_matrix": "live-opportunity-mcp-matrix.ts",
+    "operator_action_loop": "live-operator-action-loop-runner.ts",
+    "power_user_reconcile": "live-power-user-live-apply-reconcile.ts",
+    "aggressive_operator_firehose": "live-aggressive-operator-firehose.ts",
+    "max_compounding_cycle": "live-max-compounding-cycle.ts",
+    "total_recursive_closure": "live-total-recursive-closure-max-cycle.ts",
+    "model_department_total": "live-model-department-total-cycle.ts",
+    "power_user_model_closure": "live-power-user-model-closure-compiler.ts",
+    "power_user_product_activation": "live-power-user-product-activation.ts",
+    "power_user_provider_fanout": "live-power-user-provider-fanout.ts",
+}
+
+UNIT_ALLOW = {
+    "bonfyred.service",
+    "bonfyre-continuation-loop.service",
+    "bonfyre-continuation-loop.timer",
+    "bonfyre-autonomous-worker-loop.service",
+    "bonfyre-autonomous-worker-loop.timer",
+    "bonfyre-recursive-institutional-growth.service",
+    "bonfyre-recursive-institutional-growth.timer",
+    "bonfyre-surface-fabric.service",
+    "bonfyre-surface-fabric.timer",
+}
+UNIT_ALLOW.update({f"bonfyre-hypercycle@{p}.service" for p in PROFILE_ALLOW})
+UNIT_ALLOW.update({f"bonfyre-hypercycle-{p}.timer" for p in PROFILE_ALLOW})
+
+PREVIEW_POST_ALLOW = {
+    "/api/bonfyre-mcp/graphs/preview",
+    "/api/bonfyre-mcp/mesh/deep-test",
+    "/api/runtime-parity/checks/run-live-read",
+    "/api/runtime-mesh/flows/preview",
+    "/api/interactions/scenarios/run-matrix-fixture",
+    "/api/resources/provider-enrich",
+    "/api/deep-tests/run-all-fixture",
+}
+
+
+def safe_family(value: str) -> str:
+    if not re.fullmatch(r"Bonfyre[A-Za-z0-9_-]+", value):
+        raise ValueError("invalid command family")
+    return value
+
+
+def find_family_binary(family: str) -> Path:
+    safe_family(family)
+    directory = CMD_ROOT / family
+    if not directory.is_dir():
+        raise FileNotFoundError(f"command family not found: {family}")
+    candidates: list[Path] = []
+    for path in directory.rglob("*"):
+        try:
+            if path.is_file() and os.access(path, os.X_OK):
+                desc = run(["file", "-b", str(path)], timeout=5)
+                if "ELF 64-bit LSB" in desc["stdout"]:
+                    candidates.append(path)
+        except OSError:
+            continue
+    if not candidates:
+        raise FileNotFoundError(f"no Linux ELF executable found in {family}")
+    candidates.sort(key=lambda p: (len(p.parts), str(p)))
+    return candidates[0]
+
+
+
+FLEMING_ROOT = "/var/lib/bonfyre/state/fleming"
+DUCKDB_HOME = "/var/lib/bonfyre/state/duckdb"
+STATE = "/var/lib/bonfyre/state"
+
+
+def _fleming_sql(inner: str) -> str:
+    """Compose the read view: hot SQLite rows shadow the cold Parquet history."""
+    return (
+        f"SET home_directory='{DUCKDB_HOME}'; INSTALL sqlite; LOAD sqlite; "
+        f"ATTACH '{FLEMING_ROOT}/estate-lite.db' AS hot (TYPE sqlite, READ_ONLY); "
+        f"CREATE OR REPLACE TEMP VIEW observation AS "
+        f"SELECT * FROM parquet_scan('{FLEMING_ROOT}/estate.parquet/observation.parquet') "
+        f"WHERE src_id NOT IN (SELECT DISTINCT src_id FROM hot.observation) "
+        f"UNION ALL SELECT * FROM hot.observation; "
+        f"CREATE OR REPLACE TEMP VIEW page AS SELECT * FROM hot.page; "
+        f"CREATE OR REPLACE TEMP VIEW parcel_flat AS SELECT * FROM hot.parcel_flat; " + inner
+    )
+
+
+FLEMING_PROJECTIONS = {
+    "estate": "SELECT (SELECT count(*) FROM observation) AS observations, "
+              "(SELECT count(DISTINCT src_id) FROM observation) AS sources, "
+              "(SELECT count(*) FROM page) AS pages, "
+              "(SELECT count(*) FROM parcel_flat) AS parcels_projected",
+    "coverage": "SELECT src_id, count(*) AS rows FROM observation GROUP BY src_id ORDER BY rows DESC LIMIT 40",
+    "markets": "WITH p AS (SELECT trim(json_extract_string(observed,'$.City')) AS city, "
+               "TRY_CAST(trim(json_extract_string(observed,'$.Land_Value')) AS DOUBLE) AS lv, "
+               "TRY_CAST(trim(json_extract_string(observed,'$.Improvemen')) AS DOUBLE) AS iv, "
+               "TRY_CAST(trim(json_extract_string(observed,'$.Total_Valu')) AS DOUBLE) AS tv, "
+               "TRY_CAST(trim(json_extract_string(observed,'$.Land_SqFt')) AS DOUBLE) AS sqft "
+               "FROM observation WHERE src_id='src:tad-parcel-view') "
+               "SELECT city, count(*) FILTER (WHERE iv=0 AND lv>0 AND sqft BETWEEN 3000 AND 20000) AS vacant_n, "
+               "median(lv) FILTER (WHERE iv=0 AND lv>0 AND sqft BETWEEN 3000 AND 20000) AS land_median, "
+               "count(*) FILTER (WHERE tv>0) AS improved_n, median(tv) FILTER (WHERE tv>0) AS exit_median "
+               "FROM p GROUP BY city HAVING vacant_n >= 40 AND improved_n >= 500 ORDER BY improved_n DESC LIMIT 20",
+    "owners": "SELECT trim(json_extract_string(observed,'$.Owner_Name')) AS owner, count(*) AS parcels "
+              "FROM observation WHERE src_id='src:tad-parcel-view' "
+              "AND trim(json_extract_string(observed,'$.Owner_Name')) <> '' "
+              "GROUP BY 1 HAVING parcels >= 60 ORDER BY parcels DESC LIMIT 25",
+}
+
+_SAFE_SLUG = re.compile(r"^[A-Za-z0-9._@-]{1,96}$")
+_SAFE_ACCOUNT = re.compile(r"^[A-Za-z0-9-]{1,32}$")
+
+
+def _studio_tool(name: str, args: dict):
+    """Studio control verbs. Every value that reaches an argv slot is validated
+    against a character class rather than escaped, matching the HTTP surface."""
+    if name == "studio_client_register":
+        slug = str(args.get("slug", ""))
+        if not _SAFE_SLUG.match(slug):
+            return {"error": "slug must be alphanumeric/._@- and at most 96 chars"}
+        # Write and read must hit one store: without this the organ resolves
+        # $HOME/.local/share/bonfyre/entity.db while studio_client_list reads
+        # the shared state copy, so a registered client never appears again.
+        env = dict(os.environ, BONFYRE_ENTITY_DB=f"{STATE}/entity.db")
+        return run(["/usr/local/bin/bonfyre-entity", "resolve", "text", f"client:{slug}", "--kind", "org"],
+                   timeout=30, env=env)
+    if name == "studio_client_list":
+        return run(["/usr/local/bin/bonfyre-query", "sql", ":memory:",
+                    f"SET home_directory='{DUCKDB_HOME}'; INSTALL sqlite; LOAD sqlite; "
+                    f"ATTACH '{STATE}/entity.db' AS e (TYPE sqlite, READ_ONLY); "
+                    "SELECT replace(display,'client:','') AS slug, display, first_seen "
+                    "FROM e.entities WHERE display LIKE 'client:%' ORDER BY display"], timeout=60)
+    if name == "studio_fleming_watch":
+        account = str(args.get("account", ""))
+        if not _SAFE_ACCOUNT.match(account):
+            return {"error": "account must be alphanumeric/dash and at most 32 chars"}
+        return run(["/usr/local/bin/bonfyre-queue", "enqueue", "fleming-watch", account,
+                    "--db", f"{FLEMING_ROOT}/fleming-work.db"], timeout=60)
+    if name == "studio_fleming_query":
+        proj = str(args.get("projection", ""))
+        if proj not in FLEMING_PROJECTIONS:
+            return {"error": f"unknown projection; choose one of {sorted(FLEMING_PROJECTIONS)}"}
+        return run(["/usr/local/bin/bonfyre-query", "sql", ":memory:",
+                    _fleming_sql(FLEMING_PROJECTIONS[proj])], timeout=180)
+    if name == "studio_membrane_status":
+        return run(["/usr/local/bin/bonfyre-query", "sql", ":memory:",
+                    f"SET home_directory='{DUCKDB_HOME}'; INSTALL sqlite; LOAD sqlite; "
+                    f"ATTACH '{STATE}/economy.db' AS ec (TYPE sqlite, READ_ONLY); "
+                    f"ATTACH '{STATE}/finance.db' AS fi (TYPE sqlite, READ_ONLY); "
+                    "SELECT (SELECT count(*) FROM ec.budgets) AS budgets, "
+                    "(SELECT coalesce(sum(max_usd),0) FROM ec.budgets) AS usd_capped, "
+                    "(SELECT coalesce(sum(spent),0) FROM ec.budgets) AS usd_spent_against_caps, "
+                    "(SELECT count(*) FROM ec.costs) AS cost_records, "
+                    "(SELECT count(*) FROM fi.services) AS services"], timeout=60)
+    if name == "studio_membrane_budget_set":
+        recipe = str(args.get("recipe", ""))
+        if not _SAFE_SLUG.match(recipe):
+            return {"error": "recipe must be alphanumeric/._@- and at most 96 chars"}
+        try:
+            cap = float(args.get("usd_cap"))
+        except (TypeError, ValueError):
+            return {"error": "usd_cap must be a number"}
+        if not (0.0 <= cap <= 1_000_000.0):
+            return {"error": "usd_cap must be between 0 and 1000000"}
+        # Same reason as the entity store: the organ defaults to $HOME, which is
+        # not where the membrane is read from, so an unpinned write is invisible.
+        env = dict(os.environ, BONFYRE_ECONOMY_DB=f"{STATE}/economy.db")
+        return run(["/usr/local/bin/bonfyre-economy", "budget", "set", recipe, f"{cap:.2f}"],
+                   timeout=30, env=env)
+    return None
+
+
+_SAFE_IDENT = re.compile(r"^[A-Za-z0-9._-]{1,96}$")
+_SAFE_HEX64 = re.compile(r"^[0-9a-fA-F]{64}$")
+WORK_DB = f"{FLEMING_ROOT}/fleming-work.db"
+
+
+def _studio_write_tool(name: str, args: dict):
+    """Typed WorkGraph and membrane mutations. Same validators as the HTTP
+    surface, and the same organs, so an agent and a person cannot diverge."""
+    if name == "studio_work_claim":
+        worker = str(args.get("worker", ""))
+        if not _SAFE_IDENT.match(worker):
+            return {"error": "worker must be alphanumeric/._- and at most 96 chars"}
+        return run(["/usr/local/bin/bonfyre-queue", "claim-next", worker, "--db", WORK_DB], timeout=60)
+    if name == "studio_work_complete":
+        mission, node, worker = (str(args.get(k, "")) for k in ("mission", "node", "worker"))
+        token = str(args.get("token", ""))
+        if not all(_SAFE_IDENT.match(v) for v in (mission, node, worker)):
+            return {"error": "mission, node and worker must be alphanumeric/._- and at most 96 chars"}
+        if not _SAFE_HEX64.match(token):
+            return {"error": "token must be the 64-hex claim token from studio_work_claim"}
+        return run(["/usr/local/bin/bonfyre-queue", "ack", mission, node, worker, token,
+                    "--db", WORK_DB], timeout=60)
+    if name == "studio_fleming_opportunity":
+        account = str(args.get("account", ""))
+        if not _SAFE_ACCOUNT.match(account):
+            return {"error": "account must be alphanumeric/dash and at most 32 chars"}
+        return run(["/usr/local/bin/bonfyre-queue", "enqueue", "fleming-opportunity", account,
+                    "--db", WORK_DB], timeout=60)
+    if name == "studio_economy_cost_record":
+        recipe, stage, model = (str(args.get(k, "")) for k in ("recipe", "stage", "model"))
+        if not all(_SAFE_IDENT.match(v) for v in (recipe, stage, model)):
+            return {"error": "recipe, stage and model must be alphanumeric/._- and at most 96 chars"}
+        try:
+            usd = float(args.get("usd"))
+        except (TypeError, ValueError):
+            return {"error": "usd must be a number"}
+        if not (0.0 <= usd <= 1_000_000.0):
+            return {"error": "usd must be between 0 and 1000000"}
+        env = dict(os.environ, BONFYRE_ECONOMY_DB=f"{STATE}/economy.db")
+        return run(["/usr/local/bin/bonfyre-economy", "cost", "record", recipe, stage, model,
+                    f"{usd:.6f}"], timeout=30, env=env)
+    return None
+
+
+# ---------------------------------------------------------------------------
+# The institution's own organs, reachable by an agent.
+#
+# The gateway carried 45 tools and none of them reached the atlas, the finance
+# book, local generation, the estate as anything but four fixed projections, or
+# any of the seventeen carrier protocols. An agent could therefore see the
+# system's activity but not its substance, and when a remote provider returned
+# credit_balance_exhausted there was nowhere for bounded work to go.
+# ---------------------------------------------------------------------------
+
+BONFYRE_ROOT = os.environ.get("BONFYRE_ROOT", "/opt/bonfyre")
+ATLAS_QUERY = f"{BONFYRE_ROOT}/architecture/atlas_query.py"
+SURFACE = os.environ.get("BONFYRE_SURFACE", "https://aurekai.life")
+
+# Each carrier is a projection of one semantic state into a different grammar.
+# Naming them here keeps an agent from having to already know the path.
+PROTOCOL_CARRIERS = {
+    "x402": "/capability",
+    "mpp": "/mpp/quote",
+    "a2a": "/.well-known/agent.json",
+    "cloudevents": "/events",
+    "ogc": "/ogc",
+    "ogc_items": "/ogc/collections/parcels/items",
+    "reso": "/reso/Property",
+    "mismo": "/mismo/subject-property",
+    "activitypub": "/ap/actor",
+    "activitypub_outbox": "/ap/outbox",
+    "webfinger": "/.well-known/webfinger?resource=acct:bonfyre@aurekai.life",
+    "beckn": "/beckn/search",
+    "ucp": "/ucp/catalog",
+    "acp": "/acp/products",
+    "wot": "/wot/thing",
+    "cap": "/cap/alerts",
+    "epcis": "/epcis/events",
+    "openrtb": "/openrtb/bidrequest",
+}
+
+_SAFE_SERVICE = re.compile(r"^[A-Za-z][A-Za-z0-9_-]{0,95}$")
+
+
+def _read_only_sql(sql: str) -> str | None:
+    """Reject anything that is not a single read.
+
+    A read tool that accepts a write is a write tool with a misleading name, so
+    this refuses rather than sanitising: one statement, and it must begin as a
+    query."""
+    stripped = sql.strip().rstrip(";").strip()
+    if not stripped:
+        return "empty statement"
+    if ";" in stripped:
+        return "one statement only"
+    head = stripped.split(None, 1)[0].upper()
+    if head not in ("SELECT", "WITH"):
+        return f"read-only: statement must begin SELECT or WITH, not {head}"
+    banned = ("ATTACH", "COPY", "INSTALL", "LOAD", "EXPORT", "PRAGMA",
+              "CREATE", "INSERT", "UPDATE", "DELETE", "DROP", "ALTER")
+    upper = stripped.upper()
+    for word in banned:
+        if re.search(rf"\b{word}\b", upper):
+            return f"read-only: {word} is not permitted here"
+    return None
+
+
+def _institution_tool(name: str, args: dict):
+    if name == "architecture_atlas":
+        op = str(args.get("op", "")).replace("_", "-")
+        if not os.path.exists(ATLAS_QUERY):
+            return {
+                "error": "atlas_query_absent",
+                "expected_at": ATLAS_QUERY,
+                "detail": (
+                    "The registry read path is not installed under BONFYRE_ROOT. Source search "
+                    "is not an equivalent substitute: it matches text, while the atlas answers "
+                    "about declared maturity, witnesses and forbidden inferences."
+                ),
+            }
+        argv = ["/usr/bin/python3", ATLAS_QUERY, op]
+        arg = str(args.get("arg", "")).strip()
+        if op in ("search", "get", "cannot-infer", "expand"):
+            if not arg:
+                return {"error": f"op {op} needs arg"}
+            argv.append(arg)
+        return run(argv, timeout=60, cwd=BONFYRE_ROOT)
+
+    if name == "model_local_inventory":
+        organs = {}
+        for organ, binary in (("qwen-fpq", "/usr/local/bin/bonfyre-qwen-fpq"),
+                              ("moe", "/usr/local/bin/bonfyre-moe"),
+                              ("embed", "/usr/local/bin/bonfyre-embed"),
+                              ("transcribe", "/usr/local/bin/bonfyre-transcribe")):
+            organs[organ] = {"binary": binary, "present": os.access(binary, os.X_OK)}
+        catalogue = run(
+            ["/usr/local/bin/bonfyre-query", "sql", ":memory:",
+             f"SET home_directory='{DUCKDB_HOME}'; INSTALL sqlite; LOAD sqlite; "
+             f"ATTACH '{STATE}/models.db' AS m (TYPE sqlite, READ_ONLY); "
+             "SELECT id, format, size_mb, fpq_size_mb FROM m.models ORDER BY size_mb DESC LIMIT 40"],
+            timeout=60,
+        )
+        generation, other = [], []
+        for root in (BONFYRE_ROOT, "/var/lib/bonfyre"):
+            for dirpath, _dirs, files in os.walk(root):
+                if dirpath.count("/") - root.count("/") > 3:
+                    continue
+                for f in files:
+                    if not f.endswith((".gguf", ".onnx", ".fpq")):
+                        continue
+                    full = os.path.join(dirpath, f)
+                    try:
+                        size = os.path.getsize(full)
+                    except OSError:
+                        continue
+                    if size <= 10_000_000:
+                        continue
+                    # A text-to-speech voice and a speaker-embedding net are both
+                    # large model files and neither can generate text. Counting
+                    # them as generation weights is the false green this tool
+                    # exists to prevent, so they are named separately.
+                    is_generation = f.endswith((".gguf", ".fpq")) and "/voices/" not in full
+                    (generation if is_generation else other).append(
+                        {"path": full, "mb": round(size / 1048576, 1)}
+                    )
+        return {
+            "organs": organs,
+            "catalogue": catalogue,
+            "generation_weights": sorted(generation, key=lambda w: -w["mb"])[:20],
+            "other_model_files": sorted(other, key=lambda w: -w["mb"])[:10],
+            "runnable": bool(generation) and any(
+                organs[o]["present"] for o in ("qwen-fpq", "moe")
+            ),
+            "note": (
+                "A registered model is not a present model, and a large model file is not "
+                "necessarily a generation model: other_model_files holds things like the piper "
+                "TTS voice, which cannot answer a prompt. runnable is true only when a real "
+                "generation weight is on disk and an organ that can run it is installed. When "
+                "it is false, local generation refuses rather than silently returning to a "
+                "remote provider."
+            ),
+        }
+
+    if name == "finance_book":
+        # Executable capabilities are a subset of the book. x402 settles only
+        # what an organ can actually produce; the rest of the book is merchant
+        # inventory that the shopping grammars carry but x402 will not sell,
+        # because taking payment for something no organ can deliver would be a
+        # promise the system cannot keep.
+        executable = run(["/usr/bin/curl", "-sS", "-m", "30",
+                          "-H", "Accept: application/json", f"{SURFACE}/capability"],
+                         timeout=60)
+        book = run(
+            ["/usr/local/bin/bonfyre-query", "sql", ":memory:",
+             f"SET home_directory='{DUCKDB_HOME}'; INSTALL sqlite; LOAD sqlite; "
+             f"ATTACH '{STATE}/finance.db' AS fi (TYPE sqlite, READ_ONLY); "
+             "SELECT name, category, buy_price, sell_price, "
+             "round(sell_price - buy_price, 2) AS margin_usd, "
+             "CASE WHEN sell_price > 0 THEN 'priced' ELSE 'not_for_sale' END AS status, "
+             "source FROM fi.services ORDER BY sell_price DESC, name"],
+            timeout=90,
+        )
+        return {
+            "book": book,
+            "x402_executable_catalogue": executable,
+            "note": (
+                "Two different sets. The book is every service with a price; the x402 "
+                "catalogue is the subset an organ can execute and therefore settle. Pricing a "
+                "book entry does not make it x402-sellable -- the executable catalogue is "
+                "compiled into the address organ, not read from this book. UCP, ACP and Beckn "
+                "carry merchant inventory; x402 carries only what can be delivered."
+            ),
+        }
+
+    if name == "estate_query":
+        sql = str(args.get("sql", ""))
+        bad = _read_only_sql(sql)
+        if bad:
+            return {"error": bad}
+        return run(["/usr/local/bin/bonfyre-query", "sql", ":memory:",
+                    _fleming_sql(sql.strip().rstrip(";"))], timeout=300)
+
+    if name == "protocol_fetch":
+        carrier = str(args.get("carrier", "")).strip().lower()
+        if carrier not in PROTOCOL_CARRIERS:
+            return {"error": "unknown carrier",
+                    "carriers": sorted(PROTOCOL_CARRIERS)}
+        path = PROTOCOL_CARRIERS[carrier]
+        cap = str(args.get("name", "")).strip()
+        if cap:
+            if not _SAFE_SERVICE.match(cap):
+                return {"error": "name must be alphanumeric/dash/underscore"}
+            if carrier == "x402":
+                path = f"/capability/{cap}"
+            elif carrier == "mpp":
+                path = f"/mpp/quote?capability={cap}"
+        return run(["/usr/bin/curl", "-sS", "-m", "60",
+                    "-H", "Accept: application/json",
+                    "-w", "\n__STATUS__%{http_code}",
+                    f"{SURFACE}{path}"], timeout=90)
+
+    if name == "desk_open_decisions":
+        return run(["/usr/bin/curl", "-sS", "-m", "60",
+                    "-H", "Accept: text/html", f"{SURFACE}/studio/"], timeout=90)
+
+    return None
+
+
+def _institution_write_tool(name: str, args: dict):
+    if name == "model_local_generate":
+        organ = str(args.get("organ", "qwen-fpq"))
+        prompt = str(args.get("prompt", ""))
+        if not prompt.strip():
+            return {"error": "prompt is empty"}
+        binary = {"qwen-fpq": "/usr/local/bin/bonfyre-qwen-fpq",
+                  "moe": "/usr/local/bin/bonfyre-moe"}.get(organ)
+        if not binary or not os.access(binary, os.X_OK):
+            return {"error": "organ_absent", "organ": organ,
+                    "detail": "That local organ is not installed here."}
+        inventory = _institution_tool("model_local_inventory", {})
+        if not inventory.get("runnable"):
+            return {
+                "error": "no_local_weights",
+                "organ": organ,
+                "detail": (
+                    "The organ is installed but no model weights are present, so local "
+                    "generation cannot run. This refuses instead of returning to a remote "
+                    "provider: work routed here was routed here deliberately, and a silent "
+                    "fallback would break the constraint that sent it."
+                ),
+                "fixes_it": "Place a .gguf listed by model_local_inventory under BONFYRE_ROOT.",
+            }
+        with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False) as fh:
+            fh.write(prompt)
+            prompt_path = fh.name
+        try:
+            argv = [binary, "generate", "--prompt-file", prompt_path]
+            tokens = args.get("max_tokens")
+            if isinstance(tokens, int) and 0 < tokens <= 4096:
+                argv += ["--max-tokens", str(tokens)]
+            return run(argv, timeout=600)
+        finally:
+            try:
+                os.unlink(prompt_path)
+            except OSError:
+                pass
+
+    if name == "finance_price_set":
+        svc = str(args.get("name", ""))
+        if not _SAFE_SERVICE.match(svc):
+            return {"error": "name must be alphanumeric/dash/underscore, at most 96 chars"}
+        try:
+            buy = float(args.get("buy_usd"))
+            sell = float(args.get("sell_usd"))
+        except (TypeError, ValueError):
+            return {"error": "buy_usd and sell_usd must be numbers"}
+        if buy < 0 or sell < 0:
+            return {"error": "prices cannot be negative"}
+        # Without this the organ falls back to $HOME, and a service running under
+        # systemd has no writable home -- the write failed against
+        # /root/.local/share/bonfyre/finance.db while every reader used
+        # /var/lib/bonfyre/state/finance.db.
+        env = dict(os.environ, BONFYRE_FINANCE_DB=f"{STATE}/finance.db")
+        return run(["/usr/local/bin/bonfyre-finance", "service", "add",
+                    "--name", svc, "--buy", f"{buy:.2f}", "--sell", f"{sell:.2f}",
+                    "--source", "mcp"], timeout=60, env=env)
+
+    return None
+
+
+def call_tool(name: str, args: dict[str, Any], trace_id: str) -> Any:
+    _studio = _studio_tool(name, args)
+    if _studio is not None:
+        return _studio
+    _studio_w = _studio_write_tool(name, args)
+    if _studio_w is not None:
+        return _studio_w
+    _inst = _institution_tool(name, args)
+    if _inst is not None:
+        return _inst
+    _inst_w = _institution_write_tool(name, args)
+    if _inst_w is not None:
+        return _inst_w
+
+    if name == "mesh_status":
+        local_status = None
+        try:
+            local_status = unwrap_mcp_tool_result(
+                project_mcp("tools/call", {"name": "project_status", "arguments": {}})
+            )
+        except Exception as exc:
+            local_status = {"error": str(exc)}
+        current = Path("/opt/bonfyre/releases/command-plane-current")
+        release = str(current.resolve()) if current.exists() else None
+        services = {}
+        for unit in (
+            "bonfyred.service",
+            "bonfyre-continuation-loop.timer",
+            "bonfyre-autonomous-worker-loop.timer",
+        ):
+            services[unit] = run(
+                ["systemctl", "show", unit, "-p", "ActiveState", "-p", "SubState", "-p", "Result", "-p", "ExecMainStatus", "--no-pager"],
+                timeout=10,
+            )
+        with DB_LOCK:
+            conn = db()
+            counts = {
+                "calls": conn.execute("SELECT COUNT(*) FROM calls").fetchone()[0],
+                "deltas": conn.execute("SELECT COUNT(*) FROM deltas").fetchone()[0],
+                "events": conn.execute("SELECT COUNT(*) FROM events").fetchone()[0],
+                "tasks": conn.execute("SELECT COUNT(*) FROM tasks").fetchone()[0],
+            }
+            conn.close()
+        return {
+            "node": "oracle",
+            "runtime_url": RUNTIME_URL,
+            "project_mcp_url": PROJECT_MCP_URL,
+            "release": release,
+            "services": services,
+            "project": local_status,
+            "database": counts,
+            "tool_count": len(TOOLS),
+        }
+
+    if name in {
+        "project_status",
+        "project_tree",
+        "project_search",
+        "project_read",
+        "project_diff",
+        "project_patch_preview",
+        "project_apply_patch",
+        "project_apply_low_risk_patch",
+        "project_revert_receipt",
+        "project_test_profile",
+        "project_commit_receipt",
+        "operator_status",
+        "operator_goal_add",
+        "operator_pause",
+        "operator_resume",
+    }:
+        return unwrap_mcp_tool_result(
+            project_mcp("tools/call", {"name": name, "arguments": args})
+        )
+
+    if name == "project_recent_deltas":
+        limit = max(1, min(int(args.get("limit", 100)), 1000))
+        with DB_LOCK:
+            conn = db()
+            rows = [
+                dict(row)
+                for row in conn.execute(
+                    "SELECT * FROM deltas ORDER BY seq DESC LIMIT ?", (limit,)
+                ).fetchall()
+            ]
+            conn.close()
+        for row in rows:
+            row["payload"] = json.loads(row.pop("payload_json"))
+        return {"deltas": rows}
+
+    if name == "runtime_get":
+        path = str(args["path"])
+        if path != "/health" and not path.startswith("/api/"):
+            raise ValueError("runtime path must be /health or /api/*")
+        status, result = http_json(RUNTIME_URL + path, timeout=60)
+        return {"status": status, "path": path, "result": result}
+
+    if name == "runtime_preview":
+        path = str(args["path"])
+        if path not in PREVIEW_POST_ALLOW:
+            raise PermissionError(f"POST route not allowlisted: {path}")
+        status, result = http_json(
+            RUNTIME_URL + path,
+            method="POST",
+            payload=args.get("body") or {},
+            timeout=300,
+        )
+        return {"status": status, "path": path, "result": result}
+
+    if name == "oracle_service_status":
+        unit = str(args["unit"])
+        if unit not in UNIT_ALLOW:
+            raise PermissionError(f"unit not allowlisted: {unit}")
+        lines = max(0, min(int(args.get("journal_lines", 120)), 1000))
+        show = run(
+            [
+                "systemctl",
+                "show",
+                unit,
+                "-p",
+                "ActiveState",
+                "-p",
+                "SubState",
+                "-p",
+                "Result",
+                "-p",
+                "ExecMainStatus",
+                "-p",
+                "ExecMainStartTimestamp",
+                "-p",
+                "ExecMainExitTimestamp",
+                "--no-pager",
+            ],
+            timeout=15,
+        )
+        journal = (
+            run(["journalctl", "-u", unit, "-n", str(lines), "--no-pager"], timeout=30)
+            if lines
+            else None
+        )
+        return {"unit": unit, "show": show, "journal": journal}
+
+    if name == "oracle_command_describe":
+        family = safe_family(str(args["family"]))
+        binary = find_family_binary(family)
+        return {
+            "family": family,
+            "binary": str(binary),
+            "file": run(["file", str(binary)], timeout=5),
+            "ldd": run(["ldd", str(binary)], timeout=10),
+            "version": run([str(binary), "--version"], timeout=8),
+            "help": run([str(binary), "--help"], timeout=8),
+        }
+
+    if name == "oracle_command_probe":
+        family = safe_family(str(args["family"]))
+        binary = find_family_binary(family)
+        mode = str(args.get("mode", "version"))
+        timeout = max(1, min(int(args.get("timeout_seconds", 8)), 30))
+        flag = "--version" if mode == "version" else "--help"
+        return run([str(binary), flag], timeout=timeout, cwd=str(binary.parent))
+
+    if name == "oracle_profile_run":
+        profile = str(args["profile"])
+        if profile not in PROFILE_ALLOW:
+            raise PermissionError("profile not allowlisted")
+        unit = f"bonfyre-hypercycle@{profile}.service"
+        started = run(["systemctl", "start", unit], timeout=3700)
+        show = run(
+            [
+                "systemctl",
+                "show",
+                unit,
+                "-p",
+                "Result",
+                "-p",
+                "ExecMainStatus",
+                "-p",
+                "ActiveState",
+                "-p",
+                "SubState",
+                "--no-pager",
+            ],
+            timeout=15,
+        )
+        # Return actual profile state instead of masking it with systemctl-show.
+        state = "success" if "Result=success" in show["stdout"] and "ExecMainStatus=0" in show["stdout"] else "failed"
+        return {"profile": profile, "state": state, "start": started, "show": show}
+
+    if name == "oracle_profile_receipts":
+        path = ROOT / "output/phase94-hypercycle/profile-run-receipts.jsonl"
+        profile = str(args.get("profile", ""))
+        state = str(args.get("state", ""))
+        limit = max(1, min(int(args.get("limit", 200)), 2000))
+        records: list[Any] = []
+        if path.exists():
+            for line in path.read_text(errors="replace").splitlines():
+                try:
+                    record = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if profile and record.get("profile") != profile:
+                    continue
+                if state and record.get("state") != state:
+                    continue
+                records.append(record)
+        return {"path": str(path), "records": records[-limit:]}
+
+    if name == "oracle_deep_flow":
+        flow = str(args["flow"])
+        if flow not in FLOW_ALLOW:
+            raise PermissionError("flow not allowlisted")
+        timeout = max(10, min(int(args.get("timeout_seconds", 900)), 3600))
+        tool = ROOT / "tools" / FLOW_ALLOW[flow]
+        if not tool.exists():
+            raise FileNotFoundError(str(tool))
+        env = os.environ.copy()
+        env.update(
+            {
+                "BONFYRE_BASE_URL": RUNTIME_URL,
+                "BONFYRE_EXTERNAL_READS_ENABLED": "1",
+                "BONFYRE_EXTERNAL_WRITES_ENABLED": "0",
+                "BONFYRE_LIVE_APPLY_ENABLED": "0",
+                "BONFYRE_EXTERNAL_IRREVERSIBLE_EFFECTS_ENABLED": "0",
+            }
+        )
+        return run(
+            ["/home/ubuntu/.bun/bin/bun", str(tool)],
+            timeout=timeout,
+            cwd=str(ROOT),
+            env=env,
+        )
+
+    if name == "task_start":
+        kind = str(args["kind"])
+        task_name = str(args["name"])
+        command: list[str]
+        if kind == "profile":
+            if task_name not in PROFILE_ALLOW:
+                raise PermissionError("profile not allowlisted")
+            command = ["/bin/systemctl", "start", f"bonfyre-hypercycle@{task_name}.service"]
+        elif kind == "flow":
+            if task_name not in FLOW_ALLOW:
+                raise PermissionError("flow not allowlisted")
+            command = [
+                "/usr/bin/env",
+                f"BONFYRE_BASE_URL={RUNTIME_URL}",
+                "BONFYRE_EXTERNAL_READS_ENABLED=1",
+                "BONFYRE_EXTERNAL_WRITES_ENABLED=0",
+                "BONFYRE_LIVE_APPLY_ENABLED=0",
+                "/home/ubuntu/.bun/bin/bun",
+                str(ROOT / "tools" / FLOW_ALLOW[task_name]),
+            ]
+        else:
+            raise ValueError("kind must be profile or flow")
+        task_id = uuid.uuid4().hex[:20]
+        unit = f"bonfyre-mcp-task-{task_id}"
+        log_path = str(TASK_DIR / f"{task_id}.log")
+        argv = [
+            "systemd-run",
+            "--unit",
+            unit,
+            "--collect",
+            "--property",
+            "Type=oneshot",
+            "--property",
+            f"StandardOutput=append:{log_path}",
+            "--property",
+            f"StandardError=append:{log_path}",
+        ]
+        if kind == "flow":
+            argv += ["--uid=ubuntu", "--gid=ubuntu", "--working-directory=/opt/bonfyre"]
+        argv += command
+        launch = run(argv, timeout=30)
+        state = "started" if launch["exit_code"] == 0 else "failed_to_start"
+        with DB_LOCK:
+            conn = db()
+            conn.execute(
+                "INSERT INTO tasks(id,ts,kind,name,unit_name,state,log_path) VALUES(?,?,?,?,?,?,?)",
+                (task_id, time.time(), kind, task_name, unit, state, log_path),
+            )
+            conn.commit()
+            conn.close()
+        event("task.started", {"task_id": task_id, "kind": kind, "name": task_name, "state": state}, trace_id)
+        return {"task_id": task_id, "unit": unit, "state": state, "launch": launch, "log_path": log_path}
+
+    if name == "task_status":
+        task_id = str(args["task_id"])
+        if not re.fullmatch(r"[a-f0-9]{20}", task_id):
+            raise ValueError("invalid task id")
+        lines = max(0, min(int(args.get("journal_lines", 200)), 2000))
+        with DB_LOCK:
+            conn = db()
+            row = conn.execute("SELECT * FROM tasks WHERE id=?", (task_id,)).fetchone()
+            conn.close()
+        if row is None:
+            raise FileNotFoundError("task not found")
+        unit = str(row["unit_name"])
+        show = run(
+            [
+                "systemctl",
+                "show",
+                unit,
+                "-p",
+                "LoadState",
+                "-p",
+                "ActiveState",
+                "-p",
+                "SubState",
+                "-p",
+                "Result",
+                "-p",
+                "ExecMainStatus",
+                "--no-pager",
+            ],
+            timeout=15,
+        )
+        journal = run(["journalctl", "-u", unit, "-n", str(lines), "--no-pager"], timeout=30)
+        log_text = ""
+        log_path = Path(str(row["log_path"]))
+        if log_path.exists():
+            log_text = log_path.read_text(errors="replace")[-200_000:]
+        return {"task": dict(row), "show": show, "journal": journal, "log": log_text}
+
+    if name == "artifact_search":
+        term = str(args.get("name", ""))
+        contains = str(args.get("contains", ""))
+        limit = max(1, min(int(args.get("limit", 200)), 2000))
+        output = (ROOT / "output").resolve()
+        matches: list[dict[str, Any]] = []
+        for path in output.rglob("*"):
+            if not path.is_file():
+                continue
+            relative = str(path.relative_to(output))
+            if term and term.lower() not in relative.lower():
+                continue
+            item = {"path": str(path), "relative": relative, "size": path.stat().st_size}
+            if contains and path.stat().st_size <= 5_000_000:
+                try:
+                    text = path.read_text(errors="replace")
+                except OSError:
+                    continue
+                if contains.lower() not in text.lower():
+                    continue
+            matches.append(item)
+            if len(matches) >= limit:
+                break
+        return {"matches": matches}
+
+    if name == "artifact_read":
+        path = Path(str(args["path"]))
+        output = (ROOT / "output").resolve()
+        resolved = path.resolve() if path.is_absolute() else (output / path).resolve()
+        if resolved != output and output not in resolved.parents:
+            raise PermissionError("artifact path escapes /opt/bonfyre/output")
+        if not resolved.is_file():
+            raise FileNotFoundError(str(resolved))
+        max_bytes = max(1, min(int(args.get("max_bytes", 200000)), 1_000_000))
+        data = resolved.read_bytes()[:max_bytes]
+        return {
+            "path": str(resolved),
+            "size": resolved.stat().st_size,
+            "truncated": resolved.stat().st_size > max_bytes,
+            "text": data.decode("utf-8", errors="replace"),
+        }
+
+    if name == "release_attest":
+        current = Path("/opt/bonfyre/releases/command-plane-current").resolve()
+        checks: dict[str, Any] = {
+            "current": str(current),
+            "exists": current.is_dir(),
+        }
+        if current.is_dir():
+            executable_files: list[str] = []
+            for path in (current / "cmd").rglob("*"):
+                if path.is_file() and os.access(path, os.X_OK):
+                    desc = run(["file", "-b", str(path)], timeout=5)
+                    if "ELF 64-bit LSB" in desc["stdout"]:
+                        executable_files.append(str(path))
+            checks["command_elfs"] = len(executable_files)
+            checks["manifest"] = (current / "sha256-manifest.txt").exists()
+        checks["bonfyred"] = run(["file", "/opt/bonfyre/bonfyred"], timeout=5)
+        checks["runtime_health"] = http_json(RUNTIME_URL + "/health", timeout=10)
+        checks["timers"] = {
+            unit: run(["systemctl", "is-active", unit], timeout=10)
+            for unit in (
+                "bonfyre-continuation-loop.timer",
+                "bonfyre-autonomous-worker-loop.timer",
+            )
+        }
+        checks["portable_dependencies"] = {
+            family: run(["ldd", str(find_family_binary(family))], timeout=15)
+            for family in ("BonfyreQwenFPQ", "BonfyreMoE", "BonfyreEmbed", "BonfyreTranscribe")
+        }
+        return checks
+
+    if name == "mcp_call_history":
+        tool = str(args.get("tool", ""))
+        state = str(args.get("state", ""))
+        limit = max(1, min(int(args.get("limit", 200)), 2000))
+        where: list[str] = []
+        values: list[Any] = []
+        if tool:
+            where.append("tool=?")
+            values.append(tool)
+        if state:
+            where.append("state=?")
+            values.append(state)
+        clause = " WHERE " + " AND ".join(where) if where else ""
+        with DB_LOCK:
+            conn = db()
+            rows = [
+                dict(row)
+                for row in conn.execute(
+                    f"SELECT * FROM calls{clause} ORDER BY ts DESC LIMIT ?",
+                    (*values, limit),
+                ).fetchall()
+            ]
+            conn.close()
+        for row in rows:
+            row["args"] = json.loads(row.pop("args_json"))
+            row["result"] = json.loads(row.pop("result_json"))
+        return {"calls": rows}
+
+    raise KeyError(f"unknown tool: {name}")
+
+
+RESOURCES = [
+    {
+        "uri": "bonfyre://mesh/status",
+        "name": "Bonfyre MCP mesh status",
+        "description": "Current local-project, Oracle, release, runtime and transport state.",
+        "mimeType": "application/json",
+    },
+    {
+        "uri": "bonfyre://project/status",
+        "name": "Live project status",
+        "description": "Current branch, HEAD, dirty files and recent delta journal.",
+        "mimeType": "application/json",
+    },
+    {
+        "uri": "bonfyre://oracle/release",
+        "name": "Current Oracle release",
+        "description": "Sealed release and portable dependency attestation.",
+        "mimeType": "application/json",
+    },
+    {
+        "uri": "bonfyre://phase94/receipts",
+        "name": "Phase 94 receipts",
+        "description": "Recent hypercycle profile receipts, including failed tools.",
+        "mimeType": "application/json",
+    },
+    {
+        "uri": "bonfyre://mcp/calls",
+        "name": "MCP call ledger",
+        "description": "Recent MCP calls with trace IDs and durations.",
+        "mimeType": "application/json",
+    },
+]
+
+PROMPTS = [
+    {
+        "name": "diagnose_live_system",
+        "description": "Diagnose the live Bonfyre project and Oracle mesh from current evidence.",
+        "arguments": [{"name": "focus", "description": "Optional subsystem focus", "required": False}],
+    },
+    {
+        "name": "implement_project_change",
+        "description": "Inspect source, prepare a patch, validate it, then use the approval-gated patch tool.",
+        "arguments": [{"name": "request", "description": "Requested project change", "required": True}],
+    },
+    {
+        "name": "certify_oracle",
+        "description": "Attest release, services, routes, commands, receipts, and parity.",
+        "arguments": [],
+    },
+]
+
+
+def read_resource(uri: str) -> Any:
+    if uri == "bonfyre://mesh/status":
+        return call_tool("mesh_status", {}, uuid.uuid4().hex)
+    if uri == "bonfyre://project/status":
+        return unwrap_mcp_tool_result(
+            project_mcp("tools/call", {"name": "project_status", "arguments": {}})
+        )
+    if uri == "bonfyre://oracle/release":
+        return call_tool("release_attest", {}, uuid.uuid4().hex)
+    if uri == "bonfyre://phase94/receipts":
+        return call_tool("oracle_profile_receipts", {"limit": 300}, uuid.uuid4().hex)
+    if uri == "bonfyre://mcp/calls":
+        return call_tool("mcp_call_history", {"limit": 300}, uuid.uuid4().hex)
+    raise FileNotFoundError(uri)
+
+
+class Handler(BaseHTTPRequestHandler):
+    server_version = "BonfyreMCP/2.0"
+
+    def log_message(self, fmt: str, *args: Any) -> None:
+        # systemd captures stderr; avoid leaking auth headers or request bodies.
+        print(f"{self.address_string()} - {fmt % args}", flush=True)
+
+    def _origin_ok(self) -> bool:
+        origin = self.headers.get("Origin")
+        return not origin or origin in ORIGINS
+
+    def _auth_ok(self) -> bool:
+        if not TOKEN:
+            return False
+        supplied = self.headers.get("Authorization", "")
+        expected = f"Bearer {TOKEN}"
+        return hmac.compare_digest(supplied, expected)
+
+    def _json(self, status: int, value: Any, extra_headers: dict[str, str] | None = None) -> None:
+        body = json.dumps(value, separators=(",", ":"), default=str).encode()
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        if extra_headers:
+            for key, val in extra_headers.items():
+                self.send_header(key, val)
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _read_json(self) -> Any:
+        length = int(self.headers.get("Content-Length", "0"))
+        if length <= 0 or length > 20_000_000:
+            raise ValueError("invalid body size")
+        return json.loads(self.rfile.read(length))
+
+    def do_GET(self) -> None:
+        parsed = urllib.parse.urlparse(self.path)
+        if parsed.path == "/health":
+            status, runtime = http_json(RUNTIME_URL + "/health", timeout=5)
+            self._json(
+                200 if status == 200 else 503,
+                {
+                    "status": "ok" if status == 200 else "degraded",
+                    "service": "bonfyre-mcp-gateway",
+                    "runtime": runtime,
+                    "tools": len(TOOLS),
+                },
+            )
+            return
+        if not self._origin_ok():
+            self._json(403, {"error": "origin not allowed"})
+            return
+        if not self._auth_ok():
+            self._json(401, {"error": "unauthorized"})
+            return
+        if parsed.path == "/events":
+            query = urllib.parse.parse_qs(parsed.query)
+            after = int((query.get("after") or ["0"])[0])
+            limit = min(int((query.get("limit") or ["500"])[0]), 2000)
+            with DB_LOCK:
+                conn = db()
+                rows = [
+                    dict(row)
+                    for row in conn.execute(
+                        "SELECT * FROM events WHERE seq>? ORDER BY seq LIMIT ?",
+                        (after, limit),
+                    ).fetchall()
+                ]
+                conn.close()
+            for row in rows:
+                row["payload"] = json.loads(row.pop("payload_json"))
+            self._json(200, {"events": rows, "next_after": rows[-1]["seq"] if rows else after})
+            return
+        if parsed.path == "/metrics":
+            with DB_LOCK:
+                conn = db()
+                data = {
+                    "calls": conn.execute("SELECT COUNT(*) FROM calls").fetchone()[0],
+                    "call_failures": conn.execute("SELECT COUNT(*) FROM calls WHERE state!='passed'").fetchone()[0],
+                    "deltas": conn.execute("SELECT COUNT(*) FROM deltas").fetchone()[0],
+                    "events": conn.execute("SELECT COUNT(*) FROM events").fetchone()[0],
+                    "tasks": conn.execute("SELECT COUNT(*) FROM tasks").fetchone()[0],
+                }
+                conn.close()
+            self._json(200, data)
+            return
+        if parsed.path == "/mcp":
+            self._json(405, {"error": "standalone GET stream disabled; use POST"})
+            return
+        self._json(404, {"error": "not found"})
+
+    def do_POST(self) -> None:
+        parsed = urllib.parse.urlparse(self.path)
+        if not self._origin_ok():
+            self._json(403, {"error": "origin not allowed"})
+            return
+        if not self._auth_ok():
+            self._json(401, {"error": "unauthorized"})
+            return
+        try:
+            payload = self._read_json()
+        except Exception as exc:
+            self._json(400, {"error": str(exc)})
+            return
+
+        if parsed.path == "/internal/delta":
+            source = str(payload.get("source", "local-project"))
+            head = payload.get("head")
+            status_hash = payload.get("status_hash")
+            with DB_LOCK:
+                conn = db()
+                cur = conn.execute(
+                    "INSERT INTO deltas(ts,source,head,status_hash,payload_json) VALUES(?,?,?,?,?)",
+                    (
+                        time.time(),
+                        source,
+                        head,
+                        status_hash,
+                        json.dumps(payload, separators=(",", ":")),
+                    ),
+                )
+                conn.commit()
+                seq = int(cur.lastrowid)
+                conn.close()
+            event("project.delta", {"seq": seq, "source": source, "head": head, "status_hash": status_hash})
+            self._json(202, {"accepted": True, "seq": seq})
+            return
+
+        if parsed.path != "/mcp":
+            self._json(404, {"error": "not found"})
+            return
+
+        req_id = payload.get("id")
+        method = payload.get("method")
+        params = payload.get("params") or {}
+        trace_id = (
+            ((params.get("_meta") or {}).get("traceparent"))
+            or self.headers.get("traceparent")
+            or uuid.uuid4().hex
+        )
+        headers = {
+            "MCP-Protocol-Version": "2025-06-18",
+            "Mcp-Method": str(method or ""),
+        }
+
+        try:
+            if method == "initialize":
+                result = {
+                    "protocolVersion": "2025-06-18",
+                    "capabilities": {
+                        "tools": {"listChanged": False},
+                        "resources": {"subscribe": False, "listChanged": False},
+                        "prompts": {"listChanged": False},
+                    },
+                    "serverInfo": {"name": "bonfyre-mcp-mesh", "version": "2.0.0"},
+                    "instructions": (
+                        "Use project tools for live Mac source, runtime tools for Bonfyre APIs, "
+                        "Oracle tools for commands/services/profiles, explicit task handles for "
+                        "long work, and candidate patch tools before any approved write."
+                    ),
+                }
+            elif method in {"notifications/initialized", "notifications/cancelled"}:
+                self.send_response(202)
+                self.end_headers()
+                return
+            elif method == "ping":
+                result = {}
+            elif method == "tools/list":
+                result = {"tools": sorted(TOOLS, key=lambda item: item["name"])}
+            elif method == "tools/call":
+                tool_name = str(params.get("name", ""))
+                arguments = params.get("arguments") or {}
+                if tool_name not in TOOL_MAP:
+                    raise KeyError(f"unknown tool: {tool_name}")
+                call_id = uuid.uuid4().hex
+                started = time.time()
+                try:
+                    value = call_tool(tool_name, arguments, trace_id)
+                    duration = int((time.time() - started) * 1000)
+                    record_call(call_id, trace_id, tool_name, arguments, "passed", duration, value)
+                    result = text_result(value)
+                except Exception as exc:
+                    duration = int((time.time() - started) * 1000)
+                    value = {
+                        "error": f"{type(exc).__name__}: {exc}",
+                        "tool": tool_name,
+                        "trace_id": trace_id,
+                    }
+                    record_call(call_id, trace_id, tool_name, arguments, "failed", duration, value)
+                    result = text_result(value, is_error=True)
+            elif method == "resources/list":
+                result = {"resources": RESOURCES}
+            elif method == "resources/read":
+                uri = str(params.get("uri", ""))
+                value = read_resource(uri)
+                result = {
+                    "contents": [
+                        {
+                            "uri": uri,
+                            "mimeType": "application/json",
+                            "text": json.dumps(value, indent=2, sort_keys=True, default=str),
+                        }
+                    ]
+                }
+            elif method == "prompts/list":
+                result = {"prompts": PROMPTS}
+            elif method == "prompts/get":
+                prompt_name = str(params.get("name", ""))
+                args = params.get("arguments") or {}
+                if prompt_name == "diagnose_live_system":
+                    focus = args.get("focus", "entire mesh")
+                    message = (
+                        f"Diagnose the live Bonfyre {focus}. Start with mesh_status, project_status, "
+                        "release_attest, failed Phase 94 receipts, runtime parity, and current deltas. "
+                        "Separate active, reachable, authenticated, verified, degraded, and failed."
+                    )
+                elif prompt_name == "implement_project_change":
+                    request = args.get("request", "")
+                    message = (
+                        f"Implement this Bonfyre project change: {request}. Search and read the live "
+                        "project first, inspect the diff, produce a unified patch, call "
+                        "project_patch_preview, and do not call project_apply_patch without explicit approval."
+                    )
+                elif prompt_name == "certify_oracle":
+                    message = (
+                        "Certify Oracle through release_attest, command probes, service state, route reads, "
+                        "MCP deep flows, profile receipts, and local/Oracle parity. Report exact evidence."
+                    )
+                else:
+                    raise KeyError(f"unknown prompt: {prompt_name}")
+                result = {"description": prompt_name, "messages": [{"role": "user", "content": {"type": "text", "text": message}}]}
+            else:
+                raise KeyError(f"unsupported method: {method}")
+
+            self._json(200, {"jsonrpc": "2.0", "id": req_id, "result": result}, headers)
+        except Exception as exc:
+            self._json(
+                200,
+                {
+                    "jsonrpc": "2.0",
+                    "id": req_id,
+                    "error": {"code": -32000, "message": f"{type(exc).__name__}: {exc}"},
+                },
+                headers,
+            )
+
+
+def main() -> None:
+    if not TOKEN:
+        raise SystemExit("BONFYRE MCP token missing")
+    server = ThreadingHTTPServer((HOST, PORT), Handler)
+    print(f"bonfyre MCP gateway listening on {HOST}:{PORT}", flush=True)
+    event("gateway.started", {"host": HOST, "port": PORT, "tool_count": len(TOOLS)})
+    server.serve_forever()
+
+
+if __name__ == "__main__":
+    main()
