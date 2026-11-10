@@ -6,4 +6,4 @@ cd "$SCRIPT_DIR"
 
 export PATH="/Users/nickgonzales/Library/Python/3.9/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
 
-perl drain_all_queues.pl "$@"
+perl drain_transcription_queue.pl "$@"

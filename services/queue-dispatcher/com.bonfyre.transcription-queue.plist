@@ -3,25 +3,33 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.bonfyre.drain-all-queues</string>
+    <string>com.bonfyre.transcription-queue</string>
 
     <key>ProgramArguments</key>
     <array>
-        <string>/bin/zsh</string>
-        <string>/Users/nickgonzales/Documents/Bonfyre/.bonfyre-runtime/drain_all_queues.sh</string>
+        <string>/usr/bin/perl</string>
+        <string>/Users/nickgonzales/.bonfyre/bin/queue-dispatcher/drain_transcription_queue.pl</string>
     </array>
 
     <key>WorkingDirectory</key>
-    <string>/Users/nickgonzales/Documents/Bonfyre/.bonfyre-runtime</string>
+    <string>/Users/nickgonzales/.bonfyre/bin/queue-dispatcher</string>
 
     <key>StartInterval</key>
     <integer>1200</integer>
 
     <key>StandardOutPath</key>
-    <string>/Users/nickgonzales/Documents/Bonfyre/.bonfyre-runtime/logs/drain-stdout.log</string>
+    <string>/Users/nickgonzales/.bonfyre/logs/queue-dispatcher/stdout.log</string>
 
     <key>StandardErrorPath</key>
-    <string>/Users/nickgonzales/Documents/Bonfyre/.bonfyre-runtime/logs/drain-stderr.log</string>
+    <string>/Users/nickgonzales/.bonfyre/logs/queue-dispatcher/stderr.log</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <key>BONFYRE_REPO_ROOT</key>
+        <string>/Users/nickgonzales/Documents/Bonfyre</string>
+    </dict>
 
     <key>Nice</key>
     <integer>10</integer>
