@@ -3,12 +3,13 @@ CFLAGS ?= -O2 -Wall -Wextra -std=c11
 CFLAGS += -I../../lib/libbonfyre/include
 TARGET = bonfyre-surface-scene
 SRC = src/main.c
+MD_SRC = src/authoring_markdown.c vendor/md4c/md4c.c vendor/md4c/md4c-html.c vendor/md4c/entity.c
 LIB = ../../lib/libbonfyre/libbonfyre.a
 
 all: $(TARGET) authoring-bundle test
 
-$(TARGET): $(SRC) $(LIB)
-	$(CC) $(CFLAGS) -o $(TARGET) $(SRC) $(LIB) -lsqlite3
+$(TARGET): $(SRC) $(MD_SRC) $(LIB)
+	$(CC) $(CFLAGS) -Ivendor/md4c -o $(TARGET) $(SRC) $(MD_SRC) $(LIB) -lsqlite3
 
 $(LIB):
 	$(MAKE) -C ../../lib/libbonfyre

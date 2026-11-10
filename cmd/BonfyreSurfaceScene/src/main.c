@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include "bonfyre.h"
 #include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+#include "authoring_markdown.h"
 
 typedef struct { char *p; size_t n, cap; } Buf;
 
@@ -373,10 +374,24 @@ static int drain_handoffs(const char *dbpath,const char *ns,const char *scope,co
     return failed?6:0;
 }
 
-static void usage(void){fprintf(stderr,"usage: bonfyre-surface-scene <compile|sync|sync-all|lower|drain> --db FILE [--ns NS] [--site ID] [--world ID] [--subject ADDRESS] [--actor-scope public] [--frontier REF] [--intent TEXT] [--handoff FILE|--lowerer-dir DIRECTORY] [--limit N]\n");}
+static void usage(void){fprintf(stderr,"usage: bonfyre-surface-scene <compile|sync|sync-all|lower|drain> --db FILE [--ns NS] [--site ID] [--world ID] [--subject ADDRESS] [--actor-scope public] [--frontier REF] [--intent TEXT] [--handoff FILE|--lowerer-dir DIRECTORY] [--limit N]\n       bonfyre-surface-scene render-md [--max-html N] < input.md > output.html\n");}
+
+static int render_md(int argc,char **argv){
+    long cap=262144;const char *m=opt(argc,argv,"--max-html",NULL);
+    if(m){cap=atol(m);if(cap<1024||cap>16777216)return 2;}
+    size_t n=0,len=0;char *text=NULL;const size_t CH=65536;
+    for(;;){char *g=realloc(text,len+CH+1);if(!g){free(text);return 1;}text=g;
+        n=fread(text+len,1,CH,stdin);len+=n;if(n<CH)break;
+        if(len>16777216){free(text);return 2;}}
+    text[len]=0;
+    int ok=bf_authoring_markdown_render(stdout,text,(size_t)cap);
+    free(text);return ok?0:1;
+}
 
 int main(int argc,char **argv){
-    if(argc<2){usage();return 2;}const char *db=opt(argc,argv,"--db",NULL);if(!db){usage();return 2;}
+    if(argc<2){usage();return 2;}
+    if(!strcmp(argv[1],"render-md"))return render_md(argc,argv);
+    const char *db=opt(argc,argv,"--db",NULL);if(!db){usage();return 2;}
     schemas_dir_arg=opt(argc,argv,"--schemas",NULL);
     scene_schema_arg=opt(argc,argv,"--scene-schema",NULL);
     const char *ns=opt(argc,argv,"--ns","root"),*site=opt(argc,argv,"--site",""),*world=opt(argc,argv,"--world",""),*subject=opt(argc,argv,"--subject",""),*scope=opt(argc,argv,"--actor-scope","public"),*frontier=opt(argc,argv,"--frontier",""),*intent=opt(argc,argv,"--intent","");

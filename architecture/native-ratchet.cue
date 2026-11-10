@@ -28,8 +28,9 @@ budget: {
 	// compile_authoring_* tools once their contracts freeze.
 	// Authoring completion 2026-11-10: editor sources, renderers and reader
 	// assets land +27 files / +4,081 lines net. Same rule: down only.
-	authored_mjs_files: 1612
-	authored_mjs_lines: 178479
+	// Journal composition 2026-11-10: composer plus parity test +2/+162.
+	authored_mjs_files: 1614
+	authored_mjs_lines: 178641
 	// .js/.cjs/.ts/.tsx/.py: retiring .mjs must not move the code sideways.
 	// 53 after the Swarm transfer test and product-review renderer went to C.
 	// Merge 2026-11-10: reset to the merged actual; down only.
