@@ -1,0 +1,42 @@
+architecture institution-planes
+  canonical_name InstitutionPlanes
+  family institutional
+  domain Institutional / How an institution can be reached, and what each way knows
+  layer contract
+  semantic_question A person names their school. Which of its surfaces exist, and what is each one incapable of telling them?
+  purpose Nine ways an institution can be reached, each declaring whether it is published to anyone or answers only to a relationship the institution established, what it carries, and what it cannot be read to mean. A subject room counts the public planes it actually holds for a host and names the granted ones as absent with the reason.
+  maturity implemented
+  node_types InstitutionPlane
+  edge_types reached_through
+  internal_calculus a parent should never have to ask whether their district has an API. They name the school; the estate works out which surfaces exist
+  internal_calculus the distinction that matters is not technical. Some planes are published to anyone and some answer only to a relationship, and showing them in one list as though a reader could simply have either is how a calendar feed ends up presented as if it knew something about a child
+  internal_calculus a granted plane is named as absent with its reason rather than as a missing feature or work in progress: it answers to a connection the institution established, and wanting one does not create it
+  internal_calculus a plane is what the address is, not what carried it. An agenda published as a PDF arrives over HTTP, and counting it by its protocol made every institution look as though it published no documents
+  internal_calculus a household can say what it already holds, and that record belongs to it alone. The estate stores who said so and when, opens no channel, fetches nothing through it, and shows it to no other reader
+  invariant a plane marked granted is never rendered as reachable, and the reach is generated from the contract rather than remembered
+  invariant a granted plane reads as held only for the household that established the connection: another household, and any signed-out reader, sees it as needing a relationship
+  invariant a connection is released by the same household that established it, in one submission, and release is refused to everyone else
+  invariant a household connection and its public institution room may name only a host with at least one admitted/active channel in the readable public frontier; a hostname-shaped or candidate-only request cannot manufacture an institution or open a household
+  invariant each channel is counted under exactly one plane, classified from its path with the scheme, host and query string removed
+  forbidden_inference a calendar entry -> that the event happened, still stands, or that any person is expected at it
+  forbidden_inference a roster -> attendance, performance, or anything about a person beyond enrolment
+  forbidden_inference a connected student record -> permission for this estate to hold, compare or publish it; it is one household reading its own
+  forbidden_inference an open dataset -> anything about an individual in it, however few rows it has
+  forbidden_inference a silent feed -> an absence of news
+  forbidden_inference an established connection -> that the institution agreed to it, or that this estate can reach that plane; it is a household's own statement, dated and attributed, and nothing more
+  source_path schemas/control/institution-planes.cue
+  source_path cmd/BonfyreWebAddress/tools/compile_planes.zig
+  source_path cmd/BonfyreWebAddress/generated/native_planes.h
+  source_path cmd/BonfyreWebAddress/src/main.c
+  source_path cmd/BonfyreCMS/content-types/household.json
+  source_path cmd/BonfyreCMS/content-types/institution_connection.json
+  witness 2026-09-26 nine planes compiled from CUE, five public and four granted, by a generator that refuses an unknown field
+  witness 2026-09-26 the frontier holds 1,185 education-domain roots, and their channels are exactly what a public institution exposes: 965 rss, 433 json_feed, 277 json_api, 10 ics, 5 atom. No roster or student-record plane appears anywhere, which is the contract being true rather than the estate lacking a feature
+  witness 2026-09-26 served natively for api.artic.edu: 22 addresses held, 5 calendars and 15 feeds counted as reachable, documents and open data as none held, and all four granted planes named as needing a relationship
+  witness 2026-09-26 planes are now classified from the address path rather than the protocol column. Estate-wide over 109,757 channels: 63,763 feeds, 37,159 pages, 8,802 calendars, 33 data, 10 documents, each channel in exactly one plane
+  witness 2026-09-26 the first classification was wrong and measurement caught it twice: matching '.doc' anywhere in the address made coinigy.docs.apiary.io publish 23 documents from its hostname, and matching '/agenda' before the extension made lozere.fr/agendas.rss a document rather than a feed. The path is cut from the address and extensions outrank path keywords, leaving 10 documents, every one a real PDF
+  witness 2026-09-26 a connection established and released end to end against smh.com.au on the native rail: POST /govern/connect refused 405 on GET, 401 unsigned, 400 with no plane, 400 for a public plane, 400 for an unknown plane and 403 from a foreign origin; with a session it created one household and one connection, the roster plane then read as yours with a release control for that reader and as needing a relationship for every other reader, and release returned it
+  witness 2026-09-26 the same page read signed out contains no occurrence of a held granted plane: the substance is scoped to one household, not published
+  witness 2026-09-26 held by a witness in the build rather than by hand: cmd/BonfyreWebAddress/tests/household_plane_test.sh builds a district whose addresses cover every public plane, including the two shapes that used to be misread -- a packet at /board/agenda-2026-09.pdf and a feed at /agendas.rss -- and a handbook on a hostname containing ".docs.". It asserts the five public planes reachable, all four granted planes absent, every refusal on /govern/connect, that establishing one grants exactly one plane, and that neither a second household nor a signed-out reader of the same page sees it
+  witness 2026-09-27 cmd/BonfyreWebAddress/tests/household_plane_test.sh posts invented-school.test and candidate-school.test connections under an authenticated session and proves 404 plus no household record; candidate-school.test has a root but only a candidate channel. The same test establishes and releases fixture-school.test, whose admitted channels are also rendered as direct public material links
+  source_path cmd/BonfyreWebAddress/tests/household_plane_test.sh

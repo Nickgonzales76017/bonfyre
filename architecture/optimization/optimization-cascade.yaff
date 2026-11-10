@@ -1,0 +1,140 @@
+atlas optimization-cascade
+
+architecture optimization-cascade
+  canonical_name OptimizationCascade
+  owns CascadeStage
+  owns OperatorSelection
+  consumes SmallestSufficientState
+  consumes CapabilityDemand
+  consumes ResourceWeather
+  publishes OperatorSelection
+  publishes CascadePlan
+  family optimization
+  domain Optimization / Execution discipline
+  layer execution
+  semantic_question What is the cheapest operator that is still adequate for this decision, and has every cheaper stage already been tried?
+  purpose Make cheapest-adequate-operator a planner discipline rather than a preference. An expensive stage is admissible only over the residue a cheaper stage could not resolve.
+  maturity architectural
+  node_types CascadeStage
+  node_types OperatorClass
+  node_types Residue
+  edge_types narrows
+  edge_types escalates_to
+  edge_types precedes
+  invariant never give a model the whole world when exact structure can first reduce it to the relevant few candidates
+  invariant an expensive stage operates on the residue of a cheaper stage, never on the source set
+  invariant stage order is measured per subject family, not fixed by doctrine; exact then latent then cheap-model and exact then cheap-model then latent are both admissible orders
+  invariant a stage that cannot reduce the candidate set is skipped rather than run for completeness
+  invariant elimination precedes every other stage; state that need not exist is not compressed, it is not created
+  invariant deduplicate before compressing; content identity is cheaper than any encoder
+  invariant a typed decision model is considered only when an exact bounded semantic residue remains and measured downstream work can be avoided
+  forbidden_inference a stage existing in the cascade -> that stage running on every request
+  forbidden_inference an expensive operator producing a correct answer -> that operator having been adequate to select
+  forbidden_inference a cheap stage being wrong once -> that stage being inadmissible
+
+stage s0-eliminate
+  question Does this state need to exist at all?
+  operator none
+  note The only stage that can reduce cost to zero.
+
+stage s1-identity
+  question Has this exact content been seen before?
+  operator BLAKE3 content addressing, interning, dedup
+  precedes s9-compress
+  invariant one physical body may carry many semantic references
+
+stage s2-factor
+  question What is shared basis and what is genuine exception?
+  operator shared basis, typed binding, sparse exception, recursive structural factorization
+  invariant an authority edge is never factored away
+  invariant truth ownership is never factored away
+
+stage s3-address
+  question Can this be referenced instead of copied?
+  operator handles, prefix dictionaries and tries, closure descriptors
+  detail A deep hierarchical path is a projection. Hot execution carries an address handle, a subject handle, world bits and a closure mask. Stable content identity and small local handles coexist.
+  invariant the pretty path is a rendering; it is never the stored form in a hot relation
+
+stage s4-pack
+  question Can this be represented densely?
+  operator dictionary identifiers, enums, bitfields, bitsets, packed structs, columnar relations, adjacency arrays
+
+stage s5-delta
+  question Did anything actually change?
+  operator Occurrence, FactDelta, incremental maintenance, temporal residuals
+  invariant a small logical change produces a change representation of comparable size, not a new snapshot
+
+stage s6-filter-exact
+  question What is even lawful here?
+  operator bitmap intersection, indexes, deterministic masks over authority, world, information policy and validity
+  invariant this stage is exact and precedes every approximate stage
+  invariant authority and world filtering never runs after a model has already seen the candidates
+
+stage s7-cheap-cognition
+  question Can a tiny classifier resolve this ambiguity?
+  operator small local classifiers, sparse feature probes
+  bounded_by cheap-cognition
+  invariant runs inside an exact mask, never over an open world
+
+stage s8-latent-reduction
+  question Can similarity narrow this further?
+  operator embedding neighborhoods, basis plus residual coordinates
+  invariant narrows candidates; never decides authority
+
+stage s8a-typed-decision
+  question Does a state-bound set of atomic Choice, Score and Noul judgments avoid a more expensive operator on this exact residue?
+  operator DecisionPlane over an exact shortlist, with a measured selective-value gate
+  bounded_by decision-plane
+  invariant the same state is assessed across independent questions; unrelated sources are not bundled merely to fill a question budget
+  invariant unmeasured model confidence is not a correctness or savings certificate
+
+stage s9-compress-physical
+  question What is the right body for how this is accessed?
+  operator Zstd with domain dictionaries, seekable frames, INT8, product quantization, polar residuals, FPQ families
+  requires s1-identity
+  invariant cold and hot tiers are chosen by access pattern, not applied uniformly
+
+stage s10-borrow
+  question Can this be read without copying it?
+  operator Arrow C data and stream interfaces, mmap, borrowed views
+  invariant a copy on the hot path is a defect until measured otherwise
+
+stage s11-prepare
+  question Has this cognition already been paid for?
+  operator context cuts, exact source coordinates, prepared context and model state, reusable key-value cache
+  invariant stable prefixes are prepared once and reused across tasks that share them
+
+stage s12-reside-sparsely
+  question Does all of this need to be resident?
+  operator selective hydration, expert caching, residency policy under resource weather
+
+stage s13-fuse
+  question Are these separate physical stages for a reason?
+  operator remove materialization boundaries, combine repeated operators, generated and native kernels
+
+stage s14-prove
+  question Is this still correct, and is it admissibly represented?
+  operator semantic proof, authority proof, quality envelope, compression and copy receipts
+  bounded_by optimization-proof
+
+stage s15-lower
+  question Has this compound become stable enough to become a path?
+  operator recipe, capability graft, native shadow, native path
+  invariant every lowering retains a lift or thaw path
+
+metric copy_amplification
+  formula bytes_copied divided by useful_bytes
+metric hydration_amplification
+  formula bytes_hydrated divided by useful_bytes
+metric factorization_ratio
+  formula explicit objects before factoring divided by bases plus bindings plus exceptions after
+metric escalation_rate
+  formula decisions escalated to an expensive operator divided by decisions entering the cheap stage
+
+interaction cascade-reports-to-proof
+  source optimization-cascade
+  destination optimization-proof
+  relation measurement_input
+  preserves the stage at which each decision was resolved
+  drops any claim that a correct result implies an adequate operator choice
+  forbidden_inference a passing semantic proof -> an admissible materialization

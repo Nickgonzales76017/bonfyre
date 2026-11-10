@@ -1,0 +1,81 @@
+atlas commands-spines-owner
+
+architecture native-spines-bun-owner
+  canonical_name NativeSpinesBunOwner
+  family commands
+  domain Execution / Temporal maintenance, bounded reasoning and candidate placement
+  maturity measured
+  semantic_question Can temporal consequences, pure reduction witnesses and model placement compose through native executables without letting representation or a candidate plan become authority?
+  purpose Retire the installed R5-R7 Python coordinator and CLI into Bun owners over existing C executables and the original SQLite state.
+  node_types FluxEvent
+  node_types LogicalDelta
+  node_types AffectedClosure
+  node_types StandingView
+  node_types RewriteRule
+  node_types BoundedReduction
+  node_types AuthorityPreflight
+  node_types ExecutionPhenotype
+  node_types CandidatePlacement
+  node_types ChainedReceipt
+  internal_calculus immutable flux -> logical delta and native chunk witness -> affected closure -> standing views -> replay parity
+  internal_calculus bounded term rewrites -> cost extraction -> helix native execution -> witness -> candidate proof
+  internal_calculus observed inventory and hardware -> phenotype -> eligibility constraints -> candidate placement and fuse
+  invariant twenty-nine tool contracts remain on one authenticated bounded MCP transport; legacy proof-writing reads are serialized as effects
+  invariant STOP refuses new mutations including hidden proof writes; historical records are not replayed or relabelled on startup
+  invariant chained receipts preserve Python numeric-source and Unicode canonicalization and bind document fields to their SQLite row
+  invariant composite mission attempts persist intent and uncertain outcomes; no automatic effect retry after partial completion
+  forbidden_inference kernel CPU reference parity -> GPU execution, model quality or arbitrary backend verification
+  forbidden_inference discovered runtime executable -> verified model weights or viable inference
+  forbidden_inference candidate proof, placement or fuse -> authority to execute external or irreversible effects
+  forbidden_inference local migration tests or warm inventory reads -> whole-system scaling or complete Python retirement
+  source_path integrations/mcp/spines_store.mjs
+  source_path integrations/mcp/spines_schema.sql
+  source_path integrations/mcp/spines_temporal.mjs
+  source_path integrations/mcp/spines_reasoning.mjs
+  source_path integrations/mcp/spines_model.mjs
+  source_path integrations/mcp/spines_server.mjs
+  source_path integrations/mcp/spines_catalog.json
+  source_path cmd/BonfyreMcp/src/clis.c
+  source_path integrations/mcp/spines_wasm.mjs
+  source_path integrations/mcp/spines_wasm_core.mjs
+  source_path integrations/mcp/native/spines_helix_export.c
+  source_path integrations/mcp/native/spines_helix_vm.c
+  source_path integrations/mcp/native/spines_helix.lock.json
+  source_path integrations/mcp/native/build_spines_wasm.mjs
+  witness packs/no-simulation/spines-source-pin-20261013/rebuild.json proves the updated shared SHA source and header reproduce the same pinned WASM bytes; source pins refreshed without changing the reducer artifact
+  source_path deploy/launchd/spines_cutover.mjs
+  witness integrations/mcp/tests/spines_store.test.mjs
+  witness integrations/mcp/tests/spines_temporal.test.mjs
+  witness integrations/mcp/tests/spines_reasoning.test.mjs
+  witness integrations/mcp/tests/spines_wasm.test.mjs same C evaluator across native and pinned Wasm, no-rights imports, byte identity, bounded inputs, present-corruption refusal and platform-neutral core
+  witness integrations/mcp/tests/spines_wasm_benchmark.json paired local kernel and full durable-owner reduction timings; no distributed throughput inference
+  witness integrations/mcp/tests/spines_model.test.mjs
+  witness integrations/mcp/tests/spines_transport.test.mjs
+  witness integrations/mcp/tests/spines_live_witness.mjs
+  witness tests/spines_history_witness.mjs confined-copy replay without live mutations
+  witness integrations/mcp/tests/spines_history.json all 177 historical receipts and 18 flux events verified; incremental and replay digests equal
+  witness integrations/mcp/tests/spines_integration.test.mjs actual native delta, reduction and CPU kernel composed through CLI and MCP owner on disposable state
+  witness integrations/mcp/tests/spines_native_analysis.json Cppcheck, Clang static analyzer and ShellCheck results bound to the inspected sources; one existing native-reader warning remains
+  witness integrations/mcp/tests/spines_cutover.json installed Bun daemon and CLI replacement; original stopped Python database and launcher retained for rollback
+  witness integrations/mcp/tests/spines_cutover_readback.json authenticated live Bun readback; all twenty-four tables equal stopped Python backup, 177 receipts verified, 240 owned files checked
+  known_gap production owner cutover is local service continuity evidence, not multi-host throughput or public gateway deployment
+  known_gap filesystem and SQLite effects are not a distributed transaction; a crash can leave unreferenced artifacts requiring reconciliation
+  known_gap installed native executables remain separate dependencies; their status is not evidence that optional external adapters executed
+  invariant verified bundled Wasm is the default pure reducer; only missing artifact permits native fallback, while present corruption fails visibly
+  forbidden_inference local Wasm timing improvement or standard Web APIs -> deployed browser, Worker or multi-region execution
+  known_gap Clang flags unchecked rewind in installed native delta reader; bounded controlled input and manifest hash checks do not establish absence of all native defects
+  source_path integrations/mcp/tests/spines_wasm_binaryen.test.mjs
+  witness integrations/mcp/tests/spines_wasm_binaryen.test.mjs optimises the pinned reducer with Binaryen (-Oz) into a candidate and holds it to the pinned module: 1,640 reductions over generated terms and four fuel levels, 35 of them refusals, answer for answer the same apart from the module identity and timing each answer carries. 2026-10-04, wasm-opt 129: 30,454 bytes to 26,956, the same exports, one host import (fd_close) no longer asked for, and 3,000 reductions in 17.9 ms against 18.3 ms
+  invariant the executor accepts a module that asks for fewer of the allowed host imports and never one that asks for another; every import is still denied when called
+  forbidden_inference the optimised candidate proved equal -> the optimised candidate in use; the pinned artifact, its lock and the loader's digest are unchanged, and the build script has no Binaryen stage
+  known_gap Binaryen is measured as a stage and not adopted as one: adopting it means re-pinning the artifact through the cutover this owner already has
+
+interaction native-spines-shared-wire
+  source native-spines-bun-owner
+  destination mcp-bounded-wire-boundary
+  relation shared-bounded-authenticated-transport
+  preserves exact captured catalog, authorization and serialized mutation admission
+  drops duplicated Python HTTP parsing and subprocess lifecycle code
+  forbidden_inference readOnlyHint -> absence of persistent proof effects
+  binding integrations/mcp/spines_server.mjs
+  witness integrations/mcp/tests/spines_transport.test.mjs

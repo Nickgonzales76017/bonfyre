@@ -1,0 +1,90 @@
+atlas optimization-native-clef-runtime
+
+architecture native-clef-runtime
+  canonical_name NativeClefRuntime
+  owns InstalledDecisionRuntimeLifecycle
+  owns PinnedNativeDecisionArtifactPassport
+  consumes TypedQuestionProgram
+  publishes ArtifactBoundJointDecisionAnswers
+  family optimization
+  domain Optimization / Local trained typed decision execution
+  layer execution
+  semantic_question Can ordinary typed decision assessment use one locally owned trained Clef execution process without a hosted dependency or an unbounded permanent model residency?
+  purpose Bind a pinned native Qwen3.5 and joint Clef head implementation to quantized published model bytes, expose a lazy shared local owner, and preserve exact decision contracts through bounded authenticated loopback transport.
+  maturity implemented
+  source_path components/BonfyreDecision/native/clef-runtime.lock.json
+  source_path components/BonfyreDecision/native/build-clef.sh
+  source_path components/BonfyreDecision/native/patches/clef-output-embedding.patch
+  source_path components/BonfyreDecision/local-systemone.mjs
+  source_path components/BonfyreDecision/installed-runtime.mjs
+  source_path components/BonfyreDecision/tests/trained-runtime-witness.mjs
+  source_lineage ggml-org/llama.cpp PR 29831 at 1e265f2111a894c85560d667216d4dd7930474dc; pinned unmerged text-only Clef implementation
+  source_lineage ggml-org/Clef-Flash-GGUF at 4a7a08c09bc63baf043b62b5ba89dd67a0357d95; Cloudflare/clef-flash source checkpoint 17f0b0ad64efb65d273590632833508766b2aae6
+  witness components/BonfyreDecision/tests/clef-runtime-build-witness.json records a successful Darwin arm64 CPU, Metal and Accelerate native build, source archive and binary fingerprints, system-only dynamic dependencies, and version/help checks; it explicitly does not witness trained inference
+  witness components/BonfyreDecision/tests/clef-runtime-patched-build-witness.json records the Clef-only output-buffer classification fix, canonical patch digest, incremental native rebuild, new binary passport and preserved original; it does not itself witness trained inference
+  witness components/BonfyreDecision/tests/trained-cpu-unrepacked-witness.json retains one actual 139-token quantized trained-model response on CPU with repacking disabled, demonstrating execution and the loader-layout diagnosis but not accuracy, numerical parity or performance advantage
+  witness components/BonfyreDecision/tests/trained-runtime-witness.json retains five actual quantized trained-model assessments through the installed default owner across ContextCut, MCP, Flow and ExternalEstate, with complete answers, implementation identity and hardware timings; these authored examples are integration evidence, not held-out accuracy or throughput evidence
+  witness components/BonfyreDecision/tests/clef-runtime-build.test.mjs proves pinned source admission, fresh output ownership, offline packaging and receipt guards with a mocked compiler rather than a trained model
+  witness components/BonfyreDecision/tests/local-systemone.test.mjs proves owned loopback child lifecycle, typed answer validation, immutable artifact admission, request and response bounds, cancellation, marker and media refusal, explicit confidence semantics, and shared assessment integration using offline fixtures
+  witness components/BonfyreDecision/tests/installed-runtime.test.mjs proves no-start lazy identity, single shared startup, caller-isolated cancellation, retry after startup failure, joined shutdown, idle eviction outside active requests, passport mutation refusal and refusal to replace a child after failed shutdown
+  node_types NativeRuntimeLock
+  node_types ModelArtifactPassport
+  node_types LazyDecisionOwner
+  node_types OwnedLoopbackChild
+  state_types absent / starting / ready / retiring / shutdown-refused
+  internal_calculus source and local binary pins plus actual model digest -> authenticated owned child -> one text prefill with joint schema head -> complete typed probability answers -> shared owner projection
+  internal_calculus lazy descriptor -> one cached startup promise -> active caller leases -> sixty-second idle retirement -> joined shutdown before replacement
+  invariant normal planning exposes the same immutable model and implementation passport as execution without hashing model bytes or starting a process
+  invariant the production factory verifies actual binary and model sizes, SHA-256 digests and file identity; synthetic fixtures cannot be relabeled as the released model
+  invariant the implementation passport binds native and model pins, adapter source bytes, context geometry, confidence semantics and effective transport limits
+  invariant a private loopback child uses an API-key file rather than an argv secret; authenticated properties bind readiness to the pinned model path, alias and context
+  invariant the child starts offline with automatic fit, agent, web UI and MCP proxy disabled; missing or mismatched artifacts refuse without hosted fallback
+  invariant this machine uses explicit CPU device selection with GPU layers, operation offload and KV offload disabled; those physical settings are bound into the implementation passport
+  invariant admitted execution is text-only with 2048 context, batch and microbatch tokens, one sequence, no prefix cache and explicit overflow refusal rather than silent truncation
+  invariant question IDs and option labels remain text even when named images or audio; unsupported question-descriptor fields refuse instead of disappearing in native parsing, and state media, byte, depth and reserved-marker checks remain enforced
+  invariant the GGUF representation uses Q4_K backbone mixture, Q8_0 decision matrices, Q6_K output embeddings and F32 norms; it is not the original BF16 representation
+  invariant the hash-pinned local loader patch selects a GET_ROWS-compatible output embedding buffer only for Clef; non-Clef output matrix-multiplication layout is unchanged
+  known_gap initial all-Metal execution exhausted device memory alongside the existing Qwen service; the declared local placement must not be interpreted as a validated GPU execution profile
+  invariant confidence is declared as typesafe-uniform-adjusted rather than silently equated with Cloudflare maximum-option probability or calibrated correctness
+  invariant local execution is declared nondeterministic and does not enter deterministic cross-request logit reuse
+  invariant one caller abandoning startup cannot cancel another caller's startup; model residency expires only after all active or waiting callers release the owner
+  invariant shutdown joins the owned process and cleanup; failure to establish termination latches refusal instead of starting another model process
+  invariant normal startup and request limits are each 120 seconds; wire request and response limits are 65536 and 262144 bytes respectively
+  forbidden_inference native compilation, offline transport tests or installed model bytes -> verified trained inference, numerical BF16 parity, production accuracy, calibrated confidence or end-to-end cost savings
+  forbidden_inference local model execution or complete probability distributions -> candidate admission, source truth, authority, permission, automatic work claims or executable effects
+  known_gap the pinned runtime comes from unmerged upstream PR 29831 rather than a merged release; upgrades require renewed source, binary and behavioral review
+  known_gap no numerical comparison with the original BF16 framework execution or labeled Bonfyre quality and operational cost evaluation is established by these witnesses
+  known_gap the implemented native runtime is a separate GGML execution realization; it does not establish trained parity for the standalone Bonfyre C head or encoder bridge
+  known_gap text-only 2048-token admission does not establish multimodal support, full upstream context length, prefix reuse, browser portability or multi-sequence throughput
+  known_gap the approved binary passport is specific to the recorded Darwin arm64 build; another platform or toolchain requires its own reviewed binary passport
+  interacts decision-plane
+  interacts decision-program
+
+interaction native-clef-runtime-serves-decision-plane
+  source native-clef-runtime
+  destination decision-plane
+  relation lazy_installed_owner_to_artifact_bound_joint_assessment
+  preserves complete authored question schema and option identity, joint field semantics, explicit confidence statistic, model and implementation provenance, information policy, cancellation and bounded execution
+  drops hosted provider dependency, autoregressive answer generation, unsupported media, implicit remote fallback and permanently resident idle model processes
+  authority exact candidate owners retain masks, freshness, evidence and effect authorization; the native model supplies a non-effecting diagnostic only
+  invalidates_on model or binary bytes, adapter implementation, declared execution limits, question program, exact owner contract or runtime passport change
+  forbidden_inference local trained computation or an artifact digest -> a correct answer, permission to apply a proposal, authenticated external labels or measured system savings
+  witness components/BonfyreDecision/tests/local-systemone.test.mjs
+  witness components/BonfyreDecision/tests/installed-runtime.test.mjs
+  binding components/BonfyreDecision/installed-runtime.mjs
+  binding components/BonfyreDecision/local-systemone.mjs
+  binding components/BonfyreDecision/decision-plane.mjs
+
+interaction native-clef-runtime-serves-source-review
+  source native-clef-runtime
+  destination decision-program
+  relation shared_installed_owner_to_exact_source_assessment
+  preserves per-source authored questions, artifact and implementation identity, complete probabilities, total execution budget and explicit information policy
+  drops a second native process, implicit hosted egress, duplicated execution ownership and cross-source joint attention
+  authority ExternalEstate retains source standing, rights, admission and effect authority; local inference supplies diagnostic review only
+  invalidates_on source descriptor, question program, information policy, model artifact or native implementation change
+  forbidden_inference shared local execution -> source truth, recurring production value or permission to publish
+  witness cmd/BonfyreExternalEstate/tests/decision_program_plane.test.mjs
+  binding cmd/BonfyreExternalEstate/tools/decision_program_plane.mjs
+  binding components/BonfyreDecision/local-inference.mjs
+  binding components/BonfyreDecision/installed-runtime.mjs

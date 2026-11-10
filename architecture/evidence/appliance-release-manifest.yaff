@@ -1,0 +1,44 @@
+atlas evidence-appliance-release-manifest
+
+architecture appliance-release-manifest
+  canonical_name ApplianceReleaseManifest
+  owns BuildTreeArtifactInventory
+  publishes ApplianceCompatibilityManifest
+  publishes ManifestReleaseNotes
+  family evidence
+  domain Evidence / Build artifact inventory
+  layer packaging
+  semantic_question Which current build-tree operators, native libraries and model representation aliases are described by the appliance compatibility manifest and its release notes?
+  purpose Restore the legacy appliance manifest and notes contract through one Bun compiler, without interpreting archived Python or confusing a build-tree inventory with a seal, signature or running-process attestation.
+  maturity implemented
+  source_path scripts/appliance-manifest.mjs
+  source_path scripts/gen_manifest.py.archive
+  source_path scripts/release_notes_from_manifest.py.archive
+  source_path Makefile
+  source_path Aurekai/Makefile
+  witness scripts/tests/appliance_manifest.test.mjs proves archived executable filtering, stable binary and library hashes, model and SAE aliases, dotted FPQx identities, optional fallback, exact release-note formatting, actual root Make targets in an isolated fixture without Python, and previous-report preservation on malformed input
+  internal_calculus sorted build-tree artifacts -> streaming SHA-256 with file identity checks -> bonfyre.deploy.v1 inventory -> manifest-derived Markdown release notes
+  internal_calculus legacy and Aurekai model aliases -> one family entry; SAE aliases -> one dictionary entry; FPQx aliases -> full dotted-stem entry
+  invariant only executable bonfyre or bonfyre-prefixed regular files directly under a command directory enter the operator inventory; artifacts are hashed and never executed
+  invariant operator and library hashing rejects file identity or metadata changes during the read, using bounded streaming buffers rather than whole-binary allocations
+  invariant generated runtime FFI drift and runnable-capability states remain unknown without evidence; enumeration cannot establish either
+  invariant the historical optional default-model paths remain compatibility hints with explicit not_observed presence when no model descriptor exists
+  invariant release notes preserve public model aliases and distinct legacy paths; malformed structures and multiline scalar labels refuse before replacing an existing report
+  invariant a completed output is renamed from a same-directory temporary file; partial generator failures do not replace the existing output
+  invariant root manifest produces both root and dist compatibility paths; release-notes depends on the same manifest and consumes its dist copy
+  forbidden_inference a manifest, SHA-256 inventory or generated release notes -> correct binaries, FFI zero drift, runnable capabilities, resident fallback weights, signed provenance, authorized deployment or the bytes actually running
+  known_gap compatibility revision is a short Git label, not a complete reproducible source and toolchain closure; the signature field remains explicitly unsigned
+  known_gap the fixture witnesses packaging metadata only; the complete appliance build, runtime pack and installation are not executed by these tests
+  interacts running-system-attestation
+
+interaction appliance-inventory-distinct-from-runtime-attestation
+  source appliance-release-manifest
+  destination running-system-attestation
+  relation build_tree_inventory_is_distinct_from_deployed_and_running_bytes
+  preserves artifact names and content digests as observations of a named build tree
+  drops any inference that a build-tree artifact has been sealed, installed, authorized or started
+  authority deployment and running-process byte attestation remain owned by the existing seal, deploy and runtime attestation operations
+  forbidden_inference generated release metadata -> sealed equals deployed equals running
+  witness scripts/tests/appliance_manifest.test.mjs
+  binding scripts/appliance-manifest.mjs
+  binding scripts/release_attest.mjs

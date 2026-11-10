@@ -1,0 +1,63 @@
+atlas external
+
+architecture commons-knowledge-reading
+  canonical_name CommonsKnowledgeReading
+  family external
+  domain External / Free Knowledge
+  layer external
+  semantic_question How does the estate read Wikimedia's free knowledge (Wikipedia's daily feeds, Commons structured data, Wikidata) through carriers that admit a retention crawler, and carry each thing's identity, place, playable file, author and stated terms into public pages?
+  purpose Declares Wikimedia census rows in CUE and writes them through the CMS binary; the reading contract (summary, maker, rights, rights link, media, identity, place, link base, field alternatives, single-object extracts) is read by the page composer natively. commons.wikimedia.org/w/ and query.wikidata.org/sparql refuse crawlers, so the same knowledge is read from api.wikimedia.org feeds (no robots rules) and from QLever at qlever.dev (Freiburg's index of the Wikidata and Commons dumps, no robots rules); the pictures and files themselves are loaded by the reader's own browser from Wikimedia, credited to the commons that keeps them with a link to their own page.
+  maturity implemented
+  consumes InternetSource
+  consumes ForeignTwinGraph
+  publishes CommonsReadingRow
+  node_types CensusReading
+  node_types PictureOrigin
+  edge_types credits
+  edge_types same_identity_as
+  invariant every Wikimedia row is declared in schemas/control/wikimedia-sources.cue and written only through bonfyre-cms entry create|update; a row that exists is updated in place, never duplicated, and never deleted by the tool
+  invariant a row reads only through a carrier whose robots rules admit BonfyreProject/1.0; a refused path is not reached through a different verb on the same host
+  invariant terms shown are the terms the source states for the file (licence words and deed, or a public-domain status), read and credited, never granted by this estate; where no terms are carried the page says the file's own page states them
+  invariant a picture kept by a commons is credited to that commons with a link to the file's own page, whichever source carried its address (nativePagePictureOrigins)
+  invariant an English Wikipedia upload is withheld from every page, because such uploads are often non-free and usable only on their own article (nativePageWithheldPictures)
+  invariant a commons picture is requested at the width its slot needs through the commons' own sizing address, which never enlarges past the original
+  invariant a file name is never a title: a namespace, an encoding and an extension are read as words
+  invariant one identity reported by two sources is one thing on a composed page (the first report keeps its place) and "Also about this" on each item page, each report keeping its own source
+  invariant a film or recording plays in place from the address the commons gives; nothing is proxied, cached or re-hosted here
+  invariant places close together are drawn on OpenStreetMap tiles loaded by the reader's browser, and the tiles carry their credit inside the map
+  invariant undated material is spread evenly through a time-ordered stream rather than sinking below everything dated, and equal times keep their sources' order on every platform
+  forbidden_inference a QLever answer -> Wikimedia's current state; QLever indexes a dump and can lag the live wikis
+  forbidden_inference a film's public-domain status in Wikidata -> public domain in every jurisdiction
+  forbidden_inference a licence shown on a page -> a licence granted, verified or warranted by this estate
+  forbidden_inference a photograph's recorded location -> a survey, an address or a property record
+  forbidden_inference the same Wikidata identity -> the same occurrence, observation or claim
+  forbidden_inference a featured or quality rating -> this estate's endorsement
+  known_gap pictures named by Wikidata (P18) carry no terms in the index; their credit links to the file's page but the page cannot state the licence until Commons structured data for that file is joined
+  known_gap the Dallas–Fort Worth bounding box and the two counties are written into the queries; a territory-derived place scope is not built
+  known_gap thumbnails carried by the Wikipedia feeds are credited by link to their file page only; author and licence are shown only where the carrier supplies them (the picture of the day, Commons structured data rows)
+  known_gap OpenStreetMap's public tile servers are for light use; heavier use needs a tile provider arrangement, which is not made
+  invariant a Commons file's depicted identity (P180) is read as about, never as its own identity, so a picture of a place joins that place's identity page without being treated as the place
+  source_path schemas/control/wikimedia-sources.cue
+  source_path cmd/BonfyreWebAddress/tools/apply_census_sources.py.archive
+  source_path cmd/BonfyreWebAddress/tools/apply_census_sources.mjs
+  source_path cmd/BonfyreWebAddress/tests/apply_census_sources_native_test.sh
+  witness 2026-09-29 cmd/BonfyreWebAddress/tests/apply_census_sources_native_test.sh with BONFYRE_VERIFY_LEGACY=1 proves exact CUE dry-run parity, CMS owner create then update idempotence, and retained body/receipt acquisition through the Bun source compiler; standing probe, qualify, automation and public Commons witnesses now call it instead of Python
+  source_path cmd/BonfyreCMS/content-types/internet_source.json
+  source_path schemas/control/page-composition.cue
+  source_path cmd/BonfyreWebAddress/src/main.c
+  source_path components/BonfyreProject/src/main.c
+  source_path cmd/BonfyreWebAddress/tests/page_commons_test.sh
+  witness cmd/BonfyreWebAddress/tests/page_commons_test.sh writes the declared rows through the CMS binary over production-shaped bodies and proves today's article leads by its words while its English Wikipedia picture is withheld, the picture of the day credits Charles J. Sharp read from markup and links CC BY-SA 4.0 to its deed with a ready credit line, file names read as words (including percent-encoded ones), a contributor named only by account is credited, one identity reported by the almanac and most-read appears once and links as "Also about this", recordings and a film play in place with where they are kept and their standing, places are numbered on a credited street map, and no machine vocabulary is visible
+  witness 2026-09-17 local fetch through the declared carriers retained all six twins: QLever answered the Commons featured-picture query in 10.8 s (48 files, 35 credited), the rated Dallas–Fort Worth photographs in 7.8 s (60 files, 51 credited), the Tarrant and Dallas county places in 1.6 s (60), public-domain films newest first in 3.5 s (40) and recorded music in 2.4 s (48); api.wikimedia.org served today's and yesterday's featured feeds
+  witness 2026-09-17 estate canary on :28791 against a copied CMS with the migrated census matched live on 144/144 route-host pairs; production then migrated internet_source (link_base, reading fields, credential, about_field) through the CMS binary after a store backup, wrote the rows with apply_census_sources.py, and https://aurekai.life/listen, /on-this-day and /nearby answered 200 in about 0.3 s with 40 in-place recordings, a lead article and a credited street map
+  source_lineage 2026-09-17 leaning on Wikimedia Commons without crossing robots rules
+
+interaction commons-knowledge-reading-feeds-page-composition
+  source commons-knowledge-reading
+  destination page-composition
+  relation supplies_credited_material
+  preserves the source's title, identity, place, playable file address, author, stated terms and terms link; the commons that keeps a file and its page there
+  drops SPARQL binding shapes, file-name encodings, markup in authors and descriptions, and English Wikipedia uploads
+  forbidden_inference credited material on a page -> a reuse permission granted by this estate
+  invalidates_on internet_source rows, retained twin bodies, wikimedia-sources.cue or page-composition.cue changes
+  witness cmd/BonfyreWebAddress/tests/page_commons_test.sh

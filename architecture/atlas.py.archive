@@ -20,6 +20,10 @@ instead of re-summarising the system from memory. This module is deliberately
 dependency-free (standard library only) so CI and the MCP node can run it
 without the control-plane environment.
 
+    python3 atlas.py summary          # the whole atlas's shape, bounded
+    python3 atlas.py get <id>         # one architecture record, bounded
+    python3 atlas.py search <query>   # content search (values, never field names)
+    python3 atlas.py cannot-infer <id># what it may NOT be read to imply
     python3 atlas.py validate         # parse + enforce the constitution (CI gate)
     python3 atlas.py loss             # what the atlas knows it is missing
     python3 atlas.py maturity         # honest maturity rollup, no laundering
@@ -31,11 +35,37 @@ without the control-plane environment.
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
+
+def _looks_like_path(witness: str) -> bool:
+    """Whether a witness names a file rather than describing evidence.
+
+    The field carries both: `cmd/.../foo_test.sh` is checkable and `a bounded
+    proof artifact` is not. Guessing wrong in the strict direction would fail
+    every honest prose witness, so the test is deliberately narrow."""
+    return "/" in witness and " " not in witness and not witness.endswith(".")
+
+
+def _witness_exists(witness: str) -> bool:
+    """Resolve a witness path.
+
+    Home-relative paths are expanded: ten substrate proofs live under ~/.bonfyre
+    and a checker that did not expand them would report every one as missing,
+    which is how a false alarm becomes a reason to distrust the check."""
+    import os
+    candidate = os.path.expanduser(witness)
+    if os.path.exists(candidate):
+        return True
+    if not os.path.isabs(candidate):
+        return (ROOT.parent / candidate).exists() or (ROOT / candidate).exists()
+    return False
+
+
 
 # The maturity ladder, low to high. It mirrors the proof-frontier truth planes:
 # a claim is architectural (named only), declared (a contract exists),
@@ -48,6 +78,31 @@ WITNESS_REQUIRED_AT = _MATURITY_RANK["measured"]
 
 # Fields inside a block that accumulate into a list when repeated. Everything
 # else is a scalar (last value wins).
+# Two spellings of one law. `cannot_infer` reads better beside an invariant and
+# is what several families were authored with; `forbidden_inference` is the
+# registry's name for the same field. An unrecognised key is dropped silently,
+# so a family that chose the other spelling was stating what it cannot infer
+# and having it discarded -- seventy-seven such lines, and the loss report kept
+# reporting those architectures as having said nothing.
+_FIELD_ALIASES = {"cannot_infer": "forbidden_inference"}
+
+# Scalar fields something downstream actually reads. Everything else a block
+# carries is stored and never looked at again, which is how 607 authored lines
+# across 84 keys came to be discarded in silence -- the same failure as the 77
+# `cannot_infer` lines above, one layer out. A parser that accepts anything
+# teaches its authors nothing about what it understood.
+_READ_SCALARS = {
+    "canonical_name", "family", "domain", "layer", "semantic_question", "purpose",
+    "maturity", "relation", "source", "destination", "roundtrip_probe",
+    "generation", "authority", "absorbs", "statement", "contract",
+    "native_header", "native_source", "schema", "record", "field",
+}
+
+# Every key seen that neither accumulates nor is read. Collected rather than
+# refused: refusing would fail CI on lines authors already wrote, and the point
+# is to show them, not to lose them twice.
+UNDECLARED_FIELDS: dict[str, list[str]] = {}
+
 _LIST_FIELDS = {
     "node_types", "edge_types", "state_types", "internal_calculus", "child",
     "invariant", "forbidden_inference", "interacts", "computational_form",
@@ -65,6 +120,28 @@ _LIST_FIELDS = {
     # WiringSpec: typed semantic-fact flow between organs (the wiring constitution)
     "owns", "publishes", "subscribes", "derived",
 }
+
+
+def declaration_digest() -> dict:
+    """Digest every declaration this atlas is built from.
+
+    Lives here, module level, because two copies of "which bytes count" is the
+    drift this whole stamp exists to detect. atlas_query imports this one when it
+    can and declines to verify when it cannot -- it never re-derives the answer.
+
+    The index is a build artifact that travels. A copy was hand-installed on the
+    deployment once and then answered questions for four days about declarations
+    that had moved underneath it: `get surface-ir` returned `architectural` with
+    one witness where the checkout carried `implemented` with five. Both answers
+    look equally authoritative when neither says what it was made from.
+    """
+    import hashlib
+    h = hashlib.sha256()
+    files = sorted(ROOT.rglob("*.yaff"))
+    for f in files:
+        h.update(f.relative_to(ROOT).as_posix().encode())
+        h.update(f.read_bytes())
+    return {"declaration_files": len(files), "declaration_digest": h.hexdigest()}
 
 
 @dataclass
@@ -98,12 +175,15 @@ def parse_file(path: Path) -> list[Block]:
         stripped = raw.strip()
         key, _, value = stripped.partition(" ")
         value = value.strip()
+        key = _FIELD_ALIASES.get(key, key)
         if raw[0].isspace():
             if current is None:
                 continue
             if key in _LIST_FIELDS:
                 current.lists.setdefault(key, []).append(value)
             else:
+                if key not in _READ_SCALARS:
+                    UNDECLARED_FIELDS.setdefault(key, []).append(str(path.name))
                 current.scalars[key] = value
             continue
         # top-level line
@@ -172,12 +252,47 @@ class Atlas:
             maturity = a.get("maturity")
             if maturity and maturity not in _MATURITY_RANK:
                 errors.append(f"architecture {aid}: unknown maturity '{maturity}'")
-            elif maturity and _MATURITY_RANK[maturity] >= WITNESS_REQUIRED_AT and not a.lst("witness"):
-                # the anti-laundering rule: no measured/proven claim without a witness.
-                errors.append(
-                    f"architecture {aid}: maturity '{maturity}' claims a measurement "
-                    f"but carries no witness -- maturity laundering"
-                )
+            elif maturity and _MATURITY_RANK[maturity] >= WITNESS_REQUIRED_AT:
+                # The anti-laundering rule, enforced rather than stated.
+                #
+                # This tested only that the witness list was non-empty, so any
+                # sentence satisfied it: `witness a bounded proof artifact`
+                # passed the guard against claiming a measurement without one.
+                # The rule forbade an absent witness, not a fictional one.
+                witnesses = a.lst("witness")
+                if not witnesses:
+                    errors.append(
+                        f"architecture {aid}: maturity '{maturity}' claims a measurement "
+                        f"but carries no witness -- maturity laundering"
+                    )
+                else:
+                    # A measured claim needs at least one witness that can be
+                    # run or opened today. An archived witness listed alongside
+                    # a live one is historical context and is left alone; an
+                    # archive standing alone is a claim whose evidence was
+                    # retired and never revisited.
+                    live = [w for w in witnesses
+                            if not w.endswith(".archive")
+                            and (not _looks_like_path(w) or _witness_exists(w))]
+                    for w in witnesses:
+                        if (_looks_like_path(w) and not w.endswith(".archive")
+                                and not _witness_exists(w)):
+                            errors.append(
+                                f"architecture {aid}: witness '{w}' names a file that does "
+                                f"not exist -- a witness that cannot be opened is not one"
+                            )
+                    if not live:
+                        # Say which kind of nothing it is. A missing file and a
+                        # retired one are different failures with different
+                        # fixes, and a message naming the wrong one sends the
+                        # reader looking in the wrong place.
+                        archived = [w for w in witnesses if w.endswith(".archive")]
+                        reason = ("every witness is archived; a retired witness cannot "
+                                  "support a current claim" if archived == witnesses
+                                  else "no witness can be opened or run today")
+                        errors.append(
+                            f"architecture {aid}: {reason} -- '{maturity}' is not supported"
+                        )
 
         # a view must expand only to real architectures, and to at least two of
         # them (a one-child view is a rename hiding as a collapse).
@@ -280,8 +395,19 @@ class Atlas:
             rollup[fam][m] += 1
         return rollup
 
+    def source_digest(self) -> dict:
+        d = declaration_digest()
+        return {
+            "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "declaration_files": d["declaration_files"],
+            "declaration_digest": d["declaration_digest"],
+            "cannot_infer": "a matching digest -> a correct atlas; it says this index was "
+                            "built from these declaration bytes and nothing more",
+        }
+
     def export(self) -> dict:
         return {
+            "provenance": self.source_digest(),
             "architectures": {
                 aid: {
                     "canonical_name": a.get("canonical_name"),
@@ -350,8 +476,48 @@ class Atlas:
 # --------------------------------------------------------------------------- #
 
 
+def _backing_errors() -> list[str]:
+    """Whether every claim still stands on a file a reader can open.
+
+    The anti-laundering rule was enforced on witnesses and never on sources, so
+    an architecture could carry `implemented` while every file it named had
+    been archived, or while a path it named had not existed for months. Both
+    were true here, and the estate's metering organ was one of them. The check
+    lives in its own module; validation runs it so the gap cannot reopen
+    quietly.
+    """
+    import subprocess
+    probe = Path(__file__).resolve().parent / "check-maturity-backing.mjs"
+    if not probe.exists():
+        return ["native maturity-backing checker is missing"]
+    try:
+        done = subprocess.run(["bun", str(probe), "--json"],
+                              capture_output=True, text=True)
+    except OSError as exc:
+        return [f"native maturity-backing checker could not start: {exc}"]
+    if done.returncode != 0 or not done.stdout.strip():
+        return ["native maturity-backing checker failed: " +
+                (done.stderr.strip() or f"exit {done.returncode}")]
+    try:
+        report = json.loads(done.stdout)
+    except ValueError as exc:
+        return [f"native maturity-backing checker returned invalid JSON: {exc}"]
+    out = []
+    for row in report.get("source_paths_that_do_not_open", []):
+        out.append("architecture %s: source_path '%s' names a file that does not open -- "
+                   "a claim resting on it rests on nothing"
+                   % (row["architecture"], row["paths"][0]))
+    for row in report.get("every_source_archived_and_unsaid", []):
+        out.append("architecture %s: every source is archived and no known_gap says so -- "
+                   "archived code is history, not an implementation" % row["architecture"])
+    for row in report.get("measured_without_an_openable_witness", []):
+        out.append("architecture %s: maturity '%s' with no witness that opens"
+                   % (row["architecture"], row["maturity"]))
+    return out
+
+
 def _cmd_validate(atlas: Atlas) -> int:
-    errors = atlas.validate()
+    errors = atlas.validate() + _backing_errors()
     if errors:
         print(f"✗ atlas invalid: {len(errors)} error(s)")
         for e in errors:
@@ -360,6 +526,35 @@ def _cmd_validate(atlas: Atlas) -> int:
     print(f"✓ atlas valid: {len(atlas.architectures)} architectures, "
           f"{len(atlas.views)} views, {len(atlas.interactions)} interactions, "
           f"{len(atlas.phenotypes)} phenotypes, {len(atlas.edge_classes)} edge-classes")
+    return 0
+
+
+def _cmd_fields() -> int:
+    """What the parser stored and no renderer reads.
+
+    A field the atlas does not understand is not refused; it is kept as a
+    scalar nobody looks at. That is how `cannot_infer` lines written by three
+    families were discarded while the loss report went on saying those
+    architectures had stated nothing, and it is how 607 further lines went the
+    same way. Reporting them is the difference between a registry that knows
+    what it understood and one that quietly decides for its authors.
+
+    Cannot infer: an undeclared key is not a mistake. It is a key nobody wrote
+    a rule for, and the fix is either a rule or a rename -- the registry cannot
+    tell which and does not guess.
+    """
+    if not UNDECLARED_FIELDS:
+        print("every field key in the atlas is one a renderer reads")
+        return 0
+    total = sum(len(v) for v in UNDECLARED_FIELDS.values())
+    print(f"{len(UNDECLARED_FIELDS)} field keys are stored and never read "
+          f"({total} authored lines):")
+    for key in sorted(UNDECLARED_FIELDS, key=lambda k: -len(UNDECLARED_FIELDS[k])):
+        files = sorted(set(UNDECLARED_FIELDS[key]))
+        shown = ", ".join(files[:3]) + ("  ..." if len(files) > 3 else "")
+        print(f"  {key:32} {len(UNDECLARED_FIELDS[key]):4}  {shown}")
+    print("\nEach is either a field the registry should read or a line that "
+          "should be renamed to one it does. Nothing here guesses which.")
     return 0
 
 
@@ -409,11 +604,63 @@ def _cmd_view(atlas: Atlas, view_id: str) -> int:
     return 0
 
 
+def _organ_projection(atlas: Atlas) -> dict:
+    """What each cmd/ organ is, projected for the capability registry.
+
+    BonfyreCapability discovers installed organs by scanning the install
+    directory, which tells it a name and a path and nothing else -- so a
+    discovered capability could be found by name and never ranked against a
+    curated one. Every organ already says what it is here, in the entry whose
+    source_path points into its directory.
+
+    This is a generated view and never canonical: the atlas entries are. It
+    exists so the registry reads a small projection instead of parsing the
+    258KB index, and so the fact that an organ has no entry stays visible as an
+    absence rather than being filled in with a guess.
+    """
+    organs: dict[str, dict] = {}
+    for arch_id, entry in atlas.export()["architectures"].items():
+        for path in entry.get("source_paths") or []:
+            if not path.startswith("cmd/"):
+                continue
+            parts = path.split("/")
+            if len(parts) < 2:
+                continue
+            organ = parts[1]
+            publishes = entry.get("publishes") or []
+            candidate = {
+                "architecture": arch_id,
+                "description": entry.get("semantic_question") or "",
+                "layer": entry.get("layer") or "",
+                "family": entry.get("family") or "",
+                "domain": entry.get("domain") or "",
+                "maturity": entry.get("maturity") or "",
+                "publishes": publishes[0] if publishes else "",
+            }
+            prior = organs.get(organ)
+            # An organ can appear in several entries. Prefer the one that has
+            # actually been measured, then the longest description, because a
+            # one-line placeholder should not displace a real answer.
+            if prior is None:
+                organs[organ] = candidate
+                continue
+            rank = {"measured": 3, "proven": 3, "implemented": 2, "declared": 1, "architectural": 1}
+            if (rank.get(candidate["maturity"], 0), len(candidate["description"])) > \
+               (rank.get(prior["maturity"], 0), len(prior["description"])):
+                organs[organ] = candidate
+    return organs
+
+
 def _cmd_export(atlas: Atlas) -> int:
     out = ROOT / "atlas.index.json"
     out.write_text(json.dumps(atlas.export(), indent=2, sort_keys=True))
+    organs = _organ_projection(atlas)
+    organ_out = ROOT / "atlas.organs.json"
+    organ_out.write_text(json.dumps(organs, indent=2, sort_keys=True))
     print(f"✓ wrote {out.relative_to(ROOT.parent)} "
           f"({len(atlas.architectures)} architectures)")
+    print(f"✓ wrote {organ_out.relative_to(ROOT.parent)} "
+          f"({len(organs)} organs the capability registry can read)")
     return 0
 
 
@@ -474,11 +721,23 @@ def _cmd_fs(atlas: Atlas, out_dir: str) -> int:
 
 def main(argv: list[str]) -> int:
     cmd = argv[1] if len(argv) > 1 else "validate"
+    # Bounded context queries answer from the exported index and never parse the
+    # registry -- the whole point is that asking the atlas one question costs one
+    # question's worth of bytes.
+    if cmd in ("summary", "get", "search", "cannot-infer"):
+        return _cmd_query(cmd, argv[2] if len(argv) > 2 else "")
     atlas = Atlas.load()
     if cmd == "validate":
-        return _cmd_validate(atlas)
+        rc = _cmd_validate(atlas)
+        if UNDECLARED_FIELDS:
+            total = sum(len(v) for v in UNDECLARED_FIELDS.values())
+            print(f"  note: {len(UNDECLARED_FIELDS)} field keys ({total} lines) are "
+                  f"stored and never read; `atlas.py fields` lists them")
+        return rc
     if cmd == "loss":
         return _cmd_loss(atlas)
+    if cmd == "fields":
+        return _cmd_fields()
     if cmd == "maturity":
         return _cmd_maturity(atlas)
     if cmd == "expand":
@@ -500,6 +759,57 @@ def main(argv: list[str]) -> int:
         return _cmd_audit()
     print(f"unknown command: {cmd}")
     return 1
+
+
+def _cmd_query(cmd: str, arg: str) -> int:
+    """The cheap realization of an atlas lookup: a bounded answer from the
+    exported index, for carriers that have a shell but no MCP attachment."""
+    import subprocess
+    query = subprocess.run(
+        ["bun", str(ROOT / "atlas-query.mjs"), cmd, arg],
+        capture_output=True, text=True, timeout=120,
+    )
+    if query.returncode:
+        print(query.stderr.strip() or "Atlas query failed", file=sys.stderr)
+        return query.returncode
+    r = json.loads(query.stdout)
+    if cmd == "summary":
+        s = r
+        print(f"atlas: {s['architectures']} architectures, {s['views']} views, "
+              f"{s['interactions']} interactions")
+        print("  maturity: " + ", ".join(f"{k}:{v}" for k, v in s["maturity"].items()))
+        print("  families: " + ", ".join(f"{k}:{v}" for k, v in s["families"].items()))
+        print("  views:    " + ", ".join(s["view_names"]))
+        return 0
+    if cmd == "cannot-infer":
+        if not r["exists"]:
+            print(f"no such architecture: {arg}")
+            return 1
+        for fi in r["forbidden_inferences"]:
+            print(f"    {arg} may NOT be read to imply: {fi}")
+        if not r["forbidden_inferences"]:
+            print(f"    {arg} states no forbidden inference (atlas loss)")
+        return 0
+    if cmd == "get":
+        a = r["architecture"]
+        if a is None:
+            print(f"no such architecture: {arg}")
+            if r["did_you_mean"]:
+                print("  did you mean: " + ", ".join(r["did_you_mean"]))
+            return 1
+        print(f"{arg}  {a.get('canonical_name')}  [{a.get('maturity')}] "
+              f"family={a.get('family')}")
+        print(f"  asks: {a.get('semantic_question')}")
+        for field in ("source_paths", "witnesses", "forbidden_inferences",
+                      "invariants", "known_gaps"):
+            for v in a.get(field) or []:
+                print(f"  {field[:-1] if field.endswith('s') else field}: {v}")
+        return 0
+    print(f"search {arg!r}: {r['total']} match(es)"
+          + (" (truncated)" if r["truncated"] else ""))
+    for m in r["matches"]:
+        print(f"    {m['id']:34} [{m['maturity']}] via {','.join(m['matched_fields'])}")
+    return 0
 
 
 def _cmd_audit() -> int:

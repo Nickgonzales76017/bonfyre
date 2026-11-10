@@ -2,6 +2,41 @@ atlas model
 # Harvested run6/run7 model estate above FPQ/SLI/KV: representation, topology,
 # prepared execution. Registered architectural until built.
 
+architecture latent-coordinate-fabric
+  canonical_name LatentCoordinateFabric
+  family model
+  domain Model / Governed Coordinates
+  layer model/latent
+  semantic_question Which replayable learned coordinate is attached to this exact subject, under what passport, comparability and use law?
+  purpose Binds LatentProfile, EmbeddingProjection, LatentSpacePassport, ComparabilityContract, LatentTrajectory, LatentDelta and LatentWatch to exact AddressPlane subjects and causal frontiers.
+  maturity implemented
+  owns LatentProfile
+  owns EmbeddingProjection
+  owns LatentSpacePassport
+  owns ComparabilityContract
+  owns LatentTrajectory
+  owns LatentDelta
+  owns LatentWatch
+  consumes AddressSet
+  consumes InformationPolicy
+  publishes LatentWatch
+  node_types LatentProfile
+  node_types EmbeddingProjection
+  node_types LatentSpacePassport
+  edge_types projected_from
+  edge_types comparable_under
+  edge_types follows
+  invariant every projection names an exact semantic subject, feature closure, causal frontier and source digest
+  invariant cross-space comparison requires an explicit comparability contract
+  forbidden_inference similarity -> identity, relation, evidence, authority, or financial truth
+  forbidden_inference latent drift -> causal change
+  interacts latent-coordinate-narrows-derivation
+  source_path components/BonfyreControlPlane/latent_fabric.py.archive
+  source_path components/BonfyreControlPlane/address_plane.py.archive
+  witness components/BonfyreControlPlane/tests/test_latent_fabric.py.archive
+  witness components/BonfyreControlPlane/tests/test_address_plane.py.archive
+  source_lineage Generation-10 governed latent coordinate target over current SID and embedding predecessors
+  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
 architecture model-representation-graph
   canonical_name ModelRepresentationGraph
   family model
@@ -10,13 +45,74 @@ architecture model-representation-graph
   semantic_question What representation profile is this model in, and what invalidates it?
   purpose Binds model identity, representation profile, prepared state, execution phenotype, runtime capability with separate invalidation domains, so changing one does not silently invalidate another. FPQ is representation, never identity.
   maturity architectural
+  source_path cmd/BonfyreFPQ/src/fpq_native.c
+  source_path cmd/BonfyreFPQ/src/main.c
+  source_path cmd/BonfyreFPQ/results/2026-09-11-qwen-gguf-local-baseline.json
+  source_path cmd/BonfyreFPQ/results/2026-09-11-qwen2.5-coder-0.5b-real-tensor-v9.json
+  source_path cmd/BonfyreFPQ/results/2026-09-11-bitnetcpp-arm-build-refusal.json
+  source_path cmd/BonfyreFPQ/results/2026-09-11-bitnetcpp-official-model-patched-diagnostic.json
+  source_path cmd/BonfyreQwenFPQ/results/2026-09-11-qwen-native-fp16-execution.json
+  witness cmd/BonfyreFPQ/results/2026-09-11-qwen-fpq0-header.json verifies one real FPQ0 artifact can be structurally inspected without full-model hydration; it does not promote execution or generation behavior
+  witness cmd/BonfyreFPQ/results/2026-09-11-qwen-gguf-local-baseline.json records one bounded local Qwen 3B GGUF generation on the stated llama.cpp/Metal configuration; it is explicitly a non-FPQ, non-BitNet baseline and does not establish capacity or comparative quality
+  witness cmd/BonfyreFPQ/results/2026-09-11-qwen2.5-coder-0.5b-real-tensor-v9.json records one real Qwen tensor FPQ transform/reconstruction, not a model execution receipt
+  witness cmd/BonfyreFPQ/results/2026-09-11-bitnetcpp-arm-build-refusal.json records that the unmodified official BitNet.cpp ARM build did not reach model execution on the stated host
+  witness cmd/BonfyreFPQ/results/2026-09-11-bitnetcpp-official-model-patched-diagnostic.json records Microsoft BitNet-b1.58-2B-4T (332 tensors; 210 I2_S) through an actual patched-diagnostic BitNet.cpp ARM execution. It proves only model execution; the completion failed its exact instruction after the loader warned of degraded generation quality, so no embedding/reranking or production inference claim follows
+  witness cmd/BonfyreQwenFPQ/results/2026-09-11-qwen-native-fp16-execution.json records 24-layer native execution and four generated tokens from the existing Qwen FPQ0 artifact, while naming that all 290 tensors stayed passthrough and no compressed FPQ execution occurred
   node_types ModelPassport
   edge_types represented_as
   forbidden_inference low reconstruction error -> good semantic generation
   forbidden_inference representation -> model identity
   interacts fpq-transform
   source_lineage run6/run7 model estate
-  known_gap not built; FPQTransformation is one representation already measured
+  known_gap native FPQ0 now has a native-Qwen execution baseline but still lacks a per-tensor/block representation passport, non-passthrough block-local decode, prepared residency and parity envelope. BitNet.cpp now has a patched-diagnostic ARM model execution receipt, while the unmodified upstream build remains refused and the observed degraded completion disqualifies it from embedding/reranking or ResourceAdmission until a compatible model/tokenizer path has a measured preservation envelope
+
+architecture model-representation-passport-registry
+  canonical_name ModelRepresentationPassportRegistry
+  family model
+  domain Model / Representation Admission
+  layer model/representation
+  semantic_question Which measured model representation may be forwarded for which operation, and what exact preservation gate remains before resource admission?
+  purpose ModelCatalog stores one normalized representation passport per physical/runtime form with a receipt digest, operation scope, quality envelope and ADMIT/DEFER/REJECT state. It forwards typed compute advertisements through AddressPlane but never turns a model declaration, transform receipt or physical fit into runnable inference.
+  maturity implemented
+  owns ModelRepresentationPassport
+  consumes ModelPassport
+  publishes CandidateAdvertisement
+  node_types ModelRepresentationPassport
+  edge_types represented_as
+  edge_types measured_by
+  edge_types admitted_for
+  invariant a bare ModelCatalog row advertises operation catalog only; generation, embedding and rerank coordinates require a separate representation passport
+  invariant only a measured passport whose exact ModelCatalog gate returns ADMIT can proceed to ResourceAdmission
+  invariant a provider embedding passport names its source and ordered physical-vector digests, while a rank receipt may carry only a query digest and candidate handles; neither representation becomes the caller's semantic owner
+  forbidden_inference a representation receipt -> model identity, semantic quality, provider readiness, authorization, evidence, or effect
+  forbidden_inference ResourceAdmission physical fit -> representation preservation or model execution eligibility
+  source_path cmd/BonfyreModel/src/main.c
+  source_path cmd/BonfyreExternalEstate/src/main.c
+  source_path cmd/BonfyreQwenFPQ/results/2026-09-11-qwen-native-fp16-representation-passport.json
+  witness cmd/BonfyreModel/tests/representation_passport_test.sh
+  witness cmd/BonfyreExternalEstate/tests/model_representation_owner_test.sh
+  witness estate/generated/mistral-publication-embedding-witness-2026-09.json
+  witness estate/generated/mistral-publication-retrieval-evaluation-2026-09.json
+  interacts model-representation-passport-forwards-address-candidate
+  source_lineage native model catalog and FPQ/Qwen receipt estate
+  known_gap the recorded native-Qwen baseline is intentionally DEFER because it is all native-F16 passthrough with no task/production or compressed-FPQ parity envelope. BitNet's patched diagnostic execution remains outside this registry because the exact model-body passport and compatible tokenizer/ranking preservation envelope are still absent.
+  invariant representation-record reads the passport's receipt_ref now and refuses a passport whose receipt is unreadable or whose sha256 differs from receipt_digest; a passport is never recorded on trust
+  invariant the catalogue sync projects every registry passport as a representation node (category = admission state, source_hash = receipt digest, json_data = the full typed passport) joined to its model by has_representation/represents_model; the served catalogue and the registry hold the same passports
+  invariant a failed passport node or edge write aborts the catalogue refresh and rolls the previous projection back rather than committing a partial passport graph
+  forbidden_inference a projected passport node -> admission; DEFER travels with it and Model Commons shows it as DEFER
+  forbidden_inference a static embedding's neighbour overlap with its teacher -> retrieval quality, or the teacher's own quality
+  source_path lib/libbonfyre/src/bf_catalog.c
+  source_path estate/generated/nomic-static-128-representation-passport-2026-10.json
+  source_path estate/generated/nomic-embed-text-onnx-representation-passport-2026-10.json
+  witness 2026-10-30 live registry and served catalogue agree exactly: 23 models and 4 passports in models.db, 23 model nodes and 4 representation nodes in catalog.db, no registry row or passport missing from the catalogue (attach-and-diff query); all four receipt digests re-read and match
+  witness lib/libbonfyre/tests/catalog_model_sync_test.c exercises bootstrap recipe model rebuild, unknown model provenance, unavailable and malformed registries, absent and malformed passport tables, write rollback, and removal from a valid empty registry
+  invariant a model registry refresh fails and rolls back if its prior projection cannot be read or if prior passports exist without a readable passport table; a registry without passports can bootstrap before any passport is projected
+  witness cmd/BonfyreModel/tests/representation_passport_test.sh deletes passport edges in an isolated catalogue, verifies a shared-library resync restores both directions, and injects an edge-write failure to verify rollback
+  witness estate/generated/nomic-static-128-teacher-agreement-site-passages-2026-10-30.json
+  witness estate/generated/nomic-static-128-teacher-agreement-publication-titles-2026-10-30.json
+  known_gap nomic-static-128 and nomic-embed-text-onnx now carry measured DEFER passports: teacher agreement (18.5 percent top-10 overlap on 1703 site passages, 20.7 percent on 2000 publication titles) and teacher residency (peak 280 MB against a 275 MB grant). Neither has a relevance judgement, false-prune trial or ComparabilityContract, so no passport here is ADMIT and no cross-model quality comparison is supported
+  known_gap eight other organs resync the catalogue through libbonfyre (Capability, Family, Layer, QwenFPQ, Runtime, Recipe, Run, Workflow). Their installed copies predate the passport projection: a resync by one of them keeps representation nodes but drops their model edges (delete of the model: scope) until bonfyre-model next resyncs or those organs are relinked
+  known_gap Mistral Embed now has one complete 22,962-body physical embedding representation and a narrow four-query top-3 retrieval witness, but its full passport remains DEFER until a declared preservation envelope and false-prune trial are measured; it cannot be compared with Nomic or BitNet without a ComparabilityContract.
 
 architecture model-topology-graph
   canonical_name ModelTopologyGraph
@@ -55,3 +151,125 @@ architecture prepared-execution-graph
   interacts tract
   source_lineage run6/run7 model estate
   known_gap not built
+
+architecture model-commons
+  canonical_name ModelCommons
+  family model
+  domain Model / The model estate as a page
+  layer presentation
+  semantic_question What models does this estate hold, which exact local native candidate can this account review, and what output and metered usage did that one admitted run produce?
+  purpose Model catalogue pages retain their measured relations and unresolved references. A separate native execution surface lists the current MoE owner's chat candidates and admits one bounded account-owned request through Fabric after explicit review. Model detail joins only an exact native-owned catalogue binding. Served at /s/models/all and /s/model/<id>.
+  maturity measured
+  node_types CatalogueModel
+  node_types CatalogueRelation
+  node_types AccountModelReview
+  node_types ModelPhysicalAttempt
+  consumes CatalogueModel
+  consumes NativeModelCandidate
+  publishes AccountScopedModelRequest
+  native_format MessagePack browser activity carrier, private review intents and retained native execution receipts
+  native_format existing llama-compatible JSON protocol is confined to the current MoE adapter; it is not the Aurekai or Fabric account transport
+  edge_types powers
+  edge_types derived_from
+  internal_calculus the catalogue held all of this and had no page. bonfyre-model list prints names and sizes, and everything that makes a model legible -- its variants, what it came from, what depends on it -- was reachable only by querying the graph by hand
+  internal_calculus a relation is a dependency only if the thing at the other end exists. Counting an edge whose target was never registered is how one model came to look as though seven recipes depended on it while its own page could name one
+  internal_calculus an unresolved reference is information, not noise: a recipe that uses a model is a real relation even when the recipe was never inserted, so it is named as unfollowable rather than dropped by the join that could not follow it
+  internal_calculus a model with a measured representation passport is not unmeasured: the page printed "nothing has been measured" beside a registry that held a measured passport, because the catalogue never carried passports. The passport is shown with its admission state and envelope, never turned into a score
+  internal_calculus a measured figure is printed only where one exists. A zero for mean F1 is an absence of measurement, and printing it as a score would make a model that has never been evaluated look like one that failed
+  internal_calculus catalogue prices remain observations; a reviewed run separately reads the native Meter rate effective at its attempt time. Measured output bytes and duration produce a physical usage event; absent rates remain unknown and do not become free usage
+  invariant every relation figure counts only edges whose other end resolves to a registered node
+  invariant unresolved references are counted in their own right and named on the model that carries them
+  invariant reading a catalogue or native capability list never pulls a model, acquires a lease or starts inference
+  invariant account write authority is resolved at the native page boundary and rechecked by Auth and CMS before the local lease and physical model dispatch; a browser expectedBinding must still name the exact actor and destination
+  invariant one retained review binds the prompt digest, native candidate witness, maximum tokens, timeout, one-call budget and observed unit rate; a new submission identity cannot reuse that delegation for another task
+  invariant the exact native lease must name the reviewed checkpoint and a live residency memory grant before the prompt is sent; fallback substitution and changed residency are refused or retained as uncertain
+  invariant a retained physical attempt cannot be replayed after restart, timeout, cancellation or a lost acknowledgement. Meter reconciliation can only repeat the exact retained usage payload for a completed output
+  invariant outputs and recipient notifications derive from trusted task scope in the existing Fabric store; historical operator work is never adopted into a customer account
+  forbidden_inference a registered model -> a cached, licensed, or runnable one
+  forbidden_inference a recorded edge -> a guarantee about either end of it, or a licence that travels along it
+  forbidden_inference powering a capability -> authority to invoke it, or a claim this is the only model that could
+  forbidden_inference an absent price -> a free model; it means no provider has published a rate this estate admitted, and the electricity and time are unmeasured
+  forbidden_inference a derivation -> a licence inherited from what it was derived from
+  forbidden_inference an exact catalogue binding or a native memory grant -> a representation passport, model licence or measured semantic quality
+  forbidden_inference a native response timeout or client cancellation -> proof the model performed no work
+  forbidden_inference a model output -> authority, executable instructions or a confirmed external effect
+  forbidden_inference local MoE execution -> distributed peer inference or hosted-provider spending authority
+  source_path cmd/BonfyreWebAddress/src/main.c
+  source_path cmd/BonfyreWebAddress/src/model_catalogue_index.c
+  source_path cmd/BonfyreWebAddress/src/glyph_set.h
+  source_path cmd/BonfyreWebAddress/tests/model_commons_test.sh
+  witness cmd/BonfyreWebAddress/tests/model_catalogue_index_test.c checks catalogue card icons, escaped content and separately disclosed unresolved references
+  witness cmd/BonfyreWebAddress/tests/model_catalogue_index_test.c checks public model pages describe local file sources without disclosing their machine paths while retaining external source coordinates
+  invariant a public model page describes local file sources without exposing the local filesystem path; the catalogue retains the original source record
+  witness cmd/BonfyreWebAddress/tests/model_commons_test.sh checks escaped price observation dates and a focusable scroll region for the hosted price table
+  source_path cmd/BonfyreWebAddress/src/activity_workspace.h
+  source_path integrations/browser/aurekai-model.mjs
+  source_path integrations/mcp/fabric_model.mjs
+  source_path integrations/mcp/native_model.mjs
+  source_path integrations/mcp/native_meter.mjs
+  source_path integrations/estate/llama_generation.mjs
+  witness 2026-09-26 served from the live catalogue: 22 models, 201 layer artifacts, 134 capabilities, and the relations split honestly into 177 that resolve and 547 that do not
+  witness 2026-09-26 the 547 unresolved edges are a real defect in the catalogue, not a rendering choice: they name recipe and layer ids that were never inserted as nodes. Llama 3 8B Instruct carries eight uses_model edges of which one resolves, and its page now names all seven recipes it references and cannot follow
+  witness 2026-09-26 the first version of the index counted those edges, reporting nine dependents for a model whose own page could name two. The figures are now joined through the node table and the unresolved count is shown beside them
+  witness 2026-09-26 held by cmd/BonfyreWebAddress/tests/model_commons_test.sh, whose fixture gives one model a real dependent plus two phantom recipes and a phantom layer, and asserts the dependent count excludes all three, the unresolved count includes all three, each is named on the model's page, a clean model is not flagged, a measured figure shows only where one exists, and an unregistered model is refused
+  witness 2026-10-30 cmd/BonfyreWebAddress/tests/model_commons_test.sh gives a model a measured DEFER passport node and asserts the page shows the passport, its state, envelope and receipt, does not call that model unmeasured, and gives no passport to a model without one; run against a scratch build, and against a copy of the live catalogue where /s/model/nomic-static-128 showed "measured embedding, DEFER"
+  witness integrations/mcp/tests/fabric_model.test.mjs checks durable account-bound review, exact submission recovery after expiry and restart, one-call consumption, fresh authority and rate refusal, scoped output integrity, cancellation uncertainty and usage-only reconciliation
+  witness integrations/mcp/tests/native_model.test.mjs checks the current native MoE protocol, exact lease and residency, bounded response bytes, cancellation propagation and explicit native-owned catalogue mapping
+  witness integrations/mcp/tests/fabric_model_pipeline.test.mjs traverses the real Fabric queue and store, a controlled loopback MoE wire witness, compiled BonfyreMeter, recipient activity and the browser decoder; this is not a live model inference claim
+  known_gap little has been measured about these models here: four representation passports for four models, all DEFER (mistral-embed coverage, bitnet diagnostic, nomic-embed-text-onnx residency, nomic-static-128 teacher agreement). A model page shows each passport with its state and envelope; the other nineteen models still say nothing has been measured, and no quality comparison across models is supported
+  known_gap catalogue entries without an explicit BONFYRE_MODEL_BINDINGS_FILE mapping remain catalogue-only. The model index separately lists actual configured native candidates without inferring a catalogue match
+  known_gap verification uses a controlled MoE protocol witness and the real native meter in isolated stores; it does not establish the live model's availability, performance, licence or production quality, and does not resume an operator STOP
+  known_gap the passport band is in checkout source and held by the test, but the running releases predate it: the live page will not show passports until a WebAddress release carries it
+  known_gap hosted token usage in BonfyreMeter (codex and claude models) names no model this catalogue registers, so there is no exact meter-to-catalogue join; none is inferred
+  known_gap the 547 unresolved references are reported and not repaired. Whether those recipes and layers should be registered nodes or should stop being referenced is a question about the catalogue, not about this page
+  interacts model-commons-reads-the-catalogue
+  interacts model-commons-admits-native-account-work
+  interacts model-commons-records-physical-usage
+  interacts account-work-names-provider-sessions-for-meter
+
+interaction model-commons-reads-the-catalogue
+  source model-commons
+  destination model-topology-graph
+  relation reads_without_asserting
+  preserves the catalogue as the owner of what is registered: these pages read it and write nothing
+  drops any path by which rendering a model could register, pull, cache or run one
+  forbidden_inference a rendered model page -> a model this estate has ever executed
+  witness 2026-09-26 both rooms open the catalogue read-only and no request pulls, verifies or caches anything
+  binding cmd/BonfyreWebAddress/src/main.c
+
+interaction model-commons-admits-native-account-work
+  source model-commons
+  destination dual-agent-fabric-native-owner
+  relation reviewed-account-delegation
+  preserves fresh native actor and destination admission, one physical request, original task identity, native lease, STOP, queue budgets, output ownership and recipient notifications
+  drops browser-selected paths, hosts, process arguments, retroactive operator task attribution and automatic retries of uncertain inference
+  forbidden_inference an available candidate or a prepared review -> permission to skip native account or execution admission
+  binding integrations/mcp/fabric_model.mjs
+  binding integrations/mcp/native_model.mjs
+  binding integrations/mcp/fabric_server.mjs
+  witness integrations/mcp/tests/fabric_model.test.mjs
+  witness integrations/mcp/tests/fabric_model_pipeline.test.mjs
+
+interaction model-commons-records-physical-usage
+  source model-commons
+  destination financial-metabolism
+  relation exact-native-physical-attempt-recording
+  preserves the original account key, attempt, realization, occurrence time, receipt digest, measured bytes, duration and admitted rate; exact replay returns one retained event
+  drops invented costs, token estimates, zero-price assumptions and inference replay as a response to a lost meter acknowledgement
+  forbidden_inference recorded or priced model usage -> an invoice, payment or settled liability
+  binding integrations/mcp/native_meter.mjs
+  binding integrations/mcp/fabric_model.mjs
+  witness integrations/mcp/tests/native_meter.test.mjs
+  witness integrations/mcp/tests/fabric_model_pipeline.test.mjs
+
+interaction account-work-names-provider-sessions-for-meter
+  source cmd-meter
+  destination aurekai-activity
+  relation exact-session-key-read
+  preserves the account Work index as owner of task, run and account scope; Meter reads its provider_session_ref read-only and attributes model token receipts only where one task and one provider name the session for the same account key
+  drops time-window, title and proximity joins, sessions claimed by more than one task, and evidence recorded under another account key
+  forbidden_inference a task's provider session with token evidence -> a cost the account was charged for that task, or a CostAllocation
+  binding cmd/BonfyreQueue/src/account_work.h
+  binding cmd/BonfyreMeter/src/meter_tokens.h
+  witness cmd/BonfyreQueue/tests/account_work_index_test.sh
+  witness cmd/BonfyreMeter/tests/token_evidence_test.sh

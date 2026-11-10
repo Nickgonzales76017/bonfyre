@@ -1,0 +1,31 @@
+architecture media-delivery
+  canonical_name MediaDelivery
+  family surface
+  domain Media / Delivery lease
+  layer surface
+  semantic_question How can an authenticated actor obtain a bounded transport lease for an already-selected media representation without collapsing library access, rights, transport, delivery, or watch proof?
+  purpose Native delivery-lease owner. It independently obtains the current BonfyreAuth ActorClosure, re-asks MediaLibrary for a current direct representation plan, verifies a separate exact right scoped to actor/library/subject/representation/protocol/time, and mints a short-lived HLS, DASH, or MOQT lease. It carries no media bytes.
+  maturity measured
+  owns MediaDeliveryRight
+  owns TransportLease
+  consumes ActorClosure
+  consumes PlaybackPlan
+  publishes TransportLease
+  node_types MediaDeliveryRight
+  node_types TransportLease
+  edge_types grants_bounded_transport_eligibility
+  edge_types leases_representation_to_transport
+  internal_calculus Auth ActorClosure x current direct PlaybackPlan x explicit actor/library/subject/representation/protocol/right interval -> bounded TransportLease | REFUSED_RIGHT_REQUIRED
+  invariant a delivery lease rechecks the current actor closure and MediaLibrary plan instead of trusting a previously returned catalog or plan body
+  invariant an explicit delivery right is scoped to exactly one actor, library, subject, representation, protocol and validity interval; a CMS music_right row is evidence/interest metadata and never becomes this grant by implication
+  invariant revoking an explicit delivery right atomically revokes each active derived TransportLease; a carrier rechecks current lease status rather than treating a prior SUBSCRIBE_OK as durable permission
+  invariant an HLS/DASH/MOQT lease is a transport eligibility projection only; it contains no delivery URL, byte stream, transcode job, watch occurrence, evidence admission or effect
+  forbidden_inference a delivery lease -> media ownership, a licence beyond its stated right, delivered bytes, an active carrier session, a transcode, playback, watch proof or payment settlement
+  source_path cmd/BonfyreMediaDelivery/src/main.c
+  source_path cmd/BonfyreMediaDelivery/tests/media_delivery_test.sh
+  witness cmd/BonfyreMediaDelivery/tests/media_delivery_test.sh proves an authenticated audio plan is refused without a matching protocol right, issues a bounded HLS lease only after current Auth and MediaLibrary rechecks, and revokes individual leases and all active leases derived from a revoked right
+  witness integrations/mcp/tests/media_actor_closure_test.sh proves a stateless MCP 2026 request binds its bearer to Auth ActorClosure and reaches the same right-checked HLS lease owner without exposing a carrier URL or watch claim
+  interacts media-delivery-rechecks-authenticated-playback-plan
+  interacts media-delivery-projects-moqt-token
+  source_lineage direct playback selection separated from rights and carrier admission
+  known_gap HLS/DASH manifest generation, actual object delivery, device/session state, transcode enactment, token rotation/replay policy, MOQT relay aggregation and watch proof remain distinct owners

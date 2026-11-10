@@ -1,0 +1,91 @@
+atlas optimization-cheap-cognition
+
+architecture cheap-cognition
+  canonical_name CheapCognition
+  owns CognitiveMicroRoute
+  owns AdmissibleRole
+  consumes ExactMask
+  consumes CandidateSet
+  consumes InformationPolicy
+  publishes CandidateClassification
+  publishes EscalationDecision
+  family optimization
+  domain Optimization / Cognitive control plane
+  layer execution
+  semantic_question Is this decision a classification a tiny local model can make inside an exact mask, or does it require an expensive operator?
+  purpose Give the machine a cheap semantic control plane that removes expensive cognition from paths that never needed it, without letting an approximate operator take a decision that must be exact.
+  maturity implemented
+  source_path components/BonfyreDecision/channel-yield.mjs
+  source_path components/BonfyreDecision/decision-plane.cue
+  source_path cmd/BonfyreSourceFrontier/tools/qualify_channels.mjs
+  source_path scripts/qualify_continuously.sh
+  source_path cmd/BonfyreDecide/src/dp_gguf.c
+  witness components/BonfyreDecision/tests/channel-yield.test.mjs proves the ordered replay never shows a record an outcome recorded after it, training is byte-deterministic, a shadow assessment is a validated DecisionPlane receipt bound to the weight file's SHA-256, and skip value is computed by assessSelectiveValue against timed qualifier outcomes
+  witness components/BonfyreDecision/results/channel-yield-offline-20261016.json trains weights cb5713ef (frozen for the live holdout) on the first 73,854 of 92,318 ordered qualifier outcomes and replays the last 18,464: Brier 0.052 against 0.077 for the base rate; worked in score order, 50% of yields arrive in the first 10% of observations against 9.5% as run, 76% in the first quarter against 23%, 94% in the first half against 44%; skipping below 0.01 drops 26% of observations and loses 3.9% of yields
+  witness cmd/BonfyreDecide/tests/parity.sh exercises the C owner (dp_gguf.c) against tests/mock_front.c: forced-continuation scoring over a token trie for an 18-account chart, lettered questions asked in both orders with the content-free prior, checkpoint pinning and a lease granted and released, byte-identical to the retired Bun owner (2026-10-22)
+  known_gap the refusal paths ported into dp_gguf.c (an unreported option token, option names that extend one another, a letter read as zero over a non-negligible tail) were proven on the retired Bun owner and are not yet exercised by a C vector
+  invariant the first admitted role is SourceFrontier channel_qualification: before an observation is spent, the DecisionPlane gives the probability that it yields a qualifying channel or a page that declares channels, from the address and the publisher's earlier outcomes only
+  invariant the owner is a pinned local logistic weight file trained on the qualifier's own ordered evidence; the qualifier still observes every claimed candidate and owns admission
+  invariant receipts are written before the qualifier observes the same slice, so its timed outcomes are an independent holdout for the frozen weights; the gate stays SHADOW until assessSelectiveValue on that holdout is promotion-eligible
+  forbidden_inference yields found earlier in an ordered replay -> sources admitted sooner in the live chain; ordering reaches WorkGraph priority only with BONFYRE_QUALIFY_ORDER=yield, off by default
+  forbidden_inference a skipped observation that would have refused -> a worthless channel; a refusal is how one fetch ended on one day
+  known_gap the live holdout has no timed outcomes yet: qualify_channels began recording observe_ms and channel_id on 2026-10-16
+  known_gap Clef, the pinned DecisionPlane owner, took 32 to 132 s per assessment on this machine's CPU (tests/trained-runtime-witness.json), longer than the observations it would avoid; it is not the owner here
+  node_types CheapClassifier
+  node_types AdmissibleRole
+  node_types InadmissibleRole
+  node_types EscalationBoundary
+  edge_types classifies
+  edge_types escalates_to
+  edge_types bounded_by
+  invariant a cheap classifier runs inside an exact mask over a bounded candidate set, never over an open world
+  invariant a cheap classifier proposes; the exact layer disposes
+  invariant no authority, permission, effect admission or proof outcome is ever decided by an approximate operator
+  invariant a classification carries its confidence and its escalation path; an unresolved case escalates rather than guesses
+  invariant the cheap stage is measured by how much expensive cognition it avoided, not by its own accuracy alone
+  invariant a cheap classifier may discover a compression opportunity; only the exact layer may act on one
+  invariant a local GGUF owner gives probability only to what the server scored: up to five options are lettered and asked in both orders; more are scored as forced continuations of each option name, one call per distinct token prefix; an option token the server did not report refuses the answer, and mass said off the list is abstention (none) rather than spread over unscored options
+  invariant a GGUF answer is bound to the checkpoint by SHA-256, device, inode, size and nanosecond modification and change times and to the model the server names on every call; the batch holds the model by a front lease
+  invariant the checkpoint is hashed through one descriptor whose identity must hold from open to close; its digest is kept per process (16 files) and as one row per path in ~/.bonfyre/state/checkpoints.sqlite, replaced when the file's identity changes; the JSON sidecar is no longer read or written and the model directory is never written
+  invariant a lease reply must name the lease it answers (renewed/released true); a grant is released when owner start-up fails after it; a refused or malformed grant is an error, and only 404 (plain llama-server) means unleased; an unacknowledged release keeps the lease for retry
+  invariant templates, option tokens and calibration priors share a 128-entry, 1 MiB serialized-payload memo per owner, and coverage keeps the latest 128 readings
+  witness cmd/BonfyreDecide/tests/parity.sh runs every model-assisted vector with a fresh BONFYRE_HOME, so the C owner writes the checkpoint row in state/checkpoints.sqlite (shared with the Bun schema) and takes and releases a front lease each run (2026-10-22)
+  known_gap rehash on a changed checkpoint, a refused grant, release after a failed start-up and an unacknowledged release kept for retry are ported into dp_gguf.c but were witnessed only on the retired Bun owner (2026-10-17)
+  forbidden_inference the memo budget -> the owner's memory; it bounds serialized payload, not process memory, and a lost grant reply with no lease id still relies on the front's ttl
+  forbidden_inference a cheap classification -> a resolved finding
+  forbidden_inference a cheap classification -> a granted authority
+  forbidden_inference high classifier confidence -> exactness
+  forbidden_inference a cheap stage being available -> it being cheaper than a bitmap intersection
+  forbidden_inference a named option the model generated -> a distribution over the declared options; only scored options carry probability
+  interacts optimization-cascade
+  interacts compression-law
+  source_lineage Generation-10 optimization doctrine promotion, 2026-08-26
+
+admissible_role assign a repair phenotype to a finding before expensive analysis
+admissible_role propose a likely duplicate family
+admissible_role propose a business-impact class
+admissible_role propose a likely proof family
+admissible_role estimate escalation likelihood
+admissible_role assign a route or function to a candidate capability family
+admissible_role assign a motif to a candidate domain operation
+admissible_role tokenize a scraped title into candidate entity attributes
+admissible_role classify a phrase as carrying a candidate contract term
+admissible_role triage a new failure as known phenotype, provider-shaped, carrier-shaped, contract-shaped or new
+admissible_role separate likely reusable motifs from incidental similarity before expensive analysis
+
+inadmissible_role deciding that a security finding is resolved
+inadmissible_role granting or denying authority
+inadmissible_role admitting an effect
+inadmissible_role establishing entity identity as fact
+inadmissible_role closing a proof obligation
+inadmissible_role deciding what a downstream estate may see
+
+escalation_boundary exact-rule
+  detail The classification maps onto a deterministic rule that resolves the case exactly.
+escalation_boundary latent-search
+  detail The classification narrows to a neighborhood that similarity search can rank.
+escalation_boundary deeper-model
+  detail The case is genuinely ambiguous and warrants an expensive operator over a small residue.
+
+ordering_note the measured best order varies by subject family; exact then latent then cheap-model is sometimes cheaper than exact then cheap-model then latent, and the planner selects on measurement rather than doctrine
+discovery_note the highest-value use of this stage is separating reusable structure from incidental similarity across a very large candidate population, which makes cheap cognition a producer of compression opportunities and not only a consumer of them

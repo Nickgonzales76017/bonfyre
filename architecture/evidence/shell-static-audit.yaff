@@ -1,0 +1,49 @@
+atlas evidence-shell-static-audit
+
+architecture shell-static-audit
+  canonical_name ShellStaticAudit
+  family evidence
+  domain Evidence / Shell source analysis
+  layer verification
+  semantic_question Which discovered shell files did the installed ShellCheck analyze, which could it not analyze, and what exact source bytes were in scope?
+  purpose Run one bounded read-only ShellCheck audit in ordinary CI with deterministic rg discovery, source hashes, complete diagnostics, and explicit unsupported-shell classification.
+  maturity implemented
+  source_path scripts/analysis/shellcheck_audit.mjs
+  source_path scripts/tests/shellcheck_audit.test.mjs
+  source_path .github/workflows/native-kernel.yml
+  witness scripts/tests/shellcheck_audit.test.mjs covers actual-error refusal, missing-tool refusal, unsupported-shell separation, concurrent source-change refusal, and unknown-severity refusal; the installed 2026-10-02 ShellCheck 0.11.0 scan discovered 315 files, analyzed 314, reported one SC1071 unsupported file, zero other errors, and retained all warnings, info and style diagnostics
+  invariant discovery names the exact existing source roots and globs and sorts paths bytewise; each input path and SHA-256 contributes to the reported scope digest
+  invariant runner subprocesses have time and output limits; missing rg or ShellCheck, malformed output, unknown diagnostic severity, and input changes during the scan fail closed
+  invariant SC1071 files are reported as unsupported and excluded from analyzed counts rather than suppressed, counted as errors, or called passed
+  invariant all ShellCheck diagnostics, including warnings, info and style, remain in the JSON report; only actual non-SC1071 errors fail the source audit
+  forbidden_inference no ShellCheck errors -> shell runtime correctness, safe deployment, absence of defects, or successful analysis of an unsupported shell
+  known_gap ShellCheck cannot analyze scripts whose interpreter is outside its supported shell family; scripts/bonfyre_repo_inventory.sh remains explicitly unsupported, and the audit neither replaces runtime tests nor applies fixes
+
+architecture javascript-static-audit
+  canonical_name JavaScriptStaticAudit
+  family evidence
+  domain Evidence / Exact source analysis coverage
+  layer verification
+  maturity implemented
+  semantic_question Did the requested JavaScript source bytes actually reach a real pinned analyzer, rather than merely produce a successful installer or wrapper exit?
+  purpose Bind explicit source hashes, observed analyzer version, analyzed file and rule counts, diagnostics and process status into one fail-closed CI receipt.
+  source_path scripts/analysis/oxlint_audit.mjs
+  source_path scripts/tests/oxlint_audit.test.mjs
+  source_path .github/workflows/native-kernel.yml
+  witness scripts/tests/oxlint_audit.test.mjs covers missing or silent output, incomplete scope, changed source bytes, invalid diagnostics and executable/version refusal
+  invariant every requested input is a bounded regular file beneath the audit root; duplicate paths and symlinks refuse
+  invariant analyzer JSON must report the exact requested file count and a positive rule count; silent success and skipped input coverage fail
+  invariant source identity and digest are checked before and after analysis; changed input invalidates the receipt
+  invariant warnings remain visible and fail this explicit clean-source gate; malformed output or process status cannot be reclassified as success
+  forbidden_inference zero analyzer diagnostics -> semantic correctness, security proof, runtime performance or analysis of any file outside the recorded scope
+  known_gap the JavaScript gate checks an explicit scoped list; it is not a claim that all estate JavaScript is analyzed or clean
+
+interaction javascript-audit-covers-project-mcp
+  source javascript-static-audit
+  destination mcp-project-native-owner
+  relation source-bound-static-analysis
+  preserves exact runtime, deployment and HTTP witness source paths, source digests, pinned analyzer version and observed coverage counts
+  drops any inference from static analysis to live effect authority, deployment success or functional parity
+  forbidden_inference a clean static-analysis receipt -> correctness of a native projection or safety of a production cutover
+  binding .github/workflows/native-kernel.yml
+  witness integrations/mcp/tests/project_node_cutover.json records explicit Oxlint JSON coverage separately from tests and deployment observations

@@ -1,0 +1,66 @@
+atlas native-file-digest
+
+architecture native-file-digest
+  canonical_name NativeFileDigest
+  family external
+  domain External / Platform cryptography
+  layer external
+  semantic_question Can native file receipts use the operating system's digest implementation while preserving exact content identity and read-failure semantics?
+  purpose The shared file reader supplies SHA-256 identities to native commands and Fabric. macOS uses CommonCrypto from libSystem; other platforms and BONFYRE_SHA256_PORTABLE builds use the existing portable implementation.
+  maturity measured
+  source_path lib/libbonfyre/src/bf_sha256.c
+  source_path lib/libbonfyre/include/bonfyre.h
+  source_path lib/libbonfyre/tests/sha256_file_test.c
+  source_path cmd/BonfyreHash/tests/file.test.mjs
+  internal_calculus one 8 KiB input buffer feeds a private backend context; the exported BfSha256 context and incremental functions retain their portable representation
+  invariant identical file bytes produce the same 64-character digest across the system and portable backends; open, stream and close failures publish no digest
+  witness lib/libbonfyre/tests/sha256_file_test.c passes eighteen checks on each backend, including partial read failure and descriptor cleanup
+  witness cmd/BonfyreHash/tests/file.test.mjs checks both backends against Node crypto across eleven sizes including SHA padding and read-buffer boundaries
+  witness packs/no-simulation/native-hash-acceleration-20261013/benchmark.json records five alternating runs at each size; 128 MiB plus 17 bytes improved from median 0.720429 to 0.119173 seconds with equal independent digests on this Mac
+  forbidden_inference faster local digest timing -> the same gain on another machine, cold storage, or a complete application workflow
+  forbidden_inference a successful digest -> source immutability, file authenticity or effect authority
+  known_gap the portable branch is tested on macOS; this change does not claim a Linux execution witness or accelerate the exported incremental in-memory API
+
+interaction hash-uses-native-file-digest
+  source cmd-hash
+  destination native-file-digest
+  relation file_and_duplicate_reads_to_shared_digest
+  preserves exact content identity and explicit I/O failure
+  drops digest publication on failed reads
+  forbidden_inference equal digests -> permission to delete either file
+  invalidates_on digest or error contract changing
+  witness cmd/BonfyreHash/tests/file.test.mjs
+  binding cmd/BonfyreHash/src/main.c
+
+interaction ingest-uses-native-file-digest
+  source cmd-ingest
+  destination native-file-digest
+  relation source_and_normalized_body_to_intake_identity
+  preserves source and normalized identities as separate manifest fields
+  drops ready manifest creation when either local hash fails
+  forbidden_inference both hashes succeeded -> normalization was lossless or the input stayed immutable throughout processing
+  invalidates_on hash or intake readiness contract changing
+  witness cmd/BonfyreIngest/tests/hash.test.mjs
+  binding cmd/BonfyreIngest/src/main.c
+
+interaction compress-uses-native-file-digest
+  source cmd-compress
+  destination native-file-digest
+  relation passport_source_to_generation_digest
+  preserves source generation identity across backend choice
+  drops a generation digest when the source cannot be read completely
+  forbidden_inference a matching generation digest -> authority to replace a physical representation
+  invalidates_on passport or digest contract changing
+  witness cmd/BonfyreCompress/tests/physical_compiler_test.sh
+  binding cmd/BonfyreCompress/src/physical.c
+
+interaction artifacts-use-native-file-digest
+  source artifact-graph
+  destination native-file-digest
+  relation retained_file_to_artifact_identity
+  preserves content-addressed artifact identity and read failure
+  drops partial-read digests
+  forbidden_inference an artifact digest -> evidence that its contents support a claim
+  invalidates_on artifact or digest contract changing
+  witness engine/core/tests/operator_reference.test.mjs
+  binding engine/core/src/fabric.c

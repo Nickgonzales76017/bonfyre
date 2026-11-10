@@ -1,6 +1,6 @@
 atlas views
 # Collapsed names are legal ONLY here, as reversible views. Each expands to >=2
-# real architectures; the view never replaces its children. atlas.py enforces
+# real architectures; the view never replaces its children. atlas.mjs enforces
 # that every child resolves, so a view can never silently swallow a system.
 
 view ModelView

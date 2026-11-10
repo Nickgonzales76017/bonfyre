@@ -1,0 +1,151 @@
+#!/usr/bin/env python3
+# Retired: architecture/check-maturity-backing.mjs reads the verified Atlas.
+"""Whether each claim in the atlas still stands on something that exists.
+
+The anti-laundering rule was enforced on witnesses and never on sources. A
+witness that cannot be opened fails validation; a *source* that cannot be
+opened passes, and so does an architecture whose every source was archived
+years ago. That is how BonfyreMeter carried `implemented` while pricing usage
+by the first letter of an op name, and how FinancialMetabolism carried it while
+every file it named ended in `.archive`.
+
+Three questions, none of which needs anyone's judgement:
+
+  gone        does each source_path open? A claim resting on a file that is not
+              there rests on nothing, and the reader cannot even go and look
+
+  retired     is every source archived? Archived code is history, not an
+              implementation. An architecture in that state may still be the
+              right description of something native -- but it has to say so,
+              in a known_gap, naming what took the work over
+
+  unwitnessed the existing rule, restated here so one command answers the whole
+              question: measured and proven need a witness that opens
+
+It prints what it finds and, with --strict, fails. Without --strict it is a
+report, because the point is to make the gap visible before it is fatal.
+
+  check_maturity_backing.py [--strict] [--json]
+"""
+from __future__ import annotations
+import argparse, json, os, re, sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+WITNESS_REQUIRED_AT = ("measured", "proven")
+
+
+def opens(path: str) -> bool:
+    """Whether a named path can be opened from here.
+
+    A path may be written relative to the repository, against the operator's
+    home, or absolutely against a deployment that is not this machine. The
+    first two are checkable; the third is recorded as unopenable here, which is
+    the honest answer for a reader standing in this checkout.
+    """
+    candidate = os.path.expanduser(path)
+    if os.path.isabs(candidate):
+        return os.path.exists(candidate)
+    return os.path.exists(ROOT / candidate) or os.path.exists(candidate)
+
+
+def looks_like_path(text: str) -> bool:
+    """Whether a line names a file rather than describing evidence in prose."""
+    return "/" in text and " " not in text and not text.endswith(".")
+
+
+def read_entries() -> dict:
+    entries, current = {}, None
+    for yaff in sorted(ROOT.glob("architecture/**/*.yaff")):
+        for line in yaff.read_text(errors="replace").splitlines():
+            named = re.match(r"^architecture (\S+)\s*$", line)
+            if named:
+                current = named.group(1)
+                entries[current] = {"file": str(yaff.relative_to(ROOT)), "maturity": "",
+                                    "source_path": [], "witness": [], "known_gap": []}
+                continue
+            if not current:
+                continue
+            for field in ("maturity", "source_path", "witness", "known_gap"):
+                got = re.match(r"^  %s (.+?)\s*$" % field, line)
+                if got:
+                    if field == "maturity":
+                        entries[current]["maturity"] = got.group(1)
+                    else:
+                        entries[current][field].append(got.group(1))
+    return entries
+
+
+RETIRED_SAID = re.compile(r"(archiv|retired|absorb|native owner|superseded|no longer)", re.I)
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--strict", action="store_true", help="fail on what is found")
+    ap.add_argument("--json", action="store_true")
+    args = ap.parse_args()
+
+    entries = read_entries()
+    gone, retired, unwitnessed = [], [], []
+
+    for name, entry in sorted(entries.items()):
+        sources = [s for s in entry["source_path"] if looks_like_path(s)]
+        missing = [s for s in sources if not opens(s)]
+        if missing:
+            gone.append({"architecture": name, "maturity": entry["maturity"],
+                         "file": entry["file"], "paths": missing})
+
+        if sources:
+            live = [s for s in sources if opens(s) and not s.endswith(".archive")]
+            if not live:
+                # An architecture whose work has all been archived may still be
+                # a true description of something native. It has to say which,
+                # and a known_gap is where this atlas says that kind of thing.
+                said = any(RETIRED_SAID.search(g) for g in entry["known_gap"])
+                if not said:
+                    retired.append({"architecture": name, "maturity": entry["maturity"],
+                                    "file": entry["file"], "sources": len(sources)})
+
+        if entry["maturity"] in WITNESS_REQUIRED_AT:
+            # A witness is often a real file followed by what it proves, and
+            # prose alone is a legitimate witness in this atlas. Only a witness
+            # that names a file and fails to open is a failure; everything else
+            # counts, exactly as the validator already treats it. Reading this
+            # more narrowly flagged two architectures whose witness is a live
+            # test with its result written after the path.
+            witnesses = entry["witness"]
+            openable = [w for w in witnesses
+                        if not w.endswith(".archive")
+                        and (not looks_like_path(w.split()[0]) or opens(w.split()[0]))]
+            if witnesses and not openable:
+                unwitnessed.append({"architecture": name, "maturity": entry["maturity"],
+                                    "file": entry["file"]})
+
+    report = {"architectures": len(entries),
+              "source_paths_that_do_not_open": gone,
+              "every_source_archived_and_unsaid": retired,
+              "measured_without_an_openable_witness": unwitnessed}
+
+    if args.json:
+        print(json.dumps(report, indent=1))
+    else:
+        print("atlas maturity backing: %d architectures" % len(entries))
+        print("  %d name a source path that does not open" % len(gone))
+        for row in gone:
+            print("    %-34s %-12s %s" % (row["architecture"], row["maturity"], row["paths"][0]))
+        print("  %d have every source archived without saying so" % len(retired))
+        for row in retired:
+            print("    %-34s %-12s %s" % (row["architecture"], row["maturity"], row["file"]))
+        print("  %d claim a measurement with no witness that opens" % len(unwitnessed))
+        for row in unwitnessed:
+            print("    %-34s %-12s" % (row["architecture"], row["maturity"]))
+
+    found = len(gone) + len(retired) + len(unwitnessed)
+    if args.strict and found:
+        print("\n%d claims do not stand on something a reader can open." % found, file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

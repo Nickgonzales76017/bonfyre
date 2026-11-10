@@ -1,0 +1,114 @@
+atlas institutional-system-map-stress
+
+architecture generation10-system-map-stress
+  canonical_name Generation10SystemMapStress
+  owns CircuitReplayReport
+  consumes WorkState
+  consumes AtlasAnswer
+  consumes CapabilityBid
+  consumes Authority
+  consumes Artifact
+  consumes Evidence
+  publishes ReceiptEnvelope
+  publishes CircuitReplayReport
+  family institutional
+  domain Institutional / Whole-machine proof
+  layer replay
+  semantic_question Can one real effect cross the Generation-10 owner topology and replay without collapsing any owner's semantics?
+  purpose Executes a rights-limited foreign observation through WorkGraph, bounded context, ProviderGraph, Authority, native EffectKernel, ObjectFabric, ReceiptEnvelope and EvidenceGraph, then attacks the recorded trace with authority, tamper, producer-identity and claim-promotion counterfactuals.
+  maturity measured
+  node_types OwnerTransition
+  node_types ReceiptEnvelope
+  node_types ReplayVerdict
+  edge_types hands_off_to
+  edge_types replays
+  internal_calculus content-addressed envelope replay against live owner stores
+  internal_calculus counterfactual authority and identity mutation
+  invariant every successful run closes durable work against a content-addressed receipt after the native effect receipt and ObjectFabric artifact exist
+  invariant a second invocation over satisfied work is replay-only and creates no additional effect or native receipt
+  invariant foreign rights, AuthorityGraph grants, provider identity, transport identity, artifact identity, provenance and claim support remain separately replayable dimensions
+  forbidden_inference a successful replay -> current foreign truth, upstream completion, effect authority, or a new external effect
+  forbidden_inference a content-valid receipt -> the named producer actually produced it
+  interacts foreign-twin
+  interacts work-graph
+  interacts atlas-context-provider
+  interacts provider-graph
+  interacts authority-graph
+  interacts artifact-graph
+  interacts evidence-graph
+  source_path components/BonfyreControlPlane/system_map_stress.py.archive
+  witness components/BonfyreControlPlane/tests/test_system_map_stress.py.archive
+  witness evidence/proofs/generation10-system-map-stress.json
+  source_lineage Generation-10/V8.1 end-to-end institutional circuit
+  source_lineage Bernstein artifact-identity-vs-producer-identity and validation-snapshot boundary
+  known_gap every source this entry names is archived, so this is a historical measurement rather than a live implementation; no native replacement for the whole circuit is witnessed here
+
+interaction generation10-stress-consumes-foreign-twin
+  source foreign-twin
+  destination generation10-system-map-stress
+  relation rights_limited_observation_input
+  preserves source institution, remote resource identity, observation event and observe/reference rights
+  drops mutation authority and any claim of current remote truth
+  forbidden_inference cached partner observation -> authority or upstream completion
+  witness foreign_act_label_without_authority_grant_is_denied
+  binding components/BonfyreControlPlane/system_map_stress.py
+
+interaction generation10-stress-closes-work
+  source work-graph
+  destination generation10-system-map-stress
+  relation receipt_bound_lifecycle_replay
+  preserves work item identity, transitions and satisfying receipt reference
+  drops queue priority as a durability claim
+  forbidden_inference effect command exit zero -> work satisfied
+  witness workgraph_closed_only_against_receipt
+  binding components/BonfyreControlPlane/system_map_stress.py
+
+interaction generation10-stress-bounds-context
+  source atlas-context-provider
+  destination generation10-system-map-stress
+  relation bounded_context_delivery
+  preserves query identity, answer digest and delivered byte count
+  drops the rest of the lossless registry from provider context
+  forbidden_inference bounded context -> complete mission evidence
+  witness receipt_context_answer_sha256
+  binding components/BonfyreControlPlane/system_map_stress.py
+
+interaction generation10-stress-selects-provider
+  source provider-graph
+  destination generation10-system-map-stress
+  relation authority_filtered_realization
+  preserves provider identity and the multidimensional bid vector
+  drops unauthorized candidates from selection, not from historical observation
+  forbidden_inference available or cheapest provider -> authorized provider
+  witness provider_owner_agrees_with_receipt
+  binding components/BonfyreControlPlane/system_map_stress.py
+
+interaction generation10-stress-admits-effect
+  source authority-graph
+  destination generation10-system-map-stress
+  relation exact_effect_admission
+  preserves actor, permission, subject, purpose and effect scope
+  drops ForeignTwin rights as an authority source
+  forbidden_inference foreign act label -> AuthorityGraph grant
+  witness authority_owner_admitted_exact_effect
+  binding components/BonfyreControlPlane/system_map_stress.py
+
+interaction generation10-stress-replays-artifact
+  source artifact-graph
+  destination generation10-system-map-stress
+  relation objectfabric_content_replay
+  preserves content digest, URI, byte count and transformation lineage
+  drops producer and transport identity from artifact identity
+  forbidden_inference byte-identical artifact -> same producer or same execution
+  witness objectfabric_digest_matches_effect_output
+  binding components/BonfyreControlPlane/system_map_stress.py
+
+interaction generation10-stress-replays-evidence
+  source evidence-graph
+  destination generation10-system-map-stress
+  relation directional_claim_replay
+  preserves the exact evidence, relation kind and supported claim
+  drops unsupported upstream-completion claims
+  forbidden_inference green owned validation snapshot -> current upstream completion
+  witness snapshot_evidence_does_not_support_upstream_completion
+  binding components/BonfyreControlPlane/system_map_stress.py

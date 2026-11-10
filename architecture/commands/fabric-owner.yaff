@@ -1,0 +1,142 @@
+atlas commands-fabric-owner
+
+architecture dual-agent-fabric-native-owner
+  canonical_name DualAgentFabricNativeOwner
+  family commands
+  domain Execution / Durable cross-agent work and isolated convergence
+  maturity measured
+  semantic_question Can independent agent proposals, isolated implementation and evidence-gated application share one durable cancellable work owner without turning model output into authority?
+  purpose Replace the Python broker with Bun scheduling and the existing real agent CLIs while preserving fourteen tools, four prompts, task handles, sessions, events and receipt identities.
+  node_types DurableTask
+  node_types AgentRun
+  node_types IsolatedWorktree
+  node_types SourceSnapshot
+  node_types LaneLock
+  node_types ReviewVerdict
+  node_types PatchReceipt
+  node_types TaskDisclosureAdmission
+  node_types RecipientNotification
+  node_types ReviewedAccountModelTask
+  node_types NativeUsageReceipt
+  node_types RecipientPushAttempt
+  internal_calculus bounded admission -> atomic queued task claim -> optional exact-hash current-source admission -> pinned isolated baseline -> owned process groups -> early Project patch admission -> review and conditional repair -> executable tests and one bounded test repair -> concurrent independent final verification -> unchanged patch identity -> fresh Project preview and guarded apply
+  internal_calculus cancellation -> terminal cancellation state -> terminate owned subprocess groups -> join -> release lane locks
+  internal_calculus trusted native actor and destination admission -> immutable task scope in existing Fabric SQLite -> current process execution witness -> bounded MessagePack activity -> recipient revision and request receipt for read or dismiss
+  internal_calculus fresh native write authority -> exact local model and pricing review -> synchronous scoped task and request receipt -> existing bounded queue -> pinned native lease and physical attempt -> retained output -> native Meter event -> recipient attention
+  invariant restart does not replay historical queued or running work; recorded running state is not evidence of a surviving process
+  invariant cancelled tasks cannot become successful when a late subprocess result arrives; foreign lock expiry does not prove executor death
+  invariant agent dispatch tools are effects despite inherited readOnlyHint annotations; task submission obeys STOP and bounded scheduling
+  invariant untracked additions are included in isolated worktree patches; reviewed patch changes invalidate application
+  invariant Project MCP owns live patch authority; ambiguous apply responses remain uncertain and are never automatically retried
+  invariant Project reads and patch operations use the configured Project endpoint independently of the mesh endpoint; remote Project placement requires a dedicated credential
+  invariant known Project preflight refusals stop before review expense, failed tests receive at most one configured repair in the same worktree, and persistent failures never enter final verification or apply
+  invariant repair may be skipped only for a structured review with resolved state, nonempty evidence and no blocking findings; both independent final verdicts and successful tests remain required for apply
+  invariant compact task reads omit prompts, agent output and receipt bodies; live executor ownership and queue position come from the service process, never from a historical running row
+  invariant legacy unbound tasks remain operator work; account disclosure is admitted atomically with task creation and cannot be added or reassigned later
+  invariant task disclosure follows the native subject and scope; notification lifecycle additionally matches the current recipient actor and never cancels or resumes work
+  invariant the internal activity carrier accepts only authenticated native exact operations and rejects browser origins; reviewed account model execution has a separate fresh native write and exact-model admission path and cannot dispatch operator tools
+  invariant model work shares the existing Fabric queue STOP capacity and cancellation owners; legacy MCP dispatch cannot select model kind or supply account disclosure coordinates
+  invariant a physical model attempt is retained before inference; restart cancellation or an incomplete response cannot cause automatic replay
+  invariant Meter repair uses the retained exact attempt output bytes duration and identity; a lost native acknowledgement cannot create a second inference or a second usage event
+  invariant current native Auth and CMS access is checked at model dispatch and recipient push delivery; stored scope and browser permission are not substitute authority
+  invariant local output verification resolves immutable bytes through the model owner and fresh initiating-account permission; peer claims never become account or remote recipient authority
+  invariant optional source_files admit at most sixty-four explicit regular files or absent paths and eight MiB total; stale hashes, unsafe paths, ignored files and cancelled preparation refuse before agent execution
+  invariant selected source is retained as a hashed receipt and isolated Git baseline without changing the project HEAD or index; baseline diffs exclude supplied inputs and remain pinned if an agent commits
+  invariant baseline object hashing uses one no-filter batch and one index-info update; Git object identities are compared with captured bytes and repository attributes that reinterpret the baseline refuse admission
+  invariant selected source hashes and modes are checked again before apply; detected source changes retain the candidate for review and never relax Project clean-path or write policy
+  forbidden_inference admitted selected source -> complete dependency coverage, an atomic repository snapshot, or authority to write a dirty path
+  forbidden_inference passing CLI exit or model-authored JSON -> correctness of the proposed patch, independent proof, or permission to bypass Project authority
+  forbidden_inference child environment peer depth -> authenticated recursion isolation across MCP HTTP clients sharing a credential
+  forbidden_inference local contract and fixture tests -> live paid-provider behavior, estate-wide performance, or complete retirement of all Python services
+  forbidden_inference destination membership or a notification dismissal -> task execution authority, recipient fan-out, cancellation, or permission to disclose an unbound task
+  forbidden_inference a retained receipt digest and kind -> a safe artifact body or a downloadable file
+  source_path integrations/mcp/fabric_server.mjs
+  source_path integrations/mcp/fabric_store.mjs
+  source_path integrations/mcp/http_boundary.mjs
+  source_path integrations/mcp/fabric_schema.sql
+  source_path integrations/mcp/fabric_activity.mjs
+  source_path integrations/mcp/fabric_activity_cli.mjs
+  source_path integrations/mcp/fabric_model.mjs
+  source_path integrations/mcp/native_model.mjs
+  source_path integrations/mcp/native_meter.mjs
+  source_path integrations/mcp/fabric_output_transfer.mjs
+  source_path integrations/mcp/account_authority.mjs
+  source_path integrations/mcp/fabric_push.mjs
+  source_path integrations/mcp/fabric_push_store.mjs
+  source_path integrations/mcp/fabric_push_carrier.mjs
+  source_path integrations/mcp/fabric_work.mjs
+  source_path integrations/mcp/fabric_catalog.json
+  source_path integrations/mcp/fabric_estate.mjs
+  source_path integrations/mcp/hook_bridge.mjs
+  source_path integrations/mcp/owned_mcp_client.mjs
+  source_path integrations/mcp/project_fabric.mjs
+  interacts project-node-uses-delivery-fabric
+  interacts workspace-reads-native-fabric-activity
+  source_path deploy/launchd/fabric_cutover.mjs
+  witness integrations/mcp/tests/fabric_store.test.mjs
+  witness integrations/mcp/tests/fabric_activity.test.mjs verifies real SQLite scope and recipient isolation, immutable admission, idempotent review, STOP and queue preservation, and an actual Bun CLI MessagePack roundtrip through a temporary loopback Fabric process
+  witness integrations/mcp/tests/fabric_work.test.mjs
+  witness integrations/mcp/tests/fabric_transport.test.mjs
+  witness integrations/mcp/tests/fabric_model.test.mjs
+  witness integrations/mcp/tests/fabric_model_pipeline.test.mjs verifies account-owned execution through the actual queue native protocol adapter compiled Meter and browser decoder, including exact replay fresh revocation STOP and usage-only reconciliation
+  witness integrations/mcp/tests/native_meter.test.mjs
+  witness integrations/mcp/tests/fabric_output_transfer.test.mjs
+  witness integrations/mcp/tests/fabric_push.test.mjs
+  witness integrations/mcp/tests/fabric_estate.test.mjs
+  witness integrations/mcp/tests/hook_bridge.test.mjs
+  witness integrations/mcp/tests/owned_mcp_client.test.mjs
+  witness integrations/mcp/tests/project_run_cancel.test.mjs
+  witness integrations/mcp/tests/fabric_project_workflow.test.mjs sends one relay over real loopback HTTP, runs real Git isolation and a Bun test, applies through the real Project owner, and reads compact and full results with deterministic injected agents
+  witness packs/no-simulation/mcp-workflow-20261017/relay-source-http-fixture.json records real HTTP, current tracked and untracked source, immutable input baseline, real test and Project apply with deterministic agents under an explicit fixture dirty-path policy
+  witness integrations/mcp/tests/fabric_project_workflow.test.mjs also verifies that default clean-path policy refuses the same dirty-source candidate before review expense
+  witness packs/no-simulation/mcp-workflow-20261017/relay-http-fixture.json records the temporary fixture's actual task, test, apply and response-size results without claiming model quality or production effect authority
+  witness packs/no-simulation/mcp-workflow-20261017/fabric-live-readback.json records the paused live broker's Project reachability, compact task read and historical-task reconciliation signal; before-and-after snapshots preserve all six tables and verify all fifty-two receipt files
+  witness integrations/mcp/tests/fabric_live_witness.mjs read-only full-catalog and historical task/receipt/table continuity verifier
+  witness integrations/mcp/tests/fabric_cutover.json live Python-to-Bun promotion with identical six-table row digests, 52 receipt files, fourteen tools and four prompts; Recursive, Canary and Project MCP refreshed and witnessed
+  invariant migration preserves historical state and STOP controls; startup never promotes stale running rows into executable work
+  known_gap measured 25 warm serial receipt reads improved p50 from 15.994291ms to 6.999ms and p95 from 18.123167ms to 16.386084ms; this is not agent throughput or a concurrent scaling benchmark
+  known_gap cutover checks broker-recorded work and referenced receipts, not unrecorded reparented processes or orphan receipt files
+  known_gap paid agent behavior is not exercised by migration tests; deterministic injected agents prove orchestration contracts, not model quality
+  known_gap legacy estate-compiler databases may be absent; estate status/add then refuse explicitly rather than creating replacement authority
+  known_gap hook bridge is ported but no active installed hook reference was found; its presence is not a live-wiring claim
+  known_gap historical orphaned running rows are preserved for explicit reconciliation, never automatically resumed or relabelled
+  known_gap native reviewed model work is now an account-aware producer; historical operator dispatch remains unbound and scoped session resumption still requires its original owner authority
+  known_gap generic operator outputs remain bounded receipt metadata; the model owner separately admits exact retained plaintext output after fresh destination access and digest verification
+  known_gap explicit source selection does not discover omitted dependencies or snapshot all concurrent changes; unselected files remain at the configured Git base, and Project can still refuse dirty-path application
+  known_gap the October 17 broker remains paused by its existing STOP state and its configured mesh endpoint remains unavailable; the directly configured Project endpoint is reachable, and no paid agent task was dispatched for this verification
+
+interaction dual-agent-fabric-shared-wire
+  source dual-agent-fabric-native-owner
+  destination mcp-bounded-wire-boundary
+  relation shared-catalog-and-route-transport
+  preserves authentication, fourteen tool contracts, bounded hook ingestion and finite event snapshots
+  drops duplicate HTTP parsing and effect serialization code
+  forbidden_inference finite events endpoint -> SSE transport or public event access
+  binding integrations/mcp/fabric_server.mjs
+  witness integrations/mcp/tests/fabric_transport.test.mjs
+
+interaction workspace-reads-native-fabric-activity
+  source cmd-web-address
+  destination dual-agent-fabric-native-owner
+  relation fresh-native-destination-authorization-and-recipient-review
+  preserves authoritative actor subject scope binding, existing process liveness, task and run identity, private no-store MessagePack, idempotent recipient actions and separately reviewed native model admission
+  drops operator-wide enumeration, browser-chosen actor coordinates, private command paths, generic receipt bodies and operator dispatch rights
+  forbidden_inference a scoped activity read -> authority to dispatch an agent or expose legacy operator tasks
+  binding cmd/BonfyreWebAddress/src/activity_workspace.h
+  binding integrations/mcp/fabric_activity_cli.mjs
+  binding integrations/mcp/fabric_activity.mjs
+  witness cmd/BonfyreWebAddress/tests/activity_workspace.test.mjs
+  witness integrations/mcp/tests/fabric_activity.test.mjs
+
+interaction dual-agent-fabric-project-apply
+  source dual-agent-fabric-native-owner
+  destination mcp-project-native-owner
+  relation explicit-preview-and-apply-boundary
+  preserves Project-owned low-risk policy and application refusal with durable attempt evidence
+  drops automatic replay after ambiguous remote effects
+  forbidden_inference a passed agent review -> permission for an unguarded project write
+  binding integrations/mcp/owned_mcp_client.mjs
+  binding integrations/mcp/fabric_work.mjs
+  binding integrations/mcp/fabric_server.mjs
+  witness integrations/mcp/tests/fabric_work.test.mjs
+  witness integrations/mcp/tests/fabric_project_workflow.test.mjs

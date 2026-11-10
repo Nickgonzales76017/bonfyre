@@ -1,0 +1,88 @@
+atlas external
+
+architecture obsidian-vault-binding
+  canonical_name ObsidianVaultBinding
+  family external
+  domain External / Personal knowledge vaults
+  layer external
+  semantic_question Which Obsidian vault folders on this device belong to which account, how are they read, written and synced (desktop CLI, Obsidian Headless or the files themselves), and when is headless sync refused?
+  purpose Binds a local Obsidian vault folder to exactly one account and gives every flow one contract over it. Reads (search, tasks, backlinks, links, unresolved, tags, properties, read) go through the running desktop app's CLI when the binding asks for it and the app is up, otherwise through native readers over the files. Writes (create, append, prepend, daily-append, task) go the same way, natively as atomic same-folder writes. Obsidian Headless (ob) runs per account under its own HOME so each account has its own Obsidian login; sync-setup, sync-config, sync-once and a supervised continuous sync (child process with pidfile, or a launchd agent) are refused wherever desktop Sync is on for the vault, as Obsidian requires. Content-addressed snapshots record every file's sha256, size and mtime incrementally and diff against each other for local sync.
+  maturity implemented
+  consumes AccountSubject
+  owns ObsidianVaultBinding
+  publishes ObsidianNoteRef
+  publishes ObsidianTaskRef
+  publishes ObsidianGuardDecision
+  publishes ObsidianSyncRun
+  publishes ObsidianSnapshot
+  node_types ObsidianVaultBinding
+  node_types ObsidianNoteRef
+  node_types ObsidianTaskRef
+  node_types ObsidianGuardDecision
+  node_types ObsidianSyncRun
+  node_types ObsidianReceipt
+  node_types ObsidianSnapshot
+  state_types bound
+  state_types sync-configured
+  state_types syncing
+  internal_calculus path containment: relative slash paths, no dot or dot-dot or dot-led component, never the config folder in any case; reads resolve inside the real root, writes lstat every parent and refuse a symlink
+  internal_calculus Obsidian link resolution: markdown links relative to the note, wikilinks with a folder by path suffix, bare names by case-insensitive filename preferring the note's folder then the shortest path
+  internal_calculus headless guard: transport, desktop Sync core plugin (object or array form), a running app's sync:status, another account's or an unscoped ob setup for the same real folder
+  internal_calculus incremental snapshot: reuse a file's recorded sha256 when size and mtime match, hash otherwise; manifest digest is sha256 over path, sha256 and size lines in byte order
+  command bonfyre-obsidian
+  source_path cmd/BonfyreObsidian/src/main.c
+  source_path cmd/BonfyreObsidian/src/vault.c
+  source_path cmd/BonfyreObsidian/src/drive.c
+  source_path cmd/BonfyreObsidian/src/obsidian.h
+  source_path cmd/BonfyreObsidian/Makefile
+  source_path cmd/BonfyreObsidian/README.md
+  source_path schemas/control/obsidian.yaff
+  source_path schemas/control/obsidian.cue
+  witness cmd/BonfyreObsidian/tests/obsidian_test.sh (149 checks, 2026-10-31, throwaway vaults): one folder per account and no nesting; another account's vault refused exactly as an absent one; a symlink out of the allowed roots refused at bind; eight escaping or hidden note paths refused on read and four on write, nothing written through a linked folder; search, tasks (fenced task excluded, numbered and nested included), backlinks (wikilink, lower-case and markdown), outgoing links, unresolved, tags (frontmatter and body, none from code or digits) and properties match a hand-built fixture; create, overwrite, append from stdin, prepend after frontmatter, daily-append and task toggle write the expected bytes and receipt them without content; snapshots reuse every hash when nothing changed, rehash only the two touched files and diff to one added, one removed, one changed; another account cannot diff them
+  witness cmd/BonfyreObsidian/tests/obsidian_test.sh with recording shims for ob, obsidian and launchctl (argv and environment only): the guard refuses a desktop-Sync vault before ob is run, refuses a folder another account's or an unscoped ob setup syncs, and allows a clean one; ob runs under the account's own HOME with no password, email or MFA flag; OBSIDIAN_AUTH_TOKEN reaches ob only for the account BONFYRE_OBSIDIAN_TOKEN_ACCOUNT names and never the store, logs or output; continuous sync starts once, is seen again, blocks unbind, stops, and a reused pid is called stale and not signalled; a launchd plist names ob, the folder and the account HOME, lints, and bootstrap and bootout carry the right argv; the CLI is never called while the app is down, its JSON is passed through when up, a failing CLI falls back to native, writes escape newlines, and a running app reporting Sync refuses headless sync
+  witness cmd/BonfyreObsidian/tests/real_readonly_test.sh against /Users/nickgonzales/Documents/AurekaiV2 (2026-10-31, 15 checks): doctor found Obsidian 1.12.7 running, its CLI not registered, ob 0.0.14 on Node 26.13.0 and no login; native search found the same 7 lines grep finds, one unresolved link ([[create a link]]), no tasks; the guard refused headless sync because the vault's Sync core plugin is on; every file's size, mtime and sha256 were identical before and after
+  invariant a real folder is bound at most once across all accounts and never inside or around another bound folder; local_path is the real path after symlinks and lies inside a configured root (BONFYRE_OBSIDIAN_ROOTS)
+  invariant every verb but doctor requires --account; a vault another account bound answers exactly as one nobody bound
+  invariant Obsidian's settings folder is never read or written through a note verb; a write follows no symlink and lands by write, fsync, then rename (or link when the note must not yet exist)
+  invariant headless sync is refused where the desktop Sync core plugin is on for the vault, where a running app reports Sync, or where another account's or an unscoped Obsidian Headless setup already syncs the folder
+  invariant the desktop CLI is called only when the app is already running (or BONFYRE_OBSIDIAN_CLI_LAUNCH=1), because the CLI starts the app otherwise
+  invariant ob runs per account under HOME=<state>/accounts/<account>/home; no password, email or MFA code is ever placed on argv; OBSIDIAN_AUTH_TOKEN is removed from ob's environment except for the one named account
+  invariant a receipt holds paths, digests, codes and reasons, never note content or a credential
+  forbidden_inference a binding -> the account owns, pays for or may share the remote Obsidian vault
+  forbidden_inference headless sync configured -> desktop Sync is off for that vault on every device; the guard reads this device only
+  forbidden_inference guard allow -> the remote vault is safe to overwrite; mirror-remote and pull-only still discard local edits by design
+  forbidden_inference CLI reachable -> the app's state is the vault on disk; unsaved editor text and an unrescanned index differ from the files
+  forbidden_inference a native answer -> the app's answer; link resolution, tags and properties follow Obsidian's rules on the files, not its live index or plugins
+  forbidden_inference token_file_present -> a valid login or a Sync subscription; only the file's presence is read
+  forbidden_inference equal size and mtime -> equal bytes; a writer that restores mtime is missed until a fresh snapshot without history
+  forbidden_inference an account name on a call -> that the caller authenticated as it; the calling boundary authenticates
+  known_gap the desktop CLI is not registered on this Mac, so no real CLI call has been made; CLI argv and the shapes passed through are witnessed only against a recording shim, and the CLI's own JSON shapes are passed through unnormalized
+  known_gap no Obsidian login exists for any account here and no real Headless Sync has run; ob's argv, HOME and token handling are witnessed against a shim, not Obsidian's servers
+  known_gap the Obsidian Headless token is held in ob's own auth_token file under the account HOME, not sealed by CredentialBoundary, which has no path that hands a raw value to a child process
+  known_gap the organ trusts --account from its caller; no web route, MCP tool or flow calls it yet, so nothing authenticates the account in front of it
+  known_gap headless Publish (publish-*) is not exposed; Obsidian Bases (base:query) and outline are reachable only through the CLI, with no native reader
+  known_gap the binary stays in cmd/BonfyreObsidian; it is not installed to ~/.bonfyre/bin while the install budget is spent
+
+interaction credential-accounts-name-obsidian-accounts
+  source credential-boundary
+  destination obsidian-vault-binding
+  relation same_account_grammar
+  preserves an account is one lowercase name of letters, digits and - _ . @ + up to 128, so one account names its credentials and its vaults alike
+  drops sealed values; no credential moves from the boundary to Obsidian Headless, whose token stays in ob's own file under the account HOME
+  forbidden_inference a CredentialBoundary account having a sealed value -> an Obsidian login for that account
+  forbidden_inference an Obsidian binding under an account -> a credential stored for it
+  invalidates_on either owner changing its account alphabet
+  witness cmd/BonfyreObsidian/tests/obsidian_test.sh
+  binding cmd/BonfyreObsidian/src/main.c
+  binding cmd/BonfyreCredentials/src/main.c
+
+interaction obsidian-command-realizes-vault-binding
+  source cmd-obsidian
+  destination obsidian-vault-binding
+  relation realizes
+  preserves every verb, JSON shape and exit code in cmd/BonfyreObsidian/README.md
+  drops authentication of the caller, which belongs to the boundary in front of the command
+  forbidden_inference the command answering -> the caller may act for the account it named
+  invalidates_on a verb, shape or exit code changing in README.md
+  witness cmd/BonfyreObsidian/tests/obsidian_test.sh
+  binding cmd/BonfyreObsidian/src/main.c

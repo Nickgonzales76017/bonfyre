@@ -1,0 +1,120 @@
+atlas command
+
+architecture native-command-dispatch
+  canonical_name NativeCommandDispatch
+  family command
+  domain Command / Native Entry
+  semantic_question How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?
+  purpose Shares a sorted, exact command lookup while each semantic owner retains its own argument grammar, database mode, handler, and refusal behavior.
+  maturity implemented
+  source_path lib/libbonfyre/include/bf_command_lookup.h
+  source_path cmd/BonfyreExternalEstate/src/main.c
+  source_path cmd/BonfyreSpatial/src/main.c
+  source_path cmd/BonfyreSourceFrontier/src/main.c
+  source_path cmd/BonfyreWebSub/src/main.c
+  source_path cmd/BonfyreRuntime/src/main.c
+  source_path cmd/BonfyreWebAddress/src/main.c
+  source_path cmd/BonfyreQueue/src/main.c
+  source_path cmd/BonfyreProvider/src/main.c
+  source_path cmd/BonfyreIndex/src/main.c
+  source_path cmd/BonfyreLatentAtlas/src/main.c
+  source_path cmd/BonfyreCMS/src/main.c
+  source_path cmd/BonfyreFacet/src/main.c
+  source_path cmd/BonfyreDiscipl/src/main.c
+  source_path cmd/BonfyreFamily/src/main.c
+  source_path cmd/BonfyreAttention/src/main.c
+  source_path cmd/BonfyreOperatorStore/src/main.c
+  source_path cmd/BonfyreAdmission/src/main.c
+  source_path cmd/BonfyreStitch/src/main.c
+  source_path cmd/BonfyreStitch/tests/dispatch_test.sh
+  source_path cmd/BonfyreStitch/tests/invalid_recipe_id.json
+  source_path cmd/BonfyreAttention/tests/smoke.sh
+  source_path cmd/BonfyreAdmission/tests/smoke.sh
+  source_path cmd/BonfyreFacet/tests/facet_test.sh
+  source_path cmd/BonfyreDiscipl/tests/composition_test.sh
+  source_path scripts/tests/native_command_tables.test.mjs
+  source_path scripts/analysis/native-command-string-dispatch.yml
+  source_path scripts/analysis/native_dispatch_audit.mjs
+  source_path cmd/BonfyreRuntime/tests/dispatch_test.sh
+  source_path cmd/BonfyreQueue/tests/dispatch_test.sh
+  source_path cmd/BonfyreIndex/tests/dispatch_test.sh
+  source_path cmd/BonfyreRetention/src/main.c
+  source_path cmd/BonfyreScopedDemand/src/main.c
+  source_path cmd/BonfyreShowcaseEstate/src/main.c
+  source_path cmd/BonfyreBridgeReadiness/src/main.c
+  source_path cmd/BonfyreCampaign/src/main.c
+  source_path cmd/BonfyreCommerce/src/main.c
+  source_path cmd/BonfyreDecide/src/main.c
+  source_path cmd/BonfyreDisturbanceAudit/src/main.c
+  source_path cmd/BonfyreModel/src/main.c
+  source_path cmd/BonfyreOperator/src/main.c
+  source_path cmd/BonfyrePack/src/main.c
+  source_path cmd/BonfyreScopedFrontier/src/main.c
+  source_path cmd/BonfyreSign/src/main.c
+  source_path cmd/BonfyreSourceFrontier/tools/civic_ledger.c
+  source_path cmd/BonfyreSpace/src/main.c
+  source_path cmd/BonfyreSurface/src/main.c
+  source_path cmd/BonfyreSurface/src/surface_ir_main.c
+  source_path cmd/BonfyreTier/src/main.c
+  source_path cmd/BonfyreBrief/src/main.c
+  source_path cmd/BonfyreCapability/src/main.c
+  source_path cmd/BonfyreCompete/src/main.c
+  source_path cmd/BonfyreControl/src/main.c
+  source_path cmd/BonfyreEntity/src/main.c
+  source_path cmd/BonfyreFlow/src/main.c
+  source_path cmd/BonfyreLifecycle/src/main.c
+  source_path cmd/BonfyreMaterialLease/src/main.c
+  source_path cmd/BonfyreNarrate/src/main.c
+  source_path cmd/BonfyreOffer/src/main.c
+  source_path cmd/BonfyreOrigin/src/main.c
+  source_path cmd/BonfyreProviderFrontier/src/main.c
+  source_path cmd/BonfyreProxy/src/main.c
+  source_path cmd/BonfyrePublicWorld/src/main.c
+  source_path cmd/BonfyreReason/src/main.c
+  source_path cmd/BonfyreRender/src/main.c
+  source_path cmd/BonfyreSemanticOptimizer/src/entry.c
+  source_path cmd/BonfyreShowcaseCrosswalk/src/main.c
+  source_path cmd/BonfyreWorkflow/src/main.c
+  source_path cmd/BonfyreCanon/src/main.c
+  source_path cmd/BonfyreDomain/src/main.c
+  source_path cmd/BonfyreEconomy/src/verification_planner.c
+  source_path cmd/BonfyreGitHubWatch/src/main.c
+  source_path cmd/BonfyreHousehold/src/main.c
+  source_path cmd/BonfyreIngest/src/main.c
+  source_path cmd/BonfyreMaterialWeatherGate/src/main.c
+  source_path cmd/BonfyreMaterialWeatherReheat/src/main.c
+  source_path cmd/BonfyreMCPProof/src/main.c
+  source_path cmd/BonfyreObservationBoundary/src/main.c
+  source_path cmd/BonfyrePackConditionDelta/src/bridge_impl.h
+  source_path cmd/BonfyrePipeline/src/main.c
+  source_path cmd/BonfyreQuery/src/main.c
+  source_path cmd/BonfyreRecipe/src/main.c
+  source_path cmd/BonfyreRecipe/src/recipe_nutrition.c
+  source_path cmd/BonfyreRecipe/src/recipe_week.c
+  source_path cmd/BonfyreResourceWeatherDelta/src/main.c
+  source_path cmd/BonfyreResourceWeatherRefresh/src/main.c
+  source_path cmd/BonfyreResourceWeatherTransition/src/main.c
+  source_path cmd/BonfyreScopedLeaseReheat/src/main.c
+  source_path cmd/BonfyreScopedReheat/src/main.c
+  source_path cmd/BonfyreScopedRespecialize/src/main.c
+  source_path cmd/BonfyreTag/src/main.c
+  source_path cmd/BonfyreTone/src/main.c
+  source_path cmd/BonfyreVec/src/main.c
+  source_path cmd/BonfyreWebSubLeaseGate/src/main.c
+  invariant command names are unique and sorted within each owner's descriptor table; unknown verbs are refused before database creation or network initialization where that entrypoint has no dynamic command fallback
+  invariant the atlas owner list drives discovery of native command tables and the structural audit refuses new string dispatch in a registered owner
+  invariant ExternalEstate records direct, read-only, and schema-writing modes and the exact database option in each descriptor, opening a read-only database only once for each read command
+  invariant Runtime resolves only the selected sibling binary on ordinary delegated and special commands; doctor intentionally resolves all sixteen; unknown runtime verbs retain the dynamic capability passthrough
+  invariant Queue command descriptors preserve minimum argument counts and resolve account-inbox and account-work alongside every WorkGraph verb, refusing unknown or incomplete input before an owner opens its store
+  invariant Index command descriptors preserve minimum argument counts and share the existing per-command limit option parser without changing artifact identity or collapse authority
+  invariant Facet resolves the verb before corpus loading; the recognized verb does not promote candidate_match into a compiled or enacted contract
+  invariant Discipl resolves the top-level verb once while actors and contracts retain explicit nested grammar and refusal on unsupported subcommands
+  invariant Family resolves help, unknown, and incomplete verbs without loading its catalog, and its display modes reuse the resolved numeric command identity
+  invariant Attention and Admission resolve every verb, including Admission's read-only memory inspection, before opening or mutating the declared SQLite store, and their command handlers retain the original refusal behavior
+  invariant WebAddress resolves its site and detail-depth special modes through the same descriptor table as public verbs before either route reaches an owner
+  invariant OperatorStore resolves archive, init, inspect or reconcile-reverted before it opens the declared queue database; init requires durable SQLite, inspect stays read-only, and each STOP-gated transition requires a same-directory STOP before its durable transaction
+  invariant Stitch resolves the reconstruction verb once while retaining each operator DAG command's own required arguments and refusing to treat a plan as a completed materialization
+  invariant Stitch compiles a recipe through direct compiler argv with a bounded source filename, rather than interpreting recipe or output bytes as shell syntax
+  forbidden_inference a recognized command -> valid arguments, a current owner closure, provider or institutional authority, evidence admission, or permission to perform an effect
+  witness scripts/tests/native_command_tables.test.mjs checks every declared native owner table and Runtime's delegated table; ExternalEstate route-cost/participation/native tests, Spatial native test, SourceFrontier native test, WebSub optimized/ASan tests, Runtime and Queue dispatch tests, WebAddress native route tests, Provider smoke tests, Index native checks, LatentAtlas native tests, CMS native tests, Facet compiler and reader-agreement tests, Discipl composition test, Family native list and help checks, Attention smoke test, Admission smoke test, OperatorStore archive test, and Stitch native command checks exercise the descriptor cuts
+  known_gap this is now a shared pattern adopted across the great majority of cmd/* owners; the ast-grep audit finds only 8 string comparisons remaining in 5 files, none of which are conversion candidates: cmd/BonfyreRecipe/tests/material_driver.c and cmd/BonfyreWebAddress/tests/participant_journey_test.c are test-fixture harnesses, cmd/BonfyreEconomy/src/main.c and cmd/BonfyreLearn/src/main.c retain a pre-shift `--db` option check rather than a verb, and cmd/BonfyreMcp/src/main.c already resolves its multi-call owners through a generic function-pointer table rather than a duplicated strcmp chain; Facet grammar-density currently reports content types without facts, and no live throughput gain has been measured from lookup alone

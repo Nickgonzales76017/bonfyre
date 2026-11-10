@@ -1,0 +1,32 @@
+architecture acquisition-brief-studio
+  canonical_name Acquisition Brief Studio
+  family surface
+  domain Surface / Acquisition review and recipient briefs
+  layer application
+  semantic_question Which source, checks, verification routes and recommendation belong to the selected opportunity, and what can a reviewer deliver from them?
+  purpose A browser workspace over the existing procurement-memory brief contract with independent equipment, property, supplier and civic opportunities, source-bearing memos, eligible route comparisons and recipient exports
+  maturity implemented
+  source_path ../pages-procurement-memory/site/brief-studio/core.mjs
+  source_path ../pages-procurement-memory/site/brief-studio/studio.mjs
+  source_path ../pages-procurement-memory/site/brief-studio/composer.mjs
+  source_path ../pages-procurement-memory/site/brief-studio/index.html
+  source_path ../pages-procurement-memory/site/brief-studio/vendor/tiptap-3.32.0/provenance.json
+  source_path ../pages-procurement-memory/tests/brief-studio.test.mjs
+  source_path components/BonfyreServiceSite/tests/brief-studio-browser.mjs
+  node_types Opportunity, ProofNeed, VerificationRoute, EditorialSnapshot, ReviewerMemo, RecipientBrief
+  internal_calculus eligible proof-kind coverage, exact integer-cent cost and shared-provider travel group pricing, bounded route subset optimization and explicit route exclusion
+  internal_calculus version-two editorial migration preserves legacy values once and retains recommendation, recipient, memo, budget, comparison mode and section choices per opportunity
+  internal_calculus browser saves compare the expected workspace revision in one IndexedDB write transaction; edits arriving during an in-flight save remain dirty and are saved separately
+  internal_calculus Tiptap documents are validated against bounded node and mark types before persistence and HTML or Markdown export; a failed optional editor leaves the plain text field and recoverable draft
+  invariant unfinished quote edits block case or domain changes until saved or cancelled; invalid candidate routes never mutate the opportunity; failed saved-workspace reads preserve unsaved edits and current identity
+  invariant excluded routes remain available for comparison but never appear as selected routes in the typed proposal
+  invariant proposed coverage and locally reviewed check status are distinct; quoted-ready mode requires a recorded reference without claiming provider verification
+  invariant native Economy retains approval and dispatch authority; the browser downloads a proposal and performs no provider or native admission request
+  witness ../pages-procurement-memory/tests/brief-studio.test.mjs passes 20 tests for route eligibility, exact costs, exclusion, source preservation, safe note export, independent records and versioned migration
+  witness packs/no-simulation/product-maturity-20261015/brief/local/verification.json records 55 fresh-Chrome checks including formatted notes, quote edits, imports, independent settings, revision conflicts, failure recovery and phone views
+  witness packs/no-simulation/product-maturity-20261015/brief/live/verification.json repeats the 55-check journey on the published branch preview with no browser exceptions or remote writes
+  witness packs/no-simulation/product-maturity-20261015/brief/deployment.json names preview deployment e8875e2b-6dc2-49cf-8f59-3ab119d8c9b6 and unchanged Work Samples production deployment
+  forbidden_inference a usable browser brief or complete proposed coverage -> a shared account workspace, organization authority, verified supplier evidence, native approval or booking
+  forbidden_inference the preview deployment -> a new GitHub commit, changed GitHub Pages, or completion of all thirty demo programs
+  known_gap source is owned by the sibling pages-procurement-memory checkout; GitHub Pages remains on its committed version and the preview origin has separate browser storage
+  known_gap account and organization persistence, review handoff admission, collaborative editing, full workspace backup and Google Stitch design generation remain open

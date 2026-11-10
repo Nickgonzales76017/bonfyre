@@ -1,0 +1,91 @@
+#!/usr/bin/env python3
+# Retired: WebAddress compiles nativeAudiencePresentations from CUE through Zig,
+# and surface-programs-verify checks the generated header and rejects AUDIENCE_COPY.
+"""Check the audience the page claims against the audience the Matrix resolved.
+
+Unlike the other contracts here, this one already has a source: matrix_domains
+carries territory and default_scope as real columns, and the address plane
+resolves every request through them. The drift risk is narrower and stranger --
+AUDIENCE_COPY in BonfyreWebAddress maps a scope to the words a reader sees, so
+the page can describe an audience the Matrix did not resolve, and the page is
+the only place anyone would notice.
+
+That is a caption disagreeing with an identity. It cannot corrupt state and it
+cannot leak anything, which is exactly why nothing would catch it.
+
+Cannot infer: agreement here is not a claim the copy is good, only that the
+scope it is keyed to is a scope this Matrix actually resolves.
+"""
+from __future__ import annotations
+
+import os
+import re
+import sqlite3
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+# A checkout nests the organ under cmd/; the deployment stages it under
+# native-src/cmd/. Look in both rather than assuming the layout that happens to
+# be under foot -- the same managed-vs-checkout split that broke organ
+# delegation earlier.
+_CANDIDATES = (
+    ROOT / "cmd" / "BonfyreWebAddress" / "src" / "main.c",
+    ROOT / "native-src" / "cmd" / "BonfyreWebAddress" / "src" / "main.c",
+)
+SOURCE = next(
+    (p for p in _CANDIDATES if p.is_file()),
+    Path(os.environ.get("BONFYRE_WEB_ADDRESS_SOURCE", str(_CANDIDATES[0]))),
+)
+MATRIX_DB = os.environ.get("BONFYRE_MATRIX_DB", "/var/lib/bonfyre/matrix.db")
+
+
+def copy_scopes() -> set[str]:
+    text = SOURCE.read_text(errors="replace")
+    block = re.search(r"AUDIENCE_COPY\[\]\s*=\s*\{(.*?)\n\};", text, re.S)
+    if not block:
+        raise SystemExit("AUDIENCE_COPY table not found")
+    return set(re.findall(r'\{"([a-z-]+)",', block.group(1)))
+
+
+def matrix_scopes() -> set[str]:
+    if not Path(MATRIX_DB).is_file():
+        raise SystemExit(f"no Matrix DB at {MATRIX_DB}; set BONFYRE_MATRIX_DB")
+    db = sqlite3.connect(f"file:{MATRIX_DB}?mode=ro", uri=True)
+    scopes = {r[0] for r in db.execute("SELECT DISTINCT default_scope FROM matrix_domains") if r[0]}
+    db.close()
+    return scopes
+
+
+def main() -> int:
+    described = copy_scopes()
+    resolved = matrix_scopes()
+
+    invented = sorted(described - resolved)
+    unnamed = sorted(resolved - described)
+
+    for scope in invented:
+        print(
+            f"  page describes an audience the Matrix does not resolve: {scope}",
+            file=sys.stderr,
+        )
+    for scope in unnamed:
+        print(
+            f"  Matrix resolves an audience the page has no words for: {scope} "
+            "(it falls back to the neutral wording)",
+            file=sys.stderr,
+        )
+    if invented:
+        print("territory contract mismatch", file=sys.stderr)
+        return 1
+    # A resolved scope with no copy is a gap, not a lie: the page falls back to
+    # neutral wording rather than borrowing another audience's.
+    print(
+        f"territory contract agrees: {len(described)} described, "
+        f"{len(resolved)} resolved, {len(unnamed)} using neutral wording"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

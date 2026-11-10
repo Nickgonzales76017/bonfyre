@@ -1,0 +1,357 @@
+atlas external
+
+architecture source-frontier
+  canonical_name SourceFrontier
+  invariant Discourse board review verifies one retained category page ordered by creation, including nested category paths with every topic checked against the leaf category ID, sorts original posting dates separately from reply activity, and emits topic observation URLs without fetching or classifying hiring status
+  witness 2026-10-08 installed native board review receipt 8a945874-0fa9-4dff-9939-934465eaea16 reads 30 retained Make Hire Help topics from its nested category path; reader and native command-index suites pass 27 tests with 460 assertions, including leaf category mismatch and malformed nested routes
+  witness 2026-10-08 native board review receipt 1f05d33b-66fc-422a-9128-557c7810fad0 reads 30 retained n8n job-board topics; the reader and native command-index suites pass 26 tests with 452 assertions, including old requests with new replies, invalid dates, foreign categories, modified bodies and installed native board dispatch
+  forbidden_inference A recent board creation date, reply date, title or open flag -> buyer demand, an available paid job or authority to contact
+  invariant Classified buyer rules declare referral or purchase_resale; candidate records carry the selected model and its distinct missing commercial facts without creating a bid, purchase or financial commitment
+  witness cmd/BonfyreSourceFrontier/tests/classified_market.test.mjs verifies purchase/resale can retain a seller declining sales help when its authored exclusion only concerns dealers, preserves bid and cost requirements, and rejects unknown transaction models
+  forbidden_inference A purchase_resale candidate -> inventory ownership, accepted seller terms, buyer bid, available capital, positive margin or permission to transact
+  invariant Classified routing exclusions apply only to verified retained seller bodies; held associations retain their receipts and matched terms separately from outreach candidates and observation failures
+  witness cmd/BonfyreSourceFrontier/tests/classified_market.test.mjs verifies seller-exclusion holds, edited-projection refusal, literal boundaries, malformed-rule rejection and installed native execution without a ledger
+  forbidden_inference An exclusion match or absence of a match -> a complete interpretation of seller intent, current availability or permission to contact
+  invariant Optional classified routing term groups each require a literal retained-body match; index titles and edited projections cannot satisfy a group
+  witness cmd/BonfyreSourceFrontier/tests/classified_market.test.mjs verifies all-group matching, word boundaries, rejection of malformed groups and native installed execution
+  forbidden_inference Matched lot or fleet wording -> verified quantity, working condition, wholesale pricing or an accepted buyer bid
+  invariant classified-market routes through native dispatch without opening a ledger; retained buyer rules and seller bodies are digest-checked before literal-term associations are emitted with unresolved commercial conditions
+  witness cmd/BonfyreSourceFrontier/tests/classified_market.test.mjs verifies source and provider receipt identity, digest checks, literal matching against retained bodies, duplicate-address handling and held commercial standing
+  witness 2026-10-08 native_tool_invoke BonfyreSourceFrontier classified-market route checked 190 distinct retained sources and emitted 27 review associations across three provider rules with zero network requests; 45 input rows retained prior failure reasons; no association established an accepted referral
+  forbidden_inference A buyer-rule association or published referral percentage -> accepted inventory, our program eligibility, expected commission, ownership or authority to contact
+  invariant Classified enrichment can reuse retained evidence or operate offline; each receipt must name the selected source and match retained bytes, while original observation time and policy failures remain visible
+  witness cmd/BonfyreSourceFrontier/tests/classified_market.test.mjs proves offline reuse performs zero network observations, rejects cross-source receipts and changed bodies, preserves observation dates and refuses overwriting its evidence input
+  witness 2026-10-08 national wholesale discovery retained 34062 index entries from 105 indexes across 15 markets with zero failed indexes; SourceFrontier receipts a867f06c-a980-4802-b0b6-a6ff0fb8db3a and 2fb3577f-7ef4-45d8-9d5d-9f87ca3014eb retain index and shadow goods imports; entries include reposts and do not establish qualified leads
+  source_path cmd/BonfyreSourceFrontier/tools/classified_market.mjs
+  invariant Classified enrichment routes bounded market-balanced selections through the existing native ForeignTwin observer and verifies retained body digests before projecting full post text; policy refusals and removed pages remain failures
+  witness cmd/BonfyreSourceFrontier/tests/classified_market.test.mjs covers market balance, same-title alternatives, policy refusal, digest drift, removed posts and repeated body versus post identity
+  invariant Classified wholesale profile preserves wanted-goods demand separately from merchandise supply and operator services; display prices remain source text without quote or margin inference
+  witness 2026-10-08 wholesale profile read 14 canonical Dallas and Houston indexes with zero failures, retaining 637 wanted and 4013 supply advertisements; native imports a19d9d17-a0cb-438f-bf5e-7b272f33610f and cbb68ba7-631d-4ecd-a07d-0872f2807797 registered 14 index and 4650 shadow listing channels; these include reposts and are not distinct buyers or completed transactions
+  witness cmd/BonfyreSourceFrontier/tests/classified_market.test.mjs checks wholesale market selection and goods identity, including price-only rows without locations that must not absorb the next listing
+  forbidden_inference A goods listing, displayed price or matching model name -> owned inventory, an accepted purchase, resale permission, a deliverable lot or a realizable margin
+  source_path cmd/BonfyreSourceFrontier/tools/operator_supply.mjs
+  source_path cmd/BonfyreSourceFrontier/tests/classified_market.test.mjs
+  source_path cmd/BonfyreSourceFrontier/tests/operator_supply.test.mjs
+  source_path cmd/BonfyreSourceFrontier/tools/discourse_thread.mjs
+  source_path cmd/BonfyreSourceFrontier/tests/discourse_thread.test.mjs
+  source_path cmd/BonfyreSourceFrontier/README.md
+  invariant discourse-review resolves through the native command index and executes its packaged reader before opening any ledger; missing reader or runtime and invalid retained evidence return nonzero
+  invariant Discourse thread review verifies permitted retained observation digests, exact topic and origin, post stream membership and original-poster user identity; missing posts produce explicit observation candidates without fetching them
+  invariant forum closed state and original-poster updates remain separate evidence; coverage refers only to the retained stream and does not turn recent applicant replies into current buyer demand
+  witness 2026-10-08 discourse_thread.test.mjs passes six tests, including installation to a path with spaces, native argument forwarding, digest failure propagation and refusal without ledger creation; native_command_tables.test.mjs and the existing TraktoK native dispatch test also pass
+  witness 2026-10-08 the reader identified 17 missing Drochaid posts in the first 20-post response; a permitted ForeignTwin supplement completed all 37 retained stream IDs. The Multitude Films observation covered all seven stream IDs and retained the original poster's September 30 closure at post 12; no outreach was made
+  forbidden_inference Discourse topic open, complete retained stream or recent activity -> an unfilled position, verified applicant claims, a contact route we can use, or permission to send
+  witness 2026-10-08 native_tool_invoke with BonfyreSourceFrontier discourse-review returned complete retained coverage for Drochaid topic 116649 (37 posts) and Multitude topic 113277 (7 posts), including Multitude's original-poster closure at post 12
+  known_gap Discourse review uses a packaged Bun reader behind native dispatch; it does not automatically collect missing posts or classify hiring status
+  invariant A classified index must declare exactly one canonical URL matching the requested origin, path and category before its rows inherit a demand or supply label; HTTP success alone is insufficient.
+  invariant Offline classified replay checks each retained body digest and records category mismatch or drift as a refused index with zero contributed rows; original evidence is not rewritten.
+  witness cmd/BonfyreSourceFrontier/tests/classified_market.test.mjs proves for-sale fallback cannot become marketing demand, lookalike hosts are excluded, and offline replay preserves evidence while separating digest and category failures.
+  witness cmd/BonfyreSourceFrontier/tests/operator_supply.test.mjs covers observed website editor and developer title variants and preserves independent provider standing and rate evidence.
+  forbidden_inference A category-checked retained classified row -> current availability, a distinct buyer, a qualified provider or permission to contact.
+  family external
+  domain External / Source Accounting
+  layer external
+  semantic_question How many sources does this estate actually have, at which level -- publisher, protocol family, exact endpoint -- how much of that is the same thing listed twice, which of them a person has ever seen, and what is missing about each one?
+  purpose The accounting plane between every inventory the estate holds and the small number of channels a page carries. It holds four levels -- SourceRoot (one publisher origin), ChannelFamily (one machine protocol at that root), Channel (one exact endpoint) and SourceGap (something unknown about that root) -- and keeps each inventory's provenance label on every root and channel it listed, so overlap is reported instead of totals being added. Channels are admitted only by the census (what the pages actually read), made active only by a page contribution receipt, and lowered into the estate's own HOT/WARM/COOL/COLD attention language. Its starvation report turns the estate against itself: which admitted channels never reach a person, which publisher or protocol dominates a surface, which discovery nobody examined.
+  maturity implemented
+  consumes InternetSource
+  consumes ExternalEstateDensity
+  consumes PublicEstatePassport
+  publishes SourceChannel
+  publishes SourceGap
+  publishes SourceContributionReceipt
+  publishes SourceAttentionPlan
+  node_types SourceRoot
+  node_types ChannelFamily
+  node_types Channel
+  node_types SourceGap
+  edge_types listed_by_inventory
+  edge_types read_by_census_row
+  edge_types contributed_to_surface
+  invariant an address is canonical before it is counted: scheme and host lowercased, a leading www dropped, a default port and tracking parameters removed, one trailing slash dropped, and the address as it was written kept beside it; two inventories listing the same endpoint are one channel
+  invariant one publisher is one root however many inventories listed it, and every inventory that listed a root or channel keeps its label on it, so the report states roots and channels listed by more than one inventory rather than summing the inventories
+  invariant a channel's state may rise as the estate learns (shadow, candidate, eligible, waiting_credential, admitted, active) and never falls silently; a refusal is written beside the state so a refused channel stays in the count with its reason
+  invariant a link found inside a retained body enters as shadow with truth_level observed_link_candidate; it has not been asked for, no robots rule has been checked for it and it is not a source
+  invariant a catalogue's declared members are virtual channels counted in their own column, so the ledger may hold hundreds of thousands of generated channels without claiming that many active sources
+  invariant only the census admits: a channel becomes admitted because a published internet_source row reads it, and a census row nothing listed becomes its own channel rather than being lost
+  invariant one endpoint may be read by several census rows; readers are many-to-many, so three feeds reading one address are three readers of one channel
+  invariant a channel becomes active only through a page contribution receipt, which says what a public route would show now, by source; a receipt measures this estate's surfaces and never a reader
+  invariant a gap whose measurements do not exist reads UNMEASURED rather than being given a value
+  invariant a publisher is a lattice, not a URL: what its own body links, what its publishing grammar addresses (WordPress, Ghost, Drupal, CivicPlus, Blogger, Substack, Discourse) and what its editorial archives imply all enter as separate channels, each carrying which of the three it is -- observed_link_candidate, observed_index_candidate or protocol_derived_candidate -- and all of them SHADOW until asked
+  invariant a candidate becomes a source only by answering: the qualifier asks it through the observer, and admits it only if a feed parses, carries three items with titles, has published inside the freshness window and reads as English (stated, or evidenced by its own words), or a calendar holds three events with one still to come; everything else keeps its channel with the reason it was refused
+  invariant a qualified channel joins the family its publisher is already filed under; where the estate has never filed that publisher, a feed is news rather than anything local, and a comment thread on one article is refused as not a channel
+  invariant the forward plan values a gap only by what is counted -- channels at that root, items a page has shown, surfaces reached, and for an identity gap the number of roots sharing its name -- and prints UNMEASURED for everything else
+  invariant a free closure is preferred before anyone is asked for anything: Wikidata's own statement of which organization owns a host names a root, and a body's own links name its machine channels, both at no cost and with no contact
+  invariant the ledger is walkable rather than merely counted: the publishers, one publisher's families, and every channel in one family are each a bounded page with its own address, and each channel states its standing (read and shown, read here, answered, waiting for a key, named by something retained, listed, or refused with its reason)
+  invariant a static ledger carries the whole admitted census and its bounded admitted index as WebAddress coordinates; it does not promote the candidate census merely because an object store can hold it
+  invariant a static source coordinate is semantic routing state, never a required filesystem or object leaf; an oversized coordinate lowers through its canonical-query digest to a carrier-safe material key
+  invariant the finite admitted-source static manifest is compiled natively from a read-only Frontier snapshot using the shared query encoder and SHA-256; candidate channels and channels without a census source do not enter the export
+  invariant an attention level is a reading plan; it is never permission to fetch, buy, contact or enrol, and no outreach, purchase or enrolment is performed anywhere in this organ
+  invariant a decision-model source-program assessment is a receipt-bound diagnostic plan over already-admitted descriptors; it cannot alter source standing, rights, public program membership, authority, payment, or any effect
+  forbidden_inference a listed channel -> a lawful, callable, credentialed, licensed or available source
+  forbidden_inference an admitted channel -> one a person ever saw; that is what the contribution receipt is for
+  forbidden_inference a starved source -> a bad source; starvation names a surface, join or aperture this estate has not built
+  forbidden_inference a gap's resolution class -> a decision to take it, or permission to contact anyone
+  forbidden_inference a virtual channel -> an observation, a retained body or admitted evidence
+  forbidden_inference the ledger's channel count -> the number of sources this estate reads
+  forbidden_inference a static source-ledger coordinate -> a live endpoint, an item retained from it, or a claim beyond that channel's recorded standing
+  known_gap the ledger counts what inventories and catalogues declare; robots, rights, schema, cadence and reachability are probed only for the channels the census already reads
+  known_gap the qualifier reads a feed's shape and language, never its quality: a channel that parses and is fresh is admitted whatever it publishes
+  known_gap an economic interface (affiliate, partner, referral) is a column on a root that nothing yet fills; no provider relationship is declared, enrolled or applied anywhere
+  known_gap gap valuation is structural (how many channels a root has, how often they contributed); the closure dividend the target describes -- branches eliminated, queries avoided, subject and scene reuse -- has no measurement yet and is reported UNMEASURED
+  known_gap a root is a host with www dropped, not a registrable domain, so two hosts of one organization are two roots until an identity joins them
+  known_gap catalog.data.gov answers 404 to package_search from this estate and its whole DCAT document is too large for one observation, so the national catalogue is declared and skipped rather than read
+  known_gap the contribution receipt composes each route as the server would rather than recording what a served page contained; it measures the surface, not the traffic
+  source_path cmd/BonfyreSourceFrontier/tools/measure_carried_material.py.archive
+  source_path cmd/BonfyreSourceFrontier/tools/measure_carried_material.mjs
+  source_path scripts/file-sought-family.mjs
+  source_path scripts/sought-families.cue
+  source_path scripts/file_sought_family.py.archive
+  witness scripts/tests/file-sought-family.test.mjs proves dry-run leaves the Frontier and CMS untouched, search-origin filing changes only unmeasured admitted channels, and observed carriage and missing census readers are not overwritten
+  invariant a search label may provisionally file the family the estate sought only before an admitted channel has contributed observed material; two conflicting search-family labels refuse rather than silently picking one
+  forbidden_inference a search-origin family -> the material a channel actually carries
+  source_path cmd/BonfyreSourceFrontier/tools/discover_with_exa.mjs
+  source_path cmd/BonfyreSourceFrontier/tools/discover_with_exa.py.archive
+  source_path cmd/BonfyreSourceFrontier/tests/discover_with_exa_test.mjs
+  source_path cmd/BonfyreSourceFrontier/tools/sweep_root_grammars.mjs
+  source_path cmd/BonfyreSourceFrontier/tools/sweep_root_grammars.py.archive
+  source_path cmd/BonfyreSourceFrontier/tests/sweep_root_grammars_test.mjs
+  source_path cmd/BonfyreSourceFrontier/tests/measure_carried_material_test.sh
+  source_path cmd/BonfyreSourceFrontier/src/main.c
+  source_path lib/libbonfyre/include/bf_command_lookup.h
+  source_path scripts/tests/native_command_tables.test.mjs
+  invariant the SourceFrontier CLI resolves its verb before opening or initializing its ledger; a miss cannot create a ledger merely because a caller supplied a database path
+  forbidden_inference a resolved SourceFrontier verb -> an admitted channel, a receipt, or permission to fetch a listed endpoint
+  witness 2026-09-30 cmd/BonfyreSourceFrontier/tests/source_frontier_test.sh passes after the 11-verb descriptor cut; native_command_tables.test.mjs checks sorted unique rows and handled IDs
+  source_path lib/libbonfyre/include/bf_sqlite_path.h
+  invariant census-link opens the configured CMS database as a literal read-only path and never truncates or reinterprets its location as a URI query
+  witness cmd/BonfyreSourceFrontier/tests/source_frontier_test.sh proves census-link reads a CMS database with '?', '#', and an apostrophe in its literal filename
+  source_path cmd/BonfyreSourceFrontier/Makefile
+  source_path cmd/BonfyreSourceFrontier/tools/compile_channel_hierarchy.mjs
+  source_path cmd/BonfyreSourceFrontier/tools/compile_channel_hierarchy.py.archive
+  source_path cmd/BonfyreSourceFrontier/tools/source_ledger_static_manifest.c
+  source_path cmd/BonfyreSourceFrontier/tools/source_ledger_static_manifest.py.archive
+  source_path cmd/BonfyreSourceFrontier/tests/channel_hierarchy.test.mjs
+  witness cmd/BonfyreSourceFrontier/tests/channel_hierarchy.test.mjs proves a bounded hierarchy preserves exact readers and origin labels, reports hidden channel tails, and batches more than 500 roots without SQLite parameter overflow
+  source_path cmd/BonfyreSourceFrontier/tests/source_frontier_test.sh
+  source_path cmd/BonfyreSourceFrontier/tools/compile_inventories.mjs
+  source_path cmd/BonfyreSourceFrontier/inventory-projection.cue
+  source_path cmd/BonfyreSourceFrontier/publisher-grammars.cue
+  source_path cmd/BonfyreSourceFrontier/tools/publisher_grammar_policy.mjs
+  witness cmd/BonfyreSourceFrontier/tests/publisher_grammar_policy.test.mjs proves one authored publisher grammar supplies separately bounded sweep and retained-body candidate profiles without inferring an answering endpoint or admission
+  invariant publisher grammar markers, conventional routes, declared feed MIME types, and universal probes are authored once in CUE and compiled by both sweep and retained-body expansion; they create candidates only, never endpoint availability or admission
+  witness cmd/BonfyreSourceFrontier/tests/compile_inventories_test.mjs proves CUE-authored inventory labels and protocol conventions lower into separately labeled native imports, with inferred protocol explicitly marked as a candidate hint and never as admission or rights
+  source_path cmd/BonfyreSourceFrontier/tools/expand_retained_channels.mjs
+  source_path cmd/BonfyreSourceFrontier/tools/expand_publisher_lattice.mjs
+  source_path cmd/BonfyreSourceFrontier/tools/expand_catalogues.mjs
+  source_path cmd/BonfyreSourceFrontier/tools/qualify_channels.mjs
+  source_path cmd/BonfyreSourceFrontier/tools/qualify_channels.py.archive
+  source_path cmd/BonfyreSourceFrontier/tests/qualify_channels_test.mjs
+  source_path scripts/qualify_claims.mjs
+  source_path scripts/tests/qualify_claims_test.mjs
+  witness cmd/BonfyreSourceFrontier/tests/qualify_channels_test.mjs proves observed feeds and calendars become typed census rows, denials and unparseable pages remain candidate refusals, publisher-declared links stay candidate addresses, and replay clears stale discovery output instead of reimporting a prior run
+  witness scripts/tests/qualify_claims_test.mjs proves a WorkGraph lease lowers to an exact SourceFrontier channel id and finish token while malformed, unleased and tab-bearing claims are refused
+  source_path cmd/BonfyreSourceFrontier/tools/probe_event_channels.mjs
+  source_path cmd/BonfyreSourceFrontier/tools/foreign_observation.mjs
+  source_path cmd/BonfyreSourceFrontier/tools/robots_policy.mjs
+  source_path cmd/BonfyreExternalEstate/tools/compile_live_sources.mjs
+  source_path cmd/BonfyreSourceFrontier/tools/close_gaps_freely.mjs
+  source_path cmd/BonfyreWebAddress/src/main.c
+  source_path cmd/BonfyreWebAddress/src/source_depth_projection.c
+  source_path cmd/BonfyreSourceFrontier/tools/source_ledger_static_manifest.py.archive
+  source_path cmd/BonfyreSourceFrontier/tools/source_ledger_static_manifest.c
+  source_path lib/libbonfyre/include/bf_static_query.h
+  source_path cmd/BonfyreSourceFrontier/tests/source_ledger_static_manifest_test.sh
+  source_path cmd/BonfyreExternalEstate/tools/decision_program_plane.mjs
+  source_path cmd/BonfyreExternalEstate/tools/jev_program_plane.py.archive
+  source_path cmd/BonfyreExternalEstate/decision-program-plane.cue
+  source_path cmd/BonfyreExternalEstate/results/clef-first-live-probe.json
+  witness cmd/BonfyreExternalEstate/tests/decision_program_plane.test.mjs proves admitted-only bounded Clef/Clef-flash diagnostic batches, source-indexed typed questions, exact-review refusal, receipt-bound disagreement and a non-effecting review queue; Bun and Python Jev plan receipts matched before archival
+  witness cmd/BonfyreExternalEstate/results/clef-first-live-probe.json records a one-source live execution of both Clef models, with disagreement left in review and no effect
+  witness cmd/BonfyreSourceFrontier/tests/source_ledger_static_manifest_test.sh proves an admitted coordinate longer than a filesystem leaf is lowered to a deterministic SHA-256 material key while its public coordinate remains unchanged, and the native output matched the legacy compiler byte-for-byte on duplicate, Unicode, null, empty, and excluded rows
+  source_path scripts/tests/source_ledger_static_export_test.sh
+  witness cmd/BonfyreSourceFrontier/tests/source_frontier_test.sh derives contribution receipt days from current UTC time, keeping seven-day pressure and attention checks live; make test passes with the native static manifest and export witnesses
+  witness cmd/BonfyreSourceFrontier/tests/discover_with_exa_test.mjs proves discovery is gated by external-read governance and a credential, caps queries, emits publisher and feed addresses at distinct candidate truth levels, refuses non-feed/private URLs, and stops on provider 402 without treating it as an empty search or authorizing payment
+  witness cmd/BonfyreSourceFrontier/tests/sweep_root_grammars_test.mjs proves a retained publisher body yields observed links and bounded grammar-derived candidates separately, a refused publisher yields only a refusal receipt, and a publisher already read by the census is not swept again
+  source_path cmd/BonfyreWebAddress/src/source_hierarchy_projection.c
+  witness cmd/BonfyreWebAddress/tests/source_hierarchy_projection_test.c checks indexed and unindexed hierarchy output parity, multiple readers, limits, mismatched roots and non-default collations
+  invariant the hierarchy projection uses a connection-local indexed working set when family lookup lacks an index and compatible collations permit it; otherwise it retains the original queries without changing the source database
+  invariant SourceFrontier initialization creates idempotent channel family and family root indexes for hierarchy lookups without changing ledger rows
+  witness cmd/BonfyreSourceFrontier/tests/source_frontier_test.sh removes the hierarchy indexes from a populated ledger, reruns owner initialization twice, compares retained rows and checks the query plans use both indexes
+  invariant SourceFrontier initialization also indexes exact channel addresses and publisher hosts for bounded depth and reference lookups without changing ledger rows
+  witness cmd/BonfyreSourceFrontier/tests/source_frontier_test.sh checks exact address and host indexes are recreated by repeated initialization and selected by SQLite
+  source_path scripts/bonfyre_automate.mjs
+  source_path scripts/bonfyre_automate.py.archive
+  witness 2026-09-18 measured carriage read 277 admitted channels' retained bodies and found 75 carrying material their family never named: 60 publishing picture files, 13 publishing audio, 3 publishing video; 38 had no retained body and were left silent rather than guessed at
+  witness cmd/BonfyreSourceFrontier/tests/source_frontier_test.sh proves an address a fetch cannot open is not a channel, that www, case, a tracking parameter and a trailing slash do not mint channels, that one channel keeps every inventory that listed it while one publisher stays one root, that a catalogue member is virtual and a retained-body link is shadow with truth_level observed_link_candidate, that a refused channel stays in the count with its reason, that a channel waiting for a key is not admitted, that the census admits and a census row nothing listed becomes its own channel, that a page receipt lands on its channel and makes it active, that a root no page has shown reads UNMEASURED, and that starvation names domination and a join failure while refusing to call a source bad
+  witness cmd/BonfyreSourceFrontier/tests/expand_retained_channels_test.mjs proves retained body links become provenance-bound shadow candidates while own-host links are refused before SourceFrontier import
+  witness cmd/BonfyreSourceFrontier/tests/expand_publisher_lattice_test.mjs proves retained publisher grammar compiles observed links and derived conventions as distinct shadow channels, reads gzip bodies within a cap, and refuses self-host roots
+  witness cmd/BonfyreSourceFrontier/tests/compile_inventories_test.mjs proves multiple inventory labels preserve an overlapping address without granting admission, and native SourceFrontier receives each listing under its distinct origin label
+  witness cmd/BonfyreSourceFrontier/tests/probe_event_channels_test.mjs proves calendar census rows are emitted only after a second canonical ForeignTwin body is retained under the row's twin, and a failed canonical observation refuses a probe-only calendar
+  witness cmd/BonfyreSourceFrontier/tests/expand_catalogues_test.mjs proves retained observed DCAT catalogues emit separate catalogue and virtual dataset channels, while policy refusals emit no members
+  witness cmd/BonfyreSourceFrontier/tests/close_gaps_freely_test.mjs proves Wikidata official-site identity and a publisher's own head links close distinct ledger gaps through native import without admitting a source or conferring authority
+  witness cmd/BonfyreExternalEstate/tests/compile_live_sources_test.mjs proves public identity discovery refuses weak or stale feeds and emits an InternetCensus row only when the exact source twin owns a retained matching receipt and body
+  witness 2026-09-17 the estate's own lists compiled into one ledger: EXTERNAL_ESTATE_V4 4,891 listings, ADDRESS_PLANE 4,652, DISCOVERY_CANDIDATES 1,548, PUBLICATION_FEEDS 500 and LIVE_SOURCE_DISCOVERY 59 resolved to 2,581 roots and 4,749 exact channels, with 2,344 roots and 4,080 channels listed by more than one inventory -- the overlap a summed "40k sources" hides
+  witness 2026-09-17 four public catalogues admitted by robots (Dallas Open Data 371, Texas Open Data Portal 1,200, Austin Open Data 2,854, Fort Worth 53) enumerated 4,468 virtual channels through bonfyre-project foreign observe, taking the ledger to 2,594 roots and 9,233 channels of which 4,464 are virtual; data.nctcog.org's robots preflight was unavailable and catalog.data.gov answered 404, both recorded as evidence rather than dropped
+  witness 2026-09-18 on the estate the publisher lattice read 80 retained bodies, found 14 WordPress roots, one Blogger and one Discourse, and wrote 139 shadow channels; the qualifier asked 30 of them and admitted 10 (Deutsche Welle, France 24, the Guardian's India edition, the Times of India, the Hindu, NDTV and others), refusing per-article comment threads, feeds with nothing inside the window and feeds whose words do not read as English; the ledger stood at 4,912 exact channels with 128 shadow and 37 eligible, and the forward plan named qlever.dev as the most-used root with an open structured-channel gap (5 channels, 570 items shown across 5 surfaces)
+  witness 2026-09-18 on the estate the qualifier asked 700 candidate channels across 477 publishers in one bounded run and admitted 281, taking the census from 106 to 391 published sources; /channels?roots=1 walks all 2,580 publishers forty at a time, /channels?root=feeds.bbci.co.uk opens that publisher's own families, and ?family=rss lists its channels with each one's standing
+  witness scripts/tests/source_ledger_static_export_test.sh proves the Python-free exporter writes the bounded admitted index and two admitted source-profile leaves while withholding a candidate channel
+  internal_calculus a convention is a question, not an observation: a feed lives at /feed, a catalogue at /data.json, an interface at /openapi.json, so a host nobody has ever linked can still be asked; anything found this way is protocol_derived_candidate and the host's robots policy still decides
+  internal_calculus a host is asked for one catalogue, one feed and one interface and no more; past the first answer in a category the rest are the same estate said twice
+  internal_calculus a host that answers nothing is remembered as asked, so the backlog is worked through rather than re-asked, and only those hosts are worth the one rendered second look that spends a credit
+  source_path cmd/BonfyreSourceFrontier/tools/probe_catalogues.mjs
+  source_path cmd/BonfyreSourceFrontier/tools/expand_publishers_wikidata.mjs
+  source_path cmd/BonfyreSourceFrontier/tools/expand_publishers_wikidata.py.archive
+  source_path cmd/BonfyreSourceFrontier/publisher-classes.cue
+  witness cmd/BonfyreSourceFrontier/tests/expand_publishers_wikidata.test.mjs proves CUE-authored Wikidata publisher classes compile distinct official-site roots and refuse invalid or duplicate hosts without claiming channels or admission
+  source_path cmd/BonfyreSourceFrontier/tools/dork_common_crawl.mjs
+  source_path cmd/BonfyreSourceFrontier/tools/dork_common_crawl.py.archive
+  source_path cmd/BonfyreSourceFrontier/common-crawl-queries.cue
+  witness cmd/BonfyreSourceFrontier/tests/dork_common_crawl.test.mjs proves CUE-authored Common Crawl index dorks emit only exact index-observed candidates and refuse an unavailable collection rather than inventing a source
+  source_path cmd/BonfyreSourceFrontier/tools/probe_catalogues.py.archive
+  source_path cmd/BonfyreSourceFrontier/tests/probe_catalogues_test.mjs
+  witness cmd/BonfyreSourceFrontier/tests/probe_catalogues_test.mjs proves one bounded catalogue, feed and interface question per host, distinct candidate and readable-source outputs, a persisted ForeignTwin receipt while only the transient sampling body is discarded, and native recording of which selected hosts answered
+  source_path cmd/BonfyreSourceFrontier/tools/probe_storefronts.mjs
+  source_path cmd/BonfyreExternalEstate/tools/compile_scene_source_delta.mjs
+  source_path cmd/BonfyreExternalEstate/tools/source_identity.mjs
+  source_path cmd/BonfyreExternalEstate/tools/compile_source_change_impact.mjs
+  source_path cmd/BonfyreExternalEstate/tools/compile_source_change_impact.py.archive
+  source_path cmd/BonfyreExternalEstate/tools/compile_source_pressure.mjs
+  source_path cmd/BonfyreExternalEstate/tools/compile_source_pressure.py.archive
+  source_path cmd/BonfyreExternalEstate/source-pressure-policy.cue
+  source_path cmd/BonfyreExternalEstate/tools/source_fabric_cycle.mjs
+  source_path cmd/BonfyreExternalEstate/tools/source_fabric_cycle.py.archive
+  source_path cmd/BonfyreExternalEstate/source-fabric-cycle.cue
+  source_path cmd/BonfyreExternalEstate/tools/compile_recursive_channels.mjs
+  source_path cmd/BonfyreExternalEstate/tools/compile_recursive_channels.py.archive
+  source_path cmd/BonfyreExternalEstate/tools/compile_source_frontier.mjs
+  source_path cmd/BonfyreExternalEstate/tools/compile_source_frontier.py.archive
+  source_path cmd/BonfyreExternalEstate/source-frontier-accounting.cue
+  witness cmd/BonfyreExternalEstate/tests/source_frontier_accounting.test.mjs proves CUE-authored frontier accounting preserves exact channels, descriptor-only roots, state and evidence distinctions, and ordered gaps; the Bun output was also compared field-for-field with the prior Python compiler on this mixed fixture before archival
+  invariant compatibility frontier accounting preserves source occurrences, rights and gaps without declaring native SourceFrontier admission or effect authority
+  witness cmd/BonfyreExternalEstate/tests/recursive_channels.test.mjs proves retained-body links, WordPress candidate routes, archive feeds and sitemap locations preserve separate observed-link and protocol-derived truth without admission
+  invariant the Source Fabric cycle runner and artifact names are compiled from one CUE contract; each optional step records either its successful exact owner call or the reason it was skipped, and never treats a candidate as an effect
+  invariant candidate pressure consumes compiled Frontier root/channel state and family through exact occurrence provenance; a missing or ambiguous occurrence refuses instead of recreating the Python URL-family classifier
+  witness cmd/BonfyreExternalEstate/tests/source_pressure.test.mjs proves exact candidate counts, ambiguous identity matches, and descriptor-only roots carry Frontier state and family without promoting pressure into contribution or authority
+  invariant a FactDelta ForeignTwin write measures distinct reverse-dependency closures and published Scene joins only; it cannot establish visible source contribution, causality, rights, or effect authority
+  witness cmd/BonfyreExternalEstate/tests/source_change_impact.test.mjs proves duplicate dependencies and unmapped topics are counted without promoting an unreceipted, unpublished, or non-ForeignTwin write into visible source reuse
+  witness cmd/BonfyreExternalEstate/tests/source_fabric_cycle_impact.test.mjs proves the live Source Fabric cycle invokes the Bun change-impact compiler and produces measured reverse-dependency reuse without inferring Scene visibility
+  source_path cmd/BonfyreExternalEstate/tools/compile_scene_source_receipts.mjs
+  source_path cmd/BonfyreExternalEstate/tools/compile_scene_legacy_sources.mjs
+  source_path cmd/BonfyreExternalEstate/tools/compile_source_starvation.mjs
+  source_path cmd/BonfyreExternalEstate/source-starvation-policy.cue
+  invariant Source starvation diagnoses root, Scene, pressure and impact relationships by CUE-authored predicates; JavaScript only evaluates the typed predicate operators and cannot promote diagnosis into admission, rights or provider effects
+  source_path cmd/BonfyreExternalEstate/tools/compile_source_attention.mjs
+  source_path cmd/BonfyreExternalEstate/source-attention-policy.cue
+  source_path cmd/BonfyreExternalEstate/tools/sync_source_attention.mjs
+  source_path cmd/BonfyreExternalEstate/tools/sync_source_attention.py.archive
+  witness cmd/BonfyreExternalEstate/tests/source_attention_sync.test.mjs proves dry-run plans never call the native Attention binary and valid live plans pass bounded explicit argv without inferring fetch or effect authority
+  invariant Source Attention thresholds are authored in CUE and may be overridden as explicit run policy; temperature only schedules a reading plan and cannot itself trigger observation or spending
+  source_path cmd/BonfyreExternalEstate/tools/compile_source_forward.mjs
+  source_path cmd/BonfyreExternalEstate/source-forward-policy.cue
+  invariant the Source Forward scorer reads benefit, cost, relationship, and disclosure law from the authored CUE policy; a gap owner's resolution order passes through unchanged and no prose recommendation is synthesized by the compiler
+  witness cmd/BonfyreExternalEstate/tests/source_forward.test.mjs proves measured SourceGap dividends and commercial relationship proposals remain candidate-only and require human approval and identity disclosure
+  witness cmd/BonfyreExternalEstate/tests/source_attention.test.mjs proves independent pressure, reverse-impact, and gap signals compile to hot, warm, cool, and cold reading plans without granting fetch, spend, or source contribution authority
+  witness cmd/BonfyreExternalEstate/tests/source_starvation.test.mjs proves separately authored starvation diagnostics can coexist per SourceRoot without promoting pressure, Scene dependency, or severity to admission or authority
+  witness cmd/BonfyreExternalEstate/tests/scene_legacy_sources.test.mjs proves the published legacy census cut reports its compatibility limit, dropped source IDs, and unmatched Scene roots without claiming visibility
+  witness cmd/BonfyreExternalEstate/tests/scene_source_receipts.test.mjs proves a persisted Scene joins exact ForeignTwin closure dependencies to canonical source roots while keeping candidates and unresolved topics separate from visible source claims
+  witness cmd/BonfyreExternalEstate/tests/scene_source_delta.test.mjs proves Scene source snapshots emit born, retired, and changed dependency receipts with per-root co-change counts while refusing to attribute cause or authority
+  witness cmd/BonfyreExternalEstate/tests/commerce_family.test.mjs proves a returned storefront endpoint shape stays eligible-not-admitted and its public observer path refuses unreceipted answers while retaining receipted ones
+  source_path scripts/probe_continuously.sh
+  source_path scripts/firecrawl_second_look.mjs
+  source_path scripts/firecrawl_second_look.py.archive
+  source_path scripts/tests/firecrawl_second_look_test.mjs
+  witness scripts/tests/firecrawl_second_look_test.mjs proves the rendered second look asks only previously silent hosts under read governance and a credential, emits only observed-link candidates, records denials, and stops on provider payment demand without marking unasked hosts or claiming measured billing
+  witness 2026-09-19 twenty-one conventional addresses asked of hosts this estate had listed and never got a channel from: a first slice of 40 such hosts answered 13 times and produced 12 readable sources carrying 262 rows, against 650 addresses that did not answer and 101 that answered with nothing usable
+  witness 2026-09-19 the page organ's existing JSON regime reads a DCAT, CKAN, Socrata or ArcGIS catalogue with no new reader: data.cityofchicago.org answered /data.json with 1,127 datasets, and three Socrata portals were admitted carrying 150 rows
+  known_gap 27,152 roots in this ledger still have no channel of any state; the standing probe works through them a slice at a time, so the figure is a backlog being drawn down rather than a measurement of what those hosts publish
+  known_gap the Bun/CUE ExternalEstate compatibility frontier accounting projection and native SourceFrontier C ledger still have distinct family and admission semantics; the mixed fixture proves Python-output compatibility, not typed parity with the native owner or whole-estate equivalence
+  known_gap Clef and Clef-flash have a one-source live diagnostic witness, not a calibrated evaluation or a whole-estate run; Jev still lacks a Typesafe credential and remains an inactive alternate realization
+  known_gap the rendered second look reaches hosts whose page only exists once a browser builds it, and is the one thing here that spends a metered credit on a host that has already said nothing once; it is bounded per pass rather than by a measured yield
+  source_lineage 2026-09-17 the 40k+ target: count sources at the level they exist, and prove which of them a person ever sees
+  source_path cmd/BonfyreSourceFrontier/tools/traktok_collect.mjs
+  source_path cmd/BonfyreSourceFrontier/tests/traktok_collect.test.mjs
+  witness cmd/BonfyreSourceFrontier/tests/traktok_collect.test.mjs passes 12 tests and 98 assertions including 100000 synthetic observations, 300000 relationships, 1000 native shadow creator channels, short-page resumption, 64-bit IDs, stale leases, HTTP refusal, sealed Credentials, explicit refresh generations and verified retained read through BrowserHost
+  invariant video observations, source-specific relations and collection checkpoints belong to SourceFrontier; individual posts do not become duplicate source channels
+  invariant raw source bytes precede committed page advancement; bounded pages, lease checks, continuation IDs, retries and request budgets preserve resumability
+  invariant a new explicit generation retains old observations; the same generation resumes without overwriting completed history
+  invariant a collected read verifies page SHA-256, containment in the configured body owner, exact video membership and equality with the indexed record before producing the bounded browser projection
+  invariant collector credentials remain inside the existing native Credentials apply boundary or process environment and are never retained in pages, state or receipts
+  forbidden_inference a successful synthetic scale or installed-browser witness -> live TikTok access, real harvested posts or commercial reuse rights
+  known_gap the configured ten-shard recipe query remains pending approved access with zero live posts; broad unofficial crawling and the full set of TraktoK research endpoints are not implemented
+
+  invariant identity backfill joins a census source to a publisher QID only on evidence the estate holds, strongest first: the census channel's own root or channel identity, a host Wikidata records as an official website, or one label below such a host; a shared publishing host (FeedBurner, Megaphone, Substack, Blogspot and the like) never lends its own identity to what its tenants publish
+  invariant a publisher name is backfilled only from the census root's real name or from retained items that all name one publisher; a QID placeholder used as a root name and a bare host in an item's publisher field are refused as names
+  invariant every backfill row names its evidence and is stale-safe through the CMS owner, so a QID or name set since the cut is never overwritten; a source with no evidenced QID stays an IDENTITY gap and is routed to DISCOVER or HUMAN_VERIFY
+  witness cmd/BonfyreSourceFrontier/tests/source_frontier_test.sh proves the evidence ladder: news.nd.edu joins nd.edu's QID and keeps its CMS name, a FeedBurner-hosted show is refused, an agreed retained name is filled without a QID, a host-shaped name is refused, and a second CMS apply changes nothing
+  witness 2026-10-30 on copies of the live estate (2,635 published sources, 1,514 missing a publisher QID or name) the backfill produced 47 rows: 31 QIDs one label below an official website, 16 names agreed by retained items; 140 platform-hosted sources and 178 host-shaped names were refused; applied to a CMS copy, sources with full publisher identity rose from 1,121 to 1,150 and retained-source identity gaps fell from 1,359 to 1,338
+  forbidden_inference a host one label below an organization's official website -> that organization authored, endorsed or controls every item the source carries
+  forbidden_inference a backfilled publisher identity -> an account, membership, partnership or authority for that publisher anywhere in Aurekai
+  known_gap 1,483 of the 1,514 sources missing identity have no QID evidence held locally; Wikidata's newspaper, magazine, radio and television classes were refused by rate limit in the original harvest, so closing them needs a governed DISCOVER pass
+interaction source-frontier-allocates-page-sources
+  source source-frontier
+  destination page-composition
+  relation allocates_admitted_channels
+  preserves each channel's census row, the publisher it belongs to and when it last reached a person
+  drops inventory labels, gaps, attention levels and every channel the census has not admitted
+  forbidden_inference a page's choice of sources -> a ranking of those sources by quality, truth or importance
+  invalidates_on census admissions, contribution receipts, the ledger's absence (the declared families still fill the page)
+  witness cmd/BonfyreWebAddress/tests/page_programs_test.sh
+
+interaction source-frontier-exports-admitted-ledger
+  source source-frontier
+  destination web-address-edge
+  relation compiles_admitted_source_coordinates
+  preserves exact admitted channel address and its bounded index position
+  drops candidate, eligible, waiting-credential and virtual-only channels
+  forbidden_inference an exported source profile -> an active public program contribution, current endpoint reachability, or publisher endorsement
+  invalidates_on census admission state or exact channel address
+  witness scripts/tests/source_ledger_static_export_test.sh
+
+interaction source-frontier-reads-census-admissions
+  source internet-census
+  destination source-frontier
+  relation admits_channels
+  preserves the exact published address, its family as the channel's material and the credential it waits for
+  drops unpublished rows, retained bodies and every item the census read
+  forbidden_inference an admitted channel -> a lawful right to read it again, or its content being current
+  invalidates_on census publication, credential state
+  witness cmd/BonfyreSourceFrontier/tests/source_frontier_test.sh
+
+interaction source-frontier-collection-native-credentials
+  source source-frontier
+  destination credential-boundary
+  relation projects_as
+  preserves sealed provider authorization, fixed destination and source-specific access requirements
+  binding cmd/BonfyreSourceFrontier/tools/traktok_collect.mjs
+  witness cmd/BonfyreSourceFrontier/tests/traktok_collect.test.mjs
+  forbidden_inference configured credentials -> approved access or current remote success
+
+interaction source-frontier-retained-post-browser
+  source source-frontier
+  destination browser-host
+  relation projects_as
+  preserves exact collection and post, verified retained source bytes, observation time and source-specific standing
+  binding integrations/browser/host/bonfyre-browser-host.mjs
+  witness integrations/browser/tests/workbench-live.test.mjs
+  forbidden_inference a retained post read -> a live page fetch or publication permission
+
+interaction foreign-observation-to-discourse-review
+  source foreign-twin
+  destination source-frontier
+  relation decodes_retained_observation
+  preserves public source URL, SHA-256, receipt path and time, exact topic/post identity, original-poster updates and uncovered stream IDs
+  drops applicant post bodies from the original-poster projection, executable interpretation of HTML and inference of job availability
+  binding cmd/BonfyreSourceFrontier/src/main.c discourse-review
+  witness cmd/BonfyreSourceFrontier/tests/discourse_thread.test.mjs
+  forbidden_inference a source-backed reading plan -> permission to contact or an automatically qualified sales opportunity
+
+interaction source-frontier-backfills-census-identity
+  source source-frontier
+  destination internet-census
+  relation proposes_publisher_identity
+  preserves the census row id and namespace, the QID or name, the evidence that supports it and the empty-field condition the CMS owner checks before writing
+  drops sources with conflicting, ambiguous or platform-borrowed identity and every name that is only a host
+  forbidden_inference a proposed identity row -> a written CMS fact; only the CMS owner applies it, and only where the field is still empty
+  invalidates_on census publication, root identity, retained item publishers
+  witness cmd/BonfyreSourceFrontier/tests/source_frontier_test.sh

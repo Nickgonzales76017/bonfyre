@@ -1,0 +1,67 @@
+#!/usr/bin/env python3
+# Retired: architecture/check-cms-contract.mjs is the active read-only checker.
+"""Check that the CMS schema files and the registered types are the same set.
+
+A content type can exist in two places: a .json in the schemas directory, and a
+row in _content_types. Nothing kept them equal. Fourteen files sat beside
+fifteen rows, and the extra row was physical_carrier -- a type the CMS knew and
+no file described, so it existed to the running store and to nothing else. That
+is the same failure that stranded nine commerce types inside two otherwise-empty
+databases on a laptop: schema whose only copy is in a database is schema one
+deletion from gone.
+
+A file with no row is the milder direction -- a type declared and not loaded.
+Both are reported.
+
+Cannot infer: agreement here is not a claim that any type is correct, populated,
+or published. It is a claim that the two places that describe the set describe
+the same set.
+"""
+from __future__ import annotations
+
+import os
+import sqlite3
+import sys
+from pathlib import Path
+
+DB = os.environ.get("BONFYRE_CMS_DB", "/var/lib/bonfyre/cms/bonfyre_cms.db")
+SCHEMAS = Path(os.environ.get("BONFYRE_CMS_SCHEMAS", "/var/lib/bonfyre/cms/content-types"))
+
+
+def main() -> int:
+    if not Path(DB).is_file():
+        print(f"no CMS store at {DB}; set BONFYRE_CMS_DB", file=sys.stderr)
+        return 1
+    if not SCHEMAS.is_dir():
+        print(f"no schema directory at {SCHEMAS}; set BONFYRE_CMS_SCHEMAS", file=sys.stderr)
+        return 1
+
+    files = {p.stem for p in SCHEMAS.glob("*.json")}
+    db = sqlite3.connect(f"file:{DB}?mode=ro", uri=True)
+    registered = {r[0] for r in db.execute("SELECT name FROM _content_types")}
+    db.close()
+
+    orphan_rows = sorted(registered - files)
+    unloaded_files = sorted(files - registered)
+
+    for name in orphan_rows:
+        print(
+            f"  registered with no schema file: {name} "
+            "(its only copy is inside the database)",
+            file=sys.stderr,
+        )
+    for name in unloaded_files:
+        print(f"  schema file never registered: {name}", file=sys.stderr)
+
+    if orphan_rows or unloaded_files:
+        print(
+            f"CMS contract mismatch: {len(files)} files, {len(registered)} registered",
+            file=sys.stderr,
+        )
+        return 1
+    print(f"CMS contract agrees: {len(files)} content types, files and store identical")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,56 @@
+atlas execution-cloudflare-workgraph
+
+architecture cloudflare-workgraph-transport
+  canonical_name CloudflareWorkgraphTransport
+  family execution
+  domain Execution / External intent transport
+  layer transport
+  maturity implemented
+  semantic_question Can a retried source observation reach one durable native work item without an unfinished admission being acknowledged?
+  purpose Transport pinned source-sync intents through Cloudflare Queue delivery to the existing native WorkGraph owner.
+  consumes SourceDigest
+  consumes ScheduledOccurrence
+  publishes NativeAdmissionReceipt
+  node_types TransportIntent
+  node_types ReplayLease
+  state_types pending
+  state_types accepted
+  internal_calculus signed bounded envelope -> fenced durable replay claim -> native queue admission and readback -> retained receipt -> edge acknowledgment
+  invariant in-flight replay returns pending and a retryable HTTP response; only a retained native receipt establishes duplicate admission
+  invariant a claim token fences accept and release against subsequent lease holders; a changed digest under the same replay key refuses
+  invariant native work identity includes source mission, family and digest; repeated unchanged source digests reuse work rather than imply a fresh scheduled execution
+  invariant edge acknowledgment requires a bounded response with matching source mission, digest and native job identity; redirects and unrelated success pages refuse
+  forbidden_inference local admission tests or a signed delivery -> deployed Cloudflare infrastructure, executed synchronization, completed work or authorization for downstream effects
+  source_path integrations/cloudflare/workgraph-envelope.mjs
+  source_path integrations/cloudflare/workgraph-admission.mjs
+  source_path integrations/cloudflare/native-nonce-store.mjs
+  source_path integrations/cloudflare/native-queue-adapter.mjs
+  source_path integrations/cloudflare/native-ingress.mjs
+  source_path integrations/cloudflare/bounded-body.mjs
+  source_path integrations/cloudflare/edge-worker.mjs
+  witness integrations/cloudflare/codex-delivery.test.mjs exercises overlapping admission, fenced leases, restart and lost-response recovery against the compiled native queue in temporary databases
+  witness integrations/cloudflare/codex-edge.test.mjs refuses unrelated successful responses and verifies delayed signing plus matching native acknowledgment
+  witness packs/no-simulation/product-maturity-20261015/bridge-profile.json retains the successful local build and fifteen behavioral tests
+  known_gap no live Cloudflare queue, dead-letter queue, private ingress route or source-sync executor is established by these fixtures
+  known_gap deployed project MCP must reload its catalog before the added cloudflare-bridge test profile is available to an existing remote session
+  interacts cloudflare-admits-native-work
+
+interaction cloudflare-admits-native-work
+  source cloudflare-workgraph-transport
+  destination work-graph
+  relation bounded-native-enqueue
+  preserves digest, source mission, work family, native job identity and retained admission receipt
+  drops any assumption that transport success means native work execution or delivery
+  forbidden_inference enqueue or duplicate receipt -> completed synchronization or effect authority
+  binding integrations/cloudflare/native-queue-adapter.mjs
+  witness integrations/cloudflare/codex-delivery.test.mjs
+
+interaction project-mcp-verifies-cloudflare-bridge
+  source mcp-project-native-owner
+  destination cloudflare-workgraph-transport
+  relation fixed-verification-profile
+  preserves native build failures and behavioral test failures with fixed local fixture paths
+  drops caller-selected scripts, production queue access and deployment actions
+  forbidden_inference a passing local profile -> live Cloudflare deployment or correct production execution
+  binding integrations/mcp/project_operator.mjs
+  witness integrations/mcp/tests/project_operator.test.mjs

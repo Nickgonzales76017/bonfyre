@@ -1,0 +1,48 @@
+atlas optimization-estate-physical-density
+
+architecture estate-physical-density
+  canonical_name EstatePhysicalDensity
+  family optimization
+  domain Optimization / Estate density
+  layer storage
+  semantic_question How much physical disk can the five storage estates (models, releases, estate-local, operator, caches) give back without changing a path or a byte that a receipt, release or reader names?
+  purpose Converge cold estate files onto filesystem-level dense representations, APFS clones for byte-identical files and APFS transparent (decmpfs) compression for compressible cold files, so every reader sees the same path and the same bytes while allocated blocks shrink
+  maturity measured
+  owns EstateDensityLedger
+  source_path scripts/reclaim_space.mjs
+  source_path scripts/release/public_surface_rollout.mjs
+  source_path .claude/skills/density/SKILL.md
+  source_path /Users/nickgonzales/.bonfyre/density/tools/clone_apply.sh
+  source_path /Users/nickgonzales/.bonfyre/density/tools/afsc_apply.sh
+  source_path /Users/nickgonzales/.bonfyre/density/tools/census.sh
+  source_path /Users/nickgonzales/.bonfyre/density/tools/unshared.mjs
+  source_path /Users/nickgonzales/.bonfyre/density/releases-excluded-live-rollback-referenced-20261030.txt
+  internal_calculus clone: group regular files by size then sha256; for each rewritten file clonefile the group's source to a sibling temp, restore mode and times, cmp byte-compare against the original, then rename over it; files outside the destination set (live, rollback or referenced releases) serve only as read-only clone sources
+  internal_calculus transparent: ditto --hfsCompression to a sibling temp, keep only when allocated blocks shrink, cmp byte-compare, restore mode and times, re-check the original mtime, rename; skip open, hard-linked, already compressed, clone-shared (EF_SHARES_ALL_BLOCKS), under 8 KiB, or modified within six hours
+  internal_calculus physical measurement is df on /System/Volumes/Data; du is clone-blind and only reflects transparent compression
+  witness 2026-10-30 ~/.bonfyre/density ledgers: clone-releases 6,512 files (4.95 GB logical) in 113 unreferenced release trees, clone-estate-local 412 files, clone-operator 297 files; every ledger row re-hashed afterwards to its recorded sha256 with zero mismatches
+  witness 2026-10-30 ~/.bonfyre/density ledgers: transparent compression caches 1,573 files 1,896,184 to 775,696 KiB, operator 500 files 946,044 to 252,312 KiB, estate-local 1,987 files 1,816,684 to 461,440 KiB; every row re-hashed to its recorded sha256 with zero mismatches
+  witness 2026-10-30 df available 2,384,248 KiB before, 6,014,144 KiB after; release clone step alone measured +314,184 KiB because most release copies already shared blocks from an earlier reclaim dedupe
+  invariant no original is replaced before a byte compare of its replacement passes; the rename is atomic and keeps path, bytes, mode and mtime
+  invariant live, rollback and otherwise referenced release trees (LaunchAgent plists, open files, ~/.bonfyre references, one previous-service level) are never rewritten
+  invariant canonical SQLite stores, WAL/SHM, keys, locks, open files, model weights and operator.sqlite3 and its backups are never rewritten
+  forbidden_inference du shrinking -> physical bytes freed; clones are counted in full by du, and only df measures shared blocks
+  forbidden_inference a file flagged compressed or cloned -> a different file; readers get identical bytes, and the ledger digest is of the original content
+  forbidden_inference available bytes rising -> the 10 GiB reserve or a ResourceAdmission pass is met; the reserve is judged by the admission owner, not by this layer
+  forbidden_inference clone or transparent density at the filesystem -> the writer was fixed; release staging still copies per release and keeps producing duplicates until its owner clones
+  known_gap release staging now clones site/ and browser/ with COPYFILE_FICLONE (2026-10-30, scripts/release/public_surface_rollout.mjs; a 200 MB cpSync clone test moved df by 0 KiB with identical bytes), but frozen bin/ inputs are still written fresh per release; 77 live, rollback or referenced releases hold up to about 778 MiB of unshared duplicates that need the owner's approval
+  known_gap model weights (19.7 GB) have no byte-identical duplicates and are resident, so no lossless reduction was taken; decmpfs would also slow mmap loads
+  known_gap available space reached 5.7 GiB, short of the 10 GiB reserve
+  known_gap Chrome's and VS Code ShipIt's caches belong to running apps and were not touched
+  source_lineage operator goal a4ed1ecfa75b49f9a6e1f4710116589f; memory estate-physical-density-layer (density lives at the filesystem layer, never re-encoding)
+  interacts estate-density-defers-cold-releases-to-retirement-archive
+
+interaction estate-density-defers-cold-releases-to-retirement-archive
+  source estate-physical-density
+  destination retirement-archive
+  relation leaves_whole_tree_retirement_to_the_archive
+  preserves every release path and byte in place; whole-tree removal stays with the archive's restore-verified path and the owner's approval
+  drops nothing; clones and transparent compression only change allocation
+  forbidden_inference a densified release tree -> a retired or removable release; it remains a rollback candidate until the archive retires it
+  invalidates_on release staging changing to clone, or the live/rollback reference set changing
+  witness /Users/nickgonzales/.bonfyre/density/clone-releases-20261030.tsv

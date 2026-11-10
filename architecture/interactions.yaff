@@ -1,7 +1,187 @@
 atlas interactions
+
+interaction territory-front-opens-local-conversation
+  source human-community-body
+  destination page-composition
+  relation public-conversation-discovery
+  preserves exact root-namespace community and post identities, published visibility, moderation standing, bounded candidate selection and original thread continuation
+  drops private membership, actor-specific state, replies in previews, inferred territory classification and all write authority
+  forbidden_inference a public conversation entrance -> membership, external-network enrollment or publication permission
+  invalidates_on public selection, community visibility or policy, post content or moderation standing changing
+  witness cmd/BonfyreWebAddress/tests/community_journey.test.mjs
+  binding cmd/BonfyreCMS/src/community_discovery.h
+  binding cmd/BonfyreWebAddress/src/front_community.h
+
+interaction project-delta-producer-publishes-to-mcp-gateway
+  source project-delta-producer
+  destination mcp-recursive-native-overlay
+  relation local_git_snapshot_to_authenticated_delta_intake
+  preserves status hash, head, branch, upstream, bounded working/staged summaries, local journal and bearer-gated HTTP publication
+  drops source mutation authority, guaranteed delivery on an ambiguous response, and historical remote completeness when pending is replaced
+  forbidden_inference an accepted delta or a local journal entry -> a complete project history, a verified claim, or permission to edit source
+  invalidates_on Git status format, journal encoding, gateway delta schema, token admission or retry policy changing
+  witness integrations/mcp/tests/project_delta_watcher.test.mjs
+  binding integrations/mcp/project_delta_watcher.mjs
+  binding integrations/mcp/recursive_overlay.mjs
+
+interaction decision-program-uses-shared-typed-runtime
+  source decision-program
+  destination decision-plane
+  relation authored_source_questions_to_shared_numeric_execution
+  preserves one source per semantic record, authored criteria, complete probability distributions, expected ordinal score, bounded concurrency, cancellation and diagnostic-only owner posture
+  drops duplicate provider registry and answer validator, unrelated-source joint-schema batching and provider confidence as a common decision threshold
+  forbidden_inference shared decision algebra or concurrent execution -> calibrated source classification, fewer provider calls or authorized source changes
+  invalidates_on typed schema, provider semantics, source descriptor or authored diagnostic thresholds changing
+  witness cmd/BonfyreExternalEstate/tests/decision_program_plane.test.mjs
+  binding cmd/BonfyreExternalEstate/tools/decision_program_plane.mjs
+
+interaction decision-plane-projects-context-cut
+  source context-cut-compiler
+  destination decision-plane
+  relation exact_receipted_passage_to_typed_diagnostic
+  preserves selected candidate identity, ForeignTwin receipt, body digest, ADMIT versus SHADOW gate, information-policy class, purpose, and recoverable frontier
+  drops unrelated unselected bodies, private hosted state, source authority, and any claim that semantic relevance is evidence completeness
+  forbidden_inference a model passage score -> permission to execute a SHADOW context or omit an exact-owner obligation
+  invalidates_on selected candidate, body digest, purpose, rank gate, information policy, or model program changing
+  witness cmd/BonfyreContextCut/tests/context_cut_test.sh
+  binding cmd/BonfyreContextCut/context_cut.mjs
+
+interaction decision-plane-projects-mcp-shortlist
+  source mcp-recursive-native-overlay
+  destination decision-plane
+  relation exact_read_only_tool_shortlist_to_typed_diagnostic
+  preserves tool identity, read-only annotation, exact shortlist, intent and non-effecting model distribution
+  drops effecting tools, arbitrary model-invented tool names, bearer credentials, and invocation authority
+  forbidden_inference a suggested tool -> authorization to call it or proof that its result is true
+  invalidates_on tool catalogue, shortlist, intent, permission annotation, or decision program changing
+  witness integrations/mcp/tests/recursive_overlay.test.mjs
+  binding integrations/mcp/recursive_overlay.mjs
+
+interaction decision-plane-projects-flow-work
+  source work-graph
+  destination decision-plane
+  relation exact_work_role_shortlist_to_typed_diagnostic
+  preserves work identity, exact read digest, candidate role identities and distribution
+  drops effect admission, leases, external calls, and model-generated authority
+  forbidden_inference a model work phenotype -> a claim, assignment, authorized transition, or completed effect
+  invalidates_on work read set, role shortlist, information policy, or decision program changing
+  witness components/BonfyreDecision/tests/decision-plane.test.mjs
+  binding components/BonfyreDecision/frontier-adapters.mjs
+
+interaction residual-work-compiles-decision-frontiers
+  source live-gym
+  destination decision-plane
+  relation measured_residual_to_normal_typed_work_plan
+  preserves source receipt digest, CUE-mapped owner role, closable versus human-decision distinction, private information policy and explicit abstention
+  drops automatic model execution, generated role identities as authority, and model-driven goal submission
+  forbidden_inference a compiled work frontier -> a model assessment, queue claim, or permission to close a residual
+  invalidates_on source receipt, CUE owner mapping, decision program or information policy changing
+  witness scripts/tests/residual-to-work.test.mjs
+  binding scripts/residual-to-work.mjs
+  binding components/BonfyreDecision/frontier-adapters.mjs
+
+interaction decision-plane-derives-context-cut
+  source decision-plane
+  destination decision-cut
+  relation held_out_measured_token_representation_derivation
+  preserves original ContextCut, body and token digests, candidate identities, question probabilities, omitted recoverable frontier and measured evaluation receipt
+  drops model text generation, source truth, authorization, and every claim that omission proves irrelevance
+  forbidden_inference an execution-candidate derived context -> authorized model projection or sufficient evidence
+  invalidates_on source cut, body, token, case, model, thresholds, or held-out evaluation changing
+  witness components/BonfyreDecision/tests/decision-cut.test.mjs
+  binding components/BonfyreDecision/decision-cut.mjs
+
+interaction protocol-obligations-expose-decision-frontiers
+  source protocol-contract
+  destination decision-plane
+  relation exact_outstanding_obligation_to_reconstructable_typed_case
+  preserves native commitment event, authored role set, queue status and attempt, private information policy, exact read fingerprint and existing queue tuple shape
+  drops duplicate durable decision state, automatic hosted inference, committer reassignment, claims and discharge authority
+  forbidden_inference a model phenotype, urgency or review suggestion -> an authorized effect, queue claim, reassignment or discharged commitment
+  invalidates_on contract, role set, commitment event, queue state or compiled question program changing
+  witness components/BonfyreControlPlane/tests/obligation-decision-frontier.test.mjs
+  binding components/BonfyreControlPlane/obligation-work.mjs
+
+interaction decision-program-reviews-source-frontier
+  source decision-program
+  destination source-frontier
+  relation bounded_model_diagnostic_of_exact_admitted_sources
+  preserves exact admitted channel identity, source descriptor, model selector, typed question schema, request and response digests, uncertainty, disagreement, and operator-review state
+  drops raw credentials, model-generated prose, unbounded source enumeration, automatic admission, publication, and effects
+  forbidden_inference a Clef answer or agreement between models -> source truth, rights, authority, program membership, or permission to fetch or publish
+  invalidates_on admitted descriptor, retained-item observation, authored question schema, selected model, or response receipt changing
+  witness cmd/BonfyreExternalEstate/tests/decision_program_plane.test.mjs
+  binding cmd/BonfyreExternalEstate/tools/decision_program_plane.mjs
+
+interaction representation-manifold-native-arrow-transport
+  source representation-manifold
+  destination representation-manifold
+  relation verified_physical_to_columnar_transport
+  preserves the canonical Parquet input digest and frontier, a content-addressed Flight catalog, native executable identity, and separate installed versus serving states
+  drops JSON object-graph marshalling, duplicate resident Arrow bodies, semantic authority, and any claim that a transport binding proves a live service
+  forbidden_inference a valid Arrow IPC stream or Flight batch -> semantic truth, owner adoption, remote access authority, or a service currently running
+  invalidates_on canonical Parquet bytes, representation frontier, native bundle digest, catalog digest, or registered transport receipt changing
+  witness scripts/tests/representation-manifold-fabric.test.mjs
+  binding scripts/representation-manifold-fabric.mjs
+
+interaction representation-manifold-native-adbc-admission
+  source representation-manifold
+  destination representation-manifold
+  relation local_driver_abi_to_unserved_receipt
+  preserves exact native driver and probe digests, accepted ADBC ABI version, and distinct initialized versus connected or serving states
+  drops Python import as a runtime readiness test, implicit package installation, and any claim that a loaded driver executed SQL
+  forbidden_inference a successfully initialized ADBC driver -> a Flight SQL connection, query result, authenticated endpoint, or live service
+  invalidates_on native driver bytes, probe bytes, ADBC ABI callback table, or recorded receipt changing
+  witness scripts/tests/representation-manifold-adbc.test.mjs
+  binding scripts/representation-manifold-adbc.mjs
+
+interaction rate-discovery-offers-meter-evidence
+  source rate-discovery
+  destination cmd-meter
+  relation evidence_bound_rate_admission
+  preserves provider coordinate, stated amount, stated currency, response date, and HTTP 402 evidence
+  drops the source body after bounded inspection, source claims without a qualified denomination, and any inference of usage or settlement
+  forbidden_inference a successful 402 probe -> a Meter rate; only the Meter command's success is admission
+  invalidates_on a changed source statement, robots policy, rate denomination, or native Meter verdict
+  witness scripts/tests/sweep_rates.test.mjs
+  binding scripts/sweep-rates.mjs
 # Cross-architecture contracts. Often more important than architecture interiors:
 # the hardest bugs live in the bridges. Each names what it preserves, what it
 # drops, and what it must NOT promote.
+
+interaction placement-plane-preserves-owner-boundaries
+  source placement-plane
+  destination address-plane
+  relation provider_neutral_delivery_placement
+  preserves declared public origin, control-path exclusion, service identity, failure posture and the fact that delivery is only a realization
+  drops provider-native route identifiers, tunnel credentials, bearer material, semantic owner state and authority decisions
+  forbidden_inference an addressable route or Cloudflare delivery plan -> eligibility, authority, publication standing, effect permission or semantic ownership
+  invalidates_on placement declaration, public origin, route exclusion, owner binding or provider receipt changing
+  witness scripts/tests/placement_plane_test.sh
+  binding tools/compile_placement_plane.mjs
+
+interaction placement-plane-projects-oauth-continuity
+  source placement-plane
+  destination cmd-auth
+  relation sealed_transaction_continuity
+  preserves code digest, client/redirect/PKCE binding, requested scope, expiry and a sealed session envelope for atomic single-use exchange
+  drops private signing keys, raw bearer material, user/password identity data, institution grants, effect authority and issuer ownership
+  forbidden_inference a durable OAuth transaction projection -> a valid session, authorization decision, renewed grant or ability to mint authority
+  invalidates_on code consumption, expiry, native session revocation, placement generation replacement or credential-boundary rotation
+  witness scripts/tests/placement_plane_test.sh
+  binding deploy/supabase/placement-plane.sql
+  binding integrations/mcp/bonfyre_oauth_gateway.mjs
+
+interaction placement-plane-persists-spatial-projection
+  source spatial-observation
+  destination placement-plane
+  relation last_proven_spatial_projection
+  preserves occurrence-keyed observation/frontier references, immutable material target, query projection target and last-proven public projection posture
+  drops geometry as a routing term, subject identity ownership, disclosure decisions, authority, effect rights and a claim that a projection is a source observation
+  forbidden_inference a spatial projection surviving an Oracle outage -> a new observation, currently valid position, disclosure right or authoritative spatial answer
+  invalidates_on source receipt/retraction, observation frontier, projection generation or retention decision changing
+  witness scripts/tests/placement_plane_test.sh
+  binding schemas/control/placement-plane.cue
 
 interaction feldera-maintains-reachability
   source feldera
@@ -33,6 +213,435 @@ interaction restate-durably-runs-work
   forbidden_inference durably waiting -> the external event will occur
   witness a journaled durable handle
   binding architecture/substrate/foundry.yaff
+
+interaction execution-environment-informs-work-placement
+  source execution-environment-graph
+  destination work-graph
+  relation resource_weather_placement_input
+  preserves environment identity, observed health, owning subsystem, regeneration cost, and suitable work classes
+  drops credential values, raw subprocess output, and task-irrelevant reference environments
+  forbidden_inference a healthy suitable environment -> authority to execute an effect or semantic completion
+  invalidates_on the executable, context, reference environment, or bound dependency changes
+  witness evidence/proofs/execution-environment-matrix.json
+  binding components/BonfyreControlPlane/execution_environment.py
+
+interaction provider-weather-preserves-target-obligation
+  source provider-state
+  destination target-obligation
+  relation realization_routing
+  preserves append-only provider weather, explicit ExpectedProofDelta, and the semantic target identity
+  drops provider-native invocation/session identifiers and raw carrier output
+  forbidden_inference provider quota, authentication, or transport state -> TargetObligation completion, failure, or supersession
+  invalidates_on an explicit provider observation, dependency digest change, or evidence-backed target transition
+  binding components/BonfyreControlPlane/continuous_supervisor.py
+
+interaction target-obligation-compiles-predicate-residual
+  source target-obligation
+  destination inverse-compiler
+  relation non_owning_predicate_projection
+  preserves target identity and the fact that only PROVEN or SUPERSEDED terminates purpose
+  drops realization/provider failure as a target-terminal signal and drops any claim that a referenced predicate is currently satisfied
+  forbidden_inference a TargetObligation compiling -> a selected plan, work item, commitment, reservation, authority grant or effect
+  invalidates_on target supersession or an owner-backed predicate change
+  witness cmd/BonfyreSemanticOptimizer/tests/live_inverse_test.c
+  binding engine/core/include/bf_target_obligation.h
+  binding schemas/control/owner-predicate-contracts.cue
+
+interaction media-library-reads-media-program
+  source media-library
+  destination cmd-c-m-s
+  relation representation_reference_resolution
+  preserves the selected program identity, subject reference, declared representation metadata and publication/status labels
+  drops media identity ownership, media bytes, rights, licensing, distribution authority, transcript truth and playback state
+  forbidden_inference a MediaProgram representation resolved for a library -> permission to deliver, transcode, redistribute or prove a watch
+  invalidates_on referenced MediaProgram identity, representation metadata, publication/status labels or library membership changing
+  witness cmd/BonfyreMediaLibrary/tests/media_library_test.sh
+  binding cmd/BonfyreMediaLibrary/src/main.c
+
+interaction media-library-advertises-address-plane
+  source media-library
+  destination address-plane
+  relation typed_playback_candidate_forwarding
+  preserves compact subject/library/material/operation/representation/audience forwarding coordinates plus owner, verifier, lowerer and dependency references
+  drops raw subject identifiers, access results, representation selection, rights, carrier state, playback progress and watch claims
+  forbidden_inference a media_library candidate surviving a mask -> an authenticated actor closure, library access, a selected representation, transport delivery, authority or media consumption
+  invalidates_on MediaLibrary membership or referenced MediaProgram coordinate change
+  witness cmd/BonfyreMediaLibrary/tests/media_library_test.sh
+  binding cmd/BonfyreMediaLibrary/src/main.c
+
+interaction auth-binds-actor-closure-to-media-library
+  source cmd-auth
+  destination media-library
+  relation revocable_authenticated_actor_projection
+  preserves one explicit login-principal-to-canonical-actor binding, current session validity, binding validity frontier and a caller-requested coordinate only when it exactly equals that binding
+  drops actor identity resolution, relationship state, institution grant, library visibility, media right, representation selection, delivery, watch proof, evidence and effect authority
+  forbidden_inference an authenticated ActorClosure -> an ActorGraph verification, library access, media right, transport lease, watch occurrence or authority to act
+  forbidden_inference a caller-supplied --actor equal to a closure -> a right to choose another actor on a later request
+  invalidates_on session expiry/revocation, user disablement or explicit actor-closure binding revocation/rebinding
+  witness cmd/BonfyreAuth/tests/actor_closure_test.sh
+  witness cmd/BonfyreMediaLibrary/tests/media_library_test.sh
+  binding cmd/BonfyreAuth/src/main.c
+  binding cmd/BonfyreMediaLibrary/src/main.c
+
+interaction mcp-aperture-reads-authenticated-media-library
+  source web-address-edge
+  destination media-library
+  relation stateless_machine_media_projection
+  preserves self-described MCP method/name binding, typed media-library aperture eligibility, the opaque closure digest, a current Auth ActorClosure recheck, exact library access result and a declared direct-representation plan when the MediaLibrary owner returns one
+  drops bearer material, raw actor selection, media identity ownership, right/licence state, delivery bytes, HLS/DASH/MOQT lease, transcode enactment, playback session, watch proof, evidence and effect authority
+  forbidden_inference a media resource template or tool advertisement -> library access, media right, delivery, transport lease, transcode, watch occurrence or authority
+  forbidden_inference a DIRECT_PLAYABLE MCP result -> a carrier having delivered bytes or proof that the actor watched/listened
+  invalidates_on media-library candidate replacement, Auth ActorClosure revocation/rebinding, library access/membership change, MediaProgram representation/publication change or any aperture dependency FactDelta
+  witness integrations/mcp/tests/media_actor_closure_test.sh
+  binding integrations/mcp/bonfyre_mcp_2026_adapter.mjs
+  binding cmd/BonfyreMediaLibrary/src/main.c
+
+interaction media-delivery-rechecks-authenticated-playback-plan
+  source media-delivery
+  destination media-library
+  relation bounded_transport_lease_admission
+  preserves a current Auth-derived actor coordinate, exact library access, selected direct representation identity and explicit delivery-right scope
+  drops bearer material, MediaProgram ownership, media bytes, general licence standing, transcode enactment, carrier session state, playback progress and watch proof
+  forbidden_inference a current direct PlaybackPlan plus a delivery right -> a delivered HLS/DASH/MOQT object, session, watch occurrence, evidence or external effect
+  invalidates_on Auth ActorClosure revocation/rebinding, library access/membership or representation change, right expiry/revocation or delivery-right interval change
+  witness cmd/BonfyreMediaDelivery/tests/media_delivery_test.sh
+  witness integrations/mcp/tests/media_actor_closure_test.sh
+  binding cmd/BonfyreMediaDelivery/src/main.c
+
+interaction media-delivery-projects-moqt-token
+  source media-delivery
+  destination cmd-mo-q
+  relation draft21_authorization_token_projection
+  preserves an opaque, time-bounded MOQT TransportLease reference and the lease owner's exact protocol/representation recheck before SUBSCRIBE_OK
+  drops actor identity, right evidence, media bytes, HLS/DASH semantics, transcode, relay aggregation, object forwarding, completed playback and watch proof
+  forbidden_inference a MOQT AUTHORIZATION TOKEN carrying a lease id -> ownership, a general authority grant, delivered media objects or proof of consumption
+  invalidates_on lease expiry/revocation, protocol/representation mismatch or native request closure
+  witness cmd/BonfyreMoQ/tests/moqt_leased_session_test.sh
+  binding cmd/BonfyreMoQ/src/main.c
+  binding cmd/BonfyreMediaDelivery/src/main.c
+
+interaction creator-channel-reads-current-media-program
+  source creator-channel
+  destination cmd-c-m-s
+  relation current_published_program_projection
+  preserves one creator-owned ChannelPublication reference only when its subject and MediaProgram both exactly match a currently published CMS row
+  drops media identity ownership, asset bytes, representation delivery, stream lease, right/licence standing, playback, analytics, comments and watch proof
+  forbidden_inference a listed ChannelPublication -> a playable or deliverable representation, a current live session, a view or a watched occurrence
+  invalidates_on CMS MediaProgram subject/publication/status change, channel membership change or channel visibility change
+  witness cmd/BonfyreChannel/tests/channel_test.sh
+  binding cmd/BonfyreChannel/src/main.c
+
+interaction auth-binds-actor-closure-to-creator-channel
+  source cmd-auth
+  destination creator-channel
+  relation authenticated_channel_subscription_projection
+  preserves a current authenticated ActorClosure coordinate used for one subscribe/unsubscribe or private-channel surface request
+  drops raw bearer material, actor identity resolution, channel ownership, media rights, playback access, notification delivery, social authority and watch proof
+  forbidden_inference an ActorClosure-derived ChannelSubscription -> a delivery entitlement, notification delivered, relationship authority or watched media
+  invalidates_on session expiry/revocation, ActorClosure binding revocation/rebinding, channel visibility or subscription state change
+  witness cmd/BonfyreChannel/tests/channel_test.sh
+  binding cmd/BonfyreChannel/src/main.c
+
+interaction mcp-generation-proof-reads-cms-owner
+  source mcp-generation-proof
+  destination cmd-c-m-s
+  relation owner_returned_content_integrity
+  preserves the CMS namespace, entry identity, stored generation text, declared output digest, and schema-visible fields
+  drops direct database access, publication standing, and any assertion that generated text is true
+  forbidden_inference a CMS row whose hash matches a receipt -> publication, evidence, authority, or external effect
+  invalidates_on the CMS entry, receipt digest, namespace, or schema-visible output fields changing
+  witness evidence/proofs/moe/24337a43-fc9f-4112-a50a-a7485370f8af.json
+  binding cmd/BonfyreMCPProof/src/cms.c
+
+interaction mcp-generation-proof-reads-artifact-owner
+  source mcp-generation-proof
+  destination artifact-graph
+  relation exported_atom_operator_verification
+  preserves the output atom content digest and named operator-to-output relation from the graph owner's canonical export
+  drops a claim that the graph operator made the generated text semantically correct
+  forbidden_inference an ArtifactGraph atom and operator -> evidence, truth, authority, or an external effect
+  invalidates_on the artifact atom, operator, or receipt digest changing
+  witness evidence/proofs/moe/24337a43-fc9f-4112-a50a-a7485370f8af.json
+  binding cmd/BonfyreMCPProof/src/graph.c
+
+interaction mcp-generation-proof-reads-workflow-owner
+  source mcp-generation-proof
+  destination work-graph
+  relation defined_flow_projection_verification
+  preserves the Flow identifier and persisted definition equality
+  drops every execution, commitment, authority, and effect claim
+  forbidden_inference a defined persisted flow -> executed WorkGraph realization or external consequence
+  invalidates_on the flow definition or flow record changing
+  witness evidence/proofs/moe/24337a43-fc9f-4112-a50a-a7485370f8af.json
+  binding cmd/BonfyreMCPProof/src/flow.c
+
+interaction mcp-generation-proof-reads-discipl-owner
+  source mcp-generation-proof
+  destination cmd-discipl
+  relation declared_contract_verification
+  preserves the declared T_MOE_ROUTER-to-T_MOE_EXPERT route and required verification bridge
+  drops actor enactment, delegation, authority, model correctness, and effect state
+  forbidden_inference a declared DisCIPL route -> an enacted actor transition or authorized action
+  invalidates_on a DisCIPL contract import changing the route family
+  witness evidence/proofs/moe/24337a43-fc9f-4112-a50a-a7485370f8af.json
+  binding cmd/BonfyreMCPProof/src/discipl.c
+
+interaction address-plane-delivers-inverse-affected-cut
+  source address-plane
+  destination inverse-compiler
+  relation typed_dependency_cut_delivery
+  preserves the TargetObligation identity, declared lowerer identity, owner-backed dependency coordinate and immutable handoff digest
+  drops planning-time authority, preferred transformation, owner facts, proof standing, commitment state and every effect capability
+  forbidden_inference a delivered InverseCompiler handoff -> a selected plan, authority grant, commitment, reservation, effect, proof or target termination
+  invalidates_on a matching target/predicate dependency FactDelta, target supersession, or compiled advertisement generation replacement
+  witness cmd/BonfyreSemanticOptimizer/tests/live_inverse_test.c
+  binding cmd/BonfyreExternalEstate/src/main.c
+  binding cmd/BonfyreSemanticOptimizer/src/main.c
+
+interaction inverse-compiler-saturates-equivalences
+  source inverse-compiler
+  destination egglog
+  relation cue_validated_equivalence_search
+  preserves CUE-declared lossless TransformationIR fields, equivalence boundaries and compiled e-class extraction structure
+  drops semantic ownership, current owner state, proof admission, authority and all effect capability
+  forbidden_inference egglog equality -> a lawful external transition, reservation, settlement or observed outcome
+  invalidates_on transformation algebra or equivalence digest change
+  witness cmd/BonfyreSemanticOptimizer/tests/inverse_compiler_test.sh
+  binding cmd/BonfyreSemanticOptimizer/tools/compile_inverse_program.zig
+
+interaction inverse-compiler-reads-native-owner-state
+  source inverse-compiler
+  destination resource-reservation
+  relation owner_backed_predicate_evaluation
+  preserves exact owner, subject, expected state, temporal window, evidence requirement and authority-at-check-time answer
+  drops any cached assertion that a predicate remains satisfied after its receipt
+  forbidden_inference a current owner answer -> a future effect-time authority or completed external effect
+  invalidates_on commitment, authority, reservation, commerce, evidence or ForeignTwin state changes
+  witness cmd/BonfyreSemanticOptimizer/tests/live_inverse_test.c
+  binding cmd/BonfyreSemanticOptimizer/src/main.c
+
+interaction inverse-compiler-lowers-selected-residual-work
+  source inverse-compiler
+  destination work-graph
+  relation explicit_candidate_work_projection
+  preserves target identity, selected policy, ProtocolContract pattern, commitment/resource/authority/effect requirements and compensation posture
+  drops authority, commitment, reservation, payment and effect transitions
+  forbidden_inference a WorkGraph node produced from a residual -> authorization, an effect, settlement, delivery or target completion
+  invalidates_on a predicate receipt changing or target supersession
+  witness cmd/BonfyreSemanticOptimizer/tests/live_inverse_test.c
+  binding cmd/BonfyreSemanticOptimizer/src/main.c
+
+interaction inverse-compiler-rechecks-effect-aperture
+  source inverse-compiler
+  destination authority-graph
+  relation effect_time_admission
+  preserves target and predicate identity, selected transformation, declared authority requirement and current predicate prerequisites
+  drops planning-time authority, provider availability, effect success and any inference that an aperture performed a mutation
+  forbidden_inference an admissible aperture -> an EffectKernel attempt, external consequence, ForeignTwin observation, proof or target completion
+  invalidates_on authority revocation, authority expiry, target supersession, or prerequisite receipt change
+  witness cmd/BonfyreSemanticOptimizer/tests/live_inverse_test.c
+  binding cmd/BonfyreSemanticOptimizer/src/main.c
+
+interaction inverse-compiler-reconciles-proof-frontier
+  source inverse-compiler
+  destination proof-frontier
+  relation owner_rechecked_terminal_reconciliation
+  preserves target identity, every current owner PredicateRef receipt, the declared source-frontier invariant, ForeignTwin receipt identity and directional EvidenceGraph support
+  drops planning preference, synthesized candidate identity, effect-aperture admission, and any inference that a retained foreign body is itself institutional truth
+  forbidden_inference a frontier-satisfied synthesis -> PROVEN; a ForeignTwin receipt -> proof; standing evidence -> TargetObligation closure without a declared still-PROVEN ProofFrontier invariant
+  invalidates_on a referenced owner predicate, evidence relation, foreign receipt, proof challenge, or target source-frontier change
+  witness cmd/BonfyreSemanticOptimizer/tests/live_inverse_test.c
+  binding engine/core/src/proof.c
+  binding cmd/BonfyreSemanticOptimizer/src/main.c
+
+interaction remote-mesh-quarantines-into-evidence
+  source remote-mesh-transport
+  destination evidence-graph
+  relation refusal_evidence_projection
+  preserves the event identifier, refusal reason, claimed/measured address dimensions, and first/last observation times
+  drops raw refused envelope content, provider authority, producer identity, and any truth claim embedded in the refused body
+  forbidden_inference a quarantined envelope -> authority, producer identity, or truth of its embedded claim
+  invalidates_on a new quarantine occurrence or a changed claimed/measured address pair
+  witness components/BonfyreControlPlane/tests/test_mesh_transport.py.archive
+  binding components/BonfyreControlPlane/mesh_transport.py
+
+interaction worker-run-realizes-workgraph
+  source worker-run
+  destination work-graph
+  relation durable_realization
+  preserves the mission identity and receipt-bound WorkGraph completion frontier
+  drops provider invocation IDs, PIDs and transport retry identity
+  forbidden_inference durable WorkerRun -> satisfied WorkGraph or effect authority
+  witness engine/core/tests/lifecycle_test.c
+  binding architecture/execution/work.yaff
+
+interaction protocol-machine-gates-restate-resume
+  source protocol-machine
+  destination restate
+  relation durable_resume_typestate
+  preserves WorkerRun identity, WorkGraph mission identity and the EffectKernel recovery witness
+  drops the carrier process and transport invocation identity
+  forbidden_inference legal resume -> external effect completed or WorkGraph satisfied
+  witness evidence/proofs/worker-lifecycle-restate-recovery.json
+  binding services/bonfyre-restate-native/src/main.rs
+
+interaction protocol-machine-bounds-capability-payment
+  source protocol-machine
+  destination financial-metabolism
+  relation quoted_capability_typestate
+  preserves the stable capability exchange identity, immutable owned-public MPP quote digest, native operating-book route evidence, payment-presentation digest, and receipt-bound transition order
+  drops raw payment credential material, settlement claims, provider invocation identity, and any external execution assertion
+  forbidden_inference payment-presented -> payment verified, booked revenue, spend authority, execution entitlement, or delivered result
+  witness engine/core/tests/lifecycle_test.c
+  witness 2026-08-30 MCP capability_fulfillment mcp-v2-proof-01 remained payment-presented and native verify-payment was rejected
+  binding engine/core/src/lifecycle.c
+
+interaction partner-commons-projects-foreign-twin
+  source partner-commons
+  destination foreign-twin
+  relation rights_limited_projection
+  preserves partner identity, source institution, and observe/reference rights
+  drops remote mutation rights and any claim that cached state is current remote truth
+  forbidden_inference a partner observation -> bind or act authority
+  witness partner_state_is_a_rights_limited_foreign_twin
+  binding cmd/BonfyreProject/src/main.c
+
+interaction external-estate-density-feeds-foreign-twin
+  source external-estate-density
+  destination foreign-twin
+  relation candidate_descriptor_projection
+  preserves source reference, declared carrier, semantic-output class, affordance class and explicit limits
+  drops endpoint liveness, credentials, remote-account binding, provider admission, payment settlement and effect authority
+  forbidden_inference an observed descriptor -> a callable or authorized foreign capability
+  invalidates_on source corpus digest or descriptor classification changes
+  binding estate/external-density.yaff
+
+interaction external-estate-density-address-plane
+  source external-estate-density
+  destination address-plane
+  relation compiled_candidate_forwarding
+  preserves exact occurrence identity, declared candidate axes, typed source kind, corpus digest and a reproducible mask position
+  drops source body, endpoint liveness, provider admission, credential, authority, evidence, payment, settlement and effect state
+  forbidden_inference address-mask survivor -> semantic match, source admission, provider readiness, authority, proof or selected execution
+  invalidates_on source corpus digest or declared candidate-axis classification changes
+  binding cmd/BonfyreExternalEstate/src/main.c
+
+interaction machine-membrane-websub-dirty-foreign-twin
+  source machine-membrane
+  destination foreign-twin
+  relation push_notification_coalescence
+  preserves the exact subscribed topic, callback signature verification, stored subscription authority receipt, one coalesced SourceDirty frontier and the later independent ForeignTwin observation boundary
+  drops delivery payload truth, unbounded callback-triggered reads, remote mutation authority, provider admission, evidence promotion and any claim that a notification body is the source body
+  forbidden_inference verified WebSub delivery -> a ForeignTwin fact, evidence, provider liveness, or permission to read a source not previously subscribed under an authority receipt
+  invalidates_on subscription receipt withdrawal, callback signature failure, lease expiry, source topic change, or ForeignTwin observation law change
+  binding cmd/BonfyreWebSub/src/main.c
+
+interaction material-compiler-source-dirty
+  source address-plane
+  destination foreign-twin
+  relation demand_coalesced_before_observation
+  preserves MaterialCompiler identity, externally-owned topic, one durable SourceDirty key per topic and a bounded later ForeignTwin observation path
+  drops demand payload truth, an authorization grant, an observation receipt, body bytes, evidence, proof, source selection, provider admission and every external effect
+  forbidden_inference an observation demand -> a source read, a ForeignTwin fact, permission to observe, evidence or a selected source
+  invalidates_on material handoff envelope, exact ExternalEstate/CMS topic, SourceDirty queue law or ForeignTwin observation policy change
+  witness cmd/BonfyreWebSub/tests/websub_test.sh proves fifty MaterialCompiler-shaped demands for one topic become one durable SourceDirty row and exactly one later fixture ForeignTwin invocation, while a malformed demand stays unacknowledged
+  binding cmd/BonfyreLoweringWorkers/src/main.c
+  binding cmd/BonfyreWebSub/src/main.c
+  binding deploy/systemd/bonfyre-websub-demand.service
+  binding deploy/systemd/bonfyre-websub-demand.timer
+
+interaction foreign-twin-delta-materializes-exact-receipt
+  source foreign-twin
+  destination address-plane
+  relation causal_receipt_materialization
+  preserves the ForeignTwin topic write, AddressPlane's dependent candidate cut, lowerer identity and the exact matching receipt reference/digest selected by MaterialCompiler
+  drops the foreign body as semantic truth, an additional observation request, semantic parsing, source selection, evidence admission, authority, provider state and every external effect
+  forbidden_inference a receipt-bound material artifact -> a parsed fact, evidence, a selected source, an authorization or a reason to reread the source
+  invalidates_on ForeignTwin receipt/topic, candidate dependency registration, lowerer causal-write envelope or receipt retention change
+  witness cmd/BonfyreWebSub/tests/material_demand_bridge_test.sh proves a receipt-bound ForeignTwin FactDelta returns through AddressPlane as one MaterialCompiler artifact and creates no self-exciting demand
+  binding cmd/BonfyreExternalEstate/src/main.c
+  binding cmd/BonfyreLoweringWorkers/src/main.c
+
+interaction resource-weather-delta-reheats-matching-material-intent
+  source execution-environment-graph
+  destination foreign-twin
+  relation source_scoped_physical_reheat
+  preserves one ResourceWeather source coordinate, exact previous/current snapshot digests, tier and scheduler-decision standing, the matching still-leased MaterialLease identity, the gate's HOT/WARM/COLD/FROZEN outcome and ordinary later SourceDirty/ForeignTwin boundary
+  drops semantic candidate selection, a source-read grant, authority, body bytes, evidence/proof standing, provider execution, effect admission and every unrelated held source intent
+  forbidden_inference HOT or WARM -> authority, observed body, evidence, source selection or successful delivery
+  forbidden_inference a ResourceWeather delta for one source -> reheat of every held material intent
+  invalidates_on ResourceWeather source-standing delta, MaterialLease transition, gate law, ExternalEstate source coordinate or ForeignTwin observation law change
+  witness cmd/BonfyreMaterialWeatherReheat/tests/material_weather_reheat_test.sh proves a feed-a weather delta admits only feed-a while feed-b stays pending, and cancellation of feed-b remains terminal under a later HOT delta
+  witness cmd/BonfyreMaterialWeatherReheat/tests/weather_material_bridge_test.sh proves the admitted source enters the native MaterialCompiler -> WebSub -> ForeignTwin -> receipt-bound AddressPlane return loop, then an exact HOT scheduler-due delta creates one fresh SourceDirty demand without replaying old handled work
+  witness cmd/BonfyreResourceWeatherTransition/tests/resource_weather_transition_test.sh proves the durable weather frontier advances only after its source-scoped reheat worker accepts all FactDeltas from a new snapshot
+  witness cmd/BonfyreResourceWeatherRefresh/tests/resource_weather_refresh_test.sh proves BonfyreProject dry-run output is atomically handed into the native transition worker without reading a source
+  binding cmd/BonfyreResourceWeatherDelta/src/main.c
+  binding cmd/BonfyreMaterialWeatherGate/src/main.c
+  binding cmd/BonfyreMaterialWeatherReheat/src/main.c
+  binding cmd/BonfyreResourceWeatherTransition/src/main.c
+  binding cmd/BonfyreResourceWeatherRefresh/src/main.c
+  binding cmd/BonfyreMaterialLease/src/main.c
+
+interaction external-estate-public-surface
+  source external-estate-density
+  destination web-address-edge
+  relation read_only_candidate_query_carrier
+  preserves source occurrence identity, raw source provenance, source digest, candidate-only truth level, query filters, explicit World composition and user-triggered no-body HEAD probe boundary
+  drops provider credentials, private observation bodies, authority grants, InformationPolicy decisions, payment instruments, settlement facts, effect receipts and provider admission state
+  forbidden_inference a public external-estate result or transport response -> a callable provider, lawful data combination, verified vendor claim, admitted evidence, authorized spend, settlement or external effect
+  invalidates_on external corpus digest, candidate-classification compiler, external-estate runtime query contract or public edge proxy contract changes
+  witness Aurekai/tests/external-estate-runtime.test.mjs
+  binding Aurekai/src/external-estate-runtime.mjs
+  binding Aurekai/src/external-estate-server.mjs
+  binding deploy/nginx/snippets/bonfyre-public-estate.conf
+
+interaction external-estate-candidate-slices-enter-surface-ir
+  source external-estate-density
+  destination surface-ir
+  relation bounded_candidate_slice_input
+  preserves grammar, host-derived territory, extent, observed candidate filters, exact supplied source occurrence identity, unresolved shape coordinates and candidate-only truth level
+  drops actor identity, actor closure, audience entitlement, institutional role, authority, financial authority, effect authority, provider readiness and admission state
+  forbidden_inference URL shape -> actor, audience, authority, role, admitted evidence, provider readiness, payment, settlement or external effect
+  invalidates_on external-estate slice compiler, AddressPlane host-resolution contract, Discover/Observations carrier contract or InformationPolicy boundary changes
+  witness Aurekai/tests/external-estate-runtime.test.mjs
+  witness Aurekai/tests/external-estate-surface-contract.test.mjs
+  binding Aurekai/src/external-estate-runtime.mjs
+  binding Aurekai/src/external-estate-server.mjs
+  binding site/matrix/surfaces/discover.html
+  binding cmd/BonfyreWebAddress/src/main.c
+
+interaction foreign-twin-bounds-housing-concession-arbitrage
+  source foreign-twin
+  destination housing-concession-arbitrage
+  relation retained_public_quote_projection
+  preserves the public observe right, robots decision, source URL, observation time, and body digest that bound a quote curve
+  drops account access, application/tour/contact effects, and any claim that an observed row remains remotely available
+  forbidden_inference retained public quote row -> lease, guaranteed availability, or promotion eligibility
+  invalidates_on the source body digest, admission decision, or quote-surface extraction contract changes
+  witness tests/test_housing_concession_arbitrage.py.archive
+  binding tools/housing_concession_arbitrage.py
+
+interaction evidence-feeds-pattern-graph
+  source evidence-graph
+  destination pattern-graph
+  relation evidence_bound_clustering
+  preserves trace references and source-backed evidence references
+  drops automatic proof and promotion authority
+  forbidden_inference repeated source-backed observations -> a proven or promoted primitive
+  witness aurekai_patterns_propose_but_do_not_promote
+  binding components/BonfyreControlPlane/run_history_absorption.py
+
+interaction blogger-receipt-feeds-evidence
+  source blogger-publication-surface
+  destination evidence-graph
+  relation receipt_projection
+  preserves external post identity, public URL, publication time, source lineage, and API acknowledgement
+  drops OAuth credentials, access tokens, refresh tokens, and unneeded Blogger response fields
+  forbidden_inference an API acknowledgement -> the article's substantive claims are true
+  invalidates_on the public URL becomes unavailable or the receipt no longer matches the external post identity
+  evidence the safe Blogger API response supports only api-acknowledged and publicly-addressable publication claims
+  witness test_safe_blogger_receipt_projects_once_into_occurrence_and_evidence
+  binding components/BonfyreControlPlane/blogger_receipts.py
 
 interaction hvm4-reduces-fpq-seed
   source hvm4
@@ -119,6 +728,58 @@ interaction discipl-composes-into-closure
   forbidden_inference proposed chain -> runnable chain
   witness ExecutionOrganism
   binding components/BonfyreControlPlane/capability_closure.py
+
+interaction command-law-seeds-discipl
+  source command-law
+  destination discipl-composition
+  relation native_command_family_materialization
+  preserves command identity, exact native binary location, declared input/output kinds, and contracts derived only from intersecting kinds
+  drops unverified command grammar and does not treat a seeded actor as a healthy or workload-proven capability
+  forbidden_inference a native command family seed -> a callable, authorized, or workload-proven command
+  binding lib/libbonfyre/src/bf_discipl.c
+
+interaction estate-bridges-into-discipl
+  source foreign-twin
+  destination discipl-composition
+  relation retained_representation_becomes_composable_material
+  preserves the occurrence a body came from, the digest of what was served, and the measured rate at which an attempted observation still has bytes on disk
+  preserves carrier conformance as the only licence for a kind narrower than `file`; a body is text because it parsed as a feed, not because its phenotype suggested it might
+  drops the phenotype's own account of what the source offers, which describes the source and not the bytes this estate retained from it
+  drops any carrier the conformance compiler has never actually detected here; an unobserved probe contributes no family and no edge
+  forbidden_inference a retained body entering the lattice -> a transform having run; the bridge seeds contracts and executes nothing
+  forbidden_inference a composable body -> a right to redistribute what it contains
+  forbidden_inference the estate-wide retention rate -> the rate for any one phenotype or carrier
+  binding lib/libbonfyre/src/bf_discipl.c
+  note the bridge exists because the estate read a gigabyte into 2,882 files and stopped. Ingest has consumed `file` the whole time; nothing had told the composition engine that the estate holds any.
+
+interaction plane-ranks-into-pure-reduction
+  source bitnet-address-ranker
+  destination pure-execution-tier
+  relation ranked_frontier_enters_bounded_reduction
+  preserves the deterministic membership AddressPlane decided, unchanged: the reducer receives exactly the survivors the mask cut admitted, in whatever order the ranker chose
+  preserves the survivor set against the order it arrived in; the same 48-candidate weather frontier reduced in rank order, reversed rank order and plane order returns one set digest across reference, hvm2 and hvm4
+  drops the ranker's authority to remove a candidate. Ordering is presentation here and nothing else, which is what makes a ranker measured worse than chance harmless in this position
+  drops any claim that a Bend aggregate is order-free; it sums indices, so its checksum moves with the order and is only comparable against a reference computed in the same order
+  forbidden_inference a ranker safe in this position -> a ranker fit to truncate; the safety comes from the reducer computing the whole frontier, and a top-k cut would put the measured unfitness straight into the answer
+  forbidden_inference agreement across three orderings -> correctness; it shows the computation does not depend on sequence, which is a smaller and different thing
+  forbidden_inference a survivor here -> a reachable, admitted, quoted or purchasable source
+  binding scripts/pure-job.mjs
+  note the chain was assembled to find out whether a SHADOW ranker could drive a bounded search. It cannot choose the prefix -- 91 percent of random draws beat its top-16 -- and it can safely choose the order, because an exact reducer over the whole frontier is immune to being handed things in a bad sequence.
+
+interaction discipl-asks-the-pure-tier
+  source discipl-composition
+  destination pure-execution-tier
+  relation composition_question_stated_for_bounded_reduction
+  preserves the chains the composition engine found and the cost, confidence and drift it assigned them, scaled to integers because the lattice compares integers and a float disagreeing in the last bit would present as two reducers disagreeing about a pure computation
+  preserves the tier's boundary: the engine states the question in the tier's job shape and never dispatches a reducer itself, so purity is still checked before dispatch and placement is still asked per backend
+  drops the engine's own ranking; a portfolio is a subset-sum over accumulated cost and the order chains were proposed in says nothing about which combinations fit
+  drops any backend that cannot express the lattice, by refusal rather than by answering an easier question
+  forbidden_inference a feasible portfolio -> a runnable one; these chains are contracts and most of their commands still have no checked invocation
+  forbidden_inference accumulated transform cost -> money, time or energy
+  forbidden_inference a budget that fits -> authority to spend it
+  forbidden_inference agreement between the net and enumeration -> a correct cost model; both were handed the same declared priors
+  binding cmd/BonfyreDiscipl/src/main.c
+  note DisCIPL scored chains with declared priors and nothing else could compute the same thing, so the scores had no second opinion. This is the first one: two reducers arriving at one feasible set by routes with nothing in common.
 
 interaction serm-reduces-to-sufficiency
   source serm
@@ -392,27 +1053,101 @@ interaction proof-frontier-reheats-feldera
   witness reachability-proof.json (the retraction that withdrew organism 2 and reheated the fold)
   binding components/BonfyreControlPlane/substrate/feldera_reachability_incremental.rs
 
-interaction partner-commons-projects-foreign-twin
-  source partner-commons
-  destination foreign-twin
-  relation rights_limited_projection
-  preserves partner identity, source institution, and observe/reference rights
-  drops remote mutation rights and any claim that cached state is current remote truth
-  forbidden_inference a partner observation -> bind or act authority
-  witness partner_state_is_a_rights_limited_foreign_twin
-  binding components/BonfyreControlPlane/partner_commons.py
+interaction realization-measurement-feeds-provider-graph
+  source realization-measurement
+  destination provider-graph
+  relation measured_bid_supply
+  preserves the metric vector in real units, uncollapsed
+  drops the execution that produced the measurement (only the cost survives)
+  forbidden_inference a bid exists -> that realization is authorized to serve
+  forbidden_inference the tournament ranked it first -> it is valid (cheapest is not valid)
+  invalidates_on the measured path changes cost class (reheat: re-measure)
+  witness components/BonfyreControlPlane/tests/test_realization_measure.py.archive
+  binding components/BonfyreControlPlane/realization_measure.py
 
-interaction blogger-receipt-feeds-evidence
-  source blogger-publication-surface
-  destination evidence-graph
-  relation receipt_projection
-  preserves external post identity, public URL, publication time, source lineage, and API acknowledgement
-  drops OAuth credentials, access tokens, refresh tokens, and unneeded Blogger response fields
-  forbidden_inference an API acknowledgement -> the article's substantive claims are true
-  invalidates_on the public URL becomes unavailable or the receipt no longer matches the external post identity
-  evidence the safe Blogger API response supports only api-acknowledged and publicly-addressable publication claims
-  witness test_safe_blogger_receipt_projects_once_into_occurrence_and_evidence
-  binding components/BonfyreControlPlane/blogger_receipts.py
+interaction atlas-context-provider-bounds-model-context
+  source atlas-context-provider
+  destination realization-measurement
+  relation bounded_read_realization
+  preserves the exact registry record for the id asked about
+  drops every architecture that was not asked about
+  forbidden_inference a bounded answer -> the caller has seen the atlas
+  invalidates_on atlas.mjs export rewrites the index
+  witness bun test architecture/tests/atlas_query.test.mjs
+  binding architecture/atlas-query.mjs
+
+interaction remote-mesh-quarantines-into-divergence
+  source remote-mesh-transport
+  destination work-graph
+  relation bounded_divergence_report
+  preserves both the declared and the measured address of a refused envelope
+  drops the refused payload itself, which is never echoed back onto the public branch
+  forbidden_inference an envelope refused for its address -> its semantic content is wrong
+  forbidden_inference a reported divergence -> the producer will re-seal it
+  invalidates_on the producer publishes a re-sealed envelope at the same event id
+  witness components/BonfyreControlPlane/tests/test_mesh_transport.py.archive
+  binding components/BonfyreControlPlane/mesh_transport.py
+
+interaction remote-mesh-materializes-work
+  source remote-mesh-transport
+  destination work-graph
+  relation content_bound_coordination_projection
+  preserves event identity, typed request, bounded body, evidence references, addressed carrier, and originating provider
+  drops transport authority and any implication that delivery is acknowledgement
+  forbidden_inference an actionable mesh event -> authority to perform its requested effects
+  forbidden_inference a WorkGraph projection -> the addressed carrier consumed the event
+  invalidates_on the event content address no longer binds its envelope or the work is explicitly cooled/superseded
+  witness components/BonfyreControlPlane/tests/test_mesh_transport.py.archive
+  binding components/BonfyreControlPlane/mesh_transport.py
+
+interaction receipt-envelope-closes-mesh-delivery
+  source receipt-envelope
+  destination remote-mesh-transport
+  relation delivered_event_consumption
+  preserves event identity, consuming provider identity, prior delivery, and the first consumption receipt
+  drops any implication that an acknowledgement proves the event claim or grants authority
+  forbidden_inference a provider listing an event id in mesh_acks -> that provider received the event
+  forbidden_inference an originating provider receipt -> satisfaction of its own cross-provider proof obligation
+  invalidates_on the delivery row is absent, belongs to another consumer, or the coordination route excludes the acknowledging provider
+  witness components/BonfyreControlPlane/tests/test_mesh_transport.py.archive
+  binding components/BonfyreControlPlane/mesh_transport.py
+
+interaction agent-session-binds-receipt-envelope
+  source agent-session
+  destination receipt-envelope
+  relation event_frontier_coverage
+  preserves session identity, event sequence, event kind, provider/model attribution, explicit producer verifier reference and subject/host/external evidence origin
+  drops provider-private state and provider-native session identity as a semantic owner
+  forbidden_inference evidence for one origin -> evidence for another origin
+  forbidden_inference artifact identity -> producer, model, transport, authority, completion, or claim support
+  forbidden_inference matching provider/model strings -> verified producer fidelity without a verifier observation
+  invalidates_on an event is inserted, removed, reordered, rebound to another origin, or attributed to another provider/model
+  witness engine/core/tests/agent_contract_test.c
+  binding engine/core/src/agent_contract.c
+
+interaction terminal-epoch-receipt-feeds-finance
+  source physical-derivation
+  destination financial-metabolism
+  relation compaction_safe_carrier_coordinate_projection
+  preserves a versioned terminal envelope, the optional carrier/model/route coordinates it declares, and digest-checked immutable carrier command argv
+  drops raw terminal stdout, unretained command files, and any provider-private state
+  forbidden_inference a hash-only v5 command manifest -> model, route, or command argv
+  forbidden_inference a compacted command argv -> provider price, billing truth, work completion, or semantic proof
+  invalidates_on the terminal-envelope schema, carrier argv digest, or terminal receipt source changes
+  witness components/BonfyreControlPlane/tests/test_financial_metabolism.py.archive
+  binding components/BonfyreControlPlane/financial_metabolism.py
+
+interaction mesh-routing-replay-refutes-transport-claims
+  source mesh-routing-replay
+  destination remote-mesh-transport
+  relation adversarial_replay
+  preserves the envelope's declared address, its re-derived route, and the exact bytes published at that address
+  drops any trust in the stored routing row, which is recomputed rather than read
+  forbidden_inference a 14/14 replay -> the transport is correct for envelopes it has not replayed
+  forbidden_inference a replay verdict -> a completion receipt for the challenge that requested it
+  invalidates_on the transport's routing rule, canonicalisation, or privacy gate changes
+  witness evidence/proofs/mesh-routing-fence-replay.json
+  binding components/BonfyreControlPlane/mesh_routing_replay.py
 
 interaction resource-pressure-triggers-metabolism
   source resource-admission
@@ -422,5 +1157,1453 @@ interaction resource-pressure-triggers-metabolism
   drops any implication that a target shortfall justifies unbounded maintenance
   forbidden_inference disk below the configured target -> every reclaim candidate is worth scanning or deleting
   invalidates_on free-space state, inventory fingerprint, yield policy, or backoff deadline changes
-  witness components/BonfyreControlPlane/tests/test_resource_metabolism.py
+  witness components/BonfyreControlPlane/tests/test_resource_metabolism.py.archive
   binding components/BonfyreControlPlane/resource_metabolism.py
+
+interaction target-obligation-materializes-work
+  source target-obligation
+  destination work-graph
+  relation realization_residue
+  preserves semantic target identity and proof requirements
+  drops any implication that one Work item exhausts the target
+  forbidden_inference Work failure or lease expiry -> TargetObligation termination
+  invalidates_on target proof requirements or source frontier change
+  witness components/BonfyreControlPlane/tests/test_target_obligation.py.archive
+  binding components/BonfyreControlPlane/target_obligation.py
+
+interaction semantic-derivation-demands-realization
+  source semantic-derivation
+  destination physical-derivation
+  relation required_postcondition_realization
+  preserves target reference, dependency closure and expected outputs
+  drops semantic authority from the selected physical command
+  forbidden_inference selected realization -> admitted semantic delta
+  invalidates_on the semantic read closure or toolchain passport changes
+  witness components/BonfyreControlPlane/tests/test_semantic_derivation.py.archive
+  binding components/BonfyreControlPlane/physical_derivation.py
+
+interaction address-plane-routes-household-operator
+  source semantic-operator
+  destination semantic-derivation
+  relation deterministic_operator_lowering
+  preserves the addressed source record, selected command owner, exact read set and semantic program digest
+  drops proof, authority, availability and economic truth not carried by a witness
+  forbidden_inference source-bound household projection -> current availability, dog acceptance, effective cost, purchase authority or proof
+  invalidates_on the source record digest, identity key, command advertisement or operator implementation changes
+  witness components/BonfyreControlPlane/tests/test_semantic_operator.py.archive
+  witness engine/core/tests/semantic_operator_test.c
+  binding components/BonfyreControlPlane/semantic_operator.py.archive
+  binding engine/core/src/semantic_operator.c
+
+interaction address-plane-forwards-owner-advertisements
+  source address-plane
+  destination semantic-derivation
+  relation typed_candidate_publication_and_dependency_cut
+  preserves candidate identity, candidate kind, canonical owner reference, exact verifier reference, lowerer reference, declared read/dependency addresses and an fsync+rename idempotent lowerer-handoff envelope
+  drops copied owner state, authority, proof, provider weather, commitment, reservation, effect admission and execution of the lowerer itself
+  forbidden_inference an address-mask survivor -> selection, authorization, proof, provider admission or effect
+  forbidden_inference a FactDelta dependency hit -> global invalidation or a new owner fact
+  invalidates_on canonical CMS/TargetObligation/Provider/ModelCatalog/ProtocolCommons declaration, authenticated MCP closure snapshot, candidate coordinate or declared dependency change
+  witness cmd/BonfyreExternalEstate/tests/external_estate_test.sh
+  witness cmd/BonfyreWebSub/tests/websub_test.sh
+  binding cmd/BonfyreExternalEstate/src/main.c
+  binding cmd/BonfyreWebSub/src/main.c
+
+interaction address-plane-handoff-reaches-typed-lowerer-consumers
+  source address-plane
+  destination protocol-contract
+  relation typed_handoff_consumer_recheck
+  preserves immutable handoff identity, candidate kind, owner reference, exact verifier coordinate and lowerer reference
+  drops authority grants, protocol enactment, carrier selection, ForeignTwin evidence, proof and external effects
+  forbidden_inference a compiled protocol chain -> an enactment, authority or carrier effect
+  invalidates_on the authenticated MCP closure snapshot, declared protocol chain, published CMS source/collection state or handoff digest
+  witness cmd/BonfyreLoweringWorkers/tests/lowering_workers_test.sh
+  binding cmd/BonfyreLoweringWorkers/src/main.c
+
+interaction mcp-ledger-aperture-reads-mesh-call-ledger
+  source mcp-mesh-call-ledger
+  destination mcp-mesh-ledger-aperture
+  relation authenticated_read_only_receipt_projection
+  preserves call id, timestamp, trace id, tool, parsed arguments, state, duration and parsed result
+  drops database write authority, other gateway resources, prompts, project mutations and effect authority
+  forbidden_inference reading a call receipt through MCP -> permission to replay the call or trust its result
+  invalidates_on a new call row in the existing mesh SQLite calls table
+  witness mcp/tests/mesh-ledger.test.mjs
+  binding mcp/mesh-ledger.mjs
+
+interaction address-plane-compiles-mcp-aperture
+  source address-plane
+  destination web-address-edge
+  relation closure_scoped_machine_projection
+  preserves typed MCP candidate identities, required/prohibited coordinate cut, actor/address/target/policy closure digests, exact verifier references, dependency frontier and deterministic aperture digest
+  drops bearer tokens, actor facts, authority results, proof standing, task completion, owner bodies, effect admission and tool invocation
+  forbidden_inference a cached McpApertureIR -> current authorization, a permitted tool call, a completed task or an external effect
+  invalidates_on authenticated MCP closure snapshot, candidate coordinates, target frontier, actor/address/policy closure digest or any declared dependency FactDelta
+  witness cmd/BonfyreExternalEstate/tests/external_estate_test.sh
+  witness integrations/mcp/tests/mcp_2026_aperture_test.sh
+  binding cmd/BonfyreExternalEstate/src/main.c
+  binding integrations/mcp/bonfyre_mcp_2026_adapter.mjs
+
+interaction model-representation-passport-forwards-address-candidate
+  source model-representation-passport-registry
+  destination address-plane
+  relation measured_representation_candidate_forwarding
+  preserves model identity reference, representation identity/family/version, receipt digest, declared operation scope, exactness/measurement state, ADMIT/DEFER/REJECT coordinate, quality-envelope reference and ModelCatalog verifier route
+  drops model bytes, generated output, tokenizer state, task quality, cache residency, authority, provider capability, resource grant, proof standing and effect aperture
+  forbidden_inference a forwarded measured representation -> ResourceAdmission approval, semantic-generation quality, embedding/rerank recall, authorization or an external effect
+  forbidden_inference a bare catalog row -> generation, embedding or rerank eligibility
+  invalidates_on model representation passport/revocation, receipt digest, operation scope, preservation envelope or admission-state change
+  witness cmd/BonfyreModel/tests/representation_passport_test.sh
+  witness cmd/BonfyreExternalEstate/tests/model_representation_owner_test.sh
+  binding cmd/BonfyreModel/src/main.c
+  binding cmd/BonfyreExternalEstate/src/main.c
+
+interaction addressplane-survivors-reorder-through-bitnet
+  source address-plane
+  destination bitnet-address-ranker
+  relation bounded_learned_reordering
+  preserves typed survivor identity, declared coordinate terms, model representation passport, source/feature digest, exact verifier reference, lowerer reference, full ordered frontier and widening offset
+  drops owner bodies, authority, provider weather, evidence/proof standing, commitment state, resource grant, carrier outcome and effect aperture
+  forbidden_inference a BitNet score -> a selected candidate, semantic match, authority, evidence, proof or effect
+  forbidden_inference a top-k slice -> rejection of the retained remainder
+  invalidates_on AddressPlane coordinate/frontier change, CandidateAdvertisement replacement, model representation passport/revocation, feature closure, information policy or source digest change
+  witness cmd/BonfyreBitNet/tests/contract_test.sh
+  witness cmd/BonfyreBitNet/results/2026-09-12-addressplane-weather-shadow.json
+  binding cmd/BonfyreExternalEstate/src/main.c
+  binding cmd/BonfyreBitNet/src/main.c
+
+interaction resource-admission-bounds-bitnet-address-rerank
+  source resource-admission
+  destination bitnet-address-ranker
+  relation transient_learned_execution_lease
+  preserves the declared representation, rerank plane, volume, bounded byte estimate, native ADMIT/DEFER/REJECT verdict, and a released grant coordinate after derived-frontier persistence
+  drops candidate eligibility, rank score, model preservation standing, owner state, authority, proof, provider result, protocol enactment and effect aperture
+  forbidden_inference a ResourceAdmission ADMIT -> a lawful candidate, a measured representation, a selected rank, a carrier operation, or an external effect
+  forbidden_inference a released BitNet grant -> an erased RankingRun; the derived frontier remains reproducible under its own representation and source digests
+  invalidates_on current physical resource pressure, resource policy, representation revocation, or the declared rerank workload shape changing
+  witness cmd/BonfyreBitNet/tests/contract_test.sh
+  witness cmd/BonfyreBitNet/results/2026-09-12-addressplane-protocol-handoff.json
+  binding engine/core/src/admission.c
+  binding cmd/BonfyreBitNet/src/main.c
+
+interaction bitnet-extends-route-ranker-with-passported-locality
+  source bitnet-address-ranker
+  destination route-ranker
+  relation optional_learned_ranking_phenotype
+  preserves the already eligible candidate frontier, a representation-passported vector score, deterministic score ordering, the fallback ranker's continued availability, and each candidate's exact verifier/lowerer references
+  drops a comparison between BitNet cosine scores and the native ternary head's scores; the two may order a common survivor set but do not share a declared score geometry
+  forbidden_inference a BitNet embedding rank -> a replacement for the zero-dependency ternary fallback, a cross-encoder quality result, or a false-prune envelope
+  forbidden_inference two rankers agreeing -> a candidate being true, selected, lawful or effectable
+  invalidates_on the AddressPlane survivor set, model representation passport, feature closure or learned ranking policy changing
+  witness cmd/BonfyreBitNet/results/2026-09-12-addressplane-weather-shadow.json
+  binding cmd/BonfyreBitNet/src/main.c
+  binding components/BonfyreControlPlane/route_ranker.py.archive
+
+interaction bitnet-emits-gated-representation-use-evidence
+  source bitnet-address-ranker
+  destination protocol-facet-compiler
+  relation owner-produced-execution-receipt-composition
+  preserves persisted BitNetRankRun identity, representation and operation scope, source/vector digests, causal frontier, declared verifier/lowerer references, and the original ADMIT/DEFER/SHADOW gate state
+  drops the vector body, candidate score, selection, owner-query result, authority, proof, protocol enactment, carrier outcome, and every external effect
+  forbidden_inference a representation-use receipt -> an exact owner query, selected candidate, semantic truth, authority, proof, carrier use, or lowerer execution
+  invalidates_on the persisted rank run, representation passport, source/vector digest, operation scope, or evidence-output schema changing
+  witness cmd/BonfyreBitNet/tests/contract_test.sh
+  witness /Users/nickgonzales/.bonfyre/estate/representation-evidence.jsonl
+  binding cmd/BonfyreBitNet/src/main.c
+  binding cmd/BonfyreFacet/src/main.c
+
+interaction bitnet-frontier-gets-native-foreign-verification
+  source bitnet-address-ranker
+  destination foreign-twin
+  relation bounded-exact-owner-query-feedback
+  preserves persisted rank-run identity, bounded candidate identity/rank, representation and gate state, declared ForeignTwin verifier reference, source/vector digests, query predicate, exact observed-or-unobserved outcome, receipt id when observed, and the AddressPlane causal frontier
+  drops learned score as truth, vector body, remote execution, semantic relevance, source claim admission, authority, proof, commitment, carrier action, lowerer enactment, and effect capability
+  forbidden_inference an observed ForeignTwin retained-body result -> a relevant candidate, remote truth, a selected plan, authority, proof, provider readiness, or an external effect
+  forbidden_inference an unobserved retained-body result -> candidate impossibility, source absence, or TargetObligation failure
+  invalidates_on rank-run identity/gate change, ForeignTwin receipt/body frontier change, exact-verifier contract change, or query-evidence schema change
+  witness cmd/BonfyreLoweringWorkers/tests/lowering_workers_test.sh
+  witness /Users/nickgonzales/.bonfyre/estate/bitnet-exact-owner-evidence.jsonl
+  binding cmd/BonfyreLoweringWorkers/src/main.c
+
+interaction cms-publishes-addressable-fact-delta
+  source cmd-c-m-s
+  destination address-plane
+  relation post_commit_typed_change_notice
+  preserves a committed published CMS type, its schema-declared unique owner coordinate, and PublicationOccurrence's declared source coordinate
+  drops CMS row bodies, actor authority, disclosure standing, source truth, evidence/proof, provider state, commitment, reservation and effects
+  forbidden_inference a CMS FactDelta -> publication selection, source admission, a public projection, authority, evidence, proof or an external effect
+  invalidates_on a committed published CMS create, update, withdrawal/delete, or retained-publication promotion; a draft-only write has no public projection delta
+  witness cmd/BonfyreCMS/tests/fact_delta_test.sh
+  witness cmd/BonfyreExternalEstate/tests/external_estate_test.sh
+  binding cmd/BonfyreCMS/src/main.c
+  binding cmd/BonfyreExternalEstate/src/main.c
+
+interaction address-plane-compiles-physical-passports
+  source address-plane
+  destination compression-law
+  relation derived_representation_publication
+  preserves candidate identity, typed candidate kind, canonical advertisement digest, shared address-index basis, typed binding digest, sparse exception coordinate, physical access operations, lift route, fsync'd snapshot boundary, and atomic derived-registry replacement
+  drops copied owner facts, authority, evidence, proof, commitment, reservation, effect, representation selection, and any claim that declared bytes or a declared latent body has a measured quality envelope
+  forbidden_inference a content-digested CandidateAdvertisement passport -> the candidate being selected, authorized, proven, or physically measured on this host
+  forbidden_inference a shared address-index basis -> candidate identities being merged
+  invalidates_on candidate canonical bytes, candidate kind, owner reference, shared basis version, declared operation support, or PhysicalCompiler passport schema change
+  witness cmd/BonfyreExternalEstate/tests/external_estate_test.sh
+  witness cmd/BonfyreCompress/tests/physical_compiler_test.sh
+  binding cmd/BonfyreExternalEstate/src/main.c
+  binding cmd/BonfyreCompress/src/physical.c
+
+interaction resource-admission-gates-derived-physical-build
+  source resource-admission
+  destination compression-law
+  relation transient_derived_representation_build_admission
+  preserves measured fsync'd passport snapshot byte count, explicit plane/kind/volume coordinate, ADMIT/DEFER/REJECT distinction, protected-floor/quota policy, transient grant identity, compiler input digest, and post-compiler release coordinate
+  drops representation selection, persistent capacity proof, candidate authorization, owner truth, evidence/proof standing, commitment/reservation, and effect authority
+  forbidden_inference an admitted snapshot build -> selected representation, durable registry capacity, candidate authorization, or a lawful external effect
+  forbidden_inference a deferred or rejected derived build -> address or owner state being invalid
+  invalidates_on resource policy, volume free space, open grants, compiler input snapshot, or derived registry contract changes
+  witness cmd/BonfyreExternalEstate/tests/external_estate_test.sh
+  witness engine/core/tests/admission_test.c
+  binding cmd/BonfyreExternalEstate/src/main.c
+  binding engine/core/src/admission.c
+
+interaction physical-derivation-feeds-finance
+  source physical-derivation
+  destination financial-metabolism
+  relation observed_usage_valuation
+  preserves target, resource, multi-dimensional token/cache/retry/wall-time/local-resource usage, provider/model/route, separate account coordinates and physical receipt identity
+  drops any implication that observed usage is already billed or booked
+  forbidden_inference physical execution -> booked financial fact
+  invalidates_on usage, agreement rate, funding, currency, or allocation basis changes
+  witness components/BonfyreControlPlane/tests/test_financial_metabolism.py.archive
+  witness components/BonfyreControlPlane/tests/test_physical_derivation.py.archive
+  binding components/BonfyreControlPlane/financial_metabolism.py
+
+interaction food-combination-preserves-economic-basis
+  source food-combination-graph
+  destination financial-metabolism
+  relation household_offer_economic_projection
+  preserves source identity, cash basis, delayed-rebate basis, points basis, eligibility conditions and exact promotion arithmetic
+  drops any permission to purchase, availability claim, booked-accounting claim or cash conversion for points and rebates
+  forbidden_inference observed offer composition -> authorized transaction, effective meal cost, or booked financial position
+  invalidates_on an offer source, eligibility/stack law, product price, fulfillment fee, route, rebate, points term or recipe coverage changes
+  witness components/BonfyreControlPlane/tests/test_food_combination_engine.py.archive
+  binding components/BonfyreControlPlane/food_combination_engine.py
+  binding components/BonfyreControlPlane/food_fulfillment_route.py
+
+interaction latent-coordinate-narrows-derivation
+  source latent-coordinate-fabric
+  destination semantic-derivation
+  relation learned_candidate_prior
+  preserves subject identity, passport, comparability contract and causal frontier
+  drops authority, evidence truth and hard-constraint satisfaction
+  forbidden_inference nearest neighbor -> exact semantic relation
+  invalidates_on feature closure, encoder, passport, information policy, source digest, or causal frontier changes
+  witness components/BonfyreControlPlane/tests/test_latent_fabric.py.archive
+  binding components/BonfyreControlPlane/latent_fabric.py
+
+interaction food-combination-is-bounded-by-household-circuit
+  source food-combination-graph
+  destination household-economic-circuit
+  relation source_bound_household_comparison
+  preserves source-bound cash, delayed rebate, points, fulfillment, customer-travel and geodesic-lower-bound dimensions with their input artifact identity
+  drops any implicit residence identity, food budget, fuel estimate, order authority or booked accounting state
+  forbidden_inference a food route bound to a candidate housing origin -> the candidate is a residence or may be joined to a separate effective-cost listing
+  invalidates_on the food route projection, housing component projection, input artifact digest, constraint law or explicit residence identity changes
+  witness components/BonfyreControlPlane/tests/test_household_economic_circuit.py.archive
+  binding components/BonfyreControlPlane/household_economic_circuit.py
+
+interaction bonfyre-shell-composes-existing-owners
+  source bonfyre-semantic-shell
+  destination semantic-operator
+  relation typed_surface_composition
+  preserves semantic address, named native Power identity, selected canonical projection and source digest
+  drops implementation ownership from the public CLI route and authority from address resolution
+  forbidden_inference @power/BonfyreTime -> permission to invoke a mutating time operation
+  invalidates_on command advertisement, native binary identity, selected projection digest, or shell parser change
+  witness components/BonfyreControlPlane/tests/test_bonfyre_shell.py.archive
+  binding components/BonfyreControlPlane/bonfyre_shell.py
+
+interaction bonfyre-shell-reads-financial-metabolism
+  source bonfyre-semantic-shell
+  destination financial-metabolism
+  relation read_only_finance_projection
+  preserves work-item target, stable attempt, realization, physical receipt, usage dimensions, economic basis, allocation version and evidence reference
+  drops billing side effects, pricing mutation, funding choice, payment authority and any unobserved resource dimension
+  forbidden_inference a shell finance projection -> a new ledger, billed cost, paid cost, booked cost or authority to spend
+  invalidates_on the canonical FinancialMetabolism ledger or its allocated work-item closure changes
+  witness components/BonfyreControlPlane/tests/test_bonfyre_shell.py.archive
+  binding components/BonfyreControlPlane/bonfyre_shell.py
+
+interaction frappe-lineage-compiler-realizes-native-workgraph
+  source cmd-frappe-compiler
+  destination work-graph
+  relation compiler_catalog_derived_transition
+  preserves registered lineage identity, declared predecessor, representative DocType, AppPack revision, native WorkGraph lifecycle and receipt identity
+  drops business-fact ownership, live Frappe mutation, effect authority and any claim that a surface record proves the represented subject
+  forbidden_inference a compiler-derived AppPack transition -> authorized Frappe write, booked value, verified relationship state or completed external work
+  invalidates_on lineage catalog, AppPack revision or native executor implementation changes
+  witness cmd/BonfyreFrappeCompiler/tests/native_schema_ingest_smoke.sh
+  binding lib/libbonfyre/src/bonfyre_frappe_compiler.c
+
+interaction frappe-compiler-projects-safe-cms-grammar
+  source cmd-frappe-compiler
+  destination cmd-c-m-s
+  relation selected-doctype-declarative-projection
+  preserves installed lineage identity, selected non-child DocType identity, scalar field constraints, source metadata, CMS schema revision, and namespace-scoped native record lifecycle
+  drops controllers, hooks, migrations, Frappe-site state, credential-shaped fields, child-table realization, dynamic-link resolution, and external-effect authority
+  forbidden_inference a native CMS record projected from a Frappe DocType -> a Frappe document, resolved relation, controller execution, Frappe write-back, publication, or authority grant
+  invalidates_on compiled DocType schema revision, scalar mapping contract, CMS schema revision, or namespace authorization bridge changes
+  witness 2026-08-30 MCP native CMS flow compiled CRM Deal grammar, registered a native CMS schema, and performed create/update/get/list through BonfyreCMS
+  binding cmd/BonfyreFrappeCompiler/src/main.c
+  binding cmd/BonfyreCMS/src/main.c
+
+interaction native-cms-serves-authenticated-htmx-workflow
+  source cmd-c-m-s
+  destination web-address-edge
+  relation native-schema-bound-human-workflow
+  preserves registered content-type identity, declared editable columns, authenticated session identity, isolated native namespace, native create/update receipt, and human-readable HTMX continuation
+  drops browser-side schema ownership, arbitrary submitted columns, raw owner JSON as a human surface, Matrix delegation inference, publication, anonymous readability, Frappe write-back, resolved foreign relations, financial settlement, and external effects
+  forbidden_inference an authenticated CMS save -> publication, actor/institution delegation, Frappe controller execution, external effect authority, or access to another CMS namespace
+  invalidates_on CMS registry/table schema, session-to-namespace containment mapping, native CMS binary contract, or HTMX form transition changes
+  witness cmd/BonfyreWebAddress/tests/auth_surface_test.sh
+  binding cmd/BonfyreWebAddress/src/main.c
+  binding cmd/BonfyreCMS/src/main.c
+
+interaction web-address-compiles-internet-observatory
+  source web-address-edge
+  destination bonfyre-matrix
+  relation bounded-observatory-institution-carrier
+  preserves the exact controlled internet.aurekai.work host, its one bound Matrix subject and active public Work presence, typed maintained path coordinate, authenticated operator identity for candidate retention, source/query receipt digest, and discovery_only truth level
+  drops raw query frontier from public maintained views, implicit HTTP fetching, ForeignTwin promotion, origin liveness, protocol validation, relationship/effect authority, private institutional closures, payment/settlement state, and any claim a candidate carrier owns a semantic subject
+  forbidden_inference CandidateAddress discovery receipt -> ForeignTwin observation, live origin, advertised capability, tool right, payment route, relationship, authority, or effect
+  invalidates_on Observatory host/domain binding, active Matrix presence, maintained-view address binding, authenticated candidate-retention contract, or ForeignTwin admission law changes
+  witness cmd/BonfyreWebAddress/tests/web_address_test.sh
+  witness cmd/BonfyreWebAddress/tests/auth_surface_test.sh
+  binding cmd/BonfyreWebAddress/src/main.c
+
+interaction machine-membrane-passports-observatory-candidate
+  source machine-membrane
+  destination web-address-edge
+  relation selected-candidate-carrier-passport
+  preserves one authenticated write-scoped operator, the already-retained public CandidateAddress identity, its publisher origin, robots decision, selected cheapest declared carrier, CUE-bounded MCP/A2A/OAuth/auth.md/mobile descriptor candidates at declared_descriptor truth level, passport digest, query receipt lineage, and discovery-only truth level
+  drops foreign body admission, raw passport/candidate publication, origin liveness, protocol validation, tool/payment/provider availability, relationship authority, effect authority, and any inference that a carrier or descriptor can promote a source to a ForeignTwin
+  forbidden_inference a retained MachineMembrane passport or declared protocol descriptor -> a ForeignTwin, readable source body, current foreign state, callable capability, approved relationship, credential, payment route, or authority to act
+  invalidates_on MachineMembrane carrier ladder, robots policy, CandidateAddress admission contract, passport parser/output contract, authenticated operator write closure, or ForeignTwin admission law changes
+  witness cmd/BonfyreWebAddress/tests/auth_surface_test.sh
+  witness scripts/tests/foreign_discover.test.mjs
+  binding scripts/foreign-discover.mjs
+  binding scripts/foreign-discovery.cue
+  binding estate/profiles.yaff
+  binding schemas/control/external-descriptor.cue
+  binding cmd/BonfyreWebAddress/src/main.c
+
+interaction yaff-cue-bounds-physical-carrier-cms-projection
+  source yaff
+  destination cmd-c-m-s
+  relation validated-physical-mobile-projection-recipe
+  preserves a scoped CMS recipe identity, governed HTTPS AddressPlane coordinate, selected carrier/payload/purpose/temporal/proximity/audience vocabulary, CUE validation envelope, and explicit authority/security policy
+  drops canonical subject state, QR bitmap ownership, wallet credential, payment credential, device commissioning state, FIDO identity, effect authorization, payment settlement, and any inference that scanning a carrier proves a person or device is present
+  forbidden_inference a CUE-valid physical-carrier CMS record -> QR/NFC possession, authentication, payment, device control, foreign protocol enrollment, or authority to cause an effect
+  invalidates_on physical carrier profile vocabulary, CUE policy, CMS schema, namespace closure bridge, AddressPlane coordinate, or protocol-specific adapter contract changes
+  witness cmd/BonfyreWebAddress/tests/auth_surface_test.sh
+  binding estate/profiles.yaff
+  binding schemas/control/physical-carrier.cue
+  binding cmd/BonfyreCMS/content-types/physical_carrier.json
+
+interaction self-authoring-compiles-life-presence
+  source web-address-edge
+  destination bonfyre-matrix
+  relation bounded-actor-owned-self-publication
+  preserves authenticated actor identity, exact self scope, PersonalProfile kind, aurekai.life self territory, actor-owned subject identity, self-only web/RO-Crate/Zarr read recheck, ordinary Matrix address constellation, local publication receipt, and the isolated native CMS namespace plus its sole visible PhysicalCarrier grammar
+  drops generic write authority, anonymous actor-self readability, institutional/Frappe CMS grammar enumeration, market/public/work territory selection, institution delegation, sibling/other-actor namespace selection, ForeignTwin admission, provider/resource availability, payment/device authority, financial state, and all external effects
+  forbidden_inference a free authenticated self publication or carrier recipe -> identity verification, public discoverability, institutional membership, merchant relationship, payment right, device possession, foreign enrollment, or authority to act
+  invalidates_on session scope, actor ownership prefix, allowed self publication grammar, Life domain binding, CMS namespace mapping, or PhysicalCarrier policy changes
+  witness cmd/BonfyreWebAddress/tests/auth_surface_test.sh
+  binding cmd/BonfyreAuth/src/main.c
+  binding cmd/BonfyreWebAddress/src/main.c
+
+interaction browser-session-binds-controlled-territory
+  source web-address-edge
+  destination cmd-auth
+  relation host-derived-browser-session-transport
+  preserves the verified native session token, Secure HttpOnly SameSite=Lax transport properties, the request's controlled Life/Live/Shop/Work parent zone, and per-request native session revalidation
+  drops sibling-territory cookie propagation, institution or role closure, actor delegation, evidence/provider/resource/financial state, publication, effect authority, and any host not under a declared controlled territory
+  forbidden_inference a browser session cookie scoped to one controlled territory -> authority to access a sibling territory, an institution, an MCP slice, a CMS namespace, a ForeignTwin, a payment route, or any effect
+  invalidates_on controlled territory binding, session verification semantics, cookie transport policy, or cross-territory authorization protocol changes
+  witness cmd/BonfyreWebAddress/tests/auth_surface_test.sh proves a login on aurekai.life emits only a .aurekai.life browser cookie while the same native token remains independently revalidated
+  binding cmd/BonfyreWebAddress/src/main.c
+
+interaction static-territory-hands-member-session-to-native-sibling
+  source placement-plane
+  destination web-address-edge
+  relation territory_bound_member_session_handoff
+  preserves controlled territory, exact member path/query, the target territory's exact native sibling hostname or bounded native apex fallback, secure redirect semantics where a Worker is present, independently revalidated native session, actor-owned account closure and checked-in interaction-runtime identity only
+  drops public R2 body selection, Worker authentication behavior, source/import promotion, provider credentials, external effect authority, generic wildcard-host admission and any inference that a declared outside profile link is OAuth or verified identity
+  forbidden_inference a static apex redirect or native fallback -> a worker-owned session, cross-territory cookie, OAuth grant, imported provider data or authority to act externally
+  invalidates_on exact member-path classification, territory-to-sibling binding, exact apex fallback binding, Worker route exclusion, Tunnel DNS/ingress binding, native session validation or checked-in client runtime contract changes
+  witness cmd/BonfyreWebAddress/tests/external_account_surface_test.sh
+  witness 2026-09-27 all four public territories redirected member paths to their native session sibling while broad Worker routing was active; after Worker budget exhaustion, all four exact apexes returned through the same native/Tunnel origin and the Life apex completed the native member flow
+  binding deploy/worker/estate-worker.mjs
+  binding deploy/cloudflared/bonfyre-addressplane-ingress.yml
+  binding scripts/cloudflare-reconcile.mjs
+  binding cmd/BonfyreWebAddress/src/main.c
+  binding site/matrix/surfaces/account-native.html
+
+interaction self-foreign-observation-enters-private-closure
+  source web-address-edge
+  destination foreign-twin
+  relation actor-derived-private-observation
+  preserves authenticated actor identity, exact self scope, aurekai.life territory, a public http(s) source address, robots/observe-right preflight, immutable retained body and receipt, and an actor-derived private storage root
+  drops other-actor root selection, public ForeignTwin projection, canonical truth, institution membership, relationship/bind authority, provider/resource availability, payment/device authority, financial state, and every external effect
+  forbidden_inference a self-scoped private ForeignTwin receipt -> public readability, canonical evidence, a remote service being live, a relationship, provider authority, payment right, device control, or an effect
+  invalidates_on session scope, authenticated actor identity, Life host policy, private-root mapping, observer/robots policy, or ForeignTwin receipt contract changes
+  witness cmd/BonfyreWebAddress/tests/auth_surface_test.sh proves a self account observes a local public source into private/self/actor-<id>, receives an HTMX receipt fragment, and cannot select the Shop territory
+  binding cmd/BonfyreWebAddress/src/main.c
+
+interaction physical-carrier-consumes-address-closure
+  source web-address-edge
+  destination address-plane
+  relation scoped-carrier-recipe-to-current-address-cut
+  preserves the authenticated closure namespace, one controlled HTTPS host/path, current Matrix address resolution, resolved subject identity, and for self scope the actor-owned subject-prefix check only
+  drops arbitrary foreign URLs, URL query/fragment/port selection, a copied subject body, canonical ownership transfer, public QR rendering, payment/device/FIDO/Matter enrollment, authentication, publication, effect authority, and any claim that scanning the later carrier proves presence
+  forbidden_inference a retained PhysicalCarrier recipe whose address resolved now -> durable public discoverability, a future address resolution, QR possession, relationship authority, identity verification, payment right, device control, or an effect
+  invalidates_on controlled-domain binding, active Matrix address/presence, actor ownership prefix, session scope, CMS namespace closure, or PhysicalCarrier profile policy changes
+  witness cmd/BonfyreWebAddress/tests/auth_surface_test.sh proves a self carrier saves only after its own Life address resolves, refuses an institutional Life root, and records that carrier rendering/effects remain separate
+  binding cmd/BonfyreWebAddress/src/main.c
+
+interaction mcp-superuser-controls-native-auth-and-copy
+  source web-address-edge
+  destination cmd-auth
+  relation bonfyre-admin-carrier-to-canonical-control-owners
+  preserves a freshly verified bonfyre/admin institution closure, bounded user id/tier/activity fields, immediate stale-session invalidation, named institution read/write/admin admission or revocation, explicit native CMS type/namespace/id/document coordinates, retained public MachineMembrane source/reader/described-carrier coordinates and cooling state, active scoped provider-materialization receipt coordinates and release reason, canonical owner receipts, the controlled Work-root private repair room, and the existing full project MCP owner lane
+  drops password hashes, password salts, bearer/session credentials, arbitrary SQL, arbitrary binary/path selection, raw foreign bodies, raw canonical artifact bodies, provider account material, inferred descriptor liveness/object/provider/payment/effect authority, publication inference, anonymous/indexable browser access, and any administrative tool visibility in self or delegated institutional slices
+  forbidden_inference a Bonfyre admin carrier mutation, declared external descriptor, or provider-materialization release -> authority to retain a prior session, read or act on a named institution subject, delete canonical artifact/evidence/provider-account state, publish CMS copy, settle money, activate a provider, or perform an external effect
+  invalidates_on BonfyreAuth institution-admin semantics, BonfyreCMS schema/entry contract, MachineMembrane disclosure policy, PhysicalDerivation materialization receipt contract, OAuth superuser closure calculation, admin tool allowlist, or full project MCP owner forwarding changes
+  witness integrations/mcp/tests/oauth_institution_slice_test.sh proves a current bonfyre/admin closure receives only additive native-admin tools on top of the full upstream owner, upgrades one fixture user tier, grants/revokes a named institution, creates schema-valid copy, sees bounded external-descriptor and provider-materialization controls, releases one scoped provider residency without canonical deletion, and never leaks credential material to any slice
+  binding integrations/mcp/bonfyre_oauth_gateway.mjs
+  binding scripts/membrane-store.mjs
+  binding scripts/machine-membrane.cue
+  binding cmd/BonfyreAuth/src/main.c
+  binding cmd/BonfyreCMS/src/main.c
+  binding cmd/BonfyreProvider/src/main.c
+  binding cmd/BonfyreWebAddress/src/main.c
+
+interaction objectfabric-provider-materialization-receipt
+  source physical-derivation
+  destination provider-graph
+  relation scoped-replaceable-provider-body-residency
+  preserves canonical artifact SID, exact representation digest, provider and provider-local opaque reference, bounded scope/purpose/capability coordinates, authority reference, optional expiry, receipt identity, and release/cooling state
+  drops provider credentials, account secrets, raw canonical body, provider-result admission, provider liveness, semantic knowledge ownership, output truth, payment approval, and external effect authority
+  forbidden_inference an active provider materialization receipt -> provider authority, artifact identity, canonical knowledge, retained provider body, admitted output, provider availability, spend approval, or effect right
+  invalidates_on ObjectFabric digest contract, PhysicalDerivation receipt contract, provider materialization scope/reuse rule, AuthorityGraph closure, InformationPolicy, or provider lifecycle/release semantics changes
+  witness cmd/BonfyreProvider/tests/smoke.sh proves same-digest scoped reuse, rejects provider-reference rebinding to another body, and records release without canonical deletion
+  binding cmd/BonfyreProvider/src/main.c
+  binding estate/profiles.yaff
+
+interaction machine-membrane-projects-surface-ir
+  source machine-membrane
+  destination surface-ir
+  relation shared_projection
+  preserves one descriptor and one query behind both carriers, so a person and an agent receive the same records in the same order
+  drops the second implementation a machine carrier usually grows -- an MCP feature beside a website feature, describing the same state twice and drifting
+  forbidden_inference a surface reachable over MCP -> a surface the caller may read (the catalogue reports the requirement; the pattern enforces it, and refuses the agent exactly as it refuses the browser)
+  forbidden_inference an agent reading a projection -> an authorized effect (every pattern here is QUERY; Authority still gates at effect time)
+  invalidates_on a pattern descriptor is authored, published or unpublished in the CMS
+  witness surface_project catalogue returns 4 declared patterns; read doors returns the same 7 records the public fragment renders; ledger-doors returns 403 surface_authority_required to an admitted-less agent
+  binding integrations/mcp/recursive_overlay_tools.mjs
+
+interaction mcp-recursive-overlay-forwards-rich-mesh
+  source mcp-recursive-native-overlay
+  destination mcp-mesh-call-ledger
+  relation native_gateway_preserves_mesh_receipts
+  preserves 53 rich tool descriptors, five resource bindings, three prompts, bearer/origin boundary, delta/events/metrics paths, shared call/event receipts, and project-node schema/authority ownership
+  drops both Python gateway entrypoints and the loopback rich-base runtime; no second semantic store or copied project schemas are introduced
+  forbidden_inference source-level native parity -> live deployment, effect authority, or an observed remote state
+  invalidates_on rich mesh MCP contract, project-node tool schema, CUE forwarded allowlist, SQLite call/event schema, or systemd placement change
+  witness integrations/mcp/tests/recursive_overlay.test.mjs
+  binding integrations/mcp/recursive_overlay.mjs
+  binding integrations/mcp/recursive_overlay.cue
+
+interaction admission-places-the-pure-tier
+  source live-gym
+  destination pure-execution-tier
+  relation admission_before_dispatch
+  preserves the work class and data scope the job declared, as the reason a backend is or is not placed
+  drops the assumption that an available backend is a permitted one
+  forbidden_inference a backend present on this machine -> a backend allowed to receive this input
+  witness cmd/BonfyreWebAddress/tests/pure_tier_test.sh
+  note Built beside each other and neither consulted the other. A job declaring money work over institution-private data was dispatched to reducers on a machine cleared only for public input; the job said what it was and nothing read it.
+
+interaction residuals-become-ranked-work
+  source live-gym
+  destination work-graph
+  relation residual_to_work
+  preserves the plane that owns each fix and the reason the residual exists
+  drops residual size as a ranking, because an item nobody can close is not a small task
+  forbidden_inference a ranked item -> an approved one
+  forbidden_inference a source with no recognised residual -> a source with no residual
+  witness scripts/tests/residual-to-work.test.mjs
+  binding scripts/residual-to-work.mjs
+  binding scripts/residual-work-owners.cue
+
+interaction funding-frontier-feeds-work
+  source funding-frontier
+  destination work-graph
+  relation binding_condition_to_work
+  preserves which condition the most capital is waiting on
+  drops the assumption that a capital shortfall is resolved with capital
+  forbidden_inference a binding condition -> a funding decision
+
+interaction close-consequence-feeds-work
+  source close-consequence
+  destination work-graph
+  relation unreconciled_to_work
+  preserves the direction of each imbalance, over and under separately
+  drops the net figure as a work item, because a net hides money missing in both directions
+  forbidden_inference an unreconciled obligation -> money owed
+
+interaction representation-market-feeds-work
+  source representation-market
+  destination work-graph
+  relation preservation_loss_to_work
+  preserves the candidates a cheaper body would lose, as false prunes
+  drops recall as a single number
+  forbidden_inference a lossy representation -> one that should be replaced
+
+interaction address-identity-serves-the-twin-graph
+  source foreign-address-identity
+  destination foreign-relationship-graph
+  relation canonical_match_before_comparison
+  preserves the folds a standard or a declared policy permits
+  drops the assumption that two addresses folding alike are one resource
+  forbidden_inference a canonical match -> a proven identity
+  witness cmd/BonfyreWebAddress/tests/gym_test.sh
+
+interaction vector-admission-guards-the-latent-body
+  source vector-body-admission
+  destination representation-market
+  relation width_admission
+  preserves the refusal of a body whose width the store cannot hold
+  drops the appearance of a stored vector where none was written
+  forbidden_inference a reported insert -> a stored body
+  witness cmd/BonfyreVec/tests/width_admission_test.sh
+
+interaction generic-machinery-consumes-declarations
+  source generic-machinery-law
+  destination close-consequence
+  relation namespace_to_grammar
+  preserves the product's grammar in the pack that declares it
+  drops the product's name from the machinery that consumes it
+  forbidden_inference a named contract -> hardcoding
+  witness cmd/BonfyreWebAddress/tests/close_consequence_test.sh
+
+interaction connectivity-is-measured
+  source atlas-context-provider
+  destination live-gym
+  relation bridge_census
+  preserves the count of architectures that participate in at least one bridge
+  drops the assumption that a mature capability is a used one
+  forbidden_inference a declared interaction -> a working bridge
+  forbidden_inference a prose witness -> a verifiable one
+  witness cmd/BonfyreWebAddress/tests/connectivity_test.sh
+  note 87% of declared architectures participated in no bridge. Maturity that nothing consumes is inventory, and the estate had grown many organs that each measured something correctly and ended at a number nobody was obliged to read.
+
+
+
+interaction mcp-operates-the-measurements
+  source institutional-measurement-surface
+  destination live-gym
+  relation declared_invocation
+  preserves the bound each measurement places on how its result may be read
+  drops the need to compile a tool per measurement into the gateway
+  forbidden_inference a reachable measurement -> a correct one
+  witness cmd/BonfyreWebAddress/tests/mcp_measure_test.sh
+  note An agent could read the atlas and could not run anything that produces the numbers the atlas records.
+
+interaction mcp-operates-the-funding-frontier
+  source institutional-measurement-surface
+  destination funding-frontier
+  relation declared_invocation
+  preserves the classification of each unmet condition by what would resolve it
+  drops the assumption that a capital shortfall is resolved with capital
+  forbidden_inference a closing combination -> funding
+
+interaction hvm4-serves-the-pure-tier
+  source hvm4
+  destination pure-execution-tier
+  relation execution_backend
+  preserves the pure computation exactly, with nothing written and no effect performed
+  drops the assumption that a substrate present on a machine may receive its input
+  forbidden_inference a substrate that reduces -> a substrate cleared to see the data
+  witness cmd/BonfyreWebAddress/tests/pure_tier_test.sh
+  note Built from vendored C with the estate's own compiler, so a reducer finally runs where the private data already lives rather than where the data may not go.
+
+interaction bend-compiles-for-the-pure-tier
+  source bend
+  destination pure-execution-tier
+  relation compiled_frontend
+  preserves the predicate as one program rather than one hand lowering per runtime
+  drops the frontier itself, because a fold yields an aggregate and not a set
+  forbidden_inference an aggregate that agrees -> the same answer as a set comparison
+  witness cmd/BonfyreWebAddress/tests/pure_tier_test.sh
+
+interaction atlas-measures-its-own-connectivity
+  source atlas-context-provider
+  destination pure-execution-tier
+  relation self_measurement
+  preserves the distinction between an organ that failed to connect and a catalogue row that was declared alone
+  drops a raw isolation count, which is dominated by a generated command census and reads as disconnection
+  forbidden_inference a shared family -> something exchanged
+  forbidden_inference an isolated architecture -> an unused one
+  witness scripts/architecture_frontier.py
+
+interaction closure-algebra-subsumes-the-funding-frontier
+  source closure-algebra
+  destination funding-frontier
+  relation generalisation
+  preserves the finding that a capital condition can unlock nothing while cheaper conditions unlock more
+  drops the finance shape, so the same evaluator answers feasibility, reconciliation and birth
+  forbidden_inference a general algebra -> a domain without grammar
+  witness cmd/BonfyreWebAddress/tests/closure_algebra_test.sh
+
+interaction commitment-ladder-gates-the-closure
+  source closure-algebra
+  destination institutional-root
+  relation commitment_admission
+  preserves the distinction between observed, interested, conditional and committed
+  drops the assumption that a stated resolver is an available one
+  forbidden_inference an expression of interest -> a plan
+
+interaction residuals-become-market-targets
+  source closure-algebra
+  destination closure-loop
+  relation residual_to_target
+  preserves what the institution needs and cannot obtain, phrased several ways
+  drops any claim that the market was asked
+  forbidden_inference a named target -> a measured market
+
+interaction closure-justifies-a-spend
+  source closure-loop
+  destination financial-metabolism
+  relation spend_justification
+  preserves what a purchase would close and at what leverage
+  drops the payment itself, which belongs to whoever owns money
+  forbidden_inference an admitted spend -> a released payment
+  witness cmd/BonfyreWebAddress/tests/closure_loop_test.sh
+
+interaction outcomes-correct-the-planner
+  source closure-loop
+  destination live-gym
+  relation prediction_scoring
+  preserves the claim as it stood before the change
+  drops the comfort of an unchanged closure, which is not a confirmation
+  forbidden_inference a scored prediction -> a validated planner
+
+interaction routes-become-transformations
+  source funding-closure
+  destination capital-transformation-network
+  relation route_to_transformation
+  preserves what each route requires before it can be drawn
+  drops the claim that five routes all satisfy cash-position, which made a vendor term and a grant the same row
+  forbidden_inference a declared transformation -> an offered one
+  witness cmd/BonfyreWebAddress/tests/capital_transform_test.sh
+
+interaction closure-cannot-price-capital
+  source closure-algebra
+  destination capital-transformation-network
+  relation monotonicity_withdrawn
+  preserves the shape of the question: what does the declared world permit
+  drops the fixed point, which requires monotone effects that capital does not have
+  forbidden_inference a closure evaluator -> a capital planner
+
+interaction capital-paths-are-checked-purely
+  source capital-transformation-network
+  destination pure-execution-tier
+  relation predicate_agreement
+  preserves the survivor predicate over enumerated paths
+  drops the enumeration, which no backend was handed and none can vouch for
+  forbidden_inference reducer agreement -> a correct enumeration
+  witness cmd/BonfyreWebAddress/tests/pure_tier_test.sh
+
+interaction the-atlas-dates-what-it-serves
+  source atlas-provenance
+  destination atlas-context-provider
+  relation index_stamping
+  preserves when the index was built and from which declaration bytes
+  drops any claim that a dated index is current
+  forbidden_inference a dated index -> a verified one
+  witness cmd/BonfyreAtlas/tests/parity.sh
+
+interaction deploys-ship-whole-organs
+  source atlas-provenance
+  destination cmd-embed
+  relation source_tree_attestation
+  preserves the exact set of sources the estate will build
+  drops the assumption that one translation unit is the organ
+  forbidden_inference a copied file -> a built one
+  witness scripts/deploy_organ.sh
+
+interaction falsifiability-gates-the-suites
+  source claim-falsifiability
+  destination profile-runner-legibility
+  relation failure_must_reach_the_caller
+  preserves the count a run computed about itself
+  drops the assumption that printing a failure reports one
+  forbidden_inference a printed failure -> a returned one
+  witness bun architecture/check-falsifiable-claims.mjs
+
+interaction mutation-grades-the-witnesses
+  source witness-mutation
+  destination claim-falsifiability
+  relation empirical_falsifiability
+  preserves which declared facts a suite actually reacts to
+  drops the assumption that a green suite defends what it reads
+  forbidden_inference a witness that exists -> a witness that would notice
+  witness scripts/witness_mutation.test.mjs
+
+interaction aurekai-kernel-claims-are-not-proof
+  source aurekai-continuity-kernel
+  destination proof-frontier
+  relation claim_emission
+  preserves schema-conformant functional claims and their content-addressed committed state
+  drops any assertion that the host protocol actually executed what the event described
+  forbidden_inference a functional claim emitted -> a proof-layer fact settled
+  forbidden_inference a chargeability claim passing -> an invoice payable (the payment processor is absent; the claim is a predicate, not a settlement)
+  invalidates_on the host event or the target descriptor changes (state_hash moves)
+  witness Aurekai/tests/integration-kernel.test.mjs (12 assertions, 2960 emitted objects schema-checked)
+  binding Aurekai/src/integration-engine.mjs
+
+interaction pack-activation-narrows-the-forwarding-cut
+  source pack-graph
+  destination address-plane
+  relation candidate_lowering
+  preserves the published activation's pack, subject, scope and declared conditions, and a dependency edge on every pack head the activation transitively declares
+  drops overlay composition, precedence order, refused verbs and the resolved closure -- none of which the plane can compute
+  forbidden_inference a forwarded activation -> a resolved closure or an applied overlay
+  forbidden_inference an activation surviving the cut -> an authorized verb; activating is not authorizing and Authority still decides at effect time
+  forbidden_inference a pack reaching the plane -> a pack being an addressable subject
+  invalidates_on the activation, its pack head, or any declared dependency head is published (reheat)
+  witness cmd/BonfyreExternalEstate/tests/external_estate_test.sh (a parent head publish retires the fork's activation cut through PackGraph:activation)
+  binding cmd/BonfyreExternalEstate/src/main.c
+
+interaction pack-demand-is-declared-not-scheduled
+  source pack-graph
+  destination address-plane
+  relation candidate_lowering
+  preserves the declared demand kind, needs, preferred sources, fields, body regime and reheat condition
+  drops any decision about when or whether the body is retrieved
+  forbidden_inference a compiled demand coordinate -> a scheduled hydration, a reservation, or retained bytes
+  forbidden_inference a preferred source term -> an admitted source or a granted read
+  invalidates_on the demand row or its pack head is published (reheat)
+  witness cmd/BonfyreExternalEstate/tests/external_estate_test.sh (regime and demand terms select the declaration; ResourceWeather still does not read it)
+  binding cmd/BonfyreExternalEstate/src/main.c
+
+interaction membership-forwards-as-a-relation-not-a-grant
+  source human-community-body
+  destination address-plane
+  relation candidate_lowering
+  preserves the published membership's community, member subject, role and state, and a dependency edge on the community body and on the membership's authority reference
+  drops the authority reference as a coordinate: it is carried as a dependency so an authority publish retires the cut, and never as a term the plane could match on
+  forbidden_inference a membership surviving the cut -> authority, disclosure or entitlement; relationship ownership, capability availability and downstream authority are separate facts
+  forbidden_inference a role term -> a permission that role is assumed to carry
+  invalidates_on the membership, its community body, or its referenced authority is published (reheat)
+  witness cmd/BonfyreExternalEstate/tests/external_estate_test.sh (no authority coordinate reaches the membership; the community and role coordinates do)
+  binding cmd/BonfyreExternalEstate/src/main.c
+
+interaction policy-shape-cuts-before-the-evaluator-decides
+  source information-policy
+  destination address-plane
+  relation candidate_lowering
+  preserves the declared shape of a disclosure policy -- one candidate per subject kind and audience, carrying the fields that audience is declared to be able to see and the profile's evidence requirements
+  drops every decision: the withheld field and its reason, aggregation floors, evidence release, and the per-request evaluation itself
+  forbidden_inference a field term -> a disclosure; the exact evaluator still decides and still returns withheld fields marked with their reason
+  forbidden_inference a field absent from an audience's candidate -> the field being empty or the subject not existing; absence is default-deny, the same direction the evaluator defaults
+  forbidden_inference an audience coordinate arriving -> the caller being that audience; audience is still supplied by the caller rather than derived from the arriving territory
+  invalidates_on the profile declaration is published (reheat)
+  witness cmd/BonfyreExternalEstate/tests/external_estate_test.sh (the parcel owner mailing address is unreachable as the public and reachable as an institution)
+  binding cmd/BonfyreExternalEstate/src/main.c
+
+interaction spatial-narrows-coarsely-and-stops
+  source spatial-observation
+  destination address-plane
+  relation candidate_lowering
+  preserves whether a subject is spatially participating at all, its mobility phenotype, scale band, region, coarse cell, geometry kind, and the mode by which its position was arrived at
+  drops the geometry, the CRS and the datum; every exact spatial predicate -- intersects, contains, within-radius, along-route, nearest-N, visible-from, reachable-from -- stays with the spatial owner and runs on the survivors
+  forbidden_inference two subjects sharing a coarse cell -> those subjects being near each other
+  forbidden_inference a spatial candidate surviving the cut -> a spatial relationship holding; the cut removes what cannot possibly be related and computes nothing
+  forbidden_inference a coarse coordinate -> a location precise enough to act on
+  invalidates_on the observation, or any observation it was derived from, is published (reheat)
+  witness cmd/BonfyreExternalEstate/tests/external_estate_test.sh (a cell and a mobility phenotype select the population; no geometry or CRS reaches the plane as a term)
+  binding cmd/BonfyreExternalEstate/src/main.c
+
+interaction a-derived-position-is-not-an-observation
+  source spatial-observation
+  destination occurrence-spine
+  relation derivation_typing
+  preserves the observation mode on every position and the references from a derived position back to the fixes it was computed from
+  drops nothing; a derived position is recorded rather than discarded, because interpolation is legitimate and only its promotion to observation is not
+  forbidden_inference an interpolated, propagated or simulated position -> an observation a source made
+  forbidden_inference a derived position being wrong later -> the observations under it being wrong; the fixes are append-only and the derivation is what gets recomputed
+  forbidden_inference a fast-moving projection -> history being written at that rate
+  invalidates_on any observation named in derived_from is published or retracted (reheat)
+  witness cmd/BonfyreExternalEstate/tests/external_estate_test.sh (asking for what a source observed never returns the interpolation between two fixes, and asking for the interpolation never returns the fixes)
+  binding cmd/BonfyreExternalEstate/src/main.c
+
+interaction coverage-is-reach-not-entitlement
+  source coverage-volume
+  destination information-policy
+  relation separate_decision
+  preserves the coverage volume's owner, derivation, quality, scale and coarse position as a statement about reach
+  drops any suggestion that reach settles disclosure; what may be told about a subject inside a coverage volume is decided per field and per audience by the evaluator, unchanged
+  forbidden_inference a camera covering a place -> footage of that place being lawful to hold, publish or search
+  forbidden_inference a delivery or service radius reaching a subject -> that subject being entitled to the service
+  forbidden_inference a specified coverage -> a measured one
+  invalidates_on the coverage declaration or the governing policy declaration is published (reheat)
+  witness cmd/BonfyreExternalEstate/tests/external_estate_test.sh (a coverage volume carries no authority, audience or field coordinate, and a specified footprint is not returned when asking for a measured one)
+  binding cmd/BonfyreExternalEstate/src/main.c
+
+interaction reconstruction-is-recomputed-not-replayed
+  source spatial-observation
+  destination occurrence-spine
+  relation bitemporal_reconstruction
+  preserves both time axes on every fact -- when a source saw a position, when that position is claimed to hold, when it expires, and when this estate learned it -- and every retraction as an appended fact with its own knowledge time
+  drops nothing; the log is append-only and a correction is an addition, so the state at any earlier knowledge frontier remains computable rather than remembered
+  forbidden_inference a reconstruction -> a recording; nothing replays a stored frame and the answer is recomputed from facts at a stated frontier pair
+  forbidden_inference a position being the latest known -> that position being current; a claim past valid_until expires and expiry is reported distinctly from never having observed the subject
+  forbidden_inference a retraction -> the retracted fact never having been believed; what was believed at an earlier knowledge time stays reproducible, which is the whole reason retraction appends
+  forbidden_inference a derived position outliving a retracted basis -> that position still standing; it is marked as an orphaned derivation
+  invalidates_on any fact for the subject, or a retraction of one, is appended (reheat)
+  witness cmd/BonfyreSpatial/tests/spatial_test.sh (one valid instant answers differently at two knowledge times; UPDATE and DELETE abort at the store)
+  binding cmd/BonfyreSpatial/src/main.c
+
+interaction exact-closure-runs-on-what-the-plane-left
+  source address-plane
+  destination spatial-observation
+  relation exact_verification
+  preserves the coarse cut's surviving population, and the frontier the question was asked at
+  drops the plane's role entirely at this point: the mask said what could not possibly participate, and every distance, containment and ordering decision here is computed exactly from geometry the plane never saw
+  forbidden_inference surviving the coarse cut -> being within any radius, box or route; the cut removes impossibilities and asserts no proximity
+  forbidden_inference a subject being returned by the closure -> that subject's position being disclosable to the asker; InformationPolicy decides that separately and afterwards
+  forbidden_inference a nearest-N result -> a complete answer over subjects this estate has never observed
+  invalidates_on the compiled advertisement generation is replaced, or a fact at the frontier is appended (reheat)
+  witness cmd/BonfyreSpatial/tests/spatial_test.sh (each subject contributes one position per frontier; a measured haversine separation of 0.009 degrees latitude lands between 995 and 1010 metres)
+  binding cmd/BonfyreSpatial/src/main.c
+
+interaction the-frontier-travels-and-the-population-does-not
+  source spatial-observation
+  destination web-address-edge
+  relation projection_addressing
+  preserves the frontier pair -- the valid instant and the knowledge instant -- plus extent, region, cell and an optional subject of interest, all as projection coordinates in the address itself
+  drops the population entirely; no subject, position, geometry or layer content is serialised, so the recipient recompiles the closure under their own actor and policy
+  forbidden_inference holding an address -> access to what it projects; a link grants nothing the recipient could not have asked for themselves
+  forbidden_inference a subject named in an address -> that subject existing, being observed, or being disclosable to the holder
+  forbidden_inference two people opening one address -> two people seeing the same thing; they see the same frontier resolved under different closures, and that is the intended behaviour
+  invalidates_on nothing; an address is a pure function of its coordinates and holds no state to invalidate
+  witness cmd/BonfyreSpatial/tests/spatial_test.sh (the rendered address round-trips exactly, carries no subject or geometry, and is refused when it carries no frontier, a malformed instant or an undeclared coordinate)
+  binding cmd/BonfyreSpatial/src/main.c
+
+interaction the-plane-names-candidates-and-never-decides-truth
+  source address-plane
+  destination spatial-observation
+  relation candidate_naming
+  preserves which subjects could possibly participate at a coarse extent, computed from region, cell, scale and mobility alone
+  drops any claim about those subjects' actual state; the surviving advertisements name candidate subjects and are never used as the set of facts about them
+  forbidden_inference an advertised observation -> the current or historical position of its subject; the owner answers from its complete log, including facts that were never advertised
+  forbidden_inference a subject failing the coarse cut -> that subject having no position; it failed a narrowing, not a query
+  forbidden_inference a stale advertisement -> a stale answer; the advertisement decides participation and the log decides position
+  invalidates_on the compiled advertisement generation is replaced, or a fact for a candidate subject is appended (reheat)
+  witness cmd/BonfyreSpatial/tests/spatial_test.sh (a store advertising only fix-a still yields fix-b from the world closure, because the plane named the subject and the owner answered)
+  binding cmd/BonfyreSpatial/src/main.c
+
+interaction a-receipted-observation-becomes-a-position
+  source foreign-twin
+  destination spatial-observation
+  relation intake_mapping
+  preserves the source's own instant, the occurrence and digest that identify the document observed, and the subject key the source published, under a mapping declared per source rather than inferred from the payload
+  drops every feature the mapping cannot place honestly -- no source instant, a geometry this owner cannot place exactly, no subject key, or a source instant later than the moment of ingest -- each refused and counted separately rather than dropped quietly
+  forbidden_inference a feature carrying no instant -> an observation at the moment of ingest; a stamped feature is indistinguishable from a real one forever afterwards, so it is refused instead
+  forbidden_inference an ingested position -> an admitted, disclosable or authoritative one; intake records what a source said and settles nothing about whether it may be repeated
+  forbidden_inference observing one document twice -> two observations; ingest is idempotent by the whole source digest
+  forbidden_inference an empty ingest -> a source that reported nothing; an unparseable document fails rather than recording an absence
+  invalidates_on the source is re-observed and a new receipt with a different digest arrives (reheat)
+  witness cmd/BonfyreSpatial/tests/spatial_test.sh (two features ingested, three refused for three separately counted reasons, no fact carrying the ingest instant as its observed instant, and a re-observed document ingesting nothing)
+  binding cmd/BonfyreSpatial/src/main.c
+
+interaction the-frontier-is-reachable-not-only-addressable
+  source web-address-edge
+  destination spatial-observation
+  relation route_projection
+  preserves the frontier pair carried in the URL, the World it names, and the coarse projection coordinates, handed to the owner exactly as received
+  drops any attempt to answer the question here; the route asks the spatial owner and projects what comes back, because a second implementation of what was there at an instant is a second answer waiting to disagree with the first
+  forbidden_inference a request reaching this route -> entitlement to what it projects; the population shown is the advertised one, and publication is a decision the institution already made elsewhere
+  forbidden_inference a served position -> a current, authoritative or universally disclosable one
+  forbidden_inference a route with no frontier -> this route's business; without an instant it is the ordinary spatial surface and is left alone
+  invalidates_on nothing is cached; each request recompiles the closure at the frontier it names
+  witness cmd/BonfyreWebAddress/tests/spatial_frontier_route_test.sh (one URL, two knowledge instants, two different pasts; a malformed instant refused; a frontier-less request falling through untouched)
+  binding cmd/BonfyreWebAddress/src/spatial_frontier.c
+
+interaction an-extent-is-not-its-centre
+  source spatial-observation
+  destination address-plane
+  relation extent_typing
+  preserves the exact geometry of a line, polygon or multi-part shape, and a bounding box used only to reject candidates cheaply
+  drops the temptation to store a representative point for an extent; there is none, so distance is computed against the shape and containment is answered by the shape
+  forbidden_inference a bounding box overlapping -> the shapes overlapping; a box is a rejection and never an answer
+  forbidden_inference a distance to an extent -> a distance to its centre; the two differ by the size of the thing and differ most where it is largest
+  forbidden_inference a point inside an area's outer ring -> a point inside the area; a hole subtracts, and a courtyard is not the building
+  invalidates_on a fact for the subject is appended (reheat)
+  witness cmd/BonfyreSpatial/tests/spatial_test.sh (a polygon and a line stored with no position and a real box; containment true inside, false in the hole; 94 m to a line whose nearest endpoint is two kilometres away)
+  binding cmd/BonfyreSpatial/src/main.c
+
+interaction the-live-frontier-is-maintained-and-the-past-is-recomputed
+  source spatial-observation
+  destination occurrence-spine
+  relation incremental_maintenance
+  preserves the latest known fact per subject, advanced from the facts that arrived rather than from the whole log, with a watermark saying how far it has caught up
+  drops nothing from the log; the maintained view is derived, disposable, and rebuildable from the facts at any time
+  forbidden_inference a maintained view -> a second source of truth; a maintained read and a recomputed read must agree and a disagreement is a defect in the maintenance
+  forbidden_inference a stored latest fact -> an assertion that it holds now; effectiveness and expiry are decided at read time against the instant asked about
+  forbidden_inference a retraction -> something that can be patched forward; only appends move the answer in one direction, so a retraction recomputes the subject it touched
+  forbidden_inference a historical frontier -> something a maintained view can answer; it knows only what it has caught up to, so a live read is refused while it is behind
+  invalidates_on any fact is appended or retracted (the watermark falls behind)
+  witness cmd/BonfyreSpatial/tests/spatial_test.sh (maintained and recomputed reads agree before and after a retraction; a live read is refused while the view is behind; expiry still applies through it)
+  binding cmd/BonfyreSpatial/src/main.c
+
+interaction the-cold-representation-is-the-same-facts
+  source spatial-observation
+  destination compression-law
+  relation representation_lowering
+  preserves every field of every fact, verified by row count, identity sum and a digest over the fields that carry meaning, and restorable into a store that answers the same closure the same way
+  drops 254 MB down to 3.3 MB on a million facts, which is representation and not content
+  forbidden_inference a verified cold copy -> an authority to delete the hot store, or a retention decision of any kind
+  forbidden_inference a matching row count -> matching facts; equality here is by content because a count proves only that nothing was dropped
+  forbidden_inference a cold tier -> a queryable one; the hot store is where the log is read, and the cold copy is thawed before it answers anything
+  invalidates_on a fact is appended after the export (the hot store and the cold copy stop being identical, and verify says so)
+  witness cmd/BonfyreSpatial/tests/spatial_test.sh (identical by content; a hot store that moved on reported as different; a thawed store answering the same closure identically)
+  binding cmd/BonfyreSpatial/src/main.c
+
+interaction the-estate-says-which-of-itself-bears-position
+  source external-estate-index
+  destination address-plane
+  relation candidate_classification
+  preserves a typed spatial classification on every one of the 4,891 occurrences, derived from what each source says about itself, carried to the plane as a coordinate it can cut on
+  drops any claim to have looked; this replaces a literal "unknown" with evidence from a description and not with an observation
+  forbidden_inference a classification of bearing -> an observation, a reachable source, or an admitted one
+  forbidden_inference a classification of not_evident -> a source with no coordinates; a listing that said nothing about maps is a listing that said nothing, and no third value asserting "not spatial" exists because nobody made that observation
+  forbidden_inference a term firing -> the term being meaningful here; six were measured as false positives on this corpus and removed, because a term that fires on an idiom turns an honest silence into a false claim
+  invalidates_on the master index is recompiled (the corpus is regenerated)
+  witness bun test architecture/tests/compile_external_estate.test.mjs (4,891 occurrences classified: 146 bearing, 4,745 not_evident, no unknown remaining)
+  binding cmd/BonfyreExternalEstate/src/main.c
+
+interaction an-owner-handoff-leaves-occurrence-keyed-evidence
+  source spatial-observation
+  destination external-estate-index
+  relation realized_participation
+  preserves the ExternalEstate occurrence coordinate carried from the ForeignTwin receipt's own twin_id, and a receipt saying which owner accepted a handoff for it, on which axis, at which rung
+  drops any claim about the interpretation being right; the receipt records the handoff and nothing else
+  forbidden_inference a synthesized coordinate -> an identity; a coordinate no other owner uses joins to nothing and makes a running chain measure as depth zero
+  forbidden_inference an owner-transition receipt -> a correct interpretation, an admitted source, or an authorized downstream act
+  forbidden_inference an empty ingest -> a handoff; nothing was interpreted, so nothing is recorded
+  invalidates_on the source is re-observed under a new digest (a new handoff, a new receipt)
+  witness cmd/BonfyreSpatial/tests/spatial_test.sh with cmd/BonfyreExperienceMap/tools/participation_report.mjs (external:ext-02176 moves from braid_depth 0 to 2 over ExternalEstate to ForeignTwin to SpatialObservation)
+  binding cmd/BonfyreSpatial/src/main.c
+
+interaction a-subject-follows-its-identifier-lineage
+  source spatial-observation
+  destination human-community-body
+  relation identifier_lineage
+  preserves every identifier a source declared together, the subject they resolve to, and when each was first and last seen
+  drops the assumption that the identifier a source currently prefers is the identity; the lineage decides the subject and the label does not
+  forbidden_inference declared identifier equivalence -> two events being the same physical event; a source said so at an observed time and a source can be wrong
+  forbidden_inference a changed preferred identifier -> a new thing; USGS states that its preferred event id can change while the associated identifiers persist, and treating the new label as a new subject splits one earthquake in two
+  forbidden_inference an alias resolving -> authority over either identifier's namespace
+  invalidates_on a source declares a different identifier association for the same subject (reheat)
+  witness cmd/BonfyreSpatial/tests/spatial_test.sh (two feeds across a preferred-identifier change yield one subject; the same feeds without lineage yield two)
+  binding cmd/BonfyreSpatial/src/main.c
+
+interaction a-facet-compiles-from-phenotype-not-domain
+  source protocol-facet-compiler
+  destination protocol-density-law
+  relation law_realization
+  preserves the law's finite relation vocabulary and its five-state ladder, enforced rather than cited: the compiler's vocabularies are compared against the CUE declaration and every facet it emits claims the first rung only
+  drops domain keying entirely; a facet is the intersection of a phenotype the occurrence carries, a relation the protocol offers, and that relation being meaningful for that phenotype
+  forbidden_inference a candidate facet -> a compiled contract, an enactment, closed obligations, or an authorized effect
+  forbidden_inference a protocol appearing in a facet -> that protocol being reachable, admitted or lawful on this subject for this actor
+  forbidden_inference an affordance describing how a source is reached -> a phenotype; that mapping was measured turning an earthquake feed into an identity credential and a commerce protocol then offered it IDENTIFY
+  invalidates_on the corpus is regenerated, or the declared vocabulary changes
+  witness cmd/BonfyreFacet/tests/facet_test.sh (25 relations and 15 phenotypes byte-compared with the CUE declaration; every facet candidate_match; no protocol name in any AddressPlane coordinate)
+  binding cmd/BonfyreFacet/src/main.c
+
+interaction candidate-adjacency-is-not-realized-participation
+  source protocol-facet-compiler
+  destination external-estate-index
+  relation candidate_adjacency
+  preserves what could lawfully meet across the whole estate: 4,891 occurrences against the 739 protocol occurrences among them, as 7.1 million typed candidate facets
+  drops every claim that any of it is available; candidate adjacency is computed from descriptions and realized participation is measured from occurrence-keyed receipts, which is a far smaller number and the one that matters
+  forbidden_inference 7.1 million candidate facets -> 7.1 million available interactions
+  forbidden_inference a dense candidate braid -> a dense realized braid; the first is arithmetic over the corpus and the second requires a receipt at every owner handoff
+  forbidden_inference an unpopulated phenotype -> a wrong phenotype; it is a fact about this corpus and not about the vocabulary
+  invalidates_on the corpus is regenerated (the candidate space is recomputed)
+  witness cmd/BonfyreFacet/tests/facet_test.sh (4,891 and 739 asserted against the corpus; all 15 phenotypes and all 25 relations present in the distribution)
+  binding cmd/BonfyreFacet/src/main.c
+
+interaction one-compiler-spans-every-domain-the-estate-carries
+  source protocol-facet-compiler
+  destination external-estate-index
+  relation universal_participation
+  preserves one compilation rule across all 61 topic domains the corpus carries -- mobility, energy, manufacturing, medicine, finance, media, research, buildings, law, food, telecommunications, computing, retail and the rest -- with no domain-specific branch anywhere in it
+  drops the vertical adapter entirely; there is no `if earthquake then FDSN`, no `if bus then GTFS`, and no `if property then IFC`, because the compiler never reads a domain as an instruction
+  forbidden_inference a domain compiling facets -> that domain being integrated; candidate adjacency is arithmetic over descriptions
+  forbidden_inference a domain reaching many phenotypes -> those phenotypes being observed in it; a neighbourhood is not an observation
+  forbidden_inference one compiler covering every domain -> every domain being equally served; the report shows how thin the small ones are and that is the point of reporting all of them
+  invalidates_on the corpus is regenerated, or the phenotype evidence tiers change
+  witness cmd/BonfyreFacet/tests/facet_test.sh (all 61 domains compile; the larger ones exercise all 15 phenotypes and all 25 relations; no phenotype or relation left at zero across the estate)
+  binding cmd/BonfyreFacet/src/main.c
+
+interaction density-is-affordable-only-if-invalidation-is-precise
+  source protocol-facet-compiler
+  destination spatial-observation
+  relation invalidation_precision
+  preserves a per-phenotype invalidation set on every facet, so a projection thaws when the thing it projects changes and not when anything about the subject changes
+  drops the coupling that would make more protocol projections mean more recomputation; a moving thing invalidates its position and its live projections and touches neither its route identity nor its fare policy
+  forbidden_inference a subject changing -> every projection of it being stale
+  forbidden_inference a licence changing -> the bytes already observed being rewritten; onward distribution is invalidated and the retained observation and its rights statement at that frontier are not
+  forbidden_inference an invalidation set being short -> the facet being cheap; it means the dependency was stated precisely
+  invalidates_on the phenotype's declared invalidation set fires
+  witness cmd/BonfyreFacet/tests/facet_test.sh (a LIVE_ENTITY facet invalidated by position and trip changes and not by a price change)
+  binding cmd/BonfyreFacet/src/main.c
+
+interaction a-facet-is-promoted-only-by-its-owner
+  source protocol-facet-compiler
+  destination protocol-contract
+  relation rung_promotion
+  preserves the facet's relation and phenotype, the ForeignTwin receipt digest under it, and the program count the native ProtocolContract owner returned when it registered the contract
+  drops the promoter's ability to decide anything: it constructs a contract shape, hands it to bf_protocol_derivation_register, and reports what came back
+  forbidden_inference a compiled contract -> an enacted request, closed obligations, or an authorized effect
+  forbidden_inference a compiled contract -> conformance to the standard its name mentions; the name is derived from the protocol and the relation and claims nothing about that protocol's specification
+  forbidden_inference a promoter constructing a contract shape -> that shape being right for the relation; three roles is lawful and is not what COMMAND or SETTLE need
+  forbidden_inference a receipt for one occurrence -> evidence for another; a contract may not borrow an observation
+  invalidates_on the receipted body stops hashing to its receipt, or the corpus is regenerated
+  witness cmd/BonfyreFacet/tests/facet_test.sh (a verifying digest chain; three refusals -- unadmitted relation, borrowed receipt, drifted body)
+  binding cmd/BonfyreFacet/src/main.c
+
+interaction the-report-measures-contracts-and-not-one-contract
+  source protocol-contract
+  destination external-estate-index
+  relation realized_measurement
+  preserves the structural rigor a compiled contract must satisfy: a validated binding, a named contract, a positive program count from its native registrar, and three digests binding it to a domain binding and a registration receipt
+  drops the specimen; the gate required the contract to be literally ogc-api-common-observation with exactly three programs, so one occurrence in the estate could ever reach compiled and every other real compiled contract was discarded as unrecognised
+  forbidden_inference a contract being recognised -> that contract being correct; the report measures that an owner registered it and not that it is right
+  forbidden_inference ten occurrences at depth three -> the estate being integrated; 4,881 remain at zero because nothing has observed them
+  invalidates_on new occurrence-keyed evidence is supplied
+  witness cmd/BonfyreExperienceMap/tools/participation_report.mjs (ten domains at braid_depth 3 where previously only one occurrence could reach it)
+  binding cmd/BonfyreExperienceMap/tools/participation_report.mjs
+
+interaction each-rung-is-produced-by-the-owner-that-owns-it
+  source protocol-facet-compiler
+  destination commitment-graph
+  relation ladder_production
+  preserves the separation of the four rungs above candidate_match, each produced by the native owner that owns it: AuthorityGraph authorizes, ProtocolContract enacts, CommitmentGraph discharges, and closure reports obligations and evidence as two axes
+  drops any shortcut between them; enactment does not authorize, enactment does not discharge, and discharge does not evidence
+  forbidden_inference an enactment -> a discharged obligation; bf_commitment states it outright, recording is never delivery
+  forbidden_inference terminal obligations -> standing evidence, or standing evidence -> terminal obligations; an exchange closes only when both hold and is reported outstanding when either does not
+  forbidden_inference a grant this estate wrote -> an external delegation; the rung proves the gate works and not that anyone outside authorized anything
+  forbidden_inference closed obligations -> a correct outcome
+  invalidates_on the commitment state changes, or an evidence relation for a required claim is added or retracted
+  witness cmd/BonfyreFacet/tests/facet_test.sh (refusal names the role and permission; evidence alone and discharge alone both leave it outstanding; only both close it)
+  binding cmd/BonfyreFacet/src/main.c
+
+interaction interpretation-is-not-observation
+  source protocol-facet-compiler
+  destination external-estate-index
+  relation weakest_semantic_rung
+  preserves the fact that this compiler read every occurrence and typed it, recorded per occurrence at the interpreted rung of the semantic axis
+  drops any claim about the source; nothing was fetched, no body was retained, and no receipt exists
+  forbidden_inference an interpretation -> an observation, a receipt, or a reachable source
+  forbidden_inference depth one by this route -> progress toward realized participation; the occurrence has still never been looked at
+  forbidden_inference an occurrence with no phenotype -> an occurrence with no shape; its description names one this compiler cannot read
+  invalidates_on the corpus is regenerated, or the phenotype evidence changes
+  witness cmd/BonfyreFacet/tests/facet_test.sh (4,880 interpreted; none claiming profile_bound; none claiming the observation axis)
+  binding cmd/BonfyreFacet/src/main.c
+
+interaction a-receipt-carries-what-the-source-said-too
+  source foreign-twin
+  destination evidence-graph
+  relation observation_envelope
+  preserves both independent sets of facts about one representation: this estate's digest of the bytes it retained, and the source's own ETag, Last-Modified, Content-Type, Content-Location, Link rel=license and rel=canonical, RFC 9530 Content-Digest and Repr-Digest, and whether an RFC 9421 signature was present
+  drops nothing the source said; keeping only this estate's digest lost every statement the publisher made, including the only machine-readable statement of rights a source ever makes
+  forbidden_inference a source-supplied digest matching ours -> the source being right; the bytes agree and nothing follows about the content
+  forbidden_inference robots permitting a read -> a licence to republish; an absent license link means the source stated none, not that permission exists
+  forbidden_inference an RFC 9421 signature verifying -> factual correctness or reuse permission
+  forbidden_inference a 304 -> the thing not having changed in the world; the representation this estate holds is still current, which is a different claim
+  invalidates_on the source is re-observed and returns a different validator or digest
+  witness components/BonfyreProject/tests/http_envelope_test.sh (the envelope recorded beside our digest; the ETag retaining its quotes; a second observation returning 304 and referencing the prior body)
+  binding components/BonfyreProject/src/main.c
+
+interaction one-reader-per-shape-not-one-per-call-site
+  source text-extraction-rules
+  destination foreign-twin
+  relation shared_implementation
+  preserves the escaping, the buffer discipline and the absent-versus-empty distinction in one place per field kind, so a caller names a ruleset and a field and inherits all three
+  drops every call site's freedom to write its own parser; that freedom produced 163 extractors in C and 49 in witnesses, and produced two silent failures
+  forbidden_inference a value read by a declared rule -> a correct value; the rule says where to look and the document says what is there
+  forbidden_inference an undeclared key -> a key that should not exist
+  forbidden_inference one converted caller -> a converted estate; 163 hand-rolled readers remain
+  invalidates_on the ruleset declaration changes
+  witness cmd/BonfyreLex/tests/lex_test.sh with components/BonfyreProject/tests/http_envelope_test.sh (an escaped ETag read whole; a 64-character digest read as a value; conditional re-observation returning 304 through the shared reader)
+  binding cmd/BonfyreLex/src/bf_lex.h
+
+interaction interaction-grammar-enters-addressplane
+  source interaction-grammar
+  destination address-plane
+  relation forwards
+  preserves the active binding's compact subject, institution, grammar, application, operation, extent and audience coordinates plus its declared exact verifier and target-lowerer references, routed through the deployed InteractionGrammarCompiler consumer; CreatorChannel/MediaLibrary-derived bindings retain their canonical source coordinate for current-owner recheck
+  drops donor implementation, owner facts, actor authority, content bodies, media rights, payments, protocol enactment and effects
+  forbidden_inference a forwarded interaction grammar -> an exact verifier ran, an actor may disclose, playback/delivery is lawful, or an effect is lawful
+  invalidates_on the binding is retired or replaced, or its declared owner validity frontier changes
+  witness cmd/BonfyreInteractionGrammar/tests/interaction_grammar_test.sh (a bound Discord grammar enters typed AddressPlane forwarding, a FactDelta produces a durable handoff, source-derived YouTube/TikTok/Spotify bindings recheck active Channel/MediaLibrary state, public Channel grammars invoke the existing Channel surface compiler, and retirement atomically removes the candidate)
+  binding cmd/BonfyreInteractionGrammar/src/main.c
+
+interaction a-parser-reports-what-it-did-not-understand
+  source text-extraction-rules
+  destination architecture-frontier
+  relation undeclared_reporting
+  preserves every field key an author wrote, either as something a renderer reads or as something the registry names as unread
+  drops the silent third option; storing an unknown key where nothing looks at it discarded 77 cannot_infer lines and 272 more, while the loss report went on saying those architectures had stated nothing
+  forbidden_inference a reported undeclared key -> a wrong key; the fix is either a rule or a rename and the registry cannot tell which
+  forbidden_inference no undeclared keys -> a complete registry; it means every key written has a reader
+  invalidates_on a yaff file introduces a key no renderer reads
+  witness architecture/atlas.mjs (validate names the count; `fields` lists unread authored keys and their files)
+  binding architecture/atlas.mjs
+
+interaction demand-book-projects-resource-eligibility
+  source demand-book
+  destination resource-activation
+  relation eligibility_projection
+  preserves external resource identity, current SupplyMatch eligibility, basis digest and eligibility evidence digest
+  drops activate authority, activate actor selection, mechanism binding, payment-rail selection, spend approval and execution
+  forbidden_inference SupplyMatch eligible -> resource authorized or activated
+  forbidden_inference a declared x402, MPP or L402 carrier -> spend approval, payment verification or settlement
+  invalidates_on the current DemandBook SupplyMatch projection no longer contains the resource
+  witness components/BonfyreProject/tests/activation_projection_test.sh
+  binding components/BonfyreProject/src/main.c
+  binding scripts/bonfyre_automate.mjs
+
+interaction source-frontier-materializes-territory-subject
+  source source-frontier
+  destination page-composition
+  relation compiles_foundation_reader_closure
+  preserves admitted census source identity, channel/root/protocol state and the explicit estate SourceCollection membership that selected a route
+  drops retained bodies, source freshness, ranking, endorsement, authority, payment, private eligibility and every external effect
+  forbidden_inference an admitted source in a territory closure -> it is visible, current, accurate, endorsed, licensed, payable or callable
+  forbidden_inference an estate SourceCollection matching a route family -> a source may bypass that route's material/form contract
+  invalidates_on admitted census membership, explicit SourceCollection source refs/grouping, or the route material contract
+  witness cmd/BonfyreExternalEstate/tests/foundation_subject_projection.test.mjs
+  binding cmd/BonfyreExternalEstate/tools/materialize_foundation_subjects.mjs
+  binding cmd/BonfyreExternalEstate/tools/compile_subject_projection.mjs
+
+interaction native-joint-head-feeds-decision-plane
+  source native-joint-decision-head
+  destination decision-plane
+  relation typed_local_inference
+  preserves exact question and option identities, complete request digest, backbone and encoder identity, head tensor identity, compiled native implementation identity, full logits and private-state locality
+  drops autoregressive answer strings, implicit hosted fallback and positional interpretation of reordered schema options
+  forbidden_inference a successful native head call -> trained-model accuracy, calibrated correctness, admission or effect permission
+  invalidates_on head tensors, backbone, encoder, native implementation, question schema or request state changes
+  witness components/BonfyreDecision/tests/native-head.test.mjs
+  binding components/BonfyreDecision/native-head.mjs
+  binding components/BonfyreDecision/decision-plane.mjs
+
+interaction source-frontier-composes-publisher-host
+  source source-frontier
+  destination subject-room-publisher
+  relation compiles_admitted_publisher_readers
+  preserves root identity, admitted channel identity, census source, material, protocol and admission state
+  drops adoption, approval, endorsement, publisher authority and every external effect
+  forbidden_inference an admitted channel has a publisher subject and host here -> the publisher knows of or approved the page
+  invalidates_on admitted channel membership, publisher root identity, publisher host or name, or publisher-host policy
+  witness scripts/tests/compose_publisher_hosts.test.mjs
+  binding scripts/compose-publisher-hosts.mjs
+
+interaction capability-discovery-refers-to-service-inquiry
+  source web-address-edge
+  destination service-site
+  relation links_to_configured_inquiry
+  preserves configured HTTPS destination and human-reviewed scope and pricing boundary
+  drops no inquiry is submitted by discovery and no catalogue or payment state is transferred
+  forbidden_inference following an inquiry link -> a quote, accepted order, authority, paid execution or settlement
+  invalidates_on configured inquiry URL, capability projection or destination form change
+  witness cmd/BonfyreWebAddress/tests/capability-inquiry.test.mjs
+  binding cmd/BonfyreWebAddress/src/main.c
+
+interaction native-site-wears-presentation-template
+  source web-address-edge
+  destination presentation-template
+  via cmd/BonfyreWebAddress/src/site_presentation.c
+  preserves customer template identity and closed typography, color, layout and mode roles
+  drops unknown tokens and templates that fail recognized-role validation
+  forbids presentation patches changing customer identity, business state or another customer's template
+
+interaction service-site-wears-presentation-template
+  source presentation-template
+  destination service-site
+  relation dresses_by_named_roles
+  preserves ground, ink, display, accent, muted and panel colours, the three faces and the font sheet
+  drops radius, gap, measure, display sizing, card border and shadow, renderer mix, density, semantic roles, the acceptance contract and the reference the language was studied from
+  forbidden_inference a service site wears an estate language -> the language's acceptance contract was evaluated against the site, or the site carries the estate's authority
+  invalidates_on a change to an authored template row or to the role-to-shade derivation
+  witness components/BonfyreServiceSite/tests/service-site.test.mjs
+  binding components/BonfyreServiceSite/theme.mjs
+
+interaction service-site-transcribes-recording
+  source service-site
+  destination cmd-transcribe
+  relation transcribes_selected_media
+  preserves selected recording bytes, raw recognized text and media-clock spans, model identity and transcript digest
+  drops automatic publication and any assumption that recognized names are correct
+  forbidden_inference a native transcription receipt -> recognition accuracy on an arbitrary recording
+  invalidates_on recording bytes, recognition model, native transcript format or passage grouping
+  witness components/BonfyreServiceSite/tests/documents-recording.test.mjs
+  binding components/BonfyreServiceSite/document-recording.mjs
+
+interaction fleming-site-is-a-service-site-record
+  source service-site
+  destination fleming-site
+  relation builds_from_record
+  preserves section order, every word of the record, the stated colours and the preview state
+  drops nothing the record states; the kit adds only its own labels (step numbers, the call label, the preview heading)
+  forbidden_inference the kit built the page -> the kit vouches for what the page says
+  invalidates_on a change to the record, a section module, the shell or the shade derivation
+  witness components/BonfyreServiceSite/tests/service-site.test.mjs
+  binding components/BonfyreServiceSite/site.mjs
+
+interaction recipe-library-site-reads-recipe-organ
+  source cmd-recipe
+  destination recipe-library-site
+  relation publishes_derived_families
+  preserves each family's base with exact amounts, each variation's additions and its own method, every standalone recipe as written, and which collection each came from
+  drops repeated tellings after the first, record digests, and the original spelling of an amount where the base restates it
+  forbidden_inference a variation listed under a base -> a tested substitution
+  invalidates_on a new gather, a change to the reader, or a change to the family rule
+  witness components/BonfyreServiceSite/tests/service-site.test.mjs
+  binding components/BonfyreServiceSite/sites/recipe-library/material.mjs
+
+interaction fleming-site-request-reads-fleming-roll
+  source fleming-site
+  destination service-site
+  relation briefs_a_request_from_observed_public_records
+  preserves the address as typed, the matched account, class, legal description, owner of record as the roll states it, and the pack's programme readiness for that account
+  drops any value, any judgement of the property or the person, and every field not on the Dallas County roll the pack observed
+  forbidden_inference a request matched to an account -> the person writing in owns it, the title is clear, or an offer exists
+  invalidates_on a new observation of the roll, a change to the pack's forms, or a change to the seller form's address field
+  witness packs/fleming-equity-group/site/lead.test.mjs
+  binding packs/fleming-equity-group/site/lead.mjs
+
+interaction ocr-reads-a-photographed-recipe-for-the-recipe-organ
+  source cmd-ocr
+  destination cmd-recipe
+  relation lowers_page_lines_to_a_recipe_record
+  preserves every line as read, the page position that decides column order, the recogniser's confidence, and the image's digest
+  drops layout that carries no meaning (fonts, colours, decoration) and nothing else; no word is corrected and no amount supplied
+  forbidden_inference a record made from a photograph -> a reviewed recipe, or a right to republish the card it came from
+  invalidates_on a change to the operator, the system recogniser, or the reading rules
+  witness cmd/BonfyreRecipe/tests/ocr_recipe.test.mjs
+  binding cmd/BonfyreRecipe/tools/ocr_recipe.mjs
+
+interaction service-site-documents-use-native-embeddings
+  source service-site
+  destination cmd-embed
+  relation indexes_and_queries_local_document_passages
+  preserves exact passage IDs, source digests, paragraph positions, native model choice and stored-count receipt
+  drops document layout and any claim that proximity establishes an answer
+  forbidden_inference native embedding completed -> every retrieved passage supports the question or private files were imported
+  invalidates_on a change to collection content, chunking, model assets, native embedding contract or local HTTP access checks
+  witness components/BonfyreServiceSite/tests/documents.test.mjs
+  binding components/BonfyreServiceSite/document-workspace.mjs
+
+interaction service-site-documents-use-native-vector-search-and-removal
+  source service-site
+  destination cmd-vec
+  relation searches_and_removes_exact_document_passages
+  preserves all selected source passage IDs, removal counts and persistent absence across process restart
+  drops original files, saved browser notes, embedding caches and backups from the scope of deletion
+  forbidden_inference removed from this index -> secure erasure, removal from other indexes or a supported answer from the remaining nearest neighbors
+  invalidates_on a change to source identity, native transaction semantics or index persistence
+  witness components/BonfyreServiceSite/tests/documents-browser.test.mjs
+  binding components/BonfyreServiceSite/document-workspace.mjs
+
+interaction service-site-document-notes-use-browser-store
+  source service-site
+  destination browser-host
+  relation reuses_browser_storage_module
+  preserves collection and document identity, cited paragraph, authored note and atomically checked revision
+  drops cross-origin storage, remote synchronization and extension host authority
+  forbidden_inference shared storage module -> shared data across browsers, origins or devices
+  invalidates_on a change to storage revision checks, collection identity or note shape
+  witness components/BonfyreServiceSite/tests/documents-browser.test.mjs
+  binding components/BonfyreServiceSite/document-client.mjs
+
+interaction web-address-commits-native-page-aggregate
+  source web-address-edge
+  destination cmd-c-m-s
+  relation namespace-scoped-atomic-page-write
+  preserves namespace, route, expected page identity, typed content constraints, complete page and fragment generation, operation history, and explicit committed status
+  drops per-fragment product mutations and page recreation during replacement
+  forbidden_inference a local committed page receipt -> public deployment, durable notification delivery, hook success or a revision conflict check
+  invalidates_on page aggregate contract, CMS transaction semantics, site namespace binding, or page projection schema changes
+  witness cmd/BonfyreCMS/tests/page_write.test.mjs
+  witness cmd/BonfyreWebAddress/tests/site_page_replace.test.mjs
+  binding cmd/BonfyreCMS/src/main.c
+  binding cmd/BonfyreWebAddress/src/site_product.c
+
+interaction landing-reviews-user-supplied-public-url
+  source territory-landing
+  destination foreign-twin
+  relation explicit-authorized-observation-handoff
+  preserves the exact user-supplied HTTP address, escaped review, same-site sign-in continuation, session and write scope, native observation receipt and retained body
+  drops inference of a discovery candidate for a bare URL and any automatic read during review
+  forbidden_inference a URL review or sign-in -> fetched content, trusted claims, provider admission, publication or authorization to act on the source
+  invalidates_on intake query grammar, sign-in continuation limits, ForeignTwin observation contract or native session authorization changes
+  witness cmd/BonfyreWebAddress/tests/url_review.test.mjs
+  binding cmd/BonfyreWebAddress/src/main.c
+
+interaction bonfyre-reference-reads-information-policy
+  source bonfyre-semantic-shell
+  destination information-policy
+  relation exact_audience_excerpt_projection
+  preserves operator identity, compiled contract generation, artifact digest, exact excerpt field, audience and disclosure declaration digest
+  drops implied public disclosure from execution success or local publication
+  forbidden_inference a supplied disclosure declaration -> authority to publish a page or act on an external service
+  invalidates_on declaration, contract generation, artifact bytes or native policy evaluator changes
+  witness engine/core/tests/operator_reference.test.mjs
+  binding engine/core/src/fabric_exec.c
+
+interaction acquisition-brief-prepares-economy-proposal
+  source acquisition-brief-studio
+  destination cmd-economy
+  relation prepares_downloadable_review_input
+  preserves selected opportunity identity, source address, proof kinds, integer-cent costs, selected eligible routes and explicit recommendation
+  drops browser formatting from the plain-note YAFF handoff, excluded offers from selected routes, automatic admission and dispatch authority
+  forbidden_inference a downloaded typed proposal -> a native ledger record, approved spending, accepted proof or booked verification
+  invalidates_on browser proposal format or native Economy verification contract changes
+  witness ../pages-procurement-memory/tests/brief-studio.test.mjs
+  binding ../pages-procurement-memory/site/brief-studio/core.mjs
+
+interaction itad-desk-prepares-economy-proposal
+  source itad-acquisition-desk
+  destination cmd-economy
+  relation prepares_downloadable_review_input
+  preserves seller source identity, manifest counts, exact modeled acquisition and recovery cents, assumption provenance, eligible verification routes and proposed pickup terms
+  drops grid presentation and selection state, browser undo history, automatic native admission and dispatch authority
+  forbidden_inference downloaded acquisition proposal -> accepted inventory, approved spend, buyer assent or custody receipt
+  invalidates_on equipment proposal schema or native Economy verification contract changes
+  witness ../pages-procurement-memory/tests/itad-workspace.test.mjs
+  binding ../pages-procurement-memory/site/itad-exchange/core.mjs
+
+interaction monitor-asks-decision-plane-about-archived-mentions
+  source cmd-monitor
+  destination decision-plane
+  relation exact_archive_candidates_to_typed_mention_review
+  preserves the archive's own item identity and link, whole-word candidacy, the watched business named in the question, complete option distributions and one receipt per item bound to the model checkpoint
+  drops repeated headlines from several feeds, the watch block from the record the model reads, and any send or publication
+  forbidden_inference a mention review receipt -> a fact about the business or an instruction to reply
+  invalidates_on mention_review questions, prompt_fields, the item archive or the loaded checkpoint changing
+  witness cmd/BonfyreDecide/tests/parity.sh
+  binding cmd/BonfyreDecide/src/monitor.c
+
+interaction books-learns-before-it-asks-the-local-model
+  source cmd-books
+  destination cheap-cognition
+  relation learned_owner_first_local_model_for_the_residue
+  preserves the client's chart as the exact option set, pinned learned weights as an artifact, private information policy and every line's receipt
+  drops a separate merchant-rule stage, which covered 59% at 93.6% against the learned owner's 99.4% at the same confidence
+  forbidden_inference a confident learned answer -> a reviewed ledger entry
+  invalidates_on the learned file, the chart, the 0.7 escalation cut or the local checkpoint changing
+  witness cmd/BonfyreDecide/tests/parity.sh
+  binding cmd/BonfyreDecide/src/books.c
+
+interaction manifest-reads-lots-into-the-itad-desk
+  source cmd-manifest
+  destination itad-acquisition-desk
+  relation photos_and_listing_to_typed_units_to_importable_manifest
+  preserves text as the recogniser and the seller wrote it, what is left to confirm, and the desk's model, qty and grade import columns
+  drops units with no readable words from model questions, and kinds guessed from a brand alone
+  forbidden_inference an imported manifest line -> a counted, tested or owned unit
+  invalidates_on manifest_unit questions, the OCR recogniser, the brand and family lists or the desk's import format changing
+  witness cmd/BonfyreDecide/tests/parity.sh
+  binding cmd/BonfyreDecide/src/manifest.c
+
+interaction static-semantic-search-indexes-cms-site-sections
+  source static-semantic-search
+  destination web-address-edge
+  relation published_cms_sections_to_static_search_index
+  preserves page route, section anchor, page title, heading, a bounded excerpt, passage order and the model's SHA-256
+  drops section formatting, offers, unpublished drafts and passages the model cannot see
+  forbidden_inference an indexed section -> an approved answer, a published claim beyond the page, or a reason to show unpublished text
+  invalidates_on static model bytes, the tokenizer fold table, passage text, or site_page/site_fragment publication changing
+  witness cmd/BonfyreWebAddress/tests/site_search_test.sh
+  binding cmd/BonfyreWebAddress/src/site_search.h
+  binding lib/libbonfyre/src/bf_static_embed.c
+
+interaction static-export-carries-site-search
+  source web-address-edge
+  destination static-semantic-search
+  relation exported_host_includes_search_files_and_reader
+  preserves /_search/passages.json, index.bfsi and model.bfse byte for byte, and the shared reader and site assets
+  drops search for a host without an index, which keeps the page-name filter alone
+  forbidden_inference an exported index -> a current one; it is as fresh as the export
+  invalidates_on the export route list, asset names or search file names changing
+  witness scripts/export_subject_hosts.sh
+  binding scripts/export_subject_hosts.sh
+
+interaction estate-reference-feeds-scene-relations
+  source estate-reference
+  destination scene-compiler
+  relation resolved_reference_to_relation_material
+  preserves the publisher's own link text, the section a name appears in, the frontier root and identity, and the subject host bound in matrix_domains
+  drops platform links (video, social, shorteners) as organizations, and any address the estate does not answer for
+  forbidden_inference a named organization on a page -> a relationship the organization agreed to, or an endorsement of the piece
+  invalidates_on matrix_domains rebinding, frontier root identity changes, the publisher slug rule in address_every_publisher.mjs, or the passage/organization/channel materials in page-composition.cue changing
+  witness cmd/BonfyreWebAddress/tests/addressed_depth_test.sh
+  binding cmd/BonfyreWebAddress/src/estate_reference.h
+  binding cmd/BonfyreWebAddress/src/item_depth.h
+
+interaction web-source-publication-uses-native-cms-transaction
+  source web-address-edge
+  destination cmd-c-m-s
+  relation admits_exact_source_publication
+  preserves current CMS namespace and write grant, same-origin boundary, caller-retained request identity, selected native source subject and source reference, authored title and introduction, current pair readback and explicit notification delivery outcome
+  drops any browser-owned content store, implicit retry, provider credential, membership, private research, source-licence claim or authority inferred from a selected URL
+  forbidden_inference a native committed pair -> source acquisition, populated public material, provider capability, payment or external effect authority
+  invalidates_on source-publication MessagePack grammar, current native CMS closure, content type fields, exact selected source or SourceCollection/World owner changes
+  witness cmd/BonfyreCMS/tests/source_publication.test.mjs
+  witness cmd/BonfyreWebAddress/tests/source_publication_web.test.mjs
+  witness scripts/tests/source-publication-browser.test.mjs
+  binding cmd/BonfyreCMS/src/source_publication.h
+  binding cmd/BonfyreWebAddress/src/source_publication_web.h
+  binding integrations/browser/source-publication.mjs
+
+interaction installed-production-publishes-reviewed-design
+  source surface-ir
+  destination cmd-c-m-s
+  relation publishes_and_reconciles_native_page_aggregate
+  preserves reviewed public design fields, exact native namespace and page baseline, public withdrawal, independent receiving-workspace record identities and supported research-to-product handoffs
+  drops source text, private findings, workbook/database bytes, credentials, personal identities, grants and original private record addresses from public design material
+  forbidden_inference reusing a public arrangement -> copying its private work, acquiring its permissions, operating an external provider or completing all source skills
+  invalidates_on authored-workspace grammar, supported instrument operations, native page snapshot, destination authority or immutable package changes
+  witness scripts/tests/authored-publication-browser.test.mjs
+  witness cmd/BonfyreSurfaceScene/tests/authored-publication.test.mjs
+  binding cmd/BonfyreSurfaceScene/runtime/authored-publication.mjs
+  binding cmd/BonfyreWebAddress/src/production_publication.h
+
+interaction verified-context-handoff-meets-provider-token-evidence
+  source cmd-k-v-cache
+  destination cmd-meter
+  relation verified_handoff_receipt_to_run_pair_token_comparison
+  preserves the handoff receipt and context digests, task and revision binding, the tokenizer-count label, exact Work session keys, provider counter classes, inherited snapshots apart, and admitted effective-dated rates or explicit unknown
+  drops body text, context text, provider session ids, transcript paths and any price not admitted with evidence
+  forbidden_inference a verified handoff plus a smaller provider count -> the handoff caused the reduction, the answer was as good, or money was saved
+  invalidates_on any body, the context, the task, the revision, the Work index session keys, imported usage rows or admitted rates changing
+  witness cmd/BonfyreKVCache/tests/context_contract.sh
+  witness cmd/BonfyreMeter/tests/context_compare_test.sh
+  binding cmd/BonfyreMeter/src/meter_context.h

@@ -1,0 +1,69 @@
+atlas commands-recursive-owner
+
+architecture recursive-substrate-native-owner
+  canonical_name RecursiveSubstrateNativeOwner
+  family commands
+  domain Execution / Recursive substrate and representation integrity
+  maturity measured
+  semantic_question Can recursive context, native token bodies, deltas and mission evidence share one durable owner without granting representations semantic authority?
+  purpose Retire the Python recursive service and CLI into Bun orchestration over existing SQLite state and the real native Rust token engine.
+  node_types CanonicalArtifact
+  node_types TokenBody
+  node_types DependencyEdge
+  node_types LogicalDelta
+  node_types RuntimeImage
+  node_types HashLinkedReceipt
+  internal_calculus canonical bytes -> native token chunks -> shared body identity with explicit semantic ownership edges -> verified delta reconstruction -> affected dependency closure
+  internal_calculus mission attempt receipt -> sequential local candidate writes -> completion or uncertain receipt -> explicit reconciliation before retry
+  invariant identical token bytes may share physical identity without merging distinct artifact owners
+  invariant source paths are explicit authenticated inputs; generated files stay confined to the owner root
+  invariant historical receipts preserve raw numeric and Unicode digest semantics; corrupt cached bodies cannot become reusable evidence
+  invariant read-only catalog hints cannot allow known closure writes to bypass serialized effect scheduling
+  invariant runtime images require valid receipt and flux chains; BFP plans remain candidates and never activate authority
+  forbidden_inference exact fallback tokenizer or successful COPY reconstruction -> compatibility with a vendor model tokenizer or model KV cache
+  forbidden_inference complete local tool witness -> distributed transaction atomicity, production write authorization or estate-wide performance
+  source_path integrations/mcp/recursive_server.mjs
+  source_path integrations/mcp/recursive_store.mjs
+  source_path integrations/mcp/recursive_schema.sql
+  source_path integrations/mcp/recursive_catalog.json
+  source_path cmd/BonfyreMcp/src/clis.c
+  source_path integrations/mcp/canonical_json.mjs
+  source_path integrations/mcp/mission_plan.mjs
+  invariant task-bearing mission bundles recompute and bind one semantic task-plan digest across all seven IRs; execution plans remain candidate-only
+  known_gap task-plan binding is implemented and tested in source but is not part of the earlier live cutover witness
+  source_path deploy/launchd/service_cutover.mjs
+  source_path deploy/launchd/recursive_cutover.mjs
+  source_path deploy/launchd/bonfyre-recursive
+  witness integrations/mcp/tests/recursive_store.test.mjs
+  witness integrations/mcp/tests/recursive_transport.test.mjs
+  witness cmd/BonfyreMcp/tests/vectors.sh check replays 44 recursive command vectors recorded from the retired recursive_cli.mjs (grammar, catalog validation, mission files, native-smoke, wire refusals) against bonfyre-mcp byte for byte
+  witness deploy/launchd/tests/service_cutover.test.mjs verifies the complete legacy table signature and additive indexes for rollback compatibility
+  witness integrations/mcp/tests/recursive_integration.test.mjs
+  witness tests/recursive_native_witness.mjs exercises all twenty-two tools with real native token compilation and exact reconstruction in disposable state
+  witness integrations/mcp/tests/recursive_python_baseline.json read-only live Python baseline, not a native deployment claim
+  witness integrations/mcp/tests/recursive_legacy_snapshot.json verifies all 134 historical receipts and four flux streams on a disposable database copy
+  witness integrations/mcp/tests/recursive_cutover.json records live daemon and CLI retirement, unchanged chains and counts, refreshed consumers and a measured replay-latency regression
+  known_gap initial 25-sample live replay benchmark regressed from 57.5 to 68.6 milliseconds median; no throughput or scaling win is established
+  known_gap native integration requires an installed real token engine; unavailable engines are explicitly skipped rather than simulated in CI
+  known_gap compound operations can leave partial candidate state; durable attempt receipts require reconciliation and do not claim automatic rollback
+  known_gap native token engine is an installed independent owner; source-level retirement does not claim ownership of that implementation
+
+interaction recursive-mcp-shares-wire-boundary
+  source recursive-substrate-native-owner
+  destination mcp-bounded-wire-boundary
+  relation shared-transport-factory
+  preserves twenty-two tool schemas, two prompts, authentication, bounded decoding and owner-specific effects
+  drops duplicate request dispatch plumbing
+  forbidden_inference shared transport -> shared authority or interchangeable state
+  binding integrations/mcp/recursive_server.mjs
+  witness integrations/mcp/tests/recursive_transport.test.mjs
+
+interaction canary-projects-recursive-evidence
+  source fixture-canary-native-owner
+  destination recursive-substrate-native-owner
+  relation certificate-evidence-projection
+  preserves version-bound certificate identity and explicit projection intent
+  drops no provider evidence or refusal semantics
+  forbidden_inference evidence projection -> automatic canary promotion or permission to execute external effects
+  binding integrations/mcp/canary_fixtures.mjs
+  witness integrations/mcp/tests/canary_fixtures.test.mjs

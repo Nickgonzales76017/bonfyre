@@ -1,0 +1,95 @@
+architecture catalogue-release-review
+  canonical_name CatalogueReleaseReview
+  family surface
+  domain Content / Catalogue and room release review
+  maturity implemented
+  semantic_question Which exact saved product changes affect the retained room plans, and can authorized members stage and review that snapshot without overwriting concurrent work?
+  purpose Extend the existing catalogue workspace with merchant-specific releases, source comparisons, room budget impact, revision-checked review annotations and exact saved-record continuation.
+  internal_calculus Immutable selected draft snapshots and canonical content digests
+  internal_calculus Exact source URL, product and option identity joins across retained fixture catalogues
+  internal_calculus Per-placement exact-cent price deltas with source-observation and baseline checks
+  internal_calculus Atomic check-only dependency revisions and release-record compare-and-swap
+  internal_calculus Native idempotent request replay after uncertain save responses
+  source_path components/BonfyreServiceSite/planner-model.mjs
+  source_path components/BonfyreServiceSite/planner-spatial-model.mjs
+  source_path components/BonfyreServiceSite/planner-spatial.mjs
+  source_path components/BonfyreServiceSite/planner-client.mjs
+  source_path components/BonfyreServiceSite/catalogue-release.mjs
+  source_path components/BonfyreServiceSite/catalogue-release-view.mjs
+  source_path components/BonfyreServiceSite/catalogue-client.mjs
+  source_path components/BonfyreServiceSite/catalogue-material.mjs
+  source_path components/BonfyreServiceSite/sections/catalogue.mjs
+  source_path components/BonfyreServiceSite/catalogue.css
+  source_path scripts/materialize_catalogue_release_repair.mjs
+  source_path scripts/materialize_room_scale_repair.mjs
+  source_path components/BonfyreServiceSite/planner.css
+  source_path scripts/materialize_workspace_package.mjs
+  source_path scripts/publish_experience_setups.mjs
+  source_path packs/aurekai-work-samples/site/material.mjs
+  witness components/BonfyreServiceSite/tests/catalogue-release.test.mjs checks exact identity joins, repeated placements, unknown collections, changed sources, stale review and tampered release bodies
+  witness components/BonfyreServiceSite/tests/catalogue-release-native.test.mjs builds the real ServiceSite material and exercises isolated Auth, CMS and WebAddress owners for continuation, shared review, atomic dependency checks, current roles and lost-response replay
+  witness components/BonfyreServiceSite/tests/planner-scale.test.mjs checks forty placements, shared sixty-four placement limits, exact-cent budgets, unsafe total refusal and stale release review
+  witness scripts/tests/room-scale-native-browser.test.mjs exercises forty-placement layout edits, native reopen, release staging, review and changed-room refusal at desktop and narrow widths
+  witness scripts/tests/room-scale-retained-browser.test.mjs exercises the exact retained package repair through native storage when BONFYRE_ROOM_BASE_ROOT is provided
+  witness scripts/tests/room-scale-repair.test.mjs verifies historical module bytes and unrelated package members remain unchanged
+  witness scripts/tests/catalogue-release-retained-browser.test.mjs checks the retained native catalogue, merchant IDs, forty-placement price impact, shared review, stale dependencies, lost acknowledgements and unresolved source observations when BONFYRE_ROOM_BASE_ROOT is provided
+  source_path components/BonfyreServiceSite/catalogue-room-model.mjs
+  source_path scripts/materialize_room_quantity_repair.mjs
+  witness scripts/tests/room-quantity-retained.test.mjs checks catalogue placement into a forty-item native room, sixty-four item quantities, overflow refusal and native reopen at desktop and narrow widths
+  invariant Plan validation, catalogue placement, quantity editing and retained release impact share a sixty-four placement limit
+  invariant Product and room draft records remain unchanged by staging and reviewing a release
+  invariant A release contains one merchant catalogue and exact saved product and room revisions; no title matching supplies an identity
+  invariant Unknown fixture collections and different source observations prevent completed review; unresolved price totals remain null
+  invariant Every known dependency revision is checked in the same native transaction as the release save
+  invariant Refresh produces a staged snapshot and clears the prior review annotation
+  invariant The review annotation does not assert approver identity or grant publication authority
+  invariant The release record uses the existing spaces family and Pack-declared release:catalogue: prefix
+  forbidden_inference staged or reviewed release -> merchant publication, procurement commitment, supplier acceptance or authenticated approval
+  forbidden_inference exact checks for known room revisions -> an atomic snapshot of all possible rooms created concurrently
+  forbidden_inference native integration tests or a successful public build -> verified desktop or mobile rendering, host integration or live deployment
+  known_gap The larger placement bound does not add multi-room geometry, merchant ingestion, procurement or source reconciliation
+  known_gap The public easel and fixture planner retain different capture hashes; source reconciliation is required before their release review can finish
+  known_gap Assets, page content, localization, attributed approvals and merchant publication are not part of this release transaction yet
+  known_gap New room records created after enumeration are outside the snapshot; refresh is required to include them
+  known_gap Fictional-source native browser tests cover desktop and narrow forty-placement flows; full accessibility, all failures and live source reconciliation remain unverified
+  invariant The retained release projection preserves native scene, docking, collection history and existing source package bytes; new modules have new immutable paths
+  forbidden_inference Bounded merchant identifier syntax -> a verified merchant identity or current source price
+  source_path components/BonfyreServiceSite/workspace-lifetime.mjs
+  source_path integrations/browser/workspace-store.mjs
+  source_path integrations/browser/workspace-continuation.mjs
+  source_path scripts/materialize_catalogue_account_repair.mjs
+  source_path scripts/materialize_planner_account_repair.mjs
+  witness scripts/tests/planner-account-browser.test.mjs checks native room account closure, held controls, delayed reads, exactly-once committed saves, scene disposal and current-account reload in both retained collections
+  invariant Both retained room collections share document lifetime, guarded native storage and disposal of private plans, project choices, history and spatial scenes
+  invariant Account changes and pagehide permanently close the catalogue document; queued storage operations and late responses cannot publish private record projections
+  witness integrations/browser/tests/workspace-lifetime.test.mjs checks abort boundaries, queued writes and delayed private response bodies
+  witness scripts/tests/catalogue-account-browser.test.mjs exercises retained catalogue account closure and current-account reload through isolated native owners
+  known_gap Event-driven pagehide tests do not prove every browser back-forward cache lifecycle or unrelated editor closure
+  interacts catalogue-release-uses-native-workspace
+  interacts service-site-renders-catalogue-release
+
+interaction catalogue-release-uses-native-workspace
+  source catalogue-release-review
+  destination web-address-edge
+  relation revision-checked-release-review
+  preserves Current session, destination, installation, roles, exact dependency revisions, saved release identity and native idempotency
+  drops Application-owned record databases and inferred permission to publish merchant content
+  forbidden_inference Native release save -> authority to publish or change a merchant account
+  invalidates_on Pack prefix declarations, native check-only semantics, record schema, current role or package continuation changes
+  binding components/BonfyreServiceSite/catalogue-release.mjs
+  binding scripts/publish_experience_setups.mjs
+  binding scripts/materialize_workspace_package.mjs
+  witness components/BonfyreServiceSite/tests/catalogue-release-native.test.mjs
+
+interaction service-site-renders-catalogue-release
+  source service-site
+  destination catalogue-release-review
+  relation catalogue-and-fixture-material
+  preserves Existing catalogue editing, planner validation, source digests, store identity, theme and shared storage selection
+  drops Unverified matching by product title or inferred live merchant prices
+  forbidden_inference Prepared static material -> account-scoped persistence or verified current source prices
+  invalidates_on Catalogue material, fixture catalogue digest, planner model or browser store binding changes
+  binding components/BonfyreServiceSite/catalogue-material.mjs
+  binding components/BonfyreServiceSite/catalogue-client.mjs
+  binding packs/aurekai-work-samples/site/material.mjs
+  witness components/BonfyreServiceSite/tests/catalogue-release.test.mjs

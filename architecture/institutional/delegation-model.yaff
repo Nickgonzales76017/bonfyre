@@ -1,0 +1,38 @@
+atlas institutional-delegation-model
+
+architecture institutional-delegation-model
+  canonical_name InstitutionalDelegationModel
+  owns DelegationEnvelope
+  consumes Authority
+  consumes InformationPolicy
+  consumes CapabilityClosure
+  consumes EvidenceClosure
+  publishes DelegationEnvelope
+  publishes BoundClosure
+  family institutional
+  domain Institution / Delegation
+  layer institutional
+  semantic_question What exactly does this estate receive from the estate above it, and what does it remain unable to do?
+  purpose Make delegation a bounded, inspectable envelope rather than an inheritance, so a managed client receives a provider closure, an information closure, an effect authority and an evidence release without receiving its operator's whole world.
+  maturity architectural
+  node_types DelegationEnvelope
+  node_types ProviderClosure
+  node_types InformationClosure
+  node_types EffectAuthority
+  node_types EvidenceRelease
+  edge_types delegates_to
+  edge_types bounds
+  invariant delegation is bounded downward; a child estate never receives more than its parent holds
+  invariant delegation is not inheritance; an unlisted capability is absent rather than implied
+  invariant each envelope declares its provider closure, information closure, effect authority, evidence release and model or provider allowances explicitly
+  invariant effect authority is separate from read authority; being able to see a subject never implies being able to change it
+  invariant an evidence release names what the child may see of the parent's proof, and defaults to nothing
+  invariant revoking an envelope revokes every closure derived from it without requiring the child to cooperate
+  forbidden_inference a parent holding a capability -> a child holding it
+  forbidden_inference a child reading a subject -> a child being able to effect it
+  forbidden_inference a delegation existing -> data flowing across it
+  forbidden_inference a credential reaching a resource -> the envelope authorizing that reach
+  interacts institutional-root
+  interacts institutional-relationship-types
+  interacts authority
+  source_lineage Generation-10 product topology separation, 2026-08-26

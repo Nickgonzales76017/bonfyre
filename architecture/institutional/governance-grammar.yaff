@@ -1,0 +1,36 @@
+architecture governance-grammar
+  canonical_name GovernanceGrammar
+  family institutional
+  domain Institutional / Governance as verbs a person already knows
+  layer contract
+  semantic_question What does a community see when it decides something, and what carries that decision underneath?
+  purpose Fourteen governance verbs declared once -- Proposal, Decision, Vote, Discussion, Role, Delegation, Budget, FundingRequest, Milestone, Execution, Receipt, Policy, Member, Council -- with eight backings that may carry any of them, so the same rendered thing can be a database tally, a human approving, a Snapshot signal or a Safe threshold without the machinery reaching the page.
+  maturity implemented
+  node_types GovernanceVerb
+  node_types GovernanceBacking
+  node_types GovernanceRule
+  edge_types carried_by
+  edge_types bounded_by
+  internal_calculus most governance in this estate is not blockchain governance. A PTA vote, a moderator appointment, a household spending decision and a community funding proposal need no wallet, and making them carry one would be the protocol leaking into the vocabulary
+  internal_calculus human_approval is the first backing because it is the honest default: most decisions are made by a person who is allowed to make them
+  internal_calculus a backing is chosen per verb, not per community, so a group can take its votes in a database and its treasury through a Safe without either fact reaching the page
+  internal_calculus governance mostly declares the rules under which an action may execute without a vote; a vote is what happens when an act falls outside them. Proposing and voting on everything is overhead, not maturity
+  invariant every verb states what it cannot be read to mean, because the failure here is always one shape: a record of an intention read as the thing having happened
+  invariant only a backing that can settle may be offered where settlement is claimed, and the institution's declared world still gates it
+  forbidden_inference a proposal -> a decision, or authority to act on it
+  forbidden_inference a tally -> the membership's view; it is what was said by those who said it
+  forbidden_inference a receipt reference -> settlement; it is a digest of something presented
+  forbidden_inference a threshold reached on a Safe -> a transaction that landed; it is authority to submit
+  source_path schemas/control/governance.cue
+  source_path cmd/BonfyreWebAddress/tools/compile_governance.zig
+  source_path cmd/BonfyreWebAddress/generated/native_governance.h
+  source_path cmd/BonfyreWebAddress/src/main.c
+  source_path cmd/BonfyreCMS/content-types/governance_proposal.json
+  source_path cmd/BonfyreCMS/content-types/governance_vote.json
+  source_path cmd/BonfyreCMS/content-types/governance_decision.json
+  witness 2026-09-26 the package vets and exports: fourteen verbs and eight backings, three of which can settle and five of which cannot, each carrying its own refusal
+  witness 2026-09-26 compiled from CUE into generated/native_governance.h by a Zig generator that refuses an unknown field, and served natively at /s/governance/grammar: 22 rows, fourteen verbs each printed with the sentence that bounds it and eight backings marked by whether they can settle
+  witness 2026-09-26 the build asserts the count of settling backings, so a fourth cannot appear in the header without the check failing
+  witness 2026-09-26 bound and exercised: 112 proposals and 9 decisions derived through the CMS organ from obligations the program fabric already held, and a member signed in and cast a real vote -- recorded as user:1, for, human_approval -- then changed it, which replaced the row rather than adding to the tally, because one person holds one position
+  witness 2026-09-26 the three acts refuse before they record: an unauthenticated POST answers 401 saying an act carries the name of whoever performed it, a choice that is not for, against or abstain answers 400, and a request from another origin answers 403
+  known_gap the rule form is declared and unused: no community has stated a ceiling, and nothing enforces one

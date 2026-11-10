@@ -1,0 +1,124 @@
+architecture provider-estate
+  canonical_name ProviderEstate
+  family identity
+  domain Identity / Downstream Provider Tenancy
+  layer institutional
+  semantic_question Which downstream provider accounts is Aurekai acquiring, how far has each got, what container does each provider offer for a customer, and what may Aurekai actually do inside it?
+  purpose A hand-kept, natively checked ledger of 102 provider targets (Cloudflare, Twilio and the 100 ranked from the 2026-10-26 Cloudflare Tier 3 thread) and one acquisition row per provider. It records sign-up triage tags, the customer container where one is evidenced, the partner route, stage reached, account and organization identifiers, references to where secrets and recovery material are kept, and the six tenancy questions (create container, delegate, operate, meter, revoke, transfer). It is the first, declarative half of a provider-neutral issue -> claim -> authorize -> configure -> operate -> observe -> rotate -> transfer/revoke lifecycle; no provider API is called.
+  maturity implemented
+  publishes ProviderEstate
+  node_types ProviderTarget
+  node_types ProviderAcquisition
+  state_types none
+  state_types account
+  state_types organization
+  state_types secured
+  state_types machine
+  state_types recorded
+  state_types partner_submitted
+  source_path cmd/BonfyreProviderEstate/src/main.c
+  source_path cmd/BonfyreProviderEstate/providers.tsv
+  source_path cmd/BonfyreProviderEstate/acquisition.tsv
+  source_path cmd/BonfyreProviderEstate/routes.tsv
+  source_path cmd/BonfyreProviderEstate/prefill.tsv
+  source_path cmd/BonfyreWebAddress/src/application_continuation.h
+  source_path cmd/BonfyreProviderEstate/tests/provider_estate_test.sh
+  source_path docs/engineering/provider-estate-20261026/RUNBOOK.md
+  witness cmd/BonfyreProviderEstate/tests/provider_estate_test.sh proves the shipped ledgers pass; Stripe-, GitHub- and long mixed-token values pasted into any tracker cell are refused while vault references are accepted; secured without two-factor, an account stage without an owner and partner_submitted without a submitted application are refused; a row for an unknown provider is refused; a tenancy primitive with no source is refused; summary is one JSON object over all 102 providers; next groups by wave; matrix has one row per provider; routes reject non-https and duplicate steps and next prints each step's page; publish writes one blocked operator goal per provider with its routes, is idempotent, and resolves a provider's goal once the tracker records it
+  invariant the tracker keeps identifiers and references only; secret_reference and recovery_location must name a store (op://, keychain:, vault:, bonfyre-credentials:, paper:, file:) and any cell that reads like a credential fails check
+  invariant stages are claims about evidence already recorded: account needs an owner email, secured needs two-factor and a recovery location, recorded needs an account or organization id, partner_submitted needs an application past bookmarked
+  invariant tenancy_primitive is filled only with a cited mechanism: the evidence column carries the https page it came from (or the source thread); all 102 are cited as of 2026-10-26; six read 'none found' where public docs offer no customer-account mechanism (Freshworks, Fastly, Buildkite, Namecheap, Porkbun, Paddle)
+  invariant the six tenancy answers start unknown and are set by a person from the provider's own console or documentation
+  forbidden_inference holding a credential or an account id -> Aurekai owns that account, or may act for any customer inside it
+  forbidden_inference a provider account -> a partner, reseller or MSP relationship; base account and partner program are separate artifacts
+  forbidden_inference Aurekai startup credits (for example Cloudflare Tier 3) -> permission to host customer-owned resources in Aurekai's account; customer resources stay in customer-owned accounts
+  forbidden_inference a tag, tenancy_primitive or evidence link in providers.tsv -> current provider terms, approval for Aurekai, pricing or API availability today; several mechanisms are partner-, plan- or sales-gated
+  forbidden_inference a stage in acquisition.tsv -> a remote check was made; the organ reads only the two ledgers
+  invariant routes.tsv names each provider's exact signup, security, organization, token, app, startup and partner pages, opened on the checked date; post-signup pages are expected to land on the provider's sign-in first
+  invariant prefill.tsv lists signup pages tried with a placeholder address and never submitted that read the email from their own link (Sentry, Vercel, Grafana, Clerk, Auth0 on 2026-10-26); the goal carries NAME={email} and the work board fills it from an address kept only in the person's browser
+  invariant a connect step links the 14 providers Connection Studio already catalogues straight to /apps/connections with that work id
+  invariant POST /work-board/act lets the signed-in owner settle only their own listed provider-estate goal from a same-origin form: done resolves it, email or review keep it open with a dated note, later lowers its priority; operator goals and other accounts are refused
+  known_gap the work-board act route has no in-repo witness: its signed-in browser-fixture test passed 3/3 on 2026-10-26 but is held outside the repo by the native ratchet until a native harness exists
+  known_gap provider API calls exist only in github-app-connection and provider-customer-accounts (Neon, Sentry); invite, rotate and reconcile remain unbuilt elsewhere
+  known_gap tenancy grammar verbs (provider.account.issue, provider.member.invite, ...) are not yet declared per provider
+  source_lineage 2026-10-26 ChatGPT thread: Cloudflare Tier 3 reply, downstream account administration, 100 providers, tonight's zero-to-hero runbook
+
+interaction provider-estate-publishes-operator-goals
+  source provider-estate
+  destination autonomous-operator-native-owner
+  relation publishes_person_work
+  preserves one goal per provider keyed provider-estate:<slug>, title, ordered step routes, readiness needs, cited customer container and partner route, and resolution once the tracker records the provider
+  drops credentials, recovery material, identity-pack values, provider responses and any claim that an account exists
+  forbidden_inference a provider-estate goal -> work the operator may run; goals are written blocked and wait on a person
+  invalidates_on providers.tsv, routes.tsv or acquisition.tsv changing, or the operator goal schema changing
+  witness cmd/BonfyreProviderEstate/tests/provider_estate_test.sh
+
+architecture github-app-connection
+  canonical_name GitHubAppConnection
+  family identity
+  domain Identity / Downstream Provider Tenancy
+  layer institutional
+  semantic_question Is the estate's GitHub app created, are its key and secrets sealed, and does GitHub accept a request signed with that key?
+  purpose The first provider taken from sign-up page to working machine identity with one approval and nothing typed. The estate owner opens /connect/github-app; Aurekai posts an app manifest to github.com; the owner presses Create; GitHub returns a one-time code that BonfyreCredentials exchanges for the app id, key and secrets, seals under AES-256-GCM, and proves by calling GET /app with an RS256 app JWT signed by the sealed key.
+  maturity implemented
+  consumes provider-estate
+  publishes GitHubAppConnection
+  state_types started
+  state_types sealed
+  state_types verified
+  source_path cmd/BonfyreWebAddress/src/connect_github_app.h
+  source_path cmd/BonfyreCredentials/src/main.c
+  source_path cmd/BonfyreCredentials/tests/github_app_test.sh
+  witness cmd/BonfyreCredentials/tests/github_app_test.sh proves (2026-10-26 live: app 5489864 created, installation 175688016 on one chosen repository reached by its own token) a one-time code becomes a sealed app identity with nothing secret printed or stored in clear, the sealed key signs a JWT an RSA-verifying API accepts, and refused, malformed or non-https exchanges store nothing
+  invariant only the account named BONFYRE_ACCOUNT_WORK_OWNER may start or finish the connection; each attempt has one random state bound to that session's actor for fifteen minutes and deleted on first use
+  invariant the one-time code reaches the credential owner on standard input, never argv; the private key, client secret and webhook secret are never rendered
+  forbidden_inference a sealed GitHub app -> access to any repository; the app reaches only repositories the owner installs it on
+  forbidden_inference a verified app JWT -> an installation token or permission beyond the manifest's metadata/contents read and issues/pull request write
+  known_gap the web routes' signed-in fixture test (3 cases) passed on 2026-10-26 but is held outside the repo by the native ratchet
+  invariant downstream access is per customer: github-app-installations lists each installation (account, type, repository selection); github-app-customer mints that installation's one-hour token, never printed, and reads only the repositories the customer chose; /connect/github-app/customers shows this to the owner with the install link for new customers
+  witness cmd/BonfyreCredentials/tests/github_app_test.sh also proves installations are listed, a customer token over 255 characters is issued and used for exactly the customer's chosen repositories, is never printed, and a refused or malformed installation is reported unusable
+  known_gap customer offboarding is the customer's uninstall on GitHub; Aurekai does not yet suspend an installation itself
+  source_lineage 2026-10-26 owner direction: take one provider all the way to a working account instead of listing sign-up pages
+
+architecture provider-customer-accounts
+  canonical_name ProviderCustomerAccounts
+  family identity
+  domain Identity / Downstream Provider Tenancy
+  layer institutional
+  semantic_question Can an Aurekai organization (a customer sub-account) get, see and close its own account inside a provider account Aurekai holds?
+  purpose The operating half of the provider lifecycle for providers whose customer container lives under Aurekai's held account. bonfyre-provider-estate customer open|show|close names every container aurekai-c-<customer>, reads it back from the provider after open and confirms it is gone after close. The organization page (/organizations?organization=ID) shows administrators a Provider accounts section that runs these verbs for that organization and links GitHub's install page for providers the customer owns directly.
+  maturity implemented
+  consumes provider-estate
+  publishes ProviderCustomerAccount
+  state_types none
+  state_types open
+  state_types closed
+  source_path cmd/BonfyreProviderEstate/src/customer.h
+  source_path cmd/BonfyreProviderEstate/tests/customer_test.sh
+  source_path cmd/BonfyreWebAddress/src/provider_accounts_web.h
+  source_path cmd/BonfyreWebAddress/src/organization_workspace_web.h
+  source_path scripts/release/public_surface_rollout.mjs
+  witness cmd/BonfyreProviderEstate/tests/customer_test.sh proves open makes and reads back one container per customer, a repeat open does not duplicate, close removes only that customer's container, the held key and provider connection strings never reach argv or output, and malformed names, non-local test APIs and refused keys are refused
+  witness 2026-10-27 live: Stripe Connect Express account aurekai-c-witness-1027 (acct_1UVDFgCijxFao6tV) opened, read back and deleted; an organization opened and closed its own Stripe account (acct_1UVDHYCrXrHOvfVF) from the organization page (14/14 checks)
+  witness 2026-10-27 live: Neon project aurekai-c-witness-1027 and Sentry team+project aurekai-c-witness-1027 opened, read back, closed and confirmed gone; a signed-in founder created an organization and opened then closed its own Neon project (autumn-glade-26332014) from the organization page, with cross-origin and outsider posts refused (9/9 checks; browser-fixture test held outside the repo by the native ratchet)
+  invariant only a current admin of the organization, in a self-authoring session, from a same-origin form, may open or close its provider accounts; the customer name is derived from the organization id, never from the form
+  invariant the held key is read from the estate env file and passed to curl on stdin; the page shows provider identifiers and state only
+  invariant the holding organization (BONFYRE_PROVIDER_HOLDING_INSTITUTION, default bonfyre) page lists every provider account Aurekai holds from bonfyre-provider-estate held: name, account identifier, what customers get and whether customers can use it; customer organizations never see this list
+  witness 2026-10-27 live through the organization page with real provider APIs: an organization opened, read back and closed its own Neon, Stripe Connect, Vercel and Render accounts; the bonfyre page listed 14 held accounts, 6 usable by customers, with no secrets; a customer organization did not see the holding list (27/27 checks, fixture-held browser test outside the repo)
+  invariant show and close reach only containers named aurekai-c-<customer>, so an organization cannot see or close Aurekai's own resources or another organization's
+  forbidden_inference an open container -> the customer owns the provider account, may be billed by the provider, or holds the provider key; the container runs under Aurekai's held account
+  forbidden_inference a provider listed on the organization page -> plan capacity for every organization; free plans cap projects and no quota is enforced yet
+  known_gap Neon, Sentry, Vercel, Render, Supabase, Google Cloud and Stripe Connect (test mode) only; Cloudflare, AWS, Fly.io and Railway hold keys but their customer verbs are unbuilt, and Fly.io and Railway need a paid plan first
+  invariant open refuses a new customer once the provider account holds BONFYRE_PROVIDER_CUSTOMER_MAX (default 20) aurekai-c- containers, reporting state full; an existing customer still reads its own container
+  known_gap the ceiling is per provider account, not per organization, and there is no billing meter; transfer of a container to a customer-owned provider account is unbuilt
+  known_gap the customer receives no connection string yet; handing a scoped role or DSN to the organization is the next step
+
+interaction organization-opens-provider-customer-account
+  source cmd-web-address
+  destination provider-customer-accounts
+  relation requests
+  preserves organization id as customer name, provider slug, open or close verb, the provider's read-back id and state
+  drops provider keys, connection strings and provider response bodies
+  forbidden_inference a 303 after open -> the container exists; the page rereads the provider before showing Open
+  invalidates_on the customer verb output contract or organization admin authorization changing
+  witness cmd/BonfyreProviderEstate/tests/customer_test.sh

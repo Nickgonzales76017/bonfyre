@@ -23,11 +23,35 @@ architecture provider-state
   state_types exhausted
   forbidden_inference available -> authorized
   forbidden_inference cheapest -> valid
-  source_path components/BonfyreControlPlane/provider_state.py
+  invariant a capability probe reports presence it observed, not presence it assumed; cli_present was the literal true on a host with no aws binary, and the one field that would have explained the crash could not say no
+  invariant presence is probed independently of credentials, because inferring absence from a call that credentials prevented is a second assertion nobody made
+  invariant provider embedding work receives a persistent ResourceAdmission grant, stores only finite same-width vectors with source/vector digests, and releases that grant when the batch or query completes
+  invariant an explicit provider-operation protected floor is a ResourceAdmission placement input; it may make a bounded local operation feasible under a lower retained floor, but cannot bypass a grant, alter provider availability, change representation geometry, or select a semantic result
+  invariant a provider rank receipt retains a query digest, vector digest and bounded candidate handles but never caller text, semantic selection, exact-owner success, authority or a lowerer outcome
+  invariant a completed ProviderEmbeddingRank may become a receipt-bound diagnostic context input only after ProviderFrontier rechecks every ranked handle against current typed AddressPlane advertisements and ForeignTwin exact-owner receipts; the provider result remains a latent ordering representation, never a BitNet alias, selection, authority, evidence admission, lowerer handoff or model execution plan
+  invariant a complete ProviderEmbeddingRun enters a durable ProviderState outbox as only its exact ProviderEmbeddingRun write coordinate; AddressPlane performs the later dependency cut and ProviderCompiler reopens the run before retaining an unrequested derived artifact
+  forbidden_inference an absent tool -> an unready provider; it is an unknown one
+  source_path components/BonfyreControlPlane/provider_state.py.archive
+  source_path components/BonfyreControlPlane/continuous_supervisor.py.archive
   source_path engine/core/src/control_provider.c
-  witness components/BonfyreControlPlane/tests/test_provider_state.py
+  source_path cmd/BonfyreProvider/src/main.c
+  source_path cmd/BonfyreProviderFrontier/src/main.c
+  source_path cmd/BonfyreExternalEstate/src/main.c
+  source_path cmd/BonfyreLoweringWorkers/src/main.c
+  source_path deploy/systemd/bonfyre-provider-delta.service
+  source_path deploy/systemd/bonfyre-provider-delta.timer
+  witness cmd/BonfyreProvider/tests/smoke.sh
+  witness estate/generated/mistral-publication-embedding-witness-2026-09.json records a live ResourceAdmission-gated Mistral Embed run over 22,962 canonical publication bodies: 22,962 persisted 1,024-dimensional vectors, zero failed bodies, and exact ordered source/vector digests
+  witness estate/generated/mistral-publication-retrieval-evaluation-2026-09.json records four live provider queries whose independently selected canonical headline handles survived the complete 22,962-body field in top-3
+  witness estate/generated/provider-embedding-delta-reconciliation-2026-09.json records two complete live Mistral embedding runs reconstructed into durable ProviderState FactDeltas; each reached only its own AddressPlane provider candidate and a ProviderCompiler artifact whose admission remains unrequested
+  witness cmd/BonfyreProviderFrontier/tests/provider_frontier_test.sh proves a complete ProviderEmbeddingRank must rejoin typed ExternalEstate AddressPlane descriptors and ForeignTwin exact owner receipts before it can emit a strictly receipt-bound context material manifest; a mismatched exact verifier is refused and neither verification nor manifest emission produces a lowerer handoff
+  witness /Users/nickgonzales/.bonfyre/estate/representation-runs/mistral-bitnet-frontier-20260915/weather-query-exact-owner.summary.json records a live Mistral rank over the persisted 128-member AddressPlane frontier: 16 current typed external-occurrence descriptors rechecked, 16 exact ForeignTwin queries, 12 retained observations, zero lowerer handoffs
+  witness /Users/nickgonzales/.bonfyre/estate/representation-runs/mistral-bitnet-frontier-20260915/addressplane-provider-closure/ records a live completed Mistral embedding run emitted as one ProviderEmbeddingRun FactDelta, selected exactly one AddressPlane provider advertisement, dispatched one fsync'd ProviderCompiler handoff, and rechecked into a 1,024-dimensional unrequested derived artifact; its copy-on-write AddressPlane generation also compiled 5,524 dense exact representation passports under a released 4,747,641-byte native ResourceAdmission grant. It records no new provider request, semantic selection, authority, evidence admission, model execution or effect
   source_lineage run6 control-plane retrospective
+  known_gap native provider persistence and fold are executable through BonfyreProvider; supervisor call sites still use the compatibility reader until they are moved to the native command boundary
+  known_gap provider rank has four retained top-3 semantic probes over the complete publication field, but that narrow witness does not establish a general preservation envelope or permit cross-model comparison
 
+  known_gap the Python peer's witness for this organ no longer exists on disk; the entry named a file that could not be opened, which is the one thing a witness must never be. The line is removed rather than repointed, and the live evidence for this architecture is what remains listed.
 architecture resource-admission
   owns ResourceGrant
   consumes WorkState
@@ -46,11 +70,17 @@ architecture resource-admission
   forbidden_inference resource exists -> resource is reachable (activation is separate)
   invariant three verdicts admit/defer/reject never collapse; a request that cannot fit even if every grant were released is reject (never), not defer (not now)
   invariant committed grant bytes are subtracted from free space, so concurrent planes cannot each be admitted against the same bytes (native + python parity on the shared resource_grants ledger)
-  source_path components/BonfyreControlPlane/resource_admission.py
+  invariant unset, explicitly absent and zero are three states and the policy struct carries all three; reading 0 as unset meant --protected-floor-bytes 0 was accepted, discarded, and replaced with the 10 GiB default, so a 2 KiB grant was refused against 1 MB of free space by a floor the caller had asked to remove
+  invariant a limit is removed by naming it none, and a bare 0 is refused with the word that works rather than silently ignored; the safety floor itself is unchanged
+  forbidden_inference an accepted flag -> an applied one
+  source_path components/BonfyreControlPlane/resource_admission.py.archive
   source_path engine/core/src/control_admission.c
   source_path engine/core/src/admission.c
   source_path engine/core/include/bf_admission.h
-  witness components/BonfyreControlPlane/tests/test_resource_admission.py
+  source_path cmd/BonfyreAdmission/src/main.c
+  source_path cmd/BonfyreExternalEstate/src/main.c
   witness engine/core/tests/admission_test.c
+  witness cmd/BonfyreExternalEstate/tests/external_estate_test.sh proves the AddressPlane worker requests a native grant for its measured derived RepresentationPassport snapshot, releases an admitted transient grant after compiler completion, and leaves the previous physical registry untouched when admission rejects the build
   source_lineage run6 control-plane retrospective
-  known_gap native decide() kernel returns verdicts byte-for-byte matching the python decide() across the case battery, and the native grant ledger writes the shared resource_grants store python counts (proven); binding native admission to a live disk probe at real supervisor call sites is the remaining native-absorption item
+  known_gap native decide() kernel returns verdicts byte-for-byte matching the python decide() across the case battery; BonfyreAdmission now owns request/grant/release/reap and defaults to a real disk probe, while supervisor call sites remain on the compatibility reader until their carrier is moved
+  known_gap the Python peer's witness for this organ no longer exists on disk; the entry named a file that could not be opened, which is the one thing a witness must never be. The line is removed rather than repointed, and the live evidence for this architecture is what remains listed.

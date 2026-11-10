@@ -1,0 +1,262 @@
+architecture native-interaction-components
+  source_path scripts/release/publication_picker_upgrade.mjs
+  witness scripts/tests/publication-picker-release.test.mjs checks that a retained connected-instruments package changes only its picker and refuses incompatible dependencies
+  witness scripts/tests/authored-workspace-sources.test.mjs exercises the actual Production Studio, correcting or withdrawing a native occurrence after selection and refusing adoption while preserving the unsaved production and prior saved rows
+  invariant the reviewed source picker can be promoted into an existing account binding through the shared workspace upgrade journal without changing its production controller, recovery profile or other package members
+  canonical_name NativeInteractionComponents
+  family surface
+  layer browser-presentation
+  domain Surface / Working-set interaction
+  maturity implemented
+  invariant native campaign render actions and command actions honor the same current text-fit refusal; a disabled button is not the only check before encoding
+  witness scripts/tests/campaign-workspace.test.mjs verifies overwide words disable PNG and motion actions and their commands, create no output, and recover after the message is shortened
+  invariant native campaign rendering rechecks a saved source through bounded current owner reads; changed or unavailable passages refuse new renderings, prior output bytes and editorial state remain intact, and reopening never treats an earlier source check as current
+  source_path integrations/browser/campaign-workspace.mjs
+  witness scripts/tests/campaign-workspace.test.mjs renders and saves a source-backed PNG, changes its retained source, flags the saved output, refuses new motion, reopens the same record and restores current status only after a matching source read
+  invariant shared publication-picker adoption re-reads each reviewed page through the native owner, pins retained feed generations and compares every selected excerpt and receipt; changed, withdrawn, refused or cancelled reads cannot populate the receiving editor and preserve the selection for review
+  semantic_question Can source-bearing working sets share selection, inspection, layout and keyboard behavior while their native owners retain all records and effects?
+  purpose Extend the existing interaction-collection browser owner and replace the Source Review article-card loop with its bounded explorer; this is a consumer integration, not a new record or authority service.
+  source_path integrations/browser/publication-picker.mjs
+  source_path integrations/browser/tests/publication-research.test.mjs
+  source_path scripts/tests/campaign-workspace.test.mjs
+  witness integrations/browser/tests/publication-research.test.mjs checks grouped current-page reads, exact source metadata, generation pinning, disappearance, cancellation and failed multi-page adoption
+  witness scripts/tests/campaign-workspace.test.mjs changes and withdraws retained source material after browser selection; stale adoption is refused, the review remains selected, and explicit corrected selection enters the native campaign
+  source_path integrations/browser/interaction-collection.mjs
+  source_path integrations/browser/web-workbench.mjs
+  source_path integrations/browser/program-workspace.css
+  source_path integrations/browser/source-desk.css
+  source_path integrations/browser/publication-research-client.mjs
+  source_path integrations/browser/connection-studio.mjs
+  source_path integrations/browser/connection-studio.css
+  source_path integrations/browser/workspace-destinations.mjs
+  source_path integrations/browser/source-library.mjs
+  source_path integrations/browser/retained-material-view.mjs
+  source_path integrations/browser/retained-material.mjs
+  invariant a research source can reopen its source-library original only after rereading the saved research reference and the exact current library record through their admitted native stores; binding, key, revision and full UTF-8 content remain checked
+  invariant newer library descriptions and archived originals remain readable when the original bytes still match; the reader shows the research revision and current library revision separately and never rewrites the authored research copy
+  invariant original-file dialogs reuse retained text search, clear on account or page departure and discard replies after closure; source markup remains inert and reopening an original performs no write or provider request
+  witness scripts/tests/source-library-browser.test.mjs prepares actual installed research from a library original, reopens that original after a later metadata revision, searches its final passage at phone width, cancels a delayed blob response, refuses revoked library access and preserves the saved research record
+  witness scripts/tests/retained-material.test.mjs refuses changed reference coordinates before library reads, missing or older records, wrong digests, changed bytes, oversized originals and cancelled or refused access while allowing an archived matching original
+  known_gap original-library reading verifies retained UTF-8 files up to two MiB under current access; it does not recover deleted files, grant another workspace access or verify facts in the source
+  source_path cmd/BonfyreSourceFrontier/tools/source_material.mjs
+  source_path scripts/materialize_reference_repair.mjs
+  source_path integrations/browser/program-workspace.mjs
+  source_path integrations/browser/shipment-workspace.mjs
+  source_path integrations/browser/authentication-capability-surface.mjs
+  source_path integrations/browser/program-source-work.mjs
+  source_path integrations/browser/record-comparison.mjs
+  source_path integrations/browser/web-workbench.css
+  invariant Programs and Web Research share source-review drafts keyed to the exact retained run and result; navigation keeps edits in memory, while destination changes and page departure clear them
+  invariant a newer saved review preserves the local draft and requires an explicit comparison before saving against the current revision; editing or rereading invalidates an earlier confirmation
+  invariant an unconfirmed review save holds its draft and disables another write; Web Research can reconcile through a saved-item read, and Programs retains its existing native recovery operation
+  witness cmd/BonfyreWebAddress/tests/web_workbench.browser.test.mjs preserves a draft across source navigation and run refresh, compares concurrent saved edits, rejects an obsolete confirmation, recovers a committed save after a failed response without another write and clears private drafts on page departure; the compared notes remain readable within phone bounds
+  witness integrations/browser/tests/program-workspace.browser.test.mjs verifies the shared editor preserves existing source-review conflict and lost-response recovery through the native Programs owner
+  known_gap review drafts live only in the current destination page; reload and account changes discard unsaved edits, and isolated browser acceptance does not establish deployment to live accounts
+  source_path scripts/release/public_surface_rollout.mjs
+  source_path scripts/release/tests/public_surface_rollout.test.mjs
+  invariant retained-run comparison uses the existing owner comparison and exact result reads; each displayed passage must match the compared address and digest, and neither comparison nor inspection creates a provider request or record write
+  invariant changing the previous run, leaving the research view or closing its account lifetime clears comparison controls and cancels both passage reads; an obsolete response cannot restore compared text
+  invariant changed, added and removed sources share the bounded collection and text-search controls; desktop panels can show both runs together, phone panels stack, and each passage links to its original page and saved run
+  witness cmd/BonfyreWebAddress/tests/web_workbench.browser.test.mjs compares actual retained owner runs including an archived earlier run, opens exact changed and one-sided passages, refuses a different validly hashed body, cancels delayed reads, verifies phone bounds and leaves both records and provider-call counts unchanged
+  witness cmd/BonfyreWebAddress/tests/account_choice_boundaries.test.mjs verifies the account chooser reuses bounded workspace reads while preserving current-grant lookup, response cancellation and redirect refusal
+  witness scripts/release/tests/public_surface_rollout.test.mjs freezes and compiles the public browser closure including workspace-destinations required by the source readers
+  invariant public release acceptance exercises the frozen Web Research and collection modules, including source comparison, review recovery, text search and phone inspection; account-choice dependencies are frozen and checked at their native public routes
+  witness scripts/release/tests/public_surface_rollout.test.mjs freezes the account chooser, reference picker, invitation choice and their shared dependencies; cmd/BonfyreWebAddress/tests/web_workbench.browser.test.mjs and scripts/tests/interaction-components-browser.test.mjs read the selected frozen browser root during release acceptance
+  known_gap source comparison presents complete retained passages and text-digest differences; it does not mark individual edits or establish that the publisher changed the original page
+  invariant Source Library opens complete retained UTF-8 text up to two MiB after checking its digest; archived originals remain readable, research still requires active sources, and decoding preserves the original byte-order mark and line endings
+  invariant Source Library, Web Research and historical source dialogs share literal Unicode search over existing text nodes; matches retain original offsets, scroll into view, skip reference controls and clear on inspector cancellation without changing stored content
+  witness scripts/tests/interaction-components-browser.test.mjs searches Unicode and literal regular-expression characters, wraps through multiple matches, scrolls to late text, preserves inert markup and cancels detached controls
+  witness scripts/tests/source-library-browser.test.mjs opens the complete original beyond its preview, preserves a leading byte-order mark through research handoff, finds a final passage and checks desktop and phone reading layouts
+  witness cmd/BonfyreSourceFrontier/tests/source_material.test.mjs verifies digest and UTF-8 failures, read-only archived sources, preserved byte-order marks and line endings, and the two-MiB text bound
+  witness scripts/tests/reference-repair-browser.test.mjs searches a verified historical contract through the shared control, then captures and reopens evidence at its original offsets
+  witness scripts/tests/retained-material.test.mjs verifies the historical package carries the current shared interaction dependency while retaining unrelated files
+  witness integrations/browser/tests/program-workspace.browser.test.mjs and scripts/tests/shipment-workspace.test.mjs exercise existing saved workflows after replacing duplicate element and button factories with the shared helpers
+  known_gap complete source-file reading is limited to valid UTF-8 text of at most two MiB; larger files and other formats retain their original download without invented extraction
+  source_path scripts/tests/source-library-browser.test.mjs
+  source_path cmd/BonfyreWebAddress/tests/source_web_work.test.mjs
+  source_path scripts/materialize_connections_workspace.mjs
+  source_path scripts/materialize_source_library.mjs
+  source_path schemas/control/publication-occurrence.cue
+  invariant saved source selections open the existing Source Desk research review through an exact private workspace record and revision; the record is reread and every selected passage is compared against its admitted retained reader before preparation and again before saving
+  invariant Source Desk and Source Library share bounded destination and binding reads with exact subject and scope validation; account refusal cancels the response body and remains distinguishable from an unavailable service
+  invariant Source Library closes its native stores and clears retained text, dialogs and media URLs on account change, page departure or native access refusal; a late original-file response cannot mount a preview in a closed inspector
+  invariant source intake and source-library research use the same exact-revision save readback; an uncertain write remains held for explicit recovery, and current source checks precede a research write
+  invariant Web Research uses the shared bounded MessagePack reader while retaining its native failure status, reviewed write packet and twenty-five-second deadline; cancelled replies and failed body cleanup cannot publish a decoded result or keep the reader locked
+  witness scripts/tests/source-library-browser.test.mjs delays an actual original-file read beyond account invalidation and inspector closure, revokes preview URLs, closes a prepared research review without writing, reloads after cached-page suspension and clears private records after native access refusal
+  witness scripts/tests/source-library-browser.test.mjs saves exact retained text into native research after a lost acknowledgement, reconciles one write and reopens the same research record
+  witness cmd/BonfyreWebAddress/tests/source_web_work.test.mjs verifies the shared reader preserves the reviewed POST envelope, bounds oversized streams, releases a reader despite cancellation failure and discards a reply after account cancellation
+  known_gap source-library lifecycle checks use isolated installed workspaces; this change does not promote existing live packages or establish a current signed-in customer session
+  witness cmd/BonfyreWebAddress/tests/connections_workspace.test.mjs hands an actual saved source set to installed research, refuses a changed passage and deleted source-set record, and recovers a committed research save after its reply is lost with one write and unchanged retained text and receipt
+  witness scripts/tests/connected-instruments-package.test.mjs verifies the direct instrument projection includes the shared publication reader required by Source Review
+  known_gap source-set revision checks, retained-source checks and the receiving research save are separate owner operations; the handoff does not claim an atomic transaction across those reads
+  source_path cmd/BonfyreWebAddress/tests/connections_workspace.test.mjs
+  invariant Connection Studio presents saved source sets through the shared bounded collection and exact record continuation; a read-only source check distinguishes a match, correction, withdrawal and failed read without changing the saved passage or its receipt
+  invariant leaving the saved-source view aborts its inspector checks; account invalidation clears the library and aborts workspace storage, and a late response cannot restore private source content
+  witness cmd/BonfyreWebAddress/tests/connections_workspace.test.mjs exercises exact saved-selection reopening, current and corrected native retained passages, withdrawal and read failure, account invalidation during an outstanding check, unchanged saved records and desktop and phone width bounds
+  forbidden_inference a matching retained source at inspection -> a current remote publisher fetch, independently verified fact, reuse right or completed downstream production
+  known_gap the saved-source library is verified in an isolated installed workspace; existing live account packages have not been promoted by this change
+  source_path integrations/browser/publication-research.css
+  source_path scripts/materialize_workspace_package.mjs
+  source_path integrations/browser/workspace-adoption-review.mjs
+  source_path integrations/browser/workspace-members.mjs
+  invariant working-set identity and reviewed version remain distinct from title, ordering, filter and inspector focus; changed or removed generic rows drop stale selections atomically
+  invariant Source Review explicitly preserves its selected earlier input when later readback changes; selecting the replacement requires removing the earlier selection and source identity includes title, address, native subject, retained text, rights, receipt and publication date
+  invariant the shared renderer mounts at most its page size, default fifty rows, from at most one thousand loaded objects; filtered bulk selection respects the consumer selection bound before changing any selection
+  invariant resizable panes preserve existing DOM and support pointer capture, Arrow, Home and End controls with narrow-view stacking; tabs use explicit focus and manual activation over the same panel elements
+  invariant narrow collections show one focused detail view; returning restores the inspected row and its page without changing selected identities, and leaving details cancels their pending work
+  invariant a read-only parent collection cannot hide a nested picker selection or control its detail navigation; layout selectors apply to each collection's own list and inspector
+  invariant object navigation focuses the current heading, row removal returns focus to search, and a command dialog closing cannot take focus from a control opened by its command
+  invariant the command dialog searches caller-provided actions and rechecks their current disabled predicate when selected; the controller creates no permission, effect or automatic mutation
+  invariant obsolete asynchronous inspector work is cancelled and its cleanup invoked; removing an inspected object cannot leave its active source content mounted
+  invariant native publication recovery, exact receiving-workspace revisions and save admission remain with their existing owners; these presentation changes add no browser database, credentials or provider requests
+  witness scripts/tests/interaction-components-browser.test.mjs verifies real Chrome pagination, filters, sorting, selection bounds, pointer and keyboard resize, mobile stacking, manual tabs, disabled-command recheck, Escape focus return and stale inspector cleanup
+  witness scripts/tests/interaction-components-browser.test.mjs opens phone details, moves across a page boundary, returns to the exact row with its earlier selection, preserves details across resizing, cancels a late response and checks command focus after dialog closure
+  witness scripts/tests/interaction-components-browser.test.mjs selects a nested source inside a read-only parent, enters and exits its phone detail view, and preserves the child selection and open parent
+  witness cmd/BonfyreWebAddress/tests/web_workbench.browser.test.mjs exercises retained provider text, reviewed source-library transfer and lost replies with the shared presentation helpers; declared credential fields remain absent until the fixture supplies current administrator admission
+  witness scripts/tests/retained-source-workspace.test.mjs verifies current native RSS selection, unchanged selected text after source correction, explicit replacement, command selection, tab controls, native research save and reopen at the exact record
+  witness scripts/tests/source-publication-browser.test.mjs verifies native atomic SourceCollection and World publication, interrupted response recovery, private research preservation and refusal without a publication grant after the explorer integration
+  witness 2026-10-20 America/Chicago combined native acceptance receipt f6636245-7650-4678-a354-b39370cfbce7 passed 33 tests and 253 assertions; installed-account receipt eb5684e5-c668-4117-adc6-651f98317862 activated release 8a53d04ddf8b6ce606019fd4e6b88733d73230eed3a5d63864fedfb642678435 at installation 6 revision 16 without changing saved records
+  known_gap current live WORK browser inspection redirected to login; installed-account readiness and isolated browser acceptance are not a current signed-in customer-session witness
+  known_gap finance consumer adoption was blocked before execution and remains unchanged; organization/adoption callers are existing source consumers but their released packages have not been advanced by this Source Review release
+  known_gap this delivers specific working components, not every component in the user taxonomy, complete accessibility certification, full gallery parity or completion of the 388 source-derived operations
+  forbidden_inference a reusable browser control or passing keyboard test -> an authorized domain operation, live customer verification, source licence or completed professional workflow
+  source_path cmd/BonfyreSurfaceScene/runtime/authored-workspace-view.mjs
+  source_path cmd/BonfyreSurfaceScene/runtime/authored-workspace.css
+  invariant Production Studio reuses the same pane, tab and command controllers; existing source bindings, native save, personal-destination handoff and publication semantics remain owned by the existing production editor
+  witness scripts/tests/authored-publication-browser.test.mjs verifies keyboard inspector tabs retain their actual panel elements, canvas resizing and narrow stacking, command-driven configuration and native save/reopen with unchanged source bindings
+  witness scripts/tests/authored-publication-browser.test.mjs closes and reopens the docked Activity rail, verifies stacking follows the remaining canvas width, and restores the prior pane ratio and active configuration tab
+  witness scripts/tests/authored-workspace-destination-browser.test.mjs verifies the prepared receiving production still contains exact research, product evidence and SQLite material, recovers lost acknowledgement without duplication and rejects changed-source transfer
+  witness final combined acceptance receipt 83cf779c-72db-426d-8b8c-c52f3ee3f002 passed 38 tests and 317 assertions; receipt e94e18cb-a7b6-44b4-9737-aa24b7309bd8 installed both consumers at revision 18, release 747eec49b563134db80cbaad9809479183584334d7e427169ff50761c69f077d, preserving all saved records
+  source_path integrations/browser/reference-picker.mjs
+  source_path integrations/browser/account-choices.mjs
+  source_path integrations/browser/account-choices.css
+  source_path cmd/BonfyreWebAddress/src/account_choices.h
+  source_path site/matrix/surfaces/account-native.html
+  invariant a typed reference search is not an object identity; the caller supplies bounded current choices, repeated labels retain distinct identities, and selecting an item alone never creates an effect
+  invariant editing search text clears selected identity and old results immediately; late responses cannot restore stale choices, and an account change clears private destination previews
+  invariant account destinations use the existing authenticated application destination projection; public institution choices use admitted SourceFrontier roots without creating membership or remote access
+  invariant a public profile locator supplies a reviewed service and account label without inferring ownership, OAuth authorization, imported content or publication; unrecognized hosts remain website links
+  witness cmd/BonfyreWebAddress/tests/account_choices.test.mjs passes nine isolated native tests covering name search and pagination, duplicate labels, keyboard selection, delayed and refused lookups, current-account destinations, revocation and actual Auth public-link save/revoke
+  source_path integrations/browser/invitation-choice.mjs
+  invariant a rejected or incompatible reference response is cancelled before error presentation; it cannot retain a streaming body and stall account navigation
+  invariant destination searches re-read current account grants even when the principal is unchanged; configuration links appear only for destinations the current account may configure
+  invariant an organization invitation link resolves to the native private review; it does not create access, enumerate accounts, accept the invitation or put its token in a query string
+  invariant organization HTML uses same-origin referrer policy so native form submissions preserve Origin while external destinations receive no referrer; the exact-origin server refusal remains unchanged
+  witness cmd/BonfyreWebAddress/tests/account_choice_boundaries.test.mjs exercises cancelled error bodies, bounded binary reads, current-account grant refresh and read-only destination actions
+  witness cmd/BonfyreWebAddress/tests/invitation_choice.test.mjs drives actual native organization review and explicit acceptance in Chrome with no manual identifier entry and no invitation token in request URLs
+  witness 2026-10-21 frozen account acceptance fa0c9192-1bba-4af0-878c-2fbdbc4a62b8 passed 23 tests and 188 assertions; continuity acceptance 1d64bb8c-1398-4c88-ae81-6ee9847790bf passed 46 tests and 489 assertions
+  witness promotion 02469b6a-232e-4d8b-8d24-05343bc5dc24 deployed account-choices-20261021; public readback 25683e27-d302-424d-a69d-08b3dcd2c1ec confirmed exact client hashes and hidden private sections on WORK LIFE LIVE SHOP at 1440 and 390 pixels
+  known_gap current signed-in customer-account editing was not performed; public anonymous readback and isolated native authenticated editing remain separate witnesses
+  forbidden_inference applied reference-picker code or isolated passing consumer tests -> rollout to every skill-backed application, grant programme, external account connector or live site
+  interacts research-reopens-source-library-original
+  interacts retained-source-review-uses-shared-editor
+  interacts account-uses-native-reference-choices
+  interacts source-review-uses-native-interaction-components
+  interacts connection-source-library-uses-retained-reader
+  interacts saved-source-selection-continues-to-research
+
+interaction research-reopens-source-library-original
+  source native-interaction-components
+  destination web-address-edge
+  relation reads_original_through_current_workspace_owners
+  preserves saved research source and material coordinate, current native access to both workspaces, original byte digest, source and current revisions, read-only archived originals and cancellation
+  drops manual file lookup, duplicate original-reader UI, browser source replacement, provider requests and cross-workspace write authority
+  forbidden_inference a matching original file -> a current publisher observation, verified fact, source licence or permission to publish
+  invalidates_on saved research reference, original bytes or native access changes, missing records, account lifetime or inspector cancellation
+  witness scripts/tests/source-library-browser.test.mjs
+  witness scripts/tests/retained-material.test.mjs
+  binding integrations/browser/retained-material.mjs
+  binding integrations/browser/retained-material-view.mjs
+  binding integrations/browser/workspace-store.mjs
+
+interaction retained-source-review-uses-shared-editor
+  source native-interaction-components
+  destination source-frontier
+  relation reviews_exact_retained_result_through_existing_native_owners
+  preserves destination scope, run and result identities, local draft lifetime, exact review revision, explicit conflict confirmation and readback after an uncertain save
+  drops duplicate review controls, automatic draft saving, stale confirmation actions and provider execution during review recovery
+  forbidden_inference a local draft or matching readback -> a new provider observation, publication authority or approval of other results
+  invalidates_on destination or account lifetime, inspector cancellation, draft edits, saved revision changes or a new saved-review read
+  witness cmd/BonfyreWebAddress/tests/web_workbench.browser.test.mjs
+  witness integrations/browser/tests/program-workspace.browser.test.mjs
+  binding integrations/browser/record-comparison.mjs
+  binding integrations/browser/program-source-work.mjs
+  binding integrations/browser/web-workbench.mjs
+
+interaction saved-source-selection-continues-to-research
+  source native-interaction-components
+  destination foreign-link-desk
+  relation reuses_reviewed_research_addition
+  preserves exact source-set revision, original excerpts and receipts, current writable destination and installed research owner, explicit confirmation and lost-response recovery
+  drops a second research editor, automatic saving or publication, source replacement and any credential or provider operation
+  forbidden_inference a prepared addition or retained source match -> an atomic cross-owner commit, verified source fact or publication right
+  invalidates_on source-set revision or deletion, selected source material, current account access, destination revision or inspector cancellation
+  witness cmd/BonfyreWebAddress/tests/connections_workspace.test.mjs
+  binding integrations/browser/source-desk.mjs
+  binding integrations/browser/connection-studio.mjs
+
+interaction connection-source-library-uses-retained-reader
+  source native-interaction-components
+  destination web-address-edge
+  relation checks_saved_source_against_current_admitted_reader
+  preserves exact account workspace, saved source identity and original passage, bounded retained reads, receipt comparison and cancellation on view or account change
+  drops duplicate source cards and feed packet readers, automatic source replacement, provider requests and private-content publication
+  forbidden_inference source inspection -> permission to publish or mutate a saved selection
+  invalidates_on current account access, inspected selection, native retained source generation or workspace release changes
+  witness cmd/BonfyreWebAddress/tests/connections_workspace.test.mjs
+  binding integrations/browser/connection-studio.mjs
+  binding integrations/browser/publication-picker.mjs
+
+interaction retained-run-comparison-reads-source-frontier
+  source native-interaction-components
+  destination source-frontier
+  relation inspects_both_retained_runs_without_provider_execution
+  preserves current destination scope, compared run and item identities, exact retained body digests, missing-side distinctions, explicit saved-run continuations and cancellation
+  drops manual copying between inspectors, provider replay, automatic record writes and presentation of a newly read mismatching passage as the compared original
+  forbidden_inference different retained text -> a publisher revision, factual correction, new remote observation or right to reuse the source
+  invalidates_on destination or account changes, comparison selection, source identity mismatch, view cancellation or incomplete retained comparison
+  witness cmd/BonfyreWebAddress/tests/web_workbench.browser.test.mjs
+  binding integrations/browser/web-workbench.mjs
+  binding cmd/BonfyreSourceFrontier/tools/web_work.mjs
+
+interaction retained-text-uses-shared-search
+  source web-address-edge
+  destination native-interaction-components
+  relation searches_exact_text_in_current_source_inspector
+  preserves original text nodes and evidence offsets, retained source identity, current inspector lifetime, literal Unicode matching and read-only original downloads
+  drops duplicate historical search controls, preview-only text-file reading and browser interpretation of source markup
+  forbidden_inference finding a passage -> a verified claim, reuse licence, new remote fetch or authority to write
+  invalidates_on account context, inspector cancellation, source revision, original digest or retained-text bounds changing
+  witness scripts/tests/source-library-browser.test.mjs
+  witness scripts/tests/reference-repair-browser.test.mjs
+  witness cmd/BonfyreWebAddress/tests/web_workbench.browser.test.mjs
+  binding integrations/browser/interaction-collection.mjs
+  binding integrations/browser/source-library.mjs
+  binding integrations/browser/web-workbench.mjs
+  binding integrations/browser/retained-material-view.mjs
+
+interaction source-review-uses-native-interaction-components
+  source web-address-edge
+  destination native-interaction-components
+  relation composes_existing_installed_source_review
+  preserves current native workspace binding, exact retained input and reviewed version, separate source and publication operations, selected earlier excerpts and native save/recovery semantics
+  drops duplicate per-page article controllers, unbounded rendered rows, private-content publication and any inference of provider authority from a visible action
+  forbidden_inference an installed explorer -> completed source acquisition, all downstream production behavior or current signed-in browser acceptance
+  invalidates_on immutable workspace release, public retained source packet, selected input fingerprint, native record revision or current destination authority changes
+  witness scripts/tests/retained-source-workspace.test.mjs
+  witness scripts/tests/source-publication-browser.test.mjs
+  binding scripts/materialize_workspace_package.mjs
+  binding integrations/browser/publication-research-client.mjs
+
+
+interaction account-uses-native-reference-choices
+  source web-address-edge
+  destination native-interaction-components
+  relation resolves_human_selection_to_existing_owner_coordinate
+  preserves actual account and destination scope, explicit selection, private/public separation, exact native Auth link ownership and existing site-specific profile continuation
+  drops mandatory manual provider and remote-account identifiers, exact-domain recall, automatic identity selection from search text, and representation of a declared link as an authorized integration
+  forbidden_inference a visible or selected choice -> current operation authority, foreign account control, connected provider or automatic mutation
+  invalidates_on current account, selected object, native admission or active destination grant changes
+  witness cmd/BonfyreWebAddress/tests/account_choices.test.mjs
+  binding integrations/browser/account-choices.mjs
+  binding cmd/BonfyreWebAddress/src/account_choices.h

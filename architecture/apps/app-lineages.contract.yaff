@@ -1,0 +1,34 @@
+atlas app-lineages
+
+# The application lineages this institution compiles, declared once.
+#
+# These nine were a hardcoded C table, BF_FRAPPE_LINEAGES[], inside
+# cmd/BonfyreFrappeCompiler. Downstream readers took it through
+# --emit-lineage-catalog, so there was one copy -- but it was a copy in an
+# organ, which made "which applications does this institution understand" a
+# question answerable only by compiling a binary and asking it.
+#
+# The rename matters and is not cosmetic. ERPNext is a real product and stays
+# named. Frappe was never the *type* of an application lineage; it was the
+# vendor whose DocType JSON the grammar was first extracted from. That is
+# provenance, recorded per lineage as `dialect`, not an organ name, a contract
+# name, or a fact about what Bonfyre serves. The same lesson as Upper90: keep
+# the product, remove the vendor as the mechanism.
+#
+# Cannot infer: a declared lineage -> a running application. Nothing here is
+# installed on the serving estate. These are grammars the institution can
+# compile against, and the flow order is how one lineage's state becomes
+# another's input, not a deployment topology.
+
+app_lineage_contract compiled
+  lineage frappe-core dir:frappe platform DocType - dialect:frappe owns:DocType consumes:Authority publishes:SurfaceGrammar|Policy
+  lineage crm dir:crm customer CRM-Deal frappe-core dialect:frappe owns:- consumes:Actor|Relation|OccurrenceProjection publishes:CommunicationEvent|DealState
+  lineage helpdesk dir:helpdesk support HD-Ticket crm dialect:frappe owns:TicketState consumes:Actor|WorkState|OccurrenceProjection publishes:TicketState
+  lineage erpnext dir:erpnext commercial-fulfillment-accounting Sales-Order helpdesk dialect:frappe owns:Value|Receipt consumes:WorkState|ProviderState publishes:Value|Receipt
+  lineage hrms dir:hrms people Attendance erpnext dialect:frappe owns:HumanCapacity consumes:Actor|WorkState publishes:HumanCapacity
+  lineage lms dir:lms capability LMS-Course hrms dialect:frappe owns:Credential consumes:Actor publishes:Credential|Evidence
+  lineage wiki dir:wiki knowledge Wiki-Document lms dialect:frappe owns:KnowledgeClaim consumes:Evidence|ProofFrontier publishes:KnowledgeClaim
+  lineage insights dir:insights analytics Insights-Query wiki dialect:frappe owns:DerivedView consumes:ReachableCapacity|Value|OpportunityEligibility|ResourcePressure publishes:DerivedView
+  lineage drive dir:drive content Drive-Permission insights dialect:frappe owns:- consumes:Artifact|Authority|RouteAdvertisement|NamespaceProjection|QueryDirectory publishes:ShareGrant|RepresentationHistory
+  forbidden_inference a declared lineage -> a running application
+  forbidden_inference a dialect -> a dependency (the dialect records where a grammar was first extracted from, not what serves it)

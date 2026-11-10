@@ -25,14 +25,29 @@ architecture work-graph
   invariant a node's family must be registered as routable, or it is rejected (native + python parity)
   forbidden_inference queue priority -> durability guarantee
   command BonfyreQueue
-  source_path components/BonfyreControlPlane/work_graph.py
+  source_path components/BonfyreControlPlane/work_graph.py.archive
   source_path engine/core/src/workgraph.c
   source_path engine/core/include/bf_workgraph.h
+  source_path engine/core/src/workgraph_scheduler.c
+  source_path engine/core/src/workgraph_schema.c
   witness engine/core/tests/routable_family_test.c
+  witness engine/core/tests/workgraph_checkpoint_test.c verifies competing process saves admit one expected revision, stale review cannot complete work, failed completion rolls back, and a version-eight database migrates without changing existing work
+  owns WorkCheckpoint
+  invariant a checkpoint save validates the live claim and expected revision inside one native transaction; checkpoints do not change work completion state
+  invariant checkpoint-bound completion checks the reviewed revision in the same transaction that completes the work
+  forbidden_inference an admitted checkpoint URI -> artifact validity, completed work, publication or permission to deliver
+  owns RunAttestation
+  source_path engine/core/src/workgraph_events.c
+  witness engine/core/tests/workgraph_run_evidence_test.c (2026-10-30): run evidence is refused without the live claim, for another worker, for an unknown harness and for a malformed session, model or handoff; an accepted attestation lands in the node's own chained receipt (chain hash recomputed from the claim receipt) and event row, changes no node state, is rolled back whole on a storage fault, admits one session per attempt and refuses a session already bound to another node; no trace table exists
+  invariant cross-harness run evidence (claude or codex harness, provider session id, optional model, optional context-verify handoff receipt digest) enters WorkGraph only as a run_attested transition under the live claim, in the same hash-chained receipts and events as every other transition; there is no separate trace store
+  invariant one attestation per attempt, and a provider session names at most one attempt in the graph; both are checked inside the attestation's own transaction
+  forbidden_inference a run_attested receipt -> the provider ran, the tokens were spent, the handoff was read, or the work is correct; the worker declares the session and handoff under its claim and WorkGraph observes none of them
+  forbidden_inference an attempt without an attestation -> no agent ran it; unattested attempts simply carry no harness evidence
+  known_gap no launcher yet calls run-attest itself: Fabric runners, Claude Code and Codex sessions must be wired to claim a WorkGraph node and attest their session at launch; until then the binding exists only where a worker runs the command
   known_gap native WorkGraph is mature and now family-routing-checked; native Occurrence and Resource/Actor persistence, plane replay, and supervisor call-site replacement are the open native-absorption items (Python authority not yet retired)
-  witness components/BonfyreControlPlane/tests/test_work_graph.py
   source_lineage run6 control-plane retrospective
 
+  known_gap the Python peer's witness for this organ no longer exists on disk; the entry named a file that could not be opened, which is the one thing a witness must never be. The line is removed rather than repointed, and the live evidence for this architecture is what remains listed.
 architecture occurrence-spine
   canonical_name OccurrenceSpine
   owns Occurrence
@@ -50,20 +65,20 @@ architecture occurrence-spine
   edge_types precedes
   forbidden_inference retrieval time -> event time (timestamps must not collapse)
   invariant observation identity = sha256(source|actor|kind|subject|observed_at)[:32]; native and python dedup against each other on the shared external_event_log store
-  source_path components/BonfyreControlPlane/external_events.py
-  source_path components/BonfyreControlPlane/ingest_github_notifications.py
-  source_path components/BonfyreControlPlane/migrate_run6.py
+  source_path components/BonfyreControlPlane/external_events.py.archive
+  source_path cmd/BonfyreGitHubWatch/src/main.c
   source_path engine/core/src/occurrence.c
   source_path engine/core/include/bf_occurrence.h
-  witness components/BonfyreControlPlane/tests/test_external_events.py
   witness engine/core/tests/occurrence_spine_test.c
   witness engine/core/tests/run6_replay.sh
   witness engine/core/tests/occurrence_correction_test.c
   witness engine/core/tests/p0_loop_test.c
   invariant a correction supersedes a prior occurrence (the -1 retraction): the fold withdraws the stale status while the correction's stands; append-only and auditable (nothing deleted)
   source_lineage run6 control-plane retrospective
-  known_gap native writer records + dedups on the shared store (byte-identical digest), enforces the two-clock + kind gate, AND folds pending occurrences via a total kind->status projection into the shared occurrence_projection table; run6 replay over the real 9 recorded occurrences matches the python fold row-for-row (RUN6 REPLAY PARITY: MATCH). Remaining native-absorption item: native watchers (the observe side is driven by python ingest)
+  known_gap native writer records + dedups on the shared store (byte-identical digest), enforces the two-clock + kind gate, folds pending occurrences via a total kind->status projection into the shared occurrence_projection table, and the native GitHub watcher obtains live notifications through gh api while suppressing bot/self/no-op activity before the write boundary. Live GitHub credentials and endpoint availability remain ForeignTwin/provider conditions rather than local truth.
+  witness cmd/BonfyreGitHubWatch/tests/smoke.sh
 
+  known_gap the Python peer's witness for this organ no longer exists on disk; the entry named a file that could not be opened, which is the one thing a witness must never be. The line is removed rather than repointed, and the live evidence for this architecture is what remains listed.
 architecture transport-phenotype
   canonical_name TransportPhenotypeGraph
   consumes RouteAdvertisement
@@ -75,7 +90,11 @@ architecture transport-phenotype
   layer execution/transport
   semantic_question By which carrier does a hop run, and what does each carrier add?
   purpose Direct subprocess, MCP (adds a signed receipt), external HTTP (ForeignTwin, rights-gated). Transport is orthogonal to computational form.
-  maturity measured
+  maturity implemented
+  # Demoted: every witness this carried was archived. The evidence was
+  # retired and the claim was never revisited, which is the laundering the
+  # atlas forbids -- reclaiming measured needs a witness that runs today.
+  known_gap transport-phenotype lost its live witness to archival and holds implemented until one runs again
   node_types Transport
   node_types Hop
   edge_types carries
@@ -84,6 +103,378 @@ architecture transport-phenotype
   forbidden_inference MCP receipt present -> different computation occurred
   computational_form durable
   command BonfyreProject
-  source_path components/BonfyreControlPlane/transport.py
-  witness components/BonfyreControlPlane/tests/test_transport.py
+  source_path components/BonfyreControlPlane/transport.py.archive
+  witness components/BonfyreControlPlane/tests/test_transport.py.archive
   source_lineage MCP native_tool_invoke work
+
+architecture agent-session
+  canonical_name AgentSession
+  owns AgentSession
+  consumes WorkState
+  consumes ContextCut
+  consumes CapabilityBid
+  publishes AgentEvent
+  family execution
+  domain Execution / Agentic realization
+  layer execution/session
+  semantic_question Which governed session and observable event frontier spans changing provider realizations?
+  purpose Stable agent-session lifecycle correlation with model turns, context compaction and strategy changes as typed observable events.
+  maturity implemented
+  node_types AgentSession
+  node_types AgentEvent
+  node_types ModelTurn
+  node_types ContextCompaction
+  node_types StrategyChange
+  edge_types realizes
+  edge_types compacts
+  edge_types changes_strategy
+  invariant session identity is independent of provider-native session references and may span provider and model changes
+  invariant every model turn records provider identity, model identity and evidence origin for independent receipt verification
+  invariant context compaction and strategy change carry distinct before/after references and an observable reason
+  forbidden_inference provider-native session reference -> AgentSession identity, authority, completion, or semantic continuity
+  forbidden_inference provider attribution -> effect safety, quality, ownership, or evidence sufficiency
+  source_path schemas/control/agent-session-receipt.yaff
+  source_path engine/core/src/agent_contract.c
+  source_path engine/core/include/bf_agent_contract.h
+  source_path cmd/BonfyreAgentContract/src/main.c
+  witness engine/core/tests/agent_contract_test.c
+  witness cmd/BonfyreAgentContract/tests/receipt_frontier_test.sh proves the carrier adapter retains model, compaction, strategy and external transport coordinates as distinct events rather than flattening them into a command exit
+  source_lineage V8.1 agentic execution contract and Run8 AgentBranch requirement absorption
+
+architecture execution-environment-graph
+  canonical_name ExecutionEnvironmentGraph
+  owns CapabilityEnvironment
+  consumes ResourceWeather
+  consumes ProviderState
+  publishes CapabilityEnvironment
+  publishes ResourceWeather
+  family execution
+  domain Execution / Physical Environment
+  layer execution/environment
+  semantic_question Which installed machine surfaces are healthy, regenerable, owned, and suitable for this work now?
+  purpose Converts the secret-free Run8 environment catalog into bounded execution evidence across runtimes, existing virtual environments, Docker contexts, provider CLIs, and task-local reference environments.
+  maturity measured
+  node_types ExecutionEnvironment
+  node_types EnvironmentHealthObservation
+  node_types CapabilityCredentialResolution
+  node_types ModelRoute
+  edge_types suitable_for
+  edge_types owned_by
+  edge_types observed_as
+  edge_types resolved_from
+  edge_types routes_to
+  invariant a catalog entry becomes healthy only after a bounded workload or authenticated read-only probe succeeds
+  invariant reference environments are sourced task-locally and values never enter evidence
+  invariant a cataloged executable path is resolved against installed alternates before its surface is called unavailable
+  invariant a capability whose variable name conflicts across reference files is resolved by probing every declared source and naming the one that authenticates
+  invariant a model route is live only after a real bounded completion returns the expected answer, never from credential presence
+  invariant a failing probe records its failure mode so an expired credential, an exhausted quota and a refused transport stay distinguishable
+  forbidden_inference catalog presence or version text -> runtime health or semantic completion
+  forbidden_inference credential reachability -> effect authority
+  forbidden_inference one expired copy of a conflicting variable name -> the capability is unavailable
+  forbidden_inference an answering OS shim -> an installed runtime
+  forbidden_inference measured routing latency -> durable provider cost or availability guarantee
+  source_path components/BonfyreControlPlane/execution_environment.py.archive
+  witness components/BonfyreControlPlane/tests/test_execution_environment.py.archive
+  witness evidence/proofs/execution-environment-matrix.json
+  source_lineage Run8 V5 installed-environment resource law
+  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
+architecture worker-run
+  canonical_name WorkerRun
+  owns WorkerRun
+  consumes WorkState
+  consumes ExecutionReceipt
+  publishes WorkerRunState
+  family execution
+  domain Execution / Agentic realization
+  layer execution/lifecycle
+  semantic_question Which stable logical worker execution spans process death, provider retries and durable continuation?
+  purpose Durable lifecycle identity for one realization of WorkGraph purpose, independent of the carrier processes that execute it.
+  maturity measured
+  node_types WorkerRun
+  edge_types realizes
+  state_types running
+  state_types waiting
+  state_types completed
+  state_types failed
+  internal_calculus replay-safe lifecycle transitions keyed by stable semantic identity
+  invariant replay with matching semantic bindings returns the existing WorkerRun and creates no new transition
+  invariant an identity collision with different worker, mission or ProtocolMachine bindings fails closed
+  forbidden_inference provider invocation ID or PID -> WorkerRun identity, WorkGraph identity, completion or authority
+  interacts worker-run-realizes-workgraph
+  source_path engine/core/include/bf_lifecycle.h
+  source_path engine/core/src/lifecycle.c
+  source_path services/bonfyre-restate-native/src/main.rs
+  witness engine/core/tests/lifecycle_test.c
+  witness services/bonfyre-restate-native/tests/discovery.sh
+  witness tests/restate_integration.sh
+  witness evidence/proofs/worker-lifecycle-restate-recovery.json
+  source_lineage V8.1 autonomous worker mesh and Run8 lifecycle closure
+
+architecture protocol-machine
+  canonical_name ProtocolMachine
+  owns ProtocolState
+  consumes WorkerRunState
+  consumes ExecutionReceipt
+  publishes ProtocolTransition
+  family execution
+  domain Execution / Boundary programs
+  layer execution/protocol
+  semantic_question Which operations are legal now in a durable foreign conversation, and which acknowledgement permits the next one?
+  purpose Registered typestate for ordered, idempotent and receipt-bound boundary conversations.
+  maturity measured
+  node_types ProtocolMachine
+  node_types ProtocolInstance
+  edge_types admits_transition
+  state_types registered
+  state_types running
+  state_types waiting
+  state_types completed
+  state_types quoted
+  state_types payment-presented
+  internal_calculus registered transition table + per-instance idempotency journal
+  invariant an idempotency key can name one operation only and replay preserves its first durable transition
+  invariant Restate resume is illegal until node A acknowledgement and EffectKernel recovery have crossed the waiting state
+  invariant capability-fulfillment-v2 records only quoted -> payment-presented; payment verification, execution, evidence recording and delivery are absent until a real rail-specific adapter owns them
+  invariant an opened capability instance binds the exact owned-public MPP quote digest at creation; a later start with another quote digest conflicts rather than rewriting commercial history
+  forbidden_inference valid protocol transition -> WorkGraph satisfaction, effect authority, external acknowledgement or outcome truth
+  forbidden_inference payment-presented -> payment verification, settlement, execution entitlement or delivery
+  interacts protocol-machine-gates-restate-resume
+  source_path engine/core/include/bf_lifecycle.h
+  source_path engine/core/src/lifecycle.c
+  source_path cmd/BonfyreLifecycle/src/main.c
+  source_path services/bonfyre-restate-native/src/main.rs
+  witness engine/core/tests/lifecycle_test.c
+  witness 2026-08-30 native capability-fulfillment-v2 rejects forged verify-payment after a payment-presented transition
+  witness 2026-08-30 cap-protocol-quote-binding replayed only with its original MPP quote digest and rejected a changed digest
+  witness services/bonfyre-restate-native/tests/discovery.sh
+  witness tests/restate_integration.sh
+  witness evidence/proofs/worker-lifecycle-restate-recovery.json
+  source_lineage V8.1 ProtocolMachine and generated boundary programs
+
+architecture target-obligation
+  canonical_name TargetObligation
+  family execution
+  domain Execution / Persistent Purpose
+  layer execution/obligation
+  semantic_question Which semantic objective remains due across carrier failures, waits, and checkpoints?
+  purpose Persists semantic purpose independently of WorkGraph and provider occurrences; only evidence-backed PROVEN or explicit SUPERSEDED terminates the target.
+  maturity implemented
+  owns TargetObligation
+  owns StandingPredicate
+  owns FailureFingerprint
+  consumes ExecutionReceipt
+  publishes TargetState
+  node_types TargetObligation
+  node_types StandingPredicate
+  node_types FailureFingerprint
+  edge_types realized_by
+  edge_types waits_for
+  edge_types superseded_by
+  invariant carrier, tool, provider and build failure never terminate semantic purpose
+  invariant unchanged deterministic failures cool by realization and dependency digest
+  invariant a target may cross PROVEN only through its declared source-frontier invariant after the ProofFrontier has rechecked that invariant; an optimizer may reconcile predicates but never issue PROVEN
+  forbidden_inference a failed realization -> the TargetObligation failed
+  forbidden_inference a checkpoint or wait -> semantic completion
+  interacts target-obligation-materializes-work
+  source_path engine/core/include/bf_target_obligation.h
+  source_path engine/core/src/target_obligation.c
+  source_path cmd/BonfyreSemanticOptimizer/src/main.c
+  witness engine/core/tests/target_obligation_test.c
+  witness cmd/BonfyreSemanticOptimizer/tests/live_inverse_test.c
+  witness components/BonfyreControlPlane/tests/test_target_obligation.py.archive
+  source_lineage Run8 persistent target law and R2C state schema
+
+  known_gap The native proof bridge now closes a target only from an explicit still-PROVEN source-frontier invariant after ForeignTwin receipt -> EvidenceGraph support -> ProofFrontier admission. Actual external effect adapters, complete post-effect observation scheduling and incremental repair remain separate.
+
+architecture inverse-compiler
+  canonical_name InverseCompiler
+  family execution
+  domain Execution / Institutional Synthesis
+  layer execution/compiler
+  semantic_question Given a TargetObligation, which owner-backed predicates and declared transformation alternatives could lawfully close its residual?
+  purpose A non-owning compiler between TargetObligation, ClosureAlgebra and egglog. It reads arbitrary native TargetObligation PredicateRefs, saturates declared transformation algebra, Pareto-rejects dominated alternatives, applies an explicit preference policy, and lowers a selected candidate into typed cross-owner residuals without writing commitments, authority, evidence, reservations or effects itself.
+  maturity implemented
+  consumes TargetObligation
+  consumes ClosureAlgebra
+  consumes Authority
+  consumes InformationPolicy
+  publishes PredicateRef
+  publishes ClosureProgramIR
+  node_types PredicateRef
+  node_types TransformationIR
+  node_types ClosureProgramIR
+  edge_types requires
+  edge_types establishes
+  edge_types retracts
+  edge_types equivalent_to
+  invariant a PredicateRef addresses an existing owner, subject, expected state and temporal/evidence/authority boundary; it is never a cached assertion that the expected state currently holds
+  invariant a ClosureProgramIR is a candidate projection across owners, not a new plan-state store; WorkGraph, CommitmentGraph, ResourceActivation and EffectKernel retain their own transitions
+  invariant non-monotone transformations retain requires, establishes, retracts, consumes, produces, commitments, rights, conflicts, obligations, economic deltas, reversibility and compensation cost through CUE, Zig, egglog extraction and native descriptors
+  invariant egglog searches only equivalences declared after CUE validation; a found equivalence is not truth, authority, provider admission, reservation or permission to execute
+  invariant owner evaluation reads the native owner state plane at compilation time and records a receipt of that answer; it never writes an actual_state shadow field
+  invariant the only semantic-owner-to-native evaluation binding is the CUE OwnerAdapter table compiled by Zig into typed adapter/state opcodes; runtime C may execute an opcode but may not select an owner or expected state by comparing declaration strings
+  invariant owner_query is declared with each CUE OwnerAdapter state and carried losslessly into generated native grammar; CommerceChain's fifteen distinct canonical stages and CommitmentGraph's five lifecycle states therefore remain owner query families rather than hand-picked branches
+  invariant a temporal capacity predicate is answered only by ResourceReservation over the requested window, never by resource activation, provider presence or a quote
+  invariant WorkGraph lowering emits proposed cross-owner residuals naming capability, authority recheck, ProtocolContract pattern, commitment pattern, resource pattern, effect kind and compensation posture; the separate admit boundary rereads effect-time authority and every declared prerequisite before exposing an admissible aperture, while neither boundary grants authority nor prepares an effect
+  invariant projected WorkGraph mission/node identities derive from target and predicate identity, never target string length or another lossy presentation property
+  invariant reconciliation reevaluates every declared owner PredicateRef and may request proof-owned target closure only when every predicate holds and the target explicitly declares a matching ProofFrontier source frontier
+  invariant an `InverseCompiler:closure_program` FactDelta handoff is consumed only by the native inverse worker, which reruns owner-backed synthesis/reconciliation and atomically marks the envelope handled; it emits no effect attempt and carries no planning-time authority across the boundary
+  forbidden_inference a well-formed predicate address -> the owner currently satisfies it
+  forbidden_inference an egglog-equivalent closure -> an admissible, selected or executable plan
+  forbidden_inference a preferred transformation -> current authority or a completed effect
+  interacts target-obligation-compiles-predicate-residual
+  interacts inverse-compiler-saturates-equivalences
+  interacts inverse-compiler-reads-native-owner-state
+  interacts inverse-compiler-lowers-selected-residual-work
+  interacts inverse-compiler-reconciles-proof-frontier
+  source_path schemas/control/inverse-compiler.cue
+  source_path schemas/control/owner-predicate-contracts.cue
+  source_path cmd/BonfyreSemanticOptimizer/tools/compile_inverse_program.zig
+  source_path cmd/BonfyreSemanticOptimizer/generated/inverse-programs.egg
+  source_path cmd/BonfyreSemanticOptimizer/generated/inverse_programs.h
+  source_path cmd/BonfyreSemanticOptimizer/src/main.c
+  source_path deploy/systemd/bonfyre-inverse-compiler-worker.service
+  source_path deploy/systemd/bonfyre-inverse-compiler-worker.timer
+  witness cmd/BonfyreSemanticOptimizer/tests/inverse_compiler_test.sh proves fixture subjects/program registries are absent from generated production algebra, unknown semantic fields fail Zig compilation, non-monotone fields survive CUE-to-native lowering, CommerceChain's fifteen stages and CommitmentGraph's five lifecycle states are emitted with CUE-declared numeric queries, and the generated egglog algebra plus static e-class extraction are valid
+  witness cmd/BonfyreSemanticOptimizer/tests/live_inverse_test.c creates arbitrary native target:storm-closure-742 PredicateRefs, proves an `InverseCompiler:closure_program` handoff drains into generic native residual synthesis and is retained as an atomic handled receipt, verifies FRONTIER_SATISFIED does not change the target from OPEN, proves an effect aperture is admitted only while its authority edge remains current then refused immediately after revocation, and completes a second arbitrary target through retained ForeignTwin receipt -> directional EvidenceGraph support -> ProofFrontier -> proof-owned TargetObligation closure
+  known_gap recursive prerequisite expansion, compensation enactment, actual external adapters, complete post-effect observation scheduling and incremental affected-cut repair remain separate passes. The compiler emits their typed residual requirements but does not claim they occurred.
+
+architecture resource-reservation
+  canonical_name ResourceReservation
+  family execution
+  domain Execution / Resource Admission
+  layer execution/resource
+  semantic_question Which bounded temporal capacity is actually held for a subject and purpose?
+  purpose Native temporal holds separate resource activation from availability, reservation and delivery.
+  maturity implemented
+  owns ResourceReservation
+  consumes ResourceActivation
+  consumes Authority
+  publishes ResourceReservation
+  node_types Reservation
+  edge_types holds
+  state_types held
+  state_types confirmed
+  state_types released
+  state_types cancelled
+  state_types expired
+  invariant overlapping live holds for the same resource and time window are refused
+  invariant a temporal hold does not imply authority, delivery, settlement or goal completion
+  forbidden_inference resource activation -> temporal availability
+  forbidden_inference quote or candidate presence -> reservation
+  forbidden_inference reservation -> delivered capacity
+  source_path engine/core/include/bf_reservation.h
+  source_path engine/core/src/reservation.c
+  witness engine/core/tests/reservation_test.c
+  witness cmd/BonfyreSemanticOptimizer/tests/live_inverse_test.c
+architecture pure-execution-tier
+  canonical_name PureExecutionTier
+  family execution
+  domain Execution
+  maturity measured
+  semantic_question Which backend should reduce this pure search space, and did the backends agree on what it contains?
+  # Bonfyre decides what may be computed; a reducer computes the pure search
+  # space; Bonfyre decides what the result means and whether anything may happen
+  # because of it. A backend here is a compiler target beneath the organs, never
+  # an owner beside them: it holds no truth, identity, authority or money, and it
+  # cannot perform an effect. HVM2 having no external-call layer is not a
+  # limitation for this purpose, it is the property that makes it safe.
+  node_types ExecutionProfile
+  node_types PureJob
+  node_types DifferentialReceipt
+  edge_types lowers_to
+  edge_types compared_against
+  state_types available
+  state_types vendored_unbuilt
+  state_types not_installed
+  invariant purity is checked before dispatch and never inferred from a job's name; a reducer that could reach outward would be a second effect path beside the one the estate governs
+  invariant the purity scan runs over field names and values with the declaration field removed, and matches whole words; scanning the whole document matched effect inside effect_class and refused every correctly declared pure job, which is a guard rejecting exactly the input it exists to admit
+  invariant a backend absent from this machine is reported unavailable with its reason, never skipped; a skipped backend leaves the comparison and its absence reads as agreement
+  invariant a backend that only exercised a job's shape reports no result; an interaction count printed beside a result computed elsewhere measures the runtime and answers nothing
+  invariant agreement is undetermined rather than assumed when fewer than two backends produced a result
+  invariant the differential harness is itself tested by corrupting a lowering and requiring the disagreement to surface; an agreement check that cannot fail is decoration
+  invariant declared availability is a claim about the estate and presence on PATH is a fact about this process, and the two are recorded apart; a vendored but unbuilt runtime is never mistaken for a running one
+  invariant a lowering states the shape of predicate it can express and refuses input outside it rather than approximating; the boolean encoding refuses a non-boolean field
+  forbidden_inference agreement between backends -> correctness
+  forbidden_inference an interaction count -> wall time or energy
+  forbidden_inference a candidate frontier -> a decision
+  forbidden_inference constant cost for a non-inspecting function -> constant cost for a function that branches on its argument
+  forbidden_inference vendored source -> an available backend
+  computational_form reduction
+  native_format json
+  source_path scripts/pure-job.mjs
+  source_path scripts/pure-series.mjs
+  witness scripts/tests/pure-native.test.mjs
+  source_path cmd/BonfyreCMS/content-types/execution_profile.json
+  witness cmd/BonfyreWebAddress/tests/pure_tier_test.sh
+  measured hvm2 2.0.22 reduced the retained-and-observed frontier over 30 live twins to 26 survivors at 320 interactions, identical to the reference backend
+  known_gap the lowering expresses boolean predicates only; arithmetic and ordering are not expressible in it, and the operator node form was probed and not established
+  invariant a mutation test corrupts exactly one reducer, never the shared decode; breaking every backend equally leaves them agreeing and proves nothing
+  invariant a backend that produced no result carries a reason whatever the reason is; an errored backend rendering as a blank cell is the same silent disappearance the unavailable case was written to prevent
+  invariant a superposition is binary, so a candidate space is nested, and the index tree and the verdict tree are nested identically; a different shape pairs a candidate with another candidate's answer
+  measured hvm4 4.0 built from vendored source reduced the same 30-twin frontier to the same 26 survivors at 188 interactions against hvm2's 320 on this encoding
+  forbidden_inference fewer interactions on one encoding -> a faster or better runtime (the encodings differ, and interactions are not wall time)
+  forbidden_inference hvm4 -> a more parallel hvm2 (its own banner calls it a sequential runtime, so it is a different calculus rather than a successor)
+  invariant a backend answering with an aggregate is checked against the reference's own aggregate and kept out of the set-equality vote; the two are not being asked the same question, and counting them together lets a weaker agreement stand in for a stronger one
+  invariant a backend states what it answered, so an aggregate is never read as a frontier
+  measured bend-lang 0.2.38 compiles the candidate predicate and folds it over a tree, returning 26 survivors and index checksum 394 in agreement with the reference; its generated core is structurally the lowering that had been written by hand, which is what validates the hand version
+  known_gap bend answers an aggregate rather than the frontier, because a fold yields one value; recovering the set through Bend would need a different program and has not been written
+  known_gap hvm4 describes itself as pre-launch, so agreement on one job is evidence for promotion and not promotion; a single cohort is not a differential series
+  invariant the tier asks ResourceAdmission before dispatching to any backend, and a backend admission will not place is refused with that reason recorded; the two were built beside each other and neither consulted the other, so a job declaring money work over institution-private data reached reducers on a machine cleared only for public input
+  invariant a backend is not placed by default; when the admission decision cannot be obtained, nothing runs rather than everything
+  measured a job declaring money work over institution-private data now reaches no reducer and still runs on the reference where the data lives, while public discovery work still reaches both reducers
+  source_path cmd/BonfyreCMS/content-types/execution_profile.json
+  source_path cmd/BonfyreCMS/content-types/compute_site.json
+  source_path cmd/BonfyreCMS/content-types/representation_profile.json
+  known_gap the tier could not be run from a checkout. It reads execution_profile, compute_site and representation_profile rows from the CMS, and none of those three content types existed in the repository -- the schemas lived only on the deploy host. From a clone the tier refuses with "no execution_profile rows are readable", which reads as the backends being missing when what is missing is their declaration. All three are now in version control.
+  known_gap an unrecognised max_data_scope rendered as "cleared for institution_private, this input is public" -- a wider clearance appearing to refuse narrower data, which sends a reader looking for a policy bug. The site had written institution_private where the vocabulary says institution-private, and a typo was being reported as a rule. Fail-closed was right; the message was wrong and now names the unrecognised term.
+  known_gap the lowering is total on booleans. A predicate needing arithmetic or ordering is refused rather than approximated, which is correct and is also the wall between this tier and the financial class of work: money is comparison and summation, so nothing about thresholds, balances or allocations can be expressed here yet.
+  known_gap HVM4 calls itself a sequential Interaction Calculus runtime, so what this tier gets from it is optimal sharing, confluence, and a reducer with no external-call layer -- not parallelism. Reading interaction-net work as "parallel by default" would be the wrong reason to reach for it.
+  witness architecture/tests/numeric_lowering_test.sh
+  internal_calculus numeric comparison in the net: HVM4 operators distribute over superpositions, so a whole candidate space compares against a threshold in one reduction and the predicate is computed by the backend rather than handed to it
+  internal_calculus subset lattice by distinct superposition labels: n labels give all 2^n combinations as one term, each total paired with a mask identifying its subset
+  invariant a numeric clause compares integers only. A price is carried as micro-USD, because a float disagreeing with the reference in the last bit presents as a backend disagreeing about money and costs more to chase than the scale costs to carry
+  invariant a backend that cannot express a numeric clause refuses the job rather than dropping the clause; dropping it would leave the backend answering an easier question and calling the result agreement
+  known_gap the boolean lowering evaluates the predicate in Python and hands the net the verdicts to fan out. The differential still catches a broken lowering -- corrupting one backend surfaces as disagreement -- but no backend computes what the predicate means, so a predicate that is wrong is wrong identically in all four places. The numeric lowering is the first where the comparison happens in the net.
+  known_gap superposition enumerates the subset lattice; it does not prune it. Measured on real price-book data the cost per branch is roughly constant and mildly improving -- 22.5 interactions per subset at n=4, 17.6 at n=16 -- and the collapse emits one line per branch, so 2^n output. Reading this as a knapsack solver that beats brute force would be laundering: at n=16 the net returned 264 feasible subsets identical to brute force, and it did so by walking all 65,536.
+  known_gap what the net buys here is expression, not complexity: the whole lattice is one declarative term over a fixed operator vocabulary, with no loop and no enumeration written by hand. That is a real property and it is not a speedup.
+  witness architecture/tests/plane_rank_reduce_test.sh
+  interacts plane-ranks-into-pure-reduction
+  invariant the survivor set does not depend on the order candidates are presented in; a reducer whose answer moves with the sequence is letting the ranker decide the result
+  known_gap Bend answers with a sum over candidate indices, which is positional, so its checksum moves when the order moves. That is correct for a positional aggregate and it is a trap: compared against a reference computed in a different order it reads as a backend disagreeing about a pure computation when nothing disagreed.
+  witness architecture/tests/chain_portfolio_test.sh
+  internal_calculus subset budget: a candidate space plus an integer field and a budget yields every subset whose total is within it, by enumeration in the reference and as one superposed term in the net
+  invariant the subset lattice refuses past twenty candidates rather than returning part of it; the collapse emits one line per subset, so this is a wall and not a tuning knob, and a truncated lattice answers a different question while looking like the same one
+
+architecture profile-runner-legibility
+  canonical_name ProfileRunnerLegibility
+  family execution
+  domain Execution
+  maturity measured
+  semantic_question When a scheduled profile fails, does the failure say what failed and why, where the scheduler can see it?
+  # Three hypercycle units sat in `failed`. The journal held
+  # "Main process exited, code=exited, status=1/FAILURE" and nothing else,
+  # because the runner wrote every diagnostic to per-tool log files whose
+  # existence and location you had to already know.
+  node_types ProfileRun
+  node_types ToolReceipt
+  edge_types explains
+  state_types passed
+  state_types failed
+  invariant a failing run names each failing tool and that tool's own last error on stderr, so the scheduler's journal carries the reason rather than the exit code alone
+  invariant a receipt is appended with one write under O_APPEND; concurrent profiles sharing one JSONL had already interleaved two lines into JSON valid from neither
+  invariant the failure summary skips a receipt line it cannot parse and says how many it skipped, because a diagnostic that dies on its own input buries the failure it exists to report
+  invariant an assertion message carries the values it compared; expected notification attempts and actioned state named the half that was fine while attempt_count was 156
+  forbidden_inference a failing unit -> a defect in the code it runs
+  forbidden_inference a green unit -> an institution that acted
+  computational_form derivation
+  native_format json
+  source_path tools/estate/checkpoint93-profile-runner.sh
+  source_path tools/estate/checkpoint93-profile-receipt.mjs
+  witness tools/estate/checkpoint93-profile-receipt.test.mjs verifies the default runner invokes Bun helpers, concurrent O_APPEND writes retain whole receipt rows, malformed lines are counted and prior runs excluded, and the final error diagnostic remains visible without a scheduled profile execution
+  source_path tools/estate/live-institutional-closure-flow.ts
+  witness the three units were restarted after the repair; cloud-placement and provider-credit completed, and graph-closure printed its own reason into journalctl
+  measured cloud-placement and provider-credit failed only because execCommand threw on a missing aws binary rather than returning the result its type declares; both pass with the binary still absent
+  measured graph-closure still fails and should: the operator overview reports 157 notification attempts and 0 actioned, so notifications are sent and none has ever been actioned
+  known_gap the estate holds 271 tools under /opt/bonfyre/tools with no version control and one counterpart in the checkout; four are mirrored under tools/estate and nothing keeps the rest in step

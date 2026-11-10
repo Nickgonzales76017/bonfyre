@@ -1,0 +1,410 @@
+architecture bonfyre-matrix
+  canonical_name BonfyreMatrix
+  family institutional
+  domain Institution / Factorized participation
+  layer institutional
+  semantic_question How can one stable semantic subject lawfully acquire many addresses, presences, disclosures, and institutional relationships without becoming copied applications or a flattened tenant graph?
+  purpose Native factorized substrate for evidence-bound semantic subjects, address constellations, recursively delegated institutions, and authenticated self-declared publication-presence projections across Life, Live, Shop, Work, and independent territories.
+  maturity implemented
+  owns MatrixSubject
+  owns AddressConstellation
+  owns CanonicalDomain
+  owns StandingAddress
+  owns PublicationPresence
+  owns InstitutionDelegation
+  consumes Authority
+  consumes Evidence
+  publishes AddressConstellation
+  publishes PublicationPresence
+  node_types MatrixSubject
+  node_types AddressConstellation
+  node_types StandingAddress
+  node_types CanonicalDomain
+  node_types AddressAlias
+  node_types PublicationPresence
+  node_types InstitutionDelegation
+  edge_types addressed_as
+  edge_types projects_as
+  edge_types delegates_to
+  internal_calculus global address uniqueness over subject identity; unbounded address multiplicity per subject
+  internal_calculus host/path resolution selects an active exact presence over territory, world, audience, and requested representation
+  internal_calculus controlled host resolution uses the longest registered DNS suffix; an explicit canonical host supplies a deliberate host alias rather than a copied institution
+  internal_calculus StandingAddress membership is derived from active subject-presence factors and is never stored as a copied result array
+  internal_calculus ordered disclosure membrane self -> household -> group -> community -> public -> market -> institution
+  internal_calculus an authenticated actor may declare one local subject and its address constellation with a retained creation receipt; it never thereby receives delegated, financial, foreign, or institutional effect authority
+  internal_calculus recursive delegation cycle rejection, after AuthorityGraph admits delegate over the parent institution
+  internal_calculus RecursiveMatrixClosure compiles any exact resolved host/path Matrix cut into a virtual RO-Crate and Zarr v3 group: semantic identity/address/presence are resolved once; material, latent, execution, and economic planes stay sparse until their existing owners publish immutable evidence-bound references for that exact subject/presence cut
+  invariant an address constellation locates one semantic subject; it does not copy that subject
+  invariant a publication creates a presence projection while retaining its source presence and semantic identity
+  invariant a web alias may redirect only to an address of the same semantic subject
+  invariant a registered host supplies public context but never grants subject, institution, effect, or private-closure authority
+  invariant a public URL aperture prepares only a reviewed Studio route on a configured host; it never observes, claims, fetches, or promotes a ForeignTwin
+  invariant Matrix consults AuthorityGraph for institutional delegation; authenticated subject declaration records only a local Presence and does not grant authority itself
+  invariant an authenticated actor may extend a local Matrix subject only when its stable subject identifier is rooted in that verified actor; another actor's or Aurekai-owned subject requires the separate AuthorityGraph path
+  invariant institution kinds and subject kinds are extensible domain grammar, not a generic ERP ontology
+  invariant a virtual Matrix crate is a compiled closure, not a new semantic object or package-owned record; re-materializing it preserves the canonical subject and address identity
+  invariant a non-root closure address is a bounded local path on the controlled host and resolves through the same active Presence rule as HTML; it cannot name a foreign URL or substitute a host-wide closure for a subject cut
+  invariant a Matrix crate structurally omits private/effect/economic/provider state not supplied by its owning closure; a RO-Crate or Zarr group is never treated as a complete viewer closure
+  invariant a closure owner-reference is admitted only for an already-active exact Presence, names its independent owner, exact representation, digest and receipt, and cannot create a subject, Presence, disclosure, owner state, lifecycle, or authority
+  forbidden_inference an address resolving -> read, effect, publication, or economic authority
+  forbidden_inference a RO-Crate or Zarr closure -> a material body, latent comparability, model/provider route, Work permission, financial state, or effect authority
+  forbidden_inference a receipted closure owner-reference -> a readable body, current owner state, viewer closure, provider availability, financial position, Work permission, or effect authority
+  forbidden_inference a valid Studio session -> authority to add a Presence, StandingAddress, or alias to a subject it did not originate
+  forbidden_inference a public or market presence -> a new canonical semantic object
+  forbidden_inference a public URL prepared on the landing surface -> evidence, a ForeignTwin, canonical truth, or authority over the foreign system
+  forbidden_inference a delegated institution -> transfer of private data closure or parent authority
+  forbidden_inference accumulated presences -> a lawful disclosure regression
+  forbidden_inference a StandingAddress member -> a canonical relationship or a completed Work result
+  forbidden_inference a Fleming market median -> a comp, an appraisal, or a price for any single parcel
+  forbidden_inference a taxpayer name on the roll -> the legal owner, a sole owner, or capacity to convey
+  forbidden_inference a watched parcel -> an offer, an option, a lien position, or any claim on that parcel
+  forbidden_inference a registered client entity -> an engagement, a contract, a billing account, or an entitlement
+  forbidden_inference a budget cap on the financial membrane -> committed capital, an invoice, or funds on hand
+  forbidden_inference a public profile view -> the absence of a private record; it is what the graph publishes, not all that exists
+  forbidden_inference an agent holding an MCP write verb -> authority over a human submit line
+  invariant a profile's self view is selected by the verified session alone; no path, query, or header can select it
+  invariant a client registered through MCP and through HTTP resolves to one entity in one store
+  invariant a foreign twin excluded by robots is receipted without its source URL being fetched
+  invariant completing a WorkGraph node requires the lease token issued at claim; a valid-hex wrong token is refused by the queue as stale_claim
+  forbidden_inference a claimed mission -> a completed one, or authority to complete it without the lease
+  forbidden_inference an entity link -> consent by either party; it is a stated relationship, not an accepted one
+  forbidden_inference a compiled Frappe schema -> an executed controller, hook, or migration; extraction is metadata only
+  invariant a presence is bound once; the core refuses a re-bind, and a move is not emulated by delete and reinsert
+  invariant a standing address stands only on an already-bound address
+  invariant a web alias may bind only between two addresses of the same semantic subject
+  invariant a workgraph failure carries a class from the scheduler's closed set, which decides retryability
+  invariant a protocol projection is a carrier grammar over one semantic Matrix; it never becomes a second owner of the data
+  invariant a capability quoted to an agent carries the same price the financial membrane reports; there is no second price list
+  invariant an unverified payment is never treated as settled; with no facilitator the resource answers 402 and says why
+  invariant a cross-carrier capability exchange uses one native ProtocolMachine identity; quote and payment presentation may be retained, while payment verification and execution remain impossible without an exercised rail-specific adapter
+  invariant a protocol field the source does not carry is emitted null with a stated reason, never fabricated
+  forbidden_inference a RESO or MISMO projection -> an MLS listing, a listing agreement, an appraisal, or a loan file
+  forbidden_inference an OGC feature with null geometry -> an absent parcel; the roll carries area and length, not coordinates
+  forbidden_inference an advertised A2A skill -> an agreement to perform it for any particular requester
+  forbidden_inference an empty CAP, EPCIS, or OpenRTB collection -> absence in the world; nothing has been admitted to observe
+  invariant a content type describes its own fields; an editor generates its form from that description and holds no second copy of any schema
+  invariant the notes index lists only pages that are published AND guest-readable, so it can never advertise a page a reader cannot open
+  forbidden_inference a published CMS page -> a disclosure decision; publishing and guest-readability are separate flags
+  invariant an asset or theme is a ForeignTwin: admitted through the same observe right, robots preflight, receipt and content digest as any other foreign observation
+  invariant a retained asset body is served only while it still hashes to its receipt; a digest mismatch is refused, not served
+  invariant binding an asset to an account is an edge in the identity graph, which is what makes a shared cache of external things one account's expression
+  forbidden_inference admitting an asset -> a licence, or any right in the underlying work
+  forbidden_inference a bound theme -> ownership; it is a stated preference of that account
+  invariant a session is authenticated and separately authorized; being signed in is never authority to mutate
+  invariant a room describes its subject and is never a second way into it; readability is decided once, by the rule the reader path uses, so no surface can serve a body another surface refuses
+  invariant a queue of unpublished things discloses its count and never its rows to a viewer who cannot act on them; the count is a fact about the institution, the rows are content nobody has published
+  forbidden_inference a page that states a restriction -> a page that enforces it; the note room printed readable-by signed-in-accounts-only above the body it was serving to anyone
+  invariant an operational surface carries a no-index directive and is named in robots.txt, because a surface reachable by a person is reachable by a crawler that followed the same link
+  invariant the machine web is materialized, not generated per caller: a sitemap, a feed and a metadata block are the same bytes for every consumer, so ten thousand machine reads cost what one costs
+  invariant a sitemap is a publication claim and carries only what the reader path would serve to a stranger; an unpublished thing listed there is one more way to leak it
+  invariant an advertised alternate representation exists at the address it advertises; a rel=alternate promising JSON that returns HTML is a false statement about the surface
+  invariant a machine consumer is offered a validator and answered 304 when it already holds the bytes, and HEAD is a first-class verb because it is how freshness is checked without paying for a body
+  forbidden_inference a verified crawler identity -> authority to read anything private; identity resolution is not authorization here any more than anywhere else, and a user agent is a clue rather than a credential
+  invariant a carrier projection never becomes a second owner of facts; a preview card, a sitemap entry and a payment quote are all projections of one state and cannot disagree with it or each other
+  invariant a subject stands at explicit per-representation addresses as well as under content negotiation, because many machine consumers follow links and never send an Accept header
+  invariant a manifest names every representation of a subject so one fetch discovers the family, and digests the representation rather than asserting a version of the subject
+  invariant absent geometry is published as null with the reason; the observed roll gives an address and synthesising a centroid would turn a missing fact into a plausible one
+  invariant machine readership is measured from the access log rather than assumed; a declared user agent is counted as a claim about purpose and never treated as identity or as a basis for access
+  forbidden_inference a change published -> a change propagated; a pull-only surface waits for a crawler's own schedule, and a withdrawn claim keeps being asserted by every copy that has not been told
+  invariant a foreign source is read through the cheapest deterministic representation it already publishes; HTML extraction and model interpretation are the last two rungs of a ladder, never the first move
+  invariant discovery decides what to read and never becomes a second way to read it; every body that matters is admitted by the organ that owns foreign observation, so a parser works from bytes that still hash to their receipt
+  invariant a probe verifies the representation is present, not that the server answered 200; a rejection page served with a success code otherwise records an affordance the source does not have and routes every later read into a carrier that will never answer
+  invariant a source that declares nothing machine-legible is recorded as expensive rather than treated as normal; the cost of reading it is a property of that source and belongs in its passport
+  forbidden_inference a source passport -> a claim about the world; it records how an institution wishes to be consumed and what our own probes observed, never what its documents assert
+  invariant a push delivery is a notification and never content; the payload says a topic moved, and the bytes retained are the ones the origin serves on a re-read under the admission law
+  invariant a hub's verification is refused unless the topic it names is exactly the topic that callback subscribed to; without that check a stranger enrols this institution into a subject it never chose
+  invariant a subscription created with a secret refuses an unsigned delivery, and compares the signature in constant time; an early return leaks the digest one byte at a time
+  invariant a notification triggers at most one re-read per minute per subscription, so a flood of pings cannot turn a callback into an amplifier aimed at the publisher
+  invariant work provoked by a request happens after the reply and off the request path; a single-threaded organ that fetches inline can deadlock against itself when the topic it reads is one it serves
+  invariant a receipted body is parsed only while it still hashes to its receipt; bytes that have drifted are not the bytes that were observed and cannot support any claim derived from them
+  invariant a parsed foreign item is a candidate carrying its own provenance, recorded as what a source declared at an observed time, never as what is true or current or will occur
+  invariant a subscription lease is renewed inside its own window; a lapsed lease is silent rather than loud, and a topic that stops delivering is indistinguishable from a source with no news
+  invariant a WebSub renewal retains the subscription callback/token identity; parallel rows would multiply foreign rereads and make one source appear as several independent observations
+  invariant a verified WebSub delivery writes only a coalesced SourceDirty notification; a bounded worker performs the later ForeignTwin reread, so repeated notifications normally produce one observation attempt
+  invariant a callback without the receipt that authorized its subscription cannot induce a foreign read; notification reachability is not observe authority
+  forbidden_inference an advertised hub -> a hub that exists; declaring one this institution does not run leaves a subscriber waiting for deliveries that can never arrive, which is worse for them than knowing to poll
+  invariant an address withdrawn from a source index is recorded as a withdrawal; a claim loses its support when its source stops listing it, and every copy never told keeps asserting it
+  invariant a source index is read where the source says it lives, not at a conventional path; a site may answer the conventional address with an unrelated document and a success code
+  invariant a refusal by the observation law is reported as the refusal it is, never as a generic failure; a source whose robots cannot be reached is declined correctly rather than unavailable accidentally
+  invariant a challenge page is recorded as the source declining machine reading and is not circumvented; a source may advertise an affordance in one document and gate it in another, and that contradiction is a fact about the source
+  forbidden_inference a two hundred status -> the representation requested; an interstitial, a rejection page and a login wall are all served with success codes
+  invariant session scope follows the account tier at login; a free account reads, a paid tier may also write
+  invariant a client-institution hostname is a private AuthorityGraph aperture: every request requires an active exact institution grant, with read for GET/HEAD and write/admin for a mutation, before any legacy upstream is contacted; generic subscription tier or Bonfyre write scope never substitutes for the client grant
+  invariant a client grant is re-evaluated on each request, so revocation or expiry denies an otherwise valid session immediately; it is a transport admission aperture and does not replace the managed product's object-level authority
+  invariant a mutation reaching the CMS through nginx is held to write scope, because an auth subrequest is always a GET and cannot see the original verb
+  forbidden_inference an authenticated session -> permission to change another person's content
+  forbidden_inference a controlled client hostname -> a public institution, a crawlable route, a machine carrier, or read authority over its legacy estate
+  forbidden_inference a paid Bonfyre account or generic write scope -> JRSS, AI Loss, Upper90, Leads, or any other client-estate authority
+  invariant a person-facing surface is a flow: each step renders the next and carries its subject forward, rather than a panel of controls that each fire one call
+  invariant the operator surface states what is open for decision, computed from the stores that hold it, and gives each open thing the one act that closes it
+  invariant a queue count is counted, never inferred from the size of the page showing it; a page that stops at its limit reports the limit and understates what is open
+  invariant an empty queue names what would fill it, because an empty queue is a fact about the institution rather than a gap in the page
+  forbidden_inference the operator desk -> a feature index; a control with nothing open behind it is not offered, and the unsorted panel keeps its own address
+  invariant a content type listing is generated from the type itself, so every declared type lists and creates without a per-type branch
+  forbidden_inference an assessed value or a city median -> an appraisal, a comparable sale, a listing price, or advice
+  invariant a protocol reaches a person as a flow over real state, not as a JSON endpoint they must already know exists
+  invariant the commerce grammars quote from one service book, so x402, MPP, UCP, ACP and Beckn cannot disagree about a price
+  invariant the executable catalogue is a subset of the service book, not the same set: x402 settles only what an organ can produce, while the shopping grammars may carry inventory no organ delivers
+  forbidden_inference a priced entry in the book -> an x402-sellable capability; pricing is a fact about the book and delivery is a fact about the organs
+  invariant an agent surface reaches the institution's own organs -- registry, service book, estate, local generation, every carrier -- because a surface that shows only activity lets an agent watch the system without being able to use it
+  invariant a local generation path refuses when its chain is incomplete and names the missing link, rather than returning to the remote provider that a routing constraint sent the work away from
+  invariant local generation is a resident service on loopback, not a per-call process launch; a five-gigabyte model reloaded for every prompt is a path nothing will actually route to
+  invariant an internal organ that authenticates nobody is bound to loopback and denied every other address, because reachability is the whole of its security
+  forbidden_inference a wrapper organ that names a backend -> a working path through it; bonfyre-moe passes a llama.cpp flag that llama.cpp renamed, and two projects moving separately skew whether or not either is broken
+  invariant a failure that will recur identically is blocked rather than retried; an exhausted account rescheduled on a timer produces a stream of calls that cannot succeed and buries the errors that could
+  forbidden_inference a large model file on disk -> a generation weight; a speech voice is neither, and counting it as one reports a runnable local path that cannot answer a prompt
+  invariant an organ that writes state is told which store to write, never left to infer one from a home directory a service does not have
+  invariant a durable row state that means work is in flight is reconciled against live runs; without reconciliation a process that dies without raising strands the row forever and the store reports activity that no actor is performing
+  invariant a store with more than one writer is reclaimed by staleness, never by a startup sweep; a sweep that assumes single-instance hands the same work to two runners at once
+  invariant a pause is scoped to what it can actually stop; a stop file that halts one daemon while other writers share its store leaves both readings true and neither complete
+  forbidden_inference paused -> nothing is running; the flag describes the actor that owns it, not every actor writing to its database
+  invariant usage telemetry never invalidates the response it describes; a completed and billed generation discarded during token accounting is paid for twice and delivered never
+  invariant an empty protocol world names what it is waiting for and the one act that fills it, rather than presenting itself as complete
+  forbidden_inference an empty CAP, EPCIS, WoT or OpenRTB world -> absence in reality; it is absence of an admitted source
+  invariant a subject is addressable and answers with itself plus the operations that pertain to it, rather than a person navigating to a feature and filling a form
+  invariant an aperture is computed per viewer from identity, the capability registry, runtime reachability, session closure, authority and cost; it is never a static menu
+  invariant visual weight in an aperture is a projection of closure, so the strongest action is the one that viewer can most usefully take
+  forbidden_inference an offered action -> permission already granted; the act still checks scope at the effect boundary
+  forbidden_inference an absent action -> a missing feature; it is a closure for that viewer
+  invariant a relation is a direction, offered only when the graph has somewhere to go; a direction the source cannot support is named rather than hidden
+  invariant a lens alters selection and representation independently, so a selection can be shown differently and a representation can be reused over other objects
+  invariant a lens lives in its address, not in a stored preference, so sharing the address shares the exact cut
+  forbidden_inference a lens -> the default view; no cut is privileged over another
+  invariant a room is navigation continuity with representational discontinuity: arrival is uniform, and what is found is shaped by what the subject is
+  invariant a room states which of its bands the source cannot supply, rather than rendering an empty frame as though the data were merely missing
+  invariant every carrier listed on a subject is a coordinate of that one subject, never a copy that could diverge from it
+  invariant creation is read into a typed proposal and shown before anything exists; the person chooses the type, and a wrong reading costs a click
+  forbidden_inference a composed reading -> the object already created; nothing exists until a type is chosen
+  forbidden_inference publishing -> the purpose of creation; it is one projection of it
+  invariant a composed type is created through the organ that owns that kind, so it is the same object every other surface sees
+  invariant a sentence that proposes several things at once is read as a combination, offered above its parts, and creates each part through its own organ in order
+  invariant a combination reports part by part: a part that failed is named as failed rather than omitted, because what was asked for and what became real are different facts
+  forbidden_inference a combination -> a transaction; an earlier part survives a later part's refusal and is not rolled back
+  invariant a room exists for a kind only when it was built for that kind; an unbuilt kind is named as unbuilt rather than served a generic frame
+  invariant traversal is one gesture over changing object grammars: the movement stays fixed while each kind is drawn in its own terms
+  invariant a traversal position lives in the address, so the same position is the same object for everyone and the sequence is shareable
+  forbidden_inference a traversal sequence -> a ranking or a recommendation; nothing about the viewer selects or orders what appears
+  invariant an interaction trace records the shape of an interaction -- subject kind, closure, offered actions -- never which subject a viewer looked at
+  invariant a viewer is counted through a salted digest, so repetition is distinguishable from reload without retaining who they were
+  invariant a shape is proven only when it both repeats and is seen by distinct viewers; anonymous traffic cannot prove a shape because its viewers cannot be told apart
+  forbidden_inference a SurfaceCandidate -> a decision to build it; cooling a shape into a fixed page is a deliberate act the frontier never performs
+  forbidden_inference an interaction trace -> a record of what any person did; it is the shape of an interaction, not its subject
+  invariant a set of near-identical objects is compressed as a set, ordered so that like sits beside like; compressing each object alone leaves the shared structure unmeasured and unclaimed
+  invariant the ordering is the lever, not the window size: a set laid out tree-by-tree hides its duplicates beyond any practical long-range window, while the same set laid out by relative path exposes them to a small one
+  invariant a compression window is part of the frame, so the same window must be declared on the way out; an archive written with one and read without it is not corrupt, it is unreadable by a reader that never opted in
+  invariant an archive replaces its original only after the original has been extracted again and compared entry for entry, symlinks and empty directories included
+  forbidden_inference a listing of regular files -> the tree; a symlink and an empty directory are structure, and an archive built from a file list alone silently drops both
+  invariant a response body that is not text/html is compressed too; nginx compresses only HTML unless told the other types, and every asset a page loads is paid for on every load
+  native_format graf
+  source_path engine/core/include/bf_matrix.h
+  source_path engine/core/src/matrix.c
+  source_path engine/core/include/bf_matrix_closure.h
+  source_path engine/core/src/matrix_closure.c
+  witness engine/core/tests/matrix_closure_test.c rejects a contribution whose Presence is not active for its subject, then emits an exact ObjectFabric reference without resolving any other owner plane
+source_path cmd/BonfyreWebAddress/src/main.c
+source_path integrations/mcp/matrix_tools.json
+source_path integrations/mcp/matrix_aperture.mjs
+witness integrations/mcp/tests/matrix_aperture.test.mjs covers read-only native Matrix tool arguments, sparse closure claims and authenticated MCP transport; the rich mesh and recursive Python overlay remain active until their other tools and deployment paths reach parity
+  source_path site/matrix/index.html
+  source_path site/matrix/vgpu/htmx.ts
+  source_path site/matrix/vgpu/matrix-vgpu.ts
+  source_path site/matrix/surfaces/studio.html
+  source_path packs/fleming-equity-group/evidence/estate.parquet/observation.parquet
+  source_path components/BonfyreProject/src/main.c
+  source_path deploy/nginx/aurekai-surfaces.conf
+  source_path deploy/systemd/bonfyre-web-address.service
+  source_path deploy/systemd/bonfyre-surface-fabric.service
+  witness engine/core/tests/matrix_test.c
+  witness cmd/BonfyreWebAddress/tests/web_address_test.sh
+  witness cmd/BonfyreWebAddress/tests/web_address_test.sh compiles one native root resolution into both RO-Crate JSON-LD and a virtual Zarr v3 group, asserting exact Matrix identity and explicit unresolved owner planes
+  witness cmd/BonfyreWebAddress/tests/web_address_test.sh attaches an ObjectFabric reference to one exact root Presence and verifies identical RO-Crate/Zarr owner-reference projection through HTTP
+  witness cmd/BonfyreWebAddress/tests/web_address_test.sh resolves one plant path into distinct HTML, RO-Crate and Zarr coordinates with the same active Presence and rejects a foreign URL supplied as a closure path
+  source_lineage Generation-10 factorized institutional matrix and address-constellation recovery, 2026-08-28
+  interacts matrix-addresses-through-address-plane
+  interacts matrix-standing-address-projects-to-surface
+  interacts matrix-publication-requires-authority
+  interacts matrix-presence-projects-to-surface
+  interacts matrix-realizes-institutional-root
+  interacts matrix-closure-references-artifact
+  interacts matrix-closure-references-latent
+  interacts matrix-closure-references-execution
+  interacts matrix-closure-references-economic
+
+interaction matrix-addresses-through-address-plane
+  source bonfyre-matrix
+  destination address-plane
+  relation resolved_location_candidate
+  preserves one semantic subject across multiple lawful addresses while AddressPlane determines only route eligibility
+  drops any implication that an address is readable, actionable, or semantically equivalent to another address
+  forbidden_inference an AddressPlane route match -> authority over the Matrix subject
+  binding engine/core/src/matrix.c
+
+interaction matrix-standing-address-projects-to-surface
+  source bonfyre-matrix
+  destination surface-ir
+  relation live_query_membership_projection
+  preserves a stable saved address and factorized active-presence membership while allowing HTML, API, MCP, A2A, CMS, Habitat, and filesystem carriers to project it
+  drops any result-array ownership, effect permission, and claim that membership itself is canonical semantic state
+  forbidden_inference a standing query result -> authority to mutate a matched subject
+  witness engine/core/tests/matrix_test.c
+  binding engine/core/src/matrix.c
+
+
+interaction matrix-publication-requires-authority
+  source bonfyre-matrix
+  destination authority-graph
+  relation delegated_authority_admitted_projection
+  preserves AuthorityGraph as the sole owner of delegation and institutional publication admission; an authenticated self-declaration is deliberately narrower and cannot assert a delegated role or effect right
+  drops the authority grant implementation and its mutable edge store from Matrix
+  forbidden_inference a Matrix presence -> a publish grant
+  binding engine/core/src/matrix.c
+  binding cmd/BonfyreWebAddress/src/main.c
+
+interaction matrix-presence-projects-to-surface
+  source bonfyre-matrix
+  destination surface-ir
+  relation presence_surface_input
+  preserves subject identity, territory, disclosure scope, representation request, and source evidence for a surface projection
+  drops any claim that a SurfaceIR rendering changes canonical subject or publication authority
+  forbidden_inference a rendered surface -> a new subject or a completed publication effect
+  binding cmd/BonfyreWebAddress/src/main.c
+  binding site/matrix/index.html
+  binding site/matrix/vgpu/matrix-vgpu.ts
+  binding site/matrix/surfaces/studio.html
+  witness cmd/BonfyreWebAddress/tests/auth_surface_test.sh
+
+interaction matrix-realizes-institutional-root
+  source bonfyre-matrix
+  destination institutional-root
+  relation factorized_subject_and_owner_topology
+  preserves the distinction between a Matrix subject/presence and the product or delegated estate that owns its local relationship closure
+  drops any claim that all Matrix subjects belong to one tenant, product, or company
+  forbidden_inference an institution hosting a Matrix presence -> ownership of every subject address or private data closure
+  binding engine/core/src/matrix.c
+
+interaction matrix-closure-references-artifact
+  source bonfyre-matrix
+  destination artifact-graph
+  relation presence_bound_owner_reference
+  preserves the exact Matrix subject and active Presence, independent Artifact/Format ownership, representation identifier, immutable digest, and evidence receipt
+  drops every artifact body, format conversion, readable-body decision, lifecycle, and publishing decision from Matrix
+  forbidden_inference a material-plane closure reference -> a readable body, valid conversion, current artifact, license, or publication authority
+  invalidates_on the exact Presence is withdrawn or a later owner receipt changes the artifact reference frontier
+  witness engine/core/tests/matrix_closure_test.c
+  binding engine/core/include/bf_matrix.h
+  binding engine/core/src/matrix.c
+  binding engine/core/src/matrix_closure.c
+
+interaction matrix-closure-references-latent
+  source bonfyre-matrix
+  destination latent-coordinate-fabric
+  relation passported_projection_reference
+  preserves subject/presence identity, declared latent representation, exact projection digest, and evidence receipt
+  drops latent coordinates, encoder, source closure, comparability contract, learned inference, and any ranking decision from Matrix
+  forbidden_inference a latent-plane closure reference -> comparable embedding, similarity, identity, model decision, or canonical fact
+  invalidates_on the exact Presence is withdrawn or the named LatentCoordinateFabric owner emits a changed passported reference
+  binding engine/core/include/bf_matrix.h
+  binding engine/core/src/matrix_closure.c
+
+interaction matrix-closure-references-execution
+  source bonfyre-matrix
+  destination work-graph
+  relation execution_owner_reference
+  preserves only an evidence-bound reference from one active subject Presence to an independently-owned execution representation
+  drops Work identity/state, target obligation, provider route, resource admission, authority, effect transition, and receipt interpretation from Matrix
+  forbidden_inference an execution-plane closure reference -> queued Work, runnable capability, provider availability, a claimed mission, or effect authority
+  invalidates_on the exact Presence is withdrawn or the independent execution owner changes its reference frontier
+  binding engine/core/include/bf_matrix.h
+  binding engine/core/src/matrix_closure.c
+
+interaction matrix-closure-references-economic
+  source bonfyre-matrix
+  destination financial-metabolism
+  relation economic_owner_reference
+  preserves subject/presence identity, independently-owned economic representation, digest, and receipt identity only
+  drops usage state, cost, allocation, agreement, funding, MoneyGraph facts, ledger position, settlement, and all spend/effect authority from Matrix
+  forbidden_inference an economic-plane closure reference -> financial state, current balance, price, commitment, invoice, payment, settlement, or spend authority
+  invalidates_on the exact Presence is withdrawn or the independent financial owner changes its evidence-bound reference frontier
+  binding engine/core/include/bf_matrix.h
+  binding engine/core/src/matrix_closure.c
+
+architecture machine-membrane
+  canonical_name MachineMembrane
+  family institutional
+  domain Institution / Machine-readable exchange
+  layer institutional
+  semantic_question How can one canonical state be delivered to thousands of machine consumers, and the machine-readable world be read back, without any carrier becoming a second owner of a fact or any cost scaling with the number of readers?
+  purpose Two-way boundary to the machine internet: materialized outbound projections across discovery files, embedded metadata, per-subject artifact families, change streams and eighteen carrier grammars; inbound discovery of how each foreign source publishes, read through the cheapest deterministic representation it already offers and admitted under the foreign observation law.
+  summary The two-way boundary between this institution and the machine-readable
+    internet. Outbound it materializes one canonical state into discovery files,
+    embedded metadata, per-subject artifact families, change streams and eighteen
+    carrier grammars. Inbound it discovers how a foreign source publishes, reads it
+    through the cheapest deterministic representation that source already offers,
+    and admits every body through the foreign observation law. Neither direction
+    owns a fact: both are projections of, or observations into, state owned
+    elsewhere.
+  maturity implemented
+  native_format graf
+  source_path cmd/BonfyreWebAddress/src/main.c
+  source_path scripts/foreign-discover.mjs
+  source_path scripts/foreign-discovery.cue
+  source_path scripts/Makefile
+  source_path cmd/BonfyreSourceFrontier/tools/robots_policy.mjs
+  source_path scripts/sitemap-delta.mjs
+  source_path scripts/sitemap-delta.cue
+  witness scripts/tests/sitemap_delta.test.mjs proves digest-gated sitemap additions, lastmod changes and withdrawals, refusal and challenge boundaries, and robots discovery through the shared public-observation owner
+  source_path cmd/BonfyreWebSub/src/main.c
+  source_path cmd/BonfyreWebSub/tests/websub_test.sh
+  witness cmd/BonfyreWebSub/tests/websub_test.sh covers native discover, receipt-gated subscribe, lease renewal, unsubscribe and WebSub material demand after the unbound Python script was retired
+  known_gap the archived WebSub Python CLI minted subscriptions without an authority receipt; native WebSub intentionally refuses that behavior rather than preserving it
+  source_path scripts/feed-parse.mjs
+  source_path scripts/foreign_xml.c
+  source_path scripts/feed-observation.cue
+  witness scripts/tests/feed_parse.test.mjs verifies the receipt digest gate, candidate-only RSS/Atom/JSON projection, namespaced fields and non-feed refusal
+  forbidden_inference a feed item declared by a publisher -> a true, current, authorized or upcoming real-world occurrence
+  source_path scripts/membrane-store.mjs
+  source_path scripts/machine-membrane.cue
+  witness scripts/tests/foreign_discover.test.mjs proves candidate-only public descriptor discovery from digest-verified observations and direct membrane retention without promotion
+  witness scripts/tests/membrane_store.test.mjs proves source/descriptor history, cooling, readership fold and durable summary over the native SQLite owner
+  witness scripts/tests/membrane_install.test.mjs proves the staged Bun/CUE/native membrane can execute outside the source tree
+  known_gap the systemd unit and installation recipe are wired but deployment and live public-source operation have not been attested on a production host
+  source_path scripts/machine-readership.mjs
+  source_path scripts/machine-readership.py.archive
+  source_path schemas/control/machine-readership.cue
+  witness scripts/tests/machine_readership.test.mjs proves declared crawler demand and discovery 404s compile from access logs without treating user-agent claims as verified identity or authority
+  source_path deploy/nginx/00-compression.conf
+  source_path deploy/systemd/bonfyre-membrane-refresh.service
+  source_path deploy/systemd/bonfyre-web-address.service
+  source_path deploy/systemd/bonfyre-websub-reconcile.service
+  source_path deploy/systemd/bonfyre-websub-drain.service
+  witness tests/circuits/cross_protocol_circuit.mjs exercises price and projection agreement, protocol shapes, paging, machine representations, and opt-in WebSub signatures against an explicitly selected host
+  invariant the carrier ladder is descended, never skipped: push, then federation,
+    then a feed, then a source index, then structured metadata, then a conditional
+    fetch, and only then the page and a model
+  invariant every inbound body is admitted by the organ that owns foreign
+    observation, and parsed only while it still hashes to its receipt
+  invariant outbound artifacts are materialized once and read many times, so ten
+    thousand machine consumers cost approximately what one costs
+  invariant a source that declines -- by robots, by challenge, or by publishing
+    nothing machine-legible -- is recorded as declining and respected
+  invariant a public MCP, A2A, OAuth, OpenID, auth.md, App Link, or similar descriptor is
+    retained only as a CUE-bounded declared candidate in a source passport; it
+    cannot become a live endpoint, admitted provider, credential, payment route,
+    identity assertion, or effect right without the later native owners
+  invariant public membrane surfaces expose aggregate coverage only; foreign roots,
+    reader-family detail, and declared descriptor coordinates require the separate
+    Bonfyre admin closure and remain no-store/noindex there
+  witness tests/foreign_discover_protocol_test.py.archive is the retired Python loopback witness; active Bun witnesses now cover its descriptor contract without a live Python test runner
+    descriptor-shaped JSON becomes declared_descriptor passport candidates only,
+    leaves the carrier ladder on its ordinary cheapest path, and asserts no
+    provider/authority/effect state
+  witness cmd/BonfyreWebAddress/tests/auth_surface_test.sh proves an anonymous
+    membrane view cannot enumerate a fixture foreign root or reader family while
+    the current bonfyre/admin closure can inspect that retained operational detail
+    and its declared MCP descriptor candidate
+  forbidden_inference machine reach -> audience; a projection consumed by a
+    crawler is a representation delivered, not a person informed
+  forbidden_inference a passport or a reader row -> a claim about the world; one
+    records how a source publishes, the other that a request arrived carrying a
+    declared identity
+  source_lineage Machine membrane, both directions, 2026-08-30

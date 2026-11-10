@@ -1,0 +1,1097 @@
+atlas commons
+# The interaction layer above the carriers.
+#
+# This file was nearly four times longer. Measuring a design document against the
+# registry suggested that the whole authorable front end was missing -- object
+# grammar, apertures, projections, effects, deltas. The atlas guard rejected it,
+# and it was right: ObjectGrammar already owns ObjectContract and ActionAperture
+# and carries a witness proving five birth modes behave differently;
+# OccurrenceSpine already owns Occurrence in C; SemanticDerivation already models
+# FactDelta and already forbids reading one as global invalidation;
+# ProductContracts already owns ProductContract. Six of nine proposed entries
+# were duplicates of built, witnessed architectures whose canonical names simply
+# differ from the fact names they own.
+#
+# What remained after that check is what is registered here: ten architectures
+# that nothing in this estate owns.
+#
+# Three are the layer that MCP, A2A, ACP and their peers do not supply -- those
+# carriers move messages competently and say nothing about what a participant
+# owes, what may be disclosed to them, or what a generic pattern means in a
+# particular domain.
+#
+# Five more come from the compiler being bidirectional. Occurrence is both an
+# output and an input, so the estate needs the semantic rendition of a live
+# occurrence, the distinction between an occurrence it watched, derived and
+# caused, a publication path where consent is resolved before an adapter is
+# reached, a ranking whose unit is a lawful opportunity rather than a content
+# object, and the reference UI estate as declared compiler targets. Those are not
+# a `.live` subsystem: they are the upward direction of the central law, and
+# `.live` is only where it runs fastest.
+#
+# All eight began `architectural` and all eight are now `measured`: each carries
+# a live witness written to falsify its own forbidden inferences rather than to
+# confirm that its happy path works. Where a claim outruns the code the entry
+# says so in a known_gap instead of rounding the maturity up.
+
+architecture protocol-contract
+  canonical_name ProtocolContract
+  family commons
+  domain Commons / Interaction
+  layer commons
+  semantic_question How may several participants interact lawfully over one subject, and what does each still owe the others when the exchange ends?
+  purpose The semantic layer above the carriers. A transport can complete perfectly while leaving an obligation open, an authority unchecked or an output computed from information its producer was not entitled to -- and no carrier notices, because none of them model obligation. A ProtocolContract states the information each role must hold and produce, the commitments the interaction creates and discharges, and the authority and evidence that bound it. It compiles into owners that already exist rather than introducing a runtime.
+  maturity measured
+  source_path engine/core/src/protocol_contract.c
+  source_path engine/core/include/bf_protocol_contract.h
+  source_path schemas/control/protocol-contract.yaff
+  source_path schemas/control/protocol-contract.cue
+  source_path schemas/control/protocol-library.cue
+  source_path components/BonfyreControlPlane/protocol_evidence.py.archive
+  source_path components/BonfyreControlPlane/protocol_contract.py.archive
+  source_path components/BonfyreControlPlane/protocol_library.py.archive
+  source_path components/BonfyreControlPlane/protocol-contract.mjs
+  source_path components/BonfyreControlPlane/protocol-library.mjs
+  source_path components/BonfyreControlPlane/protocol-program.mjs
+  source_path components/BonfyreControlPlane/obligation-work.mjs
+  witness components/BonfyreControlPlane/tests/obligation-decision-frontier.test.mjs proves ordinary native obligation lowering carries a compact reconstructable typed-decision fingerprint, preserves the existing queue tuple and effect owner, and refuses local diagnostics after commitment or queue changes
+  invariant diagnostic role frontiers reconstruct from current native commitments and queue state without a second durable store; local model suggestions never discharge commitments or change their legal committer
+  interacts decision-plane
+  source_path components/BonfyreControlPlane/protocol_program.py.archive
+  witness components/BonfyreControlPlane/tests/protocol-library.test.mjs holds all twenty-one CUE-registered patterns against all three conformance conditions, so the library cannot ship one that deadlocks or races, and every pattern must create at least one obligation. It proves contract-net ordering, independent escrow obligations, principal-directed agent obligations, bounded dataset release, foreign preflight, evidence-gated upgrades, and no money parameter in mutual-aid (88 tests, 213 assertions)
+  witness components/BonfyreControlPlane/tests/protocol-contract.test.mjs proves ordering is derived rather than declared, independent checks share a wave, all three conformance conditions catch distinct failures, a complete quote-accept exchange can leave both obligations open, and closure requires each to reach a terminal state with compensated violation history intact (23 tests, 39 assertions)
+  witness engine/core/tests/protocol_contract_test.c compiles quote-accept natively, derives its four causal waves, rejects enactment without its role grants before opening an obligation, then opens both shared CommitmentGraph obligations only after every AuthorityGraph check succeeds; it also proves native closure reports outstanding commitments and unevidenced claims independently, and that a contradiction reopens the evidence axis even when a support exists
+  node_types Role
+  node_types InformationParameter
+  node_types CommitmentEvent
+  node_types ConformanceCondition
+  edge_types requires_information
+  edge_types produces_information
+  edge_types creates_commitment
+  edge_types discharges_commitment
+  owns ProtocolContract
+  publishes ProtocolEnactment
+  consumes DomainProfile
+  consumes InformationPolicy
+  consumes Authority
+  consumes ObjectContract
+  interacts commitment-graph
+  interacts authority-graph
+  interacts evidence-graph
+  interacts work-graph
+  interacts object-grammar
+  internal_calculus level 1 communicative acts -- request, assert, propose, accept, reject, challenge, prove, delegate, commit, retract, compensate -- the small semantic moves a protocol is written from
+  internal_calculus level 2 interaction protocols: reusable multi-party patterns (contract-net, quote-accept, evidence-challenge, reservation, delegation, escrow, peer-review), imported from the FIPA lineage rather than renamed as new work
+  internal_calculus level 3 domain protocols: a DomainProfile gives a pattern domain meaning without altering its structure
+  internal_calculus level 4 combinators: SEQ, PAR, RACE, QUORUM, UNTIL, TIMEBOX, BUDGET, DELEGATE, ESCALATE, COMPENSATE, RETRY, PROVE, DISCLOSE, COOL
+  internal_calculus level 5 carrier projection: one enactment lowered to whichever carrier the counterparty already speaks
+  internal_calculus information causality: ordering is derived from which role needs which parameter rather than prescribed as a message sequence, so the compiler finds the concurrency that a hand-written sequence would have serialized by accident
+  invariant a protocol compiles into SemanticProgramIR, WorkGraph, CommitmentGraph, AuthorityGraph obligations and EvidenceGraph obligations; there is no protocol state store, because a second store would become a second truth about one exchange
+  invariant a carrier is chosen after the interaction is closed, never before; choosing the carrier first is what turns an institution into a client of its transport
+  invariant a role is specified by what information it must hold and produce; specifying it by the messages it sends binds the contract to one carrier's grammar and makes every other projection a translation
+  invariant a commitment created by an enactment is owned by CommitmentGraph; the protocol names the event and the graph holds the state
+  invariant conformance exceeds schema validation -- a well-formed message that leaves a commitment undischarged, or that carries an output computed from information its producer was not entitled to, is a violation that a shape validator passes
+  invariant an enactment addresses one subject through AddressPlane; a protocol that ranges over an unaddressed set has no place to record what it owed
+  forbidden_inference a completed enactment -> a discharged commitment (an exchange can finish with an obligation still open, and that residue is the reason to model it)
+  forbidden_inference a protocol projection -> a licence, a listing agreement, an appraisal, or an offer
+  forbidden_inference a carrier answering -> the interaction being lawful on this subject for this actor
+  forbidden_inference an advertised role -> an agreement to perform it for any particular requester
+  forbidden_inference a declared combinator -> an execution guarantee (durability is owned by the enactment layer; a TIMEBOX nothing enforces is a comment)
+  forbidden_inference a conformant enactment -> a satisfied counterparty (delivery is not satisfaction)
+  known_gap the dependency-addressed program is now registered with SemanticDerivationGraph by cmd/BonfyreExperienceMap/src/protocol_derivation_bridge.c, independently witnessed for scoped, targeted and atomic registration. The remaining gap is not graph registration: real occurrence-specific ProtocolContract bindings/enactments are still required before an external braid may advance beyond DomainProfile.
+  known_gap native ProtocolContract now derives liveness/safety/integrity and causal waves, opens native CommitmentGraph facts only through a per-role AuthorityGraph effect gate, and closes across native EvidenceGraph verdicts. The standalone Python evidence helper is archived; the Python pattern library and work/program lowerings remain compatibility clients until generated declarations bind bf_protocol_contract_*.
+  known_gap evidence_required is checked against the real evidence_relations store, with contradiction outranking support and falsification terminal, and an enactment reports obligation closure and evidence closure as two separate conditions. What remains is the proof frontier itself: this native ABI reports whether evidence currently stands and never whether a claim is proven.
+  known_gap the level-2 library carries twenty-one patterns and every one of the ten declared families now holds at least one. That is a floor rather than a finish: the design names roughly a hundred candidates, and what exists is the subset whose information causality can be stated exactly today. A pattern is added when its roles, inputs and obligations are known, never as an empty contract.
+  known_gap the Agent Client Protocol is not served by this estate. The commerce ACP is -- verified answering at /acp/products -- and the two share an acronym while being different protocols; a projection list must never read one as evidence of the other.
+  known_gap seventeen carriers answer on the public surface today with no ProtocolContract above them. That is the gap this entry names: the projections exist and the thing being projected does not.
+  known_gap no second protocol state store exists in native code either: evidence_required, WorkGraph, SemanticProgramIR and carrier lowerings must bind the existing owners rather than being reimplemented as a protocol database.
+
+architecture information-policy
+  canonical_name InformationPolicy
+  family commons
+  domain Commons / Disclosure
+  layer commons
+  semantic_question What may this actor be told about this subject, and what must be withheld without denying that the subject exists?
+  purpose Disclosure as a plane of its own. AuthorityGraph answers whether an actor may act; nothing else answers what they may know. Those are different questions, and collapsing them produces both failure modes at once -- refusing a reader who should see a summary, and disclosing a field to someone entitled only to the record's existence. This governs field-level disclosure, aggregate floors, and the difference between withholding a value and denying a subject.
+  maturity measured
+  source_path engine/core/src/information_policy.c
+  source_path engine/core/include/bf_information_policy.h
+  source_path components/BonfyreControlPlane/information-policy.mjs
+  source_path schemas/control/information-policy.cue
+  source_path cmd/BonfyreExternalEstate/src/main.c
+  witness engine/core/tests/information_policy_test.c proves the native evaluator remains default-deny for undeclared fields, has exact audience masks rather than an audience hierarchy, rejects a one-person aggregation floor, returns only a policy floor on aggregate refusal, and defaults evidence release to nothing
+  witness components/BonfyreControlPlane/tests/information-policy.test.mjs exercises native Bun projection over a Tarrant parcel, exact audiences including explicit deny-to-all, non-leaking aggregate floors, and exact evidence release; the C witness also exercises ordered bulk field decisions and denies partial output on invalid input
+  witness cmd/BonfyreExternalEstate/tests/external_estate_test.sh compiles the declared profiles into one candidate per subject kind and audience carrying only the fields that audience is declared to be able to see, and proves the forwarding cut is default-deny in the same direction as the evaluator: the parcel owner mailing address, declared to self and institution only, is absent from the public and market candidates rather than marked there, and asking the plane for it as the public selects nothing while asking as an institution selects the declaration
+  node_types DisclosureRule
+  node_types AudienceScope
+  node_types AggregationFloor
+  node_types EvidenceRelease
+  owns InformationPolicy
+  publishes DisclosureDecision
+  consumes Authority
+  interacts authority-graph
+  interacts institutional-product-contracts
+  internal_calculus an aggregation floor releases a count or a median only above a declared population, so a statistic cannot be differenced back to the individual record it summarizes
+  internal_calculus withholding is stated rather than performed by omission: a withheld field says it was withheld, because quietly dropping it teaches the caller the subject lacks it
+  internal_calculus disclosure audience is read from the territory the request arrived on, so one subject discloses differently to self, household, group, community, public, market and institution without being copied per audience
+  internal_calculus the audience list is an enumeration and never a permission ladder: market is not a superset of household, and a rule written for one audience never widens to another by sitting higher in the order
+  internal_calculus an undeclared field is withheld rather than allowed, so a field added to a contract without a rule cannot become public by having been forgotten
+  internal_calculus a below-floor refusal names the floor and never the population that failed it; echoing the real count back would leak exactly what the floor protects
+  invariant read authority and effect authority are independent; seeing a subject never implies changing it, and holding effect authority never implies entitlement to read everything about it
+  invariant disclosure is decided per field and per audience, never per record; a record-level gate forces the system to choose between over-disclosing and refusing outright, and it will do both
+  invariant an evidence release defaults to nothing; a delegated estate sees exactly what its envelope names of the parent's proof
+  invariant a public source having published a fact does not settle whether this estate may republish it; the observation is receipted and the redisclosure is a separate decision with its own audience
+  forbidden_inference a subject being addressable -> its contents being disclosable
+  forbidden_inference a withheld field -> the field being empty, or the subject not existing
+  forbidden_inference an aggregate being released -> its constituent records being releasable
+  forbidden_inference a disclosure to one audience -> the same disclosure being lawful to another
+  forbidden_inference an actor holding authority to act -> that actor being entitled to read the evidence the action rests on
+  witness engine/core/tests/operator_reference.test.mjs evaluates exact artifact-excerpt fields for the public audience through the native InformationPolicy ABI and withholds undeclared fields
+  known_gap the policy is enforced across the OGC/RESO/MISMO trio through DomainProfile and Fabric reference excerpts through a publisher-supplied declaration; other carrier projections still answer from their own assumptions until each binds a policy
+  known_gap audience is supplied by the caller rather than derived from the arriving territory; wiring it to the AddressPlane territory is what makes the audience unforgeable, and until then a caller naming its own audience is trusted.
+  known_gap information-policy.cue supplies the exact audience vocabulary to the Bun projection and bf_information_policy_* owns the native C decision ABI. The former Python evaluator and its test are archived after all active callers moved; the remaining gap is binding audience to the arriving AddressPlane territory rather than trusting a caller-supplied label.
+
+architecture domain-profile
+  canonical_name DomainProfile
+  family commons
+  domain Commons / Domain grammar
+  layer commons
+  semantic_question What do these generic institutional moves mean in this particular domain?
+  purpose The specialization between a reusable interaction pattern and a working institution. Quote-accept is structurally identical for a venue booking and a mortgage; the vocabulary, the evidence that closes it and the conditions of settlement are not. A DomainProfile carries that difference so the pattern is written once and the domains stay honest about what they each require. It also holds the shared meaning behind several industry grammars, so a fact cannot be answered differently by two carriers of one estate.
+  maturity measured
+  source_path schemas/control/domain-profile.cue
+  source_path cmd/BonfyreWebAddress/tools/compile_domain_profiles.zig
+  source_path cmd/BonfyreWebAddress/generated/native_domain_profiles.h
+  source_path cmd/BonfyreWebAddress/src/domain_profile_projection.c
+  source_path components/BonfyreControlPlane/domain_profile.py.archive
+  source_path components/BonfyreControlPlane/domain-profile.mjs
+  source_path cmd/BonfyreExperienceMap/tools/domain-observation.cue
+  source_path cmd/BonfyreExperienceMap/tools/domain-observation.generated.json
+  source_path cmd/BonfyreExperienceMap/tools/domain_observation_bridge.mjs
+  witness components/BonfyreControlPlane/tests/domain-profile.test.mjs holds OGC, RESO and MISMO against one CUE-declared parcel meaning on the row the live surface serves (account 00000051, 117 E BELKNAP ST, $450,000): the three grammars agree field by field, a deliberately remapped carrier is caught disagreeing on a parcel where land and total values differ, a carrier projecting an undeclared field is refused at build time, MISMO omits owner rather than carrying an empty column, and a field withheld by policy is withheld in all three grammars while the entitled audience still receives it (13 tests)
+  witness components/BonfyreControlPlane/tests/live-carrier-conformance.test.mjs fetches the three deployed routes on aurekai.life and holds the CUE declaration against them: every field the profile maps is actually served, every field the deployment serves is mapped, the live carriers agree on every shared fact for one parcel, and MISMO carries no owner in the real response. It is opt-in for live deployment checks rather than passing on a simulation
+  witness cmd/BonfyreWebAddress/tests/domain_profile_projection_test.c compiles the CUE parcel profile through the Zig generator, proves the generated native projection supplies the live RESO aliases and OGC/MISMO carrier metadata, refuses an unknown carrier and invalid audience, and never projects the undisclosed mailing address
+  witness cmd/BonfyreExperienceMap/tests/domain_observation_bridge.test.mjs binds a retained HTML observation only after ForeignTwin and Ingest hashes agree, preserves the retired Python binder's semantic digest, appends once, and refuses drift or the wrong occurrence; cmd/BonfyreExperienceMap/tests/vectors/policy_compilation.json holds its runtime descriptor byte-for-byte against CUE
+  node_types Profile
+  node_types VocabularyBinding
+  node_types EvidenceRequirement
+  owns DomainProfile
+  publishes DomainProfile
+  consumes ObjectContract
+  interacts protocol-contract
+  internal_calculus a profile binds domain vocabulary to the roles and parameters a pattern already declares; it never adds a role, because adding one produces a different interaction rather than the same one in a domain
+  internal_calculus an external standard is a projection of a profile, not the profile itself: RESO, MISMO, OGC and EPCIS are grammars this estate answers in, and the profile is what it means before the grammar is chosen
+  internal_calculus a carrier mapping renames declared semantic fields and may not add one; a projection naming a field the profile does not declare is refused where it is written, because that field came from somewhere other than the shared meaning
+  internal_calculus disclosure is applied to the semantic record before projection, so a field withheld from an audience is withheld in every grammar rather than in whichever carrier remembered to check
+  internal_calculus semantic agreement is computable: rendering one record through several carriers and collecting the values per semantic field detects two grammars answering one fact differently, which is the drift hand-written carriers make invisible
+  invariant a profile specializes an existing pattern and never defines a new one; a profile introducing its own interaction is an interaction protocol wearing a profile's name
+  invariant a profile may tighten evidence and authority requirements and may never loosen them below what the pattern demands
+  invariant one profile serves many carrier projections; four industry grammars over one profile is the claim, and four profiles producing four grammars would be its refutation
+  forbidden_inference a domain profile existing -> that domain's external standards being satisfied (conformance to RESO, MISMO or EPCIS is a separate projection carrying its own witness)
+  forbidden_inference a profile naming a regulated activity -> authority to perform it
+  forbidden_inference a shared profile -> equivalent obligations across its domains (the structure is shared; what closes it is not)
+  known_gap OGC, RESO and MISMO request their select lists from the generated native parcel profile, evaluated against native InformationPolicy; the Bun cross-carrier/withheld-marker vectors pass. Differential checks against the deployed carriers remain opt-in.
+  known_gap parcel, live-moment and social-clip are profiled. EPCIS, CAP, WoT and the commerce carriers answer today with no shared profile behind them, so nothing detects drift between them.
+
+# ---------------------------------------------------------------------------
+# Bridges. Each names what it carries, what it deliberately drops, and the
+# promotion it must not make. All three sources are architectural, so these
+# describe contracts rather than observed behaviour -- which is why none claims a
+# witness. The destinations are built architectures, and the bridges are written
+# from the built side's existing invariants rather than around them.
+# ---------------------------------------------------------------------------
+
+interaction protocol-creates-commitments
+  source protocol-contract
+  destination commitment-graph
+  relation creates_commitment
+  preserves who committed what resource to whom, under which conditions, until when
+  preserves the enactment identity, so an obligation can be traced back to the exchange that made it
+  drops the message sequence that produced the commitment; the graph holds the obligation, not the conversation
+  forbidden_inference a completed enactment -> a discharged commitment
+  forbidden_inference a recorded commitment -> the resource delivered
+  invalidates_on a commitment is discharged, delegated, violated or compensated
+
+interaction protocol-requires-authority
+  source protocol-contract
+  destination authority-graph
+  relation requires_authority
+  preserves the purpose, scope and validity window each role's participation demands
+  drops the participant's identity provider; authority holds from a matching non-revoked edge inside its window, never from a session
+  forbidden_inference a role being advertised -> any requester holding the authority to fill it
+  forbidden_inference a valid session -> authority over the subject the protocol addresses
+  forbidden_inference a conformant contract -> a permitted enactment (structure and permission fail for different reasons and are checked separately, so a caller told only refused can tell which)
+  forbidden_inference authority over one subject -> authority over another
+  authority every role's participation is gated by its own declared purpose, rechecked at effect time
+  invalidates_on an authority edge is revoked, or leaves its time window
+  binding components/BonfyreControlPlane/protocol-authority.mjs
+  witness components/BonfyreControlPlane/tests/protocol-authority.test.mjs drives the native AuthorityGraph owner and compares its answers against an independent SQL rule on eleven cases, including revocation, window edges, purpose bounds and unknown actors. It proves a conformant quote-accept still refuses ungranted actors before any obligation opens, and that delegation narrows while cascade revocation closes every descendant (22 tests, 61 assertions)
+
+interaction protocol-obliges-evidence
+  source protocol-contract
+  destination evidence-graph
+  relation requires_evidence
+  preserves which assertions must be witnessed before an enactment may be treated as closed
+  preserves the cannot-infer set the interaction carries, so a closed exchange still states what it did not establish
+  drops the protocol's own opinion of sufficiency; the proof frontier decides what an assertion is worth
+  forbidden_inference a closed enactment -> a proven claim
+  forbidden_inference a produced artifact -> evidence (it must cross the proof frontier first)
+  invalidates_on a witness is retired, or the proof frontier moves
+
+interaction protocol-lowers-to-work
+  source protocol-contract
+  destination work-graph
+  relation compiles_to
+  preserves obligations that remain open as durable, leasable work
+  preserves deadlines and timeboxes as lease conditions rather than as commentary
+  drops the role structure; the work graph holds what must still be done, not who was speaking
+  forbidden_inference queued work -> an enactment in progress (work outlives the exchange that created it, which is the point of durability)
+  forbidden_inference queued work -> the obligation being met (enqueuing is not doing, and neither is claiming)
+  forbidden_inference a failed or dead-lettered work item -> a violated commitment (the queue's verdict is about the work; somebody with standing decides that a promise broke)
+  forbidden_inference a discharged obligation -> its work item having run (work is one mechanism for meeting a promise, not the definition of one)
+  invalidates_on a lease expires, or its originating commitment is discharged
+  binding components/BonfyreControlPlane/obligation-work.mjs
+  witness components/BonfyreControlPlane/tests/obligation-work.test.mjs drives the real BonfyreQueue binary and native CommitmentGraph owner: lowering enqueues a claimable item without settling the promise, completion discharges, transient and permanent failure do not violate, repeated lowering is idempotent, and partially completed escrow retains exactly the undelivered obligation (16 tests, 40 assertions)
+
+interaction protocol-admits-through-aperture
+  source protocol-contract
+  destination object-grammar
+  relation admits_through
+  preserves the subject kind and the operation a participant's local move resolves to
+  preserves the birth mode, so a move that proposes is not recorded as one that declared
+  drops the multi-party structure; an aperture admits one actor's operation and knows nothing of the exchange around it
+  forbidden_inference an enactment step -> an admitted operation (the aperture still applies its own grammar and authority)
+  forbidden_inference an offered aperture -> a completed effect
+  invalidates_on the object grammar's applicability bound or birth policy changes
+
+interaction policy-gates-projection
+  source information-policy
+  destination institutional-product-contracts
+  relation gates_disclosure
+  preserves the per-field, per-audience disclosure decision for the bound product surface
+  preserves the distinction between a withheld field and an absent one
+  drops effect authority, which this bridge carries in neither direction
+  forbidden_inference a bound capability -> its fields being disclosable to this actor
+  forbidden_inference a field surviving into one territory's projection -> it being lawful in another
+  invalidates_on a disclosure rule, audience scope or aggregation floor changes
+
+interaction profile-specializes-protocol
+  source domain-profile
+  destination protocol-contract
+  relation specializes
+  preserves the interaction's role structure and information causality unchanged
+  preserves the domain's vocabulary, evidence requirements and settlement conditions
+  drops nothing from the base pattern; a profile tightens requirements and never loosens them
+  forbidden_inference a domain profile -> conformance to that domain's external standards
+  forbidden_inference a shared pattern -> equivalent obligations in every domain that profiles it
+  invalidates_on the profile's evidence requirement or vocabulary binding changes
+
+# ---------------------------------------------------------------------------
+# Aurekai Live. One occurrence, five simultaneous products: a human media
+# experience, a machine-readable semantic simulcast, a federated fanout, an
+# ephemeral social world, and durable institutional effects.
+#
+# Only one architecture is registered here. AttentionCoolingGraph already owns
+# cooling, StandingAddress already belongs to the Matrix, BonfyreTranscribe and
+# BonfyreClips are already command organs, and VerticalDiscovery/LiveCreatorRoom/
+# EphemeralBoard are SurfacePatterns rather than calculi. What nothing owned is
+# the semantic rendition itself.
+# ---------------------------------------------------------------------------
+
+architecture live-semantic-track
+  canonical_name LiveSemanticTrack
+  family commons
+  domain Commons / Live semantics
+  layer commons
+  semantic_question What did this live occurrence actually mean, moment by moment, and which of it deserves to outlive the stream?
+  purpose The machine rendition of a live occurrence, synchronized to the media clock. Without it a stream is an opaque blob rankable only by viewer count; with it, ranking, sponsorship, clipping and institution-formation all read one structure. It is the organ that makes the social, federation and protocol work compound rather than merely coexist.
+  maturity measured
+  source_path components/BonfyreControlPlane/live-semantic-track.mjs
+  source_path schemas/control/live-semantic-track.cue
+  source_path components/BonfyreControlPlane/native-ingest.mjs
+  witness components/BonfyreControlPlane/tests/native-ingest.test.mjs drives the real BonfyreSegment and BonfyreClips binaries and checks their boundaries, taxonomy, rank, scores, and cooling without a fixture substitute
+  witness components/BonfyreControlPlane/tests/live-semantic-track.test.mjs checks CUE retention tiers, media-clock partitions, explicit claim promotion, independent corroboration, and cooling
+  witness components/BonfyreControlPlane/tests/live-semantic-track.test.mjs holds the Deep Ellum boundaries against the CUE retention law, native DomainProfile carriers, InformationPolicy disclosure, and the C-backed durable CommitmentGraph
+  witness components/BonfyreControlPlane/tests/aurekai-live-loop.test.mjs runs one stream through CUE-authored semantics, independent claim corroboration, native C AuthorityGraph, C CommitmentGraph, the real BonfyreQueue work lease and acknowledgement, sponsorship, and cooling; seven end-to-end tests and forty expectations prove refusal opens nothing, speech is not performance, a compensated breach remains historic, and distinct observers close distinct obligations
+  node_types SemanticEvent
+  node_types ClaimObservation
+  node_types Corroboration
+  state_types ephemeral
+  state_types durable
+  owns LiveSemanticTrack
+  owns ClaimObservation
+  publishes LiveSemanticTrack
+  publishes ClaimObservation
+  consumes Occurrence
+  interacts commitment-graph
+  interacts attention-cooling
+  internal_calculus the media clock is integer milliseconds from stream start and wall-clock time is deliberately absent, so a replay, a restart and the live edge all address one moment identically; a track keyed to wall-clock cannot survive being replayed
+  internal_calculus retention is an eight-tier lattice (flash, chat, moment, social, saved, institutional, evidentiary, economic) ordered by how long the estate is willing to be answerable for a record, not by importance; a boolean could not distinguish a reaction from a saved post or a saved post from a settled payment, and those differences decide what may be deleted
+  internal_calculus a kind's tier is declared where the kind is added rather than inferred later from whether anything referenced the event, because a tier that depends on being referenced is wrong exactly when nothing has referenced it yet
+  internal_calculus promotion up the lattice requires an explicit action or evidence and moves upward only; popularity, reference count and mere survival are refused as reasons, and demotion is refused because lowering retention deletes something the estate already took responsibility for
+  internal_calculus hierarchical compression runs utterances to semantic events to durable moments to institutional effects; the durable set is a strict minority of the track by construction
+  internal_calculus corroboration counts distinct independent sources; a repeated source and the asserter's own repetition are both excluded, because a noisy feed talking more is not a consensus
+  invariant an utterance is not a claim: promotion names an asserter and is an explicit act, because deciding that somebody committed to something is the judgement a machine must not make silently
+  invariant windows are half-open so adjacent windows partition the track rather than double-counting the boundary between them
+  invariant a surface compiled at a moment reads only what the track knew by that moment; a ranking that could see later in the stream would rank on facts the viewer does not have
+  invariant cooling partitions and does not delete the world: an expired event still happened, and expiry is a statement about storage rather than about the occurrence
+  invariant sponsor matching is exact on the sponsor name rather than substring; a generous comparison would let a shorter name close a longer sponsor's obligation
+  forbidden_inference an utterance -> a claim
+  forbidden_inference a claim -> a fact (it is what was said, and saying it clearly or from a verified account does not change that)
+  forbidden_inference corroboration -> proof (it raises how well-attested a claim is; EvidenceGraph and the proof frontier decide what it is worth)
+  forbidden_inference a spoken sponsor mention -> a discharged sponsor obligation (only the contract knows how many were owed, and only evidence closes it)
+  forbidden_inference a clip candidate -> a published clip
+  forbidden_inference an expired ephemeral event -> the moment not having happened
+  forbidden_inference a popular or much-referenced record -> a record worth keeping (storage is not memory, and promoting on attention is how a timeline becomes sludge)
+  forbidden_inference a crystallizable claim -> an admitted Event (this organ proposes; admission is somebody else's act and stops at the human line)
+  witness components/BonfyreControlPlane/tests/native-ingest.test.mjs speaks a recording, recognises it through each named recognizer (managed and hcp), and checks the resulting utterances, media-clock spans and per-recognizer contribution receipt; a call that names no recognizer is refused
+  witness components/BonfyreControlPlane/tests/native-ingest.test.mjs replays a spoken recording at its own pace through the window cutter and checks that at least three windows reach the track, each only after its audio has played out, that the track never holds an utterance later than the window just closed, that it grows during the occurrence, and that the media clock stays ordered
+  invariant audio reaches the track in closed windows: a window is recognised only after the cutter has named it finished, and its utterances are placed at the occurrence's media clock, so the track cannot hold what has not yet been said
+  forbidden_inference a window-by-window witness over a replayed recording -> a microphone or a remote publisher bound (the cutter accepts a capture device's input arguments; no device was opened by the witness)
+  known_gap the live path is witnessed on a recording replayed in real time. The same cutter takes a capture device, but no microphone, camera or remote publisher has been opened through it here, and a fixed window can cut a word in two at its edge.
+  known_gap chapters and clip candidates are read once the capture ends, over everything recognised; during the occurrence the track carries utterances only.
+  known_gap a window cut mid-sentence is sometimes recognised wrongly: about one run in thirty the managed recognizer garbled the sentence a four-second boundary split and dropped a word a whole recording yields. Windows are not cut at silence and adjacent windows do not overlap, so nothing repairs it
+  source_path components/BonfyreControlPlane/trace.mjs
+  witness components/BonfyreControlPlane/tests/native-ingest.test.mjs attaches a trace to one stream and checks it records the two native processes started, names the transcript both read by its bytes as read twice, and writes complete events in the Trace Event format Perfetto loads
+  known_gap the trace shows BonfyreSegment and BonfyreClips each started as a process and each parsing the same transcript; nothing has been changed on that evidence, and only this module's native calls are traced. Perfetto's own SDK and trace processor are not installed; the file is in the format they read and has been summarised here, not opened in them
+  known_gap this organ partitions and RetentionGC removes; the earlier note here named AttentionCoolingGraph as the policy owner and was wrong. That organ answers what deserves attention and what has cooled until a named signal reheats it, which is a different question from what may be deleted.
+  known_gap the machine simulcast exists as a DomainProfile projecting one semantic moment into CloudEvents, ActivityPub, ATProto and MCP, with disclosure applied once so a withheld speaker is withheld on every carrier. It is not yet wired to a live clock or emitted anywhere; nothing publishes it.
+  known_gap NativeSemanticTrack currently owns an in-process live observation; durable cross-process claim storage and receipt-backed replay are not yet wired, so the native end-to-end witness proves composition within one process rather than a deployed live stream.
+
+interaction live-track-creates-commitments
+  source live-semantic-track
+  destination commitment-graph
+  relation evidences_commitment
+  preserves the media-clock moments that bear on an obligation, with their speaker and source
+  preserves the count of contracted acts actually observed, so a contract asking for two is not closed by one
+  drops every ephemeral moment around them; the graph holds obligations, not atmosphere
+  forbidden_inference an observed spoken act -> a discharged obligation (the contract decides how many were owed)
+  forbidden_inference a cooled track -> a lapsed obligation (commitments outlive the track that evidenced them)
+  invalidates_on the sponsor contract's required count or kind of acknowledgement changes
+
+interaction live-track-cools-into-attention
+  source live-semantic-track
+  destination attention-cooling
+  relation proposes_expiry
+  preserves the partition between durable and ephemeral events, and the media-clock moment of each
+  drops the content of what expires; cooling needs to know that a moment may go, not what was said in it
+  forbidden_inference a proposed expiry -> a removed record (this organ partitions; the cooling graph owns the policy and the removal)
+  forbidden_inference an expired event -> the moment not having happened
+  invalidates_on a kind's declared durability changes
+
+architecture speech-recognition-repair
+  canonical_name SpeechRecognitionRepair
+  family commons
+  domain Commons / Speech recognition
+  layer commons
+  semantic_question Which recognised segments does the acoustic and token evidence distrust, and does a second recognition of that audio score better than the first?
+  purpose The HCP transcriber: recognition, a complex-spectral diagnosis of token confidence that flags segments, and a repair pass that recognises each flagged segment's own audio window again and accepts the candidate only when it scores above the original. It is a different program from the managed bonfyre-transcribe command and is selected by name.
+  maturity measured
+  source_path components/BonfyreTranscribe/src/main.c
+  source_path components/BonfyreTranscribe/Makefile
+  source_path components/BonfyreTranscribe/tests/redecode_test.sh
+  source_path components/BonfyreControlPlane/native-ingest.mjs
+  witness components/BonfyreTranscribe/tests/redecode_test.sh speaks a recording and checks that every re-decoded segment carries a scored candidate, that the accepted count equals the segments marked accepted, that an accepted repair keeps the text it replaced and scored higher, that --no-redecode reports zero, and that a default run re-decodes no more than HCP flagged
+  witness components/BonfyreControlPlane/tests/native-ingest.test.mjs selects this program as the hcp recognizer and checks repaired <= re-decoded <= diagnosed in the receipt it returns
+  interacts live-semantic-track
+  internal_calculus diagnosis: token probabilities are lifted to a complex sequence, filtered in the frequency domain, and tokens whose magnitude or phase moves past threshold are flagged; a segment is a repair candidate when its flagged-token ratio passes threshold
+  internal_calculus repair: whisper_full() over the segment's samples padded 200 ms either side, with no preceding-text context and a wider beam; the candidate is scored conf * (1 - no_speech) * min(1, 2.4/compression_ratio) and refused outright on n-gram repetition
+  invariant hcp_redecoded_segments counts second recognitions that actually ran; hcp_repaired_segments counts accepted candidates; a flagged segment whose window could not be recognised is counted as failed, never as re-decoded
+  invariant an accepted repair keeps the replaced text beside the new one and keeps the original media-clock span
+  invariant the transcript, subtitle and text writers read the repaired text, so one acceptance updates every output of that run
+  forbidden_inference a flagged segment -> a wrong segment
+  forbidden_inference a re-decoded segment -> a repaired one (most candidates are rejected)
+  forbidden_inference an accepted repair -> a correct transcript (the candidate outscored the original on the model's own confidence; no reference text was consulted)
+  forbidden_inference a higher hcp_quality -> lower word error rate (no word-error measurement against reference transcripts exists here)
+  source_path components/BonfyreTranscribe/tests/wer_measure.mjs
+  witness 2026-10-03 components/BonfyreTranscribe/tests/wer_measure.mjs, base.en, four spoken passages (99 reference words) at four white-noise levels: re-decoding only flagged segments left word error unchanged at three levels (10.10, 11.11, 13.13 percent) and lowered it at the loudest (15.15 to 13.13); re-decoding every segment lowered it at every level (10.10 to 8.08, 11.11 to 9.09, 13.13 to 11.11, 15.15 to 13.13). No accepted repair raised word error. HCP flagged 0 or 1 of about 8 segments per condition
+  forbidden_inference the 2026-10-03 word-error figures -> an accuracy claim for speech in a room (synthetic voice, white noise, 99 words; each change is two words)
+  known_gap word error has been measured only on four synthetic passages. The acceptance test did not raise error there, but the diagnosis flagged so few segments that the default run rarely repaired anything; whether HCP flags the segments that are actually wrong has not been measured on human speech with reference transcripts
+  source_path components/BonfyreTranscribe/tests/preprocess_measure.mjs
+  witness 2026-10-03 components/BonfyreTranscribe/tests/preprocess_measure.mjs, base.en, the same four passages at four white-noise levels, recognised as recorded and after an ffmpeg spectral denoise (afftdn): word error unchanged on clean audio (10.10), lower at moderate noise (13.13 to 12.12, 15.15 to 13.13) and higher at the heaviest (18.18 to 19.19); adding a band-pass made the two noisiest levels worse (16.16, 21.21)
+  forbidden_inference the 2026-10-03 denoise figures -> a case for or against WebRTC's audio processing module; that module is not packaged on this machine and was not run, and each difference here is one to three words
+  known_gap cleaning the signal before recognition has been measured only with ffmpeg filters on synthetic speech, where it helped a little at moderate noise and hurt at heavy noise. No echo cancellation or gain control was exercised, and nothing in the capture path applies any preprocessing
+  known_gap the reference comparison does not normalise numerals, so a spoken "seven thirty" recognised as "7:30" counts as error in every figure above
+  known_gap the managed bonfyre-transcribe binary does not carry this path, and this program does not carry the managed one's denoise, speech split or vocabulary; the two are alternatives, not one merged recognizer
+  known_gap the witness speaks clean synthetic audio, on which HCP flags little; the repair pass is exercised there through --redecode-all rather than through naturally flagged speech
+
+interaction recognition-feeds-live-track
+  source speech-recognition-repair
+  destination live-semantic-track
+  relation produces_timed_utterances
+  preserves each segment's media-clock span and text, and for the hcp recognizer the repair outcome and the text an accepted repair replaced
+  preserves which recognizer ran and what it contributes (recognition alone, or recognition, diagnosis and repair)
+  drops token-level probabilities, the spectral diagnosis and rejected candidates; the track receives utterances, not the evidence for them
+  forbidden_inference an utterance on the track -> what was actually said
+  forbidden_inference a track built from a recording -> a live capture
+  invalidates_on the recording, the named recognizer, its model, or its repair setting changes
+  witness components/BonfyreControlPlane/tests/native-ingest.test.mjs
+  binding components/BonfyreControlPlane/native-ingest.mjs
+
+interaction protocol-closes-on-evidence
+  source protocol-contract
+  destination evidence-graph
+  relation requires_evidence
+  preserves which declared requirements currently stand, and the verdict blocking each that does not
+  preserves the direction of every relation; supports(A,B) is never read as supports(B,A)
+  drops any opinion about proof; this bridge reports whether the store is presently on a claim's side
+  forbidden_inference a supporting relation -> a proven claim
+  forbidden_inference terminal obligations -> a closed enactment (evidence closure is the second, independent condition)
+  forbidden_inference a reproduction -> a rescued falsification
+  invalidates_on a relation is recorded or retracted against a declared requirement
+  binding components/BonfyreControlPlane/protocol_evidence.py
+  witness components/BonfyreControlPlane/tests/test_protocol_evidence.py links the compiled organ both ways -- the C reads rows this module wrote and this module reads rows the C wrote -- and proves contradiction outranks support regardless of write order, falsification survives reproduction, retraction agrees across both implementations, a contradiction is not counted as a supporter, and an enactment reports its two closure conditions separately so a caller can tell which to chase (18 assertions)
+
+architecture occurrence-origin
+  canonical_name OccurrenceOrigin
+  family commons
+  domain Commons / Occurrence provenance
+  layer commons
+  semantic_question Did this happen to us, did we derive it, or did we do it?
+  purpose OccurrenceSpine was read as the effects this estate created. The upward direction of the compiler makes that untenable: one spine now carries what happened externally, what was derived from watching it, and what the estate caused. They are answerable for different things, and an estate that files all three without origin will eventually settle money against a derivation.
+  maturity measured
+  source_path engine/core/src/occurrence_origin.c
+  source_path engine/core/include/bf_occurrence_origin.h
+  source_path cmd/BonfyreOrigin/src/main.c
+  source_path cmd/BonfyreActors/tests/organ_callers_test.sh
+  source_path schemas/control/occurrence-origin.yaff
+  source_path schemas/control/occurrence-origin.cue
+  source_path components/BonfyreControlPlane/occurrence-origin.mjs
+  witness components/BonfyreControlPlane/tests/occurrence-origin.test.mjs files one night on the native-owned relation and refuses observation/derivation authority laundering, missing provenance/inputs, and re-filing; provenance returns only observed roots
+  witness engine/core/tests/occurrence_origin_test.c proves native storage refuses source-less observations, input-less derivations, authority-less effects and re-filing; it also verifies that derivation roots are observed occurrences only, never effects
+  witness cmd/BonfyreActors/tests/organ_callers_test.sh proves the native caller refuses an input-less derivation, stores an observed occurrence and reports its derived successor as not caused by this estate
+  node_types Occurrence
+  state_types observed
+  state_types derived
+  state_types effect
+  owns OccurrenceOrigin
+  publishes OccurrenceOrigin
+  consumes Occurrence
+  interacts occurrence-spine
+  interacts live-semantic-track
+  internal_calculus each origin demands exactly what it is answerable for: an observation names its source, a derivation names its inputs, an effect names its authority, and only the effect may carry one
+  internal_calculus provenance walks a derivation chain to the observations beneath it; a derivation with no observed root descends from something the estate did rather than something it watched, and reports that rather than an empty observation
+  invariant raw material is not an occurrence; audio bytes are not, an utterance is, and the boundary is whether anything temporal and meaningful can be addressed
+  invariant an occurrence is filed once; refiling the same id under a different origin would relabel watching as acting, which is the laundering this architecture exists to stop
+  forbidden_inference an observed occurrence -> something the estate did
+  forbidden_inference a derived occurrence -> an effect (a SponsorOccurrence candidate derived from a transcript is not the obligation being met)
+  forbidden_inference a derived occurrence -> its inputs being true
+  forbidden_inference an effect occurrence -> the intended outcome
+  invariant native C and Bun callers share one occurrence_origin relation and the same origin refusal laws; a Bun facade does not create a second occurrence store
+  known_gap the spine keeps causal ordering separate from origin so no caller can infer an effect from being on the spine; a future unified occurrence write must atomically admit both owners without collapsing their semantic facts.
+  known_gap the foreign ingest path now uses the Bun occurrence facade, but its relation insert and the independent OccurrenceSpine insert are not yet one atomic admission; neither partial write may be read as a completed unified occurrence
+architecture publication-program
+  canonical_name PublicationProgram
+  family commons
+  domain Commons / Publication
+  layer commons
+  semantic_question May this be published there, on whose authority, showing what, and has anybody checked it arrived?
+  purpose Cross-platform publication as a compiled program rather than a set of adapters each holding a token and its own idea of what it may post. An OAuth token is a capability to reach an account; what may be sent through it, on whose behalf, about which subject, for what purpose, to which audience and until when are six other questions, and an adapter answers none of them.
+  maturity measured
+  source_path components/BonfyreControlPlane/publication-program.mjs
+  source_path schemas/control/publication-program.cue
+  witness components/BonfyreControlPlane/tests/publication-program.test.mjs uses adapters that record whether they were called and the compiled AuthorityGraph, proving consent is checked before any adapter, grants are platform/purpose/window-scoped and revocable, disclosure precedes projection, and an adapter reporting 200 still leaves the round trip pending until a receipt-backed observation
+  node_types PublicationProgram
+  node_types Target
+  owns PublicationProgram
+  publishes PublicationProgram
+  consumes DomainProfile
+  consumes InformationPolicy
+  consumes Authority
+  interacts authority-graph
+  interacts domain-profile
+  internal_calculus resolution order is delegation, then disclosure, then projection, then adapter; each stage can refuse and a refusal names which stage closed, because an adapter that failed and a principal who never consented are different problems and a caller told only that publishing failed will debug the wrong one
+  internal_calculus consent is checked per platform and per operation, because agreeing to publish to one network is not agreeing to publish to another and that is a decision a person makes per audience
+  invariant a target's audience is a disclosure audience, not a routing label; a public timeline and a members-only feed are different audiences even when one adapter reaches both
+  invariant a partial simulcast is a different act from the one consented to, so a missing adapter refuses the whole program rather than publishing to the targets that happen to be wired
+  forbidden_inference a token existing -> permission to publish anything
+  forbidden_inference a grant to publish on one platform -> a grant to publish on another
+  forbidden_inference an adapter reporting success -> the platform having accepted it (that is the adapter's account of itself; a round trip is a separate observation by a separate owner)
+  forbidden_inference a program declaring round-trip observation -> the round trip having happened
+  known_gap the native Bun program gates against compiled AuthorityGraph and DomainProfile but still delegates actual network calls and independent ForeignTwin observation to injected callers; neither an adapter report nor a declared round trip is treated as observed fact.
+  known_gap no adapter is implemented. The program refuses, discloses and projects; reaching an actual network is deliberately left to callers, and the round-trip observation is declared rather than performed by ForeignTwin.
+
+interaction origin-refines-the-spine
+  source occurrence-origin
+  destination occurrence-spine
+  relation refines
+  preserves the occurrence identity and its subject, so one spine still orders one causal history
+  preserves which of the three origins the occurrence has, and what that origin is answerable for
+  drops nothing from the spine; this adds a distinction the spine did not carry rather than replacing its ordering
+  forbidden_inference an ordered spine -> a spine of things the estate did
+  forbidden_inference a derived occurrence on the spine -> an effect
+  invalidates_on an occurrence is filed, or its derivation inputs change
+  binding components/BonfyreControlPlane/occurrence-origin.mjs
+
+interaction publication-requires-delegated-consent
+  source publication-program
+  destination authority-graph
+  relation requires_authority
+  preserves the principal, the operation, the platform, the subject, the purpose and the moment the grant is checked at
+  drops the platform credential entirely; a token is not consulted here and is not what authorizes anything
+  forbidden_inference a token existing -> a live grant
+  forbidden_inference a live grant -> a grant that will still be live at publish time (it is rechecked, and revocation closes publication immediately)
+  authority publish:<platform> on the published subject, for the program's declared purpose
+  invalidates_on a grant is revoked or leaves its window
+  binding components/BonfyreControlPlane/publication-program.mjs
+
+architecture standing-address-compiler
+  canonical_name StandingAddressCompiler
+  family commons
+  domain Commons / Opportunity ranking
+  layer commons
+  semantic_question Which lawful opportunity is most relevant to this actor, in this territory, right now?
+  purpose Ranking whose unit is an addressed opportunity rather than a content object. A feed of objects cannot say that one creator is two different things to do; an opportunity can. It also keeps the attention loop and the institutional loop apart, because a system that fed the second from the first would convert curiosity into commitments.
+  maturity measured
+  source_path engine/core/src/standing_address.c
+  source_path engine/core/include/bf_standing_address.h
+  source_path cmd/BonfyreStanding/src/main.c
+  source_path cmd/BonfyreActors/tests/organ_callers_test.sh
+  source_path schemas/control/standing-address.yaff
+  source_path schemas/control/standing-address.cue
+  source_path components/BonfyreControlPlane/standing-address.mjs
+  source_path components/BonfyreControlPlane/authored-territory.mjs
+  witness components/BonfyreControlPlane/tests/standing-address.test.mjs proves CUE-authored territory actions, opportunity ranking, attention-only reorder, available-before-unavailable boundary and disclosure gating
+  witness engine/core/tests/standing_address_test.c verifies native territory/action validation, availability-before-relevance ordering even after fifty attention signals, default withholding of an undisclosable subject, and refusal of an institutional verb presented as attention
+  witness cmd/BonfyreActors/tests/organ_callers_test.sh proves the native caller drops an undeclared verb and retains available-before-unavailable ordering after a large attention signal
+  node_types Opportunity
+  node_types StandingAddress
+  owns Opportunity
+  publishes Opportunity
+  consumes InformationPolicy
+  consumes FactDelta
+  interacts information-policy
+  interacts live-semantic-track
+  internal_calculus the recommendation unit is an action against an addressed subject, so one subject may carry several opportunities and which is useful depends on the actor rather than on the object
+  internal_calculus availability is a fact about the world and authority is a fact about the actor; an unavailable opportunity sinks below every available one regardless of relevance, because a sold-out thing is not an opportunity however well it matches
+  internal_calculus each territory offers its own verbs -- life MEET/JOIN/GO/SAVE/HELP, live WATCH/JOIN/GO/FOLLOW, shop BUY/OFFER, work APPLY/APPROVE/CLAIM/FUND/CONTACT -- and a verb outside its territory is a category error rather than a low-ranking candidate
+  internal_calculus disclosure runs before ranking, because offering an action on a subject an actor may not know exists discloses that subject
+  invariant attention may reorder what is offered and may never open an obligation; the attention loop's invalidation envelope names only the standing address it reorders
+  invariant the institutional loop is entered only by an enactment that produced an occurrence, never by somebody having looked
+  invariant a standing address is recompiled rather than stored; an opportunity that outlived its world is the failure this shape exists to avoid
+  forbidden_inference a ranked opportunity -> an authorized one (Authority still gates at effect time)
+  forbidden_inference attention -> intent
+  forbidden_inference an offered action -> an available one
+  forbidden_inference a high rank -> a transaction being wanted (entertainment wins when entertainment is what the actor wants, and a ranker that pushed BUY upward because it is worth more would be optimizing for the estate)
+  known_gap bf_standing_compile is now the native cheap ranking realization; SurfacePattern's newly authored CUE catalogue and territory verbs are not yet consumed by bf_standing_* at build time.
+  known_gap relevance is supplied by the caller. Nothing here computes it from place, time, relationships or the live world, so this ranks honestly over scores it did not produce.
+  known_gap the native caller ranks an explicit candidate input; PageComposition and SurfacePattern still need an owner-backed opportunity feed before this can become a public recommendation surface.
+architecture surface-pattern
+  canonical_name SurfacePattern
+  family commons
+  domain Commons / Surface grammar
+  layer commons
+  semantic_question What does this surface read, at what extent, and what may be done from it?
+  purpose The reference UI estate as declared compiler targets rather than research notes, across all four territories. A pattern names the owner it reads, the extent it renders at, the action layer it carries, the authority that layer demands and the territory whose UX physics it belongs to -- so adding a surface is an authoring act and the borrowed behaviour of a familiar interface never brings its backend with it. Each reference project also records its licence and how this estate may use it, because donor and reference are a legal distinction rather than a preference.
+  maturity implemented
+  source_path cmd/BonfyreCMS/content-types/surface_pattern.json
+  source_path schemas/control/surface-pattern.cue
+  source_path schemas/control/standing-address.cue
+  source_path components/BonfyreControlPlane/surface-pattern.mjs
+  source_path components/BonfyreControlPlane/surface_pattern.py.archive
+  source_path cmd/BonfyreWebAddress/src/main.c
+  source_path cmd/BonfyreWebAddress/src/bounded_output.c
+  node_types SurfacePattern
+  node_types PatternCatalogue
+  state_types chip
+  state_types card
+  state_types section
+  state_types page
+  state_types workspace
+  owns SurfacePattern
+  publishes SurfacePattern
+  consumes Opportunity
+  interacts surface-ir
+  interacts standing-address-compiler
+  internal_calculus extent decides the action layer: only page and workspace carry one, because a chip, card or section is a reference to a surface rather than the surface itself
+  internal_calculus narrowing an extent drops the action layer and keeps the subject, so a workspace appearing elsewhere as a card is a projection rather than a second implementation
+  internal_calculus lineage records which reference interface a pattern's behaviour was extracted from, which is what makes the claim that only the look was borrowed checkable rather than a slogan
+  internal_calculus a reference project carries its licence and a use class; a copyleft or field-of-use licence cannot be marked a donor or an implementation, and the refusal names which obligation blocks it rather than reporting a generic denial
+  internal_calculus a pattern belongs to exactly one territory and may only offer that territory's verbs, so a .live surface offering BUY is the same category error the opportunity model already refuses
+  internal_calculus record_namespace is an optional descriptor-owned read boundary. It selects the CMS namespace of the owner being projected before URL slices run, so independently authored seed and compiled-census records with the same key never silently merge.
+  invariant a pattern reads a CMS type or a native organ and the catalogue names which; a pattern reading both would be two patterns sharing a name whose human and machine projections could diverge unnoticed
+  invariant a pattern carrying actions names the authority they require; an action layer that stated no requirement could not be refused by anything
+  invariant record_namespace is authored by the descriptor and cannot be supplied by the URL; it narrows a truth owner but never names an actor, audience, entitlement or authority
+  invariant a SurfacePattern query is assembled as complete bounded fragments and refused with 503 before SQLite prepare if its descriptor exceeds the query budget; a truncated query must not silently change the read set
+  forbidden_inference a declared pattern -> a working or permitted one
+  forbidden_inference a rendered action layer -> an authorized action (the pattern declares a requirement; AuthorityGraph decides at effect time)
+  forbidden_inference a smaller extent -> a lesser subject
+  forbidden_inference a familiar interface -> a familiar backend
+  forbidden_inference a good interface -> a usable codebase (the licence decides, and an unrecognised licence is a reference until a person says otherwise)
+  forbidden_inference matching record keys across namespaces -> one record or permission to merge them
+  forbidden_inference a query-budget refusal -> no published records (the descriptor was not evaluated)
+  witness cmd/BonfyreWebAddress/tests/surface_pattern_contract_test.sh proves declared patterns render both human and machine projections, constrain slices and extent, refuse ambiguity and invalid controls, and keep a descriptor-owned namespace boundary from leaking an identically keyed seed row
+  witness components/BonfyreControlPlane/tests/surface-pattern.test.mjs tests all 31 prior Python contract cases against the CUE-authored catalogue, including extent narrowing, owner and authority refusal, all 41 patterns across four territories, and donor license classification
+  witness cmd/BonfyreWebAddress/tests/bounded_output_test.c proves an oversized fragment leaves the query buffer and offset unchanged, and a failed query writer refuses later appends
+  witness cmd/BonfyreWebAddress/analysis/clean-compiler-offset.yml structurally rejects a new unchecked snprintf offset in the SurfacePattern compiler and shared subject renderers
+  known_gap SurfacePattern is rendered natively but only the declared generic record grammar is lowered; richer renderer families still need to lower the same resolved descriptor into their own interaction grammars.
+
+interaction attention-reorders-without-obligating
+  source standing-address-compiler
+  destination semantic-derivation
+  relation reorders
+  preserves the subject attended to and the signal, so relevance can move
+  drops any path to an obligation; the envelope names one standing address and nothing institutional
+  forbidden_inference attention -> intent
+  forbidden_inference a reordered feed -> a changed world
+  invalidates_on an attention signal is observed for this actor
+  binding components/BonfyreControlPlane/standing-address.mjs
+
+interaction pattern-renders-an-opportunity
+  source surface-pattern
+  destination standing-address-compiler
+  relation renders
+  preserves the addressed subject and the action a surface offers, at the extent that may carry one
+  drops every action below page extent, because a reference to a surface offers nothing
+  forbidden_inference a rendered opportunity -> an authorized action
+  forbidden_inference an unoffered action -> an impossible one (it may be owned elsewhere, or withheld for want of a session)
+  invalidates_on a pattern's extent, action layer or declared authority changes
+  binding components/BonfyreControlPlane/surface-pattern.mjs
+
+architecture commerce-chain
+  canonical_name CommerceChain
+  family commons
+  domain Commons / Commerce stages
+  layer commons
+  semantic_question Which of the fifteen distinct commerce facts has actually been established for this exchange?
+  purpose Product, Listing, Inventory, AvailabilityObservation, Offer, Quote, Cart, Checkout, Commitment, Payment, Settlement, Fulfilment, Delivery, Satisfaction and Ownership are fifteen different facts that commerce systems routinely collapse into one row. A Shopify product, an eBay listing and a store two miles away having one are three different claims about the world, and a universal product row has already lost the ability to say which is true. Each stage names the owner that can establish it, because these collapse when a subsystem is asked a question it cannot answer.
+  maturity measured
+  source_path engine/core/src/commerce.c
+  source_path engine/core/include/bf_commerce.h
+  source_path schemas/control/commerce.yaff
+  source_path schemas/control/commerce.cue
+  source_path components/BonfyreControlPlane/commerce_chain.py.archive
+  witness engine/core/tests/commerce_test.c tests all 225 stage pairs (the 210 distinct pairs plus fifteen identity checks), refuses a skipped delivery, retains commitment as the furthest stage with six further facts outstanding, and rejects an ownerless assertion
+  witness components/BonfyreControlPlane/tests/test_commerce_chain.py.archive
+  node_types Stage
+  state_types product
+  state_types listing
+  state_types inventory
+  state_types availability_observation
+  state_types offer
+  state_types quote
+  state_types cart
+  state_types checkout
+  state_types commitment
+  state_types payment
+  state_types settlement
+  state_types fulfilment
+  state_types delivery
+  state_types satisfaction
+  state_types ownership
+  owns CommerceStage
+  publishes CommerceStage
+  interacts commitment-graph
+  interacts money-graph
+  internal_calculus each stage names the single owner that can establish it -- a catalogue cannot know whether anybody has one, a payment rail cannot know whether money settled, a courier cannot know whether the buyer wanted what arrived
+  internal_calculus no stage may be skipped: recording one requires its predecessor, so an exchange reporting delivery with no fulfilment is refused rather than filed
+  invariant the non-implication is checked over every pair rather than adjacent ones, because the dangerous collapses skip -- paid read as delivered, delivered read as owned
+  forbidden_inference a listing -> a product in inventory
+  forbidden_inference inventory -> availability here, now, to this buyer
+  forbidden_inference an offer -> a quote priced for this buyer
+  forbidden_inference a quote -> a reservation (the resource is not held)
+  forbidden_inference a cart -> intent to buy
+  forbidden_inference a checkout -> a commitment
+  forbidden_inference a payment -> settled money
+  forbidden_inference a settlement -> fulfilment
+  forbidden_inference a delivery -> satisfaction
+  forbidden_inference a delivery -> transferred ownership
+  forbidden_inference satisfaction -> a discharged obligation (the buyer accepting is not the ledger closing)
+  known_gap native C owns commerce_progress and the former Python implementation is archived because no live consumer remained; live UCP, Beckn, GS1 Digital Link and EPCIS bindings must call bf_commerce_record only after their own observations are admitted.
+  known_gap the stages are recorded by callers and nothing yet drives them from UCP, Beckn, GS1 Digital Link or EPCIS observations, so the chain describes an exchange rather than following one.
+
+architecture retention-gc
+  canonical_name RetentionGC
+  family commons
+  domain Commons / Retention
+  layer commons
+  semantic_question May this record be removed now, and if not, who is keeping it?
+  purpose The half of the retention lattice that acts. The lattice said which tier a record sits in and nothing removed anything, so it described what could be deleted by something that did not exist. This is that something: it removes what may go, refuses what may not, names who is holding whatever it refuses, and leaves a tombstone so that removing a body never denies the moment.
+  maturity measured
+  source_path engine/core/src/retention.c
+  source_path engine/core/include/bf_retention.h
+  source_path schemas/control/retention.yaff
+  source_path schemas/control/retention.cue
+  source_path components/BonfyreControlPlane/retention_gc.py.archive
+  witness engine/core/tests/retention_test.c verifies the native shared-store owner: declared kind-to-tier selection, elapsed-clock collection, named holds, durable-floor refusal, tombstones without bodies, idempotent sweeps, and derived CommitmentGraph/EvidenceGraph holds that place and release only when their real source relation changes
+  node_types RetainedRecord
+  node_types Hold
+  node_types Tombstone
+  owns RetainedRecord
+  owns Tombstone
+  publishes Tombstone
+  consumes LiveSemanticTrack
+  interacts live-semantic-track
+  interacts attention-cooling
+  internal_calculus three conditions must all agree before a record is removed -- its tier is below the cooling floor, its tier's lifetime has elapsed, and nothing holds it; a tier at or above the floor has no lifetime at all and is never removed by time passing
+  internal_calculus a hold names which owner is keeping the record (an open obligation, an evidence reference, a legal hold, or the person whose record it is) because a refusal that cannot say who is holding something cannot be acted on by anybody
+  internal_calculus removal writes a tombstone carrying the occurrence, kind, tier and both timestamps and never the body, so material retention and institutional history are separable rather than one decision
+  invariant an elapsed lifetime is permission to consider removal, never permission to remove; a hold outranks the clock
+  invariant removing a record's body never denies that the moment happened, because a GC that deleted the fact along with the bytes would be enforcing amnesia rather than retention
+  invariant a sweep is idempotent; running it twice removes nothing the second time
+  forbidden_inference an elapsed lifetime -> permission to remove
+  forbidden_inference a removed body -> the moment not having happened
+  forbidden_inference a tombstone -> recoverable content
+  forbidden_inference a released hold -> a record that was always removable
+  known_gap native retention is bounded to BF_RETENTION_SWEEP_MAX records per transaction; a larger sweep must be explicitly paged rather than silently processing an unbounded set.
+  known_gap obligation and evidence holds are now derived from their stores and lift when their reason ends; legal holds and user saves are still placed out of band by whoever has standing to place them, which is correct rather than missing.
+
+interaction gc-removes-what-the-lattice-released
+  source retention-gc
+  destination live-semantic-track
+  relation removes
+  preserves the occurrence, kind, tier and timestamps of every removed record, as a tombstone
+  preserves every record the lattice placed at or above the cooling floor, untouched by any amount of elapsed time
+  drops the body of a removed record, permanently and without recovery
+  forbidden_inference a removed body -> the moment not having happened
+  forbidden_inference a tier below the floor -> a record that will be removed (a hold outranks the clock, and the holder is named)
+  invalidates_on a hold is placed or released, or a kind's declared tier changes
+  binding engine/core/src/retention.c
+
+interaction holds-derive-from-their-owners
+  source retention-gc
+  destination commitment-graph
+  relation derives_hold
+  preserves which open obligations rest on a record, so a sweep cannot remove what a live promise depends on
+  preserves the release: a terminal commitment stops justifying retention in the same pass that would have swept it
+  drops the obligation's own content; retention needs to know that something is owed, not what
+  forbidden_inference a derived hold -> a permanent one (it lifts when its reason ends)
+  forbidden_inference a discharged commitment -> a removable record (another owner may still hold it)
+  forbidden_inference a placed hold -> a record that was ever removable
+  invalidates_on a commitment reaches or leaves a terminal state, or an obligation's record link changes
+  binding engine/core/src/retention.c
+  witness engine/core/tests/retention_test.c proves the half that matters is release rather than placement: a discharged commitment and retracted evidence relation lift their own native derived holds, while legal holds survive reconciliation untouched
+
+interaction protocol-lowers-to-a-dependency-addressed-program
+  source protocol-contract
+  destination semantic-derivation
+  relation compiles_to
+  preserves each role as a read/write pair over exact parameter addresses, so a delta can be answered by intersection
+  preserves the per-enactment address, so two runs of one contract hold two closures rather than one
+  drops the role structure, the obligations and the authority requirements; the derivation graph needs addresses and edges and nothing about protocols
+  forbidden_inference a FactDelta -> global invalidation
+  forbidden_inference an invalidated role -> an invalidated enactment
+  forbidden_inference a shared contract -> a shared closure
+  forbidden_inference a written parameter -> a produced effect (a write is an address in a closure, not an occurrence)
+  invalidates_on a role's requires or produces changes, or the contract stops conforming
+  binding components/BonfyreControlPlane/protocol-program.mjs
+  binding cmd/BonfyreExperienceMap/src/protocol_derivation_bridge.c
+  binding cmd/BonfyreExperienceMap/tools/protocol_observation_bridge.mjs
+  binding cmd/BonfyreExperienceMap/tools/protocol-observation.cue
+  binding cmd/BonfyreExperienceMap/tools/protocol-observation.generated.json
+  witness components/BonfyreControlPlane/tests/protocol-program.test.mjs proves the invalidation is by intersection rather than by default: a delta on a parameter no role reads leaves every role valid, a delta mid-chain invalidates its reader and what depends on that reader's output while the roles upstream stay valid, and a delta naming one escrow parameter touches the escrow enactment and none of twenty concurrent quote-accepts. Every one of the twenty-one CUE library patterns lowers, and none is globally invalidated by an unrelated address (57 assertions)
+  witness cmd/BonfyreExperienceMap/tests/protocol_derivation_bridge_test.c compiles against libbonfyre-fabric.a and proves two enactments register independent closures, invalidation stays enactment-scoped and target-specific, duplicate/nonconformant registration is atomic, and the emitted receipt is required by participation activation reporting
+  witness cmd/BonfyreExperienceMap/tests/protocol_observation_bridge_test.c compiles the occurrence-scoped OGC API Common observation contract natively; cmd/BonfyreExperienceMap/tests/protocol_observation_bridge.test.mjs refuses an absent/tampered DomainProfile receipt or a native receipt for another occurrence, then records only compiled protocol state, never an enactment or an external effect
+  witness cmd/BonfyreExperienceMap/tests/vectors/policy_compilation.json checks that the protocol runtime descriptor is exactly the CUE export, allowing the receipt hot path to omit a CUE subprocess without duplicating its law
+  source_path cmd/BonfyreRetention/src/main.c
+  internal_calculus a caller may not supply a tier; a kind carries its own closed retention tier, because a caller that could name the tier could delete anything by calling it short-lived
+  internal_calculus a kind with no tier is refused rather than given a default lifetime, since a default would be a deletion policy nobody wrote
+  witness 2026-09-19 the organ has a caller for the first time; it refuses `foreign_body` outright -- "this kind carries no retention tier" -- retains `chat` and then declines to remove it while its six-hour lifetime stands, and declines to remove `commerce` at all because an evidentiary tier is at the cooling floor where time cannot reach it
+  known_gap the tier policy covers a conversation and clip domain -- reaction, presence, chat, utterance, speaker, topic, entity, place, chapter, clip_candidate, cta, claim, sponsor_mention, commerce -- and the estate's 449 MB of retained foreign source bodies match none of them, so nothing the estate actually retains can be registered with this organ at all
+  known_gap the page organ composes from retained bodies, so a retention tier for them is not only a storage decision: removing a body removes the material a page is built from, and no tier has been written that accounts for that
+  forbidden_inference a removed body -> the occurrence did not happen, or what it said was untrue
+
+architecture foreign-live-ingest
+  canonical_name ForeignLiveIngest
+  family commons
+  domain Commons / Foreign occurrence
+  layer commons
+  semantic_question What may this estate actually do with a live occurrence somebody else is hosting?
+  purpose A creator who streams only elsewhere still produces an occurrence, and where rights permit its observable material can become a LiveSemanticTrack exactly like a native stream. That is what lets the estate understand a city before everybody in it streams natively. The difficulty is that being able to see something is four separate rights, and collapsing the first into the fourth is how an estate ends up redistributing somebody else's stream under its own name.
+  maturity architectural
+  source_path components/BonfyreControlPlane/foreign-live.mjs
+  source_path schemas/control/foreign-live.cue
+  witness components/BonfyreControlPlane/tests/foreign-live.test.mjs falsifies right implication, separate foreign provenance on native semantic events, independent claim corroboration, and observed-only occurrence filing over an in-memory SQLite spine
+  node_types ForeignLiveSource
+  state_types observable
+  state_types retainable
+  state_types derivable
+  state_types republishable
+  owns ForeignLiveSource
+  publishes ForeignLiveSource
+  consumes LiveSemanticTrack
+  interacts live-semantic-track
+  interacts foreign-twin
+  interacts occurrence-origin
+  internal_calculus the four rights are ordered and each is granted separately; a later right is meaningless without the earlier ones, and holding one never implies the next
+  internal_calculus foreign material is mapped onto the native vocabulary rather than given a parallel one, so a caption is an utterance and a title is a topic and every downstream organ works unchanged
+  internal_calculus every ingested event records the platform it came from, so a native and a foreign track are distinguishable per event and nothing downstream has to remember which it holds
+  invariant a source granting nothing is not opened; an ingest that could be opened and then refused at every operation would report a capability the terms never gave
+  invariant the asserter of an ingested claim is whoever spoke on the foreign stream, never the twin that observed it
+  invariant every ingested occurrence is filed as OBSERVED; this estate did not cause a foreign stream and any other origin would let a later reader believe it did
+  forbidden_inference observable -> retainable
+  forbidden_inference retainable -> derivable
+  forbidden_inference derivable -> republishable
+  forbidden_inference an ingested claim -> a claim this estate is asserting
+  forbidden_inference a foreign track -> a native one
+  known_gap the Bun ingest now binds the CUE rights vocabulary, native LiveSemanticTrack, and the occurrence-origin SQLite relation; the rights grant is still supplied externally rather than established from platform terms.
+  known_gap the rights are supplied by the caller as a declared grant with a basis string. Nothing yet derives them from a robots preflight, an API's terms or a licence, so the grant is honest about what it rests on and is not itself established here.
+  known_gap downgraded from measured after review: the witness asserted this module's own declared constants rather than falsifying anything external, which is the maturity laundering this registry forbids. Source and witness lines removed until a test exists that could fail for a reason the module did not author.
+
+architecture protocol-density-law
+  canonical_name ProtocolDensityLaw
+  family commons
+  domain Commons / Protocol
+  layer law
+  semantic_question Does this protocol integration add a relation the machine did not have, without taking ownership of a fact something else already owns?
+  purpose The rule that stops a protocol estate becoming a taxonomy swamp. Seven hundred and thirty-nine protocols are not seven hundred and thirty-nine integrations; they are a library of typed transition grammars, and a new one earns its place only by adding a relation and not a truth store. Written as an architecture so it can be cited and failed against, rather than as advice.
+  maturity architectural
+  source_path architecture/commons/protocol-commons.yaff
+  source_path cmd/BonfyreExperienceMap/tools/participation_report.mjs
+  source_path components/BonfyreProject/tools/quote-capture.sh
+  source_path components/BonfyreProject/tools/economic-reports.mjs
+  source_path components/BonfyreProject/tools/contract-drive.sh
+  source_path components/BonfyreProject/tools/enact-drive.sh
+  source_path components/BonfyreProject/tools/read-protocol-contract.mjs
+  witness components/BonfyreProject/tests/read_protocol_drive.test.mjs invokes both default shells with real native Lex and mocked Facet, preserves DESCRIBE then QUERY then DISCOVER selection, refuses non-read/domain-derived facets and option-like owner arguments, distinguishes compiler failure from malformed output, and requires attempted successful transport and matching body digest before an enact call; no external effects are executed
+  known_gap native enact still accepts no receipt and does not bind the original observer identity; ACTOR is a caller assertion, retained allow is not current permission, and DB plus evidence-file writes are not one transaction. The Bun retirement does not claim these native boundaries are closed.
+  witness components/BonfyreProject/tests/economic_reports.test.mjs exercises the actual quote-capture shell through bounded Bun retained-file reads, recovers payment-required envelopes from prose bodies, preserves body/header and quote digests, atomically publishes zero-spend quoted receipts, and refuses malformed or oversized inputs without replacing prior output; no fetch, payment or carrier verification occurs
+  consumes ProtocolContract
+  consumes EvidenceGraph
+  publishes ProtocolFacetContract
+  internal_calculus a facet is admitted only if it adds at least one previously unavailable relation from the finite set: DISCOVER, IDENTIFY, AUTHENTICATE, AUTHORIZE, OBSERVE, SYNCHRONIZE, DESCRIBE, QUERY, FILTER, SUBSCRIBE, NOTIFY, TRANSFER, STREAM, PUBLISH, FEDERATE, TASK, COMMAND, NEGOTIATE, QUOTE, COMMIT, PAY, SETTLE, PROVE, VERIFY, ROUND_TRIP
+  internal_calculus compile facets from the phenotype of the thing crossing the fabric rather than from its domain; one object may carry several phenotypes at once, and a domain-keyed compiler degenerates into `if earthquake then FDSN`
+  internal_calculus the ladder is five distinct states and collapsing any adjacent pair is the failure mode: a candidate protocol match is not a compiled ProtocolContract, which is not a ProtocolEnactment, which is not obligations closed, which is not an authorized effect
+  invariant a protocol adds a relation and never acquires ownership of a fact already owned elsewhere; seventeen projections of one earthquake are seventeen carriers over one typed closure and not seventeen earthquakes
+  invariant every owner handoff leaves occurrence-keyed evidence, because a handoff that leaves none is a handoff nobody can measure and a running chain reports as depth zero
+  invariant density is measured as branching and rejoining over one occurrence, not as the longest path; a straight line of eight owners is not denser than six branches that rejoin
+  invariant a source-native carrier and a Bonfyre projection carrier are different facts about different hops; SeedLink is what a seismic source speaks and MOQT is how this estate may deliver an addressed object, and neither substitutes for the other
+  cannot_infer a protocol answering -> the interaction being lawful on this subject for this actor
+  cannot_infer a richer representation -> a more authoritative fact; QuakeML beside GeoJSON is more seismology and not more authority
+  cannot_infer a matching digest or a valid signature -> source truth; RFC 9530 and RFC 9421 carry integrity and communication authenticity, neither of which is correctness or permission to redistribute
+  cannot_infer robots permitting a read -> a licence to republish; an observation right and a rights profile are separate facts
+  cannot_infer a conditional 304 -> the thing not having changed in the world; it says the representation this estate holds is still current
+  cannot_infer a subscription notification -> an observation; a notice is a dirty signal and the source is reread through the admission law
+  cannot_infer a model-derived estimate -> an observed measurement; a PAGER fatality estimate never flattens into observed fatalities
+  cannot_infer an alert-shaped projection -> authority to warn; CAP sits after AuthorityGraph and a red impact estimate is not permission to issue anything
+  cannot_infer public source bytes -> something this estate may charge for; a price may attach to admitted analysis this estate added, never to the observation it read
+  source_path schemas/control/owner-participation.cue
+  source_path cmd/BonfyreExternalEstate/tests/participation_test.sh
+  internal_calculus an owner reports participation as a row carrying the digest of what it read and the digest of what it produced. Neither is decoration: a reader that accepts an axis, an owner and a state at face value lets any owner write itself onto any rung, and the reader did exactly that -- it ended in `return raw`, so a document claiming economic/settled was counted as a settlement
+  internal_calculus the axes are declared with their rungs in one place and the reader refuses a state that is not a rung of its own axis, so a new owner can report without a new reader and cannot invent a ladder for itself
+  invariant an owner emits the lowest rung it actually earned and never one above it; the address plane emits discovery/routable because it can form the address, and refuses capability/eligible because eligibility needs a lowerer that survives an exact cut
+  invariant a rung that requires something this estate cannot grant itself is not emitted from local compilation. semantic/carrier_conformant outranks profile_bound, which requires a retained body, so deriving conformance from declared metadata would launder a rung above one that needs real evidence
+  cannot_infer six axes measured -> six axes deep; every one of them is at its lowest rung, and the estate reports longest_owner_path 2 with rejoin_points 0, which is a tree and not yet a braid
+  cannot_infer an occurrence at depth 1 -> an occurrence that was reached; depth 1 means one owner left checkable evidence about it, and for 4,890 of them that owner read a description rather than a source
+  witness cmd/BonfyreExternalEstate/tests/participation_test.sh runs on every build and proves the refusals rather than the acceptances: a row claiming economic/settled with short digests, a row naming a state that is not a rung of its axis, and a bare row with no schema are each read and none is counted
+  source_path schemas/control/application-kind-facts.cue
+  source_path cmd/BonfyreFacet/tests/grammar_density_test.sh
+  internal_calculus density is relations carried and never names declared. This estate holds thirty string-union grammars and four hundred and thirteen members; fifty-eight of those members appear nowhere but their own declaration, and the widest grammar, #ApplicationKind, had forty-three of fifty-nine dead
+  internal_calculus a grammar earns density by binding to another grammar, not by growing. #ApplicationKind named fifty-nine applications and carried nothing, so the facet compiler -- which types four thousand external occurrences and derives twenty-five relations from their phenotypes -- could not see a single site application. Binding each kind to the phenotypes it is makes the relations follow instead of being restated per capability program
+  internal_calculus a kind carries several phenotypes because a thing is often more than one. A Marketplace is an economic offer and a dataset; a Podcast is a media asset and a versioned record. The compiler already types occurrences with several at once and the binding matches it rather than forcing a single answer
+  invariant the phenotype relation table is emitted by its owner and never re-parsed. It lived only as a multi-line C initialiser, and a line-indexed parse of a table whose rows wrap attributes one phenotype's relations to another -- it reported that a Checkout admits VERIFY and not PAY, which is neither true nor what the table says
+  invariant a binding names only phenotypes the compiler holds; a grammar that binds to a phenotype nothing implements is two vocabularies wearing one name
+  cannot_infer an admitted relation -> a lawful one; admission is what the phenotype can carry and AuthorityGraph decides what may be done with it
+  cannot_infer a bound application kind -> a built application; the binding says what a kind is, not that anything realizes it
+  witness cmd/BonfyreFacet/tests/grammar_density_test.sh runs on every build: every declared kind bound, no binding for an undeclared kind, every phenotype and extent exercised rather than a few carrying all of it, and every kind admitting at least one relation
+  witness fifty-nine application kinds went from zero derivable relations to seven hundred and sixty-six, a mean of thirteen each, reaching all twenty-five relation kinds
+  source_path schemas/control/content-type-facts.cue
+  internal_calculus the estate's own rows enter the relation grammar the same way external ones do. The facet compiler typed 4,891 external occurrences and none of the 54 content types carrying the institution's own data, so it could propose relations for the outside world and nothing for the inside: a media_program could not be known to be a media asset, a pack_demand could not be known to be an obligation
+  internal_calculus the estate is no longer one thing and the grammar says so. Twelve domains -- pack, music, media, community, site, surface, external, spatial, governance, contract, frappe, cms -- are separate bodies of meaning over one relation spine, which is what lets a question be asked across them rather than inside one of them
+  invariant COMMAND is reachable from application kinds and not from content types, because COMMANDABLE_RESOURCE is a device phenotype and nothing the CMS holds is a device. The witness asserts this rather than assuming it, so a content type that ever claims COMMAND has to justify holding a commandable row
+  invariant neither grammar has to reach every relation alone; together they must. Site applications reach all twenty-five and authored rows reach twenty-four, and the pair is what the estate can actually derive
+  cannot_infer a declared phenotype -> a row that exists; several content types carry no rows at all and the binding says what a type is rather than that anything was written into it
+  witness the density witness covers both grammars on every build: 59 application kinds and 54 content types across 12 domains, 1,463 relations derivable, all 25 relation kinds reached
+  known_gap the household audience is bound by no application kind and no content type. Either something household-scoped is unwritten, or that audience belongs to a body other than a site application or an authored row
+  source_path schemas/control/standing-action-facts.cue
+  internal_calculus three vocabularies described the affordance and nothing checked they agreed: the forty-four #ExternalAffordance declares, the thirty-eight the compiler mapped to relations, and the thirty-eight the estate's data carries. Six were declared and mapped to nothing, so a source arriving with SHIP would have contributed nothing to its own facet set and no one would have been told
+  internal_calculus the fourth law is mechanical where it belongs. #StandingAction names twenty-eight things a person does and was read by nothing at all; binding it says which six computation may carry to completion and which twenty-two are a commitment no engine may close on someone's behalf
+  invariant data stays inside its grammar. The witness refuses an affordance the data carries that #ExternalAffordance does not declare, and an affordance the compiler maps that nothing declares
+  invariant anything that moves money, grants authority or discloses is a commitment. BUY, SELL, FUND, APPROVE, APPLY, SHARE, ESCALATE and JOIN are asserted rather than left to drafting care, because an engine that could close them on a person's behalf is what the fourth law exists to prevent
+  cannot_infer a satisfiable requirement -> a permitted action; the relations say what the machine must be able to do for the action to be possible at all, and AuthorityGraph still decides whether this actor may
+  witness the density witness now covers four grammars on every build: 59 application kinds, 54 content types across 12 domains, 44 affordances all mapped in three agreeing vocabularies, and 28 standing actions split six reachable to twenty-two at the human line
+  witness 2026-10-10: the estate had grown to 99 content types with rows and only 57 declared, so the density witness failed on 42 of them. All 42 are now declared in schemas/control/content-type-facts.cue with a household domain added, each given the narrower phenotype where it records something observed, declared or held: an observed offer is filed under external, a role, a need and a requirement are documents and not obligations or capabilities, a session or presence is a recorded event and not a live entity. Density witness: 59 kinds + 99 content types across 13 domains, 2013 relations derivable, all 25 reached; reader agreement and the native witness pass
+  internal_calculus a bound grammar is a description until a protocol can carry it. Ability is the protocol: 739 of them each offer some subset of the twenty-five relations, and a grammar member is executable exactly to the degree that one of them offers what its phenotype admits. `reach` answers this for a phenotype set, which is what a bound grammar has, because `compile` answers it only for an occurrence and an application kind is not an occurrence and never will be
+  invariant every grammar member is servable by at least one protocol. All 141 members across the three bound grammars are, with a range of 310 to 730 protocols each; a member no protocol can serve is a name that cannot be executed however well it is typed
+  witness the protocol census over 739 protocols: QUERY 413, OBSERVE 358, FILTER 240, TRANSFER 213 at the abundant end, and PROVE 14, ROUND_TRIP 14, SETTLE 16, SYNCHRONIZE 31, VERIFY 35 at the scarce end
+  known_gap the machine-readable internet offers reading in abundance and proof almost not at all. The four scarcest relations -- PROVE, ROUND_TRIP, SETTLE, VERIFY -- are exactly the four that turn an observation into a settled and verified fact, and that shape explains this estate's own numbers rather than excusing them: 3,316 observations, 2,344 reads enacted, nothing settled. It is a fact about the corpus and not a defect here, and the witness asserts the scarcity so a change that appears to make proof abundant is looked at rather than believed
+  internal_calculus how many grammars are bound is answered from cue's own normalised definition and not from the source text. Two regex attempts over the schemas gave two different wrong answers: the first called ExternalAffordance and RelationKind bare, which are the two most bound things here, and the second missed every list element type because it required a colon or a space before the reference where the text has a bracket or a dot
+  invariant a vocabulary declared twice is compared twice. The axis set is declared as #AddressAxis and again inside the #AddressTerm pattern, and only the pattern was ever compared with the native plane; all three agree at sixty-eight and the witness now checks all three rather than two
+  witness the measured answer: thirty-one string-union grammars, twenty-nine used inside CUE structures, and two -- AddressAffordance and AddressAxis -- used only from C, where both have real tables. None is genuinely unbound
+  known_gap an earlier note in this entry claimed twenty-six of thirty grammars were unbound. That figure was never measured and is wrong by the width of the claim. CandidateKind is mirrored in C with a witness proving the two sets identical, ExpectedPredicateState is mapped by nativeOwnerPredicateGrammar through owner, opcode and native state, and AddressAffordance is carried by PHENOTYPE_AFFORDANCE. The retraction is kept here because the number was reported before it was checked
+  known_gap SHIP, STORE, CONTROL, RESERVE, FINANCE and NOTIFY are mapped and carried by no occurrence in the estate. The mapping is a prepared answer rather than a measured one, and the first source that carries one will be the first test of it
+  known_gap the law is stated and only partly enforced. The relation vocabulary is not yet a validated field on a ProtocolFacetContract, so nothing refuses a facet that adds no relation; participation_report measures the ladder and does not gate on it.
+  internal_calculus a ForeignTwin receipt is the ExternalEstate handoff and never says so, because the observer records what it saw rather than who handed it the occurrence. Both readers of the evidence must synthesise that edge or neither may; one did and one did not, and the estate's own first hop was absent from every density report it had produced
+  witness cmd/BonfyreFacet/tests/reader_agreement_test.sh runs on every build and holds the two readers to one owner graph over one evidence file: the participation reader and the density reader must agree on the edge count, the longest path and which axes an occurrence reached
+  source_path components/BonfyreProject/tools/enact-drive.sh
+  source_path components/BonfyreProject/tools/quote-capture.sh
+  internal_calculus the rungs above contract_compiled were called unreachable because each needs an actor, an authority or money, and all three existed the whole time pointed at nothing. The one interaction this estate has actually performed is a read, and a read has all three: the actor is the identity the source was shown, the authority is the source's own robots rule, and the money is nothing because a permitted GET of a public representation costs nothing
+  internal_calculus a contract is compiled for the relation that was performed and not for the first one the compiler proposes. Taking the first shape-derived facet produced AUTHENTICATE contracts against a thousand sources nobody authenticated to and PUBLISH contracts against sources whose own receipt says robots allowing a read is not a licence to republish
+  internal_calculus phenotype has a third derivation tier and it is the only one that rests on bytes. Shape reads what a thing is described as and domain reads the neighbourhood it sits in; both were available before anything was fetched and both are guesses. A carrier detected in a retained body is the source saying what it is, and 451 of 519 conformant occurrences were typed by observation after the catalogue had typed them otherwise
+  internal_calculus a price is not a payment. Three sources answered the sweep with HTTP 402 and an x402 envelope, which is a published price, and reading it cost nothing. quoted is rung one of five and committed, paid, settled and reconciled all remain unreached because all four move money
+  invariant no authority is granted by this estate to itself to reach a rung. The read relation reports authority_required false, so the flag that would grant one is not passed and cannot be the reason anything closes
+  invariant a rung is reached only where the evidence still holds at the moment it is claimed: robots allowed, the fetch returned 200, and the retained bytes still hash to what the receipt recorded. A body that has drifted from its receipt is skipped rather than enacted on a weaker basis
+  cannot_infer an enacted read -> a licence to republish or derive, or authority over anything else that source offers
+  cannot_infer obligations_closed -> the source agreeing that they were; the obligations of a permitted read were discharged at request time and this records that, it does not negotiate it
+  cannot_infer a quote -> an intention to pay, a budget, or a fair price
+  witness components/BonfyreProject/tools/enact-drive.sh enacted 2,338 reads under published permission with zero spend, and refused 835 that were not permitted or never fetched
+  known_gap the braid branches and does not rejoin. branch_points is 1 and rejoin_points is 0, because every rung that would join two owners into a third needs an observation, an authority or a price. The rejoin is not missing work; it is work that cannot be done without leaving this machine.
+  known_gap the economic axis has five declared rungs and three quotes. The earlier reading -- that a quote needs a price from a carrier this estate does not hold -- was true of the carriers and false of the sources: three answered with HTTP 402 and a published price. The other four rungs move money and remain unreached, which is a decision and not a limitation.
+  known_gap 146 facts are produced by an architecture nothing consumes and 55 are consumed by an architecture nothing produces. Those pairs are where the rejoin would come from, and until they are closed the estate is a set of owners that each report separately rather than a machine that hands work along.
+  known_gap phenotype compilation is described and unbuilt. Facets are still authored per protocol family rather than selected from the phenotypes an occurrence carries, so the abstraction jump this entry names has not been taken.
+
+architecture protocol-facet-compiler
+  canonical_name ProtocolFacetCompiler
+  family commons
+  domain Commons / Protocol
+  layer compiler
+  semantic_question Given what this occurrence is, which protocols could lawfully add a relation to it that the machine does not already have?
+  purpose The abstraction jump ProtocolDensityLaw named and did not take. Facets compile from the phenotype of the thing crossing the fabric rather than from its domain, so 739 protocols stop being 739 integrations and become a library of typed transition grammars. One object carries several phenotypes at once and each opens different lawful facets.
+  maturity measured
+  source_path schemas/control/protocol-facet.cue
+  source_path cmd/BonfyreFacet/src/main.c
+  source_path cmd/BonfyreFacet/tests/facet_test.sh
+  source_path cmd/BonfyreExperienceMap/src/protocol_derivation_bridge.c
+  source_path cmd/BonfyreExperienceMap/tools/participation_report.mjs
+  consumes ExternalEstateIndex
+  consumes ProtocolContract
+  publishes ProtocolFacetContract
+  internal_calculus a facet is the intersection of three things: a phenotype the occurrence carries, a relation the protocol offers, and that relation being meaningful for that phenotype. Drop the phenotype and this is domain matching; drop the protocol's own offer and it invents capability; drop the meaningfulness table and a payment protocol acquires a relation over a weather field
+  internal_calculus phenotypes are derived from evidence the corpus already carries and already witnesses -- candidate affordances, estate roles, topic domains, the spatial classification -- rather than from a fresh reading of the same descriptions, which would be a second opinion with no extra evidence behind it
+  internal_calculus evidence comes in two tiers and they are never merged. Shape evidence is an affordance or role that names what the thing is and is sufficient alone. Domain evidence says what a domain is mostly made of -- a deed, a permit, a policy and an invoice are versioned records, so law, government, housing and finance carry VERSIONED_RECORD -- and is weaker, so every facet records which tier admitted it
+  internal_calculus a facet names the protocol families its phenotype is usually carried over, so it says which relation is possible and over what; AddressPlane still addresses affordances and never protocol names
+  internal_calculus invalidation is per phenotype because density is only affordable if it is precise: a moving thing is invalidated by moving and not by a price changing, and more protocol projections must not mean more recomputation
+  internal_calculus AddressPlane coordinates for a facet are affordances and never protocol names; a live bus and a private physiological reading share temporal:live and are separated by InformationPolicy and Authority rather than by routing vocabulary
+  invariant the relation and phenotype vocabularies are finite and declared once in CUE; the compiler's own lists are compared against that declaration, because two independently maintained copies is how a finite vocabulary stops being finite
+  invariant a compiled facet claims candidate_match and nothing higher unless something witnesses the next rung; promotion to contract_compiled requires the facet to be one this compiler would emit, a ForeignTwin receipt for that exact occurrence whose body still hashes to it, and a registration performed by the native ProtocolContract owner
+  invariant the program count on a compiled contract is what the native registrar returned and never a number chosen by the promoter
+  invariant a protocol binding carries the digest of the domain binding under it and the domain binding carries the digest of the receipt under that; a contract with nothing beneath it does not verify
+  invariant a contract's shape follows its relation; describer/compiler/reader is lawful for a read and wrong for anything that changes something, so COMMAND, TASK, COMMIT, PAY, SETTLE, AUTHORIZE, PUBLISH, TRANSFER and FEDERATE construct an authority-bearing acting role and a read does not
+  invariant an obligation is opened only where the relation creates one, so closing has something real to discharge rather than nothing
+  invariant obligations and evidence are separate axes and neither is rounded up; an exchange is reported closed only when its obligations are terminal and its required claims presently stand
+  invariant granting authority is an institutional act and is never implied by asking to enact; without a grant the authorize step refuses and names the role that lacks the permission
+  invariant discharging an obligation is an act someone performs; recording is never delivery, so enactment does not discharge and closure is unreachable without it
+  invariant domain evidence may carry a candidate facet and may not carry a compiled contract on its own; a contract asserts a shape for this source rather than for sources like it, and an override is recorded on the binding so the weaker basis stays visible
+  invariant the phenotype that admitted a relation is resolved the same way everywhere, preferring shape evidence; two answers to which phenotype admitted a facet would make the derivation tier meaningless
+  invariant a facet defers to the owner of every fact it touches and acquires none of them; it names those owners rather than implying them
+  invariant only affordances that say what a thing is may derive a phenotype; an affordance describing how a source is reached says nothing about its shape
+  invariant a facet names the phenotype that admitted it and the tier that evidence came from; a facet that cannot is a domain match wearing a phenotype label
+  invariant acceptance is every domain the corpus carries, not a favourable specimen per domain; a domain that compiles nothing must be visible in the report rather than omitted from it
+  invariant this compiler plans observations and never performs one; it says which occurrence is worth a request and ForeignTwin decides robots, retains bytes and writes the receipt
+  cannot_infer a candidate facet -> a compiled contract, an enactment, closed obligations, or an authorized effect
+  cannot_infer a protocol offering a relation -> that protocol being reachable, admitted, or lawful on this subject for this actor
+  cannot_infer 7.1 million candidate facets -> 7.1 million available interactions; this is candidate adjacency across the estate and realized participation is measured separately and is far smaller
+  cannot_infer a phenotype -> an observation; a phenotype is a shape read off a description and no position, measurement or record follows from it
+  cannot_infer a phenotype distribution of zero -> the phenotype being wrong; this corpus carries no evidence shaped like it, which is a fact about the corpus
+  witness cmd/BonfyreFacet/tests/facet_test.sh holds the compiler to the declaration and to the ladder: its 25 relations and 15 phenotypes are compared byte for byte against schemas/control/protocol-facet.cue, no protocol name appears in any AddressPlane coordinate, an OccurrenceBraidInput declares actor context and authority cut absent rather than defaulting them, every compiled facet is candidate_match and validates against #ProtocolFacetContract, every facet defers to ForeignTwin and AuthorityGraph and names what invalidates it, an earthquake feed is never offered COMMAND whatever a protocol claims, and a corpus that cannot be read fails rather than reporting an empty estate (36 assertions)
+  witness cmd/BonfyreFacet/tests/facet_test.sh measures full depth across the estate: 4,891 occurrences against the 739 protocol occurrences among them yield 7,124,689 candidate facets in about 0.3 s, with all 15 phenotypes and all 25 relations present in the distribution so an unpopulated one is visible rather than absent
+  known_gap phenotype derivation inherits the precision of the affordance layer beneath it. EVENT reaches only 132 occurrences because the corpus assigns ALERT and REPORT sparsely, which is why the USGS earthquake feed is a DATASET and a SPATIAL_RESOURCE and not an EVENT; hand-correcting that one source would be the `if earthquake then FDSN` failure wearing the opposite coat.
+  known_gap SUPPLY_CHAIN_OBJECT derives from nothing. Its candidate signals were measured as false positives and removed, and no estate role names the shape, so the phenotype is declared and unpopulated.
+  known_gap a facet carries no carrier candidates and no representation requirements. Both fields exist in the contract and the compiler leaves them empty, so a facet says which relation is possible and not yet over what carrier or in which representation.
+  witness cmd/BonfyreFacet/tests/facet_test.sh proves the generalization spans the machine rather than one specimen: all 61 topic domains the corpus carries compile candidate facets, every domain the brief names across mobility, energy, manufacturing, medicine, finance, media, research, buildings, law, food, telecommunications, computing and retail among them, the larger domains exercise all 15 phenotypes and all 25 relations, and no phenotype or relation in the vocabulary is left at zero across the estate
+  witness cmd/BonfyreFacet/tests/facet_test.sh proves a facet is carried and invalidated precisely: a LIVE_ENTITY facet names GTFS-RT, SIRI, FIXM, AIS, MOQT and MQTT as carriers, is invalidated by position and trip changes, and is not invalidated by a price change; every facet names the phenotype that admitted it and whether that came from shape or from domain evidence; and the shape tier is a subset of the total so a merged report cannot hide which evidence did the work
+  witness cmd/BonfyreFacet/tests/facet_test.sh measures the estate at full depth: 4,891 occurrences against the 739 protocol occurrences among them compile 10,327,712 candidate facets in about 0.4 s, with 4,880 of 4,891 carrying at least one phenotype and all 61 domains represented
+  witness cmd/BonfyreFacet/tests/facet_test.sh proves the rung and the three refusals that give it meaning: a promotion emits a domain binding then a protocol binding with a verifying digest chain from receipt to semantic record to domain binding to native registration receipt; a relation the phenotype does not admit is refused; a receipt observing a different occurrence cannot be borrowed; and a body that has drifted from its receipt compiles nothing
+  witness cmd/BonfyreFacet/tests/facet_test.sh proves the rung is not a specimen: two occurrences in different domains compile differently named contracts through the same code path, each naming the phenotype that admitted it and the evidence tier that phenotype came from
+  witness cmd/BonfyreExperienceMap/tools/participation_report.mjs measures ten occurrences across ten domains -- buildings, energy, finance, food, law, manufacturing, medicine, research, telecommunications and vehicles -- at braid_depth 3 over ExternalEstate to ForeignTwin to DomainProfile to ProtocolContract, against a prior estate in which exactly one occurrence could reach 3 because the report required the contract to be literally ogc-api-common-observation with exactly three programs
+  witness cmd/BonfyreFacet/tests/facet_test.sh proves the whole ladder is produced by the owner that owns each rung: authorize refuses and names the role lacking the permission until an AuthorityGraph grant exists, bf_protocol_contract_enact_authorized opens the obligation the relation creates, evidence standing alone leaves it outstanding, discharging alone leaves it outstanding, and only both together reach obligations_closed through bf_protocol_contract_close
+  witness cmd/BonfyreFacet/tests/facet_test.sh proves the contract shape follows the relation: every read facet carries no authority requirement and every facet whose relation changes something carries one, and each names the representations its phenotype is carried in
+  witness cmd/BonfyreFacet/tests/facet_test.sh proves domain evidence cannot carry a contract alone: a relation admitted only by a domain-tier phenotype is refused, the same promotion succeeds when the weaker basis is named, and the binding records that it was domain evidence
+  witness cmd/BonfyreFacet/tests/facet_test.sh proves interpretation is not observation: 4,880 occurrences receive occurrence-keyed semantic evidence at the interpreted rung, none claims profile_bound, none claims the observation axis, and an occurrence with no phenotype is left alone rather than given an empty one
+  known_gap effect_authorized is an AuthorityGraph grant this estate wrote for itself. Nothing external has delegated any of these permissions, so the rung proves the gate works and not that anyone outside has authorized anything.
+  witness cmd/BonfyreFacet/tests/facet_test.sh compiles an observation plan over the whole corpus: 4,891 occurrences carrying an http(s) address, grouped by host so a driver can pace itself per host without sorting, and ordered within a host by how many candidate facets each would unlock so a partial sweep spends its requests where they matter
+  known_gap the plan orders by candidate facets, which is a measure of what this estate would gain and not of what a source wants. A source that publishes reluctantly and a source that publishes generously sort the same way.
+  known_gap the eleven occurrences this compiler cannot type carry no facets and therefore sort last, which is the wrong end: they are the ones an observation would teach the most about. Ordering cannot fix it, because phenotypes are read from the corpus description rather than from an observed body, so observing them changes nothing until a DomainProfile reads the bytes.
+  known_gap eleven occurrences carry no phenotype at all and stay at depth zero. Their descriptions name a shape this compiler cannot read, which is a fact about those eleven descriptions.
+  known_gap density reads explicit from_owner and to_owner pairs and does not reimplement the participation report's schema-specific normalizer; a receipt that only carries a twin_id contributes no edge here. Two normalizers would be two opinions, so the gap is recorded rather than closed by duplication.
+
+architecture text-extraction-rules
+  canonical_name TextExtractionRules
+  family commons
+  domain Commons / Text
+  layer law
+  semantic_question Where in this document is that value, and who decided the answer?
+  purpose The rule that stops every call site inventing a parser. This estate had 163 hand-rolled field extractors in C and 49 grep, sed and awk extractions across its witnesses, each written at the moment it was needed by someone thinking about something else. Two were wrong in ways nothing could notice, and both were the same wrongness: an undeclared text rule failing quietly.
+  maturity measured
+  source_path schemas/control/text-rules.cue
+  source_path cmd/BonfyreLex/src/bf_lex.h
+  source_path cmd/BonfyreLex/src/main.c
+  source_path cmd/BonfyreLex/tests/lex_test.sh
+  source_path cmd/BonfyreLex/tests/bf_lex_test.c
+  source_path cmd/BonfyreWebAddress/src/source_depth_projection.c
+  source_path cmd/BonfyreWebAddress/src/main.c
+  source_path cmd/BonfyreAtlas/src/main.c
+  consumes ForeignTwinGraph
+  publishes ExtractionRule
+  internal_calculus one implementation per field kind and no more: a JSON string with its escaping, a JSON scalar as written, an HTTP header matched case-insensitively, one relation out of a multi-relation Link header, a tab column, a whitespace-separated report column, an indented yaff field, a percent-decoded query parameter, a command-line flag. A call site names a ruleset and a field and never a key, an escaping rule or a document shape
+  internal_calculus writing is a field kind too. Nineteen copies of the JSON emitter held sixteen different opinions about escaping, and reading them back was never the check on them; one document per binary was simply assumed well-formed
+  internal_calculus a key is addressed at the depth it is written, and a path addresses it exactly: session.token is the token of the session rather than whichever token the document happens to carry first. A flat search finds a key at any depth and inside any value, which is how a record was selected by an address nested in its own profile
+  internal_calculus a document is a sequence of records whether it is written one per line or all on one, so selecting a record by one of its fields and reading another is a declared shape rather than a substitution spanning a line
+  internal_calculus the vocabulary lives in CUE and is exported rather than restated in C; a second copy would be a second vocabulary, which is the thing being fixed
+  internal_calculus a receipt file is a log, so a ruleset can be read at its newest line rather than its oldest; reading the oldest is how a superseded validator kept being handed back to sources
+  invariant absent, present-and-empty, and present are three different answers and are never collapsed; a missing required field fails loudly rather than yielding an empty string that reads like a legitimate value
+  invariant a value too long for its buffer is reported as too long and never as absent; testing capacity before the closing quote reported a 64-character digest missing, which read as a receipt with no digest
+  invariant a request for a field nobody declared lists what is declared rather than returning empty; an extractor that answers questions it was never given a rule for is guessing
+  invariant undeclared keys in a document are reported and never discarded in silence
+  invariant a control character never reaches a document unescaped and never disappears from one; a writer that drops a newline has edited the content, not the encoding
+  invariant a bounded escape truncates before an escape sequence and never through one; a document cut mid-\u is a document nothing can read
+  invariant what this estate writes, this estate can read back: the emitter and the reader are exercised against each other on the same awkward bytes rather than each being assumed correct alone
+  invariant shared HTML text emission writes ordinary spans at once and escapes ampersand, angle brackets, and both quote styles; WebAddress does not emit each ordinary byte through a separate stdio call
+  cannot_infer an undeclared key -> a key that should not exist; it is a key nobody wrote a rule for, and whether the fix is a rule or a rename is not something the reader can tell
+  cannot_infer a document with no missing required fields -> a well-formed document; the check knows the fields it was told about
+  cannot_infer a declared ruleset -> the document conforming to the schema it names; the ruleset says where to look and not what is true
+  cannot_infer one shared reader -> one correct reader; it means disagreement is now a single decision that can be examined, and a decision made once can still be made wrongly
+  cannot_infer a converted call site -> a call site whose caller wanted what the shared implementation does; three witnesses were converted and immediately failed, which is how their silent emptiness was found rather than a sign the conversion was safe
+  witness cmd/BonfyreLex/tests/lex_test.sh proves the two failures that motivated this are closed by construction: an ETag containing escaped quotes reads back whole, a 64-character digest in a 65-byte buffer reads as a value rather than an absence, a receipt log can be read at its newest line, a redirect chain's final header block wins over an earlier one, an empty trailing tab column is present and empty, a request for an undeclared field lists the declared ones, and a document carrying keys nobody declared reports them by name (31 assertions)
+  witness components/BonfyreProject/tests/http_envelope_test.sh exercises the shared reader in its first real caller: ForeignTwin's receipt reader is now bf_lex and conditional re-observation returns 304 and repeat_observed against a live source
+  witness cmd/BonfyreLex/tests/bf_lex_test.c holds 84 assertions, including a shared HTML emission check for both attribute quote styles alongside the JSON, receipt, and query reader cases
+  witness make all builds 111 of 112 binaries and runs each organ's own witnesses; the one failure is an unrelated generated symbol another agent has not emitted yet. The conversion is exercised by whatever each organ already proves rather than by a claim about it
+  witness cmd/BonfyreWebAddress/tests/auth_surface_test.sh passes on a real user id. It read a fixed-width report table with a JSON substitution, which matched nothing; sed exited 0, the variable was empty, and the witness asserted on the empty string and passed for as long as it had existed
+  known_gap four rulesets are declared and the estate has many more shapes. The duplication is closed: 48 C sources and 7 witnesses reach 137 call sites through the one implementation, and the estate's other shared reader, bf_json_str with 47 callers, delegates to it rather than disagreeing with it.
+  known_gap three readers are deliberately not converted. BonfyreAuth's json_field is stricter than the shared one on purpose -- it refuses an unknown escape, a control byte and an empty value, because it is reading a credential rather than a document. BonfyreWebAddress's studio_json_string carries a JSON path and a form-encoded fallback in one function and another agent is working in that file. BonfyreFPQ's legacy_from_10code tree is excluded from the build entirely. All three are named here rather than left unmentioned.
+  known_gap array iteration is not a declared shape. BonfyreGraph walks an array of objects and BonfyreVec scans a list of ids, both by hand, because bf_lex addresses a field and a record and not yet a sequence.
+  known_gap two writers remain and both are deliberate. BonfyreBitNet accumulates into its own buffer rather than writing to a stream, and BonfyreTranscriptClean and BonfyreBrief unescape lossily on purpose -- a transcript wants a newline as a space, not as \n. Neither is the shared shape, and declaring them as one would be the laundering this file exists to prevent.
+  known_gap the rules declare where a field is and the emitters declare how a value is written, and nothing yet declares which documents this estate produces. `check` can say a document carries an undeclared key; it cannot say a binary emitted a document no ruleset describes.
+  known_gap the atlas reports the field keys it stores and never reads and does not refuse them. Refusing would fail CI on 272 lines authors already wrote, so the loss is now visible and still present.
+
+architecture marketplace-observation
+  canonical_name MarketplaceObservation
+  family commons
+  domain Commerce / Observed marketplace material
+  layer material
+  semantic_question What does observing a marketplace feed entitle this estate to say about an exchange, and what does it not?
+  purpose Reads shopping feeds as commerce rather than as news. A marketplace lot becomes an exchange on the fifteen-stage chain, with exactly the two stages an observation establishes, and the thirteen it does not shown with the party who alone could establish each.
+  maturity implemented
+  node_types MarketplaceLot
+  node_types ObservedExchange
+  edge_types establishes
+  edge_types outstanding_on
+  internal_calculus a lot is told from an article by its address: a marketplace reserves a path for lots, and editorial in the same feed is not a lot whatever it is called
+  internal_calculus an observation establishes product and listing and nothing further; inventory belongs to the merchant's system of record, availability to a receipted observation, offer and quote to the merchant, and everything past checkout to the buyer, the rails and the carrier
+  internal_calculus the thirteen unestablished stages are the honest answer to what can be done here -- not a button this estate owns, but the next fact and the party entitled to establish it
+  invariant stages are recorded through the commerce organ, which requires exactly the prior stage, so no projection can invent a transitive completion
+  invariant a price this estate has not observed is shown as not observed, never as zero and never as the merchant's asking price
+  invariant every dated lot is materialized once through BonfyreCMS as a root service_offer keyed by its exchange; it remains OBSERVED/observed/published and carries the retained source receipt, rather than becoming a presentation-owned row
+  forbidden_inference an observed lot -> the thing exists, is in stock, is the seller's to sell, or is still obtainable
+  forbidden_inference a listing this estate shows -> a price, an offer, or terms available to any particular buyer
+  forbidden_inference showing an exchange -> this estate performing any part of it
+  source_path cmd/BonfyreCommerce/src/main.c
+  source_path cmd/BonfyreCMS/content-types/service_offer.json
+  source_path scripts/project_listings.py.archive
+  source_path scripts/project_listings.mjs
+  source_path scripts/publish_market.py.archive
+  source_path scripts/publish_market.mjs
+  source_path scripts/tests/project_listings_owner.test.mjs
+  source_path scripts/tests/publish_market_owner.test.mjs
+  source_path scripts/tests/project_listings_owner_test.py.archive
+  source_path scripts/tests/publish_market_owner_test.py.archive
+  witness scripts/tests/project_listings_owner.test.mjs proves repeated listing projection writes one CMS-owned observed offer without duplicating it
+  witness scripts/tests/publish_market_owner.test.mjs proves the market page reads the canonical CMS offer and excludes a disagreeing legacy commerce_lot
+  witness 2026-09-19 bringatrailer.com had been admitted and filed under news; 48 lots were typed as commerce and 1 editorial post in the same feed was left alone, establishing 96 stages through the organ with none refused
+  witness 2026-09-19 the organ refuses a skipped stage in practice: recording payment on a fresh exchange answers "payment requires commitment to be established first", and product then listing succeeds, leaving 13 outstanding each naming its owner
+  witness 2026-09-19 /market publishes the chain for every observed lot at aurekai.shop and the other worker-served territories, showing established stages with what each still does not establish
+  witness 2026-09-22 the local estate projected 48 dated Bring a Trailer observations to 48 unique root service_offer rows, all OBSERVED/observed/published, established 96 lawful commerce stages with none refused, and rendered a 48-lot market page from those owner rows; project_listings_owner_test proves a repeat pass updates rather than duplicates and publish_market_owner_test proves a disagreeing commerce_lot compatibility row cannot reach the public page
+  witness 2026-09-29 scripts/tests/publish_market_owner_test.py.archive with BONFYRE_VERIFY_LEGACY=1 proved the Bun renderer emitted the same owner-backed market HTML byte-for-byte as the historical Python renderer while refusing the stale commerce_lot row
+  known_gap bf_commerce_record had no caller anywhere in the estate before this; the chain was measured against all 225 stage pairs and run by nothing, so this is its first use rather than a long-standing path
+  known_gap no price is observed for any lot: the feeds carry titles and addresses only, and reading a lot page for its current bid is a further observation this estate has not made
+  known_gap only five marketplaces have a lot-address pattern, so a shopping feed outside that list is still read as whatever it was filed as
+  interacts marketplace-observation-prices-through-the-membrane
+
+interaction marketplace-observation-prices-through-the-membrane
+  source marketplace-observation
+  destination financial-metabolism
+  relation observed_price_is_not_an_accrual
+  preserves the separation between what this estate's own reading costs and what a merchant asks for a thing it is selling
+  drops any path by which a merchant's asking price could enter this estate's accrued use, or an accrual could be read as an amount owed to a merchant
+  forbidden_inference a price observed in a listing -> a cost this estate incurred, an amount it owes, or a price it offers
+  witness 2026-09-19 /market and /economics are separate surfaces that link to each other; no lot price enters the meter, and no metered accrual appears against a lot

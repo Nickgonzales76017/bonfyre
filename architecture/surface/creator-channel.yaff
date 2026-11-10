@@ -1,0 +1,33 @@
+architecture creator-channel
+  canonical_name CreatorChannel
+  family surface
+  domain Media / Creator channel
+  layer surface
+  semantic_question How can a creator program compose published media into a channel without making the channel a media, rights, delivery, community, analytics or proof owner?
+  purpose Native creator-channel owner. It records a channel's creator binding, visibility, Community reference, current published MediaProgram memberships and actor-specific ChannelSubscription. It compiles a Watch/Shorts/Live/Playlists/Community human surface and typed AddressPlane advertisement.
+  maturity measured
+  owns CreatorChannel
+  owns ChannelPublication
+  owns ChannelSubscription
+  consumes MediaProgram
+  consumes ActorClosure
+  consumes Community
+  publishes ChannelSurfaceProjection
+  node_types CreatorChannel
+  node_types ChannelPublication
+  node_types ChannelSubscription
+  node_types ChannelSurfaceProjection
+  edge_types publishes_media_program
+  edge_types subscribes_to_channel
+  edge_types projects_channel_surface
+  internal_calculus creator channel x currently published CMS MediaProgram x ActorClosure -> channel surface / ChannelSubscription | refusal
+  invariant a ChannelPublication can reference only a current CMS MediaProgram whose subject and publication status exactly match; it never copies media identity or bytes into the channel store
+  invariant external subscribe/unsubscribe derives the actor solely from the current BonfyreAuth ActorClosure; a supplied raw actor is not a public channel API
+  invariant a ChannelSubscription records a bounded audience relationship only; it is not notification delivery, a social relationship authority, a playback right or a watch event
+  invariant a ChannelSurface filters every listed membership through the current CMS publication state, so a later-unpublished MediaProgram disappears without the channel asserting it remains playable
+  forbidden_inference a channel listing -> media ownership, a playable representation, bytes delivered, a live session, a view, a subscriber notification, comment admission, monetization, creator payment or watch proof
+  source_path cmd/BonfyreChannel/src/main.c
+  source_path cmd/BonfyreChannel/tests/channel_test.sh
+  witness cmd/BonfyreChannel/tests/channel_test.sh proves a native channel can bind only current published video/live MediaPrograms, exposes its creator-channel surface, binds subscribe/unsubscribe through a real Auth ActorClosure, refuses private-channel subscription and emits forwarding-only advertisements
+  source_lineage YouTube-shaped creator grammar composed from native CMS MediaProgram, Auth ActorClosure, Community and separate MediaLibrary/MediaDelivery/MOQT owners
+  known_gap upload/ingest, comments/moderation, search/recommendation, notification delivery, analytics, creator economics, HLS/DASH/MOQT delivery, live object relay, playback completion and watch proof remain distinct owners

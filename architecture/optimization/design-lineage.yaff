@@ -1,0 +1,104 @@
+atlas optimization-design-lineage
+
+architecture architecture-claim
+  canonical_name ArchitectureClaim
+  owns ClaimIdentity
+  owns ClaimStatus
+  owns VerificationState
+  consumes Measurement
+  consumes AnalysisUniverse
+  publishes ClaimStatus
+  publishes DesignLineage
+  family optimization
+  domain Optimization / Design lineage
+  layer governance
+  semantic_question Where did this architectural claim come from, what evidence stands behind it now, and what would falsify it?
+  purpose Stop managing architecture by latest-document-wins. A claim carries its origin, its reason, its evidence, its measurements and the universe those measurements were taken under, so a correction revises a claim rather than silently replacing a whole design.
+  maturity architectural
+  node_types ArchitectureClaim
+  node_types DesignLineage
+  node_types Correction
+  node_types VerificationState
+  edge_types supersedes
+  edge_types contradicts
+  edge_types corrects
+  edge_types depends_on
+  edge_types evidenced_by
+  invariant a claim carries its origin, original reason, semantic scope and blast radius
+  invariant a claim carries a verification state distinct from its implementation state and its proof state
+  invariant a newer document does not supersede an older claim; only evidence or an explicit supersession does
+  invariant a correction revises the claim it targets and leaves the lineage intact; retraction is recorded, never deleted
+  invariant a local success never silently shrinks a larger design; narrowing scope is itself a claim requiring evidence
+  invariant a claim derived from a document is VERIFIED only when something on disk or a measurement confirms it
+  invariant an inventory recovered from a design document is ASSERTED until independently checked, however authoritative the document
+  forbidden_inference the most recent summary -> the current architecture
+  forbidden_inference a claim being long-standing -> that claim being verified
+  forbidden_inference a claim being unverified -> that claim being wrong
+  forbidden_inference a proving workload succeeding -> the wider machine being reducible to it
+  forbidden_inference absence from a recent summary -> removal from the design
+  interacts readiness-state
+  interacts analysis-universe
+  interacts optimization-proof
+  source_lineage Generation-10 no-prune recovery, 2026-08-26
+
+claim_field identity
+claim_field origin
+claim_field origin_artifact
+claim_field original_reason
+claim_field semantic_scope
+claim_field status
+claim_field verification_state
+claim_field supporting_evidence
+claim_field measurements
+claim_field measurement_universe
+claim_field corrections
+claim_field contradicts
+claim_field supersedes
+claim_field superseded_by
+claim_field dependencies
+claim_field validity_envelope
+claim_field implementation_state
+claim_field proof_state
+claim_field blast_radius
+claim_field promotion_state
+
+status PROPOSED
+status STANDING
+status REVISED
+status RETRACTED
+status SUPERSEDED
+status DORMANT
+  detail Designed, unimplemented, not contradicted. Absence from recent work is not evidence against it.
+
+verification_state VERIFIED_ON_DISK
+  detail Something in the working estate confirms it.
+verification_state VERIFIED_BY_MEASUREMENT
+  detail A measurement over a named universe confirms it.
+verification_state ASSERTED_FROM_DOCUMENT
+  detail Stated in a design artifact; not independently checked.
+verification_state ASSERTED_BY_INFERENCE
+  detail Concluded from adjacent evidence rather than direct observation. The weakest state and the one that produced this session's two retractions.
+verification_state CONTRADICTED
+
+lineage_field claim
+lineage_field ancestors
+lineage_field descendants
+lineage_field surviving_invariants
+lineage_field invalidated_assumptions
+lineage_field realized_bindings
+lineage_field current_evidence
+
+correction_rule a retraction records what was claimed, what was checked, what was found and what the claim becomes
+correction_rule a claim contradicted by measurement is REVISED toward what the measurement supports, not deleted
+correction_rule the workload that produced a correction is recorded, because it predicts where the next correction will come from
+
+registry_note the live atlas and the frozen canonical estate are two registries; a claim present in one and absent from the other is a registry gap, not an absent design
+registry_note a claim may be simultaneously DORMANT in the atlas and VERIFIED_ON_DISK in the canonical estate
+
+interaction lineage-gates-supersession
+  source architecture-claim
+  destination readiness-state
+  relation supersession_constraint
+  preserves the origin, reason and evidence of every prior claim across a revision
+  drops any supersession justified only by recency
+  forbidden_inference a later and more detailed description -> a superseding claim

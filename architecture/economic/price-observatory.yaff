@@ -1,0 +1,32 @@
+architecture price-observatory
+  canonical_name PriceObservatory
+  family economic
+  domain Economic / What things cost, according to whoever published it
+  layer store
+  semantic_question What does this estate know about the price of anything, and who said so?
+  purpose Prices gathered from publishers that state their own openly and in machine-readable form, across cloud compute, model inference, government awards, pharmacy acquisition cost, shop prices contributed by the people who paid them, and the figures written into a public knowledge base. Each entry carries the endpoint that stated it.
+  maturity measured
+  node_types ObservedPrice
+  node_types PriceSource
+  edge_types stated_by
+  internal_calculus this is not the meter and must never be read as one. A rate applies to usage this estate performed and lives in the meter in units it can actually apply; admitting a drug's unit cost or a government award there would corrupt what accrual means
+  internal_calculus a source qualifies on one property: the publisher quotes itself, openly, without a key. Nothing is scraped from a marketing page, averaged across competitors, or carried forward because it looked stable
+  internal_calculus a price of zero or below is not recorded as free; it is the publisher declining to sell that way, and recording it as a price would be a claim
+  internal_calculus a unit stated as a knowledge-base identifier is kept as stated rather than guessed into a currency
+  internal_calculus the native collector checks each source's robots policy through the existing SourceFrontier parser before any price request, and refuses pagination that leaves the declared source origin; the former Python collector only claimed to honor robots in its user agent
+  invariant every entry carries the endpoint and the date that stated it
+  forbidden_inference an observed price -> a price this estate has been quoted, will be charged, or that anyone paid
+  forbidden_inference an observed price -> a rate; rates are admitted separately and apply only to usage this estate performed
+  forbidden_inference the absence of a publisher -> that it is free; a publisher stating no price is absent rather than assumed
+  source_path scripts/observe-prices.mjs
+  source_path scripts/price-observation.cue
+  source_path scripts/public-source-fetch.mjs
+  source_path cmd/BonfyreWebAddress/src/main.c
+  witness 2026-09-26 23,954 prices held from six published lists, by 122 publishers in 94 currencies: 8,975 medicine from the Medicaid NADAC survey, 6,739 catalogued from Wikidata P2284 through the qlever channel this estate had already admitted, 3,896 consumer from Open Prices across 60 shops, 1,984 government awards from USAspending, 1,498 compute from Azure retail, and 862 inference from OpenRouter across 58 model publishers
+  witness 2026-09-26 served natively at /s/prices/observed, every kind shown with its range and the list it was read from, and sample entries printed with the sentence that admitted each
+  witness scripts/tests/observe_prices.test.mjs covers all six source families, zero-price exclusion, stated Wikidata units, idempotent SQLite publication for WebAddress, robots denial, and off-origin pagination refusal; fixture witness only, not a new live six-source pull
+  witness scripts/tests/price_install.test.mjs stages the collector, its CUE policy and shared public-source gate on a target layout without Python
+  known_gap the HTTP 402 sweep this began as found nothing: twelve API-shaped endpoints asked, none stated a price. The mechanism is right and 402 is simply rare in the wild, which is why the published-list sources carry this instead
+  known_gap Azure paginates and a long pull drops it; one run held 1,498 of a list with hundreds of thousands
+  known_gap nothing reconciles two publishers pricing the same thing, so the store can hold disagreeing figures without saying they disagree
+  known_gap the native collector has not replayed the historical six-source live pull; source API drift and rate limits remain an external-state boundary

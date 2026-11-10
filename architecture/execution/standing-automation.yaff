@@ -1,0 +1,63 @@
+atlas execution
+
+architecture standing-automation
+  canonical_name StandingAutomation
+  family execution
+  domain Execution / Standing Work
+  layer execution
+  semantic_question Which work that was being done by hand now runs on a clock, what does each run record, and what must still wait for a person?
+  purpose One runner for the estate's standing work, recorded rather than assumed. Daily: the census read as items exactly as the pages read it; every item projected into the words chart, skipping words that have not changed; mentions and film identities written as typed relations; a bounded number of new recordings sampled into the sound charts; the contribution receipt for every public route landed on the source ledger; the ledger's typed gaps, attention plan and starvation diagnostics refreshed; credentials the estate can generate generated and every ready provider checked. Weekly: live sources compiled from identity and admitted through the CMS binary; every inventory imported into the source ledger with its provenance; machine channels named inside retained bodies recorded as shadow candidates; public catalogues enumerated into virtual channels; a slice of source hosts asked what their APIs require. Every step runs even when an earlier one fails, and each run is written under the automation directory with each step's outcome.
+  maturity implemented
+  consumes InternetCensus
+  consumes SourceFrontier
+  consumes LatentCoordinateAtlas
+  consumes CredentialBoundary
+  publishes AutomationRun
+  node_types AutomationRun
+  node_types AutomationStep
+  invariant a retained body is kept as gzip once it is half a day old, where every reader already takes it: a three-day raw window meant almost nothing was ever compressed, because a body is only rewritten when its source is read again, and that is why the estate kept filling its disk
+  invariant reclaim compresses only aged material and refuses database, key and JSON receipt suffixes even inside an operator-supplied directory; scratch pruning is confined below a temporary root and skips current or named-kept work
+  invariant the estate warms its own composed pages at the end of every run, after everything that could change one: it composes exactly what a request composes, reads no source and admits nothing
+  invariant every step runs independently: one step's failure is recorded with its error and does not stop the rest, and the run exits non-zero when any step failed
+  invariant acoustic work sees every retained audio item rather than only music labels, and selects a bounded batch round-robin by source; its run records the whole waiting frontier and per-source backlog, so a large podcast source cannot silently bury a smaller live or music source
+  invariant a run is recorded under a stamp that includes the process, so two runs in the same second cannot overwrite each other's record
+  invariant no step holds, prints or records a credential value; the credentials step records only what was generated, by provider and field, and whether a check was accepted
+  invariant nothing here publishes beyond census rows the live compiler admitted with receipts, and no step contacts anyone, enrols in anything or spends
+  invariant the weekly steps run only with --weekly, so the daily clock cannot start a catalogue enumeration
+  forbidden_inference a green run -> the estate's sources being correct, current or complete
+  forbidden_inference an automated admission -> editorial endorsement of what that source publishes
+  forbidden_inference a HOT attention level written by a run -> permission to fetch, buy, contact or enrol
+  known_gap the runner is started by systemd timers rather than by the estate's own loop, so the heartbeat is the host's
+  known_gap acoustic sampling is bounded per run; its total and per-source backlog are explicit, but the native WorkGraph has not yet been asked to lease the derived acoustic slice because SourceFrontier remains the authority for source re-observation rather than for this retained-body derivative
+  known_gap a failed step is retried only on the next run; there is no per-step backoff or alert beyond the run record
+  source_path scripts/bonfyre_automate.mjs
+  source_path scripts/bonfyre_automate.py.archive
+  source_path cmd/BonfyreLatentAtlas/tools/compile_acoustic_sweep.mjs
+  source_path cmd/BonfyreLatentAtlas/tools/audio_sample.mjs
+  source_path scripts/reclaim_space.mjs
+  source_path scripts/reclaim_space.py.archive
+  source_path scripts/tests/reclaim_space_test.sh
+  source_path scripts/tests/bonfyre_automate_test.sh
+  source_path scripts/bonfyre-credential-ready
+  source_path deploy/systemd/bonfyre-automate.service
+  source_path deploy/systemd/bonfyre-automate-daily.timer
+  source_path deploy/systemd/bonfyre-automate-weekly.timer
+  witness 2026-09-18 on a local replica, 40 retained bodies a day old packed from 21,196,500 to 3,670,923 bytes in place (5.8x) and every page composed the same items afterwards, the reader taking the packed body without noticing
+  witness scripts/tests/bonfyre_automate_test.sh proves a run whose credentials key is readable by others fails that step, exits 1 and still runs and records the others, that the census is read as items, that the linker writes a mention, that the page receipts all land on channels of the source ledger and the census admits them, that the words chart skips unchanged words on the next run, that bootstrap generates a secret without showing it, that no generated value appears in the run record, and that the weekly steps wait for the weekly run
+  witness cmd/BonfyreLatentAtlas/tests/audio_sample_test.mjs and cmd/BonfyreLatentAtlas/tests/compile_acoustic_sweep_test.mjs prove bounded native ForeignTwin observation, robots refusal, exact sample digest, source-fair selection and explicit native chart contract import
+  witness 2026-09-29 scripts/tests/bonfyre_automate_test.sh passed with the Bun standing runner and two distinct recorded runs
+  witness scripts/tests/reclaim_space_test.sh proves the Bun reclaim step compresses and round-trips an aged retained body, leaves a fresh body and a database untouched, preserves current and named-kept scratch work, and reclaims stale scratch without touching live home caches
+  witness 2026-09-17 a local run of the daily steps recorded census-items 637 items, atlas projection, link 22 mentions and 2 film identities, acoustic 3 sampled, and credentials bootstrap 3 generated with api-data-gov accepted on its documented public default
+  witness 2026-09-25 /private/tmp/bonfyre-full-audio-frontier-20260925T1740Z/runs/20260925T174733Z-8419.json proves a restored estate with only a words chart declares the three typed acoustic chart contracts before import, samples one real source with zero refusal, records 6,241 waiting audio items across 50 sources, and projects fingerprint, spectrum and loudness exactly once rather than treating absent chart declarations as implicit
+  witness 2026-09-25 /private/tmp/bonfyre-full-audio-frontier-20260925T1800Z/runs/20260925T180053Z-59889.json proves the source-fair audio frontier on the retained estate: one bounded pass reaches 50 different sources, admits 27 sampled recordings, records 23 refusals without discarding them, and leaves a 6,213-item per-source waiting frontier for the next standing run
+  source_lineage 2026-09-17 what was done by hand each session, put on a clock with a record
+
+interaction standing-automation-feeds-source-frontier
+  source standing-automation
+  destination source-frontier
+  relation lands_receipts_and_listings
+  preserves each route's visible items by source, each inventory's provenance label and the day the receipt was taken
+  drops page markup, item content and every source a route did not show
+  forbidden_inference a contribution receipt -> a reader, a visit or a measurement of traffic
+  invalidates_on census publication, page composition, the ledger's schema
+  witness scripts/tests/bonfyre_automate_test.sh

@@ -1,0 +1,26 @@
+{
+  "schema": "bonfyre.estate-compiler-retirement.v1",
+  "status": "retired",
+  "legacy_label": "com.bonfyre.estate-compiler",
+  "frozen_authority": {
+    "path": ".bonfyre/run8/canonical/estate/Bonfyre_Aurekai_CANONICAL_INTEGRATED_V8_1_FULL_LINEAGE_KERNEL_CONVERGENCE_2026-08-20/99_SOURCE_PROVENANCE/V8_PINNED_REFERENCE_INPUTS/02_PINNED_REFERENCE_AND_FRAPPE_COMPILER_DIRECTION.md",
+    "section": "YaFF Scan should be documented deeply, but not turned into an estate compiler right now",
+    "prohibition": "YaFF Scan should be documented deeply, but not turned into an estate compiler right now."
+  },
+  "retired_runtime_paths": [
+    "$HOME/Library/LaunchAgents/com.bonfyre.estate-compiler.plist",
+    "$HOME/.bonfyre/estate-compiler"
+  ],
+  "successor": null,
+  "successor_requirements": {
+    "explicit_current_architecture": true,
+    "explicit_owner": true,
+    "non_append_only_snapshot_state_model": true,
+    "positive_retention_bounds": [
+      "max_age_seconds",
+      "max_bytes",
+      "max_snapshots"
+    ],
+    "generated_projections_are_authority": false
+  }
+}

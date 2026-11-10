@@ -1,5 +1,5 @@
 atlas schema
-# The meta-schema: what an atlas entry is. Human-facing contract; atlas.py is the
+# The meta-schema: what an atlas entry is. Human-facing contract; atlas.mjs is the
 # machine enforcer. Three levels are mandatory -- never stop at a domain label:
 #   DOMAIN          broad semantic territory
 #   ARCHITECTURE    an independent calculus / state machine (one atlas entry)
@@ -27,6 +27,7 @@ atlas schema
 #     native_format ...    graf|flux|delta|crux|helix|axon|kore|fuse|bfp (repeat)
 #     command     ...      public command identities that own/participate (repeat)
 #     source_path ...      real implementation paths (repeat)
+#     experience_chain ... exact ExperienceMap workflow ID for candidate discovery (repeat; grants no execution authority)
 #     witness     ...      real tests/fixtures/receipts proving maturity (repeat)
 #     source_lineage ...   originating documents/prior names (repeat)
 #     historical_name ...  prior identities (repeat)
@@ -39,14 +40,14 @@ atlas schema
 #     consumes    ...      facts it reads (repeat)
 #     publishes   ...      facts/state/capabilities it exports (repeat)
 #     subscribes  ...      deltas it needs maintained (repeat)
-#   `atlas.py wiring` runs graph analysis over these: orphan producers (published,
+#   `atlas.mjs wiring` runs graph analysis over these: orphan producers (published,
 #   nobody consumes), orphan consumers (consumed, nobody provides -- the sharp gap
 #   to wire), duplicate ownership (two organs claim one fact), and fact feedback
 #   loops (closed producer/consumer cycles vs one-way flows). Fact names are a
 #   shared vocabulary (Actor, Occurrence, ProofFrontier, ReachableCapacity, ...);
 #   a producer and a consumer wire together only when they name the SAME fact.
 #
-# CONSTITUTIONAL RULES enforced by atlas.py validate:
+# CONSTITUTIONAL RULES enforced by atlas.mjs validate:
 #   1. maturity measured|proven REQUIRES a witness (no laundering by parent label).
 #   2. a view must expand to >=2 real architectures (collapse is reversible zoom,
 #      never a replacement).

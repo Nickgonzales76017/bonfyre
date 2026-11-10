@@ -1,0 +1,72 @@
+atlas surface
+
+architecture identity-page
+  canonical_name IdentityPage
+  family surface
+  domain Surface / Subject
+  layer surface/public
+  semantic_question What does the estate keep about one thing, gathered by its identity rather than by who published it?
+  purpose /about/<identity> composes every retained report whose identity is that one (a Wikidata place, an anniversary's article, a film) with the pictures whose depicted identity is that one, leads with the thing as its sources describe it, shows the pictures of it and where it is, and lists the other reports -- each still carrying its own source. Item pages link "Everything about this" and, for a picture, "Shows <name>"; a place's page shows "Pictures of it".
+  maturity implemented
+  consumes PageComposition
+  consumes CommonsKnowledgeReading
+  publishes IdentityPage
+  node_types IdentityPage
+  edge_types depicts
+  edge_types same_identity_as
+  invariant an identity no retained report names has no page (404); a depicted identity alone does not make one
+  invariant a thing's own picture leads; the pictures shown under it are only those that depict it
+  invariant each report keeps its own source and byline; being about one thing does not make them agree
+  forbidden_inference pictures gathered by depicted identity -> a verified depiction, location or ownership
+  forbidden_inference an identity page -> a canonical Matrix subject or an authority over it
+  known_gap only sources that declare ident_field or about_field join; stories, properties and events without an external identity do not appear
+  known_gap a depicted identity is named only when another retained source names it; labels for other identities are not fetched because QLever's cross-index federation timed out
+  source_path cmd/BonfyreWebAddress/src/main.c
+  source_path schemas/control/wikimedia-sources.cue
+  source_path cmd/BonfyreWebAddress/tests/page_public_commons_test.sh
+  witness cmd/BonfyreWebAddress/tests/page_public_commons_test.sh proves /about/Q16557 is named Dallas by its report, shows the Commons picture depicting it and a street map, an unnamed identity answers 404, the picture's page says "Shows Dallas", and Dallas's place page shows "Pictures of it" and "Everything about this"
+  source_lineage 2026-09-17 pages organized around things, not publishers
+
+architecture page-history
+  canonical_name PageHistory
+  family surface
+  domain Surface / What changed
+  layer surface/public
+  semantic_question When did the page an item links to answer with different content, as the Internet Archive recorded it?
+  purpose An item page offers "How this page changed". /o/<source>/<key>/changes reads a retained Wayback capture-index answer (collapsed by content digest) for the item's address and lists each change, newest first, linked to the Archive's copy; when none is retained, or it is older than a day, a same-site form asks the ForeignTwin observer to look it up once, with robots preflight and a receipt.
+  maturity implemented
+  consumes ForeignTwinGraph
+  consumes WaybackCaptureIndex
+  publishes PageHistory
+  node_types PageHistory
+  invariant a lookup happens only on a same-site POST, at most once a day per address, and a lookup the Archive did not answer is not repeated for an hour
+  invariant the history page reads only the retained answer; it never fetches on GET
+  invariant a capture that answered with a non-success status says so
+  forbidden_inference a capture -> what every visitor saw, what is true, or that a change was substantive
+  forbidden_inference no captures -> a page that never existed
+  known_gap on 2026-09-17 the Wayback capture index answered 503 Temporarily Offline to every client, so no production history was observed; the witness is a retained fixture answer
+  known_gap Common Crawl's index is refused by robots, so the Archive is the only history carrier
+  source_path cmd/BonfyreWebAddress/src/main.c
+  source_path cmd/BonfyreWebAddress/tests/page_public_commons_test.sh
+  witness cmd/BonfyreWebAddress/tests/page_public_commons_test.sh proves a retained capture answer is told as three changes between 2012 and 2026 with each linked to its Wayback copy, a 301 capture says it answered 301, the item page offers the history, and a cross-site lookup is refused
+  source_lineage 2026-09-17 FactDelta as a human product: what changed
+
+interaction identity-page-reads-commons-identities
+  source commons-knowledge-reading
+  destination identity-page
+  relation gathers_by_identity
+  preserves each report's source, words, picture credit and terms; depicted identity kept apart from own identity
+  drops publisher grouping
+  forbidden_inference a gathered report -> agreement between sources
+  invalidates_on internet_source ident_field or about_field, retained twin bodies
+  witness cmd/BonfyreWebAddress/tests/page_public_commons_test.sh
+
+interaction page-history-reads-foreign-twin
+  source foreign-twin
+  destination page-history
+  relation reads_retained_captures
+  preserves capture timestamps, statuses and content digests as the Archive recorded them
+  drops capture bodies, which stay at the Archive
+  forbidden_inference a retained capture list -> a complete history
+  invalidates_on the history twin's receipt
+  witness cmd/BonfyreWebAddress/tests/page_public_commons_test.sh

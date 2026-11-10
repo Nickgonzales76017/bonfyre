@@ -1,0 +1,58 @@
+architecture the-press
+  canonical_name ThePress
+  family surface
+  domain Surface / A front page for anything
+  layer presentation
+  semantic_question Of everything this estate kept, what is being reported by more than one publisher, what is only being said once, and in whose words?
+  purpose A front page composed for any subject a reader names, in the reader's own tab, from the estate's published tables. Stories are ranked by how many separate publishers print a headline sharing their uncommon words; the publishers are named; what only one publisher says is given its own column rather than dropped.
+  maturity implemented
+  node_types Subject
+  node_types Piece
+  node_types Corroboration
+  node_types Vocabulary
+  edge_types shares_wording_with
+  edge_types composed_into
+  internal_calculus a word nearly every matching title uses carries no signal and is dropped, so the subject cannot corroborate itself: asking about Nepal, the word Nepal is discarded before anything is compared
+  internal_calculus two pieces corroborate only if they share two or more uncommon words AND come from different publishers. The same publisher filing twice is one newsroom twice, not a second voice
+  internal_calculus what only one publisher says gets a named column of its own. A front page that quietly drops the uncorroborated is making an editorial claim while pretending to be a list
+  internal_calculus the shape of the material picks the design family -- pictures make it a magazine, words make it a newsroom -- and the reader can overrule it
+  internal_calculus one headline appears once: the same piece arrives under two addresses when two feeds carry it, and the copy kept is whichever knows the most
+  internal_calculus the vocabulary of a subject is offered as the next question, because the words a story is being told in are a better index than any category someone assigned it
+  invariant every piece is material this estate already read and kept; nothing is fetched from a source and no question reaches a server
+  invariant the corroboration count appears nowhere without the sentence that says what it is not
+  forbidden_inference a high corroboration count -> the story being true, confirmed, or agreed on; it counts wording, not facts
+  forbidden_inference a high corroboration count -> independent sources; syndicated copy is one newsroom printed in forty papers and this counts it as forty
+  forbidden_inference a piece in "said once" -> being doubtful, unreliable, or contradicted; it is a fact about this estate's reading
+  forbidden_inference the publishers named as carriers -> those publishers having any relationship to one another or to this estate
+  forbidden_inference the front page -> an editor; no person chose any of this, and the ranking is arithmetic on shared words
+  source_path site/matrix/press.html
+  internal_calculus a subject has an identity that outlives the feed. The names this estate's sources keep repeating are resolved against Wikidata through a channel the estate had already admitted, which attaches a Q-number, a description and a coordinate -- and filters, because a phrase that resolves to nothing well-linked was never a thing
+  internal_calculus a phrase made only of ordinary English is refused however many language editions some song of that title has. "The Best" resolves to a Tina Turner single with twenty-three sitelinks and is still not a subject
+  internal_calculus every entity named in a subject's coverage is a page of its own, and every publisher is a way into what the estate kept from that publisher. A reader moves between subjects and between surfaces rather than between products
+  forbidden_inference a title carrying a resolved name -> the title being about that entity; mention is not aboutness, and no string match closes that gap
+  forbidden_inference two entities named in the same piece -> a relationship between them; it is co-occurrence
+  witness 2026-09-25 964 names resolved against Wikidata through qlever, 189 of them carrying coordinates, with 123 refused as ordinary English rather than admitted on sitelink count alone
+  witness 2026-09-25 measured locally against the published tables: the page set on Texas carried its identity (Q1439, state of the United States of America) with its coordinate drawn, nineteen subjects reachable from it -- Houston, San Antonio, Dallas, State Fair, Senate, Texas Rangers -- and every publisher on the page linking into the reading room filtered to that publisher
+  known_gap single-word entities resolve to whatever carries that exact label, so the bare name Trump resolves to a card-game sense rather than a person, whose label is the full name. The page shows what the name resolved to and does not pretend otherwise
+  known_gap fragments of a resolved phrase resolve separately, so Football and College appear beside College Football
+  known_gap the coordinate is drawn on a bare graticule with no coastline, which locates a thing without showing what is around it
+  witness 2026-09-25 live at aurekai.live/press: set on Nepal, 35 pieces from 21 publishers, leading with the New York Times on Himalayan flood risk, corroborated by seven named publishers -- nature.com, BBC, latimes.com, scmp.com, fox4news.com, hongkongfp.com, nation.com.pk -- with eight more pieces said once
+  witness 2026-09-25 set on Gaza: 26 pieces from 18 publishers, the lead corroborated by exactly one publisher and the page saying so in the singular rather than rounding it up
+  witness 2026-09-25 pressing the word "collapse" in the vocabulary re-set the page on it: 49 pieces from 29 publishers, keeping the same lead, which is the subject index working as a subject index
+  witness 2026-09-25 the clustering measured at 160ms over 69,189 rows with the DuckDB CLI, and composes in the tab over the same tables read from the object store by byte range
+  known_gap corroboration cannot see syndication. This is the gap that matters most, it is stated on the page beside every count, and closing it would need the wire attribution the catalogue does not carry
+  known_gap matching is on titles only, because the catalogue publishes no bodies; two pieces that report the same event in different words do not corroborate here
+  known_gap the subject is matched as a substring of the title, so a subject whose name is a common word inside other words will over-match
+  known_gap the whole page is bounded by what this estate has read -- some thirteen hundred publishers -- and is never a survey of the press
+  interacts press-reads-the-catalogue
+
+interaction press-reads-the-catalogue
+  source the-press
+  destination edge-catalogue
+  relation reads_from
+  preserves the catalogue as derived and read-only: the browser builds its own tables from it and writes nothing back
+  drops any path by which composing a front page could reach a source or alter what was kept
+  forbidden_inference a front page -> the state of the press now; it is composed from the last publish pass of what this estate had read
+  witness 2026-09-25 three tables -- the matching pieces, their uncommon words, and the cross-publisher pairs -- were built inside the tab from material.parquet and every query answered there
+  binding site/matrix/press.html
+  binding scripts/publish_catalog.sh

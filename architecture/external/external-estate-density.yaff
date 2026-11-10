@@ -1,0 +1,113 @@
+atlas external
+
+architecture external-estate-density
+  canonical_name ExternalEstateDensity
+  family external
+  domain External / Cross-domain Composition
+  layer external/descriptor
+  semantic_question Which unrelated worlds can lawfully reuse this source's observed semantic outputs and affordances?
+  purpose Compiles the external estate as a cross-domain reagent library. A source is classified by reusable semantic output, affordance, carrier, economics, temporal/spatial scope, actor, world phase and interaction fit, then may enter many Worlds without becoming their semantic owner.
+  maturity measured
+  source_path schemas/control/external-estate.yaff
+  source_path schemas/control/external-estate.cue
+  source_path estate/external-density.yaff
+  source_path architecture/compile-external-estate.mjs
+  source_path architecture/external/external-estate-classification.cue
+  witness bun test architecture/tests/compile_external_estate.test.mjs replays the CUE classification over all 4,891 committed occurrences
+  source_path estate/generated/external-estate-v4/observed-external-estate.jsonl
+  source_path estate/generated/external-estate-v4/manifest.json
+  source_path Aurekai/src/external-estate-runtime.mjs
+  source_path Aurekai/src/external-estate-server.mjs
+  source_path cmd/BonfyreExternalEstate/src/main.c
+  source_path lib/libbonfyre/include/bf_command_lookup.h
+  source_path scripts/tests/native_command_tables.test.mjs
+  invariant the native ExternalEstate command verb is resolved once through a sorted descriptor; each descriptor fixes whether the verb is direct, read-only, or schema-writing and which exact database option it accepts before any database is opened
+  forbidden_inference a recognized ExternalEstate command or successful read-only open -> permission to import, publish, contact a provider, or execute an external effect
+  witness 2026-09-30 route_cost_test.sh, participation_test.sh, and external_estate_test.sh pass after the 28-verb descriptor cut; native_command_tables.test.mjs checks sorted unique dispatch rows and handled IDs, not service latency
+  source_path cmd/BonfyreExternalEstate/tests/external_estate_test.sh
+  source_path cmd/BonfyreScopedDemand/src/main.c
+  source_path cmd/BonfyreScopedFrontier/src/main.c
+  source_path cmd/BonfyreScopedRespecialize/src/main.c
+  source_path cmd/BonfyreScopedRespecialize/tests/scoped_respecialize_test.sh
+  source_path cmd/BonfyreExperienceMap/generated/external_bindings.jsonl
+  source_path cmd/BonfyreExperienceMap/generated/stage_bindings.jsonl
+  source_path cmd/BonfyreExperienceMap/generated/chains.jsonl
+  source_path cmd/BonfyreExperienceMap/data/interaction_references.tsv
+  source_path cmd/BonfyreExperienceMap/data/typed_application_programs.tsv
+  source_path cmd/BonfyreExperienceMap/generated/interaction_evidence.jsonl
+  source_path cmd/BonfyreExperienceMap/generated/chain_reference_lattice.jsonl
+  source_path cmd/BonfyreExperienceMap/generated/typed_application_nodes.jsonl
+  source_path cmd/BonfyreExperienceMap/tools/experience-classification.cue
+  source_path cmd/BonfyreExperienceMap/tools/experience-classification.generated.json
+  source_path cmd/BonfyreExperienceMap/tools/compile_experience_map.mjs
+  source_path cmd/BonfyreExperienceMap/tools/stage-law.cue
+  source_path cmd/BonfyreExperienceMap/tools/stage-law.generated.json
+  source_path cmd/BonfyreExperienceMap/tools/compile_stage_bindings.mjs
+  source_path cmd/BonfyreExperienceMap/tools/json_contract.mjs
+  source_path cmd/BonfyreExperienceMap/tools/activation-law.cue
+  source_path cmd/BonfyreExperienceMap/tools/activation-law.generated.json
+  source_path cmd/BonfyreExperienceMap/tools/participation_activation.mjs
+  source_path cmd/BonfyreExperienceMap/tools/participation-law.cue
+  source_path cmd/BonfyreExperienceMap/tools/participation-law.generated.json
+  source_path cmd/BonfyreExperienceMap/tools/participation_report.mjs
+  source_path cmd/BonfyreExternalEstate/tools/estate-refresh.sh
+  source_path cmd/BonfyreExternalEstate/tools/estate-refresh-summary.mjs
+  source_path cmd/BonfyreExternalEstate/tests/participation_contract.mjs
+  source_path cmd/BonfyreFacet/tests/reader_agreement.mjs
+  source_path cmd/BonfyreExperienceMap/tools/tsv_contract.mjs
+  source_path cmd/BonfyreExperienceMap/tools/experience-audit.cue
+  source_path cmd/BonfyreExperienceMap/tools/experience-audit.generated.json
+  source_path cmd/BonfyreExperienceMap/tools/audit_experience_map.mjs
+  source_path cmd/BonfyreExperienceMap/tools/experience-materiality.cue
+  source_path cmd/BonfyreExperienceMap/tools/experience-materiality.generated.json
+  source_path cmd/BonfyreExperienceMap/tools/materiality_report.mjs
+  source_path schemas/control/surface-presentation-cells.cue
+  source_path Aurekai/docs/EXTERNAL_ESTATE_RUNTIME.md
+  source_path /Users/nickgonzales/Downloads/AUREKAI_EXTERNAL_ESTATE_MASTER_INDEX_V4.md
+  source_path /Users/nickgonzales/Downloads/AUREKAI_MACHINE_PROTOCOLS_CONTINUATION_V3.md
+  node_types ExternalDescriptor
+  node_types ExternalAffordance
+  node_types WorldComposition
+  node_types ExternalEstateQuery
+  edge_types contributes_to
+  edge_types realizes
+  invariant source descriptors remain observed candidates until ForeignTwin, CapabilityClosure, Authority and Evidence admit their respective facts
+  invariant one source may contribute to many unrelated Worlds without unifying the subjects, owners or facts in those Worlds
+  invariant a URL may narrow an external candidate slice only through observed candidate fields; kind, relation, near, state and time without a corresponding observed field remain explicit unresolved shape rather than a match claim
+  invariant actor closure, exact audience, institutional role, authority, financial authority and effect authority are rejected from the public candidate-slice query and remain AddressPlane/native-owner work
+  invariant a grammar's SurfaceDemand deterministically ranks candidates from the same source reservoir by declared affordance, domain and carrier diversity; ranking changes presentation order, never candidate truth, admission or identity
+  invariant an addressed World may use only an explicit WorldDemand alias to narrow the candidate graph; an alias is a composition declaration, not evidence that two Worlds are identical
+  invariant every imported ExternalOccurrence receives a reproducible AddressPlane mask from declared terms, so all 4,891 can be considered without a source read; a survivor remains observed_candidate pending exact owners
+  invariant a World may compile formation candidates only from explicitly counted heterogeneous observed signals (material, observation, comparison, schedule, communication, market, identity or place); a formation candidate names source occurrence ids and missing signals, and cannot create a publication, service, institution, market, budget, membership, governance process, transaction, provider standing or effect
+  invariant the estate-wide formation catalogue is an unranked census of every declared World and its observed-signal coverage; greater source count or coverage never establishes value, demand, need, legitimacy, priority, eligibility, authority or permission to form
+  invariant a formation recipe may name only a declared native operator archetype and ProjectPrimitive facet as a possible human operating grammar; it never names an actual person, role assignment, engagement, membership, budget, commitment, employer, authority or launch
+  invariant a World bridge is exact overlap of observed source-candidate membership only; it may name common source occurrences, carriers and affordance signals but never establishes a semantic World relationship, shared audience, spatial relationship, shared need, data-combination right, provider standing, authority or a shared project
+  invariant raw external descriptors may be inspected only inside an operator closure; a human surface receives typed material or an application lowered from lawful owner records, never a descriptor, protocol label or ExperienceChain
+  forbidden_inference a public source listing -> a callable, paid, authorized, correct or available provider
+  forbidden_inference a cross-domain composition -> permission to combine personal, institutional or external data
+  invariant an ExperienceMap reference with no exact stage fit emits no stage edge; lexical or category discovery is candidate evidence only and may never fall back to the first prose stage
+  invariant market, donor, Frappe and Ghost reference planes are independent evidence inputs; a small market sample may not become a renderer-selection ceiling, and Ghost remains art-direction candidate evidence until separately observed
+  invariant every ExperienceProgram owns typed application declarations with explicit material roles, renderer requirements, action families and empty/refusal states; legacy prose stages are compatibility-only and may not create an executable graph edge
+  invariant generic machine and discover-only bindings remain visible in the specificity audit and never count as a specific protocol or human experience
+  interacts foreign-twin
+  interacts provider-graph
+  interacts web-address-edge
+  witness Aurekai/tests/external-estate-runtime.test.mjs proves the original compiled runtime preserves all 4,891 source occurrences (4,152 non-protocol plus 739 protocol rows), retains raw source provenance, answers World/domain/affordance queries locally without probing a provider, refuses non-HTTP targets before transport, and uses declared grammar demand plus carrier diversity rather than corpus order for a candidate slice
+  witness Aurekai/tests/external-estate-runtime.test.mjs proves all 30 declared Worlds compile into one unranked formation census over the full measured candidate estate, with six possible formation grammars kept as observed candidates rather than launches
+  witness Aurekai/tests/external-estate-runtime.test.mjs proves every formation recipe's possible operator is present in the generated native operator declaration, while the formation output expressly refuses to invent a person in that role
+  witness Aurekai/tests/external-estate-runtime.test.mjs proves School Township's bridge compiler finds a separately addressable Household Daily Life overlap while retaining the no-relationship/no-data-combination boundary
+  witness cmd/BonfyreExternalEstate/tests/external_estate_test.sh proves the native C/SQLite import retains all 4,891 occurrences, joins each exact occurrence to its ExperienceMap human/protocol/stage program, refuses the Cure Cancer With AI weather collision, and lowers script-free inspection fragments
+  witness cmd/BonfyreExperienceMap/tests/compile_stage_bindings.test.mjs proves an unmatched candidate and a reference-only app emit no stage edge, a presentation reference does not bind merely by looking like a page, an exact weather affordance binds only the weather stage, and stale output is refused; the full 5,591-record native manifest and digest match the retired Python compiler
+  witness cmd/BonfyreExperienceMap/tests/participation_activation.test.mjs proves CUE-routed diagnostic ranking preserves the observed-body and retained-body handoff gates, accepts a causally linked owner braid and rejects scripted step counts; the native manifest first matched the retired Python compiler byte-for-byte, then deliberately replaced source-text readiness claims with receipted bridge evidence
+  witness cmd/BonfyreExperienceMap/tests/participation_report.test.mjs proves candidate join power stays separate from measured owner depth, retained-body rungs require present nonempty bytes, repeat observation requires more than one receipt, and unreceipted owner claims are refused; current full-estate native outputs were byte-identical to the retired Python compiler at cutover
+  witness cmd/BonfyreExternalEstate/tests/participation_test.sh and cmd/BonfyreFacet/tests/reader_agreement_test.sh prove native estate and facet readers still agree with the Bun participation projection and refuse three unverifiable owner rows without Python in these test paths
+  witness cmd/BonfyreExperienceMap/tests/compile_experience_map.test.mjs proves all current human chains have interaction-reference evidence from the 20-market, 19-donor, 9-Frappe and 238-Ghost lattice while references remain evidence-only; it verifies typed application declarations remain unselected and without executable edges. Current full-estate native outputs were byte-identical to all retired Python compiler outputs at cutover, including the manifest digest.
+  witness cmd/BonfyreExperienceMap/tests/audit_experience_map.test.mjs checks specific versus generic external bindings and missing ghost/app human chains; tests/vectors/policy_compilation.json holds its runtime descriptor byte-for-byte against CUE; the native audit's current generated-estate JSON was byte-identical to the retired Python audit at cutover
+  witness cmd/BonfyreExperienceMap/tests/materiality_report.test.mjs checks that weak generic bindings, missing reagent roles, and stale stage projections remain diagnostic rather than admissions; the native report's current generated-estate JSON was byte-identical to the retired Python report at cutover
+  witness cmd/BonfyreScopedRespecialize/tests/scoped_respecialize_test.sh proves a changed FactDelta recomputes only its affected subject/scope closure, preserves an already-present external dependency, dispatches only the newly selected external candidate to MaterialCompiler, and records an idempotent receipt; its argument-boundary witness proves the 4096-closure capacity is heap-owned and prints usage rather than overflowing the carrier stack
+  source_lineage AUREKAI_EXTERNAL_ESTATE_MASTER_INDEX_V4 and MACHINE_PROTOCOLS_CONTINUATION_V3
+  known_gap ExperienceMap human chains and generated stage bindings are now compatibility/reference artifacts only. SitePrograms need typed application nodes with consumes/produces, renderer requirements, actions and explicit empty/refused states before a public route may execute one.
+  invariant the activation projection reports occurrence-keyed bridge evidence and a falsifiable native registration witness; it does not inspect source text for readiness or infer general future handoffs from one receipt
+  known_gap FactDelta-driven scoped respecialization can now compute and hand off only-new external candidate material for an already-resolved subject/scope closure. PackGraph and World native owners still need to expose their complete scoped demand closures to the SitePresentation reader before a private or institutional World can contribute that material to a public-facing edition.
+  known_gap the JavaScript reservoir service remains a read-only inspection/import lane. The native C/SQLite projection is operator inspection material only; a SitePresentation material compiler and typed application lowerers are still owed before any public route may consume the reservoir.
+  known_gap individual source candidates remain unadmitted: each still needs a concrete provider binding, terms/credential review, CapabilityClosure result, applicable InformationPolicy, receipted ForeignTwin observation and native effect gate before it can do work beyond the explicit no-body transport probe.

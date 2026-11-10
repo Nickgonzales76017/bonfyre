@@ -1,0 +1,539 @@
+#!/usr/bin/env python3
+"""Compile Aurekai's supplied external estate into a lossless candidate corpus.
+
+This is a *source compiler*, not an external-provider runtime and not a
+semantic owner.  It preserves each supplied occurrence (including raw source
+lines) and adds deliberately non-authoritative, breadth-oriented composition
+candidates.  Admission, capability closure, authority, evidence, settlement,
+and effects remain owned by their existing Bonfyre organs.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import re
+from collections import Counter
+from pathlib import Path
+from typing import Any, Iterable
+
+
+ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_MASTER = Path("/Users/nickgonzales/Downloads/AUREKAI_EXTERNAL_ESTATE_MASTER_INDEX_V4.md")
+DEFAULT_PROTOCOLS = Path("/Users/nickgonzales/Downloads/AUREKAI_MACHINE_PROTOCOLS_CONTINUATION_V3.md")
+DEFAULT_OUT = ROOT / "estate" / "generated" / "external-estate-v4"
+
+ENTRY_ID = re.compile(r"`(EXT-\d{5})`")
+LINK = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
+TABLE_SOURCE = re.compile(r"\[source\]\(([^)]+)\)")
+
+
+# These are composition possibilities, never declarations that a source is an
+# authority or is capable of performing the action.  The vocabulary mirrors the
+# estate's horizontal-world doctrine rather than source-directory categories.
+DOMAIN_TERMS: dict[str, tuple[str, ...]] = {
+    "people": ("people", "person", "human", "citizen", "consumer", "patient", "member"),
+    "family": ("family", "child", "parent", "household", "elder"),
+    "community": ("community", "civic", "local", "municipal", "social", "club"),
+    "animals": ("animal", "pet", "veterinary", "livestock", "wildlife", "fishery"),
+    "plants": ("plant", "crop", "botany", "forestry", "agriculture"),
+    "food": ("food", "restaurant", "meal", "nutrition", "ingredient", "beverage"),
+    "water": ("water", "hydro", "drought", "flood", "reservoir", "wastewater"),
+    "land": ("land", "parcel", "soil", "property", "real estate", "geospatial"),
+    # Forecast is an affordance, not weather evidence: a generic business or
+    # model forecast must not turn a weather address into an analytics/tool
+    # catalogue.  Weather material requires an observed weather/climate/
+    # meteorological/air-quality term in the occurrence itself.
+    "weather": ("weather", "climate", "meteor", "air quality"),
+    "oceans": ("ocean", "marine", "maritime", "sea", "vessel", "port"),
+    "forests": ("forest", "forestry", "wildfire", "timber"),
+    "mines": ("mine", "mineral", "mining", "geology"),
+    "farms": ("farm", "agri", "crop", "precision agriculture"),
+    "factories": ("factory", "industrial", "plant operation"),
+    "buildings": ("building", "bim", "ifc", "facility", "hvac", "smart home"),
+    "roads": ("road", "traffic", "highway", "street"),
+    "rail": ("rail", "railway", "train"),
+    "aircraft": ("aircraft", "aviation", "airspace", "airline", "flight"),
+    "ships": ("ship", "shipping", "freight", "container", "vessel"),
+    "spacecraft": ("space", "satellite", "orbit", "launch", "ntn"),
+    "energy": ("energy", "electric", "grid", "solar", "wind", "battery", "der"),
+    "telecommunications": ("telecom", "network", "wireless", "5g", "connectivity", "mesh", "ran"),
+    "medicine": ("health", "medical", "medicine", "clinical", "patient", "pharma"),
+    "science": ("science", "scientific", "laboratory", "research", "genomic"),
+    "education": ("education", "school", "student", "learning", "lms", "university"),
+    "law": ("legal", "law", "court", "contract", "compliance", "regulatory"),
+    "government": ("government", "public sector", "municipal", "tax", "permit"),
+    "insurance": ("insurance", "reinsurance", "claim", "risk market"),
+    "finance": ("finance", "bank", "payment", "money", "crypto", "invoice", "accounting"),
+    "trade": ("trade", "commerce", "marketplace", "procurement", "customs"),
+    "labor": ("labor", "workforce", "hiring", "employment", "payroll", "worker"),
+    "sports": ("sport", "football", "baseball", "athlete", "game"),
+    "art": ("art", "design", "creative", "gallery"),
+    "music": ("music", "audio", "song", "concert", "podcast"),
+    "film": ("film", "video", "movie", "broadcast"),
+    "fashion": ("fashion", "garment", "textile", "apparel"),
+    "travel": ("travel", "tourism", "hotel", "booking", "trip"),
+    "religion": ("religion", "church", "mosque", "synagogue", "faith"),
+    "housing": ("housing", "home", "residential", "tenant", "lease"),
+    "construction": ("construction", "bim", "ifc", "contractor", "built environment"),
+    "repair": ("repair", "maintenance", "service", "inspection"),
+    "retail": ("retail", "shop", "store", "catalog", "product"),
+    "hospitality": ("hospitality", "hotel", "restaurant", "venue"),
+    "logistics": ("logistics", "route", "delivery", "warehouse", "supply chain"),
+    "emergencies": ("emergency", "alert", "disaster", "safety", "cap"),
+    "utilities": ("utility", "water", "electric", "gas", "wastewater"),
+    "waste": ("waste", "recycling", "compost", "disposal"),
+    "manufacturing": ("manufacturing", "production", "industrial", "factory"),
+    "agriculture": ("agriculture", "farm", "crop", "agri", "phytosanitary"),
+    "natural-resources": ("natural resource", "forest", "mineral", "watershed", "environment"),
+    "media": ("media", "news", "rss", "publication", "content"),
+    "publishing": ("publish", "rss", "news", "book", "journal"),
+    "advertising": ("advertis", "marketing", "openrtb", "campaign"),
+    "research": ("research", "scholarly", "dataset", "paper", "science"),
+    "instruments": ("instrument", "sensor", "laboratory", "measurement"),
+    "machines": ("machine", "iot", "device", "industrial", "robot"),
+    "robots": ("robot", "autonomous", "drone", "mobility"),
+    "vehicles": ("vehicle", "car", "fleet", "mobility", "transport"),
+    "computers": ("software", "developer", "api", "database", "compute", "cloud"),
+    "models": ("model", "inference", "llm", "ai", "machine learning"),
+    "agents": ("agent", "mcp", "a2a", "tool", "capability"),
+}
+
+# A direct topical match can conditionally participate in the related contexts.
+# It does not make the source a provider in any of them.
+REUSE: dict[str, tuple[str, ...]] = {
+    "weather": ("farms", "construction", "energy", "aircraft", "ships", "sports", "travel", "emergencies", "housing", "medicine"),
+    "water": ("farms", "buildings", "utilities", "medicine", "construction", "emergencies", "natural-resources"),
+    "energy": ("buildings", "farms", "factories", "vehicles", "utilities", "construction", "housing"),
+    "telecommunications": ("farms", "medicine", "education", "ships", "spacecraft", "emergencies", "machines", "construction"),
+    "finance": ("trade", "insurance", "housing", "farms", "travel", "food", "construction", "labor", "film", "music"),
+    "insurance": ("housing", "farms", "ships", "aircraft", "construction", "travel", "medicine", "film", "sports"),
+    "agriculture": ("food", "water", "land", "logistics", "trade", "insurance", "finance", "natural-resources", "animals"),
+    "food": ("farms", "household", "medicine", "hospitality", "retail", "logistics", "waste", "community"),
+    "buildings": ("housing", "energy", "water", "telecommunications", "construction", "repair", "insurance", "community"),
+    "oceans": ("ships", "trade", "weather", "food", "insurance", "energy", "telecommunications", "natural-resources"),
+    "science": ("research", "medicine", "education", "instruments", "spacecraft", "agriculture", "natural-resources"),
+    "education": ("people", "family", "community", "sports", "travel", "food", "buildings", "telecommunications"),
+    "media": ("community", "music", "film", "sports", "art", "advertising", "travel", "publishing"),
+    "logistics": ("ships", "roads", "rail", "aircraft", "trade", "food", "manufacturing", "retail", "waste"),
+    "agents": ("computers", "models", "research", "trade", "labor", "government", "community"),
+    "emergencies": ("weather", "medicine", "telecommunications", "utilities", "transport", "community", "government"),
+}
+
+SOURCE_DEFAULTS = {
+    "rss": (("media", "publishing", "community"), ("DISCOVER", "OBSERVE", "PUBLISH")),
+    "public_api": (("people", "community", "research"), ("DISCOVER", "OBSERVE", "COMPARE")),
+    "x402": (("finance", "trade", "agents"), ("DISCOVER", "QUOTE", "PAY", "SETTLE")),
+    "x402_spec": (("finance", "trade", "computers"), ("DISCOVER", "QUOTE", "PAY")),
+    "mcp": (("agents", "computers", "research"), ("DISCOVER", "SEARCH", "COMPARE")),
+    "machine_protocol": (("computers", "machines", "community"), ("DISCOVER", "OBSERVE", "COMPARE")),
+}
+
+# An occurrence's role in the estate is independent of its topical terms.
+# This is the missing discriminator between a weather observation, a protocol
+# that could carry one, and a tool that helps Aurekai build a weather surface.
+# Broad reuse remains useful for compiler planning; it is never sufficient to
+# make a source a human Discover result.
+ROLE_TERMS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("material_source", ("rss", "news", "dataset", "catalog", "library", "archive", "music", "video", "image", "event")),
+    ("media_service", ("stream", "video", "audio", "podcast", "photo", "gallery")),
+    ("action_adapter", ("booking", "appointment", "checkout", "payment", "quote", "ticket", "reservation")),
+    ("interaction_reference", ("pixelfed", "zulip", "mobilizon", "pinry", "maplibre", "frappe", "mattermost", "plane", "cal.com")),
+    ("design_reference", ("figma", "storybook", "shadcn", "design token", "css", "template")),
+    ("authoring_adapter", ("wordpress", "elementor", "figma", "notion", "drive", "cms")),
+    ("compiler_toolchain", ("compiler", "build", "lint", "test", "visual regression", "screenshot", "code intelligence")),
+    ("transport_carrier", ("protocol", "oauth", "oidc", "webauthn", "webfinger", "websub", "webmention", "xrpc", "websocket", "webrtc", "hls", "dash", "whip")),
+    ("publication_carrier", ("activitypub", "atproto", "rss", "feed", "publish", "federation")),
+    ("verification_tool", ("verify", "attestation", "signature", "certificate", "audit", "compliance")),
+)
+
+AFFORDANCE_TERMS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("LOCATE", ("geo", "map", "location", "route", "address", "spatial")),
+    ("IDENTIFY", ("identity", "identifier", "credential", "registry", "epc")),
+    ("OBSERVE", ("sensor", "observation", "telemetry", "weather", "data", "feed")),
+    ("MEASURE", ("measure", "meter", "laboratory", "assay", "instrument")),
+    ("VERIFY", ("verify", "signature", "certificate", "proof", "audit")),
+    ("PREDICT", ("forecast", "predict", "model", "risk")),
+    ("SEARCH", ("search", "discovery", "catalog", "directory", "registry")),
+    ("MATCH", ("match", "marketplace", "broker", "provider")),
+    ("ROUTE", ("route", "transport", "shipping", "delivery", "traffic")),
+    ("SCHEDULE", ("calendar", "schedule", "booking", "appointment")),
+    ("QUOTE", ("quote", "price", "offer", "bid", "market")),
+    ("PURCHASE", ("commerce", "checkout", "order", "procurement")),
+    ("PAY", ("payment", "pay", "settlement", "invoice", "money")),
+    ("INSURE", ("insurance", "claim", "coverage")),
+    ("COMMUNICATE", ("message", "communication", "telecom", "chat", "mail")),
+    ("TRANSLATE", ("translate", "translation", "language")),
+    ("PUBLISH", ("rss", "publish", "news", "media", "content")),
+    ("STREAM", ("stream", "realtime", "media", "websocket")),
+    ("AUTHENTICATE", ("auth", "identity", "oauth", "credential")),
+    ("AUTHORIZE", ("authoriz", "consent", "policy", "permission")),
+    ("SIGN", ("signature", "signing", "signed")),
+    ("CERTIFY", ("certificate", "certification", "compliance")),
+    ("FILE", ("filing", "tax", "report", "permit")),
+    ("REPORT", ("report", "alert", "notification")),
+    ("ALERT", ("alert", "emergency", "warning", "cap")),
+    ("SIMULATE", ("simulation", "physics", "digital twin")),
+    ("OPTIMIZE", ("optim", "planning", "routing")),
+    ("REPAIR", ("repair", "maintenance", "service")),
+    ("INSPECT", ("inspect", "inspection", "audit")),
+    ("CLASSIFY", ("classif", "taxonomy", "ontology")),
+    ("NEGOTIATE", ("negotiat", "contract", "agreement", "proposal")),
+    ("CONTRACT", ("contract", "agreement", "procurement")),
+    ("HIRE", ("hire", "recruit", "job", "labor")),
+    ("TEACH", ("education", "learn", "training", "school")),
+    ("CARE", ("health", "care", "medical", "elder", "patient")),
+)
+
+WORLDS: dict[str, tuple[str, ...]] = {
+    "household-daily-life": ("people", "family", "housing", "food", "medicine", "finance", "weather", "utilities", "community"),
+    "farm-cold-chain-household": ("farms", "agriculture", "food", "water", "logistics", "trade", "insurance", "retail"),
+    "resilient-building-community": ("buildings", "housing", "energy", "water", "telecommunications", "repair", "emergencies", "community"),
+    "elder-care-network": ("medicine", "family", "housing", "food", "travel", "insurance", "telecommunications", "community"),
+    "school-township": ("education", "people", "family", "food", "sports", "buildings", "transport", "community"),
+    "high-school-sports": ("sports", "education", "people", "travel", "food", "weather", "insurance", "media"),
+    "touring-musician": ("music", "people", "travel", "hospitality", "finance", "insurance", "logistics", "media"),
+    "independent-film-production": ("film", "labor", "travel", "housing", "finance", "insurance", "telecommunications", "food"),
+    "port-township": ("oceans", "ships", "trade", "logistics", "labor", "insurance", "energy", "telecommunications"),
+    "water-district": ("water", "utilities", "buildings", "farms", "weather", "emergencies", "repair", "government"),
+    "energy-community": ("energy", "utilities", "buildings", "vehicles", "weather", "finance", "community", "construction"),
+    "rural-clinic": ("medicine", "science", "instruments", "travel", "food", "telecommunications", "government", "insurance"),
+    "hospital-construction": ("construction", "buildings", "medicine", "energy", "water", "labor", "finance", "logistics"),
+    "natural-disaster-response": ("emergencies", "weather", "telecommunications", "utilities", "medicine", "housing", "government", "community"),
+    "small-town-fair": ("community", "agriculture", "food", "music", "sports", "weather", "finance", "emergencies"),
+    "restaurant-and-meal": ("food", "farms", "hospitality", "retail", "labor", "finance", "waste", "logistics"),
+    "international-scientific-expedition": ("science", "research", "travel", "spacecraft", "oceans", "medicine", "telecommunications", "insurance"),
+    "space-mission": ("spacecraft", "science", "instruments", "telecommunications", "weather", "finance", "government", "education"),
+    "circular-fashion": ("fashion", "agriculture", "manufacturing", "retail", "logistics", "waste", "art", "trade"),
+    "recoverable-material-market": ("waste", "construction", "manufacturing", "logistics", "trade", "finance", "natural-resources", "government"),
+    "family-farm-succession": ("family", "farms", "land", "law", "finance", "insurance", "government", "agriculture"),
+    "community-association": ("religion", "community", "people", "food", "education", "buildings", "finance", "labor"),
+    "independent-retailer": ("retail", "trade", "finance", "logistics", "advertising", "community", "labor", "food"),
+    "factory-and-repair-network": ("factories", "manufacturing", "machines", "energy", "labor", "repair", "logistics", "insurance"),
+    "land-and-forest-stewardship": ("land", "forests", "water", "weather", "natural-resources", "government", "science", "community"),
+    "vehicle-ownership": ("vehicles", "roads", "repair", "insurance", "finance", "energy", "travel", "family"),
+    "connected-field-team": ("telecommunications", "construction", "farms", "mines", "emergencies", "machines", "labor", "travel"),
+    "research-laboratory": ("research", "science", "instruments", "medicine", "computers", "models", "finance", "education"),
+    "cross-border-shipment": ("trade", "ships", "aircraft", "roads", "rail", "logistics", "finance", "insurance"),
+    "civic-services": ("government", "community", "housing", "water", "utilities", "law", "emergencies", "people"),
+}
+
+
+def sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def clean(value: str) -> str:
+    return re.sub(r"\s+", " ", value.replace("**", "").strip())
+
+
+def source_kind_for_ext(source_ref: str) -> str:
+    number = int(source_ref.split("-")[1])
+    if number <= 7:
+        return "x402_spec"
+    if number <= 848:
+        return "rss"
+    if number <= 2604:
+        return "public_api"
+    if number <= 2815:
+        return "x402"
+    return "mcp"
+
+
+def markdown_name_url(line: str) -> tuple[str, str]:
+    bold_link = re.search(r"\*\*\[([^\]]+)\]\(([^)]+)\)\*\*", line)
+    if bold_link:
+        return clean(bold_link.group(1)), bold_link.group(2)
+    bold_then_link = re.search(r"\*\*([^*]+)\*\*\s+—\s+\[([^\]]+)\]\(([^)]+)\)", line)
+    if bold_then_link:
+        return clean(bold_then_link.group(1)), bold_then_link.group(3)
+    link = LINK.search(line)
+    if link:
+        return clean(link.group(1)), link.group(2)
+    raise ValueError(f"cannot parse source occurrence: {line}")
+
+
+def parse_master(master: Path) -> list[dict[str, Any]]:
+    records: dict[str, dict[str, Any]] = {}
+    active = False
+    section = ""
+    for line_no, raw in enumerate(master.read_text(encoding="utf-8").splitlines(), start=1):
+        # The seven x402 foundation entries precede the source-organized list;
+        # all other duplicate entries in the functional index are ignored.
+        early_match = ENTRY_ID.search(raw)
+        if not active and early_match and raw.startswith("- "):
+            early_ref = early_match.group(1)
+            if int(early_ref.split("-")[1]) <= 7:
+                name, url = markdown_name_url(raw)
+                records.setdefault(early_ref, {
+                    "id": f"external:{early_ref.lower()}", "source_ref": early_ref,
+                    "observed_name": name, "primary_url": url,
+                    "source_kind": source_kind_for_ext(early_ref),
+                    "section": "x402 foundation, protocol and specification resources",
+                    "source_document": master.name, "source_line": line_no,
+                    "raw_source_text": raw,
+                })
+        if raw.startswith("## 3. Lossless source-organized master list"):
+            active = True
+            continue
+        if active and raw.startswith("# Machine Protocols & Standards Continuation"):
+            break
+        if not active:
+            continue
+        if raw.startswith("## "):
+            section = clean(raw[3:])
+        elif raw.startswith("### "):
+            section = clean(raw[4:])
+        match = ENTRY_ID.search(raw)
+        if not match or not raw.startswith("- "):
+            continue
+        source_ref = match.group(1)
+        if int(source_ref.split("-")[1]) > 4152:
+            continue
+        name, url = markdown_name_url(raw)
+        records.setdefault(source_ref, {
+            "id": f"external:{source_ref.lower()}",
+            "source_ref": source_ref,
+            "observed_name": name,
+            "primary_url": url,
+            "source_kind": source_kind_for_ext(source_ref),
+            "section": section,
+            "source_document": master.name,
+            "source_line": line_no,
+            "raw_source_text": raw,
+        })
+    ordered = [records[key] for key in sorted(records)]
+    if len(ordered) != 4152:
+        raise ValueError(f"expected 4,152 non-protocol source occurrences, found {len(ordered)}")
+    return ordered
+
+
+def parse_protocols(protocols: Path) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    section = ""
+    for line_no, raw in enumerate(protocols.read_text(encoding="utf-8").splitlines(), start=1):
+        if raw.startswith("## "):
+            section = clean(raw[3:])
+            continue
+        name = url = ""
+        if raw.startswith("| **") and "[source](" in raw:
+            cells = [cell.strip() for cell in raw.strip().strip("|").split("|")]
+            if len(cells) < 6:
+                continue
+            name = clean(cells[0])
+            source = TABLE_SOURCE.search(cells[-1])
+            if not source:
+                raise ValueError(f"missing protocol source at line {line_no}")
+            url = source.group(1)
+        elif raw.startswith("- **[") and ENTRY_ID.search(raw):
+            name, url = markdown_name_url(raw)
+        else:
+            continue
+        ext_match = ENTRY_ID.search(raw)
+        # The continuation's own table rows do not print their inherited EXT
+        # labels. Its stated 739-row range follows the 4,152 non-protocol
+        # occurrences exactly, so reconstruct the documented stable range
+        # rather than inventing a second protocol-only namespace.
+        source_ref = ext_match.group(1) if ext_match else f"EXT-{4152 + len(records) + 1:05d}"
+        records.append({
+            "id": f"external:protocol-{len(records) + 1:04d}",
+            "source_ref": source_ref,
+            "source_ref_assignment": "printed" if ext_match else "documented_continuation_range",
+            "protocol_occurrence": len(records) + 1,
+            "observed_name": name,
+            "primary_url": url,
+            "source_kind": "machine_protocol",
+            "section": section,
+            "source_document": protocols.name,
+            "source_line": line_no,
+            "raw_source_text": raw,
+        })
+    if len(records) != 739:
+        raise ValueError(f"expected 739 protocol occurrences, found {len(records)}")
+    return records
+
+
+def unique(values: Iterable[str]) -> list[str]:
+    return list(dict.fromkeys(values))
+
+
+def term_matches(text: str, term: str) -> bool:
+    """Match short protocol/domain acronyms as tokens, not substrings.
+
+    `der` is meaningful as Distributed Energy Resource but not as the tail of
+    Genderize or placeholder. Longer lexical terms retain deliberately broad
+    matching for source descriptions. This is classification only; it does not
+    admit a provider or assert capability.
+    """
+    text, term = text.lower(), term.lower()
+    if len(term) <= 3 and term.isalnum():
+        return re.search(rf"(?<![a-z0-9]){re.escape(term)}(?![a-z0-9])", text) is not None
+    return term in text
+
+
+def estate_roles(record: dict[str, Any], text: str) -> list[str]:
+    roles = [role for role, terms in ROLE_TERMS if any(term_matches(text, term) for term in terms)]
+    if record["source_kind"] == "machine_protocol":
+        roles.append("transport_carrier")
+    elif record["source_kind"] == "mcp":
+        roles.append("compiler_toolchain")
+    elif record["source_kind"] == "rss":
+        roles.append("material_source")
+    elif record["source_kind"] in {"public_api", "x402"}:
+        roles.append("external_service_candidate")
+    else:
+        roles.append("reference_standard")
+    return unique(roles)
+
+
+# Whether a source publishes position at all, read from what the source says
+# about itself. `unknown` was a literal here for every one of the 4,891
+# occurrences -- a field that was declared and never computed, which reads as a
+# question nobody asked rather than one asked and unanswered.
+#
+# Two values, and the second is the one that matters. `bearing` means the
+# source's own description names a geospatial publication. `not_evident` means
+# this listing showed no spatial evidence -- and says exactly that, because a
+# line in an index saying nothing about maps is not a source that has no
+# coordinates. Absence of evidence in a description is not evidence of absence
+# in the source, and a third value asserting "not spatial" would claim an
+# observation nobody made.
+SPATIAL_TERMS: tuple[str, ...] = (
+    # Format and protocol names, which mean one thing only.
+    "geojson", "geo-json", "ogc api", "wfs", "wms", "wmts", "shapefile",
+    "geopackage", "geotiff", "postgis", "gtfs", "opensky", "ads-b", "adsb",
+    "openstreetmap", "gazetteer",
+    # Vocabulary that is geospatial in every ordinary reading.
+    "spatial", "geospatial", "geography", "geocod", "latitude", "longitude",
+    "lat/lon", "bounding box", "bbox", "basemap", "map tile", "vector tile",
+    "isochrone", "street network", "elevation", "terrain",
+    "satellite imagery", "earth observation", "cadastr", "census tract",
+    "place name", "earthquake", "seismic",
+    # Deliberately absent, each having been measured as a false positive on this
+    # corpus: "radar" ("Under the Radar"), "parcel" (PostNord ships them),
+    # "hotspot" (a LoRaWAN device is not a fire), "routing" (packets and models
+    # are routed too), "boundaries" and bare "coordinate" (both ordinary English
+    # long before they are geography). A term that fires on an idiom turns an
+    # honest "nobody looked" into a false claim that somebody did.
+)
+
+
+def spatial_candidate(text: str) -> str:
+    return "bearing" if any(term_matches(text, term) for term in SPATIAL_TERMS) else "not_evident"
+
+
+def project(record: dict[str, Any]) -> dict[str, Any]:
+    text = " ".join((record["observed_name"], record["section"], record["raw_source_text"])).lower()
+    # Topic terms come only from the occurrence itself.  Carrier defaults and
+    # cross-domain reuse are intentionally held apart: a generic MCP server
+    # may be useful to the weather compiler without being weather material.
+    topic_domains = [domain for domain, terms in DOMAIN_TERMS.items() if any(term_matches(text, term) for term in terms)]
+    defaults, default_affordances = SOURCE_DEFAULTS[record["source_kind"]]
+    topic_domains = unique(topic_domains)
+    reusable = unique(item for domain in topic_domains for item in REUSE.get(domain, ()))
+    candidate_domains = unique(topic_domains + reusable + list(defaults))
+    roles = estate_roles(record, text)
+    affordances = [name for name, terms in AFFORDANCE_TERMS if any(term_matches(text, term) for term in terms)]
+    affordances = unique(affordances or list(default_affordances))
+    # A World candidate requires direct topical evidence.  Reuse labels may
+    # rank an already-selected candidate, but cannot conjure a World fit from
+    # a carrier default or a two-term bag overlap.
+    worlds = [world for world, required in WORLDS.items() if len(set(topic_domains).intersection(required)) >= 2]
+    carrier = "protocol" if record["source_kind"] == "machine_protocol" else "http"
+    return {
+        "classification_level": "candidate_heuristic_not_provider_admission",
+        "estate_roles": roles,
+        "topic_domains": topic_domains,
+        "carrier_default_domains": list(defaults),
+        "direct_domains": topic_domains,
+        "conditional_reuse_domains": reusable,
+        "candidate_domains": candidate_domains,
+        "candidate_affordances": affordances,
+        "candidate_worlds": worlds,
+        "carrier_candidate": carrier,
+        "temporal_candidate": "unknown",
+        "spatial_candidate": spatial_candidate(text),
+        "world_phases": ["discover", "plan", "observe"],
+        "interaction_fits": ["discover", "inspector", "work"],
+    }
+
+
+def compile_corpus(master: Path, protocols: Path) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    records = parse_master(master) + parse_protocols(protocols)
+    for record in records:
+        record["truth_level"] = "observed_candidate"
+        record["projection"] = project(record)
+        record["forbidden_inferences"] = [
+            "listing -> verified capability",
+            "candidate affordance -> authority or permission",
+            "carrier/protocol -> canonical semantic owner",
+            "payment presentation -> settlement or fulfillment",
+            "observation candidate -> admitted evidence or institutional truth",
+        ]
+    kind_counts = Counter(record["source_kind"] for record in records)
+    domain_counts = Counter(domain for record in records for domain in record["projection"]["candidate_domains"])
+    world_counts = Counter(world for record in records for world in record["projection"]["candidate_worlds"])
+    reuse_counts = Counter(len(record["projection"]["candidate_worlds"]) for record in records)
+    summary = {
+        "schema": "bonfyre.external-estate.v1",
+        "truth_level": "observed_candidate",
+        "input": {
+            "master": str(master), "master_sha256": sha256(master),
+            "protocols": str(protocols), "protocols_sha256": sha256(protocols),
+        },
+        "counts": {
+            "external_occurrences": len(records),
+            "non_protocol_occurrences": len(records) - 739,
+            "protocol_occurrences": 739,
+            "by_source_kind": dict(sorted(kind_counts.items())),
+            "candidate_domains": len(domain_counts),
+            "candidate_worlds": len(world_counts),
+            "sources_in_2_or_more_worlds": sum(count for width, count in reuse_counts.items() if width >= 2),
+            "sources_in_10_or_more_worlds": sum(count for width, count in reuse_counts.items() if width >= 10),
+            "maximum_world_reuse": max(reuse_counts),
+        },
+        "candidate_domain_occurrences": dict(sorted(domain_counts.items())),
+        "candidate_world_occurrences": dict(sorted(world_counts.items())),
+        "limits": [
+            "Heuristic classifications are composition candidates, not source verification.",
+            "A generated candidate must pass CapabilityClosure, Authority, Evidence and effect gates before execution.",
+            "The raw source line and document digest are retained for every occurrence.",
+        ],
+    }
+    return records, summary
+
+
+def write_jsonl(path: Path, records: Iterable[dict[str, Any]]) -> None:
+    with path.open("w", encoding="utf-8") as handle:
+        for record in records:
+            handle.write(json.dumps(record, sort_keys=True, ensure_ascii=False) + "\n")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--master", type=Path, default=DEFAULT_MASTER)
+    parser.add_argument("--protocols", type=Path, default=DEFAULT_PROTOCOLS)
+    parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
+    parser.add_argument("--check", action="store_true", help="verify generated corpus without rewriting it")
+    args = parser.parse_args()
+    records, summary = compile_corpus(args.master, args.protocols)
+    output = args.out
+    corpus = output / "observed-external-estate.jsonl"
+    manifest = output / "manifest.json"
+    if args.check:
+        if not corpus.exists() or not manifest.exists():
+            raise SystemExit("generated corpus or manifest is absent")
+        observed = [json.loads(line) for line in corpus.read_text(encoding="utf-8").splitlines() if line]
+        if observed != records or json.loads(manifest.read_text(encoding="utf-8")) != summary:
+            raise SystemExit("generated external estate is stale; rerun compile_external_estate.py")
+        return 0
+    output.mkdir(parents=True, exist_ok=True)
+    write_jsonl(corpus, records)
+    manifest.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    print(f"wrote {len(records)} observed candidate occurrences to {output}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

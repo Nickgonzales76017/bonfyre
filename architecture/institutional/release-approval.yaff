@@ -1,0 +1,45 @@
+architecture release-approval
+  canonical_name ReleaseApproval
+  family institutional
+  domain Release / Human Approval
+  layer institutional
+  semantic_question Which accepted public release is waiting for the owner's approval, and what happened when they approved it?
+  purpose Moves the last human step of a public release out of the terminal and onto the owner's Aurekai work board. An accepted release is offered as a blocked operator goal; the owner's Approve click writes a single approval file; a watcher activates that exact release through the existing rollout owner, which restores the previous service on failure, and reports the outcome on the same task.
+  maturity implemented
+  consumes autonomous-operator-native-owner
+  publishes ReleaseApproval
+  state_types offered
+  state_types approved
+  state_types live
+  state_types failed
+  source_path scripts/release/approved_activation.sh
+  source_path scripts/release/bootstrap_approvals.sh
+  source_path deploy/launchd/com.bonfyre.release-approvals.plist
+  source_path cmd/BonfyreWebAddress/src/application_continuation.h
+  source_path scripts/release/tests/approved_activation_test.sh
+  witness scripts/release/tests/approved_activation_test.sh proves a release without acceptance cannot be offered; an offer becomes one blocked release-approval goal; an approval for the open goal activates once, resolves the task with when it went live and keeps the approval as a receipt; a failed switch leaves the task open with the reason; approvals for another release or with malformed names are set aside unacted
+  invariant only the account owner's own listed release-approval goal can be approved, from a same-origin work board form under a current session; the web request writes the approval and never activates anything itself
+  invariant activation runs only for a release directory under ~/.bonfyre/releases holding accepted.mpk, through public_surface_rollout.mjs activate, one run at a time
+  forbidden_inference an offered release -> approved; an approval file -> live; only the watcher's resolved task says a release went live
+  forbidden_inference release approval -> approval of database writes, account changes, provider actions or anything beyond switching the public service to an accepted frozen release
+  known_gap the watcher LaunchAgent is installed once by the owner (bootstrap_approvals.sh); agent installation is not automated
+  known_gap the Approve form path has a signed-in browser-fixture witness held outside the repo by the native ratchet
+  source_lineage 2026-10-26 owner direction: anything needing the owner goes through live Aurekai, no ad-hoc terminal asks
+
+architecture release-approval-mcp
+  canonical_name ReleaseApprovalMcp
+  family command
+  domain Release / Human Approval
+  layer institutional
+  semantic_question Can the owner approve an offered release from an MCP client instead of the work board button?
+  purpose bonfyre-release-approval lists open release-approval goals and approves one by writing the same <release>.approved file the work board writes; MCP clients reach it through native_tool_invoke (family BonfyreReleaseApproval), so no new MCP surface or JS is added. The existing release watcher verifies again and activates.
+  maturity implemented
+  consumes release-approval
+  publishes ReleaseApproval
+  source_path cmd/BonfyreReleaseApproval/src/main.c
+  source_path cmd/BonfyreReleaseApproval/tests/release_approval_test.sh
+  witness cmd/BonfyreReleaseApproval/tests/release_approval_test.sh proves only an open offered release is listed and approved, once, with the watcher's file format and the approver recorded on the goal; resolved, non-release, path-shaped and symlinked approvals are refused
+  witness 2026-10-27 native_tool_invoke BonfyreReleaseApproval list answered through the bonfyre MCP (receipt 60a2de95-4513-460f-aae6-d63ea748e4b5)
+  invariant approve never activates; it records the owner's decision where the watcher reads it, and the watcher's own acceptance rerun decides whether the release goes live
+  forbidden_inference an MCP session -> owner approval; whoever holds the MCP session is treated as the owner, so the MCP token must stay the owner's
+  known_gap native_tool_invoke does not yet check that the MCP caller is the account named BONFYRE_ACCOUNT_WORK_OWNER; the actor is supplied by the caller

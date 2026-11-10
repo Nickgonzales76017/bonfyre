@@ -1,0 +1,39 @@
+architecture semantic-operator
+  canonical_name HouseholdSemanticOperator
+  family forwarding
+  domain Forwarding / Semantic Lowering
+  layer forwarding
+  semantic_question How can a current household projection be addressed and queried without promoting its source observations or creating a second household store?
+  purpose A native, bounded read-only lowerer over decoded food and housing projections. It validates the projection contract, derives stable addresses and content digests, lowers duplicate-free read closures, preserves distinct units, and returns a deliberately non-promoting proof verdict.
+  maturity implemented
+  node_types HouseholdProjection
+  node_types AddressedHouseholdRecord
+  node_types SemanticProgram
+  node_types NonPromotingProofVerdict
+  edge_types addresses
+  edge_types lowers
+  edge_types explains
+  internal_calculus address = domain / declared identity kind / stable identity
+  internal_calculus program digest = SHA-256(operator plus lexically ordered addressed read closure)
+  internal_calculus proof verdict = not_proven regardless of observed availability, dog, effective-cost, or price fields
+  invariant lowered programs have an empty write set
+  invariant every accepted read retains a content digest and source evidence reference
+  invariant a shared property with distinct units remains coexistence rather than a merge
+  forbidden_inference an addressed source observation -> current availability, dog acceptance, effective cost, purchase authority or proof
+  forbidden_inference an admitted read closure -> authority to mutate a household source or execute a transaction
+  source_path schemas/control/household-projection.yaff
+  source_path engine/core/include/bf_semantic_operator.h
+  source_path engine/core/src/semantic_operator.c
+  source_path components/BonfyreControlPlane/semantic_operator.py.archive
+  source_path cmd/BonfyreOperator/src/main.c
+  source_path bin/bonfyre-operator
+  source_path cmd/BonfyreHousehold/src/main.c
+  source_path cmd/BonfyreActors/tests/organ_callers_test.sh
+  witness engine/core/tests/semantic_operator_test.c
+  witness components/BonfyreControlPlane/tests/test_semantic_operator.py.archive
+  witness cmd/BonfyreOperator/tests/smoke.sh
+  witness cmd/BonfyreOperator/tests/parity.sh holds the C bonfyre-operator to 33 vectors recorded from the retired Bun-compiled src/main.ts (one deliberate fix: records are no longer mutated while their source_refs are listed) and it matched that program on the live run8 household projection (2026-10-22)
+  witness cmd/BonfyreActors/tests/organ_callers_test.sh proves the native household caller binds exactly one declared housing identity and returns availability as observed but never proven
+  known_gap archived Python source is retained only as historical evidence; the executable shell surface is compiled from C (54 KB; until 2026-10-22 it was a 63 MB bun-compiled TypeScript program) and no longer invokes it
+  interacts address-plane-routes-household-operator
+  known_gap the native caller is a bounded operator surface; household projection owners still need to invoke it at their read boundary rather than handing a browser a second household store.

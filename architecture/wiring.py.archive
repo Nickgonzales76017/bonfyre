@@ -337,7 +337,7 @@ def _is_native(paths: list[str]) -> bool:
 
 
 def _is_python(paths: list[str]) -> bool:
-    return any(p.startswith("10-Code/") or p.endswith(".py") for p in paths)
+    return any(p.startswith("components/") or p.endswith(".py") for p in paths)
 
 
 def audit(index_path: str | None = None) -> dict:

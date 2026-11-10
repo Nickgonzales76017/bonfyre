@@ -1,0 +1,56 @@
+atlas external
+
+architecture account-enrollment
+  canonical_name Account enrollment
+  family external
+  domain External / Obtaining provider capabilities per identity
+  layer integration
+  semantic_question For each of the 200 onboarding targets and each identity (Gmail, Proton), what has been checked, which account holds it, which key is kept under which account, what is it waiting for, and what needs a person?
+  purpose Replaces the retired standalone launcher's progress file, key writer and window bindings with native work: one BonfyreQueue mission per capability per identity, leases held per identity so one provider page is open at a time, revision-checked checkpoints for the six stages, waiting and decision states, keys sealed by BonfyreCredentials under the identity's account, and a BrowserHost side-panel section that only presents the item
+  maturity implemented
+  consumes BonfyreQueue
+  consumes CredentialBoundary
+  consumes BrowserHost
+  node_types EnrollmentItem, EnrollmentLease, EnrollmentCheckpoint, EnrollmentStage, Interruption
+  internal_calculus priority: accounts with history to recover first, then by source tier, accounts likely shared with another target last; the queue orders claims by priority
+  internal_calculus waiting (email, second factor, review) fails the attempt as a resource shortage so the lease is released and the item retries after a ten-minute backoff, up to forty times; a decision (human check, paid plan, terms, no developer access) is a dependency failure held for the person
+  invariant presentation is never identity: a tab id is kept only in the browser session; the item is the mission and resuming renews its lease or, if it lapsed, returns it to the queue with its checkpoint
+  invariant only finishing or setting aside an item lets the next one out; finishing needs the first stage recorded and is accepted only against the checkpoint revision just read
+  invariant a key travels from the panel envelope to the credential boundary's standard input with the identity's account; no argument, checkpoint, reply or ledger holds it
+  invariant the retired launcher's recorded visits are carried as notes, never as stages; its cursor is ignored
+  witness integrations/browser/tests/enrollment.test.mjs runs the real queue and credential binaries: 400 missions seeded once and kept on re-seed, legacy visits as notes, a lost panel resuming the same item, revision-checked stages with a stale save refused, a key sealed under the Gmail account and absent from every checkpoint, an undeclared provider refused, waiting releasing the place, a decision listed, done refused before the first stage, and the host carrying the seven operations with confirmation required for every change
+  witness integrations/browser/tests/enrollment-live.test.mjs in Chrome for Testing 155 with the unpacked extension and the real host: a stage recorded in the panel, the provider page and the panel closed, a reopened panel showing the same item with the stage, and Done releasing the next item
+  witness 2026-10-19 on this Mac the queue at ~/.bonfyre/onboarding/native/enrollment.db holds 400 ready items (200 per identity); the retired launcher had recorded no progress to carry
+  forbidden_inference a finished item -> an account the provider accepts, a working key or permission to use it; the stages recorded say how far it got
+  forbidden_inference the Proton lane -> proof of who authenticated at the provider; it names the identity the work is for
+  forbidden_inference a seeded item -> a need for that account; the targets list is the supplied plan
+  known_gap the side panel in Nick's own Chrome needs the extension reloaded (0.3.0, storage permission, split incognito) and the host registered; no provider page has been worked through it yet
+  known_gap most targets have no declared provider fields in provider-credentials, so a key for them is refused until declared
+  known_gap credential verification, scope confirmation and consumer binding are recorded by hand; nothing checks them against the provider yet
+  source_path integrations/browser/onboarding/enrollment.mjs
+  source_path integrations/browser/extension/panel-enrollment.mjs
+  source_path integrations/browser/host/bonfyre-browser-host.mjs
+  source_path integrations/browser/tests/enrollment.test.mjs
+  source_path integrations/browser/tests/enrollment-live.test.mjs
+  source_path docs/engineering/handoff-backfill-20261019/onboarding-enrollment.tsv
+  source_lineage 2026-10-19 ChatGPT onboarding noon audit: the standalone launcher crashed the Mac, then lost its place on a closed window
+
+interaction browser-host-carries-enrollment
+  source browser-host
+  destination account-enrollment
+  relation carries_operations
+  preserves the identity, the stage or reason, and a key on its way to the credential boundary
+  drops the key from every reply
+  forbidden_inference a carried operation -> authority to act at the provider
+  invalidates_on host operation list, enrollment verbs
+  witness integrations/browser/tests/enrollment.test.mjs
+
+interaction account-enrollment-seals-with-credential-boundary
+  source account-enrollment
+  destination credential-boundary
+  relation seals_under_account
+  preserves the identity's account as the sealed value's account
+  drops the value from arguments and checkpoints
+  forbidden_inference a sealed key -> a verified key
+  invalidates_on sealed_field schema, provider declarations
+  witness integrations/browser/tests/enrollment.test.mjs

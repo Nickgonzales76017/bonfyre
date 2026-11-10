@@ -1,0 +1,116 @@
+#!/usr/bin/env python3
+# Retired: architecture/check-organ-callers.mjs indexes source mentions once.
+"""Which native organs anything actually calls.
+
+A test is not a caller. An organ can pass every assertion it makes about
+itself and still be wired into nothing, and the atlas has no field that tells
+those apart -- `implemented` and `measured` both go on saying the work is real
+while no path in the estate reaches it.
+
+CommerceChain was exactly that: fifteen stages measured against all two hundred
+and twenty-five stage pairs, and `bf_commerce_record` had no caller anywhere in
+the tree. The proof was sound. The subject was missing.
+
+So this asks one question per organ: does anything outside its own source,
+header and tests name a symbol it exports? It is deliberately generous about
+what counts -- any mention in any language, not just a C call -- because the
+failure being looked for is total absence, and a generous test that still finds
+nothing is worth more than a strict one nobody trusts.
+
+  check_organ_callers.py [--json] [--strict]
+"""
+from __future__ import annotations
+import argparse, json, re, subprocess, sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+SEARCHED = ("cmd", "engine", "components", "integrations", "scripts", "lib")
+SUFFIXES = {".c", ".h", ".mjs", ".py", ".sh", ".ts"}
+
+
+def exported(header: Path) -> set[str]:
+    return set(re.findall(r"\b(bf_[a-z0-9_]+)\s*\(", header.read_text(errors="replace")))
+
+
+def is_self(path: str, organ: str, base: str) -> bool:
+    """Whether a mention is the organ talking about itself.
+
+    Its own header and source are not callers, and neither is its test: a
+    witness proves the organ works, which is a different claim from the estate
+    using it.
+    """
+    if path.startswith("engine/core/include/%s.h" % organ):
+        return True
+    if path.startswith("engine/core/src/%s.c" % base):
+        return True
+    return "/tests/" in path or path.endswith(("_test.c", "_test.sh", "_test.py"))
+
+
+def source_mentions() -> dict[str, set[str]]:
+    """Index all candidate callers once.
+
+    The original audit invoked a whole-tree ``grep`` once per exported symbol.
+    That was logically sound but made the very check intended to expose unused
+    organs too slow to use on this repository.  The policy stays deliberately
+    generous: any token-shaped mention in a supported source file is a caller
+    candidate, before ``is_self`` removes an organ's own implementation/tests.
+    """
+    files = subprocess.run(
+        ["rg", "--files", *SEARCHED], capture_output=True, text=True, cwd=ROOT,
+        check=False,
+    ).stdout.splitlines()
+    mentions: dict[str, set[str]] = {}
+    for relative in files:
+        path = ROOT / relative
+        if path.suffix not in SUFFIXES:
+            continue
+        try:
+            text = path.read_text(errors="replace")
+        except OSError:
+            continue
+        for symbol in set(re.findall(r"\bbf_[a-z0-9_]+\b", text)):
+            mentions.setdefault(symbol, set()).add(relative)
+    return mentions
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--json", action="store_true")
+    ap.add_argument("--strict", action="store_true")
+    args = ap.parse_args()
+
+    mentions = source_mentions()
+    rows = []
+    for header in sorted((ROOT / "engine/core/include").glob("bf_*.h")):
+        symbols = exported(header)
+        if not symbols:
+            continue
+        organ = header.stem
+        base = organ[3:]
+        callers: set[str] = set()
+        for symbol in symbols:
+            callers.update(p for p in mentions.get(symbol, ())
+                           if not is_self(p, organ, base))
+        rows.append({"organ": organ, "symbols": len(symbols),
+                     "callers": sorted(callers)})
+
+    uncalled = [r for r in rows if not r["callers"]]
+    rows.sort(key=lambda r: len(r["callers"]))
+
+    if args.json:
+        print(json.dumps({"organs": rows, "uncalled": [r["organ"] for r in uncalled]}, indent=1))
+    else:
+        print("native organs: %d, of which %d are called by nothing" % (len(rows), len(uncalled)))
+        for row in rows:
+            note = "   <- nothing outside its own tests calls it" if not row["callers"] else ""
+            print("  %-26s %3d symbols  %2d callers%s"
+                  % (row["organ"], row["symbols"], len(row["callers"]), note))
+
+    if args.strict and uncalled:
+        print("\n%d organs are proven and unused." % len(uncalled), file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

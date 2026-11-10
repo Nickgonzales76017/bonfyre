@@ -1,0 +1,309 @@
+atlas surface-aurekai-activity
+
+architecture aurekai-activity
+  canonical_name AurekaiActivity
+  family surface
+  domain Surface / Account-scoped work and recipient attention
+  layer surface/private
+  maturity implemented
+  semantic_question How can a person keep current work, its outputs, provider steps and personal notifications visible while moving through Aurekai?
+  purpose Extend shared native navigation with one persistent Activity, Outputs and Inbox presentation. Existing SourceFrontier, Queue and Fabric owners retain work and recipient state; the surface reads their admitted projections and reopens exact work.
+  consumes WebWorkJob
+  consumes AccountWorkGraph
+  consumes QueueRecipientNotification
+  consumes FabricScopedTask
+  consumes FabricRecipientNotification
+  consumes FabricPushDelivery
+  consumes FabricModelRun
+  consumes NativeModelUsageReceipt
+  publishes AccountActivityPresentation
+  node_types ActivityRow
+  node_types OutputContinuation
+  node_types RecipientNotificationRow
+  node_types ProviderContinuationCard
+  node_types DeviceNotificationSubscription
+  node_types ReviewedModelRun
+  node_types LocalOutputTransferVerification
+  node_types AgentRunRow
+  internal_calculus current native navigation -> fresh destination admission -> independent bounded MessagePack owner reads -> matching actor/subject/scope bindings -> source-qualified Activity and Outputs -> exact recipient Inbox
+  internal_calculus provider card -> trusted browser gesture -> pinned top-level extension document -> fresh same-origin native work/revision admission -> native host validation -> retain or focus the same provider tab beside Aurekai
+  invariant current account, destination and page-lifecycle changes clear private presentation immediately and invalidate late replies; the caller's context and displayed name never establish identity
+  invariant the four independent WebWork, Queue activity, Queue Inbox and Fabric reads are combined only when every successful reply has the same native actor, subject and scope binding; a source failure remains an unavailable state and cannot become an empty work list
+  invariant Queue activity, outputs and agents reads within one refresh run in sequence to avoid competing stale-index rebuilds; failure of one does not suppress the next, and an invalidated refresh starts no remaining reads
+  witness integrations/browser/tests/aurekai-activity-interaction.browser.test.mjs checks Queue read ordering and that outputs and Inbox remain available when the task list fails
+  invariant any current owner refusal clears all private projections immediately, including while another owner read is pending; a stale response or stale refusal cannot affect a newer account
+  invariant WebAddress resolves the current actor and destination on every activity, notification and provider request; writes use same-origin bounded MessagePack and no browser-supplied principal or service credential
+  invariant the existing Queue and native Inbox gateway retains /apps/_activity; the separate Fabric, model and push gateway uses /apps/_fabric so neither owner shadows or reinterprets the other's operations
+  invariant Queue success packets carry a freshly resolved native binding; Inbox writes require an exact expectedBinding checked against that current actor subject scope, then forward only the original five action fields to the existing Queue parser
+  invariant activity reads are projections of native WebWork, admitted Queue WorkGraphs and the existing Fabric process; historical running rows do not establish live executor ownership
+  invariant legacy operator tasks remain outside account activity unless scoped at original trusted admission; the rail never retroactively assigns an operator task to a customer
+  invariant declared subagents retain their parent task; receipts retain their task identity and are described as receipt evidence unless the owner supplies an actual artifact continuation
+  invariant a notification belongs to the exact native recipient and destination; read and dismiss require its revision and retained request identity, and neither cancels nor completes its work
+  invariant Queue notifications retain their existing read unread dismiss restore pagination and exact-action receipt owner; Fabric notifications retain the separate Fabric recipient owner, and research updates remain work state rather than invented recipient notices
+  invariant device subscriptions require an explicit trusted browser gesture and matching freshly resolved actor subject scope; browser permission and a subscription do not grant account access
+  invariant the existing Fabric recipient owner retains subscriptions and delivery attempts in its SQLite store; current Auth and CMS destination read access is checked again immediately before sending
+  invariant Web Push encrypts a bounded MessagePack delivery identity; device text contains no private task content; opening it resolves the original work through the current native account boundary
+  invariant push-service acceptance, browser display and opening remain separate receipts; none is an Inbox read or dismiss action or proof that a person read the notification
+  invariant STOP prevents push scheduling and sending; a crashed or transport-uncertain send is retained for reconciliation and never automatically replayed
+  invariant outbound Web Push accepts only declared public push-service HTTPS endpoints and refuses redirects; subscription keys and VAPID private material never enter activity projections
+  invariant provider work retains exact destination, job and reviewed revision; unrelated polling and card changes preserve the provider presentation and existing redirected provider tab
+  invariant provider key entry is available only with current native administrator capability and an exact installed credential declaration; no website password, provider cookie or bearer enters the page adapter
+  invariant shared native navigation and installed editor body replacement preserve one rail; wide screens show it persistently and narrower screens retain an explicit keyboard and touch control
+  invariant Model Commons preserves the selected destination and executes only a currently admitted native local candidate after exact prompt model limits pricing and account review; a catalogue row alone grants no execution right
+  invariant model review and submission retain separate exact request identities; uncertain submission recovery reads the same task and never silently submits another inference
+  invariant model result presentation verifies retained output bytes and digest; usage pricing remains unknown unless the existing native Meter supplies an admitted rate and actual retained cost
+  invariant explicit usage reconciliation retries only the frozen physical-attempt metadata for a completed retained output; it cannot rerun inference
+  invariant local output transfer verification accepts only current task and receipt identities, obtains private artifact coordinates from the owner, and verifies both native loopback peers under fresh initiating-account authority
+  invariant local transfer recovery retains the exact request identity; an uncertain attempt is not automatically transmitted again and does not imply remote delivery or recipient pairing
+  forbidden_inference a floating card, a provider tab opening, a stored API key or a browser redirect -> verified provider account ownership, successful consent, usable credentials or completed work
+  forbidden_inference recipient Inbox polling -> operating-system push delivery, peer reading or a guarantee that a notification has been seen
+  forbidden_inference local native and browser fixture tests -> live deployment, configured production owner paths, an installed user extension or an admitted real provider effect
+  source_path integrations/browser/aurekai-activity.mjs
+  source_path integrations/browser/aurekai-activity-source.mjs
+  source_path integrations/browser/aurekai-inbox-source.mjs
+  invariant Inbox and Activity share the bounded native packet transport; Inbox retains its original encoded request, exact declared response length, typed refusal mapping and current recipient binding checks
+  witness integrations/browser/tests/aurekai-inbox-source.test.mjs verifies unchanged request bytes, malformed lengths, refused reads, late cancellation and exact recipient receipts after transport consolidation
+  source_path integrations/browser/aurekai-activity.css
+  source_path integrations/browser/extension/workbench-shell.mjs
+  source_path integrations/browser/extension/foreign-sign-in.mjs
+  source_path integrations/browser/provider-contract.mjs
+  source_path cmd/BonfyreWebAddress/src/activity_workspace.h
+  source_path cmd/BonfyreWebAddress/src/account_activity_web.h
+  source_path cmd/BonfyreWebAddress/src/source_web_work.h
+  source_path cmd/BonfyreWebAddress/src/application_workspace.h
+  source_path cmd/BonfyreSourceFrontier/tools/web_work.mjs
+  source_path integrations/mcp/fabric_activity.mjs
+  source_path integrations/mcp/fabric_activity_cli.mjs
+  source_path integrations/mcp/fabric_push.mjs
+  source_path integrations/mcp/fabric_push_store.mjs
+  source_path integrations/mcp/fabric_push_carrier.mjs
+  source_path integrations/mcp/account_authority.mjs
+  source_path cmd/BonfyreAuth/src/background_access.h
+  source_path integrations/browser/aurekai-push.mjs
+  source_path integrations/browser/aurekai-push-sw.mjs
+  source_path integrations/browser/aurekai-horde.mjs
+  invariant the work board's pixel knight loader is presentation only: it mounts after the board status, runs a fixed-timestep loop until the first native task page or its refusal arrives, then removes itself; it pauses while the tab is hidden, holds one still frame under reduced motion, takes no pointer input and draws only from page colour tokens
+  forbidden_inference the knight loader animating, disappearing or swinging -> task progress, owner availability, a successful task read or any work having been done
+  source_path integrations/browser/aurekai-model.mjs
+  source_path integrations/browser/aurekai-model.css
+  source_path integrations/mcp/fabric_model.mjs
+  source_path integrations/mcp/native_model.mjs
+  source_path integrations/mcp/native_meter.mjs
+  source_path integrations/mcp/fabric_output_transfer.mjs
+  source_path cmd/BonfyreQueue/src/account_work.h
+  source_path cmd/BonfyreWebAddress/src/account_inbox_web.h
+  source_path cmd/BonfyreWebAddress/src/application_continuation.h
+  source_path cmd/BonfyreWebAddress/src/work_board.h
+  invariant changing workspace from a focused task opens the chosen workspace without carrying the prior task identity
+  invariant long task diagnostics and attempt summaries remain escaped and available on explicit expansion; a recorded progress update on finished work is not labelled a failure
+  witness cmd/BonfyreWebAddress/tests/account_inbox_web.test.mjs checks workspace changes discard the former task selection and long diagnostic text stays escaped and expandable
+  source_path cmd/BonfyreWebAddress/src/work_provenance.h
+  invariant when Meter cannot be read or returns malformed output, task provenance reports the records as unavailable instead of asserting that the store is empty
+  witness cmd/BonfyreWebAddress/tests/work_provenance_test.sh checks a connected Meter with an invalid schema is reported unavailable, alongside the exact-source and account isolation checks
+  witness integrations/browser/tests/aurekai-activity-source.test.mjs
+  witness integrations/browser/tests/aurekai-activity.browser.test.mjs
+  witness integrations/browser/tests/activity-source.test.mjs
+  witness integrations/browser/tests/aurekai-inbox-source.test.mjs
+  witness integrations/browser/tests/aurekai-activity-interaction.browser.test.mjs
+  witness cmd/BonfyreWebAddress/tests/account_activity_web.test.mjs
+  witness cmd/BonfyreWebAddress/tests/account_inbox_web.test.mjs seeds an operator store, its real account work index, real Auth organizations and an invitation, then checks the signed-in /inbox separates release, provider, checklist and classified exhausted-credit steps from agent work, omits the raw provider quota error and any retry control, keeps the public inbox for signed-out readers, and in real Chrome at 1440 and 390 clicks Approve to write exactly one approval file into a temporary approvals directory
+  witness cmd/BonfyreWebAddress/tests/account_activity_binding.test.mjs verifies exact native binding envelopes, same-organization actor changes, rejected malformed guards and five-field forwarding to the existing Queue owner
+  witness integrations/mcp/tests/fabric_activity.test.mjs
+  witness cmd/BonfyreWebAddress/tests/activity_workspace.test.mjs
+  witness cmd/BonfyreWebAddress/tests/source_web_work.test.mjs
+  witness integrations/browser/tests/provider-continuation.test.mjs
+  witness integrations/browser/tests/provider-continuation.browser.test.mjs
+  witness integrations/mcp/tests/fabric_push.test.mjs verifies encrypted RFC8291 packets, actual loopback HTTP signature and content verification, recipient isolation, revocation, bounded retries and uncertain-send preservation
+  witness cmd/BonfyreAuth/tests/background_access_test.py compiles the current native account policy helper and verifies active-user, institution-role and household-access parity
+  witness integrations/browser/tests/aurekai-push.test.mjs
+  witness integrations/browser/tests/aurekai-push.browser.test.mjs
+  witness integrations/browser/tests/aurekai-push-rail.browser.test.mjs
+  witness integrations/browser/tests/aurekai-model.test.mjs
+  witness integrations/browser/tests/aurekai-model.browser.test.mjs verifies actual browser review submission retained output usage-only reconciliation account switching and explicit interrupted-request recovery
+  witness integrations/mcp/tests/fabric_model_pipeline.test.mjs exercises the real Fabric queue and SQLite owner, bounded local MoE HTTP fixture, compiled native Meter and browser result decoder without live inference
+  witness integrations/mcp/tests/fabric_output_transfer.test.mjs verifies actual native two-process transfer of a scoped retained output and exact request recovery without remote recipient claims
+  known_gap production push identity, explicit native authority paths and browser device opt-in require activation; local carrier and browser tests do not prove an actual external push-service delivery
+  known_gap generic embedded provider browsing requires an admitted provider browser owner; existing provider-tab continuation remains the supported mode
+  known_gap production source application, native service configuration and user extension activation require their existing native owners; this declaration does not attest those effects
+  known_gap remote peer pairing and distributed inference have no admitted owner in this surface; local byte verification does not establish either capability
+  invariant the activity rail docks open on desktop only once an account or workspace is confirmed on that page; a signed-out visitor keeps the full page width and opens it from the launcher
+  invariant a docked rail publishes its width as --ak-dock so the bar and every full-bleed band span only the page beside it; a signed-out rail shows the sign-in line and public research links, never an empty account picker, inbox or outputs
+  invariant signed in, listed work comes first under its heading and the work card grows with the screen on desktop; empty native-task and output sections give their space to it while Activity, Outputs and Inbox stay reachable at 720px
+  invariant account work is read from the owners that record it (operator goals and runs, fabric tasks and agent runs, workgraph missions) through read-only attaches into one derived index rebuilt whole; it is served in the exact queue task packet and only under the configured owner subject, and another account's read never refreshes or copies it
+  invariant completed Fabric runs project reported token totals from one retained terminal stream record bound to the recorded task and run; Claude input includes its reported cache read and creation counts, Codex input already includes cached input, and absent, malformed or ambiguous records remain unmeasured
+  invariant task cost estimates name priced run coverage and are not invoices; a Claude terminal estimate or reconciled public-rate archive estimate stays attached only to its exact run and matching reported token totals
+  invariant the work board reuses the bounded native interaction collection for searching, filtering and inspecting loaded task snapshots; its grouped view and older-page control retain the same scoped task identities and expose no new execution authority
+  invariant the work board's Model Commons continuation carries the selected account context; it does not assert a task-to-model binding or admit model execution
+  witness cmd/BonfyreQueue/tests/account_work_index_test.sh checks Codex and Claude terminal usage, cache accounting, partial coverage and ambiguous duplicate terminals
+  invariant a completed WorkGraph root output reference remains on the existing job and is hashed before account projection; a reference does not establish a retrievable artifact or permission to deliver its bytes
+  witness cmd/BonfyreQueue/tests/account_work_index_test.sh checks root and child output references, account isolation and refusal to leak the root file path into the packet
+  witness cmd/BonfyreQueue/tests/account_work_index_test.sh checks that a completed Fabric task's receipt becomes an output only when its retained bytes still hash to the owner's digest inside the owner's receipts directory; tampered, outside and failed-task receipts are dropped and no receipt path reaches the outputs packet
+  invariant Fabric receipt outputs in the account work index carry sha256:<owner digest>, never a path; the outputs packet hashes that reference again, so an output stays a reference with no link or open right
+  forbidden_inference a Fabric receipt output reference -> a usable link, permission to open or redisclose the receipt, or evidence that the reviewed work was correct
+  witness cmd/BonfyreWebAddress/tests/work_provenance_test.sh builds the real Queue account work index from seeded operator and Fabric stores, imports real Meter token evidence, signs in through real Auth and checks the /work-board?task= provenance (runs with agent, role, session kind, wall time, limit flag and cache-inclusive usage; failed steps listed first; digest-verified outputs only; Meter rows joined by exact session with failed-run usage, keyless runs and partial valuation stated) and /work-board/outputs; another account, a foreign destination and a signed-out reader see none of it; without Meter or the index the page says unavailable, never zero
+  forbidden_inference the provenance task view -> a public proof, an Outcome Card, a resumed or retried run, or a reviewed account of whether the work was correct; it restates owner records and starts nothing
+  forbidden_inference a run listed under Who worked on it -> live process ownership; a Meter-matched session -> a charge, an invoice or a provider bill
+  forbidden_inference /work-board/outputs listing a digest -> a link to, licence for or permission to share the retained file
+  invariant a reverted operator action projects into the account work graph as cancelled, never completed; the projection does not turn rollback into progress
+  invariant the Inbox over the account work index announces only work that moved in the last week (running, finished, stopped, retrying), keeps read and dismiss state per recipient beside the index, and never lists queued goals as notices
+  invariant superseded assistant goals stay on the work board but do not create Inbox notices; an actual Fabric cancellation remains eligible under the existing recency and recipient rules
+  invariant the compact Inbox offers current attention work separately from recipient notifications, in a collapsed list that does not hide notification controls on short screens
+  invariant an account-work recovery reason is a finite native classification, never a copied provider diagnostic; Inbox acknowledgement changes only its recipient receipt and cannot retry, cancel, resolve or otherwise mutate the recorded work
+  witness integrations/browser/tests/aurekai-activity.browser.test.mjs loads a signed-out page at 1440 px and checks the rail stays closed, undocked and without reserved padding until the launcher is pressed
+
+interaction source-frontier-projects-account-work-to-aurekai
+  source source-frontier
+  destination aurekai-activity
+  relation projects_current_native_web_work
+  preserves admitted actor and destination, exact retained job and revision, provider identity, state, retained-result count and native continuation
+  drops credentials, provider response bodies, authorization grants and every implied execution right
+  forbidden_inference a visible research run -> permission to replay it or to widen its destination
+  invalidates_on current session, membership, destination, job revision or provider declaration changing
+  binding cmd/BonfyreWebAddress/src/source_web_work.h
+  witness integrations/browser/tests/aurekai-activity.browser.test.mjs
+
+interaction fabric-projects-recipient-work-to-aurekai
+  source dual-agent-fabric-native-owner
+  destination aurekai-activity
+  relation projects_scoped_execution_and_recipient_state
+  preserves original scope admission, current process liveness, parent/subagent relation, receipt digest, exact recipient, notification revision and action receipt
+  drops prompts, private command and filesystem paths, agent output bodies, service credentials and unbound legacy operator work
+  forbidden_inference read or dismiss -> cancellation, task completion, execution admission or another recipient's acknowledgement
+  invalidates_on current actor or membership, scoped task state, live process ownership or recipient revision changing
+  binding integrations/mcp/fabric_activity.mjs
+  binding cmd/BonfyreWebAddress/src/activity_workspace.h
+  witness integrations/mcp/tests/fabric_activity.test.mjs
+
+interaction queue-projects-account-work-and-inbox-to-aurekai
+  source cmd-queue
+  destination aurekai-activity
+  relation projects_admitted_work_graph_and_native_recipient_state
+  preserves original account work ownership, exact current native actor subject scope, task graph and artifact identity, recipient version revision and exact action receipt
+  drops operator-wide unbound missions, private command paths and every implied execution grant
+  forbidden_inference a Queue task graph or Inbox acknowledgement -> Fabric executor liveness, another recipient's state or permission to redisclose operator work
+  invalidates_on current actor destination access, work ownership, notification version or recipient revision changing
+  binding cmd/BonfyreWebAddress/src/account_activity_web.h
+  binding integrations/browser/aurekai-inbox-source.mjs
+  witness cmd/BonfyreWebAddress/tests/account_activity_binding.test.mjs
+  witness cmd/BonfyreWebAddress/tests/account_activity_web.test.mjs
+  witness integrations/browser/tests/aurekai-activity-interaction.browser.test.mjs
+
+interaction aurekai-continues-provider-work-through-browser-host
+  source aurekai-activity
+  destination browser-host
+  relation retains_exact_admitted_provider_continuation
+  preserves native origin and binding, exact work and reviewed revision, short-lived challenge, declared provider entry, pinned source document and existing provider tab
+  drops provider password, provider session, arbitrary page-supplied URLs, enrollment-lane identity and every claim of credential or work completion
+  forbidden_inference provider tab continuity -> a separate organization cookie jar, verified external account identity or authority to use the provider
+  forbidden_inference account work index -> authority to dispatch, retry or cancel work, or evidence that a goal shown as queued is being worked; the index is a cache over owners that keep the truth
+  forbidden_inference operator account steps without an output reference -> work that produced nothing; operator actions record no owner-digested artifact, so their outputs stay unprojected rather than guessed
+  invariant an account work rebuild that can read none of its sources fails and keeps the last index; one that can read some skips and names the rest
+  witness cmd/BonfyreQueue/tests/account_work_index_test.sh builds an index from a fixture operator store, proves a known exhausted-credit failure emits the fixed Inbox recovery sentence without its raw quota code, then rebuilds from a missing store and requires a failing exit with the indexed goal still present
+  forbidden_inference one client's queue (Fleming) -> the account's work; it answers only the inbox and the no-index fallback
+  invalidates_on origin or source document change, native admission expiry, work revision change, provider declaration change or removed browser tab
+  binding integrations/browser/host/provider-admission.mjs
+  binding integrations/browser/provider-contract.mjs
+  witness cmd/BonfyreWebAddress/tests/source_web_work.test.mjs
+  witness integrations/browser/tests/provider-continuation.test.mjs
+  witness integrations/browser/tests/provider-continuation.browser.test.mjs
+  invariant a blocked Aurekai assistant goal (account-operator-*) is waiting on the person, so the account work read gives it phase attention and the rail lists it under Needs you; blocked workgraph steps waiting on another step stay pending
+  witness cmd/BonfyreQueue/tests/account_work_index_test.sh proves a blocked assistant goal reads with phase attention and no pending phase, and fails without the mapping
+
+interaction meter-token-evidence-to-work-provenance
+  source cmd-meter
+  destination aurekai-activity
+  via bonfyre-meter work-tokens --work-db ACCOUNT_WORK_INDEX --subject --scope --mission, spawned by cmd/BonfyreWebAddress/src/work_provenance.h for the signed-in account's task
+  relation projects_exact_session_token_records_into_task_provenance
+  preserves the reader's freshly resolved account subject and scope, the exact task, session match counts (exact, shared and refused, keyless runs, failed runs that used tokens), per provider and model record counts with fresh, cached, cache-write, output and reasoning counters, and the valuation coverage with its provisional admitted-rate estimate
+  drops session identifiers, transcript paths, message and request coordinates, unvalued records' would-be prices and every charge or money claim
+  invariant a task outside the reader's account is refused by Meter itself; the page renders the refusal, an empty store or an unconfigured Meter as distinct sentences and never as zero tokens
+  invariant an estimate is labelled an estimate and not a charge; unknown reasoning stays not reported
+  forbidden_inference matched tokens -> what the provider billed, what the account owes, or that the run's output was used
+  invalidates_on Meter token import, rate admission, account work index rebuild, current actor or destination access change
+  binding cmd/BonfyreMeter/src/meter_tokens.h
+  binding cmd/BonfyreWebAddress/src/work_provenance.h
+  witness cmd/BonfyreWebAddress/tests/work_provenance_test.sh
+
+interaction meter-session-evidence-to-account-work-runs
+  source cmd-meter
+  destination cmd-queue
+  relation projects_exact_provider_session_counters
+  preserves the exact account, provider, unique run and session binding, terminal-reported usage precedence, and separate cache read and write counts
+  drops unmatched or shared sessions, inherited snapshots, unknown counters, unadmitted prices and transcript content
+  invariant an unavailable Meter does not prevent other account work from refreshing; its unconfirmed counters remain unknown
+  forbidden_inference a token count -> an invoice, charge, authority to spend or proof that an output was used
+  binding cmd/BonfyreQueue/src/account_work.h
+  binding cmd/BonfyreQueue/tests/account_work_index_test.sh
+  witness cmd/BonfyreQueue/tests/account_work_index_test.sh checks exact matching, ambiguous sessions, inherited snapshots, other accounts, unavailable Meter and existing usage precedence
+
+interaction fabric-agent-runs-to-aurekai-agents-lane
+  source dual-agent-fabric-native-owner
+  destination aurekai-activity
+  via the account work index (bonfyre-queue account-work agents) and /apps/_activity?operation=agents
+  relation projects_recorded_agent_runs_into_the_rail_agents_lane
+  preserves exact run and task identity, agent, role, session kind (duel relay review verify assistant), run state and phase, owner-recorded wall time, terminal-record token counters with cache read and write breakdown, Claude terminal cost estimate, and the owner's account subject and scope
+  drops session ids, prompts, run finals, stream paths, command lines, provider error text and any usage a run did not report
+  invariant usage appears only for a run whose single terminal record carried integer counters; an absent counter or an unreported run is nil and renders as not reported, never zero
+  invariant wall time is Fabric duration_ms or the owner's recorded start and end; an open run has none, and the browser shows live elapsed time only for a run that is running under unfinished work
+  invariant the limit flag is a fixed public sentence raised only by a failed run whose short final names a session, usage or rate limit, exhausted quota or credit balance, or by a failed assistant run under a goal already classified as credit-exhausted; the final text never leaves the index
+  invariant a run still marked running under finished, failed or cancelled work reads as attention and outcome unconfirmed, not as live work
+  invariant the lane lists at most twenty runs, running first then newest; counts cover every running run and the last seven days of finished ones; another account and the organization destinations read only their own indexed runs
+  forbidden_inference an Agents lane row -> live process ownership, a provider account's billing, a quota still in force, or authority to retry, cancel or dispatch the run
+  forbidden_inference account-wide imported CLI session totals -> any one task's or run's usage; the lane never shows recovered session counters that are not tied to an indexed run
+  forbidden_inference no limit flag -> the provider had quota; the flag reads only what a failed run recorded
+  invalidates_on account work index rebuild, Fabric run state, duration or result change, current actor or destination access change
+  binding cmd/BonfyreQueue/src/account_work.h
+  binding cmd/BonfyreWebAddress/src/account_activity_web.h
+  binding integrations/browser/aurekai-activity-source.mjs
+  witness cmd/BonfyreQueue/tests/account_work_index_test.sh projects duel session kind, Fabric duration, Codex cache breakdown with nil write, a limit flag from a short failed final but not from a long review, an unconfirmed running run, and an empty packet for another account
+  witness cmd/BonfyreWebAddress/tests/account_activity_web.test.mjs reads the lane through current grants, the HTTP owner and the real Queue binary, with null usage for an unreported run, refusal of extra coordinates and 503 without an index
+  witness integrations/browser/tests/aurekai-activity-interaction.browser.test.mjs renders running elapsed time, a limit flag, reported-only usage, the exact work-board link and the empty organization lane after switching destination
+  invariant an assistant run the provider refused for credit or quota (insufficient_quota, credit_balance_exhausted, no credits remaining in its short summary) carries limit_signal like a Fabric run, so the Agents lane can show it as a provider limit; ordinary failures are not flagged
+  witness cmd/BonfyreQueue/tests/account_work_index_test.sh flags a credit-refused operator run and leaves an ordinary failed run unflagged
+
+architecture account-relationship-observations
+  canonical_name AccountRelationshipObservations
+  family surface
+  domain Surface / Account relationship observations
+  layer surface/private
+  maturity implemented
+  semantic_question How can a person retain an exact source credit in an installed relationship workspace?
+  purpose Review one retained item, preserve its credit and source fingerprint as an unresolved observation, and reopen the saved record under the same account destination.
+  source_path cmd/BonfyreWebAddress/src/relationship_observation.h
+  source_path cmd/BonfyreWebAddress/src/relationship_observation.cue
+  source_path cmd/BonfyreWebAddress/src/application_continuation.h
+  source_path cmd/BonfyreWebAddress/src/application_workspace.h
+  source_path scripts/publish_experience_setups.mjs
+  witness cmd/BonfyreWebAddress/tests/installed_subtools_test.mjs checks current account and write admission, exact source credit and snapshot, changed editor, capability withdrawal, repeat saves and browser review.
+  invariant a source credit is loaded from the exact retained item; submitted form fields cannot name or merge an actor, and uncredited jobs retain source-item evidence without claiming a credit
+  invariant the installed relationship intake must admit the source family and require source fingerprints before the review or save is available
+  invariant the form pins the reviewing actor, editor release and source fingerprint; every POST repeats current native destination and write admission
+  invariant source verification precedes a separate native CMS compare-and-swap from revision zero; the source and workspace owners do not share an atomic transaction
+  invariant an existing or removed record is never overwritten by repeated observation intake; saved and current source fingerprints remain distinct
+  invariant work-board list pages and exact-task reads must retain the same actor subject and scope binding before any cards are rendered
+  forbidden_inference a retained source credit or unresolved observation -> verified actor identity, a qualified lead, consent, an established relationship or external CRM mutation
+
+interaction source-credit-to-account-relationship
+  source source-frontier
+  destination account-relationship-observations
+  via exact retained item, native workspace review and CMS record compare-and-swap
+  preserves source coordinate, credited name, reviewed fingerprint, account destination and saved record revision
+  drops identity merging, inferred lead qualification and external contact authority
+  invalidates_on account or write grant change, editor release change, source fingerprint change or withdrawn intake declaration
+  forbidden_inference matching credited names across sources -> the same actor
+  witness cmd/BonfyreWebAddress/tests/installed_subtools_test.mjs
+  binding cmd/BonfyreWebAddress/src/relationship_observation.h
+
+interaction operator-person-goals-to-account-inbox
+  source autonomous-operator-native-owner
+  destination aurekai-activity
+  relation projects_person_waiting_goals_and_organization_invitations_into_the_signed_in_inbox
+  preserves exact goal id listed for the current account in the account work index, goal source, current operator state, release name, provider sign-in address and invitation recipient email
+  drops agent-only stopped goals from Needs you, operator goals the index does not list for this account and invitation secrets
+  forbidden_inference a goal on the inbox Needs you list -> the only work that needs the person, a working provider sign-in, an accepted invitation or a release that has gone live
+  forbidden_inference an Approve click or an approval file -> a live release; the release watcher activates and reports, and may restore the previous release
+  forbidden_inference an empty Agents working list -> no work exists; queued and finished work stays on the work board
+  invalidates_on operator goal state or source change, account work index rebuild, current actor or destination access change, invitation acceptance, revocation or expiry
+  binding cmd/BonfyreWebAddress/src/account_inbox_web.h
+  binding cmd/BonfyreWebAddress/src/application_continuation.h
+  witness cmd/BonfyreWebAddress/tests/account_inbox_web.test.mjs

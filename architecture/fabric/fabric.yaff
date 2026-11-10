@@ -24,8 +24,206 @@ architecture bonfyre-fs
   forbidden_inference a virtual query directory -> stored state (it is a maintained set projected as folders, not a directory on disk)
   publishes QueryDirectory
   source_path engine/core/src/filesystem_projection.c
-  source_path components/BonfyreControlPlane/fabric_publish.py
-  source_path components/BonfyreControlPlane/fabric_queries.py
-  witness components/BonfyreControlPlane/tests/test_fabric_queries.py
+  source_path scripts/bonfyre-fs-effects-watch
+  source_path scripts/bonfyre-fs-effects-watch.mjs
+  source_path scripts/tests/fs_effects_watch.test.mjs
+  interacts filesystem-effects-use-native-workgraph
+  invariant queued effects are parsed and exclusively claimed by the Bun watcher, but preparation and commit remain native WorkGraph operations; an ambiguous commit is retained in-flight for reconciliation rather than retried
+  forbidden_inference an in-flight queue claim -> a committed effect or permission to replay it
+  witness scripts/tests/fs_effects_watch.test.mjs runs the production entrypoint through a real native publish-local effect without Python or Perl, checks argument boundaries and rejection sidecars, and proves concurrent claims commit only once while ambiguous commits are not replayed
+  source_path components/BonfyreControlPlane/fabric_publish.py.archive
+  source_path components/BonfyreControlPlane/fabric_queries.py.archive
+  witness components/BonfyreControlPlane/tests/test_fabric_queries.py.archive
   source_lineage fabric.db served live by bonfyre-fs; virtual query directories (riff SS38)
   known_gap virtual query directories are implemented as maintained sets computed from live state (Unverified-Actors, Load-Bearing, Ready-To-Verify, Pending-Occurrences, Fragile-Capacity, Wiring-Gaps) and materialized as a browsable tree; fabric.db namespace registration is opt-in (the live daemon holds the db for writes, so register_in_fabric runs when it is idle -- never force-unmount)
+
+interaction filesystem-effects-use-native-workgraph
+  source bonfyre-fs
+  destination work-graph
+  relation realizes_through
+  preserves native WorkGraph preparation, authority input and commit receipts; immutable queue claims retain ambiguous outcomes without automatic replay
+  drops shell text extraction of JSON and inline Python or Perl processing
+  forbidden_inference a queued request or local receipt sidecar -> independently granted authority or proof of a remote effect
+  binding scripts/bonfyre-fs-effects-watch.mjs
+  witness scripts/tests/fs_effects_watch.test.mjs proves the actual shell entrypoint publishes through the native WorkGraph into a temporary local target, alongside concurrent-claim and ambiguous-commit refusal cases
+
+architecture semantic-derivation
+  canonical_name SemanticDerivationGraph
+  family fabric
+  domain Fabric / Incremental Derivation
+  layer fabric/derivation
+  semantic_question Which exact programs and read closures are affected by this FactDelta?
+  purpose Compiles SemanticProgramIR and hard/learned ConstraintIR into a dependency-addressed semantic slice so only intersecting programs invalidate.
+  maturity implemented
+  owns SemanticDerivationGraph
+  owns SemanticProgramIR
+  owns SemanticSlice
+  owns DecisionSnapshot
+  owns AllocationProblem
+  consumes FactDelta
+  publishes DecisionSnapshot
+  publishes SemanticSlice
+  node_types SemanticProgramIR
+  node_types ConstraintIR
+  node_types FactDelta
+  edge_types reads
+  edge_types writes
+  edge_types invalidates
+  internal_calculus fixed-point dependency closure over exact addresses
+  internal_calculus HybridLogicalClock merge and tick
+  invariant learned signals may rank candidates but cannot satisfy a hard constraint
+  invariant programs outside the changed read closure remain valid
+  invariant a failed ANN rebuild leaves every dependent FactDelta pending, while independently rebuilt types may advance
+  invariant the consumer captures exact filename-bound input bytes before rebuild and acknowledges them with a separate immutable content-bound receipt; producer event paths are never rewritten or deleted
+  invariant replacement of a filename during success leaves the new version pending; replacement during failure retains both the captured old version and the newly published version
+  invariant an exclusive consumer claim serializes ANN rebuild batches; a claim surviving process death is held for explicit reconciliation rather than guessed stale and stolen
+  known_gap the claim and immutable journal do not provide exactly-once ANN rebuild execution after crashes; a completed rebuild without a durable receipt may repeat after explicit claim recovery
+  known_gap input and acknowledgement journals are trusted local owner state, not authenticated producer signatures or a proof of index correctness; bytes beyond the one-MiB input bound refuse visibly
+  known_gap bytes overwritten by a producer before the consumer captures them cannot be recovered by this consumer; publishers must use atomic publication and unique names to retain unobserved events
+  forbidden_inference a learned rank -> a satisfied hard constraint
+  forbidden_inference a FactDelta -> global invalidation
+  forbidden_inference an applied FactDelta -> a semantically correct index
+  interacts semantic-derivation-demands-realization
+  source_path engine/core/include/bf_semantic_derivation.h
+  source_path engine/core/src/semantic_derivation.c
+  source_path components/BonfyreControlPlane/semantic_derivation.py.archive
+  source_path scripts/apply_fact_deltas.mjs
+  witness engine/core/tests/semantic_derivation_test.c
+  witness components/BonfyreControlPlane/tests/test_semantic_derivation.py.archive
+  witness scripts/tests/apply_fact_deltas.test.mjs includes successful and failed same-filename replacement, competing consumers, surviving claims, bounded refusal and exact captured-journal digest checks
+  witness cmd/BonfyreCMS/tests/fact_delta_test.sh
+  source_lineage Generation-10 semantic instruction and targeted invalidation contract; Python remains a frozen compatibility oracle while the native core owns runtime derivation
+
+architecture estate-version
+  canonical_name EstateVersion
+  family fabric
+  domain Fabric / A snapshot of a namespace, by digest
+  layer contract
+  semantic_question What was under this namespace at that moment, and what changed between two readings of it?
+  purpose A content-addressed snapshot of every file under a namespace root, and a diff of two snapshots into added, removed and changed paths. Reached through bonfyre-project version take and version diff.
+  maturity measured
+  node_types EstateVersion
+  node_types VersionPath
+  edge_types snapshot_of
+  internal_calculus three interaction grammars were blocked on versioning and none of them needed branching. What they needed was to be able to say what was there and what moved, which is a reading and a comparison
+  internal_calculus a merge is refused rather than deferred: reconstructing derived material this estate cannot rebuild would produce a tree with provenance from neither side
+  internal_calculus the tree digest folds each path and its digest by XOR, so two readings of identical trees agree whatever order the directory was walked in. A digest that depended on readdir order would differ between two copies of the same tree
+  invariant a diff is refused between snapshots of different namespace roots, which were never the same tree to compare
+  invariant a root with no readable file is refused rather than recorded as an empty snapshot
+  forbidden_inference a snapshot -> a backup or a restore point; the bytes it names may be gone and nothing here can put them back
+  forbidden_inference a tree digest -> a guarantee the files still exist or still hash that way
+  forbidden_inference an unchanged path -> a path nobody touched; it means the bytes hash the same
+  source_path schemas/control/missing-cells.cue
+  source_path cmd/BonfyreWebAddress/tools/compile_missing_cells.zig
+  source_path cmd/BonfyreWebAddress/generated/native_missing_cells.h
+  source_path components/BonfyreProject/src/main.c
+  source_path components/BonfyreProject/tests/missing_cells_test.sh
+  witness 2026-09-26 taken over a real tree: 62 files and 352,726 bytes under schemas/control folded to one tree digest, and after one file was edited the diff reported exactly that path changed with 61 unchanged
+  witness 2026-09-26 two copies of one tree produce the same tree digest, so the fold does not depend on walk order -- asserted in the witness by copying a tree and comparing
+  witness 2026-09-26 the diff direction was inverted in the first version and the witness caught it: a path missing from the later snapshot was labelled added. The subqueries are now named earlier and later rather than a and b
+  known_gap nothing restores. A snapshot records digests and never bytes, so this can tell a reader what changed and cannot give them back what was there
+  known_gap a snapshot walks at most twelve directories deep and skips files over 64 MB and every dotfile, so it is a reading of the tree a person keeps rather than of everything on disk
+
+architecture held-message
+  canonical_name HeldMessage
+  family fabric
+  domain Fabric / Something composed for somebody and not sent
+  layer contract
+  semantic_question What would be said to whom, and who would have to be the one to say it?
+  purpose A message recorded with its recipient, its text, and the act somebody would have to perform to send it. There is no transport, and no state this record can hold claims one. Reached through bonfyre-project message compose.
+  maturity measured
+  node_types OutboundMessage
+  edge_types composed_for
+  internal_calculus four interaction grammars needed a message rail and every one of them wanted sending. Sending is the thing this estate does not do: reachability stops at the human line, and an outbox that delivered would move that line while looking like a feature
+  internal_calculus the record names who would send it -- a person, their own account, their own judgement, outside this estate -- because a held message with no named sender reads like a queue waiting for a worker
+  invariant every declared message state has transmitted false, and the compiler refuses a state table where one does not
+  forbidden_inference a composed message -> a sent, delivered or read one
+  forbidden_inference a named recipient -> a recipient who knows the message exists
+  forbidden_inference the absence of a transport -> a transport that is coming; this is the design rather than a gap
+  source_path schemas/control/missing-cells.cue
+  source_path cmd/BonfyreWebAddress/tools/compile_missing_cells.zig
+  source_path cmd/BonfyreWebAddress/generated/native_missing_cells.h
+  source_path components/BonfyreProject/src/main.c
+  source_path components/BonfyreProject/tests/missing_cells_test.sh
+  witness 2026-09-26 composed against a real discovery-set candidate: a message to calendar.tccd.edu recorded with transmitted false and the sender named as a person outside this estate
+  witness 2026-09-26 the compiler refuses a message-state table in which any state claims transmission, so a transport cannot be introduced by editing a boolean
+  source_path components/BonfyreProject/src/message_review.h
+  source_path components/BonfyreProject/tests/message_review.test.mjs
+  source_path components/BonfyreProject/tests/message_review_browser.test.mjs
+  invariant message review reads project and message records in one namespace and one SQLite snapshot; the source database is opened read-only
+  invariant the report preserves exact draft text and saved state, identifies its content by SHA-256, and keeps inactive or unmatched records visible outside the active batch
+  invariant exported HTML escapes stored content, has no script or remote resource, and replaces an output file only after the complete bounded report exists
+  invariant active drafts have local navigation links; older messages and projects without messages remain available in collapsed sections without changing the source snapshot or active membership
+  witness 2026-10-08 the refreshed 15-draft review preserves snapshot 5565422b3ddd5e12269f2698285536a5d26b8a5c0165bc2378e38b312ea6a5dd across the installed native owner and workspace build, with 25 older messages and 31 projects without messages retained. The existing native suites pass 31 tests and 251 assertions. The browser review passes at 1440 and 390 pixels with expanded content fitting and no remote requests; screenshots were inspected. Evidence is retained under .bonfyre/revenue/review-20261008
+  invariant review labels saved recipient shapes as email, Craigslist, other web or unresolved and counts only active draft routes; it performs no mailbox, contact-role or application verification
+  forbidden_inference a syntactically recorded email or a web route -> a deliverable mailbox, an appropriate recipient, an open application, complete application fields or permission to send
+  witness 2026-10-08 message_review.test.mjs passes eight tests and 116 assertions, including route classification, misleading Craigslist hostnames, multi-recipient and header-like values, inactive-count exclusion and unchanged source records; project_native.test.mjs passes 23 tests and 135 assertions
+  invariant draft project records with no linked message in the same namespace appear separately, preserve their saved stage, and never increase the active message count; both queries share an explicit read transaction
+  forbidden_inference no linked message record -> no prior outreach; the project stage and external sent history may record contact elsewhere
+  witness 2026-10-07 message_review.test.mjs passes seven tests and 81 assertions, including projects without messages, namespace isolation, project-revision fingerprints, removal from that section after composing a message, and refusal of an oversized project set
+  forbidden_inference active review membership or a report digest -> source freshness, approval, transmission, a contract or revenue
+  witness components/BonfyreProject/tests/message_review.test.mjs uses the compiled CMS and Project owners to verify namespace isolation, exact draft preservation, no database writes, revision-sensitive fingerprints, HTML escaping and refusal of missing data, oversized batches and source-database replacement
+  witness 2026-10-07 the installed BonfyreProject message review command ran through native_tool_invoke over craigslist-zero-close and exported 16 canonical messages, 15 active and 1 outside the batch, with snapshot e6081d3b3df15c8bfff17a7fc1dff6484123d0629077f5c421b1c3e071fb02f3. The generated local report passed message_review_browser.test.mjs at 1440 and 390 pixels, including expanded evidence sections and absence of remote requests. The five native review tests pass 52 assertions; integrations/mcp/tests/project_native.test.mjs passes 23 tests and 135 assertions
+  known_gap generic CMS updates can set withheld and abandoned states; message review reports them but has no decision or handoff action. A person still decides about the exact draft outside this read-only report
+
+interaction project-reviews-held-messages
+  source cmd-project
+  destination held-message
+  relation projects_messages_with_project_context
+  preserves namespace, exact draft text, recipient, derived contact route, project scope, saved state, projects without linked messages and content fingerprint
+  drops any inference of source freshness, approval or transmission
+  forbidden_inference a readable report -> permission to dispatch its messages
+  binding components/BonfyreProject/src/message_review.h
+  witness components/BonfyreProject/tests/message_review.test.mjs
+
+architecture assent-signature
+  canonical_name AssentSignature
+  family fabric
+  domain Fabric / Assent bound to exact bytes
+  layer contract
+  semantic_question Did this person agree to this, and is this still the thing they agreed to?
+  purpose One person's recorded assent to one digest, which reports itself broken the moment the bytes hash differently. Reached through bonfyre-project sign record and sign check.
+  maturity measured
+  node_types AssentSignature
+  edge_types assents_to
+  internal_calculus a signature that survives a change to what was signed is worse than none, so this is bound to a digest rather than to a document, a path or a name
+  internal_calculus broken is not withdrawn. The assent was real and the bytes moved out from under it, which is a different fact and the page says which
+  invariant assent cannot be recorded for a file that is not readable
+  invariant a check against changed or missing bytes reports broken rather than intact
+  forbidden_inference a recorded assent -> a legal signature, a notarisation, or identity verification
+  forbidden_inference an intact signature -> evidence the signer read what they assented to, or was entitled to assent
+  source_path schemas/control/missing-cells.cue
+  source_path cmd/BonfyreWebAddress/tools/compile_missing_cells.zig
+  source_path cmd/BonfyreWebAddress/generated/native_missing_cells.h
+  source_path components/BonfyreProject/src/main.c
+  source_path components/BonfyreProject/tests/missing_cells_test.sh
+  witness 2026-09-26 recorded against a real delivered release fragment: the assent checked intact against the bytes, and one appended newline made it broken
+  witness 2026-09-26 a deleted file reports broken with the reason that nothing can show what was assented to, rather than reporting intact by not looking
+  known_gap there is no signer identity beyond the actor name this estate was given, so a signature says who it was recorded for and not who they are
+
+architecture live-session
+  canonical_name LiveSession
+  family fabric
+  domain Fabric / Something happening now, or not
+  layer contract
+  semantic_question Is this session actually going on, and what is left of it afterwards?
+  purpose A session, the heartbeats that keep it live, and what it points at for replay once it ends. No media passes through this estate. Reached through bonfyre-project session open, beat, status and end.
+  maturity measured
+  node_types LiveSession
+  edge_types hosted_by
+  internal_calculus everything that makes a streaming product worth cloning is the media path, and this has none. What it can honestly hold is whether a session is still going, which is the fact every surface around a stream needs and the one most often faked
+  internal_calculus live is a claim with an expiry. A session with no heartbeat inside the window is silent whatever its record says, so nobody can leave a session marked live by walking away from it
+  internal_calculus asking a session's standing must not change it. The first version had no read-only path, so every reader kept the session alive by looking at it
+  invariant a session that has ended cannot be made live again by a heartbeat
+  invariant status writes nothing
+  forbidden_inference a live session -> an audience, a viewer count, or anybody watching
+  forbidden_inference a replay reference -> media this estate holds or may redistribute
+  source_path schemas/control/missing-cells.cue
+  source_path cmd/BonfyreWebAddress/tools/compile_missing_cells.zig
+  source_path cmd/BonfyreWebAddress/generated/native_missing_cells.h
+  source_path components/BonfyreProject/src/main.c
+  source_path components/BonfyreProject/tests/missing_cells_test.sh
+  witness 2026-09-26 all four standings exercised: live on opening, live on a heartbeat, silent once the last beat fell outside the 120-second window, ended with its replay reference kept, and a heartbeat against an ended session refused
+  witness 2026-09-26 reading a silent session twice left it silent, which is the property the read-only status path was added for
+  known_gap the window is a fixed 120 seconds and nothing derives it from how often a real host would beat
+  known_gap no media path exists, so a replay reference is a string this estate stores and cannot resolve

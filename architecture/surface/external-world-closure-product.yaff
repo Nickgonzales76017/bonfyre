@@ -1,0 +1,83 @@
+atlas external
+
+architecture external-world-closure-product
+  canonical_name ExternalWorldClosureProduct
+  family surface
+  domain Surface / Public World
+  layer surface/public
+  semantic_question How does one addressed public World become a coherent human product and a machine resource without assembling two different candidate sets?
+  purpose Compiles a bounded, content-addressed public World closure from the measured ExternalEstate reservoir. A product-map closure names every World and grammar aperture, then each declared World and its participating interaction grammars become human and machine product routes through the same compiler, so a reader and machine inspect the same candidates, lenses and limits.
+  maturity measured
+  consumes ExternalEstateDensity
+  consumes SurfaceDemand
+  publishes PublicWorldClosure
+  publishes PublicWorldCatalogue
+  publishes HumanWorldProjection
+  publishes MachineWorldProjection
+  node_types PublicWorldClosure
+  node_types PublicWorldCatalogue
+  node_types SurfaceLens
+  edge_types lowers
+  edge_types projects
+  invariant the HTML and JSON carriers expose the same closure digest and candidate identities; a carrier may differ in representation but never in World membership
+  invariant a public World lens is a bounded deterministic presentation ranking over observed candidates, not an ActorClosure, provider admission, evidence admission, institutional fact, right, payment, settlement or effect
+  invariant a public World closure carries the same content-addressed formation-candidate projection to human and machine carriers: possible publication, decision service, coordination, market, place-service and small-institution artifacts expose counted observed signal coverage and missing signals, never an automatic launch or authority claim
+  invariant the public formation-catalogue carrier enumerates every declared World through the same bounded formation compiler and has no semantic ranking, priority, need, demand or launch implication
+  invariant World aliases are explicit composition declarations and retain the requested and resolved names in the closure
+  invariant a focused grammar lens is a smaller addressed closure with its own digest; it is not an HTML-only tab or a route-specific application
+  invariant a visible public lens lowers only the selected presentation cell's declared renderers and visible sections; presentation changes the carrier grammar but never candidate membership, owner standing or authority
+  invariant the product map names declared World and grammar apertures without claiming each candidate is admitted or actionable; focused closures retain that candidate boundary
+  invariant conditional requests may reuse a public closure only while its exact closure digest matches; a changed corpus-derived closure receives a new validator
+  invariant a reconnecting public World runtime asks this owner for the complete, content-addressed Scene at its declared scene carrier; 304 preserves the exact Scene it already holds, while a changed digest supplies a successor Scene and never a client-compiled candidate patch
+  invariant a changed published corpus stamp clears only the disposable public candidate/lens indexes before recompilation; it does not mutate ForeignTwin, evidence, provider, authority or effect owner state
+  invariant when a deployment binds the native AddressPlane index, the public closure emits only candidates returned by that index's World-mask witness as eligible-for-further-consideration and fails closed if configured to require the witness
+  invariant a public source card may initiate only an explicit no-body transport check; that receipt cannot establish provider standing, evidence, authority, payment, settlement or effect
+  forbidden_inference a public World closure -> private or institutional World state
+  forbidden_inference a candidate lens -> exact-owner selection or lawful data combination
+  forbidden_inference a cached public closure -> continued source availability or effect authority
+  forbidden_inference a public Scene reconciliation -> an ActorClosure, a queued external effect, a provider admission or a right to apply a partial owner result
+  forbidden_inference a rendered /external-estate World page -> the human product page; it is a corpus and debugging carrier over candidates, and people read a subject through PageComposition at /w/<slug>, which composes admitted owner material into existing interaction languages rather than candidate cards
+  source_path Aurekai/src/external-estate-runtime.mjs
+  source_path Aurekai/src/external-estate-server.mjs
+  source_path Aurekai/src/presentation-cell-catalog.mjs
+  source_path Aurekai/tests/external-estate-runtime.test.mjs
+  source_path Aurekai/tests/external-estate-server.test.mjs
+  source_path Aurekai/docs/EXTERNAL_ESTATE_RUNTIME.md
+  source_path deploy/systemd/external-estate.env.example
+  witness Aurekai/tests/external-estate-runtime.test.mjs proves Farm Cold Chain Household compiles a real 131-occurrence public World closure with bounded lenses, and embeds the exact machine closure digest in the human projection
+  witness Aurekai/tests/external-estate-server.test.mjs boots the public HTTP carrier, verifies HTML and JSON expose one closure digest, and proves an If-None-Match re-read returns 304 without a body
+  witness Aurekai/tests/external-estate-server.test.mjs proves the HTTP formation-catalogue carrier returns the measured 30-World full-estate census with an exact closure digest
+  witness Aurekai/tests/external-estate-runtime.test.mjs proves all 30 measured Worlds expose all 15 participating compiled grammar families as 450 focused product closures, and separately verifies every grammar can lower as a focused World lens
+  witness Aurekai/tests/external-estate-server.test.mjs proves the server-rendered product map and its JSON carrier share one digest over 30 Worlds and 450 declared focused apertures
+  witness Aurekai/tests/external-estate-runtime.test.mjs proves a rebuilt temporary corpus is re-read through the same public runtime without a process restart and invalidates only its disposable candidate indexes
+  witness Aurekai/tests/external-estate-runtime.test.mjs proves the local 4,891-occurrence native AddressPlane index rejects 4,760 records before exact ownership for Farm Cold Chain Household and that all 131 survivors remain within the measured World reservoir
+  witness Aurekai/tests/external-estate-runtime.test.mjs proves every rendered public World card exposes an explicit POST transport-check carrier and that the resulting human receipt names its no-body/non-admission boundary
+  witness local 2026-09-15 server witness at 127.0.0.1:8872 returned Farm Cold Chain Household HTML and JSON with closure sha256:2bfb77eb17f049b210a63ec6d9a5d36712c3149eec2f6a8579d06ae91101576a, 131 occurrences and six eight-candidate lenses; an If-None-Match request returned 304 without a body
+  source_lineage public product closure over the measured external estate
+
+interaction external-world-closure-serves-human-and-machine
+  source external-estate-density
+  destination external-world-closure-product
+  relation bounded_public_product_projection
+  preserves requested/resolved World coordinate, observed candidate identity, deterministic lens selection, public candidate limits and closure digest
+  drops ActorClosure, audience, institutional role, InformationPolicy decision, provider admission, evidence admission, financial authority, payment, settlement and effect authority
+  forbidden_inference human World page or machine World resource -> provider readiness, admitted evidence, authority, payment, settlement or effect
+  invalidates_on external corpus digest, World alias declaration, SurfaceDemand profile or public World closure compiler changes
+  witness Aurekai/tests/external-estate-runtime.test.mjs
+  witness Aurekai/tests/external-estate-server.test.mjs
+  binding Aurekai/src/external-estate-runtime.mjs
+  binding Aurekai/src/external-estate-server.mjs
+
+interaction external-world-scene-reconciles-at-surface-runtime
+  source external-world-closure-product
+  destination surface-ir
+  relation content_addressed_scene_reconciliation
+  preserves exact prior closure digest, complete successor Scene, public actor scope, declared lenses, owner query plan and the candidate boundary
+  drops ActorClosure, audience entitlement, authority, provider/evidence admission, payment, settlement, commitment and effect state
+  forbidden_inference an owner Scene carrier -> permission for the browser to derive, replay or partially apply a changed candidate result
+  invalidates_on external corpus digest, World alias declaration, SurfaceDemand profile, public World Scene compiler or SurfaceRuntime delta contract changes
+  witness Aurekai/tests/external-estate-server.test.mjs
+  witness cmd/BonfyreSurfaceScene/tests/surface_runtime_test.mjs
+  binding Aurekai/src/external-estate-runtime.mjs
+  binding Aurekai/src/external-estate-server.mjs
+  binding cmd/BonfyreSurfaceScene/runtime/surface-runtime.mjs

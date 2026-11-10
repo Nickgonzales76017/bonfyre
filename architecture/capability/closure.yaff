@@ -21,13 +21,21 @@ architecture capability-lattice
   forbidden_inference a family name -> the estate is only that (BonfyreNet is not only networking)
   forbidden_inference classified into an estate -> cannot span estates
   command BonfyreCapability
-  source_path components/BonfyreControlPlane/estate_catalog.py
-  source_path components/BonfyreControlPlane/capability_catalog.py
-  source_path components/BonfyreControlPlane/probe_native_capabilities.py
-  source_path components/BonfyreControlPlane/probe_native_commands.py
-  witness components/BonfyreControlPlane/tests/test_capability_catalog.py
+  source_path components/BonfyreControlPlane/estate_catalog.py.archive
+  source_path components/BonfyreControlPlane/capability_catalog.py.archive
+  source_path components/BonfyreControlPlane/probe_native_capabilities.py.archive
+  source_path components/BonfyreControlPlane/probe_native_commands.py.archive
+  source_path engine/core/src/control_capability.c
+  source_path cmd/BonfyreCapability/src/main.c
+  source_path cmd/BonfyreOwnerContract/src/main.c
+  source_path cmd/BonfyreOwnerContract/src/catalog.c
+  internal_calculus OwnerContractImage: latest Atlas interaction classification + Capability physical-realization census -> fsync+rename compiled reference image; AddressPlane validates it before replacing a derived candidate generation, LowererWorkers validates it before derived consumption, while DisCIPL and Runtime integration remains pending
+  invariant an OwnerContractImage references Atlas, Capability, RepresentationPassport and exact-gate owners; it cannot copy their facts or make a declared/realized command an admitted invocation
+  forbidden_inference compiled OwnerContractImage -> a capability invocation is checked, authorized, or effectful
+  witness cmd/BonfyreOwnerContract/Makefile builds the current 331-architecture/267-interaction frontier, requires unresolved=0 and realized_unmapped=0, emits an atomic OwnerContractImage, and verifies its schema plus exact-gate boundary; cmd/BonfyreExternalEstate/bonfyre-external-estate address-worker --db ~/.bonfyre/estate/estate.db --model-db ~/.local/share/bonfyre/models.db --owner-contract-image ~/.bonfyre/estate/owner-contract-image-current.json published the current 22-model advertisement generation through that gate; cmd/BonfyreLoweringWorkers/tests/lowering_workers_test.sh compiles the consumer with the optional image gate
   source_lineage bonfyre operating model plural-fabric
 
+  known_gap the Python peer's witness for this organ no longer exists on disk; the entry named a file that could not be opened, which is the one thing a witness must never be. The line is removed rather than repointed, and the live evidence for this architecture is what remains listed.
 architecture discipl-composition
   canonical_name DisCIPLCompositionGraph
   consumes CommandAdvertisement
@@ -44,10 +52,56 @@ architecture discipl-composition
   forbidden_inference a proposed chain -> a runnable chain (binding is separate)
   computational_form fused
   command BonfyreDiscipl
-  source_path components/BonfyreControlPlane/capability_closure.py
-  source_path components/BonfyreControlPlane/command_pipeline_seed.py
-  witness components/BonfyreControlPlane/tests/test_capability_closure.py
+  source_path lib/libbonfyre/src/bf_discipl.c
+  source_path cmd/BonfyreDiscipl/src/main.c
+  witness cmd/BonfyreDiscipl/tests/composition_test.sh
   source_lineage capability closure essay
+  interacts command-law-seeds-discipl
+  interacts estate-bridges-into-discipl
+  node_types PhenotypeFamily
+  node_types CarrierFamily
+  node_types RetainedBody
+  edge_types retained_as
+  edge_types conforms_to
+  edge_types ingested_as
+  edge_types emits_kind
+  forbidden_inference a seeded edge -> an executed transform; nothing in the lattice has run a binary
+  forbidden_inference a carrier family -> every retained body being that carrier; the edge carries the rate, not a certainty
+  forbidden_inference the estate-wide retention rate -> a per-phenotype rate
+  invariant a prior on the estate bridge is measured or the edge is refused; bf_discipl_seed_estate_bridge returns 2 rather than substituting a default. The measured rate is 0.513 -- 2,505 of 4,885 occurrences have a body on disk now -- and is per occurrence, because the lattice starts from an occurrence and not from a fetch
+  invariant the carrier edge is conditional on the phenotype that declares the carrier, never on the retained body. Seeded from the body it made all fifteen phenotypes equivalent; conditional, EVENT reaches RSS at 0.990 and SERVICE_CAPABILITY reaches OpenAPI at 0.012 and thirteen phenotypes reach no carrier at all
+  invariant a carrier with no observed population gets no family; a probe that has never fired contributes nothing. Three of the nine detectable carriers have one: RSS at 474 occurrences, Atom at 26, OpenAPI at 19
+  internal_calculus bounded enumeration of simple paths to --depth, ranked by the unfloored confidence product less drift less amortised cost
+  internal_calculus modality transition loss: an edge whose command carries material into a different modality loses 0.15, one that does not loses 0.03
+  internal_calculus execution: a proposed chain is walked hop by hop with the real binaries, each hop's output taken from the manifest that binary writes rather than from a filename guess, and a declared carrier passed down to the command that can use it
+  invariant a hop's output is what the binary declared it produced. A binary that exits zero and leaves no declared output fails the hop; its stdout is never passed to the next command as if it were material
+  invariant an invocation is bound only after it ran and left something on disk; exit zero alone binds nothing
+  invariant a call whose usage names a database, a URL, a model or a key is never probed. Finding out how to call it would mean writing to real state or touching the network, and an unbound command is a smaller cost than either
+  invariant a command with no checked argv stops the walk and is named. An invocation is bound only after it has been run and its output looked at -- four of twenty-seven are, and a guessed argv that exits zero would let a receipt claim a hop ran when nothing happened
+  known_gap the lattice contracted 104 edges and had executed none of them, which made every score a claim about a claim. Chains now run end to end on retained bodies -- carrier RSS, ingest to normalized text, hash to digest -- and invocations are no longer checked one at a time by hand: `bind-commands` reads each binary's own usage, derives the file-in calls it claims to accept, and binds one only after running it and finding something on disk that was not there before. Seven of twenty-seven are bound that way; 12 offer no call that takes a file without also naming a database, a URL, a model or a key, and 4 print no usage block at all.
+  known_gap binding by execution proves a call works and cannot prove it is the right call. The prober demonstrated this on itself: offered every safe shape bonfyre-tag accepts, it bound `detect-lang`, which exits zero and writes a file and is not what Tag declares it makes -- `predict` needs a trained model and is refused as unsafe to probe. Shapes are now tried in the order of what the command declares it produces and every binding reports whether the call it found names a declared output. T_TAG's says false.
+  known_gap the first runner hardcoded ingest's output as normalized.txt and fell back to the hop's stdout when that was missing. On a body with no extension ingest detected `unknown`, wrote the file under its original name, and the chain carried ingest's own log into the hash. Both hops reported ok and the composition was wrong -- exit zero is not review, and a silent fallback is how a wrong answer gets a receipt.
+  known_gap a carrier measured on the bytes did not reach the command that could use it: a walk starting at T_CARRIER_RSS told ingest nothing and ingest detected `unknown` on a feed the estate had already proven was a feed. The start family is now read as well as the hop destinations.
+  known_gap the two witnesses this entry carried were both .py.archive -- archived files that cannot run. It held `implemented` on evidence that had been deleted, which is the laundering the atlas forbids one level in: the maturity was checked once and the witness was retired without the claim being revisited. A live witness now stands in their place.
+  known_gap the engine honoured --depth only to 2. It searched for a direct edge, then for one intermediate, then reported candidate_chains: [] -- an authoritative negative about paths held in its own table. T_WORKFLOW_STAGE -> T_QUEUE_JOB -> T_EXECUTION -> T_LEDGER_EVENT -> T_VALUE_CAPTURE is four contracted edges and was reported unreachable at --depth 6. The emptiness of discipl_chains was never about the chains.
+  known_gap every proposal was keyed discipl_chain:discipl-proposal, so each one replaced the last and the table could not accumulate more than one row per verb. Chains are now identified by the families they walk.
+  known_gap the reach difference between phenotypes was an evidence gap until conformance was run on every receipt. It is now a coverage fact with a measured floor: across all 3,316 receipts, 523 bodies conform, 2 carry a carrier no phenotype declares, 1,964 carry nothing the nine probes can detect, and 325 name a body this estate no longer holds. Running it everywhere added four conformances. The thirteen phenotypes that reach fewer terminals do so because their bytes carry no detectable carrier, not because nobody looked -- but `no_carrier_detected` still means nine needles found nothing, never that the body carries none.
+  known_gap the conformance compiler had only a single-receipt entry point, so sweeping the estate meant parsing 4,891 occurrences once per receipt. The evidence gap was a cost of the interface, not a decision about the sources; a batch mode that parses the corpus once closed it in one run.
+  known_gap carrier detection returned the same value for a body that matched no probe and a body that is not on disk. A sweep reporting both as nothing-detected reports an absence of evidence as evidence of absence, about 325 receipts whose bytes this estate has lost. They are separate outcomes now.
+  invariant a chain that leaves a modality and returns to it is neither proposed nor stored when a shorter chain to the same goal passes through the same families in the same order without that trip, at no greater cost or loss; it is listed under refused_detours with the chain that covers it
+  invariant a round trip that is the only route stays proposed, and a longer chain that changes what a later step receives is a different output and is not a detour
+  witness cmd/BonfyreDiscipl/tests/composition_test.sh proves TranscriptClean -> Brief -> Narrate -> Transcribe -> Segment is refused as covered by the one-hop chain and not stored, that Brief -> Narrate -> Transcribe -> Segment stays because nothing shorter exists, and that the longer chain through TranscriptClean is kept as a different output
+  forbidden_inference a chain not refused as a detour -> a useful chain; only a modality round trip covered by a shorter chain is refused
+  known_gap the search still finds compositions that are legal and worthless when they are not a covered round trip. A speak-then-listen chain with no shorter alternative is proposed, ranked last by modality loss; conversion cost is a declared prior, not a measured time or energy, and nothing asks whether the output serves the consumer that requested it.
+  known_gap the bridge emits `rows_claiming_a_body` for rows carrying body_path and body_bytes. That is the right denominator for "can I hand bytes to a binary" and it is not a count of retention claims, which is a different and much more honest number. The two were briefly reported as one.
+  known_gap counting observation rows instead of occurrences inflated the bridge prior from 0.513 to 0.691. An occurrence observed twice contributes twice, and "did this fetch work" is not the question a chain rooted at a phenotype asks. Both rates are now emitted so the difference stays visible rather than being quietly chosen.
+  known_gap the `source_retained` rung was awarded for the presence of a `body_path` field rather than for a body, and nothing re-checked it after the writer set it. Verified against the filesystem it costs 3 rows of 2,885 -- the rung was substantially honest and is now checked rather than believed. An earlier note here read the 691 rows that name a body whose bytes are gone as 691 false retention claims; every one of those is a `boundary_response`, a lower rung that never claimed retention, and the stronger number was mine from conflating "names a body" with "claims the rung".
+  known_gap 451 occurrences name a boundary-response body this estate no longer holds. Recovering them means re-fetching 451 external hosts, which is an outward act rather than a repair, so the claim is checked and left standing at the rung it actually earned.
+  known_gap the 17 terminal families a retained body cannot reach are not one gap but two: 13 are model-internal and need weights rather than documents, which is correct and permanent; 4 root in capability, telemetry, alert and graph, which are real roots this bridge simply does not touch.
+  interacts discipl-asks-the-pure-tier
+  witness architecture/tests/chain_portfolio_test.sh
+  known_gap the engine ranked chains and could not answer which combinations of them fit a budget, which is the question an operator actually has: nobody runs one chain. That is a subset-sum over accumulated cost, and it is now stated as a pure job rather than answered here, so the tier decides where it may be computed and a second reducer checks the answer.
+  known_gap the engine's scores had no second opinion until now. Agreement between the interaction net and enumeration says the search is computed consistently; it says nothing about the declared priors both were handed, which remain unmeasured.
 
 architecture capability-closure
   owns Capability
@@ -61,7 +115,11 @@ architecture capability-closure
   layer capability/execution
   semantic_question Can this composed chain be bound to real binaries, gated by the frontier, and run?
   purpose Compose (DisCIPL) -> bind to real binaries (estate/law) -> gate (proof frontier) -> select form -> execute. Execution is evidence: a hop that ran a real workload earns workload_proven.
-  maturity measured
+  maturity implemented
+  # Demoted: every witness this carried was archived. The evidence was
+  # retired and the claim was never revisited, which is the laundering the
+  # atlas forbids -- reclaiming measured needs a witness that runs today.
+  known_gap capability-closure lost its live witness to archival and holds implemented until one runs again
   node_types ExecutionOrganism
   node_types Hop
   node_types FormSelection
@@ -77,7 +135,143 @@ architecture capability-closure
   computational_form durable
   command BonfyreDiscipl
   command BonfyreFPQ
-  source_path components/BonfyreControlPlane/capability_closure.py
-  witness components/BonfyreControlPlane/tests/test_fpq_closure.py
-  witness components/BonfyreControlPlane/tests/test_capability_closure.py
+  source_path components/BonfyreControlPlane/capability_closure.py.archive
+  witness components/BonfyreControlPlane/tests/test_fpq_closure.py.archive
+  witness components/BonfyreControlPlane/tests/test_capability_closure.py.archive
   source_lineage capability closure essay
+
+architecture closure-algebra
+  canonical_name ClosureAlgebra
+  family capability
+  domain Capability
+  maturity measured
+  semantic_question What closes, what blocks, and what would one more commitment unlock -- for any domain that states its own conditions?
+  # Four things in this estate turned out to be one shape. Reconciliation asks
+  # whether obligations settle, funding whether capital routes close, feasibility
+  # whether a desired future can exist, and a birth operation whether an object
+  # may enter the world. Each is a desired state, conditions in several states of
+  # satisfaction, resolvers that close conditions and carry their own, and a
+  # closure repeated until nothing new closes.
+  #
+  #     Closure(S) = mu X . ( S union { effects(r) : r in admissible(X) } )
+  #
+  # The algebra is generic and the grammar is not: which conditions exist and
+  # what a resolver closes are domain facts that stay in the declaration.
+  node_types Condition
+  node_types Resolver
+  node_types ClosureDomain
+  edge_types requires
+  edge_types satisfies
+  state_types SATISFIED
+  state_types UNKNOWN
+  state_types BLOCKED
+  invariant an unknown condition is not an unmet one; collapsing the two reports a wall where there is only silence, and nobody asked is a different answer from refused
+  invariant a resolver below the admitting rung is real and not yet load-bearing; a list of expressions of interest must not present itself as a feasible world, and the ladder has eleven rungs rather than two
+  invariant a resolver held below the rung is not also reported as blocked; not yet committed and blocked on a condition have different fixes
+  invariant a resolver is worth the set of conditions that stop closing without it, measured by removing it and recomputing; pricing it against the one condition it closes directly understates it by the rest of its closure
+  invariant a declared cost of zero means free and an absent cost means unpriced; treating them alike buried the best trades among the unknowns, and an unpriced resolver never carries a computed value
+  invariant every counterfactual is the whole closure run again with the condition treated as met, never an estimate of what it might unlock
+  invariant the fixed point is bounded by the resolver count, so a cycle in the declaration ends the loop rather than spinning it
+  forbidden_inference a closed condition -> a condition satisfied in the world
+  forbidden_inference a fixed point -> a plan
+  forbidden_inference an interested resolver -> a committed one
+  forbidden_inference a reachable world -> a chosen one
+  computational_form derivation
+  native_format json
+  source_path scripts/closure-algebra.mjs
+  source_path scripts/closure_algebra.py.archive
+  witness scripts/tests/closure-algebra.test.mjs exercises work-list fixed-point closure, UNKNOWN separation, commitment thresholds, marginal leverage, reuse, declared cost and probability faults; one-time Python comparison matched the complete receipt except run timestamp
+  witness cmd/BonfyreWebAddress/tests/closure_algebra_test.sh
+  measured two domains through one evaluator: capital over institution:nightgrid reproduces the funding result including that the capital condition unlocks nothing alone, and feasibility over a declared world shows venue-agreement closing one condition directly while five fail without it
+  measured enforcing the commitment ladder moved the declared world from seven of eight conditions closing to zero, because every resolver sat at unknown; committing one moved it to two, which is the cascade the ladder exists to gate
+  known_gap the requirement key is found by convention from the declared type name, so a domain naming its key differently would need the convention stated in the declaration rather than inferred
+  known_gap a source this entry named could not be opened from this checkout -- /var/lib/bonfyre/cms/content-types/closure_domain.json. The line is removed rather than repointed to something that merely looks similar, and what remains listed is the evidence this architecture actually stands on.
+architecture closure-loop
+  canonical_name ClosureLoop
+  family capability
+  domain Capability
+  maturity measured
+  semantic_question From an unmet condition to a scored outcome, what does each stage claim and what does it refuse to claim?
+  # A residual is a precise statement of something this institution needs and
+  # cannot obtain, which is the input a live gym wants. It becomes a target with
+  # several phrasings, a spend decision justified by what it would close, an
+  # effect performed by whoever owns it, and a prediction scored against what
+  # happened. Each stage refuses the next stage's ground.
+  node_types ResidualTarget
+  node_types SpendDecision
+  node_types Prediction
+  node_types Outcome
+  edge_types names
+  edge_types justifies
+  edge_types scores
+  state_types named
+  state_types admitted
+  state_types scored
+  invariant a residual target is typed by the condition's own declared kind and never by the class of whatever is blocked on it; taking the blocker's class typed a partner requirement as evidence because a sponsor was waiting on it
+  invariant a phrasing must not repeat the condition's own word back at it; a template that produced permit permit is the same question asked twice rather than a second way of asking
+  invariant naming a target reaches the first rung of six and says so; a named target is not a declared capability, an admissible route, an executed trial, a retrieved result or a closed requirement
+  invariant a spend decides admissibility and holds no credential; a decision to spend is not a payment, and the two do not live in the same place
+  invariant an unpriced resolver is never admitted, because a purchase with no ceiling has no ceiling; and nothing is bought that closes nothing, however cheap
+  invariant a spend above the policy ceiling is referred to a person rather than trimmed to fit, because a ceiling that bends is a suggestion
+  invariant a prediction is recorded before the change and scored after; an unchanged closure is not evidence the prediction was right
+  forbidden_inference a named target -> a measured market
+  forbidden_inference an admitted spend -> an approved one, or a payment
+  forbidden_inference a correct prediction -> a good decision
+  forbidden_inference one cohort agreeing -> a validated planner
+  computational_form derivation
+  native_format json
+  source_path scripts/residual-target.mjs
+  source_path scripts/residual-vocabularies.cue
+  source_path scripts/residual_target.py.archive
+  witness scripts/tests/residual-target.test.mjs proves authored vocabularies preserve typed residual targets and do not duplicate a condition's own vocabulary in phrasings
+  source_path scripts/closure-spend.mjs
+  source_path scripts/closure-outcome.mjs
+  source_path scripts/closure_spend.py.archive
+  source_path scripts/closure_outcome.py.archive
+  witness scripts/tests/closure-spend.test.mjs proves a pure spending decision refuses unpriced, free, inert and over-ceiling resolvers without moving money
+  witness scripts/tests/closure-outcome.test.mjs proves prediction receipts reject cross-subject scoring and an unchanged closure never confirms a prediction
+  witness cmd/BonfyreWebAddress/tests/closure_loop_test.sh
+  measured a prediction recorded over a declared world, one resolver then committed, and the score found two conditions closed of which one had been predicted to unlock nothing -- the planner wrong in a way it can now see
+  measured a $300 capture is referred at a $10 information ceiling and admitted at $500 once the world is valued at $30,000; no money moves at either
+  known_gap no external route is credentialed for any named capability, so every target stops at the first rung and the market behind it is unmeasured rather than absent
+
+architecture capability-discovery-gap
+  canonical_name CapabilityDiscoveryGap
+  family capability
+  domain Capability / Registry
+  layer capability
+  semantic_question Can this estate discover a capability it has just gained?
+  purpose BonfyreCapability indexes 103 capabilities with real cost estimates and latency tiers and is what capability matching reads. It cannot find a capability that was added after it was compiled, which is why work done in the checkout is invisible to the estate's own discovery until someone edits C.
+  maturity measured
+  source_path cmd/BonfyreCapability/src/main.c
+  publishes CandidateClassification
+  internal_calculus the capability set is a compiled-in BUILTINS table plus rows seeded into the index database once. `index` calls rebuild_index, which rebuilds an FTS index over the rows that already exist, and sync_catalog, which syncs recipes from the repository. Neither enumerates binaries
+  invariant a command named index rebuilds an index and does not discover; reading it as discovery is what made twenty-five newly installed organs look like a no-op rather than like an unsupported operation
+  cannot_infer an installed organ -> a discoverable capability; nineteen organs built in the checkout were installed into the managed binary directory and the registry still reported the same 103
+  cannot_infer a capability absent from the registry -> a capability the estate cannot execute; native_tool_invoke reaches every installed binary and capability_fulfillment routes any named capability across eight carriers. What is missing is discovery, not execution
+  witness installing nineteen checkout-only organs raised the managed binary count from 98 to 123 and left `bonfyre-capability list` at 103, with none of the newly installed organs appearing
+  source_path cmd/BonfyreCapability/tests/discovery_test.sh
+  internal_calculus index now scans the directory the binary itself lives in, which is the directory the estate installs into, and records anything named bonfyre-* that the builtin table does not already claim. A curated row is never overwritten by a scan, because it carries a measured cost and a latency tier and a scan knows neither
+  invariant a discovered organ is recorded at cost -1, meaning unmeasured, and never 0. Zero is a price, and this estate already refuses elsewhere to let an unpriced capability read as a free one; both list renderers print it as unmeasured rather than as a number
+  invariant discovery is idempotent; a second index reports nothing newly discovered rather than re-counting what it already holds
+  witness cmd/BonfyreCapability/tests/discovery_test.sh runs on every build against a synthetic install tree holding an organ no table could know about: it must be discovered, it must carry no price, running index twice must discover nothing further, and a curated cost must survive the scan
+  witness discovery over the real install tree took the registry from 103 to 134, finding all 31 organs that had been installed and were invisible, including every organ this session worked in
+  source_path architecture/atlas.mjs
+  internal_calculus a discovered organ is described by the atlas rather than by the scan. Every organ already carried a semantic_question, a layer, a family, a domain and a maturity in the entry whose source_path points into its directory; the registry reads a generated projection of that, architecture/atlas.organs.json, rather than parsing the 258KB index. An organ with no entry is recorded as undescribed and is never given a description this tool invented
+  internal_calculus match scores the registry and not the compiled-in table. It scored BUILTINS while list read the database, so a discovered capability was listable and unmatchable -- the registry could show an organ it had just found and then fail to return it for the need it answers, which made discovery cosmetic. A curated row still competes on its curated keywords and a discovered row competes on what the atlas says about it
+  invariant there is one scorer. The compiled-table scorer was removed rather than left beside the registry one, because two scorers that disagree is the same failure this entry exists to record
+  cannot_infer a description from the atlas -> a measured cost; the atlas knows what an organ is for and not what it costs to run, so a discovered row stays unmeasured on both cost and latency
+  witness the extended discovery witness asserts a discovered organ is matchable and not merely listable, and that a curated capability still matches on its own keywords
+  witness bonfyre-lex scores 0.714 against its own semantic_question, above bonfyre-spatial at 0.429, where before neither could be returned at all
+  internal_calculus a capability is matched on its id as well as its description, keywords and name. The id is the shortest true name a capability has -- sign, lex, spatial -- and was the one field never scored, so a caller asking for a thing by its own name got nothing back
+  internal_calculus camel case is split before tokenising. BonfyreSign is one token to a splitter, so the organ whose entire purpose is signing did not rank for the verb sign
+  invariant a capability ranks for its own name; the witness installs an organ with an invented name and requires it to be returned both by its id and by a word inside its camel-case name
+  witness bonfyre-sign now ranks first for "sign a statement so a third party can verify it", above bonfyre-proof; bonfyre-spatial scores 1.200 for its own subject and bonfyre-lex 1.000
+  internal_calculus a learned metric is available and is not the default, because that is what the measurement said. Over ten queries with known answers, word overlap ranked the right capability first nine times and fusing a learned cosine managed seven
+  internal_calculus the embedding organ refuses to return a hashed-token vector when a learned one was requested, on the grounds that hashed-token geometry is not a learned metric and distances are not comparable across the two. This registry honours the same refusal: it never falls back to the hash backend, it falls back to word overlap and says so
+  invariant a ranking names the metric that produced it. A caller shown a number alone cannot tell a learned distance from a word count, and the two do not mean the same thing
+  invariant two metrics are fused by rank and never by score. Scaling cosine to compete with word overlap made every row land within 0.02 of every other and turned the lexical signal into noise on top of a near-constant, which dropped lex from first to absent for the query "lex extraction"
+  cannot_infer a learned embedding -> a better ranking; on one-line descriptions it measured worse, and the reason is the corpus rather than the model
+  witness the discovery witness asserts the default metric is the one that measured better, so a future change that promotes the learned path has to beat it first
+  known_gap the semantic path is measured on ten queries and that is a small set. It is enough to decide which metric leads and not enough to characterise either
+  known_gap a capability is embedded from a one-line description. The atlas holds invariants, forbidden inferences and internal calculi for the same organ, and none of that reaches the vector

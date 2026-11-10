@@ -15,9 +15,9 @@ architecture blocker-graph
   invariant a blocker with no substrate to decide it is open, never assumed satisfied
   forbidden_inference blocker removed -> opportunity won
   source_lineage SEED-A recursive organ document
-  source_path components/BonfyreControlPlane/opportunity.py
-  witness components/BonfyreControlPlane/tests/test_opportunity.py
-
+  source_path components/BonfyreControlPlane/opportunity.py.archive
+  witness components/BonfyreControlPlane/tests/test_opportunity.py.archive
+  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
 architecture unlock-graph
   canonical_name UnlockGraph
   owns OpportunityEligibility
@@ -48,16 +48,16 @@ architecture unlock-graph
   forbidden_inference an unlock exists -> the unlock is authorized or free
   forbidden_inference all blockers resolved -> opportunity won
   source_lineage SEED-A recursive organ document
-  source_path components/BonfyreControlPlane/opportunity.py
-  source_path components/BonfyreControlPlane/reachability_publish.py
-  source_path components/BonfyreControlPlane/reachability_watch.py
-  source_path components/BonfyreControlPlane/reachability_bridge.py
-  witness components/BonfyreControlPlane/tests/test_opportunity.py
+  source_path components/BonfyreControlPlane/opportunity.py.archive
+  source_path components/BonfyreControlPlane/reachability_publish.py.archive
+  source_path components/BonfyreControlPlane/reachability_watch.py.archive
+  source_path components/BonfyreControlPlane/reachability_bridge.py.archive
+  witness components/BonfyreControlPlane/tests/test_opportunity.py.archive
   witness packs/institutional-opportunities/opportunities.yaff
-  witness components/BonfyreControlPlane/tests/test_loop_reachability.py
+  witness components/BonfyreControlPlane/tests/test_loop_reachability.py.archive
   native_format graf
   known_gap unlockable (not yet reachable) opportunities are refused; auto-executing their unlocks is the next step
-
+  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
 architecture collapse-front
   canonical_name CollapseFront
   owns SupportStructure
@@ -83,12 +83,12 @@ architecture collapse-front
   forbidden_inference single-retraction collapse -> that fact is the sole cause (co-critical grounds may each be independently solo-critical)
   forbidden_inference absent from every collapse front -> the conclusion is true (robust support is not truth; it may also be already unsupported)
   interacts actor-graph
-  source_path components/BonfyreControlPlane/support_lattice.py
-  source_path architecture/atlas_collapse.py
-  witness components/BonfyreControlPlane/tests/test_support_lattice.py
-  witness architecture/tests/test_atlas_collapse.py
+  source_path components/BonfyreControlPlane/support_lattice.py.archive
+  source_path cmd/BonfyreAtlas/src/main.c
+  witness components/BonfyreControlPlane/tests/test_support_lattice.py.archive
+  witness bun test architecture/tests/atlas_collapse.test.mjs proves solo retraction, robust support and external-vs-missing witness classification
   source_lineage retraction dual harvested from run6/run7 DBSP retraction algebra
-  known_gap runs over the actor graph (measured on the real 68-actor control plane: org:tarbell-center is load-bearing for 279 of 338 conclusions). Self-applied to the atlas's own maturity claims (atlas_collapse.py): 21 measured/proven claims audited, zero laundered against the real witness files, 13 single-witness fragile. Extending grounds to occurrences/evidence witnesses and maintaining the collapse matrix incrementally in DBSP is the next step
+  known_gap actor-graph CollapseFront was measured on 68 actors (org:tarbell-center load-bearing for 279 of 338 conclusions); this Bun Atlas self-audit covers only the OR-over-witness maturity specialization. Extending grounds to occurrences/evidence witnesses and maintaining the full collapse matrix incrementally in DBSP remains open
 
 architecture fortification-plan
   canonical_name FortificationPlan
@@ -103,7 +103,11 @@ architecture fortification-plan
   layer opportunity
   semantic_question Which single real-world action most increases robust reachable capacity right now?
   purpose Composes CollapseFront with reachability into ranked action over the real relationship graph. VERIFY: an asserted actor many live conclusions rest on (leverage = its CollapseFront) -- confirm the assumption before acting on it. DIVERSIFY: a high-value conclusion (funding/authority/opportunity) standing on a single actor -- add a second independent path. Emits the next moves ranked by leverage and publishes the plan into the live fabric, so the loop and a human read the priorities BonfyreFS serves. Not an audit; an action list.
-  maturity measured
+  maturity implemented
+  # Demoted: every witness this carried was archived. The evidence was
+  # retired and the claim was never revisited, which is the laundering the
+  # atlas forbids -- reclaiming measured needs a witness that runs today.
+  known_gap fortification-plan lost its live witness to archival and holds implemented until one runs again
   node_types Action
   edge_types prioritizes
   state_types verify
@@ -117,8 +121,8 @@ architecture fortification-plan
   interacts collapse-front
   interacts actor-graph
   interacts unlock-graph
-  source_path components/BonfyreControlPlane/fortification.py
-  witness components/BonfyreControlPlane/tests/test_fortification.py
+  source_path components/BonfyreControlPlane/fortification.py.archive
+  witness components/BonfyreControlPlane/tests/test_fortification.py.archive
   source_lineage CollapseFront applied to real institutional prioritization
   known_gap measured on the live 68-actor graph: Tarbell Center is the top verify target (279 live conclusions rest on an only-asserted actor), then the funder set at 15 each; plan published to the live fabric as fortification-plan.v1. Feeding the leverage signal back into reachable_capacity so the loop pursues fragile-but-reachable capacity before it collapses is the next step
 
@@ -148,13 +152,21 @@ architecture resource-activation
   internal_calculus ordered activation state machine, authority-gated
   invariant only a resource at activated is usable; available is not activated
   invariant activate authority is never short-circuited by qualification or binding
+  invariant actor/mechanism selection is an independent fact: selection_detail is separate from DemandBook eligibility provenance and a refresh or retraction of SupplyMatch may not erase the selection
+  invariant reconciliation reads the current AuthorityGraph activate grant and current ServiceLifecycle binding and writes neither; losing eligibility, authority or binding immediately lowers the derived state
   forbidden_inference provider available -> resource activation bypassed
   forbidden_inference resource eligible -> resource authorized
+  forbidden_inference actor selected -> activate authority, service binding or activation
   native_format graf
-  source_path components/BonfyreControlPlane/resource_activation.py
+  source_path components/BonfyreControlPlane/resource_activation.py.archive
   source_path engine/core/src/activation.c
   source_path engine/core/include/bf_activation.h
-  witness components/BonfyreControlPlane/tests/test_resource_activation.py
+  source_path engine/core/src/service_lifecycle.c
+  source_path engine/core/include/bf_service_lifecycle.h
+  source_path components/BonfyreProject/src/main.c
+  witness components/BonfyreControlPlane/tests/test_resource_activation.py.archive
   witness engine/core/tests/activation_test.c
+  witness engine/core/tests/service_lifecycle_test.c
+  witness components/BonfyreProject/tests/activation_projection_test.sh
   source_lineage SEED-A recursive organ document
-  known_gap native state machine derives gap<candidate<qualified<eligible<authorized<activated on the shared resource_candidates store; the activate-authority gate is un-short-circuitable (authority result is an input -- authority stays its own fact); python reads native-written candidates -- parity proven
+  known_gap no standing policy elects a provider/actor, mints activate authority or creates a binding; those remain explicit institutional facts, so eligibility can accumulate without activation and that is the intended membrane

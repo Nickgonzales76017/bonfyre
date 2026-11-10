@@ -10,14 +10,18 @@ architecture artifact-graph
   consumes ExecutionReceipt
   publishes Artifact
   source_path engine/core/src/fabric.c
+  source_path lib/libbonfyre/src/bf_sha256.c
+  witness lib/libbonfyre/tests/sha256_file_test.c verifies the shared native file hash refuses stream and close errors instead of returning a digest of a partial read
+  forbidden_inference a successful shared file read -> source immutability during hashing or the subsequent artifact workflow
   family evidence
   domain Evidence / Artifacts
   layer evidence
   semantic_question What operator transformed this source artifact into that derived one?
   purpose Transformation semantics: source -> operator -> derived -> packet -> export. Distinct from lineage (ancestry) and provenance (who/what/when).
   maturity implemented
-  source_path components/BonfyreControlPlane/evidence_graphs.py
-  witness components/BonfyreControlPlane/tests/test_evidence_graphs.py
+  source_path components/BonfyreControlPlane/evidence_graphs.py.archive
+  source_path components/BonfyreControlPlane/protocol_evidence.py.archive
+  witness components/BonfyreControlPlane/tests/test_evidence_graphs.py.archive
   node_types SourceArtifact
   node_types DerivedArtifact
   edge_types transformed_by
@@ -33,14 +37,14 @@ architecture provenance-graph
   semantic_question Through what source, observer, actor, runtime, model, provider, transport did this arrive?
   purpose The full path an artifact took to exist -- the cheap path-vector checks (untrusted provider, missing authority provenance, loops) ride on this.
   maturity implemented
-  source_path components/BonfyreControlPlane/evidence_graphs.py
-  witness components/BonfyreControlPlane/tests/test_evidence_graphs.py
+  source_path components/BonfyreControlPlane/evidence_graphs.py.archive
+  witness components/BonfyreControlPlane/tests/test_evidence_graphs.py.archive
   node_types ProvenanceNode
   edge_types produced_by
   forbidden_inference a provenance path -> authority over the artifact
   source_lineage run6/run7 evidence estate
   known_gap ResultReceiptBundle chain is a partial real shape
-
+  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
 architecture evidence-graph
   owns Evidence
   consumes Occurrence
@@ -53,17 +57,17 @@ architecture evidence-graph
   semantic_question Does this support, contradict, reproduce, or falsify that claim?
   purpose The claim-support relation itself (supports / contradicts / reproduces / falsifies / contextualizes / witnesses). SERM produces its consequences; it is not this.
   maturity implemented
-  source_path components/BonfyreControlPlane/evidence_graphs.py
+  source_path components/BonfyreControlPlane/evidence_graphs.py.archive
   source_path engine/core/src/evidence.c
   source_path engine/core/include/bf_evidence.h
-  witness components/BonfyreControlPlane/tests/test_evidence_graphs.py
+  witness components/BonfyreControlPlane/tests/test_evidence_graphs.py.archive
   witness engine/core/tests/evidence_test.c
   node_types Claim
   edge_types supports
   edge_types contradicts
   forbidden_inference correlation -> causation
   invariant an evidence relation is directional: supports(A,B) never implies supports(B,A) (native + python parity on the shared evidence_relations store)
-  known_gap native peer records directional supports/contradicts/reproduces/falsifies relations on the shared store with kind gating (python reads native-written rows, directionality preserved -- parity proven)
+  known_gap native owner records directional supports/contradicts/reproduces/falsifies relations with kind gating and derives the precedence-ordered current verdict (falsified > contested > reproduced > supported > unevidenced) from that same relation; it never turns standing evidence into a proof-frontier verdict
   forbidden_inference supports(A,B) -> supports(B,A)
   source_lineage run6/run7 evidence estate
   known_gap EvidenceBindingGraph binds candidates, does not maintain the claim relation
@@ -76,15 +80,15 @@ architecture temporal-evidence-graph
   semantic_question Which time is this -- event, publication, observation, retrieval, effective, supersession, correction, expiration?
   purpose Timestamps must not collapse. Stale-for-decision does not mean delete the historical evidence.
   maturity implemented
-  source_path components/BonfyreControlPlane/evidence_graphs.py
-  witness components/BonfyreControlPlane/tests/test_evidence_graphs.py
+  source_path components/BonfyreControlPlane/evidence_graphs.py.archive
+  witness components/BonfyreControlPlane/tests/test_evidence_graphs.py.archive
   node_types TimedFact
   edge_types supersedes
   forbidden_inference retrieval time -> event time
   forbidden_inference stale for a decision -> delete the historical evidence
   source_lineage run6/run7 evidence estate
   known_gap the occurrence spine keeps one ordering, not the eight time planes
-
+  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
 architecture claim-graph
   canonical_name ClaimGraph
   family evidence
@@ -93,10 +97,125 @@ architecture claim-graph
   semantic_question What does this claim depend on, assume, and what is its current vs historical proof state?
   purpose A claim with its definition/evidence dependencies, counterclaims, caveats, assumptions, and current vs historical proof state.
   maturity implemented
-  source_path components/BonfyreControlPlane/evidence_graphs.py
-  witness components/BonfyreControlPlane/tests/test_evidence_graphs.py
+  source_path components/BonfyreControlPlane/evidence_graphs.py.archive
+  witness components/BonfyreControlPlane/tests/test_evidence_graphs.py.archive
   node_types Claim
   node_types Counterclaim
   edge_types depends_on
   forbidden_inference a claim stated -> a claim proven
   source_lineage run6/run7 evidence estate
+  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
+architecture receipt-envelope
+  canonical_name ReceiptEnvelope
+  owns ReceiptEnvelope
+  consumes AgentEvent
+  consumes Occurrence
+  consumes Artifact
+  publishes Evidence
+  family evidence
+  domain Evidence / Receipts
+  layer evidence/receipt
+  semantic_question What exact session event frontier occurred, and from which evidence origin and identity dimensions?
+  purpose Composite receipt boundary over session events with subject/host/external origin fidelity and separately typed artifact, producer/model and transport identities.
+  maturity implemented
+  node_types ReceiptEnvelope
+  node_types ReceiptEvidence
+  edge_types covers_event
+  edge_types produced_by
+  edge_types carried_by
+  invariant receipt coverage requires same-sequence and same-origin evidence for every AgentEvent
+  invariant model-turn evidence repeats the exact provider and model identity declared by the covered event and binds an explicit producer verifier observation
+  invariant the carrier adapter accepts bounded explicit fields for provider-native session identity, context compaction, strategy transition, artifact identity and external transport identity; absent fields are refused when their event/origin kind requires them and never filled from a process exit
+  invariant external evidence carries transport identity while artifact, producer/model and transport identities remain orthogonal
+  forbidden_inference artifact/content identity -> producer, model, transport, authority, provenance, or claim support
+  forbidden_inference repeated provider/model attribution -> verified producer fidelity without a verifier observation
+  forbidden_inference subject, host, or external origin -> either of the other origin classes
+  source_path schemas/control/agent-session-receipt.yaff
+  source_path engine/core/src/agent_contract.c
+  source_path engine/core/include/bf_agent_contract.h
+  source_path cmd/BonfyreAgentContract/src/main.c
+  source_path cmd/BonfyreActors/tests/organ_callers_test.sh
+  witness engine/core/tests/agent_contract_test.c
+  witness cmd/BonfyreActors/tests/organ_callers_test.sh proves the native caller accepts a same-origin, same-sequence model-turn receipt only when its provider/model identities and verifier observation cover the declared session frontier
+  witness cmd/BonfyreAgentContract/tests/receipt_frontier_test.sh proves one receipt covers a contiguous model-turn, context-compaction, strategy-change and external model-turn frontier, while an external event without transport identity is refused
+  source_lineage V8.1 ReceiptEnvelope and Run8 cross-provider identity review
+  known_gap the native caller validates explicit session files; no standing worker has yet been bound to emit its own AgentSession and ReceiptEnvelope through this contract.
+architecture running-system-attestation
+  canonical_name RunningSystemAttestation
+  owns RunningSystemClaim
+  consumes Artifact
+  publishes Evidence
+  family evidence
+  domain Evidence / Deployment
+  layer evidence/attestation
+  semantic_question Which bytes were sealed, which are deployed, and which are actually executing right now?
+  purpose Separates three claims that are routinely spoken as one. A sealed release is bytes someone committed to; a deployed artifact is what sits at the path a unit names; a running artifact is the inode the kernel is executing. Replacing a file without restarting leaves the process on the old, now-unlinked inode while every health surface reports healthy. Reads the release's existing sha256 manifest rather than introducing a second attestation format.
+  maturity implemented
+  node_types SealedArtifact
+  node_types DeployedArtifact
+  node_types RunningArtifact
+  edge_types deployed_from
+  edge_types executing
+  invariant the question asked matches the artifact kind: an ELF is compared by content through /proc/<pid>/exe, while an interpreted unit executes its interpreter and is compared by whether its source changed after the process started
+  invariant running-differs-from-deployed fails the check, and deployed-differs-from-sealed only reports; a check that fails during ordinary development is a check that gets ignored
+  forbidden_inference a service reporting active -> the service executing the bytes on disk (a replaced file leaves the process on the unlinked inode, and every health surface still answers)
+  forbidden_inference sealed, deployed and running agreeing -> the bytes being correct, tested or authorized (this settles which bytes, never whether they are right)
+  forbidden_inference a version endpoint or deploy log -> evidence of what is executing (both report intent; only the running inode reports fact)
+  source_path scripts/release_attest.mjs
+  source_path scripts/release_attest.py.archive
+  source_path scripts/release_metadata.mjs
+  source_path scripts/tests/release_attest_test.mjs
+  witness scripts/tests/release_attest_test.mjs proves an env-wrapped Bun service attests its script rather than its interpreter or an argument binary, and that running-byte drift and a changed interpreted source are fatal while deployed-versus-sealed drift remains reported
+  source_path scripts/deploy_organ.sh
+  source_path scripts/seal_release.sh
+  witness scripts/release_attest.py proved detection against a live estate: touching an interpreted unit's source without restarting reported SOURCE_CHANGED_SINCE_START and exited 1, and the same estate returned to exit 0 after a restart
+  witness scripts/deploy_organ.sh refuses a broken change with exit 2 and leaves the live binary byte-identical and serving 200; a good change exits 0; a probe returning other than the expected status exits 1
+  invariant a deploy builds, installs only bytes that build produced, restarts, attests the running inode and probes a real route; each step fails closed, because the hand-rolled sequence it replaces piped make into grep and installed the stale binary still on disk
+  invariant the artifact a unit executes is the last existing path token of its final ExecStart, never the first: for an interpreter plus a script the script is the artifact, and denylisting interpreter names by hand resolved the oauth unit to /usr/bin/node and compared node against node
+  invariant sealing refuses while any unit runs bytes other than the deployed ones, and excludes backup copies; certifying drift or freezing which of two similar binaries is real are both worse than leaving the question open
+  witness scripts/seal_release.sh sealed 116 artifacts including 8 unit entrypoints, excluding 20 backup copies, after which all three attested units report deployed equal to sealed and running equal to deployed
+  known_gap the seal covers what is deployed, not what built it: a sealed organ cannot be rebuilt from the manifest alone, because source hashes are not recorded beside the binary hashes
+
+architecture witness-mutation
+  canonical_name WitnessMutation
+  family evidence
+  domain Evidence
+  maturity measured
+  semantic_question If a declared fact were wrong, would anything in this institution notice?
+  # The atlas forbids maturity laundering and has enforced it as "a witness
+  # exists and can be opened". That is not the rule. The rule is that the witness
+  # would notice if the thing it witnesses were false, and nothing here had ever
+  # checked it.
+  #
+  # A passing suite proves nothing alone. A suite that passes and then goes red
+  # the moment a fact it claims to check is changed underneath it has proven it
+  # is load-bearing. That difference is the whole difference between a test and
+  # a decoration.
+  node_types DeclaredFact
+  node_types Witness
+  edge_types defends
+  state_types guarded
+  state_types blind
+  state_types inconclusive
+  invariant every suite must pass before any fact is mutated; a suite already red cannot demonstrate that it noticed, and counting it as guarded would be the laundering this exists to detect
+  invariant a suite that skips is not a suite that passed; several exit zero on an empty world, so a mutation that makes the world unfindable would otherwise record the field as undefended -- the tool manufacturing the finding it exists to detect
+  invariant the mutation keeps the shape of the value it replaces, because a number turned into a word is caught by a type check rather than by anything that understands the field
+  invariant a fingerprint pins values and not counts; counting how many cash deltas are known left 0.00 becoming 1.0 invisible, and that a vendor term supplies exactly zero is the entire finding it was meant to defend
+  forbidden_inference a guarded field -> a correct value; the suite reacted to a change, which says nothing about whether the original was right
+  forbidden_inference a blind field -> an untested one; only that no suite run here reacted
+  forbidden_inference a passing suite -> a load-bearing one, until it has gone red for a reason
+  computational_form search
+  native_format json
+  source_path scripts/witness_mutation.mjs
+  witness scripts/witness_mutation.test.mjs
+  invariant mutation plans declare PURE effect class and argv arrays; arbitrary shell command strings, source-store writes, and implicit execution are refused
+  witness cmd/BonfyreWebAddress/tests/capital_transform_test.sh
+  witness cmd/BonfyreWebAddress/tests/closure_algebra_test.sh
+  witness cmd/BonfyreWebAddress/tests/funding_closure_test.sh
+  invariant a fact whose change moves no computed answer anywhere is inert and no witness is faulted for missing it; 241 of 284 are, and reporting them as gaps would drown eleven real ones in noise
+  invariant a producer is run twice on the untouched store before anything is mutated, and any key differing between those two runs is excluded; representation_trial carries a trials block that moves on its own, and with it counted every mutation looked load-bearing and every guard graded a consequence
+  measured 284 declared facts across all 29 populated content types were each changed to a plausible wrong value with eight suites watching: 241 inert, 26 guarded, 17 blind
+  measured 17 facts changed what the institution computes while every suite stayed green, including a budget request's amount, what a funding route satisfies, and a resolver's success probability set to 2.2 -- a number outside [0,1] that the algebra went on multiplying by
+  measured of the 26 guards, 23 held because a computed answer moved and 2 only because a declaration fingerprint was pinned; a fingerprint guard detects tampering and is no evidence the field does any work
+  measured after adding consequence assertions and refusing impossible declarations the same 284 mutations give 32 guarded and 11 blind, with 6 named facts moved from computing-differently-unnoticed to defended
+  known_gap 11 facts still move a computed answer with no suite reacting, and 23 of the 61 architectures claiming measured rest on a witness file nothing in this estate runs

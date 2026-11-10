@@ -34,14 +34,75 @@ architecture actor-graph
   invariant provenance is mandatory on every actor and edge; confidence tier {verified,asserted,inferred} never collapses (native + python parity on the shared actor_nodes/actor_edges store)
   native_format graf
   command BonfyreEntity
-  source_path components/BonfyreControlPlane/actors.py
-  source_path components/BonfyreControlPlane/pack_loader.py
+  source_path components/BonfyreControlPlane/actors.py.archive
+  source_path components/BonfyreControlPlane/pack_loader.py.archive
   source_path engine/core/src/actor.c
   source_path engine/core/include/bf_actor.h
-  witness components/BonfyreControlPlane/tests/test_actors.py
+  source_path cmd/BonfyreActors/src/main.c
+  source_path scripts/build-actor-graph.mjs
+  source_path scripts/build_actor_graph.py.archive
+  witness scripts/tests/build-actor-graph.test.mjs proves source-bound identities remain distinct for equal bylines and all generated actor observations stay asserted
+  source_path cmd/BonfyreWebAddress/src/people_projection.c
+  source_path cmd/BonfyreActors/tests/organ_callers_test.sh
+  source_path cmd/BonfyreWebAddress/tests/people_projection_test.c
   witness engine/core/tests/actor_graph_test.c
+  witness cmd/BonfyreActors/tests/organ_callers_test.sh proves asserted actor records, typed edges and distinct-source corroboration flow through the native caller; repeating a source does not increase the independent count
+  witness 2026-09-24 the current 68,944-item estate replayed 6,452 source-bound asserted name observations (4,441 person-shaped and 2,011 publication-shaped) into the native ActorGraph; equal names across sources remain separate actor coordinates and no cross-source name string was promoted or counted as corroboration
+  witness cmd/BonfyreWebAddress/tests/people_projection_test.c proves the public directory links each (source, by) credit to its own profile host, an exact source surface cannot cross the source boundary, and a legacy name-only address offers source choices rather than asserting identity
   source_lineage capitalgym crm relationships
   known_gap native writer records actors/edges on the shared store with the declared-kind, mandatory-provenance and non-collapsing-confidence gates (python reads native-written rows, tier preserved -- proven); native corroboration/verification-profile promotion logic is the remaining native-absorption item
+  known_gap the former name-collapsed 2,143-row derived ActorGraph is retained locally as actors-legacy-name-collapsed-20260924T163000Z.db for recovery; it must not be consumed as identity truth because its key omitted the asserting source
+
+  known_gap the Python peer's witness for this organ no longer exists on disk; the entry named a file that could not be opened, which is the one thing a witness must never be. The line is removed rather than repointed, and the live evidence for this architecture is what remains listed.
+  known_gap the native caller is an explicit operator CLI, not yet a standing archive-to-actor ingestion pass; a credited byline remains asserted until an operator supplies its provenance and no name is auto-merged into an identity.
+  interacts web-address-edge
+architecture role-program-compiler
+  canonical_name RoleProgramCompiler
+  family identity
+  domain Identity / Operating posture
+  layer compiler
+  semantic_question How can one Actor assume distinct modern operating responsibilities over shared subjects without becoming a different Actor kind or receiving portable authority?
+  purpose Compiles declared role programs into CMS-native operating postures: subject and relationship neighborhoods, public search reach, CRM lenses, work queues, capability references, exact existing Foundry operations, metric views, handoff contracts and a SurfaceScene preference. It compiles requested operations only when FoundryBehaviorCompiler already emitted their exact contract; every other requested verb remains explicit unresolved work. A signed-in actor may assume a published program in an explicit context scope through the native RoleAssignment owner and read only their own compiled Operator Passport workspace. The assignment is a posture, not an authority grant.
+  maturity implemented
+  owns RoleProgram
+  owns RoleAssignment
+  consumes Actor
+  consumes ExactObjectContractCatalog
+  consumes CapabilityProgram
+  consumes SurfaceScene
+  publishes RoleProgramCatalog
+  node_types RoleProgram
+  node_types RoleAssignment
+  edge_types assumes_operating_posture
+  edge_types selects_lens
+  invariant a role program composes shared Actor, subject, relationship, CRM, WorkGraph, capability and authority substrates; it never creates an occupational Actor subtype
+  invariant global role reach is restricted to declared public search scopes while every effect remains checked by its native authority owner in the local subject context
+  invariant requested role operations absent from the exact Foundry catalog remain unresolved and do not become a surface aperture or an ObjectContract
+  invariant a RoleAssignment names one signed-in actor, one published RoleProgram and one explicit scope, and is replay-safe per actor/program/scope; a second scope cannot overwrite the first and a failed native write cannot be reported as an assumed role
+  forbidden_inference a RoleAssignment -> authority grant, provider access, institutional role, employment relationship, representation right, or permission to act
+  forbidden_inference a RoleProgram's global public reach -> global effect authority
+  source_path schemas/control/role-program-specs.json
+  source_path cmd/BonfyreCMS/tools/compile_role_program.mjs
+  source_path cmd/BonfyreCMS/tools/compile_role_program.py.archive
+  source_path cmd/BonfyreCMS/content-types/role_program.json
+  source_path cmd/BonfyreCMS/content-types/role_assignment.json
+  source_path cmd/BonfyreWebAddress/src/main.c
+  witness cmd/BonfyreCMS/tools/compile_role_program.test.mjs proves Brand Operator, Go-to-Market Engineer and Internet Operator compile to real RoleProgram rows; only existing exact Foundry operations emit and requested ownerless role verbs remain unresolved
+  witness cmd/BonfyreWebAddress/tests/role_program_owner_test.sh proves one actor can retain two separate scopes of the same published operating program and read each private workspace without granting either to another actor
+  witness cmd/BonfyreWebAddress/tests/role_program_owner_test.sh proves an authenticated actor can assume Internet Operator in one community scope, then reads only their own private Operator Passport workspace with compiled lenses, queues, exact operations and authority requirements; anonymous and cross-actor reads are refused and the stored assignment cannot infer an authority grant
+  known_gap the private Operator Passport is a native JSON workspace; a richer interactive SurfaceScene is not yet rendered over it
+  known_gap local authority remains separately checked per native effect owner; no role program presently carries a proof-backed authority grant workflow
+
+interaction role-program-compiler-uses-foundry-contracts
+  source role-program-compiler
+  destination foundry-behavior-compiler
+  relation filters_to_exact_operations
+  preserves only an exact target kind and verified native owner operation already emitted by the Foundry compiler
+  drops every requested operation lacking a verified owner, along with any implied authority or effect
+  forbidden_inference a role-requested operation -> an emitted ObjectContract or a usable action
+  invalidates_on role spec, Foundry catalog, exact operation target, or native owner changing
+  binding cmd/BonfyreCMS/tools/compile_role_program.mjs
+  witness cmd/BonfyreCMS/tools/compile_role_program.test.mjs
 
 architecture verification-ledger
   canonical_name VerificationLedger
@@ -69,11 +130,14 @@ architecture verification-ledger
   interacts actor-graph
   interacts collapse-front
   interacts fortification-plan
-  source_path components/BonfyreControlPlane/verification.py
+  source_path components/BonfyreControlPlane/verification.py.archive
   source_path engine/core/src/corroboration.c
   source_path engine/core/include/bf_corroboration.h
-  witness components/BonfyreControlPlane/tests/test_verification.py
+  source_path cmd/BonfyreActors/src/main.c
+  source_path cmd/BonfyreActors/tests/organ_callers_test.sh
+  witness components/BonfyreControlPlane/tests/test_verification.py.archive
   witness engine/core/tests/corroboration_test.c
+  witness cmd/BonfyreActors/tests/organ_callers_test.sh proves the native caller records only distinct corroborating sources and returns repeat-source rather than inflating the count
   source_lineage fortification verify action needs a real gated mechanism
   known_gap native ledger records corroborations on the shared actor_corroborations store with distinct-source independence (python reads native-written rows -- parity proven); the promotion gate stays python/human (native never promotes -- the human line)
 
@@ -93,3 +157,48 @@ architecture hash-identity
   command BonfyreHash
   source_path cmd/BonfyreHash
   source_lineage identity federation seed
+
+architecture estate-identity-graph
+  canonical_name EstateIdentityGraph
+  family identity
+  domain Identity / What the estate's material names
+  layer store
+  semantic_question When this estate's sources keep saying a name, what is the thing, and how does a composed page come to know it?
+  purpose The names this estate's material repeats, resolved to identities in the native identity organ: an entity per thing, an observation per fact about it, a link per pair the material names together. Composed pages read it where they are composed.
+  maturity implemented
+  node_types Entity
+  node_types Observation
+  node_types EntityLink
+  edge_types observed_as
+  edge_types named_together_with
+  internal_calculus an identity is an entity and its observations, not a row. The register's identifier, the description and the coordinate are observations *about* one entity, each carrying the source that made it and how sure that source was, so a reader can see who claimed what
+  internal_calculus a name of two or more words is admitted readily; almost nothing says "Fort Worth" by accident. A single word must resolve to an instance rather than a class, and to something the world carries heavily, or it is refused
+  internal_calculus the longest name that fits wins, enforced rather than merely ordered for, and word boundaries include punctuation
+  invariant an observation about an entity that does not exist is refused rather than allowed to invent the entity it would describe
+  forbidden_inference a title naming an entity -> the piece being about that entity; mention is not aboutness
+  forbidden_inference two entities named in one title -> a relationship between them; it is co-mention, and the link says so
+  forbidden_inference a resolved identity -> the right one for this corpus; a bare label resolves to what the register labels that way, so Apple is a fruit and Amazon a river
+  source_path cmd/BonfyreEntity/src/main.c
+  source_path cmd/BonfyreWebAddress/src/main.c
+  source_path scripts/resolve-entities.mjs
+  source_path scripts/entity-resolution.cue
+  source_path scripts/resolve_entities.py.archive
+  witness scripts/tests/resolve_entities.test.mjs proves the native resolver extracts actual repeated names from retained Parquet, refuses ordinary English, classes and thin single-word names, selects the most-linked Q identity, attaches only returned coordinates, stages with its CUE policy, preserves the prior complete cut on provider refusal and never promotes mention into aboutness; live QLever execution is not part of the fixture
+  witness 2026-09-25 the organ could create an entity from an observation but had no way to attach a second observation to an existing one, so an identifier and a coordinate about one thing minted two entities; `observe` was written in C, and `resolve` now fills the source column it had declared and never written
+  witness 2026-09-25 519 entities and 1,660 observations built through the organ, 300 links from co-mention, with 124 candidates refused as ordinary English, 558 as a class rather than a thing of that class, and 49 as too thinly linked to be what a headline meant
+  witness 2026-09-25 served by the estate's own C server: the item page for Fort Worth names Fort Worth alone, and a photograph captioned in Fort Worth, Texas names both -- after the match was fixed to treat punctuation as a boundary and to suppress a name contained in a longer accepted one, which had been reporting a German municipality called Worth
+  known_gap resolution is by label, so an entity whose label differs from the name a headline uses is missed, and a bare surname resolves to whoever the register labels that way
+  known_gap the links record co-mention only; nothing distinguishes two things being discussed together from two things being related
+  known_gap the native resolver has deterministic Parquet and mocked-QLever witnesses but has not replayed the live catalog or verified the external endpoint response after cutover
+  interacts identity-graph-reaches-composed-pages
+
+interaction identity-graph-reaches-composed-pages
+  source estate-identity-graph
+  destination page-composition
+  relation reads_from
+  preserves the composer as the only thing that decides what a page says; the graph supplies identities and never material
+  drops any path by which reading an identity could write one, or by which a page could admit an entity
+  forbidden_inference an identity shown beneath a piece -> the piece being about it
+  witness 2026-09-25 page_emit_entities reads the identity graph read-only at compose time and renders what it observed with each observation's source; the twelve page tests pass unchanged
+  binding cmd/BonfyreWebAddress/src/main.c
+  binding cmd/BonfyreEntity/src/main.c

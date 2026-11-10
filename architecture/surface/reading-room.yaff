@@ -1,0 +1,81 @@
+architecture edge-catalogue
+  canonical_name EdgeCatalogue
+  family substrate
+  domain Substrate / The estate as tables a browser can query
+  layer storage
+  semantic_question Can a reader ask this estate a question the file tree cannot answer, without a server answering it?
+  purpose The same material the estate already composed, published a second way -- as columnar tables in the object store, small enough and laid out so a browser can range-read only the columns and row groups it needs. Seven tables: what was kept, every channel address, the roots that publish them, the design systems the estate composes in, and the thin relation tables.
+  maturity implemented
+  node_types CatalogueTable
+  edge_types published_as
+  internal_calculus a file tree answers "what is at this address". It cannot answer "thirty things I have not seen, not all from the same publisher", because that is one request per guess. A table answers it in one query, on the reader's device
+  internal_calculus nothing here is new material: every row points at a page the estate already composed. The catalogue chooses among them and is never a second source of truth
+  internal_calculus the design systems are published alongside the material because a theme reduced to tokens is data like anything else, and a reader who can query the archive can wear its clothes
+  invariant the catalogue is derived; it is rebuilt from the estate's own stores and never written back to
+  forbidden_inference a row in the catalogue -> a fresh reading of its source, or a claim the source still publishes it
+  forbidden_inference a similarity score between two rows -> a shared subject; it is a measurement of two texts
+  forbidden_inference a distance between two rows -> a relation; it is the gap between two stated points
+  forbidden_inference the catalogue being current -> the estate being current; it is as fresh as the last publish pass
+  source_path scripts/publish_catalog.sh
+  source_path scripts/edge-catalog-manifest.mjs
+  witness scripts/tests/catalog_persona_retirement.test.mjs runs the actual catalogue publisher against a mock DuckDB without Python or upload, verifies atomic JSON manifest publication and quoted, newline-containing filenames, and excludes hidden files, directories and symlinks from manifest rows
+  witness 2026-09-25 seven tables published to R2: material 69,189 rows at 5.8 MB, source_channel 109,762 at 2.9 MB, source_root 29,256 at 974 KB, template 1,390 at 35 KB, kin 710, neighbour 317, route_source 85
+  known_gap kin and neighbour hold 710 and 317 rows from a single source, so nothing built on them would be about the estate
+  known_gap the catalogue is a publication pass, not a stream; nothing invalidates it when the archive moves underneath it
+
+architecture reading-room
+  canonical_name ReadingRoom
+  family surface
+  domain Surface / The archive, asked directly
+  layer presentation
+  semantic_question What has this estate actually kept -- asked by the reader, answered on the reader's own device, and read in whichever of the estate's published designs they choose?
+  purpose Everything the estate has kept, queried in the reader's tab out of the published catalogue, and dressed in any one of the design systems the estate composes its own pages in. A word, a publisher, a kind, a window of time, and whether the answer should come one per publisher or however it falls.
+  maturity implemented
+  node_types Query
+  node_types KeptThing
+  node_types WornTemplate
+  edge_types answered_from
+  edge_types dressed_by
+  internal_calculus the reader's words are quoted into a fixed clause shape; nothing typed becomes SQL structure
+  internal_calculus one row per publisher is offered as a first-class question, because a list ordered only by recency is whichever publisher posted most in the last hour rather than what the estate holds
+  internal_calculus every selection is bounded in time even when the reader asks for "whenever", because timestamps in this archive run from 1970 to 2105 and an unbounded ordering hands the top of the page to the worst clock
+  internal_calculus the chart is drawn from the rows the current query matched, so the shape of time answers the same question as the list
+  internal_calculus the page states the colour scheme of whatever template it is wearing, so a browser does not repaint a cream ground black and call it a preference
+  internal_calculus a title is printed as its publisher meant it: feeds arrive having escaped their own quotation marks, sometimes several times over, and the escaping is collapsed until it stops changing
+  invariant no question asked here reaches a server; the engine, the tables and the answer are all in the reader's tab
+  invariant the reader chooses the clothes and never the content: a template changes colour, type and scale, and cannot change which rows came back
+  forbidden_inference a piece appearing here -> this estate endorsing it, or its source still publishing it, or what it says being true
+  forbidden_inference the design being worn -> its authors knowing this estate exists or approving of the use
+  forbidden_inference an empty answer -> nothing in the world; it is a fact about what this estate has read
+  source_path site/matrix/archive.html
+  witness 2026-09-25 live at aurekai.live/archive: 30,627 kept things from 1,338 publishers in the default window, 121 publishers and 5 kinds offered from the table itself, 1,390 design systems loaded and wearable across 8 families, zero organ failures
+  witness 2026-09-25 measured: asking for "climate" narrowed 30,628 rows to 48 from 33 publishers, with a real headline at the top, answered without a request to any server
+  witness 2026-09-25 measured: one-per-publisher turned 40 rows carrying 14 distinct publishers into 41 rows carrying 41, which is the question the catalogue was built to answer
+  witness 2026-09-25 switching family from docs to gallery restyled ground, ink, accent, three typefaces and the display scale, and loaded the faces the template names
+  known_gap the hero is the most recent matching thing that carries an image, which is recency rather than judgment, so a publisher's logo can take the position a photograph would
+  known_gap the publisher list is the hundred and twenty largest; a reader cannot filter to a publisher outside it except through the title
+  known_gap full text is matched against the title only, because the catalogue does not publish bodies
+  interacts reading-room-reads-the-catalogue
+  interacts field-reads-the-catalogue
+
+interaction reading-room-reads-the-catalogue
+  source reading-room
+  destination edge-catalogue
+  relation reads_from
+  preserves the catalogue as derived and read-only: the browser queries it and never writes a row
+  drops any path by which a reader's question could reach the archive the catalogue was derived from
+  forbidden_inference an answer in the reading room -> the state of the estate now; it is the state of the last publish pass
+  witness 2026-09-25 DuckDB-Wasm range-read material.parquet and template.parquet from R2 in the tab and answered every query on the device, with the estate serving bytes and computing nothing
+  binding site/matrix/archive.html
+  binding scripts/publish_catalog.sh
+
+interaction field-reads-the-catalogue
+  source estate-field
+  destination edge-catalogue
+  relation reads_from
+  preserves the catalogue as derived and read-only
+  drops any path by which drawing the catalogue could write to it
+  forbidden_inference a point drawn -> a live reading of that address
+  witness 2026-09-25 the field read 109,761 rows from source_channel.parquet and joined every one of them to source_root.parquet in the tab, with none unmatched
+  binding site/matrix/field.html
+  binding scripts/publish_catalog.sh

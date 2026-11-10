@@ -1,0 +1,110 @@
+atlas external
+
+architecture remote-mesh-transport
+  canonical_name RemoteMeshTransport
+  family external
+  domain External / Federation
+  layer external/transport
+  semantic_question Did this coordination envelope arrive as the bytes its producer addressed, and what happens when it did not?
+  purpose Content-addressed sanitized envelopes on a public non-merge branch between local Run8 carriers and external operator trajectories. The address is taken over the whole envelope minus the address field, so any post-seal edit unbinds it. A refused envelope is quarantined with BOTH the declared and the measured address rather than dropped, because an address disagreement is two carriers disagreeing about content, not malformed input. Export converges on content: identical bytes already at an address have already succeeded; different bytes there are a collision that is never resolved by overwriting.
+  maturity implemented
+  # Demoted: every witness this carried was archived. The evidence was
+  # retired and the claim was never revisited, which is the laundering the
+  # atlas forbids -- reclaiming measured needs a witness that runs today.
+  known_gap remote-mesh-transport lost its live witness to archival and holds implemented until one runs again
+  node_types MeshEnvelope
+  node_types QuarantinedEnvelope
+  node_types ExportState
+  node_types CoordinationObligation
+  node_types DeliveryReceipt
+  edge_types addresses
+  edge_types quarantines
+  edge_types diverges_from
+  edge_types materializes_as_work
+  state_types admitted
+  state_types duplicate
+  state_types quarantined
+  state_types synced
+  state_types collision
+  state_types refused
+  state_types delivered
+  state_types acknowledged
+  state_types acknowledgement_refused
+  invariant the declared address must equal the address measured over the envelope's own content
+  invariant an already-seen event id never bypasses validation of the bytes currently present on the remote branch
+  invariant one event id cannot be rebound to different content; both addresses are retained as a collision
+  invariant a refused envelope is retained with both addresses, never silently dropped
+  invariant re-presenting a quarantined envelope increments an attempt count instead of re-refusing it invisibly
+  invariant the privacy gate runs on import as well as export, so an upstream leak never becomes our publication
+  invariant structured raw prompt, stdout, stderr, raw log, private correspondence, and authority-grant fields are refused
+  invariant a divergence report carries the two addresses and never echoes the refused content
+  invariant an actionable provider-authored event addressed to another local carrier materializes as idempotent WorkGraph state that excludes its author
+  invariant the WorkGraph id of a mesh obligation is injective in the event id, so two distinct legal envelopes can never collapse onto one obligation and silently drop the second
+  invariant a receipt can acknowledge only an existing delivery to the same provider; it cannot manufacture delivery
+  invariant the originating provider cannot acknowledge a cross-provider obligation that excludes it
+  invariant the privacy gate reads every string in the envelope, list positions included, so evidence_refs, audience, changed_paths and tests[].command are inspected rather than skipped
+  invariant the set of acknowledgements the eligibility fence would refuse today is empty; a closure written before the fence existed is reopened, with the prior closure preserved verbatim
+  invariant repeated valid acknowledgement preserves the first consumption receipt rather than replacing it
+  invariant durable store guards enforce delivery and cross-provider acknowledgement eligibility even when a long-running carrier still has pre-upgrade Python loaded
+  invariant pre-fence ineligible acknowledgements are retracted from the live frontier while their original ReceiptEnvelope assertion remains auditable
+  invariant a successful write is not synchronized until remote readback bytes exactly equal the local payload
+  invariant concurrent first export attempts converge through atomic bookkeeping rather than a unique-key failure
+  invariant a terminal exact-readback receipt recovers a crash before EventGraph export-state projection without another remote write
+  invariant concurrent importers serialize the shared tracking-ref update and inspect one immutable commit snapshot per cycle
+  invariant a partial import or export failure is explicitly degraded even though bounded maintenance remains nonfatal
+  forbidden_inference a delivered mesh message -> an authority grant
+  forbidden_inference a delivered mesh message -> a completion receipt
+  forbidden_inference an admitted envelope -> its claims are true
+  forbidden_inference a projection that inserted no row -> the obligation was already held
+  forbidden_inference an address collision -> permission to force-push the transport branch
+  forbidden_inference the transport branch -> a merge target
+  computational_form durable
+  source_path components/BonfyreControlPlane/mesh_transport.py.archive
+  witness components/BonfyreControlPlane/tests/test_mesh_transport.py.archive
+  known_gap the producer side of the mesh is external, so a re-sealed envelope cannot be proven to arrive; only its refusal can be reported back
+  known_gap divergence_report and mark_divergence_reported have no production caller; the remote-mesh-quarantines-into-divergence interaction is exercised only by its unit witness, so on 2026-08-21 sixteen quarantined envelopes carried 8385 cumulative refused re-fetch attempts with divergence_reported still 0 for every row and no producer notified
+  known_gap quarantined and divergence_report call ensure_schema, so an observer holding a read-only handle to live coordination state cannot read the divergence backlog through the module's own API
+  known_gap envelopes published before the list-traversal fix are already public; the gate can refuse republication but cannot unpublish local-2b5745a7e20f61978cfcdbb81409, whose body carried a home path
+  source_lineage Run8 federated mesh; live 2026-08-21 refusal of two external envelopes whose declared address did not bind their bytes
+  source_lineage 2026-08-21 cross-provider replay of proof challenge local-746b1d0bc6cbc4467780842d8046: the routing fence held on all 14 checks, and the adversarial pass found the privacy gate never descended into lists
+  source_lineage 2026-08-21 second cross-provider replay of the same challenge under changed state (118 events, 136 work items, mesh branch eeb84c24): the fence held again, and the adversarial pass found the work-id stem was not injective -- ':' is legal in an event id but folds to '-', and ids may reach 180 characters against a 120-character stem, so a second distinct obligation was dropped and reported as an ordinary idempotent replay
+
+architecture mesh-routing-replay
+  owns MeshRoutingReplay
+  consumes MeshEvent
+  consumes WorkState
+  publishes ReplayVerdict
+  canonical_name MeshRoutingReplay
+  family external
+  domain External / Federation
+  layer external/proof
+  semantic_question Does this envelope's claimed cross-provider routing actually hold in live state, and does replaying it change anything?
+  purpose Replays one published mesh envelope against live EventGraph, WorkGraph, delivery and public-branch state, re-deriving the route from the envelope instead of trusting the stored row, and mutating a snapshot so a proof run cannot damage the frontier it measures.
+  maturity measured
+  node_types ReplayCheck
+  node_types RoutingCase
+  edge_types replays
+  edge_types refutes
+  state_types review_result
+  state_types trace_divergence
+  internal_calculus address rebinding over reconstructed EventGraph state
+  internal_calculus route re-derivation and adversarial author/audience mutation matrix
+  invariant the route is recomputed from the envelope; agreement with the stored row is a check, never an assumption
+  invariant replay runs against a SQLite backup copy, so a proof never mutates the coordination frontier it measures
+  invariant a replayed projection that creates a row, or a re-admission that is not a duplicate, is a failed proof rather than a repair
+  invariant the mutation matrix must show the fence reacting to the author and audience, because a constant answer proves nothing
+  invariant the replay probes obligation-id injectivity in both lossy directions, because a dropped obligation and an honest idempotent replay are otherwise indistinguishable
+  invariant every mesh work id in live state must re-derive from a live event id, so an injectivity repair cannot orphan an obligation the frontier already owns
+  invariant the emitted artifact is repo-relative and quotable onto the public branch
+  forbidden_inference a passing replay -> the envelope's claims are true
+  forbidden_inference a passing replay -> authority to perform the challenge's requested effects
+  forbidden_inference a snapshot replay -> the live frontier was exercised under concurrency
+  computational_form durable
+  source_path components/BonfyreControlPlane/mesh_routing_replay.py.archive
+  witness evidence/proofs/mesh-routing-fence-replay.json
+  witness components/BonfyreControlPlane/tests/test_mesh_transport.py.archive
+  known_gap replay measures a snapshot, so it cannot observe a race between two carriers writing the same delivery row
+  known_gap only the local side is replayed; an external producer's own state remains unobservable
+  source_lineage Run8 cross-provider proof challenge local-746b1d0bc6cbc4467780842d8046, authored by codex and assigned away from codex; executed 2026-08-21 with 14/14 checks passing against mesh branch commit fb814c3c
+  source_lineage re-executed 2026-08-21 against mesh branch commit eeb84c24 with 17/17 checks, three of them added by that run after it refuted the obligation-id derivation
+  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.

@@ -1,0 +1,33 @@
+architecture itad-acquisition-desk
+  canonical_name ITAD Acquisition Desk
+  family surface
+  domain Surface / Equipment inventory and acquisition decisions
+  layer application
+  semantic_question Which seller-described inventory, recovery assumptions, verification requirements and buyer inquiry belong to each equipment lot?
+  purpose An acquisition workspace over the existing procurement-memory equipment contract with editable manifests, reviewed bulk changes, independent lot settings and exact-cent scenario comparisons
+  maturity implemented
+  source_path ../pages-procurement-memory/site/itad-exchange/core.mjs
+  source_path ../pages-procurement-memory/site/itad-exchange/app.mjs
+  source_path ../pages-procurement-memory/site/itad-exchange/manifest-grid.mjs
+  source_path ../pages-procurement-memory/site/itad-exchange/index.html
+  source_path ../pages-procurement-memory/site/itad-exchange/vendor/ag-grid-community-36.2.0/provenance.tsv
+  source_path ../pages-procurement-memory/tests/itad-workspace.test.mjs
+  source_path components/BonfyreServiceSite/tests/itad-desk-browser.mjs
+  node_types EquipmentLot, ManifestLine, SellerClaim, RecoveryScenario, VerificationNeed, LocalRevision, BuyerInquiry
+  internal_calculus manifest changes validate an immutable candidate against row, unit, identity and numeric bounds before replacing state; reviewed bulk proposals reject changes to their source generation
+  internal_calculus resale sensitivity rounds each unit to cents before aggregation, reserve rounds upward, target proceeds round downward and the maximum unit bid floors the allowable acquisition amount divided by units
+  internal_calculus version-one settings migrate legacy recipient, budget, mode and prepared status into independent lot snapshots; record-scoped undo retains other lots
+  internal_calculus saves compare an expected workspace revision inside one existing IndexedDB transaction; in-flight save snapshots cannot absorb later edits
+  invariant empty or partially unpriced inventory has no numeric net or maximum bid; zero recovery has no percentage margin
+  invariant illustrative assumptions remain labeled through edits, imports, comparisons and exports; a manifest import cannot relabel retained illustrative acquisition costs as entered facts
+  invariant new lots have no inventory or provider offers unless the caller explicitly chooses a template; the current new-lot interface does not choose one
+  invariant pending form and grid edits retain unload protection; initial hydration blocks input, failed or stale saved-state reloads preserve the current draft
+  invariant failed optional grid loading leaves a usable list editor over the same contract; retry retains its edits
+  witness ../pages-procurement-memory/tests/itad-workspace.test.mjs checks atomic mutations, per-lot migration, custom lots, independently calculated integer-cent scenarios and provenance-bearing exports
+  witness packs/no-simulation/product-maturity-20261015/itad/local/verification.json records 54 actual Chrome checks including grid edits, reviewed bulk changes, atomic import refusal, independent settings, revision conflicts, delayed-load guards and phone views
+  witness packs/no-simulation/product-maturity-20261015/itad/live/verification.json repeats all 54 checks on the public preview without browser exceptions or remote writes
+  witness packs/no-simulation/product-maturity-20261015/itad/deployment.json records preview e5f2d6ea-40f9-4086-9482-0e20ae6ab558 with unchanged Work Samples production
+  forbidden_inference modeled profit, local review flags or a prepared inquiry -> independently verified inventory, accepted offer, buyer agreement, custody transfer or settlement
+  forbidden_inference a browser-local workspace or preview deployment -> organization persistence, a changed GitHub Pages deployment or completion of the thirty-program scope
+  known_gap sibling checkout owns the source; account and organization integration needs server authorization, native draft admission and a same-origin public transport
+  known_gap full workspace backup, custom verification route editing, custody receipts, purchase execution and Google Stitch design generation remain open

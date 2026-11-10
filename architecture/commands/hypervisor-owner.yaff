@@ -1,0 +1,181 @@
+atlas commands-hypervisor-owner
+
+architecture hypervisor-bun-compilation-owner
+  canonical_name HypervisorBunCompilationOwner
+  family commands
+  domain Execution / Governed mission compilation and provider registry
+  maturity implemented
+  semantic_question Can the installed mission semantics become a shared content-addressed plan without confusing provider reachability, compilation and authorization to execute?
+  purpose Retire Python registry and mission compilation into bounded Bun owners and share planning identity with V6 and Recursive representations.
+  internal_calculus trait descriptors -> exact mission task DAG -> content-addressed input identities -> durable specification and candidate execution plan
+  internal_calculus all requested capabilities -> one indexed route query -> ordered eligible candidates -> selected-provider input identity -> downstream invalidation
+  internal_calculus bounded concurrent native probes -> ordered secret-safe observations -> one registry update transaction
+  invariant compilation retains the original R7 task and authority distinctions; task execution and canary success are not inferred
+  invariant historical receipts preserve Python default-space canonicalization and raw numeric identities without rewriting source evidence
+  invariant process admission is shared with V6; Python and unknown shell trampolines cannot silently re-enter retired paths
+  invariant candidate reuse requires verified output identity, current authority, current input residency and effect-specific replay policy
+  forbidden_inference content identity, a compiled mission or fewer SQL statements -> valid cached effects, semantic provider capability or distributed throughput
+  source_path integrations/mcp/hypervisor_schema.sql
+  source_path integrations/mcp/hypervisor_store.mjs
+  source_path integrations/mcp/hypervisor_missions.mjs
+  source_path integrations/mcp/hypervisor_discovery.mjs
+  source_path integrations/mcp/native_probe.mjs
+  source_path integrations/mcp/v6_hypervisor_bridge.mjs
+  source_path integrations/mcp/hypervisor_server.mjs
+  source_path integrations/mcp/hypervisor_catalog.mjs
+  source_path integrations/mcp/hypervisor_catalog.json
+  source_path integrations/mcp/hypervisor_cli.mjs
+  source_path integrations/mcp/hypervisor_adapters.mjs
+  source_path integrations/mcp/hypervisor_evaluation.mjs
+  source_path integrations/mcp/hypervisor_sources.mjs
+  witness integrations/mcp/tests/hypervisor_store.test.mjs
+  witness integrations/mcp/tests/hypervisor_missions.test.mjs
+  witness integrations/mcp/tests/hypervisor_discovery.test.mjs
+  witness integrations/mcp/tests/v6_hypervisor_bridge.test.mjs
+  witness integrations/mcp/tests/v6_transport.test.mjs default server path compiles all ten mission templates into candidate state
+  witness tests/hypervisor_history_witness.json verifies all nineteen historical receipts on a disposable copy with source bytes unchanged
+  witness integrations/mcp/tests/hypervisor_route_benchmark.json source-bound copied-registry comparison with equal route results and twelve-to-one statement reduction
+  witness integrations/mcp/tests/hypervisor_discovery_benchmark.json seven alternating paired scans with real child processes and controlled synthetic latency; no production speed claim
+  witness integrations/mcp/tests/hypervisor_analysis.json Oxlint 1.86.0, twenty-two source-bound files, ninety-six rules and zero diagnostics
+  witness integrations/mcp/tests/hypervisor_server.test.mjs all thirty-three tools retain dispatch contracts; default composition compiles and persists real context without injected engines; cold STOP reads do not initialize a database
+  witness integrations/mcp/tests/hypervisor_cli.test.mjs native task-execute and schema-driven argument parsing
+  witness integrations/mcp/tests/hypervisor_adapters.test.mjs reviewed executable boundaries, bounded children and no arbitrary compact-command shell
+  witness integrations/mcp/tests/hypervisor_evaluation.test.mjs capability-specific behavior, current certificates and actual SQLite persistence; reachability never grants semantic success
+  witness integrations/mcp/tests/hypervisor_sources.test.mjs disposable local Git fixtures verify source identity, update candidates and failed acquisition without retry
+  witness integrations/mcp/tests/hypervisor_runtime_analysis.json actual Oxlint 1.86.0 checks thirty-six source-bound files with ninety-six rules and no diagnostics
+  known_gap the thirty-three-operation Bun service is source-implemented and fixture-verified, not live-promoted; the installed Python daemon remains running
+  known_gap Bernstein is still an explicitly named upstream Python CLI; unsandboxed acquired source tests refuse; neither boundary counts as Python retirement
+  known_gap default external effects require an independent authority owner and mission goal verification requires an independent typed verifier; neither permission nor verdict is synthesized
+  known_gap filesystem artifacts and SQLite state are not one atomic transaction; interrupted compilation leaves explicit reconciliation receipts
+
+architecture hypervisor-context-body-cut
+  canonical_name HypervisorContextBodyCut
+  family representation
+  domain Representation / Purpose-bound mission context residency
+  maturity implemented
+  semantic_question Can concurrent missions share exact source bodies without sharing authorization or silently changing mandatory instructions?
+  internal_calculus exact UTF-8 source body -> SHA-256 address -> required inline or explicit optional reference -> purpose-bound rendered body -> durable packet receipt
+  internal_calculus full rendered envelope -> declared tokenizer counter or explicitly approximate byte estimate -> bounded cut or refusal
+  invariant goal, mission constraints, task definitions and explicit evidence remain intact or compilation refuses; there is no prose substitution or silent truncation
+  invariant equal body identity permits byte residency sharing only; each packet retains its own purpose, task plan and receipt
+  invariant every render rechecks owned packet bytes and referenced source body digests
+  forbidden_inference shared context bytes or byte estimates -> shared policy, native model token counts, admissible external evidence or authority to execute
+  source_path integrations/mcp/hypervisor_context.mjs
+  source_path integrations/mcp/hypervisor_store.mjs
+  witness integrations/mcp/tests/hypervisor_context.test.mjs exact reuse, purpose separation, full-envelope accounting, body tamper, STOP and cancellation
+  witness integrations/mcp/tests/hypervisor_context_benchmark.json twelve real disposable compiles with exact synthetic-body equality and measured byte residency; no production latency or token-saving claim
+  known_gap the default mission context has no native model-tokenizer binding; budget_verified is false and exact counts are null until a declared counter is bound
+  known_gap this context does not bypass AddressPlane/ForeignTwin admission and is not a substitute for the separately governed ContextCut material frontier
+
+architecture hypervisor-durable-task-execution
+  canonical_name HypervisorDurableTaskExecution
+  family execution
+  domain Execution / Bounded owner orchestration and effect reconciliation
+  maturity implemented
+  semantic_question How can a semantic task DAG advance concurrently without stale policy, stale provider eligibility or crash recovery silently replaying an effect?
+  internal_calculus immutable task plan -> cached task indexes -> bounded ready waves -> indexed dependency reads -> atomic revision and provider eligibility check -> FULL SQLite intent commit -> exact owner call -> bound outcome
+  internal_calculus task input plus packet plus route plus provider plus non-downgradable effect class -> domain-separated attempt identity
+  invariant an interrupted attempt is not retried; uncertain effects require reconciliation and running siblings are joined before the execution scope ends
+  invariant mission revisions advance monotonically on semantic or routing updates; stale dispatch, completion and finalization refuse
+  invariant accepted work and two completed agent runs do not prove a mission goal; resolved requires an independent typed behavioral-verification receipt
+  forbidden_inference matching input identity, successful transport or completed agent work -> permission, exactly-once external execution or verified mission success
+  source_path integrations/mcp/hypervisor_execution.mjs
+  source_path integrations/mcp/hypervisor_store.mjs
+  witness integrations/mcp/tests/hypervisor_execution.test.mjs bounded parallel waves, sibling joining, real context/store integration, uncertainty, separate goal verdict and concurrent provider quarantine
+  witness integrations/mcp/tests/hypervisor_store.test.mjs restarted intent refusal, exact attempt completion, revision invalidation and event byte bounds
+  witness 2026-10-03 live owners, mission 45095ca358914685806965f777458cb8: substrate.mission.bootstrap failed (receipt 97fe897be66d490ab53a7dadefcd1e43) although the recursive owner returned a passing receipt and all seven IR projections each with a digest; acceptance had required a bundle-level ir_bundle.digest the owner never emits
+  witness 2026-10-03 live owners, mission fdf68c9dcc7e47f88ddc9d1b6ebb827b: with acceptance changed to require the seven projections, T-001, T-001A, T-001B, T-001C and T-002 passed; one run, no fixture
+  forbidden_inference seven IR projections each carrying a digest -> a bundle-level content identity; none is computed or compared
+  known_gap the seven-projection bootstrap acceptance has no fixture test; it is witnessed by one live run only
+  known_gap fabric tasks dispatch only when the selected provider is bonfyre-native, while live routing selects claude-code for agent.architect; an authorized T-003 blocked as native fabric owner unavailable, so no live mission has advanced past the first agent task
+  known_gap each owner process consults the operator STOP file itself; a stop override at the hypervisor does not reach them, and the spines owner returned the temporal bootstrap as uncertain while STOP was present
+  known_gap remote owner authorization remains at each exact owner; this ledger is not a distributed transaction and cannot prove exactly-once external effects
+  known_gap local fixtures do not establish distributed throughput or production deployment
+
+interaction hypervisor-default-context-cut
+  source hypervisor-bun-compilation-owner
+  destination hypervisor-context-body-cut
+  relation default-owned-context-compilation
+  preserves purpose, exact source identities, semantic task plan, mandatory evidence and explicit absence
+  drops mutable per-mission section files and lossy prose rewriting
+  forbidden_inference content-addressed context -> admitted evidence or provider authority
+  binding integrations/mcp/hypervisor_server.mjs
+  witness integrations/mcp/tests/hypervisor_server.test.mjs
+
+interaction hypervisor-executes-shared-task-plan
+  source hypervisor-durable-task-execution
+  destination semantic-task-input-plan
+  relation bounded-ready-wave-execution
+  preserves exact dependencies and recomputed plan identity with current context, route, provider and effect binding
+  drops per-task full-mission scans and generic verified-boolean success
+  forbidden_inference deterministic DAG -> deterministic remote effects or mission goal proof
+  binding integrations/mcp/hypervisor_execution.mjs
+  witness integrations/mcp/tests/hypervisor_execution.test.mjs
+
+interaction hypervisor-execution-consumes-context-body-cut
+  source hypervisor-durable-task-execution
+  destination hypervisor-context-body-cut
+  relation exact-purpose-bound-owner-input
+  preserves rendered body bytes and current packet digest in task attempt identity
+  drops sending a local packet pathname as if it were model context
+  forbidden_inference native packet rendering -> model tokenizer compatibility or remote residency
+  binding integrations/mcp/hypervisor_execution.mjs
+  witness integrations/mcp/tests/hypervisor_execution.test.mjs
+
+architecture semantic-task-input-plan
+  canonical_name SemanticTaskInputPlan
+  family execution
+  domain Execution / Incremental semantic planning
+  maturity implemented
+  semantic_question Which task inputs changed and which exact downstream computations must be reconsidered without rebuilding semantic authority?
+  internal_calculus canonical task definition plus mission-wide policy context plus parent input identities -> transitive task input digest
+  internal_calculus immutable validated DAG -> indexed downstream cut -> candidate invalidation; global policy change invalidates every candidate
+  invariant duplicate tasks, dangling dependencies and cycles refuse before durable compilation
+  invariant mutable execution status is not part of semantic input identity; selected provider and task acceptance contracts are
+  invariant serialized plan descriptors are not trusted indexes; representation owners recompute identity from semantic inputs
+  forbidden_inference unchanged input digest -> authorized output reuse or permission to skip an effect
+  source_path integrations/mcp/mission_plan.mjs
+  witness integrations/mcp/tests/mission_plan.test.mjs exact two-node one-edge invalidation in a ten-thousand-task forest
+  witness integrations/mcp/tests/recursive_store.test.mjs all seven IRs bind the shared recomputed plan identity
+  known_gap this is candidate work selection, not a complete result cache, distributed scheduler or incremental compiler that avoids every whole-plan scan
+
+interaction hypervisor-compiles-semantic-input-plan
+  source hypervisor-bun-compilation-owner
+  destination semantic-task-input-plan
+  relation default-mission-compilation
+  preserves task dependencies, provider selection, constraints and mission policy
+  drops repeated ad hoc graph identity and unbound cache decisions
+  forbidden_inference plan identity -> execution authority
+  binding integrations/mcp/hypervisor_missions.mjs
+  witness integrations/mcp/tests/hypervisor_missions.test.mjs
+
+interaction recursive-ir-binds-task-plan
+  source recursive-substrate-native-owner
+  destination semantic-task-input-plan
+  relation representation-shared-input-identity
+  preserves one recomputed task-plan digest across all seven IRs and per-task roots in DeltaIR
+  drops trust in caller-supplied execution-plan metadata
+  forbidden_inference representation agreement -> deployment, successful execution or authority
+  binding integrations/mcp/recursive_store.mjs
+  witness integrations/mcp/tests/recursive_store.test.mjs
+
+interaction v6-uses-bun-mission-compiler
+  source v6-capability-bun-owner
+  destination hypervisor-bun-compilation-owner
+  relation default-receipted-compiler
+  preserves mission intent, effect class, spec and graph bytes, candidate plan identity and receipt-chain evidence
+  drops Python subprocess compilation and opt-in-only compiler wiring
+  forbidden_inference verified compilation -> canary pass or active mission
+  binding integrations/mcp/v6_server.mjs
+  binding integrations/mcp/v6_hypervisor_bridge.mjs
+  witness integrations/mcp/tests/v6_transport.test.mjs
+
+interaction v6-reuses-hypervisor-history-verifier
+  source v6-capability-bun-owner
+  destination hypervisor-bun-compilation-owner
+  relation federated-owner-verification
+  preserves original receipt ordering, raw numeric identity, row binding and source immutability
+  drops duplicate legacy JSON encoder and special-case federation verifier
+  forbidden_inference verified history -> current provider or execution authority
+  binding integrations/mcp/v6_history.mjs
+  witness integrations/mcp/tests/v6_history.test.mjs

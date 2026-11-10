@@ -1,0 +1,31 @@
+architecture site-fragment-migration
+  canonical_name SiteFragmentMigration
+  family surface
+  domain Surface / Authored fragment migration
+  layer surface
+  semantic_question How can compiled source literals become reviewable draft fragments without claiming publication or replacing an exact SurfaceIR slot?
+  purpose Clang literal candidates carry source byte identity into a reviewed page/slot/audience map. The native planner emits draft coordinates and explicit review records; CMS admits only unseen draft coordinates in one transaction, while a rebuildable semantic index proposes reuse without becoming the exact address or an authority source.
+  maturity implemented
+  source_path cmd/BonfyreSurface/tools/ast_literal_candidates.mjs
+  source_path cmd/BonfyreSurface/tools/plan_fragment_migration.mjs
+  source_path cmd/BonfyreSurface/tools/stage_fragment_migration.mjs
+  source_path cmd/BonfyreSurface/tools/build_fragment_semantic_index.mjs
+  source_path cmd/BonfyreCMS/content-types/site_fragment.json
+  source_path cmd/BonfyreSurface/tests/fragment_migration_native.test.mjs
+  witness cmd/BonfyreSurface/tests/fragment_migration_native.test.mjs proves literal source identity, human text extraction, review isolation, duplicate-equivalence counts, atomic draft-only CMS import, skip-existing behavior, and a separate rebuildable index manifest
+  consumes SourceArtifact
+  publishes DerivedView
+  internal_calculus Clang AST ranges and source bytes name candidates; an authored function map decides exact page, slot and audience; the native planner assigns draft-only coordinates and leaves unreviewed functions unadmitted. The staging tool applies the CMS schema and imports all new drafts in one transaction. A read-only CMS scan produces a distinct semantic-index generation in a fresh work directory; no index result is written back into canonical content.
+  invariant a candidate without a reviewed page/slot/audience mapping stays in review and never enters CMS
+  invariant stage is create-only and draft-only; existing coordinates are not overwritten, and publication requires a separate exact SurfaceIR and carrier witness
+  invariant semantic similarity may propose reuse but cannot satisfy exact coordinate equality or grant effect authority
+  invariant work and vector outputs use fresh generation paths and are never deleted by the index builder
+  forbidden_inference a Clang string literal or approximate semantic neighbour -> authored, published, or still-desired user-facing copy
+
+interaction fragment-migration-proposes-surface-copy
+  source site-fragment-migration
+  destination surface-ir
+  relation proposes-draft-coordinate
+  preserves source digest, authored page/slot/audience map, draft state and exact coordinate
+  drops the assumption that a compiled fallback may be removed at admission time
+  forbidden_inference a draft coordinate -> a published surface or authority to remove its compiled fallback

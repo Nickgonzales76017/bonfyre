@@ -1,0 +1,79 @@
+atlas provider
+
+architecture commerce-observation-provider
+  canonical_name CommerceObservationProvider
+  family provider
+  domain Provider / Commerce observation
+  layer materialization
+  semantic_question Which declared commerce carriers can resolve a product, observe an offer, price, or availability, and what exact observation shape may each contribute?
+  purpose A phenotype catalog, SourceFrontier storefront probe, capability route planner, merchant-expansion compiler and receipt-bound external-commerce materializer. WooCommerce and Shopify public endpoint shapes become eligible storefront channels only after the ordinary observer answers. Retained WooCommerce, Shopify, eBay Browse, Keepa-normalized and Open Prices payloads lower into ProductIdentity, MerchantOffer, PriceObservation and AvailabilityObservation. The provider route never calls an undeclared or unavailable provider.
+  maturity implemented
+  owns CommerceObservationProvider
+  owns StorefrontPhenotype
+  publishes ProductIdentity
+  publishes MerchantOffer
+  publishes PriceObservation
+  publishes AvailabilityObservation
+  consumes ForeignTwin
+  consumes SourceFrontier
+  node_types StorefrontPhenotype
+  node_types ProductIdentity
+  node_types MerchantOffer
+  node_types PriceObservation
+  node_types AvailabilityObservation
+  edge_types fingerprinted_as
+  edge_types observed_from
+  invariant runtime commerce material is accepted only from a declared phenotype with a retained source receipt; a URL resemblance does not select an adapter
+  invariant ProductIdentity aliases are source-supplied coordinates and do not merge merchant variants by title resemblance
+  invariant PriceObservation and AvailabilityObservation are separate dated statements over one MerchantOffer; neither is inventory truth, a buyer quote, or a reservation
+  invariant a provider declared without a receipt-preserving materializer is refused rather than reduced to a generic page scrape
+  invariant discovery and materialization are read-only; no product, merchant, carrier, or provider is contacted for checkout, payment, or account data
+  invariant the declared endpoint probe owns its request path, response key and response shape; the observer must return an explicit allow receipt and 2xx HTTP result before any candidate endpoint can become eligible
+  forbidden_inference a WooCommerce or Shopify fingerprint -> every path on the merchant being public, stable, or available
+  forbidden_inference an observed price -> a price this estate will pay, a merchant quote, a payment, or settlement
+  forbidden_inference observed availability -> inventory truth, buyer eligibility, delivery, or a reservation
+  forbidden_inference matching SKU, GTIN, ASIN, or title -> an exact cross-merchant product equivalence beyond the aliases a source supplied
+  source_path schemas/control/commerce-observation-providers.json
+  source_path cmd/BonfyreExternalEstate/tools/compile_commerce_family.mjs
+  source_path cmd/BonfyreSourceFrontier/tools/probe_storefronts.mjs
+  source_path schemas/control/commerce-observation-routing.json
+  source_path cmd/BonfyreCMS/content-types/product_identity.json
+  source_path cmd/BonfyreCMS/content-types/merchant_offer.json
+  source_path cmd/BonfyreCMS/content-types/price_observation.json
+  source_path cmd/BonfyreCMS/content-types/availability_observation.json
+  witness cmd/BonfyreExternalEstate/tests/commerce_family.test.mjs
+  known_gap Magento, Saleor, BigCommerce, product JSON-LD/sitemaps, affiliate feeds, Sovrn, Rakuten, Best Buy, Etsy, TCGplayer, BrickLink and comparison providers are declared capability families but have no receipt-preserving adapter yet. Credential presence, provider cost, cache freshness and a lawful source receipt must all be supplied to an execution layer before a planned provider route can run.
+
+interaction commerce-observation-provider-extends-marketplace-observation
+  source commerce-observation-provider
+  destination marketplace-observation
+  relation materializes_observed_offer_facets
+  preserves a retained source receipt, merchant address, observation time, and the distinction among identity, offer, price, and availability
+  drops checkout, quote, reservation, payment, settlement, fulfilment, delivery, and ownership state
+  forbidden_inference a lowered MerchantOffer -> a CommerceChain stage beyond the independently observed listing
+  forbidden_inference a price or availability row -> a current offer for a particular buyer
+  invalidates_on the source receipt, declared phenotype, product payload, or provider materializer changing
+  binding cmd/BonfyreExternalEstate/tools/compile_commerce_family.mjs
+  witness cmd/BonfyreExternalEstate/tests/commerce_family.test.mjs
+
+interaction commerce-observation-provider-probes-source-frontier
+  source commerce-observation-provider
+  destination source-frontier
+  relation qualifies_storefront_endpoint
+  preserves the exact endpoint answer, ordinary observer/robots boundary, root, endpoint phenotype, and eligible-not-admitted source standing
+  drops product materialization, full-catalogue coverage, credentials, merchant authority, buyer eligibility, checkout, payment, and delivery
+  forbidden_inference an eligible storefront endpoint -> an admitted source, a retained product, or a public path beyond the answered endpoint
+  invalidates_on the endpoint answer, robots decision, observer receipt, or declared phenotype shape changing
+  binding cmd/BonfyreSourceFrontier/tools/probe_storefronts.mjs
+  witness cmd/BonfyreExternalEstate/tests/commerce_family.test.mjs
+
+interaction commerce-observation-provider-routes-provider-graph
+  source commerce-observation-provider
+  destination provider-graph
+  relation plans_capability_route
+  preserves requested capability, declared provider capability, preference order, availability state, and credential wait state
+  drops authority to contact, a fresh provider result, product equivalence, provider cost measurement, and every commercial effect
+  forbidden_inference a selected route -> a provider call, an observation, or a right to buy
+  invalidates_on the routing policy, provider declaration, capability declaration, or supplied availability state changing
+  binding cmd/BonfyreExternalEstate/tools/compile_commerce_family.mjs
+  witness cmd/BonfyreExternalEstate/tests/commerce_family.test.mjs

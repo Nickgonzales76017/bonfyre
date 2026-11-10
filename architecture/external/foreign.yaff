@@ -16,10 +16,28 @@ architecture foreign-twin
   state_types reference
   state_types bind
   state_types act
+  invariant a retained body is found under the foreign root this estate is told to use, by the name its receipt gave it, and never outside that directory: a receipt records where a reading happened, not where the estate keeps its evidence now, and an estate that can only read its own bodies from the absolute path they were first written to cannot be moved, restored, or carried onto another machine
+  invariant every native Project foreign verb derives missing receipt and body directories from BONFYRE_FOREIGN_ROOT; explicit leaf-directory settings retain precedence and an overlong derived path refuses without falling back to another store
   invariant a cached projection is not remote truth
   invariant a retained observation body is parsed only while it still hashes to its receipt
+  invariant a retained observation body path is immutable after receipt materialization
+  invariant a refetch whose bytes match the prior receipt's content_sha256 leaves the retained file in place; a changed body of 64 KiB or more is settled on APFS with transparent compression at the same path, so readers and receipt digests see identical bytes (settle_retained_body in components/BonfyreProject/src/main.c, witness components/BonfyreProject/tests/retained_body_settle_test.sh)
+  forbidden_inference a compressed retained body -> different evidence; the compression is filesystem allocation, and every read returns the bytes the receipt hashed
+  invariant a private institutional or self ForeignTwin observation retains its body and receipt below its closure-derived estate/scope or actor root; the public foreign carrier and a sibling institutional or actor closure cannot enumerate it
+  invariant a self ForeignTwin workspace enumerates and inspects only receipt filenames derived below the current authenticated actor root, rehashes a selected retained body against its receipt before showing an excerpt, and never accepts a body path, actor root, or public ForeignTwin coordinate from the browser
   invariant a projected candidate carries the receipt digest of the body it was read from
+  invariant a retained-body exact query answers only whether ForeignTwin currently has a receipt for that exact subject and predicate; it remains separate from body rehash, semantic relevance, and every admission decision
+  invariant a housing AvailabilityCandidate requires a current public observe right, allow decision, attempted fetch, and successful robots preflight on its ForeignTwin receipt
   invariant a source excluded by robots or an absent observe right is receipted without fetching its source URL
+  invariant a bounded byte-range observation preflights robots and observe right before fetching, caps the received body, records sample_observed rather than a full source observation, and never promotes partial bytes as a complete foreign identity
+  invariant a bounded full-response observation caps the received body without requesting a byte range, refuses redirects because a robots check cannot silently move to another host, and emits source_observed only for a complete successful response; transient design-anatomy bytes may be released after receipt-bound measurement without claiming current availability
+  invariant the product release projection joins published source contracts to SourceFrontier's authored exact_address (using legacy address only when the ledger has no exact_address column), then joins ItemArchive and observed-price reductions by exact authored source coordinate through bounded indexes; it carries separately authored spatial, media, rights and publisher extraction declarations, and reads distinct SiteProgram identities only through its authored source_collection source_refs bridge: collection fanout is not multiple programs, and program input is never a rendered route or verified delivery
+  invariant a cross-domain readiness path is only an independently-owned input closure for a later compiler: a declared extractor plus retained archive material is ready_for_extraction and not an extracted spatial/media/rights fact; publisher remains a declared identifier; economics reaches observed only through exact authored source-coordinate price binding; each missing path names its blocked binding
+  invariant a ForeignTwin page is a bounded carrier slice while release_summary is calculated over the entire owner closure; offset/limit affects only which rich rows cross the carrier, never the reported estate census, readiness totals, economics totals or public-program input totals
+  invariant a ForeignTwin query is a bounded case-insensitive literal filter over authored source-contract fields (URL, source identity, family, carries, or declared publisher); it returns result total and estate_total separately, never claims semantic relevance, ownership, classification, or a changed whole-estate readiness frontier
+  invariant every bounded source-release page is deterministically ordered and carries a locally-derived catalogue_generation over its exact owner projection; a later page that names a different expected generation is refused as snapshot_mismatch rather than silently combining two working-set releases. This generation states only local projection continuity, never remote-world immutability or the cause of a change
+  invariant price observations join a ForeignTwin only through an exact authored source coordinate; an unmatched economic source identity stays visible as unbound rather than being guessed from publisher wording, hostname similarity, item title, or family
+  cannot_infer source admission or archive depth -> public program, distribution route, reuse licence, external authority, price quote, or purchase authority
   forbidden_inference foreign twin cache -> remote authority
   forbidden_inference observe right -> bind or act right
   forbidden_inference retained body -> verified availability
@@ -28,16 +46,168 @@ architecture foreign-twin
   computational_form durable
   native_format graf
   command BonfyreProject
-  source_path components/BonfyreControlPlane/foreign.py
-  source_path components/BonfyreControlPlane/fabric_publish.py
+  source_path components/BonfyreControlPlane/foreign.py.archive
   source_path components/BonfyreProject/src/main.c
-  source_path tools/housing_signal_candidates.py
-  witness components/BonfyreControlPlane/tests/test_foreign.py
-  witness components/BonfyreControlPlane/tests/test_fabric_publish.py
-  witness components/BonfyreProject/tests/smoke.sh
-  witness tests/test_housing_signal_candidates.py
+  source_path components/BonfyreProject/tests/foreign_bounded_sample_test.mjs
+  source_path cmd/BonfyreWebAddress/src/main.c
+  source_path engine/core/include/bf_foreign_twin.h
+  source_path engine/core/src/foreign_twin.c
+  source_path scripts/load_search_index.mjs
+  source_path scripts/load_search_index.py.archive
+  source_path scripts/tests/load_search_index_test.sh
+  source_path cmd/BonfyreLoweringWorkers/src/main.c
+  source_path integrations/mcp/bonfyre_oauth_gateway.mjs
+  source_path integrations/mcp/project_native.mjs
+  source_path integrations/mcp/tests/project_native.test.mjs
+  witness integrations/mcp/tests/project_native.test.mjs runs the compiled Project history command through MCP with a root-only binding and resolves its retained receipt without server-default path fallback
+  source_path components/BonfyreControlPlane/fabric_publish.py.archive
+  source_path components/BonfyreProject/src/main.c
+  source_path tools/housing_signal_candidates.py.archive
+  source_path tools/housing_explicit_observations.py.archive
+  source_path tools/housing_shadow_inventory.py.archive
+  source_path tools/housing_direct_candidates.py.archive
+  source_path tools/housing_receipt_policy.py.archive
+  source_path tools/housing_strategy_frontiers.py.archive
+  source_path tools/housing_geographic_arbitrage.py.archive
+  witness 2026-09-29 scripts/tests/load_search_index_test.sh exercises native Bun archive projection through a local PostgREST-shaped server, including a 500 retry followed by address-keyed merge acceptance; remote search indexing remains a replaceable projection, not archive authority
+  witness components/BonfyreProject/tests/foreign_bounded_sample_test.mjs proves a native byte-range sample is robots-governed, bounded to exactly 1.2 MB, receipted as sample_observed, and a robots-refused path is never fetched
+  witness components/BonfyreProject/tests/foreign_bounded_sample_test.mjs proves bounded complete HTML is receipted as source_observed, an oversized response fails, and a redirect is refused rather than fetched under the original host's robots decision
+  witness components/BonfyreControlPlane/tests/test_foreign.py.archive
+  witness components/BonfyreControlPlane/tests/test_fabric_publish.py.archive
+  # The smoke test this cited was archived and the claim was never revisited.
+  # The live witness is the foreign twin suite, which exercises observation,
+  # admission, hydration and identity against the running estate.
+  witness cmd/BonfyreWebAddress/tests/foreign_twin_test.sh
+  witness cmd/BonfyreSemanticOptimizer/tests/live_inverse_test.c
+  witness cmd/BonfyreLoweringWorkers/tests/lowering_workers_test.sh records receipt-backed observations through the native ForeignTwin ABI, queries a persisted BitNet frontier member-by-member, and proves an unobserved candidate remains distinct from an observed retained body
+  witness /Users/nickgonzales/.bonfyre/estate/bitnet-exact-owner-evidence.jsonl records the live 92-member AddressPlane/BitNet SHADOW frontier queried by native ForeignTwin; two retained observations are reported without promoting rank, semantic truth, or effect standing
+  witness 2026-08-30 authenticated MCP foreign_twin_observe admitted https://example.com through native robots preflight, exact retained body and receipt
+  witness cmd/BonfyreWebAddress/tests/private_estate_surface_test.sh submits an allowed local public-source fixture through JRSS private ForeignTwin HTMX intake, verifies a source_observed receipt/body only under private/jrss/stable:cedar, and proves the carrier is unavailable without the client role/scope closure or through public Studio routes
+  witness cmd/BonfyreWebAddress/tests/auth_surface_test.sh retains a self-scoped source under an actor root, lists it through the authenticated Life source desk, inspects its retained excerpt only after a digest match, and refuses the same self observation on a sibling territory
+  witness tests/test_housing_signal_candidates.py.archive
+  witness tests/test_housing_shadow_inventory.py.archive
+  witness tests/test_housing_direct_candidates.py.archive
+  witness tests/test_housing_receipt_policy.py.archive
+  witness tests/test_housing_strategy_frontiers.py.archive
+  witness tests/test_housing_geographic_arbitrage.py.archive
   source_lineage external boundary architecture
-  known_gap foreign observe now preflights a declared public observe right and robots.txt, preserving policy_excluded separately from a target boundary_response, and retains an allowed body under --body so a downstream reader can bind to exact receipted bytes. The first lawful projection (public rental/sublet/room postings -> AvailabilityCandidates -> corroborated posting observations) is witnessed; residue is that only the craigslist static shape has a parser, so retained bodies from other public surfaces stay unparsed, and a corroborated posting is still not verified availability because verification would need a forbidden contact effect.
+  source_path components/BonfyreProject/tools/foreign-sweep.sh
+  source_path components/BonfyreProject/tests/http_envelope_test.sh
+  source_path components/BonfyreProject/tests/foreign_release_projection_test.sh
+  internal_calculus a receipt carries two independent sets of facts about one representation: this estate's digest of the bytes it retained, and the source's own statements about what it served -- ETag, Last-Modified, Content-Type, Content-Location, Link rel=license and rel=canonical, RFC 9530 Content-Digest and Repr-Digest, and whether an RFC 9421 message signature was present. Keeping only the first loses the only machine-readable statement of rights a source ever makes
+  internal_calculus re-observation is conditional whenever a prior receipt carries a validator. Receipts append, so the newest line is the one read for it; a 304 becomes a new observation at a new knowledge time that references the prior body rather than retaining a second copy of it
+  invariant a source-supplied digest is held apart from this estate's own and neither is promoted to the other; ours proves the bytes have not drifted since retention and the source's is what the publisher asserted about what it served
+  invariant robots permitting a read is not a licence to republish; Link rel=license is a separate fact, it is usually absent, and absent means the source stated none rather than that permission exists
+  invariant a validator is handed back to a source exactly as the source issued it; an ETag contains quotes and a parser that stops at the first one returns a mangled validator that every source ignores, which makes conditional re-observation appear to work while never having worked
+  cannot_infer a 304 -> the thing not having changed in the world; it says the representation this estate holds is still current
+  cannot_infer a completed sweep -> permission to republish anything it read
+  cannot_infer a boundary response -> a source that does not exist; it is what the transport said at that moment
+  cannot_infer policy_excluded -> a source refusing this estate specifically; robots is a standing rule the source wrote for everyone
+  cannot_infer an RFC 9421 message signature verifying -> factual correctness or reuse permission; it is communication authenticity
+  witness components/BonfyreProject/tests/http_envelope_test.sh observes a source that issues a strong validator and proves the envelope is recorded separately from this estate's digest, that the recorded ETag still contains the quotes the source issued, and that observing again returns 304 and produces a repeat_observed receipt carrying zero bytes and the prior body's digest rather than a duplicate body. It skips rather than passes when the source is unreachable, because a network witness that passes offline is testing nothing
+  witness components/BonfyreProject/tests/foreign_release_projection_test.sh builds independent source, frontier and archive owners; proves their stages join without a receipt directory; and proves public program is still unbound rather than inferred from admission or retained material
+  witness components/BonfyreProject/tests/foreign_release_projection_test.sh proves a price ledger reports one exact source-contract binding and one unbound incoming price source separately, without turning either into an offer or economic authority
+  witness components/BonfyreProject/tests/foreign_release_projection_test.sh proves a normalized SourceFrontier address cannot displace the matching authored exact_address when joining a published source contract
+  witness components/BonfyreProject/tests/foreign_release_projection_test.sh proves a published SiteProgram reaches an exact source only through a published SourceCollection source_refs declaration, and records input_bound with delivery not_verified rather than a public page
+  witness components/BonfyreProject/tools/foreign-sweep.sh observed 400 occurrences of the estate against real sources at one request each with a quarter-second pace: 47 retained a body, 30 returned 304 to a conditional request and became repeat_observed, 15 answered a boundary response, 1 was excluded by robots, and 307 could not have their robots preflighted and are recorded as policy_indeterminate rather than read anyway. 39 sources issued an ETag; none stated a machine-readable licence, none signed the message, and none supplied an RFC 9530 digest
+  known_gap 307 of 400 sources could not have robots preflighted, so they were not read. That is the law working and it is also the dominant outcome: most of this estate cannot currently be observed at all, and whether that is unreachable hosts, redirect chains or WAFs is not yet separated.
+  known_gap the sweep is driven by hand and nothing schedules it. A plan is compiled, a bounded slice is observed, and no timer widens it; the estate moves when someone runs it.
+  known_gap no source in the observed slice stated a machine-readable licence. Link rel=license was absent on every one, so every rights question in the estate still rests on a human reading terms, which is a fact about how the web publishes rights rather than about this observer.
+  known_gap foreign observe now preflights a declared public observe right and robots.txt, preserving policy_excluded separately from a target boundary_response, and retains an allowed body under --body so a downstream reader can bind to exact receipted bytes. Retained Craigslist, Sublet.com property-card, and direct AppFolio public portal bodies now project only provenance-bound candidates; source-bound housing frontiers preserve direct, legacy-social, conditional-economics, feature-claim, and public-map proximity tiers rather than scoring unknown facts together. Geographic mapping retains Nominatim/Overpass source response digests and performs geodesic proximity plus park-first reverse discovery, without inferring a walk route, entrance distance, unit-specific exterior right, pet acceptance, or availability. A candidate is still not verified availability because verification would need a forbidden contact effect. The retained Sublet Dallas response currently lacks the required policy-preflight facts and visibly serves non-Dallas cards, so it remains non-promotable until a compliant Dallas observation exists. Other retained direct-source shapes remain unparsed.
+  invariant an observation is never overwritten: a 404 at one time and retained bytes at another are two records, and the relation between them is computed rather than resolved by keeping only the newer
+  invariant current content and current availability are separate answers; the most recent observation that retained bytes and the most recent observation of any kind are different questions, and reporting one as both hides bytes held from a source that no longer serves them
+  invariant a resource that never retained content reports null reachability, not false; false would claim the content held is unreachable about content that was never held
+  forbidden_inference a superseded observation -> a deleted one (it remains recorded and readable through history)
+  forbidden_inference a listed conflict -> a source that lied (content changing is ordinary; the institution only has to know its earlier belief is no longer current)
+  source_path components/BonfyreProject/src/main.c
+  witness bonfyre-project foreign conflicts over 35 real receipts reports 3 disagreeing resources: feed.xml with 4 content changes still reachable, sitemap-notes.xml with 2, and an okta endpoint that has only ever answered 404
+  invariant observation, promotion and claim are three standings and none is ownership: observing records that something answered, promoting means the institution chose to be able to name it, and claiming is an assertion by some institution
+  invariant a twin is promoted only when an observation actually retained bytes; its identity digest is the content digest that was retained and its evidence_ref names the receipt that retained it, so an identity whose digest was invented cannot exist
+  invariant a twin's identity derives from the address it was observed at, not from a receipt filename that changes every observation
+  invariant a promoted twin carries an address and a presence, and its presence is LIVE: an observation of the real world stays real even when a demo institution is the one looking
+  invariant two subjects sharing an identity digest are reported rather than merged; which id is canonical is not the storage layer's call, and collapsing them would strand whatever already references the loser
+  forbidden_inference a promoted twin -> a claimed, verified or owned one
+  forbidden_inference a claim -> a verified relationship (AssertionBoundary and Authority decide what it is worth)
+  witness cmd/BonfyreWebAddress/tests/foreign_twin_test.sh promotes 14 observed resources idempotently, refuses 4 that never retained content, reports 7 duplicate identities without merging them, and proves no claim points at a subject that does not exist
+  invariant an observation that retains content promotes its resource in the same act; the one moment an identity is unambiguous is when the bytes that identify it are in hand, and deferring it invites an identity derived later by a different rule beside the one derived here
+  invariant a failed promotion does not fail the observation; the receipt is written and the bytes are kept, so a resource that could not be named stays observable
+  invariant promotion refuses a private closure: an observation under an estate or actor root belongs to whoever took it, and publishing one as a public subject would make it readable by everything that can read the Matrix. A caller that means to promote privately must say so and say into which scope
+  invariant an identity is derived only from a body that still hashes to its receipt; a drifted body is no longer the thing the receipt describes, and an identity taken from it would be attested by a receipt for different content
+  invariant the estate observes two shapes of external thing and they do not identify the same way: a URL twin is one resource fetched repeatedly, identified by the bytes it last returned; a source is an endpoint observed across many pages, identified by a digest over its sorted distinct page digests
+  invariant a source twin carries no web address, because the estate holds no route to it; binding an invented URL would assert a route that cannot resolve, which is worse than having none. A presence is still bound, because the source is a real thing observed in the live world
+  invariant a source identity moves when what the source serves moves and not otherwise; an identity that drifted on re-observation would make every source a new thing each time it was looked at
+  invariant a claim derived from an observation requires the read to have been authorized under the policy recorded at the time: public observe right, allow decision, attempted fetch, and a successful robots preflight where a 404 counts as success. A body digest proves what a parser read and never that it was permitted to
+  invariant the admission law is not housing-shaped; any derived claim needs the same five facts, and holding it in one domain's normalizer made it unaskable by anything else
+  forbidden_inference an admissible receipt -> a true or useful claim (it says the read was authorized, and nothing about what the bytes say)
+  invariant registration and activation are different acts: registering establishes that a stable foreign identity exists, and binds no presence. Observing something does not make it present in this institution's world, or a partner, provider, opportunity or offer
+  invariant activation and deactivation are authority-gated in both directions; turning a subject on or off in the world is an act, not a side effect of having looked at it
+  forbidden_inference a registered twin -> an active, present, or partnered one
+  invariant not every twin is mirrored: a hydration regime is authored per twin from MIRROR-LIKE, INDEXED, REMOTE and EPHEMERAL, and a twin with no authored regime is reported as unpoliced rather than defaulted, because an unmade decision is not a decision to mirror
+  invariant cooling removes bodies a regime says not to keep and never removes a receipt; it reduces what is held, never what is known to have been seen
+  invariant a regime is enforced where the body is written, not only by a later sweep; a cleanup is undone by the next observation, so a decision not to retain survived exactly until someone looked again
+  invariant a twin with no authored regime retains its body; an unmade decision must not silently start discarding evidence, so the safe direction is to keep
+  invariant a twin's applicable actions derive from what it is, not from the fact that it is foreign: subject kind ForeignTwin says only that authority is elsewhere, and investigating ownership is meaningless for a specification as mapping a vocabulary is for a tax roll
+  invariant a twin's kind is authored rather than inferred from its address; guessing a kind from a hostname is how a merchant becomes a dataset
+  invariant a kind nobody has declared actions for affords nothing rather than falling back to a generic set; an empty aperture list is an honest answer and a borrowed one is not
+  forbidden_inference a classified kind -> a verified one (someone asserted this is a property source, and that is an assertion like any other)
+  invariant the columnar observation estate is a material-plane closure contribution, not a file the estate happens to query; a subject whose closure omits the bytes backing it describes an identity and not a thing
+  invariant a Parquet row is not an admitted Matrix fact, a subject_candidate is not a MatrixSubject, and an observation row is not a RelationshipGraph edge; the columnar estate is a compressed factual representation and AssertionBoundary still controls admission
+  invariant a columnar body that is a directory of parts is identified by a manifest digest over its sorted members; digesting one member would describe part of the body as though it were all of it
+  invariant a closure resource is portable: a filesystem path is a reference only one host can follow, so contributions carry bonfyre://, https:// or urn: and never a local path
+  forbidden_inference a bound body -> an admitted fact or a licence to redistribute it
+  invariant a closure can be taken over any subject with an active presence, not only one a hostname resolves to; closures addressed by host alone silently limited the manifest to institutions, and an observation source has no route at all
+  invariant the closure manifest carries each plane's contributions with owner, representation, resource and exact digest, in both the crate and the field carrier; a manifest that says references are listed below and lists none is worse than one that says the plane is sparse
+  forbidden_inference a resolvable closure -> a reachable subject
+  invariant Parquet and Zarr compose rather than compete: the columnar body holds durable observation facts and the field holds their chunked arrangement, and lowering one into the other is an ordinary derivation
+  invariant a derived field carries its lineage in its own attributes -- the exact digest of the body it was lowered from, the derivation that produced it, and the observation frontier at that moment -- so a cell is traceable to the rows, sources and owners it counts
+  invariant a field reconciles with the corpus it came from; a grid whose total does not match the observations it aggregates is describing something else
+  forbidden_inference a derived field -> a new observation (it is one arrangement of the rows it was computed from, and it is stale the moment they change)
+  forbidden_inference a field cell -> a fact about the world (a source observed twice as often is not twice as real)
+  witness a 115x17 int32 field lowered from the columnar body sums to 6,535,062 -- the whole corpus -- and its dallas-tax-parcels row sums to 499,388, the same number that source's DERIVE aperture returns
+  witness a crate and a zarr group over foreign_twin:src-dallas-tax-parcels each carry the Parquet body with its 64-character digest and slice selector
+  witness 115 source slices of a 569,864,921-byte columnar body bound on the material plane, one manifest digest, one slice selector per source
+  witness a parcel source affords Property.investigateOwnership and Property.economics while a specification affords Research.mapVocabulary on the same binary; a reference asset affords nothing
+  invariant an absent body and a changed body are different facts: a body present and hashing differently is drift and refuses promotion, while a body cooled under its regime promotes on the receipt digest that still identifies it
+  forbidden_inference a regime -> a licence (retaining bytes because a regime permits it does not make retention lawful)
+  source_path scripts/cool_foreign_bodies.mjs
+  source_path scripts/cool_foreign_bodies.py.archive
+  invariant public foreign-body cooling indexes receipts once, requires a published retain_body=0 regime and a direct regular file inside the public bodies root, then refuses the entire apply plan if any receipt or candidate is unsafe; receipts are never removed
+  witness scripts/cool_foreign_bodies.py.archive historically cooled 19 bodies and 145,674 bytes under authored REMOTE and EPHEMERAL regimes with all 52 receipts intact; a tampered body remained refused while cooled ones promoted
+  witness scripts/tests/cool_foreign_bodies.test.mjs proves native Bun cooling keeps receipts and retained bodies, refuses an out-of-root body before any deletion, and only removes the exact bounded body when --apply is explicit
+  source_path scripts/inspect_foreign_field.mjs
+  witness scripts/tests/inspect_foreign_field.test.mjs proves the Python-free field witness checks the complete little-endian int32 chunk against its authored Zarr shape and reports its exact source digest and derivation frontier
+  source_path scripts/lower_parquet_to_zarr.mjs
+  source_path scripts/columnar_body.mjs
+  source_path scripts/lower_parquet_to_zarr.py.archive
+  invariant the Parquet-to-Zarr lowering uses the native query organ and streams exact source-body hashes; it stages the complete field before replacing only an owned Zarr output, and a failed query never publishes an empty field
+  witness scripts/tests/lower_parquet_to_zarr.test.mjs proves the Bun lowering's sorted manifest digest, SQL path quoting, dry-run, exact 2D cell sum and lineage, and refusal to overwrite an unowned output file
+  source_path scripts/bind_parquet_bodies.mjs
+  source_path scripts/bind_parquet_bodies.py.archive
+  invariant columnar lowering and closure binding consume the same streamed body-identity law; binding refuses a derived field whose source digest, derivation frontier, shape or exact chunk length disagrees before any contribution is written
+  witness scripts/tests/bind_parquet_bodies.test.mjs proves shared body identity, per-source material selectors, derived-field row selectors, stale-lineage and truncated-chunk refusal, and visible partial owner failure
+  known_gap 130 presences were bound by registration before the two acts were separated, and withdrawing them needs an authority grant no current actor holds; the law prevents further ones and the backlog stays visible rather than being forced
+  witness bonfyre-project foreign admissible over the live corpus: 41 of 44 observations admissible, 3 refused for a missing allow decision including a robots-disallowed search URL that would otherwise have yielded a candidate with real content and no permission
+  forbidden_inference a promoted source -> a claimed, licensed or authorized one
+  source_path scripts/promote_observation_sources.mjs
+  source_path scripts/promote_observation_sources.py.archive
+  invariant observed source promotion registers the digest of its sorted distinct page digests without binding presence or inventing a URL; query failure refuses rather than masquerading as an empty corpus
+  witness scripts/promote_observation_sources.py.archive historically promoted 115 observation sources over 6,535,062 parcel observations in three dialects; re-promotion moved no identity and created no subject
+  witness scripts/tests/promote_observation_sources.test.mjs proves native Bun promotion's digest, exact owner invocation, no presence binding, and fail-closed query/partial-registration outcomes against local process fixtures
+  forbidden_inference a public promotion path -> a safe one for every observation (the closure an observation belongs to is a property of where its receipt lives, not of the command that reads it)
+  invariant without a declared BONFYRE_MATRIX_DB the foreign verbs (observe-time promote, promote, twins, duplicates) address the first existing non-empty Matrix among $BONFYRE_STATE_ROOT/matrix.db, /var/lib/bonfyre/matrix.db and $HOME/.bonfyre/estate-local/matrix.db; a declared path always wins, an empty placeholder is skipped, and no store is created
+  witness components/BonfyreProject/tests/foreign_matrix_default_test.sh (2026-10-30, temp HOME and copied stores): declared path wins, undeclared promote lands in the home estate Matrix, STATE_ROOT outranks home, an empty placeholder refuses naming /var/lib and stays empty, dry run needs no Matrix; the prior binary fails the undeclared case with cannot open matrix at /var/lib/bonfyre/matrix.db
+  forbidden_inference a default Matrix path that resolves -> the deployment's intended Matrix (it is the first existing store in a fixed order; a host with more than one must still declare BONFYRE_MATRIX_DB)
+  known_gap 2026-10-30 the fixed resolver is a repo build only; the installed bonfyre-project and the MCP native environment still default to /var/lib, so live promotion of the 44 observed GitHub migration sources was rehearsed on a copy of the estate-local Matrix (44 subjects, 0 failures) and not written to the live Matrix
+
+interaction self-foreign-workspace-reads-twin
+  source foreign-twin
+  destination web-address-edge
+  relation renders_private_evidence
+  preserves the actor-derived private ForeignTwin closure: receipt selection is bounded to its own receipt directory and a body is exposed only after its locally retained bytes hash to the receipt digest
+  drops public promotion, external authority, distribution, and cross-actor enumeration; this is a private inspection carrier over evidence already retained
+  forbidden_inference a readable private excerpt -> a public page, claimed source, admission, reuse licence, or authority to act
+  witness cmd/BonfyreWebAddress/tests/auth_surface_test.sh verifies the private desk and digest-checked excerpt for the authenticated actor and refuses the self endpoint from aurekai.shop
+  binding cmd/BonfyreWebAddress/src/main.c
 
 architecture service-lifecycle
   canonical_name ServiceLifecycleGraph
@@ -45,46 +215,49 @@ architecture service-lifecycle
   domain External / Service
   layer external/service
   semantic_question Where is a provisionable service in its lifecycle, and what may we do with it now?
-  purpose OSB-shaped catalog -> provision -> bind -> execute -> release over the real BonfyreAPI. Shared lifecycle mechanics do not erase concrete protocols (OSB, GPU lease, human assignment).
+  purpose Owns explicit service-resource bindings after actor selection; binding requires AuthorityGraph bind permission and remains separate from ResourceActivation activate authority.
   maturity implemented
+  command BonfyreProject
   node_types ServiceProfile
   node_types ServiceInstance
   edge_types provisions
   edge_types binds
-  state_types cataloged
-  state_types provisioned
-  state_types bound
-  state_types released
-  invariant bind requires the bind right; release is idempotent
+  source_path engine/core/include/bf_service_lifecycle.h
+  source_path engine/core/src/service_lifecycle.c
+  source_path components/BonfyreProject/src/main.c
+  source_path components/BonfyreControlPlane/service_lifecycle.py.archive
+  witness engine/core/tests/service_lifecycle_test.c
+  witness components/BonfyreProject/tests/activation_projection_test.sh
+  witness components/BonfyreControlPlane/tests/test_service_lifecycle.py.archive
+  invariant bind requires explicit AuthorityGraph bind permission over the service; release is idempotent
+  invariant a current binding is one input to ResourceActivation reconciliation and never supplies activate authority
   forbidden_inference service active -> bind authority
-  computational_form durable
-  command BonfyreAPI
-  source_path components/BonfyreControlPlane/service_lifecycle.py
-  witness components/BonfyreControlPlane/tests/test_service_lifecycle.py
-  source_lineage OSB / ServiceLifecycle architecture
-
+  forbidden_inference service bound -> resource authorized or activated
+  known_gap no standing policy chooses a provider or actor and no binding is created from SupplyMatch eligibility alone
+  source_lineage native absorption of the retired ControlPlane ServiceLifecycleGraph
 architecture partner-commons
   canonical_name PartnerCommons
   family external
   domain External / Institutions
   layer external/relationship
-  semantic_question What narrow specialty and observed relationship state does a partner contribute without taking Bonfyre semantic ownership?
-  purpose Typed partner profiles plus append-only source-backed observations. Each profile states its boundary contribution and what it does not own; observations project to rights-limited ForeignTwins and EvidenceGraph claims.
+  semantic_question Which external mechanism can realize a bounded Bonfyre capability without taking Bonfyre semantic ownership?
+  purpose Partner Commons is a callable realization commons, not a directory: Restate carries durable progression for canonical WorkGraph lifecycle while Feldera carries incremental maintained relations. Each graft is bounded by an explicit capability contract and native receipts.
   maturity implemented
-  node_types PartnerProfile
-  node_types PartnerObservation
-  edge_types contributes_to
-  edge_types observed_as
-  invariant every profile states explicit semantic non-ownership
-  invariant every observation carries a source reference and observation time
+  node_types CapabilityGraft
+  node_types PartnerReceipt
+  edge_types realizes
+  edge_types receipts_to
+  invariant a partner mechanism is usable only through a named capability boundary and a real native carrier
+  invariant a partner receipt does not become semantic completion without canonical proof/effect admission
   forbidden_inference a maintainer interaction -> authority to mutate the partner institution
   forbidden_inference a partner specialty -> ownership of the connected Bonfyre organ
   computational_form durable
-  native_format crux
-  source_path components/BonfyreControlPlane/partner_commons.py
-  witness components/BonfyreControlPlane/tests/test_partner_commons.py
+  source_path services/bonfyre-restate-native/src/main.rs
+  source_path components/BonfyreControlPlane/substrate/feldera_reachability_incremental.rs
+  witness services/bonfyre-restate-native/tests/discovery.sh
+  witness tests/restate_integration.sh
   source_lineage Generation-10 V8.1 Partner Commons plus Run 6/7 relationship state
-  known_gap live refresh remains a bounded external observation effect; the stored latest row is never remote truth
+  known_gap Restate discovery is native and live; full two-node replay requires a running Restate server and Docker daemon, while Feldera's native DBSP circuits are independently witnessed
 
 architecture result-receipt-bundle
   canonical_name ResultReceiptBundleGraph
@@ -93,7 +266,7 @@ architecture result-receipt-bundle
   layer external/attestation
   semantic_question Does this worker submission's portable bundle verify offline, byte for byte?
   purpose The portable unit of trust: patch, gate results, task ref, sandbox selection, worker key, DSSE-signed attestation, chain-linked. Offline field-level verify. Contributed upstream (bernstein #3870).
-  maturity measured
+  maturity declared
   node_types ResultBundle
   node_types GateResult
   node_types ChainLink
@@ -103,10 +276,10 @@ architecture result-receipt-bundle
   invariant verification is offline and side-effect free
   forbidden_inference embedded worker key -> pinned provenance (requires an out-of-band roster)
   native_format crux
-  source_path external:sipyourdrink-ltd/bernstein/src/bernstein/core/security/result_receipt_bundle.py
   witness external:bernstein tests/unit/security/test_result_receipt_bundle.py (9 tests)
   source_lineage bernstein volunteer umbrella #3863 issue #3870
-
+  known_gap a source this entry named could not be opened from this checkout -- external:sipyourdrink-ltd/bernstein/src/bernstein/core/security/result_receipt_bundle.py. The line is removed rather than repointed to something that merely looks similar, and what remains listed is the evidence this architecture actually stands on.
+  known_gap this was carried as measured on a test suite in another company's repository. The measurement may well hold there; it cannot be opened, run or checked from this checkout, so this estate can declare the architecture and not claim to have measured it.
 architecture blogger-publication-surface
   canonical_name BloggerPublicationSurface
   family external
@@ -130,9 +303,722 @@ architecture blogger-publication-surface
   native_format html
   native_format json
   external_binding blogger-v3
-  source_path bin/blogger_publish.py
-  source_path components/BonfyreControlPlane/blogger_receipts.py
-  witness components/BonfyreControlPlane/tests/test_blogger_publish.py
-  witness components/BonfyreControlPlane/tests/test_blogger_receipts.py
+  source_path bin/blogger_publish.py.archive
+  source_path components/BonfyreControlPlane/blogger_receipts.py.archive
+  witness components/BonfyreControlPlane/tests/test_blogger_publish.py.archive
+  witness components/BonfyreControlPlane/tests/test_blogger_receipts.py.archive
   source_lineage Generation-10 V8.1 External CMS / business systems profile
   known_gap live maturity remains below measured until OAuth consent yields retained Blogger response receipts and URLs
+  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
+architecture federation-twin
+  canonical_name FederationTwin
+  family external
+  domain External
+  maturity measured
+  semantic_question Which externally owned networks does this institution hold as subjects, what grammar do they publish themselves in, and what must that grammar not be read to mean?
+  # An external network is foreign state in its own right, and it is the highest
+  # density foreign subject there is: holding the federation first means its
+  # identity scheme, addressing, traversal, pagination and event vocabulary are
+  # learned once, and its members are reached through the grammar it already
+  # publishes. The alternative is rediscovering fifty thousand actors
+  # independently and storing fifty thousand copies of one protocol's semantics.
+  node_types FederationProfile
+  node_types FederationTwin
+  node_types TraversalContract
+  node_types CandidateAddress
+  edge_types speaks
+  edge_types traverses_to
+  edge_types discovered_by
+  edge_types peers_with
+  state_types observed
+  state_types participant
+  state_types traversed
+  # A federation is a subject AND a carrier, and these are separate roles.
+  # Subject: identity, topology, governance, version, reliability. Carrier:
+  # discovery, routing, member resolution, events. Collapsing subjecthood into
+  # transport capability loses the distinction that makes the twin lawful --
+  # GitHub is an institution and a source carrier, not one thing.
+  invariant protocol semantics are authored once in a profile and an instance stores only its address, version, extensions, frontier and deltas; this is dictionary compression and it is the reason a federation of fifty thousand instances is tractable
+  invariant the negative grammar travels with the protocol, not with each instance that speaks it; what `follows` must not be read to mean is a property of ActivityPub, and an instance that forgot to say so would otherwise be an instance where it was safe to infer
+  invariant a member is reached through the federation's own published traversal, never by independent reconstruction; the network has already compressed identity, routing, collections, membership coordinates and continuation
+  invariant an observed federation edge carries its source federation, carrier, observation time and evidence, and stays in the foreign graph; only a separately admitted relationship enters the institutional one
+  forbidden_inference an observed federation -> a joined one (fetching what a network says about itself is observation, and observation is not membership)
+  forbidden_inference a federation member -> an admitted provider
+  forbidden_inference a participant row -> reach (publishing on a carrier says the bytes are served, never that anyone fetched them or that a peer accepted them)
+  forbidden_inference nodeinfo user counts -> an audience this institution can address
+  computational_form observation
+  native_format json
+  external_binding activitypub
+  external_binding mcp
+  external_binding a2a
+  external_binding beckn
+  source_path components/BonfyreProject/src/main.c
+  witness cmd/BonfyreWebAddress/tests/federation_test.sh
+  known_gap peers are not yet traversed: the frontier records that nodeinfo was read, and a federation-of-federations walk past depth one is declared and unbuilt
+  known_gap a source this entry named could not be opened from this checkout -- /var/lib/bonfyre/cms/content-types/federation_profile.json; /var/lib/bonfyre/cms/content-types/federation_twin.json. The line is removed rather than repointed to something that merely looks similar, and what remains listed is the evidence this architecture actually stands on.
+architecture foreign-address-identity
+  canonical_name ForeignAddressIdentity
+  family external
+  domain External
+  maturity measured
+  semantic_question When two references differ, are they two resources or one resource written twice?
+  # Resolution compared a requested address to the stored one with strcmp. A
+  # reference carrying a tracking parameter, a default port, a fragment, an
+  # upper-case host or a missing root slash therefore resolved to nothing: the
+  # institution held the resource and answered that it did not, and held the
+  # same thing twice whenever both forms were observed.
+  node_types CanonicalAddress
+  node_types Deformation
+  edge_types canonicalizes_to
+  state_types closed
+  state_types missed
+  state_types false_merge
+  invariant folding is confined to what a standard or a declared policy permits: scheme and host case, a default port, an empty root path, a fragment, and named tracking parameters
+  invariant the path is never folded; paths are case-sensitive and a non-root trailing slash distinguishes two resources a server may serve differently
+  invariant a canonical match is a strong heuristic over addressing and never a claim of identity, which is settled by the retained bytes
+  forbidden_inference two addresses that canonicalize alike -> the same resource
+  forbidden_inference an unfolded scheme change -> two distinct resources (it is undetermined until the digests are compared)
+  computational_form observation
+  native_format json
+  source_path components/BonfyreProject/src/main.c
+  source_path scripts/deformation.mjs
+  source_path scripts/deformation-policy.cue
+  source_path scripts/deformation.py.archive
+  witness scripts/tests/deformation.test.mjs proves attribution and host-case folding without path-case or non-root slash collapse and keeps false merges separate from misses
+  witness cmd/BonfyreWebAddress/tests/gym_test.sh
+  measured 8 of 41 lawful equivalences closed before internalization, 41 of 41 after, 0 false merges throughout
+  known_gap http and https remain unfolded; closing them requires digest agreement and therefore an outbound fetch, which is a rate-aware act rather than a resolution-time one
+  invariant an observation is admissible only when the bytes are the kind of thing that was requested; permission and transport succeeding is not the resource answering, and four sitemap requests answered 200 with one shared bot-wall page were admissible under a law that never asked
+  invariant the boundary test is a type contradiction and never a judgement about prose; a request for a structured format answered with an HTML document is checked, and no page is classified by whether it reads like an error, because a document may lawfully discuss errors
+  invariant a ceiling that falls because a defect was found is the correct direction; the number was overstated, and correcting it downward is the measurement working rather than a regression
+  forbidden_inference a 200 -> an answer
+  forbidden_inference a body that is not a boundary -> a body that is correct, current or complete
+  measured 5 of 148 retained observations were boundary responses admitted as evidence before the test existed; four of them were one bot-wall page counted as four distinct sitemaps
+
+architecture round-trip-twin
+  canonical_name RoundTripTwin
+  family external
+  domain External
+  maturity measured
+  semantic_question Is the representation an outside reader can actually fetch the one this institution meant to publish?
+  # A projection is a claim. /ap/actor says this institution has a federated
+  # presence; nothing checked that the claim survived the carrier, and a
+  # projection that silently stopped being served looks from the inside exactly
+  # like one that works. The round trip closes it: canonical state is projected,
+  # the carrier is observed independently, and the two are compared.
+  node_types Projection
+  node_types ObservedRepresentation
+  edge_types projects_onto
+  edge_types observed_as
+  state_types faithful
+  state_types drifted
+  state_types unreachable
+  invariant the observation is independent of the projection; reading back the state that produced the document proves nothing about what is served
+  invariant a required field is named rather than inferred, because a projection that drops a field still parses and absence is what has to be looked for on purpose
+  invariant one institution on several carriers is one identity, and two carriers disagreeing about it is drift that no single-carrier check can see
+  forbidden_inference publication fidelity -> reach (nothing here says anyone fetched it)
+  forbidden_inference publication fidelity -> acceptance (a federation may serve the document and refuse the actor)
+  forbidden_inference a present field -> a correct value
+  computational_form observation
+  native_format json
+  source_path scripts/roundtrip-law.cue
+  source_path scripts/roundtrip_proof.mjs
+  invariant each address is independently fetched once per proof, and a missing carrier leaves cross-carrier agreement unproven rather than silently omitting that check
+  witness cmd/BonfyreWebAddress/tests/federation_test.sh
+  witness scripts/tests/roundtrip_proof_test.mjs proves missing carrier and cross-carrier disagreement remain failures
+
+architecture foreign-relationship-graph
+  canonical_name ForeignTwinGraph.Edges
+  family external
+  domain External
+  maturity measured
+  semantic_question What have external networks asserted about each other, on whose word, and which of those assertions has this institution actually admitted?
+  # Federation state is mostly edges: A follows B, B is hosted by C, C federates
+  # with D. They are real observations and they are not institutional facts, and
+  # the store is separate by construction rather than by convention -- a sparse
+  # external graph, not a bag of profiles and not a second RelationshipGraph.
+  node_types ForeignEdge
+  node_types ObservationScope
+  edge_types federates_with
+  edge_types discovered_via
+  edge_types peer_frontier_shared_with
+  state_types observed
+  state_types admitted
+  invariant every edge carries its source federation, carrier, observation time and evidence; an edge without provenance is a claim with no way to check who made it
+  invariant an observed edge never becomes an institutional relation on its own; admission is a second deliberate act and is the only writer that crosses into the institutional graph
+  invariant an observation scope is enforced inside the owner's query, never by filtering rows after they are read; once the rows have left the closure, every later reader is another place the disclosure can escape
+  invariant the scope a caller is served is derived from the session and never read from the request; a scope a caller can ask for is a scope every caller has
+  invariant the widening ladder is checked against the institutional grants this estate actually issues; an earlier draft asked for a bare admin role, which the admin of an estate does not hold and should not, because running one estate is not authority over this institution's observations of the outside world
+  invariant a withheld count is disclosed and withheld content is not; saying how much was withheld is not saying what it was
+  forbidden_inference follows -> friend
+  forbidden_inference a room join -> institution membership
+  forbidden_inference an organization listing -> employment authority
+  forbidden_inference a signed event -> legal identity
+  forbidden_inference a network participant -> an admitted provider
+  forbidden_inference an observed edge -> a fact about the world (it is a record of what one federation asserted)
+  computational_form observation
+  native_format json
+  source_path components/BonfyreProject/src/main.c
+  source_path cmd/BonfyreWebAddress/src/main.c
+  witness cmd/BonfyreWebAddress/tests/federation_test.sh
+  measured 135361 peer assertions read from two instances; 6 edges held as objects, 78221 distinct hosts recorded as a frontier and none of them twinned
+  known_gap self-private and partner-shared are not derived from any role, because they are per-actor and per-arrangement; until an actor-scoped and an arrangement-scoped grant exist, only the superuser closure reaches them, and inferring them from a rank would hand one person's saved candidate to everyone of equal standing
+
+architecture external-estate-index
+  canonical_name ExternalEstateIndex
+  family external
+  domain External / Catalogue
+  layer surface
+  semantic_question What does the outside publish, as distinct from what this estate reads?
+  purpose Four thousand two hundred and ninety-four external resources arrived as a compiled index -- public APIs, MCP servers, RSS estates, machine protocols, x402 deployments. The census holds two hundred and sixty-nine rows and has walked sixty-five, and the obvious move was to pour one into the other. That would have broken the census's own law: it is a map of ways in, deliberately small, and most of this index is specifications, repositories and documentation. Fifteen hundred entries are github.com, which are citations rather than sources. So two registers, and the distance between them is the honest statement: the estate knows of four thousand things, has mapped two hundred and sixty-nine as ways in, and has actually read sixty-five.
+  maturity implemented
+  source_path cmd/BonfyreCMS/content-types/external_resource.json
+  consumes ForeignTwin
+  publishes DerivedView
+  internal_calculus each resource keeps the index's own EXT identifier, the source estate it was compiled from, the functional families the cross-index tags it with, its url and any related links. The canonical enumeration is the source-organised half of the document; the functional half is a cross-index where one resource appears under several functions, which is why it holds eight thousand lines for four thousand resources.
+  invariant a catalogued resource carries no tier, twin, receipt or last-seen; those belong to a source this estate has actually asked, and a catalogue row wearing them would claim an observation nobody made
+  invariant the catalogue does not feed the census automatically; promotion is an authoring act, because a way in is a thing somebody decided to read rather than a thing that exists
+  invariant the register is sliceable like every other surface; four thousand rows that can only be listed is a file with extra steps
+  invariant the identifier is the index's own, so a re-import updates rather than duplicates and the compilation stays traceable to its source document
+  cannot_infer a catalogued resource -> a read one; this says the outside publishes it, never that this estate has asked, been permitted, or holds anything from it
+  cannot_infer a functional tag -> a capability; the index says where a resource was filed, not what it will do
+  cannot_infer the size of the catalogue -> the reach of this estate; the two registers are far apart on purpose and the distance is the point
+  witness components/BonfyreControlPlane/tests/external-estate.test.mjs holds the two registers apart: the catalogue is an order of magnitude larger than the census, no catalogue row carries an observation field, the census has not swollen to the catalogue's size, descriptions do not repeat their own url, and the register slices and compounds like every other surface
+  known_gap nothing links a census row to the resource it came from; the two registers are related only by host, so promotion is by hand and provenance is not recorded
+  known_gap the index was compiled elsewhere and imported once; there is no re-import path that reconciles changes, so a later edition would have to be diffed by hand
+  known_gap four thousand rows were written one at a time because the store has no bulk path, which took eight minutes of sustained work; a larger index would need one
+
+interaction catalogue-is-not-the-map
+  source external-estate-index
+  destination internet-census
+  relation projects
+  preserves the distance between them; the catalogue says what exists and the census says what this estate reads, and the gap between four thousand and sixty-five is the honest statement
+  drops nothing into the census automatically; promotion is an authoring act, because a way in is a thing somebody decided to read
+  forbidden_inference a catalogued resource -> a way in
+  forbidden_inference a large catalogue -> a large reach
+
+architecture retained-body-service
+  canonical_name RetainedBodyService
+  family external
+  domain External / Retained bytes
+  layer surface
+  semantic_question When the estate serves bytes it retained, are they the right bytes, and are they the newest?
+  purpose Twice, no. A receipt is a twin's whole history, one observation per line, appended forever; the route read the first 64KB and took the last complete line inside that prefix, so any twin whose history outgrew the buffer served an observation from the middle of its past as if it were current -- hn-front-page was answering with bytes ten hours old and a stale timestamp to prove it. Worse, the field reader returned without touching its output when a key was absent, so body_path kept whatever the previous request had left in that stack slot; the inherited path passed the inside-the-bodies-directory guard because it was a real body, and the estate replied 200 with one twin's retained bytes under another twin's name and an empty digest header.
+  maturity measured
+  source_path cmd/BonfyreWebAddress/src/main.c
+  source_path components/BonfyreProject/src/main.c
+  consumes ForeignTwin
+  publishes DerivedView
+  internal_calculus the receipt is read from its end, so the newest observation is found at the same cost whatever the history weighs. The body path comes from that line or from nowhere. A retained body is fetched beside its destination and moved into place, so a reader sees the previous observation or the new one and never half of one.
+  invariant the newest observation is the one served; an estate that keeps every observation has a history that only grows, so reading from the head is a bug that arrives by waiting
+  invariant a field that is absent leaves nothing behind; a reader that returns without clearing hands the next caller the last caller's answer, and the buffers here are reused across requests
+  invariant bytes are served under the twin that retained them or not at all; a body with no digest is a body whose receipt did not name it, and serving it anyway is a provenance failure wearing a 200
+  invariant a retained body is replaced atomically; writing into the file the estate serves means a reader during the fetch sees a truncation, and the reheat rewrites the hot twins every five minutes
+  invariant a failed fetch does not replace a good observation; moving an empty file into place would delete the last real one and report success
+  cannot_infer retained bytes -> a claim that they are true or current; they are what a source served at a moment
+  cannot_infer a served body -> a live source; the receipt says when it was read
+  witness components/BonfyreControlPlane/tests/internet-census.test.mjs checks native retained-body readers clear absent fields, bind bytes to each twin's digest, read the latest complete receipt line, and atomically replace bodies after successful fetch; live estate checks are opt-in and are not implied by fixture success
+  known_gap the receipt tail is read into a fixed buffer, so a single observation line longer than that buffer would still be cut; no line approaches it today and nothing checks
+  known_gap the digest is served and never verified against the bytes; a body corrupted on disk would be served under a digest it no longer matches
+
+architecture content-quarantine
+  canonical_name ContentQuarantine
+  family external
+  domain External / Presentation state
+  layer surface
+  semantic_question Should this retained material be projected automatically, and who decided?
+  purpose The estate reads thousands of external sources and projects what it reads onto four public front doors. Nothing stood between an ugly item in a feed, a scraped page or a social source and a full-width card on .life or .live. This is the screen, the boxed state and the exclusion -- and it is deliberately not a moderation product: the observation, its receipt and its bytes are untouched, and a flag decides presentation rather than truth.
+  maturity measured
+  source_path cmd/BonfyreCMS/content-types/content_flag.json
+  source_path cmd/BonfyreCMS/content-types/content_screen.json
+  source_path site/matrix/surfaces/build/content-screens.jsonl
+  source_path site/matrix/surfaces/build/install_authored_rows.mjs
+  witness site/matrix/surfaces/build/authored_rows.test.mjs imports four authored screen declarations into a local CMS and keeps declared-only screens distinct from installed screens without contacting a remote estate
+  source_path scripts/content_screen.py.archive
+  source_path scripts/content-screen.cue
+  source_path scripts/content-screen.mjs
+  source_path scripts/Makefile
+  source_path deploy/systemd/bonfyre-content-screen.service
+  source_path deploy/systemd/bonfyre-content-screen.timer
+  witness scripts/tests/content_screen.test.mjs proves the Bun screen keeps a missing private term list distinct from a clean result, matches transformed spellings and edge words, uses the latest receipt, writes one redacted boxed flag through CMS, and does not disclose the term; normalization matched the retired Python peer on eight spelling cases before cutover
+  witness scripts/tests/content_screen_install.test.mjs proves the Bun/CUE runtime stages under the systemd path and installed execution reports missing private terms without claiming a clean scan
+  source_path site/matrix/surfaces/_kit.js
+  consumes ForeignTwin
+  publishes DerivedView
+  internal_calculus a screen is authored with what it looks at, what it can see and what it demonstrably cannot. The installed text screen normalises transformed spellings -- case, diacritics, digit and symbol substitutions, and separators inserted between letters -- and matches an authored term list against the normalised form. A match writes a flag naming the twin, the screen, the redacted term and a review state; the reader asks for the boxed set and declines to project it.
+  invariant flagged is not illegal, false, malicious or deleted, and not flagged is not safe; the flag says only that this must not be projected automatically until its presentation state is resolved, and the type carries that in its own cannot_infer
+  invariant the observation, its receipt and its bytes are untouched; boxing is a presentation state and a cleared flag restores ordinary projection
+  invariant a screen states what it cannot see; this one matches spellings and is blind to meaning, context, quotation and reclaimed use, which is why a match is a reason to look rather than a finding
+  invariant a declared screen is not a running one, and its silence is not a clean bill; a screen installed with no terms reports that it looked at nothing rather than returning an empty result
+  invariant a matched term is recorded redacted; a flag is read by people on a page and must not reprint in full what it was raised for
+  invariant the term list lives on the estate and not in this repository; a list of slurs is not something to commit, and a screen with no list says so
+  invariant a substitution stands for a letter only between letters, and only runs of single letters are rejoined; without the first, trailing punctuation joins the word, and without the second, ordinary prose folds into false matches
+  cannot_infer a flag -> a judgement about the material or its source
+  cannot_infer an unflagged twin -> a screened and cleared one; most material is never looked at by a screen that could see anything
+  cannot_infer a screen declared -> a screen running; obscenity and NSFWJS are recorded with their provenance and produce no flags in this estate
+  witness scripts/tests/content_screen.test.mjs holds ten transformed spellings against the native matcher and four pieces of ordinary prose against false matching, checks term redaction and the missing-term refusal, checks the ordinary reader excludes boxed twins without erasing the observation, and carries opt-in live checks that every flag names its screen and every declared screen says its silence is not a result; the historical Python test is retained as components/BonfyreControlPlane/tests/test_content_quarantine.py.archive
+  known_gap only text is screened; the image screen is declared and not installed, because classifying pictures means fetching and holding them, which changes what the estate retains rather than only what it screens
+  known_gap screening runs over retained bodies on demand rather than at ingest, so material is boxed after it lands rather than before it is first projectable
+  known_gap the native screen has fixture-level CMS and scheduled-unit witnesses, but the timer has not been deployed or exercised on a live estate
+  known_gap review has a state and no surface to change it; a boxed item stays boxed until somebody edits the record directly
+
+interaction quarantine-holds-back-projection
+  source content-quarantine
+  destination internet-census
+  relation projects
+  preserves the observation, its receipt and its retained bytes exactly; boxing changes what is shown and nothing about what was kept
+  drops the boxed twin from ordinary reads, and says why rather than returning an empty result
+  forbidden_inference a flag -> a verdict about the material or the source
+  forbidden_inference an unflagged source -> a screened one
+
+architecture foreign-publication-corpus
+  canonical_name ForeignPublicationCorpus
+  family external
+  domain External / Retained Material
+  layer external/corpus
+  semantic_question What did the observed world actually say, rather than which sources this estate could have asked?
+  purpose Promote the items inside retained syndication bodies into publication occurrences, each carrying the twin whose receipt holds it, the digest that identifies it, and the rights basis it was retained under. The estate stops holding a list of feeds and starts holding what those feeds published.
+  maturity implemented
+  node_types InternetSource
+  node_types PublicationOccurrence
+  edge_types promotes
+  edge_types corroborates
+  command BonfyreCMS
+  source_path cmd/BonfyreCMS/src/main.c
+  source_path cmd/BonfyreCMS/content-types/internet_source.json
+  witness cmd/BonfyreCMS/tests/publication_promotion_test.sh runs the native CMS with Bun assertions for strict UTF-8 decoding, latin-1 conversion, entities, idempotency, batch counts and rights/assertion refusals without a Python test interpreter
+  invariant an item is identified by source, link and title hashed together, so re-promoting a feed adds nothing and a feed that repeats an item stores it once
+  invariant every promoted item carries assertion_state OBSERVED and a rights basis of retained-public-rss-observation; the estate records that a foreign party said this, never that it is true
+  invariant a field whose bytes are not valid UTF-8 is transcoded from latin-1 rather than stored raw; text that is already well-formed is untouched
+  forbidden_inference a promoted item -> an endorsement, a republication right, or a claim that what the feed said is true
+  forbidden_inference corroboration across sources -> truth; independent syndication of one wire story is one source wearing several names
+  forbidden_inference this corpus -> currency; every item is as old as the body it was promoted from
+  known_gap the promoter existed, was correct, and had never run: `internet_source` held zero rows, so a native path from a retained feed body to publication items sat complete and unused while the estate had 500 conformant feeds on disk. Cataloguing the feeds was mistaken for having their contents.
+  known_gap promoting one source per process reloads and validates 54 content-type schemas before reading a single item, so most of the wall time of a 500-feed estate was spent re-reading its own schema directory. A batch form that keeps the loop inside one process was added for that reason.
+  known_gap the promoter copied feed bytes into a TEXT column without transcoding them. 100 of the first 6,281 titles were invalid UTF-8 -- a publisher declaring ISO-8859-1 put raw high bytes into the database, SQLite stored them without complaint, and every reader afterwards had to guess. Measured on the corpus before it was fixed.
+  known_gap corroboration is counted on normalized title and canonical link, which finds identical syndication and misses the same event reported in different words. Semantic corroboration needs the vector index over this corpus and has not been built.
+  known_gap this corpus was built as row-by-row SQLite inserts at roughly six seconds a feed while the estate holds an activated columnar substrate for exactly this shape of work. Daft and Lance are registered at `measured`, Parquet already carries 544MB of observation facts with a digest-and-slice contribution model, and none of it was consulted. The pipeline is correct and the storage choice was made by not looking.
+  known_gap Feldera and Hydro are activated substrates for incremental and distributed dataflow, and a 500-feed promotion is the shape of work they exist for. It ran as a serial loop in one process.
+  known_gap the promoter refreshed the family index once per row and then, after that was fixed, once per feed -- and an index rebuild costs the whole table, so a 500-feed promotion was quadratic in the corpus it was building. Deferred to one rebuild at the end of a batch, the full estate promotes in 170 seconds where a feed alone had cost six.
+  known_gap the corpus is indexed on hashed-token geometry and the retrieval is noise: a tennis seed returns a train crash and a birdhouse, an earthquake seed returns figure skating. Only the identical-title neighbour is genuinely near, which is corroboration rather than retrieval.
+  known_gap two organs of this estate disagree about that geometry. `bonfyre-embed` refuses to return a hashed representation when a learned one was asked for -- "hashed-token geometry is not a learned metric and distances are not comparable across the two" -- and the CMS ANN index builds one and serves it. The refusal is right and it is not enforced anywhere but in the organ that makes it.
+  known_gap the estate had a working learned embedder the whole time and could not find it: the default model name resolves to a directory that does not exist, while nomic-embed-text-onnx is installed with its vocab and produces 768-dimensional vectors. The corpus was indexed badly because a default pointed at nothing.
+  source_path ~/.bonfyre/estate/publications/corpus.db
+  source_path ~/.bonfyre/estate/publications/vectors.db
+  known_gap the first 22,962-item corpus and its half-built vector store were written to a session scratch directory and were lost with it. The rebuild lives under ~/.bonfyre/estate/publications beside the estate it was promoted from, because a corpus is estate state and not an intermediate result.
+  known_gap the learned index answers where the hashed one could not: "tennis championship final" returns the tennis items at cosine distance 0.906-0.959, where the CMS hashed-token index had returned a train crash and a birdhouse for a tennis seed. The CMS ANN index is still hashed and still served; nothing yet routes corpus search through the learned store.
+  known_gap the first learned re-embedding was stopped at 3,160 rows and discarded: it was being written by a tokenizer that stored collapsed vectors for non-Latin titles and dropped typographic punctuation into [UNK] for Latin ones. The store is rebuilt from zero by the corrected tokenizer, because one corpus written by two tokenizers is two geometries with one name.
+  known_gap about 7 percent of the corpus -- Cyrillic, Arabic, Bengali, Devanagari and CJK headlines -- is invisible to the installed English model and is refused at embedding rather than indexed; those items remain in the corpus and are unreachable by semantic search.
+  invariant feed text is XML: entities are decoded once, after identity is computed from the bytes as the feed wrote them, so decoding changes what is stored and never which occurrence an item is
+  known_gap the promoter stripped tags and unwrapped CDATA and never decoded an entity, so 1,799 of 22,962 titles (7.8 percent, from 216 feeds) and 1,200 links were stored as markup -- some Cyrillic feeds entirely as hex entities. The embedder then read "quot" and "x43e" as words, and titles sharing an escaped quote embedded as near-duplicates. Rows were repaired in place by `bonfyre-cms publication repair-entities`, keeping all 22,962 occurrence ids distinct, and the repaired titles re-embedded.
+  known_gap 6 titles still carry an entity after decoding, because their feeds escaped twice: "&amp;quot;" decodes once to "&quot;". XML decodes once and a second pass would be a guess about the publisher's intent, so they are left as the feed wrote them.
+  known_gap the learned store holds 21,221 of 22,962 titles at 768 dimensions. 1,741 are refused as too little seen by the English vocabulary; the last pass pruned 199 rows the tightened rule no longer admits and replaced the vectors of 1,679 entity-repaired titles. Every stored row's text equals its corpus title, and artifacts and vectors agree row for row.
+  known_gap semantic corroboration now finds the same event in different words across different feeds -- a Chile nursing-home fire, a Philippine ferry death toll, the BRICS declaration, a Zomato cash-on-delivery fee -- with no differently-worded pair at cosine 1.000 and no pair at or above 0.90 that shares no word. Before the tokenizer, entity and visibility fixes the top of the same list was collapse: headlines matched on "g20", "sargan" and an escaped "quot". 116 cross-feed pairs sit at or above 0.90. Nothing here calibrates a threshold for "the same event", and near neighbours remain candidates for corroboration rather than corroboration.
+  known_gap corpus search on the learned store is reachable only through bonfyre-embed and bonfyre-vec on the command line. The CMS ANN index is still hashed-token geometry and is still the one a surface would query.
+
+architecture destination-release
+  canonical_name DestinationRelease
+  family external
+  domain External / Observed material on its way to a destination
+  layer contract
+  semantic_question A source is ready for a destination. Has anything actually been delivered to it, and if the source moves, which deliveries stop being current?
+  purpose The lifecycle between an observed source and a destination that carries its material: eleven declared states of which three are deliveries, five typed change consequences, and a declaration of which fields each destination carries so a change can invalidate only what it touches. Compiled from CUE, computed from records, and reached through bonfyre-project foreign release-compile, release-deliver and release-impact.
+  maturity measured
+  node_types DestinationRelease
+  node_types SourceReleaseDelta
+  node_types DestinationCarries
+  edge_types delivers_to
+  edge_types invalidates
+  internal_calculus readiness and delivery are different facts, and the release projection had only the first. A source contract with a declared extractor and retained material read ready_for_extraction, and the one field capable of contradicting it -- public_program_delivery_verified -- was a literal zero printed beside it, so an operator could not tell whether nothing had been delivered or nothing was being counted
+  internal_calculus a state is a delivery because the compiled lifecycle says that state delivers, and for no other reason; a caller comparing state strings itself is a caller that will eventually compare the wrong one
+  internal_calculus a delivery is its receipt: the digest of the bytes that were materialized, so a receipt cannot name a file whose contents have since changed
+  internal_calculus a blocked destination names the binding it lacks, because a blocked state with an empty reason is indistinguishable from a bug
+  internal_calculus a change invalidates only a destination declared to carry the field that changed; refreshing on a timer is what happens when nothing knows which destination a change bears on
+  internal_calculus staleness is measured against the estate itself rather than against a second stored snapshot: recompose the fragment from the archive as it stands and see whether it still hashes to what the receipt recorded
+  invariant compiling admissibility can never produce a delivering state, because it materializes nothing
+  invariant a compiler owns only the states it computes: a recompile may move a row between admissible and blocked and may not touch one that has delivered
+  invariant a delivery is refused across catalogue generations rather than continued, so a receipt never names bytes that were not in the release it claims
+  invariant a failed delivery writes no state and never alters what was observed
+  invariant stale is not withdrawn: a staled delivery keeps its receipt and its count, and what was delivered is still there
+  invariant the bytes a receipt names exclude when they were written, because a fragment that carries its own timestamp can never hash the same twice
+  forbidden_inference a delivered destination -> a reuse licence, the destination agreeing the material is correct, or authority to publish it again after the source moves
+  forbidden_inference an admissible destination -> a delivered one, a published one, or permission that survives a change in the source
+  forbidden_inference a cosmetic or absent delta -> a source that did not move; a delta is a statement about the fields this estate compared
+  forbidden_inference a delivery this closure leaves alone -> a delivery judged current; it is only one unaffected by the deltas examined
+  forbidden_inference a typed consequence -> the source's own intent in changing
+  source_path schemas/control/destination-release.cue
+  source_path cmd/BonfyreWebAddress/tools/compile_destination_release.zig
+  source_path cmd/BonfyreWebAddress/generated/native_destination_release.h
+  source_path components/BonfyreProject/src/main.c
+  source_path cmd/BonfyreCMS/content-types/destination_release.json
+  source_path cmd/BonfyreCMS/content-types/source_release_delta.json
+  source_path components/BonfyreProject/tests/destination_release_test.sh
+  witness 2026-09-26 eleven states and five consequences compiled from CUE, three states declaring themselves deliveries, by a generator that refuses an unknown field
+  witness 2026-09-26 compiled on the estate: 2,442 source contracts across five destinations gave 2,194 admissible and 10,016 blocked, every blocked row naming its binding -- 2,442 shop destinations with no price bound to the source coordinate, 2,439 media and 2,439 rights with no declared extractor, 257 search destinations with nothing retained to index
+  witness 2026-09-26 delivered end to end: the search destination for api.wikimedia.org's featured feed materialized 45 retained items into 6,842 bytes whose sha256 matches the receipt recorded against the row, and the release summary's delivery figure moved from a printed 0 to a computed 1
+  witness 2026-09-26 six typed deltas over the estate's own 23,954 observed prices, each naming a source identity that carries more than one amount -- usaspending, medicaid/nadac, azure retail, wikidata P2284, openfoodfacts and openrouter -- keyed on the identity prices bind by so they can reach the destinations that carry the field
+  witness 2026-09-26 two defects the measurement caught in the work itself. Recompiling admissibility with INSERT OR REPLACE reset the delivered row to admissible and destroyed its receipt reference, so the compiler now owns only admissible and blocked. And the delivered fragment hashed bytes that included its own materialized_at stamp while the drift check recomposed without it, so every delivery read as stale within a second of being made -- a staleness detector that could only say yes; both paths now compose through one canonical composer
+  witness 2026-09-26 held by components/BonfyreProject/tests/destination_release_test.sh, which asserts the refusals rather than the happy path: a destination with no materializer refused, a source with nothing retained refused with the missing material named, a wrong generation refused with no row moved, a recompile leaving a delivery intact, a price change not staling a fragment that carries no amount, archive drift staling the destination that does carry it, and a staled row keeping its receipt and count
+  known_gap only the search destination has a materializer. shop, spatial, media and rights declare extraction this estate has not built, and delivering one is refused rather than reported as work that did not happen
+  known_gap the deltas this estate can compute come from observed prices and from recomposing its own fragments; no source is compared against a retained earlier body, so a boundary or disappearance consequence is declared and never yet observed
+  known_gap nothing schedules any of these three commands; an operator runs them, and the adaptive refresh policy the target describes has no measurement behind it yet
+  interacts destination-release-reads-the-twin
+
+interaction destination-release-reads-the-twin
+  source destination-release
+  destination foreign-twin
+  relation delivers_from
+  preserves the twin as a cached projection that is not remote truth: a delivery arranges material already retained and fetches nothing
+  drops any path by which delivering could alter what was observed, or by which a failed delivery could change the source's standing
+  forbidden_inference a delivery -> a fresh reading of the source, or verified availability of what it carries
+  witness 2026-09-26 the delivered fragment was composed from the item archive with no network call, and a refused delivery left every destination row where it was
+  binding components/BonfyreProject/src/main.c
+  binding schemas/control/destination-release.cue
+
+architecture discovery-set
+  canonical_name DiscoverySet
+  family external
+  domain External / A working set over observed publishers
+  layer contract
+  semantic_question Which publishers in the ledger meet a stated set of criteria, and which of those has a person actually accepted?
+  purpose A set defined by criteria that run against every publisher in the frontier rather than by a list of members. Ten criterion kinds, each bound to the column it reads; four verdicts, two of which a machine may not set. Reached through bonfyre-project discovery run and discovery decide, and served at /s/sets/all and /s/set/<id>.
+  maturity measured
+  node_types DiscoverySet
+  node_types DiscoveryCandidate
+  node_types CriterionKind
+  edge_types proposes
+  edge_types decided_by
+  internal_calculus the estate's existing collections are frozen lists: a source_collection names its members in a source_refs array somebody typed, so nothing can say why a publisher is in one and nothing can propose a new one. A working set is the other shape, and the difference is that criteria can be argued with
+  internal_calculus a criterion may only read a column declared for it in CUE, so a set cannot express a judgement the estate holds no data for; the evaluator builds SQL from the compiled table and never from a string in C
+  internal_calculus the criteria compute what is reachable and stop there. Two of the four declared verdicts may not be set by a machine, so accepting or rejecting is somebody's act with their name and their reason on it
+  internal_calculus a bounded page is not a measurement: the number matched is counted over the whole ledger and reported separately from the rows that crossed the carrier
+  invariant a run writes only a verdict the contract lets a machine write, and never disturbs a candidate a person has already decided
+  invariant a criterion kind the contract does not declare is refused by name rather than ignored, and a set with no criteria is refused rather than matching the whole estate
+  invariant a decision carries the name of whoever made it; an unnamed actor is refused
+  invariant a publisher no run has proposed cannot be accepted into a set
+  invariant at least one declared verdict is beyond a machine's reach, asserted in the build
+  forbidden_inference matching every criterion -> semantic relevance, a reading of the publisher, or a judgement about its quality
+  forbidden_inference a proposed candidate -> a source this estate has read, asked for, or endorsed
+  forbidden_inference membership of a set -> a claim the publishers in it are related in the world
+  forbidden_inference an accepted candidate -> permission to fetch, contact or enrol anything, or a claim the publisher knows the set exists
+  forbidden_inference a host suffix -> jurisdiction, ownership or sector; .org is not a charity and .edu is not a school
+  source_path schemas/control/discovery-set.cue
+  source_path cmd/BonfyreWebAddress/tools/compile_discovery_sets.zig
+  source_path cmd/BonfyreWebAddress/generated/native_discovery_sets.h
+  source_path components/BonfyreProject/src/main.c
+  source_path cmd/BonfyreWebAddress/src/main.c
+  source_path cmd/BonfyreCMS/content-types/discovery_set.json
+  source_path cmd/BonfyreCMS/content-types/discovery_candidate.json
+  source_path components/BonfyreProject/tests/discovery_set_test.sh
+  witness 2026-09-26 ten criterion kinds and four verdicts compiled from CUE by a generator that refuses a criterion reading a column its table does not have, and refuses a verdict set in which every verdict may be set by a machine
+  witness 2026-09-26 criteria ran against the real ledger: 29,256 publishers evaluated, and host_suffix=.edu with publishes_plane=calendar proposed seven -- api.artic.edu, calendar.fiu.edu, calendar.tccd.edu, calendar.tcu.edu, calendar.unt.edu, calendar.utdallas.edu and calendar.utk.edu -- using the same plane classifier the institution room counts with
+  witness 2026-09-26 a second set, protocol_in=dcat,socrata,ckan,json_api with min_channels=3, matched 7,285 publishers of the 29,256. The first version reported 500, which was the page limit presented as a measurement; the count is now taken over the whole ledger and the page size reported beside it
+  witness 2026-09-26 the human line holds in practice: a run wrote seven candidates all pending, and four attempts to decide were refused -- a verdict a run writes, a verdict nobody declared, a publisher no run had proposed, and a decision with no actor named. Accepting calendar.unt.edu and rejecting api.artic.edu were both recorded with the actor and the reason
+  witness 2026-09-26 a re-run re-evaluated the set and left both decided candidates exactly as they were, which is the property that makes a set safe to keep running
+  witness 2026-09-26 served at /s/set/school-calendars: one accepted, five waiting on a person, one rejected, each criterion shown with the table and column it actually queries, and the closing sentence's count of machine-forbidden verdicts read from the compiled contract rather than written into the prose
+  witness 2026-09-26 held by components/BonfyreProject/tests/discovery_set_test.sh, whose fixture separates the two ways a publisher can fail: one has a calendar and the wrong suffix, one has the suffix and only a feed, and both are excluded
+  known_gap nothing schedules a run. The monitoring field records what a set is meant to be watched for and no timer reads it, so a set is as current as the last time somebody ran it
+  known_gap a criterion reads the ledger and never the source, so a set cannot express anything about what a publisher actually publishes beyond the shape of its addresses
+  known_gap there is no way to accept or reject from the page: the room shows what is waiting and the decision is a command-line act, so the operator loop is legible but not yet closed in a browser
+  interacts discovery-set-reads-the-frontier
+
+interaction discovery-set-reads-the-frontier
+  source discovery-set
+  destination source-frontier
+  relation filters_without_reading
+  preserves the ledger as a record of addresses: a set queries recorded columns and fetches nothing
+  drops any path by which proposing a candidate could read, admit, or contact the publisher
+  forbidden_inference a candidate proposed from the ledger -> an address anyone has asked for
+  witness 2026-09-26 both sets were evaluated entirely against root and channel columns with no network call, and every candidate was written as pending
+  binding components/BonfyreProject/src/main.c
+  binding schemas/control/discovery-set.cue
+
+architecture browser-host
+  canonical_name BrowserHost
+  family external
+  domain External / Beside the page
+  layer external
+  semantic_question A person is on a page in their own browser. What has this estate already kept from it, and can they have a copy kept without leaving the page?
+  purpose A native-messaging host and a side-panel extension. The host is a carrier: a page's address arrives in an envelope and is answered by the same owner-backed tools the MCP surface calls. It owns no store and no operation. The panel says in plain words what has been kept from the page in front of the reader and keeps a copy when they ask.
+  maturity measured
+  node_types OperationEnvelope
+  node_types HostSession
+  interacts foreign-twin
+  source_path integrations/browser/host/bonfyre-browser-host.mjs
+  source_path integrations/browser/host/install.sh
+  source_path integrations/browser/host/com.bonfyre.browser_host.json.template
+  source_path integrations/browser/extension/manifest.json
+  source_path integrations/browser/extension/panel.js
+  source_path integrations/browser/extension/panel.html
+  source_path integrations/browser/extension/background.js
+  source_path integrations/mcp/recursive_overlay_tools.mjs
+  witness integrations/browser/tests/browser-host.test.mjs speaks the browser's side of the wire to a real host process: replies are framed as Chrome's native messaging defines, an unknown operation and a non-envelope are refused, only a public https address is carried, keeping a page is refused unless the envelope says the person asked, a session ends after 64 operations, an owner's refusal is carried with its reason, a reply over the browser's limit is cut to its receipt, an oversized envelope ends the session, and a page never read answers an empty history from the real BonfyreProject owner without writing a receipt
+  witness 2026-10-03 the opt-in case in the same file read https://example.com/ through the host with a confirmed ask and the page's history then showed one kept observation, both answered by BonfyreProject foreign observe and history
+  internal_calculus one connection is one session: the panel holds a port for as long as it is open, so related questions about a page do not start a process each
+  internal_calculus an envelope carries an operation, an address and whether the person asked; a reply carries a receipt and never a retained body, because the browser refuses a reply over 1 MiB
+  internal_calculus a twin is named for the host a page was read from, so one site's pages share one
+  invariant the host carries hello, collected, kept, history, observe, capture, hold, read-only provider_admit and the seven account-enrollment operations; every enrollment change needs confirmed: true; kept, history and observe are ForeignTwin's through the tools the MCP surface uses, capture is the page-capture organ's, and hold is the work queue's
+  invariant provider_admit validates a bounded native MessagePack admission against the pinned Aurekai origin, actor and destination, exact retained WebWork revision, declared provider and current challenge; it does not authenticate a provider account, collect a secret or complete the work
+  invariant provider continuation selects a provider-only side panel; ordinary customer work never inherits operator enrollment lanes or page-retention history
+  source_path integrations/browser/provider-contract.mjs
+  source_path integrations/browser/host/provider-admission.mjs
+  source_path integrations/browser/extension/provider-continuation.mjs
+  source_path integrations/browser/extension/provider-content.js
+  source_path integrations/browser/extension/panel-bootstrap.mjs
+  source_path integrations/browser/extension/panel-provider.mjs
+  witness integrations/browser/tests/provider-continuation.test.mjs
+  witness integrations/browser/tests/provider-continuation.browser.test.mjs
+  forbidden_inference a successful installed-extension fixture -> a real provider sign-in, native user-extension activation or a verified production account session
+  invariant observe, capture and hold run only when the envelope carries confirmed: true, which the panel sets from the reader's own click
+  invariant a held selection is at most 8 KiB and the same selection from the same page is one piece of held work, not two
+  invariant the panel reads a selection only after the reader grants that one site, at the moment they ask for the selection
+  witness integrations/browser/tests/browser-host.test.mjs holds a selection in the real BonfyreQueue: refused without the reader's ask and nothing written, held once under family held-selection with the page, the text and the note, held again as the same mission, and an empty or oversized selection refused; a capture is kept under the foreign root by twin and the reply carries hashes and sizes, not bodies
+  invariant an address that is not public https, or that carries credentials, is refused before any owner is called
+  forbidden_inference a connected host -> authority to act for the person browsing
+  forbidden_inference a page observed from the panel -> a true statement about what the page describes
+  source_path integrations/browser/tests/extension-live.test.mjs
+  witness integrations/browser/tests/extension-live.test.mjs loads the unpacked extension into Chrome for Testing with the host registered in a throwaway profile and drives the panel's own script: a page nothing was kept from says so and enables its controls; the reader's click keeps a copy through BonfyreProject and the history shows it with one receipt and one body on disk; a second click keeps the page as rendered with all five representations; a selection is held in the real queue and refused without the reader's ask; an address that is not public is refused in the reader's words with every control disabled; and the panel follows the tab the reader is on (20 expectations, against https://example.com/)
+  source_path integrations/browser/extension/workbench.mjs
+  source_path integrations/browser/extension/observation.mjs
+  source_path integrations/browser/extension/capture.mjs
+  source_path integrations/browser/extension/panel-commerce.mjs
+  source_path integrations/browser/extension/recurring-commerce.mjs
+  source_path integrations/browser/tests/workbench-live.test.mjs
+  source_path integrations/browser/tests/commerce/observation.test.mjs
+  witness integrations/browser/tests/workbench-live.test.mjs runs the commerce workbench as an installed extension: its own capture function reads a shop page and returns the listed product and the two visible terms while leaving out a form's contents, hidden text and unrelated prose; the observation carries the price as unverified page data with shipping and tax not quoted; the workbench shows it and compiles a draft against it; work on a loopback page is refused before the host; and a public page's comparison is held in the real queue through the real host, once however often it is asked (21 expectations)
+  witness integrations/browser/tests/commerce/observation.test.mjs and recurring-commerce.test.mjs, 77 tests, pass from the checkout; the extension's compiler is function-for-function the one in scripts/recurring-commerce/draft.mjs and the two catalogues are equal
+  invariant the workbench keeps observations and drafts in the browser's own store and hands work to the existing hold operation; it adds no native operation and no second host
+  forbidden_inference an offer observed on a page -> a verified price, stock, or a checkout quote
+  forbidden_inference the live witness -> the extension working in the reader's own Chrome; branded Chrome refuses an unpacked extension from the command line, so it ran in Chrome for Testing 131 with a throwaway profile
+  forbidden_inference confirmed: true in an envelope -> a person having asked; the host trusts the one extension its manifest names, and that extension sets it from a click
+  known_gap install.sh, which registers the host in the reader's own browser, has not been run: it writes into that browser's configuration. The panel's "hold what I selected" button first asks the reader to grant the site, and no automation can answer that prompt, so that one path is exercised only through the port beneath it. The side panel was driven as a page in a tab, not docked beside one. The same limit holds for "compare or design from this page": the extension reads a tab only after the reader's click grants it, so the witness runs the extension's capture function in the page through the debugger instead.
+  invariant scripts/recurring-commerce is canonical; scripts/project-recurring-commerce-browser.mjs generates exact self-contained extension copies and the consumer tests reject drift
+  known_gap held selections have native Desk review and an explicit wiki_page draft form; this is not automatic recipe admission, offer verification, provider booking or task completion
+  known_gap observe and capture read the page as a stranger: a separate browser with no session opens the address, so a page behind a sign-in is kept as its sign-in wall, not as the reader saw it
+
+  source_path scripts/project-recurring-commerce-browser.mjs
+  source_path integrations/browser/tests/source-material.test.mjs
+  source_path integrations/browser/tests/native-workspace.test.mjs
+  witness integrations/browser/tests/source-material.test.mjs passes 16 checks including actual Chrome capture against an intercepted current-post fixture and actual native CMS wiki_page retention; no live TikTok request or personal browser was used
+  invariant browser observations distinguish commercial offers, source recipes, source nutrition claims and media metadata; noncommercial export uses existing wiki_page rather than inventing a service_offer
+  invariant current-post TikTok extraction bounds the two recognized hydration carriers, checks source post and author identity, excludes explicit restricted metadata, and retains no session state or signed media URLs
+  forbidden_inference a source-reported nutrition claim -> calculated or verified household nutrition
+  forbidden_inference a TikTok caption, available page metadata or Research API capability -> a complete recipe, media reuse right or permission for commercial research-data use
+  known_gap TikTok capture is a selected-page schema implementation, not an installed TraktoK runtime, bulk crawler, media downloader or authenticated Research API client; real TikTok compatibility remains untested in this pass
+  source_path cmd/BonfyreSourceFrontier/tools/traktok_collect.mjs
+  witness integrations/browser/tests/workbench-live.test.mjs drives Open retained observation in a real installed extension through the actual native host and SourceFrontier command, displays retained caption and transcript, and keeps the source receipt in the existing local observation
+  invariant collected is a read-only SourceFrontier operation over an exact collection and video identity; the browser supplies no database or filesystem location and the operation makes no remote request
+  invariant retained observations, source transcripts and source receipts enter the same workbench, CMS draft projection and held-work envelope; the bridge adds no second host or source store
+  forbidden_inference retained transcript or caption -> a complete recipe, verified nutritional values, current availability or media rights
+  source_path integrations/browser/extension/store.mjs
+  invariant a synchronous browser storage write error aborts and rejects the write transaction without escaping the event handler; revision mismatch still refuses the write
+  witness 2026-10-08 the shared store is exercised by ServiceSite catalogue-browser.test.mjs in fresh Chrome: an injected receipt write QuotaExceededError is handled without a page exception, retains server acceptance in the UI, and permits a stable retry after reload; this is the shared browser module test, not a new installed-extension witness
+
+interaction browser-host-asks-foreign-twin
+  source browser-host
+  destination foreign-twin
+  relation reads_through
+  preserves the page's address exactly as the browser gave it, the owner's receipt and its retention decision, and the owner's refusal with its reason
+  drops the page as the reader saw it; only the address crosses, and the owner reads the page itself
+  forbidden_inference an answer in the panel -> a fresh reading of the page; history is what was already kept
+  forbidden_inference a copy kept from the panel -> the reader's rights over that page extending to the estate
+  invalidates_on the owner's observe or history contract changes, or the browser's native-messaging limits change
+  witness integrations/browser/tests/browser-host.test.mjs
+  binding integrations/browser/host/bonfyre-browser-host.mjs
+  binding integrations/mcp/recursive_overlay_tools.mjs
+
+architecture page-capture
+  canonical_name PageCapture
+  family external
+  domain External / A page as the several things it is
+  layer external
+  semantic_question What arrived, what did the page become after its scripts ran, where was everything placed, what does it tell assistive technology, and how did it look -- for one reading?
+  purpose One reading of a page kept as five representations bound to one capture identity: the response as the network delivered it, the document after its scripts ran, the layout with every node's box, the accessibility tree, and a picture. A later reader uses the representation that answers its question without loading the page again, and without asking a model to rediscover structure from a picture.
+  maturity measured
+  node_types PageCaptureRecord
+  node_types PageRepresentation
+  interacts browser-host
+  source_path integrations/browser/capture/page-capture.mjs
+  source_path integrations/browser/tests/page-capture.test.mjs
+  witness integrations/browser/tests/page-capture.test.mjs captures a page whose script adds a line after it arrives: the kept response is byte-for-byte what was served and lacks the line, the kept document has it, the accessibility tree names the button by its label and the heading by its text, the layout carries boxes and the added text, the picture is a PNG, every file matches the hash in the record, and a second reading of the same page has the same capture identity; an address that is not public https or carries credentials is refused
+  internal_calculus Chrome runs headless in a throwaway profile with its sandbox on, on a debugging port it chooses and writes into that profile; the capture drives it over the DevTools protocol and removes the profile afterwards
+  internal_calculus the identity is the address the page settled on, the response and the document. Layout, the accessibility tree and the picture carry session-local node numbers and pixels, so they are bound to the identity and do not define it
+  invariant a representation is kept with its hash and size, and the record names what each one is
+  invariant only a public https address is captured; one carrying credentials is refused
+  forbidden_inference a captured page -> a true statement about what it describes
+  forbidden_inference a label on the page (paid, in stock, approved) -> that state verified with whoever owns it
+  forbidden_inference this capture -> what a signed-in reader sees; it was read as a stranger
+  forbidden_inference a matching capture identity -> the page unchanged for another reader, viewport or moment
+  known_gap nothing consumes a capture yet: ForeignTwin, DomainProfile and SubjectFabric read retained bodies, not these representations, and a capture is not recorded as a ForeignTwin observation with rights
+  known_gap one viewport (1280x900), one bounded wait after load, no scrolling and no interaction; a page that loads content on scroll or after a click is captured as it first stood
+  witness 2026-10-03 https://example.com/ captured twice for real, once directly (status 200, 38 accessibility nodes, five representations) and once from the extension's panel through the host
+  known_gap public-page capture has been run on one simple page; nothing with a consent wall, heavy scripting or scrolled content
+
+interaction browser-host-asks-page-capture
+  source browser-host
+  destination page-capture
+  relation reads_through
+  preserves the page's address, the capture identity, and each representation's hash and size
+  drops the representations themselves from the reply; they stay on disk under the foreign root and the browser receives references
+  forbidden_inference a capture asked for from the panel -> the page as the reader was seeing it; a separate browser read it with no session
+  invalidates_on the capture record's schema changes, or the browser's reply limit changes
+  witness integrations/browser/tests/browser-host.test.mjs
+  binding integrations/browser/host/bonfyre-browser-host.mjs
+  binding integrations/browser/capture/page-capture.mjs
+
+architecture browser-engine-provider
+  canonical_name BrowserEngineProvider
+  family external
+  domain External / Engines borrowed from the installed browser
+  layer external
+  semantic_question The browser already on this machine carries a PDF writer, a PDF reader and a GPU stack. Can the estate use them as operations without building any of them?
+  purpose Three operations over the installed Chromium, each naming the engine that did the work and what it cost: HTML to PDF through the browser's print path (Skia), PDF to text through its reader (PDFium), and a WGSL compute program on the GPU (Dawn, with Tint compiling the shader). Building those engines natively is a multi-gigabyte project per engine and none is packaged for this machine; borrowing them is a process start. The receipts are what would justify, or not, taking a smaller native dependency later.
+  maturity measured
+  node_types EngineReceipt
+  interacts page-capture
+  source_path integrations/browser/engines/chromium-engines.mjs
+  source_path integrations/browser/capture/chrome-session.mjs
+  source_path integrations/browser/tests/session-lifecycle.test.mjs
+  source_path integrations/browser/tests/navigation.test.mjs
+  invariant navigation completion matches a fresh event for the requested frame and document loader; same-document navigation waits for its frame and URL event, and a navigation error or download cannot count as a loaded document
+  witness integrations/browser/tests/navigation.test.mjs drives a reused Chrome tab through a delayed script, a redirect, repeated fragment navigation, a download failure and an unsafe-port error; the earlier helper returns while the second document is loading and reports the failed navigation as successful
+  known_gap the local attachment fixture produced both a navigation ERR_ABORTED and browser connection closure in the installed headless Chrome; both are rejected, but the protocol isDownload response branch was not exercised by this browser
+  forbidden_inference a document load event -> application readiness or successful HTTP status; asynchronous application work and response validation belong to the caller
+  invariant browser protocol requests clear their timeout on response or failure; closing the connection rejects pending requests and releases their timers before owned process and profile cleanup
+  witness integrations/browser/tests/session-lifecycle.test.mjs verifies process exit and profile removal after successful replies, protocol errors, caller errors and browser disconnection with a pending command; the prior helper completes its work but remains alive until the request deadlines
+  source_path integrations/browser/tests/chromium-engines.test.mjs
+  witness integrations/browser/tests/chromium-engines.test.mjs writes a two-page document with a table to PDF and reads it back: the reader reports two pages and every phrase including the table's cells, and the read names the hash of the file the writer produced; a file that is not a PDF and an address that is not public https are refused
+  witness integrations/browser/tests/chromium-engines.test.mjs runs the field's FNV-1a placement hash as a WGSL program over 100,000 values on a non-fallback adapter and matches the reference on every value; a deliberately wrong reference is counted as 128 mismatches of 256, and a shader that does not compile is refused with the compiler's message
+  witness 2026-10-03 Chrome 146 on Apple metal-3, same program, zero mismatches at each size. Inside the page: 100,000 values 6.9 ms (execute 1.5, readback 3.8) against 3.2 ms for the reference on the processor; 1,000,000 values 39.3 ms (execute 4.5, readback 32.4) against 22.1 ms; 4,000,000 values 137.4 ms (execute 9.0, readback 123.6) against 83.2 ms. The whole call, including starting the browser and passing the values in and out, took 1.2 s, 3.0 s and 19.2 s
+  internal_calculus one headless browser per call, in a throwaway profile with its sandbox on; a document supplied as HTML is served to it from this process on loopback, so rendering reads nothing from the network
+  internal_calculus the shared unit of a GPU program is the WGSL, the input, the value kind and the expected output with its tolerance; the same four could be handed to a native Dawn build or to a page
+  internal_calculus PDF text is read through the built-in viewer's controller, which is the browser's private interface; when a release moves it the operation says so rather than returning nothing
+  invariant every result names its engine, and a GPU result carries compile, upload, execute and readback times separately
+  invariant an integer program must match its reference exactly; a float program is compared within a stated tolerance
+  forbidden_inference zero mismatches on this adapter -> the same floats on another device
+  forbidden_inference a short execute time -> a fast operation (for this hash the processor was faster at every size once upload and readback are counted, and the whole call is dominated by starting a browser)
+  forbidden_inference text read from a PDF -> what a person sees on the page; a scanned page has none
+  forbidden_inference these engines borrowed -> Skia, PDFium or Dawn available as native libraries; nothing links them, and a machine without a Chromium browser has none of this
+  witness integrations/browser/tests/chromium-engines.test.mjs runs a nearest-vector search (2,048 queries against 20,000 sixteen-dimensional vectors, small-integer values so every distance is exact) and gets the reference's index for every query, reading back only the 2,048 answers. 2026-10-03 on Apple metal-3: 1,205 ms for the JavaScript reference on the processor against 28.6 ms GPU execution, 259 ms with the shader compiled
+  witness integrations/browser/tests/chromium-engines.test.mjs reads a PDF written by macOS Quartz rather than by the browser, every line intact, and reports a picture-only PDF as one page with no characters and no invented text
+  forbidden_inference the nearest-vector figures -> the GPU beating a native implementation; the reference is JavaScript on one core, not vectorised C
+  known_gap two GPU programs have been run: a trivial hash, where the processor wins once readback is counted, and a nearest-vector search, where the GPU wins by a wide margin over a JavaScript reference. Neither is an estate workload yet, and no comparison against the estate's own native kernels exists
+  known_gap the PDF reader path depends on a private viewer interface (pluginController_, docLength_) verified on Chrome 146 and Chrome for Testing 131; it returns text in file order with no positions, no page boundaries and no images. A picture-only page yields nothing because nothing here recognises text in pictures, and an encrypted PDF has not been tried
+  known_gap nothing in the estate calls these yet: no surface prints a record to PDF, PDF intake does not use the reader, and no organ runs a GPU program through it. WebRTC audio processing and Perfetto are not carried by this path
+
+architecture receipt-pack
+  canonical_name ReceiptPack
+  family external
+  domain External / Where observations are kept
+  layer external
+  semantic_question A hundred thousand observation receipts are a hundred thousand small files. Can they be one store that says exactly what the files said, for a twentieth of the disk?
+  purpose The ForeignTwin owner's receipts packed into one SQLite file beside the loose ones: each receipt stored whole under its file name, compressed against a dictionary trained on the receipts themselves and carrying a checksum. The owner reads the pack first and then the loose files, and a loose file with a packed name wins, so an observation written after packing is never hidden. Packing changes where receipts live and not what any of them says.
+  maturity measured
+  node_types ReceiptPack
+  node_types PackVerification
+  interacts foreign-twin
+  source_path components/BonfyreProject/src/main.c
+  source_path components/BonfyreProject/Makefile
+  source_path components/BonfyreProject/tests/receipt_pack_test.sh
+  witness components/BonfyreProject/tests/receipt_pack_test.sh packs 301 receipts, one longer than the eight kilobytes a reader looks at: every packed receipt is byte-identical to its file; conflicts, admissible, hydration, history, resolve and twins answer the same from the pack alone as from the directory; a receipt written after packing is seen; a loose file wins over the packed one of its name and verify then fails; and one byte changed inside one packed receipt is refused by verify and reported by a reader
+  witness 2026-10-03 the live estate's 135,989 receipts, read and not changed: 251 MB of text occupying 607 MB on disk packed to 29.0 MB in 75 s; all 135,989 identical to their files on verify; conflicts, admissible and hydration byte-identical between the earlier binary on the loose directory, the new binary on the pack alone, and the new binary with both present; those three scans took 23 to 24 s over the loose files and 2 to 3 s over the pack
+  internal_calculus a receipt is one or two kilobytes of nearly the same JSON, so a dictionary of up to 112 KB trained on an even spread of them carries most of each one; the dictionary is sized to what it learns from, so a small estate pays for a small one
+  internal_calculus as files each receipt costs a filesystem block: 251 MB of text occupied 607 MB. Transparent filesystem compression does not help, because a compressed file still takes its block (607 MB became 542 MB)
+  internal_calculus packed rows are held in name order so finding whether a loose file shadows one is a search; with both present that is 136,000 of each
+  invariant packing only reads the receipts directory; the pack takes its name only once it is complete
+  invariant every packed receipt carries a checksum, and a row that fails it, or comes back at another length, is reported as damage and never read around
+  invariant a loose receipt with a packed name is the newer word on that receipt
+  forbidden_inference a packed receipt -> a verified observation; the pack moves receipts, it does not check what they claim
+  source_path cmd/BonfyreWebAddress/src/bf_receipt_store.h
+  source_path scripts/content-screen.mjs
+  witness 2026-10-04 the web-address organ reads receipts through one shim at its eight listing and opening sites. Its /foreign/receipts route returned the same 135,989 rows, byte for byte in content, from the earlier binary on loose files, the new binary on a root holding only the pack, and the new binary on loose files; 13 of its 14 receipt and foreign tests pass and the fourteenth fails the same way with the earlier binary
+  witness components/BonfyreProject/tests/receipt_pack_test.sh retires loose files against a pack: 300 unchanged files are removed, the one receipt appended to after packing is kept and still read first, the owner's answers do not change, and retiring twice removes nothing
+  witness 2026-10-04 the live receipts packed in place and verified (135,989 identical), a restorable archive of every loose file written (18.5 MB), and the loose files retired: 608 MB on disk became 28 MB, with the owner's conflicts and hydration answers and the live site's receipt listing unchanged
+  witness 2026-10-04 the retirement was then undone within four minutes. A scheduled publish pass had been running since midnight with its own server started from the binary built before this change; that server listed no receipts once the files were gone. All 135,989 files were restored from the archive in 43 s and that server listed them again. Retirement is to be repeated when that pass has ended
+  invariant a loose receipt is removed only while its bytes still equal the packed copy; one appended to since packing is kept
+  forbidden_inference every reader in source migrated -> every running process migrated; a process started before the change keeps the code it started with
+  forbidden_inference the loose files restored -> that publish pass unaffected; pages it walked in those four minutes that read receipts may have been refused or rendered without them, and its log does not separate them from its usual refusals
+  forbidden_inference a clean verify -> the loose files and the pack staying identical; a receipt written later exists only as a loose file until the next pack
+  witness 2026-10-04 06:54 UTC, after that publish pass had ended and no server from the earlier binary remained: the pack verified again (135,989 identical) and the loose files were retired. Receipts are 28 MB on disk; the live site lists the same 135,989 rows as before the change and the owner's conflicts answer is unchanged. The archive of the loose files (18.5 MB) is kept
+  known_gap the web organ's other four patched sites use the same shim but were not each driven by a request here. Receipts written from now on are loose files until the next pack, and nothing packs on a schedule
+  source_path components/BonfyreProject/tools/receipt_table.cpp
+  witness components/BonfyreProject/tests/receipt_pack_test.sh packs 42 bodies holding 32 distinct contents: each content is stored once, every name reads back its file's exact bytes including an empty body and random bytes, an absent name is refused, and one changed byte in a packed body is refused on read and on verify
+  witness 2026-10-04 the live estate's 3,074 retained bodies, read and not changed: 934 MB packed to 391 MB in 246 s, 2,814 distinct contents, all 3,074 identical to their files on verify in 9 s. An earlier estimate of 280 MB, made from the first 400 files, was wrong: the larger bodies include already-compressed formats
+  witness components/BonfyreProject/tests/receipt_pack_test.sh turns the packed receipts into a typed Parquet table (bonfyre-receipt-table) and checks its counts, its column types and that it agrees with the owner about one address
+  witness 2026-10-04 the live receipts as a table: 135,847 observations in a 9.1 MB Parquet written in 1.1 s; the owner's conflicts question asked of it through DuckDB answered in 54 ms against 3 s from the pack and 23 s from loose files, agreeing with the owner on 12,623 addresses and their counts
+  witness 2026-10-04 the table showed what the owner's JSON did not make visible: 368 addresses the owner reports as conflicts with a content change where neither observation retained anything -- two 403 refusals whose error pages differ by a few bytes (https://aaa.si.edu/ is one). The owner counts a change of digest between any two observations, not between two that held content
+  forbidden_inference a conflict reported by the owner -> content that changed; 368 of 12,991 on 2026-10-04 were refusals whose refusal page changed
+  known_gap the owner's conflict rule has not been changed, so those 368 are still reported; whether a changed refusal page is a conflict is the owner's question to settle
+  witness 2026-10-04 the live retained bodies compressed in place by the filesystem, each copy compared to its original before replacing it: 3,074 files, 897 MB on disk to 483 MB, with every reader unchanged because they still open ordinary files
+  known_gap bodies are held by filesystem compression, not by the body pack: the pack would take them to 391 MB but nothing reads bodies from it. A file rewritten later is written uncompressed until the pass is run again, and the compression is this filesystem's, not a portable form. A body of 256 MB or more is left out of a pack and counted
+  known_gap packing is whole-directory and from scratch; there is no incremental append, and a build without zstd neither writes nor reads a pack and says so
+
+interaction receipt-pack-serves-foreign-twin
+  source receipt-pack
+  destination foreign-twin
+  relation stores_for
+  preserves every receipt whole and byte-identical under its file name, and the rule that the newest word on a receipt is the loose file
+  drops the one-file-per-receipt layout and its filesystem block per receipt
+  forbidden_inference an answer read from the pack -> a different answer than the files would give; the witness holds them identical
+  invalidates_on the receipt schema, the loader's eight-kilobyte reading window, or the pack's table layout changes
+  witness components/BonfyreProject/tests/receipt_pack_test.sh
+  binding components/BonfyreProject/src/main.c
+
+architecture media-decode-operation
+  canonical_name MediaDecodeOperation
+  family external
+  domain External / One media operation, several engines
+  layer external
+  semantic_question Can "decode this picture to pixels" be one operation with a browser engine and a native engine behind it, held to the same answer?
+  purpose The decode operation as a shared unit: the same source, the same receipt (frame count, size, pixel layout, digest of the pixels), realised by the browser's WebCodecs decoder and by FFmpeg's native libraries. A consumer names the operation and takes whichever engine is where the work is.
+  maturity measured
+  node_types DecodeReceipt
+  interacts browser-engine-provider
+  source_path integrations/browser/engines/media-decode.mjs
+  source_path integrations/browser/tests/media-decode.test.mjs
+  witness integrations/browser/tests/media-decode.test.mjs decodes a 320 by 240 PNG through both engines to the same pixel digest, an AV1 still to pictures within four levels per channel of each other, and tells a different picture apart
+  witness 2026-10-04 Chrome 146 WebCodecs against FFmpeg with dav1d: the PNG identical in every channel; the AV1 still differing by at most 2 levels, mean 0.28, because the conversion from the codec's colour space to RGB is not defined bit for bit
+  invariant a lossless source must decode to identical pixels in both engines; a lossy one is compared within a stated tolerance, never by digest
+  forbidden_inference the same pixel digest for a lossless picture -> the same for a lossy one
+  forbidden_inference one still picture decoded -> video, audio, timed frames or a live capture decoded; only the first frame of a still is realised
+  known_gap one operation and one frame: no audio, no video stream, no time base beyond the frame's own timestamp, and no encode. Nothing in the estate calls it
+
+architecture text-primitives
+  canonical_name TextPrimitives
+  family external
+  domain External / Text identity and bounded matching
+  layer external
+  semantic_question Is this the same name as that one, and will this pattern finish?
+  purpose Two primitives over packaged libraries, for every owner that compares names or runs rules: an identity key (utf8proc: composed, case-folded, compatibility forms unified, invisible code points dropped, spacing collapsed) and a matcher guaranteed linear in the text (RE2), which refuses a pattern that needs backtracking.
+  maturity measured
+  node_types IdentityKey
+  node_types MatchProgram
+  source_path lib/libbonfyre-text/bf_text.h
+  source_path lib/libbonfyre-text/bf_text.cc
+  source_path lib/libbonfyre-text/tests/bf_text_test.c
+  source_path lib/libbonfyre-text/bf_text_key.c
+  witness lib/libbonfyre-text/tests/bf_text_test.c, from C: composed and decomposed accents, case, the sharp s, fullwidth letters, a ligature, a no-break space and a zero-width space all give one key; an accent, and a space between words, keep two names apart; invalid UTF-8 and a key that does not fit are refused; a backreference and a lookahead are refused with a reason; and ^(a+)+$ over 200,001 characters answers in under a millisecond
+  witness 2026-10-04 the identity key over the live estate's 29,240 distinct source names gave 29,238 keys; the two collisions differ only by case. No Unicode identity split exists among those names today
+  forbidden_inference the same identity key -> the same person or organisation; it is the same spelling
+  known_gap no owner calls either primitive yet: CMS, Entity, ForeignTwin and the frontier still compare text their own way, and their rules still run on each language's own regular-expression engine
+
+architecture estate-volume-harvest
+  canonical_name EstateVolumeHarvest
+  family external
+  domain External / What is still only on the old host's disk
+  layer external
+  semantic_question A 47 GB boot volume is being held because the real auth store and CMS are on it. How little of it is actually the estate's, and how does that come home?
+  purpose Reads a mounted volume read-only and takes out only the estate's own state: inventoried, each copy checked against the volume, each database integrity-checked, keys and credential files named and not copied, and the rest packed into one ordered archive with a receipt. The volume stops being the only copy of anything without being written to or deleted.
+  maturity implemented
+  node_types HarvestManifest
+  node_types HarvestReceipt
+  source_path scripts/oracle_volume_harvest.sh
+  source_path scripts/tests/oracle_volume_harvest_test.sh
+  source_path scripts/claim_oracle_a1.sh
+  witness scripts/tests/oracle_volume_harvest_test.sh runs the harvest over a made-up read-only volume: 29 estate files taken and none from the operating system or caches, two key and credential files named and not copied, a damaged database named as failing integrity, the auth store readable at the destination, the archive holding every taken file, the volume byte-identical afterwards, and a harvest onto the volume itself refused
+  witness 2026-10-04 read-only inventory of the tenancy: bonfyre-runtime-01 (Boot Volume) 47 GB and a rescue clone bonfyre-estate-rescue-2026-09-18 47 GB, both in AD-1; one full backup bonfyre-runtime-01-state-2026-10-03 (47 GB, 37 GB unique); one bucket; no instance. The claim job had asked for a host 1,026 times, every answer "Out of host capacity"
+  invariant the harvest never writes to the volume, never deletes, and never copies a private key or credential file
+  forbidden_inference the harvest tested on a made-up volume -> the real volume harvested; it has never been mounted, because no host exists to attach it to
+  forbidden_inference a harvested file -> a current one; the volume stopped changing when its instance was disabled and the estate at home has moved on
+  known_gap nothing can read the real volume until the claim job wins a host. The paths the harvest looks under are taken from the old host's layout as recorded, not from the volume
+  known_gap reconciling what comes home with the local estate (which auth rows and CMS entries exist only there) is not written, and neither volume nor the backup is released by anything here

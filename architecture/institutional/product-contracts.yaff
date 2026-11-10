@@ -1,0 +1,139 @@
+atlas institutional-product-contracts
+
+architecture institutional-product-contracts
+  canonical_name ProductContracts
+  owns ProductContract
+  owns CapabilityBinding
+  consumes SurfaceIR
+  consumes DelegationEnvelope
+  consumes SemanticProgramIR
+  consumes Authority
+  consumes WorkState
+  publishes ProductContract
+  publishes CapabilityBinding
+  family institutional
+  domain Institution / Downstream product
+  layer surface
+  semantic_question What can a person in this downstream organization actually see, filter, run and approve, and which existing route or function realizes it?
+  purpose Bind an existing application's real routes, calculations, reports and jobs to the semantic estate without replacing them, so a downstream product gets more capability while its working software keeps running.
+  maturity implemented
+  node_types ProductContract
+  node_types BoundDomainProduct
+  node_types CapabilityBinding
+  node_types DomainAction
+  node_types ReportContract
+  node_types FilterContract
+  edge_types binds
+  edge_types realized_by
+  edge_types projected_into
+  edge_types requests_review
+  internal_calculus a delegated host first verifies exact institution admission, then BonfyreUpper90 resolves the session actor to one native AuthorityGraph-backed named role and scope before compiling an HTMX product closure
+  internal_calculus Upper90 leadership is a live parent delegation to JRSS internal administration, AI Loss administration, and Leads Demo administration; the child grammar is compiled at render and submit time from the parent edge rather than copied as a child grant
+  internal_calculus BonfyreUpper90 closure emits only verified estate, actor, inherited state, and scope coordinates for CMS, Studio, ForeignTwin, and MCP carrier compilation; it does not emit client records or replace any downstream owner
+  internal_calculus a protected product request carries an opaque reference into a registered upper90-private WorkGraph family; the native product returns a durable review mission and does not invoke a JRSS or AI Loss legacy route
+  internal_calculus the standalone AI Loss saved-projection compiler reads the authored product pack and CUE projection law into inert Query IR; its optional operating view summarizes the current pure close-consequence receipt without applying it
+  invariant a binding makes an existing route visible to the estate; it does not replace or reimplement that route
+  invariant a downstream product is expressed in its own domain language, never in Powers, Partner names or engine vocabulary
+  invariant a bound domain product terminates in a concrete user experience; attachment to the institutional graph alone is not a binding
+  invariant a report contract records its filters, because a report without its filter set is not reproducible
+  invariant an existing report or ad-hoc report builder is preserved as a capability, never dropped as legacy
+  invariant a binding declares its effect class from QUERY, DERIVE or EFFECT before it may be planned
+  invariant a binding carries the full semantic lineage defined by PreservationBoundary, sufficient to reconstruct the original behavior
+  invariant scheduled and background behavior is bound as product capability; having no screen is not being absent
+  invariant a downstream product presents named domain sections, never capability identifiers
+  invariant added capability sits beside existing capability and never retires it
+  invariant exact institution admission is not a product role or object-level closure; both gates must be current before any downstream section or request appears
+  invariant a JRSS, AI Loss, Leads, or Upper90 product request never reads, displays, or mutates a client record merely from its opaque reference
+  invariant a PhysicalCarrier section in a delegated private Studio resolves only through the already-admitted estate CMS namespace; a visual/mobile handoff cannot become a second disclosure path, select a sibling namespace, or authorize a foreign/device/payment effect
+  invariant revoking Upper90 leadership removes every child product aperture it supplied immediately; a child role never climbs to leadership or crosses siblings
+  invariant a saved AI Loss projection declares its basis, fields, filters, scope, policy, and materialization target but grants no table, financial, scheduling, or external effect authority
+  invariant Leads remains DEMO-only: its private product may use synthetic/replayed scenario state and proposal economics but cannot read LIVE client state or initiate a third-party effect
+  forbidden_inference a route being bound -> that route being safe to change
+  forbidden_inference a compiled function existing for a domain -> the downstream product needing to adopt it
+  forbidden_inference engine capability -> downstream user visibility
+  forbidden_inference a legacy implementation -> disposable functionality
+  forbidden_inference an AI Loss saved projection or close frontier -> an executed query, approved close, financial write, or live private product binding
+  forbidden_inference repetition across bindings -> those bindings being one capability
+  forbidden_inference a valid Aurekai session, institution grant, or role in one managed estate -> a role, scope, or data closure in another estate
+  interacts institutional-root
+  interacts delegation-model
+  interacts surface
+  interacts preservation-boundary
+  interacts authority-graph
+  interacts work-graph
+  interacts web-address-edge
+  interacts close-consequence
+  source_path cmd/BonfyreUpper90/src/main.c
+  source_path packs/upper90/ai-loss-projection.cue
+  source_path packs/upper90/implementations/ai-loss-operating-estate.mjs
+  source_path packs/upper90/implementations/ai-loss-projection-compile.mjs
+  source_path cmd/BonfyreWebAddress/src/main.c
+  source_path deploy/nginx/aurekai-surfaces.conf
+  witness cmd/BonfyreUpper90/tests/private_estate_smoke.sh
+  witness packs/upper90/implementations/ai-loss-native.test.mjs proves pack-derived contract and report bases, authored CUE vocabulary, inert projection IR and explicit refusals, plus pure close receipt semantics
+  witness cmd/BonfyreWebAddress/tests/private_estate_surface_test.sh proves two independent gates, exact JRSS scope, WorkGraph review creation, cross-client form refusal, no protocol/RO-Crate discovery, and role/client revocation
+  source_lineage Generation-10 product topology separation, 2026-08-26
+  source_lineage route and report census of JRSSv1 and AiLtd_Loss, 2026-08-25
+
+interaction ai-loss-close-consequence-enters-operating-view
+  source close-consequence
+  destination institutional-product-contracts
+  relation read-only-pure-receipt-summary
+  preserves named AI Loss namespace, source reachability, resolved and unevaluable counts, under- and over-allocation counts and amounts, and the explicit no-effect fact
+  drops database credentials, client payment rows, approval authority, financial effects, and any inference from an unreachable source
+  forbidden_inference an operating-view summary -> an approved or performed close, a live private product route, or an authority to execute the saved projection
+  invalidates_on AI Loss product pack, close-consequence law, obligation source, or projection CUE policy changes
+  witness packs/upper90/implementations/ai-loss-native.test.mjs
+  binding packs/upper90/implementations/ai-loss-operating-estate.mjs
+  binding scripts/product_close_consequence.mjs
+
+interaction delegated-product-compiles-private-review-work
+  source institutional-product-contracts
+  destination work-graph
+  relation scope-bounded-review-mission
+  preserves named downstream estate, native role, scope reference, request kind, opaque reference token, AuthorityGraph admission, WorkGraph mission/node identifiers, and the fact that no legacy effect occurred
+  drops client record contents, cross-client closure, card charge, payment/split/horse mutation, external contact, generic paid-tier authority, provider credentials, and all inferred facts from the opaque reference
+  forbidden_inference a durable review mission -> approval, client mutation, legacy-route invocation, financial settlement, or authority to perform the requested effect
+  invalidates_on role assignment/revocation, AuthorityGraph edge, requested estate/scope/kind, or WorkGraph routing-family changes
+  witness cmd/BonfyreUpper90/tests/private_estate_smoke.sh
+  witness cmd/BonfyreWebAddress/tests/private_estate_surface_test.sh
+  binding cmd/BonfyreUpper90/src/main.c
+  binding engine/core/src/workgraph.c
+
+interaction delegated-product-renders-private-closure
+  source institutional-product-contracts
+  destination web-address-edge
+  relation host-admitted-role-scope-htmx-projection
+  preserves exact protected host, active institution admission, session actor identifier, named product role, scope reference, HTML representation, and no-store/noindex policy
+  drops machine-carrier publication, RO-Crate/Zarr/feed/protocol discovery, generic Matrix public fallback, cross-client role names, client records, and private request bodies from the edge
+  forbidden_inference a protected hostname or signed-in account -> a publicly enumerable product surface or a readable client closure
+  invalidates_on host-to-estate map, institution grant, role assignment, session revocation, representation policy, or protected-edge route changes
+  witness cmd/BonfyreWebAddress/tests/private_estate_surface_test.sh
+  binding cmd/BonfyreWebAddress/src/main.c
+  binding deploy/nginx/aurekai-surfaces.conf
+
+interaction delegated-product-compiles-cms-carrier
+  source institutional-product-contracts
+  destination web-address-edge
+  relation closure-derived-private-cms-namespace
+  preserves exact protected host, active institution admission, current session actor, native Upper90 estate, one owner-returned scope coordinate, registered CMS type grammar, and the native CMS row namespace only
+  drops browser-selected namespace or scope, generic actor CMS namespace, sibling-estate rows, client record contents not deliberately authored into the CMS, public notes/routes, protocol publication, and all effect authority beyond the CMS owner's validated create/update operation
+  forbidden_inference a current JRSS, AI Loss, Leads, or Upper90 closure -> authority to read another delegated estate's CMS rows or to publish a private CMS row publicly
+  invalidates_on protected host mapping, institution grant, Upper90 role/scope assignment, session revocation, CMS namespace contract, or registered CMS grammar changes
+  witness cmd/BonfyreWebAddress/tests/private_estate_surface_test.sh creates a native JRSS wiki page under private:jrss:stable:cedar and proves the same admitted actor cannot see it through the AI Loss private CMS host; it further proves Upper90 leadership inherits a distinct private:jrss:institution:jrss CMS namespace rather than silently unioning the direct child scope
+  binding cmd/BonfyreUpper90/src/main.c
+  binding cmd/BonfyreWebAddress/src/main.c
+  binding cmd/BonfyreCMS/src/main.c
+
+interaction delegated-product-compiles-private-studio
+  source institutional-product-contracts
+  destination web-address-edge
+  relation closure-derived-multi-owner-human-workroom
+  preserves exact protected host, active institution admission, current session actor, native Upper90 estate and scope, Upper90 durable review-work grammar, CMS private namespace coordinate, ForeignTwin private receipt/body root coordinate, HTML/HTMX representation, and no-store/noindex policy only
+  drops global Studio/operator surfaces, global finance/model/Fleming/Frappe state, browser-selected estate or namespace, sibling-estate content, public machine carrier publication, raw client records, arbitrary private body enumeration, and all effect authority beyond the individual native owners
+  forbidden_inference a delegated /studio address -> a user may open the global Aurekai Studio or read a client plane that no named owner admitted
+  invalidates_on protected host mapping, institution grant, Upper90 role/scope assignment, session revocation, owner carrier contract, or private-route disclosure policy changes
+  witness cmd/BonfyreWebAddress/tests/private_estate_surface_test.sh asserts the JRSS Studio contains native Stable Owner work and only CMS/ForeignTwin routes from private:jrss:stable:cedar while refusing global Institution Studio/financial output/raw JSON
+  binding cmd/BonfyreUpper90/src/main.c
+  binding cmd/BonfyreWebAddress/src/main.c
+  binding cmd/BonfyreCMS/src/main.c

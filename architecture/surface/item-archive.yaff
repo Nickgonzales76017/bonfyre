@@ -1,0 +1,60 @@
+atlas surface
+
+architecture item-archive
+  canonical_name ItemArchive
+  family surface
+  domain Surface / Kept Items
+  layer surface
+  semantic_question What did this estate read, when did it first read it, and does the address a person was given still answer after its source moved on?
+  purpose A feed holds a page of recent items and a calendar holds a year; what either dropped last week is not thereby untrue, and a person who was sent its address should not meet an empty page. Every item the census produces is kept once here, with when it was first and last read, so an item page outlives its source's feed slot, a source's earlier publications remain reachable, and the estate can say what it read rather than only what a source currently shows. The archive is written by the standing automation from the same census items the pages read, and read by the page organ read-only.
+  maturity implemented
+  consumes InternetCensus
+  consumes StandingAutomation
+  publishes KeptItem
+  node_types KeptItem
+  invariant an archived item is what this estate read at a time, never a claim that its source still publishes it: a page built from the archive says so in words, keeps the original link, and shows when it was read
+  invariant an item is kept once, addressed by its source and its stable key; a later reading updates what it says and its last-read time, and nothing is ever removed because a source stopped publishing it
+  invariant the neighbourhood of every placed thing is computed once, away from any request, through the estate's own vGPU kernel (deterministic CPU where no GPU backend exists) and kept beside the items; a page reads a neighbourhood instead of measuring one, and a distance between two stated points establishes no relation, attendance, access or recommendation
+  invariant what every item is near in this estate's own chart of words is computed once, away from any request, through the estate's own vGPU kernel across everything the census produced, and kept beside the items; a page reads that instead of measuring it, and two coordinates resembling each other establishes no shared subject, no citation, no influence, no endorsement and no reason to read one because you read the other
+  invariant the resemblance shown to a reader is the one the chart can actually carry: measured against this estate's own chart, only a high score across two different publishers means anything, and it means one story two publishers both carried -- said as a measurement of two texts, never as corroboration of what either states or a claim about who published first
+  invariant the archive never becomes a page's first answer: current retained material is read first, and the archive answers only where that material no longer carries the item
+  invariant a route's own composition is unaffected: an agenda, a feed or a front page carries what its sources still publish, so the archive cannot make a dropped item look current
+  forbidden_inference a kept item -> its source still publishing it, its link still resolving, or its content still being true
+  forbidden_inference the archive -> a copy of a source's corpus; it holds what the census read, at page depth, not what the source holds
+  forbidden_inference a first-read date -> the date the source published it; the item's own stated time is separate and may be absent
+  known_gap the archive keeps what the census produced, so a source read at page depth is archived at page depth; nothing backfills what was published before this estate first read that source
+  known_gap an archived item's page shows no picture unless the picture's address still resolves at its origin
+  known_gap the vGPU adapter publishes no Dawn prebuild for linux/x64, so the estate runs the same kernel on its deterministic CPU path while a developer machine runs it on the GPU; the receipt always says which ran
+  known_gap the neighbourhood is recomputed whole on each run rather than updated for what changed
+  known_gap nothing prunes the archive; its growth is bounded only by how many items the census produces
+  source_path cmd/BonfyreWebAddress/src/main.c
+  source_path cmd/BonfyreWebAddress/tests/page_events_test.sh
+  source_path cmd/BonfyreSurfaceScene/runtime/stage-compute-vgpu.mjs
+  source_path cmd/BonfyreSurfaceScene/runtime/kin-compute-vgpu.mjs
+  source_path cmd/BonfyreSurfaceScene/tools/compile_kin.py.archive
+  source_path cmd/BonfyreSurfaceScene/tools/compile_kin.mjs
+  source_path cmd/BonfyreSurfaceScene/tests/compile_kin_native_test.sh
+  source_path cmd/BonfyreWebAddress/tests/page_kin_test.sh
+  source_path cmd/BonfyreSurfaceScene/tools/compile_neighbourhood.py.archive
+  source_path cmd/BonfyreSurfaceScene/tools/compile_neighbourhood.mjs
+  source_path cmd/BonfyreSurfaceScene/tests/compile_neighbourhood_native_test.sh
+  source_path scripts/bonfyre_automate.mjs
+  source_path scripts/bonfyre_automate.py.archive
+  witness cmd/BonfyreWebAddress/tests/page_events_test.sh proves every item read is kept once, that an item its source has since dropped still answers at its own address, that the page says it was kept rather than current in plain words, that it carries what that source published before it, and that the agenda itself carries only what the source still publishes
+  witness cmd/BonfyreWebAddress/tests/page_kin_test.sh walks two feeds, the census, the archive and the kernel on whichever backend the machine has, and proves a story both publishers carried finds its twin, that nothing below the floor is kept, that the page names the other publisher's copy, that an unrelated story is never offered as kin, and that the page states what the resemblance is not
+  witness 2026-09-29 the Bun neighbourhood and kin compilers ran the existing deterministic CPU kernels and matched the historical Python reports and exact persisted neighbour/kin rows, excluding timing fields, in cmd/BonfyreSurfaceScene/tests/compile_neighbourhood_native_test.sh and compile_kin_native_test.sh with BONFYRE_VERIFY_LEGACY=1
+  witness 2026-09-18 on a 6,810-item local estate the kin kernel compared 46,376,100 pairs in 1.1s on vgpu-node and kept 710 above 0.85; measured against this estate's own chart, pairs below about 0.85 were noise (a crocodile story paired with a telephone story) while pairs above it across two publishers were the same story twice -- 376 such pairs, e.g. Warren Buffett stepping down carried by six different publishers
+  known_gap the chart is a trigram hash of words, so it recognises the same story told twice and not two stories about one subject; nothing here finds topical kinship, and the floor is set where the measurement stops being honest
+  witness 2026-09-18 on the estate the standing automation kept 1,633 items (995 stories, 212 videos, 192 recordings, 173 pictures, 61 events); an event page answered 200 and carried Earlier from this source
+  witness 2026-09-18 on the estate 3,755 census items were kept (4,101 in the archive) and 260 placed things were given neighbourhoods in one run: 67,600 pairs in 136ms through the kernel's CPU path, 651 neighbour pairs kept within four kilometres; on a machine with a GPU backend the same kernel ran 190,608 pairs in 704ms as vgpu-node
+  source_lineage 2026-09-18 the page never dies: what the estate read stays reachable after its source moves on
+
+interaction item-archive-answers-after-a-source-moves-on
+  source item-archive
+  destination page-composition
+  relation answers_for_dropped_items
+  preserves the item's title, words, link, publisher and the moment its source stated, with when this estate first read it
+  drops any claim that the source still publishes it, and the item's place in every current composition
+  forbidden_inference an answered page -> a live item
+  invalidates_on the census reading that source again, the item returning to its feed
+  witness cmd/BonfyreWebAddress/tests/page_events_test.sh

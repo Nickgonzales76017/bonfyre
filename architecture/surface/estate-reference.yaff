@@ -1,0 +1,29 @@
+atlas surface
+
+architecture estate-reference
+  canonical_name EstateReference
+  family surface
+  domain Surface / Addresses
+  layer surface
+  semantic_question Where does a reference a page shows -- a linked URL, a bare host, a Wikidata identity, a census source, an org:/inst: subject or a publisher subject -- open in this estate?
+  purpose One reading of references, so a publisher, an organization a piece names or a source never renders as a string when the estate already answers for it. It resolves through the source frontier to a root and through matrix_domains to that root's subject host, then to the identity page, and otherwise leaves the reference as given.
+  maturity implemented
+  consumes SourceFrontier
+  consumes AddressPlane
+  publishes EstateAddress
+  node_types EstateReference
+  invariant a reference opens only at an address the estate already answers for: a publisher's subject host bound in matrix_domains, or the identity page for a Wikidata identity; nothing creates an address
+  invariant a host resolves through itself and then each parent that still has a name above its suffix, so alphafold.ebi.ac.uk is EMBL-EBI's
+  invariant an address of this estate opens in place; an outside address opens as the publisher's own link
+  invariant serve fills every store path a page reads from the estate directory of its --db when the service left it unset, so a section cannot go empty because one variable was missing; an explicit variable wins
+  forbidden_inference a resolved reference -> the organization's consent, control or endorsement; the address is this estate reading them
+  forbidden_inference an unresolved reference -> that the organization does not exist; the estate holds no address for it
+  known_gap demo applications in the separate Pages repositories do not yet resolve through this; their foreign: and fixture: references are still text
+  known_gap a publisher with material but no subject host (no address_every_publisher row) resolves only to its identity page
+  source_path cmd/BonfyreWebAddress/src/estate_reference.h
+  source_path cmd/BonfyreWebAddress/src/item_depth.h
+  source_path cmd/BonfyreWebAddress/src/main.c
+  source_path scripts/publisher_readers.mjs
+  witness cmd/BonfyreWebAddress/tests/addressed_depth_test.sh proves the byline opens the publisher's subject host, a named organization opens its own, an unknown site keeps the publisher's link, a platform is left out, and estate addresses open in place (2026-10-18)
+  interacts scene-compiler
+  interacts canonical-subject-address

@@ -1,0 +1,73 @@
+atlas surface
+
+architecture detail-depth
+  canonical_name DetailDepth
+  family surface
+  domain Surface / Detail Pages
+  layer surface
+  semantic_question From any detail page -- a piece, a credited maker, a feed, a publisher, the reader a feed is read with, an application's record shape, a topic, a printed name -- where can a visitor go next, and what does each retained source yield beyond its own pieces?
+  purpose A detail page used to end at its own kind: a piece led to more pieces from the same source and a maker's page to that maker's pieces. The material already reached further. The source ledger knows the feed every kept piece came through, its publisher and the way it was read; the archive knows who each piece credits; the compiled application shapes say which record kinds exist; and the retained feed bodies carry topics, credit lines and links nothing had read out of them. Each detail page now closes with the other kinds of page its own material reaches, every one of them another detail page with its own continuations, drawn in the estate's existing .more and desk-row dress with the shared glyph set. An offline derivation reads the archive and the retained bodies into a separate facet store (topic, maker, printed name, linked host, linked publisher, month, media type); the archive and the ledger are only read.
+  maturity implemented
+  consumes KeptItem
+  consumes SourceFrontier
+  consumes BonfyreFrappeCompiler
+  publishes DetailContinuation
+  publishes ItemFacet
+  node_types DetailContinuation
+  node_types ItemFacet
+  invariant every continuation row is read from an owner that already holds it -- the archive, the source ledger, the compiled application shapes or the derived facet store -- and a row whose page would not answer is not offered; nothing is invented to fill a slot
+  invariant a page never offers itself, and each row says in words what it is (the feed it came through, publisher, hosting platform, credited on this piece, the tool that read it, how it would be filed in an app, filed under, named in the text, linked from the text)
+  invariant the facet store is written only by `bonfyre-web-address detail-depth derive` from the archive and the retained bodies; one retained entry is matched to at most one kept piece, and a link counts only when the titles agree, so a show that gives every episode its home page cannot pour its episodes into one piece
+  invariant an application shape is offered only from a declared correspondence (src/detail_depth.c shapes[], mirrored in cmd/BonfyreWebAddress/src/detail_depth.cue) and only when the compiled shape store holds that slug
+  invariant a printed credit is offered as a maker only when it reads as a person's name under the people directory's own filter, and only at the source that printed it
+  forbidden_inference a topic page -> one subject; equal labels printed by different publishers are shown together and are not thereby the same subject
+  forbidden_inference a printed name -> a person, place or organisation; it is a run of capitalised words in what a publisher wrote, and equal spellings are not merged into an identity
+  forbidden_inference a maker row -> a profile, a verified identity, consent, or an established relationship; it is a credit line a publisher printed
+  forbidden_inference an application shape row -> a record held in that application, an import, or a permission; it says only how such a thing would be filed
+  forbidden_inference a linked publisher -> endorsement, citation or affiliation; it is a link the publisher put in the text
+  forbidden_inference a yield multiplier -> more material read; it counts pages, entities and edges derived from what was already retained, not new sources or new reads
+  known_gap the retained bodies hold each source's latest feed page, so topics, credit lines and links exist only for pieces still in that page when the derivation ran; older kept pieces get month and printed-name facets from their stored summary only
+  known_gap printed-name extraction is a capitalisation heuristic over sentence-case text with a stopword and boilerplate filter; it misses lower-case names and keeps some show and segment titles
+  known_gap the people directory's name filter lets some network and channel names through (e.g. a streaming service credited as a maker by a schedule feed)
+  known_gap JSON, ArcGIS and sitemap bodies are not parsed for facets; only RSS and Atom entries are
+  known_gap the facet refresh runs inside scripts/release/estate_maturity_refresh.sh (derive to detail-depth.next.db, then an atomic move); that script is a foreground owner refresh with no schedule, so facets are as fresh as its last run (first production derive 2026-10-29: 87,666 pieces, 453,934 facet rows); releases set BONFYRE_DETAIL_DEPTH_DB to ~/.bonfyre/estate-local/detail-depth.db
+  known_gap the derivation rebuilds the whole store (about three minutes over 87,497 kept pieces and 2,370 bodies) rather than updating what changed
+  source_path cmd/BonfyreWebAddress/src/detail_depth.c
+  source_path cmd/BonfyreWebAddress/src/page_routes_and_emitters.h
+  source_path cmd/BonfyreWebAddress/src/page_core_rendering.h
+  invariant item pages keep opening, saving and sharing close to the item while additional source and reuse actions remain available through a disclosure
+  invariant shortening a publisher label requires a match with the destination host; otherwise its full source label remains visible
+  source_path cmd/BonfyreWebAddress/src/detail_depth.h
+  source_path cmd/BonfyreWebAddress/src/detail_depth.cue
+  source_path cmd/BonfyreWebAddress/src/glyph_set.h
+  source_path cmd/BonfyreWebAddress/src/item_depth.h
+  source_path cmd/BonfyreWebAddress/src/main.c
+  source_path cmd/BonfyreWebAddress/src/people_projection.c
+  source_path cmd/BonfyreWebAddress/tests/detail_depth_witness.c
+  source_path cmd/BonfyreWebAddress/tests/detail_depth_test.sh
+  source_path scripts/release/estate_maturity_refresh.sh
+  source_path site/matrix/world.css
+  witness cmd/BonfyreWebAddress/tests/detail_depth_test.sh copies the estate's archive, ledger, CMS and application shapes, derives facets from the retained bodies, serves the copy, and requires every start (five item kinds, a credited maker, a feed, a publisher, a reader, an application and a record shape) to reach ten hops through distinct detail pages that cross feeds, tools, apps and profiles, with icons and the boundary in words
+  witness 2026-10-27 against copies of ~/.bonfyre/estate-local, tests/detail_depth_witness.c from 14 real detail pages: before, 0 of 14 reached ten hops crossing all four kinds (item starts stayed inside one source's items; the application page dead-ended after one hop); after, 14 of 14 reached ten hops crossing feeds, tools, apps and profiles, and 14 of 14 reached twenty
+  witness 2026-10-27 `detail-depth derive` over 87,497 kept pieces and 2,370 retained bodies matched 48,936 entries and wrote 450,687 facet rows; `detail-depth measure` put per-source yield at 7.19x overall (101,735 derived things before, 731,184 after), median 3.35x, 449 of 2,373 sources at 10x or more and 14 at 30x or more
+  source_lineage 2026-10-27 detail pages should go through feeds, tools, apps and profiles at least ten deep, and sources should yield far more than their own pieces
+
+interaction detail-depth-continues-detail-pages
+  source detail-depth
+  destination page-composition
+  relation continues_detail_pages
+  preserves the exact page addresses of feeds, publishers, makers, readers, record shapes, topics and printed names, with what each row is said in words
+  drops any ranking, recommendation or identity claim about what is offered
+  forbidden_inference a continuation row -> a reason to read the next page because of the current one
+  invalidates_on the archive, the ledger, the application shapes or the facet store changing
+  witness cmd/BonfyreWebAddress/tests/detail_depth_test.sh
+
+interaction item-archive-feeds-detail-facets
+  source item-archive
+  destination detail-depth
+  relation derives_facets_from_retained_material
+  preserves each kept piece's source and key, and the retained body entry it was matched to
+  drops nothing from the archive; the facets live in their own store
+  forbidden_inference a facet -> a fact about the world rather than what a publisher printed
+  invalidates_on a new derivation run
+  witness cmd/BonfyreWebAddress/tests/detail_depth_test.sh

@@ -1,0 +1,96 @@
+atlas model
+
+architecture latent-coordinate-atlas
+  canonical_name LatentCoordinateAtlas
+  family model
+  domain Model / Latent Coordinates
+  layer model/latent
+  semantic_question Which typed coordinate charts carry an exact address, which comparisons between them are lawful, what does a group of addresses become when lifted, and which branch of the hierarchy must change when one occurrence changes?
+  purpose The native polytypic extension of LatentCoordinateFabric. An exact address may carry projections in charts whose mathematics match what each preserves -- dense direction (cosine), role-bound hypervector (Hamming), Poincare point (geodesic), place (great circle), phase (wrapped), distribution (Hellinger), subspace (principal angles), acoustic fingerprint (aligned bit error) and trajectory (DTW) -- with typed relations between exact addresses. Groups are addressed twice (a logical address and a snapshot digest over universe, lens, chart version, exact member closure and child snapshots), lift to a different representation type than their members, and lift again into hierarchy nodes with hyperbolic child coordinates and a topology signature. A lens is a typed query program over an exact eligible set with fusion, attempt slice and widening. Exact joins emit typed training anchors and hard negatives. The organ also encodes hashed text, role bindings and an acoustic fingerprint, spectrum and loudness trajectory from PCM.
+  maturity implemented
+  consumes LatentCoordinateFabric
+  consumes AddressPlane
+  publishes LatentChart
+  publishes NeighbourhoodSnapshot
+  publishes TypedAnchor
+  node_types LatentChart
+  node_types Projection
+  node_types Neighbourhood
+  node_types NeighbourhoodSnapshot
+  node_types LatentBridge
+  edge_types member_of
+  edge_types performance_of
+  edge_types depicts
+  edge_types same_subject_as
+  edge_types happens_at
+  edge_types projected_into
+  invariant two projections are compared only within one chart, or across charts through a declared bridge carrying its calibration error, loss envelope and validity frontier; anything else is refused as incomparable
+  invariant relations are typed and written only from exact joins; similarity never writes a relation
+  invariant a group's snapshot digest covers its universe, lens, chart and version, every member's address with its source digest, and its child snapshots, so a parent references exact child states
+  invariant dense members lift to modes and a rank <= 3 subspace with dispersion, boundary exemplars and outliers; distributions lift to a mixture; hypervectors to a bundle; fingerprints to a medoid; groups of groups to a hierarchy node
+  invariant after a mutation only groups whose exact member closure changed recompute; a parent recomputes only when a changed child's representation moved beyond the preservation envelope, otherwise the hold is recorded
+  invariant reopening a neighbourhood reports each member as exact, drifted or missing against its current projection
+  invariant a lens considers only its exact eligible set, skips (and names) charts its query is not projected in rather than imputing them, and widens a strict fusion to reciprocal rank when too few survive
+  invariant roles survive binding: role=value pairs bound by XOR and bundled by majority are order-free but swapping roles is a different situation
+  invariant a public page links a neighbour only after reopening it against current retained material
+  forbidden_inference nearness in any chart -> identity, relation, evidence or truth
+  forbidden_inference a group -> a category anyone declared, or a mode -> a genre
+  forbidden_inference an acoustic fingerprint match -> the same performance, recording rights or authorship
+  forbidden_inference a hold within the envelope -> the parent snapshot being exactly current
+  forbidden_inference hashed text geometry -> semantic understanding
+  known_gap the charts are hashed text, role bindings and signal features; no learned encoder, S2 cell chart, spectral graph chart or factorized tensor lens is wired yet, and no bridge has a measured calibration
+  known_gap competence of any chart for any lens (recall preservation, false merge rate) is not measured; the witness proves structure and maintenance, not quality
+  known_gap relation-conditioned training from the typed anchors is not run; anchors are emitted only
+  known_gap the estate's standing audio frontier measures 6,241 retained audio items across 50 sources and round-robins bounded sampling by source; the atlas itself is still not wired to AddressPlane advertisements, FactDelta or the inverse compiler
+  known_gap the Python LatentCoordinateFabric owner is archived; this organ extends its laws natively but does not import its historical profiles
+  source_path cmd/BonfyreLatentAtlas/src/main.c
+  source_path cmd/BonfyreLatentAtlas/Makefile
+  source_path cmd/BonfyreLatentAtlas/tests/latent_atlas_test.sh
+  source_path cmd/BonfyreLatentAtlas/tests/link_music_identities_test.sh
+  source_path cmd/BonfyreLatentAtlas/tests/link_identities_native_test.sh
+  source_path cmd/BonfyreLatentAtlas/tools/audio_family_witness.py.archive
+  source_path cmd/BonfyreLatentAtlas/tools/audio_family_witness.mjs
+  source_path cmd/BonfyreLatentAtlas/tests/audio_family_witness.test.mjs
+  witness cmd/BonfyreLatentAtlas/tests/audio_family_witness.test.mjs proves retained three-source inventory, six-chart projection command closure, cross-chart refusal, mutation, refresh and reopen shape; live remote audio sampling still requires explicit --apply and was not claimed by the fixture
+  source_path cmd/BonfyreLatentAtlas/tools/audio_sample.mjs
+  source_path cmd/BonfyreLatentAtlas/tools/compile_acoustic_sweep.mjs
+  source_path cmd/BonfyreLatentAtlas/tests/audio_sample_test.mjs
+  source_path cmd/BonfyreLatentAtlas/tests/compile_acoustic_sweep_test.mjs
+  source_path cmd/BonfyreLatentAtlas/tools/link_identities.mjs
+  source_path cmd/BonfyreLatentAtlas/tools/link_identities.py.archive
+  witness cmd/BonfyreLatentAtlas/tests/link_music_identities_test.sh proves the Bun linker admits only exact source-declared music identifiers and the native atlas holds the imported observation
+  witness cmd/BonfyreLatentAtlas/tests/link_identities_native_test.sh proves one-pass native exact gazetteer matching, organizer place over description, exact film credit joins, retained music identifiers, and replay-safe retraction without removing a human-authored relation
+  forbidden_inference a gazetteer mention or source-declared music QID -> authority, authorship, or canonical sameness of a file and a work
+  source_path scripts/bonfyre_automate.mjs
+  source_path scripts/bonfyre_automate.py.archive
+  witness cmd/BonfyreLatentAtlas/tests/audio_sample_test.mjs and cmd/BonfyreLatentAtlas/tests/compile_acoustic_sweep_test.mjs prove bounded receipt-carrying acoustic sampling and source-fair native chart projection
+  source_path cmd/BonfyreWebAddress/src/main.c
+  witness cmd/BonfyreLatentAtlas/tests/latent_atlas_test.sh proves dense and distribution charts and two unbridged dense charts are refused as incomparable, a declared bridge compares with its calibration error, three dense groups lift to modes+subspace over their exact six members, spectra lift to a mixture, three groups lift to a hierarchy node inside the Poincare ball with a topology signature, role bindings keep roles, a small move recomputes only the mutated group and holds the parent, reopening before refresh reports the drifted member, a move beyond the envelope recomputes the parent and still only that branch, a lens skips an unprojected chart and fills its slice from the exact eligible set, and exact joins become typed positives while shared words at different addresses become hard negatives
+  witness 2026-09-17 ~/.bonfyre/estate/latent-atlas/audio-family-witness-20260917.json: 24 real recordings from the retained Wikidata recorded-music, Great 78 and Dallas live-music twins were range-sampled under robots admission (sample digests kept, bytes deleted), decoded by ffmpeg and projected into fingerprint, spectrum, loudness, words, roles and season charts; each of three collections lifted to modes+subspace, a mixture and a medoid; the words and spectrum groups lifted into hierarchy nodes; cross-chart comparison was refused; re-sampling one 78 moved its fingerprint 0.49 and spectrum 0.13, refresh recomputed only that collection's two acoustic groups, the collection's mixture moved 0.021 past the 0.02 envelope so the spectrum hierarchy recomputed while the words hierarchy did not, and reopening reported one drifted member before refresh and none after
+  witness cmd/BonfyreWebAddress/tests/page_public_commons_test.sh proves an item page links the recording nearest in the atlas's spectrum chart first and stops linking a neighbour once its source no longer publishes it
+  witness cmd/BonfyreLatentAtlas/tests/latent_atlas_test.sh also proves an atlas written before a relation type existed accepts that type after its table is rebuilt, keeping every relation it already held, and that every census item is projected into the words chart with its family membership in one pass, that words which have not changed are not re-encoded, that only the item whose words changed is re-encoded, and that a linker forgets exactly the relations it wrote before writing them again
+  witness 2026-09-17 the organ built and its law test passed on the estate (GCC 13); the audio-family atlas was installed at /var/lib/bonfyre/latent-atlas/census-recordings.db, reopen reported its 78 rpm spectrum group exact (8 exact, 0 drifted), and a production recording page answered with Sounds similar
+  witness 2026-09-25 /private/tmp/bonfyre-audio-frontier-20260925T0730Z/witness.json sampled 36 retained recordings from Wikidata recorded music, Great 78 and Dallas live music under robots admission with zero refusals; every sample retained its range digest while bytes were deleted, the acoustic/spectrum/loudness lens reopened 35 eligible neighbours, and a later sample changed only the affected 78 acoustic branches before refresh restored closure
+  witness 2026-09-25 /private/tmp/bonfyre-music-wiki-link-20260925/relations.jsonl projected all 39,314 retained items through the exact Wikidata recorded-music closure and admitted 48 observed_as links with zero refusal; each link carries the retained item address, source-declared QID and Wikipedia page, while the linker test rejects a non-QID and an ident from another source
+  witness 2026-09-25 /private/tmp/bonfyre-full-audio-frontier-20260925T1800Z/runs/20260925T180053Z-59889.json ran the source-fair retained-audio batch over 50 distinct sources: 27 new fingerprint, spectrum and loudness projections were admitted and 23 were explicitly refused, leaving the 6,213-item remainder measurable by source instead of pretending an unprocessed item has no acoustic state
+  source_lineage 2026-09-17 polytypic addressed atlas: one address, many geometries, recursive typed groups
+
+interaction latent-coordinate-atlas-extends-latent-fabric
+  source latent-coordinate-atlas
+  destination latent-coordinate-fabric
+  relation extends_polytypically
+  preserves exact subject addresses, comparability contracts, source digests and the rule that similarity is not identity
+  drops the archived Python profile storage
+  forbidden_inference a native chart -> an admitted LatentSpacePassport
+  invalidates_on chart version, encoder or universe changes
+  witness cmd/BonfyreLatentAtlas/tests/latent_atlas_test.sh
+
+interaction latent-coordinate-atlas-offers-neighbours-to-pages
+  source latent-coordinate-atlas
+  destination page-composition
+  relation reopened_neighbours
+  preserves the neighbour's exact item address, reopened against current retained material
+  drops distances, charts and group snapshots from the page
+  forbidden_inference "Sounds similar" -> same performance, genre, artist or recommendation
+  invalidates_on atlas projections, retained source bodies
+  witness cmd/BonfyreWebAddress/tests/page_public_commons_test.sh

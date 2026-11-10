@@ -1,0 +1,354 @@
+#!/usr/bin/env python3
+"""The atlas as a *bounded* model-context provider.
+
+The atlas is the canonical registry, but a registry is not a context surface.
+``atlas.index.json`` is 258 KB; pushing it into a model context to answer "what
+does ProviderGraph forbid?" costs ~64k tokens to deliver ~200 tokens of answer.
+The registry is right to be lossless. The path a model reads it through is what
+has to be cheap.
+
+This module is that path: the same query ops, computed deterministically from
+the exported index, with three properties the previous ad-hoc query surface did
+not have.
+
+  * **Values, not keys.** The old search matched ``query in json.dumps(record)``,
+    so every record's *field names* were searchable content: ``search("witness")``
+    returned all 185 architectures because all 185 serialize a ``witnesses`` key.
+    A search that always matches everything is not a filter, and an agent that
+    then fetches the "hits" pays the full-index cost it was trying to avoid.
+    Search here reads field *values* (plus the architecture id, which is real
+    content) and never field names.
+
+  * **Bounded output.** Every op has a byte budget. A query that would exceed it
+    truncates and says so, rather than silently becoming the context bomb.
+
+  * **Explain stays request-local.** Field attribution and snippets are computed
+    per request and never enter the exported index -- they are observability
+    over an answer, not part of the cached plan that produced it.
+
+Stdlib only, like ``atlas.py``: CI, the MCP node, native callers and any carrier
+without an MCP attachment all get the identical cheap realization.
+"""
+
+from __future__ import annotations
+
+import json
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any, Iterable, Optional
+
+ROOT = Path(__file__).resolve().parent
+INDEX = ROOT / "atlas.index.json"
+
+# Default per-response byte budget. Sized so a search answer stays ~2 orders of
+# magnitude under a full-index read; callers may raise it explicitly.
+DEFAULT_BUDGET = 8192
+
+OPS = ("summary", "get", "search", "cannot_infer", "expand", "loss")
+
+
+def declaration_digest() -> Optional[dict]:
+    """The digest atlas.py would compute, or None where it cannot be computed.
+
+    Not a reimplementation -- atlas.py owns which bytes count, and a second
+    opinion about that is the drift the stamp exists to detect. The condition for
+    verifiability is exact rather than heuristic: verification is possible where
+    atlas.py is, because that is the only place the index can be rebuilt.
+
+    Counting .yaff files instead was wrong and briefly shipped. The deployment
+    carries two contract declarations that feed other generators, so a
+    "two or more sources" test made it claim it had checked an index against
+    declarations that were never its inputs."""
+    if not (ROOT / "atlas.py").is_file():
+        return None
+    try:
+        sys.path.insert(0, str(ROOT))
+        import atlas  # noqa: PLC0415
+        return atlas.declaration_digest()
+    except BaseException:  # noqa: BLE001
+        # BaseException, not Exception: a syntax error or a stray SystemExit in
+        # atlas.py must leave this query surface answering from the index it
+        # already has, dated and unverified, rather than dying with it.
+        return None
+    finally:
+        if sys.path and sys.path[0] == str(ROOT):
+            sys.path.pop(0)
+
+
+def load_index(path: Optional[Path] = None) -> dict:
+    """Load the exported index, rebuilding it when it disagrees with the sources.
+
+    The index is a build artifact that travels. A copy of it was hand-installed
+    on the deployment once and then answered questions for four days about
+    declarations that had moved underneath it: `get surface-ir` returned
+    `architectural` with one witness while the checkout carried `implemented`
+    with five. Both answers look equally authoritative, because neither said
+    when it was built. A planner reading the stale one would conclude a
+    capability was absent and build around what already existed.
+
+    Two different situations, two different answers:
+
+      sources present  -- the index can be checked, so it is; a disagreeing
+                          index is rebuilt rather than served
+      sources absent   -- the index cannot be checked, so it is dated; every
+                          answer carries when it was built and from what
+
+    Neither case silently serves an index that might be wrong."""
+    p = path or INDEX
+    if not p.exists():
+        subprocess.run([sys.executable, str(ROOT / "atlas.py"), "export"],
+                       check=False, capture_output=True, timeout=60)
+        if not p.exists():
+            raise SystemExit(
+                f"no atlas index at {p} and the export did not produce one")
+    idx = json.loads(p.read_text())
+    here = declaration_digest()
+    if here is None:
+        return idx
+    stamped = (idx.get("provenance") or {}).get("declaration_digest")
+    if stamped == here["declaration_digest"]:
+        return idx
+    # The export's exit status decides what may be claimed. Discarding it let
+    # this stamp "was regenerated rather than served" onto an index the export
+    # had failed to rewrite -- a rebuild asserted because one was attempted,
+    # which is the same defect the stamp exists to prevent.
+    export = subprocess.run([sys.executable, str(ROOT / "atlas.py"), "export"],
+                            check=False, capture_output=True, timeout=120, text=True)
+    rebuilt = json.loads(p.read_text())
+    prov = rebuilt.setdefault("provenance", {})
+    if export.returncode == 0 and prov.get("declaration_digest") == here["declaration_digest"]:
+        prov["rebuilt_because"] = (
+            "the index disagreed with the declarations beside it and was regenerated "
+            "rather than served" if stamped else
+            "the index carried no provenance stamp, so it could not be shown current")
+    else:
+        detail = (export.stderr or export.stdout or "").strip().splitlines()
+        prov["rebuild_failed"] = (
+            "this index disagrees with the declarations beside it and the rebuild "
+            "did not succeed, so what follows is the stale index: "
+            + (detail[-1][:160] if detail else f"export exited {export.returncode}"))
+    return rebuilt
+
+
+# --------------------------------------------------------------- value walking
+
+def _values(record: Any) -> Iterable[str]:
+    """Yield the string *values* of a record. Field names are never yielded --
+    they are schema, not content, and matching them makes every query match
+    every record."""
+    if isinstance(record, str):
+        yield record
+    elif isinstance(record, dict):
+        for v in record.values():
+            yield from _values(v)
+    elif isinstance(record, (list, tuple)):
+        for v in record:
+            yield from _values(v)
+
+
+def _matching_fields(record: dict, needle: str) -> list[str]:
+    """Which top-level fields carried the match. Request-local explain."""
+    return sorted(f for f, v in record.items()
+                  if any(needle in s.lower() for s in _values(v)))
+
+
+def _snippet(record: dict, needle: str, width: int = 100) -> str:
+    """The shortest decisive evidence that this record matched."""
+    for s in _values(record):
+        low = s.lower()
+        i = low.find(needle)
+        if i < 0:
+            continue
+        start = max(0, i - width // 3)
+        text = s[start:start + width]
+        return ("..." if start else "") + text + ("..." if start + width < len(s) else "")
+    return ""
+
+
+def _budgeted(items: list[dict], budget: int) -> tuple[list[dict], bool]:
+    """Take the prefix of ``items`` that fits in ``budget`` bytes when encoded."""
+    kept: list[dict] = []
+    used = 0
+    for it in items:
+        size = len(json.dumps(it))
+        if kept and used + size > budget:
+            return kept, True
+        kept.append(it)
+        used += size
+    return kept, False
+
+
+# ------------------------------------------------------------------------- ops
+
+def summary(index: dict) -> dict:
+    archs = index.get("architectures", {})
+    views = index.get("views", {})
+    families: dict[str, int] = {}
+    maturities: dict[str, int] = {}
+    for a in archs.values():
+        families[a.get("family") or "?"] = families.get(a.get("family") or "?", 0) + 1
+        maturities[a.get("maturity") or "?"] = maturities.get(a.get("maturity") or "?", 0) + 1
+    return {
+        "architectures": len(archs),
+        "views": len(views),
+        "interactions": len(index.get("interactions", {})),
+        "families": dict(sorted(families.items())),
+        "maturity": dict(sorted(maturities.items())),
+        "view_names": sorted(views),
+    }
+
+
+def get(index: dict, aid: str) -> dict:
+    archs = index.get("architectures", {})
+    rec = archs.get(aid)
+    if rec is None:
+        near = [k for k in archs if aid and aid.lower() in k.lower()][:8]
+        return {"id": aid, "architecture": None, "did_you_mean": sorted(near)}
+    return {"id": aid, "architecture": rec}
+
+
+def cannot_infer(index: dict, aid: str) -> dict:
+    rec = index.get("architectures", {}).get(aid)
+    return {"id": aid,
+            "exists": rec is not None,
+            "forbidden_inferences": (rec or {}).get("forbidden_inferences", [])}
+
+
+def expand(index: dict, view: str) -> dict:
+    archs = index.get("architectures", {})
+    children = index.get("views", {}).get(view, {}).get("expands_to", [])
+    return {
+        "view": view,
+        "expands_to": children,
+        "children": [
+            {"id": c,
+             "canonical_name": archs.get(c, {}).get("canonical_name"),
+             "maturity": archs.get(c, {}).get("maturity")}
+            for c in children
+        ],
+    }
+
+
+def search(index: dict, query: str, *, limit: int = 25,
+           budget_bytes: int = DEFAULT_BUDGET) -> dict:
+    """Search architecture *content*. Returns bounded hits with request-local
+    field attribution, never whole records -- the caller follows up with ``get``
+    on the few it actually wants."""
+    needle = (query or "").strip().lower()
+    archs = index.get("architectures", {})
+    if not needle:
+        return {"query": query, "total": 0, "matches": [], "truncated": False,
+                "note": "empty query matches nothing (an empty filter is not a filter)"}
+    hits: list[dict] = []
+    for aid, rec in archs.items():
+        if needle in aid.lower() or any(needle in s.lower() for s in _values(rec)):
+            hits.append({
+                "id": aid,
+                "canonical_name": rec.get("canonical_name"),
+                "maturity": rec.get("maturity"),
+                # explain: request-local, never written into the index
+                "matched_fields": _matching_fields(rec, needle) or ["id"],
+                "snippet": _snippet(rec, needle),
+            })
+    hits.sort(key=lambda h: h["id"])
+    total = len(hits)
+    kept, over_budget = _budgeted(hits[:limit], budget_bytes)
+    return {"query": query, "total": total, "matches": kept,
+            "truncated": over_budget or total > len(kept)}
+
+
+def loss(index: dict) -> dict:
+    archs = index.get("architectures", {})
+    interactions = index.get("interactions", {})
+    wired = set()
+    for it in interactions.values():
+        wired.add(it.get("source"))
+        wired.add(it.get("destination"))
+    return {
+        "no_interaction_contract": sorted(a for a in archs if a not in wired),
+        "no_cannot_infer": sorted(a for a, v in archs.items()
+                                  if not v.get("forbidden_inferences")),
+        "unbuilt": sorted(a for a, v in archs.items()
+                          if v.get("maturity") == "architectural"),
+    }
+
+
+def _with_provenance(idx: dict, answer: dict) -> dict:
+    """Attach when this answer's index was built, and whether it could be checked.
+
+    Cheap -- five short fields -- and it is the difference between an answer a
+    planner can weigh and one it has to trust. An index that cannot be verified
+    against sources says so in the answer rather than in a README nobody reads
+    at the moment of the query."""
+    if not isinstance(answer, dict) or "error" in answer:
+        return answer
+    prov = dict(idx.get("provenance") or {})
+    if not prov:
+        answer["index"] = {"verified_against_sources": False,
+                           "note": "this index carries no provenance stamp; it cannot be "
+                                   "shown current and its age is unknown"}
+        return answer
+    checkable = declaration_digest() is not None
+    answer["index"] = {
+        "generated_at": prov.get("generated_at"),
+        "declaration_digest": str(prov.get("declaration_digest", ""))[:12],
+        "declaration_files": prov.get("declaration_files"),
+        "verified_against_sources": checkable,
+        "note": ("checked against the declarations beside it" if checkable else
+                 "no declarations are present here, so this index is dated and not "
+                 "verified; a newer one may exist in the checkout"),
+    }
+    if prov.get("rebuilt_because"):
+        answer["index"]["rebuilt_because"] = prov["rebuilt_because"]
+    # A failed rebuild has to reach the reader, not just the provenance dict it
+    # was written into. Recording the condition and not surfacing it is the same
+    # silence as never computing it, and it costs the caller the one fact that
+    # tells them this answer is stale.
+    if prov.get("rebuild_failed"):
+        answer["index"]["rebuild_failed"] = prov["rebuild_failed"]
+        answer["index"]["verified_against_sources"] = False
+        answer["index"]["note"] = ("this index disagrees with the declarations "
+                                   "beside it and could not be rebuilt")
+    return answer
+
+
+def dispatch(op: str, index: Optional[dict] = None, **kw) -> dict:
+    """One entry point so every carrier (CLI, MCP, CI, native) runs the same
+    query semantics instead of reimplementing them per transport."""
+    idx = index if index is not None else load_index()
+    return _with_provenance(idx, _dispatch(op, idx, **kw))
+
+
+def _dispatch(op: str, idx: dict, **kw) -> dict:
+    if op == "summary":
+        return summary(idx)
+    if op == "get":
+        return get(idx, str(kw.get("id", "")))
+    if op == "cannot_infer":
+        return cannot_infer(idx, str(kw.get("id", "")))
+    if op == "expand":
+        return expand(idx, str(kw.get("view", "")))
+    if op == "search":
+        return search(idx, str(kw.get("query", "")),
+                      limit=int(kw.get("limit", 25)),
+                      budget_bytes=int(kw.get("budget_bytes", DEFAULT_BUDGET)))
+    if op == "loss":
+        return loss(idx)
+    return {"error": f"unknown op {op!r}", "ops": list(OPS)}
+
+
+def main(argv: list[str]) -> int:
+    if len(argv) < 2 or argv[1] not in OPS:
+        print(f"usage: atlas_query.py <{'|'.join(OPS)}> [arg]")
+        return 1
+    op = argv[1]
+    arg = argv[2] if len(argv) > 2 else ""
+    kw = {"get": {"id": arg}, "cannot_infer": {"id": arg},
+          "expand": {"view": arg}, "search": {"query": arg}}.get(op, {})
+    print(json.dumps(dispatch(op, **kw), indent=2, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv))

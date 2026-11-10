@@ -1,0 +1,275 @@
+#!/usr/bin/env python3
+"""Render the institutional namespace contract into what the organs compile against.
+
+Which estates exist was asserted four times independently -- BonfyreAuth,
+BonfyreWebAddress, BonfyreUpper90 and the OAuth gateway -- while
+architecture/institutional/namespaces.yaff declared the real tree and nothing
+generated from it. They had already drifted: the gateway listed `leads` as an
+estate the contract never declared, and flattened ai-loss and jrss into peers of
+upper90 when the contract nests them under upper90/managed.
+
+The list decides who receives an institutional MCP slice, so a fifth estate
+added to three of four places produces an account that authenticates and has no
+slice, with nothing to notice it.
+
+This emits the managed-estate list the gateway needs and a C header for the
+native organs. It renders the tree; it does not decide the hierarchy's meaning.
+Whether upper90 inherits access to its managed children is an authority
+question, answered where authority is answered, not here.
+
+Run with --check to verify the generated artifacts still match the contract.
+"""
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+CONTRACT = ROOT / "architecture" / "institutional" / "namespaces.yaff"
+JSON_OUT = ROOT / "integrations" / "mcp" / "institution_contract.json"
+HEADER = ROOT / "engine" / "core" / "include" / "bf_institutions.h"
+
+MANAGED_PREFIX = "upper90/managed/"
+
+
+def parse(path: Path) -> dict[str, list[str]]:
+    roots: list[str] = []
+    managed: list[str] = []
+    parents: dict[str, str] = {}
+    inherited: dict[str, str] = {}
+    ranks: dict[str, int] = {}
+    leadership: dict[str, str] = {}
+    worlds: dict[str, str] = {}
+    personas: dict[str, list[dict[str, str]]] = {}
+    lattice_for = ""
+    current = ""
+    for raw in path.read_text().splitlines():
+        if raw.startswith("  role ") and not current:
+            _, name, rank = raw.strip().split(" ", 2)
+            ranks[name] = int(rank)
+            continue
+        if raw.startswith("  inherited_role ") and current.startswith(MANAGED_PREFIX):
+            inherited[current[len(MANAGED_PREFIX):]] = raw.strip().split(" ", 1)[1].strip()
+            continue
+        if raw.startswith("  parent ") and current and "/" not in current:
+            parents[current] = raw.strip().split(" ", 1)[1].strip()
+            continue
+        # The delegated parent's leadership tuple. The vertical organ asserted
+        # these as five string literals, which made a second delegated parent a
+        # code change; declared here they are one contract line.
+        if current and "/" not in current:
+            for field, key in (
+                ("  delegated_parent ", "delegated_parent"),
+                ("  leadership_role ", "leadership_role"),
+                ("  leadership_permission ", "leadership_permission"),
+                ("  leadership_object ", "leadership_object"),
+            ):
+                if raw.startswith(field):
+                    value = raw.strip().split(" ", 1)[1].strip()
+                    if key == "delegated_parent":
+                        if value == "true":
+                            leadership["estate"] = current
+                    else:
+                        leadership[key] = value
+                    break
+        if raw.startswith("  world ") and current and "/" not in current:
+            worlds[current] = raw.strip().split(" ", 1)[1].strip()
+            continue
+        # persona_lattice <institution> opens a block of persona rows. Declaring
+        # the lattice makes "a venue operator must not gain district admin" a row
+        # a test reads rather than a sentence someone has to remember.
+        if raw.startswith("persona_lattice "):
+            lattice_for = raw.split(" ", 1)[1].strip()
+            personas.setdefault(lattice_for, [])
+            current = ""
+            continue
+        if raw.startswith("  persona ") and lattice_for:
+            parts = raw.strip().split()
+            if len(parts) >= 4:
+                personas[lattice_for].append(
+                    {"persona": parts[1], "rank": parts[2], "capabilities": parts[3]}
+                )
+            continue
+        if raw.startswith("institution_roles"):
+            current = ""
+            lattice_for = ""
+            continue
+        if not raw.startswith("namespace "):
+            continue
+        name = raw[len("namespace ") :].strip()
+        current = name
+        if name.startswith(MANAGED_PREFIX):
+            leaf = name[len(MANAGED_PREFIX) :]
+            if leaf and "/" not in leaf:
+                managed.append(leaf)
+        elif "/" not in name:
+            roots.append(name)
+    if not roots or not managed:
+        raise SystemExit("namespace contract declares no roots or no managed estates")
+    # The estates an account can hold a grant in: every delegated vertical plus
+    # the estates it manages. `bonfyre` is excluded because it is the superuser
+    # closure, checked on its own and never one slice among several -- the
+    # gateway already treats it that way, and folding it in here would offer the
+    # institution itself as an estate to enter.
+    slices = sorted(set(r for r in roots if r != "bonfyre") | set(managed))
+    # The authority graph, declared once. A parent grant opens its declared
+    # descendants; a child grant never climbs to a parent or crosses to a
+    # sibling. BonfyreAuth asserted this same map in C as a fifth independent
+    # copy -- correct, and correct by coincidence rather than by construction.
+    for estate in managed:
+        parents.setdefault(estate, "upper90")
+    # A declared delegated parent must carry its whole tuple or none of it: a
+    # half-declared leadership is two authority sources disagreeing, which is
+    # the failure this contract exists to remove.
+    if leadership:
+        missing = [k for k in ("estate", "leadership_role", "leadership_permission", "leadership_object")
+                   if k not in leadership]
+        if missing:
+            raise SystemExit(f"delegated parent declares an incomplete leadership tuple; missing {missing}")
+    # Every institution declares exactly one world -- the worlds contract's
+    # first invariant. A root with no declared world defaults to LIVE, which
+    # is the safe direction: a demo estate must say so, and an estate that
+    # forgets is treated as real rather than silently sandboxed.
+    for root in roots:
+        worlds.setdefault(root, "LIVE")
+    return {
+        "leadership": leadership,
+        "worlds": dict(sorted(worlds.items())),
+        "personas": personas,
+        "roots": sorted(set(roots)),
+        "managed": sorted(set(managed)),
+        "slices": slices,
+        "parents": dict(sorted(parents.items())),
+        "inherited_roles": dict(sorted(inherited.items())),
+        "role_ranks": dict(sorted(ranks.items(), key=lambda kv: kv[1])),
+    }
+
+
+def render_json(tree: dict[str, list[str]]) -> str:
+    return json.dumps(
+        {
+            "schema_version": "bonfyre.institution.contract.v1",
+            "source": "architecture/institutional/namespaces.yaff",
+            "roots": tree["roots"],
+            "managed_estates": tree["managed"],
+            "slice_estates": tree["slices"],
+            "parents": tree["parents"],
+            "inherited_roles": tree["inherited_roles"],
+            "role_ranks": tree["role_ranks"],
+            "delegated_leadership": tree.get("leadership", {}),
+            "worlds": tree.get("worlds", {}),
+            "persona_lattice": tree.get("personas", {}),
+            "note": (
+                "the estates an authenticated account may hold a slice in; "
+                "membership is declared here, admission is decided by the grant"
+            ),
+            "forbidden_inference": (
+                "a declared estate is not a granted one, and this list is not an "
+                "authority model: it says which estates exist, never who may enter one"
+            ),
+        },
+        indent=2,
+        sort_keys=True,
+    ) + "\n"
+
+
+def render_header(tree: dict[str, list[str]]) -> str:
+    managed = ", ".join(f'"{e}"' for e in tree["managed"])
+    slices = ", ".join(f'"{e}"' for e in tree["slices"])
+    pairs = ", ".join(f'{{"{c}", "{p}"}}' for c, p in tree["parents"].items())
+    roles = ", ".join(f'{{"{e}", "{r}"}}' for e, r in tree["inherited_roles"].items())
+    ranks = ", ".join(f'{{"{n}", {v}}}' for n, v in tree["role_ranks"].items())
+    roots = ", ".join(f'"{r}"' for r in tree["roots"])
+    lead = tree.get("leadership", {})
+    lead_estate = lead.get("estate", "")
+    lead_role = lead.get("leadership_role", "")
+    lead_perm = lead.get("leadership_permission", "")
+    lead_object = lead.get("leadership_object", "")
+    worlds = ", ".join(f'{{"{i}", "{w}"}}' for i, w in tree.get("worlds", {}).items())
+    world_n = len(tree.get("worlds", {}))
+    return f"""/* Generated from architecture/institutional/namespaces.yaff.
+ *
+ * Do not edit. Change the contract and re-run
+ * architecture/generate_institution_contract.py.
+ *
+ * Cannot infer: a declared estate -> a granted one. This names which estates
+ * exist; whether an account may enter one is the grant's answer.
+ */
+#ifndef BF_INSTITUTIONS_H
+#define BF_INSTITUTIONS_H
+
+#define BF_INSTITUTION_ROOTS     {{ {roots} }}
+#define BF_INSTITUTION_ROOT_N    {len(tree['roots'])}
+
+#define BF_MANAGED_ESTATES       {{ {managed} }}
+#define BF_MANAGED_ESTATE_N      {len(tree['managed'])}
+
+/* Every estate an account can hold a grant in. `bonfyre` is not here: it is the
+ * superuser closure, not one slice among several. */
+#define BF_SLICE_ESTATES         {{ {slices} }}
+#define BF_SLICE_ESTATE_N        {len(tree['slices'])}
+
+/* The institutional ancestry graph. A parent grant opens its declared
+ * descendants; a child grant never climbs to a parent or crosses to a sibling.
+ * Deliberately a small closed graph, not a prefix convention. */
+#define BF_INSTITUTION_PARENTS   {{ {pairs} }}
+#define BF_INSTITUTION_PARENT_N  {len(tree['parents'])}
+
+/* The role a parent's leadership inherits in each managed estate. A managed
+ * estate declared without one inherits an aperture and no role, which is two
+ * authority organs disagreeing rather than a smaller grant. */
+#define BF_INHERITED_ROLES       {{ {roles} }}
+#define BF_INHERITED_ROLE_N      {len(tree['inherited_roles'])}
+
+/* read < write < admin. A rank decides whether a held grant satisfies a
+ * required role. */
+#define BF_ROLE_RANKS            {{ {ranks} }}
+#define BF_ROLE_RANK_N           {len(tree['role_ranks'])}
+
+/* The delegated parent and the tuple its leadership is held under. The vertical
+ * organ asserted all four as literals, so "who leads a delegated vertical" was
+ * answered in C rather than by the contract, and a second delegated parent
+ * meant editing an organ. Upper90 remains a real institution; it is no longer
+ * the type of every delegated institution. */
+#define BF_DELEGATED_PARENT      "{lead_estate}"
+#define BF_DELEGATED_LEAD_ROLE   "{lead_role}"
+#define BF_DELEGATED_LEAD_PERM   "{lead_perm}"
+#define BF_DELEGATED_LEAD_OBJECT "{lead_object}"
+#define BF_DELEGATED_LEAD_SCOPE  "institution:{lead_estate}"
+
+/* The world each institution executes in. A DEMO institution admits real
+ * public observation and never a live external effect against a third party,
+ * so an organ that can raise an external effect has to be able to ask. An
+ * institution with no declared world is LIVE: forgetting must fail toward
+ * real, never toward silently sandboxed. */
+#define BF_INSTITUTION_WORLDS    {{ {worlds} }}
+#define BF_INSTITUTION_WORLD_N   {world_n}
+
+#endif /* BF_INSTITUTIONS_H */
+"""
+
+
+def main() -> int:
+    tree = parse(CONTRACT)
+    want = {JSON_OUT: render_json(tree), HEADER: render_header(tree)}
+    if "--check" in sys.argv:
+        for path, text in want.items():
+            if not path.is_file() or path.read_text() != text:
+                print(
+                    f"{path.relative_to(ROOT)} disagrees with the namespace contract; "
+                    "re-run architecture/generate_institution_contract.py",
+                    file=sys.stderr,
+                )
+                return 1
+        print(f"institution contract and artifacts agree ({len(tree['managed'])} managed estates)")
+        return 0
+    for path, text in want.items():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text)
+        print(f"wrote {path.relative_to(ROOT)}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

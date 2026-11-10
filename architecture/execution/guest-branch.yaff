@@ -1,0 +1,72 @@
+atlas execution-guest-branch
+
+architecture guest-branch-commit
+  canonical_name GuestBranchCommit
+  family execution
+  domain Execution / Candidate branches over one deterministic guest
+  maturity implemented
+  semantic_question When a workload is a deterministic body plus a command log, how are its possible next steps explored without any of them becoming Actual?
+  purpose Give any line-speaking deterministic guest the same footing the institution gives its own work: candidates are computed freely, and only a committed step enters the record. The campaign that forced it was Doom; the verb names no campaign.
+  internal_calculus body identity and command log -> state; nothing else is state
+  internal_calculus live guest -> candidate action sequences run in forks of the guest -> ranked landings -> one committed step -> a longer log
+  internal_calculus committed log replayed by a fresh guest -> the same end state, or the claim is void
+  invariant a fork never moves the guest; the log grows only by a committed step
+  invariant a ranker that fails or returns the wrong count gives no scores and the run stops
+  invariant the guest's clock is its own step count; a slow ranker or a slow model changes how long a decision takes and never what the guest does
+  forbidden_inference a branch that ranked best -> a goal reached; the stop score is the caller's claim about its own ranker
+  forbidden_inference a run that replays -> a guest that is deterministic in general; determinism and exact forks are assumed by the verb and witnessed only per body
+  forbidden_inference a level finished by ranked branches -> a model that plays; no model was in the loop that finished it
+  source_path cmd/BonfyreRuntime/src/main.c
+  source_path packs/doom-guest/program/actions.tsv
+  source_path packs/doom-guest/program/map.sql
+  source_path packs/doom-guest/program/rank.sql
+  source_path packs/doom-guest/program/commit.sql
+  witness cmd/BonfyreRuntime/tests/dispatch_test.sh a counter guest reaches its goal committing only the higher-ranked step; a ranker that exits non-zero stops the run
+  witness 2026-10-03 packs/doom-guest/measured-witness.yaff a foreign guest held through 577 decisions and 88281 forks; the kept log replays to the same end state in a fresh process
+  known_gap one guest body has been held; the contract is a convention the guest must honour and nothing verifies a new guest against it
+  known_gap every ranking starts a fresh query process, so the run that finished made 194 forks a second where the guest alone makes several times that
+  known_gap three further maps of the same body ran their whole budget without finishing; see packs/doom-guest/proof-frontier.yaff layer episode
+  known_gap the guest body, its platform file and its build live outside this repository and are named by hash only
+
+architecture connectome-pixel-controller
+  canonical_name ConnectomePixelController
+  family execution
+  domain Execution / A controller that reads a rendered frame through a published connectome
+  maturity implemented
+  semantic_question Can a guest be driven from its screen alone by wiring that was observed, not trained here, and how far does that get?
+  purpose Hold the one screen-only attempt of the guest campaign to its real result. The wiring is the FlyWire fruit-fly connectome; the arithmetic is the query organ's.
+  internal_calculus two rendered frames -> lamina columns of the matching eye by the published column grid -> six synapses through signed, in-degree-normalised wiring -> descending neurons -> keys
+  internal_calculus the scene and its mirror image -> two waves -> averaged so that the wiring's own left-right asymmetry cancels
+  invariant the controller reads frames and nothing else: no engine state, no map, no coordinates, no forks
+  invariant every action is committed to the log; the guest waits while the controller decides
+  forbidden_inference a connectome that holds the controls -> a connectome that plays; measured, it explores less than random keys
+  forbidden_inference 139248 neurons in a table -> a simulated animal; one feed-forward wave per frame, no fitted parameter, no spikes, no motion vision
+  forbidden_inference an observed body with a receipt -> a licence to publish what is built on it; the annotations declare none and ask for citation
+  source_path packs/doom-guest/program/fly-setup.sql
+  source_path packs/doom-guest/program/fly-wave.sql
+  source_path packs/doom-guest/program/fly-decide.sql
+  witness 2026-10-03 packs/doom-guest/fly.yaff 300 decisions from pixels at 0.60 seconds each; scored afterwards at 38 map cells against 43 to 81 for five random-key runs
+  known_gap the result is a loss to chance; the controller stays in the first hall
+  known_gap motion cells show no direction preference in this model, so it has no optic flow and no looming
+  known_gap which way each eye's field runs front to back is inferred from the optic chiasm, not measured in the model
+  known_gap the loop that replays the guest, runs the waves and appends the keys is a shell line, not an organ verb
+
+interaction connectome-controller-reads-foreign-twin
+  source connectome-pixel-controller
+  destination foreign-twin
+  relation observed-body-used-as-wiring
+  preserves the body's digest, its observation time and the source it was read from
+  drops every neuron and connection under five synapses, and all morphology
+  forbidden_inference wiring read from an observed body -> a claim the source made about behaviour; the source published anatomy
+  binding packs/doom-guest/program/fly-setup.sql
+  witness packs/doom-guest/fly.yaff
+
+interaction guest-branch-ranked-by-query
+  source guest-branch-commit
+  destination cmd-query
+  relation external-ranker-over-candidate-landings
+  preserves candidate order, the committed state, and the ranker's refusal
+  drops every reason a candidate scored as it did; branch receives one number per candidate
+  forbidden_inference a score -> a judgement the runtime organ made; goals, routes and penalties are the pack's data and the query organ's arithmetic
+  binding packs/doom-guest/program/rank.sql
+  witness packs/doom-guest/measured-witness.yaff

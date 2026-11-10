@@ -128,7 +128,7 @@ def generate() -> str:
         for s in srcs:
             lines.append(f"  source_path {s}")
         if live:
-            lines.append("  witness cmd/command_smoke.py")
+            lines.append("  witness cmd/command_smoke.sh")
         lines.append("  source_lineage the 91-command capability surface")
         note = ("responds to --help (live)" if live else
                 ("source-only, not built" if srcs else "declared, no source found"))

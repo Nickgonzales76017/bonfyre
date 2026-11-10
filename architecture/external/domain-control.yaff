@@ -1,0 +1,45 @@
+architecture domain-control
+  canonical_name DomainControl
+  family external
+  domain External reality / DNS authority
+  layer boundary
+  semantic_question How can Bonfyre observe and deliberately publish the owned domain records without treating registrar state, a local plan, or a secret as canonical institutional truth?
+  purpose Native Namecheap Dynamic DNS control for the owned Aurekai domains. It observes the public A record, distinguishes known parking ranges, plans a target, and requires an explicit apply boundary plus a per-domain credential before emitting an external effect.
+  maturity implemented
+  owns DomainPublicationIntent
+  owns DNSObservation
+  owns DNSPublicationReceipt
+  consumes ExternalAuthority
+  consumes AddressConstellation
+  publishes DNSObservation
+  publishes DomainPublicationReceipt
+  node_types OwnedDomain
+  node_types DNSObservation
+  node_types DomainPublicationIntent
+  node_types DNSPublicationReceipt
+  edge_types observes_dns
+  edge_types publishes_dns
+  internal_calculus owned domain -> per-domain Dynamic DNS credential; current IPv4 -> parked|live observation
+  internal_calculus status -> plan -> explicit apply; apply refuses absent credentials and never uses an implicit secrets path
+  invariant a DNS plan is not an external publication effect
+  invariant each publication requires one explicit IPv4 target and the specific owned-domain secret
+  invariant public DNS observation is ForeignTwin state until reconciled with an effect receipt
+  forbidden_inference possession of a domain credential -> authority over a Matrix subject, institution, or publication presence
+  forbidden_inference an A record -> a working TLS edge, semantic route, or readable public object
+  forbidden_inference a parked record -> loss of domain ownership
+  native_format graf
+  command bonfyre-domain
+  source_path cmd/BonfyreDomain/src/main.c
+  witness cmd/BonfyreDomain/tests/domain_control_test.sh
+  source_lineage Namecheap owned-domain Dynamic DNS boundary recovered from scripts/akai_ddns.py.archive
+  interacts domain-control-publishes-web-edge
+
+interaction domain-control-publishes-web-edge
+  source domain-control
+  destination web-address-edge
+  relation public_host_reachability_candidate
+  preserves one explicitly selected owned hostname and its external publication receipt as an edge-reachability input
+  drops registrar credential material, raw provider response body, and any implication that DNS alone realizes TLS, routing, or semantic publication
+  forbidden_inference published DNS -> a Matrix address resolving or a public presence being authorized
+  witness cmd/BonfyreDomain/tests/domain_control_test.sh
+  binding cmd/BonfyreDomain/src/main.c
