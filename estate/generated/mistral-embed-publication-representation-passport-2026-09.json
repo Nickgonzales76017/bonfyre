@@ -1,0 +1,18 @@
+{
+  "representation_id": "mistral-embed-v1-publications-2026-09",
+  "model_id": "mistral-embed",
+  "representation_family": "provider-embedding",
+  "representation_version": "mistral-embed/1024/2026-09",
+  "exactness_class": "latent",
+  "measurement_state": "measured",
+  "admission_state": "DEFER",
+  "admission_scope": "embedding",
+  "quality_envelope": "Physical coverage measured: 22962/22962 canonical publication bodies persisted at 1024 dimensions with zero failed bodies. No retrieval preservation, false-prune, cross-model comparability, or semantic-quality envelope has been measured; ResourceAdmission must not select this representation for retrieval or ranking.",
+  "receipt_ref": "estate/generated/mistral-publication-embedding-witness-2026-09.json",
+  "receipt_digest": "c853b5b541e9aea84de7570d2cd6c59285363d0114ee05d3536d239c45b47b07",
+  "physical_body_ref": "~/.bonfyre/estate/provider.db#provider_embedding_run/embedding:mistral:1789424980",
+  "physical_digest": "52e2922b648ff09864e257d0ca533dcda3fec16a5c1e07001ea629f41acd802f",
+  "physical_bytes": 94052352,
+  "supports": ["equality", "top-k", "partial-decode", "random-access"],
+  "recorded_at": "2026-09-14T22:41:33+00:00"
+}

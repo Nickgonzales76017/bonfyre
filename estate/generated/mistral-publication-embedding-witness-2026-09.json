@@ -1,0 +1,39 @@
+{
+  "schema": "bonfyre.provider.embedding.witness.v1",
+  "observed_at": "2026-09-14T22:41:33+00:00",
+  "run_id": "embedding:mistral:1789424980",
+  "provider": "mistral",
+  "model": "mistral-embed",
+  "representation_id": "mistral-embed-v1-publications-2026-09",
+  "input": {
+    "body_ref": "~/.bonfyre/estate/publications/titles_repaired.jsonl",
+    "digest": "a5025adcb5933c16e1ca11c8ff3a98187dee75da09a3ae91f7de31e073239c20",
+    "count": 22962
+  },
+  "result": {
+    "stored": 22962,
+    "failed": 0,
+    "dimensions": 1024,
+    "response_bytes": 444959916,
+    "vector_bytes": 94052352,
+    "ordered_vector_digest": "52e2922b648ff09864e257d0ca533dcda3fec16a5c1e07001ea629f41acd802f",
+    "ordered_source_digest": "980a6e985e488e6a164581f40752d39c00ee04cc18917cb61754d6aa6c94336c"
+  },
+  "resource_admission": {
+    "plane": "provider-embedding-publications-full",
+    "estimated_bytes": 134217728,
+    "grant_id": 8,
+    "released_by_worker": true
+  },
+  "preservation": {
+    "state": "unmeasured",
+    "admission": "DEFER",
+    "reason": "Physical coverage and vector integrity were measured. Retrieval preservation, false-prune behavior, and comparability against another model passport have not yet been measured."
+  },
+  "forbidden_inferences": [
+    "provider embedding completion implies semantic relevance",
+    "latent vectors imply canonical identity or evidence",
+    "provider availability implies authorization or selection",
+    "a measured physical body implies a retrieval preservation envelope"
+  ]
+}

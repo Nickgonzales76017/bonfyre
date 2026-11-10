@@ -75,7 +75,7 @@ wire	bonfyre-wire	BonfyreWire
 surface	bonfyre-surface	BonfyreSurface
 kvcache	bonfyre-kvcache	BonfyreKVCache
 auth	bonfyre-auth	BonfyreAuth
-tel	bonfyre-tel	BonfyreTel
+tel	bonfyre-tel-selftest	BonfyreTel
 moq	bonfyre-moq-selftest	BonfyreMoQ
 cms	bonfyre-cms	BonfyreCMS
 api	bonfyre-api-selftest	BonfyreAPI

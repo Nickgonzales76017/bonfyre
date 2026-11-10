@@ -1,0 +1,10 @@
+{
+  "id": "bitnet-embedding-270m-i2s",
+  "name": "BitNet Embedding 270M I2_S",
+  "description": "Official BitNet embedding release body used only through the distinct BitNet representation passport. This identity does not imply comparability with any Bonfyre or provider embedding geometry.",
+  "format": "gguf",
+  "sha256": "8ee5ae971b103cd55758934be54e5c9f7cc2b58b15890615acce8e649988c751",
+  "size_mb": 350.463,
+  "geometry": "640-dimensional normalized embedding",
+  "geometry_condition": "comparison requires an explicit ComparabilityContract"
+}

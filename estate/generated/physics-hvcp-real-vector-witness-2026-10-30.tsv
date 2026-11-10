@@ -1,0 +1,38 @@
+key	value
+schema	bonfyre.physics.hvcp-real-vector-witness.v1
+at	2026-10-30T16:40:25Z
+goal	2f49fc7899e24bd4a52fdd631876bae6
+physics_binary_sha256	d6daf3e8cf3e5cc437e10402ff9f3540da70ca63bb2789cc1840f5ecde297fcf
+physics_source_sha256	ad832f0f91978e9d3897884228c58cf1a92ebac3beb6ec8b296732c98582a26f
+physics_lib_source_sha256	a756b209cf5bd87e90f5af1c36c14a3f31d7b2a35d6a0d1c659b5953b20122e5
+embed_binary_sha256	466d143871dfa0988d44f16dc95bfa7009138b00311177898049883dfc28a3eb
+embed_static_source_sha256	d60f16fea23bc07a5c9139689f850a7be483d99b0e8a2030e93900b7f79d8940
+representation	nomic-static-128 (.bfse, 128 dims, distilled from nomic-embed-text-onnx)
+representation_sha256	5b722d081d18113a77970f63d2bd4bef346ca3e56d6c12c0fadf2c3f1032b51e
+representation_agreement_receipt	estate/generated/nomic-static-128-teacher-agreement-site-passages-2026-10-30.json
+representation_agreement_receipt_sha256	3810e4edffb745a7fc3a2f1842a2651daf4ead1ffd34de177db048edce4a641c
+representation_neighbour_overlap_at_10	0.18549618320610686
+representation_passport	nomic-static-128/bfse-int8/2026-10-17 (copy of /Users/nickgonzales/.local/share/bonfyre/models.db; physical and receipt digests match)
+representation_gate_embedding	{"representation_id":"nomic-static-128/bfse-int8/2026-10-17","scope":"embedding","owner_state":"DEFER","measurement":"measured","decision":"DEFER","truth":"model_gate_only_resource_and_effect_admission_remain_separate"}
+corpus	/Users/nickgonzales/.bonfyre/estate-local/recall/sites-work/passages.jsonl
+corpus_sha256	e3b2a8beeeb28727d338e9a2112975dd66762bd76901f7437788501349c259e4
+admission_ledger	copy of /Users/nickgonzales/.bonfyre/admission.db
+admission_grant	{"verdict":"admit","plane":"physics-hvcp-witness","kind":"model","grant_id":124,"free_bytes":3817275392,"committed_bytes":734003200,"spendable_bytes":1472659456,"reason":"spendable above the protected floor"}
+admission_release	{"released_grant_id":124}
+rows_embedded	1703
+pack_vectors	1703
+pack_sha256	349d2d9a4859f11f1e06b155c5669a9d33a16a16af0927a058e45de04786be8f
+bvh_nodes	220
+energy_convergence_T0.64	row=0 dt0.01:1.35 dt0.005:0.287 dt0.0025:0.0676 ratios:4.70,4.25 H0:-1259.337280;row=567 dt0.01:0.905 dt0.005:0.164 dt0.0025:0.0382 ratios:5.52,4.29 H0:-1205.090088;row=1135 dt0.01:1.4 dt0.005:0.292 dt0.0025:0.0702 ratios:4.79,4.16 H0:-1250.586914;
+determinism	init c9ee61f984c1750a5763b94353a6087f614e9cf4b62c24a34704fe896addb142 -> 256 steps dt=0.0025 -> f2d5527c1588b11ccc73027f3096eb931e5a7b11777aed2599cc366985b375ac twice; traces identical
+trace_sha256	960f7410197cc2c29ab29c4f573675c90be16a24998fbeb1b495e1f25cda01bb
+trace_replay_events	256
+nearest_top1_score_after_run	0.9563
+branch_compare	left,right compared under the pack: pass
+negative_width	32-d vecf refused before state: input dim 32 != pack dim 128
+meter	[meter] recorded key=physics-hvcp op=physics.hvcp.run bytes=940104 -- unpriced: no admitted rate for (no provider)/physics.hvcp.run 
+cannot_infer	dH ~ dt^2 shows a symplectic second-order integrator over this potential; it says nothing about retrieval, reasoning or meaning
+cannot_infer	the static vectors agree with their teacher at 0.19 top-10 overlap; physics over them inherits that representation, it does not improve it
+cannot_infer	time reversibility is not exercised: no command exports or negates p
+cannot_infer	the passport gate answers DEFER for the embedding scope: these vectors are a measured latent representation, not an admitted substitute for the teacher or a ranker of record
+cannot_infer	the grant was taken on a copy of the admission ledger; the live ledger was not changed

@@ -1,0 +1,39 @@
+{
+  "schema": "bonfyre-bitnet-execution-receipt.v1",
+  "recorded_at": "2026-09-15T06:49:11Z",
+  "model": {
+    "id": "bitnet-embedding-270m-i2s",
+    "body": "~/.cache/bonfyre/models/bitnet-embedding-270m/bitnet-embeddings-270m-bf16-i2_s.gguf",
+    "sha256": "8ee5ae971b103cd55758934be54e5c9f7cc2b58b15890615acce8e649988c751",
+    "bytes": 367487040,
+    "release_branch": "release-bitnet-embedding-0.6b-270m"
+  },
+  "runtime": {
+    "upstream": "microsoft/BitNet",
+    "root_commit": "07d3cf",
+    "source_state": "upstream_pull_request_606_unmerged",
+    "llama_submodule_commit": "0684c7fd2",
+    "binary": "~/.cache/bonfyre/bitnet.cpp-pr606/build-embedding-official-pr606-x86-nohttps/bin/llama-embedding",
+    "binary_sha256": "0038e52fcc0344e819782cbe12f24f0bd1e531316cfcd4687ffc39e9caee35f9",
+    "architecture": "x86_64 under local compatibility execution",
+    "https_enabled": false,
+    "local_model_only": true
+  },
+  "invocation": {
+    "query_digest": "3ef6e383691717f8b9a1b8e41832bc96c9b8728c37755b3970d86253e475574d",
+    "pooling": "last",
+    "attention": "causal",
+    "normalization": 2,
+    "gpu_layers": 0,
+    "threads": 2
+  },
+  "result": {
+    "exit_status": 0,
+    "dimensions": 640,
+    "finite": true,
+    "vector_output_sha256": "788642a8a4baddbc21e31ebc72a9461a6270d8c404c3449f7614ebd410434044",
+    "elapsed_ns": 2692072000
+  },
+  "measurement": "one real local execution proves runtime interoperability and physical output only",
+  "forbidden_inference": "This receipt does not prove retrieval quality, false-prune safety, ranking quality, cross-model comparability, authorization, exact verification, lowerer selection, or external effect."
+}

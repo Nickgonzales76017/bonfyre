@@ -3,3 +3,80 @@ profile local-native
   artifact-policy zero-copy-reference
   effect-policy plan-approve-adapter-commit
   catalog-generation bootstrap-1
+
+# A shared Format Commons/YaFF recipe family. CUE supplies the exact envelope
+# in schemas/control/physical-carrier.cue; this profile supplies carrier and
+# lifecycle vocabulary without owning the addressed subject or its authority.
+profile physical-carrier-v1
+  contract schemas/control/physical-carrier.cue#PhysicalCarrierProfile
+  carrier qr datamatrix nfc ble uwb barcode
+  payload-profile web-uri gs1-digital-link app-clip emv-qr matter-onboarding fido-cross-device wallet signed-bonfyre-invocation
+  source-subject AddressPlane
+  source-authority AuthorityGraph
+  source-effect ProtocolMachine
+  source-money MoneyGraph
+  source-format FormatCommons
+  durable-law permanent-carrier-resolves-a-stable-https-address
+  bounded-law effect-shaped-carrier-requires-nonce-expiry-signature-and-separate-confirmation
+  fallback-law every-mobile-or-physical-carrier-retains-its-lawful-web-address
+  forbidden-inference QR-or-NFC-scan-implies-identity-authority-payment-settlement-device-control-or-foreign-effect
+
+# The inbound counterpart: YaFF supplies reusable source/protocol probe
+# families, while CUE preserves the narrow declared-descriptor truth level.
+# ForeignTwin, ProviderGraph, AuthorityGraph, MoneyGraph and EffectKernel own
+# every later admission or execution decision.
+profile external-discovery-v1
+  contract schemas/control/external-descriptor.cue#SourcePassport
+  source-passport robots carrier-ladder conditional-http
+  descriptor-family activitypub-discovery mcp-descriptor-candidate a2a-agent-card-candidate oauth-resource-candidate oauth-server-candidate openid-configuration-candidate auth-md-candidate android-app-link-candidate apple-universal-link-candidate ai-plugin-candidate
+  source-owner MachineMembrane
+  body-owner ForeignTwinGraph
+  provider-owner ProviderGraph
+  authority-owner AuthorityGraph
+  money-owner MoneyGraph
+  effect-owner EffectKernel
+  truth-level declared-descriptor
+  admission-law descriptor-candidate-requires-foreign-twin-cue-resource-admission-and-current-authority-before-provider-or-effect-use
+  forbidden-inference declared-protocol-descriptor-implies-live-endpoint-provider-admission-tool-authorization-payment-route-identity-or-effect-right
+
+# OAuth/OIDC discovery and external credential delegation are intentionally
+# separated. This recipe can prepare only a PKCE/device authorization intent
+# from a current actor/institution closure; a dedicated credential boundary,
+# ForeignTwin observation, ResourceAdmission and Authority must all close
+# later. It does not make WorkOS/auth.md or any remote IdP a semantic owner.
+profile external-auth-intent-v1
+  contract schemas/control/external-descriptor.cue#ExternalAuthIntent
+  authority-descriptor-family oauth-resource-candidate oauth-server-candidate openid-configuration-candidate
+  optional-registration-guide auth-md-candidate
+  actor-owner BonfyreAuth
+  institution-owner AuthorityGraph
+  external-observation-owner ForeignTwinGraph
+  provider-owner ProviderGraph
+  credential-owner external-credential-boundary
+  effect-owner EffectKernel
+  accepted-flow authorization-code-pkce device-authorization
+  intent-law current-actor-purpose-and-authority-descriptor-closure-must-precede-external-auth-ceremony
+  credential-law tokens-and-refresh-material-never-enter-cms-mcp-descriptor-passport-or-public-crate
+  forbidden-inference oauth-oidc-or-auth-md-descriptor-implies-external-identity-account-binding-credential-provider-admission-remote-authorization-or-effect-right
+
+# Provider-local files, indexes, containers and batches are materializations of
+# ObjectFabric representations. This profile is intentionally provider-neutral:
+# each concrete provider adapter declares which capability it can actually
+# realize, while the native receipt ledger retains only opaque coordinates.
+profile provider-materialization-v1
+  source-owner ObjectFabric
+  representation-owner FormatCommons
+  receipt-owner PhysicalDerivation
+  provider-owner ProviderGraph
+  placement-owner PlacementGraph
+  lifecycle-owner ServiceLifecycleGraph
+  cooling-owner AttentionCoolingGraph
+  authority-owner AuthorityGraph
+  policy-owner InformationPolicy
+  economic-owner FinancialMetabolism
+  materialization-kind file vector-store collection container batch remote-uri
+  lifecycle active expired released
+  reuse-key provider.scope.external-ref.representation-digest
+  release-law release-removes-reusable-residency-not-canonical-artifact-or-receipt
+  credential-law credentials-and-provider-account-material-never-enter-materialization-receipt-cms-mcp-crate-or-public-surface
+  forbidden-inference provider-file-or-index-identifier-implies-artifact-identity-authority-canonical-knowledge-provider-admission-or-output-admission

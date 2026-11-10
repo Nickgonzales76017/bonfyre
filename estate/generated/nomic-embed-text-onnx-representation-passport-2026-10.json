@@ -1,0 +1,18 @@
+{
+  "representation_id": "nomic-embed-text-onnx/onnx-mean-pool-768/2026-10-30",
+  "model_id": "nomic-embed-text-onnx",
+  "representation_family": "onnx-sentence-embedding",
+  "representation_version": "onnx-graph-b4342336/vocab-07eced37/768/mean-pool/128-tokens",
+  "exactness_class": "latent",
+  "measurement_state": "measured",
+  "admission_state": "DEFER",
+  "admission_scope": "embedding",
+  "quality_envelope": "Residency measured, quality not. bonfyre-embed loaded this graph under a ResourceAdmission memory grant of 274,592,584 bytes (2 x graph bytes) and the process peaked at 279,939,456 bytes physical footprint over 1703 site passages and 274,565,696 bytes over 2000 publication titles (receipt sha256 47b89764), so the estimate rule ran about 2 percent under the measured peak on the first run. Wall-clock embedding was 62 ms per text in one run and 203 ms in another taken beside a concurrent build; neither is a latency guarantee. It serves as the teacher reference for nomic-static-128 agreement. No retrieval relevance, false-prune or cross-model comparability has been measured.",
+  "receipt_ref": "estate/generated/nomic-static-128-teacher-agreement-site-passages-2026-10-30.json",
+  "receipt_digest": "3810e4edffb745a7fc3a2f1842a2651daf4ead1ffd34de177db048edce4a641c",
+  "physical_body_ref": "~/.cache/bonfyre/models/nomic-embed-text-onnx/onnx/model.onnx",
+  "physical_digest": "b4342336debaea79de872370664b0aaeb67dea4605513d00ee236ea871a81f27",
+  "physical_bytes": 137296292,
+  "supports": ["top-k"],
+  "recorded_at": "2026-10-30T14:20:00Z"
+}

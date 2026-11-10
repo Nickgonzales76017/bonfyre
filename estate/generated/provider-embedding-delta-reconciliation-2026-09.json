@@ -1,0 +1,40 @@
+{
+  "schema": "bonfyre-provider-embedding-delta-reconciliation.v1",
+  "observed_on": "2026-09-15",
+  "owner_database": "~/.bonfyre/estate/provider.db",
+  "address_index": "~/.bonfyre/estate/estate.db",
+  "runs": [
+    {
+      "run_id": "embedding:mistral:1789424683",
+      "owner_write": "ProviderEmbeddingRun:embedding:mistral:1789424683",
+      "candidate_identity": "provider-embedding:embedding:mistral:1789424683",
+      "lowerer_ref": "ProviderCompiler:embedding",
+      "provider": "mistral",
+      "model": "mistral-embed",
+      "representation_id": "mistral-embed-v1-publication-tail",
+      "dimensions": 1024,
+      "address_cut_affected": 1,
+      "handoff_dispatched": true,
+      "provider_compiler_artifact": "unrequested"
+    },
+    {
+      "run_id": "embedding:mistral:1789424980",
+      "owner_write": "ProviderEmbeddingRun:embedding:mistral:1789424980",
+      "candidate_identity": "provider-embedding:embedding:mistral:1789424980",
+      "lowerer_ref": "ProviderCompiler:embedding",
+      "provider": "mistral",
+      "model": "mistral-embed",
+      "representation_id": "mistral-embed-v1-publications-2026-09",
+      "dimensions": 1024,
+      "address_cut_affected": 1,
+      "handoff_dispatched": true,
+      "provider_compiler_artifact": "unrequested"
+    }
+  ],
+  "forbidden_inference": [
+    "provider embedding availability is semantic relevance",
+    "a provider compiler artifact is a ResourceAdmission grant",
+    "a dispatched FactDelta authorizes a provider call",
+    "a latent representation proves an owner fact"
+  ]
+}

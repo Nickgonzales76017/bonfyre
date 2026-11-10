@@ -1,0 +1,45 @@
+{
+  "schema": "bonfyre.provider.embedding.retrieval-evaluation.v1",
+  "observed_at": "2026-09-15T01:54:50+00:00",
+  "representation_id": "mistral-embed-v1-publications-2026-09",
+  "run_id": "embedding:mistral:1789424980",
+  "candidate_population": 22962,
+  "metric": "expected canonical handle retained in top-3",
+  "queries": [
+    {
+      "query_digest": "ac210f15eedd445ade5942e2401bd5fd76d630120c97d47dcdd29b12b6f5c8c6",
+      "expected_subject_id": "4",
+      "observed_rank": 2,
+      "query_id": "embedding-rank:mistral:1789437288-725538000"
+    },
+    {
+      "query_digest": "e024546645decf76e5b3047f1cc014862ac9ca8b264fba088d8f0d91358053f7",
+      "expected_subject_id": "8",
+      "observed_rank": 3,
+      "query_id": "embedding-rank:mistral:1789437289-250548000"
+    },
+    {
+      "query_digest": "551d0e64f3c425d2f70bce9962c63881c7831c786a593a37ce7cd69a8d83738c",
+      "expected_subject_id": "10",
+      "observed_rank": 1,
+      "query_id": "embedding-rank:mistral:1789437289-710928000"
+    },
+    {
+      "query_digest": "44c12046211245d59a737633557eb3b8271417d2a960f26c8a04f8b5adbfab70",
+      "expected_subject_id": "19908",
+      "observed_rank": 1,
+      "query_id": "embedding-rank:mistral:1789437290-151683000"
+    }
+  ],
+  "result": {
+    "expected_retained_top_3": 4,
+    "queries": 4,
+    "top_3_recall": 1.0
+  },
+  "scope_limit": "A four-query, English headline probe over one publication corpus. It demonstrates a retained live narrowing path, not a general semantic-quality, false-prune, bias, or cross-model-comparability claim.",
+  "forbidden_inferences": [
+    "top-3 recall on four queries implies global retrieval quality",
+    "retrieval survival implies exact-owner acceptance",
+    "latent ranking implies authority, evidence, or selection"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "id": "mistral-embed",
+  "name": "Mistral Embed",
+  "description": "Remote embedding-model identity. Its provider vectors are recorded separately as typed latent representations; this catalog row is not a local model body or a claim of retrieval quality.",
+  "format": "provider-api",
+  "geometry": "1024-dimensional remote embedding",
+  "geometry_condition": "comparison requires an explicit ComparabilityContract"
+}
