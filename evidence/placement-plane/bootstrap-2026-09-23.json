@@ -1,0 +1,36 @@
+{
+  "schema_version": "bonfyre.placement-bootstrap-receipt.v1",
+  "observed_at": "2026-09-23",
+  "declaration": "schemas/control/placement-plane.cue",
+  "outcome": "partially_applied",
+  "applied": [
+    {
+      "provider": "supabase",
+      "operation": "placement-plane.sql",
+      "proof": "Management API accepted the migration; public.placement_generation was subsequently queried successfully."
+    },
+    {
+      "provider": "cloudflare",
+      "operation": "remote tunnel ingress configuration",
+      "proof": "The managed bonfyre-oracle-continuation tunnel accepted ordered mcp.aurekai.work and auth.aurekai.work entries to 127.0.0.1:8791 before estate wildcard entries."
+    },
+    {
+      "provider": "cloudflare",
+      "operation": "canonical control DNS and no-Worker route exclusions",
+      "proof": "Proxied CNAMEs for mcp.aurekai.work and auth.aurekai.work target the managed Tunnel; exact no-Worker routes for both hosts and the three legacy control paths are present ahead of the broad estate Worker route. Edge probes changed from Worker quota error 1027 to Tunnel-unavailable error 1033, proving the control hosts no longer enter the static Worker."
+    },
+    {
+      "provider": "cloudflare",
+      "operation": "direct immutable material domain",
+      "proof": "material.aurekai.work was attached as the aurekai-estate R2 custom domain with an exact no-Worker exclusion. A direct request for /discover/13.html returned 200 and 55,907 bytes from the current estate material."
+    }
+  ],
+  "not_applied": [
+    {
+      "provider": "oracle",
+      "operation": "gateway/unit rollout and continuity credential installation",
+      "reason": "The managed Tunnel reported down and the configured Oracle SSH endpoint timed out, so no remote source or service was claimed deployed."
+    }
+  ],
+  "invariant": "A planned or partially applied placement is not a healthy realization receipt."
+}

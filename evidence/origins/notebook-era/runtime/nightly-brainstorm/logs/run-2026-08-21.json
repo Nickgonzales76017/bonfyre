@@ -1,0 +1,17 @@
+{
+   "date" : "2026-08-21",
+   "dry_run" : false,
+   "elapsed" : 1,
+   "entries" : [],
+   "passes" : [
+      "idea_expand",
+      "project_review",
+      "system_wire",
+      "agent_brief",
+      "morning_digest",
+      "morning_brief_audio",
+      "project_narrator",
+      "idea_playback",
+      "distribution_snippet"
+   ]
+}

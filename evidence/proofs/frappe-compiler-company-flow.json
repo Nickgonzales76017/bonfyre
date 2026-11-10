@@ -1,0 +1,834 @@
+{
+  "acceptance": {
+    "all_lanes_share_one_semantic_identity": true,
+    "all_runnable_checks_pass": true,
+    "at_least_three_lanes_cross_five_owner_families": true,
+    "compiler_spine_crosses_registered_lineages_with_idempotent_receipts": true,
+    "unavailable_edges_are_bounded": true
+  },
+  "bounded_blockers": [
+    {
+      "organ": "OpenDAL",
+      "reason": "no local opendal executable or Python binding is installed; ObjectFabric used its registered local zero-copy representation",
+      "state": "blocked_exactly"
+    },
+    {
+      "organ": "Iroh/QUIC",
+      "reason": "no existing local iroh executable/service path is available; peer transport was not simulated",
+      "state": "blocked_exactly"
+    },
+    {
+      "organ": "BonfyreReason durable session",
+      "reason": "BonfyreReason start returned zero but did not create its promised session state; branch/run were refused after exact readback",
+      "state": "blocked_exactly"
+    },
+    {
+      "organ": "CaveMem",
+      "reason": "no live CaveMem source or executable is registered in the repository",
+      "state": "blocked_exactly"
+    },
+    {
+      "organ": "GigaToken",
+      "reason": "the installed substrate has a passed semantic proof, but no installed importable runtime was used in this epoch",
+      "state": "exercised_replay"
+    },
+    {
+      "organ": "local-model-generation",
+      "reason": "BonfyreModel reports 0 of 18 model artifacts cached; no giant model download was allowed",
+      "state": "blocked_exactly"
+    }
+  ],
+  "forbidden_inferences": [
+    "simulation cash -> production revenue",
+    "local partner review -> remote partner completion or authority",
+    "unsigned DSSE envelope -> verified signature",
+    "content hash -> producer, model, transport, authority or claim support",
+    "provider process identity -> AgentSession, WorkerRun or WorkGraph identity",
+    "available source checkout -> live registered runtime binding"
+  ],
+  "lane_owner_family_counts": {
+    "artifact_supply_chain": 6,
+    "compiled_company_flow": 8,
+    "customer_to_cash": 8,
+    "engineering_to_partner": 8,
+    "knowledge_to_action": 9
+  },
+  "lanes": {
+    "artifact_supply_chain": {
+      "blockers": [
+        {
+          "organ": "OpenDAL",
+          "reason": "no local opendal executable or Python binding is installed; ObjectFabric used its registered local zero-copy representation",
+          "state": "blocked_exactly"
+        },
+        {
+          "organ": "Iroh/QUIC",
+          "reason": "no existing local iroh executable/service path is available; peer transport was not simulated",
+          "state": "blocked_exactly"
+        }
+      ],
+      "checks": {
+        "objectfabric_addresses_every_projection": true,
+        "six_registered_format_families_roundtrip": true,
+        "unavailable_peer_storage_paths_are_not_claimed": true,
+        "zstd_recovery_hash_matches_when_invoked": true
+      },
+      "compression": {
+        "compressed_bytes": 357,
+        "input_sha256": "674b89f78374e5f279903eb998a76cef7902711785454b6640a275f69abe58ca",
+        "recovered_sha256": "674b89f78374e5f279903eb998a76cef7902711785454b6640a275f69abe58ca",
+        "status": "pass"
+      },
+      "evidence": [
+        "formats/canonical.json",
+        "formats/object.csv",
+        "formats/object.sqlite",
+        "formats/object.geojson",
+        "formats/object.html",
+        "formats/object.tar"
+      ],
+      "formats": [
+        {
+          "bytes": 549,
+          "family": "schema-record-data",
+          "format": "JSON",
+          "path": "formats/canonical.json",
+          "sha256": "674b89f78374e5f279903eb998a76cef7902711785454b6640a275f69abe58ca"
+        },
+        {
+          "bytes": 87,
+          "family": "spreadsheets",
+          "format": "CSV",
+          "path": "formats/object.csv",
+          "sha256": "181a3757fa28d4a480d46690566d7bde3f9d2cafb25265b07fc2e6e7222145e2"
+        },
+        {
+          "bytes": 12288,
+          "family": "relational-containers",
+          "format": "SQLite",
+          "path": "formats/object.sqlite",
+          "sha256": "640cb75b9a95d7c5322bbb761719b00e0146cadb26a843695515486ab7f9501c"
+        },
+        {
+          "bytes": 862,
+          "family": "geospatial-vector",
+          "format": "GeoJSON",
+          "path": "formats/object.geojson",
+          "sha256": "a05bf66a402a3c3d3c18f68b092e69188e50bd8e91bf9b5a0c3f0abde053f40f"
+        },
+        {
+          "bytes": 938,
+          "family": "ebooks-web-archives",
+          "format": "HTML",
+          "path": "formats/object.html",
+          "sha256": "60d926fefc42be6e5c4dc12d333dd0db45fb179f37cb26a21507b344eff8f7d4"
+        },
+        {
+          "bytes": 10240,
+          "family": "archive-distribution",
+          "format": "TAR",
+          "path": "formats/object.tar",
+          "sha256": "6befce8d6bc9b3daf9c3f4ce982b659520fef6fe58ee4c2d1fb70efd76dfb929"
+        }
+      ],
+      "objectfabric": [
+        {
+          "bytes": 549,
+          "format": "JSON",
+          "sha256": "674b89f78374e5f279903eb998a76cef7902711785454b6640a275f69abe58ca",
+          "uri": "bonfyre://artifact/674b89f78374e5f279903eb998a76cef7902711785454b6640a275f69abe58ca"
+        },
+        {
+          "bytes": 87,
+          "format": "CSV",
+          "sha256": "181a3757fa28d4a480d46690566d7bde3f9d2cafb25265b07fc2e6e7222145e2",
+          "uri": "bonfyre://artifact/181a3757fa28d4a480d46690566d7bde3f9d2cafb25265b07fc2e6e7222145e2"
+        },
+        {
+          "bytes": 12288,
+          "format": "SQLite",
+          "sha256": "640cb75b9a95d7c5322bbb761719b00e0146cadb26a843695515486ab7f9501c",
+          "uri": "bonfyre://artifact/640cb75b9a95d7c5322bbb761719b00e0146cadb26a843695515486ab7f9501c"
+        },
+        {
+          "bytes": 862,
+          "format": "GeoJSON",
+          "sha256": "a05bf66a402a3c3d3c18f68b092e69188e50bd8e91bf9b5a0c3f0abde053f40f",
+          "uri": "bonfyre://artifact/a05bf66a402a3c3d3c18f68b092e69188e50bd8e91bf9b5a0c3f0abde053f40f"
+        },
+        {
+          "bytes": 938,
+          "format": "HTML",
+          "sha256": "60d926fefc42be6e5c4dc12d333dd0db45fb179f37cb26a21507b344eff8f7d4",
+          "uri": "bonfyre://artifact/60d926fefc42be6e5c4dc12d333dd0db45fb179f37cb26a21507b344eff8f7d4"
+        },
+        {
+          "bytes": 10240,
+          "format": "TAR",
+          "sha256": "6befce8d6bc9b3daf9c3f4ce982b659520fef6fe58ee4c2d1fb70efd76dfb929",
+          "uri": "bonfyre://artifact/6befce8d6bc9b3daf9c3f4ce982b659520fef6fe58ee4c2d1fb70efd76dfb929"
+        }
+      ],
+      "owner_trace": [
+        "ArtifactGraph",
+        "FormatCommons",
+        "BonfyreHash",
+        "ObjectFabric",
+        "BonfyreCompress",
+        "EvidenceGraph"
+      ],
+      "semantic_equivalence": {
+        "canonical": true,
+        "csv_typed_subset": true,
+        "geojson": true,
+        "html": true,
+        "sqlite": true,
+        "tar": true
+      },
+      "shared_identity": "company-object:run8-tiny-order",
+      "status": "pass"
+    },
+    "compiled_company_flow": {
+      "catalog": {
+        "lineages": [
+          "frappe-core",
+          "crm",
+          "helpdesk",
+          "erpnext",
+          "hrms",
+          "lms",
+          "wiki",
+          "insights",
+          "drive"
+        ],
+        "schema": "bonfyre.frappe-lineage-catalog.v1"
+      },
+      "checks": {
+        "all_registered_lineages_compiled": true,
+        "catalog_is_compiler_source_of_truth": true,
+        "compiled_at_least_three_registered_lineages": true,
+        "context_and_projections_share_contract": true,
+        "each_mutation_is_workgraph_receipted": true,
+        "receipt_envelopes_reach_evidence_graph": true,
+        "replay_has_no_duplicate_effects": true,
+        "rollback_discards_aborted_effect": true,
+        "ui_and_api_share_canonical_fields": true
+      },
+      "compiler_registry_maturity": "health_probed",
+      "contract_ref": "5242e7ecdc29a95e6c5437819914dfbd09c9ee57301fbbeebcc0aae6ba51c5ec",
+      "coverage_debt": [],
+      "dependency_graph": {
+        "catalog_sha256": "e165ef11e42c7f509099d1240039df2b096efc111f7a23964996afd3186befa8",
+        "edges": [
+          {
+            "destination": "crm",
+            "kind": "company_flow_after",
+            "source": "frappe-core"
+          },
+          {
+            "destination": "helpdesk",
+            "kind": "company_flow_after",
+            "source": "crm"
+          },
+          {
+            "destination": "erpnext",
+            "kind": "company_flow_after",
+            "source": "helpdesk"
+          },
+          {
+            "destination": "hrms",
+            "kind": "company_flow_after",
+            "source": "erpnext"
+          },
+          {
+            "destination": "lms",
+            "kind": "company_flow_after",
+            "source": "hrms"
+          },
+          {
+            "destination": "wiki",
+            "kind": "company_flow_after",
+            "source": "lms"
+          },
+          {
+            "destination": "insights",
+            "kind": "company_flow_after",
+            "source": "wiki"
+          },
+          {
+            "destination": "drive",
+            "kind": "company_flow_after",
+            "source": "insights"
+          }
+        ],
+        "nodes": [
+          "frappe-core",
+          "crm",
+          "helpdesk",
+          "erpnext",
+          "hrms",
+          "lms",
+          "wiki",
+          "insights",
+          "drive"
+        ],
+        "ownership": [
+          {
+            "consumes": [
+              "Authority"
+            ],
+            "lineage": "frappe-core",
+            "owns": [
+              "DocType"
+            ],
+            "publishes": [
+              "SurfaceGrammar",
+              "Policy"
+            ]
+          },
+          {
+            "consumes": [
+              "Actor",
+              "Relation",
+              "OccurrenceProjection"
+            ],
+            "lineage": "crm",
+            "owns": [],
+            "publishes": [
+              "CommunicationEvent",
+              "DealState"
+            ]
+          },
+          {
+            "consumes": [
+              "Actor",
+              "WorkState",
+              "OccurrenceProjection"
+            ],
+            "lineage": "helpdesk",
+            "owns": [
+              "TicketState"
+            ],
+            "publishes": [
+              "TicketState"
+            ]
+          },
+          {
+            "consumes": [
+              "WorkState",
+              "ProviderState"
+            ],
+            "lineage": "erpnext",
+            "owns": [
+              "Value",
+              "Receipt"
+            ],
+            "publishes": [
+              "Value",
+              "Receipt"
+            ]
+          },
+          {
+            "consumes": [
+              "Actor",
+              "WorkState"
+            ],
+            "lineage": "hrms",
+            "owns": [
+              "HumanCapacity"
+            ],
+            "publishes": [
+              "HumanCapacity"
+            ]
+          },
+          {
+            "consumes": [
+              "Actor"
+            ],
+            "lineage": "lms",
+            "owns": [
+              "Credential"
+            ],
+            "publishes": [
+              "Credential",
+              "Evidence"
+            ]
+          },
+          {
+            "consumes": [
+              "Evidence",
+              "ProofFrontier"
+            ],
+            "lineage": "wiki",
+            "owns": [
+              "KnowledgeClaim"
+            ],
+            "publishes": [
+              "KnowledgeClaim"
+            ]
+          },
+          {
+            "consumes": [
+              "ReachableCapacity",
+              "Value",
+              "OpportunityEligibility",
+              "ResourcePressure"
+            ],
+            "lineage": "insights",
+            "owns": [
+              "DerivedView"
+            ],
+            "publishes": [
+              "DerivedView"
+            ]
+          },
+          {
+            "consumes": [
+              "Artifact",
+              "Authority",
+              "RouteAdvertisement",
+              "NamespaceProjection",
+              "QueryDirectory"
+            ],
+            "lineage": "drive",
+            "owns": [],
+            "publishes": [
+              "ShareGrant",
+              "RepresentationHistory"
+            ]
+          }
+        ],
+        "schema": "bonfyre.frappe-lineage-dependency-graph.v1"
+      },
+      "evidence": [
+        "frappe-company-flow/lineage-catalog.json",
+        "frappe-company-flow/ownership-dependency-graph.json",
+        "frappe-company-flow/canonical-contract-ir.json",
+        "frappe-company-flow/context-cut.json",
+        "frappe-company-flow/projection-closure.json",
+        "frappe-company-flow/evidence-graph.json"
+      ],
+      "owner_trace": [
+        "BonfyreFrappeCompiler",
+        "WorkGraph",
+        "AuthorityGraph",
+        "EffectKernel",
+        "ContextCompiler",
+        "ContractProjectionKernel",
+        "ReceiptEnvelope",
+        "EvidenceGraph"
+      ],
+      "replay": {
+        "after": {
+          "effects": 9,
+          "evidence": 9,
+          "work": 9
+        },
+        "before": {
+          "effects": 9,
+          "evidence": 9,
+          "work": 9
+        },
+        "duplicate_effects": 0
+      },
+      "shared_identity": "company-object:run8-tiny-order",
+      "status": "pass"
+    },
+    "customer_to_cash": {
+      "checks": {
+        "crm_projects_actor_identity": true,
+        "erpnext_projects_commitment_identity": true,
+        "erpnext_quote_order_invoice_share_semantic_identity": true,
+        "helpdesk_projects_occurrence_identity": true,
+        "insights_exposes_maintained_queries": true,
+        "moneygraph_retains_causal_payment": true,
+        "simulation_never_claims_production_revenue": true
+      },
+      "counts": {
+        "crm": 1,
+        "erpnext_commercial_chain": 3,
+        "erpnext_payments": 1,
+        "helpdesk": 1,
+        "insights": 7
+      },
+      "evidence": [
+        "customer/crm-leads.json",
+        "customer/helpdesk-tickets.json",
+        "customer/erpnext-payments.json",
+        "customer/erpnext-commercial-chain.json",
+        "customer/insights-queries.json"
+      ],
+      "owner_trace": [
+        "ExternalEventLog",
+        "ActorGraph",
+        "CRM",
+        "Helpdesk",
+        "ERPNext",
+        "MoneyGraph",
+        "Insights",
+        "EvidenceGraph"
+      ],
+      "shared_identity": "company-object:run8-tiny-order",
+      "status": "pass"
+    },
+    "engineering_to_partner": {
+      "blockers": [],
+      "checks": {
+        "dsse_does_not_fake_signature": true,
+        "foreign_twin_is_observe_reference_only": true,
+        "partner_update_is_local_observation": true,
+        "sarif_vex_otel_are_content_addressed": true,
+        "workgraph_closed_against_receipt": true
+      },
+      "evidence": [
+        "partner/issue.json",
+        "partner/review.sarif",
+        "partner/review.cdx.json",
+        "partner/review.otel.json",
+        "partner/review.dsse.json",
+        "partner/receipt-envelope.json"
+      ],
+      "lifecycle_bindings": [
+        {
+          "organ": "WorkerRun",
+          "source": "engine/core/src/lifecycle.c",
+          "state": "registered_live",
+          "witness": "engine/core/tests/lifecycle_test.c"
+        },
+        {
+          "organ": "ProtocolMachine",
+          "source": "engine/core/src/lifecycle.c",
+          "state": "registered_live",
+          "witness": "engine/core/tests/lifecycle_test.c"
+        },
+        {
+          "organ": "Restate",
+          "recovery_fence": "WorkGraph reconcile-effects precedes ProtocolMachine resume",
+          "source": "services/bonfyre-restate-adapter/app.py.archive",
+          "state": "registered_live",
+          "witness": "tests/restate_integration.sh"
+        }
+      ],
+      "owner_trace": [
+        "PartnerCommons",
+        "ForeignTwin",
+        "WorkGraph",
+        "BonfyreIngest",
+        "FormatCommons",
+        "DSSE",
+        "ReceiptEnvelope",
+        "EvidenceGraph"
+      ],
+      "receipt": {
+        "artifact_identity": "b6ca891346dcfd61e98c398929a6cd8500f202fe07a955f776fe45ca6cc1e8f3",
+        "evidence": {
+          "otel": "eb71aa26fed69601206fdd87defaad3b9edf4e824de1e019869dfae3a6b69774",
+          "sarif": "de43b08f81ce0e544cb4639b384cd9ed82dfb0a626ea4985fccc29dc57356064",
+          "vex": "02d19fd76c73e48ef245fa0c10c7c49af0a7a6df68cd7d283e26f07db49bc092"
+        },
+        "identity": "receipt:35cab61caaecff22316ef98c2e5a8ac5789b4fd06025b10a81371529f6094640",
+        "provider_identity": "native-bonfyre-review",
+        "review": "pass",
+        "schema": "bonfyre.receipt-envelope.v1",
+        "subject": "issue:run8-evidence-packet",
+        "transport_identity": "local-filesystem",
+        "work_item_id": 1
+      },
+      "shared_identity": "company-object:run8-tiny-order",
+      "status": "pass",
+      "work_item_id": 1
+    },
+    "knowledge_to_action": {
+      "agent_session": {
+        "events": [
+          {
+            "evidence_origin": "subject",
+            "kind": "model_turn",
+            "model_identity": "codex",
+            "provider_identity": "openai",
+            "sequence": 1,
+            "work_node": "mesh-external-chatgpt-20260821T0250-020"
+          }
+        ],
+        "provider_process_identity_used_as_lifecycle_identity": false,
+        "root_work_node": "mesh-external-chatgpt-20260821T0250-020",
+        "session_id": "agent-session:1debfd961dafd3f5621a012a"
+      },
+      "blockers": [
+        {
+          "organ": "BonfyreReason durable session",
+          "reason": "BonfyreReason start returned zero but did not create its promised session state; branch/run were refused after exact readback",
+          "state": "blocked_exactly"
+        },
+        {
+          "organ": "CaveMem",
+          "reason": "no live CaveMem source or executable is registered in the repository",
+          "state": "blocked_exactly"
+        },
+        {
+          "organ": "GigaToken",
+          "reason": "the installed substrate has a passed semantic proof, but no installed importable runtime was used in this epoch",
+          "state": "exercised_replay"
+        },
+        {
+          "organ": "local-model-generation",
+          "reason": "BonfyreModel reports 0 of 18 model artifacts cached; no giant model download was allowed",
+          "state": "blocked_exactly"
+        }
+      ],
+      "checks": {
+        "bounded_context_is_digest_bound": true,
+        "decision_contract_binds_evidence_and_authority_scope": true,
+        "effect_is_content_addressed": true,
+        "provider_process_id_is_not_lifecycle_identity": true,
+        "providergraph_selects_current_codex_epoch": true
+      },
+      "context": {
+        "answer_sha256": "59d63ec95603030861824d9b4d81e4a46ed5722bf45e0fe9e125715af1a625a7",
+        "bytes": 1638,
+        "query": "get work-graph"
+      },
+      "decision_contract": {
+        "authority_scope": "isolated local simulation state",
+        "contract_id": "decision:2429a647cf8048c54e30d779c814291f0872d8e0817b4af2b8d2fb8eabd8f377",
+        "decision": "commit only bounded local evidence projections",
+        "evidence_refs": [
+          "external-chatgpt-20260821T0250-020",
+          "atlas-answer:59d63ec95603030861824d9b4d81e4a46ed5722bf45e0fe9e125715af1a625a7"
+        ],
+        "provider_route": "codex-epoch",
+        "subject": "company-object:run8-tiny-order",
+        "valid_from": "2026-08-21T00:00:00Z",
+        "valid_until": "2026-08-22T00:00:00Z"
+      },
+      "evidence": [
+        "knowledge/corpus-stats.json",
+        "knowledge/decision-contract.json",
+        "knowledge/agent-session.json"
+      ],
+      "owner_trace": [
+        "Wiki/Drive",
+        "AtlasContextProvider",
+        "ProviderGraph",
+        "BonfyreModel",
+        "BonfyreReason",
+        "DecisionContract",
+        "AgentSession",
+        "ObjectFabric",
+        "ProofBundle"
+      ],
+      "shared_identity": "company-object:run8-tiny-order",
+      "status": "bounded-pass-with-native-model-blockers"
+    }
+  },
+  "powers": {
+    "actually_invoked": [
+      {
+        "operation": "--phase",
+        "output_sha256": "62bd58451e8bb6c3c71f9dfa2064a2fb6c26eef5ffa7096260f7dfe649a6d02a",
+        "power": "BonfyreFrappeCompiler",
+        "registry_maturity": "health_probed",
+        "returncode": 0,
+        "wall_ms": 4.32
+      },
+      {
+        "operation": "file",
+        "output_sha256": "9fed004e79ffdff27a2ba8fd601c14cceb04131aed6daa3565616ee5d44045b7",
+        "power": "BonfyreHash",
+        "registry_maturity": "health_probed",
+        "returncode": 0,
+        "wall_ms": 3.901
+      },
+      {
+        "operation": "pack",
+        "output_sha256": "a44768fd033dfc08d1741ea4c1140c82d42e482a9416e0f6f6e79e3a7753ff82",
+        "power": "BonfyreCompress",
+        "registry_maturity": "workload_proven",
+        "returncode": 0,
+        "wall_ms": 12.058
+      },
+      {
+        "operation": "unpack",
+        "output_sha256": "8101169a1b41171ac6507a70cd089a08b7ed3b69e91c3a50a6f0c5bf58ff239e",
+        "power": "BonfyreCompress",
+        "registry_maturity": "workload_proven",
+        "returncode": 0,
+        "wall_ms": 7.741
+      },
+      {
+        "operation": "invoke",
+        "output_sha256": "f33a6a3cc6926841385c47b889650548d4c21a09c1f2a659b7aeae73ffe0fa61",
+        "power": "BonfyreIngest",
+        "registry_maturity": "workload_proven",
+        "returncode": 0,
+        "wall_ms": 6.136
+      },
+      {
+        "operation": "route",
+        "output_sha256": "07d32e1b7444ac71ea956a7213373225f440afa3fe7a06a147e057b7edf7de90",
+        "power": "BonfyreModel",
+        "registry_maturity": "health_probed",
+        "returncode": 0,
+        "wall_ms": 61.719
+      },
+      {
+        "operation": "start",
+        "output_sha256": "660cde39f6c6de39bb7e59cbe56dc3ca56c91c8a185ddc9286cc95354a105b0a",
+        "power": "BonfyreReason",
+        "registry_maturity": "health_probed",
+        "returncode": 0,
+        "wall_ms": 5.571
+      },
+      {
+        "operation": "--phase",
+        "output_sha256": "479e7d4d4466e4b884249c7b13989a27dd1659e3866695e41f7c37fc85bdf7a1",
+        "power": "BonfyreFrappeCompiler",
+        "registry_maturity": "health_probed",
+        "returncode": 0,
+        "wall_ms": 876.231
+      },
+      {
+        "operation": "--phase",
+        "output_sha256": "39a5aa20d2f71466931c98fb4eea87977a315465ef8905b640d47c2b658a98b1",
+        "power": "BonfyreFrappeCompiler",
+        "registry_maturity": "health_probed",
+        "returncode": 0,
+        "wall_ms": 84.928
+      },
+      {
+        "operation": "--phase",
+        "output_sha256": "3d32b4f784040b76cf2fe813b007705da9b8ded64e26aa5d237890befcd0516c",
+        "power": "BonfyreFrappeCompiler",
+        "registry_maturity": "health_probed",
+        "returncode": 0,
+        "wall_ms": 75.644
+      },
+      {
+        "operation": "--phase",
+        "output_sha256": "63946cdf9d97169dd9899eb511c03a4c74da38e29915c0b9c58db95539ce3173",
+        "power": "BonfyreFrappeCompiler",
+        "registry_maturity": "health_probed",
+        "returncode": 0,
+        "wall_ms": 5462.672
+      },
+      {
+        "operation": "--phase",
+        "output_sha256": "bbf86e31ccc18cdaa85d122c067003ee68795f4718b3d1fa10e3ae69c0f7498e",
+        "power": "BonfyreFrappeCompiler",
+        "registry_maturity": "health_probed",
+        "returncode": 0,
+        "wall_ms": 424.144
+      },
+      {
+        "operation": "--phase",
+        "output_sha256": "f1344b0e069b96286b93b93413c128db06f3e14ef31367325b995f1ba8664707",
+        "power": "BonfyreFrappeCompiler",
+        "registry_maturity": "health_probed",
+        "returncode": 0,
+        "wall_ms": 124.99
+      },
+      {
+        "operation": "--phase",
+        "output_sha256": "57834bb8ac9d38dbf6f533976c3138bd59f74e55ab388848fe3a015d5e7c3a64",
+        "power": "BonfyreFrappeCompiler",
+        "registry_maturity": "health_probed",
+        "returncode": 0,
+        "wall_ms": 69.862
+      },
+      {
+        "operation": "--phase",
+        "output_sha256": "be0c93891de69bb2f8cbfd647ac7c97ef79bb6a91a8bfa8e8328ae9e738ad6d2",
+        "power": "BonfyreFrappeCompiler",
+        "registry_maturity": "health_probed",
+        "returncode": 0,
+        "wall_ms": 75.399
+      },
+      {
+        "operation": "--phase",
+        "output_sha256": "cca1acdef6d0fefa0fb6cbd7f5defa4940b5a2e87c89a17228d18bd558e72450",
+        "power": "BonfyreFrappeCompiler",
+        "registry_maturity": "health_probed",
+        "returncode": 0,
+        "wall_ms": 57.475
+      },
+      {
+        "operation": "context-compile",
+        "output_sha256": "837014a92b74fd914e5504a10350085e43ae8bb11e50e6255c2f3035e74730a6",
+        "power": "BonfyreKVCache",
+        "registry_maturity": "health_probed",
+        "returncode": 0
+      },
+      {
+        "operation": "assess-json",
+        "output_sha256": "07ac68949f6d7286c8a3b5bebfba6ebb2950d17755d8da87f4114b7e50828c1e",
+        "power": "BonfyreLedger",
+        "registry_maturity": "workload_proven",
+        "returncode": 0,
+        "wall_ms": 5.039
+      },
+      {
+        "operation": "bundle",
+        "output_sha256": "a934529270c3db873f687589e9508bc613dd8f88bbcceb9606f665022ed02201",
+        "power": "BonfyreProof",
+        "registry_maturity": "health_probed",
+        "returncode": 0,
+        "wall_ms": 5.302
+      }
+    ],
+    "direct_names": [
+      "BonfyreCompress",
+      "BonfyreFrappeCompiler",
+      "BonfyreHash",
+      "BonfyreIngest",
+      "BonfyreKVCache",
+      "BonfyreLedger",
+      "BonfyreModel",
+      "BonfyreProof",
+      "BonfyreReason"
+    ],
+    "novel_cross_organ_composition": [
+      "BonfyreFrappeCompiler + CRM/Helpdesk/ERPNext + MoneyGraph + Insights",
+      "BonfyreFrappeCompiler registry + nine lineage AppPacks + WorkGraph + ReceiptEnvelope + EvidenceGraph",
+      "BonfyreHash + FormatCommons + BonfyreCompress + ObjectFabric",
+      "BonfyreIngest + PartnerCommons + ForeignTwin + WorkGraph + ReceiptEnvelope",
+      "BonfyreModel + BonfyreReason + ProviderGraph + DecisionContract + AgentSession"
+    ]
+  },
+  "proof_sha256": "aa0be24ecd42eaa01f29fea51743def2aecfcfbd4293d48bd2d46512602dcc8a",
+  "reusable_evidence": [
+    "customer/crm-leads.json",
+    "customer/erpnext-commercial-chain.json",
+    "customer/erpnext-payments.json",
+    "customer/helpdesk-tickets.json",
+    "customer/insights-queries.json",
+    "formats/canonical.json",
+    "formats/object.csv",
+    "formats/object.geojson",
+    "formats/object.html",
+    "formats/object.sqlite",
+    "formats/object.tar",
+    "frappe-company-flow/canonical-contract-ir.json",
+    "frappe-company-flow/context-cut.json",
+    "frappe-company-flow/evidence-graph.json",
+    "frappe-company-flow/lineage-catalog.json",
+    "frappe-company-flow/ownership-dependency-graph.json",
+    "frappe-company-flow/projection-closure.json",
+    "knowledge/agent-session.json",
+    "knowledge/corpus-stats.json",
+    "knowledge/decision-contract.json",
+    "partner/issue.json",
+    "partner/receipt-envelope.json",
+    "partner/review.cdx.json",
+    "partner/review.dsse.json",
+    "partner/review.otel.json",
+    "partner/review.sarif"
+  ],
+  "schema": "bonfyre.one-company-stress-gauntlet.v1",
+  "shared_object": {
+    "identity": "company-object:run8-tiny-order",
+    "sha256": "1debfd961dafd3f5621a012a017b2c3bea4304c17b53d78c5f795071d491a31b"
+  },
+  "simulation": true,
+  "source_event": "external-chatgpt-20260821T0250-020",
+  "work_item": "mesh-external-chatgpt-20260821T0250-020"
+}
