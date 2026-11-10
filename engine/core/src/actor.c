@@ -1,3 +1,10 @@
+/* POSIX interfaces used below are hidden by glibc under -std=c11 unless a
+   feature macro is set. macOS exposes them regardless, which is why this
+   whole class only surfaced on the Linux deployment host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * Native ActorGraph. Shares the actor_nodes / actor_edges store with the Python
  * reference (actors.py) and enforces the same epistemic gates: declared kinds,

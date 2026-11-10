@@ -16,6 +16,9 @@
  */
 
 typedef struct BfProof BfProof;
+typedef struct BfEvidence BfEvidence;
+typedef struct BfForeignTwin BfForeignTwin;
+typedef struct BfTargetObligation BfTargetObligation;
 
 int bf_proof_open(const char *database_path, BfProof **out, FILE *err);
 int bf_proof_open_database(void *sqlite_database, BfProof **out, FILE *err);
@@ -42,6 +45,22 @@ int bf_proof_challenge_invariant(BfProof *proof, const char *invariant_id, const
  * Returns 1 / 0 / -1.
  */
 int bf_proof_invariant_is_proven(BfProof *proof, const char *invariant_id);
+
+/* Admit a proof only from an independently retained ForeignTwin observation
+ * whose exact receipt supports the named EvidenceGraph claim.  ForeignTwin
+ * retains the observation; EvidenceGraph owns the support relation; this
+ * owner only owns the resulting ProofFrontier invariant. */
+int bf_proof_record_independent_invariant(
+    BfProof *proof, BfForeignTwin *foreign, BfEvidence *evidence,
+    const char *invariant_id, const char *subject_resource,
+    const char *subject_profile, const char *layer, const char *statement,
+    const char *foreign_subject, const char *foreign_predicate,
+    const char *evidence_claim, const char *now);
+
+/* Only the proof owner may close a TargetObligation.  The target must name
+ * this still-PROVEN invariant as its source frontier. */
+int bf_proof_close_target(BfProof *proof, BfTargetObligation *target,
+                          const char *target_id, const char *invariant_id);
 
 /* --- known non-causes: durable negatives (blackholes) --- */
 int bf_proof_record_noncause(BfProof *proof, const char *noncause_id,

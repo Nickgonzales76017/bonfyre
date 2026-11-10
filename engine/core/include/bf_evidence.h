@@ -6,7 +6,7 @@
 
 /*
  * Native evidence relations -- the native peer of the EvidenceGraph in the Python
- * reference (10-Code/BonfyreControlPlane/evidence_graphs.py). Writes the SAME
+ * reference (components/BonfyreControlPlane/evidence_graphs.py). Writes the SAME
  * evidence_relations store, so native and Python share one evidence graph.
  *
  * A relation (evidence --kind--> claim) is DIRECTIONAL: supports(A,B) never
@@ -22,6 +22,18 @@ typedef enum BfEvidenceStatus {
     BF_EVIDENCE_INVALID,       /* a required field is null or empty */
     BF_EVIDENCE_STORAGE_ERROR
 } BfEvidenceStatus;
+
+/* The current position of the evidence relation store about one claim.  This
+ * is deliberately not a truth/proof verdict: the ProofFrontier owns that
+ * stronger conclusion.  A later support can never rescue a contradiction or
+ * falsification merely by being written later. */
+typedef enum BfEvidenceVerdict {
+    BF_EVIDENCE_UNEVIDENCED = 0,
+    BF_EVIDENCE_SUPPORTED,
+    BF_EVIDENCE_REPRODUCED,
+    BF_EVIDENCE_CONTESTED,
+    BF_EVIDENCE_FALSIFIED
+} BfEvidenceVerdict;
 
 int bf_evidence_open(const char *database_path, BfEvidence **out, FILE *err);
 int bf_evidence_open_database(void *sqlite_database, BfEvidence **out, FILE *err);
@@ -44,5 +56,15 @@ int bf_evidence_supports(BfEvidence *graph, const char *evidence, const char *cl
 
 /* Count of distinct evidences that SUPPORT a claim. -1 on error. */
 int64_t bf_evidence_supporters_count(BfEvidence *graph, const char *claim);
+
+/* Derive the precedence-ordered verdict for a claim.  The result is a query
+ * over the relation store, never a persisted second truth store. */
+BfEvidenceStatus bf_evidence_verdict(BfEvidence *graph, const char *claim,
+                                      BfEvidenceVerdict *out);
+
+/* True only for supported/reproduced claims with no contradiction or
+ * falsification.  "stands" must not be read as "proven". */
+int bf_evidence_stands(BfEvidence *graph, const char *claim);
+const char *bf_evidence_verdict_name(BfEvidenceVerdict verdict);
 
 #endif

@@ -11,7 +11,7 @@ set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 CORE="$(cd "$HERE/.." && pwd)"
-CP="$CORE/../../10-Code/BonfyreControlPlane"
+CP="$CORE/../../components/BonfyreControlPlane"
 SRC="${1:-$CP/control_plane.db}"
 NOW="2026-08-16T00:00:00+00:00"
 

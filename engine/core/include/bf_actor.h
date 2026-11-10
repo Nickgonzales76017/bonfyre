@@ -8,7 +8,7 @@
 /*
  * Native ActorGraph -- people, organizations, publications, programs and the
  * typed relationships between them. Native peer of the Python reference
- * (10-Code/BonfyreControlPlane/actors.py): it writes the SAME actor_nodes /
+ * (components/BonfyreControlPlane/actors.py): it writes the SAME actor_nodes /
  * actor_edges tables, so native and Python share one social/authority graph.
  *
  * The load-bearing invariant is epistemic honesty. Every node and edge carries

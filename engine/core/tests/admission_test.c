@@ -139,6 +139,28 @@ int main(int argc, char **argv) {
         return fail("committed should be 8G after reaping the stale grant");
     }
 
+    /* Memory: a resident model settles its grant. It stays held by its plane,
+     * stops counting as committed, and a plane restart releases what is left. */
+    BfAdmissionPolicy memory;
+    BfResourceRequest model = {.plane = "moe-serve:7000", .kind = "model-resident",
+                               .estimated_bytes = 4 * GIB, .volume = BF_ADMISSION_MEMORY_VOLUME};
+    int64_t model_grant = 0;
+    bf_admission_policy_memory(&memory);
+    if (bf_admission_request_grant(grants, &model, &memory, 8 * GIB, NULL, NULL, &model_grant) != BF_ADMISSION_ADMIT)
+        return fail("a 4G model should fit in 8G of free memory");
+    if (bf_admission_committed_bytes(grants, BF_ADMISSION_MEMORY_VOLUME, NULL) != 4 * GIB)
+        return fail("an unsettled model grant is committed");
+    if (bf_admission_settle_grant(grants, model_grant) != 0 ||
+        bf_admission_committed_bytes(grants, BF_ADMISSION_MEMORY_VOLUME, NULL) != 0)
+        return fail("a settled grant must not be counted again");
+    BfAdmissionDecision later;
+    if (bf_admission_request_grant(grants, &model, &memory, 1 * GIB, NULL, &later, NULL) != BF_ADMISSION_DEFER)
+        return fail("too little free memory is not now, never never");
+    if (bf_admission_release_plane(grants, "moe-serve:7000", NULL) != 1)
+        return fail("a restarted plane releases the grant its predecessor held");
+    if (bf_admission_committed_bytes(grants, "/data", NULL) != 8 * GIB)
+        return fail("memory grants never touch a disk volume");
+
     bf_admission_close(grants);
     printf("DB=%s\n", db_path);
     printf("admission_test: PASS\n");

@@ -6,7 +6,7 @@
 
 /*
  * Native authority grants -- native peer of the grant/has_authority half of the
- * Python reference (10-Code/BonfyreControlPlane/authority.py). Writes the SAME
+ * Python reference (components/BonfyreControlPlane/authority.py). Writes the SAME
  * authority_edges store. (The bit-mask / CID forwarding in authority.py is a
  * separate AddressPlane concern; this owns the grants fact.)
  *
@@ -42,6 +42,16 @@ int bf_authority_grant(BfAuthority *auth, const BfAuthorityEdge *edge, const cha
 
 /* Revoke an edge by id. Returns 1 if an edge was revoked, 0 if none, -1 error. */
 int bf_authority_revoke(BfAuthority *auth, const char *edge_id);
+
+/* Derive a non-delegable child bounded by its immediate parent. Returns 0 on
+ * success, -1 when the parent is missing/revoked/non-delegable or a requested
+ * purpose/window would widen it. */
+int bf_authority_delegate(BfAuthority *auth, const char *parent_edge_id,
+                          const char *child_edge_id, const char *to_actor,
+                          const char *purpose, const char *expires_at);
+
+/* Revoke a grant plus every transitive child that names it as immediate origin. */
+int bf_authority_revoke_cascade(BfAuthority *auth, const char *edge_id);
 
 /*
  * Does `actor` hold `permission` over `subject` at `at_iso` (NULL => now), for

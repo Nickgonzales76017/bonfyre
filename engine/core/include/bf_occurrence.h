@@ -8,7 +8,7 @@
 /*
  * Native OccurrenceSpine -- external observations folded into an ordered,
  * append-only causal spine. This is the native peer of the Python reference in
- * 10-Code/BonfyreControlPlane/external_events.py: it writes the SAME
+ * components/BonfyreControlPlane/external_events.py: it writes the SAME
  * external_event_log table, with the SAME observation digest, so a native
  * writer and the Python writer dedup against each other on a shared store.
  *

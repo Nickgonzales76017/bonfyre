@@ -1,3 +1,10 @@
+/* POSIX interfaces used below are hidden by glibc under -std=c11 unless a
+   feature macro is set. macOS exposes them regardless, which is why this
+   whole class only surfaced on the Linux deployment host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * Native resource-activation state machine. Shares the resource_candidates store
  * with resource_activation.py; the ordered state derivation matches exactly.
@@ -26,6 +33,7 @@ static const char *ACTIVATION_SCHEMA =
     "  eligible INTEGER NOT NULL DEFAULT 0,"
     "  activate_actor TEXT NOT NULL DEFAULT '',"
     "  detail TEXT NOT NULL DEFAULT '',"
+    "  selection_detail TEXT NOT NULL DEFAULT '',"
     "  updated_at TEXT NOT NULL"
     ");";
 
@@ -50,6 +58,27 @@ static int apply_schema(sqlite3 *db, FILE *err) {
         }
         sqlite3_free(errmsg);
         return -1;
+    }
+    /* The historical Python peer has no selection field. Additive migration
+     * keeps its shared-store reader valid while preventing an actor selection
+     * from overwriting DemandBook's eligibility provenance in `detail`. */
+    {
+        sqlite3_stmt *columns = NULL;
+        int found = 0;
+        if (sqlite3_prepare_v2(db, "PRAGMA table_info(resource_candidates)", -1, &columns, NULL) != SQLITE_OK)
+            return -1;
+        while (sqlite3_step(columns) == SQLITE_ROW) {
+            const char *name = (const char *)sqlite3_column_text(columns, 1);
+            if (name && strcmp(name, "selection_detail") == 0) { found = 1; break; }
+        }
+        sqlite3_finalize(columns);
+        if (!found && sqlite3_exec(db,
+                "ALTER TABLE resource_candidates ADD COLUMN selection_detail TEXT NOT NULL DEFAULT ''",
+                NULL, NULL, &errmsg) != SQLITE_OK) {
+            if (err) fprintf(err, "activation: selection migration failed: %s\n", errmsg ? errmsg : "?");
+            sqlite3_free(errmsg);
+            return -1;
+        }
     }
     return 0;
 }
@@ -147,6 +176,69 @@ int bf_activation_record(BfActivation *act, const BfActivationCandidate *cand, c
     return rc == SQLITE_DONE ? 0 : -1;
 }
 
+int bf_activation_project_eligibility(BfActivation *act, const char *resource_id,
+                                      int eligible, const char *detail, const char *now) {
+    if (!act || !resource_id || resource_id[0] == '\0') {
+        return -1;
+    }
+    char stamp[40];
+    if (!now || now[0] == '\0') {
+        now_iso(stamp);
+        now = stamp;
+    }
+    sqlite3_stmt *stmt = NULL;
+    /*
+     * SupplyMatch owns only qualification/eligibility evidence.  It must not
+     * erase a mechanism or activate_actor installed later by the independent
+     * activation/authority path.  A new row starts with the neutral defaults;
+     * an existing row preserves those authority-adjacent fields.
+     */
+    if (sqlite3_prepare_v2(
+            act->db,
+            "INSERT INTO resource_candidates"
+            "(resource_id,mechanism,qualified,eligible,activate_actor,detail,updated_at)"
+            " VALUES(?,'service',1,?,'',?,?)"
+            " ON CONFLICT(resource_id) DO UPDATE SET"
+            "  qualified=1, eligible=excluded.eligible,"
+            "  detail=excluded.detail, updated_at=excluded.updated_at",
+            -1, &stmt, NULL) != SQLITE_OK) {
+        return -1;
+    }
+    sqlite3_bind_text(stmt, 1, resource_id, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 2, eligible ? 1 : 0);
+    sqlite3_bind_text(stmt, 3, detail ? detail : "", -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, now, -1, SQLITE_TRANSIENT);
+    int rc = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    return rc == SQLITE_DONE ? 0 : -1;
+}
+
+int bf_activation_select_actor(BfActivation *act, const char *resource_id,
+                               const char *actor, const char *mechanism,
+                               const char *detail, const char *now) {
+    sqlite3_stmt *stmt = NULL;
+    char stamp[40];
+    int rc;
+    if (!act || !resource_id || !resource_id[0] || !actor || !actor[0]) return -1;
+    if (!now || !now[0]) { now_iso(stamp); now = stamp; }
+    if (sqlite3_prepare_v2(act->db,
+            "INSERT INTO resource_candidates"
+            "(resource_id,mechanism,qualified,eligible,activate_actor,detail,selection_detail,updated_at)"
+            " VALUES(?, ?, 0, 0, ?, '', ?, ?)"
+            " ON CONFLICT(resource_id) DO UPDATE SET mechanism=excluded.mechanism,"
+            " activate_actor=excluded.activate_actor,selection_detail=excluded.selection_detail,"
+            " updated_at=excluded.updated_at",
+            -1, &stmt, NULL) != SQLITE_OK) return -1;
+    sqlite3_bind_text(stmt, 1, resource_id, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, mechanism && mechanism[0] ? mechanism : "service", -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, actor, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, detail ? detail : "", -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 5, now, -1, SQLITE_TRANSIENT);
+    rc = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    return rc == SQLITE_DONE ? 0 : -1;
+}
+
 BfActivationState bf_activation_state(BfActivation *act, const char *resource_id,
                                       int has_authority, int is_bound) {
     if (!act || !resource_id) {
@@ -199,6 +291,32 @@ int bf_activation_is_activated(BfActivation *act, const char *resource_id,
         return -1;
     }
     return bf_activation_state(act, resource_id, has_authority, is_bound) == BF_ACT_ACTIVATED ? 1 : 0;
+}
+
+BfActivationState bf_activation_reconcile(BfActivation *act, BfAuthority *authority,
+                                          BfServiceLifecycle *lifecycle,
+                                          const char *resource_id, const char *at_iso) {
+    sqlite3_stmt *stmt = NULL;
+    const char *actor = NULL;
+    char actor_copy[256] = {0};
+    int authority_result, bound_result;
+    if (!act || !authority || !lifecycle || !resource_id) return BF_ACT_GAP;
+    if (sqlite3_prepare_v2(act->db,
+            "SELECT activate_actor FROM resource_candidates WHERE resource_id=?",
+            -1, &stmt, NULL) != SQLITE_OK) return BF_ACT_GAP;
+    sqlite3_bind_text(stmt, 1, resource_id, -1, SQLITE_TRANSIENT);
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        actor = (const char *)sqlite3_column_text(stmt, 0);
+        if (actor) snprintf(actor_copy, sizeof(actor_copy), "%s", actor);
+    }
+    sqlite3_finalize(stmt);
+    if (!actor_copy[0]) return bf_activation_state(act, resource_id, 0, 0);
+    authority_result = bf_authority_has(authority, actor_copy, "activate", resource_id,
+                                        at_iso, "resource-activation");
+    if (authority_result < 0) return BF_ACT_GAP;
+    bound_result = bf_service_lifecycle_is_bound(lifecycle, resource_id, actor_copy);
+    if (bound_result < 0) return BF_ACT_GAP;
+    return bf_activation_state(act, resource_id, authority_result, bound_result);
 }
 
 const char *bf_activation_state_name(BfActivationState state) {

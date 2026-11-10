@@ -58,6 +58,28 @@ int main(int argc, char **argv) {
     if (bf_evidence_supporters_count(g, "claim:1") != 2) {
         return fail("supporters count must ignore the contradiction");
     }
+    {
+        BfEvidenceVerdict verdict;
+        if (bf_evidence_verdict(g, "claim:1", &verdict) != BF_EVIDENCE_OK ||
+            verdict != BF_EVIDENCE_CONTESTED || bf_evidence_stands(g, "claim:1") != 0) {
+            return fail("contradiction must outrank support");
+        }
+        if (bf_evidence_relate(g, "artifact:D", "falsifies", "claim:1") != BF_EVIDENCE_OK ||
+            bf_evidence_relate(g, "artifact:E", "reproduces", "claim:1") != BF_EVIDENCE_OK ||
+            bf_evidence_verdict(g, "claim:1", &verdict) != BF_EVIDENCE_OK ||
+            verdict != BF_EVIDENCE_FALSIFIED || bf_evidence_stands(g, "claim:1") != 0) {
+            return fail("falsification must remain terminal");
+        }
+        if (bf_evidence_relate(g, "artifact:R", "reproduces", "claim:2") != BF_EVIDENCE_OK ||
+            bf_evidence_verdict(g, "claim:2", &verdict) != BF_EVIDENCE_OK ||
+            verdict != BF_EVIDENCE_REPRODUCED || bf_evidence_stands(g, "claim:2") != 1) {
+            return fail("reproduction must stand when uncontested");
+        }
+        if (bf_evidence_verdict(g, "claim:none", &verdict) != BF_EVIDENCE_OK ||
+            verdict != BF_EVIDENCE_UNEVIDENCED || bf_evidence_stands(g, "claim:none") != 0) {
+            return fail("missing relation must be unevidenced");
+        }
+    }
     /* an undeclared kind is rejected */
     if (bf_evidence_relate(g, "x", "vibes_with", "claim:1") != BF_EVIDENCE_INVALID_KIND) {
         return fail("undeclared kind should be rejected");

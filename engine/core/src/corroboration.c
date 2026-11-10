@@ -1,3 +1,10 @@
+/* POSIX interfaces used below are hidden by glibc under -std=c11 unless a
+   feature macro is set. macOS exposes them regardless, which is why this
+   whole class only surfaced on the Linux deployment host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * Native corroboration ledger. Shares the actor_corroborations store with the
  * Python reference (verification.py); independence by distinct source.

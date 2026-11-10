@@ -1,7 +1,7 @@
 /*
  * Provider health as a fold over append-only observations.
  *
- * Ported from 10-Code/BonfyreControlPlane/provider_state.py. Conformance
+ * Absorbed from components/BonfyreControlPlane/provider_state.py.archive. Conformance
  * vectors: tests/conformance/control/vectors/provider.
  */
 

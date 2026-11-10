@@ -47,6 +47,13 @@ typedef struct BfContractContext {
     const char *input_path;
     const char *input_dir;
     const char *input_uri;
+    /* The receipt of the operator execution that produced the input artifact.
+     * Empty when the input was ingested and no node of this fabric made it. */
+    const char *input_receipt;
+    /* When that receipt was written, as the fabric recorded it. */
+    const char *input_receipt_at;
+    /* How long that execution ran, in milliseconds, as the fabric timed it. */
+    const char *input_receipt_duration_ms;
     const char *mission_id;
     const char *mission_dir;
     const char *output_dir;

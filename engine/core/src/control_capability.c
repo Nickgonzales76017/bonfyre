@@ -1,7 +1,7 @@
 /*
  * Capability identity versus callability.
  *
- * Ported from 10-Code/BonfyreControlPlane/capability_catalog.py. The ladder is
+ * Ported from components/BonfyreControlPlane/capability_catalog.py. The ladder is
  * the one estate/catalog.yaff already uses for operators.
  */
 

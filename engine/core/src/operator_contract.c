@@ -28,6 +28,9 @@ static const char *placeholder_value(const char *token, const BfContractContext 
     if (!strcmp(token, "${input.path}")) return context->input_path;
     if (!strcmp(token, "${input.dir}")) return context->input_dir;
     if (!strcmp(token, "${input.uri}")) return context->input_uri;
+    if (!strcmp(token, "${input.receipt}")) return context->input_receipt;
+    if (!strcmp(token, "${input.receipt_at}")) return context->input_receipt_at;
+    if (!strcmp(token, "${input.receipt_duration_ms}")) return context->input_receipt_duration_ms;
     if (!strcmp(token, "${mission.id}")) return context->mission_id;
     if (!strcmp(token, "${mission.dir}")) return context->mission_dir;
     if (!strcmp(token, "${output.dir}")) return context->output_dir;
@@ -179,7 +182,9 @@ static int validate_template_declaration(const char *template, char *error, size
             memcpy(placeholder,cursor,length); placeholder[length]='\0';
             if (strcmp(placeholder,"${binary}") && strcmp(placeholder,"${input.path}") &&
                 strcmp(placeholder,"${input.dir}") &&
-                strcmp(placeholder,"${input.uri}") && strcmp(placeholder,"${mission.id}") &&
+                strcmp(placeholder,"${input.uri}") && strcmp(placeholder,"${input.receipt}") &&
+                strcmp(placeholder,"${input.receipt_at}") && strcmp(placeholder,"${input.receipt_duration_ms}") &&
+                strcmp(placeholder,"${mission.id}") &&
                 strcmp(placeholder,"${mission.dir}") && strcmp(placeholder,"${output.dir}") &&
                 strcmp(placeholder,"${state.dir}") && strncmp(placeholder,"${argument.",11)) {
                 contract_error(error,error_size,"unknown placeholder: %s",placeholder); return -1;

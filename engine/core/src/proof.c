@@ -1,3 +1,10 @@
+/* POSIX interfaces used below are hidden by glibc under -std=c11 unless a
+   feature macro is set. macOS exposes them regardless, which is why this
+   whole class only surfaced on the Linux deployment host. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /*
  * Native proof frontier. Shares frontier_layers / solved_invariants /
  * known_noncauses with proof_frontier.py. Preserves the truth-plane discipline
@@ -5,6 +12,9 @@
  */
 
 #include "bf_proof.h"
+#include "bf_evidence.h"
+#include "bf_foreign_twin.h"
+#include "bf_target_obligation.h"
 
 #include <sqlite3.h>
 
@@ -289,6 +299,35 @@ int bf_proof_invariant_is_proven(BfProof *proof, const char *invariant_id) {
     }
     sqlite3_finalize(stmt);
     return proven;
+}
+
+int bf_proof_record_independent_invariant(
+    BfProof *proof, BfForeignTwin *foreign, BfEvidence *evidence,
+    const char *invariant_id, const char *subject_resource,
+    const char *subject_profile, const char *layer, const char *statement,
+    const char *foreign_subject, const char *foreign_predicate,
+    const char *evidence_claim, const char *now) {
+    char receipt[256];
+    if (!proof || !foreign || !evidence || !invariant_id || !subject_resource ||
+        !layer || !statement || !foreign_subject || !foreign_predicate ||
+        !evidence_claim || !*evidence_claim) return -1;
+    if (bf_foreign_twin_latest_receipt(foreign, foreign_subject, foreign_predicate,
+                                       receipt, sizeof(receipt)) != 1) return 0;
+    if (bf_evidence_supports(evidence, receipt, evidence_claim) != 1) return 0;
+    return bf_proof_record_invariant(proof, invariant_id, subject_resource,
+                                     subject_profile, layer, statement,
+                                     "proven", "proven", now);
+}
+
+int bf_proof_close_target(BfProof *proof, BfTargetObligation *target,
+                          const char *target_id, const char *invariant_id) {
+    BfTargetObligationRecord record;
+    if (!proof || !target || !target_id || !*target_id || !invariant_id || !*invariant_id)
+        return -1;
+    if (bf_target_obligation_get(target, target_id, &record) != 0) return -1;
+    if (strcmp(record.source_frontier, invariant_id) != 0) return 0;
+    if (bf_proof_invariant_is_proven(proof, invariant_id) != 1) return 0;
+    return bf_target_obligation_prove(target, target_id, invariant_id) == 0 ? 1 : -1;
 }
 
 int bf_proof_record_noncause(BfProof *proof, const char *noncause_id,

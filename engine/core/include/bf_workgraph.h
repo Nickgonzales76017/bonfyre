@@ -116,6 +116,50 @@ typedef struct BfWorkgraphTransition {
     int64_t created_at_ms;
 } BfWorkgraphTransition;
 
+typedef struct BfWorkgraphCheckpoint {
+    int64_t revision;
+    int64_t created_at_ms;
+    char artifact_uri[1024];
+    char worker_id[128];
+} BfWorkgraphCheckpoint;
+
+BfWorkgraphResult bf_workgraph_checkpoint_read(BfWorkgraph *graph, const char *mission_id,
+                                              const char *node_id, BfWorkgraphCheckpoint *record);
+BfWorkgraphResult bf_workgraph_checkpoint_save(BfWorkgraph *graph, const char *mission_id,
+                                              const char *node_id, const char *worker_id,
+                                              const char *claim_token, int64_t expected_revision,
+                                              const char *artifact_uri, BfWorkgraphCheckpoint *record);
+BfWorkgraphResult bf_workgraph_complete_checkpoint(BfWorkgraph *graph, const char *mission_id,
+                                                  const char *node_id, const char *worker_id,
+                                                  const char *claim_token, const char *output_uri,
+                                                  int64_t expected_revision);
+
+/*
+ * Cross-harness run evidence for the claimed attempt. A Claude Code or Codex
+ * session that executes a node names itself here, under the live claim, and
+ * the binding enters the node's existing hash-chained transition receipts
+ * (transition "run_attested"); no separate trace store exists.
+ *   agent                 the harness whose provider usage Meter imports: "claude" or "codex"
+ *   provider_session_ref  the provider's own session/thread id, 8..64 of [0-9A-Za-z-]
+ *   model_id              optional, 1..96 of [0-9A-Za-z._:-]
+ *   handoff_receipt       optional "sha256:" + 64 lowercase hex of a context-verify handoff receipt
+ * One attestation per attempt; a session already attested for any other
+ * attempt, node or mission is refused, so a session never names two runs.
+ * The worker declares the session and handoff; WorkGraph does not observe the
+ * provider, the tokens, or whether the handoff was read.
+ */
+typedef struct BfWorkgraphRunEvidence {
+    const char *agent;
+    const char *provider_session_ref;
+    const char *model_id;
+    const char *handoff_receipt;
+} BfWorkgraphRunEvidence;
+
+BfWorkgraphResult bf_workgraph_attest_run(BfWorkgraph *graph, const char *mission_id,
+                                          const char *node_id, const char *worker_id,
+                                          const char *claim_token,
+                                          const BfWorkgraphRunEvidence *run);
+
 int bf_workgraph_open(const char *database_path, BfWorkgraph **out, FILE *err);
 int bf_workgraph_open_database(void *sqlite_database, BfWorkgraph **out, FILE *err);
 void bf_workgraph_close(BfWorkgraph *graph);

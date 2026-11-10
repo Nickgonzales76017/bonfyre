@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define BF_WORKGRAPH_SCHEMA_VERSION 8
+#define BF_WORKGRAPH_SCHEMA_VERSION 9
 
 static int table_exists(sqlite3 *db, const char *table_name) {
     sqlite3_stmt *statement = NULL;
@@ -513,6 +513,25 @@ static int verify_version_eight(sqlite3 *db, FILE *err) {
     return 0;
 }
 
+static int apply_version_nine(sqlite3 *db, FILE *err) {
+    return checked_exec(db,
+        "CREATE TABLE IF NOT EXISTS workgraph_checkpoints("
+        "mission_id TEXT NOT NULL,node_id TEXT NOT NULL,revision INTEGER NOT NULL CHECK(revision>0),"
+        "artifact_uri TEXT NOT NULL,worker_id TEXT NOT NULL,created_at_ms INTEGER NOT NULL,"
+        "PRIMARY KEY(mission_id,node_id,revision),"
+        "FOREIGN KEY(mission_id,node_id) REFERENCES workgraph_nodes(mission_id,node_id));", err);
+}
+
+static int verify_version_nine(sqlite3 *db, FILE *err) {
+    sqlite3_stmt *statement = NULL;
+    int rc = sqlite3_prepare_v2(db,
+        "SELECT mission_id,node_id,revision,artifact_uri,worker_id,created_at_ms FROM workgraph_checkpoints LIMIT 0",
+        -1, &statement, NULL);
+    sqlite3_finalize(statement);
+    if (rc != SQLITE_OK) fprintf(err, "workgraph migration: checkpoint table is missing or invalid\n");
+    return rc == SQLITE_OK ? 0 : -1;
+}
+
 static int migration_record(sqlite3 *db, int version, FILE *err) {
     sqlite3_stmt *statement = NULL;
     char version_text[32];
@@ -588,6 +607,8 @@ int bf_workgraph_migrate_database(void *sqlite_database, FILE *err) {
              (apply_version_seven(db, err) != 0 || verify_version_seven(db, err) != 0)) ||
             (target == 8 &&
              (apply_version_eight(db, err) != 0 || verify_version_eight(db, err) != 0)) ||
+            (target == 9 &&
+             (apply_version_nine(db, err) != 0 || verify_version_nine(db, err) != 0)) ||
             migration_record(db, target, err) != 0 ||
             checked_exec(db, "COMMIT", err) != 0) {
             sqlite3_exec(db, "ROLLBACK", NULL, NULL, NULL);
@@ -607,5 +628,6 @@ int bf_workgraph_migrate_database(void *sqlite_database, FILE *err) {
     if (verify_version_six(db, err) != 0) {
         return -1;
     }
-    return verify_version_seven(db, err);
+    if (verify_version_seven(db, err) != 0 || verify_version_eight(db, err) != 0) return -1;
+    return verify_version_nine(db, err);
 }

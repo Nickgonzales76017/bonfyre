@@ -42,6 +42,7 @@ typedef struct BfWorkgraphEvidence {
     int compensation_attempt; /* -1 when not applicable */
     const char *from_state;   /* NULL to derive from prior node transition history */
     const char *to_state;
+    const BfWorkgraphRunEvidence *run; /* NULL except for a run_attested transition */
 } BfWorkgraphEvidence;
 
 int bf_workgraph_write_evidence(BfWorkgraph *graph, BfWorkgraphResult *result,
