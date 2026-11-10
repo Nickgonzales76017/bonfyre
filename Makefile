@@ -25,10 +25,10 @@ CFLAGS ?= -O3 $(MARCH_FLAG) -flto=auto -ffunction-sections -fdata-sections -Wall
 # Every directory under cmd/ with a Makefile
 BINARIES := $(sort $(dir $(wildcard cmd/*/Makefile)))
 
-.PHONY: all lib binaries clean install test help sanitize fuzz docker docker-build dist \
+.PHONY: all lib binaries native-carriers native-dispatch-audit control-plane-native-test clean install test help sanitize fuzz docker docker-build dist \
 	edge edge-esp32s3 edge-arm edge-arm64 edge-x86-64 \
 	appliance-build runtime-pack model-memory-pack appliance-package manifest \
-	appliance-smoke release-check release-notes
+	appliance-smoke release-check release-notes runtime-image-verify runtime-image-promote
 
 BUN_BIN      ?= $(HOME)/.bun/bin/bun
 APPLIANCE_DIR ?= dist/bonfyre-appliance
@@ -48,16 +48,61 @@ MODEL_PACK_ZST  ?= dist/bonfyre-model-memory-$(MODEL_MEMORY_FAMILY)-$(DATE_TAG).
 APPLIANCE_TAR   ?= dist/bonfyre-appliance-v$(BONFYRE_VERSION)-$(HYPER_TARGET).tar.gz
 APPLIANCE_TAR_ZST ?= dist/bonfyre-appliance-v$(BONFYRE_VERSION)-$(HYPER_TARGET).tar.zst
 
-all: lib binaries
+all: lib binaries native-carriers
+
+native-carriers:
+	$(MAKE) -C scripts foreign-xml
+
+# CFLAGS reaches the organs through the environment, not the command line.
+#
+# `$(MAKE) -C $$dir CFLAGS="..."` is a command-line assignment, and those beat
+# every assignment inside the sub-make -- including the `CFLAGS +=` lines that
+# carry each organ's own required flags. Four organs failed to build for this and
+# nothing else: BonfyreFS lost -D_FILE_OFFSET_BITS=64 and FUSE refused to
+# compile, BonfyreDetectObjects lost -I on libfragment, BonfyreProject lost the
+# engine include path, BonfyreQwenFPQ lost all four of its -I flags. Their
+# Makefiles were correct the whole time.
+#
+# Through the environment, `CFLAGS ?=` still takes this value and `CFLAGS +=`
+# still appends to it, which is what both sides were written to expect.
+
+# `binaries` reports per-organ and exits on the count.
+#
+# The recipe's last statement used to be the summary `echo`, so the target
+# returned 0 whatever the counter said: `make all` succeeded with every organ
+# failing to build, and any unit or CI step reading the exit status was told the
+# estate builds. The per-organ ticks and the failure logs were all already
+# there -- the one thing missing was that the result reached the caller.
 
 # ── Libraries ────────────────────────────────────────────────
+#
+# QUIC transport is optional and its absence is reported, not fatal.
+#
+# lib/libquic-transport declares its external dependency with $(error), which is
+# the right thing for that library to do and the wrong thing to propagate: `lib`
+# died on it, `binaries` never ran, and all 103 organs went unbuilt because two
+# of them can optionally speak QUIC. On the estate that had been the state for
+# six weeks, with an empty journal, because the unit that installs libngtcp2 had
+# also failed.
+#
+# The dependency is probed here the same way the library probes it, so a genuine
+# compile error inside libquic-transport still fails the build -- only a declared
+# missing dependency is skipped, and it is skipped out loud.
 lib:
 	@echo "=== Building liblambda-tensors ==="
 	$(MAKE) -C lib/liblambda-tensors CC="$(CC)" OPTFLAGS="$(CFLAGS)"
 	@echo "=== Building libbonfyre ==="
 	$(MAKE) -C lib/libbonfyre CC="$(CC)" OPTFLAGS="$(CFLAGS)"
 	@echo "=== Building libquic-transport ==="
-	$(MAKE) -C lib/libquic-transport CC="$(CC)" OPTFLAGS="$(CFLAGS)"
+	@if pkg-config --exists libngtcp2 libngtcp2_crypto_ossl 2>/dev/null \
+	   || ls /opt/homebrew/lib/libngtcp2.* >/dev/null 2>&1; then \
+		$(MAKE) -C lib/libquic-transport CC="$(CC)" OPTFLAGS="$(CFLAGS)"; \
+	else \
+		echo "  skipped: libngtcp2 + libngtcp2_crypto_ossl are not installed."; \
+		echo "  QUIC transport is unavailable; BonfyreMoE and BonfyreQwenFPQ build without it."; \
+		echo "  This is a declared absence, not a build failure. Install the libraries"; \
+		echo "  or set PKG_CONFIG_PATH to make it available."; \
+	fi
 
 # ── Binaries ─────────────────────────────────────────────────
 binaries: lib
@@ -66,7 +111,7 @@ binaries: lib
 		name=$$(basename $$dir); \
 		printf "  [%2d] %-28s" $$((total+1)) "$$name"; \
 		logfile=$$(mktemp); \
-		if $(MAKE) -C $$dir CC="$(CC)" CFLAGS="$(CFLAGS)" > "$$logfile" 2>&1; then \
+		if CFLAGS="$(CFLAGS)" $(MAKE) -C $$dir CC="$(CC)" > "$$logfile" 2>&1; then \
 			echo "✓"; \
 			ok=$$((ok+1)); \
 		else \
@@ -78,7 +123,8 @@ binaries: lib
 		total=$$((total+1)); \
 	done; \
 	echo ""; \
-	echo "=== $$ok/$$total built ($$fail failed) ==="
+	echo "=== $$ok/$$total built ($$fail failed) ==="; \
+	test "$$fail" -eq 0
 
 # ── Install ──────────────────────────────────────────────────
 install: all
@@ -112,8 +158,32 @@ clean:
 	@echo "Clean."
 
 # ── Test ─────────────────────────────────────────────────────
-test: all
+native-dispatch-audit:
+	bun scripts/analysis/native_dispatch_audit.mjs
+
+control-plane-native-test:
+	bun test components/BonfyreControlPlane/tests/*.test.mjs
+
+.PHONY: decision-plane-test
+decision-plane-test:
+	bun test components/BonfyreDecision/tests cmd/BonfyreExternalEstate/tests/decision_program_plane.test.mjs scripts/tests/residual-to-work.test.mjs
+
+.PHONY: operator-entrypoints-test
+operator-entrypoints-test:
+	$(MAKE) -C programs/bonfyre
+	$(MAKE) -C scripts foreign-xml
+	$(MAKE) -C cmd/BonfyreLex
+	bun test scripts/tests/cloudflare-reconcile.test.mjs scripts/tests/cloudflare-entrypoints.test.mjs \
+		scripts/tests/catalog_persona_retirement.test.mjs scripts/tests/pages-runtime-metadata.test.mjs \
+		scripts/tests/fs_effects_watch.test.mjs scripts/tests/command-workload-binary-fixtures.test.mjs \
+		components/BonfyreProject/tests/economic_reports.test.mjs components/BonfyreProject/tests/economic_views_test.mjs \
+		scripts/tests/dns-migration.test.mjs components/BonfyreProject/tests/read_protocol_drive.test.mjs \
+		components/BonfyreProject/tests/project_liveness_test.mjs components/BonfyreProject/tests/project_demand_test.mjs \
+		tools/estate/checkpoint93-profile-receipt.test.mjs
+
+test: all decision-plane-test operator-entrypoints-test
 	@echo "=== Running tests ==="
+	bun test scripts/tests/native_command_tables.test.mjs
 	$(MAKE) -C lib/liblambda-tensors test || true
 	$(MAKE) -C lib/libbonfyre test || true
 	@pass=0; \
@@ -356,15 +426,11 @@ model-memory-pack:
 	@if [ -f $(MODEL_PACK_ZST) ]; then echo "  → $(MODEL_PACK_ZST)"; fi
 
 manifest:
-	@echo "=== Writing bonfyre.manifest.json ==="
+	@$(BUN_BIN) scripts/appliance-manifest.mjs manifest \
+		--target "$(HYPER_TARGET)" --out bonfyre.manifest.json \
+		--release "$(BONFYRE_VERSION)" --schema "$(MANIFEST_SCHEMA)" \
+		--runtime-abi "$(RUNTIME_ABI)" --default-model-family "$(MODEL_MEMORY_FAMILY)"
 	@mkdir -p dist
-	@python3 scripts/gen_manifest.py \
-		--target $(HYPER_TARGET) \
-		--out bonfyre.manifest.json \
-		--release $(BONFYRE_VERSION) \
-		--schema $(MANIFEST_SCHEMA) \
-		--runtime-abi $(RUNTIME_ABI) \
-		--default-model-family $(MODEL_MEMORY_FAMILY)
 	@cp bonfyre.manifest.json dist/bonfyre.manifest.json
 
 appliance-package: appliance-build runtime-pack model-memory-pack manifest
@@ -395,6 +461,15 @@ appliance-smoke: appliance-build manifest
 	@echo "  help:   /tmp/bonfyre-hyper-help.txt"
 	@echo "  doctor: /tmp/bonfyre-hyper-doctor.txt"
 
+# A build tree is not the runtime MCP and workers invoke.  These targets keep
+# that promotion explicit: verify is read-only, and promotion is the only path
+# allowed to install absent managed organs.
+runtime-image-verify:
+	@./scripts/organ_drift.sh --verify
+
+runtime-image-promote:
+	@./scripts/organ_drift.sh --sync --install-missing
+
 release-check:
 	$(MAKE) manifest
 	$(MAKE) runtime-pack
@@ -406,8 +481,7 @@ release-check:
 	$(HYPER_OUT) doctor --deep --manifest dist/bonfyre.manifest.json
 
 release-notes: manifest
-	@python3 scripts/release_notes_from_manifest.py --manifest dist/bonfyre.manifest.json --out dist/release-notes.md
-	@echo "  → dist/release-notes.md"
+	@$(BUN_BIN) scripts/appliance-manifest.mjs notes --manifest dist/bonfyre.manifest.json --out dist/release-notes.md
 # ── dist: source tarball ─────────────────────────────────────────────────────
 # Whitelist-based: only explicitly listed paths are included.
 # This prevents workspace state (Obsidian vault, .bonfyre-runtime, layeros DB,
@@ -430,6 +504,8 @@ dist:
 		--exclude='*.m4a' \
 		--exclude='*/build' \
 		--exclude='out/' \
+		--exclude='scripts/foreign-xml' \
+		--exclude='scripts/feed-parse-xml' \
 		--exclude='cmd/BonfyreFPQ/legacy_from_10code' \
 		cmd/ lib/ scripts/ docs/ \
 		Makefile install.sh README.md LICENSE \

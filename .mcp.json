@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "aurekai": {
+      "type": "http",
+      "url": "${AUREKAI_MCP_URL:-http://127.0.0.1:3051/mcp}",
+      "headers": {
+        "Authorization": "Bearer ${AUREKAI_MCP_TOKEN}"
+      }
+    }
+  }
+}

@@ -4,23 +4,75 @@
 <h1 align="center">Bonfÿre</h1>
 
 <p align="center">
-  <strong>A typed operating machine for turning intent into authorized work, effects, evidence, and learning.</strong>
+  <strong>Software for tools, sites and apps that keep track of who may do what, and what was done.</strong>
 </p>
 
 <p align="center">
+  <a href="#see-it-running">See it running</a> ·
+  <a href="#building-blocks">Building blocks</a> ·
   <a href="#start-here">Start here</a> ·
   <a href="#the-whole-machine">Whole machine</a> ·
   <a href="#what-is-live">What is live</a> ·
+  <a href="https://docs.aurekai.work/">Guides</a> ·
+  <a href="https://aurekai-work-samples.pages.dev/">Work samples</a> ·
   <a href="docs/architecture.md">Architecture</a> ·
   <a href="CONTRIBUTING.md">Contributing</a>
 </p>
 
-Bonfÿre is not a fixed collection of binaries and Aurekai is not a generic
-agent wrapper. Bonfÿre owns the semantic machine: identity, authority,
-capability, work, effects, evidence, resources, commitments, and institutional
-state. Aurekai learns from traces and proof bundles, proposes better factors and
-routes, and must pass the same validation and authority boundaries before a
-proposal can become part of the machine.
+Bonfÿre is the software underneath. Aurekai is what gets built and run on it:
+tools for a team, sites that carry a customer's own name, apps their customers
+keep using, and the links between systems that already exist.
+
+## See it running
+
+| What | Where |
+|---|---|
+| Team tools you can use in the browser: a fixture planner, a product editor, a shipment-file check | [Work samples](https://aurekai-work-samples.pages.dev/) |
+| Three shop sites with their own looks, run from one installation | [Three businesses](https://docs.aurekai.work/three-businesses) |
+| A training app for a studio, for members and coaches | [Walk-through](https://aurekai-work-samples.pages.dev/training/) · [`components/BonfyreServiceSite`](components/BonfyreServiceSite/) |
+| Search over your own documents, on your own computer | [Walk-through](https://aurekai-work-samples.pages.dev/documents/) · [`components/BonfyreServiceSite`](components/BonfyreServiceSite/README.md) |
+| Step-by-step guides: white-label delivery, recordings, requests to books, migration | [Guides](https://docs.aurekai.work/) · [`docs/experiences`](docs/experiences/) |
+| What this looks like for a service network, a media business, a community project and others | [Product families](https://docs.aurekai.work/operating-products) |
+
+The samples use public or made-up data. Paid memberships and card payments are
+not part of the training sample.
+
+## Building blocks
+
+Nine areas of the codebase are being cut into libraries a developer can use
+without the rest. Each one works from source today. None is published as a
+package yet, so there is no version to pin and no support promise.
+
+| Area | What it does | Where it lives |
+|---|---|---|
+| Data | Local SQL and vector search, with the source of every record kept | [`cmd/BonfyreVec`](cmd/BonfyreVec/), [`cmd/BonfyreEmbed`](cmd/BonfyreEmbed/), [`cmd/BonfyreCMS`](cmd/BonfyreCMS/) |
+| Contracts | Typed schemas and the code generated from them | [`schemas/control`](schemas/control/) |
+| Models | Serving, quantization and embeddings | [`cmd/BonfyreQuant`](cmd/BonfyreQuant/), [`cmd/BonfyreModel`](cmd/BonfyreModel/) |
+| Work | Requests, commitments and who may act on them | [`cmd/BonfyreQueue`](cmd/BonfyreQueue/), [`cmd/BonfyreAuth`](cmd/BonfyreAuth/), [`cmd/BonfyreWorkflow`](cmd/BonfyreWorkflow/) |
+| Apps | Frappe and WordPress integration | [`integrations/`](integrations/) |
+| Media | Preparing and transcribing recordings | [`cmd/BonfyreMediaPrep`](cmd/BonfyreMediaPrep/), [`cmd/BonfyreTranscribe`](cmd/BonfyreTranscribe/) |
+| Commerce | Moving records between systems and checking them on arrival | [`cmd/BonfyreBridge`](cmd/BonfyreBridge/) |
+| Finance | Meters, invoices and recorded payments | [`cmd/BonfyreFinance`](cmd/BonfyreFinance/), [`cmd/BonfyrePay`](cmd/BonfyrePay/), [`cmd/BonfyreMeter`](cmd/BonfyreMeter/) |
+| Web | Sites, pages and the assistant endpoint for each | [`cmd/BonfyreWebAddress`](cmd/BonfyreWebAddress/), [`components/BonfyreServiceSite`](components/BonfyreServiceSite/) |
+
+The [building blocks guide](https://docs.aurekai.work/building-blocks) says
+where to start with each, and the
+[local-first guide](https://docs.aurekai.work/local-first-applications)
+walks through the data area. Known limits are written down rather than hidden:
+a vector store is made at one width (`bonfyre-vec init store.db --dims 768`),
+and changing embedding model means making a new store.
+
+## How it is put together
+
+Underneath, the **Matrix** represents each subject once and connects its
+addresses, public presence, relationships, institutions, state, economics,
+compute, external participation and interfaces. Identity, authority,
+capability, work, effects, evidence, resources and commitments each have a
+separate owner.
+
+Aurekai uses execution traces and proof bundles to propose better factors and
+routes. Those proposals must pass the system's validation and authorization
+checks before they can change how it runs.
 
 The Generation-10/V8.1 system map is the architectural basis. The live
 repository is the implementation truth. When they differ, the
@@ -33,7 +85,10 @@ witnesses; a declared or architectural organ is never presented as proven.
 intent / observation / foreign state
                  │
                  ▼
- Identity · Authority · CapabilityClosure · WorkGraph
+ Subject · AddressConstellation · Presence · Authority
+                 │
+                 ▼
+ Bonfÿre Matrix · CapabilityClosure · WorkGraph
                  │
        ProviderGraph · Context · Resources · MoneyGraph
                  │
@@ -50,10 +105,11 @@ intent / observation / foreign state
        Aurekai: learn → test → promote/cool/thaw
 ```
 
-The machine keeps these concerns connected without collapsing them:
+Each part has a defined responsibility:
 
 | Organ | What it owns |
 |---|---|
+| **Bonfÿre Matrix** | Stable semantic subjects, address constellations, publication presences, and recursively delegated institutional topology. |
 | **WorkGraph** | Durable missions, dependencies, leases, cooling, and completion contracts. |
 | **CapabilityClosure** | The gap between a named capability, a callable realization, and a workload-proven one. |
 | **Authority + EffectKernel** | Who may do what, with idempotency and effect ceilings checked at execution time. |
@@ -61,7 +117,7 @@ The machine keeps these concerns connected without collapsing them:
 | **Evidence and replay** | Receipts, witness DAGs, trace divergence, proof bundles, deterministic replay, shadow execution, simulation, and institutional backtesting. |
 | **Aurekai** | Evidence-bound learning: discover candidates, backtest, run gyms, shadow, promote or cool, and thaw invalid factors. |
 
-### 91 powers, not one generic tool
+### Public capabilities
 
 Bonfÿre preserves **91 public Power identities**. Each identity moves through a
 maturity ladder—defined, implemented, built, resolvable, health-probed,
@@ -118,13 +174,15 @@ Profiles connect through ForeignTwin, ProviderGraph, Capability, WorkGraph,
 SurfaceIR, and evidence boundaries; an integration never gains semantic or
 institutional authority merely because it is reachable.
 
-Operational metabolism turns provider readiness, price, credit, quota,
-freshness, schedules, external tools, artifact packets, and autonomous worker
-dependencies into explicit WorkGraph and ResourceGraph inputs. Financial
-metabolism keeps agreement, billing account, spend intent, funding source,
-payment instrument, authorization, capture, settlement, refund, allocation, and
-ERPNext accounting as distinct states. A price is not a payment, a provider
-credit is not cash, and a dashboard is not accounting truth.
+WorkGraph and ResourceGraph track provider readiness, prices, credits, quotas,
+freshness, schedules, external tools, artifact packets and worker dependencies.
+This is the system's operational metabolism.
+
+Financial metabolism tracks agreements, billing accounts, spend intents, funding
+sources, payment instruments, authorization, capture, settlement, refunds,
+allocation and ERPNext accounting separately. It keeps quoted prices apart from
+payments, provider credits apart from cash, and dashboards apart from the
+accounting records they display.
 
 ## What is live
 
@@ -146,10 +204,10 @@ Architecture Atlas. Maturity is deliberately mixed:
 Inspect the truth directly:
 
 ```bash
-python3 architecture/atlas.py validate
-python3 architecture/atlas.py expand ExecutionView
-python3 architecture/atlas.py get work-graph
-python3 architecture/atlas.py loss
+bun architecture/atlas.mjs validate
+bun architecture/atlas.mjs expand ExecutionView
+bun architecture/atlas.mjs get work-graph
+bun architecture/atlas.mjs loss
 ```
 
 ## Start here
@@ -159,9 +217,9 @@ python3 architecture/atlas.py loss
 ```bash
 git clone https://github.com/Nickgonzales76017/bonfyre-oss.git
 cd bonfyre-oss
-python3 architecture/atlas.py validate
-python3 architecture/atlas.py expand CapabilityView
-python3 architecture/atlas.py expand EvidenceView
+bun architecture/atlas.mjs validate
+bun architecture/atlas.mjs expand CapabilityView
+bun architecture/atlas.mjs expand EvidenceView
 ```
 
 ### 2. Run the semantic control-plane evidence
@@ -214,6 +272,8 @@ For a guided version, see [QUICKSTART.md](QUICKSTART.md).
 ## Read next
 
 - [Quickstart](QUICKSTART.md)
+- [Guides](https://docs.aurekai.work/): the pages in `docs/experiences`, published
+- [Work samples](https://aurekai-work-samples.pages.dev/): tools to try, and where to send a project brief
 - [Architecture](docs/architecture.md)
 - [Architecture Atlas](architecture/README.md)
 - [Operator status and drift](docs/bonfyre_status_and_drift.md)
