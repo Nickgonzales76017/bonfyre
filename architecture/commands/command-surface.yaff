@@ -2482,6 +2482,24 @@ architecture cmd-braid-audit
   source_lineage current command directory and command_smoke.json census
   known_gap built by make -C cmd/BonfyreBraidAudit (bonfyre-braid-audit) but prints nothing on --help and exits 2 (checked 2026-11-07), so it is not yet a usable command; deeper WiringSpec fact flow and authority admission are separate work
 
+architecture cmd-bridge
+  canonical_name BonfyreBridge
+  family command
+  domain Command / Bridge
+  semantic_question What does the BonfyreBridge capability organ realize, and by what contract?
+  purpose Command-surface organ realizing the BridgeCapability capability. Its product effects require separate scope and authority.
+  maturity implemented
+  command BonfyreBridge
+  internal_calculus BonfyreBridge binary
+  forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
+  forbidden_inference a matching digest -> the source system is correct; agreement covers the compared values only
+  source_path cmd/BonfyreBridge/src/main.c
+  source_path cmd/BonfyreBridge/src/transform.c
+  source_lineage current command directory and command_smoke.json census
+  witness cmd/BonfyreBridge/tests/db_bridge_test.sh passes sqlite legs plus mysql-postgres live legs (checked 2026-11-10)
+  witness cmd/BonfyreBridge/tests/transform_evidence_test.sh passes 37 checks on cited type-rule parsing and schema-map rehearsal (checked 2026-11-10)
+  known_gap db legs need local postgres and mariadb servers; the suite skips them when the servers are absent; deeper WiringSpec fact flow and authority admission are separate work
+
 architecture cmd-bridge-readiness
   canonical_name BonfyreBridgeReadiness
   family command

@@ -17,5 +17,13 @@ test: $(TARGET)
 	./tests/db_bridge_test.sh ./$(TARGET)
 	sh tests/transform_evidence_test.sh ./$(TARGET)
 
+MANAGED_PREFIX ?= $(HOME)/.bonfyre
+install: all
+	install -d "$(MANAGED_PREFIX)/bin"
+	install -m 755 $(TARGET) "$(MANAGED_PREFIX)/bin/.bonfyre-bridge.next"
+	mv -f "$(MANAGED_PREFIX)/bin/.bonfyre-bridge.next" "$(MANAGED_PREFIX)/bin/bonfyre-bridge"
+
 clean:
 	rm -f $(TARGET)
+
+.PHONY: all clean test install

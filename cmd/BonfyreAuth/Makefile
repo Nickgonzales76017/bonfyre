@@ -3,7 +3,9 @@ CFLAGS  ?= -O2 -Wall -Wextra -std=c11 -ffunction-sections -fdata-sections -I../.
 LDFLAGS ?= ../../lib/libbonfyre/libbonfyre.a -lsqlite3
 TARGET   = bonfyre-auth
 
-.PHONY: all clean test
+.PHONY: all clean test install
+
+MANAGED_PREFIX ?= $(HOME)/.bonfyre
 
 all: $(TARGET)
 
@@ -20,3 +22,8 @@ test: $(TARGET)
 	bun test tests/organization_workspace.test.mjs
 	./tests/actor_closure_test.sh
 	./tests/external_account_link_test.sh
+
+install: all
+	install -d "$(MANAGED_PREFIX)/bin"
+	install -m 755 $(TARGET) "$(MANAGED_PREFIX)/bin/.bonfyre-auth.next"
+	mv -f "$(MANAGED_PREFIX)/bin/.bonfyre-auth.next" "$(MANAGED_PREFIX)/bin/bonfyre-auth"

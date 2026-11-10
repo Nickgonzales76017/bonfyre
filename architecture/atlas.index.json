@@ -4337,6 +4337,46 @@
       "views": [],
       "witnesses": []
     },
+    "cmd-bridge": {
+      "canonical_name": "BonfyreBridge",
+      "commands": [
+        "BonfyreBridge"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Bridge",
+      "edge_types": [],
+      "experience_chains": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized; Authority gates mutation and read scope still applies",
+        "a matching digest -> the source system is correct; agreement covers the compared values only"
+      ],
+      "internal_calculi": [
+        "BonfyreBridge binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "db legs need local postgres and mariadb servers; the suite skips them when the servers are absent; deeper WiringSpec fact flow and authority admission are separate work"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreBridge capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreBridge/src/main.c",
+        "cmd/BonfyreBridge/src/transform.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/BonfyreBridge/tests/db_bridge_test.sh passes sqlite legs plus mysql-postgres live legs (checked 2026-11-10)",
+        "cmd/BonfyreBridge/tests/transform_evidence_test.sh passes 37 checks on cited type-rule parsing and schema-map rehearsal (checked 2026-11-10)"
+      ]
+    },
     "cmd-bridge-readiness": {
       "canonical_name": "BonfyreBridgeReadiness",
       "commands": [
@@ -41350,9 +41390,9 @@
   },
   "provenance": {
     "cannot_infer": "a matching digest -> a correct atlas; it says this index was built from these declaration bytes and nothing more",
-    "declaration_digest": "6e20b7602c78d6f1449fc3d6b3d3ed0af6799f7c180586114656b4e7b6ea4a5e",
+    "declaration_digest": "c3ce6e457ad4c005498c013c4227ecbae87c16b64c08b01f42b0a32e13111c15",
     "declaration_files": 151,
-    "generated_at": "2026-11-10T18:24:49Z"
+    "generated_at": "2026-11-10T20:00:44Z"
   },
   "views": {
     "CapabilityView": {
